@@ -559,6 +559,12 @@ struct Args {
     /// crystal's centre (world units), its nearest walker and the walkers
     /// within 20 of it, to pick a crystal the slime is heading for.
     fence_pick: Option<f32>,
+    /// `necks=T[,T...]` (look= only, 2026-11-17, the gun-card plan's cut
+    /// count): at each game second T, the walkers in parts of the slime
+    /// that only thin necks (2 or 4 dish cells wide) tie to a crystal with
+    /// charge, so one cut there would leave them without food
+    /// (`mould::necks`).
+    necks: Vec<f32>,
     /// `tload=T,NAME` (look= only, the turrets thread, 2026-11-16): at game
     /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
     /// `Game::turret_deck`), a preset or a card list as `load=`.
@@ -2311,6 +2317,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 args.cross = Some([*x1, *y1, *x2, *y2, *d]);
             }
             "fencepick" => args.fence_pick = Some(v.parse()?),
+            "necks" => args.necks = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?,
             "cutsquad" => {
                 // `cutsquad=X,Y[,T[,N]]` (after `cut=`): N soldiers (all)
                 // are set down there at T (the cut's time) and stay.

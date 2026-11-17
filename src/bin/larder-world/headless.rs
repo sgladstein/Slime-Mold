@@ -205,6 +205,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // `trail=`: the lines laid; `cross=`: each slot's side of the line
     // (0 unknown or dead, 1 this side, 2 crossed) and the crossings.
     let mut trailed: Vec<usize> = Vec::new();
+    let mut necked = 0usize;
     let mut cross_sec = u64::MAX;
     let mut sides: Vec<u8> = Vec::new();
     let mut crossed = 0usize;
@@ -516,6 +517,69 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
             app.settle();
+            // `necks=T,...`: the cut count at each T (`mould::necks`), after
+            // the step, so a T that is also the run's last frame counts (the
+            // first census lost its 300 s count with the check before it).
+            while let Some(g) = app.game.as_ref().filter(|g| necked < app.args.necks.len() && g.time() >= app.args.necks[necked]) {
+                let t = app.args.necks[necked];
+                necked += 1;
+                let sc = g.world.scale();
+                let bin = (sc as usize).max(1);
+                let (fw, fh) = g.world.size();
+                let (w, h) = (fw.div_ceil(bin), fh.div_ceil(bin));
+                let Some(grid) = g.world.mould_grid(bin) else { continue };
+                // Food: the cells within a dish cell and a half of a
+                // crystal that still holds charge.
+                let crystals = g.world.crystals();
+                let food: Vec<bool> = (0..w * h)
+                    .map(|i| {
+                        let (x, y) = (((i % w) as f32 + 0.5) * bin as f32, ((i / w) as f32 + 0.5) * bin as f32);
+                        crystals.iter().enumerate().any(|(c, &((cx, cy), charge))| charge > 0.0 && (x - cx).hypot(y - cy) <= g.world.crystal_r(c) + 1.5 * sc)
+                    })
+                    .collect();
+                // Open ground: a dish cell with agar under half its fine
+                // cells or more (pinholes are filled only there).
+                let d = &g.world.e.dish;
+                let open: Vec<bool> = (0..w * h)
+                    .map(|i| {
+                        let (x0, y0) = ((i % w) * bin, (i / w) * bin);
+                        let cells = (y0..(y0 + bin).min(d.h)).flat_map(|y| (x0..(x0 + bin).min(d.w)).map(move |x| y * d.w + x));
+                        let (on, all) = cells.fold((0, 0), |(on, all), j| (on + usize::from(d.agar[j]), all + 1));
+                        2 * on >= all
+                    })
+                    .collect();
+                let raw = |r: usize| slime_mould::mould::necks::necks(&grid, w, h, &food, &vec![false; w * h], r, 500);
+                let (r2, r4) = (raw(1), raw(2));
+                let line = |r: usize| {
+                    let (n, cut) = slime_mould::mould::necks::necks_map(&grid, w, h, &food, &open, r, 500);
+                    (n, cut, format!("necks {}: {} cuttable ({:.1}%), largest {}, {} parts of 500+", 2 * r, n.cuttable, 100.0 * n.cuttable as f32 / n.total.max(1) as f32, n.largest, n.big_parts))
+                };
+                let ((n, cut2, two), (_, cut4, four)) = (line(1), line(2));
+                let fed = crystals.iter().filter(|c| c.1 > 0.0).count();
+                println!("  necks t {t:.0} s: {} walkers, {} without food, {fed} crystals with charge; {two}; {four}", n.total, n.unfed);
+                // The first census's count, pinholes left open, to compare.
+                println!("  necks t {t:.0} s, pinholes open: necks 2: {} cuttable, largest {}, {} parts of 500+; necks 4: {} cuttable, largest {}, {} parts of 500+", r2.cuttable, r2.largest, r2.big_parts, r4.cuttable, r4.largest, r4.big_parts);
+                // The map, 3 pixels a dish cell: red the parts a cut 2
+                // cells wide starves, orange those only a cut of 4 does,
+                // tan the rest of the slime on food, violet slime already
+                // without food, blue the food, near-black the bare ground.
+                let px = 3u32;
+                let img = image::RgbImage::from_fn(w as u32 * px, h as u32 * px, |x, y| {
+                    let i = (y / px) as usize * w + (x / px) as usize;
+                    use slime_mould::mould::necks::{BARE, CUT, UNFED};
+                    image::Rgb(match (cut2[i], cut4[i], food[i]) {
+                        (CUT, ..) => [220, 40, 40],
+                        (_, CUT, _) => [245, 150, 30],
+                        (UNFED, ..) => [120, 80, 160],
+                        (_, _, true) => [60, 140, 230],
+                        (BARE, ..) => [22, 24, 28],
+                        _ => [150, 135, 100],
+                    })
+                });
+                let path = format!("{dir}/{}-{hand}-{:03}s-necks.png", file_part(&app.name), t as u32);
+                img.save(&path).map_err(|e| format!("{path}: {e}"))?;
+                println!("{path}");
+            }
             // Each surge the game starts (food-driven surges, 11-15).
             if let Some(g) = app.game.as_ref().filter(|g| g.surges != surges) {
                 println!("  surge {} starts at t {:.1} s (the slime has eaten {:.0} food)", g.surges, g.time(), g.slime_ate);

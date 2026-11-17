@@ -1,0 +1,54 @@
+== p1-idle
+  necks t 60 s: 15207 walkers, 432 without food, 7 crystals with charge; necks 2: 33 cuttable (0.2%), largest 33, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 0 cuttable, largest 0, 0 parts of 500+; necks 4: 0 cuttable, largest 0, 0 parts of 500+
+  necks t 120 s: 17720 walkers, 130 without food, 7 crystals with charge; necks 2: 62 cuttable (0.3%), largest 53, 0 parts of 500+; necks 4: 110 cuttable (0.6%), largest 110, 0 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 120 cuttable, largest 120, 0 parts of 500+; necks 4: 0 cuttable, largest 0, 0 parts of 500+
+  t 136 s: mould 18956, soldiers 0, bank 400, harvested 0, rendered 0, shots 143, killed 1002, took 0%, crystals left 0.971, ended: squad wiped
+== p2-idle
+  necks t 60 s: 24653 walkers, 737 without food, 14 crystals with charge; necks 2: 110 cuttable (0.4%), largest 59, 0 parts of 500+; necks 4: 338 cuttable (1.4%), largest 229, 0 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 197 cuttable, largest 54, 0 parts of 500+; necks 4: 457 cuttable, largest 218, 0 parts of 500+
+  necks t 120 s: 32960 walkers, 877 without food, 14 crystals with charge; necks 2: 340 cuttable (1.0%), largest 201, 0 parts of 500+; necks 4: 450 cuttable (1.4%), largest 198, 0 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 608 cuttable, largest 110, 0 parts of 500+; necks 4: 0 cuttable, largest 0, 0 parts of 500+
+  t 169 s: mould 39940, soldiers 0, bank 399, harvested 0, rendered 0, shots 241, killed 1770, took 0%, crystals left 0.948, ended: squad wiped
+== p3-idle
+  necks t 60 s: 44083 walkers, 322 without food, 10 crystals with charge; necks 2: 1053 cuttable (2.4%), largest 794, 1 parts of 500+; necks 4: 952 cuttable (2.2%), largest 568, 1 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 1229 cuttable, largest 794, 1 parts of 500+; necks 4: 928 cuttable, largest 568, 1 parts of 500+
+  necks t 120 s: 27257 walkers, 420 without food, 10 crystals with charge; necks 2: 37 cuttable (0.1%), largest 37, 0 parts of 500+; necks 4: 1292 cuttable (4.7%), largest 318, 0 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 1271 cuttable, largest 273, 0 parts of 500+; necks 4: 397 cuttable, largest 397, 0 parts of 500+
+  necks t 180 s: 30166 walkers, 510 without food, 10 crystals with charge; necks 2: 372 cuttable (1.2%), largest 206, 0 parts of 500+; necks 4: 698 cuttable (2.3%), largest 309, 0 parts of 500+
+  necks t 180 s, pinholes open: necks 2: 793 cuttable, largest 168, 0 parts of 500+; necks 4: 1050 cuttable, largest 344, 0 parts of 500+
+== p4-idle
+  necks t 60 s: 56274 walkers, 356 without food, 14 crystals with charge; necks 2: 9987 cuttable (17.7%), largest 5031, 4 parts of 500+; necks 4: 10715 cuttable (19.0%), largest 5051, 3 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 10213 cuttable, largest 5028, 3 parts of 500+; necks 4: 10544 cuttable, largest 5055, 3 parts of 500+
+  necks t 120 s: 36457 walkers, 701 without food, 14 crystals with charge; necks 2: 857 cuttable (2.4%), largest 383, 0 parts of 500+; necks 4: 558 cuttable (1.5%), largest 558, 1 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 866 cuttable, largest 508, 1 parts of 500+; necks 4: 0 cuttable, largest 0, 0 parts of 500+
+  necks t 180 s: 44730 walkers, 578 without food, 14 crystals with charge; necks 2: 912 cuttable (2.0%), largest 92, 0 parts of 500+; necks 4: 385 cuttable (0.9%), largest 213, 0 parts of 500+
+  necks t 180 s, pinholes open: necks 2: 757 cuttable, largest 198, 0 parts of 500+; necks 4: 258 cuttable, largest 197, 0 parts of 500+
+== p5-idle
+  necks t 60 s: 82804 walkers, 1736 without food, 32 crystals with charge; necks 2: 2172 cuttable (2.6%), largest 987, 1 parts of 500+; necks 4: 4774 cuttable (5.8%), largest 1367, 3 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 3510 cuttable, largest 1036, 2 parts of 500+; necks 4: 10741 cuttable, largest 1094, 10 parts of 500+
+  necks t 120 s: 67398 walkers, 1036 without food, 32 crystals with charge; necks 2: 586 cuttable (0.9%), largest 70, 0 parts of 500+; necks 4: 420 cuttable (0.6%), largest 259, 0 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 610 cuttable, largest 106, 0 parts of 500+; necks 4: 1022 cuttable, largest 484, 0 parts of 500+
+  necks t 180 s: 87834 walkers, 903 without food, 32 crystals with charge; necks 2: 1684 cuttable (1.9%), largest 150, 0 parts of 500+; necks 4: 995 cuttable (1.1%), largest 465, 0 parts of 500+
+  necks t 180 s, pinholes open: necks 2: 1552 cuttable, largest 144, 0 parts of 500+; necks 4: 704 cuttable, largest 471, 0 parts of 500+
+== p6-idle
+  necks t 60 s: 121980 walkers, 3255 without food, 20 crystals with charge; necks 2: 234 cuttable (0.2%), largest 86, 0 parts of 500+; necks 4: 1109 cuttable (0.9%), largest 260, 0 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 2760 cuttable, largest 434, 0 parts of 500+; necks 4: 6866 cuttable, largest 870, 2 parts of 500+
+  necks t 120 s: 107260 walkers, 2968 without food, 20 crystals with charge; necks 2: 498 cuttable (0.5%), largest 150, 0 parts of 500+; necks 4: 1017 cuttable (0.9%), largest 200, 0 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 4256 cuttable, largest 538, 1 parts of 500+; necks 4: 31794 cuttable, largest 5084, 10 parts of 500+
+  necks t 180 s: 94836 walkers, 2518 without food, 20 crystals with charge; necks 2: 480 cuttable (0.5%), largest 134, 0 parts of 500+; necks 4: 1032 cuttable (1.1%), largest 162, 0 parts of 500+
+  necks t 180 s, pinholes open: necks 2: 11738 cuttable, largest 704, 2 parts of 500+; necks 4: 52845 cuttable, largest 3408, 11 parts of 500+
+== p7-idle
+  necks t 60 s: 86134 walkers, 1273 without food, 56 crystals with charge; necks 2: 495 cuttable (0.6%), largest 66, 0 parts of 500+; necks 4: 508 cuttable (0.6%), largest 345, 0 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 663 cuttable, largest 126, 0 parts of 500+; necks 4: 622 cuttable, largest 163, 0 parts of 500+
+  necks t 120 s: 106127 walkers, 3099 without food, 56 crystals with charge; necks 2: 2113 cuttable (2.0%), largest 238, 0 parts of 500+; necks 4: 1128 cuttable (1.1%), largest 347, 0 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 1999 cuttable, largest 186, 0 parts of 500+; necks 4: 1118 cuttable, largest 488, 0 parts of 500+
+  necks t 180 s: 136743 walkers, 3082 without food, 56 crystals with charge; necks 2: 2188 cuttable (1.6%), largest 166, 0 parts of 500+; necks 4: 1036 cuttable (0.8%), largest 238, 0 parts of 500+
+  necks t 180 s, pinholes open: necks 2: 2189 cuttable, largest 167, 0 parts of 500+; necks 4: 805 cuttable, largest 237, 0 parts of 500+
+== p8-idle
+  necks t 60 s: 145612 walkers, 3530 without food, 43 crystals with charge; necks 2: 4261 cuttable (2.9%), largest 318, 0 parts of 500+; necks 4: 1531 cuttable (1.1%), largest 429, 0 parts of 500+
+  necks t 60 s, pinholes open: necks 2: 4409 cuttable, largest 234, 0 parts of 500+; necks 4: 1153 cuttable, largest 420, 0 parts of 500+
+  necks t 120 s: 164845 walkers, 3651 without food, 43 crystals with charge; necks 2: 8556 cuttable (5.2%), largest 686, 3 parts of 500+; necks 4: 7874 cuttable (4.8%), largest 829, 6 parts of 500+
+  necks t 120 s, pinholes open: necks 2: 10133 cuttable, largest 730, 4 parts of 500+; necks 4: 6388 cuttable, largest 1075, 6 parts of 500+
+  necks t 180 s: 188109 walkers, 4183 without food, 43 crystals with charge; necks 2: 5662 cuttable (3.0%), largest 515, 1 parts of 500+; necks 4: 5935 cuttable (3.2%), largest 1012, 5 parts of 500+
+  necks t 180 s, pinholes open: necks 2: 7153 cuttable, largest 964, 2 parts of 500+; necks 4: 3503 cuttable, largest 993, 3 parts of 500+

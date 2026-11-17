@@ -1,0 +1,74 @@
+== p1-idle
+  necks t 60 s: 15207 walkers, 441 without food, 7 crystals with charge; necks 2: 0 cuttable (0.0%), largest 0, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  necks t 120 s: 17720 walkers, 198 without food, 7 crystals with charge; necks 2: 120 cuttable (0.7%), largest 120, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  t 136 s: mould 18956, soldiers 0, bank 400, harvested 0, rendered 0, shots 143, killed 1002, took 0%, crystals left 0.971, ended: squad wiped
+  t 136 s: mould 18956, soldiers 0, bank 400, harvested 0, rendered 0, shots 143, killed 1002, took 0%, crystals left 0.971, ended: squad wiped
+== p1-squadwork
+  necks t 60 s: 15194 walkers, 427 without food, 7 crystals with charge; necks 2: 0 cuttable (0.0%), largest 0, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  necks t 120 s: 16607 walkers, 172 without food, 7 crystals with charge; necks 2: 152 cuttable (0.9%), largest 104, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  t 167 s: mould 20219, soldiers 0, bank 246, harvested 0, rendered 0, shots 460, killed 2413, took 0%, crystals left 0.963, ended: squad wiped
+  t 167 s: mould 20219, soldiers 0, bank 246, harvested 0, rendered 0, shots 460, killed 2413, took 0%, crystals left 0.963, ended: squad wiped
+== p2-idle
+  necks t 60 s: 24653 walkers, 788 without food, 14 crystals with charge; necks 2: 197 cuttable (0.8%), largest 54, 0 parts of 500+; necks 4: 457 cuttable (1.9%), largest 218, 0 parts of 500+
+  necks t 120 s: 32960 walkers, 948 without food, 14 crystals with charge; necks 2: 608 cuttable (1.8%), largest 110, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  t 169 s: mould 39940, soldiers 0, bank 399, harvested 0, rendered 0, shots 241, killed 1770, took 0%, crystals left 0.948, ended: squad wiped
+  t 169 s: mould 39940, soldiers 0, bank 399, harvested 0, rendered 0, shots 241, killed 1770, took 0%, crystals left 0.948, ended: squad wiped
+== p2-squadwork
+  necks t 60 s: 24613 walkers, 796 without food, 14 crystals with charge; necks 2: 527 cuttable (2.1%), largest 123, 0 parts of 500+; necks 4: 159 cuttable (0.6%), largest 159, 0 parts of 500+
+  t 86 s: mould 26465, soldiers 0, bank 325, harvested 0, rendered 0, shots 533, killed 3166, took 0%, crystals left 0.982, ended: squad wiped
+  t 86 s: mould 26465, soldiers 0, bank 325, harvested 0, rendered 0, shots 533, killed 3166, took 0%, crystals left 0.982, ended: squad wiped
+  t 86 s: mould 26465, soldiers 0, bank 325, harvested 0, rendered 0, shots 533, killed 3166, took 0%, crystals left 0.982, ended: squad wiped
+== p3-idle
+  necks t 60 s: 44083 walkers, 417 without food, 10 crystals with charge; necks 2: 1229 cuttable (2.8%), largest 794, 1 parts of 500+; necks 4: 928 cuttable (2.1%), largest 568, 1 parts of 500+
+  necks t 120 s: 27257 walkers, 474 without food, 10 crystals with charge; necks 2: 1271 cuttable (4.7%), largest 273, 0 parts of 500+; necks 4: 397 cuttable (1.5%), largest 397, 0 parts of 500+
+  necks t 180 s: 30166 walkers, 526 without food, 10 crystals with charge; necks 2: 793 cuttable (2.6%), largest 168, 0 parts of 500+; necks 4: 1050 cuttable (3.5%), largest 344, 0 parts of 500+
+== p3-squadwork
+  necks t 60 s: 44127 walkers, 363 without food, 10 crystals with charge; necks 2: 1071 cuttable (2.4%), largest 794, 1 parts of 500+; necks 4: 776 cuttable (1.8%), largest 568, 1 parts of 500+
+  necks t 120 s: 26726 walkers, 512 without food, 10 crystals with charge; necks 2: 1009 cuttable (3.8%), largest 225, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  t 149 s: mould 27064, soldiers 0, bank 343, harvested 0, rendered 0, shots 419, killed 2255, took 0%, crystals left 0.955, ended: squad wiped
+  t 149 s: mould 27064, soldiers 0, bank 343, harvested 0, rendered 0, shots 419, killed 2255, took 0%, crystals left 0.955, ended: squad wiped
+== p4-idle
+  necks t 60 s: 56274 walkers, 531 without food, 14 crystals with charge; necks 2: 10213 cuttable (18.1%), largest 5028, 3 parts of 500+; necks 4: 10544 cuttable (18.7%), largest 5055, 3 parts of 500+
+  necks t 120 s: 36457 walkers, 765 without food, 14 crystals with charge; necks 2: 866 cuttable (2.4%), largest 508, 1 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  necks t 180 s: 44730 walkers, 600 without food, 14 crystals with charge; necks 2: 757 cuttable (1.7%), largest 198, 0 parts of 500+; necks 4: 258 cuttable (0.6%), largest 197, 0 parts of 500+
+  t 300 s: mould 62923, soldiers 0, bank 399, harvested 0, rendered 0, shots 135, killed 1926, took 0%, crystals left 0.903, ended: squad wiped
+== p4-squadwork
+  necks t 60 s: 56271 walkers, 468 without food, 14 crystals with charge; necks 2: 10028 cuttable (17.8%), largest 5063, 4 parts of 500+; necks 4: 10694 cuttable (19.0%), largest 5071, 4 parts of 500+
+  necks t 120 s: 36294 walkers, 1491 without food, 14 crystals with charge; necks 2: 91 cuttable (0.3%), largest 57, 0 parts of 500+; necks 4: 0 cuttable (0.0%), largest 0, 0 parts of 500+
+  t 135 s: mould 38495, soldiers 0, bank 324, harvested 0, rendered 0, shots 249, killed 2507, took 0%, crystals left 0.964, ended: squad wiped
+  t 135 s: mould 38495, soldiers 0, bank 324, harvested 0, rendered 0, shots 249, killed 2507, took 0%, crystals left 0.964, ended: squad wiped
+== p5-idle
+  necks t 60 s: 82804 walkers, 1766 without food, 32 crystals with charge; necks 2: 3510 cuttable (4.2%), largest 1036, 2 parts of 500+; necks 4: 10741 cuttable (13.0%), largest 1094, 10 parts of 500+
+  necks t 120 s: 67398 walkers, 1156 without food, 32 crystals with charge; necks 2: 610 cuttable (0.9%), largest 106, 0 parts of 500+; necks 4: 1022 cuttable (1.5%), largest 484, 0 parts of 500+
+  necks t 180 s: 87834 walkers, 984 without food, 32 crystals with charge; necks 2: 1552 cuttable (1.8%), largest 144, 0 parts of 500+; necks 4: 704 cuttable (0.8%), largest 471, 0 parts of 500+
+== p5-squadwork
+  necks t 60 s: 83429 walkers, 1609 without food, 32 crystals with charge; necks 2: 2698 cuttable (3.2%), largest 961, 1 parts of 500+; necks 4: 8325 cuttable (10.0%), largest 1640, 6 parts of 500+
+  necks t 120 s: 68245 walkers, 1281 without food, 32 crystals with charge; necks 2: 529 cuttable (0.8%), largest 73, 0 parts of 500+; necks 4: 413 cuttable (0.6%), largest 413, 0 parts of 500+
+  necks t 180 s: 83595 walkers, 1569 without food, 32 crystals with charge; necks 2: 1438 cuttable (1.7%), largest 479, 0 parts of 500+; necks 4: 1377 cuttable (1.6%), largest 660, 1 parts of 500+
+  t 198 s: mould 90278, soldiers 0, bank 381, harvested 0, rendered 0, shots 649, killed 2074, took 0%, crystals left 0.936, ended: squad wiped
+== p6-idle
+  necks t 60 s: 121980 walkers, 3432 without food, 20 crystals with charge; necks 2: 2760 cuttable (2.3%), largest 434, 0 parts of 500+; necks 4: 6866 cuttable (5.6%), largest 870, 2 parts of 500+
+  necks t 120 s: 107260 walkers, 3091 without food, 20 crystals with charge; necks 2: 4256 cuttable (4.0%), largest 538, 1 parts of 500+; necks 4: 31794 cuttable (29.6%), largest 5084, 10 parts of 500+
+  necks t 180 s: 94836 walkers, 2614 without food, 20 crystals with charge; necks 2: 11738 cuttable (12.4%), largest 704, 2 parts of 500+; necks 4: 52845 cuttable (55.7%), largest 3408, 11 parts of 500+
+== p6-squadwork
+  necks t 60 s: 121889 walkers, 3548 without food, 20 crystals with charge; necks 2: 2754 cuttable (2.3%), largest 434, 0 parts of 500+; necks 4: 6866 cuttable (5.6%), largest 870, 2 parts of 500+
+  necks t 120 s: 106965 walkers, 3072 without food, 20 crystals with charge; necks 2: 5320 cuttable (5.0%), largest 956, 2 parts of 500+; necks 4: 31772 cuttable (29.7%), largest 5084, 10 parts of 500+
+  necks t 180 s: 94097 walkers, 2626 without food, 20 crystals with charge; necks 2: 11886 cuttable (12.6%), largest 704, 2 parts of 500+; necks 4: 52791 cuttable (56.1%), largest 3408, 11 parts of 500+
+== p7-idle
+  necks t 60 s: 86134 walkers, 1358 without food, 56 crystals with charge; necks 2: 663 cuttable (0.8%), largest 126, 0 parts of 500+; necks 4: 622 cuttable (0.7%), largest 163, 0 parts of 500+
+  necks t 120 s: 106127 walkers, 3447 without food, 56 crystals with charge; necks 2: 1999 cuttable (1.9%), largest 186, 0 parts of 500+; necks 4: 1118 cuttable (1.1%), largest 488, 0 parts of 500+
+  necks t 180 s: 136743 walkers, 3262 without food, 56 crystals with charge; necks 2: 2189 cuttable (1.6%), largest 167, 0 parts of 500+; necks 4: 805 cuttable (0.6%), largest 237, 0 parts of 500+
+== p7-squadwork
+  necks t 60 s: 85997 walkers, 1504 without food, 56 crystals with charge; necks 2: 504 cuttable (0.6%), largest 83, 0 parts of 500+; necks 4: 725 cuttable (0.8%), largest 186, 0 parts of 500+
+  t 94 s: mould 95572, soldiers 0, bank 366, harvested 0, rendered 0, shots 500, killed 2108, took 0%, crystals left 0.974, ended: squad wiped
+  t 94 s: mould 95572, soldiers 0, bank 366, harvested 0, rendered 0, shots 500, killed 2108, took 0%, crystals left 0.974, ended: squad wiped
+  t 94 s: mould 95572, soldiers 0, bank 366, harvested 0, rendered 0, shots 500, killed 2108, took 0%, crystals left 0.974, ended: squad wiped
+== p8-idle
+  necks t 60 s: 145612 walkers, 3785 without food, 43 crystals with charge; necks 2: 4409 cuttable (3.0%), largest 234, 0 parts of 500+; necks 4: 1153 cuttable (0.8%), largest 420, 0 parts of 500+
+  necks t 120 s: 164845 walkers, 3919 without food, 43 crystals with charge; necks 2: 10133 cuttable (6.1%), largest 730, 4 parts of 500+; necks 4: 6388 cuttable (3.9%), largest 1075, 6 parts of 500+
+  necks t 180 s: 188109 walkers, 4686 without food, 43 crystals with charge; necks 2: 7153 cuttable (3.8%), largest 964, 2 parts of 500+; necks 4: 3503 cuttable (1.9%), largest 993, 3 parts of 500+
+== p8-squadwork
+  necks t 60 s: 146112 walkers, 3508 without food, 43 crystals with charge; necks 2: 4585 cuttable (3.1%), largest 372, 0 parts of 500+; necks 4: 1226 cuttable (0.8%), largest 413, 0 parts of 500+
+  necks t 120 s: 166836 walkers, 3884 without food, 43 crystals with charge; necks 2: 8376 cuttable (5.0%), largest 820, 2 parts of 500+; necks 4: 7071 cuttable (4.2%), largest 867, 3 parts of 500+
+  t 143 s: mould 174361, soldiers 0, bank 396, harvested 0, rendered 0, shots 586, killed 1920, took 0%, crystals left 0.953, ended: squad wiped
+  t 143 s: mould 174361, soldiers 0, bank 396, harvested 0, rendered 0, shots 586, killed 1920, took 0%, crystals left 0.953, ended: squad wiped

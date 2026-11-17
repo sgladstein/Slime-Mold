@@ -72,6 +72,7 @@ pub mod levelgen;
 pub mod look;
 pub mod map;
 pub mod map_edit;
+pub mod necks;
 pub mod organ;
 pub mod own_mould;
 pub mod plans;

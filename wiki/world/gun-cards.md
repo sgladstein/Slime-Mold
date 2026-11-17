@@ -4,6 +4,7 @@ kind: design
 status: open
 updated: 2026-11-17
 sources:
+  - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-mind-2026-11-16/README.md
   - Reports/gun-readers-2026-11-17/README.md
@@ -91,11 +92,16 @@ decoy, a harmless shock at the far edge before the strike
 (it draws a woken crust onto empty ground; no window on that planet yet). Shatter reads gas sleep only,
 not the Sleeper's own dormancy; reading it would make one card answer a
 whole planet, a call for the designer or the owner. The Grudge is beaten by
-moving, not by a card. The Trunk is beaten by starving it, which waits on
-the cut family.
+moving, not by a card. The Trunk is beaten by starving it, and no Cut card
+does that: the cut count (11-17) found that one thin cut rarely leaves much
+without food (the largest part under 2% of the slime in most counts; only
+the Swarmer's first minute holds a big part behind necks), so starving is
+done with walls and positioning, which withering and panic already reward
+([cut count](../../Reports/gun-cut-count-2026-11-17/README.md)).
 
 **Merge or cut candidates.** Pull and Thrift (no planet); Heave and Corral
-(one shove, two cards); Trigger and Expire; Gas and Mist. Wide and Multicast
+(one shove, two cards; whether they merge is the owner's pick in the next
+playtest pack, on the game designer's call, 11-17 12:23Z); Trigger and Expire; Gas and Mist. Wide and Multicast
 are general on purpose. Blind and Sour may not read apart (the Mind quiz is
 with the owner).
 
@@ -132,4 +138,4 @@ with the owner).
 - [toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md), *Confirmed at 32 seeds*: Blast, Plain, Germ.
 - [mould tiers](../../Reports/mould-tiers-2026-11-11.md): each tier's counter.
 - [rounds](../../Reports/rounds-2026-11-12.md): the Sleeper ignores every round.
-- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Corral, Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder.
+- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Corral, Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.
