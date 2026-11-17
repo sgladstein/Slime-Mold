@@ -6,7 +6,7 @@ into a kill zone on one of planets 1 to 3, the counts beside it, and your
 recommendation." The owner, 11-16 05:11Z: "I could image a gun that lets you
 corral and push the slime onto areas. Into a kill zone".
 
-Page: [Steering the Slime](PAGE_URL) (source in `page/`): the clips at zoom
+Page: [Steering the Slime](https://claude.ai/artifact/FNGWU1K7kKNicmzFhR6zmC) (source in `page/`): the clips at zoom
 6 and 12 with the counts beside each.
 
 Status: **it works, and the recommendation is to build it into the game,
@@ -159,7 +159,8 @@ in a milestone, not a job anyone has been given):
   smell and steering can both be on, and a per-tier weight: how hard a
   slime follows a lure is a trait (a Trunk that barely leans, a Swarmer
   that stampedes). Decide whether a panic or a surge ignores the lure (in
-  the prototype the overrides win, which looked right).
+  the prototype the overrides still win; that was not looked at on its
+  own).
 - **Squad and arsenal**: the Lure building returns to the run shop with
   this rule; the pusher needs a carrier (a dart, a thrown canister or the
   Siren). The lure should be mortal and short: the slime ate the building
@@ -186,9 +187,12 @@ mini-boss, and any planet past 3. Each fits the same field.
 
 ## Files
 
-- `page/`: the page's source and clips (`index.html`; the clips are made by
-  `raw/film.sh` on the lab branch's build).
-- `raw/`: `run.sh` and `film.sh` (the rig), and each filmed run's log.
+- `page/`: the page's source, clips and poster frames (`index.html`; the
+  clips are made by `raw/film.sh` on the lab branch's build, its header
+  lists each clip's command).
+- `raw/`: `run.sh` and `film.sh` (the rig), and `logs/`, each filmed run's
+  log (a count line a frame; the page's counts are the lines at the whole
+  second). The filmed runs repeat the tables' runs exactly.
 - Code: branch `claude/project-thread-4tc75h`, commits "LAB: steering field
   prototype" and "LAB: the lure's core glow"; module
   `src/mould/larder_world/lab.rs`.
