@@ -1,4 +1,14 @@
-# Hand-off: where the mould game stands
+# Hand-off: where the mould game stood on 2026-11-17
+
+> **History since 2026-11-17.** The front page is now [NOW.md](NOW.md), and
+> [`CLAUDE.md`](CLAUDE.md) carries the rules. The owner approved a new plan
+> that day ([copy](Reports/continuation-plan-2026-11-17.md)): one milestone,
+> five lanes that each own files, everything on by default, no thread asks
+> for a playtest. Read this page as what others were doing and recommended,
+> not as orders; where it differs from `NOW.md` or `CLAUDE.md`, they hold.
+> Open decisions now live in `NOW.md`. This file stays here, unedited beyond
+> this note and the decisions list, only until the wiki lint stops needing
+> links from it; then it moves under `Reports/`.
 
 The single starting point for whoever picks up the mould game. It says where
 the game stands in one line per subject, what the owner still has to decide,
@@ -198,8 +208,14 @@ work; neither new dish has been played by the owner's hand.
 
 ## Decisions the owner has not made
 
-Ask each again; none has an answer to assume. Numbers are kept so older
-references stay right.
+**Closed 2026-11-17.** The owner closed 2 to 8 as not needed while those
+games are paused (19:07Z, "5)Yes"; none was answered, so ask again only if
+its game comes back), and answered D9 and D12 the same minute
+([decisions](wiki/decisions-game.md)) and D8 at 19:21Z
+([decisions](wiki/decisions.md)). What is still open (D7 the rush brake) is
+in [NOW.md](NOW.md), *What waits on the owner*. The
+list below is kept as it stood, so older references to its numbers stay
+right.
 
 1. ~~What to fix first after review 2.~~ Decided 11-10 18:56Z ("Trace it now"); the 20 s landing preview it proposes is not agreed.
 2. **Grains or glints** for walkers in the tube look (only while F7 is kept). [`Reports/mould-looks-2026-11-10.md`](Reports/mould-looks-2026-11-10.md)
@@ -211,7 +227,7 @@ references stay right.
 8. **Larder World's open questions:** world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds. ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)) For the campaign, how a mission ends and what carries (unlocked verbs only) are decided (owner, 11-12 04:44Z; [design](Reports/larder-campaign-2026-11-12.md)); world size, allies or rivals and fog stay open.
 9. ~~**Cutting the mould off its crystals**~~ Decided 11-13 15:53Z: withering, at half the blind A/B/C's speed (`wither` 0.01 in shape C's keys; "B is the best but still too fast", "Lets just double it and call it good. I will have to playtest"). Asked the same minute (15:53-15:57Z, "if possible", an inspiration): a cut-off part acts like a scared animal, more reckless, and either runs back to the main body or goes straight for the soldiers, with no stronger attack. Built 11-13 (`panic` 2, on in shape C, default-on rule; `panic=0` turns it off): it charges a unit within 20 cells or else runs for a crystal with food, after a 1.5 s lean that creeps at half its pace (`panic_creep` 0.5, the game designer's review: a lean at its own pace already outran a soldier), and a charge at a unit gives up after a 0.5 s dash (`panic_dash` 15) so a squad that pulls back in time gets clear; [films](https://claude.ai/artifact/SRxAj8nri2iGAsvE4DFGbP) await the owner's playtest. ([decisions](wiki/decisions-game.md); [report, *A cut-off part withers*](Reports/fed-mould-2026-11-13/README.md))
 
-10. **From the whole-game review (11-15)** ([report](Reports/whole-game-review-2026-11-15/README.md), *Owner decisions*): D1-D5, D7 and D10 answered 21:41Z ([decisions](wiki/decisions-game.md)). Still open: D6 camera shake and hit-stop (the owner asked to see a video first; the gun thread films it); D12 park the own mould; D8 new slime rules GPU-first; D9 Windows only.
+10. **From the whole-game review (11-15)** ([report](Reports/whole-game-review-2026-11-15/README.md), *Owner decisions*): D1-D5, D7 and D10 answered 21:41Z ([decisions](wiki/decisions-game.md)). On 11-17: D9 (Windows only for now) and D12 (the own mould stays parked) answered yes; D8 answered by card at 19:21Z: new slime rules on the GPU engine only, today's CPU engine kept, its removal decided at Milestone 2; D6 (camera shake and hit-stop) goes into the game as an Experiments toggle to try.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

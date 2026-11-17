@@ -10,6 +10,7 @@ sources:
   - Reports/build-flow-2026-11-14/README.md
   - Reports/card-text-2026-11-15.md
   - Reports/command-card-2026-11-15/README.md
+  - Reports/continuation-plan-2026-11-17.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/free-camera-2026-11-15/README.md
   - Reports/gun-look-2026-11-15/README.md
@@ -52,12 +53,17 @@ code:
 
 Split from [decisions.md](decisions.md) on 2026-11-11 when it passed the
 12 KB cap; the standing rulings stay there. Newest first. Open decisions
-live only in [HANDOFF.md](../HANDOFF.md).
+live only in [NOW.md](../NOW.md), *What waits on the owner* (since
+2026-11-17).
 
 ## Decided choices
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-17 19:07 | The game targets Windows only for now (the whole-game review's D9) | "3) Yes" (to "Target Windows only for now (D9)?") | [plan](../Reports/continuation-plan-2026-11-17.md), [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |
+| 2026-11-17 19:07 | The player's own mould stays parked (D12), with a place on the lab thread's later list | "4) Sure" (to "Keep your own mould parked (D12)?") | [own mould](world/own-mould.md), [plan](../Reports/continuation-plan-2026-11-17.md) |
+| 2026-11-17 19:07 | The dish-era decisions still open on HANDOFF (2 to 8: grains or glints, retiring the tube look, food flow, the Organ and the Wanderer, the GPU plan's uploads and ports, Bloomfront's and Larder World's open questions) are closed as not needed while those games are paused. None was answered; ask again only if its game comes back | "5)Yes" (to "Close the dish-era decisions still open on HANDOFF (2 to 8) as 'not needed while paused'?") | [HANDOFF.md](../HANDOFF.md), *Decisions the owner has not made* |
+| 2026-11-17 17:39 | Look work explores all four areas, in this order: A the fight round the squad, B the slime itself, C planets and terrain, D menus, shop and screens. A is Milestone 1's look test; each next one starts when the one before passes his eye | "For the visuals, I am happy to start with your recommendations, but we should explore all your suggestions, priority in the order that you listed A->B->C->D" | [art direction](looks/art-direction.md), [plan](../Reports/continuation-plan-2026-11-17.md) |
 | 2026-11-17 02:30, card | The slime's setting (walkers that stiffen where it was hurt, the simulation-use plan's E2) toughens the rim of a hole while the player is still shooting it, not only after fire stops; the hole itself still doesn't refill under fire (11-12 ruling). Built 11-17 as E2a: walkers set while under fire, behind `setting=1` ([report](../Reports/sim-use-2026-11-17/e2a-setting.md)) | "Toughen while under fire" (to: should the slime toughen its rim while you're still shooting it?) | [Larder World](world/larder.md), [plan](../Reports/sim-use-2026-11-17/README.md) |
 | 2026-11-17 01:13 | Bulwarks (the slime's crust hardened where it is shot, a plan step) block both rifle shots and soldiers; the slime walks through its own bulwarks as soldiers walk through doors; fed slime is fireproof and starving slime burns; B's signal tools (provoke, calm) are both carried devices and gun cards, the gun thread making the cards; the slime eating plants is dropped from the plan (11-14 ruling stands). Fireproof fed slime holds for burning crust too (C2, built 11-17: the fed trail stays wet to fire, [report](../Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md)). Soldiers' half built 11-17 (E2b): set slime is no ground to feet or walking maps, behind `set=set_block=N` ([report](../Reports/sim-use-2026-11-17/e2b-bulwark.md)); blocking shelters a rush, so a trapping alternative (`set_hold`) awaits the owner's pick (with setting, the crust's pull sign and `fire_fed`, on the 11-17 playtest pack's blind page, [report](../Reports/sim-use-2026-11-17/pack-films.md)), and set slime's look (blind A/B, [report](../Reports/sim-use-2026-11-17/e2b-look.md)) awaits the owner's pick too. Starving slime burns built 11-17 (C1, on by default, [report](../Reports/sim-use-2026-11-17/c1-dry-burns.md)); fed slime wholly fireproof, thin trail included, is built behind `fire_fed` and awaits the owner's pick. Provoke and Still (B1, B2; calm renamed Still) built 11-17 as Mind statuses on both engines and as two test devices on the toolkit's page, left out of runs until the gun thread's cards ([report](../Reports/sim-use-2026-11-17/b-provoke-still.md)) | "Both"; "agreed"; "sure"; "not sure the benefits it cost of this"; "agreed" (the plan's five questions) | [Larder World](world/larder.md), [plan](../Reports/sim-use-2026-11-17/README.md) |
 | 2026-11-17 00:47, card | The first turret body is the mortar (over a placement mine, a picky-targeting turret or a sprayer): a building unlocked in the run shop after Turrets that lobs shells over walls from the longest reach in the game, firing the turrets' cards | "Mortar anyway" (to: which turret body should come first, now that every turret fires over walls?) | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |

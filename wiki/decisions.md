@@ -2,10 +2,11 @@
 title: The owner's rulings and decided choices
 kind: method
 status: current
-updated: 2026-11-15
+updated: 2026-11-17
 sources:
   - CLAUDE.md
   - HANDOFF.md
+  - Reports/continuation-plan-2026-11-17.md
   - Reports/mould-real-world-2026-11-09.md
   - Reports/mould-review-thread-handoff-2026-11-10.md
   - Reports/mould-sound-2026-11-10.md
@@ -20,10 +21,11 @@ code:
 
 Every ruling and every decided choice, with the owner's words and the time
 they were said, newest first in each group. **Open decisions live in one
-place only: [HANDOFF.md, *Decisions the owner has not made*](../HANDOFF.md).**
-When the owner answers one, move it here with the quote and time, and update
-the pages it changes in the same commit. Never write an answer the owner
-did not give; a recommendation on a card is not his answer.
+place only: [NOW.md, *What waits on the owner*](../NOW.md)** (since
+2026-11-17; before that, HANDOFF.md's list). The Direction lane keeps these
+pages. When the owner answers one, move it here with the quote and time, and
+update the pages it changes in the same commit. Never write an answer the
+owner did not give; a recommendation on a card is not his answer.
 
 Times are UTC. "Card" means he tapped an option. Old-account thread ids and
 artifact links are left out; the quotes are kept in the sources named.
@@ -32,6 +34,17 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-17 19:21, card | New slime rules are written and tested on the GPU engine only (on the software GPU in the cloud and in CI): no new CPU twin and no new twin test. Today's CPU engine (`src/mould/big.rs`) stays as it is for the tests and the census that stand on it, and whether to remove it is decided at Milestone 2. This closes the whole-game review's D8 | "So what is the point of the CPU then. I thought we start with CPU because it is easier to write and test in the cloud threads. If we start in the GPU (which I am not against) is there any reason to even have the CPU twin?" (19:07, to "Build new slime rules on the GPU first, and write the CPU twin only when a rule becomes a default (D8)?"); card "GPU only for new rules, keep old CPU" (over "Retire the CPU engine now" and "Keep full twins as today") | [plan](../Reports/continuation-plan-2026-11-17.md), [CLAUDE.md](../CLAUDE.md), [scale](model/scale.md) |
+| 2026-11-17 19:07 | Go on the continuation plan. One milestone at a time with exit tests, the first being "Three planets" (planets 1 to 3 as one 30-minute sitting); five standing lanes that each own files, plus one lab thread; `NOW.md` as the one front page in place of HANDOFF and ROADMAP; lighter records (a report only for a measurement others will cite, a dead end, or a page for the owner) | "1) Yes" (to "Start the five lanes on this plan?") | [plan](../Reports/continuation-plan-2026-11-17.md), [NOW.md](../NOW.md), [CLAUDE.md](../CLAUDE.md) |
+| 2026-11-17 19:07 | Models: Fable for the main threads, Opus or Sonnet for simpler tasks, Haiku for pure runners, at medium to extra high effort by the task | "Fable for all of the main threads because we have a Fable usage reset on this account. Opus/Sonnet can be used for simplier tasks. Haiku for pure runners. Recommend Medium to Extra effort based on the complexity/importance of each task." (his answer 9, to question 10: which models should the lanes run) | [CLAUDE.md](../CLAUDE.md) |
+| 2026-11-17 19:07 | Films and stills are kept on an archive branch of this repository, off main. Read as yes to the recommendation: the question was an either-or (an archive branch or a second repository) and the archive branch was recommended. He gave nine answers to ten questions, so the lab question (9: steering the slime as its first prototype) has no answer and goes ahead on the recommendation | "8) Yes" | [plan](../Reports/continuation-plan-2026-11-17.md) |
+| 2026-11-17 19:07 | Old thread branches whose work is already on main are deleted, and each branch is deleted when its pull request merges; branches with unmerged commits stay. The repository switch "Automatically delete head branches" is his to turn on | "7)Yes" | [plan](../Reports/continuation-plan-2026-11-17.md) |
+| 2026-11-17 19:07 | Never assign the owner to a pull request or request his review: the 11-14 rule is kept, and is in the new account's project instructions | "6)Yes" (to "Keep the rule 'never assign me to a pull request or request my review'?") | [CLAUDE.md](../CLAUDE.md) |
+| 2026-11-17 17:39 | `play.cmd` may send the game's play logs to this public repository, so threads can see when he played, on which build and with what on | "\"play.cmd may send play logs to the public repository.\" - yes play logs is a great idea" | [plan](../Reports/continuation-plan-2026-11-17.md) |
+| 2026-11-17 17:25 | The game is not unplayed, and he cannot playtest on a thread's schedule. So no thread asks for a playtest or ends its work on "awaits the owner's playtest": work lands on, says what he will see, and is done | "Note that I have playtested many times. the threads don't always know that and I often cannot playtest when a specific thread asks. But the game is not unplayed." | [plan](../Reports/continuation-plan-2026-11-17.md), [CLAUDE.md](../CLAUDE.md) |
+| 2026-11-17 17:25 | Features that land switched off are a problem: he must be able to tell what is on, what is off and what needs testing. The plan's rule from it (approved 19:07): everything lands on by default; at most three switches are off at once, each declared in one list in code, shown on the game's Experiments tab and ended at his next play; the game lists what is new and up to five things to try. This tightens "Defaults on" below | "this is a problem. There is a lot of work going on in parallel and when I have time to playtest, I don't know what is on/off and what needs to be tested." (on the draft's "Features land switched off. 14 switches are built but off, each waiting for a pick.") | [plan](../Reports/continuation-plan-2026-11-17.md), [CLAUDE.md](../CLAUDE.md) |
+| 2026-11-17 17:25 | Improving the visuals is an important factor, and a plan needs specific direction for them. The order of look work he set at 17:39 is in [decisions-game.md](decisions-game.md) | "I didn't see any specific directions about improving the visuals, but that is an important factor" | [plan](../Reports/continuation-plan-2026-11-17.md), [art direction](looks/art-direction.md) |
+| 2026-11-17 17:12-17:13, four cards | The aim, the next phase, the number of threads and how choices reach him. Release work stays parked until he says. Threads make planets 1 to 3 fun and finished before adding systems, with one thread free to prototype new simulation ideas. Threads pick looks and tuning and he vetoes in play; he is asked only the big questions, at most five a session. So a blind A/B is kept only for a choice that sets the whole art direction | cards: "A game I love to play; release maybe"; "Slice first, plus one lab thread"; "About 5 standing lanes"; "Threads decide small, ask big" | [plan](../Reports/continuation-plan-2026-11-17.md) |
 | 2026-11-15 08:35 | After a multi-agent review, anything every reviewer agrees on is built without waiting for the owner (sent to the owning thread, or a new thread); a decision without a clear answer waits for the owner, listed with a recommendation | "After the main work is in. Anything where everyone agrees, just start building. If there are decisions to be made without a clear solution that we can wait to discuss" | [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |
 | 2026-11-14 03:52, card 03:55 | PRs merge through a merge queue instead of each thread re-merging main and re-running CI. GitHub's queue is for organization-owned repos only, so the queue is our own Actions workflow (`.github/workflows/merge-queue.yml`, label `queue`) rather than moving the repo to an org | "yes" (to setting up a merge queue); card "Build our own queue in Actions" | [CLAUDE.md](../CLAUDE.md) |
 | 2026-11-12 23:14 | The project stays proprietary, all rights reserved, so it can be sold later: no open-source licence. [LICENSE](../LICENSE) grants nothing beyond reading; every dependency must offer a permissive licence (`scripts/licensecheck.sh`). The repo being public (since 2026-11-12 01:40, for Actions billing) does not change this | "Can we add a license to this project on GitHub in case I decide to want to monetize it later? I don't want open source" | [LICENSE](../LICENSE) |
@@ -60,7 +73,8 @@ size). Add a new game decision there, newest first.
 
 ## Sources
 
-- [CLAUDE.md](../CLAUDE.md), *What the owner has ruled for this game*.
+- [CLAUDE.md](../CLAUDE.md), *What the owner has ruled*.
+- [The continuation plan](../Reports/continuation-plan-2026-11-17.md) and its thread (2026-11-17): the 11-17 rows above; the quotes are the owner's messages there, the questions the planning thread's.
 - [HANDOFF.md](../HANDOFF.md), *Where the game stands* and *Decisions the owner has not made*.
 - [mould-review-thread-handoff-2026-11-10.md](../Reports/mould-review-thread-handoff-2026-11-10.md), *What the owner said in this thread*.
 - [mould-real-world-2026-11-09.md](../Reports/mould-real-world-2026-11-09.md), §5.
