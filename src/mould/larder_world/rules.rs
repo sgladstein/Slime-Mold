@@ -541,6 +541,12 @@ pub struct Rules {
     /// **Raids** (2026-11-15, the defenses thread; `raids.rs`): the slime
     /// spends what it eats on waves at the player's richest holding.
     pub raid: super::RaidRules,
+    /// **Charges round walls** (the simulation-use plan's S1, 2026-11-17;
+    /// `raids.rs`'s `time_unit_paths`): the units' walking distance,
+    /// rebuilt once a game second, which surging and panicking walkers go
+    /// down instead of steering straight at a unit (`set=unit_paths=1`).
+    /// Off until the owner's blind films.
+    pub unit_paths: bool,
     /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
     /// slime at a crowded knot or a big part cut off from food clenches
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
@@ -601,6 +607,10 @@ impl Rules {
         }
         if name == "funnel" {
             self.funnel = v > 0.0;
+            return true;
+        }
+        if name == "unit_paths" {
+            self.unit_paths = v > 0.0;
             return true;
         }
         let f = match name {
@@ -771,6 +781,7 @@ impl Default for Rules {
             surge_food: SURGE_FOOD,
             surge_min: 10.0,
             raid: super::RaidRules::default(),
+            unit_paths: false,
             boss: super::BossRules::default(),
         }
     }

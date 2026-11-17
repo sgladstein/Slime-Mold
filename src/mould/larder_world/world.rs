@@ -109,6 +109,11 @@ pub trait World {
     /// `field` is its walking distance (`big::raid_field_for` on
     /// `raid_ground`), empty to steer straight.
     fn set_raid(&mut self, _at: u32, _to: (f32, f32), _r: f32, _share: f32, _field: Vec<u32>) {}
+    /// The units' walking distance (`big::BigDish::units_field`, S1;
+    /// `big::units_field_for` on `raid_ground`), which charging walkers
+    /// descend from the next step; empty to steer straight. A world with
+    /// no slime of this kind ignores it.
+    fn set_units_field(&mut self, _field: Vec<u32>) {}
     /// **Lumps** (held bodies, `BigParams::lumps`, the mini-boss thread
     /// 2026-11-16): forms lump `b` of the ordinary walkers within `r` dish
     /// cells of `at` (fine cells), or releases it (None). A world with no
@@ -311,6 +316,10 @@ impl World for BigDish {
 
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         Some((self.agar.clone(), self.w, self.h))
+    }
+
+    fn set_units_field(&mut self, field: Vec<u32>) {
+        self.units_field = field;
     }
 
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {

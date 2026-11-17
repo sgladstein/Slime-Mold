@@ -256,6 +256,15 @@ impl<W: World> Game<W> {
         let spray = (r.spray_secs * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
         let spray_speed = r.spray_reach * self.world.scale() / (0.7 * spray as f32 + 0.3);
         let catch = self.catches(&by, dt);
+        // The units the slime charges, for their walking distance (S1,
+        // `time_unit_paths`), as the world takes them; a masked soldier
+        // (the toolkit's mask, smell 0) is left out, so the charge's paths
+        // don't lead to it.
+        if r.unit_paths {
+            let size = self.world.size();
+            let masked = |w: &Who| matches!(*w, Who::Soldier(k) if self.soldiers[k].smell <= 0.0);
+            self.raids.unit_cells = units.iter().zip(&who).take(squad::UNITS_MAX).filter(|(_, w)| !masked(w)).map(|(u, _)| super::raid_cell((u.x, u.y), size)).collect();
+        }
         let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share, catch };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, by, fired, who, from, out });
@@ -407,6 +416,7 @@ impl<W: World> Game<W> {
             self.check_broken();
             self.keep_panic_reach();
             self.time_raids();
+            self.time_unit_paths();
             self.time_bosses();
         }
         self.campaign_rules(now - t);

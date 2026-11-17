@@ -989,6 +989,12 @@ impl World for GpuWorld {
         self.e.write_raid_field();
     }
 
+    /// The units' walking distance (S1), written after the slot words.
+    fn set_units_field(&mut self, field: Vec<u32>) {
+        self.e.dish.units_field = field;
+        self.e.write_units_field();
+    }
+
     /// Runs `lumpform` at once, after the running step's shares (the CPU's
     /// `form_lump`; the mirror's dense words are not kept).
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
@@ -1238,6 +1244,9 @@ mod tests {
         }
         fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32, field: Vec<u32>) {
             self.g.set_raid(at, to, r, share, field)
+        }
+        fn set_units_field(&mut self, field: Vec<u32>) {
+            self.g.set_units_field(field)
         }
         fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
             self.g.raid_ground()

@@ -1849,6 +1849,18 @@ pub struct BigDish {
     /// after the dense cells (`dense_words`), and a raider standing
     /// where no way reaches steers straight.
     pub raid_field: Vec<u32>,
+    /// **The units' walking distance** (the simulation-use plan's S1,
+    /// 2026-11-17; `units_field_for`, on `RAID_BLOCK` blocks): to the
+    /// nearest unit by the way round walls and rock, every unit a source.
+    /// The game rebuilds it once a game second off the frame
+    /// (`Game::time_unit_paths`, `Rules::unit_paths`) and sets it a second
+    /// later (`World::set_units_field`). While it is not empty, a walker
+    /// charging a unit (a panic at a unit, a surge) descends it instead of
+    /// steering straight at the unit it picked, so walls bend the charge;
+    /// one standing where no way reaches steers straight. Empty: straight,
+    /// as before. The GPU holds it after the slot words (`dense_words`),
+    /// each word the distance + 1, 0 for none.
+    pub units_field: Vec<u32>,
     /// The squad's units this frame (`squad::frame` sets them), fine cells
     /// as `squad::cell_of` gives them: what a panicking walker may charge
     /// (`BigParams::panic`).
@@ -2169,6 +2181,7 @@ impl BigDish {
             news: Vec::new(),
             dense: Vec::new(),
             raid_field: Vec::new(),
+            units_field: Vec::new(),
             threats: Vec::new(),
             lump_sums: [(0, 0, 0); LUMPS],
             heard_cells: Vec::new(),
@@ -3151,6 +3164,14 @@ impl BigDish {
         self.raid_field.get(((i / self.w) / b) * bw + (i % self.w) / b).copied().unwrap_or(u32::MAX)
     }
 
+    /// The units' walking distance at fine cell `i` (`units_field`'s
+    /// block), `u32::MAX` where none reaches or with no field.
+    pub fn units_dist(&self, i: usize) -> u32 {
+        let b = RAID_BLOCK;
+        let bw = self.w.div_ceil(b);
+        self.units_field.get(((i / self.w) / b) * bw + (i % self.w) / b).copied().unwrap_or(u32::MAX)
+    }
+
     /// The raid's haste on the step being made (`BigParams::raid_at`):
     /// `panic_creep` through its lean, `raid_haste` through its run, else 0.
     pub fn raid_haste(&self) -> f32 {
@@ -3724,11 +3745,15 @@ impl BigDish {
             let still = mind == MIND_STILL;
             let haste = self.panic_haste(k);
             let mut scared = if haste > 0.0 { self.panic_target(x.floor() as i64, y.floor() as i64) } else { None };
+            // Charging a unit (a panic at one, a surge): with the units'
+            // walking distance (`units_field`, S1) it goes down that.
+            let mut at_unit = scared.is_some_and(|s| s.2);
             // A breakaway (`roam`) runs for its crystal the same way, at
             // its own pace.
             if let Some(j) = self.roam_of(k).filter(|_| !still) {
                 let c = self.pile_centre(j);
                 scared = Some(((c & 0xFFFF) as f32 + 0.5, (c >> 16) as f32 + 0.5, false));
+                at_unit = false;
             }
             if let (Some((_, _, unit)), true) = (scared, haste > 0.0) {
                 st *= if unit { self.panic_charge(k, haste) } else { haste };
@@ -3743,6 +3768,7 @@ impl BigDish {
                     st *= l.haste;
                 }
                 scared = self.lump_leash(b, x, y);
+                at_unit = false;
             }
             // A raid (`raid_at`): a raider runs for the raid's target, by
             // its sensors alone (it does not panic, above): down the raid's
@@ -3766,13 +3792,18 @@ impl BigDish {
                 if let Some((_, ux, uy)) = self.nearest_threat(x.floor() as i64, y.floor() as i64) {
                     scared = Some((ux as f32 + 0.5, uy as f32 + 0.5, true));
                     st *= surge;
+                    at_unit = true;
                 }
             }
+            // Down the units' walking distance (S1), unless the walker
+            // stands where none reaches: then straight.
+            let by_units = at_unit && !by_field && !self.units_field.is_empty() && self.units_dist(here) < u32::MAX;
             if let (true, Some((tx, ty, _))) = (look, scared) {
                 let read = |a: f32| {
                     let (c, s) = (a.cos(), a.sin());
                     match self.cell(x + c * so, y + s * so) {
                         Some(i) if self.agar[i] && by_field => -(self.raid_dist(i) as f32),
+                        Some(i) if self.agar[i] && by_units => -(self.units_dist(i) as f32),
                         Some(i) if self.agar[i] => c * (tx - x) + s * (ty - y),
                         _ => -1.0e6,
                     }
@@ -5650,6 +5681,60 @@ pub(crate) fn start_shape(seed: u64, at: u32) -> Shape {
 /// (`w` x `h` fine cells) to fine cell `to` (x | y << 16): a free
 /// function so the game can build it off the frame (`Game::time_raids`).
 pub fn raid_field_for(agar: &[bool], w: usize, h: usize, to: u32) -> Vec<u32> {
+    let (open, bw, bh) = open_blocks(agar, w, h);
+    let (tx, ty) = (((to & 0xFFFF) as usize).min(w - 1) / RAID_BLOCK, ((to >> 16) as usize).min(h - 1) / RAID_BLOCK);
+    // A target in a closed block (by rock, a wall or a crystal's rim):
+    // start from the nearest open one.
+    let start = (0..bw * bh).filter(|&q| open[q]).min_by_key(|&q| {
+        let (x, y) = ((q % bw) as i64 - tx as i64, (q / bw) as i64 - ty as i64);
+        x * x + y * y
+    });
+    walk_field(&open, bw, bh, start.as_slice())
+}
+
+/// **The units' walking distance** (`BigDish::units_field`, the
+/// simulation-use plan's S1, 2026-11-17) on ground `agar` (`w` x `h` fine
+/// cells): to the nearest of `units` (fine cells, x | y << 16) by the
+/// raid's search, every unit a source. A unit in a closed block (a
+/// building on its footprint, a soldier against rock) starts from the
+/// nearest open block within `UNITS_REACH` blocks, else adds none. A free
+/// function so the game builds it off the frame.
+pub fn units_field_for(agar: &[bool], w: usize, h: usize, units: &[u32]) -> Vec<u32> {
+    let (open, bw, bh) = open_blocks(agar, w, h);
+    let r = UNITS_REACH as i64;
+    let mut starts: Vec<usize> = units
+        .iter()
+        .filter_map(|&u| {
+            let (tx, ty) = ((((u & 0xFFFF) as usize).min(w - 1) / RAID_BLOCK) as i64, (((u >> 16) as usize).min(h - 1) / RAID_BLOCK) as i64);
+            let mut best: Option<(i64, usize)> = None;
+            for dy in -r..=r {
+                for dx in -r..=r {
+                    let (x, y) = (tx + dx, ty + dy);
+                    if x < 0 || y < 0 || x >= bw as i64 || y >= bh as i64 {
+                        continue;
+                    }
+                    let q = y as usize * bw + x as usize;
+                    let d2 = dx * dx + dy * dy;
+                    if open[q] && best.is_none_or(|b| d2 < b.0) {
+                        best = Some((d2, q));
+                    }
+                }
+            }
+            best.map(|b| b.1)
+        })
+        .collect();
+    starts.sort_unstable();
+    starts.dedup();
+    walk_field(&open, bw, bh, &starts)
+}
+
+/// How far (blocks) `units_field_for` looks for an open block beside a
+/// unit standing in a closed one.
+pub const UNITS_REACH: usize = 4;
+
+/// The `RAID_BLOCK` blocks of `agar` (`w` x `h` fine cells), open where
+/// every fine cell is agar, and the blocks' width and height.
+fn open_blocks(agar: &[bool], w: usize, h: usize) -> (Vec<bool>, usize, usize) {
     let b = RAID_BLOCK;
     let (bw, bh) = (w.div_ceil(b), h.div_ceil(b));
     // Row by row over the fine cells (a block's cells are in `b` rows).
@@ -5659,7 +5744,13 @@ pub fn raid_field_for(agar: &[bool], w: usize, h: usize, to: u32) -> Vec<u32> {
             open[((i / w) / b) * bw + (i % w) / b] = false;
         }
     }
-    let (tx, ty) = (((to & 0xFFFF) as usize).min(w - 1) / b, ((to >> 16) as usize).min(h - 1) / b);
+    (open, bw, bh)
+}
+
+/// The walking distance over the open blocks (`bw` x `bh`) from `starts`
+/// (blocks, each at 0): steps of 2, diagonals of 3 where both sides are
+/// open; `u32::MAX` where none reaches.
+fn walk_field(open: &[bool], bw: usize, bh: usize, starts: &[usize]) -> Vec<u32> {
     // The search runs on a grid one closed block wider on every side,
     // so no step needs a bounds check.
     let pw = bw + 2;
@@ -5668,23 +5759,21 @@ pub fn raid_field_for(agar: &[bool], w: usize, h: usize, to: u32) -> Vec<u32> {
         pad[(y + 1) * pw + 1..(y + 1) * pw + 1 + bw].copy_from_slice(&open[y * bw..(y + 1) * bw]);
     }
     let mut pd = vec![u32::MAX; pad.len()];
-    // A target in a closed block (by rock, a wall or a crystal's rim):
-    // start from the nearest open one.
-    let start = (0..bw * bh).filter(|&q| open[q]).min_by_key(|&q| {
-        let (x, y) = ((q % bw) as i64 - tx as i64, (q / bw) as i64 - ty as i64);
-        x * x + y * y
-    });
-    if let Some(start) = start {
-        let start = (start / bw + 1) * pw + start % bw + 1;
+    if !starts.is_empty() {
         let p = pw as isize;
         // (offset, cost, the two sides a diagonal passes).
         let steps: [(isize, u32, isize, isize); 8] = [(-1, 2, 0, 0), (1, 2, 0, 0), (-p, 2, 0, 0), (p, 2, 0, 0), (-p - 1, 3, -p, -1), (-p + 1, 3, -p, 1), (p - 1, 3, p, -1), (p + 1, 3, p, 1)];
         // Edges cost 2 or 3, so four buckets in a ring hold every
         // distance still to settle.
         let mut ring: [Vec<u32>; 4] = Default::default();
-        pd[start] = 0;
-        ring[0].push(start as u32);
-        let (mut at, mut left) = (0u32, 1usize);
+        let mut left = 0usize;
+        for &q in starts {
+            let start = (q / bw + 1) * pw + q % bw + 1;
+            pd[start] = 0;
+            ring[0].push(start as u32);
+            left += 1;
+        }
+        let mut at = 0u32;
         while left > 0 {
             let slot = (at % 4) as usize;
             let now = std::mem::take(&mut ring[slot]);

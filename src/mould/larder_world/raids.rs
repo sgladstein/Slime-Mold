@@ -139,11 +139,17 @@ pub struct Raids {
     /// which a worker thread builds (`big::raid_field_for`: 7-8 ms on
     /// planet 8, too long for one step by the levelgen thread's hitch rule).
     pending: Option<(Raid, Way)>,
+    /// The units the last frame sent (fine cells, x | y << 16), for their
+    /// walking distance (`Rules::unit_paths`, S1).
+    pub(super) unit_cells: Vec<u32>,
+    /// The units' walking distance being built, set a game second after
+    /// it was started (`time_unit_paths`).
+    unit_way: Option<Way>,
 }
 
 impl Raids {
     pub fn new(seed: u64) -> Raids {
-        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None }
+        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -183,6 +189,20 @@ impl Way {
         }
     }
 
+    /// The units' walking distance (`big::units_field_for`), off the
+    /// frame as `start`'s.
+    fn start_units(ground: Option<(Vec<bool>, usize, usize)>, units: Vec<u32>) -> Way {
+        let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Way::Building(std::thread::spawn(move || crate::mould::big::units_field_for(&agar, w, h, &units)))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Way::Ready(crate::mould::big::units_field_for(&agar, w, h, &units))
+        }
+    }
+
     fn finish(self) -> Vec<u32> {
         match self {
             Way::Ready(f) => f,
@@ -193,6 +213,24 @@ impl Way {
 }
 
 impl<W: World> Game<W> {
+    /// **The units' walking distance** (`Rules::unit_paths`, the
+    /// simulation-use plan's S1, 2026-11-17): once a game second, the
+    /// distance started a second ago is set (`World::set_units_field`) and
+    /// a new one is started from where the units stood in the last frame.
+    /// Always a second late, so the game is the same however fast the
+    /// thread was (as a raid's way, `time_raids`). Charging walkers go
+    /// down it, so walls bend a surge or a panic charge.
+    pub(super) fn time_unit_paths(&mut self) {
+        if !self.rules.unit_paths {
+            return;
+        }
+        if let Some(way) = self.raids.unit_way.take() {
+            self.world.set_units_field(way.finish());
+        }
+        let units = std::mem::take(&mut self.raids.unit_cells);
+        self.raids.unit_way = Some(Way::start_units(self.world.raid_ground(), units));
+    }
+
     /// Once a game second: start a raid when its drawn time comes, or the
     /// last stand.
     pub(super) fn time_raids(&mut self) {

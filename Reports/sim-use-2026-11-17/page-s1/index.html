@@ -1,0 +1,60 @@
+<title>Charges Round Walls</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root { --bg:#f6f3ec; --fg:#1d1b17; --muted:#6b655a; --card:#fffdf8; --line:#e2dccf; --accent:#c4520f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font:15px/1.55 Inter, system-ui, sans-serif; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:24px 48px }
+main { max-width:1100px; margin:0 auto }
+h1, h2 { font-family:"Space Grotesk", Inter, sans-serif; text-wrap:balance; line-height:1.2 }
+h1 { font-size:1.9rem; margin:0 0 .3rem }
+h2 { font-size:1.25rem; margin:2rem 0 .5rem }
+p, ul { max-width:72ch }
+.sub { color:var(--muted); margin:0 0 1.2rem }
+figure { margin:1rem 0; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px }
+figure img { display:block; width:100%; border-radius:6px }
+.labels { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; font-size:.85rem; margin-top:.5rem }
+.labels b { display:block; font-family:"Space Grotesk", Inter, sans-serif; font-size:1rem }
+.labels span { color:var(--muted) }
+figcaption { color:var(--muted); font-size:.9rem; margin-top:.6rem }
+.wrap { overflow-x:auto }
+table { border-collapse:collapse; font-size:.9rem; min-width:720px; width:100% }
+th, td { text-align:right; padding:6px 9px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums }
+th:first-child, td:first-child { text-align:left }
+th { font-weight:600; color:var(--muted) }
+b.k { color:var(--accent) }
+.key { display:flex; flex-wrap:wrap; gap:14px; font-size:.85rem; color:var(--muted); margin:.4rem 0 0 }
+.key i { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin-right:5px }
+</style>
+<main>
+<h1>Charges round walls</h1>
+<p class="sub">Simulation-use plan step S1, 2026-11-17. A soldier stands in a cup of walls that opens away from the slime, and the slime surges at it. In one panel the charging walkers steer straight at the soldier; in the other they walk down the soldier's walking distance, which bends round walls and rock. Which is which is kept off this page. CPU probe: shape C on the race world, grown 63 s, a surge 1 s in, watched 30 s; one frame every third of a game second, played at 3 times real speed.</p>
+<div class="key"><span><i style="background:#d8cc5a"></i>slime (by its trail)</span><span><i style="background:#26252b"></i>wall and rock</span><span><i style="background:#7fd6e6"></i>crystal</span><span><i style="background:#ffffff;border:1px solid var(--line)"></i>the soldier, ringed at 3 cells</span></div>
+
+<h2>Seed 1</h2>
+<figure>
+<video src="charge.mp4" autoplay muted loop playsinline controls style="display:block;width:100%;border-radius:6px"></video>
+<div class="labels" style="grid-template-columns:repeat(3,1fr)">
+<div><b>No wall</b><span>198 walkers came within 3 cells in 30 s</span></div>
+<div><b>A</b><span>58 came within 3; 67 piled at the wall at the end</span></div>
+<div><b>B</b><span>41 came within 3; 62 piled at the wall at the end</span></div>
+</div>
+<figcaption>Same grown dish, same surge, same wall in A and B. Only how a charging walker picks its way differs.</figcaption>
+</figure>
+
+<h2>Eight seeds</h2>
+<p>Walkers that came within 3 cells of the soldier (each counted once), and walkers piled against the wall's slime side at the end.</p>
+<div class="wrap"><table>
+<tr><th>Seed</th><th>No wall, 15 s</th><th>A, 15 s</th><th>B, 15 s</th><th>Piled, A</th><th>Piled, B</th><th>No wall, 30 s</th><th>A, 30 s</th><th>B, 30 s</th></tr>
+<tr><td>1</td><td>181</td><td>43</td><td>35</td><td>36</td><td>63</td><td>198</td><td>58</td><td>41</td></tr><tr><td>2</td><td>255</td><td>107</td><td>84</td><td>43</td><td>54</td><td>374</td><td>117</td><td>106</td></tr><tr><td>3</td><td>226</td><td>98</td><td>63</td><td>3</td><td>58</td><td>299</td><td>108</td><td>70</td></tr><tr><td>4</td><td>175</td><td>57</td><td>63</td><td>51</td><td>62</td><td>179</td><td>65</td><td>69</td></tr><tr><td>5</td><td>253</td><td>127</td><td>136</td><td>49</td><td>67</td><td>290</td><td>150</td><td>161</td></tr><tr><td>6</td><td>96</td><td>74</td><td>87</td><td>0</td><td>0</td><td>96</td><td>75</td><td>87</td></tr><tr><td>7</td><td>261</td><td>99</td><td>111</td><td>33</td><td>55</td><td>319</td><td>113</td><td>120</td></tr><tr><td>8</td><td>181</td><td>75</td><td>15</td><td>0</td><td>57</td><td>220</td><td>79</td><td>20</td></tr><tr><td>Sum</td><td>1,628</td><td>680</td><td>594</td><td>215</td><td>416</td><td>1,975</td><td>765</td><td>674</td></tr>
+</table></div>
+<ul>
+<li>Reaching the soldier: A more on 4 seeds, B more on 4, at 15 s and at 30 s. Neither gets more through.</li>
+<li>The pile against the wall at 15 s: A fewer on 7 of 7 seeds that piled (sign p 0.016), about half as many in all.</li>
+<li>Either way the wall holds back most of the charge: a third to two fifths of what reached the soldier with no wall.</li>
+</ul>
+
+<h2>The question</h2>
+<p>Which charge, A or B, is the slime you want to fight behind walls?</p>
+</main>
