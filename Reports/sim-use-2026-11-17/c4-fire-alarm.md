@@ -99,8 +99,10 @@ a lit Tinder line across a stream of walkers going to food, crossings from
 50: 31 crossed (0 while it burned), 28 burned. Neither is a fence: both
 hold the stream at the edge until the fire dies, then it crosses the char.
 `fire_alarm` held harder and reuses the field the flinch already reads, so
-it stays (off) and the gun thread deletes `fire_weight`, one switch for
-one mechanism (a reviewer's ask).
+the two threads agreed it is the one kept (off) and `fire_weight` goes, one
+switch for one mechanism (a reviewer's ask). The technical lead (12:05Z)
+pairs the two in ROADMAP's switches-off table for the owner's blind A/B
+before the delete; if they look alike, the alarm route wins.
 
 ## Left
 
