@@ -439,7 +439,7 @@ owner's playtest.
 - The build plan, reviewed by three independent agents and revised ([larder-build-plan-2026-11-11.md](../../Reports/larder-build-plan-2026-11-11.md); Claude Doc https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): M1-M3 built, M4-M6 replaced by the world phases (11-11 14:06Z). M1 ([report](../../Reports/larder-m1-2026-11-11.md)): fortress and farmer beat idle and random 16/16 held-out; four soldiers attacking die in about 45 s.
 - Re-run smell on a dish the mould takes 30 s or more to cross.
 - Versus (two squads, one mould) is set aside for now (owner, 00:30Z: solo first).
-- **The slime shapes its world** (owner, 2026-11-17 00:45Z: the slime building terrain first, then reacting fields and faking its signals; plan first, reviewed, then built): crust where it lives long, bulwarks where it lives long under fire, wet fed slime and dry starving slime, barren char, plants as food, provoke and calm on its food news ([plan, draft 1](../../Reports/sim-use-2026-11-17/README.md); doc https://claude.ai/artifact/9dMLbiVKoK58zVMAqSCCxb). Nothing built yet.
+- **The slime shapes its world** (owner, 2026-11-17 00:45Z: the slime building terrain first, then reacting fields and faking its signals; plan first, reviewed, then built): crust where it lives long, bulwarks where it lives long under fire (blocking shots and soldiers, the slime walking through its own; owner 01:13Z), wet fed slime and dry starving slime, barren char, provoke and calm on its food news ([plan, draft 2](../../Reports/sim-use-2026-11-17/README.md); doc https://claude.ai/artifact/9dMLbiVKoK58zVMAqSCCxb). Nothing built yet.
 
 ## Sources
 

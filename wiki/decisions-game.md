@@ -2,8 +2,9 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-16
+updated: 2026-11-17
 sources:
+  - Reports/sim-use-2026-11-17/README.md
   - CLAUDE.md
   - HANDOFF.md
   - Reports/bug-check-2026-11-15/README.md
@@ -52,6 +53,8 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-17 01:13 | Bulwarks (the slime's crust hardened where it is shot, a plan step) block both rifle shots and soldiers; the slime walks through its own bulwarks as soldiers walk through doors; fed slime is fireproof and starving slime burns; B's signal tools (provoke, calm) are both carried devices and gun cards, the gun thread making the cards; the slime eating plants is dropped from the plan (11-14 ruling stands) | "Both"; "agreed"; "sure"; "not sure the benefits it cost of this"; "agreed" (the plan's five questions) | [Larder World](world/larder.md), [plan](../Reports/sim-use-2026-11-17/README.md) |
+| 2026-11-17 00:45 | The simulation-use review: move scripted slime behaviour onto fields only where it doesn't make the game worse; ideas may go outside the run; the slime building terrain first, then reacting fields and faking its signals; a detailed plan, reviewed, before building | "if you could that would be ideal, but I don't want to put a bunch of effort into making the game worse"; "you can expand outside the run"; "E is top choice then C/B"; "first we write a detailed plan. Have it reviewed then start to implement" | [Larder World](world/larder.md), [plan](../Reports/sim-use-2026-11-17/README.md) |
 | 2026-11-16 22:10 | The mortar stays among the turret bodies: its point is a longer range than anything else in the game | "mortar still has a point and the point is a longer range that anything else in the game" | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 21:41 | The turret tech tree lives in the run shop between planets, not as research during a mission | "I lean shop" (to: should the tree also run inside a mission, or only in the run shop?) | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 21:36, card | Turrets grow both ways: a tech tree unlocks turret bodies (each a different way to deliver a shot, such as a mortar over walls, a sprayer, a fan) and gun cards fill each body's barrel (not a tree alone, not cards alone) | "Both: tree bodies, card barrels" | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |

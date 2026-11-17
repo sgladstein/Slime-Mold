@@ -8,7 +8,7 @@ game worse; ideas may go outside the run; the slime building terrain first,
 then reacting fields and faking its signals; "first we write a detailed
 plan. Have it reviewed then start to implement"; independent reviewers yes.
 
-- [plan.md](plan.md): the plan, draft 1 (crust and bulwarks, reacting
+- [plan.md](plan.md): the plan, draft 2 (crust and bulwarks, reacting
   fields, provoke and calm, scripted pressure onto fields where no worse).
   Doc copy: https://claude.ai/artifact/9dMLbiVKoK58zVMAqSCCxb
 - [reviews/prompts.md](reviews/prompts.md): the three reviewers' briefs.

@@ -1,6 +1,6 @@
 # Plan: a slime that shapes its world
 
-2026-11-17. Draft 1, for review. Thread: *Review how the game uses its
+2026-11-17. Draft 2, for review (draft 1 plus the owner's answers, 01:13Z). Thread: *Review how the game uses its
 simulation*. Owner's steer (2026-11-17 00:45Z): replacing scripted behaviour
 with fields "would be ideal, but I don't want to put a bunch of effort into
 making the game worse"; ideas may go outside the run; **E (the slime builds
@@ -17,8 +17,7 @@ out of its own model: where it lives long it leaves **crust**, ground that
 remembers it, carries it faster and burns; where it lives long *and is being
 shot*, the crust hardens into **bulwarks** that stop rifle fire. Then the
 fields start to **react**: fed slime is wet and will not burn, starving slime
-dries and does; burnt ground is barren; the slime eats plants and flees fire;
-gas ignites. Then two **signal** tools work on the food news that runs
+dries and does; burnt ground is barren; the slime flees fire; gas ignites. Then two **signal** tools work on the food news that runs
 through its body: one that makes a part panic on your timing, one that
 calms a charge. Last, the scripted charges and specks are moved onto
 fields where a side-by-side film shows the field version is no worse.
@@ -139,7 +138,8 @@ repels, a nomad slime) and film both.
 - at 1 the cell is a **bulwark**: a wall cell owned by the slime;
 - falls back to crust over `bulwark_fade` seconds with no walker on it.
 
-**What a bulwark does** (first cut, E2a):
+**What a bulwark does** (owner, 01:13Z: bulwarks block **both** shots and
+soldiers; the slime walks through its own, as soldiers through doors):
 
 - Stops soldiers' rifle shots like a wall, and takes damage from them as a
   wall does (shots chip `hard`), so it is cover, not a lock.
@@ -150,10 +150,13 @@ repels, a nomad slime) and film both.
   through their own doors (the door ruling, 2026-11-16 14:24Z, mirrored).
 - Fire burns it back to crust (C2), a blast breaks it at once.
 
-Second cut (E2b, after the owner has seen E2a): bulwarks also block
-soldiers. This needs the walking maps to go stale where a bulwark rises or
-falls (`paths.rs`, the levelgen thread's lock) and the walls thread's door
-and side rules to know a wall can be the slime's.
+- Soldiers can't walk through it. Built in two PRs inside the step: cover
+  first (E2a), then blocking soldiers (E2b), which needs the walking maps
+  to go stale where a bulwark rises or falls (`paths.rs`, the levelgen
+  thread's lock; maps rebuild every `PATHS_EVERY` 30 s today, so a fresh
+  bulwark must mark its cells' maps stale) and the walls thread's door and
+  side rules to know a wall can be the slime's. Until a map catches up,
+  `steer.rs` must stop a soldier at the bulwark, never inside it.
 
 **What the player sees.** Under sustained fire from one place, the slime's
 face toward the squad thickens into dark ridges within about 30-60 s; shots
@@ -203,8 +206,8 @@ devices can play on.
 
 | | crust | moisture | fire | char | plants | gas | alarm |
 |---|---|---|---|---|---|---|---|
-| **fed slime** | lays (E1) | wets (C1) | resists (C1) | pays x3 to cross (C2) | eats (C3) | sleeps (today) | flinches (today) |
-| **starving slime** | lays less | dries (C1) | burns (C1) | pays x3 (C2) | eats (C3) | sleeps | flinches |
+| **fed slime** | lays (E1) | wets (C1) | resists (C1) | pays x3 to cross (C2) | ignores (ruled) | sleeps (today) | flinches (today) |
+| **starving slime** | lays less | dries (C1) | burns (C1) | pays x3 (C2) | ignores | sleeps | flinches |
 | **fire** | burns to char (C2) | dries (C1) | | leaves (today) | eats (today) | ignites (C5) | lays (C4) |
 
 ### C1. Wet slime, dry slime
@@ -238,15 +241,12 @@ without C1, against the uncut body lit at the same time.
 counter to crust and bulwarks. **Measure:** crossings of a scorched line
 between the slime's home and a pump in 2 minutes, with and without.
 
-### C3. The slime eats plants
+### C3. Not doing: the slime eating plants
 
-**Rule.** Walkers on a plant cell take `plant_eat` of its density as food
-(the old grazing code, `graze_eat`, pointed at the plant field); the plant
-regrows from its edges as today.
-
-**Play.** A jungle is the slime's pantry and road; burning it starves an
-approach. The owner noticed it ignores plants (11-14 17:29Z). The slime will
-grow bigger on green planets: retune the numbers, don't drop it.
+Dropped. The owner ruled on 2026-11-14 17:29Z that the slime does not eat
+plants (the plants thread's rulings), and on 2026-11-17 01:13Z was "not sure
+the benefits [are worth] the cost". Draft 1 misread the 11-14 line as a
+complaint. Plants still matter through fire (C2, C5) and as fuel.
 
 ### C4. The slime flees fire
 
@@ -313,12 +313,11 @@ are: they are characters, and the owner shaped them.
 | # | Step | Size | The owner sees |
 |---|---|---|---|
 | 1 | E1 crust: field, memory roads, fast ground, look | M | a page: crust building over 5 minutes, a blasted road refilling with and without memory; glaze A/B |
-| 2 | E2a bulwarks as cover | M | a page: a standing squad walled off, a moving one not; a playable build |
+| 2 | E2 bulwarks: cover (E2a), then blocking soldiers (E2b) | M + M | a page: a standing squad walled off, a moving one not; a playable build |
 | 3 | C1 + C2 wet/dry slime, barren char, crust burns | M | a page: cut, dull, burn; a firebreak holding |
 | 4 | B1 provoke + B2 calm, one device | S | films of a provoked charge into turrets and a calmed surge |
-| 5 | C3 plants as food, C4 fire alarm, C5 gas ignites | S each | a film each |
-| 6 | E2b bulwarks block soldiers | M | after the owner has played 2 |
-| 7 | S1, then S2 | S, M | blind side-by-side films |
+| 5 | C4 fire lays alarm, C5 gas ignites | S each | a film each |
+| 6 | S1, then S2 | S, M | blind side-by-side films |
 | later | E3 tunnels, E4 regrowth, B3 hush | | after a count or the owner's ask |
 
 Each step is its own PR with tests, a page under
@@ -358,14 +357,12 @@ Not in this plan's order, each with a first experiment if the owner wants it:
   fire, food, crust) to grow a slime into a shape or keep two in balance; a
   puzzle mode that shows off E and C and needs no new engine work after them.
 
-## Questions for the owner
+## The owner's answers (2026-11-17 01:13Z)
 
-1. Should bulwarks block soldiers too, or only shots? (Recommended: shots
-   first, soldiers after you've played it.)
-2. Should the slime walk through its own bulwarks, as your soldiers walk
-   through doors? (Recommended: yes.)
-3. Should fed slime be fireproof and starving slime burn? (Recommended:
-   yes.)
-4. Should the slime eat plants? (Recommended: yes, and retune.)
-5. Should B's tools be devices you carry, gun cards, or both? (Recommended:
-   both, with the gun thread making the cards.)
+| Question | Answer |
+|---|---|
+| Bulwarks block soldiers too, or only shots? | "Both" |
+| The slime walks through its own bulwarks? | "agreed" |
+| Fed slime fireproof, starving slime burns? | "sure" |
+| The slime eats plants? | "not sure the benefits it cost of this": dropped (C3) |
+| B's tools as devices, gun cards, or both? | "agreed": both, the gun thread makes the cards |
