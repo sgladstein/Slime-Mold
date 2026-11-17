@@ -66,7 +66,10 @@ field the flinch reads, on both engines. At 5 nothing changed (8 seeds); at
 50 and 200 the slime drew back from the flames, the fire, undoused, ate
 holes in the body ringed by slime, and killed 13% and 26% more. The same
 behaviour as `fire_weight`, so off with it until the designer's crossing
-test ([report](../../Reports/sim-use-2026-11-17/c4-fire-alarm.md)).
+test ([report](../../Reports/sim-use-2026-11-17/c4-fire-alarm.md)). The two routes are one decision (technical lead, 11-17 12:05Z): one blind
+A/B film of each alone, the owner keeps one and the other goes to
+`Reports/dead-ends.md`; if they look alike the alarm route wins, as it adds
+no sensor read ([ROADMAP](../../ROADMAP.md), switches that are off).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
 cell a second on dry ground (was 5), goes out and smoulders where damp,
