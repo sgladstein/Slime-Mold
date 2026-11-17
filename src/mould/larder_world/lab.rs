@@ -56,6 +56,9 @@ pub fn marks() -> Vec<Mark> {
         .collect()
 }
 
+/// A lone pusher's height at its rim (`steer_field`).
+const PUSH_BASE: u32 = 60;
+
 /// The steering field over the blocks of `agar` (`w` x `h` fine cells):
 /// lower is where walkers lean. `lures` and `pushers` are fine cells
 /// (x | y << 16); `reach` and `push` are walking distances in fine cells;
@@ -78,8 +81,10 @@ pub fn steer_field(agar: &[bool], w: usize, h: usize, lures: &[u32], pushers: &[
                 // Lean to the lure, and off the pusher's hill where it
                 // stands in the way.
                 (Some(d), hill) => d + hill.unwrap_or(0),
-                // A pusher alone: its hill, down to 0 at its rim.
-                (None, Some(hl)) => hl,
+                // A pusher alone: its hill, down to `PUSH_BASE` at its
+                // rim (not 0: the view lights the field's lowest ground
+                // as a lure's core, and a hill's rim is no lure).
+                (None, Some(hl)) => hl + PUSH_BASE,
             }
         })
         .collect()

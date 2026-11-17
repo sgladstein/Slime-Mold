@@ -2654,7 +2654,10 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let dr = abs(d - STEER_RING * round(d / STEER_RING));
             let line = 1.0 - smoothstep(0.6 / P.zoom, 1.6 / P.zoom, dr);
             let near = exp(-d / 110.0);
-            c += STEER_RGB * (0.07 * near + 0.42 * line * (0.25 + 0.75 * near)) * sp.y * (0.3 + 0.7 * under);
+            // The field's lowest ground (a lure's own place) is a small
+            // bright core, so the eye finds what the rings close on.
+            let core = exp(-d / 5.0);
+            c += STEER_RGB * (0.07 * near + 0.42 * line * (0.25 + 0.75 * near) + 0.9 * core) * sp.y * (0.3 + 0.7 * under);
         }
     }
     let k1 = gem_near(x, y);
