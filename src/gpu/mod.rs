@@ -69,7 +69,7 @@ pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (296 words).
-pub const PARAMS_BYTES: usize = 1200;
+pub const PARAMS_BYTES: usize = 1216;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -131,6 +131,10 @@ pub const SCAR_AT: usize = 1168;
 /// (`Engine::crust_at` / 4; the field rides in `news` because every
 /// binding a stage has is taken).
 pub const CRUST_AT: usize = 1184;
+/// The crust's effects row (the plan's E1b and C2, 2026-11-17; Params grew
+/// from 1200 to 1216): `crust_weight`, `crust_fast` and `crust_fuel` (each 0
+/// on a dish without the crust), and `char_barren` (0 without plants).
+pub const CRUST_FX_AT: usize = 1200;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -432,6 +436,12 @@ pub struct Settings {
     pub crust_rise: f32,
     pub crust_keep: f32,
     pub crust_trail: f32,
+    /// The crust's effects (`BigParams::crust_weight`, `crust_fast`,
+    /// `crust_fuel`, `char_barren`; the plan's E1b and C2).
+    pub crust_weight: f32,
+    pub crust_fast: f32,
+    pub crust_fuel: f32,
+    pub char_barren: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -694,6 +704,10 @@ impl Settings {
             crust_rise: t.crust_rise,
             crust_keep: t.crust_keep,
             crust_trail: t.crust_trail,
+            crust_weight: t.crust_weight,
+            crust_fast: t.crust_fast,
+            crust_fuel: t.crust_fuel,
+            char_barren: t.char_barren,
             flinch: t.flinch,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
@@ -976,12 +990,26 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // The window's crust at once (`crust=1`; 0 turns it off): a cell
         // fills in a minute of steady living and halves in two minutes
         // with none, at the window's 30 fine steps a second (scale 2).
+        // With it, the crust burns (C2, 2026-11-17): worth 3 plants a unit,
+        // so a fire lit on ground the slime left runs across it (planet 3,
+        // seed 1: 4,382 cells burning 60 s after a 4-cell light, against
+        // 30 at 1 and none left at 0) and stops at the fed body; char of
+        // 0.3 or more is barren. Its pull (`crust_weight`) and fast ground
+        // stay 0 until the owner picks a sign.
         "crust" => {
-            (s.crust_rise, s.crust_keep, s.crust_trail) = if b()? { (1.0 / 1800.0, 0.5f32.powf(1.0 / 3600.0), 1.0) } else { (0.0, 1.0, 1.0) };
+            let on = b()?;
+            (s.crust_rise, s.crust_keep, s.crust_trail) = if on { (1.0 / 1800.0, 0.5f32.powf(1.0 / 3600.0), 1.0) } else { (0.0, 1.0, 1.0) };
+            (s.crust_fuel, s.char_barren) = if on { (3.0, 0.3) } else { (0.0, 0.0) };
         }
         "crust_rise" => s.crust_rise = f()?.max(0.0),
         "crust_keep" => s.crust_keep = f()?.clamp(0.0, 1.0),
         "crust_trail" => s.crust_trail = f()?,
+        // The crust's effects (E1b, C2): its pull on the sensors (under 0 a
+        // push), fast ground, fuel for fire and barren char.
+        "crust_weight" => s.crust_weight = f()?,
+        "crust_fast" => s.crust_fast = f()?.max(0.0),
+        "crust_fuel" => s.crust_fuel = f()?.max(0.0),
+        "char_barren" => s.char_barren = f()?.max(0.0),
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
         "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of {}", crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")))?.settings(s)?,
@@ -1152,6 +1180,10 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         crust_rise: s.crust_rise,
         crust_keep: s.crust_keep,
         crust_trail: s.crust_trail,
+        crust_weight: s.crust_weight,
+        crust_fast: s.crust_fast,
+        crust_fuel: s.crust_fuel,
+        char_barren: s.char_barren,
         flinch: s.flinch,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
@@ -2254,6 +2286,12 @@ impl Engine {
         let rise = if self.crust_at > 0 { s.crust_rise } else { 0.0 };
         b.extend(f32_bytes(&[rise, s.crust_keep, s.crust_trail]));
         b.extend(u32_bytes(&[(self.crust_at / 4) as u32]));
+        assert_eq!(b.len(), CRUST_FX_AT, "Params rows before the crust's effects moved");
+        // As the CPU: a dish without the crust reads none, and without
+        // plants it has no char.
+        let crusts = self.crust_at > 0;
+        let fx = |v: f32| if crusts { v } else { 0.0 };
+        b.extend(f32_bytes(&[fx(s.crust_weight), fx(s.crust_fast), fx(s.crust_fuel), if self.plants { s.char_barren } else { 0.0 }]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food

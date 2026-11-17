@@ -1,0 +1,117 @@
+<title>Old Ground and Fire</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column of figures, each picture with its counts beside or under it. */
+:root {
+  --bg: #f3f4f2; --panel: #ffffff; --fg: #1c2124; --muted: #5d676c; --line: #d9ddd9;
+  --slime: #c98a12; --crust: #4f6f86;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161a; --panel: #1a2026; --fg: #e4e8ea; --muted: #97a2a8; --line: #2b343b;
+  --slime: #e3a23a; --crust: #8fb2cc; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161a; --panel: #1a2026; --fg: #e4e8ea; --muted: #97a2a8; --line: #2b343b;
+  --slime: #e3a23a; --crust: #8fb2cc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 21px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+section { display: grid; gap: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; height: auto; display: block; border-radius: 4px; border: 1px solid var(--line); background: #000; }
+.map img { image-rendering: pixelated; }
+figcaption { font-size: 13px; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tag { font-family: var(--mono); font-size: 12px; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--line); background: var(--panel); }
+.on { color: var(--crust); border-color: var(--crust); }
+table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 520px; }
+th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+.scroll { overflow-x: auto; }
+ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
+.note { border-left: 3px solid var(--crust); padding: 8px 0 8px 14px; background: var(--panel); border-radius: 0 4px 4px 0; }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 640px) { .trio { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <div class="eyebrow">Simulation-use plan · E1b and C2 · 2026-11-17</div>
+    <h1>The slime reads its old ground, and old ground burns</h1>
+    <p>The crust from the last page now does things. The slime can be drawn back to ground it held, or pushed off it to new ground. And crust is fuel: a fire lit where the slime used to be runs across that ground and stops at the living body, leaving burnt ground where nothing is born. Everything here is planet 3, run seed 1, the squad idle, one seed: a look, not a census.</p>
+  </header>
+
+  <section>
+    <h2>Moving on, or keeping to its ground</h2>
+    <p>The same game at 5:00 with the slime's pull to its crust at three settings. Under 0 it moves on to ground it has not held; over 0 it keeps to what it held. The second row is the crust map: white where the ground was held, black where never, orange where walkers stand now.</p>
+    <div class="trio">
+      <figure><img src="wm8-300s.jpg" alt="Pull -8 at 5:00"><figcaption><span class="tag">pull −8</span> <b>Moves on.</b> 50,869 walkers; has held 98,300 cells.</figcaption></figure>
+      <figure><img src="w0-300s.jpg" alt="Pull 0 at 5:00"><figcaption><span class="tag">pull 0</span> <b>Today.</b> 39,999 walkers; has held 72,500 cells.</figcaption></figure>
+      <figure><img src="wp8-300s.jpg" alt="Pull +8 at 5:00"><figcaption><span class="tag">pull +8</span> <b>Keeps its ground.</b> 43,366 walkers; has held 73,200 cells.</figcaption></figure>
+      <figure class="map"><img src="wm8-300s-crust.png" alt="Crust map, pull -8"><figcaption>A diffuse sheet over the middle.</figcaption></figure>
+      <figure class="map"><img src="w0-300s-crust.png" alt="Crust map, pull 0"><figcaption>Roads between clearings.</figcaption></figure>
+      <figure class="map"><img src="wp8-300s-crust.png" alt="Crust map, pull +8"><figcaption>Roads, sharper edges.</figcaption></figure>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Pull</th><th>Walkers 3:00</th><th>Walkers 5:00</th><th>Ground ever held, 5:00</th><th>Walkers on old ground, 5:00</th></tr></thead>
+        <tbody>
+          <tr><td>−8 (fast ground on)</td><td>35,674</td><td>50,869</td><td>98,284</td><td>44,978</td></tr>
+          <tr><td>−2</td><td>30,355</td><td>43,920</td><td>80,749</td><td>37,045</td></tr>
+          <tr><td>0</td><td>30,166</td><td>39,999</td><td>72,507</td><td>37,798</td></tr>
+          <tr><td>+2</td><td>31,807</td><td>45,595</td><td>71,720</td><td>39,047</td></tr>
+          <tr><td>+8 (fast ground on)</td><td>33,820</td><td>43,366</td><td>73,244</td><td>39,243</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Moving on shows plainly: at −8 the slime has covered 36% more of the map by 5:00. Keeping to its ground barely shows with an idle squad, because nothing pushes the slime off; the film where you blast it off its ground and watch it come back is still to make. Both signs ended bigger than 0 on this seed, which one seed can't tell apart from chance.</p>
+  </section>
+
+  <section>
+    <h2>Fire along old ground</h2>
+    <p>At 2:30 a small fire (4 cells) is lit in the clearing the slime held in its first minute and then left. Left: crust is not fuel, as today. Right: crust burns as 3 plants a unit, and burnt ground over 0.3 char is barren.</p>
+    <div class="pair">
+      <figure><img src="fire-f0-160s.jpg" alt="2:40, crust not fuel"><figcaption><span class="tag">not fuel</span> <b>2:40.</b> 12 cells burning.</figcaption></figure>
+      <figure><img src="fire-f3-160s.jpg" alt="2:40, crust burns"><figcaption><span class="tag on">burns</span> <b>2:40.</b> 180 cells burning.</figcaption></figure>
+      <figure><img src="fire-f0-180s.jpg" alt="3:00, crust not fuel"><figcaption><span class="tag">not fuel</span> <b>3:00.</b> Out.</figcaption></figure>
+      <figure><img src="fire-f3-180s.jpg" alt="3:00, crust burns"><figcaption><span class="tag on">burns</span> <b>3:00.</b> 889 burning, 168 barren.</figcaption></figure>
+      <figure><img src="fire-f0-210s.jpg" alt="3:30, crust not fuel"><figcaption><span class="tag">not fuel</span> <b>3:30.</b></figcaption></figure>
+      <figure><img src="fire-f3-210s.jpg" alt="3:30, crust burns"><figcaption><span class="tag on">burns</span> <b>3:30.</b> 4,382 burning, 3,530 barren.</figcaption></figure>
+      <figure><img src="fire-f0-240s.jpg" alt="4:00, crust not fuel"><figcaption><span class="tag">not fuel</span> <b>4:00.</b> 35,004 walkers.</figcaption></figure>
+      <figure><img src="fire-f3-240s.jpg" alt="4:00, crust burns"><figcaption><span class="tag on">burns</span> <b>4:00.</b> 2,743 burning, 6,336 barren; 34,785 walkers.</figcaption></figure>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Crust worth (plants)</th><th>2:32</th><th>2:40</th><th>2:50</th><th>3:00</th><th>3:30</th><th>4:00</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>32</td><td>12</td><td>2</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>1</td><td>51</td><td>41</td><td>30</td><td>4</td><td>0</td><td>0</td></tr>
+          <tr><td>3 (in <span class="tag">crust=1</span>)</td><td>84</td><td>180</td><td>331</td><td>889</td><td>4,382</td><td>2,743</td></tr>
+          <tr><td>6</td><td>139</td><td>371</td><td>1,111</td><td>2,853</td><td>6,682</td><td>4,740</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Cells burning. The front crosses the whole clearing the slime left and stops at the living slime's edge, as you ruled: fed slime doesn't burn. The slime itself loses almost nothing (35,004 against 34,785 walkers at 4:00); the fire takes the ground it left. Burnt ground over 0.3 char takes no new slime while it lasts.</p>
+  </section>
+
+  <section>
+    <h2>What comes next</h2>
+    <ul>
+      <li><b>Your pick:</b> should the slime keep to its old ground, move on, or neither? The question is in the thread.</li>
+      <li><b>E2:</b> where old ground and the memory of being hurt are both high, walkers set into a living wall that toughens while you shoot it.</li>
+    </ul>
+  </section>
+</div>

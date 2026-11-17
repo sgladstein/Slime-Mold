@@ -2,15 +2,17 @@
 title: Plants
 kind: mechanism
 status: open
-updated: 2026-11-15
+updated: 2026-11-17
 sources:
   - Reports/bug-check-leftovers-2026-11-15/README.md
   - Reports/fire-2026-11-14/README.md
   - Reports/plants-2026-11-14/README.md
   - Reports/plants-look-2026-11-14/README.md
   - Reports/review-fixes-2026-11-15/README.md
+  - Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md
 code:
   - BigDish::ignite
+  - BigParams::crust_fuel
   - BigParams::fire_damp
   - BigParams::fire_spread
   - BigParams::plant_grow
@@ -32,6 +34,12 @@ edge, not its body (probe: 501 killed in 80 s while it grew 5,405 to
 7,669). Char comes from the plants that burnt (`char_gain` 1), so a
 jungle leaves darker ground than a meadow. How it is drawn: see *Look*.
 Maps carry plants in the PNG's B channel (kind << 6 | density 1-63).
+With the crust on (`crust=1`, 2026-11-17), crust is fuel too, worth 3
+plants a unit (`crust_fuel`), and char of 0.3 or more is barren
+(`char_barren`: no births, x3 upkeep): a 4-cell light on ground the slime
+left ran across the whole clearing in a minute (4,382 cells burning) and
+stopped at the living body, where at fuel 0 it went out in 20 s
+([report](../../Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md)).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
 cell a second on dry ground (was 5), goes out and smoulders where damp,

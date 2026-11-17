@@ -24,6 +24,10 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
 - [e1a-crust.md](e1a-crust.md): E1a built, the crust field in both engines
   and its satin look, behind `crust=1`; offline look in `crust-look/`, page
   in `page-e1a/` (https://claude.ai/artifact/7S91NqGRDSopYhhje3giS6).
+- [e1b-c2-crust-effects.md](e1b-c2-crust-effects.md): E1b and C2 built, the
+  crust's pull and fast ground, crust as fuel and barren char; films and page
+  in `page-e1b/` (https://claude.ai/artifact/6Qpdh7rTKKpGEgMhD9btAR), raw
+  lines in `e1b-raw/`.
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure

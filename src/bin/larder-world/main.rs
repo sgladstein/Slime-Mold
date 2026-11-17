@@ -515,6 +515,10 @@ struct Args {
     /// line, to see whether crust shows roads or one plate under the body
     /// (the reviews' question).
     crust_look: Option<u8>,
+    /// `light=T,X,Y,R` (2026-11-17, the crust fire films): a plain fire
+    /// lit over R world units at (X, Y) at game second T (a burn burst,
+    /// no kill); repeat for more.
+    lights: Vec<(f32, f32, f32, f32)>,
     /// `tload=T,NAME` (look= only, the turrets thread, 2026-11-16): at game
     /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
     /// `Game::turret_deck`), a preset or a card list as `load=`.
@@ -2245,6 +2249,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 let [t, x, y] = w.map(|s| s.parse::<f32>());
                 booms.push((t?, x?, y?, cards));
+            }
+            "light" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [t, x, y, r] = w.as_slice() else { return Err("light=T,X,Y,R".into()) };
+                args.lights.push((*t, *x, *y, *r));
             }
             "cutsquad" => {
                 // `cutsquad=X,Y[,T[,N]]` (after `cut=`): N soldiers (all)

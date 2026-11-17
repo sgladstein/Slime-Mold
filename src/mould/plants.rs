@@ -264,6 +264,11 @@ pub struct Fire {
 /// moisture (`moisture`, 0-1), and `tick` the fire steps run, which keys
 /// each cell's chance (`roll`). Only `+`, `*`, `/` and integer hashing, so
 /// the GPU matches. Returns cells burning after the step.
+///
+/// `crust` is the ground the slime has lived on (`BigDish::crust`, empty
+/// for none) and the plants a unit of it is worth (`BigParams::crust_fuel`,
+/// the simulation-use plan's C2): a cell's fuel is its plants plus that,
+/// and a fire eats the plants first, then the crust.
 #[allow(clippy::too_many_arguments)]
 pub fn fire_step(
     g: &Ground,
@@ -277,15 +282,18 @@ pub fn fire_step(
     to: &mut [f32],
     moist: &[f32],
     tick: u32,
+    (crust, cf): (&mut [f32], f32),
 ) -> usize {
     let (w, h) = (g.w, g.h);
+    let crusts = cf > 0.0 && !crust.is_empty();
     let mut lit = 0;
     for y in 0..h {
         for x in 0..w {
             let i = y * w + x;
             let wet = (!g.wet.is_empty() && g.wet[i]) || trail[i] >= f.damp || !g.agar[i];
             let heat = from[i];
-            let p = plant[i];
+            let pl = plant[i];
+            let p = if crusts { pl + cf * crust[i] } else { pl };
             let m = moist[i];
             let dice = roll(i as u32, tick);
             let mut ate = 0.0;
@@ -294,7 +302,12 @@ pub fn fire_step(
             } else if heat > 0.0 {
                 let slow = 1.0 - f.smoulder * m;
                 let eat = (f.eat * heat * slow).min(p);
-                plant[i] = p - eat;
+                if eat <= pl {
+                    plant[i] = pl - eat;
+                } else {
+                    plant[i] = 0.0;
+                    crust[i] = (crust[i] - (eat - pl) / cf).max(0.0);
+                }
                 ate = eat;
                 let top = (1.0 - f.cool * m) * (p / f.full).min(1.0);
                 to[i] = if p - eat < f.fuel {
@@ -665,6 +678,41 @@ mod tests {
         char_clear: 0.02,
     };
 
+    /// Crust is fuel (`fire_step`'s `crust`, the simulation-use plan's C2):
+    /// on bare ground a fire runs along a strip of crust, eats it and leaves
+    /// char, stops where the crust ends, and with no crust worth goes out
+    /// at once.
+    #[test]
+    fn fire_runs_along_crust_on_bare_ground() {
+        let (w, h) = (60, 3);
+        let cap = vec![1.0; w * h];
+        let agar = vec![true; w * h];
+        let g = Ground { w, h, cap: &cap, agar: &agar, pile_of: &[], wet: &[], scorch: &[] };
+        let r = Rates { kinds: KIND, ..R };
+        let kind = vec![MEADOW; w * h];
+        let trail = vec![0.0; w * h];
+        let moist = vec![0.0; w * h];
+        let run = |cf: f32| {
+            let mut plant = vec![0.0; w * h];
+            // Crust from x 0 to 39, none past it.
+            let mut crust: Vec<f32> = (0..w * h).map(|i| if i % w < 40 { 0.8 } else { 0.0 }).collect();
+            let (mut a, mut b) = (vec![0.0; w * h], vec![0.0; w * h]);
+            let mut ch = vec![0.0; w * h];
+            a[w] = 1.0;
+            for tick in 1..=3000 {
+                fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick, (&mut crust, cf));
+                std::mem::swap(&mut a, &mut b);
+            }
+            (crust, ch)
+        };
+        let (crust, ch) = run(1.0);
+        assert!(crust[w + 1] < 0.1 && crust[w + 35] < 0.1, "burnt along the crust: {} {}", crust[w + 1], crust[w + 35]);
+        assert!(ch[w + 35] > 0.0, "the crust left char");
+        assert!(ch[w + 45] == 0.0, "no fire past the crust's end");
+        let (crust, _) = run(0.0);
+        assert!(crust[w + 5] == 0.8, "worth nothing, the crust doesn't burn");
+    }
+
     /// A fire runs through dry plants and burns them out, stops at wet
     /// ground and at slime, and never crosses bare ground.
     #[test]
@@ -701,7 +749,7 @@ mod tests {
         let mut tick = 0;
         for _ in 0..3000 {
             tick += 1;
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick);
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick, (&mut [], 0.0));
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -719,7 +767,7 @@ mod tests {
         a[w + 21] = 1.0;
         for _ in 0..3000 {
             tick += 1;
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick);
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick, (&mut [], 0.0));
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -732,7 +780,7 @@ mod tests {
         a[w + 31] = 1.0;
         for _ in 0..3000 {
             tick += 1;
-            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick);
+            fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, tick, (&mut [], 0.0));
             std::mem::swap(&mut a, &mut b);
         }
         assert!(
@@ -749,7 +797,7 @@ mod tests {
         a[w] = 1.0;
         for _ in 0..300 {
             tick += 1;
-            fire_step(&g, &r, &F, &trail, &reeds, &mut plant, &mut ch, &a, &mut b, &moist, tick);
+            fire_step(&g, &r, &F, &trail, &reeds, &mut plant, &mut ch, &a, &mut b, &moist, tick, (&mut [], 0.0));
             std::mem::swap(&mut a, &mut b);
         }
         assert!(plant[w + 5] > 0.79, "reeds don't burn");
@@ -775,7 +823,7 @@ mod tests {
         }
         let (mut f10, mut f20, mut lit10) = (0, 0, 0);
         for t in 1..=900u32 {
-            let lit = fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, t);
+            let lit = fire_step(&g, &r, &F, &trail, &kind, &mut plant, &mut ch, &a, &mut b, &moist, t, (&mut [], 0.0));
             std::mem::swap(&mut a, &mut b);
             let far = |a: &[f32]| (0..w * h).filter(|&i| a[i] > 0.0).map(|i| i % w).max().unwrap_or(0);
             if t == 150 {
