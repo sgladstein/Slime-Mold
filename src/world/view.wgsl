@@ -75,8 +75,9 @@ struct V {
     // block (`View::set_setting`, E2b; 0 off); a spare word (set slime's
     // look to 2026-11-18).
     // The Lure's steering field (`View::set_steer`, 2026-11-18): the word
-    // in `news` where its blocks start, 0 hidden.
-    crust_at: u32, setc_at: u32, spare_c: u32, steer_at: u32,
+    // in `news` where its blocks start, 0 hidden; and how far it reaches in
+    // cells (`View::set_steer_reach`), 0 unknown.
+    crust_at: u32, setc_at: u32, steer_reach: f32, steer_at: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1688,10 +1689,15 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
 // sand and is the team's cream and the wanderer's pale bone; and with no
 // mark a wall that stops soldiers looked like slime they can walk
 // (`Reports/dead-ends.md`). Not dark ridges (they read as the player's
-// walls), not bronze (the owner turned it down). Only colour, gloss and glow: the body's opacity
-// and height stay the sheet's (the graphics thread, 11-17), so its edge is
-// the set walkers' own, smoothed over the 4 x 4 cells round (a lone set
-// walker is a fleck, a set rim a band).
+// walls), not bronze (the owner turned it down). The body's opacity stays
+// the sheet's; its edge is the set walkers' own, smoothed over the 4 x 4
+// cells round (a lone set walker is a fleck, a set rim a band).
+// It stands `SET_RISE` above the sheet (2026-11-18). To then it kept the
+// sheet's height too (the graphics thread, 11-17), which was a detail while
+// it formed only under fire; the Trunk's fort (Enemy, #473) made it a ring
+// round every crystal the slime holds, and flat it read as a rust stain or
+// a drawn target on the slime, not a wall a soldier cannot cross. Raised,
+// the light gives it a lit flank and a shaded one, as a wall.
 fn set_c(ix: i32, iy: i32) -> f32 { return f32(news[P.setc_at + cidx(ix, iy)]); }
 fn set_share(x: f32, y: f32) -> f32 {
     if (P.setc_at == 0u) { return 0.0; }
@@ -1710,6 +1716,9 @@ fn set_share(x: f32, y: f32) -> f32 {
 }
 const SET_AMBER: vec3<f32> = vec3<f32>(112.0, 46.0, 14.0);
 const SET_AMBER_GLOW: vec3<f32> = vec3<f32>(255.0, 110.0, 30.0);
+// How far set slime stands above the sheet: the dense body is at most 5.
+const SET_RISE: f32 = 4.0;
+fn set_rise(share: f32, th: f32) -> f32 { return SET_RISE * share * smoothstep(0.02, 0.2, th); }
 fn set_mat(m0: Mat, share: f32, th: f32) -> Mat {
     if (share <= 0.0) { return m0; }
     var m = m0;
@@ -1896,10 +1905,11 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The alarm on the slime here (`flush_at`), under a mini-boss's skin
     // and the set slime's, which keep their own colours.
     let hot = flush_at(wx, wy, tm);
+    let ss = set_share(wx, wy);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         let hh = cell_height(ix, iy, th_h);
-        hcell[i] = hh.x;
+        hcell[i] = hh.x + set_rise(ss, tm);
         hcell[P.rw * P.rh + i] = hh.y;
         hcell[2u * P.rw * P.rh + i] = ground_pack(ground_cell(ix, iy).col);
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
@@ -1907,7 +1917,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         m1.glow += ABSORB_RGB * 0.45 * flash;
         m1 = flush_mat(m1, hot);
         m1 = lump_mat(m1, lump, tm);
-        m1 = set_mat(m1, set_share(wx, wy), tm);
+        m1 = set_mat(m1, ss, tm);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -1935,8 +1945,8 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     mt.glow += ABSORB_RGB * 0.45 * flash;
     mt = flush_mat(mt, hot);
     mt = lump_mat(mt, lump, tm);
-    mt = set_mat(mt, set_share(wx, wy), tm);
-    hcell[i] = h.x;
+    mt = set_mat(mt, ss, tm);
+    hcell[i] = h.x + set_rise(ss, tm);
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
     mcell[i] = mat_pack(mt);
@@ -2686,8 +2696,16 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let sp = steer_px(x, y);
         if (sp.y > 0.0) {
             let d = sp.x;
-            let dr = abs(d - STEER_RING * max(round(d / STEER_RING), 1.0));
-            let line = 1.0 - smoothstep(0.6 / P.zoom, 1.6 / P.zoom, dr);
+            let ring = STEER_RING * max(round(d / STEER_RING), 1.0);
+            let dr = abs(d - ring);
+            // No ring within half a ring of the field's reach. There the
+            // field stops on its blocks' stepped edge, so a ring drew as a
+            // dotted line round the pull's rim; the game's reach (60 dish
+            // cells, 120 cells) is a multiple of the spacing, so its last
+            // ring fell on that edge (seen on planets 2 and 3, 11-18). The
+            // pull's rim is where the rings stop.
+            let kept = select(1.0, 0.0, P.steer_reach > 0.0 && ring > P.steer_reach - 0.5 * STEER_RING);
+            let line = (1.0 - smoothstep(0.6 / P.zoom, 1.6 / P.zoom, dr)) * kept;
             c += STEER_RGB * STEER_LINE * line * (0.25 + 0.75 * exp(-d / 110.0)) * sp.y * (0.3 + 0.7 * under);
         }
     }

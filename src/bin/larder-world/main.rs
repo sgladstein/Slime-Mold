@@ -1960,6 +1960,9 @@ impl App {
             let nb = (e.dish.w.div_ceil(b) * e.dish.h.div_ceil(b)) as u32;
             let field = (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32 + e.n + 2 * nb;
             v.set_steer(if e.lured { field } else { 0 });
+            // How far it reaches, as `time_lure_paths` builds it, so no
+            // ring is drawn on its rim (Look and interface, 2026-11-18).
+            v.set_steer_reach(((g.rules.lure_reach.max(0.0) * g.world.scale()) as u32) as f32);
             // The mini-bosses' bodies (2026-11-16): each live or fading
             // one's lump, centre, look by its kind, strength by its grade,
             // look left by its fade and a leech's fill by its take.
