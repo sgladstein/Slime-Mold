@@ -44,18 +44,38 @@ use super::{Game, Kind, Rng, World};
 /// of the raid should be picked randomly (each raid) from a normal
 /// distribution". Until then a raid came every 400 food the slime ate
 /// (40-150 s apart): on the Fork turtle every 42 s like a clock.
+///
+/// **Rare early, often later** (2026-11-18, the Enemy lane; the owner's
+/// play notes, 15:56Z: "The raids come too early and too often (or at
+/// least too often in the early game). Occasionally a raid can happen early
+/// in a session but not every time. and they can happen often later on in
+/// a session, but not right at the begining. It is hard to build pumps,
+/// walls, turrets because you get raided so quick"). Direction's targets:
+/// the first raid usually between 3:00 and 5:00, about one game in five
+/// before 2:00; the gap from about 150 s falling to about 45 s by 10:00 on
+/// the planet. Until then the first came at 75 +/- 15 s from the world's
+/// start and every 60 +/- 20 s after, the same all game (the owner met a
+/// raid on his pumps about a minute in, every game). Times now count from
+/// the landing (`Game::landed`), so a planet whose slime grows alone first
+/// does not raid the squad as it lands.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RaidRules {
     /// The time till the next raid is drawn from a normal distribution
-    /// with this mean and `every_sd` (0: raids off), never under `min`.
-    /// 60 s: the food rule's gaps were 42 s on the Fork turtle and up to
-    /// 150 s on a lean slime; a minute keeps about four in the first five
-    /// minutes.
+    /// with this mean and `every_sd` (0: raids off), never under `min`, at
+    /// the landing; both fall to `late` of themselves by `ramp` seconds
+    /// after it, in a straight line, and stay there.
     pub every: f32,
     pub every_sd: f32,
-    /// The first raid's time from the landing, drawn the same way.
+    pub late: f32,
+    pub ramp: f32,
+    /// The first raid's time from the landing, drawn the same way; with
+    /// the chance `early` it is drawn from `early_at` and `early_sd`
+    /// instead (an early raid now and then, not every game).
     pub first: f32,
     pub first_sd: f32,
+    pub early: f32,
+    pub early_at: f32,
+    pub early_sd: f32,
     pub min: f32,
     /// The raid's size, a share of the slime's mass: drawn from a normal
     /// distribution with this mean and `size_sd` each raid, kept within
@@ -78,10 +98,18 @@ pub struct RaidRules {
 impl Default for RaidRules {
     fn default() -> Self {
         RaidRules {
-            every: 60.0,
-            every_sd: 20.0,
-            first: 75.0,
-            first_sd: 15.0,
+            // 150 +/- 45 s at the landing, 45 +/- 13.5 s from 10:00.
+            every: 150.0,
+            every_sd: 45.0,
+            late: 0.3,
+            ramp: 600.0,
+            // 240 +/- 40 s: 3:00 to 5:00 holds 87% of the draws, and
+            // one game in five draws from 80 +/- 20 s instead.
+            first: 240.0,
+            first_sd: 40.0,
+            early: 0.2,
+            early_at: 80.0,
+            early_sd: 20.0,
             min: 20.0,
             size: 0.15,
             size_sd: 0.06,
@@ -92,6 +120,16 @@ impl Default for RaidRules {
             last_stand: false,
             last_stand_at: 0.25,
         }
+    }
+}
+
+impl RaidRules {
+    /// The gap's mean and spread `since` game seconds after the landing:
+    /// `every` and `every_sd` falling to `late` of themselves by `ramp`.
+    pub fn gap_at(&self, since: f32) -> (f32, f32) {
+        let f = if self.ramp > 0.0 { (since / self.ramp).clamp(0.0, 1.0) } else { 1.0 };
+        let k = 1.0 + (self.late - 1.0) * f;
+        (self.every * k, self.every_sd * k)
     }
 }
 
@@ -166,6 +204,14 @@ impl Raids {
         let u = self.rng.f32().max(1e-7);
         let v = self.rng.f32();
         m + sd * (-2.0 * u.ln()).sqrt() * (std::f32::consts::TAU * v).cos()
+    }
+
+    /// The first raid's time from the landing, game seconds: early with
+    /// the chance `early`, else from `first`; never under `min`.
+    pub fn first_raid(&mut self, r: &RaidRules) -> f32 {
+        let early = r.early > 0.0 && self.rng.f32() < r.early;
+        let (m, sd) = if early { (r.early_at, r.early_sd) } else { (r.first, r.first_sd) };
+        self.normal(m, sd).max(r.min)
     }
 }
 
@@ -534,7 +580,7 @@ impl<W: World> Game<W> {
         let next = match self.raids.next {
             Some(t) => t,
             None => {
-                let t = gap(&mut self.raids, r.first, r.first_sd);
+                let t = self.landed + secs(self.raids.first_raid(&r));
                 self.raids.next = Some(t);
                 t
             }
@@ -544,7 +590,9 @@ impl<W: World> Game<W> {
         }
         let Some((aim, to)) = self.raid_aim() else { return };
         let size = self.raids.normal(r.size, r.size_sd).clamp(r.size_min, r.size_max);
-        self.raids.next = Some(now + gap(&mut self.raids, r.every, r.every_sd));
+        let since = now.saturating_sub(self.landed) as f32 / self.rules.tps as f32;
+        let (m, sd) = r.gap_at(since);
+        self.raids.next = Some(now + gap(&mut self.raids, m, sd));
         self.send_raid(aim, to, size, r.share, false);
     }
 
@@ -636,8 +684,36 @@ impl<W: World> Game<W> {
 
 #[cfg(test)]
 mod tests {
-    use super::round_walk;
+    use super::{round_walk, RaidRules, Raids};
     use crate::mould::big::{units_field_for, RAID_BLOCK};
+
+    /// **Raids are rare early and often later** (2026-11-18, the owner's
+    /// play notes and Direction's targets): over 4,000 games the first
+    /// raid comes before 2:00 in about one in five, and the rest mostly
+    /// between 3:00 and 5:00; the gap's mean falls from 150 s at the
+    /// landing to 45 s by 10:00 and stays there.
+    #[test]
+    fn raids_are_rare_early_and_often_later() {
+        let r = RaidRules::default();
+        let n = 4000;
+        let firsts: Vec<f32> = (0..n).map(|seed| Raids::new(seed).first_raid(&r)).collect();
+        let early = firsts.iter().filter(|&&t| t < 120.0).count() as f32 / n as f32;
+        let late: Vec<f32> = firsts.iter().copied().filter(|&t| t >= 120.0).collect();
+        let usual = late.iter().filter(|&&t| (180.0..=300.0).contains(&t)).count() as f32 / late.len() as f32;
+        assert!((0.17..0.23).contains(&early), "one game in five raided before 2:00: {early}");
+        assert!(usual > 0.8, "the rest mostly between 3:00 and 5:00: {usual}");
+        assert!(firsts.iter().all(|&t| t >= r.min), "never under the floor");
+        assert_eq!(r.gap_at(0.0), (150.0, 45.0));
+        let (m, sd) = r.gap_at(600.0);
+        assert!((m - 45.0).abs() < 1e-3 && (sd - 13.5).abs() < 1e-3, "{m} {sd} at 10:00");
+        assert_eq!(r.gap_at(900.0), r.gap_at(600.0), "and stays there");
+        assert!((1..60).all(|k| r.gap_at(k as f32 * 10.0).0 < r.gap_at((k - 1) as f32 * 10.0).0), "falls all the way");
+        // No ramp: the gap stays `every`; no early chance: always `first`.
+        let flat = RaidRules { late: 1.0, early: 0.0, ..r };
+        assert_eq!(flat.gap_at(900.0), (150.0, 45.0));
+        let mean = (0..2000).map(|seed| Raids::new(seed).first_raid(&flat)).sum::<f32>() / 2000.0;
+        assert!((236.0..244.0).contains(&mean), "no early ones: mean {mean}");
+    }
 
     /// A block 70 fine cells right of the test's lure, past a reach of 60.
     fn behind_cut(bw: usize) -> usize {

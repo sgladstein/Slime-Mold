@@ -31,7 +31,8 @@
 //! raid makes. It breaks up when it has lost most of its members or hunted
 //! `life` seconds; its members are then slime far from food, which withers.
 //!
-//! On in a run (`BossRules::for_depth`, rising with the planet); off in
+//! On in a run from planet 2 (`BossRules::for_depth`, rising with the
+//! planet; none on planet 1 since 11-18, the owner's play notes); off in
 //! `Rules::default()` so the censuses and replays keep their games; a film
 //! turns it on with `set=boss_every=40` or stages one with `boss=T,X,Y`.
 
@@ -141,13 +142,23 @@ pub struct BossRules {
 }
 
 impl BossRules {
-    /// A run's planet `depth` (1 to 8): the chance rises through the run
-    /// (owner 04:58Z), from a crowding chance every 150 s and a cut-off
-    /// part's 2% a second on planet 1 to every 45 s and 10% on planet 8;
-    /// at most one at once on planets 1-3, two from 4. Specks (breakaways)
-    /// stay more common early (the slime-enemy thread's).
+    /// A run's planet `depth` (1 to 8): none on planet 1, then the chance
+    /// rises through the run (owner 04:58Z), from a crowding chance every
+    /// 150 s and a cut-off part's 2% a second on planet 2 to every 45 s and
+    /// 10% on planet 8; at most one at once on planets 2-3, two from 4.
+    /// Specks (breakaways) stay more common early (the slime-enemy
+    /// thread's).
+    ///
+    /// None on planet 1 since 2026-11-18 (the owner's play notes, 15:56Z:
+    /// "Mini-bosses also shouldn't show up in world one. that should be
+    /// part of progression"). Until then the curve started on planet 1;
+    /// it moved up a planet unchanged, so planet 2 has what planet 1 had
+    /// and planet 8 still has every 45 s and 10%.
     pub fn for_depth(depth: u32) -> BossRules {
-        let t = (depth.clamp(1, 8) - 1) as f32 / 7.0;
+        if depth <= 1 {
+            return BossRules::default();
+        }
+        let t = (depth.min(8) - 2) as f32 / 6.0;
         BossRules {
             every: 150.0 + (45.0 - 150.0) * t,
             every_sd: 30.0 + (10.0 - 30.0) * t,
