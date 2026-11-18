@@ -21,9 +21,13 @@ on:
   schedule:
     - cron: "17 6 * * *"
 
+# One at a time, and a run in progress finishes: GitHub keeps only the
+# newest waiting run. (Cancelling in progress, the first cut, meant a
+# landing every few minutes cancelled each curve before it ended: the
+# first run on main, 11-18 09:11Z, was cancelled at 09:17Z.)
 concurrency:
   group: run-bot
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
