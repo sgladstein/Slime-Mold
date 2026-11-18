@@ -48,6 +48,16 @@ plays. The siren and the outpost stay out.
 The dart, the Lure's second form (lab part three), waits until he has played
 the building.
 
+**His play notes of 11-18 15:56Z come first** ([record](wiki/decisions-game.md)):
+Enemy makes raids rare early and more frequent later in a planet (first
+raid mostly 3:00 to 5:00, one game in five before 2:00, the gap from about
+150 s to 45 s by 10:00), takes mini-bosses off planet 1, and makes slime
+that leaves its body move as one (his words: the surge at the squad is
+fine). Engine and tools ends the run when the last soldier dies. The Lab
+explores the slime as one body on its branch. Direction set a planet won
+only when its last walker dies (`WIN_SHARE` 0) and planet 2's slime at
+0.6 of its size (#485).
+
 **Parked until Milestone 1 passes:** gun steps E and F, the Mortar and
 Pinwheel mini-bosses, the next turret body, twists and rescue planets, the
 Trunk's cords, more planet polish, the player's own mould (D12), and
