@@ -61,9 +61,12 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
   1795015831, eight held at the start, 150 s): old auto 804 shots, 3,058
   kills, health 60%; new defend 1,208, 3,166, 83%; new free 1,613, 3,204,
   75%; volley at the densest slime 1,632-1,700, 3,032-3,117, 41-49%.
-- Not done: manual fire still lands every bullet on one point. If he still
-  wants it spread, the cheap next step is each soldier aiming at the
-  thickest block near the cursor point instead of the point itself.
+- Merged as #495. Spreading the volley over the slime round the cursor was
+  then tried at his request and not kept (wins +10-16% at a body's edge,
+  loses at a stream past rock and among loose walkers; `Reports/dead-ends.md`).
+- Next: Look's A3 standing half, a squad that stands or drains holds elbow
+  room (`steer.rs`; their numbers: nearest neighbour 0.69 of elbow room on a
+  crystal). Look and interface will film it.
 
 **2026-11-18, batch 2 (one PR after #448: Heave and Corral merged, shop offers, Free recruits off the list).**
 

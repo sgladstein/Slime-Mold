@@ -48,5 +48,28 @@ the difference is the bites taken. Clips: before and after (defend) at zoom 6,
 64-90 s, and zoom 12, 68-80 s, on llvmpipe, frames joined by
 `make_clips.py`.
 
-Not done: the volley still puts every bullet on the cursor point. Spreading it
-over the thickest blocks near the cursor is the next step if he asks.
+## Spreading the volley (tried, not kept)
+
+He asked for it (17:40Z: "if that improves my killing sure"). Five read
+probes round the volley point (one at it, four on a ring 4 dish cells out),
+each member firing at one of their finds in turn, only finds it can see. Kills
+paired against the single point on main after #495 (the raid ramp had moved
+the first raid later, so the loose scene is the early walkers), same build
+with `set=volley_spread=0`:
+
+| post | point | spread | change |
+|---|---:|---:|---:|
+| main body's edge (170,105) | 3,103 | 3,491 | +12.5% |
+| (166,109) | 3,437 | 3,995 | +16.2% |
+| (174,101) | 2,866 | 3,157 | +10.2% |
+| stream past a rock (204,158) | 2,498 | 2,398 | -4.0% |
+| (200,162) | 2,832 | 2,573 | -9.1% |
+| (208,154) | 1,838 | 1,797 | -2.2% |
+| loose walkers, the start (340,75), 150 s | 1,496 | 1,397 | -6.6% |
+| (336,79) | 1,401 | 1,375 | -1.9% |
+| (344,71) | 1,697 | 1,389 | -18.1% |
+
+Among loose walkers the squad kept 10 to 14 points more health, but killed
+fewer. Keeping only finds half as thick as the thickest changed nothing clear.
+The finds held 0 to 6 walkers a block in every scene, so the game has nothing
+to tell the edge where it wins from the rest. Not kept: `Reports/dead-ends.md`.
