@@ -1,0 +1,114 @@
+<title>Two Slimes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #0e1316; --panel: #161d21; --line: #27323a; --fg: #ece6d8; --dim: #9aa5a8;
+    --prey: #f3a63c; --hunter: #8fe04a; --head: #fff8e8;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5f1e8; --panel: #fffdf7; --line: #d9d2c2; --fg: #262a2b; --dim: #626b6d;
+      --prey: #a85d00; --hunter: #3d7a1c; --head: #14181a; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f1e8; --panel: #fffdf7; --line: #d9d2c2; --fg: #262a2b; --dim: #626b6d;
+    --prey: #a85d00; --hunter: #3d7a1c; --head: #14181a; color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-block: 40px 72px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  h1, h2 { font-family: "Space Grotesk", Inter, system-ui, sans-serif; color: var(--head); text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; }
+  h2 { font-size: 1.45rem; line-height: 1.2; font-weight: 600; margin-top: 56px; }
+  p, li { max-width: 68ch; }
+  p { margin: 0.7em 0 0; }
+  .eyebrow { font-size: 0.78rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+  .lede { font-size: 1.14rem; margin-top: 18px; max-width: 62ch; }
+  .g { color: var(--hunter); font-weight: 600; } .o { color: var(--prey); font-weight: 600; }
+  .dim { color: var(--dim); }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 24px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  .card h3 { font: 600 1.05rem "Space Grotesk", Inter, sans-serif; margin: 0 0 8px; color: var(--head); }
+  video { width: 100%; border-radius: 6px; display: block; background: #000; aspect-ratio: 16 / 10; }
+  svg { width: 100%; height: auto; display: block; margin-top: 10px; }
+  .counts { font-size: 0.88rem; color: var(--dim); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .tbl { overflow-x: auto; margin-top: 18px; }
+  table { border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; min-width: 560px; }
+  th, td { text-align: right; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--dim); font-weight: 500; }
+  .rec { background: var(--panel); border-left: 3px solid var(--hunter); padding: 16px 20px; margin-top: 18px; border-radius: 0 8px 8px 0; }
+  ol { padding-left: 1.3em; } li { margin-top: 0.4em; }
+  code { font-size: 0.86em; }
+</style>
+<div class="wrap">
+  <div class="eyebrow">Lab · 2026-11-18 · lab branch only, not in the game</div>
+  <h1>Two Slimes</h1>
+  <p class="lede">A second slime species that eats the first. The <span class="g">green hunter</span> takes no food from crystals: it lives only on the <span class="o">orange slime</span> it converts. One number, its edge, decides whether it eats the planet in two minutes, in five, or lives beside it.</p>
+
+  <h2>From the model</h2>
+  <p>The two species share the ground (one walker a cell, so bodies push), the crystals, the alarm and the squad. Each lays its own trail. The engine's only fight was conversion: a walker joins the species whose trail outweighs its own. Measured on 11-11 and 11-12, that stalls at an even split. Here the fight is one way, the green is drawn to orange trail and the orange turns from the green's, an orange walker turns green where green trail is at least <b>edge</b> times its own, and the green starves unless it converts. Converted walkers keep their energy, so the prey's food becomes the hunter's.</p>
+
+  <h2>Planet 1, five minutes</h2>
+  <p class="dim">Run seed 1, idle squad. 300 game seconds at one frame a second, played at 20 fps. Walker counts every 5 s below each clip.</p>
+  <div class="pair">
+    <div class="card">
+      <h3>Control: conversion only, both eat crystals</h3>
+      <video src="base.mp4" poster="base.jpg" controls muted loop playsinline preload="metadata"></video>
+      <svg id="c-base" viewBox="0 0 400 150" role="img" aria-label="Walker counts, control"></svg>
+      <div class="counts">At 2:00 <span class="g">14,201</span> / <span class="o">10,891</span>. At 5:00 <span class="g">13,914</span> / <span class="o">12,325</span>. The border holds.</div>
+    </div>
+    <div class="card">
+      <h3>Starving hunter, edge 0.8</h3>
+      <video src="hunt.mp4" poster="hunt.jpg" controls muted loop playsinline preload="metadata"></video>
+      <svg id="c-hunt" viewBox="0 0 400 150" role="img" aria-label="Walker counts, starving hunter"></svg>
+      <div class="counts">At 1:20 <span class="g">13,930</span>, at 1:40 <span class="g">881</span>: the hunter starves off its crystal. A front then crosses the orange body: <span class="g">2,766</span> / <span class="o">9,083</span> at 4:00, <span class="g">12,840</span> / <span class="o">107</span> at 5:00.</div>
+    </div>
+  </div>
+
+  <h2>The edge is the dial</h2>
+  <p class="dim">Green / orange walkers, one run each, run seed 1.</p>
+  <div class="tbl"><table>
+    <tr><th>Arm</th><th>1:00</th><th>2:00</th><th>4:00</th><th>End</th></tr>
+    <tr><td>Control (1.2, both eat)</td><td>13,397 / 12,538</td><td>14,201 / 10,891</td><td>14,161 / 12,078</td><td>5:00 13,914 / 12,325</td></tr>
+    <tr><td>Starving hunter, 1.0</td><td>13,679 / 11,932</td><td>998 / 9,588</td><td>2,179 / 9,768</td><td>7:00 4,260 / 10,345</td></tr>
+    <tr><td>Starving hunter, 0.9</td><td>13,674 / 11,937</td><td>265 / 10,387</td><td>457 / 11,489</td><td>7:00 1,588 / 13,168</td></tr>
+    <tr><td>Starving hunter, 0.8</td><td>13,651 / 11,957</td><td>1,556 / 9,016</td><td>2,779 / 9,087</td><td>orange gone 4:59</td></tr>
+    <tr><td>Starving hunter, 0.7</td><td>13,647 / 11,964</td><td>2,395 / 8,148</td><td></td><td>orange gone 2:29</td></tr>
+    <tr><td>Starving hunter, 0.6</td><td>14,157 / 11,450</td><td></td><td></td><td>orange gone 1:40</td></tr>
+    <tr><td>Hunter that eats crystals, 0.8</td><td>13,850 / 11,987</td><td>15,401 / 9,539</td><td>13,641 / 8,709</td><td></td></tr>
+  </table></div>
+
+  <h2>Recommendation</h2>
+  <div class="rec">
+    <p style="margin-top:0"><b>Keep the starving hunter as the second species.</b> It is the first fight between two slimes that does not stall. Not for the game yet; three steps first:</p>
+    <ol>
+      <li><b>Start it small.</b> Here it starts as half the walkers on a crystal it cannot eat, and nine tenths starve in 20 s. A small seed near the prey would show the chase without the crash.</li>
+      <li><b>Make it a second enemy.</b> Here it is the garden's green mould, so it gathers round the squad. In the game it would be a strain of the slime with its own colour, counted in the planet's slime, so one slime eating the other does not end the planet.</li>
+      <li><b>The player's angle,</b> the lab's next run: lead the orange into the hunter with the Lure and see whether a hunter at 1.0 then eats the slime faster than turrets do.</li>
+    </ol>
+  </div>
+  <p class="dim" style="margin-top:28px">Code: lab branch <code>claude/project-thread-4tc75h</code>, commits 849670d and a96e78c (GPU only, never merges). Keys: <code>own=1 cycle=1 next=1 prev=-1</code>, <code>LAB_CONVERT</code> (the edge), <code>LAB_HUNTER</code> (no crystal share). Report: <code>Reports/lab-species-2026-11-18/</code>.</p>
+</div>
+<script>
+const DATA = {"hunt": [[0, 12858, 12862], [5, 12860, 12861], [10, 12864, 12824], [15, 12898, 12778], [20, 12933, 12725], [25, 13058, 12593], [30, 13211, 12436], [35, 13327, 12311], [40, 13429, 12203], [45, 13503, 12123], [50, 13561, 12059], [55, 13592, 12020], [60, 13651, 11957], [65, 13672, 11934], [70, 13712, 11886], [75, 13783, 11811], [80, 13962, 11626], [85, 8978, 11407], [90, 2386, 10830], [95, 928, 10473], [100, 956, 9952], [105, 1319, 9415], [110, 1493, 9162], [115, 1536, 9072], [120, 1556, 9016], [125, 1591, 8974], [130, 1573, 8956], [135, 1591, 8929], [140, 1585, 8904], [145, 1568, 8880], [150, 1576, 8864], [155, 1586, 8844], [160, 1592, 8849], [165, 1548, 8862], [170, 1554, 8885], [175, 1629, 8888], [180, 1720, 8873], [185, 1881, 8813], [190, 2053, 8757], [195, 2224, 8698], [200, 2331, 8703], [205, 2386, 8755], [210, 2450, 8801], [215, 2495, 8861], [220, 2548, 8911], [225, 2609, 8952], [230, 2663, 9007], [235, 2718, 9049], [240, 2779, 9087], [245, 2835, 9118], [250, 3121, 9128], [255, 4847, 7484], [260, 5780, 6628], [265, 6608, 5861], [270, 7765, 4772], [275, 8824, 3781], [280, 9619, 3059], [285, 10418, 2331], [290, 11071, 1762], [295, 12002, 909], [299, 12840, 107]], "base": [[0, 12858, 12862], [5, 12866, 12861], [10, 12949, 12822], [15, 13070, 12769], [20, 13133, 12739], [25, 13166, 12697], [30, 13199, 12664], [35, 13226, 12635], [40, 13251, 12607], [45, 13231, 12637], [50, 13262, 12625], [55, 13305, 12609], [60, 13397, 12538], [65, 13502, 12463], [70, 13591, 12391], [75, 13687, 12311], [80, 13748, 12257], [85, 13819, 12141], [90, 13872, 11618], [95, 13952, 11287], [100, 13986, 11151], [105, 14051, 11025], [110, 14066, 10995], [115, 14133, 10939], [120, 14201, 10891], [125, 14249, 10869], [130, 14314, 10825], [135, 14358, 10805], [140, 14386, 10799], [145, 14386, 10832], [150, 14410, 10856], [155, 14417, 10908], [160, 14368, 10981], [165, 14317, 11056], [170, 14325, 11084], [175, 14307, 11157], [180, 14331, 11202], [185, 14291, 11308], [190, 14287, 11409], [195, 14252, 11527], [200, 14233, 11661], [205, 14222, 11776], [210, 14208, 11882], [215, 14217, 11945], [220, 14237, 11964], [225, 14234, 11993], [230, 14217, 12018], [235, 14184, 12054], [240, 14161, 12078], [245, 14160, 12079], [250, 14128, 12111], [255, 14128, 12111], [260, 14111, 12128], [265, 14057, 12182], [270, 14038, 12201], [275, 14040, 12199], [280, 14015, 12224], [285, 13991, 12248], [290, 13963, 12276], [295, 13941, 12298], [300, 13914, 12325]]};
+for (const k of ["base", "hunt"]) {
+  const svg = document.getElementById("c-" + k), pts = DATA[k];
+  const W = 400, H = 150, L = 34, B = 20, T = 8, max = 16000;
+  const x = t => L + (t / 300) * (W - L - 8), y = v => T + (1 - v / max) * (H - T - B);
+  let s = "";
+  for (const v of [0, 5000, 10000, 15000]) s += '<line x1="' + L + '" x2="' + (W - 8) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)"/><text x="' + (L - 4) + '" y="' + (y(v) + 4) + '" font-size="10" text-anchor="end" fill="var(--dim)">' + (v / 1000) + 'k</text>';
+  for (const t of [0, 60, 120, 180, 240, 300]) s += '<text x="' + x(t) + '" y="' + (H - 4) + '" font-size="10" text-anchor="' + (t == 300 ? 'end' : 'middle') + '" fill="var(--dim)">' + (t / 60) + ':00</text>';
+  for (const [i, c] of [[1, "var(--hunter)"], [2, "var(--prey)"]]) s += '<polyline fill="none" stroke="' + c + '" stroke-width="2" points="' + pts.map(p => x(p[0]) + "," + y(p[i])).join(" ") + '"/>';
+  svg.innerHTML = s;
+}
+</script>

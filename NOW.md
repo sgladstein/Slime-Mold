@@ -33,7 +33,7 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 | Squad and arsenal | 5 | Done: the brief's five jobs, with Provoke and Still (#448) and the shop's offers (#459); no new card families. The Lure building (#461), then the Lure on planet 1 and two prices (below). Next is what his play notes say about control and the gun. |
 | Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad (the flinch's look is done, #454). One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
 | Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452). The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
-| Lab | none | Steering is delivered and closed, in four parts ([report](Reports/lab-steering-2026-11-17/README.md)): the lure, no bullet steering card, a dart that sets a lure where the squad aims, and what becomes of a colony pulled off its crystal. Now: a second slime species that fights the first, as a clip and a recommendation, on its own branch. |
+| Lab | none | Delivered: steering, closed in four parts ([report](Reports/lab-steering-2026-11-17/README.md)), and a second slime species, a hunter that eats the first ([report](Reports/lab-species-2026-11-18/README.md); kept as a second enemy strain, not in the game). Now: one more step, leading the slime into the hunter with the Lure. Then the forest floor. |
 
 **The Lure, for planets 1 to 3** (his card, 11-18 03:03Z: "Lure now, in the
 three planets"; [lab report](Reports/lab-steering-2026-11-17/README.md)). A
