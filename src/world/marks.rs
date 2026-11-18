@@ -16,7 +16,8 @@ pub const MARK_WORDS: usize = 12;
 /// The most marks a frame (the Larder thread's budget: two teams of 40,
 /// buildings, bait, shot lines and range rings, about 1,000). 4096 since
 /// 2026-11-16, for the 200-soldier cap (`Rules::max_squad`): a body, a
-/// health bar, a selection ring and a muzzle flash each, the dead (drawn
+/// health bar, a selection ring, a muzzle flash and a head (drawn again
+/// above every body, `Marks::soldier_head`) each, the dead (drawn
 /// first, and never removed in a level) and every bullet's tracer could
 /// pass 2,048, and past the cap the newest marks, the living, are dropped.
 /// The marks pass costs by marks drawn, not by the buffer.
@@ -45,6 +46,7 @@ pub enum Shape {
     /// full one), bits 17-24 the pulse of a take from a crystal. Drawn and lit in the view's shader.
     /// A dead one (`Marks::fallen`) reads bits 0-7 as how far its pool of
     /// blood has spread (0-255) and bits 9-16 as the seed of its shape.
+    /// Bit 25 draws the helmet alone (`Marks::soldier_head`).
     Soldier = 7,
     /// A top-down building `hw` across its footprint radius (world cells
     /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren,
@@ -300,6 +302,21 @@ impl Marks {
         let turn = toward.rem_euclid(std::f32::consts::TAU) / std::f32::consts::TAU;
         let word = byte(bite) | ((turn * 65535.0).round() as u32) << 8;
         self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, colour2: word.to_le_bytes(), ..Mark::new(Shape::Soldier, at, (r, r), colour) });
+    }
+
+    /// Soldier `soldier_bitten`'s helmet alone, drawn again above every
+    /// figure so a packed squad shows each head (the brief: "space the
+    /// squad so 40 soldiers can be counted"). Same arguments as the figure
+    /// it tops, so its pixels are that figure's own where its helmet is.
+    #[allow(clippy::too_many_arguments)]
+    pub fn soldier_head(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, carry: f32, take: f32, bite: f32, toward: f32) {
+        let n = self.list.len();
+        self.soldier_bitten(at, r, facing, colour, flash, true, carry, take, bite, toward);
+        if self.list.len() > n {
+            let m = &mut self.list[n];
+            m.extra |= 1 << 25;
+            m.flags &= !MINIMAP;
+        }
     }
 
     /// A fallen soldier at `at`, `r` world cells across the radius, lying

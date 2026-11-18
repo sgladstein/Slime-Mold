@@ -39,19 +39,24 @@ https://claude.ai/artifact/9vsJuSofq14P5jShjiWyqe): gold beads lit by the
 body's key light, each with a shadow (`draw_specks`, `DROP_*`);
 `DROP_GLOW` is the number if hits read too quiet at zoom 6.
 
+**Also on main:** the fallen soldier (#491; `Reports/fallen-soldier-2026-11-18/`,
+page https://claude.ai/artifact/A6fJKZbrQDx9PCwuHWFBTj): the `dead` layer
+of `sprites/soldier.svg` is a soldier on its back in dull olive (atlas tile
+3; `render.js` reproduces the other tiles byte for byte), over
+`blood_pool` in `view.wgsl`, which spreads over `POOL_GROW` 2.5 s
+(`Look::fallen` in `main.rs`; `Marks::fallen`). `BLOOD`, `BLOOD_RIM` and
+`POOL_R` are the numbers if the pools read too loud.
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
 time.
 
-- The fallen soldier (the owner's note 11-18 16:12Z, "the body on the
-  floor looks really bad"; `Reports/fallen-soldier-2026-11-18/`, page
-  https://claude.ai/artifact/A6fJKZbrQDx9PCwuHWFBTj). The `dead` layer of
-  `sprites/soldier.svg` is a soldier on its back in dull olive (atlas tile
-  3 re-rendered; `render.js` reproduces the other tiles byte for byte), and
-  `blood_pool` in `view.wgsl` draws a pool under it that spreads over
-  `POOL_GROW` 2.5 s (`Look::fallen` in `main.rs`, Engine's file: a field,
-  its count and the reset at the fall; `Marks::fallen` carries the share
-  and a seed). `BLOOD`, `BLOOD_RIM` and `POOL_R` are the numbers if the
-  pools read too loud.
+- Heads on top (Look A3; `Reports/squad-heads-2026-11-18/`, page
+  https://claude.ai/artifact/F58mCnsvBbT2CMUk2Rhz31): each living
+  soldier's helmet drawn again above every body (`Marks::soldier_head`,
+  `HEAD_ONLY` in `view.wgsl`, the loop after the figures in `draw.rs`),
+  with a ring of its own figure 1.5 px wide; a lone soldier is unchanged.
+  How close soldiers stand (`steer_all`'s soft push: 0.69 of elbow room
+  draining a crystal) went to Squad and arsenal with the films.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
@@ -65,8 +70,10 @@ while Squad asked to keep it.
 **Next, in order.**
 
 1. The rest of Look A, from the ranked list in
-   `wiki/looks/art-direction.md`: a hit's hole and how it closes, a squad
-   of 40 you can count, no effect bigger than its damage.
+   `wiki/looks/art-direction.md`: no effect bigger than its damage (the
+   bite light reaches 3.5 dish cells where a bite reaches 1.5), a Mind
+   status on the slime, fire at zoom 12; a hit's lasting hole would be a
+   slime rule (Enemy's) if the owner wants one.
 2. The Experiments tab's own look (still Engine's first tab, one row a
    switch), and the experiments in the pause menu.
 3. Win and lose screens with the planet's numbers.

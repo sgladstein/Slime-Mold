@@ -950,6 +950,16 @@ impl App {
             // above as light (gun look, 2026-11-15).
             self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
         }
+        // Every living soldier's head again, above every body, so a packed
+        // squad shows each one (Look A3, a squad of 40 you can count: at
+        // planet 1's first crystal 35 soldiers stood 3.3 fine cells from
+        // their nearest, under half a figure across, and later figures'
+        // shoulders hid earlier ones' heads).
+        for (k, s) in g.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+            let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
+            let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
+            self.marks.soldier_head(drawn_at(s, &l, r), r, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
+        }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {
             if s.alive {

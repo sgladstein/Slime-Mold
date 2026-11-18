@@ -1,0 +1,98 @@
+<title>Countable Squad</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; each scene is a pair, before on the left and after on the right (stacked on a phone), counts under each */
+:root{
+  --bg:#f3f2ec; --panel:#e8e6dc; --fg:#1d211c; --muted:#5b6157;
+  --accent:#b0702a; --soft:#f1e3cf; --line:#cfccbf;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:720px){.grid{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure video,figure img{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figure img.px{image-rendering:pixelated}
+figcaption{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:.92rem;color:var(--muted)}
+.side{font:750 1.1rem/1 var(--display);color:var(--fg);min-width:4.6em}
+.counts{font:13px/1.4 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.note{background:var(--soft);border-radius:8px;padding:16px 18px;max-width:760px;display:flex;flex-direction:column;gap:8px}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:760px}
+footer{font-size:.85rem;color:var(--muted);max-width:760px}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · Look A · 2026-11-18</span>
+  <h1>Every soldier's head shows in a packed squad</h1>
+  <p class="lede">When 30 or more soldiers crowd a crystal they stand closer than their figures are wide, and each one's shoulders covered the head of whoever was drawn before it, so the squad read as one olive heap. Now every living soldier's helmet is drawn again above all the bodies, with a thin ring of its own figure round it. Heads are the highest thing seen from above, so this is also the right order. A soldier standing alone looks exactly as before. Each pair is one game drawn two ways, planet 1, run seed 1, at the game's own pace.</p>
+</header>
+
+<section>
+  <h2>35 soldiers draining a crystal, zoom 6</h2>
+  <p class="prose">86 to 92 s. Counted at 90 s: a helmet showing at its soldier's own place.</p>
+  <div class="grid">
+    <figure><video src="drain6-before.mp4" poster="drain6-before.jpg" autoplay muted loop playsinline aria-label="Before: the squad heaped on the crystal"></video><figcaption><span class="side">Before</span><span class="counts">25 of 35 heads show</span></figcaption></figure>
+    <figure><video src="drain6-after.mp4" poster="drain6-after.jpg" autoplay muted loop playsinline aria-label="After: the squad heaped on the crystal"></video><figcaption><span class="side">After</span><span class="counts">35 of 35 show · 0.50% of the picture changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>The same, zoom 12</h2>
+  <div class="grid">
+    <figure><video src="drain12-before.mp4" poster="drain12-before.jpg" autoplay muted loop playsinline aria-label="Before: the squad heaped on the crystal, close"></video><figcaption><span class="side">Before</span><span class="counts">20 of the 31 on screen show</span></figcaption></figure>
+    <figure><video src="drain12-after.mp4" poster="drain12-after.jpg" autoplay muted loop playsinline aria-label="After: the squad heaped on the crystal, close"></video><figcaption><span class="side">After</span><span class="counts">31 of 31 show · 1.54% of the picture changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>42 soldiers walking to the next crystal, zoom 6</h2>
+  <p class="prose">118 to 124 s.</p>
+  <div class="grid">
+    <figure><video src="walk6-before.mp4" poster="walk6-before.jpg" autoplay muted loop playsinline aria-label="Before: the squad walking"></video><figcaption><span class="side">Before</span><span class="counts"></span></figcaption></figure>
+    <figure><video src="walk6-after.mp4" poster="walk6-after.jpg" autoplay muted loop playsinline aria-label="After: the squad walking"></video><figcaption><span class="side">After</span><span class="counts">0.55% of the picture changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>The same, zoom 12</h2>
+  <div class="grid">
+    <figure><video src="walk12-before.mp4" poster="walk12-before.jpg" autoplay muted loop playsinline aria-label="Before: the squad walking, close"></video><figcaption><span class="side">Before</span><span class="counts"></span></figcaption></figure>
+    <figure><video src="walk12-after.mp4" poster="walk12-after.jpg" autoplay muted loop playsinline aria-label="After: the squad walking, close"></video><figcaption><span class="side">After</span><span class="counts">0.76% of the picture changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>What to look for</h2>
+  <ul>
+    <li><strong>One white dome per soldier,</strong> each with a thin dark ring, so you can count the squad by its heads.</li>
+    <li><strong>The bodies still overlap.</strong> Draining a crystal the soldiers stand 3.3 cells from their nearest neighbour, where a figure is 6.9 across and elbow room asks 4.8.</li>
+  </ul>
+  <div class="note">
+    <h3>The other half</h3>
+    <p>How close soldiers stand is the Squad and arsenal lane's steering. Its push apart is a soft spring, so a squad pulled to one point settles at 0.86 of elbow room at rest and 0.69 on a crystal. They have these films; holding elbow room would spread the heap without shrinking the figures.</p>
+  </div>
+</section>
+
+<footer>Filmed on the software renderer, 30 frames a game second. Changed is the share of the picture where any colour channel differs by more than 12 of 255 between the two drawings of the same frame. Source and numbers: <code>Reports/squad-heads-2026-11-18/</code> in the repo.</footer>
+</main>
