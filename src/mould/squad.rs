@@ -329,6 +329,18 @@ pub struct BurstRules {
     /// than the 6 s the other Mind statuses last (`mind_steps_for`).
     pub deaf_steps: u16,
     pub still_steps: u16,
+    /// **Sleep wears off** (2026-11-18, the owner's playtest: Mist on the
+    /// turrets "basically stopped everything"): fine steps a walker that
+    /// woke from gas cannot be gassed again, and while it is gassed no gas
+    /// or cloud lengthens its sleep. 0 is the old rule (a cloud or a fresh
+    /// hit kept it asleep for as long as it was refilled). GPU engine
+    /// only (`Engine::gas_immune`; the owner's 11-17 card, no CPU twin).
+    pub gas_immune: u16,
+    /// **Statuses wear off** (2026-11-18, with `gas_immune`): fine steps
+    /// after a Mind status ends before the same status can take that
+    /// walker again, so Still (no charge, no eating) or Spin on a turret
+    /// cannot hold the slime for as long as the turret fires. GPU only.
+    pub mind_rest: u16,
 }
 
 impl BurstRules {

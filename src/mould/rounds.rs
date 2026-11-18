@@ -640,6 +640,11 @@ pub struct RoundRules {
     /// step (`BigParams::spin_curl`).
     /// `set=` keys (`RoundRules::set`) tune them by eye.
     pub mind_r: f32,
+    /// **Statuses wear off** (2026-11-18; `BurstRules::mind_rest`): game
+    /// seconds after a Mind status ends before the same status takes that
+    /// walker again. Without it a turret firing Still kept every walker in
+    /// front of it from ever charging, as Mist's sleep did.
+    pub mind_rest: f32,
     pub mind_secs: f32,
     pub spin_curl: f32,
     /// **The readers** (`Card::Shatter`, `Detonate`, 2026-11-16): their
@@ -703,6 +708,7 @@ impl Default for RoundRules {
             pull_short: 6.0,
             mind_r: 8.0,
             mind_secs: 6.0,
+            mind_rest: 20.0,
             spin_curl: 35.0,
             read_r: 12.0,
             detonate_r: 24.0,
@@ -742,6 +748,7 @@ impl RoundRules {
             mind_steps: steps(self.mind_secs),
             deaf_steps: steps(self.kit.provoke_secs),
             still_steps: steps(self.kit.still_secs),
+            mind_rest: (self.mind_rest * fine).round().clamp(0.0, u16::MAX as f32) as u16,
             spin_curl: self.spin_curl.to_radians(),
             ..burst_rules(&self.kit, fine)
         }
@@ -753,9 +760,12 @@ impl RoundRules {
         let r = match name {
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
+            "mind_rest" => &mut self.mind_rest,
             "spin_curl" => &mut self.spin_curl,
             "provoke_secs" => &mut self.kit.provoke_secs,
             "still_secs" => &mut self.kit.still_secs,
+            "gas_immune" => &mut self.kit.gas_immune,
+            "gas_secs" => &mut self.kit.gas_secs,
             "read_r" => &mut self.read_r,
             "detonate_r" => &mut self.detonate_r,
             "flare_alarm" => &mut self.flare_alarm,
@@ -1051,6 +1061,7 @@ pub fn burst_rules(k: &KitRules, fine: f32) -> BurstRules {
         gas_linger,
         sick_steps,
         immune_steps: (k.immune_secs * fine).round().min(u16::MAX as f32 - sick_steps as f32) as u16,
+        gas_immune: (k.gas_immune * fine).round().clamp(0.0, u16::MAX as f32) as u16,
         sick_upkeep: k.sick_upkeep,
         sick_catch: k.sick_catch,
         sick_deposit: k.sick_deposit,
@@ -1060,6 +1071,7 @@ pub fn burst_rules(k: &KitRules, fine: f32) -> BurstRules {
         spin_curl: 0.0,
         deaf_steps: 0,
         still_steps: 0,
+        mind_rest: 0,
     }
 }
 

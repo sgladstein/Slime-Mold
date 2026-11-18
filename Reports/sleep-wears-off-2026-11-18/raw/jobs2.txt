@@ -1,0 +1,21 @@
+1795038793-gas-off 1795038793 gas setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+1795038793-mist-on 1795038793 mist set=gas_immune=0
+1795038793-mist-off 1795038793 mist setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+1-plain-on 1 plain set=gas_immune=0
+1-plain-off 1 plain setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+1-gas-on 1 gas set=gas_immune=0
+1-gas-off 1 gas setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+1-mist-on 1 mist set=gas_immune=0
+1-mist-off 1 mist setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+2-plain-on 2 plain set=gas_immune=0
+2-plain-off 2 plain setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+2-gas-on 2 gas set=gas_immune=0
+2-gas-off 2 gas setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+2-mist-on 2 mist set=gas_immune=0
+2-mist-off 2 mist setting=0 crust=0 fire_fed=0 set=fort=0 set=set_block=0 set=gas_immune=0
+1795038793-gas-new 1795038793 gas
+1795038793-mist-new 1795038793 mist
+1-gas-new 1 gas
+1-mist-new 1 mist
+2-gas-new 2 gas
+2-mist-new 2 mist
