@@ -1,0 +1,95 @@
+<title>Squad Auto-Fire</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column of findings, then before/after clip pairs side by side, a count table under them. */
+:root {
+  --bg: #f3f4ef; --fg: #1f231c; --muted: #5c6455; --line: #d3d8cb; --accent: #5b6b2f; --slime: #c9821a; --card: #ffffff;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #161813; --fg: #e6e9df; --muted: #9aa290; --line: #33382d; --accent: #b4c77a; --slime: #e9a23b; --card: #1e211a; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #161813; --fg: #e6e9df; --muted: #9aa290; --line: #33382d; --accent: #b4c77a; --slime: #e9a23b; --card: #1e211a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+main { max-width: 1040px; margin: 0 auto; padding-block: 32px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.25rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.quote { border-left: 3px solid var(--slime); padding-left: 14px; font-style: italic; max-width: 68ch; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 10; background: #000; border-radius: 4px; }
+figcaption { font-size: 0.9rem; color: var(--muted); }
+figcaption b { color: var(--fg); }
+section { display: grid; gap: 12px; }
+.table { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 560px; width: 100%; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--display); font-weight: 500; color: var(--muted); }
+tr.now td { color: var(--accent); font-weight: 600; }
+ul { margin: 0; padding-left: 20px; max-width: 68ch; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: 0.88em; }
+.note { font-size: 0.88rem; color: var(--muted); }
+</style>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>Squad auto-fire among loose walkers</h1>
+    <p class="lede">Planet 1, run seed 1795015831: eight soldiers you command stand at the start while a raid of loose walkers comes in at 68 s. Fire: defend, nobody holding the button. Left is the game before the fix, right after.</p>
+    <p class="quote">"When I am surrounded by a bunch of individual walkers ... I typically stop manually shooting and let them shoot automatically, but the soliders seem to shoot much slower or not all of them are shooting." (Scott, 11-18 17:01Z)</p>
+  </header>
+
+  <section>
+    <h2>What was happening</h2>
+    <ul>
+      <li>The squad you command was held to <b>defend</b> whatever its fire mode, so pressing C for free fire did nothing for it. Your log shows it: free at 71 s and 346 s, no change.</li>
+      <li>Defend looked at the thickest clump in the gun's whole 24-cell reach and fired only if that clump was within 7.5 cells. A thicker clump further off hid the walkers on the squad, so most soldiers held fire while they were bitten.</li>
+      <li>In your planet 1 game: with the button held, 23.9 shots and 143 kills a second. Letting go, 4.5 shots and 11 kills a second.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Zoom 12, 68 to 80 s (2x)</h2>
+    <div class="pair">
+      <figure><video src="before-zoom12.mp4" controls muted loop playsinline preload="metadata"></video><figcaption><b>Before.</b> Soldiers stand with walkers near them.</figcaption></figure>
+      <figure><video src="after-zoom12.mp4" controls muted loop playsinline preload="metadata"></video><figcaption><b>After.</b> Each soldier shoots the walkers nearest it.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Zoom 6, 64 to 90 s (3x)</h2>
+    <div class="pair">
+      <figure><video src="before-zoom6.mp4" controls muted loop playsinline preload="metadata"></video><figcaption><b>Before.</b> 450 shots by 90 s, squad health 72%.</figcaption></figure>
+      <figure><video src="after-zoom6.mp4" controls muted loop playsinline preload="metadata"></video><figcaption><b>After.</b> 730 shots by 90 s, squad health 88%.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The counts at 150 s</h2>
+    <div class="table">
+      <table>
+        <thead><tr><th>How the squad fires</th><th>Shots</th><th>Walkers killed</th><th>Squad health</th></tr></thead>
+        <tbody>
+          <tr><td>Before: on its own (defend or free, the same)</td><td>804</td><td>3,058</td><td>60%</td></tr>
+          <tr><td>Button held at the thickest slime, before</td><td>1,632</td><td>3,117</td><td>41%</td></tr>
+          <tr><td>Button held at the thickest slime, after</td><td>1,700</td><td>3,032</td><td>49%</td></tr>
+          <tr class="now"><td>After: on its own, Fire: defend</td><td>1,208</td><td>3,166</td><td>83%</td></tr>
+          <tr class="now"><td>After: on its own, Fire: free</td><td>1,613</td><td>3,204</td><td>75%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">One scene, one seed, eight soldiers holding still from the start. Kills are close in every row because the raid brings a fixed number of walkers. The difference is how many bite the squad before they die. Holding the button at the thickest slime ignores the walkers already on the squad, which is why it ends at the lowest health.</p>
+  </section>
+
+  <section>
+    <h2>What changed</h2>
+    <ul>
+      <li>The squad you command keeps the fire mode you give it when you are not holding the button: X defend, C free, Z hold.</li>
+      <li>Defend now looks only 7.5 cells round each soldier, so every soldier picks its own nearest walkers and the squad's fire spreads.</li>
+      <li>Attack-move now fires freely for the commanded squad too. Before, it stopped to fight slime it then would not shoot.</li>
+      <li>Holding the button is unchanged: every bullet goes to the cursor, which is still the way to kill a thick mass.</li>
+    </ul>
+    <p class="note">Code: <code>Game::stance_of</code> and <code>Game::sight</code> in <code>larder_world/cmd.rs</code>, the read's sight in <code>turn.rs</code>.</p>
+  </section>
+</main>

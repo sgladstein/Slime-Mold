@@ -424,7 +424,7 @@ pub struct Rules {
     pub lead: super::LeadRules,
     /// The squad mode (`squads`, owner 2026-11-14 04:49Z: "a separate
     /// mode for right now. Not erase the other game"): formations by
-    /// squad, the controlled squad's self-defence stance and bought
+    /// squad, the controlled squad's edge and bought
     /// soldiers joining it. Off, the game plays as before (squad commands
     /// still apply, but nothing sends them).
     pub squads: bool,

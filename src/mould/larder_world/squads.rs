@@ -42,8 +42,10 @@
 //! **The controlled squad** (`Game::active`) fires `LeadRules::rate` times
 //! as often, with a strike `LeadRules::strike` times wider. Both show in
 //! the simulation itself: more bullets and bigger holes. Not volleying, it
-//! fires only in self-defence (the defend stance), since its guns are the
-//! player's to aim.
+//! fires by the fire mode the player gave it like any squad
+//! (`Game::stance_of`; until 2026-11-18 it was held to defend, as its guns
+//! were the player's to aim, and the owner found it barely shooting when he
+//! let go of the button among loose walkers).
 
 use super::*;
 

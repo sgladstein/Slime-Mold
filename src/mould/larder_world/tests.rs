@@ -1706,6 +1706,63 @@ fn a_squad_sent_somewhere_goes_at_the_pace_of_its_slowest() {
 
 const STRAY_TEST: f32 = 12.0;
 
+/// The controlled squad fires by the fire mode the player gave it, and a
+/// defending soldier reads only the slime near it (owner 11-18 17:01Z: let
+/// go of the fire button among loose walkers and "the soldiers seem to
+/// shoot much slower or not all of them are shooting"). Before, the
+/// controlled squad was held to defend whatever its mode, and defend read
+/// the thickest block in the gun's whole reach, so a clump 20 cells off
+/// hid the walkers on the squad.
+#[test]
+fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
+    let mut g = squads(7);
+    g.apply(Cmd::Active(0));
+    let sc = g.s();
+    let k = g.members(0)[0];
+    // Away from the core, whose read looks the whole way (`check_core`).
+    let (x, y) = (g.soldiers[k].x, g.soldiers[k].y);
+    assert!((x - g.core.0).hypot(y - g.core.1) > 3.0 * g.rules.core_r * sc, "the larder is off the core");
+    let reach = g.gun_range(0) * sc;
+    // A direction with open ground out to the slime.
+    let u = (0..16)
+        .map(|i| (i as f32 * std::f32::consts::TAU / 16.0).sin_cos())
+        .find(|&(s, c)| g.clear_line((x, y), (x + c * 0.8 * reach, y + s * 0.8 * reach)))
+        .map(|(s, c)| (c, s))
+        .expect("open ground by the larder");
+    let far = (x + u.0 * 0.8 * reach, y + u.1 * 0.8 * reach);
+    let aim = |g: &mut Game<BigDish>, at: (f32, f32), stance: Stance| {
+        let s = &mut g.soldiers[k];
+        s.order = Order::Hold;
+        s.stance = stance;
+        s.touching = 0;
+        s.aim = Some(at);
+        s.dense = 10;
+    };
+    // Free fire: the thickest slime in reach, controlled or not.
+    aim(&mut g, far, Stance::Free);
+    assert_eq!(g.target(k), Some(far), "the controlled squad on free fire shoots slime in reach");
+    assert_eq!(g.sight(k), reach, "free fire reads the gun's reach");
+    // Hold fire holds.
+    aim(&mut g, far, Stance::HoldFire);
+    assert_eq!(g.target(k), None);
+    // Defend: reads only as far as it defends, and shoots what is there.
+    aim(&mut g, far, Stance::Defend);
+    assert!(g.target(k).is_none(), "defend holds at far slime");
+    let short = g.sight(k);
+    assert!(short < 0.5 * reach && short >= g.rules.defend * sc, "defend reads {short} of {reach}");
+    let edge = (x + u.0 * (g.rules.defend * sc + 1.0), y + u.1 * (g.rules.defend * sc + 1.0));
+    aim(&mut g, edge, Stance::Defend);
+    assert_eq!(g.target(k), Some(edge), "a walker at the edge of defend, read by its block's centre");
+    // Clearing a crystal or guarding, defend reads the whole reach again.
+    g.squads[0].guard = Some((x + 5.0 * sc, y));
+    assert_eq!(g.sight(k), reach, "guarding reads the reach");
+    g.squads[0].guard = None;
+    // Attack-move fires freely, the controlled squad too.
+    aim(&mut g, far, Stance::Defend);
+    g.soldiers[k].order = Order::Attack;
+    assert_eq!(g.target(k), Some(far), "attack-move shoots slime in reach");
+}
+
 #[test]
 fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster() {
     let mut g = squads(5);
