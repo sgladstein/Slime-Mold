@@ -1,0 +1,180 @@
+<title>Raid March</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* One reading column. Each film or still sits beside the counts read off
+   the same game, so no picture stands without its numbers. */
+:root {
+  --bg: #f3f4f1;
+  --panel: #ffffff;
+  --ink: #1b2023;
+  --muted: #58626a;
+  --rule: #d4d8d6;
+  --amber: #a85a12;
+  --amber-soft: #f4e3cf;
+  --good: #2f6b4f;
+  --good-soft: #dcebe2;
+  --bad: #8c3b2e;
+  --bad-soft: #f2dcd6;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: Inter, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181b; --panel: #1c2226; --ink: #e7eae8; --muted: #9aa5ab; --rule: #313a40;
+    --amber: #e8a04d; --amber-soft: #3a2b1a; --good: #7fc3a0; --good-soft: #1d3329;
+    --bad: #e59a8b; --bad-soft: #3a221d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181b; --panel: #1c2226; --ink: #e7eae8; --muted: #9aa5ab; --rule: #313a40;
+  --amber: #e8a04d; --amber-soft: #3a2b1a; --good: #7fc3a0; --good-soft: #1d3329;
+  --bad: #e59a8b; --bad-soft: #3a221d;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 16px/1.55 var(--body);
+  padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+header { display: flex; flex-direction: column; gap: 14px; }
+h1 { font: 600 2.1rem/1.15 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font: 600 1.4rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 0.82rem/1.3 var(--body); margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 1.1rem; }
+.meta { color: var(--muted); font-size: 0.9rem; }
+section { display: flex; flex-direction: column; gap: 20px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .pair, .three { grid-template-columns: minmax(0, 1fr); } }
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+figure video, figure img { width: 100%; height: auto; display: block; border-radius: 4px; background: #0d1012; }
+figcaption { font-size: 0.9rem; color: var(--muted); }
+figcaption b { color: var(--ink); font-weight: 600; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-weight: 600; color: var(--muted); font-size: 0.8rem; border-bottom-color: var(--muted); }
+td.up { background: var(--good-soft); color: var(--good); font-weight: 600; }
+td.down { background: var(--bad-soft); color: var(--bad); }
+td.sub { color: var(--muted); font-size: 0.8rem; }
+code { font: 0.86em ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.answer { border-left: 3px solid var(--amber); padding-left: 16px; display: flex; flex-direction: column; gap: 10px; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+</style>
+
+<main>
+<header>
+  <h1>A raid that leaves as one body</h1>
+  <p class="lede">A raid now gathers inside the slime, walks out as one body down its way round the rocks, and pours onto its target, or onto your squad if it meets it on the way. Slime breaking away to a new crystal keeps touching its neighbours instead of spraying off as single specks.</p>
+  <p class="meta">2026-11-18, the Enemy lane. From the owner's play notes that day: "Often, especially during raids the slime feels more like a bunch of individual walkers instead of a single slime unit ... Seeing the individual walkers doesn't bother me when I am attacking a big slime blob and the walkers surge towards me, but when they all leave the blob and most of what I see is individual walkers that is problematic." Planet 1 of run seed 1 with the pumps hand, the first raid forced at 0:20 so the films stay short, a frame every half second to 0:56 (5 times real speed), one film each, on the software GPU.</p>
+</header>
+
+<section>
+  <h2>The raid at zoom 6</h2>
+  <div class="pair">
+    <figure>
+      <video src="stream6.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>Before: a stream.</b> The raid's walkers cross the map one by one to the far pump (top right, off the frame), which goes by <b>0:34</b>. The squad stands at 59 health at 0:56.</figcaption>
+    </figure>
+    <figure>
+      <video src="march6.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>After: a march.</b> 1,789 walkers gather inside the ring of rock round the home crystal (bottom left), come out at about <b>0:33</b>, walk past the crystal as one long body, meet the squad at <b>0:45</b> and pour onto it. The far pump stands; the near one goes by 0:54; the squad stands at 85.</figcaption>
+    </figure>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Time</th><th>Before: loose walkers</th><th>squad health</th><th>far pump</th><th>near pump</th><th>killed</th><th>After: loose walkers</th><th>squad health</th><th>far pump</th><th>near pump</th><th>killed</th></tr></thead>
+      <tbody>
+        <tr><td>0:20</td><td>214</td><td>100</td><td>200</td><td>20</td><td>0</td><td>214</td><td>100</td><td>200</td><td>20</td><td>0</td></tr>
+        <tr><td>0:24</td><td>666</td><td>100</td><td>200</td><td>200</td><td>0</td><td class="up">404</td><td>100</td><td>200</td><td>200</td><td>0</td></tr>
+        <tr><td>0:28</td><td>788</td><td>100</td><td>199</td><td>190</td><td>50</td><td class="up">561</td><td>100</td><td>200</td><td>194</td><td>70</td></tr>
+        <tr><td>0:32</td><td>748</td><td>98</td><td class="down">92</td><td>170</td><td>189</td><td class="up">568</td><td>100</td><td>200</td><td>182</td><td>227</td></tr>
+        <tr><td>0:36</td><td>533</td><td>97</td><td class="down">0</td><td>152</td><td>350</td><td>462</td><td>100</td><td>200</td><td>166</td><td>410</td></tr>
+        <tr><td>0:44</td><td>512</td><td>76</td><td>0</td><td>98</td><td>1,035</td><td>560</td><td>99</td><td>200</td><td>136</td><td>790</td></tr>
+        <tr><td>0:52</td><td>493</td><td>65</td><td>0</td><td>70</td><td>1,442</td><td>578</td><td>93</td><td>200</td><td class="down">31</td><td>1,346</td></tr>
+        <tr><td>0:56</td><td>520</td><td>59</td><td>0</td><td>58</td><td>1,636</td><td>609</td><td>85</td><td>200</td><td class="down">0</td><td>1,865</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="meta">Loose walkers: the walkers on the whole map with at most one other round them (the Lab's count). From 0:22 to 0:38 they average 485 a frame with the march against 635 with the stream (peaks 570 and 801). The count also holds the slime by the crystal near the squad, which surges at the soldiers from 0:26 in both films, and after 0:45 the march's own pour, the surge he does not mind.</p>
+</section>
+
+<section>
+  <h2>Up close, zoom 12</h2>
+  <div class="pair">
+    <figure>
+      <video src="stream12.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>Before.</b> The same stream where the march comes out of the ring: single walkers drift past.</figcaption>
+    </figure>
+    <figure>
+      <video src="march12.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>After.</b> The march comes out of the ring and crosses the river as one body (spread 1.5 to 1.9, where 1 is packed), heading up and right for the crystal.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <h2>Specks with and without the tether</h2>
+  <div class="pair">
+    <figure>
+      <video src="tether0.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>Tether off.</b> 0:02 to 0:20, before the raid, 2.5 times real speed: slime leaving the home ring for the crystal north of it, with single walkers spraying off the column.</figcaption>
+    </figure>
+    <figure>
+      <video src="tether2.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>Tether 2, as it lands.</b> The same game: a walker on its way out steps only where its next cell touches two others, so fewer leave the column's sides.</figcaption>
+    </figure>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Tether</th><th>0:04</th><th>0:08</th><th>0:12</th><th>0:16</th><th>0:20</th><th>Mean</th><th>Peak</th></tr></thead>
+      <tbody>
+        <tr><td>Off</td><td>309</td><td>430</td><td>445</td><td>348</td><td>377</td><td>381</td><td>450</td></tr>
+        <tr><td>2</td><td>307</td><td class="up">286</td><td class="up">313</td><td class="up">226</td><td class="up">214</td><td class="up">284</td><td class="up">319</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="meta">Loose walkers on the whole map. With the greedy hand (0:20 to 0:40) the mean was 257 with no tether, 166 at 2 and 179 at 3, so 2. Raiders are left untethered: the Lab found a tether of 2 or more kept a raid at home.</p>
+</section>
+
+<section>
+  <h2>Picking the march</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Setting</th><th>Sets off</th><th>Spread by the squad</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Leash 1.3, pull 30</td><td>0:26</td><td>2.3</td><td>the first build</td></tr>
+        <tr><td>Leash 1.0, pull 20 to 40</td><td>0:35 to 0:37</td><td>1.45 to 1.5</td><td>rounder, but waits 9 to 11 s at the edge</td></tr>
+        <tr><td>1.5 times the raid, pull 30</td><td>never</td><td>0.65</td><td>formed inside the ring and sank into the body</td></tr>
+        <tr><td>1.5 times the raid, pull 100 (lands)</td><td>0:33</td><td>1.65 to 1.9</td><td>out of the ring 12 s after it forms</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>To 1:08</th><th>Squad health</th><th>Pumps lost</th><th>Killed</th></tr></thead>
+      <tbody>
+        <tr><td>Stream</td><td>53</td><td>the far one at 0:34; the near one down to 36</td><td>2,001</td></tr>
+        <tr><td>March, the raid's own size</td><td>75</td><td>the near one at 0:50</td><td>2,243</td></tr>
+        <tr><td>March, 1.5 times (lands)</td><td>93 (80 at 1:20)</td><td>the near one at 0:50, a third by 1:08</td><td>2,947</td></tr>
+        <tr><td>March, 2 times</td><td>80 (68 at 1:20)</td><td>the near one by 1:02, a third by 1:14</td><td>2,638</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The march hits pumps as hard as the stream and the squad less, since the squad shoots one body coming at it. A march that gets no ten cells nearer in 15 s lets go and streams to its target as before, so a raid always lands: with the tether off, this same game's march formed deeper in the ring and stood.</p>
+  <p class="meta">Frame cost: the tether reads 8 more cells for a walker it applies to, only when it steps into a new cell; the march is CPU work once a game second (the lump sums the mini-bosses already read back, and a walk of at most about 30 blocks down its way). Not timed on the software GPU; Engine and tools times it on the GTX 1070 in the milestone's batch.</p>
+</section>
+
+<section class="answer">
+  <h2>What he will see</h2>
+  <p>A raid swelling out of the slime as one lump, sliding round the rocks to its pump and spreading over it, or over the squad if the squad is in its way. Slime breaking away to a new crystal goes as a band rather than a spray of specks. The surge at the squad is as it was.</p>
+  <p class="meta">Not checked: other planets and seeds, a raid that is not forced, several marches at once, how often a march stalls and streams instead. One film each on the software GPU.</p>
+</section>
+</main>

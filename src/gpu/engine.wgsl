@@ -155,8 +155,9 @@ struct Params {
     // with few others round it stepped shorter), whose half in this engine
     // was deleted on 11-17 (Reports/dead-ends.md); the last was
     // `fed_crowd`'s until 11-17. `fort` (2026-11-18): 1 while the game has
-    // written a fort mask (`fort_at`), else 0.
-    lone_free0: f32, lone_free1: f32, fort: u32, lone_free: u32,
+    // written a fort mask (`fort_at`), else 0. `tether` (2026-11-18): the
+    // walkers a marcher's next cell must touch (`tethered`), 0 off.
+    lone_free0: f32, lone_free1: f32, fort: u32, tether: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
@@ -523,6 +524,23 @@ fn fort_at(i: u32) -> bool {
     let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
     let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
     return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 3u * nb + q]) != 0u;
+}
+// Whether cell `j`'s 8 neighbours, cell `own` aside, hold `tether`
+// walkers (the tether in `sense`).
+fn tethered(j: u32, own: u32) -> bool {
+    var n = 0u;
+    let x = i32(j % P.w);
+    let y = i32(j / P.w);
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let cx = x + dx;
+            let cy = y + dy;
+            if ((dx == 0 && dy == 0) || cx < 0 || cy < 0 || cx >= i32(P.w) || cy >= i32(P.h)) { continue; }
+            let c = u32(cy) * P.w + u32(cx);
+            if (c != own) { n += atomicLoad(&occ[c]); }
+        }
+    }
+    return n >= P.tether;
 }
 // Walker k's setting this step on cell `here` (the CPU's `set_step`): a set
 // walker wakes under `set_wake` of scar; an unset one sets on crust of
@@ -1290,6 +1308,31 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let nx = wk.x + cos(h) * st;
     let ny = wk.y + sin(h) * st;
     let there = cell(nx, ny);
+    // **The tether** (`tether`, 2026-11-18, the Enemy lane, from the Lab's
+    // one-body prototype, Reports/lab-body-2026-11-18; the owner's play
+    // notes that day: "Seeing the individual walkers doesn't bother me when
+    // I am attacking a big slime blob and the walkers surge towards me, but
+    // when they all leave the blob and most of what I see is individual
+    // walkers that is problematic"). A walker on its own way out from the
+    // body (a breakaway, a cut-off walker making for food: scared, not
+    // raiding and not charging a unit) steps only into a cell whose 8
+    // neighbours, its own cell aside, hold `tether` walkers; else it is
+    // blocked there as at a wall (a new heading, or about-turn where the
+    // blocked keep keeps it) and stays, so it goes out in a band touching
+    // the rest. Not a raider: a raid leaves the body one walker wide, and
+    // no cell ahead of a file touches two others, so a tether of 2 kept
+    // the Lab's raid home (20 to 41 kills in its first 17 s against 379,
+    // holding the heading or turning about alike); a raid goes as one
+    // body by its march instead (`RaidRules::march`). The charge at a
+    // unit (a surge, a panic charge) is left as it was, and a lump's
+    // member is held by its leash. GPU only (the owner's card, 11-17
+    // 19:21Z: no CPU twin). Eight more reads a step, for such a walker
+    // stepping into a new cell only.
+    if (P.tether > 0u && scared && lb == 0u && !goal_unit && there != NONE && there != here && raid_to(k, here).z <= 0.0 && !tethered(there, here)) {
+        intent[k] = vec4<f32>(wk.x, wk.y, h + 0.5 * TAU, 0.0);
+        icell[k] = NONE;
+        return;
+    }
     var aim = NONE;
     if (there != NONE) {
         if (there == here) {

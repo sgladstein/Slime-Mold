@@ -13,6 +13,7 @@ sources:
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/mould-shape-2026-11-11.md
   - Reports/one-body-2026-11-12.md
+  - Reports/raid-march-2026-11-18/README.md
   - Reports/slime-enemy-review-2026-11-12.md
   - Reports/specks-2026-11-16/README.md
   - Reports/thicken-2026-11-15/README.md
@@ -245,7 +246,16 @@ the strength that grows instead, and keep the dense word for their members.
   kept the body one piece, but kept raid 1 at home (41 raid kills against
   379; tighter tethers the same), since a raid leaves as a one-wide trickle;
   breakaways walk as blobs. Waiting for the crowd left the raid spread
-  ([one body, lab](../../Reports/lab-body-2026-11-18/README.md)).
+  ([one body, lab](../../Reports/lab-body-2026-11-18/README.md)). In the
+  game since 11-18 a speck is tethered (`Settings::tether`, `run::TETHER`
+  2; GPU only): a scared walker on its own way out (a speck, a cut-off
+  walker making for food), not raiding, not charging a unit and not a
+  lump's member, steps only into a cell whose 8 neighbours, its own aside,
+  hold 2 walkers, else it is blocked there as at a wall. On planet 1 of
+  run seed 1 the walkers seen alone fell from 381 to 284 a frame over the
+  first 20 s (pumps hand) and from 257 to 166 from 0:20 to 0:40 (greedy
+  hand; 179 at a tether of 3). Raids march as one lump instead
+  ([raid march](../../Reports/raid-march-2026-11-18/README.md)).
 
 ## Sources
 

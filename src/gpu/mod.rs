@@ -81,12 +81,13 @@ pub const BODY_AT: usize = 848;
 /// words alone, as it does the squad's.
 pub const CRATER_AT: usize = 864;
 /// Where the lone step's row sat in `Params` (2026-11-12, after the
-/// crater's). **Three words are free** (written 0): two of the lone step's
+/// crater's). **Two words are free** (written 0): two of the lone step's
 /// three (`lone_step`, `lone_floor`, `lone_r`; f32 880 and 884, u32 888)
 /// since the GPU's half of that rule was deleted on 2026-11-17 (the Enemy
 /// lane's switch cleanup; `Reports/dead-ends.md`), and 892, `fed_crowd`'s
 /// until the same day. The CPU engine keeps `BigParams::lone_step`. Word
-/// 888 is the fort's flag since 2026-11-18 (`Engine::forted`).
+/// 888 is the fort's flag since 2026-11-18 (`Engine::forted`), and 892
+/// the tether (`Settings::tether`) since the same day.
 pub const LONE_AT: usize = 880;
 /// Where the fling row sits in `Params` (11-14, after the lone step's:
 /// `fling_deposit`, then three spare words).
@@ -483,6 +484,16 @@ pub struct Settings {
     /// `Engine::write_lure_field`); the pull is sent only while one is
     /// written (`Engine::lured`), in the soil row's last word.
     pub lure_pull: f32,
+    /// **The tether** (`tether=N`, 2026-11-18, the Enemy lane, from the
+    /// Lab's one-body prototype; 0 off, as here): a walker on its own way
+    /// out from the body (a breakaway, a cut-off walker making for food;
+    /// not a raider, not a charge at a unit, not a lump's member) steps
+    /// only into a cell whose 8 neighbours, its own aside, hold N walkers
+    /// (engine.wgsl's `tethered`). This engine's own rule with no
+    /// `BigParams` field (the owner's card, 11-17 19:21Z: no CPU twin). A
+    /// run's planets set it (`run::TETHER`). Params word 892, the lone
+    /// step row's last.
+    pub tether: u32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -747,6 +758,7 @@ impl Settings {
             gas_burn: t.gas_burn,
             far_smell: t.far_smell,
             lure_pull: 0.0,
+            tether: 0,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1073,6 +1085,10 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // rig: 10 a steady stream with the body at home, 30 emptied a
         // colony in 45 s (Reports/lab-steering-2026-11-17).
         "lure_pull" => s.lure_pull = f()?,
+        // The tether (`tether=N`, 2026-11-18): slime on its way out from
+        // the body steps only where it touches N others (Lab, one body:
+        // Reports/lab-body-2026-11-18; 2 its pick).
+        "tether" => s.tether = int()?.min(8),
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -2333,7 +2349,8 @@ impl Engine {
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
         // The lone step's row, free since 11-17 (`LONE_AT`) but for its
         // third word, the fort's flag (`forted`, 11-18).
-        b.extend(u32_bytes(&[0, 0, self.forted as u32, 0]));
+        // Its last word, the tether since 11-18 (`Settings::tether`).
+        b.extend(u32_bytes(&[0, 0, self.forted as u32, s.tether]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then

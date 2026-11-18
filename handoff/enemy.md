@@ -3,12 +3,56 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## State (2026-11-18, after the planet 2 look)
+## State (2026-11-18, the march)
 
-**Open branch:** `claude/project-thread-s5k9cw`, with the planet 2 look
-(docs only). Merged on 11-18: #451 (the switch settlement, job 1), #457
-(the lure's field), #473 (the Trunk's fort), #478 (the lure's field round
-on open ground), #480 (job 2's page and job 3's design).
+**Open branch:** `claude/project-thread-s5k9cw`, with the march and the
+tether (its pull request names Engine and tools' files it touches:
+`gpu/mod.rs`, `headless.rs`, `rules.rs`). Merged on 11-18: #451 (the switch
+settlement, job 1), #457 (the lure's field), #473 (the Trunk's fort), #478
+(the lure's field round on open ground), #480 (job 2's page and job 3's
+design), #486 (the planet 2 look), #490 (raids rare early, no mini-bosses
+on planet 1).
+
+**The owner's play notes of 11-18** (15:56Z to 15:58Z, relayed by
+Direction; in `wiki/decisions-game.md`) gave this lane three jobs, in
+order: raids rare early and more often later, no mini-bosses on planet 1
+(both #490, [raid ramp](../Reports/raid-ramp-2026-11-18/README.md)), and
+the slime holding together as one body, worst in raids (the march and the
+tether, below). Direction also asked whether planet 3 has an unfinishable
+tail now that a planet is won at its last walker (#487): no; answered.
+
+**Raids march as one body; specks are tethered**
+([report](../Reports/raid-march-2026-11-18/README.md)). Direction's narrowing
+(11-18 16:24Z and 16:53Z, after the owner liked the Lab's tighter-tether
+page): keep the slime together when it moves away from its body (a raid,
+a breakaway, a walk to a new crystal), leave the surge at the squad as it
+is, and the march is this lane's (the Lab builds no muster).
+
+- The march (`RaidRules::march`, `Raids::start_march`, `Game::time_march`
+  in `raids.rs`): a raid takes a free lump (`big::LUMPS`, shared with the
+  mini-bosses) for 1.5 times its walkers nearest the target, steers it
+  down the raid's walking distance (`down_way`, a point a body's length
+  and ten dish cells ahead) at pull 100, leash 1.3, haste 2, and pours it
+  on as a raid of share 1 by the target or at a soldier it meets (gun
+  range plus the panic margin past its edge). It lets go at a 30% quorum
+  or after 90 s. No lump free, or the last stand: it streams as before.
+- `form_lump` takes other lumps' members, so `form_boss` refuses near a
+  march and never takes a marching lump's slot.
+- A bigger march formed inside planet 1's rock ring and, at the
+  mini-boss's pull of 30, sank into the body; pull 100 gets it out in about
+  12 s. Not checked: other planets, a march that meets a wall it cannot
+  find a way round, several marches at once.
+- The tether (`Settings::tether`, engine.wgsl's `tethered` in `sense`;
+  `run::TETHER` 2 on every run planet): scared walkers that are not
+  raiding, not charging a unit and not a lump's members step only where
+  their next cell touches 2 others. Raiders are left out (the Lab: a
+  tether of 2 or more keeps a raid home). Params word 892.
+- Frame cost: the tether reads 8 cells for such a walker stepping into a
+  new cell; the march is CPU work once a game second (lump sums, as for a
+  mini-boss, and a walk of at most about 30 blocks). Not timed: ask
+  Engine and tools for the GTX 1070 in the milestone's batch.
+- `headless.rs` prints `march t ...` each second and a `loose:` line (the
+  Lab's measure: walkers with at most one other round them).
 
 **The order of work now** (11-18): the origin is designed and waits on
 Direction ([design](../Reports/origin-design-2026-11-18/README.md): a
