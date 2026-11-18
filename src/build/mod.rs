@@ -17,6 +17,28 @@
 pub mod news;
 pub mod switches;
 
+/// **The folder the game's files are in** (the designed maps and the
+/// campaign's missions, under `Reports/`): the repo's root.
+///
+/// Until 2026-11-17 the game used the path it was compiled at
+/// (`CARGO_MANIFEST_DIR`), which is right for a build made where it runs
+/// and wrong for one made elsewhere: the Windows build CI makes for
+/// `play.cmd` would have looked for the maps in the runner's folder. So,
+/// in order: `LARDER_ROOT` if it names a folder with the maps (`play.ps1`
+/// sets it), the compiled path if the maps are there (every local build
+/// and test), a folder above the program that has them (CI's build
+/// started by hand from `target\ci`), the current folder. With none, the
+/// compiled path, so the error names it as before.
+pub fn root() -> std::path::PathBuf {
+    use std::path::PathBuf;
+    let has = |p: &PathBuf| p.join("Reports/larder-maps-2026-11-11/maps").is_dir();
+    let built = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let given = std::env::var_os("LARDER_ROOT").filter(|v| !v.is_empty()).map(PathBuf::from);
+    let above = std::env::current_exe().ok().and_then(|exe| exe.ancestors().skip(1).map(PathBuf::from).find(|p| has(p)));
+    let here = std::env::current_dir().ok();
+    given.into_iter().chain([built.clone()]).chain(above).chain(here).find(has).unwrap_or(built)
+}
+
 /// Which build this is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Build {
@@ -80,6 +102,14 @@ pub fn parse(word: &str) -> Option<(u32, String, String)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_games_files_are_found() {
+        // In a test the compiled path is the repo, whatever LARDER_ROOT
+        // says when it names a folder without the maps.
+        assert!(root().join("Reports/larder-maps-2026-11-11/maps").is_dir());
+        assert!(root().join("Reports/larder-campaign-2026-11-12/missions").is_dir());
+    }
 
     #[test]
     fn a_build_says_its_commit_and_reads_back() {

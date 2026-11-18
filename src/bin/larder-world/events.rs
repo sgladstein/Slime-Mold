@@ -102,6 +102,13 @@ impl ApplicationHandler for App {
                 if pressed && self.ctrl && self.ui_key(code) {
                     return;
                 }
+                // F9 drops a note in the play log (`App::drop_note`), in
+                // play only and whatever else is open, so it is never the
+                // wrong moment to mark one.
+                if pressed && !event.repeat && code == KeyCode::F9 && !self.in_menu() {
+                    self.drop_note();
+                    return;
+                }
                 // The start menu takes every key while it is up.
                 if self.in_menu() {
                     let repeat = event.repeat && !matches!(code, KeyCode::ArrowUp | KeyCode::ArrowDown);

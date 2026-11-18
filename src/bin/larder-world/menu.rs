@@ -22,7 +22,7 @@ use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopArea, ShopRow, Start
 /// a word on stderr. (The campaign thread's `Mission::list` will do this
 /// in the library; switch to it when it lands.)
 pub(super) fn missions() -> Vec<(String, Mission)> {
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-campaign-2026-11-12/missions");
+    let dir = slime_mould::build::root().join("Reports/larder-campaign-2026-11-12/missions");
     let mut out: Vec<(u32, String, Mission)> = Vec::new();
     for e in std::fs::read_dir(&dir).into_iter().flatten().flatten() {
         let p = e.path();
@@ -171,6 +171,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("N", "Next map"),
         ("M", "Minimap"),
         ("F2", "Scent view: what the mould smells"),
+        ("F9", "Drop a note in the play log: marks this moment and place"),
         ("O / K", "Sound; the mould's voice"),
         ("Space", "Look at the newest alert"),
         ("Esc", "Cancel placing, or the menu"),
@@ -850,5 +851,5 @@ fn launch_editor() -> Result<(), String> {
     if !exe.exists() {
         return Err("No map editor built: cargo build --release --bin larder-edit".into());
     }
-    std::process::Command::new(&exe).current_dir(env!("CARGO_MANIFEST_DIR")).spawn().map(|_| ()).map_err(|e| format!("The map editor did not start: {e}"))
+    std::process::Command::new(&exe).current_dir(slime_mould::build::root()).spawn().map(|_| ()).map_err(|e| format!("The map editor did not start: {e}"))
 }

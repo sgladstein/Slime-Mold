@@ -1,8 +1,14 @@
 //! **The play log** (whole-game review W13, 2026-11-15): what a round in the
 //! window did, a line a game second, so a thread can read the owner's play
-//! instead of asking for it. The window writes it beside the replay as
-//! `larder-world-log-MAP-SEED.txt` (gitignored); `examples/playlog.rs` reads
-//! one back and prints the summary (`Summary`).
+//! instead of asking for it. The window writes one file a round into the
+//! folder `play-logs/` beside the game (gitignored), named by when the
+//! round began, its map and its seed (`file_name`); `examples/playlog.rs`
+//! reads one back and prints the summary (`summary`). Until 2026-11-17 it
+//! was `larder-world-log-MAP-SEED.txt` beside the replay, which the next
+//! round on the same map and seed wrote over, so a session of play left
+//! only its last round. `play.cmd` sends the folder to the repository's
+//! `play-logs` branch when the game quits (the owner, 11-17 17:39Z: "yes
+//! play logs is a great idea").
 //!
 //! The replay (`Game::replay_text`) already holds the commands, but it
 //! replays only on the machine that made it (CPU and GPU maths differ
@@ -15,15 +21,50 @@
 //! The format is one record a line, `key=value` words after a tag:
 //!
 //! ```text
-//! log map=planet:1:7 seed=7 mode=squads tier=Drifter planet=1
+//! log map=planet:1:7 seed=7 when=2026-11-17T21:03:11Z build=3127:d08583d:2026-11-17 mode=squads planet=1 run=7 tier=drifter switches=far_smell:on keys=far_smell=1
 //! t=12 mould=1834 mass=1834 soldiers=6 squads=1 bank=40 income=120 pumped=0 shots=55 killed=300 pumps=0 turrets=0 walls=0 other=0 crystals=0.991 stuck=0 p50=3.1 p95=6.0
 //! cmd t=12.4 order 0 move 310 200
+//! note n=1 t=47.2 x=310 y=200 zoom=6.0
 //! end t=301 verdict=lost
 //! ```
 //!
 //! A reader skips any word it doesn't know, so new words can be added.
+//!
+//! **A note** (2026-11-17, the plan's play record) is the player's mark:
+//! F9 in play writes the game second and where the camera was looking, so
+//! "note 2 was the slime walking through my wall" in a sentence afterwards
+//! points a thread at the exact second of the log. It has no words of its
+//! own yet: typing in play needs a text field the HUD does not have.
 
 use super::larder_world::{Game, Kind, World};
+
+/// The folder the window writes its logs in, beside the game.
+pub const DIR: &str = "play-logs";
+
+/// A moment as the log writes it, UTC: `2026-11-17T21:03:11Z` from seconds
+/// since 1970 (the standard library has no calendar; this is the usual
+/// days-to-date arithmetic, good for any date the game will see).
+pub fn stamp(unix_secs: u64) -> String {
+    let (days, rem) = (unix_secs / 86_400, unix_secs % 86_400);
+    // Days since 0000-03-01, in 400-year eras of 146,097 days.
+    let z = days as i64 + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let (d, m) = (doy - (153 * mp + 2) / 5 + 1, if mp < 10 { mp + 3 } else { mp - 9 });
+    let y = yoe + era * 400 + i64::from(m <= 2);
+    format!("{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}Z", rem / 3600, rem % 3600 / 60, rem % 60)
+}
+
+/// A round's log file in `DIR`: when it began (`stamp`, its colons as
+/// dashes for Windows), the map and the seed, so files sort by time and
+/// no round writes over another.
+pub fn file_name(when: &str, map: &str, seed: u64) -> String {
+    let safe = |s: &str| s.chars().map(|c| if c.is_ascii_alphanumeric() || c == '-' { c } else { '-' }).collect::<String>();
+    format!("{}-{}-{seed}.txt", safe(when), safe(map))
+}
 
 /// The writer: gathers a second's frame times and the commands since the
 /// last line, and gives the text to append.
@@ -50,6 +91,12 @@ impl Playlog {
             s += &format!(" {k}={}", v.replace(' ', "_"));
         }
         s + "\n"
+    }
+
+    /// The player's mark `n` (from 1) at game second `t`, with the place
+    /// the camera was centred on (world units) and its zoom.
+    pub fn note(n: u32, t: f32, at: (f32, f32), zoom: f32) -> String {
+        format!("note n={n} t={t:.1} x={:.0} y={:.0} zoom={zoom:.1}\n", at.0, at.1)
     }
 
     /// One window frame took `ms` milliseconds.
@@ -135,6 +182,8 @@ pub struct Read {
     pub secs: Vec<Second>,
     /// (game second, the command's line)
     pub cmds: Vec<(f32, String)>,
+    /// The player's marks: (number, game second, the camera's centre).
+    pub notes: Vec<(u32, f32, (f32, f32))>,
     pub end: Option<String>,
 }
 
@@ -154,6 +203,12 @@ pub fn read(text: &str) -> Read {
                 let (t, c) = rest.split_once(' ').unwrap_or((rest, ""));
                 if let Some(t) = t.strip_prefix("t=").and_then(|v| v.parse().ok()) {
                     r.cmds.push((t, c.to_string()));
+                }
+            }
+            "note" => {
+                let get = |k: &str| words(rest).find(|(n, _)| *n == k).and_then(|(_, v)| v.parse::<f32>().ok());
+                if let (Some(n), Some(t)) = (get("n"), get("t")) {
+                    r.notes.push((n as u32, t, (get("x").unwrap_or(0.0), get("y").unwrap_or(0.0))));
                 }
             }
             "end" => r.end = Some(rest.to_string()),
@@ -234,6 +289,12 @@ pub fn summary(r: &Read) -> String {
     }
     kinds.sort_by_key(|a| std::cmp::Reverse(a.1));
     out += &format!("commands: {}\n", kinds.iter().map(|(k, n)| format!("{k} {n}")).collect::<Vec<_>>().join(", "));
+    // The player's marks, each with the second's numbers beside it.
+    for (n, t, at) in &r.notes {
+        let near = r.secs.iter().rfind(|s| s.t <= *t).or(r.secs.first());
+        let then = near.map_or(String::new(), |s| format!(": {} soldiers, slime mass {}, {} killed", s.soldiers, s.mass, s.killed));
+        out += &format!("note {n} at {} looking at {:.0},{:.0}{then}\n", clock(*t), at.0, at.1);
+    }
     out
 }
 
@@ -241,6 +302,17 @@ pub fn summary(r: &Read) -> String {
 mod tests {
     use super::*;
     use crate::mould::larder_world::{race_world, Cmd, Order, Rules};
+
+    #[test]
+    fn a_log_is_named_by_when_it_began() {
+        assert_eq!(stamp(0), "1970-01-01T00:00:00Z");
+        // 2026-11-17 21:03:11 UTC, and a leap day.
+        assert_eq!(stamp(1_794_949_391), "2026-11-17T21:03:11Z");
+        assert_eq!(stamp(1_709_251_199), "2024-02-29T23:59:59Z");
+        assert_eq!(stamp(1_709_251_200), "2024-03-01T00:00:00Z");
+        assert_eq!(file_name("2026-11-17T21:03:11Z", "planet:1:7", 7), "2026-11-17T21-03-11Z-planet-1-7-7.txt");
+        assert_eq!(file_name("2026-11-17T21:03:11Z", "../a b", 1), "2026-11-17T21-03-11Z----a-b-1.txt");
+    }
 
     #[test]
     fn a_log_reads_back_what_it_wrote() {
@@ -261,6 +333,7 @@ mod tests {
             log.frame(9.0);
             text += &log.second(&g);
         }
+        text += &Playlog::note(1, 2.4, (310.0, 200.0), 6.0);
         text += "end t=3 verdict=test\n";
         let r = read(&text);
         assert_eq!(r.head[0], ("map".to_string(), "planet:1:7".to_string()));
@@ -271,8 +344,10 @@ mod tests {
         assert_eq!(r.secs[0].p50, 4.0);
         assert_eq!(r.cmds.len(), g.log.len());
         assert!(r.cmds[0].1.starts_with("order 0"), "{:?}", r.cmds);
+        assert_eq!(r.notes, vec![(1, 2.4, (310.0, 200.0))]);
         let s = summary(&r);
         assert!(s.contains("played 0:03") && s.contains("commands: "), "{s}");
+        assert!(s.contains("note 1 at 0:02 looking at 310,200: "), "{s}");
         // A cut-off line is skipped, not an error.
         let cut = read(&format!("{text}t=4 mould=1"));
         assert_eq!(cut.secs.len(), 4);

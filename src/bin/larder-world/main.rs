@@ -909,10 +909,12 @@ struct App {
     seen: u64,
     report_at: Instant,
     saved: bool,
-    /// The play log (`mould::playlog`, whole-game review W13, 11-15):
-    /// `larder-world-log-MAP-SEED.txt` beside the replay, a line a game
-    /// second, in the window only (not the headless films). The path, the
-    /// writer, the last second written, and whether the end is written.
+    /// The play log (`mould::playlog`, whole-game review W13, 11-15): a
+    /// file a round in `play-logs/` beside the game, a line a game second,
+    /// in the window only (not the headless films) and not for the dish
+    /// behind the start menu. The path, the writer, the last second
+    /// written, whether the end is written, and the notes dropped (F9).
+    log_notes: u32,
     log_path: Option<String>,
     playlog: slime_mould::mould::playlog::Playlog,
     log_sec: u64,
@@ -1058,6 +1060,7 @@ impl App {
             playlog: Default::default(),
             log_sec: 0,
             log_ended: false,
+            log_notes: 0,
             build_page: false,
             kit: Kit::new(KitRules::default()),
             rounds: Rounds::new(Vec::new(), RoundRules::default()),
@@ -1112,7 +1115,7 @@ impl App {
         let mission = match (&level, &a.mission) {
             (Some(l), _) => Some(l.mission.clone()),
             (None, Some(name)) => {
-                let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
+                let path = slime_mould::build::root().join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
                 Some(Mission::parse(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?)?)
             }
             (None, None) => None,
@@ -1168,7 +1171,7 @@ impl App {
             _ if made.is_some() => GpuWorld::with_map(device, queue, s, a.scale, made.as_ref().expect("a made map")),
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
-                let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+                let dir = slime_mould::build::root().join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
                     Some((d, n)) => (PathBuf::from(d), n.to_string()),
                     None => (dir, name.clone()),
@@ -1471,14 +1474,18 @@ impl App {
         self.playlog = Default::default();
         self.log_sec = 0;
         self.log_ended = false;
-        if self.window.is_none() {
+        self.log_notes = 0;
+        // The dish behind the start menu is not play: no log of it (until
+        // 11-17 it wrote one, which the round picked from the menu then
+        // wrote over; with a file a round it would fill the folder).
+        if self.window.is_none() || self.menu.is_some() {
             return;
         }
-        let path = format!("larder-world-log-{}-{}.txt", file_part(&self.name), self.args.seed);
-        if self.menu.is_none() {
-            self.memory.played();
-        }
-        let mut extra = vec![("build", slime_mould::build::build().word()), ("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
+        use slime_mould::mould::playlog;
+        let when = playlog::stamp(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs()));
+        let path = format!("{}/{}", playlog::DIR, playlog::file_name(&when, &self.name, self.args.seed));
+        self.memory.played();
+        let mut extra = vec![("when", when), ("build", slime_mould::build::build().word()), ("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
         if let Some(tr) = &self.mission {
             extra.push(("mission", tr.mission.name.clone()));
             extra.push(("tier", tr.mission.tier.clone().unwrap_or_default()));
@@ -1493,11 +1500,24 @@ impl App {
             extra.push(("planet", self.planet_depth.to_string()));
         }
         extra.extend(log_keys(&self.args.keys));
-        let head = slime_mould::mould::playlog::Playlog::head(&self.name, self.args.seed, &extra);
-        match std::fs::write(&path, head) {
+        let head = playlog::Playlog::head(&self.name, self.args.seed, &extra);
+        match std::fs::create_dir_all(playlog::DIR).and_then(|()| std::fs::write(&path, head)) {
             Ok(()) => self.log_path = Some(path),
             Err(e) => eprintln!("larder-world: {path}: {e}"),
         }
+    }
+
+    /// **Drops a note in the play log** (F9; the plan's play record,
+    /// 11-17): the game second and where the camera is looking, numbered
+    /// from 1 each round, with a word on the HUD so the player knows which
+    /// number to name afterwards.
+    fn drop_note(&mut self) {
+        let Some(g) = self.game.as_ref().filter(|_| self.log_path.is_some()) else { return };
+        self.log_notes += 1;
+        let t = g.time();
+        let line = slime_mould::mould::playlog::Playlog::note(self.log_notes, t, self.camera.centre(), self.camera.zoom);
+        Self::log_write(&self.log_path, &line);
+        self.hud.alert(&format!("Note {} dropped at {}:{:02} (it is in the play log)", self.log_notes, t as u32 / 60, t as u32 % 60), None, theme::ACCENT);
     }
 
     /// Appends `text` to the play log (nothing without one).
@@ -2172,6 +2192,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     return Err(format!("ammo=: a number, or a round such as ammo/plain/slug/0/160/60/90/60/6+blast (got {v})").into());
                 }
                 args.ammo = Some(v.to_string());
+            }
+            // `version=1`: says which build this is and stops (CI checks
+            // its Windows build starts with it; no window, no GPU).
+            "version" => {
+                println!("larder-world {}", slime_mould::build::build().long());
+                return Ok(());
             }
             "look" => look = Some(v.to_string()),
             // `ui=150%` or `ui=1.5`: the UI's size this run (`uisize`).

@@ -14,3 +14,6 @@ __pycache__/
 # `larder-world-log-MAP-SEED.txt`; read with `cargo run --release --example
 # playlog -- FILE`), 2026-11-15.
 /larder-world-log-*.txt
+# Since 2026-11-17 a file a round in this folder; `play.cmd` sends them to
+# the `play-logs` branch and moves them to `play-logs/sent/`.
+/play-logs/

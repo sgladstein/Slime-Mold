@@ -110,7 +110,11 @@ mod tests {
             keys.extend(arm.split("=>").next().unwrap_or("").split('"').step_by(2).filter(|k| !k.is_empty()));
         }
         assert!(keys.len() >= 60 && keys.contains(&"map") && keys.contains(&"try"), "{} keys read from main: has its loop changed shape?", keys.len());
-        let tools: Vec<&str> = TOOLS.split(' ').collect();
+        // The Engine and tools lane's own keys (`version`: print the build
+        // and quit, for CI), kept apart from TOOLS so that lanes editing
+        // that line and this lane do not conflict.
+        const ENGINE_TOOLS: &str = "version";
+        let tools: Vec<&str> = TOOLS.split(' ').chain(ENGINE_TOOLS.split(' ')).collect();
         let declared: Vec<&str> = SWITCHES.iter().flat_map(|s| s.choices.iter()).flat_map(|c| c.keys.iter()).filter_map(|(k, _)| k.strip_prefix(WINDOW_KEY)).collect();
         for k in keys {
             if WINDOW_KEYS.contains(&k) {
