@@ -1,0 +1,29 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 42.0 s (the slime has eaten 181 food)
+  raid 1 at t 59.0 s: Soldiers(0) at 59,77, reach 116 cells holding 4918 walkers, share 0.60, size 12% of the slime
+  load t 70.00 s: 16 squads load still+plain (asked for 70 s)
+  rounds t   70 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 1 batches of 1 bursts, 0 seeker turns, 424 soldier hits in 421 cells, 34 ran out of range and 1 hit a wall with no slime struck, 0 pulls too near to pull, 1 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+  CPU: ground field 4.29 ms (once a game second), model and HUD 0.099 ms a frame
+  t 70 s: mould 25377, soldiers 6, bank 367, harvested 0, rendered 0, shots 459, killed 2000, took 0%, crystals left 0.986; squad at 49.6,76.2
+  surge: the slime ate 355 food (5.1/s); meter 174.0 of 181, 1 surges
+  dense: 0 condensed or thick walkers, mass 25377 (readout 25374); 1577 breaking away
+  squad: touching 0.5 mean, 1 most; health 39 mean
+  surge 2 starts at t 71.1 s (the slime has eaten 362 food)
+  boss t 78.0 s: Crowd hunter formed on lump 0 at 393,117 (crowd top 1.00); grade 0.42: 9 blows a member, touches as 3, pace x1.17
+  boss t 78 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 393,117, spread 1.01, stolen 0.0; nearest soldier 341.3, 4 alive
+  boss t 79 s: lump 0 hunter Gather, 415 members (first 415, 0 hurt), at 392,120, spread 0.88, stolen 0.0; nearest soldier 340.1, 4 alive
+  boss t 80 s: lump 0 hunter Gather, 415 members (first 415, 0 hurt), at 390,120, spread 0.89, stolen 0.0; nearest soldier 339.3, 3 alive
+  rounds t   80 s: 26 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 15 batches of 26 bursts, 0 seeker turns, 474 soldier hits in 471 cells, 34 ran out of range and 1 hit a wall with no slime struck, 0 pulls too near to pull, 26 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+  CPU: ground field 4.33 ms (once a game second), model and HUD 0.268 ms a frame
+  t 80 s: mould 26403, soldiers 3, bank 349, harvested 0, rendered 0, shots 509, killed 2585, took 0%, crystals left 0.984; squad at 50.3,71.3
+  surge: the slime ate 421 food (5.3/s); meter 59.0 of 181, 2 surges
+  dense: 0 condensed or thick walkers, mass 26403 (readout 26403); 1502 breaking away
+  squad: touching 4.7 mean, 8 most; health 14 mean
+  boss t 81 s: lump 0 hunter Gather, 415 members (first 415, 0 hurt), at 392,120, spread 0.91, stolen 0.0; nearest soldier 340.3, 2 alive
+  boss t 82 s: lump 0 hunter Gather, 415 members (first 415, 0 hurt), at 390,120, spread 0.94, stolen 0.0; nearest soldier 339.1, 2 alive
+  boss t 83 s: lump 0 hunter Gather, 415 members (first 415, 0 hurt), at 388,122, spread 0.90, stolen 0.0; nearest soldier 342.2, 1 alive
+  rounds t   83 s: 31 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 19 batches of 31 bursts, 0 seeker turns, 481 soldier hits in 478 cells, 34 ran out of range and 1 hit a wall with no slime struck, 0 pulls too near to pull, 31 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+  CPU: ground field 7.70 ms (once a game second), model and HUD 0.331 ms a frame
+  t 83 s: mould 26607, soldiers 0, bank 333, harvested 0, rendered 0, shots 516, killed 2714, took 0%, crystals left 0.983, ended: squad wiped
+  surge: the slime ate 442 food (5.3/s); meter 80.0 of 181, 2 surges
+  dense: 0 condensed or thick walkers, mass 26607 (readout 26603); 1430 breaking away

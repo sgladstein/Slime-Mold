@@ -2,11 +2,12 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-mind-2026-11-16/README.md
+  - Reports/gun-provoke-still-2026-11-17/README.md
   - Reports/gun-readers-2026-11-17/README.md
   - Reports/gun-route-2026-11-17/README.md
   - Reports/gun-seek-2026-11-16/README.md
@@ -35,8 +36,9 @@ Only two cards have a planet settled by a census: the blast against the
 Drifter and the germ against the Sporer, each 30 of 32 paired seeds after a
 Holm correction ([toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md),
 *Confirmed at 32 seeds*); the germ was retuned per planet since (11-17,
-seed 0), still strongest on the Sporer and Drifter. Five more rest on a
-narrower measure (Corral, Pull, Seek, Detonate, Flare, Torch, Tinder); the rest of the
+seed 0), still strongest on the Sporer and Drifter. Nine more rest on a
+narrower measure (Heave, Pull, Seek, Detonate, Flare, Torch, Tinder,
+Provoke, Still); the rest of the
 table is this thread's judgement of each card against
 [the tier's counter](mould-tiers.md). The gaps are the Grudge and the
 Trunk; Pull and Thrift answer no planet.
@@ -60,6 +62,8 @@ this thread's judgement.
 | Scorch | 2 | Sprawler | J | a line it turns from, as it turns from walls | a burnt line the slime avoids |
 | Seek | 2 | Sprawler | M | near misses on thin slime become hits | near misses strike the slime beside them |
 | Blind | 2 | Sprawler | J | a fast mesh walks straight into walls, water, fire | walkers leave the vein in straight lines |
+| Provoke | 2 | Drifter; any slime sitting on a crystal | M | it fakes the cut: the part it hits believes it is cut off and comes out onto the guns (planet 1: the crystal clear in 13 s, kills 387 against 319); adds nothing to slime already charging | the slime goes grey, lets go of the crystal and runs at the squad |
+| Still | 2 | Swarmer; any raid | M | a raid it hits loses the charge: the squad better off in 4 of 6 paired windows, at about a third fewer kills | the raiders drift past instead of biting |
 | Pierce | 1 | Trunk | J | runs on along a long cord | the bullet carries on past its first hit |
 | Trigger, Expire | 2 | Trunk | J | carry a payload past the cords to a body | a second payload goes off past the first |
 | Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food | the slime loses its line to a crystal |
@@ -67,8 +71,7 @@ this thread's judgement.
 | Mist | 2 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
 | Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it |
 | Spin | 2 | Swarmer | J | rings stop a charge | the vein beads into knots |
-| Heave | 2 | Swarmer | J | pushes the swarm back | the slime shoved as a block |
-| Corral | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone) | the slime shoved toward a turret |
+| Heave | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone); with no turret near it pushes the swarm back | the slime shoved as a block, toward a turret if one is near |
 | Shatter | 2 | Swarmer, after gas | J | the gassed charge dies at once | the grey patch is gone and the hole stays |
 | Bomb | 4 | Swarmer | J | throws a rushing swarm back off the squad | the slime flung out in a ring |
 | Germ | 4 | strong vs Sporer and Drifter, weak vs Swarmer and Grudge; useless on a sleeping Sleeper, after a Flare strong | M | each planet's slime resists it (`germ_resist`) or is frail to it (`germ_upkeep`); a sleeping crust neither catches it nor starves | red runs along the veins, then the body thins to a net |
@@ -76,7 +79,7 @@ this thread's judgement.
 | Bait | 1 | Sporer | J | draws it off its crystals without a hit (its counter: starve it, don't hit it) | a scent line the slime follows |
 | Torch | 2 | Sporer (its jungle), by the ground; measured on the meadow | M | its fire kills thin slime in plants: on planets 1-3 more kills than plain in 9 of 9 windows, on the meadow 350 against 230 (216 by fire), on the barrens and fen barely more; the jungle (planet 5) not measured | the plants round the hit catch fire; thin slime in the flames burns, a damp body stops it |
 | Tinder | 2 | Sprawler (its barrens), with a torch | M | a fire runs along its brush where plants are thin: with the torch, more kills than the torch alone in 9 of 9 windows, on the barrens 159 against 123; nothing added to a scorch trail | a strip of dry brush along each flight, kept 6 cells clear of the squad; a fire runs along it |
-| Flare | 2 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); it wakes the Sleeper for a germ; shape C backs off from it and in play loses kills | an alarm haze; the slime comes to it or backs away |
+| Flare | 2 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); it wakes the Sleeper for a germ; shape C backs off from it and in play loses kills | a red ember; the slime comes to it or backs away |
 | Quiet | 1 | Sleeper; Swarmer | J | no alarm to wake the crust or draw the swarm; keeps gas asleep for Shatter | nothing: the slime does not stir |
 | Delay | 1 | Grudge | J | goes off when the slime comes back to where it was shot | the hit lodges, then goes off |
 | Range | 1 | Grudge | J | fire from new spots, out of a scar's reach | longer shots |
@@ -99,11 +102,11 @@ the Swarmer's first minute holds a big part behind necks), so starving is
 done with walls and positioning, which withering and panic already reward
 ([cut count](../../Reports/gun-cut-count-2026-11-17/README.md)).
 
-**Merge or cut candidates.** Pull and Thrift (no planet); Heave and Corral
-(one shove, two cards; whether they merge is the owner's pick in the next
-playtest pack, on the game designer's call, 11-17 12:23Z); Trigger and Expire; Gas and Mist. Wide and Multicast
-are general on purpose. Blind and Sour may not read apart (the Mind quiz is
-with the owner).
+**Merge or cut candidates.** Pull and Thrift (no planet); Trigger and
+Expire; Gas and Mist. Wide and Multicast are general on purpose. Blind and
+Sour may not read apart (the Mind quiz was dropped 11-17; play shows it).
+Heave and Corral were one shove in two cards (the game designer, 11-17
+12:23Z) and are one card, Heave, since 2026-11-18.
 
 ## Open
 
@@ -138,4 +141,4 @@ with the owner).
 - [toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md), *Confirmed at 32 seeds*: Blast, Plain, Germ.
 - [mould tiers](../../Reports/mould-tiers-2026-11-11.md): each tier's counter.
 - [rounds](../../Reports/rounds-2026-11-12.md): the Sleeper ignores every round.
-- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Corral, Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.
+- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Heave (Corral until 2026-11-18), Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.

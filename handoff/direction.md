@@ -6,24 +6,62 @@ the game's "what is new" and "things to try" lists, the record of his play
 sessions and the tuning numbers. The brief it was started from is at the
 end.
 
-## State (2026-11-17)
+## State (2026-11-18)
 
-- **Done:** `NOW.md` written; `CLAUDE.md` points at it and carries the lane
-  rules; the 11-17 decisions are in `wiki/decisions.md` and
-  `wiki/decisions-game.md`, D8 included; the plan is copied to
-  `Reports/continuation-plan-2026-11-17.md`; `HANDOFF.md` and `ROADMAP.md`
-  are marked as history; the pending picks are sorted (below); the first
-  list of things to try is in `NOW.md`.
-- **Open branch:** `claude/project-thread-5ho8zd` (this change).
-- **Next:** move `HANDOFF.md` and `ROADMAP.md` under `Reports/` once Engine
-  and tools retires the lint rule that needs links from `HANDOFF.md` (its
-  job 5); both decisions pages list `HANDOFF.md` in `sources:`, so change
-  them in the same commit. Move the list of things to try into the game's
-  file when Engine and tools lands it. When the owner plays, sort the log
-  and his notes within the hour. When the run bot exists, the curve for
-  planets 1 to 3.
-- **No play record yet.** Until the play log carries a build number, his
-  play shows only in what he writes; his notes are the dated rows of
+- **Done:** `NOW.md` and the lane rules in `CLAUDE.md` (#447); the 11-17
+  decisions in both decisions pages, D8 included; the plan copied to
+  `Reports/continuation-plan-2026-11-17.md`; the pending picks sorted
+  (below); the lab's steering report carried to main (#450); the old front
+  pages moved to `Reports/handoff-2026-11-17.md` and
+  `Reports/roadmap-2026-11-17.md` with stubs left at the root;
+  `news/things-to-try.txt` taken over.
+- **The Lure is going in** (his card, 11-18 03:03Z: "Lure now, in the three
+  planets"; row in `wiki/decisions-game.md`). Enemy's field (#457) and
+  Look's rings (#458) are on main; Squad's building is #461. This lane's
+  numbers, sent to Squad 11-18 08:40Z: pull 10; the run starts with the
+  Lure (`run::START`), because a shop unlock would keep it off planet 1,
+  where the rush is tested; the building 300 food and 150 health; Tinder
+  100 and the shop's sure Torch at most 100 (before planet 2 a run has 200
+  to 300 points, and Tinder without a fire is a wasted buy). When Squad's
+  two changes are on main: give the Lure a line in
+  `news/things-to-try.txt` and retune after he plays. Nothing is open with
+  the owner now.
+- **From the lab's part two** (11-18, `Reports/lab-steering-2026-11-17/`):
+  no bullet steering card. A tuning lead for the pull: a strong lure that
+  drags a colony off its crystal shrinks it without kills (10,386 alive
+  against 11,460 by 2:00, 1,565 killed against 10,533), so a high pull is
+  a second way to win a crystal, not only a kill zone. Keep the game's
+  pull at 10 until he has played it.
+- **The dart waits** (the lab's part three, 11-18): a lure fired where the
+  squad aims, at pull 10, takes a crystal off a colony in 30 to 45 s and
+  leaves the planet's slime 22% smaller by 2:00, for fewer kills (about
+  3,500 against 8,612) and less food. The lab says build it as the Lure's
+  second form. Not placed: it is more than his card covered and it changes
+  how a crystal is won, so it waits until he has played the Lure building.
+  Then put it to him once, with the clips, or give it to Squad if his play
+  notes ask for it. Its price and cooldown are this lane's.
+- **Held for D7:** Enemy's idea that the Drifter also smells crystals being
+  drained by hand. It is a rush brake, so it is not built, not even behind a
+  switch. Enemy's planet 1 finding is beside the rush on the list of things
+  to try: a hand building pumps is raided at 0:59 and both pumps are worn
+  down by 1:30, while the hand-draining rush has 42 soldiers at health 90
+  at 2:00. `crystal_regrow` stays off for the same reason.
+- **Also held for D7:** the harvest reach. 40 soldiers draining one crystal
+  stand in an overlapping pile, because only soldiers within the rim plus
+  2 cells harvest (Squad, 11-18); tidy rings need a longer reach, which is
+  the rush economy.
+- **The switch list** is at the rule's three rows, a count the compiler
+  enforces since #459: `crystal_regrow` (D7's), `feel` (shake and
+  hit-stop, his to judge in play) and the set slime's look, which Look and
+  interface deletes in #460 (amber stays).
+- **Next:** check each lane's lines in `news/whats-new.txt` as they land
+  and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
+  and Still, the Trunk's walls and the flinch look). When the owner plays,
+  sort the log (the `play-logs` branch, since #452) and his notes within
+  the hour. When the run bot exists, the curve for planets 1 to 3.
+- **The play record** exists since #452: a log a round with the build
+  number and F9 notes, pushed by `play.cmd` to the `play-logs` branch. No
+  session of his is on it yet; his notes so far are the dated rows of
   `wiki/decisions-game.md`.
 
 ## The pending picks, sorted (2026-11-17)
@@ -38,7 +76,8 @@ ask big". None of these is asked of him; he vetoes in play.
 | Far smell (`far_smell`) and charges round walls (`unit_paths`); `play-new-slime.cmd` | On by default on the run's planets; delete the second script | Enemy |
 | Setting, block or trap (`set_block`, `set_hold`), crust and its pull, fed slime fireproof (`fire_fed`): four blind films | Pick one configuration and give it to one deeper tier as its trait; the films exist if wanted | Enemy |
 | The set slime's look (`setlook`: glaze or amber) | Decide | Look and interface |
-| Haze strength and flinch strength | Redraw the haze (look A); set the flinch | Look and interface; Enemy |
+| Haze strength | Settled by Look and interface, 11-17: there is no haze any more. The lime wash was the engine's alarm paint; the alarm now shows only on slime, as a warm orange flush in the slime's own colour, and bare ground shows nothing | closed when its PR merges |
+| Flinch strength | Set it | Enemy |
 | Mini-boss colour (Violet, Ember, Ink) | Decide | Look and interface |
 | Fen moat or rock rims | Delete the moat: he saw no difference | Look and interface |
 | Heave and Corral as one card | Decide; the plan would merge them | Squad and arsenal |
@@ -46,7 +85,8 @@ ask big". None of these is asked of him; he vetoes in play.
 | The door-grate bullets question | Answered 11-17 03:08Z: bullets do not pass doors | closed |
 | Camera shake and hit-stop (D6) | One Experiments toggle; second on the list of things to try | Squad and arsenal, with Look and interface |
 | Last stand | One deep tier's trait, or delete | Enemy |
-| Reserve recruit, lossy flow, lone step | Delete, each with its `Reports/dead-ends.md` line | Enemy |
+| Lossy flow, lone step | Delete, each with its `Reports/dead-ends.md` line | Enemy |
+| Reserve recruit (`Rules::reserve`) | Kept: it has no `set=` name and the run never uses it; it is the frozen campaign's mission rule (his 11-12 04:44Z no-soft-lock pick), so it is not a switch (Enemy, 11-17) | closed |
 | Crystals that refill | Stays off: it belongs to his D7 answer | Direction holds it |
 | Specks amount, mortar strength, the size of what each planet does to you | Tuning notes from his next play | Direction |
 | Run pacing, shop prices, the breather planet | His next play and the bot's curve | Direction |

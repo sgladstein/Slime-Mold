@@ -1,0 +1,23 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 33.6 s (the slime has eaten 103 food)
+  load t 50.00 s: 16 squads load still+plain (asked for 50 s)
+  rounds t   50 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 74 soldier hits in 72 cells, 8 ran out of range and 0 hit a wall with no slime struck, 0 pulls too near to pull, 0 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+  CPU: ground field 5.15 ms (once a game second), model and HUD 0.106 ms a frame
+  t 50 s: mould 14690, soldiers 8, bank 398, harvested 0, rendered 0, shots 82, killed 107, took 0%, crystals left 0.992; squad at 341.0,70.4
+  surge: the slime ate 186 food (3.7/s); meter 82.8 of 103, 1 surges
+  dense: 0 condensed or thick walkers, mass 14690 (readout 14694); 1519 breaking away
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  surge 2 starts at t 54.0 s (the slime has eaten 206 food)
+  raid 1 at t 59.0 s: Soldiers(0) at 346,67, reach 78 cells holding 2153 walkers, share 0.60, size 9% of the slime
+  rounds t   60 s: 20 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 20 batches of 20 bursts, 0 seeker turns, 112 soldier hits in 108 cells, 9 ran out of range and 0 hit a wall with no slime struck, 0 pulls too near to pull, 20 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+  CPU: ground field 2.66 ms (once a game second), model and HUD 0.128 ms a frame
+  t 60 s: mould 15204, soldiers 8, bank 397, harvested 0, rendered 0, shots 122, killed 177, took 0%, crystals left 0.989; squad at 341.0,70.4
+  surge: the slime ate 237 food (3.9/s); meter 30.7 of 103, 2 surges
+  dense: 0 condensed or thick walkers, mass 15204 (readout 15204); 1282 breaking away
+  squad: touching 0.4 mean, 1 most; health 95 mean
+  rounds t   70 s: 46 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 43 batches of 46 bursts, 0 seeker turns, 161 soldier hits in 157 cells, 9 ran out of range and 0 hit a wall with no slime struck, 0 pulls too near to pull, 46 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.084 ms a frame
+  t 70 s: mould 15716, soldiers 8, bank 394, harvested 0, rendered 0, shots 170, killed 405, took 0%, crystals left 0.987; squad at 341.0,70.4
+  surge: the slime ate 288 food (4.1/s); meter 81.8 of 103, 2 surges
+  dense: 0 condensed or thick walkers, mass 15716 (readout 15716); 1382 breaking away
+  squad: touching 0.0 mean, 0 most; health 88 mean

@@ -2,7 +2,7 @@
 title: Art direction for Larder World (the style guide)
 kind: look
 status: open
-updated: 2026-11-16
+updated: 2026-11-18
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/biome-ground-2026-11-15/README.md
@@ -10,8 +10,10 @@ sources:
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/dark-ground-2026-11-14/README.md
+  - Reports/flinch-look-2026-11-17/README.md
   - Reports/ground-edges-2026-11-14/README.md
   - Reports/levelgen-review-2026-11-14/README.md
+  - Reports/lure-rings-2026-11-18/README.md
   - Reports/mini-boss-look-2026-11-16/README.md
   - Reports/river-look-2026-11-14/README.md
   - Reports/soil-materials-2026-11-14/README.md
@@ -31,6 +33,9 @@ thing on screen; the ground is dark and quiet; hard shapes (rock, walls,
 crystals) are crisp; your units are high-contrast and countable; light
 (muzzle, impact, crystal charge) only ever shows something the simulation
 did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed, and the ground is dark and cool since #247; what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
+Since 2026-11-17 the Look and interface lane holds this guide and the list
+under *Look jobs, ranked*, in the owner's order: the fight round the squad,
+then the slime, planets and terrain, menus and screens.
 
 ## The rules
 
@@ -77,9 +82,12 @@ did. The first review (11-14) found the slime out of focus, cell staircases on e
    data: a cut-off piece withering loses light and cools as its energy
    drops while the fed body stays brightest; a panic lean shows as a
    brighter, denser front facing its target; a shot's hole is clear the
-   moment it opens (it refills in about 2 s). Check: a three-frame strip
+   moment it opens (it refills in about 2 s); slime under the alarm (backing
+   off from fire, or called by a siren) flushes warm orange, deepest where
+   shots land now, and bare ground shows no alarm (`flush_at`;
+   [flinch look](../../Reports/flinch-look-2026-11-17/README.md)). Check: a three-frame strip
    (fed, cut at +30 s, leaning) turned grey still shows the difference
-   (game designer review, 11-14). The slime sharpness thread owns these.
+   (game designer review, 11-14).
 6. **Units read at zoom 6.** Every soldier countable (figures never draw
    exactly on top of one another), its facing visible, selection a thin
    ring, health shown when hurt; the dead look dead; buildings show their
@@ -93,30 +101,51 @@ did. The first review (11-14) found the slime out of focus, cell staircases on e
 
 ## How a look is judged and shipped
 
-- Look in motion: GIFs or a playable build at zoom 1, 6, 12 and 24, never
-  stills alone (owner 11-12 14:28Z). A visual choice goes to the owner as a
-  blind A/B with the key off the page.
-- Quote the frame cost on llvmpipe as before/after; the 1070 timing waits
-  for the owner's PC.
+- Look in motion, at zoom 6 and 12, never stills alone (owner 11-12
+  14:28Z): a before and an after clip of 5 to 10 s on an Artifact page, and
+  one line for the game's "what is new" list. Small choices are the lane's
+  and the owner vetoes in play; a blind A/B with the key off the page is
+  kept for a choice that sets the whole art direction (11-17).
+- Quote the frame cost on llvmpipe, before and after.
 - A look lands when it works and can be seen (testing rule, 11-12 17:26Z):
   if a better look changes balance, retune the numbers, don't keep the
   uglier look.
-- One owner per file region: the art director's thread agrees who edits
-  `view.wgsl`, `marks.rs` and `draw.rs` when, so threads don't collide.
+- One owner: the Look and interface lane (`CLAUDE.md`, *Lanes*) reviews
+  every lane's visible change against this guide.
 
 ## Owner's word
 
 - 2026-11-14 01:49Z: "Graphics need a big improvement. The crystals are pixelated. The slime looks very blurry/out of focus. The flashes of chaos bullets are really bad."
 - 2026-11-14 01:50Z: "The bullets shouldn't just be flashy effects. Research how noita does their wand animations."
 - 2026-11-14 02:24Z: "I want another thread to review all graphics in general and mange the current graphics work and start new work where it sees issues. We need to polish this game up"
+- 2026-11-17 17:39Z: "we should explore all your suggestions, priority in the order that you listed A->B->C->D"
 
-## Open
+## Look jobs, ranked
 
-- The review's ten issues and who has each: [review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*.
-- The 1070 cost of the new looks (waits for the PC).
-- Procedural planets: each biome must read from a grey thumbnail; layout per biome and soil materials are open ([planet review](../../Reports/levelgen-review-2026-11-14/README.md)).
+In the owner's order. A is Milestone 1's look test (`NOW.md`, exit test 2);
+B starts once A passes his eye.
+
+**A. The fight round the squad**
+
+1. Done: the flinch on the slime alone, no lime wash (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's pull as cream rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)).
+2. A shot is a short bright streak the eye can follow (thin dotted tracers today), and a hit is the slime's own reaction: the hole and the walkers it flings.
+3. Flung droplets in the slime's material (outlined shapes in another style today).
+4. A squad of 40 you can count (42 are one pile today); the spacing with Squad and arsenal.
+5. No effect bigger than its damage: check the muzzle light, hit light and crater ember.
+6. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as the hit's rose flash.
+7. Fire on slime and on set slime with no cell-sized squares at zoom 12.
+8. Flushed slime beside amber set slime (planet 3): film both, part them by hue if they blur.
+
+**B. The slime itself**: veins and flow inside the thick body; loose specks that read as parts of one body, not glowing pebbles; a look for the origin when Enemy builds it.
+
+**C. Planets and terrain**: stronger grounding (shadows are faint at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
+
+**D. Menus, shop and screens**: win and lose screens with the planet's numbers first; a landing, a win and a loss that happen in the picture; then the shop and the menus.
+
+Also open: the 1070 cost of the new looks (one batch before the milestone check); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
 ## Sources
 
 - [Art review 2026-11-14](../../Reports/art-review-2026-11-14/README.md).
 - [Planet art review 2026-11-14](../../Reports/levelgen-review-2026-11-14/README.md).
+- [Flinch look 2026-11-17](../../Reports/flinch-look-2026-11-17/README.md).

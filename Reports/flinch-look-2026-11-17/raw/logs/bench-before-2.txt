@@ -1,0 +1,20 @@
+larder-world machine at the start: RAM 15.1 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: planet:1:1 seed 14804443570064328175, 400 x 248 cells, 26239 slots, one walker a cell, scale 2 walkers 12860; hand squads, 45 game s at 15 frames a second, screen 1280x800
+  GPU buffers: 95.6 MB for 400 x 248 cells (964 bytes a cell), the biggest 16.7 MB
+  675 frames, 675 game steps; 0.11 read-backs a step, 0.00 waits a step (0.02 ms a step waiting); steps finished once in 656, when the next was due 0
+  every frame (675 of them), ms: frame p50 134.90 p95 163.91 max 208.07; step  p50 1.00 p95 22.83 max 37.93; prepare  p50 0.26 p95 1.25 max 38.67; record  p50 22.97 p95 29.51 max 41.62; GPU tail  p50 109.92 p95 134.84 max 168.75
+  frames with a step (675 of them), ms: frame p50 134.90 p95 163.91 max 208.07; step  p50 1.00 p95 22.83 max 37.93; prepare  p50 0.26 p95 1.25 max 38.67; record  p50 22.97 p95 29.51 max 41.62; GPU tail  p50 109.92 p95 134.84 max 168.75
+  after the first game second (660 frames), ms: frame max 204.20; step max 37.93; prepare max 38.67
+  longest frames, at game time: 0.00 s: 208.07 (step 3.87, prepare 1.45, record 34.01, tail 168.75, stepped); 40.87 s: 204.20 (step 1.27, prepare 0.53, record 34.04, tail 168.36, stepped); 13.20 s: 189.26 (step 0.88, prepare 0.26, record 23.65, tail 164.47, stepped)
+  ground refresh: 22 of them, ms: mean 23.36 max 38.43, of which the read-back at most 38.17; 3661 live cells
+  GPU (timestamps, median of 675 steps): the step's ticks 20.03 ms, its drawing 1.92 ms
+  t 45 s: mould 11081, soldiers 6, buildings 0, harvested 0, shots 330, killed 4122
+  view, every pass timed alone (median of 30 frames): 100.015 ms in all
+    base      87.246 ms   87.2%  (30 frames)
+    marks      1.280 ms    1.3%  (30 frames)
+    compose    3.925 ms    3.9%  (30 frames)
+    specks     0.651 ms    0.7%  (30 frames)
+    prep       5.799 ms    5.8%  (30 frames)
+    drain      0.124 ms    0.1%  (30 frames)
+  machine at the end: RAM 14.8 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs

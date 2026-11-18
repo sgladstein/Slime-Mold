@@ -22,12 +22,12 @@ what you see). The ROADMAP row is N10.
     - Cut: no Cut card. The cut count, #435: one thin cut frees under 2% of the slime in 21 of 22 counts (`Reports/gun-cut-count-2026-11-17/`).
 - Each step's report is in `Reports/gun-*-2026-11-1x/`. Its page source is in that folder's `page/`. The old claude.ai page links will not open on the new account, so open `page/index.html`.
 
-## Open branch (not a PR)
+## Provoke and Still: finished 11-17 by the Squad and arsenal lane
 
-- `claude/project-thread-vx9t3p-wip`, commit 9294ed83: **Provoke and Still as Mind cards**. These are the simulation-use thread's `MIND_DEAF` and `MIND_STILL` statuses, laid for the devices' 12 s and 10 s through `BurstRules::mind_steps_for` on both engines.
-  - Done: shells sold from planet 2, icons, faces, H decks. Unit tests pass.
-  - Not done: clippy not run, not filmed, windows partial (`Reports/gun-provoke-still-2026-11-17/raw/windows-partial/`). The README is a draft with PAGE, STATUS and PLAY placeholders.
-  - To resume: rebase that commit onto main, run `raw/windows.sh` and `raw/film.sh` (planet 1's raid at 59 s is the scene), fill in the report, then open a PR and label it `queue`.
+The branch `claude/project-thread-vx9t3p-wip` (9294ed83) was rebased, filmed
+and merged: `Reports/gun-provoke-still-2026-11-17/`. This file is history
+now; the lane's state is `handoff/squad-and-arsenal.md`. Steps E and F
+below are parked until Milestone 1 passes.
 
 ## Next
 
@@ -37,8 +37,6 @@ what you see). The ROADMAP row is N10.
 
 ## Waiting on the owner
 
-- The Mind cards' blind quiz. The key is in `Reports/gun-mind-2026-11-16/README.md`.
-- Whether Heave and Corral merge into one card. The pick is in the 11-17 playtest pack (#433).
 - The Torch's and Tinder's costs (2) wait for the balance pass. The game designer called it.
 - Timing the Mind statuses on the GTX 1070.
 

@@ -94,7 +94,8 @@ its reach ring, a lobbed arc to the landing point and the area in the tool's
 colour, all red with the click refused out of reach (`Model::throw`, `Throw`;
 [report](../../Reports/throw-aim-2026-11-16/README.md)). Since 11-17 the page
 has two test devices for the simulation-use plan's signals, left out of runs
-until the gun thread's cards: Provoke (X) makes the mould within
+(their gun cards are in runs since 11-17, [guns](guns.md); a carried device
+waits on the device slot, parked): Provoke (X) makes the mould within
 `KitRules::mind_r` deaf to food news, so it panics and charges, and Still
 (Z) stops its charges and its eating (`Tool::Provoke`, `Tool::Still`;
 [report](../../Reports/sim-use-2026-11-17/b-provoke-still.md)). The crater a blast, cord
@@ -148,8 +149,8 @@ Step 5 is built ([report](../../Reports/trail-cards-2026-11-14.md)): the flight 
 alarm and mist lay crater, alarm or a thin gas cloud along every soldier bullet's flight,
 through `World::burst` on both engines.
 Since 11-14 08:41Z (owner) scorch also burns the walkers on its line (`Burst::burn`,
-`World::burned`), and the engine's draw shows crater as a fading ember and alarm as a
-green haze straight from the fields ([report](../../Reports/burning-trails-2026-11-14.md)).
+`World::burned`), and the engine's draw shows crater as a fading ember from its field
+([report](../../Reports/burning-trails-2026-11-14.md); the alarm's green went 11-17).
 The default mould ignores alarm (`alarm_weight` 0), so on 09:02Z (owner's card) the alarm trail
 became `bait`: food scent along the flight (`Burst::bait`, GPU pass `baitlay` 60) that every mould follows.
 Cards cost budget (`Card::cost`, gun budget 10, capacity at loadout, owner 15:34Z); `rate`, `thrift` and

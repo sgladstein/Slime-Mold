@@ -1,0 +1,24 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 11 s alone in 10.7 s
+FILMS/p4-before/planet-4-1-squads-020s-all.png
+FILMS/p4-before/planet-4-1-squads-020s-near.png
+  CPU: ground field 3.32 ms (once a game second), model and HUD 0.095 ms a frame
+  t 20 s: mould 51400, soldiers 8, bank 400, harvested 0, rendered 0, shots 135, killed 2490, took 0%, crystals left 0.996; squad at 371.7,251.5
+  surge: the slime ate 113 food (5.7/s); meter 113.2 of 327, 0 surges
+  dense: 0 condensed or thick walkers, mass 51400 (readout 51400); 2969 breaking away
+  squad: touching 0.2 mean, 2 most; health 80 mean
+FILMS/p4-before/planet-4-1-squads-040s-all.png
+FILMS/p4-before/planet-4-1-squads-040s-near.png
+  CPU: ground field 3.17 ms (once a game second), model and HUD 0.098 ms a frame
+  t 40 s: mould 50376, soldiers 8, bank 400, harvested 0, rendered 0, shots 401, killed 4328, took 0%, crystals left 0.992; squad at 414.5,279.6
+  surge: the slime ate 249 food (6.2/s); meter 248.5 of 327, 0 surges
+  dense: 0 condensed or thick walkers, mass 50376 (readout 50376); 3733 breaking away
+  squad: touching 1.2 mean, 9 most; health 69 mean
+  surge 1 starts at t 51.1 s (the slime has eaten 327 food)
+FILMS/p4-before/planet-4-1-squads-060s-all.png
+FILMS/p4-before/planet-4-1-squads-060s-near.png
+  CPU: ground field 4.30 ms (once a game second), model and HUD 0.117 ms a frame
+  t 60 s: mould 50295, soldiers 4, bank 434, harvested 0, rendered 0, shots 495, killed 5517, took 0%, crystals left 0.987; squad at 491.0,327.0
+  surge: the slime ate 391 food (6.5/s); meter 64.3 of 327, 1 surges
+  dense: 0 condensed or thick walkers, mass 50295 (readout 50295); 2569 breaking away
+  squad: touching 0.0 mean, 0 most; health 82 mean

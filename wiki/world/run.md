@@ -2,13 +2,15 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
+  - Reports/enemy-switches-2026-11-17/README.md
   - Reports/flinch-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-steering-2026-11-17/README.md
+  - Reports/lure-field-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/pump-economy-2026-11-15/README.md
@@ -17,6 +19,8 @@ sources:
   - Reports/run-progression-2026-11-15/does-to-you.md
   - Reports/shop-b-2026-11-15/README.md
   - Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md
+  - Reports/sim-use-2026-11-17/s1-unit-paths.md
+  - Reports/sim-use-2026-11-17/s2-far-smell.md
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/surge-2026-11-15/README.md
@@ -25,6 +29,8 @@ code:
   - BossRules::for_depth
   - Game::boss_aim
   - LADDER
+  - LURE_PULL
+  - LureMark
   - PLANETS
   - Playlog
   - RANGE_DEPTH
@@ -42,6 +48,7 @@ code:
   - ammo_price
   - area_of
   - bring
+  - bring_shell
   - clock
   - does_to_you
   - enemy_keys
@@ -59,6 +66,7 @@ code:
   - size_roll
   - surge_food
   - surge_secs
+  - time_lure_paths
   - two_stars
 ---
 
@@ -116,11 +124,14 @@ four healthy soldiers and both pumps standing. The shrink goal counts the
 slime's mass (`World::mass`, the enemy's living walkers; until 11-17 a
 thickened walker counted twice, so a body that thickened did not read as
 shrinking; thickening was deleted). The window writes a play log
-(`Playlog`) beside the replay, `larder-world-log-MAP-SEED.txt`, a line a
+(`Playlog`), a file a round in `play-logs/` beside the game (since 11-17;
+before, `larder-world-log-MAP-SEED.txt`, which the next round wrote over),
+headed by the build, the switches on and the planet, a line a
 game second (walkers, mass, soldiers, squads, bank, income, shots, kills,
 buildings, frame p50/p95) with each command; `cargo run --release --example
 playlog -- FILE` prints time to 10-40 soldiers, splits, pumps, kills a
-minute against the slime's mass, and frame times.
+minute against the slime's mass, and frame times. F9 in play drops a
+numbered note (the second and where the camera looked).
 
 Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet: see below.
 
@@ -129,34 +140,104 @@ Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/READM
 Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 [report](../../Reports/run-progression-2026-11-15/does-to-you.md)), each
 rung of `LADDER` does one thing to you (`does_to_you`), named on the planet
-card and in the landing alert: the Drifter and the Trunk smell your pumps
-(`pump_smell` 20 over `lure_r` 15 cells) and come to eat their crystals; the
+card and in the landing alert: the Drifter smells your pumps
+(`pump_smell` 20 over `lure_r` 15 cells) and comes to eat their crystals; the
+Trunk sets into amber walls where you shoot it (below; until 11-17 it had the
+Drifter's pump smell, so planets 1 and 3 did the same thing); the
 Sprawler smells your soldiers from far off (`smell` 4 over 4 cells) but
 shies from fire (`fire_alarm` 50, since 11-17: the designer's fire-shy
 tier, as a switch for every slime it fenced every fire;
 [report](../../Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md); on
 run seed 1's planet 2 a plain light found nothing to burn); the
 Swarmer's surges reach 25 cells past your range (`panic_margin`) and lunge
-3x (`surge_haste`); the Sporer bursts into spores at an alarm of 0.3; the
+3x (`surge_haste`), and since 11-17 it makes a last stand (`last_stand`: cut
+under a quarter of its peak, all of it rushes the thickest knot of soldiers,
+once; the owner's 11-15 21:15Z idea, "a slime that is losing might rush you
+will everything it has", given to the one tier whose card is already the
+charge); the Sporer bursts into spores at an alarm of 0.3; the
 Sleeper wakes at an alarm of 0.3; the Grudge (planet 7 since 11-17, when
 its scar reached the GPU; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md))
 reads the scar where it was hit at twice the campaign tier's weight
 (`scar_weight` 1, a first number; one film, seed 1 with four soldiers standing: gone at 0:40 against 0:48 with it off, a small effect). Run seed 1 at 2:00, each ends or wears the
 four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
-shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
-them on the command card), and the 40-soldier rush is left as it is (D7). A
-lab prototype, not in the game, meets D10's condition for the lure: a lure
+shop no longer sells the outpost or siren (D10; `run_hidden` hides
+them on the command card; the lure was out with them until 11-18), and the 40-soldier rush is left as it is (D7). A
+lab prototype met D10's condition for the lure: a lure
 that every walker leans toward (a walking-distance field, so walls bend it)
 drew planet 1's home colony into three turrets, 4,158 walkers killed by
 1:30 against 1,623 without it (run seed 1, one seed, software GPU;
-[report](../../Reports/lab-steering-2026-11-17/README.md)). Whether it is
-built into the game is Direction's to place.
+[report](../../Reports/lab-steering-2026-11-17/README.md)). The owner's card,
+11-18 03:03Z: "Lure now, in the three planets". The Lure comes back to the
+run shop for planets 1 to 3 with that rule at a third of the lab's pull
+(first numbers: pull 10, shop unlock 150, the building 300 food and 150
+health, mortal); Enemy builds the field with its own GPU slot and weight,
+Squad and arsenal the building and the shop item, Look and interface the
+rings' colour. Both are built: the field (below), and since 11-18 the
+shop's Lures unlock, with the Lure and the lures' switch back on a run's
+build card (`run_lock`). The siren and the outpost stay out.
+The lab's later parts (same report): marks laid by every shot do not herd,
+so there is no bullet steering card; a dart that sets a lure where the squad
+aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
+(about 3,500 against 8,612 by 2:00, planet 1, run seed 1). The dart is not
+placed: it waits until the owner has played the Lure building.
+Part four, to 5:00: a colony pulled off its crystal mostly dies in the
+turrets, and the crystal is resettled within one to two minutes once the
+darts stop; with no turrets a raid on the squad overrides the lure, and the
+port keeps that (below).
+
+**A lure pulls** (every planet, 11-18). The lab's field is a slime rule of
+the GPU engine (`lure_pull`, `run::LURE_PULL` 10 on every planet, no CPU
+twin): calm slime within `Rules::lure_reach` (60 cells of walking) of a
+Lure that is on, or of a lure mark (`LureMark`, for a thrown or shot lure),
+leans down the walking distance to it; the game rebuilds the field once a
+game second (`time_lure_paths`). A panicking, surging, raiding or breakaway
+walker and a mini-boss's member ignore it, so a lure draws the body at rest
+and is no shield from a charge; a blind walker does not see it and a soured
+one runs from it. In the lab's scene on the game's build, 4,461 walkers
+killed by 1:30 with a Lure building (which the first raid wore down at
+0:59), 5,978 with a mark that cannot be eaten, 1,813 with no lure (run seed
+1, one film each, software GPU;
+[report](../../Reports/lure-field-2026-11-18/README.md)).
+
+**The Trunk's walls** (planet 3, 11-17; `TRUNK_KEYS` and `TRUNK_RULES` in
+`run.rs`; [report](../../Reports/enemy-switches-2026-11-17/README.md)).
+Where the Trunk is shot it sets: the hurt walkers stop where they stand,
+take three blows instead of one (`setting`, `set_armour` 3) and are drawn as
+amber resin. Five of them round a cell make it no ground to soldiers
+(`set_block` 5), and the walking maps route round it. Its fed body does not
+burn (`fire_fed`); its set walls and its starved parts do, with the crust
+under them as fuel (`crust_fuel` 3). It keeps to ground it has held
+(`crust_weight` +8, `crust_fast` 1). These were the simulation-use plan's
+four open picks; the plan the owner approved on 11-17 had the Enemy lane
+pick one configuration for one tier, and planet 3 was chosen because it is
+inside Milestone 1 and its old card repeated planet 1's. One film each, run
+seed 1: eight rifles holding a front had set 1,143 walkers into 1,130 wall
+cells by 1:15, and two Torch shots on that wall cut it to 679 cells in two
+seconds while it grew to 1,284 with no fire; the scripted rush killed 3,205
+by 1:00 against 7,992 before and still fell to the first raid.
+
+**Every run planet's slime** (11-17; `enemy_keys` and `ENEMY_RULES`) smells
+crystals it has not reached from across the map (`far_smell`;
+[report](../../Reports/sim-use-2026-11-17/s2-far-smell.md)) and its charges
+go round walls instead of piling against them (`unit_paths`;
+[report](../../Reports/sim-use-2026-11-17/s1-unit-paths.md)). Both were
+switches until then. With both on, the scripted rush on run seed 1 still had
+42 soldiers at 2:00 on planet 1 and had 7 on planet 2 against 18, one film
+each ([report](../../Reports/enemy-switches-2026-11-17/README.md), *Films*).
 
 A planet whose tier asks for a card (`bring`; the Sprawler, which shies
 from fire, asks for Tinder) gets that card in one of its shop's card slots
 when you don't own it, on every reroll (the game designer, 11-17 15:26Z);
-drawn by chance it was in 23 of 200 planet-2 shops.
+drawn by chance it was in 23 of 200 planet-2 shops. A tier may ask for a
+bullet too (`bring_shell`, 2026-11-18): the Sprawler and the Trunk ask for a
+Torch, which is the shop's first bullet while you own none, because
+Tinder's brush kills nothing until a fire runs along it and the Trunk's
+amber walls burn. Since the same day a shop's two bullets are never one
+shell, never the plain standard bullet the run starts with and never a
+reader with nothing to read (a Shatter with no gas bullet owned, a Detonate
+with no germ), and its two guns are two kinds, neither the kind carried
+(`Run::restock`).
 
 ## The gun range
 

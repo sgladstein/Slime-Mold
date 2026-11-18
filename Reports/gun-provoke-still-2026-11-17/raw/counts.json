@@ -1,0 +1,58 @@
+{
+ "provoke": {
+  "plain": {
+   "t0": 16.0,
+   "t1": 32.0,
+   "killed": 319,
+   "shots": 23,
+   "slime0": 12980,
+   "slime1": 12899,
+   "soldiers": 8,
+   "health": 98,
+   "touched": 2,
+   "touching": 0.01,
+   "mind": 0
+  },
+  "provoke": {
+   "t0": 16.0,
+   "t1": 32.0,
+   "killed": 387,
+   "shots": 42,
+   "slime0": 12980,
+   "slime1": 12608,
+   "soldiers": 8,
+   "health": 98,
+   "touched": 2,
+   "touching": 0.03,
+   "mind": 21
+  }
+ },
+ "still": {
+  "plain": {
+   "t0": 56.0,
+   "t1": 72.0,
+   "killed": 585,
+   "shots": 98,
+   "slime0": 14993,
+   "slime1": 15549,
+   "soldiers": 7,
+   "health": 71,
+   "touched": 13,
+   "touching": 1.01,
+   "mind": 0
+  },
+  "still": {
+   "t0": 56.0,
+   "t1": 72.0,
+   "killed": 320,
+   "shots": 77,
+   "slime0": 15003,
+   "slime1": 15812,
+   "soldiers": 8,
+   "health": 87,
+   "touched": 8,
+   "touching": 0.31,
+   "mind": 40
+  }
+ }
+}

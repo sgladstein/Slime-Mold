@@ -2,7 +2,7 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-15
+updated: 2026-11-18
 sources:
   - Reports/alarm-look-2026-11-15/README.md
   - Reports/bar-allocator-2026-11-15/README.md
@@ -11,9 +11,11 @@ sources:
   - Reports/command-card-2026-11-15/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
+  - Reports/flinch-look-2026-11-17/README.md
   - Reports/gun-card-hud-2026-11-14/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/levelgen-2026-11-14/README.md
+  - Reports/lure-rings-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/menu-layout-research-2026-11-15/README.md
   - Reports/menu-review-2026-11-15/README.md
@@ -42,7 +44,6 @@ sources:
   - Reports/world-look-2026-11-11.md
   - Reports/world-ui-2026-11-11.md
 code:
-  - ALARM_LOOK
   - Camera::set_inset
   - Camera::wheel
   - CanvasPass
@@ -85,12 +86,12 @@ code:
   - View::record
   - View::record_each
   - View::set_alarm
-  - View::set_alarm_look
   - View::set_alive
   - View::set_body_density
   - View::set_crystals
   - View::set_look
   - View::set_news
+  - View::set_steer
   - first_hit
   - mark_far
   - ring_groups
@@ -183,20 +184,21 @@ turns on its base to its aim and kicks with a muzzle flash as it fires, its
 lamp the game's state, and hovering one shows its reach (`Marks::turret`;
 [turret look](../../Reports/turret-look-2026-11-14/README.md)). The other
 buildings show their work too, all soldier-scale: a burning lure lights the
-engine's real scent field green (a scent light, `Light` with lift below 0), a
+engine's real scent field green (a scent light, `Light` with lift below 0),
+or, where the engine holds the Lure's steering field, shows its pull as thin
+cream rings of equal walking distance with the scent light unlit
+(`View::set_steer`, 2026-11-18;
+[lure rings](../../Reports/lure-rings-2026-11-18/README.md)), a
 pump turns its hose into its crystal with a charge line as bright as its draw
 (`Marks::building_facing`, `Building::drew`), an outpost is a mini larder that
-flares when a load is banked there, and a siren's real call shows as the
-engine's alarm field itself, a pale front spreading and fading
-(`View::set_alarm`, bindings 25-26;
-[siren alarm](../../Reports/siren-alarm-2026-11-14/README.md)), at a
-quarter of its first strength since 2026-11-15 (`View::set_alarm_look`,
-`ALARM_LOOK`; at full, a squad's fire on the Swarmer's planet washed the
-frame mint), and over open ground only, so a wall face draws no bright
-edge ([alarm look](../../Reports/alarm-look-2026-11-15/README.md), a
-blind A/B of four strengths for the owner; on the GTX 1070 the change cost
-the view's base pass 0.16 ms on planet 4, most of it the wall-aware
-sample, and since the flinch PR a strength of 0 samples nothing). F2 turns on the scent view (`View::scent`, 2026-11-15; owner: "Is there a way for me to view the mold scent?"): the world dims under the two fields a walker smells, the food scent in blue with contour lines one to three pixels wide at any zoom and the trail in pink, crystals and rock left readable ([scent view](../../Reports/scent-view-2026-11-15/README.md)). A soldier the slime bites flinches every 3 hp of damage, the
+flares when a load is banked there, and a siren's real call shows on the slime it
+reaches: slime under the engine's alarm field flushes warm orange and bare
+ground shows nothing (`flush_at`, `View::set_alarm`, bindings 25-26;
+[flinch look](../../Reports/flinch-look-2026-11-17/README.md)), which is
+also how the flinch from every shot shows since 2026-11-17; before that the
+field was a pale haze over ground and slime
+([siren alarm](../../Reports/siren-alarm-2026-11-14/README.md),
+[alarm look](../../Reports/alarm-look-2026-11-15/README.md)). F2 turns on the scent view (`View::scent`, 2026-11-15; owner: "Is there a way for me to view the mold scent?"): the world dims under the two fields a walker smells, the food scent in blue with contour lines one to three pixels wide at any zoom and the trail in pink, crystals and rock left readable ([scent view](../../Reports/scent-view-2026-11-15/README.md)). A soldier the slime bites flinches every 3 hp of damage, the
 bitten side flushing hot (`Marks::soldier_bitten`;
 [building looks](../../Reports/building-looks-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the

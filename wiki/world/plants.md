@@ -58,8 +58,8 @@ is older than the wither lag, nor set slime, on both engines. A cut part
 that went stale burnt whole in 20 s on full meadow (6 of 6 seeds; 0-6%
 before), and a fed disc burnt exactly as before. But fed slime was never
 wholly fireproof: fire through its thin trail took 24-65% of a fed disc in
-20 s; `BigParams::fire_fed` (off, the owner's card) makes fed slime wet
-whatever its trail, and took that to 0
+20 s; `BigParams::fire_fed` (the Trunk's trait in a run since 11-17, off
+elsewhere) makes fed slime wet whatever its trail, and took that to 0
 ([report](../../Reports/sim-use-2026-11-17/c1-dry-burns.md)).
 **Fire lays alarm** (C4, 2026-11-17; `BigParams::fire_alarm`, off): each
 fire step a burning agar cell adds `fire_alarm` x its fire to the alarm

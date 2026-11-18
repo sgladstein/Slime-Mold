@@ -2,14 +2,15 @@
 title: The owner's rulings and decided choices
 kind: method
 status: current
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - CLAUDE.md
-  - HANDOFF.md
   - Reports/continuation-plan-2026-11-17.md
+  - Reports/handoff-2026-11-17.md
   - Reports/mould-real-world-2026-11-09.md
   - Reports/mould-review-thread-handoff-2026-11-10.md
   - Reports/mould-sound-2026-11-10.md
+  - Reports/roadmap-2026-11-17.md
   - Reports/rts-design-2026-11-10.md
   - Reports/testing-practice-2026-11-12.md
   - Reports/whole-game-review-2026-11-15/README.md
@@ -22,7 +23,7 @@ code:
 Every ruling and every decided choice, with the owner's words and the time
 they were said, newest first in each group. **Open decisions live in one
 place only: [NOW.md, *What waits on the owner*](../NOW.md)** (since
-2026-11-17; before that, HANDOFF.md's list). The Direction lane keeps these
+2026-11-17; before that, the old HANDOFF.md's list). The Direction lane keeps these
 pages. When the owner answers one, move it here with the quote and time, and
 update the pages it changes in the same commit. Never write an answer the
 owner did not give; a recommendation on a card is not his answer.
@@ -75,7 +76,7 @@ size). Add a new game decision there, newest first.
 
 - [CLAUDE.md](../CLAUDE.md), *What the owner has ruled*.
 - [The continuation plan](../Reports/continuation-plan-2026-11-17.md) and its thread (2026-11-17): the 11-17 rows above; the quotes are the owner's messages there, the questions the planning thread's.
-- [HANDOFF.md](../HANDOFF.md), *Where the game stands* and *Decisions the owner has not made*.
+- [The old HANDOFF.md](../Reports/handoff-2026-11-17.md), *Where the game stands* and *Decisions the owner has not made*, and [the old ROADMAP.md](../Reports/roadmap-2026-11-17.md): the front pages until 2026-11-17, kept as history.
 - [mould-review-thread-handoff-2026-11-10.md](../Reports/mould-review-thread-handoff-2026-11-10.md), *What the owner said in this thread*.
 - [mould-real-world-2026-11-09.md](../Reports/mould-real-world-2026-11-09.md), §5.
 - The `handoff/project-memory/` notes linked above (a frozen snapshot of the old project's memory; do not edit them).

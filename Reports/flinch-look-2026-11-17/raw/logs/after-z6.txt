@@ -1,0 +1,1261 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+FILMS/after-z6/planet-1-1-squads-14500ms-all.png
+FILMS/after-z6/planet-1-1-squads-14500ms-near.png
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.088 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 38, killed 414, took 0%, crystals left 0.998; squad at 148.1,144.0
+  surge: the slime ate 34 food (2.3/s); meter 34.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12704); 774 breaking away
+  squad: touching 1.1 mean, 5 most; health 98 mean
+FILMS/after-z6/planet-1-1-squads-14533ms-all.png
+FILMS/after-z6/planet-1-1-squads-14533ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.096 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 38, killed 414, took 0%, crystals left 0.998; squad at 148.1,144.0
+  surge: the slime ate 34 food (2.3/s); meter 34.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12704); 774 breaking away
+  squad: touching 1.1 mean, 5 most; health 98 mean
+FILMS/after-z6/planet-1-1-squads-14567ms-all.png
+FILMS/after-z6/planet-1-1-squads-14567ms-near.png
+  CPU: ground field 4.21 ms (once a game second), model and HUD 0.127 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 39, killed 549, took 0%, crystals left 0.998; squad at 147.6,144.2
+  surge: the slime ate 34 food (2.3/s); meter 34.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12691); 771 breaking away
+  squad: touching 0.1 mean, 1 most; health 98 mean
+FILMS/after-z6/planet-1-1-squads-14600ms-all.png
+FILMS/after-z6/planet-1-1-squads-14600ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.130 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 39, killed 549, took 0%, crystals left 0.998; squad at 147.6,144.2
+  surge: the slime ate 34 food (2.3/s); meter 34.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12691); 771 breaking away
+  squad: touching 0.1 mean, 1 most; health 98 mean
+FILMS/after-z6/planet-1-1-squads-14633ms-all.png
+FILMS/after-z6/planet-1-1-squads-14633ms-near.png
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.095 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 39, killed 549, took 0%, crystals left 0.998; squad at 146.7,144.5
+  surge: the slime ate 34 food (2.3/s); meter 34.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12680); 769 breaking away
+  squad: touching 0.2 mean, 1 most; health 98 mean
+FILMS/after-z6/planet-1-1-squads-14667ms-all.png
+FILMS/after-z6/planet-1-1-squads-14667ms-near.png
+  CPU: ground field 1.82 ms (once a game second), model and HUD 0.118 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 40, killed 549, took 0%, crystals left 0.998; squad at 145.9,144.8
+  surge: the slime ate 35 food (2.3/s); meter 34.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12662); 769 breaking away
+  squad: touching 0.4 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14700ms-all.png
+FILMS/after-z6/planet-1-1-squads-14700ms-near.png
+  CPU: ground field 1.16 ms (once a game second), model and HUD 0.095 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 40, killed 549, took 0%, crystals left 0.998; squad at 145.9,144.8
+  surge: the slime ate 35 food (2.3/s); meter 34.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12662); 769 breaking away
+  squad: touching 0.4 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14733ms-all.png
+FILMS/after-z6/planet-1-1-squads-14733ms-near.png
+  CPU: ground field 4.48 ms (once a game second), model and HUD 0.078 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 40, killed 549, took 0%, crystals left 0.998; squad at 145.9,144.8
+  surge: the slime ate 35 food (2.3/s); meter 34.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12662); 769 breaking away
+  squad: touching 0.4 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14767ms-all.png
+FILMS/after-z6/planet-1-1-squads-14767ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.208 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 40, killed 549, took 0%, crystals left 0.998; squad at 145.0,145.2
+  surge: the slime ate 35 food (2.3/s); meter 34.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12643); 769 breaking away
+  squad: touching 0.1 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14800ms-all.png
+FILMS/after-z6/planet-1-1-squads-14800ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.094 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 40, killed 549, took 0%, crystals left 0.998; squad at 145.0,145.2
+  surge: the slime ate 35 food (2.3/s); meter 34.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12643); 769 breaking away
+  squad: touching 0.1 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14833ms-all.png
+FILMS/after-z6/planet-1-1-squads-14833ms-near.png
+  CPU: ground field 1.37 ms (once a game second), model and HUD 0.087 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 41, killed 565, took 0%, crystals left 0.998; squad at 144.3,145.6
+  surge: the slime ate 35 food (2.4/s); meter 34.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12601); 767 breaking away
+  squad: touching 0.1 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14867ms-all.png
+FILMS/after-z6/planet-1-1-squads-14867ms-near.png
+  CPU: ground field 1.03 ms (once a game second), model and HUD 0.485 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 41, killed 565, took 0%, crystals left 0.998; squad at 143.8,145.9
+  surge: the slime ate 35 food (2.4/s); meter 35.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12560); 765 breaking away
+  squad: touching 0.2 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14900ms-all.png
+FILMS/after-z6/planet-1-1-squads-14900ms-near.png
+  CPU: ground field 1.15 ms (once a game second), model and HUD 0.299 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 41, killed 565, took 0%, crystals left 0.998; squad at 143.8,145.9
+  surge: the slime ate 35 food (2.4/s); meter 35.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12560); 765 breaking away
+  squad: touching 0.2 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14933ms-all.png
+FILMS/after-z6/planet-1-1-squads-14933ms-near.png
+  CPU: ground field 5.22 ms (once a game second), model and HUD 0.085 ms a frame
+  t 15 s: mould 12859, soldiers 8, bank 400, harvested 0, rendered 0, shots 41, killed 565, took 0%, crystals left 0.998; squad at 143.8,145.9
+  surge: the slime ate 35 food (2.4/s); meter 35.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12859 (readout 12560); 765 breaking away
+  squad: touching 0.2 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-14967ms-all.png
+FILMS/after-z6/planet-1-1-squads-14967ms-near.png
+  CPU: ground field 1.16 ms (once a game second), model and HUD 0.168 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 591, took 0%, crystals left 0.998; squad at 143.2,146.3
+  surge: the slime ate 35 food (2.4/s); meter 35.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12531); 763 breaking away
+  squad: touching 0.1 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-015s-all.png
+FILMS/after-z6/planet-1-1-squads-015s-near.png
+  CPU: ground field 6.01 ms (once a game second), model and HUD 0.082 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 591, took 0%, crystals left 0.998; squad at 143.2,146.3
+  surge: the slime ate 35 food (2.4/s); meter 35.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12531); 763 breaking away
+  squad: touching 0.1 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15033ms-all.png
+FILMS/after-z6/planet-1-1-squads-15033ms-near.png
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.093 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 591, took 0%, crystals left 0.998; squad at 142.4,146.6
+  surge: the slime ate 35 food (2.4/s); meter 35.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12527); 763 breaking away
+  squad: touching 0.4 mean, 2 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15067ms-all.png
+FILMS/after-z6/planet-1-1-squads-15067ms-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.087 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 591, took 0%, crystals left 0.998; squad at 141.7,146.9
+  surge: the slime ate 36 food (2.4/s); meter 35.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12521); 763 breaking away
+  squad: touching 0.8 mean, 5 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15100ms-all.png
+FILMS/after-z6/planet-1-1-squads-15100ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.099 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 591, took 0%, crystals left 0.998; squad at 141.7,146.9
+  surge: the slime ate 36 food (2.4/s); meter 35.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12521); 763 breaking away
+  squad: touching 0.8 mean, 5 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15133ms-all.png
+FILMS/after-z6/planet-1-1-squads-15133ms-near.png
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.269 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 591, took 0%, crystals left 0.998; squad at 141.7,146.9
+  surge: the slime ate 36 food (2.4/s); meter 35.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12521); 763 breaking away
+  squad: touching 0.8 mean, 5 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15167ms-all.png
+FILMS/after-z6/planet-1-1-squads-15167ms-near.png
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.081 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 603, took 0%, crystals left 0.998; squad at 141.1,147.2
+  surge: the slime ate 36 food (2.4/s); meter 35.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12514); 762 breaking away
+  squad: touching 0.5 mean, 4 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15200ms-all.png
+FILMS/after-z6/planet-1-1-squads-15200ms-near.png
+  CPU: ground field 4.21 ms (once a game second), model and HUD 0.096 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 603, took 0%, crystals left 0.998; squad at 141.1,147.2
+  surge: the slime ate 36 food (2.4/s); meter 35.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12514); 762 breaking away
+  squad: touching 0.5 mean, 4 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15233ms-all.png
+FILMS/after-z6/planet-1-1-squads-15233ms-near.png
+  CPU: ground field 1.88 ms (once a game second), model and HUD 0.077 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 603, took 0%, crystals left 0.998; squad at 140.3,147.5
+  surge: the slime ate 36 food (2.4/s); meter 36.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12499); 761 breaking away
+  squad: touching 0.8 mean, 6 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15267ms-all.png
+FILMS/after-z6/planet-1-1-squads-15267ms-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.502 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 603, took 0%, crystals left 0.998; squad at 139.6,147.8
+  surge: the slime ate 36 food (2.4/s); meter 36.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12495); 761 breaking away
+  squad: touching 0.9 mean, 3 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15300ms-all.png
+FILMS/after-z6/planet-1-1-squads-15300ms-near.png
+  CPU: ground field 5.56 ms (once a game second), model and HUD 0.147 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 603, took 0%, crystals left 0.998; squad at 139.6,147.8
+  surge: the slime ate 36 food (2.4/s); meter 36.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12495); 761 breaking away
+  squad: touching 0.9 mean, 3 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15333ms-all.png
+FILMS/after-z6/planet-1-1-squads-15333ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.091 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 43, killed 603, took 0%, crystals left 0.998; squad at 139.6,147.8
+  surge: the slime ate 36 food (2.4/s); meter 36.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12495); 761 breaking away
+  squad: touching 0.9 mean, 3 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15367ms-all.png
+FILMS/after-z6/planet-1-1-squads-15367ms-near.png
+  CPU: ground field 1.16 ms (once a game second), model and HUD 0.089 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 634, took 0%, crystals left 0.998; squad at 138.7,148.2
+  surge: the slime ate 36 food (2.4/s); meter 36.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12487); 761 breaking away
+  squad: touching 0.1 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15400ms-all.png
+FILMS/after-z6/planet-1-1-squads-15400ms-near.png
+  CPU: ground field 1.05 ms (once a game second), model and HUD 0.076 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 634, took 0%, crystals left 0.998; squad at 138.7,148.2
+  surge: the slime ate 36 food (2.4/s); meter 36.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12487); 761 breaking away
+  squad: touching 0.1 mean, 1 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15433ms-all.png
+FILMS/after-z6/planet-1-1-squads-15433ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.462 ms a frame
+  t 15 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 634, took 0%, crystals left 0.998; squad at 137.6,148.6
+  surge: the slime ate 37 food (2.4/s); meter 36.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12484); 761 breaking away
+  squad: touching 0.2 mean, 2 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15467ms-all.png
+FILMS/after-z6/planet-1-1-squads-15467ms-near.png
+  CPU: ground field 2.53 ms (once a game second), model and HUD 0.552 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 136.5,148.9
+  surge: the slime ate 37 food (2.4/s); meter 36.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12476); 761 breaking away
+  squad: touching 0.4 mean, 3 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15500ms-all.png
+FILMS/after-z6/planet-1-1-squads-15500ms-near.png
+  CPU: ground field 1.15 ms (once a game second), model and HUD 0.087 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 136.5,148.9
+  surge: the slime ate 37 food (2.4/s); meter 36.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12476); 761 breaking away
+  squad: touching 0.4 mean, 3 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15533ms-all.png
+FILMS/after-z6/planet-1-1-squads-15533ms-near.png
+  CPU: ground field 9.07 ms (once a game second), model and HUD 0.083 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 136.5,148.9
+  surge: the slime ate 37 food (2.4/s); meter 36.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12476); 761 breaking away
+  squad: touching 0.4 mean, 3 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15567ms-all.png
+FILMS/after-z6/planet-1-1-squads-15567ms-near.png
+  CPU: ground field 1.03 ms (once a game second), model and HUD 0.493 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 135.4,149.3
+  surge: the slime ate 37 food (2.4/s); meter 36.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12472); 761 breaking away
+  squad: touching 0.9 mean, 7 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15600ms-all.png
+FILMS/after-z6/planet-1-1-squads-15600ms-near.png
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.096 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 135.4,149.3
+  surge: the slime ate 37 food (2.4/s); meter 36.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12472); 761 breaking away
+  squad: touching 0.9 mean, 7 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15633ms-all.png
+FILMS/after-z6/planet-1-1-squads-15633ms-near.png
+  CPU: ground field 1.10 ms (once a game second), model and HUD 0.081 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 134.4,149.6
+  surge: the slime ate 37 food (2.4/s); meter 37.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12463); 761 breaking away
+  squad: touching 1.2 mean, 7 most; health 97 mean
+FILMS/after-z6/planet-1-1-squads-15667ms-all.png
+FILMS/after-z6/planet-1-1-squads-15667ms-near.png
+  CPU: ground field 1.03 ms (once a game second), model and HUD 0.284 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 133.6,149.9
+  surge: the slime ate 37 food (2.4/s); meter 37.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12458); 764 breaking away
+  squad: touching 1.9 mean, 8 most; health 96 mean
+FILMS/after-z6/planet-1-1-squads-15700ms-all.png
+FILMS/after-z6/planet-1-1-squads-15700ms-near.png
+  CPU: ground field 1.39 ms (once a game second), model and HUD 0.091 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 133.6,149.9
+  surge: the slime ate 37 food (2.4/s); meter 37.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12458); 764 breaking away
+  squad: touching 1.9 mean, 8 most; health 96 mean
+FILMS/after-z6/planet-1-1-squads-15733ms-all.png
+FILMS/after-z6/planet-1-1-squads-15733ms-near.png
+  CPU: ground field 1.39 ms (once a game second), model and HUD 0.359 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 133.6,149.9
+  surge: the slime ate 37 food (2.4/s); meter 37.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12458); 764 breaking away
+  squad: touching 1.9 mean, 8 most; health 96 mean
+FILMS/after-z6/planet-1-1-squads-15767ms-all.png
+FILMS/after-z6/planet-1-1-squads-15767ms-near.png
+  CPU: ground field 2.04 ms (once a game second), model and HUD 0.342 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 132.9,150.1
+  surge: the slime ate 37 food (2.4/s); meter 37.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12444); 763 breaking away
+  squad: touching 2.5 mean, 11 most; health 96 mean
+FILMS/after-z6/planet-1-1-squads-15800ms-all.png
+FILMS/after-z6/planet-1-1-squads-15800ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.083 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 132.9,150.1
+  surge: the slime ate 37 food (2.4/s); meter 37.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12444); 763 breaking away
+  squad: touching 2.5 mean, 11 most; health 96 mean
+FILMS/after-z6/planet-1-1-squads-15833ms-all.png
+FILMS/after-z6/planet-1-1-squads-15833ms-near.png
+  CPU: ground field 1.58 ms (once a game second), model and HUD 0.098 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 647, took 0%, crystals left 0.998; squad at 132.3,150.3
+  surge: the slime ate 38 food (2.4/s); meter 37.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12441); 763 breaking away
+  squad: touching 3.4 mean, 13 most; health 96 mean
+FILMS/after-z6/planet-1-1-squads-15867ms-all.png
+FILMS/after-z6/planet-1-1-squads-15867ms-near.png
+  CPU: ground field 8.57 ms (once a game second), model and HUD 0.091 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 51, killed 697, took 0%, crystals left 0.998; squad at 131.9,150.5
+  surge: the slime ate 38 food (2.4/s); meter 37.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12437); 792 breaking away
+  squad: touching 0.5 mean, 2 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-15900ms-all.png
+FILMS/after-z6/planet-1-1-squads-15900ms-near.png
+  CPU: ground field 5.44 ms (once a game second), model and HUD 0.095 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 51, killed 697, took 0%, crystals left 0.998; squad at 131.9,150.5
+  surge: the slime ate 38 food (2.4/s); meter 37.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12437); 792 breaking away
+  squad: touching 0.5 mean, 2 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-15933ms-all.png
+FILMS/after-z6/planet-1-1-squads-15933ms-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.103 ms a frame
+  t 16 s: mould 12531, soldiers 8, bank 400, harvested 0, rendered 0, shots 51, killed 697, took 0%, crystals left 0.998; squad at 131.9,150.5
+  surge: the slime ate 38 food (2.4/s); meter 37.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12531 (readout 12437); 792 breaking away
+  squad: touching 0.5 mean, 2 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-15967ms-all.png
+FILMS/after-z6/planet-1-1-squads-15967ms-near.png
+  CPU: ground field 1.35 ms (once a game second), model and HUD 0.095 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 131.0,150.9
+  surge: the slime ate 38 food (2.4/s); meter 37.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12439); 799 breaking away
+  squad: touching 0.5 mean, 2 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-016s-all.png
+FILMS/after-z6/planet-1-1-squads-016s-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.080 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 131.0,150.9
+  surge: the slime ate 38 food (2.4/s); meter 37.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12439); 799 breaking away
+  squad: touching 0.5 mean, 2 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-16033ms-all.png
+FILMS/after-z6/planet-1-1-squads-16033ms-near.png
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.109 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 130.1,151.3
+  surge: the slime ate 38 food (2.4/s); meter 38.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12432); 805 breaking away
+  squad: touching 1.9 mean, 8 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-16066ms-all.png
+FILMS/after-z6/planet-1-1-squads-16066ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.699 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 129.5,151.5
+  surge: the slime ate 38 food (2.4/s); meter 38.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12423); 805 breaking away
+  squad: touching 1.9 mean, 6 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-16100ms-all.png
+FILMS/after-z6/planet-1-1-squads-16100ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.499 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 129.5,151.5
+  surge: the slime ate 38 food (2.4/s); meter 38.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12423); 805 breaking away
+  squad: touching 1.9 mean, 6 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-16132ms-all.png
+FILMS/after-z6/planet-1-1-squads-16132ms-near.png
+  CPU: ground field 1.07 ms (once a game second), model and HUD 0.485 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 129.5,151.5
+  surge: the slime ate 38 food (2.4/s); meter 38.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12423); 805 breaking away
+  squad: touching 1.9 mean, 6 most; health 95 mean
+FILMS/after-z6/planet-1-1-squads-16167ms-all.png
+FILMS/after-z6/planet-1-1-squads-16167ms-near.png
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.098 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 128.8,151.8
+  surge: the slime ate 38 food (2.4/s); meter 38.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12409); 803 breaking away
+  squad: touching 3.2 mean, 9 most; health 94 mean
+FILMS/after-z6/planet-1-1-squads-16200ms-all.png
+FILMS/after-z6/planet-1-1-squads-16200ms-near.png
+  CPU: ground field 5.26 ms (once a game second), model and HUD 0.093 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 128.8,151.8
+  surge: the slime ate 38 food (2.4/s); meter 38.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12409); 803 breaking away
+  squad: touching 3.2 mean, 9 most; health 94 mean
+FILMS/after-z6/planet-1-1-squads-16233ms-all.png
+FILMS/after-z6/planet-1-1-squads-16233ms-near.png
+  CPU: ground field 1.05 ms (once a game second), model and HUD 0.286 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 128.3,152.0
+  surge: the slime ate 39 food (2.4/s); meter 38.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12401); 802 breaking away
+  squad: touching 3.9 mean, 12 most; health 94 mean
+FILMS/after-z6/planet-1-1-squads-16267ms-all.png
+FILMS/after-z6/planet-1-1-squads-16267ms-near.png
+  CPU: ground field 9.16 ms (once a game second), model and HUD 0.084 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 128.0,152.2
+  surge: the slime ate 39 food (2.4/s); meter 38.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12384); 800 breaking away
+  squad: touching 3.9 mean, 12 most; health 93 mean
+FILMS/after-z6/planet-1-1-squads-16299ms-all.png
+FILMS/after-z6/planet-1-1-squads-16299ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.092 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 128.0,152.2
+  surge: the slime ate 39 food (2.4/s); meter 38.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12384); 800 breaking away
+  squad: touching 3.9 mean, 12 most; health 93 mean
+FILMS/after-z6/planet-1-1-squads-16333ms-all.png
+FILMS/after-z6/planet-1-1-squads-16333ms-near.png
+  CPU: ground field 1.06 ms (once a game second), model and HUD 0.084 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 128.0,152.2
+  surge: the slime ate 39 food (2.4/s); meter 38.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12384); 800 breaking away
+  squad: touching 3.9 mean, 12 most; health 93 mean
+FILMS/after-z6/planet-1-1-squads-16367ms-all.png
+FILMS/after-z6/planet-1-1-squads-16367ms-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.093 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 127.7,152.3
+  surge: the slime ate 39 food (2.4/s); meter 39.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12379); 800 breaking away
+  squad: touching 4.4 mean, 11 most; health 93 mean
+FILMS/after-z6/planet-1-1-squads-16400ms-all.png
+FILMS/after-z6/planet-1-1-squads-16400ms-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.090 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 706, took 0%, crystals left 0.998; squad at 127.7,152.3
+  surge: the slime ate 39 food (2.4/s); meter 39.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12379); 800 breaking away
+  squad: touching 4.4 mean, 11 most; health 93 mean
+FILMS/after-z6/planet-1-1-squads-16433ms-all.png
+FILMS/after-z6/planet-1-1-squads-16433ms-near.png
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.531 ms a frame
+  t 16 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 56, killed 817, took 0%, crystals left 0.998; squad at 127.4,152.5
+  surge: the slime ate 39 food (2.4/s); meter 39.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12381); 800 breaking away
+  squad: touching 2.1 mean, 7 most; health 93 mean
+FILMS/after-z6/planet-1-1-squads-16467ms-all.png
+FILMS/after-z6/planet-1-1-squads-16467ms-near.png
+  CPU: ground field 7.30 ms (once a game second), model and HUD 0.096 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 837, took 0%, crystals left 0.998; squad at 126.9,152.7
+  surge: the slime ate 39 food (2.4/s); meter 39.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12380); 800 breaking away
+  squad: touching 0.6 mean, 4 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16500ms-all.png
+FILMS/after-z6/planet-1-1-squads-16500ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.300 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 837, took 0%, crystals left 0.998; squad at 126.9,152.7
+  surge: the slime ate 39 food (2.4/s); meter 39.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12380); 800 breaking away
+  squad: touching 0.6 mean, 4 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16533ms-all.png
+FILMS/after-z6/planet-1-1-squads-16533ms-near.png
+  CPU: ground field 13.47 ms (once a game second), model and HUD 0.189 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 837, took 0%, crystals left 0.998; squad at 126.9,152.7
+  surge: the slime ate 39 food (2.4/s); meter 39.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12380); 800 breaking away
+  squad: touching 0.6 mean, 4 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16567ms-all.png
+FILMS/after-z6/planet-1-1-squads-16567ms-near.png
+  CPU: ground field 9.27 ms (once a game second), model and HUD 0.095 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 837, took 0%, crystals left 0.998; squad at 126.1,153.0
+  surge: the slime ate 39 food (2.4/s); meter 39.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12380); 800 breaking away
+  squad: touching 1.5 mean, 4 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16600ms-all.png
+FILMS/after-z6/planet-1-1-squads-16600ms-near.png
+  CPU: ground field 10.29 ms (once a game second), model and HUD 0.120 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 837, took 0%, crystals left 0.998; squad at 126.1,153.0
+  surge: the slime ate 39 food (2.4/s); meter 39.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12380); 800 breaking away
+  squad: touching 1.5 mean, 4 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16633ms-all.png
+FILMS/after-z6/planet-1-1-squads-16633ms-near.png
+  CPU: ground field 1.37 ms (once a game second), model and HUD 0.398 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 852, took 0%, crystals left 0.998; squad at 125.3,153.4
+  surge: the slime ate 40 food (2.4/s); meter 39.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12363); 798 breaking away
+  squad: touching 2.4 mean, 7 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16667ms-all.png
+FILMS/after-z6/planet-1-1-squads-16667ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.121 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 852, took 0%, crystals left 0.998; squad at 124.7,153.6
+  surge: the slime ate 40 food (2.4/s); meter 39.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12329); 827 breaking away
+  squad: touching 3.5 mean, 9 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16700ms-all.png
+FILMS/after-z6/planet-1-1-squads-16700ms-near.png
+  CPU: ground field 1.47 ms (once a game second), model and HUD 0.099 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 852, took 0%, crystals left 0.998; squad at 124.7,153.6
+  surge: the slime ate 40 food (2.4/s); meter 39.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12329); 827 breaking away
+  squad: touching 3.5 mean, 9 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16733ms-all.png
+FILMS/after-z6/planet-1-1-squads-16733ms-near.png
+  CPU: ground field 2.25 ms (once a game second), model and HUD 0.142 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 852, took 0%, crystals left 0.998; squad at 124.7,153.6
+  surge: the slime ate 40 food (2.4/s); meter 39.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12329); 827 breaking away
+  squad: touching 3.5 mean, 9 most; health 92 mean
+FILMS/after-z6/planet-1-1-squads-16767ms-all.png
+FILMS/after-z6/planet-1-1-squads-16767ms-near.png
+  CPU: ground field 9.12 ms (once a game second), model and HUD 0.086 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 852, took 0%, crystals left 0.998; squad at 124.2,153.7
+  surge: the slime ate 40 food (2.4/s); meter 40.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12301); 825 breaking away
+  squad: touching 3.8 mean, 10 most; health 91 mean
+FILMS/after-z6/planet-1-1-squads-16800ms-all.png
+FILMS/after-z6/planet-1-1-squads-16800ms-near.png
+  CPU: ground field 1.07 ms (once a game second), model and HUD 0.287 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 852, took 0%, crystals left 0.998; squad at 124.2,153.7
+  surge: the slime ate 40 food (2.4/s); meter 40.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12301); 825 breaking away
+  squad: touching 3.8 mean, 10 most; health 91 mean
+FILMS/after-z6/planet-1-1-squads-16833ms-all.png
+FILMS/after-z6/planet-1-1-squads-16833ms-near.png
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.493 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 59, killed 852, took 0%, crystals left 0.998; squad at 123.8,153.8
+  surge: the slime ate 40 food (2.4/s); meter 40.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12257); 855 breaking away
+  squad: touching 4.1 mean, 10 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-16867ms-all.png
+FILMS/after-z6/planet-1-1-squads-16867ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.092 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 59, killed 852, took 0%, crystals left 0.998; squad at 123.4,153.9
+  surge: the slime ate 40 food (2.4/s); meter 40.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12248); 854 breaking away
+  squad: touching 4.4 mean, 11 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-16900ms-all.png
+FILMS/after-z6/planet-1-1-squads-16900ms-near.png
+  CPU: ground field 1.42 ms (once a game second), model and HUD 0.099 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 59, killed 852, took 0%, crystals left 0.998; squad at 123.4,153.9
+  surge: the slime ate 40 food (2.4/s); meter 40.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12248); 854 breaking away
+  squad: touching 4.4 mean, 11 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-16933ms-all.png
+FILMS/after-z6/planet-1-1-squads-16933ms-near.png
+  CPU: ground field 6.78 ms (once a game second), model and HUD 0.095 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 59, killed 852, took 0%, crystals left 0.998; squad at 123.4,153.9
+  surge: the slime ate 40 food (2.4/s); meter 40.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12248); 854 breaking away
+  squad: touching 4.4 mean, 11 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-16967ms-all.png
+FILMS/after-z6/planet-1-1-squads-16967ms-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.301 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 63, killed 1013, took 0%, crystals left 0.998; squad at 123.0,154.0
+  surge: the slime ate 41 food (2.4/s); meter 40.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12247); 853 breaking away
+  squad: touching 1.9 mean, 8 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-017s-all.png
+FILMS/after-z6/planet-1-1-squads-017s-near.png
+  CPU: ground field 6.02 ms (once a game second), model and HUD 0.082 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 63, killed 1013, took 0%, crystals left 0.998; squad at 123.0,154.0
+  surge: the slime ate 41 food (2.4/s); meter 40.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12247); 853 breaking away
+  squad: touching 1.9 mean, 8 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-17033ms-all.png
+FILMS/after-z6/planet-1-1-squads-17033ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.102 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1075, took 0%, crystals left 0.998; squad at 122.8,153.9
+  surge: the slime ate 41 food (2.4/s); meter 40.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12241); 853 breaking away
+  squad: touching 0.2 mean, 1 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-17067ms-all.png
+FILMS/after-z6/planet-1-1-squads-17067ms-near.png
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.087 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1137, took 0%, crystals left 0.998; squad at 122.9,153.7
+  surge: the slime ate 41 food (2.4/s); meter 40.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12241); 853 breaking away
+  squad: touching 0.5 mean, 3 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-17100ms-all.png
+FILMS/after-z6/planet-1-1-squads-17100ms-near.png
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.297 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1137, took 0%, crystals left 0.998; squad at 122.9,153.7
+  surge: the slime ate 41 food (2.4/s); meter 40.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12241); 853 breaking away
+  squad: touching 0.5 mean, 3 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-17133ms-all.png
+FILMS/after-z6/planet-1-1-squads-17133ms-near.png
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.094 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1137, took 0%, crystals left 0.998; squad at 122.9,153.7
+  surge: the slime ate 41 food (2.4/s); meter 40.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12241); 853 breaking away
+  squad: touching 0.5 mean, 3 most; health 90 mean
+FILMS/after-z6/planet-1-1-squads-17167ms-all.png
+FILMS/after-z6/planet-1-1-squads-17167ms-near.png
+  CPU: ground field 1.14 ms (once a game second), model and HUD 0.090 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1194, took 0%, crystals left 0.998; squad at 123.0,153.5
+  surge: the slime ate 41 food (2.4/s); meter 41.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12217); 849 breaking away
+  squad: touching 1.0 mean, 4 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17200ms-all.png
+FILMS/after-z6/planet-1-1-squads-17200ms-near.png
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.080 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1194, took 0%, crystals left 0.998; squad at 123.0,153.5
+  surge: the slime ate 41 food (2.4/s); meter 41.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12217); 849 breaking away
+  squad: touching 1.0 mean, 4 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17233ms-all.png
+FILMS/after-z6/planet-1-1-squads-17233ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.283 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1194, took 0%, crystals left 0.998; squad at 123.1,153.2
+  surge: the slime ate 41 food (2.4/s); meter 41.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12165); 846 breaking away
+  squad: touching 1.1 mean, 5 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17267ms-all.png
+FILMS/after-z6/planet-1-1-squads-17267ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.094 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 123.2,153.0
+  surge: the slime ate 41 food (2.4/s); meter 41.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12090); 841 breaking away
+  squad: touching 1.4 mean, 8 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17300ms-all.png
+FILMS/after-z6/planet-1-1-squads-17300ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.491 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 123.2,153.0
+  surge: the slime ate 41 food (2.4/s); meter 41.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12090); 841 breaking away
+  squad: touching 1.4 mean, 8 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17333ms-all.png
+FILMS/after-z6/planet-1-1-squads-17333ms-near.png
+  CPU: ground field 1.15 ms (once a game second), model and HUD 0.087 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 123.2,153.0
+  surge: the slime ate 41 food (2.4/s); meter 41.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12090); 841 breaking away
+  squad: touching 1.4 mean, 8 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17367ms-all.png
+FILMS/after-z6/planet-1-1-squads-17367ms-near.png
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.496 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 123.1,153.1
+  surge: the slime ate 42 food (2.4/s); meter 41.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12006); 835 breaking away
+  squad: touching 2.0 mean, 10 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17400ms-all.png
+FILMS/after-z6/planet-1-1-squads-17400ms-near.png
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.098 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 123.1,153.1
+  surge: the slime ate 42 food (2.4/s); meter 41.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 12006); 835 breaking away
+  squad: touching 2.0 mean, 10 most; health 89 mean
+FILMS/after-z6/planet-1-1-squads-17433ms-all.png
+FILMS/after-z6/planet-1-1-squads-17433ms-near.png
+  CPU: ground field 1.12 ms (once a game second), model and HUD 0.286 ms a frame
+  t 17 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 122.9,153.1
+  surge: the slime ate 42 food (2.4/s); meter 41.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11956); 832 breaking away
+  squad: touching 2.6 mean, 12 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17467ms-all.png
+FILMS/after-z6/planet-1-1-squads-17467ms-near.png
+  CPU: ground field 1.06 ms (once a game second), model and HUD 0.081 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 122.8,153.1
+  surge: the slime ate 42 food (2.4/s); meter 42.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11898); 835 breaking away
+  squad: touching 2.8 mean, 13 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17500ms-all.png
+FILMS/after-z6/planet-1-1-squads-17500ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.188 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 122.8,153.1
+  surge: the slime ate 42 food (2.4/s); meter 42.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11898); 835 breaking away
+  squad: touching 2.8 mean, 13 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17533ms-all.png
+FILMS/after-z6/planet-1-1-squads-17533ms-near.png
+  CPU: ground field 1.03 ms (once a game second), model and HUD 0.309 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 71, killed 1312, took 0%, crystals left 0.998; squad at 122.8,153.1
+  surge: the slime ate 42 food (2.4/s); meter 42.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11898); 835 breaking away
+  squad: touching 2.8 mean, 13 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17567ms-all.png
+FILMS/after-z6/planet-1-1-squads-17567ms-near.png
+  CPU: ground field 5.29 ms (once a game second), model and HUD 0.091 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1367, took 0%, crystals left 0.998; squad at 122.8,153.1
+  surge: the slime ate 42 food (2.4/s); meter 42.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11854); 833 breaking away
+  squad: touching 0.8 mean, 6 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17600ms-all.png
+FILMS/after-z6/planet-1-1-squads-17600ms-near.png
+  CPU: ground field 1.03 ms (once a game second), model and HUD 0.530 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1367, took 0%, crystals left 0.998; squad at 122.8,153.1
+  surge: the slime ate 42 food (2.4/s); meter 42.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11854); 833 breaking away
+  squad: touching 0.8 mean, 6 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17633ms-all.png
+FILMS/after-z6/planet-1-1-squads-17633ms-near.png
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.291 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1367, took 0%, crystals left 0.998; squad at 122.7,153.2
+  surge: the slime ate 42 food (2.4/s); meter 42.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11816); 830 breaking away
+  squad: touching 1.2 mean, 8 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17667ms-all.png
+FILMS/after-z6/planet-1-1-squads-17667ms-near.png
+  CPU: ground field 1.01 ms (once a game second), model and HUD 0.284 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1367, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 42.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11786); 823 breaking away
+  squad: touching 0.9 mean, 6 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17700ms-all.png
+FILMS/after-z6/planet-1-1-squads-17700ms-near.png
+  CPU: ground field 1.38 ms (once a game second), model and HUD 0.100 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1367, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 42.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11786); 823 breaking away
+  squad: touching 0.9 mean, 6 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17733ms-all.png
+FILMS/after-z6/planet-1-1-squads-17733ms-near.png
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.494 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1367, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 42.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11786); 823 breaking away
+  squad: touching 0.9 mean, 6 most; health 88 mean
+FILMS/after-z6/planet-1-1-squads-17767ms-all.png
+FILMS/after-z6/planet-1-1-squads-17767ms-near.png
+  CPU: ground field 1.13 ms (once a game second), model and HUD 0.092 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1399, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 42.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11782); 823 breaking away
+  squad: touching 1.6 mean, 8 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-17800ms-all.png
+FILMS/after-z6/planet-1-1-squads-17800ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.085 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1399, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 42.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11782); 823 breaking away
+  squad: touching 1.6 mean, 8 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-17833ms-all.png
+FILMS/after-z6/planet-1-1-squads-17833ms-near.png
+  CPU: ground field 1.45 ms (once a game second), model and HUD 0.459 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1399, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 42.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11765); 821 breaking away
+  squad: touching 1.6 mean, 6 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-17867ms-all.png
+FILMS/after-z6/planet-1-1-squads-17867ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.523 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1399, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 43.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11751); 822 breaking away
+  squad: touching 2.0 mean, 8 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-17900ms-all.png
+FILMS/after-z6/planet-1-1-squads-17900ms-near.png
+  CPU: ground field 1.41 ms (once a game second), model and HUD 0.106 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1399, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 43.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11751); 822 breaking away
+  squad: touching 2.0 mean, 8 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-17933ms-all.png
+FILMS/after-z6/planet-1-1-squads-17933ms-near.png
+  CPU: ground field 7.28 ms (once a game second), model and HUD 0.196 ms a frame
+  t 18 s: mould 12247, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1399, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 43.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12247 (readout 11751); 822 breaking away
+  squad: touching 2.0 mean, 8 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-17967ms-all.png
+FILMS/after-z6/planet-1-1-squads-17967ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.301 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1479, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 43.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11736); 818 breaking away
+  squad: touching 1.8 mean, 5 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-018s-all.png
+FILMS/after-z6/planet-1-1-squads-018s-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.095 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1479, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 43.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11736); 818 breaking away
+  squad: touching 1.8 mean, 5 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-18033ms-all.png
+FILMS/after-z6/planet-1-1-squads-18033ms-near.png
+  CPU: ground field 2.50 ms (once a game second), model and HUD 0.344 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1479, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 43 food (2.4/s); meter 43.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11730); 818 breaking away
+  squad: touching 1.9 mean, 6 most; health 87 mean
+FILMS/after-z6/planet-1-1-squads-18067ms-all.png
+FILMS/after-z6/planet-1-1-squads-18067ms-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.105 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1534, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 43.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11727); 848 breaking away
+  squad: touching 0.8 mean, 6 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18100ms-all.png
+FILMS/after-z6/planet-1-1-squads-18100ms-near.png
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.089 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1534, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 43.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11727); 848 breaking away
+  squad: touching 0.8 mean, 6 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18133ms-all.png
+FILMS/after-z6/planet-1-1-squads-18133ms-near.png
+  CPU: ground field 1.37 ms (once a game second), model and HUD 0.096 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1534, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 43.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11727); 848 breaking away
+  squad: touching 0.8 mean, 6 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18167ms-all.png
+FILMS/after-z6/planet-1-1-squads-18167ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.090 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1549, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 43.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11701); 844 breaking away
+  squad: touching 0.5 mean, 4 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18200ms-all.png
+FILMS/after-z6/planet-1-1-squads-18200ms-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.389 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1549, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 43.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11701); 844 breaking away
+  squad: touching 0.5 mean, 4 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18233ms-all.png
+FILMS/after-z6/planet-1-1-squads-18233ms-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.105 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1549, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 44.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11678); 844 breaking away
+  squad: touching 1.0 mean, 7 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18267ms-all.png
+FILMS/after-z6/planet-1-1-squads-18267ms-near.png
+  CPU: ground field 1.13 ms (once a game second), model and HUD 0.086 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1549, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 44.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11641); 842 breaking away
+  squad: touching 1.0 mean, 6 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18300ms-all.png
+FILMS/after-z6/planet-1-1-squads-18300ms-near.png
+  CPU: ground field 3.85 ms (once a game second), model and HUD 0.097 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1549, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 44.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11641); 842 breaking away
+  squad: touching 1.0 mean, 6 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18333ms-all.png
+FILMS/after-z6/planet-1-1-squads-18333ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.096 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1549, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 44.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11641); 842 breaking away
+  squad: touching 1.0 mean, 6 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18367ms-all.png
+FILMS/after-z6/planet-1-1-squads-18367ms-near.png
+  CPU: ground field 1.12 ms (once a game second), model and HUD 0.490 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 44.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11609); 840 breaking away
+  squad: touching 1.1 mean, 7 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18400ms-all.png
+FILMS/after-z6/planet-1-1-squads-18400ms-near.png
+  CPU: ground field 9.06 ms (once a game second), model and HUD 0.259 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 44 food (2.4/s); meter 44.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11609); 840 breaking away
+  squad: touching 1.1 mean, 7 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18433ms-all.png
+FILMS/after-z6/planet-1-1-squads-18433ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.095 ms a frame
+  t 18 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 44.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11585); 845 breaking away
+  squad: touching 0.8 mean, 3 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18467ms-all.png
+FILMS/after-z6/planet-1-1-squads-18467ms-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.095 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 44.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11572); 845 breaking away
+  squad: touching 1.0 mean, 5 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18500ms-all.png
+FILMS/after-z6/planet-1-1-squads-18500ms-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.334 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 44.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11572); 845 breaking away
+  squad: touching 1.0 mean, 5 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18533ms-all.png
+FILMS/after-z6/planet-1-1-squads-18533ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.095 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 44.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11572); 845 breaking away
+  squad: touching 1.0 mean, 5 most; health 86 mean
+FILMS/after-z6/planet-1-1-squads-18567ms-all.png
+FILMS/after-z6/planet-1-1-squads-18567ms-near.png
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.089 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 44.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11565); 843 breaking away
+  squad: touching 1.5 mean, 6 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18600ms-all.png
+FILMS/after-z6/planet-1-1-squads-18600ms-near.png
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.102 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 87, killed 1582, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 44.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11565); 843 breaking away
+  squad: touching 1.5 mean, 6 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18633ms-all.png
+FILMS/after-z6/planet-1-1-squads-18633ms-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.504 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1646, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 45.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11554); 842 breaking away
+  squad: touching 0.2 mean, 1 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18667ms-all.png
+FILMS/after-z6/planet-1-1-squads-18667ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.299 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1646, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 45.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11545); 840 breaking away
+  squad: touching 0.6 mean, 4 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18700ms-all.png
+FILMS/after-z6/planet-1-1-squads-18700ms-near.png
+  CPU: ground field 5.01 ms (once a game second), model and HUD 0.080 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1646, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 45.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11545); 840 breaking away
+  squad: touching 0.6 mean, 4 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18733ms-all.png
+FILMS/after-z6/planet-1-1-squads-18733ms-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.214 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1646, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 45.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11545); 840 breaking away
+  squad: touching 0.6 mean, 4 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18767ms-all.png
+FILMS/after-z6/planet-1-1-squads-18767ms-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.295 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1646, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 45.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11538); 839 breaking away
+  squad: touching 0.9 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18800ms-all.png
+FILMS/after-z6/planet-1-1-squads-18800ms-near.png
+  CPU: ground field 1.35 ms (once a game second), model and HUD 0.104 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1646, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 45 food (2.4/s); meter 45.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11538); 839 breaking away
+  squad: touching 0.9 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18833ms-all.png
+FILMS/after-z6/planet-1-1-squads-18833ms-near.png
+  CPU: ground field 1.58 ms (once a game second), model and HUD 0.278 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1674, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 45.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11528); 839 breaking away
+  squad: touching 1.0 mean, 3 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18867ms-all.png
+FILMS/after-z6/planet-1-1-squads-18867ms-near.png
+  CPU: ground field 2.35 ms (once a game second), model and HUD 0.122 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1674, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 45.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11508); 866 breaking away
+  squad: touching 0.9 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18900ms-all.png
+FILMS/after-z6/planet-1-1-squads-18900ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.301 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1674, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 45.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11508); 866 breaking away
+  squad: touching 0.9 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18933ms-all.png
+FILMS/after-z6/planet-1-1-squads-18933ms-near.png
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.098 ms a frame
+  t 19 s: mould 11736, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1674, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 45.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11736 (readout 11508); 866 breaking away
+  squad: touching 0.9 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-18967ms-all.png
+FILMS/after-z6/planet-1-1-squads-18967ms-near.png
+  CPU: ground field 1.72 ms (once a game second), model and HUD 0.101 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1674, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 46.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11493); 863 breaking away
+  squad: touching 0.9 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-019s-all.png
+FILMS/after-z6/planet-1-1-squads-019s-near.png
+  CPU: ground field 5.31 ms (once a game second), model and HUD 0.095 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1674, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 46.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11493); 863 breaking away
+  squad: touching 0.9 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-19033ms-all.png
+FILMS/after-z6/planet-1-1-squads-19033ms-near.png
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.292 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1718, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 46.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11476); 862 breaking away
+  squad: touching 1.1 mean, 2 most; health 85 mean
+FILMS/after-z6/planet-1-1-squads-19067ms-all.png
+FILMS/after-z6/planet-1-1-squads-19067ms-near.png
+  CPU: ground field 1.33 ms (once a game second), model and HUD 0.093 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1718, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 46.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11471); 861 breaking away
+  squad: touching 1.9 mean, 4 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19100ms-all.png
+FILMS/after-z6/planet-1-1-squads-19100ms-near.png
+  CPU: ground field 1.03 ms (once a game second), model and HUD 0.079 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1718, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 46.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11471); 861 breaking away
+  squad: touching 1.9 mean, 4 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19133ms-all.png
+FILMS/after-z6/planet-1-1-squads-19133ms-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.091 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1718, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 46 food (2.4/s); meter 46.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11471); 861 breaking away
+  squad: touching 1.9 mean, 4 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19167ms-all.png
+FILMS/after-z6/planet-1-1-squads-19167ms-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.331 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1754, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 46.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11460); 859 breaking away
+  squad: touching 0.6 mean, 4 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19200ms-all.png
+FILMS/after-z6/planet-1-1-squads-19200ms-near.png
+  CPU: ground field 1.13 ms (once a game second), model and HUD 0.084 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1754, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 46.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11460); 859 breaking away
+  squad: touching 0.6 mean, 4 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19233ms-all.png
+FILMS/after-z6/planet-1-1-squads-19233ms-near.png
+  CPU: ground field 1.08 ms (once a game second), model and HUD 0.085 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1755, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 46.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11450); 857 breaking away
+  squad: touching 0.2 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19267ms-all.png
+FILMS/after-z6/planet-1-1-squads-19267ms-near.png
+  CPU: ground field 5.48 ms (once a game second), model and HUD 0.098 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1755, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 46.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11436); 855 breaking away
+  squad: touching 0.2 mean, 1 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19300ms-all.png
+FILMS/after-z6/planet-1-1-squads-19300ms-near.png
+  CPU: ground field 1.12 ms (once a game second), model and HUD 0.688 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1755, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 46.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11436); 855 breaking away
+  squad: touching 0.2 mean, 1 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19333ms-all.png
+FILMS/after-z6/planet-1-1-squads-19333ms-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.093 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1755, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 46.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11436); 855 breaking away
+  squad: touching 0.2 mean, 1 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19367ms-all.png
+FILMS/after-z6/planet-1-1-squads-19367ms-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.094 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 47.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11420); 852 breaking away
+  squad: touching 0.2 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19400ms-all.png
+FILMS/after-z6/planet-1-1-squads-19400ms-near.png
+  CPU: ground field 5.20 ms (once a game second), model and HUD 0.092 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 47.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11420); 852 breaking away
+  squad: touching 0.2 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19433ms-all.png
+FILMS/after-z6/planet-1-1-squads-19433ms-near.png
+  CPU: ground field 1.15 ms (once a game second), model and HUD 0.082 ms a frame
+  t 19 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 47.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11405); 850 breaking away
+  squad: touching 0.4 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19467ms-all.png
+FILMS/after-z6/planet-1-1-squads-19467ms-near.png
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.276 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 47.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11389); 850 breaking away
+  squad: touching 0.4 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19500ms-all.png
+FILMS/after-z6/planet-1-1-squads-19500ms-near.png
+  CPU: ground field 9.00 ms (once a game second), model and HUD 0.111 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 47.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11389); 850 breaking away
+  squad: touching 0.4 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19533ms-all.png
+FILMS/after-z6/planet-1-1-squads-19533ms-near.png
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.096 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 47 food (2.4/s); meter 47.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11389); 850 breaking away
+  squad: touching 0.4 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19567ms-all.png
+FILMS/after-z6/planet-1-1-squads-19567ms-near.png
+  CPU: ground field 1.06 ms (once a game second), model and HUD 0.081 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 47.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11372); 847 breaking away
+  squad: touching 0.4 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19600ms-all.png
+FILMS/after-z6/planet-1-1-squads-19600ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.499 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 47.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11372); 847 breaking away
+  squad: touching 0.4 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19633ms-all.png
+FILMS/after-z6/planet-1-1-squads-19633ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.499 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 103, killed 1782, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 47.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11365); 846 breaking away
+  squad: touching 0.6 mean, 4 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19667ms-all.png
+FILMS/after-z6/planet-1-1-squads-19667ms-near.png
+  CPU: ground field 1.09 ms (once a game second), model and HUD 0.082 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1813, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 48.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11358); 846 breaking away
+  squad: touching 0.2 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19700ms-all.png
+FILMS/after-z6/planet-1-1-squads-19700ms-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.092 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1813, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 48.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11358); 846 breaking away
+  squad: touching 0.2 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19733ms-all.png
+FILMS/after-z6/planet-1-1-squads-19733ms-near.png
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.094 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1813, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 48.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11358); 846 breaking away
+  squad: touching 0.2 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19767ms-all.png
+FILMS/after-z6/planet-1-1-squads-19767ms-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.095 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1821, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 48.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11356); 845 breaking away
+  squad: touching 0.4 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19800ms-all.png
+FILMS/after-z6/planet-1-1-squads-19800ms-near.png
+  CPU: ground field 1.46 ms (once a game second), model and HUD 0.100 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1821, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 48.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11356); 845 breaking away
+  squad: touching 0.4 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19833ms-all.png
+FILMS/after-z6/planet-1-1-squads-19833ms-near.png
+  CPU: ground field 9.37 ms (once a game second), model and HUD 0.090 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1821, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 48 food (2.4/s); meter 48.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11360); 845 breaking away
+  squad: touching 0.4 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19867ms-all.png
+FILMS/after-z6/planet-1-1-squads-19867ms-near.png
+  CPU: ground field 10.26 ms (once a game second), model and HUD 0.141 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1842, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 48.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11357); 845 breaking away
+  squad: touching 0.5 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19900ms-all.png
+FILMS/after-z6/planet-1-1-squads-19900ms-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.181 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1842, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 48.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11357); 845 breaking away
+  squad: touching 0.5 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19933ms-all.png
+FILMS/after-z6/planet-1-1-squads-19933ms-near.png
+  CPU: ground field 9.19 ms (once a game second), model and HUD 0.090 ms a frame
+  t 20 s: mould 11493, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1842, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 48.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11493 (readout 11357); 845 breaking away
+  squad: touching 0.5 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-19967ms-all.png
+FILMS/after-z6/planet-1-1-squads-19967ms-near.png
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.487 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1842, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 48.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11348); 845 breaking away
+  squad: touching 0.8 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-020s-all.png
+FILMS/after-z6/planet-1-1-squads-020s-near.png
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.093 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1842, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 48.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11348); 845 breaking away
+  squad: touching 0.8 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-20033ms-all.png
+FILMS/after-z6/planet-1-1-squads-20033ms-near.png
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.095 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1894, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 48.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11329); 870 breaking away
+  squad: touching 0.8 mean, 2 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-20067ms-all.png
+FILMS/after-z6/planet-1-1-squads-20067ms-near.png
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.083 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1894, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 49.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11314); 868 breaking away
+  squad: touching 1.2 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-20100ms-all.png
+FILMS/after-z6/planet-1-1-squads-20100ms-near.png
+  CPU: ground field 8.72 ms (once a game second), model and HUD 0.095 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1894, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 49.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11314); 868 breaking away
+  squad: touching 1.2 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-20133ms-all.png
+FILMS/after-z6/planet-1-1-squads-20133ms-near.png
+  CPU: ground field 4.26 ms (once a game second), model and HUD 0.108 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1894, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 49.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11314); 868 breaking away
+  squad: touching 1.2 mean, 3 most; health 84 mean
+FILMS/after-z6/planet-1-1-squads-20167ms-all.png
+FILMS/after-z6/planet-1-1-squads-20167ms-near.png
+  CPU: ground field 9.31 ms (once a game second), model and HUD 0.088 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1894, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 49.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11309); 866 breaking away
+  squad: touching 1.5 mean, 4 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20200ms-all.png
+FILMS/after-z6/planet-1-1-squads-20200ms-near.png
+  CPU: ground field 4.16 ms (once a game second), model and HUD 0.083 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 1894, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 49 food (2.4/s); meter 49.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11309); 866 breaking away
+  squad: touching 1.5 mean, 4 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20233ms-all.png
+FILMS/after-z6/planet-1-1-squads-20233ms-near.png
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.090 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1909, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 49.5 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11293); 849 breaking away
+  squad: touching 0.8 mean, 4 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20267ms-all.png
+FILMS/after-z6/planet-1-1-squads-20267ms-near.png
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.079 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1935, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 49.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11270); 847 breaking away
+  squad: touching 0.8 mean, 5 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20300ms-all.png
+FILMS/after-z6/planet-1-1-squads-20300ms-near.png
+  CPU: ground field 1.18 ms (once a game second), model and HUD 0.320 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1935, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 49.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11270); 847 breaking away
+  squad: touching 0.8 mean, 5 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20333ms-all.png
+FILMS/after-z6/planet-1-1-squads-20333ms-near.png
+  CPU: ground field 1.10 ms (once a game second), model and HUD 0.207 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1935, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 49.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11270); 847 breaking away
+  squad: touching 0.8 mean, 5 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20367ms-all.png
+FILMS/after-z6/planet-1-1-squads-20367ms-near.png
+  CPU: ground field 4.24 ms (once a game second), model and HUD 0.098 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1935, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 49.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11262); 846 breaking away
+  squad: touching 0.9 mean, 5 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20400ms-all.png
+FILMS/after-z6/planet-1-1-squads-20400ms-near.png
+  CPU: ground field 1.10 ms (once a game second), model and HUD 0.083 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1935, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 49.9 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11262); 846 breaking away
+  squad: touching 0.9 mean, 5 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20433ms-all.png
+FILMS/after-z6/planet-1-1-squads-20433ms-near.png
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.093 ms a frame
+  t 20 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1947, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 50.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11249); 845 breaking away
+  squad: touching 1.0 mean, 5 most; health 83 mean
+FILMS/after-z6/planet-1-1-squads-20467ms-all.png
+FILMS/after-z6/planet-1-1-squads-20467ms-near.png
+  CPU: ground field 1.17 ms (once a game second), model and HUD 0.088 ms a frame
+  t 21 s: mould 11348, soldiers 8, bank 400, harvested 0, rendered 0, shots 119, killed 1969, took 0%, crystals left 0.998; squad at 122.6,153.2
+  surge: the slime ate 50 food (2.4/s); meter 50.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11348 (readout 11233); 871 breaking away
+  squad: touching 1.1 mean, 4 most; health 83 mean

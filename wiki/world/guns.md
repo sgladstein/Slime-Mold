@@ -2,7 +2,7 @@
 title: Guns, bullets and gun cards
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
@@ -13,6 +13,7 @@ sources:
   - Reports/gun-mind-2026-11-16/README.md
   - Reports/gun-multicast-2026-11-16/README.md
   - Reports/gun-order-2026-11-14.md
+  - Reports/gun-provoke-still-2026-11-17/README.md
   - Reports/gun-range-2026-11-15.md
   - Reports/gun-readers-2026-11-17/README.md
   - Reports/gun-route-2026-11-17/README.md
@@ -32,6 +33,7 @@ code:
   - BigDish::read_strike
   - Burst::light
   - Burst::push
+  - BurstRules::mind_steps_for
   - Engine::mind_pass
   - Engine::read_pass
   - Engine::snap
@@ -73,6 +75,8 @@ sells guns and cards, and the gun range (`Run::range`, start menu) is a free
 armory to try any of them against slime ([the run](run.md)). The H loadouts
 are test presets, not the game's way to arm. Nothing here is balanced.
 
+## The cards, family by family
+
 **Each bullet set has a shape** (2026-11-16, step A of the gun-system review;
 `Set::shape`): a slug's hit shoves the slime around it away from the gun (a
 fling with no kill), a needle flies on through two more slime hits, buckshot
@@ -99,19 +103,23 @@ a buckshot trigger with a blast is strong
 
 **Shove cards** (2026-11-16, the owner's 05:11Z ask: "corral and push the
 slime onto areas. Into a kill zone"): `Heave` makes a bullet's hit shove the
-slime round it on along its line, farther with each heave; `Corral` sends the
-shove to the nearest turret in reach; `Pull` drags it toward the gun. They
+slime round it toward your nearest turret within `corral_reach` (40 dish
+cells), or with none in reach on along its line, farther with each heave;
+`Pull` drags it toward the gun. Heave was two cards, Heave and Corral, until
+the lane merged them (2026-11-18; `corral` still loads as `heave`). They
 steer a slug's own shove too. The shove is a push (`Burst::push`): every
 walker in the ring flies one heading, on both engines. With one turret beside
-the squad, corral's turret killed 241 in 3 s against 157 with plain bullets;
-with three turrets over 10 s, 1,234 against 617, and no soldier lost. Heave
-keeps the slime off the squad but kills little. Pull first dragged the slime
-onto the squad and lost all eight in 10 s; since the owner's 19:40Z pick it
-stops short, the pulled slime landing at least `RoundRules::pull_short` (6
-dish cells) in front of the gun, and with no room it does nothing. The squad
-then kept 7 of 8 as with plain bullets; pulls happen at range (18 in 10 s
-while a squad marched and shot slime 10-24 cells off), with kills about even
-([shove cards](../../Reports/gun-shove-2026-11-16/README.md)).
+the squad, one heave raised the turret's kills in 10 s from 139 with plain
+bullets to 371, the squad's own falling as with every shove; a second heave
+by a turret scatters the slime and feeds it less (101). Pull first dragged
+the slime onto the squad and lost all eight in 10 s; since the owner's
+19:40Z pick it stops short, the pulled slime landing at least
+`RoundRules::pull_short` (6 dish cells) in front of the gun, and with no
+room it does nothing. The squad then kept 7 of 8 as with plain bullets;
+pulls happen at range (18 in 10 s while a squad marched and shot slime
+10-24 cells off), with kills about even
+([shove cards](../../Reports/gun-shove-2026-11-16/README.md), *2026-11-18*
+for the merged card).
 
 **Multicast** (2026-11-16, step B): the shot that fires its cast also fires
 the next cast beside it, each its own bullets, a little apart; a second
@@ -155,9 +163,22 @@ its turn. Scared, raiding and lump walkers take them too. They cost 2, are
 sold from planet 2, take their set's shape, and have their own tab in the
 armory. On a thin vein, 10 s each, every status cut the walkers within 8
 cells from 19 to 11-12 while it lasted, and sour halved the ring round it
-too. The owner has the four clips as a blind quiz. Spin as a harder turn
+too. The blind quiz on their four clips was dropped 11-17. Spin as a harder turn
 and Lace (sensing reach x 0.15 or 2.5) showed nothing and were dropped
 ([Mind bullets](../../Reports/gun-mind-2026-11-16/README.md)).
+
+**Provoke and Still** (2026-11-17, the Mind family's last two, on): the
+simulation-use thread's signal statuses as cards, for the devices' 12 s and
+10 s (`BurstRules::mind_steps_for`), cost 2, sold as bullets from planet 2.
+Provoked slime hears no food news, so after about 5 s it believes it is cut
+off: it goes grey, lets go of what it holds and charges. Still slime neither
+charges nor eats. On planet 1 Provoke pulled the slime's film off a crystal
+onto a squad's guns (kills 387 against 319 in 16 s), and Still took the bite
+out of a raid (8 of 8 soldiers at health 87 against 7 at 71, kills 320
+against 585). In six paired windows Still left the squad better off in 4 and
+more slime alive in 6 of 6; Provoke changed little where the slime already
+charged
+([Provoke and Still](../../Reports/gun-provoke-still-2026-11-17/README.md)).
 
 **Readers** (2026-11-17, step D's second family): Shatter and Detonate
 kill only the walkers in the state another card put there, within their
@@ -219,6 +240,8 @@ The alarm held harder and adds no sensor read, so `fire_weight` was
 deleted and `fire_alarm` is the one fire-shyness switch, off
 ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
 
+## The look
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -256,13 +279,13 @@ card text) and 08:30 (the guns a draw of the game).
   squad on a cooldown; luck that changes rules. Steps A-F, each filmed; cut
   last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
   useful"). Step A (set shapes, blast and bomb apart, germ sold), the
-  trigger and expire cards, the owner's shove cards (heave, corral, pull),
+  trigger and expire cards, the owner's shove cards (heave, pull),
   multicast and the GPU read-back batching are built. Step C: seek is
   homing in the shot trace (hits up from 80% to 89% on thin slime, kills
   +3%); aim cards wait (squads on their own hold the defend stance, so an
   aim card changes only which nearby slime they pick). Step D's first
-  family, Mind (blind, sour, spin), is built and its blind quiz is with the
-  owner; the readers (shatter, detonate), the route's Flare and the
+  family, Mind (blind, sour, spin, then provoke and still), is built (its
+  blind quiz was dropped 11-17: play shows whether they read); the readers (shatter, detonate), the route's Flare and the
   element's Torch and Tinder are built; force counts as built (the shove
   cards; the game designer, 11-17 12:23Z: no new card). The cut count
   (11-17) found no Cut card worth building: the largest part one thin cut
@@ -289,7 +312,7 @@ card text) and 08:30 (the guns a draw of the game).
   (the game designer's note, 11-17). The gaps are the Sleeper, the Grudge
   and the Trunk; Pull and Thrift answer no planet.
 - Pull stops short but adds no kills where squads on their own fight (the
-  slime they shoot is already near). Corral finds turrets only, not a
+  slime they shoot is already near). A heave finds turrets only, not a
   marked spot or other buildings.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
 - Balance of budgets, prices and rolls waits for the owner's playtest.
