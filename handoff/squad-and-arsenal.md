@@ -82,16 +82,19 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
   rim plus 2 dish cells harvest (`turn.rs`, Engine and tools'). Tidy rings
   would need a longer harvest reach, which changes the rush economy (D7),
   so that is Direction's call, not a control fix.
-- New job from Scott's card of 11-18 03:03Z ("Lure now, in the three
-  planets"): the Lure building back in the run on Enemy's steering field.
-  Shop item "Lures", an unlock, first price 150, no prerequisite; the
-  building costs 300 food, has 150 health and is mortal; siren and outpost
-  stay out. Interface agreed with Enemy 11-18 03:13Z: the field comes from
-  every `Kind::Lure` that is `up()` and on, plus `Game::lure_marks`
-  (Enemy's, in `raids.rs`); reach `Rules::lure_reach` 60, engine key
-  `lure_pull` 10; GPU only; `lure=T,X,Y,SECS` films a mark. Enemy's branch
-  is `claude/project-thread-s5k9cw`. The Lure is not sold before the field
-  is on main, so this lane's PR queues after Enemy's.
+- The Lure is back in the run (Scott's card of 11-18 03:03Z, "Lure now, in
+  the three planets"): the shop's "Lures" unlock (150, no prerequisite),
+  the Lure and the lures' on/off switch off `run_hidden`, 300 food and 150
+  health as before, mortal. It stands on Enemy's field (#457: every
+  `Kind::Lure` that is `up()` and on, plus `Game::lure_marks`; reach
+  `Rules::lure_reach` 60, `run::LURE_PULL` 10 on every run planet; GPU
+  only; `lure=X,Y[,T]` films a building, `lure_mark=T,X,Y,SECS` a mark).
+  In Enemy's scene on this branch the Lure stood from 0:30 to under 1:00
+  and 4,461 walkers were killed by 1:30 (1,813 with no lure;
+  `Reports/lure-field-2026-11-18/`). The siren and the outpost stay out.
+  Known: the unlock is bought in a shop, so planet 1 itself has no Lure;
+  the Drifter's and Trunk's `lure_r` 15 (the pump smell's reach) also
+  widens the Lure's own scent on those planets.
 - From Enemy (11-17 22:28Z, #451): planet 3's Trunk sets into amber walls
   where it is shot and fire burns them; the shop before planet 3 does not
   push a Torch (`run::bring` names a card for the Sprawler only, and the
@@ -104,9 +107,8 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
   off-by-default key needs a row in `src/build/switches.rs`. Run
   `cargo test --release --locked --bin larder-world` (5 minutes) as well
   as the library tests before pushing: #448 bounced once on a window test.
-- Next: the Lure (above), as its own PR once Enemy's field (#457) is on
-  main. The built change is kept as a patch in the project's shared
-  folder, `squad-and-arsenal/lure-wip.patch`, until then.
+- Next: what Scott's next play notes say about control and the gun; the
+  dart (the Lure's second form) waits until he has played the Lure.
 
 **2026-11-17, batch 1.**
 
