@@ -24,6 +24,12 @@ end.
   check its line in `news/whats-new.txt`, give it a line in
   `news/things-to-try.txt` in place of the mini-bosses, and retune after
   he plays. Nothing is open with the owner now.
+- **From the lab's part two** (11-18, `Reports/lab-steering-2026-11-17/`):
+  no bullet steering card. A tuning lead for the pull: a strong lure that
+  drags a colony off its crystal shrinks it without kills (10,386 alive
+  against 11,460 by 2:00, 1,565 killed against 10,533), so a high pull is
+  a second way to win a crystal, not only a kill zone. Keep the game's
+  pull at 10 until he has played it.
 - **Held for D7:** Enemy's idea that the Drifter also smells crystals being
   drained by hand. It is a rush brake, so it is not built, not even behind a
   switch. Enemy's planet 1 finding goes beside the rush on the list of
