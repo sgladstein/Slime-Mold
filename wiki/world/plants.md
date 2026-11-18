@@ -2,12 +2,13 @@
 title: Plants
 kind: mechanism
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/bug-check-leftovers-2026-11-15/README.md
   - Reports/fire-2026-11-14/README.md
   - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-tinder-2026-11-17/README.md
+  - Reports/lab-forest-2026-11-18/README.md
   - Reports/plants-2026-11-14/README.md
   - Reports/plants-look-2026-11-14/README.md
   - Reports/review-fixes-2026-11-15/README.md
@@ -78,6 +79,12 @@ flickers and leaves embers; moisture (`plants::moisture`) comes from the
 map's `moisture BASE SPREAD` line (levelgen, by biome), water within 8
 cells and noise. Fire hurts soldiers (`Rules::fire_hurt` 25 hp/s at full
 heat) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
+
+The lab (11-18, lab branch only, not in the game) made the moisture live:
+rain that runs to the rivers, pools and dries, read by fire, the slime,
+the soldiers and the view. On planet 1 a 20 s shower pooled 6,397 of
+99,200 cells and was gone in 30 to 40 s; the slime ended a tenth smaller
+([report](../../Reports/lab-forest-2026-11-18/README.md)).
 
 **Laid fuel** (2026-11-17, the Tinder gun card): `BigDish::lay_fuel`
 (GPU: the IGNITE pass in lay mode) plants open, dry ground up to a level,
