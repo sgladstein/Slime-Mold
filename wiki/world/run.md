@@ -45,6 +45,7 @@ code:
   - ammo_price
   - area_of
   - bring
+  - bring_shell
   - clock
   - does_to_you
   - enemy_keys
@@ -209,7 +210,15 @@ each ([report](../../Reports/enemy-switches-2026-11-17/README.md), *Films*).
 A planet whose tier asks for a card (`bring`; the Sprawler, which shies
 from fire, asks for Tinder) gets that card in one of its shop's card slots
 when you don't own it, on every reroll (the game designer, 11-17 15:26Z);
-drawn by chance it was in 23 of 200 planet-2 shops.
+drawn by chance it was in 23 of 200 planet-2 shops. A tier may ask for a
+bullet too (`bring_shell`, 2026-11-18): the Sprawler and the Trunk ask for a
+Torch, which is the shop's first bullet while you own none, because
+Tinder's brush kills nothing until a fire runs along it and the Trunk's
+amber walls burn. Since the same day a shop's two bullets are never one
+shell, never the plain standard bullet the run starts with and never a
+reader with nothing to read (a Shatter with no gas bullet owned, a Detonate
+with no germ), and its two guns are two kinds, neither the kind carried
+(`Run::restock`).
 
 ## The gun range
 

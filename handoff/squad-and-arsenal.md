@@ -48,7 +48,27 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
-**2026-11-18, batch 2 (Heave and Corral merged; the next PR after #448).**
+**2026-11-18, batch 2 (one PR after #448: Heave and Corral merged, shop offers, Free recruits off the list).**
+
+- Shop offers (job 4): `run::bring_shell` (the Sprawler and the Trunk ask
+  for a Torch, the shop's first bullet while none is owned) and
+  `Run::restock`'s rules (no shell twice, no plain standard bullet, no
+  reader with nothing to read, two gun kinds and neither the one carried).
+  From the first two shops of run seeds 1-12 before the change: Tinder was
+  pushed with no fire on sale on 9 of 12, one shell twice on 4 of 24, one
+  gun kind twice on 7, the carried rifle on 7. For Direction (prices are
+  its numbers): before planet 2 the run has 200 to 300 points, Tinder is
+  150 and the Torch rolled 40 to 150, so on about 1 seed in 4 a two-star
+  win cannot buy both.
+- Shake and hit-stop (job 3): the one Experiments toggle is the switch
+  list's row `feel` (`try=feel`). Nothing more was built: only blasts
+  trigger it, so the starting rifle shows nothing until a blast bullet is
+  bought; a kick on every plain volley was ruled out when it was built
+  (`feel` in main.rs: "in a fight every volley would").
+- Free recruits (`Rules::reserve`) left the Experiments list on Direction's
+  ask: a campaign-only rule (`NOT_SWITCHES`), `SETTLING` is false, three
+  rows stand.
+
 
 - Done: Heave and Corral are one card, `Card::Heave`; `corral` still loads
   as `heave`. Numbers and the reverted stop-short trial:
@@ -84,9 +104,9 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
   off-by-default key needs a row in `src/build/switches.rs`. Run
   `cargo test --release --locked --bin larder-world` (5 minutes) as well
   as the library tests before pushing: #448 bounced once on a window test.
-- Next, in order: the Lure (above); shake and hit-stop as one Experiments
-  toggle and the rifle's feel (job 3; the switch row exists); shop offers
-  for planets 1 to 3 (job 4).
+- Next: the Lure (above), as its own PR once Enemy's field (#457) is on
+  main. The built change is kept as a patch in the project's shared
+  folder, `squad-and-arsenal/lure-wip.patch`, until then.
 
 **2026-11-17, batch 1.**
 

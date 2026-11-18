@@ -144,9 +144,10 @@ mod tests {
         }
         let plain = round_args(&bare, false, &menu, &StartEvent::Sandbox);
         assert_eq!(switches::log_word(&plain.keys), "none");
-        // The rows this plays are the four left since the Enemy lane
+        // The rows this plays are the three left since the Enemy lane
         // settled the 11-17 list (the far smell, the trap and the crust,
-        // which this test turned until then, are no longer rows).
+        // which this test turned until then, are no longer rows) and the
+        // free recruits left it (11-18).
         turn(&mut menu, "crystal_regrow", "on");
         turn(&mut menu, "set_look", "hidden");
         let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
@@ -154,19 +155,19 @@ mod tests {
         assert!(a.keys.contains(&("crystal_regrow".into(), "0.001".into())) && a.keys.contains(&("win:setlook".into(), "0".into())));
         let run = run_args(&bare, &menu, &Run::new(1));
         assert_eq!(switches::log_word(&run.keys), "set_look:hidden,crystal_regrow:on", "a run's planets play the picks");
-        // The command line's `try=reserve try=crystal_regrow` presets the
+        // The command line's `try=feel try=crystal_regrow` presets the
         // rows; turning one off in the menu takes its keys off the round.
         let mut cli = bare.clone();
-        for t in ["reserve", "crystal_regrow"] {
+        for t in ["feel", "crystal_regrow"] {
             cli.keys.extend(switches::keys_of(switches::parse_try(t).unwrap().1));
         }
         let mut menu = start_menu(&cli);
-        assert_eq!(menu.option("exp:reserve").map(|o| o.value()), Some("on"));
-        assert_eq!(switches::log_word(&round_args(&cli, false, &menu, &StartEvent::Sandbox).keys), "reserve:on,crystal_regrow:on");
-        turn(&mut menu, "reserve", "off");
+        assert_eq!(menu.option("exp:feel").map(|o| o.value()), Some("on"));
+        assert_eq!(switches::log_word(&round_args(&cli, false, &menu, &StartEvent::Sandbox).keys), "feel:on,crystal_regrow:on");
+        turn(&mut menu, "feel", "off");
         let a = round_args(&cli, false, &menu, &StartEvent::Sandbox);
         assert_eq!(switches::log_word(&a.keys), "crystal_regrow:on");
-        assert!(!a.keys.iter().any(|(k, _)| k == "set:reserve"));
+        assert!(!a.keys.iter().any(|(k, _)| k == "win:shake" || k == "win:hitstop"));
         // A film's own number shows as custom and is left alone.
         let mut film = bare.clone();
         film.keys.push(("crystal_regrow".into(), "0.01".into()));

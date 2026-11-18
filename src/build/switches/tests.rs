@@ -177,6 +177,7 @@ const PARTS: &[(&str, &str)] = &[];
 const DISH: &str = "a rule of the paused dish games' model, which shape C never sets";
 const CAST: &str = "set by the game when a round or tool is cast, not by a key";
 const FILM: &str = "a film's override; 0 leaves the game's own draw";
+const CAMPAIGN: &str = "a rule the frozen campaign's missions set themselves; the run never uses it";
 const NOT_SWITCHES: &[(&str, &str)] = &[
     ("graze", DISH),
     ("respawn", DISH),
@@ -210,6 +211,11 @@ const NOT_SWITCHES: &[(&str, &str)] = &[
     // `set=boss_kind=N` forces a mini-boss's kind for its film; 0 draws
     // one by the kinds' weights, which is the game.
     ("set:boss_kind", FILM),
+    // The free recruit (`Rules::reserve`): a row until 2026-11-18. The
+    // campaign's missions set it (`campaign::RESERVE`, the owner's
+    // no-soft-lock pick of 11-12); squad mode has no larder to send one
+    // from, and his pick for the game was free recruits off.
+    ("set:reserve", CAMPAIGN),
 ];
 
 /// **The test the plan asks for** (job 1: "A test fails on a switch that
@@ -286,9 +292,9 @@ fn the_keys_say_which_switches_are_on() {
     // were rows until the Enemy lane turned them on on every planet.
     assert_eq!(log_word(&keys(&[("panic", "1"), ("surge", "900"), ("set:pump_smell", "2"), ("far_smell", "1"), ("set:unit_paths", "1"), ("setting", "1"), ("set:set_block", "5")])), "none");
     // In the list's order, whatever order the keys came in.
-    assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("set:reserve", "5")])), "reserve:on,crystal_regrow:on");
-    // 5.0 is 5; a later 0 turns it off again.
-    assert_eq!(log_word(&keys(&[("set:reserve", "5.0")])), "reserve:on");
+    assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("win:setlook", "2")])), "set_look:glaze,crystal_regrow:on");
+    // 2.0 is 2; a later 0 turns it off again.
+    assert_eq!(log_word(&keys(&[("win:setlook", "2.0")])), "set_look:glaze");
     assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("crystal_regrow", "0")])), "none");
     // A choice is named when all its keys hold: shake alone is not the
     // row's "on".
