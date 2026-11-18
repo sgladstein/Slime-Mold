@@ -254,6 +254,11 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// a key in `play-new-slime.cmd` only. Its field is built on a worker
 /// thread every 2 game seconds; a hungry walker reads three more words a
 /// step.
+///
+/// **A lure pulls on every planet** (`lure_pull` `LURE_PULL`, 2026-11-18,
+/// the Enemy lane; the owner's card, 11-18 03:03Z: "Lure now, in the three
+/// planets"). Calm slime within `Rules::lure_reach` of a Lure that is on
+/// leans down the walking distance to it (`raids.rs`'s `time_lure_paths`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
     vec![
@@ -262,8 +267,18 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("roam", ROAM[i].to_string()),
         ("roam_share", format!("{}", ROAM_SHARE[i])),
         ("far_smell", "1".to_string()),
+        ("lure_pull", format!("{LURE_PULL}")),
     ]
 }
+
+/// **How hard a lure pulls** (the engine's `lure_pull`), one number for
+/// every tier, Direction's to tune. 10 is the lab's recommended start:
+/// on planet 1 with three rendering turrets it made a steady stream into
+/// the guns while the body stayed on its crystal (6,024 killed by 1:30
+/// against 1,623 with no lure); 30 emptied the home colony in about 45 s
+/// (`Reports/lab-steering-2026-11-17`). Those were measured with the far
+/// smell off; here both are on.
+pub const LURE_PULL: f32 = 10.0;
 
 /// **Game rules every planet's slime plays by** (`Rules::set` names), set
 /// in `Run::rules` before the tier's own (`does_to_you`). Today one:
@@ -324,13 +339,13 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // to 23 at 2:00 and down by 2:21 with it; pump_smell 2 to 8 was too
         // weak to see.
         Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
+        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder and a Torch", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
         // Until 2026-11-17 the Trunk had the Drifter's row (the same pump
         // smell: the first two pumps at 185 and 167 hp at 2:30 without it,
         // 160 and 160 with it; modest, as its cords are slow to turn), so
         // planets 1 and 3 did the same thing to you. Now it sets
         // (`TRUNK_KEYS`).
-        Tier::Trunk => DoesToYou { says: "Where you shoot it, it sets into amber walls that take three hits and stop your soldiers. Fire burns them", rules: TRUNK_RULES, keys: TRUNK_KEYS },
+        Tier::Trunk => DoesToYou { says: "Where you shoot it, it sets into amber walls that take three hits and stop your soldiers. Fire burns them: bring a Torch", rules: TRUNK_RULES, keys: TRUNK_KEYS },
         Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
         Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
@@ -433,6 +448,25 @@ const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1")];
 pub fn bring(tier: Tier) -> Option<Card> {
     match tier {
         Tier::Sprawler => Some(Card::Tinder),
+        _ => None,
+    }
+}
+
+/// The bullet a tier's planet asks you to bring, if any (2026-11-18, the
+/// Squad and arsenal lane: the shops before planets 2 and 3 should make
+/// those planets play differently). When you own no bullet of that shell
+/// it is the shop's first bullet on every reroll (`Run::restock`).
+///
+/// - The Sprawler: a Torch. Tinder lays brush and kills nothing until a
+///   fire runs along it, and the run starts with plain bullets: over run
+///   seeds 1-12 the shop that pushed Tinder sold a fire (a torch or a
+///   blast) on 3, so on 9 the planet's own advice was a dead buy.
+/// - The Trunk: a Torch. Shot, it sets into amber walls that take three
+///   hits each and that fire burns (the Enemy lane, 11-17: two torch shots
+///   cut a 1,212-cell wall to 679 in 2 s).
+pub fn bring_shell(tier: Tier) -> Option<Shell> {
+    match tier {
+        Tier::Sprawler | Tier::Trunk => Some(Shell::Torch),
         _ => None,
     }
 }
@@ -1085,21 +1119,56 @@ impl Run {
         if let Some(c) = wanted {
             from.retain(|&f| f != c);
         }
-        // Rolled bullets first, each its own seed.
-        let shells = shells_at(self.depth);
+        // Rolled bullets first, each its own seed. What a shop's bullets
+        // may not be (2026-11-18, from the first two shops of run seeds
+        // 1-12, where each of these happened on 3 to 5 of the 24): the same
+        // shell twice; a reader with nothing to read (a Shatter with no gas
+        // bullet owned, a Detonate with no germ: alone each kills nothing);
+        // a plain bullet of the standard set, which is the bullet the run
+        // starts with. And the first is the planet's (`bring_shell`) while
+        // none of that shell is owned.
+        let owns = |s: Shell| self.cards.iter().any(|c| matches!(c.0, Card::Ammo(a) if a.shell == s));
+        let mut shells: Vec<Shell> = shells_at(self.depth).into_iter().filter(|&s| match s {
+            Shell::Shatter => owns(Shell::Gas),
+            Shell::Detonate => owns(Shell::Germ),
+            _ => true,
+        }).collect();
+        let mut asked = bring_shell(self.level().tier).filter(|&s| !owns(s));
         for _ in 0..AMMO_OFFER {
             z = mix(z);
-            let shell = shells[(z % shells.len() as u64) as usize];
-            let set = Set::ALL[((z >> 20) % Set::ALL.len() as u64) as usize];
+            let shell = match asked.take() {
+                Some(s) => {
+                    shells.retain(|&x| x != s);
+                    s
+                }
+                None if shells.is_empty() => break,
+                None => shells.remove((z % shells.len() as u64) as usize),
+            };
+            let mut set = Set::ALL[((z >> 20) % Set::ALL.len() as u64) as usize];
+            if (shell, set) == (Shell::Plain, Set::Standard) {
+                set = Set::ALL[1 + ((z >> 24) % (Set::ALL.len() as u64 - 1)) as usize];
+            }
             self.offers.push(Card::Ammo(Ammo::roll_of(shell, set, mix(z ^ 0xA330), self.depth)));
         }
+        let bullets = self.offers.len();
         self.offers.extend(wanted);
-        while self.offers.len() < n + AMMO_OFFER && !from.is_empty() {
+        while self.offers.len() < n + bullets && !from.is_empty() {
             z = mix(z);
             self.offers.push(from.remove((z % from.len() as u64) as usize));
         }
-        // Guns for the planet ahead, each its own seed.
-        self.gun_offers = (0..GUN_OFFER as u64).map(|k| Gun::roll(mix(z ^ (0x6755_4E00 + k)), self.depth)).filter(|g| !self.guns.contains(g)).collect();
+        // Guns for the planet ahead, each its own seed: two kinds, and
+        // neither the kind in hand (2026-11-18: a gun of another kind is
+        // the buy that most changes how the squad plays, and of seeds
+        // 1-12's first two shops 7 sold the same kind twice and 7 sold the
+        // rifle the run starts with).
+        let mut kinds: Vec<GunKind> = GunKind::ALL.into_iter().filter(|&k| self.guns.get(self.carry).is_none_or(|g| g.kind != k)).collect();
+        self.gun_offers = (0..GUN_OFFER as u64)
+            .filter_map(|k| {
+                let s = mix(z ^ (0x6755_4E00 + k));
+                (!kinds.is_empty()).then(|| Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.depth))
+            })
+            .filter(|g| !self.guns.contains(g))
+            .collect();
     }
 
     /// The current level was won with `stars` (1-3): its points, the next
@@ -1350,6 +1419,15 @@ mod tests {
             assert_eq!(surge_secs(d), get(d, "surge") / 30.0);
             let mut p = crate::mould::big::BigParams::today();
             for (k, v) in enemy_keys(d) {
+                // The lure's pull is the GPU engine's alone (the owner's
+                // card, 11-17 19:21Z: no CPU twin): the engine takes it,
+                // and `BigParams` has no field for it.
+                if k == "lure_pull" {
+                    let mut s = crate::gpu::Settings::big_dish();
+                    crate::gpu::set(&mut s, k, &v).unwrap();
+                    assert_eq!(s.lure_pull, LURE_PULL, "planet {d}");
+                    continue;
+                }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
             }
             // No bronze (owner 11-16: "Remove the bronze"), specks on.
@@ -1447,6 +1525,53 @@ mod tests {
         assert!(!r.offers.contains(&Card::Tinder));
         // No other rung asks for a card yet.
         assert!(LADDER.iter().all(|&t| t == Tier::Sprawler || bring(t).is_none()));
+    }
+
+    /// **The first two shops change how the gun plays** (Milestone 1's
+    /// exit test 5; 2026-11-18). On run seeds 1-12, every reroll: the shop
+    /// before the Sprawler and the one before the Trunk sell a Torch
+    /// bullet first while none is owned (`bring_shell`: Tinder's brush
+    /// needs a fire, and the Trunk's amber walls burn); the two bullets
+    /// are never one shell, never the starting bullet, never a reader with
+    /// nothing to read; the two guns are two kinds, neither the one
+    /// carried.
+    #[test]
+    fn the_first_shops_sell_the_planets_bullet_and_no_doubles() {
+        for seed in 1..=12 {
+            let mut r = Run::new(seed);
+            for tier in [Tier::Sprawler, Tier::Trunk] {
+                r.won(2);
+                assert_eq!((r.level().tier, bring_shell(tier)), (tier, Some(Shell::Torch)));
+                for _ in 0..6 {
+                    let shells: Vec<(Shell, Set)> = r.offers.iter().filter_map(|c| if let Card::Ammo(a) = c { Some((a.shell, a.set)) } else { None }).collect();
+                    assert_eq!((shells.len(), shells[0].0), (AMMO_OFFER, Shell::Torch), "seed {seed}, {tier:?}: {:?}", r.offers);
+                    assert_ne!(shells[0].0, shells[1].0, "seed {seed}: one shell twice");
+                    assert!(shells.iter().all(|&s| s != (Shell::Plain, Set::Standard) && !matches!(s.0, Shell::Shatter | Shell::Detonate)), "seed {seed}: {shells:?}");
+                    assert_eq!(r.offers.len(), OFFER + AMMO_OFFER, "the planet's bullet takes a slot, not an extra one");
+                    let kinds: Vec<GunKind> = r.gun_offers.iter().map(|g| g.kind).collect();
+                    assert!(kinds.len() == GUN_OFFER && kinds[0] != kinds[1] && !kinds.contains(&r.guns[r.carry].kind), "seed {seed}: {kinds:?} with a {:?} carried", r.guns[r.carry].kind);
+                    r.rerolls += 1;
+                    r.restock();
+                }
+            }
+        }
+        // With a torch owned the planet's bullet is no longer pushed, and
+        // with a gas bullet owned a Shatter may be sold.
+        let mut r = Run::new(1);
+        r.won(2);
+        r.cards.push((Card::Ammo(Ammo::standard(Shell::Torch)), false));
+        r.cards.push((Card::Ammo(Ammo::standard(Shell::Gas)), false));
+        let (mut torch_first, mut shatter) = (0, 0);
+        for _ in 0..40 {
+            r.rerolls += 1;
+            r.restock();
+            let shells: Vec<Shell> = r.offers.iter().filter_map(|c| if let Card::Ammo(a) = c { Some(a.shell) } else { None }).collect();
+            torch_first += usize::from(shells[0] == Shell::Torch);
+            shatter += usize::from(shells.contains(&Shell::Shatter));
+        }
+        assert!(torch_first < 12 && shatter > 0, "torch first in {torch_first} of 40, shatter in {shatter}");
+        // The other rungs ask for no bullet yet.
+        assert!(LADDER.iter().all(|&t| matches!(t, Tier::Sprawler | Tier::Trunk) || bring_shell(t).is_none()));
     }
 
     #[test]
@@ -1752,6 +1877,8 @@ mod tests {
             // Every planet: the far smell, and charges that go round walls.
             assert!(r.unit_paths, "{}", t.name());
             assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
+            // Every planet: a lure pulls (the owner's card, 11-18 03:03Z).
+            assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "lure_pull" && v.parse::<f32>().unwrap() > 0.0));
         }
         let mut r = Rules::default();
         Run::range(1).rules(&mut r);

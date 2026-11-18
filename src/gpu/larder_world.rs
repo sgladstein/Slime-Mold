@@ -1019,6 +1019,14 @@ impl World for GpuWorld {
         self.e.write_food_field();
     }
 
+    fn lure_pull(&self) -> bool {
+        self.s.lure_pull > 0.0
+    }
+
+    fn set_lure_field(&mut self, field: Vec<u32>) {
+        self.e.write_lure_field(&field);
+    }
+
     /// Runs `lumpform` at once, after the running step's shares (the CPU's
     /// `form_lump`; the mirror's dense words are not kept).
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
@@ -1280,6 +1288,12 @@ mod tests {
         }
         fn set_food_field(&mut self, field: Vec<u32>) {
             self.g.set_food_field(field)
+        }
+        fn lure_pull(&self) -> bool {
+            self.g.lure_pull()
+        }
+        fn set_lure_field(&mut self, field: Vec<u32>) {
+            self.g.set_lure_field(field)
         }
         fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
             self.g.raid_ground()
@@ -1850,6 +1864,100 @@ mod tests {
             let cpu = race_params(seed, scale, walkers);
             let gpu = BigParams { substeps: cpu.substeps, ..engine_params(&race_settings(seed, scale, walkers), scale) };
             assert_eq!(format!("{gpu:?}"), format!("{cpu:?}"), "seed {seed} scale {scale}");
+        }
+    }
+
+    /// **A lure draws the calm slime down its field** (`Settings::
+    /// lure_pull`, `Game::time_lure_paths`; 2026-11-18, the Enemy lane). A
+    /// rule of the GPU engine alone (the owner's card, 11-17 19:21Z: no CPU
+    /// twin), so its test is what it does on the software GPU. Three race
+    /// worlds alike: pull 10 with a lure mark 25 dish cells from the
+    /// mould's home for 12 game seconds, pull 10 with no lure, and pull 0
+    /// with the mark.
+    ///
+    /// - The field is set a game second after it is started (so the game
+    ///   does not depend on the worker thread): no pull in the engine
+    ///   before second 2, the pull and the field after, 0 walking at the
+    ///   mark's block and nothing past the reach.
+    /// - At 12 s the lured slime has several times the walkers round the
+    ///   mark that the unlured has.
+    /// - The mark runs out at 12 s; by 14 s the field is cleared and the
+    ///   pull is off again.
+    /// - Pull 0 builds no field, and plays the unlured game to the bit.
+    #[test]
+    fn a_lure_draws_the_calm_slime_down_its_field() {
+        use crate::gpu::{floats, DENSE_HEAD};
+        use crate::mould::big::RAID_BLOCK;
+        use crate::mould::larder_world::LureMark;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let k = scale as f32;
+        let play = |pull: f32, mark: bool| {
+            let s = Settings { lure_pull: pull, ..race_settings(seed, scale, walkers) };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            let home = g.world.crystals()[0].0;
+            let (w, _) = g.world.size();
+            // Toward the middle of the world, so the mark is on it.
+            let at = (if home.0 < w as f32 / 2.0 { home.0 + 25.0 * k } else { home.0 - 25.0 * k }, home.1);
+            let tps = g.rules.tps as u64;
+            if mark {
+                g.lure_marks.push(LureMark { at, until: 12 * tps });
+            }
+            (g, at)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        let near = |g: &Game<GpuWorld>, at: (f32, f32), r: f32| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            (0..e.n as usize).filter(|&q| (!e.grows || en[q] >= 0.0) && (wk[4 * q] - at.0).hypot(wk[4 * q + 1] - at.1) <= r).count()
+        };
+        // The lure's blocks as the engine holds them (the cells' region's
+        // third quarter, engine.wgsl's `lure_dist`).
+        let blocks = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let nb = e.dish.w.div_ceil(RAID_BLOCK) * e.dish.h.div_ceil(RAID_BLOCK);
+            let from = e.dense_at as usize + 4 * (DENSE_HEAD + e.n as usize + 2 * nb);
+            read_back(&e.device, &e.queue, &e.news)[from..from + 4 * nb].chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<u32>>()
+        };
+        let (mut lured, at) = play(10.0, true);
+        let (mut bare, _) = play(10.0, false);
+        let (mut off, _) = play(0.0, true);
+        assert!(lured.world.lure_pull() && !off.world.lure_pull());
+        // Started at the first second, set at the second.
+        to(&mut lured, 1.5);
+        assert!(!lured.world.e.lured, "the field is not set in its first second");
+        to(&mut lured, 2.5);
+        assert!(lured.world.e.lured, "the field is set a second after it was started");
+        let f = blocks(&lured);
+        let bw = lured.world.e.dish.w.div_ceil(RAID_BLOCK);
+        let q = (at.1 as usize / RAID_BLOCK) * bw + at.0 as usize / RAID_BLOCK;
+        let reach = (lured.rules.lure_reach * k) as u32;
+        let (reached, far) = (f.iter().filter(|&&v| v > 0).count(), f.iter().copied().max().unwrap_or(0));
+        eprintln!("lure field: {reached} of {} blocks reached, {} at the mark, the farthest {far} (reach {reach})", f.len(), f[q]);
+        assert!(f[q] >= 1 && f[q] <= 2 * RAID_BLOCK as u32 * crate::mould::big::UNITS_REACH as u32 + 4, "0 walking at the mark's block, or the open block beside it ({})", f[q]);
+        assert!(reached > 50 && reached < f.len() && far <= reach + 1, "the field stops at the lure's reach");
+        // Twelve seconds of pull.
+        for g in [&mut lured, &mut bare, &mut off] {
+            to(g, 12.0);
+        }
+        let r = 8.0 * k;
+        let (with, without) = (near(&lured, at, r), near(&bare, at, r));
+        eprintln!("lure: at 12 s {with} walkers within {r} of the mark with it, {without} without ({} and {} alive)", lured.world.e.alive(), bare.world.e.alive());
+        assert!(with >= 3 * without + 30, "the lure draws the slime: {with} walkers round it against {without}");
+        // The mark has run out: cleared a second after the last field.
+        to(&mut lured, 14.5);
+        assert!(lured.lure_marks.is_empty() && !lured.world.e.lured, "the field is cleared when the last lure goes");
+        assert!(blocks(&lured).iter().all(|&v| v == 0), "and its blocks are clear");
+        // Pull 0: no field, and the unlured game to the bit (on software
+        // Vulkan; a card orders its float sums its own way).
+        assert!(!off.world.e.lured && blocks(&off).iter().all(|&v| v == 0), "pull 0 builds no field");
+        if !ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
+            assert_eq!(off.world.hash(), bare.world.hash(), "pull 0 is the game with no lure");
         }
     }
 

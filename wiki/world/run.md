@@ -10,6 +10,7 @@ sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-steering-2026-11-17/README.md
+  - Reports/lure-field-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/pump-economy-2026-11-15/README.md
@@ -28,6 +29,8 @@ code:
   - BossRules::for_depth
   - Game::boss_aim
   - LADDER
+  - LURE_PULL
+  - LureMark
   - PLANETS
   - Playlog
   - RANGE_DEPTH
@@ -45,6 +48,7 @@ code:
   - ammo_price
   - area_of
   - bring
+  - bring_shell
   - clock
   - does_to_you
   - enemy_keys
@@ -62,6 +66,7 @@ code:
   - size_roll
   - surge_food
   - surge_secs
+  - time_lure_paths
   - two_stars
 ---
 
@@ -158,7 +163,7 @@ four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
 them on the command card), and the 40-soldier rush is left as it is (D7). A
-lab prototype, not in the game, meets D10's condition for the lure: a lure
+lab prototype met D10's condition for the lure: a lure
 that every walker leans toward (a walking-distance field, so walls bend it)
 drew planet 1's home colony into three turrets, 4,158 walkers killed by
 1:30 against 1,623 without it (run seed 1, one seed, software GPU;
@@ -168,8 +173,8 @@ run shop for planets 1 to 3 with that rule at a third of the lab's pull
 (first numbers: pull 10, shop unlock 150, the building 300 food and 150
 health, mortal); Enemy builds the field with its own GPU slot and weight,
 Squad and arsenal the building and the shop item, Look and interface the
-rings' colour. Not built yet: until it lands the shop is as above. The siren
-and the outpost stay out.
+rings' colour. The field is built (below); until the building lands the
+shop is as above. The siren and the outpost stay out.
 The lab's later parts (same report): marks laid by every shot do not herd,
 so there is no bullet steering card; a dart that sets a lure where the squad
 aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
@@ -177,8 +182,22 @@ aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
 placed: it waits until the owner has played the Lure building.
 Part four, to 5:00: a colony pulled off its crystal mostly dies in the
 turrets, and the crystal is resettled within one to two minutes once the
-darts stop; with no turrets a raid on the squad overrides the lure (whether
-a lure should outrank a raid is Enemy's call in the port).
+darts stop; with no turrets a raid on the squad overrides the lure, and the
+port keeps that (below).
+
+**A lure pulls** (every planet, 11-18). The lab's field is a slime rule of
+the GPU engine (`lure_pull`, `run::LURE_PULL` 10 on every planet, no CPU
+twin): calm slime within `Rules::lure_reach` (60 cells of walking) of a
+Lure that is on, or of a lure mark (`LureMark`, for a thrown or shot lure),
+leans down the walking distance to it; the game rebuilds the field once a
+game second (`time_lure_paths`). A panicking, surging, raiding or breakaway
+walker and a mini-boss's member ignore it, so a lure draws the body at rest
+and is no shield from a charge; a blind walker does not see it and a soured
+one runs from it. In the lab's scene on the game's build, 4,461 walkers
+killed by 1:30 with a Lure building (which the first raid wore down at
+0:59), 5,978 with a mark that cannot be eaten, 1,813 with no lure (run seed
+1, one film each, software GPU;
+[report](../../Reports/lure-field-2026-11-18/README.md)).
 
 **The Trunk's walls** (planet 3, 11-17; `TRUNK_KEYS` and `TRUNK_RULES` in
 `run.rs`; [report](../../Reports/enemy-switches-2026-11-17/README.md)).
@@ -209,7 +228,15 @@ each ([report](../../Reports/enemy-switches-2026-11-17/README.md), *Films*).
 A planet whose tier asks for a card (`bring`; the Sprawler, which shies
 from fire, asks for Tinder) gets that card in one of its shop's card slots
 when you don't own it, on every reroll (the game designer, 11-17 15:26Z);
-drawn by chance it was in 23 of 200 planet-2 shops.
+drawn by chance it was in 23 of 200 planet-2 shops. A tier may ask for a
+bullet too (`bring_shell`, 2026-11-18): the Sprawler and the Trunk ask for a
+Torch, which is the shop's first bullet while you own none, because
+Tinder's brush kills nothing until a fire runs along it and the Trunk's
+amber walls burn. Since the same day a shop's two bullets are never one
+shell, never the plain standard bullet the run starts with and never a
+reader with nothing to read (a Shatter with no gas bullet owned, a Detonate
+with no germ), and its two guns are two kinds, neither the kind carried
+(`Run::restock`).
 
 ## The gun range
 

@@ -50,7 +50,8 @@ The Look and interface lane's pick (the plan of 11-17 gave it the pending
 look picks; `wiki/decisions-game.md`, 11-17 01:13, has amber as the set
 slime's look). Amber is the only look; the glaze, the unmarked side, the
 Experiments row `set_look` and the key `setlook=` are deleted, which
-brings the switch list to its three.
+takes its row off the switch list (two rows are left: the free
+recruits left it the same day, #459).
 
 Judged on the game as it is on main at 7a38050, where the Trunk sets on
 planet 3 by default: run seed 1, `hand=hold@344,169 gun=rifle`, the frame

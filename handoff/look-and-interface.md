@@ -12,13 +12,15 @@ page https://claude.ai/artifact/4QyfFzQNXQuAPfvz83WqTe).
 `View::set_steer(at)` draws the engine's steering field as pale cream
 hairlines of equal walking distance (`steer_px` and the block in
 `shaded`), and while they show the Lure's green scent light is unlit.
-Nothing calls it yet.
+The window calls it each frame since Enemy's #457 (`prepare_now` in
+`main.rs`: the field's word while a lure stands, else 0).
 
 **Open branch:** `claude/project-thread-8bv885`, one pull request: the
 set slime's look settled. Amber is the only look; the glaze, the unmarked
 side, the Experiments row `set_look` and the key `setlook=` are deleted,
-and the switch list is at its three with `SETTLING` false, so a fourth
-row no longer builds. Record: `Reports/sim-use-2026-11-17/e2b-look.md`,
+and the switch list is down to two rows (`feel`, `crystal_regrow`; Squad
+and arsenal took the free recruits off it in #459), with `SETTLING`
+false, so a fourth row no longer builds. Record: `Reports/sim-use-2026-11-17/e2b-look.md`,
 *Settled*.
 
 **The Lure, who does what** (`NOW.md`; the owner's card 11-18 03:03Z).

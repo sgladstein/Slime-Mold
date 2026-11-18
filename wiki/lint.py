@@ -79,7 +79,6 @@ FRONT_CAP = 100        # NOW.md, the repo's front page, in lines (error)
 NOW_OVER = {
     "wiki/model/growth.md": 4_500,
     "wiki/model/sensors.md": 3_100,
-    "wiki/world/guns.md": 12_000,
     "wiki/world/larder.md": 16_900,
     "wiki/world/maps.md": 3_300,
     "wiki/world/mould-tiers.md": 3_100,

@@ -472,6 +472,16 @@ pub struct Settings {
     /// A far smell (`BigParams::far_smell`, the plan's S2; 0 off), in one
     /// body's row's last word (`Params::far`).
     pub far_smell: f32,
+    /// **The lure's pull** (`lure_pull=W`, 2026-11-18, the Enemy lane; 0
+    /// off, as here): a calm walker inside a lure's reach leans down the
+    /// walking distance to it, x this (engine.wgsl's `lure_dist`, the
+    /// lure block in `sense`). It is this engine's own rule with no
+    /// `BigParams` field: the owner's card (11-17 19:21Z) builds new slime
+    /// rules on the GPU only. A run's planets set it (`run::LURE_PULL`).
+    /// The field is the game's (`Game::time_lure_paths`,
+    /// `Engine::write_lure_field`); the pull is sent only while one is
+    /// written (`Engine::lured`), in the soil row's last word.
+    pub lure_pull: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -735,6 +745,7 @@ impl Settings {
             fire_alarm: t.fire_alarm,
             gas_burn: t.gas_burn,
             far_smell: t.far_smell,
+            lure_pull: 0.0,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1056,6 +1067,11 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // A far smell (`far_smell=W`, the plan's S2): hungry walkers lean
         // down the walking distance to untouched crystals; specks walk it.
         "far_smell" => s.far_smell = f()?,
+        // The lure's pull (`lure_pull=W`, 2026-11-18): calm slime inside a
+        // lure's reach leans down the walking distance to it. The lab's
+        // rig: 10 a steady stream with the body at home, 30 emptied a
+        // colony in 45 s (Reports/lab-steering-2026-11-17).
+        "lure_pull" => s.lure_pull = f()?,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1569,6 +1585,10 @@ pub struct Engine {
     /// walker read its word every step for the rest of the planet).
     pub minds: bool,
     pub mind_until: u64,
+    /// A lure's field is written and reaches somewhere
+    /// (`write_lure_field`): only then is `Settings::lure_pull` sent, so
+    /// with no lure standing a calm walker reads no word for it.
+    pub lured: bool,
     /// The gas cloud (`lay_gas`): on for good once laid (its keep is sent
     /// and `gasp` runs every tick), the step `calm` must look until, and a
     /// bound on the cloud's top at step `cloud_at`. A dish loaded with a
@@ -1917,6 +1937,7 @@ impl Engine {
             gas_at: 4 * news_len as u64,
             gas_until: gas_until(&d),
             minds: !d.mind.is_empty(),
+            lured: false,
             mind_until: mind_until(&d),
             clouded: false,
             cloud_until: 0,
@@ -2119,6 +2140,9 @@ impl Engine {
         self.gas_until = gas_until(d);
         self.minds = !d.mind.is_empty();
         self.mind_until = mind_until(d);
+        // The dense words above cleared the lure's blocks (a CPU dish has
+        // none); the game writes them again within a game second.
+        self.lured = false;
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.specks = self.grows && d.p.roam > 0;
         self.done = d.steps;
@@ -2283,11 +2307,13 @@ impl Engine {
         assert_eq!(b.len(), STRIKE_AT, "Params rows before the strike row moved");
         b.extend([0u8; 32]);
         // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
-        // them from its `BigParams` (read only with `WORLD_SOIL`); the last
-        // word (f32, byte 844) is free again: it was one body's lossy
-        // sharing (`eloss`, `flow_loss`) from 11-13 until the GPU's half
-        // of that rule was deleted on 11-17 (`Reports/dead-ends.md`).
-        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
+        // them from its `BigParams` (read only with `WORLD_SOIL`). The last
+        // word (f32, byte 844) is the lure's pull (`Settings::lure_pull`,
+        // 2026-11-18, the Enemy lane), 0 until a lure's field is written
+        // (`lured`). It was one body's lossy sharing (`eloss`, `flow_loss`)
+        // from 11-13 until the GPU's half of that rule was deleted on 11-17
+        // (`Reports/dead-ends.md`).
+        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, if self.lured { s.lure_pull } else { 0.0 }]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
         // The row's last word is the far smell (`far_smell`, S2, 11-17; it
         // held `fed_full`, then heat in the sensors, `fire_weight`, both
@@ -3429,7 +3455,8 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     // its distance + 1, 0 where none reaches or with no field.
     // The far smell's (`BigDish::food_field`, S2; `food_dist`) follows in
     // the same region, a block's words on: blocks are a quarter of the
-    // cells, so both fit.
+    // cells, so both fit. The lure's field (`Engine::write_lure_field`,
+    // `lure_dist`) is the third quarter, clear here: a CPU dish has none.
     w.extend(block_words(&d.units_field, d.w, d.h));
     w.extend(block_words(&d.food_field, d.w, d.h));
     w.resize(DENSE_HEAD + d.walkers.len() + cells, 0);
@@ -3483,6 +3510,30 @@ impl Engine {
         let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + nb) as u64;
         self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(&self.dish.food_field, self.dish.w, self.dish.h)));
+    }
+
+    /// **Writes a lure's field** (engine.wgsl's `lure_dist`; 2026-11-18,
+    /// the Enemy lane): each block's walking distance to the nearest lure
+    /// (`big::units_field_for`'s blocks, `u32::MAX` where none reaches),
+    /// after the far smell's in the cells' region, one word a block as
+    /// that. An empty field clears it. The mirror dish holds no copy: the
+    /// rule has no CPU twin. Nothing is written while there was no lure
+    /// and there is none (the game calls this once a game second).
+    pub fn write_lure_field(&mut self, field: &[u32]) {
+        let reaches = field.iter().any(|&d| d != u32::MAX);
+        if !reaches && !self.lured {
+            return;
+        }
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        // The third quarter of the region; a dish of odd size (none of
+        // the game's: maps are multiples of 4) has no room for it.
+        if 3 * nb > self.cells as usize {
+            return;
+        }
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 2 * nb) as u64;
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
+        self.lured = reaches;
     }
 
     /// Forms lump `b` (the CPU's `BigDish::form_lump`, `lumpform`): the

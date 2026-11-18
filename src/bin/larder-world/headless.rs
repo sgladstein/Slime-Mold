@@ -207,6 +207,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
     let mut lit: Vec<usize> = Vec::new();
+    let mut lured: Vec<usize> = Vec::new();
     // `trail=`: the lines laid; `cross=`: each slot's side of the line
     // (0 unknown or dead, 1 this side, 2 crossed) and the crossings.
     let mut trailed: Vec<usize> = Vec::new();
@@ -399,6 +400,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let b = slime_mould::mould::squad::Burst { at: (lx, ly), r, burn: true, ..Default::default() };
                     g.world.burst(&b, &slime_mould::mould::squad::BurstRules::default());
                     println!("  fire t {:.2} s lit at {lx},{ly} over {r}", g.time());
+                }
+            }
+            // `lure_mark=T,X,Y,SECS`: a lure with no building there once
+            // T has come (the lure's field, `Game::time_lure_paths`).
+            for (j, &(mt, mx, my, secs)) in app.args.lure_marks.iter().enumerate() {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= mt && !lured.contains(&j) {
+                    lured.push(j);
+                    let until = g.world.ticks() + (secs * g.rules.tps as f32) as u64;
+                    g.lure_marks.push(slime_mould::mould::larder_world::LureMark { at: (mx, my), until });
+                    println!("  lure mark t {:.2} s at {mx},{my} for {secs} s", g.time());
                 }
             }
             // `trail=T,X1,Y1,X2,Y2,CARDS[,lit]`: a bullet's trail laid along

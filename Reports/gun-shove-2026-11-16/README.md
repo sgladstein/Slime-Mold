@@ -148,9 +148,47 @@ up into the three turrets and heaps at their feet.
   the rounds do not yet) or it goes; the owner's call. (Since changed: it
   stops short, above.)
 
+## 2026-11-18: Heave and Corral are one card
+
+The Squad and arsenal lane merged the two cards (the game designer's call of
+11-17 12:23Z, "one shove, two cards"; the plan of 11-17 recommended the
+merge). `Heave` now does both: its hit shoves the slime toward the nearest
+standing turret within `corral_reach` (40 dish cells), and with none in
+reach straight on along the bullet's line; each heave still reaches and
+throws 1.5 times as far. `corral` still parses as `heave`, so old decks and
+replays load. The tables above name the old cards: their
+`corral + heave + plain` is today's `heave + plain` beside a turret, and
+their `heave + heave + plain` (no herding) no longer exists beside a turret.
+
+The same scene on today's build (`hand=hold@150,265 bank=8000 rounds=plain
+load=29,DECK turret=180,240,29`, one turret, seven soldiers standing at
+29 s in every row; the game has changed since 11-16, so compare within this
+table only):
+
+| From 29 s | Thrown, 3 s | By the turret, 3 s | Killed, 3 s | By the turret, 10 s | Killed, 10 s |
+|---|---|---|---|---|---|
+| plain | 0 | 78 | 199 | 139 | 607 |
+| heave + plain | 1,784 | 99 | 120 | 371 | 477 |
+| heave + heave + plain | 2,210 | 29 | 41 | 101 | 172 |
+| heave + slug | 2,644 | 39 | 52 | 169 | 237 |
+
+- **One heave is the kill-zone card**: the turret kills 371 in 10 s against
+  139 with plain bullets, and the squad's own kills fall (106 against 468),
+  as every shove card's do.
+- **A second heave by a turret feeds it less** (101): the wider, longer
+  throw scatters the slime instead of landing it in the turret's fire. In
+  the open a second heave still throws farther (the test
+  `shove_cards_push_the_slime_where_they_say`). The H test loadout `heave`
+  is now `heave+plain`.
+- **Tried and reverted: stopping the throw short of the turret**, as Pull
+  stops short of the gun (`pull_short`, 6 dish cells). The turret's kills in
+  3 s fell from 99 to 23 with one heave and from 29 to 20 with two. Stopping
+  the throw at the turret itself changed nothing (99 and 29): the throw ends
+  before it. One seed, one scene; a tuning note, not a census.
+
 ## Not settled
 
-- **Corral finds turrets only.** A marked spot, a wall's face, or any
+- **A heave finds turrets only** (Corral's rule, kept in the merge). A marked spot, a wall's face, or any
   building is the next choice; turrets came first because they are the kill
   zone the owner named.
 - **The squad's own kills fall with every shove card.** Shoves trade kills

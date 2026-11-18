@@ -28,9 +28,10 @@
 //! across all lanes, and each ends at the owner's next play: on, one
 //! tier's trait, or deleted with its `Reports/dead-ends.md` line. The
 //! list began on 11-17 as ROADMAP's table as it stood, 14 rows. The Enemy
-//! lane settled ten of them that day and Look and interface the set
-//! slime's look on 11-18; three are left, and the compiler holds
-//! `MOST_OFF` from then on (`SETTLING`).
+//! lane settled ten of them that day. On 11-18 the free recruits left the
+//! list as a campaign-only rule and Look and interface settled the set
+//! slime's look (amber). Two are left, and `MOST_OFF` is held by the
+//! compiler (`SETTLING` is false).
 
 /// The lanes of the 11-17 plan, as a row's owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -123,13 +124,19 @@ const fn on(keys: &'static [(&'static str, &'static str)]) -> Choice {
 /// lanes (plan, rule 3).
 pub const MOST_OFF: usize = 3;
 
-/// True while the list is over `MOST_OFF`. It stood at four from 11-17,
-/// when the Enemy lane settled its rows of ROADMAP's table, to 11-18,
-/// when Look and interface settled the set slime's look (amber; the row
-/// is gone). Three are left: shake and hit-stop and the free recruits
-/// (Squad and arsenal), crystals that refill (held with the owner's
-/// answer on the rush, D7). It is false since that change, so a row over
-/// the count stops the build.
+/// True while the list is over `MOST_OFF`. It stood at four after the
+/// Enemy lane settled its rows of ROADMAP's table (11-17). Two left on
+/// 2026-11-18. The free recruits (`Rules::reserve`): a rule the frozen
+/// campaign's missions set (the owner's no-soft-lock pick, 11-12 04:44Z),
+/// squad mode has no larder to send a recruit from, and the owner's pick
+/// for the game was free recruits off, so it was never an experiment for
+/// the run (the Squad and arsenal lane, on Direction's ask). The set
+/// slime's look: Look and interface settled it as amber, what the game
+/// drew, and deleted the glaze and the unmarked side
+/// (`Reports/sim-use-2026-11-17/e2b-look.md`). Two rows stand: shake and
+/// hit-stop (Squad and arsenal), crystals that refill (held with the
+/// owner's answer on the rush, D7). So this is false, and a row over the
+/// count stops the build.
 pub const SETTLING: bool = false;
 
 // The count, held by the compiler: with `SETTLING` false, a fourth row
@@ -162,16 +169,6 @@ pub const SWITCHES: &[Switch] = &[
         since: "2026-11-15",
         sees: "The camera shakes on blasts, and the game holds still for a moment when a big blast lands",
         why_off: "The owner asked to see it before it goes on (11-15, D6); his play with it on decides",
-    },
-    Switch {
-        key: "reserve",
-        label: "Free recruits",
-        choices: &[OFF, on(&[("set:reserve", "5")])],
-        default: "off",
-        lane: Lane::Squad,
-        since: "2026-11-12",
-        sees: "With fewer than 2 soldiers alive and no money for another, a free soldier arrives after 5 seconds (the larder game; squad mode has no larder to send one)",
-        why_off: "The owner's pick was free recruits off. Delete if nobody asks for it by the next play",
     },
     Switch {
         key: "crystal_regrow",
@@ -283,7 +280,8 @@ pub fn state(keys: &[(String, String)]) -> Vec<(&'static Switch, &'static str)> 
     out
 }
 
-/// The play log's word for `state`: `feel:on,reserve:on`, or `none`.
+/// The play log's word for `state`: `feel:on,crystal_regrow:on`, or
+/// `none`.
 pub fn log_word(keys: &[(String, String)]) -> String {
     let on = state(keys);
     if on.is_empty() {
