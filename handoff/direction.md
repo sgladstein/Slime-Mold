@@ -69,6 +69,16 @@ end.
   this lane's tuning once the bot plays it on seeds 1 to 3 (the Run bot
   workflow's summary): if a played planet 2 is still lost, the landing
   squad or the Sprawler's size is the number to move. Then post the curve.
+- **Planet 2's slime at 0.6 of its size** (11-18, this lane's tuning;
+  `run::tier_size`). Enemy's look (`Reports/planet2-sprawler-2026-11-18/`)
+  found the planet, not the bot: on run seeds 1, 3 and 4 a slime of 23,000
+  to 25,000 walkers holds every big crystal and the bot has 3 to 9 soldiers
+  at 2:30; at 0.6 it has 18 to 24 on all three, at 0.8 only one seed
+  holds. 0.6 is the size measured to build on every seed; it puts planet
+  2 at about planet 1's count on a bigger map, so the Sprawler's threads
+  and fire shyness are what make it harder. Next: the run bot's daily run
+  on seeds 1 to 3 says whether planet 2 is now won; retune from that and
+  from his play (0.7 if it is too easy).
 - **Old branches** (Engine and tools' Branches workflow, 11-18): 91 merged
   branches deleted, 56 unmerged listed in the run's summary
   (actions run 44317767827), most of them one-commit runner and census

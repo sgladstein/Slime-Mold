@@ -128,6 +128,30 @@ pub fn size_roll(seed: u64) -> f32 {
     (0.8f32.ln() + u * (1.25f32.ln() - 0.8f32.ln())).exp()
 }
 
+/// Each tier's slime as a factor on the size its depth, area and roll give
+/// (`Run::level`); a tuning number, Direction's to set (the 11-17 plan).
+///
+/// The Sprawler 0.6 (Direction, 11-18, on the Enemy lane's planet 2 look,
+/// `Reports/planet2-sprawler-2026-11-18/`): at full size planet 2's slime
+/// is 23,000 to 25,000 walkers against planet 1's 13,000 and holds every
+/// crystal over 130,000 charge, so on run seeds 1, 3 and 4 the run bot,
+/// landing with 9 soldiers and nothing bought, had 3 to 9 soldiers at 2:30.
+/// At 0.6 it had 18 to 24 on all three; at 0.8 only seed 1 held (14);
+/// seed 2, which lands by a free crystal, had 30 and 28. A bot that backs
+/// off farther, or the Sprawler's smell for soldiers turned down, gained a
+/// little on 2 of 3 seeds and built up on none, so the size is the lever.
+/// Its threads and its fire shyness (`does_to_you`) stay what planet 2
+/// does to you; per cell it is now thinner than planet 1 (0.72 of it), so
+/// the depth rule's "more later on" is kept apart from this factor
+/// (`levels_get_harder_and_the_same_seed_gives_the_same_run`). Retune from
+/// the owner's play.
+pub fn tier_size(tier: Tier) -> f32 {
+    match tier {
+        Tier::Sprawler => 0.6,
+        _ => 1.0,
+    }
+}
+
 /// The planet's area as a share of today's map (`MAP_W` x `MAP_H`): 0.6 on
 /// planet 1, 6 on the core world (`levelgen::AREA`).
 pub fn area_of(p: &Planet) -> f32 {
@@ -851,7 +875,7 @@ impl Run {
         // 11-14 17:50Z: the same count covered a third of the smaller
         // planet 1 by 30 s, and would be a corner of a 6x core world).
         let area = area_of(&planet);
-        let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed);
+        let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed) * tier_size(tier);
         Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers, mission, grow: head_start(area) }
     }
 
@@ -1476,8 +1500,9 @@ mod tests {
             r.depth = d;
             let l = r.level();
             // A cell's walkers grow deeper, so a smaller planet (a breather)
-            // can have fewer in all.
-            let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed);
+            // can have fewer in all; the tier's own factor (`tier_size`, the
+            // Sprawler's 0.6) is a tuning number kept apart from that rule.
+            let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed) / tier_size(l.tier);
             assert!((0.8..=1.25).contains(&size_roll(l.seed)));
             assert!(dense > walkers, "more walkers a cell deeper");
             assert!(shrink_goal(d) <= goals);
@@ -1488,6 +1513,11 @@ mod tests {
         }
         r.depth = 1;
         assert_eq!(r.level().tier, Tier::Drifter);
+        // Planet 2's Sprawler at 0.6 of its size (the planet 2 look, 11-18).
+        r.depth = 2;
+        let (l, area) = (r.level(), area_of(&r.planet()));
+        assert_eq!(l.tier, Tier::Sprawler);
+        assert!((l.walkers - 0.6 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
         // The level generator's core world is the run's last planet.
         assert_eq!(levelgen::CORE_DEPTH, PLANETS);
     }
