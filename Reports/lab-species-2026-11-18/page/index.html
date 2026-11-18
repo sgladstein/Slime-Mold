@@ -88,26 +88,47 @@
     <tr><td>Hunter that eats crystals, 0.8</td><td>13,850 / 11,987</td><td>15,401 / 9,539</td><td>13,641 / 8,709</td><td></td></tr>
   </table></div>
 
+  <h2 id="lure">Leading the slime into the hunter</h2>
+  <p>Direction's next step: give the war a player's verb. A lure at the game's pull of 10 is laid in the hunter's ground, north-west of the orange body, from 2:00 to 7:00 (the pink rings). The hunter's edge is 1.0, where without help it only lives beside the orange.</p>
+  <p class="dim">Run seed 1, idle squad, edge 1.0. 2:00 to 7:00 at one frame a second, played at 20 fps. Walker counts every 5 s below each clip.</p>
+  <div class="pair">
+    <div class="card">
+      <h3>No lure</h3>
+      <video src="lure-none.mp4" poster="lure-none.jpg" controls muted loop playsinline preload="metadata"></video>
+      <svg id="c-none" viewBox="0 0 400 150" role="img" aria-label="Walker counts, no lure"></svg>
+      <div class="counts">At 5:00 <span class="g">3,133</span> / <span class="o">9,998</span>. At 7:00 <span class="g">4,260</span> / <span class="o">10,345</span>.</div>
+    </div>
+    <div class="card">
+      <h3>Lure in the hunter's ground</h3>
+      <video src="lure-lure.mp4" poster="lure-lure.jpg" controls muted loop playsinline preload="metadata"></video>
+      <svg id="c-lure" viewBox="0 0 400 150" role="img" aria-label="Walker counts, lure"></svg>
+      <div class="counts">At 5:00 <span class="g">6,714</span> / <span class="o">7,395</span>. At 7:00 <span class="g">8,247</span> / <span class="o">6,651</span>: the orange is 36% smaller, the green almost twice the size.</div>
+    </div>
+  </div>
+  <p>The lure draws the orange out of its body into the green, which converts it, so the front moves south twice as fast. Moved 15 cells further north-east the lure gives the same (7:00: 8,568 / 6,519). At edge 0.9, where the hunter barely lives, the lure takes it from 1,588 to 4,002 green and the orange from 13,168 to 11,989 by 7:00.</p>
+  <p><b>Two catches.</b> The slime in all is no smaller: green and orange together are 14,898 with the lure and 14,605 without at 7:00, because the hunter is slime too. The lure turns orange slime into green slime; it pays the player only if the hunter is worth more to them than the slime it ate (it takes no crystal food, so a crystal it holds is free). And on run seed 2 the hunter starved to nothing by 2:00 with or without the lure, as it starts far from prey: the small-seed start is needed before this can be relied on.</p>
+
   <h2>Recommendation</h2>
   <div class="rec">
     <p style="margin-top:0"><b>Keep the starving hunter as the second species.</b> It is the first fight between two slimes that does not stall. Not for the game yet; three steps first:</p>
     <ol>
       <li><b>Start it small.</b> Here it starts as half the walkers on a crystal it cannot eat, and nine tenths starve in 20 s. A small seed near the prey would show the chase without the crash.</li>
       <li><b>Make it a second enemy.</b> Here it is the garden's green mould, so it gathers round the squad. In the game it would be a strain of the slime with its own colour, counted in the planet's slime, so one slime eating the other does not end the planet.</li>
-      <li><b>The player's angle,</b> the lab's next run: lead the orange into the hunter with the Lure and see whether a hunter at 1.0 then eats the slime faster than turrets do.</li>
+      <li><b>The player's angle</b> (tried, <a href="#lure">above</a>): the Lure leads the orange into the hunter and doubles the hunter's speed, but the slime in all is no smaller. For it to pay, the hunter should be worth something to the player, for example a strain that dies off once its prey is gone, or that the turrets render for more food.</li>
     </ol>
   </div>
   <p class="dim" style="margin-top:28px">Code: lab branch <code>claude/project-thread-4tc75h</code>, commits 849670d and a96e78c (GPU only, never merges). Keys: <code>own=1 cycle=1 next=1 prev=-1</code>, <code>LAB_CONVERT</code> (the edge), <code>LAB_HUNTER</code> (no crystal share). Report: <code>Reports/lab-species-2026-11-18/</code>.</p>
 </div>
 <script>
+const LURE = {"none": [[120, 998, 9588], [125, 1083, 9481], [130, 1103, 9407], [135, 1117, 9367], [140, 1112, 9339], [145, 1087, 9316], [150, 1093, 9299], [155, 1112, 9281], [160, 1139, 9280], [165, 1161, 9295], [170, 1193, 9332], [175, 1223, 9381], [180, 1243, 9438], [185, 1265, 9504], [190, 1311, 9566], [195, 1386, 9600], [200, 1525, 9578], [205, 1627, 9589], [210, 1728, 9598], [215, 1826, 9608], [220, 1938, 9605], [225, 2014, 9624], [230, 2074, 9675], [235, 2130, 9718], [240, 2179, 9768], [245, 2247, 9789], [250, 2500, 9849], [255, 2601, 9841], [260, 2648, 9884], [265, 2707, 9900], [270, 2776, 9909], [275, 2846, 9905], [280, 2901, 9928], [285, 2953, 9947], [290, 3008, 9964], [295, 3070, 9982], [300, 3133, 9998], [305, 3185, 10023], [310, 3244, 10040], [315, 3289, 10055], [320, 3348, 10067], [325, 3400, 10077], [330, 3445, 10074], [335, 3419, 10096], [340, 3479, 10089], [345, 3569, 10079], [350, 3653, 10068], [355, 3734, 10068], [360, 3791, 10080], [365, 3850, 10089], [370, 3916, 10097], [375, 3987, 10101], [380, 4061, 10386], [385, 4164, 10362], [390, 4258, 10350], [395, 4327, 10348], [400, 4339, 10336], [405, 4333, 10337], [410, 4366, 10342], [415, 4387, 10340], [420, 4260, 10345]], "lure": [[120, 998, 9588], [125, 1263, 9325], [130, 1443, 9162], [135, 1601, 9022], [140, 1712, 8928], [145, 1796, 8861], [150, 1859, 8801], [155, 1912, 8755], [160, 1976, 8745], [165, 2031, 8755], [170, 2104, 8784], [175, 2177, 8832], [180, 2244, 8887], [185, 2299, 8980], [190, 2380, 9051], [195, 2522, 9063], [200, 2653, 9077], [205, 2747, 9132], [210, 2809, 9215], [215, 2872, 9291], [220, 2936, 9363], [225, 3006, 9412], [230, 3074, 9475], [235, 3143, 9525], [240, 3217, 9570], [245, 3271, 9623], [250, 3445, 9585], [255, 4606, 8704], [260, 5441, 7996], [265, 5983, 7550], [270, 6221, 7400], [275, 6336, 7378], [280, 6444, 7351], [285, 6525, 7349], [290, 6597, 7351], [295, 6659, 7371], [300, 6714, 7395], [305, 6752, 7416], [310, 6794, 7435], [315, 6822, 7449], [320, 6862, 7461], [325, 6965, 7405], [330, 7249, 7167], [335, 7420, 7055], [340, 7611, 6919], [345, 7682, 6894], [350, 7727, 6904], [355, 7769, 6906], [360, 7798, 6913], [365, 7839, 6899], [370, 7867, 6901], [375, 7892, 6904], [380, 7915, 7321], [385, 7949, 7361], [390, 7948, 7345], [395, 7958, 7243], [400, 7997, 7059], [405, 8025, 6838], [410, 8173, 6666], [415, 8203, 6659], [420, 8247, 6651]]};
 const DATA = {"hunt": [[0, 12858, 12862], [5, 12860, 12861], [10, 12864, 12824], [15, 12898, 12778], [20, 12933, 12725], [25, 13058, 12593], [30, 13211, 12436], [35, 13327, 12311], [40, 13429, 12203], [45, 13503, 12123], [50, 13561, 12059], [55, 13592, 12020], [60, 13651, 11957], [65, 13672, 11934], [70, 13712, 11886], [75, 13783, 11811], [80, 13962, 11626], [85, 8978, 11407], [90, 2386, 10830], [95, 928, 10473], [100, 956, 9952], [105, 1319, 9415], [110, 1493, 9162], [115, 1536, 9072], [120, 1556, 9016], [125, 1591, 8974], [130, 1573, 8956], [135, 1591, 8929], [140, 1585, 8904], [145, 1568, 8880], [150, 1576, 8864], [155, 1586, 8844], [160, 1592, 8849], [165, 1548, 8862], [170, 1554, 8885], [175, 1629, 8888], [180, 1720, 8873], [185, 1881, 8813], [190, 2053, 8757], [195, 2224, 8698], [200, 2331, 8703], [205, 2386, 8755], [210, 2450, 8801], [215, 2495, 8861], [220, 2548, 8911], [225, 2609, 8952], [230, 2663, 9007], [235, 2718, 9049], [240, 2779, 9087], [245, 2835, 9118], [250, 3121, 9128], [255, 4847, 7484], [260, 5780, 6628], [265, 6608, 5861], [270, 7765, 4772], [275, 8824, 3781], [280, 9619, 3059], [285, 10418, 2331], [290, 11071, 1762], [295, 12002, 909], [299, 12840, 107]], "base": [[0, 12858, 12862], [5, 12866, 12861], [10, 12949, 12822], [15, 13070, 12769], [20, 13133, 12739], [25, 13166, 12697], [30, 13199, 12664], [35, 13226, 12635], [40, 13251, 12607], [45, 13231, 12637], [50, 13262, 12625], [55, 13305, 12609], [60, 13397, 12538], [65, 13502, 12463], [70, 13591, 12391], [75, 13687, 12311], [80, 13748, 12257], [85, 13819, 12141], [90, 13872, 11618], [95, 13952, 11287], [100, 13986, 11151], [105, 14051, 11025], [110, 14066, 10995], [115, 14133, 10939], [120, 14201, 10891], [125, 14249, 10869], [130, 14314, 10825], [135, 14358, 10805], [140, 14386, 10799], [145, 14386, 10832], [150, 14410, 10856], [155, 14417, 10908], [160, 14368, 10981], [165, 14317, 11056], [170, 14325, 11084], [175, 14307, 11157], [180, 14331, 11202], [185, 14291, 11308], [190, 14287, 11409], [195, 14252, 11527], [200, 14233, 11661], [205, 14222, 11776], [210, 14208, 11882], [215, 14217, 11945], [220, 14237, 11964], [225, 14234, 11993], [230, 14217, 12018], [235, 14184, 12054], [240, 14161, 12078], [245, 14160, 12079], [250, 14128, 12111], [255, 14128, 12111], [260, 14111, 12128], [265, 14057, 12182], [270, 14038, 12201], [275, 14040, 12199], [280, 14015, 12224], [285, 13991, 12248], [290, 13963, 12276], [295, 13941, 12298], [300, 13914, 12325]]};
-for (const k of ["base", "hunt"]) {
-  const svg = document.getElementById("c-" + k), pts = DATA[k];
+for (const [k, pts, t0] of [["base", DATA.base, 0], ["hunt", DATA.hunt, 0], ["none", LURE.none, 120], ["lure", LURE.lure, 120]]) {
+  const svg = document.getElementById("c-" + k);
   const W = 400, H = 150, L = 34, B = 20, T = 8, max = 16000;
-  const x = t => L + (t / 300) * (W - L - 8), y = v => T + (1 - v / max) * (H - T - B);
+  const x = t => L + ((t - t0) / 300) * (W - L - 8), y = v => T + (1 - v / max) * (H - T - B);
   let s = "";
   for (const v of [0, 5000, 10000, 15000]) s += '<line x1="' + L + '" x2="' + (W - 8) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)"/><text x="' + (L - 4) + '" y="' + (y(v) + 4) + '" font-size="10" text-anchor="end" fill="var(--dim)">' + (v / 1000) + 'k</text>';
-  for (const t of [0, 60, 120, 180, 240, 300]) s += '<text x="' + x(t) + '" y="' + (H - 4) + '" font-size="10" text-anchor="' + (t == 300 ? 'end' : 'middle') + '" fill="var(--dim)">' + (t / 60) + ':00</text>';
+  for (let t = t0; t <= t0 + 300; t += 60) s += '<text x="' + x(t) + '" y="' + (H - 4) + '" font-size="10" text-anchor="' + (t == t0 + 300 ? 'end' : 'middle') + '" fill="var(--dim)">' + (t / 60) + ':00</text>';
   for (const [i, c] of [[1, "var(--hunter)"], [2, "var(--prey)"]]) s += '<polyline fill="none" stroke="' + c + '" stroke-width="2" points="' + pts.map(p => x(p[0]) + "," + y(p[i])).join(" ") + '"/>';
   svg.innerHTML = s;
 }
