@@ -3641,6 +3641,14 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
             w[64 + o] = v.to_bits();
         }
     }
+    // LAB (one body, 2026-11-18): words 71-74, the marchers' rules
+    // (engine.wgsl `body_wait`, `body_tether`), whatever `LAB_FLOOR` says.
+    {
+        let e = |n: &str, d: f32| std::env::var(n).ok().and_then(|v| v.parse::<f32>().ok()).unwrap_or(d);
+        for (o, v) in [e("LAB_WAIT", 0.0), e("LAB_WAIT_R", 2.0), e("LAB_WAIT_FLOOR", 0.1), e("LAB_TETHER", 0.0)].iter().enumerate() {
+            w[71 + o] = v.to_bits();
+        }
+    }
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));

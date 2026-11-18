@@ -1262,10 +1262,35 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         st *= clamp(f32(max(n, 1u) - 1u) / P.lone, min(P.lfloor, 1.0), 1.0);
     }
+    // LAB (one body, 2026-11-18, lab branch only): slime moving away from
+    // its body (a raid's march, a roam to food, a panic; not the charge at
+    // a unit, which the owner likes as it is) keeps together. Plant head
+    // words 71-74 (mod.rs `plant_words`, from `LAB_WAIT`, `LAB_TETHER`).
+    let marching = scared && ((P.raid_field != 0u && raid_to(k, here).z > 0.0) || roaming(k) || !goal_unit);
+    if (marching && body_wait() > 0.0) {
+        // Wait for the crowd: a marcher with fewer than word 71 others in
+        // the square of radius word 72 round it slows, down to word 73, so
+        // the leaders wait and the march moves as a front.
+        let cx = i32(here % P.w); let cy = i32(here / P.w); let r = i32(pf(72u));
+        var n = 0u;
+        for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
+            for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
+                n += atomicLoad(&occ[u32(y) * P.w + u32(x)]);
+            }
+        }
+        st *= clamp(f32(max(n, 1u) - 1u) / body_wait(), min(pf(73u), 1.0), 1.0);
+    }
     let nx = wk.x + cos(h) * st;
     let ny = wk.y + sin(h) * st;
     let there = cell(nx, ny);
     var aim = NONE;
+    // Tether: a marcher steps only into a cell that touches another walker
+    // (its own cell aside), so no marcher leaves contact by its own step.
+    if (marching && body_tether() && there != NONE && there != here && !touches_other(there, here)) {
+        intent[k] = vec4<f32>(wk.x, wk.y, h + 3.14159265, 0.0);
+        icell[k] = NONE;
+        return;
+    }
     if (there != NONE) {
         if (there == here) {
             aim = there;
@@ -3879,6 +3904,26 @@ fn pcap_of(i: u32, k: u32) -> f32 {
 const PB_WATER: u32 = 9u;
 const PB_LIVE: u32 = 10u;
 const PB_WNEXT: u32 = 11u;
+// LAB (one body): the marchers' rules, plant head words 71-74.
+fn body_wait() -> f32 { if (!world(PLANTS)) { return 0.0; } return pf(71u); }
+fn body_tether() -> bool { return world(PLANTS) && pf(74u) > 0.0; }
+// Whether cell j has at least word 74 walkers in its 8 neighbours, cell
+// `own` (the stepping walker's) aside.
+fn touches_other(j: u32, own: u32) -> bool {
+    let need = u32(max(pf(74u), 1.0));
+    var n = 0u;
+    let x = i32(j % P.w); let y = i32(j / P.w);
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) { continue; }
+            let nx = x + dx; let ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+            let c = u32(ny) * P.w + u32(nx);
+            if (c != own) { n += atomicLoad(&occ[c]); }
+        }
+    }
+    return n >= need;
+}
 // LAB (the rot, part two): block 12, food in litter that rots where wet.
 const PB_ROT: u32 = 12u;
 fn rot(i: u32) -> f32 { if (!floor_on()) { return 0.0; } return pget(PB_ROT, i); }

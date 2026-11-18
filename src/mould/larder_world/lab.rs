@@ -139,6 +139,9 @@ impl<W: World> Game<W> {
         if std::env::var("LAB_FLOOR").is_ok() && now / tps_u != before / tps_u {
             self.floor_turn();
         }
+        if std::env::var("LAB_BODY_LOG").is_ok() && now / tps_u != before / tps_u {
+            self.body_turn();
+        }
         if !self.world.lab_steer() {
             return;
         }
@@ -215,6 +218,79 @@ impl<W: World> Game<W> {
         }
         self.raids.lab_water = water;
         self.raids.lab_water_w = w;
+    }
+
+    /// One body (`LAB_BODY_LOG`, 2026-11-18): the walkers a fine cell read
+    /// back once a game second, cut into pieces that touch (8 neighbours),
+    /// and logged: walkers alone (a piece of 1), in specks (pieces of 2-9),
+    /// in the largest piece, and the pieces of 10 or more.
+    fn body_turn(&mut self) {
+        let Some(g) = self.world.mould_grid(1) else { return };
+        let (w, h) = self.world.size();
+        if g.len() != w * h {
+            return;
+        }
+        let mut seen = vec![false; w * h];
+        let (mut alone, mut specks, mut largest, mut bodies, mut all) = (0u32, 0u32, 0u32, 0u32, 0u32);
+        let mut stack = Vec::new();
+        for s in 0..w * h {
+            if g[s] == 0 || seen[s] {
+                continue;
+            }
+            seen[s] = true;
+            stack.push(s);
+            let (mut n, mut cells) = (0u32, 0u32);
+            while let Some(i) = stack.pop() {
+                n += g[i];
+                cells += 1;
+                let (x, y) = ((i % w) as i64, (i / w) as i64);
+                for dy in -1..=1i64 {
+                    for dx in -1..=1i64 {
+                        let (nx, ny) = (x + dx, y + dy);
+                        if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                            continue;
+                        }
+                        let j = ny as usize * w + nx as usize;
+                        if g[j] > 0 && !seen[j] {
+                            seen[j] = true;
+                            stack.push(j);
+                        }
+                    }
+                }
+            }
+            all += n;
+            if cells == 1 {
+                alone += n;
+            } else if cells < 10 {
+                specks += n;
+            } else {
+                bodies += 1;
+            }
+            largest = largest.max(n);
+        }
+        // Loose walkers: on a cell with at most one walker in its 8
+        // neighbours (a dot on screen, or a bead on a one-wide string).
+        let mut loose = 0u32;
+        for i in 0..w * h {
+            if g[i] == 0 {
+                continue;
+            }
+            let (x, y) = ((i % w) as i64, (i / w) as i64);
+            let mut n = 0u32;
+            for dy in -1..=1i64 {
+                for dx in -1..=1i64 {
+                    let (nx, ny) = (x + dx, y + dy);
+                    if (dx, dy) != (0, 0) && nx >= 0 && ny >= 0 && nx < w as i64 && ny < h as i64 {
+                        n += g[ny as usize * w + nx as usize];
+                    }
+                }
+            }
+            if n <= 1 {
+                loose += g[i];
+            }
+        }
+        let pc = |v: u32| 100.0 * v as f32 / all.max(1) as f32;
+        println!("  lab body t {:.0} s: {all} walkers, loose {loose} ({:.1}%), alone {alone} ({:.1}%), in specks {specks} ({:.1}%), largest {largest} ({:.1}%), {bodies} pieces of 10+", self.time(), pc(loose), pc(alone), pc(specks), pc(largest));
     }
 
     /// Whether world point (x, y) stands in the forest floor's standing
