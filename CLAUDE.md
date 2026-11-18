@@ -10,10 +10,11 @@ reads. A runner thread reads nothing else.
 - Before trying an idea: grep `Reports/dead-ends.md` and `Reports/README.md`
   for it; don't read them whole.
 - File layout and tools: `README.md`, when you need them.
-- `HANDOFF.md`, `ROADMAP.md` and the area handoffs in `handoff/` (every file
-  there that is not a lane's) describe the work before 2026-11-17. Read them
-  as what others were doing, not as orders: where they differ from this file
-  or `NOW.md`, these two hold. The reasons are in
+- The old front pages (`Reports/handoff-2026-11-17.md`,
+  `Reports/roadmap-2026-11-17.md`) and the area handoffs in `handoff/` (every
+  file there that is not a lane's) describe the work before 2026-11-17. Read
+  them as what others were doing, not as orders: where they differ from this
+  file or `NOW.md`, these two hold. The reasons are in
   `Reports/continuation-plan-2026-11-17.md`.
 
 **The wiki** (`wiki/`): a change that adds a report, changes a default
@@ -56,13 +57,15 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
   measured harm or for one side of a real either-or, at most three at once
   across all lanes, and each ends at his next play: on, one tier's trait, or
   deleted with its `Reports/dead-ends.md` line. A switch that exists only as
-  a command-line key is not allowed: it is declared in the switch list Engine
-  and tools is building, which the game's Experiments tab shows. Until that
-  list lands, name any switch in your pull request.
-- **Every change he can see or feel adds one line** to the game's "what is
-  new" list: what he will see and how to try it. Until Engine and tools lands
-  the file for it, put that line in the pull request body under "What you
-  will see".
+  a command-line key is not allowed: every off-by-default key gets a row in
+  `src/build/switches.rs`, which the game's Experiments tab shows and
+  `try=NAME` turns on from the command line.
+- **Every change he can see or feel adds one line** to
+  `news/whats-new.txt`, the list the game shows him: `DATE | LANE | what you
+  will see | how to try it`, newest at the bottom. The lint fails a change
+  to `src/`, `assets/` or the play scripts that adds none, unless a commit
+  message carries `Nothing-new: <why>`. Direction owns the wording and
+  `news/things-to-try.txt` (at most five lines; ask Direction for one).
 - **Decide what can be undone; ask only what cannot** (2026-11-17, card:
   "Threads decide small, ask big"). Look, tuning and implementation choices
   are yours: make them, state them in the "what is new" line, reverse them if
