@@ -6,7 +6,7 @@ the game's "what is new" and "things to try" lists, the record of his play
 sessions and the tuning numbers. The brief it was started from is at the
 end.
 
-## State (2026-11-17)
+## State (2026-11-18)
 
 - **Done:** `NOW.md` and the lane rules in `CLAUDE.md` (#447); the 11-17
   decisions in both decisions pages, D8 included; the plan copied to
@@ -15,10 +15,21 @@ end.
   pages moved to `Reports/handoff-2026-11-17.md` and
   `Reports/roadmap-2026-11-17.md` with stubs left at the root;
   `news/things-to-try.txt` taken over.
-- **Open with the owner:** a card in the Direction thread (11-17 22:25Z):
-  when the lab's steering lure goes into the game. Recommended: the Lure
-  only, in the run shop for planets 1 to 3 at pull 10, built by Enemy and
-  Squad after their first jobs. No lane starts on it until he answers.
+- **The Lure is going in** (his card, 11-18 03:03Z: "Lure now, in the three
+  planets"; row in `wiki/decisions-game.md`). The split is in `NOW.md` and
+  went to Enemy, Squad and arsenal, and Look and interface through the
+  coordinator, and to the Lab directly, at 03:05Z. The numbers are this
+  lane's: pull 10 (the lab's 30 emptied planet 1's home colony in 45 s),
+  shop unlock 150, the building 300 food and 150 health. When it lands:
+  check its line in `news/whats-new.txt`, give it a line in
+  `news/things-to-try.txt` in place of the mini-bosses, and retune after
+  he plays. Nothing is open with the owner now.
+- **From the lab's part two** (11-18, `Reports/lab-steering-2026-11-17/`):
+  no bullet steering card. A tuning lead for the pull: a strong lure that
+  drags a colony off its crystal shrinks it without kills (10,386 alive
+  against 11,460 by 2:00, 1,565 killed against 10,533), so a high pull is
+  a second way to win a crystal, not only a kill zone. Keep the game's
+  pull at 10 until he has played it.
 - **Held for D7:** Enemy's idea that the Drifter also smells crystals being
   drained by hand. It is a rush brake, so it is not built, not even behind a
   switch. Enemy's planet 1 finding goes beside the rush on the list of

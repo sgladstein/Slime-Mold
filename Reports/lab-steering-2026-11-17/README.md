@@ -196,3 +196,65 @@ mini-boss, and any planet past 3. Each fits the same field.
 - Code: branch `claude/project-thread-4tc75h`, commits "LAB: steering field
   prototype" and "LAB: the lure's core glow"; module
   `src/mould/larder_world/lab.rs`.
+
+## Part two: a gun that lays the pull (2026-11-18)
+
+Scott's card, 11-18 03:03Z: "Lure now, in the three planets" (the lure
+goes into the game, built by Enemy, Squad and arsenal, and Look). Direction
+left the lab steering by bullets, the item closest to his words: "a gun
+that lets you corral and push the slime onto areas".
+
+**Built** (lab branch, commit "LAB: shots lay marks"): each soldier's
+bullet that hits slime writes into the same field for `LAB_SHOT_SECS` (3):
+`LAB_SHOT=push` a pusher on the hit, `lure` a lure `LAB_SHOT_AHEAD` dish
+cells (30 here) past the hit along the bullet's line, `drive` both.
+Turrets lay none. The field is now rebuilt every `LAB_EVERY` game seconds
+(0.25 here) in `Game::lab_turn`, still one period late; at most 256 marks.
+
+**Scene** (planet 1, run seed 1): the squad holds at 325,80 and walks at
+0:55 to 258,47, east of the colony on the north crystal (210,47); three
+rendering turrets stand on its west side at 172,30 / 165,55 / 180,78.
+Nothing is placed by hand except in the dart rows. By 2:00:
+
+| Arm | Killed | Food rendered | Slime alive |
+|---|---|---|---|
+| Plain fire | 10,533 | 1,282 | 11,460 |
+| Push on the hit, pull 30 | 8,543 | 1,434 | 13,058 |
+| Push on the hit, pull 10 | 8,947 | 1,478 | 14,102 |
+| Push, 12 dish cells, pull 30 | 9,625 | 1,356 | 13,230 |
+| Lure 30 ahead, pull 30 | 1,565 | 254 | 10,386 |
+| Lure 30 ahead, reach 25, pull 10 | 4,618 | 702 | 10,551 |
+| Both, pull 30 | 2,020 | 408 | 9,930 |
+| Both, reach 25, push 12, pull 10 | 10,005 | 1,520 | 10,867 |
+| One lure dart into the turrets (172,55) at 0:55 for 10 s, pull 10 | 10,403 | 1,436 | 12,715 |
+| The same, pull 30 | 10,306 | 1,425 | 11,987 |
+| Three darts, 0:55, 1:15, 1:35, 8 s each, pull 10 | 10,661 | 1,533 | 11,736 |
+| The same, pull 30 | 10,411 | 1,566 | 11,212 |
+
+The three clips on the page (`page/shots-*.mp4`, 800 x 500, about 1.7 MB
+each) are separate filmed runs of plain fire, "both, pull 10" and "lure
+ahead, pull 30"; their counts are on the page from their own logs
+(`raw/logs/shots-*.log.gz`) and differ from the table's runs by about 1%
+at the same time (frames every 1/7.5 s, where the table's runs took six
+stills).
+
+**Result: no bullet steering card.** No arm beat plain fire on kills.
+A bullet lands where the slime is nearest the squad, so the marks gather
+round the squad: pushes make the body back off the squad's fire (fewer
+kills, more slime alive), lures along the line pull it about in front of
+the squad. Placement is what herds, as in part one. Here the squad already
+stood in range of the body, so even aimed darts added only 12 to 20% to
+the turrets' food and about nothing to the kills.
+
+**A lead: evicting starves.** With lures 30 ahead at pull 30 the colony
+left its crystal before the squad arrived and chased its own marks across
+the field: 1,565 killed by 2:00 against 10,533, yet 10,386 walkers alive
+against 11,460. Off its crystal it stops growing. A strong lure that drags
+a colony off its food is another way to shrink it, and fits the Lure now
+going in.
+
+**Recommendation.** Do not build a bullet that lays the pull. If the
+player is to steer with the gun, the gun carries the lure: a dart or a
+thrown canister placed by aim, the same lure as the building. Next in the
+lab, if Direction agrees: the eviction lead (a lure that pulls a colony
+off its crystal, and how fast it then shrinks), or the pusher's carrier.
