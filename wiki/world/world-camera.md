@@ -16,6 +16,7 @@ sources:
   - Reports/gun-card-hud-2026-11-14/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/levelgen-2026-11-14/README.md
+  - Reports/lure-in-play-2026-11-18/README.md
   - Reports/lure-rings-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/menu-layout-research-2026-11-15/README.md
@@ -189,7 +190,9 @@ engine's real scent field green (a scent light, `Light` with lift below 0),
 or, where the engine holds the Lure's steering field, shows its pull as thin
 cream rings of equal walking distance with the scent light unlit
 (`View::set_steer`, 2026-11-18;
-[lure rings](../../Reports/lure-rings-2026-11-18/README.md)), a
+[lure rings](../../Reports/lure-rings-2026-11-18/README.md); round on open
+ground since Enemy's #478,
+[in play](../../Reports/lure-in-play-2026-11-18/README.md)), a
 pump turns its hose into its crystal with a charge line as bright as its draw
 (`Marks::building_facing`, `Building::drew`), an outpost is a mini larder that
 flares when a load is banked there, and a siren's real call shows on the slime it
