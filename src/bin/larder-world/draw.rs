@@ -907,11 +907,19 @@ impl App {
                 self.lights.push(Light { at: tip, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
             }
             // A bite: a brief hot light on the side the slime bit from
-            // (`step_notes`, from the real damage).
+            // (`step_notes`, from the real damage), as far as a bite
+            // reaches: the soldier's touch (`Rules::touch`), the size of
+            // the damage (the owner, 11-14 20:22Z: "only the size of the
+            // damage. The same for all affects"). It reached 3.5 dish cells
+            // until 11-18 (Look A4), 2.3 touches, lighting the slime out to
+            // 3.3 touches from a soldier wading in: a wader flinches many
+            // times a second, so a squad in the slime stood in a flickering
+            // orange pool five times the area its bites reach.
             if let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flinch > 0.0) {
                 let f = l.flinch / FLINCH;
-                let at = (s.x + l.bite.cos() * g.rules.touch * sc, s.y + l.bite.sin() * g.rules.touch * sc);
-                self.lights.push(Light { at, reach: 3.5 * sc, lift: 2.0, colour: [255.0, 120.0, 70.0], strength: 1.1 * f });
+                let touch = g.rules.touch * sc;
+                let at = (s.x + l.bite.cos() * touch, s.y + l.bite.sin() * touch);
+                self.lights.push(Light { at, reach: touch, lift: 2.0, colour: [255.0, 120.0, 70.0], strength: 1.1 * f });
             }
         }
         // A lodged cast (delay, thick) is an ember where it waits, its light
