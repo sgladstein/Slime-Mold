@@ -417,11 +417,19 @@ impl Card {
 
     /// How rare the card is: 1 common, 2 uncommon, 3 rare. A run hands
     /// out higher tiers deeper in (the roguelike thread's rewards).
+    ///
+    /// Gas uncommon and Mist rare since 2026-11-18 (Direction, on the
+    /// owner's play that day: sleep on his gun made planet 3 "way too
+    /// easy" and Mist on his planet 4 turrets "basically stopped
+    /// everything"; "there are no single OP spells"). Gas was common and
+    /// sold from planet 1, Mist uncommon; the sleep is a find, not a
+    /// default (`Reports/sleep-wears-off-2026-11-18/`, the audit).
     pub fn tier(self) -> u8 {
         match self {
             Card::Ammo(a) => a.shell.card().tier(),
-            Card::Bomb | Card::Germ | Card::Multicast => 3,
-            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Pull | Card::Seek => 2,
+            Card::Bomb | Card::Germ | Card::Multicast | Card::Mist => 3,
+            Card::Gas => 2,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Pull | Card::Seek => 2,
             Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Flare | Card::Torch | Card::Tinder => 2,
             Card::Detonate => 3,
             _ => 1,
