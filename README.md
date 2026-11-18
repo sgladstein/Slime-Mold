@@ -31,9 +31,10 @@ cargo run --release --bin organ            # side prototype: the network plays a
 
 **Picking this up? Start at [NOW.md](NOW.md):** the milestone being built
 and its exit tests, each lane's jobs, and what waits on the owner; the
-[wiki](wiki/index.md) has one page per subject. [HANDOFF.md](HANDOFF.md) and
-[ROADMAP.md](ROADMAP.md) are the front pages from before 2026-11-17, kept as
-history.
+[wiki](wiki/index.md) has one page per subject. The front pages from before
+2026-11-17 are kept as history in
+[`Reports/handoff-2026-11-17.md`](Reports/handoff-2026-11-17.md) and
+[`Reports/roadmap-2026-11-17.md`](Reports/roadmap-2026-11-17.md).
 
 Keys are on screen. F2-F6 cycle the looks, T opens the tuning panel (saved
 to `mould-tune.txt`), M the dish picker, H the briefing card.

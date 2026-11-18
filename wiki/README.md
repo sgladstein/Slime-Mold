@@ -134,7 +134,10 @@ hears a ruling sends it the quote and time.
 
 **Front page**: `NOW.md` (since 2026-11-17, the Direction lane's): the
 milestone, each lane's jobs, what waits on the owner; at most 100 lines
-(lint fails over that). `HANDOFF.md` was the front page before and is
-history now; the lint rule that a dish, tool or mechanism page must be
-linked from it is retired (2026-11-17), so the file can move under
-`Reports/`.
+(lint fails over that). `HANDOFF.md` was the front page before, and with
+`ROADMAP.md` it is history now, under `Reports/`
+([handoff](../Reports/handoff-2026-11-17.md),
+[roadmap](../Reports/roadmap-2026-11-17.md)); the two files of those names
+at the root are stubs that keep old links alive. The lint rule that a dish,
+tool or mechanism page must be linked from `HANDOFF.md` is retired
+(2026-11-17).
