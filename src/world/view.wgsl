@@ -2496,6 +2496,33 @@ const STEER_RGB: vec3<f32> = vec3<f32>(250.0, 242.0, 220.0);
 const STEER_RING: f32 = 20.0;
 const STEER_LINE: f32 = 0.42;
 
+// **The biting slime** (the owner, 2026-11-18 18:04Z: "When the slime is
+// attacking/damagin my soliders, I cannot really tell. It just looks like
+// walkers are running past them", and 18:08Z: "The issue isn't that the
+// bite was too brite or too weak it just looks like more of the same
+// slime"). A soldier is bitten by every walker within its touch
+// (`squad::read`, `Rules::touch`), so while it is bitten (`touching` above
+// 0) the window sends that disc as a bite zone (`Light::bite`: a light
+// whose lift is `BITE_LIFT`, which lights nothing), and the slime in it
+// takes its own colour: a wet crimson, where the rest is gold, by the
+// slime's thickness there. Most of the disc lies under the figure, so the
+// marks draw it over the soldier too (`slime_on`). Until 11-18 a bite showed
+// as an orange light 3.5 cells wide on the slime round the soldier and an
+// orange flush on its bitten side, the slime's own colours.
+const BITE_LIFT: f32 = 1.0e9;
+const BITE_SLIME: vec3<f32> = vec3<f32>(178.0, 18.0, 44.0);
+const BITE_SLIME_GLOW: vec3<f32> = vec3<f32>(70.0, 0.0, 14.0);
+fn bite_share(x: f32, y: f32) -> f32 {
+    var s = 0.0;
+    for (var j = 0u; j < P.n_lights; j++) {
+        let a = lights[2u * j];
+        if (a.w < BITE_LIFT) { continue; }
+        let d = length(vec2<f32>(a.x - x, a.y - y));
+        s = max(s, lights[2u * j + 1u].w * (1.0 - smoothstep(a.z - 0.25, a.z + 0.15, d)));
+    }
+    return s;
+}
+
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     var m = mat_at(x, y);
     under_body = m.body;
@@ -2608,13 +2635,22 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let sx = film_h(x + so, y) - film_h(x - so, y);
     let sy = film_h(x, y + so) - film_h(x, y - so);
     let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
-    let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
+    var spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
     // The thin film's shaded flank keeps most of its light (rule 2: the
     // film from 80; the planet review 11-15 measured its 10th percentile
     // at 65-80 on slime-coloured pixels, the far flank of the frontier's
     // veins, which fell to 0.4 of the light). Thick veins keep their full
     // relief.
     let thin_floor = 0.15 + 0.7 * smoothstep(0.005, 0.04, th_here) * (1.0 - smoothstep(0.25, 0.6, th_here));
+    // The slime biting a soldier (`bite_share`) in its own colour.
+    if (th_here > SLIME_ON_TH.x) {
+        let bs = bite_share(x, y) * smoothstep(SLIME_ON_TH.x, SLIME_ON_TH.y, th_here);
+        if (bs > 0.0) {
+            m.albedo = mix(m.albedo, BITE_SLIME, bs);
+            m.glow = mix(m.glow, BITE_SLIME_GLOW, bs);
+            spec *= 1.0 + 0.6 * bs;
+        }
+    }
     var c = m.albedo * max(shade, thin_floor) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // The fire's body, at this pixel (`flame_body` of the B-spline heat):
     // worked out in `prep` per fine cell it stair-stepped at the owner's
@@ -2654,6 +2690,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     for (var j = 0u; j < P.n_lights; j++) {
         let a = lights[2u * j];
         let lc = lights[2u * j + 1u];
+        if (a.w >= BITE_LIFT) { continue; }
         let to = vec3<f32>(a.x - x, a.y - y, abs(a.w) - h);
         let d2 = dot(to.xy, to.xy);
         let rr = a.z * a.z;
@@ -3806,7 +3843,7 @@ const LAMP_TRACK: vec3<f32> = vec3<f32>(255.0, 190.0, 80.0);
 const LAMP_DRY: vec3<f32> = vec3<f32>(240.0, 64.0, 52.0);
 const LAMP_IDLE: vec3<f32> = vec3<f32>(70.0, 72.0, 60.0);
 const CALL_RED: vec3<f32> = vec3<f32>(255.0, 90.0, 60.0);
-const BITE_HOT: vec3<f32> = vec3<f32>(255.0, 120.0, 72.0);
+const BITE_HOT: vec3<f32> = vec3<f32>(235.0, 40.0, 48.0);
 
 // ---- The pump's rig (kind 6, `Marks::pump_rig`, 2026-11-15) ----
 //
@@ -4313,16 +4350,50 @@ fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
         }
         if (head <= 0.004) { return vec4<f32>(0.0); }
     }
-    // A bite (`Marks::soldier_bitten`, 11-14): the side the slime bit from
-    // flushes hot, fading with the flinch, on the body only (no new alpha).
+    // A bite (`Marks::soldier_bitten`, 11-14): the figure flushes blood
+    // red, fading with the flinch, on the body only (no new alpha). Until
+    // 11-18 only the side toward its aim flushed, in the slime's orange: the
+    // aim is not where the bite came from (the walkers within its touch,
+    // all round it), so its rifle arm reddened.
+    // The helmet stays white, so a squad can still be counted by its heads.
     let w = marks[b + 8u];
     let bite = f32(w & 255u) / 255.0;
     if (bite > 0.0 && f.w > 0.0) {
-        let a = f32(w >> 8u) / 65535.0 * 6.2831853;
-        let side = clamp(dot(d / r, vec2<f32>(cos(a), sin(a))) * 1.4 + 0.3, 0.0, 1.0);
-        f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * side * 0.75), f.w);
+        let s = d / r;
+        let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
+        let helmet = sprite(1u, p, r < 12.0).w;
+        f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * 0.45 * (1.0 - helmet)), f.w);
     }
     return f;
+}
+
+// **The slime on a soldier** (the owner, 2026-11-18 18:04Z: "When the
+// slime is attacking/damagin my soliders, I cannot really tell. It just
+// looks like walkers are running past them"). The walkers that bite a
+// soldier are the ones within its touch (`squad::read`, `Rules::touch`),
+// and its figure, 1.15 touches across the radius, covered every one of
+// them: the slime showed only round it, flowing past. Now where biting
+// slime lies (a bite zone, `bite_share`, in its crimson), it is drawn over
+// the figure, its own pixel as the world drew it, by how thick it is
+// there: a soldier wading in is slime to the waist, its helmet clear (the
+// head marks are drawn above, untouched), and one the slime has left is
+// clean at once. A soldier not bitten, and the fallen, look as they did.
+// What it covers is the slime that bites, so it is never bigger than the
+// damage.
+const SLIME_ON_TH: vec2<f32> = vec2<f32>(0.02, 0.2);
+const SLIME_ON_MAX: f32 = 0.85;
+fn slime_on(b: u32, d: vec2<f32>, r: f32, x: u32, y: u32) -> f32 {
+    let extra = marks[b + 11u];
+    if ((extra & (256u | HEAD_ONLY)) != 0u) { return 0.0; }
+    let fx = P.cx + (f32(x) + 0.5) / P.zoom;
+    let fy = P.cy + (f32(y) + 0.5) / P.zoom;
+    let cover = smoothstep(SLIME_ON_TH.x, SLIME_ON_TH.y, film_th(fx, fy)) * bite_share(fx, fy);
+    if (cover <= 0.0) { return 0.0; }
+    // Within the touch (the figure's 1 / 1.15 of its radius), its edge
+    // soft over a pixel or two.
+    let touch = r / 1.15;
+    let inside = 1.0 - smoothstep(touch - 1.5, touch + 0.5, length(d));
+    return SLIME_ON_MAX * cover * inside;
 }
 
 // Marks, then the overlay (premultiplied RGBA, screen-sized), over the
@@ -4355,7 +4426,9 @@ fn compose(@builtin(global_invocation_id) gid: vec3<u32>) {
         } else if (marks[b + 6u] == SOLDIER && !in_minimap(x, y)) {
             let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
             let f = soldier_at(b, d, half(b).x);
+            let world = c;
             c = c * (1.0 - f.w) + f.xyz * f.w;
+            c = mix(c, world, slime_on(b, d, half(b).x, x, y) * f.w);
         } else if (marks[b + 6u] == BUILDING && !in_minimap(x, y)) {
             let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
             let f = building_at(b, d, half(b).x);

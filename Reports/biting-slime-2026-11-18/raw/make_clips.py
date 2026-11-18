@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The page's clips from film.sh's frames (Reports/bite-light-2026-11-18).
+"""The page's clips from film.sh's frames (Reports/biting-slime-2026-11-18).
 
     make_clips.py OUT PAGE
 
@@ -7,9 +7,11 @@ Each near-view film holds two windows, 23 to 27 s and 41 to 45 s; each
 window becomes an H.264 clip at 30 frames a second: the middle 960 x 600
 of the 1280 x 800 picture at its own pixels, with a poster from its most
 changed frame. Printed beside each pair: the soldiers standing and the
-mean walkers touching a soldier (from the film's log), and the share of
-the picture that changed between before and after (any channel more than
-12 of 255 apart).
+mean walkers touching a soldier (from the film's log), the share of the
+picture that changed between before and after (any channel more than 12
+of 255 apart), and the crimson pixels a frame before and after (red at
+least 120 and 80 over green and 40 over blue: the biting slime's colour,
+which the fight drew nowhere before).
 """
 import glob, os, re, subprocess, sys, tempfile
 import numpy as np
@@ -46,11 +48,14 @@ def log(path, lo, hi):
 for z in (12, 6):
     for scene, (lo, hi) in WINDOWS.items():
         pair = {side: frames(os.path.join(out, f"fork{z}-{side}"), lo, hi) for side in ("before", "after")}
-        changed = []
+        changed, red = [], {"before": [], "after": []}
+        crimson = lambda p: ((p[..., 0] >= 120) & (p[..., 1] * 100 < 35 * p[..., 0]) & (p[..., 2] > p[..., 1] + 8)).sum()
         for a, b in zip(pair["before"], pair["after"]):
             x = np.asarray(Image.open(a).convert("RGB").crop(CROP)).astype(int)
             y = np.asarray(Image.open(b).convert("RGB").crop(CROP)).astype(int)
             changed.append((np.abs(x - y).max(2) > 12).mean())
+            red["before"].append(crimson(x))
+            red["after"].append(crimson(y))
         most = int(np.argmax(changed))
         for side in ("before", "after"):
             name = f"{scene}{z}-{side}"
@@ -63,4 +68,5 @@ for z in (12, 6):
             Image.open(pair[side][most]).convert("RGB").crop(CROP).save(os.path.join(page, f"{name}.jpg"), quality=86)
         first, last, touching = log(os.path.join(out, f"fork{z}-after.log"), lo, hi)
         print(f"{scene}{z}", len(pair["after"]), f"frames; standing {first} to {last}; touching {touching:.1f} a soldier;",
-              f"changed {100 * np.mean(changed):.2f}% (at most {100 * changed[most]:.2f}%, poster {os.path.basename(pair['after'][most])})")
+              f"changed {100 * np.mean(changed):.2f}% (at most {100 * changed[most]:.2f}%, poster {os.path.basename(pair['after'][most])});",
+              f"crimson px a frame {np.mean(red['before']):.0f} -> {np.mean(red['after']):.0f} (frames with any: {sum(v > 0 for v in red['before'])} -> {sum(v > 0 for v in red['after'])})")

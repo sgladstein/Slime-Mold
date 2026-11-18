@@ -52,20 +52,25 @@ of `sprites/soldier.svg` is a soldier on its back in dull olive (atlas tile
 https://claude.ai/artifact/F58mCnsvBbT2CMUk2Rhz31): each living soldier's
 helmet drawn again above every body (`Marks::soldier_head`, `HEAD_ONLY` in
 `view.wgsl`, the loop after the figures in `draw.rs`), with a ring of its
-own figure 1.5 px wide; a lone soldier is unchanged. How close soldiers
-stand (`steer_all`'s soft push: 0.69 of elbow room draining a crystal) is
-Squad and arsenal's; they will hold elbow room when a squad stands and
-tell this lane when to film it.
+own figure 1.5 px wide; a lone soldier is unchanged. Squad and arsenal
+(11-18) keep `steer.rs` as it is: a squad at rest holds elbow room (5.13
+fine cells against 4.8); only a squad draining a crystal heaps, because
+the crystal's rim has no room for 35 at 4.8, so the helmets carry the
+count there.
 
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
 time.
 
-- The bite light at a bite's reach (Look A4;
-  `Reports/bite-light-2026-11-18/`, page
-  https://claude.ai/artifact/Wk5DevY7VGNnCAN21hAPcb): `draw.rs`'s bite
-  light reaches `Rules::touch` where it reached 3.5 dish cells. Every
-  other light of the fight was already its damage's size (the report's
-  table), so Look A4 is done with it.
+- The biting slime (the owner's 11-18 18:04Z and 18:08Z notes: a bite
+  "just looks like more of the same slime"; `Reports/biting-slime-2026-11-18/`,
+  page https://claude.ai/artifact/Wk5DevY7VGNnCAN21hAPcb): while a soldier
+  is bitten (`touching` above 0) `draw.rs` sends its touch disc as a bite
+  zone (`Light::bite`, lift `BITE_LIFT`, lighting nothing); `view.wgsl`'s
+  `bite_share` turns the slime in it crimson (`BITE_SLIME`), `slime_on`
+  draws it over the figure (the walkers that bite are all under it), and
+  a flinch flushes the figure red (`BITE_HOT`) with its helmet white. The
+  orange bite light is gone. Every other light of the fight was already
+  its damage's size (the report's table), so Look A4 is done with it.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
