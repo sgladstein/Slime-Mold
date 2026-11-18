@@ -161,6 +161,8 @@ jobs:
               # The Windows build for play.cmd (windows-build.yml): this
               # push starts no runs of its own, so it is asked for here.
               gh workflow run windows-build.yml -R "$R" --ref main || echo "the Windows build was not started"
+              # The run bot's curve on the new main (run-bot.yml).
+              gh workflow run run-bot.yml -R "$R" --ref main || echo "the run bot was not started"
             else
               echo "main moved under the candidate; building again on the new main"
             fi
