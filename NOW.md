@@ -33,7 +33,7 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 | Squad and arsenal | 5 | Done: the brief's five jobs, with Provoke and Still (#448) and the shop's offers (#459); no new card families; the Lure building, from planet 1 (#461, #464). Next is what his play notes say about control and the gun. |
 | Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad (the flinch's look is done, #454). One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
 | Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452); the run bot's first cut (#463). The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
-| Lab | none | Delivered 11-17 and 11-18: steering (four parts, in the game as the Lure), a second species that hunts the first (parked), and the forest floor, rain that pools and dries ([report](Reports/lab-forest-2026-11-18/README.md); recommendation: change, then build). With the rot (wet litter rots into food and draws foragers into the guns), the lab waits for a brief; what to build of its work waits on his play. |
+| Lab | none | Delivered 11-17 and 11-18: steering (four parts, in the game as the Lure), a second species that hunts the first (parked), and the forest floor, rain that pools and dries ([report](Reports/lab-forest-2026-11-18/README.md); recommendation: change, then build). With the rot, and (11-18, his play notes) the slime as one body: marchers that will not step where fewer than two others touch keep a raid in one piece, 114 loose walkers against 365 ([report](Reports/lab-body-2026-11-18/README.md)); Enemy builds it into the raid march. The lab waits for a brief. |
 
 **The Lure is in, from planet 1** (his card, 11-18 03:03Z: "Lure now, in
 the three planets"; [lab report](Reports/lab-steering-2026-11-17/README.md)).
@@ -47,6 +47,16 @@ be bought before planet 2. The numbers are Direction's to retune after he
 plays. The siren and the outpost stay out.
 The dart, the Lure's second form (lab part three), waits until he has played
 the building.
+
+**His play notes of 11-18 15:56Z come first** ([record](wiki/decisions-game.md)):
+Enemy makes raids rare early and more frequent later in a planet (first
+raid mostly 3:00 to 5:00, one game in five before 2:00, the gap from about
+150 s to 45 s by 10:00), takes mini-bosses off planet 1, and makes slime
+that leaves its body move as one (his words: the surge at the squad is
+fine). Engine and tools ends the run when the last soldier dies. The Lab
+explores the slime as one body on its branch. Direction set a planet won
+only when its last walker dies (`WIN_SHARE` 0) and planet 2's slime at
+0.6 of its size (#485).
 
 **Parked until Milestone 1 passes:** gun steps E and F, the Mortar and
 Pinwheel mini-bosses, the next turret body, twists and rescue planets, the

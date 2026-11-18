@@ -308,6 +308,14 @@ pub struct Rules {
     /// With it on, a wiped squad is no loss while a recruit can still come.
     /// 0, the default, is off.
     pub reserve: f32,
+    /// **The last soldier's death ends the round**, however much food is
+    /// in the bank and whatever the reserve would send (1 on, 0 off, the
+    /// default). A run turns it on (`Run::rules`): the owner reached planet
+    /// 2, lost every soldier and saw them come back (2026-11-18 15:56Z:
+    /// "you should lose if all your soliders die"). Free play, missions and
+    /// the censuses keep the old rule, where a bank that can buy a soldier,
+    /// or a recruit that can come, keeps the round going.
+    pub wipe_ends: f32,
     // Rations and hunger (`ration`, `hunger`; PR 4, the economy: food a
     // second each soldier ate from the bank, and hit points lost when it
     // couldn't pay) were removed on 2026-11-14 after being off by default
@@ -700,6 +708,7 @@ impl Rules {
             // "Free recruits") needs a key; until then only a campaign
             // mission's own rules could set it.
             "reserve" => &mut self.reserve,
+            "wipe_ends" => &mut self.wipe_ends,
             "set_block" => &mut self.set_block,
             "fort" => &mut self.fort,
             _ => return false,
@@ -772,6 +781,7 @@ impl Default for Rules {
             build: BuildRules::default(),
             overrun: 20.0,
             reserve: 0.0,
+            wipe_ends: 0.0,
             seek: true,
             crater: 2.0,
             sink: 1.0,

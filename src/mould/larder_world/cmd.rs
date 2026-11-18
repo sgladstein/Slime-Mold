@@ -247,7 +247,10 @@ impl<W: World> Game<W> {
     }
 
     pub fn buy(&mut self) -> bool {
-        if self.bank < self.rules.soldier_cost || self.alive() >= self.rules.max_squad {
+        // Not once the squad is gone where that ends the round
+        // (`Rules::wipe_ends`): its end screen must not show a soldier.
+        let gone = self.rules.wipe_ends > 0.0 && self.alive() == 0;
+        if self.bank < self.rules.soldier_cost || self.alive() >= self.rules.max_squad || gone {
             return false;
         }
         self.bank -= self.rules.soldier_cost;

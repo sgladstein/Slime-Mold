@@ -193,7 +193,17 @@ pub fn head_start(area: f32) -> f32 {
 
 /// The goal: the slime down to this share of its peak, on every planet.
 ///
-/// 1% since the owner's 11-15 18:02Z ("We are still winning the game with
+/// 0 since 2026-11-18, so a planet is won when its last walker dies
+/// (`End::MouldWiped`, which the campaign counts as the goal met). The
+/// owner's play that day: "The game still ends too quick when you get
+/// close to winning. There were still slime left." At 1% a planet 1 slime
+/// of 13,000 was won with about 130 walkers on the map. The broken line
+/// below still starves the stragglers off food, so what is left to shoot
+/// is the slime on its crystals; the Trunk's walls are set walkers and
+/// count. Direction's tuning number; the origin (Milestone 2) may become
+/// the win instead.
+///
+/// 1% from the owner's 11-15 18:02Z ("We are still winning the game with
 /// too many slime left. Drop it to 1% of peak"); 2% before.
 ///
 /// Why 2% (owner, 11-15 03:02Z: "right now how it's set up I feel like I
@@ -213,7 +223,7 @@ pub fn shrink_goal(_depth: u32) -> f32 {
 }
 
 /// `shrink_goal` on every planet.
-pub const WIN_SHARE: f32 = 0.01;
+pub const WIN_SHARE: f32 = 0.0;
 
 /// The slime's surges by planet, 1 to 8 (past the end the last): the food
 /// it eats to build one, as a share of the sandbox's (`SURGE_FOOD`, 150,
@@ -859,7 +869,7 @@ impl Run {
         let shrink = shrink_goal(d);
         let mission = Mission {
             name: format!("Planet {d} of {PLANETS}, {}", planet.name),
-            says: format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink),
+            says: if shrink > 0.0 { format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink) } else { "Wipe out the slime: kill every last walker".to_string() },
             map: map.clone(),
             tier: Some(tier.name().to_string()),
             goal: Goal::Shrink(shrink),
@@ -896,6 +906,9 @@ impl Run {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }
         }
+        // A run is lost when its last soldier falls, food in the bank or
+        // not (owner, 2026-11-18 15:56Z; `Rules::wipe_ends`).
+        r.wipe_ends = 1.0;
         let l = |k| f32::from(self.level_of(k));
         r.hp *= 1.0 + 0.25 * l("hp");
         r.strike *= 1.0 + 0.2 * l("strike");

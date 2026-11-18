@@ -116,6 +116,18 @@ A second slime species that fights the first; the player's own mould
   `47150aa`): litter rots into food where rain soaks it and smells like a
   crystal; after a shower the slime forages out and the squad shoots it
   (2,020 killed by 2:00 against 1,476), the slime no bigger.
-- Next step: none. Direction (11-18 14:14Z): stop and wait for a brief; the
-  dart and the wet-planet trait go to Scott together after he has played
-  the Lure.
+- 2026-11-18: **cohesion, one body, is delivered** (brief from Direction
+  15:58Z, from Scott's play note that raids read as separate walkers).
+  Report [`Reports/lab-body-2026-11-18/`](../Reports/lab-body-2026-11-18/README.md),
+  page "One Body" (in `Reports/pages.md`), code `22f468a` (keys
+  `LAB_TETHER`, `LAB_WAIT`, `LAB_BODY_LOG`). Marchers read no trail; a
+  tether on marchers alone cuts loose walkers to a third and keeps
+  breakaways a blob, but the raid sends fewer walkers out (kills 799
+  against 1,212). Recommendation: tether 2 with the raid's walker count
+  retuned, for Direction to place.
+- 2026-11-18: part two, tighter tethers at Scott's ask (page `#tighter`,
+  code `73b6357`): any tether of 2 or more keeps raid 1 at home (raid kills
+  41 against 379); tighter adds nothing. Recommendation now: tether 2 for
+  roaming and breakaway walkers only; a muster so a raid leaves as a body
+  is the next step if Direction wants it. Numbers sent to Enemy.
+- Next step: none. Wait for Direction's next brief.

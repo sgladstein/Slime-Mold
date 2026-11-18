@@ -735,11 +735,14 @@ struct Look {
     kick: f32,
     cast: u8,
     shots: u32,
+    /// Seconds since it fell (counting while it lies dead), which spreads
+    /// its pool of blood over `POOL_GROW` (`Marks::fallen`).
+    fallen: f32,
 }
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
+        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW } }
     }
 }
 
@@ -765,6 +768,9 @@ const SIREN_CALL: f32 = 0.7;
 const FLINCH_HP: f32 = 3.0;
 /// How long a flinch lasts, seconds.
 const FLINCH: f32 = 0.2;
+/// How long a fallen soldier's pool of blood takes to spread, seconds
+/// (`Marks::fallen`; the owner's playtest 2026-11-18 16:12Z).
+const POOL_GROW: f32 = 2.5;
 
 /// The camera shake's wobble at full trauma, screen pixels, and how fast
 /// the trauma falls, a second (`App::shake`; D6, 11-15).
@@ -1575,8 +1581,11 @@ impl App {
         self.tracers.retain(|t| t.age < TRACER + t.delay);
         for l in &mut self.looks {
             // Turning toward where it walks or aims, at `TURN_RATE`; held
-            // while its muzzle flashes, which points along the shot.
-            if l.flash <= 0.0 {
+            // while its muzzle flashes, which points along the shot, and
+            // for good once it has fallen (its body lies as it fell).
+            if !l.alive {
+                l.fallen += dt;
+            } else if l.flash <= 0.0 {
                 let d = (l.turn_to - l.facing + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
                 l.facing += d.clamp(-TURN_RATE * dt, TURN_RATE * dt);
             }
@@ -1741,6 +1750,7 @@ impl App {
             }
             if l.alive && !s.alive {
                 self.hud.alert("A soldier has fallen", Some((s.x, s.y)), theme::BAD);
+                l.fallen = 0.0;
             }
             l.alive = s.alive;
         }

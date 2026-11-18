@@ -65,7 +65,9 @@ Start from `handoff/integration.md` and
    - the Lure (the Lab's steering, planets 1 to 3);
    - the Trunk's fort (Enemy's #473, 11-18): walkers on the Trunk's
      planet read one more `news` word a step (Params word 888, the last
-     quarter of the cells' region), and `time_fort` runs once a second.
+     quarter of the cells' region), and `time_fort` runs once a second;
+   - the raised walls (Look's view prep, 11-18): one multiply-add a fine
+     cell in the view's prep each frame.
 
 ## The CPU engine
 
