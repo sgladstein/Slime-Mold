@@ -1,0 +1,136 @@
+  lab body t 1 s: 13119 walkers, loose 225 (1.7%), alone 100 (0.8%), in specks 107 (0.8%), largest 11770 (89.7%), 8 pieces of 10+
+  lab body t 2 s: 13119 walkers, loose 263 (2.0%), alone 112 (0.9%), in specks 125 (1.0%), largest 11767 (89.7%), 11 pieces of 10+
+  lab body t 3 s: 13119 walkers, loose 259 (2.0%), alone 120 (0.9%), in specks 162 (1.2%), largest 11783 (89.8%), 5 pieces of 10+
+  lab body t 4 s: 13122 walkers, loose 307 (2.3%), alone 149 (1.1%), in specks 154 (1.2%), largest 11786 (89.8%), 5 pieces of 10+
+  lab body t 5 s: 13122 walkers, loose 312 (2.4%), alone 147 (1.1%), in specks 160 (1.2%), largest 11789 (89.8%), 8 pieces of 10+
+  lab body t 6 s: 13119 walkers, loose 276 (2.1%), alone 145 (1.1%), in specks 126 (1.0%), largest 11781 (89.8%), 8 pieces of 10+
+  lab body t 7 s: 13100 walkers, loose 306 (2.3%), alone 165 (1.3%), in specks 154 (1.2%), largest 11781 (89.9%), 6 pieces of 10+
+  lab body t 8 s: 13076 walkers, loose 283 (2.2%), alone 168 (1.3%), in specks 88 (0.7%), largest 11782 (90.1%), 5 pieces of 10+
+  lab body t 9 s: 13054 walkers, loose 270 (2.1%), alone 157 (1.2%), in specks 107 (0.8%), largest 11772 (90.2%), 7 pieces of 10+
+  lab body t 10 s: 13036 walkers, loose 285 (2.2%), alone 165 (1.3%), in specks 124 (1.0%), largest 11775 (90.3%), 7 pieces of 10+
+  lab body t 11 s: 13010 walkers, loose 282 (2.2%), alone 164 (1.3%), in specks 113 (0.9%), largest 11789 (90.6%), 6 pieces of 10+
+  lab body t 12 s: 12977 walkers, loose 267 (2.1%), alone 149 (1.1%), in specks 137 (1.1%), largest 11797 (90.9%), 7 pieces of 10+
+  lab body t 13 s: 12947 walkers, loose 270 (2.1%), alone 159 (1.2%), in specks 116 (0.9%), largest 11788 (91.0%), 5 pieces of 10+
+  lab body t 14 s: 12914 walkers, loose 227 (1.8%), alone 142 (1.1%), in specks 74 (0.6%), largest 11791 (91.3%), 6 pieces of 10+
+  lab body t 15 s: 12878 walkers, loose 248 (1.9%), alone 128 (1.0%), in specks 128 (1.0%), largest 11781 (91.5%), 6 pieces of 10+
+  t 15 s: mould 12885, soldiers 10, bank 150, harvested 550, rendered 0, shots 103, killed 142, took 95%, crystals left 0.974; squad at 230.8,50.9
+  t 15 s: mould 12885, soldiers 10, bank 164, harvested 564, rendered 0, shots 106, killed 142, took 95%, crystals left 0.973; squad at 230.8,50.9
+  t 15 s: mould 12885, soldiers 10, bank 178, harvested 578, rendered 0, shots 110, killed 143, took 95%, crystals left 0.973; squad at 230.8,50.9
+  t 16 s: mould 12885, soldiers 10, bank 192, harvested 592, rendered 0, shots 112, killed 150, took 95%, crystals left 0.972; squad at 230.8,50.9
+  t 16 s: mould 12885, soldiers 10, bank 206, harvested 606, rendered 0, shots 113, killed 160, took 95%, crystals left 0.971; squad at 230.7,50.9
+  lab body t 16 s: 12853 walkers, loose 221 (1.7%), alone 129 (1.0%), in specks 98 (0.8%), largest 11770 (91.6%), 7 pieces of 10+
+  t 16 s: mould 12860, soldiers 10, bank 220, harvested 620, rendered 0, shots 115, killed 160, took 95%, crystals left 0.971; squad at 230.7,50.9
+  t 16 s: mould 12860, soldiers 10, bank 234, harvested 634, rendered 0, shots 117, killed 163, took 95%, crystals left 0.970; squad at 230.7,50.9
+  t 16 s: mould 12860, soldiers 10, bank 248, harvested 648, rendered 0, shots 121, killed 165, took 95%, crystals left 0.969; squad at 230.7,50.9
+  t 17 s: mould 12860, soldiers 10, bank 262, harvested 662, rendered 0, shots 125, killed 171, took 95%, crystals left 0.969; squad at 230.7,50.9
+  t 17 s: mould 12860, soldiers 10, bank 276, harvested 676, rendered 0, shots 126, killed 176, took 95%, crystals left 0.968; squad at 230.7,50.9
+  lab body t 17 s: 12821 walkers, loose 214 (1.7%), alone 118 (0.9%), in specks 112 (0.9%), largest 11772 (91.8%), 6 pieces of 10+
+  t 17 s: mould 12825, soldiers 10, bank 290, harvested 690, rendered 0, shots 126, killed 180, took 95%, crystals left 0.968; squad at 230.7,50.9
+  t 17 s: mould 12825, soldiers 10, bank 304, harvested 704, rendered 0, shots 129, killed 180, took 95%, crystals left 0.967; squad at 230.7,50.9
+  t 17 s: mould 12825, soldiers 10, bank 318, harvested 718, rendered 0, shots 133, killed 181, took 95%, crystals left 0.966; squad at 230.7,50.9
+  t 18 s: mould 12825, soldiers 10, bank 332, harvested 732, rendered 0, shots 134, killed 187, took 95%, crystals left 0.966; squad at 230.6,50.9
+  t 18 s: mould 12825, soldiers 10, bank 346, harvested 746, rendered 0, shots 139, killed 189, took 95%, crystals left 0.965; squad at 230.6,50.9
+  lab body t 18 s: 12805 walkers, loose 217 (1.7%), alone 115 (0.9%), in specks 115 (0.9%), largest 11783 (92.0%), 7 pieces of 10+
+  t 18 s: mould 12807, soldiers 10, bank 360, harvested 760, rendered 0, shots 139, killed 190, took 95%, crystals left 0.964; squad at 230.6,50.9
+  t 18 s: mould 12807, soldiers 10, bank 375, harvested 775, rendered 0, shots 139, killed 193, took 95%, crystals left 0.964; squad at 230.6,50.9
+  t 18 s: mould 12807, soldiers 10, bank 389, harvested 789, rendered 0, shots 143, killed 195, took 95%, crystals left 0.963; squad at 230.6,50.8
+  t 19 s: mould 12807, soldiers 10, bank 403, harvested 803, rendered 0, shots 147, killed 203, took 96%, crystals left 0.962; squad at 230.6,50.8
+  t 19 s: mould 12807, soldiers 10, bank 417, harvested 817, rendered 0, shots 149, killed 207, took 96%, crystals left 0.962; squad at 230.6,50.8
+  lab body t 19 s: 12786 walkers, loose 210 (1.6%), alone 111 (0.9%), in specks 88 (0.7%), largest 11772 (92.1%), 7 pieces of 10+
+  t 19 s: mould 12788, soldiers 10, bank 431, harvested 831, rendered 0, shots 152, killed 207, took 96%, crystals left 0.961; squad at 230.6,50.8
+  t 19 s: mould 12788, soldiers 11, bank 45, harvested 845, rendered 0, shots 153, killed 207, took 96%, crystals left 0.960; squad at 231.0,50.7
+  t 19 s: mould 12788, soldiers 11, bank 58, harvested 858, rendered 0, shots 155, killed 210, took 96%, crystals left 0.960; squad at 230.9,50.6
+  t 20 s: mould 12788, soldiers 11, bank 73, harvested 873, rendered 0, shots 160, killed 210, took 96%, crystals left 0.959; squad at 230.7,50.6
+  t 20 s: mould 12788, soldiers 11, bank 88, harvested 888, rendered 0, shots 161, killed 212, took 96%, crystals left 0.958; squad at 230.6,50.5
+  lab body t 20 s: 12771 walkers, loose 194 (1.5%), alone 102 (0.8%), in specks 92 (0.7%), largest 11775 (92.2%), 6 pieces of 10+
+  t 20 s: mould 12773, soldiers 11, bank 103, harvested 903, rendered 0, shots 166, killed 212, took 96%, crystals left 0.958; squad at 230.5,50.5
+  t 20 s: mould 12773, soldiers 11, bank 120, harvested 920, rendered 0, shots 167, killed 221, took 96%, crystals left 0.957; squad at 230.5,50.4
+  t 20 s: mould 12773, soldiers 11, bank 136, harvested 936, rendered 0, shots 169, killed 221, took 96%, crystals left 0.956; squad at 230.5,50.4
+  t 21 s: mould 12773, soldiers 11, bank 152, harvested 952, rendered 0, shots 174, killed 227, took 96%, crystals left 0.955; squad at 230.4,50.4
+  t 21 s: mould 12773, soldiers 11, bank 168, harvested 968, rendered 0, shots 175, killed 227, took 96%, crystals left 0.955; squad at 230.4,50.3
+  lab body t 21 s: 12745 walkers, loose 219 (1.7%), alone 117 (0.9%), in specks 99 (0.8%), largest 11758 (92.3%), 5 pieces of 10+
+  t 21 s: mould 12746, soldiers 11, bank 185, harvested 985, rendered 0, shots 177, killed 228, took 96%, crystals left 0.954; squad at 230.4,50.3
+  t 21 s: mould 12746, soldiers 11, bank 201, harvested 1001, rendered 0, shots 181, killed 236, took 96%, crystals left 0.953; squad at 230.3,50.3
+  t 21 s: mould 12746, soldiers 11, bank 217, harvested 1017, rendered 0, shots 182, killed 237, took 96%, crystals left 0.952; squad at 230.3,50.2
+  t 22 s: mould 12746, soldiers 11, bank 233, harvested 1033, rendered 0, shots 184, killed 242, took 96%, crystals left 0.952; squad at 230.2,50.2
+  t 22 s: mould 12746, soldiers 11, bank 249, harvested 1049, rendered 0, shots 190, killed 242, took 96%, crystals left 0.951; squad at 230.2,50.2
+  lab body t 22 s: 12721 walkers, loose 178 (1.4%), alone 96 (0.8%), in specks 119 (0.9%), largest 11765 (92.5%), 7 pieces of 10+
+  t 22 s: mould 12724, soldiers 11, bank 266, harvested 1066, rendered 0, shots 191, killed 245, took 96%, crystals left 0.950; squad at 230.2,50.1
+  t 22 s: mould 12724, soldiers 11, bank 282, harvested 1082, rendered 0, shots 193, killed 245, took 96%, crystals left 0.949; squad at 230.1,50.1
+  t 22 s: mould 12724, soldiers 11, bank 298, harvested 1098, rendered 0, shots 197, killed 251, took 96%, crystals left 0.949; squad at 230.1,50.1
+  t 23 s: mould 12724, soldiers 11, bank 314, harvested 1114, rendered 0, shots 199, killed 254, took 96%, crystals left 0.948; squad at 230.0,50.1
+  t 23 s: mould 12724, soldiers 11, bank 330, harvested 1130, rendered 0, shots 204, killed 256, took 96%, crystals left 0.947; squad at 230.0,50.1
+  lab body t 23 s: 12704 walkers, loose 157 (1.2%), alone 78 (0.6%), in specks 107 (0.8%), largest 11766 (92.6%), 5 pieces of 10+
+  t 23 s: mould 12705, soldiers 11, bank 347, harvested 1147, rendered 0, shots 205, killed 256, took 96%, crystals left 0.946; squad at 230.0,50.1
+  t 23 s: mould 12705, soldiers 11, bank 360, harvested 1160, rendered 0, shots 207, killed 259, took 96%, crystals left 0.946; squad at 230.0,50.1
+  t 23 s: mould 12705, soldiers 11, bank 373, harvested 1173, rendered 0, shots 207, killed 259, took 96%, crystals left 0.945; squad at 230.0,50.1
+  t 24 s: mould 12705, soldiers 11, bank 386, harvested 1186, rendered 0, shots 207, killed 259, took 96%, crystals left 0.945; squad at 230.0,50.1
+  t 24 s: mould 12705, soldiers 11, bank 399, harvested 1200, rendered 0, shots 207, killed 259, took 96%, crystals left 0.944; squad at 229.9,50.1
+  lab body t 24 s: 12691 walkers, loose 170 (1.3%), alone 82 (0.6%), in specks 94 (0.7%), largest 11758 (92.6%), 6 pieces of 10+
+  t 24 s: mould 12692, soldiers 11, bank 413, harvested 1213, rendered 0, shots 216, killed 260, took 96%, crystals left 0.943; squad at 229.9,50.1
+  t 24 s: mould 12692, soldiers 12, bank 27, harvested 1227, rendered 0, shots 216, killed 260, took 96%, crystals left 0.943; squad at 229.7,48.6
+  t 24 s: mould 12692, soldiers 12, bank 41, harvested 1242, rendered 0, shots 216, killed 260, took 96%, crystals left 0.942; squad at 229.6,48.5
+  t 25 s: mould 12692, soldiers 12, bank 56, harvested 1256, rendered 0, shots 216, killed 260, took 96%, crystals left 0.941; squad at 229.6,48.4
+  t 25 s: mould 12692, soldiers 12, bank 70, harvested 1270, rendered 0, shots 216, killed 260, took 96%, crystals left 0.941; squad at 229.6,48.4
+  lab body t 25 s: 12683 walkers, loose 165 (1.3%), alone 92 (0.7%), in specks 73 (0.6%), largest 11764 (92.8%), 6 pieces of 10+
+  t 25 s: mould 12683, soldiers 12, bank 85, harvested 1285, rendered 0, shots 216, killed 260, took 96%, crystals left 0.940; squad at 229.5,48.4
+  t 25 s: mould 12683, soldiers 12, bank 99, harvested 1299, rendered 0, shots 216, killed 260, took 96%, crystals left 0.939; squad at 229.5,48.4
+  t 25 s: mould 12683, soldiers 12, bank 113, harvested 1314, rendered 0, shots 216, killed 260, took 96%, crystals left 0.939; squad at 229.4,48.4
+  t 26 s: mould 12683, soldiers 12, bank 128, harvested 1328, rendered 0, shots 228, killed 260, took 96%, crystals left 0.938; squad at 229.4,48.3
+  t 26 s: mould 12683, soldiers 12, bank 142, harvested 1342, rendered 0, shots 228, killed 262, took 96%, crystals left 0.937; squad at 229.3,48.3
+  lab body t 26 s: 12674 walkers, loose 171 (1.3%), alone 86 (0.7%), in specks 74 (0.6%), largest 11774 (92.9%), 6 pieces of 10+
+  t 26 s: mould 12676, soldiers 12, bank 157, harvested 1357, rendered 0, shots 228, killed 262, took 96%, crystals left 0.937; squad at 229.3,48.3
+  t 26 s: mould 12676, soldiers 12, bank 171, harvested 1371, rendered 0, shots 228, killed 262, took 96%, crystals left 0.936; squad at 229.3,48.3
+  t 26 s: mould 12676, soldiers 12, bank 185, harvested 1386, rendered 0, shots 228, killed 262, took 96%, crystals left 0.935; squad at 229.3,48.3
+  t 27 s: mould 12676, soldiers 12, bank 200, harvested 1400, rendered 0, shots 236, killed 262, took 96%, crystals left 0.935; squad at 229.2,48.3
+  t 27 s: mould 12676, soldiers 12, bank 214, harvested 1414, rendered 0, shots 240, killed 262, took 96%, crystals left 0.934; squad at 229.2,48.3
+  lab body t 27 s: 12659 walkers, loose 197 (1.6%), alone 100 (0.8%), in specks 74 (0.6%), largest 11757 (92.9%), 9 pieces of 10+
+  t 27 s: mould 12662, soldiers 12, bank 229, harvested 1429, rendered 0, shots 240, killed 265, took 96%, crystals left 0.933; squad at 229.2,48.3
+  t 27 s: mould 12662, soldiers 12, bank 243, harvested 1443, rendered 0, shots 240, killed 265, took 96%, crystals left 0.933; squad at 229.2,48.3
+  t 27 s: mould 12662, soldiers 12, bank 257, harvested 1458, rendered 0, shots 240, killed 265, took 96%, crystals left 0.932; squad at 229.2,48.3
+  t 28 s: mould 12662, soldiers 12, bank 272, harvested 1472, rendered 0, shots 240, killed 265, took 96%, crystals left 0.931; squad at 229.2,48.3
+  t 28 s: mould 12662, soldiers 12, bank 286, harvested 1486, rendered 0, shots 252, killed 268, took 96%, crystals left 0.931; squad at 229.2,48.3
+  lab body t 28 s: 12646 walkers, loose 173 (1.4%), alone 85 (0.7%), in specks 94 (0.7%), largest 11766 (93.0%), 6 pieces of 10+
+  t 28 s: mould 12653, soldiers 12, bank 301, harvested 1501, rendered 0, shots 252, killed 272, took 96%, crystals left 0.930; squad at 229.1,48.3
+  t 28 s: mould 12653, soldiers 12, bank 315, harvested 1515, rendered 0, shots 252, killed 272, took 96%, crystals left 0.929; squad at 229.1,48.3
+  t 28 s: mould 12653, soldiers 12, bank 329, harvested 1530, rendered 0, shots 252, killed 272, took 96%, crystals left 0.929; squad at 229.1,48.3
+  t 29 s: mould 12653, soldiers 12, bank 344, harvested 1544, rendered 0, shots 252, killed 272, took 96%, crystals left 0.928; squad at 229.1,48.3
+  t 29 s: mould 12653, soldiers 12, bank 358, harvested 1558, rendered 0, shots 260, killed 274, took 96%, crystals left 0.927; squad at 229.1,48.3
+  lab body t 29 s: 12635 walkers, loose 186 (1.5%), alone 92 (0.7%), in specks 72 (0.6%), largest 11761 (93.1%), 5 pieces of 10+
+  t 29 s: mould 12643, soldiers 12, bank 373, harvested 1573, rendered 0, shots 264, killed 280, took 96%, crystals left 0.927; squad at 229.1,48.3
+  t 29 s: mould 12643, soldiers 12, bank 387, harvested 1587, rendered 0, shots 264, killed 280, took 96%, crystals left 0.926; squad at 229.1,48.3
+  t 29 s: mould 12643, soldiers 12, bank 401, harvested 1602, rendered 0, shots 264, killed 280, took 96%, crystals left 0.925; squad at 229.0,48.3
+  t 30 s: mould 12643, soldiers 12, bank 416, harvested 1616, rendered 0, shots 264, killed 280, took 96%, crystals left 0.925; squad at 229.0,48.3
+  t 30 s: mould 12643, soldiers 12, bank 430, harvested 1630, rendered 0, shots 272, killed 280, took 96%, crystals left 0.924; squad at 229.0,48.3
+  lab body t 30 s: 12624 walkers, loose 192 (1.5%), alone 99 (0.8%), in specks 116 (0.9%), largest 11746 (93.0%), 9 pieces of 10+
+  t 30 s: mould 12628, soldiers 12, bank 445, harvested 1645, rendered 0, shots 275, killed 284, took 96%, crystals left 0.923; squad at 229.0,48.3
+  t 30 s: mould 12628, soldiers 13, bank 63, harvested 1663, rendered 0, shots 276, killed 290, took 96%, crystals left 0.923; squad at 229.0,48.3
+  t 30 s: mould 12628, soldiers 13, bank 81, harvested 1681, rendered 0, shots 276, killed 294, took 96%, crystals left 0.922; squad at 229.0,48.3
+  t 31 s: mould 12628, soldiers 13, bank 100, harvested 1700, rendered 0, shots 277, killed 294, took 96%, crystals left 0.921; squad at 228.9,48.3
+  t 31 s: mould 12628, soldiers 13, bank 118, harvested 1718, rendered 0, shots 278, killed 294, took 96%, crystals left 0.920; squad at 228.9,48.3
+  lab body t 31 s: 12602 walkers, loose 176 (1.4%), alone 83 (0.7%), in specks 103 (0.8%), largest 11765 (93.4%), 6 pieces of 10+
+  t 31 s: mould 12607, soldiers 13, bank 137, harvested 1737, rendered 0, shots 289, killed 299, took 96%, crystals left 0.919; squad at 228.9,48.3
+  t 31 s: mould 12607, soldiers 13, bank 155, harvested 1755, rendered 0, shots 289, killed 300, took 96%, crystals left 0.918; squad at 228.9,48.3
+  t 31 s: mould 12607, soldiers 13, bank 173, harvested 1773, rendered 0, shots 291, killed 300, took 96%, crystals left 0.918; squad at 228.8,48.3
+  t 32 s: mould 12607, soldiers 13, bank 192, harvested 1792, rendered 0, shots 293, killed 305, took 96%, crystals left 0.917; squad at 228.8,48.3
+  t 32 s: mould 12607, soldiers 13, bank 210, harvested 1810, rendered 0, shots 294, killed 310, took 96%, crystals left 0.916; squad at 228.8,48.3
+  lab body t 32 s: 12577 walkers, loose 171 (1.4%), alone 88 (0.7%), in specks 106 (0.8%), largest 11760 (93.5%), 8 pieces of 10+
+  t 32 s: mould 12582, soldiers 13, bank 228, harvested 1828, rendered 0, shots 303, killed 313, took 96%, crystals left 0.915; squad at 228.8,48.3
+  t 32 s: mould 12582, soldiers 13, bank 247, harvested 1847, rendered 0, shots 306, killed 315, took 96%, crystals left 0.914; squad at 228.8,48.3
+  t 32 s: mould 12582, soldiers 13, bank 265, harvested 1865, rendered 0, shots 307, killed 316, took 96%, crystals left 0.913; squad at 228.7,48.3
+  t 33 s: mould 12582, soldiers 13, bank 284, harvested 1884, rendered 0, shots 308, killed 318, took 97%, crystals left 0.913; squad at 228.7,48.3
+  t 33 s: mould 12582, soldiers 13, bank 302, harvested 1902, rendered 0, shots 309, killed 318, took 97%, crystals left 0.912; squad at 228.7,48.3
+  lab body t 33 s: 12564 walkers, loose 169 (1.3%), alone 80 (0.6%), in specks 94 (0.7%), largest 11763 (93.6%), 6 pieces of 10+
+  t 33 s: mould 12565, soldiers 13, bank 320, harvested 1920, rendered 0, shots 316, killed 319, took 97%, crystals left 0.911; squad at 228.7,48.3
+  t 33 s: mould 12565, soldiers 13, bank 339, harvested 1939, rendered 0, shots 322, killed 319, took 97%, crystals left 0.910; squad at 228.7,48.3
+  t 33 s: mould 12565, soldiers 13, bank 357, harvested 1957, rendered 0, shots 323, killed 320, took 97%, crystals left 0.909; squad at 228.6,48.3
+  t 34 s: mould 12565, soldiers 13, bank 375, harvested 1975, rendered 0, shots 325, killed 326, took 97%, crystals left 0.908; squad at 228.6,48.3
+  t 34 s: mould 12565, soldiers 13, bank 394, harvested 1994, rendered 0, shots 326, killed 327, took 97%, crystals left 0.907; squad at 228.6,48.3
+  lab body t 34 s: 12552 walkers, loose 183 (1.5%), alone 91 (0.7%), in specks 124 (1.0%), largest 11745 (93.6%), 6 pieces of 10+
+  t 34 s: mould 12553, soldiers 13, bank 412, harvested 2012, rendered 0, shots 326, killed 327, took 97%, crystals left 0.907; squad at 228.6,48.3
+  t 34 s: mould 12553, soldiers 14, bank 32, harvested 2032, rendered 0, shots 339, killed 327, took 97%, crystals left 0.906; squad at 229.0,48.2
+  t 34 s: mould 12553, soldiers 14, bank 51, harvested 2051, rendered 0, shots 340, killed 328, took 97%, crystals left 0.905; squad at 228.8,48.1
+  t 35 s: mould 12553, soldiers 14, bank 71, harvested 2071, rendered 0, shots 340, killed 332, took 97%, crystals left 0.904; squad at 228.7,48.1
+  t 35 s: mould 12553, soldiers 14, bank 90, harvested 2090, rendered 0, shots 340, killed 334, took 97%, crystals left 0.903; squad at 228.6,48.1
+  lab body t 35 s: 12538 walkers, loose 207 (1.7%), alone 94 (0.7%), in specks 119 (0.9%), largest 11748 (93.7%), 6 pieces of 10+
+  t 35 s: mould 12539, soldiers 14, bank 110, harvested 2110, rendered 0, shots 344, killed 334, took 97%, crystals left 0.902; squad at 228.6,48.1
