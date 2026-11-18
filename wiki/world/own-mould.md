@@ -54,14 +54,9 @@ Next: an attacker's edge in conversion. Detail below
 ([report](../../Reports/player-mould-2026-11-12.md), window
 [page](https://claude.ai/artifact/SLmH8k3C797UCo3949RcMn)).
 
-The lab tried that edge on 11-18 (lab branch only, not in the game), with
-the green as a second slime that hunts the orange: one-way conversion where
-green trail is a share (the edge) of the orange's, and no crystal share for
-the green, so it lives on what it converts. On planet 1 (run seed 1) at
-edge 0.8 a front crossed the orange body and ate it by 5:00; 0.9 and 1.0
-lived beside it to 7:00; conversion alone held a border. The lab's
-recommendation is to keep it as a second enemy strain, not as the player's
-mould ([report](../../Reports/lab-species-2026-11-18/README.md)).
+The lab tried that edge on 11-18 as a second enemy strain, not the player's
+mould, and not in the game: detail below
+([report](../../Reports/lab-species-2026-11-18/README.md)).
 
 ## Detail
 
@@ -100,6 +95,15 @@ smaller: the two blind species meet along one front and hold it
 
 - An enemy drawn to the player's trail as its threat: it converts on arrival and feeds the player ([`dead-ends.md`](../../Reports/dead-ends.md), the enemy hunting the player's mould).
 - Conversion on raw trail between forms that lay different amounts: deposit won every fight ([`dead-ends.md`](../../Reports/dead-ends.md), species conversion on raw trail).
+
+The lab tried that edge on 11-18 (lab branch only, not in the game), with
+the green as a second slime that hunts the orange: one-way conversion where
+green trail is a share (the edge) of the orange's, and no crystal share for
+the green, so it lives on what it converts. On planet 1 (run seed 1) at
+edge 0.8 a front crossed the orange body and ate it by 5:00; 0.9 and 1.0
+lived beside it to 7:00; conversion alone held a border. The lab's
+recommendation is to keep it as a second enemy strain, not as the player's
+mould ([report](../../Reports/lab-species-2026-11-18/README.md)).
 
 ## Open
 
