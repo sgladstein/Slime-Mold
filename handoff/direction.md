@@ -41,7 +41,12 @@ end.
   notes ask for it. Its price and cooldown are this lane's.
 - **Held for D7:** Enemy's idea that the Drifter also smells crystals being
   drained by hand. It is a rush brake, so it is not built, not even behind a
-  switch. Enemy's planet 1 finding is beside the rush on the list of things
+  switch. Enemy's job 2 page (11-18, run seed 1, one clip a planet) shows
+  the gap it would fill: by minute 2 planet 2 hunts the squad and planet 3
+  walls its crystals, but planet 1 eats two pumps by 1:15 and leaves a hand
+  that builds none alone (50 soldiers, health 93). So exit test 4 fails on
+  planet 1 for the rusher only, and that is D7: put it to him with his play,
+  not before. Enemy's planet 1 finding is beside the rush on the list of things
   to try: a hand building pumps is raided at 0:59 and both pumps are worn
   down by 1:30, while the hand-draining rush has 42 soldiers at health 90
   at 2:00. `crystal_regrow` stays off for the same reason.
