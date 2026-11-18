@@ -102,4 +102,15 @@ A second slime species that fights the first; the player's own mould
   either way. The second species is closed in the lab (Direction 08:49Z:
   "Then the forest floor"); it waits as a second enemy strain on NOW.md's
   Lab row.
-- Next step: the forest floor.
+- 2026-11-18: **the forest floor is delivered.** Report
+  [`Reports/lab-forest-2026-11-18/`](../Reports/lab-forest-2026-11-18/README.md),
+  page "Forest Floor" (in `Reports/pages.md`). Described from the model
+  first, then built on the lab branch (code commit `a9b9e61`, key
+  `LAB_FLOOR=1`, not for main): rain that runs to the rivers, pools and
+  dries, on the GPU plant pass; the slime, soldiers, fire and the view read
+  it. Planet 1: one shower pools 6% of the cells for about half a minute;
+  the slime ends a tenth smaller; few soldiers stand in mud. Rot (logs into
+  food) not built. Recommendation: change, then build (wet planets, a
+  player verb on it, a look pass).
+- Next step: the rot, if Direction wants the floor taken further;
+  otherwise Direction's next brief.
