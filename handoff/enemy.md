@@ -3,52 +3,77 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## State (2026-11-18, after the lure's field)
+## State (2026-11-18, after the Trunk's fort)
 
 **Open branch:** `claude/project-thread-s5k9cw`, one pull request: the
-lure's field. #451 (the switch settlement, job 1) merged on 11-18.
+Trunk's fort. #451 (the switch settlement, job 1) and #457 (the lure's
+field) merged on 11-18.
 
-**The order of work now** (11-18): the lure's field (this pull request),
-then the Trunk's base walls, then job 2's page, then job 3.
+**The order of work now** (11-18): the Trunk's fort (this pull request),
+then a rounder lure field (Look and interface's note, 11-18: on open ground
+the 8-neighbour walking distance draws the Lure's rings as octagons; try
+chamfer weights or knight moves for the lure's search), then job 2's page,
+then job 3.
 
-**The lure's field: built** (the owner's card, 11-18 03:03Z: "Lure now, in
-the three planets"; [report](../Reports/lure-field-2026-11-18/README.md)).
-Calm slime within `Rules::lure_reach` (60 cells of walking) of a Lure that
-is on, or of a `LureMark` in `Game::lure_marks`, leans down the walking
-distance to it. The weight is the engine key `lure_pull`, 0 by default and
+**The Trunk's fort: built** (the owner in this lane's thread, 11-18 03:11Z,
+on the walls that form where the Trunk is shot: "This is interesting and I
+want to play test it, but when it was original suggested, I thought the
+walls would form protecting the core of the slime or the slime crystals
+giving them a base of sorts";
+[report](../Reports/trunk-fort-2026-11-18/README.md)). On planet 3 the slime
+walls each crystal it holds: an amber ring with four gates, round its home
+crystal by 0:30 and round each crystal it takes after. Hardening where it
+is shot stays on, so he can play both.
+
+- The rule is `Rules::fort` (the ring's thickness in dish cells; 0 off, 3 in
+  `run::TRUNK_RULES`). `Game::time_fort` (`bulwark.rs`) looks every 2 game
+  seconds at the walkers on each crystal: held at a quarter covered, lost
+  under a twentieth or dry. On a change it writes the rings
+  (`bulwark::fort_mask`) through `World::set_fort` into the fourth quarter
+  of the cells' region in `news` (`fort_at` in engine.wgsl), and Params
+  word 888 is the flag that a mask is written (`Engine::forted`). A walker
+  on a masked block with crust under it sets with no scar and stays set;
+  the bulwark rule makes it a wall. GPU only.
+- All four quarters of the cells' region are now taken (charge paths, far
+  smell, lure, fort). Params words 880, 884 and 892 are free.
+- The slime's own ways (charges, far smell, lure, raids) go through the
+  gates: `Game::slime_ground` in `raids.rs` is the raid ground less the
+  wall cells.
+- The first gate of the home ring faces the middle of the map and every
+  other ring's faces home; `open_gate` turns a ring so that at least two
+  gates open on ground.
+- A fire burns the stretch of wall between two gates and stops at them (the
+  fed slime in a gate does not burn). The burnt stretch had not grown back
+  70 s later; whether a wall chewed by shots refills was not checked.
+- Not checked: a squad fighting through a ring, planets other than 3 (the
+  rule is the Trunk's alone), the GTX 1070's time. Look and interface
+  reviews the clips: the set slime's flat slab is now a standing feature.
+- It belongs in the origin's design page (job 3): a walled home crystal is
+  the base to break into.
+
+**The lure's field: merged** (#457; the owner's card, 11-18 03:03Z: "Lure
+now, in the three planets";
+[report](../Reports/lure-field-2026-11-18/README.md)). Calm slime within
+`Rules::lure_reach` (60 cells of walking) of a Lure that is on, or of a
+`LureMark` in `Game::lure_marks`, leans down the walking distance to it.
+The weight is the engine key `lure_pull`, 0 by default and
 `run::LURE_PULL` 10 on every planet (Direction's to tune). GPU only.
 
 - The field is the third quarter of the cells' region in `news`
-  (`lure_dist` in engine.wgsl); the fourth quarter is free. The pull is
-  Params word 844, sent only while a field is written (`Engine::lured`).
-  Words 880, 884 and 888 are still free.
+  (`lure_dist` in engine.wgsl). The pull is Params word 844, sent only
+  while a field is written (`Engine::lured`).
 - Charging, surging, raiding and breakaway walkers and mini-boss members
   ignore it (this lane's call); Blind and Sour apply to it.
-- Agreed with Squad and arsenal (11-18 03:11Z): it brings the Lure back to
-  the run's build card and shop (300 food, 150 health, unlock 150) after
-  this lands and writes the news line then; this pull request carries
-  `Nothing-new:`, since nothing in a run stands a lure before that. Its
-  films use `lure=X,Y[,T]` (the building); `lure_mark=T,X,Y,SECS` lays a
-  mark.
+- Squad and arsenal brought the Lure back to the run's build card (300
+  food, 150 health; free from planet 1 with no unlock since #464) and wrote
+  its news line. Look and interface filmed it pulling on planets 2 and 3
+  (412 and 503 walkers within 30 cells at 0:40, 11-18). Films use
+  `lure=X,Y[,T]` (the building); `lure_mark=T,X,Y,SECS` lays a mark.
 - The rings on the ground are Look and interface's (`View::set_steer`,
   #458). This lane's call is in the window's `prepare_now` (`main.rs`):
   each frame, the field's word (`dense_at / 4 + DENSE_HEAD + n + 2 * nb`)
-  while `Engine::lured`, else 0. Seen on a film with a mark; Look films
-  the real field for its page once the building is back.
-- Not checked: planets 2 and 3, a lure behind a wall with a gap, the GTX
-  1070's time.
-
-**The Trunk's base walls: next** (the owner in this lane's thread, 11-18
-03:11Z, on the walls that form where the Trunk is shot: "This is
-interesting and I want to play test it, but when it was original
-suggested, I thought the walls would form protecting the core of the slime
-or the slime crystals giving them a base of sorts"). Told him: walls that
-ring the Trunk's home crystal and each crystal it holds, with gaps, and
-harden-where-shot stays on so he can play both. Sketch: the game writes a
-block mask (the rings) into the free fourth quarter of the cells' region,
-and a walker with crust on a masked block sets with no scar; the bulwark
-rule then makes it a wall. It also belongs in the origin's design page
-(job 3): a walled home crystal is the base to break into.
+  while `Engine::lured`, else 0.
+- Not checked: a lure behind a wall with a gap, the GTX 1070's time.
 
 **Job 1, the switches: done.** What became of each of the fourteen is in
 `Reports/enemy-switches-2026-11-17/README.md` (the roadmap that held the
@@ -59,7 +84,8 @@ table is history since 11-18). In short:
   `play-new-slime.cmd` is deleted.
 - The Trunk's trait (planet 3; `TRUNK_KEYS`, `TRUNK_RULES` in `run.rs`):
   crust, its pull at +8 with fast ground, setting, the wall (`set_block` 5)
-  and `fire_fed`. Its card: "Where you shoot it, it sets into amber walls".
+  and `fire_fed`, and since 11-18 the fort. Its card: "It walls the
+  crystals it holds in amber, and sets where you shoot it".
   Planet 3 was picked over a deeper tier because it is inside Milestone 1
   and its old card was the Drifter's.
 - The Swarmer's trait (planet 4; `SWARMER_RULES`): the last stand.

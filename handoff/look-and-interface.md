@@ -7,46 +7,51 @@ page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
 a warm flush on the slime (`flush_at` in `view.wgsl`), bare ground shows
 none, and a burning Flare is an ember and a red light (`draw.rs`).
 
-**Open branch:** `claude/project-thread-8bv885`, one pull request: the
-Lure's rings (`Reports/lure-rings-2026-11-18/`, page
-https://claude.ai/artifact/4QyfFzQNXQuAPfvz83WqTe). `View::set_steer(at)`
-draws the engine's steering field as pale cream hairlines of equal walking
-distance (`steer_px` and the block in `shaded`), and while they show the
-Lure's green scent light is unlit. Nothing calls it yet.
+**Also on main:** the Lure's rings (#458; `Reports/lure-rings-2026-11-18/`,
+page https://claude.ai/artifact/4QyfFzQNXQuAPfvz83WqTe).
+`View::set_steer(at)` draws the engine's steering field as pale cream
+hairlines of equal walking distance (`steer_px` and the block in
+`shaded`), and while they show the Lure's green scent light is unlit.
+The window calls it each frame since Enemy's #457 (`prepare_now` in
+`main.rs`: the field's word while a lure stands, else 0).
 
-**The Lure, who does what** (`NOW.md`; the owner's card 11-18 03:03Z).
-Enemy lands the field as a rule and adds the `set_steer` call beside
-`set_crust` in `main.rs`, 0 while no lure stands (the word is
-`dense_at / 4 + DENSE_HEAD + n + 2 * nb`). Squad and arsenal lands the
-building and the shop item. Then this lane takes `LURE` and `LURES` out of
-`run_hidden` (`draw.rs`), films the real thing at zoom 6 and 12, and
-decides whether the scent light's code goes (it only shows where no
-steering field is drawn).
+**Also on main:** the set slime's look settled as amber (#460; the glaze,
+the unmarked side, the row `set_look` and the key `setlook=` deleted;
+`Reports/sim-use-2026-11-17/e2b-look.md`, *Settled*). The switch list is
+two rows (`feel`, `crystal_regrow`).
+
+**Open branch:** `claude/project-thread-8bv885`, one pull request: the
+build pages (`Reports/build-pages-2026-11-18/`, page
+https://claude.ai/artifact/2SwV4MTJMh7MFLQAyuqHPn). A "What is new" row on
+the main menu with a count; `Page::News`, named for the build, with two
+tabs (what is new with NEW marks and a pane; things to try with ticks,
+`StartEvent::Tried`); the build and any experiment on in the main page's
+corner; `ui::Model::trying`, a yellow mark under the clock in play. The
+window fills them in `menu.rs` (`build_page`) and `draw.rs`. It also
+fixes Engine's `Memory::set_tried` (it now writes only `tried`) and adds
+`menu=news` and `menu=news-try` for films (`headless.rs`, `main.rs`).
+
+**The Lure** is in the game on planet 1 (Squad's #461 and #464; Enemy's
+#457 calls `set_steer` each frame). Left here: film the real thing at zoom
+6 and 12 for a page, and decide whether the scent light's code goes
+(Squad asked to keep it for now; it only shows where no steering field
+is drawn).
 
 **Next, in order.**
 
-1. Settle the set slime look switch (Direction's ask, 11-18: the
-   Experiments list is one over its limit of three): amber stays, the
-   glaze and hidden choices go, with `set_look` in `src/build/switches.rs`,
-   the window key `setlook` and the shader's glaze branch. Engine and
-   tools' tests use `set_look` as their example switch
-   (`experiments.rs`), so the pull request touches their files: say so.
-2. Job 1, the pages that say what a build holds. Engine and tools' data is
-   on main since #449 (`slime_mould::build`: `build()`, `switches`,
-   `news`, `Memory`), with a first Experiments tab wired in `menu.rs`
-   (`experiments::options` and `experiments::apply`: keep those two
-   calls). Still to build here: the build number in the menu's corner, the
-   "what is new" page with the new lines marked (`memory.is_new`), the
-   "things to try" list with ticks (`memory.set_tried`), the Experiments
-   tab's look, and a small HUD mark when `switches::state` is not empty.
-3. The rest of Look A, from the ranked list in
+1. Film the Lure in the game (above).
+2. The rest of Look A, from the ranked list in
    `wiki/looks/art-direction.md`: shots as bright streaks, droplets in the
    slime's material, a squad of 40 you can count, no effect bigger than
-   its damage. Flushed slime beside amber set slime on planet 3 can be
-   filmed now (#451 and #454 are both on main).
+   its damage. Set slime wants a material of its own (list B): amber is
+   a flat sheet at zoom 12.
+3. The Experiments tab's own look (still Engine's first tab, one row a
+   switch), and the experiments in the pause menu.
 4. Win and lose screens with the planet's numbers.
 5. Picks still open: the mini-boss colours; delete the fen moat A/B's
    unused side.
+6. Seen and left: at 200% on 1080 lines the goal's pill covers the top
+   bar's fourth number.
 
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's
 Provoke and Still (#448) and Enemy's amber set slime (#451), both fine to

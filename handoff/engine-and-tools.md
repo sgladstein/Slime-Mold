@@ -60,7 +60,12 @@ Start from `handoff/integration.md` and
    the bot play the game Scott plays. Agree the timing with Squad and
    arsenal.
 7. **One GTX 1070 batch** before the milestone check, through Remote
-   Control on Scott's desktop (standing OK for tests, 11-11).
+   Control on Scott's desktop (standing OK for tests, 11-11). Booked so
+   far, each against main without it on the same planet:
+   - the Lure (the Lab's steering, planets 1 to 3);
+   - the Trunk's fort (Enemy's #473, 11-18): walkers on the Trunk's
+     planet read one more `news` word a step (Params word 888, the last
+     quarter of the cells' region), and `time_fort` runs once a second.
 
 ## The CPU engine
 
@@ -76,8 +81,9 @@ he picks "retire it now", that becomes your first job after job 1.
 
 **2026-11-18.** Branch `claude/project-thread-9y1l65`. Job 1 merged in
 #449 (11-17 22:28Z), jobs 2 and 3 in #452 (11-18 03:38Z); CI's Windows
-build is published. Job 4's first cut (the run bot) is in the branch's
-next pull request.
+build is published. Job 4's first cut (the run bot) merged in #463
+(11-18 ~09:40Z); the Run bot workflow was started on main by hand the
+first time (the queue that landed #463 ran main's older queue file).
 
 What job 1 put where:
 
@@ -151,8 +157,67 @@ What job 4 put where (first cut, 11-18):
   planet 2 lost at the clock twice, the Sprawler's threads eating the
   9-soldier landing squad before it drained (1,471 food in 15 minutes),
   Tinder bought or not.
+- **CI's first curve** (main af78a06, 11-18): 1 planet won of 9. Run seed
+  1 as above; run seeds 2 and 3 lost planet 1 at the clock (27 and 4
+  soldiers left).
+- **Planet 1 on all three run seeds** (11-18, this branch): the home is
+  taken once every other crystal is dry or gave nothing for 30 s (it
+  counted as charged before, so seed 2 never went home with 29 soldiers,
+  one under `BOT_ECON`), and only while the slime by it is under 200 a
+  soldier. Seeds 1 and 2 win (2:48 and 5:16, 2 stars); seed 3 loses at
+  the clock: its slime sits behind a band of set slime (the bulwark, grey
+  in the film) that soaks the volley, so the hunt kills about 200 a
+  half-minute while it grows 300, and a walk-in with 36 soldiers at 267
+  a soldier was eaten to 2. Tried and reverted: a siege from a stand
+  short of the home's heaviest slime (the home's slime is nearly all the
+  slime, so it never ended, and seed 1 lost).
 
-**Next:** the bot on planet 2 (land, back off to a quiet crystal, hold it
+Planet 2 tries after #463 (11-18, reverted; run seed 1, `look=DIR
+run=1:2 mode=squads hand=bot`):
+- build up at the quiet crystal nearest the landing instead of the most
+  charge for the walk: it drained crystal 3 by 0:50 but the slime took
+  most of it (1,192 food); the squad never passed 12 and was worn out
+  by 3:47 (a 421-walker hunter mini-boss at 1:18 and 3:32).
+- pumps first on the biggest quiet crystals near the landing (a pump
+  draws 1/150 of its crystal's start charge a second for ever): the
+  Sprawler ate the first pump by 0:40, 1,632 food in 5 minutes; on
+  planet 1 the same rule lost a won planet (3,897 food all game, the
+  pumps eaten), so pumps before a big squad is a dead end for the bot.
+
+- **Seed 3, later the same day**: the grey band round its home is not a
+  bulwark or set slime (none on planet 1) but rock: the home sits in a
+  basin with one gap. The volley and the hunt now aim only along lines of
+  open ground (`clear` in `bot_hand`; seeds 1 and 2 still win, 2:49 and
+  4:42), but seed 3 still loses at the clock with 34 soldiers: the hunt
+  kills about 300 a half-minute while the home's slime grows about 350.
+  Walking in at 250 a soldier (41 soldiers at 3:20) left 8 within 10 s.
+  Not yet tried: film it to see whether the squad reaches the gap, and
+  pumps on the basin's rim once the squad is 40.
+
+- **Planet 2 after #468** (11-18, local): run seed 1 loses at the cap
+  with 46k slime (its landing crystal is by the slime; 9 soldiers worn to
+  1 by 3:00, 1.7k food all game). Run seed 2 reaches 30 soldiers by 2:30
+  and ends with 14.5k slime: the home stays over 200 a soldier, and the
+  two charged crystals left (2 and 5) give nothing while the slime holds
+  them, so the bot swaps between them and heals its bank to 0. The home
+  is now no pick or work until it can be taken (it was held as the work
+  while the bot hunted, 15.9k slime at the end).
+
+Job 5, branches (11-18): a thread cannot delete another's branch (the
+proxy refused both `git push --delete` and the refs API), so on Scott's
+card ("Let CI delete them", 13:17Z) `.github/workflows/branches.yml` runs
+`scripts/branches.sh` after each landing (the queue dispatches it),
+weekly and by hand: it deletes branches whose tip is in main and lists
+the rest with the commits main has no copy of in the run's summary, for
+Direction. Its first run (11-18 13:52Z, actions run 44317767827) deleted
+91 (a session's shallow clone had found 18) and listed 56 not in main,
+most of them 11-10 to 11-12 runner and census branches with one commit
+each. Still open in job 5: films to an archive
+branch with a size cap a pull request (gifs and mp4s are 1.2 GB of
+main's 1.47 GB tree). The lint caps were already in.
+
+**Next:** seed 3's planet 1 (above), then the bot on planet 2: clear a
+held crystal by hunting the slime on it before draining it (land, back off to a quiet crystal, hold it
 with the volley, build up), then planet 3; then whether the old run smoke
 rounds (`the_window_plays_a_runs_planet`, RTS mode) go, measured against
 the bot's coverage. After job 4: job 5's housekeeping.
