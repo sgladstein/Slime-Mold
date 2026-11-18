@@ -150,11 +150,13 @@ struct Params {
     // shot's hit sets the countdown on its struck agar cells to at least
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
-    // Four free words (written 0). The first three were the lone step
-    // (2026-11-12, `BigParams::lone_step`: a walker with few others round
-    // it stepped shorter), whose half in this engine was deleted on 11-17
-    // (Reports/dead-ends.md); the last was `fed_crowd`'s until 11-17.
-    lone_free0: f32, lone_free1: f32, lone_free2: u32, lone_free: u32,
+    // Three free words (written 0) and the fort's flag. The first three
+    // were the lone step (2026-11-12, `BigParams::lone_step`: a walker
+    // with few others round it stepped shorter), whose half in this engine
+    // was deleted on 11-17 (Reports/dead-ends.md); the last was
+    // `fed_crowd`'s until 11-17. `fort` (2026-11-18): 1 while the game has
+    // written a fort mask (`fort_at`), else 0.
+    lone_free0: f32, lone_free1: f32, fort: u32, lone_free: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
@@ -506,18 +508,36 @@ fn crust_of(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&news[P.crust_at + i
 fn set_word(k: u32) -> u32 { return atomicLoad(&news[P.crust_at + P.w * P.h + k]); }
 fn set_put(k: u32, v: u32) { atomicStore(&news[P.crust_at + P.w * P.h + k], v); }
 fn is_set(k: u32) -> bool { return P.set_scar > 0.0 && set_word(k) > 0u; }
+// **The fort** (2026-11-18, the Enemy lane; the owner's note that day: he
+// had thought the walls "would form protecting the core of the slime or the
+// slime crystals giving them a base of sorts"): a mask the game writes, one
+// word a `RAID_BLOCK` block in the fourth quarter of the cells' region of
+// `news`, after the lure's (`Engine::write_fort`; `Game::time_fort` rings
+// each crystal the slime holds). On a masked block a walker sets with no
+// scar and does not wake, so the ring fills with set walkers and the
+// bulwark rule makes it a wall. This engine only: the CPU's `set_step` has
+// no fort (the owner's card, 11-17 19:21Z: no new CPU twin).
+fn fort_at(i: u32) -> bool {
+    if (P.fort == 0u) { return false; }
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 3u * nb + q]) != 0u;
+}
 // Walker k's setting this step on cell `here` (the CPU's `set_step`): a set
 // walker wakes under `set_wake` of scar; an unset one sets on crust of
-// `set_crust` or more with scar of `set_scar` or more. True if it stays
-// set. A lump's member never sets.
+// `set_crust` or more with scar of `set_scar` or more. On the fort's mask
+// (`fort_at`) it sets with no scar and stays set. True if it stays set. A
+// lump's member never sets.
 fn set_step(k: u32, here: u32) -> bool {
     if (P.set_scar <= 0.0 || lump_of(k) != 0u) { return false; }
     let s = scar_at(here);
+    let fort = fort_at(here);
     if (set_word(k) > 0u) {
-        if (s < P.set_wake) { set_put(k, 0u); return false; }
+        if (s < P.set_wake && !fort) { set_put(k, 0u); return false; }
         return true;
     }
-    if (s >= P.set_scar && crust_of(here) >= P.set_crust) { set_put(k, 1u); return true; }
+    if ((s >= P.set_scar || fort) && crust_of(here) >= P.set_crust) { set_put(k, 1u); return true; }
     return false;
 }
 fn crust_put(i: u32, v: f32) { atomicStore(&news[P.crust_at + i], bitcast<u32>(v)); }

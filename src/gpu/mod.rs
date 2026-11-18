@@ -81,11 +81,12 @@ pub const BODY_AT: usize = 848;
 /// words alone, as it does the squad's.
 pub const CRATER_AT: usize = 864;
 /// Where the lone step's row sat in `Params` (2026-11-12, after the
-/// crater's). **All four words are free** (written 0): the lone step's
+/// crater's). **Three words are free** (written 0): two of the lone step's
 /// three (`lone_step`, `lone_floor`, `lone_r`; f32 880 and 884, u32 888)
 /// since the GPU's half of that rule was deleted on 2026-11-17 (the Enemy
 /// lane's switch cleanup; `Reports/dead-ends.md`), and 892, `fed_crowd`'s
-/// until the same day. The CPU engine keeps `BigParams::lone_step`.
+/// until the same day. The CPU engine keeps `BigParams::lone_step`. Word
+/// 888 is the fort's flag since 2026-11-18 (`Engine::forted`).
 pub const LONE_AT: usize = 880;
 /// Where the fling row sits in `Params` (11-14, after the lone step's:
 /// `fling_deposit`, then three spare words).
@@ -1589,6 +1590,10 @@ pub struct Engine {
     /// (`write_lure_field`): only then is `Settings::lure_pull` sent, so
     /// with no lure standing a calm walker reads no word for it.
     pub lured: bool,
+    /// A fort mask is written and marks some block (`write_fort`,
+    /// 2026-11-18): only then is the fort's flag sent (Params word 888),
+    /// so with no fort a walker reads no word for it.
+    pub forted: bool,
     /// The gas cloud (`lay_gas`): on for good once laid (its keep is sent
     /// and `gasp` runs every tick), the step `calm` must look until, and a
     /// bound on the cloud's top at step `cloud_at`. A dish loaded with a
@@ -1938,6 +1943,7 @@ impl Engine {
             gas_until: gas_until(&d),
             minds: !d.mind.is_empty(),
             lured: false,
+            forted: false,
             mind_until: mind_until(&d),
             clouded: false,
             cloud_until: 0,
@@ -2141,8 +2147,10 @@ impl Engine {
         self.minds = !d.mind.is_empty();
         self.mind_until = mind_until(d);
         // The dense words above cleared the lure's blocks (a CPU dish has
-        // none); the game writes them again within a game second.
+        // none); the game writes them again within a game second. The
+        // fort's mask the same (`Game::time_fort` writes it again).
         self.lured = false;
+        self.forted = false;
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.specks = self.grows && d.p.roam > 0;
         self.done = d.steps;
@@ -2323,8 +2331,9 @@ impl Engine {
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
-        // The lone step's row, all free since 11-17 (`LONE_AT`).
-        b.extend([0u8; 16]);
+        // The lone step's row, free since 11-17 (`LONE_AT`) but for its
+        // third word, the fort's flag (`forted`, 11-18).
+        b.extend(u32_bytes(&[0, 0, self.forted as u32, 0]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then
@@ -3534,6 +3543,32 @@ impl Engine {
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 2 * nb) as u64;
         self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
         self.lured = reaches;
+    }
+
+    /// **Writes the fort's mask** (engine.wgsl's `fort_at`; 2026-11-18,
+    /// the Enemy lane): a word a `RAID_BLOCK` block, row by row, not 0
+    /// where a walker sets with no scar, after the lure's field in the
+    /// cells' region (its fourth quarter). An empty or all-zero mask
+    /// clears it. The mirror dish holds no copy: the rule has no CPU
+    /// twin. Nothing is written while there was no fort and there is
+    /// none.
+    pub fn write_fort(&mut self, mask: &[u32]) {
+        let any = mask.iter().any(|&m| m != 0);
+        if !any && !self.forted {
+            return;
+        }
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        // The fourth quarter of the region; a dish of odd size (none of
+        // the game's: maps are multiples of 4) has no room for it.
+        if 4 * nb > self.cells as usize {
+            return;
+        }
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 3 * nb) as u64;
+        let mut words: Vec<u32> = mask.iter().copied().take(nb).collect();
+        words.resize(nb, 0);
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&words));
+        self.forted = any;
     }
 
     /// Forms lump `b` (the CPU's `BigDish::form_lump`, `lumpform`): the

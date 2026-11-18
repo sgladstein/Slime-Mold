@@ -140,6 +140,16 @@ pub trait World {
     /// nearest lure within its reach (`u32::MAX` past it), or empty for
     /// none.
     fn set_lure_field(&mut self, _field: Vec<u32>) {}
+    /// **The fort** (2026-11-18, the Enemy lane): whether the slime sets
+    /// on a mask the game gives it, so the game builds one
+    /// (`Game::time_fort`). A rule of the GPU engine only, as the lure's
+    /// field is, so the CPU world keeps these defaults.
+    fn forts(&self) -> bool {
+        false
+    }
+    /// Sets the fort's mask: a word a `big::RAID_BLOCK` block, row by row,
+    /// not 0 where a walker sets with no scar; empty for none.
+    fn set_fort(&mut self, _mask: Vec<u32>) {}
     /// **Lumps** (held bodies, `BigParams::lumps`, the mini-boss thread
     /// 2026-11-16): forms lump `b` of the ordinary walkers within `r` dish
     /// cells of `at` (fine cells), or releases it (None). A world with no

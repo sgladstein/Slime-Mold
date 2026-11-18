@@ -271,6 +271,13 @@ pub struct Rules {
     /// share of its speed) was the other side of this A/B and was deleted
     /// the same day (`Reports/dead-ends.md`).
     pub set_block: f32,
+    /// **The fort** (2026-11-18, the Enemy lane; `bulwark.rs`'s
+    /// `time_fort`): the slime walls each crystal it holds. The game marks
+    /// a ring this many dish cells thick round the crystal, with gates,
+    /// and slime on the ring sets with no shot needed (`World::set_fort`),
+    /// so `set_block` makes it a wall. 0 off; 3 on the Trunk's planet
+    /// (`run::does_to_you`); `set=fort=N`. GPU engine only.
+    pub fort: f32,
     /// The larder smells of the bank, `hoard` times a full pile per 10,000
     /// food (M2), and walkers touching it take `steal` food a game second.
     pub hoard: f32,
@@ -694,6 +701,7 @@ impl Rules {
             // mission's own rules could set it.
             "reserve" => &mut self.reserve,
             "set_block" => &mut self.set_block,
+            "fort" => &mut self.fort,
             _ => return false,
         };
         *f = v;
@@ -757,6 +765,7 @@ impl Default for Rules {
             wall_cost: 20.0,
             wall_width: 2.0,
             set_block: 0.0,
+            fort: 0.0,
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,
