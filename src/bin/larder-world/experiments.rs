@@ -90,10 +90,6 @@ mod tests {
     /// switches: what sets a round up (map, seed, run, mode, gun), the
     /// films' and the bench's tools (look, at, hand, boom, turret, bench),
     /// and numbers a film forces for a picture (crater, wade, spray, aim).
-    /// The Engine and tools lane's own keys (`version`: print the build and
-    /// quit, for CI), on a line of their own so that lanes editing TOOLS
-    /// and this lane do not change the same line.
-    const ENGINE_TOOLS: &str = "version";
     const TOOLS: &str = "map seed scale walkers mission run range dev grow mode crater scent follow boss_look alarm_look core_pull bullet own mass shape wade real sink spray aim gun ammo look ui menu hand rounds sound voice at bench fps stamps grid fast passes viewpasses settle squad1 spread holes select drag scroll card hover bank set centre cut turret turret2 mortar lure pump outpost siren wall boss load try crustlook watch tload boom light trail cross fencepick necks cutsquad screen";
 
     /// **No switch hides as a window key** (the plan's rule 3: "A switch
@@ -114,6 +110,10 @@ mod tests {
             keys.extend(arm.split("=>").next().unwrap_or("").split('"').step_by(2).filter(|k| !k.is_empty()));
         }
         assert!(keys.len() >= 60 && keys.contains(&"map") && keys.contains(&"try"), "{} keys read from main: has its loop changed shape?", keys.len());
+        // The Engine and tools lane's own keys (`version`: print the build
+        // and quit, for CI), kept apart from TOOLS so that lanes editing
+        // that line and this lane do not conflict.
+        const ENGINE_TOOLS: &str = "version";
         let tools: Vec<&str> = TOOLS.split(' ').chain(ENGINE_TOOLS.split(' ')).collect();
         let declared: Vec<&str> = SWITCHES.iter().flat_map(|s| s.choices.iter()).flat_map(|c| c.keys.iter()).filter_map(|(k, _)| k.strip_prefix(WINDOW_KEY)).collect();
         for k in keys {
