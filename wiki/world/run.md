@@ -158,6 +158,11 @@ health, mortal); Enemy builds the field with its own GPU slot and weight,
 Squad and arsenal the building and the shop item, Look and interface the
 rings' colour. Not built yet: until it lands the shop is as above. The siren
 and the outpost stay out.
+The lab's later parts (same report): marks laid by every shot do not herd,
+so there is no bullet steering card; a dart that sets a lure where the squad
+aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
+(about 3,500 against 8,612 by 2:00, planet 1, run seed 1). The dart is not
+placed: it waits until the owner has played the Lure building.
 
 A planet whose tier asks for a card (`bring`; the Sprawler, which shies
 from fire, asks for Tinder) gets that card in one of its shop's card slots
