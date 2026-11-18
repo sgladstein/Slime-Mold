@@ -60,7 +60,12 @@ Start from `handoff/integration.md` and
    the bot play the game Scott plays. Agree the timing with Squad and
    arsenal.
 7. **One GTX 1070 batch** before the milestone check, through Remote
-   Control on Scott's desktop (standing OK for tests, 11-11).
+   Control on Scott's desktop (standing OK for tests, 11-11). Booked so
+   far, each against main without it on the same planet:
+   - the Lure (the Lab's steering, planets 1 to 3);
+   - the Trunk's fort (Enemy's #473, 11-18): walkers on the Trunk's
+     planet read one more `news` word a step (Params word 888, the last
+     quarter of the cells' region), and `time_fort` runs once a second.
 
 ## The CPU engine
 
