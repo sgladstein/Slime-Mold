@@ -30,11 +30,11 @@ distance to it. The weight is the engine key `lure_pull`, 0 by default and
   `Nothing-new:`, since nothing in a run stands a lure before that. Its
   films use `lure=X,Y[,T]` (the building); `lure_mark=T,X,Y,SECS` lays a
   mark.
-- Agreed with Look and interface (11-18 03:09Z): it adds
-  `View::set_steer(at)` and the rings; the call beside `set_crust` in
-  `main.rs` (`at` = `dense_at / 4 + DENSE_HEAD + n + 2 * nb`, 0 hides) is
-  this lane's to add once that is on main. It was not on main when this
-  was pushed.
+- The rings on the ground are Look and interface's (`View::set_steer`,
+  #458). This lane's call is in the window's `prepare_now` (`main.rs`):
+  each frame, the field's word (`dense_at / 4 + DENSE_HEAD + n + 2 * nb`)
+  while `Engine::lured`, else 0. Seen on a film with a mark; Look films
+  the real field for its page once the building is back.
 - Not checked: planets 2 and 3, a lure behind a wall with a gap, the GTX
   1070's time.
 

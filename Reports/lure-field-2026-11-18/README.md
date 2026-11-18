@@ -6,8 +6,10 @@ showed that one more term in the walkers' sensors, a walking-distance field
 they lean down, draws a colony into a kill box. This is that field as a
 slime rule of the game, built by the Enemy lane. The Lure building's return
 to the run's shop is Squad and arsenal's change, and the field's rings on
-the ground are Look and interface's; until the building is back, nothing in
-a run stands a lure, so this change alone shows the player nothing.
+the ground are Look and interface's (`View::set_steer`, #458; the game
+calls it each frame while a field stands). Until the building is back,
+nothing in a run stands a lure, so this change alone shows the player
+nothing.
 
 Page: https://claude.ai/artifact/EhGraPKu1QZvqUd54MGEWH (source `page/`; open `index.html`).
 Films: `film.sh`; clips from their frames: `make_clips.py`.

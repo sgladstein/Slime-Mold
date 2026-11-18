@@ -1952,6 +1952,17 @@ impl App {
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
             v.set_alarm_side((g.world.e.done % 2) as u32);
+            // The lure's field as rings on the ground (Look and
+            // interface's `set_steer`, 2026-11-18), while the engine holds
+            // one: the third quarter of the cells' region of `news`
+            // (`Engine::write_lure_field`). Each frame, since a lure
+            // stands and falls in play; 0 hides the rings. The world's
+            // setup bound `news` (`set_dense`), which the view needs first.
+            let e = &g.world.e;
+            let b = slime_mould::mould::big::RAID_BLOCK;
+            let nb = (e.dish.w.div_ceil(b) * e.dish.h.div_ceil(b)) as u32;
+            let field = (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32 + e.n + 2 * nb;
+            v.set_steer(if e.lured { field } else { 0 });
             // The mini-bosses' bodies (2026-11-16): each live or fading
             // one's lump, centre, look by its kind, strength by its grade,
             // look left by its fade and a leech's fill by its take.
