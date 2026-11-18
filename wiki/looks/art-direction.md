@@ -10,11 +10,13 @@ sources:
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/dark-ground-2026-11-14/README.md
+  - Reports/droplets-2026-11-18/README.md
   - Reports/flinch-look-2026-11-17/README.md
   - Reports/ground-edges-2026-11-14/README.md
   - Reports/levelgen-review-2026-11-14/README.md
   - Reports/lure-rings-2026-11-18/README.md
   - Reports/mini-boss-look-2026-11-16/README.md
+  - Reports/raised-walls-2026-11-18/README.md
   - Reports/river-look-2026-11-14/README.md
   - Reports/sim-use-2026-11-17/e2b-look.md
   - Reports/soil-materials-2026-11-14/README.md
@@ -68,7 +70,7 @@ then the slime, planets and terrain, menus and screens.
    the slime round them), and a broken or spent one's look drains into the slime
    over its 1.5 s fade ([mini-boss look](../../Reports/mini-boss-look-2026-11-16/README.md),
    round 2; the owner's A/B pick for the hunter open). A new colour needs a role nobody has.
-   The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)). Each soil has its own material from the soil field since 11-14 (sand ripples, clay cracks, ash speckle, dark water with a smooth edge and shore, raised rock with a lit rim), so planets read apart in grey; the ripples bend and fade out below zoom 3, and barren ash sits a clear step under rock ([soil materials](../../Reports/soil-materials-2026-11-14/README.md)). Water is a clear step darker than any ground, deep water darker again toward its middle, with a shallow margin, waterline and damp bank; bridges are plank decks; soft rock at full health is a mid-grey under thin slime ([river look](../../Reports/river-look-2026-11-14/README.md)). Play is assumed zoomed in (owner, 11-14 20:21Z): every boundary between grounds, soils, water and plant patches and kinds, is drawn crisp at the pixel up to 24 px a cell, and no texture shows the cell grid ([ground edges](../../Reports/ground-edges-2026-11-14/README.md)); a shortcut past the soil spline must cover all 4 x 4 cells it reads, or the shore and bridge shading steps at cell middles; the full test costs about 0.2 ms of GPU a frame on the 1070 ([bug check](../../Reports/bug-check-2026-11-15/README.md)). Shots scatter a little round the aim since 11-15 (the rifle 0.5 cells, the long gun 0.3), so a wide or tight bullet card shows on every gun (same report). Value order since 11-15, on every planet: ground 41-51, rock 50-60 (hedges and rubble too), soft rock 60-72 darkening with damage, thin slime above rock with a shade floor on its far flank, crystal faces 110 and up, thick slime 140 and up; shallow water about 20 above deep; off the map is darker than cave rock; hedges are lumpy and grained, not tubes; the rock bevel is at most 5 px; below zoom 1 and on the minimap each cell is drawn from the shaded materials ([value order](../../Reports/value-order-2026-11-15/README.md)). Each planet's plain soil has its own hue at every zoom and its own close look from its biome (the map's `flora`): brown meadow loam, tan barrens hardpan, olive fen mud, warm valley silt, red-brown jungle humus, neutral highland gravel, blue-grey cave dust, the texture in from zoom 3 to 8, all kept in the ground's value band; thin film has an absolute floor of 95 before shading over any ground ([planet ground](../../Reports/biome-ground-2026-11-15/README.md)).
+   The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)). Each soil has its own material from the soil field since 11-14 (sand ripples, clay cracks, ash speckle, dark water with a smooth edge and shore, raised rock with a lit rim), so planets read apart in grey; the ripples bend and fade out below zoom 3, and barren ash sits a clear step under rock ([soil materials](../../Reports/soil-materials-2026-11-14/README.md)). Water is a clear step darker than any ground, deep water darker again toward its middle, with a shallow margin, waterline and damp bank; bridges are plank decks; soft rock at full health is a mid-grey under thin slime ([river look](../../Reports/river-look-2026-11-14/README.md)). Play is assumed zoomed in (owner, 11-14 20:21Z): every boundary between grounds, soils, water and plant patches and kinds, is drawn crisp at the pixel up to 24 px a cell, and no texture shows the cell grid ([ground edges](../../Reports/ground-edges-2026-11-14/README.md)); a shortcut past the soil spline must cover all 4 x 4 cells it reads, or the shore and bridge shading steps at cell middles; the full test costs about 0.2 ms of GPU a frame on the 1070 ([bug check](../../Reports/bug-check-2026-11-15/README.md)). Value order since 11-15, on every planet: ground 41-51, rock 50-60 (hedges and rubble too), soft rock 60-72 darkening with damage, thin slime above rock with a shade floor on its far flank, crystal faces 110 and up, thick slime 140 and up; shallow water about 20 above deep; off the map is darker than cave rock; hedges are lumpy and grained, not tubes; the rock bevel is at most 5 px; below zoom 1 and on the minimap each cell is drawn from the shaded materials ([value order](../../Reports/value-order-2026-11-15/README.md)). Each planet's plain soil has its own hue at every zoom and its own close look from its biome (the map's `flora`): brown meadow loam, tan barrens hardpan, olive fen mud, warm valley silt, red-brown jungle humus, neutral highland gravel, blue-grey cave dust, the texture in from zoom 3 to 8, all kept in the ground's value band; thin film has an absolute floor of 95 before shading over any ground ([planet ground](../../Reports/biome-ground-2026-11-15/README.md)).
 4. **Sharp at every zoom, 1 to 24.** Hard shapes have exact edges worked
    out at the screen pixel and antialiased over one pixel; no cell stair is
    visible at any zoom. The slime's edge is where its walker density falls
@@ -128,16 +130,14 @@ B starts once A passes his eye.
 
 **A. The fight round the squad**
 
-1. Done: the flinch on the slime alone, no lime wash (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's pull as cream rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)).
-2. A shot is a short bright streak the eye can follow (dotted today), and a hit is the slime's own reaction: the hole and the walkers it flings.
-3. Flung droplets in the slime's material (outlined shapes in another style today).
-4. A squad of 40 you can count (one pile today), with Squad and arsenal.
-5. No effect bigger than its damage: check muzzle light, hit light, crater ember.
-6. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as the hit's rose flash.
-7. Fire on slime and on set slime with no cell-sized squares at zoom 12.
-8. Done 11-18: flushed slime and amber set slime part by value ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)).
+1. Done: the flinch on the slime alone (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart by value (11-18, [settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); flung droplets in the slime's material (11-18, [droplets](../../Reports/droplets-2026-11-18/README.md)).
+2. A hit is the slime's own reaction: the hole and how it closes. (A shot already flies as a bright comet, 11-18 films.)
+3. A squad of 40 you can count (one pile today), with Squad and arsenal.
+4. No effect bigger than its damage: check muzzle light, hit light, crater ember.
+5. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as a rose flash.
+6. Fire on slime and on set slime with no cell-sized squares at zoom 12.
 
-**B. The slime itself**: veins and flow inside the thick body; set slime as a hard material; loose specks that read as parts of one body, not glowing pebbles; a look for the origin when Enemy builds it.
+**B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.
 
 **C. Planets and terrain**: stronger grounding (faint shadows at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
 

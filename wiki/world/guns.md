@@ -5,6 +5,7 @@ status: open
 updated: 2026-11-18
 sources:
   - Reports/card-text-2026-11-15.md
+  - Reports/droplets-2026-11-18/README.md
   - Reports/gun-budget-2026-11-14.md
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
@@ -255,7 +256,10 @@ kill flies (`Rules::spray_share`, 1 all) went to the owner as a blind
 A/B ([spray A/B](../../Reports/spray-share-ab-2026-11-15/README.md)); they
 saw no difference, and the droplets were made bolder: their own layer in
 the view, a dark rim, white-hot cooling to orange, 0.45 s and 7 cells
-([gun feel](../../Reports/gun-feel-2026-11-15/README.md)). Camera shake
+([gun feel](../../Reports/gun-feel-2026-11-15/README.md)). Since 11-18 the
+rim is gone: each droplet is a bead in the slime's gold lit by its key
+light, with a small shadow
+([droplets](../../Reports/droplets-2026-11-18/README.md)). Camera shake
 and hit-stop on blasts are built and off (`shake=K`, `hitstop=K`; the
 review's D6, waiting on the owner).
 

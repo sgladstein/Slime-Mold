@@ -13,6 +13,9 @@ sources:
   - Reports/lure-field-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/mini-boss-2026-11-16/README.md
+  - Reports/origin-design-2026-11-18/README.md
+  - Reports/planet-things-2026-11-18/README.md
+  - Reports/planet2-sprawler-2026-11-18/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
@@ -58,6 +61,7 @@ code:
   - head_start
   - range_args
   - reward
+  - round_walk
   - run_args
   - run_hidden
   - run_shape
@@ -68,6 +72,7 @@ code:
   - size_roll
   - surge_food
   - surge_secs
+  - tier_size
   - time_fort
   - time_lure_paths
   - two_stars
@@ -104,7 +109,7 @@ slots hold the cards. The gun fires its slots left to right; the player
 drags a card onto a slot to move it, buys a card for sale straight into a
 slot, drags one onto the bag to take it out, or presses Q and E; a card
 put in without a slot lands before the first bullet (`Run::put_in`)
-([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). The clock grows with the planet's area (`clock`: 15:00 on planet 1 to 55:30 on the core world; two stars before four fifths of it, `two_stars`), and on planets bigger than today's map the slime grows alone first (`head_start`: 11 to 87 s on planets 4-8), the clock starting on landing. The slime is shape C under the tier's keys (`run_shape`), from C's 25,000 walkers times the level's factor (`run_walkers`) and a per-planet roll of 0.8 to 1.25 (`size_roll`; owner 11-15 08:34Z: "It should vary and be more later on"), C's slots grown to match, and then the planet's own engine keys (`enemy_keys`, 11-15, the slime-enemy thread; the run thread agreed the curve): the slime lunges 1 s to 1.8 s (`surge_dash`), so deeper slime presses harder, and on every planet it sends specks off to fresh crystals, most often early (`roam` 300, a chance every 10 s, taken at `roam_share` 0.05 on planets 1-2 down to 0.02 on the core world; the owner, 11-16 04:58Z: "Remove the bronze, keep the specks ... Specks more often early game"): ordinary walkers crowded or feeding at a crystal break away and land there, about 1,000 on their way at once on planet 2, and the slime is 7-10% heavier at 5:00 than with none (planets 1 and 2, one seed each); the GTX 1070's step costs 0.05-0.07 ms more on planets 1-2 and 0.30-0.33 ms on the core world (0.56 before #388's trim) ([specks](../../Reports/specks-2026-11-16/README.md)). Until 11-16 it also thickened from 2 down to 1.3 births' energy (`thicken`) and from planet 2 condensed (`condense` 300) and broke away bronze pieces (the whole-game review's D2, owner 11-15 21:41Z; [breakaway](../../Reports/breakaway-run-2026-11-15/README.md)); both are out of the run, shape C and the start menu. On planets 1-3, whose tiers read no alarm of their own, C's flinch is on (`BigParams::flinch` 0.9): the slime backs off ground a volley keeps hitting and closes in when it stops, at no frame cost on the GTX 1070; planets 4-8 keep their tier's alarm ([flinch](../../Reports/flinch-2026-11-15/README.md)). Its surges come when it has eaten enough from its crystals (`Rules::surge_food`, set from `surge_food`: a third more than the sandbox's 150 food on planets 1-2, as much on 3-4, down to half on the core world, times the level's walkers, since a bigger slime eats more), at least 10 s apart and at most 80 s on planets 1-2, 60 s on 3-4, 50 s on 5, 40 s on 6-7 and 30 s on the core world (`surge_every`, the longest wait); the shop's clock line names the longest wait (`surge_secs`). Before food-driven surges (later on 11-15) they came on a fixed beat of half those waits; neither costs a frame on the GTX 1070 ([surge](../../Reports/surge-2026-11-15/README.md)); until 11-15 a run played the bare race slime by mistake, which shed nine tenths of itself in a minute ([report](../../Reports/roguelike-run-2026-11-14/README.md), *The run's slime is shape C*). Locked buildings and tools show
+([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). The clock grows with the planet's area (`clock`: 15:00 on planet 1 to 55:30 on the core world; two stars before four fifths of it, `two_stars`), and on planets bigger than today's map the slime grows alone first (`head_start`: 11 to 87 s on planets 4-8), the clock starting on landing. The slime is shape C under the tier's keys (`run_shape`), from C's 25,000 walkers times the level's factor (`run_walkers`) and a per-planet roll of 0.8 to 1.25 (`size_roll`; owner 11-15 08:34Z: "It should vary and be more later on") and the tier's (`tier_size`: the Sprawler 0.6 since 11-18), C's slots grown to match, and then the planet's own engine keys (`enemy_keys`, 11-15, the slime-enemy thread): the slime lunges 1 s to 1.8 s (`surge_dash`), so deeper slime presses harder, and on every planet it sends specks off to fresh crystals, most often early (`roam` 300, a chance every 10 s, taken at `roam_share` 0.05 on planets 1-2 down to 0.02 on the core world; the owner, 11-16 04:58Z: "Remove the bronze, keep the specks ... Specks more often early game"): ordinary walkers crowded or feeding at a crystal break away and land there, about 1,000 on their way at once on planet 2, and the slime is 7-10% heavier at 5:00 than with none (planets 1 and 2, one seed each); the GTX 1070's step costs 0.05-0.07 ms more on planets 1-2 and 0.30-0.33 ms on the core world ([specks](../../Reports/specks-2026-11-16/README.md)). Until 11-16 it also thickened from 2 down to 1.3 births' energy (`thicken`) and from planet 2 condensed (`condense` 300) and broke away bronze pieces (the whole-game review's D2, owner 11-15 21:41Z; [breakaway](../../Reports/breakaway-run-2026-11-15/README.md)); both are out of the run, shape C and the start menu. On planets 1-3, whose tiers read no alarm of their own, C's flinch is on (`BigParams::flinch` 0.9): the slime backs off ground a volley keeps hitting and closes in when it stops, at no frame cost on the GTX 1070; planets 4-8 keep their tier's alarm ([flinch](../../Reports/flinch-2026-11-15/README.md)). Its surges come when it has eaten enough from its crystals (`Rules::surge_food`, set from `surge_food`: a third more than the sandbox's 150 food on planets 1-2, as much on 3-4, down to half on the core world, times the level's walkers, since a bigger slime eats more), at least 10 s apart and at most 80 s on planets 1-2, 60 s on 3-4, 50 s on 5, 40 s on 6-7 and 30 s on the core world (`surge_every`, the longest wait); the shop's clock line names the longest wait (`surge_secs`). Before food-driven surges they came on a fixed beat of half those waits; neither costs a frame on the GTX 1070 ([surge](../../Reports/surge-2026-11-15/README.md)); until 11-15 a run played the bare race slime by mistake, which shed nine tenths of itself in a minute ([report](../../Reports/roguelike-run-2026-11-14/README.md), *The run's slime is shape C*). Locked buildings and tools show
 locked on the command card, except pumps, the main income since 2026-11-15: they are never locked, never drain their crystal (owner, 2026-11-15 17:14Z), and the shop sells Pump power (`pump+`, a quarter more draw a level) in place of their unlock ([report](../../Reports/pump-economy-2026-11-15/README.md)). Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
@@ -139,6 +144,25 @@ numbered note (the second and where the camera looked).
 Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet: see below.
 
 ## What each planet does to you
+
+By minute 2 on run seed 1 (11-18, one film each,
+[report](../../Reports/planet-things-2026-11-18/README.md)): planet 1's slime
+eats two pumps by 1:15 but leaves a squad that builds none alone (the run
+bot: 50 soldiers at health 93 at 2:00); planet 2's wears the bot's squad
+down (health 35 at 1:00, 6 of 11 soldiers at 2:00); planet 3's walls its
+crystals and sets where shot (12,140 walkers set by 2:00).
+
+Planet 2 is where the run bot loses (11-18, run seeds 1 to 4, landing
+straight on planet 2 with 9 soldiers,
+[report](../../Reports/planet2-sprawler-2026-11-18/README.md)): mostly the
+planet. On seeds 1, 3 and 4 the squad lands by crystals of 20,000 to
+120,000 charge while every crystal over 130,000 sits in a slime of 23,000
+to 25,000 walkers (planet 1's: 13,000), and the squad is down to 3 to 9
+soldiers at 2:30. A bot that backs off farther, or the Sprawler's smell
+turned down to the plain slime's, gains a little on 2 of 3 seeds; the
+slime at 0.6 of its size builds 18 to 24 soldiers on all three, at 0.8
+only seed 1 holds. Seed 2 lands by a free crystal of 365,000 and builds 30
+soldiers at today's size. The size is Direction's to set.
 
 Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 [report](../../Reports/run-progression-2026-11-15/does-to-you.md)), each
@@ -196,8 +220,9 @@ port keeps that (below).
 the GPU engine (`lure_pull`, `run::LURE_PULL` 10 on every planet, no CPU
 twin): calm slime within `Rules::lure_reach` (60 cells of walking) of a
 Lure that is on, or of a lure mark (`LureMark`, for a thrown or shot lure),
-leans down the walking distance to it; the game rebuilds the field once a
-game second (`time_lure_paths`). A panicking, surging, raiding or breakaway
+leans down the walking distance to it, which is round on open ground
+(`round_walk`, since 11-18: the raid's search drew octagons); the game
+rebuilds the field once a game second (`time_lure_paths`). A panicking, surging, raiding or breakaway
 walker and a mini-boss's member ignore it, so a lure draws the body at rest
 and is no shield from a charge; a blind walker does not see it and a soured
 one runs from it. In the lab's scene on the game's build, 4,461 walkers
@@ -297,6 +322,7 @@ armory over the paused round and Back re-arms every squad
 
 ## Open
 
+- The origin as the win rule (Milestone 2; the owner, 11-16 04:58Z): designed 11-18 as a sitting lump of the slime's walkers on its home crystal whose death wins the planet, with three questions for the owner; not built ([design](../../Reports/origin-design-2026-11-18/README.md)).
 - The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
 - Mini-boss slimes: hunter, wanderer, sapper and leech are built and on in the run (Now); Mortar and Pinwheel, each kind's look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 3).
 - A mortar or artillery building; rescue planets; saving a run.

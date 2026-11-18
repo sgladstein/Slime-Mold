@@ -41,7 +41,12 @@ end.
   notes ask for it. Its price and cooldown are this lane's.
 - **Held for D7:** Enemy's idea that the Drifter also smells crystals being
   drained by hand. It is a rush brake, so it is not built, not even behind a
-  switch. Enemy's planet 1 finding is beside the rush on the list of things
+  switch. Enemy's job 2 page (11-18, run seed 1, one clip a planet) shows
+  the gap it would fill: by minute 2 planet 2 hunts the squad and planet 3
+  walls its crystals, but planet 1 eats two pumps by 1:15 and leaves a hand
+  that builds none alone (50 soldiers, health 93). So exit test 4 fails on
+  planet 1 for the rusher only, and that is D7: put it to him with his play,
+  not before. Enemy's planet 1 finding is beside the rush on the list of things
   to try: a hand building pumps is raided at 0:59 and both pumps are worn
   down by 1:30, while the hand-draining rush has 42 soldiers at health 90
   at 2:00. `crystal_regrow` stays off for the same reason.
@@ -64,6 +69,31 @@ end.
   this lane's tuning once the bot plays it on seeds 1 to 3 (the Run bot
   workflow's summary): if a played planet 2 is still lost, the landing
   squad or the Sprawler's size is the number to move. Then post the curve.
+- **Planet 2's slime at 0.6 of its size** (11-18, this lane's tuning;
+  `run::tier_size`). Enemy's look (`Reports/planet2-sprawler-2026-11-18/`)
+  found the planet, not the bot: on run seeds 1, 3 and 4 a slime of 23,000
+  to 25,000 walkers holds every big crystal and the bot has 3 to 9 soldiers
+  at 2:30; at 0.6 it has 18 to 24 on all three, at 0.8 only one seed
+  holds. 0.6 is the size measured to build on every seed; it puts planet
+  2 at about planet 1's count on a bigger map, so the Sprawler's threads
+  and fire shyness are what make it harder. Next: the run bot's daily run
+  on seeds 1 to 3 says whether planet 2 is now won; retune from that and
+  from his play (0.7 if it is too easy).
+- **Old branches** (Engine and tools' Branches workflow, 11-18): 91 merged
+  branches deleted, 56 unmerged listed in the run's summary
+  (actions run 44317767827), most of them one-commit runner and census
+  branches of 11-10 to 11-12. Live: the Lab's `claude/project-thread-4tc75h`.
+  Deleting unmerged work cannot be undone, so it is his call: ask once,
+  with a list and a recommendation, when there is another question for him.
+- **The origin's design** (Enemy's job 3, #480,
+  `Reports/origin-design-2026-11-18/README.md`): a sitting lump of the
+  slime's own walkers on its home crystal; killing it wins the planet and
+  the rest dies back over five seconds. It is Milestone 2's and holds three
+  questions for him with Enemy's recommendations (die-back or instant end;
+  call home when struck; the 1% rule kept as a second win). Not asked yet:
+  the win rule is his to settle in play. Ask once, with the dart and the
+  wet-planet trait, after his next play; Enemy builds nothing of it until
+  then.
 - **Next:** check each lane's lines in `news/whats-new.txt` as they land
   and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
   and Still, the Trunk's walls and the flinch look). When the owner plays,

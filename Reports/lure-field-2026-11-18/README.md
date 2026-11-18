@@ -110,3 +110,28 @@ field and plays the game with no lure to the bit.
   the building lasted 30 s here. That is Direction's number and Squad and
   arsenal's building.
 - A lure behind a wall with a gap (the lab's fence film) on the game's rule.
+
+## Round on open ground (2026-11-18, later)
+
+The Look and interface lane's note after filming the Lure on planets 2 and
+3: on open ground the field's rings were octagons, because the raid's
+search it used steps 2 a block and 3 a diagonal (up to 12% long near
+27°), so the rings read as a target drawn over the meadow, and the pull
+had the same shape. The lure's field now has its own search
+(`round_walk` in `raids.rs`): the knight's moves added, at the chamfer
+weights 5, 7 and 11, within 3% of the straight line at every angle (the
+test `the_lures_walk_is_round_and_goes_round_rock`), in the same units,
+going round rock as before, and stopping at the reach instead of
+searching the whole map. The charges, the far smell and raids keep the
+raid's search (`big.rs` is frozen).
+
+Planet 3, run seed 1, a Lure at (357, 182) from 0:10, squad idle, one film
+each: walkers within 30 cells of the lure at 0:20, 0:40, 1:00 were 732,
+1,358, 796 with the octagon and 721, 1,395, 806 round; from 30 to 60
+cells 303, 790, 1,928 and 498, 1,003, 2,181. The pull at the lure is the
+same; the round field reaches more ground at the same 60 cells, since
+the octagon overstated every distance off the axes (the GPU test's field
+now reaches 2,681 blocks where it reached 2,281).
+
+`round-vs-octagon.jpg`: the same frame at 0:14, zoom 6, the octagon's
+rings left and the round ones right.

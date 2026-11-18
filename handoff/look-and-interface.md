@@ -20,44 +20,61 @@ the unmarked side, the row `set_look` and the key `setlook=` deleted;
 `Reports/sim-use-2026-11-17/e2b-look.md`, *Settled*). The switch list is
 two rows (`feel`, `crystal_regrow`).
 
-**Open branch:** `claude/project-thread-8bv885`, one pull request: the
-build pages (`Reports/build-pages-2026-11-18/`, page
-https://claude.ai/artifact/2SwV4MTJMh7MFLQAyuqHPn). A "What is new" row on
-the main menu with a count; `Page::News`, named for the build, with two
-tabs (what is new with NEW marks and a pane; things to try with ticks,
+**Also on main:** the build pages (#471; `Reports/build-pages-2026-11-18/`,
+page https://claude.ai/artifact/2SwV4MTJMh7MFLQAyuqHPn). A "What is new"
+row on the main menu with a count; `Page::News`, named for the build, with
+two tabs (what is new with NEW marks and a pane; things to try with ticks,
 `StartEvent::Tried`); the build and any experiment on in the main page's
 corner; `ui::Model::trying`, a yellow mark under the clock in play. The
-window fills them in `menu.rs` (`build_page`) and `draw.rs`. It also
-fixes Engine's `Memory::set_tried` (it now writes only `tried`) and adds
-`menu=news` and `menu=news-try` for films (`headless.rs`, `main.rs`).
+window fills them in `menu.rs` (`build_page`) and `draw.rs`.
 
-**The Lure** is in the game on planet 1 (Squad's #461 and #464; Enemy's
-#457 calls `set_steer` each frame). Left here: film the real thing at zoom
-6 and 12 for a page, and decide whether the scent light's code goes
-(Squad asked to keep it for now; it only shows where no steering field
-is drawn).
+**Open branch:** `claude/project-thread-8bv885`, one pull request at a
+time.
+
+- Raised walls and the Lure's rim (#477; `Reports/raised-walls-2026-11-18/`,
+  page https://claude.ai/artifact/EBAKa6mpRV9M31H5CoDiF1). Set slime
+  stands `SET_RISE` 4 above the sheet (`set_rise` in `prep`), so Enemy's
+  fort rings (#473) read as walls; no ring within half a ring of the
+  Lure's reach (`View::set_steer_reach`, one call in `main.rs`'s
+  `prepare_now`).
+- Then flung droplets in the slime's material (Look A3;
+  `Reports/droplets-2026-11-18/`, page
+  https://claude.ai/artifact/9vsJuSofq14P5jShjiWyqe): a shot's spray flies
+  as gold beads lit by the body's key light, each with a shadow, not chips
+  in a dark rim (`draw_specks`, `DROP_*` in `view.wgsl`). Zoom 6 is
+  quieter than the chips were; `DROP_GLOW` is the number if hits read too
+  quiet. Shots already fly as comets, so A2 is now only the hole.
+
+**The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
+#457 calls `set_steer` each frame), its pull round on open ground since
+Enemy's #478. Filmed in play on planets 1 to 3 at zoom 6 and 12
+(`Reports/lure-in-play-2026-11-18/`, page
+https://claude.ai/artifact/QHdZD8LkMJ9E5ZaTDv3Aw2): round rings that bend
+round rock, the slime streaming in, nothing to fix. The green scent light
+is never lit (the field is drawn whenever a Lure stands); its code stays
+while Squad asked to keep it.
 
 **Next, in order.**
 
-1. Film the Lure in the game (above).
-2. The rest of Look A, from the ranked list in
-   `wiki/looks/art-direction.md`: shots as bright streaks, droplets in the
-   slime's material, a squad of 40 you can count, no effect bigger than
-   its damage. Set slime wants a material of its own (list B): amber is
-   a flat sheet at zoom 12.
-3. The Experiments tab's own look (still Engine's first tab, one row a
+1. The rest of Look A, from the ranked list in
+   `wiki/looks/art-direction.md`: a hit's hole and how it closes, a squad
+   of 40 you can count, no effect bigger than its damage.
+2. The Experiments tab's own look (still Engine's first tab, one row a
    switch), and the experiments in the pause menu.
-4. Win and lose screens with the planet's numbers.
-5. Picks still open: the mini-boss colours; delete the fen moat A/B's
+3. Win and lose screens with the planet's numbers.
+4. Picks still open: the mini-boss colours; delete the fen moat A/B's
    unused side.
-6. Seen and left: at 200% on 1080 lines the goal's pill covers the top
+5. Seen and left: at 200% on 1080 lines the goal's pill covers the top
    bar's fourth number.
+6. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
+   their height), and their arcs show cell steps.
 
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's
 Provoke and Still (#448) and Enemy's amber set slime (#451), both fine to
 land. Owed from them to the look list: a stilled or provoked body has no
-look of its own (A6), and burning slabs draw as cell-sized squares at zoom
-12 (A7).
+look of its own (A5), and burning slabs draw as cell-sized squares at zoom
+12 (A6). Enemy's Trunk fort (#473): fine to land; its flat walls led to
+the raised walls above.
 
 **Worth knowing.**
 
