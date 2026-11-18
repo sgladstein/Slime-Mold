@@ -76,8 +76,9 @@ he picks "retire it now", that becomes your first job after job 1.
 
 **2026-11-18.** Branch `claude/project-thread-9y1l65`. Job 1 merged in
 #449 (11-17 22:28Z), jobs 2 and 3 in #452 (11-18 03:38Z); CI's Windows
-build is published. Job 4's first cut (the run bot) is in the branch's
-next pull request.
+build is published. Job 4's first cut (the run bot) merged in #463
+(11-18 ~09:40Z); the Run bot workflow was started on main by hand the
+first time (the queue that landed #463 ran main's older queue file).
 
 What job 1 put where:
 
@@ -151,6 +152,18 @@ What job 4 put where (first cut, 11-18):
   planet 2 lost at the clock twice, the Sprawler's threads eating the
   9-soldier landing squad before it drained (1,471 food in 15 minutes),
   Tinder bought or not.
+
+Planet 2 tries after #463 (11-18, reverted; run seed 1, `look=DIR
+run=1:2 mode=squads hand=bot`):
+- build up at the quiet crystal nearest the landing instead of the most
+  charge for the walk: it drained crystal 3 by 0:50 but the slime took
+  most of it (1,192 food); the squad never passed 12 and was worn out
+  by 3:47 (a 421-walker hunter mini-boss at 1:18 and 3:32).
+- pumps first on the biggest quiet crystals near the landing (a pump
+  draws 1/150 of its crystal's start charge a second for ever): the
+  Sprawler ate the first pump by 0:40, 1,632 food in 5 minutes; on
+  planet 1 the same rule lost a won planet (3,897 food all game, the
+  pumps eaten), so pumps before a big squad is a dead end for the bot.
 
 **Next:** the bot on planet 2 (land, back off to a quiet crystal, hold it
 with the volley, build up), then planet 3; then whether the old run smoke
