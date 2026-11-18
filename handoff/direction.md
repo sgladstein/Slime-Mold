@@ -16,14 +16,16 @@ end.
   `Reports/roadmap-2026-11-17.md` with stubs left at the root;
   `news/things-to-try.txt` taken over.
 - **The Lure is going in** (his card, 11-18 03:03Z: "Lure now, in the three
-  planets"; row in `wiki/decisions-game.md`). The split is in `NOW.md` and
-  went to Enemy, Squad and arsenal, and Look and interface through the
-  coordinator, and to the Lab directly, at 03:05Z. The numbers are this
-  lane's: pull 10 (the lab's 30 emptied planet 1's home colony in 45 s),
-  shop unlock 150, the building 300 food and 150 health. When it lands:
-  check its line in `news/whats-new.txt`, give it a line in
-  `news/things-to-try.txt` in place of the mini-bosses, and retune after
-  he plays. Nothing is open with the owner now.
+  planets"; row in `wiki/decisions-game.md`). Enemy's field (#457) and
+  Look's rings (#458) are on main; Squad's building is #461. This lane's
+  numbers, sent to Squad 11-18 08:40Z: pull 10; the run starts with the
+  Lure (`run::START`), because a shop unlock would keep it off planet 1,
+  where the rush is tested; the building 300 food and 150 health; Tinder
+  100 and the shop's sure Torch at most 100 (before planet 2 a run has 200
+  to 300 points, and Tinder without a fire is a wasted buy). When Squad's
+  two changes are on main: give the Lure a line in
+  `news/things-to-try.txt` and retune after he plays. Nothing is open with
+  the owner now.
 - **From the lab's part two** (11-18, `Reports/lab-steering-2026-11-17/`):
   no bullet steering card. A tuning lead for the pull: a strong lure that
   drags a colony off its crystal shrinks it without kills (10,386 alive
@@ -44,10 +46,14 @@ end.
   to try: a hand building pumps is raided at 0:59 and both pumps are worn
   down by 1:30, while the hand-draining rush has 42 soldiers at health 90
   at 2:00. `crystal_regrow` stays off for the same reason.
-- **The switch list has four rows** (`crystal_regrow`, D7's; `set_look`,
-  Look and interface; `feel` and `reserve`, Squad and arsenal), one over
-  the rule's three. `feel` (shake and hit-stop) is his to judge in play;
-  ask Squad to settle `reserve` and Look `set_look`.
+- **Also held for D7:** the harvest reach. 40 soldiers draining one crystal
+  stand in an overlapping pile, because only soldiers within the rim plus
+  2 cells harvest (Squad, 11-18); tidy rings need a longer reach, which is
+  the rush economy.
+- **The switch list** is at the rule's three rows, a count the compiler
+  enforces since #459: `crystal_regrow` (D7's), `feel` (shake and
+  hit-stop, his to judge in play) and the set slime's look, which Look and
+  interface deletes in #460 (amber stays).
 - **Next:** check each lane's lines in `news/whats-new.txt` as they land
   and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
   and Still, the Trunk's walls and the flinch look). When the owner plays,

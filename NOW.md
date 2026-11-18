@@ -29,21 +29,22 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 | Lane | Exit test | Top three jobs, in order |
 |---|---|---|
 | Direction | all | This page, `CLAUDE.md` and the 11-17 decisions. Sort every pending pick ([`handoff/direction.md`](handoff/direction.md)) and keep the list of things to try. Sort each play session into lane jobs within the hour; post the bot's curve for planets 1 to 3. |
-| Enemy | 4 | Done: the off switches settled (#451). The lure's steering field as a real rule (below), then walls that guard the slime's crystals as a base (his note, 11-18 03:11Z). Make each of planets 1 to 3 do one nameable thing to the player by minute 2, with a clip a planet; then the origin, as a design page to Direction first. |
-| Squad and arsenal | 5 | Done: Provoke and Still (#448); no new card families. The Lure building back in the run shop (below), then what the play notes say gets in the way of control. The rifle's feel, with shake and hit-stop as one Experiments toggle; then shop offers that give planets 1 to 3 distinct builds. |
+| Enemy | 4 | Done: the off switches settled (#451), the lure's field (#457). Walls that guard the slime's crystals as a base (his note, 11-18 03:11Z). Make each of planets 1 to 3 do one nameable thing to the player by minute 2, with a clip a planet; then the origin, as a design page to Direction first. |
+| Squad and arsenal | 5 | Done: the brief's five jobs, with Provoke and Still (#448) and the shop's offers (#459); no new card families. The Lure building (#461), then the Lure on planet 1 and two prices (below). Next is what his play notes say about control and the gun. |
 | Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad (the flinch's look is done, #454). One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
 | Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452). The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
 | Lab | none | Steering is delivered and closed, in four parts ([report](Reports/lab-steering-2026-11-17/README.md)): the lure, no bullet steering card, a dart that sets a lure where the squad aims, and what becomes of a colony pulled off its crystal. Now: a second slime species that fights the first, as a clip and a recommendation, on its own branch. |
 
 **The Lure, for planets 1 to 3** (his card, 11-18 03:03Z: "Lure now, in the
 three planets"; [lab report](Reports/lab-steering-2026-11-17/README.md)). A
-lure every walker leans toward, so walls and turrets make a kill zone. Enemy:
-the field with its own GPU slot and weight key, ported from the lab branch
-`claude/project-thread-4tc75h` at commit `dafbc22`, lures only, GPU only.
-Squad and arsenal: the building and a shop item "Lures", after Enemy's
-field. Look and interface: the rings' colour (not the lab's pink) and the
-Lure off `run_hidden`. Direction's first numbers: pull 10, unlock 150, the
-building 300 food and 150 health. The siren and the outpost stay out.
+lure every calm walker leans toward, so walls and turrets make a kill zone.
+On main: Enemy's field (#457; pull 10 on every planet; panic, surge and raids
+ignore it, and a raid still turns for a lure near its target) and Look and
+interface's rings, cream hairlines (#458). In the queue: Squad and arsenal's
+building (#461). Direction's numbers: the run starts with the Lure, so
+planet 1 has it (`run::START`; no shop row); the building 300 food and 150
+health; Tinder 100 and the shop's sure Torch at most 100, so the pair can
+always be bought before planet 2. The siren and the outpost stay out.
 The dart, the Lure's second form (lab part three), waits until he has played
 the building.
 
