@@ -70,18 +70,36 @@ flinch flushes the figure red (`BITE_HOT`) with its helmet white. The
 orange bite light is gone. Every other light of the fight was already its
 damage's size (the report's table), so Look A4 is done with it.
 
+**Also on main:** a Mind status on the slime (#503, Look A5;
+`Reports/mind-status-2026-11-18/`, page
+https://claude.ai/artifact/2or1C2HtnaRqNMX7pbznFz): each walker under one
+lays a soft rose disc a cell across (`draw_mind` in `draw_specks`, a value
+under 256 in the specks' third screen), and `base` tints the slime there
+toward `MIND_ROSE`, fading over the last 1.5 s. `View::set_minds(news, at,
+fade)` takes the engine's Mind words (`gas_at` / 4 + `GAS_SLOTS` +
+walkers), called once in `main.rs`. `MIND_TINT` and `MIND_HALO` are the
+numbers if it reads too loud or too faint.
+
+**Look A6 checked (11-18), nothing to fix:** fire at zoom 12 shows no cell
+squares. Planet 3's amber walls lit by two Torch shots (run seed 1,
+`hand=hold@344,169`, `boom=76,374,116,torch boom=76,317,121,torch`) and
+the Fork's meadow under Torch rounds, at 30 frames a second: the mean
+step between neighbouring pixels is flat across the 12 pixel phases of a
+cell (4.6 to 5.5) in a frame and between frames (0.60 to 0.65). The
+squares noted on 11-18 were in Enemy's #451 clip, scaled to 0.75 and
+squeezed to 8 frames a second; fire has been drawn per pixel since 11-14.
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
 time.
 
-- A Mind status on the slime (Look A5; `Reports/mind-status-2026-11-18/`,
-  page https://claude.ai/artifact/2or1C2HtnaRqNMX7pbznFz): each walker
-  under one lays a soft rose disc a cell across (`draw_mind` in
-  `draw_specks`, a value under 256 in the specks' third screen), and
-  `base` tints the slime there toward `MIND_ROSE`, fading over the last
-  1.5 s. `View::set_minds(news, at, fade)` takes the engine's Mind words
-  (`gas_at` / 4 + `GAS_SLOTS` + walkers), called once in `main.rs`
-  (Engine and tools' file, named in the pull request). `MIND_TINT` and
-  `MIND_HALO` are the numbers if it reads too loud or too faint.
+- The end screens (the brief's job 4; `Reports/end-screens-2026-11-18/`,
+  page https://claude.ai/artifact/YSjVHU9Es2ztXjeE52VLt1): `ui::Ending`
+  (`Model::end`) holds where (a run's planet and its slime), the title by
+  how it ended, stars, the tier's sentence (`run::does_to_you`), six
+  number tiles and lines; `draw.rs` fills it (`end_screen`,
+  `mission_screen`, `end_tiles`, `App::model`), `Hud::end_screen` draws
+  it and shrinks it to fit. `film_ends` (ignored, `film.rs`) makes the
+  pictures.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
@@ -94,13 +112,12 @@ while Squad asked to keep it.
 
 **Next, in order.**
 
-1. The rest of Look A, from the ranked list in
-   `wiki/looks/art-direction.md`: fire at zoom 12 (A6); film the
-   squad's spacing when Squad lands it; a hit's lasting hole would be a
-   slime rule (Enemy's) if the owner wants one.
+1. The rest of Look A: film the squad's spacing when Squad lands it; a
+   hit's lasting hole would be a slime rule (Enemy's) if the owner wants
+   one.
 2. The Experiments tab's own look (still Engine's first tab, one row a
    switch), and the experiments in the pause menu.
-3. Win and lose screens with the planet's numbers.
+3. A landing, a win and a loss that happen in the picture (D's next).
 4. Picks still open: the mini-boss colours; delete the fen moat A/B's
    unused side.
 5. Seen and left: at 200% on 1080 lines the goal's pill covers the top
@@ -111,8 +128,8 @@ while Squad asked to keep it.
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's
 Provoke and Still (#448) and Enemy's amber set slime (#451), both fine to
 land. Owed from them to the look list: a stilled or provoked body has no
-look of its own (A5), and burning slabs draw as cell-sized squares at zoom
-12 (A6). Enemy's Trunk fort (#473): fine to land; its flat walls led to
+look of its own (A5, done), and burning slabs draw as cell-sized squares
+at zoom 12 (A6, checked: not so now). Enemy's Trunk fort (#473): fine to land; its flat walls led to
 the raised walls above.
 
 **Worth knowing.**

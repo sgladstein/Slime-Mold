@@ -136,13 +136,13 @@ B starts once A passes his eye.
 3. Done (11-18): a squad countable by its heads ([heads](../../Reports/squad-heads-2026-11-18/README.md)).
 4. Done (11-18): no light past its damage; biting slime crimson ([bite](../../Reports/biting-slime-2026-11-18/README.md)).
 5. Done (11-18): status slime glows rose ([mind](../../Reports/mind-status-2026-11-18/README.md)).
-6. Fire on slime with no cell-sized squares at zoom 12.
+6. Checked (11-18): fire at zoom 12 has no cell steps.
 
 **B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.
 
 **C. Planets and terrain**: stronger grounding (faint shadows at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
 
-**D. Menus, shop and screens**: win and lose screens with the planet's numbers first; a landing, a win and a loss that happen in the picture; then the shop and the menus.
+**D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture; then the shop and the menus.
 
 Also open: the 1070 cost of the new looks (one batch); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
@@ -150,4 +150,3 @@ Also open: the 1070 cost of the new looks (one batch); the first review's remain
 
 - [Art review 2026-11-14](../../Reports/art-review-2026-11-14/README.md).
 - [Planet art review 2026-11-14](../../Reports/levelgen-review-2026-11-14/README.md).
-- [Flinch look 2026-11-17](../../Reports/flinch-look-2026-11-17/README.md).
