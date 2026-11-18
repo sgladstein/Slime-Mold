@@ -49,10 +49,11 @@ end.
   stand in an overlapping pile, because only soldiers within the rim plus
   2 cells harvest (Squad, 11-18); tidy rings need a longer reach, which is
   the rush economy.
-- **The switch list** is at the rule's three rows, a count the compiler
-  enforces since #459: `crystal_regrow` (D7's), `feel` (shake and
-  hit-stop, his to judge in play) and the set slime's look, which Look and
-  interface deletes in #460 (amber stays).
+- **The switch list** has two rows since #460 (the set slime's look
+  deleted, amber stays): `crystal_regrow` (D7's) and `feel` (shake and
+  hit-stop, his to judge in play). Lines in `news/whats-new.txt` should not
+  name a row count, which goes stale (fixed 11-18 after Look's #471 showed
+  the file in the game).
 - **The run bot's first cut** (#463, Engine and tools, 11-18; run seed 1,
   a measurement, nothing changed for it): planet 1 is won at 2:48 with 2
   stars by the rush (drain the biggest crystal to 50 soldiers, walk into
