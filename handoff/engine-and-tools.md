@@ -189,7 +189,17 @@ run=1:2 mode=squads hand=bot`):
   Not yet tried: film it to see whether the squad reaches the gap, and
   pumps on the basin's rim once the squad is 40.
 
-**Next:** seed 3's planet 1 (above), then the bot on planet 2 (land, back off to a quiet crystal, hold it
+- **Planet 2 after #468** (11-18, local): run seed 1 loses at the cap
+  with 46k slime (its landing crystal is by the slime; 9 soldiers worn to
+  1 by 3:00, 1.7k food all game). Run seed 2 reaches 30 soldiers by 2:30
+  and ends with 14.5k slime: the home stays over 200 a soldier, and the
+  two charged crystals left (2 and 5) give nothing while the slime holds
+  them, so the bot swaps between them and heals its bank to 0. The home
+  is now no pick or work until it can be taken (it was held as the work
+  while the bot hunted, 15.9k slime at the end).
+
+**Next:** seed 3's planet 1 (above), then the bot on planet 2: clear a
+held crystal by hunting the slime on it before draining it (land, back off to a quiet crystal, hold it
 with the volley, build up), then planet 3; then whether the old run smoke
 rounds (`the_window_plays_a_runs_planet`, RTS mode) go, measured against
 the bot's coverage. After job 4: job 5's housekeeping.
