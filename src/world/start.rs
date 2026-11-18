@@ -3,7 +3,9 @@
 //! keys, quit), the campaign's mission list, an options page for the
 //! window's switches in tabs with the focused one's note and default
 //! beside them, and the key card (its last tab; also F1 or ? from any
-//! page), and the run shop / gun range armory (`shop`). Every page fits
+//! page), the run shop / gun range armory (`shop`), and what the build
+//! holds (`BuildPage`: what is new, with the lines new to this PC marked,
+//! and the things to try with their ticks). Every page fits
 //! one screen at every UI size and pages a list too long for it rather
 //! than scroll (owner, 11-15 17:31Z: "Having to scroll is horrible"):
 //! the inner pages (Options, the keys, the campaign) under a one-line
@@ -97,6 +99,80 @@ pub struct Entry {
     pub says: String,
     /// A muted line under it (the map and the mould).
     pub detail: String,
+}
+
+/// One line of the game's "what is new" list, as the game hands it over.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NewsLine {
+    /// The day it was written (YYYY-MM-DD) and the lane that wrote it.
+    pub date: String,
+    pub lane: String,
+    /// What the player will see.
+    pub sees: String,
+    /// How to try it; may be empty.
+    pub try_it: String,
+    /// No round has been played on this PC on a build that held it.
+    pub new: bool,
+}
+
+/// One thing to try, with its tick.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TryLine {
+    pub text: String,
+    pub tried: bool,
+}
+
+/// **What the build says of itself** (the plan of 2026-11-17: "The start
+/// menu shows the build number, what is new since the build you last
+/// played ... and at most five things worth trying"; the owner that day:
+/// features left switched off are a problem because he cannot tell what
+/// is on or off or what needs testing). The game fills it from
+/// `build::news`; the menu shows the build in the main page's corner, a
+/// row that counts the new lines, and a page of two tabs.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct BuildPage {
+    /// "build 3127", the page's name, and the whole of it for the corner
+    /// ("build 3127 (d08583d, 2026-11-18)").
+    pub name: String,
+    pub long: String,
+    /// The last build a round was played on here ("build 3098,
+    /// 2026-11-17"); None on a PC that has not played.
+    pub last: Option<String>,
+    /// What is new, the lines new to this PC first, each the newest first.
+    pub news: Vec<NewsLine>,
+    /// At most five, the most important first.
+    pub to_try: Vec<TryLine>,
+}
+
+impl BuildPage {
+    fn fresh(&self) -> usize {
+        self.news.iter().filter(|n| n.new).count()
+    }
+
+    fn untried(&self) -> usize {
+        self.to_try.iter().filter(|t| !t.tried).count()
+    }
+
+    /// One sentence on the news: how much is new, and since which build.
+    fn since(&self) -> String {
+        let n = self.fresh();
+        let last = self.last.as_ref().map_or(String::new(), |l| format!(" ({l})"));
+        match (n, &self.last) {
+            (0, _) => format!("Nothing new since you last played{last}"),
+            (_, None) => "All of it is new here: no round has been played on this PC yet".into(),
+            (1, _) => format!("1 change since you last played{last}"),
+            _ => format!("{n} changes since you last played{last}"),
+        }
+    }
+
+    /// And one on the things to try.
+    fn left(&self) -> String {
+        match (self.untried(), self.to_try.len()) {
+            (_, 0) => String::new(),
+            (0, n) => format!("All {n} things to try are ticked"),
+            (k, n) => format!("{k} of {n} things to try are not ticked yet"),
+        }
+    }
 }
 
 /// Where a shop row sits on the page (owner, 2026-11-14 16:55Z: "This
@@ -246,6 +322,8 @@ pub enum StartEvent {
     EndRun,
     /// A round on a new generated planet (`mould::levelgen`).
     RandomPlanet,
+    /// Thing to try `i` ticked or unticked: the game remembers it.
+    Tried(usize, bool),
     Quit,
 }
 
@@ -257,6 +335,8 @@ pub enum Page {
     Keys,
     /// The run's shop.
     Shop,
+    /// What the build holds: what is new, and the things to try.
+    News,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -297,6 +377,15 @@ enum Hit {
     /// A paged list one page back or on (the key list; a tab or the
     /// mission list longer than the screen).
     Flip(isize),
+    /// The main page's "What is new" row.
+    Build,
+    /// "What is new" line `i`: a click or the keyboard's row tells it in
+    /// full beside the list.
+    Line(usize),
+    /// Thing to try `i`: a click or Enter ticks it.
+    Try(usize),
+    /// The build page's tab `k`: what is new, the things to try.
+    NewsTab(usize),
 }
 
 pub struct StartMenu {
@@ -315,6 +404,9 @@ pub struct StartMenu {
     pub notice: Option<String>,
     /// The run's shop (the Shop page draws it).
     pub shop: Option<Shop>,
+    /// What the build holds (the main page's row and corner, the News
+    /// page); None draws neither.
+    pub build: Option<BuildPage>,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
     /// The shop's tab showing, whether the player has picked something
@@ -355,6 +447,11 @@ pub struct StartMenu {
     sheets: usize,
     /// Rows a page of it, as last drawn.
     per: usize,
+    /// The build page's tab showing (0 what is new, 1 the things to try),
+    /// and the first thing to try on each page of that list as last drawn
+    /// (its rows are as tall as their text, so a page has no fixed count).
+    news_tab: usize,
+    try_first: Vec<usize>,
 }
 
 /// The inner pages' header band and the hint line under them, UI units.
@@ -372,7 +469,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1 }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, news_tab: 0, try_first: Vec::new() }
     }
 
     /// The option named `key`.
@@ -394,6 +491,15 @@ impl StartMenu {
         (self.shop_tab, self.picked, self.bag_sheet) = (0, false, 0);
         self.scroll = 0.0;
         self.sheet = 0;
+        self.news_tab = 0;
+    }
+
+    /// The build page's tab `k` (0 what is new, 1 the things to try).
+    pub fn open_news_tab(&mut self, k: usize) {
+        if self.page != Page::News {
+            self.show(Page::News);
+        }
+        (self.news_tab, self.focus, self.sheet) = (k % 2, 0, 0);
     }
 
     /// The Options page's tabs: the options' own, in the order they come
@@ -521,11 +627,16 @@ impl StartMenu {
         match self.page {
             // (No Keys row since 11-15: the key list is Options' last tab,
             // and F1 or ? opens it from anywhere.)
-            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range]).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
             Page::Shop => self.shop_rows(),
+            Page::News => {
+                let b = self.build.as_ref();
+                let n = b.map_or(0, |b| if self.news_tab == 0 { b.news.len() } else { b.to_try.len() });
+                (0..n).map(|i| if self.news_tab == 0 { Hit::Line(i) } else { Hit::Try(i) }).chain([Hit::Back]).collect()
+            }
         }
     }
 
@@ -545,6 +656,7 @@ impl StartMenu {
                 Page::Keys => Hit::Options,
                 Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => Hit::Range,
                 Page::Shop => Hit::Run,
+                Page::News => Hit::Build,
                 Page::Main => Hit::Run,
             };
             self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
@@ -593,6 +705,19 @@ impl StartMenu {
             Hit::Default(i) => self.options[i].at = self.options[i].default,
             Hit::Tab(k) => self.open_tab(k),
             Hit::Flip(by) => self.flip(by),
+            Hit::Build => self.show(Page::News),
+            Hit::NewsTab(k) => self.open_news_tab(k),
+            // (A line's row only takes the focus: `button`.)
+            Hit::Line(_) => {}
+            Hit::Try(i) => {
+                let t = self.build.as_mut().and_then(|b| b.to_try.get_mut(i))?;
+                t.tried = !t.tried;
+                let now = t.tried;
+                if let Some(k) = self.rows().iter().position(|&r| r == Hit::Try(i)) {
+                    self.focus = k;
+                }
+                return Some(StartEvent::Tried(i, now));
+            }
             Hit::Panel => {}
         }
         None
@@ -604,8 +729,10 @@ impl StartMenu {
     fn flip(&mut self, by: isize) {
         let n = self.sheets.max(1) as isize;
         self.sheet = (self.sheet as isize + by).rem_euclid(n) as usize;
-        if matches!(self.page, Page::Options | Page::Missions | Page::Shop) {
+        if matches!(self.page, Page::Options | Page::Missions | Page::Shop) || (self.page == Page::News && self.news_tab == 0) {
             self.focus = self.sheet * self.per.max(1);
+        } else if self.page == Page::News {
+            self.focus = self.try_first.get(self.sheet).copied().unwrap_or(0);
         }
     }
 
@@ -671,6 +798,12 @@ impl StartMenu {
                         self.options[i].at = self.options[i].default;
                         return Vec::new();
                     }
+                    Hit::Line(_) => {
+                        if let Some(k) = self.rows().iter().position(|&r| r == h) {
+                            self.focus = k;
+                        }
+                        return Vec::new();
+                    }
                     // A shop row clicked is picked: the pane tells it and
                     // its button (or Enter) buys it (Shop B, 11-15: a click
                     // bought at once, and the box telling what was bought
@@ -709,6 +842,7 @@ impl StartMenu {
                 let at = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
                 self.open_tab(at + 1);
             }
+            KeyCode::Tab if self.page == Page::News => self.open_news_tab(self.news_tab + 1),
             // The shop's tabs: Tab goes round, 1 to 9 pick one.
             KeyCode::Tab if self.page == Page::Shop => self.open_shop_tab(self.shop_tab + 1),
             _ if self.page == Page::Shop && digit(code).is_some_and(|n| n >= 1 && n <= self.shop_tabs().len()) => {
@@ -797,7 +931,7 @@ impl StartMenu {
         // 17:31Z) found the title and its line repeated on every page took
         // 130 to 220 of the 565 units a 1080-line screen has at 200%
         // (`Reports/menu-layout-research-2026-11-15/`).
-        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions);
+        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::News);
         // A shade down the left, fading out, so the panel reads over the
         // dish; the shop and the inner pages span the screen, so they dim
         // all of it.
@@ -844,6 +978,8 @@ impl StartMenu {
             Page::Missions => self.missions_page(c, x, at, w, s, focus),
             Page::Options => self.options_page(c, x, at, w, s, focus),
             Page::Keys => self.keys_page(c, x, at, w, s),
+            Page::News if self.news_tab == 0 => self.news_page(c, x, at, s, focus),
+            Page::News => self.try_page(c, x, at, s, focus),
             // (Its own frame, above.)
             Page::Shop => at,
         };
@@ -893,8 +1029,28 @@ impl StartMenu {
             Page::Keys if self.tabbed() => "Tab next tab  ·  Esc or F1 back",
             Page::Keys => "Esc or F1 back",
             Page::Shop => "",
+            Page::News if self.news_tab == 0 => "Up/Down pick a line  ·  Tab things to try  ·  Esc back",
+            Page::News => "Up/Down pick  ·  Enter or click ticks it  ·  Tab what is new  ·  Esc back",
         };
-        let pager_w = if paged { 170.0 * s } else { 0.0 };
+        let mut pager_w = if paged { 170.0 * s } else { 0.0 };
+        // The main page's corner: which build this is, and left of it, in
+        // amber, any experiment that is on, so a game that is not the
+        // default one says so before a round starts (the HUD's mark says
+        // it in play). On the hint's own line: a line over it met the
+        // caption box of the last rows on a narrow screen.
+        if let (Page::Main, Some(b)) = (self.page, &self.build) {
+            let bw = c.text(Weight::Medium, 13.5 * s, (sw - x, sh - 28.0 * s), Align::Right, &b.long, MUTED);
+            pager_w = bw + 24.0 * s;
+            let on: Vec<&Opt> = self.options.iter().filter(|o| o.tab == "Experiments" && !o.is_default()).collect();
+            let says = match on.as_slice() {
+                [] => String::new(),
+                [o] => format!("Experiment on: {}", o.label),
+                all => format!("{} experiments on", all.len()),
+            };
+            if !says.is_empty() {
+                pager_w += c.text(Weight::SemiBold, 13.5 * s, (sw - x - bw - 16.0 * s, sh - 28.0 * s), Align::Right, &says, WARN) + 16.0 * s;
+            }
+        }
         // On the main page a notice from the game (why the map editor did
         // not start) takes the hint's place, in full view.
         let (hint, ink) = match &self.notice {
@@ -961,25 +1117,48 @@ impl StartMenu {
             let depth = self.option("planet").map_or("1", |o| o.value());
             items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false, false));
         }
-        items.extend([
-            ("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false, false),
-            ("Options", "The UI size, the game and the planet, the mould's rules, and the keys".into(), Hit::Options, false, true),
-        ]);
+        items.push(("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false, false));
+        // What the build holds, first of the rows that are not a way to
+        // play: how much is new since the last build played here, and
+        // what is left to try.
+        let fresh = self.build.as_ref().map_or(0, BuildPage::fresh);
+        if let Some(b) = &self.build {
+            let sub: Vec<String> = [b.since(), b.left()].into_iter().filter(|t| !t.is_empty()).collect();
+            items.push(("What is new", sub.join(". "), Hit::Build, false, true));
+        }
+        items.push(("Options", "The UI size, the game and the planet, the mould's rules, and the keys".into(), Hit::Options, false, self.build.is_none()));
         if self.edit_maps {
             items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false, false));
         }
         items.push(("Quit", "Close the game".into(), Hit::Quit, false, true));
         let longest = items.iter().map(|it| c.atlas.measure(Weight::SemiBold, 18.0 * s, it.0)).fold(0.0f32, f32::max);
-        let w = (longest + 48.0 * s).max(280.0 * s);
-        let (rh, gap) = (40.0 * s, 4.0 * s);
+        // (Room for the "What is new" row's count beside its name.)
+        let w = (longest + 48.0 * s + if fresh > 0 { 70.0 * s } else { 0.0 }).max(280.0 * s);
+        // Rows of 40 units, down to 34 where the page would otherwise run
+        // under the hint: with the "What is new" row the page has nine,
+        // and at 200% on 1080 lines nine rows of 40 scrolled (11-18).
+        let (gap, apart_by) = (4.0 * s, 12.0 * s);
+        let aparts = items.iter().filter(|it| it.4).count() as f32;
+        // (Half a pixel under the room: filled to the last bit, the sum
+        // of the rows came out 0.00003 over and the page scrolled.)
+        let room = c.screen.1 as f32 - (FOOT + 12.0) * s - (top + self.scroll + 8.0 * s) - 0.5;
+        let rh = ((room - aparts * apart_by) / items.len() as f32 - gap).clamp(34.0 * s, 40.0 * s);
         let mut y = top + 8.0 * s;
         let mut placed = Vec::new();
         for (label, sub, hit, primary, apart) in items {
             if apart {
-                y += 12.0 * s;
+                y += apart_by;
             }
             let r = Rect::new(x, y, w, rh);
             self.item(r, label, "", hit, primary, focus == Some(hit), c, s);
+            if hit == Hit::Build && fresh > 0 {
+                // How many lines are new to this PC, at the row's right.
+                let t = format!("{fresh} new");
+                let bw = c.atlas.measure(Weight::SemiBold, 13.0 * s, &t) + 18.0 * s;
+                let chip = Rect::new(r.right() - 12.0 * s - bw, r.y + (rh - 22.0 * s) / 2.0, bw, 22.0 * s);
+                c.rrect(chip, 11.0 * s, with_alpha(ACCENT, 0.18));
+                c.text(Weight::SemiBold, 13.0 * s, (chip.x + chip.w / 2.0, chip.y + 15.5 * s), Align::Centre, &t, ACCENT);
+            }
             placed.push((r, label.to_string(), sub, hit));
             y += rh + gap;
         }
@@ -1017,17 +1196,38 @@ impl StartMenu {
         let h = HEAD * s;
         c.rrect(Rect::new(0.0, 0.0, sw, h), 0.0, [8, 11, 14, 236]);
         c.rrect(Rect::new(0.0, h - s.max(1.0), sw, s.max(1.0)), 0.0, EDGE);
+        // (The build page is named for the build: "Build 3127".)
+        let build = self.build.as_ref().filter(|_| self.page == Page::News);
         let name = match self.page {
-            Page::Missions => "Campaign",
-            _ if self.tabbed() => "Options",
-            _ => "Keys",
+            Page::Missions => "Campaign".to_string(),
+            Page::News => build.map_or(String::new(), |b| {
+                let mut n = b.name.clone();
+                if let Some(f) = n.get_mut(0..1) {
+                    f.make_ascii_uppercase();
+                }
+                n
+            }),
+            _ if self.tabbed() => "Options".into(),
+            _ => "Keys".into(),
         };
-        let tx = x + c.text(Weight::SemiBold, 22.0 * s, (x, 36.0 * s), Align::Left, name, TEXT) + 24.0 * s;
+        // Its tabs count what is left to look at: the lines new to this
+        // PC, the things not ticked.
+        let counted = |t: &str, n: usize| if n > 0 { format!("{t} ({n})") } else { t.to_string() };
+        let tabs: Vec<(String, Hit)> = match build {
+            Some(b) => vec![(counted("What is new", b.fresh()), Hit::NewsTab(0)), (counted("Things to try", b.untried()), Hit::NewsTab(1))],
+            None if self.tabbed() => self.tabs().into_iter().enumerate().map(|(k, t)| (t, Hit::Tab(k))).collect(),
+            None => Vec::new(),
+        };
+        let tx = x + c.text(Weight::SemiBold, 22.0 * s, (x, 36.0 * s), Align::Left, &name, TEXT) + 24.0 * s;
         let back = Rect::new(sw - x - 116.0 * s, 10.0 * s, 116.0 * s, 36.0 * s);
-        if self.tabbed() {
-            let lit = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
+        if !tabs.is_empty() {
+            let lit = match self.page {
+                Page::News => self.news_tab,
+                Page::Keys => tabs.len() - 1,
+                _ => self.opt_tab,
+            };
             let mut tx = tx;
-            for (k, t) in self.tabs().iter().enumerate() {
+            for (k, (t, hit)) in tabs.iter().enumerate() {
                 let w = c.atlas.measure(Weight::SemiBold, 15.0 * s, t) + 28.0 * s;
                 let r = Rect::new(tx, 11.0 * s, w, 34.0 * s);
                 if r.right() > back.x - 12.0 * s {
@@ -1042,7 +1242,7 @@ impl StartMenu {
                 };
                 c.panel(r, 8.0 * s, top, bottom, 1.0, if on { ACCENT } else { [255, 255, 255, 30] });
                 c.text(Weight::SemiBold, 15.0 * s, (r.x + 14.0 * s, r.y + 22.5 * s), Align::Left, t, if on { TEXT } else { MUTED });
-                self.hits.push((r, Hit::Tab(k)));
+                self.hits.push((r, *hit));
                 tx = r.right() + 8.0 * s;
             }
         }
@@ -1290,6 +1490,181 @@ impl StartMenu {
         panel.bottom().max(r.bottom())
     }
 
+    /// **What is new** (the build page's first tab): the list's lines as
+    /// one-line rows, the ones new to this PC first and marked, a page of
+    /// them if they outgrow the screen, and beside them the line under the
+    /// cursor (else the keyboard's, else the first) in full: what the
+    /// player will see, how to try it, who wrote it and when. The same
+    /// list-and-note shape as Options and the campaign, since a line is
+    /// two or three sentences and a row has room for half of one.
+    fn news_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let Some(b) = self.build.clone() else { return top };
+        let n = b.news.len();
+        let (lw, nw) = self.split(c, x, s);
+        let (rh, cap) = (40.0 * s, 40.0 * s);
+        let room = self.room(c, top, s);
+        let per = ((room - cap - 12.0 * s) / rh).floor().max(1.0) as usize;
+        if let Some(Hit::Line(i)) = focus {
+            self.sheet = i / per;
+        }
+        let (shown, pages) = sheet_of(n, per, self.sheet);
+        (self.sheets, self.per) = (pages, per);
+        self.sheet = self.sheet.min(pages - 1);
+        let panel = Rect::new(x, top, lw, cap + shown.len().max(1) as f32 * rh + 12.0 * s);
+        self.glass(panel, c, s);
+        // How much is new, and since which build.
+        c.text_fit(Weight::SemiBold, 15.0 * s, (panel.x + 20.0 * s, panel.y + 28.0 * s), Align::Left, &b.since(), panel.w - 40.0 * s, if b.fresh() > 0 { ACCENT } else { MUTED });
+        let chip_w = c.atlas.measure(Weight::SemiBold, 12.5 * s, "NEW") + 14.0 * s;
+        let date_w = c.atlas.measure(Weight::Medium, 13.5 * s, "00-00") + 12.0 * s;
+        let first = shown.start;
+        let mut told = None;
+        let mut y = panel.y + cap + 4.0 * s;
+        for i in shown {
+            let l = &b.news[i];
+            let row = Rect::new(panel.x + 8.0 * s, y, panel.w - 16.0 * s, rh - 4.0 * s);
+            let focused = focus == Some(Hit::Line(i));
+            let hot = self.hover.is_some_and(|p| row.contains(p));
+            if focused || hot {
+                c.rrect(row, 9.0 * s, [255, 255, 255, if focused { 22 } else { 12 }]);
+            }
+            if focused {
+                c.outline(row, 9.0 * s, 1.5 * s, ACCENT);
+            }
+            if hot || (focused && told.is_none()) {
+                told = Some(i);
+            }
+            let base = row.y + row.h / 2.0 + 5.5 * s;
+            let mut tx = row.x + 10.0 * s;
+            if l.new {
+                let chip = Rect::new(tx, row.y + (row.h - 20.0 * s) / 2.0, chip_w, 20.0 * s);
+                c.rrect(chip, 10.0 * s, with_alpha(ACCENT, 0.18));
+                c.text(Weight::SemiBold, 12.5 * s, (chip.x + chip.w / 2.0, chip.y + 14.5 * s), Align::Centre, "NEW", ACCENT);
+            }
+            // (The seen lines keep the column, so the dates line up.)
+            tx += chip_w + 8.0 * s;
+            c.text(Weight::Medium, 13.5 * s, (tx, base), Align::Left, l.date.get(5..).unwrap_or(&l.date), MUTED);
+            tx += date_w;
+            let (weight, ink) = if l.new { (Weight::SemiBold, TEXT) } else { (Weight::Medium, [201, 210, 219, 255]) };
+            c.text_fit(weight, 15.5 * s, (tx, base), Align::Left, &l.sees, row.right() - 12.0 * s - tx, ink);
+            self.hits.push((row, Hit::Line(i)));
+            y += rh;
+        }
+        if n == 0 {
+            c.text(Weight::Medium, 15.5 * s, (panel.x + 20.0 * s, panel.y + cap + 28.0 * s), Align::Left, "The list is empty", MUTED);
+        }
+        // The note. Its text shrinks a step or two before it is cut: the
+        // longest lines at 200% on 1080 lines need it.
+        let Some(l) = told.or((n > 0).then_some(first)).map(|i| &b.news[i]) else { return panel.bottom() };
+        let tw = nw - 36.0 * s;
+        let fixed = (34.0 + 30.0 + 10.0 + 46.0) * s + if l.try_it.is_empty() { 0.0 } else { 30.0 * s };
+        let need = |c: &Canvas, k: f32| fixed + Self::count(c, Weight::Medium, 16.0 * k * s, tw, &l.sees) * 23.0 * k * s + Self::count(c, Weight::Medium, 15.0 * k * s, tw, &l.try_it) * 22.0 * k * s;
+        let k = [1.0, 0.92, 0.84].into_iter().find(|&k| need(c, k) <= room).unwrap_or(0.84);
+        let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(260.0 * s).max(need(c, k)).min(room));
+        self.glass(r, c, s);
+        let px = r.x + 18.0 * s;
+        let mut y = r.y + 34.0 * s;
+        let (tag, ink) = if l.new { ("New since you last played", ACCENT) } else { ("On a build you have played", MUTED) };
+        c.text(Weight::SemiBold, 13.5 * s, (px, y), Align::Left, tag, ink);
+        y += 30.0 * s;
+        // (Cut to the pane if the smallest size still runs over.)
+        let foot = r.bottom() - 46.0 * s;
+        let most = |y: f32, lead: f32| ((foot - y) / lead).floor().max(1.0) as usize + 1;
+        y += self.lines_most(c, 16.0 * k * s, (px, y), tw, 23.0 * k * s, &l.sees, TEXT, most(y, 23.0 * k * s)) + 10.0 * s;
+        if !l.try_it.is_empty() && y + 30.0 * s <= foot {
+            c.text(Weight::SemiBold, 13.5 * s, (px, y), Align::Left, "How to try it", MUTED);
+            y += 26.0 * s;
+            self.lines_most(c, 15.0 * k * s, (px, y), tw, 22.0 * k * s, &l.try_it, [201, 210, 219, 255], most(y, 22.0 * k * s));
+        }
+        c.text_fit(Weight::Medium, 13.0 * s, (px, r.bottom() - 18.0 * s), Align::Left, &format!("{}  ·  {}", l.lane, l.date), tw, MUTED);
+        panel.bottom().max(r.bottom())
+    }
+
+    /// Wrapped text of at most `most` lines from a first baseline at `at`,
+    /// the last ending in an ellipsis when it was cut; the height it took.
+    #[allow(clippy::too_many_arguments)]
+    fn lines_most(&self, c: &mut Canvas, px: f32, at: (f32, f32), max: f32, lead: f32, text: &str, colour: Rgba, most: usize) -> f32 {
+        if text.is_empty() {
+            return 0.0;
+        }
+        let mut lines = c.wrap(Weight::Medium, px, max, text);
+        if lines.len() > most {
+            lines.truncate(most.max(1));
+            if let Some(l) = lines.last_mut() {
+                while !l.is_empty() && c.atlas.measure(Weight::Medium, px, &format!("{l}…")) > max {
+                    l.pop();
+                }
+                l.push('…');
+            }
+        }
+        for (k, l) in lines.iter().enumerate() {
+            c.text(Weight::Medium, px, (at.0, at.1 + k as f32 * lead), Align::Left, l, colour);
+        }
+        lines.len() as f32 * lead
+    }
+
+    /// **The things to try** (the build page's second tab; the Direction
+    /// lane's list, at most five, the most important first): each in
+    /// full, wrapped, with a tick the game remembers on this PC. A click
+    /// anywhere on a row, or Enter, ticks it. Rows are as tall as their
+    /// text, so the list pages by height like the key list.
+    fn try_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let Some(b) = self.build.clone() else { return top };
+        let w = (c.screen.0 as f32 - 2.0 * x).min(920.0 * s);
+        let room = self.room(c, top, s);
+        let cap = 40.0 * s;
+        let (px, lead) = (16.0 * s, 23.0 * s);
+        // The text starts right of the tick box.
+        let tx = 54.0 * s;
+        let tw = w - 16.0 * s - tx - 18.0 * s;
+        let heights: Vec<f32> = b.to_try.iter().map(|t| c.wrap(Weight::Medium, px, tw, &t.text).len() as f32 * lead + 20.0 * s).collect();
+        let col_h = room - cap - 12.0 * s;
+        let mut first = vec![0usize];
+        let mut used = 0.0f32;
+        for (i, h) in heights.iter().enumerate() {
+            if used + h > col_h && used > 0.0 {
+                first.push(i);
+                used = 0.0;
+            }
+            used += h;
+        }
+        if let Some(Hit::Try(i)) = focus {
+            self.sheet = first.iter().rposition(|&f| f <= i).unwrap_or(0);
+        }
+        self.sheets = first.len();
+        self.sheet = self.sheet.min(self.sheets - 1);
+        let (from, to) = (first[self.sheet], first.get(self.sheet + 1).copied().unwrap_or(heights.len()));
+        self.try_first = first;
+        let used: f32 = heights[from..to].iter().sum();
+        let panel = Rect::new(x, top, w, (cap + used.max(40.0 * s) + 12.0 * s).min(room));
+        self.glass(panel, c, s);
+        let says = if b.to_try.is_empty() { "Nothing is on the list right now" } else { "The most important first. Tick what you have tried: the game remembers it on this PC" };
+        c.text_fit(Weight::SemiBold, 15.0 * s, (panel.x + 20.0 * s, panel.y + 28.0 * s), Align::Left, says, panel.w - 40.0 * s, MUTED);
+        let mut y = panel.y + cap + 4.0 * s;
+        for (i, (t, &h)) in b.to_try.iter().zip(&heights).enumerate().take(to).skip(from) {
+            let row = Rect::new(panel.x + 8.0 * s, y, panel.w - 16.0 * s, h - 4.0 * s);
+            let focused = focus == Some(Hit::Try(i));
+            let hot = self.hover.is_some_and(|p| row.contains(p));
+            if focused || hot {
+                c.rrect(row, 9.0 * s, [255, 255, 255, if focused { 22 } else { 12 }]);
+            }
+            if focused {
+                c.outline(row, 9.0 * s, 1.5 * s, ACCENT);
+            }
+            let tick = Rect::new(row.x + 14.0 * s, row.y + 8.0 * s, 22.0 * s, 22.0 * s);
+            if t.tried {
+                c.rrect(tick, 6.0 * s, with_alpha(GOOD, 0.22));
+                c.outline(tick, 6.0 * s, 1.5 * s, GOOD);
+                c.icon(Icon::Check, (tick.x + 3.0 * s, tick.y + 3.0 * s), 16.0 * s, GOOD);
+            } else {
+                c.outline(tick, 6.0 * s, 1.5 * s, if hot || focused { TEXT } else { MUTED });
+            }
+            c.paragraph(Weight::Medium, px, (row.x + tx, row.y + 25.0 * s), tw, lead, &t.text, if t.tried { MUTED } else { TEXT });
+            self.hits.push((row, Hit::Try(i)));
+            y += h;
+        }
+        panel.bottom()
+    }
+
     /// The key list, the Options page's last tab (also F1 or ?): two
     /// columns where there is room, each line wrapped, a page at a time
     /// (Left/Right or the arrows under it). It scrolled until 11-15.
@@ -1351,7 +1726,7 @@ impl StartMenu {
     /// The pages the last drawn list took: an Options tab, the key list or
     /// the campaign (1 elsewhere). The fit tests'.
     pub fn sheets(&self) -> usize {
-        if matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::Shop) {
+        if matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::Shop | Page::News) {
             self.sheets
         } else {
             1
@@ -1748,7 +2123,8 @@ mod tests {
         assert!(m.key(KeyCode::KeyE, true).is_empty(), "a bag card has no slot");
     }
 
-    /// The main page with every row (Run, Random planet, Edit maps: eight)
+    /// The main page with every row (Run, Random planet, Edit maps, What
+    /// is new: nine)
     /// stays on screen at every size and UI scale, with the game's eleven
     /// options (whose page sets the scale for every page).
     #[test]
@@ -1761,6 +2137,8 @@ mod tests {
                     m.options.push(Opt::new(&k, &k, &["0", "1"], "0", "0", ""));
                 }
                 (m.planets, m.edit_maps, m.run_live) = (true, true, true);
+                // (Nine with "What is new", 11-18: the rows shrink to fit.)
+                m.build = Some(build_page(6, 2));
                 let mut c = Canvas::new(screen);
                 c.ui.user = user;
                 // (Scrolled to each since 11-15: a big UI size scrolls.)
@@ -1950,9 +2328,10 @@ mod tests {
     #[test]
     fn every_page_follows_the_ui_size() {
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
-            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop] {
+            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop, Page::News] {
                 let size = |user: f32| {
                     let mut m = menu();
+                    m.build = Some(build_page(12, 4));
                     m.keys = (0..40).map(|k| (format!("K{k}"), "Does a thing".to_string())).collect();
                     m.shop = Some(if page == Page::Shop { armory(9) } else { shop(14) });
                     m.show(page);
@@ -1973,7 +2352,7 @@ mod tests {
                         let b = m.body.unwrap_or(Rect::new(0.0, 0.0, screen.0 as f32, screen.1 as f32));
                         // The shop's two buttons and the inner pages'
                         // header are fixed, over and under the body.
-                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions) && h == Hit::Back);
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News) && h == Hit::Back);
                         assert!(r.y >= 0.0 && r.bottom() <= screen.1 as f32, "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen");
                         assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
                     }
@@ -1983,6 +2362,7 @@ mod tests {
                         Page::Shop => Hit::Next,
                         Page::Options => Hit::Reset(0),
                         Page::Missions => Hit::Mission(0),
+                        Page::News => Hit::Line(0),
                         Page::Keys | Page::Main => Hit::Back,
                     };
                     let probe = if page == Page::Main { Hit::Sandbox } else { probe };
@@ -1998,6 +2378,105 @@ mod tests {
             }
         }
     }
+    /// A build page like the game's: `n` lines of what is new, the first
+    /// `fresh` new to this PC, every third as long as the game's longest
+    /// (on 11-18 one ran to 310 characters with 150 on how to try it),
+    /// and five things to try of two sentences.
+    fn build_page(n: usize, fresh: usize) -> BuildPage {
+        let long = "Two new bullets, Provoke and Still. Slime near a Provoke hit goes grey after about 5 seconds, lets go of what it holds and charges your guns. Slime near a Still hit is calm for 10 seconds, so a raid drifts past instead of turning on you, and a surge near it does not start until the calm wears off";
+        let how = "Buy them in the run's shop from planet 2, or load them in the gun range's armory (Special bullets) and fire at a thick arm of slime and at a raid";
+        let news = (0..n)
+            .map(|i| NewsLine {
+                date: format!("2026-11-{:02}", 18 - (i * 2 / n.max(1)).min(1)),
+                lane: "Squad and arsenal".into(),
+                sees: if i % 3 == 0 { format!("{i}: {long}") } else { format!("Line {i}: the lime wash on the ground round a firefight is gone") },
+                try_it: if i % 2 == 0 { how.into() } else { String::new() },
+                new: i < fresh,
+            })
+            .collect();
+        let to_try = (0..5).map(|i| TryLine { text: format!("Thing {i}: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build two pumps first instead: the slime now raids them about a minute in."), tried: i == 1 }).collect();
+        BuildPage { name: "build 3127".into(), long: "build 3127 (d08583d, 2026-11-18)".into(), last: Some("build 3098, 2026-11-17".into()), news, to_try }
+    }
+
+    /// What the build holds (the plan of 2026-11-17: the menu shows the
+    /// build, what is new since the last build played, and the things to
+    /// try): a row on the main page that counts the new lines, the build
+    /// in the corner, and a page of two tabs where the new lines are
+    /// marked and a thing to try is ticked by a click or Enter.
+    #[test]
+    fn the_build_page_marks_what_is_new_and_ticks_what_was_tried() {
+        let said = |c: &Canvas, t: &str| c.runs.iter().filter(|r| r.text == t).count();
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        m.draw(&mut c);
+        assert!(m.rect_of(Hit::Build).is_none() && said(&c, "What is new") == 0, "no row without a build page");
+        m.build = Some(build_page(6, 2));
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!(m.rows(), [Hit::Run, Hit::Sandbox, Hit::Campaign, Hit::Range, Hit::Build, Hit::Options, Hit::Quit]);
+        assert_eq!((said(&c, "2 new"), said(&c, "build 3127 (d08583d, 2026-11-18)"), said(&c, "Experiment on: Shake")), (1, 1, 0));
+        // An experiment that is on is named in the corner; two are counted.
+        m.options.push(Opt::new("exp:feel", "Shake", &["off", "on"], "off", "on", "").in_tab("Experiments"));
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!(said(&c, "Experiment on: Shake"), 1);
+        m.options.push(Opt::new("exp:crystal_regrow", "Crystals refill", &["off", "on"], "off", "on", "").in_tab("Experiments"));
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!(said(&c, "2 experiments on"), 1);
+        // The row opens what is new: the new lines first and marked, the
+        // first told in full beside the list.
+        assert!(click(&mut m, &mut c, Hit::Build).is_empty());
+        assert_eq!(m.page, Page::News);
+        m.moved(None);
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!((said(&c, "NEW"), said(&c, "New since you last played"), said(&c, "On a build you have played")), (2, 1, 0));
+        assert_eq!(said(&c, "2 changes since you last played (build 3098, 2026-11-17)"), 1);
+        assert_eq!((said(&c, "What is new (2)"), said(&c, "Things to try (4)"), said(&c, "Build 3127")), (1, 1, 1));
+        // A click on a line that was seen tells that one, and starts nothing.
+        assert!(click(&mut m, &mut c, Hit::Line(4)).is_empty());
+        assert_eq!(m.rows()[m.focus], Hit::Line(4));
+        m.moved(None);
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!((said(&c, "New since you last played"), said(&c, "On a build you have played")), (0, 1));
+        // Tab: the things to try. A click ticks one and the game is told;
+        // Enter on the keyboard's row unticks one.
+        m.key(KeyCode::Tab, true);
+        assert_eq!(m.rows(), [Hit::Try(0), Hit::Try(1), Hit::Try(2), Hit::Try(3), Hit::Try(4), Hit::Back]);
+        assert_eq!(click(&mut m, &mut c, Hit::Try(3)), vec![StartEvent::Tried(3, true)]);
+        assert!(m.build.as_ref().unwrap().to_try[3].tried);
+        m.key(KeyCode::ArrowUp, true);
+        m.key(KeyCode::ArrowUp, true);
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Tried(1, false)]);
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!(said(&c, "Things to try (4)"), 1, "one ticked, one unticked: four are left");
+        // Tab again goes back to what is new; Esc leaves for the main
+        // page, on the row that led here.
+        m.key(KeyCode::Tab, true);
+        assert_eq!(m.rows()[0], Hit::Line(0));
+        m.key(KeyCode::Escape, true);
+        assert_eq!((m.page, m.rows()[m.focus]), (Page::Main, Hit::Build));
+        // Nothing new: the row has no count and the page says so.
+        m.build = Some(build_page(6, 0));
+        c.clear();
+        m.draw(&mut c);
+        assert!(!c.runs.iter().any(|r| r.text.strip_suffix(" new").is_some_and(|n| n.parse::<u32>().is_ok())));
+        m.show(Page::News);
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!((said(&c, "NEW"), said(&c, "Nothing new since you last played (build 3098, 2026-11-17)"), said(&c, "What is new")), (0, 1, 1));
+        // A PC that has not played: all of it is new, and the page says why.
+        let mut b = build_page(3, 3);
+        b.last = None;
+        m.build = Some(b);
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!((said(&c, "NEW"), said(&c, "All of it is new here: no round has been played on this PC yet")), (3, 1));
+    }
+
     /// A menu with the game's own lists' sizes: 17 options on three tabs
     /// with the longest notes, eight missions and 46 key lines (the
     /// game's, 11-15), some of them long.
@@ -2024,7 +2503,12 @@ mod tests {
                 _ => (format!("Ctrl + {k}"), "Make a group, select it".into()),
             })
             .collect();
-        StartMenu::new("Larder World", missions, options, keys)
+        let mut m = StartMenu::new("Larder World", missions, options, keys);
+        // What the build holds, with more lines than a screen has rows at
+        // the big sizes, and an experiment on (the corner names it).
+        m.build = Some(build_page(24, 9));
+        m.options.push(Opt::new("exp:feel", "Shake and hit-stop", &["off", "on"], "off", "on", "The camera shakes on blasts").in_tab("Experiments"));
+        m
     }
 
     /// The owner, 11-15 17:31Z: "Having to scroll is horrible. That's not
@@ -2070,7 +2554,7 @@ mod tests {
             // the focused one's), with every option moved off its default
             // (the note's longest: its "back to" button).
             m.show(Page::Options);
-            for tab in 0..3 {
+            for tab in 0..4 {
                 m.open_tab(tab);
                 for row in 0..m.rows().len() {
                     m.focus = row;
@@ -2081,7 +2565,7 @@ mod tests {
                 }
             }
             // The key list, page by page.
-            m.open_tab(3);
+            m.open_tab(4);
             assert_eq!(m.page, Page::Keys);
             draw(&mut m, &mut c);
             let pages = m.sheets();
@@ -2103,9 +2587,23 @@ mod tests {
                 check(&m, &c, &at);
                 assert_eq!(m.sheets(), 1, "{at}: the campaign takes {} pages", m.sheets());
             }
+            // The build page: what is new with every line focused in turn
+            // (its page follows, the note tells it in full, the longest
+            // shrunk to fit), then the things to try.
+            for tab in 0..2 {
+                m.open_news_tab(tab);
+                for row in 0..m.rows().len() {
+                    m.focus = row;
+                    draw(&mut m, &mut c);
+                    let h = m.rows()[row];
+                    let at = format!("{screen:?} at {user}, build page tab {tab}, {h:?}");
+                    check(&m, &c, &at);
+                    assert!(m.rect_of(h).is_some(), "{at}: not drawn when focused");
+                }
+            }
             // The main page with every row it can have (Random planet, the
-            // map editor) and a notice, each row focused in turn, its
-            // caption box beside it.
+            // map editor, what is new) and a notice, each row focused in
+            // turn, its caption box beside it.
             m.planets = true;
             m.edit_maps = true;
             m.notice = Some("The map editor did not start: larder-edit was not found next to the game".into());

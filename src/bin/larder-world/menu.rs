@@ -8,14 +8,21 @@
 //! Any other argument starts that round at once, as before, so every
 //! command line keeps working; `menu=1` with them opens the menu with
 //! those values preset (a preset that differs from the default shows in
-//! amber), and `menu=PAGE` (`main`, `campaign`, `options`, `keys`) with
-//! `look=DIR` films that page over the round (the pictures on the page).
+//! amber), and `menu=PAGE` (`main`, `campaign`, `options`, `keys`, `news`)
+//! with `look=DIR` films that page over the round (the pictures on the
+//! page).
+//!
+//! It also says what the build holds (`build_page`, from the Engine and
+//! tools lane's `slime_mould::build`): the build in the main page's
+//! corner, what is new with the lines new to this PC marked, and the
+//! things to try with their ticks.
 
 use super::*;
 use slime_mould::mould::run::{self as run, Pick};
 use slime_mould::mould::run::{Face, Group};
 use slime_mould::mould::bullets::{Set, Shell};
-use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, BAG};
+use slime_mould::build::news::{self, Memory};
+use slime_mould::world::start::{BuildPage, Entry, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -204,7 +211,35 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
     let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu.planets = true;
+    // What the build holds, as a PC that has not played sees it (every
+    // line new, nothing ticked): the window puts its own memory over it
+    // when it opens the menu (`App::open_menu`). A film may show a PC
+    // that has played by naming its settings file (`LARDER_SETTINGS`),
+    // which is read here and never written: nothing in a film plays a
+    // round or ticks a row.
+    let seen = std::env::var_os("LARDER_SETTINGS").filter(|v| !v.is_empty()).map_or_else(Memory::unsaved, |p| Memory::load_from(std::path::Path::new(&p)));
+    menu.build = Some(build_page(&seen));
     menu
+}
+
+/// **What the build says of itself**, for the menu (`start::BuildPage`),
+/// as `memory` has it: which build this is, the last one played here, the
+/// "what is new" list with the lines no round has been played on marked,
+/// and the things to try with their ticks.
+///
+/// The new lines come first, and each part is the newest first by the
+/// day a line was written. The file's own order is the order pull
+/// requests merged in, which on 11-18 already had three lines of 11-17
+/// under five of 11-18.
+pub(super) fn build_page(memory: &Memory) -> BuildPage {
+    let b = slime_mould::build::build();
+    let mut lines: Vec<NewsLine> = news::news().iter().map(|n| NewsLine { date: n.date.into(), lane: n.lane.name().into(), sees: n.sees.into(), try_it: n.try_it.into(), new: memory.is_new(n) }).collect();
+    lines.sort_by(|a, b| b.new.cmp(&a.new).then_with(|| b.date.cmp(&a.date)));
+    let last = memory.last_build.as_ref().map(|(n, commit, date)| {
+        let name = if *n > 0 { format!("build {n}") } else { format!("build {commit}") };
+        if date.is_empty() { name } else { format!("{name}, {date}") }
+    });
+    BuildPage { name: b.short(), long: b.long(), last, news: lines, to_try: news::to_try().iter().map(|t| TryLine { text: t.text.into(), tried: memory.is_tried(t) }).collect() }
 }
 
 /// The round a run's level plays: the options over the command line, as a
@@ -434,6 +469,8 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "campaign" | "missions" => Page::Missions,
         "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
+        // (`news-try`: its second tab, the things to try.)
+        "news" | "news-try" => Page::News,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" => Page::Shop,
         _ => return None,
     })
@@ -510,7 +547,13 @@ impl App {
     /// map.
     pub(super) fn open_menu(&mut self) -> Result<(), String> {
         let Some((base, chosen)) = self.base.clone() else { return Ok(()) };
-        let menu = self.menu.take().unwrap_or_else(|| start_menu(&base));
+        let mut menu = self.menu.take().unwrap_or_else(|| start_menu(&base));
+        // What this PC has seen and ticked, over the menu's own (a PC
+        // that has not played). The no-window films keep the menu's: their
+        // memory is never this PC's.
+        if self.window.is_some() {
+            menu.build = Some(build_page(&self.memory));
+        }
         self.args = round_args(&base, chosen, &menu, &StartEvent::Sandbox);
         self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
         self.menu = Some(menu);
@@ -650,6 +693,12 @@ impl App {
                     m.show(Page::Main);
                 }
             }
+            // A thing to try ticked or unticked: this PC remembers.
+            StartEvent::Tried(i, tried) => {
+                if let Some(t) = news::to_try().get(i) {
+                    self.memory.set_tried(t, tried);
+                }
+            }
             StartEvent::EditMaps => {
                 let note = match launch_editor() {
                     Ok(()) => "The map editor opened in its own window".to_string(),
@@ -731,7 +780,11 @@ impl App {
             self.hud.alert("The armory is on the start menu's Gun range", None, theme::WARN);
             return;
         };
-        self.menu = Some(self.parked.take().unwrap_or_else(|| start_menu(&base)));
+        let mut menu = self.parked.take().unwrap_or_else(|| start_menu(&base));
+        if self.window.is_some() {
+            menu.build = Some(build_page(&self.memory));
+        }
+        self.menu = Some(menu);
         self.set_armory(true);
         self.paused = true;
         self.show_armory();

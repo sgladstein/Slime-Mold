@@ -104,6 +104,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             "shop-tools" => {
                 m.open_shop_tab_named("Tools");
             }
+            // The build page's second tab, the things to try (11-18, the
+            // Look and interface lane's).
+            "news-try" => m.open_news_tab(1),
             // Options' second and third tabs (11-15), as Tab opens them.
             // The fourth, Experiments (11-17, the declared switches).
             "options-planet" | "options-mould" | "options-experiments" => {

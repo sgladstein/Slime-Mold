@@ -570,6 +570,10 @@ pub struct Model {
     pub clock: String,
     /// "Paused", "x4": a chip beside the clock.
     pub speed: Option<String>,
+    /// The experiments that are on, each as its name and choice ("Shake
+    /// and hit-stop on"): a small amber mark under the clock, so a round
+    /// that is not the default game says so for as long as it is played.
+    pub trying: Vec<String>,
     pub objective: Option<String>,
     pub selection: Vec<Card>,
     /// Drawn instead of the cards when set.
@@ -1469,6 +1473,28 @@ impl Hud {
             let r = Rect::new(x, y + 9.0 * s, chip, h - 18.0 * s);
             c.rrect(r, r.h / 2.0, alpha(WARN, 0.18));
             c.text(Weight::SemiBold, small, (r.x + r.w / 2.0, base - 1.0 * s), Align::Centre, &sp.to_uppercase(), WARN);
+        }
+        // The experiments that are on (the plan of 2026-11-17: "the HUD
+        // shows a small mark when anything is off its default"; the owner
+        // that day could not tell what was on or off). Under the clock,
+        // at the screen's edge and off the fight: in the clock's own pill
+        // it met the objective at 200% while paused. Hovering it names
+        // them.
+        if !m.trying.is_empty() {
+            let label = if m.trying.len() == 1 { "EXPERIMENT ON".to_string() } else { format!("{} EXPERIMENTS ON", m.trying.len()) };
+            let w = c.atlas.measure(Weight::SemiBold, small, &label) + 22.0 * s;
+            let r = Rect::new(menu.right() - w, y + h + 6.0 * s, w, 22.0 * s);
+            c.shadow(r, r.h / 2.0, 10.0 * s, 2.0 * s, SHADOW);
+            c.panel(r, r.h / 2.0, PANEL_TOP, PANEL_BOTTOM, 1.0, alpha(WARN, 0.55));
+            c.text(Weight::SemiBold, small, (r.x + r.w / 2.0, r.y + 15.5 * s), Align::Centre, &label, WARN);
+            self.hits.push((r, Hit::Panel));
+            if self.hover.is_some_and(|p| r.contains(p)) {
+                // Under the mark, ending at its right edge (`tip_small`'s
+                // own flip put it a mark's width to the left).
+                let tip = format!("Not the default game: {}. Options, the Experiments tab", m.trying.join(", "));
+                let tw = c.atlas.measure(Weight::Medium, 13.5 * s, &tip) + 18.0 * s;
+                self.tip_small(&tip, ((r.right() - tw).max(8.0 * s), r.bottom() + 6.0 * s), c, s);
+            }
         }
         // The objective, centred.
         if let Some(obj) = &m.objective {
@@ -3211,6 +3237,47 @@ mod tests {
             } else {
                 assert!(carry.is_none());
             }
+        }
+    }
+
+    /// The experiments mark (the plan of 2026-11-17: "the HUD shows a
+    /// small mark when anything is off its default"): none in the default
+    /// game; with a switch on, a chip under the clock at the screen's
+    /// right edge, clear of the top bar's pills and of the bottom bar,
+    /// that names the switches when the cursor is on it and keeps a click
+    /// from reaching the world. At the plain size and at 200%.
+    #[test]
+    fn a_round_off_the_default_game_wears_a_mark() {
+        for user in [1.0, 2.0] {
+            let mut r = Rig::new((1920, 1080));
+            r.c.ui.user = user;
+            r.m.clock = "1:00 / 18:00".into();
+            r.m.speed = Some("Paused".into());
+            r.m.objective = Some("Wipe out the slime: cut it to 1% of its peak (counting from 1:00; 43,957 walkers now)".into());
+            r.draw();
+            let said = |r: &Rig, t: &str| r.c.runs.iter().find(|x| x.text == t).map(|x| x.ink);
+            assert!(said(&r, "EXPERIMENT ON").is_none() && !r.c.runs.iter().any(|x| x.text.contains("EXPERIMENTS ON")), "at {user}: a mark in the default game");
+            r.m.trying = vec!["Shake and hit-stop on".into()];
+            r.draw();
+            let ink = said(&r, "EXPERIMENT ON").unwrap_or_else(|| panic!("at {user}: no mark with a switch on"));
+            // Under the top bar, at the right, on the screen, and touching
+            // no other word.
+            assert!(ink.1 >= r.hud.top && ink.2 <= 1920.0 && ink.0 >= 1920.0 * 0.75 && ink.3 <= 1080.0 * 0.2, "at {user}: the mark at {ink:?}, the top bar ends at {}", r.hud.top);
+            for x in r.c.runs.iter().filter(|x| x.text != "EXPERIMENT ON" && x.ink.0 < x.ink.2) {
+                let apart = ink.2 <= x.ink.0 || x.ink.2 <= ink.0 || ink.3 <= x.ink.1 || x.ink.3 <= ink.1;
+                assert!(apart, "at {user}: the mark {ink:?} over {:?} {:?}", x.text, x.ink);
+            }
+            // On it, the cursor is over the HUD (a click does not reach the
+            // world), and the tip names what is on.
+            r.at(((ink.0 + ink.2) / 2.0, (ink.1 + ink.3) / 2.0));
+            r.draw();
+            assert!(r.c.runs.iter().any(|x| x.text == "Not the default game: Shake and hit-stop on. Options, the Experiments tab"), "at {user}: no tip");
+            assert!(r.click(Button::Left, true).0, "at {user}: a click on the mark went to the world");
+            r.click(Button::Left, false);
+            // Two are counted.
+            r.m.trying.push("Crystals refill on".into());
+            r.draw();
+            assert!(said(&r, "2 EXPERIMENTS ON").is_some(), "at {user}");
         }
     }
 

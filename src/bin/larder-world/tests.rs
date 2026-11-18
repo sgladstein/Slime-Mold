@@ -1433,6 +1433,61 @@ fn n_on_a_seeded_planet_goes_on_to_the_next_seed() {
     assert_eq!(next_planet("fork"), None);
 }
 
+/// **The menu says what the build holds** (`menu::build_page`; the plan
+/// of 2026-11-17: the build number, what is new since the build last
+/// played, the things to try). A PC that has not played sees every line
+/// as new; one that played an older list sees the lines added since
+/// first, marked, and the last build named; a tick on the page is saved
+/// and read back.
+#[test]
+fn the_menu_says_what_the_build_holds() {
+    use slime_mould::build::news::{self, Memory};
+    use slime_mould::world::start::StartEvent;
+    let all = news::news();
+    let fresh = build_page(&Memory::unsaved());
+    assert_eq!(fresh.name, slime_mould::build::build().short());
+    assert_eq!(fresh.long, slime_mould::build::build().long());
+    assert_eq!(fresh.news.len(), all.len());
+    assert!(fresh.last.is_none() && fresh.news.iter().all(|l| l.new) && fresh.to_try.iter().all(|t| !t.tried));
+    assert!(fresh.news.windows(2).all(|w| w[0].date >= w[1].date), "the newest day first");
+    assert_eq!(fresh.to_try.len(), news::to_try().len());
+    // The menu carries it, and its main page has the row.
+    let menu = start_menu(&Args::default());
+    assert_eq!(menu.build.as_ref().map(|b| b.news.len()), Some(all.len()));
+    // A PC whose last round was on a list that ended three lines ago.
+    let p = std::env::temp_dir().join(format!("larder-build-page-{}/settings.txt", std::process::id()));
+    let _ = std::fs::remove_file(&p);
+    let old: Vec<String> = all.iter().skip(3).map(|n| format!("{:08x}", n.id)).collect();
+    settings::set_at(&p, "news_seen", &old.join(",")).unwrap();
+    settings::set_at(&p, "last_build", "3098:abc1234:2026-11-16").unwrap();
+    let page = build_page(&Memory::load_from(&p));
+    assert_eq!(page.last.as_deref(), Some("build 3098, 2026-11-16"));
+    assert_eq!(page.news.iter().filter(|l| l.new).count(), 3);
+    assert!(page.news[..3].iter().all(|l| l.new) && page.news[3..].iter().all(|l| !l.new), "the new lines come first");
+    let mut new: Vec<&str> = page.news[..3].iter().map(|l| l.sees.as_str()).collect();
+    let mut want: Vec<&str> = all[..3].iter().map(|n| n.sees).collect();
+    new.sort();
+    want.sort();
+    assert_eq!(new, want, "the three the old list did not have");
+    // A build with no number is named by its commit.
+    settings::set_at(&p, "last_build", "0:abc1234:2026-11-16").unwrap();
+    assert_eq!(build_page(&Memory::load_from(&p)).last.as_deref(), Some("build abc1234, 2026-11-16"));
+    // A tick on the page reaches this PC's memory and its file, and an
+    // untick takes it off; it starts no round.
+    if let Some(t) = news::to_try().first() {
+        let mut app = App::new(Args::default());
+        app.memory = Memory::load_from(&p);
+        assert!(!app.menu_event(StartEvent::Tried(0, true)).unwrap());
+        assert!(build_page(&app.memory).to_try[0].tried && Memory::load_from(&p).is_tried(t));
+        assert!(app.game.is_none(), "a tick started a round");
+        app.menu_event(StartEvent::Tried(0, false)).unwrap();
+        assert!(!Memory::load_from(&p).is_tried(t));
+        // (A tick past the list's end is nothing.)
+        app.menu_event(StartEvent::Tried(99, true)).unwrap();
+    }
+    let _ = std::fs::remove_dir_all(p.parent().unwrap());
+}
+
 /// The menus' own lists on one screen (owner 11-15 17:31Z: "Having to
 /// scroll is horrible. That's not professional."): every Options tab and
 /// the campaign in one page and the key list in three at most, nothing
@@ -1486,6 +1541,15 @@ fn the_menus_real_lists_fit_one_screen() {
             m.show(Page::Missions);
             draw(&mut m);
             assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the campaign takes {} pages", m.sheets());
+            // What the build holds (11-18): the game's own list of what
+            // is new pages and never scrolls, and its five things to try
+            // take two pages at most (at 200% on 720 lines).
+            m.show(Page::News);
+            draw(&mut m);
+            assert!(!m.scrolls(), "{at}: what is new scrolls");
+            m.open_news_tab(1);
+            draw(&mut m);
+            assert!(m.sheets() <= 2 && !m.scrolls(), "{at}: the things to try take {} pages", m.sheets());
             // The run's shop three planets in (as `menu=shop-mid` films it)
             // and the gun range's armory (Shop B, 11-15): every tab whole on
             // one screen, but the armory's eight guns, which may take two
