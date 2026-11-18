@@ -294,7 +294,6 @@ fn the_keys_say_which_switches_are_on() {
     // row's "on".
     assert_eq!(log_word(&keys(&[("win:shake", "1"), ("win:hitstop", "1")])), "feel:on");
     assert_eq!(log_word(&keys(&[("win:shake", "1")])), "feel:custom");
-    assert_eq!(log_word(&keys(&[("win:setlook", "2")])), "set_look:glaze");
     // A film's own number is custom, not lost.
     assert_eq!(log_word(&keys(&[("crystal_regrow", "0.01")])), "crystal_regrow:custom");
     // Everything at once reads back as every switch (the all-switches

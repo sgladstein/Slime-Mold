@@ -537,10 +537,6 @@ struct Args {
     /// line, to see whether crust shows roads or one plate under the body
     /// (the reviews' question).
     crust_look: Option<u8>,
-    /// `setlook=N` (2026-11-17, the simulation-use plan's E2b): set slime's
-    /// look, 1 amber (the default, None), 2 glaze, 0 hidden; only with
-    /// setting (`setting=1`).
-    set_look: Option<u32>,
     /// `light=T,X,Y,R` (2026-11-17, the crust fire films): a plain fire
     /// lit over R world units at (X, Y) at game second T (a burn burst,
     /// no kill); repeat for more.
@@ -1369,7 +1365,7 @@ impl App {
             // the same buffer, when the world has one (`crust=1`).
             v.set_crust((e.crust_at > 0).then_some((&e.news, &e.state)), (e.crust_at / 4) as u32);
             // Set slime (E2b), from the block after the crust's set words.
-            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n, self.args.set_look.unwrap_or(1));
+            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
@@ -2344,7 +2340,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 args.keys.extend(slime_mould::build::switches::keys_of(choice));
             }
             "crustlook" => args.crust_look = Some(v.parse()?),
-            "setlook" => args.set_look = Some(v.parse::<u32>()?.min(2)),
             "watch" => {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, r] = w.as_slice() else { return Err("watch=X,Y,R".into()) };

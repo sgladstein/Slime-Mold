@@ -27,3 +27,4 @@
 2026-11-18 | enemy | On every planet the slime reaches for crystals it has not touched from across the map, and its charges come round walls instead of piling up against them | Watch the whole map on planet 1 or 2 for two minutes
 2026-11-18 | enemy | Planet 4's slime (the Swarmer) makes a last stand: cut to a quarter of its biggest, all of it rushes your squad, once | Reach planet 4 and cut the slime down
 2026-11-18 | enemy | The Experiments tab is down to four rows, and play-new-slime.cmd is gone: what it turned on is in every game now | Double-click play.cmd as always
+2026-11-18 | look | The Experiments tab no longer lists the set slime's look: the walls the slime sets into on planet 3 are always amber | Open Options and the Experiments tab: three rows are left

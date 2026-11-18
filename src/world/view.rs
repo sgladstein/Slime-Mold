@@ -253,9 +253,8 @@ pub struct View {
     /// engine's crust block starts (`gpu::Engine::crust_at` / 4), 0 off.
     crust_at: u32,
     /// Set slime (`set_setting`, E2b): the set walkers a cell's first word
-    /// in `news` and the look (0 off, 1 amber, 2 glaze).
+    /// in `news`, 0 off.
     setc_at: u32,
-    set_look: u32,
     /// The Lure's steering field (`set_steer`, 2026-11-18): the word in
     /// `news` where its blocks start, 0 hidden.
     steer_at: u32,
@@ -399,7 +398,6 @@ impl View {
             plant_at: 0,
             crust_at: 0,
             setc_at: 0,
-            set_look: 0,
             steer_at: 0,
             flora: 0,
             ripe_at: 0,
@@ -727,7 +725,7 @@ impl View {
             self.dense_at = 0;
             self.plant_at = 0;
             self.crust_at = 0;
-            (self.setc_at, self.set_look) = (0, 0);
+            self.setc_at = 0;
             self.steer_at = 0;
         }
     }
@@ -774,10 +772,12 @@ impl View {
 
     /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)
     /// from the engine's `news` word `at` (`gpu::Engine::crust_at` / 4 +
-    /// cells + walkers), bound with the crust (`set_crust` first): `look` 1
-    /// amber, 2 glaze, 0 hides it. Off while the crust is.
-    pub fn set_setting(&mut self, at: u32, look: u32) {
-        (self.setc_at, self.set_look) = if self.crust_at > 0 { (at, look) } else { (0, 0) };
+    /// cells + walkers), bound with the crust (`set_crust` first), as amber
+    /// resin; `at` 0 hides it. Off while the crust is. (To 2026-11-18 it
+    /// took a look, 1 amber, 2 a pale glaze, 0 hidden, for a blind A/B;
+    /// amber is the game's and the other two went: `view.wgsl`, `set_mat`.)
+    pub fn set_setting(&mut self, at: u32) {
+        self.setc_at = if self.crust_at > 0 { at } else { 0 };
     }
 
     /// Draws the Lure's steering field (2026-11-18) from the engine's
@@ -969,7 +969,8 @@ impl View {
         for v in self.lump_fade.into_iter().chain(self.lump_fill).chain(self.lump_held) {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.crust_at, self.setc_at, self.set_look, self.steer_at] {
+        // The third word is spare (set slime's look to 2026-11-18).
+        for v in [self.crust_at, self.setc_at, 0, self.steer_at] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);

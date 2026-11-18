@@ -28,9 +28,9 @@
 //! across all lanes, and each ends at the owner's next play: on, one
 //! tier's trait, or deleted with its `Reports/dead-ends.md` line. The
 //! list began on 11-17 as ROADMAP's table as it stood, 14 rows. The Enemy
-//! lane settled ten of them that day; four are left, one over the count,
-//! and `MOST_OFF` is held by the compiler once one more is settled
-//! (`SETTLING`).
+//! lane settled ten of them that day and Look and interface the set
+//! slime's look on 11-18; three are left, and the compiler holds
+//! `MOST_OFF` from then on (`SETTLING`).
 
 /// The lanes of the 11-17 plan, as a row's owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -75,8 +75,8 @@ impl Lane {
 /// `("set:unit_paths", "1")`, set through `Rules::set` or `RoundRules::set`.
 pub const RULE_KEY: &str = "set:";
 
-/// The prefix of a key only the window reads (`win:setlook`: the
-/// command line's `setlook=`). The window sets it (`larder-world`'s
+/// The prefix of a key only the window reads (`win:shake`: the
+/// command line's `shake=`). The window sets it (`larder-world`'s
 /// `set_window_key`); the library's worlds ignore it.
 pub const WINDOW_KEY: &str = "win:";
 
@@ -123,14 +123,14 @@ const fn on(keys: &'static [(&'static str, &'static str)]) -> Choice {
 /// lanes (plan, rule 3).
 pub const MOST_OFF: usize = 3;
 
-/// True while the list is over `MOST_OFF`. It stands at four since the
-/// Enemy lane settled its rows of ROADMAP's table (11-17): the set
-/// slime's look (Look and interface), shake and hit-stop and the free
-/// recruits (Squad and arsenal), crystals that refill (held with the
-/// owner's answer on the rush, D7). Set it false in the change that brings
-/// the list down to `MOST_OFF`, and a row over the count stops the build
-/// from then on.
-pub const SETTLING: bool = true;
+/// True while the list is over `MOST_OFF`. It stood at four from 11-17,
+/// when the Enemy lane settled its rows of ROADMAP's table, to 11-18,
+/// when Look and interface settled the set slime's look (amber; the row
+/// is gone). Three are left: shake and hit-stop and the free recruits
+/// (Squad and arsenal), crystals that refill (held with the owner's
+/// answer on the rush, D7). It is false since that change, so a row over
+/// the count stops the build.
+pub const SETTLING: bool = false;
 
 // The count, held by the compiler: with `SETTLING` false, a fourth row
 // does not build.
@@ -144,22 +144,15 @@ const _: () = assert!(SETTLING || SWITCHES.len() <= MOST_OFF, "more switches are
 /// stand the Swarmer's (`run::does_to_you`); lossy flow, the lone step and
 /// the trap (`set_hold`) were deleted (`Reports/dead-ends.md`). What
 /// became of each is in `Reports/enemy-switches-2026-11-17/README.md`.
+/// Look and interface settled the set slime's look on 11-18: amber is
+/// what the game draws, and its glaze and its unmarked side were deleted
+/// with the window key `setlook` (`Reports/dead-ends.md`).
 ///
 /// To add one: a row here, in the same change as the key. To settle one:
 /// make its choice the engine's or the rules' own default (or a tier's
 /// trait in `tiers.rs` / `run::does_to_you`) and delete the row, or delete
 /// the feature and the row and add the `Reports/dead-ends.md` line.
 pub const SWITCHES: &[Switch] = &[
-    Switch {
-        key: "set_look",
-        label: "Set slime's look",
-        choices: &[Choice { name: "amber", keys: &[] }, Choice { name: "glaze", keys: &[("win:setlook", "2")] }, Choice { name: "hidden", keys: &[("win:setlook", "0")] }],
-        default: "amber",
-        lane: Lane::Look,
-        since: "2026-11-17",
-        sees: "How the slime that sets on planet 3 (the Trunk) is drawn: amber, a glaze, or not marked at all",
-        why_off: "A look pick: slime sets on planet 3 since 11-17 and is drawn amber. The Look and interface lane's to settle",
-    },
     Switch {
         key: "feel",
         label: "Shake and hit-stop",
@@ -290,8 +283,7 @@ pub fn state(keys: &[(String, String)]) -> Vec<(&'static Switch, &'static str)> 
     out
 }
 
-/// The play log's word for `state`: `set_look:glaze,reserve:on`, or
-/// `none`.
+/// The play log's word for `state`: `feel:on,reserve:on`, or `none`.
 pub fn log_word(keys: &[(String, String)]) -> String {
     let on = state(keys);
     if on.is_empty() {
@@ -313,9 +305,9 @@ pub fn all_on() -> Vec<(String, String)> {
     SWITCHES.iter().flat_map(|s| keys_of(s.tried())).collect()
 }
 
-/// The same with every switch at its last choice: the other side of each
-/// either-or (the set slime's look hidden instead of a glaze), which the
-/// all-switches test plays as its second round.
+/// The same with every switch at its last choice: the other side of an
+/// either-or with three choices (none today; the set slime's look was
+/// one to 11-18), which the all-switches test plays as its second round.
 pub fn all_last() -> Vec<(String, String)> {
     SWITCHES.iter().flat_map(|s| keys_of(s.choices.iter().rev().find(|c| c.name != s.default).expect("a choice off the default"))).collect()
 }
