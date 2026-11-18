@@ -56,6 +56,19 @@ pub fn marks() -> Vec<Mark> {
         .collect()
 }
 
+/// A mark a soldier's shot laid (`LAB_SHOT`, part two: a gun that lays the
+/// pull along its shots): a fine cell (x | y << 16), the tick it goes out,
+/// and whether it pushes (a hill) or draws (a lure).
+#[derive(Clone, Copy, Debug)]
+pub struct ShotMark {
+    pub cell: u32,
+    pub out: u64,
+    pub push: bool,
+}
+
+/// Most shot marks alive at once; past it the oldest go.
+const SHOT_MARKS_MAX: usize = 256;
+
 /// A lone pusher's height at its rim (`steer_field`).
 const PUSH_BASE: u32 = 60;
 
@@ -91,8 +104,55 @@ pub fn steer_field(agar: &[bool], w: usize, h: usize, lures: &[u32], pushers: &[
 }
 
 impl<W: World> Game<W> {
-    /// Once a game second (`time_food_paths`): set the field started a
-    /// second ago, start the next from the lures and pushers standing now.
+    /// Every step: the squad's shots lay their marks (`LAB_SHOT`), and
+    /// the field is rebuilt every `LAB_EVERY` game seconds (default 1; a
+    /// gun wants it quicker, and each field is still set one period late
+    /// so a replay does not depend on the worker thread).
+    ///
+    /// `LAB_SHOT=push`: each soldier's bullet that hits slime lays a pusher
+    /// on the hit, so the body leans away from where it is being shot.
+    /// `LAB_SHOT=lure`: it lays a lure `LAB_SHOT_AHEAD` dish cells (default
+    /// 20) past the hit along the bullet's line, so the body leans the way
+    /// the squad fires. `LAB_SHOT=drive`: both. A mark lasts
+    /// `LAB_SHOT_SECS` (default 3). Turrets' shots lay none.
+    pub(super) fn lab_turn(&mut self, before: u64, now: u64) {
+        if !self.world.lab_steer() {
+            return;
+        }
+        let tps = self.rules.tps as f32;
+        if let Ok(mode) = std::env::var("LAB_SHOT") {
+            let (push, lure) = (mode != "lure", mode != "push");
+            let out = now + (knob("LAB_SHOT_SECS", 3.0) * tps).round() as u64;
+            let ahead = knob("LAB_SHOT_AHEAD", 20.0) * self.world.scale();
+            let cell = |x: f32, y: f32| (x.max(0.0) as u32) | ((y.max(0.0) as u32) << 16);
+            let mut laid = Vec::new();
+            for s in self.last_shots.iter().filter(|s| s.by.is_some()) {
+                let Some(h) = s.hit else { continue };
+                if push {
+                    laid.push(ShotMark { cell: cell(h.0, h.1), out, push: true });
+                }
+                if lure {
+                    let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
+                    let d = dx.hypot(dy).max(1e-3);
+                    laid.push(ShotMark { cell: cell(h.0 + dx / d * ahead, h.1 + dy / d * ahead), out, push: false });
+                }
+            }
+            let m = &mut self.raids.lab_shots;
+            m.retain(|k| k.out > now);
+            m.extend(laid);
+            if m.len() > SHOT_MARKS_MAX {
+                m.drain(..m.len() - SHOT_MARKS_MAX);
+            }
+        }
+        let every = ((knob("LAB_EVERY", 1.0) * tps).round() as u64).max(1);
+        if now / every != before / every {
+            self.steer_turn();
+        }
+    }
+
+    /// Every `LAB_EVERY` game seconds (`lab_turn`): set the field started
+    /// a period ago, start the next from the lures, pushers and marks
+    /// standing now.
     pub(super) fn steer_turn(&mut self) {
         if let Some(way) = self.raids.food_way.take() {
             let field = way.finish();
@@ -104,7 +164,7 @@ impl<W: World> Game<W> {
                     let at = |c: (f32, f32)| field.get((c.1 as usize / crate::mould::big::RAID_BLOCK) * bw + c.0 as usize / crate::mould::big::RAID_BLOCK).copied().unwrap_or(u32::MAX);
                     let reached = field.iter().filter(|&&d| d != u32::MAX).count();
                     let cs: Vec<String> = self.world.crystals().iter().map(|c| format!("({:.0},{:.0}):{}", c.0.0, c.0.1, at(c.0) as i32)).collect();
-                    println!("  lab t {:.0} s: field reaches {reached} of {} blocks; at crystals {}", self.time(), field.len(), cs.join(" "));
+                    println!("  lab t {:.2} s: field reaches {reached} of {} blocks; {} shot marks; at crystals {}", self.time(), field.len(), self.raids.lab_shots.len(), cs.join(" "));
                 }
             }
             self.world.set_food_field(field);
@@ -121,6 +181,10 @@ impl<W: World> Game<W> {
                 let c = cell(m.at);
                 if m.push { pushers.push(c) } else { lures.push(c) }
             }
+        }
+        let tick = self.world.ticks();
+        for k in self.raids.lab_shots.iter().filter(|k| k.out > tick) {
+            if k.push { pushers.push(k.cell) } else { lures.push(k.cell) }
         }
         let reach = (knob("LAB_REACH", 60.0) * sc) as u32;
         let push = (knob("LAB_PUSH", 25.0) * sc) as u32;

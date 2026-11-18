@@ -147,11 +147,13 @@ pub struct Raids {
     unit_way: Option<Way>,
     /// The far smell's field being built (S2, `time_food_paths`).
     pub(super) food_way: Option<Way>,
+    /// LAB: the marks the squad's shots have laid (`lab.rs`, `LAB_SHOT`).
+    pub(super) lab_shots: Vec<super::lab::ShotMark>,
 }
 
 impl Raids {
     pub fn new(seed: u64) -> Raids {
-        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None }
+        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lab_shots: Vec::new() }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -277,7 +279,7 @@ impl<W: World> Game<W> {
     pub(super) fn time_food_paths(&mut self) {
         // LAB: the steering field takes the far smell's slot.
         if self.world.lab_steer() {
-            return self.steer_turn();
+            return; // `Game::lab_turn` builds it, at its own pace.
         }
         if !self.world.far_smell() {
             return;

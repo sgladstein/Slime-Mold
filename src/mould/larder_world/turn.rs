@@ -420,6 +420,7 @@ impl<W: World> Game<W> {
             self.time_food_paths();
             self.time_bosses();
         }
+        self.lab_turn(t, now);
         self.campaign_rules(now - t);
         self.check_end();
     }
