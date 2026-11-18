@@ -28,17 +28,27 @@ two tabs (what is new with NEW marks and a pane; things to try with ticks,
 corner; `ui::Model::trying`, a yellow mark under the clock in play. The
 window fills them in `menu.rs` (`build_page`) and `draw.rs`.
 
-**Open branch:** `claude/project-thread-8bv885`, one pull request: raised
-walls and the Lure's rim (`Reports/raised-walls-2026-11-18/`, page
-https://claude.ai/artifact/EBAKa6mpRV9M31H5CoDiF1). Set slime stands
-`SET_RISE` 4 above the sheet (`set_rise` in `prep`), so Enemy's fort rings
-(#473) read as walls; no ring within half a ring of the Lure's reach
-(`View::set_steer_reach`, one call in `main.rs`'s `prepare_now`).
+**Open branch:** `claude/project-thread-8bv885`, one pull request at a
+time.
+
+- Raised walls and the Lure's rim (#477; `Reports/raised-walls-2026-11-18/`,
+  page https://claude.ai/artifact/EBAKa6mpRV9M31H5CoDiF1). Set slime
+  stands `SET_RISE` 4 above the sheet (`set_rise` in `prep`), so Enemy's
+  fort rings (#473) read as walls; no ring within half a ring of the
+  Lure's reach (`View::set_steer_reach`, one call in `main.rs`'s
+  `prepare_now`).
+- Then flung droplets in the slime's material (Look A3;
+  `Reports/droplets-2026-11-18/`, page
+  https://claude.ai/artifact/9vsJuSofq14P5jShjiWyqe): a shot's spray flies
+  as gold beads lit by the body's key light, each with a shadow, not chips
+  in a dark rim (`draw_specks`, `DROP_*` in `view.wgsl`). Zoom 6 is
+  quieter than the chips were; `DROP_GLOW` is the number if hits read too
+  quiet. Shots already fly as comets, so A2 is now only the hole.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame). On open ground its rings are octagons,
-the field's 8-neighbour walking distance; Enemy will make the field round
-(11-18). Then film it in play at zoom 6 and 12 on planets 1 to 3. Scenes
+the field's 8-neighbour walking distance, until Enemy's round field
+(#478, 11-18 14:40Z). Now film it in play at zoom 6 and 12 on planets 1 to 3. Scenes
 that work (run seed 1): a Lure at (275, 95), (100, 168) and (357, 182)
 from 30 s, three `turret2` round it and the squad held beside; each pulls
 400 to 500 walkers within 30 cells by 40 s. Then decide whether the scent light's code goes (Squad asked to
@@ -46,11 +56,10 @@ keep it for now; it only shows where no steering field is drawn).
 
 **Next, in order.**
 
-1. Film the Lure in play once Enemy's round field lands (above).
+1. Film the Lure in play now that Enemy's round field has landed (above).
 2. The rest of Look A, from the ranked list in
-   `wiki/looks/art-direction.md`: shots as bright streaks, droplets in the
-   slime's material, a squad of 40 you can count, no effect bigger than
-   its damage.
+   `wiki/looks/art-direction.md`: a hit's hole and how it closes, a squad
+   of 40 you can count, no effect bigger than its damage.
 3. The Experiments tab's own look (still Engine's first tab, one row a
    switch), and the experiments in the pause menu.
 4. Win and lose screens with the planet's numbers.
@@ -64,8 +73,8 @@ keep it for now; it only shows where no steering field is drawn).
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's
 Provoke and Still (#448) and Enemy's amber set slime (#451), both fine to
 land. Owed from them to the look list: a stilled or provoked body has no
-look of its own (A6), and burning slabs draw as cell-sized squares at zoom
-12 (A7). Enemy's Trunk fort (#473): fine to land; its flat walls led to
+look of its own (A5), and burning slabs draw as cell-sized squares at zoom
+12 (A6). Enemy's Trunk fort (#473): fine to land; its flat walls led to
 the raised walls above.
 
 **Worth knowing.**
