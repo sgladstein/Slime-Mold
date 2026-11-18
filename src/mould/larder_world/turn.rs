@@ -571,7 +571,11 @@ impl<W: World> Game<W> {
             }
         }
         if r.reserve > 0.0 {
-            if self.alive() < 2 && self.bank < r.soldier_cost && !held {
+            // No recruit for a squad that is gone where that ends the
+            // round (`Rules::wipe_ends`): it could come on the step the
+            // last soldier fell, before the end is checked.
+            let gone = r.wipe_ends > 0.0 && self.alive() == 0;
+            if self.alive() < 2 && self.bank < r.soldier_cost && !held && !gone {
                 self.reserve_ticks += ticks;
                 if self.reserve_ticks >= self.secs(r.reserve) {
                     self.reserve_ticks = 0;
@@ -612,7 +616,9 @@ impl<W: World> Game<W> {
         // With the reserve on, a wiped squad waits for its recruit unless
         // the mould holds the larder.
         let recruit = self.rules.reserve > 0.0 && self.larder_touch == 0;
-        if self.alive() == 0 && self.bank < self.rules.soldier_cost && !recruit {
+        // In a run the last soldier's death ends it (`Rules::wipe_ends`).
+        let wiped = self.rules.wipe_ends > 0.0 || (self.bank < self.rules.soldier_cost && !recruit);
+        if self.alive() == 0 && wiped {
             self.end = Some(End::SquadWiped(t));
         } else if self.mould == 0 {
             self.end = Some(End::MouldWiped(t));
