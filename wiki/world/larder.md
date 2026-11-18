@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
@@ -318,8 +318,16 @@ cost does not show, clock or food-driven, and the squad twins pass.
 Since 11-15 the slime also **raids** (owner, 20:56Z: a big defense
 "just ends with the mold clustering around its own crystals"; 21:15Z:
 "Raids is the number 1 option") at random times: since 11-16 each
-raid draws its wait from a normal distribution (mean 60 s, spread 20 s,
-never under 20 s; the first round 1:15) and its size the same way (mean
+raid draws its wait from a normal distribution (never under 20 s) and
+its size the same way; since 11-18 they are **rare early and often later**
+(the owner's play notes, 15:56Z: "Occasionally a raid can happen early in
+a session but not every time. and they can happen often later on in a
+session, but not right at the begining"; `RaidRules::gap_at`,
+`Raids::first_raid`): counted from the landing, the first comes at 4:00
++/- 40 s, or in one game in five at 1:20 +/- 20 s, and the wait falls in a
+line from 150 +/- 45 s at the landing to 45 +/- 13.5 s by 10:00 (until
+then 60 +/- 20 s all game and the first about 1:15, so his planet 1 and 2
+rounds that day met raids at 1:08 and 0:54); the size is drawn (mean
 15% of the slime's mass, spread 6%, within 4-40%), at the player's best
 pump (owner 01:48Z: raids "regardless", not "so consistent as every 400
 food", the rule until then), else a building, else the soldiers, from

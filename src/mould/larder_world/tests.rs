@@ -3230,7 +3230,7 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
         }
         (g, top)
     };
-    let fast = RaidRules { first: 2.0, first_sd: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, size_sd: 0.0, ..RaidRules::default() };
+    let fast = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, late: 1.0, size_sd: 0.0, ..RaidRules::default() };
     let (g, top) = play(fast, false, 14.0);
     eprintln!("raids: {:?}", g.raids.sent);
     assert!(g.raids.sent.len() >= 2, "a raid every 5 s: {}", g.raids.sent.len());
@@ -3265,7 +3265,7 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert!(!RaidRules::default().last_stand);
     // Random (owner 2026-11-16 01:48Z): each raid draws its gap and its
     // size from a normal distribution, within the floor and the bounds.
-    let spread = RaidRules { first: 2.0, first_sd: 1.0, min: 2.0, every: 4.0, every_sd: 2.0, size: 0.15, size_sd: 0.06, ..RaidRules::default() };
+    let spread = RaidRules { first: 2.0, first_sd: 1.0, early: 0.0, min: 2.0, every: 4.0, every_sd: 2.0, late: 1.0, size: 0.15, size_sd: 0.06, ..RaidRules::default() };
     let (g, _) = play(spread, false, 30.0);
     let r = &g.raids.sent;
     assert!(r.len() >= 4, "{} raids in 30 s", r.len());
@@ -3320,12 +3320,19 @@ fn a_rendering_turret_pays_for_kills_in_its_range() {
 /// run (owner 04:58Z, "Chance increases with progression into the run").
 #[test]
 fn mini_boss_chances_rise_with_the_planet() {
-    let (a, b) = (BossRules::for_depth(1), BossRules::for_depth(8));
+    // None on planet 1 (the owner's play notes, 2026-11-18 15:56Z:
+    // "Mini-bosses also shouldn't show up in world one. that should be
+    // part of progression"): off as outside a run.
+    let one = BossRules::for_depth(1);
+    assert_eq!((one.every, one.cut), (0.0, 0.0), "none on planet 1");
+    let (a, b) = (BossRules::for_depth(2), BossRules::for_depth(8));
     assert!(a.every > b.every && a.cut < b.cut && a.first > b.first, "{a:?} {b:?}");
+    assert_eq!((a.every, a.cut), (150.0, 0.02), "planet 2 has the curve's first step");
+    assert!((b.every - 45.0).abs() < 1e-3 && (b.cut - 0.1).abs() < 1e-6, "planet 8 as before: {b:?}");
     assert_eq!((a.most, BossRules::for_depth(4).most), (1, 2));
     assert_eq!(Rules::default().boss.every, 0.0, "off outside a run");
     assert_eq!(Rules::default().boss.cut, 0.0);
-    for d in 1..8 {
+    for d in 2..8 {
         let (p, q) = (BossRules::for_depth(d), BossRules::for_depth(d + 1));
         assert!(q.every <= p.every && q.cut >= p.cut && q.grade_lo >= p.grade_lo && q.grade_hi >= p.grade_hi, "planet {d}");
     }
