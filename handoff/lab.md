@@ -60,7 +60,14 @@ A second slime species that fights the first; the player's own mould
   reports, pages) reach main through Direction: the files go in the
   project's shared folder under `lab-docs/` and Direction merges them
   docs-only.
-- Next step: wait for the ruling on the recommendation. If steering is
-  taken up, the lab's follow-ups are in the report's *Not tried* (a gun
-  that lays the pull along its shots is the closest to the owner's words).
-  Otherwise start the next brief below.
+- 2026-11-18 03:03Z: Scott: "Lure now, in the three planets". Enemy ports
+  the lure field from commit `dafbc22` (own slot, weight 10), Squad and
+  arsenal returns the Lure to the run shop, Look picks the ring colour. The
+  lab answers their questions and keeps the branch; the pusher, per-tier
+  weights and steering by bullets stay in the lab.
+- 2026-11-18: part two, steering by bullets, delivered as a section of the
+  same report and page: no bullet steering card (no version beat plain
+  fire); the gun's job is to carry a lure dart. Lead: a strong lure that
+  drags a colony off its crystal shrinks it without kills.
+- Next step: the eviction lead or the pusher's carrier, whichever
+  Direction prefers; then the next brief below.
