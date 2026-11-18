@@ -1910,8 +1910,8 @@ pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
 /// outpost is out, and the siren stays out until it visibly draws the
 /// slime. The shop doesn't sell them (`run::ITEMS`). The lure and the
 /// lures' switch were hidden with them until 2026-11-18 (owner's card,
-/// 03:03Z: "Lure now, in the three planets"); the shop sells the lure
-/// again (`run_lock`).
+/// 03:03Z: "Lure now, in the three planets"); it needs no unlock
+/// (`run_lock`).
 pub(super) fn run_hidden(id: u32) -> bool {
     // Provoke and Still are test devices until the gun thread's cards.
     matches!(id, SIREN | OUTPOST | T_PROVOKE | T_STILL)
@@ -1922,8 +1922,10 @@ pub(super) fn run_lock(id: u32) -> Option<&'static str> {
         WALL | DOOR => "walls",
         TURRET => "turret",
         MORTAR => "mortar",
-        LURE => "lure",
-        LURES => return None,
+        // The lure is free from the first planet (Direction, 2026-11-18
+        // 08:38Z, on the owner's "Lure now, in the three planets"): for an
+        // hour it was a shop unlock, which left planet 1 without it.
+        LURE | LURES => return None,
         // Pumps are the main income: never locked (owner, 2026-11-15).
         PUMP => return None,
         OUTPOST => "outpost",

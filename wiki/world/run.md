@@ -174,8 +174,10 @@ run shop for planets 1 to 3 with that rule at a third of the lab's pull
 health, mortal); Enemy builds the field with its own GPU slot and weight,
 Squad and arsenal the building and the shop item, Look and interface the
 rings' colour. Both are built: the field (below), and since 11-18 the
-shop's Lures unlock, with the Lure and the lures' switch back on a run's
-build card (`run_lock`). The siren and the outpost stay out.
+Lure and the lures' switch are back on a run's build card, free from the
+first planet with nothing to unlock (`run_lock`; Direction, 08:38Z, after
+an hour as a 150 unlock that left planet 1 without it). The siren and the
+outpost stay out.
 The lab's later parts (same report): marks laid by every shot do not herd,
 so there is no bullet steering card; a dart that sets a lure where the squad
 aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
@@ -237,7 +239,9 @@ amber walls burn. Since the same day a shop's two bullets are never one
 shell, never the plain standard bullet the run starts with and never a
 reader with nothing to read (a Shatter with no gas bullet owned, a Detonate
 with no germ), and its two guns are two kinds, neither the kind carried
-(`Run::restock`).
+(`Run::restock`). Tinder costs 100 and a Torch at most 100 (`TINDER_PRICE`,
+`TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
+planet 1 pays.
 
 ## The gun range
 

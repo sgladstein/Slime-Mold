@@ -525,8 +525,11 @@ pub struct Item {
 /// a run's build card (`run_hidden`). The lure was out with them until the
 /// Enemy lane's lure field met that condition for it (the lab's steering
 /// prototype; owner's card, 2026-11-18 03:03Z: "Lure now, in the three
-/// planets").
-pub const ITEMS: [Item; 19] = [
+/// planets"). It is not sold either: for an hour it was an unlock here
+/// (Lures, 150), which left planet 1 without it, so Direction made it free
+/// from the first planet (11-18 08:38Z). The window never locks it
+/// (`run_lock`), as it never locks the pump.
+pub const ITEMS: [Item; 18] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -540,10 +543,6 @@ pub const ITEMS: [Item; 19] = [
     // after turrets, as each next body will be after the one before.
     Item { key: "mortar", name: "Mortars", group: Group::Build, about: "Unlocks the mortar: the longest reach there is, lobbed over walls", max: 1, cost: 250, needs: Some("turret") },
     Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets and mortars: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
-    // Back in the run 2026-11-18 (above): an unlock with no prerequisite,
-    // so it can be a first buy. 150 is Direction's first price; the
-    // building's own cost and health are `BuildRules::lure_cost`, `lure_hp`.
-    Item { key: "lure", name: "Lures", group: Group::Build, about: "Unlocks the lure, a beacon the slime walks to and eats", max: 1, cost: 150, needs: None },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.
     Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
@@ -607,15 +606,31 @@ pub fn shells_at(depth: u32) -> Vec<Shell> {
 
 /// A rolled bullet's price in points: its shell's budget cost, how well
 /// it rolled (`Ammo::grade`) and how deep it was found, in tens.
+///
+/// A Torch never costs more than `TORCH_MOST` (Direction, 2026-11-18): the
+/// shop before planet 2 pushes Tinder and a Torch together (`bring`,
+/// `bring_shell`), and the pair must be affordable on the least a won
+/// planet 1 pays (`reward(1, 1)`, 200). A Torch rolled 40 to 150 before.
 pub fn ammo_price(a: &Ammo) -> u32 {
     let p = (40.0 + 20.0 * a.shell.base() as f32) * a.grade().max(0.4).powf(1.5) * (1.0 + 0.1 * (a.depth.max(1) - 1) as f32);
-    ((p / 10.0).round() as u32).max(1) * 10
+    let p = ((p / 10.0).round() as u32).max(1) * 10;
+    if a.shell == Shell::Torch {
+        p.min(TORCH_MOST)
+    } else {
+        p
+    }
 }
+
+/// The most a Torch bullet costs, and Tinder's price (it was its rarity's
+/// 150): Direction's first numbers, 2026-11-18 (`ammo_price`).
+pub const TORCH_MOST: u32 = 100;
+pub const TINDER_PRICE: u32 = 100;
 
 /// A card's price in points: a rolled bullet's own, else its rarity's.
 pub fn card_price(c: Card) -> u32 {
     match c {
         Card::Ammo(a) => ammo_price(&a),
+        Card::Tinder => TINDER_PRICE,
         c => card_cost(card_power(c).unwrap_or(1)),
     }
 }
@@ -1555,6 +1570,9 @@ mod tests {
                     assert_ne!(shells[0].0, shells[1].0, "seed {seed}: one shell twice");
                     assert!(shells.iter().all(|&s| s != (Shell::Plain, Set::Standard) && !matches!(s.0, Shell::Shatter | Shell::Detonate)), "seed {seed}: {shells:?}");
                     assert_eq!(r.offers.len(), OFFER + AMMO_OFFER, "the planet's bullet takes a slot, not an extra one");
+                    // Tinder and the Torch together cost no more than the
+                    // least a won planet 1 pays (Direction, 2026-11-18).
+                    assert!(card_price(r.offers[0]) + card_price(Card::Tinder) <= reward(1, 1), "seed {seed}: a torch at {}", card_price(r.offers[0]));
                     let kinds: Vec<GunKind> = r.gun_offers.iter().map(|g| g.kind).collect();
                     assert!(kinds.len() == GUN_OFFER && kinds[0] != kinds[1] && !kinds.contains(&r.guns[r.carry].kind), "seed {seed}: {kinds:?} with a {:?} carried", r.guns[r.carry].kind);
                     r.rerolls += 1;
@@ -1893,19 +1911,13 @@ mod tests {
     }
 
     /// The outpost and siren are not sold in a run (owner 11-15 21:41Z,
-    /// D10). The lure is again (owner's card, 2026-11-18 03:03Z): an
-    /// unlock at 150 that needs nothing first.
+    /// D10). Nor is the lure: since 2026-11-18 it is free from the first
+    /// planet and needs no unlock (the window's `run_lock`).
     #[test]
-    fn the_run_shop_sells_lures_and_no_outpost_or_siren() {
-        for k in ["outpost", "siren"] {
+    fn the_run_shop_sells_no_outpost_lure_or_siren() {
+        for k in ["outpost", "lure", "siren"] {
             assert!(ITEMS.iter().all(|i| i.key != k), "{k}");
         }
-        let lure = ITEMS.iter().position(|i| i.key == "lure").unwrap();
-        assert_eq!((ITEMS[lure].max, ITEMS[lure].cost, ITEMS[lure].needs, ITEMS[lure].group), (1, 150, None, Group::Build));
-        let mut r = Run::new(1);
-        assert!(!r.has("lure"));
-        r.points = 150;
-        assert!(r.pick(Pick::Item(lure)) && r.has("lure") && r.points == 0);
     }
 
     #[test]
