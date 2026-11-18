@@ -88,7 +88,41 @@ neighbours of the target cell, once per marcher step; the wait reads 25 cells
 per marcher. Only marchers pay, about 1,700 walkers during a raid and a few
 hundred otherwise, against 12,000 walkers in the pass.
 
-## Recommendation
+## Part two: tighter tethers (2026-11-18, code `73b6357`)
+
+The owner, 16:32Z: "Can you show me what it looks like if we make the tether
+much smaller so walkers always have to be much closer?" Same scene, three
+tighter rules: tether 3 and tether 4, and edge contact 2 (`LAB_TETHER_SIDE=1`:
+2 walkers counted along the target cell's four sides only, not its corners).
+`LAB_BODY_LOG` now also counts walkers within 30 cells of squad 0's soldiers.
+A new count says whether the raid reaches its target: the walkers the squad
+kills between 0:59 (raid 1 leaves) and 1:16. Page section `#tighter`.
+
+| Arm | Loose 0:30 (calm) | Loose 1:03 | Largest piece 1:03 | Raid kills 0:59 to 1:16 | Slime 1:16 |
+|---|---|---|---|---|---|
+| None | 407 | 365 | 96.7% | 379 | 11,761 |
+| Tether 1 | | 261 | 97.2% | 127 | |
+| Tether 2 | 192 | 114 | 97.7% | 41 | 11,908 |
+| Tether 3 | 182 | 76 | 98.0% | 20 | 11,885 |
+| Tether 4 | 214 | 128 | 97.8% | 22 | 11,893 |
+| Edge contact 2 | 218 | 91 | 98.0% | 34 | 11,903 |
+
+Walkers within 30 cells of the squad stayed at 0 to 4 under every tether of
+2 or more from 1:03 (10 to 34 without).
+
+- **Any tether of 2 or more keeps raid 1 at home.** Part one's "kills fall a
+  third" (799 against 1,212 by 1:16) hid this: most of those kills came
+  before the raid; in the raid's window it is 41 against 379. On film the
+  marchers stand at the body's edge.
+- **Why:** a raid leaves the body as a one-wide trickle, and no cell ahead of
+  a trickle touches 2 other walkers. Making the marcher stand with its
+  heading kept instead of turning round (`LAB_TETHER_HOLD=1`) gave exactly
+  the same counts at k 1, 2 and 3.
+- Tether 1 lets the raid go (127 kills) but it crosses as dots.
+- The calm breakaway is a blob under every tether, and the tighter ones make
+  it no tighter (182 to 218 loose against 192 at tether 2).
+
+## Recommendation (part one; withdrawn for raids by part two)
 
 **Tether 2, with the raid's size retuned.** It is the one mechanism that
 makes moving slime read as a body: a third of the loose walkers, the
@@ -103,3 +137,13 @@ a raid still reaches the squad.
 Not built: a pull toward a moving piece's centre (the 11-12 dead end's
 re-test condition for align), and marchers that lay and follow their own
 trail.
+
+## Recommendation after part two
+
+**Tether 2 for roaming and breakaway walkers only, not for raid marchers.**
+It turns a walk to food or a breakaway from a stream of dots into a blob and
+costs the player nothing. For a raid it needs a body to hold first: the next
+lab step would be a **muster**, raid walkers gathering at the body's edge
+until a crowd has formed and then setting off together. Tighter tethers (3,
+4, edge contact) add nothing over 2. Sent to Enemy 11-18 ~17:45Z, who was
+building tether 2 into the walk pass.

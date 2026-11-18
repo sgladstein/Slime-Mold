@@ -242,8 +242,9 @@ the strength that grows instead, and keep the dense word for their members.
   or a walk to food read no trail, so they cross the map as single walkers.
   A tether on marchers alone (no step into a cell touching fewer than 2
   others) cut loose walkers on planet 1 from 365 to 114 as raid 1 left and
-  kept the body one piece, but fewer marchers got out (799 killed against
-  1,212); waiting for the crowd left the raid spread
+  kept the body one piece, but kept raid 1 at home (41 raid kills against
+  379; tighter tethers the same), since a raid leaves as a one-wide trickle;
+  breakaways walk as blobs. Waiting for the crowd left the raid spread
   ([one body, lab](../../Reports/lab-body-2026-11-18/README.md)).
 
 ## Sources
