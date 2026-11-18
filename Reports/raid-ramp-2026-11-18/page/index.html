@@ -1,0 +1,156 @@
+<title>Raid Ramp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* One reading column. Each film or still sits beside the counts read off
+   the same game, so no picture stands without its numbers. */
+:root {
+  --bg: #f3f4f1;
+  --panel: #ffffff;
+  --ink: #1b2023;
+  --muted: #58626a;
+  --rule: #d4d8d6;
+  --amber: #a85a12;
+  --amber-soft: #f4e3cf;
+  --good: #2f6b4f;
+  --good-soft: #dcebe2;
+  --bad: #8c3b2e;
+  --bad-soft: #f2dcd6;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: Inter, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181b; --panel: #1c2226; --ink: #e7eae8; --muted: #9aa5ab; --rule: #313a40;
+    --amber: #e8a04d; --amber-soft: #3a2b1a; --good: #7fc3a0; --good-soft: #1d3329;
+    --bad: #e59a8b; --bad-soft: #3a221d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181b; --panel: #1c2226; --ink: #e7eae8; --muted: #9aa5ab; --rule: #313a40;
+  --amber: #e8a04d; --amber-soft: #3a2b1a; --good: #7fc3a0; --good-soft: #1d3329;
+  --bad: #e59a8b; --bad-soft: #3a221d;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 16px/1.55 var(--body);
+  padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+header { display: flex; flex-direction: column; gap: 14px; }
+h1 { font: 600 2.1rem/1.15 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font: 600 1.4rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 0.82rem/1.3 var(--body); margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 1.1rem; }
+.meta { color: var(--muted); font-size: 0.9rem; }
+section { display: flex; flex-direction: column; gap: 20px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .pair, .three { grid-template-columns: minmax(0, 1fr); } }
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+figure video, figure img { width: 100%; height: auto; display: block; border-radius: 4px; background: #0d1012; }
+figcaption { font-size: 0.9rem; color: var(--muted); }
+figcaption b { color: var(--ink); font-weight: 600; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-weight: 600; color: var(--muted); font-size: 0.8rem; border-bottom-color: var(--muted); }
+td.up { background: var(--good-soft); color: var(--good); font-weight: 600; }
+td.down { background: var(--bad-soft); color: var(--bad); }
+td.sub { color: var(--muted); font-size: 0.8rem; }
+code { font: 0.86em ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.answer { border-left: 3px solid var(--amber); padding-left: 16px; display: flex; flex-direction: column; gap: 10px; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+</style>
+
+
+<main>
+<header>
+  <h1>Raids that come later and build up</h1>
+  <p class="lede">The first raid on planet 1 now comes about four minutes after the landing instead of one, and the raids close in from every two and a half minutes to every 45 seconds by 10:00. No mini-bosses on planet 1; they start on planet 2.</p>
+  <p class="meta">2026-11-18, the Enemy lane. From the owner's play notes that day: "The raids come too early and too often ... Occasionally a raid can happen early in a session but not every time ... It is hard to build pumps, walls, turrets because you get raided so quick. Mini-bosses also shouldn't show up in world one." Planet 1 of run seed 1 with the pumps hand (two pumps by the landing, more as food allows), on the software GPU, one film each, 0:06 to 12:00.</p>
+</header>
+
+<section>
+  <h2>The same planet, before and after</h2>
+  <div class="pair">
+    <figure>
+      <video src="before.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>Before.</b> 60 times real speed. Raids at <b>0:59</b> (the near pump), 1:35, 3:00, 4:15, 5:32, 6:14, 7:13, 8:21, 8:48, 9:26, 9:49 and 10:55: twelve, the first a minute in. Mini-bosses at 1:41, 4:09, 6:18, 8:36 and 11:21.</figcaption>
+    </figure>
+    <figure>
+      <video src="after.mp4" controls muted loop playsinline preload="metadata"></video>
+      <figcaption><b>After.</b> The same span. Raids at <b>3:15</b> (the near pump), 4:32, 6:12, 7:47, 8:57, 9:32, 9:58, 10:56 and 11:52: nine, 77 to 100 seconds apart at first and 26 to 58 after 8:00. No mini-bosses.</figcaption>
+    </figure>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Time</th><th>Before: soldiers</th><th>near pump</th><th>food pumped</th><th>slime</th><th>After: soldiers</th><th>near pump</th><th>food pumped</th><th>slime</th></tr></thead>
+      <tbody>
+        <tr><td>1:00</td><td>4</td><td>200</td><td>1,235</td><td>13,674</td><td>4</td><td>200</td><td>1,235</td><td>13,643</td></tr>
+        <tr><td>2:00</td><td>3</td><td class="down">0</td><td>1,607</td><td>15,049</td><td>4</td><td class="up">185</td><td>2,554</td><td>14,578</td></tr>
+        <tr><td>3:00</td><td>1</td><td class="down">0</td><td>1,607</td><td>19,409</td><td>4</td><td class="up">151</td><td>3,741</td><td>15,820</td></tr>
+        <tr><td>4:00</td><td>2</td><td>0</td><td>1,607</td><td>22,529</td><td>0</td><td>0</td><td>4,271</td><td>19,628</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="meta">The near pump has 200 health. The first raid took it at 1:12 before and at 3:24 after, and the pumps hand pumped 4,271 food in all against 1,607. The pumps hand does not fight back well: after the first raid its four soldiers fall by 3:48 (before, one of them held on to 9:00).</p>
+</section>
+
+<section>
+  <h2>The schedule</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th></th><th>Before</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>First raid</td><td>75 ± 15 s from the start</td><td>4:00 ± 40 s from the landing; one game in five 1:20 ± 20 s</td></tr>
+        <tr><td>Gap between raids</td><td>60 ± 20 s all game</td><td>150 ± 45 s at the landing, falling in a straight line to 45 ± 13.5 s at 10:00, then flat</td></tr>
+        <tr><td>Mini-bosses</td><td>from planet 1: one every 150 s on average there, rising to every 45 s on planet 8</td><td>from planet 2: planet 1's old chances there, rising to the same every 45 s on planet 8</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Over 4,000 drawn games the first raid comes before 2:00 in 20% and, of the rest, 87% come between 3:00 and 5:00 (the test <code>raids_are_rare_early_and_often_later</code>).</p>
+</section>
+
+<section>
+  <h2>His run seed</h2>
+  <p>The raids a run seed draws come off their own dice, so his game of 11-18 met the same times. With the run bot on his seed:</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Planet</th><th>Before (what he met)</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>raids 1:08, 1:47, 3:07; a mini-boss 1:32</td><td>raids 4:43, 6:48, 8:40; none; the bot wins at 8:56</td></tr>
+        <tr><td>2</td><td>raids 0:54, 1:14, 2:06, 2:35; a mini-boss 1:26</td><td>raid 4:45; mini-bosses 1:33 and 4:06</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>The Drifter's smell</h2>
+  <p>Planet 1's slime smells pumps 20 times as strongly as a soldier over 15 cells. A pump the pumps hand puts by a crystal the slime holds is gone by 1:12, raid or no raid. Turning the smell down does not save the pumps: the slime grows over them anyway, and the squad by that pump kills far less of it. New rules, to 3:00, no raid yet:</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Pump smell</th><th>That pump at 1:00</th><th>Near pump at 3:00</th><th>Food pumped</th><th>Slime killed</th><th>Slime</th></tr></thead>
+      <tbody>
+        <tr><td>20 (the Drifter's)</td><td>75, gone by 1:12</td><td>151</td><td>3,741</td><td>7,994</td><td>15,820</td></tr>
+        <tr><td>8</td><td>97, gone by 2:00</td><td>0</td><td>3,944</td><td>3,776</td><td>18,646</td></tr>
+        <tr><td>0</td><td>167, gone by 2:00</td><td>0</td><td>6,303</td><td>1,064</td><td>19,056</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>So the raid "about a minute in" was the first raid (0:59 here, 1:08 on his seed), which now comes at about 4:00. The smell stays as the Drifter's trait.</p>
+</section>
+
+<section class="answer">
+  <h2>What he will see</h2>
+  <p>Time to build pumps, walls and turrets before the first raid most games, an early raid now and then, and raids coming harder and faster the longer a planet lasts. No mini-bosses until planet 2.</p>
+  <p class="meta">Not checked: other seeds than these two, the run as played past planet 2, and the bot winning later planets. One film each on the software GPU.</p>
+</section>
+</main>

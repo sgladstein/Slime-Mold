@@ -30,6 +30,7 @@ sources:
   - Reports/mould-shooter-2026-11-11.md
   - Reports/narrow-squads-2026-11-15/README.md
   - Reports/pump-economy-2026-11-15/README.md
+  - Reports/raid-ramp-2026-11-18/README.md
   - Reports/raids-2026-11-15/README.md
   - Reports/resume-build-2026-11-15/README.md
   - Reports/rts-research-2026-11-10.md
@@ -327,7 +328,9 @@ session, but not right at the begining"; `RaidRules::gap_at`,
 +/- 40 s, or in one game in five at 1:20 +/- 20 s, and the wait falls in a
 line from 150 +/- 45 s at the landing to 45 +/- 13.5 s by 10:00 (until
 then 60 +/- 20 s all game and the first about 1:15, so his planet 1 and 2
-rounds that day met raids at 1:08 and 0:54); the size is drawn (mean
+rounds that day met raids at 1:08 and 0:54; planet 1 of run seed 1 now
+raids from 3:15 and its first pump stands to 3:24, against 0:59 and 1:12:
+[raid ramp](../../Reports/raid-ramp-2026-11-18/README.md)); the size is drawn (mean
 15% of the slime's mass, spread 6%, within 4-40%), at the player's best
 pump (owner 01:48Z: raids "regardless", not "so consistent as every 400
 food", the rule until then), else a building, else the soldiers, from
