@@ -998,11 +998,21 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     // for giving nothing counting as dry: run seed 2 (planet 1) dried every
     // other crystal but one it could not drain by 3:30 with 29 soldiers,
     // one short, and its bank never reached a soldier's price again.
+    let by_home = |p: (f32, f32)| (p.0 - cs[0].0 .0).hypot(p.1 - cs[0].0 .1) <= g.world.crystal_r(0) + range;
+    let home_mass: u32 = grid.iter().enumerate().filter(|&(i, _)| by_home(centre(i))).map(|(_, &c)| c).sum();
+    if (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(10) {
+        eprintln!("BOT t {t:.0} home mass {home_mass}");
+    }
+    // Until the slime by the home is under 200 a soldier (see below), the
+    // home is no crystal to pick or keep: run seed 2's
+    // planet 2 picked it at 3:00 with 30 soldiers and 450 a soldier, held
+    // it as its work, hunted, and never drained the crystals still charged.
+    let home_ok = home_mass < 200 * g.alive() as u32;
     let barren = BOT.with_borrow(|b| b.barren.clone());
     let strong = g.alive() >= BOT_ECON || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = (0..cs.len())
-        .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && (strong || (c > 0 && quiet(c))))
+        .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && (c > 0 || home_ok) && (strong || (c > 0 && quiet(c))))
         .max_by(|&a, &b| {
             let walk = if strong { 4.0 * range } else { 0.5 * range };
             let v = |c: usize| cs[c].1.min(200_000.0) / (1.0 + (cs[c].0 .0 - m.0).hypot(cs[c].0 .1 - m.1) / walk.max(1.0));
@@ -1027,7 +1037,7 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     // A crystal that gives no harvest for 30 s is left for a minute.
     let work = BOT.with_borrow_mut(|b| {
         match (b.work, pick) {
-            (Some((c, h, since)), _) if cs.get(c).is_some_and(|x| x.1 > 0.0) && !b.left.iter().any(|l| l.0 == c) => {
+            (Some((c, h, since)), _) if cs.get(c).is_some_and(|x| x.1 > 0.0) && !b.left.iter().any(|l| l.0 == c) && (c > 0 || home_ok) => {
                 if g.harvested > h + 50.0 {
                     b.work = Some((c, g.harvested, t));
                 } else if t - since > 30.0 && c > 0 {
@@ -1110,12 +1120,7 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     // the home was tried and lost all three seeds: the home's slime is
     // nearly all the slime, so the siege never ended, and run seed 1, which
     // had won, lost.
-    let by_home = |p: (f32, f32)| (p.0 - cs[0].0 .0).hypot(p.1 - cs[0].0 .1) <= g.world.crystal_r(0) + range;
-    let home_mass: u32 = grid.iter().enumerate().filter(|&(i, _)| by_home(centre(i))).map(|(_, &c)| c).sum();
-    if (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(10) {
-        eprintln!("BOT t {t:.0} home mass {home_mass}");
-    }
-    let work = work.filter(|&c| c > 0 || home_mass < 200 * g.alive() as u32);
+    let work = work.filter(|&c| c > 0 || home_ok);
     if let Some(c) = work {
         let at = cs[c].0;
         let o = Order::Clear(at.0, at.1);
