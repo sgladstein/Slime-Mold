@@ -989,6 +989,9 @@ impl App {
             // The gun range has no time limit to show.
             clock: if self.args.range.is_some() { clock(t) } else { format!("{} / {}", clock(t), clock(r.cap)) },
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
+            // The switches this round plays off their default (the play
+            // log's `switches=` says the same).
+            trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).collect(),
             objective: Some(if let Some(tr) = &self.mission {
                 tr.progress_line()
             } else if self.args.range.is_some() {

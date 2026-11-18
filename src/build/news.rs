@@ -166,7 +166,17 @@ impl Memory {
         // Ticks of things no longer on the list are dropped.
         let now: Vec<u32> = to_try().iter().map(|t| t.id).collect();
         self.tried.retain(|x| now.contains(x));
-        self.save();
+        // Only the ticks are written. This copy's build and seen lines
+        // are the ones read when the game opened (`played` keeps them so
+        // the menu goes on marking the lines as new), so saving all of it
+        // after a round would take the round's mark back off the file,
+        // and every line would be new again at the next opening (the
+        // Look and interface lane's tick boxes found this, 11-18).
+        if let Some(p) = &self.path {
+            if let Err(e) = settings::set_at(p, "tried", &word(&self.tried)) {
+                eprintln!("larder-world: the tick was not saved ({e})");
+            }
+        }
     }
 
     /// **A round was played on this build**: from the next time the game
@@ -259,6 +269,15 @@ mod tests {
             assert!(Memory::load_from(&p).is_tried(t));
             m.set_tried(t, false);
             assert!(!Memory::load_from(&p).is_tried(t));
+        }
+        // A tick after a round, on the copy that still shows the lines as
+        // new, leaves the round's mark in the file.
+        if let Some(t) = to_try().first() {
+            let mut before = m.clone();
+            before.set_tried(t, true);
+            let after = Memory::load_from(&p);
+            assert!(after.fresh().is_empty() && after.is_tried(t), "a tick took the round's mark off the file");
+            before.set_tried(t, false);
         }
         assert_eq!(settings::get_at(&p, "ui").as_deref(), Some("125%"));
         // One that is not saved leaves no file.
