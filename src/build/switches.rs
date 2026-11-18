@@ -27,9 +27,10 @@
 //! harm or for one side of a real either-or, at most [`MOST_OFF`] at once
 //! across all lanes, and each ends at the owner's next play: on, one
 //! tier's trait, or deleted with its `Reports/dead-ends.md` line. The
-//! rows of 11-17 are over that count: they are ROADMAP's table as it
-//! stood, which the Enemy lane is settling; `MOST_OFF` is held by the
-//! compiler once they are down to it (`SETTLING`).
+//! list began on 11-17 as ROADMAP's table as it stood, 14 rows. The Enemy
+//! lane settled ten of them that day; four are left, one over the count,
+//! and `MOST_OFF` is held by the compiler once one more is settled
+//! (`SETTLING`).
 
 /// The lanes of the 11-17 plan, as a row's owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -122,20 +123,27 @@ const fn on(keys: &'static [(&'static str, &'static str)]) -> Choice {
 /// lanes (plan, rule 3).
 pub const MOST_OFF: usize = 3;
 
-/// True while the 11-17 rows (ROADMAP's table, carried over) are being
-/// settled by the Enemy lane and the list is over `MOST_OFF`. Set it false
-/// in the change that brings the list down to `MOST_OFF`, and a row over
-/// the count stops the build from then on.
+/// True while the list is over `MOST_OFF`. It stands at four since the
+/// Enemy lane settled its rows of ROADMAP's table (11-17): the set
+/// slime's look (Look and interface), shake and hit-stop and the free
+/// recruits (Squad and arsenal), crystals that refill (held with the
+/// owner's answer on the rush, D7). Set it false in the change that brings
+/// the list down to `MOST_OFF`, and a row over the count stops the build
+/// from then on.
 pub const SETTLING: bool = true;
 
 // The count, held by the compiler: with `SETTLING` false, a fourth row
 // does not build.
 const _: () = assert!(SETTLING || SWITCHES.len() <= MOST_OFF, "more switches are declared than the plan allows (MOST_OFF): settle one (on, a tier's trait, or deleted) before adding another");
 
-/// **The list.** The rows of 2026-11-17 are ROADMAP's "Switches that are
-/// off" table as it stood that day (14 rows; the two crust rows and the
-/// two set-slime rows are each one either-or here). Their reports are
-/// linked from that table and from `wiki/world/squad-toolkit.md`.
+/// **The list.** It began as ROADMAP's "Switches that are off" table of
+/// 2026-11-17 (14 rows). The Enemy lane settled ten that day: the far
+/// smell and the charge paths are on on every run planet
+/// (`run::enemy_keys`, `run::ENEMY_RULES`); the crust, its pull, setting,
+/// the wall and fireproof fed slime are the Trunk's trait and the last
+/// stand the Swarmer's (`run::does_to_you`); lossy flow, the lone step and
+/// the trap (`set_hold`) were deleted (`Reports/dead-ends.md`). What
+/// became of each is in `Reports/enemy-switches-2026-11-17/README.md`.
 ///
 /// To add one: a row here, in the same change as the key. To settle one:
 /// make its choice the engine's or the rules' own default (or a tier's
@@ -143,68 +151,14 @@ const _: () = assert!(SETTLING || SWITCHES.len() <= MOST_OFF, "more switches are
 /// the feature and the row and add the `Reports/dead-ends.md` line.
 pub const SWITCHES: &[Switch] = &[
     Switch {
-        key: "crust",
-        label: "Crust",
-        choices: &[OFF, on(&[("crust", "1")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-17",
-        sees: "Ground the slime has lived on for a minute turns to a pale crust that stays after it leaves, and fire runs across crust but stops at the fed body",
-        why_off: "New on 11-17; nothing in the game reads the crust on its own yet. Decided with the crust and set-slime picks",
-    },
-    Switch {
-        key: "crust_ground",
-        label: "Crust underfoot",
-        choices: &[OFF, Choice { name: "pulls back", keys: &[("crust", "1"), ("crust_weight", "8"), ("crust_fast", "0.5")] }, Choice { name: "pushes on", keys: &[("crust", "1"), ("crust_weight", "-8"), ("crust_fast", "0.5")] }],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-17",
-        sees: "Slime either keeps to its old crusted ground and moves faster on it (pulls back), or is pushed off it onto fresh ground (pushes on)",
-        why_off: "A real either-or: no sign is chosen (the pull stays 0 until the owner picks one)",
-    },
-    Switch {
-        key: "setting",
-        label: "Slime sets",
-        choices: &[OFF, on(&[("setting", "1")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-17",
-        sees: "Slime on crust that is shot at sets hard: it stops moving and takes three hits to kill",
-        why_off: "New on 11-17; a standing rifle squad killed 265 in the first minute against 366 without, so it makes the slime tougher. The owner's film pick",
-    },
-    Switch {
-        key: "set_slime",
-        label: "Set slime is",
-        choices: &[
-            Choice { name: "soft", keys: &[] },
-            Choice { name: "a wall", keys: &[("setting", "1"), ("set:set_block", "3")] },
-            Choice { name: "a trap", keys: &[("setting", "1"), ("set:set_hold", "0.5")] },
-        ],
-        default: "soft",
-        lane: Lane::Enemy,
-        since: "2026-11-17",
-        sees: "Set slime either blocks soldiers like a wall, or lets them in and slows them like a trap",
-        why_off: "A real either-or: block against trap (the trap replaces the block when both are set)",
-    },
-    Switch {
         key: "set_look",
         label: "Set slime's look",
         choices: &[Choice { name: "amber", keys: &[] }, Choice { name: "glaze", keys: &[("win:setlook", "2")] }, Choice { name: "hidden", keys: &[("win:setlook", "0")] }],
         default: "amber",
         lane: Lane::Look,
         since: "2026-11-17",
-        sees: "How set slime is drawn when Slime sets is on: amber, a glaze, or not marked at all",
-        why_off: "A look pick that only shows with Slime sets on; decided with it",
-    },
-    Switch {
-        key: "last_stand",
-        label: "Last stand",
-        choices: &[OFF, on(&[("set:last_stand", "1")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-15",
-        sees: "Once, when the slime is down to a quarter of its biggest, all of it rushes your soldiers at once, with an alert",
-        why_off: "The owner was not sure it is a good idea; a play with it on decides",
+        sees: "How the slime that sets on planet 3 (the Trunk) is drawn: amber, a glaze, or not marked at all",
+        why_off: "A look pick: slime sets on planet 3 since 11-17 and is drawn amber. The Look and interface lane's to settle",
     },
     Switch {
         key: "feel",
@@ -235,56 +189,6 @@ pub const SWITCHES: &[Switch] = &[
         since: "2026-11-11",
         sees: "A crystal that is not being eaten slowly fills again",
         why_off: "Crystals that run out suit the race at the start; to be settled by play on a world that is mostly slime",
-    },
-    Switch {
-        key: "flow_loss",
-        label: "Lossy food flow",
-        choices: &[OFF, on(&[("flow_loss", "0.1")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-12",
-        sees: "Food fades as the body shares it, so a part cut off from every crystal starves in about half a minute instead of staying whole for minutes",
-        why_off: "The one-body work stopped at shared food 0.05 without it. Delete unless a cut-the-network play wants it",
-    },
-    Switch {
-        key: "lone_step",
-        label: "Lone slime slows",
-        choices: &[OFF, on(&[("lone_step", "3")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-12",
-        sees: "Slime with few others round it moves slower, so hunks hold together instead of scattering",
-        why_off: "It held hunks together on the designed maps but was never made a default. Decided with Lossy food flow",
-    },
-    Switch {
-        key: "unit_paths",
-        label: "Charges go round walls",
-        choices: &[OFF, on(&[("set:unit_paths", "1")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-17",
-        sees: "Surging and panicking slime walks round walls to reach your soldiers instead of piling up against them",
-        why_off: "New on 11-17; behind a cup of walls half as many piled at the wall and as many reached the soldier, so it changes the charge's shape. On unless the owner objects in play",
-    },
-    Switch {
-        key: "far_smell",
-        label: "A far smell",
-        choices: &[OFF, on(&[("far_smell", "1")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-17",
-        sees: "Hungry slime heads for untouched crystals far away, so it spreads over the planet sooner",
-        why_off: "New on 11-17; on planet 3 with no squad the slime reached 59 crystals against 47 in 2:30 and ended up to 45% bigger, so the planet is harder. On unless the owner objects in play",
-    },
-    Switch {
-        key: "fire_fed",
-        label: "Fed slime fireproof",
-        choices: &[OFF, on(&[("fire_fed", "1")])],
-        default: "off",
-        lane: Lane::Enemy,
-        since: "2026-11-17",
-        sees: "Fire stops at slime that is fed from a crystal, however thin its trail; only cut-off slime burns",
-        why_off: "Without it fire through a fed disc's thin trail took 24 to 65% of it in 20 s. The owner's pick on the blind page",
     },
 ];
 
@@ -353,15 +257,17 @@ fn same(a: &str, b: &str) -> bool {
 /// and the menu's, rules as `set:NAME`, window keys as `win:NAME`), with
 /// the name of the choice whose keys are all set, or "custom" when some of
 /// a switch's keys are set but to no choice's values (a film's own
-/// numbers, such as `crust_weight=2`).
+/// numbers, such as `crystal_regrow=0.01`).
 ///
 /// It reads only the keys given on top of the default game, so a tier's
 /// own trait (the Sprawler's `fire_alarm`) is not a switch that is on.
 pub fn state(keys: &[(String, String)]) -> Vec<(&'static Switch, &'static str)> {
     let mut out = Vec::new();
     for s in SWITCHES {
-        // The choice with the most keys that all hold wins, so "a wall"
-        // (setting and set_block) is not read as plain setting.
+        // The choice with the most keys that all hold wins: on 11-17 "a
+        // wall" (setting and set_block) was not to be read as plain
+        // setting. No two rows share a key since the Enemy lane settled
+        // those; the rule stays for the next either-or that does.
         let held = s.choices.iter().filter(|c| !c.keys.is_empty() && c.keys.iter().all(|(k, v)| last(keys, k).is_some_and(|got| same(got, v)))).max_by_key(|c| c.keys.len());
         // Keys that are this switch's alone (no other switch's choice sets
         // them), given a value that is not "off".
@@ -384,7 +290,7 @@ pub fn state(keys: &[(String, String)]) -> Vec<(&'static Switch, &'static str)> 
     out
 }
 
-/// The play log's word for `state`: `crust:on,set_slime:a_wall`, or
+/// The play log's word for `state`: `set_look:glaze,reserve:on`, or
 /// `none`.
 pub fn log_word(keys: &[(String, String)]) -> String {
     let on = state(keys);
@@ -408,7 +314,7 @@ pub fn all_on() -> Vec<(String, String)> {
 }
 
 /// The same with every switch at its last choice: the other side of each
-/// either-or (set slime as a trap, the crust pushing on), which the
+/// either-or (the set slime's look hidden instead of a glaze), which the
 /// all-switches test plays as its second round.
 pub fn all_last() -> Vec<(String, String)> {
     SWITCHES.iter().flat_map(|s| keys_of(s.choices.iter().rev().find(|c| c.name != s.default).expect("a choice off the default"))).collect()

@@ -80,9 +80,12 @@ pub const BODY_AT: usize = 848;
 /// whether the crater counts down at all). `set_squad` writes its last two
 /// words alone, as it does the squad's.
 pub const CRATER_AT: usize = 864;
-/// Where the lone step's row sits in `Params` (2026-11-12, after the
-/// crater's: `lone_step`, `lone_floor`, `lone_r`; `BigParams::lone_step`;
-/// then a free word, `fed_crowd`'s until 11-17).
+/// Where the lone step's row sat in `Params` (2026-11-12, after the
+/// crater's). **All four words are free** (written 0): the lone step's
+/// three (`lone_step`, `lone_floor`, `lone_r`; f32 880 and 884, u32 888)
+/// since the GPU's half of that rule was deleted on 2026-11-17 (the Enemy
+/// lane's switch cleanup; `Reports/dead-ends.md`), and 892, `fed_crowd`'s
+/// until the same day. The CPU engine keeps `BigParams::lone_step`.
 pub const LONE_AT: usize = 880;
 /// Where the fling row sits in `Params` (11-14, after the lone step's:
 /// `fling_deposit`, then three spare words).
@@ -525,11 +528,6 @@ pub struct Settings {
     pub energy_flow: f32,
     pub hunger_scent: f32,
     pub hunger_at: f32,
-    /// Lossy sharing (2026-11-13, `BigParams::flow_loss`): what a cell takes
-    /// in `egain` arrives x 1 - `flow_loss`, so food fades as it travels
-    /// and a part cut off from every crystal starves in about half a
-    /// minute instead of staying whole for minutes. 0 off.
-    pub flow_loss: f32,
     /// A part cut off from its food withers (2026-11-13,
     /// `BigParams::wither` and its clock, `wither_every`, `wither_lag`,
     /// `wither_reach`): news of food travels through the body and each
@@ -595,11 +593,6 @@ pub struct Settings {
     /// game review's W44, so a film can turn scent up).
     pub scent_keep: f32,
     pub fed_scent: f32,
-    /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
-    /// radius `body_r`): a walker with few others round it moves slower.
-    pub lone_step: f32,
-    pub lone_floor: f32,
-    pub lone_r: u8,
     /// The crater's cut, length of full bite and cone (`BigParams::
     /// scorch_keep`, `scorch_full`, `scorch_cone`), for the look A/B of a
     /// shot's hole (`larder-world scorch_cone=1 ...`).
@@ -768,7 +761,6 @@ impl Settings {
             energy_flow: t.energy_flow,
             hunger_scent: t.hunger_scent,
             hunger_at: t.hunger_at,
-            flow_loss: t.flow_loss,
             wither: t.wither,
             wither_every: t.wither_every,
             wither_lag: t.wither_lag,
@@ -798,9 +790,6 @@ impl Settings {
             lumps: t.lumps,
             scent_keep: t.scent_keep,
             fed_scent: t.fed_scent,
-            lone_step: t.lone_step,
-            lone_floor: t.lone_floor,
-            lone_r: t.body_r,
             scorch_keep: t.scorch_keep,
             scorch_full: t.scorch_full,
             scorch_cone: t.scorch_cone,
@@ -1114,7 +1103,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "energy_flow" => s.energy_flow = f()?,
         "hunger_scent" => s.hunger_scent = f()?,
         "hunger_at" => s.hunger_at = f()?,
-        "flow_loss" => s.flow_loss = f()?,
         "wither" => s.wither = f()?,
         "wither_every" => s.wither_every = int()?.clamp(1, 255),
         "wither_lag" => s.wither_lag = int()?.min(0xFFFF),
@@ -1138,9 +1126,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "roam" => s.roam = int()?.min(crate::mould::big::RIPE),
         "roam_far" => s.roam_far = f()?,
         "roam_share" => s.roam_share = f()?,
-        "lone_step" => s.lone_step = f()?,
-        "lone_floor" => s.lone_floor = f()?,
-        "lone_r" | "body_r" => s.lone_r = f()? as u8,
         "scorch_keep" => s.scorch_keep = f()?,
         "scorch_full" => s.scorch_full = int()?.clamp(1, 65535) as u16,
         "scorch_cone" => s.scorch_cone = b()?,
@@ -1293,7 +1278,6 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         energy_flow: s.energy_flow,
         hunger_scent: s.hunger_scent,
         hunger_at: s.hunger_at,
-        flow_loss: s.flow_loss,
         wither: s.wither,
         wither_every: s.wither_every,
         wither_lag: s.wither_lag,
@@ -1323,9 +1307,6 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         lumps: s.lumps,
         scent_keep: s.scent_keep,
         fed_scent: s.fed_scent,
-        lone_step: s.lone_step,
-        lone_floor: s.lone_floor,
-        body_r: s.lone_r,
         scorch_keep: s.scorch_keep,
         scorch_full: s.scorch_full,
         scorch_cone: s.scorch_cone,
@@ -2303,8 +2284,10 @@ impl Engine {
         b.extend([0u8; 32]);
         // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
         // them from its `BigParams` (read only with `WORLD_SOIL`); the last
-        // word, spare until 11-13, is one body's lossy sharing (`eloss`).
-        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
+        // word (f32, byte 844) is free again: it was one body's lossy
+        // sharing (`eloss`, `flow_loss`) from 11-13 until the GPU's half
+        // of that rule was deleted on 11-17 (`Reports/dead-ends.md`).
+        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, 0.0]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
         // The row's last word is the far smell (`far_smell`, S2, 11-17; it
         // held `fed_full`, then heat in the sensors, `fire_weight`, both
@@ -2314,8 +2297,8 @@ impl Engine {
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
-        b.extend(f32_bytes(&[s.lone_step, s.lone_floor]));
-        b.extend(u32_bytes(&[s.lone_r as u32, 0]));
+        // The lone step's row, all free since 11-17 (`LONE_AT`).
+        b.extend([0u8; 16]);
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then

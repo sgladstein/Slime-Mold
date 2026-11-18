@@ -17,10 +17,9 @@ folder. It switches to main and pulls (skipped, with a note, if you have
 local changes or no network), fetches the game CI built for that code
 or, when there is none yet, builds the game and the map editor with
 cargo's progress bar, and opens the start menu. Extra arguments go to the
-game: `play.cmd map=nest mode=squads`. `play-new-slime.cmd` is the same with the
-new-slime switches on (`try=far_smell try=unit_paths`). The window's title
-names the build; Options has an Experiments tab with every feature that is
-built but not on yet.
+game: `play.cmd map=nest mode=squads`. The window's title names the build;
+Options has an Experiments tab with every feature that is built but not on
+yet.
 
 When the game quits, `play.cmd` sends the session's play logs (`play-logs/`)
 to the repository's `play-logs` branch, or says that it could not and keeps

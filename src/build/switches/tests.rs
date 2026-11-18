@@ -58,7 +58,7 @@ fn the_scan_finds_the_setters() {
     for k in ["crowd", "far_smell", "crystal_regrow", "plants"] {
         assert!(e.iter().any(|x| x == k), "engine key {k} not found");
     }
-    for k in ["last_stand", "unit_paths", "raid_every", "set_hold"] {
+    for k in ["last_stand", "unit_paths", "raid_every", "set_block"] {
         assert!(r.iter().any(|x| x == k), "rule {k} not found");
     }
     assert!(rr.iter().any(|x| x == "mind_r"));
@@ -153,10 +153,12 @@ fn off_keys() -> (Vec<String>, Vec<String>) {
     (engine.collect(), rule.collect())
 }
 
-/// Engine keys a declared switch turns on through another key: `crust=1`
-/// sets the rise, the fuel and the barren char; `setting=1` the scar a
-/// walker sets at and wakes under. (key, the switch it is part of)
-const PARTS: &[(&str, &str)] = &[("crust_rise", "crust"), ("crust_fuel", "crust"), ("char_barren", "crust"), ("set_scar", "setting"), ("set_wake", "setting")];
+/// Engine keys a declared switch turns on through another key, as (key,
+/// the switch it is part of). None today: on 11-17 `crust=1` set the rise,
+/// the fuel and the barren char and `setting=1` the scar a walker sets at
+/// and wakes under, and both rows are now the Trunk's trait, so the
+/// default game sets their parts on planet 3.
+const PARTS: &[(&str, &str)] = &[];
 
 /// **Keys the default game leaves at 0 that are not switches**, as of
 /// 2026-11-17, each with why. Three kinds:
@@ -271,31 +273,35 @@ fn the_list_is_sound() {
         }
         assert_eq!(parse_try(s.key).map(|(_, c)| c.name), Ok(s.tried().name));
     }
-    assert!(parse_try("no_such").unwrap_err().contains("far_smell"));
-    assert!(parse_try("crust:sideways").unwrap_err().contains("off, on"));
+    assert!(parse_try("no_such").unwrap_err().contains("crystal_regrow"));
+    assert!(parse_try("crystal_regrow:sideways").unwrap_err().contains("off, on"));
 }
 
 #[test]
 fn the_keys_say_which_switches_are_on() {
     let keys = |v: &[(&str, &str)]| v.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<Vec<_>>();
     assert_eq!(log_word(&[]), "none");
-    // The default game's own keys are no switch.
-    assert_eq!(log_word(&keys(&[("panic", "1"), ("surge", "900"), ("set:pump_smell", "2")])), "none");
-    assert_eq!(log_word(&keys(&[("far_smell", "1"), ("set:unit_paths", "1")])), "unit_paths:on,far_smell:on");
-    // 1.0 is 1; a later 0 turns it off again.
-    assert_eq!(log_word(&keys(&[("far_smell", "1.0")])), "far_smell:on");
-    assert_eq!(log_word(&keys(&[("far_smell", "1"), ("far_smell", "0")])), "none");
-    // The bigger choice is the one named: a wall is not also plain setting.
-    assert_eq!(log_word(&keys(&[("setting", "1"), ("set:set_block", "3")])), "set_slime:a_wall");
-    assert_eq!(log_word(&keys(&[("setting", "1")])), "setting:on");
-    assert_eq!(log_word(&keys(&[("crust", "1"), ("crust_weight", "-8"), ("crust_fast", "0.5")])), "crust_ground:pushes_on");
+    // The default game's own keys are no switch: a planet's, a tier's
+    // trait, and since 11-17 the far smell and the charge paths, which
+    // were rows until the Enemy lane turned them on on every planet.
+    assert_eq!(log_word(&keys(&[("panic", "1"), ("surge", "900"), ("set:pump_smell", "2"), ("far_smell", "1"), ("set:unit_paths", "1"), ("setting", "1"), ("set:set_block", "5")])), "none");
+    // In the list's order, whatever order the keys came in.
+    assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("set:reserve", "5")])), "reserve:on,crystal_regrow:on");
+    // 5.0 is 5; a later 0 turns it off again.
+    assert_eq!(log_word(&keys(&[("set:reserve", "5.0")])), "reserve:on");
+    assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("crystal_regrow", "0")])), "none");
+    // A choice is named when all its keys hold: shake alone is not the
+    // row's "on".
+    assert_eq!(log_word(&keys(&[("win:shake", "1"), ("win:hitstop", "1")])), "feel:on");
+    assert_eq!(log_word(&keys(&[("win:shake", "1")])), "feel:custom");
+    assert_eq!(log_word(&keys(&[("win:setlook", "2")])), "set_look:glaze");
     // A film's own number is custom, not lost.
-    assert_eq!(log_word(&keys(&[("crust", "1"), ("crust_weight", "2")])), "crust:on,crust_ground:custom");
+    assert_eq!(log_word(&keys(&[("crystal_regrow", "0.01")])), "crystal_regrow:custom");
     // Everything at once reads back as every switch (the all-switches
-    // test's keys), but for the rows another row's bigger choice covers.
+    // test's keys). No row's choice covers another's today (11-17: "a
+    // wall" covered plain setting, and the crust's pull the crust).
     let all = state(&all_on());
     for s in SWITCHES {
-        let covered = ["crust", "setting"].contains(&s.key);
-        assert_eq!(all.iter().any(|(o, _)| o.key == s.key), !covered, "{}", s.key);
+        assert!(all.iter().any(|(o, _)| o.key == s.key), "{}", s.key);
     }
 }

@@ -54,6 +54,8 @@ censuses ask for by name (`tier=drifter`).
 | added | Sleeper, Swarmer, Sporer | the life cycle and the alarm ([the life cycle](../model/life-cycle.md)) | bait then strike; a kill zone; starve it |
 | added | Grudge | a scar field that remembers where it was shot (`BigParams::scar_keep`), read toward, with the Swarmer's alarm | don't fire twice from one spot; random fire loses its squad |
 
+In a run each tier also does one thing to you: [the run](run.md).
+
 The Drifter, Sprawler and Trunk (2026-11-12) are settings over rules both
 engines run; the GPU keeps each within 2% of the CPU over 20 s. Grudge comes
 back in force to a spot shot again and again (8 of 8 fresh seeds); the

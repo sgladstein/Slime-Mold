@@ -8,7 +8,8 @@
 //! does: each launch starts on the default game, so what is on is never a
 //! leftover from last week (owner, 11-17: features left switched off are a
 //! problem because he can't tell what is on or off). `try=NAME` on the
-//! command line presets one, as `play-new-slime.cmd` does.
+//! command line presets one (`play-new-slime.cmd` did, until the two rows
+//! it turned on became every planet's on 11-17 and the script went).
 
 use super::*;
 use slime_mould::build::switches::{self, Switch, SWITCHES};
@@ -143,45 +144,48 @@ mod tests {
         }
         let plain = round_args(&bare, false, &menu, &StartEvent::Sandbox);
         assert_eq!(switches::log_word(&plain.keys), "none");
-        turn(&mut menu, "far_smell", "on");
-        turn(&mut menu, "set_slime", "a trap");
+        // The rows this plays are the four left since the Enemy lane
+        // settled the 11-17 list (the far smell, the trap and the crust,
+        // which this test turned until then, are no longer rows).
+        turn(&mut menu, "crystal_regrow", "on");
+        turn(&mut menu, "set_look", "hidden");
         let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
-        assert_eq!(switches::log_word(&a.keys), "set_slime:a_trap,far_smell:on");
-        assert!(a.keys.contains(&("far_smell".into(), "1".into())) && a.keys.contains(&("set:set_hold".into(), "0.5".into())));
+        assert_eq!(switches::log_word(&a.keys), "set_look:hidden,crystal_regrow:on");
+        assert!(a.keys.contains(&("crystal_regrow".into(), "0.001".into())) && a.keys.contains(&("win:setlook".into(), "0".into())));
         let run = run_args(&bare, &menu, &Run::new(1));
-        assert_eq!(switches::log_word(&run.keys), "set_slime:a_trap,far_smell:on", "a run's planets play the picks");
-        // The command line's `try=crust try=unit_paths` presets the rows;
-        // turning one off in the menu takes its keys off the round.
+        assert_eq!(switches::log_word(&run.keys), "set_look:hidden,crystal_regrow:on", "a run's planets play the picks");
+        // The command line's `try=reserve try=crystal_regrow` presets the
+        // rows; turning one off in the menu takes its keys off the round.
         let mut cli = bare.clone();
-        for t in ["crust", "unit_paths"] {
+        for t in ["reserve", "crystal_regrow"] {
             cli.keys.extend(switches::keys_of(switches::parse_try(t).unwrap().1));
         }
         let mut menu = start_menu(&cli);
-        assert_eq!(menu.option("exp:crust").map(|o| o.value()), Some("on"));
-        assert_eq!(switches::log_word(&round_args(&cli, false, &menu, &StartEvent::Sandbox).keys), "crust:on,unit_paths:on");
-        turn(&mut menu, "crust", "off");
+        assert_eq!(menu.option("exp:reserve").map(|o| o.value()), Some("on"));
+        assert_eq!(switches::log_word(&round_args(&cli, false, &menu, &StartEvent::Sandbox).keys), "reserve:on,crystal_regrow:on");
+        turn(&mut menu, "reserve", "off");
         let a = round_args(&cli, false, &menu, &StartEvent::Sandbox);
-        assert_eq!(switches::log_word(&a.keys), "unit_paths:on");
-        assert!(!a.keys.iter().any(|(k, _)| k == "crust"));
+        assert_eq!(switches::log_word(&a.keys), "crystal_regrow:on");
+        assert!(!a.keys.iter().any(|(k, _)| k == "set:reserve"));
         // A film's own number shows as custom and is left alone.
         let mut film = bare.clone();
-        film.keys.push(("crust_weight".into(), "2".into()));
+        film.keys.push(("crystal_regrow".into(), "0.01".into()));
         let menu = start_menu(&film);
-        assert_eq!(menu.option("exp:crust_ground").map(|o| o.value()), Some("custom"));
-        assert!(round_args(&film, false, &menu, &StartEvent::Sandbox).keys.contains(&("crust_weight".into(), "2".into())));
+        assert_eq!(menu.option("exp:crystal_regrow").map(|o| o.value()), Some("custom"));
+        assert!(round_args(&film, false, &menu, &StartEvent::Sandbox).keys.contains(&("crystal_regrow".into(), "0.01".into())));
     }
 
     /// The play log's header names the build and the switches.
     #[test]
     fn the_logs_header_names_the_build_and_the_switches() {
         let mut keys = vec![("panic".to_string(), "1".to_string())];
-        keys.extend(switches::keys_of(switches::parse_try("set_slime:a_wall").unwrap().1));
+        keys.extend(switches::keys_of(switches::parse_try("feel:on").unwrap().1));
         let extra = log_keys(&keys);
         let head = slime_mould::mould::playlog::Playlog::head("planet:1:7", 7, &[("build", slime_mould::build::build().word())].into_iter().chain(extra).collect::<Vec<_>>());
         let r = slime_mould::mould::playlog::read(&head);
         let get = |k: &str| r.head.iter().find(|(n, _)| n == k).map(|(_, v)| v.as_str());
         assert_eq!(get("build").and_then(slime_mould::build::parse).map(|b| b.1), Some(slime_mould::build::build().commit.to_string()));
-        assert_eq!(get("switches"), Some("set_slime:a_wall"));
-        assert_eq!(get("keys"), Some("panic=1,setting=1,set:set_block=3"));
+        assert_eq!(get("switches"), Some("feel:on"));
+        assert_eq!(get("keys"), Some("panic=1,win:shake=1,win:hitstop=1"));
     }
 }

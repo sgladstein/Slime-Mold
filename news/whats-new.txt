@@ -23,3 +23,7 @@
 2026-11-17 | engine | Every round keeps its own play log, in the play-logs folder, where before the next round on the same planet wrote over it |
 2026-11-17 | engine | play.cmd starts sooner after most updates: it fetches the game already built for that code, and builds on your PC only when there is none yet | Double-click play.cmd; it says "Using the game CI built for this code" or "Building"
 2026-11-17 | engine | When you quit, play.cmd sends the session's play logs to the play-logs branch on GitHub, or says plainly that it could not and keeps them for next time | Quit the game and read the last lines of the play.cmd window
+2026-11-18 | enemy | Planet 3's slime (the Trunk) sets where you shoot it: it hardens into amber walls that take three hits a walker, and your soldiers must walk round them. Its fed body does not burn, but the walls do | Land on planet 3, hold a squad at a front and fire for half a minute, then put a Torch shot on the wall
+2026-11-18 | enemy | On every planet the slime reaches for crystals it has not touched from across the map, and its charges come round walls instead of piling up against them | Watch the whole map on planet 1 or 2 for two minutes
+2026-11-18 | enemy | Planet 4's slime (the Swarmer) makes a last stand: cut to a quarter of its biggest, all of it rushes your squad, once | Reach planet 4 and cut the slime down
+2026-11-18 | enemy | The Experiments tab is down to four rows, and play-new-slime.cmd is gone: what it turned on is in every game now | Double-click play.cmd as always

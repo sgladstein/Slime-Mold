@@ -93,7 +93,7 @@ NOW_OVER = {
 
 # What counts as the game for the "what is new" rule: a change under one of
 # these can change what the player sees or does. Tests cannot.
-GAME_PATHS = ("src/", "assets/", "play.cmd", "play.ps1", "play-new-slime.cmd")
+GAME_PATHS = ("src/", "assets/", "play.cmd", "play.ps1")
 NEWS = "news/whats-new.txt"
 NO_NEWS = "Nothing-new:"
 INDEX_LINE_CAP = 200   # one index line is one sentence (warning)

@@ -265,14 +265,12 @@ pub struct Rules {
     /// Set slime blocks soldiers (E2b, the owner's 01:13Z "Both"): a fine
     /// cell with this many set walkers or more in its 3 x 3 is no ground to
     /// soldiers' feet until the count falls under half of it
-    /// (`Game::bulwark`). 0 off.
+    /// (`Game::bulwark`). 0 off; 5 on the Trunk's planet since 2026-11-17
+    /// (`run::does_to_you`), where slime sets. The trapping alternative
+    /// (`set_hold`: bulwark cells stayed ground and held a soldier to a
+    /// share of its speed) was the other side of this A/B and was deleted
+    /// the same day (`Reports/dead-ends.md`).
     pub set_block: f32,
-    /// Set slime holds instead of blocking (E2b's A/B, the game designer
-    /// 11-17: a rush that walks into set slime should be trapped and eaten,
-    /// not sheltered at its rim): over 0, bulwark cells stay ground, and a
-    /// soldier in one walks at this share of its speed (`Game::wade`). 0
-    /// blocks.
-    pub set_hold: f32,
     /// The larder smells of the bank, `hoard` times a full pile per 10,000
     /// food (M2), and walkers touching it take `steal` food a game second.
     pub hoard: f32,
@@ -689,7 +687,6 @@ impl Rules {
             // mission's own rules could set it.
             "reserve" => &mut self.reserve,
             "set_block" => &mut self.set_block,
-            "set_hold" => &mut self.set_hold,
             _ => return false,
         };
         *f = v;
@@ -753,7 +750,6 @@ impl Default for Rules {
             wall_cost: 20.0,
             wall_width: 2.0,
             set_block: 0.0,
-            set_hold: 0.0,
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,

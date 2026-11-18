@@ -241,6 +241,19 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// when your guns get stronger"; until now depth grew only the walkers
 /// and changed the tier. The surge's reach follows the guns already (the
 /// gun's range plus `Rules::panic_margin`).
+///
+/// **The far smell is on on every planet** (`far_smell` 1, 2026-11-17,
+/// the Enemy lane; the plan the owner approved at 19:07Z: "On by default now,
+/// you veto in play"). Hungry slime leans down the walking distance to
+/// crystals nothing has touched, and specks walk it, so the slime goes for
+/// food it cannot yet smell instead of waiting in its bowl. With no squad
+/// on planet 3 it reached 59 crystals in 2:30 against 47 (more on 7 of 8
+/// seeds, none fewer) and ended bigger on 8 of 8, by up to 45%
+/// (`Reports/sim-use-2026-11-17/s2-far-smell.md`): a harder planet, to be
+/// retuned by the numbers above, not by turning this off. Until now it was
+/// a key in `play-new-slime.cmd` only. Its field is built on a worker
+/// thread every 2 game seconds; a hungry walker reads three more words a
+/// step.
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
     vec![
@@ -248,8 +261,22 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("surge_dash", SURGE_DASH[i].to_string()),
         ("roam", ROAM[i].to_string()),
         ("roam_share", format!("{}", ROAM_SHARE[i])),
+        ("far_smell", "1".to_string()),
     ]
 }
+
+/// **Game rules every planet's slime plays by** (`Rules::set` names), set
+/// in `Run::rules` before the tier's own (`does_to_you`). Today one:
+/// charges go round walls (`unit_paths`, the simulation-use plan's S1; on
+/// on every planet since 2026-11-17, with the far smell above). A surge or
+/// a panic charge walks down the units' walking distance instead of
+/// steering straight at a soldier, so a wall bends a charge to its gap
+/// where it used to pile the slime against the wall: behind a cup of
+/// walls half as many walkers piled at the wall and as many reached the
+/// soldier (`Reports/sim-use-2026-11-17/s1-unit-paths.md`). The field is
+/// built on a worker thread once a game second (2.0 ms on planet 3, 7.4 ms
+/// on planet 8, off the frame).
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
@@ -298,11 +325,13 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // weak to see.
         Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
         Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
-        // The same smell on planet 3 (pumps hand): the first two pumps at
-        // 185 and 167 hp at 2:30 without it, 160 and 160 with it (modest:
-        // the Trunk's cords are slow to turn).
-        Tier::Trunk => DoesToYou { says: "It runs its cords to your pumps", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast", rules: SWARMER_RULES, keys: SWARMER_KEYS },
+        // Until 2026-11-17 the Trunk had the Drifter's row (the same pump
+        // smell: the first two pumps at 185 and 167 hp at 2:30 without it,
+        // 160 and 160 with it; modest, as its cords are slow to turn), so
+        // planets 1 and 3 did the same thing to you. Now it sets
+        // (`TRUNK_KEYS`).
+        Tier::Trunk => DoesToYou { says: "Where you shoot it, it sets into amber walls that take three hits and stop your soldiers. Fire burns them", rules: TRUNK_RULES, keys: TRUNK_KEYS },
+        Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
         Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
         Tier::Grudge => DoesToYou { says: "It remembers where you hurt it, and comes back there", rules: &[], keys: GRUDGE_KEYS },
@@ -325,12 +354,58 @@ const SPRAWLER_RULES: &[(&str, f32)] = &[("smell", 4.0), ("smell_r", 4.0)];
 // (15:26Z) keeps it here for that: Tinder, which brings its own fuel, is the
 // answer, so the card says to bring it.
 const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50")];
+// **The Trunk sets** (2026-11-17, the Enemy lane; planet 3). The
+// simulation-use plan's E1 and E2 were built on 11-17 behind four switches
+// (the crust and its pull, setting, set slime blocking or trapping, fed
+// slime fireproof), each waiting on its own blind film. The plan the owner
+// approved at 19:07Z has the Enemy lane pick one configuration and give it
+// to one tier as its trait, as fire shyness became the Sprawler's. This is
+// it, on the planet its films were made on:
+// - `crust=1`: ground the slime has held keeps a crust (full after a
+//   minute of living, half gone two minutes after it leaves), which burns
+//   as fuel (`crust_fuel` 3) and leaves barren char (`char_barren` 0.3).
+// - `crust_weight` 8 and `crust_fast` 1: the Trunk keeps to its old ground
+//   and steps faster on it (the +8 side of the pull's film: 43,366 walkers
+//   and 73,244 cells ever held at 5:00, against 39,999 and 72,507 with no
+//   pull; the -8 side spread it as a thin sheet over 36% more ground,
+//   which is the Sprawler's shape, not the Trunk's).
+// - `setting=1`: a walker on crust where the scar says it was hurt stops,
+//   stops breeding and takes three blows (`set_armour` 3), and wakes when
+//   the fire has been off it for about a minute. A standing rifle squad
+//   killed 39% less in 45-75 s, a squad that moved to a fresh front 34%
+//   less, and soldiers lived longer (7 at 90 s against 5 and 4), since set
+//   slime does not come on: the Trunk is the slime that holds its ground
+//   (`Reports/sim-use-2026-11-17/e2a-setting.md`).
+// - `set_block` 5: set slime is a wall to soldiers (`larder_world/bulwark.rs`;
+//   the owner, 11-17 01:13Z: bulwarks block "Both" shots and soldiers). The
+//   trap (`set_hold`) lost the A/B and was deleted.
+// - `fire_fed=1`: the fed body is fireproof whatever its trail (the owner
+//   agreed to the plan's "fed slime is fireproof, starving slime burns" in
+//   the same answer); set and cut-off slime still burn (`fire_dry`), so
+//   fire is the answer to a wall your shots made. A fed disc lost 24-65% to
+//   fire in 20 s without it and nothing on 7 of 8 seeds with it
+//   (`c1-dry-burns.md`). Checked on planet 3, run seed 1: two Torch shots
+//   on a 1,212-cell wall left 679 cells two seconds later, against 1,284
+//   with no fire, and the fed body beside it did not catch
+//   (`Reports/enemy-switches-2026-11-17/README.md`).
+// GPU engine keys only (`gpu::set`'s `crust` and `setting` set several
+// numbers at once; the CPU setter has no such names, and new slime work is
+// GPU only since the owner's 11-17 19:21Z answer).
+const TRUNK_RULES: &[(&str, f32)] = &[("set_block", 5.0)];
+const TRUNK_KEYS: &[(&str, &str)] = &[("crust", "1"), ("crust_weight", "8"), ("crust_fast", "1"), ("setting", "1"), ("fire_fed", "1")];
 // Swarmer, planet 4, attack-move: a surge reaches 25 cells past the gun's
 // range (`Rules::panic_margin` 5) and lunges at 3x (`surge_haste` 2):
 // health 74 -> 29. Tried and backfired: the alarm louder (alarm_relay 20,
 // alarm_weight 6), health 74 -> 95 and kills 4,537 -> 878, the body
 // drawn to the wounds instead of the squad.
-const SWARMER_RULES: &[(&str, f32)] = &[("panic_margin", 25.0)];
+// And its last stand (`RaidRules::last_stand`, 2026-11-17, the Enemy
+// lane): once, when it falls under a quarter of its peak
+// (`last_stand_at`), every walker it has left rushes the thickest knot of
+// soldiers. Built 11-15 as a switch for every slime and left off (the owner,
+// 21:15Z: "a slime that is losing might rush you will everything it has.
+// Not sure if this is a good idea or not"); it is the charging slime's
+// way to lose, so it is this tier's and no other's.
+const SWARMER_RULES: &[(&str, f32)] = &[("panic_margin", 25.0), ("last_stand", 1.0)];
 const SWARMER_KEYS: &[(&str, &str)] = &[("surge_haste", "3")];
 // Sporer, planet 5, attack-move: bursts at an alarm of 0.3, not the
 // tier's 1, at 0.2 a step, not 0.05: 4 soldiers at 27 health -> none.
@@ -732,6 +807,10 @@ impl Run {
             // chance rises with the planet (owner, 04:58Z: "Chance increases
             // with progression into the run"); a tier's own rules after.
             r.boss = crate::mould::larder_world::BossRules::for_depth(self.depth);
+            // What every planet's slime does (`ENEMY_RULES`).
+            for &(k, v) in ENEMY_RULES {
+                assert!(r.set(k, v), "ENEMY_RULES: no rule {k}");
+            }
             for &(k, v) in does_to_you(self.level().tier).rules {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }
@@ -1656,12 +1735,23 @@ mod tests {
                 assert_eq!((r.build.pump_smell, r.build.lure_r), (20.0, 15.0));
             }
             // The fire-shy Sprawler, on both engines; no other rung is.
+            // The CPU setter takes the keys it has: the Trunk's are the GPU
+            // engine's alone (`TRUNK_KEYS`).
             let mut p = crate::mould::larder_world::race_params(1, 2, 5000);
             for &(k, v) in does.keys {
-                crate::mould::tiers::set_key(&mut p, k, v).unwrap_or_else(|e| panic!("{} key {k}: {e}", t.name()));
+                let set = crate::mould::tiers::set_key(&mut p, k, v);
+                assert!(set.is_ok() || *t == Tier::Trunk, "{} key {k}: {set:?}", t.name());
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());
+            // The Trunk sets, walls soldiers out and is fireproof while fed;
+            // the Swarmer makes a last stand; no other rung does either.
+            let trunk = *t == Tier::Trunk;
+            assert_eq!((s.set_scar > 0.0, s.crust_rise > 0.0, s.fire_fed, r.set_block > 0.0), (trunk, trunk, trunk, trunk), "{}", t.name());
+            assert_eq!(r.raid.last_stand, *t == Tier::Swarmer, "{}", t.name());
+            // Every planet: the far smell, and charges that go round walls.
+            assert!(r.unit_paths, "{}", t.name());
+            assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
         }
         let mut r = Rules::default();
         Run::range(1).rules(&mut r);

@@ -323,10 +323,8 @@ impl<W: World> Game<W> {
         }
         // Set slime's bulwark (E2b) is no ground: maps route round it as
         // of their build (`Game::mark_bulwark` stales them when it moved).
-        if self.rules.set_hold == 0.0 {
-            for (o, &b) in ok.iter_mut().zip(&self.bulwark) {
-                *o &= !b;
-            }
+        for (o, &b) in ok.iter_mut().zip(&self.bulwark) {
+            *o &= !b;
         }
         for &(c, r) in &self.solid {
             let span = |m: f32, n: usize| ((m - r - 1.0).floor().max(0.0) as usize, ((m + r + 1.0).ceil().max(0.0) as usize).min(n));
@@ -756,19 +754,12 @@ impl<W: World> Game<W> {
     /// The share of full speed soldier `k` walks at: thick slime holds a
     /// soldier back (`Rules::wade`).
     pub fn wade(&self, k: usize) -> f32 {
-        let w = if self.rules.wade > 0.0 {
+        if self.rules.wade > 0.0 {
             // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
             let x = self.soldiers[k].touching as f32 / self.rules.wade;
             1.0 / (1.0 + x * x)
         } else {
             1.0
-        };
-        // Set slime that holds (`Rules::set_hold`, E2b's other way): a
-        // soldier in the bulwark walks at that share.
-        if self.rules.set_hold > 0.0 && self.bulwark_at(self.soldiers[k].x, self.soldiers[k].y) {
-            w * self.rules.set_hold
-        } else {
-            w
         }
     }
 
