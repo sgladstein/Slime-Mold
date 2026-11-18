@@ -152,6 +152,20 @@ What job 4 put where (first cut, 11-18):
   planet 2 lost at the clock twice, the Sprawler's threads eating the
   9-soldier landing squad before it drained (1,471 food in 15 minutes),
   Tinder bought or not.
+- **CI's first curve** (main af78a06, 11-18): 1 planet won of 9. Run seed
+  1 as above; run seeds 2 and 3 lost planet 1 at the clock (27 and 4
+  soldiers left).
+- **Planet 1 on all three run seeds** (11-18, this branch): the home is
+  taken once every other crystal is dry or gave nothing for 30 s (it
+  counted as charged before, so seed 2 never went home with 29 soldiers,
+  one under `BOT_ECON`), and only while the slime by it is under 200 a
+  soldier. Seeds 1 and 2 win (2:48 and 5:16, 2 stars); seed 3 loses at
+  the clock: its slime sits behind a band of set slime (the bulwark, grey
+  in the film) that soaks the volley, so the hunt kills about 200 a
+  half-minute while it grows 300, and a walk-in with 36 soldiers at 267
+  a soldier was eaten to 2. Tried and reverted: a siege from a stand
+  short of the home's heaviest slime (the home's slime is nearly all the
+  slime, so it never ended, and seed 1 lost).
 
 Planet 2 tries after #463 (11-18, reverted; run seed 1, `look=DIR
 run=1:2 mode=squads hand=bot`):
@@ -165,7 +179,8 @@ run=1:2 mode=squads hand=bot`):
   planet 1 the same rule lost a won planet (3,897 food all game, the
   pumps eaten), so pumps before a big squad is a dead end for the bot.
 
-**Next:** the bot on planet 2 (land, back off to a quiet crystal, hold it
+**Next:** seed 3's planet 1 (go round the bulwark: find a stand with a
+clear line of fire, or walk in at its gap), then the bot on planet 2 (land, back off to a quiet crystal, hold it
 with the volley, build up), then planet 3; then whether the old run smoke
 rounds (`the_window_plays_a_runs_planet`, RTS mode) go, measured against
 the bot's coverage. After job 4: job 5's housekeeping.
