@@ -103,7 +103,10 @@ the green, so it lives on what it converts. On planet 1 (run seed 1) at
 edge 0.8 a front crossed the orange body and ate it by 5:00; 0.9 and 1.0
 lived beside it to 7:00; conversion alone held a border. The lab's
 recommendation is to keep it as a second enemy strain, not as the player's
-mould ([report](../../Reports/lab-species-2026-11-18/README.md)).
+mould ([report](../../Reports/lab-species-2026-11-18/README.md)). A
+lure at pull 10 in the hunter's ground doubled its speed (edge 1.0, 7:00:
+8,247 green / 6,651 orange against 4,260 / 10,345), with green and orange
+together no fewer.
 
 ## Open
 

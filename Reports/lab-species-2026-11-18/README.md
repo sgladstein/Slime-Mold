@@ -117,6 +117,40 @@ What it looks like (clips `page/base.mp4` and `page/hunt.mp4`, 300 game seconds 
   prey is gone the hunter has nothing left, and where the prey survives the
   hunter has not yet crashed again.
 
+## Part two: leading the slime into the hunter (11-18)
+
+Direction, 08:49Z: "yes to the one more step, leading the slime into the
+hunter with the Lure ... A day at most." The lab's lure field (the
+branch's, every walker reads it, at the game's pull of 10, `far_smell=-10`)
+laid in the hunter's ground north-west of the orange body from 2:00 to
+7:00: `LAB_MARKS=lure:120:45:110:300` (world units), hunter edge 1.0, run
+seed 1, idle hand. Clips `page/lure-none.mp4` and `page/lure-lure.mp4`
+(2:00 to 7:00 at one frame a second, played at 20 fps).
+
+| Arm (green / orange) | 3:00 | 5:00 | 7:00 | Both at 7:00 |
+|---|---|---|---|---|
+| Edge 1.0, no lure | 1,243 / 9,438 | 3,133 / 9,998 | 4,260 / 10,345 | 14,605 |
+| Edge 1.0, lure at 45,110 | 2,244 / 8,887 | 6,714 / 7,395 | 8,247 / 6,651 | 14,898 |
+| Edge 1.0, lure at 60,95 | 2,366 / 8,721 | 6,698 / 7,419 | 8,568 / 6,519 | 15,087 |
+| Edge 0.9, no lure | 173 / 10,525 | 774 / 12,301 | 1,588 / 13,168 | 14,756 |
+| Edge 0.9, lure at 45,110 | 147 / 10,923 | 1,397 / 12,934 | 4,002 / 11,989 | 15,991 |
+
+- **The lure feeds the hunter.** It draws orange walkers out of their body
+  into the green, which converts them; the front moves south about twice
+  as fast, and by 7:00 the orange is 36% smaller (6,651 against 10,345).
+  Where the lure sits within the hunter's ground matters little.
+- **The slime in all is no smaller.** Green and orange together are within
+  2% either way at edge 1.0: the lure turns orange slime into green slime.
+  It pays the player only if the hunter is worth more to them than what it
+  ate (it takes no crystal food, so a crystal it holds is free).
+- **Run seed 2: the hunter starved to nothing by 2:00**, with and without
+  the lure (green 0 at 2:00, orange 13,293 and 13,409 at 7:00), because it
+  starts far from prey. The small-seed start comes before anything else.
+- A purple patch shows on the lure clip at 7:00 where the front reaches
+  the eaten crystal; not looked into.
+
+One seed, so a direction, not a proof.
+
 ## Recommendation
 
 **Keep the starving hunter as the second species; it is the first fight
@@ -135,9 +169,11 @@ Not for the game yet. Before a card:
    it tends the squad. In the game it would be a second enemy (a strain of
    the slime), counted in the planet's slime, and the planet should not
    end because one slime ate the other.
-3. **The player's angle**, the lab's next run: lead the orange into the
-   hunter with the lure (now in the game), and see whether a hunter at 1.0
-   then eats the slime faster than turrets do.
+3. **The player's angle** (tried in part two): the lure leads the orange
+   into the hunter and doubles its speed, but the slime in all is no
+   smaller. For it to pay, the hunter should be worth something to the
+   player: a strain that dies off once its prey is gone, or one that the
+   turrets render for more food.
 
 Dead end recorded: an edge of 0.6 to 0.8 wins everything, as a stat that
 converts did on 11-11 and 11-12; the shape of the fight is set by the edge,
