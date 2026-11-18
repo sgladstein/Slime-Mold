@@ -125,4 +125,9 @@ A second slime species that fights the first; the player's own mould
   breakaways a blob, but the raid sends fewer walkers out (kills 799
   against 1,212). Recommendation: tether 2 with the raid's walker count
   retuned, for Direction to place.
+- 2026-11-18: part two, tighter tethers at Scott's ask (page `#tighter`,
+  code `73b6357`): any tether of 2 or more keeps raid 1 at home (raid kills
+  41 against 379); tighter adds nothing. Recommendation now: tether 2 for
+  roaming and breakaway walkers only; a muster so a raid leaves as a body
+  is the next step if Direction wants it. Numbers sent to Enemy.
 - Next step: none. Wait for Direction's next brief.

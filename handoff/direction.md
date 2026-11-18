@@ -84,6 +84,11 @@ end.
   walkers in raid 1 from 365 to 114 at 1:03 and in a calm breakaway from
   407 to 192, at a cost in kills (799 against 1,212 by 1:16) that the
   raid's size should win back; placed with Enemy for the walk pass, 11-18.
+  Part two (tether 3, 4, edge contact): every tether of 2 or more keeps a
+  raid at home (raid kills 0:59 to 1:16: 379 untethered, 41 at tether 2,
+  20 to 34 tighter), so the tether is for roaming and breakaway walkers
+  and a raid leaves as one held body (Enemy's march). He liked the tight
+  look (16:51Z, "i like it").
 - **Planet 2's slime at 0.6 of its size** (11-18, this lane's tuning;
   `run::tier_size`). Enemy's look (`Reports/planet2-sprawler-2026-11-18/`)
   found the planet, not the bot: on run seeds 1, 3 and 4 a slime of 23,000
