@@ -58,7 +58,7 @@
   <p class="lede">Can a planet's ground be simulation? Here <span class="w">rain falls, runs to the rivers, pools in the hollows and dries</span>, and everything reads the same water: the slime is drawn to it and pays more to live on dry ground, soldiers wade through pools, fire reads how damp the ground is, and the picture darkens and shines where it is wet.</p>
 
   <h2>From the model</h2>
-  <p>A run planet's ground was fixed for the round: soil kinds, a wet bit, a moisture map that only fire read. Plants, fire, char, crystals and crust were the only things that changed. The prototype adds one moving field, standing water, on the GPU engine's plant pass. Its height is 1 minus the map's own moisture, so water runs toward the rivers and wet biomes the map already has, and the rivers carry it away. Logs that rot into food are described in the report but not built.</p>
+  <p>A run planet's ground was fixed for the round: soil kinds, a wet bit, a moisture map that only fire read. Plants, fire, char, crystals and crust were the only things that changed. The prototype adds one moving field, standing water, on the GPU engine's plant pass. Its height is 1 minus the map's own moisture, so water runs toward the rivers and wet biomes the map already has, and the rivers carry it away. Litter that rots into food is part two, below.</p>
 
   <h2>Planet 1 through one shower</h2>
   <p class="dim">Run seed 1, greedy hand. A 20 s shower from 0:40 to 1:00. 0:35 to 1:35 at four frames a second, played at four times speed.</p>
@@ -84,6 +84,22 @@
     <tr><td>Floor</td><td>12,751</td><td>12,456</td><td>12,351</td><td>11,517</td><td>10,603</td><td>9,841</td><td>9,622</td></tr>
   </table></div>
 
+  <h2 id="rot">Part two: litter that rots into food</h2>
+  <p>Where rain soaks the litter (the plants on the ground) it rots into food, drawn as dark umber soft ground. Rot smells like a crystal, so the slime finds it, and walkers standing on it eat it. It does not dry out; it waits to be eaten. Same planet, seed and shower as above.</p>
+  <div class="pair">
+    <div class="card">
+      <h3>Floor, no rot</h3>
+      <video src="floor.mp4" poster="floor.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">By 1:35: slime <span class="s">9,841</span>, killed <b>1,306</b>. By 2:00: killed <b>1,476</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Floor and rot</h3>
+      <video src="rot.mp4" poster="rot.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">By 1:35: slime <span class="s">9,931</span>, killed <b>1,531</b>. By 2:00: killed <b>2,020</b>.</div>
+    </div>
+  </div>
+  <p>Rot forms only after rain: none before 0:45, then about a million upkeeps of food on the meadow by 1:15. The slime goes out for it in scattered foragers across the wet ground, and the squad shoots them: a sixth more killed by 1:35, a third more by 2:00. The slime ends no bigger, since what it eats is about what it loses to the guns, and most of the rot is never reached. <b>The rot is bait the weather lays</b>: after a shower the slime leaves its body to forage, where a squad can catch it.</p>
+
   <h2>Recommendation</h2>
   <div class="rec">
     <p style="margin-top:0"><b>Change, then build.</b> The ground can be simulation on the GPU engine at little cost, and one field is read by the slime, the squad, fire and the picture alike. On planet 1 it is a mild tide, not a game changer. Before it goes in:</p>
@@ -92,9 +108,9 @@
       <li><b>Give the player a verb on it:</b> fire in a dry spell (fire already reads the moisture), or a pump that drains a pool.</li>
       <li><b>Make the water read clearly:</b> at the full view the wet floor is a darker, mottled green and easy to miss; puddle edges and the shine need a look pass.</li>
     </ol>
-    <p>Next in the lab if wanted: logs and litter that rot into food where it is wet.</p>
+    <p>The rot (part two) is the stronger hook: it draws the slime out after each shower.</p>
   </div>
-  <p class="dim" style="margin-top:28px">One seed, so a direction, not a proof. Code: lab branch <code>claude/project-thread-4tc75h</code>, commit a9b9e61 (GPU only, never merges), key <code>LAB_FLOOR=1</code>. Report: <code>Reports/lab-forest-2026-11-18/</code>.</p>
+  <p class="dim" style="margin-top:28px">One seed, so a direction, not a proof. Code: lab branch <code>claude/project-thread-4tc75h</code>, commits a9b9e61 and 47150aa (GPU only, never merges), key <code>LAB_FLOOR=1</code>. Report: <code>Reports/lab-forest-2026-11-18/</code>.</p>
 </div>
 <script>
 const D = {"base": [[35, 12634], [36, 12625], [37, 12598], [38, 12567], [39, 12552], [40, 12522], [41, 12496], [42, 12465], [43, 12438], [44, 12424], [45, 12399], [46, 12373], [47, 12277], [48, 12260], [49, 12253], [50, 12244], [51, 12231], [52, 12213], [53, 12201], [54, 12190], [55, 12184], [56, 12178], [57, 12166], [58, 12163], [59, 12158], [60, 12152], [61, 12147], [62, 12136], [63, 12125], [64, 12119], [65, 12089], [66, 12048], [67, 11985], [68, 11944], [69, 11904], [70, 11870], [71, 11851], [72, 11837], [73, 11828], [74, 11813], [75, 11791], [76, 11761], [77, 11742], [78, 11738], [79, 11735], [80, 11731], [81, 11715], [82, 11708], [83, 11700], [84, 11685], [85, 11635], [86, 11555], [87, 11454], [88, 11350], [89, 11261], [90, 11156], [91, 11084], [92, 11010], [93, 10950], [94, 10900], [95, 10854]], "floor": [[35, 12803], [36, 12794], [37, 12785], [38, 12780], [39, 12751], [40, 12743], [41, 12729], [42, 12717], [43, 12714], [44, 12712], [45, 12695], [46, 12679], [47, 12671], [48, 12548], [49, 12456], [50, 12435], [51, 12425], [52, 12415], [53, 12403], [54, 12399], [55, 12395], [56, 12389], [57, 12381], [58, 12364], [59, 12351], [60, 12337], [61, 12312], [62, 12279], [63, 12240], [64, 12174], [65, 12060], [66, 11922], [67, 11765], [68, 11641], [69, 11517], [70, 11431], [71, 11309], [72, 11191], [73, 11077], [74, 10965], [75, 10884], [76, 10801], [77, 10729], [78, 10662], [79, 10603], [80, 10551], [81, 10487], [82, 10409], [83, 10325], [84, 10210], [85, 10123], [86, 10061], [87, 10010], [88, 9976], [89, 9953], [90, 9928], [91, 9894], [92, 9887], [93, 9859], [94, 9841], [95, 9831]], "water": [[1, 0, 0, 0], [2, 0, 0, 0], [3, 0, 0, 0], [4, 0, 0, 0], [5, 0, 0, 0], [6, 0, 0, 0], [7, 0, 0, 0], [8, 0, 0, 0], [9, 0, 0, 0], [10, 0, 0, 0], [11, 0, 0, 0], [12, 0, 0, 0], [13, 0, 0, 0], [14, 0, 0, 0], [15, 0, 0, 0], [16, 0, 0, 0], [17, 0, 0, 0], [18, 0, 0, 0], [19, 0, 0, 0], [20, 0, 0, 0], [21, 0, 0, 0], [22, 0, 0, 0], [23, 0, 0, 0], [24, 0, 0, 0], [25, 0, 0, 0], [26, 0, 0, 0], [27, 0, 0, 0], [28, 0, 0, 0], [29, 0, 0, 0], [30, 0, 0, 0], [31, 0, 0, 0], [32, 0, 0, 0], [33, 0, 0, 0], [34, 0, 0, 0], [35, 0, 0, 0], [36, 0, 0, 0], [37, 0, 0, 0], [38, 0, 0, 0], [39, 0, 0, 0], [40, 24, 0, 0], [41, 348, 0, 0], [42, 655, 0, 0], [43, 955, 1, 0], [44, 1249, 12, 0], [45, 1539, 20, 0], [46, 1823, 51, 0], [47, 2103, 109, 0], [48, 2378, 199, 0], [49, 2649, 373, 0], [50, 2917, 582, 0], [51, 3180, 829, 0], [52, 3441, 1168, 0], [53, 3698, 1559, 0], [54, 3951, 2018, 1], [55, 4202, 2576, 1], [56, 4450, 3218, 2], [57, 4695, 3999, 2], [58, 4938, 4796, 2], [59, 5178, 5616, 4], [60, 5366, 6397, 5], [61, 4972, 5784, 6], [62, 4614, 5241, 4], [63, 4272, 4727, 4], [64, 3946, 4262, 3], [65, 3635, 3838, 4], [66, 3341, 3387, 4], [67, 3063, 3031, 3], [68, 2802, 2739, 3], [69, 2561, 2466, 2], [70, 2339, 2212, 3], [71, 2138, 1993, 2], [72, 1958, 1781, 2], [73, 1797, 1579, 1], [74, 1650, 1409, 0], [75, 1516, 1251, 0], [76, 1392, 1106, 0], [77, 1278, 982, 0], [78, 1174, 877, 0], [79, 1077, 787, 0], [80, 989, 689, 0], [81, 906, 617, 0], [82, 829, 549, 0], [83, 757, 484, 0], [84, 691, 435, 0], [85, 629, 378, 0], [86, 573, 338, 0], [87, 520, 295, 0], [88, 471, 246, 0], [89, 427, 218, 0], [90, 386, 185, 0], [91, 348, 157, 0], [92, 314, 129, 0], [93, 282, 101, 0], [94, 253, 86, 0], [95, 226, 75, 0]]};
