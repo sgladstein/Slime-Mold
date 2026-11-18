@@ -75,6 +75,15 @@ end.
   branches of 11-10 to 11-12. Live: the Lab's `claude/project-thread-4tc75h`.
   Deleting unmerged work cannot be undone, so it is his call: ask once,
   with a list and a recommendation, when there is another question for him.
+- **The origin's design** (Enemy's job 3, #480,
+  `Reports/origin-design-2026-11-18/README.md`): a sitting lump of the
+  slime's own walkers on its home crystal; killing it wins the planet and
+  the rest dies back over five seconds. It is Milestone 2's and holds three
+  questions for him with Enemy's recommendations (die-back or instant end;
+  call home when struck; the 1% rule kept as a second win). Not asked yet:
+  the win rule is his to settle in play. Ask once, with the dart and the
+  wet-planet trait, after his next play; Enemy builds nothing of it until
+  then.
 - **Next:** check each lane's lines in `news/whats-new.txt` as they land
   and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
   and Still, the Trunk's walls and the flinch look). When the owner plays,

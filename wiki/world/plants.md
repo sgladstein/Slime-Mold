@@ -141,7 +141,7 @@ Gaussian per cell, soft blobs ([page](https://claude.ai/artifact/5pChXx8qdHxa3qw
 
 ## Open
 
-- Live moisture: the lab (11-18, lab branch only) made it move: rain that runs to the rivers, pools and dries, read by fire, the slime, the soldiers and the view; on planet 1 a 20 s shower pooled 6,397 of 99,200 cells for about half a minute and the slime ended a tenth smaller ([report](../../Reports/lab-forest-2026-11-18/README.md)).
+- Live moisture: the lab (11-18, lab branch only) made it move: rain that runs to the rivers, pools and dries, read by fire, the slime, the soldiers and the view; on planet 1 a 20 s shower pooled 6,397 of 99,200 cells for about half a minute and the slime ended a tenth smaller ([report](../../Reports/lab-forest-2026-11-18/README.md)); part two rots rain-soaked plants into food that draws the slime out to forage.
 - Plants are on by default (menu Plants, `plants=0` off); maps without
   their own get `plants::stand_in` until levelgen writes them, in the
   window and (since 2026-11-15, `plants::planted`) the campaign,

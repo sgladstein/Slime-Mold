@@ -79,7 +79,7 @@ plants' passes, which already run every plant step on a run planet.
   its trail washes out there; fire reads the live moisture; a soldier in a
   pool walks at half speed (the water read back once a game second); the
   view darkens the ground and makes it shine as water pools.
-- **Not built:** litter that rots into food.
+- **Litter that rots into food:** part two, below.
 
 Frame cost: the water adds four neighbour reads a cell to the plant pass,
 on the 99,200 cells of planet 1, every plant step. The once-a-second
@@ -114,6 +114,54 @@ soldiers in a pool at most 5 of 19.
   ground round the north crystal, so at most 5 of 19 soldiers stood in mud.
 - Fire through a dry spell was not filmed (the greedy hand lights none).
 
+## Part two: litter that rots into food (11-18)
+
+Direction, 14:14Z: "yes to the rot, a day at most ... logs and litter that
+rot into food the slime can take, read off the same moisture." Code on the
+lab branch (commit `47150aa`, same `LAB_FLOOR=1`, never merges):
+
+- **Plant block 12 is the rot**, food in units of the slime's upkeep.
+  Litter (the plants on a cell, up to 1) rots where rain has soaked it: the
+  live moisture over the map's own, less 0.05, times 2 a plant step, up to
+  200. Not in rivers and lakes. The walkers standing on a cell eat it (each
+  up to 3 upkeeps a tick, shared), and rot does not dry out: it waits to
+  be eaten.
+- **The slime finds it** because rot lays scent like a crystal (0.3 a unit
+  of rot, a crystal cell lays 20), and its sensors read it too.
+- **It is drawn** as dark umber soft ground with pale flecks where richest.
+- Tried and changed: rot wherever the live moisture passed 0.5 rotted the
+  map's damp river banks before any rain, so the rot ran along every
+  river and drew the slime down the banks; the rot now needs rain. Without
+  its scent the slime ignored the rot more than a few cells from its edge
+  (smell weights 2 to 40 changed nothing).
+
+Results, planet 1, run seed 1, greedy hand, the same shower (0:40 to 1:00).
+Clip `page/rot.mp4`, 0:35 to 1:35 as the floor clip:
+
+| | 1:00 | 1:15 | 1:30 | 1:35 | 2:00 |
+|---|---|---|---|---|---|
+| Floor, no rot: slime | 12,351 | 10,965 | 9,953 | 9,841 | 9,622 |
+| Floor, no rot: killed | 604 | 1,081 | 1,260 | 1,306 | 1,476 |
+| Floor and rot: slime | 12,312 | 10,940 | 10,081 | 9,931 | 9,401 |
+| Floor and rot: killed | 655 | 1,257 | 1,464 | 1,531 | 2,020 |
+
+(2:00 from separate runs with the same settings: `r1-floor`, `r3-sc0.3`.)
+
+- **Rot forms only after rain**: none before 0:45, 0.55 million upkeeps by
+  1:00, 1.1 million by 1:15, and little more until the next shower.
+- **The slime goes out for it** in scattered foragers across the wet
+  meadow, and the squad shoots them: a sixth more killed by 1:35, a third
+  more by 2:00. The slime ends no bigger: what it eats is about what it
+  loses to the guns.
+- **Most of the rot is never eaten**: the rot on the ground still grew
+  from 1.07 to 1.10 million upkeeps between 1:15 and 1:35, after the
+  rain; the slime takes what is near its edge.
+
+So the rot works as bait the weather lays: after a shower the slime comes
+out of its body to forage, where a squad can catch it. It is a stronger
+play hook than the water alone, and the same recommendation stands: change
+(a wet planets' trait, Look's pass on the water and the rot), then build.
+
 ## Recommendation
 
 **Change, then build.** The ground can be simulation on the GPU engine at
@@ -130,5 +178,5 @@ after a shower and the squad rarely stands in mud. Before it goes in:
    is a darker, mottled green, easy to miss; puddle edges and the shine
    need Look's pass (only the full view was filmed).
 
-The rot (logs into food) is the next lab step if Direction wants the
-forest floor taken further.
+The rot is part two, above. The lab stops here and waits for a brief
+(Direction, 14:14Z).
