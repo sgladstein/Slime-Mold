@@ -925,17 +925,20 @@ pub(super) struct BotMemory {
     work: Option<(usize, f32, f32)>,
     /// Crystals left alone, until when.
     left: Vec<(usize, f32)>,
+    /// Crystals ever left: they count as dry when the bot asks whether
+    /// the home is all that is left.
+    barren: Vec<usize>,
 }
 
 thread_local! {
-    static BOT: std::cell::RefCell<BotMemory> = const { std::cell::RefCell::new(BotMemory { work: None, left: Vec::new() }) };
+    static BOT: std::cell::RefCell<BotMemory> = const { std::cell::RefCell::new(BotMemory { work: None, left: Vec::new(), barren: Vec::new() }) };
 }
 
 pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     let t = g.time();
     let sc = g.world.scale();
     if t < 1.0 {
-        BOT.with_borrow_mut(|b| *b = BotMemory { work: None, left: Vec::new() });
+        BOT.with_borrow_mut(|b| *b = BotMemory { work: None, left: Vec::new(), barren: Vec::new() });
     }
     while g.bank >= g.rules.soldier_cost && g.alive() < BOT_SQUAD.min(g.rules.max_squad) {
         if !g.apply(Cmd::Buy) {
@@ -991,7 +994,12 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     // Building up, the nearest crystal with no slime within a range of it
     // (planet 2's first try walked to a big one by the slime and was eaten
     // on the way, 0 food in 3 minutes).
-    let strong = g.alive() >= BOT_ECON;
+    // Or when the home is all that is left, a crystal that was ever left
+    // for giving nothing counting as dry: run seed 2 (planet 1) dried every
+    // other crystal but one it could not drain by 3:30 with 29 soldiers,
+    // one short, and its bank never reached a soldier's price again.
+    let barren = BOT.with_borrow(|b| b.barren.clone());
+    let strong = g.alive() >= BOT_ECON || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = (0..cs.len())
         .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && (strong || (c > 0 && quiet(c))))
@@ -999,6 +1007,22 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
             let walk = if strong { 4.0 * range } else { 0.5 * range };
             let v = |c: usize| cs[c].1.min(200_000.0) / (1.0 + (cs[c].0 .0 - m.0).hypot(cs[c].0 .1 - m.1) / walk.max(1.0));
             v(a).total_cmp(&v(b))
+        })
+        // Weak with no quiet crystal left: the least slimed one, weighed by
+        // its charge and the walk. Run seeds 2 and 3 (planet 1, CI's first
+        // curve) had none quiet by 2:00 and 4:00, hunted the slime's body
+        // with 13 to 18 soldiers and no income (bank stuck under a
+        // soldier's price) and lost at the clock.
+        .or_else(|| {
+            (1..cs.len())
+                .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c))
+                .map(|c| {
+                    let d = (cs[c].0 .0 - m.0).hypot(cs[c].0 .1 - m.1);
+                    let crowd = g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) as f32;
+                    (c, cs[c].1.min(200_000.0) / (1.0 + d / range.max(1.0)) / (1.0 + crowd / 30.0))
+                })
+                .max_by(|a, b| a.1.total_cmp(&b.1))
+                .map(|(c, _)| c)
         });
     // A crystal that gives no harvest for 30 s is left for a minute.
     let work = BOT.with_borrow_mut(|b| {
@@ -1006,8 +1030,11 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
             (Some((c, h, since)), _) if cs.get(c).is_some_and(|x| x.1 > 0.0) && !b.left.iter().any(|l| l.0 == c) => {
                 if g.harvested > h + 50.0 {
                     b.work = Some((c, g.harvested, t));
-                } else if t - since > 30.0 {
+                } else if t - since > 30.0 && c > 0 {
                     b.left.push((c, t + 60.0));
+                    if !b.barren.contains(&c) {
+                        b.barren.push(c);
+                    }
                     b.work = pick.filter(|&p| p != c).map(|p| (p, g.harvested, t));
                 }
             }
@@ -1042,6 +1069,20 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
         }
         return;
     }
+    // The home is cleared only when the slime by it is under 200 a
+    // soldier; till then the squad hunts (below), which thins it. Run seed
+    // 1 (planet 1) cleared it from 9,300 with 50 soldiers (186 a soldier)
+    // and won; run seed 3 walked 36 onto 9,600 (267 a soldier) and had 2
+    // left 30 s later. A siege from a stand short of the heaviest slime by
+    // the home was tried and lost all three seeds: the home's slime is
+    // nearly all the slime, so the siege never ended, and run seed 1, which
+    // had won, lost.
+    let by_home = |p: (f32, f32)| (p.0 - cs[0].0 .0).hypot(p.1 - cs[0].0 .1) <= g.world.crystal_r(0) + range;
+    let home_mass: u32 = grid.iter().enumerate().filter(|&(i, _)| by_home(centre(i))).map(|(_, &c)| c).sum();
+    if (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(10) {
+        eprintln!("BOT t {t:.0} home mass {home_mass}");
+    }
+    let work = work.filter(|&c| c > 0 || home_mass < 200 * g.alive() as u32);
     if let Some(c) = work {
         let at = cs[c].0;
         let o = Order::Clear(at.0, at.1);
