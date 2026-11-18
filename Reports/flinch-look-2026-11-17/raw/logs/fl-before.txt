@@ -1,0 +1,23 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  boom t 16.00 s at 165,168: 0 killed, 0 flung, 0 gassed
+FILMS/fl-before/planet-1-1-squads-16500ms-all.png
+FILMS/fl-before/planet-1-1-squads-16500ms-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.083 ms a frame
+  t 17 s: mould 12439, soldiers 8, bank 400, harvested 0, rendered 0, shots 58, killed 838, took 0%, crystals left 0.998; squad at 126.9,152.7
+  surge: the slime ate 39 food (2.4/s); meter 39.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12439 (readout 12380); 800 breaking away
+  squad: touching 0.5 mean, 3 most; health 92 mean
+FILMS/fl-before/planet-1-1-squads-018s-all.png
+FILMS/fl-before/planet-1-1-squads-018s-near.png
+  CPU: ground field 5.14 ms (once a game second), model and HUD 0.078 ms a frame
+  t 18 s: mould 11765, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 1445, took 0%, crystals left 0.998; squad at 122.8,153.1
+  surge: the slime ate 43 food (2.4/s); meter 43.2 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11765 (readout 11765); 824 breaking away
+  squad: touching 1.5 mean, 5 most; health 88 mean
+FILMS/fl-before/planet-1-1-squads-18800ms-all.png
+FILMS/fl-before/planet-1-1-squads-18800ms-near.png
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.079 ms a frame
+  t 19 s: mould 11765, soldiers 8, bank 400, harvested 0, rendered 0, shots 95, killed 1602, took 0%, crystals left 0.998; squad at 122.8,153.1
+  surge: the slime ate 45 food (2.4/s); meter 45.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11765 (readout 11568); 840 breaking away
+  squad: touching 0.6 mean, 4 most; health 86 mean
