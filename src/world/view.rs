@@ -258,6 +258,8 @@ pub struct View {
     /// The Lure's steering field (`set_steer`, 2026-11-18): the word in
     /// `news` where its blocks start, 0 hidden.
     steer_at: u32,
+    /// How far that field reaches, cells (`set_steer_reach`), 0 unknown.
+    steer_reach: f32,
     flora: u32,
     ripe_at: u32,
     lag: u32,
@@ -399,6 +401,7 @@ impl View {
             crust_at: 0,
             setc_at: 0,
             steer_at: 0,
+            steer_reach: 0.0,
             flora: 0,
             ripe_at: 0,
             lag: 0,
@@ -794,6 +797,16 @@ impl View {
         self.steer_at = if self.news_on || self.dense_at > 0 || self.plant_at > 0 || self.crust_at > 0 { at } else { 0 };
     }
 
+    /// How far the Lure's field reaches, in its own cells (the game's
+    /// `Rules::lure_reach` times the world's scale; 2026-11-18). No ring
+    /// is drawn within half a ring of it: the field stops there on its
+    /// blocks' stepped edge, and a ring on it drew as a dotted line round
+    /// the pull's rim (the game's reach, 120 cells, is a multiple of the
+    /// rings' 20). 0, the default, draws every ring.
+    pub fn set_steer_reach(&mut self, cells: f32) {
+        self.steer_reach = cells.max(0.0);
+    }
+
     /// The world's living walkers a cell (living walkers over its cells),
     /// which sets how many walkers near a cell make the look's body thick
     /// (`view.wgsl`, `body`). Leave it at 0 for the calibration's 5000 on
@@ -969,8 +982,9 @@ impl View {
         for v in self.lump_fade.into_iter().chain(self.lump_fill).chain(self.lump_held) {
             b.extend(v.to_le_bytes());
         }
-        // The third word is spare (set slime's look to 2026-11-18).
-        for v in [self.crust_at, self.setc_at, 0, self.steer_at] {
+        // The third word was set slime's look to 2026-11-18; since, the
+        // Lure's reach.
+        for v in [self.crust_at, self.setc_at, self.steer_reach.to_bits(), self.steer_at] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
@@ -1571,6 +1585,69 @@ mod tests {
             let both = frame(4, &[scent]);
             assert!(both.as_raw() == rings.as_raw(), "zoom {zoom}: the scent light is lit under the rings");
             assert!(frame(0, &[]).as_raw() == none.as_raw(), "zoom {zoom}: set_steer(0) left something drawn");
+        }
+    }
+
+    /// No ring on the pull's rim (2026-11-18): on planets 2 and 3 the
+    /// game's last ring, 120 cells out, fell on the field's edge, where the
+    /// field stops on its blocks' steps, and drew as a dotted line. A field
+    /// reaching 40 cells round the lure at (21, 25): with no reach given
+    /// the ring 40 cells east is drawn, with the reach (`set_steer_reach`)
+    /// it is not, and the ring 20 cells east is drawn either way.
+    #[test]
+    fn no_ring_is_drawn_on_the_lures_rim() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 48usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let (bw, bh) = (w.div_ceil(2), h.div_ceil(2));
+        let mut nw = vec![0u32; 4];
+        for by in 0..bh {
+            for bx in 0..bw {
+                let (dx, dy) = ((bx as f32 - 10.0).abs(), (by as f32 - 12.0).abs());
+                let d = 2.0 * (dx.max(dy) + (2f32.sqrt() - 1.0) * dx.min(dy));
+                nw.push(if d <= 40.0 { d.round() as u32 + 1 } else { 0 });
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&vec![0u32; w * h]));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let news = buf("news", &crate::gpu::u32_bytes(&nw));
+        let state = buf("state", &crate::gpu::u32_bytes(&[100u32, 0, 0, 0]));
+        let screen = (384, 288);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        view.set_dense(Some((&news, &state)), 4 + (bw * bh) as u32, 0);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on((32.0, 24.0));
+        let mut frame = |steer: u32, reach: f32| {
+            view.set_steer(steer);
+            view.set_steer_reach(reach);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let at = |pic: &image::RgbaImage, x: f32, y: f32| {
+            let (sx, sy) = cam.to_screen((x, y));
+            let p = pic.get_pixel(sx as u32, sy as u32).0;
+            [p[0] as i32, p[1] as i32, p[2] as i32]
+        };
+        let lit = |a: [i32; 3], b: [i32; 3]| (0..3).all(|k| b[k] > a[k] + 20);
+        let none = frame(0, 0.0);
+        let every = frame(4, 0.0);
+        let kept = frame(4, 40.0);
+        let (inner, rim) = ((41.0, 25.0), (61.0, 25.0));
+        assert!(lit(at(&none, rim.0, rim.1), at(&every, rim.0, rim.1)), "with no reach given the rim's ring is drawn: {:?} -> {:?}", at(&none, rim.0, rim.1), at(&every, rim.0, rim.1));
+        assert_eq!(at(&kept, rim.0, rim.1), at(&none, rim.0, rim.1), "a ring on the rim");
+        for pic in [&every, &kept] {
+            assert!(lit(at(&none, inner.0, inner.1), at(pic, inner.0, inner.1)), "the ring 20 cells out is drawn");
         }
     }
 
