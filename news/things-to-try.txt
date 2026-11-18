@@ -1,11 +1,9 @@
 # Things to try: at most five lines, shown in the game beside "What is new",
 # each with a tick the game remembers on that PC. The Direction lane owns
 # this file; other lanes ask Direction for a line. One thing a line, in
-# plain words. Lines starting with # are notes.
-#
-# The five below are NOW.md's list of 2026-11-17, a line each.
+# plain words, the most important first. Lines starting with # are notes.
 The rush on planet 1: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it?
-Camera shake and hit-stop: try a fight with them on, once their toggle is on the Experiments tab.
+Camera shake and hit-stop: turn it on in Options, on the Experiments tab, and fight. Keep it, change it or drop it?
 What each of planets 1 to 3 does to you: one sentence a planet after playing them.
 The starting rifle: does it feel good, and did one shop visit change how the gun plays?
 The four mini-bosses: how do they play?

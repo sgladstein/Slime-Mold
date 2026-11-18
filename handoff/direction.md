@@ -8,27 +8,29 @@ end.
 
 ## State (2026-11-17)
 
-- **Done:** `NOW.md` written; `CLAUDE.md` points at it and carries the lane
-  rules; the 11-17 decisions are in `wiki/decisions.md` and
-  `wiki/decisions-game.md`, D8 included; the plan is copied to
-  `Reports/continuation-plan-2026-11-17.md`; `HANDOFF.md` and `ROADMAP.md`
-  are marked as history; the pending picks are sorted (below); the first
-  list of things to try is in `NOW.md`.
-- **Open branch:** none; #447 merged 11-17 19:25Z.
-- **Next, waiting on Engine and tools' first PR** (switch list, `news/`
-  files, lint: the `HANDOFF.md` link rule retired, `NOW.md` capped at 100
-  lines): then (1) move `HANDOFF.md` and `ROADMAP.md` under `Reports/` and
-  fix the links; both decisions pages list `HANDOFF.md` in `sources:`, so
-  change them in the same commit; (2) drop `CLAUDE.md`'s two "until Engine
-  and tools lands" sentences and name `news/whats-new.txt` and
-  `src/build/switches.rs` instead; (3) take over `news/things-to-try.txt`
-  (at most 5 lines) and cut the list from `NOW.md`.
-- **Next, waiting on Enemy's switch PR:** note on the 11-17 01:13Z bulwark
+- **Done:** `NOW.md` and the lane rules in `CLAUDE.md` (#447); the 11-17
+  decisions in both decisions pages, D8 included; the plan copied to
+  `Reports/continuation-plan-2026-11-17.md`; the pending picks sorted
+  (below); the lab's steering report carried to main (#450); the old front
+  pages moved to `Reports/handoff-2026-11-17.md` and
+  `Reports/roadmap-2026-11-17.md` with stubs left at the root;
+  `news/things-to-try.txt` taken over.
+- **Open with the owner:** a card in the Direction thread (11-17 22:25Z):
+  when the lab's steering lure goes into the game. Recommended: the Lure
+  only, in the run shop for planets 1 to 3 at pull 10, built by Enemy and
+  Squad after their first jobs. No lane starts on it until he answers.
+- **Held for D7:** Enemy's idea that the Drifter also smells crystals being
+  drained by hand. It is a rush brake, so it is not built, not even behind a
+  switch. Enemy's planet 1 finding goes beside the rush on the list of
+  things to try once its switch PR is on main: a hand building pumps is
+  raided at 0:59 and both pumps are worn down by 1:30, while the
+  hand-draining rush has 42 soldiers at health 90 at 2:00.
+- **Next:** when Enemy's switch PR merges, note on the 11-17 01:13Z bulwark
   row of `wiki/decisions-game.md` what the lane settled (wall kept, trap
   deleted, fed slime fireproof as the Trunk's trait), as the lane's choice,
-  not the owner's words.
-- **Then:** when the owner plays, sort the log and his notes within the
-  hour. When the run bot exists, the curve for planets 1 to 3.
+  not the owner's words. Prune and reword `news/whats-new.txt` as lanes add
+  lines. When the owner plays, sort the log and his notes within the hour.
+  When the run bot exists, the curve for planets 1 to 3.
 - **No play record yet.** Until the play log carries a build number, his
   play shows only in what he writes; his notes are the dated rows of
   `wiki/decisions-game.md`.

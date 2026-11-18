@@ -143,7 +143,7 @@ const _: () = assert!(SETTLING || SWITCHES.len() <= MOST_OFF, "more switches are
 /// the wall and fireproof fed slime are the Trunk's trait and the last
 /// stand the Swarmer's (`run::does_to_you`); lossy flow, the lone step and
 /// the trap (`set_hold`) were deleted (`Reports/dead-ends.md`). What
-/// became of each is in ROADMAP, with the reports.
+/// became of each is in `Reports/enemy-switches-2026-11-17/README.md`.
 ///
 /// To add one: a row here, in the same change as the key. To settle one:
 /// make its choice the engine's or the rules' own default (or a tier's

@@ -29,7 +29,7 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 | Lane | Exit test | Top three jobs, in order |
 |---|---|---|
 | Direction | all | This page, `CLAUDE.md` and the 11-17 decisions. Sort every pending pick ([`handoff/direction.md`](handoff/direction.md)) and keep the list of things to try. Sort each play session into lane jobs within the hour; post the bot's curve for planets 1 to 3. |
-| Enemy | 4 | Settle the 14 built-but-off switches (ROADMAP, *Switches that are off*): far smell and charges round walls on, the rest a tier's trait or deleted. Make each of planets 1 to 3 do one nameable thing to the player by minute 2. Then the origin, as a design page to Direction first. |
+| Enemy | 4 | Settle the built-but-off switches (`src/build/switches.rs`): far smell and charges round walls on, the rest a tier's trait or deleted. Make each of planets 1 to 3 do one nameable thing to the player by minute 2. Then the origin, as a design page to Direction first. |
 | Squad and arsenal | 5 | Finish Provoke and Still (branch `claude/project-thread-vx9t3p-wip`), then no new card families. Fix what the play notes say gets in the way of control. The rifle's feel, with shake and hit-stop as one Experiments toggle; then shop offers that give planets 1 to 3 distinct builds. |
 | Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad, starting with the flinch haze. One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
 | Engine and tools | 1, 6 | The switch list in code, the build number, the "what is new" file and its lint. The play record (build, switches, planet, a note key; `play.cmd` pushes it) and a Windows build from CI. The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
@@ -54,17 +54,15 @@ asks at most once a session with a recommendation.
 
 ## Things to try at the next play
 
-At most five, most important first. They are offers, not requests. The start
-menu will show this list once its page lands; until then it lives here.
-
-1. **The rush on planet 1 (D7).** Drain crystals and buy soldiers from the first second. A scripted hand had 42 soldiers at 2:00 with nothing touching it, and on planet 3 the same hand was down to 1 (one seed each, 11-17). Does it still win planet 1, and what should stop it?
-2. **Camera shake and hit-stop (D6).** Built and off; it becomes one toggle on the Options page's Experiments tab. Try a fight with it on once the toggle is there.
-3. **What each of planets 1 to 3 does to you.** One sentence a planet after playing them (exit test 4).
-4. **The starting rifle.** Does it feel good, and did one shop visit change how the gun plays (exit test 5)?
-5. **The four mini-bosses.** How do they play? New kinds wait on that.
+At most five, most important first; offers, not requests. The game shows them
+beside "What is new": [`news/things-to-try.txt`](news/things-to-try.txt).
+Today: the rush on planet 1 (D7), camera shake and hit-stop (D6, on the
+Experiments tab), what each of planets 1 to 3 does to you, the starting
+rifle, the four mini-bosses. What each build holds is in
+[`news/whats-new.txt`](news/whats-new.txt).
 
 ## Where things are
 
 - Rulings, quoted and timed: [`wiki/decisions.md`](wiki/decisions.md), [`wiki/decisions-game.md`](wiki/decisions-game.md).
 - What is true now, by subject: [`wiki/index.md`](wiki/index.md). Tried and rejected: `Reports/dead-ends.md`.
-- Before 11-17: [`HANDOFF.md`](HANDOFF.md) and [`ROADMAP.md`](ROADMAP.md), history only. They move under `Reports/` when the wiki lint stops needing links from `HANDOFF.md`.
+- Before 11-17: [`Reports/handoff-2026-11-17.md`](Reports/handoff-2026-11-17.md) and [`Reports/roadmap-2026-11-17.md`](Reports/roadmap-2026-11-17.md), history only.

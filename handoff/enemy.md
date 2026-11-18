@@ -9,7 +9,8 @@ given on 2026-11-17 is below it, unchanged.
 (the switch settlement, job 1). Nothing else is open.
 
 **Job 1, the switches: done.** What became of each of the fourteen is in
-ROADMAP, *Switches that are off*. In short:
+`Reports/enemy-switches-2026-11-17/README.md` (the roadmap that held the
+table is history since 11-18). In short:
 
 - On on every run planet: the far smell (`far_smell`, in `run::enemy_keys`)
   and charges round walls (`unit_paths`, in `run::ENEMY_RULES`).

@@ -3,12 +3,46 @@
 The Enemy lane's first job under the plan the owner approved on 11-17
 ([plan](../continuation-plan-2026-11-17.md), [brief](../../handoff/enemy.md)):
 fourteen slime features were built and off; each is now on, one tier's
-trait, or deleted. What became of each is in
-[ROADMAP](../../ROADMAP.md), *Switches that are off*. This folder holds the
-films behind the choices and the page made for the owner.
+trait, or deleted. What became of each is in the table below (it was the
+roadmap's *Switches that are off* table, now
+[history](../roadmap-2026-11-17.md); the list of what is still off lives in
+code, `src/build/switches.rs`). This folder holds the films behind the
+choices and the page made for the owner.
 
 Page: https://claude.ai/artifact/1qg9m9ktNWHCCLL5Li74JQ (source `page/`; open `index.html`). Films: `film.sh`;
 clips from their frames: `make_clips.py`.
+
+## What became of each
+
+One is still off in the slime's rules:
+
+| Switch (key) | Why it is off | What decides it |
+|---|---|---|
+| Crystals that refill: `crystal_regrow` | Run-out crystals suit the race start (owner, 11-11 14:54Z, "to be settled by playtests"), and refilling changes what the rush pays | It belongs to the owner's D7 answer (the rush brake), which he is holding |
+
+The other thirteen:
+
+| Was | Now |
+|---|---|
+| A far smell: `far_smell` | **On on every run planet** (`run::enemy_keys`). Plain shape C and the campaign keep it off. |
+| Charges round walls: `unit_paths` | **On on every run planet** (`run::ENEMY_RULES`, applied in `Run::rules`). |
+| Crust: `crust=1` | **The Trunk's trait** (planet 3; `TRUNK_KEYS` in `run.rs`). Setting needs it, and it is what fire burns. |
+| Crust pull and fast ground: `crust_weight`, `crust_fast` | **The Trunk's trait** at +8 and 1: the Trunk keeps to ground it has held, which is where its walls stand. |
+| Setting: `setting=1` | **The Trunk's trait.** Where it is shot it sets into slime that takes three blows and doesn't move. |
+| Set slime blocks soldiers: `set_block` | **The Trunk's trait** at 5 (`TRUNK_RULES`): a cell with five set walkers round it is no ground to soldiers, and the set walkers' armour soaks the shots. |
+| Set slime traps: `set_hold` | **Deleted** ([dead end](../dead-ends.md)). The owner ruled "Both" (block shots and soldiers, 01:13Z); a wall is in the walking maps, so a squad routes round it, and a trap was not. |
+| Set slime's look: `setlook=N` | Not a rule switch: the amber set look is what the game draws. The key and the choice of look go to Look and interface. |
+| Fed slime fireproof: `fire_fed` | **The Trunk's trait.** Its fed body does not burn; its set walls and its starved parts do. |
+| Last stand: `RaidRules::last_stand` | **The Swarmer's trait** (planet 4; `SWARMER_RULES`): cut under a quarter of its peak, all of it rushes the squad once. |
+| Reserve recruit: `Rules::reserve` | **Kept**, against the brief, which said to delete it. It is the frozen campaign's own mission rule (a free soldier 20 s after the last one dies, the owner's 11-12 04:44Z no-soft-lock pick), so deleting it would change the campaign; the run does not use it. The switch list gave it a `set=` name and the row "Free recruits", which is Squad and arsenal's to settle. |
+| Lossy flow: `flow_loss` | **Deleted from the game** ([dead end](../dead-ends.md)): the GPU setting, its key and its shader line are gone, and Params word 844 is free. The CPU engine keeps the field, since `src/mould/big.rs` is frozen as it is until Milestone 2. |
+| Lone step: `lone_step` | **Deleted from the game** the same way ([dead end](../dead-ends.md)); Params words 880, 884 and 888 are free. |
+
+`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`)
+plays 15 game seconds on each engine three times: the switch list's rows at
+their first choices, at their last, and then the Trunk's keys and wall, the
+Swarmer's last stand and the charge paths together, so that the settled
+traits still cannot break each other off their own planets.
 
 ## What was chosen, and why
 
