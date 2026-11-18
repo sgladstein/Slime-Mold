@@ -94,5 +94,12 @@ A second slime species that fights the first; the player's own mould
   it. Conversion alone stalls. Recommendation: keep the starving hunter,
   not for the game yet: start it as a small seed, make it a second enemy
   strain, and try leading the slime into it with the Lure.
-- Next step: the hunter as a small seed and the Lure leading prey into it,
-  if Direction wants it; otherwise the next brief (the forest floor).
+- 2026-11-18: part two of the second species, leading the slime into the
+  hunter with the lure (pull 10, laid in the hunter's ground, page
+  `#lure`): at edge 1.0 the hunter is twice the size and the orange 36%
+  smaller by 7:00 (8,247 / 6,651 against 4,260 / 10,345), but green and
+  orange together are no fewer; on run seed 2 the hunter starved by 2:00
+  either way. The second species is closed in the lab (Direction 08:49Z:
+  "Then the forest floor"); it waits as a second enemy strain on NOW.md's
+  Lab row.
+- Next step: the forest floor.
