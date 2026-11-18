@@ -46,28 +46,27 @@ time.
   quiet. Shots already fly as comets, so A2 is now only the hole.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
-#457 calls `set_steer` each frame). On open ground its rings are octagons,
-the field's 8-neighbour walking distance, until Enemy's round field
-(#478, 11-18 14:40Z). Now film it in play at zoom 6 and 12 on planets 1 to 3. Scenes
-that work (run seed 1): a Lure at (275, 95), (100, 168) and (357, 182)
-from 30 s, three `turret2` round it and the squad held beside; each pulls
-400 to 500 walkers within 30 cells by 40 s. Then decide whether the scent light's code goes (Squad asked to
-keep it for now; it only shows where no steering field is drawn).
+#457 calls `set_steer` each frame), its pull round on open ground since
+Enemy's #478. Filmed in play on planets 1 to 3 at zoom 6 and 12
+(`Reports/lure-in-play-2026-11-18/`, page
+https://claude.ai/artifact/QHdZD8LkMJ9E5ZaTDv3Aw2): round rings that bend
+round rock, the slime streaming in, nothing to fix. The green scent light
+is never lit (the field is drawn whenever a Lure stands); its code stays
+while Squad asked to keep it.
 
 **Next, in order.**
 
-1. Film the Lure in play now that Enemy's round field has landed (above).
-2. The rest of Look A, from the ranked list in
+1. The rest of Look A, from the ranked list in
    `wiki/looks/art-direction.md`: a hit's hole and how it closes, a squad
    of 40 you can count, no effect bigger than its damage.
-3. The Experiments tab's own look (still Engine's first tab, one row a
+2. The Experiments tab's own look (still Engine's first tab, one row a
    switch), and the experiments in the pause menu.
-4. Win and lose screens with the planet's numbers.
-5. Picks still open: the mini-boss colours; delete the fen moat A/B's
+3. Win and lose screens with the planet's numbers.
+4. Picks still open: the mini-boss colours; delete the fen moat A/B's
    unused side.
-6. Seen and left: at 200% on 1080 lines the goal's pill covers the top
+5. Seen and left: at 200% on 1080 lines the goal's pill covers the top
    bar's fourth number.
-7. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
+6. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
    their height), and their arcs show cell steps.
 
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's
