@@ -1286,8 +1286,14 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     var aim = NONE;
     // Tether: a marcher steps only into a cell that touches another walker
     // (its own cell aside), so no marcher leaves contact by its own step.
+    // Word 76 above 0 (hold): the marcher stands with its heading kept
+    // instead of turning round. Tried 11-18 at k 1-3 on raid 1: the same
+    // counts to the walker as turning round (the raid field resets the
+    // heading next step), so it is not the turn that keeps a tethered raid
+    // home: a raid leaves the body as a one-wide trickle, and no cell ahead
+    // of a trickle touches 2 others.
     if (marching && body_tether() && there != NONE && there != here && !touches_other(there, here)) {
-        intent[k] = vec4<f32>(wk.x, wk.y, h + 3.14159265, 0.0);
+        intent[k] = vec4<f32>(wk.x, wk.y, select(h + 3.14159265, h, pf(76u) > 0.0), 0.0);
         icell[k] = NONE;
         return;
     }
@@ -3908,14 +3914,18 @@ const PB_WNEXT: u32 = 11u;
 fn body_wait() -> f32 { if (!world(PLANTS)) { return 0.0; } return pf(71u); }
 fn body_tether() -> bool { return world(PLANTS) && pf(74u) > 0.0; }
 // Whether cell j has at least word 74 walkers in its 8 neighbours, cell
-// `own` (the stepping walker's) aside.
+// `own` (the stepping walker's) aside. Word 75 above 0 counts the 4 side
+// neighbours only (Scott 11-18 16:32Z asked to see walkers held much
+// closer), so contact must be along an edge, not at a corner.
 fn touches_other(j: u32, own: u32) -> bool {
     let need = u32(max(pf(74u), 1.0));
+    let side = pf(75u) > 0.0;
     var n = 0u;
     let x = i32(j % P.w); let y = i32(j / P.w);
     for (var dy = -1; dy <= 1; dy++) {
         for (var dx = -1; dx <= 1; dx++) {
             if (dx == 0 && dy == 0) { continue; }
+            if (side && dx != 0 && dy != 0) { continue; }
             let nx = x + dx; let ny = y + dy;
             if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
             let c = u32(ny) * P.w + u32(nx);

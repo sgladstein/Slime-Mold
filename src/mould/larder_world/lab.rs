@@ -289,8 +289,20 @@ impl<W: World> Game<W> {
                 loose += g[i];
             }
         }
+        // Walkers within 30 cells of a live soldier of squad 0: whether a
+        // raid still reaches its target (part two, the tighter tethers).
+        let sq: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive && s.squad == 0).map(|s| (s.x, s.y)).collect();
+        let mut near = 0u32;
+        for i in 0..w * h {
+            if g[i] > 0 {
+                let (x, y) = ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5);
+                if sq.iter().any(|&(sx, sy)| (sx - x).powi(2) + (sy - y).powi(2) <= 900.0) {
+                    near += g[i];
+                }
+            }
+        }
         let pc = |v: u32| 100.0 * v as f32 / all.max(1) as f32;
-        println!("  lab body t {:.0} s: {all} walkers, loose {loose} ({:.1}%), alone {alone} ({:.1}%), in specks {specks} ({:.1}%), largest {largest} ({:.1}%), {bodies} pieces of 10+", self.time(), pc(loose), pc(alone), pc(specks), pc(largest));
+        println!("  lab body t {:.0} s: {all} walkers, loose {loose} ({:.1}%), alone {alone} ({:.1}%), in specks {specks} ({:.1}%), largest {largest} ({:.1}%), {bodies} pieces of 10+, near squad {near}", self.time(), pc(loose), pc(alone), pc(specks), pc(largest));
     }
 
     /// Whether world point (x, y) stands in the forest floor's standing
