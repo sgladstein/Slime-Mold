@@ -10,6 +10,7 @@ sources:
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/dark-ground-2026-11-14/README.md
+  - Reports/droplets-2026-11-18/README.md
   - Reports/flinch-look-2026-11-17/README.md
   - Reports/ground-edges-2026-11-14/README.md
   - Reports/levelgen-review-2026-11-14/README.md
@@ -129,13 +130,12 @@ B starts once A passes his eye.
 
 **A. The fight round the squad**
 
-1. Done: the flinch on the slime alone (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart by value (11-18, [settled](../../Reports/sim-use-2026-11-17/e2b-look.md)).
-2. A shot is a short bright streak the eye can follow (dotted today), and a hit is the slime's own reaction: the hole and the walkers it flings.
-3. Flung droplets in the slime's material (outlined shapes in another style today).
-4. A squad of 40 you can count (one pile today), with Squad and arsenal.
-5. No effect bigger than its damage: check muzzle light, hit light, crater ember.
-6. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as a rose flash.
-7. Fire on slime and on set slime with no cell-sized squares at zoom 12.
+1. Done: the flinch on the slime alone (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart by value (11-18, [settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); flung droplets in the slime's material (11-18, [droplets](../../Reports/droplets-2026-11-18/README.md)).
+2. A hit is the slime's own reaction: the hole and how it closes. (A shot already flies as a bright comet, 11-18 films.)
+3. A squad of 40 you can count (one pile today), with Squad and arsenal.
+4. No effect bigger than its damage: check muzzle light, hit light, crater ember.
+5. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as a rose flash.
+6. Fire on slime and on set slime with no cell-sized squares at zoom 12.
 
 **B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.
 

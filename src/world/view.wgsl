@@ -3233,35 +3233,65 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // pixels across the radius and its tail, inside a dark rim zoom / 12
     // pixels wide (at least one), so it reads over the bright body and
     // the dark ground alike. A shot's spray droplet (the engine writes its
-    // flight below 0) is a killed walker blown out: white-hot while it is
-    // fast, cooling to deep orange as it slows to land. A blast's throw is
-    // living mould and keeps its gold.
+    // flight below 0) is a killed walker blown out: hot while it is fast
+    // (white-hot until 11-18, now the slime's gold glowing), cooling to
+    // deep orange as it slows to land. A blast's throw is living mould and
+    // keeps its gold.
+    // In the slime's material (Look A3, 2026-11-18): the dark rim was an
+    // ink outline, a cartoon chip beside a body drawn with light (the
+    // 11-17 review: "outlined shapes in a different style from the slime
+    // they come from"). Now a droplet is a bead in the slime's gold, lit by
+    // the body's key light with its tight wet glint, so its upper left
+    // catches the light and its lower right falls darker, and where the rim
+    // stood it casts a soft shadow down and away from the light onto what
+    // is under it. The shaded limb and the shadow keep it apart from the
+    // bright body as the rim did.
     if (w.w != 0.0) {
         let spray = w.w < 0.0;
         let fl = abs(w.w);
         let rh = max(P.zoom / 3.2, 1.0);
-        let rim = max(P.zoom / 12.0, 1.0);
         let len = max(clamp(0.8 * fl, 0.5, 3.0) * P.zoom, 2.0);
         let dir = vec2<f32>(cos(w.z), sin(w.z));
         let tail = s - dir * len;
+        let l = normalize(LIGHT);
+        // The shadow: the droplet's own shape, put DROP_SHADOW head radii
+        // away from the light (screen pixels; the light's own direction on
+        // the ground), at least a pixel.
+        let sh = -normalize(l.xy) * max(DROP_SHADOW * rh, 1.0);
         // Heat by its flight a tick: about 0.9 cells for the fastest
         // droplet as it leaves (`spray_reach` 7 over 0.45 s; its tail at
         // zoom 12 about 9 pixels), under 0.2 as the slowest lands.
-        var heat = 0u;
-        if (spray) { heat = u32(round(255.0 * clamp((fl - 0.2) / 0.6, 0.0, 1.0))); }
-        let lo = vec2<i32>(floor(min(s, tail) - vec2<f32>(rh + rim + 1.0)));
-        let hi = vec2<i32>(ceil(max(s, tail) + vec2<f32>(rh + rim + 1.0)));
+        // Four bits: 0 a blast's living throw (gold), 1-15 a spray's heat
+        // from landing to leaving.
+        var heat = 0.0;
+        if (spray) { heat = clamp((fl - 0.2) / 0.6, 0.0, 1.0); }
+        let pad = vec2<f32>(rh + 1.0);
+        let lo = vec2<i32>(floor(min(s, tail) + min(sh, vec2<f32>(0.0)) - pad));
+        let hi = vec2<i32>(ceil(max(s, tail) + max(sh, vec2<f32>(0.0)) + pad));
         for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
             for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
                 let p = vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5);
                 let t = clamp(dot(s - p, dir) / len, 0.0, 1.0);
                 let r = rh * (1.0 - 0.7 * t);
-                let d = distance(p, s - dir * (t * len));
-                // The layer: 2 the droplet, 1 its rim; the tail cooler
-                // than the head.
+                let on = s - dir * (t * len);
+                let d = distance(p, on);
+                // The layer: 2 the droplet (its heat in bits 4-7, the tail
+                // cooler than the head; how squarely it faces the light in
+                // bits 0-3), 1 its shadow.
                 var v = 0u;
-                if (d <= r) { v = (2u << 8u) | u32(f32(heat) * (1.0 - 0.5 * t)); }
-                else if (d <= r + rim) { v = 1u << 8u; }
+                if (d <= r) {
+                    var h4 = 0u;
+                    if (spray) { h4 = 1u + u32(round(14.0 * heat * (1.0 - 0.5 * t))); }
+                    // A bead's normal: out from its axis, up by what is
+                    // left of a sphere's radius.
+                    let o = (p - on) / max(r, 0.5);
+                    let n = normalize(vec3<f32>(o, sqrt(max(1.0 - dot(o, o), 0.0))));
+                    let f = u32(round(15.0 * clamp((dot(n, l) + 0.3) / 1.3, 0.0, 1.0)));
+                    v = (2u << 8u) | (h4 << 4u) | f;
+                } else {
+                    let ts = clamp(dot(s - (p - sh), dir) / len, 0.0, 1.0);
+                    if (distance(p - sh, s - dir * (ts * len)) <= rh * (1.0 - 0.7 * ts)) { v = 1u << 8u; }
+                }
                 if (v != 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], v); }
             }
         }
@@ -3310,12 +3340,29 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
-// A flung walker's droplet (`draw_specks`, the bold spray, 11-15): its
-// rim, a blast's living throw, and a shot's spray from fast (hot) to
-// landing (cool).
-const DROP_RIM: vec3<f32> = vec3<f32>(34.0, 18.0, 6.0);
+// A flung walker's droplet (`draw_specks`, the bold spray, 11-15): a
+// blast's living throw, and a shot's spray from fast (hot) to landing
+// (cool). Since 11-18 a lit bead with a shadow, not a chip in a dark rim
+// (`DROP_RIM` (34, 18, 6) at 0.8, a rim zoom / 12 pixels wide).
+// The shadow: how far it falls from the droplet in head radii, and how
+// much light it takes from what is under it.
+const DROP_SHADOW: f32 = 0.9;
+const DROP_SHADE: f32 = 0.5;
+// The bead's shading: the body's curve (`shaded`, 1 + 1.25 (n.l - l.z),
+// floor 0.3) made a bead a few pixels across mostly its dark limb, a
+// brown pebble at zoom 6, so a gentler slope and a higher floor.
+const DROP_SLOPE: f32 = 0.8;
+const DROP_FLOOR: f32 = 0.55;
+// A shot's spray: a killed walker blown out, the slime's gold while it is
+// fast, glowing this share of the way to `DROP_HEAT` over its shading
+// (so even the fastest keeps a shaded side), cooling to deep orange as it
+// slows to land. A blast's throw is living mould: gold, no glow.
+// (Tried 11-18 and not kept: the 11-15 white-hot (`DROP_HOT` (255, 246,
+// 214)) at 0.6 and at 0.3 over a base a fifth to a third of the way to
+// it: pale cream or grey-brown seeds, not the slime.)
+const DROP_GLOW: f32 = 0.4;
+const DROP_HEAT: vec3<f32> = vec3<f32>(255.0, 238.0, 180.0);
 const DROP_GOLD: vec3<f32> = vec3<f32>(255.0, 196.0, 70.0);
-const DROP_HOT: vec3<f32> = vec3<f32>(255.0, 246.0, 214.0);
 const DROP_COOL: vec3<f32> = vec3<f32>(238.0, 118.0, 24.0);
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // Off the map in the shaded view: darker than any ground or rock.
@@ -3420,14 +3467,26 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);
             c = mix(c, ABSORB_RGB, min(f32(hot) * 0.3, 0.9));
             // A flung walker's droplet (`draw_specks`, the bold spray): its
-            // dark rim, then the droplet, a spray's by its heat.
+            // shadow on what is under it, then the droplet, lit by the
+            // body's key light with the dense body's wet glint (`shaded`:
+            // exponent 14 + 30 x 0.95), a spray's colour by its heat.
             let drop = atomicExchange(&specks[2u * P.shalf + y * P.stride + x], 0u);
-            if ((drop >> 8u) == 1u) { c = mix(c, DROP_RIM, 0.8); }
+            if ((drop >> 8u) == 1u) { c *= 1.0 - DROP_SHADE; }
             if ((drop >> 8u) == 2u) {
-                let hh = f32(drop & 255u) / 255.0;
+                let h4 = (drop >> 4u) & 15u;
                 var dc = DROP_GOLD;
-                if (hh > 0.0) { dc = mix(DROP_COOL, DROP_HOT, hh * hh * (3.0 - 2.0 * hh)); }
-                c = mix(c, dc, 0.95);
+                var hh = 0.0;
+                if (h4 > 0u) {
+                    hh = f32(h4 - 1u) / 14.0;
+                    dc = mix(DROP_COOL, DROP_GOLD, hh);
+                }
+                let fl = f32(drop & 15u) / 15.0 * 1.3 - 0.3;
+                let lz = normalize(LIGHT).z;
+                let shade = clamp(1.0 + DROP_SLOPE * (fl - lz), DROP_FLOOR, 1.4);
+                let spec = pow(max(fl, 0.0), 42.0) * 1.1;
+                var lit = dc * shade + vec3<f32>(255.0, 250.0, 236.0) * spec;
+                lit = mix(lit, DROP_HEAT, DROP_GLOW * hh * hh * (3.0 - 2.0 * hh));
+                c = mix(c, min(lit, vec3<f32>(255.0)), 0.95);
             }
             // A mini-boss's member (`draw_specks`): its lump's core colour
             // (cyan as a leech drinks), white-hot by the hits it has taken,

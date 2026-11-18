@@ -39,3 +39,4 @@
 2026-11-18 | look | The Lure's rings stop short of the edge of its pull, so zoomed out they no longer end in a dotted ring | Build a Lure on planet 2 or 3 and zoom out
 2026-11-18 | look | The amber walls the slime sets on planet 3 now stand up off the slime, lit on one side and shaded on the other, so they read as walls rather than a stain | Planet 3: look at the ring round the slime's big crystal at zoom 6 and 12
 2026-11-18 | enemy | The Lure's rings are round on open ground instead of octagons, and its pull reaches the same distance in every direction, a little more ground than before | Build a Lure on open ground and look at its rings
+2026-11-18 | look | The slime your shots blow out now flies as glossy gold beads, lit from the same side as the slime and each with a small shadow, instead of pale chips in a black outline | Shoot into the slime and zoom in to 12

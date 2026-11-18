@@ -217,7 +217,8 @@ pub struct View {
     /// absorbed walkers' streaks (`draw_absorbed`, 11-14), a buffer half of
     /// their own so the specks' calm/lean/bolt fields keep their room, then
     /// the flung walkers' droplets (the bold spray, 11-15: a layer and a
-    /// heat a pixel, by `atomicMax`).
+    /// heat a pixel, by `atomicMax`; since 11-18 the heat in four bits and
+    /// how squarely the bead faces the light in the other four).
     specks: wgpu::Buffer,
     /// Each walker's energy, when the world grows (`set_alive`): a slot
     /// below 0 is empty or dead and draws no speck.
@@ -2353,5 +2354,79 @@ mod tests {
         assert!(door[0] > door[2] + 25.0, "the door is timber, not slate or water: {door:?}");
         assert!(door[0] - door[2] > wall[0] - wall[2] + 10.0, "warmer than the wall: {door:?} against {wall:?}");
         assert!(door_swing > 30.0, "its grate swings bar to gap: {door_swing}");
+    }
+
+    /// A shot's flung droplet (Look A3, 2026-11-18) is a bead in the
+    /// slime's material over the bright body: lit on the side toward the
+    /// key light and darker on the far side, in the slime's gold rather
+    /// than a pale chip, with no ink rim on its lit side, and a shadow on
+    /// the body beside its far side. Against the 11-15 shader (a flat chip
+    /// in a dark rim) it fails on the first: its two sides 241 and 243.
+    #[test]
+    fn a_flung_droplet_is_a_lit_bead_with_a_shadow_and_no_rim() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [200u8, 160, 60, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        // A body of 4 walkers a cell everywhere, and over it one droplet a
+        // shot's spray throws (the fourth word below 0: a killed walker's
+        // flight a tick, 0.8 cells, fast) flying toward +x.
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for y in 0..h {
+            for x in 0..w {
+                look[y * w + x] = 255 | (4 << 8);
+                for k in 0..4 {
+                    walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                }
+            }
+        }
+        walk.extend([24.5f32, 20.5, 0.0, -0.8]);
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
+        let mut cam = Camera::new((w, h), screen);
+        let zoom = 12.0;
+        cam.zoom_to(zoom, (0.0, 0.0));
+        cam.centre_on((24.0, 20.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        // The pixel (dx, dy) screen pixels from the droplet's head, and the
+        // one `d` pixels from it along (dx, dy).
+        let (hx, hy) = cam.to_screen((24.5, 20.5));
+        let off = |dx: f32, dy: f32| pic.get_pixel((hx + dx) as u32, (hy + dy) as u32).0.map(|v| v as f32);
+        let at = |dx: f32, dy: f32, d: f32| {
+            let n = dx.hypot(dy).max(1e-6);
+            off(dx / n * d, dy / n * d)
+        };
+        let lum = |p: [f32; 4]| 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2];
+        // The key light (`LIGHT`) comes from the upper left.
+        let (lx, ly) = (-0.42f32, -0.58f32);
+        let rh = zoom / 3.2;
+        let (lit, far) = (lum(at(lx, ly, 0.6 * rh)), lum(at(-lx, -ly, 0.6 * rh)));
+        assert!(lit > far + 15.0, "a bead lit toward the light: {lit} against its far side {far}");
+        let core = at(0.0, 0.0, 0.0);
+        assert!(core[2] < 0.6 * core[0], "the slime's gold, not a pale chip: {core:?}");
+        // The body itself, well clear of the droplet and its shadow: the
+        // median of a row of pixels above it (the body has its own sheen).
+        let mut row: Vec<f32> = (0..24).map(|k| lum(off(k as f32 - 12.0, -3.0 * rh))).collect();
+        row.sort_by(f32::total_cmp);
+        let body = row[row.len() / 2];
+        // Just past the head straight up (the tail lies along -x): the 11-15
+        // rim drew there, a pixel wide.
+        let above = lum(at(0.0, -1.0, rh + 0.6));
+        assert!(above > 0.75 * body, "no ink rim on the lit side: {above} against the body {body}");
+        let shade = lum(at(-lx, -ly, rh + 1.2));
+        assert!(shade < 0.8 * body, "a shadow on the body beside its far side: {shade} against the body {body}");
     }
 }
