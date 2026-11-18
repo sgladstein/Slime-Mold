@@ -69,6 +69,16 @@ end.
   this lane's tuning once the bot plays it on seeds 1 to 3 (the Run bot
   workflow's summary): if a played planet 2 is still lost, the landing
   squad or the Sprawler's size is the number to move. Then post the curve.
+- **His play notes, 11-18 15:56Z** (sorted the same hour; record in
+  `wiki/decisions-game.md`): Enemy has raids rare early and ramping later
+  (targets in NOW.md), no mini-bosses on planet 1, and slime that leaves
+  its body moving as one; Engine and tools ends the run when the last
+  soldier dies; the Lab has the brief on the slime as one body (a day,
+  then a page and a recommendation). Direction's own: `WIN_SHARE` 0, a
+  planet won when its last walker dies. Watch the run bot's daily run for
+  a tail on planet 3, where the Trunk's walls are set walkers that count.
+  When Enemy's raid ramp lands, rewrite things-to-try line 1 (it says the
+  pumps are raided about a minute in).
 - **Planet 2's slime at 0.6 of its size** (11-18, this lane's tuning;
   `run::tier_size`). Enemy's look (`Reports/planet2-sprawler-2026-11-18/`)
   found the planet, not the bot: on run seeds 1, 3 and 4 a slime of 23,000
