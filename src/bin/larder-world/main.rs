@@ -101,8 +101,7 @@
 //! puts the round's sound on tape. The CI smoke tests play every mission
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
 //! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
-//! `alarm_look=G[,S]` how strongly the alarm haze draws on bare ground and
-//! on the slime (`View::set_alarm_look`; 0 none); `boss_look=NAME` how every
+//! `boss_look=NAME` how every
 //! mini-boss's body is drawn whatever its kind (`LumpLook`: plain, ember,
 //! violet, ink, bone; for the look's A/B) and `follow=boss` keeps the near view
 //! on the first live mini-boss; `scent=1` opens with the
@@ -592,10 +591,6 @@ struct Args {
     /// `crater=S`: game seconds of crater a hit lays (`Rules::crater`; 0
     /// turns the hole under fire off, to compare).
     crater: Option<f32>,
-    /// `alarm_look=G[,S]`: how strongly the alarm haze draws on bare ground
-    /// and on the slime (`View::set_alarm_look`; S defaults to G), for
-    /// films and A/Bs.
-    alarm_look: Option<(f32, f32)>,
     /// `boss_look=NAME`: every mini-boss's look (`LumpLook`) whatever its
     /// kind, for the look's A/B (else `kind_look`).
     boss_look: Option<LumpLook>,
@@ -1381,11 +1376,10 @@ impl App {
             // The engine's alarm field, so a siren's call (and a shot's
             // alarm) is the field itself spreading and fading (the art
             // director, 11-14: not rings timed from the call); full at a
-            // siren's call.
+            // siren's call. Drawn on the slime it reaches, as the slime's
+            // own colour (the look lane, 11-17; the `alarm_look=` key that
+            // scaled the old haze went with the haze).
             v.set_alarm(Some([&e.germ[0], &e.germ[1]]), game.rules.build.siren_alarm);
-            if let Some((g, s)) = self.args.alarm_look {
-                v.set_alarm_look(g, s);
-            }
             if self.args.scent {
                 v.scent = true;
             }
@@ -2130,10 +2124,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "scent" => args.scent = v != "0",
             "follow" => args.follow_boss = v == "boss",
             "boss_look" => args.boss_look = Some(LumpLook::parse(v).ok_or_else(|| format!("boss_look={v}: plain, ember, violet, ink or bone"))?),
-            "alarm_look" => {
-                let (g, s) = v.split_once(',').unwrap_or((v, v));
-                args.alarm_look = Some((g.parse()?, s.parse()?));
-            }
             "core_pull" => args.core_pull = Some(v.parse()?),
             "bullet" => args.bullet = Some(v.parse()?),
             "own" => {

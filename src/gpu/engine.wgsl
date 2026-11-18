@@ -2164,17 +2164,26 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
         let gh = 1.0 - exp(-germ_in[2u * P.w * P.h + i] / max(2.0 * gas_sleep(), 1.0e-3));
         c += vec3<f32>(45.0, 22.0, 90.0) * gh;
     }
-    // Crater and alarm on the ground (owner, 2026-11-14 08:40Z, of the
-    // scorch and alarm trails: "They should be visible though" "100%"),
-    // the fields themselves, added as the gas is so the mould on them
-    // keeps its colour. Crater (`crater_at`, fine steps left) is an ember,
-    // full while at least `scorch_full` steps are left and fading as the
-    // count runs out: it is the burn Scorch leaves. Alarm (the germ
-    // fields' second block) is a sharp green (a yellow was lost on
-    // the gold mould, 11-14), faint as it spreads thin. On 11-12 04:38Z the owner turned
-    // down a dark char painted at every shot's hit; this is no paint: it
-    // is on exactly the cells the mould shuns or flees, for exactly as
-    // long, and gone when the field is.
+    // The crater on the ground (owner, 2026-11-14 08:40Z, of the scorch
+    // and alarm trails: "They should be visible though" "100%"), the field
+    // itself, added as the gas is so the mould on it keeps its colour.
+    // Crater (`crater_at`, fine steps left) is an ember, full while at
+    // least `scorch_full` steps are left and fading as the count runs out:
+    // it is the burn Scorch leaves. On 11-12 04:38Z the owner turned down a
+    // dark char painted at every shot's hit; this is no paint: it is on
+    // exactly the cells the mould shuns, for exactly as long, and gone when
+    // the field is.
+    // The alarm is not painted here since 2026-11-17 (the look lane, this
+    // pass only). It was a sharp green by the same rule (a yellow was lost
+    // on the gold mould, 11-14), full from an alarm of about 20, made for
+    // the Alarm trail card, which Bait replaced the same day (09:02Z).
+    // Since the flinch (11-15) every shot lays an alarm of 50, so the green
+    // lay over the ground and the slime round a firing squad all game: the
+    // view takes this colour as the slime's hue and the soil's tint, so the
+    // slime went lime and the ground mint in cell-sized blobs (planning
+    // review, 11-17). The view now shows the alarm itself, on the slime it
+    // acts on, as the slime's own colour (`view.wgsl`, `flush_at`;
+    // `Reports/flinch-look-2026-11-17/`).
     if (P.world != 0u && agar[i] != 0u) {
         if ((P.scorched & 1u) != 0u) {
             let left = crater_at(i);
@@ -2182,10 +2191,6 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let cf = min(left / max(P.scorch_full, 1.0), 1.0);
                 c += vec3<f32>(120.0, 36.0, 8.0) * cf;
             }
-        }
-        if (P.alarm_keep > 0.0) {
-            let ah = 1.0 - exp(-germ_in[P.w * P.h + i] / 8.0);
-            c += vec3<f32>(30.0, 110.0, 40.0) * ah;
         }
     }
     // The look the view shades from (byte 2, the wound, is the trail pass's).

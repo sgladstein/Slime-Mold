@@ -849,6 +849,24 @@ impl App {
             // casts, so a payload squad lit the whole front each volley.
             self.lights.push(Light { at, reach: p.burst.r * sc, lift: 4.0, colour: look.light, strength: f * f * (1.0 + (p.killed as f32 / 200.0).min(1.0) + 0.5 * thrown) });
         }
+        // A burning flare (`Card::Flare`, `Rounds::burning`) is an ember
+        // where it burns and a hot red light round it, for as long as it
+        // burns, guttering out over its last `FLARE_GUTTER`: game state,
+        // not a painted pulse. The light reaches half as far as the alarm,
+        // so it is never bigger than what the flare does (the owner's rule
+        // above) and marks the flare more than it washes the ground. Until
+        // 2026-11-17 a flare's only sign was the alarm field's haze on the
+        // ground it lay on; the view now shows the alarm on slime alone
+        // (`view.wgsl`, `flush_at`), and a flare's strike has no radius for
+        // the burst light above, so one cast onto bare ground to draw a
+        // Swarmer would have shown nothing.
+        let flare = card_look(Some(rounds::Card::Flare));
+        for (at, reach, left) in self.rounds.burning(t) {
+            let f = (left as f32 / tps / FLARE_GUTTER).min(1.0);
+            let at = (at.0 * sc, at.1 * sc);
+            self.marks.streak(at, at, (0.3 * sc * zoom).clamp(1.5, 6.0), [flare.glow[0], flare.glow[1], flare.glow[2], (255.0 * f) as u8], flare.core);
+            self.lights.push(Light { at, reach: 0.5 * reach * sc, lift: 3.0, colour: flare.light, strength: FLARE_LIGHT * f });
+        }
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
         // Once the drawn bullet gets there (`Tracer::delay`), white-hot for
@@ -1769,6 +1787,12 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
     out
 }
 
+/// A burning flare's light (`Card::Flare`): its strength at the flare (a
+/// siren's call is 1.2, a burst's first frame 1 and up; at 1 a flare on
+/// the dark ground did not read at zoom 6), and the seconds over which it
+/// gutters out at the end of its burn.
+const FLARE_LIGHT: f32 = 2.5;
+const FLARE_GUTTER: f32 = 0.5;
 
 /// How long a burst lights the world, game seconds.
 const BURST_LIGHT: f32 = 0.12;

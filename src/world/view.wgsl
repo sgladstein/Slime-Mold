@@ -49,9 +49,10 @@ struct V {
     // The map's flora (`View::set_plants`, `map::Items::flora`): which
     // forms its plants take up close (`plant_layer`).
     flora: u32,
-    // How strongly the alarm haze draws (`View::set_alarm_look`, 11-15):
-    // on bare ground and on the slime, 1 as drawn on 11-14.
-    alarm_ground: f32, alarm_slime: f32,
+    // Two spare words. To 2026-11-17 they scaled the alarm's pale haze on
+    // bare ground and on the slime (`View::set_alarm_look`, 11-15); the
+    // haze is gone (`flush_at`).
+    spare_a: u32, spare_b: u32,
     // The scent view (`View::scent`, F2 in Larder World, 11-15): 1 dims the
     // world and washes over it the two fields a walker's sensor adds up
     // (the engine's `sense_at`): the food scent (the look's byte 3) in
@@ -1430,9 +1431,11 @@ fn alarm_open(ix: i32, iy: i32) -> f32 {
 // alarm, y the open cells' share of the weight (0 deep in a wall).
 // Plain bilinear (to 11-15) mixed a wall's 0 into the open cell beside
 // it, so a plateau of alarm fell to nothing at every wall face and the
-// front term below drew that fall as a bright straight line: the square
-// edge of a blast's glow in the Fork's stem (the whole-game review's W27;
-// the field itself is right, the walls hold none).
+// haze's front term (it brightened the field's slope; gone 11-17) drew
+// that fall as a bright straight line: the square edge of a blast's glow
+// in the Fork's stem (the whole-game review's W27; the field itself is
+// right, the walls hold none). The flush keeps the open weights, so slime
+// against a wall flushes as the slime beside it does.
 fn alarm_at(x: f32, y: f32) -> vec2<f32> {
     let fx = x - 0.5; let fy = y - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
@@ -1445,11 +1448,46 @@ fn alarm_at(x: f32, y: f32) -> vec2<f32> {
     return vec2<f32>(dot(w, a) / s, s);
 }
 
-// A slope sample: the alarm there, or `a` (the pixel's own) where the
-// sample lies wholly in a wall, so a wall face has no slope.
-fn alarm_or(x: f32, y: f32, a: f32) -> f32 {
-    let s = alarm_at(x, y);
-    return select(a, s.x, s.y > 0.0);
+// **The flinch, on the slime** (Look A, 2026-11-17). The alarm field is
+// what a hit lays and the slime steers by (`BigParams::flinch`: it backs
+// off ground a shot just struck; the Swarmer floods to it), so it is drawn
+// where it acts, on the slime, as the slime's own colour: struck slime
+// flushes hot, from its gold toward a deep orange with a little light of
+// its own, by the alarm there (`FLUSH_KNEE` of the alarm that reads full
+// is two-thirds of the way), for as long as the engine keeps the alarm (at
+// the flinch's keep a shot's is gone in under a second). The hottest thing
+// stays the crater's ember, the damage itself; the flush is the fainter
+// warmth round it. It is worked out a fine cell in `prep`, with the
+// slime's hue, and only where there is slime.
+// Before: a pale cool haze by the alarm's strength with a brighter front
+// on its slope, a pixel at a time in `shaded`, on bare ground and slime
+// alike (11-14), scaled to a quarter on 11-15 (`set_alarm_look`, the
+// whole-game review's W46: at full strength the fire zone washed mint),
+// over a sharp green the engine painted on the same field. With the
+// flinch on, every shot lays alarm, so the two together were a lime wash
+// in cell-sized blobs over ground and slime round a firing squad, the
+// largest thing on screen where the player aims (planning review, 11-17).
+// Tried the same day and not kept: the slime blanching (toward pale
+// straw; it washed the front out as the haze had) and dimming (pulling
+// its light in; the fire zone read as a darker, dirtier slime).
+// Bare ground shows no alarm now. A siren's call there (the siren is held
+// out of the run, D10) shows by its lamp and by the slime it reaches.
+const FLUSH_KNEE: f32 = 0.5;
+const FLUSH_MUL: vec3<f32> = vec3<f32>(1.0, 0.76, 0.58);
+const FLUSH_GLOW: vec3<f32> = vec3<f32>(24.0, 4.0, 0.0);
+// How hot the slime at (x, y) is flushed, 0 to 1; `th` its thickness as
+// its colour takes it (`prep`'s `tm`).
+fn flush_at(x: f32, y: f32, th: f32) -> f32 {
+    if (P.alarm_full <= 0.0 || th <= 0.004) { return 0.0; }
+    let a = alarm_at(x, y);
+    return (1.0 - exp(-a.x / (FLUSH_KNEE * P.alarm_full))) * a.y * smoothstep(0.004, 0.05, th);
+}
+fn flush_mat(m0: Mat, k: f32) -> Mat {
+    if (k <= 0.0) { return m0; }
+    var m = m0;
+    m.albedo = mix(m.albedo, m.albedo * FLUSH_MUL, k);
+    m.glow += FLUSH_GLOW * k;
+    return m;
 }
 
 fn look_trail(x: f32, y: f32) -> f32 {
@@ -1854,6 +1892,9 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // the trail alone it was a dark film bead; where walkers are, it is
     // mould and takes the mould's colour. The height keeps `th`.
     let tm = max(th, 0.4 * near);
+    // The alarm on the slime here (`flush_at`), under a mini-boss's skin
+    // and the set slime's, which keep their own colours.
+    let hot = flush_at(wx, wy, tm);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         let hh = cell_height(ix, iy, th_h);
@@ -1863,6 +1904,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
         m1.body = wide;
         m1.glow += ABSORB_RGB * 0.45 * flash;
+        m1 = flush_mat(m1, hot);
         m1 = lump_mat(m1, lump, tm);
         m1 = set_mat(m1, set_share(wx, wy), tm);
         mcell[i] = mat_pack(m1);
@@ -1890,6 +1932,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss; mt.vis += wq * mq.vis;
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
+    mt = flush_mat(mt, hot);
     mt = lump_mat(mt, lump, tm);
     mt = set_mat(mt, set_share(wx, wy), tm);
     hcell[i] = h.x;
@@ -2582,36 +2625,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let sp = pow(max(dot(n, hv), 0.0), 24.0) * (0.15 + m.gloss);
         c += (m.albedo * (lc.xyz / 255.0) * diff * 1.6 + lc.xyz * sp * 0.9) * att;
     }
-    // The alarm field (a siren's call, a shot's alarm; 11-14): a pale cool
-    // haze by its strength and a brighter front where it falls off (its
-    // slope), so a call is the engine's field spreading and fading as the
-    // engine spreads and decays it. Pale, not red: red is a bolting walker
-    // and the cut-off rim (the slime-look thread).
-    // Where the field is under 1% of full, nothing is drawn and its slope
-    // is not sampled: five bilinear samples everywhere cost llvmpipe 10% of
-    // the frame (86.7 -> 95.3 ms GPU tail, 11-14).
-    // Only open cells count (`alarm_at`): the haze fades out over a wall's
-    // first cell by the open share, and a wall face draws no front.
-    // Its strength is `alarm_ground` on bare ground and `alarm_slime` on the
-    // slime, by the film there (the whole-game review's W46, 11-15: with
-    // the alarm on, as on the Swarmer's, Sporer's and Sleeper's planets,
-    // the squad's whole fire zone washed out mint, soil and plants with
-    // it). Where the haze draws nothing it is not sampled: a branch, as
-    // WGSL's `select` runs both its arms (with `select` here, `alarm_look=0`
-    // still cost the 1070's base pass 0.11 ms of the change's 0.16, 11-15).
-    let ak = mix(P.alarm_ground, P.alarm_slime, 1.0 - under);
-    var a2 = vec2<f32>(0.0, 0.0);
-    if (P.alarm_full > 0.0 && ak > 0.0) {
-        a2 = alarm_at(x, y);
-    }
-    let a = a2.x;
-    if (a > 0.01 * P.alarm_full) {
-        let gx = alarm_or(x + 1.0, y, a) - alarm_or(x - 1.0, y, a);
-        let gy = alarm_or(x, y + 1.0, a) - alarm_or(x, y - 1.0, a);
-        let fill = 1.0 - exp(-a / (0.5 * P.alarm_full));
-        let front = 1.0 - exp(-length(vec2<f32>(gx, gy)) / (0.12 * P.alarm_full));
-        c += ALARM_RGB * (0.10 * fill + 0.45 * front) * a2.y * ak;
-    }
+    // (The alarm field's pale haze was laid here, to 2026-11-17: `flush_at`.)
     let k1 = gem_near(x, y);
     if (k1 > 0u) {
         let k = k1 - 1u;
@@ -3600,7 +3614,6 @@ const LAMP_DRY: vec3<f32> = vec3<f32>(240.0, 64.0, 52.0);
 const LAMP_IDLE: vec3<f32> = vec3<f32>(70.0, 72.0, 60.0);
 const CALL_RED: vec3<f32> = vec3<f32>(255.0, 90.0, 60.0);
 const BITE_HOT: vec3<f32> = vec3<f32>(255.0, 120.0, 72.0);
-const ALARM_RGB: vec3<f32> = vec3<f32>(200.0, 214.0, 240.0);
 
 // ---- The pump's rig (kind 6, `Marks::pump_rig`, 2026-11-15) ----
 //

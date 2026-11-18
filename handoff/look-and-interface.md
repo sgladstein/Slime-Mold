@@ -1,4 +1,65 @@
-# Lane brief: Look and interface
+# Look and interface: state and brief
+
+## State (2026-11-18)
+
+**Open branch:** `claude/project-thread-8bv885`, one pull request: the
+flinch's look (Look A, first piece). Report
+`Reports/flinch-look-2026-11-17/`, page
+https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg.
+
+**What that pull request does.** The lime wash round a firefight was the
+engine's own paint of the alarm (`engine.wgsl`, `draw`), not the view's
+haze; both are gone, with `ALARM_LOOK` and the key `alarm_look=`. Slime
+under alarm flushes warm orange in `prep` (`flush_at`, `flush_mat` in
+`view.wgsl`); bare ground shows no alarm. A burning Flare, whose only sign
+was the haze, is an ember and a red light (`draw.rs`, `FLARE_LIGHT`). The
+haze strength pick is closed by it.
+
+**Next, in order.**
+
+1. Job 1, the pages that say what a build holds. Engine and tools' data is
+   on main since #449 (`slime_mould::build`: `build()`, `switches`,
+   `news`, `Memory`), with a first Experiments tab wired in `menu.rs`
+   (`experiments::options` and `experiments::apply`: keep those two
+   calls). Still to build here: the build number in the menu's corner, the
+   "what is new" page with the new lines marked (`memory.is_new`), the
+   "things to try" list with ticks (`memory.set_tried`), the Experiments
+   tab's look, and a small HUD mark when `switches::state` is not empty.
+2. The rest of Look A, from the ranked list in
+   `wiki/looks/art-direction.md`: shots as bright streaks, droplets in the
+   slime's material, a squad of 40 you can count, no effect bigger than
+   its damage.
+3. Reviews owed: Squad and arsenal's Provoke and Still (#448, page
+   https://claude.ai/artifact/KeLdsKF61XaDDdESBLEdGF) and Enemy's amber
+   set slime (#451, page https://claude.ai/artifact/1qg9m9ktNWHCCLL5Li74JQ).
+   Both were filmed with the old green wash round the hits.
+4. Win and lose screens with the planet's numbers.
+5. Picks still open: the mini-boss colours; delete the fen moat A/B's
+   unused side. (The set slime's look went to amber in Enemy's #451.)
+
+**Worth knowing.**
+
+- `LARDER_VIEW_WGSL=path` swaps the view shader at run time, in the game
+  and in the tests, so a look can be tried without a rebuild.
+- Films on llvmpipe: 1280 x 800 at 30 frames a game second is about 5 s a
+  frame with four films side by side on four cores (`raw/film.sh` in the
+  report). The bench for frame cost takes 90 s a run and two runs of one
+  build differ by up to 10%.
+- Where a Mind status can be read for a look (Enemy, 11-18): not in the
+  look word (full) and not in `spec`. It is one word a walker slot in the
+  engine's `news` buffer at `mind_at() + k` (kind in the top three bits,
+  the step it ends in the low 29; valid only with `P.mind_on`), which the
+  view already binds, so `draw_specks` can tint a walker with one new
+  offset word passed as `set_crust` passes `setc_at`. A per-cell count
+  (the pattern is `setcount`) needs a pass from Enemy: ask, naming the
+  statuses.
+- An owner's row to mind: `wiki/decisions-game.md`, 11-14 08:39, says the
+  alarm is drawn on bare ground from its field. The plan of 11-17 put the
+  flinch on the slime alone; the tools that lay an alarm (Flare, siren)
+  now show by their own light. Direction agreed (11-18) and adds the
+  dated note once the pull request is on main.
+
+## The brief (the plan of 2026-11-17)
 
 Model and effort: Fable, extra high. Read `00-all-lanes.md` in this folder
 first.
