@@ -43,6 +43,8 @@ pub enum Shape {
     /// `atan2(dy, dx)`), the team's colour, `extra` bits 0-7 the muzzle
     /// flash (0-255), bit 8 dead, bits 9-16 its carried load (0-255 of a
     /// full one), bits 17-24 the pulse of a take from a crystal. Drawn and lit in the view's shader.
+    /// A dead one (`Marks::fallen`) reads bits 0-7 as how far its pool of
+    /// blood has spread (0-255) and bits 9-16 as the seed of its shape.
     Soldier = 7,
     /// A top-down building `hw` across its footprint radius (world cells
     /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren,
@@ -289,11 +291,28 @@ impl Marks {
     /// byte, the angle 16 bits above it.
     #[allow(clippy::too_many_arguments)]
     pub fn soldier_bitten(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool, carry: f32, take: f32, bite: f32, toward: f32) {
+        if !alive {
+            self.fallen(at, r, facing, colour, 1.0, 0);
+            return;
+        }
         let byte = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u32;
-        let extra = byte(flash) | if alive { 0 } else { 256 } | byte(carry) << 9 | byte(take) << 17;
+        let extra = byte(flash) | byte(carry) << 9 | byte(take) << 17;
         let turn = toward.rem_euclid(std::f32::consts::TAU) / std::f32::consts::TAU;
         let word = byte(bite) | ((turn * 65535.0).round() as u32) << 8;
         self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, colour2: word.to_le_bytes(), ..Mark::new(Shape::Soldier, at, (r, r), colour) });
+    }
+
+    /// A fallen soldier at `at`, `r` world cells across the radius, lying
+    /// as it fell from facing `facing` radians (it fell back, so its head
+    /// lies behind it), over a pool of blood spread `pool` 0-1 of the way
+    /// (it spreads in the seconds after the fall, `POOL_GROW` in the
+    /// window), its shape varied by `seed`. The owner's playtest
+    /// (2026-11-18 16:12Z): "When soliders die, the body on the floor looks
+    /// really bad. You could create a better looking body or just a blood
+    /// splotch."
+    pub fn fallen(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, pool: f32, seed: u32) {
+        let extra = (pool.clamp(0.0, 1.0) * 255.0).round() as u32 | 256 | (seed & 255) << 9;
+        self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, ..Mark::new(Shape::Soldier, at, (r, r), colour) });
     }
 
     /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren, 5 larder) at

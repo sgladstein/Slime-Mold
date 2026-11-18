@@ -3597,7 +3597,8 @@ fn pm_over(under: vec4<f32>, top: vec4<f32>) -> vec4<f32> {
 // OUTLINE pixels wide round its silhouette (body and helmet), which
 // parts it from the gold slime, and a cream rim light on the edges that
 // face the world's light, which parts it from the dark ground. The dead
-// get neither and no shadow: a flat grey shape lying on the ground.
+// get neither and no shadow: a body lying on the ground in a pool of its
+// blood (`blood_pool`; a flat grey shape until the owner's 11-18 playtest).
 const OUTLINE: f32 = 1.5;
 // Sprite colours are 0-255, as the atlas's texels (`texel`).
 const RIM: vec3<f32> = vec3<f32>(250.0, 244.0, 222.0);
@@ -3619,6 +3620,53 @@ fn silhouette(p: vec2<f32>, small: bool) -> f32 {
 const CHARGE: vec3<f32> = vec3<f32>(92.0, 224.0, 232.0);
 const CHARGE_HOT: vec3<f32> = vec3<f32>(220.0, 255.0, 255.0);
 
+// The pool of blood under a fallen soldier (the owner's playtest,
+// 2026-11-18 16:12Z: "When soliders die, the body on the floor looks
+// really bad. You could create a better looking body or just a blood
+// splotch"). At `p` in the body's frame (radii, +x the way it faced; the
+// body lies along x), premultiplied: a lumpy pool centred under the chest
+// that spreads from a quarter of its size at the fall to all of it as
+// `grow` goes 0 to 1 (eased, so it spreads fast and slows), with a few
+// drops flung past its edge from the start. Wet: dark at its rim, red
+// inside, a soft glint on the side toward the world's light (`lp`, the
+// light's direction on the ground turned into the body's frame). `seed` (0-255)
+// turns its lobes and drops so no two pools match. All of it inside the
+// soldier mark's box (2 radii each way).
+const BLOOD: vec3<f32> = vec3<f32>(114.0, 14.0, 12.0);
+const BLOOD_RIM: vec3<f32> = vec3<f32>(50.0, 4.0, 5.0);
+const BLOOD_GLINT: vec3<f32> = vec3<f32>(214.0, 96.0, 84.0);
+// The pool's radius at full spread, radii (1.2 times that along the body).
+const POOL_R: f32 = 0.95;
+
+fn blood_pool(p: vec2<f32>, grow: f32, seed: f32, aa: f32, lp: vec2<f32>) -> vec4<f32> {
+    let g = 1.0 - (1.0 - clamp(grow, 0.0, 1.0)) * (1.0 - clamp(grow, 0.0, 1.0));
+    let c = vec2<f32>(-0.3, 0.0);
+    let stretch = vec2<f32>(1.2, 1.0);
+    let q = (p - c) / stretch;
+    let th = atan2(q.y, q.x);
+    let s1 = seed * 0.0246;
+    let wob = 1.0 + 0.14 * sin(3.0 * th + s1 * 9.0) + 0.09 * sin(5.0 * th + s1 * 23.0) + 0.05 * sin(8.0 * th + s1 * 41.0);
+    let big = POOL_R * (0.25 + 0.75 * g);
+    let dist = length(q) - big * wob;
+    var a = cover(dist, aa);
+    // The drops, flung as it fell: four, each at its own angle and reach.
+    for (var i = 0u; i < 4u; i++) {
+        let fi = f32(i);
+        let h = fract(sin(seed * 12.9898 + fi * 78.233) * 43758.5453);
+        let ang = seed * 0.137 + fi * 1.83 + h * 0.9;
+        let at = c + vec2<f32>(cos(ang), sin(ang)) * stretch * POOL_R * (1.1 + 0.15 * h);
+        a = max(a, cover(length(p - at) - (0.06 + 0.06 * h), aa));
+    }
+    if (a <= 0.0) { return vec4<f32>(0.0); }
+    // Dark at the rim, red inside, by depth into the pool.
+    var col = mix(BLOOD_RIM, BLOOD, clamp(-dist / (0.3 * big + 0.05), 0.0, 1.0));
+    let gq = q - lp * 0.45 * big;
+    let glint = exp(-dot(gq, gq) / (0.06 * big * big + 0.01));
+    col = mix(col, BLOOD_GLINT, 0.35 * glint * clamp(-dist / 0.1, 0.0, 1.0));
+    let alpha = a * 0.94;
+    return vec4<f32>(col * alpha, alpha);
+}
+
 fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool, carry: f32, take: f32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
@@ -3629,9 +3677,12 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
     // averaged rather than aliased.
     let small = r < 12.0;
     if (dead) {
-        let c = sprite(3u, p, small);
+        // `flash` is how far its pool has spread, `carry` its seed
+        // (`Marks::fallen`).
+        let lp = vec2<f32>(l.x * ca + l.y * sa, -l.x * sa + l.y * ca);
+        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), sprite(3u, p, small));
         if (c.w <= 0.0) { return vec4<f32>(0.0); }
-        return vec4<f32>(c.xyz / c.w, c.w * 0.92);
+        return vec4<f32>(c.xyz / c.w, c.w);
     }
     let sh = sd_ellipse(s, vec2<f32>(-l.x, -l.y) * 0.32, vec2<f32>(0.78, 0.78));
     var out = vec4<f32>(0.0, 0.0, 0.0, 0.38 * cover(sh, aa * 2.5));

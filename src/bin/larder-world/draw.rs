@@ -940,6 +940,12 @@ impl App {
             let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
             let at = if s.alive { drawn_at(s, &l, r) } else { (s.x, s.y) };
             let bite = if s.alive { l.flinch / FLINCH } else { 0.0 };
+            // The fallen lie as they fell, in a pool of blood that spreads
+            // over `POOL_GROW` (the owner's playtest, 2026-11-18 16:12Z).
+            if !s.alive {
+                self.marks.fallen(at, r, l.facing, team_colour(0), (l.fallen / POOL_GROW).min(1.0), k as u32 * 97 + 13);
+                continue;
+            }
             // No sprite flash: the muzzle flash is its own mark, drawn
             // above as light (gun look, 2026-11-15).
             self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);

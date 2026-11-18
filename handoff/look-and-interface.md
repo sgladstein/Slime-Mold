@@ -28,22 +28,30 @@ two tabs (what is new with NEW marks and a pane; things to try with ticks,
 corner; `ui::Model::trying`, a yellow mark under the clock in play. The
 window fills them in `menu.rs` (`build_page`) and `draw.rs`.
 
+**Also on main:** raised walls and the Lure's rim (#477;
+`Reports/raised-walls-2026-11-18/`, page
+https://claude.ai/artifact/EBAKa6mpRV9M31H5CoDiF1): set slime stands
+`SET_RISE` 4 above the sheet (`set_rise` in `prep`); no ring within half a
+ring of the Lure's reach (`View::set_steer_reach`, one call in `main.rs`'s
+`prepare_now`). Flung droplets in the slime's material (#482, Look A3;
+`Reports/droplets-2026-11-18/`, page
+https://claude.ai/artifact/9vsJuSofq14P5jShjiWyqe): gold beads lit by the
+body's key light, each with a shadow (`draw_specks`, `DROP_*`);
+`DROP_GLOW` is the number if hits read too quiet at zoom 6.
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
 time.
 
-- Raised walls and the Lure's rim (#477; `Reports/raised-walls-2026-11-18/`,
-  page https://claude.ai/artifact/EBAKa6mpRV9M31H5CoDiF1). Set slime
-  stands `SET_RISE` 4 above the sheet (`set_rise` in `prep`), so Enemy's
-  fort rings (#473) read as walls; no ring within half a ring of the
-  Lure's reach (`View::set_steer_reach`, one call in `main.rs`'s
-  `prepare_now`).
-- Then flung droplets in the slime's material (Look A3;
-  `Reports/droplets-2026-11-18/`, page
-  https://claude.ai/artifact/9vsJuSofq14P5jShjiWyqe): a shot's spray flies
-  as gold beads lit by the body's key light, each with a shadow, not chips
-  in a dark rim (`draw_specks`, `DROP_*` in `view.wgsl`). Zoom 6 is
-  quieter than the chips were; `DROP_GLOW` is the number if hits read too
-  quiet. Shots already fly as comets, so A2 is now only the hole.
+- The fallen soldier (the owner's note 11-18 16:12Z, "the body on the
+  floor looks really bad"; `Reports/fallen-soldier-2026-11-18/`, page
+  https://claude.ai/artifact/A6fJKZbrQDx9PCwuHWFBTj). The `dead` layer of
+  `sprites/soldier.svg` is a soldier on its back in dull olive (atlas tile
+  3 re-rendered; `render.js` reproduces the other tiles byte for byte), and
+  `blood_pool` in `view.wgsl` draws a pool under it that spreads over
+  `POOL_GROW` 2.5 s (`Look::fallen` in `main.rs`, Engine's file: a field,
+  its count and the reset at the fall; `Marks::fallen` carries the share
+  and a seed). `BLOOD`, `BLOOD_RIM` and `POOL_R` are the numbers if the
+  pools read too loud.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
