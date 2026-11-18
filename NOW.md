@@ -33,7 +33,7 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 | Squad and arsenal | 5 | Finish Provoke and Still (branch `claude/project-thread-vx9t3p-wip`), then no new card families. The Lure building back in the run shop (below), then what the play notes say gets in the way of control. The rifle's feel, with shake and hit-stop as one Experiments toggle; then shop offers that give planets 1 to 3 distinct builds. |
 | Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad, starting with the flinch haze. One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
 | Engine and tools | 1, 6 | The switch list in code, the build number, the "what is new" file and its lint. The play record (build, switches, planet, a note key; `play.cmd` pushes it) and a Windows build from CI. The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
-| Lab | none | Steering, part three: a dart from the gun that sets a lure or a pusher where the player aims, as a clip and a recommendation, on its own branch. Part two found that marks laid by every shot do not herd (no bullet steering card). Per-tier pull stays here too. |
+| Lab | none | Steering is delivered in three parts ([report](Reports/lab-steering-2026-11-17/README.md)): the lure, no bullet steering card, and a dart that sets a lure where the squad aims. Last on steering: what becomes of a colony pulled off its crystal, a day at most. Then a second slime species that fights the first. |
 
 **The Lure, for planets 1 to 3** (his card, 11-18 03:03Z: "Lure now, in the
 three planets"; [lab report](Reports/lab-steering-2026-11-17/README.md)). A
@@ -44,6 +44,8 @@ Squad and arsenal: the building and a shop item "Lures", after Enemy's
 field. Look and interface: the rings' colour (not the lab's pink) and the
 Lure off `run_hidden`. Direction's first numbers: pull 10, unlock 150, the
 building 300 food and 150 health. The siren and the outpost stay out.
+The dart, the Lure's second form (lab part three), waits until he has played
+the building.
 
 **Parked until Milestone 1 passes:** gun steps E and F, the Mortar and
 Pinwheel mini-bosses, the next turret body, twists and rescue planets, the

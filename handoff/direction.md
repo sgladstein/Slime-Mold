@@ -30,6 +30,14 @@ end.
   against 11,460 by 2:00, 1,565 killed against 10,533), so a high pull is
   a second way to win a crystal, not only a kill zone. Keep the game's
   pull at 10 until he has played it.
+- **The dart waits** (the lab's part three, 11-18): a lure fired where the
+  squad aims, at pull 10, takes a crystal off a colony in 30 to 45 s and
+  leaves the planet's slime 22% smaller by 2:00, for fewer kills (about
+  3,500 against 8,612) and less food. The lab says build it as the Lure's
+  second form. Not placed: it is more than his card covered and it changes
+  how a crystal is won, so it waits until he has played the Lure building.
+  Then put it to him once, with the clips, or give it to Squad if his play
+  notes ask for it. Its price and cooldown are this lane's.
 - **Held for D7:** Enemy's idea that the Drifter also smells crystals being
   drained by hand. It is a rush brake, so it is not built, not even behind a
   switch. Enemy's planet 1 finding goes beside the rush on the list of
