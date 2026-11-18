@@ -3,19 +3,33 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## State (2026-11-18, after job 2's page)
+## State (2026-11-18, after the planet 2 look)
 
-**Open branch:** `claude/project-thread-s5k9cw`, with job 2's page and
-job 3's design (docs only). Merged on 11-18: #451 (the switch settlement,
-job 1), #457 (the lure's field), #473 (the Trunk's fort), #478 (the lure's
-field round on open ground).
+**Open branch:** `claude/project-thread-s5k9cw`, with the planet 2 look
+(docs only). Merged on 11-18: #451 (the switch settlement, job 1), #457
+(the lure's field), #473 (the Trunk's fort), #478 (the lure's field round
+on open ground), #480 (job 2's page and job 3's design).
 
 **The order of work now** (11-18): the origin is designed and waits on
 Direction ([design](../Reports/origin-design-2026-11-18/README.md): a
 sitting lump on the home crystal, regrowing from its charge, calling the
-body home when struck, its death the win; three questions for the owner).
-It is Milestone 2's, so it is not built until Direction says go. Until
-then: what the owner's play notes say about the three slimes.
+body home when struck, its death the win; three questions for the owner,
+which Direction holds until after his next play). It is Milestone 2's, so
+it is not built until Direction says go. Direction counts this lane's
+Milestone 1 jobs done but planet 1's minute-2 gap for a rusher (D7, the
+owner's call).
+
+**Planet 2, the bot or the planet: mostly the planet** (Direction's
+question, 11-18; [report](../Reports/planet2-sprawler-2026-11-18/README.md)).
+On run seeds 1, 3 and 4 the squad lands by crystals of 20,000 to 120,000
+charge while every crystal over 130,000 sits in a slime of 23,000 to
+25,000 walkers; the bot has 3 to 9 soldiers at 2:30. A bot that backs off
+farther, or the Sprawler's smell off, gains a little on 2 of 3 seeds; the
+slime at 0.6 of its size gives 18 to 24 soldiers on all three. Seed 2
+lands by a free 365,000 crystal and builds 30. The size is Direction's
+(the tuning numbers); the lever is `Level::walkers` (`run.rs`'s
+`WALKERS_PER_DEPTH`, the area and `size_roll`), which has no per-tier
+factor today. The two local patches the films used are in the report.
 
 **Job 2, what planets 1 to 3 do by minute 2: page delivered**
 ([report](../Reports/planet-things-2026-11-18/README.md), one clip a

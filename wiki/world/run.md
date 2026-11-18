@@ -15,6 +15,7 @@ sources:
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/origin-design-2026-11-18/README.md
   - Reports/planet-things-2026-11-18/README.md
+  - Reports/planet2-sprawler-2026-11-18/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
@@ -149,6 +150,18 @@ eats two pumps by 1:15 but leaves a squad that builds none alone (the run
 bot: 50 soldiers at health 93 at 2:00); planet 2's wears the bot's squad
 down (health 35 at 1:00, 6 of 11 soldiers at 2:00); planet 3's walls its
 crystals and sets where shot (12,140 walkers set by 2:00).
+
+Planet 2 is where the run bot loses (11-18, run seeds 1 to 4, landing
+straight on planet 2 with 9 soldiers,
+[report](../../Reports/planet2-sprawler-2026-11-18/README.md)): mostly the
+planet. On seeds 1, 3 and 4 the squad lands by crystals of 20,000 to
+120,000 charge while every crystal over 130,000 sits in a slime of 23,000
+to 25,000 walkers (planet 1's: 13,000), and the squad is down to 3 to 9
+soldiers at 2:30. A bot that backs off farther, or the Sprawler's smell
+turned down to the plain slime's, gains a little on 2 of 3 seeds; the
+slime at 0.6 of its size builds 18 to 24 soldiers on all three, at 0.8
+only seed 1 holds. Seed 2 lands by a free crystal of 365,000 and builds 30
+soldiers at today's size. The size is Direction's to set.
 
 Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 [report](../../Reports/run-progression-2026-11-15/does-to-you.md)), each
