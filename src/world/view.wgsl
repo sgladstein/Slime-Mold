@@ -49,10 +49,11 @@ struct V {
     // The map's flora (`View::set_plants`, `map::Items::flora`): which
     // forms its plants take up close (`plant_layer`).
     flora: u32,
-    // Two spare words. To 2026-11-17 they scaled the alarm's pale haze on
-    // bare ground and on the slime (`View::set_alarm_look`, 11-15); the
-    // haze is gone (`flush_at`).
-    spare_a: u32, spare_b: u32,
+    // The Mind statuses (`View::set_minds`, Look A5, 2026-11-18): the word
+    // in `news` where each walker's Mind word starts (0 off) and the engine
+    // steps over which one fades as it runs out. To 2026-11-17 these two
+    // words scaled the alarm's pale haze (`flush_at` replaced it).
+    mind_at: u32, mind_fade: u32,
     // The scent view (`View::scent`, F2 in Larder World, 11-15): 1 dims the
     // world and washes over it the two fields a walker's sensor adds up
     // (the engine's `sense_at`): the food scent (the look's byte 3) in
@@ -3153,6 +3154,43 @@ fn draw_absorbed(k: u32, dw: u32) {
     }
 }
 
+// **A Mind status on the slime it holds** (Look A5, 2026-11-18; the 11-18
+// reviews of Provoke and Still: "a stilled or provoked body has no look of
+// its own"). A walker under a status (blind, sour, spin, provoke, still:
+// the engine's Mind word, `mind_of`) lays a soft rose disc a cell across
+// the radius round itself in the specks' third screen, below the droplets
+// and members (a value under 256, layer 0: its strength in the low byte,
+// `atomicMax`, so overlapping discs make one haze over the walkers held
+// and the brightest is the walker itself). `base` tints the slime there
+// toward the Mind cards' rose (`card_look`'s 255, 90, 190), so a status
+// shows on the slime it holds, moves with it, and what the walkers do (a
+// blind one walking straight, a spinning one curling, a still one
+// stopped) shows in the rose. It fades over the status's last
+// `mind_fade` steps, so how long is left reads too. One hue for the
+// family, as the cards have; which status it is shows in the motion.
+const MIND_T_VIEW: u32 = 0x1FFFFFFFu;
+const MIND_HALO: f32 = 1.0;
+const MIND_ROSE: vec3<f32> = vec3<f32>(255.0, 96.0, 196.0);
+const MIND_TINT: f32 = 0.6;
+fn draw_mind(k: u32, s: vec2<f32>) {
+    let w = news[P.mind_at + k];
+    let end = w & MIND_T_VIEW;
+    let now = state[0] & MIND_T_VIEW;
+    if ((w >> 29u) == 0u || now >= end) { return; }
+    let fade = clamp(f32(end - now) / f32(P.mind_fade), 0.0, 1.0);
+    let r = max(MIND_HALO * P.zoom, 1.5);
+    let lo = vec2<i32>(floor(s - vec2<f32>(r)));
+    let hi = vec2<i32>(ceil(s + vec2<f32>(r)));
+    for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
+        for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
+            let d = distance(vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5), s);
+            if (d >= r) { continue; }
+            let v = u32(round(255.0 * fade * (1.0 - smoothstep(0.0, r, d))));
+            if (v > 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], min(v, 255u)); }
+        }
+    }
+}
+
 // Every walker a speck of light at its own position (one thread a walker),
 // counted a screen pixel; `base` adds and clears them.
 @compute @workgroup_size(256)
@@ -3283,6 +3321,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // stood it casts a soft shadow down and away from the light onto what
     // is under it. The shaded limb and the shadow keep it apart from the
     // bright body as the rim did.
+    if (P.mind_at != 0u && w.w == 0.0) { draw_mind(k, s); }
     if (w.w != 0.0) {
         let spray = w.w < 0.0;
         let fl = abs(w.w);
@@ -3508,6 +3547,13 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             // body's key light with the dense body's wet glint (`shaded`:
             // exponent 14 + 30 x 0.95), a spray's colour by its heat.
             let drop = atomicExchange(&specks[2u * P.shalf + y * P.stride + x], 0u);
+            // A Mind status (`draw_mind`): its haze over the slime it holds,
+            // and its walkers' own cores wherever they are.
+            if (drop > 0u && drop < 256u) {
+                let a = f32(drop) / 255.0;
+                let on = max(smoothstep(0.05, 0.4, under_body), smoothstep(0.6, 0.9, a));
+                c = mix(c, MIND_ROSE, MIND_TINT * a * on);
+            }
             if ((drop >> 8u) == 1u) { c *= 1.0 - DROP_SHADE; }
             if ((drop >> 8u) == 2u) {
                 let h4 = (drop >> 4u) & 15u;
