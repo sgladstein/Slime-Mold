@@ -161,8 +161,8 @@ reads the scar where it was hit at twice the campaign tier's weight
 (`scar_weight` 1, a first number; one film, seed 1 with four soldiers standing: gone at 0:40 against 0:48 with it off, a small effect). Run seed 1 at 2:00, each ends or wears the
 four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
-shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
-them on the command card), and the 40-soldier rush is left as it is (D7). A
+shop no longer sells the outpost or siren (D10; `run_hidden` hides
+them on the command card; the lure was out with them until 11-18), and the 40-soldier rush is left as it is (D7). A
 lab prototype met D10's condition for the lure: a lure
 that every walker leans toward (a walking-distance field, so walls bend it)
 drew planet 1's home colony into three turrets, 4,158 walkers killed by
@@ -173,8 +173,9 @@ run shop for planets 1 to 3 with that rule at a third of the lab's pull
 (first numbers: pull 10, shop unlock 150, the building 300 food and 150
 health, mortal); Enemy builds the field with its own GPU slot and weight,
 Squad and arsenal the building and the shop item, Look and interface the
-rings' colour. The field is built (below); until the building lands the
-shop is as above. The siren and the outpost stay out.
+rings' colour. Both are built: the field (below), and since 11-18 the
+shop's Lures unlock, with the Lure and the lures' switch back on a run's
+build card (`run_lock`). The siren and the outpost stay out.
 The lab's later parts (same report): marks laid by every shot do not herd,
 so there is no bullet steering card; a dart that sets a lure where the squad
 aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
