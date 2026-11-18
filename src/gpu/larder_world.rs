@@ -263,7 +263,12 @@ pub fn garden_settings_on(s: Settings, side: usize) -> Settings {
     let s = Settings { walkers: 2 * side, ..s };
     let half = s.capacity.max(s.walkers) / 2;
     let species_cap = (0..own_mould::SPECIES as usize).map(|sp| if sp == 0 || sp == own_mould::OWN as usize { half } else { 0 }).collect();
-    Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, species_cap, ..s }
+    // LAB (the second species, 2026-11-18, lab branch only): a hunter
+    // needs its own conversion edge, which this function overwrote.
+    let lab = |k: &str| std::env::var(k).ok().and_then(|v| v.parse::<f32>().ok());
+    let convert = lab("LAB_CONVERT").unwrap_or(own_mould::CONVERT);
+    let convert_r = lab("LAB_CONVERT_R").map(|r| r as u32).unwrap_or(own_mould::CONVERT_R);
+    Settings { species: own_mould::SPECIES, avoid: 0.0, convert, convert_r, species_cap, ..s }
 }
 
 impl GpuWorld {
