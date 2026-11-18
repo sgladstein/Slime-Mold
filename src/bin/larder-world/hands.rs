@@ -1055,7 +1055,39 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
         );
     }
     // The volley: the heaviest slime in range of the squad.
-    let near = heaviest(m, range);
+    // A line of fire over open ground, no wall, bulwark or set walker on
+    // it: run seed 3's planet 1 has its home in a basin of rock with one
+    // gap, and the squad stood outside the rock shooting into it for ten
+    // minutes, killing about 200 a half-minute while the slime grew 300.
+    // Planet 1 has no bulwark (`set_block` is the Trunk's), but its set
+    // walkers' armour soaks shots all the same: the line is read against
+    // the set walkers themselves, a fine cell at a time.
+    let set = g.world.set_cells().unwrap_or_default();
+    let clear = |g: &Game<GpuWorld>, a: (f32, f32), b: (f32, f32)| {
+        let n = (b.0 - a.0).hypot(b.1 - a.1).ceil().max(1.0) as usize;
+        (0..=n).all(|i| {
+            let f = i as f32 / n as f32;
+            let (x, y) = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
+            g.ground(x, y) && (x < 0.0 || y < 0.0 || x as usize >= w || set.get(y as usize * w + x as usize).is_none_or(|&c| c == 0))
+        })
+    };
+    // The heaviest slime bins by weight for the walk from `from`, at most 40.
+    let ranked = |from: (f32, f32)| {
+        let mut v: Vec<((f32, f32), f32, f32)> = grid
+            .iter()
+            .enumerate()
+            .filter(|&(_, &c)| c >= 8)
+            .map(|(i, &c)| {
+                let p = centre(i);
+                let d = (p.0 - from.0).hypot(p.1 - from.1);
+                (p, d, c as f32 / (1.0 + d / (2.0 * range.max(1.0))))
+            })
+            .collect();
+        v.sort_by(|a, b| b.2.total_cmp(&a.2));
+        v.truncate(40);
+        v
+    };
+    let near = ranked(m).into_iter().find(|&(p, d, _)| d <= range && clear(g, m, p)).map(|(p, ..)| p).or_else(|| heaviest(m, range));
     g.apply(Cmd::Fire(q as u8, near));
     let fresh = |g: &Game<GpuWorld>, o: Order| !members.iter().all(|&k| g.soldiers[k].order == o);
     if eaten {
@@ -1073,7 +1105,8 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     // soldier; till then the squad hunts (below), which thins it. Run seed
     // 1 (planet 1) cleared it from 9,300 with 50 soldiers (186 a soldier)
     // and won; run seed 3 walked 36 onto 9,600 (267 a soldier) and had 2
-    // left 30 s later. A siege from a stand short of the heaviest slime by
+    // left 30 s later, and at 250 a soldier walked 41 in at 3:20 and had 8
+    // left 10 s later. A siege from a stand short of the heaviest slime by
     // the home was tried and lost all three seeds: the home's slime is
     // nearly all the slime, so the siege never ended, and run seed 1, which
     // had won, lost.
@@ -1092,10 +1125,16 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
         return;
     }
     // Every crystal dry or left: hunt.
-    let Some(a) = heaviest(m, f32::INFINITY) else { return };
+    // From a stand with a clear line to it when one of the heaviest has
+    // one, else as before.
+    let stand_for = |a: (f32, f32)| {
+        let d = (a.0 - m.0).hypot(a.1 - m.1).max(1.0);
+        (a.0 - (a.0 - m.0) / d * 0.7 * range, a.1 - (a.1 - m.1) / d * 0.7 * range)
+    };
+    let shot = ranked(m).into_iter().map(|(a, ..)| (a, stand_for(a))).find(|&(a, st)| g.ground(st.0, st.1) && clear(g, st, a));
+    let Some((a, stand)) = shot.or_else(|| heaviest(m, f32::INFINITY).map(|a| (a, stand_for(a)))) else { return };
     let d = (a.0 - m.0).hypot(a.1 - m.1).max(1.0);
-    if d > 0.8 * range {
-        let stand = (a.0 - (a.0 - m.0) / d * 0.7 * range, a.1 - (a.1 - m.1) / d * 0.7 * range);
+    if d > 0.8 * range || !clear(g, m, a) {
         g.apply(Cmd::SquadOrder(q as u8, Order::Fight(stand.0, stand.1)));
     }
 }
