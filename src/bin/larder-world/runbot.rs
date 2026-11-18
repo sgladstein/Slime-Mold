@@ -97,6 +97,9 @@ pub(super) fn run_bot(base: Args, seed: u64, to: u32, device: &wgpu::Device, que
         let mut last_sec = u64::MAX;
         let t0 = std::time::Instant::now();
         loop {
+            // A game that ended in the last step gets the mission's verdict
+            // (the window's next step would do the same).
+            app.follow_mission();
             let verdict = app.mission.as_ref().and_then(|m| m.verdict);
             let g = app.game.as_mut().unwrap();
             if verdict.is_some() || g.end.is_some() || g.time() - g.landed as f32 / g.rules.tps as f32 > limit {

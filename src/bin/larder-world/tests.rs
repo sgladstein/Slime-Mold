@@ -995,6 +995,35 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
 /// a rack gun swapped in and Back arm the squad with it in the same round,
 /// and Restart keeps it. Leave the range goes to the main page, and the
 /// gun is still built the next time.
+/// **A planet won by its last walker carries the run on** (the owner's
+/// play, 2026-11-18 17:20Z: winning planet 1 showed only "Play again" and
+/// "Main menu"). Since WIN_SHARE is 0 (#487) a win is the Game's own end
+/// (`End::MouldWiped`), which a step can reach before the mission looks;
+/// the window's next step must still give the mission its verdict, so the
+/// end screen carries on to the shop. The same for a wiped squad (#488):
+/// the run ends rather than offering "Play again".
+#[test]
+fn a_run_planet_ended_by_the_game_carries_on() {
+    use slime_mould::mould::larder::End;
+    let Some((device, queue)) = gpu() else { return };
+    for (end, label) in [(End::MouldWiped(200.0), "On to the shop"), (End::SquadWiped(200.0), "End the run")] {
+        let mut a = run_base();
+        a.run = Some(Run::new(1));
+        let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+        app.prepare();
+        for _ in 0..10 {
+            app.step(0.1);
+        }
+        app.settle();
+        app.game.as_mut().unwrap().end = Some(end);
+        app.step(0.1);
+        let v = app.mission.as_ref().unwrap().verdict;
+        assert!(v.is_some(), "{end:?}: the mission gave no verdict");
+        assert_eq!(v.unwrap().stars > 0, matches!(end, End::MouldWiped(_)), "{end:?}: {v:?}");
+        assert_eq!(app.model(None, None).carry_on.as_deref(), Some(label), "{end:?}");
+    }
+}
+
 #[test]
 fn the_gun_range_builds_a_gun_and_plays_it() {
     use slime_mould::mould::guns::GunKind;

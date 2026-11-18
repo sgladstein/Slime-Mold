@@ -1602,6 +1602,25 @@ impl App {
 
     /// Steps the game for `dt` real seconds and keeps the window's notes
     /// (facing, flashes, tracers, alerts).
+    /// **The mission follows the game** once a game second, with the GPU
+    /// world's mould grid (an occupancy read-back, PR #101), and at once
+    /// when the game has ended, so the end screen is the mission's.
+    fn follow_mission(&mut self) {
+        let (Some(g), Some(tr)) = (self.game.as_ref(), self.mission.as_mut()) else { return };
+        // Whole steps only (a step may still be running on the GPU).
+        let sec = g.settled_ticks() / g.rules.tps as u64;
+        // A game that ended inside a game second (a wipe) still gives
+        // the mission its verdict, so the end screen is the mission's.
+        while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
+            self.mission_sec += 1;
+            let grid = g.world.mould_grid(BIN);
+            if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
+                let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
+                self.hud.alert(&tr.cause_line(), None, colour);
+            }
+        }
+    }
+
     fn step(&mut self, dt: f32) {
         self.clock += dt;
         self.trauma = (self.trauma - SHAKE_FALL * dt).max(0.0);
@@ -1644,6 +1663,13 @@ impl App {
         }
         if self.paused || g.end.is_some() || mission_over {
             self.owed = 0.0;
+            // A game that ended in the step finished above still gets the
+            // mission's verdict, so its end screen is the mission's (a run's
+            // "On to the shop"). Missing here, a planet won by its last
+            // walker dying (WIN_SHARE 0, #487) ended the Game before the
+            // mission saw it, and a run showed only "Play again" (the
+            // owner's play, 2026-11-18 17:20Z).
+            self.follow_mission();
             return;
         }
         let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
@@ -1682,22 +1708,8 @@ impl App {
             }
         }
         self.steps += n;
-        // The mission follows the game once a game second, with the GPU
-        // world's mould grid (an occupancy read-back, PR #101).
-        if let Some(tr) = self.mission.as_mut() {
-            // Whole steps only (a step may still be running on the GPU).
-            let sec = g.settled_ticks() / g.rules.tps as u64;
-            // A game that ended inside a game second (a wipe) still gives
-            // the mission its verdict, so the end screen is the mission's.
-            while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
-                self.mission_sec += 1;
-                let grid = g.world.mould_grid(BIN);
-                if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
-                    let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
-                    self.hud.alert(&tr.cause_line(), None, colour);
-                }
-            }
-        }
+        self.follow_mission();
+        let Some(g) = self.game.as_mut() else { return };
         let t = g.time();
         // The play log's line for each whole game second passed.
         if self.log_path.is_some() {
