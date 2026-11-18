@@ -1405,7 +1405,7 @@ fn the_menus_real_lists_fit_one_screen() {
             }
             t
         });
-        assert_eq!(tabs, ["Game", "Planet", "The mould"]);
+        assert_eq!(tabs, ["Game", "Planet", "The mould", "Experiments"]);
         for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
             let at = format!("{screen:?} at {user}, squads {squads}");
             let mut m = start_menu(&base);
@@ -1420,7 +1420,13 @@ fn the_menus_real_lists_fit_one_screen() {
             m.show(Page::Options);
             for tab in &tabs {
                 draw(&mut m);
-                assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the {tab} tab takes {} pages (scrolls: {})", m.sheets(), m.scrolls());
+                // The Experiments tab (11-17) has a row a declared switch:
+                // 14 on the day it landed (ROADMAP's table carried over),
+                // which page like the key list at the big sizes, never
+                // scroll. The plan's rule is three switches at most
+                // (`build::switches::MOST_OFF`), which is one page.
+                let most = if tab == "Experiments" { 3 } else { 1 };
+                assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {tab} tab takes {} pages (scrolls: {})", m.sheets(), m.scrolls());
                 m.key(KeyCode::Tab, true);
             }
             assert_eq!(m.page, Page::Keys, "{at}: Tab after the last options tab opens the keys");

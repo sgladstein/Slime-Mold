@@ -1,0 +1,18 @@
+# What is new in the game: one line for every change the player can see or
+# feel, the newest at the bottom. The game shows these on its "What is new"
+# page and marks the ones added since the last build played on that PC.
+#
+#   DATE | LANE | what you will see | how to try it
+#
+# DATE is the day you write the line (YYYY-MM-DD). LANE is one of direction,
+# enemy, squad, look, engine, lab. Say what the player will see in plain
+# words, not what the code does. The last part may be left out.
+#
+# Add your line at the bottom, in the pull request that makes the change;
+# wiki/lint.py fails a pull request that changes the game and adds none
+# (how to say "nothing the player sees changed": wiki/README.md, "What is
+# new"). The Direction lane owns the wording and prunes old lines. The rules
+# for reading this file are in src/build/news.rs.
+2026-11-17 | engine | The game says which build it is | The window's title ends with "build" and a number; the play log's first line has it too
+2026-11-17 | engine | Experiments: the features that are built but not on yet are listed in the game with what each one does, and can be turned on from the menu | Open Options and the Experiments tab, turn one on, and start a round
+2026-11-17 | engine | The game keeps a list of what is new, and remembers which lines this PC has already seen | Play a round, close the game and open it again: the lines from before are no longer marked new

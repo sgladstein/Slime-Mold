@@ -17,7 +17,9 @@ folder. It switches to main and pulls (skipped, with a note, if you have
 local changes or no network), builds the game and the map editor with
 cargo's progress bar, and opens the start menu. Extra arguments go to the
 game: `play.cmd map=nest mode=squads`. `play-new-slime.cmd` is the same with the
-new-slime switches on (ROADMAP, "Playtest pack 11-17").
+new-slime switches on (`try=far_smell try=unit_paths`). The window's title
+names the build; Options has an Experiments tab with every feature that is
+built but not on yet.
 
 ```
 cargo run --release --bin mould            # the game: lesson, challenge dishes, free dishes, the endless dish
@@ -61,6 +63,7 @@ code at build time.
 | `src/mould/organ.rs` | the Mould Organ prototype |
 | `src/mould/tune.rs` | the T tuning panel |
 | `src/gpu/` | the big dish on the GPU: `engine.wgsl` and `Engine`, shared by the sandbox and the Larder world (wgpu through pixels) |
+| `src/build/`, `build.rs`, `news/` | what a build says about itself: its number (`build.rs` stamps it), the declared switches (`switches.rs`, the Experiments tab's rows), and the "what is new" and "things to try" lists the game shows (`news/*.txt`, read by `news.rs`) |
 | `src/world/` | the world view: camera, minimap, marks, controls; the game UI (`ui.rs` HUD, `canvas.rs`/`canvas.wgsl` its GPU pass, `icons.rs`) and the stand-in squad that drives it (`demo.rs`) |
 | `assets/fonts/` | Inter Medium and SemiBold (SIL OFL, `OFL.txt`; from the Debian fonts-inter package), embedded by `canvas.rs` |
 | `src/bin/mould.rs`, `src/bin/organ.rs` | the windows (winit + pixels only) |

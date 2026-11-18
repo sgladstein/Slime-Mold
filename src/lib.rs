@@ -3,8 +3,11 @@
 //! screen draws with, `sound` the game's sound (listener, voice bank, device),
 //! and `wav` the offline sound writer. `gpu` is the big dish on the GPU (not
 //! built for the browser); `world` is the camera, view and controls for a
-//! world bigger than the screen.
+//! world bigger than the screen. `build` is what a build says about itself:
+//! its number, the switches that are off, and what is new.
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod build;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod gpu;
 pub mod hud;

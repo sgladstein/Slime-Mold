@@ -14,14 +14,21 @@ end.
   `Reports/continuation-plan-2026-11-17.md`; `HANDOFF.md` and `ROADMAP.md`
   are marked as history; the pending picks are sorted (below); the first
   list of things to try is in `NOW.md`.
-- **Open branch:** `claude/project-thread-5ho8zd` (this change).
-- **Next:** move `HANDOFF.md` and `ROADMAP.md` under `Reports/` once Engine
-  and tools retires the lint rule that needs links from `HANDOFF.md` (its
-  job 5); both decisions pages list `HANDOFF.md` in `sources:`, so change
-  them in the same commit. Move the list of things to try into the game's
-  file when Engine and tools lands it. When the owner plays, sort the log
-  and his notes within the hour. When the run bot exists, the curve for
-  planets 1 to 3.
+- **Open branch:** none; #447 merged 11-17 19:25Z.
+- **Next, waiting on Engine and tools' first PR** (switch list, `news/`
+  files, lint: the `HANDOFF.md` link rule retired, `NOW.md` capped at 100
+  lines): then (1) move `HANDOFF.md` and `ROADMAP.md` under `Reports/` and
+  fix the links; both decisions pages list `HANDOFF.md` in `sources:`, so
+  change them in the same commit; (2) drop `CLAUDE.md`'s two "until Engine
+  and tools lands" sentences and name `news/whats-new.txt` and
+  `src/build/switches.rs` instead; (3) take over `news/things-to-try.txt`
+  (at most 5 lines) and cut the list from `NOW.md`.
+- **Next, waiting on Enemy's switch PR:** note on the 11-17 01:13Z bulwark
+  row of `wiki/decisions-game.md` what the lane settled (wall kept, trap
+  deleted, fed slime fireproof as the Trunk's trait), as the lane's choice,
+  not the owner's words.
+- **Then:** when the owner plays, sort the log and his notes within the
+  hour. When the run bot exists, the curve for planets 1 to 3.
 - **No play record yet.** Until the play log carries a build number, his
   play shows only in what he writes; his notes are the dated rows of
   `wiki/decisions-game.md`.
@@ -38,7 +45,8 @@ ask big". None of these is asked of him; he vetoes in play.
 | Far smell (`far_smell`) and charges round walls (`unit_paths`); `play-new-slime.cmd` | On by default on the run's planets; delete the second script | Enemy |
 | Setting, block or trap (`set_block`, `set_hold`), crust and its pull, fed slime fireproof (`fire_fed`): four blind films | Pick one configuration and give it to one deeper tier as its trait; the films exist if wanted | Enemy |
 | The set slime's look (`setlook`: glaze or amber) | Decide | Look and interface |
-| Haze strength and flinch strength | Redraw the haze (look A); set the flinch | Look and interface; Enemy |
+| Haze strength | Settled by Look and interface, 11-17: there is no haze any more. The lime wash was the engine's alarm paint; the alarm now shows only on slime, as a warm orange flush in the slime's own colour, and bare ground shows nothing | closed when its PR merges |
+| Flinch strength | Set it | Enemy |
 | Mini-boss colour (Violet, Ember, Ink) | Decide | Look and interface |
 | Fen moat or rock rims | Delete the moat: he saw no difference | Look and interface |
 | Heave and Corral as one card | Decide; the plan would merge them | Squad and arsenal |
@@ -46,7 +54,8 @@ ask big". None of these is asked of him; he vetoes in play.
 | The door-grate bullets question | Answered 11-17 03:08Z: bullets do not pass doors | closed |
 | Camera shake and hit-stop (D6) | One Experiments toggle; second on the list of things to try | Squad and arsenal, with Look and interface |
 | Last stand | One deep tier's trait, or delete | Enemy |
-| Reserve recruit, lossy flow, lone step | Delete, each with its `Reports/dead-ends.md` line | Enemy |
+| Lossy flow, lone step | Delete, each with its `Reports/dead-ends.md` line | Enemy |
+| Reserve recruit (`Rules::reserve`) | Kept: it has no `set=` name and the run never uses it; it is the frozen campaign's mission rule (his 11-12 04:44Z no-soft-lock pick), so it is not a switch (Enemy, 11-17) | closed |
 | Crystals that refill | Stays off: it belongs to his D7 answer | Direction holds it |
 | Specks amount, mortar strength, the size of what each planet does to you | Tuning notes from his next play | Direction |
 | Run pacing, shop prices, the breather planet | His next play and the bot's curve | Direction |

@@ -68,8 +68,14 @@ jobs:
       # history (the lint reads git dates), so it adds seconds, not a runner.
       # Docs-only PRs skip the build jobs, and those are the PRs that change
       # the wiki, so without this step the lint would never run in CI.
+      # On a pull request the lint finds its base itself (GITHUB_BASE_REF).
+      # On the merge queue's candidate it is given the main the candidate
+      # was built on, so its per-pull-request checks (a changed report's
+      # page, a game change's "what is new" line) run there too: the queue
+      # does not wait for a pull request's own CI, so without this a
+      # request that failed them could still land (2026-11-17).
       - name: wiki lint
-        run: python3 wiki/lint.py
+        run: python3 wiki/lint.py ${{ inputs.base && format('--base={0}', inputs.base) || '' }}
       # No tracked file the .gitignore names (2026-11-15). #192 committed
       # two of the game's replays (larder-world-replay-*.txt); the game
       # rewrites them on every round there, so the owner's play.cmd saw
