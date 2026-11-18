@@ -205,7 +205,7 @@ impl<W: World> Game<W> {
                 x: s.x,
                 y: s.y,
                 touch: r.touch * sc,
-                sight: self.gun_range(q) * sc,
+                sight: self.sight(k),
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
                 smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
