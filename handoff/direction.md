@@ -64,6 +64,12 @@ end.
   this lane's tuning once the bot plays it on seeds 1 to 3 (the Run bot
   workflow's summary): if a played planet 2 is still lost, the landing
   squad or the Sprawler's size is the number to move. Then post the curve.
+- **Old branches** (Engine and tools' Branches workflow, 11-18): 91 merged
+  branches deleted, 56 unmerged listed in the run's summary
+  (actions run 44317767827), most of them one-commit runner and census
+  branches of 11-10 to 11-12. Live: the Lab's `claude/project-thread-4tc75h`.
+  Deleting unmerged work cannot be undone, so it is his call: ask once,
+  with a list and a recommendation, when there is another question for him.
 - **Next:** check each lane's lines in `news/whats-new.txt` as they land
   and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
   and Still, the Trunk's walls and the flinch look). When the owner plays,
