@@ -56,11 +56,13 @@
   .trio { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
   .counts b { color: var(--fg); font-weight: 600; }
   .rec { border-left-color: var(--tether); }
+  .five { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  h3.sub { font: 600 1.1rem "Space Grotesk", Inter, sans-serif; margin: 32px 0 0; color: var(--head); }
 </style>
 <div class="wrap">
   <div class="eyebrow">Lab · 2026-11-18 · lab branch only, not in the game</div>
   <h1>One Body</h1>
-  <p class="lede">When slime moves away from its body, on a raid or a walk to a new crystal, it crosses the map as a cloud of single walkers. Two rules on the GPU engine make the moving slime keep contact: marchers that <b>wait for the crowd</b>, and marchers <span style="color:var(--tether);font-weight:600">tethered</span> so they never step where they would be alone. The surge at the squad is left as it is.</p>
+  <p class="lede"><b>Part two (tighter tethers, below):</b> any tether of 2 or more keeps raid 1 at home, so the recommendation changed. When slime moves away from its body, on a raid or a walk to a new crystal, it crosses the map as a cloud of single walkers. Two rules on the GPU engine make the moving slime keep contact: marchers that <b>wait for the crowd</b>, and marchers <span style="color:var(--tether);font-weight:600">tethered</span> so they never step where they would be alone. The surge at the squad is left as it is.</p>
 
   <h2>From the model</h2>
   <p>Most walkers steer by the trail the crowd lays, so they crowd onto the trail they share, and that holds the body. A walker that leaves its body is almost always a scared one: marching on a raid, roaming to food, or panicking. These follow a distance field to their goal and read no trail at all, so nothing ties one marcher to the next. A raid of about 1,700 walkers takes 1,700 separate paths down the field.</p>
@@ -98,7 +100,7 @@
       <div class="counts">Loose at 1:03 <b>134</b>, at 1:10 <b>137</b>. Killed by 1:16 <b>835</b>, slime <b>11,881</b>.</div>
     </div>
   </div>
-  <p>Without the rule the raid is a cloud of single orange dots crossing the river. With the tether, loose walkers fall to a third, but much of the raid never leaves: marchers at the body's edge turn back when the cell ahead would leave them alone. Those that do reach the squad come as a column of small blobs, and kills fall by a third.</p>
+  <p>Without the rule the raid is a cloud of single orange dots crossing the river. With the tether, loose walkers fall to a third, but the raid never leaves: marchers stand at the body's edge because the cell ahead would leave them alone. (Part one said kills fall by a third; most of those kills came before the raid. Within the raid's window they fall from 379 to 41: see part two.)</p>
 
   <h2>Raid 1, zoom 12</h2>
   <div class="pair trio">
@@ -154,13 +156,142 @@
     </div>
   </div>
 
+
+  <h2 id="tighter">Part two: tighter tethers</h2>
+  <p>Scott asked to see the tether much tighter, so walkers always have to be much closer. Three tighter rules, same scene: <b>tether 3</b> and <b>tether 4</b> (the cell a marcher steps into must touch 3 or 4 other walkers), and <b>edge contact 2</b> (2 walkers, counted only along the cell's four sides, not its corners). A new count says whether the raid still reaches its target: the walkers the squad kills between 0:59, when raid 1 leaves, and 1:16.</p>
+  <div class="tbl"><table>
+    <tr><th>Arm</th><th>Loose 0:30 (calm)</th><th>Loose 1:03 (raid out)</th><th>Largest piece 1:03</th><th>Raid kills 0:59 to 1:16</th><th>Slime 1:16</th></tr>
+    <tr><td>No tether</td><td>407</td><td>365</td><td>96.7%</td><td>379</td><td>11,761</td></tr>
+    <tr><td>Tether 1</td><td></td><td>261</td><td>97.2%</td><td>127</td><td></td></tr>
+    <tr><td>Tether 2</td><td>192</td><td>114</td><td>97.7%</td><td>41</td><td>11,908</td></tr>
+    <tr><td>Tether 3</td><td>182</td><td>76</td><td>98.0%</td><td>20</td><td>11,885</td></tr>
+    <tr><td>Tether 4</td><td>214</td><td>128</td><td>97.8%</td><td>22</td><td>11,893</td></tr>
+    <tr><td>Edge contact 2</td><td>218</td><td>91</td><td>98.0%</td><td>34</td><td>11,903</td></tr>
+  </table></div>
+  <svg id="chart2" viewBox="0 0 800 240" role="img" aria-label="Loose walkers over time, five arms"></svg>
+  <div class="key"><span><i style="background:var(--base)"></i>no tether</span><span><i style="background:var(--tether)"></i>tether 2</span><span><i style="background:var(--water)"></i>tether 3</span><span><i style="background:var(--slime)"></i>tether 4</span><span><i style="background:var(--fg)"></i>edge contact 2</span></div>
+  <p><b>What it shows.</b> With any tether of 2 or more, raid 1 does not reach the squad: 20 to 41 kills in the raid's window against 379 with none. A raid leaves the body as a one-wide trickle, and no cell ahead of a trickle touches 2 other walkers, so the marchers stand at the edge of the body. Making the tether tighter only makes that stricter; it does not make a body that travels. Tether 1 lets the raid go (127 kills) but it crosses as dots. A marcher that holds its heading instead of turning round gave exactly the same counts. The calm breakaway is a blob under every tether, and the tighter ones make it no tighter (182 to 218 loose against 192).</p>
+
+  <h3 class="sub">Raid 1, zoom 6</h3>
+  <div class="pair five">
+    <div class="card">
+      <h3>No tether</h3>
+      <video src="raid6-base.mp4" poster="raid6-base.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 1:03 <b>365</b>. Raid kills 0:59 to 1:16 <b>379</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 2</h3>
+      <video src="raid6-t2.mp4" poster="raid6-t2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 1:03 <b>114</b>. Raid kills 0:59 to 1:16 <b>41</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 3</h3>
+      <video src="raid6-t3.mp4" poster="raid6-t3.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 1:03 <b>76</b>. Raid kills 0:59 to 1:16 <b>20</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 4</h3>
+      <video src="raid6-t4.mp4" poster="raid6-t4.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 1:03 <b>128</b>. Raid kills 0:59 to 1:16 <b>22</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Edge contact 2</h3>
+      <video src="raid6-s2.mp4" poster="raid6-s2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 1:03 <b>91</b>. Raid kills 0:59 to 1:16 <b>34</b>.</div>
+    </div>
+  </div>
+  <h3 class="sub">Raid 1, zoom 12, by the squad</h3>
+  <div class="pair five">
+    <div class="card">
+      <h3>No tether</h3>
+      <video src="raid12-base.mp4" poster="raid12-base.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Raid kills 0:59 to 1:16 <b>379</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 2</h3>
+      <video src="raid12-t2.mp4" poster="raid12-t2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Raid kills 0:59 to 1:16 <b>41</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 3</h3>
+      <video src="raid12-t3.mp4" poster="raid12-t3.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Raid kills 0:59 to 1:16 <b>20</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 4</h3>
+      <video src="raid12-t4.mp4" poster="raid12-t4.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Raid kills 0:59 to 1:16 <b>22</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Edge contact 2</h3>
+      <video src="raid12-s2.mp4" poster="raid12-s2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Raid kills 0:59 to 1:16 <b>34</b>.</div>
+    </div>
+  </div>
+  <h3 class="sub">Calm breakaway, zoom 6</h3>
+  <div class="pair five">
+    <div class="card">
+      <h3>No tether</h3>
+      <video src="calm6-base.mp4" poster="calm6-base.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>407</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 2</h3>
+      <video src="calm6-t2.mp4" poster="calm6-t2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>192</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 3</h3>
+      <video src="calm6-t3.mp4" poster="calm6-t3.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>182</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 4</h3>
+      <video src="calm6-t4.mp4" poster="calm6-t4.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>214</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Edge contact 2</h3>
+      <video src="calm6-s2.mp4" poster="calm6-s2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>218</b>.</div>
+    </div>
+  </div>
+  <h3 class="sub">Calm breakaway, zoom 12</h3>
+  <div class="pair five">
+    <div class="card">
+      <h3>No tether</h3>
+      <video src="calm12-base.mp4" poster="calm12-base.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>407</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 2</h3>
+      <video src="calm12-t2.mp4" poster="calm12-t2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>192</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 3</h3>
+      <video src="calm12-t3.mp4" poster="calm12-t3.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>182</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Tether 4</h3>
+      <video src="calm12-t4.mp4" poster="calm12-t4.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>214</b>.</div>
+    </div>
+    <div class="card">
+      <h3>Edge contact 2</h3>
+      <video src="calm12-s2.mp4" poster="calm12-s2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="counts">Loose at 0:30 <b>218</b>.</div>
+    </div>
+  </div>
+
   <h2>Frame cost</h2>
   <p>Not timed (the software GPU is never timed). The tether reads the 8 neighbours of the target cell once per marcher step; the wait reads 25 cells per marcher. Only marchers pay: about 1,700 during a raid and a few hundred otherwise, against 12,000 walkers in the pass.</p>
 
   <h2>Recommendation</h2>
   <div class="rec">
-    <p style="margin-top:0"><b>Tether 2, with the raid's size retuned.</b> It is the one rule that makes moving slime read as a body: a third of the loose walkers, the breakaway a blob, the surge at the squad untouched. Its cost is a softer raid, because fewer marchers get out. If the raid's weight should stay, raise the raid's walker count rather than loosen the tether. Waiting adds nothing the tether does not.</p>
-    <p>Not for the game yet: it goes to Direction to place. Not built: a pull toward a moving piece's centre, and marchers that lay and follow their own trail.</p>
+    <p style="margin-top:0"><b>Changed after part two.</b> Part one recommended tether 2 for the raid; part two shows it keeps the raid at home, so that is withdrawn. The tether is right for slime walking to food or breaking away: it turns a stream of dots into a blob (loose walkers halved) and costs nothing in play. For a raid it needs the raid to leave as a body first.</p>
+    <p>So: <b>tether 2 for roaming and breakaway walkers only, not for raid marchers</b>, and a next lab step for the raid, a <b>muster</b>: raid walkers gather at the body's edge until a crowd has formed and then set off together, so the tether has a body to hold. Tighter tethers (3, 4, edge contact) add nothing over 2.</p>
   </div>
   <p class="dim" style="margin-top:40px">Lab branch <code>claude/project-thread-4tc75h</code>, code <code>22f468a</code>, keys <code>LAB_TETHER</code>, <code>LAB_WAIT</code>, <code>LAB_BODY_LOG</code>. Report <code>Reports/lab-body-2026-11-18/README.md</code>.</p>
 </div>
@@ -179,5 +310,23 @@
   g+=`<line x1="${x(59)}" x2="${x(59)}" y1="${T}" y2="${H-B}" stroke="var(--dim)" stroke-dasharray="3 4"/><text x="${x(59)+6}" y="${T+12}" font-size="11" fill="var(--dim)">raid 1 leaves</text>`;
   for(const k of ['base','t2','w6t2']) g+=`<polyline fill="none" stroke="${col[k]}" stroke-width="2.2" points="${D[k].map((v,i)=>x(t[i])+','+y(v)).join(' ')}"/>`;
   document.getElementById('chart').innerHTML=g;
+})();
+
+(function(){
+  const t=[]; for(let s=20;s<=76;s+=2) t.push(s);
+  const D={
+    base:[339,314,400,379,400,407,348,361,375,400,362,384,374,317,272,239,257,239,254,274,314,369,385,336,273,216,197,177,136],
+    t2:[194,178,170,171,173,192,171,183,190,220,227,222,247,231,226,186,192,213,190,195,130,106,104,112,126,121,111,111,101],
+    t3:[210,213,170,195,201,182,214,196,185,185,195,204,185,171,134,130,110,79,93,102,91,91,92,72,80,77,78,73,79],
+    t4:[253,234,214,224,211,214,192,229,236,229,212,213,201,222,187,151,149,143,143,123,121,105,109,101,119,100,107,103,97],
+    s2:[205,189,198,193,200,218,191,183,181,185,187,176,185,175,180,174,162,149,139,107,100,89,90,82,103,99,81,85,84]};
+  const col={base:'var(--base)',t2:'var(--tether)',t3:'var(--water)',t4:'var(--slime)',s2:'var(--fg)'};
+  const W=800,H=240,L=48,R=16,T=12,B=30, x=s=>L+(s-20)/56*(W-L-R), y=v=>T+(1-v/450)*(H-T-B);
+  let g='';
+  for(const v of [0,100,200,300,400]) g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--dim)">${v}</text>`;
+  for(const s of [20,30,40,50,60,70]) g+=`<text x="${x(s)}" y="${H-10}" text-anchor="middle" font-size="11" fill="var(--dim)">${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}</text>`;
+  g+=`<line x1="${x(59)}" x2="${x(59)}" y1="${T}" y2="${H-B}" stroke="var(--dim)" stroke-dasharray="3 4"/><text x="${x(59)+6}" y="${T+12}" font-size="11" fill="var(--dim)">raid 1 leaves</text>`;
+  for(const k of ['base','t2','t3','t4','s2']) g+=`<polyline fill="none" stroke="${col[k]}" stroke-width="2" points="${D[k].map((v,i)=>x(t[i])+','+y(v)).join(' ')}"/>`;
+  document.getElementById('chart2').innerHTML=g;
 })();
 </script>
