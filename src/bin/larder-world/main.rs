@@ -214,6 +214,7 @@ mod events;
 mod headless;
 mod bench;
 mod hands;
+mod runbot;
 mod menu;
 mod squadmode;
 mod uisize;
@@ -2084,6 +2085,9 @@ struct Bench {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
+    // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
+    // planet TO (3) or a loss, with no window (`runbot`).
+    let mut runbot: Option<(u64, u32)> = None;
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut viewpasses = 0u32;
@@ -2200,6 +2204,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(());
             }
             "look" => look = Some(v.to_string()),
+            "runbot" => {
+                let (seed, to) = v.split_once(':').unwrap_or((v, "3"));
+                runbot = Some((seed.parse()?, to.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS)));
+            }
             // `ui=150%` or `ui=1.5`: the UI's size this run (`uisize`).
             "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
@@ -2440,6 +2448,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre, viewpasses }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
+        return Ok(());
+    }
+    if let Some((seed, to)) = runbot {
+        let (device, queue) = gpu().ok_or("no GPU adapter")?;
+        runbot::run_bot(base, seed, to, &device, &queue)?;
         return Ok(());
     }
     if let Some(dir) = look {
