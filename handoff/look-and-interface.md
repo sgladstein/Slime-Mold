@@ -47,16 +47,25 @@ of `sprites/soldier.svg` is a soldier on its back in dull olive (atlas tile
 (`Look::fallen` in `main.rs`; `Marks::fallen`). `BLOOD`, `BLOOD_RIM` and
 `POOL_R` are the numbers if the pools read too loud.
 
+**Also on main:** heads on top (#494, Look A3;
+`Reports/squad-heads-2026-11-18/`, page
+https://claude.ai/artifact/F58mCnsvBbT2CMUk2Rhz31): each living soldier's
+helmet drawn again above every body (`Marks::soldier_head`, `HEAD_ONLY` in
+`view.wgsl`, the loop after the figures in `draw.rs`), with a ring of its
+own figure 1.5 px wide; a lone soldier is unchanged. How close soldiers
+stand (`steer_all`'s soft push: 0.69 of elbow room draining a crystal) is
+Squad and arsenal's; they will hold elbow room when a squad stands and
+tell this lane when to film it.
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
 time.
 
-- Heads on top (Look A3; `Reports/squad-heads-2026-11-18/`, page
-  https://claude.ai/artifact/F58mCnsvBbT2CMUk2Rhz31): each living
-  soldier's helmet drawn again above every body (`Marks::soldier_head`,
-  `HEAD_ONLY` in `view.wgsl`, the loop after the figures in `draw.rs`),
-  with a ring of its own figure 1.5 px wide; a lone soldier is unchanged.
-  How close soldiers stand (`steer_all`'s soft push: 0.69 of elbow room
-  draining a crystal) went to Squad and arsenal with the films.
+- The bite light at a bite's reach (Look A4;
+  `Reports/bite-light-2026-11-18/`, page
+  https://claude.ai/artifact/Wk5DevY7VGNnCAN21hAPcb): `draw.rs`'s bite
+  light reaches `Rules::touch` where it reached 3.5 dish cells. Every
+  other light of the fight was already its damage's size (the report's
+  table), so Look A4 is done with it.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
@@ -70,10 +79,9 @@ while Squad asked to keep it.
 **Next, in order.**
 
 1. The rest of Look A, from the ranked list in
-   `wiki/looks/art-direction.md`: no effect bigger than its damage (the
-   bite light reaches 3.5 dish cells where a bite reaches 1.5), a Mind
-   status on the slime, fire at zoom 12; a hit's lasting hole would be a
-   slime rule (Enemy's) if the owner wants one.
+   `wiki/looks/art-direction.md`: a Mind status on the slime, fire at
+   zoom 12; film the squad's spacing when Squad lands it; a hit's
+   lasting hole would be a slime rule (Enemy's) if the owner wants one.
 2. The Experiments tab's own look (still Engine's first tab, one row a
    switch), and the experiments in the pause menu.
 3. Win and lose screens with the planet's numbers.
