@@ -258,3 +258,56 @@ player is to steer with the gun, the gun carries the lure: a dart or a
 thrown canister placed by aim, the same lure as the building. Next in the
 lab, if Direction agrees: the eviction lead (a lure that pulls a colony
 off its crystal, and how fast it then shrinks), or the pusher's carrier.
+
+## Part three: the dart (2026-11-18)
+
+Direction's pick after part two: the carrier, "a dart from the gun that
+sets a lure or a pusher where the player aims", shown at the game's pull of
+10 (the number Enemy is porting).
+
+**Built** (lab branch, commit "LAB: the dart"): `LAB_DARTS=lure|push:T:X:Y:SECS;...`.
+At game second T squad 0 fires from its soldiers' middle toward X,Y; the
+dart flies at `LAB_DART_SPEED` (60 dish cells a second), over slime and
+walls, no farther than `LAB_DART_RANGE` (60 dish cells), and stands SECS as
+a lure or a pusher in the same field. Each dart is logged
+(`lab dart t ...: pusher from 291,49 to 232,47, lands at 30.47 s`).
+
+**Scene** (planet 1, run seed 1): the squad holds on the small crystal at
+290,47; the colony sits on the north crystal at 210,47; three rendering
+turrets stand on its far (west) side at 172,30 / 165,55 / 180,78. A dart
+every 10 s from 0:30, each standing 10 s: pushers aimed at 232,47 (the
+colony's near edge), lures at 172,55 (between the turrets). By 2:00
+(walkers within 30 of the colony's crystal, killed, rendered, slime alive):
+
+| Arm | On its crystal | Killed | Rendered | Slime alive |
+|---|---|---|---|---|
+| No darts | 2,438 | 8,612 | 1,444 | 13,468 |
+| Pusher darts, pull 10 | 1 | 3,515 | 800 | 10,547 |
+| Pusher darts, pull 30 | | 2,745 | 616 | 10,443 |
+| Lure darts, pull 10 | 0 | 3,429 | 787 | 10,269 |
+| Lure darts, pull 30 | 0 | 3,148 | 720 | 10,286 |
+| Both, pull 10 | | 2,988 | 683 | 10,261 |
+
+On its crystal through the run, pull 10 (0:30, 0:40, 0:50, 1:00, 1:15):
+no darts 610, 1,019, 1,312, 1,563, 1,768; pusher darts 610, 670, 516,
+291, 0; lure darts 610, 596, 151, 0, 0. Blank cells were not counted in
+that run (its watch was on the turrets).
+
+Clips on the page (800 x 500): no darts, pusher darts and lure darts at
+zoom 6 from 0:26 to 1:26, and the first pusher darts at zoom 12 in real
+time (0:29 to 0:44); their counts come from their own logs
+(`raw/logs/dart-*.log.gz`).
+
+**Result.** At pull 10 a dart every 10 s takes a crystal off a colony in
+30 to 45 s and leaves the planet's slime 22% smaller by 2:00. It costs
+kills and food: only part of the body crosses the turrets, the rest
+scatters and withers off its crystal, and the squad has less in front of
+it to shoot. Pull 30 adds nothing here (the same slime, less food), and
+both darts together do no better than either.
+
+**Recommendation.** Build the dart as the Lure's second form, with a
+pusher setting: the lure dart when the turrets are in its line, the
+pusher dart from the near side. Range 60, life 10 s and one dart every
+10 s are first numbers, not tuned; the price and a cooldown are
+Direction's. The pusher draws no core glow (by design, `PUSH_BASE`), only
+faint rings at its rim, so Look may want to give it a mark of its own.
