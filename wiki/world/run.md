@@ -58,6 +58,7 @@ code:
   - head_start
   - range_args
   - reward
+  - round_walk
   - run_args
   - run_hidden
   - run_shape
@@ -196,8 +197,9 @@ port keeps that (below).
 the GPU engine (`lure_pull`, `run::LURE_PULL` 10 on every planet, no CPU
 twin): calm slime within `Rules::lure_reach` (60 cells of walking) of a
 Lure that is on, or of a lure mark (`LureMark`, for a thrown or shot lure),
-leans down the walking distance to it; the game rebuilds the field once a
-game second (`time_lure_paths`). A panicking, surging, raiding or breakaway
+leans down the walking distance to it, which is round on open ground
+(`round_walk`, since 11-18: the raid's search drew octagons); the game
+rebuilds the field once a game second (`time_lure_paths`). A panicking, surging, raiding or breakaway
 walker and a mini-boss's member ignore it, so a lure draws the body at rest
 and is no shield from a charge; a blind walker does not see it and a soured
 one runs from it. In the lab's scene on the game's build, 4,461 walkers

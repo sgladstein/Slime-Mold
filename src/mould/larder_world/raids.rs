@@ -248,20 +248,12 @@ impl Way {
     }
 
     /// The lure's field: the walking distance to the nearest of `lures`
-    /// (`big::units_field_for`, so a lure in a closed block starts from
-    /// the open block nearest it), kept out to `reach` fine cells of
-    /// walking and `u32::MAX` past it. Off the frame as `start`'s.
+    /// (`round_walk`, so a lure in a closed block starts from the open
+    /// block nearest it), kept out to `reach` fine cells of walking and
+    /// `u32::MAX` past it. Off the frame as `start`'s.
     fn start_lures(ground: Option<(Vec<bool>, usize, usize)>, lures: Vec<u32>, reach: u32) -> Way {
         let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
-        let build = move || {
-            let mut f = crate::mould::big::units_field_for(&agar, w, h, &lures);
-            for d in &mut f {
-                if *d > reach {
-                    *d = u32::MAX;
-                }
-            }
-            f
-        };
+        let build = move || round_walk(&agar, w, h, &lures, reach);
         #[cfg(not(target_arch = "wasm32"))]
         {
             Way::Building(std::thread::spawn(move || {
@@ -282,6 +274,133 @@ impl Way {
             Way::Building(j) => j.join().unwrap_or_default(),
         }
     }
+}
+
+/// **The lure's walking distance, round on open ground** (2026-11-18, the
+/// Enemy lane). The raid's search (`big::units_field_for`) steps 2 a block
+/// and 3 a diagonal, so on open ground its distance is an octagon: the
+/// Lure's rings drew as a target over the meadow (the Look and interface
+/// lane's note, 11-18) and the pull's shape was the same octagon. This one
+/// adds the knight's moves, at the chamfer weights 5, 7 and 11 a block
+/// (within 2% of the straight line at every angle), and reads the same
+/// units as the raid's search: fine cells of walking, rounded. A diagonal
+/// passes only where both sides are open, and a knight's move only where
+/// the two blocks it crosses are, so it goes round rock as the raid's
+/// does. A lure in a closed block starts from the nearest open block
+/// within `big::UNITS_REACH`, as there. Its own search and not the raid's,
+/// since `big.rs` (where the raid's lives, under the charges and the far
+/// smell too) is frozen until Milestone 2 (the owner's card, 11-17 19:21Z).
+/// The search stops past `limit` fine cells of walking (`u32::MAX` past
+/// it), so a lure's field costs its reach and not the map.
+pub(super) fn round_walk(agar: &[bool], w: usize, h: usize, from: &[u32], limit: u32) -> Vec<u32> {
+    use crate::mould::big::{RAID_BLOCK, UNITS_REACH};
+    let b = RAID_BLOCK;
+    let (bw, bh) = (w.div_ceil(b), h.div_ceil(b));
+    // The open blocks: every fine cell agar.
+    let mut open = vec![true; bw * bh];
+    for (i, &a) in agar.iter().enumerate() {
+        if !a {
+            open[((i / w) / b) * bw + (i % w) / b] = false;
+        }
+    }
+    let r = UNITS_REACH as i64;
+    let mut starts: Vec<usize> = from
+        .iter()
+        .filter_map(|&u| {
+            let (tx, ty) = ((((u & 0xFFFF) as usize).min(w - 1) / b) as i64, (((u >> 16) as usize).min(h - 1) / b) as i64);
+            let mut best: Option<(i64, usize)> = None;
+            for dy in -r..=r {
+                for dx in -r..=r {
+                    let (x, y) = (tx + dx, ty + dy);
+                    if x < 0 || y < 0 || x >= bw as i64 || y >= bh as i64 {
+                        continue;
+                    }
+                    let q = y as usize * bw + x as usize;
+                    if open[q] && best.is_none_or(|p| dx * dx + dy * dy < p.0) {
+                        best = Some((dx * dx + dy * dy, q));
+                    }
+                }
+            }
+            best.map(|p| p.1)
+        })
+        .collect();
+    starts.sort_unstable();
+    starts.dedup();
+    // On a grid two closed blocks wider on every side, so no move needs a
+    // bounds check.
+    let pw = bw + 4;
+    let mut pad = vec![false; pw * (bh + 4)];
+    for y in 0..bh {
+        pad[(y + 2) * pw + 2..(y + 2) * pw + 2 + bw].copy_from_slice(&open[y * bw..(y + 1) * bw]);
+    }
+    let mut pd = vec![u32::MAX; pad.len()];
+    let p = pw as isize;
+    // (offset, cost, the two blocks it crosses; a straight step crosses
+    // none, so its own block twice).
+    let mut moves: Vec<(isize, u32, isize, isize)> = Vec::with_capacity(16);
+    for (dx, dy) in [(1isize, 0isize), (0, 1), (-1, 0), (0, -1)] {
+        moves.push((dy * p + dx, 5, dy * p + dx, dy * p + dx));
+    }
+    for (dx, dy) in [(1isize, 1isize), (1, -1), (-1, 1), (-1, -1)] {
+        moves.push((dy * p + dx, 7, dx, dy * p));
+    }
+    for (dx, dy) in [(2isize, 1isize), (2, -1), (-2, 1), (-2, -1), (1, 2), (-1, 2), (1, -2), (-1, -2)] {
+        // A knight's move crosses the straight block and the diagonal one
+        // on its way: (2, 1) crosses (1, 0) and (1, 1).
+        let (sx, sy) = if dx.abs() == 2 { (dx / 2, 0) } else { (0, dy / 2) };
+        moves.push((dy * p + dx, 11, sy * p + sx, dy.signum() * p + dx.signum()));
+    }
+    // Moves cost 5 to 11, so twelve buckets in a ring hold every distance
+    // still to settle.
+    let mut ring: [Vec<u32>; 12] = Default::default();
+    let mut left = 0usize;
+    for &q in &starts {
+        let s = (q / bw + 2) * pw + q % bw + 2;
+        pd[s] = 0;
+        ring[0].push(s as u32);
+        left += 1;
+    }
+    let mut at = 0u32;
+    let last = limit.saturating_mul(5) / b as u32 + 5;
+    while left > 0 && at <= last {
+        let slot = (at % 12) as usize;
+        let now = std::mem::take(&mut ring[slot]);
+        left -= now.len();
+        for &q in &now {
+            if pd[q as usize] != at {
+                continue;
+            }
+            let q = q as isize;
+            for &(o, c, s1, s2) in &moves {
+                let j = (q + o) as usize;
+                if !pad[j] || !pad[(q + s1) as usize] || !pad[(q + s2) as usize] {
+                    continue;
+                }
+                let nd = at + c;
+                if nd < pd[j] {
+                    pd[j] = nd;
+                    ring[(nd % 12) as usize].push(j as u32);
+                    left += 1;
+                }
+            }
+        }
+        ring[slot] = now;
+        ring[slot].clear();
+        at += 1;
+    }
+    // Fifths of a block to fine cells (a block is `b` = 2 fine cells),
+    // rounded.
+    let mut d = vec![u32::MAX; bw * bh];
+    for y in 0..bh {
+        for x in 0..bw {
+            let v = pd[(y + 2) * pw + x + 2];
+            let f = if v == u32::MAX { u32::MAX } else { (v * b as u32 + 2) / 5 };
+            if f <= limit {
+                d[y * bw + x] = f;
+            }
+        }
+    }
+    d
 }
 
 impl<W: World> Game<W> {
@@ -512,5 +631,66 @@ impl<W: World> Game<W> {
             }
         }
         (near.last().map(|l| l.0 / sc + 1.0).unwrap_or(0.0), sum)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::round_walk;
+    use crate::mould::big::{units_field_for, RAID_BLOCK};
+
+    /// A block 70 fine cells right of the test's lure, past a reach of 60.
+    fn behind_cut(bw: usize) -> usize {
+        (100 / RAID_BLOCK) * bw + 170 / RAID_BLOCK
+    }
+
+    /// **The lure's walking distance is round on open ground and walks
+    /// round rock** (2026-11-18). From one lure on an open map, at 40
+    /// blocks in sixteen directions, the distance is within 3% of the
+    /// straight line, where the raid's search is up to 6% out (its
+    /// octagon). Through a wall with one gap, the far side is reached only
+    /// by the gap, never through the wall.
+    #[test]
+    fn the_lures_walk_is_round_and_goes_round_rock() {
+        let (w, h) = (200usize, 200usize);
+        let b = RAID_BLOCK;
+        let bw = w.div_ceil(b);
+        let at = (100u32, 100u32);
+        let open = vec![true; w * h];
+        let round = round_walk(&open, w, h, &[at.0 | at.1 << 16], u32::MAX);
+        let raid = units_field_for(&open, w, h, &[at.0 | at.1 << 16]);
+        let (cx, cy) = (at.0 as f32 / b as f32, at.1 as f32 / b as f32);
+        let (mut worst_round, mut worst_raid) = (0.0f32, 0.0f32);
+        for k in 0..16 {
+            let a = k as f32 * std::f32::consts::TAU / 16.0;
+            let (x, y) = ((cx + 40.0 * a.cos()).round() as usize, (cy + 40.0 * a.sin()).round() as usize);
+            let line = ((x as f32 - cx).hypot(y as f32 - cy)) * b as f32;
+            worst_round = worst_round.max((round[y * bw + x] as f32 / line - 1.0).abs());
+            worst_raid = worst_raid.max((raid[y * bw + x] as f32 / line - 1.0).abs());
+        }
+        assert!(worst_round < 0.03, "round within 3% of the line: {worst_round}");
+        assert!(worst_raid > worst_round, "rounder than the raid's octagon ({worst_raid} against {worst_round})");
+        assert_eq!(round[(cy as usize) * bw + cx as usize], 0, "0 at the lure");
+        // A wall across the map at x = 120 fine cells, 4 thick, with a gap
+        // at y 20 to 31: the far side is reached round by the gap.
+        let mut walled = open.clone();
+        for y in 0..h {
+            if (20..32).contains(&y) {
+                continue;
+            }
+            for x in 120..124 {
+                walled[y * w + x] = false;
+            }
+        }
+        let d = round_walk(&walled, w, h, &[at.0 | at.1 << 16], u32::MAX);
+        // Cut at a reach, the search goes no further.
+        let near = round_walk(&walled, w, h, &[at.0 | at.1 << 16], 60);
+        assert!(near.iter().all(|&v| v == u32::MAX || v <= 60) && near[behind_cut(bw)] == u32::MAX && near.iter().filter(|&&v| v != u32::MAX).count() > 100, "the search stops at its limit");
+        let behind = (100 / b) * bw + 140 / b;
+        // The shortest way: to the gap's near corner, through, and back.
+        let by_gap = 20.0f32.hypot(69.0) + 4.0 + 16.0f32.hypot(69.0);
+        let got = d[behind] as f32;
+        assert!(got >= 0.97 * by_gap && got <= 1.1 * by_gap, "behind the wall by the gap: {got} against {by_gap}");
+        assert!((120 / b..124 / b).all(|x| d[(100 / b) * bw + x] == u32::MAX), "no distance inside the wall");
     }
 }
