@@ -2,13 +2,14 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/condense-2026-11-14/README.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/food-tubes-2026-11-11.md
   - Reports/growth-2026-11-11.md
+  - Reports/lab-body-2026-11-18/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/mould-shape-2026-11-11.md
   - Reports/one-body-2026-11-12.md
@@ -237,6 +238,13 @@ the strength that grows instead, and keep the dense word for their members.
   upkeep, starve, divide and share energy; a spore or a dormant walker
   keeps its energy until it lands or wakes, and a struck walker frees its
   slot for a birth. Should sleeping cost upkeep? Untested in play.
+- Moving slime as a body (lab branch only, 2026-11-18): marchers on a raid
+  or a walk to food read no trail, so they cross the map as single walkers.
+  A tether on marchers alone (no step into a cell touching fewer than 2
+  others) cut loose walkers on planet 1 from 365 to 114 as raid 1 left and
+  kept the body one piece, but fewer marchers got out (799 killed against
+  1,212); waiting for the crowd left the raid spread
+  ([one body, lab](../../Reports/lab-body-2026-11-18/README.md)).
 
 ## Sources
 
@@ -244,3 +252,4 @@ the strength that grows instead, and keep the dense word for their members.
 - [mould shape](../../Reports/mould-shape-2026-11-11.md), grass and crystals, size on crystals.
 - [Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md), W0.
 - [food tubes](../../Reports/food-tubes-2026-11-11.md): the race start joins crystals with tubes.
+- [one body, lab](../../Reports/lab-body-2026-11-18/README.md): a tether on marching walkers, results and recommendation.
