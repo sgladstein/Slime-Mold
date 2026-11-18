@@ -47,6 +47,10 @@ pub struct Mark {
 /// `LAB_MARKS=lure:T:X:Y:SECS;push:T:X:Y:SECS;...`, read every time.
 pub fn marks() -> Vec<Mark> {
     let Ok(v) = std::env::var("LAB_MARKS") else { return Vec::new() };
+    marks_of(&v)
+}
+
+fn marks_of(v: &str) -> Vec<Mark> {
     v.split(';')
         .filter_map(|m| {
             let w: Vec<&str> = m.split(':').collect();
@@ -62,12 +66,25 @@ pub fn marks() -> Vec<Mark> {
 #[derive(Clone, Copy, Debug)]
 pub struct ShotMark {
     pub cell: u32,
+    /// The tick it starts (a dart's landing; a shot's mark at once).
+    pub from: u64,
     pub out: u64,
     pub push: bool,
 }
 
 /// Most shot marks alive at once; past it the oldest go.
 const SHOT_MARKS_MAX: usize = 256;
+
+/// A dart (part three, 2026-11-18: the gun carries the lure): fired by
+/// squad 0 at game second `from` toward `aim` (world units), it lands
+/// after its flight (`LAB_DART_SPEED` dish cells a second, default 60) no
+/// farther than `LAB_DART_RANGE` dish cells (default 60) from the squad's
+/// middle, lobbed over slime and walls, and stands there `secs` as a lure
+/// or a pusher. `LAB_DARTS=lure|push:T:X:Y:SECS;...`, read every time.
+pub fn darts() -> Vec<Mark> {
+    let Ok(v) = std::env::var("LAB_DARTS") else { return Vec::new() };
+    marks_of(&v)
+}
 
 /// A lone pusher's height at its rim (`steer_field`).
 const PUSH_BASE: u32 = 60;
@@ -129,12 +146,12 @@ impl<W: World> Game<W> {
             for s in self.last_shots.iter().filter(|s| s.by.is_some()) {
                 let Some(h) = s.hit else { continue };
                 if push {
-                    laid.push(ShotMark { cell: cell(h.0, h.1), out, push: true });
+                    laid.push(ShotMark { cell: cell(h.0, h.1), from: now, out, push: true });
                 }
                 if lure {
                     let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
                     let d = dx.hypot(dy).max(1e-3);
-                    laid.push(ShotMark { cell: cell(h.0 + dx / d * ahead, h.1 + dy / d * ahead), out, push: false });
+                    laid.push(ShotMark { cell: cell(h.0 + dx / d * ahead, h.1 + dy / d * ahead), from: now, out, push: false });
                 }
             }
             let m = &mut self.raids.lab_shots;
@@ -143,6 +160,31 @@ impl<W: World> Game<W> {
             if m.len() > SHOT_MARKS_MAX {
                 m.drain(..m.len() - SHOT_MARKS_MAX);
             }
+        }
+        // Darts fired this step (`darts`): from squad 0's middle, clamped
+        // to the range, landing after the flight.
+        let sc = self.world.scale();
+        for d in darts() {
+            let t = (d.from * tps).round() as u64;
+            if !(before < t && t <= now) && !(before == 0 && t == 0) {
+                continue;
+            }
+            let live: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive && s.squad == 0).map(|s| (s.x, s.y)).collect();
+            if live.is_empty() {
+                continue;
+            }
+            let n = live.len() as f32;
+            let from = (live.iter().map(|p| p.0).sum::<f32>() / n, live.iter().map(|p| p.1).sum::<f32>() / n);
+            let (dx, dy) = (d.at.0 - from.0, d.at.1 - from.1);
+            let dist = dx.hypot(dy).max(1e-3);
+            let range = knob("LAB_DART_RANGE", 60.0) * sc;
+            let go = dist.min(range);
+            let at = (from.0 + dx / dist * go, from.1 + dy / dist * go);
+            let land = now + (go / (knob("LAB_DART_SPEED", 60.0) * sc) * tps).round() as u64;
+            let out = land + (d.secs * tps).round() as u64;
+            println!("  lab dart t {:.2} s: {} from {:.0},{:.0} to {:.0},{:.0} (aimed {:.0},{:.0}), lands at {:.2} s", now as f32 / tps, if d.push { "pusher" } else { "lure" }, from.0, from.1, at.0, at.1, d.at.0, d.at.1, land as f32 / tps);
+            let c = (at.0.max(0.0) as u32) | ((at.1.max(0.0) as u32) << 16);
+            self.raids.lab_shots.push(ShotMark { cell: c, from: land, out, push: d.push });
         }
         let every = ((knob("LAB_EVERY", 1.0) * tps).round() as u64).max(1);
         if now / every != before / every {
@@ -183,7 +225,7 @@ impl<W: World> Game<W> {
             }
         }
         let tick = self.world.ticks();
-        for k in self.raids.lab_shots.iter().filter(|k| k.out > tick) {
+        for k in self.raids.lab_shots.iter().filter(|k| k.from <= tick && k.out > tick) {
             if k.push { pushers.push(k.cell) } else { lures.push(k.cell) }
         }
         let reach = (knob("LAB_REACH", 60.0) * sc) as u32;
