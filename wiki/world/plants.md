@@ -80,12 +80,6 @@ map's `moisture BASE SPREAD` line (levelgen, by biome), water within 8
 cells and noise. Fire hurts soldiers (`Rules::fire_hurt` 25 hp/s at full
 heat) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
 
-The lab (11-18, lab branch only, not in the game) made the moisture live:
-rain that runs to the rivers, pools and dries, read by fire, the slime,
-the soldiers and the view. On planet 1 a 20 s shower pooled 6,397 of
-99,200 cells and was gone in 30 to 40 s; the slime ended a tenth smaller
-([report](../../Reports/lab-forest-2026-11-18/README.md)).
-
 **Laid fuel** (2026-11-17, the Tinder gun card): `BigDish::lay_fuel`
 (GPU: the IGNITE pass in lay mode) plants open, dry ground up to a level,
 even where nothing grows; bare ground turns scrub. Plants over their
@@ -147,6 +141,7 @@ Gaussian per cell, soft blobs ([page](https://claude.ai/artifact/5pChXx8qdHxa3qw
 
 ## Open
 
+- Live moisture: the lab (11-18, lab branch only) made it move: rain that runs to the rivers, pools and dries, read by fire, the slime, the soldiers and the view; on planet 1 a 20 s shower pooled 6,397 of 99,200 cells for about half a minute and the slime ended a tenth smaller ([report](../../Reports/lab-forest-2026-11-18/README.md)).
 - Plants are on by default (menu Plants, `plants=0` off); maps without
   their own get `plants::stand_in` until levelgen writes them, in the
   window and (since 2026-11-15, `plants::planted`) the campaign,
