@@ -906,6 +906,9 @@ impl Run {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }
         }
+        // A run is lost when its last soldier falls, food in the bank or
+        // not (owner, 2026-11-18 15:56Z; `Rules::wipe_ends`).
+        r.wipe_ends = 1.0;
         let l = |k| f32::from(self.level_of(k));
         r.hp *= 1.0 + 0.25 * l("hp");
         r.strike *= 1.0 + 0.2 * l("strike");

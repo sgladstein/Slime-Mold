@@ -1219,6 +1219,38 @@ fn the_campaign_switches_do_what_they_say() {
     assert!(matches!(g.end, Some(End::SquadWiped(_))));
 }
 
+/// **A run is lost when its last soldier falls** (owner, 2026-11-18
+/// 15:56Z: he lost every soldier on planet 2 and they came back; "you
+/// should lose if all your soliders die"): with a run's rules, food in the
+/// bank for several soldiers and the reserve on, the round still ends at
+/// once, and no soldier comes back after.
+#[test]
+fn a_runs_round_ends_when_its_last_soldier_falls() {
+    let mut g = small(1);
+    crate::mould::run::Run::new(1).rules(&mut g.rules);
+    assert_eq!(g.rules.wipe_ends, 1.0, "a run turns it on");
+    g.rules.reserve = 10.0;
+    g.bank = 10.0 * g.rules.soldier_cost;
+    for s in g.soldiers.iter_mut() {
+        s.alive = false;
+    }
+    g.step();
+    assert!(matches!(g.end, Some(End::SquadWiped(_))), "{:?}", g.end);
+    assert!(!g.apply(Cmd::Buy) && g.alive() == 0, "a soldier was bought after the end");
+    for _ in 0..(g.rules.tps * 15) {
+        g.step();
+    }
+    assert_eq!(g.alive(), 0, "no recruit after the end");
+    // Free play keeps the old rule: the same bank buys on.
+    let mut g = small(1);
+    g.bank = 10.0 * g.rules.soldier_cost;
+    for s in g.soldiers.iter_mut() {
+        s.alive = false;
+    }
+    g.step();
+    assert!(g.end.is_none(), "{:?}", g.end);
+}
+
 /// No upkeep (owner, 2026-11-14: soldiers must not need feeding, 01:49Z;
 /// "There should be no maintenance costs in this game", 04:53Z): a squad
 /// standing idle for 20 s spends nothing and keeps its health, so the

@@ -185,13 +185,34 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
         }
         if ((git rev-parse --abbrev-ref HEAD) -eq "main") {
             Say "Getting the newest code"
+            $before = (Get-FileHash -LiteralPath $PSCommandPath).Hash
             git pull --ff-only origin main
-            if ($LASTEXITCODE -ne 0) { Say "Couldn't update (offline?). Playing the last code you had." Yellow }
+            $pulled = $LASTEXITCODE -eq 0
+            if (-not $pulled) { Say "Couldn't update (offline?). Playing the last code you had." Yellow }
+            # This script changed in the pull: run the new one. PowerShell
+            # read the old one whole at the start, so without this the
+            # first launch after an update runs the old steps. (11-18: the
+            # owner's first launch after the play-log send landed ran a
+            # script with no send, and his four logs stayed on his PC.)
+            if ($pulled -and (Get-FileHash -LiteralPath $PSCommandPath).Hash -ne $before -and -not $env:LARDER_PLAY_RESTARTED) {
+                foreach ($f in $replays) { if (Test-Path "$f.keep") { Move-Item -Force "$f.keep" $f } }
+                Say "play.cmd itself was updated; starting the new one"
+                $env:LARDER_PLAY_RESTARTED = "1"
+                & powershell -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath @args
+                exit $LASTEXITCODE
+            }
         }
     }
     foreach ($f in $replays) { if (Test-Path "$f.keep") { Move-Item -Force "$f.keep" $f } }
 } else {
     Say "git not found; playing the code as it is." Yellow
+}
+
+# Logs a last send left behind (the game closed with no network, a
+# window shut early, an old script): sent now, before playing.
+$left = @(Send-PlayLogs $repo)[-1]
+if ($left) {
+    if ($left.StartsWith("Sent")) { Say $left } else { Say $left Red }
 }
 
 # 2. The game and the map editor (the menu's Edit maps button starts
@@ -225,6 +246,8 @@ $code = $LASTEXITCODE
 #    play, and it says plainly when it could not send.
 $said = @(Send-PlayLogs $repo)[-1]
 if ($said) {
-    if ($said.StartsWith("Sent")) { Say $said } else { Say $said Yellow; Start-Sleep -Seconds 6 }
+    # A failure waits for Enter, so it is read: the logs are how the
+    # threads see a play session (11-18: a silent miss lost one).
+    if ($said.StartsWith("Sent")) { Say $said } else { Say $said Red; Read-Host "Press Enter to close" | Out-Null }
 }
 exit $code
