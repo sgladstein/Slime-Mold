@@ -40,18 +40,22 @@ end.
   notes ask for it. Its price and cooldown are this lane's.
 - **Held for D7:** Enemy's idea that the Drifter also smells crystals being
   drained by hand. It is a rush brake, so it is not built, not even behind a
-  switch. Enemy's planet 1 finding goes beside the rush on the list of
-  things to try once its switch PR is on main: a hand building pumps is
-  raided at 0:59 and both pumps are worn down by 1:30, while the
-  hand-draining rush has 42 soldiers at health 90 at 2:00.
-- **Next:** when Enemy's switch PR merges, note on the 11-17 01:13Z bulwark
-  row of `wiki/decisions-game.md` what the lane settled (wall kept, trap
-  deleted, fed slime fireproof as the Trunk's trait), as the lane's choice,
-  not the owner's words. Prune and reword `news/whats-new.txt` as lanes add
-  lines. When the owner plays, sort the log and his notes within the hour.
-  When the run bot exists, the curve for planets 1 to 3.
-- **No play record yet.** Until the play log carries a build number, his
-  play shows only in what he writes; his notes are the dated rows of
+  switch. Enemy's planet 1 finding is beside the rush on the list of things
+  to try: a hand building pumps is raided at 0:59 and both pumps are worn
+  down by 1:30, while the hand-draining rush has 42 soldiers at health 90
+  at 2:00. `crystal_regrow` stays off for the same reason.
+- **The switch list has four rows** (`crystal_regrow`, D7's; `set_look`,
+  Look and interface; `feel` and `reserve`, Squad and arsenal), one over
+  the rule's three. `feel` (shake and hit-stop) is his to judge in play;
+  ask Squad to settle `reserve` and Look `set_look`.
+- **Next:** check each lane's lines in `news/whats-new.txt` as they land
+  and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
+  and Still, the Trunk's walls and the flinch look). When the owner plays,
+  sort the log (the `play-logs` branch, since #452) and his notes within
+  the hour. When the run bot exists, the curve for planets 1 to 3.
+- **The play record** exists since #452: a log a round with the build
+  number and F9 notes, pushed by `play.cmd` to the `play-logs` branch. No
+  session of his is on it yet; his notes so far are the dated rows of
   `wiki/decisions-game.md`.
 
 ## The pending picks, sorted (2026-11-17)
