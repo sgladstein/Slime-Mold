@@ -72,10 +72,11 @@ struct V {
     lump_held: vec4<f32>,
     // The crust (`View::set_crust`, 2026-11-17): the word in `news` where
     // the engine's crust block starts (0 off); the set walkers a cell's
-    // block and set slime's look (`View::set_setting`, E2b; 0 off).
+    // block (`View::set_setting`, E2b; 0 off); a spare word (set slime's
+    // look to 2026-11-18).
     // The Lure's steering field (`View::set_steer`, 2026-11-18): the word
     // in `news` where its blocks start, 0 hidden.
-    crust_at: u32, setc_at: u32, set_look: u32, steer_at: u32,
+    crust_at: u32, setc_at: u32, spare_c: u32, steer_at: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1679,17 +1680,21 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
 
 // **Set slime** (the simulation-use plan's E2b, 2026-11-17;
 // `BigDish::set_cells`): walkers that stopped where they were hurt are drawn
-// by their own state, a material over the body where they stand, settled
-// by a blind A/B (`P.set_look`): 1 amber, a deep resin with a low warm glow
-// inside (set slime as hardened, dried sap); 2 glaze, a pale, glass-glossy
-// skin. Not dark ridges (they read as the player's walls), not bronze (the
-// owner turned it down). Only colour, gloss and glow: the body's opacity
+// by their own state, a material over the body where they stand: amber, a
+// deep resin with a low warm glow inside (set slime as hardened, dried
+// sap). It was one side of a blind A/B to 2026-11-18, settled by the Look
+// and interface lane from frames of planet 3's walls at zoom 6: the other
+// side, a pale glass-glossy glaze toward (255, 238, 196), read as bare
+// sand and is the team's cream and the wanderer's pale bone; and with no
+// mark a wall that stops soldiers looked like slime they can walk
+// (`Reports/dead-ends.md`). Not dark ridges (they read as the player's
+// walls), not bronze (the owner turned it down). Only colour, gloss and glow: the body's opacity
 // and height stay the sheet's (the graphics thread, 11-17), so its edge is
 // the set walkers' own, smoothed over the 4 x 4 cells round (a lone set
 // walker is a fleck, a set rim a band).
 fn set_c(ix: i32, iy: i32) -> f32 { return f32(news[P.setc_at + cidx(ix, iy)]); }
 fn set_share(x: f32, y: f32) -> f32 {
-    if (P.setc_at == 0u || P.set_look == 0u) { return 0.0; }
+    if (P.setc_at == 0u) { return 0.0; }
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var c = 0.0;
     var ws = 0.0;
@@ -1705,19 +1710,13 @@ fn set_share(x: f32, y: f32) -> f32 {
 }
 const SET_AMBER: vec3<f32> = vec3<f32>(112.0, 46.0, 14.0);
 const SET_AMBER_GLOW: vec3<f32> = vec3<f32>(255.0, 110.0, 30.0);
-const SET_GLAZE: vec3<f32> = vec3<f32>(255.0, 238.0, 196.0);
 fn set_mat(m0: Mat, share: f32, th: f32) -> Mat {
     if (share <= 0.0) { return m0; }
     var m = m0;
     let s = share * smoothstep(0.02, 0.2, th);
-    if (P.set_look == 1u) {
-        m.albedo = mix(m.albedo, SET_AMBER, s);
-        m.gloss = mix(m.gloss, 0.5, s);
-        m.glow = m.glow + SET_AMBER_GLOW * 0.14 * s;
-    } else {
-        m.albedo = mix(m.albedo, SET_GLAZE, 0.55 * s);
-        m.gloss = mix(m.gloss, 1.0, s);
-    }
+    m.albedo = mix(m.albedo, SET_AMBER, s);
+    m.gloss = mix(m.gloss, 0.5, s);
+    m.glow = m.glow + SET_AMBER_GLOW * 0.14 * s;
     return m;
 }
 

@@ -16,6 +16,7 @@ sources:
   - Reports/lure-rings-2026-11-18/README.md
   - Reports/mini-boss-look-2026-11-16/README.md
   - Reports/river-look-2026-11-14/README.md
+  - Reports/sim-use-2026-11-17/e2b-look.md
   - Reports/soil-materials-2026-11-14/README.md
   - Reports/value-order-2026-11-15/README.md
 code:
@@ -128,21 +129,21 @@ B starts once A passes his eye.
 **A. The fight round the squad**
 
 1. Done: the flinch on the slime alone, no lime wash (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's pull as cream rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)).
-2. A shot is a short bright streak the eye can follow (thin dotted tracers today), and a hit is the slime's own reaction: the hole and the walkers it flings.
+2. A shot is a short bright streak the eye can follow (dotted today), and a hit is the slime's own reaction: the hole and the walkers it flings.
 3. Flung droplets in the slime's material (outlined shapes in another style today).
-4. A squad of 40 you can count (42 are one pile today); the spacing with Squad and arsenal.
-5. No effect bigger than its damage: check the muzzle light, hit light and crater ember.
+4. A squad of 40 you can count (one pile today), with Squad and arsenal.
+5. No effect bigger than its damage: check muzzle light, hit light, crater ember.
 6. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as the hit's rose flash.
 7. Fire on slime and on set slime with no cell-sized squares at zoom 12.
-8. Flushed slime beside amber set slime (planet 3): film both, part them by hue if they blur.
+8. Done 11-18: flushed slime and amber set slime part by value ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)).
 
-**B. The slime itself**: veins and flow inside the thick body; loose specks that read as parts of one body, not glowing pebbles; a look for the origin when Enemy builds it.
+**B. The slime itself**: veins and flow inside the thick body; set slime as a hard material; loose specks that read as parts of one body, not glowing pebbles; a look for the origin when Enemy builds it.
 
-**C. Planets and terrain**: stronger grounding (shadows are faint at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
+**C. Planets and terrain**: stronger grounding (faint shadows at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
 
 **D. Menus, shop and screens**: win and lose screens with the planet's numbers first; a landing, a win and a loss that happen in the picture; then the shop and the menus.
 
-Also open: the 1070 cost of the new looks (one batch before the milestone check); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
+Also open: the 1070 cost of the new looks (one batch); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
 ## Sources
 

@@ -7,12 +7,21 @@ page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
 a warm flush on the slime (`flush_at` in `view.wgsl`), bare ground shows
 none, and a burning Flare is an ember and a red light (`draw.rs`).
 
+**Also on main:** the Lure's rings (#458; `Reports/lure-rings-2026-11-18/`,
+page https://claude.ai/artifact/4QyfFzQNXQuAPfvz83WqTe).
+`View::set_steer(at)` draws the engine's steering field as pale cream
+hairlines of equal walking distance (`steer_px` and the block in
+`shaded`), and while they show the Lure's green scent light is unlit.
+The window calls it each frame since Enemy's #457 (`prepare_now` in
+`main.rs`: the field's word while a lure stands, else 0).
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request: the
-Lure's rings (`Reports/lure-rings-2026-11-18/`, page
-https://claude.ai/artifact/4QyfFzQNXQuAPfvz83WqTe). `View::set_steer(at)`
-draws the engine's steering field as pale cream hairlines of equal walking
-distance (`steer_px` and the block in `shaded`), and while they show the
-Lure's green scent light is unlit. Nothing calls it yet.
+set slime's look settled. Amber is the only look; the glaze, the unmarked
+side, the Experiments row `set_look` and the key `setlook=` are deleted,
+and the switch list is down to two rows (`feel`, `crystal_regrow`; Squad
+and arsenal took the free recruits off it in #459), with `SETTLING`
+false, so a fourth row no longer builds. Record: `Reports/sim-use-2026-11-17/e2b-look.md`,
+*Settled*.
 
 **The Lure, who does what** (`NOW.md`; the owner's card 11-18 03:03Z).
 Enemy lands the field as a rule and adds the `set_steer` call beside
@@ -25,13 +34,7 @@ steering field is drawn).
 
 **Next, in order.**
 
-1. Settle the set slime look switch (Direction's ask, 11-18: the
-   Experiments list is one over its limit of three): amber stays, the
-   glaze and hidden choices go, with `set_look` in `src/build/switches.rs`,
-   the window key `setlook` and the shader's glaze branch. Engine and
-   tools' tests use `set_look` as their example switch
-   (`experiments.rs`), so the pull request touches their files: say so.
-2. Job 1, the pages that say what a build holds. Engine and tools' data is
+1. Job 1, the pages that say what a build holds. Engine and tools' data is
    on main since #449 (`slime_mould::build`: `build()`, `switches`,
    `news`, `Memory`), with a first Experiments tab wired in `menu.rs`
    (`experiments::options` and `experiments::apply`: keep those two
@@ -39,13 +42,13 @@ steering field is drawn).
    "what is new" page with the new lines marked (`memory.is_new`), the
    "things to try" list with ticks (`memory.set_tried`), the Experiments
    tab's look, and a small HUD mark when `switches::state` is not empty.
-3. The rest of Look A, from the ranked list in
+2. The rest of Look A, from the ranked list in
    `wiki/looks/art-direction.md`: shots as bright streaks, droplets in the
    slime's material, a squad of 40 you can count, no effect bigger than
-   its damage. Flushed slime beside amber set slime on planet 3 can be
-   filmed now (#451 and #454 are both on main).
-4. Win and lose screens with the planet's numbers.
-5. Picks still open: the mini-boss colours; delete the fen moat A/B's
+   its damage. Set slime wants a material of its own (list B): amber is
+   a flat sheet at zoom 12.
+3. Win and lose screens with the planet's numbers.
+4. Picks still open: the mini-boss colours; delete the fen moat A/B's
    unused side.
 
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's

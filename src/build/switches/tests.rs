@@ -292,15 +292,14 @@ fn the_keys_say_which_switches_are_on() {
     // were rows until the Enemy lane turned them on on every planet.
     assert_eq!(log_word(&keys(&[("panic", "1"), ("surge", "900"), ("set:pump_smell", "2"), ("far_smell", "1"), ("set:unit_paths", "1"), ("setting", "1"), ("set:set_block", "5")])), "none");
     // In the list's order, whatever order the keys came in.
-    assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("win:setlook", "2")])), "set_look:glaze,crystal_regrow:on");
-    // 2.0 is 2; a later 0 turns it off again.
-    assert_eq!(log_word(&keys(&[("win:setlook", "2.0")])), "set_look:glaze");
+    assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("win:shake", "1"), ("win:hitstop", "1")])), "feel:on,crystal_regrow:on");
+    // 1.0 is 1; a later 0 turns it off again.
+    assert_eq!(log_word(&keys(&[("win:shake", "1.0"), ("win:hitstop", "1.0")])), "feel:on");
     assert_eq!(log_word(&keys(&[("crystal_regrow", "0.001"), ("crystal_regrow", "0")])), "none");
     // A choice is named when all its keys hold: shake alone is not the
     // row's "on".
     assert_eq!(log_word(&keys(&[("win:shake", "1"), ("win:hitstop", "1")])), "feel:on");
     assert_eq!(log_word(&keys(&[("win:shake", "1")])), "feel:custom");
-    assert_eq!(log_word(&keys(&[("win:setlook", "2")])), "set_look:glaze");
     // A film's own number is custom, not lost.
     assert_eq!(log_word(&keys(&[("crystal_regrow", "0.01")])), "crystal_regrow:custom");
     // Everything at once reads back as every switch (the all-switches

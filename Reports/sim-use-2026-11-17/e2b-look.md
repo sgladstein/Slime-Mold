@@ -43,3 +43,31 @@ Off (no setting, or `setlook=0`): one uniform test a fine cell in `prep`.
 On: 16 loads from `news` a fine cell in `prep` (the 4 x 4), a material blend
 where the share is over 0. 1070 timing at zoom 1 and 6 (the graphics
 thread's ask) to book with the scar's and crust's.
+
+## Settled (2026-11-18): amber
+
+The Look and interface lane's pick (the plan of 11-17 gave it the pending
+look picks; `wiki/decisions-game.md`, 11-17 01:13, has amber as the set
+slime's look). Amber is the only look; the glaze, the unmarked side, the
+Experiments row `set_look` and the key `setlook=` are deleted, which
+takes its row off the switch list (two rows are left: the free
+recruits left it the same day, #459).
+
+Judged on the game as it is on main at 7a38050, where the Trunk sets on
+planet 3 by default: run seed 1, `hand=hold@344,169 gun=rifle`, the frame
+at 72 s (1,699 killed, the two set patches the squad shoots), the same
+game three ways (`setlook=1|2|0`), zoom 6 (`e2b-settled.jpg`: amber, glaze,
+unmarked, left to right) and amber at zoom 12 (`e2b-settled-z12.jpg`).
+
+| Look | A set patch, mean colour | Reads as |
+|---|---|---|
+| Amber | (160, 89, 28) | a darker, redder sheet in the slime's own hue family |
+| Glaze | (193, 148, 78) | pale sand: it left the slime's hue for the team's cream, which is also the wanderer's pale bone and the Lure's rings |
+| Unmarked | (169, 113, 30) | ordinary slime, though five set walkers round a cell stop a soldier |
+
+The fed body beside the patches is (234, 153, 37), and slime under alarm
+flushes to about (255, 161, 54) ([flinch look](../flinch-look-2026-11-17/README.md)),
+so flushed slime and amber set slime part by value, the set darker by a
+third. What amber lacks is a material: at zoom 12 it is a flat sheet with a
+soft edge, not something hard. That is a look job (the art direction's
+list, B), not a switch.

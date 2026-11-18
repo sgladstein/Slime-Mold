@@ -47,17 +47,16 @@ pub(super) fn apply(a: &mut Args, base: &Args, menu: &StartMenu) {
 
 /// The window keys a switch may set (`the_switches_window_keys_are_read`
 /// holds the list to these), as the command line's own keys of the same
-/// names: `setlook`, set slime's look (`View::set_setting`: 1 amber, 2
-/// glaze, 0 hidden); `shake` and `hitstop`, the camera's shake and the
-/// freeze on a hit (off at 0, the Squad lane's toggle).
-pub(super) const WINDOW_KEYS: [&str; 3] = ["setlook", "shake", "hitstop"];
+/// names: `shake` and `hitstop`, the camera's shake and the freeze on a
+/// hit (off at 0, the Squad lane's toggle). (`setlook`, the set slime's
+/// look, was one to 2026-11-18: amber is what the game draws.)
+pub(super) const WINDOW_KEYS: [&str; 2] = ["shake", "hitstop"];
 
 /// Sets window key `name` (a switch's `win:NAME`) on a round's args
 /// (`App::start`, before the round is built).
 pub(super) fn set_window_key(a: &mut Args, name: &str, v: &str) -> Result<(), String> {
     let bad = |e: &dyn std::fmt::Display| format!("{}{name}={v}: {e}", switches::WINDOW_KEY);
     match name {
-        "setlook" => a.set_look = Some(v.parse::<u32>().map_err(|e| bad(&e))?.min(2)),
         "shake" => a.shake = v.parse().map_err(|e| bad(&e))?,
         "hitstop" => a.hitstop = v.parse().map_err(|e| bad(&e))?,
         _ => return Err(format!("{}{name}: the window reads no such key (it reads {})", switches::WINDOW_KEY, WINDOW_KEYS.join(", "))),
@@ -144,17 +143,17 @@ mod tests {
         }
         let plain = round_args(&bare, false, &menu, &StartEvent::Sandbox);
         assert_eq!(switches::log_word(&plain.keys), "none");
-        // The rows this plays are the three left since the Enemy lane
+        // The rows this plays are the two left since the Enemy lane
         // settled the 11-17 list (the far smell, the trap and the crust,
         // which this test turned until then, are no longer rows) and the
         // free recruits left it (11-18).
         turn(&mut menu, "crystal_regrow", "on");
-        turn(&mut menu, "set_look", "hidden");
+        turn(&mut menu, "feel", "on");
         let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
-        assert_eq!(switches::log_word(&a.keys), "set_look:hidden,crystal_regrow:on");
-        assert!(a.keys.contains(&("crystal_regrow".into(), "0.001".into())) && a.keys.contains(&("win:setlook".into(), "0".into())));
+        assert_eq!(switches::log_word(&a.keys), "feel:on,crystal_regrow:on");
+        assert!(a.keys.contains(&("crystal_regrow".into(), "0.001".into())) && a.keys.contains(&("win:hitstop".into(), "1".into())));
         let run = run_args(&bare, &menu, &Run::new(1));
-        assert_eq!(switches::log_word(&run.keys), "set_look:hidden,crystal_regrow:on", "a run's planets play the picks");
+        assert_eq!(switches::log_word(&run.keys), "feel:on,crystal_regrow:on", "a run's planets play the picks");
         // The command line's `try=feel try=crystal_regrow` presets the
         // rows; turning one off in the menu takes its keys off the round.
         let mut cli = bare.clone();
