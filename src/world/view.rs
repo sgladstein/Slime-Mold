@@ -128,7 +128,8 @@ pub fn pick_lights(lights: &[Light], seen: (f32, f32, f32, f32)) -> Vec<Light> {
     let (x0, y0, x1, y1) = seen;
     let mut on: Vec<Light> = lights.iter().copied().filter(|l| l.at.0 + l.reach >= x0 && l.at.0 - l.reach <= x1 && l.at.1 + l.reach >= y0 && l.at.1 - l.reach <= y1).collect();
     if on.len() > MAX_LIGHTS {
-        let worth = |l: &Light| l.strength;
+        // A bite zone first: it is the slime's attack, not a glow.
+        let worth = |l: &Light| if l.is_bite() { f32::INFINITY } else { l.strength };
         let mut order: Vec<usize> = (0..on.len()).collect();
         order.sort_by(|&a, &b| worth(&on[b]).total_cmp(&worth(&on[a])).then(a.cmp(&b)));
         let mut keep = vec![false; on.len()];
@@ -161,6 +162,24 @@ pub struct Light {
     pub lift: f32,
     pub colour: [f32; 3],
     pub strength: f32,
+}
+
+/// A bite zone's `lift` (`Light::bite`): above any real light's.
+pub const BITE_LIFT: f32 = 1.0e9;
+
+impl Light {
+    /// The slime biting a soldier (the owner, 2026-11-18 18:08Z: a bite
+    /// "just looks like more of the same slime"): the disc of `reach` world
+    /// cells round `at` in which every walker bites it, sent with the
+    /// lights. It lights nothing: the slime in it takes its own crimson
+    /// (`view.wgsl`, `bite_share`) by `strength`, 0 to 1.
+    pub fn bite(at: (f32, f32), reach: f32, strength: f32) -> Light {
+        Light { at, reach, lift: BITE_LIFT, colour: [0.0; 3], strength }
+    }
+
+    pub fn is_bite(&self) -> bool {
+        self.lift >= BITE_LIFT
+    }
 }
 
 /// The minimap's longest side, in pixels, and its margin from the corner.
@@ -2406,6 +2425,93 @@ mod tests {
         let (one, two) = (shot(&body), shot(&both));
         let most = one.pixels().zip(two.pixels()).map(|(p, q)| (0..3).map(|c| (p.0[c] as i32 - q.0[c] as i32).abs()).max().unwrap()).max().unwrap();
         assert!(most <= 2, "a lone soldier's head is its own figure's: {most}");
+    }
+
+    /// The slime biting a soldier (the owner, 2026-11-18 18:08Z: a bite
+    /// "just looks like more of the same slime"): two pieces of gold slime,
+    /// A and B, a soldier standing in each, and a bite zone (`Light::bite`,
+    /// the soldier's touch) on B alone and on bare ground between them. B's
+    /// slime turns crimson and shows over its soldier's shoulder; A's slime
+    /// and soldier, and the bare ground in its zone, are unchanged. At zoom
+    /// 12 and 6. Against the 11-18 shader (no bite zone) B stays gold and
+    /// under its figure.
+    #[test]
+    fn slime_biting_a_soldier_turns_crimson_over_it_and_nothing_else_changes() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let mut px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for cx in [16usize, 48] {
+            for dy in 0..7 {
+                for dx in 0..7 {
+                    let (x, y) = (cx + dx - 3, 20 + dy - 3);
+                    look[y * w + x] = 255 | (1 << 8);
+                    px[4 * (y * w + x)..4 * (y * w + x) + 3].copy_from_slice(&[255, 190, 90]);
+                    walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, walk.len() as u32 / 4);
+        let (r, team) = (2.0f32, crate::world::marks::team_colour(0));
+        let (a, b, bare) = ((16.5f32, 20.5f32), (48.5f32, 20.5f32), (32.5f32, 20.5f32));
+        let mut soldiers = Marks::default();
+        for p in [a, b] {
+            soldiers.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+        }
+        let zones = [Light::bite(b, r / 1.15, 1.0), Light::bite(bare, r / 1.15, 1.0)];
+        for zoom in [12.0f32, 6.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            let mut shot = |centre: (f32, f32), marks: &Marks, lights: &[Light]| {
+                cam.centre_on(centre);
+                view.set_marks(marks);
+                view.set_lights(lights, (0.0, 0.0, w as f32, h as f32));
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                (view.picture(), cam)
+            };
+            // The mean colour of the 3 x 3 pixels round a world point.
+            let at = |(pic, cam): &(image::RgbaImage, Camera), p: (f32, f32)| {
+                let (sx, sy) = cam.to_screen(p);
+                let mut c = [0i32; 3];
+                for dy in -1..=1 {
+                    for dx in -1..=1 {
+                        let v = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                        for k in 0..3 {
+                            c[k] += v[k] as i32;
+                        }
+                    }
+                }
+                c.map(|v| v / 9)
+            };
+            let far = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| (p[k] - q[k]).abs()).max().unwrap();
+            // Half a radius out across the facing: the soldier's shoulder,
+            // inside its touch.
+            let shoulder = |p: (f32, f32)| (p.0, p.1 + 0.5 * r);
+            let none = Marks::default();
+            // The slime alone, then with the soldiers.
+            for (marks, what) in [(&none, "slime"), (&soldiers, "shoulder")] {
+                let spot = |p: (f32, f32)| if what == "slime" { p } else { shoulder(p) };
+                let (b0, b1) = (at(&shot(b, marks, &[]), spot(b)), at(&shot(b, marks, &zones), spot(b)));
+                assert!(b1[0] > b1[1] + 80 && b1[0] > b1[2] + 40, "zoom {zoom}: B's biting {what} is crimson: {b0:?} -> {b1:?}");
+                let (a0, a1) = (at(&shot(a, marks, &[]), spot(a)), at(&shot(a, marks, &zones), spot(a)));
+                assert!(far(a0, a1) <= 2, "zoom {zoom}: A's {what}, not bitten, is unchanged: {a0:?} -> {a1:?}");
+            }
+            let (g0, g1) = (at(&shot(bare, &none, &[]), bare), at(&shot(bare, &none, &zones), bare));
+            assert!(far(g0, g1) <= 2, "zoom {zoom}: bare ground in a bite zone is unchanged: {g0:?} -> {g1:?}");
+        }
     }
 
     /// A fallen soldier (the owner's playtest, 2026-11-18 16:12Z: "When

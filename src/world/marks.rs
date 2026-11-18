@@ -287,10 +287,12 @@ impl Marks {
 
     /// A soldier as `soldier_working`, `bite` 0-1 the slime's last bite
     /// fading (building looks, 11-14: "a flinch and a brief light where
-    /// slime bites, from the real damage"), lit hot on the side it came
-    /// from, `toward` radians (screen frame, as `facing`). Both ride in
-    /// the second colour's word, which a soldier does not use: the bite a
-    /// byte, the angle 16 bits above it.
+    /// slime bites, from the real damage"): the figure flushes blood red
+    /// (`view.wgsl`, `soldier_at`). `toward`, radians (screen frame, as
+    /// `facing`), is the side it came from, which lit that side alone until
+    /// 2026-11-18; the view no longer reads it. Both ride in the second
+    /// colour's word, which a soldier does not use: the bite a byte, the
+    /// angle 16 bits above it.
     #[allow(clippy::too_many_arguments)]
     pub fn soldier_bitten(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool, carry: f32, take: f32, bite: f32, toward: f32) {
         if !alive {

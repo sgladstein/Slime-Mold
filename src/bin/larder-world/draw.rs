@@ -906,20 +906,19 @@ impl App {
                 let tip = muzzle(drawn_at(s, l, body_r), l.facing, body_r);
                 self.lights.push(Light { at: tip, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
             }
-            // A bite: a brief hot light on the side the slime bit from
-            // (`step_notes`, from the real damage), as far as a bite
-            // reaches: the soldier's touch (`Rules::touch`), the size of
-            // the damage (the owner, 11-14 20:22Z: "only the size of the
-            // damage. The same for all affects"). It reached 3.5 dish cells
-            // until 11-18 (Look A4), 2.3 touches, lighting the slime out to
-            // 3.3 touches from a soldier wading in: a wader flinches many
-            // times a second, so a squad in the slime stood in a flickering
-            // orange pool five times the area its bites reach.
-            if let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flinch > 0.0) {
-                let f = l.flinch / FLINCH;
-                let touch = g.rules.touch * sc;
-                let at = (s.x + l.bite.cos() * touch, s.y + l.bite.sin() * touch);
-                self.lights.push(Light { at, reach: touch, lift: 2.0, colour: [255.0, 120.0, 70.0], strength: 1.1 * f });
+            // The slime biting it (the owner, 2026-11-18 18:04Z and
+            // 18:08Z: "it just looks like more of the same slime"): while
+            // any walker is within its touch (`Soldier::touching`, the
+            // walkers that bite it, `squad::read`), that disc, whose slime
+            // the view draws in its own crimson (`Light::bite`). Until
+            // 11-18 a bite was an orange light on the bitten side, 3.5 dish
+            // cells across the radius (2.3 touches; cut to the touch in
+            // #498 that day), on gold slime: it read as more slime, and lit
+            // a wader's squad in an orange wash.
+            // It throbs with each flinch (every `FLINCH_HP` of damage).
+            if s.alive && s.touching > 0 {
+                let f = self.looks.get(k).map_or(0.0, |l| l.flinch / FLINCH);
+                self.lights.push(Light::bite((s.x, s.y), g.rules.touch * sc, 0.75 + 0.25 * f));
             }
         }
         // A lodged cast (delay, thick) is an ember where it waits, its light

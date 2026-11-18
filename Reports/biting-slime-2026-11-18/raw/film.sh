@@ -1,22 +1,19 @@
 #!/bin/bash
-# The bite-light films (Reports/bite-light-2026-11-18). From the repo's root
+# The biting-slime films (Reports/biting-slime-2026-11-18). From the repo's root
 # after `cargo build --release --locked --bin larder-world`, on the software
 # GPU:
 #
 #   film.sh OUT OLD_GAME   -> OUT/<name>/ frames, OUT/<name>.log
 #
 # OLD_GAME is a larder-world built from the commit before this change (the
-# light is pushed by the window, so swapping the shader alone does not give
-# the old look). The game is the same in both: only the drawing changed.
+# bite zone is pushed by the window, so swapping the shader alone does not
+# give the old look). The game is the same in both: only the drawing changed.
 #
 # The Fork held at 150,265 with plain rounds (not squad mode): the slime
 # wades into the eight soldiers at 23 to 27 s and again at 41 to 45 s,
 # the two windows where the most soldiers touch it (a scan once every 2 s
 # from 10 to 50 s: 3.9 touching walkers a soldier at 24 s, 6.7 at 42 s,
-# 1.1 at most elsewhere). Zoom 12 and 6, 30 frames a game
-# second. Planet 2 of run seed 1 with the greedy hand, 86 to 92 s, was
-# filmed too and is in the README only: its squad stood at the slime's
-# edge, 0.2 touching a soldier, and the picture changed by 0.07%.
+# 1.1 at most elsewhere). Zoom 12 and 6, 30 frames a game second.
 set -e
 out=${1:?film.sh OUT OLD_GAME}; old=${2:?film.sh OUT OLD_GAME}
 export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json
