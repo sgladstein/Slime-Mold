@@ -3,10 +3,52 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## State (2026-11-17, after the switch settlement)
+## State (2026-11-18, after the lure's field)
 
-**Open branch:** `claude/project-thread-s5k9cw`, one pull request, #451
-(the switch settlement, job 1). Nothing else is open.
+**Open branch:** `claude/project-thread-s5k9cw`, one pull request: the
+lure's field. #451 (the switch settlement, job 1) merged on 11-18.
+
+**The order of work now** (11-18): the lure's field (this pull request),
+then the Trunk's base walls, then job 2's page, then job 3.
+
+**The lure's field: built** (the owner's card, 11-18 03:03Z: "Lure now, in
+the three planets"; [report](../Reports/lure-field-2026-11-18/README.md)).
+Calm slime within `Rules::lure_reach` (60 cells of walking) of a Lure that
+is on, or of a `LureMark` in `Game::lure_marks`, leans down the walking
+distance to it. The weight is the engine key `lure_pull`, 0 by default and
+`run::LURE_PULL` 10 on every planet (Direction's to tune). GPU only.
+
+- The field is the third quarter of the cells' region in `news`
+  (`lure_dist` in engine.wgsl); the fourth quarter is free. The pull is
+  Params word 844, sent only while a field is written (`Engine::lured`).
+  Words 880, 884 and 888 are still free.
+- Charging, surging, raiding and breakaway walkers and mini-boss members
+  ignore it (this lane's call); Blind and Sour apply to it.
+- Agreed with Squad and arsenal (11-18 03:11Z): it brings the Lure back to
+  the run's build card and shop (300 food, 150 health, unlock 150) after
+  this lands and writes the news line then; this pull request carries
+  `Nothing-new:`, since nothing in a run stands a lure before that. Its
+  films use `lure=X,Y[,T]` (the building); `lure_mark=T,X,Y,SECS` lays a
+  mark.
+- Agreed with Look and interface (11-18 03:09Z): it adds
+  `View::set_steer(at)` and the rings; the call beside `set_crust` in
+  `main.rs` (`at` = `dense_at / 4 + DENSE_HEAD + n + 2 * nb`, 0 hides) is
+  this lane's to add once that is on main. It was not on main when this
+  was pushed.
+- Not checked: planets 2 and 3, a lure behind a wall with a gap, the GTX
+  1070's time.
+
+**The Trunk's base walls: next** (the owner in this lane's thread, 11-18
+03:11Z, on the walls that form where the Trunk is shot: "This is
+interesting and I want to play test it, but when it was original
+suggested, I thought the walls would form protecting the core of the slime
+or the slime crystals giving them a base of sorts"). Told him: walls that
+ring the Trunk's home crystal and each crystal it holds, with gaps, and
+harden-where-shot stays on so he can play both. Sketch: the game writes a
+block mask (the rings) into the free fourth quarter of the cells' region,
+and a walker with crust on a masked block sets with no scar; the bulwark
+rule then makes it a wall. It also belongs in the origin's design page
+(job 3): a walled home crystal is the base to break into.
 
 **Job 1, the switches: done.** What became of each of the fourteen is in
 `Reports/enemy-switches-2026-11-17/README.md` (the roadmap that held the
@@ -22,8 +64,8 @@ table is history since 11-18). In short:
   and its old card was the Drifter's.
 - The Swarmer's trait (planet 4; `SWARMER_RULES`): the last stand.
 - Deleted, with dead-end lines: the trap (`set_hold`), and the GPU game's
-  half of lossy flow and the lone step (Params words 844, 880, 884, 888 are
-  free). `src/mould/big.rs` still has `flow_loss` and `lone_step`: it is
+  half of lossy flow and the lone step (which freed Params words 844, 880,
+  884 and 888; the lure took 844). `src/mould/big.rs` still has `flow_loss` and `lone_step`: it is
   frozen until Milestone 2 (the owner's 19:21Z answer).
 - Not deleted, against the brief: the reserve recruit. The run never turns
   `Rules::reserve` on; it is the frozen campaign's mission rule (a free
@@ -64,8 +106,8 @@ Milestone 1 batch.
   engine only, and `every_ladder_tier_does_something_to_you` lets the CPU
   refuse them for the Trunk alone.
 
-**Next step: job 2**, planets 1 to 3 each do one nameable thing by minute
-2, one still or clip a planet. Where it stands: planet 3 now has its thing
+**Job 2**, planets 1 to 3 each do one nameable thing by minute
+2, one still or clip a planet (after the lure and the base walls). Where it stands: planet 3 now has its thing
 (the walls). Planet 1 does nothing to a squad that drains by hand and
 builds no pump (the Drifter only smells pumps), and planet 2's hunt is the
 Sprawler's own. No rush brake (D7): Direction (11-17 22:28Z) holds "the

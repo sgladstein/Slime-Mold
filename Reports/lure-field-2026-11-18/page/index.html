@@ -1,0 +1,158 @@
+<title>Lure Field</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column; each film sits beside or above the counts that
+   were read off the same game, so no picture stands without its numbers. */
+:root {
+  --bg: #f3f4f1;
+  --panel: #ffffff;
+  --ink: #1b2023;
+  --muted: #58626a;
+  --rule: #d4d8d6;
+  --amber: #a85a12;
+  --amber-soft: #f4e3cf;
+  --off: #5b6f86;
+  --off-soft: #e3e9f0;
+  --gone: #8a4a44;
+  --gone-soft: #f1e0de;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: Inter, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181b; --panel: #1c2226; --ink: #e7eae8; --muted: #9aa5ab; --rule: #313a40;
+    --amber: #e8a04d; --amber-soft: #3a2b1a; --off: #9bb3cf; --off-soft: #232e3a;
+    --gone: #d59a93; --gone-soft: #3a2624; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181b; --panel: #1c2226; --ink: #e7eae8; --muted: #9aa5ab; --rule: #313a40;
+  --amber: #e8a04d; --amber-soft: #3a2b1a; --off: #9bb3cf; --off-soft: #232e3a;
+  --gone: #d59a93; --gone-soft: #3a2624; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 16px/1.55 var(--body);
+  padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+header { display: flex; flex-direction: column; gap: 14px; }
+h1 { font: 600 2.1rem/1.15 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font: 600 1.4rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 0.82rem/1.3 var(--body); margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 1.1rem; }
+.meta { color: var(--muted); font-size: 0.9rem; }
+section { display: flex; flex-direction: column; gap: 20px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.wide { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .pair, .wide { grid-template-columns: minmax(0, 1fr); } }
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+figure video, figure img { width: 100%; height: auto; display: block; border-radius: 4px; background: #0d1012; }
+figcaption { font-size: 0.9rem; color: var(--muted); }
+figcaption b { color: var(--ink); font-weight: 600; }
+.counts { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-weight: 600; color: var(--muted); font-size: 0.8rem; border-bottom-color: var(--muted); }
+table.fate td, table.fate th { text-align: left; white-space: normal; vertical-align: top; }
+table.fate td:first-child { white-space: nowrap; font-weight: 500; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.tag.on { background: var(--amber-soft); color: var(--amber); }
+.tag.off { background: var(--off-soft); color: var(--off); }
+.tag.gone { background: var(--gone-soft); color: var(--gone); }
+code { font: 0.86em ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.see { border-left: 3px solid var(--amber); padding-left: 16px; display: flex; flex-direction: column; gap: 8px; }
+.see p { max-width: 72ch; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+</style>
+
+<main>
+<header>
+  <h1>A lure now pulls the slime to it</h1>
+  <p class="lede">You picked "Lure now, in the three planets". The slime's half is built: calm slime within about 60 cells of a lure turns and streams to it, round rock and walls. Ringed by turrets, a lure is fed a steady stream.</p>
+  <p class="meta">2026-11-18, the Enemy lane. Planet 1 of run seed 1 on the software GPU, one film each, so every number is a first number. You cannot build a Lure in a run yet: it returns to the shop with Squad and arsenal's next change, and the rings that show its reach come from Look and interface.</p>
+</header>
+
+<section>
+  <h2>What it will do</h2>
+  <div class="see">
+    <p><b>It draws the slime that is at rest.</b> Slime inside the lure's reach leans toward it along the way it could walk there, so it bends round rock and through a gap in a wall.</p>
+    <p><b>It is no shield.</b> Slime that is charging you, surging or on a raid ignores the lure, and so does a mini-boss's body.</p>
+    <p><b>It can be eaten.</b> The Lure building has 150 health. Here the first raid turned for it and wore it down half a minute after it stood.</p>
+  </div>
+</section>
+
+<section>
+  <h2>The same minute with no lure and with one</h2>
+  <p>Three turrets that pay for kills stand below the slime's home crystal from 0:20, with eight soldiers holding beside them. In the second film a Lure stands between the turrets from 0:30.</p>
+  <div class="pair">
+    <figure>
+      <video src="no-lure-zoom6.mp4" autoplay muted loop playsinline controls></video>
+      <figcaption><b>No lure. Zoom 6, 0:26 to 1:30, three times real speed.</b> The body stays on its crystal until the raid at 0:59.</figcaption>
+    </figure>
+    <figure>
+      <video src="lure-zoom6.mp4" autoplay muted loop playsinline controls></video>
+      <figcaption><b>A Lure from 0:30. Same camera and speed.</b> A stream runs from the crystal into the guns. The raid at 0:59 goes for the Lure and wears it down.</figcaption>
+    </figure>
+  </div>
+  <div class="counts">
+    <h3>Both games, and a lure that cannot be eaten, by the clock</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Walkers killed by</th><th>0:30</th><th>0:45</th><th>1:00</th><th>1:15</th><th>1:30</th><th>Food paid at 1:30</th><th>Slime alive at 1:30</th></tr></thead>
+      <tbody>
+        <tr><td>No lure</td><td>4</td><td>138</td><td>350</td><td>1,279</td><td>1,813</td><td>382</td><td>15,397</td></tr>
+        <tr><td>A Lure building</td><td>4</td><td>1,154</td><td>2,547</td><td>4,152</td><td>4,461</td><td>1,087</td><td>12,981</td></tr>
+        <tr><td>A lure mark for 60 s</td><td>4</td><td>964</td><td>2,332</td><td>4,233</td><td>5,978</td><td>1,489</td><td>12,355</td></tr>
+      </tbody>
+    </table></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Walkers within 30 of the lure at</th><th>0:30</th><th>0:45</th><th>1:00</th><th>1:15</th><th>1:30</th></tr></thead>
+      <tbody>
+        <tr><td>No lure</td><td>0</td><td>1</td><td>104</td><td>67</td><td>9</td></tr>
+        <tr><td>A Lure building</td><td>0</td><td>144</td><td>155</td><td>57</td><td>1</td></tr>
+        <tr><td>A lure mark for 60 s</td><td>0</td><td>242</td><td>202</td><td>365</td><td>337</td></tr>
+      </tbody>
+    </table></div>
+    <p class="meta">A lure mark is a lure with no building, for something thrown or shot later; nothing in the game lays one yet. The clips were filmed again at ten frames a game second and their counts differ from this table by under 1%.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Up close</h2>
+  <div class="wide">
+    <figure>
+      <video src="lure-zoom12.mp4" autoplay muted loop playsinline controls></video>
+      <figcaption><b>Zoom 12, 0:34 to 0:56, twice real speed.</b> The stream arriving between the three turrets, with a lure mark in place of the building.</figcaption>
+    </figure>
+    <div class="counts">
+      <h3>This film, by the clock</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Time</th><th>Killed</th><th>Food paid</th><th>Slime alive</th></tr></thead>
+        <tbody>
+          <tr><td>0:34</td><td>27</td><td>5</td><td>13,691</td></tr>
+          <tr><td>0:44</td><td>846</td><td>209</td><td>13,793</td></tr>
+          <tr><td>0:54</td><td>1,753</td><td>436</td><td>13,550</td></tr>
+          <tr><td>0:56</td><td>1,962</td><td>488</td><td>13,493</td></tr>
+        </tbody>
+      </table></div>
+      <p class="meta">About 90 walkers a second die in the guns while the lure holds, and the slime's own growth keeps its size level.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>What I chose, and what is still open</h2>
+  <ul>
+    <li><b>The pull is 10 on every planet</b>, the lab's recommended start. At 30 the lab's lure emptied a colony in 45 seconds. Even at 10 the home colony is a fifth smaller at 1:30 and thinner over its crystal, so the lure takes part of the body and not only its rim. The number is Direction's to tune.</li>
+    <li><b>Charging slime ignores it.</b> A lure that also stopped charges would make a turret ring safe from everything.</li>
+    <li><b>Blinded slime does not see a lure and soured slime runs from it</b>, as with anything else it smells. Not filmed.</li>
+    <li><b>Not checked:</b> planets 2 and 3, a lure behind a wall with a gap, and the cost on your GTX 1070, which goes in the milestone's timing batch. With no lure standing the game does no extra work.</li>
+  </ul>
+</section>
+</main>

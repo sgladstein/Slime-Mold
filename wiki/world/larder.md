@@ -325,7 +325,9 @@ pump (owner 01:48Z: raids "regardless", not "so consistent as every 400
 food", the rule until then), else a building, else the soldiers, from
 beyond the surge's reach (`Rules::raid`, `raids.rs`; `BigParams::raid_*`
 on both engines, the squad twin exact). A lure that is on within 40 cells
-of the target takes the raid, so a lure ringed by turrets is a kill box,
+of the target takes the raid, so a lure ringed by turrets is a kill box
+(in a run the calm slime within 60 cells streams to it too since 11-18,
+the lure's field: [the run](run.md)),
 and a turret's one upgrade (600 food) makes it
 render (select the turret, Render): each walker killed in its range pays 0.25 food (owner: "the kill
 box pays but only with an upgrade"). The last stand (`set=last_stand=1`; the Swarmer's trait in a run since 11-17,

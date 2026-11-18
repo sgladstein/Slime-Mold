@@ -545,6 +545,12 @@ pub struct Rules {
     /// down instead of steering straight at a unit (`set=unit_paths=1`).
     /// Off until the owner's blind films.
     pub unit_paths: bool,
+    /// **A lure's reach** (2026-11-18, the Enemy lane; `raids.rs`'s
+    /// `time_lure_paths`): how far, in dish cells of walking, the lure's
+    /// field goes from a Lure or a lure mark; calm slime inside it leans
+    /// toward the lure (`gpu::Settings::lure_pull`). 60, the lab's rig
+    /// (`Reports/lab-steering-2026-11-17`); `set=lure_reach=N`.
+    pub lure_reach: f32,
     /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
     /// slime at a crowded knot or a big part cut off from food clenches
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
@@ -623,6 +629,7 @@ impl Rules {
             "raid_size_max" => &mut self.raid.size_max,
             "raid_share" => &mut self.raid.share,
             "raid_lure_r" => &mut self.raid.lure_r,
+            "lure_reach" => &mut self.lure_reach,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
             "boss_first" => &mut self.boss.first,
@@ -782,6 +789,7 @@ impl Default for Rules {
             surge_min: 10.0,
             raid: super::RaidRules::default(),
             unit_paths: false,
+            lure_reach: 60.0,
             boss: super::BossRules::default(),
         }
     }

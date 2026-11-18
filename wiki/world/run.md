@@ -10,6 +10,7 @@ sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-steering-2026-11-17/README.md
+  - Reports/lure-field-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/pump-economy-2026-11-15/README.md
@@ -28,6 +29,8 @@ code:
   - BossRules::for_depth
   - Game::boss_aim
   - LADDER
+  - LURE_PULL
+  - LureMark
   - PLANETS
   - Playlog
   - RANGE_DEPTH
@@ -62,6 +65,7 @@ code:
   - size_roll
   - surge_food
   - surge_secs
+  - time_lure_paths
   - two_stars
 ---
 
@@ -158,7 +162,7 @@ four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
 them on the command card), and the 40-soldier rush is left as it is (D7). A
-lab prototype, not in the game, meets D10's condition for the lure: a lure
+lab prototype met D10's condition for the lure: a lure
 that every walker leans toward (a walking-distance field, so walls bend it)
 drew planet 1's home colony into three turrets, 4,158 walkers killed by
 1:30 against 1,623 without it (run seed 1, one seed, software GPU;
@@ -168,8 +172,22 @@ run shop for planets 1 to 3 with that rule at a third of the lab's pull
 (first numbers: pull 10, shop unlock 150, the building 300 food and 150
 health, mortal); Enemy builds the field with its own GPU slot and weight,
 Squad and arsenal the building and the shop item, Look and interface the
-rings' colour. Not built yet: until it lands the shop is as above. The siren
-and the outpost stay out.
+rings' colour. The field is built (below); until the building lands the
+shop is as above. The siren and the outpost stay out.
+
+**A lure pulls** (every planet, 11-18). The lab's field is a slime rule of
+the GPU engine (`lure_pull`, `run::LURE_PULL` 10 on every planet, no CPU
+twin): calm slime within `Rules::lure_reach` (60 cells of walking) of a
+Lure that is on, or of a lure mark (`LureMark`, for a thrown or shot lure),
+leans down the walking distance to it; the game rebuilds the field once a
+game second (`time_lure_paths`). A panicking, surging, raiding or breakaway
+walker and a mini-boss's member ignore it, so a lure draws the body at rest
+and is no shield from a charge; a blind walker does not see it and a soured
+one runs from it. In the lab's scene on the game's build, 4,461 walkers
+killed by 1:30 with a Lure building (which the first raid wore down at
+0:59), 5,978 with a mark that cannot be eaten, 1,813 with no lure (run seed
+1, one film each, software GPU;
+[report](../../Reports/lure-field-2026-11-18/README.md)).
 
 **The Trunk's walls** (planet 3, 11-17; `TRUNK_KEYS` and `TRUNK_RULES` in
 `run.rs`; [report](../../Reports/enemy-switches-2026-11-17/README.md)).

@@ -77,7 +77,7 @@ pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
 pub use doors::WALL_LEVELS;
-pub use raids::{Raid, RaidAim, RaidRules, Raids};
+pub use raids::{LureMark, Raid, RaidAim, RaidRules, Raids};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
@@ -514,6 +514,9 @@ pub struct Game<W: World> {
     charge_was: f64,
     /// Raids (`Rules::raid`, `raids.rs`): the meter and every raid sent.
     pub raids: Raids,
+    /// Lures with no building (`raids::LureMark`; the lure's field,
+    /// `time_lure_paths`), each until its tick.
+    pub lure_marks: Vec<LureMark>,
     /// Mini-bosses (`Rules::boss`, `bosses.rs`): the live ones and the ended.
     pub bosses: Bosses,
     /// Food the kill box has paid (`BuildRules::render_food`).
@@ -661,6 +664,7 @@ impl<W: World> Game<W> {
             surge_timed: false,
             charge_was: 0.0,
             raids: Raids::new(seed),
+            lure_marks: Vec::new(),
             bosses: Bosses::new(seed),
             rendered: 0.0,
         };

@@ -545,6 +545,11 @@ struct Args {
     /// lit over R world units at (X, Y) at game second T (a burn burst,
     /// no kill); repeat for more.
     lights: Vec<(f32, f32, f32, f32)>,
+    /// `lure_mark=T,X,Y,SECS` (look= only, 2026-11-18, the Enemy lane): a
+    /// lure with no building (`LureMark`, the lure's field) at (X, Y),
+    /// world units, from game second T for SECS; repeat for more.
+    /// `lure=X,Y[,T]` stands a Lure building instead.
+    lure_marks: Vec<(f32, f32, f32, f32)>,
     /// `trail=T,X1,Y1,X2,Y2,CARDS[,lit]` (2026-11-17, the element family's
     /// fence test): at game second T, the trails of CARDS (scorch, bait,
     /// mist, smother, tinder) laid along the line from (X1, Y1) to (X2, Y2),
@@ -2378,6 +2383,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [t, x, y, r] = w.as_slice() else { return Err("light=T,X,Y,R".into()) };
                 args.lights.push((*t, *x, *y, *r));
+            }
+            "lure_mark" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [t, x, y, secs] = w.as_slice() else { return Err("lure_mark=T,X,Y,SECS".into()) };
+                args.lure_marks.push((*t, *x, *y, *secs));
             }
             "trail" => {
                 let p: Vec<&str> = v.split(',').collect();

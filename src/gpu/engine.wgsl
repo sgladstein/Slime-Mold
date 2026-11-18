@@ -128,10 +128,13 @@ struct Params {
     // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
     // `world(SOIL)`: the trail on sand and on clay is x these after the
     // spread, and on barren ground upkeep is x `barren_up`. The row's last
-    // word is free (written 0): it was one body's `eloss` (lossy sharing,
-    // `BigParams::flow_loss`) from 2026-11-13 until this engine's half of
-    // that rule was deleted on 11-17 (Reports/dead-ends.md).
-    sand_keep: f32, clay_keep: f32, barren_up: f32, eloss_free: f32,
+    // word is the lure's pull (`lure`, 2026-11-18, the Enemy lane;
+    // `Settings::lure_pull` while a lure's field is written, else 0, so a
+    // game with no lure reads nothing more). It was one body's `eloss`
+    // (lossy sharing, `BigParams::flow_loss`) from 2026-11-13 until this
+    // engine's half of that rule was deleted on 11-17
+    // (Reports/dead-ends.md).
+    sand_keep: f32, clay_keep: f32, barren_up: f32, lure: f32,
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
@@ -985,6 +988,34 @@ fn food_dist(i: u32) -> u32 {
     if (v == 0u) { return 0xFFFFFFFFu; }
     return v - 1u;
 }
+// **The lure's field** (2026-11-18, the Enemy lane, from the lab's
+// steering prototype, Reports/lab-steering-2026-11-17): the walking
+// distance to the nearest lure the player has standing, out to the lure's
+// reach, after the far smell's blocks in the same region and in the same
+// words (a block's distance + 1; 0 where no lure reaches, or with none).
+// The game writes it once a game second (`Engine::write_lure_field`). It
+// has no CPU twin (the owner's card, 11-17 19:21Z), and the region's
+// fourth quarter is still free.
+fn lure_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    let v = atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 2u * nb + q]);
+    if (v == 0u) { return 0xFFFFFFFFu; }
+    return v - 1u;
+}
+// The lure at a sensor: how much nearer the lure its block is than the
+// walker's own (`dh`). A block the field does not reach (rock, a wall, or
+// past the lure's reach) reads no lean either way, as in the lab's rig
+// whose weights this rule keeps: it is not the far smell's `FAR_WALL`
+// penalty, so a walker at the field's rim is not pushed back in.
+fn lure_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE) { return 0.0; }
+    let d = lure_dist(i);
+    if (d == 0xFFFFFFFFu) { return 0.0; }
+    return f32(dh) - f32(d);
+}
 fn food_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
     let i = cell(x + cos(a) * so, y + sin(a) * so);
     if (i == NONE || agar[i] == 0u) { return -1.0e6; }
@@ -1180,6 +1211,24 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (f > -1.0e5) { f += w * far_near(wk.x, wk.y, h, so, dh); }
                 if (fl > -1.0e5) { fl += w * far_near(wk.x, wk.y, h - sa, so, dh); }
                 if (fr > -1.0e5) { fr += w * far_near(wk.x, wk.y, h + sa, so, dh); }
+            }
+        }
+        // **The lure** (2026-11-18; `lure_dist`): a calm walker inside a
+        // lure's reach leans down the walking distance to it, x `lure`,
+        // on top of everything it smells, fed or hungry. Only this branch
+        // reads it: a panicking, surging, raiding or breakaway walker is
+        // on its own errand and a mini-boss's member follows its body, so
+        // a lure draws the body at rest and is no shield from a charge.
+        // Blind and Sour change it below like any reading: a blind walker
+        // does not see the lure, and a soured one runs from it.
+        // No hunger gate (the far smell's): the lab's weights (10 a steady
+        // stream, 30 empties a colony in 45 s) were measured without one.
+        if (lb == 0u && P.lure > 0.0) {
+            let dh = lure_dist(here);
+            if (dh != 0xFFFFFFFFu) {
+                if (f > -1.0e5) { f += P.lure * lure_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += P.lure * lure_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += P.lure * lure_near(wk.x, wk.y, h + sa, so, dh); }
             }
         }
     }
