@@ -163,6 +163,8 @@ jobs:
               gh workflow run windows-build.yml -R "$R" --ref main || echo "the Windows build was not started"
               # The run bot's curve on the new main (run-bot.yml).
               gh workflow run run-bot.yml -R "$R" --ref main || echo "the run bot was not started"
+              # Branches already in main go (branches.yml).
+              gh workflow run branches.yml -R "$R" --ref main || echo "the branch sort was not started"
             else
               echo "main moved under the candidate; building again on the new main"
             fi

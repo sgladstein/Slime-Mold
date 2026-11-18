@@ -198,6 +198,16 @@ run=1:2 mode=squads hand=bot`):
   is now no pick or work until it can be taken (it was held as the work
   while the bot hunted, 15.9k slime at the end).
 
+Job 5, branches (11-18): a thread cannot delete another's branch (the
+proxy refused both `git push --delete` and the refs API), so on Scott's
+card ("Let CI delete them", 13:17Z) `.github/workflows/branches.yml` runs
+`scripts/branches.sh` after each landing (the queue dispatches it),
+weekly and by hand: it deletes branches whose tip is in main (18 that
+day) and lists the rest with the commits main has no copy of in the
+run's summary, for Direction. Still open in job 5: films to an archive
+branch with a size cap a pull request (gifs and mp4s are 1.2 GB of
+main's 1.47 GB tree). The lint caps were already in.
+
 **Next:** seed 3's planet 1 (above), then the bot on planet 2: clear a
 held crystal by hunting the slime on it before draining it (land, back off to a quiet crystal, hold it
 with the volley, build up), then planet 3; then whether the old run smoke
