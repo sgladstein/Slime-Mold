@@ -207,9 +207,12 @@ Job 5, branches (11-18): a thread cannot delete another's branch (the
 proxy refused both `git push --delete` and the refs API), so on Scott's
 card ("Let CI delete them", 13:17Z) `.github/workflows/branches.yml` runs
 `scripts/branches.sh` after each landing (the queue dispatches it),
-weekly and by hand: it deletes branches whose tip is in main (18 that
-day) and lists the rest with the commits main has no copy of in the
-run's summary, for Direction. Still open in job 5: films to an archive
+weekly and by hand: it deletes branches whose tip is in main and lists
+the rest with the commits main has no copy of in the run's summary, for
+Direction. Its first run (11-18 13:52Z, actions run 44317767827) deleted
+91 (a session's shallow clone had found 18) and listed 56 not in main,
+most of them 11-10 to 11-12 runner and census branches with one commit
+each. Still open in job 5: films to an archive
 branch with a size cap a pull request (gifs and mp4s are 1.2 GB of
 main's 1.47 GB tree). The lint caps were already in.
 
