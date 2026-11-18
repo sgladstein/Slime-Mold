@@ -37,8 +37,6 @@ below are parked until Milestone 1 passes.
 
 ## Waiting on the owner
 
-- The Mind cards' blind quiz. The key is in `Reports/gun-mind-2026-11-16/README.md`.
-- Whether Heave and Corral merge into one card. The pick is in the 11-17 playtest pack (#433).
 - The Torch's and Tinder's costs (2) wait for the balance pass. The game designer called it.
 - Timing the Mind statuses on the GTX 1070.
 

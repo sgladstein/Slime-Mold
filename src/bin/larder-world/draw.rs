@@ -1676,8 +1676,8 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Seek => (Icon::Seek, CardKind::Flight, "Bullets that just miss strike slime beside them.".into()),
         // The shove cards (owner 2026-11-16 05:11Z: "corral and push the
         // slime onto areas. Into a kill zone").
-        C::Heave => (Icon::Heave, CardKind::Modifier, format!("Its hit shoves slime back, {:.1}x farther a card.", r.heave)),
-        C::Corral => (Icon::Corral, CardKind::Modifier, "Its hit shoves slime toward your nearest turret.".into()),
+        // One card since 2026-11-17 (Heave and Corral merged).
+        C::Heave => (Icon::Heave, CardKind::Modifier, format!("Shoves slime onto your nearest turret or back, {:.1}x a card.", r.heave)),
         C::Pull => (Icon::Pull, CardKind::Modifier, "Its hit drags slime toward the gun.".into()),
         // The Mind bullets (2026-11-16, step D): a status, no kill.
         C::Blind => (Icon::Blind, CardKind::Payload, format!("Slime within {:.0} cells is blind for {:.0} s: it walks straight on.", r.mind_r, r.mind_secs)),

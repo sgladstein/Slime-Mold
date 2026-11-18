@@ -2,7 +2,7 @@
 title: Guns, bullets and gun cards
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
@@ -103,19 +103,23 @@ a buckshot trigger with a blast is strong
 
 **Shove cards** (2026-11-16, the owner's 05:11Z ask: "corral and push the
 slime onto areas. Into a kill zone"): `Heave` makes a bullet's hit shove the
-slime round it on along its line, farther with each heave; `Corral` sends the
-shove to the nearest turret in reach; `Pull` drags it toward the gun. They
+slime round it toward your nearest turret within `corral_reach` (40 dish
+cells), or with none in reach on along its line, farther with each heave;
+`Pull` drags it toward the gun. Heave was two cards, Heave and Corral, until
+the lane merged them (2026-11-18; `corral` still loads as `heave`). They
 steer a slug's own shove too. The shove is a push (`Burst::push`): every
 walker in the ring flies one heading, on both engines. With one turret beside
-the squad, corral's turret killed 241 in 3 s against 157 with plain bullets;
-with three turrets over 10 s, 1,234 against 617, and no soldier lost. Heave
-keeps the slime off the squad but kills little. Pull first dragged the slime
-onto the squad and lost all eight in 10 s; since the owner's 19:40Z pick it
-stops short, the pulled slime landing at least `RoundRules::pull_short` (6
-dish cells) in front of the gun, and with no room it does nothing. The squad
-then kept 7 of 8 as with plain bullets; pulls happen at range (18 in 10 s
-while a squad marched and shot slime 10-24 cells off), with kills about even
-([shove cards](../../Reports/gun-shove-2026-11-16/README.md)).
+the squad, one heave raised the turret's kills in 10 s from 139 with plain
+bullets to 371, the squad's own falling as with every shove; a second heave
+by a turret scatters the slime and feeds it less (101). Pull first dragged
+the slime onto the squad and lost all eight in 10 s; since the owner's
+19:40Z pick it stops short, the pulled slime landing at least
+`RoundRules::pull_short` (6 dish cells) in front of the gun, and with no
+room it does nothing. The squad then kept 7 of 8 as with plain bullets;
+pulls happen at range (18 in 10 s while a squad marched and shot slime
+10-24 cells off), with kills about even
+([shove cards](../../Reports/gun-shove-2026-11-16/README.md), *2026-11-18*
+for the merged card).
 
 **Multicast** (2026-11-16, step B): the shot that fires its cast also fires
 the next cast beside it, each its own bullets, a little apart; a second
@@ -159,7 +163,7 @@ its turn. Scared, raiding and lump walkers take them too. They cost 2, are
 sold from planet 2, take their set's shape, and have their own tab in the
 armory. On a thin vein, 10 s each, every status cut the walkers within 8
 cells from 19 to 11-12 while it lasted, and sour halved the ring round it
-too. The owner has the four clips as a blind quiz. Spin as a harder turn
+too. The blind quiz on their four clips was dropped 11-17. Spin as a harder turn
 and Lace (sensing reach x 0.15 or 2.5) showed nothing and were dropped
 ([Mind bullets](../../Reports/gun-mind-2026-11-16/README.md)).
 
@@ -275,7 +279,7 @@ card text) and 08:30 (the guns a draw of the game).
   squad on a cooldown; luck that changes rules. Steps A-F, each filmed; cut
   last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
   useful"). Step A (set shapes, blast and bomb apart, germ sold), the
-  trigger and expire cards, the owner's shove cards (heave, corral, pull),
+  trigger and expire cards, the owner's shove cards (heave, pull),
   multicast and the GPU read-back batching are built. Step C: seek is
   homing in the shot trace (hits up from 80% to 89% on thin slime, kills
   +3%); aim cards wait (squads on their own hold the defend stance, so an
@@ -308,7 +312,7 @@ card text) and 08:30 (the guns a draw of the game).
   (the game designer's note, 11-17). The gaps are the Sleeper, the Grudge
   and the Trunk; Pull and Thrift answer no planet.
 - Pull stops short but adds no kills where squads on their own fight (the
-  slime they shoot is already near). Corral finds turrets only, not a
+  slime they shoot is already near). A heave finds turrets only, not a
   marked spot or other buildings.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
 - Balance of budgets, prices and rolls waits for the owner's playtest.

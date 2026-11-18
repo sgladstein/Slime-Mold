@@ -352,7 +352,7 @@ fn range_shelf(row: &run::Row) -> &'static str {
         // The shove cards their own shelf (2026-11-16): with them on the
         // next bullet's, that tab took two pages at 200% on 1080 lines.
         // With the trails since 11-17 (below).
-        (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Corral | rounds::Card::Pull)) => "Trails and shoves",
+        (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Pull)) => "Trails and shoves",
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
         // The readers (Shatter, Detonate) share it: their own tab would
