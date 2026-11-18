@@ -118,6 +118,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     let sizes: Vec<&str> = sizes.iter().map(String::as_str).collect();
     // First on the page (the review, 11-15: it was the last of 15 rows,
     // below the fold, and the one the owner needed).
+    // The declared switches (`build::switches`; the Engine and tools
+    // lane, 11-17), one row each on their own tab: `experiments.rs` says
+    // what is on it, this file and `start.rs` how it is drawn.
+    o.extend(experiments::options(base));
     o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -128,6 +132,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
             let tab = match opt.key.as_str() {
                 "map" | "planet" | "own" | "plants" => "Planet",
                 "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The mould",
+                k if k.starts_with(slime_mould::build::switches::OPT_KEY) => "Experiments",
                 _ => "Game",
             };
             opt.in_tab(tab)
@@ -426,7 +431,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
     Some(match name {
         "1" | "main" => Page::Main,
         "campaign" | "missions" => Page::Missions,
-        "options" | "options-planet" | "options-mould" => Page::Options,
+        "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" => Page::Shop,
         _ => return None,
@@ -488,6 +493,8 @@ pub(super) fn round_args(base: &Args, chosen: bool, menu: &StartMenu, pick: &Sta
             a.keys.push((k.to_string(), v.to_string()));
         }
     }
+    // The Experiments tab's picks, last so they stand over the rest.
+    experiments::apply(&mut a, base, menu);
     a
 }
 

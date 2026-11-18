@@ -105,8 +105,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 m.open_shop_tab_named("Tools");
             }
             // Options' second and third tabs (11-15), as Tab opens them.
-            "options-planet" | "options-mould" => {
-                for _ in 0..if flag == "options-planet" { 1 } else { 2 } {
+            // The fourth, Experiments (11-17, the declared switches).
+            "options-planet" | "options-mould" | "options-experiments" => {
+                for _ in 0..match flag {
+                    "options-planet" => 1,
+                    "options-mould" => 2,
+                    _ => 3,
+                } {
                     m.key(KeyCode::Tab, true);
                 }
             }

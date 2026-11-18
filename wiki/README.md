@@ -106,6 +106,14 @@ report only when the page does not answer.
 source report the PR changed while the page did not change (ingest it, or
 bump `updated` once you have checked it is still true). It also fails on broken links, pages missing from the index,
 code symbols that no longer exist, required frontmatter missing, and an owner quote with no date.
+A page's Now over 2 KB fails (a page that was over on 2026-11-17 fails only
+when it grows, `NOW_OVER` in the script), and so does `NOW.md` over 100 lines.
+
+**What is new** (2026-11-17): with `--base` the lint also fails a change to
+the game (`src/`, `assets/`, the play scripts; tests don't count) that adds
+no line to [`news/whats-new.txt`](../news/whats-new.txt), the list the game
+shows the owner. If nothing the player sees or does changed (a refactor, a
+tool), say so in a commit message line, `Nothing-new: <why>`, and it passes.
 
 **Frontmatter that merges** (2026-11-12, after green PRs waited a CI cycle
 each on frontmatter conflicts): `updated:` is a date, `YYYY-MM-DD`, never a
@@ -125,8 +133,8 @@ changes. The Direction lane keeps both decisions pages; another lane that
 hears a ruling sends it the quote and time.
 
 **Front page**: `NOW.md` (since 2026-11-17, the Direction lane's): the
-milestone, each lane's jobs, what waits on the owner; at most 100 lines.
-`HANDOFF.md` was the front page before and is history now. Lint still fails
-when a dish, tool or mechanism page is not linked from `HANDOFF.md`, so a
-new page of those kinds gets a line there until Engine and tools retires
-that rule and the file moves under `Reports/`.
+milestone, each lane's jobs, what waits on the owner; at most 100 lines
+(lint fails over that). `HANDOFF.md` was the front page before and is
+history now; the lint rule that a dish, tool or mechanism page must be
+linked from it is retired (2026-11-17), so the file can move under
+`Reports/`.

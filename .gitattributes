@@ -8,3 +8,6 @@
 # GitHub's web "Update branch" may not honour it; git merge does.
 Reports/README.md merge=union
 Reports/pages.md merge=union
+# The game's "what is new" list (2026-11-17) gains a line at the bottom in
+# most pull requests, by every lane: the same case as the two above.
+news/whats-new.txt merge=union

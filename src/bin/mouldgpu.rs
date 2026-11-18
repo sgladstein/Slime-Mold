@@ -6086,52 +6086,32 @@ mod tests {
     /// default (ROADMAP, *Switches that are off*) each double a code path
     /// that the twins and the census rarely play. This plays them all
     /// together, on shape C with planet 1's keys, a squad attacking for 15
-    /// game seconds, on the CPU and, when there is one, on the GPU, so that
-    /// they at least don't break each other: no panic, a living mould, a
-    /// squad that fired. Not a twin: the engines aren't compared. A new off
-    /// switch joins `KEYS` or `rules` here in the same PR as its ROADMAP
-    /// row.
+    /// game seconds, once at each switch's first choice and once at its
+    /// last (the two sides of an either-or), on the CPU and, when there is
+    /// one, on the GPU, so that they at least don't break each other: no
+    /// panic, a living mould, a squad that fired. Not a twin: the engines
+    /// aren't compared. Since 11-17 the switches are
+    /// `build::switches::SWITCHES`, the one list: a new row is played here
+    /// without editing this test.
     ///
-    /// Since the Enemy lane settled the switches (2026-11-17) only refilling
-    /// crystals is still off in the default game. The rest of what this
-    /// plays is now one tier's trait, played here together and off its own
-    /// planet: the Trunk's crust, pull, setting and wall, the Swarmer's
-    /// last stand, the campaign's reserve recruit. The lone step, lossy
-    /// flow and the trap (`set_hold`) went from the GPU game that day.
+    /// A third round plays what the Enemy lane settled into tiers' traits
+    /// that day, together and off their own planets: the Trunk's crust,
+    /// pull, setting, wall and fireproof fed slime, the Swarmer's last
+    /// stand, every planet's charge paths (`run::does_to_you`,
+    /// `run::ENEMY_RULES`). Until then they were rows of the list and this
+    /// test's first round; a settled row drops out of the list, and these
+    /// are still the paths with the most parts that touch each other (the
+    /// crust under setting under the wall under fire), each on one planet
+    /// of a run that no other test plays past a minute. The lone step,
+    /// lossy flow and the trap (`set_hold`) went from the GPU game with
+    /// the settlement.
     #[test]
     fn all_off_switches_on_together_play_on_both_engines() {
+        use slime_mould::build::switches;
         use slime_mould::gpu::larder_world::{engine_params, race_settings, GpuWorld};
         use slime_mould::mould::larder_world::{shape_keys, Cmd, Game, Order, Rules, World};
-        // The crust rises 36 times as fast as the window's (1/1800 a fine
-        // step) so slime sets within the test's 15 s; the code paths are
-        // the same.
-        const KEYS: [(&str, &str); 8] = [
-            ("crust", "1"),
-            ("crust_rise", "0.02"),
-            ("crust_weight", "0.5"),
-            ("crust_fast", "0.5"),
-            ("setting", "1"),
-            ("fire_fed", "1"),
-            // A far smell (S2): the game builds its field (`time_food_paths`).
-            ("far_smell", "1"),
-            ("crystal_regrow", "0.001"),
-        ];
-        let (seed, scale, walkers) = (1, 2, 5_000);
-        let mut s = race_settings(seed, scale, walkers);
-        let (_, c) = shape_keys("c").unwrap();
-        for (k, v) in c {
-            slime_mould::gpu::set(&mut s, k, v).unwrap();
-        }
-        for (k, v) in slime_mould::mould::run::enemy_keys(1) {
-            slime_mould::gpu::set(&mut s, k, &v).unwrap();
-        }
-        for (k, v) in KEYS {
-            slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
-        }
-        assert!(s.crust_rise > 0.0 && s.set_scar > 0.0, "the keys turned their switches on");
-        let mut rules = Rules { reserve: 5.0, set_block: 3.0, unit_paths: true, ..Rules::default() };
-        rules.raid.last_stand = true;
-        fn play<W: World>(mut g: Game<W>, what: &str) {
+        use slime_mould::mould::rounds::RoundRules;
+        fn play<W: World>(mut g: Game<W>, what: &str, sets: bool) {
             for k in 0..g.soldiers.len() {
                 assert!(g.apply(Cmd::Order(k, Order::Attack)), "{what}: soldier {k} takes the order");
             }
@@ -6146,13 +6126,65 @@ mod tests {
             }
             let (living, set) = (g.world.living(), g.world.set_cells().map_or(0, |c| c.iter().map(|&n| n as u64).sum::<u64>()));
             eprintln!("{what}: at {:.0} s {living} walkers, {set} set, {} soldiers, shots {}, killed {}", g.time(), g.alive(), g.shots, g.killed);
-            // llvmpipe, 11-17: 5,018 / 4,720 walkers, 131 / 149 set, 4 / 5
-            // shots at 15 s (CPU / GPU); 14 s of test on llvmpipe.
-            assert!(living > 0 && g.shots > 0 && set > 0, "{what}: {living} walkers, {set} set, {} shots", g.shots);
+            // llvmpipe, 11-17, the 14 rows of that day: 5,010 / 5,073
+            // walkers, 110 / 214 set, 5 / 5 shots at 15 s (CPU / GPU);
+            // 21 s of test on llvmpipe for the four rounds. 11-18, the
+            // traits' round: 5,008 / 5,254 walkers, 64 / 114 set, 13 / 23
+            // shots; 18 s for the six rounds.
+            assert!(living > 0 && g.shots > 0 && (set > 0 || !sets), "{what}: {living} walkers, {set} set, {} shots", g.shots);
         }
-        play(Game::new(slime_mould::mould::big::BigDish::new(engine_params(&s, scale)), rules, seed), "CPU");
-        if let Some((device, queue)) = test_gpu() {
-            play(Game::new(GpuWorld::new(&device, &queue, s.clone(), scale), rules, seed), "GPU");
+        let (seed, scale, walkers) = (1, 2, 5_000);
+        let gpu = test_gpu();
+        // Every declared switch at its first choice off the default, then
+        // at its last: the two sides of each either-or. Until 11-17 the
+        // switches were a list kept here by hand, which a new one had to
+        // remember to join; now a row in `switches::SWITCHES` is played
+        // here with no edit, and a settled row drops out. Then the traits
+        // the settled rows became (the doc above), as a round's keys: a
+        // rule is `set:NAME`, as on the command line.
+        let traits: Vec<(String, String)> = {
+            use slime_mould::mould::run::{does_to_you, ENEMY_RULES};
+            use slime_mould::mould::tiers::Tier;
+            let rule = |&(k, v): &(&str, f32)| (format!("{}{k}", switches::RULE_KEY), v.to_string());
+            let mut keys: Vec<(String, String)> = ENEMY_RULES.iter().map(rule).collect();
+            for tier in [Tier::Trunk, Tier::Swarmer] {
+                let does = does_to_you(tier);
+                keys.extend(does.keys.iter().map(|(k, v)| (k.to_string(), v.to_string())));
+                keys.extend(does.rules.iter().map(rule));
+            }
+            keys
+        };
+        for (which, keys) in [("first choices", switches::all_on()), ("last choices", switches::all_last()), ("the Trunk's and the Swarmer's traits", traits)] {
+            let mut s = race_settings(seed, scale, walkers);
+            let (_, c) = shape_keys("c").unwrap();
+            for (k, v) in c {
+                slime_mould::gpu::set(&mut s, k, v).unwrap();
+            }
+            for (k, v) in slime_mould::mould::run::enemy_keys(1) {
+                slime_mould::gpu::set(&mut s, k, &v).unwrap();
+            }
+            let mut rules = Rules::default();
+            let mut rounds = RoundRules::default();
+            for (k, v) in &keys {
+                switches::set_key(&mut s, &mut rules, &mut rounds, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
+            }
+            // The test's own, where the round turned the crust on: it
+            // rises 36 times as fast as the window's (1/1800 a fine step)
+            // so slime sets within the 15 s, and its pull is a sixteenth
+            // of the Trunk's (0.5 for 8, the number this test has always
+            // played): at the Trunk's the slime keeps to its crust, and
+            // little of it meets the squad in 15 s. The code paths are the
+            // same.
+            if s.crust_rise > 0.0 {
+                s.crust_rise = 0.02;
+                s.crust_weight /= 16.0;
+            }
+            // Whether slime sets in this round: in the traits' round.
+            let sets = s.set_scar > 0.0;
+            play(Game::new(slime_mould::mould::big::BigDish::new(engine_params(&s, scale)), rules, seed), &format!("CPU, {which}"), sets);
+            if let Some((device, queue)) = &gpu {
+                play(Game::new(GpuWorld::new(device, queue, s.clone(), scale), rules, seed), &format!("GPU, {which}"), sets);
+            }
         }
     }
 

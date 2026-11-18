@@ -9,6 +9,7 @@ sources:
   - Reports/flinch-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/lab-steering-2026-11-17/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/pump-economy-2026-11-15/README.md
@@ -153,7 +154,13 @@ reads the scar where it was hit at twice the campaign tier's weight
 four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
-them on the command card), and the 40-soldier rush is left as it is (D7).
+them on the command card), and the 40-soldier rush is left as it is (D7). A
+lab prototype, not in the game, meets D10's condition for the lure: a lure
+that every walker leans toward (a walking-distance field, so walls bend it)
+drew planet 1's home colony into three turrets, 4,158 walkers killed by
+1:30 against 1,623 without it (run seed 1, one seed, software GPU;
+[report](../../Reports/lab-steering-2026-11-17/README.md)). Whether it is
+built into the game is Direction's to place.
 
 **The Trunk's walls** (planet 3, 11-17; `TRUNK_KEYS` and `TRUNK_RULES` in
 `run.rs`; [report](../../Reports/enemy-switches-2026-11-17/README.md)).

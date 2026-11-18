@@ -504,7 +504,7 @@ lone-step row, **880** `lone_free0` (f32), **884** `lone_free1` (f32) and
 
 ### Switches that are off
 
-Settled 2026-11-17 by the Enemy lane, as the plan the owner approved that day asks ([brief](handoff/enemy.md), job 1). One switch is left off in the slime's rules. Every other row of the old table is on, one tier's trait, or deleted, and the table below says which. A new switch is named in its pull request and goes into the switch list Engine and tools is building; this section is that list's starting point.
+Settled 2026-11-17 by the Enemy lane, as the plan the owner approved that day asks ([brief](handoff/enemy.md), job 1). One switch is left off in the slime's rules. Every other row of the old table is on, one tier's trait, or deleted, and the table below says which. The list itself now lives in code, `src/build/switches.rs`, which the game's Experiments tab shows and a test holds complete; a new switch gets a row there, not here. It has four rows after the settlement: this one, the set slime's look (Look and interface), and shake with hit-stop and the free recruits (Squad and arsenal), one over the three the plan allows.
 
 | Switch (key) | Why it is off | What decides it |
 |---|---|---|
@@ -524,11 +524,11 @@ What became of the other thirteen:
 | Set slime's look: `setlook=N` | Not a rule switch: the amber set look is what the game draws. The key and the choice of look go to Look and interface. |
 | Fed slime fireproof: `fire_fed` | **The Trunk's trait.** Its fed body does not burn; its set walls and its starved parts do. |
 | Last stand: `RaidRules::last_stand` | **The Swarmer's trait** (planet 4; `SWARMER_RULES`): cut under a quarter of its peak, all of it rushes the squad once. |
-| Reserve recruit: `Rules::reserve` | **Not a switch.** It never had a `set=` name; it is the frozen campaign's own mission rule (a free soldier 20 s after the last one dies, the owner's 11-12 04:44Z no-soft-lock pick) and stays with the campaign. The run does not use it. |
+| Reserve recruit: `Rules::reserve` | **Kept**, against the brief, which said to delete it. It is the frozen campaign's own mission rule (a free soldier 20 s after the last one dies, the owner's 11-12 04:44Z no-soft-lock pick), so deleting it would change the campaign; the run does not use it. The switch list gave it a `set=` name and the row "Free recruits", which is Squad and arsenal's to settle. |
 | Lossy flow: `flow_loss` | **Deleted from the game** ([dead end](Reports/dead-ends.md)): the GPU setting, its key and its shader line are gone, and Params word 844 is free. The CPU engine keeps the field, since `src/mould/big.rs` is frozen as it is until Milestone 2. |
 | Lone step: `lone_step` | **Deleted from the game** the same way ([dead end](Reports/dead-ends.md)); Params words 880, 884 and 888 are free. |
 
-`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`) still turns the Trunk's keys, the far smell, the charge paths, the last stand, the campaign's reserve and the crystal refill on together and plays 15 game seconds on each engine, so that none of them breaks another.
+`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`) plays 15 game seconds on each engine three times: the switch list's rows at their first choices, at their last, and then the Trunk's keys and wall, the Swarmer's last stand and the charge paths together, so that the settled traits still cannot break each other off their own planets.
 
 The flinch's strength stays the Enemy lane's number; the haze over it is Look and interface's to redraw.
 

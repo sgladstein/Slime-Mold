@@ -33,10 +33,12 @@ clips from their frames: `make_clips.py`.
   then the answer to the walls only, which the fire film below checks.
 - **The last stand is the Swarmer's** (planet 4): it is the charging slime's
   way to lose. Not filmed; see below.
-- **The reserve recruit was not deleted**, against the brief. `Rules::reserve`
-  has no `set=` name and the run never turns it on: it is the frozen
-  campaign's mission rule (`campaign::RESERVE`, the owner's 11-12 04:44Z
-  no-soft-lock pick). It is recorded as not a switch.
+- **The reserve recruit was not deleted**, against the brief. The run never
+  turns `Rules::reserve` on: it is the frozen campaign's mission rule
+  (`campaign::RESERVE`, the owner's 11-12 04:44Z no-soft-lock pick), so
+  deleting it would change the campaign. The switch list
+  (`src/build/switches.rs`) lists it as "Free recruits", Squad and
+  arsenal's row.
 - **Lossy flow and the lone step went from the GPU game only.** The owner's
   19:21Z answer leaves `src/mould/big.rs` exactly as it is until Milestone 2.
 

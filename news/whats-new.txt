@@ -1,0 +1,22 @@
+# What is new in the game: one line for every change the player can see or
+# feel, the newest at the bottom. The game shows these on its "What is new"
+# page and marks the ones added since the last build played on that PC.
+#
+#   DATE | LANE | what you will see | how to try it
+#
+# DATE is the day you write the line (YYYY-MM-DD). LANE is one of direction,
+# enemy, squad, look, engine, lab. Say what the player will see in plain
+# words, not what the code does. The last part may be left out.
+#
+# Add your line at the bottom, in the pull request that makes the change;
+# wiki/lint.py fails a pull request that changes the game and adds none
+# (how to say "nothing the player sees changed": wiki/README.md, "What is
+# new"). The Direction lane owns the wording and prunes old lines. The rules
+# for reading this file are in src/build/news.rs.
+2026-11-17 | engine | The game says which build it is | The window's title ends with "build" and a number; the play log's first line has it too
+2026-11-17 | engine | Experiments: the features that are built but not on yet are listed in the game with what each one does, and can be turned on from the menu | Open Options and the Experiments tab, turn one on, and start a round
+2026-11-17 | engine | The game keeps a list of what is new, and remembers which lines this PC has already seen | Play a round, close the game and open it again: the lines from before are no longer marked new
+2026-11-18 | enemy | Planet 3's slime (the Trunk) sets where you shoot it: it hardens into amber walls that take three hits a walker, and your soldiers must walk round them. Its fed body does not burn, but the walls do | Land on planet 3, hold a squad at a front and fire for half a minute, then put a Torch shot on the wall
+2026-11-18 | enemy | On every planet the slime reaches for crystals it has not touched from across the map, and its charges come round walls instead of piling up against them | Watch the whole map on planet 1 or 2 for two minutes
+2026-11-18 | enemy | Planet 4's slime (the Swarmer) makes a last stand: cut to a quarter of its biggest, all of it rushes your squad, once | Reach planet 4 and cut the slime down
+2026-11-18 | enemy | The Experiments tab is down to four rows, and play-new-slime.cmd is gone: what it turned on is in every game now | Double-click play.cmd as always

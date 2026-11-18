@@ -5,8 +5,8 @@ given on 2026-11-17 is below it, unchanged.
 
 ## State (2026-11-17, after the switch settlement)
 
-**Open branch:** `claude/project-thread-s5k9cw`, one pull request (the
-switch settlement, job 1). Nothing else is open.
+**Open branch:** `claude/project-thread-s5k9cw`, one pull request, #451
+(the switch settlement, job 1). Nothing else is open.
 
 **Job 1, the switches: done.** What became of each of the fourteen is in
 ROADMAP, *Switches that are off*. In short:
@@ -24,13 +24,18 @@ ROADMAP, *Switches that are off*. In short:
   half of lossy flow and the lone step (Params words 844, 880, 884, 888 are
   free). `src/mould/big.rs` still has `flow_loss` and `lone_step`: it is
   frozen until Milestone 2 (the owner's 19:21Z answer).
-- Not deleted, against the brief: the reserve recruit. `Rules::reserve` has
-  no `set=` name and the run never turns it on; it is the frozen campaign's
-  mission rule (a free soldier 20 s after the last one dies, the owner's
-  11-12 no-soft-lock pick). It is not a switch, so it stays with the
-  campaign. Direction was told.
+- Not deleted, against the brief: the reserve recruit. The run never turns
+  `Rules::reserve` on; it is the frozen campaign's mission rule (a free
+  soldier 20 s after the last one dies, the owner's 11-12 no-soft-lock
+  pick), so deleting it would change the campaign. The switch list gave it
+  the row "Free recruits", which is Squad and arsenal's. Direction was told.
 - Still off: crystals that refill (`crystal_regrow`), which is D7's. It is
   the only off switch in this lane's files.
+- The switch list in code (`src/build/switches.rs`, Engine and tools') lost
+  the ten rows this settled and has four left: `crystal_regrow` (this
+  lane's), `set_look` (Look and interface), `feel` and `reserve` (Squad and
+  arsenal). That is one over the plan's three, so its `SETTLING` is still
+  true; the lane that settles the next row sets it false.
 - Handed over: `setlook` and the haze to Look and interface (amber is what
   the game draws). The flinch stays at 0.9 (`shape_keys`), and the 11-15
   blind page for it is closed: it is this lane's number, changed if the
@@ -62,8 +67,34 @@ Milestone 1 batch.
 2, one still or clip a planet. Where it stands: planet 3 now has its thing
 (the walls). Planet 1 does nothing to a squad that drains by hand and
 builds no pump (the Drifter only smells pumps), and planet 2's hunt is the
-Sprawler's own. Start with planet 1. No rush brake (D7). Then job 3, the
-origin, as a design page to Direction before any code.
+Sprawler's own. No rush brake (D7): Direction (11-17 22:28Z) holds "the
+Drifter also smells crystals drained by hand" as the first candidate for
+when the owner rules on D7, and it is not to be built before, not even
+behind a switch. Then job 3, the origin, as a design page to Direction
+before any code.
+
+**Planet 1's two hands, for the run bot's paired seeds** (Direction's ask;
+the gap between them is the fact D7 needs). Run seed 1 on the software
+GPU, this branch, one film each:
+
+- The builder is raided:
+  `larder-world look=DIR run=1:1 mode=squads hand=pumps at=30,60,90,120,180`.
+  The pump at (290,50) is at 187 of 200 hp at 0:30 and 73 at 1:00; raid 1
+  goes at 0:59 for the pump at (374,25); both pumps are worn down by 1:30.
+  The squad of 4 is at health 67 at 1:30 and 12 at 2:00 (3 soldiers), and 1
+  soldier is left at 3:00.
+- The rush is not touched:
+  `larder-world look=DIR run=1:1 mode=squads hand=greedy at=20,60,120`.
+  42 soldiers at health 90 at 2:00, 3,283 killed, 38% of the crystals
+  left; two raids of about 1,670 walkers went at the squad (0:59, 1:35)
+  and the slime was down to 9,603 walkers in its bowl.
+
+The same builder hand on the other two planets (`run=1:2`, `run=1:3` with
+`crustlook=1`, `at=20,40,60,90,120`): on planet 2 the squad of 4 is dead
+by 1:30 (raid 1 at 0:59, pumps at 183 and 140 hp at 1:00 and down by
+1:30); on planet 3 raid 1 goes at 1:12, the pumps are down by 2:00, 578
+walkers are set at 1:30 and 3,019 (2,932 wall cells) at 2:00, and the
+squad of 4 is at health 40.
 
 **Filming notes** beyond `Reports/whole-game-review-2026-11-15/kit.md`:
 `light=T,X,Y,R` takes dish cells, which are half the world units the log's
