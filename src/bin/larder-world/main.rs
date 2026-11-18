@@ -545,6 +545,11 @@ struct Args {
     /// lit over R world units at (X, Y) at game second T (a burn burst,
     /// no kill); repeat for more.
     lights: Vec<(f32, f32, f32, f32)>,
+    /// `lure_mark=T,X,Y,SECS` (look= only, 2026-11-18, the Enemy lane): a
+    /// lure with no building (`LureMark`, the lure's field) at (X, Y),
+    /// world units, from game second T for SECS; repeat for more.
+    /// `lure=X,Y[,T]` stands a Lure building instead.
+    lure_marks: Vec<(f32, f32, f32, f32)>,
     /// `trail=T,X1,Y1,X2,Y2,CARDS[,lit]` (2026-11-17, the element family's
     /// fence test): at game second T, the trails of CARDS (scorch, bait,
     /// mist, smother, tinder) laid along the line from (X1, Y1) to (X2, Y2),
@@ -1947,6 +1952,17 @@ impl App {
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
             v.set_alarm_side((g.world.e.done % 2) as u32);
+            // The lure's field as rings on the ground (Look and
+            // interface's `set_steer`, 2026-11-18), while the engine holds
+            // one: the third quarter of the cells' region of `news`
+            // (`Engine::write_lure_field`). Each frame, since a lure
+            // stands and falls in play; 0 hides the rings. The world's
+            // setup bound `news` (`set_dense`), which the view needs first.
+            let e = &g.world.e;
+            let b = slime_mould::mould::big::RAID_BLOCK;
+            let nb = (e.dish.w.div_ceil(b) * e.dish.h.div_ceil(b)) as u32;
+            let field = (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32 + e.n + 2 * nb;
+            v.set_steer(if e.lured { field } else { 0 });
             // The mini-bosses' bodies (2026-11-16): each live or fading
             // one's lump, centre, look by its kind, strength by its grade,
             // look left by its fade and a leech's fill by its take.
@@ -2378,6 +2394,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [t, x, y, r] = w.as_slice() else { return Err("light=T,X,Y,R".into()) };
                 args.lights.push((*t, *x, *y, *r));
+            }
+            "lure_mark" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [t, x, y, secs] = w.as_slice() else { return Err("lure_mark=T,X,Y,SECS".into()) };
+                args.lure_marks.push((*t, *x, *y, *secs));
             }
             "trail" => {
                 let p: Vec<&str> = v.split(',').collect();

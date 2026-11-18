@@ -254,6 +254,11 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// a key in `play-new-slime.cmd` only. Its field is built on a worker
 /// thread every 2 game seconds; a hungry walker reads three more words a
 /// step.
+///
+/// **A lure pulls on every planet** (`lure_pull` `LURE_PULL`, 2026-11-18,
+/// the Enemy lane; the owner's card, 11-18 03:03Z: "Lure now, in the three
+/// planets"). Calm slime within `Rules::lure_reach` of a Lure that is on
+/// leans down the walking distance to it (`raids.rs`'s `time_lure_paths`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
     vec![
@@ -262,8 +267,18 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("roam", ROAM[i].to_string()),
         ("roam_share", format!("{}", ROAM_SHARE[i])),
         ("far_smell", "1".to_string()),
+        ("lure_pull", format!("{LURE_PULL}")),
     ]
 }
+
+/// **How hard a lure pulls** (the engine's `lure_pull`), one number for
+/// every tier, Direction's to tune. 10 is the lab's recommended start:
+/// on planet 1 with three rendering turrets it made a steady stream into
+/// the guns while the body stayed on its crystal (6,024 killed by 1:30
+/// against 1,623 with no lure); 30 emptied the home colony in about 45 s
+/// (`Reports/lab-steering-2026-11-17`). Those were measured with the far
+/// smell off; here both are on.
+pub const LURE_PULL: f32 = 10.0;
 
 /// **Game rules every planet's slime plays by** (`Rules::set` names), set
 /// in `Run::rules` before the tier's own (`does_to_you`). Today one:
@@ -1350,6 +1365,15 @@ mod tests {
             assert_eq!(surge_secs(d), get(d, "surge") / 30.0);
             let mut p = crate::mould::big::BigParams::today();
             for (k, v) in enemy_keys(d) {
+                // The lure's pull is the GPU engine's alone (the owner's
+                // card, 11-17 19:21Z: no CPU twin): the engine takes it,
+                // and `BigParams` has no field for it.
+                if k == "lure_pull" {
+                    let mut s = crate::gpu::Settings::big_dish();
+                    crate::gpu::set(&mut s, k, &v).unwrap();
+                    assert_eq!(s.lure_pull, LURE_PULL, "planet {d}");
+                    continue;
+                }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
             }
             // No bronze (owner 11-16: "Remove the bronze"), specks on.
@@ -1752,6 +1776,8 @@ mod tests {
             // Every planet: the far smell, and charges that go round walls.
             assert!(r.unit_paths, "{}", t.name());
             assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
+            // Every planet: a lure pulls (the owner's card, 11-18 03:03Z).
+            assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "lure_pull" && v.parse::<f32>().unwrap() > 0.0));
         }
         let mut r = Rules::default();
         Run::range(1).rules(&mut r);

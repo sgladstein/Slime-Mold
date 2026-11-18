@@ -150,11 +150,15 @@ pub struct Raids {
     unit_way: Option<Way>,
     /// The far smell's field being built (S2, `time_food_paths`).
     food_way: Option<Way>,
+    /// The lure's field being built (`time_lure_paths`), and whether the
+    /// world holds one to clear when the last lure has gone.
+    lure_way: Option<Way>,
+    lure_set: bool,
 }
 
 impl Raids {
     pub fn new(seed: u64) -> Raids {
-        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None }
+        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lure_way: None, lure_set: false }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -169,6 +173,20 @@ impl Default for Raids {
     fn default() -> Self {
         Raids::new(0)
     }
+}
+
+/// **A lure with no building** (2026-11-18, the Enemy lane, for Squad and
+/// arsenal: what a thrown canister or a lure dart leaves): the slime's
+/// lure field (`Game::time_lure_paths`) reaches it exactly as it reaches a
+/// standing Lure, until its tick. Push one to `Game::lure_marks`; the
+/// field drops it when it has run out. It draws no scent and takes no
+/// raid: it is the field's source and nothing else.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LureMark {
+    /// Where: world units (fine cells), as a building's place.
+    pub at: (f32, f32),
+    /// The tick (`World::ticks`) it ends at.
+    pub until: u64,
 }
 
 /// A raid's way round walls being built.
@@ -229,6 +247,34 @@ impl Way {
         }
     }
 
+    /// The lure's field: the walking distance to the nearest of `lures`
+    /// (`big::units_field_for`, so a lure in a closed block starts from
+    /// the open block nearest it), kept out to `reach` fine cells of
+    /// walking and `u32::MAX` past it. Off the frame as `start`'s.
+    fn start_lures(ground: Option<(Vec<bool>, usize, usize)>, lures: Vec<u32>, reach: u32) -> Way {
+        let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
+        let build = move || {
+            let mut f = crate::mould::big::units_field_for(&agar, w, h, &lures);
+            for d in &mut f {
+                if *d > reach {
+                    *d = u32::MAX;
+                }
+            }
+            f
+        };
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Way::Building(std::thread::spawn(move || {
+                way_delay();
+                build()
+            }))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Way::Ready(build())
+        }
+    }
+
     fn finish(self) -> Vec<u32> {
         match self {
             Way::Ready(f) => f,
@@ -275,6 +321,49 @@ impl<W: World> Game<W> {
         }
         let fresh = self.world.fresh_crystals();
         self.raids.food_way = Some(Way::start_units(self.world.raid_ground(), fresh));
+    }
+
+    /// **The lure's field** (`gpu::Settings::lure_pull`, 2026-11-18, the
+    /// Enemy lane; the lab's steering prototype made a rule,
+    /// `Reports/lab-steering-2026-11-17`). The owner, 11-15 20:56Z: "even
+    /// if i build lures, only a thin trickle moves into my kill box"; a
+    /// lure's scent reaches 6 cells. Once a game second the field started
+    /// a second ago is set (`World::set_lure_field`) and a new one is
+    /// started from every Lure that is whole and on (`Kind::Lure`) and
+    /// every mark (`LureMark`): the walking distance to the nearest, out
+    /// to `Rules::lure_reach` dish cells. Calm slime inside it leans down
+    /// it (engine.wgsl, the lure block in `sense`). Walking distance goes
+    /// round rock and walls, so a wall with a gap funnels what a lure
+    /// draws. Always a second late, so the game is the same however fast
+    /// the thread was, as the units' way; when the last lure goes, the
+    /// field is cleared the second after.
+    ///
+    /// Only a world that reads it builds it (`World::lure_pull`: the GPU
+    /// world with the key over 0, which a run's planets set). There is no
+    /// CPU twin (the owner's card, 11-17 19:21Z). No lure, no thread and
+    /// no write.
+    pub(super) fn time_lure_paths(&mut self) {
+        if !self.world.lure_pull() {
+            return;
+        }
+        if let Some(way) = self.raids.lure_way.take() {
+            self.world.set_lure_field(way.finish());
+        } else if self.raids.lure_set {
+            self.world.set_lure_field(Vec::new());
+            self.raids.lure_set = false;
+        }
+        let now = self.world.ticks();
+        self.lure_marks.retain(|m| m.until > now);
+        let (w, h) = self.world.size();
+        let cell = |at: (f32, f32)| (at.0.clamp(0.0, w as f32 - 1.0) as u32) | ((at.1.clamp(0.0, h as f32 - 1.0) as u32) << 16);
+        let mut lures: Vec<u32> = self.buildings.iter().filter(|b| b.kind == Kind::Lure && b.up() && b.on).map(|b| cell(b.at)).collect();
+        lures.extend(self.lure_marks.iter().map(|m| cell(m.at)));
+        if lures.is_empty() {
+            return;
+        }
+        let reach = (self.rules.lure_reach.max(0.0) * self.world.scale()) as u32;
+        self.raids.lure_way = Some(Way::start_lures(self.world.raid_ground(), lures, reach));
+        self.raids.lure_set = true;
     }
 
     /// Once a game second: start a raid when its drawn time comes, or the
