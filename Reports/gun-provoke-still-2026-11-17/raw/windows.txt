@@ -1,0 +1,19 @@
+window                                plain                             provoke                               still
+         killed  slime  soldiers health raids mind  killed  slime  soldiers health raids mind  killed  slime  soldiers health raids mind
+p1-50       526  15495        8     67     1    0     552  15482        8     68     1   55     298  15716        8     88     1   46
+p1-70       432  16055        7     51     0    0     437  16065        7     46     0   56     325  16132        8     60     0   52
+p2-50      1030  25377        6     39     1    0    1103  25284        6     39     1   70     879  25490        7     18     1   72
+p2-70      1166  26465        0     19     0    0     949  26269        0     15     0   29     714  26607        0     14     0   30
+p3-50        31  44288        8    100     0    0      44  44315        8     99     0   22      36  44304        8    100     0   20
+p3-70       908  30345        6     67     1    0     916  30329        6     66     1   52     342  30944        8     87     1   49
+
+provoke against plain, 6 windows:
+  soldiers left (then health): more in 1, fewer in 4, p 0.375; soldiers (35, 35)
+  kills: more in 5, fewer in 1, p 0.219; totals (4093, 4001)
+  slime at the end: less in 4, more in 2, p 0.688; totals (158025, 157744)
+  raids sent: (3, 3)
+still against plain, 6 windows:
+  soldiers left (then health): more in 4, fewer in 1, p 0.375; soldiers (35, 39)
+  kills: more in 1, fewer in 5, p 0.219; totals (4093, 2594)
+  slime at the end: less in 0, more in 6, p 0.031; totals (158025, 159193)
+  raids sent: (3, 3)

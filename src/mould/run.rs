@@ -476,11 +476,12 @@ pub const AMMO_OFFER: usize = 2;
 /// cards' rarity, and the readers with what they read: shatter with the
 /// Mind bullets (gas is sold from the start), detonate with the germ. The
 /// flare and the torch (step D's route and element families, 11-17) from
-/// planet 2, their cards' rarity.
+/// planet 2, their cards' rarity, and so Provoke and Still (the Mind
+/// family's last two, 11-17).
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast, Shell::Gas];
     if depth >= power_from(2) {
-        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Flare, Shell::Torch]);
+        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Provoke, Shell::Still, Shell::Shatter, Shell::Flare, Shell::Torch]);
     }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ, Shell::Detonate]);

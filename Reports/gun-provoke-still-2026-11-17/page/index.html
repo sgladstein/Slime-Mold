@@ -1,0 +1,155 @@
+<title>Provoke and Still</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Same system as the Mind, reader, route and element pages. Accents: the Mind family's rose (Provoke) and a calm sea blue (Still). */
+:root{
+  --bg:#eef0ee; --panel:#e0e4e1; --fg:#161a19; --muted:#56605c; --line:#c5cbc7;
+  --torch:#b0126f; --heat:#1f5fa8; --crystal:#137f95; --good:#3f7a00;
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --torch:#ff82c8; --heat:#7db8ff; --crystal:#5fd0e3; --good:#b6f05a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --torch:#ff82c8; --heat:#7db8ff; --crystal:#5fd0e3; --good:#b6f05a; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16.5px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.12;margin:0;letter-spacing:.01em}
+h1{font-size:2.5rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+p{margin:0;max-width:70ch}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);font-size:1.04rem;max-width:70ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:74ch}
+li{min-width:0}
+code{font:.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:600 14px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible{outline:2px solid var(--crystal);outline-offset:2px}
+.hint{font-size:.9rem;color:var(--muted)}
+.pair{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.sides{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.sides .tag{text-align:left}
+@media (max-width:760px){.pair,.sides{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+video{width:100%;max-width:100%;aspect-ratio:1600/500;border-radius:6px;border:1px solid var(--line);background:#000;display:block}
+img.still{width:100%;max-width:100%;border-radius:6px;border:1px solid var(--line);display:block}
+.tag{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.torch .tag .on,.torch .tag.on,.torch h2 .k,.torch h3 .k{color:var(--torch)}
+.heat .tag .on,.heat .tag.on,.heat h2 .k,.heat h3 .k{color:var(--heat)}
+figcaption{font-size:.92rem;color:var(--muted)}
+.counts{font:12.5px/1.55 var(--mono);color:var(--fg);background:var(--panel);padding:7px 10px;border-radius:6px;overflow-x:auto;white-space:pre}
+.short{background:var(--panel);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.wrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font:13px/1.45 var(--mono);min-width:560px}
+th,td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font:600 12px var(--body);color:var(--muted)}
+tbody tr:last-child td{border-bottom:none}
+td.up{color:var(--good);font-weight:500}
+.note{border-left:3px solid var(--torch);padding:4px 0 4px 14px}
+.heat .note{border-left-color:var(--heat)}
+footer{font-size:.85rem;color:var(--muted)}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · guns · the Mind family · 2026-11-17</span>
+  <h1>Provoke and Still</h1>
+  <p class="lede">The last two Mind cards. Neither kills anything. A Provoke bullet makes the slime round its hit believe it has been cut off from food, so it leaves what it was doing and charges the guns. A Still bullet calms the slime round its hit, so a charge walks past instead of biting. Both are on in the game now: the shop sells them as bullets from planet 2, and the gun range has them from the start.</p>
+</header>
+
+<div class="bar">
+  <button id="slow" type="button" aria-pressed="false">Slow motion ×½</button>
+  <span class="hint">In every clip the left half fires plain bullets and the right half fires the card in every other shot. Both halves are the same game up to the second the deck is loaded.</span>
+</div>
+
+<section class="torch">
+  <h2><span class="k">Provoke</span>: pull the slime off a crystal</h2>
+  <p>Planet 1. A squad of eight stands beside a crystal the slime's stream is feeding. Left alone it only defends itself, so with plain bullets the slime's film grows over the crystal next to it. With Provoke, the slime it hits hears no news of food. About five seconds later it turns grey, lets go of the crystal and runs at the squad, into the plain bullets between each Provoke.</p>
+  <figure><span class="tag">Zoom 6 · plain on the left, <span class="on">Provoke + plain</span> on the right</span><video src="provoke-z6.mp4" autoplay muted loop playsinline></video></figure>
+  <figure><span class="tag">Zoom 12</span><video src="provoke-z12.mp4" autoplay muted loop playsinline></video></figure>
+  <div class="sides">
+    <div class="counts">plain, 16 to 32 s
+shots fired        23
+slime killed       319
+slime on the map   12,980 to 12,899
+soldiers           8 of 8, health 98</div>
+    <div class="counts">Provoke + plain, 16 to 32 s
+shots fired        42 (21 of them Provoke)
+slime killed       387
+slime on the map   12,980 to 12,608
+soldiers           8 of 8, health 98</div>
+  </div>
+  <p class="note">The crystal is clear at 27 s with Provoke and covered with plain. The squad fires almost twice as often because the slime comes into its reach. Some of the fall in slime is the provoked part withering by itself, as a part cut off by a wall does.</p>
+</section>
+
+<section class="heat">
+  <h2><span class="k">Still</span>: take the bite out of a raid</h2>
+  <p>Planet 1 again. Eight soldiers stand in the open as one group. The slime surges at 54 s and sends a raid at them at 59 s. With plain bullets the raid lands on the group. With Still, the raiders it hits lose the charge for ten seconds and drift past.</p>
+  <figure><span class="tag">Zoom 6 · plain on the left, <span class="on">Still + plain</span> on the right</span><video src="still-z6.mp4" autoplay muted loop playsinline></video></figure>
+  <figure><span class="tag">Zoom 12</span><video src="still-z12.mp4" autoplay muted loop playsinline></video></figure>
+  <div class="sides">
+    <div class="counts">plain, 56 to 72 s
+slime killed            585
+most slime on a soldier 13
+soldiers                7 of 8, health 71</div>
+    <div class="counts">Still + plain, 56 to 72 s
+slime killed            320
+most slime on a soldier 8
+soldiers                8 of 8, health 87</div>
+  </div>
+  <p class="note">Still is a trade. The group keeps every soldier and more of its health, and it kills about half as much, because half its bullets kill nothing and the calmed slime does not walk onto the guns.</p>
+</section>
+
+<section>
+  <h2>Six paired 20 s windows</h2>
+  <p>Planets 1 to 3, one game each played to 50 s and to 70 s. At that second every squad loads plain bullets, Provoke + plain or Still + plain and fights for 20 s. This is a tuning note, not a test the cards had to pass.</p>
+  <div class="wrap"><table>
+    <thead><tr><th>Window</th><th>plain: killed</th><th>soldiers, health</th><th>Provoke: killed</th><th>soldiers, health</th><th>Still: killed</th><th>soldiers, health</th></tr></thead>
+    <tbody>
+      <tr><td>Planet 1, 50 s</td><td>526</td><td>8, 67</td><td>552</td><td>8, 68</td><td>298</td><td class="up">8, 88</td></tr>
+      <tr><td>Planet 1, 70 s</td><td>432</td><td>7, 51</td><td>437</td><td>7, 46</td><td>325</td><td class="up">8, 60</td></tr>
+      <tr><td>Planet 2, 50 s</td><td>1,030</td><td>6, 39</td><td>1,103</td><td>6, 39</td><td>879</td><td class="up">7, 18</td></tr>
+      <tr><td>Planet 2, 70 s</td><td>1,166</td><td>0</td><td>949</td><td>0</td><td>714</td><td>0</td></tr>
+      <tr><td>Planet 3, 50 s</td><td>31</td><td>8, 100</td><td>44</td><td>8, 99</td><td>36</td><td>8, 100</td></tr>
+      <tr><td>Planet 3, 70 s</td><td>908</td><td>6, 67</td><td>916</td><td>6, 66</td><td>342</td><td class="up">8, 87</td></tr>
+      <tr><td>all six</td><td>4,093</td><td>35</td><td>4,001</td><td>35</td><td>2,594</td><td class="up">39</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><b>Still left the squad better off in 4 of the 6 windows and worse in 1</b> (more soldiers, or as many with more health; 39 soldiers against 35 in all), and left more slime alive in 6 of 6. With six windows that is a lean, not a proof (sign test p 0.38 for the squad, 0.03 for the slime).</li>
+    <li><b>Provoke changed little here</b> (more kills in 5 of 6, p 0.22; soldiers 35 and 35). In these windows the slime was already charging the squads, and Provoke has nothing to add to a charge. Its use is the first clip: slime that is sitting on something and will not come out.</li>
+    <li>On planet 2 at 70 s the whole squad died with every deck. That window is the slime's, not the cards'.</li>
+  </ul>
+</section>
+
+<section class="short">
+  <h2>In the game, and what is not settled</h2>
+  <ul>
+    <li><b>Where to find them.</b> The run's shop offers them as bullets from planet 2. The gun range's armory has both under the Mind bullets. Each costs 2 of the gun's budget.</li>
+    <li><b>Numbers.</b> Both reach 8 cells round the hit. Provoke lasts 12 s and Still 10 s. These are first guesses.</li>
+    <li><b>Provoke brings the slime onto you.</b> That is the point of it, and it will hurt a squad that cannot hold what comes.</li>
+    <li><b>Not timed on the GTX 1070.</b> A cast is one pass, the same as Blind's.</li>
+  </ul>
+</section>
+
+<footer>Source, clips and counts: <code>Reports/gun-provoke-still-2026-11-17/</code> in the repo. Frames by <code>raw/film.sh</code> on software Vulkan, clips and <code>raw/counts.json</code> by <code>raw/make_clips.py</code>, windows by <code>raw/windows.sh</code> (table in <code>raw/windows.txt</code>).</footer>
+</main>
+<script>
+(function(){
+  var b=document.getElementById('slow');
+  function set(on){
+    b.setAttribute('aria-pressed',on?'true':'false');
+    document.querySelectorAll('video').forEach(function(v){v.playbackRate=on?0.5:1;});
+  }
+  b.addEventListener('click',function(){set(b.getAttribute('aria-pressed')!=='true');});
+})();
+</script>

@@ -428,6 +428,9 @@ impl Kit {
             fling_speed: 0.0,
             mind_steps: 0,
             spin_curl: 0.0,
+            // The devices set `mind_steps` to their own seconds (`use_`).
+            deaf_steps: 0,
+            still_steps: 0,
         }
     }
 

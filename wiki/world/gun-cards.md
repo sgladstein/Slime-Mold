@@ -7,6 +7,7 @@ sources:
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-mind-2026-11-16/README.md
+  - Reports/gun-provoke-still-2026-11-17/README.md
   - Reports/gun-readers-2026-11-17/README.md
   - Reports/gun-route-2026-11-17/README.md
   - Reports/gun-seek-2026-11-16/README.md
@@ -35,8 +36,9 @@ Only two cards have a planet settled by a census: the blast against the
 Drifter and the germ against the Sporer, each 30 of 32 paired seeds after a
 Holm correction ([toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md),
 *Confirmed at 32 seeds*); the germ was retuned per planet since (11-17,
-seed 0), still strongest on the Sporer and Drifter. Five more rest on a
-narrower measure (Corral, Pull, Seek, Detonate, Flare, Torch, Tinder); the rest of the
+seed 0), still strongest on the Sporer and Drifter. Nine more rest on a
+narrower measure (Corral, Pull, Seek, Detonate, Flare, Torch, Tinder,
+Provoke, Still); the rest of the
 table is this thread's judgement of each card against
 [the tier's counter](mould-tiers.md). The gaps are the Grudge and the
 Trunk; Pull and Thrift answer no planet.
@@ -60,6 +62,8 @@ this thread's judgement.
 | Scorch | 2 | Sprawler | J | a line it turns from, as it turns from walls | a burnt line the slime avoids |
 | Seek | 2 | Sprawler | M | near misses on thin slime become hits | near misses strike the slime beside them |
 | Blind | 2 | Sprawler | J | a fast mesh walks straight into walls, water, fire | walkers leave the vein in straight lines |
+| Provoke | 2 | Drifter; any slime sitting on a crystal | M | it fakes the cut: the part it hits believes it is cut off and comes out onto the guns (planet 1: the crystal clear in 13 s, kills 387 against 319); adds nothing to slime already charging | the slime goes grey, lets go of the crystal and runs at the squad |
+| Still | 2 | Swarmer; any raid | M | a raid it hits loses the charge: the squad better off in 4 of 6 paired windows, at about a third fewer kills | the raiders drift past instead of biting |
 | Pierce | 1 | Trunk | J | runs on along a long cord | the bullet carries on past its first hit |
 | Trigger, Expire | 2 | Trunk | J | carry a payload past the cords to a body | a second payload goes off past the first |
 | Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food | the slime loses its line to a crystal |
@@ -102,8 +106,8 @@ done with walls and positioning, which withering and panic already reward
 **Merge or cut candidates.** Pull and Thrift (no planet); Heave and Corral
 (one shove, two cards; whether they merge is the owner's pick in the next
 playtest pack, on the game designer's call, 11-17 12:23Z); Trigger and Expire; Gas and Mist. Wide and Multicast
-are general on purpose. Blind and Sour may not read apart (the Mind quiz is
-with the owner).
+are general on purpose. Blind and Sour may not read apart (the Mind quiz
+was dropped 11-17; play shows it).
 
 ## Open
 
