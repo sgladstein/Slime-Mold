@@ -2,22 +2,36 @@
 
 ## State (2026-11-18)
 
-**Open branch:** `claude/project-thread-8bv885`, one pull request: the
-flinch's look (Look A, first piece). Report
-`Reports/flinch-look-2026-11-17/`, page
-https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg.
+**On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
+page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
+a warm flush on the slime (`flush_at` in `view.wgsl`), bare ground shows
+none, and a burning Flare is an ember and a red light (`draw.rs`).
 
-**What that pull request does.** The lime wash round a firefight was the
-engine's own paint of the alarm (`engine.wgsl`, `draw`), not the view's
-haze; both are gone, with `ALARM_LOOK` and the key `alarm_look=`. Slime
-under alarm flushes warm orange in `prep` (`flush_at`, `flush_mat` in
-`view.wgsl`); bare ground shows no alarm. A burning Flare, whose only sign
-was the haze, is an ember and a red light (`draw.rs`, `FLARE_LIGHT`). The
-haze strength pick is closed by it.
+**Open branch:** `claude/project-thread-8bv885`, one pull request: the
+Lure's rings (`Reports/lure-rings-2026-11-18/`, page
+https://claude.ai/artifact/4QyfFzQNXQuAPfvz83WqTe). `View::set_steer(at)`
+draws the engine's steering field as pale cream hairlines of equal walking
+distance (`steer_px` and the block in `shaded`), and while they show the
+Lure's green scent light is unlit. Nothing calls it yet.
+
+**The Lure, who does what** (`NOW.md`; the owner's card 11-18 03:03Z).
+Enemy lands the field as a rule and adds the `set_steer` call beside
+`set_crust` in `main.rs`, 0 while no lure stands (the word is
+`dense_at / 4 + DENSE_HEAD + n + 2 * nb`). Squad and arsenal lands the
+building and the shop item. Then this lane takes `LURE` and `LURES` out of
+`run_hidden` (`draw.rs`), films the real thing at zoom 6 and 12, and
+decides whether the scent light's code goes (it only shows where no
+steering field is drawn).
 
 **Next, in order.**
 
-1. Job 1, the pages that say what a build holds. Engine and tools' data is
+1. Settle the set slime look switch (Direction's ask, 11-18: the
+   Experiments list is one over its limit of three): amber stays, the
+   glaze and hidden choices go, with `set_look` in `src/build/switches.rs`,
+   the window key `setlook` and the shader's glaze branch. Engine and
+   tools' tests use `set_look` as their example switch
+   (`experiments.rs`), so the pull request touches their files: say so.
+2. Job 1, the pages that say what a build holds. Engine and tools' data is
    on main since #449 (`slime_mould::build`: `build()`, `switches`,
    `news`, `Memory`), with a first Experiments tab wired in `menu.rs`
    (`experiments::options` and `experiments::apply`: keep those two
@@ -25,26 +39,34 @@ haze strength pick is closed by it.
    "what is new" page with the new lines marked (`memory.is_new`), the
    "things to try" list with ticks (`memory.set_tried`), the Experiments
    tab's look, and a small HUD mark when `switches::state` is not empty.
-2. The rest of Look A, from the ranked list in
+3. The rest of Look A, from the ranked list in
    `wiki/looks/art-direction.md`: shots as bright streaks, droplets in the
    slime's material, a squad of 40 you can count, no effect bigger than
-   its damage.
-3. Reviews owed: Squad and arsenal's Provoke and Still (#448, page
-   https://claude.ai/artifact/KeLdsKF61XaDDdESBLEdGF) and Enemy's amber
-   set slime (#451, page https://claude.ai/artifact/1qg9m9ktNWHCCLL5Li74JQ).
-   Both were filmed with the old green wash round the hits.
+   its damage. Flushed slime beside amber set slime on planet 3 can be
+   filmed now (#451 and #454 are both on main).
 4. Win and lose screens with the planet's numbers.
 5. Picks still open: the mini-boss colours; delete the fen moat A/B's
-   unused side. (The set slime's look went to amber in Enemy's #451.)
+   unused side.
+
+**Reviews sent** (11-18, through the coordinator): Squad and arsenal's
+Provoke and Still (#448) and Enemy's amber set slime (#451), both fine to
+land. Owed from them to the look list: a stilled or provoked body has no
+look of its own (A6), and burning slabs draw as cell-sized squares at zoom
+12 (A7).
 
 **Worth knowing.**
 
 - `LARDER_VIEW_WGSL=path` swaps the view shader at run time, in the game
-  and in the tests, so a look can be tried without a rebuild.
-- Films on llvmpipe: 1280 x 800 at 30 frames a game second is about 5 s a
-  frame with four films side by side on four cores (`raw/film.sh` in the
-  report). The bench for frame cost takes 90 s a run and two runs of one
-  build differ by up to 10%.
+  and in the tests, so a look can be tried without a rebuild, two films
+  of one build are the same game, and a test can be run against a shader
+  planted wrong.
+- Films on llvmpipe: 1280 x 800 at 30 frames a game second, 180 frames,
+  is about 3 minutes with four films side by side on four cores
+  (`raw/film.sh` in either report). For "how much of the picture a sign
+  changes", film the same game with the sign compiled out and compare
+  frame for frame (`raw/make_page.py` in the lure report).
+- The bench for frame cost takes 60 to 90 s a run, and two runs of one
+  build differ by 10 to 20% in every pass: take three runs a side, in turn.
 - Where a Mind status can be read for a look (Enemy, 11-18): not in the
   look word (full) and not in `spec`. It is one word a walker slot in the
   engine's `news` buffer at `mind_at() + k` (kind in the top three bits,
@@ -53,11 +75,11 @@ haze strength pick is closed by it.
   offset word passed as `set_crust` passes `setc_at`. A per-cell count
   (the pattern is `setcount`) needs a pass from Enemy: ask, naming the
   statuses.
-- An owner's row to mind: `wiki/decisions-game.md`, 11-14 08:39, says the
-  alarm is drawn on bare ground from its field. The plan of 11-17 put the
-  flinch on the slime alone; the tools that lay an alarm (Flare, siren)
-  now show by their own light. Direction agreed (11-18) and adds the
-  dated note once the pull request is on main.
+- The view's `V` struct has two spare words (`spare_a`, `spare_b`, the
+  old haze strengths).
+- The owner asked (11-18 03:05Z) whether any green should show in the
+  flinch look, since he saw none, and said "Overall it is better". None
+  is drawn; Direction recorded it as a question, not a ruling.
 
 ## The brief (the plan of 2026-11-17)
 

@@ -256,6 +256,9 @@ pub struct View {
     /// in `news` and the look (0 off, 1 amber, 2 glaze).
     setc_at: u32,
     set_look: u32,
+    /// The Lure's steering field (`set_steer`, 2026-11-18): the word in
+    /// `news` where its blocks start, 0 hidden.
+    steer_at: u32,
     flora: u32,
     ripe_at: u32,
     lag: u32,
@@ -397,6 +400,7 @@ impl View {
             crust_at: 0,
             setc_at: 0,
             set_look: 0,
+            steer_at: 0,
             flora: 0,
             ripe_at: 0,
             lag: 0,
@@ -724,6 +728,7 @@ impl View {
             self.plant_at = 0;
             self.crust_at = 0;
             (self.setc_at, self.set_look) = (0, 0);
+            self.steer_at = 0;
         }
     }
 
@@ -773,6 +778,20 @@ impl View {
     /// amber, 2 glaze, 0 hides it. Off while the crust is.
     pub fn set_setting(&mut self, at: u32, look: u32) {
         (self.setc_at, self.set_look) = if self.crust_at > 0 { (at, look) } else { (0, 0) };
+    }
+
+    /// Draws the Lure's steering field (2026-11-18) from the engine's
+    /// `news` from word `at`: a word a 2 x 2 block of cells, row by row
+    /// (`ceil(w / 2)` blocks a row), the walking distance to the nearest
+    /// lure in cells + 1, and 0 where the field does not reach. It shows as
+    /// cream rings of equal distance, every 20 cells, on the ground the
+    /// field covers (`view.wgsl`, `steer_px`), and while it shows the
+    /// Lure's scent light is not lit. `at` 0 hides it (no lure standing).
+    /// Needs the engine's `news` bound (`set_news`, `set_dense`,
+    /// `set_plants` or `set_crust` first, each frame's order in the game);
+    /// without it nothing is drawn.
+    pub fn set_steer(&mut self, at: u32) {
+        self.steer_at = if self.news_on || self.dense_at > 0 || self.plant_at > 0 || self.crust_at > 0 { at } else { 0 };
     }
 
     /// The world's living walkers a cell (living walkers over its cells),
@@ -950,7 +969,7 @@ impl View {
         for v in self.lump_fade.into_iter().chain(self.lump_fill).chain(self.lump_held) {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.crust_at, self.setc_at, self.set_look, 0] {
+        for v in [self.crust_at, self.setc_at, self.set_look, self.steer_at] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
@@ -1448,6 +1467,109 @@ mod tests {
             view.set_alarm_side(0);
             let [_, other, _] = spots(&frame(&view));
             assert!(far(other, b0) <= 2, "zoom {zoom}: the other side holds no alarm: {b0:?} -> {other:?}");
+        }
+    }
+
+    /// The Lure's steering field draws as cream rings of equal walking
+    /// distance (2026-11-18): a field round a lure at cell (21, 25), a word
+    /// a 2 x 2 block, reaching 30 cells. The ring 20 cells out is lit east
+    /// and north of the lure; half way to it, at the lure's own block and
+    /// where the next ring would fall past the field's reach nothing shows;
+    /// on slime the ring lifts the picture by less than half what it does
+    /// on bare ground; `set_steer(0)` draws the picture with no field. The
+    /// Lure's scent light is lit without the field and not lit with it. At
+    /// zoom 6 and zoom 2 (a ring is a hairline at both).
+    #[test]
+    fn the_lures_field_draws_as_cream_rings_and_its_scent_light_goes() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 48usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        // A gold piece of 49 walkers across the ring south of the lure,
+        // round (21, 45), and scent on the ground round (31, 25).
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for dy in 0..6 {
+            for dx in 0..7 {
+                let (x, y) = (18 + dx, 42 + dy);
+                look[y * w + x] = 255 | (1 << 8);
+                walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+            }
+        }
+        for y in 19..31 {
+            for x in 25..37 {
+                look[y * w + x] |= 255 << 24;
+            }
+        }
+        // The field as the engine writes it, from word 4 of `news`: the
+        // walking distance (octile over the blocks) to the lure's block
+        // (10, 12), in cells + 1, and 0 past 30 cells.
+        let (bw, bh) = (w.div_ceil(2), h.div_ceil(2));
+        let mut nw = vec![0u32; 4];
+        for by in 0..bh {
+            for bx in 0..bw {
+                let (dx, dy) = ((bx as f32 - 10.0).abs(), (by as f32 - 12.0).abs());
+                let d = 2.0 * (dx.max(dy) + (2f32.sqrt() - 1.0) * dx.min(dy));
+                nw.push(if d <= 30.0 { d.round() as u32 + 1 } else { 0 });
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let news = buf("news", &crate::gpu::u32_bytes(&nw));
+        let state = buf("state", &crate::gpu::u32_bytes(&[100u32, 0, 0, 0]));
+        let screen = (384, 288);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, walk.len() as u32 / 4);
+        view.set_steer(4);
+        assert_eq!(view.steer_at, 0, "no field is drawn before the engine's news is bound");
+        view.set_dense(Some((&news, &state)), 4 + (bw * bh) as u32, 0);
+        let scent = Light { at: (31.0, 25.0), reach: 8.0, lift: -2.0, colour: [150.0, 235.0, 80.0], strength: 1.3 };
+        for zoom in [6.0f32, 2.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            cam.centre_on((32.0, 24.0));
+            let mut frame = |steer: u32, lights: &[Light]| {
+                view.set_steer(steer);
+                view.set_lights(lights, (0.0, 0.0, w as f32, h as f32));
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                view.picture()
+            };
+            let at = |pic: &image::RgbaImage, x: f32, y: f32| {
+                let (sx, sy) = cam.to_screen((x, y));
+                let p = pic.get_pixel(sx as u32, sy as u32).0;
+                [p[0] as i32, p[1] as i32, p[2] as i32]
+            };
+            let far = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| (p[k] - q[k]).abs()).max().unwrap();
+            let lift = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| p[k] - q[k]).sum::<i32>();
+            let none = frame(0, &[]);
+            let rings = frame(4, &[]);
+            let (east, north) = ((41.0, 25.0), (21.0, 5.0));
+            for (name, (x, y)) in [("east", east), ("north", north)] {
+                let (a, b) = (at(&none, x, y), at(&rings, x, y));
+                assert!((0..3).all(|k| b[k] > a[k] + 25) && b[0] >= b[2], "zoom {zoom}: the ring 20 cells {name} is lit cream: {a:?} -> {b:?}");
+            }
+            for (name, (x, y)) in [("half way to the ring", (31.0, 25.0)), ("the lure's own block", (21.0, 25.0)), ("past the reach", (61.0, 25.0))] {
+                let (a, b) = (at(&none, x, y), at(&rings, x, y));
+                assert!(far(a, b) <= 2, "zoom {zoom}: {name} shows nothing: {a:?} -> {b:?}");
+            }
+            let ground = lift(at(&rings, east.0, east.1), at(&none, east.0, east.1));
+            let slime = lift(at(&rings, 21.0, 45.0), at(&none, 21.0, 45.0));
+            assert!(at(&none, 21.0, 45.0)[0] > 150 && 2 * slime < ground, "zoom {zoom}: on slime the ring is under half as strong: {slime} against {ground}");
+            // The scent light: lit on the scented ground without the field,
+            // and with the field the picture is the rings' alone.
+            let lit = frame(0, &[scent]);
+            let (a, b) = (at(&none, 31.0, 25.0), at(&lit, 31.0, 25.0));
+            assert!(b[1] > a[1] + 10, "zoom {zoom}: the Lure's scent light is lit with no field: {a:?} -> {b:?}");
+            let both = frame(4, &[scent]);
+            assert!(both.as_raw() == rings.as_raw(), "zoom {zoom}: the scent light is lit under the rings");
+            assert!(frame(0, &[]).as_raw() == none.as_raw(), "zoom {zoom}: set_steer(0) left something drawn");
         }
     }
 

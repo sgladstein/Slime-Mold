@@ -29,11 +29,11 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 | Lane | Exit test | Top three jobs, in order |
 |---|---|---|
 | Direction | all | This page, `CLAUDE.md` and the 11-17 decisions. Sort every pending pick ([`handoff/direction.md`](handoff/direction.md)) and keep the list of things to try. Sort each play session into lane jobs within the hour; post the bot's curve for planets 1 to 3. |
-| Enemy | 4 | Settle the built-but-off switches (`src/build/switches.rs`): far smell and charges round walls on, the rest a tier's trait or deleted. The lure's steering field as a real rule (below), then walls that guard the slime's crystals as a base (his note, 11-18 03:11Z). Make each of planets 1 to 3 do one nameable thing to the player by minute 2; the origin waits, as a design page to Direction first. |
-| Squad and arsenal | 5 | Finish Provoke and Still (branch `claude/project-thread-vx9t3p-wip`), then no new card families. The Lure building back in the run shop (below), then what the play notes say gets in the way of control. The rifle's feel, with shake and hit-stop as one Experiments toggle; then shop offers that give planets 1 to 3 distinct builds. |
-| Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad, starting with the flinch haze. One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
-| Engine and tools | 1, 6 | The switch list in code, the build number, the "what is new" file and its lint. The play record (build, switches, planet, a note key; `play.cmd` pushes it) and a Windows build from CI. The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
-| Lab | none | Steering, part three: a dart from the gun that sets a lure or a pusher where the player aims, as a clip and a recommendation, on its own branch. Part two found that marks laid by every shot do not herd (no bullet steering card). Per-tier pull stays here too. |
+| Enemy | 4 | Done: the off switches settled (#451). The lure's steering field as a real rule (below), then walls that guard the slime's crystals as a base (his note, 11-18 03:11Z). Make each of planets 1 to 3 do one nameable thing to the player by minute 2, with a clip a planet; then the origin, as a design page to Direction first. |
+| Squad and arsenal | 5 | Done: Provoke and Still (#448); no new card families. The Lure building back in the run shop (below), then what the play notes say gets in the way of control. The rifle's feel, with shake and hit-stop as one Experiments toggle; then shop offers that give planets 1 to 3 distinct builds. |
+| Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad (the flinch's look is done, #454). One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
+| Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452). The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
+| Lab | none | Steering is delivered and closed, in four parts ([report](Reports/lab-steering-2026-11-17/README.md)): the lure, no bullet steering card, a dart that sets a lure where the squad aims, and what becomes of a colony pulled off its crystal. Now: a second slime species that fights the first, as a clip and a recommendation, on its own branch. |
 
 **The Lure, for planets 1 to 3** (his card, 11-18 03:03Z: "Lure now, in the
 three planets"; [lab report](Reports/lab-steering-2026-11-17/README.md)). A
@@ -44,6 +44,8 @@ Squad and arsenal: the building and a shop item "Lures", after Enemy's
 field. Look and interface: the rings' colour (not the lab's pink) and the
 Lure off `run_hidden`. Direction's first numbers: pull 10, unlock 150, the
 building 300 food and 150 health. The siren and the outpost stay out.
+The dart, the Lure's second form (lab part three), waits until he has played
+the building.
 
 **Parked until Milestone 1 passes:** gun steps E and F, the Mortar and
 Pinwheel mini-bosses, the next turret body, twists and rescue planets, the
@@ -67,7 +69,8 @@ At most five, most important first; offers, not requests. The game shows them
 beside "What is new": [`news/things-to-try.txt`](news/things-to-try.txt).
 Today: the rush on planet 1 (D7), camera shake and hit-stop (D6, on the
 Experiments tab), what each of planets 1 to 3 does to you, the starting
-rifle, the four mini-bosses. The Lure takes a line when it lands. What each build holds is in
+rifle and the two new bullets, the new flinch look. The Lure takes a line
+when it lands. What each build holds is in
 [`news/whats-new.txt`](news/whats-new.txt).
 
 ## Where things are

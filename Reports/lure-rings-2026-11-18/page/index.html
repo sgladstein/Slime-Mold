@@ -1,0 +1,88 @@
+<title>Lure Rings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; each zoom is a pair, the lab's look on the left and the game's on the right (stacked on a phone), counts under each clip */
+:root{
+  --bg:#f3f2ec; --panel:#e8e6dc; --fg:#1d211c; --muted:#5b6157;
+  --accent:#b0702a; --soft:#f1e3cf; --line:#cfccbf;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:12px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:720px){.grid{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure video{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:.92rem;color:var(--muted)}
+.side{font:750 1.1rem/1 var(--display);color:var(--fg);min-width:4.6em}
+.counts{font:13px/1.4 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.game{font:13px/1.4 var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.note{background:var(--soft);border-radius:8px;padding:16px 18px;max-width:760px;display:flex;flex-direction:column;gap:8px}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:760px}
+footer{font-size:.85rem;color:var(--muted);max-width:760px}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · Look A, the fight round the squad · 2026-11-18</span>
+  <h1>The Lure shows its reach as thin cream rings</h1>
+  <p class="lede">A Lure pulls the calm slime toward it, round rock and walls, so the turrets and walls beside it make a kill zone. The lab's prototype drew that pull in pink with a haze over it, and the Lure lit a green pool of its own, so the place you are meant to shoot into was washed over. Now the pull is drawn as thin cream rings and nothing else. Each pair below is one game, walker for walker.</p>
+</header>
+
+<section>
+  <h2>Zoom 6, as the stream reaches the Lure</h2>
+  <p class="prose">Run seed 1, planet 1. A Lure built at 30 s with three turrets round it, the squad held to the east, 34 to 40 s at the game's own pace.</p>
+  <div class="grid">
+    <figure><video src="img/before-z6.mp4" poster="img/before-z6.jpg" autoplay muted loop playsinline aria-label="The lab's look, zoom 6: pink rings, a pink haze and a green pool at the Lure"></video><figcaption><span class="side">Lab's look</span><span class="counts">23.3% of the picture changed · 28.9% of the slime recoloured</span></figcaption></figure>
+    <figure><video src="img/after-z6.mp4" poster="img/after-z6.jpg" autoplay muted loop playsinline aria-label="Now, zoom 6: thin cream rings and the slime in its own colours"></video><figcaption><span class="side">Now</span><span class="counts">2.1% of the picture changed · 1.9% of the slime recoloured</span></figcaption></figure>
+  </div>
+  <p class="game">Both sides, 34 s to 40 s: shots 36 to 70 · slime killed 75 to 705 · walkers 13,922 to 14,034 · soldiers 8</p>
+</section>
+
+<section>
+  <h2>Zoom 12, on the Lure</h2>
+  <p class="prose">The same game three seconds later, 37 to 43 s, twice as close.</p>
+  <div class="grid">
+    <figure><video src="img/before-z12.mp4" poster="img/before-z12.jpg" autoplay muted loop playsinline aria-label="The lab's look, zoom 12: the Lure in a white and green bloom"></video><figcaption><span class="side">Lab's look</span><span class="counts">65.7% of the picture changed · 57.5% of the slime recoloured</span></figcaption></figure>
+    <figure><video src="img/after-z12.mp4" poster="img/after-z12.jpg" autoplay muted loop playsinline aria-label="Now, zoom 12: one ring crosses the fight and the slime flushes orange where the turrets hit it"></video><figcaption><span class="side">Now</span><span class="counts">1.1% of the picture changed · 1.0% of the slime recoloured</span></figcaption></figure>
+  </div>
+  <p class="game">Both sides, 37 s to 43 s: shots 54 to 87 · slime killed 329 to 1,079 · walkers 14,081 to 13,962 · soldiers 8</p>
+  <p class="prose">Changed is the share of the picture that differs from the same frame of the same game drawn with no sign of the Lure at all, averaged over the clip. Recoloured is that share among the slime's own pixels.</p>
+</section>
+
+<section>
+  <h2>What to look for</h2>
+  <ul>
+    <li><strong>The rings are the pull itself.</strong> Each ring is 10 cells further to walk from the Lure, so they bend round rock and walls and stop where the pull stops. The calm slime leans across them toward the middle. They stand still: a ring that drifted inward would be drawn on, not the game.</li>
+    <li><strong>Brightest at the Lure, fainter outward,</strong> and over slime they drop to a third, so the slime stays the thing you read.</li>
+    <li><strong>The orange at the Lure is the turrets' shots landing.</strong> It is the flush from the flinch look that has just gone in. Under the green pool it could not be seen.</li>
+    <li><strong>A charge ignores the Lure.</strong> Panicking, surging and raiding slime and the mini-bosses do not lean to it, so the rings show where the calm body goes, not where a rush goes.</li>
+    <li><strong>The colour is your team's cream.</strong> The lab's pink is kept for the core planet's plants. Green rings were tried and were lost on the meadow. The Lure's own light was tried in cream and read as a pale mist over the fight, so while the rings show it is not lit.</li>
+  </ul>
+  <div class="note">
+    <h3>In the game</h3>
+    <p>Not yet. These clips are filmed on the lab's prototype of the pull, at pull 10. The rings are built into the game's picture and wait on two pieces: the Enemy lane's pull as a real rule, and the Squad lane's Lure building in the run shop. When both are in, a Lure you build shows its rings with nothing to switch.</p>
+  </div>
+</section>
+
+<footer>Filmed on the software renderer, so the timing of your PC's frames is not in these clips. There the rings cost nothing that shows above the spread between two runs of one build. Source and numbers: <code>Reports/lure-rings-2026-11-18/</code> in the repo.</footer>
+</main>

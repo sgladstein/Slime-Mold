@@ -72,8 +72,10 @@ struct V {
     lump_held: vec4<f32>,
     // The crust (`View::set_crust`, 2026-11-17): the word in `news` where
     // the engine's crust block starts (0 off); the set walkers a cell's
-    // block and set slime's look (`View::set_setting`, E2b; 0 off); a spare.
-    crust_at: u32, setc_at: u32, set_look: u32, _cr2: u32,
+    // block and set slime's look (`View::set_setting`, E2b; 0 off).
+    // The Lure's steering field (`View::set_steer`, 2026-11-18): the word
+    // in `news` where its blocks start, 0 hidden.
+    crust_at: u32, setc_at: u32, set_look: u32, steer_at: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -2445,6 +2447,46 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     return vec4<f32>(mul, add);
 }
 
+// The Lure's steering field as the engine holds it (2026-11-18; the lab's
+// prototype of 11-17 made a rule): a word a 2 x 2 block of cells, the
+// walking distance to the nearest lure in cells + 1, and 0 where the field
+// does not reach (past its reach, behind rock, or no lure standing).
+// Calm walkers lean down it; the engine rewrites it once a game second.
+fn steer_w(bx: i32, by: i32) -> u32 {
+    let bw = (P.ww + 1u) / 2u; let bh = (P.wh + 1u) / 2u;
+    let x = u32(clamp(bx, 0, i32(bw) - 1)); let y = u32(clamp(by, 0, i32(bh) - 1));
+    return news[P.steer_at + y * bw + x];
+}
+// (distance, cover) at a point: bilinear over the blocks the field
+// reaches, so a line of equal distance is smooth at any zoom and stops
+// where the field does.
+fn steer_px(x: f32, y: f32) -> vec2<f32> {
+    let fx = x / 2.0 - 0.5; let fy = y / 2.0 - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - floor(fx); let ty = fy - floor(fy);
+    var sum = 0.0; var ws = 0.0;
+    for (var j = 0; j < 2; j++) {
+        for (var i = 0; i < 2; i++) {
+            let v = steer_w(ix + i, iy + j);
+            if (v == 0u) { continue; }
+            let w = select(1.0 - tx, tx, i == 1) * select(1.0 - ty, ty, j == 1);
+            sum += w * f32(v - 1u); ws += w;
+        }
+    }
+    if (ws <= 0.0) { return vec2<f32>(0.0, 0.0); }
+    return vec2<f32>(sum / ws, ws);
+}
+// The rings' colour is your team's cream (art direction, rule 3: the Lure
+// is your tool). Not the lab's pink (255, 110, 215): that hue is the core
+// planet's flora, the only purple on the map. Not the Lure's old scent
+// green either: on the meadow's green it was lost, and a green over the
+// fight is what the flinch's wash was (`flush_at`). Tried on the lab's
+// scene at zoom 6, planet 1, 2026-11-18.
+const STEER_RGB: vec3<f32> = vec3<f32>(250.0, 242.0, 220.0);
+// A ring every 20 cells of walking, and how bright a ring is at the lure.
+const STEER_RING: f32 = 20.0;
+const STEER_LINE: f32 = 0.42;
+
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     var m = mat_at(x, y);
     under_body = m.body;
@@ -2616,6 +2658,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         // The scent glows a little of itself too, as the gas cloud does,
         // so it shows on the dark bare ground the light alone barely lifts.
         if (a.w < 0.0) {
+            // While the steering field's rings are drawn they are the
+            // Lure's sign and the scent light is not lit: its green pool
+            // turned the slime at the lure lime, and at cream it read as
+            // the pale haze the alarm lost (11-18, the lab's scene).
+            if (P.steer_at != 0u) { continue; }
             att *= look_scent(x, y);
             c += lc.xyz * att * 0.22;
         }
@@ -2626,6 +2673,25 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         c += (m.albedo * (lc.xyz / 255.0) * diff * 1.6 + lc.xyz * sp * 0.9) * att;
     }
     // (The alarm field's pale haze was laid here, to 2026-11-17: `flush_at`.)
+    // The Lure's steering field, drawn as it is: hairlines of equal walking
+    // distance to the lure every `STEER_RING` cells (they bend round rock
+    // and walls as the field does), brightest at the lure and fading with
+    // the distance, so what the rings cover is what the Lure reaches and
+    // the slime leans across them toward the middle. Lines only: the lab's
+    // prototype also filled the field with a haze and lit a core at the
+    // lure, which was a wash over the kill zone the Lure is built to make;
+    // the Lure building marks the middle. Under slime the lines drop to
+    // 30%, so the slime stays the thing to read. They do not move: a
+    // drifting ring would be a drawn pulse, not the field.
+    if (P.steer_at != 0u) {
+        let sp = steer_px(x, y);
+        if (sp.y > 0.0) {
+            let d = sp.x;
+            let dr = abs(d - STEER_RING * max(round(d / STEER_RING), 1.0));
+            let line = 1.0 - smoothstep(0.6 / P.zoom, 1.6 / P.zoom, dr);
+            c += STEER_RGB * STEER_LINE * line * (0.25 + 0.75 * exp(-d / 110.0)) * sp.y * (0.3 + 0.7 * under);
+        }
+    }
     let k1 = gem_near(x, y);
     if (k1 > 0u) {
         let k = k1 - 1u;

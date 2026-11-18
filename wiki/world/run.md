@@ -174,6 +174,15 @@ health, mortal); Enemy builds the field with its own GPU slot and weight,
 Squad and arsenal the building and the shop item, Look and interface the
 rings' colour. The field is built (below); until the building lands the
 shop is as above. The siren and the outpost stay out.
+The lab's later parts (same report): marks laid by every shot do not herd,
+so there is no bullet steering card; a dart that sets a lure where the squad
+aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
+(about 3,500 against 8,612 by 2:00, planet 1, run seed 1). The dart is not
+placed: it waits until the owner has played the Lure building.
+Part four, to 5:00: a colony pulled off its crystal mostly dies in the
+turrets, and the crystal is resettled within one to two minutes once the
+darts stop; with no turrets a raid on the squad overrides the lure, and the
+port keeps that (below).
 
 **A lure pulls** (every planet, 11-18). The lab's field is a slime rule of
 the GPU engine (`lure_pull`, `run::LURE_PULL` 10 on every planet, no CPU

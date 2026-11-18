@@ -2,7 +2,7 @@
 title: Art direction for Larder World (the style guide)
 kind: look
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/biome-ground-2026-11-15/README.md
@@ -13,6 +13,7 @@ sources:
   - Reports/flinch-look-2026-11-17/README.md
   - Reports/ground-edges-2026-11-14/README.md
   - Reports/levelgen-review-2026-11-14/README.md
+  - Reports/lure-rings-2026-11-18/README.md
   - Reports/mini-boss-look-2026-11-16/README.md
   - Reports/river-look-2026-11-14/README.md
   - Reports/soil-materials-2026-11-14/README.md
@@ -86,7 +87,7 @@ then the slime, planets and terrain, menus and screens.
    shots land now, and bare ground shows no alarm (`flush_at`;
    [flinch look](../../Reports/flinch-look-2026-11-17/README.md)). Check: a three-frame strip
    (fed, cut at +30 s, leaning) turned grey still shows the difference
-   (game designer review, 11-14). The slime sharpness thread owns these.
+   (game designer review, 11-14).
 6. **Units read at zoom 6.** Every soldier countable (figures never draw
    exactly on top of one another), its facing visible, selection a thin
    ring, health shown when hurt; the dead look dead; buildings show their
@@ -105,14 +106,12 @@ then the slime, planets and terrain, menus and screens.
   one line for the game's "what is new" list. Small choices are the lane's
   and the owner vetoes in play; a blind A/B with the key off the page is
   kept for a choice that sets the whole art direction (11-17).
-- Quote the frame cost on llvmpipe as before/after; the 1070 timing waits
-  for the owner's PC.
+- Quote the frame cost on llvmpipe, before and after.
 - A look lands when it works and can be seen (testing rule, 11-12 17:26Z):
   if a better look changes balance, retune the numbers, don't keep the
   uglier look.
-- One owner: the Look and interface lane owns `view.wgsl`, `marks.rs`,
-  `sprites/`, `ui.rs`, the menus and `draw.rs`, and reviews every other
-  lane's visible change against this guide.
+- One owner: the Look and interface lane (`CLAUDE.md`, *Lanes*) reviews
+  every lane's visible change against this guide.
 
 ## Owner's word
 
@@ -128,7 +127,7 @@ B starts once A passes his eye.
 
 **A. The fight round the squad**
 
-1. Done 11-17: the flinch drawn on the slime alone, no lime wash ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)).
+1. Done: the flinch on the slime alone, no lime wash (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's pull as cream rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)).
 2. A shot is a short bright streak the eye can follow (thin dotted tracers today), and a hit is the slime's own reaction: the hole and the walkers it flings.
 3. Flung droplets in the slime's material (outlined shapes in another style today).
 4. A squad of 40 you can count (42 are one pile today); the spacing with Squad and arsenal.
@@ -141,7 +140,7 @@ B starts once A passes his eye.
 
 **C. Planets and terrain**: stronger grounding (shadows are faint at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
 
-**D. Menus, shop and screens**: win and lose screens with the planet's numbers first; a landing, a win and a loss that happen in the picture; then the shop (judge it closely first) and the menus.
+**D. Menus, shop and screens**: win and lose screens with the planet's numbers first; a landing, a win and a loss that happen in the picture; then the shop and the menus.
 
 Also open: the 1070 cost of the new looks (one batch before the milestone check); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
