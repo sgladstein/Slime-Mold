@@ -13,6 +13,8 @@ sources:
   - Reports/lure-field-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/mini-boss-2026-11-16/README.md
+  - Reports/origin-design-2026-11-18/README.md
+  - Reports/planet-things-2026-11-18/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
@@ -140,6 +142,13 @@ numbered note (the second and where the camera looked).
 Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet: see below.
 
 ## What each planet does to you
+
+By minute 2 on run seed 1 (11-18, one film each,
+[report](../../Reports/planet-things-2026-11-18/README.md)): planet 1's slime
+eats two pumps by 1:15 but leaves a squad that builds none alone (the run
+bot: 50 soldiers at health 93 at 2:00); planet 2's wears the bot's squad
+down (health 35 at 1:00, 6 of 11 soldiers at 2:00); planet 3's walls its
+crystals and sets where shot (12,140 walkers set by 2:00).
 
 Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 [report](../../Reports/run-progression-2026-11-15/does-to-you.md)), each
@@ -299,6 +308,7 @@ armory over the paused round and Back re-arms every squad
 
 ## Open
 
+- The origin as the win rule (Milestone 2; the owner, 11-16 04:58Z): designed 11-18 as a sitting lump of the slime's walkers on its home crystal whose death wins the planet, with three questions for the owner; not built ([design](../../Reports/origin-design-2026-11-18/README.md)).
 - The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
 - Mini-boss slimes: hunter, wanderer, sapper and leech are built and on in the run (Now); Mortar and Pinwheel, each kind's look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 3).
 - A mortar or artillery building; rescue planets; saving a run.

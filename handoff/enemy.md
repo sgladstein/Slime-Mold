@@ -3,17 +3,34 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## State (2026-11-18, after the Trunk's fort)
+## State (2026-11-18, after job 2's page)
 
-**Open branch:** `claude/project-thread-s5k9cw`, one pull request: the
-Trunk's fort. #451 (the switch settlement, job 1) and #457 (the lure's
-field) merged on 11-18.
+**Open branch:** `claude/project-thread-s5k9cw`, with job 2's page and
+job 3's design (docs only). Merged on 11-18: #451 (the switch settlement,
+job 1), #457 (the lure's field), #473 (the Trunk's fort), #478 (the lure's
+field round on open ground).
 
-**The order of work now** (11-18): the Trunk's fort (this pull request),
-then a rounder lure field (Look and interface's note, 11-18: on open ground
-the 8-neighbour walking distance draws the Lure's rings as octagons; try
-chamfer weights or knight moves for the lure's search), then job 2's page,
-then job 3.
+**The order of work now** (11-18): the origin is designed and waits on
+Direction ([design](../Reports/origin-design-2026-11-18/README.md): a
+sitting lump on the home crystal, regrowing from its charge, calling the
+body home when struck, its death the win; three questions for the owner).
+It is Milestone 2's, so it is not built until Direction says go. Until
+then: what the owner's play notes say about the three slimes.
+
+**Job 2, what planets 1 to 3 do by minute 2: page delivered**
+([report](../Reports/planet-things-2026-11-18/README.md), one clip a
+planet). Planet 2 (hunts the squad) and planet 3 (walls its crystals,
+hardens where shot) do their thing to the run bot by 2:00. Planet 1 eats
+pumps by 1:15 but leaves a squad that builds none alone (the bot: 50
+soldiers at health 93 at 2:00). That gap is D7's; Direction holds the
+candidate (below).
+
+**The lure's field is round** (#478; Look and interface's note, 11-18):
+the lure has its own walking search, `raids::round_walk` (chamfer 5, 7,
+11 with the knight's moves, within 3% of the line, stopping at the
+reach). The charges, far smell and raids keep `big::units_field_for`'s
+octagon (`big.rs` is frozen). Look's `set_steer_reach` reads the same
+units.
 
 **The Trunk's fort: built** (the owner in this lane's thread, 11-18 03:11Z,
 on the walls that form where the Trunk is shot: "This is interesting and I
@@ -132,15 +149,11 @@ Milestone 1 batch.
   engine only, and `every_ladder_tier_does_something_to_you` lets the CPU
   refuse them for the Trunk alone.
 
-**Job 2**, planets 1 to 3 each do one nameable thing by minute
-2, one still or clip a planet (after the lure and the base walls). Where it stands: planet 3 now has its thing
-(the walls). Planet 1 does nothing to a squad that drains by hand and
-builds no pump (the Drifter only smells pumps), and planet 2's hunt is the
-Sprawler's own. No rush brake (D7): Direction (11-17 22:28Z) holds "the
-Drifter also smells crystals drained by hand" as the first candidate for
-when the owner rules on D7, and it is not to be built before, not even
-behind a switch. Then job 3, the origin, as a design page to Direction
-before any code.
+**Job 2's gap**: planet 1 does nothing to a squad that drains by hand and
+builds no pump (the Drifter only smells pumps). No rush brake (D7):
+Direction (11-17 22:28Z) holds "the Drifter also smells crystals drained
+by hand" as the first candidate for when the owner rules on D7, and it is
+not to be built before, not even behind a switch.
 
 **Planet 1's two hands, for the run bot's paired seeds** (Direction's ask;
 the gap between them is the fact D7 needs). Run seed 1 on the software
