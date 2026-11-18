@@ -15,16 +15,16 @@ end.
   pages moved to `Reports/handoff-2026-11-17.md` and
   `Reports/roadmap-2026-11-17.md` with stubs left at the root;
   `news/things-to-try.txt` taken over.
-- **The Lure is going in** (his card, 11-18 03:03Z: "Lure now, in the three
-  planets"; row in `wiki/decisions-game.md`). Enemy's field (#457) and
-  Look's rings (#458) are on main; Squad's building is #461. This lane's
-  numbers, sent to Squad 11-18 08:40Z: pull 10; the run starts with the
-  Lure (`run::START`), because a shop unlock would keep it off planet 1,
-  where the rush is tested; the building 300 food and 150 health; Tinder
-  100 and the shop's sure Torch at most 100 (before planet 2 a run has 200
-  to 300 points, and Tinder without a fire is a wasted buy). The Lure has its line in
-  `news/things-to-try.txt` (second, after the rush); retune after he plays. Nothing is open with
-  the owner now.
+- **The Lure is in the game** (his card, 11-18 03:03Z: "Lure now, in the
+  three planets"; row in `wiki/decisions-game.md`): Enemy's field (#457),
+  Look's rings (#458), Squad's building (#461, #464). This lane's numbers:
+  pull 10; on the Build page from planet 1 with nothing to unlock (a shop
+  unlock would have kept it off planet 1, where the rush is tested;
+  `run_lock` never locks it); 300 food and 150 health; Tinder 100 and the
+  shop's sure Torch at most 100 (before planet 2 a run has 200 to 300
+  points, and Tinder without a fire is a wasted buy). It has its line in
+  `news/things-to-try.txt`, second after the rush. Retune after he plays.
+  Nothing is open with the owner now.
 - **From the lab's part two** (11-18, `Reports/lab-steering-2026-11-17/`):
   no bullet steering card. A tuning lead for the pull: a strong lure that
   drags a colony off its crystal shrinks it without kills (10,386 alive
