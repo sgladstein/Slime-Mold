@@ -2,7 +2,7 @@
 # each with a tick the game remembers on that PC. The Direction lane owns
 # this file; other lanes ask Direction for a line. One thing a line, in
 # plain words, the most important first. Lines starting with # are notes.
-The rush on planet 1: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build two pumps first instead: the slime now raids them about a minute in.
+The rush on planet 1: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build first instead: pumps, walls and turrets. Raids now come late, usually about four minutes in and only now and then early, and more often as the planet goes on.
 The Lure, on planet 1: build two or three turrets, put a Lure in front of them and watch the calm slime stream into your guns. Does it make building worth it against the rush?
 Camera shake and hit-stop: turn it on in Options, on the Experiments tab, and fight. Keep it, change it or drop it?
 What each of planets 1 to 3 does to you: one sentence a planet after playing them. Planet 3's slime now walls its crystals in amber and sets where you shoot it: bring a Torch.
