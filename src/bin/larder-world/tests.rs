@@ -924,19 +924,13 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
     assert!(!turret.ready && turret.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
     // The lure is back on a run's build card (owner's card, 2026-11-18
-    // 03:03Z), locked until the shop's Lures is bought; the siren and the
-    // outpost stay out, so the switch names lures alone.
+    // 03:03Z), free from the first planet with no unlock (Direction,
+    // 08:38Z); the siren and the outpost stay out, so the switch names
+    // lures alone.
     let lure = m.commands.iter().find(|c| c.id == LURE).unwrap();
-    assert!(!lure.ready && lure.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
+    assert!(!lure.locked, "{:?}", lure.why_not);
     assert_eq!(m.commands.iter().find(|c| c.id == LURES).map(|c| c.name.as_str()), Some("Lures on/off"));
     assert!(m.commands.iter().all(|c| c.id != SIREN && c.id != OUTPOST));
-    app.run.as_mut().unwrap().owned[ITEMS.iter().position(|i| i.key == "lure").unwrap()] = 1;
-    app.args.run = app.run.clone();
-    let m = app.model(None, None);
-    let lure = m.commands.iter().find(|c| c.id == LURE).unwrap();
-    assert!(!lure.locked, "bought: {:?}", lure.why_not);
-    app.run.as_mut().unwrap().owned[ITEMS.iter().position(|i| i.key == "lure").unwrap()] = 0;
-    app.args.run = app.run.clone();
     app.build_page = false;
     // A won level: the end screen carries on to the shop.
     let win = Verdict { cause: Cause::Goal, at: 300.0, stars: 2, best: 1.0 };

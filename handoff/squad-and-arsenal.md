@@ -83,18 +83,21 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
   would need a longer harvest reach, which changes the rush economy (D7),
   so that is Direction's call, not a control fix.
 - The Lure is back in the run (Scott's card of 11-18 03:03Z, "Lure now, in
-  the three planets"): the shop's "Lures" unlock (150, no prerequisite),
-  the Lure and the lures' on/off switch off `run_hidden`, 300 food and 150
-  health as before, mortal. It stands on Enemy's field (#457: every
+  the three planets"): the Lure and the lures' on/off switch are off
+  `run_hidden` and never locked (`run_lock`), free from planet 1, 300 food
+  and 150 health as before, mortal. #461 first sold it as a shop unlock
+  (Lures, 150); Direction dropped the row the same hour (08:38Z) so planet
+  1 has it. Direction's prices with it: Tinder 100 (`TINDER_PRICE`), a
+  Torch at most 100 (`TORCH_MOST`). It stands on Enemy's field (#457: every
   `Kind::Lure` that is `up()` and on, plus `Game::lure_marks`; reach
   `Rules::lure_reach` 60, `run::LURE_PULL` 10 on every run planet; GPU
   only; `lure=X,Y[,T]` films a building, `lure_mark=T,X,Y,SECS` a mark).
   In Enemy's scene on this branch the Lure stood from 0:30 to under 1:00
   and 4,461 walkers were killed by 1:30 (1,813 with no lure;
   `Reports/lure-field-2026-11-18/`). The siren and the outpost stay out.
-  Known: the unlock is bought in a shop, so planet 1 itself has no Lure;
-  the Drifter's and Trunk's `lure_r` 15 (the pump smell's reach) also
-  widens the Lure's own scent on those planets.
+  Known: the Drifter's `lure_r` 15 (the pump smell's reach) also widens
+  the Lure's own scent on planet 1. Harvest reach (the pile of 40 on one
+  crystal) is on Direction's held list under D7.
 - From Enemy (11-17 22:28Z, #451): planet 3's Trunk sets into amber walls
   where it is shot and fire burns them; the shop before planet 3 does not
   push a Torch (`run::bring` names a card for the Sprawler only, and the
