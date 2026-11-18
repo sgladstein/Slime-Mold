@@ -78,7 +78,7 @@
   <div class="eyebrow">Lab prototype &middot; 17 November 2026 &middot; planet 1, run seed 1</div>
   <h1>Steering the slime</h1>
   <p class="lede">A lure that every walker leans toward pulls the planet 1 colony off its crystal and into three turrets. By 1:30 the zone has killed <b>4,158</b> walkers against <b>1,623</b> with no lure, and rendered three times the food. No soldier is lost either way.</p>
-  <p class="dim">Scott's pick, 18 November: the lure goes into planets 1 to 3. <a href="#gun" style="color:var(--lure)">Part two</a>, below, tries the steering laid by the squad's own bullets.</p>
+  <p class="dim">Scott's pick, 18 November: the lure goes into planets 1 to 3. <a href="#gun" style="color:var(--lure)">Part two</a>, below, tries the steering laid by the squad's own bullets, and <a href="#dart" style="color:var(--lure)">part three</a> a dart the squad fires where you aim.</p>
   <div class="key">
     <span style="--c: var(--slime)">amber: the slime</span>
     <span style="--c: var(--lure)">pink rings: the lure's pull, one ring every 20 cells of walking</span>
@@ -295,6 +295,85 @@
   <ul>
     <li><b>The gun's job is to carry the lure.</b> A lure dart, or a canister thrown where the player aims, is the same lure as the building and needs nothing new from the slime.</li>
     <li><b>A lead worth one more look: evicting starves.</b> A strong pull that drags a colony off its crystal shrinks it without killing it. That is another way to win a planet, and it fits the Lure now going in.</li>
+  </ul>
+
+  <h2 id="dart">Part three: the dart</h2>
+  <p>The gun carries the lure. The squad fires a dart where the player aims, up to 60 cells away, over slime and walls. It lands half a second to a second later and stands 10 seconds as a lure or as a pusher. Here the squad holds on a small crystal east of a colony and fires one dart every 10 seconds from 0:30, at the game's pull of 10. Three turrets wait on the colony's far side. Nobody walks in.</p>
+  <p class="dim">Zoom 6, 0:26 to 1:26 at twice real speed. "On its crystal" counts walkers within 30 cells of the colony's crystal.</p>
+  <div class="clip">
+    <video src="dart-none.mp4" poster="dart-none.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag off">No darts</span>
+      <h3>Left alone</h3>
+      <table>
+        <thead><tr><th></th><th>0:56</th><th>1:26</th></tr></thead>
+        <tbody><tr><td>On its crystal</td><td class="big">1,449</td><td class="big">1,929</td></tr><tr><td>Killed</td><td>1,995</td><td>5,168</td></tr><tr><td>Food rendered</td><td>308</td><td>872</td></tr><tr><td>Slime alive</td><td>13,724</td><td>13,965</td></tr></tbody>
+      </table>
+      <p class="what">The squad shoots what spills its way. The colony keeps its crystal and grows.</p>
+    </div>
+  </div>
+
+  <div class="clip">
+    <video src="dart-push.mp4" poster="dart-push.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag lure">Pusher darts, pull 10</span>
+      <h3>Pushed off</h3>
+      <table>
+        <thead><tr><th></th><th>0:56</th><th>1:26</th></tr></thead>
+        <tbody><tr><td>On its crystal</td><td class="big">370</td><td class="big">6</td></tr><tr><td>Killed</td><td>1,982</td><td>3,187</td></tr><tr><td>Food rendered</td><td>429</td><td>729</td></tr><tr><td>Slime alive</td><td>12,933</td><td>11,713</td></tr></tbody>
+      </table>
+      <p class="what">Each dart lands on the colony's near edge. The body backs away from it, off the crystal and through the turrets.</p>
+    </div>
+  </div>
+
+  <div class="clip">
+    <video src="dart-lure.mp4" poster="dart-lure.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag lure">Lure darts, pull 10</span>
+      <h3>Drawn in</h3>
+      <table>
+        <thead><tr><th></th><th>0:56</th><th>1:26</th></tr></thead>
+        <tbody><tr><td>On its crystal</td><td class="big">2</td><td class="big">1</td></tr><tr><td>Killed</td><td>3,020</td><td>3,253</td></tr><tr><td>Food rendered</td><td>686</td><td>745</td></tr><tr><td>Slime alive</td><td>11,784</td><td>11,395</td></tr></tbody>
+      </table>
+      <p class="what">Each dart lands between the turrets. The colony leaves its crystal within 25 seconds of the first one and pours into them.</p>
+    </div>
+  </div>
+
+  <div class="clip">
+    <video src="dart-pushclose.mp4" poster="dart-pushclose.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag lure">Pusher dart, pull 10</span>
+      <h3>Up close</h3>
+      <table>
+        <thead><tr><th></th><th>0:29</th><th>0:44</th></tr></thead>
+        <tbody><tr><td>Killed</td><td class="big">293</td><td class="big">1,304</td></tr><tr><td>Food rendered</td><td>40</td><td>264</td></tr></tbody>
+      </table>
+      <p class="what">Zoom 12, real time. The first two pusher darts land on the colony's near edge and it streams off its crystal toward the turrets. A pusher draws no core glow, only faint rings at its rim.</p>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>By 2:00 (the test runs)</th><th>On its crystal</th><th>Killed</th><th>Food rendered</th><th>Slime alive</th></tr></thead>
+      <tbody>
+        <tr><td>No darts</td><td>2,438</td><td>8,612</td><td>1,444</td><td>13,468</td></tr>
+        <tr><td>Pusher darts, pull 10</td><td>1</td><td>3,515</td><td>800</td><td>10,547</td></tr>
+        <tr><td>Pusher darts, pull 30</td><td></td><td>2,745</td><td>616</td><td>10,443</td></tr>
+        <tr><td>Lure darts, pull 10</td><td>0</td><td>3,429</td><td>787</td><td>10,269</td></tr>
+        <tr><td>Lure darts, pull 30</td><td>0</td><td>3,148</td><td>720</td><td>10,286</td></tr>
+        <tr><td>Both, pull 10</td><td></td><td>2,988</td><td>683</td><td>10,261</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="dim">One seed. Blank: not counted in that run. The colony empties its crystal by 1:00 with lure darts and by 1:15 with pusher darts; left alone it grows to 2,438 walkers there.</p>
+  <div class="verdict">
+    <p>Build the dart as the Lure's second form, and give it a pusher setting.</p>
+    <p>At the game's pull of 10 a dart every 10 seconds takes a crystal off a colony in 30 to 45 seconds and leaves the planet's slime about a fifth smaller by 2:00. It costs kills: the squad has less in front of it to shoot, and only part of the body crosses the turrets, so they render about half the food. The trade is a crystal now against food over time, which is a real choice.</p>
+  </div>
+  <ul>
+    <li><b>Lure or pusher.</b> The lure dart is quicker and needs the turrets in its line. The pusher dart works from the near side, so it fits a squad that cannot reach behind the slime. Both together did no better than either.</li>
+    <li><b>Pull 30 adds nothing here.</b> The slime ends the same size and the turrets get less. The darts land close to the colony, so the game's pull of 10 is already enough.</li>
+    <li><b>What I set and did not tune:</b> 60 cells of range, a 10 second life, one dart every 10 seconds. A price and a cooldown are Direction's to set.</li>
   </ul>
 
   <footer>

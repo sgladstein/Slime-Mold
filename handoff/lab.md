@@ -69,5 +69,11 @@ A second slime species that fights the first; the player's own mould
   same report and page: no bullet steering card (no version beat plain
   fire); the gun's job is to carry a lure dart. Lead: a strong lure that
   drags a colony off its crystal shrinks it without kills.
-- Next step: the eviction lead or the pusher's carrier, whichever
-  Direction prefers; then the next brief below.
+- 2026-11-18: part three, the dart (Direction's pick), on the same page
+  (`#dart`): a dart fired where the squad aims, as a lure or a pusher; at
+  pull 10 a dart every 10 s takes a crystal off a colony in 30 to 45 s and
+  leaves the slime 22% smaller by 2:00, at the cost of kills and food.
+  Recommendation: build it as the Lure's second form, with a pusher
+  setting. Code commit `9df3f0a` (`LAB_DARTS`), not for main.
+- Next step: the eviction lead (Direction noted it as a tuning lead), then
+  the next brief below.
