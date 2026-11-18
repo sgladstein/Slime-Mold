@@ -24,6 +24,7 @@ sources:
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/surge-2026-11-15/README.md
+  - Reports/trunk-fort-2026-11-18/README.md
   - Reports/whole-game-review-2026-11-15/README.md
 code:
   - BossRules::for_depth
@@ -52,6 +53,7 @@ code:
   - clock
   - does_to_you
   - enemy_keys
+  - fort_mask
   - gun_price
   - head_start
   - range_args
@@ -66,6 +68,7 @@ code:
   - size_roll
   - surge_food
   - surge_secs
+  - time_fort
   - time_lure_paths
   - two_stars
 ---
@@ -142,8 +145,9 @@ Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 rung of `LADDER` does one thing to you (`does_to_you`), named on the planet
 card and in the landing alert: the Drifter smells your pumps
 (`pump_smell` 20 over `lure_r` 15 cells) and comes to eat their crystals; the
-Trunk sets into amber walls where you shoot it (below; until 11-17 it had the
-Drifter's pump smell, so planets 1 and 3 did the same thing); the
+Trunk walls the crystals it holds in amber and sets where you shoot it
+(below; until 11-17 it had the Drifter's pump smell, so planets 1 and 3 did
+the same thing); the
 Sprawler smells your soldiers from far off (`smell` 4 over 4 cells) but
 shies from fire (`fire_alarm` 50, since 11-17: the designer's fire-shy
 tier, as a switch for every slime it fenced every fire;
@@ -219,6 +223,21 @@ cells by 1:15, and two Torch shots on that wall cut it to 679 cells in two
 seconds while it grew to 1,284 with no fire; the scripted rush killed 3,205
 by 1:00 against 7,992 before and still fell to the first raid.
 
+**The Trunk's fort** (planet 3, 11-18; `fort` 3 in `TRUNK_RULES`;
+[report](../../Reports/trunk-fort-2026-11-18/README.md)). The owner had
+pictured the walls guarding the slime's core or crystals (Owner's word), so
+the Trunk walls each crystal it holds: a quarter covered by walkers holds
+it, under a twentieth or dry loses it (`time_fort`), and each held crystal
+gets an amber ring with four gates (`fort_mask`; the home ring's first gate
+faces the map's middle, the others face home). Slime on a ring sets with no
+scar once the ground has crusted, and the bulwark makes it wall; the
+slime's own ways go through the gates. It still sets where it is shot. GPU
+engine only. One film each, run seed 1, the squad standing still: the home
+ring stands from 0:15 (1,422 walkers set), and by 3:00 3,916 walkers are
+set into 3,681 wall cells against 1,321 and 1,339 with no fort, with the
+slime 9% smaller. A fire on the wall burns the stretch between two gates
+(the fed slime in a gate does not burn) and runs on over the crust outside.
+
 **Every run planet's slime** (11-17; `enemy_keys` and `ENEMY_RULES`) smells
 crystals it has not reached from across the map (`far_smell`;
 [report](../../Reports/sim-use-2026-11-17/s2-far-smell.md)) and its charges
@@ -274,6 +293,7 @@ armory over the paused round and Back re-arms every squad
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
 - 2026-11-15 02:55Z: "I need a test environment built where I can play with the guns and cards and bullets."
 - 2026-11-15 08:30Z (play notes for the whole-game review): "I mostly run to the biggest crystal, harvest and create new soliders until I have 40 soliders and then I attack the slime. That is not what I want to play though"; "Some enemy slimes just hang at their home crystal ... They don't attach my pumping crystals so no need to defend"; "There needs to be more interesting progression in the enemy"; the real game is squad mode in the run; "The gun graphics need work. They should really be one of the draws of the game."
+- 2026-11-18 03:11Z (in the Enemy lane's thread, on the walls the Trunk sets where it is shot): "This is interesting and I want to play test it, but when it was original suggested, I thought the walls would form protecting the core of the slime or the slime crystals giving them a base of sorts" (built as the Trunk's fort).
 
 ## Open
 

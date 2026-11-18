@@ -358,6 +358,9 @@ pub struct Game<W: World> {
     /// tick that was (`Game::mark_bulwark`).
     pub bulwark_maps: Vec<bool>,
     pub bulwark_staled: u64,
+    /// The crystals the slime holds now, each one's ring in the fort's
+    /// mask (`Rules::fort`, `Game::time_fort`). Empty until the first look.
+    pub fort_held: Vec<bool>,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
     pub buildings: Vec<Building>,
@@ -601,6 +604,7 @@ impl<W: World> Game<W> {
             bulwark: Vec::new(),
             bulwark_maps: Vec::new(),
             bulwark_staled: 0,
+            fort_held: Vec::new(),
             buildings: Vec::new(),
             pumped: 0.0,
             lost_buildings: 0,

@@ -344,8 +344,9 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // smell: the first two pumps at 185 and 167 hp at 2:30 without it,
         // 160 and 160 with it; modest, as its cords are slow to turn), so
         // planets 1 and 3 did the same thing to you. Now it sets
-        // (`TRUNK_KEYS`).
-        Tier::Trunk => DoesToYou { says: "Where you shoot it, it sets into amber walls that take three hits and stop your soldiers. Fire burns them: bring a Torch", rules: TRUNK_RULES, keys: TRUNK_KEYS },
+        // (`TRUNK_KEYS`), and since 11-18 it walls the crystals it holds
+        // (`fort` in `TRUNK_RULES`).
+        Tier::Trunk => DoesToYou { says: "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch", rules: TRUNK_RULES, keys: TRUNK_KEYS },
         Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
         Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
@@ -406,7 +407,7 @@ const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50")];
 // GPU engine keys only (`gpu::set`'s `crust` and `setting` set several
 // numbers at once; the CPU setter has no such names, and new slime work is
 // GPU only since the owner's 11-17 19:21Z answer).
-const TRUNK_RULES: &[(&str, f32)] = &[("set_block", 5.0)];
+const TRUNK_RULES: &[(&str, f32)] = &[("set_block", 5.0), ("fort", 3.0)];
 const TRUNK_KEYS: &[(&str, &str)] = &[("crust", "1"), ("crust_weight", "8"), ("crust_fast", "1"), ("setting", "1"), ("fire_fed", "1")];
 // Swarmer, planet 4, attack-move: a surge reaches 25 cells past the gun's
 // range (`Rules::panic_margin` 5) and lunges at 3x (`surge_haste` 2):
@@ -1894,10 +1895,11 @@ mod tests {
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());
-            // The Trunk sets, walls soldiers out and is fireproof while fed;
-            // the Swarmer makes a last stand; no other rung does either.
+            // The Trunk sets, walls soldiers out, walls the crystals it
+            // holds and is fireproof while fed; the Swarmer makes a last
+            // stand; no other rung does either.
             let trunk = *t == Tier::Trunk;
-            assert_eq!((s.set_scar > 0.0, s.crust_rise > 0.0, s.fire_fed, r.set_block > 0.0), (trunk, trunk, trunk, trunk), "{}", t.name());
+            assert_eq!((s.set_scar > 0.0, s.crust_rise > 0.0, s.fire_fed, r.set_block > 0.0, r.fort > 0.0), (trunk, trunk, trunk, trunk, trunk), "{}", t.name());
             assert_eq!(r.raid.last_stand, *t == Tier::Swarmer, "{}", t.name());
             // Every planet: the far smell, and charges that go round walls.
             assert!(r.unit_paths, "{}", t.name());

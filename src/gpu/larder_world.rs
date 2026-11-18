@@ -1027,6 +1027,16 @@ impl World for GpuWorld {
         self.e.write_lure_field(&field);
     }
 
+    /// Where setting runs (`Engine::setting`: the crust, the scar and
+    /// `set_scar`), a walker can set on a fort's mask.
+    fn forts(&self) -> bool {
+        self.e.setting
+    }
+
+    fn set_fort(&mut self, mask: Vec<u32>) {
+        self.e.write_fort(&mask);
+    }
+
     /// Runs `lumpform` at once, after the running step's shares (the CPU's
     /// `form_lump`; the mirror's dense words are not kept).
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
@@ -1294,6 +1304,12 @@ mod tests {
         }
         fn set_lure_field(&mut self, field: Vec<u32>) {
             self.g.set_lure_field(field)
+        }
+        fn forts(&self) -> bool {
+            self.g.forts()
+        }
+        fn set_fort(&mut self, mask: Vec<u32>) {
+            self.g.set_fort(mask)
         }
         fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
             self.g.raid_ground()
@@ -1959,6 +1975,85 @@ mod tests {
         if !ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
             assert_eq!(off.world.hash(), bare.world.hash(), "pull 0 is the game with no lure");
         }
+    }
+
+    /// **The fort** (`Rules::fort`, 2026-11-18, the Enemy lane; the
+    /// owner's note that day that he had thought the walls "would form
+    /// protecting the core of the slime or the slime crystals") is a rule
+    /// of the GPU engine alone, so its test is what it does on the
+    /// software GPU. Two race worlds alike with setting on and `set_block`
+    /// 5, one with `fort` 2 and one without; nobody shoots, so no scar.
+    ///
+    /// - With the fort the slime holds its home crystal, the engine has
+    ///   its ring, and by 20 s walkers have set, every one of them on the
+    ///   ring, enough that the bulwark has cells. Without it none sets.
+    /// - The walls cost the slime little: it is no smaller than nine
+    ///   tenths of the slime with no fort.
+    /// - With the rule off the mask is cleared and the walls wake.
+    #[test]
+    fn the_slime_walls_the_crystal_it_holds() {
+        use crate::gpu::{floats, DENSE_HEAD};
+        use crate::mould::big::RAID_BLOCK;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let play = |fort: f32| {
+            // Setting needs the scar, which needs the alarm (the game's
+            // shape has both; a race world has neither).
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "alarm_keep", "0.9").unwrap();
+            crate::gpu::set(&mut s, "setting", "1").unwrap();
+            // A thin race slime moves on before the crust it sets on has
+            // grown (the game's blanket stands on its cells): a fast crust
+            // under any trail.
+            crate::gpu::set(&mut s, "crust_rise", "0.02").unwrap();
+            crate::gpu::set(&mut s, "crust_trail", "0").unwrap();
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { set_block: 5.0, fort, ..Rules::default() }, seed)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        // The fort's blocks as the engine holds them (the cells' region's
+        // fourth quarter, engine.wgsl's `fort_at`).
+        let mask = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let nb = e.dish.w.div_ceil(RAID_BLOCK) * e.dish.h.div_ceil(RAID_BLOCK);
+            let from = e.dense_at as usize + 4 * (DENSE_HEAD + e.n as usize + 3 * nb);
+            read_back(&e.device, &e.queue, &e.news)[from..from + 4 * nb].chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<u32>>()
+        };
+        // The living set walkers, and how many of them stand off the mask.
+        let set = |g: &Game<GpuWorld>, m: &[u32]| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let bw = e.dish.w.div_ceil(RAID_BLOCK);
+            let words = e.set_of();
+            let on: Vec<usize> = (0..e.n as usize).filter(|&q| words[q] > 0 && en[q] >= 0.0).collect();
+            let off = on.iter().filter(|&&q| m[(wk[4 * q + 1] as usize / RAID_BLOCK) * bw + wk[4 * q] as usize / RAID_BLOCK] == 0).count();
+            (on.len(), off)
+        };
+        let (mut fort, mut bare) = (play(2.0), play(0.0));
+        for g in [&mut fort, &mut bare] {
+            to(g, 20.0);
+        }
+        assert!(fort.world.forts(), "setting runs, so the world can hold a fort");
+        let m = mask(&fort);
+        let ring = m.iter().filter(|&&v| v != 0).count();
+        let (walls, stray) = set(&fort, &m);
+        let wall_cells = fort.bulwark.iter().filter(|&&b| b).count();
+        eprintln!("fort: held {:?}, {ring} blocks in the ring, {walls} walkers set ({stray} off the ring), bulwark {wall_cells} cells; {} alive against {} with no fort", fort.fort_held, fort.world.e.alive(), bare.world.e.alive());
+        assert!(fort.fort_held.first() == Some(&true) && fort.world.e.forted && ring > 20, "the slime holds its home crystal and the engine has its ring");
+        assert!(walls >= 40 && stray == 0, "slime on the ring sets, and only there: {walls} set, {stray} off the ring");
+        assert!(wall_cells >= 20, "the ring is a wall to feet: {wall_cells} cells");
+        assert!(!bare.world.e.forted && set(&bare, &mask(&bare)).0 == 0 && bare.bulwark.is_empty(), "no fort, nothing sets unshot");
+        assert!(10 * fort.world.e.alive() >= 9 * bare.world.e.alive(), "the walls do not starve the slime");
+        // The rule off: the mask is cleared and the walls wake.
+        fort.rules.fort = 0.0;
+        to(&mut fort, 24.0);
+        let m = mask(&fort);
+        assert!(!fort.world.e.forted && m.iter().all(|&v| v == 0) && fort.fort_held.is_empty(), "the mask is cleared with the rule off");
+        assert_eq!(set(&fort, &m).0, 0, "and the walls wake");
     }
 
     /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,

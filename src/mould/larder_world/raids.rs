@@ -285,6 +285,23 @@ impl Way {
 }
 
 impl<W: World> Game<W> {
+    /// The ground the slime's ways are built on (a raid's, the charge
+    /// paths', the far smell's and the lure's): the world's
+    /// (`World::raid_ground`) less the bulwark's cells (2026-11-18). A
+    /// walker cannot step into a cell a set walker holds, so a way through
+    /// the slime's own wall led a charge to press on it from behind; with
+    /// the walls taken out the ways go through a fort's gates and round a
+    /// wall the shots made.
+    fn slime_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
+        let (mut ground, w, h) = self.world.raid_ground()?;
+        if self.bulwark.len() == ground.len() {
+            for (g, &wall) in ground.iter_mut().zip(&self.bulwark) {
+                *g &= !wall;
+            }
+        }
+        Some((ground, w, h))
+    }
+
     /// **The units' walking distance** (`Rules::unit_paths`, the
     /// simulation-use plan's S1, 2026-11-17): once a game second, the
     /// distance started a second ago is set (`World::set_units_field`) and
@@ -300,7 +317,7 @@ impl<W: World> Game<W> {
             self.world.set_units_field(way.finish());
         }
         let units = std::mem::take(&mut self.raids.unit_cells);
-        self.raids.unit_way = Some(Way::start_units(self.world.raid_ground(), units));
+        self.raids.unit_way = Some(Way::start_units(self.slime_ground(), units));
     }
 
     /// **The far smell** (`BigParams::far_smell`, the simulation-use plan's
@@ -320,7 +337,7 @@ impl<W: World> Game<W> {
             self.world.set_food_field(way.finish());
         }
         let fresh = self.world.fresh_crystals();
-        self.raids.food_way = Some(Way::start_units(self.world.raid_ground(), fresh));
+        self.raids.food_way = Some(Way::start_units(self.slime_ground(), fresh));
     }
 
     /// **The lure's field** (`gpu::Settings::lure_pull`, 2026-11-18, the
@@ -362,7 +379,7 @@ impl<W: World> Game<W> {
             return;
         }
         let reach = (self.rules.lure_reach.max(0.0) * self.world.scale()) as u32;
-        self.raids.lure_way = Some(Way::start_lures(self.world.raid_ground(), lures, reach));
+        self.raids.lure_way = Some(Way::start_lures(self.slime_ground(), lures, reach));
         self.raids.lure_set = true;
     }
 
@@ -466,7 +483,7 @@ impl<W: World> Game<W> {
     /// reach. It goes at the next game second (`time_raids`).
     fn send_raid(&mut self, aim: RaidAim, to: (f32, f32), size: f32, share: f32, last_stand: bool) {
         let (reach, held) = if size.is_finite() { self.raid_reach(to, size * self.world.mass() as f32 / share.max(1e-3)) } else { (1.0e4, self.world.mass() as u32) };
-        let way = Way::start(self.world.raid_ground(), super::raid_cell(to, self.world.size()));
+        let way = Way::start(self.slime_ground(), super::raid_cell(to, self.world.size()));
         self.raids.pending = Some((Raid { tick: self.world.ticks(), aim, to, reach, size, held, share, last_stand }, way));
     }
 
