@@ -175,6 +175,10 @@ so there is no bullet steering card; a dart that sets a lure where the squad
 aims takes a crystal off a colony in 30 to 45 s at pull 10, for fewer kills
 (about 3,500 against 8,612 by 2:00, planet 1, run seed 1). The dart is not
 placed: it waits until the owner has played the Lure building.
+Part four, to 5:00: a colony pulled off its crystal mostly dies in the
+turrets, and the crystal is resettled within one to two minutes once the
+darts stop; with no turrets a raid on the squad overrides the lure (whether
+a lure should outrank a raid is Enemy's call in the port).
 
 **The Trunk's walls** (planet 3, 11-17; `TRUNK_KEYS` and `TRUNK_RULES` in
 `run.rs`; [report](../../Reports/enemy-switches-2026-11-17/README.md)).
