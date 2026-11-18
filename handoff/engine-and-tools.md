@@ -74,8 +74,8 @@ he picks "retire it now", that becomes your first job after job 1.
 
 ## State (kept current by the lane)
 
-**2026-11-17.** Branch `claude/project-thread-9y1l65`. Job 1 is built and in
-its pull request; nothing of the lane is merged yet.
+**2026-11-18.** Branch `claude/project-thread-9y1l65`. Job 1 merged in
+#449 (11-17 22:28Z). Jobs 2 and 3 are in the branch's next pull request.
 
 What job 1 put where:
 
@@ -107,5 +107,24 @@ Not done from job 1: the menu's corner does not show the build yet and the
 "what is new" and "things to try" pages are not drawn. Those are Look and
 interface's, from the data above.
 
-**Next:** job 2, the play record (a note key in play; `play.cmd` pushes
-the logs to a branch), then job 3, a Windows build from CI.
+What jobs 2 and 3 put where:
+
+- **The play log**: one file a round, `play-logs/<when>-<map>-<seed>.txt`
+  (`playlog::file_name`), only in a real window and not on the menu. F9
+  writes `note n=.. t=.. x=.. y=.. zoom=..` (`App::drop_note`). A typed
+  note needs a text field in the HUD, which is Look's.
+- **Sending the logs**: `play.ps1` `Send-PlayLogs`, after the game quits,
+  to the branch `play-logs` (plumbing, own index, fixed author name);
+  sent logs move to `play-logs/sent`. `play.cmd send-logs` lets git ask
+  for a sign-in once.
+- **The Windows build**: `.github/workflows/windows-build.yml` publishes
+  to the prerelease `windows-build` on every new main (the queue
+  dispatches it). `play.ps1` `Get-CiBuild` uses it only when no game file
+  differs from HEAD. `slime_mould::build::root()` finds the maps from a
+  build made elsewhere (`LARDER_ROOT`, set by `play.ps1`).
+- **Testing play.ps1**: `scripts/play-selftest.ps1`, run by the Windows
+  workflow on pull requests that touch the play scripts. Nothing else
+  runs PowerShell; a cloud session cannot.
+
+**Next:** job 4, the run bot (planet 1 to a win or a loss, then planets 1
+to 3 with the shop), which replaces the per-feature smoke checks in CI.
