@@ -82,4 +82,17 @@ A second slime species that fights the first; the player's own mould
   Without turrets the lure loses to a raid. **Steering is closed as a lab
   subject** (Direction, 11-18 03:31Z); the dart waits for Scott to have
   played the Lure building.
-- Next step: the next brief, a second slime species that fights the first.
+- 2026-11-18: **the second species is delivered.** Report
+  [`Reports/lab-species-2026-11-18/`](../Reports/lab-species-2026-11-18/README.md),
+  page "Two Slimes" (in `Reports/pages.md`). Described from the model
+  first, then built on the lab branch (code commits `849670d`, `a96e78c`,
+  not for main): the garden's green mould (`own=1`) as a hunter that
+  converts the orange one way, at an edge (`LAB_CONVERT`), and takes no
+  crystal share (`LAB_HUNTER`), so it lives on what it converts. Planet 1:
+  at edge 0.8 it starves off its crystal, then a front crosses the orange
+  body and eats it by 5:00; 0.6 and 0.7 win sooner; 0.9 and 1.0 live beside
+  it. Conversion alone stalls. Recommendation: keep the starving hunter,
+  not for the game yet: start it as a small seed, make it a second enemy
+  strain, and try leading the slime into it with the Lure.
+- Next step: the hunter as a small seed and the Lure leading prey into it,
+  if Direction wants it; otherwise the next brief (the forest floor).

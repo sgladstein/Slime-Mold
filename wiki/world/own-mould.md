@@ -2,8 +2,9 @@
 title: The player's own mould (gardeners)
 kind: design
 status: paused
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
+  - Reports/lab-species-2026-11-18/README.md
   - Reports/larder-campaign-2026-11-12.md
   - Reports/player-mould-2026-11-12.md
   - Reports/species-gpu-2026-11-11.md
@@ -53,6 +54,15 @@ Next: an attacker's edge in conversion. Detail below
 ([report](../../Reports/player-mould-2026-11-12.md), window
 [page](https://claude.ai/artifact/SLmH8k3C797UCo3949RcMn)).
 
+The lab tried that edge on 11-18 (lab branch only, not in the game), with
+the green as a second slime that hunts the orange: one-way conversion where
+green trail is a share (the edge) of the orange's, and no crystal share for
+the green, so it lives on what it converts. On planet 1 (run seed 1) at
+edge 0.8 a front crossed the orange body and ate it by 5:00; 0.9 and 1.0
+lived beside it to 7:00; conversion alone held a border. The lab's
+recommendation is to keep it as a second enemy strain, not as the player's
+mould ([report](../../Reports/lab-species-2026-11-18/README.md)).
+
 ## Detail
 
 The owner chose **gardeners** (2026-11-12 04:45Z). The player owns a second
@@ -93,7 +103,7 @@ smaller: the two blind species meet along one front and hold it
 
 ## Open
 
-- An attacker's edge in conversion (the fed or massed walker wins), so a hunting enemy is a threat.
+- An attacker's edge in conversion (the fed or massed walker wins), so a hunting enemy is a threat. The lab's edge (11-18) moves a front but wins all or nothing below 0.9.
 - The front hand's thresholds are first guesses; tune by play.
 - Cut's disc (radius 3) moves nothing visible.
 - Cut was never used by a planned hand.
@@ -102,6 +112,7 @@ smaller: the two blind species meet along one front and hold it
 
 ## Sources
 
+- [lab-species-2026-11-18/](../../Reports/lab-species-2026-11-18/README.md): the lab's hunter species, its edge and the counts.
 - [player-mould-2026-11-12.md](../../Reports/player-mould-2026-11-12.md): the proposal copy, the form census and the contact counts.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU and their cost.
 - [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings.
