@@ -64,9 +64,15 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 - Merged as #495. Spreading the volley over the slime round the cursor was
   then tried at his request and not kept (wins +10-16% at a body's edge,
   loses at a stream past rock and among loose walkers; `Reports/dead-ends.md`).
-- Next: Look's A3 standing half, a squad that stands or drains holds elbow
-  room (`steer.rs`; their numbers: nearest neighbour 0.69 of elbow room on a
-  crystal). Look and interface will film it.
+- Look's A3 standing half (hold elbow room when a squad stands or drains):
+  looked, not built. A squad at rest already keeps it (eight held on planet
+  1, nearest neighbour 5.13 fine cells at least, elbow room 4.8). The heap is
+  only drainers, each pulled to the rim point nearest it (`Game::rim`):
+  greedy hand, planet 1 run 1, median 4.2-4.3 with up to 20 draining, 2.9-3.2
+  with 35-42 on one crystal, where the ring has no room for them all at
+  elbow room. Spacing them would stand some out of reach and cut the drain;
+  the helmets drawn above the bodies (#494) carry the count. Revisit only if
+  he says a draining squad still can't be counted.
 
 **2026-11-18, batch 2 (one PR after #448: Heave and Corral merged, shop offers, Free recruits off the list).**
 
