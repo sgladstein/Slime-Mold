@@ -30,21 +30,22 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 |---|---|---|
 | Direction | all | This page, `CLAUDE.md` and the 11-17 decisions. Sort every pending pick ([`handoff/direction.md`](handoff/direction.md)) and keep the list of things to try. Sort each play session into lane jobs within the hour; post the bot's curve for planets 1 to 3. |
 | Enemy | 4 | Done: the off switches settled (#451), the lure's field (#457). Walls that guard the slime's crystals as a base (his note, 11-18 03:11Z). Make each of planets 1 to 3 do one nameable thing to the player by minute 2, with a clip a planet; then the origin, as a design page to Direction first. |
-| Squad and arsenal | 5 | Done: the brief's five jobs, with Provoke and Still (#448) and the shop's offers (#459); no new card families. The Lure building (#461), then the Lure on planet 1 and two prices (below). Next is what his play notes say about control and the gun. |
+| Squad and arsenal | 5 | Done: the brief's five jobs, with Provoke and Still (#448) and the shop's offers (#459); no new card families; the Lure building (#461). The Lure on planet 1 and two prices (below). Next is what his play notes say about control and the gun. |
 | Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad (the flinch's look is done, #454). One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
-| Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452). The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
+| Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452); the run bot's first cut (#463). The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
 | Lab | none | Delivered: steering, closed in four parts ([report](Reports/lab-steering-2026-11-17/README.md)), and a second slime species, a hunter that eats the first ([report](Reports/lab-species-2026-11-18/README.md); kept as a second enemy strain, not in the game). Now: one more step, leading the slime into the hunter with the Lure. Then the forest floor. |
 
 **The Lure, for planets 1 to 3** (his card, 11-18 03:03Z: "Lure now, in the
 three planets"; [lab report](Reports/lab-steering-2026-11-17/README.md)). A
 lure every calm walker leans toward, so walls and turrets make a kill zone.
 On main: Enemy's field (#457; pull 10 on every planet; panic, surge and raids
-ignore it, and a raid still turns for a lure near its target) and Look and
-interface's rings, cream hairlines (#458). In the queue: Squad and arsenal's
-building (#461). Direction's numbers: the run starts with the Lure, so
-planet 1 has it (`run::START`; no shop row); the building 300 food and 150
-health; Tinder 100 and the shop's sure Torch at most 100, so the pair can
-always be bought before planet 2. The siren and the outpost stay out.
+ignore it, and a raid still turns for a lure near its target), Look and
+interface's rings, cream hairlines (#458), and Squad and arsenal's building
+(#461; the shop sells Lures for 150, the building is 300 food and 150
+health). Still to land, Direction's numbers with Squad: the run starts with
+the Lure, so planet 1 has it (`run::START`; no shop row); Tinder 100 and the
+shop's sure Torch at most 100, so the pair can always be bought before
+planet 2. The siren and the outpost stay out.
 The dart, the Lure's second form (lab part three), waits until he has played
 the building.
 
@@ -68,10 +69,9 @@ asks at most once a session with a recommendation.
 
 At most five, most important first; offers, not requests. The game shows them
 beside "What is new": [`news/things-to-try.txt`](news/things-to-try.txt).
-Today: the rush on planet 1 (D7), camera shake and hit-stop (D6, on the
-Experiments tab), what each of planets 1 to 3 does to you, the starting
-rifle and the two new bullets, the new flinch look. The Lure takes a line
-when it lands. What each build holds is in
+Today: the rush on planet 1 (D7), the Lure, camera shake and hit-stop (D6,
+on the Experiments tab), what each of planets 1 to 3 does to you, the
+starting rifle and the two new bullets. What each build holds is in
 [`news/whats-new.txt`](news/whats-new.txt).
 
 ## Where things are
