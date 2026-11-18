@@ -923,6 +923,20 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
     assert!(!turret.ready && turret.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
+    // The lure is back on a run's build card (owner's card, 2026-11-18
+    // 03:03Z), locked until the shop's Lures is bought; the siren and the
+    // outpost stay out, so the switch names lures alone.
+    let lure = m.commands.iter().find(|c| c.id == LURE).unwrap();
+    assert!(!lure.ready && lure.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
+    assert_eq!(m.commands.iter().find(|c| c.id == LURES).map(|c| c.name.as_str()), Some("Lures on/off"));
+    assert!(m.commands.iter().all(|c| c.id != SIREN && c.id != OUTPOST));
+    app.run.as_mut().unwrap().owned[ITEMS.iter().position(|i| i.key == "lure").unwrap()] = 1;
+    app.args.run = app.run.clone();
+    let m = app.model(None, None);
+    let lure = m.commands.iter().find(|c| c.id == LURE).unwrap();
+    assert!(!lure.locked, "bought: {:?}", lure.why_not);
+    app.run.as_mut().unwrap().owned[ITEMS.iter().position(|i| i.key == "lure").unwrap()] = 0;
+    app.args.run = app.run.clone();
     app.build_page = false;
     // A won level: the end screen carries on to the shop.
     let win = Verdict { cause: Cause::Goal, at: 300.0, stars: 2, best: 1.0 };
@@ -1053,6 +1067,43 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
     // Leave from the menu's armory: the main page.
     app.menu_event(StartEvent::EndRun).unwrap();
     assert_eq!(app.menu.as_ref().unwrap().page, Page::Main);
+}
+
+/// **The run bot plays planet 1 to a verdict** (the Engine and tools lane's
+/// job 4: the run bot in CI in place of smoke rounds of a fixed length).
+/// Run seed 1's planet 1 at the window's own scale, with the `bot` hand,
+/// through the window's own steps: the planet reaches a verdict (no soft
+/// lock: `run_bot` gives up a minute past the clock) and does not end in
+/// under a minute. A win is
+/// not asserted, so a change to the balance never turns CI red (the
+/// owner's "balance never blocks"); the bot's line says how it went. On
+/// 2026-11-18 it won at 2:48 with 2 stars in 78 s on the cloud's
+/// software Vulkan. Planets 2 and 3 cost minutes each, so they run after
+/// each landing instead (`.github/workflows/run-bot.yml`).
+#[test]
+fn the_window_plays_planet_1_with_the_run_bot() {
+    let Some((device, queue)) = smoke_gpu() else { return };
+    let base = Args { seed: 1, scale: 2, walkers: 5000, ..Default::default() };
+    let t0 = Instant::now();
+    let played = runbot::run_bot(base, 1, 1, &device, &queue).unwrap();
+    let p = &played[0];
+    eprintln!("run bot: {} ({:.0} s)", p.line(), t0.elapsed().as_secs_f32());
+    assert_eq!(played.len(), 1);
+    assert!(!p.why.contains("soft lock"), "{}", p.line());
+    assert!(p.secs >= 60.0, "planet 1 ended in under a minute: {}", p.line());
+}
+
+/// The run bot's shop buys the card planet 2 asks for (Tinder, for the
+/// Sprawler) and spends the rest on the squad.
+#[test]
+fn the_run_bots_shop_spends_its_points() {
+    let mut r = Run::new(1);
+    r.restock();
+    r.won(2);
+    let points = r.points;
+    let bought = runbot::shop(&mut r);
+    assert!(bought.iter().any(|b| b.starts_with("Tinder")), "{bought:?}");
+    assert!(bought.len() >= 2 && r.points < points, "{bought:?}, {} of {points} points left", r.points);
 }
 
 /// **A run's level does not panic the window's loop** (the smoke test's

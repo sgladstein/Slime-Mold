@@ -1277,7 +1277,7 @@ impl App {
                     about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Draw it along a wall to cut it in (at once, as thick as the wall), or across a gap to build it. Costs as a wall that long.".into(),
                     ..Command::new(DOOR, (1, 3), Icon::Wall, "Door", KeyCode::KeyG)
                 },
-                place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
+                place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
                 place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
                 place(OUTPOST, (1, 1), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
@@ -1328,6 +1328,13 @@ impl App {
         if let Some(run) = &self.args.run {
             cmds.retain(|c| !run_hidden(c.id));
             for c in &mut cmds {
+                // A run has no sirens (`run_hidden`): the switch is the
+                // lures' alone.
+                if c.id == LURES {
+                    c.name = "Lures on/off".into();
+                    c.about = "Switch every lure on, or every one off if all are on.".into();
+                    c.why_not = Some("No lures".into());
+                }
                 if run_lock(c.id).is_some_and(|k| !run.has(k)) {
                     c.ready = false;
                     c.locked = true;
@@ -1900,12 +1907,14 @@ pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
 }
 
 /// Buildings a run never offers (owner, 2026-11-15 21:41Z, D10): the
-/// outpost is out, and the lure and siren (with their on/off switch) stay
-/// out until they visibly draw the slime. The shop doesn't sell them
-/// (`run::ITEMS`).
+/// outpost is out, and the siren stays out until it visibly draws the
+/// slime. The shop doesn't sell them (`run::ITEMS`). The lure and the
+/// lures' switch were hidden with them until 2026-11-18 (owner's card,
+/// 03:03Z: "Lure now, in the three planets"); the shop sells the lure
+/// again (`run_lock`).
 pub(super) fn run_hidden(id: u32) -> bool {
     // Provoke and Still are test devices until the gun thread's cards.
-    matches!(id, LURE | LURES | SIREN | OUTPOST | T_PROVOKE | T_STILL)
+    matches!(id, SIREN | OUTPOST | T_PROVOKE | T_STILL)
 }
 
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {

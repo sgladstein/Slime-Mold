@@ -75,7 +75,9 @@ he picks "retire it now", that becomes your first job after job 1.
 ## State (kept current by the lane)
 
 **2026-11-18.** Branch `claude/project-thread-9y1l65`. Job 1 merged in
-#449 (11-17 22:28Z). Jobs 2 and 3 are in the branch's next pull request.
+#449 (11-17 22:28Z), jobs 2 and 3 in #452 (11-18 03:38Z); CI's Windows
+build is published. Job 4's first cut (the run bot) is in the branch's
+next pull request.
 
 What job 1 put where:
 
@@ -126,5 +128,31 @@ What jobs 2 and 3 put where:
   workflow on pull requests that touch the play scripts. Nothing else
   runs PowerShell; a cloud session cannot.
 
-**Next:** job 4, the run bot (planet 1 to a win or a loss, then planets 1
-to 3 with the shop), which replaces the per-feature smoke checks in CI.
+What job 4 put where (first cut, 11-18):
+
+- **The bot**: `hand=bot` (`hands::bot_hand`), for films too. One squad;
+  buys soldiers whenever it can; works the crystal with the most charge
+  (a quiet near one until 30 soldiers), volleys at the heaviest slime in
+  range, leaves a crystal that pays nothing for 30 s, takes the slime's
+  home crystal once strong, steps back and heals when hurt. Its doc
+  comment lists the five versions that lost and why. It prints a `BOT`
+  line every 10 game seconds on stderr.
+- **The run**: `runbot=SEED[:TO]` (`runbot.rs`): planets 1 to TO with the
+  shop between (`runbot::shop`: the card the next planet asks for, then
+  `WANTS`), a line a planet on stdout. A planet with no verdict a minute
+  past its clock is reported as a soft lock.
+- **CI**: `the_window_plays_planet_1_with_the_run_bot` (planet 1, about
+  80 s on lavapipe; asserts a verdict and not under a minute, never a
+  win). `.github/workflows/run-bot.yml` plays planets 1 to 3 for seeds 1
+  to 3 after each landing (the queue dispatches it) and nightly, into the
+  run's summary; it never fails on a loss.
+- **Measured** (run seed 1, 11-18): planet 1 won at 2:48, 2 stars (mass
+  9,300 to 110 in 28 s once 50 soldiers walked into the home crystal);
+  planet 2 lost at the clock twice, the Sprawler's threads eating the
+  9-soldier landing squad before it drained (1,471 food in 15 minutes),
+  Tinder bought or not.
+
+**Next:** the bot on planet 2 (land, back off to a quiet crystal, hold it
+with the volley, build up), then planet 3; then whether the old run smoke
+rounds (`the_window_plays_a_runs_planet`, RTS mode) go, measured against
+the bot's coverage. After job 4: job 5's housekeeping.

@@ -519,11 +519,14 @@ pub struct Item {
 
 /// Everything the shop sells but cards. Unlock keys (`max` 1) are what
 /// `Run::has` answers for the window's command card.
-/// The lure, the siren and the outpost are not sold (owner, 2026-11-15
-/// 21:41Z, the whole-game review's D10): the outpost is out of the run,
-/// and the lure and siren stay out until they visibly draw the slime. The
-/// window hides them from a run's build card (`run_hidden`).
-pub const ITEMS: [Item; 18] = [
+/// The siren and the outpost are not sold (owner, 2026-11-15 21:41Z, the
+/// whole-game review's D10): the outpost is out of the run, and the siren
+/// stays out until it visibly draws the slime. The window hides them from
+/// a run's build card (`run_hidden`). The lure was out with them until the
+/// Enemy lane's lure field met that condition for it (the lab's steering
+/// prototype; owner's card, 2026-11-18 03:03Z: "Lure now, in the three
+/// planets").
+pub const ITEMS: [Item; 19] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -537,6 +540,10 @@ pub const ITEMS: [Item; 18] = [
     // after turrets, as each next body will be after the one before.
     Item { key: "mortar", name: "Mortars", group: Group::Build, about: "Unlocks the mortar: the longest reach there is, lobbed over walls", max: 1, cost: 250, needs: Some("turret") },
     Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets and mortars: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
+    // Back in the run 2026-11-18 (above): an unlock with no prerequisite,
+    // so it can be a first buy. 150 is Direction's first price; the
+    // building's own cost and health are `BuildRules::lure_cost`, `lure_hp`.
+    Item { key: "lure", name: "Lures", group: Group::Build, about: "Unlocks the lure, a beacon the slime walks to and eats", max: 1, cost: 150, needs: None },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.
     Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
@@ -1885,13 +1892,20 @@ mod tests {
         assert_eq!(r.build.pump_smell, Rules::default().build.pump_smell);
     }
 
-    /// The outpost, lure and siren are not sold in a run (owner 11-15
-    /// 21:41Z, D10).
+    /// The outpost and siren are not sold in a run (owner 11-15 21:41Z,
+    /// D10). The lure is again (owner's card, 2026-11-18 03:03Z): an
+    /// unlock at 150 that needs nothing first.
     #[test]
-    fn the_run_shop_sells_no_outpost_lure_or_siren() {
-        for k in ["outpost", "lure", "siren"] {
+    fn the_run_shop_sells_lures_and_no_outpost_or_siren() {
+        for k in ["outpost", "siren"] {
             assert!(ITEMS.iter().all(|i| i.key != k), "{k}");
         }
+        let lure = ITEMS.iter().position(|i| i.key == "lure").unwrap();
+        assert_eq!((ITEMS[lure].max, ITEMS[lure].cost, ITEMS[lure].needs, ITEMS[lure].group), (1, 150, None, Group::Build));
+        let mut r = Run::new(1);
+        assert!(!r.has("lure"));
+        r.points = 150;
+        assert!(r.pick(Pick::Item(lure)) && r.has("lure") && r.points == 0);
     }
 
     #[test]
