@@ -2356,6 +2356,50 @@ mod tests {
         assert!(door_swing > 30.0, "its grate swings bar to gap: {door_swing}");
     }
 
+    /// A fallen soldier (the owner's playtest, 2026-11-18 16:12Z: "When
+    /// soliders die, the body on the floor looks really bad") lies in our
+    /// olive over a pool of blood that spreads after the fall: beside its
+    /// chest the bare ground the moment it falls and blood once the pool
+    /// has spread, and the chest olive. Against the 11-14 corpse (a cold
+    /// grey figure, no pool) it fails on the blood.
+    #[test]
+    fn a_fallen_soldier_lies_olive_in_a_pool_of_blood_that_spreads() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [90u8, 90, 90, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        // Facing east (0 radians): the body's frame is the screen's.
+        let r = 2.0;
+        let mut shot = |pool: f32| {
+            let mut m = Marks::default();
+            m.fallen((24.0, 16.0), r, 0.0, crate::world::marks::team_colour(0), pool, 7);
+            view.set_marks(&m);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let (fresh, spread) = (shot(0.0), shot(1.0));
+        // A point in radii of the body's frame (+x the way it faced).
+        let at = |pic: &image::RgbaImage, bx: f32, by: f32| {
+            let (sx, sy) = cam.to_screen((24.0 + bx * r, 16.0 + by * r));
+            pic.get_pixel(sx as u32, sy as u32).0
+        };
+        let ground = at(&fresh, -5.0, 0.0);
+        let then = at(&fresh, -0.3, -0.6);
+        assert!((0..3).all(|c| (then[c] as i32 - ground[c] as i32).abs() <= 4), "the ground beside its chest as it falls: {then:?}, the ground {ground:?}");
+        let beside = at(&spread, -0.3, -0.6);
+        assert!(beside[0] as i32 > beside[1] as i32 + 60 && beside[0] as i32 > beside[2] as i32 + 60, "blood there once spread: {beside:?}");
+        let chest = at(&spread, -0.3, 0.0);
+        assert!(chest[1] as i32 > chest[2] as i32 + 20 && chest[1] as i32 + 10 >= chest[0] as i32, "the chest our olive: {chest:?}");
+    }
+
     /// A shot's flung droplet (Look A3, 2026-11-18) is a bead in the
     /// slime's material over the bright body: lit on the side toward the
     /// key light and darker on the far side, in the slime's gold rather
