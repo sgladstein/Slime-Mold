@@ -112,5 +112,10 @@ A second slime species that fights the first; the player's own mould
   the slime ends a tenth smaller; few soldiers stand in mud. Rot (logs into
   food) not built. Recommendation: change, then build (wet planets, a
   player verb on it, a look pass).
-- Next step: the rot, if Direction wants the floor taken further;
-  otherwise Direction's next brief.
+- 2026-11-18: part two of the forest floor, the rot (page `#rot`, code
+  `47150aa`): litter rots into food where rain soaks it and smells like a
+  crystal; after a shower the slime forages out and the squad shoots it
+  (2,020 killed by 2:00 against 1,476), the slime no bigger.
+- Next step: none. Direction (11-18 14:14Z): stop and wait for a brief; the
+  dart and the wet-planet trait go to Scott together after he has played
+  the Lure.
