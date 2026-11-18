@@ -311,3 +311,44 @@ pusher dart from the near side. Range 60, life 10 s and one dart every
 10 s are first numbers, not tuned; the price and a cooldown are
 Direction's. The pusher draws no core glow (by design, `PUSH_BASE`), only
 faint rings at its rim, so Look may want to give it a mark of its own.
+
+## Part four: after the colony leaves (2026-11-18)
+
+Direction's question: once the pull takes a colony off its crystal, does
+it starve, resettle on another crystal, or come for the squad, and does the
+planet end sooner or later? Part three's scene at pull 10, followed to 5:00
+over the whole planet (`watch=210,47,30`, the north crystal):
+
+| Arm | Soldiers 2:00 / 5:00 | Slime alive 2:00 / 5:00 | On its crystal 2:00 / 5:00 | Killed 2:00 / 5:00 |
+|---|---|---|---|---|
+| Turrets, no darts | 8 / 0 | 13,468 / 22,405 | 2,438 / 3,534 | 8,612 / 20,918 |
+| Turrets, four lure darts 0:30 to 1:00 | 8 / 8 | 10,374 / 16,513 | 23 / 2,955 | 3,597 / 16,731 |
+| Turrets, a lure dart every 10 s to 4:50 | 8 / 8 | 10,269 / 14,859 | 0 / 8 | 3,429 / 5,214 |
+| No turrets, no darts | 7 / 0 | 16,106 / 26,195 | 3,238 / 3,883 | 3,627 / 8,583 |
+| No turrets, four lure darts | 7 / 0 | 16,106 / 26,134 | 3,254 / 3,470 | 3,211 / 9,058 |
+| No turrets, eight lure darts | 7 / 0 | 16,220 / 24,649 | 3,163 / 3,485 | 2,706 / 9,631 |
+
+The three turret arms are filmed on the page (`page/evict-*.mp4`, the whole
+map, 5:00 in 10 s); the filmed runs repeat these counts exactly.
+
+**Result.** The colony neither starves nor comes for the squad: most of it
+dies in the turrets, and the crystal stays empty only while darts keep
+coming. When they stop, an arm of the big south-west colony settles it
+again within one to two minutes (23 walkers at 2:00, 1,185 at 3:00, 2,955
+at 5:00), past the turrets, which feed on it. With darts all along the
+crystal stays empty and the slime settles a crystal in the south-east
+instead. The planet's slime grows back in every arm, more slowly with
+darts; none ends the planet in 5:00. What changes is the squad: with no
+darts the north colony overruns it between 3:00 and 5:00; with darts all
+eight soldiers live (health 54 and 94 at 5:00).
+
+**Without turrets the lure darts did nothing**: the colony raided the squad
+and the raid overrides the lure (as every override does in the prototype),
+so the squad was wiped in all three arms. A lure only herds where guns
+stand where it leads, and where no raid is under way; whether a lure should
+outrank a raid is a question for Enemy's port.
+
+**Verdict.** A crystal taken by the lure is held only while the player
+keeps luring, and only with guns where the lure leads: the dart is a tool
+for holding ground, not for clearing a planet. Steering ends here as a lab
+subject (Direction, 11-18 03:31Z).
