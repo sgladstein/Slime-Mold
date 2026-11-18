@@ -78,7 +78,7 @@
   <div class="eyebrow">Lab prototype &middot; 17 November 2026 &middot; planet 1, run seed 1</div>
   <h1>Steering the slime</h1>
   <p class="lede">A lure that every walker leans toward pulls the planet 1 colony off its crystal and into three turrets. By 1:30 the zone has killed <b>4,158</b> walkers against <b>1,623</b> with no lure, and rendered three times the food. No soldier is lost either way.</p>
-  <p class="dim">Scott's pick, 18 November: the lure goes into planets 1 to 3. <a href="#gun" style="color:var(--lure)">Part two</a>, below, tries the steering laid by the squad's own bullets, and <a href="#dart" style="color:var(--lure)">part three</a> a dart the squad fires where you aim.</p>
+  <p class="dim">Scott's pick, 18 November: the lure goes into planets 1 to 3. <a href="#gun" style="color:var(--lure)">Part two</a>, below, tries the steering laid by the squad's own bullets, <a href="#dart" style="color:var(--lure)">part three</a> a dart the squad fires where you aim, and <a href="#after" style="color:var(--lure)">part four</a> what becomes of a colony the darts move.</p>
   <div class="key">
     <span style="--c: var(--slime)">amber: the slime</span>
     <span style="--c: var(--lure)">pink rings: the lure's pull, one ring every 20 cells of walking</span>
@@ -375,6 +375,56 @@
     <li><b>Pull 30 adds nothing here.</b> The slime ends the same size and the turrets get less. The darts land close to the colony, so the game's pull of 10 is already enough.</li>
     <li><b>What I set and did not tune:</b> 60 cells of range, a 10 second life, one dart every 10 seconds. A price and a cooldown are Direction's to set.</li>
   </ul>
+
+  <h2 id="after">Part four: after the colony leaves</h2>
+  <p>What becomes of a colony once the darts have taken its crystal? The same scene as part three, at pull 10, followed for five minutes over the whole planet. The squad holds on its small crystal the whole time.</p>
+  <p class="dim">The whole map, 0:00 to 5:00 in 10 seconds. "On its crystal" counts walkers within 30 cells of the north crystal.</p>
+  <div class="clip">
+    <video src="evict-turrets.mp4" poster="evict-turrets.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag off">No darts</span>
+      <h3>The squad is overrun</h3>
+      <table>
+        <thead><tr><th></th><th>2:00</th><th>5:00</th></tr></thead>
+        <tbody><tr><td>Soldiers</td><td class="big">8</td><td class="big">0</td></tr><tr><td>Slime alive</td><td>13,468</td><td>22,405</td></tr><tr><td>On its crystal</td><td>2,438</td><td>3,534</td></tr><tr><td>Killed</td><td>8,612</td><td>20,918</td></tr></tbody>
+      </table>
+      <p class="what">The north colony grows on its crystal, reaches for the squad and wipes it out between 3:00 and 5:00. The turrets kill the most of any run, then fall silent.</p>
+    </div>
+  </div>
+
+  <div class="clip">
+    <video src="evict-four.mp4" poster="evict-four.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag lure">Four darts, 0:30 to 1:10</span>
+      <h3>Taken, then settled again</h3>
+      <table>
+        <thead><tr><th></th><th>2:00</th><th>5:00</th></tr></thead>
+        <tbody><tr><td>Soldiers</td><td class="big">8</td><td class="big">8</td></tr><tr><td>Slime alive</td><td>10,374</td><td>16,513</td></tr><tr><td>On its crystal</td><td>23</td><td>2,955</td></tr><tr><td>Killed</td><td>3,597</td><td>16,731</td></tr></tbody>
+      </table>
+      <p class="what">The crystal stays empty for a minute or more after the last dart. Then an arm of the big south-west colony crawls up past the turrets and settles it again, and the turrets feed on it.</p>
+    </div>
+  </div>
+
+  <div class="clip">
+    <video src="evict-all.mp4" poster="evict-all.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag lure">A dart every 10 s</span>
+      <h3>Kept empty</h3>
+      <table>
+        <thead><tr><th></th><th>2:00</th><th>5:00</th></tr></thead>
+        <tbody><tr><td>Soldiers</td><td class="big">8</td><td class="big">8</td></tr><tr><td>Slime alive</td><td>10,269</td><td>14,859</td></tr><tr><td>On its crystal</td><td>0</td><td>8</td></tr><tr><td>Killed</td><td>3,429</td><td>5,214</td></tr></tbody>
+      </table>
+      <p class="what">The crystal stays empty to 5:00 and nothing comes for the squad. The slime settles a crystal in the south-east instead and grows there.</p>
+    </div>
+  </div>
+
+  <p>So the colony does not starve and does not come for the squad. Most of it dies in the turrets, and the crystal stays empty only while the darts keep coming. When they stop, another colony settles it within a minute or two. The planet's slime grows back in every run, more slowly with darts, so none of these runs ends the planet in five minutes.</p>
+  <p>What changes is who is left standing. Left alone, the north colony overruns the squad by 5:00. With darts, all eight soldiers live. <b>Without turrets, the lure darts did nothing</b>: the colony raided the squad, and a raid outranks the lure. The squad was wiped either way.</p>
+  <div class="verdict">
+    <p>A crystal taken by the lure is held only while you keep luring, and only with guns where the lure leads.</p>
+    <p>That makes the dart a tool for holding ground, not for clearing a planet. It fits Direction's plan to show it after the Lure building has been played. Steering ends here as a lab subject.</p>
+  </div>
+  <p class="dim">One seed, one scene, 5 minutes. The filmed runs repeat the test runs' counts exactly.</p>
 
   <footer>
     One run seed a scene, filmed on the software GPU, so the sizes are a first look and not a balance. The prototypes live on the lab branch only. The lure is now being built into the game by the Enemy, Squad and Look lanes. Report: <code>Reports/lab-steering-2026-11-17/README.md</code>.

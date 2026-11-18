@@ -75,5 +75,11 @@ A second slime species that fights the first; the player's own mould
   leaves the slime 22% smaller by 2:00, at the cost of kills and food.
   Recommendation: build it as the Lure's second form, with a pusher
   setting. Code commit `9df3f0a` (`LAB_DARTS`), not for main.
-- Next step: the eviction lead (Direction noted it as a tuning lead), then
-  the next brief below.
+- 2026-11-18: part four, after the colony leaves (`#after`): it neither
+  starves nor comes for the squad; most of it dies in the turrets, and
+  another colony resettles the crystal within one to two minutes once the
+  darts stop. With darts the squad lives to 5:00, without it is overrun.
+  Without turrets the lure loses to a raid. **Steering is closed as a lab
+  subject** (Direction, 11-18 03:31Z); the dart waits for Scott to have
+  played the Lure building.
+- Next step: the next brief, a second slime species that fights the first.
