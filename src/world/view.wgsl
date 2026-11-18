@@ -4135,6 +4135,12 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
         // Rifle, barrels and flash reach past the radius.
         x0 = floor(s.x - 2.0 * h.x); x1 = ceil(s.x + 2.0 * h.x);
         y0 = floor(s.y - 2.0 * h.x); y1 = ceil(s.y + 2.0 * h.x);
+        // A head (`Marks::soldier_head`) is the helmet alone, within
+        // half a radius of the middle at any facing.
+        if (shape == SOLDIER && (extra & HEAD_ONLY) != 0u) {
+            x0 = floor(s.x - 0.5 * h.x); x1 = ceil(s.x + 0.5 * h.x);
+            y0 = floor(s.y - 0.5 * h.x); y1 = ceil(s.y + 0.5 * h.x);
+        }
     }
     if (shape == GLYPH) {
         x0 = floor(s.x);
@@ -4278,9 +4284,35 @@ fn flash_at(b: u32, p: vec2<f32>) -> vec2<f32> {
     return vec2<f32>(g.x * sqrt(left), g.y * (0.35 + 0.65 * left));
 }
 
+// A soldier mark that draws only the figure's helmet (`Marks::soldier_head`,
+// `extra` bit 25): every living soldier's head again, above every body, so
+// in a packed squad each one shows its white dome and can be counted (the
+// brief's "space the squad so 40 soldiers can be counted"; a squad draining
+// a crystal stands 0.69 of elbow room apart, and a later figure's shoulders
+// covered an earlier one's head). The pixels are the whole figure's own
+// where its helmet is, so a soldier standing alone looks as it did.
+const HEAD_ONLY: u32 = 1u << 25u;
+
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    var f = soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
+    let ang = bitcast<f32>(marks[b + 9u]);
+    var f = soldier(d, r, ang, unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
+    if ((extra & HEAD_ONLY) != 0u) {
+        // The helmet grown by OUTLINE pixels: there the head shows its own
+        // figure whole (helmet, and round it a ring of its own shoulders
+        // or ink), since this mark is the pixel's only one; with the
+        // helmet's own soft edge as the alpha, its fringe showed the
+        // ground through a lone soldier's body (a dark ring, 88 of 255).
+        let s = d / r;
+        let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
+        let small = r < 12.0;
+        var head = sprite(1u, p, small).w;
+        for (var i = 0u; i < 8u; i++) {
+            let a = f32(i) * 0.785398;
+            head = max(head, sprite(1u, p + vec2<f32>(cos(a), sin(a)) * OUTLINE / r, small).w);
+        }
+        if (head <= 0.004) { return vec4<f32>(0.0); }
+    }
     // A bite (`Marks::soldier_bitten`, 11-14): the side the slime bit from
     // flushes hot, fading with the flinch, on the body only (no new alpha).
     let w = marks[b + 8u];

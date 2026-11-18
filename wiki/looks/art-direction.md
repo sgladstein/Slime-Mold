@@ -21,6 +21,7 @@ sources:
   - Reports/river-look-2026-11-14/README.md
   - Reports/sim-use-2026-11-17/e2b-look.md
   - Reports/soil-materials-2026-11-14/README.md
+  - Reports/squad-heads-2026-11-18/README.md
   - Reports/value-order-2026-11-15/README.md
 code:
   - LumpLook
@@ -36,10 +37,9 @@ light on dark ground**. The slime is the brightest, warmest, most detailed
 thing on screen; the ground is dark and quiet; hard shapes (rock, walls,
 crystals) are crisp; your units are high-contrast and countable; light
 (muzzle, impact, crystal charge) only ever shows something the simulation
-did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed, and the ground is dark and cool since #247; what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
-Since 2026-11-17 the Look and interface lane holds this guide and the list
-under *Look jobs, ranked*, in the owner's order: the fight round the squad,
-then the slime, planets and terrain, menus and screens.
+did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed and the ground dark (#247); what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
+Since 2026-11-17 the Look and interface lane holds this guide and the
+ranked list of look jobs at its end, in the owner's order.
 
 ## The rules
 
@@ -133,10 +133,10 @@ B starts once A passes his eye.
 
 1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart in value ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
 2. A hit is the slime's own reaction: the hole and how it closes (shots already fly as comets).
-3. A squad of 40 you can count, with Squad and arsenal.
-4. No effect bigger than its damage: check muzzle light, hit light, crater ember.
-5. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as a rose flash.
-6. Fire on slime and on set slime with no cell-sized squares at zoom 12.
+3. A squad of 40 you can count: heads on top ([heads](../../Reports/squad-heads-2026-11-18/README.md)); standing apart is Squad and arsenal's.
+4. No effect bigger than its damage: muzzle, hit and bite lights, crater ember.
+5. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds.
+6. Fire on slime with no cell-sized squares at zoom 12.
 
 **B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.
 

@@ -2356,6 +2356,58 @@ mod tests {
         assert!(door_swing > 30.0, "its grate swings bar to gap: {door_swing}");
     }
 
+    /// A squad of 40 you can count (Look A, 2026-11-18): every living
+    /// soldier's head is drawn again above every body (`Marks::soldier_head`),
+    /// so a soldier whose neighbour's shoulders cover its middle still shows
+    /// its white helmet, and a soldier standing alone looks exactly as it
+    /// did. Against the 11-18 shader (the head mark drawn as a whole figure)
+    /// the neighbour's shoulders cover it again.
+    #[test]
+    fn a_packed_soldier_shows_its_head_and_a_lone_one_is_unchanged() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [40u8, 44, 40, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let (r, team) = (2.0, crate::world::marks::team_colour(0));
+        let mut shot = |m: &Marks| {
+            view.set_marks(m);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        // Both facing east, B 0.7 radii below A, drawn after it: B's
+        // shoulders (the body is 0.8 radii across the facing) cover A's
+        // middle.
+        let (a, b) = ((24.0, 16.0), (24.0, 16.0 + 0.7 * r));
+        let mut m = Marks::default();
+        for p in [a, b] {
+            m.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+        }
+        for p in [a, b] {
+            m.soldier_head(p, r, 0.0, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+        }
+        let packed = shot(&m);
+        let (sx, sy) = cam.to_screen((a.0 + 0.04 * r, a.1));
+        let head = packed.get_pixel(sx as u32, sy as u32).0;
+        let (lo, hi) = (head[..3].iter().min().copied().unwrap(), head[..3].iter().max().copied().unwrap());
+        assert!(lo > 150 && hi - lo < 40, "A's helmet shows over B's shoulders: {head:?}");
+        // Alone, the head changes nothing.
+        let mut body = Marks::default();
+        body.soldier_bitten(a, r, 0.7, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+        let mut both = body.clone();
+        both.soldier_head(a, r, 0.7, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let (one, two) = (shot(&body), shot(&both));
+        let most = one.pixels().zip(two.pixels()).map(|(p, q)| (0..3).map(|c| (p.0[c] as i32 - q.0[c] as i32).abs()).max().unwrap()).max().unwrap();
+        assert!(most <= 2, "a lone soldier's head is its own figure's: {most}");
+    }
+
     /// A fallen soldier (the owner's playtest, 2026-11-18 16:12Z: "When
     /// soliders die, the body on the floor looks really bad") lies in our
     /// olive over a pool of blood that spreads after the fall: beside its
