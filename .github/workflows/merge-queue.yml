@@ -158,6 +158,9 @@ jobs:
             # Fast-forward only: refused if main moved while CI ran.
             if git push origin "$SHA:refs/heads/main"; then
               echo "landed: $PRS"
+              # The Windows build for play.cmd (windows-build.yml): this
+              # push starts no runs of its own, so it is asked for here.
+              gh workflow run windows-build.yml -R "$R" --ref main || echo "the Windows build was not started"
             else
               echo "main moved under the candidate; building again on the new main"
             fi

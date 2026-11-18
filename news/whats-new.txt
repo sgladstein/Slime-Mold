@@ -18,3 +18,5 @@
 2026-11-17 | engine | The game keeps a list of what is new, and remembers which lines this PC has already seen | Play a round, close the game and open it again: the lines from before are no longer marked new
 2026-11-17 | engine | F9 in play drops a numbered note in the play log, marking the moment and the place you are looking at | Press F9 when something feels wrong or right; afterwards say in a sentence what note 1 was
 2026-11-17 | engine | Every round keeps its own play log, in the play-logs folder, where before the next round on the same planet wrote over it |
+2026-11-17 | engine | play.cmd starts sooner after most updates: it fetches the game already built for that code, and builds on your PC only when there is none yet | Double-click play.cmd; it says "Using the game CI built for this code" or "Building"
+2026-11-17 | engine | When you quit, play.cmd sends the session's play logs to the play-logs branch on GitHub, or says plainly that it could not and keeps them for next time | Quit the game and read the last lines of the play.cmd window

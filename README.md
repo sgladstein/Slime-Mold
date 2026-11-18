@@ -14,8 +14,13 @@ Third-party crates and the bundled font keep their own licences
 
 **To play Larder World on Windows, double-click `play.cmd`** in the repo
 folder. It switches to main and pulls (skipped, with a note, if you have
-local changes or no network), builds the game and the map editor with
-cargo's progress bar, and opens the start menu. Extra arguments go to the
+local changes or no network), fetches the game CI built for that code or,
+when there is none yet, builds the game and the map editor with cargo's
+progress bar, and opens the start menu. When the game quits it sends the
+session's play logs (`play-logs/`) to the repository's `play-logs` branch,
+or says that it could not and keeps them for next time (`play.cmd send-logs`
+sends them and lets git ask for a GitHub sign-in, for a PC that has never
+pushed). Extra arguments go to the
 game: `play.cmd map=nest mode=squads`. `play-new-slime.cmd` is the same with the
 new-slime switches on (`try=far_smell try=unit_paths`). The window's title
 names the build; Options has an Experiments tab with every feature that is

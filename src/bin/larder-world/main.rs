@@ -1115,7 +1115,7 @@ impl App {
         let mission = match (&level, &a.mission) {
             (Some(l), _) => Some(l.mission.clone()),
             (None, Some(name)) => {
-                let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
+                let path = slime_mould::build::root().join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
                 Some(Mission::parse(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?)?)
             }
             (None, None) => None,
@@ -1171,7 +1171,7 @@ impl App {
             _ if made.is_some() => GpuWorld::with_map(device, queue, s, a.scale, made.as_ref().expect("a made map")),
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
-                let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+                let dir = slime_mould::build::root().join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
                     Some((d, n)) => (PathBuf::from(d), n.to_string()),
                     None => (dir, name.clone()),
@@ -2197,6 +2197,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     return Err(format!("ammo=: a number, or a round such as ammo/plain/slug/0/160/60/90/60/6+blast (got {v})").into());
                 }
                 args.ammo = Some(v.to_string());
+            }
+            // `version=1`: says which build this is and stops (CI checks
+            // its Windows build starts with it; no window, no GPU).
+            "version" => {
+                println!("larder-world {}", slime_mould::build::build().long());
+                return Ok(());
             }
             "look" => look = Some(v.to_string()),
             // `ui=150%` or `ui=1.5`: the UI's size this run (`uisize`).

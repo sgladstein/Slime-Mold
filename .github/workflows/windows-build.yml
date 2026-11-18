@@ -1,0 +1,95 @@
+# The Windows build of main, for the owner's play.cmd (the Engine and tools
+# lane's job 3, the plan of 2026-11-17). WHY: every play began with a cargo
+# build on the one PC that plays, minutes long after most updates. This
+# builds each new main once on a Windows runner and publishes it; play.ps1
+# fetches it when it is the code that is checked out, and builds locally
+# otherwise (Get-CiBuild).
+#
+# WHERE IT GOES: one release, tag `windows-build`, whose two files every run
+# overwrites: larder-world-windows.zip (larder-world.exe, larder-edit.exe,
+# build.txt) and build.txt (the commit it was built from). A release and not
+# a workflow artifact, because an artifact cannot be downloaded without a
+# GitHub token and a release's files can.
+#
+# WHEN IT RUNS: the merge queue dispatches it after it lands a batch (the
+# queue pushes main with GITHUB_TOKEN, which starts no push runs); a push to
+# main by hand starts it too. On a pull request that changes the play
+# scripts or this file it only runs the scripts' self-test, in Windows
+# PowerShell 5.1, the shell play.cmd uses: nothing else tests them.
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - play.ps1
+      - play.cmd
+      - scripts/play-selftest.ps1
+      - .github/workflows/windows-build.yml
+
+# A newer main replaces a build still running for an older one.
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build and publish
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      # The whole history without its files' contents (the pack is over a
+      # gigabyte, mostly films): build.rs counts commits for the build
+      # number, and a shallow clone has none to count.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - name: play.ps1 self-test (Windows PowerShell 5.1)
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\play-selftest.ps1
+      - uses: dtolnay/rust-toolchain@1.98
+        if: github.event_name != 'pull_request'
+      - uses: Swatinem/rust-cache@v2
+        if: github.event_name != 'pull_request'
+      - name: build
+        if: github.event_name != 'pull_request'
+        run: cargo build --release --locked --bin larder-world --bin larder-edit
+      # The game starts and says its build: a build that cannot start on
+      # Windows is not published.
+      - name: the build runs
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: ./target/release/larder-world.exe version=1
+      - name: package
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          mkdir out
+          git rev-parse HEAD > out/build.txt
+          cp target/release/larder-world.exe target/release/larder-edit.exe out/
+          cd out && 7z a -bso0 ../larder-world-windows.zip larder-world.exe larder-edit.exe build.txt
+      - name: publish
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          R: ${{ github.repository }}
+        run: |
+          # The zip first: build.txt is what play.ps1 reads to decide, and
+          # the zip names its own commit inside, so a reader between the
+          # two uploads sees a mismatch and builds locally.
+          sha=$(cat out/build.txt)
+          notes="The newest Windows build of main, for play.cmd. Built from $sha. Every new main overwrites these files; this is not a versioned release."
+          if ! gh release view windows-build -R "$R" >/dev/null 2>&1; then
+            gh release create windows-build -R "$R" --prerelease --target "$sha" --title "Windows build of main (for play.cmd)" --notes "$notes"
+          fi
+          gh release upload windows-build -R "$R" larder-world-windows.zip --clobber
+          gh release upload windows-build -R "$R" out/build.txt --clobber
+          gh release edit windows-build -R "$R" --notes "$notes"
