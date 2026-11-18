@@ -78,6 +78,7 @@
   <div class="eyebrow">Lab prototype &middot; 17 November 2026 &middot; planet 1, run seed 1</div>
   <h1>Steering the slime</h1>
   <p class="lede">A lure that every walker leans toward pulls the planet 1 colony off its crystal and into three turrets. By 1:30 the zone has killed <b>4,158</b> walkers against <b>1,623</b> with no lure, and rendered three times the food. No soldier is lost either way.</p>
+  <p class="dim">Scott's pick, 18 November: the lure goes into planets 1 to 3. <a href="#gun" style="color:var(--lure)">Part two</a>, below, tries the steering laid by the squad's own bullets.</p>
   <div class="key">
     <span style="--c: var(--slime)">amber: the slime</span>
     <span style="--c: var(--lure)">pink rings: the lure's pull, one ring every 20 cells of walking</span>
@@ -230,8 +231,74 @@
   </ul>
   <p class="dim">Not tried yet: a gun that lays the pull along its shots, leapfrogging lures to walk a body across the map, and planets past 3.</p>
 
+  <h2 id="gun">Part two: a gun that lays the pull</h2>
+  <p>Scott's words were "a gun that lets you corral and push the slime onto areas". So here every bullet a soldier lands writes into the same field: a push on the hit, a lure 30 cells further along the bullet's line, or both, each for 3 seconds. The scene: the squad walks up at 0:55 east of the colony on the north crystal, three turrets wait on its west side, and nobody places anything by hand.</p>
+  <p class="dim">Zoom 6, a minute of game a clip at twice real speed: 0:50 to 1:50, and 0:20 to 1:20 for the last, which is over sooner. Counts from each filmed run.</p>
+  <div class="clip">
+    <video src="shots-plain.mp4" poster="shots-plain.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag off">Plain fire</span>
+      <h3>Bullets only</h3>
+      <table>
+        <thead><tr><th></th><th>1:20</th><th>1:50</th></tr></thead>
+        <tbody><tr><td>Killed</td><td class="big">5,161</td><td class="big">9,726</td></tr><tr><td>Food rendered</td><td>726</td><td>1,235</td></tr><tr><td>Slime alive</td><td>13,332</td><td>11,607</td></tr></tbody>
+      </table>
+      <p class="what">The squad shoots the body where it meets them. The turrets catch the edge that spills west.</p>
+    </div>
+  </div>
+
+  <div class="clip">
+    <video src="shots-drive.mp4" poster="shots-drive.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag lure">Push and lure, gentle</span>
+      <h3>Every bullet steers</h3>
+      <table>
+        <thead><tr><th></th><th>1:20</th><th>1:50</th></tr></thead>
+        <tbody><tr><td>Killed</td><td class="big">5,156</td><td class="big">9,267</td></tr><tr><td>Food rendered</td><td>799</td><td>1,355</td></tr><tr><td>Slime alive</td><td>13,027</td><td>11,269</td></tr></tbody>
+      </table>
+      <p class="what">Pull 10, short reach. The marks pile up where the bullets land, which is round the squad, so the body sways about in front of it. A tie with plain fire.</p>
+    </div>
+  </div>
+
+  <div class="clip">
+    <video src="shots-evict.mp4" poster="shots-evict.jpg" muted loop playsinline controls preload="metadata"></video>
+    <div class="counts">
+      <span class="tag lure">Lure ahead, strong</span>
+      <h3>The colony walks off</h3>
+      <table>
+        <thead><tr><th></th><th>0:50</th><th>1:20</th></tr></thead>
+        <tbody><tr><td>Killed</td><td class="big">507</td><td class="big">1,351</td></tr><tr><td>Food rendered</td><td>98</td><td>208</td></tr><tr><td>Slime alive</td><td>12,640</td><td>11,742</td></tr></tbody>
+      </table>
+      <p class="what">Pull 30 from the first shot. The body leaves its crystal before the squad arrives and chases its own marks across the field. Far fewer kills, yet by 1:20 it is 1,590 walkers smaller than with plain fire, because off its crystal it stops growing.</p>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Every-bullet mark, by 2:00 (the test runs)</th><th>Killed</th><th>Food rendered</th><th>Slime alive</th></tr></thead>
+      <tbody>
+        <tr><td>Plain fire</td><td>10,533</td><td>1,282</td><td>11,460</td></tr>
+        <tr><td>Push on the hit, pull 30</td><td>8,543</td><td>1,434</td><td>13,058</td></tr>
+        <tr><td>Push on the hit, pull 10</td><td>8,947</td><td>1,478</td><td>14,102</td></tr>
+        <tr><td>Lure 30 ahead, pull 30</td><td>1,565</td><td>254</td><td>10,386</td></tr>
+        <tr><td>Push and lure, pull 10, short reach</td><td>10,005</td><td>1,520</td><td>10,867</td></tr>
+        <tr><td>One lure dart into the turrets at 0:55, pull 10</td><td>10,403</td><td>1,436</td><td>12,715</td></tr>
+        <tr><td>Three lure darts, 20 s apart, pull 10</td><td>10,661</td><td>1,533</td><td>11,736</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="dim">One seed. The filmed runs differ from the test runs by about 1% at the same time.</p>
+  <div class="verdict">
+    <p>Do not build a bullet that lays the pull. Deliver the lure by aim instead.</p>
+    <p>A bullet lands where the slime is nearest the squad, so marks laid by every hit gather round the squad, not where the player wants the slime to go. No version beat plain fire on kills. Pushes make the body back off the squad's fire (fewer kills, more slime alive). Placement is what herds: part one's lure, put down between the turrets, drew the home colony off its crystal and into them. In this scene the squad already stood in range, so even aimed darts added only 12 to 20% to the turrets' food.</p>
+  </div>
+  <ul>
+    <li><b>The gun's job is to carry the lure.</b> A lure dart, or a canister thrown where the player aims, is the same lure as the building and needs nothing new from the slime.</li>
+    <li><b>A lead worth one more look: evicting starves.</b> A strong pull that drags a colony off its crystal shrinks it without killing it. That is another way to win a planet, and it fits the Lure now going in.</li>
+  </ul>
+
   <footer>
-    One run seed a scene, filmed on the software GPU, so the sizes are a first look and not a balance. The prototype lives on the lab branch only and is not in the game. Report: <code>Reports/lab-steering-2026-11-17/README.md</code>.
+    One run seed a scene, filmed on the software GPU, so the sizes are a first look and not a balance. The prototypes live on the lab branch only. The lure is now being built into the game by the Enemy, Squad and Look lanes. Report: <code>Reports/lab-steering-2026-11-17/README.md</code>.
   </footer>
 </div>
 
