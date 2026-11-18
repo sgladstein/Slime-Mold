@@ -26,10 +26,12 @@ charge while every crystal over 130,000 sits in a slime of 23,000 to
 25,000 walkers; the bot has 3 to 9 soldiers at 2:30. A bot that backs off
 farther, or the Sprawler's smell off, gains a little on 2 of 3 seeds; the
 slime at 0.6 of its size gives 18 to 24 soldiers on all three. Seed 2
-lands by a free 365,000 crystal and builds 30. The size is Direction's
-(the tuning numbers); the lever is `Level::walkers` (`run.rs`'s
-`WALKERS_PER_DEPTH`, the area and `size_roll`), which has no per-tier
-factor today. The two local patches the films used are in the report.
+lands by a free 365,000 crystal and builds 30. Direction set the
+Sprawler's slime to 0.6 of its size (#485, 11-18): `run::tier_size`, a
+factor on `Level::walkers` per tier (other tiers 1), kept apart from the
+depth rule in the density test. Direction retunes it from the run bot's
+daily run on seeds 1 to 3 and the owner's play. The two local patches the
+films used are in the report.
 
 **Job 2, what planets 1 to 3 do by minute 2: page delivered**
 ([report](../Reports/planet-things-2026-11-18/README.md), one clip a
