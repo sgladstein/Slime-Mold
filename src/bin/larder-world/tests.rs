@@ -243,7 +243,9 @@ fn a_mission_shows_its_goal_and_its_end() {
     assert!(matches!(v.cause, Cause::Cap | Cause::Stuck), "{v:?}");
     assert_eq!(v.stars, 0);
     app.prepare();
-    assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));
+    // The end screen says the mission is lost (since 11-18 by its cause
+    // in the title, in the loss's colour).
+    assert!(app.model(None, None).end.is_some_and(|e| e.won == Some(false) && e.stars == Some(0)));
 }
 
 /// A GPU for the smoke tests, which skip without one, except in CI:

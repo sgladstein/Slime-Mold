@@ -595,8 +595,8 @@ pub struct Model {
     /// A small card by the cursor for what is under it (an enemy, the
     /// mould), leaving the selection panel alone.
     pub hover: Option<Info>,
-    /// The round is over: a title and lines.
-    pub end: Option<(String, Vec<String>)>,
+    /// The round is over: what the end screen shows.
+    pub end: Option<Ending>,
     /// Extra lines for the controls page (key, what it does).
     pub help: Vec<(String, String)>,
     /// The rows that open the key card in place of the RTS controls' own
@@ -664,6 +664,39 @@ pub struct Site {
     /// Doing its job this frame: a turret firing, a lure laying scent, a
     /// pump drawing charge.
     pub working: bool,
+}
+
+/// What the end screen shows (the Look and interface lane, 2026-11-18;
+/// the brief's "win and lose screens that show the planet's numbers").
+/// Before, a title and three grey lines, the last cut off with "..." at
+/// 100%: a run's planet was not named, nor its slime, nor what it did.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Ending {
+    /// Small, over the title: where ("Planet 3 of 8 · Dreskor · the
+    /// Trunk"), in the outcome's colour.
+    pub place: String,
+    pub title: String,
+    /// A win (green), a loss (red), or neither (a sandbox round at its
+    /// clock: the accent).
+    pub won: Option<bool>,
+    /// A mission's stars, of three: three discs under the title, the
+    /// earned ones in the outcome's colour.
+    pub stars: Option<u8>,
+    /// What the slime did to you, one sentence (a run's planet:
+    /// `run::does_to_you`), under the title.
+    pub says: String,
+    /// The round's numbers, each a value and what it counts, three to a
+    /// row.
+    pub tiles: Vec<(String, String)>,
+    /// Lines under the numbers: how it ended, the run's points.
+    pub lines: Vec<String>,
+}
+
+impl Ending {
+    /// A plain ending: a title and lines (the tests' and a film's).
+    pub fn plain(title: &str, lines: Vec<String>) -> Ending {
+        Ending { title: title.to_string(), lines, ..Ending::default() }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1322,8 +1355,8 @@ impl Hud {
             self.hover_card(h, p, a, c, s);
         }
         self.end = m.end.is_some();
-        if let Some((title, lines)) = &m.end {
-            self.end_screen(title, lines, m.main_menu, m.carry_on.as_deref(), c, s);
+        if let Some(e) = &m.end {
+            self.end_screen(e, m.main_menu, m.carry_on.as_deref(), c, s);
         } else if let Some(page) = self.menu {
             self.menu_draw(page, m, c, s);
         }
@@ -2438,29 +2471,112 @@ impl Hud {
         }
     }
 
-    fn end_screen(&mut self, title: &str, lines: &[String], main_menu: bool, carry_on: Option<&str>, c: &mut Canvas, s: f32) {
-        let w = 420.0 * s;
-        let bh = 42.0 * s;
+    /// The end screen: a card over the dimmed world. Where, in the
+    /// outcome's colour; the title; a mission's stars; what the slime
+    /// did; the round's numbers as tiles, three to a row (a value big,
+    /// what it counts small under it); how it ended; then the buttons.
+    /// Before 2026-11-18 it was a 420-wide card of a title and grey lines.
+    /// A card taller than the screen (at 200% on 1080 lines) is drawn
+    /// smaller to fit.
+    fn end_screen(&mut self, e: &Ending, main_menu: bool, carry_on: Option<&str>, c: &mut Canvas, s: f32) {
         let buttons = if main_menu { 3.0 } else { 2.0 };
-        let h = 96.0 * s + lines.len() as f32 * 22.0 * s + buttons * (bh + 10.0 * s) + 20.0 * s;
+        let cols = 3usize;
+        let rows = e.tiles.len().div_ceil(cols);
+        let stars = e.stars.filter(|&n| n > 0);
+        // Its height at size `s`: the title and the slime's sentence in
+        // lines as wrapped at that size.
+        let lay = |c: &Canvas, s: f32| {
+            let w = (560.0 * s).min(c.screen.0 as f32 - 32.0);
+            let inner = w - 56.0 * s;
+            let title = c.wrap(Weight::SemiBold, 28.0 * s, inner, &e.title);
+            let says = if e.says.is_empty() { Vec::new() } else { c.wrap(Weight::Medium, 15.0 * s, inner, &e.says) };
+            let tiles_h = if rows == 0 { 0.0 } else { rows as f32 * 64.0 * s + (rows - 1) as f32 * 10.0 * s + 20.0 * s };
+            let h = 28.0 * s
+                + if e.place.is_empty() { 0.0 } else { 22.0 * s }
+                + title.len() as f32 * 34.0 * s
+                + if stars.is_some() { 22.0 * s } else { 0.0 }
+                + says.len() as f32 * 21.0 * s
+                + 14.0 * s
+                + tiles_h
+                + e.lines.len() as f32 * 21.0 * s
+                + 12.0 * s
+                + buttons * 52.0 * s
+                + 18.0 * s;
+            (w, h, title, says)
+        };
+        let room = c.screen.1 as f32 - 32.0;
+        let (_, h0, ..) = lay(c, s);
+        let s = if h0 > room { s * room / h0 } else { s };
+        let (w, h, title, says) = lay(c, s);
+        let pad = 28.0 * s;
+        let inner = w - 2.0 * pad;
+        let bh = 42.0 * s;
         let r = self.modal(w, h, c, s);
-        c.text(Weight::SemiBold, 24.0 * s, (r.x + w / 2.0, r.y + 50.0 * s), Align::Centre, title, TEXT);
-        let mut y = r.y + 84.0 * s;
-        for l in lines {
-            c.text_fit(Weight::Medium, 13.5 * s, (r.x + w / 2.0, y), Align::Centre, l, w - 48.0 * s, MUTED);
+        let tone = match e.won {
+            Some(true) => GOOD,
+            Some(false) => BAD,
+            None => ACCENT,
+        };
+        // The outcome's colour along the card's top edge.
+        c.rrect(Rect::new(r.x + 16.0 * s, r.y, w - 32.0 * s, 3.0 * s), 1.5 * s, tone);
+        let mut y = r.y + pad;
+        if !e.place.is_empty() {
+            c.text_fit(Weight::SemiBold, 13.5 * s, (r.x + w / 2.0, y + 10.0 * s), Align::Centre, &e.place.to_uppercase(), inner, tone);
             y += 22.0 * s;
         }
-        y += 10.0 * s;
+        for l in &title {
+            c.text(Weight::SemiBold, 28.0 * s, (r.x + w / 2.0, y + 24.0 * s), Align::Centre, l, TEXT);
+            y += 34.0 * s;
+        }
+        if let Some(n) = stars {
+            let (d, gap) = (11.0 * s, 8.0 * s);
+            let x0 = r.x + w / 2.0 - (3.0 * d + 2.0 * gap) / 2.0;
+            for k in 0..3u8 {
+                let b = Rect::new(x0 + k as f32 * (d + gap), y + 9.0 * s, d, d);
+                if k < n {
+                    c.rrect(b, d / 2.0, tone);
+                } else {
+                    c.outline(b, d / 2.0, 1.5 * s, [255, 255, 255, 60]);
+                }
+            }
+            y += 22.0 * s;
+        }
+        for l in &says {
+            y += 21.0 * s;
+            c.text(Weight::Medium, 15.0 * s, (r.x + w / 2.0, y), Align::Centre, l, MUTED);
+        }
+        y += 14.0 * s;
+        if rows > 0 {
+            y += 6.0 * s;
+            let (tile_h, gap) = (64.0 * s, 10.0 * s);
+            let tw = (inner - (cols - 1) as f32 * gap) / cols as f32;
+            for (k, (value, what)) in e.tiles.iter().enumerate() {
+                let (col, row) = (k % cols, k / cols);
+                // A short last row sits in the middle.
+                let in_row = (e.tiles.len() - row * cols).min(cols);
+                let x0 = r.x + pad + (inner - (in_row as f32 * tw + (in_row - 1) as f32 * gap)) / 2.0;
+                let t = Rect::new(x0 + col as f32 * (tw + gap), y + row as f32 * (tile_h + gap), tw, tile_h);
+                c.panel(t, 10.0 * s, [255, 255, 255, 12], [255, 255, 255, 6], 1.0, EDGE);
+                c.text_fit(Weight::SemiBold, 23.0 * s, (t.x + tw / 2.0, t.y + 30.0 * s), Align::Centre, value, tw - 16.0 * s, TEXT);
+                c.text_fit(Weight::Medium, 13.0 * s, (t.x + tw / 2.0, t.y + 51.0 * s), Align::Centre, what, tw - 12.0 * s, MUTED);
+            }
+            y += rows as f32 * tile_h + (rows - 1) as f32 * gap + 14.0 * s;
+        }
+        for l in &e.lines {
+            y += 21.0 * s;
+            c.text_fit(Weight::Medium, 14.0 * s, (r.x + w / 2.0, y - 4.0 * s), Align::Centre, l, inner, MUTED);
+        }
+        y += 12.0 * s;
         match carry_on {
-            Some(label) => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), label, Hit::Menu(MenuItem::Continue), true, c, s),
-            None => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s),
+            Some(label) => self.wide_button(Rect::new(r.x + pad, y, inner, bh), label, Hit::Menu(MenuItem::Continue), true, c, s),
+            None => self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s),
         }
         let mut y = y + bh + 10.0 * s;
         if main_menu {
-            self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
+            self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
             y += bh + 10.0 * s;
         }
-        self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Quit", Hit::Menu(MenuItem::Quit), false, c, s);
+        self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Quit", Hit::Menu(MenuItem::Quit), false, c, s);
     }
 
     /// Where a command's button was last drawn.
@@ -3132,7 +3248,7 @@ mod tests {
     #[test]
     fn the_end_screen_takes_every_key() {
         let mut r = Rig::new((1920, 1080));
-        r.m.end = Some(("Over".into(), vec![]));
+        r.m.end = Some(Ending::plain("Over", vec![]));
         r.draw();
         assert_eq!(r.key(KeyCode::KeyA), (true, vec![]));
         assert_eq!(r.key(KeyCode::Escape), (true, vec![]));
@@ -3208,7 +3324,7 @@ mod tests {
             r.key(KeyCode::Escape);
             r.draw();
             assert_eq!(r.hud.hits.iter().any(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)), on);
-            r.m.end = Some(("Over".into(), vec![]));
+            r.m.end = Some(Ending::plain("Over", vec![]));
             r.draw();
             let b = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)).map(|(b, _)| *b);
             assert_eq!(b.is_some(), on, "end screen");
@@ -3226,7 +3342,7 @@ mod tests {
         for carry in [None, Some("On to the shop")] {
             let mut r = Rig::new((1600, 900));
             r.m.carry_on = carry.map(str::to_string);
-            r.m.end = Some(("Planet 1 freed".into(), vec![]));
+            r.m.end = Some(Ending::plain("Planet 1 freed", vec![]));
             r.draw();
             let has = |r: &Rig, h: Hit| r.hud.hits.iter().find(|(_, x)| *x == h).map(|(b, _)| *b);
             assert_eq!(has(&r, Hit::Menu(MenuItem::Restart)).is_some(), carry.is_none());
@@ -3236,6 +3352,33 @@ mod tests {
                 assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::Continue)]);
             } else {
                 assert!(carry.is_none());
+            }
+        }
+    }
+
+    /// The end screen (11-18): a run's planet lost, with everything it
+    /// can hold and three buttons, stays on the screen at every UI size
+    /// and screen; its numbers and the slime's sentence are drawn, and
+    /// the stars only for a win.
+    #[test]
+    fn the_end_screen_shows_the_planets_numbers_and_fits() {
+        let says = "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch";
+        let tiles: Vec<(String, String)> = [("9:41", "played"), ("12,604", "walkers killed"), ("1,520", "shots, 8.3 kills each"), ("0", "soldiers standing, 9 lost"), ("5,700", "food harvested"), ("42.3k of 43.4k", "slime left, of its peak")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
+        let end = Ending { place: "Planet 3 of 8 · Drevix · The Trunk".into(), title: "The squad is lost".into(), won: Some(false), stars: Some(0), says: says.into(), tiles, lines: vec!["Your last soldier fell at 9:41 (best 40% of the goal)".into(), "The run ends on planet 3".into()] };
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                r.m.main_menu = true;
+                r.m.carry_on = Some("End the run".into());
+                r.m.end = Some(end.clone());
+                r.draw();
+                let quit = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::Quit)).map(|(b, _)| *b).unwrap();
+                assert!(quit.bottom() <= screen.1 as f32 && quit.y > 0.0 && quit.x >= 0.0 && quit.right() <= screen.0 as f32, "{screen:?} at {user}: Quit {quit:?} off screen");
+                for t in ["12,604", "walkers killed", "42.3k of 43.4k", "THE TRUNK"] {
+                    assert!(r.c.runs.iter().any(|x| x.text.contains(t)), "{screen:?} at {user}: no {t}");
+                }
+                assert!(r.c.runs.iter().any(|x| x.text.starts_with("It walls the crystals")), "{screen:?} at {user}: the slime's sentence");
             }
         }
     }

@@ -132,3 +132,90 @@ fn film_moves() {
     }
     std::fs::write(format!("{dir}/drawn.csv"), log).unwrap();
 }
+
+/// **The end screens** (Look and interface, 2026-11-18): a run's planet
+/// won, a run's planet lost and a sandbox round at its clock, each played
+/// `FILM_SECS` (60) game seconds by the scripted hand `FILM_HAND`
+/// (greedy), then ended as the game would end it, and the window's whole
+/// picture saved as `DIR/end-<case>.png`. Ignored; run by hand on
+/// software Vulkan:
+///
+/// `FILM=DIR cargo test --release --bin larder-world film_ends --
+/// --ignored --nocapture`
+///
+/// `FILM_SIZE` (1280x800), `FILM_UI` (the UI size, 1 for 100%),
+/// `FILM_CASES` (`won,lost,sandbox`).
+#[test]
+#[ignore]
+fn film_ends() {
+    use slime_mould::mould::larder::End;
+    let env = |k: &str| std::env::var(k).ok();
+    let dir = env("FILM").expect("FILM=DIR");
+    std::fs::create_dir_all(&dir).unwrap();
+    let Some((device, queue)) = gpu() else { panic!("no gpu") };
+    let size = env("FILM_SIZE").map_or((1280, 800), |v| {
+        let (a, b) = v.split_once('x').unwrap();
+        (a.parse().unwrap(), b.parse().unwrap())
+    });
+    let secs: f32 = env("FILM_SECS").map_or(60.0, |v| v.parse().unwrap());
+    let hand = env("FILM_HAND").unwrap_or("greedy".into());
+    let cases = env("FILM_CASES").unwrap_or("won,lost,sandbox".into());
+    for case in cases.split(',') {
+        // The command line's own defaults (`main`'s `args`).
+        let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, ..Default::default() };
+        let args = match case {
+            // Planet 1 of run seed 1 (the Drifter), won; planet 3 (the
+            // Trunk), lost.
+            "won" | "lost" => {
+                let mut r = Run::new(1);
+                r.depth = if case == "won" { 1 } else { 3 };
+                run_args(&base, &start_menu(&base), &r)
+            }
+            _ => Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() },
+        };
+        let mut app = offscreen(args, size, &device, &queue).unwrap();
+        if let Some(u) = env("FILM_UI") {
+            app.canvas.as_mut().unwrap().ui.user = u.parse().unwrap();
+        }
+        app.prepare();
+        let step = 1.0 / 15.0;
+        let mut last = u64::MAX;
+        while app.game.as_ref().is_some_and(|g| g.time() < secs && g.end.is_none()) {
+            let g = app.game.as_mut().unwrap();
+            let sec = g.world.ticks() / g.rules.tps as u64;
+            if sec != last {
+                last = sec;
+                hands::plan(g, &hand);
+            }
+            app.step(step);
+        }
+        let g = app.game.as_mut().unwrap();
+        let t = g.time();
+        if case == "lost" {
+            for s in g.soldiers.iter_mut() {
+                s.alive = false;
+            }
+        }
+        if g.end.is_none() {
+            g.end = Some(match case {
+                "won" => End::MouldWiped(t),
+                "lost" => End::SquadWiped(t),
+                _ => End::Cap(0.62),
+            });
+        }
+        app.step(step);
+        let fit = app.camera.fit();
+        app.camera.zoom_to(fit, app.camera.to_screen(app.camera.centre()));
+        app.camera.centre_on((app.camera.world.0 / 2.0, app.camera.world.1 / 2.0));
+        app.prepare();
+        let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("film") });
+        view.record(&mut enc, &app.camera, None);
+        cp.record(&mut enc, &view.out, view.stride);
+        queue.submit([enc.finish()]);
+        let path = format!("{dir}/end-{case}.png");
+        view.picture().save(&path).unwrap();
+        let m = app.model(None, None);
+        println!("{path}: {:?}", m.end);
+    }
+}

@@ -3,6 +3,7 @@
 //! unchanged (C9, 2026-11-14).
 
 use super::*;
+use slime_mould::world::ui::Ending;
 
 /// The look's ground field from the game's world: rock, wet and agar from
 /// the engine's CPU mirror; crystals from its own cells (`pile_of`, so
@@ -97,31 +98,83 @@ pub(super) fn live_code(g: &Game<GpuWorld>, depth: &[u8], i: usize, old: u32, ch
     base | (depth.get(i).copied().unwrap_or(0) as u32) << 16 | ((d.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4 | (old & look::FAR)
 }
 
-pub(super) fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
-    let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
-    let title = match end {
-        End::MouldWiped(t) => format!("The mould is wiped out at {}", clock(t)),
-        End::SquadWiped(t) => format!("The squad is lost at {}", clock(t)),
-        End::Overrun(t) => format!("The mould overran the larder at {}", clock(t)),
-        End::Cap(s) if s > 0.5 => "Time: you took more of the crystals than the mould".to_string(),
-        End::Cap(s) if s < 0.5 => "Time: the mould took more of the crystals".to_string(),
-        End::Cap(_) => "Time: an even race".to_string(),
+/// A round's end, not a mission's (the sandbox): what ended it in the
+/// title, the round's numbers, and the score. `place` is the map.
+pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, place: String) -> Ending {
+    let (title, won, at) = match end {
+        End::MouldWiped(t) => ("The mould is wiped out", Some(true), t),
+        End::SquadWiped(t) => ("The squad is lost", Some(false), t),
+        End::Overrun(t) => ("The mould overran the larder", Some(false), t),
+        End::Cap(s) if s > 0.5 => ("Time: you took more of the crystals", Some(true), g.time()),
+        End::Cap(s) if s < 0.5 => ("Time: the mould took more of the crystals", Some(false), g.time()),
+        End::Cap(_) => ("Time: an even race", None, g.time()),
     };
     let mut lines = Vec::new();
     if let End::Cap(s) = end {
-        let m = g.mould as f32 / g.start_mould.max(1) as f32;
-        lines.push(format!("You took {:.0}% of the charge gone from the crystals; the mould is {} walkers, {m:.1} times its start", s * 100.0, thousands(g.mould)));
+        lines.push(format!("You took {:.0}% of the charge gone from the crystals", s * 100.0));
     }
-    lines.push(summary(g));
     lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
-    (title, lines)
+    Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines }
 }
 
-/// A mission's end: stars and the cause in the title, then what happened.
-pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> (String, Vec<String>) {
+/// A mission's end: the cause in the title (stars when won), the round's
+/// numbers, and how it ended. A run's planet adds its own (`App::model`).
+pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
     let v = tr.verdict.expect("a verdict");
-    let stars = if v.stars == 0 { "Mission lost".to_string() } else { format!("{}: {}", tr.mission.name, "*".repeat(v.stars as usize)) };
-    (stars, vec![tr.cause_line(), summary(g)])
+    let title = if v.stars > 0 {
+        "Mission won".to_string()
+    } else {
+        use slime_mould::mould::campaign::Cause;
+        match v.cause {
+            Cause::SquadWiped => "The squad is lost",
+            Cause::Overrun => "The slime took the larder",
+            Cause::Stuck => "Out of food",
+            Cause::MouldWiped => "The slime is gone, the goal missed",
+            Cause::Cap | Cause::Goal => "Out of time",
+        }
+        .to_string()
+    };
+    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()] }
+}
+
+/// The end screen's numbers (Look and interface, 2026-11-18): how long
+/// the round ran, the walkers killed, the shots and kills a shot, the
+/// soldiers standing and lost, the food harvested, and the slime left
+/// against its peak. Before they were one grey line, cut off at 100%.
+fn end_tiles(g: &Game<GpuWorld>, at: f32) -> Vec<(String, String)> {
+    let lost = g.soldiers.iter().filter(|s| !s.alive).count();
+    let shots = if g.shots > 0 { format!("shots, {:.1} kills each", g.killed as f32 / g.shots as f32) } else { "shots".into() };
+    vec![
+        (format!("{}:{:02}", at as u32 / 60, at as u32 % 60), "played".into()),
+        (grouped(g.killed as usize), "walkers killed".into()),
+        (grouped(g.shots as usize), shots),
+        (format!("{}", g.alive()), if lost == 0 { "soldiers standing, none lost".into() } else { format!("soldiers standing, {lost} lost") }),
+        (grouped(g.harvested.round() as usize), "food harvested".into()),
+        (format!("{} of {}", walkers(g.mould), walkers(g.peak.max(g.mould))), "slime left, of its peak".into()),
+    ]
+}
+
+/// Walkers as the top bar counts them from 10,000 ("42.3k"), else whole
+/// ("1,558").
+fn walkers(n: usize) -> String {
+    if n >= 10_000 {
+        thousands(n)
+    } else {
+        grouped(n)
+    }
+}
+
+/// A count with its thousands set off ("12,630").
+fn grouped(n: usize) -> String {
+    let d = n.to_string();
+    let mut out = String::new();
+    for (i, ch) in d.chars().enumerate() {
+        if i > 0 && (d.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(ch);
+    }
+    out
 }
 
 pub(super) fn summary(g: &Game<GpuWorld>) -> String {
@@ -1469,19 +1522,30 @@ impl App {
             _ => None,
         };
         if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
-            m.end = Some(mission_screen(tr, g));
-            if let (Some(r), Some(v), Some(end)) = (&self.args.run, tr.verdict, m.end.as_mut()) {
-                let last = r.depth >= slime_mould::mould::run::PLANETS;
+            let mut end = mission_screen(tr, g);
+            if let (Some(r), Some(v)) = (&self.args.run, tr.verdict) {
+                use slime_mould::mould::run;
+                let last = r.depth >= run::PLANETS;
+                // A run's planet: which, its slime and what that slime
+                // does to you (`run::does_to_you`, the line the landing
+                // alert says), so the end names what happened to you.
+                let tier = r.level().tier;
+                end.place = format!("Planet {} of {} · {} · {}", r.depth, run::PLANETS, r.planet().name, title_case(tier.name()));
+                end.says = run::does_to_you(tier).says.to_string();
+                if v.stars > 0 {
+                    end.title = if last { "The home world is free".into() } else { format!("Planet {} freed", r.depth) };
+                }
                 let (label, line) = match (v.stars > 0, last) {
                     (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
-                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", slime_mould::mould::run::reward(r.depth, v.stars), r.points + slime_mould::mould::run::reward(r.depth, v.stars))),
+                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", run::reward(r.depth, v.stars), r.points + run::reward(r.depth, v.stars))),
                     (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
                 };
-                end.1.insert(1, line);
+                end.lines.push(line);
                 m.carry_on = Some(label.into());
             }
+            m.end = Some(end);
         } else if let Some(end) = g.end {
-            m.end = Some(end_screen(end, g));
+            m.end = Some(end_screen(end, g, map_title(&self.name, self.args.seed)));
         }
         m.help = if self.sq.is_some() {
             m.help_base = Some(squad_help());
