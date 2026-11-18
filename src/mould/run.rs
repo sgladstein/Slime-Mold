@@ -293,6 +293,12 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// the Enemy lane; the owner's card, 11-18 03:03Z: "Lure now, in the three
 /// planets"). Calm slime within `Rules::lure_reach` of a Lure that is on
 /// leans down the walking distance to it (`raids.rs`'s `time_lure_paths`).
+///
+/// **The slime holds together on its way out** (`tether` `TETHER`,
+/// 2026-11-18, the Enemy lane; the owner's play notes that day): a
+/// breakaway or a cut-off walker making for food steps only where it
+/// touches others (engine.wgsl's `tethered`); a raid goes as one body by
+/// its march (`RaidRules::march`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
     vec![
@@ -302,8 +308,16 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("roam_share", format!("{}", ROAM_SHARE[i])),
         ("far_smell", "1".to_string()),
         ("lure_pull", format!("{LURE_PULL}")),
+        ("tether", format!("{TETHER}")),
     ]
 }
+
+/// **The walkers a marcher's next cell must touch** (the engine's
+/// `tether`, 2026-11-18, the Enemy lane). The Lab's pick (one body,
+/// `Reports/lab-body-2026-11-18`): on planet 1, run seed 1, 2 halved the
+/// loose walkers in a calm breakaway (407 to 192); 3, 4 or side contact
+/// did no better. On raiders it kept the raid home, so they are left out.
+pub const TETHER: u32 = 2;
 
 /// **How hard a lure pulls** (the engine's `lure_pull`), one number for
 /// every tier, Direction's to tune. 10 is the lab's recommended start:
@@ -1482,10 +1496,10 @@ mod tests {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" {
+                if k == "lure_pull" || k == "tether" {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert_eq!(s.lure_pull, LURE_PULL, "planet {d}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();

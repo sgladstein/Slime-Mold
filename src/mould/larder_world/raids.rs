@@ -35,6 +35,7 @@
 //! slime.
 
 use super::{Game, Kind, Rng, World};
+use crate::mould::big::{Lump, RAID_BLOCK};
 
 /// The raids' numbers. Times in game seconds, distances in dish cells.
 ///
@@ -89,6 +90,42 @@ pub struct RaidRules {
     pub share: f32,
     /// A lure that is on within this of the raid's target takes the raid.
     pub lure_r: f32,
+    /// **The march** (2026-11-18, the Enemy lane; the owner's play notes,
+    /// 15:56Z: "Often, especially during raids the slime feels more like a
+    /// bunch of individual walkers instead of a single slime unit", and
+    /// 15:58Z: "Seeing the individual walkers doesn't bother me when I am
+    /// attacking a big slime blob and the walkers surge towards me, but
+    /// when they all leave the blob and most of what I see is individual
+    /// walkers that is problematic"). The raid buds off the side of the
+    /// slime nearest its target as one held body (a lump, `big::Lump`,
+    /// with none of a mini-boss's look or strength) and walks its way
+    /// round walls to the target: `march_pull` steers it at a point down
+    /// the raid's walking distance, `march_leash` holds it together, and
+    /// its walkers step at `march_haste` of their pace. Within its own size
+    /// of the target it lets go and pours onto it as a raid of the walkers
+    /// round the target (the surge he does not mind). It also lets go with
+    /// under `march_quorum` of its first members left, or after
+    /// `march_time`. Off (`march` false), or with no lump free (the
+    /// mini-bosses and the marches share `big::LUMPS`), a raid streams to
+    /// its target walker by walker, as every raid did until then.
+    pub march: bool,
+    pub march_pull: f32,
+    pub march_leash: f32,
+    pub march_haste: f32,
+    pub march_quorum: f32,
+    pub march_time: f32,
+    /// A march not ten dish cells nearer its target after `march_stall`
+    /// seconds lets go and streams to it as the raid would have: one
+    /// formed inside planet 1's ring of rock round the home crystal took
+    /// 12 s to leave it in one film and 35 s in another (the tether off).
+    pub march_stall: f32,
+    /// A march takes `march_size` times the raid's drawn size: 1.5, since
+    /// a march at 1 (the stream's walkers) poured onto the squad and left
+    /// it at health 75 at 1:08 against the stream's 53 (planet 1 of run
+    /// seed 1, the pumps hand, the first raid forced at 0:20); at 1.5 it
+    /// took two pumps by 1:08 (the stream one, and most of a second), the
+    /// squad at 93 then and 80 by 1:20 (Reports/raid-march-2026-11-18).
+    pub march_size: f32,
     /// The last stand (off here; on for the Swarmer in a run), and the
     /// share of its peak mass the slime falls under to make it.
     pub last_stand: bool,
@@ -117,6 +154,24 @@ impl Default for RaidRules {
             size_max: 0.4,
             share: 0.6,
             lure_r: 40.0,
+            // A mini-boss's leash (1.3) at twice a walker's pace (1.5 in
+            // the first film: shot down on its way). A leash of 1.0 (pull
+            // 20 to 40) packed it no rounder by the squad (spread 1.9 to
+            // 2.0 against 2.1) and held it 3 to 10 s at the edge first.
+            // Pull 100, not the mini-boss's 30: a march of 1.5 times the
+            // raid formed inside planet 1's rock ring, round the home
+            // crystal, and at 30 sank into the body (its way 122 cells
+            // long at the start, 156 a minute later); at 60 it took 24 s
+            // to reach 99 cells, at 100 18 s to 95, and at size 1 it went
+            // as at 30 (93 cells at 0:30 against 96).
+            march: true,
+            march_pull: 100.0,
+            march_leash: 1.3,
+            march_haste: 2.0,
+            march_quorum: 0.3,
+            march_time: 90.0,
+            march_stall: 15.0,
+            march_size: 1.5,
             last_stand: false,
             last_stand_at: 0.25,
         }
@@ -164,11 +219,37 @@ pub struct Raid {
     pub last_stand: bool,
 }
 
+/// A raid walking as one body (`RaidRules::march`).
+#[derive(Debug)]
+pub struct March {
+    /// The lump it walks as (`World::form_lump`).
+    pub lump: usize,
+    /// Its target (fine cells).
+    pub to: (f32, f32),
+    /// Its members at its first look (0 before it), and at its last; its
+    /// centre then (fine cells).
+    pub first: u32,
+    pub members: u32,
+    pub centre: (f32, f32),
+    /// The tick it set off.
+    pub since: u64,
+    /// Its way: the raid's walking distance to `to`, a word a
+    /// `big::RAID_BLOCK` block (`big::raid_field_for`).
+    field: Vec<u32>,
+    /// The raid's reach (dish cells) and share, for a stream if it stalls;
+    /// its distance to `to` at its first look (fine cells).
+    reach: f32,
+    share: f32,
+    start: f32,
+}
+
 /// The game's raid state.
 #[derive(Debug)]
 pub struct Raids {
     /// Every raid sent, oldest first.
     pub sent: Vec<Raid>,
+    /// The raids walking as one body now (`RaidRules::march`).
+    pub marching: Vec<March>,
     /// The tick the next raid is due (drawn at the first second, then at
     /// each raid).
     pub next: Option<u64>,
@@ -196,7 +277,7 @@ pub struct Raids {
 
 impl Raids {
     pub fn new(seed: u64) -> Raids {
-        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lure_way: None, lure_set: false }
+        Raids { sent: Vec::new(), marching: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lure_way: None, lure_set: false }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -339,7 +420,7 @@ impl Way {
 /// The search stops past `limit` fine cells of walking (`u32::MAX` past
 /// it), so a lure's field costs its reach and not the map.
 pub(super) fn round_walk(agar: &[bool], w: usize, h: usize, from: &[u32], limit: u32) -> Vec<u32> {
-    use crate::mould::big::{RAID_BLOCK, UNITS_REACH};
+    use crate::mould::big::UNITS_REACH;
     let b = RAID_BLOCK;
     let (bw, bh) = (w.div_ceil(b), h.div_ceil(b));
     // The open blocks: every fine cell agar.
@@ -554,11 +635,16 @@ impl<W: World> Game<W> {
         // A raid decided a game second ago goes now, with its way round
         // walls: always a second later, so the game is the same however
         // fast the thread was.
+        self.time_march();
         if let Some((mut d, way)) = self.raids.pending.take() {
             let field = way.finish();
             let fine = self.world.fine_steps().max(1) as u64;
             d.tick = self.world.ticks();
-            self.world.set_raid((d.tick * fine + 1).min(u32::MAX as u64 - 1) as u32, d.to, d.reach, d.share, field);
+            // As one body when it can (`RaidRules::march`), else a stream.
+            let field = if self.rules.raid.march && !d.last_stand { self.start_march(&d, field) } else { Some(field) };
+            if let Some(field) = field {
+                self.world.set_raid((d.tick * fine + 1).min(u32::MAX as u64 - 1) as u32, d.to, d.reach, d.share, field);
+            }
             self.raids.sent.push(d);
             return;
         }
@@ -654,6 +740,154 @@ impl<W: World> Game<W> {
         self.raids.pending = Some((Raid { tick: self.world.ticks(), aim, to, reach, size, held, share, last_stand }, way));
     }
 
+    /// Raid `d` sets off as one body (`RaidRules::march`) on a lump no
+    /// mini-boss or other march holds: the disc of the slime round the
+    /// middle of its walkers nearest the target, as many as the raid's
+    /// size (`march_from`). None once it has; the way back when it cannot
+    /// (no lump free, no grid), for the raid to stream.
+    fn start_march(&mut self, d: &Raid, field: Vec<u32>) -> Option<Vec<u32>> {
+        let held = |l: usize| self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).any(|b| b.lump == l) || self.raids.marching.iter().any(|m| m.lump == l);
+        let Some(lump) = (0..crate::mould::big::LUMPS).rev().find(|&l| !held(l)) else { return Some(field) };
+        let Some((at, r)) = self.march_from(d.to, self.rules.raid.march_size.max(0.0) * d.size * self.world.mass() as f32, &field) else { return Some(field) };
+        self.world.form_lump(lump, Some((at, r)));
+        let mut m = March { lump, to: d.to, first: 0, members: 0, centre: at, since: self.world.ticks(), field, reach: d.reach, share: d.share, start: f32::MAX };
+        self.steer_march(&mut m, r * self.world.scale());
+        self.raids.marching.push(m);
+        None
+    }
+
+    /// Where a march buds off (fine cells) and its reach (dish cells): the
+    /// middle of the `want` walkers nearest `to` along its way (`field`, a
+    /// raid's walking distance on `RAID_BLOCK` blocks, about a fine cell a
+    /// unit; as the crow flies, and after every square on the way, where
+    /// the way is empty or does not reach), and the disc round it that
+    /// holds as many, from the mould grid (squares of a dish cell). None
+    /// with no grid or no slime. Along the way, not as the crow flies: on
+    /// planet 1 the home crystal sits in a ring of rock, and the walkers
+    /// nearest the target as the crow flies were inside it, away from the
+    /// ring's gap; a march formed there sank into the body and stood (a
+    /// film with the tether off: its way 120 cells at 0:21, 122 at 0:56).
+    fn march_from(&self, to: (f32, f32), want: f32, field: &[u32]) -> Option<((f32, f32), f32)> {
+        let sc = self.world.scale();
+        let bin = (sc as usize).max(1);
+        let g = self.world.mould_grid(bin)?;
+        let (w, _) = self.world.size();
+        let gw = w.div_ceil(bin);
+        let bw = w.div_ceil(RAID_BLOCK);
+        let b = bin as f32;
+        let mid = |i: usize| (((i % gw) as f32 + 0.5) * b, ((i / gw) as f32 + 0.5) * b);
+        let by = |p: (f32, f32)| {
+            let mut v: Vec<(f32, usize)> = g.iter().enumerate().filter(|&(_, &n)| n > 0).map(|(i, _)| ((mid(i).0 - p.0).hypot(mid(i).1 - p.1), i)).collect();
+            v.sort_by(|a, c| a.0.total_cmp(&c.0));
+            v
+        };
+        let way = |i: usize| {
+            let (x, y) = mid(i);
+            field.get((y as usize / RAID_BLOCK) * bw + x as usize / RAID_BLOCK).copied().filter(|&d| d != u32::MAX)
+        };
+        let mut near = by(to);
+        if !field.is_empty() {
+            near.sort_by(|a, c| match (way(a.1), way(c.1)) {
+                (Some(x), Some(y)) => x.cmp(&y),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.0.total_cmp(&c.0),
+            });
+        }
+        let (mut sum, mut sx, mut sy) = (0.0f32, 0.0f32, 0.0f32);
+        for &(_, i) in &near {
+            let n = g[i] as f32;
+            (sum, sx, sy) = (sum + n, sx + n * mid(i).0, sy + n * mid(i).1);
+            if sum >= want {
+                break;
+            }
+        }
+        if sum <= 0.0 {
+            return None;
+        }
+        let at = (sx / sum, sy / sum);
+        let mut held = 0.0f32;
+        for &(d, i) in &by(at) {
+            held += g[i] as f32;
+            if held >= want {
+                return Some((at, (d + 0.5 * b) / sc));
+            }
+        }
+        Some((at, 1.0e4))
+    }
+
+    /// Each march once a game second: it steers for a point down its way;
+    /// within its own size of the target (and its leash's slack and three
+    /// dish cells) it lets go and its walkers pour onto the target as a
+    /// raid of share 1 over that reach. A soldier within the surge's reach
+    /// of its edge (the guns' range and `Rules::panic_margin`) meets it,
+    /// and it pours onto that soldier instead, straight (a lump's walkers
+    /// neither surge nor charge, so the first film's march walked into
+    /// the squad's fire and was shot to pieces). No nearer its target
+    /// after `march_stall`, or still walking after `march_time`, it lets go
+    /// and streams to the target as the raid would have, so a raid always
+    /// lands. With under `march_quorum` of its first members left (shot
+    /// down) it only lets go.
+    fn time_march(&mut self) {
+        if self.raids.marching.is_empty() {
+            return;
+        }
+        let r = self.rules.raid;
+        let sc = self.world.scale();
+        let now = self.world.ticks();
+        let lumps = self.world.lumps();
+        // A soldier this near meets the march (the surge's reach past the
+        // body's edge): the march pours onto the squad instead.
+        let meet = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * sc;
+        let soldiers: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        let mut marching = std::mem::take(&mut self.raids.marching);
+        let mut pour = None;
+        marching.retain_mut(|m| {
+            let (centre, n) = lumps[m.lump].map_or((m.centre, 0), |(x, y, n)| ((x, y), n));
+            let off = (centre.0 - m.to.0).hypot(centre.1 - m.to.1);
+            if m.first == 0 {
+                (m.first, m.start) = (n, off);
+            }
+            (m.centre, m.members) = (centre, n);
+            let edge = r.march_leash.max(1.0) * (n as f32 / std::f32::consts::PI).sqrt();
+            let met = soldiers.iter().map(|&p| (p, (p.0 - centre.0).hypot(p.1 - centre.1))).filter(|&(_, d)| d <= edge + meet).min_by(|a, b| a.1.total_cmp(&b.1));
+            let secs = |s: f32| (s.max(0.0) * self.rules.tps as f32) as u64;
+            let late = (now >= m.since + secs(r.march_stall) && off > m.start - 10.0 * sc) || now >= m.since + secs(r.march_time);
+            let done = n == 0 || (n as f32) < r.march_quorum * m.first as f32;
+            if n > 0 && off <= edge + 3.0 * sc {
+                // There: onto the target, down its way.
+                pour = Some((m.to, (edge + 3.0 * sc) / sc, 1.0, std::mem::take(&mut m.field)));
+            } else if let (Some((p, d)), false) = (met, n == 0) {
+                // The squad in the way: straight at its nearest soldier.
+                pour = Some((p, (d + edge + 3.0 * sc) / sc, 1.0, Vec::new()));
+            } else if late && !done {
+                // Stalled or slow: the raid streams to its target after all.
+                pour = Some((m.to, m.reach, m.share, std::mem::take(&mut m.field)));
+            } else if !done {
+                self.steer_march(m, edge / r.march_leash.max(1.0));
+                return true;
+            }
+            self.world.form_lump(m.lump, None);
+            false
+        });
+        self.raids.marching = marching;
+        if let Some((to, reach, share, field)) = pour {
+            let fine = self.world.fine_steps().max(1) as u64;
+            self.world.set_raid((now * fine + 1).min(u32::MAX as u64 - 1) as u32, to, reach, share, field);
+        }
+    }
+
+    /// March `m`'s steering: its aim a body's length and ten dish cells
+    /// down its way from its centre (`down_way`; the target itself where
+    /// the way does not reach), its pull, leash and pace. `body` is its
+    /// radius, fine cells.
+    fn steer_march(&mut self, m: &mut March, body: f32) {
+        let r = self.rules.raid;
+        let size = self.world.size();
+        let aim = down_way(&m.field, size.0.div_ceil(RAID_BLOCK), m.centre, body + 10.0 * self.world.scale()).unwrap_or(m.to);
+        self.world.set_lump(m.lump, Lump { aim: super::raid_cell(aim, size), pull: r.march_pull, leash: r.march_leash, haste: r.march_haste, ..Lump::default() });
+    }
+
     /// The smallest reach round `to` (dish cells) whose squares of the
     /// mould grid hold `want` walkers, and what it holds; the whole map
     /// where the world gives no grid.
@@ -682,10 +916,69 @@ impl<W: World> Game<W> {
     }
 }
 
+/// The point (fine cells) `look` fine cells down `field` (a raid's
+/// walking distance to its target, a word a `RAID_BLOCK` block, `bw`
+/// blocks a row) from `from`: from its block (or the nearest reached one
+/// within two blocks), each step to the neighbouring block nearest the
+/// target, stopping at the target. None where no block near `from` is
+/// reached. A march steers for it, since a lump's pull is straight at its
+/// aim and finds no way round a wall by itself (`bosses.rs`, the sapper).
+pub fn down_way(field: &[u32], bw: usize, from: (f32, f32), look: f32) -> Option<(f32, f32)> {
+    let bh = field.len() / bw.max(1);
+    if bw == 0 || bh == 0 {
+        return None;
+    }
+    let b = RAID_BLOCK as f32;
+    let (fx, fy) = ((from.0 / b).floor() as i64, (from.1 / b).floor() as i64);
+    let at = |x: i64, y: i64| (x >= 0 && y >= 0 && (x as usize) < bw && (y as usize) < bh).then(|| field[y as usize * bw + x as usize]).filter(|&d| d != u32::MAX);
+    let (mut x, mut y) = (-2..=2i64).flat_map(|dy| (-2..=2i64).map(move |dx| (dx, dy))).filter_map(|(dx, dy)| at(fx + dx, fy + dy).map(|d| (d, dx * dx + dy * dy, fx + dx, fy + dy))).min_by_key(|&(d, o, _, _)| (o, d)).map(|(_, _, x, y)| (x, y))?;
+    for _ in 0..(look / b).ceil().max(0.0) as usize {
+        let here = at(x, y)?;
+        let Some((d, nx, ny)) = (-1..=1i64).flat_map(|dy| (-1..=1i64).map(move |dx| (dx, dy))).filter(|&o| o != (0, 0)).filter_map(|(dx, dy)| at(x + dx, y + dy).map(|d| (d, x + dx, y + dy))).min_by_key(|&(d, _, _)| d) else { break };
+        if d >= here {
+            break;
+        }
+        (x, y) = (nx, ny);
+    }
+    Some(((x as f32 + 0.5) * b, (y as f32 + 0.5) * b))
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{round_walk, RaidRules, Raids};
-    use crate::mould::big::{units_field_for, RAID_BLOCK};
+    use super::{down_way, round_walk, RaidRules, Raids};
+    use crate::mould::big::{raid_field_for, units_field_for, RAID_BLOCK};
+
+    /// **A march's way round a wall** (`down_way`, 2026-11-18): on a map
+    /// 80 x 40 fine cells cut by a wall down x 40 to 47 with a gap at the
+    /// bottom, from the left toward a target on the right, the point a
+    /// march steers for drops toward the gap before it turns for the
+    /// target, the walking distance falling all the way; a look of 0 is
+    /// the march's own block; a centre on the wall steers from the nearest
+    /// open block; far from any open block there is none.
+    #[test]
+    fn a_march_steers_down_its_way_round_a_wall() {
+        let (w, h) = (80, 40);
+        let agar: Vec<bool> = (0..w * h).map(|i| !((40..48).contains(&(i % w)) && i / w < 34)).collect();
+        let to = 70 | 10 << 16;
+        let field = raid_field_for(&agar, w, h, to);
+        let bw = w.div_ceil(RAID_BLOCK);
+        let d = |p: (f32, f32)| field[(p.1 as usize / RAID_BLOCK) * bw + p.0 as usize / RAID_BLOCK];
+        let from = (20.0, 10.0);
+        assert_eq!(down_way(&field, bw, from, 0.0), Some((21.0, 11.0)), "its own block");
+        let near = down_way(&field, bw, from, 16.0).unwrap();
+        assert!(near.1 > from.1 + 4.0, "heads down for the gap first, not straight at the wall: {near:?}");
+        let far = down_way(&field, bw, from, 1.0e3).unwrap();
+        assert!((far.0 - 70.0).abs() <= 2.0 && (far.1 - 10.0).abs() <= 2.0, "and ends at the target: {far:?}");
+        let mut last = d(from);
+        for look in (4..60).step_by(4) {
+            let p = down_way(&field, bw, from, look as f32).unwrap();
+            assert!(d(p) <= last, "the distance falls along the way at {look}");
+            last = d(p);
+        }
+        assert!(down_way(&field, bw, (43.0, 10.0), 0.0).is_some_and(|p| p.0 < 40.0 || p.0 > 47.0), "off the wall");
+        let walled = vec![u32::MAX; field.len()];
+        assert_eq!(down_way(&walled, bw, from, 10.0), None);
+    }
 
     /// **Raids are rare early and often later** (2026-11-18, the owner's
     /// play notes and Direction's targets): over 4,000 games the first

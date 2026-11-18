@@ -552,7 +552,16 @@ impl<W: World> Game<W> {
     /// first free lump, its grade drawn (`BossRules::grade_lo`); false with
     /// none free.
     pub fn form_boss(&mut self, at: (f32, f32), reach: f32, cause: BossCause) -> bool {
-        let Some(lump) = (0..LUMPS).find(|&l| self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).all(|b| b.lump != l)) else { return false };
+        // Never on a march (`RaidRules::march`): a lump forming takes every
+        // walker in its reach from its lump, and a march is both a crowded
+        // knot and a part away from food.
+        let sc = self.world.scale();
+        let on = |m: &super::March| (m.centre.0 - at.0).hypot(m.centre.1 - at.1) < self.rules.raid.march_leash.max(1.0) * (m.members as f32 / std::f32::consts::PI).sqrt() + 2.0 * reach * sc;
+        if self.raids.marching.iter().any(on) {
+            return false;
+        }
+        // A lump no boss and no march holds.
+        let Some(lump) = (0..LUMPS).find(|&l| self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).all(|b| b.lump != l) && self.raids.marching.iter().all(|m| m.lump != l)) else { return false };
         let r = self.rules.boss;
         let (lo, hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
         let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();

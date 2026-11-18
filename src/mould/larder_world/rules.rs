@@ -587,6 +587,12 @@ impl Rules {
             self.raid.last_stand = v > 0.0;
             return true;
         }
+        // `raid_march=0` (Enemy lane, 2026-11-18): raids stream walker by
+        // walker, as before the march.
+        if name == "raid_march" {
+            self.raid.march = v > 0.0;
+            return true;
+        }
         // `turret_over=0`: turrets stop at walls as soldiers' guns do.
         if name == "turret_over" {
             self.build.turret_over = v > 0.0;
@@ -644,6 +650,18 @@ impl Rules {
             "raid_size_max" => &mut self.raid.size_max,
             "raid_share" => &mut self.raid.share,
             "raid_lure_r" => &mut self.raid.lure_r,
+            "raid_late" => &mut self.raid.late,
+            "raid_ramp" => &mut self.raid.ramp,
+            "raid_early" => &mut self.raid.early,
+            "raid_early_at" => &mut self.raid.early_at,
+            "raid_early_sd" => &mut self.raid.early_sd,
+            "raid_march_pull" => &mut self.raid.march_pull,
+            "raid_march_leash" => &mut self.raid.march_leash,
+            "raid_march_haste" => &mut self.raid.march_haste,
+            "raid_march_quorum" => &mut self.raid.march_quorum,
+            "raid_march_time" => &mut self.raid.march_time,
+            "raid_march_stall" => &mut self.raid.march_stall,
+            "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,

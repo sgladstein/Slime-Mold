@@ -3262,7 +3262,8 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
         }
         (g, top)
     };
-    let fast = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, late: 1.0, size_sd: 0.0, ..RaidRules::default() };
+    // Streams (`march` off): the world's raid words are what this tests.
+    let fast = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, late: 1.0, size_sd: 0.0, march: false, ..RaidRules::default() };
     let (g, top) = play(fast, false, 14.0);
     eprintln!("raids: {:?}", g.raids.sent);
     assert!(g.raids.sent.len() >= 2, "a raid every 5 s: {}", g.raids.sent.len());
@@ -3307,6 +3308,91 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert!(gaps.iter().all(|&a| a >= 2 * g.rules.tps as u64), "never under the floor: {gaps:?}");
     assert!(r.iter().any(|d| d.size != r[0].size), "the sizes vary");
     assert!(r.iter().all(|d| (spread.size_min..=spread.size_max).contains(&d.size)));
+}
+
+/// **The march** (`RaidRules::march`, 2026-11-18, the owner's play notes:
+/// a raid felt "like a bunch of individual walkers instead of a single
+/// slime unit"): a raid buds off as one held body, its walkers marked as
+/// one lump and the world holding no stream raid while it walks; its
+/// centre closes on the target; by the target, or at a soldier it meets
+/// on the way, it lets go and pours on as a raid of share 1, and its lump
+/// is free again; a mini-boss never forms on a march.
+#[test]
+fn a_raid_marches_as_one_body() {
+    let mut g = small(1);
+    g.rules.raid = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 1.0e4, every_sd: 0.0, late: 1.0, size_sd: 0.0, ..RaidRules::default() };
+    g.bank = 1.0e6;
+    let cs = g.world.crystals();
+    let home = g.core;
+    let far = (0..cs.len()).max_by(|&a, &b| (cs[a].0 .0 - home.0).hypot(cs[a].0 .1 - home.1).total_cmp(&(cs[b].0 .0 - home.0).hypot(cs[b].0 .1 - home.1))).unwrap();
+    assert!(g.build(Kind::Pump, cs[far].0), "a pump on the farthest crystal");
+    while g.raids.marching.is_empty() && g.time() < 10.0 {
+        g.step();
+    }
+    assert_eq!(g.raids.sent.len(), 1, "a raid went");
+    let (l, to) = (g.raids.marching[0].lump, g.raids.marching[0].to);
+    assert_eq!(g.world.p.raid_at, 0, "no stream while it marches");
+    let want = g.rules.raid.size * g.world.mass() as f32;
+    let mut first = None;
+    let mut gone = Vec::new();
+    while g.time() < 120.0 {
+        g.step();
+        let Some((centre, members, f)) = g.raids.marching.first().map(|m| (m.centre, m.members, m.first)) else { break };
+        if f > 0 {
+            first.get_or_insert(f);
+            gone.push((centre.0 - to.0).hypot(centre.1 - to.1));
+        }
+        // No mini-boss forms on it (its forming would take the march's
+        // walkers into its own lump).
+        if g.time() < 30.0 {
+            assert!(!g.form_boss(centre, 3.0, BossCause::Staged), "a boss on the march");
+        }
+        let marked = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(l)).count() as u32;
+        assert!(marked > 0 && marked >= members / 2, "{marked} marked of {members}");
+    }
+    let first = first.expect("it set off");
+    eprintln!("march: {first} members of {want:.0} wanted; to go {:?}", gone.iter().step_by(gone.len().max(10) / 10).collect::<Vec<_>>());
+    assert!(first as f32 >= 0.3 * want, "it took the raid's walkers: {first} of {want:.0}");
+    assert!(g.raids.marching.is_empty(), "it let go within two minutes");
+    assert!(gone.last().unwrap() < &(0.5 * gone[0]), "it closed on the target: {:?} to {:?}", gone[0], gone.last());
+    // It pours onto the target, or onto a soldier it met on the way (a
+    // squad in reach of the march, `time_march`).
+    let at = g.world.p.raid_to;
+    let (ax, ay) = ((at & 0xFFFF) as f32, (at >> 16) as f32);
+    let onto_target = at == raid_cell(to, (g.world.w, g.world.h));
+    let onto_squad = g.soldiers.iter().any(|s| s.alive && (s.x - ax).hypot(s.y - ay) < 4.0 * g.world.scale());
+    eprintln!("poured onto the target {onto_target}, onto the squad {onto_squad}");
+    assert!(g.world.p.raid_at > 0 && g.world.p.raid_share == 1.0 && (onto_target || onto_squad), "it poured onto the target or a soldier");
+    // The lumps' sums are a step behind.
+    g.step();
+    assert!(g.world.lumps()[l].is_none(), "its lump is free");
+}
+
+/// A march that gets no nearer its target (`RaidRules::march_stall`,
+/// 2026-11-18: one formed inside planet 1's rock ring stood there) lets go
+/// and streams to the target with the raid's own reach and share, so a raid
+/// always lands. With no pull it stands where it formed.
+#[test]
+fn a_stalled_march_streams_to_its_target() {
+    let mut g = small(1);
+    g.rules.raid = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 1.0e4, every_sd: 0.0, late: 1.0, size_sd: 0.0, march_pull: 0.0, march_stall: 5.0, ..RaidRules::default() };
+    g.bank = 1.0e6;
+    let cs = g.world.crystals();
+    let home = g.core;
+    let far = (0..cs.len()).max_by(|&a, &b| (cs[a].0 .0 - home.0).hypot(cs[a].0 .1 - home.1).total_cmp(&(cs[b].0 .0 - home.0).hypot(cs[b].0 .1 - home.1))).unwrap();
+    assert!(g.build(Kind::Pump, cs[far].0), "a pump on the farthest crystal");
+    while g.raids.marching.is_empty() && g.time() < 10.0 {
+        g.step();
+    }
+    assert_eq!(g.world.p.raid_at, 0, "it marches");
+    let (since, to) = (g.time(), g.raids.marching[0].to);
+    while !g.raids.marching.is_empty() && g.time() < since + 20.0 {
+        g.step();
+    }
+    let d = g.raids.sent[0];
+    eprintln!("let go after {:.1} s; raid {d:?}", g.time() - since);
+    assert!(g.raids.marching.is_empty() && g.time() - since >= 5.0 && g.time() - since < 7.0, "it let go at its stall: {:.1} s", g.time() - since);
+    assert!(g.world.p.raid_at > 0 && g.world.p.raid_share == d.share && g.world.p.raid_to == raid_cell(to, (g.world.w, g.world.h)), "it streams as the raid would have");
 }
 
 /// The raids' normal draw has the mean and spread asked for.

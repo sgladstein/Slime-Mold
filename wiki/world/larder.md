@@ -30,6 +30,7 @@ sources:
   - Reports/mould-shooter-2026-11-11.md
   - Reports/narrow-squads-2026-11-15/README.md
   - Reports/pump-economy-2026-11-15/README.md
+  - Reports/raid-march-2026-11-18/README.md
   - Reports/raid-ramp-2026-11-18/README.md
   - Reports/raids-2026-11-15/README.md
   - Reports/resume-build-2026-11-15/README.md
@@ -348,7 +349,20 @@ turrets killed 38% more; the slime grew as before. Raiders walk round
 walls: a worker thread builds the raid's walking distance on 2x2 blocks
 (`big::raid_field_for`, 6 ms on planet 8, 0.22 ms on the frame) and the
 raid goes a game second after it is decided
-([raids](../../Reports/raids-2026-11-15/README.md)).
+([raids](../../Reports/raids-2026-11-15/README.md)). Since 11-18 a raid
+**marches as one body** (the owner's play notes, 15:56Z: the slime "feels
+more like a bunch of individual walkers instead of a single slime unit",
+worst in raids; `RaidRules::march`): 1.5 times its walkers, those nearest
+the target, are held as one lump (`big::Lump`, no mini-boss look) and walk
+down the raid's walking distance (pull 100, leash 1.3, twice a walker's
+pace), then pour on as a raid of every walker there by the target, or at
+the squad if they meet it (the surge he does not mind). On planet 1 of run
+seed 1 with the first raid forced at 0:20, walkers seen alone (at most one
+other round them) averaged 404 a frame while it was out against the
+stream's 635; it took the pump by the squad at 0:50 where the stream took
+the far one at 0:34, and the squad stood at 75 at 0:56 against 59
+([raid march](../../Reports/raid-march-2026-11-18/README.md)); specks are
+tethered the same day ([growth](../model/growth.md)).
 
 **Turrets grow both ways** (owner's card, 2026-11-16 21:36Z: "Both: tree
 bodies, card barrels"; the tree lives in the run shop only, 21:41Z "I lean

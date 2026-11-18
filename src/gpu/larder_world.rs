@@ -1977,6 +1977,69 @@ mod tests {
         }
     }
 
+    /// **The tether** (`Settings::tether`, 2026-11-18, the Enemy lane, from
+    /// the Lab's one-body prototype; the owner's play notes that day: slime
+    /// that leaves the blob as "individual walkers ... is problematic"). A
+    /// rule of the GPU engine alone, so its test is what it does on the
+    /// software GPU. Planet 1's slime (shape C on the race world with a
+    /// run's planet keys, so breakaways), tether 2 and 0, alike.
+    ///
+    /// - A raid is not tethered (it goes as one body by its march, and a
+    ///   tethered file stays home): a raid sent at one game second leaves
+    ///   the two games the same to the bit (on software Vulkan) until the
+    ///   first breakaway.
+    /// - With breakaways on, the tether changes the game by 20 s. What it
+    ///   does to the picture is a film's: on this small world's slime a
+    ///   breakaway is loose about one time in a hundred either way.
+    #[test]
+    fn a_tethered_breakaway_goes_out_touching_the_body() {
+        use crate::mould::larder_world::shape_keys;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 2, 5_000);
+        let k = scale as f32;
+        let play = |tether: u32, roam: bool| {
+            let mut s = race_settings(seed, scale, walkers);
+            for (key, v) in shape_keys("c").unwrap().1 {
+                crate::gpu::set(&mut s, key, v).unwrap();
+            }
+            for (key, v) in crate::mould::run::enemy_keys(1) {
+                crate::gpu::set(&mut s, key, &v).unwrap();
+            }
+            s.tether = tether;
+            if !roam {
+                s.roam = 0;
+            }
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        // A raid with no breakaway: the same game either way.
+        let (mut held, mut free) = (play(2, false), play(0, false));
+        for g in [&mut held, &mut free] {
+            to(g, 1.0);
+            let home = g.world.crystals()[0].0;
+            let (w, h) = g.world.size();
+            let at = (if home.0 < w as f32 / 2.0 { home.0 + 40.0 * k } else { home.0 - 40.0 * k }, home.1);
+            let (agar, gw, gh) = g.world.raid_ground().unwrap();
+            let field = crate::mould::big::raid_field_for(&agar, gw, gh, crate::mould::larder_world::raid_cell(at, (w, h)));
+            let fine = g.world.fine_steps().max(1) as u64;
+            g.world.set_raid((g.world.ticks() * fine + 1) as u32, at, 60.0, 0.33, field);
+            to(g, 4.0);
+        }
+        if !ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
+            assert_eq!(held.world.hash(), free.world.hash(), "a raid is not tethered");
+        }
+        // With breakaways it acts (what it does to the picture is filmed:
+        // Reports/raid-march-2026-11-18).
+        let (mut held, mut free) = (play(2, true), play(0, true));
+        to(&mut held, 20.0);
+        to(&mut free, 20.0);
+        assert_ne!(held.world.hash(), free.world.hash(), "the tether holds breakaways");
+    }
+
     /// **The fort** (`Rules::fort`, 2026-11-18, the Enemy lane; the
     /// owner's note that day that he had thought the walls "would form
     /// protecting the core of the slime or the slime crystals") is a rule
