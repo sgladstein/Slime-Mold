@@ -1399,6 +1399,10 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A still walker spills its crystal share (`MIND_STILL`).
     var sh = share[i];
     if (mind_of(k, S.t) == MIND_STILL) { sh = 0.0; }
+    // LAB (the second species, 2026-11-18, lab branch only): with cycle 2
+    // the last species hunts: it takes no crystal share and lives on the
+    // energy of the walkers it converts.
+    if (P.cycle == 2u && species_of(k) == nsp() - 1u) { sh = 0.0; }
     let e = (energy[k] + g + sh) - up;
     if (e > 0.0) {
         energy[k] = e;

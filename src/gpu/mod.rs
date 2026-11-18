@@ -2205,7 +2205,10 @@ impl Engine {
         } else {
             (sets.iter().map(|t| t.explore_steps as u32).max().unwrap_or(0), sets.iter().map(|t| t.blocked_deposit).fold(0.0, f32::max), any(|t| t.graze_weight))
         };
-        b.extend(u32_bytes(&[self.nsp, s.cycle as u32, explore, stream(seed, DRAW_SIZE)]));
+        // LAB (the second species, 2026-11-18, lab branch only): cycle 2
+        // makes the last species a hunter that takes no crystal share.
+        let cyc = if s.cycle && std::env::var("LAB_HUNTER").is_ok() { 2 } else { s.cycle as u32 };
+        b.extend(u32_bytes(&[self.nsp, cyc, explore, stream(seed, DRAW_SIZE)]));
         b.extend(f32_bytes(&[s.avoid, s.next, s.prev, s.explorer_trail, s.explore_spread, blocked]));
         b.extend(u32_bytes(&[s.blocked_keep as u32]));
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
