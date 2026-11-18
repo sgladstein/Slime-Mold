@@ -602,6 +602,9 @@ impl GpuWorld {
             let sc = self.e.dish.p.scale as f32;
             self.e.fling_pass(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv, b.push);
         }
+        // Sleep wears off (2026-11-18): the gas header's word 6, written
+        // with the gas and the cloud below.
+        self.e.gas_immune = k.gas_immune as u32;
         if b.gas > 0 {
             self.s.gas_death = k.gas_death;
             self.e.gas_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.gas);
@@ -641,6 +644,7 @@ impl GpuWorld {
         // A Mind status last, as on the CPU (2026-11-16).
         if b.mind > 0 {
             self.s.spin_curl = k.spin_curl;
+            self.e.mind_rest = k.mind_rest as u32;
             self.e.mind_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.mind as u32, k.mind_steps_for(b.mind as u32));
         }
     }
@@ -1638,6 +1642,47 @@ mod tests {
                 assert!(a.abs_diff(b) * 100 <= b.max(1) + 1, "the GPU's {g:?} against the CPU's {c:?}");
             }
         }
+    }
+
+    /// **Sleep wears off** (2026-11-18, `BurstRules::gas_immune`; the
+    /// owner's playtest: Mist on the turrets "basically stopped
+    /// everything"): on the mould's home, a second gas while the first's
+    /// sleep runs puts no walker to sleep again (it would have restamped
+    /// every one), a gas after they wake finds them resting, and once the
+    /// rest is over gas takes them again. With `gas_immune` 0 every gas
+    /// takes them, the old rule.
+    #[test]
+    fn sleep_wears_off_on_the_gpu_world() {
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let rules = Rules { cap: 30.0, ..Rules::default() };
+        let run = |immune: u16| -> Vec<u32> {
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let fine = g.world.fine_steps() as u64;
+            let k = squad::BurstRules { gas_immune: immune, ..crate::mould::rounds::burst_rules(&KitRules { gas_half: 0.0, ..KitRules::default() }, 30.0 * fine as f32) };
+            let gas = squad::Burst { at: (home.0 / sc, home.1 / sc), r: 5.0, gas: 60, ..Default::default() };
+            let mut out = vec![g.world.burst(&gas, &k).gassed, g.world.burst(&gas, &k).gassed];
+            // Past the sleep (60 fine steps), inside the rest.
+            for _ in 0..(90 / fine + 1) {
+                g.step();
+            }
+            out.push(g.world.burst(&gas, &k).gassed);
+            // Past the rest too.
+            for _ in 0..(200 / fine + 1) {
+                g.step();
+            }
+            out.push(g.world.burst(&gas, &k).gassed);
+            out
+        };
+        let (old, new) = (run(0), run(120));
+        eprintln!("gassed each time: rest 0 {old:?}, rest 120 fine steps {new:?}");
+        assert!(old.iter().all(|&n| n > 20), "with no rest every gas takes them: {old:?}");
+        assert!(new[0] > 20 && new[1] == 0, "a second gas while asleep takes none: {new:?}");
+        assert!(new[2] * 2 < old[2], "a gas just after they wake finds them resting: {new:?} against {old:?}");
+        assert!(new[3] > 20, "after the rest gas takes them again: {new:?}");
     }
 
     /// **The germ runs on the GPU world** (2026-11-14, cloud plan C5): a

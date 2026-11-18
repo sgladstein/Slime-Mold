@@ -382,7 +382,11 @@ struct Squad { units: array<SqUnit, 256>, uout: array<SqUnitOut, 256>, shots: ar
 // gassed. 0 is never gassed. Header word 3 is the explosion cards
 // thread's; words 4 and 5 (11-14) are the gas cloud's linger in steps and
 // its `gas_sleep` (f32 bits; `gasp`), written by the host with each cloud
-// laid and with a dish (`gas_words`); 6-7 are spare.
+// laid and with a dish (`gas_words`); 6 (2026-11-18) is the steps a
+// walker woken from gas rests before gas can take it again
+// (`gas_resting`), written with each gas and cloud; 7 (2026-11-18) the
+// steps after a Mind status ends before it can take that walker again
+// (`mindlay`), written with each status laid.
 const GAS_HEAD: u32 = 8u;
 const GAS_UNITS: u32 = 8u;
 // GAS_HEAD + 4 and + 5 times `squad::UNITS_MAX` (256 since 11-16; 392 and
@@ -460,6 +464,19 @@ fn armoured(k: u32) -> bool {
 // field in the dense block.
 fn bite_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + i]); }
 fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
+// **Sleep wears off** (2026-11-18, Squad and arsenal's change to the gas
+// passes; `BurstRules::gas_immune`): with header word 6 over 0, a walker
+// still gassed, or woken from gas fewer than that many steps ago, is not
+// gassed again, so no gas or cloud holds it asleep for longer than one
+// sleep. The owner's playtest: Mist on the turrets "basically stopped
+// everything" (a cloud along every shot kept the slime asleep in front of
+// them for as long as they fired). 0 is the old rule.
+fn gas_resting(k: u32, t: u32) -> bool {
+    let im = gas_word(6u);
+    if (im == 0u) { return false; }
+    let end = gas_word(GAS_SLOTS + k);
+    return end != 0u && t < end + im;
+}
 fn gas_sleep() -> f32 { return bitcast<f32>(gas_word(5u)); }
 
 // **Mind statuses** (the gun cards' Mind family, 2026-11-16; the CPU's
@@ -3601,6 +3618,7 @@ fn gas(@builtin(global_invocation_id) gid: vec3<u32>) {
     let dx = wk.x - P.kx;
     let dy = wk.y - P.ky;
     if (dx * dx + dy * dy > P.kr * P.kr) { return; }
+    if (gas_resting(k, gas_word(0u))) { return; }
     spec[k] = (w & 0x1FFu) | (L_DORMANT << 9u);
     atomicStore(&news[gas_base() + GAS_SLOTS + k], gas_word(0u) + u32(P.kcs));
     atomicAdd(&news[gas_base() + 2u], 1u);
@@ -3654,6 +3672,7 @@ fn gasp(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let c = P.w * P.h;
     if (germ_out[2u * c + cell(wk.x, wk.y)] <= gas_sleep()) { return; }
+    if (gas_resting(k, S.t)) { return; }
     spec[k] = (w & 0x1FFu) | (L_DORMANT << 9u);
     let o = gas_base() + GAS_SLOTS + k;
     atomicMax(&news[o], S.t + gas_word(4u));
@@ -4188,6 +4207,17 @@ fn mindlay(@builtin(global_invocation_id) gid: vec3<u32>) {
     let dx = wk.x - P.kx;
     let dy = wk.y - P.ky;
     if (dx * dx + dy * dy > P.kr * P.kr) { return; }
+    // **Statuses wear off** (2026-11-18, Squad and arsenal's change to
+    // this pass; `BurstRules::mind_rest`, the gas header's word 7): a
+    // walker that has this status, or had it fewer than that many steps
+    // ago, is not given it again, so a turret firing Still cannot keep the
+    // slime in front of it from ever charging. A word keeps its kind and
+    // end after it runs out. 0 is the old rule (each hit restamped it).
+    let rest = gas_word(7u);
+    if (rest > 0u) {
+        let old = atomicLoad(&news[mind_at() + k]);
+        if ((old >> 29u) == u32(P.kir) && (gas_word(0u) & MIND_T) < (((old & MIND_T) + rest) & MIND_T)) { return; }
+    }
     atomicStore(&news[mind_at() + k], (u32(P.kir) << 29u) | ((gas_word(0u) + u32(P.kcs)) & MIND_T));
 }
 

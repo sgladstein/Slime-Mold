@@ -1,0 +1,24 @@
+  raid 1 at t 31.0 s: Building(6) at 35,176, reach 195 cells holding 13569 walkers, share 0.60, size 15% of the slime
+    turret at (121, 225): hp 300 / 300, built 1.0, standing
+    turret at (72, 252): hp 300 / 300, built 1.0, standing
+    turret at (46, 187): hp 300 / 300, built 1.0, standing
+    turret at (117, 200): hp 300 / 300, built 1.0, standing
+    turret at (55, 182): hp 300 / 300, built 1.0, standing
+    turret at (128, 235): hp 300 / 300, built 1.0, standing
+    turret at (35, 176): hp 300 / 300, built 1.0, standing
+  t 120 s: mould 44082, soldiers 4, bank 2000, harvested 0, rendered 0, shots 401, killed 5432, took 0%, crystals left 0.971; squad at 136.2,47.2
+    turret at (121, 225): hp 300 / 300, built 1.0, standing
+    turret at (72, 252): hp 300 / 300, built 1.0, standing
+    turret at (46, 187): hp 300 / 300, built 1.0, standing
+    turret at (117, 200): hp 300 / 300, built 1.0, standing
+    turret at (55, 182): hp 300 / 300, built 1.0, standing
+    turret at (128, 235): hp 300 / 300, built 1.0, standing
+    turret at (35, 176): hp 300 / 300, built 1.0, standing
+  t 180 s: mould 46422, soldiers 3, bank 2000, harvested 0, rendered 0, shots 664, killed 7995, took 0%, crystals left 0.955; squad at 134.2,47.2
+    turret at (121, 225): hp 300 / 300, built 1.0, standing
+    turret at (72, 252): hp 300 / 300, built 1.0, standing
+    turret at (46, 187): hp 300 / 300, built 1.0, standing
+    turret at (117, 200): hp 300 / 300, built 1.0, standing
+    turret at (55, 182): hp 300 / 300, built 1.0, standing
+    turret at (128, 235): hp 300 / 300, built 1.0, standing
+    turret at (35, 176): hp 300 / 300, built 1.0, standing

@@ -1,0 +1,24 @@
+1-gas-new | t60: mould 37566 sold 15 kill 5447 hp 81 touch 0.0/0 | t120: mould 18658 sold 24 kill 7054 hp 78 touch 0.0/0 | t150: mould 18292 sold 27 kill 7162 hp 77 touch 0.0/0 | gassed 2906
+1-gas-off | t60: mould 40899 sold 19 kill 3466 hp 94 touch 0.0/0 | t120: mould 19847 sold 28 kill 6376 hp 94 touch 0.0/0 | t150: mould 19282 sold 31 kill 6658 hp 95 touch 0.0/0 | gassed 160501
+1-gas-on | t60: mould 40947 sold 19 kill 3337 hp 97 touch 0.1/1 | t120: mould 20419 sold 27 kill 5622 hp 96 touch 0.0/0 | t150: mould 20044 sold 31 kill 5834 hp 97 touch 0.0/0 | gassed 134945
+1-mist-new | t60: mould 40196 sold 16 kill 4080 hp 90 touch 0.0/0 | gassed 0
+1-mist-off | t60: mould 39634 sold 19 kill 6626 hp 89 touch 0.5/2 | t120: mould 14873 sold 28 kill 14871 hp 73 touch 0.1/1 | t150: mould 13761 sold 29 kill 15587 hp 74 touch 0.0/0 | gassed 0
+1-mist-on | t60: mould 41520 sold 18 kill 2937 hp 92 touch 0.1/1 | t120: mould 19499 sold 27 kill 5607 hp 79 touch 0.0/1 | t150: mould 15313 sold 29 kill 8918 hp 78 touch 0.0/1 | gassed 0
+1-plain-off | t60: mould 36562 sold 18 kill 7889 hp 65 touch 0.1/1 | t120: mould 14069 sold 23 kill 16880 hp 58 touch 0.1/1 | t150: mould 13157 sold 25 kill 17527 hp 57 touch 0.0/0 | gassed 0
+1-plain-on | t60: mould 40427 sold 11 kill 3678 hp 84 touch 0.6/5 | t120: mould 17414 sold 12 kill 5601 hp 55 touch 0.3/1 | t150: mould 15540 sold 8 kill 7297 hp 53 touch 1.5/5 | gassed 0
+1795038793-gas-new | t60: mould 45356 sold 9 kill 2865 hp 71 touch 4.1/26 | gassed 1238
+1795038793-gas-off | t60: mould 42855 sold 18 kill 4759 hp 87 touch 0.1/1 | t120: mould 38263 sold 36 kill 10847 hp 88 touch 0.1/3 | t150: mould 38519 sold 48 kill 14223 hp 89 touch 0.0/1 | gassed 465292
+1795038793-gas-on | t60: mould 42649 sold 16 kill 5199 hp 90 touch 0.4/3 | t120: mould 41854 sold 28 kill 8190 hp 91 touch 0.0/0 | t150: mould 43303 sold 36 kill 9408 hp 92 touch 0.1/3 | gassed 300928
+1795038793-mist-new | t60: mould 44337 sold 9 kill 3631 hp 63 touch 1.2/8 | gassed 0
+1795038793-mist-off | t60: mould 40944 sold 16 kill 8992 hp 68 touch 1.8/16 | t120: mould 34090 sold 19 kill 20218 hp 67 touch 0.0/0 | t150: mould 35259 sold 24 kill 24064 hp 70 touch 0.1/2 | gassed 0
+1795038793-mist-on | t60: mould 44691 sold 12 kill 3538 hp 76 touch 0.8/10 | t120: mould 39963 sold 17 kill 9183 hp 57 touch 0.0/0 | t150: mould 40597 sold 23 kill 10501 hp 60 touch 0.0/0 | gassed 0
+1795038793-plain-off | t60: mould 40496 sold 7 kill 9076 hp 63 touch 0.1/1 | gassed 0
+1795038793-plain-on | t60: mould 44219 sold 11 kill 3397 hp 56 touch 0.5/2 | t120: mould 41499 sold 1 kill 5898 hp 75 touch 0.0/0 | t150: mould 43640 sold 2 kill 5952 hp 60 touch 8.0/9 | gassed 0
+2-gas-new
+2-gas-off | t60: mould 41529 sold 19 kill 212 hp 100 touch 0.0/0 | t120: mould 21141 sold 27 kill 313 hp 100 touch 0.0/0 | t150: mould 16899 sold 29 kill 4639 hp 98 touch 0.0/0 | gassed 68991
+2-gas-on | t60: mould 41554 sold 19 kill 209 hp 100 touch 0.0/0 | t120: mould 21745 sold 27 kill 284 hp 100 touch 0.0/0 | t150: mould 18010 sold 29 kill 4369 hp 96 touch 0.0/0 | gassed 93124
+2-mist-new
+2-mist-off | t60: mould 41118 sold 19 kill 693 hp 100 touch 0.0/0 | t120: mould 20067 sold 28 kill 1245 hp 99 touch 0.0/0 | t150: mould 15934 sold 27 kill 5321 hp 86 touch 0.0/1 | gassed 0
+2-mist-on | t60: mould 41206 sold 19 kill 703 hp 100 touch 0.0/0 | t120: mould 20837 sold 27 kill 1350 hp 99 touch 0.0/0 | t150: mould 19706 sold 28 kill 3252 hp 82 touch 0.8/11 | gassed 0
+2-plain-off | t60: mould 41003 sold 18 kill 782 hp 97 touch 0.0/0 | t120: mould 19905 sold 27 kill 1265 hp 98 touch 0.0/0 | t150: mould 16130 sold 28 kill 4987 hp 86 touch 0.4/7 | gassed 0
+2-plain-on | t60: mould 40995 sold 18 kill 794 hp 97 touch 0.1/1 | t120: mould 20163 sold 27 kill 1286 hp 97 touch 0.1/1 | t150: mould 16726 sold 25 kill 4850 hp 61 touch 1.3/9 | gassed 0

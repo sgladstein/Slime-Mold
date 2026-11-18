@@ -1593,6 +1593,16 @@ pub struct Engine {
     /// nothing once it has passed.
     pub gas_at: u64,
     pub gas_until: u64,
+    /// **Sleep wears off** (2026-11-18, `squad::BurstRules::gas_immune`):
+    /// fine steps a walker that woke from gas cannot be gassed again, and
+    /// while gassed no gas or cloud lengthens its sleep; 0 the old rule.
+    /// Written to the gas header's word 6 with each gas and cloud laid.
+    pub gas_immune: u32,
+    /// **Statuses wear off** (2026-11-18, `squad::BurstRules::mind_rest`):
+    /// fine steps after a Mind status ends before the same status takes
+    /// that walker again; 0 the old rule. The gas header's word 7, written
+    /// with each Mind status laid.
+    pub mind_rest: u32,
     /// Whether any walker has had a Mind status (`mind_pass`, or a dish
     /// loaded with one), and the last step any lasts to: the Mind row's
     /// first word (`minds_on`), so `sense` reads the words (after the
@@ -1957,6 +1967,8 @@ impl Engine {
             news,
             gas_at: 4 * news_len as u64,
             gas_until: gas_until(&d),
+            gas_immune: 0,
+            mind_rest: 0,
             minds: !d.mind.is_empty(),
             lured: false,
             forted: false,
@@ -2992,6 +3004,7 @@ impl Engine {
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, 0.0]));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.queue.write_buffer(&self.news, self.gas_at + 24, &u32_bytes(&[self.gas_immune]));
         self.run(shared, &[(GAS, self.n.div_ceil(256))]);
         if steps > 0 {
             self.gas_until = self.gas_until.max(self.done + steps as u64);
@@ -3010,6 +3023,7 @@ impl Engine {
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, kind as f32]));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.queue.write_buffer(&self.news, self.gas_at + 28, &u32_bytes(&[self.mind_rest]));
         self.run(shared, &[(MINDLAY, self.n.div_ceil(256))]);
     }
 
@@ -3080,7 +3094,7 @@ impl Engine {
         self.clouded = true;
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, dose, 0.0, 0.0, 0.0, 0.0]));
-        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits()]));
+        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits(), self.gas_immune]));
         self.run(shared, &[(GASLAY, self.cells.div_ceil(256))]);
         // How long `calm` must keep looking: the cloud's top can only fall
         // by `gas_keep` a step once laid (a 3x3 mean never raises it), so
