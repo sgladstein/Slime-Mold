@@ -2,7 +2,7 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
@@ -37,7 +37,7 @@ Drifter and the germ against the Sporer, each 30 of 32 paired seeds after a
 Holm correction ([toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md),
 *Confirmed at 32 seeds*); the germ was retuned per planet since (11-17,
 seed 0), still strongest on the Sporer and Drifter. Nine more rest on a
-narrower measure (Corral, Pull, Seek, Detonate, Flare, Torch, Tinder,
+narrower measure (Heave, Pull, Seek, Detonate, Flare, Torch, Tinder,
 Provoke, Still); the rest of the
 table is this thread's judgement of each card against
 [the tier's counter](mould-tiers.md). The gaps are the Grudge and the
@@ -71,8 +71,7 @@ this thread's judgement.
 | Mist | 2 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
 | Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it |
 | Spin | 2 | Swarmer | J | rings stop a charge | the vein beads into knots |
-| Heave | 2 | Swarmer | J | pushes the swarm back | the slime shoved as a block |
-| Corral | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone) | the slime shoved toward a turret |
+| Heave | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone); with no turret near it pushes the swarm back | the slime shoved as a block, toward a turret if one is near |
 | Shatter | 2 | Swarmer, after gas | J | the gassed charge dies at once | the grey patch is gone and the hole stays |
 | Bomb | 4 | Swarmer | J | throws a rushing swarm back off the squad | the slime flung out in a ring |
 | Germ | 4 | strong vs Sporer and Drifter, weak vs Swarmer and Grudge; useless on a sleeping Sleeper, after a Flare strong | M | each planet's slime resists it (`germ_resist`) or is frail to it (`germ_upkeep`); a sleeping crust neither catches it nor starves | red runs along the veins, then the body thins to a net |
@@ -103,11 +102,11 @@ the Swarmer's first minute holds a big part behind necks), so starving is
 done with walls and positioning, which withering and panic already reward
 ([cut count](../../Reports/gun-cut-count-2026-11-17/README.md)).
 
-**Merge or cut candidates.** Pull and Thrift (no planet); Heave and Corral
-(one shove, two cards; whether they merge is the owner's pick in the next
-playtest pack, on the game designer's call, 11-17 12:23Z); Trigger and Expire; Gas and Mist. Wide and Multicast
-are general on purpose. Blind and Sour may not read apart (the Mind quiz
-was dropped 11-17; play shows it).
+**Merge or cut candidates.** Pull and Thrift (no planet); Trigger and
+Expire; Gas and Mist. Wide and Multicast are general on purpose. Blind and
+Sour may not read apart (the Mind quiz was dropped 11-17; play shows it).
+Heave and Corral were one shove in two cards (the game designer, 11-17
+12:23Z) and are one card, Heave, since 2026-11-18.
 
 ## Open
 
@@ -142,4 +141,4 @@ was dropped 11-17; play shows it).
 - [toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md), *Confirmed at 32 seeds*: Blast, Plain, Germ.
 - [mould tiers](../../Reports/mould-tiers-2026-11-11.md): each tier's counter.
 - [rounds](../../Reports/rounds-2026-11-12.md): the Sleeper ignores every round.
-- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Corral, Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.
+- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Heave (Corral until 2026-11-18), Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.

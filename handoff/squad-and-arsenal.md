@@ -48,6 +48,46 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-18, batch 2 (Heave and Corral merged; the next PR after #448).**
+
+- Done: Heave and Corral are one card, `Card::Heave`; `corral` still loads
+  as `heave`. Numbers and the reverted stop-short trial:
+  `Reports/gun-shove-2026-11-16/README.md`, *2026-11-18*. The Mind quiz is
+  out of the records.
+- Squad control (job 2): the play notes of 11-14 to 11-17 hold no
+  squad-control complaint still open after the 11-16 movement rework. Its
+  leftovers (big squads in caves, places fitted to the ground) are not
+  Milestone 1. One thing seen and left alone: 40 soldiers draining one
+  crystal stand as an overlapping pile, because only soldiers within the
+  rim plus 2 dish cells harvest (`turn.rs`, Engine and tools'). Tidy rings
+  would need a longer harvest reach, which changes the rush economy (D7),
+  so that is Direction's call, not a control fix.
+- New job from Scott's card of 11-18 03:03Z ("Lure now, in the three
+  planets"): the Lure building back in the run on Enemy's steering field.
+  Shop item "Lures", an unlock, first price 150, no prerequisite; the
+  building costs 300 food, has 150 health and is mortal; siren and outpost
+  stay out. Interface agreed with Enemy 11-18 03:13Z: the field comes from
+  every `Kind::Lure` that is `up()` and on, plus `Game::lure_marks`
+  (Enemy's, in `raids.rs`); reach `Rules::lure_reach` 60, engine key
+  `lure_pull` 10; GPU only; `lure=T,X,Y,SECS` films a mark. Enemy's branch
+  is `claude/project-thread-s5k9cw`. The Lure is not sold before the field
+  is on main, so this lane's PR queues after Enemy's.
+- From Enemy (11-17 22:28Z, #451): planet 3's Trunk sets into amber walls
+  where it is shot and fire burns them; the shop before planet 3 does not
+  push a Torch (`run::bring` names a card for the Sprawler only, and the
+  Torch is a rolled shell). Job 4 should make planet 3 ask for one.
+- From Look (11-18 03:00Z): once the rose flash fades a stilled or
+  provoked part has no look of its own; Look took that job.
+- Rules that started 11-17 (#449): a PR that changes the game adds a line
+  to `news/whats-new.txt`; a wiki page's Now may not grow (the card
+  families in `wiki/world/guns.md` now sit under their own heading); an
+  off-by-default key needs a row in `src/build/switches.rs`. Run
+  `cargo test --release --locked --bin larder-world` (5 minutes) as well
+  as the library tests before pushing: #448 bounced once on a window test.
+- Next, in order: the Lure (above); shake and hit-stop as one Experiments
+  toggle and the rifle's feel (job 3; the switch row exists); shop offers
+  for planets 1 to 3 (job 4).
+
 **2026-11-17, batch 1.**
 
 - Done: Provoke and Still are finished and on

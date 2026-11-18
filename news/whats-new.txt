@@ -27,3 +27,4 @@
 2026-11-18 | enemy | On every planet the slime reaches for crystals it has not touched from across the map, and its charges come round walls instead of piling up against them | Watch the whole map on planet 1 or 2 for two minutes
 2026-11-18 | enemy | Planet 4's slime (the Swarmer) makes a last stand: cut to a quarter of its biggest, all of it rushes your squad, once | Reach planet 4 and cut the slime down
 2026-11-18 | enemy | The Experiments tab is down to four rows, and play-new-slime.cmd is gone: what it turned on is in every game now | Double-click play.cmd as always
+2026-11-18 | squad | Heave and Corral are one card now, Heave: its hit shoves the slime onto your nearest turret, or straight back when no turret is near | Gun range: build a turret beside the squad, put Heave and a plain bullet in the gun, and shoot slime near the turret

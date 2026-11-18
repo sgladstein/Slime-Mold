@@ -345,7 +345,7 @@ fill each body's barrel. Built so far: every turret fires one shared turret
 deck (`Game::turret_deck`, `Cmd::Load(TURRET_DECK, ..)`, no menu yet), each
 shot carrying the deck's next cast as a soldier's does, with its Range and
 Rate cards on every turret. In the shove page's kill box over 10 s, sleep gas
-on the turrets doubled the game's kills and corral raised the turrets' own
+on the turrets doubled the game's kills and corral (now part of Heave) raised the turrets' own
 kills from 231 to 427, while a bomb deck flung the slime away from the guns
 and lowered kills ([report](../../Reports/turret-growth-2026-11-16/README.md)).
 Each turret shot records the turret that fired it (`Bullet::turret`), so a

@@ -390,7 +390,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 69] = [
+const LOADOUTS: [(&str, &str); 68] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -454,12 +454,12 @@ const LOADOUTS: [(&str, &str); 69] = [
     ("bomb-gas", "bomb+gas"),
     ("trigger-bomb-gas", "trigger+bomb+gas"),
     // The shove cards (owner 2026-11-16 05:11Z: "corral and push the slime
-    // onto areas. Into a kill zone"): a heaved shove straight on, one
-    // toward the nearest turret, one drawn back to the gun.
-    ("heave", "heave+heave+plain"),
-    ("corral", "corral+heave+plain"),
+    // onto areas. Into a kill zone"): a heaved shove toward the nearest
+    // turret, or straight on with none in reach (Heave and Corral were two
+    // cards until 2026-11-17), and one drawn back to the gun.
+    ("heave", "heave+plain"),
     ("pull", "pull+heave+plain"),
-    ("corral-slug", "corral+ammo/plain/slug/1/100/100/100/100/1"),
+    ("heave-slug", "heave+ammo/plain/slug/1/100/100/100/100/1"),
     // Multicast (2026-11-16, step B): the next cast fired beside in the
     // same shot; two copies fire three. The films' five-card combos
     // (multicast+multicast+plain+blast+gas 13, multicast+trigger+plain+
