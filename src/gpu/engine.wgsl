@@ -667,6 +667,8 @@ fn soil_keep(i: u32) -> f32 {
     let k = soil(i);
     if (k == SOIL_SAND) { return P.sand_keep; }
     if (k == SOIL_CLAY) { return P.clay_keep; }
+    // LAB (the forest floor): water washes trail.
+    if (floor_on()) { return max(1.0 - pf(40u) * min(water(i), 1.0), 0.0); }
     return 1.0;
 }
 // Whether scent spreads through cell j: agar, or a wall that lets it
@@ -745,6 +747,8 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
     // walker's species' own with `per`).
     if (gw != 0.0) { v += gw * grass[i]; }
+    // LAB (the forest floor): the slime leans toward standing water (head word 63).
+    if (floor_on()) { v += pf(63u) * min(water(i), 1.0); }
     // The alarm (`alarm_weight`): over 0 the mould swarms to a wound,
     // under 0 it flees one.
     // The scar beside it (`scar_weight`), summed with the alarm first as
@@ -1100,6 +1104,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (world(WETS) && (ground[here] & WET) != 0u) { st *= P.wet_step; }
     // Deep water: x `deep_step` more, after the wet step as on the CPU.
     if (soil(here) == SOIL_DEEP) { st *= P.deep_step; }
+    // LAB (the forest floor): standing water is a slow step.
+    if (floor_on() && water(here) > pf(37u)) { st *= pf(42u); }
     // Fast ground (`crust_fast`): never past 1.5 cells by the crust
     // (`CRUST_STEP_CAP`).
     if (P.crust_fast > 0.0) { st = min(st * (1.0 + P.crust_fast * crust_of(here)), max(st, 1.5)); }
@@ -1396,6 +1402,8 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A sick walker pays more (the CPU's `sick_upkeep`, after the barren
     // ground's factor as there): the toolkit's germ kills by hunger.
     if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
+    // LAB (the forest floor): damp ground is cheap to live on, dry costly.
+    if (floor_on()) { up *= mix(pf(38u), pf(39u), moist(i)); }
     // A still walker spills its crystal share (`MIND_STILL`).
     var sh = share[i];
     if (mind_of(k, S.t) == MIND_STILL) { sh = 0.0; }
@@ -3855,10 +3863,55 @@ fn pcap_of(i: u32, k: u32) -> f32 {
     return pget(PB_CAP, i) * pf(16u + k) * dry;
 }
 
+// LAB (the forest floor, 2026-11-18, lab branch only): standing water in
+// plant block 9, the live moisture (the map's, block 7, plus the water) in
+// 10, the water's next in 11; the weather and what reads it in head words
+// 32-42 (mod.rs `plant_words`). Rain falls on every open cell at the end
+// of each period; water runs to the neighbour whose height (1 - the map's
+// moisture, so rivers and wet biomes are low) plus water is lower, and
+// dries. Block 7 stays the map's, because the view shapes plant patches
+// by it; fire reads the live moisture.
+const PB_WATER: u32 = 9u;
+const PB_LIVE: u32 = 10u;
+const PB_WNEXT: u32 = 11u;
+fn floor_on() -> bool { return world(PLANTS) && pf(41u) > 0.0; }
+fn water(i: u32) -> f32 { if (!floor_on()) { return 0.0; } return pget(PB_WATER, i); }
+fn moist(i: u32) -> f32 {
+    if (!world(PLANTS)) { return 0.5; }
+    if (floor_on()) { return pget(PB_LIVE, i); }
+    return pget(PB_MOIST, i);
+}
+fn lab_floor(i: u32) {
+    if (agar[i] == 0u) { pset(PB_WNEXT, i, 0.0); return; }
+    let wi = pget(PB_WATER, i);
+    let hi = 1.0 - pget(PB_MOIST, i) + wi;
+    let x = i % P.w; let y = i / P.w;
+    var net = 0.0;
+    for (var q = 0u; q < 4u; q++) {
+        var ok = false; var j = 0u;
+        if (q == 0u) { ok = x > 0u; j = i - 1u; }
+        if (q == 1u) { ok = x + 1u < P.w; j = i + 1u; }
+        if (q == 2u) { ok = y > 0u; j = i - P.w; }
+        if (q == 3u) { ok = y + 1u < P.h; j = i + P.w; }
+        if (ok && agar[j] != 0u) {
+            let wj = pget(PB_WATER, j);
+            let d = hi - (1.0 - pget(PB_MOIST, j) + wj);
+            if (d > 0.0) { net -= min(d * 0.5, wi); } else { net += min(-d * 0.5, wj); }
+        }
+    }
+    var w = wi + pf(35u) * net;
+    let per = max(pf(33u), 1.0);
+    if (f32(S.t % u32(per)) >= per - pf(34u)) { w += pf(32u); }
+    // Rivers and lakes (the map's wet ground) carry water away.
+    if (pwet(i)) { w *= 0.8; }
+    pset(PB_WNEXT, i, max(w - pf(36u), 0.0));
+}
+
 @compute @workgroup_size(256)
 fn plant(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
+    if (floor_on()) { lab_floor(i); }
     // Off open ground or on a crystal (the capacity block is 0 on both,
     // and on ground where nothing grows: the ground word tells them apart).
     if (agar[i] == 0u || (ground[i] & PILE_BITS) != 0u) { pset(PB_B, i, 0.0); return; }
@@ -3946,7 +3999,7 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     var p = pl;
     if (P.crust_fuel > 0.0) { p = pl + P.crust_fuel * crust_of(i); }
     // Moisture and the chance (owner 11-14 19:18Z; `plants::fire_step`).
-    let m = pget(PB_MOIST, i);
+    let m = moist(i);
     let dice = froll(i, pw(45u));
     var to = 0.0;
     var ate = 0.0;
@@ -4025,6 +4078,11 @@ fn pcopy(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (i >= P.w * P.h) { return; }
     pset(PB_A, i, pget(PB_B, i));
     pset(PB_FA, i, pget(PB_FB, i));
+    if (floor_on()) {
+        let w = pget(PB_WNEXT, i);
+        pset(PB_WATER, i, w);
+        pset(PB_LIVE, i, min(pget(PB_MOIST, i) + pf(41u) * w, 1.0));
+    }
 }
 
 @compute @workgroup_size(256)

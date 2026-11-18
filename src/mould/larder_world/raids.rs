@@ -149,11 +149,14 @@ pub struct Raids {
     pub(super) food_way: Option<Way>,
     /// LAB: the marks the squad's shots have laid (`lab.rs`, `LAB_SHOT`).
     pub(super) lab_shots: Vec<super::lab::ShotMark>,
+    /// LAB (the forest floor): the standing water, fine cells, and the width.
+    pub(super) lab_water: Vec<f32>,
+    pub(super) lab_water_w: usize,
 }
 
 impl Raids {
     pub fn new(seed: u64) -> Raids {
-        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lab_shots: Vec::new() }
+        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lab_shots: Vec::new(), lab_water: Vec::new(), lab_water_w: 0 }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.

@@ -1068,6 +1068,10 @@ impl World for GpuWorld {
         Some((self.e.dish.agar.clone(), self.e.dish.w, self.e.dish.h))
     }
 
+    fn lab_water(&self) -> Vec<f32> {
+        self.e.lab_water_of()
+    }
+
     fn food_deposit(&self) -> f32 {
         self.e.dish.p.food_deposit
     }

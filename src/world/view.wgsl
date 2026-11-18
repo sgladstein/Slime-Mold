@@ -2002,6 +2002,21 @@ fn water_share(x: f32, y: f32) -> vec2<f32> {
     return o;
 }
 
+// LAB (the forest floor): the standing water at (x, y), bilinear.
+fn floor_water(x: f32, y: f32) -> f32 {
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let f = vec2<f32>(ux - floor(ux), uy - floor(uy));
+    var o = 0.0;
+    for (var j = 0; j < 2; j++) {
+        for (var i = 0; i < 2; i++) {
+            let c = cidx(clamp(ix + i, 0, i32(P.ww) - 1), clamp(iy + j, 0, i32(P.wh) - 1));
+            o += bitcast<f32>(pblock(9u, c)) * mix(1.0 - f.x, f.x, f32(i)) * mix(1.0 - f.y, f.y, f32(j));
+        }
+    }
+    return o;
+}
+
 // How much thinner plants are drawn over water (their density for the
 // crowns' size, so the stems shrink and the water shows between).
 const WATER_THIN: f32 = 0.65;
@@ -2498,6 +2513,16 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let ch = smoothstep(0.06, 0.3, pp.char) * (0.85 + 0.15 * smoothstep(0.3, 0.8, pp.char));
         let ash = CHAR_RGB * (0.9 + 0.2 * vnoise(vec2<f32>(x, y) * 2.3));
         m.albedo = mix(m.albedo, ash * (0.8 + 0.4 * (pl.rgb / max(pl.cover, 0.01)).g / 60.0 * pv), ch * gv);
+    }
+    // LAB (the forest floor, 2026-11-18, lab branch only): the engine's
+    // standing water (plant block 9), bilinear: the ground darkens and
+    // shines as it pools, a puddle's colour once it is deep.
+    if (P.plant_at != 0u) {
+        let wd = floor_water(x, y);
+        let a = smoothstep(0.01, 0.12, wd) * m.vis * under;
+        let deep = smoothstep(0.1, 0.5, wd);
+        m.albedo = mix(m.albedo, mix(m.albedo * 0.55, WET_RGB, 0.6 * deep), a);
+        m.gloss = mix(m.gloss, 0.9, a);
     }
     // The crust over the bare ground and its plants, under the slime.
     m.albedo = crust_over(m.albedo, x, y, m.vis * under);

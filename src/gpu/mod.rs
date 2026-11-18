@@ -2754,6 +2754,24 @@ impl Engine {
         (f(2), (0..c).map(|i| word(1, i) as u8).collect(), f(4), f(6))
     }
 
+    /// LAB (the forest floor): the standing water (plant block 9), read
+    /// back; empty without plants or the floor.
+    pub fn lab_water_of(&self) -> Vec<f32> {
+        if !self.plants || std::env::var("LAB_FLOOR").is_err() {
+            return Vec::new();
+        }
+        let b = read_back(&self.device, &self.queue, &self.news);
+        let c = self.cells as usize;
+        if std::env::var("LAB_DEBUG").is_ok() {
+            let h = self.plant_at as usize;
+            let hw: Vec<f32> = (32..43).map(|o| f32::from_le_bytes(b[h + 4 * o..h + 4 * o + 4].try_into().unwrap())).collect();
+            let blk = |k: usize| (0..c).map(|i| { let a = h + 4 * (PLANT_HEAD + k * c + i); f32::from_le_bytes(b[a..a + 4].try_into().unwrap()) }).sum::<f32>();
+            println!("  lab debug: words 32-42 {hw:?}; block sums 7 {:.0} 9 {:.0} 10 {:.0} 11 {:.0}", blk(7), blk(9), blk(10), blk(11));
+        }
+        let at = self.plant_at as usize + 4 * (PLANT_HEAD + 9 * c);
+        b[at..at + 4 * c].chunks_exact(4).map(|w| f32::from_le_bytes(w.try_into().unwrap())).collect()
+    }
+
     /// The drawing's passes: the soft curve's histogram and reference first.
     pub fn draw_passes(&self, soft: bool) -> Vec<(usize, u32)> {
         let cells = self.cells.div_ceil(256);
@@ -3576,6 +3594,33 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     // Word 62: what plants over a cell's capacity (laid fuel, Tinder) lose
     // a plant step (the CPU's `Rates::rot`).
     w[62] = (p.plant_rot * k).to_bits();
+    // LAB (the forest floor, 2026-11-18, lab branch only): words 32-42, free
+    // until now, hold the weather and what reads the water (engine.wgsl's
+    // `lab_floor`), from `LAB_FLOOR`; word 41 (moisture per unit of water)
+    // 0 leaves the ground as it was.
+    if std::env::var("LAB_FLOOR").is_ok() {
+        let e = |n: &str, d: f32| std::env::var(n).ok().and_then(|v| v.parse::<f32>().ok()).unwrap_or(d);
+        // `S.t` counts game ticks, 30 a game second in Larder World.
+        let hz = 30.0;
+        let words = [
+            e("LAB_RAIN", 0.0006),                // 32 water a plant step while it rains
+            e("LAB_RAIN_EVERY", 60.0) * hz,       // 33 a shower's period, ticks
+            e("LAB_RAIN_SECS", 20.0) * hz,        // 34 the shower, ticks (the period's end)
+            e("LAB_FLOW", 0.2),                   // 35 share of a height step that flows a plant step
+            e("LAB_DRY", 0.0003),                 // 36 water that dries a plant step
+            e("LAB_POOL", 0.15),                  // 37 standing water: a slow step, mud
+            e("LAB_DRY_UP", 1.6),                 // 38 upkeep x on moisture 0
+            e("LAB_WET_UP", 0.6),                 // 39 upkeep x on moisture 1
+            e("LAB_WASH", 0.5),                   // 40 trail kept x (1 - wash x water)
+            e("LAB_MOIST", 2.0),                  // 41 moisture a unit of water
+            e("LAB_WADE", 0.4),                   // 42 a walker's step in standing water
+        ];
+        for (o, v) in words.iter().enumerate() {
+            w[32 + o] = v.to_bits();
+        }
+        // Word 63: how much the slime leans toward standing water.
+        w[63] = e("LAB_SEEK", 400.0).to_bits();
+    }
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));
@@ -3590,6 +3635,11 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     w.extend(fire(&d.moist));
     // Block 8: how fresh each cell's fire is (engine.wgsl's `PB_FRESH`,
     // for the view's advancing edge; the CPU keeps no copy).
+    w.extend(std::iter::repeat_n(0u32, c));
+    // LAB (the forest floor): block 9 the standing water, 10 the live
+    // moisture (block 7, the map's, plus the water), 11 the water's next.
+    w.extend(std::iter::repeat_n(0u32, c));
+    w.extend(fire(&d.moist));
     w.extend(std::iter::repeat_n(0u32, c));
     w
 }

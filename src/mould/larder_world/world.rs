@@ -155,6 +155,11 @@ pub trait World {
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         None
     }
+    /// LAB (the forest floor, lab branch only): the standing water a fine
+    /// cell, empty without it.
+    fn lab_water(&self) -> Vec<f32> {
+        Vec::new()
+    }
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in

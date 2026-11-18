@@ -30,7 +30,7 @@ use crate::mould::big::units_field_for;
 
 /// A lab knob from the environment (`LAB_REACH=120`), read every time:
 /// this is a film rig, not a rule.
-fn knob(name: &str, default: f32) -> f32 {
+pub(super) fn knob(name: &str, default: f32) -> f32 {
     std::env::var(name).ok().and_then(|v| v.parse().ok()).unwrap_or(default)
 }
 
@@ -133,6 +133,12 @@ impl<W: World> Game<W> {
     /// the squad fires. `LAB_SHOT=drive`: both. A mark lasts
     /// `LAB_SHOT_SECS` (default 3). Turrets' shots lay none.
     pub(super) fn lab_turn(&mut self, before: u64, now: u64) {
+        // The forest floor (`LAB_FLOOR`, 2026-11-18): the standing water,
+        // read back once a game second for the soldiers' mud and the log.
+        let tps_u = self.rules.tps.max(1) as u64;
+        if std::env::var("LAB_FLOOR").is_ok() && now / tps_u != before / tps_u {
+            self.floor_turn();
+        }
         if !self.world.lab_steer() {
             return;
         }
@@ -190,6 +196,36 @@ impl<W: World> Game<W> {
         if now / every != before / every {
             self.steer_turn();
         }
+    }
+
+    /// The forest floor's second (`lab_turn`): the standing water read
+    /// back into `Raids::lab_water` (fine cells, the dish's width), and with
+    /// `LAB_LOG` how much there is and how much of the ground it covers.
+    fn floor_turn(&mut self) {
+        let water = self.world.lab_water();
+        let Some((_, w, _)) = self.world.raid_ground() else { return };
+        if std::env::var("LAB_LOG").is_ok() && !water.is_empty() {
+            let pool = knob("LAB_POOL", 0.15);
+            let total: f32 = water.iter().sum();
+            let max = water.iter().cloned().fold(0.0f32, f32::max);
+            let wet = water.iter().filter(|&&v| v > 0.01).count();
+            let pooled = water.iter().filter(|&&v| v > pool).count();
+            let mud = self.soldiers.iter().filter(|s| s.alive && self.mud_at(s.x, s.y)).count();
+            println!("  lab floor t {:.0} s: water {total:.0} (max {max:.2}), wet {wet} cells, pooled {pooled} of {}, soldiers in mud {mud}", self.time(), water.len());
+        }
+        self.raids.lab_water = water;
+        self.raids.lab_water_w = w;
+    }
+
+    /// Whether world point (x, y) stands in the forest floor's standing
+    /// water (`LAB_POOL` deep or more): mud for a soldier.
+    pub(super) fn mud_at(&self, x: f32, y: f32) -> bool {
+        let w = self.raids.lab_water_w;
+        if w == 0 || x < 0.0 || y < 0.0 {
+            return false;
+        }
+        let i = y as usize * w + x as usize;
+        self.raids.lab_water.get(i).is_some_and(|&v| v > knob("LAB_POOL", 0.15))
     }
 
     /// Every `LAB_EVERY` game seconds (`lab_turn`): set the field started

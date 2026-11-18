@@ -765,6 +765,8 @@ impl<W: World> Game<W> {
         };
         // Set slime that holds (`Rules::set_hold`, E2b's other way): a
         // soldier in the bulwark walks at that share.
+        // LAB (the forest floor, lab branch only): standing water is mud.
+        let w = if self.mud_at(self.soldiers[k].x, self.soldiers[k].y) { w * super::lab::knob("LAB_MUD", 0.5) } else { w };
         if self.rules.set_hold > 0.0 && self.bulwark_at(self.soldiers[k].x, self.soldiers[k].y) {
             w * self.rules.set_hold
         } else {
