@@ -75,6 +75,8 @@ sells guns and cards, and the gun range (`Run::range`, start menu) is a free
 armory to try any of them against slime ([the run](run.md)). The H loadouts
 are test presets, not the game's way to arm. Nothing here is balanced.
 
+## The cards, family by family
+
 **Each bullet set has a shape** (2026-11-16, step A of the gun-system review;
 `Set::shape`): a slug's hit shoves the slime around it away from the gun (a
 fling with no kill), a needle flies on through two more slime hits, buckshot
@@ -233,6 +235,8 @@ crossed the char when the fire died, and did not flow round the line.
 The alarm held harder and adds no sensor read, so `fire_weight` was
 deleted and `fire_alarm` is the one fire-shyness switch, off
 ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
+
+## The look
 
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
