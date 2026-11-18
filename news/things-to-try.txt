@@ -3,7 +3,7 @@
 # this file; other lanes ask Direction for a line. One thing a line, in
 # plain words, the most important first. Lines starting with # are notes.
 The rush on planet 1: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build two pumps first instead: the slime now raids them about a minute in.
+The Lure: once you own it, put one in front of two or three turrets and watch the calm slime stream into them. Does it make building worth it against the rush?
 Camera shake and hit-stop: turn it on in Options, on the Experiments tab, and fight. Keep it, change it or drop it?
 What each of planets 1 to 3 does to you: one sentence a planet after playing them. Planet 3's slime now sets into amber walls where you shoot it.
 The starting rifle: does it feel good, and did one shop visit change how the gun plays? The shop sells two new bullets from planet 2, Provoke and Still.
-The new flinch look: the lime wash round a firefight is gone and scared slime flushes orange. Can you tell where the slime is backing off?

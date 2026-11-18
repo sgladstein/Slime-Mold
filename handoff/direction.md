@@ -22,9 +22,8 @@ end.
   Lure (`run::START`), because a shop unlock would keep it off planet 1,
   where the rush is tested; the building 300 food and 150 health; Tinder
   100 and the shop's sure Torch at most 100 (before planet 2 a run has 200
-  to 300 points, and Tinder without a fire is a wasted buy). When Squad's
-  two changes are on main: give the Lure a line in
-  `news/things-to-try.txt` and retune after he plays. Nothing is open with
+  to 300 points, and Tinder without a fire is a wasted buy). The Lure has its line in
+  `news/things-to-try.txt` (second, after the rush); retune after he plays. Nothing is open with
   the owner now.
 - **From the lab's part two** (11-18, `Reports/lab-steering-2026-11-17/`):
   no bullet steering card. A tuning lead for the pull: a strong lure that
@@ -54,6 +53,16 @@ end.
   enforces since #459: `crystal_regrow` (D7's), `feel` (shake and
   hit-stop, his to judge in play) and the set slime's look, which Look and
   interface deletes in #460 (amber stays).
+- **The run bot's first cut** (#463, Engine and tools, 11-18; run seed 1,
+  a measurement, nothing changed for it): planet 1 is won at 2:48 with 2
+  stars by the rush (drain the biggest crystal to 50 soldiers, walk into
+  the home crystal: 9,300 walkers to 110 in 28 s), far under exit test 1's
+  8 to 12 minutes; planet 2 is lost at the 15:00 clock with or without
+  Tinder (the Sprawler's threads eat the 9-soldier landing squad before it
+  drains). Planet 1's time is the rush, which is D7's and his. Planet 2 is
+  this lane's tuning once the bot plays it on seeds 1 to 3 (the Run bot
+  workflow's summary): if a played planet 2 is still lost, the landing
+  squad or the Sprawler's size is the number to move. Then post the curve.
 - **Next:** check each lane's lines in `news/whats-new.txt` as they land
   and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
   and Still, the Trunk's walls and the flinch look). When the owner plays,
