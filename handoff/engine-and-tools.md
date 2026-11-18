@@ -179,8 +179,17 @@ run=1:2 mode=squads hand=bot`):
   planet 1 the same rule lost a won planet (3,897 food all game, the
   pumps eaten), so pumps before a big squad is a dead end for the bot.
 
-**Next:** seed 3's planet 1 (go round the bulwark: find a stand with a
-clear line of fire, or walk in at its gap), then the bot on planet 2 (land, back off to a quiet crystal, hold it
+- **Seed 3, later the same day**: the grey band round its home is not a
+  bulwark or set slime (none on planet 1) but rock: the home sits in a
+  basin with one gap. The volley and the hunt now aim only along lines of
+  open ground (`clear` in `bot_hand`; seeds 1 and 2 still win, 2:49 and
+  4:42), but seed 3 still loses at the clock with 34 soldiers: the hunt
+  kills about 300 a half-minute while the home's slime grows about 350.
+  Walking in at 250 a soldier (41 soldiers at 3:20) left 8 within 10 s.
+  Not yet tried: film it to see whether the squad reaches the gap, and
+  pumps on the basin's rim once the squad is 40.
+
+**Next:** seed 3's planet 1 (above), then the bot on planet 2 (land, back off to a quiet crystal, hold it
 with the volley, build up), then planet 3; then whether the old run smoke
 rounds (`the_window_plays_a_runs_planet`, RTS mode) go, measured against
 the bot's coverage. After job 4: job 5's housekeeping.
