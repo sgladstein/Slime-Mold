@@ -60,7 +60,10 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   reach, so a clump 20 cells off hid the walkers on the squad
   (`Game::stance_of`, `Game::sight`;
   [report](../../Reports/auto-fire-2026-11-18/README.md),
-  [page](https://claude.ai/artifact/EdTkz7B7MwwHV7FbRtgGE3)).
+  [page](https://claude.ai/artifact/EdTkz7B7MwwHV7FbRtgGE3)). A held volley
+  still puts every bullet on the cursor: spreading it over the slime round
+  the cursor won at a body's edge but lost among loose walkers, so it was not
+  kept ([dead ends](../../Reports/dead-ends.md)).
 - **Commanding.** The bottom bar's middle panel has a tile per squad (hotkey,
   soldiers, health, state). Click a tile or press its number to take command;
   Ctrl + wheel switches. **Esc** or *Let go* commands none: every squad shows
