@@ -1378,6 +1378,12 @@ impl App {
             v.set_crust((e.crust_at > 0).then_some((&e.news, &e.state)), (e.crust_at / 4) as u32);
             // Set slime (E2b), from the block after the crust's set words.
             v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n);
+            // The Mind statuses on the slime they hold (Look A5,
+            // 2026-11-18): each slot's Mind word, after the gas's
+            // (`Engine::mind_words`), fading over a status's last 1.5 s.
+            let mind_at = (e.gas_at / 4) as u32 + slime_mould::gpu::GAS_SLOTS as u32 + e.n;
+            let fine_tps = game.rules.tps as f32 * game.world.fine_steps() as f32;
+            v.set_minds(Some((&e.news, &e.state)), mind_at, (1.5 * fine_tps).round() as u32);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();

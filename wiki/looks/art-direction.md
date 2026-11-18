@@ -132,10 +132,10 @@ B starts once A passes his eye.
 **A. The fight round the squad**
 
 1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart in value ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
-2. A hit is the slime's own reaction: the hole and how it closes (shots already fly as comets).
-3. Done (11-18): a squad of 40 you can count by its heads ([heads](../../Reports/squad-heads-2026-11-18/README.md)).
+2. A hit is the slime's own reaction: the hole and how it closes (shots fly as comets).
+3. Done (11-18): a squad countable by its heads ([heads](../../Reports/squad-heads-2026-11-18/README.md)).
 4. Done (11-18): no light past its damage; biting slime crimson ([bite](../../Reports/biting-slime-2026-11-18/README.md)).
-5. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds.
+5. Done (11-18): status slime glows rose ([mind](../../Reports/mind-status-2026-11-18/README.md)).
 6. Fire on slime with no cell-sized squares at zoom 12.
 
 **B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.

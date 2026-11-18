@@ -1,0 +1,98 @@
+<title>Mind Status Slime</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; each scene is a pair, before on the left and after on the right (stacked on a phone), counts under each */
+:root{
+  --bg:#f3f2ec; --panel:#e8e6dc; --fg:#1d211c; --muted:#5b6157;
+  --accent:#b3407f; --soft:#f3e0ea; --line:#cfccbf;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e98ac0; --soft:#33202b; --line:#3a3428; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e98ac0; --soft:#33202b; --line:#3a3428; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:720px){.grid{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure video,figure img{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:.92rem;color:var(--muted)}
+.side{font:750 1.1rem/1 var(--display);color:var(--fg);min-width:4.6em}
+.counts{font:13px/1.4 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.note{background:var(--soft);border-radius:8px;padding:16px 18px;max-width:760px;display:flex;flex-direction:column;gap:8px}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:760px}
+footer{font-size:.85rem;color:var(--muted);max-width:760px}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · Look A5 · 2026-11-18</span>
+  <h1>You can see which slime your Mind rounds hold</h1>
+  <p class="lede">Blind, Sour, Spin, Provoke and Still kill nothing: they change how the slime they hit behaves for a few seconds. Until now the only sign was the round's pink tracer, so you could not tell which slime was blind or still, or when it would wake. Now every walker under a status glows rose, the Mind cards' own colour, in a soft halo the size of a cell. Thick slime takes a rose wash, scattered walkers show rose cores, and the glow fades over the status's last 1.5 seconds, so you can see it running out. Each pair is one game drawn two ways: the Fork, with the squad held at 150,265 firing one kind of Mind round, 22 to 26 s, as the first statuses land on the slime coming in.</p>
+</header>
+
+<section>
+  <h2>Spin rounds, zoom 12</h2>
+  <p class="prose">The rounds land from about 21 s. All eight soldiers stand through the clip.</p>
+  <div class="grid">
+    <figure><video src="spin12-before.mp4" poster="spin12-before.jpg" autoplay muted loop playsinline aria-label="Before: Spin rounds land on the gold slime, which looks the same as before"></video><figcaption><span class="side">Before</span><span class="counts">296 rose pixels a frame (the tracers)</span></figcaption></figure>
+    <figure><video src="spin12-after.mp4" poster="spin12-after.jpg" autoplay muted loop playsinline aria-label="After: the spinning walkers glow rose"></video><figcaption><span class="side">After</span><span class="counts">2,651 a frame; 4.2% of the picture changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>The same, zoom 6</h2>
+  <div class="grid">
+    <figure><video src="spin6-before.mp4" poster="spin6-before.jpg" autoplay muted loop playsinline aria-label="Before: Spin rounds at zoom 6"></video><figcaption><span class="side">Before</span><span class="counts">121 rose pixels a frame</span></figcaption></figure>
+    <figure><video src="spin6-after.mp4" poster="spin6-after.jpg" autoplay muted loop playsinline aria-label="After: Spin rounds at zoom 6, the held slime rose"></video><figcaption><span class="side">After</span><span class="counts">1,713 a frame; 5.4% changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>Still rounds, zoom 12</h2>
+  <p class="prose">Still slime neither charges nor feeds, for 10 s, so its rose lasts longer than Spin's 6 s.</p>
+  <div class="grid">
+    <figure><video src="still12-before.mp4" poster="still12-before.jpg" autoplay muted loop playsinline aria-label="Before: Still rounds land on the gold slime"></video><figcaption><span class="side">Before</span><span class="counts">344 rose pixels a frame</span></figcaption></figure>
+    <figure><video src="still12-after.mp4" poster="still12-after.jpg" autoplay muted loop playsinline aria-label="After: the stilled slime glows rose"></video><figcaption><span class="side">After</span><span class="counts">3,595 a frame; 5.0% changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>The same, zoom 6</h2>
+  <div class="grid">
+    <figure><video src="still6-before.mp4" poster="still6-before.jpg" autoplay muted loop playsinline aria-label="Before: Still rounds at zoom 6"></video><figcaption><span class="side">Before</span><span class="counts">92 rose pixels a frame</span></figcaption></figure>
+    <figure><video src="still6-after.mp4" poster="still6-after.jpg" autoplay muted loop playsinline aria-label="After: Still rounds at zoom 6, the held slime rose"></video><figcaption><span class="side">After</span><span class="counts">3,328 a frame; 4.8% changed</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>What to look for</h2>
+  <ul>
+    <li><strong>Rose slime is held by a Mind round.</strong> Gold slime beside it is acting on its own.</li>
+    <li><strong>The rose fading</strong> is the status running out: it starts to fade 1.5 s before the slime wakes.</li>
+    <li><strong>All five statuses share the one colour,</strong> the Mind cards' family colour. What the slime does tells them apart: spinning slime curls, still slime stops, provoked slime charges, blind slime walks straight on and sour slime turns from its food.</li>
+  </ul>
+  <div class="note">
+    <h3>How it is drawn</h3>
+    <p>The status is the simulation's own: one word a walker, holding its kind and the step it ends. The view reads that word for every walker it draws and lays a soft disc the size of a cell, whose strength is the time left. Under thick slime the disc tints the body; on a lone walker it lights its core. Nothing is drawn where no walker holds a status.</p>
+  </div>
+</section>
+
+<footer>Filmed on the software renderer, 30 frames a game second. A rose pixel has red of at least 140, blue of at least 90, and blue 15 above green; the slime's gold and orange and the blood's dark red all have blue below green, so before only the rounds' own tracers count. Changed is the share of the picture where any channel differs by more than 12 of 255. Source and numbers: <code>Reports/mind-status-2026-11-18/</code> in the repo.</footer>
+</main>

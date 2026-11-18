@@ -58,19 +58,30 @@ fine cells against 4.8); only a squad draining a crystal heaps, because
 the crystal's rim has no room for 35 at 4.8, so the helmets carry the
 count there.
 
+**Also on main:** the biting slime (#502; the owner's 11-18 18:04Z and
+18:08Z notes: a bite "just looks like more of the same slime";
+`Reports/biting-slime-2026-11-18/`, page
+https://claude.ai/artifact/Wk5DevY7VGNnCAN21hAPcb): while a soldier is
+bitten (`touching` above 0) `draw.rs` sends its touch disc as a bite zone
+(`Light::bite`, lift `BITE_LIFT`, lighting nothing); `view.wgsl`'s
+`bite_share` turns the slime in it crimson (`BITE_SLIME`), `slime_on`
+draws it over the figure (the walkers that bite are all under it), and a
+flinch flushes the figure red (`BITE_HOT`) with its helmet white. The
+orange bite light is gone. Every other light of the fight was already its
+damage's size (the report's table), so Look A4 is done with it.
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
 time.
 
-- The biting slime (the owner's 11-18 18:04Z and 18:08Z notes: a bite
-  "just looks like more of the same slime"; `Reports/biting-slime-2026-11-18/`,
-  page https://claude.ai/artifact/Wk5DevY7VGNnCAN21hAPcb): while a soldier
-  is bitten (`touching` above 0) `draw.rs` sends its touch disc as a bite
-  zone (`Light::bite`, lift `BITE_LIFT`, lighting nothing); `view.wgsl`'s
-  `bite_share` turns the slime in it crimson (`BITE_SLIME`), `slime_on`
-  draws it over the figure (the walkers that bite are all under it), and
-  a flinch flushes the figure red (`BITE_HOT`) with its helmet white. The
-  orange bite light is gone. Every other light of the fight was already
-  its damage's size (the report's table), so Look A4 is done with it.
+- A Mind status on the slime (Look A5; `Reports/mind-status-2026-11-18/`,
+  page https://claude.ai/artifact/2or1C2HtnaRqNMX7pbznFz): each walker
+  under one lays a soft rose disc a cell across (`draw_mind` in
+  `draw_specks`, a value under 256 in the specks' third screen), and
+  `base` tints the slime there toward `MIND_ROSE`, fading over the last
+  1.5 s. `View::set_minds(news, at, fade)` takes the engine's Mind words
+  (`gas_at` / 4 + `GAS_SLOTS` + walkers), called once in `main.rs`
+  (Engine and tools' file, named in the pull request). `MIND_TINT` and
+  `MIND_HALO` are the numbers if it reads too loud or too faint.
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
@@ -84,9 +95,9 @@ while Squad asked to keep it.
 **Next, in order.**
 
 1. The rest of Look A, from the ranked list in
-   `wiki/looks/art-direction.md`: a Mind status on the slime, fire at
-   zoom 12; film the squad's spacing when Squad lands it; a hit's
-   lasting hole would be a slime rule (Enemy's) if the owner wants one.
+   `wiki/looks/art-direction.md`: fire at zoom 12 (A6); film the
+   squad's spacing when Squad lands it; a hit's lasting hole would be a
+   slime rule (Enemy's) if the owner wants one.
 2. The Experiments tab's own look (still Engine's first tab, one row a
    switch), and the experiments in the pause menu.
 3. Win and lose screens with the planet's numbers.
@@ -117,16 +128,12 @@ the raised walls above.
   frame for frame (`raw/make_page.py` in the lure report).
 - The bench for frame cost takes 60 to 90 s a run, and two runs of one
   build differ by 10 to 20% in every pass: take three runs a side, in turn.
-- Where a Mind status can be read for a look (Enemy, 11-18): not in the
-  look word (full) and not in `spec`. It is one word a walker slot in the
-  engine's `news` buffer at `mind_at() + k` (kind in the top three bits,
-  the step it ends in the low 29; valid only with `P.mind_on`), which the
-  view already binds, so `draw_specks` can tint a walker with one new
-  offset word passed as `set_crust` passes `setc_at`. A per-cell count
-  (the pattern is `setcount`) needs a pass from Enemy: ask, naming the
-  statuses.
-- The view's `V` struct has two spare words (`spare_a`, `spare_b`, the
-  old haze strengths).
+- A Mind status is read for the look from the engine's `news` (Enemy,
+  11-18): one word a walker slot at `mind_at() + k`, kind in the top three
+  bits, the step it ends in the low 29 (`View::set_minds`). A per-cell
+  count (the pattern is `setcount`) would need a pass from Enemy.
+- The view's `V` struct has no spare words left (`mind_at` and
+  `mind_fade` took the old haze strengths' two).
 - The owner asked (11-18 03:05Z) whether any green should show in the
   flinch look, since he saw none, and said "Overall it is better". None
   is drawn; Direction recorded it as a question, not a ruling.
