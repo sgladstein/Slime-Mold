@@ -2766,7 +2766,7 @@ impl Engine {
             let h = self.plant_at as usize;
             let hw: Vec<f32> = (32..43).map(|o| f32::from_le_bytes(b[h + 4 * o..h + 4 * o + 4].try_into().unwrap())).collect();
             let blk = |k: usize| (0..c).map(|i| { let a = h + 4 * (PLANT_HEAD + k * c + i); f32::from_le_bytes(b[a..a + 4].try_into().unwrap()) }).sum::<f32>();
-            println!("  lab debug: words 32-42 {hw:?}; block sums 7 {:.0} 9 {:.0} 10 {:.0} 11 {:.0}", blk(7), blk(9), blk(10), blk(11));
+            println!("  lab debug: words 32-42 {hw:?}; block sums 7 {:.0} 9 {:.0} 10 {:.0} 11 {:.0} rot {:.0}", blk(7), blk(9), blk(10), blk(11), blk(12));
         }
         let at = self.plant_at as usize + 4 * (PLANT_HEAD + 9 * c);
         b[at..at + 4 * c].chunks_exact(4).map(|w| f32::from_le_bytes(w.try_into().unwrap())).collect()
@@ -3564,7 +3564,9 @@ impl Engine {
 /// numbers, then seven blocks a cell (soil capacity, 0 on crystals; kind;
 /// plants A and B; fire A and B; char), or none without plants. Rates are
 /// a plant step's, as the CPU's `plant_rates` and `fire_rates` give them.
-pub const PLANT_HEAD: usize = 64;
+// LAB (the forest floor's rot, 2026-11-18): 80, not 64, so words 64-79
+// hold the rot's numbers (lab branch only).
+pub const PLANT_HEAD: usize = 80;
 pub fn plant_words(d: &BigDish) -> Vec<u32> {
     let mut w = vec![0u32; PLANT_HEAD];
     if d.plant.is_empty() {
@@ -3620,6 +3622,24 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
         }
         // Word 63: how much the slime leans toward standing water.
         w[63] = e("LAB_SEEK", 400.0).to_bits();
+        // Words 64-69: the rot (part two). Litter (the plants' density)
+        // rots into food where rain has soaked it (live moisture over the map's own, less word 69), by word
+        // 64 a plant step, up to word 65; food in units of the upkeep.
+        // A walker eats word 66 upkeeps a tick of it; word 67 is how much
+        // the slime smells it; word 68 the ticks a plant step (what the
+        // walkers on a cell ate since the last one).
+        let rot = [
+            e("LAB_ROT", 2.0),        // 64
+            e("LAB_ROT_CAP", 200.0),  // 65
+            e("LAB_ROT_EAT", 3.0),    // 66
+            e("LAB_ROT_SMELL", 2.0),  // 67
+            e("LAB_ROT_K", 2.5),      // 68
+            e("LAB_ROT_WET", 0.05),   // 69
+            e("LAB_ROT_SCENT", 0.3),  // 70 scent laid a unit of rot, as a crystal lays food_deposit
+        ];
+        for (o, v) in rot.iter().enumerate() {
+            w[64 + o] = v.to_bits();
+        }
     }
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
@@ -3640,6 +3660,8 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     // moisture (block 7, the map's, plus the water), 11 the water's next.
     w.extend(std::iter::repeat_n(0u32, c));
     w.extend(fire(&d.moist));
+    w.extend(std::iter::repeat_n(0u32, c));
+    // LAB (the rot): block 12, the food rotting litter holds.
     w.extend(std::iter::repeat_n(0u32, c));
     w
 }

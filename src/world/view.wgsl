@@ -2017,6 +2017,23 @@ fn floor_water(x: f32, y: f32) -> f32 {
     return o;
 }
 
+// LAB (the rot): the rotting litter's food at (x, y), bilinear (block 12).
+const ROT_RGB: vec3<f32> = vec3<f32>(34.0, 22.0, 10.0);
+const ROT_FLECK: vec3<f32> = vec3<f32>(70.0, 58.0, 34.0);
+fn floor_rot(x: f32, y: f32) -> f32 {
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let f = vec2<f32>(ux - floor(ux), uy - floor(uy));
+    var o = 0.0;
+    for (var j = 0; j < 2; j++) {
+        for (var i = 0; i < 2; i++) {
+            let c = cidx(clamp(ix + i, 0, i32(P.ww) - 1), clamp(iy + j, 0, i32(P.wh) - 1));
+            o += bitcast<f32>(pblock(12u, c)) * mix(1.0 - f.x, f.x, f32(i)) * mix(1.0 - f.y, f.y, f32(j));
+        }
+    }
+    return o;
+}
+
 // How much thinner plants are drawn over water (their density for the
 // crowns' size, so the stems shrink and the water shows between).
 const WATER_THIN: f32 = 0.65;
@@ -2523,6 +2540,13 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let deep = smoothstep(0.1, 0.5, wd);
         m.albedo = mix(m.albedo, mix(m.albedo * 0.55, WET_RGB, 0.6 * deep), a);
         m.gloss = mix(m.gloss, 0.9, a);
+        // The rot (part two): litter going soft, a dark umber with pale
+        // flecks where it is richest.
+        let rt = floor_rot(x, y);
+        let b = smoothstep(5.0, 120.0, rt) * m.vis * under;
+        let fleck = smoothstep(0.7, 0.9, vnoise(vec2<f32>(x, y) * 3.1)) * smoothstep(60.0, 200.0, rt);
+        m.albedo = mix(m.albedo, mix(ROT_RGB, ROT_FLECK, fleck), 0.75 * b);
+        m.gloss = mix(m.gloss, 0.35, b);
     }
     // The crust over the bare ground and its plants, under the slime.
     m.albedo = crust_over(m.albedo, x, y, m.vis * under);

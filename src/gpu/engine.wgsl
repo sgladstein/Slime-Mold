@@ -749,6 +749,7 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     if (gw != 0.0) { v += gw * grass[i]; }
     // LAB (the forest floor): the slime leans toward standing water (head word 63).
     if (floor_on()) { v += pf(63u) * min(water(i), 1.0); }
+    if (floor_on()) { v += pf(67u) * rot(i); }
     // The alarm (`alarm_weight`): over 0 the mould swarms to a wound,
     // under 0 it flees one.
     // The scar beside it (`scar_weight`), summed with the alarm first as
@@ -1404,6 +1405,8 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
     // LAB (the forest floor): damp ground is cheap to live on, dry costly.
     if (floor_on()) { up *= mix(pf(38u), pf(39u), moist(i)); }
+    // LAB (the rot): food from rotting litter, shared by the walkers here.
+    if (floor_on()) { g += min(rot(i) / max(n, 1.0), pf(66u)) * P.upkeep; }
     // A still walker spills its crystal share (`MIND_STILL`).
     var sh = share[i];
     if (mind_of(k, S.t) == MIND_STILL) { sh = 0.0; }
@@ -2063,6 +2066,8 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
                     if (atomicLoad(&reached[pj - 1u]) != 0u) { l *= P.fed; }
                     if (world(CRYSTALS)) { l *= piles[pj - 1u].left; }
                 }
+                // LAB (the rot): rotting litter smells like food (word 70 x its food).
+                if (floor_on()) { l += pf(70u) * rot(j); }
                 sum += scent_in[j] + l;
                 n += 1.0;
             }
@@ -3817,7 +3822,7 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
 // (heat A to B, eating plants B, char in place), `pcopy` (B to A) and
 // `firekill` (walkers on hot cells die as `strike` kills them). The
 // numbers are the CPU's, summed in the same order.
-const PLANT_HEAD: u32 = 64u;
+const PLANT_HEAD: u32 = 80u; // LAB: 64 on main (the rot's words 64-79)
 // (Word 49 on: up to three lights for `ignite`, four words each; words
 // 32-44 held them, three words each, until 11-14.)
 // After the dense cells, the raid's field and the bite cells
@@ -3874,6 +3879,9 @@ fn pcap_of(i: u32, k: u32) -> f32 {
 const PB_WATER: u32 = 9u;
 const PB_LIVE: u32 = 10u;
 const PB_WNEXT: u32 = 11u;
+// LAB (the rot, part two): block 12, food in litter that rots where wet.
+const PB_ROT: u32 = 12u;
+fn rot(i: u32) -> f32 { if (!floor_on()) { return 0.0; } return pget(PB_ROT, i); }
 fn floor_on() -> bool { return world(PLANTS) && pf(41u) > 0.0; }
 fn water(i: u32) -> f32 { if (!floor_on()) { return 0.0; } return pget(PB_WATER, i); }
 fn moist(i: u32) -> f32 {
@@ -3883,6 +3891,18 @@ fn moist(i: u32) -> f32 {
 }
 fn lab_floor(i: u32) {
     if (agar[i] == 0u) { pset(PB_WNEXT, i, 0.0); return; }
+    // The rot: litter (the plants on the cell) rots into food where the
+    // live moisture is over word 69; the walkers standing on it ate theirs
+    // since the last plant step (word 68 ticks of word 66 each).
+    var r = pget(PB_ROT, i);
+    // Where rain has soaked it (the live moisture over the map's own, less
+    // word 69), and not in rivers and lakes: litter rots on land. (First
+    // version: live moisture over 0.5; the map's damp river banks rotted
+    // before any rain, so the rot ran along every river.)
+    let wet = select(max(pget(PB_LIVE, i) - pget(PB_MOIST, i) - pf(69u), 0.0), 0.0, pwet(i));
+    r += pf(64u) * min(pget(PB_A, i), 1.0) * wet;
+    r -= f32(atomicLoad(&occ[i])) * pf(66u) * pf(68u);
+    pset(PB_ROT, i, clamp(r, 0.0, pf(65u)));
     let wi = pget(PB_WATER, i);
     let hi = 1.0 - pget(PB_MOIST, i) + wi;
     let x = i % P.w; let y = i / P.w;
