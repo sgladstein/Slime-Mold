@@ -40,13 +40,39 @@ def pairs():
     seen = set()
     return [d for d in decks if not (d in seen or seen.add(d))]
 
+# Stage 3 (2026-11-19), from the pairs on GitHub: the strongest pairs all
+# hold the needle blast, and the cards that added most on top of it were
+# seek, wide, rate, scorch, split and pierce; the trigger with the needle
+# blast and gas, torch or the needle germ, and the trigger with the
+# standard blast and gas (commons and an uncommon) came next. Three and
+# four card guns from those, on fresh seeds (7-12), so the stage-2 winners
+# are not judged on the seeds that picked them; the best pairs ride along
+# as references.
+MODS = ["seek", "wide", "rate", "scorch", "split", "pierce", "smother", "quiet"]
+
+def triples():
+    from itertools import combinations
+    decks = ["none", "blast.needle", "blast.standard", "germ.needle", "seek+blast.needle", "wide+blast.needle", "rate+blast.needle",
+             "trigger+blast.needle+gas.standard", "trigger+blast.needle+torch", "trigger+blast.standard+gas.standard", "trigger+blast.needle+germ.needle"]
+    decks += ["+".join(c) + "+blast.needle" for k in (2, 3) for c in combinations(MODS, k)]
+    for t in ("trigger+blast.needle+gas.standard", "trigger+blast.needle+torch", "trigger+blast.standard+gas.standard", "trigger+blast.needle+germ.needle",
+              "multicast+blast.needle+gas.standard", "multicast+blast.standard+gas.standard"):
+        decks += [f"{m}+{t}" for m in ("seek", "wide", "rate")]
+    decks += ["seek+wide+trigger+blast.standard+gas.standard"]
+    decks += ["+".join(c) + "+germ.needle" for k in (1, 2) for c in combinations(["wide", "seek", "range", "scatter", "scorch"], k)]
+    decks += ["wide+blast.standard+gas.standard", "trigger+gas.standard+blast.standard", "trigger+blast.standard+blast.standard"]
+    seen = set()
+    return [d for d in decks if not (d in seen or seen.add(d))]
+
 def main():
     stage = sys.argv[1]
     seeds = range(1, int(sys.argv[2]) + 1) if len(sys.argv) > 2 else range(1, 7)
+    if stage == "triples":
+        seeds = range(7, 13)
     extra = sys.argv[3] if len(sys.argv) > 3 else "arena=9 tail=30"
     secs = sys.argv[4] if len(sys.argv) > 4 else "60"
-    decks = {"singles": singles, "pairs": pairs}[stage]()
-    depths = (1, 3, 4) if stage == "pairs" else (1, 2, 3, 4)
+    decks = {"singles": singles, "pairs": pairs, "triples": triples}[stage]()
+    depths = (1, 3, 4) if stage in ("pairs", "triples") else (1, 2, 3, 4)
     for d in decks:
         for depth in depths:
             for s in seeds:

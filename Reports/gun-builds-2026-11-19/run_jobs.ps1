@@ -21,10 +21,13 @@ foreach ($line in $todo) {
   $tmp = [System.IO.Path]::GetTempFileName()
   $p = Start-Process -FilePath $exe -ArgumentList $a -NoNewWindow -PassThru -RedirectStandardOutput $tmp -RedirectStandardError "$tmp.err"
   $p | Add-Member -NotePropertyName Tmp -NotePropertyValue $tmp
+  $p | Add-Member -NotePropertyName Job -NotePropertyValue $line
   $running += $p
   $n++
   foreach ($r in @($running | Where-Object { $_.HasExited })) {
-    Get-Content $r.Tmp | Where-Object { $_ -match '^gunlab ' } | Add-Content $Out
+    $got = @(Get-Content $r.Tmp | Where-Object { $_ -match '^gunlab ' })
+    if ($got.Count -eq 0) { $j = $r.Job -split '\s+'; $got = @("gunlab depth=$($j[0]) seed=$($j[1]) deck=$($j[4]) how=error") }
+    $got | Add-Content $Out
     Remove-Item $r.Tmp, "$($r.Tmp).err" -ErrorAction SilentlyContinue
   }
   $running = @($running | Where-Object { -not $_.HasExited })
@@ -32,7 +35,9 @@ foreach ($line in $todo) {
 }
 $running | ForEach-Object { $_.WaitForExit() }
 foreach ($r in $running) {
-  Get-Content $r.Tmp | Where-Object { $_ -match '^gunlab ' } | Add-Content $Out
+  $got = @(Get-Content $r.Tmp | Where-Object { $_ -match '^gunlab ' })
+  if ($got.Count -eq 0) { $j = $r.Job -split '\s+'; $got = @("gunlab depth=$($j[0]) seed=$($j[1]) deck=$($j[4]) how=error") }
+  $got | Add-Content $Out
   Remove-Item $r.Tmp, "$($r.Tmp).err" -ErrorAction SilentlyContinue
 }
 Write-Host "done: $n games"
