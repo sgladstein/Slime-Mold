@@ -1,0 +1,45 @@
+# Collects a gun-lab run's results into the branch (2026-11-19): the
+# thread's cloud session cannot download Actions artifacts or logs through
+# its proxy, so a job does. `Reports/gun-builds-2026-11-19/collect.txt`
+# holds `RUN_ID OUT_NAME`; a push that changes it downloads every
+# `gun-lab-*` artifact of that run, joins their lines into
+# `Reports/gun-builds-2026-11-19/raw/OUT_NAME` and commits it to the branch.
+name: Gun lab collect
+
+on:
+  push:
+    branches: [claude/project-thread-i0vg7o]
+    paths: [Reports/gun-builds-2026-11-19/collect.txt]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: what
+        run: |
+          read -r run out < Reports/gun-builds-2026-11-19/collect.txt
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          echo "out=$out" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ steps.what.outputs.run }}
+          github-token: ${{ github.token }}
+          pattern: gun-lab-*
+          path: shards
+      - run: |
+          out="Reports/gun-builds-2026-11-19/raw/${{ steps.what.outputs.out }}"
+          mkdir -p "$(dirname "$out")"
+          cat shards/*/lab.txt | grep '^gunlab' > "$out" || true
+          wc -l "$out"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add "$out"
+          git commit -m "Gun lab: results of run ${{ steps.what.outputs.run }}
+
+          Nothing-new: research data." || exit 0
+          git push
