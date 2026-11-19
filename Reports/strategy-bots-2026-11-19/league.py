@@ -17,7 +17,8 @@ time, and reads their `league` lines into JSON lines; it also searches plans.
       Runs for good on a spare machine (Scott's PC): plays the job files
       in queue/pc/ (one game a line), then the search queue/pc-evolve.txt
       sets (name, plans, depths, seeds, secs, top, kids, util_share,
-      always), 40 games at a time; between, pushes results in pc/, takes
+      always: plans every generation, also: more result files in pc/ to
+      breed from), 40 games at a time; between, pushes results in pc/, takes
       the branch's new commits, rebuilds the game when src/ changed and
       restarts itself when this file changed. Waits while the owner's game
       or editor is open (other bots' games don't count). queue/pc-stop on
@@ -584,7 +585,8 @@ def next_work(chunk):
         if todo:
             return todo[:chunk], os.path.join(d, f"gen{gen}.jsonl")
     depths = {int(x) for x in c.get("depths", "3").split(",")}
-    rows = [r for r in load([os.path.join(d, f) for f in os.listdir(d) if f.endswith(".jsonl")]) if int(r["depth"]) in depths]
+    also = [os.path.join(OUT, f) for f in c.get("also", "").split(",") if f and os.path.exists(os.path.join(OUT, f))]
+    rows = [r for r in load([os.path.join(d, f) for f in os.listdir(d) if f.endswith(".jsonl")] + also) if int(r["depth"]) in depths]
     if gen == 0:
         plans = [l.strip() for l in open(os.path.join(ROOT, c["plans"])) if l.strip() and not l.startswith("#")]
     else:

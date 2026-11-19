@@ -9,3 +9,6 @@ secs=720
 top=8
 kids=24
 util_share=0.25
+# 11-19 19:15Z: breed from the aim and leave-home tests too, and keep their best in every generation.
+also=01-aim.jsonl,02-leave.jsonl,03-kite.jsonl
+always=econ,go=4,aim=6;lure,go=4,aim=6;turtle,go=4,aim=6;econ,aim=6;rush,aim=6
