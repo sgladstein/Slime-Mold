@@ -2,7 +2,7 @@
 title: The owner's rulings and decided choices
 kind: method
 status: current
-updated: 2026-11-18
+updated: 2026-11-19
 sources:
   - CLAUDE.md
   - Reports/continuation-plan-2026-11-17.md
@@ -35,6 +35,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-19 14:15 | His rulings are guidelines, not hard rules: follow them by default; a change that plays or reads better by bending one may land, and its "what is new" line or pull request names the ruling it bends and why. Said after a look was described as vetoed by the art-direction rulings. `CLAUDE.md`, *What the owner has ruled* | "My rules are guidelines not hard rules that cannot be bent" | Look and interface's thread |
 | 2026-11-19 00:03, card | Pages for big looks only: a small look lands with its "what is new" line and a still in the pull request, and no page; a bigger look (one that changes how the slime, the fight or a planet reads) keeps a before-and-after page. Threads still film to check their own work. `CLAUDE.md`, *Showing the owner* | Card "Pages for big looks only" (over "A page for every change" and "No pages") | Look and interface's card |
 | 2026-11-17 19:21, card | New slime rules are written and tested on the GPU engine only (on the software GPU in the cloud and in CI): no new CPU twin and no new twin test. Today's CPU engine (`src/mould/big.rs`) stays as it is for the tests and the census that stand on it, and whether to remove it is decided at Milestone 2. This closes the whole-game review's D8 | "So what is the point of the CPU then. I thought we start with CPU because it is easier to write and test in the cloud threads. If we start in the GPU (which I am not against) is there any reason to even have the CPU twin?" (19:07, to "Build new slime rules on the GPU first, and write the CPU twin only when a rule becomes a default (D8)?"); card "GPU only for new rules, keep old CPU" (over "Retire the CPU engine now" and "Keep full twins as today") | [plan](../Reports/continuation-plan-2026-11-17.md), [CLAUDE.md](../CLAUDE.md), [scale](model/scale.md) |
 | 2026-11-17 19:07 | Go on the continuation plan. One milestone at a time with exit tests, the first being "Three planets" (planets 1 to 3 as one 30-minute sitting); five standing lanes that each own files, plus one lab thread; `NOW.md` as the one front page in place of HANDOFF and ROADMAP; lighter records (a report only for a measurement others will cite, a dead end, or a page for the owner) | "1) Yes" (to "Start the five lanes on this plan?") | [plan](../Reports/continuation-plan-2026-11-17.md), [NOW.md](../NOW.md), [CLAUDE.md](../CLAUDE.md) |
