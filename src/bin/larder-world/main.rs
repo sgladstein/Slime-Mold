@@ -964,6 +964,9 @@ struct App {
     /// chose the mould (`shape=`, `walkers=`): what the menu's picks build
     /// on. None in the headless runs, which have no menu to go back to.
     base: Option<(Args, bool)>,
+    /// Experiments picked on the pause menu that wait for the next round
+    /// (`experiments::pick_experiment`): switch key, choice.
+    exp_next: Vec<(&'static str, &'static str)>,
     /// The roguelike run under way, between its levels too (`args.run` is
     /// the level being played; this is the run itself, in the shop).
     run: Option<Run>,
@@ -1083,6 +1086,7 @@ impl App {
             menu: None,
             parked: None,
             base: None,
+            exp_next: Vec::new(),
             result: Ok(()),
         }
     }
@@ -1096,6 +1100,8 @@ impl App {
     /// A new round on the map named in `args` (or the noise world).
     fn start(&mut self) -> Result<(), String> {
         self.save_replay();
+        // The pause menu's picks that wait for a new round (2026-11-19).
+        self.take_experiments();
         // A switch's window keys (`win:NAME`, the Experiments tab's picks
         // and `try=`) over the command line's own, each round: the round's
         // args are built afresh from the command line (`round_args`), so a

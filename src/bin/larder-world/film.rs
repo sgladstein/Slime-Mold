@@ -219,3 +219,75 @@ fn film_ends() {
         println!("{path}: {:?}", m.end);
     }
 }
+
+/// **The pause menu's pictures** (Look and interface, 2026-11-19): a
+/// sandbox round on the Fork a few seconds in, Esc pressed, and the
+/// menu filmed; with `FILM_PAGES=main,experiments` each page in turn
+/// (the Experiments page is clicked open from the menu's own button). A
+/// switch may be preset as the command line's `try=` would
+/// (`FILM_TRY=feel,crystal_regrow`), and `FILM_PICK=crystal_regrow`
+/// turns one on from the page itself, so the picture shows a pick
+/// waiting for Restart. `FILM_UI=2` for 200%.
+///
+/// `FILM=DIR cargo test --release --bin larder-world film_pause --
+/// --ignored --nocapture`
+#[test]
+#[ignore]
+fn film_pause() {
+    let env = |k: &str| std::env::var(k).ok();
+    let dir = env("FILM").expect("FILM=DIR");
+    std::fs::create_dir_all(&dir).unwrap();
+    let Some((device, queue)) = gpu() else { panic!("no gpu") };
+    let size = env("FILM_SIZE").map_or((1920, 1080), |v| {
+        let (a, b) = v.split_once('x').unwrap();
+        (a.parse().unwrap(), b.parse().unwrap())
+    });
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() };
+    for t in env("FILM_TRY").unwrap_or_default().split(',').filter(|t| !t.is_empty()) {
+        args.keys.extend(slime_mould::build::switches::keys_of(slime_mould::build::switches::parse_try(t).unwrap().1));
+    }
+    let mut app = offscreen(args, size, &device, &queue).unwrap();
+    if let Some(u) = env("FILM_UI") {
+        app.canvas.as_mut().unwrap().ui.user = u.parse().unwrap();
+    }
+    app.prepare();
+    for _ in 0..(4.0 * 15.0) as usize {
+        app.step(1.0 / 15.0);
+    }
+    let (_, ev) = app.hud.key(KeyCode::Escape, true, false, &mut app.camera);
+    assert_eq!(ev, vec![HudEvent::Menu(MenuItem::Opened)]);
+    let shoot = |app: &mut App, name: &str| {
+        app.prepare();
+        let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("film") });
+        view.record(&mut enc, &app.camera, None);
+        cp.record(&mut enc, &view.out, view.stride);
+        queue.submit([enc.finish()]);
+        let path = format!("{dir}/pause-{name}.png");
+        view.picture().save(&path).unwrap();
+        println!("{path}");
+    };
+    for page in env("FILM_PAGES").unwrap_or("main".into()).split(',') {
+        film_pause_page(&mut app, page, env("FILM_PICK").as_deref());
+        shoot(&mut app, page);
+    }
+}
+
+/// Opens pause menu page `page` (`main`: as Esc left it; `experiments`,
+/// with `pick`'s switch turned to its first choice off the default from
+/// the page, as a click on it would).
+fn film_pause_page(app: &mut App, page: &str, pick: Option<&str>) {
+    match page {
+        "main" => {}
+        "experiments" => {
+            app.hud.show_experiments();
+            if let Some(key) = pick {
+                let row = slime_mould::build::switches::SWITCHES.iter().position(|s| s.key == key).expect("FILM_PICK: no such switch");
+                let s = &slime_mould::build::switches::SWITCHES[row];
+                let choice = s.names().iter().position(|n| *n == s.tried().name).unwrap();
+                app.pick_experiment(row, choice).unwrap();
+            }
+        }
+        _ => panic!("no pause page {page}"),
+    }
+}

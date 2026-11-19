@@ -33,6 +33,7 @@ use super::canvas::{Align, Canvas, Rect, Rgba, Weight};
 use super::controls::Button;
 use super::icons::Icon;
 use super::ui::theme::*;
+use super::ui::{experiment_card, experiment_card_h, experiment_meter, ExpInfo, Experiment};
 
 mod shop;
 
@@ -51,6 +52,9 @@ pub struct Opt {
     /// empty). Tabs keep each list to a screen (owner, 11-15 17:31Z:
     /// "Having to scroll is horrible").
     pub tab: String,
+    /// A declared switch's own words (`experiment`): a tab whose options
+    /// all carry them is drawn as the switches' cards, not as rows.
+    pub exp: Option<ExpInfo>,
 }
 
 impl Opt {
@@ -66,7 +70,19 @@ impl Opt {
         }
         let find = |v: &str| c.iter().position(|x| x == v).unwrap_or(0);
         let (default, at) = (find(default), find(current));
-        Opt { key: key.into(), label: label.into(), choices: c, default, at, note: note.into(), tab: String::new() }
+        Opt { key: key.into(), label: label.into(), choices: c, default, at, note: note.into(), tab: String::new(), exp: None }
+    }
+
+    /// The same option as a declared switch, with its owner, date and
+    /// reasons (the Experiments tab's cards).
+    pub fn experiment(mut self, info: ExpInfo) -> Self {
+        self.exp = Some(info);
+        self
+    }
+
+    /// It as the card draws it (`ui::experiment_card`).
+    fn as_experiment(&self) -> Experiment {
+        Experiment { key: self.key.clone(), label: self.label.clone(), choices: self.choices.clone(), default: self.default, at: self.at, next: None, info: self.exp.clone().unwrap_or_default() }
     }
 
     /// The same option on the Options page's tab `tab`.
@@ -367,6 +383,8 @@ enum Hit {
     Mission(usize),
     /// Option `i` one choice back or on.
     Turn(usize, isize),
+    /// Option `i` set to its choice `k` (an Experiments card's button).
+    Pick(usize, usize),
     /// Option `i`'s row: a click focuses it, Enter turns it on.
     Reset(usize),
     /// The "default X" under a changed option: a click resets it.
@@ -407,6 +425,9 @@ pub struct StartMenu {
     /// What the build holds (the main page's row and corner, the News
     /// page); None draws neither.
     pub build: Option<BuildPage>,
+    /// How many declared switches the plan allows at once (`MOST_OFF`),
+    /// for the Experiments tab's count.
+    pub most_off: usize,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
     /// The shop's tab showing, whether the player has picked something
@@ -469,7 +490,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, news_tab: 0, try_first: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
     }
 
     /// The option named `key`.
@@ -703,6 +724,12 @@ impl StartMenu {
                 }
             }
             Hit::Default(i) => self.options[i].at = self.options[i].default,
+            Hit::Pick(i, k) => {
+                self.options[i].at = k.min(self.options[i].choices.len() - 1);
+                if let Some(k) = self.rows().iter().position(|&r| r == Hit::Reset(i)) {
+                    self.focus = k;
+                }
+            }
             Hit::Tab(k) => self.open_tab(k),
             Hit::Flip(by) => self.flip(by),
             Hit::Build => self.show(Page::News),
@@ -1392,6 +1419,9 @@ impl StartMenu {
     /// (`Reports/menu-layout-research-2026-11-15/`).
     fn options_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         let opts = self.tab_opts();
+        if !opts.is_empty() && opts.iter().all(|&i| self.options[i].exp.is_some()) {
+            return self.experiments_page(c, x, top, s, focus, &opts);
+        }
         let n = opts.len();
         let (lw, nw) = self.split(c, x, s);
         let rh = 46.0 * s;
@@ -1488,6 +1518,68 @@ impl StartMenu {
         c.paragraph(Weight::Medium, 13.0 * s, (px, all.y - 12.0 * s - (fl - 1.0) * 19.0 * s), tw, 19.0 * s, foot, MUTED);
         self.small_button(all, "All to defaults", "", Hit::ResetAll, focus == Some(Hit::ResetAll), c, s);
         panel.bottom().max(r.bottom())
+    }
+
+    /// **The Experiments tab** (the Look and interface lane, 2026-11-19):
+    /// the declared switches as cards (`ui::experiment_card`), each with
+    /// its state, its choices as one button, its lane, the day it landed,
+    /// when a pick applies in play, what you will see and why it is off,
+    /// all whole; over them what an experiment is and the count against
+    /// the plan's limit of three. The keyboard walks the cards as rows
+    /// (Up/Down, Left/Right turns one, Backspace sets it back). Until
+    /// 11-19 the tab was the other tabs' one-line rows with every reason
+    /// run into the note pane, and no lane, date or count anywhere. A
+    /// list that outgrows the screen is paged, never scrolled.
+    fn experiments_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>, opts: &[usize]) -> f32 {
+        let sw = c.screen.0 as f32;
+        let w = (sw - 2.0 * x).min(1000.0 * s);
+        let room = self.room(c, top, s);
+        let cards: Vec<(usize, Experiment)> = opts.iter().map(|&i| (i, self.options[i].as_experiment())).collect();
+        let pad = 16.0 * s;
+        let inner = w - 2.0 * pad;
+        let heights: Vec<f32> = cards.iter().map(|(_, e)| experiment_card_h(c, inner, e, s)).collect();
+        // The head: what an experiment is, the count against the limit,
+        // and every switch back to the default game; then as many cards a
+        // page as the tallest lets fit. (A foot under the cards for the
+        // reset left room for one card a page at 200% on 1080 lines.)
+        let gap = 10.0 * s;
+        let words = format!("{} of {} allowed  ·  {} on in this game", cards.len(), self.most_off, cards.iter().filter(|(_, e)| e.at != e.default).count());
+        let mw = 26.0 * self.most_off.max(cards.len()) as f32 * s + 8.0 * s + c.atlas.measure(Weight::SemiBold, 14.0 * s, &words);
+        let say = "At most three at once across the game. Each is settled once you have played it: on for everyone, one slime's trait, or deleted. A pick here lasts until the game closes";
+        let sub = Self::count(c, Weight::Medium, 14.0 * s, w - 2.0 * pad - 8.0 * s, say);
+        let head = 50.0 * s + sub * 20.0 * s + 8.0 * s;
+        let tallest = heights.iter().cloned().fold(0.0, f32::max) + gap;
+        let per = ((room - head - 2.0 * pad + gap) / tallest).floor().max(1.0) as usize;
+        if let Some(k) = focus.and_then(|h| if let Hit::Reset(i) = h { opts.iter().position(|&o| o == i) } else { None }) {
+            self.sheet = k / per;
+        }
+        let (shown, pages) = sheet_of(cards.len(), per, self.sheet);
+        (self.sheets, self.per) = (pages, per);
+        self.sheet = self.sheet.min(pages - 1);
+        let body: f32 = heights[shown.clone()].iter().map(|h| h + gap).sum::<f32>() - gap;
+        let panel = Rect::new(x, top, w, (head + body + 2.0 * pad).min(room.max(head)));
+        self.glass(panel, c, s);
+        let px = panel.x + pad + 4.0 * s;
+        let all = Rect::new(panel.right() - pad - 170.0 * s, panel.y + 14.0 * s, 170.0 * s, 34.0 * s);
+        self.small_button(all, "All to defaults", "", Hit::ResetAll, focus == Some(Hit::ResetAll), c, s);
+        let on = cards.iter().filter(|(_, e)| e.at != e.default).count();
+        let tw = c.text_fit(Weight::SemiBold, 19.0 * s, (px, panel.y + 38.0 * s), Align::Left, "Built, but not the default game yet", all.x - px - mw - 40.0 * s, TEXT);
+        experiment_meter(c, ((all.x - 24.0 * s - mw).max(px + tw + 24.0 * s), panel.y + 37.0 * s), cards.len(), on, self.most_off, s);
+        self.lines(c, Weight::Medium, 14.0 * s, (px, panel.y + 64.0 * s), w - 2.0 * pad - 8.0 * s, 20.0 * s, say, MUTED);
+        let mut y = panel.y + pad + head;
+        for (j, (i, e)) in cards[shown.clone()].iter().enumerate() {
+            let h = heights[shown.start + j];
+            let card = Rect::new(panel.x + pad, y, inner, h);
+            let focused = focus == Some(Hit::Reset(*i));
+            // The card takes the focus on a click; its buttons pick (they
+            // are drawn after it, so they are on top).
+            self.hits.push((card, Hit::Reset(*i)));
+            for (b, k) in experiment_card(c, card, e, self.hover, focused, false, s) {
+                self.hits.push((b, Hit::Pick(*i, k)));
+            }
+            y += h + gap;
+        }
+        panel.bottom()
     }
 
     /// **What is new** (the build page's first tab): the list's lines as
@@ -1794,6 +1886,48 @@ mod tests {
         m.moved(Some((r.x + r.w / 2.0, r.y + r.h / 2.0)));
         assert!(m.button(Button::Left, true).is_empty());
         m.button(Button::Left, false)
+    }
+
+    /// **The Experiments tab's cards** (2026-11-19): a tab whose options
+    /// are all declared switches draws each whole (its state, lane, date,
+    /// what you will see, why it is off) with the count against the
+    /// limit; a click on a card's choice sets it, Left/Right still turn
+    /// the keyboard's card, Backspace sets it back, and every word fits
+    /// the screen at 100% and 200%, two switches on one page.
+    #[test]
+    fn the_experiments_tab_shows_each_switch_whole() {
+        let info = |live| ExpInfo { lane: "Enemy".into(), since: "2026-11-11".into(), sees: "A crystal that is not being eaten slowly fills again".into(), why_off: "To be settled by play on a world that is mostly slime".into(), live };
+        for (screen, ui) in [((1280, 800), 1.0), ((1920, 1080), 1.0), ((1920, 1080), 2.0)] {
+            let mut m = menu();
+            m.options.push(Opt::new("exp:feel", "Shake and hit-stop", &["off", "on"], "off", "on", "").in_tab("Experiments").experiment(ExpInfo { lane: "Squad and arsenal".into(), ..info(true) }));
+            m.options.push(Opt::new("exp:crystal_regrow", "Crystals refill", &["off", "on"], "off", "off", "").in_tab("Experiments").experiment(info(false)));
+            let mut c = Canvas::new(screen);
+            c.ui.user = ui;
+            m.show(Page::Options);
+            while m.tabs()[m.opt_tab] != "Experiments" {
+                m.key(KeyCode::Tab, true);
+            }
+            c.clear();
+            m.draw(&mut c);
+            let said = |c: &Canvas, t: &str| c.runs.iter().any(|r| r.text == t);
+            for t in ["Built, but not the default game yet", "Shake and hit-stop", "Crystals refill", "ON", "OFF", "2 of 3 allowed  ·  1 on in this game", "YOU WILL SEE", "OFF BECAUSE", "All to defaults"] {
+                assert!(said(&c, t), "no {t:?} at {screen:?} {ui}");
+            }
+            assert!(c.runs.iter().any(|r| r.text == "Enemy  ·  landed 2026-11-11  ·  in play, Esc changes it for the next round"), "at {screen:?} {ui}");
+            assert_eq!(m.sheets, 1, "both on one page at {screen:?} {ui}");
+            for r in &c.runs {
+                assert!(r.x >= 0.0 && r.x + r.w <= screen.0 as f32 + 0.5 && r.base <= screen.1 as f32, "{:?} off the screen at {screen:?} {ui}", r.text);
+            }
+            // Crystals refill's "on", clicked.
+            let i = m.options.iter().position(|o| o.key == "exp:crystal_regrow").unwrap();
+            assert!(click(&mut m, &mut c, Hit::Pick(i, 1)).is_empty());
+            assert_eq!(m.option("exp:crystal_regrow").map(|o| o.value()), Some("on"));
+            assert_eq!(m.rows()[m.focus], Hit::Reset(i), "the card picked takes the focus");
+            m.key(KeyCode::Backspace, true);
+            assert_eq!(m.option("exp:crystal_regrow").map(|o| o.value()), Some("off"));
+            m.key(KeyCode::ArrowRight, true);
+            assert_eq!(m.option("exp:crystal_regrow").map(|o| o.value()), Some("on"));
+        }
     }
 
     #[test]

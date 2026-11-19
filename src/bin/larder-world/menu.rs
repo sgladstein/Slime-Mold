@@ -211,6 +211,7 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
     let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu.planets = true;
+    menu.most_off = slime_mould::build::switches::MOST_OFF;
     // What the build holds, as a PC that has not played sees it (every
     // line new, nothing ticked): the window puts its own memory over it
     // when it opens the menu (`App::open_menu`). A film may show a PC
