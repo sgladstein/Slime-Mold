@@ -244,7 +244,7 @@ pub(super) fn tally() -> (u32, usize, [u32; 4]) {
 
 /// Slime squares (`mould_grid`) round a point and on a line, shared by
 /// the volley, the hunt and the defences.
-struct Sense {
+pub(super) struct Sense {
     grid: Vec<u32>,
     bin: usize,
     gw: usize,
@@ -253,24 +253,24 @@ struct Sense {
 }
 
 impl Sense {
-    fn of(g: &Game<GpuWorld>) -> Sense {
+    pub(super) fn of(g: &Game<GpuWorld>) -> Sense {
         let sc = g.world.scale();
         let bin = (4.0 * sc).round().max(1.0) as usize;
         let (w, _) = g.world.size();
         Sense { grid: g.world.mould_grid(bin).unwrap_or_default(), bin, gw: w.div_ceil(bin), w, set: g.world.set_cells().unwrap_or_default() }
     }
 
-    fn centre(&self, i: usize) -> (f32, f32) {
+    pub(super) fn centre(&self, i: usize) -> (f32, f32) {
         (((i % self.gw) as f32 + 0.5) * self.bin as f32, ((i / self.gw) as f32 + 0.5) * self.bin as f32)
     }
 
     /// Walkers in the squares within `r` of `p`.
-    fn mass_near(&self, p: (f32, f32), r: f32) -> u32 {
+    pub(super) fn mass_near(&self, p: (f32, f32), r: f32) -> u32 {
         self.grid.iter().enumerate().filter(|&(i, _)| dist(self.centre(i), p) <= r).map(|(_, &c)| c).sum()
     }
 
     /// The slime's middle, by weight.
-    fn middle(&self) -> Option<(f32, f32)> {
+    pub(super) fn middle(&self) -> Option<(f32, f32)> {
         let (mut sx, mut sy, mut n) = (0.0f64, 0.0f64, 0.0f64);
         for (i, &c) in self.grid.iter().enumerate().filter(|&(_, &c)| c >= 8) {
             let p = self.centre(i);
@@ -283,7 +283,7 @@ impl Sense {
 
     /// A line of fire over open ground with no set walker on it (the run
     /// bot's `clear`).
-    fn clear(&self, g: &Game<GpuWorld>, a: (f32, f32), b: (f32, f32)) -> bool {
+    pub(super) fn clear(&self, g: &Game<GpuWorld>, a: (f32, f32), b: (f32, f32)) -> bool {
         let n = dist(a, b).ceil().max(1.0) as usize;
         (0..=n).all(|i| {
             let f = i as f32 / n as f32;
@@ -293,7 +293,7 @@ impl Sense {
     }
 
     /// The heaviest slime squares weighed by the walk from `from`, at most 40.
-    fn ranked(&self, from: (f32, f32), range: f32) -> Vec<((f32, f32), f32)> {
+    pub(super) fn ranked(&self, from: (f32, f32), range: f32) -> Vec<((f32, f32), f32)> {
         let mut v: Vec<((f32, f32), f32, f32)> = self
             .grid
             .iter()
@@ -311,13 +311,13 @@ impl Sense {
     }
 }
 
-fn dist(a: (f32, f32), b: (f32, f32)) -> f32 {
+pub(super) fn dist(a: (f32, f32), b: (f32, f32)) -> f32 {
     (a.0 - b.0).hypot(a.1 - b.1)
 }
 
 /// The nearest point to `p` where a `kind` may go now (`build_blocked`),
 /// searched outward in half-cell rings.
-fn spot(g: &Game<GpuWorld>, kind: Kind, p: (f32, f32)) -> Option<(f32, f32)> {
+pub(super) fn spot(g: &Game<GpuWorld>, kind: Kind, p: (f32, f32)) -> Option<(f32, f32)> {
     let sc = g.world.scale();
     (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
         let a = k as f32 / 12.0 * std::f32::consts::TAU;

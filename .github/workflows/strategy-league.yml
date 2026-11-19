@@ -50,6 +50,11 @@ jobs:
           python3 Reports/strategy-bots-2026-11-19/league.py run \
             Reports/strategy-bots-2026-11-19/queue/now.txt league-${{ matrix.shard }}.jsonl \
             --shard ${{ matrix.shard }}/12 --workers 1 --timeout 2400
+      # The rows in the log too: a cloud session reads job logs, but its
+      # proxy refuses the artifact store (fetch.sh reads these lines).
+      - name: rows
+        if: always()
+        run: sed 's/^/LEAGUEROW /' league-${{ matrix.shard }}.jsonl || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -13,6 +13,9 @@
 //! - `league=run:SEED[:TO[:SECS]] plan=PLAN`: a whole run from planet 1 to
 //!   TO (3) or a loss, shopping by the plan between planets.
 //!
+//! A plan that starts `util:` is the utility bot's weights (`utility.rs`)
+//! with its own `shop` and `cards`; any other is the strategy bot's.
+//!
 //! The game's steps are the window's (`App::step`, then `App::settle`), as
 //! the run bot's, so what the league plays is what the window plays.
 
@@ -64,11 +67,20 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     bought
 }
 
-/// The plan as the hand plays it on this run: the dials, and the unlocks
-/// the run owns (`own`).
-fn spec_for(spec: &str, r: &Run) -> String {
+/// The hand that plays plan `spec` on this run, with the unlocks the run
+/// owns (`own`): `util:...` as given, else `strat:...`.
+fn hand_for(spec: &str, r: &Run) -> String {
     let own: Vec<&str> = UNLOCKS.into_iter().filter(|k| r.has(k)).collect();
-    format!("{spec},own={}", own.join("/"))
+    let hand = if spec.starts_with("util:") { spec.to_string() } else { format!("strat:{spec}") };
+    format!("{hand},own={}", own.join("/"))
+}
+
+/// The shop policy of plan `spec` (`util:` weights carry one too).
+fn shop_plan(spec: &str) -> Result<Plan, String> {
+    match spec.strip_prefix("util:") {
+        Some(w) => Ok(super::utility::Weights::parse(w)?.plan),
+        None => Plan::parse(spec),
+    }
 }
 
 /// One planet played: the `league` line's numbers.
@@ -90,7 +102,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     args.squads = true;
     args.map = None;
     args.mission = None;
-    let hand = format!("strat:{}", spec_for(spec, r));
+    let hand = hand_for(spec, r);
     let mut app = offscreen(args, (320, 200), device, queue)?;
     let g = app.game.as_ref().ok_or("no game")?;
     let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
@@ -142,7 +154,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
         (None, None) => "open",
     };
     let count = |k: fn(&Kind) -> bool| g.buildings.iter().filter(|b| b.alive && b.up() && k(&b.kind)).count();
-    let (bought, peak_alive, secs_in) = strat::tally();
+    let (bought, peak_alive, secs_in) = if spec.starts_with("util:") { super::utility::tally() } else { strat::tally() };
     let mark = |m: Option<(u32, usize, usize)>| m.map_or("-".to_string(), |(k, s, a)| format!("{k}/{s}/{a}"));
     let line = format!(
         "depth={} seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} at150={} at300={} at600={} wall={:.0} marks={}",
@@ -180,7 +192,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
 
 /// `league=DEPTH:SEED[:SECS]` (see the module's docs).
 pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
-    let p = Plan::parse(spec)?;
+    let p = shop_plan(spec)?;
     let mut r = Run::new(seed);
     r.restock();
     let mut bought = Vec::new();
@@ -195,7 +207,7 @@ pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, spec: &str, d
 
 /// `league=run:SEED[:TO[:SECS]]` (see the module's docs).
 pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
-    let p = Plan::parse(spec)?;
+    let p = shop_plan(spec)?;
     let mut r = Run::new(seed);
     r.restock();
     let mut won = 0;
