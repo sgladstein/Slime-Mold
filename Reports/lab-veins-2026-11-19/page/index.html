@@ -1,0 +1,90 @@
+<title>Trunk Veins</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #0e1316; --panel: #161d21; --line: #27323a; --fg: #ece6d8; --dim: #9aa5a8;
+    --slime: #f3a63c; --water: #5fb3d9; --tether: #7fd1a8; --base: #9aa5a8; --head: #fff8e8;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5f1e8; --panel: #fffdf7; --line: #d9d2c2; --fg: #262a2b; --dim: #626b6d;
+      --slime: #a85d00; --water: #1f6f96; --tether: #1d7a4f; --base: #7d8689; --head: #14181a; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f1e8; --panel: #fffdf7; --line: #d9d2c2; --fg: #262a2b; --dim: #626b6d;
+    --slime: #a85d00; --water: #1f6f96; --tether: #1d7a4f; --base: #7d8689; --head: #14181a; color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-block: 40px 72px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  h1, h2 { font-family: "Space Grotesk", Inter, system-ui, sans-serif; color: var(--head); text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; }
+  h2 { font-size: 1.45rem; line-height: 1.2; font-weight: 600; margin-top: 56px; }
+  p, li { max-width: 68ch; }
+  p { margin: 0.7em 0 0; }
+  .eyebrow { font-size: 0.78rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+  .lede { font-size: 1.14rem; margin-top: 18px; max-width: 62ch; }
+  .w { color: var(--water); font-weight: 600; } .s { color: var(--slime); font-weight: 600; }
+  .dim { color: var(--dim); }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 24px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  .card h3 { font: 600 1.05rem "Space Grotesk", Inter, sans-serif; margin: 0 0 8px; color: var(--head); }
+  video { width: 100%; border-radius: 6px; display: block; background: #000; aspect-ratio: 16 / 10; }
+  svg { width: 100%; height: auto; display: block; margin-top: 10px; }
+  .counts { font-size: 0.88rem; color: var(--dim); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .tbl { overflow-x: auto; margin-top: 18px; }
+  table { border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; min-width: 600px; }
+  th, td { text-align: right; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--dim); font-weight: 500; }
+  .rec { background: var(--panel); border-left: 3px solid var(--water); padding: 16px 20px; margin-top: 18px; border-radius: 0 8px 8px 0; }
+  ol, ul { padding-left: 1.3em; } li { margin-top: 0.4em; }
+  code { font-size: 0.86em; }
+  .key { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.82rem; color: var(--dim); margin-top: 6px; }
+  .key i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; }
+</style>
+<style>
+  figure { margin: 24px 0 0; }
+  figure img { width: 100%; border-radius: 8px; display: block; }
+  figcaption { font-size: 0.88rem; color: var(--dim); margin-top: 8px; max-width: 80ch; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.8rem; color: var(--dim); margin-top: 6px; }
+</style>
+<div class="wrap">
+  <div class="eyebrow">Lab · 2026-11-19 · lab branch only, not in the game</div>
+  <h1>Trunk Veins</h1>
+  <p class="lede">Can the Trunk's thick body grow veins that the simulation makes, so the look has something real to draw? Two rules built on the walkers' own motion: <b>no</b>. Inside the body nothing moves, so there is no flow to build on. What does flow there is food.</p>
+
+  <h2>From the model</h2>
+  <p>Out of its body the Trunk makes long straight cords: walkers stream along a trail ridge, and the ridge is where they stream. Inside the body a fine cell holds at most one walker and the body is close to full, so a walker is mostly blocked; every crowded cell lays the same capped trail, the trail is flat, the sensors read the same, and headings are random.</p>
+  <p>Both rules read the <b>flow</b> on each 2 x 2 block: every walker adds its step's heading, the block keeps three quarters of it a tick, milling cancels and a stream adds up. <b>Vein deposit</b>: a walker lays trail by how coherent its block's flow is, so streams lay ridges. <b>Align</b>: a calm walker turns toward its block's flow.</p>
+
+  <h2>Inside the body, 1:00, zoom 12</h2>
+  <figure>
+    <img src="sheet-z12.jpg" alt="Four crops of the Trunk's body at zoom 12">
+    <div class="grid2"><span>Base: killed 3,678, slime 40,427</span><span>Vein 1: killed 4,498, slime 39,611</span><span>Align 1: killed 3,716, slime 40,196</span><span>Control, flow kept with no effect: killed 3,424, slime 40,474</span></div>
+    <figcaption>Planet 3, run seed 1, greedy hand, the body at 150,110. No veins in either rule: the body's middle stays an even film. Both open a bare patch where the still walkers lay little or drift off together. The control matches base, so the flow alone changes nothing.</figcaption>
+  </figure>
+
+  <h2>The cords, 2:00, zoom 6</h2>
+  <figure>
+    <img src="pair-z6.jpg" alt="Base and vein 0.5 at zoom 6">
+    <div class="grid2"><span>Base: slime 17,414 at 2:00, 15,192 at 3:00</span><span>Vein 0.5: slime 18,982 at 2:00, 17,881 at 3:00</span></div>
+    <figcaption>Where walkers do stream, the vein deposit makes the stream lay a stronger ridge: a thick cord runs east across the meadow where base has a thin trickle. Killed by 3:00: 7,922 against 7,724. Vein 1 wiped the squad at 1:25 (one seed).</figcaption>
+  </figure>
+
+  <h2>Recommendation</h2>
+  <div class="rec">
+    <p style="margin-top:0"><b>Drop both as the Trunk's veins.</b> A rule on walker motion cannot draw veins inside a body packed a walker a cell, because nothing there moves. It only acts on the cords, where vein 0.5 makes them bolder and the slime fiercer: a tuning question, not a look.</p>
+    <p>What does flow inside a packed body is <b>food</b>: the game's shared food passes energy walker to walker from the crystals the body eats, with no walker moving, and the view can already receive each walker's energy. A vein drawn from that flow is real data. Not yet looked at: whether it has vein structure or is a smooth gradient. If Look draws it once and it is only a gradient, Enemy could share food along the trail ridges so food runs in channels.</p>
+  </div>
+  <p class="dim" style="margin-top:40px">Lab branch <code>claude/project-thread-4tc75h</code>, code <code>042b8a9</code>, keys <code>LAB_VEIN</code>, <code>LAB_ALIGN</code>. Report <code>Reports/lab-veins-2026-11-19/README.md</code>.</p>
+</div>

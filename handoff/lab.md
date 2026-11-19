@@ -130,4 +130,12 @@ A second slime species that fights the first; the player's own mould
   41 against 379); tighter adds nothing. Recommendation now: tether 2 for
   roaming and breakaway walkers only; a muster so a raid leaves as a body
   is the next step if Direction wants it. Numbers sent to Enemy.
+- 2026-11-19: the lab branch's tree restarted from main (`d267da1`, a
+  merge that keeps the old prototypes' history; they are no longer in
+  the tip). **Trunk veins delivered** (brief from Direction 09:30Z):
+  report [`Reports/lab-veins-2026-11-19/`](../Reports/lab-veins-2026-11-19/README.md),
+  page "Trunk Veins", code `042b8a9` (`LAB_VEIN`, `LAB_ALIGN`; the flow
+  block after the plants', not the dense region's fourth quarter, which
+  is the fort's mask). No veins from walker motion: the body is packed.
+  Recommendation: draw the shared food's flow instead (untested).
 - Next step: none. Wait for Direction's next brief.
