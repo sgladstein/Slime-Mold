@@ -1,0 +1,58 @@
+# The gun lab's sweeps (2026-11-19, the gun-building research thread):
+# each line of the job list named in `Reports/gun-builds-2026-11-19/run.txt`
+# is one game, `DEPTH SEED GUN DECK`, played by `larder-world gunlab=`
+# (the run bot with that gun and deck on that planet) on Mesa's software
+# Vulkan. The list is split over SHARDS jobs by line number; each job
+# prints its `gunlab` lines to the log and uploads them.
+#
+# WHY ON A PUSH TO THE THREAD'S BRANCH: a sweep is about a thousand games
+# of 1 to 5 real minutes each (the owner's card of 11-18: long runs go to
+# GitHub's checks from a pushed branch), and `workflow_dispatch` needs the
+# workflow on main. It runs only when `run.txt` changes.
+name: Gun lab
+
+on:
+  push:
+    branches: [claude/project-thread-i0vg7o]
+    paths: [Reports/gun-builds-2026-11-19/run.txt]
+
+permissions:
+  contents: read
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: gun-lab
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: cargo build --release --locked --bin larder-world
+      - name: games
+        env:
+          WGPU_BACKEND: vulkan
+          SHARD: ${{ matrix.shard }}
+          SHARDS: 20
+        run: |
+          list="Reports/gun-builds-2026-11-19/$(head -1 Reports/gun-builds-2026-11-19/run.txt)"
+          n=0
+          : > lab.txt
+          grep -v '^#' "$list" | grep -v '^$' | while read -r depth seed gun deck; do
+            if [ $((n % SHARDS)) -eq "$SHARD" ]; then
+              ./target/release/larder-world gunlab=$depth:$seed gun=$gun deck=$deck 2>/dev/null | grep '^gunlab' | tee -a lab.txt || echo "gunlab depth=$depth seed=$seed gun=$gun deck=$deck how=error" | tee -a lab.txt
+            fi
+            n=$((n + 1))
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gun-lab-${{ matrix.shard }}
+          path: lab.txt
