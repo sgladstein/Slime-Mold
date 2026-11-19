@@ -281,6 +281,40 @@ def cross(a, b, rng):
     keys = set(a) | set(b)
     return {k: (a if rng.random() < 0.5 else b).get(k, (b if k in b else a).get(k)) for k in keys if (k in a or k in b)}
 
+STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1"}
+
+def presets():
+    """The strategy bot's named families, read from strat.rs."""
+    src = open(os.path.join(ROOT, "src", "bin", "larder-world", "strat.rs")).read()
+    return dict(re.findall(r'\("([a-z]+)", "([^"]*)"\)', src))
+
+def canon(plan, _p={}):
+    """What a plan plays, with its preset and defaults filled in, so two
+    spellings of one plan (`lure` and `lure,lure=1`) count as one."""
+    if not _p:
+        _p.update(presets())
+    d = dials_of(plan)
+    d.pop("name", None)
+    if d.get("@") == "util:":
+        full = {k: f"{v:.3g}" for k, v in util_weights().items()}
+        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1"})
+    else:
+        full = dict(STRAT_DEFAULTS)
+        full.update({k: v for k, v in dials_of(_p.get(d.get("@", ""), "")).items() if k != "@"})
+    for k, v in d.items():
+        if k == "@":
+            continue
+        try:
+            full[k] = f"{float(v):.3g}"
+        except ValueError:
+            full[k] = v
+    for k, v in list(full.items()):
+        try:
+            full[k] = f"{float(v):.3g}"
+        except ValueError:
+            pass
+    return ("util" if d.get("@") == "util:" else "strat", tuple(sorted(full.items())))
+
 def breed(rows, top_n, kids, seed, only=None):
     """The best `top_n` plans by mean score (of those `only` keeps) and
     `kids` new ones bred from them."""
@@ -292,7 +326,7 @@ def breed(rows, top_n, kids, seed, only=None):
     ranked = sorted(by, key=lambda p: -sum(by[p]) / len(by[p]))
     top = ranked[:top_n]
     out = list(top)
-    seen = set(by)
+    seen = {canon(p) for p in by}
     tries = 0
     while top and len(out) < len(top) + kids and tries < 10000:
         tries += 1
@@ -300,8 +334,8 @@ def breed(rows, top_n, kids, seed, only=None):
         if rng.random() < 0.3 and len(top) > 1:
             pa = cross(pa, dials_of(rng.choice(top)), rng)
         kid = plan_of(mutate(pa, rng))
-        if kid not in seen:
-            seen.add(kid)
+        if canon(kid) not in seen:
+            seen.add(canon(kid))
             out.append(kid)
     return out
 
