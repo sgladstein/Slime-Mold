@@ -73,7 +73,8 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
   the Direction lane, not straight to the owner.
 - **The look is everyone's job and one lane's call.** He called the visuals
   "an important factor" (2026-11-17). Check a visible change against
-  `wiki/looks/art-direction.md` and include a short clip at zoom 6 and 12;
+  `wiki/looks/art-direction.md` and include a short clip at zoom 6 and 12 in
+  the pull request (a page only for a big look, below);
   Look and interface reviews it. His order for look work (2026-11-17): A the
   fight round the squad, B the slime itself, C planets and terrain, D menus,
   shop and screens. An effect is never bigger than its damage (2026-11-14).
@@ -153,6 +154,12 @@ Five standing lanes and a lab, each one long-lived thread (2026-11-17).
 5. Before retrying an idea, grep `Reports/dead-ends.md` for the mechanism.
 
 ## Showing the owner
+
+**Pages for big looks only** (his card, 2026-11-19 00:03Z). A small look
+lands with its "what is new" line and a still in the pull request, and no
+page. A bigger look, one that changes how the slime, the fight or a planet
+reads, keeps a before-and-after page. Threads still film to check their own
+work. Rejected: a page for every change, and no pages at all.
 
 Pictures and clips go on an Artifact page linked in the thread, with the
 counts beside each picture, never as chat attachments. A look is judged in

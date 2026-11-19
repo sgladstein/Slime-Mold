@@ -67,8 +67,8 @@ this thread's judgement.
 | Pierce | 1 | Trunk | J | runs on along a long cord | the bullet carries on past its first hit |
 | Trigger, Expire | 2 | Trunk | J | carry a payload past the cords to a body | a second payload goes off past the first |
 | Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food | the slime loses its line to a crystal |
-| Gas | 1 | Swarmer | J | the charge sleeps before it bites | a grey, still patch |
-| Mist | 2 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
+| Gas | 2 | Swarmer | J | the charge sleeps before it bites | a grey, still patch |
+| Mist | 4 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
 | Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it |
 | Spin | 2 | Swarmer | J | rings stop a charge | the vein beads into knots |
 | Heave | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone); with no turret near it pushes the swarm back | the slime shoved as a block, toward a turret if one is near |
