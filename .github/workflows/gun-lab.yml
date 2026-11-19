@@ -2,7 +2,10 @@
 # each line of the job list named in `Reports/gun-builds-2026-11-19/run.txt`
 # is one game, `DEPTH SEED SECS GUN DECK [KEYS...]`, played by `larder-world gunlab=`
 # (the run bot with that gun and deck on that planet) on Mesa's software
-# Vulkan. The list is split over SHARDS jobs by line number; each job
+# Vulkan. The list is split over SHARDS jobs by (planet, seed): every
+# deck of one planet and seed plays on one runner, since software Vulkan
+# on two machines can give slightly different games (11-19: the cloud and
+# the 1070 differed), and decks are compared paired by seed. Each job
 # prints its `gunlab` lines to the log and uploads them.
 #
 # WHY ON A PUSH TO THE THREAD'S BRANCH: a sweep is about a thousand games
@@ -23,7 +26,7 @@ jobs:
   shard:
     name: shard ${{ matrix.shard }}
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 355
     strategy:
       fail-fast: false
       matrix:
@@ -43,13 +46,11 @@ jobs:
           SHARDS: 20
         run: |
           list="Reports/gun-builds-2026-11-19/$(head -1 Reports/gun-builds-2026-11-19/run.txt)"
-          n=0
           : > lab.txt
-          grep -v '^#' "$list" | grep -v '^$' | while read -r depth seed secs gun deck keys; do
-            if [ $((n % SHARDS)) -eq "$SHARD" ]; then
+          grep -v '^#' "$list" | grep -v '^$' | awk '{k=$1":"$2; if(!(k in g)) g[k]=n++; print g[k], $0}' | while read -r grp depth seed secs gun deck keys; do
+            if [ $((grp % SHARDS)) -eq "$SHARD" ]; then
               ./target/release/larder-world gunlab=$depth:$seed:$secs gun=$gun deck=$deck $keys 2>/dev/null | grep '^gunlab' | tee -a lab.txt || echo "gunlab depth=$depth seed=$seed gun=$gun deck=$deck how=error" | tee -a lab.txt
             fi
-            n=$((n + 1))
           done
       - uses: actions/upload-artifact@v4
         if: always()
