@@ -1,0 +1,11 @@
+bot
+rush
+econ
+turtle
+scott
+lure
+boom
+taker
+util:name=util
+util:shop=turret/turret+/strike/rate/hp
+util:shop=pump+/bank/squad/strike/rate/hp

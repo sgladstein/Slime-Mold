@@ -12,6 +12,12 @@ time, and reads their `league` lines into JSON lines; it also searches plans.
   league.py table OUT...
       Prints each plan's wins, mean time to win and mean progress by planet.
   league.py breed OUT... --top K --kids N --seed S > PLANS
+  league.py evolve PLANS DIR --until UTC_ISO [--workers N] [--push]
+      Generations on one machine until a time: plays PLANS (genN.jsonl in
+      DIR), breeds the next from every game in DIR (the strategy bot's and
+      the utility bot's plans bred apart, so neither crowds the other out),
+      and again; with --push, commits DIR after each and pushes it to the
+      branch it was fetched from.
       The next generation: the K best plans by score, kept, and N children
       made by moving one or two dials of a parent (and crossing two parents).
 
@@ -19,12 +25,13 @@ Score of one game: a win is 1 plus up to 1 for speed ((cap - secs) / cap);
 a game not won is its progress, 1 - slime left / the slime's peak, times
 0.9, so any win beats any loss. A plan's score is the mean over its games.
 """
-import argparse, json, os, random, re, subprocess, sys, time
+import argparse, json, math, os, random, re, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+BIN = os.path.join(ROOT, "target", "release", "larder-world" + (".exe" if os.name == "nt" else ""))
 
 def parse_line(line):
     """A `league ...` line into a dict (numbers as numbers)."""
@@ -42,7 +49,11 @@ def parse_line(line):
 def key(job):
     return f"{job[0]}|{job[1]}|{job[2]}|{job[3]}"
 
+DEADLINE = None
+
 def run_one(binary, job, timeout):
+    if DEADLINE and time.time() > DEADLINE:
+        return None
     plan, depth, seed, secs = job
     cmd = [binary, f"league={depth}:{seed}:{secs}", f"plan={plan}"]
     t0 = time.time()
@@ -77,6 +88,8 @@ def cmd_run(a):
     print(f"league: {len(todo)} of {len(jobs)} games to play, {a.workers} at once", file=sys.stderr)
     with open(a.out, "a") as f, ThreadPoolExecutor(a.workers) as ex:
         for r in ex.map(lambda j: run_one(a.bin, j, a.timeout), todo):
+            if r is None:
+                continue
             f.write(json.dumps(r) + "\n")
             f.flush()
             tag = r.get("how", r.get("error", "?"))
@@ -136,7 +149,7 @@ def cmd_table(a):
                 continue
             w = [r for r in ds if r["how"] == "won"]
             t = sum(r["secs"] for r in w) / len(w) if w else 0
-            prog = sum(1 - r["mould"] / max(r["peak_mould"], 1) for r in ds) / len(ds)
+            prog = sum(1 - r.get("mould", 1) / max(r.get("peak_mould", 1), 1) for r in ds) / len(ds)
             cells.append(f"{len(w)}/{len(ds)} {t/60:4.1f}m {prog:.2f}")
         lines.append((s, plan, cells))
     lines.sort(reverse=True)
@@ -168,6 +181,9 @@ SHOP_KEYS = ["strike", "rate", "hp", "squad", "harvest", "range", "bank", "turre
 
 def dials_of(plan):
     d = {}
+    if plan.startswith("util:"):
+        d["@"] = "util:"
+        plan = plan[5:]
     for w in plan.split(","):
         if "=" in w:
             k, v = w.split("=", 1)
@@ -177,10 +193,66 @@ def dials_of(plan):
     return d
 
 def plan_of(d):
+    body = [f"{k}={v}" for k, v in sorted(d.items()) if k != "@"]
+    if d.get("@") == "util:":
+        return "util:" + ",".join(body)
     head = [d["@"]] if "@" in d else []
-    return ",".join(head + [f"{k}={v}" for k, v in sorted(d.items()) if k != "@"])
+    return ",".join(head + body)
+
+_WEIGHTS = {}
+
+def util_weights():
+    """The utility bot's weights and defaults, read from utility.rs once (a
+    long search keeps the weights its binary was built with, even when a
+    push it rebases on brings new ones)."""
+    if not _WEIGHTS:
+        src = open(os.path.join(ROOT, "src", "bin", "larder-world", "utility.rs")).read()
+        _WEIGHTS.update({k: float(v) for k, v in re.findall(r'\("([a-z_]+)", (-?[0-9.]+), "', src)})
+    return _WEIGHTS
+
+def mutate_util(d, rng):
+    """Moves three to six of a utility plan's weights by a factor of about
+    e^N(0, 0.5) (or sets a zero one to a small value), and sometimes its shop."""
+    d = dict(d)
+    ws = util_weights()
+    for k in rng.sample(sorted(ws), rng.randint(3, 6)):
+        v = float(d.get(k, ws[k]))
+        if k in ("per", "cap", "threat_r", "threat_n"):
+            v *= math.exp(rng.gauss(0, 0.3))
+        elif abs(v) < 0.05:
+            v = rng.uniform(0.05, 0.5)
+        else:
+            v *= math.exp(rng.gauss(0, 0.5))
+            if rng.random() < 0.05:
+                v = 0.0
+        d[k] = f"{v:.3g}"
+    if rng.random() < 0.4:
+        d = mutate_shop(d, rng)
+    if rng.random() < 0.2:
+        d["cards"] = str(rng.choice([0, 1, 2]))
+    return d
+
+def mutate_shop(d, rng):
+    shop = d.get("shop", "strike/rate/hp/squad/harvest/range/bank").split("/")
+    op = rng.choice(["swap", "front", "drop", "add"])
+    if op == "swap" and len(shop) > 1:
+        i, j = rng.sample(range(len(shop)), 2)
+        shop[i], shop[j] = shop[j], shop[i]
+    elif op == "front":
+        x = rng.choice(SHOP_KEYS)
+        shop = [x] + [s for s in shop if s != x]
+    elif op == "drop" and len(shop) > 2:
+        shop.pop(rng.randrange(len(shop)))
+    else:
+        x = rng.choice([s for s in SHOP_KEYS if s not in shop] or SHOP_KEYS)
+        shop.insert(rng.randrange(len(shop) + 1), x)
+    d = dict(d)
+    d["shop"] = "/".join(shop)
+    return d
 
 def mutate(d, rng):
+    if d.get("@") == "util:":
+        return mutate_util(d, rng)
     d = dict(d)
     for _ in range(rng.choice([1, 1, 2])):
         k = rng.choice(list(SPACE) + ["shop"])
@@ -204,8 +276,69 @@ def mutate(d, rng):
     return d
 
 def cross(a, b, rng):
+    if (a.get("@") == "util:") != (b.get("@") == "util:"):
+        return a
     keys = set(a) | set(b)
     return {k: (a if rng.random() < 0.5 else b).get(k, (b if k in b else a).get(k)) for k in keys if (k in a or k in b)}
+
+def breed(rows, top_n, kids, seed, only=None):
+    """The best `top_n` plans by mean score (of those `only` keeps) and
+    `kids` new ones bred from them."""
+    rng = random.Random(seed)
+    by = defaultdict(list)
+    for r in rows:
+        if only is None or only(r["plan"]):
+            by[r["plan"]].append(score(r))
+    ranked = sorted(by, key=lambda p: -sum(by[p]) / len(by[p]))
+    top = ranked[:top_n]
+    out = list(top)
+    seen = set(by)
+    tries = 0
+    while top and len(out) < len(top) + kids and tries < 10000:
+        tries += 1
+        pa = dials_of(rng.choice(top))
+        if rng.random() < 0.3 and len(top) > 1:
+            pa = cross(pa, dials_of(rng.choice(top)), rng)
+        kid = plan_of(mutate(pa, rng))
+        if kid not in seen:
+            seen.add(kid)
+            out.append(kid)
+    return out
+
+def cmd_evolve(a):
+    global DEADLINE
+    import datetime
+    DEADLINE = datetime.datetime.fromisoformat(a.until.replace("Z", "+00:00")).timestamp()
+    os.makedirs(a.dir, exist_ok=True)
+    plans = [l.strip() for l in open(a.plans) if l.strip() and not l.startswith("#")]
+    gen = a.gen
+    while time.time() < DEADLINE:
+        tag = os.path.join(a.dir, f"gen{gen}")
+        open(tag + "-plans.txt", "w").write("\n".join(plans) + "\n")
+        cmd_jobs(argparse.Namespace(plans=tag + "-plans.txt", out=tag + "-jobs.txt", depths=a.depths, seeds=a.seeds, secs=a.secs))
+        cmd_run(argparse.Namespace(jobs=tag + "-jobs.txt", out=tag + ".jsonl", shard=None, workers=a.workers, bin=a.bin, timeout=a.timeout))
+        if a.push:
+            push(a.dir, f"Strategy league: generation {gen} on {os.environ.get('COMPUTERNAME', 'this machine')}")
+        rows = load([os.path.join(a.dir, f) for f in os.listdir(a.dir) if f.endswith(".jsonl")] + a.also)
+        half = a.kids // 2
+        plans = breed(rows, a.top // 2, half, gen, lambda p: not p.startswith("util:")) + breed(rows, a.top - a.top // 2, a.kids - half, gen + 1000, lambda p: p.startswith("util:"))
+        gen += 1
+
+def push(d, msg):
+    """Commits folder `d` and pushes it to the branch the worktree came from,
+    rebasing on whatever was pushed meanwhile."""
+    br = "claude/project-thread-8grg6d"
+    run = lambda *c: subprocess.run(c, cwd=ROOT, capture_output=True, text=True)
+    run("git", "add", d)
+    run("git", "commit", "-q", "-m", msg + "\n\nNothing-new: strategy league results only.")
+    for _ in range(4):
+        run("git", "fetch", "-q", "origin", br)
+        if run("git", "rebase", "-q", "FETCH_HEAD").returncode != 0:
+            run("git", "rebase", "--abort")
+        if run("git", "push", "-q", "origin", f"HEAD:refs/heads/{br}").returncode == 0:
+            return
+        time.sleep(10)
+    print("league: could not push the results; they are in " + d, file=sys.stderr)
 
 def cmd_breed(a):
     rng = random.Random(a.seed)
@@ -238,7 +371,7 @@ def main():
     r.add_argument("--workers", type=int, default=1)
     r.add_argument("--shard")
     r.add_argument("--timeout", type=float, default=3600)
-    r.add_argument("--bin", default=os.path.join(ROOT, "target", "release", "larder-world"))
+    r.add_argument("--bin", default=BIN)
     j = sub.add_parser("jobs")
     j.add_argument("plans")
     j.add_argument("out")
@@ -252,8 +385,23 @@ def main():
     b.add_argument("--top", type=int, default=6)
     b.add_argument("--kids", type=int, default=12)
     b.add_argument("--seed", type=int, default=1)
+    e = sub.add_parser("evolve")
+    e.add_argument("plans")
+    e.add_argument("dir")
+    e.add_argument("--until", required=True)
+    e.add_argument("--gen", type=int, default=1)
+    e.add_argument("--depths", default="1,2,3")
+    e.add_argument("--seeds", default="1-4")
+    e.add_argument("--secs", default="720")
+    e.add_argument("--workers", type=int, default=2)
+    e.add_argument("--top", type=int, default=8)
+    e.add_argument("--kids", type=int, default=24)
+    e.add_argument("--timeout", type=float, default=1800)
+    e.add_argument("--also", nargs="*", default=[])
+    e.add_argument("--push", action="store_true")
+    e.add_argument("--bin", default=BIN)
     a = ap.parse_args()
-    {"run": cmd_run, "jobs": cmd_jobs, "table": cmd_table, "breed": cmd_breed}[a.cmd](a)
+    {"run": cmd_run, "jobs": cmd_jobs, "table": cmd_table, "breed": cmd_breed, "evolve": cmd_evolve}[a.cmd](a)
 
 if __name__ == "__main__":
     main()
