@@ -569,14 +569,6 @@ pub struct Recipe {
     /// Open arenas (the core world): field regions with every border to
     /// their neighbours open and no outcrops, fronts or hedges in them.
     pub arenas: usize,
-    /// A moat of deep water round each nest's rock rim, the rock a thinner
-    /// lip inside it, the door a bridge across the moat. Off on every
-    /// biome: made for the fens (the planet reviews could name only 4 of 8
-    /// biomes at zoom 12, and every bowl's rim was the same grey rock), but
-    /// in game the slime covers most of the moat by 30 s and it then reads
-    /// as little more than a thinner rim (2026-11-15). Up to the owner, as
-    /// a blind A/B (`Reports/levelgen-fen-moats-2026-11-15/`).
-    pub moat: bool,
 }
 
 /// Open arenas on the core world (`Recipe::arenas`), on the 1024 x 640
@@ -639,7 +631,6 @@ impl Recipe {
             hedges: 0,
             arenas: 0,
             rivers: 0,
-            moat: false,
         };
         // Openness: the rock.
         let rc = match openness {
@@ -1897,7 +1888,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             let thick = r.range(26.0, 36.0);
             let inner = r.range(104.0, 136.0);
             // The most the rim reaches, with its wobble.
-            let reach = inner * 1.15 + thick * if rc.moat { 1.9 } else { 1.4 };
+            let reach = inner * 1.15 + thick * 1.4;
             (thick, inner, reach)
         })
         .collect();
@@ -2003,72 +1994,34 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     }
     let cross = |v: (f32, f32), u: (f32, f32)| (v.0 * u.1 - v.1 * u.0).abs();
     let dot = |v: (f32, f32), u: (f32, f32)| v.0 * u.0 + v.1 * u.1;
-    // A rim's inner edge, its rock's outer edge and its moat's outer edge
-    // at a cell. Lobed and knobbly, not a ring: the noises sit near 0.5
-    // (most within 0.25-0.75), so at first, at 0.16 and 0.5, the rim read
-    // as a drawn circle in game (2026-11-15). A moat (`Recipe::moat`) lies
-    // outside a thinner rock lip, wide where the lip is thin. Deep water
-    // alone, as the whole rim, held nothing: the slime's start covered the
-    // moat by 1 s (its start fills every cell of its disc but rock), the
-    // moat never showed, and shots fly over deep water (fens, 2026-11-15).
+    // A rim's inner edge and its rock's outer edge at a cell. Lobed and
+    // knobbly, not a ring: the noises sit near 0.5 (most within
+    // 0.25-0.75), so at first, at 0.16 and 0.5, the rim read as a drawn
+    // circle in game (2026-11-15). (A moat of deep water outside a thinner
+    // rock lip, its door a bridge, was built for the fens on 11-15 and
+    // deleted on 11-19: in game the slime covered most of it by 30 s, and
+    // the owner saw no difference in the blind A/B,
+    // `Reports/levelgen-fen-moats-2026-11-15/`.)
     let rim_at = |b: &Bowl, x: usize, y: usize| {
         let inner = b.inner * (1.0 + 0.6 * (rough.at(x, y) - 0.5));
-        let f = fine.at(x, y);
-        if rc.moat {
-            let lip = inner + b.thick * (0.3 + 1.0 * f);
-            (inner, lip, lip + b.thick * (0.6 + 1.0 * (1.0 - f)))
-        } else {
-            let lip = inner + b.thick * (0.3 + 1.4 * f);
-            (inner, lip, lip)
-        }
+        (inner, inner + b.thick * (0.3 + 1.4 * fine.at(x, y)))
     };
-    // A moat's door is a bridge: a straight deck along the door from 6
-    // cells inside the water's nearest reach to 6 past its farthest, as
-    // the rivers' decks (planet reviews: a deck that followed the bank's
-    // outline read as a mistake).
-    let decks: Vec<(f32, f32)> = bowls
-        .iter()
-        .map(|b| {
-            if !rc.moat {
-                return (0.0, -1.0);
-            }
-            let side = (-b.front.1, b.front.0);
-            let (mut lo, mut hi) = (f32::MAX, f32::MIN);
-            for c in [-b.door, 0.0, b.door] {
-                for t in (b.inner as usize / 2)..(b.reach as usize + 8) {
-                    let p = (b.q.0 + b.front.0 * t as f32 + side.0 * c, b.q.1 + b.front.1 * t as f32 + side.1 * c);
-                    if p.0 < 0.0 || p.1 < 0.0 || p.0 >= wf || p.1 >= hf {
-                        continue;
-                    }
-                    let (_, lip, outer) = rim_at(b, p.0 as usize, p.1 as usize);
-                    let rho = dist(p, b.q);
-                    if rho >= lip && rho < outer {
-                        lo = lo.min(t as f32);
-                        hi = hi.max(t as f32);
-                    }
-                }
-            }
-            (lo - 6.0, hi + 6.0)
-        })
-        .collect();
     for pass in 0..2 {
-        for (b, deck) in bowls.iter().zip(&decks) {
+        for b in &bowls {
             let m = b.inner * 1.3 + b.thick * 2.0 + 60.0;
             for y in ((b.q.1 - m).max(0.0) as usize)..((b.q.1 + m).max(0.0) as usize).min(h) {
                 for x in ((b.q.0 - m).max(0.0) as usize)..((b.q.0 + m).max(0.0) as usize).min(w) {
                     let v = (x as f32 + 0.5 - b.q.0, y as f32 + 0.5 - b.q.1);
                     let rho = len(v.0, v.1);
-                    let (inner, lip, outer) = rim_at(b, x, y);
+                    let (inner, lip) = rim_at(b, x, y);
                     let door = dot(v, b.front) > 0.0 && cross(v, b.front) < b.door;
                     let breach = dot(v, b.back) > 0.0 && cross(v, b.back) < b.breach * (0.9 + 0.2 * fine.at(x, y));
                     let i = y * w + x;
                     if pass == 0 {
-                        if rho >= inner && rho < outer && !door && !breach {
-                            ground[i] = if rho < lip { G_ROCK } else { DEEP };
+                        if rho >= inner && rho < lip && !door && !breach {
+                            ground[i] = G_ROCK;
                         }
-                    } else if rc.moat && door && (deck.0..=deck.1).contains(&dot(v, b.front)) {
-                        ground[i] = G_BRIDGE;
-                    } else if rho < inner || ((door || breach) && rho > inner * 0.5 && rho < outer + 40.0) {
+                    } else if rho < inner || ((door || breach) && rho > inner * 0.5 && rho < lip + 40.0) {
                         clear_cell(&mut ground, i);
                     }
                 }
@@ -3567,40 +3520,6 @@ mod tests {
                     }
                 }
                 assert!(nearest >= reach, "valley seed {s} nest {k}: river water {nearest:.0} cells off");
-            }
-        }
-    }
-    /// With `Recipe::moat` on, a fen's nests sit in moats (2026-11-15): on
-    /// seeds 1-6, at least a tenth of the ground 100-260 map cells from
-    /// each nest is deep water (13-30% with the moats, 0% on 5 of 6
-    /// without), and the door is a bridge (a deck within 260 cells of the
-    /// nest). Off, as on every biome now, no bridge by a meadow's nest.
-    #[test]
-    fn moats_ring_the_nests_with_a_bridge() {
-        let near = |m: &Map, q: (f32, f32), lo: f32, hi: f32, g: u8| {
-            let (mut n, mut hit) = (0, 0);
-            for y in 0..m.h {
-                for x in 0..m.w {
-                    let d = dist((x as f32 + 0.5, y as f32 + 0.5), q);
-                    if d >= lo && d < hi {
-                        n += 1;
-                        hit += (m.ground[y * m.w + x] == g) as usize;
-                    }
-                }
-            }
-            (hit, n)
-        };
-        for s in 1..=6 {
-            let p = planet(s, 3);
-            let m = build_with(&p, 0, Some(Recipe { moat: true, ..Recipe::of(&p) }));
-            for (k, &q) in m.items.moulds.iter().enumerate() {
-                let (deep, n) = near(&m, q, 100.0, 260.0, G_DEEP);
-                assert!(deep * 10 >= n, "fen seed {s} nest {k}: {deep} of {n} cells deep");
-                assert!(near(&m, q, 0.0, 260.0, G_BRIDGE).0 > 0, "fen seed {s} nest {k}: no bridge");
-            }
-            let m = level(s, 1);
-            for &q in &m.items.moulds {
-                assert_eq!(near(&m, q, 0.0, 260.0, G_BRIDGE).0, 0, "meadow seed {s}: a bridge by the nest");
             }
         }
     }
