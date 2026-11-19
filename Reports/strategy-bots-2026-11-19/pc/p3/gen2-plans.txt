@@ -22,13 +22,5 @@ econ,cards=2,go=20
 econ,aim=6,take=1
 rush,aim=6,back=0.5,defend=1
 econ,aim=6,cards=0,first=guard
-util:cap=433,drain=0.58,guard_few=2.08,hunt=0.14,hunt_mass=1.3,raise=1.69,shop=turret/turret+/strike/rate/hp,sol_late=1.42,stay=0.581,threat_n=446,tur_threat=1.08,wall_have=3.29
-util:hunt_far=1.02,hunt_mass=0.931,lure=0,name=util,sol=0
-util:cap=433,drain=0.58,drain_val=0.668,guard_few=2.08,hunt=0.104,hunt_mass=1.3,raise=1.69,save=0.432,shop=turret/turret+/strike/rate/hp,sol_late=1.42,stay=0.581,threat_n=446,tur_threat=1.41,wall_have=3.29
-util:aim=1,cap=630,cards=1,drain=0.58,guard=0.445,guard_few=2.08,hunt=0.14,hunt_mass=1.3,kite=0,raise=1.69,shop=turret/turret+/strike/rate/hp,sol_late=1.42,stay=0.581,threat_n=446,tur_threat=1.08,up=0.323,wall_have=3.29,wall_threat=0.697
-util:cap=433,drain=0.58,drain_far=1.89,guard_few=1.91,hunt=0.14,hunt_far=1.02,hunt_mass=1.3,lure=0,name=util,raise=1.69,shop=turret/rate/strike/turret+/hp,sol=0,sol_late=1.42,sol_threat=1.62,stay=0.581,threat_n=446,tur_threat=1.08,wall_have=3.29
-util:cap=336,cards=0,drain=0.58,guard_few=2.08,hunt=0.14,hunt_mass=1.3,lure_tur=0.84,pump_val=1.36,raise=1.69,shop=turret/turret+/strike/rate/hp,sol_late=1.42,stay=0.597,threat_n=1.18e+03,tur_threat=1.08,wall_have=3.29
-util:cap=433,drain=0.58,drain_risk=1.47,guard_few=1.63,guard_threat=2.12,hunt=0.14,hunt_far=0.991,hunt_mass=0.931,lure=0.2,name=util,raise=1.69,shop=turret/turret+/strike/rate/hp,sol=0,sol_late=1.42,sol_threat=0.656,stay=0.581,threat_n=446,tur_threat=1.08,wall_have=3.29
-util:cap=433,drain=0.58,guard_few=2.08,hunt=0,hunt_mass=1.3,raise=1.69,shop=turret/turret+/strike/rate/hp,sol_late=1.42,stay=0.581,threat_n=418,tur=1.11,tur_draw=0.338,tur_threat=0.957,wall_have=3.29
 lure,go=4,aim=6
 turtle,go=4,aim=6
