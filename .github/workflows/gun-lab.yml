@@ -1,6 +1,6 @@
 # The gun lab's sweeps (2026-11-19, the gun-building research thread):
 # each line of the job list named in `Reports/gun-builds-2026-11-19/run.txt`
-# is one game, `DEPTH SEED GUN DECK`, played by `larder-world gunlab=`
+# is one game, `DEPTH SEED SECS GUN DECK [KEYS...]`, played by `larder-world gunlab=`
 # (the run bot with that gun and deck on that planet) on Mesa's software
 # Vulkan. The list is split over SHARDS jobs by line number; each job
 # prints its `gunlab` lines to the log and uploads them.
@@ -45,9 +45,9 @@ jobs:
           list="Reports/gun-builds-2026-11-19/$(head -1 Reports/gun-builds-2026-11-19/run.txt)"
           n=0
           : > lab.txt
-          grep -v '^#' "$list" | grep -v '^$' | while read -r depth seed gun deck; do
+          grep -v '^#' "$list" | grep -v '^$' | while read -r depth seed secs gun deck keys; do
             if [ $((n % SHARDS)) -eq "$SHARD" ]; then
-              ./target/release/larder-world gunlab=$depth:$seed gun=$gun deck=$deck 2>/dev/null | grep '^gunlab' | tee -a lab.txt || echo "gunlab depth=$depth seed=$seed gun=$gun deck=$deck how=error" | tee -a lab.txt
+              ./target/release/larder-world gunlab=$depth:$seed:$secs gun=$gun deck=$deck $keys 2>/dev/null | grep '^gunlab' | tee -a lab.txt || echo "gunlab depth=$depth seed=$seed gun=$gun deck=$deck how=error" | tee -a lab.txt
             fi
             n=$((n + 1))
           done
