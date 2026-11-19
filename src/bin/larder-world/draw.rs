@@ -1068,6 +1068,9 @@ impl App {
             // The switches this round plays off their default (the play
             // log's `switches=` says the same).
             trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).collect(),
+            // Every switch, for the pause menu's Experiments page.
+            experiments: experiments::rows(&self.args.keys, &self.exp_next),
+            most_off: slime_mould::build::switches::MOST_OFF,
             objective: Some(if let Some(tr) = &self.mission {
                 tr.progress_line()
             } else if self.args.range.is_some() {
