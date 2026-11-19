@@ -86,6 +86,11 @@ pub(super) struct Plan {
     /// plan's once-a-second turns (`aim`). The owner's planet 3 (11-18
     /// 22:10Z) gave about 3 fire points a second, 1,469 in 7:21.
     pub aim: f32,
+    /// Kiting: 0 off; else, between turns, the squad steers away from the
+    /// slime while more than 30 walkers are within this share of its gun
+    /// range, and lets go once clear (the owner steered half the time in
+    /// his planet 3 push, 372 steers in all).
+    pub kite: f32,
 }
 
 impl Default for Plan {
@@ -112,6 +117,7 @@ impl Default for Plan {
             cards: 1,
             own: None,
             aim: 1.0,
+            kite: 0.0,
         }
     }
 }
@@ -140,7 +146,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 21] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim"];
+    pub const DIALS: [&'static str; 22] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -182,6 +188,7 @@ impl Plan {
             "cards" => self.cards = whole(v)?.min(2),
             "own" => self.own = Some(v.split('/').filter(|s| !s.is_empty()).map(String::from).collect()),
             "aim" => self.aim = num(v)?.clamp(1.0, 20.0),
+            "kite" => self.kite = num(v)?.clamp(0.0, 1.0),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -317,16 +324,47 @@ impl Sense {
     }
 }
 
-/// Re-aims the controlled squad's volley at the heaviest slime in range
-/// with a clear line, as the plan's turn does (both bots' targeting): the
-/// league calls it between turns when a plan aims more than once a second.
-pub(super) fn aim(g: &mut Game<GpuWorld>) {
+thread_local! {
+    /// Whether `between` has the squad steering away (kiting).
+    static KITING: RefCell<bool> = const { RefCell::new(false) };
+}
+
+/// Between the plan's once-a-second turns (the league calls it at the
+/// plan's aim rate): with `refire`, re-aims the controlled squad's volley
+/// at the heaviest slime in range with a clear line, as the turn does
+/// (both bots' targeting); with `kite` above 0, steers the squad away from
+/// slime closer than that share of its range and lets go once clear.
+pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32) {
     let Some(q) = g.active else { return };
     let Some(m) = g.middle(q) else { return };
     let range = g.gun_range(q) * g.world.scale();
     let sense = Sense::of(g);
-    let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
-    g.apply(Cmd::Fire(q as u8, near));
+    if refire {
+        let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
+        g.apply(Cmd::Fire(q as u8, near));
+    }
+    if kite > 0.0 {
+        let r = kite * range;
+        let (mut sx, mut sy, mut n) = (0.0f32, 0.0f32, 0u32);
+        for (i, &c) in sense.grid.iter().enumerate().filter(|&(_, &c)| c > 0) {
+            let p = sense.centre(i);
+            if dist(p, m) <= r {
+                sx += p.0 * c as f32;
+                sy += p.1 * c as f32;
+                n += c;
+            }
+        }
+        let was = KITING.with_borrow(|k| *k);
+        if n > 30 {
+            let (cx, cy) = (sx / n as f32, sy / n as f32);
+            let d = dist((cx, cy), m).max(0.01);
+            g.apply(Cmd::Steer(q as u8, ((m.0 - cx) / d, (m.1 - cy) / d)));
+            KITING.with_borrow_mut(|k| *k = true);
+        } else if was {
+            g.apply(Cmd::Steer(q as u8, (0.0, 0.0)));
+            KITING.with_borrow_mut(|k| *k = false);
+        }
+    }
 }
 
 pub(super) fn dist(a: (f32, f32), b: (f32, f32)) -> f32 {
