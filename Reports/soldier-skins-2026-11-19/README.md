@@ -58,8 +58,6 @@ works, one change a request; size and centring do not matter, since
 
 ## Open
 
-- A fallen version of each look: done 11-19, sprite A's fallen olive
-  recoloured to slate and to dark camo's blotches (`fallen` in `cut.py`,
-  tiles 23 and 24).
+- A fallen version of each look.
 - A design for each gun (rifle, carbine, long gun, scattergun), if the
   owner wants to see what a soldier carries.
