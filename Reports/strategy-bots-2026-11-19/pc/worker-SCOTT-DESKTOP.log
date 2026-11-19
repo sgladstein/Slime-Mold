@@ -76,3 +76,8 @@
 2026-11-19 13:41:23   econ,aim=3 planet 3.0 seed 2.0: open 720.1 (71 s)
 2026-11-19 13:41:34   rush,aim=6 planet 3.0 seed 2.0: open 720.1 (81 s)
 2026-11-19 13:42:26   econ,go=20 planet 3.0 seed 2.0: open 720.1 (61 s)
+2026-11-19 13:42:30 worker: the game's code changed (now 7083a84e); building
+2026-11-19 13:44:39 worker: built the game in 129 s (src fca1b8c83be0)
+2026-11-19 13:44:39 worker: league.py changed; restarting
+2026-11-19 13:44:39 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-19 13:44:40 worker: built the game in 1 s (src fca1b8c83be0)
