@@ -14,6 +14,17 @@ impl<W: World> Game<W> {
         self.finish_step();
     }
 
+    /// **Asleep in your own gas** (2026-11-18, `Rules::doze`; the owner's
+    /// Noita rule, "Any single spell that is incredibly powerful is also
+    /// really dangerous"): a living soldier whose cell had a sleep cloud at
+    /// `doze` times the slime's sleep level last frame neither fires nor
+    /// walks this one. Gas cast into slime on top of the squad, or a cloud
+    /// drifting back over it, puts the squad to sleep with the slime.
+    pub fn dozing(&self, k: usize) -> bool {
+        let r = self.rules.doze;
+        r > 0.0 && self.soldiers.get(k).is_some_and(|s| s.alive && s.doze >= r)
+    }
+
     /// Whether `finish_step` would return without waiting on the world.
     pub fn step_ready(&self) -> bool {
         self.flight.as_ref().is_none_or(|f| f.out.is_some() || self.world.frame_ready())
@@ -65,8 +76,15 @@ impl<W: World> Game<W> {
             }
             // Where its walk began (with `steer` everyone has walked already).
             let was = self.soldiers[k].was;
-            if !steer {
+            let dozing = self.dozing(k);
+            if !steer && !dozing {
                 self.walk(k, dt);
+            }
+            // Asleep in its own gas (`Rules::doze`): where it stood, still.
+            if dozing {
+                let s = &mut self.soldiers[k];
+                (s.x, s.y) = was;
+                (s.vx, s.vy) = (0.0, 0.0);
             }
             // A move that has arrived starts the next queued order (with
             // none queued it stays, as before: the window shows where).
@@ -124,12 +142,21 @@ impl<W: World> Game<W> {
             let volley = self.volley(k, t);
             let firing = self.squads[q].fire.is_some();
             let mut shot = false;
-            if (volley.is_some() || (!firing && s.ready <= t)) && self.bank >= r.price {
+            if !dozing && (volley.is_some() || (!firing && s.ready <= t)) && self.bank >= r.price {
                 let aim = if firing { volley } else { self.target(k) };
                 if let Some(at) = aim {
                     let (dx, dy) = (at.0 - s.x, at.1 - s.y);
                     let d = dx.hypot(dy).max(0.1);
                     let reach = self.gun_range(q) * sc;
+                    // Your own dangers (switch `own_goal`: `Rules::doze`,
+                    // `RoundRules::blast_hurt`) fire as any shot does. Tried
+                    // and dropped on 11-19: holding a gas or blast shot whose
+                    // aim is near a soldier (14 and 7 dish cells). Defend
+                    // fire aims at the walkers at the squad's feet, so the
+                    // hold all but stopped the gun's danger cards and the
+                    // greedy squad on planet 3 still lost: wiped at 107 s
+                    // against 114 s with no danger (run 1795038793), 1
+                    // soldier against 21 at 120 s (run 1).
                     if volley.is_some() || d <= reach + 4.0 {
                         // The squad's gun (`Game::gun`): its spread, and its
                         // bullets a shot, each turned on its own (the
@@ -313,6 +340,14 @@ impl<W: World> Game<W> {
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep
         // gas): its walkers are taken off each unit's touch.
         let calm = self.world.calm(&f.units.iter().map(|u| (u.x, u.y)).collect::<Vec<_>>(), r.touch * sc);
+        // Your own sleep gas (2026-11-18, `Rules::doze`): the cloud each
+        // soldier stood in this frame, from the same pass.
+        let clouds = self.world.clouds();
+        for (j, k) in who.iter().enumerate() {
+            if let Who::Soldier(k) = *k {
+                self.soldiers[k].doze = clouds.get(j).copied().unwrap_or(0.0);
+            }
+        }
         // Whole walkers off whole walkers: what each is worth is decided below, per rule.
         let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };

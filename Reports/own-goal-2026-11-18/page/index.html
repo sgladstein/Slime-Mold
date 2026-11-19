@@ -1,0 +1,88 @@
+<title>Gas and Blast Dangers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; each scene is a pair of clips (zoom 6, zoom 12) with its numbers beside them. */
+:root {
+  --bg: #f3f4f1; --fg: #1d2420; --muted: #5b6660; --line: #d5dad4;
+  --gas: #7a5bb5; --blast: #c2531f; --panel: #ffffff;
+  --display: "Space Grotesk", system-ui, sans-serif;
+  --body: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141916; --fg: #e3e8e3; --muted: #9aa59e; --line: #2c3530;
+  --gas: #b49ae6; --blast: #f08a55; --panel: #1b221e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141916; --fg: #e3e8e3; --muted: #9aa59e; --line: #2c3530;
+  --gas: #b49ae6; --blast: #f08a55; --panel: #1b221e; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 48px; }
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.35rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 14px; border-top: 1px solid var(--line); padding-top: 24px; }
+.tag { font-family: var(--mono); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+.gas .tag { color: var(--gas); } .blast .tag { color: var(--blast); } .base .tag { color: var(--muted); }
+.clips { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+video { width: 100%; max-width: 100%; aspect-ratio: 8 / 5; background: #000; border-radius: 6px; }
+figcaption { font-size: .85rem; color: var(--muted); }
+.wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .9rem; min-width: 420px; }
+th, td { text-align: right; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--mono); font-weight: 400; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+code { font-family: var(--mono); font-size: .85em; }
+</style>
+<main>
+  <div class="lede">
+    <h1>Gas and Blast now endanger your own squad</h1>
+    <p>Following the owner's Noita rule ("Any single spell that is incredibly powerful is also really dangerous"), two strong single cards now carry a risk to your own squad. Gas's cloud puts your soldiers to sleep, and a Blast hurts the soldiers inside its kill disc.</p>
+    <p><strong>Off for now, on the Experiments tab as "Your gas and blasts bite" (<code>try=own_goal</code>).</strong> Soldiers fire on their own at the slime by their feet, so on planet 3 a squad carrying either card gassed or blasted itself to nothing at every strength tried, and holding those shots near the squad did not save it.</p>
+    <p class="muted">Planet 1, run seed 1, scripted greedy squad of 15 draining a crystal. At 40 s one gas or blast round goes off on the squad's spot (<code>boom=40,226.6,52.1,CARDS</code>). Frames every half second from 38 s to 56 s, played at 4 frames a second (2x speed). Software GPU, filmed headless.</p>
+  </div>
+
+  <section class="gas">
+    <span class="tag">Gas · Rules::doze 1.0</span>
+    <h2>A soldier in a sleep cloud dozes until it thins</h2>
+    <p>Where the cloud reaches the level that puts the slime to sleep, a soldier stops firing and walking. The violet haze over the squad is the cloud itself.</p>
+    <div class="clips">
+      <figure><video src="gas6.mp4" controls muted loop playsinline preload="metadata" poster="gas12-042s.png"></video><figcaption>Zoom 6</figcaption></figure>
+      <figure><video src="gas12.mp4" controls muted loop playsinline preload="metadata" poster="gas12-042s.png"></video><figcaption>Zoom 12</figcaption></figure>
+    </div>
+    <div class="wrap"><table>
+      <tr><th>Shots fired</th><th>40 → 46 s</th><th>46 → 52 s</th></tr>
+      <tr><td>No gas (baseline)</td><td>86</td><td>93</td></tr>
+      <tr><td>Gas on the squad</td><td>18</td><td>89</td></tr>
+    </table></div>
+    <p class="muted">Unit test <code>a_soldier_sleeps_in_its_own_gas_cloud</code>: a cloud of 19.9 sleep levels on a soldier. It sleeps, moves 0.00 fine cells while ordered to walk, and wakes at 14.7 s.</p>
+  </section>
+
+  <section class="blast">
+    <span class="tag">Blast · RoundRules::blast_hurt 40</span>
+    <h2>A blast takes 40 health off every soldier in its disc</h2>
+    <p>Shots stop at the first slime, so a blast reaches your soldiers only when it goes off in slime that is on top of them. Firing blasts into a body that has reached the squad now costs you health.</p>
+    <div class="clips">
+      <figure><video src="blast6.mp4" controls muted loop playsinline preload="metadata" poster="blast12-041s.png"></video><figcaption>Zoom 6</figcaption></figure>
+      <figure><video src="blast12.mp4" controls muted loop playsinline preload="metadata" poster="blast12-041s.png"></video><figcaption>Zoom 12</figcaption></figure>
+    </div>
+    <div class="wrap"><table>
+      <tr><th>Squad mean health</th><th>40 s</th><th>41 s</th><th>56 s</th></tr>
+      <tr><td>No blast (baseline)</td><td>99</td><td>99</td><td>98</td></tr>
+      <tr><td>Blast on the squad</td><td>99</td><td>81</td><td>84</td></tr>
+    </table></div>
+  </section>
+
+  <section class="base">
+    <span class="tag">Baseline</span>
+    <h2>The same scene with nothing cast</h2>
+    <div class="clips">
+      <figure><video src="base6.mp4" controls muted loop playsinline preload="metadata"></video><figcaption>Zoom 6</figcaption></figure>
+    </div>
+  </section>
+</main>

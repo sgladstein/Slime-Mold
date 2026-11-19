@@ -586,6 +586,20 @@ pub struct RoundRules {
     /// (`Reports/explosions-2026-11-14/README.md`), and the two read as a
     /// big and a small hole.
     pub bomb_r: f32,
+    /// **A blast hurts your own** (2026-11-18, the owner's Noita rule:
+    /// "Any single spell that is incredibly powerful is also really
+    /// dangerous"): health a living soldier inside a `Blast`'s kill disc
+    /// loses (`Rules::hp` is 100). Shots stop at the first slime, so a
+    /// blast reaches soldiers when it goes off in slime on top of them:
+    /// firing blasts into a body that has reached the squad is a choice.
+    /// 0 is off, the default: the switch `own_goal` sets 40 (`switches.rs`;
+    /// why it is off is there).
+    pub blast_hurt: f32,
+    /// Game seconds after a blast hurts a soldier before another can: a
+    /// gun firing blasts into slime round the squad lands several a
+    /// second, and at 5 health each with no gap the greedy squad on
+    /// planet 3 (run 1795038793) still shot itself to nothing.
+    pub blast_gap: f32,
     pub bomb_ring: f32,
     pub bomb_secs: f32,
     pub fling_speed: f32,
@@ -697,6 +711,8 @@ impl Default for RoundRules {
             thick_r: 5.0,
             thick_secs: 30.0,
             bomb_r: 2.5,
+            blast_hurt: 0.0,
+            blast_gap: 2.0,
             bomb_ring: 4.0,
             bomb_secs: 0.7,
             fling_speed: 1.5,
@@ -769,6 +785,8 @@ impl RoundRules {
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
             "mind_rest" => &mut self.mind_rest,
+            "blast_hurt" => &mut self.blast_hurt,
+            "blast_gap" => &mut self.blast_gap,
             "spin_curl" => &mut self.spin_curl,
             "provoke_secs" => &mut self.kit.provoke_secs,
             "still_secs" => &mut self.kit.still_secs,
@@ -1166,6 +1184,13 @@ pub struct Rounds {
     pub short: u32,
     /// Walkers put to sleep by rounds' gas (`squad::BurstOut::gassed`).
     pub gassed: usize,
+    /// Soldiers a blast hurt, and of them those it killed
+    /// (`RoundRules::blast_hurt`).
+    pub blast_hits: u32,
+    pub blast_kills: u32,
+    /// The tick before which each soldier cannot be hurt by a blast again
+    /// (`RoundRules::blast_gap`).
+    blast_safe: Vec<u64>,
     pub pops: Vec<Pop>,
     /// This step's payload and shove bursts, run as one batch at its end
     /// (`World::bursts`; `Rounds::flush`), with what each counts for.
@@ -1657,6 +1682,28 @@ impl Rounds {
                 self.queued_turret.push(self.by_turret);
             }
             self.pops.push(Pop { burst, throw, payload: c.payload, tick: t, killed: 0, flung: 0 });
+            // A blast hurts the soldiers in its kill disc (2026-11-18,
+            // `RoundRules::blast_hurt`).
+            if c.payload == Card::Blast && burst.kill && self.rules.blast_hurt > 0.0 {
+                let (cx, cy, rr) = (burst.at.0 * s, burst.at.1 * s, burst.r * s);
+                let gap = (self.rules.blast_gap * g.rules.tps as f32).round() as u64;
+                self.blast_safe.resize(g.soldiers.len(), 0);
+                for (j, sd) in g.soldiers.iter_mut().enumerate().filter(|(_, sd)| sd.alive && (sd.x - cx).hypot(sd.y - cy) <= rr) {
+                    if t < self.blast_safe[j] {
+                        continue;
+                    }
+                    self.blast_safe[j] = t + gap;
+                    sd.hp -= self.rules.blast_hurt;
+                    sd.rest = 0.0;
+                    self.blast_hits += 1;
+                    if sd.hp <= 0.0 {
+                        sd.alive = false;
+                        sd.hp = 0.0;
+                        sd.carry = 0.0;
+                        self.blast_kills += 1;
+                    }
+                }
+            }
             // A flare burns on (`burn`), its first lay this one.
             if c.payload == Card::Flare && burst.alarm > 0.0 {
                 if self.burning.len() >= PENDING_MAX {
@@ -2110,6 +2157,32 @@ mod tests {
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
         assert_eq!(rd.cast, [0; 8], "a trail casts nothing");
+    }
+
+    /// **A blast hurts your own** (2026-11-18, `RoundRules::blast_hurt`):
+    /// a blast cast on a soldier takes `blast_hurt` off it and every other
+    /// soldier inside its kill disc, and none outside it; at 0 it hurts
+    /// no one.
+    #[test]
+    fn a_blast_hurts_the_soldiers_in_its_disc() {
+        use crate::mould::larder_world::race_world;
+        let run = |hurt: f32| {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            let at = (g.soldiers[0].x, g.soldiers[0].y);
+            let mut rd = Rounds::new(parse("blast").unwrap(), RoundRules { blast_hurt: hurt, ..RoundRules::default() });
+            let reach = rd.rules.kit.blast_r * g.world.scale();
+            let inside: Vec<bool> = g.soldiers.iter().map(|s| (s.x - at.0).hypot(s.y - at.1) <= reach).collect();
+            rd.cast_at(&mut g, at);
+            (inside, g.soldiers.iter().map(|s| s.hp).collect::<Vec<f32>>(), rd.blast_hits)
+        };
+        let (inside, hp, hits) = run(40.0);
+        let full = Rules::default().hp;
+        assert!(inside[0] && hits as usize == inside.iter().filter(|&&i| i).count(), "every soldier in the disc is hit: {hits}, {inside:?}");
+        for (i, h) in inside.iter().zip(&hp) {
+            assert_eq!(*h, if *i { full - 40.0 } else { full }, "{inside:?} {hp:?}");
+        }
+        let (_, hp, hits) = run(0.0);
+        assert!(hits == 0 && hp.iter().all(|&h| h == full), "off hurts no one");
     }
 
     /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch
@@ -2631,7 +2704,12 @@ mod tests {
         for round in ["trigger+plain+blast", "plain+blast"] {
             let mut g = attacking(2);
             g.apply(Cmd::Load(0, Some(Deck::new(&parse(round).unwrap()))));
-            let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+            // Where a carried blast lands, not what it does to the squad:
+            // with `blast_hurt` on (2026-11-18) the squad attacking at close
+            // range killed itself down to 3 of 8 by 30 s, and one blast
+            // released from a fallen soldier's bullet landed 16.8 dish cells
+            // from any plain hit counted here.
+            let mut rd = Rounds::new(Vec::new(), RoundRules { blast_hurt: 0.0, ..RoundRules::default() });
             // Each plain hit and the bullet's heading.
             let mut hits: Vec<((f32, f32), (f32, f32))> = Vec::new();
             let (mut near, mut far, mut off) = (0, 0, 0);

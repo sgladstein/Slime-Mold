@@ -3686,6 +3686,21 @@ fn gasp(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn calm(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
+    // **Your own sleep gas** (2026-11-18, Squad and arsenal's change to
+    // this pass; `Rules::doze`): thread k < the points also writes the
+    // cloud at point k, in levels that put a walker to sleep, into the
+    // point's fourth word. Both halves of the germ field's pair are read,
+    // so the step's swap does not matter.
+    if (k < gas_word(1u)) {
+        let o = GAS_UNITS + 4u * k;
+        let i = cell(bitcast<f32>(gas_word(o)), bitcast<f32>(gas_word(o + 1u)));
+        var lv = 0.0;
+        if (i != NONE) {
+            let c = P.w * P.h;
+            lv = max(germ_in[2u * c + i], germ_out[2u * c + i]) / max(gas_sleep(), 1.0e-6);
+        }
+        atomicStore(&news[gas_base() + o + 3u], bitcast<u32>(lv));
+    }
     if (k >= P.n || !lives(k) || state(k) != L_DORMANT || !gassed_at(k, gas_word(0u))) { return; }
     let wk = walkers[k];
     let nu = gas_word(1u);

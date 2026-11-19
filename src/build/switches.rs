@@ -135,8 +135,9 @@ pub const MOST_OFF: usize = 3;
 /// drew, and deleted the glaze and the unmarked side
 /// (`Reports/sim-use-2026-11-17/e2b-look.md`). Two rows stand: shake and
 /// hit-stop (Squad and arsenal), crystals that refill (held with the
-/// owner's answer on the rush, D7). So this is false, and a row over the
-/// count stops the build.
+/// owner's answer on the rush, D7). On 11-19 Squad and arsenal added the
+/// third, your own gas and blasts (`own_goal`). So this is false, and a
+/// row over the count stops the build.
 pub const SETTLING: bool = false;
 
 // The count, held by the compiler: with `SETTLING` false, a fourth row
@@ -179,6 +180,16 @@ pub const SWITCHES: &[Switch] = &[
         since: "2026-11-11",
         sees: "A crystal that is not being eaten slowly fills again",
         why_off: "Crystals that run out suit the race at the start; to be settled by play on a world that is mostly slime",
+    },
+    Switch {
+        key: "own_goal",
+        label: "Your gas and blasts bite",
+        choices: &[OFF, on(&[("set:doze", "1"), ("set:blast_hurt", "40")])],
+        default: "off",
+        lane: Lane::Squad,
+        since: "2026-11-19",
+        sees: "Soldiers in your own Gas cloud fall asleep until it thins, and a Blast takes 40 health off every soldier in its disc",
+        why_off: "Measured harm: soldiers fire on their own at the slime by their feet, so the greedy squad on planet 3 gassed or blasted itself to nothing at every value tried (Reports/own-goal-2026-11-18)",
     },
 ];
 
