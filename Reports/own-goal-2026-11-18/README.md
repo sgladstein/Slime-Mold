@@ -7,7 +7,7 @@ Squad and arsenal work, asked by Direction after the owner's playtest of
 dangerous." Page: https://claude.ai/artifact/Dxcv2mU4NjQNMMKbtdqZgb
 (source and clips in `page/`).
 
-## The rules (switch `own_goal`, off; see "Why off")
+## The rules (on by default since 11-19)
 
 - **Gas's cloud puts your soldiers to sleep** (`Rules::doze`, 1.0). A
   soldier standing where the sleep cloud is at the level that puts the slime
@@ -16,13 +16,13 @@ dangerous." Page: https://claude.ai/artifact/Dxcv2mU4NjQNMMKbtdqZgb
   the calm pass the game already runs while gas lasts (engine.wgsl's `calm`
   writes it into each point's spare fourth word; `Engine::calm` reads it
   back in the same read-back, `World::clouds`). GPU only; the CPU world reads
-  no cloud, so its soldiers never doze. Default 0; the switch sets 1.
+  no cloud, so its soldiers never doze. Default 1.
 - **A blast hurts the soldiers in its kill disc** (`RoundRules::blast_hurt`,
   40 of a soldier's 100 health; `Rounds::fire`). Shots stop at the first
   slime, so this happens when a blast goes off in slime on top of the squad,
   or a turret's blast lands among soldiers. Counted in `Rounds::blast_hits`
   and `blast_kills`. A soldier hurt by a blast is not hurt by another for
-  2 s (`blast_gap`). Default 0; the switch sets 40.
+  2 s (`blast_gap`). Default 40.
 
 ## Film
 
@@ -46,7 +46,7 @@ soldier; it sleeps, moves 0.00 fine cells while ordered to walk, and wakes at
 14.7 s; with `doze` 0 it walks) and `a_blast_hurts_the_soldiers_in_its_disc`
 (exactly the soldiers in the disc lose 40; off hurts none).
 
-## Why off: the squad's own fire
+## With no hold: the squad's own fire
 
 Soldiers fire on their own at the walkers nearest them, so once the slime
 reaches the squad they put their gas and blasts at their own feet. Planet 3,
@@ -63,13 +63,37 @@ container's `/tmp`); deciding measure soldiers standing:
 | plain + blast | 15, 2 s gap | wiped | wiped; planet 1 seed 1: 29 soldiers, health 57 |
 | plain + blast | 5, 2 s gap | wiped by 120 s (9 soldiers at hurt 0) | 9 soldiers against 22 |
 
-Holding a danger shot whose aim is near a soldier (tried in `turn.rs`,
-dropped) all but stopped the danger cards (14 gas casts against 312) and the
-squad still fell. On by default this makes Gas and Blast worse than a plain
-gun for a squad that does not aim, which is a trap, not the owner's "really
-dangerous". One switch (`own_goal`, Experiments tab) keeps it for him to try;
-the choice of on, a gentler rule (a danger only for your own volley aim), or
-deleting it is Direction's and the owner's.
+Holding a danger shot by its aim point (tried in `turn.rs`, dropped) all but
+stopped a one-card gun firing (14 gas casts against 312) and missed where the
+shot really stops, and the squad still fell.
+
+## The rule that landed (11-19, Direction's call)
+
+Fire on its own (a soldier whose squad has no fire order, or a turret) holds
+a payload whose bursts would reach a living soldier, checked in
+`Rounds::fire` at the real hit point: a Blast's kill disc plus
+`RoundRules::blast_margin` (1 dish cell), gas or cloud plus `gas_margin`
+(8). The bullet's own strike still kills; `Rounds::held_own` counts the
+held. Aimed volleys, staged casts (`boom=`, the film above) and clouds
+drifting onto the squad keep the whole danger. Mist lays no cloud disc
+within its radius and `gas_margin` of a living soldier (from the muzzle it
+slept its own shooter). Test: `a_blast_hurts_the_soldiers_in_its_disc`
+(held at a soldier's feet when fired on its own, cast when clear).
+
+Planet 3, `hand=greedy`, soldiers standing (mean health) at 120 s, the
+same binary for both columns:
+
+| gun | run | danger on | danger off |
+|---|---|---|---|
+| plain + gas | 1795038793 | 1 (75) | wiped at 114 s |
+| plain + gas | 1 | 11 (54) | 21 (75) |
+| plain + blast | 1795038793 | 8 (59) | 13 (72) |
+| plain + blast | 1 | 13 (32) | 20 (51) |
+
+No self-wipe. At a gas margin of 4, run 1 still wiped at 120 s; a doze
+threshold of 2 instead left 1 standing. The danger still costs the squad
+that does not aim (a third to a half of its soldiers), which is the card's
+price.
 
 ## Not done
 

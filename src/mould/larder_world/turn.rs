@@ -148,15 +148,10 @@ impl<W: World> Game<W> {
                     let (dx, dy) = (at.0 - s.x, at.1 - s.y);
                     let d = dx.hypot(dy).max(0.1);
                     let reach = self.gun_range(q) * sc;
-                    // Your own dangers (switch `own_goal`: `Rules::doze`,
-                    // `RoundRules::blast_hurt`) fire as any shot does. Tried
-                    // and dropped on 11-19: holding a gas or blast shot whose
-                    // aim is near a soldier (14 and 7 dish cells). Defend
-                    // fire aims at the walkers at the squad's feet, so the
-                    // hold all but stopped the gun's danger cards and the
-                    // greedy squad on planet 3 still lost: wiped at 107 s
-                    // against 114 s with no danger (run 1795038793), 1
-                    // soldier against 21 at 120 s (run 1).
+                    // Your own dangers (`Rules::doze`,
+                    // `RoundRules::blast_hurt`): fire on its own keeps them
+                    // off the squad where the shot really stops
+                    // (`RoundRules::blast_margin`, in `Rounds::fire`).
                     if volley.is_some() || d <= reach + 4.0 {
                         // The squad's gun (`Game::gun`): its spread, and its
                         // bullets a shot, each turned on its own (the

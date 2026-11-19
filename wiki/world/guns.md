@@ -92,13 +92,15 @@ with a plain gun, and the Trunk's hardening was not the cause
 ([report](../../Reports/sleep-wears-off-2026-11-18/README.md)), which also
 lists the Noita-rule audit of the other single cards.
 
-Two strong cards can be dangerous to the squad (2026-11-19, switch
-`own_goal`, off): a soldier in a sleep cloud thick enough to sleep the slime
-dozes, neither firing nor walking until it thins (`Rules::doze`), and a blast
-takes 40 health off every soldier in its kill disc (`RoundRules::blast_hurt`).
-Off for a measured harm: soldiers fire on their own at the slime by their
-feet, so on planet 3 a squad carrying either card wiped itself at every value
-tried, and holding those shots near the squad did not save it
+Two strong cards are dangerous to the squad (2026-11-19, on): a soldier in
+a sleep cloud thick enough to sleep the slime dozes, neither firing nor
+walking until it thins (`Rules::doze`), and a blast takes 40 health off every
+soldier in its kill disc (`RoundRules::blast_hurt`). Fire on its own (a
+soldier or turret, not an aimed volley) holds a payload that would reach a
+soldier and lands as a plain shot (`RoundRules::blast_margin`,
+`gas_margin`), and Mist lays no cloud by a soldier, so the danger is your
+own aim and drifting clouds; with no hold the greedy squad on planet 3
+gassed or blasted itself to nothing
 ([report](../../Reports/own-goal-2026-11-18/README.md)).
 
 ## The cards, family by family

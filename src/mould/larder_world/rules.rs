@@ -166,9 +166,8 @@ pub struct Rules {
     /// dangerous"): a soldier standing where the gas cloud is this many
     /// times the level that puts the slime to sleep (`KitRules::gas_sleep`)
     /// dozes: it neither fires nor walks until the cloud thins
-    /// (`Soldier::doze`, read by `World::clouds`). 0 is off, the default:
-    /// the switch `own_goal` turns it on at 1 (`switches.rs`; why it is off
-    /// is there).
+    /// (`Soldier::doze`, read by `World::clouds`). 0 is off. Fire on its
+    /// own does not cast gas onto the squad (`RoundRules::gas_margin`).
     pub doze: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
@@ -778,7 +777,7 @@ impl Default for Rules {
             hp: 100.0,
             drain: 2.0,
             fire_hurt: 25.0,
-            doze: 0.0,
+            doze: 1.0,
             touch: 1.5,
             elbow: 1.6,
             corners: true,
