@@ -32,6 +32,13 @@ is built, except by the lab thread in its own example program or branch.
 All rulings, quoted and timed: `wiki/decisions.md` (standing) and
 `wiki/decisions-game.md` (per game).
 
+**They are guidelines, not walls** (2026-11-19 14:15Z: "My rules are
+guidelines not hard rules that cannot be bent"). Follow them by default.
+A change that plays or reads better by bending one may still land, and its
+"what is new" line or pull request says which ruling it bends and why, so
+he can judge it in play. Don't stop work, or veto another lane's change,
+on the letter of a ruling alone.
+
 - **Fun over fidelity.** The goal is interesting simulations that can be
   turned into a game, not a realistic slime mould (2026-11-10). Biology and
   Jones's papers are inspiration, not the bar; judge every change by play.
