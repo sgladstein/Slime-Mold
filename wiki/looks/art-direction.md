@@ -121,30 +121,30 @@ ranked list of look jobs at its end, in the owner's order.
 
 - 2026-11-14 01:49Z: "Graphics need a big improvement. The crystals are pixelated. The slime looks very blurry/out of focus. The flashes of chaos bullets are really bad."
 - 2026-11-14 01:50Z: "The bullets shouldn't just be flashy effects. Research how noita does their wand animations."
-- 2026-11-14 02:24Z: "I want another thread to review all graphics in general and mange the current graphics work and start new work where it sees issues. We need to polish this game up"
+- 2026-11-14 02:24Z: "I want another thread to review all graphics ... We need to polish this game up"
 - 2026-11-17 17:39Z: "we should explore all your suggestions, priority in the order that you listed A->B->C->D"
+- 2026-11-19 00:08Z: "multiple looks could eventually apply to different slimes"
 
 ## Look jobs, ranked
 
-In the owner's order. A is Milestone 1's look test (`NOW.md`, exit test 2);
-B starts once A passes his eye.
+In the owner's order; A is Milestone 1's look test (`NOW.md`, exit test 2).
 
 **A. The fight round the squad**
 
-1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart in value ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
+1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
 2. A hit is the slime's own reaction: the hole and how it closes (shots fly as comets).
 3. Done (11-18): a squad countable by its heads ([heads](../../Reports/squad-heads-2026-11-18/README.md)).
 4. Done (11-18): no light past its damage; biting slime crimson ([bite](../../Reports/biting-slime-2026-11-18/README.md)).
 5. Done (11-18): status slime glows rose ([mind](../../Reports/mind-status-2026-11-18/README.md)).
 6. Checked (11-18): fire at zoom 12 has no cell steps.
 
-**B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.
+**B. The slime itself**, a look a slime (owner, 11-19): Sprawler dashes (done, `SlimeLook`); veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; the origin's look once Enemy builds it.
 
 **C. Planets and terrain**: stronger grounding (faint shadows at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
 
 **D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture; then the shop and the menus.
 
-Also open: the 1070 cost of the new looks (one batch); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
+Also open: the 1070 cost of the new looks (one batch); the first review's open issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
 ## Sources
 
