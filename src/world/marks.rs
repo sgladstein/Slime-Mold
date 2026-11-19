@@ -321,6 +321,16 @@ impl Marks {
         }
     }
 
+    /// The soldier marks pushed since `from` (`len()` before a
+    /// `soldier_bitten` or `soldier_head`) dressed in Armour look `skin`:
+    /// 0 olive, 1 slate, 2 dark camo (owner, 2026-11-19; `view.wgsl`,
+    /// `skin_body`). It rides at bits 27-28 of `extra`.
+    pub fn dress_since(&mut self, from: usize, skin: u32) {
+        for m in self.list.iter_mut().skip(from).filter(|m| m.shape == Shape::Soldier) {
+            m.extra |= skin.min(2) << 27;
+        }
+    }
+
     /// A fallen soldier at `at`, `r` world cells across the radius, lying
     /// as it fell from facing `facing` radians (it fell back, so its head
     /// lies behind it), over a pool of blood spread `pool` 0-1 of the way
