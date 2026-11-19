@@ -1691,8 +1691,8 @@ mod tests {
 
     /// **Asleep in your own gas** (2026-11-18, `Rules::doze`): a thick
     /// sleep cloud laid on a soldier puts it to sleep the next frame: it
-    /// fires no shot and stays where it stood, and once the cloud thins it
-    /// wakes and walks again. With `doze` 0 it never sleeps.
+    /// fires no shot but still walks where it is sent (since 11-19), and
+    /// once the cloud thins it wakes. With `doze` 0 it never sleeps.
     #[test]
     fn a_soldier_sleeps_in_its_own_gas_cloud() {
         use crate::mould::kit::KitRules;
@@ -1711,7 +1711,7 @@ mod tests {
             g.step();
             let asleep = g.dozing(0);
             let level = g.soldiers[0].doze;
-            // Sent to the crystal: one asleep does not walk.
+            // Sent to the crystal: one dozing still walks (11-19).
             let goal = g.world.crystals()[1].0;
             assert!(g.apply(Cmd::Order(0, Order::Move(goal.0, goal.1))));
             let before = (g.soldiers[0].x, g.soldiers[0].y);
@@ -1726,7 +1726,7 @@ mod tests {
         };
         let (asleep, level, moved, still, woke) = run(1.0);
         eprintln!("cloud on the soldier {level:.1} sleep levels; asleep {asleep}, moved {moved:.2} fine cells asleep; awake again at {woke:.1} s");
-        assert!(asleep && level >= 1.0 && moved < 0.01, "asleep in the cloud: level {level}, moved {moved}");
+        assert!(asleep && level >= 1.0 && moved > 0.1, "asleep in the cloud yet walking: level {level}, moved {moved}");
         assert!(!still && woke < 60.0, "it wakes when the cloud thins");
         let (asleep, _, moved, _, _) = run(0.0);
         assert!(!asleep && moved > 0.1, "doze 0: it walks on ({moved})");

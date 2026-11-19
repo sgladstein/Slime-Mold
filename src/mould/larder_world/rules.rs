@@ -165,7 +165,7 @@ pub struct Rules {
     /// single spell that is incredibly powerful is also really
     /// dangerous"): a soldier standing where the gas cloud is this many
     /// times the level that puts the slime to sleep (`KitRules::gas_sleep`)
-    /// dozes: it neither fires nor walks until the cloud thins
+    /// dozes: it does not fire until the cloud thins (it still walks, 11-19)
     /// (`Soldier::doze`, read by `World::clouds`). 0 is off. Fire on its
     /// own does not cast gas onto the squad (`RoundRules::gas_margin`).
     pub doze: f32,

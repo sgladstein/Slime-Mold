@@ -17,9 +17,11 @@ impl<W: World> Game<W> {
     /// **Asleep in your own gas** (2026-11-18, `Rules::doze`; the owner's
     /// Noita rule, "Any single spell that is incredibly powerful is also
     /// really dangerous"): a living soldier whose cell had a sleep cloud at
-    /// `doze` times the slime's sleep level last frame neither fires nor
-    /// walks this one. Gas cast into slime on top of the squad, or a cloud
-    /// drifting back over it, puts the squad to sleep with the slime.
+    /// `doze` times the slime's sleep level last frame does not fire this
+    /// one; it still walks where it is sent (the owner, 11-19: a squad that
+    /// could not walk through its own gas was "just annoying"). Gas cast
+    /// into slime on top of the squad, or a cloud drifting back over it,
+    /// leaves the squad unable to shoot while the slime sleeps beside it.
     pub fn dozing(&self, k: usize) -> bool {
         let r = self.rules.doze;
         r > 0.0 && self.soldiers.get(k).is_some_and(|s| s.alive && s.doze >= r)
@@ -76,15 +78,14 @@ impl<W: World> Game<W> {
             }
             // Where its walk began (with `steer` everyone has walked already).
             let was = self.soldiers[k].was;
+            // Groggy in its own gas (`Rules::doze`) it still walks: until
+            // 11-19 a dozing soldier also stood still, and the owner, 17:10Z:
+            // "It basically just creates a barrier that we cannot walk
+            // through ... dangerous and stopping you from moving anywhere is
+            // different and the latter is just annoying".
             let dozing = self.dozing(k);
-            if !steer && !dozing {
+            if !steer {
                 self.walk(k, dt);
-            }
-            // Asleep in its own gas (`Rules::doze`): where it stood, still.
-            if dozing {
-                let s = &mut self.soldiers[k];
-                (s.x, s.y) = was;
-                (s.vx, s.vy) = (0.0, 0.0);
             }
             // A move that has arrived starts the next queued order (with
             // none queued it stays, as before: the window shows where).
