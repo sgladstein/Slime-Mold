@@ -32,7 +32,11 @@ jobs:
     timeout-minutes: 340
     strategy:
       fail-fast: false
-      max-parallel: 8
+      # The account runs at most 20 jobs at once, shared with every lane's
+      # CI and the merge queue (11-19 09:56Z: the gun lab held 18 and this
+      # batch's queued shards sat ahead of the merge queue). Four leaves
+      # room; long searches go to the owner's PC instead.
+      max-parallel: 4
       matrix:
         shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     steps:
