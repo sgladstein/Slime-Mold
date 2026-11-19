@@ -93,8 +93,8 @@ with a plain gun, and the Trunk's hardening was not the cause
 lists the Noita-rule audit of the other single cards.
 
 Two strong cards are dangerous to the squad (2026-11-19, on): a soldier in
-a sleep cloud thick enough to sleep the slime dozes, neither firing nor
-walking until it thins (`Rules::doze`), and a blast takes 40 health off every
+a sleep cloud thick enough to sleep the slime dozes and cannot fire (it still
+walks, since 11-19) until it thins (`Rules::doze`), and a blast takes 40 health off every
 soldier in its kill disc (`RoundRules::blast_hurt`). Fire on its own (a
 soldier or turret, not an aimed volley) holds a payload that would reach a
 soldier and lands as a plain shot (`RoundRules::blast_margin`,

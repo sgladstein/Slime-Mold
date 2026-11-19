@@ -11,7 +11,7 @@ dangerous." Page: https://claude.ai/artifact/Dxcv2mU4NjQNMMKbtdqZgb
 
 - **Gas's cloud puts your soldiers to sleep** (`Rules::doze`, 1.0). A
   soldier standing where the sleep cloud is at the level that puts the slime
-  to sleep (`KitRules::gas_sleep`) neither fires nor walks until it thins
+  to sleep (`KitRules::gas_sleep`) does not fire until it thins (until 11-19 it could not walk either; the owner found that "just annoying")
   (`Game::dozing`, `Soldier::doze`). The cloud at each soldier is read in
   the calm pass the game already runs while gas lasts (engine.wgsl's `calm`
   writes it into each point's spare fourth word; `Engine::calm` reads it
