@@ -28,20 +28,40 @@ pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (44 words, then the four lumps' vec4s since the
 /// mini-bosses, 2026-11-16, and their fade, fill and held vec4s).
-const PARAMS_BYTES: usize = 304;
+/// The slime's own look (Look B, 2026-11-19): the owner asked for several
+/// looks, each for a slime, so you tell them apart on sight (00:08Z: "It
+/// would also be interesting instead of having a single look to build
+/// multiple looks could eventually apply to different slimes"). Each is
+/// drawn from that slime's own walkers, never painted on.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SlimeLook {
+    /// Every walker's film a soft disc round it: the look before 11-19.
+    #[default]
+    Plain = 0,
+    /// The Sprawler's fast threads: each walker lays its film along the
+    /// way it has just come (`draw_specks`' `lay_streak`), so a fast walker
+    /// is a dash and walkers on one path join into a thread.
+    Threads = 1,
+}
+
+/// The game seconds of a walker's way that `SlimeLook::Threads` draws.
+pub const STREAK_SECS: f32 = 0.1;
+
+impl SlimeLook {
+    /// The look for a slime of `tier` (`None`: the sandbox's plain mould).
+    pub fn of(tier: Option<crate::mould::tiers::Tier>) -> SlimeLook {
+        match tier {
+            Some(crate::mould::tiers::Tier::Sprawler) => SlimeLook::Threads,
+            _ => SlimeLook::Plain,
+        }
+    }
+}
+
+const PARAMS_BYTES: usize = 320;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
-/// How strongly the alarm haze draws by default (`View::set_alarm_look`):
-/// on bare ground, on the slime. A quarter since 2026-11-15 (the whole-game
-/// review's W46: at full strength the squad's fire on the Swarmer's planet
-/// washed the frame mint, a mean lift of 57.6 over the frame with no haze
-/// and 27.7% of its pixels lifted over 60; a quarter is 15.5 and 12.5%, and
-/// a siren's call still reads as a ring on bare ground, where a tenth
-/// barely shows and the slime alone hides it;
-/// `Reports/alarm-look-2026-11-15/README.md`, a blind A/B for the owner).
-pub const ALARM_LOOK: (f32, f32) = (0.25, 0.25);
 /// The bindings after the first twenty, in `bind`'s order: 20 the lights,
 /// then 21-24 the crystals' live charge, their heat (`drain`), the terrain
 /// cells (`tcell`) and the crystal cells listed, and 25-26 the engine's two
@@ -137,7 +157,8 @@ pub fn pick_lights(lights: &[Light], seen: (f32, f32, f32, f32)) -> Vec<Light> {
     let (x0, y0, x1, y1) = seen;
     let mut on: Vec<Light> = lights.iter().copied().filter(|l| l.at.0 + l.reach >= x0 && l.at.0 - l.reach <= x1 && l.at.1 + l.reach >= y0 && l.at.1 - l.reach <= y1).collect();
     if on.len() > MAX_LIGHTS {
-        let worth = |l: &Light| l.strength;
+        // A bite zone first: it is the slime's attack, not a glow.
+        let worth = |l: &Light| if l.is_bite() { f32::INFINITY } else { l.strength };
         let mut order: Vec<usize> = (0..on.len()).collect();
         order.sort_by(|&a, &b| worth(&on[b]).total_cmp(&worth(&on[a])).then(a.cmp(&b)));
         let mut keep = vec![false; on.len()];
@@ -170,6 +191,24 @@ pub struct Light {
     pub lift: f32,
     pub colour: [f32; 3],
     pub strength: f32,
+}
+
+/// A bite zone's `lift` (`Light::bite`): above any real light's.
+pub const BITE_LIFT: f32 = 1.0e9;
+
+impl Light {
+    /// The slime biting a soldier (the owner, 2026-11-18 18:08Z: a bite
+    /// "just looks like more of the same slime"): the disc of `reach` world
+    /// cells round `at` in which every walker bites it, sent with the
+    /// lights. It lights nothing: the slime in it takes its own crimson
+    /// (`view.wgsl`, `bite_share`) by `strength`, 0 to 1.
+    pub fn bite(at: (f32, f32), reach: f32, strength: f32) -> Light {
+        Light { at, reach, lift: BITE_LIFT, colour: [0.0; 3], strength }
+    }
+
+    pub fn is_bite(&self) -> bool {
+        self.lift >= BITE_LIFT
+    }
 }
 
 /// The minimap's longest side, in pixels, and its margin from the corner.
@@ -226,7 +265,8 @@ pub struct View {
     /// absorbed walkers' streaks (`draw_absorbed`, 11-14), a buffer half of
     /// their own so the specks' calm/lean/bolt fields keep their room, then
     /// the flung walkers' droplets (the bold spray, 11-15: a layer and a
-    /// heat a pixel, by `atomicMax`).
+    /// heat a pixel, by `atomicMax`; since 11-18 the heat in four bits and
+    /// how squarely the bead faces the light in the other four).
     specks: wgpu::Buffer,
     /// Each walker's energy, when the world grows (`set_alive`): a slot
     /// below 0 is empty or dead and draws no speck.
@@ -261,12 +301,23 @@ pub struct View {
     /// The crust (`set_crust`, 2026-11-17): the word in `news` where the
     /// engine's crust block starts (`gpu::Engine::crust_at` / 4), 0 off.
     crust_at: u32,
-    /// LAB: where the steering field's blocks start in `news` (`set_steer`).
-    steer_at: u32,
     /// Set slime (`set_setting`, E2b): the set walkers a cell's first word
-    /// in `news` and the look (0 off, 1 amber, 2 glaze).
+    /// in `news`, 0 off.
     setc_at: u32,
-    set_look: u32,
+    /// The Mind statuses (`set_minds`, Look A5, 2026-11-18): the word in
+    /// `news` where each walker's Mind word starts (0 off), and the engine
+    /// steps over which a status fades as it runs out.
+    mind_at: u32,
+    mind_fade: u32,
+    /// The Lure's steering field (`set_steer`, 2026-11-18): the word in
+    /// `news` where its blocks start, 0 hidden.
+    steer_at: u32,
+    /// How far that field reaches, cells (`set_steer_reach`), 0 unknown.
+    steer_reach: f32,
+    /// The slime's own look (`set_slime_look`, Look B, 2026-11-19) and
+    /// how far behind each walker its streak runs, cells.
+    slime_look: SlimeLook,
+    streak: f32,
     flora: u32,
     ripe_at: u32,
     lag: u32,
@@ -289,9 +340,6 @@ pub struct View {
     germ: [wgpu::Buffer; 2],
     alarm_side: u32,
     alarm_full: f32,
-    /// How strongly the alarm haze draws on bare ground and on the slime
-    /// (`set_alarm_look`).
-    alarm_look: (f32, f32),
     n_list: u32,
     gem_words: Vec<f32>,
     live: std::cell::Cell<u32>,
@@ -409,9 +457,13 @@ impl View {
             lump_held: [0.0; MAX_LUMPS],
             plant_at: 0,
             crust_at: 0,
-            steer_at: 0,
+            mind_at: 0,
+            mind_fade: 1,
             setc_at: 0,
-            set_look: 0,
+            steer_at: 0,
+            steer_reach: 0.0,
+            slime_look: SlimeLook::Plain,
+            streak: 0.0,
             flora: 0,
             ripe_at: 0,
             lag: 0,
@@ -425,7 +477,6 @@ impl View {
             germ,
             alarm_side: 0,
             alarm_full: 0.0,
-            alarm_look: ALARM_LOOK,
             n_list: 0,
             gem_words: Vec::new(),
             live: std::cell::Cell::new(0),
@@ -644,11 +695,14 @@ impl View {
     /// siren's call drawn from the real field, not rings timed from the
     /// call): `germ` the engine's two germ fields (`gpu::Engine::germ`),
     /// whose second block of cells is the alarm, and `full` the alarm that
-    /// reads at full strength (a siren's `siren_alarm`). The view draws it
-    /// over the world as a faint red haze with a brighter front where the
-    /// field falls off, so a call spreads and fades as the engine spreads
-    /// and decays it, and a shot's alarm shows too. `None` hides it. Each
-    /// frame `set_alarm_side` says which side is current.
+    /// reads at full strength (a siren's `siren_alarm`). Since 2026-11-17
+    /// the view draws it on the slime alone, as the slime's own colour:
+    /// slime under alarm flushes hot (`view.wgsl`, `flush_at`), spreading
+    /// and fading as the engine spreads and decays the field, so the slime
+    /// a shot makes flinch shows it, and bare ground shows nothing. (To
+    /// then: a pale haze with a brighter front over ground and slime
+    /// alike, which washed a firing squad's ground mint.) `None` hides it.
+    /// Each frame `set_alarm_side` says which side is current.
     pub fn set_alarm(&mut self, germ: Option<[&wgpu::Buffer; 2]>, full: f32) {
         match germ {
             Some([a, b]) => {
@@ -666,13 +720,6 @@ impl View {
     /// Which germ field is current (`Engine::done` % 2), each frame.
     pub fn set_alarm_side(&mut self, side: u32) {
         self.alarm_side = side & 1;
-    }
-
-    /// How strongly the alarm haze draws: `ground` on bare ground, `slime`
-    /// on the slime (by the film there, so it blends at the slime's edge);
-    /// 1 is the haze as drawn on 11-14, 0 none. `ALARM_LOOK` by default.
-    pub fn set_alarm_look(&mut self, ground: f32, slime: f32) {
-        self.alarm_look = (ground.max(0.0), slime.max(0.0));
     }
 
     fn clear_charge(&mut self) {
@@ -743,8 +790,8 @@ impl View {
             self.dense_at = 0;
             self.plant_at = 0;
             self.crust_at = 0;
+            self.setc_at = 0;
             self.steer_at = 0;
-            (self.setc_at, self.set_look) = (0, 0);
         }
     }
 
@@ -788,19 +835,66 @@ impl View {
         self.rebind();
     }
 
-    /// LAB (steering prototype, the lab branch only): draws the steering
-    /// field from the engine's `news` word `at` (0 hides it). Needs the
-    /// news bound (`set_dense`).
-    pub fn set_steer(&mut self, at: u32) {
-        self.steer_at = if self.news_on || self.dense_at > 0 { at } else { 0 };
+    /// Draws each walker under a Mind status (blind, sour, spin, provoke,
+    /// still: the gun cards' Mind family) in the family's rose, from the
+    /// engine's `news` word `at` (`gpu::Engine::gas_at` / 4 + `GAS_SLOTS` +
+    /// walkers: a slot's kind in the top three bits, the step it ends in
+    /// the low 29), fading over its last `fade` engine steps; `None` or
+    /// `at` 0 hides it.
+    pub fn set_minds(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32, fade: u32) {
+        match news {
+            Some((n, s)) if at > 0 => {
+                if !self.news_on && self.dense_at == 0 && self.plant_at == 0 && self.crust_at == 0 {
+                    (self.news, self.state) = (n.clone(), s.clone());
+                }
+                (self.mind_at, self.mind_fade) = (at, fade.max(1));
+            }
+            _ => self.mind_at = 0,
+        }
+        self.rebind();
+    }
+
+    /// Gives the slime its own look (Look B, 2026-11-19; the owner, 00:08Z:
+    /// several looks, each for a slime). `streak` is how far a walker goes
+    /// in `STREAK_SECS`, cells: its pace, which `SlimeLook::Threads` draws
+    /// behind it.
+    pub fn set_slime_look(&mut self, look: SlimeLook, streak: f32) {
+        self.slime_look = look;
+        self.streak = streak.max(0.0);
     }
 
     /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)
     /// from the engine's `news` word `at` (`gpu::Engine::crust_at` / 4 +
-    /// cells + walkers), bound with the crust (`set_crust` first): `look` 1
-    /// amber, 2 glaze, 0 hides it. Off while the crust is.
-    pub fn set_setting(&mut self, at: u32, look: u32) {
-        (self.setc_at, self.set_look) = if self.crust_at > 0 { (at, look) } else { (0, 0) };
+    /// cells + walkers), bound with the crust (`set_crust` first), as amber
+    /// resin; `at` 0 hides it. Off while the crust is. (To 2026-11-18 it
+    /// took a look, 1 amber, 2 a pale glaze, 0 hidden, for a blind A/B;
+    /// amber is the game's and the other two went: `view.wgsl`, `set_mat`.)
+    pub fn set_setting(&mut self, at: u32) {
+        self.setc_at = if self.crust_at > 0 { at } else { 0 };
+    }
+
+    /// Draws the Lure's steering field (2026-11-18) from the engine's
+    /// `news` from word `at`: a word a 2 x 2 block of cells, row by row
+    /// (`ceil(w / 2)` blocks a row), the walking distance to the nearest
+    /// lure in cells + 1, and 0 where the field does not reach. It shows as
+    /// cream rings of equal distance, every 20 cells, on the ground the
+    /// field covers (`view.wgsl`, `steer_px`), and while it shows the
+    /// Lure's scent light is not lit. `at` 0 hides it (no lure standing).
+    /// Needs the engine's `news` bound (`set_news`, `set_dense`,
+    /// `set_plants` or `set_crust` first, each frame's order in the game);
+    /// without it nothing is drawn.
+    pub fn set_steer(&mut self, at: u32) {
+        self.steer_at = if self.news_on || self.dense_at > 0 || self.plant_at > 0 || self.crust_at > 0 { at } else { 0 };
+    }
+
+    /// How far the Lure's field reaches, in its own cells (the game's
+    /// `Rules::lure_reach` times the world's scale; 2026-11-18). No ring
+    /// is drawn within half a ring of it: the field stops there on its
+    /// blocks' stepped edge, and a ring on it drew as a dotted line round
+    /// the pull's rim (the game's reach, 120 cells, is a multiple of the
+    /// rings' 20). 0, the default, draws every ring.
+    pub fn set_steer_reach(&mut self, cells: f32) {
+        self.steer_reach = cells.max(0.0);
     }
 
     /// The world's living walkers a cell (living walkers over its cells),
@@ -966,7 +1060,8 @@ impl View {
             b.extend(v.to_le_bytes());
         }
         let n_lumps = self.lumps.iter().filter(|l| l[2] > 0.0).count() as u32;
-        for v in [self.alarm_look.0.to_bits(), self.alarm_look.1.to_bits(), self.scent as u32, n_lumps] {
+        // The Mind words (the alarm haze's strengths to 2026-11-17).
+        for v in [self.mind_at, self.mind_fade, self.scent as u32, n_lumps] {
             b.extend(v.to_le_bytes());
         }
         for l in self.lumps {
@@ -977,7 +1072,13 @@ impl View {
         for v in self.lump_fade.into_iter().chain(self.lump_fill).chain(self.lump_held) {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.crust_at, self.setc_at, self.set_look, self.steer_at] {
+        // The third word was set slime's look to 2026-11-18; since, the
+        // Lure's reach.
+        for v in [self.crust_at, self.setc_at, self.steer_reach.to_bits(), self.steer_at] {
+            b.extend(v.to_le_bytes());
+        }
+        let streak = if self.slime_look == SlimeLook::Threads { self.streak } else { 0.0 };
+        for v in [self.slime_look as u32, streak.to_bits(), 0, 0] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
@@ -1380,22 +1481,41 @@ mod tests {
         assert_eq!(checked, 40);
     }
 
-    /// The engine's alarm field shows (`set_alarm`, 11-14): a disc of
-    /// alarm on the current germ side lifts the ground most at its edge,
-    /// where the field falls off, less inside, nothing far outside; the
-    /// other side or no alarm bound shows nothing.
+    /// The flinch is the slime's own colour (Look A, 2026-11-17): slime
+    /// under the engine's alarm (`set_alarm`, the current germ side) flushes
+    /// hot, its green and blue falling and its red kept; slime with no
+    /// alarm on it keeps its gold, and bare ground under the same alarm
+    /// shows nothing. At zoom 6 (two fine cells a cell) and at zoom 2 (one).
+    /// The other side, or no alarm bound, shows nothing.
+    /// Before, the alarm drew as a pale haze with a bright front on bare
+    /// ground and slime alike. Planted wrong it fails both ways (llvmpipe,
+    /// zoom 6): with `flush_mat` off the slime stays (255, 197, 78), and
+    /// with the flush not kept to the slime the bare ground goes from
+    /// (40, 41, 39) to (61, 36, 26).
     #[test]
-    fn the_alarm_field_shows_its_front_on_the_current_side() {
+    fn slime_under_alarm_flushes_hot_and_bare_ground_shows_nothing() {
         let Some((dev, q)) = test_gpu() else { return };
         let (w, h) = (64usize, 40usize);
-        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
-        let world = storage(&dev, "world", px.len() as u64);
-        q.write_buffer(&world, 0, &px);
-        let (c, r, full) = ((32.0f32, 20.0f32), 10.0f32, 150.0f32);
+        // Two pieces of 49 walkers, a walker a cell, gold as the engine
+        // draws mould on agar: A round (16, 20), B round (48, 20). A disc
+        // of alarm, 10 cells out round B, covers B and the bare ground by it.
+        let full = 150.0f32;
+        let mut px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for cx in [16usize, 48] {
+            for dy in 0..7 {
+                for dx in 0..7 {
+                    let (x, y) = (cx + dx - 3, 20 + dy - 3);
+                    look[y * w + x] = 255 | (1 << 8);
+                    px[4 * (y * w + x)..4 * (y * w + x) + 3].copy_from_slice(&[255, 190, 90]);
+                    walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+                }
+            }
+        }
         let mut germ = vec![0.0f32; 3 * w * h];
         for y in 0..h {
             for x in 0..w {
-                if (x as f32 + 0.5 - c.0).hypot(y as f32 + 0.5 - c.1) <= r {
+                if (x as f32 + 0.5 - 48.5).hypot(y as f32 + 0.5 - 20.5) <= 10.0 {
                     germ[w * h + y * w + x] = full;
                 }
             }
@@ -1406,70 +1526,98 @@ mod tests {
             b
         };
         let f32s = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
-        let look_b = buf("look", &vec![0u8; w * h * 4]);
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
         let ground_b = buf("ground", &vec![0u8; w * h * 4]);
-        let walk_b = buf("walkers", &[0u8; 16]);
+        let walk_b = buf("walkers", &f32s(&walk));
         let (live, empty) = (buf("germ live", &f32s(&germ)), buf("germ empty", &f32s(&vec![0.0; 3 * w * h])));
         let screen = (384, 240);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
-        view.set_look(&look_b, &ground_b, &walk_b, 0);
-        let mut cam = Camera::new((w, h), screen);
-        cam.zoom_to(6.0, (0.0, 0.0));
-        cam.centre_on(c);
-        let frame = |view: &View| {
-            let mut enc = dev.create_command_encoder(&Default::default());
-            view.record(&mut enc, &cam, None);
-            q.submit([enc.finish()]);
-            view.picture()
-        };
-        let lum = |pic: &image::RgbaImage, x: f32, y: f32| {
-            let (sx, sy) = cam.to_screen((x, y));
-            let p = pic.get_pixel(sx as u32, sy as u32).0;
-            p[0] as i32 + p[1] as i32 + p[2] as i32
-        };
-        // At full strength (the default draws a quarter, `ALARM_LOOK`).
-        view.set_alarm_look(1.0, 1.0);
-        let bare = frame(&view);
-        let spots = |pic: &image::RgbaImage| [lum(pic, c.0, c.1), lum(pic, c.0 + r, c.1), lum(pic, c.0 + r + 8.0, c.1)];
-        let [mid0, edge0, out0] = spots(&bare);
-        view.set_alarm(Some([&empty, &live]), full);
-        view.set_alarm_side(1);
-        let [mid, edge, out] = spots(&frame(&view));
-        assert!(edge > edge0 + 60 && edge > mid + 30, "the front lifts most: edge {edge0} -> {edge}, middle {mid}");
-        assert!(mid >= mid0 && (out - out0).abs() <= 6, "middle {mid0} -> {mid}, outside {out0} -> {out}");
-        view.set_alarm_side(0);
-        assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "the other side holds no alarm");
-        view.set_alarm(None, 0.0);
-        assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "none bound, none shown");
+        view.set_look(&look_b, &ground_b, &walk_b, walk.len() as u32 / 4);
+        for zoom in [6.0f32, 2.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            cam.centre_on((32.0, 20.0));
+            let frame = |view: &View| {
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                view.picture()
+            };
+            // The mean colour of the 5 x 5 pixels round a world point (so a
+            // walker's speck does not decide it).
+            let at = |pic: &image::RgbaImage, x: f32, y: f32| {
+                let (sx, sy) = cam.to_screen((x, y));
+                let mut c = [0i32; 3];
+                for dy in -2..=2 {
+                    for dx in -2..=2 {
+                        let p = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                        for k in 0..3 {
+                            c[k] += p[k] as i32;
+                        }
+                    }
+                }
+                c.map(|v| v / 25)
+            };
+            // A's middle, B's middle, and bare ground in the alarm 7.5 cells
+            // under B's middle, 4 cells clear of its last walkers (at 2.5
+            // the film's faint tail still flushed, 3 of 255, at zoom 2).
+            let spots = |pic: &image::RgbaImage| [at(pic, 16.5, 20.5), at(pic, 48.5, 20.5), at(pic, 48.5, 28.0)];
+            view.set_alarm(None, 0.0);
+            let [a0, b0, g0] = spots(&frame(&view));
+            assert!(b0[1] > b0[2] + 60 && b0[0] > 150, "zoom {zoom}: the slime is gold: {b0:?}");
+            view.set_alarm(Some([&empty, &live]), full);
+            view.set_alarm_side(1);
+            let [a, b, g] = spots(&frame(&view));
+            let far = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| (p[k] - q[k]).abs()).max().unwrap();
+            assert!(b[1] + 20 < b0[1] && b[2] < b0[2] && b[0] + 6 >= b0[0], "zoom {zoom}: slime under alarm flushes hot: {b0:?} -> {b:?}");
+            assert!(far(a, a0) <= 2, "zoom {zoom}: slime with no alarm keeps its colour: {a0:?} -> {a:?}");
+            assert!(far(g, g0) <= 2, "zoom {zoom}: bare ground shows no alarm: {g0:?} -> {g:?}");
+            view.set_alarm_side(0);
+            let [_, other, _] = spots(&frame(&view));
+            assert!(far(other, b0) <= 2, "zoom {zoom}: the other side holds no alarm: {b0:?} -> {other:?}");
+        }
     }
 
-    /// A wall holds no alarm (the engine's agar only), and its face is not
-    /// the field's front (the whole-game review's W27, 11-15: plain
-    /// bilinear mixed the wall's 0 in, so a plateau drew a bright line down
-    /// every wall face, the square edge of a blast's glow in the Fork's
-    /// stem): beside the wall the haze lifts the ground as in the middle of
-    /// the plateau. `set_alarm_look` scales it on bare ground and on the
-    /// slime (W46): 0 on the ground draws none on this bare dish.
+    /// The Lure's steering field draws as cream rings of equal walking
+    /// distance (2026-11-18): a field round a lure at cell (21, 25), a word
+    /// a 2 x 2 block, reaching 30 cells. The ring 20 cells out is lit east
+    /// and north of the lure; half way to it, at the lure's own block and
+    /// where the next ring would fall past the field's reach nothing shows;
+    /// on slime the ring lifts the picture by less than half what it does
+    /// on bare ground; `set_steer(0)` draws the picture with no field. The
+    /// Lure's scent light is lit without the field and not lit with it. At
+    /// zoom 6 and zoom 2 (a ring is a hairline at both).
     #[test]
-    fn the_alarm_haze_has_no_front_at_a_wall_and_its_strength_is_set() {
+    fn the_lures_field_draws_as_cream_rings_and_its_scent_light_goes() {
         let Some((dev, q)) = test_gpu() else { return };
-        let (w, h) = (64usize, 40usize);
+        let (w, h) = (64usize, 48usize);
         let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
-        let world = storage(&dev, "world", px.len() as u64);
-        q.write_buffer(&world, 0, &px);
-        // A wall two cells thick at x 40-41; the plateau fills the open
-        // cells left of it (not the rim), as the engine leaves it.
-        let wall = |x: usize| (40..42).contains(&x);
-        let full = 150.0f32;
-        let mut germ = vec![0.0f32; 3 * w * h];
-        let mut ground = vec![0u32; w * h];
-        for y in 0..h {
-            for x in 0..w {
-                if wall(x) {
-                    ground[y * w + x] = 3 | 255 << 8;
-                } else if x > 0 && x < 40 && y > 0 && y + 1 < h {
-                    germ[w * h + y * w + x] = full;
-                }
+        // A gold piece of 49 walkers across the ring south of the lure,
+        // round (21, 45), and scent on the ground round (31, 25).
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for dy in 0..6 {
+            for dx in 0..7 {
+                let (x, y) = (18 + dx, 42 + dy);
+                look[y * w + x] = 255 | (1 << 8);
+                walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+            }
+        }
+        for y in 19..31 {
+            for x in 25..37 {
+                look[y * w + x] |= 255 << 24;
+            }
+        }
+        // The field as the engine writes it, from word 4 of `news`: the
+        // walking distance (octile over the blocks) to the lure's block
+        // (10, 12), in cells + 1, and 0 past 30 cells.
+        let (bw, bh) = (w.div_ceil(2), h.div_ceil(2));
+        let mut nw = vec![0u32; 4];
+        for by in 0..bh {
+            for bx in 0..bw {
+                let (dx, dy) = ((bx as f32 - 10.0).abs(), (by as f32 - 12.0).abs());
+                let d = 2.0 * (dx.max(dy) + (2f32.sqrt() - 1.0) * dx.min(dy));
+                nw.push(if d <= 30.0 { d.round() as u32 + 1 } else { 0 });
             }
         }
         let buf = |label: &str, bytes: &[u8]| {
@@ -1477,50 +1625,124 @@ mod tests {
             q.write_buffer(&b, 0, bytes);
             b
         };
-        let f32s = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
-        let look_b = buf("look", &vec![0u8; w * h * 4]);
-        let ground_b = buf("ground", &ground.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let news = buf("news", &crate::gpu::u32_bytes(&nw));
+        let state = buf("state", &crate::gpu::u32_bytes(&[100u32, 0, 0, 0]));
+        let screen = (384, 288);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, walk.len() as u32 / 4);
+        view.set_steer(4);
+        assert_eq!(view.steer_at, 0, "no field is drawn before the engine's news is bound");
+        view.set_dense(Some((&news, &state)), 4 + (bw * bh) as u32, 0);
+        let scent = Light { at: (31.0, 25.0), reach: 8.0, lift: -2.0, colour: [150.0, 235.0, 80.0], strength: 1.3 };
+        for zoom in [6.0f32, 2.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            cam.centre_on((32.0, 24.0));
+            let mut frame = |steer: u32, lights: &[Light]| {
+                view.set_steer(steer);
+                view.set_lights(lights, (0.0, 0.0, w as f32, h as f32));
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                view.picture()
+            };
+            let at = |pic: &image::RgbaImage, x: f32, y: f32| {
+                let (sx, sy) = cam.to_screen((x, y));
+                let p = pic.get_pixel(sx as u32, sy as u32).0;
+                [p[0] as i32, p[1] as i32, p[2] as i32]
+            };
+            let far = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| (p[k] - q[k]).abs()).max().unwrap();
+            let lift = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| p[k] - q[k]).sum::<i32>();
+            let none = frame(0, &[]);
+            let rings = frame(4, &[]);
+            let (east, north) = ((41.0, 25.0), (21.0, 5.0));
+            for (name, (x, y)) in [("east", east), ("north", north)] {
+                let (a, b) = (at(&none, x, y), at(&rings, x, y));
+                assert!((0..3).all(|k| b[k] > a[k] + 25) && b[0] >= b[2], "zoom {zoom}: the ring 20 cells {name} is lit cream: {a:?} -> {b:?}");
+            }
+            for (name, (x, y)) in [("half way to the ring", (31.0, 25.0)), ("the lure's own block", (21.0, 25.0)), ("past the reach", (61.0, 25.0))] {
+                let (a, b) = (at(&none, x, y), at(&rings, x, y));
+                assert!(far(a, b) <= 2, "zoom {zoom}: {name} shows nothing: {a:?} -> {b:?}");
+            }
+            let ground = lift(at(&rings, east.0, east.1), at(&none, east.0, east.1));
+            let slime = lift(at(&rings, 21.0, 45.0), at(&none, 21.0, 45.0));
+            assert!(at(&none, 21.0, 45.0)[0] > 150 && 2 * slime < ground, "zoom {zoom}: on slime the ring is under half as strong: {slime} against {ground}");
+            // The scent light: lit on the scented ground without the field,
+            // and with the field the picture is the rings' alone.
+            let lit = frame(0, &[scent]);
+            let (a, b) = (at(&none, 31.0, 25.0), at(&lit, 31.0, 25.0));
+            assert!(b[1] > a[1] + 10, "zoom {zoom}: the Lure's scent light is lit with no field: {a:?} -> {b:?}");
+            let both = frame(4, &[scent]);
+            assert!(both.as_raw() == rings.as_raw(), "zoom {zoom}: the scent light is lit under the rings");
+            assert!(frame(0, &[]).as_raw() == none.as_raw(), "zoom {zoom}: set_steer(0) left something drawn");
+        }
+    }
+
+    /// No ring on the pull's rim (2026-11-18): on planets 2 and 3 the
+    /// game's last ring, 120 cells out, fell on the field's edge, where the
+    /// field stops on its blocks' steps, and drew as a dotted line. A field
+    /// reaching 40 cells round the lure at (21, 25): with no reach given
+    /// the ring 40 cells east is drawn, with the reach (`set_steer_reach`)
+    /// it is not, and the ring 20 cells east is drawn either way.
+    #[test]
+    fn no_ring_is_drawn_on_the_lures_rim() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 48usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let (bw, bh) = (w.div_ceil(2), h.div_ceil(2));
+        let mut nw = vec![0u32; 4];
+        for by in 0..bh {
+            for bx in 0..bw {
+                let (dx, dy) = ((bx as f32 - 10.0).abs(), (by as f32 - 12.0).abs());
+                let d = 2.0 * (dx.max(dy) + (2f32.sqrt() - 1.0) * dx.min(dy));
+                nw.push(if d <= 40.0 { d.round() as u32 + 1 } else { 0 });
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&vec![0u32; w * h]));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
         let walk_b = buf("walkers", &[0u8; 16]);
-        let live = buf("germ live", &f32s(&germ));
-        let screen = (384, 240);
+        let news = buf("news", &crate::gpu::u32_bytes(&nw));
+        let state = buf("state", &crate::gpu::u32_bytes(&[100u32, 0, 0, 0]));
+        let screen = (384, 288);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
         view.set_look(&look_b, &ground_b, &walk_b, 0);
+        view.set_dense(Some((&news, &state)), 4 + (bw * bh) as u32, 0);
         let mut cam = Camera::new((w, h), screen);
         cam.zoom_to(6.0, (0.0, 0.0));
-        cam.centre_on((36.0, 20.0));
-        let frame = |view: &View| {
+        cam.centre_on((32.0, 24.0));
+        let mut frame = |steer: u32, reach: f32| {
+            view.set_steer(steer);
+            view.set_steer_reach(reach);
             let mut enc = dev.create_command_encoder(&Default::default());
             view.record(&mut enc, &cam, None);
             q.submit([enc.finish()]);
             view.picture()
         };
-        let lum = |pic: &image::RgbaImage, x: f32, y: f32| {
+        let at = |pic: &image::RgbaImage, x: f32, y: f32| {
             let (sx, sy) = cam.to_screen((x, y));
             let p = pic.get_pixel(sx as u32, sy as u32).0;
-            p[0] as i32 + p[1] as i32 + p[2] as i32
+            [p[0] as i32, p[1] as i32, p[2] as i32]
         };
-        // The middle of the plateau, and half a cell and a fifth of a cell
-        // from the wall's face (x 40).
-        let at = [20.0f32, 39.5, 39.8];
-        view.set_alarm_look(1.0, 1.0);
-        let bare = frame(&view);
-        view.set_alarm(Some([&live, &live]), full);
-        let lifts = |pic: &image::RgbaImage| at.map(|x| lum(pic, x, 20.0) - lum(&bare, x, 20.0));
-        let [mid, face, closer] = lifts(&frame(&view));
-        assert!(mid > 20, "the plateau lifts the ground: {mid}");
-        // No brighter by the face than in the middle (the wall's own
-        // edge covers some of the last fifth of a cell: 58, 52 and 42 on
-        // llvmpipe; plain bilinear drew a front there, brighter).
-        assert!(face <= mid + 6 && closer <= mid + 6, "no front at the wall: middle {mid}, by the face {face}, {closer}");
-        view.set_alarm_look(0.0, 1.0);
-        let none = lifts(&frame(&view));
-        assert!(none.iter().all(|l| l.abs() <= 3), "none on bare ground: {none:?}");
-        view.set_alarm_look(0.1, 0.1);
-        let [tenth, ..] = lifts(&frame(&view));
-        assert!(tenth > 0 && tenth * 5 < mid, "a tenth: {tenth} of {mid}");
-        view.set_alarm_look(ALARM_LOOK.0, ALARM_LOOK.1);
-        let [default, ..] = lifts(&frame(&view));
-        assert!(default > tenth && default * 2 < mid, "the default, a quarter: {default} of {mid}");
+        let lit = |a: [i32; 3], b: [i32; 3]| (0..3).all(|k| b[k] > a[k] + 20);
+        let none = frame(0, 0.0);
+        let every = frame(4, 0.0);
+        let kept = frame(4, 40.0);
+        let (inner, rim) = ((41.0, 25.0), (61.0, 25.0));
+        assert!(lit(at(&none, rim.0, rim.1), at(&every, rim.0, rim.1)), "with no reach given the rim's ring is drawn: {:?} -> {:?}", at(&none, rim.0, rim.1), at(&every, rim.0, rim.1));
+        assert_eq!(at(&kept, rim.0, rim.1), at(&none, rim.0, rim.1), "a ring on the rim");
+        for pic in [&every, &kept] {
+            assert!(lit(at(&none, inner.0, inner.1), at(pic, inner.0, inner.1)), "the ring 20 cells out is drawn");
+        }
     }
 
     /// A crystal shows its live charge (the owner's playtest, 2026-11-14
@@ -2225,5 +2447,408 @@ mod tests {
         assert!(door[0] > door[2] + 25.0, "the door is timber, not slate or water: {door:?}");
         assert!(door[0] - door[2] > wall[0] - wall[2] + 10.0, "warmer than the wall: {door:?} against {wall:?}");
         assert!(door_swing > 30.0, "its grate swings bar to gap: {door_swing}");
+    }
+
+    /// A squad of 40 you can count (Look A, 2026-11-18): every living
+    /// soldier's head is drawn again above every body (`Marks::soldier_head`),
+    /// so a soldier whose neighbour's shoulders cover its middle still shows
+    /// its white helmet, and a soldier standing alone looks exactly as it
+    /// did. Against the 11-18 shader (the head mark drawn as a whole figure)
+    /// the neighbour's shoulders cover it again.
+    #[test]
+    fn a_packed_soldier_shows_its_head_and_a_lone_one_is_unchanged() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [40u8, 44, 40, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let (r, team) = (2.0, crate::world::marks::team_colour(0));
+        let mut shot = |m: &Marks| {
+            view.set_marks(m);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        // Both facing east, B 0.7 radii below A, drawn after it: B's
+        // shoulders (the body is 0.8 radii across the facing) cover A's
+        // middle.
+        let (a, b) = ((24.0, 16.0), (24.0, 16.0 + 0.7 * r));
+        let mut m = Marks::default();
+        for p in [a, b] {
+            m.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+        }
+        for p in [a, b] {
+            m.soldier_head(p, r, 0.0, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+        }
+        let packed = shot(&m);
+        let (sx, sy) = cam.to_screen((a.0 + 0.04 * r, a.1));
+        let head = packed.get_pixel(sx as u32, sy as u32).0;
+        let (lo, hi) = (head[..3].iter().min().copied().unwrap(), head[..3].iter().max().copied().unwrap());
+        assert!(lo > 150 && hi - lo < 40, "A's helmet shows over B's shoulders: {head:?}");
+        // Alone, the head changes nothing.
+        let mut body = Marks::default();
+        body.soldier_bitten(a, r, 0.7, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+        let mut both = body.clone();
+        both.soldier_head(a, r, 0.7, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let (one, two) = (shot(&body), shot(&both));
+        let most = one.pixels().zip(two.pixels()).map(|(p, q)| (0..3).map(|c| (p.0[c] as i32 - q.0[c] as i32).abs()).max().unwrap()).max().unwrap();
+        assert!(most <= 2, "a lone soldier's head is its own figure's: {most}");
+    }
+
+    /// The Sprawler's threads (Look B, 2026-11-19): two lone walkers on
+    /// bare ground, A heading east and B west. In the plain look each is a
+    /// round speck and film (lit on one flank by the key light); as threads
+    /// each is a dash along the way it came, so a cell and a half behind it
+    /// is lit and as far ahead is not. At zoom 12 and 6. With the plain
+    /// look's 11-18 shader the two looks draw the same and it fails.
+    #[test]
+    fn the_sprawlers_walkers_draw_as_dashes_along_the_way_they_came() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let walk = [16.5f32, 20.5, 0.0, 0.0, 48.5, 20.5, std::f32::consts::PI, 0.0];
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&vec![0u32; w * h]));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 2);
+        for zoom in [12.0f32, 6.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            // The summed channels of the 3 x 3 pixels round each point.
+            let mut shot = |look: SlimeLook, centre: (f32, f32), ps: [(f32, f32); 2]| {
+                view.set_slime_look(look, 2.25);
+                cam.centre_on(centre);
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                let pic = view.picture();
+                ps.map(|p| {
+                    let (sx, sy) = cam.to_screen(p);
+                    let mut c = 0i32;
+                    for dy in -1..=1 {
+                        for dx in -1..=1 {
+                            let v = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                            c += v[0] as i32 + v[1] as i32 + v[2] as i32;
+                        }
+                    }
+                    c / 9
+                })
+            };
+            // Behind, then ahead, a cell and a half from each walker.
+            let a = [(15.0, 20.5), (18.0, 20.5)];
+            let b = [(50.0, 20.5), (47.0, 20.5)];
+            for (name, c, ps) in [("A", (16.5, 20.5), a), ("B", (48.5, 20.5), b)] {
+                let [pb, pa] = shot(SlimeLook::Plain, c, ps);
+                let [tb, ta] = shot(SlimeLook::Threads, c, ps);
+                // Plain, the key light makes one flank brighter (about 70
+                // apart, either way); as a thread it is about 300 to 370.
+                assert!(tb > ta + 200, "zoom {zoom}: {name} as a thread is lit behind it: behind {tb}, ahead {ta}");
+                assert!(tb > pb + 150, "zoom {zoom}: {name}'s dash is brighter behind it than its plain speck: {pb} -> {tb}");
+                assert!(ta < pa, "zoom {zoom}: {name}'s film ahead of it thins, as the dash holds one walker: {pa} -> {ta}");
+            }
+        }
+    }
+
+    /// A Mind status on the slime it holds (Look A5, 2026-11-18): two
+    /// pieces of gold slime, A's walkers with no status and B's under one
+    /// (a Mind word: kind 3, spin, ending 200 steps on); B's middle turns
+    /// toward the family's rose and A's keeps its gold. The same word run
+    /// out (ending at the step now) draws nothing, and with 30 steps left
+    /// of a 60-step fade B is tinted less. At zoom 12 and 6. Against the
+    /// 11-18 shader (the two words unread) B stays gold.
+    #[test]
+    fn slime_under_a_mind_status_turns_rose_and_fades_as_it_runs_out() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let mut px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for cx in [16usize, 48] {
+            for dy in 0..7 {
+                for dx in 0..7 {
+                    let (x, y) = (cx + dx - 3, 20 + dy - 3);
+                    look[y * w + x] = 255 | (1 << 8);
+                    px[4 * (y * w + x)..4 * (y * w + x) + 3].copy_from_slice(&[255, 190, 90]);
+                    walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+                }
+            }
+        }
+        let n = walk.len() / 4;
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
+        // The Mind words after 16 other words; the step now is 1000.
+        let (at, now) = (16usize, 1000u32);
+        let words = |end: u32| {
+            let mut v = vec![0u32; at + n];
+            for k in n / 2..n {
+                v[at + k] = (3 << 29) | end;
+            }
+            buf("news", &crate::gpu::u32_bytes(&v))
+        };
+        let state = buf("state", &crate::gpu::u32_bytes(&[now, 0, 0, 0]));
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, n as u32);
+        let (a, b) = ((16.5f32, 20.5f32), (48.5f32, 20.5f32));
+        for zoom in [12.0f32, 6.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            let mut shot = |centre: (f32, f32), news: Option<&wgpu::Buffer>, p: (f32, f32)| {
+                view.set_minds(news.map(|n| (n, &state)), at as u32, 60);
+                cam.centre_on(centre);
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                let pic = view.picture();
+                // The mean of the 5 x 5 pixels round the point.
+                let (sx, sy) = cam.to_screen(p);
+                let mut c = [0i32; 3];
+                for dy in -2..=2 {
+                    for dx in -2..=2 {
+                        let v = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                        for k in 0..3 {
+                            c[k] += v[k] as i32;
+                        }
+                    }
+                }
+                c.map(|v| v / 25)
+            };
+            let far = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| (p[k] - q[k]).abs()).max().unwrap();
+            let (on, out, half) = (words(now + 200), words(now), words(now + 30));
+            let (b0, b1) = (shot(b, None, b), shot(b, Some(&on), b));
+            assert!(b0[2] + 60 < b0[1], "zoom {zoom}: the slime is gold: {b0:?}");
+            assert!(b1[2] > b0[2] + 50 && b1[1] < b0[1], "zoom {zoom}: B, under a status, turns rose: {b0:?} -> {b1:?}");
+            let (a0, a1) = (shot(a, None, a), shot(a, Some(&on), a));
+            assert!(far(a0, a1) <= 2, "zoom {zoom}: A, with no status, keeps its gold: {a0:?} -> {a1:?}");
+            let b2 = shot(b, Some(&out), b);
+            assert!(far(b0, b2) <= 2, "zoom {zoom}: a status run out draws nothing: {b0:?} -> {b2:?}");
+            let b3 = shot(b, Some(&half), b);
+            assert!(b3[2] > b0[2] + 10 && b3[2] + 10 < b1[2], "zoom {zoom}: half way through its fade, less rose: {b0:?}, {b3:?}, {b1:?}");
+        }
+    }
+
+    /// The slime biting a soldier (the owner, 2026-11-18 18:08Z: a bite
+    /// "just looks like more of the same slime"): two pieces of gold slime,
+    /// A and B, a soldier standing in each, and a bite zone (`Light::bite`,
+    /// the soldier's touch) on B alone and on bare ground between them. B's
+    /// slime turns crimson and shows over its soldier's shoulder; A's slime
+    /// and soldier, and the bare ground in its zone, are unchanged. At zoom
+    /// 12 and 6. Against the 11-18 shader (no bite zone) B stays gold and
+    /// under its figure.
+    #[test]
+    fn slime_biting_a_soldier_turns_crimson_over_it_and_nothing_else_changes() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let mut px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for cx in [16usize, 48] {
+            for dy in 0..7 {
+                for dx in 0..7 {
+                    let (x, y) = (cx + dx - 3, 20 + dy - 3);
+                    look[y * w + x] = 255 | (1 << 8);
+                    px[4 * (y * w + x)..4 * (y * w + x) + 3].copy_from_slice(&[255, 190, 90]);
+                    walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, walk.len() as u32 / 4);
+        let (r, team) = (2.0f32, crate::world::marks::team_colour(0));
+        let (a, b, bare) = ((16.5f32, 20.5f32), (48.5f32, 20.5f32), (32.5f32, 20.5f32));
+        let mut soldiers = Marks::default();
+        for p in [a, b] {
+            soldiers.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+        }
+        let zones = [Light::bite(b, r / 1.15, 1.0), Light::bite(bare, r / 1.15, 1.0)];
+        for zoom in [12.0f32, 6.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            let mut shot = |centre: (f32, f32), marks: &Marks, lights: &[Light]| {
+                cam.centre_on(centre);
+                view.set_marks(marks);
+                view.set_lights(lights, (0.0, 0.0, w as f32, h as f32));
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                (view.picture(), cam)
+            };
+            // The mean colour of the 3 x 3 pixels round a world point.
+            let at = |(pic, cam): &(image::RgbaImage, Camera), p: (f32, f32)| {
+                let (sx, sy) = cam.to_screen(p);
+                let mut c = [0i32; 3];
+                for dy in -1..=1 {
+                    for dx in -1..=1 {
+                        let v = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                        for k in 0..3 {
+                            c[k] += v[k] as i32;
+                        }
+                    }
+                }
+                c.map(|v| v / 9)
+            };
+            let far = |p: [i32; 3], q: [i32; 3]| (0..3).map(|k| (p[k] - q[k]).abs()).max().unwrap();
+            // Half a radius out across the facing: the soldier's shoulder,
+            // inside its touch.
+            let shoulder = |p: (f32, f32)| (p.0, p.1 + 0.5 * r);
+            let none = Marks::default();
+            // The slime alone, then with the soldiers.
+            for (marks, what) in [(&none, "slime"), (&soldiers, "shoulder")] {
+                let spot = |p: (f32, f32)| if what == "slime" { p } else { shoulder(p) };
+                let (b0, b1) = (at(&shot(b, marks, &[]), spot(b)), at(&shot(b, marks, &zones), spot(b)));
+                assert!(b1[0] > b1[1] + 80 && b1[0] > b1[2] + 40, "zoom {zoom}: B's biting {what} is crimson: {b0:?} -> {b1:?}");
+                let (a0, a1) = (at(&shot(a, marks, &[]), spot(a)), at(&shot(a, marks, &zones), spot(a)));
+                assert!(far(a0, a1) <= 2, "zoom {zoom}: A's {what}, not bitten, is unchanged: {a0:?} -> {a1:?}");
+            }
+            let (g0, g1) = (at(&shot(bare, &none, &[]), bare), at(&shot(bare, &none, &zones), bare));
+            assert!(far(g0, g1) <= 2, "zoom {zoom}: bare ground in a bite zone is unchanged: {g0:?} -> {g1:?}");
+        }
+    }
+
+    /// A fallen soldier (the owner's playtest, 2026-11-18 16:12Z: "When
+    /// soliders die, the body on the floor looks really bad") lies in our
+    /// olive over a pool of blood that spreads after the fall: beside its
+    /// chest the bare ground the moment it falls and blood once the pool
+    /// has spread, and the chest olive. Against the 11-14 corpse (a cold
+    /// grey figure, no pool) it fails on the blood.
+    #[test]
+    fn a_fallen_soldier_lies_olive_in_a_pool_of_blood_that_spreads() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [90u8, 90, 90, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        // Facing east (0 radians): the body's frame is the screen's.
+        let r = 2.0;
+        let mut shot = |pool: f32| {
+            let mut m = Marks::default();
+            m.fallen((24.0, 16.0), r, 0.0, crate::world::marks::team_colour(0), pool, 7);
+            view.set_marks(&m);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let (fresh, spread) = (shot(0.0), shot(1.0));
+        // A point in radii of the body's frame (+x the way it faced).
+        let at = |pic: &image::RgbaImage, bx: f32, by: f32| {
+            let (sx, sy) = cam.to_screen((24.0 + bx * r, 16.0 + by * r));
+            pic.get_pixel(sx as u32, sy as u32).0
+        };
+        let ground = at(&fresh, -5.0, 0.0);
+        let then = at(&fresh, -0.3, -0.6);
+        assert!((0..3).all(|c| (then[c] as i32 - ground[c] as i32).abs() <= 4), "the ground beside its chest as it falls: {then:?}, the ground {ground:?}");
+        let beside = at(&spread, -0.3, -0.6);
+        assert!(beside[0] as i32 > beside[1] as i32 + 60 && beside[0] as i32 > beside[2] as i32 + 60, "blood there once spread: {beside:?}");
+        let chest = at(&spread, -0.3, 0.0);
+        assert!(chest[1] as i32 > chest[2] as i32 + 20 && chest[1] as i32 + 10 >= chest[0] as i32, "the chest our olive: {chest:?}");
+    }
+
+    /// A shot's flung droplet (Look A3, 2026-11-18) is a bead in the
+    /// slime's material over the bright body: lit on the side toward the
+    /// key light and darker on the far side, in the slime's gold rather
+    /// than a pale chip, with no ink rim on its lit side, and a shadow on
+    /// the body beside its far side. Against the 11-15 shader (a flat chip
+    /// in a dark rim) it fails on the first: its two sides 241 and 243.
+    #[test]
+    fn a_flung_droplet_is_a_lit_bead_with_a_shadow_and_no_rim() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [200u8, 160, 60, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        // A body of 4 walkers a cell everywhere, and over it one droplet a
+        // shot's spray throws (the fourth word below 0: a killed walker's
+        // flight a tick, 0.8 cells, fast) flying toward +x.
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for y in 0..h {
+            for x in 0..w {
+                look[y * w + x] = 255 | (4 << 8);
+                for k in 0..4 {
+                    walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                }
+            }
+        }
+        walk.extend([24.5f32, 20.5, 0.0, -0.8]);
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
+        let mut cam = Camera::new((w, h), screen);
+        let zoom = 12.0;
+        cam.zoom_to(zoom, (0.0, 0.0));
+        cam.centre_on((24.0, 20.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        // The pixel (dx, dy) screen pixels from the droplet's head, and the
+        // one `d` pixels from it along (dx, dy).
+        let (hx, hy) = cam.to_screen((24.5, 20.5));
+        let off = |dx: f32, dy: f32| pic.get_pixel((hx + dx) as u32, (hy + dy) as u32).0.map(|v| v as f32);
+        let at = |dx: f32, dy: f32, d: f32| {
+            let n = dx.hypot(dy).max(1e-6);
+            off(dx / n * d, dy / n * d)
+        };
+        let lum = |p: [f32; 4]| 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2];
+        // The key light (`LIGHT`) comes from the upper left.
+        let (lx, ly) = (-0.42f32, -0.58f32);
+        let rh = zoom / 3.2;
+        let (lit, far) = (lum(at(lx, ly, 0.6 * rh)), lum(at(-lx, -ly, 0.6 * rh)));
+        assert!(lit > far + 15.0, "a bead lit toward the light: {lit} against its far side {far}");
+        let core = at(0.0, 0.0, 0.0);
+        assert!(core[2] < 0.6 * core[0], "the slime's gold, not a pale chip: {core:?}");
+        // The body itself, well clear of the droplet and its shadow: the
+        // median of a row of pixels above it (the body has its own sheen).
+        let mut row: Vec<f32> = (0..24).map(|k| lum(off(k as f32 - 12.0, -3.0 * rh))).collect();
+        row.sort_by(f32::total_cmp);
+        let body = row[row.len() / 2];
+        // Just past the head straight up (the tail lies along -x): the 11-15
+        // rim drew there, a pixel wide.
+        let above = lum(at(0.0, -1.0, rh + 0.6));
+        assert!(above > 0.75 * body, "no ink rim on the lit side: {above} against the body {body}");
+        let shade = lum(at(-lx, -ly, rh + 1.2));
+        assert!(shade < 0.8 * body, "a shadow on the body beside its far side: {shade} against the body {body}");
     }
 }

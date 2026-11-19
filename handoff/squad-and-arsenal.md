@@ -48,6 +48,32 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-18, batch 4 (auto-fire against loose walkers; Scott 17:01Z).**
+
+- The commanded squad now fires by its own fire mode when not volleying
+  (`Game::stance_of`): it was held to defend, so his "free" did nothing and
+  its attack-move stood to fight slime it would not shoot. Defend reads only
+  `Rules::defend` 7.5 cells round each soldier (`Game::sight`, the
+  `UnitIn::sight` turn.rs passes the engine), unless guarding, clearing a
+  crystal or on the core: with the whole 24-cell reach read, a thicker clump
+  far off hid the walkers on the squad. His planet-1 log: 23.9 shots and 143
+  kills a second with fire held, 4.5 and 11 on auto. Scene (planet 1 seed
+  1795015831, eight held at the start, 150 s): old auto 804 shots, 3,058
+  kills, health 60%; new defend 1,208, 3,166, 83%; new free 1,613, 3,204,
+  75%; volley at the densest slime 1,632-1,700, 3,032-3,117, 41-49%.
+- Merged as #495. Spreading the volley over the slime round the cursor was
+  then tried at his request and not kept (wins +10-16% at a body's edge,
+  loses at a stream past rock and among loose walkers; `Reports/dead-ends.md`).
+- Look's A3 standing half (hold elbow room when a squad stands or drains):
+  looked, not built. A squad at rest already keeps it (eight held on planet
+  1, nearest neighbour 5.13 fine cells at least, elbow room 4.8). The heap is
+  only drainers, each pulled to the rim point nearest it (`Game::rim`):
+  greedy hand, planet 1 run 1, median 4.2-4.3 with up to 20 draining, 2.9-3.2
+  with 35-42 on one crystal, where the ring has no room for them all at
+  elbow room. Spacing them would stand some out of reach and cut the drain;
+  the helmets drawn above the bodies (#494) carry the count. Revisit only if
+  he says a draining squad still can't be counted.
+
 **2026-11-18, batch 2 (one PR after #448: Heave and Corral merged, shop offers, Free recruits off the list).**
 
 - Shop offers (job 4): `run::bring_shell` (the Sprawler and the Trunk ask

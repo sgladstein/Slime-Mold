@@ -8,21 +8,28 @@
 //! Any other argument starts that round at once, as before, so every
 //! command line keeps working; `menu=1` with them opens the menu with
 //! those values preset (a preset that differs from the default shows in
-//! amber), and `menu=PAGE` (`main`, `campaign`, `options`, `keys`) with
-//! `look=DIR` films that page over the round (the pictures on the page).
+//! amber), and `menu=PAGE` (`main`, `campaign`, `options`, `keys`, `news`)
+//! with `look=DIR` films that page over the round (the pictures on the
+//! page).
+//!
+//! It also says what the build holds (`build_page`, from the Engine and
+//! tools lane's `slime_mould::build`): the build in the main page's
+//! corner, what is new with the lines new to this PC marked, and the
+//! things to try with their ticks.
 
 use super::*;
 use slime_mould::mould::run::{self as run, Pick};
 use slime_mould::mould::run::{Face, Group};
 use slime_mould::mould::bullets::{Set, Shell};
-use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, BAG};
+use slime_mould::build::news::{self, Memory};
+use slime_mould::world::start::{BuildPage, Entry, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
 /// a word on stderr. (The campaign thread's `Mission::list` will do this
 /// in the library; switch to it when it lands.)
 pub(super) fn missions() -> Vec<(String, Mission)> {
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-campaign-2026-11-12/missions");
+    let dir = slime_mould::build::root().join("Reports/larder-campaign-2026-11-12/missions");
     let mut out: Vec<(u32, String, Mission)> = Vec::new();
     for e in std::fs::read_dir(&dir).into_iter().flatten().flatten() {
         let p = e.path();
@@ -118,6 +125,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     let sizes: Vec<&str> = sizes.iter().map(String::as_str).collect();
     // First on the page (the review, 11-15: it was the last of 15 rows,
     // below the fold, and the one the owner needed).
+    // The declared switches (`build::switches`; the Engine and tools
+    // lane, 11-17), one row each on their own tab: `experiments.rs` says
+    // what is on it, this file and `start.rs` how it is drawn.
+    o.extend(experiments::options(base));
     o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -128,6 +139,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
             let tab = match opt.key.as_str() {
                 "map" | "planet" | "own" | "plants" => "Planet",
                 "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The mould",
+                k if k.starts_with(slime_mould::build::switches::OPT_KEY) => "Experiments",
                 _ => "Game",
             };
             opt.in_tab(tab)
@@ -166,6 +178,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("N", "Next map"),
         ("M", "Minimap"),
         ("F2", "Scent view: what the mould smells"),
+        ("F9", "Drop a note in the play log: marks this moment and place"),
         ("O / K", "Sound; the mould's voice"),
         ("Space", "Look at the newest alert"),
         ("Esc", "Cancel placing, or the menu"),
@@ -198,7 +211,36 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
     let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu.planets = true;
+    menu.most_off = slime_mould::build::switches::MOST_OFF;
+    // What the build holds, as a PC that has not played sees it (every
+    // line new, nothing ticked): the window puts its own memory over it
+    // when it opens the menu (`App::open_menu`). A film may show a PC
+    // that has played by naming its settings file (`LARDER_SETTINGS`),
+    // which is read here and never written: nothing in a film plays a
+    // round or ticks a row.
+    let seen = std::env::var_os("LARDER_SETTINGS").filter(|v| !v.is_empty()).map_or_else(Memory::unsaved, |p| Memory::load_from(std::path::Path::new(&p)));
+    menu.build = Some(build_page(&seen));
     menu
+}
+
+/// **What the build says of itself**, for the menu (`start::BuildPage`),
+/// as `memory` has it: which build this is, the last one played here, the
+/// "what is new" list with the lines no round has been played on marked,
+/// and the things to try with their ticks.
+///
+/// The new lines come first, and each part is the newest first by the
+/// day a line was written. The file's own order is the order pull
+/// requests merged in, which on 11-18 already had three lines of 11-17
+/// under five of 11-18.
+pub(super) fn build_page(memory: &Memory) -> BuildPage {
+    let b = slime_mould::build::build();
+    let mut lines: Vec<NewsLine> = news::news().iter().map(|n| NewsLine { date: n.date.into(), lane: n.lane.name().into(), sees: n.sees.into(), try_it: n.try_it.into(), new: memory.is_new(n) }).collect();
+    lines.sort_by(|a, b| b.new.cmp(&a.new).then_with(|| b.date.cmp(&a.date)));
+    let last = memory.last_build.as_ref().map(|(n, commit, date)| {
+        let name = if *n > 0 { format!("build {n}") } else { format!("build {commit}") };
+        if date.is_empty() { name } else { format!("{name}, {date}") }
+    });
+    BuildPage { name: b.short(), long: b.long(), last, news: lines, to_try: news::to_try().iter().map(|t| TryLine { text: t.text.into(), tried: memory.is_tried(t) }).collect() }
 }
 
 /// The round a run's level plays: the options over the command line, as a
@@ -346,7 +388,7 @@ fn range_shelf(row: &run::Row) -> &'static str {
         // The shove cards their own shelf (2026-11-16): with them on the
         // next bullet's, that tab took two pages at 200% on 1080 lines.
         // With the trails since 11-17 (below).
-        (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Corral | rounds::Card::Pull)) => "Trails and shoves",
+        (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Pull)) => "Trails and shoves",
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
         // The readers (Shatter, Detonate) share it: their own tab would
@@ -426,8 +468,10 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
     Some(match name {
         "1" | "main" => Page::Main,
         "campaign" | "missions" => Page::Missions,
-        "options" | "options-planet" | "options-mould" => Page::Options,
+        "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
+        // (`news-try`: its second tab, the things to try.)
+        "news" | "news-try" => Page::News,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" => Page::Shop,
         _ => return None,
     })
@@ -488,6 +532,8 @@ pub(super) fn round_args(base: &Args, chosen: bool, menu: &StartMenu, pick: &Sta
             a.keys.push((k.to_string(), v.to_string()));
         }
     }
+    // The Experiments tab's picks, last so they stand over the rest.
+    experiments::apply(&mut a, base, menu);
     a
 }
 
@@ -502,7 +548,13 @@ impl App {
     /// map.
     pub(super) fn open_menu(&mut self) -> Result<(), String> {
         let Some((base, chosen)) = self.base.clone() else { return Ok(()) };
-        let menu = self.menu.take().unwrap_or_else(|| start_menu(&base));
+        let mut menu = self.menu.take().unwrap_or_else(|| start_menu(&base));
+        // What this PC has seen and ticked, over the menu's own (a PC
+        // that has not played). The no-window films keep the menu's: their
+        // memory is never this PC's.
+        if self.window.is_some() {
+            menu.build = Some(build_page(&self.memory));
+        }
         self.args = round_args(&base, chosen, &menu, &StartEvent::Sandbox);
         self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
         self.menu = Some(menu);
@@ -642,6 +694,12 @@ impl App {
                     m.show(Page::Main);
                 }
             }
+            // A thing to try ticked or unticked: this PC remembers.
+            StartEvent::Tried(i, tried) => {
+                if let Some(t) = news::to_try().get(i) {
+                    self.memory.set_tried(t, tried);
+                }
+            }
             StartEvent::EditMaps => {
                 let note = match launch_editor() {
                     Ok(()) => "The map editor opened in its own window".to_string(),
@@ -723,7 +781,11 @@ impl App {
             self.hud.alert("The armory is on the start menu's Gun range", None, theme::WARN);
             return;
         };
-        self.menu = Some(self.parked.take().unwrap_or_else(|| start_menu(&base)));
+        let mut menu = self.parked.take().unwrap_or_else(|| start_menu(&base));
+        if self.window.is_some() {
+            menu.build = Some(build_page(&self.memory));
+        }
+        self.menu = Some(menu);
         self.set_armory(true);
         self.paused = true;
         self.show_armory();
@@ -843,5 +905,5 @@ fn launch_editor() -> Result<(), String> {
     if !exe.exists() {
         return Err("No map editor built: cargo build --release --bin larder-edit".into());
     }
-    std::process::Command::new(&exe).current_dir(env!("CARGO_MANIFEST_DIR")).spawn().map(|_| ()).map_err(|e| format!("The map editor did not start: {e}"))
+    std::process::Command::new(&exe).current_dir(slime_mould::build::root()).spawn().map(|_| ()).map_err(|e| format!("The map editor did not start: {e}"))
 }

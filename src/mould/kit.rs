@@ -95,6 +95,16 @@ pub struct KitRules {
     pub gas_dose: f32,
     pub gas_sleep: f32,
     pub gas_linger: f32,
+    /// **Sleep wears off** (2026-11-18; `BurstRules::gas_immune`): game
+    /// seconds a walker that woke from gas cannot be put back to sleep,
+    /// and no gas lengthens a sleep already running. The owner's playtest
+    /// that day: Mist on the turrets "basically stopped everything", and
+    /// "if you review how that happens in noita, there are no single OP
+    /// spells". A turret's mist laid a cloud along every shot; a walker in
+    /// it slept for as long as the turrets kept firing, so nothing reached
+    /// them. Now a sleep is a window: the slime sleeps once, wakes and
+    /// comes on through the cloud for this long.
+    pub gas_immune: f32,
     pub reek: f32,
     /// Tools a soldier can hold (0: no carry rule, tools come from the bank
     /// wherever a soldier stands). With it on, a soldier takes tools at the
@@ -171,6 +181,7 @@ impl Default for KitRules {
             gas_dose: 1.0,
             gas_sleep: 0.2,
             gas_linger: 3.0,
+            gas_immune: 20.0,
             reek: 4.0,
             // Round 2 (2026-11-12): the runner holds 5 at 50 each. At 2 the
             // loud plan fell to the farm hand's level on every tier (+0.18
@@ -419,6 +430,7 @@ impl Kit {
             gas_linger,
             sick_steps,
             immune_steps: (r.immune_secs * fine).round().min(u16::MAX as f32 - sick_steps as f32) as u16,
+            gas_immune: (r.gas_immune * fine).round().clamp(0.0, u16::MAX as f32) as u16,
             sick_upkeep: r.sick_upkeep,
             sick_catch: r.sick_catch,
             sick_deposit: r.sick_deposit,
@@ -428,6 +440,10 @@ impl Kit {
             fling_speed: 0.0,
             mind_steps: 0,
             spin_curl: 0.0,
+            // The devices set `mind_steps` to their own seconds (`use_`).
+            deaf_steps: 0,
+            still_steps: 0,
+            mind_rest: 0,
         }
     }
 

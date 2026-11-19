@@ -3,6 +3,13 @@
 
 use super::*;
 
+/// Half a read block (`squad::BIN`, engine cells): about how far past a
+/// radius the centre of a block holding a walker inside it can lie, so a
+/// defending soldier's test allows it (`Game::sight`). Not the half
+/// diagonal (2.8): at scale 1 that took defend's 7.5 cells to 10.3, and
+/// `a_guard_shoots_slime_on_what_it_guards` caught slime 10 cells off.
+const DEFEND_SLACK: f32 = squad::BIN as f32 * 0.5;
+
 /// A player's command; `Game::apply` keeps the log. As M3's, with walls and
 /// buildings (`buildings`) in place of M3's turret and bait.
 /// `Order::Clear` names a crystal by a point inside it.
@@ -247,7 +254,10 @@ impl<W: World> Game<W> {
     }
 
     pub fn buy(&mut self) -> bool {
-        if self.bank < self.rules.soldier_cost || self.alive() >= self.rules.max_squad {
+        // Not once the squad is gone where that ends the round
+        // (`Rules::wipe_ends`): its end screen must not show a soldier.
+        let gone = self.rules.wipe_ends > 0.0 && self.alive() == 0;
+        if self.bank < self.rules.soldier_cost || self.alive() >= self.rules.max_squad || gone {
             return false;
         }
         self.bank -= self.rules.soldier_cost;
@@ -434,6 +444,57 @@ impl<W: World> Game<W> {
         (p, self.rules.guard_r * sc)
     }
 
+    /// The stance soldier `k` fires by on its own clock (not volleying).
+    /// An attack-move fires freely; otherwise its own stance.
+    ///
+    /// The controlled squad keeps the fire mode the player gave it
+    /// (2026-11-18). Before, its stance was read as defend whatever the
+    /// player chose, since its guns were "the player's to aim", and its
+    /// attack-move stood to fight (`Game::engaged`) at slime it would not
+    /// shoot. The owner, 11-18 17:01Z: against loose walkers he lets go of
+    /// the fire button and lets them shoot, "but the soldiers seem to
+    /// shoot much slower or not all of them are shooting". His log that
+    /// morning (planet 1): 23.9 shots and 143 kills a second with fire
+    /// held, 4.5 and 11 on their own; his "free" at 71 s and 346 s did
+    /// nothing.
+    pub(super) fn stance_of(&self, k: usize) -> Stance {
+        let s = self.soldiers[k];
+        let commanded = self.rules.squads && Some(s.squad as usize) == self.active;
+        if commanded && s.stance == Stance::HoldFire {
+            Stance::HoldFire
+        } else if matches!(s.order, Order::Attack | Order::Fight(..)) {
+            Stance::Free
+        } else {
+            s.stance
+        }
+    }
+
+    /// How far soldier `k`'s read of the slime looks for its aim
+    /// (`squad::UnitIn::sight`, fine cells): its gun's reach, but only
+    /// as far as it defends (`Rules::defend`) when that is all it shoots
+    /// at (`Stance::Defend`, nothing to guard, no crystal to clear, not
+    /// on the core).
+    ///
+    /// The engine's aim is the block with the most walkers in sight, and
+    /// a defending soldier fires only when that block is near. With the
+    /// whole reach read, a thicker clump 20 cells off hid the loose
+    /// walkers on top of the squad: the soldiers held fire as they were
+    /// eaten, or, touched, fired past them at the clump (2026-11-18). Read
+    /// short, each soldier aims at the thickest slime near itself, so a
+    /// squad among loose walkers spreads its fire over them.
+    pub(super) fn sight(&self, k: usize) -> f32 {
+        let s = self.soldiers[k];
+        let sc = self.s();
+        let full = self.gun_range(s.squad as usize) * sc;
+        // On the core the read decides whether it is clear (`check_core`,
+        // walkers within twice its radius), so it looks the whole way.
+        let on_core = (s.x - self.core.0).hypot(s.y - self.core.1) <= 3.0 * self.rules.core_r * sc;
+        if self.stance_of(k) != Stance::Defend || self.guard_zone(k).is_some() || matches!(s.order, Order::Clear(..)) || on_core {
+            return full;
+        }
+        (self.rules.defend * sc).min(full)
+    }
+
     /// Where soldier `k` fires this frame, if anywhere (fine cells).
     pub(super) fn target(&mut self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
@@ -474,21 +535,15 @@ impl<W: World> Game<W> {
             }
         };
         let near = |p: (f32, f32), r: f32| (p.0 - aim.0).hypot(p.1 - aim.1) <= r + body;
-        let stance = if self.rules.squads && Some(s.squad as usize) == self.active {
-            // The controlled squad's guns are the player's (`squads`): on
-            // its own it only defends itself.
-            if s.stance == Stance::HoldFire { Stance::HoldFire } else { Stance::Defend }
-        } else if matches!(s.order, Order::Attack | Order::Fight(..)) {
-            Stance::Free
-        } else {
-            s.stance
-        };
-        match stance {
+        match self.stance_of(k) {
             Stance::HoldFire => None,
             Stance::Free => Some(aim),
             Stance::Defend => {
-                // Presence, any walker at any mass: one on a soldier is one to shoot.
-                let mut ok = s.touching > 0 || near((s.x, s.y), self.rules.defend * sc);
+                // Presence, any walker at any mass: one on a soldier is one
+                // to shoot. The aim is a block's centre, so a walker just
+                // inside the radius can read up to about half a block past
+                // it (`DEFEND_SLACK`).
+                let mut ok = s.touching > 0 || near((s.x, s.y), self.rules.defend * sc + DEFEND_SLACK);
                 // Guarding (`Order::Guard`, or its squad's `Squad::guard`):
                 // slime on what it guards too.
                 if let Some((p, r)) = self.guard_zone(k) {

@@ -67,7 +67,10 @@ Start from `handoff/integration.md` and
      planet read one more `news` word a step (Params word 888, the last
      quarter of the cells' region), and `time_fort` runs once a second;
    - the raised walls (Look's view prep, 11-18): one multiply-add a fine
-     cell in the view's prep each frame.
+     cell in the view's prep each frame;
+   - the tether (Enemy's #496, 11-18): 8 more cell reads for a breakaway
+     walker stepping into a new cell (Params word 892), and the raid march
+     (CPU, once a game second).
 
 ## The CPU engine
 

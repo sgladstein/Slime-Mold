@@ -2,8 +2,9 @@
 title: Squad mode
 kind: design
 status: open
-updated: 2026-11-16
+updated: 2026-11-18
 sources:
+  - Reports/auto-fire-2026-11-18/README.md
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
   - Reports/command-card-2026-11-15/README.md
@@ -35,8 +36,8 @@ code:
 
 You steer one squad of soldiers with WASD; it volleys at the cursor while the
 left button is held, and fires twice as often with a 1.4x strike while it is
-the one you command. The squads you do not command keep their last order and
-fire on their own. Squads split, join, link, queue orders and stand guard while
+the one you command. Let go of the button and it fires by its fire mode (Firing on its own, below). The squads you do not command keep their last order and fire on
+their own. Squads split, join, link, queue orders and stand guard while
 they drain or build; there is no larder. It is `mode=squads` (`Rules::squads`),
 the start menu's *Control* option. It is the window's default (2026-11-15, #330; owner 07:57Z); missions and
 headless `look=`/`bench` runs stay on the RTS round (`mode=rts` or Control: rts
@@ -51,6 +52,18 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
 
 ## How it plays
 
+- **Firing on its own** (2026-11-18). Not volleying, the commanded squad
+  fires by its fire mode like every squad: *defend*, the default, shoots the
+  thickest slime within 7.5 cells of each soldier, so among loose walkers the
+  soldiers spread their fire; *free* shoots the thickest in the gun's reach.
+  Before, it was held to defend whatever its mode, and defend read the whole
+  reach, so a clump 20 cells off hid the walkers on the squad
+  (`Game::stance_of`, `Game::sight`;
+  [report](../../Reports/auto-fire-2026-11-18/README.md),
+  [page](https://claude.ai/artifact/EdTkz7B7MwwHV7FbRtgGE3)). A held volley
+  still puts every bullet on the cursor: spreading it over the slime round
+  the cursor won at a body's edge but lost among loose walkers, so it was not
+  kept ([dead ends](../../Reports/dead-ends.md)).
 - **Commanding.** The bottom bar's middle panel has a tile per squad (hotkey,
   soldiers, health, state). Click a tile or press its number to take command;
   Ctrl + wheel switches. **Esc** or *Let go* commands none: every squad shows
@@ -119,6 +132,7 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 - 2026-11-15 19:38Z: "Card 2"; 19:51Z: "Remove burn line. Use options c for guard/defend. (b) Click a building to select it when no squad is selected."; 19:53Z: "Build option 1"; 21:37Z: "Demolishing a building giving half back is good. Canceling a partial build should give all of it back".
 - 2026-11-15 18:00Z, on guards while working: "It doesn't seem to work well. Either improve it or remove it." (Improved: posts at the work's edge.)
 - 2026-11-16 05:17Z, of squad movement and pathfinding: "It is still clunky overall" (start over rather than patch).
+- 2026-11-18 17:01Z: "When I am surrounded by a bunch of individual walkers ... it isn't ideal to have all the soliders shooting at the same point anymore. So I typically stop manually shooting and let them shoot automatically, but the soliders seem to shoot much slower or not all of them are shooting" (fixed the same day: the commanded squad keeps its fire mode and defend reads what is near).
 - 2026-11-15 02:58Z: a way to deselect, move with WASD and see each squad run on its own (built as Esc and AUTO).
 
 ## Open
@@ -127,4 +141,4 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 
 ## Sources
 
-- [squad mode](../../Reports/squad-mode-2026-11-14/README.md), [squad movement rework](../../Reports/squad-movement-2026-11-16/README.md), [bug sweep](../../Reports/bug-sweep-2026-11-14.md), [free camera](../../Reports/free-camera-2026-11-15/README.md), [narrow squads](../../Reports/narrow-squads-2026-11-15/README.md), [build flow](../../Reports/build-flow-2026-11-14/README.md).
+- [squad mode](../../Reports/squad-mode-2026-11-14/README.md), [auto-fire](../../Reports/auto-fire-2026-11-18/README.md), [squad movement rework](../../Reports/squad-movement-2026-11-16/README.md), [bug sweep](../../Reports/bug-sweep-2026-11-14.md), [free camera](../../Reports/free-camera-2026-11-15/README.md), [narrow squads](../../Reports/narrow-squads-2026-11-15/README.md), [build flow](../../Reports/build-flow-2026-11-14/README.md).

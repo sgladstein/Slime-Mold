@@ -101,8 +101,7 @@
 //! puts the round's sound on tape. The CI smoke tests play every mission
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
 //! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
-//! `alarm_look=G[,S]` how strongly the alarm haze draws on bare ground and
-//! on the slime (`View::set_alarm_look`; 0 none); `boss_look=NAME` how every
+//! `boss_look=NAME` how every
 //! mini-boss's body is drawn whatever its kind (`LumpLook`: plain, ember,
 //! violet, ink, bone; for the look's A/B) and `follow=boss` keeps the near view
 //! on the first live mini-boss; `scent=1` opens with the
@@ -208,12 +207,14 @@ fn kind_look(kind: u16) -> LumpLook {
 /// reads as two-thirds cyan, never all of it (that is a crystal's).
 const LEECH_HALF: f32 = 150.0;
 mod args;
+mod experiments;
 mod input;
 mod draw;
 mod events;
 mod headless;
 mod bench;
 mod hands;
+mod runbot;
 mod menu;
 mod squadmode;
 mod uisize;
@@ -390,7 +391,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 66] = [
+const LOADOUTS: [(&str, &str); 68] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -454,12 +455,12 @@ const LOADOUTS: [(&str, &str); 66] = [
     ("bomb-gas", "bomb+gas"),
     ("trigger-bomb-gas", "trigger+bomb+gas"),
     // The shove cards (owner 2026-11-16 05:11Z: "corral and push the slime
-    // onto areas. Into a kill zone"): a heaved shove straight on, one
-    // toward the nearest turret, one drawn back to the gun.
-    ("heave", "heave+heave+plain"),
-    ("corral", "corral+heave+plain"),
+    // onto areas. Into a kill zone"): a heaved shove toward the nearest
+    // turret, or straight on with none in reach (Heave and Corral were two
+    // cards until 2026-11-17), and one drawn back to the gun.
+    ("heave", "heave+plain"),
     ("pull", "pull+heave+plain"),
-    ("corral-slug", "corral+ammo/plain/slug/1/100/100/100/100/1"),
+    ("heave-slug", "heave+ammo/plain/slug/1/100/100/100/100/1"),
     // Multicast (2026-11-16, step B): the next cast fired beside in the
     // same shot; two copies fire three. The films' five-card combos
     // (multicast+multicast+plain+blast+gas 13, multicast+trigger+plain+
@@ -479,6 +480,11 @@ const LOADOUTS: [(&str, &str); 66] = [
     ("sour", "sour"),
     ("spin", "spin"),
     ("multi-blind", "multicast+plain+blind"),
+    // Provoke and Still (2026-11-17): the devices' statuses as cards; a
+    // provoked part charges the squad into its own plain fire.
+    ("provoke", "provoke"),
+    ("still", "still"),
+    ("provoke-plain", "provoke+plain"),
     // The readers (2026-11-16, step D): each kills only what another card
     // set up, so alone it kills nothing; in turn with its setter, the
     // setter's sleepers or sick die at the next hit.
@@ -502,7 +508,7 @@ const LOADOUTS: [(&str, &str); 66] = [
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
-const RULE_KEY: &str = "set:";
+use slime_mould::build::switches::{RULE_KEY, WINDOW_KEY};
 
 /// `Default` so a test or a tool names only the fields it sets (`..Default::default()`);
 /// before, each of 18 literals spelled out all 23 fields and every new
@@ -532,14 +538,15 @@ struct Args {
     /// line, to see whether crust shows roads or one plate under the body
     /// (the reviews' question).
     crust_look: Option<u8>,
-    /// `setlook=N` (2026-11-17, the simulation-use plan's E2b): set slime's
-    /// look, 1 amber (the default, None), 2 glaze, 0 hidden; only with
-    /// setting (`setting=1`).
-    set_look: Option<u32>,
     /// `light=T,X,Y,R` (2026-11-17, the crust fire films): a plain fire
     /// lit over R world units at (X, Y) at game second T (a burn burst,
     /// no kill); repeat for more.
     lights: Vec<(f32, f32, f32, f32)>,
+    /// `lure_mark=T,X,Y,SECS` (look= only, 2026-11-18, the Enemy lane): a
+    /// lure with no building (`LureMark`, the lure's field) at (X, Y),
+    /// world units, from game second T for SECS; repeat for more.
+    /// `lure=X,Y[,T]` stands a Lure building instead.
+    lure_marks: Vec<(f32, f32, f32, f32)>,
     /// `trail=T,X1,Y1,X2,Y2,CARDS[,lit]` (2026-11-17, the element family's
     /// fence test): at game second T, the trails of CARDS (scorch, bait,
     /// mist, smother, tinder) laid along the line from (X1, Y1) to (X2, Y2),
@@ -591,10 +598,6 @@ struct Args {
     /// `crater=S`: game seconds of crater a hit lays (`Rules::crater`; 0
     /// turns the hole under fire off, to compare).
     crater: Option<f32>,
-    /// `alarm_look=G[,S]`: how strongly the alarm haze draws on bare ground
-    /// and on the slime (`View::set_alarm_look`; S defaults to G), for
-    /// films and A/Bs.
-    alarm_look: Option<(f32, f32)>,
     /// `boss_look=NAME`: every mini-boss's look (`LumpLook`) whatever its
     /// kind, for the look's A/B (else `kind_look`).
     boss_look: Option<LumpLook>,
@@ -732,11 +735,14 @@ struct Look {
     kick: f32,
     cast: u8,
     shots: u32,
+    /// Seconds since it fell (counting while it lies dead), which spreads
+    /// its pool of blood over `POOL_GROW` (`Marks::fallen`).
+    fallen: f32,
 }
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
+        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW } }
     }
 }
 
@@ -762,6 +768,9 @@ const SIREN_CALL: f32 = 0.7;
 const FLINCH_HP: f32 = 3.0;
 /// How long a flinch lasts, seconds.
 const FLINCH: f32 = 0.2;
+/// How long a fallen soldier's pool of blood takes to spread, seconds
+/// (`Marks::fallen`; the owner's playtest 2026-11-18 16:12Z).
+const POOL_GROW: f32 = 2.5;
 
 /// The camera shake's wobble at full trauma, screen pixels, and how fast
 /// the trauma falls, a second (`App::shake`; D6, 11-15).
@@ -908,14 +917,20 @@ struct App {
     seen: u64,
     report_at: Instant,
     saved: bool,
-    /// The play log (`mould::playlog`, whole-game review W13, 11-15):
-    /// `larder-world-log-MAP-SEED.txt` beside the replay, a line a game
-    /// second, in the window only (not the headless films). The path, the
-    /// writer, the last second written, and whether the end is written.
+    /// The play log (`mould::playlog`, whole-game review W13, 11-15): a
+    /// file a round in `play-logs/` beside the game, a line a game second,
+    /// in the window only (not the headless films) and not for the dish
+    /// behind the start menu. The path, the writer, the last second
+    /// written, whether the end is written, and the notes dropped (F9).
+    log_notes: u32,
     log_path: Option<String>,
     playlog: slime_mould::mould::playlog::Playlog,
     log_sec: u64,
     log_ended: bool,
+    /// The gun's cards as the log last named them (`App::log_loadout`): a
+    /// change mid-round (H in free play, the range's armory) writes a
+    /// `gun t=..` line.
+    log_gun: String,
     /// The command card shows the build page (Q).
     build_page: bool,
     /// The squad toolkit (`mould::kit`) and whether the card shows its page
@@ -953,6 +968,9 @@ struct App {
     /// chose the mould (`shape=`, `walkers=`): what the menu's picks build
     /// on. None in the headless runs, which have no menu to go back to.
     base: Option<(Args, bool)>,
+    /// Experiments picked on the pause menu that wait for the next round
+    /// (`experiments::pick_experiment`): switch key, choice.
+    exp_next: Vec<(&'static str, &'static str)>,
     /// The roguelike run under way, between its levels too (`args.run` is
     /// the level being played; this is the run itself, in the shop).
     run: Option<Run>,
@@ -966,11 +984,26 @@ struct App {
     /// The minimap's switch (M) while the armory hides it.
     armory_minimap: bool,
     result: Result<(), String>,
+    /// What this PC has seen of the game's "what is new" list, and the
+    /// last build played here (`build::news`): read from the settings
+    /// file when a window opens (`main`), never saved by the no-window
+    /// films and tests, which must not mark the owner's news as read.
+    memory: slime_mould::build::news::Memory,
+}
+
+/// The play log header's words for a round's keys: the switches off their
+/// default, and every key given over the default game (the shape's own
+/// are the default game; the rest are the command line's and the menu's).
+fn log_keys(keys: &[(String, String)]) -> Vec<(&'static str, String)> {
+    let (_, shape) = shape_keys(DEFAULT_SHAPE).expect("the default shape");
+    let given: Vec<String> = keys.iter().filter(|(k, v)| !shape.iter().any(|(n, x)| n == k && x == v)).map(|(k, v)| format!("{k}={v}")).collect();
+    vec![("switches", slime_mould::build::switches::log_word(keys)), ("keys", if given.is_empty() { "none".into() } else { given.join(",") })]
 }
 
 impl App {
     fn new(args: Args) -> Self {
         App {
+            memory: slime_mould::build::news::Memory::unsaved(),
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
             planet_depth: 1,
@@ -1042,6 +1075,8 @@ impl App {
             playlog: Default::default(),
             log_sec: 0,
             log_ended: false,
+            log_notes: 0,
+            log_gun: String::new(),
             build_page: false,
             kit: Kit::new(KitRules::default()),
             rounds: Rounds::new(Vec::new(), RoundRules::default()),
@@ -1056,6 +1091,7 @@ impl App {
             menu: None,
             parked: None,
             base: None,
+            exp_next: Vec::new(),
             result: Ok(()),
         }
     }
@@ -1069,6 +1105,17 @@ impl App {
     /// A new round on the map named in `args` (or the noise world).
     fn start(&mut self) -> Result<(), String> {
         self.save_replay();
+        // The pause menu's picks that wait for a new round (2026-11-19).
+        self.take_experiments();
+        // A switch's window keys (`win:NAME`, the Experiments tab's picks
+        // and `try=`) over the command line's own, each round: the round's
+        // args are built afresh from the command line (`round_args`), so a
+        // pick turned back leaves nothing behind.
+        for (k, v) in self.args.keys.clone() {
+            if let Some(name) = k.strip_prefix(WINDOW_KEY) {
+                experiments::set_window_key(&mut self.args, name, &v)?;
+            }
+        }
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
         // own=1 on the noise world is the gardeners' race world; on a map,
@@ -1087,7 +1134,7 @@ impl App {
         let mission = match (&level, &a.mission) {
             (Some(l), _) => Some(l.mission.clone()),
             (None, Some(name)) => {
-                let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
+                let path = slime_mould::build::root().join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"));
                 Some(Mission::parse(&std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?)?)
             }
             (None, None) => None,
@@ -1127,7 +1174,7 @@ impl App {
         };
         // Engine keys last, over the race world's and the mission's tier
         // (`set:` keys are the game's rules, set below).
-        for (k, v) in a.keys.iter().filter(|(k, _)| !k.starts_with(RULE_KEY)) {
+        for (k, v) in a.keys.iter().filter(|(k, _)| !k.starts_with(RULE_KEY) && !k.starts_with(WINDOW_KEY)) {
             slime_mould::gpu::set(&mut s, k, v)?;
             if k == "tier" {
                 core_tier = Tier::from_name(v);
@@ -1143,7 +1190,7 @@ impl App {
             _ if made.is_some() => GpuWorld::with_map(device, queue, s, a.scale, made.as_ref().expect("a made map")),
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
-                let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+                let dir = slime_mould::build::root().join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
                     Some((d, n)) => (PathBuf::from(d), n.to_string()),
                     None => (dir, name.clone()),
@@ -1341,12 +1388,17 @@ impl App {
             // the same buffer, when the world has one (`crust=1`).
             v.set_crust((e.crust_at > 0).then_some((&e.news, &e.state)), (e.crust_at / 4) as u32);
             // Set slime (E2b), from the block after the crust's set words.
-            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n, self.args.set_look.unwrap_or(1));
-            // LAB: the steering field, after the units' walking distance
-            // in the dense region (`gpu::dense_words`), when the slime
-            // reads it (a negative `far_smell`).
-            let nb = (e.dish.w.div_ceil(2) * e.dish.h.div_ceil(2)) as u32;
-            v.set_steer(if ws.far_smell < 0.0 && dense { (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32 + e.n + nb } else { 0 });
+            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n);
+            // The Mind statuses on the slime they hold (Look A5,
+            // 2026-11-18): each slot's Mind word, after the gas's
+            // (`Engine::mind_words`), fading over a status's last 1.5 s.
+            let mind_at = (e.gas_at / 4) as u32 + slime_mould::gpu::GAS_SLOTS as u32 + e.n;
+            let fine_tps = game.rules.tps as f32 * game.world.fine_steps() as f32;
+            v.set_minds(Some((&e.news, &e.state)), mind_at, (1.5 * fine_tps).round() as u32);
+            // The slime's own look (Look B, 2026-11-19), by its tier, and a
+            // walker's pace in dish cells over the look's streak.
+            let pace = game.world.s.step / game.world.scale() * fine_tps;
+            v.set_slime_look(slime_mould::world::view::SlimeLook::of(core_tier), pace * slime_mould::world::view::STREAK_SECS);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
@@ -1361,11 +1413,10 @@ impl App {
             // The engine's alarm field, so a siren's call (and a shot's
             // alarm) is the field itself spreading and fading (the art
             // director, 11-14: not rings timed from the call); full at a
-            // siren's call.
+            // siren's call. Drawn on the slime it reaches, as the slime's
+            // own colour (the look lane, 11-17; the `alarm_look=` key that
+            // scaled the old haze went with the haze).
             v.set_alarm(Some([&e.germ[0], &e.germ[1]]), game.rules.build.siren_alarm);
-            if let Some((g, s)) = self.args.alarm_look {
-                v.set_alarm_look(g, s);
-            }
             if self.args.scent {
                 v.scent = true;
             }
@@ -1416,7 +1467,9 @@ impl App {
             self.name = tr.mission.map.clone();
         }
         if let Some(w) = &self.window {
-            w.set_title(&format!("Larder World: {} (seed {})", map_title(&self.name, self.args.seed), self.args.seed));
+            // The build at the end (11-17: "the build tells Scott what
+            // it holds"), so a screenshot or a note names the code played.
+            w.set_title(&format!("Larder World: {} (seed {}) - {}", map_title(&self.name, self.args.seed), self.args.seed, slime_mould::build::build().short()));
         }
         self.open_log();
         match &self.mission {
@@ -1436,26 +1489,84 @@ impl App {
     }
 
     /// A new round's play log (`log_path`), its header written: the map,
-    /// seed, mode, and the mission's name and tier when there is one.
+    /// seed, mode, and the mission's name and tier when there is one;
+    /// since 11-17 the build (`build=NUMBER:COMMIT:DATE`), the switches
+    /// off their default (`switches=crust:on,...` or `none`; the keys
+    /// behind them and any other given are in `keys=`), and on a planet
+    /// its number and, in a run, its slime.
+    ///
+    /// A round played out of the menu also marks this build as played on
+    /// this PC (`build::news::Memory::played`): the menu's own dish behind
+    /// it is not play.
     fn open_log(&mut self) {
         self.log_path = None;
         self.playlog = Default::default();
         self.log_sec = 0;
         self.log_ended = false;
-        if self.window.is_none() {
+        self.log_notes = 0;
+        // The dish behind the start menu is not play: no log of it (until
+        // 11-17 it wrote one, which the round picked from the menu then
+        // wrote over; with a file a round it would fill the folder).
+        if self.window.is_none() || self.menu.is_some() {
             return;
         }
-        let path = format!("larder-world-log-{}-{}.txt", file_part(&self.name), self.args.seed);
-        let mut extra = vec![("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
+        use slime_mould::mould::playlog;
+        let when = playlog::stamp(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs()));
+        let path = format!("{}/{}", playlog::DIR, playlog::file_name(&when, &self.name, self.args.seed));
+        self.memory.played();
+        let mut extra = vec![("when", when), ("build", slime_mould::build::build().word()), ("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
         if let Some(tr) = &self.mission {
             extra.push(("mission", tr.mission.name.clone()));
             extra.push(("tier", tr.mission.tier.clone().unwrap_or_default()));
         }
-        let head = slime_mould::mould::playlog::Playlog::head(&self.name, self.args.seed, &extra);
-        match std::fs::write(&path, head) {
+        if let Some(r) = self.args.run.as_ref().filter(|r| !r.range) {
+            extra.push(("planet", r.depth.to_string()));
+            extra.push(("run", r.seed.to_string()));
+            if self.mission.is_none() {
+                extra.push(("tier", r.level().tier.name().to_string()));
+            }
+        } else if self.name.starts_with("planet") {
+            extra.push(("planet", self.planet_depth.to_string()));
+        }
+        extra.extend(self.log_loadout());
+        self.log_gun = rounds::name(&self.rounds.round);
+        extra.extend(log_keys(&self.args.keys));
+        let head = playlog::Playlog::head(&self.name, self.args.seed, &extra);
+        match std::fs::create_dir_all(playlog::DIR).and_then(|()| std::fs::write(&path, head)) {
             Ok(()) => self.log_path = Some(path),
             Err(e) => eprintln!("larder-world: {path}: {e}"),
         }
+    }
+
+    /// **The loadout the round lands with**, for the play log's head
+    /// (coordinator, 2026-11-18, reviewing Scott's playtest: "play logs
+    /// don't record the army round, so we can't see which cards his
+    /// gun/turrets carried"): `gun=` the cards the gun fires in turn, and
+    /// in a run or at the range `turrets=` the turrets' deck and `bought=`
+    /// the shop's upgrades owned, as key and level. The gun itself (kind,
+    /// range, rate) is already the log's `arm` line, and the turrets' deck
+    /// its `load 255` line, but only once a turret is built.
+    fn log_loadout(&self) -> Vec<(&'static str, String)> {
+        let mut v = vec![("gun", rounds::name(&self.rounds.round))];
+        if let Some(r) = self.args.run.as_ref() {
+            v.push(("turrets", rounds::name(&r.turret_cards())));
+            let owned: Vec<String> = slime_mould::mould::run::ITEMS.iter().zip(r.owned).filter(|(_, n)| *n > 0).map(|(i, n)| format!("{}{n}", i.key)).collect();
+            v.push(("bought", if owned.is_empty() { "none".to_string() } else { owned.join("+") }));
+        }
+        v
+    }
+
+    /// **Drops a note in the play log** (F9; the plan's play record,
+    /// 11-17): the game second and where the camera is looking, numbered
+    /// from 1 each round, with a word on the HUD so the player knows which
+    /// number to name afterwards.
+    fn drop_note(&mut self) {
+        let Some(g) = self.game.as_ref().filter(|_| self.log_path.is_some()) else { return };
+        self.log_notes += 1;
+        let t = g.time();
+        let line = slime_mould::mould::playlog::Playlog::note(self.log_notes, t, self.camera.centre(), self.camera.zoom);
+        Self::log_write(&self.log_path, &line);
+        self.hud.alert(&format!("Note {} dropped at {}:{:02} (it is in the play log)", self.log_notes, t as u32 / 60, t as u32 % 60), None, theme::ACCENT);
     }
 
     /// Appends `text` to the play log (nothing without one).
@@ -1511,8 +1622,11 @@ impl App {
         self.tracers.retain(|t| t.age < TRACER + t.delay);
         for l in &mut self.looks {
             // Turning toward where it walks or aims, at `TURN_RATE`; held
-            // while its muzzle flashes, which points along the shot.
-            if l.flash <= 0.0 {
+            // while its muzzle flashes, which points along the shot, and
+            // for good once it has fallen (its body lies as it fell).
+            if !l.alive {
+                l.fallen += dt;
+            } else if l.flash <= 0.0 {
                 let d = (l.turn_to - l.facing + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
                 l.facing += d.clamp(-TURN_RATE * dt, TURN_RATE * dt);
             }
@@ -1529,6 +1643,25 @@ impl App {
 
     /// Steps the game for `dt` real seconds and keeps the window's notes
     /// (facing, flashes, tracers, alerts).
+    /// **The mission follows the game** once a game second, with the GPU
+    /// world's mould grid (an occupancy read-back, PR #101), and at once
+    /// when the game has ended, so the end screen is the mission's.
+    fn follow_mission(&mut self) {
+        let (Some(g), Some(tr)) = (self.game.as_ref(), self.mission.as_mut()) else { return };
+        // Whole steps only (a step may still be running on the GPU).
+        let sec = g.settled_ticks() / g.rules.tps as u64;
+        // A game that ended inside a game second (a wipe) still gives
+        // the mission its verdict, so the end screen is the mission's.
+        while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
+            self.mission_sec += 1;
+            let grid = g.world.mould_grid(BIN);
+            if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
+                let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
+                self.hud.alert(&tr.cause_line(), None, colour);
+            }
+        }
+    }
+
     fn step(&mut self, dt: f32) {
         self.clock += dt;
         self.trauma = (self.trauma - SHAKE_FALL * dt).max(0.0);
@@ -1571,6 +1704,13 @@ impl App {
         }
         if self.paused || g.end.is_some() || mission_over {
             self.owed = 0.0;
+            // A game that ended in the step finished above still gets the
+            // mission's verdict, so its end screen is the mission's (a run's
+            // "On to the shop"). Missing here, a planet won by its last
+            // walker dying (WIN_SHARE 0, #487) ended the Game before the
+            // mission saw it, and a run showed only "Play again" (the
+            // owner's play, 2026-11-18 17:20Z).
+            self.follow_mission();
             return;
         }
         let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
@@ -1609,29 +1749,20 @@ impl App {
             }
         }
         self.steps += n;
-        // The mission follows the game once a game second, with the GPU
-        // world's mould grid (an occupancy read-back, PR #101).
-        if let Some(tr) = self.mission.as_mut() {
-            // Whole steps only (a step may still be running on the GPU).
-            let sec = g.settled_ticks() / g.rules.tps as u64;
-            // A game that ended inside a game second (a wipe) still gives
-            // the mission its verdict, so the end screen is the mission's.
-            while (self.mission_sec < sec || g.end.is_some()) && tr.verdict.is_none() {
-                self.mission_sec += 1;
-                let grid = g.world.mould_grid(BIN);
-                if let Some(v) = tr.second(g, grid.as_deref(), 1.0) {
-                    let colour = if v.stars > 0 { theme::GOOD } else { theme::BAD };
-                    self.hud.alert(&tr.cause_line(), None, colour);
-                }
-            }
-        }
+        self.follow_mission();
+        let Some(g) = self.game.as_mut() else { return };
         let t = g.time();
         // The play log's line for each whole game second passed.
         if self.log_path.is_some() {
             let sec = (g.settled_ticks().saturating_sub(g.landed)) / g.rules.tps as u64;
             if sec > self.log_sec {
                 self.log_sec = sec;
-                let line = self.playlog.second(g);
+                let mut line = self.playlog.second(g);
+                let gun = rounds::name(&self.rounds.round);
+                if gun != self.log_gun {
+                    line += &format!("gun t={t:.1} {gun}\n");
+                    self.log_gun = gun;
+                }
                 Self::log_write(&self.log_path, &line);
             }
             let verdict = self.mission.as_ref().and_then(|m| m.verdict.map(|_| m.cause_line()));
@@ -1677,6 +1808,7 @@ impl App {
             }
             if l.alive && !s.alive {
                 self.hud.alert("A soldier has fallen", Some((s.x, s.y)), theme::BAD);
+                l.fallen = 0.0;
             }
             l.alive = s.alive;
         }
@@ -1885,6 +2017,20 @@ impl App {
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
             v.set_alarm_side((g.world.e.done % 2) as u32);
+            // The lure's field as rings on the ground (Look and
+            // interface's `set_steer`, 2026-11-18), while the engine holds
+            // one: the third quarter of the cells' region of `news`
+            // (`Engine::write_lure_field`). Each frame, since a lure
+            // stands and falls in play; 0 hides the rings. The world's
+            // setup bound `news` (`set_dense`), which the view needs first.
+            let e = &g.world.e;
+            let b = slime_mould::mould::big::RAID_BLOCK;
+            let nb = (e.dish.w.div_ceil(b) * e.dish.h.div_ceil(b)) as u32;
+            let field = (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32 + e.n + 2 * nb;
+            v.set_steer(if e.lured { field } else { 0 });
+            // How far it reaches, as `time_lure_paths` builds it, so no
+            // ring is drawn on its rim (Look and interface, 2026-11-18).
+            v.set_steer_reach(((g.rules.lure_reach.max(0.0) * g.world.scale()) as u32) as f32);
             // The mini-bosses' bodies (2026-11-16): each live or fading
             // one's lump, centre, look by its kind, strength by its grade,
             // look left by its fade and a leech's fill by its take.
@@ -2022,6 +2168,9 @@ struct Bench {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
+    // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
+    // planet TO (3) or a loss, with no window (`runbot`).
+    let mut runbot: Option<(u64, u32)> = None;
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut viewpasses = 0u32;
@@ -2087,10 +2236,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "scent" => args.scent = v != "0",
             "follow" => args.follow_boss = v == "boss",
             "boss_look" => args.boss_look = Some(LumpLook::parse(v).ok_or_else(|| format!("boss_look={v}: plain, ember, violet, ink or bone"))?),
-            "alarm_look" => {
-                let (g, s) = v.split_once(',').unwrap_or((v, v));
-                args.alarm_look = Some((g.parse()?, s.parse()?));
-            }
             "core_pull" => args.core_pull = Some(v.parse()?),
             "bullet" => args.bullet = Some(v.parse()?),
             "own" => {
@@ -2135,12 +2280,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 args.ammo = Some(v.to_string());
             }
+            // `version=1`: says which build this is and stops (CI checks
+            // its Windows build starts with it; no window, no GPU).
+            "version" => {
+                println!("larder-world {}", slime_mould::build::build().long());
+                return Ok(());
+            }
             "look" => look = Some(v.to_string()),
+            "runbot" => {
+                let (seed, to) = v.split_once(':').unwrap_or((v, "3"));
+                runbot = Some((seed.parse()?, to.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS)));
+            }
             // `ui=150%` or `ui=1.5`: the UI's size this run (`uisize`).
             "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
                 if v != "0" && page_named(v).is_none() {
-                    return Err("menu=0|1|main|campaign|options|keys|shop (options-planet, options-mould: that tab; shop-mid, shop-build, shop-tools: a run three planets in, a tab open; shop-turrets: its gun slots on the turrets' deck; shop@TAB@NAME: that tab, that row picked)".into());
+                    return Err("menu=0|1|main|campaign|options|keys|news|shop (news-try: the things to try; options-planet, options-mould, options-experiments: that tab; shop-mid, shop-build, shop-tools: a run three planets in, a tab open; shop-turrets: its gun slots on the turrets' deck; shop@TAB@NAME: that tab, that row picked)".into());
                 }
                 menu_flag = Some(v.to_string());
             }
@@ -2272,8 +2427,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 args.load_at = Some((t.parse::<f32>()?, cards.to_string()));
             }
+            // `try=NAME` or `try=NAME:CHOICE`: a declared switch by its
+            // name (`build::switches`, the Experiments tab's rows), its
+            // keys set as if typed.
+            "try" => {
+                let (_, choice) = slime_mould::build::switches::parse_try(v)?;
+                args.keys.extend(slime_mould::build::switches::keys_of(choice));
+            }
             "crustlook" => args.crust_look = Some(v.parse()?),
-            "setlook" => args.set_look = Some(v.parse::<u32>()?.min(2)),
             "watch" => {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, r] = w.as_slice() else { return Err("watch=X,Y,R".into()) };
@@ -2307,6 +2468,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [t, x, y, r] = w.as_slice() else { return Err("light=T,X,Y,R".into()) };
                 args.lights.push((*t, *x, *y, *r));
+            }
+            "lure_mark" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [t, x, y, secs] = w.as_slice() else { return Err("lure_mark=T,X,Y,SECS".into()) };
+                args.lure_marks.push((*t, *x, *y, *secs));
             }
             "trail" => {
                 let p: Vec<&str> = v.split(',').collect();
@@ -2371,6 +2537,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  machine at the end: {}", machine());
         return Ok(());
     }
+    if let Some((seed, to)) = runbot {
+        let (device, queue) = gpu().ok_or("no GPU adapter")?;
+        runbot::run_bot(base, seed, to, &device, &queue)?;
+        return Ok(());
+    }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
         return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &bosses, &turrets, &renders, page, hover, hover_to, select, &drags, scroll)?);
@@ -2378,6 +2549,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::new(args);
+    app.memory = slime_mould::build::news::Memory::load();
     app.spread = spread;
     if menu_flag.as_deref() != Some("0") {
         if bare || menu_flag.is_some() {

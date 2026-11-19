@@ -570,6 +570,14 @@ pub struct Model {
     pub clock: String,
     /// "Paused", "x4": a chip beside the clock.
     pub speed: Option<String>,
+    /// The experiments that are on, each as its name and choice ("Shake
+    /// and hit-stop on"): a small amber mark under the clock, so a round
+    /// that is not the default game says so for as long as it is played.
+    pub trying: Vec<String>,
+    /// The declared switches, for the pause menu's Experiments page (none:
+    /// no button), and how many the plan allows at once (`MOST_OFF`).
+    pub experiments: Vec<Experiment>,
+    pub most_off: usize,
     pub objective: Option<String>,
     pub selection: Vec<Card>,
     /// Drawn instead of the cards when set.
@@ -591,8 +599,8 @@ pub struct Model {
     /// A small card by the cursor for what is under it (an enemy, the
     /// mould), leaving the selection panel alone.
     pub hover: Option<Info>,
-    /// The round is over: a title and lines.
-    pub end: Option<(String, Vec<String>)>,
+    /// The round is over: what the end screen shows.
+    pub end: Option<Ending>,
     /// Extra lines for the controls page (key, what it does).
     pub help: Vec<(String, String)>,
     /// The rows that open the key card in place of the RTS controls' own
@@ -662,6 +670,219 @@ pub struct Site {
     pub working: bool,
 }
 
+/// What the end screen shows (the Look and interface lane, 2026-11-18;
+/// the brief's "win and lose screens that show the planet's numbers").
+/// Before, a title and three grey lines, the last cut off with "..." at
+/// 100%: a run's planet was not named, nor its slime, nor what it did.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Ending {
+    /// Small, over the title: where ("Planet 3 of 8 · Dreskor · the
+    /// Trunk"), in the outcome's colour.
+    pub place: String,
+    pub title: String,
+    /// A win (green), a loss (red), or neither (a sandbox round at its
+    /// clock: the accent).
+    pub won: Option<bool>,
+    /// A mission's stars, of three: three discs under the title, the
+    /// earned ones in the outcome's colour.
+    pub stars: Option<u8>,
+    /// What the slime did to you, one sentence (a run's planet:
+    /// `run::does_to_you`), under the title.
+    pub says: String,
+    /// The round's numbers, each a value and what it counts, three to a
+    /// row.
+    pub tiles: Vec<(String, String)>,
+    /// Lines under the numbers: how it ended, the run's points.
+    pub lines: Vec<String>,
+}
+
+impl Ending {
+    /// A plain ending: a title and lines (the tests' and a film's).
+    pub fn plain(title: &str, lines: Vec<String>) -> Ending {
+        Ending { title: title.to_string(), lines, ..Ending::default() }
+    }
+}
+
+/// **What a declared switch says of itself** (`build::switches`): who
+/// owns it, when it landed, what the player will see with it on and why
+/// it is not yet the default game. The start menu's Experiments tab and
+/// the pause menu's Experiments page draw the same card from it
+/// (`experiment_card`; the Look and interface lane, 2026-11-19). Until
+/// then the tab was Options' plain one-line rows, with all of this run
+/// together in the note pane ("... Not on yet: ...") and no lane, date or
+/// count anywhere.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ExpInfo {
+    pub lane: String,
+    /// YYYY-MM-DD.
+    pub since: String,
+    pub sees: String,
+    pub why_off: String,
+    /// A pick takes effect at once in play (its keys are all the
+    /// window's own: shake and hit-stop); else at the next round.
+    pub live: bool,
+}
+
+/// One switch as the pause menu's Experiments page shows it
+/// (`Model::experiments`).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Experiment {
+    /// The switch's key (`try=KEY`).
+    pub key: String,
+    pub label: String,
+    pub choices: Vec<String>,
+    pub default: usize,
+    /// The choice the round plays now.
+    pub at: usize,
+    /// The choice picked in play that waits for the next round (a switch
+    /// that is not `live`), when it differs from `at`.
+    pub next: Option<usize>,
+    pub info: ExpInfo,
+}
+
+impl Experiment {
+    /// The choice the card lights: the pick waiting, else what plays.
+    pub fn picked(&self) -> usize {
+        self.next.unwrap_or(self.at)
+    }
+}
+
+/// The card's widths and sizes, UI units.
+const EXP_PAD: f32 = 18.0;
+/// The column the "You will see" and "Off because" captions sit in.
+const EXP_CAPTION: f32 = 112.0;
+const EXP_LEAD: f32 = 21.0;
+
+/// The text column's width in a card `w` wide.
+fn exp_text_w(w: f32, s: f32) -> f32 {
+    (w - (2.0 * EXP_PAD + 6.0 + EXP_CAPTION) * s).max(60.0 * s)
+}
+
+/// **A switch's card's height**, `w` wide: its name and state, a line of
+/// who and when, and the two sentences, each wrapped whole (a cut
+/// sentence is the thing the owner was missing).
+pub fn experiment_card_h(c: &Canvas, w: f32, e: &Experiment, s: f32) -> f32 {
+    let tw = exp_text_w(w, s);
+    let n = |t: &str| if t.is_empty() { 0.0 } else { c.wrap(Weight::Medium, 15.0 * s, tw, t).len() as f32 };
+    // The first sentence's baseline 86 down, 6 between the two, 18
+    // under the last.
+    89.0 * s + (n(&e.info.sees).max(1.0) + n(&e.info.why_off).max(1.0)) * EXP_LEAD * s
+}
+
+/// **Draws a switch's card** in `r` (`experiment_card_h` tall) and gives
+/// back each of its choices' buttons, by choice. Left to right and top to
+/// bottom: a stripe down its left edge, amber while the switch is off the
+/// default game, grey at the default; its name and a state chip (ON in
+/// amber, OFF in grey, ON AT RESTART outlined while a pick waits); its
+/// choices as one segmented button at the right, the picked one lit
+/// (amber off the default, pale at it); who owns it, the day it landed
+/// and when a pick applies, muted; then what you will see and why it is
+/// off, whole, under small captions. `in_play`: the pause menu's card,
+/// whose last word says when a pick here applies; the start menu's says
+/// when it would in play.
+#[allow(clippy::too_many_arguments)]
+pub fn experiment_card(c: &mut Canvas, r: Rect, e: &Experiment, hover: Option<(f32, f32)>, focused: bool, in_play: bool, s: f32) -> Vec<(Rect, usize)> {
+    let on = e.at != e.default;
+    let picked = e.picked();
+    let lit = picked != e.default;
+    let hot = hover.is_some_and(|p| r.contains(p));
+    c.panel(r, 12.0 * s, [255, 255, 255, if hot || focused { 16 } else { 9 }], [255, 255, 255, if hot || focused { 10 } else { 5 }], 1.0, if lit { alpha(WARN, 0.42) } else { EDGE });
+    if focused {
+        c.outline(r.inset(-2.0 * s), 14.0 * s, 1.5 * s, ACCENT);
+    }
+    c.rrect(Rect::new(r.x + 7.0 * s, r.y + 12.0 * s, 4.0 * s, r.h - 24.0 * s), 2.0 * s, if lit { WARN } else { [255, 255, 255, 34] });
+    let x = r.x + (EXP_PAD + 6.0) * s;
+    let right = r.right() - EXP_PAD * s;
+    // The choices, as one segmented button at the right of the first
+    // line: "custom" (a film's own number) only while it is what plays.
+    let shown: Vec<usize> = (0..e.choices.len()).filter(|&k| e.choices[k] != "custom" || k == e.at).collect();
+    let seg_h = 30.0 * s;
+    let seg_w: Vec<f32> = shown.iter().map(|&k| (c.atlas.measure(Weight::SemiBold, 14.5 * s, &e.choices[k]) + 30.0 * s).max(58.0 * s)).collect();
+    let total: f32 = seg_w.iter().sum();
+    let sy = r.y + 12.0 * s;
+    let mut sx = right - total;
+    let group = Rect::new(sx, sy, total, seg_h);
+    c.panel(group, 8.0 * s, BUTTON_TOP, BUTTON_BOTTOM, 1.0, [255, 255, 255, 30]);
+    let mut out = Vec::new();
+    for (j, &k) in shown.iter().enumerate() {
+        let b = Rect::new(sx, sy, seg_w[j], seg_h);
+        let hot = hover.is_some_and(|p| b.contains(p));
+        if k == picked {
+            let fill = if k == e.default { [210, 218, 226, 255] } else { WARN };
+            c.rrect(b.inset(2.0 * s), 6.5 * s, fill);
+            c.text(Weight::SemiBold, 14.5 * s, (b.x + b.w / 2.0, sy + 20.0 * s), Align::Centre, &e.choices[k], [16, 19, 24, 255]);
+        } else {
+            if hot {
+                c.rrect(b.inset(2.0 * s), 6.5 * s, [255, 255, 255, 22]);
+            }
+            c.text(Weight::SemiBold, 14.5 * s, (b.x + b.w / 2.0, sy + 20.0 * s), Align::Centre, &e.choices[k], if hot { TEXT } else { MUTED });
+        }
+        out.push((b, k));
+        sx += seg_w[j];
+    }
+    // The name, and its state beside it.
+    let base = r.y + 33.0 * s;
+    let lw = c.text_fit(Weight::SemiBold, 18.5 * s, (x, base), Align::Left, &e.label, (group.x - x - 170.0 * s).max(80.0 * s), TEXT);
+    let (word, ink, filled) = match (on, e.next.filter(|&k| k != e.at)) {
+        (_, Some(k)) if k != e.default => ("ON AT RESTART".to_string(), WARN, false),
+        (_, Some(_)) => ("OFF AT RESTART".to_string(), MUTED, false),
+        (true, None) if e.choices[e.at] == "on" => ("ON".to_string(), WARN, true),
+        (true, None) => (e.choices[e.at].to_uppercase(), WARN, true),
+        (false, None) => ("OFF".to_string(), MUTED, true),
+    };
+    let cw = c.atlas.measure(Weight::SemiBold, 12.0 * s, &word) + 18.0 * s;
+    let chip = Rect::new(x + lw + 12.0 * s, base - 15.0 * s, cw, 20.0 * s);
+    if filled {
+        c.rrect(chip, chip.h / 2.0, if on { alpha(WARN, 0.2) } else { [255, 255, 255, 20] });
+    } else {
+        c.outline(chip, chip.h / 2.0, 1.2 * s, alpha(ink, 0.8));
+    }
+    c.text(Weight::SemiBold, 12.0 * s, (chip.x + chip.w / 2.0, base - 0.5 * s), Align::Centre, &word, ink);
+    // Who, when, and when a pick applies.
+    let when = match (e.info.live, in_play) {
+        (true, true) => "a pick here applies at once",
+        (false, true) => "a pick here applies when you restart",
+        (true, false) => "in play, Esc changes it at once",
+        (false, false) => "in play, Esc changes it for the next round",
+    };
+    let meta = format!("{}  ·  landed {}  ·  {when}", e.info.lane, e.info.since);
+    c.text_fit(Weight::Medium, 13.5 * s, (x, r.y + 57.0 * s), Align::Left, &meta, right - x, MUTED);
+    // The two sentences, whole, under their captions.
+    let tw = exp_text_w(r.w, s);
+    let tx = x + EXP_CAPTION * s;
+    let mut y = r.y + 86.0 * s;
+    for (caption, text, ink) in [("YOU WILL SEE", &e.info.sees, TEXT), ("OFF BECAUSE", &e.info.why_off, [196, 204, 214, 255])] {
+        c.text(Weight::SemiBold, 11.5 * s, (x, y - 1.0 * s), Align::Left, caption, FAINT);
+        let n = c.paragraph(Weight::Medium, 15.0 * s, (tx, y), tw, EXP_LEAD * s, text, ink).max(1);
+        y += n as f32 * EXP_LEAD * s + 6.0 * s;
+    }
+    out
+}
+
+/// **The count against the limit** (the plan of 2026-11-17, rule 3: at
+/// most `most` switches off the built game at once, across all lanes): a
+/// slot a switch the list may hold, the declared ones filled (bright
+/// while on in this game), and the words. From `at` (its left end and its
+/// text's baseline); gives back its width.
+pub fn experiment_meter(c: &mut Canvas, at: (f32, f32), declared: usize, on: usize, most: usize, s: f32) -> f32 {
+    let (x, base) = at;
+    let (sw, sh, gap) = (22.0 * s, 10.0 * s, 4.0 * s);
+    for k in 0..most.max(declared) {
+        let slot = Rect::new(x + k as f32 * (sw + gap), base - 10.0 * s, sw, sh);
+        let fill = if k < on {
+            WARN
+        } else if k < declared {
+            alpha(WARN, 0.38)
+        } else {
+            TRACK
+        };
+        c.rrect(slot, 3.0 * s, fill);
+    }
+    let tx = x + most.max(declared) as f32 * (sw + gap) + 8.0 * s;
+    let words = format!("{declared} of {most} allowed  ·  {on} on in this game");
+    tx - x + c.text(Weight::SemiBold, 14.0 * s, (tx, base), Align::Left, &words, if on > 0 { WARN } else { TEXT })
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MenuItem {
     Opened,
@@ -691,6 +912,9 @@ pub enum HudEvent {
     /// The idle button: select the next idle unit.
     Idle,
     Menu(MenuItem),
+    /// The pause menu's Experiments page: `Model::experiments[row]` set to
+    /// its choice `choice`.
+    Experiment { row: usize, choice: usize },
     /// A command was pressed that is not ready; the hud shows why.
     NotReady { id: u32 },
     /// The squad panel: take command of the squad on row `r`.
@@ -717,6 +941,9 @@ enum Hit {
     MenuButton,
     Menu(MenuItem),
     Help,
+    /// The pause menu's Experiments button, and a choice on its page.
+    ExpPage,
+    Exp(usize, usize),
     Back,
     /// The loadout panel's swap button.
     Cycle,
@@ -754,6 +981,9 @@ struct Targeting {
 enum MenuPage {
     Main,
     Help,
+    /// The declared switches, each as the start menu's card
+    /// (2026-11-19): set from play.
+    Experiments,
 }
 
 pub struct Hud {
@@ -777,6 +1007,9 @@ pub struct Hud {
     pub minimap_box: Option<(u32, u32, u32, u32)>,
     pub minimap: Option<(u32, u32, u32, u32)>,
     pub top: f32,
+    /// Where the HUD's own words under the top bar start (the alerts): the
+    /// bar's foot, or the goal's when it takes a row of its own.
+    below: f32,
     /// The world's size in cells, as last drawn (for the minimap).
     world: (f32, f32),
     /// The end-of-round screen is up (its buttons take every click).
@@ -878,7 +1111,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
     }
 
     /// The menu is open (the game should pause).
@@ -1047,6 +1280,8 @@ impl Hud {
                         out.push(HudEvent::Menu(MenuItem::Resume));
                     }
                     Some(Hit::Back) => self.menu = Some(MenuPage::Main),
+                    Some(Hit::ExpPage) => self.menu = Some(MenuPage::Experiments),
+                    Some(Hit::Exp(row, choice)) => out.push(HudEvent::Experiment { row, choice }),
                     _ => {}
                 }
             }
@@ -1143,7 +1378,7 @@ impl Hud {
                         out.push(HudEvent::Menu(MenuItem::Resume));
                     }
                 }
-                Some(MenuPage::Main) => {
+                Some(MenuPage::Main | MenuPage::Experiments) => {
                     self.menu = Some(MenuPage::Help);
                     self.help_direct = false;
                 }
@@ -1164,7 +1399,7 @@ impl Hud {
                     self.menu = None;
                     out.push(HudEvent::Menu(MenuItem::Resume));
                 }
-                Some(MenuPage::Help) => self.menu = Some(MenuPage::Main),
+                Some(MenuPage::Help | MenuPage::Experiments) => self.menu = Some(MenuPage::Main),
                 Some(MenuPage::Main) => {
                     self.menu = None;
                     out.push(HudEvent::Menu(MenuItem::Resume));
@@ -1318,8 +1553,8 @@ impl Hud {
             self.hover_card(h, p, a, c, s);
         }
         self.end = m.end.is_some();
-        if let Some((title, lines)) = &m.end {
-            self.end_screen(title, lines, m.main_menu, m.carry_on.as_deref(), c, s);
+        if let Some(e) = &m.end {
+            self.end_screen(e, m.main_menu, m.carry_on.as_deref(), c, s);
         } else if let Some(page) = self.menu {
             self.menu_draw(page, m, c, s);
         }
@@ -1418,6 +1653,7 @@ impl Hud {
         let h = 38.0 * s;
         let y = 8.0 * s;
         self.top = y + h;
+        self.below = self.top;
         let px = 15.0 * s;
         let small = 12.0 * s;
         let base = y + h / 2.0 + 5.0 * s;
@@ -1470,13 +1706,58 @@ impl Hud {
             c.rrect(r, r.h / 2.0, alpha(WARN, 0.18));
             c.text(Weight::SemiBold, small, (r.x + r.w / 2.0, base - 1.0 * s), Align::Centre, &sp.to_uppercase(), WARN);
         }
-        // The objective, centred.
+        // The experiments that are on (the plan of 2026-11-17: "the HUD
+        // shows a small mark when anything is off its default"; the owner
+        // that day could not tell what was on or off). Under the clock,
+        // at the screen's edge and off the fight: in the clock's own pill
+        // it met the objective at 200% while paused. Hovering it names
+        // them.
+        let mut mark = sw;
+        if !m.trying.is_empty() {
+            let label = if m.trying.len() == 1 { "EXPERIMENT ON".to_string() } else { format!("{} EXPERIMENTS ON", m.trying.len()) };
+            let w = c.atlas.measure(Weight::SemiBold, small, &label) + 22.0 * s;
+            let r = Rect::new(menu.right() - w, y + h + 6.0 * s, w, 22.0 * s);
+            mark = r.x;
+            c.shadow(r, r.h / 2.0, 10.0 * s, 2.0 * s, SHADOW);
+            c.panel(r, r.h / 2.0, PANEL_TOP, PANEL_BOTTOM, 1.0, alpha(WARN, 0.55));
+            c.text(Weight::SemiBold, small, (r.x + r.w / 2.0, r.y + 15.5 * s), Align::Centre, &label, WARN);
+            self.hits.push((r, Hit::Panel));
+            if self.hover.is_some_and(|p| r.contains(p)) {
+                // Under the mark, ending at its right edge (`tip_small`'s
+                // own flip put it a mark's width to the left).
+                let tip = format!("Not the default game: {}. Esc, Experiments to change", m.trying.join(", "));
+                let tw = c.atlas.measure(Weight::Medium, 13.5 * s, &tip) + 18.0 * s;
+                self.tip_small(&tip, ((r.right() - tw).max(8.0 * s), r.bottom() + 6.0 * s), c, s);
+            }
+        }
+        // The objective, centred between the resources' pill and the
+        // clock's, smaller if it must be; and if it still does not fit,
+        // on a row of its own under the bar, left of the experiments'
+        // mark, cut to the room there. Centred on the screen alone, at
+        // 200% on 1080 lines it covered the resources' fourth number
+        // (11-18).
         if let Some(obj) = &m.objective {
-            let ow = c.atlas.measure(Weight::Medium, 14.0 * s, obj) + 40.0 * s;
-            let r = Rect::new((sw - ow) / 2.0, y + 3.0 * s, ow, h - 6.0 * s);
+            let left = if m.resources.is_empty() { 8.0 * s } else { 8.0 * s + inner + 28.0 * s } + 10.0 * s;
+            let right = pill.x - 10.0 * s;
+            let mut fs = 14.0 * s;
+            let mut ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
+            if ow > right - left {
+                fs = (fs * (right - left - 40.0 * s) / (ow - 40.0 * s)).max(12.0 * s);
+                ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
+            }
+            let r = if ow <= right - left {
+                Rect::new(((sw - ow) / 2.0).clamp(left, right - ow), y + 3.0 * s, ow, h - 6.0 * s)
+            } else {
+                fs = 14.0 * s;
+                let room = (mark.min(sw - 8.0 * s) - 10.0 * s - 8.0 * s).max(40.0 * s);
+                let ow = (c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s).min(room);
+                let r = Rect::new(((sw - ow) / 2.0).clamp(8.0 * s, 8.0 * s + room - ow), y + h + 6.0 * s, ow, h - 6.0 * s);
+                self.below = r.bottom();
+                r
+            };
             self.glass(r, r.h / 2.0, c, s);
             c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
-            c.text(Weight::Medium, 14.0 * s, (r.x + 30.0 * s, base - 1.0 * s), Align::Left, obj, TEXT);
+            c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
         }
     }
 
@@ -2188,7 +2469,7 @@ impl Hud {
 
     fn alerts_draw(&mut self, c: &mut Canvas, world: &mut Marks, s: f32) {
         let now = Instant::now();
-        let mut y = self.top + 12.0 * s;
+        let mut y = self.below + 12.0 * s;
         let alerts = self.alerts.clone();
         for a in alerts.iter().rev() {
             let age = now.duration_since(a.when).as_secs_f32();
@@ -2342,21 +2623,46 @@ impl Hud {
             MenuPage::Main => {
                 let w = 340.0 * s;
                 let bh = 42.0 * s;
-                let mut items: Vec<(&str, Hit, bool)> = vec![("Resume", Hit::Menu(MenuItem::Resume), true), ("Controls", Hit::Help, false), ("Restart", Hit::Menu(MenuItem::Restart), false)];
-                if m.main_menu {
-                    items.push(("Main menu", Hit::Menu(MenuItem::MainMenu), false));
+                // Experiments (2026-11-19): the declared switches, set
+                // from play; the button says how many are on, and Restart
+                // how many picks it will play.
+                let on = m.experiments.iter().filter(|e| e.at != e.default).count();
+                let waiting = m.experiments.iter().filter(|e| e.next.is_some_and(|k| k != e.at)).count();
+                let exp = match on {
+                    0 => "Experiments".to_string(),
+                    n => format!("Experiments  ·  {n} on"),
+                };
+                let restart = match waiting {
+                    0 => "Restart".to_string(),
+                    1 => "Restart with the new pick".to_string(),
+                    _ => "Restart with the new picks".to_string(),
+                };
+                let mut items: Vec<(String, Hit, bool)> = vec![("Resume".into(), Hit::Menu(MenuItem::Resume), true), ("Controls".into(), Hit::Help, false)];
+                if !m.experiments.is_empty() {
+                    items.push((exp, Hit::ExpPage, false));
                 }
-                items.push(("Quit", Hit::Menu(MenuItem::Quit), false));
+                items.push((restart, Hit::Menu(MenuItem::Restart), false));
+                if m.main_menu {
+                    items.push(("Main menu".into(), Hit::Menu(MenuItem::MainMenu), false));
+                }
+                items.push(("Quit".into(), Hit::Menu(MenuItem::Quit), false));
                 let h = 84.0 * s + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
                 let r = self.modal(w, h, c, s);
                 c.text(Weight::SemiBold, 22.0 * s, (r.x + w / 2.0, r.y + 44.0 * s), Align::Centre, "Paused", TEXT);
                 c.text(Weight::Medium, 14.0 * s, (r.x + w / 2.0, r.y + 65.0 * s), Align::Centre, "Esc to resume", MUTED);
                 let mut y = r.y + 84.0 * s;
                 for (label, hit, primary) in items {
-                    self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), label, hit, primary, c, s);
+                    let b = Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh);
+                    self.wide_button(b, &label, hit, primary, c, s);
+                    // An experiment on, or a pick waiting: an amber dot at
+                    // the button's left, the HUD mark's colour.
+                    if (hit == Hit::ExpPage && on > 0) || (hit == Hit::Menu(MenuItem::Restart) && waiting > 0) {
+                        c.rrect(Rect::new(b.x + 16.0 * s, b.y + b.h / 2.0 - 4.0 * s, 8.0 * s, 8.0 * s), 4.0 * s, WARN);
+                    }
                     y += bh + 10.0 * s;
                 }
             }
+            MenuPage::Experiments => self.experiments_draw(m, c, s),
             MenuPage::Help => {
                 let mut rows: Vec<(String, String)> = if let Some(base) = &m.help_base {
                     base.clone()
@@ -2412,29 +2718,169 @@ impl Hud {
         }
     }
 
-    fn end_screen(&mut self, title: &str, lines: &[String], main_menu: bool, carry_on: Option<&str>, c: &mut Canvas, s: f32) {
-        let w = 420.0 * s;
-        let bh = 42.0 * s;
-        let buttons = if main_menu { 3.0 } else { 2.0 };
-        let h = 96.0 * s + lines.len() as f32 * 22.0 * s + buttons * (bh + 10.0 * s) + 20.0 * s;
+    /// **The pause menu's Experiments page** (2026-11-19): every declared
+    /// switch as the start menu's card, its choices clickable, the count
+    /// against the plan's limit over them, and Restart when a pick waits
+    /// for one. A card too tall for the screen (at 200% on 1080 lines
+    /// with three switches) draws the page smaller to fit, as the key card
+    /// does.
+    fn experiments_draw(&mut self, m: &Model, c: &mut Canvas, s: f32) {
+        let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+        let waiting: Vec<&Experiment> = m.experiments.iter().filter(|e| e.next.is_some_and(|k| k != e.at)).collect();
+        let mut s = s;
+        let (w, cards, h) = loop {
+            let w = (sw - 48.0 * s).min(820.0 * s);
+            let cards: Vec<f32> = m.experiments.iter().map(|e| experiment_card_h(c, w - 48.0 * s, e, s)).collect();
+            let h = (96.0 + 58.0 + 24.0) * s + cards.iter().map(|ch| ch + 10.0 * s).sum::<f32>();
+            if h <= sh - 24.0 * s || s < 0.4 {
+                break (w, cards, h);
+            }
+            s *= 0.92;
+        };
         let r = self.modal(w, h, c, s);
-        c.text(Weight::SemiBold, 24.0 * s, (r.x + w / 2.0, r.y + 50.0 * s), Align::Centre, title, TEXT);
-        let mut y = r.y + 84.0 * s;
-        for l in lines {
-            c.text_fit(Weight::Medium, 13.5 * s, (r.x + w / 2.0, y), Align::Centre, l, w - 48.0 * s, MUTED);
+        let px = r.x + 24.0 * s;
+        c.text(Weight::SemiBold, 22.0 * s, (px, r.y + 42.0 * s), Align::Left, "Experiments", TEXT);
+        c.text_fit(Weight::Medium, 14.0 * s, (px, r.y + 66.0 * s), Align::Left, "Built, but not the default game yet. Each is settled once you have played it", w - 48.0 * s, MUTED);
+        let on = m.experiments.iter().filter(|e| e.at != e.default).count();
+        experiment_meter(c, (px, r.y + 88.0 * s), m.experiments.len(), on, m.most_off, s);
+        let mut y = r.y + 104.0 * s;
+        for (row, (e, ch)) in m.experiments.iter().zip(&cards).enumerate() {
+            let card = Rect::new(px, y, w - 48.0 * s, *ch);
+            for (b, k) in experiment_card(c, card, e, self.hover, false, true, s) {
+                self.hits.push((b, Hit::Exp(row, k)));
+            }
+            y += ch + 10.0 * s;
+        }
+        // The foot: what a Restart would play, and the buttons.
+        let bh = 38.0 * s;
+        let by = r.bottom() - 20.0 * s - bh;
+        let back = Rect::new(r.right() - 24.0 * s - 110.0 * s, by, 110.0 * s, bh);
+        let mut left = back.x - 16.0 * s;
+        if !waiting.is_empty() {
+            let b = Rect::new(back.x - 12.0 * s - 150.0 * s, by, 150.0 * s, bh);
+            self.wide_button(b, "Restart now", Hit::Menu(MenuItem::Restart), true, c, s);
+            left = b.x - 16.0 * s;
+        }
+        let note = if waiting.is_empty() {
+            let live: Vec<&str> = m.experiments.iter().filter(|e| e.info.live).map(|e| e.label.as_str()).collect();
+            match live.len() {
+                0 => "A pick here plays from the next round. Picks last until the game closes".to_string(),
+                n if n == m.experiments.len() => "A pick here applies at once. Picks last until the game closes".to_string(),
+                _ => format!("{} changes at once, the rest from the next round. Picks last until the game closes", live.join(" and ")),
+            }
+        } else {
+            format!("Waiting for a restart: {}", waiting.iter().map(|e| format!("{} {}", e.label, e.choices[e.picked()])).collect::<Vec<_>>().join(", "))
+        };
+        c.text_fit(Weight::Medium, 13.5 * s, (px, by + bh / 2.0 + 5.0 * s), Align::Left, &note, left - px, if waiting.is_empty() { MUTED } else { WARN });
+        self.wide_button(back, "Back", Hit::Back, false, c, s);
+    }
+
+    /// The end screen: a card over the dimmed world. Where, in the
+    /// outcome's colour; the title; a mission's stars; what the slime
+    /// did; the round's numbers as tiles, three to a row (a value big,
+    /// what it counts small under it); how it ended; then the buttons.
+    /// Before 2026-11-18 it was a 420-wide card of a title and grey lines.
+    /// A card taller than the screen (at 200% on 1080 lines) is drawn
+    /// smaller to fit.
+    fn end_screen(&mut self, e: &Ending, main_menu: bool, carry_on: Option<&str>, c: &mut Canvas, s: f32) {
+        let buttons = if main_menu { 3.0 } else { 2.0 };
+        let cols = 3usize;
+        let rows = e.tiles.len().div_ceil(cols);
+        let stars = e.stars.filter(|&n| n > 0);
+        // Its height at size `s`: the title and the slime's sentence in
+        // lines as wrapped at that size.
+        let lay = |c: &Canvas, s: f32| {
+            let w = (560.0 * s).min(c.screen.0 as f32 - 32.0);
+            let inner = w - 56.0 * s;
+            let title = c.wrap(Weight::SemiBold, 28.0 * s, inner, &e.title);
+            let says = if e.says.is_empty() { Vec::new() } else { c.wrap(Weight::Medium, 15.0 * s, inner, &e.says) };
+            let tiles_h = if rows == 0 { 0.0 } else { rows as f32 * 64.0 * s + (rows - 1) as f32 * 10.0 * s + 20.0 * s };
+            let h = 28.0 * s
+                + if e.place.is_empty() { 0.0 } else { 22.0 * s }
+                + title.len() as f32 * 34.0 * s
+                + if stars.is_some() { 22.0 * s } else { 0.0 }
+                + says.len() as f32 * 21.0 * s
+                + 14.0 * s
+                + tiles_h
+                + e.lines.len() as f32 * 21.0 * s
+                + 12.0 * s
+                + buttons * 52.0 * s
+                + 18.0 * s;
+            (w, h, title, says)
+        };
+        let room = c.screen.1 as f32 - 32.0;
+        let (_, h0, ..) = lay(c, s);
+        let s = if h0 > room { s * room / h0 } else { s };
+        let (w, h, title, says) = lay(c, s);
+        let pad = 28.0 * s;
+        let inner = w - 2.0 * pad;
+        let bh = 42.0 * s;
+        let r = self.modal(w, h, c, s);
+        let tone = match e.won {
+            Some(true) => GOOD,
+            Some(false) => BAD,
+            None => ACCENT,
+        };
+        // The outcome's colour along the card's top edge.
+        c.rrect(Rect::new(r.x + 16.0 * s, r.y, w - 32.0 * s, 3.0 * s), 1.5 * s, tone);
+        let mut y = r.y + pad;
+        if !e.place.is_empty() {
+            c.text_fit(Weight::SemiBold, 13.5 * s, (r.x + w / 2.0, y + 10.0 * s), Align::Centre, &e.place.to_uppercase(), inner, tone);
             y += 22.0 * s;
         }
-        y += 10.0 * s;
+        for l in &title {
+            c.text(Weight::SemiBold, 28.0 * s, (r.x + w / 2.0, y + 24.0 * s), Align::Centre, l, TEXT);
+            y += 34.0 * s;
+        }
+        if let Some(n) = stars {
+            let (d, gap) = (11.0 * s, 8.0 * s);
+            let x0 = r.x + w / 2.0 - (3.0 * d + 2.0 * gap) / 2.0;
+            for k in 0..3u8 {
+                let b = Rect::new(x0 + k as f32 * (d + gap), y + 9.0 * s, d, d);
+                if k < n {
+                    c.rrect(b, d / 2.0, tone);
+                } else {
+                    c.outline(b, d / 2.0, 1.5 * s, [255, 255, 255, 60]);
+                }
+            }
+            y += 22.0 * s;
+        }
+        for l in &says {
+            y += 21.0 * s;
+            c.text(Weight::Medium, 15.0 * s, (r.x + w / 2.0, y), Align::Centre, l, MUTED);
+        }
+        y += 14.0 * s;
+        if rows > 0 {
+            y += 6.0 * s;
+            let (tile_h, gap) = (64.0 * s, 10.0 * s);
+            let tw = (inner - (cols - 1) as f32 * gap) / cols as f32;
+            for (k, (value, what)) in e.tiles.iter().enumerate() {
+                let (col, row) = (k % cols, k / cols);
+                // A short last row sits in the middle.
+                let in_row = (e.tiles.len() - row * cols).min(cols);
+                let x0 = r.x + pad + (inner - (in_row as f32 * tw + (in_row - 1) as f32 * gap)) / 2.0;
+                let t = Rect::new(x0 + col as f32 * (tw + gap), y + row as f32 * (tile_h + gap), tw, tile_h);
+                c.panel(t, 10.0 * s, [255, 255, 255, 12], [255, 255, 255, 6], 1.0, EDGE);
+                c.text_fit(Weight::SemiBold, 23.0 * s, (t.x + tw / 2.0, t.y + 30.0 * s), Align::Centre, value, tw - 16.0 * s, TEXT);
+                c.text_fit(Weight::Medium, 13.0 * s, (t.x + tw / 2.0, t.y + 51.0 * s), Align::Centre, what, tw - 12.0 * s, MUTED);
+            }
+            y += rows as f32 * tile_h + (rows - 1) as f32 * gap + 14.0 * s;
+        }
+        for l in &e.lines {
+            y += 21.0 * s;
+            c.text_fit(Weight::Medium, 14.0 * s, (r.x + w / 2.0, y - 4.0 * s), Align::Centre, l, inner, MUTED);
+        }
+        y += 12.0 * s;
         match carry_on {
-            Some(label) => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), label, Hit::Menu(MenuItem::Continue), true, c, s),
-            None => self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s),
+            Some(label) => self.wide_button(Rect::new(r.x + pad, y, inner, bh), label, Hit::Menu(MenuItem::Continue), true, c, s),
+            None => self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s),
         }
         let mut y = y + bh + 10.0 * s;
         if main_menu {
-            self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
+            self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
             y += bh + 10.0 * s;
         }
-        self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Quit", Hit::Menu(MenuItem::Quit), false, c, s);
+        self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Quit", Hit::Menu(MenuItem::Quit), false, c, s);
     }
 
     /// Where a command's button was last drawn.
@@ -2458,6 +2904,12 @@ impl Hud {
     pub fn show_help(&mut self) {
         self.menu = Some(MenuPage::Help);
         self.help_direct = false;
+    }
+
+    /// Opens the menu on its Experiments page (its button's click; the
+    /// films).
+    pub fn show_experiments(&mut self) {
+        self.menu = Some(MenuPage::Experiments);
     }
 
     /// Seconds since the HUD was made (for UI animations).
@@ -3106,7 +3558,7 @@ mod tests {
     #[test]
     fn the_end_screen_takes_every_key() {
         let mut r = Rig::new((1920, 1080));
-        r.m.end = Some(("Over".into(), vec![]));
+        r.m.end = Some(Ending::plain("Over", vec![]));
         r.draw();
         assert_eq!(r.key(KeyCode::KeyA), (true, vec![]));
         assert_eq!(r.key(KeyCode::Escape), (true, vec![]));
@@ -3182,7 +3634,7 @@ mod tests {
             r.key(KeyCode::Escape);
             r.draw();
             assert_eq!(r.hud.hits.iter().any(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)), on);
-            r.m.end = Some(("Over".into(), vec![]));
+            r.m.end = Some(Ending::plain("Over", vec![]));
             r.draw();
             let b = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)).map(|(b, _)| *b);
             assert_eq!(b.is_some(), on, "end screen");
@@ -3194,13 +3646,79 @@ mod tests {
         }
     }
 
+    fn two_experiments() -> Vec<Experiment> {
+        let info = |live: bool| ExpInfo { lane: "Squad and arsenal".into(), since: "2026-11-15".into(), sees: "The camera shakes on blasts, and the game holds still for a moment when a big blast lands".into(), why_off: "To be settled by play".into(), live };
+        let on_off = |key: &str, label: &str, at: usize, live: bool| Experiment { key: key.into(), label: label.into(), choices: vec!["off".into(), "on".into()], default: 0, at, next: None, info: info(live) };
+        vec![on_off("feel", "Shake and hit-stop", 1, true), on_off("crystal_regrow", "Crystals refill", 0, false)]
+    }
+
+    /// **The pause menu's Experiments page** (2026-11-19): a button on
+    /// the menu only when the game has switches, saying how many are on;
+    /// on the page each switch whole (name, state, lane, date, what you
+    /// will see, why it is off) and the count against the limit; a click
+    /// on a choice is the game's to apply; a pick waiting for a restart
+    /// shows on its card and lights Restart; Esc goes back to the menu.
+    /// At 200% on 1080 lines the page stays on the screen.
+    #[test]
+    fn the_pause_menu_sets_the_experiments() {
+        let mut r = Rig::new((1920, 1080));
+        r.key(KeyCode::Escape);
+        r.draw();
+        assert!(!r.hud.hits.iter().any(|(_, h)| *h == Hit::ExpPage), "no switches, no button");
+        r.m.experiments = two_experiments();
+        r.m.most_off = 3;
+        r.draw();
+        let said = |r: &Rig, t: &str| r.c.runs.iter().any(|x| x.text == t);
+        assert!(said(&r, "Experiments  ·  1 on"));
+        let b = r.hud.hits.iter().find(|(_, h)| *h == Hit::ExpPage).map(|(b, _)| *b).expect("the button");
+        r.at((b.x + 4.0, b.y + 4.0));
+        r.click(Button::Left, true);
+        assert_eq!(r.click(Button::Left, false).1, vec![]);
+        r.draw();
+        for t in ["Experiments", "Shake and hit-stop", "Crystals refill", "ON", "OFF", "2 of 3 allowed  ·  1 on in this game", "YOU WILL SEE", "OFF BECAUSE", "To be settled by play"] {
+            assert!(said(&r, t), "no {t:?} on the page");
+        }
+        assert!(r.c.runs.iter().any(|x| x.text.starts_with("Squad and arsenal  ·  landed 2026-11-15  ·  a pick here applies at once")));
+        assert!(r.c.runs.iter().any(|x| x.text.contains("a pick here applies when you restart")));
+        // Crystals refill's "on".
+        let on = r.hud.hits.iter().find(|(_, h)| *h == Hit::Exp(1, 1)).map(|(b, _)| *b).expect("its choice");
+        r.at((on.x + on.w / 2.0, on.y + on.h / 2.0));
+        r.click(Button::Left, true);
+        assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Experiment { row: 1, choice: 1 }]);
+        assert!(r.hud.menu_open(), "a pick stays on the page");
+        // The game says it waits for a restart.
+        r.m.experiments[1].next = Some(1);
+        r.draw();
+        assert!(said(&r, "ON AT RESTART") && said(&r, "Waiting for a restart: Crystals refill on") && said(&r, "Restart now"));
+        assert!(r.hud.hits.iter().any(|(_, h)| *h == Hit::Menu(MenuItem::Restart)));
+        // Every word inside the screen.
+        for x in &r.c.runs {
+            assert!(x.x >= 0.0 && x.x + x.w <= 1920.0 && x.base <= 1080.0, "{:?} off the screen", x.text);
+        }
+        assert_eq!(r.key(KeyCode::Escape).1, vec![]);
+        assert!(r.hud.menu_open());
+        r.draw();
+        assert!(said(&r, "Restart with the new pick"));
+        // At 200%, three switches: the page shrinks to fit.
+        let mut r = Rig::new((1920, 1080));
+        r.c.ui.user = 2.0;
+        r.m.experiments = two_experiments();
+        r.m.experiments.push(Experiment { key: "third".into(), label: "A third".into(), ..r.m.experiments[1].clone() });
+        r.m.most_off = 3;
+        r.hud.show_experiments();
+        r.draw();
+        for x in &r.c.runs {
+            assert!(x.x >= 0.0 && x.x + x.w <= 1920.0 && x.base <= 1080.0 && x.base >= 0.0, "{:?} off the screen at 200%", x.text);
+        }
+    }
+
     /// A run's end screen carries on (to the shop) in place of Play again.
     #[test]
     fn the_end_screen_carries_on_when_the_game_names_it() {
         for carry in [None, Some("On to the shop")] {
             let mut r = Rig::new((1600, 900));
             r.m.carry_on = carry.map(str::to_string);
-            r.m.end = Some(("Planet 1 freed".into(), vec![]));
+            r.m.end = Some(Ending::plain("Planet 1 freed", vec![]));
             r.draw();
             let has = |r: &Rig, h: Hit| r.hud.hits.iter().find(|(_, x)| *x == h).map(|(b, _)| *b);
             assert_eq!(has(&r, Hit::Menu(MenuItem::Restart)).is_some(), carry.is_none());
@@ -3210,6 +3728,103 @@ mod tests {
                 assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::Continue)]);
             } else {
                 assert!(carry.is_none());
+            }
+        }
+    }
+
+    /// The end screen (11-18): a run's planet lost, with everything it
+    /// can hold and three buttons, stays on the screen at every UI size
+    /// and screen; its numbers and the slime's sentence are drawn, and
+    /// the stars only for a win.
+    #[test]
+    fn the_end_screen_shows_the_planets_numbers_and_fits() {
+        let says = "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch";
+        let tiles: Vec<(String, String)> = [("9:41", "played"), ("12,604", "walkers killed"), ("1,520", "shots, 8.3 kills each"), ("0", "soldiers standing, 9 lost"), ("5,700", "food harvested"), ("42.3k of 43.4k", "slime left, of its peak")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
+        let end = Ending { place: "Planet 3 of 8 · Drevix · The Trunk".into(), title: "The squad is lost".into(), won: Some(false), stars: Some(0), says: says.into(), tiles, lines: vec!["Your last soldier fell at 9:41 (best 40% of the goal)".into(), "The run ends on planet 3".into()] };
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                r.m.main_menu = true;
+                r.m.carry_on = Some("End the run".into());
+                r.m.end = Some(end.clone());
+                r.draw();
+                let quit = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::Quit)).map(|(b, _)| *b).unwrap();
+                assert!(quit.bottom() <= screen.1 as f32 && quit.y > 0.0 && quit.x >= 0.0 && quit.right() <= screen.0 as f32, "{screen:?} at {user}: Quit {quit:?} off screen");
+                for t in ["12,604", "walkers killed", "42.3k of 43.4k", "THE TRUNK"] {
+                    assert!(r.c.runs.iter().any(|x| x.text.contains(t)), "{screen:?} at {user}: no {t}");
+                }
+                assert!(r.c.runs.iter().any(|x| x.text.starts_with("It walls the crystals")), "{screen:?} at {user}: the slime's sentence");
+            }
+        }
+    }
+
+    /// The experiments mark (the plan of 2026-11-17: "the HUD shows a
+    /// small mark when anything is off its default"): none in the default
+    /// game; with a switch on, a chip under the clock at the screen's
+    /// right edge, clear of the top bar's pills and of the bottom bar,
+    /// that names the switches when the cursor is on it and keeps a click
+    /// from reaching the world. At the plain size and at 200%.
+    #[test]
+    fn a_round_off_the_default_game_wears_a_mark() {
+        for user in [1.0, 2.0] {
+            let mut r = Rig::new((1920, 1080));
+            r.c.ui.user = user;
+            r.m.clock = "1:00 / 18:00".into();
+            r.m.speed = Some("Paused".into());
+            r.m.objective = Some("Wipe out the slime: cut it to 1% of its peak (counting from 1:00; 43,957 walkers now)".into());
+            r.draw();
+            let said = |r: &Rig, t: &str| r.c.runs.iter().find(|x| x.text == t).map(|x| x.ink);
+            assert!(said(&r, "EXPERIMENT ON").is_none() && !r.c.runs.iter().any(|x| x.text.contains("EXPERIMENTS ON")), "at {user}: a mark in the default game");
+            r.m.trying = vec!["Shake and hit-stop on".into()];
+            r.draw();
+            let ink = said(&r, "EXPERIMENT ON").unwrap_or_else(|| panic!("at {user}: no mark with a switch on"));
+            // Under the top bar, at the right, on the screen, and touching
+            // no other word.
+            assert!(ink.1 >= r.hud.top && ink.2 <= 1920.0 && ink.0 >= 1920.0 * 0.75 && ink.3 <= 1080.0 * 0.2, "at {user}: the mark at {ink:?}, the top bar ends at {}", r.hud.top);
+            for x in r.c.runs.iter().filter(|x| x.text != "EXPERIMENT ON" && x.ink.0 < x.ink.2) {
+                let apart = ink.2 <= x.ink.0 || x.ink.2 <= ink.0 || ink.3 <= x.ink.1 || x.ink.3 <= ink.1;
+                assert!(apart, "at {user}: the mark {ink:?} over {:?} {:?}", x.text, x.ink);
+            }
+            // On it, the cursor is over the HUD (a click does not reach the
+            // world), and the tip names what is on.
+            r.at(((ink.0 + ink.2) / 2.0, (ink.1 + ink.3) / 2.0));
+            r.draw();
+            assert!(r.c.runs.iter().any(|x| x.text == "Not the default game: Shake and hit-stop on. Esc, Experiments to change"), "at {user}: no tip");
+            assert!(r.click(Button::Left, true).0, "at {user}: a click on the mark went to the world");
+            r.click(Button::Left, false);
+            // Two are counted.
+            r.m.trying.push("Crystals refill on".into());
+            r.draw();
+            assert!(said(&r, "2 EXPERIMENTS ON").is_some(), "at {user}");
+        }
+    }
+
+    /// The goal never covers the top bar's numbers, the clock, the
+    /// experiments' mark or an alert, at every UI size on three screens
+    /// (11-18: at 200% on 1080 lines, centred on the screen, it covered
+    /// the resources' fourth number).
+    #[test]
+    fn the_goal_keeps_off_the_top_bars_numbers() {
+        let goal = "Wipe out the slime: kill every last walker (counting from 1:00; 40,451 walkers now)";
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                let rates = [Some("+23/s"), Some("-8 lost"), None, None];
+                r.m.resources = ["2,091", "11", "40.4k", "95%"].iter().zip(rates).map(|(v, rate)| Resource { icon: Icon::Clock, colour: TEXT, label: "a number".into(), value: (*v).into(), rate: rate.map(String::from) }).collect();
+                r.m.clock = "1:00 / 18:00".into();
+                r.m.speed = Some("Paused".into());
+                r.m.objective = Some(goal.into());
+                r.m.trying = vec!["Shake and hit-stop on".into()];
+                r.hud.alert("A soldier has fallen", None, WARN);
+                r.draw();
+                let g = r.c.runs.iter().find(|x| x.text.starts_with("Wipe out")).unwrap_or_else(|| panic!("{screen:?} at {user}: no goal")).ink;
+                assert!(g.0 >= 0.0 && g.2 <= screen.0 as f32, "{screen:?} at {user}: the goal off the screen: {g:?}");
+                for x in r.c.runs.iter().filter(|x| !x.text.starts_with("Wipe out") && x.ink.0 < x.ink.2) {
+                    let apart = g.2 <= x.ink.0 || x.ink.2 <= g.0 || g.3 <= x.ink.1 || x.ink.3 <= g.1;
+                    assert!(apart, "{screen:?} at {user}: the goal {g:?} over {:?} {:?}", x.text, x.ink);
+                }
             }
         }
     }

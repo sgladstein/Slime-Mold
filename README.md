@@ -14,10 +14,17 @@ Third-party crates and the bundled font keep their own licences
 
 **To play Larder World on Windows, double-click `play.cmd`** in the repo
 folder. It switches to main and pulls (skipped, with a note, if you have
-local changes or no network), builds the game and the map editor with
+local changes or no network), fetches the game CI built for that code
+or, when there is none yet, builds the game and the map editor with
 cargo's progress bar, and opens the start menu. Extra arguments go to the
-game: `play.cmd map=nest mode=squads`. `play-new-slime.cmd` is the same with the
-new-slime switches on (ROADMAP, "Playtest pack 11-17").
+game: `play.cmd map=nest mode=squads`. The window's title names the build;
+Options has an Experiments tab with every feature that is built but not on
+yet.
+
+When the game quits, `play.cmd` sends the session's play logs (`play-logs/`)
+to the repository's `play-logs` branch, or says that it could not and keeps
+them for next time. `play.cmd send-logs` sends them and lets git ask for a
+GitHub sign-in, for a PC that has never pushed.
 
 ```
 cargo run --release --bin mould            # the game: lesson, challenge dishes, free dishes, the endless dish
@@ -29,9 +36,10 @@ cargo run --release --bin organ            # side prototype: the network plays a
 
 **Picking this up? Start at [NOW.md](NOW.md):** the milestone being built
 and its exit tests, each lane's jobs, and what waits on the owner; the
-[wiki](wiki/index.md) has one page per subject. [HANDOFF.md](HANDOFF.md) and
-[ROADMAP.md](ROADMAP.md) are the front pages from before 2026-11-17, kept as
-history.
+[wiki](wiki/index.md) has one page per subject. The front pages from before
+2026-11-17 are kept as history in
+[`Reports/handoff-2026-11-17.md`](Reports/handoff-2026-11-17.md) and
+[`Reports/roadmap-2026-11-17.md`](Reports/roadmap-2026-11-17.md).
 
 Keys are on screen. F2-F6 cycle the looks, T opens the tuning panel (saved
 to `mould-tune.txt`), M the dish picker, H the briefing card.
@@ -61,6 +69,7 @@ code at build time.
 | `src/mould/organ.rs` | the Mould Organ prototype |
 | `src/mould/tune.rs` | the T tuning panel |
 | `src/gpu/` | the big dish on the GPU: `engine.wgsl` and `Engine`, shared by the sandbox and the Larder world (wgpu through pixels) |
+| `src/build/`, `build.rs`, `news/` | what a build says about itself: its number (`build.rs` stamps it), the declared switches (`switches.rs`, the Experiments tab's rows), and the "what is new" and "things to try" lists the game shows (`news/*.txt`, read by `news.rs`) |
 | `src/world/` | the world view: camera, minimap, marks, controls; the game UI (`ui.rs` HUD, `canvas.rs`/`canvas.wgsl` its GPU pass, `icons.rs`) and the stand-in squad that drives it (`demo.rs`) |
 | `assets/fonts/` | Inter Medium and SemiBold (SIL OFL, `OFL.txt`; from the Debian fonts-inter package), embedded by `canvas.rs` |
 | `src/bin/mould.rs`, `src/bin/organ.rs` | the windows (winit + pixels only) |

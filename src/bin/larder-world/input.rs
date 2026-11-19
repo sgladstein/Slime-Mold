@@ -349,6 +349,9 @@ impl App {
                 }
                 HudEvent::Menu(MenuItem::MainMenu) => self.back_to_menu()?,
                 HudEvent::Menu(MenuItem::Continue) => self.carry_on()?,
+                // The pause menu's Experiments page (Look and interface,
+                // 2026-11-19; `experiments.rs`).
+                HudEvent::Experiment { row, choice } => self.pick_experiment(row, choice)?,
                 HudEvent::Menu(MenuItem::Quit) => {
                     self.save_replay();
                     return Ok(true);

@@ -104,9 +104,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             "shop-tools" => {
                 m.open_shop_tab_named("Tools");
             }
+            // The build page's second tab, the things to try (11-18, the
+            // Look and interface lane's).
+            "news-try" => m.open_news_tab(1),
             // Options' second and third tabs (11-15), as Tab opens them.
-            "options-planet" | "options-mould" => {
-                for _ in 0..if flag == "options-planet" { 1 } else { 2 } {
+            // The fourth, Experiments (11-17, the declared switches).
+            "options-planet" | "options-mould" | "options-experiments" => {
+                for _ in 0..match flag {
+                    "options-planet" => 1,
+                    "options-mould" => 2,
+                    _ => 3,
+                } {
                     m.key(KeyCode::Tab, true);
                 }
             }
@@ -202,6 +210,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
     let mut lit: Vec<usize> = Vec::new();
+    let mut lured: Vec<usize> = Vec::new();
     // `trail=`: the lines laid; `cross=`: each slot's side of the line
     // (0 unknown or dead, 1 this side, 2 crossed) and the crossings.
     let mut trailed: Vec<usize> = Vec::new();
@@ -394,6 +403,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let b = slime_mould::mould::squad::Burst { at: (lx, ly), r, burn: true, ..Default::default() };
                     g.world.burst(&b, &slime_mould::mould::squad::BurstRules::default());
                     println!("  fire t {:.2} s lit at {lx},{ly} over {r}", g.time());
+                }
+            }
+            // `lure_mark=T,X,Y,SECS`: a lure with no building there once
+            // T has come (the lure's field, `Game::time_lure_paths`).
+            for (j, &(mt, mx, my, secs)) in app.args.lure_marks.iter().enumerate() {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= mt && !lured.contains(&j) {
+                    lured.push(j);
+                    let until = g.world.ticks() + (secs * g.rules.tps as f32) as u64;
+                    g.lure_marks.push(slime_mould::mould::larder_world::LureMark { at: (mx, my), until });
+                    println!("  lure mark t {:.2} s at {mx},{my} for {secs} s", g.time());
                 }
             }
             // `trail=T,X1,Y1,X2,Y2,CARDS[,lit]`: a bullet's trail laid along
@@ -603,7 +623,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 // How tight each one is: its members' mean distance from
                 // its centre over a packed disc's (a walker a fine cell, 1
                 // packed), from the walkers read back (a look's cost only).
-                let (ws, dw) = if g.bosses.live.is_empty() { (Vec::new(), Vec::new()) } else { (slime_mould::gpu::floats(&read_back(&device, &queue, &g.world.e.walkers)), g.world.e.dense_of()) };
+                let (ws, dw) = if g.bosses.live.is_empty() && g.raids.marching.is_empty() { (Vec::new(), Vec::new()) } else { (slime_mould::gpu::floats(&read_back(&device, &queue, &g.world.e.walkers)), g.world.e.dense_of()) };
                 for b in &g.bosses.live {
                     let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - b.centre.0).hypot(s.y - b.centre.1)).fold(f32::INFINITY, f32::min);
                     let ds: Vec<f32> = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1).map(|k| (ws[4 * k] - b.centre.0).hypot(ws[4 * k + 1] - b.centre.1)).collect();
@@ -631,6 +651,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
                 for (b, e, _) in &g.bosses.ended[bosses_ended..] {
                     println!("  boss t {:.0} s: lump {} {} ended {e:?} ({} members of {}; stole {:.1}, {:.1} given back so far)", g.time(), b.lump, b.kind.name(), b.members, b.first, b.stolen, g.bosses.returned);
+                }
+                // Each raid walking as one body (`RaidRules::march`,
+                // 2026-11-18), as the mini-bosses: its members, centre,
+                // spread and how far it has to go (dish cells).
+                for m in &g.raids.marching {
+                    let ds: Vec<f32> = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == m.lump as u32 + 1).map(|k| (ws[4 * k] - m.centre.0).hypot(ws[4 * k + 1] - m.centre.1)).collect();
+                    let packed = 2.0 / 3.0 * (ds.len() as f32 / std::f32::consts::PI).sqrt();
+                    let tight = ds.iter().sum::<f32>() / ds.len().max(1) as f32 / packed.max(1.0);
+                    let go = (m.centre.0 - m.to.0).hypot(m.centre.1 - m.to.1) / g.world.scale();
+                    println!("  march t {:.0} s: lump {}, {} members (first {}), at {:.0},{:.0}, spread {tight:.2}, {go:.0} cells to go", g.time(), m.lump, m.members, m.first, m.centre.0, m.centre.1);
                 }
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
@@ -949,6 +979,19 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let energy = slime_mould::gpu::floats(&slime_mould::gpu::read_back(&e.device, &e.queue, &e.energy));
             let roaming = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::ROAM != 0).count();
             println!("  dense: 0 condensed or thick walkers, mass {} (readout {}); {roaming} breaking away", g.mould, g.world.mass());
+        }
+        // **Loose walkers** (2026-11-18, the Enemy lane, for the march and
+        // the tether): the walkers in squares of a dish cell holding one or
+        // two, the ones seen one by one rather than as slime; and the Lab's
+        // count (Reports/lab-body-2026-11-18), walkers with at most one
+        // other in their 8 neighbouring fine cells.
+        if let (Some(grid), Some(fine)) = (g.world.mould_grid((g.world.scale() as usize).max(1)), g.world.mould_grid(1)) {
+            let loose: u32 = grid.iter().filter(|&&n| (1..=2).contains(&n)).sum();
+            let all: u32 = grid.iter().sum();
+            let (w, h) = g.world.size();
+            let at = |x: i64, y: i64| if x < 0 || y < 0 || x >= w as i64 || y >= h as i64 { 0 } else { fine[y as usize * w + x as usize] };
+            let lone: u32 = (0..w * h).filter(|&i| fine[i] > 0).filter(|&i| (-1..=1i64).flat_map(|dy| (-1..=1i64).map(move |dx| (dx, dy))).filter(|&o| o != (0, 0)).map(|(dx, dy)| at((i % w) as i64 + dx, (i / w) as i64 + dy)).sum::<u32>() <= 1).map(|i| fine[i]).sum();
+            println!("  loose: {loose} walkers alone or in twos in a dish cell, {:.1}% of {all}; {lone} with at most one other round them", 100.0 * loose as f32 / all.max(1) as f32);
         }
         // What holds the live soldiers (2026-11-13, for the wading and
         // arming clips): walkers touching them, and their health.

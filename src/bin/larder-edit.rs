@@ -52,8 +52,10 @@ use winit::window::{Window, WindowId};
 
 const DESIGNED: &str = "Reports/larder-maps-2026-11-11/maps";
 
+/// The repo's root, found at run time (`build::root`, 11-17), so the
+/// Windows build CI makes finds the maps on the owner's PC.
 fn repo() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    slime_mould::build::root()
 }
 
 /// A `map=` value to a map: a designed map's name, `DIR/NAME`, or `noise`.

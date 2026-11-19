@@ -125,15 +125,31 @@ pub trait World {
     fn fresh_crystals(&self) -> Vec<u32> {
         Vec::new()
     }
-    /// LAB (steering prototype, lab branch only): whether the slime reads
-    /// the steering field in the far smell's slot (a negative `far_smell`
-    /// on the GPU world), so the game builds it (`lab::steer_turn`).
-    fn lab_steer(&self) -> bool {
-        false
-    }
     /// Sets the far smell's field (`BigDish::food_field`): each block's
     /// walking distance to the nearest untouched crystal.
     fn set_food_field(&mut self, _field: Vec<u32>) {}
+    /// **The lure's field** (`gpu::Settings::lure_pull`, 2026-11-18, the
+    /// Enemy lane): whether the slime reads one, so the game builds it
+    /// (`Game::time_lure_paths`). A rule of the GPU engine only (the
+    /// owner's card, 11-17 19:21Z: no new CPU twin), so the CPU world
+    /// keeps these defaults and a lure there is its scent alone.
+    fn lure_pull(&self) -> bool {
+        false
+    }
+    /// Sets the lure's field: each block's walking distance to the
+    /// nearest lure within its reach (`u32::MAX` past it), or empty for
+    /// none.
+    fn set_lure_field(&mut self, _field: Vec<u32>) {}
+    /// **The fort** (2026-11-18, the Enemy lane): whether the slime sets
+    /// on a mask the game gives it, so the game builds one
+    /// (`Game::time_fort`). A rule of the GPU engine only, as the lure's
+    /// field is, so the CPU world keeps these defaults.
+    fn forts(&self) -> bool {
+        false
+    }
+    /// Sets the fort's mask: a word a `big::RAID_BLOCK` block, row by row,
+    /// not 0 where a walker sets with no scar; empty for none.
+    fn set_fort(&mut self, _mask: Vec<u32>) {}
     /// **Lumps** (held bodies, `BigParams::lumps`, the mini-boss thread
     /// 2026-11-16): forms lump `b` of the ordinary walkers within `r` dish
     /// cells of `at` (fine cells), or releases it (None). A world with no
@@ -154,11 +170,6 @@ pub trait World {
     /// frame; None for a world with no raids.
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         None
-    }
-    /// LAB (the forest floor, lab branch only): the standing water a fine
-    /// cell, empty without it.
-    fn lab_water(&self) -> Vec<f32> {
-        Vec::new()
     }
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;

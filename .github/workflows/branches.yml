@@ -1,0 +1,39 @@
+# Sorts the branches (scripts/branches.sh; the Engine and tools lane's
+# job 5, Scott's card 2026-11-18 13:17Z: "Let CI delete them"): deletes
+# the branches whose tip is already in main and lists the rest, with the
+# commits main has no copy of, in the run's summary for Direction. Runs
+# after each landing (the merge queue asks for it: its GITHUB_TOKEN push
+# starts no runs), weekly, and by hand.
+name: Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      delete:
+        description: Delete the branches whose tip is already in main
+        type: boolean
+        default: true
+  schedule:
+    - cron: "41 5 * * 1"
+
+concurrency:
+  group: branches
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  sort:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Sort the branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DELETE: ${{ github.event_name != 'workflow_dispatch' || inputs.delete }}
+        run: bash scripts/branches.sh

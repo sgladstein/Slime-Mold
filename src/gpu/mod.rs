@@ -80,9 +80,14 @@ pub const BODY_AT: usize = 848;
 /// whether the crater counts down at all). `set_squad` writes its last two
 /// words alone, as it does the squad's.
 pub const CRATER_AT: usize = 864;
-/// Where the lone step's row sits in `Params` (2026-11-12, after the
-/// crater's: `lone_step`, `lone_floor`, `lone_r`; `BigParams::lone_step`;
-/// then a free word, `fed_crowd`'s until 11-17).
+/// Where the lone step's row sat in `Params` (2026-11-12, after the
+/// crater's). **Two words are free** (written 0): two of the lone step's
+/// three (`lone_step`, `lone_floor`, `lone_r`; f32 880 and 884, u32 888)
+/// since the GPU's half of that rule was deleted on 2026-11-17 (the Enemy
+/// lane's switch cleanup; `Reports/dead-ends.md`), and 892, `fed_crowd`'s
+/// until the same day. The CPU engine keeps `BigParams::lone_step`. Word
+/// 888 is the fort's flag since 2026-11-18 (`Engine::forted`), and 892
+/// the tether (`Settings::tether`) since the same day.
 pub const LONE_AT: usize = 880;
 /// Where the fling row sits in `Params` (11-14, after the lone step's:
 /// `fling_deposit`, then three spare words).
@@ -469,6 +474,26 @@ pub struct Settings {
     /// A far smell (`BigParams::far_smell`, the plan's S2; 0 off), in one
     /// body's row's last word (`Params::far`).
     pub far_smell: f32,
+    /// **The lure's pull** (`lure_pull=W`, 2026-11-18, the Enemy lane; 0
+    /// off, as here): a calm walker inside a lure's reach leans down the
+    /// walking distance to it, x this (engine.wgsl's `lure_dist`, the
+    /// lure block in `sense`). It is this engine's own rule with no
+    /// `BigParams` field: the owner's card (11-17 19:21Z) builds new slime
+    /// rules on the GPU only. A run's planets set it (`run::LURE_PULL`).
+    /// The field is the game's (`Game::time_lure_paths`,
+    /// `Engine::write_lure_field`); the pull is sent only while one is
+    /// written (`Engine::lured`), in the soil row's last word.
+    pub lure_pull: f32,
+    /// **The tether** (`tether=N`, 2026-11-18, the Enemy lane, from the
+    /// Lab's one-body prototype; 0 off, as here): a walker on its own way
+    /// out from the body (a breakaway, a cut-off walker making for food;
+    /// not a raider, not a charge at a unit, not a lump's member) steps
+    /// only into a cell whose 8 neighbours, its own aside, hold N walkers
+    /// (engine.wgsl's `tethered`). This engine's own rule with no
+    /// `BigParams` field (the owner's card, 11-17 19:21Z: no CPU twin). A
+    /// run's planets set it (`run::TETHER`). Params word 892, the lone
+    /// step row's last.
+    pub tether: u32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -525,11 +550,6 @@ pub struct Settings {
     pub energy_flow: f32,
     pub hunger_scent: f32,
     pub hunger_at: f32,
-    /// Lossy sharing (2026-11-13, `BigParams::flow_loss`): what a cell takes
-    /// in `egain` arrives x 1 - `flow_loss`, so food fades as it travels
-    /// and a part cut off from every crystal starves in about half a
-    /// minute instead of staying whole for minutes. 0 off.
-    pub flow_loss: f32,
     /// A part cut off from its food withers (2026-11-13,
     /// `BigParams::wither` and its clock, `wither_every`, `wither_lag`,
     /// `wither_reach`): news of food travels through the body and each
@@ -595,11 +615,6 @@ pub struct Settings {
     /// game review's W44, so a film can turn scent up).
     pub scent_keep: f32,
     pub fed_scent: f32,
-    /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
-    /// radius `body_r`): a walker with few others round it moves slower.
-    pub lone_step: f32,
-    pub lone_floor: f32,
-    pub lone_r: u8,
     /// The crater's cut, length of full bite and cone (`BigParams::
     /// scorch_keep`, `scorch_full`, `scorch_cone`), for the look A/B of a
     /// shot's hole (`larder-world scorch_cone=1 ...`).
@@ -742,6 +757,8 @@ impl Settings {
             fire_alarm: t.fire_alarm,
             gas_burn: t.gas_burn,
             far_smell: t.far_smell,
+            lure_pull: 0.0,
+            tether: 0,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -768,7 +785,6 @@ impl Settings {
             energy_flow: t.energy_flow,
             hunger_scent: t.hunger_scent,
             hunger_at: t.hunger_at,
-            flow_loss: t.flow_loss,
             wither: t.wither,
             wither_every: t.wither_every,
             wither_lag: t.wither_lag,
@@ -798,9 +814,6 @@ impl Settings {
             lumps: t.lumps,
             scent_keep: t.scent_keep,
             fed_scent: t.fed_scent,
-            lone_step: t.lone_step,
-            lone_floor: t.lone_floor,
-            lone_r: t.body_r,
             scorch_keep: t.scorch_keep,
             scorch_full: t.scorch_full,
             scorch_cone: t.scorch_cone,
@@ -1067,6 +1080,15 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // A far smell (`far_smell=W`, the plan's S2): hungry walkers lean
         // down the walking distance to untouched crystals; specks walk it.
         "far_smell" => s.far_smell = f()?,
+        // The lure's pull (`lure_pull=W`, 2026-11-18): calm slime inside a
+        // lure's reach leans down the walking distance to it. The lab's
+        // rig: 10 a steady stream with the body at home, 30 emptied a
+        // colony in 45 s (Reports/lab-steering-2026-11-17).
+        "lure_pull" => s.lure_pull = f()?,
+        // The tether (`tether=N`, 2026-11-18): slime on its way out from
+        // the body steps only where it touches N others (Lab, one body:
+        // Reports/lab-body-2026-11-18; 2 its pick).
+        "tether" => s.tether = int()?.min(8),
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1114,7 +1136,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "energy_flow" => s.energy_flow = f()?,
         "hunger_scent" => s.hunger_scent = f()?,
         "hunger_at" => s.hunger_at = f()?,
-        "flow_loss" => s.flow_loss = f()?,
         "wither" => s.wither = f()?,
         "wither_every" => s.wither_every = int()?.clamp(1, 255),
         "wither_lag" => s.wither_lag = int()?.min(0xFFFF),
@@ -1138,9 +1159,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "roam" => s.roam = int()?.min(crate::mould::big::RIPE),
         "roam_far" => s.roam_far = f()?,
         "roam_share" => s.roam_share = f()?,
-        "lone_step" => s.lone_step = f()?,
-        "lone_floor" => s.lone_floor = f()?,
-        "lone_r" | "body_r" => s.lone_r = f()? as u8,
         "scorch_keep" => s.scorch_keep = f()?,
         "scorch_full" => s.scorch_full = int()?.clamp(1, 65535) as u16,
         "scorch_cone" => s.scorch_cone = b()?,
@@ -1293,7 +1311,6 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         energy_flow: s.energy_flow,
         hunger_scent: s.hunger_scent,
         hunger_at: s.hunger_at,
-        flow_loss: s.flow_loss,
         wither: s.wither,
         wither_every: s.wither_every,
         wither_lag: s.wither_lag,
@@ -1323,9 +1340,6 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         lumps: s.lumps,
         scent_keep: s.scent_keep,
         fed_scent: s.fed_scent,
-        lone_step: s.lone_step,
-        lone_floor: s.lone_floor,
-        body_r: s.lone_r,
         scorch_keep: s.scorch_keep,
         scorch_full: s.scorch_full,
         scorch_cone: s.scorch_cone,
@@ -1579,6 +1593,16 @@ pub struct Engine {
     /// nothing once it has passed.
     pub gas_at: u64,
     pub gas_until: u64,
+    /// **Sleep wears off** (2026-11-18, `squad::BurstRules::gas_immune`):
+    /// fine steps a walker that woke from gas cannot be gassed again, and
+    /// while gassed no gas or cloud lengthens its sleep; 0 the old rule.
+    /// Written to the gas header's word 6 with each gas and cloud laid.
+    pub gas_immune: u32,
+    /// **Statuses wear off** (2026-11-18, `squad::BurstRules::mind_rest`):
+    /// fine steps after a Mind status ends before the same status takes
+    /// that walker again; 0 the old rule. The gas header's word 7, written
+    /// with each Mind status laid.
+    pub mind_rest: u32,
     /// Whether any walker has had a Mind status (`mind_pass`, or a dish
     /// loaded with one), and the last step any lasts to: the Mind row's
     /// first word (`minds_on`), so `sense` reads the words (after the
@@ -1588,6 +1612,14 @@ pub struct Engine {
     /// walker read its word every step for the rest of the planet).
     pub minds: bool,
     pub mind_until: u64,
+    /// A lure's field is written and reaches somewhere
+    /// (`write_lure_field`): only then is `Settings::lure_pull` sent, so
+    /// with no lure standing a calm walker reads no word for it.
+    pub lured: bool,
+    /// A fort mask is written and marks some block (`write_fort`,
+    /// 2026-11-18): only then is the fort's flag sent (Params word 888),
+    /// so with no fort a walker reads no word for it.
+    pub forted: bool,
     /// The gas cloud (`lay_gas`): on for good once laid (its keep is sent
     /// and `gasp` runs every tick), the step `calm` must look until, and a
     /// bound on the cloud's top at step `cloud_at`. A dish loaded with a
@@ -1935,7 +1967,11 @@ impl Engine {
             news,
             gas_at: 4 * news_len as u64,
             gas_until: gas_until(&d),
+            gas_immune: 0,
+            mind_rest: 0,
             minds: !d.mind.is_empty(),
+            lured: false,
+            forted: false,
             mind_until: mind_until(&d),
             clouded: false,
             cloud_until: 0,
@@ -2138,6 +2174,11 @@ impl Engine {
         self.gas_until = gas_until(d);
         self.minds = !d.mind.is_empty();
         self.mind_until = mind_until(d);
+        // The dense words above cleared the lure's blocks (a CPU dish has
+        // none); the game writes them again within a game second. The
+        // fort's mask the same (`Game::time_fort` writes it again).
+        self.lured = false;
+        self.forted = false;
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.specks = self.grows && d.p.roam > 0;
         self.done = d.steps;
@@ -2205,10 +2246,7 @@ impl Engine {
         } else {
             (sets.iter().map(|t| t.explore_steps as u32).max().unwrap_or(0), sets.iter().map(|t| t.blocked_deposit).fold(0.0, f32::max), any(|t| t.graze_weight))
         };
-        // LAB (the second species, 2026-11-18, lab branch only): cycle 2
-        // makes the last species a hunter that takes no crystal share.
-        let cyc = if s.cycle && std::env::var("LAB_HUNTER").is_ok() { 2 } else { s.cycle as u32 };
-        b.extend(u32_bytes(&[self.nsp, cyc, explore, stream(seed, DRAW_SIZE)]));
+        b.extend(u32_bytes(&[self.nsp, s.cycle as u32, explore, stream(seed, DRAW_SIZE)]));
         b.extend(f32_bytes(&[s.avoid, s.next, s.prev, s.explorer_trail, s.explore_spread, blocked]));
         b.extend(u32_bytes(&[s.blocked_keep as u32]));
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
@@ -2305,9 +2343,13 @@ impl Engine {
         assert_eq!(b.len(), STRIKE_AT, "Params rows before the strike row moved");
         b.extend([0u8; 32]);
         // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
-        // them from its `BigParams` (read only with `WORLD_SOIL`); the last
-        // word, spare until 11-13, is one body's lossy sharing (`eloss`).
-        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
+        // them from its `BigParams` (read only with `WORLD_SOIL`). The last
+        // word (f32, byte 844) is the lure's pull (`Settings::lure_pull`,
+        // 2026-11-18, the Enemy lane), 0 until a lure's field is written
+        // (`lured`). It was one body's lossy sharing (`eloss`, `flow_loss`)
+        // from 11-13 until the GPU's half of that rule was deleted on 11-17
+        // (`Reports/dead-ends.md`).
+        b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, if self.lured { s.lure_pull } else { 0.0 }]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
         // The row's last word is the far smell (`far_smell`, S2, 11-17; it
         // held `fed_full`, then heat in the sensors, `fire_weight`, both
@@ -2317,8 +2359,10 @@ impl Engine {
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
-        b.extend(f32_bytes(&[s.lone_step, s.lone_floor]));
-        b.extend(u32_bytes(&[s.lone_r as u32, 0]));
+        // The lone step's row, free since 11-17 (`LONE_AT`) but for its
+        // third word, the fort's flag (`forted`, 11-18).
+        // Its last word, the tether since 11-18 (`Settings::tether`).
+        b.extend(u32_bytes(&[0, 0, self.forted as u32, s.tether]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then
@@ -2754,24 +2798,6 @@ impl Engine {
         (f(2), (0..c).map(|i| word(1, i) as u8).collect(), f(4), f(6))
     }
 
-    /// LAB (the forest floor): the standing water (plant block 9), read
-    /// back; empty without plants or the floor.
-    pub fn lab_water_of(&self) -> Vec<f32> {
-        if !self.plants || std::env::var("LAB_FLOOR").is_err() {
-            return Vec::new();
-        }
-        let b = read_back(&self.device, &self.queue, &self.news);
-        let c = self.cells as usize;
-        if std::env::var("LAB_DEBUG").is_ok() {
-            let h = self.plant_at as usize;
-            let hw: Vec<f32> = (32..43).map(|o| f32::from_le_bytes(b[h + 4 * o..h + 4 * o + 4].try_into().unwrap())).collect();
-            let blk = |k: usize| (0..c).map(|i| { let a = h + 4 * (PLANT_HEAD + k * c + i); f32::from_le_bytes(b[a..a + 4].try_into().unwrap()) }).sum::<f32>();
-            println!("  lab debug: words 32-42 {hw:?}; block sums 7 {:.0} 9 {:.0} 10 {:.0} 11 {:.0} rot {:.0}", blk(7), blk(9), blk(10), blk(11), blk(12));
-        }
-        let at = self.plant_at as usize + 4 * (PLANT_HEAD + 9 * c);
-        b[at..at + 4 * c].chunks_exact(4).map(|w| f32::from_le_bytes(w.try_into().unwrap())).collect()
-    }
-
     /// The drawing's passes: the soft curve's histogram and reference first.
     pub fn draw_passes(&self, soft: bool) -> Vec<(usize, u32)> {
         let cells = self.cells.div_ceil(256);
@@ -2978,6 +3004,7 @@ impl Engine {
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, 0.0]));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.queue.write_buffer(&self.news, self.gas_at + 24, &u32_bytes(&[self.gas_immune]));
         self.run(shared, &[(GAS, self.n.div_ceil(256))]);
         if steps > 0 {
             self.gas_until = self.gas_until.max(self.done + steps as u64);
@@ -2996,6 +3023,7 @@ impl Engine {
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, kind as f32]));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.queue.write_buffer(&self.news, self.gas_at + 28, &u32_bytes(&[self.mind_rest]));
         self.run(shared, &[(MINDLAY, self.n.div_ceil(256))]);
     }
 
@@ -3066,7 +3094,7 @@ impl Engine {
         self.clouded = true;
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, dose, 0.0, 0.0, 0.0, 0.0]));
-        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits()]));
+        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits(), self.gas_immune]));
         self.run(shared, &[(GASLAY, self.cells.div_ceil(256))]);
         // How long `calm` must keep looking: the cloud's top can only fall
         // by `gas_keep` a step once laid (a 3x3 mean never raises it), so
@@ -3467,7 +3495,8 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     // its distance + 1, 0 where none reaches or with no field.
     // The far smell's (`BigDish::food_field`, S2; `food_dist`) follows in
     // the same region, a block's words on: blocks are a quarter of the
-    // cells, so both fit.
+    // cells, so both fit. The lure's field (`Engine::write_lure_field`,
+    // `lure_dist`) is the third quarter, clear here: a CPU dish has none.
     w.extend(block_words(&d.units_field, d.w, d.h));
     w.extend(block_words(&d.food_field, d.w, d.h));
     w.resize(DENSE_HEAD + d.walkers.len() + cells, 0);
@@ -3523,6 +3552,56 @@ impl Engine {
         self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(&self.dish.food_field, self.dish.w, self.dish.h)));
     }
 
+    /// **Writes a lure's field** (engine.wgsl's `lure_dist`; 2026-11-18,
+    /// the Enemy lane): each block's walking distance to the nearest lure
+    /// (`big::units_field_for`'s blocks, `u32::MAX` where none reaches),
+    /// after the far smell's in the cells' region, one word a block as
+    /// that. An empty field clears it. The mirror dish holds no copy: the
+    /// rule has no CPU twin. Nothing is written while there was no lure
+    /// and there is none (the game calls this once a game second).
+    pub fn write_lure_field(&mut self, field: &[u32]) {
+        let reaches = field.iter().any(|&d| d != u32::MAX);
+        if !reaches && !self.lured {
+            return;
+        }
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        // The third quarter of the region; a dish of odd size (none of
+        // the game's: maps are multiples of 4) has no room for it.
+        if 3 * nb > self.cells as usize {
+            return;
+        }
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 2 * nb) as u64;
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
+        self.lured = reaches;
+    }
+
+    /// **Writes the fort's mask** (engine.wgsl's `fort_at`; 2026-11-18,
+    /// the Enemy lane): a word a `RAID_BLOCK` block, row by row, not 0
+    /// where a walker sets with no scar, after the lure's field in the
+    /// cells' region (its fourth quarter). An empty or all-zero mask
+    /// clears it. The mirror dish holds no copy: the rule has no CPU
+    /// twin. Nothing is written while there was no fort and there is
+    /// none.
+    pub fn write_fort(&mut self, mask: &[u32]) {
+        let any = mask.iter().any(|&m| m != 0);
+        if !any && !self.forted {
+            return;
+        }
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        // The fourth quarter of the region; a dish of odd size (none of
+        // the game's: maps are multiples of 4) has no room for it.
+        if 4 * nb > self.cells as usize {
+            return;
+        }
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 3 * nb) as u64;
+        let mut words: Vec<u32> = mask.iter().copied().take(nb).collect();
+        words.resize(nb, 0);
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&words));
+        self.forted = any;
+    }
+
     /// Forms lump `b` (the CPU's `BigDish::form_lump`, `lumpform`): the
     /// ordinary walkers within reach squared `r2` (whole fine cells) of
     /// fine cell `at` (x | y << 16) join it; None releases it, every slot
@@ -3564,9 +3643,7 @@ impl Engine {
 /// numbers, then seven blocks a cell (soil capacity, 0 on crystals; kind;
 /// plants A and B; fire A and B; char), or none without plants. Rates are
 /// a plant step's, as the CPU's `plant_rates` and `fire_rates` give them.
-// LAB (the forest floor's rot, 2026-11-18): 80, not 64, so words 64-79
-// hold the rot's numbers (lab branch only).
-pub const PLANT_HEAD: usize = 80;
+pub const PLANT_HEAD: usize = 64;
 pub fn plant_words(d: &BigDish) -> Vec<u32> {
     let mut w = vec![0u32; PLANT_HEAD];
     if d.plant.is_empty() {
@@ -3596,59 +3673,6 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     // Word 62: what plants over a cell's capacity (laid fuel, Tinder) lose
     // a plant step (the CPU's `Rates::rot`).
     w[62] = (p.plant_rot * k).to_bits();
-    // LAB (the forest floor, 2026-11-18, lab branch only): words 32-42, free
-    // until now, hold the weather and what reads the water (engine.wgsl's
-    // `lab_floor`), from `LAB_FLOOR`; word 41 (moisture per unit of water)
-    // 0 leaves the ground as it was.
-    if std::env::var("LAB_FLOOR").is_ok() {
-        let e = |n: &str, d: f32| std::env::var(n).ok().and_then(|v| v.parse::<f32>().ok()).unwrap_or(d);
-        // `S.t` counts game ticks, 30 a game second in Larder World.
-        let hz = 30.0;
-        let words = [
-            e("LAB_RAIN", 0.0006),                // 32 water a plant step while it rains
-            e("LAB_RAIN_EVERY", 60.0) * hz,       // 33 a shower's period, ticks
-            e("LAB_RAIN_SECS", 20.0) * hz,        // 34 the shower, ticks (the period's end)
-            e("LAB_FLOW", 0.2),                   // 35 share of a height step that flows a plant step
-            e("LAB_DRY", 0.0003),                 // 36 water that dries a plant step
-            e("LAB_POOL", 0.15),                  // 37 standing water: a slow step, mud
-            e("LAB_DRY_UP", 1.6),                 // 38 upkeep x on moisture 0
-            e("LAB_WET_UP", 0.6),                 // 39 upkeep x on moisture 1
-            e("LAB_WASH", 0.5),                   // 40 trail kept x (1 - wash x water)
-            e("LAB_MOIST", 2.0),                  // 41 moisture a unit of water
-            e("LAB_WADE", 0.4),                   // 42 a walker's step in standing water
-        ];
-        for (o, v) in words.iter().enumerate() {
-            w[32 + o] = v.to_bits();
-        }
-        // Word 63: how much the slime leans toward standing water.
-        w[63] = e("LAB_SEEK", 400.0).to_bits();
-        // Words 64-69: the rot (part two). Litter (the plants' density)
-        // rots into food where rain has soaked it (live moisture over the map's own, less word 69), by word
-        // 64 a plant step, up to word 65; food in units of the upkeep.
-        // A walker eats word 66 upkeeps a tick of it; word 67 is how much
-        // the slime smells it; word 68 the ticks a plant step (what the
-        // walkers on a cell ate since the last one).
-        let rot = [
-            e("LAB_ROT", 2.0),        // 64
-            e("LAB_ROT_CAP", 200.0),  // 65
-            e("LAB_ROT_EAT", 3.0),    // 66
-            e("LAB_ROT_SMELL", 2.0),  // 67
-            e("LAB_ROT_K", 2.5),      // 68
-            e("LAB_ROT_WET", 0.05),   // 69
-            e("LAB_ROT_SCENT", 0.3),  // 70 scent laid a unit of rot, as a crystal lays food_deposit
-        ];
-        for (o, v) in rot.iter().enumerate() {
-            w[64 + o] = v.to_bits();
-        }
-    }
-    // LAB (one body, 2026-11-18): words 71-76, the marchers' rules
-    // (engine.wgsl `body_wait`, `body_tether`), whatever `LAB_FLOOR` says.
-    {
-        let e = |n: &str, d: f32| std::env::var(n).ok().and_then(|v| v.parse::<f32>().ok()).unwrap_or(d);
-        for (o, v) in [e("LAB_WAIT", 0.0), e("LAB_WAIT_R", 2.0), e("LAB_WAIT_FLOOR", 0.1), e("LAB_TETHER", 0.0), e("LAB_TETHER_SIDE", 0.0), e("LAB_TETHER_HOLD", 0.0)].iter().enumerate() {
-            w[71 + o] = v.to_bits();
-        }
-    }
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));
@@ -3663,13 +3687,6 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     w.extend(fire(&d.moist));
     // Block 8: how fresh each cell's fire is (engine.wgsl's `PB_FRESH`,
     // for the view's advancing edge; the CPU keeps no copy).
-    w.extend(std::iter::repeat_n(0u32, c));
-    // LAB (the forest floor): block 9 the standing water, 10 the live
-    // moisture (block 7, the map's, plus the water), 11 the water's next.
-    w.extend(std::iter::repeat_n(0u32, c));
-    w.extend(fire(&d.moist));
-    w.extend(std::iter::repeat_n(0u32, c));
-    // LAB (the rot): block 12, the food rotting litter holds.
     w.extend(std::iter::repeat_n(0u32, c));
     w
 }

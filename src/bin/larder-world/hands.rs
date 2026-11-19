@@ -100,6 +100,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "greedy" {
         return greedy_hand(g);
     }
+    if hand == "bot" {
+        return bot_hand(g);
+    }
     if hand == "guard" {
         return guard_hand(g);
     }
@@ -882,4 +885,261 @@ fn pen_hand(g: &mut Game<GpuWorld>, door: bool, fort: bool) {
 thread_local! {
     static PEN: std::cell::Cell<Option<(f32, f32)>> = const { std::cell::Cell::new(None) };
     static DOOR_IN: std::cell::Cell<Option<usize>> = const { std::cell::Cell::new(None) };
+}
+
+/// The run bot's squad: soldiers it buys before it leaves the first
+/// crystal, and the most it keeps.
+const BOT_ECON: usize = 30;
+const BOT_SQUAD: usize = 80;
+
+/// `bot` (the run bot, the Engine and tools lane's job 4, 2026-11-18): a
+/// plain player that tries to win the planet, so that CI can play planets
+/// 1 to 3 to a win or a loss. It plays the owner's way (11-15 08:30Z: "I
+/// mostly run to the biggest crystal, harvest and create new soliders
+/// until I have 40 soliders and then I attack the slime"), and keeps on
+/// taking crystals from the slime: the slime lives off its crystals, so a
+/// crystal drained is food it never gets and soldiers the squad does.
+/// Each game second:
+/// 1. a soldier whenever the bank pays, up to `BOT_SQUAD`;
+/// 2. the squad works the crystal with the most charge, its charge
+///    discounted by the walk (until `BOT_ECON` soldiers, only one with no
+///    slime on it): it drains it, guards stand on the slime's side, and
+///    the squad volleys at the heaviest slime in range;
+/// 3. a crystal it cannot drain for 30 s (slime holding it) is left for a
+///    minute;
+/// 4. with every crystal dry or left, it hunts the heaviest slime near it;
+/// 5. eaten (a quarter of the squad bitten, or under half its health): it
+///    steps back a range's worth, firing, and heals when it is clear.
+///
+/// Tried first on run seed 1, planet 1 (2026-11-18), all lost at the
+/// clock: drain the nearest free crystal until 30 soldiers, no pumps
+/// (income stopped at 1:20 when the crystal was slimed; 26,229 walkers at
+/// the end); two pumps first (the slime ate both by 1:10 with 7
+/// soldiers); the owner's opening then a hunt of the heaviest slime (the
+/// slime from 13,100 to 6,000 by 2:20, then the squad stood at slimed
+/// crystals with no income); the same, walking as a fight and leaving
+/// targets that gave no kills (42 soldiers killed 65,000 walkers, but with
+/// no crystal drained after 1:10 the slime refed to its cap of 26,239).
+pub(super) struct BotMemory {
+    /// The crystal worked, its harvest when it was picked, and when.
+    work: Option<(usize, f32, f32)>,
+    /// Crystals left alone, until when.
+    left: Vec<(usize, f32)>,
+    /// Crystals ever left: they count as dry when the bot asks whether
+    /// the home is all that is left.
+    barren: Vec<usize>,
+}
+
+thread_local! {
+    static BOT: std::cell::RefCell<BotMemory> = const { std::cell::RefCell::new(BotMemory { work: None, left: Vec::new(), barren: Vec::new() }) };
+}
+
+pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
+    let t = g.time();
+    let sc = g.world.scale();
+    if t < 1.0 {
+        BOT.with_borrow_mut(|b| *b = BotMemory { work: None, left: Vec::new(), barren: Vec::new() });
+    }
+    while g.bank >= g.rules.soldier_cost && g.alive() < BOT_SQUAD.min(g.rules.max_squad) {
+        if !g.apply(Cmd::Buy) {
+            break;
+        }
+    }
+    // One squad: every other squad joins the first.
+    let live = g.live_squads();
+    let Some(&q) = live.first() else { return };
+    for &o in &live[1..] {
+        g.apply(Cmd::Merge(q as u8, o as u8));
+    }
+    if g.active != Some(q) {
+        g.apply(Cmd::Active(q as u8));
+    }
+    let Some(m) = g.middle(q) else { return };
+    let members = g.members(q);
+    let n = members.len().max(1);
+    let hp = members.iter().map(|&k| g.soldiers[k].hp).sum::<f32>() / n as f32 / g.rules.hp.max(1.0);
+    let bitten = members.iter().filter(|&&k| g.soldiers[k].touching > 0).count();
+    // Bitten while it drains is the volley's to answer; it steps back only
+    // when hurt (planet 2's first try stepped back at every bite and never
+    // drained).
+    let eaten = hp < 0.5 && bitten > 0;
+    let range = g.gun_range(q) * sc;
+    // The slime by squares of 4 dish cells; the heaviest within `reach` of
+    // a point, else the heaviest anywhere weighed by the walk.
+    let bin = (4.0 * sc).round().max(1.0) as usize;
+    let (w, _) = g.world.size();
+    let gw = w.div_ceil(bin);
+    let grid = g.world.mould_grid(bin).unwrap_or_default();
+    let centre = |i: usize| (((i % gw) as f32 + 0.5) * bin as f32, ((i / gw) as f32 + 0.5) * bin as f32);
+    let heaviest = |from: (f32, f32), reach: f32| {
+        grid.iter()
+            .enumerate()
+            .filter(|&(_, &c)| c >= 8)
+            .map(|(i, &c)| {
+                let p = centre(i);
+                let d = (p.0 - from.0).hypot(p.1 - from.1);
+                (p, d, c as f32 / (1.0 + d / (2.0 * range.max(1.0))))
+            })
+            .filter(|&(_, d, _)| d <= reach)
+            .max_by(|a, b| a.2.total_cmp(&b.2))
+            .map(|(p, ..)| p)
+    };
+    let cs = g.world.crystals();
+    let left = BOT.with_borrow_mut(|b| {
+        b.left.retain(|&(_, until)| until > t);
+        b.left.iter().map(|l| l.0).collect::<Vec<_>>()
+    });
+    // The slime's home (crystal 0) too once the squad is strong: the fifth
+    // try ran out of other crystals by 3:00 while the slime fed there.
+    // Building up, the nearest crystal with no slime within a range of it
+    // (planet 2's first try walked to a big one by the slime and was eaten
+    // on the way, 0 food in 3 minutes).
+    // Or when the home is all that is left, a crystal that was ever left
+    // for giving nothing counting as dry: run seed 2 (planet 1) dried every
+    // other crystal but one it could not drain by 3:30 with 29 soldiers,
+    // one short, and its bank never reached a soldier's price again.
+    let by_home = |p: (f32, f32)| (p.0 - cs[0].0 .0).hypot(p.1 - cs[0].0 .1) <= g.world.crystal_r(0) + range;
+    let home_mass: u32 = grid.iter().enumerate().filter(|&(i, _)| by_home(centre(i))).map(|(_, &c)| c).sum();
+    if (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(10) {
+        eprintln!("BOT t {t:.0} home mass {home_mass}");
+    }
+    // Until the slime by the home is under 200 a soldier (see below), the
+    // home is no crystal to pick or keep: run seed 2's
+    // planet 2 picked it at 3:00 with 30 soldiers and 450 a soldier, held
+    // it as its work, hunted, and never drained the crystals still charged.
+    let home_ok = home_mass < 200 * g.alive() as u32;
+    let barren = BOT.with_borrow(|b| b.barren.clone());
+    let strong = g.alive() >= BOT_ECON || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
+    let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
+    let pick = (0..cs.len())
+        .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && (c > 0 || home_ok) && (strong || (c > 0 && quiet(c))))
+        .max_by(|&a, &b| {
+            let walk = if strong { 4.0 * range } else { 0.5 * range };
+            let v = |c: usize| cs[c].1.min(200_000.0) / (1.0 + (cs[c].0 .0 - m.0).hypot(cs[c].0 .1 - m.1) / walk.max(1.0));
+            v(a).total_cmp(&v(b))
+        })
+        // Weak with no quiet crystal left: the least slimed one, weighed by
+        // its charge and the walk. Run seeds 2 and 3 (planet 1, CI's first
+        // curve) had none quiet by 2:00 and 4:00, hunted the slime's body
+        // with 13 to 18 soldiers and no income (bank stuck under a
+        // soldier's price) and lost at the clock.
+        .or_else(|| {
+            (1..cs.len())
+                .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c))
+                .map(|c| {
+                    let d = (cs[c].0 .0 - m.0).hypot(cs[c].0 .1 - m.1);
+                    let crowd = g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) as f32;
+                    (c, cs[c].1.min(200_000.0) / (1.0 + d / range.max(1.0)) / (1.0 + crowd / 30.0))
+                })
+                .max_by(|a, b| a.1.total_cmp(&b.1))
+                .map(|(c, _)| c)
+        });
+    // A crystal that gives no harvest for 30 s is left for a minute.
+    let work = BOT.with_borrow_mut(|b| {
+        match (b.work, pick) {
+            (Some((c, h, since)), _) if cs.get(c).is_some_and(|x| x.1 > 0.0) && !b.left.iter().any(|l| l.0 == c) && (c > 0 || home_ok) => {
+                if g.harvested > h + 50.0 {
+                    b.work = Some((c, g.harvested, t));
+                } else if t - since > 30.0 && c > 0 {
+                    b.left.push((c, t + 60.0));
+                    if !b.barren.contains(&c) {
+                        b.barren.push(c);
+                    }
+                    b.work = pick.filter(|&p| p != c).map(|p| (p, g.harvested, t));
+                }
+            }
+            (_, Some(p)) => b.work = Some((p, g.harvested, t)),
+            _ => b.work = None,
+        }
+        b.work.map(|w| w.0)
+    });
+    if (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(10) {
+        eprintln!(
+            "BOT t {t:.0} work {work:?} mould {} soldiers {} hp {hp:.2} bitten {bitten} bank {:.0} killed {} harvested {:.0} left {left:?} charge {:?}",
+            g.mould,
+            g.alive(),
+            g.bank,
+            g.killed,
+            g.harvested,
+            cs.iter().map(|c| c.1.round() as i32).collect::<Vec<_>>()
+        );
+    }
+    // The volley: the heaviest slime in range of the squad.
+    // A line of fire over open ground, no wall, bulwark or set walker on
+    // it: run seed 3's planet 1 has its home in a basin of rock with one
+    // gap, and the squad stood outside the rock shooting into it for ten
+    // minutes, killing about 200 a half-minute while the slime grew 300.
+    // Planet 1 has no bulwark (`set_block` is the Trunk's), but its set
+    // walkers' armour soaks shots all the same: the line is read against
+    // the set walkers themselves, a fine cell at a time.
+    let set = g.world.set_cells().unwrap_or_default();
+    let clear = |g: &Game<GpuWorld>, a: (f32, f32), b: (f32, f32)| {
+        let n = (b.0 - a.0).hypot(b.1 - a.1).ceil().max(1.0) as usize;
+        (0..=n).all(|i| {
+            let f = i as f32 / n as f32;
+            let (x, y) = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
+            g.ground(x, y) && (x < 0.0 || y < 0.0 || x as usize >= w || set.get(y as usize * w + x as usize).is_none_or(|&c| c == 0))
+        })
+    };
+    // The heaviest slime bins by weight for the walk from `from`, at most 40.
+    let ranked = |from: (f32, f32)| {
+        let mut v: Vec<((f32, f32), f32, f32)> = grid
+            .iter()
+            .enumerate()
+            .filter(|&(_, &c)| c >= 8)
+            .map(|(i, &c)| {
+                let p = centre(i);
+                let d = (p.0 - from.0).hypot(p.1 - from.1);
+                (p, d, c as f32 / (1.0 + d / (2.0 * range.max(1.0))))
+            })
+            .collect();
+        v.sort_by(|a, b| b.2.total_cmp(&a.2));
+        v.truncate(40);
+        v
+    };
+    let near = ranked(m).into_iter().find(|&(p, d, _)| d <= range && clear(g, m, p)).map(|(p, ..)| p).or_else(|| heaviest(m, range));
+    g.apply(Cmd::Fire(q as u8, near));
+    let fresh = |g: &Game<GpuWorld>, o: Order| !members.iter().all(|&k| g.soldiers[k].order == o);
+    if eaten {
+        let away = near.unwrap_or(g.larder);
+        let d = (away.0 - m.0).hypot(away.1 - m.1).max(1.0);
+        let back = (m.0 - (away.0 - m.0) / d * range, m.1 - (away.1 - m.1) / d * range);
+        if near.is_some() {
+            g.apply(Cmd::SquadOrder(q as u8, Order::Move(back.0, back.1)));
+        } else if !g.squads[q].heal && g.bank > 0.0 {
+            g.apply(Cmd::Heal(q as u8));
+        }
+        return;
+    }
+    // The home is cleared only when the slime by it is under 200 a
+    // soldier; till then the squad hunts (below), which thins it. Run seed
+    // 1 (planet 1) cleared it from 9,300 with 50 soldiers (186 a soldier)
+    // and won; run seed 3 walked 36 onto 9,600 (267 a soldier) and had 2
+    // left 30 s later, and at 250 a soldier walked 41 in at 3:20 and had 8
+    // left 10 s later. A siege from a stand short of the heaviest slime by
+    // the home was tried and lost all three seeds: the home's slime is
+    // nearly all the slime, so the siege never ended, and run seed 1, which
+    // had won, lost.
+    let work = work.filter(|&c| c > 0 || home_ok);
+    if let Some(c) = work {
+        let at = cs[c].0;
+        let o = Order::Clear(at.0, at.1);
+        if fresh(g, o) {
+            g.apply(Cmd::SquadOrder(q as u8, o));
+        }
+        return;
+    }
+    // Every crystal dry or left: hunt.
+    // From a stand with a clear line to it when one of the heaviest has
+    // one, else as before.
+    let stand_for = |a: (f32, f32)| {
+        let d = (a.0 - m.0).hypot(a.1 - m.1).max(1.0);
+        (a.0 - (a.0 - m.0) / d * 0.7 * range, a.1 - (a.1 - m.1) / d * 0.7 * range)
+    };
+    let shot = ranked(m).into_iter().map(|(a, ..)| (a, stand_for(a))).find(|&(a, st)| g.ground(st.0, st.1) && clear(g, st, a));
+    let Some((a, stand)) = shot.or_else(|| heaviest(m, f32::INFINITY).map(|a| (a, stand_for(a)))) else { return };
+    let d = (a.0 - m.0).hypot(a.1 - m.1).max(1.0);
+    if d > 0.8 * range || !clear(g, m, a) {
+        g.apply(Cmd::SquadOrder(q as u8, Order::Fight(stand.0, stand.1)));
+    }
 }

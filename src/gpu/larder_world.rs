@@ -263,12 +263,7 @@ pub fn garden_settings_on(s: Settings, side: usize) -> Settings {
     let s = Settings { walkers: 2 * side, ..s };
     let half = s.capacity.max(s.walkers) / 2;
     let species_cap = (0..own_mould::SPECIES as usize).map(|sp| if sp == 0 || sp == own_mould::OWN as usize { half } else { 0 }).collect();
-    // LAB (the second species, 2026-11-18, lab branch only): a hunter
-    // needs its own conversion edge, which this function overwrote.
-    let lab = |k: &str| std::env::var(k).ok().and_then(|v| v.parse::<f32>().ok());
-    let convert = lab("LAB_CONVERT").unwrap_or(own_mould::CONVERT);
-    let convert_r = lab("LAB_CONVERT_R").map(|r| r as u32).unwrap_or(own_mould::CONVERT_R);
-    Settings { species: own_mould::SPECIES, avoid: 0.0, convert, convert_r, species_cap, ..s }
+    Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, species_cap, ..s }
 }
 
 impl GpuWorld {
@@ -607,6 +602,9 @@ impl GpuWorld {
             let sc = self.e.dish.p.scale as f32;
             self.e.fling_pass(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv, b.push);
         }
+        // Sleep wears off (2026-11-18): the gas header's word 6, written
+        // with the gas and the cloud below.
+        self.e.gas_immune = k.gas_immune as u32;
         if b.gas > 0 {
             self.s.gas_death = k.gas_death;
             self.e.gas_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.gas);
@@ -646,7 +644,8 @@ impl GpuWorld {
         // A Mind status last, as on the CPU (2026-11-16).
         if b.mind > 0 {
             self.s.spin_curl = k.spin_curl;
-            self.e.mind_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.mind as u32, k.mind_steps);
+            self.e.mind_rest = k.mind_rest as u32;
+            self.e.mind_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.mind as u32, k.mind_steps_for(b.mind as u32));
         }
     }
 }
@@ -1004,10 +1003,6 @@ impl World for GpuWorld {
         self.s.far_smell > 0.0
     }
 
-    fn lab_steer(&self) -> bool {
-        self.s.far_smell < 0.0
-    }
-
     /// From the last readout's crystal sums against the mirror's full
     /// charges (the CPU's `crystal_left`).
     fn fresh_crystals(&self) -> Vec<u32> {
@@ -1026,6 +1021,24 @@ impl World for GpuWorld {
     fn set_food_field(&mut self, field: Vec<u32>) {
         self.e.dish.food_field = field;
         self.e.write_food_field();
+    }
+
+    fn lure_pull(&self) -> bool {
+        self.s.lure_pull > 0.0
+    }
+
+    fn set_lure_field(&mut self, field: Vec<u32>) {
+        self.e.write_lure_field(&field);
+    }
+
+    /// Where setting runs (`Engine::setting`: the crust, the scar and
+    /// `set_scar`), a walker can set on a fort's mask.
+    fn forts(&self) -> bool {
+        self.e.setting
+    }
+
+    fn set_fort(&mut self, mask: Vec<u32>) {
+        self.e.write_fort(&mask);
     }
 
     /// Runs `lumpform` at once, after the running step's shares (the CPU's
@@ -1066,10 +1079,6 @@ impl World for GpuWorld {
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         Some((self.e.dish.agar.clone(), self.e.dish.w, self.e.dish.h))
-    }
-
-    fn lab_water(&self) -> Vec<f32> {
-        self.e.lab_water_of()
     }
 
     fn food_deposit(&self) -> f32 {
@@ -1288,14 +1297,23 @@ mod tests {
         fn far_smell(&self) -> bool {
             self.g.far_smell()
         }
-        fn lab_steer(&self) -> bool {
-            self.g.lab_steer()
-        }
         fn fresh_crystals(&self) -> Vec<u32> {
             self.g.fresh_crystals()
         }
         fn set_food_field(&mut self, field: Vec<u32>) {
             self.g.set_food_field(field)
+        }
+        fn lure_pull(&self) -> bool {
+            self.g.lure_pull()
+        }
+        fn set_lure_field(&mut self, field: Vec<u32>) {
+            self.g.set_lure_field(field)
+        }
+        fn forts(&self) -> bool {
+            self.g.forts()
+        }
+        fn set_fort(&mut self, mask: Vec<u32>) {
+            self.g.set_fort(mask)
         }
         fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
             self.g.raid_ground()
@@ -1626,6 +1644,47 @@ mod tests {
         }
     }
 
+    /// **Sleep wears off** (2026-11-18, `BurstRules::gas_immune`; the
+    /// owner's playtest: Mist on the turrets "basically stopped
+    /// everything"): on the mould's home, a second gas while the first's
+    /// sleep runs puts no walker to sleep again (it would have restamped
+    /// every one), a gas after they wake finds them resting, and once the
+    /// rest is over gas takes them again. With `gas_immune` 0 every gas
+    /// takes them, the old rule.
+    #[test]
+    fn sleep_wears_off_on_the_gpu_world() {
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let rules = Rules { cap: 30.0, ..Rules::default() };
+        let run = |immune: u16| -> Vec<u32> {
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let fine = g.world.fine_steps() as u64;
+            let k = squad::BurstRules { gas_immune: immune, ..crate::mould::rounds::burst_rules(&KitRules { gas_half: 0.0, ..KitRules::default() }, 30.0 * fine as f32) };
+            let gas = squad::Burst { at: (home.0 / sc, home.1 / sc), r: 5.0, gas: 60, ..Default::default() };
+            let mut out = vec![g.world.burst(&gas, &k).gassed, g.world.burst(&gas, &k).gassed];
+            // Past the sleep (60 fine steps), inside the rest.
+            for _ in 0..(90 / fine + 1) {
+                g.step();
+            }
+            out.push(g.world.burst(&gas, &k).gassed);
+            // Past the rest too.
+            for _ in 0..(200 / fine + 1) {
+                g.step();
+            }
+            out.push(g.world.burst(&gas, &k).gassed);
+            out
+        };
+        let (old, new) = (run(0), run(120));
+        eprintln!("gassed each time: rest 0 {old:?}, rest 120 fine steps {new:?}");
+        assert!(old.iter().all(|&n| n > 20), "with no rest every gas takes them: {old:?}");
+        assert!(new[0] > 20 && new[1] == 0, "a second gas while asleep takes none: {new:?}");
+        assert!(new[2] * 2 < old[2], "a gas just after they wake finds them resting: {new:?} against {old:?}");
+        assert!(new[3] > 20, "after the rest gas takes them again: {new:?}");
+    }
+
     /// **The germ runs on the GPU world** (2026-11-14, cloud plan C5): a
     /// kit germ at the mould's home makes the same walkers sick there as
     /// on the CPU race world (the same mould, before any tick; within 1%,
@@ -1867,6 +1926,242 @@ mod tests {
             let gpu = BigParams { substeps: cpu.substeps, ..engine_params(&race_settings(seed, scale, walkers), scale) };
             assert_eq!(format!("{gpu:?}"), format!("{cpu:?}"), "seed {seed} scale {scale}");
         }
+    }
+
+    /// **A lure draws the calm slime down its field** (`Settings::
+    /// lure_pull`, `Game::time_lure_paths`; 2026-11-18, the Enemy lane). A
+    /// rule of the GPU engine alone (the owner's card, 11-17 19:21Z: no CPU
+    /// twin), so its test is what it does on the software GPU. Three race
+    /// worlds alike: pull 10 with a lure mark 25 dish cells from the
+    /// mould's home for 12 game seconds, pull 10 with no lure, and pull 0
+    /// with the mark.
+    ///
+    /// - The field is set a game second after it is started (so the game
+    ///   does not depend on the worker thread): no pull in the engine
+    ///   before second 2, the pull and the field after, 0 walking at the
+    ///   mark's block and nothing past the reach.
+    /// - At 12 s the lured slime has several times the walkers round the
+    ///   mark that the unlured has.
+    /// - The mark runs out at 12 s; by 14 s the field is cleared and the
+    ///   pull is off again.
+    /// - Pull 0 builds no field, and plays the unlured game to the bit.
+    #[test]
+    fn a_lure_draws_the_calm_slime_down_its_field() {
+        use crate::gpu::{floats, DENSE_HEAD};
+        use crate::mould::big::RAID_BLOCK;
+        use crate::mould::larder_world::LureMark;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let k = scale as f32;
+        let play = |pull: f32, mark: bool| {
+            let s = Settings { lure_pull: pull, ..race_settings(seed, scale, walkers) };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            let home = g.world.crystals()[0].0;
+            let (w, _) = g.world.size();
+            // Toward the middle of the world, so the mark is on it.
+            let at = (if home.0 < w as f32 / 2.0 { home.0 + 25.0 * k } else { home.0 - 25.0 * k }, home.1);
+            let tps = g.rules.tps as u64;
+            if mark {
+                g.lure_marks.push(LureMark { at, until: 12 * tps });
+            }
+            (g, at)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        let near = |g: &Game<GpuWorld>, at: (f32, f32), r: f32| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            (0..e.n as usize).filter(|&q| (!e.grows || en[q] >= 0.0) && (wk[4 * q] - at.0).hypot(wk[4 * q + 1] - at.1) <= r).count()
+        };
+        // The lure's blocks as the engine holds them (the cells' region's
+        // third quarter, engine.wgsl's `lure_dist`).
+        let blocks = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let nb = e.dish.w.div_ceil(RAID_BLOCK) * e.dish.h.div_ceil(RAID_BLOCK);
+            let from = e.dense_at as usize + 4 * (DENSE_HEAD + e.n as usize + 2 * nb);
+            read_back(&e.device, &e.queue, &e.news)[from..from + 4 * nb].chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<u32>>()
+        };
+        let (mut lured, at) = play(10.0, true);
+        let (mut bare, _) = play(10.0, false);
+        let (mut off, _) = play(0.0, true);
+        assert!(lured.world.lure_pull() && !off.world.lure_pull());
+        // Started at the first second, set at the second.
+        to(&mut lured, 1.5);
+        assert!(!lured.world.e.lured, "the field is not set in its first second");
+        to(&mut lured, 2.5);
+        assert!(lured.world.e.lured, "the field is set a second after it was started");
+        let f = blocks(&lured);
+        let bw = lured.world.e.dish.w.div_ceil(RAID_BLOCK);
+        let q = (at.1 as usize / RAID_BLOCK) * bw + at.0 as usize / RAID_BLOCK;
+        let reach = (lured.rules.lure_reach * k) as u32;
+        let (reached, far) = (f.iter().filter(|&&v| v > 0).count(), f.iter().copied().max().unwrap_or(0));
+        eprintln!("lure field: {reached} of {} blocks reached, {} at the mark, the farthest {far} (reach {reach})", f.len(), f[q]);
+        assert!(f[q] >= 1 && f[q] <= 2 * RAID_BLOCK as u32 * crate::mould::big::UNITS_REACH as u32 + 4, "0 walking at the mark's block, or the open block beside it ({})", f[q]);
+        assert!(reached > 50 && reached < f.len() && far <= reach + 1, "the field stops at the lure's reach");
+        // Twelve seconds of pull.
+        for g in [&mut lured, &mut bare, &mut off] {
+            to(g, 12.0);
+        }
+        let r = 8.0 * k;
+        let (with, without) = (near(&lured, at, r), near(&bare, at, r));
+        eprintln!("lure: at 12 s {with} walkers within {r} of the mark with it, {without} without ({} and {} alive)", lured.world.e.alive(), bare.world.e.alive());
+        assert!(with >= 3 * without + 30, "the lure draws the slime: {with} walkers round it against {without}");
+        // The mark has run out: cleared a second after the last field.
+        to(&mut lured, 14.5);
+        assert!(lured.lure_marks.is_empty() && !lured.world.e.lured, "the field is cleared when the last lure goes");
+        assert!(blocks(&lured).iter().all(|&v| v == 0), "and its blocks are clear");
+        // Pull 0: no field, and the unlured game to the bit (on software
+        // Vulkan; a card orders its float sums its own way).
+        assert!(!off.world.e.lured && blocks(&off).iter().all(|&v| v == 0), "pull 0 builds no field");
+        if !ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
+            assert_eq!(off.world.hash(), bare.world.hash(), "pull 0 is the game with no lure");
+        }
+    }
+
+    /// **The tether** (`Settings::tether`, 2026-11-18, the Enemy lane, from
+    /// the Lab's one-body prototype; the owner's play notes that day: slime
+    /// that leaves the blob as "individual walkers ... is problematic"). A
+    /// rule of the GPU engine alone, so its test is what it does on the
+    /// software GPU. Planet 1's slime (shape C on the race world with a
+    /// run's planet keys, so breakaways), tether 2 and 0, alike.
+    ///
+    /// - A raid is not tethered (it goes as one body by its march, and a
+    ///   tethered file stays home): a raid sent at one game second leaves
+    ///   the two games the same to the bit (on software Vulkan) until the
+    ///   first breakaway.
+    /// - With breakaways on, the tether changes the game by 20 s. What it
+    ///   does to the picture is a film's: on this small world's slime a
+    ///   breakaway is loose about one time in a hundred either way.
+    #[test]
+    fn a_tethered_breakaway_goes_out_touching_the_body() {
+        use crate::mould::larder_world::shape_keys;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 2, 5_000);
+        let k = scale as f32;
+        let play = |tether: u32, roam: bool| {
+            let mut s = race_settings(seed, scale, walkers);
+            for (key, v) in shape_keys("c").unwrap().1 {
+                crate::gpu::set(&mut s, key, v).unwrap();
+            }
+            for (key, v) in crate::mould::run::enemy_keys(1) {
+                crate::gpu::set(&mut s, key, &v).unwrap();
+            }
+            s.tether = tether;
+            if !roam {
+                s.roam = 0;
+            }
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        // A raid with no breakaway: the same game either way.
+        let (mut held, mut free) = (play(2, false), play(0, false));
+        for g in [&mut held, &mut free] {
+            to(g, 1.0);
+            let home = g.world.crystals()[0].0;
+            let (w, h) = g.world.size();
+            let at = (if home.0 < w as f32 / 2.0 { home.0 + 40.0 * k } else { home.0 - 40.0 * k }, home.1);
+            let (agar, gw, gh) = g.world.raid_ground().unwrap();
+            let field = crate::mould::big::raid_field_for(&agar, gw, gh, crate::mould::larder_world::raid_cell(at, (w, h)));
+            let fine = g.world.fine_steps().max(1) as u64;
+            g.world.set_raid((g.world.ticks() * fine + 1) as u32, at, 60.0, 0.33, field);
+            to(g, 4.0);
+        }
+        if !ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
+            assert_eq!(held.world.hash(), free.world.hash(), "a raid is not tethered");
+        }
+        // With breakaways it acts (what it does to the picture is filmed:
+        // Reports/raid-march-2026-11-18).
+        let (mut held, mut free) = (play(2, true), play(0, true));
+        to(&mut held, 20.0);
+        to(&mut free, 20.0);
+        assert_ne!(held.world.hash(), free.world.hash(), "the tether holds breakaways");
+    }
+
+    /// **The fort** (`Rules::fort`, 2026-11-18, the Enemy lane; the
+    /// owner's note that day that he had thought the walls "would form
+    /// protecting the core of the slime or the slime crystals") is a rule
+    /// of the GPU engine alone, so its test is what it does on the
+    /// software GPU. Two race worlds alike with setting on and `set_block`
+    /// 5, one with `fort` 2 and one without; nobody shoots, so no scar.
+    ///
+    /// - With the fort the slime holds its home crystal, the engine has
+    ///   its ring, and by 20 s walkers have set, every one of them on the
+    ///   ring, enough that the bulwark has cells. Without it none sets.
+    /// - The walls cost the slime little: it is no smaller than nine
+    ///   tenths of the slime with no fort.
+    /// - With the rule off the mask is cleared and the walls wake.
+    #[test]
+    fn the_slime_walls_the_crystal_it_holds() {
+        use crate::gpu::{floats, DENSE_HEAD};
+        use crate::mould::big::RAID_BLOCK;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let play = |fort: f32| {
+            // Setting needs the scar, which needs the alarm (the game's
+            // shape has both; a race world has neither).
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "alarm_keep", "0.9").unwrap();
+            crate::gpu::set(&mut s, "setting", "1").unwrap();
+            // A thin race slime moves on before the crust it sets on has
+            // grown (the game's blanket stands on its cells): a fast crust
+            // under any trail.
+            crate::gpu::set(&mut s, "crust_rise", "0.02").unwrap();
+            crate::gpu::set(&mut s, "crust_trail", "0").unwrap();
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { set_block: 5.0, fort, ..Rules::default() }, seed)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        // The fort's blocks as the engine holds them (the cells' region's
+        // fourth quarter, engine.wgsl's `fort_at`).
+        let mask = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let nb = e.dish.w.div_ceil(RAID_BLOCK) * e.dish.h.div_ceil(RAID_BLOCK);
+            let from = e.dense_at as usize + 4 * (DENSE_HEAD + e.n as usize + 3 * nb);
+            read_back(&e.device, &e.queue, &e.news)[from..from + 4 * nb].chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<u32>>()
+        };
+        // The living set walkers, and how many of them stand off the mask.
+        let set = |g: &Game<GpuWorld>, m: &[u32]| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let bw = e.dish.w.div_ceil(RAID_BLOCK);
+            let words = e.set_of();
+            let on: Vec<usize> = (0..e.n as usize).filter(|&q| words[q] > 0 && en[q] >= 0.0).collect();
+            let off = on.iter().filter(|&&q| m[(wk[4 * q + 1] as usize / RAID_BLOCK) * bw + wk[4 * q] as usize / RAID_BLOCK] == 0).count();
+            (on.len(), off)
+        };
+        let (mut fort, mut bare) = (play(2.0), play(0.0));
+        for g in [&mut fort, &mut bare] {
+            to(g, 20.0);
+        }
+        assert!(fort.world.forts(), "setting runs, so the world can hold a fort");
+        let m = mask(&fort);
+        let ring = m.iter().filter(|&&v| v != 0).count();
+        let (walls, stray) = set(&fort, &m);
+        let wall_cells = fort.bulwark.iter().filter(|&&b| b).count();
+        eprintln!("fort: held {:?}, {ring} blocks in the ring, {walls} walkers set ({stray} off the ring), bulwark {wall_cells} cells; {} alive against {} with no fort", fort.fort_held, fort.world.e.alive(), bare.world.e.alive());
+        assert!(fort.fort_held.first() == Some(&true) && fort.world.e.forted && ring > 20, "the slime holds its home crystal and the engine has its ring");
+        assert!(walls >= 40 && stray == 0, "slime on the ring sets, and only there: {walls} set, {stray} off the ring");
+        assert!(wall_cells >= 20, "the ring is a wall to feet: {wall_cells} cells");
+        assert!(!bare.world.e.forted && set(&bare, &mask(&bare)).0 == 0 && bare.bulwark.is_empty(), "no fort, nothing sets unshot");
+        assert!(10 * fort.world.e.alive() >= 9 * bare.world.e.alive(), "the walls do not starve the slime");
+        // The rule off: the mask is cleared and the walls wake.
+        fort.rules.fort = 0.0;
+        to(&mut fort, 24.0);
+        let m = mask(&fort);
+        assert!(!fort.world.e.forted && m.iter().all(|&v| v == 0) && fort.fort_held.is_empty(), "the mask is cleared with the rule off");
+        assert_eq!(set(&fort, &m).0, 0, "and the walls wake");
     }
 
     /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,

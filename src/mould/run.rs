@@ -128,6 +128,30 @@ pub fn size_roll(seed: u64) -> f32 {
     (0.8f32.ln() + u * (1.25f32.ln() - 0.8f32.ln())).exp()
 }
 
+/// Each tier's slime as a factor on the size its depth, area and roll give
+/// (`Run::level`); a tuning number, Direction's to set (the 11-17 plan).
+///
+/// The Sprawler 0.6 (Direction, 11-18, on the Enemy lane's planet 2 look,
+/// `Reports/planet2-sprawler-2026-11-18/`): at full size planet 2's slime
+/// is 23,000 to 25,000 walkers against planet 1's 13,000 and holds every
+/// crystal over 130,000 charge, so on run seeds 1, 3 and 4 the run bot,
+/// landing with 9 soldiers and nothing bought, had 3 to 9 soldiers at 2:30.
+/// At 0.6 it had 18 to 24 on all three; at 0.8 only seed 1 held (14);
+/// seed 2, which lands by a free crystal, had 30 and 28. A bot that backs
+/// off farther, or the Sprawler's smell for soldiers turned down, gained a
+/// little on 2 of 3 seeds and built up on none, so the size is the lever.
+/// Its threads and its fire shyness (`does_to_you`) stay what planet 2
+/// does to you; per cell it is now thinner than planet 1 (0.72 of it), so
+/// the depth rule's "more later on" is kept apart from this factor
+/// (`levels_get_harder_and_the_same_seed_gives_the_same_run`). Retune from
+/// the owner's play.
+pub fn tier_size(tier: Tier) -> f32 {
+    match tier {
+        Tier::Sprawler => 0.6,
+        _ => 1.0,
+    }
+}
+
 /// The planet's area as a share of today's map (`MAP_W` x `MAP_H`): 0.6 on
 /// planet 1, 6 on the core world (`levelgen::AREA`).
 pub fn area_of(p: &Planet) -> f32 {
@@ -169,7 +193,17 @@ pub fn head_start(area: f32) -> f32 {
 
 /// The goal: the slime down to this share of its peak, on every planet.
 ///
-/// 1% since the owner's 11-15 18:02Z ("We are still winning the game with
+/// 0 since 2026-11-18, so a planet is won when its last walker dies
+/// (`End::MouldWiped`, which the campaign counts as the goal met). The
+/// owner's play that day: "The game still ends too quick when you get
+/// close to winning. There were still slime left." At 1% a planet 1 slime
+/// of 13,000 was won with about 130 walkers on the map. The broken line
+/// below still starves the stragglers off food, so what is left to shoot
+/// is the slime on its crystals; the Trunk's walls are set walkers and
+/// count. Direction's tuning number; the origin (Milestone 2) may become
+/// the win instead.
+///
+/// 1% from the owner's 11-15 18:02Z ("We are still winning the game with
 /// too many slime left. Drop it to 1% of peak"); 2% before.
 ///
 /// Why 2% (owner, 11-15 03:02Z: "right now how it's set up I feel like I
@@ -189,7 +223,7 @@ pub fn shrink_goal(_depth: u32) -> f32 {
 }
 
 /// `shrink_goal` on every planet.
-pub const WIN_SHARE: f32 = 0.01;
+pub const WIN_SHARE: f32 = 0.0;
 
 /// The slime's surges by planet, 1 to 8 (past the end the last): the food
 /// it eats to build one, as a share of the sandbox's (`SURGE_FOOD`, 150,
@@ -241,6 +275,30 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// when your guns get stronger"; until now depth grew only the walkers
 /// and changed the tier. The surge's reach follows the guns already (the
 /// gun's range plus `Rules::panic_margin`).
+///
+/// **The far smell is on on every planet** (`far_smell` 1, 2026-11-17,
+/// the Enemy lane; the plan the owner approved at 19:07Z: "On by default now,
+/// you veto in play"). Hungry slime leans down the walking distance to
+/// crystals nothing has touched, and specks walk it, so the slime goes for
+/// food it cannot yet smell instead of waiting in its bowl. With no squad
+/// on planet 3 it reached 59 crystals in 2:30 against 47 (more on 7 of 8
+/// seeds, none fewer) and ended bigger on 8 of 8, by up to 45%
+/// (`Reports/sim-use-2026-11-17/s2-far-smell.md`): a harder planet, to be
+/// retuned by the numbers above, not by turning this off. Until now it was
+/// a key in `play-new-slime.cmd` only. Its field is built on a worker
+/// thread every 2 game seconds; a hungry walker reads three more words a
+/// step.
+///
+/// **A lure pulls on every planet** (`lure_pull` `LURE_PULL`, 2026-11-18,
+/// the Enemy lane; the owner's card, 11-18 03:03Z: "Lure now, in the three
+/// planets"). Calm slime within `Rules::lure_reach` of a Lure that is on
+/// leans down the walking distance to it (`raids.rs`'s `time_lure_paths`).
+///
+/// **The slime holds together on its way out** (`tether` `TETHER`,
+/// 2026-11-18, the Enemy lane; the owner's play notes that day): a
+/// breakaway or a cut-off walker making for food steps only where it
+/// touches others (engine.wgsl's `tethered`); a raid goes as one body by
+/// its march (`RaidRules::march`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
     vec![
@@ -248,8 +306,40 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("surge_dash", SURGE_DASH[i].to_string()),
         ("roam", ROAM[i].to_string()),
         ("roam_share", format!("{}", ROAM_SHARE[i])),
+        ("far_smell", "1".to_string()),
+        ("lure_pull", format!("{LURE_PULL}")),
+        ("tether", format!("{TETHER}")),
     ]
 }
+
+/// **The walkers a marcher's next cell must touch** (the engine's
+/// `tether`, 2026-11-18, the Enemy lane). The Lab's pick (one body,
+/// `Reports/lab-body-2026-11-18`): on planet 1, run seed 1, 2 halved the
+/// loose walkers in a calm breakaway (407 to 192); 3, 4 or side contact
+/// did no better. On raiders it kept the raid home, so they are left out.
+pub const TETHER: u32 = 2;
+
+/// **How hard a lure pulls** (the engine's `lure_pull`), one number for
+/// every tier, Direction's to tune. 10 is the lab's recommended start:
+/// on planet 1 with three rendering turrets it made a steady stream into
+/// the guns while the body stayed on its crystal (6,024 killed by 1:30
+/// against 1,623 with no lure); 30 emptied the home colony in about 45 s
+/// (`Reports/lab-steering-2026-11-17`). Those were measured with the far
+/// smell off; here both are on.
+pub const LURE_PULL: f32 = 10.0;
+
+/// **Game rules every planet's slime plays by** (`Rules::set` names), set
+/// in `Run::rules` before the tier's own (`does_to_you`). Today one:
+/// charges go round walls (`unit_paths`, the simulation-use plan's S1; on
+/// on every planet since 2026-11-17, with the far smell above). A surge or
+/// a panic charge walks down the units' walking distance instead of
+/// steering straight at a soldier, so a wall bends a charge to its gap
+/// where it used to pile the slime against the wall: behind a cup of
+/// walls half as many walkers piled at the wall and as many reached the
+/// soldier (`Reports/sim-use-2026-11-17/s1-unit-paths.md`). The field is
+/// built on a worker thread once a game second (2.0 ms on planet 3, 7.4 ms
+/// on planet 8, off the frame).
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
@@ -297,12 +387,15 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // to 23 at 2:00 and down by 2:21 with it; pump_smell 2 to 8 was too
         // weak to see.
         Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
-        // The same smell on planet 3 (pumps hand): the first two pumps at
-        // 185 and 167 hp at 2:30 without it, 160 and 160 with it (modest:
-        // the Trunk's cords are slow to turn).
-        Tier::Trunk => DoesToYou { says: "It runs its cords to your pumps", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast", rules: SWARMER_RULES, keys: SWARMER_KEYS },
+        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder and a Torch", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
+        // Until 2026-11-17 the Trunk had the Drifter's row (the same pump
+        // smell: the first two pumps at 185 and 167 hp at 2:30 without it,
+        // 160 and 160 with it; modest, as its cords are slow to turn), so
+        // planets 1 and 3 did the same thing to you. Now it sets
+        // (`TRUNK_KEYS`), and since 11-18 it walls the crystals it holds
+        // (`fort` in `TRUNK_RULES`).
+        Tier::Trunk => DoesToYou { says: "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch", rules: TRUNK_RULES, keys: TRUNK_KEYS },
+        Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
         Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
         Tier::Grudge => DoesToYou { says: "It remembers where you hurt it, and comes back there", rules: &[], keys: GRUDGE_KEYS },
@@ -325,12 +418,58 @@ const SPRAWLER_RULES: &[(&str, f32)] = &[("smell", 4.0), ("smell_r", 4.0)];
 // (15:26Z) keeps it here for that: Tinder, which brings its own fuel, is the
 // answer, so the card says to bring it.
 const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50")];
+// **The Trunk sets** (2026-11-17, the Enemy lane; planet 3). The
+// simulation-use plan's E1 and E2 were built on 11-17 behind four switches
+// (the crust and its pull, setting, set slime blocking or trapping, fed
+// slime fireproof), each waiting on its own blind film. The plan the owner
+// approved at 19:07Z has the Enemy lane pick one configuration and give it
+// to one tier as its trait, as fire shyness became the Sprawler's. This is
+// it, on the planet its films were made on:
+// - `crust=1`: ground the slime has held keeps a crust (full after a
+//   minute of living, half gone two minutes after it leaves), which burns
+//   as fuel (`crust_fuel` 3) and leaves barren char (`char_barren` 0.3).
+// - `crust_weight` 8 and `crust_fast` 1: the Trunk keeps to its old ground
+//   and steps faster on it (the +8 side of the pull's film: 43,366 walkers
+//   and 73,244 cells ever held at 5:00, against 39,999 and 72,507 with no
+//   pull; the -8 side spread it as a thin sheet over 36% more ground,
+//   which is the Sprawler's shape, not the Trunk's).
+// - `setting=1`: a walker on crust where the scar says it was hurt stops,
+//   stops breeding and takes three blows (`set_armour` 3), and wakes when
+//   the fire has been off it for about a minute. A standing rifle squad
+//   killed 39% less in 45-75 s, a squad that moved to a fresh front 34%
+//   less, and soldiers lived longer (7 at 90 s against 5 and 4), since set
+//   slime does not come on: the Trunk is the slime that holds its ground
+//   (`Reports/sim-use-2026-11-17/e2a-setting.md`).
+// - `set_block` 5: set slime is a wall to soldiers (`larder_world/bulwark.rs`;
+//   the owner, 11-17 01:13Z: bulwarks block "Both" shots and soldiers). The
+//   trap (`set_hold`) lost the A/B and was deleted.
+// - `fire_fed=1`: the fed body is fireproof whatever its trail (the owner
+//   agreed to the plan's "fed slime is fireproof, starving slime burns" in
+//   the same answer); set and cut-off slime still burn (`fire_dry`), so
+//   fire is the answer to a wall your shots made. A fed disc lost 24-65% to
+//   fire in 20 s without it and nothing on 7 of 8 seeds with it
+//   (`c1-dry-burns.md`). Checked on planet 3, run seed 1: two Torch shots
+//   on a 1,212-cell wall left 679 cells two seconds later, against 1,284
+//   with no fire, and the fed body beside it did not catch
+//   (`Reports/enemy-switches-2026-11-17/README.md`).
+// GPU engine keys only (`gpu::set`'s `crust` and `setting` set several
+// numbers at once; the CPU setter has no such names, and new slime work is
+// GPU only since the owner's 11-17 19:21Z answer).
+const TRUNK_RULES: &[(&str, f32)] = &[("set_block", 5.0), ("fort", 3.0)];
+const TRUNK_KEYS: &[(&str, &str)] = &[("crust", "1"), ("crust_weight", "8"), ("crust_fast", "1"), ("setting", "1"), ("fire_fed", "1")];
 // Swarmer, planet 4, attack-move: a surge reaches 25 cells past the gun's
 // range (`Rules::panic_margin` 5) and lunges at 3x (`surge_haste` 2):
 // health 74 -> 29. Tried and backfired: the alarm louder (alarm_relay 20,
 // alarm_weight 6), health 74 -> 95 and kills 4,537 -> 878, the body
 // drawn to the wounds instead of the squad.
-const SWARMER_RULES: &[(&str, f32)] = &[("panic_margin", 25.0)];
+// And its last stand (`RaidRules::last_stand`, 2026-11-17, the Enemy
+// lane): once, when it falls under a quarter of its peak
+// (`last_stand_at`), every walker it has left rushes the thickest knot of
+// soldiers. Built 11-15 as a switch for every slime and left off (the owner,
+// 21:15Z: "a slime that is losing might rush you will everything it has.
+// Not sure if this is a good idea or not"); it is the charging slime's
+// way to lose, so it is this tier's and no other's.
+const SWARMER_RULES: &[(&str, f32)] = &[("panic_margin", 25.0), ("last_stand", 1.0)];
 const SWARMER_KEYS: &[(&str, &str)] = &[("surge_haste", "3")];
 // Sporer, planet 5, attack-move: bursts at an alarm of 0.3, not the
 // tier's 1, at 0.2 a step, not 0.05: 4 soldiers at 27 health -> none.
@@ -358,6 +497,25 @@ const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1")];
 pub fn bring(tier: Tier) -> Option<Card> {
     match tier {
         Tier::Sprawler => Some(Card::Tinder),
+        _ => None,
+    }
+}
+
+/// The bullet a tier's planet asks you to bring, if any (2026-11-18, the
+/// Squad and arsenal lane: the shops before planets 2 and 3 should make
+/// those planets play differently). When you own no bullet of that shell
+/// it is the shop's first bullet on every reroll (`Run::restock`).
+///
+/// - The Sprawler: a Torch. Tinder lays brush and kills nothing until a
+///   fire runs along it, and the run starts with plain bullets: over run
+///   seeds 1-12 the shop that pushed Tinder sold a fire (a torch or a
+///   blast) on 3, so on 9 the planet's own advice was a dead buy.
+/// - The Trunk: a Torch. Shot, it sets into amber walls that take three
+///   hits each and that fire burns (the Enemy lane, 11-17: two torch shots
+///   cut a 1,212-cell wall to 679 in 2 s).
+pub fn bring_shell(tier: Tier) -> Option<Shell> {
+    match tier {
+        Tier::Sprawler | Tier::Trunk => Some(Shell::Torch),
         _ => None,
     }
 }
@@ -410,10 +568,16 @@ pub struct Item {
 
 /// Everything the shop sells but cards. Unlock keys (`max` 1) are what
 /// `Run::has` answers for the window's command card.
-/// The lure, the siren and the outpost are not sold (owner, 2026-11-15
-/// 21:41Z, the whole-game review's D10): the outpost is out of the run,
-/// and the lure and siren stay out until they visibly draw the slime. The
-/// window hides them from a run's build card (`run_hidden`).
+/// The siren and the outpost are not sold (owner, 2026-11-15 21:41Z, the
+/// whole-game review's D10): the outpost is out of the run, and the siren
+/// stays out until it visibly draws the slime. The window hides them from
+/// a run's build card (`run_hidden`). The lure was out with them until the
+/// Enemy lane's lure field met that condition for it (the lab's steering
+/// prototype; owner's card, 2026-11-18 03:03Z: "Lure now, in the three
+/// planets"). It is not sold either: for an hour it was an unlock here
+/// (Lures, 150), which left planet 1 without it, so Direction made it free
+/// from the first planet (11-18 08:38Z). The window never locks it
+/// (`run_lock`), as it never locks the pump.
 pub const ITEMS: [Item; 18] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
@@ -476,11 +640,15 @@ pub const AMMO_OFFER: usize = 2;
 /// cards' rarity, and the readers with what they read: shatter with the
 /// Mind bullets (gas is sold from the start), detonate with the germ. The
 /// flare and the torch (step D's route and element families, 11-17) from
-/// planet 2, their cards' rarity.
+/// planet 2, their cards' rarity, and so Provoke and Still (the Mind
+/// family's last two, 11-17).
+///
+/// Gas from planet 2 since 2026-11-18 (Direction: its card is uncommon now,
+/// `Card::tier`); it was sold from the start.
 pub fn shells_at(depth: u32) -> Vec<Shell> {
-    let mut v = vec![Shell::Plain, Shell::Blast, Shell::Gas];
+    let mut v = vec![Shell::Plain, Shell::Blast];
     if depth >= power_from(2) {
-        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Flare, Shell::Torch]);
+        v.extend([Shell::Gas, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Provoke, Shell::Still, Shell::Shatter, Shell::Flare, Shell::Torch]);
     }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ, Shell::Detonate]);
@@ -490,15 +658,31 @@ pub fn shells_at(depth: u32) -> Vec<Shell> {
 
 /// A rolled bullet's price in points: its shell's budget cost, how well
 /// it rolled (`Ammo::grade`) and how deep it was found, in tens.
+///
+/// A Torch never costs more than `TORCH_MOST` (Direction, 2026-11-18): the
+/// shop before planet 2 pushes Tinder and a Torch together (`bring`,
+/// `bring_shell`), and the pair must be affordable on the least a won
+/// planet 1 pays (`reward(1, 1)`, 200). A Torch rolled 40 to 150 before.
 pub fn ammo_price(a: &Ammo) -> u32 {
     let p = (40.0 + 20.0 * a.shell.base() as f32) * a.grade().max(0.4).powf(1.5) * (1.0 + 0.1 * (a.depth.max(1) - 1) as f32);
-    ((p / 10.0).round() as u32).max(1) * 10
+    let p = ((p / 10.0).round() as u32).max(1) * 10;
+    if a.shell == Shell::Torch {
+        p.min(TORCH_MOST)
+    } else {
+        p
+    }
 }
+
+/// The most a Torch bullet costs, and Tinder's price (it was its rarity's
+/// 150): Direction's first numbers, 2026-11-18 (`ammo_price`).
+pub const TORCH_MOST: u32 = 100;
+pub const TINDER_PRICE: u32 = 100;
 
 /// A card's price in points: a rolled bullet's own, else its rarity's.
 pub fn card_price(c: Card) -> u32 {
     match c {
         Card::Ammo(a) => ammo_price(&a),
+        Card::Tinder => TINDER_PRICE,
         c => card_cost(card_power(c).unwrap_or(1)),
     }
 }
@@ -702,7 +886,7 @@ impl Run {
         let shrink = shrink_goal(d);
         let mission = Mission {
             name: format!("Planet {d} of {PLANETS}, {}", planet.name),
-            says: format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink),
+            says: if shrink > 0.0 { format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink) } else { "Wipe out the slime: kill every last walker".to_string() },
             map: map.clone(),
             tier: Some(tier.name().to_string()),
             goal: Goal::Shrink(shrink),
@@ -718,7 +902,7 @@ impl Run {
         // 11-14 17:50Z: the same count covered a third of the smaller
         // planet 1 by 30 s, and would be a corner of a 6x core world).
         let area = area_of(&planet);
-        let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed);
+        let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed) * tier_size(tier);
         Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers, mission, grow: head_start(area) }
     }
 
@@ -731,10 +915,17 @@ impl Run {
             // chance rises with the planet (owner, 04:58Z: "Chance increases
             // with progression into the run"); a tier's own rules after.
             r.boss = crate::mould::larder_world::BossRules::for_depth(self.depth);
+            // What every planet's slime does (`ENEMY_RULES`).
+            for &(k, v) in ENEMY_RULES {
+                assert!(r.set(k, v), "ENEMY_RULES: no rule {k}");
+            }
             for &(k, v) in does_to_you(self.level().tier).rules {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }
         }
+        // A run is lost when its last soldier falls, food in the bank or
+        // not (owner, 2026-11-18 15:56Z; `Rules::wipe_ends`).
+        r.wipe_ends = 1.0;
         let l = |k| f32::from(self.level_of(k));
         r.hp *= 1.0 + 0.25 * l("hp");
         r.strike *= 1.0 + 0.2 * l("strike");
@@ -1005,21 +1196,56 @@ impl Run {
         if let Some(c) = wanted {
             from.retain(|&f| f != c);
         }
-        // Rolled bullets first, each its own seed.
-        let shells = shells_at(self.depth);
+        // Rolled bullets first, each its own seed. What a shop's bullets
+        // may not be (2026-11-18, from the first two shops of run seeds
+        // 1-12, where each of these happened on 3 to 5 of the 24): the same
+        // shell twice; a reader with nothing to read (a Shatter with no gas
+        // bullet owned, a Detonate with no germ: alone each kills nothing);
+        // a plain bullet of the standard set, which is the bullet the run
+        // starts with. And the first is the planet's (`bring_shell`) while
+        // none of that shell is owned.
+        let owns = |s: Shell| self.cards.iter().any(|c| matches!(c.0, Card::Ammo(a) if a.shell == s));
+        let mut shells: Vec<Shell> = shells_at(self.depth).into_iter().filter(|&s| match s {
+            Shell::Shatter => owns(Shell::Gas),
+            Shell::Detonate => owns(Shell::Germ),
+            _ => true,
+        }).collect();
+        let mut asked = bring_shell(self.level().tier).filter(|&s| !owns(s));
         for _ in 0..AMMO_OFFER {
             z = mix(z);
-            let shell = shells[(z % shells.len() as u64) as usize];
-            let set = Set::ALL[((z >> 20) % Set::ALL.len() as u64) as usize];
+            let shell = match asked.take() {
+                Some(s) => {
+                    shells.retain(|&x| x != s);
+                    s
+                }
+                None if shells.is_empty() => break,
+                None => shells.remove((z % shells.len() as u64) as usize),
+            };
+            let mut set = Set::ALL[((z >> 20) % Set::ALL.len() as u64) as usize];
+            if (shell, set) == (Shell::Plain, Set::Standard) {
+                set = Set::ALL[1 + ((z >> 24) % (Set::ALL.len() as u64 - 1)) as usize];
+            }
             self.offers.push(Card::Ammo(Ammo::roll_of(shell, set, mix(z ^ 0xA330), self.depth)));
         }
+        let bullets = self.offers.len();
         self.offers.extend(wanted);
-        while self.offers.len() < n + AMMO_OFFER && !from.is_empty() {
+        while self.offers.len() < n + bullets && !from.is_empty() {
             z = mix(z);
             self.offers.push(from.remove((z % from.len() as u64) as usize));
         }
-        // Guns for the planet ahead, each its own seed.
-        self.gun_offers = (0..GUN_OFFER as u64).map(|k| Gun::roll(mix(z ^ (0x6755_4E00 + k)), self.depth)).filter(|g| !self.guns.contains(g)).collect();
+        // Guns for the planet ahead, each its own seed: two kinds, and
+        // neither the kind in hand (2026-11-18: a gun of another kind is
+        // the buy that most changes how the squad plays, and of seeds
+        // 1-12's first two shops 7 sold the same kind twice and 7 sold the
+        // rifle the run starts with).
+        let mut kinds: Vec<GunKind> = GunKind::ALL.into_iter().filter(|&k| self.guns.get(self.carry).is_none_or(|g| g.kind != k)).collect();
+        self.gun_offers = (0..GUN_OFFER as u64)
+            .filter_map(|k| {
+                let s = mix(z ^ (0x6755_4E00 + k));
+                (!kinds.is_empty()).then(|| Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.depth))
+            })
+            .filter(|g| !self.guns.contains(g))
+            .collect();
     }
 
     /// The current level was won with `stars` (1-3): its points, the next
@@ -1270,6 +1496,15 @@ mod tests {
             assert_eq!(surge_secs(d), get(d, "surge") / 30.0);
             let mut p = crate::mould::big::BigParams::today();
             for (k, v) in enemy_keys(d) {
+                // The lure's pull is the GPU engine's alone (the owner's
+                // card, 11-17 19:21Z: no CPU twin): the engine takes it,
+                // and `BigParams` has no field for it.
+                if k == "lure_pull" || k == "tether" {
+                    let mut s = crate::gpu::Settings::big_dish();
+                    crate::gpu::set(&mut s, k, &v).unwrap();
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER, "planet {d}: {k}");
+                    continue;
+                }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
             }
             // No bronze (owner 11-16: "Remove the bronze"), specks on.
@@ -1295,8 +1530,9 @@ mod tests {
             r.depth = d;
             let l = r.level();
             // A cell's walkers grow deeper, so a smaller planet (a breather)
-            // can have fewer in all.
-            let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed);
+            // can have fewer in all; the tier's own factor (`tier_size`, the
+            // Sprawler's 0.6) is a tuning number kept apart from that rule.
+            let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed) / tier_size(l.tier);
             assert!((0.8..=1.25).contains(&size_roll(l.seed)));
             assert!(dense > walkers, "more walkers a cell deeper");
             assert!(shrink_goal(d) <= goals);
@@ -1307,6 +1543,11 @@ mod tests {
         }
         r.depth = 1;
         assert_eq!(r.level().tier, Tier::Drifter);
+        // Planet 2's Sprawler at 0.6 of its size (the planet 2 look, 11-18).
+        r.depth = 2;
+        let (l, area) = (r.level(), area_of(&r.planet()));
+        assert_eq!(l.tier, Tier::Sprawler);
+        assert!((l.walkers - 0.6 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
         // The level generator's core world is the run's last planet.
         assert_eq!(levelgen::CORE_DEPTH, PLANETS);
     }
@@ -1367,6 +1608,56 @@ mod tests {
         assert!(!r.offers.contains(&Card::Tinder));
         // No other rung asks for a card yet.
         assert!(LADDER.iter().all(|&t| t == Tier::Sprawler || bring(t).is_none()));
+    }
+
+    /// **The first two shops change how the gun plays** (Milestone 1's
+    /// exit test 5; 2026-11-18). On run seeds 1-12, every reroll: the shop
+    /// before the Sprawler and the one before the Trunk sell a Torch
+    /// bullet first while none is owned (`bring_shell`: Tinder's brush
+    /// needs a fire, and the Trunk's amber walls burn); the two bullets
+    /// are never one shell, never the starting bullet, never a reader with
+    /// nothing to read; the two guns are two kinds, neither the one
+    /// carried.
+    #[test]
+    fn the_first_shops_sell_the_planets_bullet_and_no_doubles() {
+        for seed in 1..=12 {
+            let mut r = Run::new(seed);
+            for tier in [Tier::Sprawler, Tier::Trunk] {
+                r.won(2);
+                assert_eq!((r.level().tier, bring_shell(tier)), (tier, Some(Shell::Torch)));
+                for _ in 0..6 {
+                    let shells: Vec<(Shell, Set)> = r.offers.iter().filter_map(|c| if let Card::Ammo(a) = c { Some((a.shell, a.set)) } else { None }).collect();
+                    assert_eq!((shells.len(), shells[0].0), (AMMO_OFFER, Shell::Torch), "seed {seed}, {tier:?}: {:?}", r.offers);
+                    assert_ne!(shells[0].0, shells[1].0, "seed {seed}: one shell twice");
+                    assert!(shells.iter().all(|&s| s != (Shell::Plain, Set::Standard) && !matches!(s.0, Shell::Shatter | Shell::Detonate)), "seed {seed}: {shells:?}");
+                    assert_eq!(r.offers.len(), OFFER + AMMO_OFFER, "the planet's bullet takes a slot, not an extra one");
+                    // Tinder and the Torch together cost no more than the
+                    // least a won planet 1 pays (Direction, 2026-11-18).
+                    assert!(card_price(r.offers[0]) + card_price(Card::Tinder) <= reward(1, 1), "seed {seed}: a torch at {}", card_price(r.offers[0]));
+                    let kinds: Vec<GunKind> = r.gun_offers.iter().map(|g| g.kind).collect();
+                    assert!(kinds.len() == GUN_OFFER && kinds[0] != kinds[1] && !kinds.contains(&r.guns[r.carry].kind), "seed {seed}: {kinds:?} with a {:?} carried", r.guns[r.carry].kind);
+                    r.rerolls += 1;
+                    r.restock();
+                }
+            }
+        }
+        // With a torch owned the planet's bullet is no longer pushed, and
+        // with a gas bullet owned a Shatter may be sold.
+        let mut r = Run::new(1);
+        r.won(2);
+        r.cards.push((Card::Ammo(Ammo::standard(Shell::Torch)), false));
+        r.cards.push((Card::Ammo(Ammo::standard(Shell::Gas)), false));
+        let (mut torch_first, mut shatter) = (0, 0);
+        for _ in 0..40 {
+            r.rerolls += 1;
+            r.restock();
+            let shells: Vec<Shell> = r.offers.iter().filter_map(|c| if let Card::Ammo(a) = c { Some(a.shell) } else { None }).collect();
+            torch_first += usize::from(shells[0] == Shell::Torch);
+            shatter += usize::from(shells.contains(&Shell::Shatter));
+        }
+        assert!(torch_first < 12 && shatter > 0, "torch first in {torch_first} of 40, shatter in {shatter}");
+        // The other rungs ask for no bullet yet.
+        assert!(LADDER.iter().all(|&t| matches!(t, Tier::Sprawler | Tier::Trunk) || bring_shell(t).is_none()));
     }
 
     #[test]
@@ -1655,20 +1946,35 @@ mod tests {
                 assert_eq!((r.build.pump_smell, r.build.lure_r), (20.0, 15.0));
             }
             // The fire-shy Sprawler, on both engines; no other rung is.
+            // The CPU setter takes the keys it has: the Trunk's are the GPU
+            // engine's alone (`TRUNK_KEYS`).
             let mut p = crate::mould::larder_world::race_params(1, 2, 5000);
             for &(k, v) in does.keys {
-                crate::mould::tiers::set_key(&mut p, k, v).unwrap_or_else(|e| panic!("{} key {k}: {e}", t.name()));
+                let set = crate::mould::tiers::set_key(&mut p, k, v);
+                assert!(set.is_ok() || *t == Tier::Trunk, "{} key {k}: {set:?}", t.name());
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());
+            // The Trunk sets, walls soldiers out, walls the crystals it
+            // holds and is fireproof while fed; the Swarmer makes a last
+            // stand; no other rung does either.
+            let trunk = *t == Tier::Trunk;
+            assert_eq!((s.set_scar > 0.0, s.crust_rise > 0.0, s.fire_fed, r.set_block > 0.0, r.fort > 0.0), (trunk, trunk, trunk, trunk, trunk), "{}", t.name());
+            assert_eq!(r.raid.last_stand, *t == Tier::Swarmer, "{}", t.name());
+            // Every planet: the far smell, and charges that go round walls.
+            assert!(r.unit_paths, "{}", t.name());
+            assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
+            // Every planet: a lure pulls (the owner's card, 11-18 03:03Z).
+            assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "lure_pull" && v.parse::<f32>().unwrap() > 0.0));
         }
         let mut r = Rules::default();
         Run::range(1).rules(&mut r);
         assert_eq!(r.build.pump_smell, Rules::default().build.pump_smell);
     }
 
-    /// The outpost, lure and siren are not sold in a run (owner 11-15
-    /// 21:41Z, D10).
+    /// The outpost and siren are not sold in a run (owner 11-15 21:41Z,
+    /// D10). Nor is the lure: since 2026-11-18 it is free from the first
+    /// planet and needs no unlock (the window's `run_lock`).
     #[test]
     fn the_run_shop_sells_no_outpost_lure_or_siren() {
         for k in ["outpost", "lure", "siren"] {

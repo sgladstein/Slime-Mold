@@ -1,6 +1,6 @@
 # Look and interface: state and brief
 
-## State (2026-11-18)
+## State (2026-11-19)
 
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
 page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
@@ -28,22 +28,97 @@ two tabs (what is new with NEW marks and a pane; things to try with ticks,
 corner; `ui::Model::trying`, a yellow mark under the clock in play. The
 window fills them in `menu.rs` (`build_page`) and `draw.rs`.
 
+**Also on main:** raised walls and the Lure's rim (#477;
+`Reports/raised-walls-2026-11-18/`, page
+https://claude.ai/artifact/EBAKa6mpRV9M31H5CoDiF1): set slime stands
+`SET_RISE` 4 above the sheet (`set_rise` in `prep`); no ring within half a
+ring of the Lure's reach (`View::set_steer_reach`, one call in `main.rs`'s
+`prepare_now`). Flung droplets in the slime's material (#482, Look A3;
+`Reports/droplets-2026-11-18/`, page
+https://claude.ai/artifact/9vsJuSofq14P5jShjiWyqe): gold beads lit by the
+body's key light, each with a shadow (`draw_specks`, `DROP_*`);
+`DROP_GLOW` is the number if hits read too quiet at zoom 6.
+
+**Also on main:** the fallen soldier (#491; `Reports/fallen-soldier-2026-11-18/`,
+page https://claude.ai/artifact/A6fJKZbrQDx9PCwuHWFBTj): the `dead` layer
+of `sprites/soldier.svg` is a soldier on its back in dull olive (atlas tile
+3; `render.js` reproduces the other tiles byte for byte), over
+`blood_pool` in `view.wgsl`, which spreads over `POOL_GROW` 2.5 s
+(`Look::fallen` in `main.rs`; `Marks::fallen`). `BLOOD`, `BLOOD_RIM` and
+`POOL_R` are the numbers if the pools read too loud.
+
+**Also on main:** heads on top (#494, Look A3;
+`Reports/squad-heads-2026-11-18/`, page
+https://claude.ai/artifact/F58mCnsvBbT2CMUk2Rhz31): each living soldier's
+helmet drawn again above every body (`Marks::soldier_head`, `HEAD_ONLY` in
+`view.wgsl`, the loop after the figures in `draw.rs`), with a ring of its
+own figure 1.5 px wide; a lone soldier is unchanged. Squad and arsenal
+(11-18) keep `steer.rs` as it is: a squad at rest holds elbow room (5.13
+fine cells against 4.8); only a squad draining a crystal heaps, because
+the crystal's rim has no room for 35 at 4.8, so the helmets carry the
+count there.
+
+**Also on main:** the biting slime (#502; the owner's 11-18 18:04Z and
+18:08Z notes: a bite "just looks like more of the same slime";
+`Reports/biting-slime-2026-11-18/`, page
+https://claude.ai/artifact/Wk5DevY7VGNnCAN21hAPcb): while a soldier is
+bitten (`touching` above 0) `draw.rs` sends its touch disc as a bite zone
+(`Light::bite`, lift `BITE_LIFT`, lighting nothing); `view.wgsl`'s
+`bite_share` turns the slime in it crimson (`BITE_SLIME`), `slime_on`
+draws it over the figure (the walkers that bite are all under it), and a
+flinch flushes the figure red (`BITE_HOT`) with its helmet white. The
+orange bite light is gone. Every other light of the fight was already its
+damage's size (the report's table), so Look A4 is done with it.
+
+**Also on main:** a Mind status on the slime (#503, Look A5;
+`Reports/mind-status-2026-11-18/`, page
+https://claude.ai/artifact/2or1C2HtnaRqNMX7pbznFz): each walker under one
+lays a soft rose disc a cell across (`draw_mind` in `draw_specks`, a value
+under 256 in the specks' third screen), and `base` tints the slime there
+toward `MIND_ROSE`, fading over the last 1.5 s. `View::set_minds(news, at,
+fade)` takes the engine's Mind words (`gas_at` / 4 + `GAS_SLOTS` +
+walkers), called once in `main.rs`. `MIND_TINT` and `MIND_HALO` are the
+numbers if it reads too loud or too faint.
+
+**Look A6 checked (11-18), nothing to fix:** fire at zoom 12 shows no cell
+squares. Planet 3's amber walls lit by two Torch shots (run seed 1,
+`hand=hold@344,169`, `boom=76,374,116,torch boom=76,317,121,torch`) and
+the Fork's meadow under Torch rounds, at 30 frames a second: the mean
+step between neighbouring pixels is flat across the 12 pixel phases of a
+cell (4.6 to 5.5) in a frame and between frames (0.60 to 0.65). The
+squares noted on 11-18 were in Enemy's #451 clip, scaled to 0.75 and
+squeezed to 8 frames a second; fire has been drawn per pixel since 11-14.
+
+**Also on main (#504):** the end screens (the brief's job 4;
+`Reports/end-screens-2026-11-18/`, page
+https://claude.ai/artifact/YSjVHU9Es2ztXjeE52VLt1): `ui::Ending`
+(`Model::end`), filled in `draw.rs`, drawn and shrunk to fit by
+`Hud::end_screen`; `film_ends` (ignored, `film.rs`) makes the pictures.
+The Experiments tab as cards and an Experiments page on the Esc menu were
+built by a helper thread under this lane (#509, reviewed and queued 11-19).
+
+**Look B, a look a slime** (the owner, 11-19 00:08Z: "multiple looks could
+eventually apply to different slimes"; 00:13Z: iterate, they need not all
+be right at once). `view::SlimeLook`, by the tier (`SlimeLook::of`, one
+call in `main.rs`'s `start`), sent to the view with a walker's pace
+(`set_slime_look`; the `V` struct's last row, two words spare). Planned:
+the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
+Trunk thick veined cords with its amber walls.
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
 time.
 
-- Raised walls and the Lure's rim (#477; `Reports/raised-walls-2026-11-18/`,
-  page https://claude.ai/artifact/EBAKa6mpRV9M31H5CoDiF1). Set slime
-  stands `SET_RISE` 4 above the sheet (`set_rise` in `prep`), so Enemy's
-  fort rings (#473) read as walls; no ring within half a ring of the
-  Lure's reach (`View::set_steer_reach`, one call in `main.rs`'s
-  `prepare_now`).
-- Then flung droplets in the slime's material (Look A3;
-  `Reports/droplets-2026-11-18/`, page
-  https://claude.ai/artifact/9vsJuSofq14P5jShjiWyqe): a shot's spray flies
-  as gold beads lit by the body's key light, each with a shadow, not chips
-  in a dark rim (`draw_specks`, `DROP_*` in `view.wgsl`). Zoom 6 is
-  quieter than the chips were; `DROP_GLOW` is the number if hits read too
-  quiet. Shots already fly as comets, so A2 is now only the hole.
+- The Sprawler's dashes (`SlimeLook::Threads`): each walker's speck is a
+  dash along the way it came over `STREAK_SECS` (0.1 s, 2.25 cells at its
+  22.5 cells a second; `speck_line`), and its film is laid along the same
+  dash holding one walker in all (`lay_streak`). A first cut weighed every
+  cell of the dash as a whole walker: the loose walkers turned into fat
+  slugs and planet 2's hub filled in as a thick body. Stills only, by the
+  owner's 11-19 ruling (pages for big looks only).
+- Baseline stills and clips of planets 1 to 3 at 60 s, zoom 6 and 12,
+  from main at 74aeb46, are on the film helper's branch
+  `claude/project-thread-5qskxs` (`Reports/look-b-baseline-2026-11-19/`;
+  not merged, for this lane's checking).
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
@@ -56,24 +131,31 @@ while Squad asked to keep it.
 
 **Next, in order.**
 
-1. The rest of Look A, from the ranked list in
-   `wiki/looks/art-direction.md`: a hit's hole and how it closes, a squad
-   of 40 you can count, no effect bigger than its damage.
-2. The Experiments tab's own look (still Engine's first tab, one row a
-   switch), and the experiments in the pause menu.
-3. Win and lose screens with the planet's numbers.
+1. Look B: the Drifter's and the Trunk's looks, then the thick body's veins
+   and flow; iterate the Sprawler's dashes on what the owner says in play.
+   The Trunk's film along each walker's way (the Sprawler's `lay_streak`)
+   was tried and not kept (`Reports/dead-ends.md`): veins need a flow
+   field, headings summed a fine cell.
+2. The rest of Look A: film the squad's spacing when Squad lands it; a
+   hit's lasting hole would be a slime rule (Enemy's) if the owner wants
+   one.
+3. A landing, a win and a loss that happen in the picture (D's next).
 4. Picks still open: the mini-boss colours; delete the fen moat A/B's
    unused side.
-5. Seen and left: at 200% on 1080 lines the goal's pill covers the top
-   bar's fourth number.
-6. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
+5. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
    their height), and their arcs show cell steps.
+
+**Helpers** (11-19, the owner offered them): a film runner thread (builds
+and films on its own machine; send it exact commands, it pushes the output
+to its branch and sends back the log lines asked for) and the Experiments
+builder (#509). To save tokens (owner, 11-19 04:17Z): look at crops at
+about a third of the size, one 2 x 2 sheet for motion, single log lines.
 
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's
 Provoke and Still (#448) and Enemy's amber set slime (#451), both fine to
 land. Owed from them to the look list: a stilled or provoked body has no
-look of its own (A5), and burning slabs draw as cell-sized squares at zoom
-12 (A6). Enemy's Trunk fort (#473): fine to land; its flat walls led to
+look of its own (A5, done), and burning slabs draw as cell-sized squares
+at zoom 12 (A6, checked: not so now). Enemy's Trunk fort (#473): fine to land; its flat walls led to
 the raised walls above.
 
 **Worth knowing.**
@@ -89,16 +171,12 @@ the raised walls above.
   frame for frame (`raw/make_page.py` in the lure report).
 - The bench for frame cost takes 60 to 90 s a run, and two runs of one
   build differ by 10 to 20% in every pass: take three runs a side, in turn.
-- Where a Mind status can be read for a look (Enemy, 11-18): not in the
-  look word (full) and not in `spec`. It is one word a walker slot in the
-  engine's `news` buffer at `mind_at() + k` (kind in the top three bits,
-  the step it ends in the low 29; valid only with `P.mind_on`), which the
-  view already binds, so `draw_specks` can tint a walker with one new
-  offset word passed as `set_crust` passes `setc_at`. A per-cell count
-  (the pattern is `setcount`) needs a pass from Enemy: ask, naming the
-  statuses.
-- The view's `V` struct has two spare words (`spare_a`, `spare_b`, the
-  old haze strengths).
+- A Mind status is read for the look from the engine's `news` (Enemy,
+  11-18): one word a walker slot at `mind_at() + k`, kind in the top three
+  bits, the step it ends in the low 29 (`View::set_minds`). A per-cell
+  count (the pattern is `setcount`) would need a pass from Enemy.
+- The view's `V` struct has two spare words, in its last row (since
+  11-19; `mind_at` and `mind_fade` took the old haze strengths' two).
 - The owner asked (11-18 03:05Z) whether any green should show in the
   flinch look, since he saw none, and said "Overall it is better". None
   is drawn; Direction recorded it as a question, not a ruling.

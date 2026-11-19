@@ -1219,6 +1219,38 @@ fn the_campaign_switches_do_what_they_say() {
     assert!(matches!(g.end, Some(End::SquadWiped(_))));
 }
 
+/// **A run is lost when its last soldier falls** (owner, 2026-11-18
+/// 15:56Z: he lost every soldier on planet 2 and they came back; "you
+/// should lose if all your soliders die"): with a run's rules, food in the
+/// bank for several soldiers and the reserve on, the round still ends at
+/// once, and no soldier comes back after.
+#[test]
+fn a_runs_round_ends_when_its_last_soldier_falls() {
+    let mut g = small(1);
+    crate::mould::run::Run::new(1).rules(&mut g.rules);
+    assert_eq!(g.rules.wipe_ends, 1.0, "a run turns it on");
+    g.rules.reserve = 10.0;
+    g.bank = 10.0 * g.rules.soldier_cost;
+    for s in g.soldiers.iter_mut() {
+        s.alive = false;
+    }
+    g.step();
+    assert!(matches!(g.end, Some(End::SquadWiped(_))), "{:?}", g.end);
+    assert!(!g.apply(Cmd::Buy) && g.alive() == 0, "a soldier was bought after the end");
+    for _ in 0..(g.rules.tps * 15) {
+        g.step();
+    }
+    assert_eq!(g.alive(), 0, "no recruit after the end");
+    // Free play keeps the old rule: the same bank buys on.
+    let mut g = small(1);
+    g.bank = 10.0 * g.rules.soldier_cost;
+    for s in g.soldiers.iter_mut() {
+        s.alive = false;
+    }
+    g.step();
+    assert!(g.end.is_none(), "{:?}", g.end);
+}
+
 /// No upkeep (owner, 2026-11-14: soldiers must not need feeding, 01:49Z;
 /// "There should be no maintenance costs in this game", 04:53Z): a squad
 /// standing idle for 20 s spends nothing and keeps its health, so the
@@ -1673,6 +1705,63 @@ fn a_squad_sent_somewhere_goes_at_the_pace_of_its_slowest() {
 }
 
 const STRAY_TEST: f32 = 12.0;
+
+/// The controlled squad fires by the fire mode the player gave it, and a
+/// defending soldier reads only the slime near it (owner 11-18 17:01Z: let
+/// go of the fire button among loose walkers and "the soldiers seem to
+/// shoot much slower or not all of them are shooting"). Before, the
+/// controlled squad was held to defend whatever its mode, and defend read
+/// the thickest block in the gun's whole reach, so a clump 20 cells off
+/// hid the walkers on the squad.
+#[test]
+fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
+    let mut g = squads(7);
+    g.apply(Cmd::Active(0));
+    let sc = g.s();
+    let k = g.members(0)[0];
+    // Away from the core, whose read looks the whole way (`check_core`).
+    let (x, y) = (g.soldiers[k].x, g.soldiers[k].y);
+    assert!((x - g.core.0).hypot(y - g.core.1) > 3.0 * g.rules.core_r * sc, "the larder is off the core");
+    let reach = g.gun_range(0) * sc;
+    // A direction with open ground out to the slime.
+    let u = (0..16)
+        .map(|i| (i as f32 * std::f32::consts::TAU / 16.0).sin_cos())
+        .find(|&(s, c)| g.clear_line((x, y), (x + c * 0.8 * reach, y + s * 0.8 * reach)))
+        .map(|(s, c)| (c, s))
+        .expect("open ground by the larder");
+    let far = (x + u.0 * 0.8 * reach, y + u.1 * 0.8 * reach);
+    let aim = |g: &mut Game<BigDish>, at: (f32, f32), stance: Stance| {
+        let s = &mut g.soldiers[k];
+        s.order = Order::Hold;
+        s.stance = stance;
+        s.touching = 0;
+        s.aim = Some(at);
+        s.dense = 10;
+    };
+    // Free fire: the thickest slime in reach, controlled or not.
+    aim(&mut g, far, Stance::Free);
+    assert_eq!(g.target(k), Some(far), "the controlled squad on free fire shoots slime in reach");
+    assert_eq!(g.sight(k), reach, "free fire reads the gun's reach");
+    // Hold fire holds.
+    aim(&mut g, far, Stance::HoldFire);
+    assert_eq!(g.target(k), None);
+    // Defend: reads only as far as it defends, and shoots what is there.
+    aim(&mut g, far, Stance::Defend);
+    assert!(g.target(k).is_none(), "defend holds at far slime");
+    let short = g.sight(k);
+    assert!(short < 0.5 * reach && short >= g.rules.defend * sc, "defend reads {short} of {reach}");
+    let edge = (x + u.0 * (g.rules.defend * sc + 1.0), y + u.1 * (g.rules.defend * sc + 1.0));
+    aim(&mut g, edge, Stance::Defend);
+    assert_eq!(g.target(k), Some(edge), "a walker at the edge of defend, read by its block's centre");
+    // Clearing a crystal or guarding, defend reads the whole reach again.
+    g.squads[0].guard = Some((x + 5.0 * sc, y));
+    assert_eq!(g.sight(k), reach, "guarding reads the reach");
+    g.squads[0].guard = None;
+    // Attack-move fires freely, the controlled squad too.
+    aim(&mut g, far, Stance::Defend);
+    g.soldiers[k].order = Order::Attack;
+    assert_eq!(g.target(k), Some(far), "attack-move shoots slime in reach");
+}
 
 #[test]
 fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster() {
@@ -3230,7 +3319,8 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
         }
         (g, top)
     };
-    let fast = RaidRules { first: 2.0, first_sd: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, size_sd: 0.0, ..RaidRules::default() };
+    // Streams (`march` off): the world's raid words are what this tests.
+    let fast = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, late: 1.0, size_sd: 0.0, march: false, ..RaidRules::default() };
     let (g, top) = play(fast, false, 14.0);
     eprintln!("raids: {:?}", g.raids.sent);
     assert!(g.raids.sent.len() >= 2, "a raid every 5 s: {}", g.raids.sent.len());
@@ -3265,7 +3355,7 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert!(!RaidRules::default().last_stand);
     // Random (owner 2026-11-16 01:48Z): each raid draws its gap and its
     // size from a normal distribution, within the floor and the bounds.
-    let spread = RaidRules { first: 2.0, first_sd: 1.0, min: 2.0, every: 4.0, every_sd: 2.0, size: 0.15, size_sd: 0.06, ..RaidRules::default() };
+    let spread = RaidRules { first: 2.0, first_sd: 1.0, early: 0.0, min: 2.0, every: 4.0, every_sd: 2.0, late: 1.0, size: 0.15, size_sd: 0.06, ..RaidRules::default() };
     let (g, _) = play(spread, false, 30.0);
     let r = &g.raids.sent;
     assert!(r.len() >= 4, "{} raids in 30 s", r.len());
@@ -3275,6 +3365,91 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert!(gaps.iter().all(|&a| a >= 2 * g.rules.tps as u64), "never under the floor: {gaps:?}");
     assert!(r.iter().any(|d| d.size != r[0].size), "the sizes vary");
     assert!(r.iter().all(|d| (spread.size_min..=spread.size_max).contains(&d.size)));
+}
+
+/// **The march** (`RaidRules::march`, 2026-11-18, the owner's play notes:
+/// a raid felt "like a bunch of individual walkers instead of a single
+/// slime unit"): a raid buds off as one held body, its walkers marked as
+/// one lump and the world holding no stream raid while it walks; its
+/// centre closes on the target; by the target, or at a soldier it meets
+/// on the way, it lets go and pours on as a raid of share 1, and its lump
+/// is free again; a mini-boss never forms on a march.
+#[test]
+fn a_raid_marches_as_one_body() {
+    let mut g = small(1);
+    g.rules.raid = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 1.0e4, every_sd: 0.0, late: 1.0, size_sd: 0.0, ..RaidRules::default() };
+    g.bank = 1.0e6;
+    let cs = g.world.crystals();
+    let home = g.core;
+    let far = (0..cs.len()).max_by(|&a, &b| (cs[a].0 .0 - home.0).hypot(cs[a].0 .1 - home.1).total_cmp(&(cs[b].0 .0 - home.0).hypot(cs[b].0 .1 - home.1))).unwrap();
+    assert!(g.build(Kind::Pump, cs[far].0), "a pump on the farthest crystal");
+    while g.raids.marching.is_empty() && g.time() < 10.0 {
+        g.step();
+    }
+    assert_eq!(g.raids.sent.len(), 1, "a raid went");
+    let (l, to) = (g.raids.marching[0].lump, g.raids.marching[0].to);
+    assert_eq!(g.world.p.raid_at, 0, "no stream while it marches");
+    let want = g.rules.raid.size * g.world.mass() as f32;
+    let mut first = None;
+    let mut gone = Vec::new();
+    while g.time() < 120.0 {
+        g.step();
+        let Some((centre, members, f)) = g.raids.marching.first().map(|m| (m.centre, m.members, m.first)) else { break };
+        if f > 0 {
+            first.get_or_insert(f);
+            gone.push((centre.0 - to.0).hypot(centre.1 - to.1));
+        }
+        // No mini-boss forms on it (its forming would take the march's
+        // walkers into its own lump).
+        if g.time() < 30.0 {
+            assert!(!g.form_boss(centre, 3.0, BossCause::Staged), "a boss on the march");
+        }
+        let marked = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(l)).count() as u32;
+        assert!(marked > 0 && marked >= members / 2, "{marked} marked of {members}");
+    }
+    let first = first.expect("it set off");
+    eprintln!("march: {first} members of {want:.0} wanted; to go {:?}", gone.iter().step_by(gone.len().max(10) / 10).collect::<Vec<_>>());
+    assert!(first as f32 >= 0.3 * want, "it took the raid's walkers: {first} of {want:.0}");
+    assert!(g.raids.marching.is_empty(), "it let go within two minutes");
+    assert!(gone.last().unwrap() < &(0.5 * gone[0]), "it closed on the target: {:?} to {:?}", gone[0], gone.last());
+    // It pours onto the target, or onto a soldier it met on the way (a
+    // squad in reach of the march, `time_march`).
+    let at = g.world.p.raid_to;
+    let (ax, ay) = ((at & 0xFFFF) as f32, (at >> 16) as f32);
+    let onto_target = at == raid_cell(to, (g.world.w, g.world.h));
+    let onto_squad = g.soldiers.iter().any(|s| s.alive && (s.x - ax).hypot(s.y - ay) < 4.0 * g.world.scale());
+    eprintln!("poured onto the target {onto_target}, onto the squad {onto_squad}");
+    assert!(g.world.p.raid_at > 0 && g.world.p.raid_share == 1.0 && (onto_target || onto_squad), "it poured onto the target or a soldier");
+    // The lumps' sums are a step behind.
+    g.step();
+    assert!(g.world.lumps()[l].is_none(), "its lump is free");
+}
+
+/// A march that gets no nearer its target (`RaidRules::march_stall`,
+/// 2026-11-18: one formed inside planet 1's rock ring stood there) lets go
+/// and streams to the target with the raid's own reach and share, so a raid
+/// always lands. With no pull it stands where it formed.
+#[test]
+fn a_stalled_march_streams_to_its_target() {
+    let mut g = small(1);
+    g.rules.raid = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 1.0e4, every_sd: 0.0, late: 1.0, size_sd: 0.0, march_pull: 0.0, march_stall: 5.0, ..RaidRules::default() };
+    g.bank = 1.0e6;
+    let cs = g.world.crystals();
+    let home = g.core;
+    let far = (0..cs.len()).max_by(|&a, &b| (cs[a].0 .0 - home.0).hypot(cs[a].0 .1 - home.1).total_cmp(&(cs[b].0 .0 - home.0).hypot(cs[b].0 .1 - home.1))).unwrap();
+    assert!(g.build(Kind::Pump, cs[far].0), "a pump on the farthest crystal");
+    while g.raids.marching.is_empty() && g.time() < 10.0 {
+        g.step();
+    }
+    assert_eq!(g.world.p.raid_at, 0, "it marches");
+    let (since, to) = (g.time(), g.raids.marching[0].to);
+    while !g.raids.marching.is_empty() && g.time() < since + 20.0 {
+        g.step();
+    }
+    let d = g.raids.sent[0];
+    eprintln!("let go after {:.1} s; raid {d:?}", g.time() - since);
+    assert!(g.raids.marching.is_empty() && g.time() - since >= 5.0 && g.time() - since < 7.0, "it let go at its stall: {:.1} s", g.time() - since);
+    assert!(g.world.p.raid_at > 0 && g.world.p.raid_share == d.share && g.world.p.raid_to == raid_cell(to, (g.world.w, g.world.h)), "it streams as the raid would have");
 }
 
 /// The raids' normal draw has the mean and spread asked for.
@@ -3320,12 +3495,19 @@ fn a_rendering_turret_pays_for_kills_in_its_range() {
 /// run (owner 04:58Z, "Chance increases with progression into the run").
 #[test]
 fn mini_boss_chances_rise_with_the_planet() {
-    let (a, b) = (BossRules::for_depth(1), BossRules::for_depth(8));
+    // None on planet 1 (the owner's play notes, 2026-11-18 15:56Z:
+    // "Mini-bosses also shouldn't show up in world one. that should be
+    // part of progression"): off as outside a run.
+    let one = BossRules::for_depth(1);
+    assert_eq!((one.every, one.cut), (0.0, 0.0), "none on planet 1");
+    let (a, b) = (BossRules::for_depth(2), BossRules::for_depth(8));
     assert!(a.every > b.every && a.cut < b.cut && a.first > b.first, "{a:?} {b:?}");
+    assert_eq!((a.every, a.cut), (150.0, 0.02), "planet 2 has the curve's first step");
+    assert!((b.every - 45.0).abs() < 1e-3 && (b.cut - 0.1).abs() < 1e-6, "planet 8 as before: {b:?}");
     assert_eq!((a.most, BossRules::for_depth(4).most), (1, 2));
     assert_eq!(Rules::default().boss.every, 0.0, "off outside a run");
     assert_eq!(Rules::default().boss.cut, 0.0);
-    for d in 1..8 {
+    for d in 2..8 {
         let (p, q) = (BossRules::for_depth(d), BossRules::for_depth(d + 1));
         assert!(q.every <= p.every && q.cut >= p.cut && q.grade_lo >= p.grade_lo && q.grade_hi >= p.grade_hi, "planet {d}");
     }

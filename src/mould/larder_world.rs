@@ -51,7 +51,6 @@
 mod buildings;
 mod world;
 mod raids;
-mod lab;
 mod bosses;
 mod rules;
 mod paths;
@@ -78,7 +77,7 @@ pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
 pub use doors::WALL_LEVELS;
-pub use raids::{Raid, RaidAim, RaidRules, Raids};
+pub use raids::{LureMark, March, Raid, RaidAim, RaidRules, Raids};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
@@ -359,6 +358,9 @@ pub struct Game<W: World> {
     /// tick that was (`Game::mark_bulwark`).
     pub bulwark_maps: Vec<bool>,
     pub bulwark_staled: u64,
+    /// The crystals the slime holds now, each one's ring in the fort's
+    /// mask (`Rules::fort`, `Game::time_fort`). Empty until the first look.
+    pub fort_held: Vec<bool>,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
     pub buildings: Vec<Building>,
@@ -515,6 +517,9 @@ pub struct Game<W: World> {
     charge_was: f64,
     /// Raids (`Rules::raid`, `raids.rs`): the meter and every raid sent.
     pub raids: Raids,
+    /// Lures with no building (`raids::LureMark`; the lure's field,
+    /// `time_lure_paths`), each until its tick.
+    pub lure_marks: Vec<LureMark>,
     /// Mini-bosses (`Rules::boss`, `bosses.rs`): the live ones and the ended.
     pub bosses: Bosses,
     /// Food the kill box has paid (`BuildRules::render_food`).
@@ -599,6 +604,7 @@ impl<W: World> Game<W> {
             bulwark: Vec::new(),
             bulwark_maps: Vec::new(),
             bulwark_staled: 0,
+            fort_held: Vec::new(),
             buildings: Vec::new(),
             pumped: 0.0,
             lost_buildings: 0,
@@ -662,6 +668,7 @@ impl<W: World> Game<W> {
             surge_timed: false,
             charge_was: 0.0,
             raids: Raids::new(seed),
+            lure_marks: Vec::new(),
             bosses: Bosses::new(seed),
             rendered: 0.0,
         };

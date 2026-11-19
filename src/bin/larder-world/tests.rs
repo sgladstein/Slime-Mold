@@ -243,7 +243,9 @@ fn a_mission_shows_its_goal_and_its_end() {
     assert!(matches!(v.cause, Cause::Cap | Cause::Stuck), "{v:?}");
     assert_eq!(v.stars, 0);
     app.prepare();
-    assert_eq!(app.model(None, None).end.map(|e| e.0).as_deref(), Some("Mission lost"));
+    // The end screen says the mission is lost (since 11-18 by its cause
+    // in the title, in the loss's colour).
+    assert!(app.model(None, None).end.is_some_and(|e| e.won == Some(false) && e.stars == Some(0)));
 }
 
 /// A GPU for the smoke tests, which skip without one, except in CI:
@@ -923,6 +925,14 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
     assert!(!turret.ready && turret.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
+    // The lure is back on a run's build card (owner's card, 2026-11-18
+    // 03:03Z), free from the first planet with no unlock (Direction,
+    // 08:38Z); the siren and the outpost stay out, so the switch names
+    // lures alone.
+    let lure = m.commands.iter().find(|c| c.id == LURE).unwrap();
+    assert!(!lure.locked, "{:?}", lure.why_not);
+    assert_eq!(m.commands.iter().find(|c| c.id == LURES).map(|c| c.name.as_str()), Some("Lures on/off"));
+    assert!(m.commands.iter().all(|c| c.id != SIREN && c.id != OUTPOST));
     app.build_page = false;
     // A won level: the end screen carries on to the shop.
     let win = Verdict { cause: Cause::Goal, at: 300.0, stars: 2, best: 1.0 };
@@ -987,6 +997,68 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
 /// a rack gun swapped in and Back arm the squad with it in the same round,
 /// and Restart keeps it. Leave the range goes to the main page, and the
 /// gun is still built the next time.
+/// **A planet won by its last walker carries the run on** (the owner's
+/// play, 2026-11-18 17:20Z: winning planet 1 showed only "Play again" and
+/// "Main menu"). Since WIN_SHARE is 0 (#487) a win is the Game's own end
+/// (`End::MouldWiped`), which a step can reach before the mission looks;
+/// the window's next step must still give the mission its verdict, so the
+/// end screen carries on to the shop. The same for a wiped squad (#488):
+/// the run ends rather than offering "Play again".
+#[test]
+fn a_run_planet_ended_by_the_game_carries_on() {
+    use slime_mould::mould::larder::End;
+    let Some((device, queue)) = gpu() else { return };
+    for (end, label) in [(End::MouldWiped(200.0), "On to the shop"), (End::SquadWiped(200.0), "End the run")] {
+        let mut a = run_base();
+        a.run = Some(Run::new(1));
+        let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+        app.prepare();
+        for _ in 0..10 {
+            app.step(0.1);
+        }
+        app.settle();
+        app.game.as_mut().unwrap().end = Some(end);
+        app.step(0.1);
+        let v = app.mission.as_ref().unwrap().verdict;
+        assert!(v.is_some(), "{end:?}: the mission gave no verdict");
+        assert_eq!(v.unwrap().stars > 0, matches!(end, End::MouldWiped(_)), "{end:?}: {v:?}");
+        assert_eq!(app.model(None, None).carry_on.as_deref(), Some(label), "{end:?}");
+    }
+}
+
+/// The play log names the loadout (coordinator, 2026-11-18: the logs did
+/// not say which cards Scott's gun and turrets carried): the head's `gun=`,
+/// `turrets=` and `bought=`, and a `gun t=..` line when the gun's cards
+/// change mid-round.
+#[test]
+fn the_play_log_names_the_gun_and_turret_cards() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut a = run_base();
+    let mut r = Run::new(1);
+    r.owned[0] = 2;
+    a.run = Some(r);
+    let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+    app.prepare();
+    let keys: Vec<(&str, String)> = app.log_loadout();
+    let first = slime_mould::mould::run::ITEMS[0].key;
+    assert_eq!(keys[..2], [("gun", rounds::name(&app.rounds.round)), ("turrets", "none".to_string())]);
+    // A new run already owns its free items (the walls), so only ours is checked.
+    assert!(keys[2].0 == "bought" && keys[2].1.split('+').any(|w| w == format!("{first}2")), "{keys:?}");
+    let dir = std::env::temp_dir().join(format!("playlog-loadout-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("log.txt");
+    std::fs::write(&path, "").unwrap();
+    app.log_path = Some(path.to_string_lossy().into_owned());
+    app.log_gun = rounds::name(&app.rounds.round);
+    app.rounds.round = rounds::parse("blast+wide").unwrap();
+    for _ in 0..30 {
+        app.step(0.1);
+    }
+    let log = std::fs::read_to_string(&path).unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+    assert_eq!(log.lines().filter(|l| l.starts_with("gun t=") && l.ends_with(" blast+wide")).count(), 1, "{log}");
+}
+
 #[test]
 fn the_gun_range_builds_a_gun_and_plays_it() {
     use slime_mould::mould::guns::GunKind;
@@ -1053,6 +1125,43 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
     // Leave from the menu's armory: the main page.
     app.menu_event(StartEvent::EndRun).unwrap();
     assert_eq!(app.menu.as_ref().unwrap().page, Page::Main);
+}
+
+/// **The run bot plays planet 1 to a verdict** (the Engine and tools lane's
+/// job 4: the run bot in CI in place of smoke rounds of a fixed length).
+/// Run seed 1's planet 1 at the window's own scale, with the `bot` hand,
+/// through the window's own steps: the planet reaches a verdict (no soft
+/// lock: `run_bot` gives up a minute past the clock) and does not end in
+/// under a minute. A win is
+/// not asserted, so a change to the balance never turns CI red (the
+/// owner's "balance never blocks"); the bot's line says how it went. On
+/// 2026-11-18 it won at 2:48 with 2 stars in 78 s on the cloud's
+/// software Vulkan. Planets 2 and 3 cost minutes each, so they run after
+/// each landing instead (`.github/workflows/run-bot.yml`).
+#[test]
+fn the_window_plays_planet_1_with_the_run_bot() {
+    let Some((device, queue)) = smoke_gpu() else { return };
+    let base = Args { seed: 1, scale: 2, walkers: 5000, ..Default::default() };
+    let t0 = Instant::now();
+    let played = runbot::run_bot(base, 1, 1, &device, &queue).unwrap();
+    let p = &played[0];
+    eprintln!("run bot: {} ({:.0} s)", p.line(), t0.elapsed().as_secs_f32());
+    assert_eq!(played.len(), 1);
+    assert!(!p.why.contains("soft lock"), "{}", p.line());
+    assert!(p.secs >= 60.0, "planet 1 ended in under a minute: {}", p.line());
+}
+
+/// The run bot's shop buys the card planet 2 asks for (Tinder, for the
+/// Sprawler) and spends the rest on the squad.
+#[test]
+fn the_run_bots_shop_spends_its_points() {
+    let mut r = Run::new(1);
+    r.restock();
+    r.won(2);
+    let points = r.points;
+    let bought = runbot::shop(&mut r);
+    assert!(bought.iter().any(|b| b.starts_with("Tinder")), "{bought:?}");
+    assert!(bought.len() >= 2 && r.points < points, "{bought:?}, {} of {points} points left", r.points);
 }
 
 /// **A run's level does not panic the window's loop** (the smoke test's
@@ -1388,6 +1497,61 @@ fn n_on_a_seeded_planet_goes_on_to_the_next_seed() {
     assert_eq!(next_planet("fork"), None);
 }
 
+/// **The menu says what the build holds** (`menu::build_page`; the plan
+/// of 2026-11-17: the build number, what is new since the build last
+/// played, the things to try). A PC that has not played sees every line
+/// as new; one that played an older list sees the lines added since
+/// first, marked, and the last build named; a tick on the page is saved
+/// and read back.
+#[test]
+fn the_menu_says_what_the_build_holds() {
+    use slime_mould::build::news::{self, Memory};
+    use slime_mould::world::start::StartEvent;
+    let all = news::news();
+    let fresh = build_page(&Memory::unsaved());
+    assert_eq!(fresh.name, slime_mould::build::build().short());
+    assert_eq!(fresh.long, slime_mould::build::build().long());
+    assert_eq!(fresh.news.len(), all.len());
+    assert!(fresh.last.is_none() && fresh.news.iter().all(|l| l.new) && fresh.to_try.iter().all(|t| !t.tried));
+    assert!(fresh.news.windows(2).all(|w| w[0].date >= w[1].date), "the newest day first");
+    assert_eq!(fresh.to_try.len(), news::to_try().len());
+    // The menu carries it, and its main page has the row.
+    let menu = start_menu(&Args::default());
+    assert_eq!(menu.build.as_ref().map(|b| b.news.len()), Some(all.len()));
+    // A PC whose last round was on a list that ended three lines ago.
+    let p = std::env::temp_dir().join(format!("larder-build-page-{}/settings.txt", std::process::id()));
+    let _ = std::fs::remove_file(&p);
+    let old: Vec<String> = all.iter().skip(3).map(|n| format!("{:08x}", n.id)).collect();
+    settings::set_at(&p, "news_seen", &old.join(",")).unwrap();
+    settings::set_at(&p, "last_build", "3098:abc1234:2026-11-16").unwrap();
+    let page = build_page(&Memory::load_from(&p));
+    assert_eq!(page.last.as_deref(), Some("build 3098, 2026-11-16"));
+    assert_eq!(page.news.iter().filter(|l| l.new).count(), 3);
+    assert!(page.news[..3].iter().all(|l| l.new) && page.news[3..].iter().all(|l| !l.new), "the new lines come first");
+    let mut new: Vec<&str> = page.news[..3].iter().map(|l| l.sees.as_str()).collect();
+    let mut want: Vec<&str> = all[..3].iter().map(|n| n.sees).collect();
+    new.sort();
+    want.sort();
+    assert_eq!(new, want, "the three the old list did not have");
+    // A build with no number is named by its commit.
+    settings::set_at(&p, "last_build", "0:abc1234:2026-11-16").unwrap();
+    assert_eq!(build_page(&Memory::load_from(&p)).last.as_deref(), Some("build abc1234, 2026-11-16"));
+    // A tick on the page reaches this PC's memory and its file, and an
+    // untick takes it off; it starts no round.
+    if let Some(t) = news::to_try().first() {
+        let mut app = App::new(Args::default());
+        app.memory = Memory::load_from(&p);
+        assert!(!app.menu_event(StartEvent::Tried(0, true)).unwrap());
+        assert!(build_page(&app.memory).to_try[0].tried && Memory::load_from(&p).is_tried(t));
+        assert!(app.game.is_none(), "a tick started a round");
+        app.menu_event(StartEvent::Tried(0, false)).unwrap();
+        assert!(!Memory::load_from(&p).is_tried(t));
+        // (A tick past the list's end is nothing.)
+        app.menu_event(StartEvent::Tried(99, true)).unwrap();
+    }
+    let _ = std::fs::remove_dir_all(p.parent().unwrap());
+}
+
 /// The menus' own lists on one screen (owner 11-15 17:31Z: "Having to
 /// scroll is horrible. That's not professional."): every Options tab and
 /// the campaign in one page and the key list in three at most, nothing
@@ -1405,7 +1569,7 @@ fn the_menus_real_lists_fit_one_screen() {
             }
             t
         });
-        assert_eq!(tabs, ["Game", "Planet", "The mould"]);
+        assert_eq!(tabs, ["Game", "Planet", "The mould", "Experiments"]);
         for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
             let at = format!("{screen:?} at {user}, squads {squads}");
             let mut m = start_menu(&base);
@@ -1420,7 +1584,13 @@ fn the_menus_real_lists_fit_one_screen() {
             m.show(Page::Options);
             for tab in &tabs {
                 draw(&mut m);
-                assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the {tab} tab takes {} pages (scrolls: {})", m.sheets(), m.scrolls());
+                // The Experiments tab (11-17) has a row a declared switch:
+                // 14 on the day it landed (ROADMAP's table carried over),
+                // which page like the key list at the big sizes, never
+                // scroll. The plan's rule is three switches at most
+                // (`build::switches::MOST_OFF`), which is one page.
+                let most = if tab == "Experiments" { 3 } else { 1 };
+                assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {tab} tab takes {} pages (scrolls: {})", m.sheets(), m.scrolls());
                 m.key(KeyCode::Tab, true);
             }
             assert_eq!(m.page, Page::Keys, "{at}: Tab after the last options tab opens the keys");
@@ -1435,6 +1605,15 @@ fn the_menus_real_lists_fit_one_screen() {
             m.show(Page::Missions);
             draw(&mut m);
             assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the campaign takes {} pages", m.sheets());
+            // What the build holds (11-18): the game's own list of what
+            // is new pages and never scrolls, and its five things to try
+            // take two pages at most (at 200% on 720 lines).
+            m.show(Page::News);
+            draw(&mut m);
+            assert!(!m.scrolls(), "{at}: what is new scrolls");
+            m.open_news_tab(1);
+            draw(&mut m);
+            assert!(m.sheets() <= 2 && !m.scrolls(), "{at}: the things to try take {} pages", m.sheets());
             // The run's shop three planets in (as `menu=shop-mid` films it)
             // and the gun range's armory (Shop B, 11-15): every tab whole on
             // one screen, but the armory's eight guns, which may take two

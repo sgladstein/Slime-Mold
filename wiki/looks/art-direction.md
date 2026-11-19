@@ -11,6 +11,7 @@ sources:
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/dark-ground-2026-11-14/README.md
   - Reports/droplets-2026-11-18/README.md
+  - Reports/fallen-soldier-2026-11-18/README.md
   - Reports/flinch-look-2026-11-17/README.md
   - Reports/ground-edges-2026-11-14/README.md
   - Reports/levelgen-review-2026-11-14/README.md
@@ -20,6 +21,7 @@ sources:
   - Reports/river-look-2026-11-14/README.md
   - Reports/sim-use-2026-11-17/e2b-look.md
   - Reports/soil-materials-2026-11-14/README.md
+  - Reports/squad-heads-2026-11-18/README.md
   - Reports/value-order-2026-11-15/README.md
 code:
   - LumpLook
@@ -35,10 +37,9 @@ light on dark ground**. The slime is the brightest, warmest, most detailed
 thing on screen; the ground is dark and quiet; hard shapes (rock, walls,
 crystals) are crisp; your units are high-contrast and countable; light
 (muzzle, impact, crystal charge) only ever shows something the simulation
-did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed, and the ground is dark and cool since #247; what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
-Since 2026-11-17 the Look and interface lane holds this guide and the list
-under *Look jobs, ranked*, in the owner's order: the fight round the squad,
-then the slime, planets and terrain, menus and screens.
+did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed and the ground dark (#247); what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
+Since 2026-11-17 the Look and interface lane holds this guide and the
+ranked list of look jobs at its end, in the owner's order.
 
 ## The rules
 
@@ -120,33 +121,32 @@ then the slime, planets and terrain, menus and screens.
 
 - 2026-11-14 01:49Z: "Graphics need a big improvement. The crystals are pixelated. The slime looks very blurry/out of focus. The flashes of chaos bullets are really bad."
 - 2026-11-14 01:50Z: "The bullets shouldn't just be flashy effects. Research how noita does their wand animations."
-- 2026-11-14 02:24Z: "I want another thread to review all graphics in general and mange the current graphics work and start new work where it sees issues. We need to polish this game up"
+- 2026-11-14 02:24Z: "I want another thread to review all graphics ... We need to polish this game up"
 - 2026-11-17 17:39Z: "we should explore all your suggestions, priority in the order that you listed A->B->C->D"
+- 2026-11-19 00:08Z: "multiple looks could eventually apply to different slimes"
 
 ## Look jobs, ranked
 
-In the owner's order. A is Milestone 1's look test (`NOW.md`, exit test 2);
-B starts once A passes his eye.
+In the owner's order; A is Milestone 1's look test (`NOW.md`, exit test 2).
 
 **A. The fight round the squad**
 
-1. Done: the flinch on the slime alone (11-17, [flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings (11-18, [lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart by value (11-18, [settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); flung droplets in the slime's material (11-18, [droplets](../../Reports/droplets-2026-11-18/README.md)).
-2. A hit is the slime's own reaction: the hole and how it closes. (A shot already flies as a bright comet, 11-18 films.)
-3. A squad of 40 you can count (one pile today), with Squad and arsenal.
-4. No effect bigger than its damage: check muzzle light, hit light, crater ember.
-5. A Mind status (blind, sour, spin, provoke, still) reads on the slime it holds, not only as a rose flash.
-6. Fire on slime and on set slime with no cell-sized squares at zoom 12.
+1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
+2. A hit is the slime's own reaction: the hole and how it closes (shots fly as comets).
+3. Done (11-18): a squad countable by its heads ([heads](../../Reports/squad-heads-2026-11-18/README.md)).
+4. Done (11-18): no light past its damage; biting slime crimson ([bite](../../Reports/biting-slime-2026-11-18/README.md)).
+5. Done (11-18): status slime glows rose ([mind](../../Reports/mind-status-2026-11-18/README.md)).
+6. Checked (11-18): fire at zoom 12 has no cell steps.
 
-**B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.
+**B. The slime itself**, a look a slime (owner, 11-19): Sprawler dashes (done, `SlimeLook`); veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; the origin's look once Enemy builds it.
 
 **C. Planets and terrain**: stronger grounding (faint shadows at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
 
-**D. Menus, shop and screens**: win and lose screens with the planet's numbers first; a landing, a win and a loss that happen in the picture; then the shop and the menus.
+**D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture; then the shop and the menus.
 
-Also open: the 1070 cost of the new looks (one batch); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
+Also open: the 1070 cost of the new looks (one batch); the first review's open issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
 ## Sources
 
 - [Art review 2026-11-14](../../Reports/art-review-2026-11-14/README.md).
 - [Planet art review 2026-11-14](../../Reports/levelgen-review-2026-11-14/README.md).
-- [Flinch look 2026-11-17](../../Reports/flinch-look-2026-11-17/README.md).

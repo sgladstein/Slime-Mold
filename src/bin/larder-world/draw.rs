@@ -3,6 +3,7 @@
 //! unchanged (C9, 2026-11-14).
 
 use super::*;
+use slime_mould::world::ui::Ending;
 
 /// The look's ground field from the game's world: rock, wet and agar from
 /// the engine's CPU mirror; crystals from its own cells (`pile_of`, so
@@ -97,31 +98,83 @@ pub(super) fn live_code(g: &Game<GpuWorld>, depth: &[u8], i: usize, old: u32, ch
     base | (depth.get(i).copied().unwrap_or(0) as u32) << 16 | ((d.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4 | (old & look::FAR)
 }
 
-pub(super) fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
-    let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
-    let title = match end {
-        End::MouldWiped(t) => format!("The mould is wiped out at {}", clock(t)),
-        End::SquadWiped(t) => format!("The squad is lost at {}", clock(t)),
-        End::Overrun(t) => format!("The mould overran the larder at {}", clock(t)),
-        End::Cap(s) if s > 0.5 => "Time: you took more of the crystals than the mould".to_string(),
-        End::Cap(s) if s < 0.5 => "Time: the mould took more of the crystals".to_string(),
-        End::Cap(_) => "Time: an even race".to_string(),
+/// A round's end, not a mission's (the sandbox): what ended it in the
+/// title, the round's numbers, and the score. `place` is the map.
+pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, place: String) -> Ending {
+    let (title, won, at) = match end {
+        End::MouldWiped(t) => ("The mould is wiped out", Some(true), t),
+        End::SquadWiped(t) => ("The squad is lost", Some(false), t),
+        End::Overrun(t) => ("The mould overran the larder", Some(false), t),
+        End::Cap(s) if s > 0.5 => ("Time: you took more of the crystals", Some(true), g.time()),
+        End::Cap(s) if s < 0.5 => ("Time: the mould took more of the crystals", Some(false), g.time()),
+        End::Cap(_) => ("Time: an even race", None, g.time()),
     };
     let mut lines = Vec::new();
     if let End::Cap(s) = end {
-        let m = g.mould as f32 / g.start_mould.max(1) as f32;
-        lines.push(format!("You took {:.0}% of the charge gone from the crystals; the mould is {} walkers, {m:.1} times its start", s * 100.0, thousands(g.mould)));
+        lines.push(format!("You took {:.0}% of the charge gone from the crystals", s * 100.0));
     }
-    lines.push(summary(g));
     lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
-    (title, lines)
+    Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines }
 }
 
-/// A mission's end: stars and the cause in the title, then what happened.
-pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> (String, Vec<String>) {
+/// A mission's end: the cause in the title (stars when won), the round's
+/// numbers, and how it ended. A run's planet adds its own (`App::model`).
+pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
     let v = tr.verdict.expect("a verdict");
-    let stars = if v.stars == 0 { "Mission lost".to_string() } else { format!("{}: {}", tr.mission.name, "*".repeat(v.stars as usize)) };
-    (stars, vec![tr.cause_line(), summary(g)])
+    let title = if v.stars > 0 {
+        "Mission won".to_string()
+    } else {
+        use slime_mould::mould::campaign::Cause;
+        match v.cause {
+            Cause::SquadWiped => "The squad is lost",
+            Cause::Overrun => "The slime took the larder",
+            Cause::Stuck => "Out of food",
+            Cause::MouldWiped => "The slime is gone, the goal missed",
+            Cause::Cap | Cause::Goal => "Out of time",
+        }
+        .to_string()
+    };
+    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()] }
+}
+
+/// The end screen's numbers (Look and interface, 2026-11-18): how long
+/// the round ran, the walkers killed, the shots and kills a shot, the
+/// soldiers standing and lost, the food harvested, and the slime left
+/// against its peak. Before they were one grey line, cut off at 100%.
+fn end_tiles(g: &Game<GpuWorld>, at: f32) -> Vec<(String, String)> {
+    let lost = g.soldiers.iter().filter(|s| !s.alive).count();
+    let shots = if g.shots > 0 { format!("shots, {:.1} kills each", g.killed as f32 / g.shots as f32) } else { "shots".into() };
+    vec![
+        (format!("{}:{:02}", at as u32 / 60, at as u32 % 60), "played".into()),
+        (grouped(g.killed as usize), "walkers killed".into()),
+        (grouped(g.shots as usize), shots),
+        (format!("{}", g.alive()), if lost == 0 { "soldiers standing, none lost".into() } else { format!("soldiers standing, {lost} lost") }),
+        (grouped(g.harvested.round() as usize), "food harvested".into()),
+        (format!("{} of {}", walkers(g.mould), walkers(g.peak.max(g.mould))), "slime left, of its peak".into()),
+    ]
+}
+
+/// Walkers as the top bar counts them from 10,000 ("42.3k"), else whole
+/// ("1,558").
+fn walkers(n: usize) -> String {
+    if n >= 10_000 {
+        thousands(n)
+    } else {
+        grouped(n)
+    }
+}
+
+/// A count with its thousands set off ("12,630").
+fn grouped(n: usize) -> String {
+    let d = n.to_string();
+    let mut out = String::new();
+    for (i, ch) in d.chars().enumerate() {
+        if i > 0 && (d.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(ch);
+    }
+    out
 }
 
 pub(super) fn summary(g: &Game<GpuWorld>) -> String {
@@ -849,6 +902,24 @@ impl App {
             // casts, so a payload squad lit the whole front each volley.
             self.lights.push(Light { at, reach: p.burst.r * sc, lift: 4.0, colour: look.light, strength: f * f * (1.0 + (p.killed as f32 / 200.0).min(1.0) + 0.5 * thrown) });
         }
+        // A burning flare (`Card::Flare`, `Rounds::burning`) is an ember
+        // where it burns and a hot red light round it, for as long as it
+        // burns, guttering out over its last `FLARE_GUTTER`: game state,
+        // not a painted pulse. The light reaches half as far as the alarm,
+        // so it is never bigger than what the flare does (the owner's rule
+        // above) and marks the flare more than it washes the ground. Until
+        // 2026-11-17 a flare's only sign was the alarm field's haze on the
+        // ground it lay on; the view now shows the alarm on slime alone
+        // (`view.wgsl`, `flush_at`), and a flare's strike has no radius for
+        // the burst light above, so one cast onto bare ground to draw a
+        // Swarmer would have shown nothing.
+        let flare = card_look(Some(rounds::Card::Flare));
+        for (at, reach, left) in self.rounds.burning(t) {
+            let f = (left as f32 / tps / FLARE_GUTTER).min(1.0);
+            let at = (at.0 * sc, at.1 * sc);
+            self.marks.streak(at, at, (0.3 * sc * zoom).clamp(1.5, 6.0), [flare.glow[0], flare.glow[1], flare.glow[2], (255.0 * f) as u8], flare.core);
+            self.lights.push(Light { at, reach: 0.5 * reach * sc, lift: 3.0, colour: flare.light, strength: FLARE_LIGHT * f });
+        }
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
         // Once the drawn bullet gets there (`Tracer::delay`), white-hot for
@@ -888,12 +959,19 @@ impl App {
                 let tip = muzzle(drawn_at(s, l, body_r), l.facing, body_r);
                 self.lights.push(Light { at: tip, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
             }
-            // A bite: a brief hot light on the side the slime bit from
-            // (`step_notes`, from the real damage).
-            if let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flinch > 0.0) {
-                let f = l.flinch / FLINCH;
-                let at = (s.x + l.bite.cos() * g.rules.touch * sc, s.y + l.bite.sin() * g.rules.touch * sc);
-                self.lights.push(Light { at, reach: 3.5 * sc, lift: 2.0, colour: [255.0, 120.0, 70.0], strength: 1.1 * f });
+            // The slime biting it (the owner, 2026-11-18 18:04Z and
+            // 18:08Z: "it just looks like more of the same slime"): while
+            // any walker is within its touch (`Soldier::touching`, the
+            // walkers that bite it, `squad::read`), that disc, whose slime
+            // the view draws in its own crimson (`Light::bite`). Until
+            // 11-18 a bite was an orange light on the bitten side, 3.5 dish
+            // cells across the radius (2.3 touches; cut to the touch in
+            // #498 that day), on gold slime: it read as more slime, and lit
+            // a wader's squad in an orange wash.
+            // It throbs with each flinch (every `FLINCH_HP` of damage).
+            if s.alive && s.touching > 0 {
+                let f = self.looks.get(k).map_or(0.0, |l| l.flinch / FLINCH);
+                self.lights.push(Light::bite((s.x, s.y), g.rules.touch * sc, 0.75 + 0.25 * f));
             }
         }
         // A lodged cast (delay, thick) is an ember where it waits, its light
@@ -922,9 +1000,25 @@ impl App {
             let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
             let at = if s.alive { drawn_at(s, &l, r) } else { (s.x, s.y) };
             let bite = if s.alive { l.flinch / FLINCH } else { 0.0 };
+            // The fallen lie as they fell, in a pool of blood that spreads
+            // over `POOL_GROW` (the owner's playtest, 2026-11-18 16:12Z).
+            if !s.alive {
+                self.marks.fallen(at, r, l.facing, team_colour(0), (l.fallen / POOL_GROW).min(1.0), k as u32 * 97 + 13);
+                continue;
+            }
             // No sprite flash: the muzzle flash is its own mark, drawn
             // above as light (gun look, 2026-11-15).
             self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
+        }
+        // Every living soldier's head again, above every body, so a packed
+        // squad shows each one (Look A3, a squad of 40 you can count: at
+        // planet 1's first crystal 35 soldiers stood 3.3 fine cells from
+        // their nearest, under half a figure across, and later figures'
+        // shoulders hid earlier ones' heads).
+        for (k, s) in g.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+            let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
+            let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
+            self.marks.soldier_head(drawn_at(s, &l, r), r, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
         }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {
@@ -971,6 +1065,12 @@ impl App {
             // The gun range has no time limit to show.
             clock: if self.args.range.is_some() { clock(t) } else { format!("{} / {}", clock(t), clock(r.cap)) },
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
+            // The switches this round plays off their default (the play
+            // log's `switches=` says the same).
+            trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).collect(),
+            // Every switch, for the pause menu's Experiments page.
+            experiments: experiments::rows(&self.args.keys, &self.exp_next),
+            most_off: slime_mould::build::switches::MOST_OFF,
             objective: Some(if let Some(tr) = &self.mission {
                 tr.progress_line()
             } else if self.args.range.is_some() {
@@ -1259,7 +1359,7 @@ impl App {
                     about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Draw it along a wall to cut it in (at once, as thick as the wall), or across a gap to build it. Costs as a wall that long.".into(),
                     ..Command::new(DOOR, (1, 3), Icon::Wall, "Door", KeyCode::KeyG)
                 },
-                place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
+                place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
                 place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
                 place(OUTPOST, (1, 1), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
@@ -1310,6 +1410,13 @@ impl App {
         if let Some(run) = &self.args.run {
             cmds.retain(|c| !run_hidden(c.id));
             for c in &mut cmds {
+                // A run has no sirens (`run_hidden`): the switch is the
+                // lures' alone.
+                if c.id == LURES {
+                    c.name = "Lures on/off".into();
+                    c.about = "Switch every lure on, or every one off if all are on.".into();
+                    c.why_not = Some("No lures".into());
+                }
                 if run_lock(c.id).is_some_and(|k| !run.has(k)) {
                     c.ready = false;
                     c.locked = true;
@@ -1418,19 +1525,30 @@ impl App {
             _ => None,
         };
         if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
-            m.end = Some(mission_screen(tr, g));
-            if let (Some(r), Some(v), Some(end)) = (&self.args.run, tr.verdict, m.end.as_mut()) {
-                let last = r.depth >= slime_mould::mould::run::PLANETS;
+            let mut end = mission_screen(tr, g);
+            if let (Some(r), Some(v)) = (&self.args.run, tr.verdict) {
+                use slime_mould::mould::run;
+                let last = r.depth >= run::PLANETS;
+                // A run's planet: which, its slime and what that slime
+                // does to you (`run::does_to_you`, the line the landing
+                // alert says), so the end names what happened to you.
+                let tier = r.level().tier;
+                end.place = format!("Planet {} of {} · {} · {}", r.depth, run::PLANETS, r.planet().name, title_case(tier.name()));
+                end.says = run::does_to_you(tier).says.to_string();
+                if v.stars > 0 {
+                    end.title = if last { "The home world is free".into() } else { format!("Planet {} freed", r.depth) };
+                }
                 let (label, line) = match (v.stars > 0, last) {
                     (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
-                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", slime_mould::mould::run::reward(r.depth, v.stars), r.points + slime_mould::mould::run::reward(r.depth, v.stars))),
+                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", run::reward(r.depth, v.stars), r.points + run::reward(r.depth, v.stars))),
                     (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
                 };
-                end.1.insert(1, line);
+                end.lines.push(line);
                 m.carry_on = Some(label.into());
             }
+            m.end = Some(end);
         } else if let Some(end) = g.end {
-            m.end = Some(end_screen(end, g));
+            m.end = Some(end_screen(end, g, map_title(&self.name, self.args.seed)));
         }
         m.help = if self.sq.is_some() {
             m.help_base = Some(squad_help());
@@ -1658,13 +1776,17 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Seek => (Icon::Seek, CardKind::Flight, "Bullets that just miss strike slime beside them.".into()),
         // The shove cards (owner 2026-11-16 05:11Z: "corral and push the
         // slime onto areas. Into a kill zone").
-        C::Heave => (Icon::Heave, CardKind::Modifier, format!("Its hit shoves slime back, {:.1}x farther a card.", r.heave)),
-        C::Corral => (Icon::Corral, CardKind::Modifier, "Its hit shoves slime toward your nearest turret.".into()),
+        // One card since 2026-11-17 (Heave and Corral merged).
+        C::Heave => (Icon::Heave, CardKind::Modifier, format!("Shoves slime onto your nearest turret or back, {:.1}x a card.", r.heave)),
         C::Pull => (Icon::Pull, CardKind::Modifier, "Its hit drags slime toward the gun.".into()),
         // The Mind bullets (2026-11-16, step D): a status, no kill.
         C::Blind => (Icon::Blind, CardKind::Payload, format!("Slime within {:.0} cells is blind for {:.0} s: it walks straight on.", r.mind_r, r.mind_secs)),
         C::Sour => (Icon::Sour, CardKind::Payload, format!("Slime within {:.0} cells turns from its own trail for {:.0} s.", r.mind_r, r.mind_secs)),
         C::Spin => (Icon::Spin, CardKind::Payload, format!("Slime within {:.0} cells turns in tight rings for {:.0} s.", r.mind_r, r.mind_secs)),
+        // Provoke and Still (2026-11-17): the devices' statuses as cards,
+        // for the devices' seconds.
+        C::Provoke => (Icon::Provoke, CardKind::Payload, format!("Slime within {:.0} cells feels cut off for {:.0} s and charges.", r.mind_r, r.kit.provoke_secs)),
+        C::Still => (Icon::Still, CardKind::Payload, format!("Slime within {:.0} cells is calm for {:.0} s: no charge, no eating.", r.mind_r, r.kit.still_secs)),
         // The readers (2026-11-16, step D): a kill of one state only.
         C::Shatter => (Icon::Shatter, CardKind::Payload, format!("Kills the slime gas put to sleep within {:.0} cells.", r.read_r)),
         C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells; let it spread first.", r.detonate_r)),
@@ -1769,6 +1891,12 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
     out
 }
 
+/// A burning flare's light (`Card::Flare`): its strength at the flare (a
+/// siren's call is 1.2, a burst's first frame 1 and up; at 1 a flare on
+/// the dark ground did not read at zoom 6), and the seconds over which it
+/// gutters out at the end of its burn.
+const FLARE_LIGHT: f32 = 2.5;
+const FLARE_GUTTER: f32 = 0.5;
 
 /// How long a burst lights the world, game seconds.
 const BURST_LIGHT: f32 = 0.12;
@@ -1846,7 +1974,7 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         Some(rounds::Card::Bomb) => ([90, 200, 255], [222, 246, 255], [130.0, 210.0, 255.0]),
         // The Mind bullets (2026-11-16): one rose-magenta family, so a
         // status shot reads apart from a kill.
-        Some(rounds::Card::Blind | rounds::Card::Sour | rounds::Card::Spin) => ([255, 90, 190], [255, 220, 242], [255.0, 130.0, 210.0]),
+        Some(rounds::Card::Blind | rounds::Card::Sour | rounds::Card::Spin | rounds::Card::Provoke | rounds::Card::Still) => ([255, 90, 190], [255, 220, 242], [255.0, 130.0, 210.0]),
         // The readers (2026-11-16): a paler flash of what each reads, the
         // gas's violet and the germ's green gone toward white.
         Some(rounds::Card::Shatter) => ([205, 170, 255], [248, 244, 255], [215.0, 190.0, 255.0]),
@@ -1872,12 +2000,14 @@ pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
 }
 
 /// Buildings a run never offers (owner, 2026-11-15 21:41Z, D10): the
-/// outpost is out, and the lure and siren (with their on/off switch) stay
-/// out until they visibly draw the slime. The shop doesn't sell them
-/// (`run::ITEMS`).
+/// outpost is out, and the siren stays out until it visibly draws the
+/// slime. The shop doesn't sell them (`run::ITEMS`). The lure and the
+/// lures' switch were hidden with them until 2026-11-18 (owner's card,
+/// 03:03Z: "Lure now, in the three planets"); it needs no unlock
+/// (`run_lock`).
 pub(super) fn run_hidden(id: u32) -> bool {
     // Provoke and Still are test devices until the gun thread's cards.
-    matches!(id, LURE | LURES | SIREN | OUTPOST | T_PROVOKE | T_STILL)
+    matches!(id, SIREN | OUTPOST | T_PROVOKE | T_STILL)
 }
 
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {
@@ -1885,8 +2015,10 @@ pub(super) fn run_lock(id: u32) -> Option<&'static str> {
         WALL | DOOR => "walls",
         TURRET => "turret",
         MORTAR => "mortar",
-        LURE => "lure",
-        LURES => return None,
+        // The lure is free from the first planet (Direction, 2026-11-18
+        // 08:38Z, on the owner's "Lure now, in the three planets"): for an
+        // hour it was a shop unlock, which left planet 1 without it.
+        LURE | LURES => return None,
         // Pumps are the main income: never locked (owner, 2026-11-15).
         PUMP => return None,
         OUTPOST => "outpost",

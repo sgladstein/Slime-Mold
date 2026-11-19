@@ -128,10 +128,13 @@ struct Params {
     // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
     // `world(SOIL)`: the trail on sand and on clay is x these after the
     // spread, and on barren ground upkeep is x `barren_up`. The row's last
-    // word is one body's `eloss` (2026-11-13, `BigParams::flow_loss`; the
-    // row had a spare word, so Params keeps its size): in `egain` what a
-    // cell takes from a richer neighbour arrives x 1 - `eloss`.
-    sand_keep: f32, clay_keep: f32, barren_up: f32, eloss: f32,
+    // word is the lure's pull (`lure`, 2026-11-18, the Enemy lane;
+    // `Settings::lure_pull` while a lure's field is written, else 0, so a
+    // game with no lure reads nothing more). It was one body's `eloss`
+    // (lossy sharing, `BigParams::flow_loss`) from 2026-11-13 until this
+    // engine's half of that rule was deleted on 11-17
+    // (Reports/dead-ends.md).
+    sand_keep: f32, clay_keep: f32, barren_up: f32, lure: f32,
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
@@ -147,11 +150,14 @@ struct Params {
     // shot's hit sets the countdown on its struck agar cells to at least
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
-    // Lone step (2026-11-12, `BigParams::lone_step`): a walker with n other
-    // walkers in the square of radius `lone_r` round its cell, as the step
-    // began, steps x clamp(n / `lone`, `lfloor`, 1). 0 off.
-    // Its last word is free (`fed_crowd`'s until 11-17).
-    lone: f32, lfloor: f32, lone_r: u32, lone_free: u32,
+    // Three free words (written 0) and the fort's flag. The first three
+    // were the lone step (2026-11-12, `BigParams::lone_step`: a walker
+    // with few others round it stepped shorter), whose half in this engine
+    // was deleted on 11-17 (Reports/dead-ends.md); the last was
+    // `fed_crowd`'s until 11-17. `fort` (2026-11-18): 1 while the game has
+    // written a fort mask (`fort_at`), else 0. `tether` (2026-11-18): the
+    // walkers a marcher's next cell must touch (`tethered`), 0 off.
+    lone_free0: f32, lone_free1: f32, fort: u32, tether: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
@@ -376,7 +382,11 @@ struct Squad { units: array<SqUnit, 256>, uout: array<SqUnitOut, 256>, shots: ar
 // gassed. 0 is never gassed. Header word 3 is the explosion cards
 // thread's; words 4 and 5 (11-14) are the gas cloud's linger in steps and
 // its `gas_sleep` (f32 bits; `gasp`), written by the host with each cloud
-// laid and with a dish (`gas_words`); 6-7 are spare.
+// laid and with a dish (`gas_words`); 6 (2026-11-18) is the steps a
+// walker woken from gas rests before gas can take it again
+// (`gas_resting`), written with each gas and cloud; 7 (2026-11-18) the
+// steps after a Mind status ends before it can take that walker again
+// (`mindlay`), written with each status laid.
 const GAS_HEAD: u32 = 8u;
 const GAS_UNITS: u32 = 8u;
 // GAS_HEAD + 4 and + 5 times `squad::UNITS_MAX` (256 since 11-16; 392 and
@@ -454,6 +464,19 @@ fn armoured(k: u32) -> bool {
 // field in the dense block.
 fn bite_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + i]); }
 fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
+// **Sleep wears off** (2026-11-18, Squad and arsenal's change to the gas
+// passes; `BurstRules::gas_immune`): with header word 6 over 0, a walker
+// still gassed, or woken from gas fewer than that many steps ago, is not
+// gassed again, so no gas or cloud holds it asleep for longer than one
+// sleep. The owner's playtest: Mist on the turrets "basically stopped
+// everything" (a cloud along every shot kept the slime asleep in front of
+// them for as long as they fired). 0 is the old rule.
+fn gas_resting(k: u32, t: u32) -> bool {
+    let im = gas_word(6u);
+    if (im == 0u) { return false; }
+    let end = gas_word(GAS_SLOTS + k);
+    return end != 0u && t < end + im;
+}
 fn gas_sleep() -> f32 { return bitcast<f32>(gas_word(5u)); }
 
 // **Mind statuses** (the gun cards' Mind family, 2026-11-16; the CPU's
@@ -503,18 +526,53 @@ fn crust_of(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&news[P.crust_at + i
 fn set_word(k: u32) -> u32 { return atomicLoad(&news[P.crust_at + P.w * P.h + k]); }
 fn set_put(k: u32, v: u32) { atomicStore(&news[P.crust_at + P.w * P.h + k], v); }
 fn is_set(k: u32) -> bool { return P.set_scar > 0.0 && set_word(k) > 0u; }
+// **The fort** (2026-11-18, the Enemy lane; the owner's note that day: he
+// had thought the walls "would form protecting the core of the slime or the
+// slime crystals giving them a base of sorts"): a mask the game writes, one
+// word a `RAID_BLOCK` block in the fourth quarter of the cells' region of
+// `news`, after the lure's (`Engine::write_fort`; `Game::time_fort` rings
+// each crystal the slime holds). On a masked block a walker sets with no
+// scar and does not wake, so the ring fills with set walkers and the
+// bulwark rule makes it a wall. This engine only: the CPU's `set_step` has
+// no fort (the owner's card, 11-17 19:21Z: no new CPU twin).
+fn fort_at(i: u32) -> bool {
+    if (P.fort == 0u) { return false; }
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 3u * nb + q]) != 0u;
+}
+// Whether cell `j`'s 8 neighbours, cell `own` aside, hold `tether`
+// walkers (the tether in `sense`).
+fn tethered(j: u32, own: u32) -> bool {
+    var n = 0u;
+    let x = i32(j % P.w);
+    let y = i32(j / P.w);
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let cx = x + dx;
+            let cy = y + dy;
+            if ((dx == 0 && dy == 0) || cx < 0 || cy < 0 || cx >= i32(P.w) || cy >= i32(P.h)) { continue; }
+            let c = u32(cy) * P.w + u32(cx);
+            if (c != own) { n += atomicLoad(&occ[c]); }
+        }
+    }
+    return n >= P.tether;
+}
 // Walker k's setting this step on cell `here` (the CPU's `set_step`): a set
 // walker wakes under `set_wake` of scar; an unset one sets on crust of
-// `set_crust` or more with scar of `set_scar` or more. True if it stays
-// set. A lump's member never sets.
+// `set_crust` or more with scar of `set_scar` or more. On the fort's mask
+// (`fort_at`) it sets with no scar and stays set. True if it stays set. A
+// lump's member never sets.
 fn set_step(k: u32, here: u32) -> bool {
     if (P.set_scar <= 0.0 || lump_of(k) != 0u) { return false; }
     let s = scar_at(here);
+    let fort = fort_at(here);
     if (set_word(k) > 0u) {
-        if (s < P.set_wake) { set_put(k, 0u); return false; }
+        if (s < P.set_wake && !fort) { set_put(k, 0u); return false; }
         return true;
     }
-    if (s >= P.set_scar && crust_of(here) >= P.set_crust) { set_put(k, 1u); return true; }
+    if ((s >= P.set_scar || fort) && crust_of(here) >= P.set_crust) { set_put(k, 1u); return true; }
     return false;
 }
 fn crust_put(i: u32, v: f32) { atomicStore(&news[P.crust_at + i], bitcast<u32>(v)); }
@@ -667,8 +725,6 @@ fn soil_keep(i: u32) -> f32 {
     let k = soil(i);
     if (k == SOIL_SAND) { return P.sand_keep; }
     if (k == SOIL_CLAY) { return P.clay_keep; }
-    // LAB (the forest floor): water washes trail.
-    if (floor_on()) { return max(1.0 - pf(40u) * min(water(i), 1.0), 0.0); }
     return 1.0;
 }
 // Whether scent spreads through cell j: agar, or a wall that lets it
@@ -747,9 +803,6 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
     // walker's species' own with `per`).
     if (gw != 0.0) { v += gw * grass[i]; }
-    // LAB (the forest floor): the slime leans toward standing water (head word 63).
-    if (floor_on()) { v += pf(63u) * min(water(i), 1.0); }
-    if (floor_on()) { v += pf(67u) * rot(i); }
     // The alarm (`alarm_weight`): over 0 the mould swarms to a wound,
     // under 0 it flees one.
     // The scar beside it (`scar_weight`), summed with the alarm first as
@@ -990,6 +1043,34 @@ fn food_dist(i: u32) -> u32 {
     if (v == 0u) { return 0xFFFFFFFFu; }
     return v - 1u;
 }
+// **The lure's field** (2026-11-18, the Enemy lane, from the lab's
+// steering prototype, Reports/lab-steering-2026-11-17): the walking
+// distance to the nearest lure the player has standing, out to the lure's
+// reach, after the far smell's blocks in the same region and in the same
+// words (a block's distance + 1; 0 where no lure reaches, or with none).
+// The game writes it once a game second (`Engine::write_lure_field`). It
+// has no CPU twin (the owner's card, 11-17 19:21Z), and the region's
+// fourth quarter is still free.
+fn lure_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    let v = atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 2u * nb + q]);
+    if (v == 0u) { return 0xFFFFFFFFu; }
+    return v - 1u;
+}
+// The lure at a sensor: how much nearer the lure its block is than the
+// walker's own (`dh`). A block the field does not reach (rock, a wall, or
+// past the lure's reach) reads no lean either way, as in the lab's rig
+// whose weights this rule keeps: it is not the far smell's `FAR_WALL`
+// penalty, so a walker at the field's rim is not pushed back in.
+fn lure_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE) { return 0.0; }
+    let d = lure_dist(i);
+    if (d == 0xFFFFFFFFu) { return 0.0; }
+    return f32(dh) - f32(d);
+}
 fn food_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
     let i = cell(x + cos(a) * so, y + sin(a) * so);
     if (i == NONE || agar[i] == 0u) { return -1.0e6; }
@@ -1004,16 +1085,6 @@ fn far_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
     let i = cell(x + cos(a) * so, y + sin(a) * so);
     if (i == NONE) { return 0.0; }
     return f32(dh) - f32(min(food_dist(i), dh + FAR_WALL));
-}
-// LAB: the steering field at a sensor, as `far_near`, but a block the
-// field does not reach reads level with the walker's own (the far smell
-// reads it 16 farther, which would pen walkers inside a pusher's rim).
-fn lab_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
-    let i = cell(x + cos(a) * so, y + sin(a) * so);
-    if (i == NONE) { return 0.0; }
-    let d = food_dist(i);
-    if (d == 0xFFFFFFFFu) { return 0.0; }
-    return f32(dh) - f32(d);
 }
 fn units_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
     let i = cell(x + cos(a) * so, y + sin(a) * so);
@@ -1105,8 +1176,6 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (world(WETS) && (ground[here] & WET) != 0u) { st *= P.wet_step; }
     // Deep water: x `deep_step` more, after the wet step as on the CPU.
     if (soil(here) == SOIL_DEEP) { st *= P.deep_step; }
-    // LAB (the forest floor): standing water is a slow step.
-    if (floor_on() && water(here) > pf(37u)) { st *= pf(42u); }
     // Fast ground (`crust_fast`): never past 1.5 cells by the crust
     // (`CRUST_STEP_CAP`).
     if (P.crust_fast > 0.0) { st = min(st * (1.0 + P.crust_fast * crust_of(here)), max(st, 1.5)); }
@@ -1199,20 +1268,22 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (fr > -1.0e5) { fr += w * far_near(wk.x, wk.y, h + sa, so, dh); }
             }
         }
-        // LAB (steering prototype, 2026-11-17; the lab branch only, GPU
-        // only): a NEGATIVE `far` is the steering field. Every walker,
-        // fed or hungry, leans down the field in the far smell's slot at
-        // weight -far, where the field reaches it. The game writes that
-        // field from the player's lures, fences and trails
-        // (`larder_world/lab.rs`), so the far smell proper is off while
-        // it is used.
-        if (lb == 0u && P.far < 0.0) {
-            let dh = food_dist(here);
+        // **The lure** (2026-11-18; `lure_dist`): a calm walker inside a
+        // lure's reach leans down the walking distance to it, x `lure`,
+        // on top of everything it smells, fed or hungry. Only this branch
+        // reads it: a panicking, surging, raiding or breakaway walker is
+        // on its own errand and a mini-boss's member follows its body, so
+        // a lure draws the body at rest and is no shield from a charge.
+        // Blind and Sour change it below like any reading: a blind walker
+        // does not see the lure, and a soured one runs from it.
+        // No hunger gate (the far smell's): the lab's weights (10 a steady
+        // stream, 30 empties a colony in 45 s) were measured without one.
+        if (lb == 0u && P.lure > 0.0) {
+            let dh = lure_dist(here);
             if (dh != 0xFFFFFFFFu) {
-                let w = -P.far;
-                if (f > -1.0e5) { f += w * lab_near(wk.x, wk.y, h, so, dh); }
-                if (fl > -1.0e5) { fl += w * lab_near(wk.x, wk.y, h - sa, so, dh); }
-                if (fr > -1.0e5) { fr += w * lab_near(wk.x, wk.y, h + sa, so, dh); }
+                if (f > -1.0e5) { f += P.lure * lure_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += P.lure * lure_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += P.lure * lure_near(wk.x, wk.y, h + sa, so, dh); }
             }
         }
     }
@@ -1251,52 +1322,35 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     // A spinning walker curls after its turn, every step (the CPU's).
     if (mk == MIND_SPIN) { h += P.spin_curl; }
-    if (P.lone > 0.0 && !scared) {
-        // `occ` is as the step began here: `walk` moves walkers after.
-        let cx = i32(here % P.w); let cy = i32(here / P.w); let r = i32(P.lone_r);
-        var n = 0u;
-        for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
-            for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
-                n += atomicLoad(&occ[u32(y) * P.w + u32(x)]);
-            }
-        }
-        st *= clamp(f32(max(n, 1u) - 1u) / P.lone, min(P.lfloor, 1.0), 1.0);
-    }
-    // LAB (one body, 2026-11-18, lab branch only): slime moving away from
-    // its body (a raid's march, a roam to food, a panic; not the charge at
-    // a unit, which the owner likes as it is) keeps together. Plant head
-    // words 71-74 (mod.rs `plant_words`, from `LAB_WAIT`, `LAB_TETHER`).
-    let marching = scared && ((P.raid_field != 0u && raid_to(k, here).z > 0.0) || roaming(k) || !goal_unit);
-    if (marching && body_wait() > 0.0) {
-        // Wait for the crowd: a marcher with fewer than word 71 others in
-        // the square of radius word 72 round it slows, down to word 73, so
-        // the leaders wait and the march moves as a front.
-        let cx = i32(here % P.w); let cy = i32(here / P.w); let r = i32(pf(72u));
-        var n = 0u;
-        for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
-            for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
-                n += atomicLoad(&occ[u32(y) * P.w + u32(x)]);
-            }
-        }
-        st *= clamp(f32(max(n, 1u) - 1u) / body_wait(), min(pf(73u), 1.0), 1.0);
-    }
     let nx = wk.x + cos(h) * st;
     let ny = wk.y + sin(h) * st;
     let there = cell(nx, ny);
-    var aim = NONE;
-    // Tether: a marcher steps only into a cell that touches another walker
-    // (its own cell aside), so no marcher leaves contact by its own step.
-    // Word 76 above 0 (hold): the marcher stands with its heading kept
-    // instead of turning round. Tried 11-18 at k 1-3 on raid 1: the same
-    // counts to the walker as turning round (the raid field resets the
-    // heading next step), so it is not the turn that keeps a tethered raid
-    // home: a raid leaves the body as a one-wide trickle, and no cell ahead
-    // of a trickle touches 2 others.
-    if (marching && body_tether() && there != NONE && there != here && !touches_other(there, here)) {
-        intent[k] = vec4<f32>(wk.x, wk.y, select(h + 3.14159265, h, pf(76u) > 0.0), 0.0);
+    // **The tether** (`tether`, 2026-11-18, the Enemy lane, from the Lab's
+    // one-body prototype, Reports/lab-body-2026-11-18; the owner's play
+    // notes that day: "Seeing the individual walkers doesn't bother me when
+    // I am attacking a big slime blob and the walkers surge towards me, but
+    // when they all leave the blob and most of what I see is individual
+    // walkers that is problematic"). A walker on its own way out from the
+    // body (a breakaway, a cut-off walker making for food: scared, not
+    // raiding and not charging a unit) steps only into a cell whose 8
+    // neighbours, its own cell aside, hold `tether` walkers; else it is
+    // blocked there as at a wall (a new heading, or about-turn where the
+    // blocked keep keeps it) and stays, so it goes out in a band touching
+    // the rest. Not a raider: a raid leaves the body one walker wide, and
+    // no cell ahead of a file touches two others, so a tether of 2 kept
+    // the Lab's raid home (20 to 41 kills in its first 17 s against 379,
+    // holding the heading or turning about alike); a raid goes as one
+    // body by its march instead (`RaidRules::march`). The charge at a
+    // unit (a surge, a panic charge) is left as it was, and a lump's
+    // member is held by its leash. GPU only (the owner's card, 11-17
+    // 19:21Z: no CPU twin). Eight more reads a step, for such a walker
+    // stepping into a new cell only.
+    if (P.tether > 0u && scared && lb == 0u && !goal_unit && there != NONE && there != here && raid_to(k, here).z <= 0.0 && !tethered(there, here)) {
+        intent[k] = vec4<f32>(wk.x, wk.y, h + 0.5 * TAU, 0.0);
         icell[k] = NONE;
         return;
     }
+    var aim = NONE;
     if (there != NONE) {
         if (there == here) {
             aim = there;
@@ -1434,17 +1488,9 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A sick walker pays more (the CPU's `sick_upkeep`, after the barren
     // ground's factor as there): the toolkit's germ kills by hunger.
     if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
-    // LAB (the forest floor): damp ground is cheap to live on, dry costly.
-    if (floor_on()) { up *= mix(pf(38u), pf(39u), moist(i)); }
-    // LAB (the rot): food from rotting litter, shared by the walkers here.
-    if (floor_on()) { g += min(rot(i) / max(n, 1.0), pf(66u)) * P.upkeep; }
     // A still walker spills its crystal share (`MIND_STILL`).
     var sh = share[i];
     if (mind_of(k, S.t) == MIND_STILL) { sh = 0.0; }
-    // LAB (the second species, 2026-11-18, lab branch only): with cycle 2
-    // the last species hunts: it takes no crystal share and lives on the
-    // energy of the walkers it converts.
-    if (P.cycle == 2u && species_of(k) == nsp() - 1u) { sh = 0.0; }
     let e = (energy[k] + g + sh) - up;
     if (e > 0.0) {
         energy[k] = e;
@@ -1465,12 +1511,12 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
 // its cell; `egain` moves each walker's energy by `eflow` x the sum over
 // the eight cells round its own that hold walkers of (their mean - its
 // cell's mean), over its cell's count, floored at 0. Pairs give and take
-// alike, so energy is kept (to the fixed point's rounding), unless
-// `eloss` (the CPU's `flow_loss`, 2026-11-13): then what a cell takes from
-// a richer neighbour arrives x 1 - `eloss` while the giver pays in full, so
-// food has a reach and a part cut off from every crystal holds little in
-// reserve (Reports/fed-mould-2026-11-13/README.md, *Cutting it off*). Only
-// dispatched with growth and `energy_flow` on.
+// alike, so energy is kept (to the fixed point's rounding). Lossy sharing
+// (`eloss`, the CPU's `flow_loss`, 2026-11-13: what a cell took arrived
+// x 1 - `eloss`, so food had a reach) was deleted from this engine on
+// 11-17: it shortened a cut part's wait but the part still died at once,
+// and it cost shape C 30% of its size; withering took the job
+// (Reports/dead-ends.md). Only dispatched with growth and `energy_flow` on.
 @compute @workgroup_size(256)
 fn esum(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -1502,7 +1548,7 @@ fn egain(@builtin(global_invocation_id) gid: vec3<u32>) {
         let j = u32(ny) * P.w + u32(nx);
         if (atomicLoad(&body[c + j]) > 0u) {
             let df = emean(j) - m;
-            f += select(df, df * (1.0 - clamp(P.eloss, 0.0, 1.0)), df > 0.0);
+            f += df;
         }
     }
     energy[k] = max(energy[k] + P.eflow * f / f32(atomicLoad(&body[c + i])), 0.0);
@@ -2097,8 +2143,6 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
                     if (atomicLoad(&reached[pj - 1u]) != 0u) { l *= P.fed; }
                     if (world(CRYSTALS)) { l *= piles[pj - 1u].left; }
                 }
-                // LAB (the rot): rotting litter smells like food (word 70 x its food).
-                if (floor_on()) { l += pf(70u) * rot(j); }
                 sum += scent_in[j] + l;
                 n += 1.0;
             }
@@ -2238,17 +2282,26 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
         let gh = 1.0 - exp(-germ_in[2u * P.w * P.h + i] / max(2.0 * gas_sleep(), 1.0e-3));
         c += vec3<f32>(45.0, 22.0, 90.0) * gh;
     }
-    // Crater and alarm on the ground (owner, 2026-11-14 08:40Z, of the
-    // scorch and alarm trails: "They should be visible though" "100%"),
-    // the fields themselves, added as the gas is so the mould on them
-    // keeps its colour. Crater (`crater_at`, fine steps left) is an ember,
-    // full while at least `scorch_full` steps are left and fading as the
-    // count runs out: it is the burn Scorch leaves. Alarm (the germ
-    // fields' second block) is a sharp green (a yellow was lost on
-    // the gold mould, 11-14), faint as it spreads thin. On 11-12 04:38Z the owner turned
-    // down a dark char painted at every shot's hit; this is no paint: it
-    // is on exactly the cells the mould shuns or flees, for exactly as
-    // long, and gone when the field is.
+    // The crater on the ground (owner, 2026-11-14 08:40Z, of the scorch
+    // and alarm trails: "They should be visible though" "100%"), the field
+    // itself, added as the gas is so the mould on it keeps its colour.
+    // Crater (`crater_at`, fine steps left) is an ember, full while at
+    // least `scorch_full` steps are left and fading as the count runs out:
+    // it is the burn Scorch leaves. On 11-12 04:38Z the owner turned down a
+    // dark char painted at every shot's hit; this is no paint: it is on
+    // exactly the cells the mould shuns, for exactly as long, and gone when
+    // the field is.
+    // The alarm is not painted here since 2026-11-17 (the look lane, this
+    // pass only). It was a sharp green by the same rule (a yellow was lost
+    // on the gold mould, 11-14), full from an alarm of about 20, made for
+    // the Alarm trail card, which Bait replaced the same day (09:02Z).
+    // Since the flinch (11-15) every shot lays an alarm of 50, so the green
+    // lay over the ground and the slime round a firing squad all game: the
+    // view takes this colour as the slime's hue and the soil's tint, so the
+    // slime went lime and the ground mint in cell-sized blobs (planning
+    // review, 11-17). The view now shows the alarm itself, on the slime it
+    // acts on, as the slime's own colour (`view.wgsl`, `flush_at`;
+    // `Reports/flinch-look-2026-11-17/`).
     if (P.world != 0u && agar[i] != 0u) {
         if ((P.scorched & 1u) != 0u) {
             let left = crater_at(i);
@@ -2256,10 +2309,6 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let cf = min(left / max(P.scorch_full, 1.0), 1.0);
                 c += vec3<f32>(120.0, 36.0, 8.0) * cf;
             }
-        }
-        if (P.alarm_keep > 0.0) {
-            let ah = 1.0 - exp(-germ_in[P.w * P.h + i] / 8.0);
-            c += vec3<f32>(30.0, 110.0, 40.0) * ah;
         }
     }
     // The look the view shades from (byte 2, the wound, is the trail pass's).
@@ -3569,6 +3618,7 @@ fn gas(@builtin(global_invocation_id) gid: vec3<u32>) {
     let dx = wk.x - P.kx;
     let dy = wk.y - P.ky;
     if (dx * dx + dy * dy > P.kr * P.kr) { return; }
+    if (gas_resting(k, gas_word(0u))) { return; }
     spec[k] = (w & 0x1FFu) | (L_DORMANT << 9u);
     atomicStore(&news[gas_base() + GAS_SLOTS + k], gas_word(0u) + u32(P.kcs));
     atomicAdd(&news[gas_base() + 2u], 1u);
@@ -3622,6 +3672,7 @@ fn gasp(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let c = P.w * P.h;
     if (germ_out[2u * c + cell(wk.x, wk.y)] <= gas_sleep()) { return; }
+    if (gas_resting(k, S.t)) { return; }
     spec[k] = (w & 0x1FFu) | (L_DORMANT << 9u);
     let o = gas_base() + GAS_SLOTS + k;
     atomicMax(&news[o], S.t + gas_word(4u));
@@ -3853,7 +3904,7 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
 // (heat A to B, eating plants B, char in place), `pcopy` (B to A) and
 // `firekill` (walkers on hot cells die as `strike` kills them). The
 // numbers are the CPU's, summed in the same order.
-const PLANT_HEAD: u32 = 80u; // LAB: 64 on main (the rot's words 64-79)
+const PLANT_HEAD: u32 = 64u;
 // (Word 49 on: up to three lights for `ignite`, four words each; words
 // 32-44 held them, three words each, until 11-14.)
 // After the dense cells, the raid's field and the bite cells
@@ -3899,94 +3950,10 @@ fn pcap_of(i: u32, k: u32) -> f32 {
     return pget(PB_CAP, i) * pf(16u + k) * dry;
 }
 
-// LAB (the forest floor, 2026-11-18, lab branch only): standing water in
-// plant block 9, the live moisture (the map's, block 7, plus the water) in
-// 10, the water's next in 11; the weather and what reads it in head words
-// 32-42 (mod.rs `plant_words`). Rain falls on every open cell at the end
-// of each period; water runs to the neighbour whose height (1 - the map's
-// moisture, so rivers and wet biomes are low) plus water is lower, and
-// dries. Block 7 stays the map's, because the view shapes plant patches
-// by it; fire reads the live moisture.
-const PB_WATER: u32 = 9u;
-const PB_LIVE: u32 = 10u;
-const PB_WNEXT: u32 = 11u;
-// LAB (one body): the marchers' rules, plant head words 71-74.
-fn body_wait() -> f32 { if (!world(PLANTS)) { return 0.0; } return pf(71u); }
-fn body_tether() -> bool { return world(PLANTS) && pf(74u) > 0.0; }
-// Whether cell j has at least word 74 walkers in its 8 neighbours, cell
-// `own` (the stepping walker's) aside. Word 75 above 0 counts the 4 side
-// neighbours only (Scott 11-18 16:32Z asked to see walkers held much
-// closer), so contact must be along an edge, not at a corner.
-fn touches_other(j: u32, own: u32) -> bool {
-    let need = u32(max(pf(74u), 1.0));
-    let side = pf(75u) > 0.0;
-    var n = 0u;
-    let x = i32(j % P.w); let y = i32(j / P.w);
-    for (var dy = -1; dy <= 1; dy++) {
-        for (var dx = -1; dx <= 1; dx++) {
-            if (dx == 0 && dy == 0) { continue; }
-            if (side && dx != 0 && dy != 0) { continue; }
-            let nx = x + dx; let ny = y + dy;
-            if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
-            let c = u32(ny) * P.w + u32(nx);
-            if (c != own) { n += atomicLoad(&occ[c]); }
-        }
-    }
-    return n >= need;
-}
-// LAB (the rot, part two): block 12, food in litter that rots where wet.
-const PB_ROT: u32 = 12u;
-fn rot(i: u32) -> f32 { if (!floor_on()) { return 0.0; } return pget(PB_ROT, i); }
-fn floor_on() -> bool { return world(PLANTS) && pf(41u) > 0.0; }
-fn water(i: u32) -> f32 { if (!floor_on()) { return 0.0; } return pget(PB_WATER, i); }
-fn moist(i: u32) -> f32 {
-    if (!world(PLANTS)) { return 0.5; }
-    if (floor_on()) { return pget(PB_LIVE, i); }
-    return pget(PB_MOIST, i);
-}
-fn lab_floor(i: u32) {
-    if (agar[i] == 0u) { pset(PB_WNEXT, i, 0.0); return; }
-    // The rot: litter (the plants on the cell) rots into food where the
-    // live moisture is over word 69; the walkers standing on it ate theirs
-    // since the last plant step (word 68 ticks of word 66 each).
-    var r = pget(PB_ROT, i);
-    // Where rain has soaked it (the live moisture over the map's own, less
-    // word 69), and not in rivers and lakes: litter rots on land. (First
-    // version: live moisture over 0.5; the map's damp river banks rotted
-    // before any rain, so the rot ran along every river.)
-    let wet = select(max(pget(PB_LIVE, i) - pget(PB_MOIST, i) - pf(69u), 0.0), 0.0, pwet(i));
-    r += pf(64u) * min(pget(PB_A, i), 1.0) * wet;
-    r -= f32(atomicLoad(&occ[i])) * pf(66u) * pf(68u);
-    pset(PB_ROT, i, clamp(r, 0.0, pf(65u)));
-    let wi = pget(PB_WATER, i);
-    let hi = 1.0 - pget(PB_MOIST, i) + wi;
-    let x = i % P.w; let y = i / P.w;
-    var net = 0.0;
-    for (var q = 0u; q < 4u; q++) {
-        var ok = false; var j = 0u;
-        if (q == 0u) { ok = x > 0u; j = i - 1u; }
-        if (q == 1u) { ok = x + 1u < P.w; j = i + 1u; }
-        if (q == 2u) { ok = y > 0u; j = i - P.w; }
-        if (q == 3u) { ok = y + 1u < P.h; j = i + P.w; }
-        if (ok && agar[j] != 0u) {
-            let wj = pget(PB_WATER, j);
-            let d = hi - (1.0 - pget(PB_MOIST, j) + wj);
-            if (d > 0.0) { net -= min(d * 0.5, wi); } else { net += min(-d * 0.5, wj); }
-        }
-    }
-    var w = wi + pf(35u) * net;
-    let per = max(pf(33u), 1.0);
-    if (f32(S.t % u32(per)) >= per - pf(34u)) { w += pf(32u); }
-    // Rivers and lakes (the map's wet ground) carry water away.
-    if (pwet(i)) { w *= 0.8; }
-    pset(PB_WNEXT, i, max(w - pf(36u), 0.0));
-}
-
 @compute @workgroup_size(256)
 fn plant(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
-    if (floor_on()) { lab_floor(i); }
     // Off open ground or on a crystal (the capacity block is 0 on both,
     // and on ground where nothing grows: the ground word tells them apart).
     if (agar[i] == 0u || (ground[i] & PILE_BITS) != 0u) { pset(PB_B, i, 0.0); return; }
@@ -4074,7 +4041,7 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     var p = pl;
     if (P.crust_fuel > 0.0) { p = pl + P.crust_fuel * crust_of(i); }
     // Moisture and the chance (owner 11-14 19:18Z; `plants::fire_step`).
-    let m = moist(i);
+    let m = pget(PB_MOIST, i);
     let dice = froll(i, pw(45u));
     var to = 0.0;
     var ate = 0.0;
@@ -4153,11 +4120,6 @@ fn pcopy(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (i >= P.w * P.h) { return; }
     pset(PB_A, i, pget(PB_B, i));
     pset(PB_FA, i, pget(PB_FB, i));
-    if (floor_on()) {
-        let w = pget(PB_WNEXT, i);
-        pset(PB_WATER, i, w);
-        pset(PB_LIVE, i, min(pget(PB_MOIST, i) + pf(41u) * w, 1.0));
-    }
 }
 
 @compute @workgroup_size(256)
@@ -4245,6 +4207,17 @@ fn mindlay(@builtin(global_invocation_id) gid: vec3<u32>) {
     let dx = wk.x - P.kx;
     let dy = wk.y - P.ky;
     if (dx * dx + dy * dy > P.kr * P.kr) { return; }
+    // **Statuses wear off** (2026-11-18, Squad and arsenal's change to
+    // this pass; `BurstRules::mind_rest`, the gas header's word 7): a
+    // walker that has this status, or had it fewer than that many steps
+    // ago, is not given it again, so a turret firing Still cannot keep the
+    // slime in front of it from ever charging. A word keeps its kind and
+    // end after it runs out. 0 is the old rule (each hit restamped it).
+    let rest = gas_word(7u);
+    if (rest > 0u) {
+        let old = atomicLoad(&news[mind_at() + k]);
+        if ((old >> 29u) == u32(P.kir) && (gas_word(0u) & MIND_T) < (((old & MIND_T) + rest) & MIND_T)) { return; }
+    }
     atomicStore(&news[mind_at() + k], (u32(P.kir) << 29u) | ((gas_word(0u) + u32(P.kcs)) & MIND_T));
 }
 

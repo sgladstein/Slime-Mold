@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-18
 sources:
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
@@ -30,6 +30,8 @@ sources:
   - Reports/mould-shooter-2026-11-11.md
   - Reports/narrow-squads-2026-11-15/README.md
   - Reports/pump-economy-2026-11-15/README.md
+  - Reports/raid-march-2026-11-18/README.md
+  - Reports/raid-ramp-2026-11-18/README.md
   - Reports/raids-2026-11-15/README.md
   - Reports/resume-build-2026-11-15/README.md
   - Reports/rts-research-2026-11-10.md
@@ -318,8 +320,18 @@ cost does not show, clock or food-driven, and the squad twins pass.
 Since 11-15 the slime also **raids** (owner, 20:56Z: a big defense
 "just ends with the mold clustering around its own crystals"; 21:15Z:
 "Raids is the number 1 option") at random times: since 11-16 each
-raid draws its wait from a normal distribution (mean 60 s, spread 20 s,
-never under 20 s; the first round 1:15) and its size the same way (mean
+raid draws its wait from a normal distribution (never under 20 s) and
+its size the same way; since 11-18 they are **rare early and often later**
+(the owner's play notes, 15:56Z: "Occasionally a raid can happen early in
+a session but not every time. and they can happen often later on in a
+session, but not right at the begining"; `RaidRules::gap_at`,
+`Raids::first_raid`): counted from the landing, the first comes at 4:00
++/- 40 s, or in one game in five at 1:20 +/- 20 s, and the wait falls in a
+line from 150 +/- 45 s at the landing to 45 +/- 13.5 s by 10:00 (until
+then 60 +/- 20 s all game and the first about 1:15, so his planet 1 and 2
+rounds that day met raids at 1:08 and 0:54; planet 1 of run seed 1 now
+raids from 3:15 and its first pump stands to 3:24, against 0:59 and 1:12:
+[raid ramp](../../Reports/raid-ramp-2026-11-18/README.md)); the size is drawn (mean
 15% of the slime's mass, spread 6%, within 4-40%), at the player's best
 pump (owner 01:48Z: raids "regardless", not "so consistent as every 400
 food", the rule until then), else a building, else the soldiers, from
@@ -337,7 +349,20 @@ turrets killed 38% more; the slime grew as before. Raiders walk round
 walls: a worker thread builds the raid's walking distance on 2x2 blocks
 (`big::raid_field_for`, 6 ms on planet 8, 0.22 ms on the frame) and the
 raid goes a game second after it is decided
-([raids](../../Reports/raids-2026-11-15/README.md)).
+([raids](../../Reports/raids-2026-11-15/README.md)). Since 11-18 a raid
+**marches as one body** (the owner's play notes, 15:56Z: the slime "feels
+more like a bunch of individual walkers instead of a single slime unit",
+worst in raids; `RaidRules::march`): 1.5 times its walkers, those nearest
+the target, are held as one lump (`big::Lump`, no mini-boss look) and walk
+down the raid's walking distance (pull 100, leash 1.3, twice a walker's
+pace), then pour on as a raid of every walker there by the target, or at
+the squad if they meet it (the surge he does not mind). On planet 1 of run
+seed 1 with the first raid forced at 0:20, walkers seen alone (at most one
+other round them) averaged 404 a frame while it was out against the
+stream's 635; it took the pump by the squad at 0:50 where the stream took
+the far one at 0:34, and the squad stood at 75 at 0:56 against 59
+([raid march](../../Reports/raid-march-2026-11-18/README.md)); specks are
+tethered the same day ([growth](../model/growth.md)).
 
 **Turrets grow both ways** (owner's card, 2026-11-16 21:36Z: "Both: tree
 bodies, card barrels"; the tree lives in the run shop only, 21:41Z "I lean

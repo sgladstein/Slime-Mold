@@ -72,10 +72,13 @@ pub enum Shell {
     Flare,
     /// The element family's (2026-11-17, `Card::Torch`).
     Torch,
+    /// The Mind family's last two (2026-11-17, `Card::Provoke`, `Still`).
+    Provoke,
+    Still,
 }
 
 impl Shell {
-    pub const ALL: [Shell; 12] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Detonate, Shell::Flare, Shell::Torch];
+    pub const ALL: [Shell; 14] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Detonate, Shell::Flare, Shell::Torch, Shell::Provoke, Shell::Still];
 
     /// The fixed card that is this payload's standard bullet.
     pub fn card(self) -> Card {
@@ -92,12 +95,14 @@ impl Shell {
             Shell::Detonate => Card::Detonate,
             Shell::Flare => Card::Flare,
             Shell::Torch => Card::Torch,
+            Shell::Provoke => Card::Provoke,
+            Shell::Still => Card::Still,
         }
     }
 
-    /// One of the Mind bullets (Blind, Sour, Spin).
+    /// One of the Mind bullets (Blind, Sour, Spin, Provoke, Still).
     pub fn mind(self) -> bool {
-        matches!(self, Shell::Blind | Shell::Sour | Shell::Spin)
+        matches!(self, Shell::Blind | Shell::Sour | Shell::Spin | Shell::Provoke | Shell::Still)
     }
 
     /// One of the readers (Shatter, Detonate).

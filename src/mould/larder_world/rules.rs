@@ -265,14 +265,19 @@ pub struct Rules {
     /// Set slime blocks soldiers (E2b, the owner's 01:13Z "Both"): a fine
     /// cell with this many set walkers or more in its 3 x 3 is no ground to
     /// soldiers' feet until the count falls under half of it
-    /// (`Game::bulwark`). 0 off.
+    /// (`Game::bulwark`). 0 off; 5 on the Trunk's planet since 2026-11-17
+    /// (`run::does_to_you`), where slime sets. The trapping alternative
+    /// (`set_hold`: bulwark cells stayed ground and held a soldier to a
+    /// share of its speed) was the other side of this A/B and was deleted
+    /// the same day (`Reports/dead-ends.md`).
     pub set_block: f32,
-    /// Set slime holds instead of blocking (E2b's A/B, the game designer
-    /// 11-17: a rush that walks into set slime should be trapped and eaten,
-    /// not sheltered at its rim): over 0, bulwark cells stay ground, and a
-    /// soldier in one walks at this share of its speed (`Game::wade`). 0
-    /// blocks.
-    pub set_hold: f32,
+    /// **The fort** (2026-11-18, the Enemy lane; `bulwark.rs`'s
+    /// `time_fort`): the slime walls each crystal it holds. The game marks
+    /// a ring this many dish cells thick round the crystal, with gates,
+    /// and slime on the ring sets with no shot needed (`World::set_fort`),
+    /// so `set_block` makes it a wall. 0 off; 3 on the Trunk's planet
+    /// (`run::does_to_you`); `set=fort=N`. GPU engine only.
+    pub fort: f32,
     /// The larder smells of the bank, `hoard` times a full pile per 10,000
     /// food (M2), and walkers touching it take `steal` food a game second.
     pub hoard: f32,
@@ -303,6 +308,14 @@ pub struct Rules {
     /// With it on, a wiped squad is no loss while a recruit can still come.
     /// 0, the default, is off.
     pub reserve: f32,
+    /// **The last soldier's death ends the round**, however much food is
+    /// in the bank and whatever the reserve would send (1 on, 0 off, the
+    /// default). A run turns it on (`Run::rules`): the owner reached planet
+    /// 2, lost every soldier and saw them come back (2026-11-18 15:56Z:
+    /// "you should lose if all your soliders die"). Free play, missions and
+    /// the censuses keep the old rule, where a bank that can buy a soldier,
+    /// or a recruit that can come, keeps the round going.
+    pub wipe_ends: f32,
     // Rations and hunger (`ration`, `hunger`; PR 4, the economy: food a
     // second each soldier ate from the bank, and hit points lost when it
     // couldn't pay) were removed on 2026-11-14 after being off by default
@@ -411,7 +424,7 @@ pub struct Rules {
     pub lead: super::LeadRules,
     /// The squad mode (`squads`, owner 2026-11-14 04:49Z: "a separate
     /// mode for right now. Not erase the other game"): formations by
-    /// squad, the controlled squad's self-defence stance and bought
+    /// squad, the controlled squad's edge and bought
     /// soldiers joining it. Off, the game plays as before (squad commands
     /// still apply, but nothing sends them).
     pub squads: bool,
@@ -547,6 +560,12 @@ pub struct Rules {
     /// down instead of steering straight at a unit (`set=unit_paths=1`).
     /// Off until the owner's blind films.
     pub unit_paths: bool,
+    /// **A lure's reach** (2026-11-18, the Enemy lane; `raids.rs`'s
+    /// `time_lure_paths`): how far, in dish cells of walking, the lure's
+    /// field goes from a Lure or a lure mark; calm slime inside it leans
+    /// toward the lure (`gpu::Settings::lure_pull`). 60, the lab's rig
+    /// (`Reports/lab-steering-2026-11-17`); `set=lure_reach=N`.
+    pub lure_reach: f32,
     /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
     /// slime at a crowded knot or a big part cut off from food clenches
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
@@ -566,6 +585,12 @@ impl Rules {
         // `last_stand=1` on.
         if name == "last_stand" {
             self.raid.last_stand = v > 0.0;
+            return true;
+        }
+        // `raid_march=0` (Enemy lane, 2026-11-18): raids stream walker by
+        // walker, as before the march.
+        if name == "raid_march" {
+            self.raid.march = v > 0.0;
             return true;
         }
         // `turret_over=0`: turrets stop at walls as soldiers' guns do.
@@ -625,6 +650,19 @@ impl Rules {
             "raid_size_max" => &mut self.raid.size_max,
             "raid_share" => &mut self.raid.share,
             "raid_lure_r" => &mut self.raid.lure_r,
+            "raid_late" => &mut self.raid.late,
+            "raid_ramp" => &mut self.raid.ramp,
+            "raid_early" => &mut self.raid.early,
+            "raid_early_at" => &mut self.raid.early_at,
+            "raid_early_sd" => &mut self.raid.early_sd,
+            "raid_march_pull" => &mut self.raid.march_pull,
+            "raid_march_leash" => &mut self.raid.march_leash,
+            "raid_march_haste" => &mut self.raid.march_haste,
+            "raid_march_quorum" => &mut self.raid.march_quorum,
+            "raid_march_time" => &mut self.raid.march_time,
+            "raid_march_stall" => &mut self.raid.march_stall,
+            "raid_march_size" => &mut self.raid.march_size,
+            "lure_reach" => &mut self.lure_reach,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
             "boss_first" => &mut self.boss.first,
@@ -684,8 +722,13 @@ impl Rules {
             // Walls (the walls thread, 11-16): thickness films and tries.
             "wall_width" => &mut self.wall_width,
             "wall_cost" => &mut self.wall_cost,
+            // Reserve recruit (11-17): its switch (`build::switches`,
+            // "Free recruits") needs a key; until then only a campaign
+            // mission's own rules could set it.
+            "reserve" => &mut self.reserve,
+            "wipe_ends" => &mut self.wipe_ends,
             "set_block" => &mut self.set_block,
-            "set_hold" => &mut self.set_hold,
+            "fort" => &mut self.fort,
             _ => return false,
         };
         *f = v;
@@ -749,13 +792,14 @@ impl Default for Rules {
             wall_cost: 20.0,
             wall_width: 2.0,
             set_block: 0.0,
-            set_hold: 0.0,
+            fort: 0.0,
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,
             build: BuildRules::default(),
             overrun: 20.0,
             reserve: 0.0,
+            wipe_ends: 0.0,
             seek: true,
             crater: 2.0,
             sink: 1.0,
@@ -782,6 +826,7 @@ impl Default for Rules {
             surge_min: 10.0,
             raid: super::RaidRules::default(),
             unit_paths: false,
+            lure_reach: 60.0,
             boss: super::BossRules::default(),
         }
     }

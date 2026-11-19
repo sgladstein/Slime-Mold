@@ -49,9 +49,11 @@ struct V {
     // The map's flora (`View::set_plants`, `map::Items::flora`): which
     // forms its plants take up close (`plant_layer`).
     flora: u32,
-    // How strongly the alarm haze draws (`View::set_alarm_look`, 11-15):
-    // on bare ground and on the slime, 1 as drawn on 11-14.
-    alarm_ground: f32, alarm_slime: f32,
+    // The Mind statuses (`View::set_minds`, Look A5, 2026-11-18): the word
+    // in `news` where each walker's Mind word starts (0 off) and the engine
+    // steps over which one fades as it runs out. To 2026-11-17 these two
+    // words scaled the alarm's pale haze (`flush_at` replaced it).
+    mind_at: u32, mind_fade: u32,
     // The scent view (`View::scent`, F2 in Larder World, 11-15): 1 dims the
     // world and washes over it the two fields a walker's sensor adds up
     // (the engine's `sense_at`): the food scent (the look's byte 3) in
@@ -71,11 +73,16 @@ struct V {
     lump_held: vec4<f32>,
     // The crust (`View::set_crust`, 2026-11-17): the word in `news` where
     // the engine's crust block starts (0 off); the set walkers a cell's
-    // block and set slime's look (`View::set_setting`, E2b; 0 off); a spare.
-    crust_at: u32, setc_at: u32, set_look: u32,
-    // LAB (steering prototype, the lab branch only): the word in `news`
-    // where the steering field's blocks start (`View::set_steer`), 0 off.
-    steer_at: u32,
+    // block (`View::set_setting`, E2b; 0 off); a spare word (set slime's
+    // look to 2026-11-18).
+    // The Lure's steering field (`View::set_steer`, 2026-11-18): the word
+    // in `news` where its blocks start, 0 hidden; and how far it reaches in
+    // cells (`View::set_steer_reach`), 0 unknown.
+    crust_at: u32, setc_at: u32, steer_reach: f32, steer_at: u32,
+    // The slime's own look (`View::set_slime_look`, Look B, 2026-11-19):
+    // 0 plain, 1 the Sprawler's threads (`LOOK_THREADS`); and how far
+    // behind a walker its streak runs, cells (0 none). Two spare words.
+    slime_look: u32, streak: f32, look_spare0: u32, look_spare1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1433,9 +1440,11 @@ fn alarm_open(ix: i32, iy: i32) -> f32 {
 // alarm, y the open cells' share of the weight (0 deep in a wall).
 // Plain bilinear (to 11-15) mixed a wall's 0 into the open cell beside
 // it, so a plateau of alarm fell to nothing at every wall face and the
-// front term below drew that fall as a bright straight line: the square
-// edge of a blast's glow in the Fork's stem (the whole-game review's W27;
-// the field itself is right, the walls hold none).
+// haze's front term (it brightened the field's slope; gone 11-17) drew
+// that fall as a bright straight line: the square edge of a blast's glow
+// in the Fork's stem (the whole-game review's W27; the field itself is
+// right, the walls hold none). The flush keeps the open weights, so slime
+// against a wall flushes as the slime beside it does.
 fn alarm_at(x: f32, y: f32) -> vec2<f32> {
     let fx = x - 0.5; let fy = y - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
@@ -1448,11 +1457,46 @@ fn alarm_at(x: f32, y: f32) -> vec2<f32> {
     return vec2<f32>(dot(w, a) / s, s);
 }
 
-// A slope sample: the alarm there, or `a` (the pixel's own) where the
-// sample lies wholly in a wall, so a wall face has no slope.
-fn alarm_or(x: f32, y: f32, a: f32) -> f32 {
-    let s = alarm_at(x, y);
-    return select(a, s.x, s.y > 0.0);
+// **The flinch, on the slime** (Look A, 2026-11-17). The alarm field is
+// what a hit lays and the slime steers by (`BigParams::flinch`: it backs
+// off ground a shot just struck; the Swarmer floods to it), so it is drawn
+// where it acts, on the slime, as the slime's own colour: struck slime
+// flushes hot, from its gold toward a deep orange with a little light of
+// its own, by the alarm there (`FLUSH_KNEE` of the alarm that reads full
+// is two-thirds of the way), for as long as the engine keeps the alarm (at
+// the flinch's keep a shot's is gone in under a second). The hottest thing
+// stays the crater's ember, the damage itself; the flush is the fainter
+// warmth round it. It is worked out a fine cell in `prep`, with the
+// slime's hue, and only where there is slime.
+// Before: a pale cool haze by the alarm's strength with a brighter front
+// on its slope, a pixel at a time in `shaded`, on bare ground and slime
+// alike (11-14), scaled to a quarter on 11-15 (`set_alarm_look`, the
+// whole-game review's W46: at full strength the fire zone washed mint),
+// over a sharp green the engine painted on the same field. With the
+// flinch on, every shot lays alarm, so the two together were a lime wash
+// in cell-sized blobs over ground and slime round a firing squad, the
+// largest thing on screen where the player aims (planning review, 11-17).
+// Tried the same day and not kept: the slime blanching (toward pale
+// straw; it washed the front out as the haze had) and dimming (pulling
+// its light in; the fire zone read as a darker, dirtier slime).
+// Bare ground shows no alarm now. A siren's call there (the siren is held
+// out of the run, D10) shows by its lamp and by the slime it reaches.
+const FLUSH_KNEE: f32 = 0.5;
+const FLUSH_MUL: vec3<f32> = vec3<f32>(1.0, 0.76, 0.58);
+const FLUSH_GLOW: vec3<f32> = vec3<f32>(24.0, 4.0, 0.0);
+// How hot the slime at (x, y) is flushed, 0 to 1; `th` its thickness as
+// its colour takes it (`prep`'s `tm`).
+fn flush_at(x: f32, y: f32, th: f32) -> f32 {
+    if (P.alarm_full <= 0.0 || th <= 0.004) { return 0.0; }
+    let a = alarm_at(x, y);
+    return (1.0 - exp(-a.x / (FLUSH_KNEE * P.alarm_full))) * a.y * smoothstep(0.004, 0.05, th);
+}
+fn flush_mat(m0: Mat, k: f32) -> Mat {
+    if (k <= 0.0) { return m0; }
+    var m = m0;
+    m.albedo = mix(m.albedo, m.albedo * FLUSH_MUL, k);
+    m.glow += FLUSH_GLOW * k;
+    return m;
 }
 
 fn look_trail(x: f32, y: f32) -> f32 {
@@ -1642,17 +1686,26 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
 
 // **Set slime** (the simulation-use plan's E2b, 2026-11-17;
 // `BigDish::set_cells`): walkers that stopped where they were hurt are drawn
-// by their own state, a material over the body where they stand, settled
-// by a blind A/B (`P.set_look`): 1 amber, a deep resin with a low warm glow
-// inside (set slime as hardened, dried sap); 2 glaze, a pale, glass-glossy
-// skin. Not dark ridges (they read as the player's walls), not bronze (the
-// owner turned it down). Only colour, gloss and glow: the body's opacity
-// and height stay the sheet's (the graphics thread, 11-17), so its edge is
-// the set walkers' own, smoothed over the 4 x 4 cells round (a lone set
-// walker is a fleck, a set rim a band).
+// by their own state, a material over the body where they stand: amber, a
+// deep resin with a low warm glow inside (set slime as hardened, dried
+// sap). It was one side of a blind A/B to 2026-11-18, settled by the Look
+// and interface lane from frames of planet 3's walls at zoom 6: the other
+// side, a pale glass-glossy glaze toward (255, 238, 196), read as bare
+// sand and is the team's cream and the wanderer's pale bone; and with no
+// mark a wall that stops soldiers looked like slime they can walk
+// (`Reports/dead-ends.md`). Not dark ridges (they read as the player's
+// walls), not bronze (the owner turned it down). The body's opacity stays
+// the sheet's; its edge is the set walkers' own, smoothed over the 4 x 4
+// cells round (a lone set walker is a fleck, a set rim a band).
+// It stands `SET_RISE` above the sheet (2026-11-18). To then it kept the
+// sheet's height too (the graphics thread, 11-17), which was a detail while
+// it formed only under fire; the Trunk's fort (Enemy, #473) made it a ring
+// round every crystal the slime holds, and flat it read as a rust stain or
+// a drawn target on the slime, not a wall a soldier cannot cross. Raised,
+// the light gives it a lit flank and a shaded one, as a wall.
 fn set_c(ix: i32, iy: i32) -> f32 { return f32(news[P.setc_at + cidx(ix, iy)]); }
 fn set_share(x: f32, y: f32) -> f32 {
-    if (P.setc_at == 0u || P.set_look == 0u) { return 0.0; }
+    if (P.setc_at == 0u) { return 0.0; }
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var c = 0.0;
     var ws = 0.0;
@@ -1668,19 +1721,16 @@ fn set_share(x: f32, y: f32) -> f32 {
 }
 const SET_AMBER: vec3<f32> = vec3<f32>(112.0, 46.0, 14.0);
 const SET_AMBER_GLOW: vec3<f32> = vec3<f32>(255.0, 110.0, 30.0);
-const SET_GLAZE: vec3<f32> = vec3<f32>(255.0, 238.0, 196.0);
+// How far set slime stands above the sheet: the dense body is at most 5.
+const SET_RISE: f32 = 4.0;
+fn set_rise(share: f32, th: f32) -> f32 { return SET_RISE * share * smoothstep(0.02, 0.2, th); }
 fn set_mat(m0: Mat, share: f32, th: f32) -> Mat {
     if (share <= 0.0) { return m0; }
     var m = m0;
     let s = share * smoothstep(0.02, 0.2, th);
-    if (P.set_look == 1u) {
-        m.albedo = mix(m.albedo, SET_AMBER, s);
-        m.gloss = mix(m.gloss, 0.5, s);
-        m.glow = m.glow + SET_AMBER_GLOW * 0.14 * s;
-    } else {
-        m.albedo = mix(m.albedo, SET_GLAZE, 0.55 * s);
-        m.gloss = mix(m.gloss, 1.0, s);
-    }
+    m.albedo = mix(m.albedo, SET_AMBER, s);
+    m.gloss = mix(m.gloss, 0.5, s);
+    m.glow = m.glow + SET_AMBER_GLOW * 0.14 * s;
     return m;
 }
 
@@ -1857,17 +1907,22 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // the trail alone it was a dark film bead; where walkers are, it is
     // mould and takes the mould's colour. The height keeps `th`.
     let tm = max(th, 0.4 * near);
+    // The alarm on the slime here (`flush_at`), under a mini-boss's skin
+    // and the set slime's, which keep their own colours.
+    let hot = flush_at(wx, wy, tm);
+    let ss = set_share(wx, wy);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         let hh = cell_height(ix, iy, th_h);
-        hcell[i] = hh.x;
+        hcell[i] = hh.x + set_rise(ss, tm);
         hcell[P.rw * P.rh + i] = hh.y;
         hcell[2u * P.rw * P.rh + i] = ground_pack(ground_cell(ix, iy).col);
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
         m1.body = wide;
         m1.glow += ABSORB_RGB * 0.45 * flash;
+        m1 = flush_mat(m1, hot);
         m1 = lump_mat(m1, lump, tm);
-        m1 = set_mat(m1, set_share(wx, wy), tm);
+        m1 = set_mat(m1, ss, tm);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -1893,9 +1948,10 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss; mt.vis += wq * mq.vis;
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
+    mt = flush_mat(mt, hot);
     mt = lump_mat(mt, lump, tm);
-    mt = set_mat(mt, set_share(wx, wy), tm);
-    hcell[i] = h.x;
+    mt = set_mat(mt, ss, tm);
+    hcell[i] = h.x + set_rise(ss, tm);
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
     mcell[i] = mat_pack(mt);
@@ -1997,38 +2053,6 @@ fn water_share(x: f32, y: f32) -> vec2<f32> {
                 o.x += wt;
                 if (((g >> 4u) & 7u) == SOIL_DEEP) { o.y += wt; }
             }
-        }
-    }
-    return o;
-}
-
-// LAB (the forest floor): the standing water at (x, y), bilinear.
-fn floor_water(x: f32, y: f32) -> f32 {
-    let ux = x - 0.5; let uy = y - 0.5;
-    let ix = i32(floor(ux)); let iy = i32(floor(uy));
-    let f = vec2<f32>(ux - floor(ux), uy - floor(uy));
-    var o = 0.0;
-    for (var j = 0; j < 2; j++) {
-        for (var i = 0; i < 2; i++) {
-            let c = cidx(clamp(ix + i, 0, i32(P.ww) - 1), clamp(iy + j, 0, i32(P.wh) - 1));
-            o += bitcast<f32>(pblock(9u, c)) * mix(1.0 - f.x, f.x, f32(i)) * mix(1.0 - f.y, f.y, f32(j));
-        }
-    }
-    return o;
-}
-
-// LAB (the rot): the rotting litter's food at (x, y), bilinear (block 12).
-const ROT_RGB: vec3<f32> = vec3<f32>(34.0, 22.0, 10.0);
-const ROT_FLECK: vec3<f32> = vec3<f32>(70.0, 58.0, 34.0);
-fn floor_rot(x: f32, y: f32) -> f32 {
-    let ux = x - 0.5; let uy = y - 0.5;
-    let ix = i32(floor(ux)); let iy = i32(floor(uy));
-    let f = vec2<f32>(ux - floor(ux), uy - floor(uy));
-    var o = 0.0;
-    for (var j = 0; j < 2; j++) {
-        for (var i = 0; i < 2; i++) {
-            let c = cidx(clamp(ix + i, 0, i32(P.ww) - 1), clamp(iy + j, 0, i32(P.wh) - 1));
-            o += bitcast<f32>(pblock(12u, c)) * mix(1.0 - f.x, f.x, f32(i)) * mix(1.0 - f.y, f.y, f32(j));
         }
     }
     return o;
@@ -2437,15 +2461,19 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     return vec4<f32>(mul, add);
 }
 
-// LAB: the steering field (`larder_world/lab.rs`) as the engine holds it,
-// a word a 2 x 2 block: the height + 1 that walkers lean down, 0 where the
-// field does not reach.
+// The Lure's steering field as the engine holds it (2026-11-18; the lab's
+// prototype of 11-17 made a rule): a word a 2 x 2 block of cells, the
+// walking distance to the nearest lure in cells + 1, and 0 where the field
+// does not reach (past its reach, behind rock, or no lure standing).
+// Calm walkers lean down it; the engine rewrites it once a game second.
 fn steer_w(bx: i32, by: i32) -> u32 {
     let bw = (P.ww + 1u) / 2u; let bh = (P.wh + 1u) / 2u;
     let x = u32(clamp(bx, 0, i32(bw) - 1)); let y = u32(clamp(by, 0, i32(bh) - 1));
     return news[P.steer_at + y * bw + x];
 }
-// (height, cover) at a pixel: bilinear over the blocks the field reaches.
+// (distance, cover) at a point: bilinear over the blocks the field
+// reaches, so a line of equal distance is smooth at any zoom and stops
+// where the field does.
 fn steer_px(x: f32, y: f32) -> vec2<f32> {
     let fx = x / 2.0 - 0.5; let fy = y / 2.0 - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
@@ -2462,8 +2490,43 @@ fn steer_px(x: f32, y: f32) -> vec2<f32> {
     if (ws <= 0.0) { return vec2<f32>(0.0, 0.0); }
     return vec2<f32>(sum / ws, ws);
 }
-const STEER_RGB: vec3<f32> = vec3<f32>(255.0, 110.0, 215.0);
+// The rings' colour is your team's cream (art direction, rule 3: the Lure
+// is your tool). Not the lab's pink (255, 110, 215): that hue is the core
+// planet's flora, the only purple on the map. Not the Lure's old scent
+// green either: on the meadow's green it was lost, and a green over the
+// fight is what the flinch's wash was (`flush_at`). Tried on the lab's
+// scene at zoom 6, planet 1, 2026-11-18.
+const STEER_RGB: vec3<f32> = vec3<f32>(250.0, 242.0, 220.0);
+// A ring every 20 cells of walking, and how bright a ring is at the lure.
 const STEER_RING: f32 = 20.0;
+const STEER_LINE: f32 = 0.42;
+
+// **The biting slime** (the owner, 2026-11-18 18:04Z: "When the slime is
+// attacking/damagin my soliders, I cannot really tell. It just looks like
+// walkers are running past them", and 18:08Z: "The issue isn't that the
+// bite was too brite or too weak it just looks like more of the same
+// slime"). A soldier is bitten by every walker within its touch
+// (`squad::read`, `Rules::touch`), so while it is bitten (`touching` above
+// 0) the window sends that disc as a bite zone (`Light::bite`: a light
+// whose lift is `BITE_LIFT`, which lights nothing), and the slime in it
+// takes its own colour: a wet crimson, where the rest is gold, by the
+// slime's thickness there. Most of the disc lies under the figure, so the
+// marks draw it over the soldier too (`slime_on`). Until 11-18 a bite showed
+// as an orange light 3.5 cells wide on the slime round the soldier and an
+// orange flush on its bitten side, the slime's own colours.
+const BITE_LIFT: f32 = 1.0e9;
+const BITE_SLIME: vec3<f32> = vec3<f32>(178.0, 18.0, 44.0);
+const BITE_SLIME_GLOW: vec3<f32> = vec3<f32>(70.0, 0.0, 14.0);
+fn bite_share(x: f32, y: f32) -> f32 {
+    var s = 0.0;
+    for (var j = 0u; j < P.n_lights; j++) {
+        let a = lights[2u * j];
+        if (a.w < BITE_LIFT) { continue; }
+        let d = length(vec2<f32>(a.x - x, a.y - y));
+        s = max(s, lights[2u * j + 1u].w * (1.0 - smoothstep(a.z - 0.25, a.z + 0.15, d)));
+    }
+    return s;
+}
 
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     var m = mat_at(x, y);
@@ -2531,23 +2594,6 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let ash = CHAR_RGB * (0.9 + 0.2 * vnoise(vec2<f32>(x, y) * 2.3));
         m.albedo = mix(m.albedo, ash * (0.8 + 0.4 * (pl.rgb / max(pl.cover, 0.01)).g / 60.0 * pv), ch * gv);
     }
-    // LAB (the forest floor, 2026-11-18, lab branch only): the engine's
-    // standing water (plant block 9), bilinear: the ground darkens and
-    // shines as it pools, a puddle's colour once it is deep.
-    if (P.plant_at != 0u) {
-        let wd = floor_water(x, y);
-        let a = smoothstep(0.01, 0.12, wd) * m.vis * under;
-        let deep = smoothstep(0.1, 0.5, wd);
-        m.albedo = mix(m.albedo, mix(m.albedo * 0.55, WET_RGB, 0.6 * deep), a);
-        m.gloss = mix(m.gloss, 0.9, a);
-        // The rot (part two): litter going soft, a dark umber with pale
-        // flecks where it is richest.
-        let rt = floor_rot(x, y);
-        let b = smoothstep(5.0, 120.0, rt) * m.vis * under;
-        let fleck = smoothstep(0.7, 0.9, vnoise(vec2<f32>(x, y) * 3.1)) * smoothstep(60.0, 200.0, rt);
-        m.albedo = mix(m.albedo, mix(ROT_RGB, ROT_FLECK, fleck), 0.75 * b);
-        m.gloss = mix(m.gloss, 0.35, b);
-    }
     // The crust over the bare ground and its plants, under the slime.
     m.albedo = crust_over(m.albedo, x, y, m.vis * under);
     let h = max(hc0, gem_height(x, y));
@@ -2594,13 +2640,22 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let sx = film_h(x + so, y) - film_h(x - so, y);
     let sy = film_h(x, y + so) - film_h(x, y - so);
     let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
-    let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
+    var spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
     // The thin film's shaded flank keeps most of its light (rule 2: the
     // film from 80; the planet review 11-15 measured its 10th percentile
     // at 65-80 on slime-coloured pixels, the far flank of the frontier's
     // veins, which fell to 0.4 of the light). Thick veins keep their full
     // relief.
     let thin_floor = 0.15 + 0.7 * smoothstep(0.005, 0.04, th_here) * (1.0 - smoothstep(0.25, 0.6, th_here));
+    // The slime biting a soldier (`bite_share`) in its own colour.
+    if (th_here > SLIME_ON_TH.x) {
+        let bs = bite_share(x, y) * smoothstep(SLIME_ON_TH.x, SLIME_ON_TH.y, th_here);
+        if (bs > 0.0) {
+            m.albedo = mix(m.albedo, BITE_SLIME, bs);
+            m.glow = mix(m.glow, BITE_SLIME_GLOW, bs);
+            spec *= 1.0 + 0.6 * bs;
+        }
+    }
     var c = m.albedo * max(shade, thin_floor) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // The fire's body, at this pixel (`flame_body` of the B-spline heat):
     // worked out in `prep` per fine cell it stair-stepped at the owner's
@@ -2640,6 +2695,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     for (var j = 0u; j < P.n_lights; j++) {
         let a = lights[2u * j];
         let lc = lights[2u * j + 1u];
+        if (a.w >= BITE_LIFT) { continue; }
         let to = vec3<f32>(a.x - x, a.y - y, abs(a.w) - h);
         let d2 = dot(to.xy, to.xy);
         let rr = a.z * a.z;
@@ -2653,6 +2709,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         // The scent glows a little of itself too, as the gas cloud does,
         // so it shows on the dark bare ground the light alone barely lifts.
         if (a.w < 0.0) {
+            // While the steering field's rings are drawn they are the
+            // Lure's sign and the scent light is not lit: its green pool
+            // turned the slime at the lure lime, and at cream it read as
+            // the pale haze the alarm lost (11-18, the lab's scene).
+            if (P.steer_at != 0u) { continue; }
             att *= look_scent(x, y);
             c += lc.xyz * att * 0.22;
         }
@@ -2662,51 +2723,32 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let sp = pow(max(dot(n, hv), 0.0), 24.0) * (0.15 + m.gloss);
         c += (m.albedo * (lc.xyz / 255.0) * diff * 1.6 + lc.xyz * sp * 0.9) * att;
     }
-    // The alarm field (a siren's call, a shot's alarm; 11-14): a pale cool
-    // haze by its strength and a brighter front where it falls off (its
-    // slope), so a call is the engine's field spreading and fading as the
-    // engine spreads and decays it. Pale, not red: red is a bolting walker
-    // and the cut-off rim (the slime-look thread).
-    // Where the field is under 1% of full, nothing is drawn and its slope
-    // is not sampled: five bilinear samples everywhere cost llvmpipe 10% of
-    // the frame (86.7 -> 95.3 ms GPU tail, 11-14).
-    // Only open cells count (`alarm_at`): the haze fades out over a wall's
-    // first cell by the open share, and a wall face draws no front.
-    // Its strength is `alarm_ground` on bare ground and `alarm_slime` on the
-    // slime, by the film there (the whole-game review's W46, 11-15: with
-    // the alarm on, as on the Swarmer's, Sporer's and Sleeper's planets,
-    // the squad's whole fire zone washed out mint, soil and plants with
-    // it). Where the haze draws nothing it is not sampled: a branch, as
-    // WGSL's `select` runs both its arms (with `select` here, `alarm_look=0`
-    // still cost the 1070's base pass 0.11 ms of the change's 0.16, 11-15).
-    let ak = mix(P.alarm_ground, P.alarm_slime, 1.0 - under);
-    var a2 = vec2<f32>(0.0, 0.0);
-    if (P.alarm_full > 0.0 && ak > 0.0) {
-        a2 = alarm_at(x, y);
-    }
-    let a = a2.x;
-    if (a > 0.01 * P.alarm_full) {
-        let gx = alarm_or(x + 1.0, y, a) - alarm_or(x - 1.0, y, a);
-        let gy = alarm_or(x, y + 1.0, a) - alarm_or(x, y - 1.0, a);
-        let fill = 1.0 - exp(-a / (0.5 * P.alarm_full));
-        let front = 1.0 - exp(-length(vec2<f32>(gx, gy)) / (0.12 * P.alarm_full));
-        c += ALARM_RGB * (0.10 * fill + 0.45 * front) * a2.y * ak;
-    }
-    // LAB: the steering field drawn as it is: lines of equal height every
-    // `STEER_RING` fine cells of walking (they bend round rock and walls
-    // as the field does), brighter the lower the ground, so a lure sits in
-    // the brightest, tightest rings and what it reaches is what is lit.
+    // (The alarm field's pale haze was laid here, to 2026-11-17: `flush_at`.)
+    // The Lure's steering field, drawn as it is: hairlines of equal walking
+    // distance to the lure every `STEER_RING` cells (they bend round rock
+    // and walls as the field does), brightest at the lure and fading with
+    // the distance, so what the rings cover is what the Lure reaches and
+    // the slime leans across them toward the middle. Lines only: the lab's
+    // prototype also filled the field with a haze and lit a core at the
+    // lure, which was a wash over the kill zone the Lure is built to make;
+    // the Lure building marks the middle. Under slime the lines drop to
+    // 30%, so the slime stays the thing to read. They do not move: a
+    // drifting ring would be a drawn pulse, not the field.
     if (P.steer_at != 0u) {
         let sp = steer_px(x, y);
         if (sp.y > 0.0) {
             let d = sp.x;
-            let dr = abs(d - STEER_RING * round(d / STEER_RING));
-            let line = 1.0 - smoothstep(0.6 / P.zoom, 1.6 / P.zoom, dr);
-            let near = exp(-d / 110.0);
-            // The field's lowest ground (a lure's own place) is a small
-            // bright core, so the eye finds what the rings close on.
-            let core = exp(-d / 5.0);
-            c += STEER_RGB * (0.07 * near + 0.42 * line * (0.25 + 0.75 * near) + 0.9 * core) * sp.y * (0.3 + 0.7 * under);
+            let ring = STEER_RING * max(round(d / STEER_RING), 1.0);
+            let dr = abs(d - ring);
+            // No ring within half a ring of the field's reach. There the
+            // field stops on its blocks' stepped edge, so a ring drew as a
+            // dotted line round the pull's rim; the game's reach (60 dish
+            // cells, 120 cells) is a multiple of the spacing, so its last
+            // ring fell on that edge (seen on planets 2 and 3, 11-18). The
+            // pull's rim is where the rings stop.
+            let kept = select(1.0, 0.0, P.steer_reach > 0.0 && ring > P.steer_reach - 0.5 * STEER_RING);
+            let line = (1.0 - smoothstep(0.6 / P.zoom, 1.6 / P.zoom, dr)) * kept;
+            c += STEER_RGB * STEER_LINE * line * (0.25 + 0.75 * exp(-d / 110.0)) * sp.y * (0.3 + 0.7 * under);
         }
     }
     let k1 = gem_near(x, y);
@@ -3116,8 +3158,109 @@ fn draw_absorbed(k: u32, dw: u32) {
     }
 }
 
+// **A Mind status on the slime it holds** (Look A5, 2026-11-18; the 11-18
+// reviews of Provoke and Still: "a stilled or provoked body has no look of
+// its own"). A walker under a status (blind, sour, spin, provoke, still:
+// the engine's Mind word, `mind_of`) lays a soft rose disc a cell across
+// the radius round itself in the specks' third screen, below the droplets
+// and members (a value under 256, layer 0: its strength in the low byte,
+// `atomicMax`, so overlapping discs make one haze over the walkers held
+// and the brightest is the walker itself). `base` tints the slime there
+// toward the Mind cards' rose (`card_look`'s 255, 90, 190), so a status
+// shows on the slime it holds, moves with it, and what the walkers do (a
+// blind one walking straight, a spinning one curling, a still one
+// stopped) shows in the rose. It fades over the status's last
+// `mind_fade` steps, so how long is left reads too. One hue for the
+// family, as the cards have; which status it is shows in the motion.
+const MIND_T_VIEW: u32 = 0x1FFFFFFFu;
+const MIND_HALO: f32 = 1.0;
+const MIND_ROSE: vec3<f32> = vec3<f32>(255.0, 96.0, 196.0);
+const MIND_TINT: f32 = 0.6;
+fn draw_mind(k: u32, s: vec2<f32>) {
+    let w = news[P.mind_at + k];
+    let end = w & MIND_T_VIEW;
+    let now = state[0] & MIND_T_VIEW;
+    if ((w >> 29u) == 0u || now >= end) { return; }
+    let fade = clamp(f32(end - now) / f32(P.mind_fade), 0.0, 1.0);
+    let r = max(MIND_HALO * P.zoom, 1.5);
+    let lo = vec2<i32>(floor(s - vec2<f32>(r)));
+    let hi = vec2<i32>(ceil(s + vec2<f32>(r)));
+    for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
+        for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
+            let d = distance(vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5), s);
+            if (d >= r) { continue; }
+            let v = u32(round(255.0 * fade * (1.0 - smoothstep(0.0, r, d))));
+            if (v > 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], min(v, 255u)); }
+        }
+    }
+}
+
 // Every walker a speck of light at its own position (one thread a walker),
 // counted a screen pixel; `base` adds and clears them.
+// ---- The slime's own looks (Look B, 2026-11-19) ----
+//
+// The owner (00:08Z): "instead of having a single look to build multiple
+// looks could eventually apply to different slimes". Each look is how that
+// slime's own walkers lay their film, so it shows what the slime does.
+const LOOK_THREADS: u32 = 1u;
+
+// The Sprawler's threads: its explorers walk away from trail at 1.5 times
+// the plain pace and only then join the mesh, so in the plain look its
+// edge was a field of separate glowing beads (the baseline films, 11-19:
+// planet 2's "fast threads" read as rows of dots). Here each walker lays
+// its film along the way it has just come, `P.streak` cells behind it
+// (its pace over `STREAK_SECS`), heaviest where it stands and tapering to
+// nothing at the tail: a fast walker is a dash pointing where it goes, and
+// walkers on one path overlap into a thread. The dash holds one walker in
+// all, so the slime reads no bigger than it is and the thick body, the
+// same walkers spread a little, looks as it did. (First cut, 11-19: every
+// fine cell of the dash at up to a whole walker, which drew the loose
+// walkers as fat slugs six cells long and filled planet 2's hub in as a
+// thick body.) Its cut-off share runs down the dash with its count, so a
+// cut-off walker's ash does too.
+// Its speck is the same dash at the pixel: the walker's way over
+// `STREAK_SECS` (`P.streak` cells, at most 48 pixels), `d` pixels wide at
+// the walker and thinning to a pixel at the tail, each pixel lit as a
+// walker's speck (`base`). At zoom 12 the Sprawler goes about 9 pixels a
+// frame, so its dot jumped from place to place and read as a scatter of
+// beads; the dash is where it has just been. Stepped a pixel at a time
+// along the longer axis, so no pixel is lit twice.
+fn speck_line(s: vec2<f32>, h: f32, d: i32, add: u32) {
+    let dir = vec2<f32>(cos(h), sin(h));
+    let len = min(P.streak * P.zoom, 48.0);
+    let ax = abs(dir.x) >= abs(dir.y);
+    let major = max(abs(dir.x), abs(dir.y));
+    let n = max(i32(ceil(len * major)), 1);
+    for (var j = 0; j <= n; j++) {
+        let t = f32(j) / f32(n);
+        let q = s - dir * (len * t);
+        let dj = max(i32(round(f32(d) * (1.0 - 0.75 * t))), 1);
+        for (var k = 0; k < dj; k++) {
+            var qx = i32(floor(q.x)); var qy = i32(floor(q.y));
+            if (ax) { qy += k - dj / 2; } else { qx += k - dj / 2; }
+            if (qx >= 0 && qy >= 0 && qx < i32(P.sw) && qy < i32(P.sh)) { atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], add); }
+        }
+    }
+}
+
+fn lay_streak(w: vec4<f32>, cnt: u32, kf: f32) {
+    let dir = vec2<f32>(cos(w.z), sin(w.z));
+    let m = clamp(i32(round(P.streak * kf)), 1, 12);
+    let head = f32(cnt & 0xFFFFu);
+    let cut = f32(cnt >> 16u);
+    // Weights m + 1 - i for i = 0 (the walker) to m, summing to this.
+    let sum = f32((m + 1) * (m + 2) / 2);
+    for (var i = 0; i <= m; i++) {
+        let f = f32(m + 1 - i) / sum;
+        let p = w.xy - dir * (f32(i) / kf);
+        let gx = i32(floor((p.x - f32(P.ox)) * kf));
+        let gy = i32(floor((p.y - f32(P.oy)) * kf));
+        if (gx < 0 || gy < 0 || gx >= i32(P.rw) || gy >= i32(P.rh)) { continue; }
+        let add = u32(round(head * f)) | (u32(round(cut * f)) << 16u);
+        if (add > 0u) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], add); }
+    }
+}
+
 @compute @workgroup_size(256)
 fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -3202,8 +3345,10 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let kf = f32(P.fine);
     let gx = i32(floor((w.x - f32(P.ox)) * kf));
     let gy = i32(floor((w.y - f32(P.oy)) * kf));
+    let streak = P.streak > 0.0 && !member && w.w == 0.0;
+    if (streak) { lay_streak(w, cnt, kf); }
     if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) {
-        atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt);
+        if (!streak) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt); }
         if (dcnt > 0u) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], dcnt); }
         if (member) { atomicOr(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << (FG_FLAGS + lump_k - 1u)); }
     }
@@ -3233,35 +3378,66 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // pixels across the radius and its tail, inside a dark rim zoom / 12
     // pixels wide (at least one), so it reads over the bright body and
     // the dark ground alike. A shot's spray droplet (the engine writes its
-    // flight below 0) is a killed walker blown out: white-hot while it is
-    // fast, cooling to deep orange as it slows to land. A blast's throw is
-    // living mould and keeps its gold.
+    // flight below 0) is a killed walker blown out: hot while it is fast
+    // (white-hot until 11-18, now the slime's gold glowing), cooling to
+    // deep orange as it slows to land. A blast's throw is living mould and
+    // keeps its gold.
+    // In the slime's material (Look A3, 2026-11-18): the dark rim was an
+    // ink outline, a cartoon chip beside a body drawn with light (the
+    // 11-17 review: "outlined shapes in a different style from the slime
+    // they come from"). Now a droplet is a bead in the slime's gold, lit by
+    // the body's key light with its tight wet glint, so its upper left
+    // catches the light and its lower right falls darker, and where the rim
+    // stood it casts a soft shadow down and away from the light onto what
+    // is under it. The shaded limb and the shadow keep it apart from the
+    // bright body as the rim did.
+    if (P.mind_at != 0u && w.w == 0.0) { draw_mind(k, s); }
     if (w.w != 0.0) {
         let spray = w.w < 0.0;
         let fl = abs(w.w);
         let rh = max(P.zoom / 3.2, 1.0);
-        let rim = max(P.zoom / 12.0, 1.0);
         let len = max(clamp(0.8 * fl, 0.5, 3.0) * P.zoom, 2.0);
         let dir = vec2<f32>(cos(w.z), sin(w.z));
         let tail = s - dir * len;
+        let l = normalize(LIGHT);
+        // The shadow: the droplet's own shape, put DROP_SHADOW head radii
+        // away from the light (screen pixels; the light's own direction on
+        // the ground), at least a pixel.
+        let sh = -normalize(l.xy) * max(DROP_SHADOW * rh, 1.0);
         // Heat by its flight a tick: about 0.9 cells for the fastest
         // droplet as it leaves (`spray_reach` 7 over 0.45 s; its tail at
         // zoom 12 about 9 pixels), under 0.2 as the slowest lands.
-        var heat = 0u;
-        if (spray) { heat = u32(round(255.0 * clamp((fl - 0.2) / 0.6, 0.0, 1.0))); }
-        let lo = vec2<i32>(floor(min(s, tail) - vec2<f32>(rh + rim + 1.0)));
-        let hi = vec2<i32>(ceil(max(s, tail) + vec2<f32>(rh + rim + 1.0)));
+        // Four bits: 0 a blast's living throw (gold), 1-15 a spray's heat
+        // from landing to leaving.
+        var heat = 0.0;
+        if (spray) { heat = clamp((fl - 0.2) / 0.6, 0.0, 1.0); }
+        let pad = vec2<f32>(rh + 1.0);
+        let lo = vec2<i32>(floor(min(s, tail) + min(sh, vec2<f32>(0.0)) - pad));
+        let hi = vec2<i32>(ceil(max(s, tail) + max(sh, vec2<f32>(0.0)) + pad));
         for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
             for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
                 let p = vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5);
                 let t = clamp(dot(s - p, dir) / len, 0.0, 1.0);
                 let r = rh * (1.0 - 0.7 * t);
-                let d = distance(p, s - dir * (t * len));
-                // The layer: 2 the droplet, 1 its rim; the tail cooler
-                // than the head.
+                let on = s - dir * (t * len);
+                let d = distance(p, on);
+                // The layer: 2 the droplet (its heat in bits 4-7, the tail
+                // cooler than the head; how squarely it faces the light in
+                // bits 0-3), 1 its shadow.
                 var v = 0u;
-                if (d <= r) { v = (2u << 8u) | u32(f32(heat) * (1.0 - 0.5 * t)); }
-                else if (d <= r + rim) { v = 1u << 8u; }
+                if (d <= r) {
+                    var h4 = 0u;
+                    if (spray) { h4 = 1u + u32(round(14.0 * heat * (1.0 - 0.5 * t))); }
+                    // A bead's normal: out from its axis, up by what is
+                    // left of a sphere's radius.
+                    let o = (p - on) / max(r, 0.5);
+                    let n = normalize(vec3<f32>(o, sqrt(max(1.0 - dot(o, o), 0.0))));
+                    let f = u32(round(15.0 * clamp((dot(n, l) + 0.3) / 1.3, 0.0, 1.0)));
+                    v = (2u << 8u) | (h4 << 4u) | f;
+                } else {
+                    let ts = clamp(dot(s - (p - sh), dir) / len, 0.0, 1.0);
+                    if (distance(p - sh, s - dir * (ts * len)) <= rh * (1.0 - 0.7 * ts)) { v = 1u << 8u; }
+                }
                 if (v != 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], v); }
             }
         }
@@ -3301,6 +3477,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // ones too since the owner's playtest, 11-14: lone walkers read dim);
     // from 3 pixels its corners are left off, so it is a dot, not a square.
     let d = clamp(i32(round(P.zoom / 3.0)), 1, 4);
+    if (P.streak > 0.0) { speck_line(s, w.z, d, add); return; }
     for (var dy = 0; dy < d; dy++) {
         for (var dx = 0; dx < d; dx++) {
             if (d >= 3 && (dx == 0 || dx == d - 1) && (dy == 0 || dy == d - 1)) { continue; }
@@ -3310,12 +3487,29 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
-// A flung walker's droplet (`draw_specks`, the bold spray, 11-15): its
-// rim, a blast's living throw, and a shot's spray from fast (hot) to
-// landing (cool).
-const DROP_RIM: vec3<f32> = vec3<f32>(34.0, 18.0, 6.0);
+// A flung walker's droplet (`draw_specks`, the bold spray, 11-15): a
+// blast's living throw, and a shot's spray from fast (hot) to landing
+// (cool). Since 11-18 a lit bead with a shadow, not a chip in a dark rim
+// (`DROP_RIM` (34, 18, 6) at 0.8, a rim zoom / 12 pixels wide).
+// The shadow: how far it falls from the droplet in head radii, and how
+// much light it takes from what is under it.
+const DROP_SHADOW: f32 = 0.9;
+const DROP_SHADE: f32 = 0.5;
+// The bead's shading: the body's curve (`shaded`, 1 + 1.25 (n.l - l.z),
+// floor 0.3) made a bead a few pixels across mostly its dark limb, a
+// brown pebble at zoom 6, so a gentler slope and a higher floor.
+const DROP_SLOPE: f32 = 0.8;
+const DROP_FLOOR: f32 = 0.55;
+// A shot's spray: a killed walker blown out, the slime's gold while it is
+// fast, glowing this share of the way to `DROP_HEAT` over its shading
+// (so even the fastest keeps a shaded side), cooling to deep orange as it
+// slows to land. A blast's throw is living mould: gold, no glow.
+// (Tried 11-18 and not kept: the 11-15 white-hot (`DROP_HOT` (255, 246,
+// 214)) at 0.6 and at 0.3 over a base a fifth to a third of the way to
+// it: pale cream or grey-brown seeds, not the slime.)
+const DROP_GLOW: f32 = 0.4;
+const DROP_HEAT: vec3<f32> = vec3<f32>(255.0, 238.0, 180.0);
 const DROP_GOLD: vec3<f32> = vec3<f32>(255.0, 196.0, 70.0);
-const DROP_HOT: vec3<f32> = vec3<f32>(255.0, 246.0, 214.0);
 const DROP_COOL: vec3<f32> = vec3<f32>(238.0, 118.0, 24.0);
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // Off the map in the shaded view: darker than any ground or rock.
@@ -3420,14 +3614,33 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);
             c = mix(c, ABSORB_RGB, min(f32(hot) * 0.3, 0.9));
             // A flung walker's droplet (`draw_specks`, the bold spray): its
-            // dark rim, then the droplet, a spray's by its heat.
+            // shadow on what is under it, then the droplet, lit by the
+            // body's key light with the dense body's wet glint (`shaded`:
+            // exponent 14 + 30 x 0.95), a spray's colour by its heat.
             let drop = atomicExchange(&specks[2u * P.shalf + y * P.stride + x], 0u);
-            if ((drop >> 8u) == 1u) { c = mix(c, DROP_RIM, 0.8); }
+            // A Mind status (`draw_mind`): its haze over the slime it holds,
+            // and its walkers' own cores wherever they are.
+            if (drop > 0u && drop < 256u) {
+                let a = f32(drop) / 255.0;
+                let on = max(smoothstep(0.05, 0.4, under_body), smoothstep(0.6, 0.9, a));
+                c = mix(c, MIND_ROSE, MIND_TINT * a * on);
+            }
+            if ((drop >> 8u) == 1u) { c *= 1.0 - DROP_SHADE; }
             if ((drop >> 8u) == 2u) {
-                let hh = f32(drop & 255u) / 255.0;
+                let h4 = (drop >> 4u) & 15u;
                 var dc = DROP_GOLD;
-                if (hh > 0.0) { dc = mix(DROP_COOL, DROP_HOT, hh * hh * (3.0 - 2.0 * hh)); }
-                c = mix(c, dc, 0.95);
+                var hh = 0.0;
+                if (h4 > 0u) {
+                    hh = f32(h4 - 1u) / 14.0;
+                    dc = mix(DROP_COOL, DROP_GOLD, hh);
+                }
+                let fl = f32(drop & 15u) / 15.0 * 1.3 - 0.3;
+                let lz = normalize(LIGHT).z;
+                let shade = clamp(1.0 + DROP_SLOPE * (fl - lz), DROP_FLOOR, 1.4);
+                let spec = pow(max(fl, 0.0), 42.0) * 1.1;
+                var lit = dc * shade + vec3<f32>(255.0, 250.0, 236.0) * spec;
+                lit = mix(lit, DROP_HEAT, DROP_GLOW * hh * hh * (3.0 - 2.0 * hh));
+                c = mix(c, min(lit, vec3<f32>(255.0)), 0.95);
             }
             // A mini-boss's member (`draw_specks`): its lump's core colour
             // (cyan as a leech drinks), white-hot by the hits it has taken,
@@ -3538,7 +3751,8 @@ fn pm_over(under: vec4<f32>, top: vec4<f32>) -> vec4<f32> {
 // OUTLINE pixels wide round its silhouette (body and helmet), which
 // parts it from the gold slime, and a cream rim light on the edges that
 // face the world's light, which parts it from the dark ground. The dead
-// get neither and no shadow: a flat grey shape lying on the ground.
+// get neither and no shadow: a body lying on the ground in a pool of its
+// blood (`blood_pool`; a flat grey shape until the owner's 11-18 playtest).
 const OUTLINE: f32 = 1.5;
 // Sprite colours are 0-255, as the atlas's texels (`texel`).
 const RIM: vec3<f32> = vec3<f32>(250.0, 244.0, 222.0);
@@ -3560,6 +3774,53 @@ fn silhouette(p: vec2<f32>, small: bool) -> f32 {
 const CHARGE: vec3<f32> = vec3<f32>(92.0, 224.0, 232.0);
 const CHARGE_HOT: vec3<f32> = vec3<f32>(220.0, 255.0, 255.0);
 
+// The pool of blood under a fallen soldier (the owner's playtest,
+// 2026-11-18 16:12Z: "When soliders die, the body on the floor looks
+// really bad. You could create a better looking body or just a blood
+// splotch"). At `p` in the body's frame (radii, +x the way it faced; the
+// body lies along x), premultiplied: a lumpy pool centred under the chest
+// that spreads from a quarter of its size at the fall to all of it as
+// `grow` goes 0 to 1 (eased, so it spreads fast and slows), with a few
+// drops flung past its edge from the start. Wet: dark at its rim, red
+// inside, a soft glint on the side toward the world's light (`lp`, the
+// light's direction on the ground turned into the body's frame). `seed` (0-255)
+// turns its lobes and drops so no two pools match. All of it inside the
+// soldier mark's box (2 radii each way).
+const BLOOD: vec3<f32> = vec3<f32>(114.0, 14.0, 12.0);
+const BLOOD_RIM: vec3<f32> = vec3<f32>(50.0, 4.0, 5.0);
+const BLOOD_GLINT: vec3<f32> = vec3<f32>(214.0, 96.0, 84.0);
+// The pool's radius at full spread, radii (1.2 times that along the body).
+const POOL_R: f32 = 0.95;
+
+fn blood_pool(p: vec2<f32>, grow: f32, seed: f32, aa: f32, lp: vec2<f32>) -> vec4<f32> {
+    let g = 1.0 - (1.0 - clamp(grow, 0.0, 1.0)) * (1.0 - clamp(grow, 0.0, 1.0));
+    let c = vec2<f32>(-0.3, 0.0);
+    let stretch = vec2<f32>(1.2, 1.0);
+    let q = (p - c) / stretch;
+    let th = atan2(q.y, q.x);
+    let s1 = seed * 0.0246;
+    let wob = 1.0 + 0.14 * sin(3.0 * th + s1 * 9.0) + 0.09 * sin(5.0 * th + s1 * 23.0) + 0.05 * sin(8.0 * th + s1 * 41.0);
+    let big = POOL_R * (0.25 + 0.75 * g);
+    let dist = length(q) - big * wob;
+    var a = cover(dist, aa);
+    // The drops, flung as it fell: four, each at its own angle and reach.
+    for (var i = 0u; i < 4u; i++) {
+        let fi = f32(i);
+        let h = fract(sin(seed * 12.9898 + fi * 78.233) * 43758.5453);
+        let ang = seed * 0.137 + fi * 1.83 + h * 0.9;
+        let at = c + vec2<f32>(cos(ang), sin(ang)) * stretch * POOL_R * (1.1 + 0.15 * h);
+        a = max(a, cover(length(p - at) - (0.06 + 0.06 * h), aa));
+    }
+    if (a <= 0.0) { return vec4<f32>(0.0); }
+    // Dark at the rim, red inside, by depth into the pool.
+    var col = mix(BLOOD_RIM, BLOOD, clamp(-dist / (0.3 * big + 0.05), 0.0, 1.0));
+    let gq = q - lp * 0.45 * big;
+    let glint = exp(-dot(gq, gq) / (0.06 * big * big + 0.01));
+    col = mix(col, BLOOD_GLINT, 0.35 * glint * clamp(-dist / 0.1, 0.0, 1.0));
+    let alpha = a * 0.94;
+    return vec4<f32>(col * alpha, alpha);
+}
+
 fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool, carry: f32, take: f32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
@@ -3570,9 +3831,12 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
     // averaged rather than aliased.
     let small = r < 12.0;
     if (dead) {
-        let c = sprite(3u, p, small);
+        // `flash` is how far its pool has spread, `carry` its seed
+        // (`Marks::fallen`).
+        let lp = vec2<f32>(l.x * ca + l.y * sa, -l.x * sa + l.y * ca);
+        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), sprite(3u, p, small));
         if (c.w <= 0.0) { return vec4<f32>(0.0); }
-        return vec4<f32>(c.xyz / c.w, c.w * 0.92);
+        return vec4<f32>(c.xyz / c.w, c.w);
     }
     let sh = sd_ellipse(s, vec2<f32>(-l.x, -l.y) * 0.32, vec2<f32>(0.78, 0.78));
     var out = vec4<f32>(0.0, 0.0, 0.0, 0.38 * cover(sh, aa * 2.5));
@@ -3696,8 +3960,7 @@ const LAMP_TRACK: vec3<f32> = vec3<f32>(255.0, 190.0, 80.0);
 const LAMP_DRY: vec3<f32> = vec3<f32>(240.0, 64.0, 52.0);
 const LAMP_IDLE: vec3<f32> = vec3<f32>(70.0, 72.0, 60.0);
 const CALL_RED: vec3<f32> = vec3<f32>(255.0, 90.0, 60.0);
-const BITE_HOT: vec3<f32> = vec3<f32>(255.0, 120.0, 72.0);
-const ALARM_RGB: vec3<f32> = vec3<f32>(200.0, 214.0, 240.0);
+const BITE_HOT: vec3<f32> = vec3<f32>(235.0, 40.0, 48.0);
 
 // ---- The pump's rig (kind 6, `Marks::pump_rig`, 2026-11-15) ----
 //
@@ -4026,6 +4289,12 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
         // Rifle, barrels and flash reach past the radius.
         x0 = floor(s.x - 2.0 * h.x); x1 = ceil(s.x + 2.0 * h.x);
         y0 = floor(s.y - 2.0 * h.x); y1 = ceil(s.y + 2.0 * h.x);
+        // A head (`Marks::soldier_head`) is the helmet alone, within
+        // half a radius of the middle at any facing.
+        if (shape == SOLDIER && (extra & HEAD_ONLY) != 0u) {
+            x0 = floor(s.x - 0.5 * h.x); x1 = ceil(s.x + 0.5 * h.x);
+            y0 = floor(s.y - 0.5 * h.x); y1 = ceil(s.y + 0.5 * h.x);
+        }
     }
     if (shape == GLYPH) {
         x0 = floor(s.x);
@@ -4169,19 +4438,79 @@ fn flash_at(b: u32, p: vec2<f32>) -> vec2<f32> {
     return vec2<f32>(g.x * sqrt(left), g.y * (0.35 + 0.65 * left));
 }
 
+// A soldier mark that draws only the figure's helmet (`Marks::soldier_head`,
+// `extra` bit 25): every living soldier's head again, above every body, so
+// in a packed squad each one shows its white dome and can be counted (the
+// brief's "space the squad so 40 soldiers can be counted"; a squad draining
+// a crystal stands 0.69 of elbow room apart, and a later figure's shoulders
+// covered an earlier one's head). The pixels are the whole figure's own
+// where its helmet is, so a soldier standing alone looks as it did.
+const HEAD_ONLY: u32 = 1u << 25u;
+
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    var f = soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
-    // A bite (`Marks::soldier_bitten`, 11-14): the side the slime bit from
-    // flushes hot, fading with the flinch, on the body only (no new alpha).
+    let ang = bitcast<f32>(marks[b + 9u]);
+    var f = soldier(d, r, ang, unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
+    if ((extra & HEAD_ONLY) != 0u) {
+        // The helmet grown by OUTLINE pixels: there the head shows its own
+        // figure whole (helmet, and round it a ring of its own shoulders
+        // or ink), since this mark is the pixel's only one; with the
+        // helmet's own soft edge as the alpha, its fringe showed the
+        // ground through a lone soldier's body (a dark ring, 88 of 255).
+        let s = d / r;
+        let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
+        let small = r < 12.0;
+        var head = sprite(1u, p, small).w;
+        for (var i = 0u; i < 8u; i++) {
+            let a = f32(i) * 0.785398;
+            head = max(head, sprite(1u, p + vec2<f32>(cos(a), sin(a)) * OUTLINE / r, small).w);
+        }
+        if (head <= 0.004) { return vec4<f32>(0.0); }
+    }
+    // A bite (`Marks::soldier_bitten`, 11-14): the figure flushes blood
+    // red, fading with the flinch, on the body only (no new alpha). Until
+    // 11-18 only the side toward its aim flushed, in the slime's orange: the
+    // aim is not where the bite came from (the walkers within its touch,
+    // all round it), so its rifle arm reddened.
+    // The helmet stays white, so a squad can still be counted by its heads.
     let w = marks[b + 8u];
     let bite = f32(w & 255u) / 255.0;
     if (bite > 0.0 && f.w > 0.0) {
-        let a = f32(w >> 8u) / 65535.0 * 6.2831853;
-        let side = clamp(dot(d / r, vec2<f32>(cos(a), sin(a))) * 1.4 + 0.3, 0.0, 1.0);
-        f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * side * 0.75), f.w);
+        let s = d / r;
+        let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
+        let helmet = sprite(1u, p, r < 12.0).w;
+        f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * 0.45 * (1.0 - helmet)), f.w);
     }
     return f;
+}
+
+// **The slime on a soldier** (the owner, 2026-11-18 18:04Z: "When the
+// slime is attacking/damagin my soliders, I cannot really tell. It just
+// looks like walkers are running past them"). The walkers that bite a
+// soldier are the ones within its touch (`squad::read`, `Rules::touch`),
+// and its figure, 1.15 touches across the radius, covered every one of
+// them: the slime showed only round it, flowing past. Now where biting
+// slime lies (a bite zone, `bite_share`, in its crimson), it is drawn over
+// the figure, its own pixel as the world drew it, by how thick it is
+// there: a soldier wading in is slime to the waist, its helmet clear (the
+// head marks are drawn above, untouched), and one the slime has left is
+// clean at once. A soldier not bitten, and the fallen, look as they did.
+// What it covers is the slime that bites, so it is never bigger than the
+// damage.
+const SLIME_ON_TH: vec2<f32> = vec2<f32>(0.02, 0.2);
+const SLIME_ON_MAX: f32 = 0.85;
+fn slime_on(b: u32, d: vec2<f32>, r: f32, x: u32, y: u32) -> f32 {
+    let extra = marks[b + 11u];
+    if ((extra & (256u | HEAD_ONLY)) != 0u) { return 0.0; }
+    let fx = P.cx + (f32(x) + 0.5) / P.zoom;
+    let fy = P.cy + (f32(y) + 0.5) / P.zoom;
+    let cover = smoothstep(SLIME_ON_TH.x, SLIME_ON_TH.y, film_th(fx, fy)) * bite_share(fx, fy);
+    if (cover <= 0.0) { return 0.0; }
+    // Within the touch (the figure's 1 / 1.15 of its radius), its edge
+    // soft over a pixel or two.
+    let touch = r / 1.15;
+    let inside = 1.0 - smoothstep(touch - 1.5, touch + 0.5, length(d));
+    return SLIME_ON_MAX * cover * inside;
 }
 
 // Marks, then the overlay (premultiplied RGBA, screen-sized), over the
@@ -4214,7 +4543,9 @@ fn compose(@builtin(global_invocation_id) gid: vec3<u32>) {
         } else if (marks[b + 6u] == SOLDIER && !in_minimap(x, y)) {
             let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
             let f = soldier_at(b, d, half(b).x);
+            let world = c;
             c = c * (1.0 - f.w) + f.xyz * f.w;
+            c = mix(c, world, slime_on(b, d, half(b).x, x, y) * f.w);
         } else if (marks[b + 6u] == BUILDING && !in_minimap(x, y)) {
             let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
             let f = building_at(b, d, half(b).x);
