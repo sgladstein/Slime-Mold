@@ -81,3 +81,8 @@
 2026-11-19 13:44:39 worker: league.py changed; restarting
 2026-11-19 13:44:39 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
 2026-11-19 13:44:40 worker: built the game in 1 s (src fca1b8c83be0)
+2026-11-19 13:44:44 worker: the game's code changed (now 21a0e2c0); building
+2026-11-19 13:46:52 worker: built the game in 128 s (src 68f057590a7b)
+2026-11-19 13:46:52 worker: league.py changed; restarting
+2026-11-19 13:46:52 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-19 13:46:53 worker: built the game in 1 s (src 68f057590a7b)
