@@ -107,7 +107,14 @@ the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
 Trunk thick veined cords with its amber walls.
 
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
-time: the fen moat's deletion.
+time: the fort walls' smooth tops (`SET_SOFT`). Next on it, once Squad's
+Gas PR (#513) is on main: a dozing soldier's look, committed on a local
+branch over #513 (`Marks::doze_since`, `doze_tint` in `draw.rs`, the
+`DOZE_*` constants in `soldier_at`): its body takes the gas's lavender
+by the cloud's level at its feet and dims while it is out, its helmet
+white. Filmed on planet 1 (Gas cast on the squad at 40 s): grey-lavender
+at 42 s, olive and firing at 48 s. If the branch is lost, that is the
+whole change; the window's 51 tests passed on it.
 
 **The Sprawler's look (#510):**
 
@@ -139,16 +146,17 @@ while Squad asked to keep it.
    Tried and not kept (`Reports/dead-ends.md`, 11-19): the Trunk's film
    along each walker's way, and a smooth droplet for the Drifter (blurry at
    zoom 6). The Trunk's body has no flow or tubes to draw (headings every
-   which way, the trail flat even at `knee=60`): veins need a slime rule
-   (Enemy's), passed to Direction 11-19.
+   which way, the trail flat even at `knee=60`, the shared food a smooth
+   pool round each crystal): Direction parked its veins for Milestone 2
+   (11-19).
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
 3. A landing, a win and a loss that happen in the picture (D's next).
-4. Pick still open: the mini-boss colours (the fen moat, the A/B's unused
-   side, was deleted 11-19).
-5. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
-   their height), and their arcs show cell steps.
+4. Picks done 11-19: the fen moat deleted; the hunter stays violet
+   (filmed on planet 8, bright and glossy over its dark purple plants,
+   framed by the gold it forms in); the fort walls' tops smooth
+   (`SET_SOFT`).
 
 **Helpers** (11-19, the owner offered them): a film runner thread (builds
 and films on its own machine; send it exact commands, it pushes the output

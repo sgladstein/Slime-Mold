@@ -1695,8 +1695,9 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
 // mark a wall that stops soldiers looked like slime they can walk
 // (`Reports/dead-ends.md`). Not dark ridges (they read as the player's
 // walls), not bronze (the owner turned it down). The body's opacity stays
-// the sheet's; its edge is the set walkers' own, smoothed over the 4 x 4
-// cells round (a lone set walker is a fleck, a set rim a band).
+// the sheet's; its edge is the set walkers' own, smoothed over the 6 x 6
+// cells round (`SET_SOFT`; a lone set walker is a faint fleck, a set rim
+// a band).
 // It stands `SET_RISE` above the sheet (2026-11-18). To then it kept the
 // sheet's height too (the graphics thread, 11-17), which was a detail while
 // it formed only under fire; the Trunk's fort (Enemy, #473) made it a ring
@@ -1706,28 +1707,43 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
 fn set_c(ix: i32, iy: i32) -> f32 { return f32(news[P.setc_at + cidx(ix, iy)]); }
 fn set_share(x: f32, y: f32) -> f32 {
     if (P.setc_at == 0u) { return 0.0; }
-    let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
+    let ix = i32(floor(x - 0.5)) - 2; let iy = i32(floor(y - 0.5)) - 2;
     var c = 0.0;
     var ws = 0.0;
-    for (var dy = 0; dy < 4; dy++) {
-        for (var dx = 0; dx < 4; dx++) {
+    for (var dy = 0; dy < 6; dy++) {
+        for (var dx = 0; dx < 6; dx++) {
             let d = vec2<f32>(f32(ix + dx) + 0.5 - x, f32(iy + dy) + 0.5 - y);
-            let w = exp(-dot(d, d) / (2.0 * 0.7 * 0.7));
+            let w = exp(-dot(d, d) / (2.0 * SET_SOFT * SET_SOFT));
             c += w * set_c(ix + dx, iy + dy);
             ws += w;
         }
     }
     return smoothstep(0.2, 0.6, c / ws);
 }
+// How wide the set walkers are smoothed, cells (11-19; 0.7 over 4 x 4
+// cells to then). A walker holds a cell to itself, so a wall's cells are
+// set or not one by one; at 0.7 its share swung cell to cell and so did
+// its `SET_RISE` of height: the Trunk's fort walls had pale flecks and
+// dark pits on top that were not their height, and their arcs stepped by
+// the cell at zoom 12. At 1.2, over 6 x 6 cells, the share is the wall's
+// fill and its flank about a cell and a half wide.
+const SET_SOFT: f32 = 1.2;
 const SET_AMBER: vec3<f32> = vec3<f32>(112.0, 46.0, 14.0);
 const SET_AMBER_GLOW: vec3<f32> = vec3<f32>(255.0, 110.0, 30.0);
 // How far set slime stands above the sheet: the dense body is at most 5.
 const SET_RISE: f32 = 4.0;
-fn set_rise(share: f32, th: f32) -> f32 { return SET_RISE * share * smoothstep(0.02, 0.2, th); }
-fn set_mat(m0: Mat, share: f32, th: f32) -> Mat {
+// Both by the wide count (`wide`, 11-19), not the colour's thickness: set
+// walkers lay little trail, so inside a wall that thickness was the sharp
+// count's, which goes cell to cell as a walker holds a cell or not; the
+// rise and the amber went with it, and the Trunk's fort walls had pale
+// flecks and dark pits on top at zoom 12 that were not their height (with
+// the rise at 0 the wall was flat and smooth: it was the rise).
+fn set_body(wide: f32) -> f32 { return smoothstep(0.15, 0.45, wide); }
+fn set_rise(share: f32, wide: f32) -> f32 { return SET_RISE * share * set_body(wide); }
+fn set_mat(m0: Mat, share: f32, wide: f32) -> Mat {
     if (share <= 0.0) { return m0; }
     var m = m0;
-    let s = share * smoothstep(0.02, 0.2, th);
+    let s = share * set_body(wide);
     m.albedo = mix(m.albedo, SET_AMBER, s);
     m.gloss = mix(m.gloss, 0.5, s);
     m.glow = m.glow + SET_AMBER_GLOW * 0.14 * s;
@@ -1914,7 +1930,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         let hh = cell_height(ix, iy, th_h);
-        hcell[i] = hh.x + set_rise(ss, tm);
+        hcell[i] = hh.x + set_rise(ss, wide);
         hcell[P.rw * P.rh + i] = hh.y;
         hcell[2u * P.rw * P.rh + i] = ground_pack(ground_cell(ix, iy).col);
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
@@ -1922,7 +1938,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         m1.glow += ABSORB_RGB * 0.45 * flash;
         m1 = flush_mat(m1, hot);
         m1 = lump_mat(m1, lump, tm);
-        m1 = set_mat(m1, ss, tm);
+        m1 = set_mat(m1, ss, wide);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -1950,8 +1966,8 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     mt.glow += ABSORB_RGB * 0.45 * flash;
     mt = flush_mat(mt, hot);
     mt = lump_mat(mt, lump, tm);
-    mt = set_mat(mt, ss, tm);
-    hcell[i] = h.x + set_rise(ss, tm);
+    mt = set_mat(mt, ss, wide);
+    hcell[i] = h.x + set_rise(ss, wide);
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
     mcell[i] = mat_pack(mt);
