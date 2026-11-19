@@ -192,6 +192,8 @@ SPACE = {
     "cards": [0, 1, 2],
     "aim": [1, 2, 3, 6, 10],
     "kite": [0, 0.3, 0.5, 0.7],
+    "split": [0, 1, 2, 3, 4, 6],
+    "group": [2, 3, 4, 6, 8],
 }
 SHOP_KEYS = ["strike", "rate", "hp", "squad", "harvest", "range", "bank", "turret", "turret+", "pump+", "mortar", "draw"]
 
@@ -301,7 +303,7 @@ def cross(a, b, rng):
     keys = set(a) | set(b)
     return {k: (a if rng.random() < 0.5 else b).get(k, (b if k in b else a).get(k)) for k in keys if (k in a or k in b)}
 
-STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1", "aim": "1", "kite": "0"}
+STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": ""}
 
 def presets():
     """The strategy bot's named families, read from strat.rs."""
@@ -317,7 +319,7 @@ def canon(plan, _p={}):
     d.pop("name", None)
     if d.get("@") == "util:":
         full = {k: f"{v:.3g}" for k, v in util_weights().items()}
-        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1", "aim": "1", "kite": "0"})
+        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": ""})
     else:
         full = dict(STRAT_DEFAULTS)
         full.update({k: v for k, v in dials_of(_p.get(d.get("@", ""), "")).items() if k != "@"})

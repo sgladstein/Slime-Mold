@@ -91,6 +91,20 @@ pub(super) struct Plan {
     /// range, and lets go once clear (the owner steered half the time in
     /// his planet 3 push, 372 steers in all).
     pub kite: f32,
+    /// Hold crystals (Scott's 11-19 playtest, "split my squad a lot and
+    /// have each of them defend a single crystal ... I stole all the
+    /// crystals"): up to this many groups, each of `group` soldiers taken
+    /// from the main squad, drain a crystal of their own and keep the
+    /// slime off it; a group whose crystal is spent moves to the next.
+    /// The main squad (controlled, where bought soldiers join) plays the
+    /// plan as before. 0: one squad.
+    pub split: u32,
+    /// Soldiers in each holding group.
+    pub group: u32,
+    /// Gun cards the league puts on the shop's shelf and buys when the
+    /// points allow (`league::shop`), so a plan can be tried with a card
+    /// the run happened to offer (Scott's push guns: `want=heave`).
+    pub want: Vec<String>,
 }
 
 impl Default for Plan {
@@ -118,6 +132,9 @@ impl Default for Plan {
             own: None,
             aim: 1.0,
             kite: 0.0,
+            split: 0,
+            group: 4,
+            want: Vec::new(),
         }
     }
 }
@@ -146,7 +163,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 22] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite"];
+    pub const DIALS: [&'static str; 25] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -189,6 +206,9 @@ impl Plan {
             "own" => self.own = Some(v.split('/').filter(|s| !s.is_empty()).map(String::from).collect()),
             "aim" => self.aim = num(v)?.clamp(1.0, 20.0),
             "kite" => self.kite = num(v)?.clamp(0.0, 1.0),
+            "split" => self.split = whole(v)?.min(12),
+            "group" => self.group = whole(v)?.clamp(1, 40),
+            "want" => self.want = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -243,6 +263,8 @@ struct Memory {
     pub peak: usize,
     /// Seconds the squad spent home, out, building and stepping back.
     pub secs: [u32; 4],
+    /// Holding groups (`Plan::split`): squad and its crystal.
+    held: Vec<(usize, usize)>,
 }
 
 thread_local! {
@@ -442,14 +464,20 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     }
     let p = MEM.with_borrow(|m| m.plan.clone());
     let sc = g.world.scale();
-    // One squad: every other squad joins the first.
+    // One squad: every other squad joins the first (the controlled one
+    // when crystals are held), bar the holding groups.
     let live = g.live_squads();
-    let Some(&q) = live.first() else { return };
-    for &o in &live[1..] {
+    let main = if p.split > 0 { g.active.filter(|a| live.contains(a)).or(live.first().copied()) } else { live.first().copied() };
+    let Some(q) = main else { return };
+    let holders: Vec<usize> = MEM.with_borrow(|mm| mm.held.iter().map(|h| h.0).collect());
+    for &o in live.iter().filter(|&&o| o != q && (p.split == 0 || !holders.contains(&o))) {
         g.apply(Cmd::Merge(q as u8, o as u8));
     }
     if g.active != Some(q) {
         g.apply(Cmd::Active(q as u8));
+    }
+    if p.split > 0 {
+        hold(g, &p, q);
     }
     let Some(m) = g.middle(q) else { return };
     let range = g.gun_range(q) * sc;
@@ -730,6 +758,63 @@ fn place(g: &mut Game<GpuWorld>, p: &Plan, w: Want, sense: &Sense) -> bool {
 /// Out of home with nothing to build: the run bot's play (work the
 /// crystal with the most charge, leave one that pays nothing, take the
 /// home when the slime by it is thin, else hunt the heaviest slime).
+/// The holding groups' turn (`Plan::split`): each drains its crystal and
+/// keeps it, moves on when it is spent (back into the main squad when no
+/// crystal is left), and one more group splits off the main squad while it
+/// has `group` soldiers to spare beyond `group` (at least four) of its own.
+fn hold(g: &mut Game<GpuWorld>, p: &Plan, q: usize) {
+    let cs = g.world.crystals();
+    let live = g.live_squads();
+    let mut held = MEM.with_borrow(|mm| mm.held.clone());
+    held.retain(|&(s, _)| s != q && live.contains(&s));
+    let pumped: Vec<bool> = (0..cs.len()).map(|c| g.pump_on(c).is_some()).collect();
+    let free = |held: &[(usize, usize)], from: (f32, f32)| {
+        (1..cs.len())
+            .filter(|&c| cs[c].1 > 0.0 && !pumped[c] && !held.iter().any(|h| h.1 == c))
+            .max_by(|&a, &b| {
+                let v = |c: usize| cs[c].1.min(200_000.0) / (1.0 + dist(cs[c].0, from) / 60.0);
+                v(a).total_cmp(&v(b))
+            })
+    };
+    let mut i = 0;
+    while i < held.len() {
+        let (s, c) = held[i];
+        if cs[c].1 <= 0.0 {
+            let from = g.middle(s).unwrap_or(cs[c].0);
+            match free(&held, from) {
+                Some(n) => held[i].1 = n,
+                None => {
+                    g.apply(Cmd::Merge(q as u8, s as u8));
+                    held.remove(i);
+                    continue;
+                }
+            }
+        }
+        let at = cs[held[i].1].0;
+        let o = Order::Clear(at.0, at.1);
+        if g.members(s).iter().any(|&k| g.soldiers[k].order != o) {
+            g.apply(Cmd::SquadOrder(s as u8, o));
+        }
+        i += 1;
+    }
+    let ms = g.members(q);
+    if held.len() < p.split as usize && ms.len() as u32 >= p.group + p.group.max(4) {
+        let from = g.middle(q).unwrap_or(g.larder);
+        let slot = (0..slime_mould::mould::larder_world::SQUADS_MAX).find(|s| !live.contains(s));
+        if let (Some(c), Some(s)) = (free(&held, from), slot) {
+            let mut by: Vec<usize> = ms;
+            by.sort_by(|&a, &b| dist((g.soldiers[a].x, g.soldiers[a].y), cs[c].0).total_cmp(&dist((g.soldiers[b].x, g.soldiers[b].y), cs[c].0)));
+            for &k in by.iter().take(p.group as usize) {
+                g.apply(Cmd::Join(k, s as u8));
+            }
+            let at = cs[c].0;
+            g.apply(Cmd::SquadOrder(s as u8, Order::Clear(at.0, at.1)));
+            held.push((s, c));
+        }
+    }
+    MEM.with_borrow_mut(|mm| mm.held = held);
+}
+
 #[allow(clippy::too_many_arguments)]
 fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, sense: &Sense, members: &[usize], out: bool) {
     let t = g.time();
@@ -742,13 +827,14 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     let home_mass = sense.mass_near(cs[0].0, g.world.crystal_r(0) + range);
     let home_ok = (home_mass as f32) < p.per * g.alive() as f32;
     let barren = MEM.with_borrow(|b| b.barren.clone());
+    let held: Vec<usize> = MEM.with_borrow(|b| b.held.iter().map(|h| h.1).collect());
     let strong = out || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
     let drains = p.take == 0;
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = drains
         .then(|| {
             (0..cs.len())
-                .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && (c > 0 || home_ok) && (strong || (c > 0 && quiet(c))) && g.pump_on(c).is_none())
+                .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && !held.contains(&c) && (c > 0 || home_ok) && (strong || (c > 0 && quiet(c))) && g.pump_on(c).is_none())
                 .max_by(|&a, &b| {
                     let walk = if strong { 4.0 * range } else { 0.5 * range };
                     let v = |c: usize| cs[c].1.min(200_000.0) / (1.0 + dist(cs[c].0, m) / walk.max(1.0));

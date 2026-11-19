@@ -26,11 +26,27 @@ use slime_mould::mould::run::{self, Pick, ITEMS};
 /// The unlocks a plan may build with, as `Run::has` keys.
 const UNLOCKS: [&str; 7] = ["walls", "turret", "mortar", "blast", "mine", "cord", "gas"];
 
-/// Spends the run's points by the plan: the card the planet ahead asks for
-/// (`cards` 1 or 2), then the plan's items, one level of each a pass, then
-/// (`cards` 2) any card on offer that fits the gun. Returns what it bought.
+/// Spends the run's points by the plan: the cards it wants (`want`), the
+/// card the planet ahead asks for (`cards` 1 or 2), then the plan's items,
+/// one level of each a pass, then (`cards` 2) any card on offer that fits
+/// the gun. Returns what it bought.
 pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     let mut bought = Vec::new();
+    // Cards the plan wants (`Plan::want`), set on the shelf as if offered
+    // and bought while the points reach, before anything else.
+    for name in &p.want {
+        let Some(c) = slime_mould::mould::rounds::Card::from_name(name) else { continue };
+        if r.cards.iter().any(|&(x, _)| x == c) {
+            continue;
+        }
+        r.offers.push(c);
+        let i = r.offers.len() - 1;
+        if r.pick(Pick::Offer(i)) {
+            bought.push(format!("{c:?}"));
+        } else {
+            r.offers.pop();
+        }
+    }
     if p.cards >= 1 {
         if let Some(c) = run::bring(r.level().tier) {
             if let Some(i) = r.offers.iter().position(|&o| o == c) {
