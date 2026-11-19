@@ -2362,7 +2362,11 @@ impl Engine {
         // The lone step's row, free since 11-17 (`LONE_AT`) but for its
         // third word, the fort's flag (`forted`, 11-18).
         // Its last word, the tether since 11-18 (`Settings::tether`).
-        b.extend(u32_bytes(&[0, 0, self.forted as u32, s.tether]));
+        // LAB (veins, 2026-11-19): the two free words, `LAB_VEIN` and
+        // `LAB_ALIGN` (engine.wgsl's `vein_flow`), 0 off.
+        let lab = |n: &str| std::env::var(n).ok().and_then(|v| v.parse::<f32>().ok()).unwrap_or(0.0);
+        b.extend(f32_bytes(&[lab("LAB_VEIN"), lab("LAB_ALIGN")]));
+        b.extend(u32_bytes(&[self.forted as u32, s.tether]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then
@@ -3646,7 +3650,14 @@ impl Engine {
 pub const PLANT_HEAD: usize = 64;
 pub fn plant_words(d: &BigDish) -> Vec<u32> {
     let mut w = vec![0u32; PLANT_HEAD];
+    // LAB (veins, 2026-11-19): the flow's block of 2 x 2 blocks after the
+    // plants' (engine.wgsl's `vein_q`), only while a LAB key is set.
+    let veins = ["LAB_VEIN", "LAB_ALIGN"].iter().any(|n| std::env::var(n).is_ok());
+    let nb = d.w.div_ceil(2) * d.h.div_ceil(2);
     if d.plant.is_empty() {
+        if veins {
+            w.resize(PLANT_HEAD + nb, 0);
+        }
         return w;
     }
     let p = &d.p;
@@ -3688,6 +3699,9 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     // Block 8: how fresh each cell's fire is (engine.wgsl's `PB_FRESH`,
     // for the view's advancing edge; the CPU keeps no copy).
     w.extend(std::iter::repeat_n(0u32, c));
+    if veins {
+        w.extend(std::iter::repeat_n(0u32, nb));
+    }
     w
 }
 

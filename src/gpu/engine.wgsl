@@ -1059,6 +1059,59 @@ fn lure_dist(i: u32) -> u32 {
     if (v == 0u) { return 0xFFFFFFFFu; }
     return v - 1u;
 }
+// LAB (veins, 2026-11-19, the Lab lane; Reports/lab-veins-2026-11-19):
+// the flow on each 2 x 2 block, in the free fourth quarter of the region
+// above. Each walker adds its step's heading, cos and sin in sixteenths
+// offset by 8 (0..16), and 1 to the count: bits 0-10 the x sum, 11-21 the
+// y sum, 22-31 the count. The scent pass keeps 3/4 of the three each tick,
+// so it is about the last four ticks' flow of the block's (at most four)
+// walkers. Inside a body milling headings cancel and a stream adds up.
+// `P.lone_free0` (`LAB_VEIN`): each walker's trail deposit x (1 - v + 2v x
+// the block's coherence), so streams lay ridges and milling lays little.
+// `P.lone_free1` (`LAB_ALIGN`): a calm walker turns that share of the way
+// to its block's flow, by the flow's coherence.
+// Stored after the plants' blocks (`gpu::plant_words` appends a block of
+// `nb` words while a LAB key is set; with no plants, right after the
+// head). Not the dense region's fourth quarter: the fort's mask has it
+// (a first try wrote there and walled the whole body, 11-19).
+fn vein_q(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    return plant_base() + PLANT_HEAD + select(0u, 9u * P.w * P.h, world(PLANTS)) + q;
+}
+fn veins_on() -> bool { return P.lone_free0 > 0.0 || P.lone_free1 > 0.0; }
+// The block's flow at cell i: (mean x, mean y, coherence 0..1, walkers).
+fn vein_flow(i: u32) -> vec4<f32> {
+    let v = atomicLoad(&news[vein_q(i)]);
+    let n = f32(v >> 22u);
+    if (n < 1.0) { return vec4<f32>(0.0); }
+    let fx = (f32(v & 0x7FFu) - 8.0 * n) / (8.0 * n);
+    let fy = (f32((v >> 11u) & 0x7FFu) - 8.0 * n) / (8.0 * n);
+    return vec4<f32>(fx, fy, min(sqrt(fx * fx + fy * fy), 1.0), n);
+}
+fn vein_add(i: u32, h: f32, moved: bool) {
+    var dx = 8u; var dy = 8u;
+    if (moved) { dx = u32(round(8.0 + 8.0 * cos(h))); dy = u32(round(8.0 + 8.0 * sin(h))); }
+    atomicAdd(&news[vein_q(i)], dx | (dy << 11u) | (1u << 22u));
+}
+// Halved once a tick by the block's first cell (the scent pass).
+fn vein_fade(i: u32) {
+    let x = i % P.w; let y = i / P.w;
+    if (x % RAID_BLOCK != 0u || y % RAID_BLOCK != 0u) { return; }
+    let a = vein_q(i);
+    let v = atomicLoad(&news[a]);
+    let n = ((v >> 22u) * 3u) / 4u;
+    // Keep the sums in step with the faded count: (sum - 8n) fades too.
+    let sx = f32(v & 0x7FFu) - 8.0 * f32(v >> 22u);
+    let sy = f32((v >> 11u) & 0x7FFu) - 8.0 * f32(v >> 22u);
+    let nx = u32(clamp(round(sx * 0.75 + 8.0 * f32(n)), 0.0, 2047.0));
+    let ny = u32(clamp(round(sy * 0.75 + 8.0 * f32(n)), 0.0, 2047.0));
+    atomicStore(&news[a], nx | (ny << 11u) | (n << 22u));
+}
+fn vein_lay(l: f32, j: u32) -> f32 {
+    if (P.lone_free0 <= 0.0) { return l; }
+    return l * max(1.0 - P.lone_free0 + 2.0 * P.lone_free0 * vein_flow(j).z, 0.0);
+}
 // The lure at a sensor: how much nearer the lure its block is than the
 // walker's own (`dh`). A block the field does not reach (rock, a wall, or
 // past the lure's reach) reads no lean either way, as in the lab's rig
@@ -1320,6 +1373,17 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     } else if (fr < fl) {
         h -= ra;
     }
+    // LAB (veins, `LAB_ALIGN`): a calm walker in a body turns part of the
+    // way to its block's flow, by how coherent the flow is.
+    if (!scared && P.lone_free1 > 0.0) {
+        let fl4 = vein_flow(here);
+        if (fl4.w >= 2.0 && fl4.z > 0.05) {
+            let fa = atan2(fl4.y, fl4.x);
+            var d = fa - h;
+            d = d - TAU * round(d / TAU);
+            h += P.lone_free1 * fl4.z * d;
+        }
+    }
     // A spinning walker curls after its turn, every step (the CPU's).
     if (mk == MIND_SPIN) { h += P.spin_curl; }
     let nx = wk.x + cos(h) * st;
@@ -1413,6 +1477,8 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         walkers[k] = vec4<f32>(wk.x, wk.y, bh, 0.0);
     }
+    // LAB (veins): the walker's step into its landing block's flow.
+    if (veins_on()) { vein_add(at, intent[k].z, wins && aim != here); }
     // Trail: a walker that moved lays it where it landed; with the capped
     // square-root deposit every walker counts where it stands after the
     // move (`trail` shares the cell's deposit among them). Sick walkers and
@@ -1958,7 +2024,9 @@ fn moved_kind(s: u32, kd: u32, j: u32, all: f32) -> f32 {
 // The trail species s lays on cell j this tick, with species 0's boost
 // (the CPU's `species_boost`, applied to each of its walkers' deposits).
 fn laid_by(s: u32, j: u32, all: f32) -> f32 {
-    let l = laid(s, j, all);
+    var l = laid(s, j, all);
+    // LAB (veins): a stream lays more, milling less.
+    if (P.lone_free0 > 0.0) { l *= max(1.0 - P.lone_free0 + 2.0 * P.lone_free0 * vein_flow(j).z, 0.0); }
     if (s == 0u) { return l * P.boost; }
     return l;
 }
@@ -2048,7 +2116,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (agar[j] != 0u) {
                     var all = 0.0;
                     if (capped) { all = counted(j); }
-                    sum += trail_in[j] + laid(0u, j, all);
+                    sum += trail_in[j] + vein_lay(laid(0u, j, all), j);
                     if (germs) { gsum += germ_in[j] + P.sick_dep * f32(atomicLoad(&gdep[j])); }
                     if (al) { asum += germ_in[c + j] + P.relay * f32(atomicLoad(&gdep[c + j])); }
                     n += 1.0;
@@ -2109,6 +2177,7 @@ fn scent(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (i >= P.w * P.h) { return; }
     atomicStore(&claim[i], NONE);
     if (P.sick_steps > 0u) { atomicStore(&gdep[i], 0u); }
+    if (veins_on()) { vein_fade(i); }
     if (cycles()) { atomicStore(&gdep[P.w * P.h + i], 0u); atomicStore(&gdep[2u * P.w * P.h + i], 0u); }
     // Cleared whenever the walk pass counts (`grazes`), not only with
     // `graze_w`: with growth on and grazing's weight 0 the counts piled up
