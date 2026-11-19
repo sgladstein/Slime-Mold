@@ -60,6 +60,10 @@ pub const STRAY: f32 = 14.0;
 /// Room between soldiers in a formation with elbow room off, dish cells;
 /// with it on, the sunflower's ring (`Game::gap`).
 pub const GAP: f32 = 1.6;
+/// The least walkers in reach that stand a squad on attack-move to fight
+/// (`Game::fight_turn`), whatever its size.
+pub const FIGHT_LEAST: f32 = 3.0;
+
 /// A moving squad's anchor goes at this share of a soldier's speed.
 pub const PACE: f32 = 0.75;
 /// Members walking slower than this share of full speed on average have
@@ -227,6 +231,10 @@ pub struct Squad {
     /// with its members still matched in column order, so the queue fanned
     /// out across the squad).
     pub rank_shape: (Formation, bool),
+    /// On an attack-move, it stands to fight (`Game::fight_turn`): enough
+    /// slime is in reach that walking on would leave it behind. Members
+    /// in contact stand and fire, the anchor stops and the rest close up.
+    pub holding: bool,
 }
 
 /// Orders a squad holds queued.
@@ -258,6 +266,7 @@ impl Default for Squad {
             map: None,
             rank_at: (f32::NAN, f32::NAN),
             rank_face: (1.0, 0.0),
+            holding: false,
             rank_shape: (Formation::Blob, false),
         }
     }
@@ -630,6 +639,55 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// Whether each squad on an attack-move stands to fight this step
+    /// (`Squad::holding`), from what its members read last frame. It
+    /// stands when the walkers in reach of its members in contact
+    /// (`Game::in_contact`: each one's aimed block, counted once however
+    /// many aim at it, plus walkers touching them) reach `Rules::fight_hold`
+    /// per living member, at least `FIGHT_LEAST`; or a mini-boss is in
+    /// reach. Once standing it stands till they fall under half that, so
+    /// it does not stutter at the line. Fewer, and it walks on and shoots
+    /// them as it goes.
+    ///
+    /// Before (to 2026-11-19), every soldier with one walker in reach stood
+    /// still; a squad is a few cells across and the gun reaches 24, so one
+    /// walker stopped the whole squad (the owner's play, 11-19 16:55Z).
+    pub(super) fn fight_turn(&mut self) {
+        let hold = self.rules.fight_hold;
+        let sc = self.s();
+        for q in 0..self.squads.len() {
+            let m = self.members(q);
+            let fighting = self.squads[q].fight || m.iter().any(|&k| matches!(self.soldiers[k].order, Order::Fight(..)));
+            if hold <= 0.0 || m.is_empty() || !fighting {
+                self.squads[q].holding = false;
+                continue;
+            }
+            let mut blocks: Vec<(i32, i32)> = Vec::new();
+            let (mut seen, mut boss) = (0u32, false);
+            for &k in &m {
+                let s = self.soldiers[k];
+                if matches!(s.order, Order::Fight(..)) && self.boss_aim(k).is_some() {
+                    boss = true;
+                }
+                if !self.in_contact(k) {
+                    continue;
+                }
+                seen += s.touching;
+                if let Some(a) = s.aim {
+                    // The engine's blocks are 4 x 4 dish cells.
+                    let b = ((a.0 / (4.0 * sc)).floor() as i32, (a.1 / (4.0 * sc)).floor() as i32);
+                    if !blocks.contains(&b) {
+                        blocks.push(b);
+                        seen += s.dense;
+                    }
+                }
+            }
+            let need = (hold * m.len() as f32).max(FIGHT_LEAST);
+            let need = if self.squads[q].holding { 0.5 * need } else { need };
+            self.squads[q].holding = boss || seen as f32 >= need;
+        }
+    }
+
     /// Each squad's turn, before its soldiers walk: a steered or sent squad
     /// moves its anchor and orders its members to their places round it.
     /// Every squad's members are matched to their places first
@@ -702,6 +760,9 @@ impl<W: World> Game<W> {
                 gap(at) > LEAD * sc
             };
             let step = self.rules.speed * sc * dt * PACE * self.pace(q);
+            // Standing to fight (`fight_turn`): the anchor waits, and the
+            // members not in reach close up round it.
+            let step = if sq.holding && sq.fight && !steering { 0.0 } else { step };
             // Sent (`steer`): it slows into its goal over `EASE` seconds'
             // walk, down to 0.3 of a soldier's speed, so its members
             // slow with it; stopping dead, they ran on past their places
