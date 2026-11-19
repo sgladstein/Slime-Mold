@@ -28,7 +28,36 @@ pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (44 words, then the four lumps' vec4s since the
 /// mini-bosses, 2026-11-16, and their fade, fill and held vec4s).
-const PARAMS_BYTES: usize = 304;
+/// The slime's own look (Look B, 2026-11-19): the owner asked for several
+/// looks, each for a slime, so you tell them apart on sight (00:08Z: "It
+/// would also be interesting instead of having a single look to build
+/// multiple looks could eventually apply to different slimes"). Each is
+/// drawn from that slime's own walkers, never painted on.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SlimeLook {
+    /// Every walker's film a soft disc round it: the look before 11-19.
+    #[default]
+    Plain = 0,
+    /// The Sprawler's fast threads: each walker lays its film along the
+    /// way it has just come (`draw_specks`' `lay_streak`), so a fast walker
+    /// is a dash and walkers on one path join into a thread.
+    Threads = 1,
+}
+
+/// The game seconds of a walker's way that `SlimeLook::Threads` draws.
+pub const STREAK_SECS: f32 = 0.1;
+
+impl SlimeLook {
+    /// The look for a slime of `tier` (`None`: the sandbox's plain mould).
+    pub fn of(tier: Option<crate::mould::tiers::Tier>) -> SlimeLook {
+        match tier {
+            Some(crate::mould::tiers::Tier::Sprawler) => SlimeLook::Threads,
+            _ => SlimeLook::Plain,
+        }
+    }
+}
+
+const PARAMS_BYTES: usize = 320;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
@@ -285,6 +314,10 @@ pub struct View {
     steer_at: u32,
     /// How far that field reaches, cells (`set_steer_reach`), 0 unknown.
     steer_reach: f32,
+    /// The slime's own look (`set_slime_look`, Look B, 2026-11-19) and
+    /// how far behind each walker its streak runs, cells.
+    slime_look: SlimeLook,
+    streak: f32,
     flora: u32,
     ripe_at: u32,
     lag: u32,
@@ -429,6 +462,8 @@ impl View {
             setc_at: 0,
             steer_at: 0,
             steer_reach: 0.0,
+            slime_look: SlimeLook::Plain,
+            streak: 0.0,
             flora: 0,
             ripe_at: 0,
             lag: 0,
@@ -819,6 +854,15 @@ impl View {
         self.rebind();
     }
 
+    /// Gives the slime its own look (Look B, 2026-11-19; the owner, 00:08Z:
+    /// several looks, each for a slime). `streak` is how far a walker goes
+    /// in `STREAK_SECS`, cells: its pace, which `SlimeLook::Threads` draws
+    /// behind it.
+    pub fn set_slime_look(&mut self, look: SlimeLook, streak: f32) {
+        self.slime_look = look;
+        self.streak = streak.max(0.0);
+    }
+
     /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)
     /// from the engine's `news` word `at` (`gpu::Engine::crust_at` / 4 +
     /// cells + walkers), bound with the crust (`set_crust` first), as amber
@@ -1031,6 +1075,10 @@ impl View {
         // The third word was set slime's look to 2026-11-18; since, the
         // Lure's reach.
         for v in [self.crust_at, self.setc_at, self.steer_reach.to_bits(), self.steer_at] {
+            b.extend(v.to_le_bytes());
+        }
+        let streak = if self.slime_look == SlimeLook::Threads { self.streak } else { 0.0 };
+        for v in [self.slime_look as u32, streak.to_bits(), 0, 0] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
@@ -2451,6 +2499,68 @@ mod tests {
         let (one, two) = (shot(&body), shot(&both));
         let most = one.pixels().zip(two.pixels()).map(|(p, q)| (0..3).map(|c| (p.0[c] as i32 - q.0[c] as i32).abs()).max().unwrap()).max().unwrap();
         assert!(most <= 2, "a lone soldier's head is its own figure's: {most}");
+    }
+
+    /// The Sprawler's threads (Look B, 2026-11-19): two lone walkers on
+    /// bare ground, A heading east and B west. In the plain look each is a
+    /// round speck and film (lit on one flank by the key light); as threads
+    /// each is a dash along the way it came, so a cell and a half behind it
+    /// is lit and as far ahead is not. At zoom 12 and 6. With the plain
+    /// look's 11-18 shader the two looks draw the same and it fails.
+    #[test]
+    fn the_sprawlers_walkers_draw_as_dashes_along_the_way_they_came() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let walk = [16.5f32, 20.5, 0.0, 0.0, 48.5, 20.5, std::f32::consts::PI, 0.0];
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&vec![0u32; w * h]));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 2);
+        for zoom in [12.0f32, 6.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            // The summed channels of the 3 x 3 pixels round each point.
+            let mut shot = |look: SlimeLook, centre: (f32, f32), ps: [(f32, f32); 2]| {
+                view.set_slime_look(look, 2.25);
+                cam.centre_on(centre);
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                let pic = view.picture();
+                ps.map(|p| {
+                    let (sx, sy) = cam.to_screen(p);
+                    let mut c = 0i32;
+                    for dy in -1..=1 {
+                        for dx in -1..=1 {
+                            let v = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                            c += v[0] as i32 + v[1] as i32 + v[2] as i32;
+                        }
+                    }
+                    c / 9
+                })
+            };
+            // Behind, then ahead, a cell and a half from each walker.
+            let a = [(15.0, 20.5), (18.0, 20.5)];
+            let b = [(50.0, 20.5), (47.0, 20.5)];
+            for (name, c, ps) in [("A", (16.5, 20.5), a), ("B", (48.5, 20.5), b)] {
+                let [pb, pa] = shot(SlimeLook::Plain, c, ps);
+                let [tb, ta] = shot(SlimeLook::Threads, c, ps);
+                // Plain, the key light makes one flank brighter (about 70
+                // apart, either way); as a thread it is about 300 to 370.
+                assert!(tb > ta + 200, "zoom {zoom}: {name} as a thread is lit behind it: behind {tb}, ahead {ta}");
+                assert!(tb > pb + 150, "zoom {zoom}: {name}'s dash is brighter behind it than its plain speck: {pb} -> {tb}");
+                assert!(ta < pa, "zoom {zoom}: {name}'s film ahead of it thins, as the dash holds one walker: {pa} -> {ta}");
+            }
+        }
     }
 
     /// A Mind status on the slime it holds (Look A5, 2026-11-18): two

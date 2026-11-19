@@ -1395,6 +1395,10 @@ impl App {
             let mind_at = (e.gas_at / 4) as u32 + slime_mould::gpu::GAS_SLOTS as u32 + e.n;
             let fine_tps = game.rules.tps as f32 * game.world.fine_steps() as f32;
             v.set_minds(Some((&e.news, &e.state)), mind_at, (1.5 * fine_tps).round() as u32);
+            // The slime's own look (Look B, 2026-11-19), by its tier, and a
+            // walker's pace in dish cells over the look's streak.
+            let pace = game.world.s.step / game.world.scale() * fine_tps;
+            v.set_slime_look(slime_mould::world::view::SlimeLook::of(core_tier), pace * slime_mould::world::view::STREAK_SECS);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();

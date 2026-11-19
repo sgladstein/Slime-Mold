@@ -79,6 +79,10 @@ struct V {
     // in `news` where its blocks start, 0 hidden; and how far it reaches in
     // cells (`View::set_steer_reach`), 0 unknown.
     crust_at: u32, setc_at: u32, steer_reach: f32, steer_at: u32,
+    // The slime's own look (`View::set_slime_look`, Look B, 2026-11-19):
+    // 0 plain, 1 the Sprawler's threads (`LOOK_THREADS`); and how far
+    // behind a walker its streak runs, cells (0 none). Two spare words.
+    slime_look: u32, streak: f32, look_spare0: u32, look_spare1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -3193,6 +3197,70 @@ fn draw_mind(k: u32, s: vec2<f32>) {
 
 // Every walker a speck of light at its own position (one thread a walker),
 // counted a screen pixel; `base` adds and clears them.
+// ---- The slime's own looks (Look B, 2026-11-19) ----
+//
+// The owner (00:08Z): "instead of having a single look to build multiple
+// looks could eventually apply to different slimes". Each look is how that
+// slime's own walkers lay their film, so it shows what the slime does.
+const LOOK_THREADS: u32 = 1u;
+
+// The Sprawler's threads: its explorers walk away from trail at 1.5 times
+// the plain pace and only then join the mesh, so in the plain look its
+// edge was a field of separate glowing beads (the baseline films, 11-19:
+// planet 2's "fast threads" read as rows of dots). Here each walker lays
+// its film along the way it has just come, `P.streak` cells behind it
+// (its pace over `STREAK_SECS`), heaviest where it stands and tapering to
+// nothing at the tail: a fast walker is a dash pointing where it goes, and
+// walkers on one path overlap into a thread. The dash holds one walker in
+// all, so the slime reads no bigger than it is and the thick body, the
+// same walkers spread a little, looks as it did. (First cut, 11-19: every
+// fine cell of the dash at up to a whole walker, which drew the loose
+// walkers as fat slugs six cells long and filled planet 2's hub in as a
+// thick body.) Its cut-off share runs down the dash with its count, so a
+// cut-off walker's ash does too.
+// Its speck is the same dash at the pixel: the walker's way over
+// `STREAK_SECS` (`P.streak` cells, at most 48 pixels), `d` pixels wide at
+// the walker and thinning to a pixel at the tail, each pixel lit as a
+// walker's speck (`base`). At zoom 12 the Sprawler goes about 9 pixels a
+// frame, so its dot jumped from place to place and read as a scatter of
+// beads; the dash is where it has just been. Stepped a pixel at a time
+// along the longer axis, so no pixel is lit twice.
+fn speck_line(s: vec2<f32>, h: f32, d: i32, add: u32) {
+    let dir = vec2<f32>(cos(h), sin(h));
+    let len = min(P.streak * P.zoom, 48.0);
+    let ax = abs(dir.x) >= abs(dir.y);
+    let major = max(abs(dir.x), abs(dir.y));
+    let n = max(i32(ceil(len * major)), 1);
+    for (var j = 0; j <= n; j++) {
+        let t = f32(j) / f32(n);
+        let q = s - dir * (len * t);
+        let dj = max(i32(round(f32(d) * (1.0 - 0.75 * t))), 1);
+        for (var k = 0; k < dj; k++) {
+            var qx = i32(floor(q.x)); var qy = i32(floor(q.y));
+            if (ax) { qy += k - dj / 2; } else { qx += k - dj / 2; }
+            if (qx >= 0 && qy >= 0 && qx < i32(P.sw) && qy < i32(P.sh)) { atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], add); }
+        }
+    }
+}
+
+fn lay_streak(w: vec4<f32>, cnt: u32, kf: f32) {
+    let dir = vec2<f32>(cos(w.z), sin(w.z));
+    let m = clamp(i32(round(P.streak * kf)), 1, 12);
+    let head = f32(cnt & 0xFFFFu);
+    let cut = f32(cnt >> 16u);
+    // Weights m + 1 - i for i = 0 (the walker) to m, summing to this.
+    let sum = f32((m + 1) * (m + 2) / 2);
+    for (var i = 0; i <= m; i++) {
+        let f = f32(m + 1 - i) / sum;
+        let p = w.xy - dir * (f32(i) / kf);
+        let gx = i32(floor((p.x - f32(P.ox)) * kf));
+        let gy = i32(floor((p.y - f32(P.oy)) * kf));
+        if (gx < 0 || gy < 0 || gx >= i32(P.rw) || gy >= i32(P.rh)) { continue; }
+        let add = u32(round(head * f)) | (u32(round(cut * f)) << 16u);
+        if (add > 0u) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], add); }
+    }
+}
+
 @compute @workgroup_size(256)
 fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -3277,8 +3345,10 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let kf = f32(P.fine);
     let gx = i32(floor((w.x - f32(P.ox)) * kf));
     let gy = i32(floor((w.y - f32(P.oy)) * kf));
+    let streak = P.streak > 0.0 && !member && w.w == 0.0;
+    if (streak) { lay_streak(w, cnt, kf); }
     if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) {
-        atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt);
+        if (!streak) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt); }
         if (dcnt > 0u) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], dcnt); }
         if (member) { atomicOr(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << (FG_FLAGS + lump_k - 1u)); }
     }
@@ -3407,6 +3477,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // ones too since the owner's playtest, 11-14: lone walkers read dim);
     // from 3 pixels its corners are left off, so it is a dot, not a square.
     let d = clamp(i32(round(P.zoom / 3.0)), 1, 4);
+    if (P.streak > 0.0) { speck_line(s, w.z, d, add); return; }
     for (var dy = 0; dy < d; dy++) {
         for (var dx = 0; dx < d; dx++) {
             if (d >= 3 && (dx == 0 || dx == d - 1) && (dy == 0 || dy == d - 1)) { continue; }
