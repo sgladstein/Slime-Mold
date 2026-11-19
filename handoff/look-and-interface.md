@@ -89,7 +89,8 @@ cell (4.6 to 5.5) in a frame and between frames (0.60 to 0.65). The
 squares noted on 11-18 were in Enemy's #451 clip, scaled to 0.75 and
 squeezed to 8 frames a second; fire has been drawn per pixel since 11-14.
 
-**Also on main (#504):** the end screens (the brief's job 4;
+**Also on main:** the Sprawler's dashes (#510, below) and the goal pill
+kept off the top bar's numbers at every UI size (#512). From #504, the end screens (the brief's job 4;
 `Reports/end-screens-2026-11-18/`, page
 https://claude.ai/artifact/YSjVHU9Es2ztXjeE52VLt1): `ui::Ending`
 (`Model::end`), filled in `draw.rs`, drawn and shrunk to fit by
@@ -106,7 +107,9 @@ the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
 Trunk thick veined cords with its amber walls.
 
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
-time.
+time: the fen moat's deletion.
+
+**The Sprawler's look (#510):**
 
 - The Sprawler's dashes (`SlimeLook::Threads`): each walker's speck is a
   dash along the way it came over `STREAK_SECS` (0.1 s, 2.25 cells at its
@@ -140,8 +143,8 @@ while Squad asked to keep it.
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
 3. A landing, a win and a loss that happen in the picture (D's next).
-4. Picks still open: the mini-boss colours; delete the fen moat A/B's
-   unused side.
+4. Pick still open: the mini-boss colours (the fen moat, the A/B's unused
+   side, was deleted 11-19).
 5. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
    their height), and their arcs show cell steps.
 
@@ -247,7 +250,8 @@ way.
 4. **Win and lose screens** that show the planet's numbers.
 5. **Pending picks that are now yours to decide**: the set slime's look
    (glaze or amber), the haze strength, the mini-boss colours. Delete the
-   fen moat A/B's unused side: Scott could not see the difference.
+   fen moat A/B's unused side: Scott could not see the difference (done
+   11-19).
 
 ## How a look is judged
 
