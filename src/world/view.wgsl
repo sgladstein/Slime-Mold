@@ -4511,8 +4511,30 @@ fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
         let helmet = sprite(skin_body() + 1u, p, r < 12.0).w;
         f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * 0.45 * (1.0 - helmet)), f.w);
     }
+    // Asleep in its own gas (`Marks::doze_since`, `Rules::doze`, 11-19):
+    // the body takes the gas's lavender by the cloud's level at its feet,
+    // so a squad gassed with the slime reads as gassed, and it clears as
+    // the cloud thins; while it is out (it neither fires nor walks) the
+    // figure dims too. The helmet stays white, so the squad can still be
+    // counted.
+    let tint = f32(w >> 24u) / 255.0;
+    if (tint > 0.0 && f.w > 0.0) {
+        let s = d / r;
+        let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
+        let helmet = sprite(1u, p, r < 12.0).w;
+        var body = mix(f.xyz, DOZE_TINT, tint * DOZE_MAX);
+        if ((extra & DOZE_OUT) != 0u) { body = body * DOZE_DIM; }
+        f = vec4<f32>(mix(body, f.xyz, helmet), f.w);
+    }
     return f;
 }
+// The sleep gas's lavender (the gas tool's colour in the window's
+// `draw.rs`), how far toward it the deepest cloud takes a body, and how
+// much an asleep figure dims.
+const DOZE_TINT: vec3<f32> = vec3<f32>(176.0, 156.0, 255.0);
+const DOZE_MAX: f32 = 0.6;
+const DOZE_DIM: f32 = 0.78;
+const DOZE_OUT: u32 = 1u << 26u;
 
 // **The slime on a soldier** (the owner, 2026-11-18 18:04Z: "When the
 // slime is attacking/damagin my soliders, I cannot really tell. It just
