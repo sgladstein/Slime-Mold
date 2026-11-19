@@ -1014,6 +1014,7 @@ impl App {
             let n = self.marks.len();
             self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
             self.marks.dress_since(n, skin);
+            self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
         // Every living soldier's head again, above every body, so a packed
         // squad shows each one (Look A3, a squad of 40 you can count: at
@@ -1026,6 +1027,7 @@ impl App {
             let n = self.marks.len();
             self.marks.soldier_head(drawn_at(s, &l, r), r, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
             self.marks.dress_since(n, skin);
+            self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {
@@ -1954,6 +1956,25 @@ pub(super) fn armour_skin(level: u8) -> u32 {
 
 /// A soldier's drawn radius, world cells: its touch 1.15 times over, and
 /// at least 10 pixels, so it reads at any zoom (see `marks`).
+/// How much of the sleep gas's lavender a soldier takes (`Marks::doze_since`,
+/// 2026-11-19), from the cloud's level at its feet (`Soldier::doze`) over
+/// the level that puts it out (`Rules::doze`, `at`): a faint quarter as the
+/// cloud reaches toward that level, then from 0.4 while it is out up to all
+/// of it at `DOZE_DEEP` times the level, so a gassed squad shows how deep it
+/// sleeps and clears as the cloud thins (a cast's cloud starts near 20
+/// times the level and thins to it in about 15 s).
+fn doze_tint(doze: f32, at: f32) -> f32 {
+    if at <= 0.0 || doze <= 0.0 {
+        return 0.0;
+    }
+    let l = doze / at;
+    if l < 1.0 { 0.25 * l } else { 0.4 + 0.6 * ((l - 1.0) / (DOZE_DEEP - 1.0)).min(1.0) }
+}
+
+/// The cloud's level, in times the level that puts a soldier out, at which
+/// it takes all of the gas's lavender (`doze_tint`).
+const DOZE_DEEP: f32 = 8.0;
+
 pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
     (g.rules.touch * g.world.scale() * 1.15).max(10.0 / zoom)
 }

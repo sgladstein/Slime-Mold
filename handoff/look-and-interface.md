@@ -121,15 +121,16 @@ made the model draw the guns side-on). Test page:
 https://claude.ai/artifact/Q4hcuw3SVcPJVNbVG4s5tD
 (`Reports/soldier-skins-2026-11-19/`).
 
+**A soldier asleep in its own Gas** (Squad's #513 puts soldiers to sleep
+in their own cloud): its body takes the gas's lavender by the cloud's
+level at its feet and dims while it is out, its helmet white
+(`Marks::doze_since`, `doze_tint` in `draw.rs`, the `DOZE_*` constants in
+`soldier_at`; doze is `extra` bit 26, beside the Armour look's bits
+27-28). Filmed on planet 1 (Gas cast on the squad at 40 s): lavender at
+42 s, olive and firing at 48 s.
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
-time: the Armour looks. Next on it, once Squad's Gas PR (#513) is on main:
-a dozing soldier's look, committed on a local branch over #513 (`Marks::doze_since`,
-`doze_tint` in `draw.rs`, the `DOZE_*` constants in `soldier_at`; merge it
-with the Armour looks, which share `soldier_at`; doze is `extra` bit 26): its body takes the gas's lavender
-by the cloud's level at its feet and dims while it is out, its helmet
-white. Filmed on planet 1 (Gas cast on the squad at 40 s): grey-lavender
-at 42 s, olive and firing at 48 s. If the branch is lost, that is the
-whole change; the window's 51 tests passed on it.
+time: the dozing soldier's look, after the Armour looks (#521).
 
 **The Sprawler's look (#510):**
 

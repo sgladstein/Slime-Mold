@@ -2546,6 +2546,50 @@ mod tests {
         assert!(white(ha) && (0..3).all(|k| (ha[k] - hb[k]).abs() <= 8 && (ha[k] - hc[k]).abs() <= 8), "the helmets the same white: {ha:?}, {hb:?}, {hc:?}");
     }
 
+    /// Asleep in its own gas (`Marks::doze_since`, 2026-11-19): two
+    /// soldiers facing east, B in a deep cloud and out. B's shoulder goes
+    /// toward the gas's lavender (bluer than its green, where A's is not);
+    /// C, as tinted but not out, is brighter than B (the out figure dims);
+    /// the helmets stay the same white, so the squad can still be counted.
+    /// With the 11-18 shader B draws as A and it fails.
+    #[test]
+    fn a_soldier_asleep_in_its_gas_takes_its_lavender_and_keeps_a_white_helmet() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [40u8, 44, 40, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let (r, team) = (2.0, crate::world::marks::team_colour(0));
+        let (a, b, c) = ((14.0, 16.0), (24.0, 16.0), (34.0, 16.0));
+        let mut m = Marks::default();
+        for (p, tint, out) in [(a, 0.0, false), (b, 1.0, true), (c, 1.0, false)] {
+            let n = m.len();
+            m.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+            m.soldier_head(p, r, 0.0, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+            m.doze_since(n, tint, out);
+        }
+        view.set_marks(&m);
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        let px_at = |p: (f32, f32)| {
+            let (sx, sy) = cam.to_screen(p);
+            pic.get_pixel(sx as u32, sy as u32).0.map(i32::from)
+        };
+        // Half a radius out across the facing: the shoulder.
+        let [sa, sb, sc] = [a, b, c].map(|p| px_at((p.0, p.1 + 0.5 * r)));
+        assert!(sb[2] - sb[1] > sa[2] - sa[1] + 25, "B's shoulder goes lavender: A {sa:?}, B {sb:?}");
+        assert!(sc[..3].iter().sum::<i32>() > sb[..3].iter().sum::<i32>() + 30, "out, B dims: B {sb:?}, C {sc:?}");
+        let [ha, hb, hc] = [a, b, c].map(|p| px_at((p.0 + 0.04 * r, p.1)));
+        assert!((0..3).all(|k| (ha[k] - hb[k]).abs() <= 2 && (ha[k] - hc[k]).abs() <= 2), "the helmets the same white: {ha:?}, {hb:?}, {hc:?}");
+    }
+
     /// The Sprawler's threads (Look B, 2026-11-19): two lone walkers on
     /// bare ground, A heading east and B west. In the plain look each is a
     /// round speck and film (lit on one flank by the key light); as threads
