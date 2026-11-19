@@ -35,14 +35,14 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     // Cards the plan wants (`Plan::want`), set on the shelf as if offered
     // and bought while the points reach, before anything else.
     for name in &p.want {
-        let Some(c) = slime_mould::mould::rounds::Card::from_name(name) else { continue };
-        if r.cards.iter().any(|&(x, _)| x == c) {
+        let Some(c) = want_card(name, r.depth) else { continue };
+        if r.cards.iter().any(|&(x, _)| card_key(x) == card_key(c)) {
             continue;
         }
         r.offers.push(c);
         let i = r.offers.len() - 1;
         if r.pick(Pick::Offer(i)) {
-            bought.push(format!("{c:?}"));
+            bought.push(card_key(c));
         } else {
             r.offers.pop();
         }
@@ -51,7 +51,7 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
         if let Some(c) = run::bring(r.level().tier) {
             if let Some(i) = r.offers.iter().position(|&o| o == c) {
                 if r.pick(Pick::Offer(i)) {
-                    bought.push(format!("{c:?}"));
+                    bought.push(card_key(c));
                 }
             }
         }
@@ -74,13 +74,42 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
         while i < r.offers.len() {
             let c = r.offers[i];
             if run::card_price(c) <= r.points && r.fits(c) && r.pick(Pick::Offer(i)) {
-                bought.push(format!("{c:?}"));
+                bought.push(card_key(c));
                 continue;
             }
             i += 1;
         }
     }
     bought
+}
+
+/// A wanted card by name; a payload may name its set after a dot
+/// (`blast.needle`): that shell's bullet as a shop at `depth` rolls it on
+/// average. The gun lab's `runbot::lab_deck` (on the gun-building thread's
+/// branch, 11-19) reads its decks the same way; the gun lab found Needle
+/// Blast the best single card for damage, +9k to +14k slime against plain
+/// bullets on planets 1, 3 and 4. One of the two goes once both land.
+fn want_card(w: &str, depth: u32) -> Option<slime_mould::mould::rounds::Card> {
+    use slime_mould::mould::bullets::{Ammo, Set, Shell, COST_POWER, DAMAGE, DEPTH_DAMAGE, DEPTH_DAMAGE_MAX};
+    use slime_mould::mould::rounds::Card;
+    let Some((shell, set)) = w.split_once('.') else { return Card::from_name(w) };
+    let shell = Shell::ALL.into_iter().find(|p| p.key() == shell)?;
+    let set = Set::parse(set)?;
+    let l = set.lean();
+    let h = |x: f32| (x * 100.0).round() as u16;
+    let d = (1.0 + DEPTH_DAMAGE * (depth.max(1) - 1) as f32).min(DEPTH_DAMAGE_MAX);
+    let mut a = Ammo { shell, set, depth: depth.clamp(1, 255) as u8, damage: (DAMAGE * l.damage * d * 10.0).round() as u16, speed: h(l.speed), range: h(l.range), spread: h(l.spread), cost: 0 };
+    a.cost = (shell.base() as f32 * a.grade().powf(COST_POWER)).round().clamp(1.0, 255.0) as u8;
+    Some(Card::Ammo(a))
+}
+
+/// A card as one word for the league's line: its name, or a bullet's
+/// shell and set (`blast.needle`), as `want` takes them.
+fn card_key(c: slime_mould::mould::rounds::Card) -> String {
+    match c {
+        slime_mould::mould::rounds::Card::Ammo(a) => format!("{}.{}", a.shell.key(), a.set.key()),
+        c => format!("{c:?}"),
+    }
 }
 
 /// The hand that plays plan `spec` on this run, with the unlocks the run
