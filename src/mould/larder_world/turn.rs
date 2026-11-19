@@ -46,7 +46,9 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let t = self.world.ticks();
         let dt = r.frame_ticks as f32 / r.tps as f32;
-        // Steered and sent squads move their anchors first (`squads`).
+        // Which squads on attack-move stand to fight (`fight_turn`), then
+        // steered and sent squads move their anchors (`squads`).
+        self.fight_turn();
         self.squad_turn(dt);
         let mut units = Vec::new();
         let mut who = Vec::new();

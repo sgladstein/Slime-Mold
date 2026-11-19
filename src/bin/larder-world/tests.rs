@@ -543,6 +543,16 @@ fn the_squad_panel_splits_switches_and_combines() {
     assert_eq!(active(&app), Some(1));
     app.squad_key(KeyCode::Digit1, true, false, false);
     assert_eq!(active(&app), Some(1), "key 1's squad is gone");
+    // One key goes through the squads in turn, round from the last
+    // (owner, 2026-11-19 16:55Z), Shift back.
+    assert!(app.squad_key(squadmode::CYCLE, true, false, false));
+    assert_eq!(active(&app), Some(2));
+    app.squad_key(squadmode::CYCLE, true, false, false);
+    assert_eq!(active(&app), Some(1), "round to the first");
+    app.shift = true;
+    app.squad_key(squadmode::CYCLE, true, false, false);
+    app.shift = false;
+    assert_eq!(active(&app), Some(2), "Shift goes back");
     // The build page has no Outpost without the larder.
     app.build_page = true;
     let cmds = app.model(None, None).commands;

@@ -1969,14 +1969,31 @@ impl Hud {
         // squad's state ("holding", "working") on the tile, not only in
         // its tooltip, in the room the panel had spare.
         // (Narrower, down to the old 72, where the row cannot hold them all.)
-        let ch = 54.0 * s;
         // (At least 86, for the squad thread's AUTO / YOU tag.)
-        let cgap0 = 7.0 * s;
-        let cw = ((inner.w + cgap0) / n.max(1) as f32 - cgap0).clamp(86.0 * s, 136.0 * s);
-        let cgap = 7.0 * s;
+        // Too many squads for the row at full size: the tiles shrink, all
+        // of them, till every squad has one (owner, 2026-11-19 16:55Z:
+        // "when we have too many squads to show in the squad panel of the
+        // hud, instead of hiding some, the squad tile should shrink").
+        // Down to 0.4 of full; a shrunk tile keeps its key, count and
+        // health (below). Only past that does the last tile say "+N" as
+        // before.
         let top = inner.y + 26.0 * s;
-        let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
-        let rows = ((inner.bottom() - top + cgap) / (ch + cgap)).floor().max(1.0) as usize;
+        let layout = |f: f32| {
+            let cgap = 7.0 * s * f.max(0.5);
+            let cw = ((inner.w + cgap) / n.max(1) as f32 - cgap).clamp(86.0 * s * f, 136.0 * s * f);
+            let ch = 54.0 * s * f;
+            let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
+            let rows = ((inner.bottom() - top + cgap) / (ch + cgap)).floor().max(1.0) as usize;
+            (cw, ch, cgap, cols, rows)
+        };
+        let f = (0..=12).map(|i| 1.0 - 0.05 * i as f32).find(|&f| {
+            let (_, _, _, cols, rows) = layout(f);
+            cols * rows >= n
+        });
+        let f = f.unwrap_or(0.4);
+        let (cw, ch, cgap, cols, rows) = layout(f);
+        // Sizes inside a tile.
+        let u = s * f;
         let room = cols * rows;
         for (k, q) in p.rows.iter().enumerate() {
             if k >= room {
@@ -1985,56 +2002,72 @@ impl Hud {
             let (i, j) = (k % cols, k / cols);
             let cell = Rect::new(inner.x + i as f32 * (cw + cgap), top + j as f32 * (ch + cgap), cw, ch);
             if k == room - 1 && n > room {
-                c.rrect(cell, 8.0 * s, [255, 255, 255, 14]);
-                c.text(Weight::SemiBold, 14.0 * s, (cell.x + cw / 2.0, cell.y + ch / 2.0 + 5.0 * s), Align::Centre, &format!("+{}", n - room + 1), MUTED);
+                c.rrect(cell, 8.0 * u, [255, 255, 255, 14]);
+                c.text(Weight::SemiBold, 14.0 * u, (cell.x + cw / 2.0, cell.y + ch / 2.0 + 5.0 * u), Align::Centre, &format!("+{}", n - room + 1), MUTED);
                 break;
             }
             // Top right: the link toggle; left of it, the + while the
             // squad overlaps yours.
-            let link = Rect::new(cell.right() - 21.0 * s, cell.y + 4.0 * s, 17.0 * s, 17.0 * s);
-            let plus = Rect::new(link.x - 20.0 * s, link.y, 17.0 * s, 17.0 * s);
+            let link = Rect::new(cell.right() - 21.0 * u, cell.y + 4.0 * u, 17.0 * u, 17.0 * u);
+            let plus = Rect::new(link.x - 20.0 * u, link.y, 17.0 * u, 17.0 * u);
             let can_link = !q.active && (q.near || q.linked);
             let on_link = can_link && self.hover.is_some_and(|h| link.contains(h));
             let on_plus = !q.active && q.near && self.hover.is_some_and(|h| plus.contains(h));
             let hot = self.hover.is_some_and(|h| cell.contains(h)) && !on_plus && !on_link;
             let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
             let edge = if q.active { ACCENT } else if q.linked { alpha(ACCENT, 0.55) } else { EDGE };
-            c.panel(cell, 8.0 * s, t, b, if q.active || q.linked { 2.0 * s } else { 1.0 }, edge);
+            c.panel(cell, 8.0 * u, t, b, if q.active || q.linked { 2.0 * u } else { 1.0 }, edge);
             self.hits.push((cell, Hit::Squad(k)));
+            // A shrunk tile: its key and soldiers in one line, never under
+            // the bar's least text (10.5, which the YOU tag would go under
+            // at once), and its health; the rest in its tooltip (linking and
+            // the + wait for a full tile).
+            if 11.5 * f < 10.5 {
+                let ink = if q.active { ACCENT } else { TEXT };
+                let size = (0.42 * ch).clamp(10.5 * s, 18.0 * s);
+                c.text_fit(Weight::SemiBold, size, (cell.x + cw / 2.0, cell.y + 0.5 * ch + 0.35 * size - 1.5 * s), Align::Centre, &format!("{}: {}", q.key, q.soldiers), cw - 4.0 * s, ink);
+                c.bar(Rect::new(cell.x + 3.0 * s, cell.bottom() - 4.0 * s, cw - 6.0 * s, 2.5 * s), q.hp, health_colour(q.hp), TRACK);
+                if hot {
+                    let state = q.note.as_deref().unwrap_or("");
+                    let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it (key {})", q.name, q.soldiers, q.key) };
+                    tip = Some((what, cell));
+                }
+                continue;
+            }
             // The hotkey, top left; the soldiers, big; their health along the foot.
-            c.text(Weight::SemiBold, 13.0 * s, (cell.x + 7.0 * s, cell.y + 15.0 * s), Align::Left, &q.key, if q.active { ACCENT } else { MUTED });
+            c.text(Weight::SemiBold, 13.0 * u, (cell.x + 7.0 * u, cell.y + 15.0 * u), Align::Left, &q.key, if q.active { ACCENT } else { MUTED });
             let ink = if q.active { ACCENT } else { TEXT };
-            c.icon(Icon::Soldier, (cell.x + 8.0 * s, cell.y + 19.0 * s), 20.0 * s, ink);
-            let nw = c.text(Weight::SemiBold, 19.0 * s, (cell.x + 32.0 * s, cell.y + 37.0 * s), Align::Left, &format!("{}", q.soldiers), ink);
-            c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
+            c.icon(Icon::Soldier, (cell.x + 8.0 * u, cell.y + 19.0 * u), 20.0 * u, ink);
+            let nw = c.text(Weight::SemiBold, 19.0 * u, (cell.x + 32.0 * u, cell.y + 37.0 * u), Align::Left, &format!("{}", q.soldiers), ink);
+            c.bar(Rect::new(cell.x + 6.0 * u, cell.bottom() - 11.0 * u, cw - 12.0 * u, 5.0 * u), q.hp, health_colour(q.hp), TRACK);
             // Right of the count: AUTO on a squad running on its own, YOU
             // on the one you command (owner 2026-11-15 02:58Z); the
             // squad's state between the count and the tag where it fits.
             let tag = if q.active { Some(("YOU", ACCENT)) } else if q.auto { Some(("AUTO", GOOD)) } else { None };
-            let mut end = cell.right() - 6.0 * s;
+            let mut end = cell.right() - 6.0 * u;
             if let Some((t, ink)) = tag {
-                let tw = c.text(Weight::SemiBold, 11.5 * s, (end, cell.y + 36.0 * s), Align::Right, t, ink);
-                end -= tw + 8.0 * s;
+                let tw = c.text(Weight::SemiBold, 11.5 * u, (end, cell.y + 36.0 * u), Align::Right, t, ink);
+                end -= tw + 8.0 * u;
             }
             // Its activity ("firing", "holding"): the note's first word was
             // "on its own" for an AUTO squad, beside the AUTO tag.
             let first = q.note.as_deref().and_then(|n| n.split(", ").find(|w| !w.is_empty()));
             if let Some(state) = Some(q.state.as_str()).filter(|t| !t.is_empty()).or(first) {
-                let sx = cell.x + 32.0 * s + nw + 8.0 * s;
-                if end - sx >= 30.0 * s {
-                    c.text_fit(Weight::Medium, 12.5 * s, (sx, cell.y + 36.0 * s), Align::Left, state, end - sx, MUTED);
+                let sx = cell.x + 32.0 * u + nw + 8.0 * u;
+                if end - sx >= 30.0 * u {
+                    c.text_fit(Weight::Medium, 12.5 * u, (sx, cell.y + 36.0 * u), Align::Left, state, end - sx, MUTED);
                 }
             }
             if can_link {
                 let (t, b) = if on_link { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
-                c.panel(link, 4.0 * s, t, b, 1.0, if q.linked { alpha(ACCENT, 0.8) } else { EDGE });
-                c.icon(Icon::Group, (link.x + 2.0 * s, link.y + 2.0 * s), 13.0 * s, if q.linked { ACCENT } else if on_link { TEXT } else { MUTED });
+                c.panel(link, 4.0 * u, t, b, 1.0, if q.linked { alpha(ACCENT, 0.8) } else { EDGE });
+                c.icon(Icon::Group, (link.x + 2.0 * u, link.y + 2.0 * u), 13.0 * u, if q.linked { ACCENT } else if on_link { TEXT } else { MUTED });
                 self.hits.push((link, Hit::SquadLink(k)));
             }
             if !q.active && q.near {
                 let (t, b) = if on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
-                c.panel(plus, 4.0 * s, t, b, 1.0, EDGE);
-                c.text(Weight::SemiBold, 13.0 * s, (plus.x + plus.w / 2.0, plus.y + 13.0 * s), Align::Centre, "+", if on_plus { GOOD } else { MUTED });
+                c.panel(plus, 4.0 * u, t, b, 1.0, EDGE);
+                c.text(Weight::SemiBold, 13.0 * u, (plus.x + plus.w / 2.0, plus.y + 13.0 * u), Align::Centre, "+", if on_plus { GOOD } else { MUTED });
                 self.hits.push((plus, Hit::SquadInto(k)));
             }
             let state = q.note.as_deref().unwrap_or("");
@@ -2983,6 +3016,7 @@ pub fn key_name(k: KeyCode) -> Option<String> {
         KeyY => "Y",
         KeyZ => "Z",
         Tab => "Tab",
+        Backquote => "`",
         Space => "Space",
         Delete => "Del",
         _ => return None,
@@ -3214,6 +3248,30 @@ mod tests {
                     assert!(b.x >= tile.x - 0.5, "{screen:?} at {user}: a header button {b:?} left of the squad panel ({tile:?})");
                     for c in &bs[k + 1..] {
                         assert!(b.right() <= c.x + 0.5 || c.right() <= b.x + 0.5, "{screen:?} at {user}: {b:?} and {c:?} overlap");
+                    }
+                }
+            }
+        }
+    }
+
+    /// Many squads (owner, 2026-11-19 16:55Z): the tiles shrink so each
+    /// squad keeps one, on the panel and apart, rather than some hiding
+    /// behind a "+N".
+    #[test]
+    fn many_squads_shrink_their_tiles_instead_of_hiding() {
+        let row = |k: usize| SquadRow { key: format!("{}", k + 1), name: format!("Squad {}", k + 1), soldiers: 4, hp: 0.8, note: Some("holding".into()), active: k == 0, near: false, linked: false, auto: k != 0, state: String::new() };
+        for screen in [(1920, 1080), (1600, 972), (1280, 720)] {
+            for n in [3, 9, 16] {
+                let mut r = Rig::new(screen);
+                r.m.squads = Some(SquadPanel { rows: (0..n).map(row).collect(), split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, free: false, free_key: Some("Esc".into()) });
+                r.m.loadout = Some(loadout());
+                r.draw();
+                let tiles: Vec<Rect> = (0..n).map(|i| r.hud.hits.iter().find(|(_, h)| *h == Hit::Squad(i)).map(|(b, _)| *b).unwrap_or_else(|| panic!("{screen:?}, {n} squads: squad {} has no tile", i + 1))).collect();
+                for (i, a) in tiles.iter().enumerate() {
+                    assert!(a.w >= 24.0 && a.h >= 16.0, "{screen:?}, {n} squads: tile {a:?} too small to click");
+                    for b in &tiles[i + 1..] {
+                        let apart = a.right() <= b.x + 0.5 || b.right() <= a.x + 0.5 || a.bottom() <= b.y + 0.5 || b.bottom() <= a.y + 0.5;
+                        assert!(apart, "{screen:?}, {n} squads: {a:?} and {b:?} overlap");
                     }
                 }
             }
