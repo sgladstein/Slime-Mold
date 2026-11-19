@@ -136,9 +136,11 @@ while Squad asked to keep it.
 
 1. Look B: the Drifter's and the Trunk's looks, then the thick body's veins
    and flow; iterate the Sprawler's dashes on what the owner says in play.
-   The Trunk's film along each walker's way (the Sprawler's `lay_streak`)
-   was tried and not kept (`Reports/dead-ends.md`): veins need a flow
-   field, headings summed a fine cell.
+   Tried and not kept (`Reports/dead-ends.md`, 11-19): the Trunk's film
+   along each walker's way, and a smooth droplet for the Drifter (blurry at
+   zoom 6). The Trunk's body has no flow or tubes to draw (headings every
+   which way, the trail flat even at `knee=60`): veins need a slime rule
+   (Enemy's), passed to Direction 11-19.
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
