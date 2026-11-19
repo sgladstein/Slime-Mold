@@ -105,6 +105,14 @@ pub(super) struct Plan {
     /// points allow (`league::shop`), so a plan can be tried with a card
     /// the run happened to offer (Scott's push guns: `want=heave`).
     pub want: Vec<String>,
+    /// Mop up: once the slime is down to this many walkers (0: never),
+    /// the squad stops draining crystals and building pumps and hunts
+    /// every square with any slime left. Without it the bot stalled on the
+    /// last few walkers: the sensing skips squares under 8 (`Sense`), and a
+    /// planet is won only at none (`check_end`). On Scott's planet 3,
+    /// `econ,cards=0` brought 70k slime down to 2 and ran out the clock
+    /// draining crystals (11-19, p3 gen1).
+    pub mop: u32,
 }
 
 impl Default for Plan {
@@ -135,6 +143,7 @@ impl Default for Plan {
             split: 0,
             group: 4,
             want: Vec::new(),
+            mop: 0,
         }
     }
 }
@@ -163,7 +172,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 25] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want"];
+    pub const DIALS: [&'static str; 26] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -209,6 +218,7 @@ impl Plan {
             "split" => self.split = whole(v)?.min(12),
             "group" => self.group = whole(v)?.clamp(1, 40),
             "want" => self.want = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
+            "mop" => self.mop = whole(v)?,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -285,6 +295,9 @@ pub(super) struct Sense {
     gw: usize,
     w: usize,
     set: Vec<u32>,
+    /// The fewest walkers a square needs to count as slime to aim at or
+    /// walk to: 8, or 1 when mopping up (`Plan::mop`).
+    floor: u32,
 }
 
 impl Sense {
@@ -292,7 +305,22 @@ impl Sense {
         let sc = g.world.scale();
         let bin = (4.0 * sc).round().max(1.0) as usize;
         let (w, _) = g.world.size();
-        Sense { grid: g.world.mould_grid(bin).unwrap_or_default(), bin, gw: w.div_ceil(bin), w, set: g.world.set_cells().unwrap_or_default() }
+        Sense { grid: g.world.mould_grid(bin).unwrap_or_default(), bin, gw: w.div_ceil(bin), w, set: g.world.set_cells().unwrap_or_default(), floor: 8 }
+    }
+
+    /// Every walker the squares hold.
+    pub(super) fn total(&self) -> u32 {
+        self.grid.iter().sum()
+    }
+
+    /// Mopping up (`Plan::mop`): at most `mop` walkers left, every square
+    /// with any counts. True if so.
+    pub(super) fn mop(&mut self, mop: u32) -> bool {
+        let on = mop > 0 && self.total() <= mop;
+        if on {
+            self.floor = 1;
+        }
+        on
     }
 
     pub(super) fn centre(&self, i: usize) -> (f32, f32) {
@@ -307,7 +335,7 @@ impl Sense {
     /// The slime's middle, by weight.
     pub(super) fn middle(&self) -> Option<(f32, f32)> {
         let (mut sx, mut sy, mut n) = (0.0f64, 0.0f64, 0.0f64);
-        for (i, &c) in self.grid.iter().enumerate().filter(|&(_, &c)| c >= 8) {
+        for (i, &c) in self.grid.iter().enumerate().filter(|&(_, &c)| c >= self.floor) {
             let p = self.centre(i);
             sx += f64::from(p.0) * f64::from(c);
             sy += f64::from(p.1) * f64::from(c);
@@ -333,7 +361,7 @@ impl Sense {
             .grid
             .iter()
             .enumerate()
-            .filter(|&(_, &c)| c >= 8)
+            .filter(|&(_, &c)| c >= self.floor)
             .map(|(i, &c)| {
                 let p = self.centre(i);
                 let d = dist(p, from);
@@ -355,12 +383,14 @@ thread_local! {
 /// plan's aim rate): with `refire`, re-aims the controlled squad's volley
 /// at the heaviest slime in range with a clear line, as the turn does
 /// (both bots' targeting); with `kite` above 0, steers the squad away from
-/// slime closer than that share of its range and lets go once clear.
-pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32) {
+/// slime closer than that share of its range and lets go once clear;
+/// with `mop`, aims at the last scraps too (`Plan::mop`).
+pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32) {
     let Some(q) = g.active else { return };
     let Some(m) = g.middle(q) else { return };
     let range = g.gun_range(q) * g.world.scale();
-    let sense = Sense::of(g);
+    let mut sense = Sense::of(g);
+    sense.mop(mop);
     if refire {
         let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
         g.apply(Cmd::Fire(q as u8, near));
@@ -481,7 +511,8 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     }
     let Some(m) = g.middle(q) else { return };
     let range = g.gun_range(q) * sc;
-    let sense = Sense::of(g);
+    let mut sense = Sense::of(g);
+    let mopping = sense.mop(p.mop);
     let cs = g.world.crystals();
     let home = MEM.with_borrow(|mm| mm.home).unwrap_or(g.larder);
     let quiet = |g: &Game<GpuWorld>, c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + 0.7 * range) < 30;
@@ -503,7 +534,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
             }
         }
     });
-    let out = g.alive() as u32 >= p.go;
+    let out = g.alive() as u32 >= p.go || mopping;
     let want = |g: &Game<GpuWorld>| -> Option<Want> {
         let (pumps, home, mut refused) = MEM.with_borrow(|mm| (mm.pumps.clone(), mm.home, mm.refused.clone()));
         refused.extend(MEM.with_borrow(|mm| mm.eaten.iter().map(|e| e.0).collect::<Vec<_>>()));
@@ -690,7 +721,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     }
     // Out: a crystal to pump (`more`), else to drain (`take` 0), else hunt.
     let pumps_now = MEM.with_borrow(|mm| mm.pumps.len()) as u32;
-    if out && p.more > 0 && pumps_now < p.pumps + p.more {
+    if out && !mopping && p.more > 0 && pumps_now < p.pumps + p.more {
         let target = (1..cs.len())
             .filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none() && g.pump_flows(c))
             .filter(|&c| sense.mass_near(cs[c].0, g.world.crystal_r(c) + range) < 120 * n as u32)
@@ -709,7 +740,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
             return fin(g, 1);
         }
     }
-    hunt(g, &p, q, m, range, &sense, &members, out);
+    hunt(g, &p, q, m, range, &sense, &members, out, mopping);
     fin(g, 1)
 }
 
@@ -816,7 +847,7 @@ fn hold(g: &mut Game<GpuWorld>, p: &Plan, q: usize) {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, sense: &Sense, members: &[usize], out: bool) {
+fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, sense: &Sense, members: &[usize], out: bool, mopping: bool) {
     let t = g.time();
     let cs = g.world.crystals();
     let fresh = |g: &Game<GpuWorld>, o: Order| !members.iter().all(|&k| g.soldiers[k].order == o);
@@ -829,7 +860,7 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     let barren = MEM.with_borrow(|b| b.barren.clone());
     let held: Vec<usize> = MEM.with_borrow(|b| b.held.iter().map(|h| h.1).collect());
     let strong = out || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
-    let drains = p.take == 0;
+    let drains = p.take == 0 && !mopping;
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = drains
         .then(|| {

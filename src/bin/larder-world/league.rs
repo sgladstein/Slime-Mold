@@ -149,7 +149,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     args.mission = None;
     let hand = hand_for(spec, r);
     let pl = shop_plan(spec)?;
-    let (aim_hz, kite) = (pl.aim, pl.kite);
+    let (aim_hz, kite, mop) = (pl.aim, pl.kite, pl.mop);
     // Between turns: at the aim rate, or five times a second to kite.
     let tick_hz = if kite > 0.0 { aim_hz.max(5.0) } else { aim_hz };
     let mut app = offscreen(args, (320, 200), device, queue)?;
@@ -193,7 +193,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
             // Between turns the volley follows the slime (`Plan::aim`) and
             // the squad keeps its distance (`Plan::kite`).
             next_aim = g.world.ticks() + (g.rules.tps as f32 / tick_hz).round().max(1.0) as u64;
-            strat::between(g, aim_hz > 1.0, kite);
+            strat::between(g, aim_hz > 1.0, kite, mop);
         }
         app.step(step);
         app.settle();
