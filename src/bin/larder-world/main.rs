@@ -215,6 +215,8 @@ mod headless;
 mod bench;
 mod hands;
 mod runbot;
+mod strat;
+mod league;
 mod menu;
 mod squadmode;
 mod uisize;
@@ -2131,6 +2133,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
     // planet TO (3) or a loss, with no window (`runbot`).
     let mut runbot: Option<(u64, u32)> = None;
+    // `league=...` and `plan=PLAN`: the strategy league (`league.rs`).
+    let (mut league_job, mut league_plan) = (None::<league::Job>, String::new());
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut viewpasses = 0u32;
@@ -2247,6 +2251,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(());
             }
             "look" => look = Some(v.to_string()),
+            "league" => league_job = Some(league::parse(v)?),
+            "plan" => league_plan = v.to_string(),
             "runbot" => {
                 let (seed, to) = v.split_once(':').unwrap_or((v, "3"));
                 runbot = Some((seed.parse()?, to.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS)));
@@ -2495,6 +2501,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre, viewpasses }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
+        return Ok(());
+    }
+    if let Some(job) = league_job {
+        let (device, queue) = gpu().ok_or("no GPU adapter")?;
+        match job {
+            league::Job::Planet { depth, seed, secs } => league::planet(base, depth, seed, secs, &league_plan, &device, &queue)?,
+            league::Job::Run { seed, to, secs } => league::whole_run(base, seed, to, secs, &league_plan, &device, &queue)?,
+        }
         return Ok(());
     }
     if let Some((seed, to)) = runbot {

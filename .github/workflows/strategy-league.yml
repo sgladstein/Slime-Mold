@@ -1,0 +1,57 @@
+# The strategy league (2026-11-19, the thread "Build a smarter bot that
+# explores strategies"): plays the batch of games in
+# Reports/strategy-bots-2026-11-19/queue/now.txt (one "PLAN DEPTH SEED SECS"
+# a line) with `larder-world league=...`, split over shards, and uploads one
+# JSON line a game as an artifact per shard (`league.py run`).
+#
+# WHY A PUSH TO ITS OWN BRANCH: a search runs hundreds of games of up to 12
+# game minutes, about 5 real minutes each on Mesa's software Vulkan, far too
+# long for a pull request's CI. A push that changes the queue file on the
+# league's branch starts a batch; nothing else starts it. At most 8 shards
+# run at once, so the merge queue's CI keeps runners. It never fails on a
+# lost game: a loss is a measurement.
+name: Strategy league
+
+on:
+  push:
+    branches: ["claude/project-thread-8grg6d"]
+    paths: ["Reports/strategy-bots-2026-11-19/queue/now.txt"]
+  workflow_dispatch:
+
+concurrency:
+  group: strategy-league
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  play:
+    name: shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: run-bot
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: cargo build --release --locked --bin larder-world
+      - name: games
+        env:
+          WGPU_BACKEND: vulkan
+        run: |
+          python3 Reports/strategy-bots-2026-11-19/league.py run \
+            Reports/strategy-bots-2026-11-19/queue/now.txt league-${{ matrix.shard }}.jsonl \
+            --shard ${{ matrix.shard }}/12 --workers 1 --timeout 2400
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: league-${{ matrix.shard }}
+          path: league-${{ matrix.shard }}.jsonl
