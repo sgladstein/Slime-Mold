@@ -20,7 +20,8 @@ time, and reads their `league` lines into JSON lines; it also searches plans.
       always), 40 games at a time; between, pushes results in pc/, takes
       the branch's new commits, rebuilds the game when src/ changed and
       restarts itself when this file changed. Waits while the owner's game
-      is open. queue/pc-stop on the branch stops it.
+      or editor is open (other bots' games don't count). queue/pc-stop on
+      the branch stops it.
   league.py breed OUT... --top K --kids N --seed S > PLANS
   league.py evolve PLANS DIR --until UTC_ISO [--workers N] [--push]
       Generations on one machine until a time: plays PLANS (genN.jsonl in
@@ -188,6 +189,7 @@ SPACE = {
     "more": [0, 2, 4, 8],
     "take": [0, 1],
     "cards": [0, 1, 2],
+    "aim": [1, 2, 3, 6, 10],
 }
 SHOP_KEYS = ["strike", "rate", "hp", "squad", "harvest", "range", "bank", "turret", "turret+", "pump+", "mortar", "draw"]
 
@@ -242,6 +244,8 @@ def mutate_util(d, rng):
         d = mutate_shop(d, rng)
     if rng.random() < 0.2:
         d["cards"] = str(rng.choice([0, 1, 2]))
+    if rng.random() < 0.2:
+        d["aim"] = str(rng.choice(SPACE["aim"]))
     return d
 
 def mutate_shop(d, rng):
@@ -293,7 +297,7 @@ def cross(a, b, rng):
     keys = set(a) | set(b)
     return {k: (a if rng.random() < 0.5 else b).get(k, (b if k in b else a).get(k)) for k in keys if (k in a or k in b)}
 
-STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1"}
+STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1", "aim": "1"}
 
 def presets():
     """The strategy bot's named families, read from strat.rs."""
@@ -309,7 +313,7 @@ def canon(plan, _p={}):
     d.pop("name", None)
     if d.get("@") == "util:":
         full = {k: f"{v:.3g}" for k, v in util_weights().items()}
-        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1"})
+        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1", "aim": "1"})
     else:
         full = dict(STRAT_DEFAULTS)
         full.update({k: v for k, v in dials_of(_p.get(d.get("@", ""), "")).items() if k != "@"})
@@ -382,7 +386,7 @@ def push(d, msg):
         who = ["-c", "user.name=Strategy league", "-c", "user.email=strategy-league@localhost.invalid"]
     run("git", "add", d)
     c = run("git", *who, "commit", "-q", "-m", msg + "\n\nNothing-new: strategy league results only.")
-    if c.returncode != 0 and "nothing to commit" not in c.stdout + c.stderr:
+    if c.returncode != 0 and "nothing to commit" not in c.stdout + c.stderr and "nothing added to commit" not in c.stdout + c.stderr:
         print("league: commit failed: " + (c.stderr or c.stdout)[-300:], file=sys.stderr)
     for _ in range(4):
         run("git", "fetch", "-q", "origin", br)
@@ -433,19 +437,21 @@ def git(*c):
 def log(msg):
     print(time.strftime("%Y-%m-%d %H:%M:%S ") + msg, file=sys.stderr, flush=True)
 
+BOT_KEYS = ("league=", "gunlab=", "runbot=", "look=", "bench=")
+
 def owner_playing(binary):
-    """True while a larder-world or larder-edit runs that is not this
-    worker's own binary: the owner is playing or editing, so the search
-    waits and leaves his GPU to him."""
-    ours = os.path.normcase(os.path.abspath(binary))
+    """True while the owner's game or editor is open: a larder-edit, or a
+    larder-world not started with a bot's key (`BOT_KEYS`; 11-19: the gun
+    lab's own batch ran four `gunlab=` games here, and those are not him).
+    The search then waits and leaves his GPU to him."""
     if os.name == "nt":
-        ps = "Get-Process -Name larder-world,larder-edit -ErrorAction SilentlyContinue | ForEach-Object { if ($_.Path) { $_.Path } else { '?' } }"
+        ps = "Get-CimInstance Win32_Process -Filter \"Name='larder-world.exe' OR Name='larder-edit.exe'\" | ForEach-Object { $_.Name + '|' + $_.CommandLine }"
         out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True).stdout
-        paths = [l.strip() for l in out.splitlines() if l.strip()]
+        procs = [l.strip().split("|", 1) for l in out.splitlines() if "|" in l]
     else:
         out = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True).stdout
-        paths = [l.split()[0] for l in out.splitlines() if l.split() and os.path.basename(l.split()[0]) in ("larder-world", "larder-edit")]
-    return any(os.path.normcase(os.path.abspath(p)) != ours for p in paths)
+        procs = [[os.path.basename(l.split()[0]), l] for l in out.splitlines() if l.split() and os.path.basename(l.split()[0]) in ("larder-world", "larder-edit")]
+    return any(name.startswith("larder-edit") or not any(k in cmd for k in BOT_KEYS) for name, cmd in procs)
 
 def wait_for_owner(binary):
     if not owner_playing(binary):

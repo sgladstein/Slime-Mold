@@ -103,6 +103,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     args.map = None;
     args.mission = None;
     let hand = hand_for(spec, r);
+    let aim_hz = shop_plan(spec)?.aim;
     let mut app = offscreen(args, (320, 200), device, queue)?;
     let g = app.game.as_ref().ok_or("no game")?;
     let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
@@ -113,6 +114,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     let (mut peak_mould, mut min_alive) = (start_mould, usize::MAX);
     let mut at = [None::<(u32, usize, usize)>; 3];
     let t0 = std::time::Instant::now();
+    let mut next_aim = 0u64;
     loop {
         app.follow_mission();
         let verdict = app.mission.as_ref().and_then(|m| m.verdict);
@@ -139,6 +141,10 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
             if sec.is_multiple_of(30) {
                 marks.push(format!("{}:{}/{}/{}/{:.0}", sec, g.killed, g.mould, g.alive(), g.bank));
             }
+        } else if aim_hz > 1.0 && g.world.ticks() >= next_aim {
+            // Between turns the volley follows the slime (`Plan::aim`).
+            next_aim = g.world.ticks() + (g.rules.tps as f32 / aim_hz).round().max(1.0) as u64;
+            strat::aim(g);
         }
         app.step(step);
         app.settle();

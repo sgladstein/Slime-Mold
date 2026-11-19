@@ -82,6 +82,10 @@ pub(super) struct Plan {
     pub cards: u32,
     /// The unlocks the run owns (`Run::has` keys); None: walls only.
     pub own: Option<Vec<String>>,
+    /// Volleys aimed a second (1 to 20): the league re-aims between the
+    /// plan's once-a-second turns (`aim`). The owner's planet 3 (11-18
+    /// 22:10Z) gave about 3 fire points a second, 1,469 in 7:21.
+    pub aim: f32,
 }
 
 impl Default for Plan {
@@ -107,6 +111,7 @@ impl Default for Plan {
             shop: ["strike", "rate", "hp", "squad", "harvest", "range", "bank"].map(String::from).to_vec(),
             cards: 1,
             own: None,
+            aim: 1.0,
         }
     }
 }
@@ -135,7 +140,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 20] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name"];
+    pub const DIALS: [&'static str; 21] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -176,6 +181,7 @@ impl Plan {
             "shop" => self.shop = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             "cards" => self.cards = whole(v)?.min(2),
             "own" => self.own = Some(v.split('/').filter(|s| !s.is_empty()).map(String::from).collect()),
+            "aim" => self.aim = num(v)?.clamp(1.0, 20.0),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -309,6 +315,18 @@ impl Sense {
         v.truncate(40);
         v.into_iter().map(|(p, d, _)| (p, d)).collect()
     }
+}
+
+/// Re-aims the controlled squad's volley at the heaviest slime in range
+/// with a clear line, as the plan's turn does (both bots' targeting): the
+/// league calls it between turns when a plan aims more than once a second.
+pub(super) fn aim(g: &mut Game<GpuWorld>) {
+    let Some(q) = g.active else { return };
+    let Some(m) = g.middle(q) else { return };
+    let range = g.gun_range(q) * g.world.scale();
+    let sense = Sense::of(g);
+    let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
+    g.apply(Cmd::Fire(q as u8, near));
 }
 
 pub(super) fn dist(a: (f32, f32), b: (f32, f32)) -> f32 {
