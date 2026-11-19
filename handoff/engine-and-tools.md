@@ -125,7 +125,11 @@ What jobs 2 and 3 put where:
 - **The play log**: one file a round, `play-logs/<when>-<map>-<seed>.txt`
   (`playlog::file_name`), only in a real window and not on the menu. F9
   writes `note n=.. t=.. x=.. y=.. zoom=..` (`App::drop_note`). A typed
-  note needs a text field in the HUD, which is Look's.
+  note needs a text field in the HUD, which is Look's. Since #507
+  (11-19) the head also names the loadout: `gun=` (the army round's
+  cards), and in a run `turrets=` (their deck) and `bought=` (upgrades,
+  key and level); a mid-round change of the gun's cards writes
+  `gun t=.. CARDS` (`App::log_loadout`).
 - **Sending the logs**: `play.ps1` `Send-PlayLogs`, after the game quits,
   to the branch `play-logs` (plumbing, own index, fixed author name);
   sent logs move to `play-logs/sent`. `play.cmd send-logs` lets git ask
