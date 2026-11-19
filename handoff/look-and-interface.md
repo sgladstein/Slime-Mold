@@ -111,11 +111,13 @@ should be olive that upgraded to slate that upgrades to heavy"; 15:11Z:
 "Replace heavy with dark camo"): three designs from the owner's image-model
 sheet (`sprites/soldiers-2026-11-19.jpg`, cells 1, 2 and 6) are atlas tiles 17-22, body then helmet, cut by
 `sprites/cut.py` (run it after `render.js`). The run's Armour level
-(`run::ITEMS` "hp") picks one for every living soldier (`armour_skin` in
+(`run::ITEMS` "hp") picks one for every soldier (`armour_skin` in
 `draw.rs`: 0 olive, 1-2 slate, 3-4 dark camo; `Marks::dress_since`,
 `extra` bits 27-28; `skin_body` in `view.wgsl`). `MUZZLE` holds each
-look's barrel mouth (cut.py prints them). Not done: fallen versions (the fallen keep tile 3),
-and a design for each gun if the owner wants that. Generating designs:
+look's barrel mouth (cut.py prints them). The fallen wear the look too:
+tile 3 (sprite A's fallen olive) and its slate and dark camo recolours,
+tiles 23 and 24 (`fallen` in cut.py, `skin_dead`). Not done: a design for
+each gun if the owner wants that. Generating designs:
 small edits of a sheet he likes, one change a request (a long rule list
 made the model draw the guns side-on). Test page:
 https://claude.ai/artifact/Q4hcuw3SVcPJVNbVG4s5tD
@@ -130,7 +132,7 @@ level at its feet and dims while it is out, its helmet white
 42 s, olive and firing at 48 s.
 
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
-time: the dozing soldier's look, after the Armour looks (#521).
+time: the fallen in each Armour look (the dozing look is #523).
 
 **The Sprawler's look (#510):**
 
@@ -173,8 +175,7 @@ while Squad asked to keep it.
    (filmed on planet 8, bright and glossy over its dark purple plants,
    framed by the gold it forms in); the fort walls' tops smooth
    (`SET_SOFT`, #517); soldiers dressed by Armour (above).
-5. Soldier looks: the fallen in each Armour look, then a design per gun if
-   the owner asks.
+5. Soldier looks: a design per gun if the owner asks.
 
 **Helpers** (11-19, the owner offered them): a film runner thread (builds
 and films on its own machine; send it exact commands, it pushes the output
