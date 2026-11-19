@@ -172,7 +172,7 @@ pub(super) fn run_bot(base: Args, seed: u64, to: u32, device: &wgpu::Device, que
 /// SECS. With `arena=N` the arena hand does (`arena_hand`), SECS then
 /// `tail` more seconds with fire held, so slow killers (germ, fire) and
 /// what wakes from sleep are counted at the end.
-pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, usize), (kind, deck, focus, tail): (&str, &str, bool, f32), device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
+pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, usize), (kind, deck, focus, tail, guard): (&str, &str, bool, f32, bool), device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
     use slime_mould::mould::guns::GunKind;
     use slime_mould::mould::rounds::{self as rd, Kind};
     let mut r = Run::new(seed);
@@ -187,7 +187,7 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
     let cards = lab_deck(deck, depth)?;
     let cost = rd::cost(&cards);
     let from = cards.iter().map(|&c| slime_mould::mould::run::power_from(c.tier())).max().unwrap_or(1);
-    let head = format!("gunlab depth={depth} seed={seed} arena={arena} focus={} tail={tail} gun={} deck={deck} cost={cost} budget={} slots={} from={from}", u8::from(focus), gun.kind.key(), gun.budget, gun.slots);
+    let head = format!("gunlab depth={depth} seed={seed} arena={arena} focus={} guard={} tail={tail} gun={} deck={deck} cost={cost} budget={} slots={} from={from}", u8::from(focus), u8::from(guard), gun.kind.key(), gun.budget, gun.slots);
     let twice = cards.iter().enumerate().any(|(i, c)| c.kind() != Kind::Payload && !matches!(c, rd::Card::Ammo(_)) && cards[..i].contains(c));
     if rd::fit_gun(cards.clone(), &gun).is_err() || twice {
         println!("{head} how=unfit");
@@ -239,6 +239,12 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
     // holds fire in the tail is eaten, which is not the deck's doing.
     let mut fire_end: Option<(usize, f64)> = None;
     let mut first_kill: Option<f32> = None;
+    // The guard (`guard_hand`): slime on the guarded crystal, a mean over
+    // the fight's seconds, and the food taken in the fight.
+    let mut guard_sum = 0.0f64;
+    let mut guard_n = 0u32;
+    let mut harvest_fire: Option<f32> = None;
+    let harvest0 = app.game.as_ref().map_or(0.0, |g| g.harvested);
     let mut ended: f32;
     let t0 = std::time::Instant::now();
     loop {
@@ -254,7 +260,16 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
         if sec != last_sec {
             last_sec = sec;
             if arena > 0 {
-                arena_hand(g, arena, since, focus, since > fire_secs);
+                if guard {
+                    guard_hand(g, arena, since, since > fire_secs);
+                } else {
+                    arena_hand(g, arena, since, focus, since > fire_secs);
+                }
+                if let Some(c) = GUARDED.with(std::cell::Cell::get) {
+                    let cs = g.world.crystals();
+                    guard_sum += f64::from(g.world.walkers_in(cs[c].0, g.world.crystal_r(c)));
+                    guard_n += 1;
+                }
             } else {
                 hands::bot_hand(g);
             }
@@ -274,6 +289,7 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
             } else if mould_fire.is_none() {
                 mould_fire = Some(g.mould);
                 fire_end = Some((alive, hp_lost));
+                harvest_fire = Some(g.harvested);
             }
             let s30 = since.round() as i64;
             if s30 % 30 == 0 {
@@ -347,7 +363,7 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
     };
     let ro = &app.rounds;
     println!(
-        "{head} how={how} cause={cause} won={} stars={stars} secs={ended:.1} killed={} mould={} start_mould={start_mould} mould_fire={} mould_mean={:.0} alive_fire={} hp_lost_fire={:.2} alive={} peak={peak_alive} min_alive={} hp={:.3} hp_lost={hp_lost:.2} bank={:.0} shots={} hits={} hit_cells={} shot_kills={shot_kills} kill_range={:.1} far_share={:.3} round_kills={} fire_kills={} gassed={} flung={} dropped={} unsupported={} bullets_dropped={} best10={best10} first_kill={:.1} near={:.0} per10={} wall={:.0} marks={}",
+        "{head} how={how} cause={cause} won={} stars={stars} secs={ended:.1} killed={} mould={} start_mould={start_mould} mould_fire={} mould_mean={:.0} alive_fire={} hp_lost_fire={:.2} alive={} peak={peak_alive} min_alive={} hp={:.3} hp_lost={hp_lost:.2} bank={:.0} shots={} hits={} hit_cells={} shot_kills={shot_kills} kill_range={:.1} far_share={:.3} round_kills={} fire_kills={} gassed={} flung={} dropped={} unsupported={} bullets_dropped={} harvest={:.0} on_crystal={:.0} best10={best10} first_kill={:.1} near={:.0} per10={} wall={:.0} marks={}",
         u8::from(won),
         g.killed,
         g.mould,
@@ -371,6 +387,8 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
         ro.dropped,
         ro.unsupported,
         g.bullets_dropped,
+        harvest_fire.unwrap_or(g.harvested) - harvest0,
+        if guard_n > 0 { guard_sum / f64::from(guard_n) } else { -1.0 },
         first_kill.unwrap_or(-1.0),
         if near_n > 0 { near_sum / f64::from(near_n) } else { 0.0 },
         per10.iter().map(u32::to_string).collect::<Vec<_>>().join("/"),
@@ -512,5 +530,62 @@ fn arena_hand(g: &mut Game<GpuWorld>, n: usize, since: f32, focus: bool, hold: b
         }
     } else if !focus && !members.iter().all(|&k| g.soldiers[k].order == Order::Hold) {
         g.apply(Cmd::SquadOrder(q as u8, Order::Hold));
+    }
+}
+
+thread_local! {
+    /// The crystal `guard_hand` holds this game.
+    static GUARDED: std::cell::Cell<Option<usize>> = const { std::cell::Cell::new(None) };
+}
+
+/// **The guard** (2026-11-19, the owner's play of 19:16Z: guns with a
+/// strong push killed less until he split his squad to hold one crystal
+/// each, where the push kept the slime off and he took every crystal):
+/// `arena=N:guard`. The arena's N soldiers, not the player's squad, hold
+/// the crystal (not the home) with the most slime round it at landing
+/// with the game's Guard order and Defend stance, so they stand and shoot
+/// what comes onto it. The measures are
+/// the food taken and the slime on the crystal, not the kills, so a card
+/// that keeps slime away is judged on that.
+fn guard_hand(g: &mut Game<GpuWorld>, n: usize, since: f32, hold: bool) {
+    if since < 1.0 {
+        GUARDED.with(|c| c.set(None));
+        g.bank = 1.0e9;
+        while g.alive() < n {
+            if !g.apply(Cmd::Buy) {
+                break;
+            }
+        }
+        g.bank = 0.0;
+    }
+    let live = g.live_squads();
+    let Some(&q) = live.first() else { return };
+    for &o in &live[1..] {
+        g.apply(Cmd::Merge(q as u8, o as u8));
+    }
+    if g.active.is_some() {
+        g.apply(Cmd::Active(u8::MAX));
+    }
+    let cs = g.world.crystals();
+    let pick = GUARDED.with(std::cell::Cell::get).or_else(|| {
+        let range = g.gun_range(q) * g.world.scale();
+        let c = (1..cs.len()).filter(|&c| cs[c].1 > 0.0).max_by_key(|&c| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range));
+        GUARDED.with(|x| x.set(c));
+        c
+    });
+    let Some(c) = pick else { return };
+    let members = g.members(q);
+    // The game's own Guard order with the Defend stance, as a player
+    // guards a crystal (owner 19:28Z: "a turret guarding a wall or just
+    // using the defend action"): no walking out to drain or chase.
+    let want = if hold { Stance::HoldFire } else { Stance::Defend };
+    for &k in &members {
+        if g.soldiers[k].stance != want {
+            g.apply(Cmd::Stance(k, want));
+        }
+    }
+    let o = if hold { Order::Move(g.larder.0, g.larder.1) } else { Order::Guard(cs[c].0 .0, cs[c].0 .1) };
+    if !members.iter().all(|&k| g.soldiers[k].order == o) {
+        g.apply(Cmd::SquadOrder(q as u8, o));
     }
 }

@@ -2139,6 +2139,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // (`runbot::arena_hand`); `tail=T`: seconds more with fire held.
     let mut arena = 0usize;
     let mut focus = false;
+    let mut guard = false;
     let mut tail = 0.0f32;
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -2268,6 +2269,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let (n, how) = v.split_once(':').unwrap_or((v, ""));
                 arena = n.parse()?;
                 focus = how == "focus";
+                guard = how == "guard";
             }
             "tail" => tail = v.parse()?,
             "runbot" => {
@@ -2523,7 +2525,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some((depth, seed, secs)) = gunlab {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         let kind = base.gun.clone().unwrap_or_else(|| "rifle".into());
-        runbot::gun_lab(base, (depth, seed, secs, arena), (&kind, &deck, focus, tail), &device, &queue)?;
+        runbot::gun_lab(base, (depth, seed, secs, arena), (&kind, &deck, focus, tail, guard), &device, &queue)?;
         return Ok(());
     }
     if let Some((seed, to)) = runbot {
