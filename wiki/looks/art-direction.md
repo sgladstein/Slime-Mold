@@ -21,6 +21,7 @@ sources:
   - Reports/river-look-2026-11-14/README.md
   - Reports/sim-use-2026-11-17/e2b-look.md
   - Reports/soil-materials-2026-11-14/README.md
+  - Reports/soldier-skins-2026-11-19/README.md
   - Reports/squad-heads-2026-11-18/README.md
   - Reports/value-order-2026-11-15/README.md
 code:
@@ -37,9 +38,9 @@ light on dark ground**. The slime is the brightest, warmest, most detailed
 thing on screen; the ground is dark and quiet; hard shapes (rock, walls,
 crystals) are crisp; your units are high-contrast and countable; light
 (muzzle, impact, crystal charge) only ever shows something the simulation
-did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed and the ground dark (#247); what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
-Since 2026-11-17 the Look and interface lane holds this guide and the
-ranked list of look jobs at its end, in the owner's order.
+did. The first review (11-14) found the slime out of focus, cell stairs on hard shapes, an uncountable squad and a HUD over the fight; by 68870d0 those are fixed and the ground dark (#247); open: the tint discs, a pebbly frontier, flat grey spent crystals and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
+Since 2026-11-17 the Look and interface lane holds this guide and its
+ranked look jobs, in the owner's order.
 
 ## The rules
 
@@ -64,13 +65,13 @@ ranked list of look jobs at its end, in the owner's order.
    mini-boss its members' own skin, by kind (`LumpLook`): the hunter
    violet (skin hue about 265, core 280), the wanderer pale bone, the
    leech near-black ink whose core turns the charge's cyan as it drinks a
-   pump (the cyan means charge there too), the sapper ember crimson at your
-   walls; dark, mid and pale, so they part by value as well as hue; not
+   pump, the sapper ember crimson at your
+   walls; dark, mid and pale, parting by value as well as hue; not
    bronze (owner 11-16); its colour, dome and core light all from where its
    members are (once out on its errand, wherever they stand, however thick
    the slime round them), and a broken or spent one's look drains into the slime
    over its 1.5 s fade ([mini-boss look](../../Reports/mini-boss-look-2026-11-16/README.md),
-   round 2; the owner's A/B pick for the hunter open). A new colour needs a role nobody has.
+   round 2; the hunter kept violet 11-19). A new colour needs a role nobody has.
    The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)). Each soil has its own material from the soil field since 11-14 (sand ripples, clay cracks, ash speckle, dark water with a smooth edge and shore, raised rock with a lit rim), so planets read apart in grey; the ripples bend and fade out below zoom 3, and barren ash sits a clear step under rock ([soil materials](../../Reports/soil-materials-2026-11-14/README.md)). Water is a clear step darker than any ground, deep water darker again toward its middle, with a shallow margin, waterline and damp bank; bridges are plank decks; soft rock at full health is a mid-grey under thin slime ([river look](../../Reports/river-look-2026-11-14/README.md)). Play is assumed zoomed in (owner, 11-14 20:21Z): every boundary between grounds, soils, water and plant patches and kinds, is drawn crisp at the pixel up to 24 px a cell, and no texture shows the cell grid ([ground edges](../../Reports/ground-edges-2026-11-14/README.md)); a shortcut past the soil spline must cover all 4 x 4 cells it reads, or the shore and bridge shading steps at cell middles; the full test costs about 0.2 ms of GPU a frame on the 1070 ([bug check](../../Reports/bug-check-2026-11-15/README.md)). Value order since 11-15, on every planet: ground 41-51, rock 50-60 (hedges and rubble too), soft rock 60-72 darkening with damage, thin slime above rock with a shade floor on its far flank, crystal faces 110 and up, thick slime 140 and up; shallow water about 20 above deep; off the map is darker than cave rock; hedges are lumpy and grained, not tubes; the rock bevel is at most 5 px; below zoom 1 and on the minimap each cell is drawn from the shaded materials ([value order](../../Reports/value-order-2026-11-15/README.md)). Each planet's plain soil has its own hue at every zoom and its own close look from its biome (the map's `flora`): brown meadow loam, tan barrens hardpan, olive fen mud, warm valley silt, red-brown jungle humus, neutral highland gravel, blue-grey cave dust, the texture in from zoom 3 to 8, all kept in the ground's value band; thin film has an absolute floor of 95 before shading over any ground ([planet ground](../../Reports/biome-ground-2026-11-15/README.md)).
 4. **Sharp at every zoom, 1 to 24.** Hard shapes have exact edges worked
    out at the screen pixel and antialiased over one pixel; no cell stair is
@@ -100,8 +101,9 @@ ranked list of look jobs at its end, in the owner's order.
 7. **The HUD serves the fight.** In play the HUD covers at most about 15% of
    the screen, collapses when nothing is selected, and never sits over what
    the camera opens on. Its look stays the `theme` set in `ui.rs`.
-8. **Shapes the owner fixed**: crystals are hexagons; soldiers are sprite A;
-   shots stop at the first slime (owner 11-11 15:50-16:48Z).
+8. **Shapes the owner fixed**: crystals are hexagons; shots stop at the
+   first slime (owner 11-11 15:50-16:48Z); soldiers wear their Armour:
+   olive, slate, dark camo (11-19, [skins](../../Reports/soldier-skins-2026-11-19/README.md)).
 
 ## How a look is judged and shipped
 
@@ -114,8 +116,8 @@ ranked list of look jobs at its end, in the owner's order.
 - A look lands when it works and can be seen (testing rule, 11-12 17:26Z):
   if a better look changes balance, retune the numbers, don't keep the
   uglier look.
-- One owner: the Look and interface lane (`CLAUDE.md`, *Lanes*) reviews
-  every lane's visible change against this guide.
+- One owner: the Look and interface lane reviews every lane's visible
+  change against this guide.
 
 ## Owner's word
 

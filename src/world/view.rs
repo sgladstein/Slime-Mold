@@ -506,10 +506,10 @@ impl View {
     }
 
     /// The soldier sprite atlas on the GPU: `SPRITES` decoded, a u32 RGBA
-    /// a texel, 2176 x 160 (17 tiles).
+    /// a texel, 2944 x 160 (23 tiles).
     fn atlas(dev: &wgpu::Device, queue: &wgpu::Queue) -> wgpu::Buffer {
         let img = image::load_from_memory(SPRITES).expect("sprites.png").to_rgba8();
-        assert_eq!(img.dimensions(), (2176, 160), "the atlas the view's shader expects");
+        assert_eq!(img.dimensions(), (2944, 160), "the atlas the view's shader expects");
         let b = storage(dev, "sprites", img.as_raw().len() as u64);
         queue.write_buffer(&b, 0, img.as_raw());
         b
@@ -2499,6 +2499,51 @@ mod tests {
         let (one, two) = (shot(&body), shot(&both));
         let most = one.pixels().zip(two.pixels()).map(|(p, q)| (0..3).map(|c| (p.0[c] as i32 - q.0[c] as i32).abs()).max().unwrap()).max().unwrap();
         assert!(most <= 2, "a lone soldier's head is its own figure's: {most}");
+    }
+
+    /// The Armour looks (`Marks::dress_since`, owner 2026-11-19 14:41Z):
+    /// three soldiers facing east in olive (A, no Armour), slate (B) and
+    /// dark camo (C). B's shoulder is bluer than its red where A's is not;
+    /// C's is darker than A's; the helmets stay the same white, so the squad
+    /// can still be counted. Against the shader before the Armour looks
+    /// every skin draws as sprite A and it fails.
+    #[test]
+    fn each_armour_look_draws_its_own_body_under_the_same_white_helmet() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [40u8, 44, 40, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let (r, team) = (2.0, crate::world::marks::team_colour(0));
+        let (a, b, c) = ((14.0, 16.0), (24.0, 16.0), (34.0, 16.0));
+        let mut m = Marks::default();
+        for (p, skin) in [(a, 0), (b, 1), (c, 2)] {
+            let n = m.len();
+            m.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+            m.soldier_head(p, r, 0.0, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+            m.dress_since(n, skin);
+        }
+        view.set_marks(&m);
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        let px_at = |p: (f32, f32)| {
+            let (sx, sy) = cam.to_screen(p);
+            pic.get_pixel(sx as u32, sy as u32).0.map(i32::from)
+        };
+        // Half a radius out across the facing: the shoulder.
+        let [sa, sb, sc] = [a, b, c].map(|p| px_at((p.0, p.1 + 0.5 * r)));
+        assert!(sb[2] > sb[0] && sa[2] + 15 < sa[0], "B slate, A olive: A {sa:?}, B {sb:?}");
+        assert!(sc[..3].iter().sum::<i32>() + 40 < sa[..3].iter().sum::<i32>(), "C's dark camo darker than A's olive: A {sa:?}, C {sc:?}");
+        let [ha, hb, hc] = [a, b, c].map(|p| px_at((p.0 + 0.04 * r, p.1)));
+        let white = |p: [i32; 4]| p[..3].iter().min().copied().unwrap() > 150;
+        assert!(white(ha) && (0..3).all(|k| (ha[k] - hb[k]).abs() <= 8 && (ha[k] - hc[k]).abs() <= 8), "the helmets the same white: {ha:?}, {hb:?}, {hc:?}");
     }
 
     /// The Sprawler's threads (Look B, 2026-11-19): two lone walkers on

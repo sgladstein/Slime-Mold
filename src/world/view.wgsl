@@ -104,9 +104,10 @@ struct V {
 @group(0) @binding(8) var<storage, read> ground: array<u32>;
 @group(0) @binding(9) var<storage, read> walkers: array<vec4<f32>>;
 @group(0) @binding(10) var<storage, read_write> specks: array<atomic<u32>>;
-// The sprites (`src/world/sprites/`): 2176 x 160 RGBA, seventeen 128 px
-// tiles (soldier body, helmet, flash, dead; six buildings, each body then
-// lamp; the turret's head) above the same at 32 px.
+// The sprites (`src/world/sprites/`): 2944 x 160 RGBA, twenty-three 128 px
+// tiles (sprite A's body, helmet, flash, dead; six buildings, each body then
+// lamp; the turret's head; the three Armour looks, each body then helmet)
+// above the same at 32 px.
 @group(0) @binding(11) var<storage, read> atlas: array<u32>;
 // Each shown cell's height and material, worked out once a frame by `prep`
 // (rows `rw` apart from cell ox, oy). `base` reads these: a pixel needs 24
@@ -3724,14 +3725,14 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 2176u + u32(clamp(x, 0, 2175))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 2944u + u32(clamp(x, 0, 2943))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
 
 // Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-15 the buildings, each
 // body then lamp: turret, lure, pump, outpost, siren, larder; 16 the
-// turret's head) at point `p` in radii
+// turret's head; 17-22 the Armour looks, `skin_body`) at point `p` in radii
 // (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
 fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
     var size = 128.0; var oy = 0.0;
@@ -3776,7 +3777,7 @@ const INK: vec3<f32> = vec3<f32>(14.0, 13.0, 10.0);
 
 // The living soldier's silhouette (body and helmet) at `p`, 0-1.
 fn silhouette(p: vec2<f32>, small: bool) -> f32 {
-    return max(sprite(0u, p, small).w, sprite(1u, p, small).w);
+    return max(sprite(skin_body(), p, small).w, sprite(skin_body() + 1u, p, small).w);
 }
 
 // Harvesting (art direction, the owner's playtest 11-14 04:53Z:
@@ -3865,9 +3866,9 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
         grown = max(grown, silhouette(p + vec2<f32>(cos(a), sin(a)) * o, small));
     }
     out = pm_over(out, vec4<f32>(INK * grown, grown));
-    let body = sprite(0u, p, small);
+    let body = sprite(skin_body(), p, small);
     out = pm_over(out, body);
-    let h = sprite(1u, p, small);
+    let h = sprite(skin_body() + 1u, p, small);
     out = pm_over(out, vec4<f32>(h.xyz * team / 255.0, h.w));
     // The rim: inside the silhouette, where one pixel toward the light
     // (screen space, turned into the sprite's frame) is outside it.
@@ -4463,8 +4464,21 @@ fn flash_at(b: u32, p: vec2<f32>) -> vec2<f32> {
 // where its helmet is, so a soldier standing alone looks as it did.
 const HEAD_ONLY: u32 = 1u << 25u;
 
+// **The soldiers' Armour looks** (owner, 2026-11-19 14:41Z: "our base
+// soldier should be olive that upgraded to slate that upgrades to heavy",
+// then 15:11Z "Replace heavy with dark camo"; `Marks::dress_since`, `extra`
+// bits 27-28): 0 olive, 1 slate, 2 dark camo,
+// each its body tile then its helmet (`src/world/sprites/cut.py`, from the
+// owner's image-model sheet). Sprite A (tiles 0 and 1, the owner's pick of
+// 11-11) drew every living soldier to then; its dead body (tile 3) still
+// draws the fallen. Set per mark in `soldier_at`, read by `soldier`,
+// `silhouette` and the helmet masks.
+var<private> SKIN: u32 = 0u;
+const SKIN_SHIFT: u32 = 27u;
+fn skin_body() -> u32 { return 17u + 2u * min(SKIN, 2u); }
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
+    SKIN = (extra >> SKIN_SHIFT) & 3u;
     let ang = bitcast<f32>(marks[b + 9u]);
     var f = soldier(d, r, ang, unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
     if ((extra & HEAD_ONLY) != 0u) {
@@ -4476,10 +4490,10 @@ fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
         let s = d / r;
         let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
         let small = r < 12.0;
-        var head = sprite(1u, p, small).w;
+        var head = sprite(skin_body() + 1u, p, small).w;
         for (var i = 0u; i < 8u; i++) {
             let a = f32(i) * 0.785398;
-            head = max(head, sprite(1u, p + vec2<f32>(cos(a), sin(a)) * OUTLINE / r, small).w);
+            head = max(head, sprite(skin_body() + 1u, p + vec2<f32>(cos(a), sin(a)) * OUTLINE / r, small).w);
         }
         if (head <= 0.004) { return vec4<f32>(0.0); }
     }
@@ -4494,7 +4508,7 @@ fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     if (bite > 0.0 && f.w > 0.0) {
         let s = d / r;
         let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
-        let helmet = sprite(1u, p, r < 12.0).w;
+        let helmet = sprite(skin_body() + 1u, p, r < 12.0).w;
         f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * 0.45 * (1.0 - helmet)), f.w);
     }
     return f;

@@ -106,11 +106,26 @@ call in `main.rs`'s `start`), sent to the view with a walker's pace
 the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
 Trunk thick veined cords with its amber walls.
 
+**The soldiers' Armour looks** (owner, 11-19 14:41Z: "our base soldier
+should be olive that upgraded to slate that upgrades to heavy"; 15:11Z:
+"Replace heavy with dark camo"): three designs from the owner's image-model
+sheet (`sprites/soldiers-2026-11-19.jpg`, cells 1, 2 and 6) are atlas tiles 17-22, body then helmet, cut by
+`sprites/cut.py` (run it after `render.js`). The run's Armour level
+(`run::ITEMS` "hp") picks one for every living soldier (`armour_skin` in
+`draw.rs`: 0 olive, 1-2 slate, 3-4 dark camo; `Marks::dress_since`,
+`extra` bits 27-28; `skin_body` in `view.wgsl`). `MUZZLE` holds each
+look's barrel mouth (cut.py prints them). Not done: fallen versions (the fallen keep tile 3),
+and a design for each gun if the owner wants that. Generating designs:
+small edits of a sheet he likes, one change a request (a long rule list
+made the model draw the guns side-on). Test page:
+https://claude.ai/artifact/Q4hcuw3SVcPJVNbVG4s5tD
+(`Reports/soldier-skins-2026-11-19/`).
+
 **Open branch:** `claude/project-thread-8bv885`, one pull request at a
-time: the fort walls' smooth tops (`SET_SOFT`). Next on it, once Squad's
-Gas PR (#513) is on main: a dozing soldier's look, committed on a local
-branch over #513 (`Marks::doze_since`, `doze_tint` in `draw.rs`, the
-`DOZE_*` constants in `soldier_at`): its body takes the gas's lavender
+time: the Armour looks. Next on it, once Squad's Gas PR (#513) is on main:
+a dozing soldier's look, committed on a local branch over #513 (`Marks::doze_since`,
+`doze_tint` in `draw.rs`, the `DOZE_*` constants in `soldier_at`; merge it
+with the Armour looks, which share `soldier_at`; doze is `extra` bit 26): its body takes the gas's lavender
 by the cloud's level at its feet and dims while it is out, its helmet
 white. Filmed on planet 1 (Gas cast on the squad at 40 s): grey-lavender
 at 42 s, olive and firing at 48 s. If the branch is lost, that is the
@@ -156,7 +171,9 @@ while Squad asked to keep it.
 4. Picks done 11-19: the fen moat deleted; the hunter stays violet
    (filmed on planet 8, bright and glossy over its dark purple plants,
    framed by the gold it forms in); the fort walls' tops smooth
-   (`SET_SOFT`).
+   (`SET_SOFT`, #517); soldiers dressed by Armour (above).
+5. Soldier looks: the fallen in each Armour look, then a design per gun if
+   the owner asks.
 
 **Helpers** (11-19, the owner offered them): a film runner thread (builds
 and films on its own machine; send it exact commands, it pushes the output
