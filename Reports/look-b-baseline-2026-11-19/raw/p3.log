@@ -1,0 +1,60 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+OUT/p3/planet-3-1-greedy-030s-all.png
+OUT/p3/planet-3-1-greedy-030s-near.png
+  CPU: ground field 2.82 ms (once a game second), model and HUD 0.107 ms a frame
+  t 30 s: mould 40280, soldiers 9, bank 256, harvested 1056, rendered 0, shots 150, killed 3467, took 91%, crystals left 0.925; squad at 276.0,63.0
+  surge: the slime ate 111 food (3.7/s); meter 111.4 of 259, 0 surges
+  dense: 0 condensed or thick walkers, mass 40280 (readout 40280); 2835 breaking away
+  loose: 2319 walkers alone or in twos in a dish cell, 5.8% of 40280; 671 with at most one other round them
+  squad: touching 0.1 mean, 1 most; health 79 mean
+  surge 1 starts at t 60.0 s (the slime has eaten 207 food)
+OUT/p3/planet-3-1-greedy-060s-all.png
+OUT/p3/planet-3-1-greedy-060s-near.png
+  CPU: ground field 4.10 ms (once a game second), model and HUD 0.146 ms a frame
+  t 60 s: mould 40427, soldiers 11, bank 251, harvested 3451, rendered 0, shots 233, killed 3678, took 95%, crystals left 0.764; squad at 271.0,59.3
+  surge: the slime ate 207 food (3.5/s); meter 0.0 of 259, 1 surges
+  dense: 0 condensed or thick walkers, mass 40427 (readout 40427); 1974 breaking away
+  loose: 3403 walkers alone or in twos in a dish cell, 8.4% of 40427; 1023 with at most one other round them
+  squad: touching 0.6 mean, 5 most; health 84 mean
+OUT/p3/planet-3-1-greedy-090s-all.png
+OUT/p3/planet-3-1-greedy-090s-near.png
+  CPU: ground field 2.63 ms (once a game second), model and HUD 0.100 ms a frame
+  t 90 s: mould 25433, soldiers 15, bank 43, harvested 5643, rendered 0, shots 368, killed 4188, took 95%, crystals left 0.614; squad at 303.2,98.5
+  surge: the slime ate 323 food (3.6/s); meter 115.7 of 259, 1 surges
+  dense: 0 condensed or thick walkers, mass 25433 (readout 25433); 1439 breaking away
+  loose: 3949 walkers alone or in twos in a dish cell, 15.5% of 25404; 1358 with at most one other round them
+  squad: touching 0.5 mean, 4 most; health 78 mean
+  boss t 97.0 s: Crowd wanderer formed on lump 0 at 107,71 (crowd top 1.00); grade 0.28: 7 blows a member, touches as 3, pace x1.11
+  boss t 97 s: lump 0 wanderer Gather, 0 members (first 0, 0 hurt), at 107,71, spread 1.00, stolen 0.0; nearest soldier 156.4, 15 alive
+  boss t 98 s: lump 0 wanderer Gather, 341 members (first 341, 0 hurt), at 108,72, spread 0.92, stolen 0.0; nearest soldier 155.0, 15 alive
+  boss t 99 s: lump 0 wanderer Gather, 341 members (first 341, 0 hurt), at 110,72, spread 0.91, stolen 0.0; nearest soldier 153.7, 14 alive
+  boss t 100 s: lump 0 wanderer Gather, 341 members (first 341, 0 hurt), at 110,74, spread 0.91, stolen 0.0; nearest soldier 149.4, 14 alive
+  boss t 101 s: lump 0 wanderer Gather, 341 members (first 341, 0 hurt), at 110,74, spread 0.94, stolen 0.0; nearest soldier 159.8, 14 alive
+  boss t 102 s: lump 0 wanderer Gather, 341 members (first 341, 0 hurt), at 110,74, spread 0.91, stolen 0.0; nearest soldier 173.3, 14 alive
+  boss t 103 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 110,74, spread 0.91, stolen 0.0; nearest soldier 181.1, 14 alive
+  boss t 104 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 114,74, spread 1.14, stolen 0.0; nearest soldier 190.2, 14 alive
+  boss t 105 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 116,74, spread 1.21, stolen 0.0; nearest soldier 204.0, 12 alive
+  boss t 106 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 116,74, spread 1.25, stolen 0.0; nearest soldier 220.8, 12 alive
+  boss t 107 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 116,74, spread 1.26, stolen 0.0; nearest soldier 237.0, 12 alive
+  boss t 108 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 118,74, spread 1.34, stolen 0.0; nearest soldier 247.4, 12 alive
+  boss t 109 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 118,72, spread 1.39, stolen 0.0; nearest soldier 258.2, 12 alive
+  boss t 110 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 118,72, spread 1.38, stolen 0.0; nearest soldier 268.8, 12 alive
+  boss t 111 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 118,72, spread 1.37, stolen 0.0; nearest soldier 281.2, 12 alive
+  boss t 112 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 118,72, spread 1.34, stolen 0.0; nearest soldier 294.2, 12 alive
+  boss t 113 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 120,72, spread 1.44, stolen 0.0; nearest soldier 306.2, 12 alive
+  boss t 114 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 120,72, spread 1.44, stolen 0.0; nearest soldier 319.1, 11 alive
+  boss t 115 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 118,72, spread 1.40, stolen 0.0; nearest soldier 322.9, 11 alive
+  boss t 116 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 120,72, spread 1.47, stolen 0.0; nearest soldier 325.2, 11 alive
+  boss t 117 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 118,72, spread 1.37, stolen 0.0; nearest soldier 314.2, 11 alive
+  boss t 118 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 120,72, spread 1.43, stolen 0.0; nearest soldier 311.0, 11 alive
+  boss t 119 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 120,72, spread 1.46, stolen 0.0; nearest soldier 310.1, 11 alive
+  surge 2 starts at t 120.0 s (the slime has eaten 436 food)
+  boss t 120 s: lump 0 wanderer Go((299.0, 66.5)), 341 members (first 341, 0 hurt), at 120,72, spread 1.42, stolen 0.0; nearest soldier 309.7, 12 alive
+OUT/p3/planet-3-1-greedy-120s-all.png
+OUT/p3/planet-3-1-greedy-120s-near.png
+  CPU: ground field 2.28 ms (once a game second), model and HUD 0.105 ms a frame
+  t 120 s: mould 17414, soldiers 12, bank 113, harvested 6112, rendered 0, shots 624, killed 5601, took 94%, crystals left 0.577; squad at 372.3,277.8
+  surge: the slime ate 436 food (3.6/s); meter 0.0 of 259, 2 surges
+  dense: 0 condensed or thick walkers, mass 17414 (readout 17414); 971 breaking away
+  loose: 1628 walkers alone or in twos in a dish cell, 9.3% of 17412; 545 with at most one other round them
+  squad: touching 0.3 mean, 1 most; health 55 mean

@@ -1,0 +1,72 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+OUT/p2/planet-2-1-greedy-030s-all.png
+OUT/p2/planet-2-1-greedy-030s-near.png
+  CPU: ground field 1.64 ms (once a game second), model and HUD 0.123 ms a frame
+  t 30 s: mould 13089, soldiers 10, bank 334, harvested 734, rendered 0, shots 193, killed 899, took 91%, crystals left 0.969; squad at 343.3,247.2
+  surge: the slime ate 74 food (2.5/s); meter 74.0 of 109, 0 surges
+  dense: 0 condensed or thick walkers, mass 13089 (readout 13089); 955 breaking away
+  loose: 1585 walkers alone or in twos in a dish cell, 12.1% of 13087; 972 with at most one other round them
+  squad: touching 0.0 mean, 0 most; health 86 mean
+  surge 1 starts at t 43.5 s (the slime has eaten 109 food)
+OUT/p2/planet-2-1-greedy-060s-all.png
+OUT/p2/planet-2-1-greedy-060s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.107 ms a frame
+  t 60 s: mould 12301, soldiers 15, bank 419, harvested 2819, rendered 0, shots 471, killed 2070, took 95%, crystals left 0.884; squad at 319.0,227.3
+  surge: the slime ate 152 food (2.5/s); meter 43.3 of 109, 1 surges
+  dense: 0 condensed or thick walkers, mass 12301 (readout 12301); 1461 breaking away
+  loose: 1622 walkers alone or in twos in a dish cell, 13.2% of 12284; 980 with at most one other round them
+  squad: touching 0.1 mean, 1 most; health 81 mean
+  surge 2 starts at t 81.3 s (the slime has eaten 217 food)
+  boss t 85.0 s: Crowd hunter formed on lump 0 at 385,127 (crowd top 1.00); grade 0.36: 8 blows a member, touches as 3, pace x1.14
+  boss t 85 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 385,127, spread 1.00, stolen 0.0; nearest soldier 106.3, 20 alive
+  boss t 86 s: lump 0 hunter Gather, 377 members (first 377, 0 hurt), at 384,130, spread 0.91, stolen 0.0; nearest soldier 112.6, 20 alive
+  boss t 87 s: lump 0 hunter Gather, 377 members (first 377, 0 hurt), at 384,130, spread 0.93, stolen 0.0; nearest soldier 107.5, 20 alive
+  boss t 88 s: lump 0 hunter Gather, 377 members (first 377, 0 hurt), at 382,132, spread 0.92, stolen 0.0; nearest soldier 101.9, 20 alive
+  boss t 89 s: lump 0 hunter Gather, 377 members (first 377, 0 hurt), at 382,136, spread 0.87, stolen 0.0; nearest soldier 99.5, 20 alive
+  boss t 90 s: lump 0 hunter Gather, 377 members (first 377, 0 hurt), at 382,138, spread 0.88, stolen 0.0; nearest soldier 100.4, 20 alive
+OUT/p2/planet-2-1-greedy-090s-all.png
+OUT/p2/planet-2-1-greedy-090s-near.png
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.099 ms a frame
+  t 90 s: mould 11066, soldiers 20, bank 316, harvested 4716, rendered 0, shots 838, killed 3810, took 96%, crystals left 0.807; squad at 272.0,218.2
+  surge: the slime ate 242 food (2.7/s); meter 24.7 of 109, 2 surges
+  dense: 0 condensed or thick walkers, mass 11066 (readout 11066); 618 breaking away
+  loose: 1256 walkers alone or in twos in a dish cell, 11.4% of 11041; 828 with at most one other round them
+  squad: touching 0.1 mean, 1 most; health 74 mean
+  boss t 91 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 380,140, spread 0.82, stolen 0.0; nearest soldier 100.1, 20 alive
+  boss t 92 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 374,186, spread 1.52, stolen 0.0; nearest soldier 54.7, 20 alive
+  boss t 93 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 374,198, spread 1.26, stolen 0.0; nearest soldier 42.7, 21 alive
+  boss t 94 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,204, spread 1.14, stolen 0.0; nearest soldier 36.5, 21 alive
+  boss t 95 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.14, stolen 0.0; nearest soldier 32.5, 21 alive
+  boss t 96 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.06, stolen 0.0; nearest soldier 31.5, 21 alive
+  boss t 97 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,206, spread 1.36, stolen 0.0; nearest soldier 33.6, 21 alive
+  boss t 98 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.05, stolen 0.0; nearest soldier 31.6, 22 alive
+  boss t 99 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.04, stolen 0.0; nearest soldier 30.7, 22 alive
+  boss t 100 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.02, stolen 0.0; nearest soldier 30.7, 22 alive
+  boss t 101 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.01, stolen 0.0; nearest soldier 30.5, 22 alive
+  boss t 102 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.27, stolen 0.0; nearest soldier 32.6, 22 alive
+  boss t 103 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.02, stolen 0.0; nearest soldier 31.6, 23 alive
+  boss t 104 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.06, stolen 0.0; nearest soldier 31.5, 23 alive
+  boss t 105 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.04, stolen 0.0; nearest soldier 30.7, 23 alive
+  boss t 106 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.01, stolen 0.0; nearest soldier 30.5, 23 alive
+  boss t 107 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,206, spread 1.36, stolen 0.0; nearest soldier 33.6, 24 alive
+  boss t 108 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.07, stolen 0.0; nearest soldier 31.6, 24 alive
+  boss t 109 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.02, stolen 0.0; nearest soldier 30.5, 24 alive
+  boss t 110 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.04, stolen 0.0; nearest soldier 30.7, 25 alive
+  boss t 111 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.01, stolen 0.0; nearest soldier 30.7, 25 alive
+  boss t 112 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.26, stolen 0.0; nearest soldier 32.6, 25 alive
+  boss t 113 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.09, stolen 0.0; nearest soldier 31.5, 26 alive
+  boss t 114 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.00, stolen 0.0; nearest soldier 30.5, 26 alive
+  boss t 115 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.00, stolen 0.0; nearest soldier 30.5, 27 alive
+  boss t 116 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,210, spread 1.01, stolen 0.0; nearest soldier 30.5, 27 alive
+  boss t 117 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,206, spread 1.31, stolen 0.0; nearest soldier 33.5, 27 alive
+  boss t 118 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 370,208, spread 1.13, stolen 0.0; nearest soldier 34.2, 25 alive
+  boss t 119 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 372,208, spread 1.07, stolen 0.0; nearest soldier 30.8, 26 alive
+  boss t 120 s: lump 0 hunter Hunt(Some(18)), 377 members (first 377, 0 hurt), at 366,208, spread 1.10, stolen 0.0; nearest soldier 35.1, 26 alive
+OUT/p2/planet-2-1-greedy-120s-all.png
+OUT/p2/planet-2-1-greedy-120s-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.107 ms a frame
+  t 120 s: mould 10043, soldiers 26, bank 166, harvested 7765, rendered 0, shots 1329, killed 4973, took 97%, crystals left 0.686; squad at 241.2,221.7
+  surge: the slime ate 310 food (2.6/s); meter 92.4 of 109, 2 surges
+  dense: 0 condensed or thick walkers, mass 10043 (readout 10043); 933 breaking away
+  loose: 730 walkers alone or in twos in a dish cell, 7.3% of 10040; 322 with at most one other round them
+  squad: touching 0.2 mean, 1 most; health 78 mean

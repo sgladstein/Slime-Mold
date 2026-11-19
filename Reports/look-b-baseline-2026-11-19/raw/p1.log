@@ -1,0 +1,36 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+OUT/p1/planet-1-1-greedy-030s-all.png
+OUT/p1/planet-1-1-greedy-030s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.122 ms a frame
+  t 30 s: mould 12673, soldiers 12, bank 443, harvested 1643, rendered 0, shots 263, killed 233, took 96%, crystals left 0.924; squad at 227.7,52.3
+  surge: the slime ate 71 food (2.4/s); meter 71.3 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 12673 (readout 12673); 938 breaking away
+  loose: 540 walkers alone or in twos in a dish cell, 4.3% of 12673; 168 with at most one other round them
+  squad: touching 0.1 mean, 1 most; health 100 mean
+  surge 1 starts at t 43.6 s (the slime has eaten 103 food)
+OUT/p1/planet-1-1-greedy-060s-all.png
+OUT/p1/planet-1-1-greedy-060s-near.png
+  CPU: ground field 2.05 ms (once a game second), model and HUD 0.107 ms a frame
+  t 60 s: mould 11759, soldiers 21, bank 397, harvested 5197, rendered 0, shots 707, killed 1029, took 98%, crystals left 0.761; squad at 218.6,46.8
+  surge: the slime ate 139 food (2.3/s); meter 36.7 of 103, 1 surges
+  dense: 0 condensed or thick walkers, mass 11759 (readout 11759); 1079 breaking away
+  loose: 734 walkers alone or in twos in a dish cell, 6.3% of 11716; 347 with at most one other round them
+  squad: touching 0.2 mean, 2 most; health 97 mean
+  surge 2 starts at t 88.1 s (the slime has eaten 206 food)
+OUT/p1/planet-1-1-greedy-090s-all.png
+OUT/p1/planet-1-1-greedy-090s-near.png
+  CPU: ground field 1.33 ms (once a game second), model and HUD 0.122 ms a frame
+  t 90 s: mould 10836, soldiers 35, bank 561, harvested 10962, rendered 0, shots 1405, killed 1649, took 98%, crystals left 0.500; squad at 214.6,50.2
+  surge: the slime ate 210 food (2.3/s); meter 4.4 of 103, 2 surges
+  dense: 0 condensed or thick walkers, mass 10836 (readout 10836); 813 breaking away
+  loose: 500 walkers alone or in twos in a dish cell, 4.6% of 10826; 261 with at most one other round them
+  squad: touching 0.2 mean, 1 most; health 96 mean
+  surge 3 starts at t 119.7 s (the slime has eaten 309 food)
+OUT/p1/planet-1-1-greedy-120s-all.png
+OUT/p1/planet-1-1-greedy-120s-near.png
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.103 ms a frame
+  t 120 s: mould 10172, soldiers 42, bank 337, harvested 13540, rendered 0, shots 1709, killed 1851, took 98%, crystals left 0.381; squad at 354.5,64.6
+  surge: the slime ate 309 food (2.6/s); meter 0.6 of 103, 3 surges
+  dense: 0 condensed or thick walkers, mass 10172 (readout 10172); 943 breaking away
+  loose: 406 walkers alone or in twos in a dish cell, 4.0% of 10172; 194 with at most one other round them
+  squad: touching 0.0 mean, 0 most; health 97 mean
