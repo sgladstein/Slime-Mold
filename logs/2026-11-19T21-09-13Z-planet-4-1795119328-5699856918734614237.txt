@@ -1,0 +1,23 @@
+log map=planet:4:1795119328 seed=5699856918734614237 when=2026-11-19T21:09:13Z build=2250:b1b400a:2026-11-19 mode=squads mission=Planet_4_of_8,_Thakor tier=swarmer planet=4 run=1795119328 gun=ammo/blind/standard/3/120/109/87/95/2 turrets=ammo/torch/standard/2/116/114/139/109/3 bought=walls1+turret1 switches=crystal_regrow:on keys=crystal_regrow=0.001
+cmd t=0.0 active 0
+cmd t=0.0 arm 0 rifle 1 24 1 0.5 1 10 4 1
+cmd t=0.0 load 255 ammo/torch/standard/2/116/114/139/109/3
+t=1 mould=59418 mass=59418 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2349313 took=0.000 stuck=0 p50=22.7 p95=67.2
+t=2 mould=59450 mass=59450 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2349030 took=0.000 stuck=0 p50=22.8 p95=66.8
+t=3 mould=59474 mass=59474 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2348752 took=0.000 stuck=0 p50=6.6 p95=67.4
+t=4 mould=59500 mass=59500 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2348476 took=0.000 stuck=0 p50=7.2 p95=66.7
+t=5 mould=59526 mass=59526 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2348201 took=0.000 stuck=0 p50=6.9 p95=67.4
+t=6 mould=59561 mass=59561 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2347929 took=0.000 stuck=0 p50=22.4 p95=57.7
+t=7 mould=59595 mass=59595 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2347658 took=0.000 stuck=0 p50=6.2 p95=54.5
+cmd t=7.3 steer 0 -1 0
+cmd t=7.5 steer 0 -1 -1
+t=8 mould=59617 mass=59617 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2347389 took=0.000 stuck=0 p50=29.0 p95=55.1
+cmd t=8.1 steer 0 -1 0
+cmd t=8.1 steer 0 0 0
+cmd t=8.2 steer 0 1 0
+cmd t=8.3 steer 0 1 1
+cmd t=8.4 steer 0 0 1
+t=9 mould=59636 mass=59636 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2347123 took=0.000 stuck=0 p50=22.7 p95=52.7
+t=10 mould=59665 mass=59665 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2346859 took=0.000 stuck=0 p50=23.9 p95=56.7
+cmd t=10.2 steer 0 0 0
+t=11 mould=59691 mass=59691 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2346595 took=0.000 stuck=0 p50=22.8 p95=55.5
