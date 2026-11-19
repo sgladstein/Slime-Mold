@@ -506,10 +506,10 @@ impl View {
     }
 
     /// The soldier sprite atlas on the GPU: `SPRITES` decoded, a u32 RGBA
-    /// a texel, 2944 x 160 (23 tiles).
+    /// a texel, 3200 x 160 (25 tiles).
     fn atlas(dev: &wgpu::Device, queue: &wgpu::Queue) -> wgpu::Buffer {
         let img = image::load_from_memory(SPRITES).expect("sprites.png").to_rgba8();
-        assert_eq!(img.dimensions(), (2944, 160), "the atlas the view's shader expects");
+        assert_eq!(img.dimensions(), (3200, 160), "the atlas the view's shader expects");
         let b = storage(dev, "sprites", img.as_raw().len() as u64);
         queue.write_buffer(&b, 0, img.as_raw());
         b
@@ -2828,7 +2828,8 @@ mod tests {
     /// olive over a pool of blood that spreads after the fall: beside its
     /// chest the bare ground the moment it falls and blood once the pool
     /// has spread, and the chest olive. Against the 11-14 corpse (a cold
-    /// grey figure, no pool) it fails on the blood.
+    /// grey figure, no pool) it fails on the blood. In the slate Armour
+    /// look (`Marks::dress_since`, 2026-11-19) the chest is slate.
     #[test]
     fn a_fallen_soldier_lies_olive_in_a_pool_of_blood_that_spreads() {
         let Some((dev, q)) = test_gpu() else { return };
@@ -2843,16 +2844,17 @@ mod tests {
         cam.centre_on((24.0, 16.0));
         // Facing east (0 radians): the body's frame is the screen's.
         let r = 2.0;
-        let mut shot = |pool: f32| {
+        let mut shot = |pool: f32, skin: u32| {
             let mut m = Marks::default();
             m.fallen((24.0, 16.0), r, 0.0, crate::world::marks::team_colour(0), pool, 7);
+            m.dress_since(0, skin);
             view.set_marks(&m);
             let mut enc = dev.create_command_encoder(&Default::default());
             view.record(&mut enc, &cam, None);
             q.submit([enc.finish()]);
             view.picture()
         };
-        let (fresh, spread) = (shot(0.0), shot(1.0));
+        let (fresh, spread, slate) = (shot(0.0, 0), shot(1.0, 0), shot(1.0, 1));
         // A point in radii of the body's frame (+x the way it faced).
         let at = |pic: &image::RgbaImage, bx: f32, by: f32| {
             let (sx, sy) = cam.to_screen((24.0 + bx * r, 16.0 + by * r));
@@ -2865,6 +2867,8 @@ mod tests {
         assert!(beside[0] as i32 > beside[1] as i32 + 60 && beside[0] as i32 > beside[2] as i32 + 60, "blood there once spread: {beside:?}");
         let chest = at(&spread, -0.3, 0.0);
         assert!(chest[1] as i32 > chest[2] as i32 + 20 && chest[1] as i32 + 10 >= chest[0] as i32, "the chest our olive: {chest:?}");
+        let cloth = at(&slate, -0.3, 0.0);
+        assert!(cloth[2] as i32 > cloth[1] as i32 && cloth[2] as i32 > cloth[0] as i32 + 10, "the chest slate in slate Armour: {cloth:?}");
     }
 
     /// A shot's flung droplet (Look A3, 2026-11-18) is a bead in the

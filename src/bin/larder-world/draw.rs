@@ -1006,7 +1006,9 @@ impl App {
             // The fallen lie as they fell, in a pool of blood that spreads
             // over `POOL_GROW` (the owner's playtest, 2026-11-18 16:12Z).
             if !s.alive {
+                let n = self.marks.len();
                 self.marks.fallen(at, r, l.facing, team_colour(0), (l.fallen / POOL_GROW).min(1.0), k as u32 * 97 + 13);
+                self.marks.dress_since(n, skin);
                 continue;
             }
             // No sprite flash: the muzzle flash is its own mark, drawn

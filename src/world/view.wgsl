@@ -104,10 +104,10 @@ struct V {
 @group(0) @binding(8) var<storage, read> ground: array<u32>;
 @group(0) @binding(9) var<storage, read> walkers: array<vec4<f32>>;
 @group(0) @binding(10) var<storage, read_write> specks: array<atomic<u32>>;
-// The sprites (`src/world/sprites/`): 2944 x 160 RGBA, twenty-three 128 px
+// The sprites (`src/world/sprites/`): 3200 x 160 RGBA, twenty-five 128 px
 // tiles (sprite A's body, helmet, flash, dead; six buildings, each body then
-// lamp; the turret's head; the three Armour looks, each body then helmet)
-// above the same at 32 px.
+// lamp; the turret's head; the three Armour looks, each body then helmet;
+// the fallen in slate and dark camo) above the same at 32 px.
 @group(0) @binding(11) var<storage, read> atlas: array<u32>;
 // Each shown cell's height and material, worked out once a frame by `prep`
 // (rows `rw` apart from cell ox, oy). `base` reads these: a pixel needs 24
@@ -3725,14 +3725,15 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 2944u + u32(clamp(x, 0, 2943))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 3200u + u32(clamp(x, 0, 3199))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
 
 // Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-15 the buildings, each
 // body then lamp: turret, lure, pump, outpost, siren, larder; 16 the
-// turret's head; 17-22 the Armour looks, `skin_body`) at point `p` in radii
+// turret's head; 17-22 the Armour looks, `skin_body`; 23-24 the fallen in
+// slate and dark camo, `skin_dead`) at point `p` in radii
 // (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
 fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
     var size = 128.0; var oy = 0.0;
@@ -3851,7 +3852,7 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
         // `flash` is how far its pool has spread, `carry` its seed
         // (`Marks::fallen`).
         let lp = vec2<f32>(l.x * ca + l.y * sa, -l.x * sa + l.y * ca);
-        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), sprite(3u, p, small));
+        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), sprite(skin_dead(), p, small));
         if (c.w <= 0.0) { return vec4<f32>(0.0); }
         return vec4<f32>(c.xyz / c.w, c.w);
     }
@@ -4476,6 +4477,9 @@ const HEAD_ONLY: u32 = 1u << 25u;
 var<private> SKIN: u32 = 0u;
 const SKIN_SHIFT: u32 = 27u;
 fn skin_body() -> u32 { return 17u + 2u * min(SKIN, 2u); }
+// The fallen in the look they wore: olive is sprite A's fallen (tile 3),
+// slate and dark camo its recolours (23, 24; `cut.py`, `fallen`).
+fn skin_dead() -> u32 { return select(22u + min(SKIN, 2u), 3u, SKIN == 0u); }
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
     SKIN = (extra >> SKIN_SHIFT) & 3u;

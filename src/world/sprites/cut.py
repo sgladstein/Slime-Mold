@@ -5,7 +5,9 @@ should be olive that upgraded to slate that upgrades to heavy", then
 designs from `soldiers-2026-11-19.jpg` (the owner's image-model sheet, 3 x 2
 on magenta: 1 olive, 2 slate, 3 cloak, 4 radio, 5 heavy, 6 dark camo) into
 the game's frame and writes them over tiles 17-22 of `sprites.png`, body
-then helmet: olive, slate, dark camo (`view.wgsl`, `skin_body`). Run after
+then helmet: olive, slate, dark camo (`view.wgsl`, `skin_body`), and tiles
+23 and 24, the fallen in slate and dark camo, recoloured from sprite A's
+fallen olive (tile 3; `fallen`, `skin_dead`). Run after
 `render.js`, from the repo root: python3 src/world/sprites/cut.py
 
 The frame: a tile covers -2..2 soldier radii, facing +x; the helmet's
@@ -25,7 +27,9 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 # Sheet cells (from 0, left to right then down) and their tiles' first index.
 PICK = [(0, 17), (1, 19), (5, 21)]
-TILES = 23
+TILES = 25
+# The fallen in slate and dark camo (tile 3 is the fallen olive).
+FALLEN = [(19, 23), (21, 24)]
 
 def key(cell):
     r, g, b = cell[..., 0], cell[..., 1], cell[..., 2]
@@ -70,6 +74,44 @@ def place(rgb, a, k, centre, size):
     return Image.fromarray(np.dstack([np.clip(rgb2, 0, 255), al]).astype(np.uint8), 'RGBA')
 
 
+def lum(c):
+    return c[..., 0] * 0.3 + c[..., 1] * 0.59 + c[..., 2] * 0.11
+
+def fallen(dead, live, olive, camo, size):
+    """The fallen olive (`dead`, tile 3 at `size` px, RGBA) in another
+    look: each pixel of its uniform (the greens) takes the look's colour
+    (`live`, its 128 px body tile), kept as much duller than the living
+    look as the fallen olive is than the living olive (`olive`), and keeps
+    its own shading. With `camo`, the look's three main colours in soft
+    blotches, as its camouflage. Hands, boots, rifle and outline stay."""
+    d = dead.astype(float)
+    rgb, a = d[..., :3], d[..., 3]
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    cloth = (a > 0) & (g > b + 10) & (g >= r - 4)
+    def body(t):
+        t = t.astype(float)
+        c = t[..., :3][(t[..., 3] > 200) & (t[..., :3].max(-1) - t[..., :3].min(-1) > 8)]
+        return c
+    ref = np.median(lum(rgb[cloth]))
+    dull = ref / np.median(lum(body(olive)))
+    shade = (lum(rgb) / ref)[..., None]
+    pal = body(live)
+    if not camo:
+        tone = np.broadcast_to(np.median(pal, 0), rgb.shape)
+    else:
+        # Three colours by brightness thirds of the look's own pixels.
+        L = lum(pal); q = np.quantile(L, [1 / 3, 2 / 3])
+        cols = [np.median(pal[L <= q[0]], 0), np.median(pal[(L > q[0]) & (L <= q[1])], 0), np.median(pal[L > q[1]], 0)]
+        rng = np.random.default_rng(1119)
+        n = Image.fromarray((rng.random((16, 16)) * 255).astype(np.uint8)).resize((128, 128), Image.BICUBIC)
+        n = np.asarray(n.resize((size, size), Image.BILINEAR)).astype(float) / 255
+        k = np.digitize(n, np.quantile(n, [0.35, 0.7]))
+        tone = np.choose(k[..., None], [np.broadcast_to(c, rgb.shape) for c in cols])
+    new = np.clip(tone * dull * shade, 0, 255)
+    out = np.where(cloth[..., None], new, rgb)
+    return Image.fromarray(np.dstack([out, a]).astype(np.uint8), 'RGBA')
+
+
 def main():
     global W, H
     sheet = np.asarray(Image.open(os.path.join(HERE, 'soldiers-2026-11-19.jpg')).convert('RGB')).astype(float)
@@ -101,6 +143,12 @@ def main():
             k = s * size / 4.0
             out.paste(place(rgb, a, k, hc, size), (t * size, row))
             out.paste(place(rgb, a * disc, k, hc, size), ((t + 1) * size, row))
+    for live, t in FALLEN:
+        body = np.asarray(out.crop((live * 128, 0, live * 128 + 128, 128)))
+        olive = np.asarray(out.crop((17 * 128, 0, 18 * 128, 128)))
+        for size, row in ((128, 0), (32, 128)):
+            dead = np.asarray(old.crop((3 * size, row, 4 * size, row + size)).convert('RGBA'))
+            out.paste(fallen(dead, body, olive, live == 21, size), (t * size, row))
     out.save(path)
 
 
