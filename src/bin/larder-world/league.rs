@@ -157,9 +157,10 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     let (bought, peak_alive, secs_in) = if spec.starts_with("util:") { super::utility::tally() } else { strat::tally() };
     let mark = |m: Option<(u32, usize, usize)>| m.map_or("-".to_string(), |(k, s, a)| format!("{k}/{s}/{a}"));
     let line = format!(
-        "depth={} seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} at150={} at300={} at600={} wall={:.0} marks={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} at150={} at300={} at600={} wall={:.0} marks={}",
         r.depth,
         r.seed,
+        l.seed,
         l.tier.name(),
         u8::from(how == "won"),
         g.killed,

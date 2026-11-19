@@ -13,6 +13,14 @@ time, and reads their `league` lines into JSON lines; it also searches plans.
       Prints each plan's wins, mean time to win and mean progress by planet.
   league.py rank OUT... [--games 12]
       One row a distinct plan, with only plans that played every game.
+  league.py worker [--workers 2] [--push]
+      Runs for good on a spare machine (Scott's PC): plays the job files
+      in queue/pc/ (one game a line), then the search queue/pc-evolve.txt
+      sets (name, plans, depths, seeds, secs, top, kids, util_share,
+      always), 40 games at a time; between, pushes results in pc/, takes
+      the branch's new commits, rebuilds the game when src/ changed and
+      restarts itself when this file changed. Waits while the owner's game
+      is open. queue/pc-stop on the branch stops it.
   league.py breed OUT... --top K --kids N --seed S > PLANS
   league.py evolve PLANS DIR --until UTC_ISO [--workers N] [--push]
       Generations on one machine until a time: plays PLANS (genN.jsonl in
@@ -67,6 +75,8 @@ def run_one(binary, job, timeout):
     if p.returncode != 0 or not rows:
         return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0}
     r = rows[-1]
+    if CODE:
+        r["code"] = CODE
     r["job"] = key(job)
     r["plan"] = plan
     r["cap"] = float(secs)
@@ -409,6 +419,176 @@ def cmd_rank(a):
     for sc, cells, n in sorted(res, key=lambda x: -x[0]):
         print(f"{sc:.3f}  {'  '.join(cells)}  {n}")
 
+# ---- The PC worker (2026-11-19, Scott 14:08Z: "You can run it all day and
+# night"). One process that never needs a person: it takes new bot code and
+# new jobs from the branch, plays them, and pushes only results.
+
+BRANCH = "claude/project-thread-8grg6d"
+QUEUE = os.path.join(HERE, "queue", "pc")
+OUT = os.path.join(HERE, "pc")
+
+def git(*c):
+    return subprocess.run(("git",) + c, cwd=ROOT, capture_output=True, text=True)
+
+def log(msg):
+    print(time.strftime("%Y-%m-%d %H:%M:%S ") + msg, file=sys.stderr, flush=True)
+
+def owner_playing(binary):
+    """True while a larder-world or larder-edit runs that is not this
+    worker's own binary: the owner is playing or editing, so the search
+    waits and leaves his GPU to him."""
+    ours = os.path.normcase(os.path.abspath(binary))
+    if os.name == "nt":
+        ps = "Get-Process -Name larder-world,larder-edit -ErrorAction SilentlyContinue | ForEach-Object { if ($_.Path) { $_.Path } else { '?' } }"
+        out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True).stdout
+        paths = [l.strip() for l in out.splitlines() if l.strip()]
+    else:
+        out = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True).stdout
+        paths = [l.split()[0] for l in out.splitlines() if l.split() and os.path.basename(l.split()[0]) in ("larder-world", "larder-edit")]
+    return any(os.path.normcase(os.path.abspath(p)) != ours for p in paths)
+
+def wait_for_owner(binary):
+    if not owner_playing(binary):
+        return
+    log("worker: the game is open on this PC; waiting until it closes")
+    while owner_playing(binary):
+        time.sleep(30)
+    log("worker: the game closed; going on")
+
+def sync(binary, push_results):
+    """Pushes results, then takes what the branch has: rebuilds the game
+    when its code changed and restarts this script when it changed.
+    Returns False when the branch asks the worker to stop."""
+    if push_results:
+        push(OUT, f"Strategy league: results from {os.environ.get('COMPUTERNAME', 'the worker')}")
+    old = git("rev-parse", "HEAD").stdout.strip()
+    if git("fetch", "-q", "origin", BRANCH).returncode == 0:
+        if git("rebase", "-q", "FETCH_HEAD").returncode != 0:
+            git("rebase", "--abort")
+            log("worker: could not take the branch's new commits: " + git("status", "--short").stdout[-300:])
+    new = git("rev-parse", "HEAD").stdout.strip()
+    if new != old:
+        changed = git("diff", "--name-only", old, new).stdout.split()
+        log(f"worker: branch moved {old[:7]}..{new[:7]} ({len(changed)} files)")
+        if any(f.startswith(("src/", "assets/", "Cargo.", "build.rs")) for f in changed):
+            build()
+        if any(f.endswith("league.py") for f in changed):
+            log("worker: league.py changed; restarting")
+            subprocess.Popen([sys.executable] + sys.argv, cwd=ROOT, stdout=sys.stdout, stderr=sys.stderr)
+            os._exit(0)
+    return not os.path.exists(os.path.join(HERE, "queue", "pc-stop"))
+
+CODE = None
+
+def build():
+    """Builds the game; CODE becomes the tree of src/ it was built from,
+    stamped on every game so a result is never reused across code."""
+    global CODE
+    t0 = time.time()
+    b = subprocess.run(["cargo", "build", "--release", "--locked", "--bin", "larder-world"], cwd=ROOT, capture_output=True, text=True)
+    if b.returncode == 0:
+        CODE = git("rev-parse", "HEAD:src").stdout.strip()[:12]
+        log(f"worker: built the game in {time.time() - t0:.0f} s (src {CODE})")
+    else:
+        log("worker: the build failed; playing on with the last binary: " + b.stderr[-600:])
+
+def pending(jobs_path, out_path):
+    jobs = [tuple(l.split()) for l in open(jobs_path) if l.strip() and not l.startswith("#")]
+    done = set()
+    if os.path.exists(out_path):
+        for l in open(out_path):
+            try:
+                r = json.loads(l)
+            except json.JSONDecodeError:
+                continue
+            done.add(r["job"])
+    return [j for j in jobs if key(j) not in done]
+
+def play(todo, out_path, binary, workers, timeout):
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    def one(j):
+        wait_for_owner(binary)
+        return run_one(binary, j, timeout)
+    with open(out_path, "a") as f, ThreadPoolExecutor(workers) as ex:
+        for r in ex.map(one, todo):
+            if r is None:
+                continue
+            f.write(json.dumps(r) + "\n")
+            f.flush()
+            tag = r.get("how", r.get("error", "?")[:200])
+            log(f"  {r['plan'][:60]} planet {r.get('depth')} seed {r.get('seed')}: {tag} {r.get('secs', '')} ({r.get('wall', 0):.0f} s)")
+
+def read_cfg(path):
+    cfg = {}
+    for l in open(path):
+        l = l.split("#")[0].strip()
+        if "=" in l:
+            k, v = l.split("=", 1)
+            cfg[k.strip()] = v.strip()
+    return cfg
+
+def next_work(chunk):
+    """The next games: the first job file in queue/pc/ (by name) with games
+    left, else the next games of the search that queue/pc-evolve.txt sets.
+    Returns (games, results file) or None."""
+    if os.path.isdir(QUEUE):
+        for name in sorted(os.listdir(QUEUE)):
+            if name.endswith(".txt"):
+                out = os.path.join(OUT, name[:-4] + ".jsonl")
+                todo = pending(os.path.join(QUEUE, name), out)
+                if todo:
+                    return todo[:chunk], out
+    cfg_path = os.path.join(HERE, "queue", "pc-evolve.txt")
+    if not os.path.exists(cfg_path):
+        return None
+    c = read_cfg(cfg_path)
+    d = os.path.join(OUT, c["name"])
+    os.makedirs(d, exist_ok=True)
+    gens = sorted(int(m.group(1)) for f in os.listdir(d) for m in [re.fullmatch(r"gen(\d+)-jobs\.txt", f)] if m)
+    gen = gens[-1] if gens else 0
+    if gen:
+        todo = pending(os.path.join(d, f"gen{gen}-jobs.txt"), os.path.join(d, f"gen{gen}.jsonl"))
+        if todo:
+            return todo[:chunk], os.path.join(d, f"gen{gen}.jsonl")
+    depths = {int(x) for x in c.get("depths", "3").split(",")}
+    rows = [r for r in load([os.path.join(d, f) for f in os.listdir(d) if f.endswith(".jsonl")]) if int(r["depth"]) in depths]
+    if gen == 0:
+        plans = [l.strip() for l in open(os.path.join(ROOT, c["plans"])) if l.strip() and not l.startswith("#")]
+    else:
+        share = float(c.get("util_share", 0.25))
+        top, kids = int(c.get("top", 8)), int(c.get("kids", 24))
+        ut, uk = round(top * share), round(kids * share)
+        plans = breed(rows, top - ut, kids - uk, gen, lambda p: not p.startswith("util:"))
+        if ut:
+            plans += breed(rows, ut, uk, gen + 1000, lambda p: p.startswith("util:"))
+    plans += [p for p in c.get("always", "").split(";") if p and p not in plans]
+    # A plan this code already played on a seed plays it the same again
+    # (one machine, one binary): the kept parents' old games stand in.
+    seen = {(canon(r["plan"]), int(r["depth"]), int(r["seed"])) for r in rows if r.get("code") == CODE}
+    jobs = [(p, dd, s, c.get("secs", "720")) for s in seeds_of(c.get("seeds", "1-8")) for dd in sorted(depths) for p in plans if (canon(p), dd, s) not in seen]
+    if not jobs:
+        log(f"worker: search {c['name']} has no new games to play")
+        return None
+    gen += 1
+    tag = os.path.join(d, f"gen{gen}")
+    open(tag + "-plans.txt", "w").write("\n".join(plans) + "\n")
+    open(tag + "-jobs.txt", "w").write("".join(f"{p} {dd} {s} {secs}\n" for p, dd, s, secs in jobs))
+    log(f"worker: search {c['name']} generation {gen}: {len(plans)} plans, {len(jobs)} new games")
+    return pending(tag + "-jobs.txt", tag + ".jsonl")[:chunk], tag + ".jsonl"
+
+def cmd_worker(a):
+    log(f"worker: started in {ROOT}, {a.workers} games at once")
+    build()
+    while sync(a.bin, a.push):
+        work = next_work(a.chunk)
+        if not work:
+            log("worker: nothing queued; looking again in 5 minutes")
+            time.sleep(300)
+            continue
+        todo, out = work
+        play(todo, out, a.bin, a.workers, a.timeout)
+    log("worker: queue/pc-stop is on the branch; stopping")
+
 def cmd_breed(a):
     rng = random.Random(a.seed)
     rows = load(a.out)
@@ -472,8 +652,14 @@ def main():
     e.add_argument("--also", nargs="*", default=[])
     e.add_argument("--push", action="store_true")
     e.add_argument("--bin", default=BIN)
+    w = sub.add_parser("worker")
+    w.add_argument("--workers", type=int, default=2)
+    w.add_argument("--chunk", type=int, default=40)
+    w.add_argument("--timeout", type=float, default=1800)
+    w.add_argument("--push", action="store_true")
+    w.add_argument("--bin", default=BIN)
     a = ap.parse_args()
-    {"run": cmd_run, "jobs": cmd_jobs, "table": cmd_table, "breed": cmd_breed, "evolve": cmd_evolve, "rank": cmd_rank}[a.cmd](a)
+    {"run": cmd_run, "jobs": cmd_jobs, "table": cmd_table, "breed": cmd_breed, "evolve": cmd_evolve, "rank": cmd_rank, "worker": cmd_worker}[a.cmd](a)
 
 if __name__ == "__main__":
     main()

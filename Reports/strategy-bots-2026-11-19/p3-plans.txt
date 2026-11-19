@@ -1,0 +1,31 @@
+# Planet 3 search, generation 1 (2026-11-19 14:30Z; Scott 14:09Z: "just focus on beating 3").
+# The eight families:
+bot
+rush
+econ
+turtle
+scott
+lure
+boom
+taker
+# Best on planet 3 overnight (seeds 1-4):
+rush,back=0.7
+rush,per=150
+rush,defend=0,shop=bank/strike/rate/hp/squad/harvest/range
+rush,pumps=3
+# Turret and pump builds sat home all game on planet 3 (never reached go): leave sooner.
+scott,go=20
+lure,go=20
+econ,go=20
+scott,go=20,cap=200
+# Econ behind turrets.
+econ,guard=1,turrets=4,shop=pump+/turret/bank/squad/strike/rate/hp
+# Without the Tinder card the planet asks for (fed slime does not burn on planet 3).
+rush,cards=0
+scott,cards=0
+econ,cards=0
+# The utility bot:
+util:name=util
+util:shop=pump+/bank/squad/strike/rate/hp
+util:hunt_far=1.02,hunt_mass=0.931,lure=0,name=util,sol=0
+util:cap=433,drain=0.58,guard_few=2.08,hunt=0.14,hunt_mass=1.3,raise=1.69,shop=turret/turret+/strike/rate/hp,sol_late=1.42,stay=0.581,threat_n=446,tur_threat=1.08,wall_have=3.29
