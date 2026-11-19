@@ -11,6 +11,8 @@ time, and reads their `league` lines into JSON lines; it also searches plans.
       Writes the cross of plans (one a line) by depths by seeds as JOBS.
   league.py table OUT...
       Prints each plan's wins, mean time to win and mean progress by planet.
+  league.py rank OUT... [--games 12]
+      One row a distinct plan, with only plans that played every game.
   league.py breed OUT... --top K --kids N --seed S > PLANS
   league.py evolve PLANS DIR --until UTC_ISO [--workers N] [--push]
       Generations on one machine until a time: plays PLANS (genN.jsonl in
@@ -360,19 +362,52 @@ def cmd_evolve(a):
 
 def push(d, msg):
     """Commits folder `d` and pushes it to the branch the worktree came from,
-    rebasing on whatever was pushed meanwhile."""
+    rebasing on whatever was pushed meanwhile. A machine with no git name
+    commits as "Strategy league" (11-19: Scott-Desktop has none, so the
+    first night's commits failed and nothing was pushed until morning)."""
     br = "claude/project-thread-8grg6d"
     run = lambda *c: subprocess.run(c, cwd=ROOT, capture_output=True, text=True)
+    who = []
+    if not run("git", "config", "user.email").stdout.strip():
+        who = ["-c", "user.name=Strategy league", "-c", "user.email=strategy-league@localhost.invalid"]
     run("git", "add", d)
-    run("git", "commit", "-q", "-m", msg + "\n\nNothing-new: strategy league results only.")
+    c = run("git", *who, "commit", "-q", "-m", msg + "\n\nNothing-new: strategy league results only.")
+    if c.returncode != 0 and "nothing to commit" not in c.stdout + c.stderr:
+        print("league: commit failed: " + (c.stderr or c.stdout)[-300:], file=sys.stderr)
     for _ in range(4):
         run("git", "fetch", "-q", "origin", br)
-        if run("git", "rebase", "-q", "FETCH_HEAD").returncode != 0:
+        if run("git", *who, "rebase", "-q", "FETCH_HEAD").returncode != 0:
             run("git", "rebase", "--abort")
-        if run("git", "push", "-q", "origin", f"HEAD:refs/heads/{br}").returncode == 0:
+        p = run("git", "push", "-q", "origin", f"HEAD:refs/heads/{br}")
+        if p.returncode == 0:
             return
+        print("league: push failed: " + p.stderr[-300:], file=sys.stderr)
         time.sleep(10)
     print("league: could not push the results; they are in " + d, file=sys.stderr)
+
+def cmd_rank(a):
+    """Like `table`, but one row a distinct plan (spellings that play the
+    same are one, and a game played twice counts once) and only plans
+    with every game of the grid (`--games`, 12: planets 1-3, seeds 1-4)."""
+    names, by = defaultdict(set), defaultdict(dict)
+    for r in load(a.out):
+        c = canon(r["plan"])
+        names[c].add(r["plan"])
+        by[c][(int(r["depth"]), int(r["seed"]))] = r
+    res = []
+    for c, g in by.items():
+        if len(g) < a.games:
+            continue
+        sc = sum(score(r) for r in g.values()) / len(g)
+        cells = []
+        for d in sorted({d for d, _ in g}):
+            won = [r["secs"] / 60 for (dd, _), r in g.items() if dd == d and r.get("how") == "won"]
+            n = sum(1 for dd, _ in g if dd == d)
+            cells.append(f"{len(won)}/{n} {sum(won) / len(won) if won else 0:4.1f}m")
+        res.append((sc, cells, min(names[c], key=len)))
+    print(f"score  {'  '.join(f'planet {d}    ' for d in range(1, 4))}plan")
+    for sc, cells, n in sorted(res, key=lambda x: -x[0]):
+        print(f"{sc:.3f}  {'  '.join(cells)}  {n}")
 
 def cmd_breed(a):
     rng = random.Random(a.seed)
@@ -419,6 +454,9 @@ def main():
     b.add_argument("--top", type=int, default=6)
     b.add_argument("--kids", type=int, default=12)
     b.add_argument("--seed", type=int, default=1)
+    k = sub.add_parser("rank")
+    k.add_argument("out", nargs="+")
+    k.add_argument("--games", type=int, default=12)
     e = sub.add_parser("evolve")
     e.add_argument("plans")
     e.add_argument("dir")
@@ -435,7 +473,7 @@ def main():
     e.add_argument("--push", action="store_true")
     e.add_argument("--bin", default=BIN)
     a = ap.parse_args()
-    {"run": cmd_run, "jobs": cmd_jobs, "table": cmd_table, "breed": cmd_breed, "evolve": cmd_evolve}[a.cmd](a)
+    {"run": cmd_run, "jobs": cmd_jobs, "table": cmd_table, "breed": cmd_breed, "evolve": cmd_evolve, "rank": cmd_rank}[a.cmd](a)
 
 if __name__ == "__main__":
     main()
