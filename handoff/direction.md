@@ -114,6 +114,19 @@ end.
   the win rule is his to settle in play. Ask once, with the dart and the
   wet-planet trait, after his next play; Enemy builds nothing of it until
   then.
+- **11-19, settled this lane:** Gas sold from planet 2 (uncommon) and Mist
+  from planet 4 (rare), with Plain and Blast the only shells before
+  planet 2 (#506). Gas and Blast bite the squad, by the gentler rule
+  (#513, Squad and arsenal): fire on its own holds a payload that would
+  reach a soldier; aimed volleys and drifting clouds keep the danger.
+  **Watch:** on planet 3 carrying Gas or Blast still costs a third to a
+  half of the squad by 120 s (Squad's check, greedy hand). Judge it from
+  his next play and the run bot, not on a guess. A dozing soldier has no
+  look yet; asked of Look and interface.
+- **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
+  prototype (#515) and Look's three checks found nothing to draw, because
+  the body is packed. The idea worth keeping is food flowing along the
+  trail's ridges.
 - **Next:** check each lane's lines in `news/whats-new.txt` as they land
   and keep `news/things-to-try.txt` to five (refreshed 11-18 for Provoke
   and Still, the Trunk's walls and the flinch look). When the owner plays,
