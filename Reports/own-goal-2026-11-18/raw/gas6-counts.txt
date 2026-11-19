@@ -1,0 +1,74 @@
+  t 38 s: mould 12552, soldiers 14, bank 415, harvested 2415, rendered 0, shots 375, killed 314, took 97%, crystals left 0.888; squad at 226.7,52.0
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 39 s: mould 12552, soldiers 15, bank 73, harvested 2473, rendered 0, shots 385, killed 321, took 97%, crystals left 0.885; squad at 227.0,52.1
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 39 s: mould 12535, soldiers 15, bank 123, harvested 2523, rendered 0, shots 389, killed 328, took 97%, crystals left 0.883; squad at 226.9,52.1
+  squad: touching 0.1 mean, 1 most; health 99 mean
+  t 40 s: mould 12535, soldiers 15, bank 181, harvested 2581, rendered 0, shots 403, killed 332, took 97%, crystals left 0.881; squad at 226.7,52.1
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 40 s: mould 12521, soldiers 15, bank 231, harvested 2631, rendered 0, shots 406, killed 335, took 97%, crystals left 0.878; squad at 226.6,52.1
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 41 s: mould 12521, soldiers 15, bank 289, harvested 2689, rendered 0, shots 407, killed 338, took 97%, crystals left 0.876; squad at 226.6,52.1
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 41 s: mould 12503, soldiers 15, bank 339, harvested 2739, rendered 0, shots 409, killed 340, took 97%, crystals left 0.873; squad at 226.6,52.1
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 42 s: mould 12503, soldiers 15, bank 397, harvested 2797, rendered 0, shots 410, killed 344, took 97%, crystals left 0.871; squad at 226.6,52.1
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 42 s: mould 12491, soldiers 15, bank 447, harvested 2847, rendered 0, shots 411, killed 344, took 97%, crystals left 0.868; squad at 226.6,52.1
+  squad: touching 0.1 mean, 1 most; health 99 mean
+  t 43 s: mould 12491, soldiers 16, bank 108, harvested 2908, rendered 0, shots 412, killed 359, took 97%, crystals left 0.866; squad at 226.8,52.5
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 43 s: mould 12468, soldiers 16, bank 161, harvested 2961, rendered 0, shots 414, killed 362, took 97%, crystals left 0.863; squad at 226.8,52.5
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 44 s: mould 12468, soldiers 16, bank 221, harvested 3021, rendered 0, shots 415, killed 365, took 97%, crystals left 0.860; squad at 226.8,52.5
+  squad: touching 0.1 mean, 1 most; health 99 mean
+  t 44 s: mould 12458, soldiers 16, bank 274, harvested 3074, rendered 0, shots 416, killed 370, took 97%, crystals left 0.858; squad at 226.8,52.5
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  t 45 s: mould 12458, soldiers 16, bank 335, harvested 3135, rendered 0, shots 418, killed 380, took 97%, crystals left 0.855; squad at 226.8,52.5
+  squad: touching 0.1 mean, 1 most; health 99 mean
+  t 45 s: mould 12437, soldiers 16, bank 388, harvested 3188, rendered 0, shots 419, killed 386, took 97%, crystals left 0.853; squad at 226.8,52.5
+  squad: touching 0.4 mean, 2 most; health 99 mean
+  t 46 s: mould 12437, soldiers 16, bank 448, harvested 3248, rendered 0, shots 421, killed 401, took 97%, crystals left 0.850; squad at 226.8,52.5
+  squad: touching 0.6 mean, 4 most; health 98 mean
+  t 46 s: mould 12407, soldiers 16, bank 501, harvested 3301, rendered 0, shots 424, killed 426, took 97%, crystals left 0.848; squad at 226.8,52.4
+  squad: touching 0.8 mean, 5 most; health 98 mean
+  t 47 s: mould 12407, soldiers 17, bank 165, harvested 3365, rendered 0, shots 429, killed 497, took 97%, crystals left 0.845; squad at 227.1,52.4
+  squad: touching 0.1 mean, 2 most; health 97 mean
+  t 47 s: mould 12313, soldiers 17, bank 220, harvested 3420, rendered 0, shots 431, killed 501, took 97%, crystals left 0.842; squad at 227.1,52.3
+  squad: touching 0.2 mean, 1 most; health 97 mean
+  t 48 s: mould 12313, soldiers 17, bank 287, harvested 3486, rendered 0, shots 439, killed 541, took 97%, crystals left 0.839; squad at 226.9,52.3
+  squad: touching 0.1 mean, 2 most; health 97 mean
+  t 48 s: mould 12257, soldiers 17, bank 345, harvested 3544, rendered 0, shots 448, killed 562, took 97%, crystals left 0.836; squad at 226.7,52.2
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  t 49 s: mould 12257, soldiers 17, bank 411, harvested 3611, rendered 0, shots 458, killed 592, took 97%, crystals left 0.833; squad at 226.2,52.1
+  squad: touching 0.1 mean, 1 most; health 97 mean
+  t 49 s: mould 12204, soldiers 17, bank 469, harvested 3669, rendered 0, shots 462, killed 611, took 97%, crystals left 0.831; squad at 226.0,51.8
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  t 50 s: mould 12204, soldiers 18, bank 138, harvested 3738, rendered 0, shots 474, killed 620, took 97%, crystals left 0.828; squad at 225.7,52.1
+  squad: touching 0.1 mean, 1 most; health 97 mean
+  t 50 s: mould 12170, soldiers 18, bank 198, harvested 3798, rendered 0, shots 481, killed 640, took 97%, crystals left 0.825; squad at 225.7,51.8
+  squad: touching 0.1 mean, 1 most; health 97 mean
+  t 51 s: mould 12170, soldiers 18, bank 267, harvested 3867, rendered 0, shots 494, killed 653, took 97%, crystals left 0.822; squad at 225.4,51.8
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  t 51 s: mould 12135, soldiers 18, bank 328, harvested 3928, rendered 0, shots 498, killed 659, took 97%, crystals left 0.819; squad at 225.3,51.7
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  t 52 s: mould 12135, soldiers 18, bank 397, harvested 3997, rendered 0, shots 506, killed 689, took 97%, crystals left 0.816; squad at 225.0,51.6
+  squad: touching 0.1 mean, 1 most; health 97 mean
+  t 52 s: mould 12094, soldiers 18, bank 458, harvested 4057, rendered 0, shots 513, killed 693, took 97%, crystals left 0.813; squad at 224.9,51.5
+  squad: touching 0.1 mean, 1 most; health 97 mean
+  t 53 s: mould 12094, soldiers 19, bank 130, harvested 4129, rendered 0, shots 523, killed 720, took 97%, crystals left 0.810; squad at 223.6,52.2
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  t 53 s: mould 12056, soldiers 19, bank 193, harvested 4192, rendered 0, shots 533, killed 729, took 97%, crystals left 0.807; squad at 223.5,52.1
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  t 54 s: mould 12056, soldiers 19, bank 265, harvested 4264, rendered 0, shots 540, killed 752, took 97%, crystals left 0.804; squad at 223.3,52.1
+  squad: touching 0.1 mean, 1 most; health 97 mean
+  t 54 s: mould 12015, soldiers 19, bank 328, harvested 4327, rendered 0, shots 544, killed 772, took 97%, crystals left 0.801; squad at 222.0,50.8
+  squad: touching 0.1 mean, 1 most; health 97 mean
+  t 55 s: mould 12015, soldiers 19, bank 400, harvested 4399, rendered 0, shots 556, killed 791, took 97%, crystals left 0.797; squad at 221.9,50.7
+  squad: touching 0.0 mean, 0 most; health 96 mean
+  t 55 s: mould 11974, soldiers 19, bank 463, harvested 4462, rendered 0, shots 563, killed 814, took 97%, crystals left 0.795; squad at 221.8,50.6
+  squad: touching 0.1 mean, 1 most; health 96 mean
+  t 56 s: mould 11974, soldiers 20, bank 138, harvested 4537, rendered 0, shots 573, killed 843, took 97%, crystals left 0.791; squad at 221.9,50.7
+  squad: touching 0.2 mean, 1 most; health 97 mean
+  t 56 s: mould 11915, soldiers 20, bank 203, harvested 4603, rendered 0, shots 579, killed 866, took 97%, crystals left 0.788; squad at 221.8,50.6
+  squad: touching 0.1 mean, 1 most; health 96 mean

@@ -178,6 +178,10 @@ pub struct Soldier {
     /// glides at the screen's frame rate instead of jumping 15 times a
     /// second.
     pub was: (f32, f32),
+    /// The sleep gas cloud where it stood last frame, in the levels that
+    /// put the slime to sleep (`World::clouds`); at `Rules::doze` or over
+    /// it dozes (`Game::dozing`).
+    pub doze: f32,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -811,6 +815,7 @@ impl<W: World> Game<W> {
             vx: 0.0,
             vy: 0.0,
             was: (x, y),
+            doze: 0.0,
         });
     }
 

@@ -5765,7 +5765,11 @@ mod tests {
         use slime_mould::mould::squad::Burst;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        // Doze off (`Rules::doze`, on since 2026-11-19): the gas here is
+        // laid on a soldier, and only the GPU world reads its cloud (the CPU
+        // world has no doze, by the owner's no-new-twin rule), so the two
+        // squads would part on the doze, not on the calm this compares.
+        let rules = Rules { cap: 30.0, crater: 0.0, doze: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15): the
         // gas catches 8 walkers where seed 3's thin edge first bites, and
         // with the outline the squad met a different edge, where the gassed

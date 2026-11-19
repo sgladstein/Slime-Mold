@@ -201,6 +201,12 @@ pub trait World {
     fn calm(&self, at: &[(f32, f32)], _r: f32) -> Vec<u32> {
         vec![0; at.len()]
     }
+    /// The sleep gas cloud at each point of the last `calm`, in levels that
+    /// put the slime to sleep (1 is `gas_sleep`); empty where the world
+    /// reads none (2026-11-18, `Rules::doze`; GPU only).
+    fn clouds(&self) -> Vec<f32> {
+        Vec::new()
+    }
     /// The player's own mould (`own_mould::Garden`): the soldiers' tasks,
     /// once a frame before the frame's `ticks`, with the bank they may
     /// spend; returns the food spent. Worlds with no player mould do

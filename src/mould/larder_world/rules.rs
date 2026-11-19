@@ -161,6 +161,14 @@ pub struct Rules {
     /// "It should hurt the player too". 25: four seconds in the hottest
     /// fire kills, so a soldier walking out of a front lives.
     pub fire_hurt: f32,
+    /// **Your own sleep gas** (2026-11-18, the owner's Noita rule: "Any
+    /// single spell that is incredibly powerful is also really
+    /// dangerous"): a soldier standing where the gas cloud is this many
+    /// times the level that puts the slime to sleep (`KitRules::gas_sleep`)
+    /// dozes: it neither fires nor walks until the cloud thins
+    /// (`Soldier::doze`, read by `World::clouds`). 0 is off. Fire on its
+    /// own does not cast gas onto the squad (`RoundRules::gas_margin`).
+    pub doze: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
     /// Elbow room: the least distance between two living soldiers'
@@ -716,6 +724,7 @@ impl Rules {
             "surge_min" => &mut self.surge_min,
             "range" => &mut self.range,
             "drain" => &mut self.drain,
+            "doze" => &mut self.doze,
             "cap" => &mut self.cap,
             "start_bank" => &mut self.start_bank,
             "soldier_cost" => &mut self.soldier_cost,
@@ -768,6 +777,7 @@ impl Default for Rules {
             hp: 100.0,
             drain: 2.0,
             fire_hurt: 25.0,
+            doze: 1.0,
             touch: 1.5,
             elbow: 1.6,
             corners: true,
