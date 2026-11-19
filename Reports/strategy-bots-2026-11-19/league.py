@@ -71,10 +71,10 @@ def run_one(binary, job, timeout):
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
     except subprocess.TimeoutExpired:
-        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": "timeout", "wall": time.time() - t0}
+        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": "timeout", "wall": time.time() - t0, "code": CODE}
     rows = [parse_line(l) for l in p.stdout.splitlines() if l.startswith("league ")]
     if p.returncode != 0 or not rows:
-        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0}
+        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0, "code": CODE}
     r = rows[-1]
     if CODE:
         r["code"] = CODE
@@ -438,7 +438,16 @@ def git(*c):
     return subprocess.run(("git",) + c, cwd=ROOT, capture_output=True, text=True)
 
 def log(msg):
-    print(time.strftime("%Y-%m-%d %H:%M:%S ") + msg, file=sys.stderr, flush=True)
+    """To stderr, and to pc/worker-MACHINE.log, which goes up with the
+    results so the log can be read from the branch."""
+    line = time.strftime("%Y-%m-%d %H:%M:%S ") + msg
+    print(line, file=sys.stderr, flush=True)
+    try:
+        os.makedirs(OUT, exist_ok=True)
+        with open(os.path.join(OUT, f"worker-{os.environ.get('COMPUTERNAME', 'local')}.log"), "a") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass
 
 BOT_KEYS = ("league=", "gunlab=", "runbot=", "look=", "bench=")
 
@@ -464,41 +473,55 @@ def wait_for_owner(binary):
         time.sleep(30)
     log("worker: the game closed; going on")
 
+def built_from():
+    """What a build depends on, as the branch's HEAD has it."""
+    return " ".join(git("rev-parse", f"HEAD:{x}").stdout.strip()[:12] for x in ("src", "assets", "Cargo.toml", "Cargo.lock"))
+
+def own_text():
+    return open(os.path.abspath(__file__), "rb").read()
+
+SELF = own_text()
+
 def sync(binary, push_results):
     """Pushes results, then takes what the branch has: rebuilds the game
-    when its code changed and restarts this script when it changed.
-    Returns False when the branch asks the worker to stop."""
+    when what it is built from differs from the last build, and restarts
+    this script when its file differs from the one running. Both compare
+    states, not commits: until 11-19 19:00Z it compared the commit before
+    and after its fetch, but push() had already rebased onto the branch,
+    so it never saw a change, and the PC played the kiting test on the old
+    binary (27 errors) and never restarted. Returns False when the branch
+    asks the worker to stop."""
     if push_results:
         push(OUT, f"Strategy league: results from {os.environ.get('COMPUTERNAME', 'the worker')}")
-    old = git("rev-parse", "HEAD").stdout.strip()
     if git("fetch", "-q", "origin", BRANCH).returncode == 0:
         if git("rebase", "-q", "FETCH_HEAD").returncode != 0:
             git("rebase", "--abort")
             log("worker: could not take the branch's new commits: " + git("status", "--short").stdout[-300:])
-    new = git("rev-parse", "HEAD").stdout.strip()
-    if new != old:
-        changed = git("diff", "--name-only", old, new).stdout.split()
-        log(f"worker: branch moved {old[:7]}..{new[:7]} ({len(changed)} files)")
-        if any(f.startswith(("src/", "assets/", "Cargo.", "build.rs")) for f in changed):
-            build()
-        if any(f.endswith("league.py") for f in changed):
-            log("worker: league.py changed; restarting")
-            subprocess.Popen([sys.executable] + sys.argv, cwd=ROOT, stdout=sys.stdout, stderr=sys.stderr)
-            os._exit(0)
+    if built_from() != BUILT:
+        log(f"worker: the game's code changed (now {git('rev-parse', '--short', 'HEAD').stdout.strip()}); building")
+        build()
+    if own_text() != SELF:
+        log("worker: league.py changed; restarting")
+        subprocess.Popen([sys.executable] + sys.argv, cwd=ROOT, stdout=sys.stdout, stderr=sys.stderr)
+        os._exit(0)
     return not os.path.exists(os.path.join(HERE, "queue", "pc-stop"))
 
 CODE = None
+BUILT = None
 
 def build():
     """Builds the game; CODE becomes the tree of src/ it was built from,
     stamped on every game so a result is never reused across code."""
-    global CODE
+    global CODE, BUILT
     t0 = time.time()
+    want = built_from()
     b = subprocess.run(["cargo", "build", "--release", "--locked", "--bin", "larder-world"], cwd=ROOT, capture_output=True, text=True)
     if b.returncode == 0:
         CODE = git("rev-parse", "HEAD:src").stdout.strip()[:12]
+        BUILT = want
         log(f"worker: built the game in {time.time() - t0:.0f} s (src {CODE})")
     else:
+        BUILT = want  # no retry until the code changes again
         log("worker: the build failed; playing on with the last binary: " + b.stderr[-600:])
 
 def pending(jobs_path, out_path):
@@ -510,7 +533,8 @@ def pending(jobs_path, out_path):
                 r = json.loads(l)
             except json.JSONDecodeError:
                 continue
-            done.add(r["job"])
+            if "error" not in r or r.get("code") == CODE:
+                done.add(r["job"])
     return [j for j in jobs if key(j) not in done]
 
 def play(todo, out_path, binary, workers, timeout):
