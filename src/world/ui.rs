@@ -1007,6 +1007,9 @@ pub struct Hud {
     pub minimap_box: Option<(u32, u32, u32, u32)>,
     pub minimap: Option<(u32, u32, u32, u32)>,
     pub top: f32,
+    /// Where the HUD's own words under the top bar start (the alerts): the
+    /// bar's foot, or the goal's when it takes a row of its own.
+    below: f32,
     /// The world's size in cells, as last drawn (for the minimap).
     world: (f32, f32),
     /// The end-of-round screen is up (its buttons take every click).
@@ -1108,7 +1111,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
     }
 
     /// The menu is open (the game should pause).
@@ -1650,6 +1653,7 @@ impl Hud {
         let h = 38.0 * s;
         let y = 8.0 * s;
         self.top = y + h;
+        self.below = self.top;
         let px = 15.0 * s;
         let small = 12.0 * s;
         let base = y + h / 2.0 + 5.0 * s;
@@ -1708,10 +1712,12 @@ impl Hud {
         // at the screen's edge and off the fight: in the clock's own pill
         // it met the objective at 200% while paused. Hovering it names
         // them.
+        let mut mark = sw;
         if !m.trying.is_empty() {
             let label = if m.trying.len() == 1 { "EXPERIMENT ON".to_string() } else { format!("{} EXPERIMENTS ON", m.trying.len()) };
             let w = c.atlas.measure(Weight::SemiBold, small, &label) + 22.0 * s;
             let r = Rect::new(menu.right() - w, y + h + 6.0 * s, w, 22.0 * s);
+            mark = r.x;
             c.shadow(r, r.h / 2.0, 10.0 * s, 2.0 * s, SHADOW);
             c.panel(r, r.h / 2.0, PANEL_TOP, PANEL_BOTTOM, 1.0, alpha(WARN, 0.55));
             c.text(Weight::SemiBold, small, (r.x + r.w / 2.0, r.y + 15.5 * s), Align::Centre, &label, WARN);
@@ -1724,13 +1730,34 @@ impl Hud {
                 self.tip_small(&tip, ((r.right() - tw).max(8.0 * s), r.bottom() + 6.0 * s), c, s);
             }
         }
-        // The objective, centred.
+        // The objective, centred between the resources' pill and the
+        // clock's, smaller if it must be; and if it still does not fit,
+        // on a row of its own under the bar, left of the experiments'
+        // mark, cut to the room there. Centred on the screen alone, at
+        // 200% on 1080 lines it covered the resources' fourth number
+        // (11-18).
         if let Some(obj) = &m.objective {
-            let ow = c.atlas.measure(Weight::Medium, 14.0 * s, obj) + 40.0 * s;
-            let r = Rect::new((sw - ow) / 2.0, y + 3.0 * s, ow, h - 6.0 * s);
+            let left = if m.resources.is_empty() { 8.0 * s } else { 8.0 * s + inner + 28.0 * s } + 10.0 * s;
+            let right = pill.x - 10.0 * s;
+            let mut fs = 14.0 * s;
+            let mut ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
+            if ow > right - left {
+                fs = (fs * (right - left - 40.0 * s) / (ow - 40.0 * s)).max(12.0 * s);
+                ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
+            }
+            let r = if ow <= right - left {
+                Rect::new(((sw - ow) / 2.0).clamp(left, right - ow), y + 3.0 * s, ow, h - 6.0 * s)
+            } else {
+                fs = 14.0 * s;
+                let room = (mark.min(sw - 8.0 * s) - 10.0 * s - 8.0 * s).max(40.0 * s);
+                let ow = (c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s).min(room);
+                let r = Rect::new(((sw - ow) / 2.0).clamp(8.0 * s, 8.0 * s + room - ow), y + h + 6.0 * s, ow, h - 6.0 * s);
+                self.below = r.bottom();
+                r
+            };
             self.glass(r, r.h / 2.0, c, s);
             c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
-            c.text(Weight::Medium, 14.0 * s, (r.x + 30.0 * s, base - 1.0 * s), Align::Left, obj, TEXT);
+            c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
         }
     }
 
@@ -2442,7 +2469,7 @@ impl Hud {
 
     fn alerts_draw(&mut self, c: &mut Canvas, world: &mut Marks, s: f32) {
         let now = Instant::now();
-        let mut y = self.top + 12.0 * s;
+        let mut y = self.below + 12.0 * s;
         let alerts = self.alerts.clone();
         for a in alerts.iter().rev() {
             let age = now.duration_since(a.when).as_secs_f32();
@@ -3770,6 +3797,35 @@ mod tests {
             r.m.trying.push("Crystals refill on".into());
             r.draw();
             assert!(said(&r, "2 EXPERIMENTS ON").is_some(), "at {user}");
+        }
+    }
+
+    /// The goal never covers the top bar's numbers, the clock, the
+    /// experiments' mark or an alert, at every UI size on three screens
+    /// (11-18: at 200% on 1080 lines, centred on the screen, it covered
+    /// the resources' fourth number).
+    #[test]
+    fn the_goal_keeps_off_the_top_bars_numbers() {
+        let goal = "Wipe out the slime: kill every last walker (counting from 1:00; 40,451 walkers now)";
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                let rates = [Some("+23/s"), Some("-8 lost"), None, None];
+                r.m.resources = ["2,091", "11", "40.4k", "95%"].iter().zip(rates).map(|(v, rate)| Resource { icon: Icon::Clock, colour: TEXT, label: "a number".into(), value: (*v).into(), rate: rate.map(String::from) }).collect();
+                r.m.clock = "1:00 / 18:00".into();
+                r.m.speed = Some("Paused".into());
+                r.m.objective = Some(goal.into());
+                r.m.trying = vec!["Shake and hit-stop on".into()];
+                r.hud.alert("A soldier has fallen", None, WARN);
+                r.draw();
+                let g = r.c.runs.iter().find(|x| x.text.starts_with("Wipe out")).unwrap_or_else(|| panic!("{screen:?} at {user}: no goal")).ink;
+                assert!(g.0 >= 0.0 && g.2 <= screen.0 as f32, "{screen:?} at {user}: the goal off the screen: {g:?}");
+                for x in r.c.runs.iter().filter(|x| !x.text.starts_with("Wipe out") && x.ink.0 < x.ink.2) {
+                    let apart = g.2 <= x.ink.0 || x.ink.2 <= g.0 || g.3 <= x.ink.1 || x.ink.3 <= g.1;
+                    assert!(apart, "{screen:?} at {user}: the goal {g:?} over {:?} {:?}", x.text, x.ink);
+                }
+            }
         }
     }
 

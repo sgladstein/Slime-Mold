@@ -133,15 +133,16 @@ while Squad asked to keep it.
 
 1. Look B: the Drifter's and the Trunk's looks, then the thick body's veins
    and flow; iterate the Sprawler's dashes on what the owner says in play.
+   The Trunk's film along each walker's way (the Sprawler's `lay_streak`)
+   was tried and not kept (`Reports/dead-ends.md`): veins need a flow
+   field, headings summed a fine cell.
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
 3. A landing, a win and a loss that happen in the picture (D's next).
 4. Picks still open: the mini-boss colours; delete the fen moat A/B's
    unused side.
-5. Seen and left: at 200% on 1080 lines the goal's pill covers the top
-   bar's fourth number.
-6. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
+5. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
    their height), and their arcs show cell steps.
 
 **Helpers** (11-19, the owner offered them): a film runner thread (builds
