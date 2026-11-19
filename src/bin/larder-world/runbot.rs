@@ -424,7 +424,7 @@ pub(super) fn lab_deck(s: &str, depth: u32) -> Result<Vec<slime_mould::mould::ro
 /// one heaviest bin in range with a clear line (finding 2: that piles
 /// every bullet on one point, which favours area cards). Bitten and under
 /// half health it steps back a range. `hold` (the tail): fire held, the
-/// squad stands.
+/// squad walks back to the larder.
 fn arena_hand(g: &mut Game<GpuWorld>, n: usize, since: f32, focus: bool, hold: bool) {
     if since < 1.0 {
         g.bank = 1.0e9;
@@ -453,10 +453,12 @@ fn arena_hand(g: &mut Game<GpuWorld>, n: usize, since: f32, focus: bool, hold: b
     }
     let Some(m) = g.middle(q) else { return };
     if hold {
+        // Out of the fight to the larder: a squad standing with its fire
+        // held is eaten (the first calibration, 11-19: 9 soldiers to 3 in
+        // 30 s), which is no measure of the deck.
         g.apply(Cmd::Fire(q as u8, None));
-        if !members.iter().all(|&k| g.soldiers[k].order == Order::Hold) {
-            g.apply(Cmd::SquadOrder(q as u8, Order::Hold));
-        }
+        let home = g.larder;
+        g.apply(Cmd::SquadOrder(q as u8, Order::Move(home.0, home.1)));
         return;
     }
     let k = members.len().max(1);
