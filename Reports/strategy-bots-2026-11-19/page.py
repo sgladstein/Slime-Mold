@@ -22,7 +22,9 @@ SEEDS17 = list(range(1, 17)) + [SCOTT_SEED]
 # was played on, named by the `code` stamp (the src tree the worker built).
 # "old": the 19 November game. "set": shots stop at set slime (5be6b0b,
 # merged into the branch at 01:45Z). "now": Needle Blast bursts once per
-# bullet (#532, merged 05:02Z) and any later code. The page's older
+# bullet (#532, merged 05:02Z) and any later code (main's eb959ba, merged
+# 06:30Z, only stops the pump lamp blinking: `working` of a pump is read by
+# the drawing and sound, not the play). The page's older
 # sections show the old game only; mixing games made one plan's row a
 # patchwork of two games (the first page after the fixes did).
 OLD_CODES = {None, "9a4b83191084", "3052b1da7102", "68f057590a7b", "de884269a412"}
