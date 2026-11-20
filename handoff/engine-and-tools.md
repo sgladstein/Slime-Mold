@@ -212,6 +212,12 @@ run=1:2 mode=squads hand=bot`):
   is now no pick or work until it can be taken (it was held as the work
   while the bot hunted, 15.9k slime at the end).
 
+- **Others' changes to the bot** (11-20): #539 (balance review) makes
+  `runbot.rs` buy the Torch (`bring_shell`) before Tinder; before, it
+  bought Tinder alone on every check, so expect the curve to move. If
+  Direction adopts "held on" (a 1-star time-out) as an outcome, the
+  bot's summary should count it apart from wins (the review's ask).
+
 Job 5, branches (11-18): a thread cannot delete another's branch (the
 proxy refused both `git push --delete` and the refs API), so on Scott's
 card ("Let CI delete them", 13:17Z) `.github/workflows/branches.yml` runs
