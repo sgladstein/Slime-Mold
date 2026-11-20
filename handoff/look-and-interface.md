@@ -131,8 +131,12 @@ level at its feet and dims while it is out, its helmet white
 27-28). Filmed on planet 1 (Gas cast on the squad at 40 s): lavender at
 42 s, olive and firing at 48 s.
 
-**Open branch:** `claude/project-thread-8bv885`, one pull request at a
-time: the fallen in each Armour look (the dozing look is #523).
+**Look C started (11-20):** rock as stone (#534: mottling, grit from
+zoom 5-10, cracks in patches; `ROCK_MOTTLE`, `ROCK_CRACK*` in
+`terrain_top`) and planet 1's meadow in patches by the water (#535:
+`flora_form` flora 0 meadow, clump 0.6, wet 0.4, spring-green tips).
+
+**Open branch:** none (`claude/project-thread-ho6vcd`, reused per PR).
 
 **The Sprawler's look (#510):**
 
@@ -171,12 +175,15 @@ while Squad asked to keep it.
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
-3. A landing, a win and a loss that happen in the picture (D's next).
-4. Picks done 11-19: the fen moat deleted; the hunter stays violet
+3. Look C, rest: a trait for planet 2 (barrens) and planet 3, faint
+   grounding shadows at play zoom, spent crystals' material
+   (art-direction's C line).
+4. A landing, a win and a loss that happen in the picture (D's next).
+5. Picks done 11-19: the fen moat deleted; the hunter stays violet
    (filmed on planet 8, bright and glossy over its dark purple plants,
    framed by the gold it forms in); the fort walls' tops smooth
    (`SET_SOFT`, #517); soldiers dressed by Armour (above).
-5. Soldier looks: a design per gun if the owner asks.
+6. Soldier looks: a design per gun if the owner asks.
 
 **Helpers** (11-19, the owner offered them): a film runner thread (builds
 and films on its own machine; send it exact commands, it pushes the output
