@@ -356,3 +356,45 @@ Scott's run seeds, planets 3 and 4, every boss a pinwheel
 
 Clips (`pinwheel/`, run 1795119328 planet 4, `set=boss_kind=6`, zoom 6 and
 12, 1:56 to 2:06, 1x): a pinwheel of 561 closing on the squad.
+
+## Do full-strength late bosses hold off a big army? (11-20)
+
+The coordinator's question after #570. `tools/contact.py`: each boss that
+met the squad (nearest soldier under 20 units), the army then, the seconds
+it lived after, the soldiers lost meanwhile (any cause).
+
+- **Full grade, planets 4 and 5** (`latefull`: every boss late,
+  `boss_late=1.01`; `lateoff`: none, `boss_late=0`; to 5:00): only run
+  1795038793 planet 4 grew an army past 40. Against 49 to 80 soldiers the
+  full-grade bosses lived 2, 16, 1 and 1 s (18, 0, 1, 0 soldiers lost);
+  the usual grades 0, 1, 8, 1 and 1 s (0, 0, 3, 3, 5 lost). What hurt was
+  size: the 388-walker hunter's 18. Late in the planet the slime is thin,
+  and the late bosses held 108 to 118.
+- **Sized to the army** (`sized`, `unsized`: every boss late, with and
+  without `late_per` 6 walkers a soldier from up to 3 times the reach;
+  1795038793 planets 3 and 4, 1795106014 planet 3, to 7:00): against 30
+  or more soldiers, bosses lived 1 to 3 s either way. A hunter of 554 at
+  grade 0.8 went from 29 units away to broken in 3 s against 50
+  soldiers and killed 1. Not kept (`Reports/dead-ends.md`).
+
+A member takes at most 15 blows (`HURT_BITS`, 4 bits; grade 0.8 is 12),
+so no grade or size outlasts 50 guns while the boss walks into them.
+
+**Options** (a direction question, sent to Direction through the
+coordinator):
+- A. **Fight from range late:** weight the Mortar up once the slime is
+  late, so the late threat is shells landing on the squad, which no
+  amount of guns stops at the source. Tuning only.
+- B. **Go round the army:** when the squad is big, a late boss takes an
+  errand (pumps, buildings, the far side of the squad) instead of
+  charging its front, so the army must split or move. Uses the leech and
+  sapper errands.
+- C. **Pincer:** a late boss forms as two or three lumps that close from
+  different sides at once (four lumps in all; marches and fruits share
+  them).
+- D. **Ambush:** a late boss may form inside the guns' reach, beside the
+  squad's flank, instead of walking in (bends `BossRules::near`).
+- E. **More blows a member:** past 15 needs a wider hurt count in the
+  engine (Engine's and Enemy's), scaled to the army.
+
+Recommended: A and B (no engine change; the army has to move).
