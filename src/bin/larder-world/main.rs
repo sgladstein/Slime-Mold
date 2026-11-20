@@ -1391,6 +1391,8 @@ impl App {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
             v.set_alive(e.grows.then_some(&e.energy));
+            // The Sleeper's crust (Look B, 11-20): each walker's life word.
+            v.set_life(Some(&e.spec));
             // Each walker's news of food (plan C8, 2026-11-14): a cut-off
             // walker's speck amber while it leans, red once it bolts; the
             // mould ashen by the share cut off. Only when the world withers

@@ -210,8 +210,16 @@ https://claude.ai/artifact/Xi8hjRyFbnbnWgsxsx9f7c): `SlimeLook::Cords` for
 planet 3, its trail off the body a translucent raised tube (`CORD_VEIL`,
 `CORD_RISE`). The Swarmer's swell (11-20, `SlimeLook::Swell`, planet 4):
 where its alarm flushes it, its height grows (`SWELL_GAIN`, `SWELL_RISE`),
-so alarmed walkers are raised beads, not a flat glow. Sporer, Sleeper and
-Grudge are still Plain: the next slime looks.
+so alarmed walkers are raised beads, not a flat glow. The Sleeper's crust
+(11-20, `SlimeLook::Dormant`, planet 6): the view binds the engine's life
+words (`spec`, binding 27, `View::set_life`; one line in Engine's
+`main.rs`), `draw_specks` counts dormant and awake walkers per fine cell
+in the fine grid's third part, and where most are dormant the body turns a
+dull grey-brown matte (`DORMANT_DIM` 0.7, `DORMANT_MATTE` 0.6, no glow);
+walkers awake keep the gold. A 3 x 3 window left square gold pixels, so the
+share is a Gaussian 5 x 5. Sporer: Enemy is making a flying spore set the
+walker's 4th word, which `draw_specks` already draws as a droplet; film
+planet 5 when that lands. Grudge is still Plain: the next slime look.
 Bullets in a crowd share their light (`dim_crowded` in `draw.rs`): each
 bullet's light over the square root of the bullets within its reach, after
 46 rifles down one lane on planet 4 lit a white column over the slime.
