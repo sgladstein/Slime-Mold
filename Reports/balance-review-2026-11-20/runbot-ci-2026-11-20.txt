@@ -1,0 +1,67 @@
+== Run bot workflow run 44683405207, main at 01fc28d
+runbot planet 1: lost at 15:00 (Time: lost (best 39% of the goal)); soldiers 26, slime 14771, killed 23800
+runbot: run 3, 0 of 3 planets won
+runbot planet 1: won, 2 stars at 6:44 (Goal met at 6:44: 2 stars); soldiers 28, slime 0, killed 27300; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 34% of the goal)); soldiers 22, slime 12557, killed 41428
+runbot: run 2, 1 of 3 planets won
+runbot planet 1: won, 2 stars at 2:46 (Goal met at 2:46: 2 stars); soldiers 61, slime 0, killed 15246; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: won, 2 stars at 6:20 (Goal met at 6:20: 2 stars); soldiers 48, slime 0, killed 30074; bought Heavier shots
+runbot planet 3: won, 1 star at 18:00 (Time: held on, 1 star (best 70% of the goal)); soldiers 32, slime 22090, killed 21114
+runbot: run 1, 3 of 3 planets won
+== Run bot workflow run 44680173046, main at e5d7969
+runbot planet 1: lost at 15:00 (Time: lost (best 39% of the goal)); soldiers 26, slime 14771, killed 23800
+runbot: run 3, 0 of 3 planets won
+runbot planet 1: won, 2 stars at 2:46 (Goal met at 2:46: 2 stars); soldiers 61, slime 0, killed 15246; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: won, 2 stars at 6:20 (Goal met at 6:20: 2 stars); soldiers 48, slime 0, killed 30074; bought Heavier shots
+runbot planet 3: won, 1 star at 18:00 (Time: held on, 1 star (best 70% of the goal)); soldiers 32, slime 22090, killed 21114
+runbot: run 1, 3 of 3 planets won
+runbot planet 1: won, 2 stars at 6:44 (Goal met at 6:44: 2 stars); soldiers 28, slime 0, killed 27300; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 34% of the goal)); soldiers 22, slime 12557, killed 41428
+runbot: run 2, 1 of 3 planets won
+== Run bot workflow run 44657375137, main at 82b465e
+runbot planet 1: won, 2 stars at 2:46 (Goal met at 2:46: 2 stars); soldiers 61, slime 0, killed 15246; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: won, 2 stars at 6:20 (Goal met at 6:20: 2 stars); soldiers 48, slime 0, killed 30074; bought Heavier shots
+runbot planet 3: won, 1 star at 18:00 (Time: held on, 1 star (best 70% of the goal)); soldiers 32, slime 22090, killed 21114
+runbot: run 1, 3 of 3 planets won
+runbot planet 1: lost at 15:00 (Time: lost (best 39% of the goal)); soldiers 26, slime 14771, killed 23800
+runbot: run 3, 0 of 3 planets won
+runbot planet 1: won, 2 stars at 6:44 (Goal met at 6:44: 2 stars); soldiers 28, slime 0, killed 27300; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 34% of the goal)); soldiers 22, slime 12557, killed 41428
+runbot: run 2, 1 of 3 planets won
+== Run bot workflow run 44655493962, main at a9aabb2
+runbot planet 1: won, 2 stars at 2:46 (Goal met at 2:46: 2 stars); soldiers 61, slime 0, killed 15246; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: won, 2 stars at 6:20 (Goal met at 6:20: 2 stars); soldiers 48, slime 0, killed 30074; bought Heavier shots
+runbot planet 3: won, 1 star at 18:00 (Time: held on, 1 star (best 70% of the goal)); soldiers 32, slime 22090, killed 21114
+runbot: run 1, 3 of 3 planets won
+runbot planet 1: won, 2 stars at 6:44 (Goal met at 6:44: 2 stars); soldiers 28, slime 0, killed 27300; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 34% of the goal)); soldiers 22, slime 12557, killed 41428
+runbot: run 2, 1 of 3 planets won
+runbot planet 1: lost at 15:00 (Time: lost (best 39% of the goal)); soldiers 26, slime 14771, killed 23800
+runbot: run 3, 0 of 3 planets won
+== Run bot workflow run 44653658405, main at d6de09b
+runbot planet 1: won, 2 stars at 6:43 (Goal met at 6:43: 2 stars); soldiers 28, slime 0, killed 27300; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 43% of the goal)); soldiers 23, slime 12014, killed 43793
+runbot: run 2, 1 of 3 planets won
+runbot planet 1: lost at 15:00 (Time: lost (best 40% of the goal)); soldiers 27, slime 14798, killed 23550
+runbot: run 3, 0 of 3 planets won
+runbot planet 1: won, 2 stars at 2:58 (Goal met at 2:58: 2 stars); soldiers 63, slime 0, killed 15613; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 28% of the goal)); soldiers 34, slime 17280, killed 47498
+runbot: run 1, 1 of 3 planets won
+== Run bot workflow run 44650565369, main at a483b80
+runbot planet 1: won, 2 stars at 2:58 (Goal met at 2:58: 2 stars); soldiers 63, slime 0, killed 15613; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 28% of the goal)); soldiers 34, slime 17280, killed 47498
+runbot: run 1, 1 of 3 planets won
+runbot planet 1: won, 2 stars at 6:43 (Goal met at 6:43: 2 stars); soldiers 28, slime 0, killed 27300; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 43% of the goal)); soldiers 23, slime 12014, killed 43793
+runbot: run 2, 1 of 3 planets won
+runbot planet 1: lost at 15:00 (Time: lost (best 40% of the goal)); soldiers 27, slime 14798, killed 23550
+runbot: run 3, 0 of 3 planets won
+== Run bot workflow run 44645097731, main at c5c1a9b
+runbot planet 1: won, 2 stars at 6:43 (Goal met at 6:43: 2 stars); soldiers 28, slime 0, killed 27300; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 43% of the goal)); soldiers 23, slime 12014, killed 43793
+runbot: run 2, 1 of 3 planets won
+runbot planet 1: won, 2 stars at 2:58 (Goal met at 2:58: 2 stars); soldiers 63, slime 0, killed 15613; bought Tinder (the gun now fires tinder), Heavier shots
+runbot planet 2: lost at 16:30 (Time: lost (best 28% of the goal)); soldiers 34, slime 17280, killed 47498
+runbot: run 1, 1 of 3 planets won
+runbot planet 1: lost at 15:00 (Time: lost (best 40% of the goal)); soldiers 27, slime 14798, killed 23550
+runbot: run 3, 0 of 3 planets won
