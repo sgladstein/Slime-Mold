@@ -255,3 +255,46 @@ Scott's three planet 4 maps with every mini-boss a mortar (`set=boss_kind=5`,
 
 Clips (`mortar/`, zoom 3.5 and 8, run 1795038793 planet 4, `set=boss_kind=5`):
 `mortar-wide.mp4` (92-112 s, 2x) and `mortar-close.mp4` (97-107 s, 2x). Page: https://claude.ai/artifact/RPtr4iteMNYdKhbRbp12xH (copy `mortar/page.html`).
+
+## The Mortar's throws hurt; late mini-bosses are the strongest (11-20)
+
+Asked by the coordinator after the balance thread's brief: a late-game army
+crushes mini-bosses without trouble, and the owner wants stronger ones near
+the end of each planet.
+
+**Shells.** A throw used to land as ordinary slime: walkers with no lump,
+which the squad shot like any other. Now `Game::mortar` takes the body's
+outer part (the walkers past the radius holding 60% of them,
+`SHELL_CORE`), grows them into a free lump as a **shell**
+(`Bosses::shells`) and flings it at the target. A shell's lump carries the
+mortar's bite, the armour of half its grade, no leash, and the mortar's look, and
+lets go after `shell_life` (8 s). The rest of the body refills from the
+slime round it, if a lump was free to throw into.
+
+Three things were wrong on the way, each seen in the `shell t` rows the
+play log now prints:
+- the landed shell streamed back to the mortar, because a lump's leash
+  pulls to its members' centre and stragglers left behind were members;
+  the shell has no leash;
+- throws after the first held 7 to 12 walkers: a mortar's members pack
+  tightly, and a ring at 0.7 to 1 of the packed radius was mostly empty;
+  the ring is now cut where the body holds 60% (throws of 96, 42, 33, 39);
+- a `scale()` multiply on the flight (tried, reverted): `walker_step` is in
+  fine cells already, so it halved every flight.
+
+Scott's three planet 4 maps with every boss a mortar (`shells` lines,
+`tools/shells.py`): 15 shells; median 84 walkers each when nearest its
+target, 10.3 units from it; 14 of 15 stood with soldiers within 15 units
+(median 8 of them). A squad of 34 filmed shooting one: a shell of about
+200 went in about 2 s. The test `a_mortar_sits_and_throws_at_the_squad`
+gives four soldiers 1000 health and finds 2653 of it gone.
+
+**Late bosses.** `BossRules::late`: when the slime is under `late` (0.6)
+of its peak mass, a new boss's grade is drawn from at least `late_grade`
+(0.8) instead of `grade_lo`: at 0.8, 12 blows a member, touches as 4,
+pace x1.29, the largest reach. The play log's formed line ends "; late".
+The strikers' 0.4 was tried first: on the same nine games to 7:00 (`late`
+lines) no boss formed with the slime that low (least 0.44); at 0.6, 2 of
+24 did (a hunter at 351 s, a sapper at 393 s), the last of their games.
+Whether they now hold off a late army is not measured. Set keys
+`boss_shell_life`, `boss_late`, `boss_late_grade`.

@@ -110,9 +110,12 @@ pub struct BossRules {
     pub grade_hi: f32,
     /// **Late in a planet** (the owner, 11-20: a late-game army crushes
     /// mini-bosses without trouble; the balance thread's brief): once the
-    /// slime is under `late` of its peak mass (the strikers' 0.4,
-    /// `StrikerRules::below`), each one's grade is drawn from at least
-    /// `late_grade`, so the last ones are the strongest.
+    /// slime is under `late` of its peak mass, each one's grade is drawn
+    /// from at least `late_grade`, so the last ones are the strongest.
+    /// The strikers' 0.4 (`StrikerRules::below`) was tried first: on the
+    /// owner's three runs, planets 2 to 4 to 7:00, no boss formed with
+    /// the slime that low (its least was 0.44). At 0.6, 2 of 24 did, at
+    /// 351 s and 393 s.
     pub late: f32,
     pub late_grade: f32,
     pub armour_lo: f32,
@@ -277,7 +280,7 @@ impl Default for BossRules {
             near: 40.0,
             grade_lo: 0.0,
             grade_hi: 1.0,
-            late: 0.4,
+            late: 0.6,
             late_grade: 0.8,
             // 4 to 15 blows a member against ordinary slime's 1, and
             // touching as 2 to 5 walkers. Packed as it is, each shot that
