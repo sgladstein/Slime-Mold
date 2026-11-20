@@ -152,6 +152,13 @@ end.
     says the slime survived.
   - The shop-money doc's pay for pumped crystals held
     (https://claude.ai/artifact/XHLmAP2RFnSAHba6orJLjW).
+- **Mini-boss errands** (11-20, #547's question): leeches and sappers
+  never reached their pump or wall in 5:00. The nearest target was 150 to
+  250 units off, at 1 to 4 units a second, on a 90 s trip. Direction's call:
+  a nearer target, with the trip unchanged. A leech or sapper is drawn only
+  when its target is within its speed times `BossRules::trip`; otherwise it
+  is drawn as another kind. The Enemy-side thread builds it after #547 and
+  re-runs the same nine games.
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the
