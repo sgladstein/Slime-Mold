@@ -1,0 +1,18 @@
+# Planet 1 regression hunt, second round (11-20 23:00Z). Job 00-p1-regress: base lost all 8 maps; no switch alone won back more than one (strikers off map 1, the heartbeat off map 4), starfall off held out longer on 6 of 8. Here the switches together: all five off, and the three that moved anything (star, strikers, heart) off. If all five off still loses, the cause is outside these five. 16 games.
+# code-bound
+bot,want=torch.standard 1 1 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 2 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 3 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 4 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 5 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 6 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 7 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 8 0 set=late_at=0 set=star=0 set=fire_hurt=25 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 1 0 set=star=0 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 2 0 set=star=0 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 3 0 set=star=0 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 4 0 set=star=0 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 5 0 set=star=0 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 6 0 set=star=0 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 7 0 set=star=0 set=strikers=0 set=heart=0
+bot,want=torch.standard 1 8 0 set=star=0 set=strikers=0 set=heart=0
