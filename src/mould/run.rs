@@ -592,8 +592,19 @@ pub fn bring_shell(tier: Tier) -> Option<Shell> {
 }
 
 /// Points a won level pays: more the deeper it was and the more stars.
+///
+/// 175 + 25 a planet since the starfall (Direction, 2026-11-20): ore
+/// worth 30 + 10 a planet falls at least three times a planet, about 4.2
+/// on average (`StarRules::for_depth`, `fall_count`), so what grows with
+/// depth is now mostly what the squad goes out and takes. Planet 1 still
+/// pays 200, which the first unlock and the Torch-and-Tinder pair before
+/// planet 2 are priced on (`ammo_price`); from planet 2 the base pays 25
+/// less a planet than the old 150 + 50 a planet (planet 3: 250, not 300;
+/// planet 8: 375, not 550). Rejected: the brainstorm's 100 + 25 a planet,
+/// which takes the planet 1 floor under both buys while no bot collects
+/// drops, so nothing yet says how much of the ore a player takes.
 pub fn reward(depth: u32, stars: u8) -> u32 {
-    150 + 50 * depth + 50 * u32::from(stars.saturating_sub(1))
+    175 + 25 * depth + 50 * u32::from(stars.saturating_sub(1))
 }
 
 /// What a shop row is.
