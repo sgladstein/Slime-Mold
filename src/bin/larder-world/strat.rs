@@ -197,6 +197,16 @@ pub(super) struct Plan {
     /// Cards for the holding groups' loadout (`arm=1`), as `want` takes
     /// them, bought after the gun.
     pub want2: Vec<String>,
+    /// Cards for the turrets' loadout (`Run::turret_loadout`), as `want`
+    /// takes them, bought after the squads' and fitted to the turrets'
+    /// rack (2 slots, a budget of 4 before "Turret+"). No bot had put a
+    /// card on its turrets.
+    pub tcards: Vec<String>,
+    /// The squads' gun's cards in this firing order, as `want` names them
+    /// (`blast.needle/wide`), after the shop (`Pick::Move`); cards not
+    /// named keep their places after these. Empty: the shop's own order
+    /// (flight cards, then modifiers and triggers, then bullets).
+    pub order: Vec<String>,
 }
 
 /// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
@@ -244,6 +254,8 @@ impl Default for Plan {
             gun: None,
             arm: 0,
             want2: Vec::new(),
+            tcards: Vec::new(),
+            order: Vec::new(),
         }
     }
 }
@@ -272,7 +284,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 38] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "gun", "arm", "want2"];
+    pub const DIALS: [&'static str; 40] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "gun", "arm", "want2", "tcards", "order"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -337,6 +349,8 @@ impl Plan {
             }
             "arm" => self.arm = whole(v)?.min(1),
             "want2" => self.want2 = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
+            "tcards" => self.tcards = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
+            "order" => self.order = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),

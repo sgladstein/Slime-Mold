@@ -51,6 +51,20 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
         buy_wants(r, &p.want2, p.shelf, &mut bought);
         r.edit(0);
     }
+    // The turrets' cards (`Plan::tcards`), in their loadout: the turrets
+    // first if the plan's items buy them, or the items would spend the
+    // points before the cards had turrets to go on.
+    if !p.tcards.is_empty() && !r.has("turret") && p.shop.iter().any(|k| k == "turret") {
+        if let Some(i) = ITEMS.iter().position(|it| it.key == "turret") {
+            if r.pick(Pick::Item(i)) {
+                bought.push("turret".to_string());
+            }
+        }
+    }
+    if !p.tcards.is_empty() && r.edit_turrets(true) {
+        buy_wants(r, &p.tcards, p.shelf, &mut bought);
+        r.edit(0);
+    }
     if p.cards >= 1 {
         if let Some(c) = run::bring(r.level().tier) {
             if let Some(i) = r.offers.iter().position(|&o| o == c) {
@@ -84,7 +98,29 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
             i += 1;
         }
     }
+    reorder(r, &p.order);
     bought
+}
+
+/// The squads' gun's cards in the order named (`Plan::order`): each named
+/// card in the gun moves to the next slot from the first.
+fn reorder(r: &mut Run, order: &[String]) {
+    r.edit(0);
+    let mut slot = 0;
+    for name in order {
+        let Some(c) = want_card(name, r.depth) else { continue };
+        let shell = (!name.contains('.')).then(|| Shell::ALL.into_iter().find(|s| s.card() == c)).flatten();
+        let same = |o: Card| card_key(o) == card_key(c) || matches!((o, shell), (Card::Ammo(a), Some(s)) if a.shell == s);
+        // The first such card in the gun past the slots already set.
+        let mut seen = 0;
+        let at = r.cards.iter().position(|&(x, on)| {
+            seen += usize::from(on);
+            on && seen > slot && same(x)
+        });
+        if at.is_some_and(|i| r.pick(Pick::Move(i, slot))) {
+            slot += 1;
+        }
+    }
 }
 
 /// Buys the cards named in `want` into the loadout shown (see `shop`).
@@ -336,12 +372,16 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
 }
 
 /// Each loadout with a gun, for the league line: `LOADOUT:KIND@GRADE:CARDS`
-/// joined by `,` (`0:long@1.07:wide+blast.needle`).
+/// joined by `,` (`0:long@1.07:wide+blast.needle`), then the turrets'
+/// cards if any (`t:wide+rate`).
 fn arms(r: &Run) -> String {
-    (0..r.loadouts.len())
-        .filter_map(|l| r.gun_of(l).map(|g| format!("{l}:{}@{:.2}:{}", g.kind.key(), g.grade, r.cards_of(l).into_iter().map(card_key).collect::<Vec<_>>().join("+"))))
-        .collect::<Vec<_>>()
-        .join(",")
+    let keys = |v: Vec<Card>| v.into_iter().map(card_key).collect::<Vec<_>>().join("+");
+    let mut v: Vec<String> = (0..r.loadouts.len()).filter_map(|l| r.gun_of(l).map(|g| format!("{l}:{}@{:.2}:{}", g.kind.key(), g.grade, keys(r.cards_of(l))))).collect();
+    let t = r.turret_cards();
+    if !t.is_empty() {
+        v.push(format!("t:{}", keys(t)));
+    }
+    v.join(",")
 }
 
 /// The plan for planet `depth` of a plan by planet (`a|b|c`): the
@@ -486,6 +526,25 @@ mod tests {
             assert_eq!(r.editing, 0, "seed {seed}");
             strat::arm_groups(&r);
         }
+    }
+
+    /// `tcards` fills the turrets' loadout, and `order` sets the squads'
+    /// firing order.
+    #[test]
+    fn a_plan_loads_its_turrets_and_orders_its_gun() {
+        let mut r = Run::new(4);
+        r.restock();
+        r.won(2);
+        r.points += 2_000;
+        let p = Plan::parse("want=wide/rate,tcards=pierce/wide,order=wide/rate,cards=0,shop=turret").unwrap();
+        let bought = shop(&mut r, &p);
+        assert!(r.has("turret"), "{bought:?}");
+        assert_eq!(r.turret_cards(), vec![Card::Pierce, Card::Wide], "{bought:?}");
+        assert_eq!(r.squad_cards(), vec![Card::Wide, Card::Rate], "the order named, not the shop's (rate first)");
+        assert_eq!(r.editing, 0);
+        let p = Plan::parse("order=rate/wide,cards=0,shop=").unwrap();
+        shop(&mut r, &p);
+        assert_eq!(r.squad_cards(), vec![Card::Rate, Card::Wide]);
     }
 
     #[test]
