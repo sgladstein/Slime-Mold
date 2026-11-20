@@ -678,10 +678,6 @@ impl<W: World> Game<W> {
             }
             (g, w, h)
         });
-        if ground.as_ref().is_none_or(|(g, w, h)| line_clear(g, *w, *h, centre, to, body + 3.0 * sc)) {
-            self.bosses.ways.retain(|w| w.lump != lump);
-            return to;
-        }
         let i = match self.bosses.ways.iter().position(|w| w.lump == lump) {
             Some(i) => i,
             None => {
@@ -689,6 +685,17 @@ impl<W: World> Game<W> {
                 self.bosses.ways.len() - 1
             }
         };
+        if ground.as_ref().is_none_or(|(g, w, h)| line_clear(g, *w, *h, centre, to, body + 3.0 * sc)) {
+            // Its leading part is a body's length toward the goal. A clear
+            // line is no promise: on the owner's planet 3 (run 1795119328)
+            // a leech of 545 stood 54 s on open ground with its line to
+            // the pump clear, its tail wedged in the packed slime behind
+            // and its leash holding the head back to its centre.
+            let d = (to.0 - centre.0).hypot(to.1 - centre.1).max(1e-3);
+            let k = body.min(d) / d;
+            self.boss_stall(i, centre, body, (centre.0 + (to.0 - centre.0) * k, centre.1 + (to.1 - centre.1) * k));
+            return to;
+        }
         // The way started a second ago is set.
         if let Some((way, g)) = self.bosses.ways[i].building.take() {
             let w = &mut self.bosses.ways[i];
@@ -728,6 +735,16 @@ impl<W: World> Game<W> {
         let ahead = way_points(&w.field, bw, from, 4.0 * look);
         let aim = ahead.iter().rev().find(|&&p| seen(p)).copied().or_else(|| down_way(&w.field, bw, from, look)).unwrap_or(to);
         // Stalled (`STALL`): it gathers again on its leading part.
+        let lead = ahead.iter().take_while(|&&p| (p.0 - from.0).hypot(p.1 - from.1) <= body).last().copied().unwrap_or(from);
+        self.boss_stall(i, centre, body, lead);
+        aim
+    }
+
+    /// Counts the seconds the way's lump `i` has stood within two dish
+    /// cells of where it last got anywhere, and at `STALL` with no soldier
+    /// near gathers it again round `lead`, its leading part.
+    fn boss_stall(&mut self, i: usize, centre: (f32, f32), body: f32, lead: (f32, f32)) {
+        let sc = self.world.scale();
         let w = &mut self.bosses.ways[i];
         if (centre.0 - w.mark.0).hypot(centre.1 - w.mark.1) > 2.0 * sc {
             (w.mark, w.still) = (centre, 0);
@@ -737,17 +754,16 @@ impl<W: World> Game<W> {
         let fight = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * sc + body;
         let near = self.soldiers.iter().any(|s| s.alive && (s.x - centre.0).hypot(s.y - centre.1) < fight);
         if self.bosses.ways[i].still >= STALL && !near {
-            let lead = ahead.iter().take_while(|&&p| (p.0 - from.0).hypot(p.1 - from.1) <= body).last().copied().unwrap_or(from);
             // As far round as holds no more walkers than it has: forming
             // takes every walker in reach, and in a thick body a first cut
             // at one and a half radii took in the slime round it (a hunter
             // of 437 on the owner's planet 3 came out at 4,630).
             let reach = self.reach_holding(lead, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
+            let lump = self.bosses.ways[i].lump;
             self.world.form_lump(lump, Some((lead, reach)));
             (self.bosses.ways[i].mark, self.bosses.ways[i].still) = (lead, 0);
             self.bosses.regrouped += 1;
         }
-        aim
     }
 
     /// The largest reach round `at` (dish cells), up to `most`, whose
