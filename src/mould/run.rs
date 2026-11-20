@@ -270,6 +270,13 @@ pub const WIN_SHARE: f32 = 0.0;
 /// the food shares keep that curve's ratios to the sandbox's 30 s.
 const SURGE_FOOD_SHARE: [f32; 8] = [1.33, 1.33, 1.0, 1.0, 0.83, 0.67, 0.67, 0.5];
 const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
+/// The strikers' share by planet (`StrikerRules::share`; 2026-11-20 night,
+/// Direction's numbers): a quarter on planet 1, where the player is
+/// poorest and weakest, 0.6 on planet 2, all of it from planet 3, as the
+/// big-army problem is planets 2 and up. It scales the rate cap
+/// (`StrikerRules::rate`) as well: about 37 strikers a second on planet 1,
+/// 90 on planet 2, 150 from planet 3.
+const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -1056,6 +1063,13 @@ impl Run {
             for &(k, v) in ENEMY_RULES {
                 assert!(r.set(k, v), "ENEMY_RULES: no rule {k}");
             }
+            // The planet's share scales the rate cap too, since the cap,
+            // not the share, binds wherever the band is big (planet 1 run
+            // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
+            // at the full cap, 43 and lost uncapped, 11 with no strikers).
+            let k = STRIKER_SHARE[depth_index(self.depth)];
+            r.strikers.share = k;
+            r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
             for &(k, v) in does_to_you(self.level().tier).rules {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }

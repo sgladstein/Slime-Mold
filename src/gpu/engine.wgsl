@@ -4135,7 +4135,8 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
 //
 // `condense` also counts the condensed walkers living into `wstat[8]` and
 // what they hold into `wstat[9]`, and the walkers taken in into
-// `wstat[10]` (`Engine::condense` clears them first).
+// `wstat[10]`, and the walkers in the band (within reach, able to try)
+// into `wstat[11]` (`Engine::condense` clears them first).
 fn cond_word(q: u32) -> u32 {
     let nb = ((P.w + RAID_BLOCK - 1u) / RAID_BLOCK) * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
     return dense_base() + DENSE_HEAD + P.n + P.w * P.h + 2u * nb + q;
@@ -4172,7 +4173,11 @@ fn condense(@builtin(global_invocation_id) gid: vec3<u32>) {
             if (dx * dx + dy * dy <= r2) { near = true; break; }
         }
     }
-    if (!near || unit(keyed(P.s_condense, S.t, k ^ 0x2C1B3C6Du)) >= P.cond_share) { return; }
+    if (!near) { return; }
+    // The band's walkers, counted for the game's rate cap
+    // (`StrikerRules::rate`): it sets the next pass's share from them.
+    atomicAdd(&wstat[11], 1u);
+    if (unit(keyed(P.s_condense, S.t, k ^ 0x2C1B3C6Du)) >= P.cond_share) { return; }
     let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
     let q = ((here / P.w) / RAID_BLOCK) * bw + (here % P.w) / RAID_BLOCK;
     let c = atomicAdd(&news[cond_word(q)], 1u << 24u) >> 24u;
