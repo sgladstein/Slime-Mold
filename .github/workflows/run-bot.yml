@@ -1,9 +1,17 @@
 # The run bot's curve (the Engine and tools lane's job 4; Milestone 1's
-# exit test 1): `larder-world runbot=SEED:3` plays planets 1 to 3 of a run
-# with the `bot` hand and the shop between, on Mesa's software Vulkan, and
-# writes a line a planet to the run's summary: won or lost, the stars, the
-# game time, the slime left, what the shop sold it. Direction posts this
-# curve.
+# exit test 1): the strategy bot (src/bin/larder-world/strat.rs) plays a
+# whole run, planets 1 to 3, with the shop between, on Mesa's software
+# Vulkan (`larder-world league=run:SEED:3 plan=PLAN`), and
+# scripts/run_bot_summary.py writes a row a planet to the run's summary:
+# won or lost, the stars, the planet's length against the 8 to 12 minute
+# target, the slime left, the squad, what the shop sold it. Direction posts
+# this curve.
+#
+# ONE BOT (NOW.md, 2026-11-20: "joined with the strategy bots rather than
+# a second bot"): until then this played the run bot's own hand
+# (`runbot=SEED:3`, `hands::bot_hand`). The plan is the first line of
+# scripts/run-bot-plan.txt, which the strategy bot's thread sets to its
+# best run plan; a run by hand may name another (`plan`).
 #
 # WHY NOT IN EACH PULL REQUEST'S CI: a planet the bot loses plays to its
 # clock (15 to 17 game minutes), about 7 real minutes here, so planets 1 to
@@ -18,6 +26,11 @@ name: Run bot
 
 on:
   workflow_dispatch:
+    inputs:
+      plan:
+        description: The strategy bot's plan (empty for scripts/run-bot-plan.txt)
+        type: string
+        default: ""
   schedule:
     - cron: "17 6 * * *"
 
@@ -53,13 +66,17 @@ jobs:
         env:
           WGPU_BACKEND: vulkan
           SEED: ${{ matrix.seed }}
+          PLAN: ${{ inputs.plan }}
         run: |
           set -o pipefail
-          ./target/release/larder-world runbot=$SEED:3 2> bot-trace.txt | tee bot.txt
+          if [ -z "$PLAN" ]; then
+            PLAN=$(grep -v '^#' scripts/run-bot-plan.txt | grep -m1 .)
+          fi
+          ./target/release/larder-world league=run:$SEED:3 "plan=$PLAN" 2> bot-trace.txt | tee bot.txt
           {
-            echo "### Run seed $SEED, $(./target/release/larder-world version=1)"
+            echo "_$(./target/release/larder-world version=1)_"
             echo
-            sed -n 's/^runbot //p' bot.txt | sed 's/^/- /'
+            python3 scripts/run_bot_summary.py "$SEED" < bot.txt
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()

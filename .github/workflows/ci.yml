@@ -112,7 +112,20 @@ jobs:
     name: test (${{ matrix.part }})
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    # Ubuntu 24.04, not ubuntu-latest (26.04), for its Mesa: from 16:28Z on
+    # 2026-11-20 the GPU tests hung on 26.04's lavapipe (Mesa 26.0.8), the
+    # library's view tests and the window's together, in the queue's
+    # candidates and in PRs that touched no code, while the same tests
+    # passed every time on 24.04's Mesa 25.2.8 (a cloud session's, six runs
+    # of the hung test and the whole window part). Back to ubuntu-latest
+    # once a hang is traced to its cause.
+    runs-on: ubuntu-24.04
+    # A hung test fails the part instead of running to GitHub's six hours:
+    # on 2026-11-20 the window part of the merge queue's candidate (#564)
+    # hung at 16:28Z, and as the queue runs one candidate at a time every
+    # PR queued after it waited behind it. A part takes 8 to 13 minutes
+    # with its build; 40 leaves room for a cold cache.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -160,6 +173,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    # As the tests' limit: about 2 minutes, 30 for a cold cache.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
