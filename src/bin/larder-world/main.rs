@@ -858,6 +858,10 @@ struct App {
     lights: Vec<Light>,
     paused: bool,
     menu_paused: bool,
+    /// The loadout panel (`open_loadouts`): paused before it, and the
+    /// loadout its squad used, so closing changes only what was picked.
+    field_paused: bool,
+    field_was: usize,
     fast: bool,
     /// Each step's GPU ticks spread over the frames until the next step is
     /// due (`GpuWorld::spread`, 2026-11-12); `spread=0` records them all on
@@ -1044,6 +1048,8 @@ impl App {
             lights: Vec::new(),
             paused: false,
             menu_paused: false,
+            field_paused: false,
+            field_was: 0,
             fast: false,
             spread: true,
             owed: 0.0,

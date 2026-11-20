@@ -1021,6 +1021,30 @@ impl Run {
         self.gun_of(i).map(|g| Gun { range: g.range + 3.0 * l("range"), rate: g.rate / 0.85f32.powf(l("rate")), ..g })
     }
 
+    /// Loadout `i`'s gun as a squad fires it, a loadout with no gun the
+    /// run's first rifle with the upgrades, as a squad lands (`armed`).
+    /// Never None: a squad armed with None took a merged squad's gun
+    /// (`Cmd::Merge` keeps either's), mixing two loadouts (review,
+    /// 2026-11-20).
+    pub fn squad_gun(&self, i: usize) -> Gun {
+        let l = |k| f32::from(self.level_of(k));
+        let g = self.gun_of(i).unwrap_or_else(first_gun);
+        Gun { range: g.range + 3.0 * l("range"), rate: g.rate / 0.85f32.powf(l("rate")), ..g }
+    }
+
+    /// Loadout `i`'s cards as a turret fires them: as many as fit the
+    /// turrets' rack, which "Turret power" grows, whatever gun the loadout
+    /// holds (a turret has no use for it; with its rack a bought gun
+    /// gave turrets four cards with no Turret power, review 2026-11-20).
+    pub fn turret_deck_of(&self, i: usize) -> Vec<Card> {
+        let rack = self.turret_rack();
+        let mut cards = self.cards_of(i);
+        while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
+            cards.pop();
+        }
+        cards
+    }
+
     /// The first loadout's gun as the squad lands with it (`armed_of`).
     pub fn armed(&self) -> Gun {
         let l = |k| f32::from(self.level_of(k));
@@ -1081,7 +1105,7 @@ impl Run {
         if !self.has("turret") {
             return Vec::new();
         }
-        self.cards_of(self.turret_loadout)
+        self.turret_deck_of(self.turret_loadout)
     }
 
     /// Every card owned: in the bag, shown, and in the other loadouts.
@@ -2259,5 +2283,22 @@ mod tests {
         // At most LOADOUTS_MAX.
         while r.pick(Pick::NewLoadout) {}
         assert_eq!(r.loadouts.len(), LOADOUTS_MAX);
+    }
+
+    /// A turret fires as many of its loadout's cards as the turrets' rack
+    /// takes, whatever gun the loadout holds; a squad on a loadout with no
+    /// gun lands with the run's rifle (review, 2026-11-20).
+    #[test]
+    fn turrets_fire_their_rack_and_gunless_squads_the_rifle() {
+        let mut r = Run::new(1);
+        r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
+        r.guns.push(Gun { slots: 4, budget: 12, ..GunKind::Long.average() });
+        assert!(r.pick(Pick::Carry(1)));
+        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
+        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok());
+        assert!(r.pick(Pick::TurretsUse));
+        let t = r.turret_cards();
+        assert!(t.len() < 4 && rounds::fit_gun(t.clone(), &r.turret_rack()).is_ok(), "{t:?} on a rack of {}", r.turret_rack().slots);
+        assert_eq!(r.squad_gun(1).kind, first_gun().kind, "loadout 2 has no gun: the rifle");
     }
 }

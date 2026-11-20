@@ -48,6 +48,14 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-20, batch 6b (a review of batch 6).** Nine fixes: the cycle key
+skips linked squads; L on a turret steps back to the default; a gunless
+loadout arms squads with the rifle plus upgrades (`Run::squad_gun`); a
+turret deck is cut to its rack (`Run::turret_deck_of`); closing the panel
+keeps the pause and only re-arms on a changed choice (`Rounds::set_round`
+keeps live state); attack-move's hold counts only fighters; build reach is
+per turret. Window test for the panel added.
+
 **2026-11-20, batch 6 (the owner's play notes of 11-19 16:55Z; thread
 "Improve squad control and gun loadouts").**
 

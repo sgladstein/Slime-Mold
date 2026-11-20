@@ -846,6 +846,8 @@ impl App {
         let Some(mut r) = self.args.run.clone() else { return };
         r.field = true;
         r.field_squad = Some((q as u8, l));
+        self.field_was = l;
+        self.field_paused = self.paused;
         r.edit(l.min(r.loadouts.len() - 1));
         self.run = Some(r);
         let mut menu = self.parked.take().unwrap_or_else(|| start_menu(&base));
@@ -869,15 +871,20 @@ impl App {
             m.show(Page::Main);
             self.parked = Some(m);
         }
-        self.paused = false;
+        // Paused as before it (P then H then Esc stays paused).
+        self.paused = self.field_paused;
         let Some(r) = self.run.as_mut() else { return };
         r.field = false;
         let chosen = r.field_squad.take();
         let r = r.clone();
         self.args.run = Some(r.clone());
-        self.rounds = Rounds::new(r.squad_cards(), RoundRules { budget: r.budget(), ..self.rounds.rules });
+        // The army's round, keeping what is live (`Rounds::set_round`).
+        self.rounds.set_round(r.squad_cards(), r.budget());
         let Some(g) = self.game.as_mut() else { return };
-        if let Some((q, l)) = chosen {
+        // Only a squad given another loadout (`Pick::SquadUses`), and its
+        // links, change: opening and closing set every linked squad to the
+        // commanded one's (review, 2026-11-20).
+        if let Some((q, l)) = chosen.filter(|c| c.1 != self.field_was) {
             // The squad and every squad linked with it.
             for o in g.linked(q as usize) {
                 if let Some(s) = g.squads.get_mut(o) {
@@ -990,7 +997,7 @@ fn launch_editor() -> Result<(), String> {
 pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     for q in g.live_squads() {
         let l = (g.squads[q].loadout as usize).min(r.loadouts.len() - 1);
-        g.apply(Cmd::Arm(q as u8, r.armed_of(l)));
+        g.apply(Cmd::Arm(q as u8, Some(r.squad_gun(l))));
         g.apply(Cmd::Load(q as u8, Some(rounds::Deck::new(&r.cards_of(l)))));
     }
     let t = r.turret_cards();
@@ -1000,7 +1007,7 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     for b in 0..g.buildings.len() {
         if let Some(l) = g.buildings[b].loadout.filter(|_| g.buildings[b].alive) {
             let l = (l as usize).min(r.loadouts.len() - 1);
-            g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.cards_of(l)))));
+            g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.turret_deck_of(l)))));
         }
     }
 }

@@ -2225,7 +2225,7 @@ impl App {
         // each press the next; H edits what they hold.
         if let (Some(r), true) = (self.args.run.as_ref(), matches!(bd.kind, Kind::Turret | Kind::Mortar)) {
             let now = bd.loadout.map_or(r.turret_loadout, usize::from);
-            let cards: Vec<String> = r.cards_of(now).iter().map(|c| c.title()).collect();
+            let cards: Vec<String> = r.turret_deck_of(now).iter().map(|c| c.title()).collect();
             let cards = if cards.is_empty() { "no cards".to_string() } else { cards.join(", ") };
             let follows = if bd.loadout.is_none() { ", the turrets' default" } else { "" };
             cmds.push(Command {

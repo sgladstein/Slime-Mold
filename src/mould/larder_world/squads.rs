@@ -687,7 +687,12 @@ impl<W: World> Game<W> {
                     }
                 }
             }
-            let need = (hold * m.len() as f32).max(FIGHT_LEAST);
+            // Per member on the attack-move, not per member: three of a
+            // 30-soldier squad sent alone (the RTS round's per-soldier
+            // orders, a cover squad) stand for 3 walkers, not 30 (review,
+            // 2026-11-20).
+            let fighters = m.iter().filter(|&&k| matches!(self.soldiers[k].order, Order::Fight(..))).count();
+            let need = (hold * fighters as f32).max(FIGHT_LEAST);
             let need = if self.squads[q].holding { 0.5 * need } else { need };
             self.squads[q].holding = boss || seen as f32 >= need;
         }
