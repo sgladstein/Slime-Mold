@@ -68,6 +68,34 @@ pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
 Proposals in the report and the owner's doc: the Mortar first from planet
 4 after Milestone 1, the Pinwheel second; a bounty; an off-screen tell.
 
+## Condensed strikers (2026-11-20, the thread "Make the slime a more interesting enemy")
+
+The owner's pick on the balance thread's card (11-20 15:10Z, "Condensed
+strikers + late lunge"; the brief is the options doc linked under
+Heartbeat). A is this lane's: `larder_world/strikers.rs`
+(`StrikerRules`, `Game::time_strikers`), on in every run
+(`ENEMY_RULES`' `strikers`), GPU only (`World::set_strikers`,
+`World::condense`, `gpu::Engine::strikers` and `Engine::condense`).
+Under 40% of its peak, once a game second, `condense` (a thread a slot)
+lets each ordinary walker within the guns' reach + 12 dish cells of a
+soldier (by the units' walking distance, bit 31 of `cond_r2`; as the crow
+flies without one) try with chance 0.5; tries count on a word a
+`RAID_BLOCK` block in the raid region's third quarter (count << 24 | the
+first's slot); the next three die, taken in. `condlead` (a thread a
+block) marks the first condensed (`DENSE_BIT`, bit 16 of its dense word)
+holding them in `HURT_BITS`. Params' lump row: `lump_on` is also 1 with
+strikers (bite cells counted), then `cond` (haste), `cond_r2`,
+`cond_share`. `armoured` spends one held a blow, `dcount` adds the held
+to its cell's bite, `panic_to` sends it at the nearest soldier,
+`lumpform` clears the bit on joining, `ripen` never sends one off as a
+speck. Counts in `wstat[8..10]`. The look: view.wgsl's `draw_striker`, a
+lit bead in the droplets' layer, radius by what it holds, a 48-step pulse;
+it counts as its walkers in the body, no bronze. Test:
+`condensed_strikers_take_in_their_neighbours_charge_and_take_more_blows`.
+The balance thread (cmsg_01LaKUNJU8dhcZFTMf8VboUgN41f84yygVjCkvqcyxGYdX)
+measures it against `set=strikers=0` with its late lunge (B). Next: D,
+the last-stand heart, once A is judged.
+
 ## Heartbeat (2026-11-20, the same thread)
 
 The third rule, on by default on every run planet (`ENEMY_RULES`' `heart`;

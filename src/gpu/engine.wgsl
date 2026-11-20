@@ -210,9 +210,15 @@ struct Params {
     raid_at: u32, raid_to: u32, raid_r2: u32, s_raid: u32,
     raid_share: f32, raid_ld: u32, raid_haste: f32, raid_field: u32,
     // The lump rows (`BigParams::lumps`, 2026-11-16, the mini-boss thread;
-    // Params grew from 1008 to 1152): whether any lump is on, three spare
-    // words, then each lump's row.
-    lump_on: u32, _l1: u32, _l2: u32, _l3: u32,
+    // Params grew from 1008 to 1152): whether any lump is on (or any
+    // walker is condensed: the bite cells and the dense words are read
+    // then), then the condensed strikers' three numbers (its three spare
+    // words until 11-20, `condense`): a condensed walker's haste as it
+    // charges (0 off: no walker is condensed then), the reach squared from
+    // a soldier inside which a walker may condense (whole fine cells), and
+    // the share that tries each time the pass runs (bit 31 of the reach:
+    // by the units' walking distance); then each lump's row.
+    lump_on: u32, cond: f32, cond_r2: u32, cond_share: f32,
     lumps: array<Lump, 4>,
     // The Mind row (the gun cards' Mind family, 2026-11-16; Params grew
     // from 1152 to 1168, after the lump rows; mod.rs's `MIND_AT`): whether
@@ -435,6 +441,14 @@ fn lump_of(k: u32) -> u32 {
     if (P.lump_on == 0u) { return 0u; }
     return (dense_word(k) & LUMP_BITS) >> LUMP_SHIFT;
 }
+// **A condensed striker** (2026-11-20, `condense`): bit 16 of its word
+// (condensing's old `DENSE_BIT`, free since 11-17; the view reads the same
+// bit), and in `HURT_BITS` the walkers it took in that are left, each one
+// blow it can take and one bite more. Never a lump's member (`lumpform`
+// clears the bit as one joins), so the hits bits are its own.
+const DENSE_BIT: u32 = 0x10000u;
+const COND_MOST: u32 = 3u;
+fn condensed(k: u32) -> bool { return P.cond > 0.0 && (dense_word(k) & DENSE_BIT) != 0u; }
 // Specks are on (`roam`, 11-16, the owner's "Remove the bronze, keep the
 // specks"; with growth). Until 11-17 this was `condenses()`, also on for
 // condensing and thickening, both deleted.
@@ -451,6 +465,15 @@ fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | H
 // it took the blow so. One thread a walker writes its word.
 fn armoured(k: u32) -> bool {
     let lb = lump_of(k);
+    // A condensed striker takes a blow for each walker it took in that is
+    // left, losing one with each (`condense`).
+    if (lb == 0u && condensed(k)) {
+        let wd = dense_word(k);
+        let left = wd >> HURT_SHIFT;
+        if (left == 0u) { return false; }
+        set_dense(k, (wd & ~HURT_BITS) | ((left - 1u) << HURT_SHIFT));
+        return true;
+    }
     // A set walker (`set_scar`) takes `set_armour` blows, counted in its
     // set word, as the CPU's `armoured`.
     if (lb == 0u && is_set(k)) {
@@ -899,6 +922,26 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
     // A still walker (`MIND_STILL`) neither breaks away, raids, panics nor
     // surges.
     if (mind_of(k, S.t) == MIND_STILL) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    // A condensed striker (`condense`) charges the nearest soldier,
+    // wherever it is, at `cond` of its pace, down the units' walking
+    // distance where there is one (`goal_unit`).
+    if (condensed(k)) {
+        let cx = i32(here % P.w);
+        let cy = i32(here / P.w);
+        var best = -1;
+        var bx = 0;
+        var by = 0;
+        for (var u = 0u; u < P.nunits; u++) {
+            let dx = i32(SQ.units[u].x) - cx;
+            let dy = i32(SQ.units[u].y) - cy;
+            let d2 = dx * dx + dy * dy;
+            if (best < 0 || d2 < best) { best = d2; bx = i32(SQ.units[u].x); by = i32(SQ.units[u].y); }
+        }
+        if (best >= 0) {
+            goal_unit = true;
+            return vec3<f32>(f32(bx) + 0.5, f32(by) + 0.5, P.cond);
+        }
+    }
     // A breakaway (`roam`) runs for its crystal at its own pace, and
     // does not panic.
     if (roaming(k)) {
@@ -3902,6 +3945,8 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (P.roam == 0u) { return; }
     let wd = dense_word(k);
     if (!ordinary(k)) { return; }
+    // A condensed striker never leaves as a speck.
+    if ((wd & DENSE_BIT) != 0u) { return; }
     // A breakaway (`roam`, 11-16, the CPU's specks) lands within
     // `roam_land` of its crystal or when it runs dry, or gives up after
     // `SPECK_TRIP` steps on its way (its low bits count them), and is
@@ -3950,12 +3995,17 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n || !lives(k)) { return; }
     let lb = lump_of(k);
-    if (lb == 0u) { return; }
+    // A condensed striker bites once more for each walker it took in that
+    // is left (`condense`).
+    var bite = 0u;
+    if (lb != 0u) { bite = P.lumps[lb - 1u].bite; } else if (condensed(k)) { bite = dense_word(k) >> HURT_SHIFT; }
+    if (bite == 0u) { return; }
     let st = state(k);
     if (st == L_SPORE || st == L_DEAD) { return; }
     let wk = walkers[k];
     let c = cell(wk.x, wk.y);
-    if (P.lumps[lb - 1u].bite > 0u) { atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + c], P.lumps[lb - 1u].bite); }
+    if (c == NONE) { return; }
+    atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + c], bite);
 }
 
 // **Lumps** (held bodies, `BigParams::lumps`, 2026-11-16, the mini-boss
@@ -4006,15 +4056,109 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let within = ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
     if ((word & 256u) != 0u) {
         if (within && (wd & LUMP_BITS) == 0u) {
-            set_dense(k, (wd & ~(HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
+            set_dense(k, (wd & ~(HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
         }
         return;
     }
     if (within) {
-        set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
+        set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
     } else if ((wd & LUMP_BITS) == mine) {
         set_dense(k, wd & ~(LUMP_BITS | HURT_BITS));
     }
+}
+
+// **Condensed strikers** (2026-11-20, the thread "Make the slime a more
+// interesting enemy"; `Game::time_strikers`). The owner, 11-20 14:10Z: once
+// the squad is big enough "the slime cannot touch them, so it doesn't matter
+// how much slime their is", and condensing "and get tougher" was a way back
+// "although the visuals and mechanics of that would need to be much
+// improved". 14:16Z: hardened slime "doesn't attack you. It makes it
+// easier." So a condensed walker charges.
+//
+// Run by the game once a game second late in a planet, off the frame:
+// `condense`, a thread a slot, then `condlead`, a thread a `RAID_BLOCK`
+// block. An ordinary calm walker within `cond_r2` of a soldier (the body's
+// edge facing the squad) tries with chance `cond_share`; the tries in a
+// block are counted on its word (the count in the top 8 bits). The first is
+// its leader (its slot in the low 24); the next `COND_MOST` are taken in,
+// dying where they stand (not counted as kills); the rest stay as they
+// are. Then the leader of a block with any taken in condenses, holding
+// what it took in (`armoured`, `dcount`, `panic_to`), and the word is
+// cleared. The mass is the same and so is the bite: the slime counts one
+// walker less for each taken in. The words are the raid region's third
+// quarter, after the raid's and the wave's blocks.
+//
+// The old condensing (11-14 to 11-17, Reports/dead-ends.md) packed thick
+// slime anywhere: its lobes sat on their crystals and thick walkers stuck
+// inside the body. This one condenses only the edge facing the squad, and
+// every condensed walker charges.
+//
+// `condense` also counts the condensed walkers living into `wstat[8]` and
+// what they hold into `wstat[9]`, and the walkers taken in into
+// `wstat[10]` (`Engine::condense` clears them first).
+fn cond_word(q: u32) -> u32 {
+    let nb = ((P.w + RAID_BLOCK - 1u) / RAID_BLOCK) * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    return dense_base() + DENSE_HEAD + P.n + P.w * P.h + 2u * nb + q;
+}
+
+@compute @workgroup_size(256)
+fn condense(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || P.cond <= 0.0 || !ordinary(k)) { return; }
+    let wd = dense_word(k);
+    if ((wd & DENSE_BIT) != 0u) {
+        atomicAdd(&wstat[8], 1u);
+        atomicAdd(&wstat[9], wd >> HURT_SHIFT);
+        return;
+    }
+    if (lump_of(k) != 0u || (wd & ROAM_BIT) != 0u || is_set(k) || mind_of(k, S.t) == MIND_STILL) { return; }
+    let wk = walkers[k];
+    let here = cell(wk.x, wk.y);
+    if (here == NONE) { return; }
+    // Within reach of a soldier by walking, where the units' walking
+    // distance is kept (bit 31 of `cond_r2`), else as the crow flies. By
+    // walking, slime across deep water or behind rock from the squad (the
+    // first films, planet 3: 2,000 of them pressed on a bank for a minute
+    // with the squad shooting across) never condenses: it could not charge.
+    let r2 = f32(P.cond_r2 & 0x7FFFFFFFu);
+    var near = false;
+    if ((P.cond_r2 & 0x80000000u) != 0u) {
+        let ud = units_dist(here);
+        near = ud != 0xFFFFFFFFu && f32(ud) * f32(ud) <= r2;
+    } else {
+        for (var u = 0u; u < P.nunits; u++) {
+            let dx = f32(SQ.units[u].x) + 0.5 - wk.x;
+            let dy = f32(SQ.units[u].y) + 0.5 - wk.y;
+            if (dx * dx + dy * dy <= r2) { near = true; break; }
+        }
+    }
+    if (!near || unit(keyed(P.s_condense, S.t, k ^ 0x2C1B3C6Du)) >= P.cond_share) { return; }
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let q = ((here / P.w) / RAID_BLOCK) * bw + (here % P.w) / RAID_BLOCK;
+    let c = atomicAdd(&news[cond_word(q)], 1u << 24u) >> 24u;
+    if (c == 0u) {
+        atomicOr(&news[cond_word(q)], k & 0xFFFFFFu);
+    } else if (c <= COND_MOST) {
+        // Taken in: dead where it stands, as `strike` kills, not counted.
+        atomicAdd(&wstat[10], 1u);
+        atomicSub(&occ[here], 1u);
+        spec[k] = (spec[k] & 0xFFFF01FFu) | (L_DEAD << 9u);
+        if (P.upkeep > 0.0) { energy[k] = -1.0; }
+    }
+}
+
+@compute @workgroup_size(256)
+fn condlead(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let nb = ((P.w + RAID_BLOCK - 1u) / RAID_BLOCK) * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    if (gid.x >= nb) { return; }
+    let v = atomicLoad(&news[cond_word(gid.x)]);
+    if (v == 0u) { return; }
+    atomicStore(&news[cond_word(gid.x)], 0u);
+    let took = min((v >> 24u) - 1u, COND_MOST);
+    if (took == 0u) { return; }
+    let k = v & 0xFFFFFFu;
+    let wd = dense_word(k);
+    set_dense(k, (wd & ~(HURT_BITS | RIPE_BITS)) | DENSE_BIT | (took << HURT_SHIFT));
 }
 
 // **Plants** (2026-11-14, the CPU's `mould::plants`): in `news` after the

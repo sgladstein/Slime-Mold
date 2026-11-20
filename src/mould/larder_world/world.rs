@@ -191,6 +191,19 @@ pub trait World {
     /// and its wavelength in fine cells (`gpu::Engine::heart`). A rule of
     /// the GPU engine only.
     fn set_heart(&mut self, _at: Option<(f32, f32)>, _lean: f32, _period: u32, _len: u32) {}
+    /// **Condensed strikers** (2026-11-20, `Game::time_strikers`): a
+    /// condensed walker's haste as it charges (None off; `gpu::Engine::
+    /// strikers`). A rule of the GPU engine only.
+    fn set_strikers(&mut self, _haste: Option<f32>) {}
+    /// Condenses the edge facing the squad at once (engine.wgsl's
+    /// `condense`): each ordinary walker within `reach` (fine cells) of a
+    /// soldier tries with chance `share`, and the first in each block takes
+    /// in up to three of the rest. The condensed walkers living before it
+    /// ran, what they held, and the walkers taken in; None for a world
+    /// that cannot (the CPU engine), or with the strikers off.
+    fn condense(&mut self, _reach: f32, _share: f32) -> Option<(u32, u32, u32)> {
+        None
+    }
     /// The ground a raid walks (the slime's agar, `w` x `h` fine cells),
     /// copied so the game can build the raid's way round walls off the
     /// frame; None for a world with no raids.

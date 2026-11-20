@@ -610,6 +610,12 @@ pub struct Rules {
     /// with them. Off here; a run turns it on (`run::ENEMY_RULES`). GPU
     /// only.
     pub heart: super::HeartRules,
+    /// **Condensed strikers** (2026-11-20; `strikers.rs`): late in a
+    /// planet the slime's edge facing the squad condenses, each walker
+    /// taking in up to three, four times as tough and as biting, and
+    /// charges. Off here; a run turns it on (`run::ENEMY_RULES`). GPU
+    /// only.
+    pub strikers: super::StrikerRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -698,6 +704,10 @@ impl Rules {
                 self.heart.on = v > 0.0;
                 return true;
             }
+            "strikers" => {
+                self.strikers.on = v > 0.0;
+                return true;
+            }
             "wave_sides" => {
                 self.wave.sides = v.clamp(0.0, 8.0) as u32;
                 return true;
@@ -754,6 +764,10 @@ impl Rules {
             "heart_period" => &mut self.heart.period,
             "heart_len" => &mut self.heart.len,
             "heart_held" => &mut self.heart.held,
+            "strikers_below" => &mut self.strikers.below,
+            "strikers_band" => &mut self.strikers.band,
+            "strikers_share" => &mut self.strikers.share,
+            "strikers_haste" => &mut self.strikers.haste,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
@@ -945,6 +959,7 @@ impl Default for Rules {
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),
             heart: super::HeartRules::default(),
+            strikers: super::StrikerRules::default(),
         }
     }
 }

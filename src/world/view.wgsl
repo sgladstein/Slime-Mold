@@ -3496,6 +3496,43 @@ fn lay_streak(w: vec4<f32>, cnt: u32, kf: f32) {
     }
 }
 
+// **A condensed striker** (2026-11-20, the Enemy lane; the engine's
+// `condense`, `Game::time_strikers`): a bead in the droplets' layer (the
+// specks' third screen, layer 2), lit by the body's key light with its
+// shadow as a droplet is, its radius by the walkers it holds (`cond`, 2
+// to 4 with itself) and a slow pulse, its heat (deep orange to glowing
+// gold, as a droplet cools) breathing with it. Where strikers bunch they
+// read as hot cores in the body; as each is shot it shrinks a step.
+// About 1.6 s a pulse at the run's 30 steps a second, each striker on its
+// own phase so a crowd shimmers rather than blinks.
+fn draw_striker(k: u32, s: vec2<f32>, cond: u32) {
+    // Its own phase: a cheap mix of its slot (Knuth's multiplier).
+    let ph = f32(state[0] % 48u) / 48.0 + f32((k * 2654435761u) >> 22u) / 1024.0;
+    let beat = sin(6.2831853 * ph);
+    let rh = max(P.zoom * (0.22 + 0.09 * f32(min(cond, 4u))) * (1.0 + 0.12 * beat), 1.0);
+    let h4 = u32(round(11.0 + 4.0 * beat));
+    let l = normalize(LIGHT);
+    let sh = -normalize(l.xy) * max(DROP_SHADOW * rh, 1.0);
+    let pad = vec2<f32>(rh + 1.0);
+    let lo = vec2<i32>(floor(s + min(sh, vec2<f32>(0.0)) - pad));
+    let hi = vec2<i32>(ceil(s + max(sh, vec2<f32>(0.0)) + pad));
+    for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
+        for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
+            let p = vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5);
+            var v = 0u;
+            if (distance(p, s) <= rh) {
+                let o = (p - s) / rh;
+                let n = normalize(vec3<f32>(o, sqrt(max(1.0 - dot(o, o), 0.0))));
+                let f = u32(round(15.0 * clamp((dot(n, l) + 0.3) / 1.3, 0.0, 1.0)));
+                v = (2u << 8u) | (h4 << 4u) | f;
+            } else if (distance(p - sh, s) <= rh) {
+                v = 1u << 8u;
+            }
+            if (v != 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], v); }
+        }
+    }
+}
+
 @compute @workgroup_size(256)
 fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -3559,14 +3596,18 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A member is counted on its own (`FG_LUMP`, `prep`'s `lcb`), and its
     // lump's flag set in the cell (`FG_FLAGS`), so `prep` takes the look
     // of the lump that is there, not of the nearest centre.
+    // A condensed striker (the engine's `condense`, 2026-11-20, the Enemy
+    // lane): the walkers it holds (its word's top bits) count in the body
+    // as walkers, so the slime's thickness is its mass; it is drawn as a
+    // bead below. No bronze (the owner, 11-20: condensing's look "would
+    // need to be much improved"; the old bronze read as a dead crust).
+    var cond = 0u;
     if (member) {
         dcnt = 1u << FG_LUMP;
     } else if (P.dense_at > 0u) {
         if ((dw & DENSE_BIT) != 0u) {
-            cnt += 15u;
-            dcnt += 15u;
-            let age = f32(dw & 0xFFFFu);
-            fresh = u32(round(4.0 * max(1.0 - age / 12.0, 0.0)));
+            cond = 1u + min(dw >> 28u, 15u);
+            cnt += 15u * (cond - 1u);
         } else if (P.ripe_at > 0u) {
             let r = clamp(f32(dw & 0xFFFFu) / f32(P.ripe_at), 0.0, 1.0);
             dcnt = u32(round(4.0 * r * r));
@@ -3627,6 +3668,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // is under it. The shaded limb and the shadow keep it apart from the
     // bright body as the rim did.
     if (P.mind_at != 0u && w.w == 0.0) { draw_mind(k, s); }
+    if (cond > 0u && w.w == 0.0) { draw_striker(k, s, cond); }
     if (w.w != 0.0) {
         let spray = w.w < 0.0;
         let fl = abs(w.w);

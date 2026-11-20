@@ -55,6 +55,7 @@ mod bosses;
 mod fruit;
 mod waves;
 mod heart;
+mod strikers;
 mod rules;
 mod paths;
 mod cmd;
@@ -84,6 +85,7 @@ pub use raids::{LureMark, March, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};
 pub use heart::HeartRules;
+pub use strikers::{StrikerRules, Strikers};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
@@ -538,6 +540,8 @@ pub struct Game<W: World> {
     pub waves: Waves,
     /// Where the slime's heart beats from now (`heart.rs`), fine cells.
     pub heart_at: Option<(f32, f32)>,
+    /// The condensed strikers (`strikers.rs`).
+    pub strikers: Strikers,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
@@ -689,6 +693,7 @@ impl<W: World> Game<W> {
             fruits: Fruits::default(),
             waves: Waves::default(),
             heart_at: None,
+            strikers: Strikers::default(),
             rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
