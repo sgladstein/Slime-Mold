@@ -19,6 +19,11 @@ With `--base`, a change to the game (`src/`, `assets/`, the play scripts)
 that adds no line to `news/whats-new.txt` is an error too, unless a commit
 message says why not in a `Nothing-new:` line (`whats_new`, below).
 
+With `--base`, a pull request that adds more than `MEDIA_CAP` of pictures,
+films or sound outside `assets/`, or one such file over `MEDIA_FILE_CAP`,
+is an error too, unless a commit message says why in a `Big-media:` line
+(`media_cap`, below).
+
 A top-level report under `Reports/` that no page cites is an error too,
 unless it is listed in `NOT_YET_INGESTED` (reports from before the wiki).
 So is a note (.md) inside a report folder that cannot be reached by links
@@ -95,6 +100,16 @@ NOW_OVER = {
 GAME_PATHS = ("src/", "assets/", "play.cmd", "play.ps1")
 NEWS = "news/whats-new.txt"
 NO_NEWS = "Nothing-new:"
+# The size cap on a pull request's films and stills (job 5 of the Engine
+# and tools lane, Scott's 19:07Z OK on 2026-11-17: "a size cap per pull
+# request in CI"; the clone was 1.2 GB then, 1.6 GB of history on 11-20,
+# most of it gifs and mp4s from before 11-15). The 60 PRs merged before
+# 2026-11-20 21:00Z added at most 10.1 MB (#563) and no file over 1.8 MB;
+# the old 7 to 9 MB gifs are what the caps stop. In bytes.
+MEDIA = (".gif", ".mp4", ".webm", ".mov", ".png", ".jpg", ".jpeg", ".webp", ".wav", ".ogg", ".mp3")
+MEDIA_CAP = 12 * 1024 * 1024
+MEDIA_FILE_CAP = 3 * 1024 * 1024
+BIG_MEDIA = "Big-media:"
 INDEX_LINE_CAP = 200   # one index line is one sentence (warning)
 STATUSES = {"current", "open", "decided", "paused", "retired"}
 
@@ -210,15 +225,8 @@ def whats_new(base):
     #N" commit the queue made, so a batch cannot hide one request's missing
     line behind another's.
     """
-    units = []
-    for line in git("log", "--first-parent", "--format=%H %s", f"{base}..HEAD").splitlines():
-        sha, _, subject = line.partition(" ")
-        if subject.startswith("Merge pull request #"):
-            units.append((subject.split(" from ")[0][len("Merge "):], f"{sha}^1", f"{sha}^2", f"{sha}^1...{sha}"))
-    if not units:
-        units = [("this change", base, "HEAD", f"{base}...HEAD")]
     errors = []
-    for what, lo, hi, span in units:
+    for what, lo, hi, span in units_of(base):
         files = [f for f in git("diff", "--name-only", span).split("\n") if f]
         game = [f for f in files if is_game(f)]
         if not game:
@@ -237,6 +245,51 @@ def whats_new(base):
                       + f") and adds no line to {NEWS}. Add one line at the bottom saying what "
                       "the player will see and how to try it. If nothing the player sees or does "
                       f"changed, say why in a commit message line: `{NO_NEWS} <why>`")
+    return errors
+
+
+def units_of(base):
+    """The pull requests in base..HEAD, as (what, lo, hi, span): each
+    "Merge pull request #N" commit the merge queue made, or else the whole
+    branch as one (`whats_new`)."""
+    units = []
+    for line in git("log", "--first-parent", "--format=%H %s", f"{base}..HEAD").splitlines():
+        sha, _, subject = line.partition(" ")
+        if subject.startswith("Merge pull request #"):
+            units.append((subject.split(" from ")[0][len("Merge "):], f"{sha}^1", f"{sha}^2", f"{sha}^1...{sha}"))
+    return units or [("this change", base, "HEAD", f"{base}...HEAD")]
+
+
+def media_cap(base):
+    """The films-and-stills cap (`MEDIA_CAP`, `MEDIA_FILE_CAP`), one pull
+    request at a time as `whats_new` does. A file counts at its size in the
+    pull request's head, added or changed, outside `assets/` (the game's
+    own pictures and sounds). Clip a film shorter or smaller, use mp4 over
+    gif, or say why it must be big in a commit line `Big-media: <why>`."""
+    errors = []
+    for what, lo, hi, span in units_of(base):
+        files = [f for f in git("diff", "--name-only", "--diff-filter=AM", span).split("\n")
+                 if f and f.lower().endswith(MEDIA) and not f.startswith("assets/")]
+        if not files:
+            continue
+        sizes = []
+        for f in files:
+            n = git("cat-file", "-s", f"{hi}:{f}").strip()
+            sizes.append((int(n) if n.isdigit() else 0, f))
+        total = sum(n for n, _ in sizes)
+        big = [(n, f) for n, f in sizes if n > MEDIA_FILE_CAP]
+        if total <= MEDIA_CAP and not big:
+            continue
+        why = [l.strip() for l in git("log", "--format=%B", f"{lo}..{hi}").splitlines()
+               if l.strip().startswith(BIG_MEDIA) and len(l.strip()) > len(BIG_MEDIA) + 8]
+        if why:
+            print(f"note: {what} adds {total / 2**20:.1f} MB of pictures and films: {why[0]}")
+            continue
+        mb = lambda n: f"{n / 2**20:.1f} MB"
+        detail = f"{mb(total)} in {len(sizes)} files (the cap is {mb(MEDIA_CAP)})" if total > MEDIA_CAP else \
+            f"{big[0][1]} at {mb(big[0][0])} (the cap is {mb(MEDIA_FILE_CAP)} a file)"
+        errors.append(f"{what} adds {detail}. Make the clips shorter or smaller (mp4, not gif), "
+                      f"or say why they must be big in a commit message line: `{BIG_MEDIA} <why>`")
     return errors
 
 
@@ -460,6 +513,7 @@ def main():
 
     if base:
         errors += whats_new(base)
+        errors += media_cap(base)
 
     for w in warnings:
         print("warning:", w)
