@@ -1224,26 +1224,27 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
 
 /// **The run bot plays planet 1 to a verdict** (the Engine and tools lane's
 /// job 4: the run bot in CI in place of smoke rounds of a fixed length).
-/// Run seed 1's planet 1 at the window's own scale, with the `bot` hand,
-/// through the window's own steps: the planet reaches a verdict (no soft
-/// lock: `run_bot` gives up a minute past the clock) and does not end in
-/// under a minute. A win is
-/// not asserted, so a change to the balance never turns CI red (the
-/// owner's "balance never blocks"); the bot's line says how it went. On
-/// 2026-11-18 it won at 2:48 with 2 stars in 78 s on the cloud's
-/// software Vulkan. Planets 2 and 3 cost minutes each, so they run after
-/// each landing instead (`.github/workflows/run-bot.yml`).
+/// Run seed 1's planet 1 at the window's own scale, with the run bot's
+/// plan (`runbot::PLAN`, the strategy bot since 2026-11-20), through the
+/// window's own steps (`league::play`): the planet reaches a verdict (no
+/// soft lock: the play gives up a minute past the clock, `how=open`) and
+/// does not end in under a minute. A win is not asserted, so a change to
+/// the balance never turns CI red (the owner's "balance never blocks");
+/// the league line says how it went. On 2026-11-18 the old bot won it at
+/// 2:48 with 2 stars in 78 s on the cloud's software Vulkan. Planets 2 and
+/// 3 cost minutes each, so they run after each landing instead
+/// (`.github/workflows/run-bot.yml`).
 #[test]
 fn the_window_plays_planet_1_with_the_run_bot() {
     let Some((device, queue)) = smoke_gpu() else { return };
     let base = Args { seed: 1, scale: 2, walkers: 5000, ..Default::default() };
+    let mut r = Run::new(1);
+    r.restock();
     let t0 = Instant::now();
-    let played = runbot::run_bot(base, 1, 1, &device, &queue).unwrap();
-    let p = &played[0];
-    eprintln!("run bot: {} ({:.0} s)", p.line(), t0.elapsed().as_secs_f32());
-    assert_eq!(played.len(), 1);
-    assert!(!p.why.contains("soft lock"), "{}", p.line());
-    assert!(p.secs >= 60.0, "planet 1 ended in under a minute: {}", p.line());
+    let p = league::play(&base, &r, runbot::PLAN, 0.0, &device, &queue).unwrap();
+    eprintln!("run bot: {} ({:.0} s)", p.line, t0.elapsed().as_secs_f32());
+    assert_ne!(p.how, "open", "no verdict by the clock and a minute: a soft lock: {}", p.line);
+    assert!(p.secs >= 60.0, "planet 1 ended in under a minute: {}", p.line);
 }
 
 /// The run bot's shop buys the bullet and the card planet 2 asks for (a
