@@ -155,10 +155,12 @@ end.
 - **Mini-boss errands** (11-20, #547's question): leeches and sappers
   never reached their pump or wall in 5:00. The nearest target was 150 to
   250 units off, at 1 to 4 units a second, on a 90 s trip. Direction's call:
-  a nearer target, with the trip unchanged. A leech or sapper is drawn only
-  when its target is within its speed times `BossRules::trip`; otherwise it
-  is drawn as another kind. The Enemy-side thread builds it after #547 and
-  re-runs the same nine games.
+  a nearer target, with the trip unchanged. A first rule, drawing a leech
+  or sapper only with its target within reach, drew none on his maps: every
+  crowded knot was 190 to 250 units from a pump or wall. So, on the
+  thread's proposal, a drawn leech or sapper forms at the crowded knot
+  nearest its target. It keeps all four kinds, as he asked, and the 90 s
+  trip.
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the
