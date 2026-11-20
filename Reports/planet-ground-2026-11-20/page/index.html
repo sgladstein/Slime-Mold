@@ -83,6 +83,25 @@ td,th{border-bottom:1px solid var(--line);padding:6px 14px 6px 0;text-align:left
 </section>
 
 <section>
+  <h2>Round 2: water and rock</h2>
+  <div class="prose">
+    <ul>
+      <li><b>Bog water (planet 3).</b> The fen's lakes were the same navy as every planet's water and, with the slime's specks in them, read as a night sky. They are now green-black bog water at the same values, so water still sits a step under the ground.</li>
+      <li><b>Reeds at zoom 6.</b> The reed blades were still half blended away at zoom 6; they are spaced a little wider so whole blades show from zoom 6 up.</li>
+      <li><b>Sandstone (planet 2).</b> Rock was the same slate on every planet. On the barrens it is now a rose-tan sandstone in beds a few cells thick, each its own shade.</li>
+      <li><b>Mossy stone (planet 3).</b> In the fen the rock is a cooler wet stone with moss in patches over its top.</li>
+    </ul>
+  </div>
+  <div class="ba"><span>Round 1</span><span>Round 2</span></div>
+  <figure><img src="fen-water6.jpg" alt="Planet 3 lake at zoom 6, navy before, bog water after">
+    <figcaption>Zoom 6, 1:00 (world 360, 90): a lake and its reed margin.</figcaption></figure>
+  <figure><img src="fen-rock12.jpg" alt="Planet 3 rock by a lake at zoom 12, slate before, mossy stone after">
+    <figcaption>Zoom 12, 0:30 (world 393, 70): a rock slab in a lake, the reeds on the shore.</figcaption></figure>
+  <figure><img src="sandstone12.jpg" alt="Planet 2 rock at zoom 12, slate before, sandstone after">
+    <figcaption>Zoom 12, 0:30 (world 330, 200): the rock round the slime's basin.</figcaption></figure>
+</section>
+
+<section>
   <h2>Cost</h2>
   <div class="prose">
     <p>GPU tail per frame on the software renderer (llvmpipe), median of a 4 s bench at zoom 6, three runs a side taken in turn. Two runs of one build differ by 10 to 20% here, so both are inside the noise. This machine says nothing about the GTX 1070.</p>
@@ -92,6 +111,7 @@ td,th{border-bottom:1px solid var(--line);padding:6px 14px 6px 0;text-align:left
     <tr><td>2, barrens (300, 300)</td><td>116, 126, 121</td><td>120, 119, 116</td></tr>
     <tr><td>3, fen (300, 100)</td><td>145, 148, 143, 154, 155, 156</td><td>169, 158, 150, 153, 155, 159</td></tr>
   </table></div>
+  <p class="lede">Round 2 against round 1, runs taken in turn: planet 2 129, 127 ms against 134, 126; planet 3 166, 156 against 169, 168 (a first run that overlapped filming dropped). Also inside the noise.</p>
   <p class="lede">Made with <code>LARDER_VIEW_WGSL</code> on one build so both sides play the same game; clips joined by <code>make_clips.py</code> in this folder.</p>
 </section>
 </main>

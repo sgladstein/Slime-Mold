@@ -518,6 +518,40 @@ fn a_scared_piece_sees_past_the_guns() {
     assert_eq!(g.world.p.panic_r, 7.0);
 }
 
+/// A cornered slime lunges (`Rules::late_at`, the 11-20 brief's option
+/// B): under `late_at` of its peak its charges reach `late_margin` past
+/// the guns and its surges lunge at `late_haste`, for the rest of the
+/// planet; off (0) nothing changes; a world already faster keeps its own.
+#[test]
+fn a_cornered_slime_lunges_from_further_out() {
+    let mut g = small(1);
+    g.rules.late_at = 0.4;
+    let haste = g.world.p.surge_haste;
+    assert!(haste < g.rules.late_haste && g.rules.panic_margin < g.rules.late_margin);
+    g.keep_panic_reach();
+    assert!(!g.late, "whole, it is not cornered");
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.panic_margin);
+    g.peak = g.mould * 3;
+    g.keep_panic_reach();
+    assert!(g.late);
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.late_margin);
+    assert_eq!(g.world.p.surge_haste, g.rules.late_haste);
+    g.peak = g.mould;
+    g.keep_panic_reach();
+    assert!(g.late, "once cornered, cornered for the rest of the planet");
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.late_margin);
+    // Off, or a world that already lunges harder (the Swarmer).
+    let mut off = small(1);
+    off.peak = off.mould * 3;
+    off.keep_panic_reach();
+    assert!(!off.late);
+    assert_eq!((off.world.p.panic_r, off.world.p.surge_haste), (off.gun_range_max() + off.rules.panic_margin, haste));
+    let mut fast = small(1);
+    (fast.rules.late_at, fast.world.p.surge_haste, fast.peak) = (0.4, 5.0, fast.mould * 3);
+    fast.keep_panic_reach();
+    assert_eq!(fast.world.p.surge_haste, 5.0);
+}
+
 /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
 /// mould's home stops nothing, and births go on.
 #[test]
@@ -830,6 +864,12 @@ impl World for Later {
     }
     fn set_panic_r(&mut self, r: f32) {
         World::set_panic_r(&mut self.d, r)
+    }
+    fn surge_haste(&self) -> f32 {
+        World::surge_haste(&self.d)
+    }
+    fn set_surge_haste(&mut self, h: f32) {
+        World::set_surge_haste(&mut self.d, h)
     }
     fn surge_every(&self) -> u32 {
         World::surge_every(&self.d)

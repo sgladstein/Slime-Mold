@@ -203,7 +203,7 @@ fn far_cell(x: f32, y: f32) -> vec3<f32> {
     var m = cell_mat(ix, iy, th, 0.0, 0.0);
     var c = m.albedo;
     // Deep water's darkness, drawn at the pixel in the shaded view.
-    if (kind == WET && ((g >> 4u) & 7u) == SOIL_DEEP) { c = mix(c, DEEP_RGB, 0.7 * m.vis); }
+    if (kind == WET && ((g >> 4u) & 7u) == SOIL_DEEP) { c = mix(c, deep_rgb(), 0.7 * m.vis); }
     // The plants over the ground, by their cover, as `plant_layer` lays them.
     let pd = plant_d(i);
     if (pd > 0.0) { c = mix(c, plant_rgb(plant_k(i)), plant_cover(pd) * m.vis); }
@@ -596,7 +596,7 @@ fn flora_form(fl: u32, k: u32) -> Form {
         // on the shore. Now standing blades in tussocks, straw-green with
         // pale tops, each with its shadow, thickest at the water's edge
         // (the reeds' own density).
-        else if (k == 2u) { f.shape = 1u; f.s = 0.42; f.r0 = 0.95; f.stretch = 1.0; f.relief = 0.45; f.clump = 0.55; f.col = vec3<f32>(46.0, 58.0, 34.0); f.tip = vec3<f32>(104.0, 106.0, 64.0); f.fall = 0.6; }
+        else if (k == 2u) { f.shape = 1u; f.s = 0.55; f.r0 = 0.9; f.stretch = 1.0; f.relief = 0.45; f.clump = 0.55; f.col = vec3<f32>(46.0, 58.0, 34.0); f.tip = vec3<f32>(104.0, 106.0, 64.0); f.fall = 0.6; }
     } else if (fl == 3u) {
         // River valley: long grass, blade by blade.
         if (k == 0u) { f.shape = 1u; f.s = 0.6; f.r0 = 0.95; f.relief = 0.3; f.col = vec3<f32>(46.0, 68.0, 42.0); }
@@ -821,6 +821,17 @@ const WET_RGB: vec3<f32> = vec3<f32>(14.0, 33.0, 41.0);
 const SOIL_DEEP: u32 = 4u;
 const SOIL_BRIDGE: u32 = 5u;
 const DEEP_RGB: vec3<f32> = vec3<f32>(1.0, 6.0, 14.0);
+// The fen's water (planet 3, Look C 2026-11-20): bog water, green-black
+// with peat, where every other planet's is navy; the lakes were the
+// largest flat thing on the planet and, navy with the walkers' specks in
+// them, read as night sky. The same values as the navy (shallow a clear
+// step under any ground, deep near black), only the hue moved.
+const FEN_WET_RGB: vec3<f32> = vec3<f32>(20.0, 33.0, 27.0);
+const FEN_DEEP_RGB: vec3<f32> = vec3<f32>(4.0, 9.0, 6.0);
+// The fen's shallow margin, the bed through peaty water (else (30,52,56)).
+const FEN_SHALLOW: vec3<f32> = vec3<f32>(36.0, 50.0, 38.0);
+fn wet_rgb() -> vec3<f32> { return select(WET_RGB, FEN_WET_RGB, P.flora == 2u); }
+fn deep_rgb() -> vec3<f32> { return select(DEEP_RGB, FEN_DEEP_RGB, P.flora == 2u); }
 // Weathered grey-brown, its value between rock and soft rock: gold is
 // the slime's hue (rule 3), and the first orange planks read as slime
 // beside its front at zoom 6 (art lead, 11-14 19:23Z).
@@ -1333,7 +1344,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         // stair inside the water.
         // Reeds (or any plant) on the water lie over it per pixel
         // (`shaded`), and dull its gloss by their cover.
-        let water = WET_RGB + tint * 0.4;
+        let water = wet_rgb() + tint * 0.4;
         let over = clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85;
         m.albedo = mix(water, m.albedo, over);
         m.vis = min(m.vis, 1.0 - over);
@@ -2265,7 +2276,7 @@ fn ground_cell(ix: i32, iy: i32) -> GroundB {
     var base = plain_soil(o.elev);
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = barren_rgb(); }
     if (kind == RUBBLE) { base = rubble_rgb(ix, iy); }
-    if (kind == WET) { base = WET_RGB; }
+    if (kind == WET) { base = wet_rgb(); }
     o.col = base;
     return o;
 }
@@ -2602,11 +2613,11 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // key light in streaks across its direction.
     if (w.w > 0.001) {
         let d = wd;
-        var water = WET_RGB;
+        var water = wet_rgb();
         var depth = 0.0;
         if (so.deep > 0.001) {
             depth = clamp(so.deep, 0.0, 1.0) * (0.35 + 0.65 * deep_depth(x, y));
-            water = mix(WET_RGB, DEEP_RGB, smoothstep(0.0, 0.8, depth));
+            water = mix(wet_rgb(), deep_rgb(), smoothstep(0.0, 0.8, depth));
         }
         // The surface: a slow swell in the darkness, so open water isn't
         // flat. (Tried and dropped: streaks of glitter across the key light
@@ -2619,7 +2630,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         } else {
             // The shallow margin: the bed (the land's colour, wet-dark)
             // through a little water, about a cell in.
-            let shallow = mix(land * 0.7, vec3<f32>(30.0, 52.0, 56.0), 0.55);
+            let shallow = mix(land * 0.7, select(vec3<f32>(30.0, 52.0, 56.0), FEN_SHALLOW, P.flora == 2u), 0.55);
             water = mix(water, shallow, exp(-max(d, 0.0) / 0.9) * 0.8);
             // The bank: damp darker ground out to about a cell, and a light
             // waterline right at the edge.
@@ -3188,6 +3199,13 @@ const TER_SHADE: f32 = 0.55;
 // Rock's stone (`terrain_top`): the mottling's size in cells, and how dark
 // and wide (in the noise's units) its cracks are.
 const ROCK_MOTTLE: f32 = 2.5;
+// The barrens' sandstone beds (cells apart, and how much a band's value
+// swings), and the fen's moss on stone (its colour and how far it covers
+// a patch).
+const STRATA: f32 = 2.6;
+const STRATA_AMP: f32 = 0.07;
+const ROCK_MOSS: vec3<f32> = vec3<f32>(42.0, 56.0, 30.0);
+const MOSS_COVER: f32 = 0.75;
 const ROCK_CRACK: f32 = 0.3;
 const ROCK_CRACK_W: f32 = 0.012;
 
@@ -3234,6 +3252,14 @@ fn tidx(ix: i32, iy: i32) -> u32 {
 }
 
 // A shown cell's terrain from its `tcell` word: colour and height (0: open).
+// Rock's hue by planet (Look C 2026-11-20, planets 2 and 3): the barrens'
+// a warm sandstone, the fen's a cooler, greener wet stone; the value kept
+// (each tint's luma within a point or two of 1), so rock stays in its band.
+fn rock_tint() -> vec3<f32> {
+    if (P.flora == 1u) { return vec3<f32>(1.24, 0.96, 0.84); }
+    if (P.flora == 2u) { return vec3<f32>(0.94, 1.02, 0.97); }
+    return vec3<f32>(1.0);
+}
 fn ter_cell(p: u32) -> vec4<f32> {
     let kind = (p >> 16u) & 255u;
     let v = byte(p, 3u);
@@ -3243,7 +3269,7 @@ fn ter_cell(p: u32) -> vec4<f32> {
     // slime's thin film from 80, crystals from 110, thick slime from 140.
     // Rock was 98 and soft rock 107-123 in grey, above the thin film on
     // all 14 planet-seeds and above the crystals on 12.
-    if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(50.0, 52.0, 56.0), vec3<f32>(66.0, 65.0, 62.0), v), h); }
+    if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(50.0, 52.0, 56.0), vec3<f32>(66.0, 65.0, 62.0), v) * rock_tint(), h); }
     // Health is the wall's brightness as well as its height: a warm grey
     // just above rock at full health, darkening as it is worn. (Before:
     // up to (128, 118, 104), and its pale beige 168 before 11-14 18:56Z.)
@@ -3387,8 +3413,27 @@ fn terrain_top(ta: TerAt) -> vec3<f32> {
         // first cut, every cell crossed).
         let crackle = smoothstep(0.55, 0.75, vnoise(q2 * 0.18 + 41.0));
         let crack = crackle * (1.0 - smoothstep(0.0, ROCK_CRACK_W + 0.5 / P.zoom, abs(cn - 0.5)));
-        let stone = (0.88 + 0.24 * mott) * (1.0 + 0.14 * grit) * (1.0 - ROCK_CRACK * crack * smoothstep(0.3, 1.2, d));
+        var stone = (0.88 + 0.24 * mott) * (1.0 + 0.14 * grit) * (1.0 - ROCK_CRACK * crack * smoothstep(0.3, 1.2, d));
+        if (P.flora == 1u) {
+            // Sandstone (planet 2): beds about `STRATA` cells thick,
+            // bent by a slow noise, each bed a shade of its own (a step at
+            // its plane), with a soft swell inside it; from zoom 3, under
+            // which they alias. Beds 1.4 cells apart with a strong swell
+            // read as wood grain at zoom 12 (first cut).
+            let u = (0.34 * p.x + 0.94 * p.y) / STRATA + 1.8 * vnoise(p / 7.0 + 3.0);
+            let band = 0.5 + 0.5 * sin(6.2831853 * u);
+            let bed = hash2(vec2<f32>(floor(u), 7.0));
+            stone *= 1.0 + (STRATA_AMP * (band - 0.5) + 0.14 * (bed - 0.5)) * smoothstep(3.0, 6.0, P.zoom);
+        }
         alb *= mix(stone, 1.0, t.wall);
+        if (P.flora == 2u) {
+            // Mossy stone (planet 3): moss in patches over the rock's top,
+            // thickest away from its edge, with a grain of its own; its
+            // value a little under the stone's, so the rock keeps its band.
+            let mp = smoothstep(0.45, 0.75, vnoise(q1 / 1.6 + 61.0) + 0.15 * (mott - 0.5)) * smoothstep(0.2, 0.9, d);
+            let moss = ROCK_MOSS * (0.8 + 0.4 * vnoise(q2 * 2.2 + 13.0));
+            alb = mix(alb, moss, MOSS_COVER * mp * (1.0 - t.wall));
+        }
     }
     // A door's grate: bars on the cells' middles both ways, dark between,
     // a pixel of smoothing at any zoom. Read from the cell under the pixel

@@ -977,6 +977,17 @@ impl World for GpuWorld {
         self.s.panic_r = r;
     }
 
+    fn surge_haste(&self) -> f32 {
+        self.s.surge_haste
+    }
+
+    /// Written to the GPU with the next step's params, and kept on the
+    /// mirror dish, as `set_surge_at`.
+    fn set_surge_haste(&mut self, h: f32) {
+        self.s.surge_haste = h;
+        self.e.dish.p.surge_haste = h;
+    }
+
     fn surge_every(&self) -> u32 {
         self.s.surge_every
     }
@@ -1332,6 +1343,12 @@ mod tests {
         }
         fn set_panic_r(&mut self, r: f32) {
             self.g.set_panic_r(r)
+        }
+        fn surge_haste(&self) -> f32 {
+            self.g.surge_haste()
+        }
+        fn set_surge_haste(&mut self, h: f32) {
+            self.g.set_surge_haste(h)
         }
         fn surge_every(&self) -> u32 {
             self.g.surge_every()

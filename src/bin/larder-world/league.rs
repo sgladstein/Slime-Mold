@@ -245,19 +245,20 @@ fn shop_plan(spec: &str) -> Result<Plan, String> {
     }
 }
 
-/// One planet played: the `league` line's numbers.
-struct Played {
-    how: &'static str,
-    stars: u8,
-    secs: f32,
-    line: String,
+/// One planet played: the `league` line's numbers. The window's planet 1
+/// test (`the_window_plays_planet_1_with_the_run_bot`) reads it too.
+pub(super) struct Played {
+    pub how: &'static str,
+    pub stars: u8,
+    pub secs: f32,
+    pub line: String,
     /// Shop points from starfall and boss cores (`Game::starfall`).
-    found: u32,
+    pub found: u32,
 }
 
 /// Plays the run's current planet with plan `spec` to its verdict or
 /// `secs` game seconds (0: its clock and a minute).
-fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Played, String> {
+pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Played, String> {
     let l = r.level();
     let mut args = base.clone();
     args.seed = l.seed;
@@ -283,6 +284,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     let start_mould = g.mould;
     let mut last_sec = u64::MAX;
     let mut marks: Vec<String> = Vec::new();
+    let mut fell: Vec<String> = Vec::new();
     let (mut peak_mould, mut min_alive) = (start_mould, usize::MAX);
     let mut at = [None::<(u32, usize, usize)>; 3];
     let t0 = std::time::Instant::now();
@@ -315,6 +317,12 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
             }
             if sec.is_multiple_of(30) {
                 marks.push(format!("{}:{}/{}/{}/{:.0}", sec, g.killed, g.mould, g.alive(), g.bank));
+                // Soldiers fallen so far (dead soldiers stay in the list), then
+                // those the slime bit to death and those fire killed:
+                // the 11-20 measure of how much a big army bleeds late in a
+                // planet ("Keeping a big squad under threat"). Its own key,
+                // so `marks`' four numbers keep their meaning for league.py.
+                fell.push(format!("{}:{}/{}/{}", sec, g.soldiers.len() - g.alive(), g.fell_bitten, g.fell_burned));
             }
         } else if tick_hz > 1.0 && g.world.ticks() >= next_aim {
             // Between turns the volley follows the slime (`Plan::aim`) and
@@ -343,7 +351,7 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     let used = if spec.starts_with("util:") { [0, 0] } else { strat::tools_used() };
     let tools = format!("{}/{}/{}/{}", used[0], used[1], app.kit.killed[0], app.kit.killed[1]);
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} late={} rest={}",
         r.depth,
         r.seed,
         l.seed,
@@ -376,6 +384,11 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
         mark(at[2]),
         t0.elapsed().as_secs_f32(),
         marks.join(","),
+        fell.join(","),
+        g.soldiers.len() - g.alive(),
+        g.fell_bitten,
+        g.fell_burned,
+        u8::from(g.late),
         // Where the last walkers were, when a game ends with a few left.
         if how != "won" && g.mould <= 50 { strat::remnant(g) } else { "-".to_string() }
     );

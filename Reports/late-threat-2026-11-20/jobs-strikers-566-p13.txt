@@ -1,0 +1,37 @@
+# The army-scaled strikers on planets 1 and 3 (2026-11-20, main with #566): PLAN DEPTH SEED SECS [ARGS]; see measure.py. Arms: #566's default, and the first striker numbers (below 0.4, band 12, share 0.5, haste 1.5, every squad).
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 1 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 2 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 3 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 4 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 5 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 6 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 7 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 8 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 1795038793 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 1 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 2 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 3 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 4 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 5 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 6 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 7 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 8 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 1 1795038793 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 2 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 3 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 4 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 5 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 6 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 7 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 8 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1795038793 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 2 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 3 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 4 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 5 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 6 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 7 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 8 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1795038793 720 set=strikers_below=0.4 set=strikers_band=12 set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0 set=strikers_full=1
