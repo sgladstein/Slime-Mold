@@ -158,8 +158,14 @@ pub struct Rules {
     pub drain: f32,
     /// Health a soldier standing in fire loses a game second at full heat
     /// (x the heat on its cell, `UnitOut::heat`): the owner (11-14 19:18Z)
-    /// "It should hurt the player too". 25: four seconds in the hottest
-    /// fire kills, so a soldier walking out of a front lives.
+    /// "It should hurt the player too". 10 (Direction, 2026-11-20): ten
+    /// seconds in the hottest fire kills, so it still hurts but a squad
+    /// can fight beside its own fire. Was 25 (four seconds), and the
+    /// strategy bot (jobs 14 and 14-b, Reports/strategy-bots-2026-11-19/pc/)
+    /// found the planet 2 card's advice, Tinder and a Torch, ruinous: rush
+    /// won 11 of 11 maps without fire cards and 2 with them (p .001), the
+    /// squad burning, and stepping back out of hurt changed little (1 of
+    /// 11); on planet 3 stepping back lost 253 soldiers against 1,033.
     pub fire_hurt: f32,
     /// **Your own sleep gas** (2026-11-18, the owner's Noita rule: "Any
     /// single spell that is incredibly powerful is also really
@@ -892,7 +898,7 @@ impl Default for Rules {
             price: 0.0,
             hp: 100.0,
             drain: 2.0,
-            fire_hurt: 25.0,
+            fire_hurt: 10.0,
             doze: 1.0,
             touch: 1.5,
             elbow: 1.6,
