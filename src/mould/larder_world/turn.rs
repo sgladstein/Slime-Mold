@@ -460,6 +460,7 @@ impl<W: World> Game<W> {
             self.time_waves();
             self.time_heart();
             self.time_strikers();
+            self.time_stand();
         }
         self.campaign_rules(now - t);
         self.check_end();

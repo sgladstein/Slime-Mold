@@ -1611,6 +1611,10 @@ fn lump_skin(k: u32) -> vec3<f32> {
         // to a saturated green, apart from the plants' muted greens
         // (filmed on planet 4 at zoom 9 beside the grass).
         case 6u: { return vec3<f32>(34.0, 58.0, 18.0); }
+        // The last-stand heart (2026-11-20, the Enemy lane, `stand.rs`):
+        // the slime's own gold run dark, so it reads as the slime's heart,
+        // not a mini-boss (none of their skins is gold).
+        case 7u: { return vec3<f32>(150.0, 74.0, 8.0); }
         default: { return MOULD_HUE; }
     }
 }
@@ -1627,6 +1631,8 @@ fn lump_core(k: u32) -> vec3<f32> {
         case 5u: { return vec3<f32>(255.0, 220.0, 150.0); }
         // The mortar's acid yellow-green core.
         case 6u: { return vec3<f32>(196.0, 245.0, 70.0); }
+        // The heart's hot white-gold, the strikers' beads' colour.
+        case 7u: { return vec3<f32>(255.0, 236.0, 150.0); }
         default: { return vec3<f32>(0.0); }
     }
 }

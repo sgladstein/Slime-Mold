@@ -109,6 +109,11 @@ pub enum LumpLook {
     /// moss skin over an acid yellow-green core, a hue no other kind or
     /// the slime uses, so the thing throwing at you is found at once.
     Mortar = 6,
+    /// **The last-stand heart** (2026-11-20, the Enemy lane,
+    /// `larder_world::stand`): a deep gold over a hot white-gold core, the
+    /// slime's own gold run dark and hot, dimming as it is cut down (its
+    /// strength).
+    Heart = 7,
 }
 
 impl LumpLook {
@@ -122,6 +127,7 @@ impl LumpLook {
             "bone" | "4" => Self::Bone,
             "fruit" | "5" => Self::Fruit,
             "mortar" | "6" => Self::Mortar,
+            "heart" | "7" => Self::Heart,
             _ => return None,
         })
     }

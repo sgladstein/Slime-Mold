@@ -405,12 +405,19 @@ pub const LURE_PULL: f32 = 10.0;
 ///
 /// **The slime condenses into strikers late in a planet** (`strikers`,
 /// 2026-11-20, the owner's pick that day; `larder_world/strikers.rs`):
-/// under 40% of its peak, its edge within the guns' reach and 12 dish
-/// cells of a soldier condenses once a second, each condensing walker
-/// taking in up to three neighbours; a condensed walker takes a blow for
-/// each, bites once more for each, and charges the nearest soldier. GPU
-/// only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0)];
+/// under 60% of its peak (retuned that evening from 40%), its edge within
+/// the guns' reach and 30 dish cells of a soldier condenses once a second
+/// against a squad of more than 8 (in full from 24), each condensing
+/// walker taking in up to three neighbours; a condensed walker takes a
+/// blow for each, bites once more for each, and charges the nearest
+/// soldier at three times its pace. GPU only.
+///
+/// **The last-stand heart** (`stand`, 2026-11-20, the same thread;
+/// `larder_world/stand.rs`): under 20% of its peak, against a squad of 24
+/// or more, every walker left gathers into one armoured heart on its heart
+/// crystal, which lunges at the nearest soldier every 20 s, until it is cut
+/// under 15% of the most it held or is 150 s old. GPU only.
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("stand", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
