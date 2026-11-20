@@ -554,8 +554,10 @@ pub struct Game<W: World> {
     /// ended.
     pub fruits: Fruits,
     pub waves: Waves,
-    /// Where the slime's heart beats from now (`heart.rs`), fine cells.
+    /// Where the slime's heart beats from now (`heart.rs`), fine cells,
+    /// and the tick it began beating there.
     pub heart_at: Option<(f32, f32)>,
+    pub heart_since: u64,
     /// The condensed strikers (`strikers.rs`).
     pub strikers: Strikers,
     /// Starfall and boss cores (`Rules::star`, `starfall.rs`): the falls
@@ -719,6 +721,7 @@ impl<W: World> Game<W> {
             fruits: Fruits::default(),
             waves: Waves::default(),
             heart_at: None,
+            heart_since: 0,
             strikers: Strikers::default(),
             starfall: Starfall::new(seed),
             cores: Cores::default(),
