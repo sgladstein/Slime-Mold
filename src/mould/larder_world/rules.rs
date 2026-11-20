@@ -158,8 +158,14 @@ pub struct Rules {
     pub drain: f32,
     /// Health a soldier standing in fire loses a game second at full heat
     /// (x the heat on its cell, `UnitOut::heat`): the owner (11-14 19:18Z)
-    /// "It should hurt the player too". 25: four seconds in the hottest
-    /// fire kills, so a soldier walking out of a front lives.
+    /// "It should hurt the player too". 10 (Direction, 2026-11-20): ten
+    /// seconds in the hottest fire kills, so it still hurts but a squad
+    /// can fight beside its own fire. Was 25 (four seconds), and the
+    /// strategy bot (jobs 14 and 14-b, Reports/strategy-bots-2026-11-19/pc/)
+    /// found the planet 2 card's advice, Tinder and a Torch, ruinous: rush
+    /// won 11 of 11 maps without fire cards and 2 with them (p .001), the
+    /// squad burning, and stepping back out of hurt changed little (1 of
+    /// 11); on planet 3 stepping back lost 253 soldiers against 1,033.
     pub fire_hurt: f32,
     /// **Your own sleep gas** (2026-11-18, the owner's Noita rule: "Any
     /// single spell that is incredibly powerful is also really
@@ -552,6 +558,21 @@ pub struct Rules {
     /// first rule's margin (29 at range 24). Negative leaves the world's
     /// own `panic_r` (a test or a probe that sets it).
     pub panic_margin: f32,
+    /// **A cornered slime lunges** (2026-11-20, the balance thread, the
+    /// brief "Keeping a big squad under threat", option B): once the slime
+    /// falls under `late_at` of its peak (0 off), for the rest of the
+    /// planet its surges reach `late_margin` dish cells past the guns (if
+    /// that is more than `panic_margin`) and lunge at `late_haste` (if
+    /// faster than the world's `surge_haste`). Why: in the owner's 19 play
+    /// logs the slime killed 1 to 1.6 soldiers a minute at every army
+    /// size, so a 41+ army lost 2.4% of itself a minute; the one rule that
+    /// took a big army apart was the Swarmer's lunge (`panic_margin` 25,
+    /// `surge_haste` 3: 32 soldiers in 30 s on his 11-19 planet 4). The
+    /// slime's size is not touched (the owner, 11-20 14:10Z: no slime that
+    /// grows with the army); only how far and fast what is left charges.
+    pub late_at: f32,
+    pub late_margin: f32,
+    pub late_haste: f32,
     /// **The slime surges when it has eaten** (2026-11-15, the slime-enemy
     /// thread with the game designer, after #343's fixed clock): food (in
     /// the bank's units, `charge` a food) the slime eats from its crystals
@@ -605,6 +626,23 @@ pub struct Rules {
     /// squad, masses there and comes in from all of them at once. Off
     /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
     pub wave: super::WaveRules,
+    /// **The heartbeat** (2026-11-20; `heart.rs`): beats run outward from
+    /// the slime's heart through its body, and its edge swells and ebbs
+    /// with them. Off here; a run turns it on (`run::ENEMY_RULES`). GPU
+    /// only.
+    pub heart: super::HeartRules,
+    /// **Condensed strikers** (2026-11-20; `strikers.rs`): late in a
+    /// planet the slime's edge facing the squad condenses, each walker
+    /// taking in up to three, four times as tough and as biting, and
+    /// charges. Off here; a run turns it on (`run::ENEMY_RULES`). GPU
+    /// only.
+    pub strikers: super::StrikerRules,
+    /// **Starfall and boss cores** (2026-11-20; `starfall.rs`): ore falls
+    /// a few times a planet and broken mini-bosses and fruits drop cores,
+    /// each paying shop points to the soldiers who reach it before the
+    /// slime eats it. Off here; a run turns it on
+    /// (`StarRules::for_depth`).
+    pub star: super::StarRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -675,6 +713,20 @@ impl Rules {
                 self.fruit.on = v > 0.0;
                 return true;
             }
+            // Starfall (`StarRules`, 2026-11-20): `star=1` on, `star=0` off;
+            // `star_least` and `star_most` whole numbers.
+            "star" => {
+                self.star.on = v > 0.0;
+                return true;
+            }
+            "star_least" => {
+                self.star.least = v.clamp(0.0, 64.0) as u32;
+                return true;
+            }
+            "star_most" => {
+                self.star.most = v.clamp(0.0, 64.0) as u32;
+                return true;
+            }
             "fruit_armour" => {
                 self.fruit.armour = v.clamp(0.0, 15.0) as u32;
                 return true;
@@ -687,6 +739,18 @@ impl Rules {
             // a whole number.
             "wave" => {
                 self.wave.on = v > 0.0;
+                return true;
+            }
+            "heart" => {
+                self.heart.on = v > 0.0;
+                return true;
+            }
+            "strikers" => {
+                self.strikers.on = v > 0.0;
+                return true;
+            }
+            "strikers_most" => {
+                self.strikers.most = v.clamp(1.0, 15.0) as u32;
                 return true;
             }
             "wave_sides" => {
@@ -724,6 +788,28 @@ impl Rules {
             "raid_march_stall" => &mut self.raid.march_stall,
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
+            "star_tail" => &mut self.star.tail,
+            "star_first" => &mut self.star.first,
+            "star_last" => &mut self.star.last,
+            "star_gap" => &mut self.star.gap,
+            "star_warn" => &mut self.star.warn,
+            "star_life" => &mut self.star.life,
+            "star_worth" => &mut self.star.worth,
+            "star_take" => &mut self.star.take,
+            "star_eat" => &mut self.star.eat,
+            "star_near" => &mut self.star.near,
+            "star_far" => &mut self.star.far,
+            "star_hurt" => &mut self.star.hurt,
+            "core_worth" => &mut self.star.core_worth,
+            "core_life" => &mut self.star.core_life,
+            "core_reform" => &mut self.star.core_reform,
+            "core_pot" => &mut self.star.core_pot,
+            "core_eat" => &mut self.star.core_eat,
+            "core_drift" => &mut self.star.core_drift,
+            "core_drift_r" => &mut self.star.core_drift_r,
+            "core_raid_beat" => &mut self.star.raid_beat,
+            "core_raid_window" => &mut self.star.raid_window,
+            "core_raid_full" => &mut self.star.raid_full,
             "fruit_first" => &mut self.fruit.first,
             "fruit_hurt" => &mut self.fruit.hurt,
             "fruit_window" => &mut self.fruit.window,
@@ -741,6 +827,16 @@ impl Rules {
             "fruit_pull" => &mut self.fruit.pull,
             "fruit_leash" => &mut self.fruit.leash,
             "fruit_spread" => &mut self.fruit.spread,
+            "heart_lean" => &mut self.heart.lean,
+            "heart_period" => &mut self.heart.period,
+            "heart_len" => &mut self.heart.len,
+            "heart_held" => &mut self.heart.held,
+            "strikers_below" => &mut self.strikers.below,
+            "strikers_band" => &mut self.strikers.band,
+            "strikers_share" => &mut self.strikers.share,
+            "strikers_haste" => &mut self.strikers.haste,
+            "strikers_few" => &mut self.strikers.few,
+            "strikers_full" => &mut self.strikers.full,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
@@ -790,9 +886,16 @@ impl Rules {
             "boss_sapper" => &mut self.boss.kinds[2],
             "boss_leech" => &mut self.boss.kinds[3],
             "boss_mortar" => &mut self.boss.kinds[4],
+            "boss_pinwheel" => &mut self.boss.kinds[5],
+            "boss_spin" => &mut self.boss.spin,
+            "boss_spin_haste" => &mut self.boss.spin_haste,
+            "boss_spin_near" => &mut self.boss.spin_near,
             "boss_lob" => &mut self.boss.lob,
             "boss_lob_every" => &mut self.boss.lob_every,
             "boss_shell" => &mut self.boss.shell,
+            "boss_shell_life" => &mut self.boss.shell_life,
+            "boss_late" => &mut self.boss.late,
+            "boss_late_grade" => &mut self.boss.late_grade,
             "boss_far" => &mut self.boss.far,
             "boss_fresh" => &mut self.boss.fresh,
             "boss_root" => &mut self.boss.root,
@@ -808,6 +911,9 @@ impl Rules {
             "smell_r" => &mut self.smell_r,
             "hoard" => &mut self.hoard,
             "panic_margin" => &mut self.panic_margin,
+            "late_at" => &mut self.late_at,
+            "late_margin" => &mut self.late_margin,
+            "late_haste" => &mut self.late_haste,
             "surge_food" => &mut self.surge_food,
             "surge_min" => &mut self.surge_min,
             "range" => &mut self.range,
@@ -868,7 +974,7 @@ impl Default for Rules {
             price: 0.0,
             hp: 100.0,
             drain: 2.0,
-            fire_hurt: 25.0,
+            fire_hurt: 10.0,
             doze: 1.0,
             touch: 1.5,
             elbow: 1.6,
@@ -926,6 +1032,9 @@ impl Default for Rules {
             broken: 0.03,
             broken_starve: 50.0,
             panic_margin: 5.0,
+            late_at: 0.0,
+            late_margin: 25.0,
+            late_haste: 3.0,
             surge_food: SURGE_FOOD,
             surge_min: 10.0,
             raid: super::RaidRules::default(),
@@ -934,6 +1043,9 @@ impl Default for Rules {
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),
+            heart: super::HeartRules::default(),
+            strikers: super::StrikerRules::default(),
+            star: super::StarRules::default(),
         }
     }
 }

@@ -569,6 +569,18 @@ impl App {
             menu.build = Some(build_page(&self.memory));
         }
         self.args = round_args(&base, chosen, &menu, &StartEvent::Sandbox);
+        // A run's planet behind the menu (Look D, 11-20): one of planets 1
+        // to 4 of a run on the clock's seed, its slime grown by the level's
+        // head start, as the game is now played. Until 11-20 the dish was
+        // the sandbox's map (the Fork, the old herding puzzle's walls). A map
+        // picked on the Planet tab, or given on the command line, still
+        // shows here, so that tab keeps its preview.
+        if !chosen && !self.args.own && menu.option("map").is_none_or(|o| o.is_default()) {
+            let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs());
+            let mut r = Run::new(secs);
+            r.depth = 1 + (secs % 4) as u32;
+            self.args = run_args(&base, &menu, &r);
+        }
         self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
         self.menu = Some(menu);
         self.paused = false;
@@ -577,10 +589,13 @@ impl App {
         Ok(())
     }
 
-    /// The whole map, under no HUD.
+    /// The map filling the window, under no HUD (Look D, 11-20): zoomed to
+    /// cover the screen, its edges cropped, not fitted whole inside black
+    /// bands as a board on a table (before 11-20).
     pub(super) fn menu_camera(&mut self) {
         self.camera.set_inset(0.0, 0.0);
-        let z = self.camera.fit();
+        let (screen, world) = (self.camera.screen, self.camera.world);
+        let z = (screen.0 / world.0).max(screen.1 / world.1).max(self.camera.fit());
         self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
         self.camera.centre_on((self.camera.world.0 / 2.0, self.camera.world.1 / 2.0));
     }
@@ -932,6 +947,8 @@ impl App {
     pub(super) fn carry_on(&mut self) -> Result<(), String> {
         let Some(v) = self.mission.as_ref().and_then(|t| t.verdict) else { return Ok(()) };
         let Some(mut r) = self.args.run.clone() else { return Ok(()) };
+        // What the squad took from starfall and boss cores (`Game::starfall`).
+        r.found(self.game.as_ref().map_or(0, |g| g.starfall.earned()));
         if v.stars > 0 {
             r.won(v.stars);
         } else {

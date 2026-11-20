@@ -125,7 +125,11 @@ What jobs 2 and 3 put where:
 - **The play log**: one file a round, `play-logs/<when>-<map>-<seed>.txt`
   (`playlog::file_name`), only in a real window and not on the menu. F9
   writes `note n=.. t=.. x=.. y=.. zoom=..` (`App::drop_note`). A typed
-  note needs a text field in the HUD, which is Look's.
+  note needs a text field in the HUD, which is Look's. Since #507
+  (11-19) the head also names the loadout: `gun=` (the army round's
+  cards), and in a run `turrets=` (their deck) and `bought=` (upgrades,
+  key and level); a mid-round change of the gun's cards writes
+  `gun t=.. CARDS` (`App::log_loadout`).
 - **Sending the logs**: `play.ps1` `Send-PlayLogs`, after the game quits,
   to the branch `play-logs` (plumbing, own index, fixed author name);
   sent logs move to `play-logs/sent`. `play.cmd send-logs` lets git ask
@@ -207,6 +211,30 @@ run=1:2 mode=squads hand=bot`):
   them, so the bot swaps between them and heals its bank to 0. The home
   is now no pick or work until it can be taken (it was held as the work
   while the bot hunted, 15.9k slime at the end).
+
+- **Others' changes to the bot** (11-20): #539 (balance review) makes
+  `runbot.rs` buy the Torch (`bring_shell`) before Tinder; before, it
+  bought Tinder alone on every check, so expect the curve to move. If
+  Direction adopts "held on" (a 1-star time-out) as an outcome, the
+  bot's summary should count it apart from wins (the review's ask).
+
+- **One bot** (11-20, NOW.md: "joined with the strategy bots rather than
+  a second bot"): CI's run bot (`run-bot.yml`) plays
+  `league=run:SEED:3 plan=PLAN`, the plan the first line of
+  `scripts/run-bot-plan.txt`, which the strategy bot's thread sets once
+  its plan-by-planet runs (#567) are measured on main
+  (provisionally `rush,aim=6|rush,aim=6,cards=0|econ,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1`).
+  `scripts/run_bot_summary.py` writes a row a planet with its length
+  against 8 to 12 minutes. First try (branch run 44777837761, plan
+  `bot,want=torch.standard`): seed 1 won planet 1 at 4:08 then lost
+  planet 2 at 3:14; seed 2 lost planet 1 at 7:25; seed 3 won planet 1 at
+  5:42 then lost planet 2 at 2:29. Both wins are short of 8 minutes.
+  Its own loop went once #567 landed (11-20): `runbot=SEED[:TO]` is now
+  short for `league=run:SEED:TO` with `runbot::PLAN` (or `plan=`), and
+  each PR's planet 1 test plays `league::play`. One bot is left; the
+  `bot_hand` stays only for the gun lab. CI tests run on ubuntu-24.04
+  since #572 (26.04's Mesa 26.0.8 hung the GPU tests on 11-20), with a
+  40-minute limit (#568).
 
 Job 5, branches (11-18): a thread cannot delete another's branch (the
 proxy refused both `git push --delete` and the refs API), so on Scott's

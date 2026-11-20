@@ -775,6 +775,11 @@ pub struct SynthStats {
     /// Samples the limiter pulled down, and the deepest it went (a gain).
     pub limited: u64,
     pub limit_min: f32,
+    /// Commands thrown away because a number in them was not finite
+    /// (`VoiceBank::apply`), and times the bank found its own output not
+    /// finite and cleared itself (`VoiceBank::recover`). Both should stay 0.
+    pub refused: u64,
+    pub recovers: u64,
 }
 
 /// The mix meter's sources past the grains (`SynthStats::energy`).
@@ -845,6 +850,23 @@ fn pan_gains(pan: f32) -> (f32, f32) {
     (th.cos(), th.sin())
 }
 
+/// Whether every number in `cmd` is finite (`VoiceBank::apply`).
+fn cmd_finite(cmd: &SoundCmd) -> bool {
+    let ok = |xs: &[f32]| xs.iter().all(|x| x.is_finite());
+    match *cmd {
+        SoundCmd::Texture { rate, level, pan, spread, .. } => ok(&[rate, level, pan, spread]),
+        SoundCmd::Grain { pan, gain, delay, .. } => ok(&[pan, gain, delay]),
+        SoundCmd::Burst { rate, secs, pan, spread, gain, .. } => ok(&[rate, secs, pan, spread, gain]),
+        SoundCmd::Alert { weight, pan, .. } => ok(&[weight, pan]),
+        SoundCmd::Impact { weight, pan, gain, delay, far } => ok(&[weight, pan, gain, delay, far]),
+        SoundCmd::Gun { pan, gain, delay, far, .. } => ok(&[pan, gain, delay, far]),
+        SoundCmd::Body { level, pitch, breath, rough, bright, pan, .. } => ok(&[level, pitch, breath, rough, bright, pan]),
+        SoundCmd::Lamp { pan, .. } => ok(&[pan]),
+        SoundCmd::Hush(_) => true,
+        SoundCmd::Master(m) => m.is_finite(),
+    }
+}
+
 /// Soft limiter: linear to 0.6, then a tanh knee that never passes 1.
 #[inline]
 fn limit(x: f32) -> f32 {
@@ -894,6 +916,17 @@ impl VoiceBank {
     }
 
     pub fn apply(&mut self, cmd: SoundCmd) {
+        // **Refuse a command with a NaN or infinite number in it**
+        // (2026-11-20, the owner's play: "the sound was working and partway
+        // through cut out"). A NaN pan or gain went through every clamp
+        // here (`NaN.clamp` is NaN, `NaN <= 1e-5` is false) into a grain,
+        // from the grain into the reverb's feedback and the master
+        // high-pass, and those never let it go: every sample after was NaN,
+        // which the device plays as silence, for the rest of the session.
+        if !cmd_finite(&cmd) {
+            self.stats.refused += 1;
+            return;
+        }
         match cmd {
             SoundCmd::Texture { kind, rate, level, pan, spread } => {
                 let t = &mut self.textures[kind as usize];
@@ -1145,6 +1178,43 @@ impl VoiceBank {
         }
     }
 
+    /// Clear everything that carries a sample from one frame to the next
+    /// (grains, bursts, tones, the mould's voices, the reverb, the room and
+    /// the high-passes), keeping the textures' and the master's settings
+    /// where they are finite. Called by `render` on a sample that is not
+    /// finite.
+    fn recover(&mut self) {
+        self.stats.recovers += 1;
+        let fresh = VoiceBank::new(self.sr as u32, 1);
+        self.grains = fresh.grains;
+        self.bursts = fresh.bursts;
+        self.tones = fresh.tones;
+        self.reverb = fresh.reverb;
+        (self.room_phase, self.room_lp, self.room_am) = (0.0, 0.0, 0.0);
+        self.body = fresh.body;
+        (self.verb_lp, self.master_lp) = (0.0, [0.0; 2]);
+        let fix = |s: &mut Smoothed, d: Smoothed| {
+            if !(s.value.is_finite() && s.target.is_finite()) {
+                *s = d;
+            }
+        };
+        for (t, d) in self.textures.iter_mut().zip(fresh.textures) {
+            fix(&mut t.rate, d.rate);
+            fix(&mut t.level, d.level);
+            fix(&mut t.pan, d.pan);
+            fix(&mut t.spread, d.spread);
+            if !t.habit.is_finite() {
+                t.habit = 1.0;
+            }
+        }
+        fix(&mut self.lamp, fresh.lamp);
+        fix(&mut self.hush, fresh.hush);
+        fix(&mut self.master, fresh.master);
+        if !self.lamp_pan.is_finite() {
+            self.lamp_pan = 0.0;
+        }
+    }
+
     /// Fill `out` with interleaved samples for `channels` channels (1 or 2
     /// are mixed properly; more get the stereo pair and silence after).
     pub fn render(&mut self, out: &mut [f32], channels: usize) {
@@ -1344,6 +1414,14 @@ impl VoiceBank {
             self.master_lp[0] += (pre_l - self.master_lp[0]) * self.k_master_hp;
             self.master_lp[1] += (pre_r - self.master_lp[1]) * self.k_master_hp;
             (pre_l, pre_r) = (pre_l - self.master_lp[0], pre_r - self.master_lp[1]);
+            // The second guard (`apply` is the first): a sample that is not
+            // finite, from anything the bank itself did, clears every
+            // voice and filter and plays a zero, so one bad sample costs a
+            // click, never the rest of the session.
+            if !(pre_l.is_finite() && pre_r.is_finite()) {
+                self.recover();
+                (pre_l, pre_r) = (0.0, 0.0);
+            }
             let lo = limit(pre_l);
             let ro = limit(pre_r);
             let peak = pre_l.abs().max(pre_r.abs());
@@ -1382,6 +1460,31 @@ mod tests {
 
     fn creep(rate: f32, level: f32) -> SoundCmd {
         SoundCmd::Texture { kind: TextureKind::Creep, rate, level, pan: 0.0, spread: 0.3 }
+    }
+
+    /// The owner's cut-out (2026-11-20): one NaN must not silence the
+    /// session. A command carrying one is refused, and a bank whose state
+    /// went NaN anyway clears itself and plays on.
+    #[test]
+    fn a_nan_never_silences_the_bank_for_good() {
+        let shot = SoundCmd::Gun { voice: GunVoice::Rifle, pan: 0.0, gain: 0.8, delay: 0.0, far: 0.0 };
+        let mut b = VoiceBank::new(48_000, 3);
+        b.apply(SoundCmd::Grain { kind: GrainKind::Hurt, pan: f32::NAN, gain: 0.5, delay: 0.0 });
+        b.apply(SoundCmd::Gun { voice: GunVoice::Rifle, pan: 0.0, gain: f32::NAN, delay: 0.0, far: 0.0 });
+        b.apply(SoundCmd::Body { slot: 0, level: f32::NAN, pitch: 48.0, breath: 0.25, rough: 0.2, bright: 0.0, pan: 0.0 });
+        assert_eq!(b.stats.refused, 3);
+        b.apply(shot);
+        let x = render(&mut b, 0.5);
+        assert!(x.iter().all(|v| v.is_finite()) && rms(&x) > 1e-3);
+        // Poison the reverb's feedback, as a NaN that got in would.
+        b.reverb.combs[0][0].iter_mut().for_each(|v| *v = f32::NAN);
+        b.apply(shot);
+        let x = render(&mut b, 0.5);
+        assert!(b.stats.recovers >= 1);
+        assert!(x.iter().all(|v| v.is_finite()));
+        b.apply(shot);
+        let x = render(&mut b, 0.5);
+        assert!(x.iter().all(|v| v.is_finite()) && rms(&x) > 1e-3, "the bank plays on after it recovers");
     }
 
     #[test]

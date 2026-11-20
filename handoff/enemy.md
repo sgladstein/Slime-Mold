@@ -58,6 +58,22 @@ is not measured yet). Moss skin, acid core (`LumpLook::Mortar`, Look's
 so it no longer swallows a mini-boss beside it (3 of 14 had been). Set
 keys `boss_mortar`, `boss_lob`, `boss_lob_every`, `boss_shell`.
 
+Then (11-20 evening, the coordinator's ask from the balance brief): a
+throw lands as a shell (`Bosses::shells`, a lump with the mortar's bite,
+the armour of half its grade and its look, no leash, for `shell_life` 8 s), cut from
+the body's outer part where it holds 60% (`SHELL_CORE`), and only
+while another lump stays free after it (4 lumps in all); and late in a
+planet (slime under `late` 0.6 of its peak, `Game::boss_late`) a new boss
+is drawn from `late_grade` 0.8 up. Numbers in the report's last section.
+Then the Pinwheel (the owner's second pick): `BossKind::Pinwheel` (6),
+planet 3 on (`kinds[5]`), a hunter whose lump's arms turn within
+`spin_near` (90) of its prey: `Lump::spin` (the 32-byte row's old pad),
+engine.wgsl's spokes after the lump pull (`PIN_ARMS` 3, `PIN_LEAN` 3,
+`PIN_TWIST` 0.08); the turn must stay constant (phase is spin x S.t).
+Look's `LumpLook::Pinwheel` (7, cobalt). Set keys `boss_pinwheel`,
+`boss_spin`, `boss_spin_haste`, `boss_spin_near`. Next: what the arms
+cost the squad, and the off-screen tell from the owner's doc.
+
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand
 (`crowded_knot(Some(&boss))`). Drawing them only with a target within
@@ -67,6 +83,53 @@ Known limit: a lump has one aim, so on a rock bar a third of a body stays
 pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
 Proposals in the report and the owner's doc: the Mortar first from planet
 4 after Milestone 1, the Pinwheel second; a bounty; an off-screen tell.
+
+## Condensed strikers (2026-11-20, the thread "Make the slime a more interesting enemy")
+
+The owner's pick on the balance thread's card (11-20 15:10Z, "Condensed
+strikers + late lunge"; the brief is the options doc linked under
+Heartbeat). A is this lane's: `larder_world/strikers.rs`
+(`StrikerRules`, `Game::time_strikers`), on in every run
+(`ENEMY_RULES`' `strikers`), GPU only (`World::set_strikers`,
+`World::condense`, `gpu::Engine::strikers` and `Engine::condense`).
+Under 40% of its peak, once a game second, `condense` (a thread a slot)
+lets each ordinary walker within the guns' reach + 12 dish cells of a
+soldier (by the units' walking distance, bit 31 of `cond_r2`; as the crow
+flies without one) try with chance 0.5; tries count on a word a
+`RAID_BLOCK` block in the raid region's third quarter (count << 24 | the
+first's slot); the next three die, taken in. `condlead` (a thread a
+block) marks the first condensed (`DENSE_BIT`, bit 16 of its dense word)
+holding them in `HURT_BITS`. Params' lump row: `lump_on` is also 1 with
+strikers (bite cells counted), then `cond` (haste), `cond_r2`,
+`cond_share`. `armoured` spends one held a blow, `dcount` adds the held
+to its cell's bite, `panic_to` sends it at the nearest soldier,
+`lumpform` clears the bit on joining, `ripen` never sends one off as a
+speck. Counts in `wstat[8..10]`. The look: view.wgsl's `draw_striker`, a
+lit bead in the droplets' layer, radius by what it holds, a 48-step pulse;
+it counts as its walkers in the body, no bronze. Test:
+`condensed_strikers_take_in_their_neighbours_charge_and_take_more_blows`.
+The balance thread (cmsg_01LaKUNJU8dhcZFTMf8VboUgN41f84yygVjCkvqcyxGYdX)
+measures it against `set=strikers=0` with its late lunge (B). Its first
+score (planet 2, 36 games) found the first numbers did not bite an
+80-soldier army, so A was retuned that evening: `below` 0.6, `band` 30,
+`share` 1, `haste` 3, and the share scaled by the squad from `few` 8 to
+`full` 24 soldiers; `most` (blows a striker takes, 1-15, packed in the
+condense row's reach word) is a rule now, default still 3. The probes and
+why are in `StrikerRules::default`'s comment. The balance thread scores
+the retune next. Next: D, the last-stand heart.
+
+## Heartbeat (2026-11-20, the same thread)
+
+The third rule, on by default on every run planet (`ENEMY_RULES`' `heart`;
+`larder_world/heart.rs`). Every 6 s a beat runs out from the home crystal
+(else the crystal held most) through the body; calm walkers lean out
+(25) and quicken (up to 60%, `HEART_HASTE`) as it passes. Params: the
+heart's place in the ground row's last two words, its lean in the lone
+step row's second, its clock (period steps | wavelength << 16) in the
+fling row's second (`Engine::heart`). The balance thread's options brief
+(late-planet threat) is at https://claude.ai/artifact/YD9LSGAkAorDNKg5WA2zZH:
+its A (condensed strikers) and D (last-stand heart) are this lane's to
+build once the owner picks.
 
 ## Waves (2026-11-20, the thread "Make the slime a more interesting enemy")
 

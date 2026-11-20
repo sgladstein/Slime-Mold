@@ -273,11 +273,38 @@ pub struct Raids {
     /// world holds one to clear when the last lure has gone.
     lure_way: Option<Way>,
     lure_set: bool,
+    /// **How each march ended** (2026-11-20, for boss cores,
+    /// `cores.rs`): broken on the way, or meeting the squad and pouring
+    /// onto it; oldest first. A beaten raid drops a core.
+    pub ends: Vec<MarchEnd>,
+}
+
+/// How a march ended (`Raids::ends`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MarchHow {
+    /// Under `march_quorum` of its first members on the way: shot apart.
+    Broken,
+    /// The squad in its way: it poured onto them.
+    Met,
+}
+
+/// One march's end (`Raids::ends`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MarchEnd {
+    pub how: MarchHow,
+    /// Its centre then (fine cells), its members at its first look and
+    /// then.
+    pub at: (f32, f32),
+    pub first: u32,
+    pub members: u32,
+    /// The tick, and the game's walkers killed by then (`Game::killed`).
+    pub tick: u64,
+    pub killed: u32,
 }
 
 impl Raids {
     pub fn new(seed: u64) -> Raids {
-        Raids { sent: Vec::new(), marching: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lure_way: None, lure_set: false }
+        Raids { sent: Vec::new(), marching: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None, lure_way: None, lure_set: false, ends: Vec::new() }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -848,6 +875,7 @@ impl<W: World> Game<W> {
         let soldiers: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
         let mut marching = std::mem::take(&mut self.raids.marching);
         let mut pour = None;
+        let killed = self.killed;
         marching.retain_mut(|m| {
             let (centre, n) = lumps[m.lump].map_or((m.centre, 0), |(x, y, n)| ((x, y), n));
             let off = (centre.0 - m.to.0).hypot(centre.1 - m.to.1);
@@ -860,18 +888,22 @@ impl<W: World> Game<W> {
             let secs = |s: f32| (s.max(0.0) * self.rules.tps as f32) as u64;
             let late = (now >= m.since + secs(r.march_stall) && off > m.start - 10.0 * sc) || now >= m.since + secs(r.march_time);
             let done = n == 0 || (n as f32) < r.march_quorum * m.first as f32;
+            let end = |how| MarchEnd { how, at: centre, first: m.first, members: n, tick: now, killed };
             if n > 0 && off <= edge + 3.0 * sc {
                 // There: onto the target, down its way.
                 pour = Some((m.to, (edge + 3.0 * sc) / sc, 1.0, std::mem::take(&mut m.field)));
             } else if let (Some((p, d)), false) = (met, n == 0) {
                 // The squad in the way: straight at its nearest soldier.
                 pour = Some((p, (d + edge + 3.0 * sc) / sc, 1.0, Vec::new()));
+                self.raids.ends.push(end(MarchHow::Met));
             } else if late && !done {
                 // Stalled or slow: the raid streams to its target after all.
                 pour = Some((m.to, m.reach, m.share, std::mem::take(&mut m.field)));
             } else if !done {
                 self.steer_march(m, edge / r.march_leash.max(1.0));
                 return true;
+            } else if m.first > 0 {
+                self.raids.ends.push(end(MarchHow::Broken));
             }
             self.world.form_lump(m.lump, None);
             false

@@ -868,8 +868,12 @@ impl World for GpuWorld {
 
     /// The enemy's living, from the same readout, so no read-back (until
     /// 11-17 plus its condensed walkers, `wstat[8]`).
+    /// With the walkers condensed strikers hold (`Engine::striker_held`,
+    /// as the last `condense` read them; the review lane, 11-20: without
+    /// them the HUD, the end card, fruit's floor and the wave's trigger saw
+    /// up to four times less slime than there is).
     fn mass(&self) -> usize {
-        self.living - self.own
+        self.living - self.own + self.e.striker_held as usize
     }
 
     fn set_task(&mut self, k: usize, t: Task) {
@@ -971,6 +975,17 @@ impl World for GpuWorld {
     /// Written to the GPU with the next step's params (`panic_r2`).
     fn set_panic_r(&mut self, r: f32) {
         self.s.panic_r = r;
+    }
+
+    fn surge_haste(&self) -> f32 {
+        self.s.surge_haste
+    }
+
+    /// Written to the GPU with the next step's params, and kept on the
+    /// mirror dish, as `set_surge_at`.
+    fn set_surge_haste(&mut self, h: f32) {
+        self.s.surge_haste = h;
+        self.e.dish.p.surge_haste = h;
     }
 
     fn surge_every(&self) -> u32 {
@@ -1097,6 +1112,24 @@ impl World for GpuWorld {
 
     fn can_wave(&self) -> bool {
         true
+    }
+
+    fn set_heart(&mut self, at: Option<(f32, f32)>, lean: f32, period: u32, len: u32) {
+        self.e.heart = at.map(|at| crate::gpu::Heart { at, lean, period, len });
+    }
+
+    fn set_strikers(&mut self, haste: Option<f32>) {
+        self.e.strikers = haste;
+        if haste.is_none() {
+            self.e.striker_held = 0;
+        }
+    }
+
+    /// At once, after the running step's shares, as `form_lump`.
+    fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
+        self.e.strikers?;
+        self.flush();
+        Some(self.e.condense(&self.shared, reach, share, most))
     }
 
     /// The mirror's ground, which the world's walls keep (`build_wall`).
@@ -1311,6 +1344,12 @@ mod tests {
         fn set_panic_r(&mut self, r: f32) {
             self.g.set_panic_r(r)
         }
+        fn surge_haste(&self) -> f32 {
+            self.g.surge_haste()
+        }
+        fn set_surge_haste(&mut self, h: f32) {
+            self.g.set_surge_haste(h)
+        }
         fn surge_every(&self) -> u32 {
             self.g.surge_every()
         }
@@ -1388,6 +1427,15 @@ mod tests {
         }
         fn can_wave(&self) -> bool {
             self.g.can_wave()
+        }
+        fn set_heart(&mut self, at: Option<(f32, f32)>, lean: f32, period: u32, len: u32) {
+            self.g.set_heart(at, lean, period, len)
+        }
+        fn set_strikers(&mut self, haste: Option<f32>) {
+            self.g.set_strikers(haste)
+        }
+        fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
+            self.g.condense(reach, share, most)
         }
     }
 
@@ -2175,6 +2223,138 @@ mod tests {
         assert!(!pulled.world.e.waved && blocks(&pulled).iter().all(|&v| v == 0), "an empty field clears it");
     }
 
+    /// **The slime's edge swells and ebbs with its heartbeat**
+    /// (`Engine::heart`, `Game::time_heart`; 2026-11-20). Two race worlds
+    /// alike, one given a heart at the mould's home at 1 s (lean 25, a beat
+    /// every 4 game seconds, 80 fine cells long), the other none. Over the
+    /// next 8 s, the walkers' mean distance from the home (read every half
+    /// second) swings at least twice as far with the heart as without.
+    #[test]
+    fn the_slime_edge_swells_and_ebbs_with_its_heartbeat() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let new = || Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules::default(), seed);
+        let mean = |g: &Game<GpuWorld>, at: (f32, f32)| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let ds: Vec<f32> = (0..e.n as usize).filter(|&q| !e.grows || en[q] >= 0.0).map(|q| (wk[4 * q] - at.0).hypot(wk[4 * q + 1] - at.1)).collect();
+            ds.iter().sum::<f32>() / ds.len().max(1) as f32
+        };
+        let swing = |beats: bool| {
+            let mut g = new();
+            let home = g.world.crystals()[0].0;
+            while g.time() < 1.0 {
+                g.step();
+            }
+            if beats {
+                let steps = 4 * g.rules.tps * g.world.fine_steps().max(1);
+                g.world.set_heart(Some(home), 25.0, steps, 80);
+            }
+            let mut m: Vec<f32> = Vec::new();
+            for k in 1..=16 {
+                while g.time() < 1.0 + 0.5 * k as f32 {
+                    g.step();
+                }
+                m.push(mean(&g, home));
+            }
+            m.iter().copied().fold(f32::MIN, f32::max) - m.iter().copied().fold(f32::MAX, f32::min)
+        };
+        let (with, without) = (swing(true), swing(false));
+        eprintln!("heart: the mean distance from home swings {with:.2} fine cells with a heart, {without:.2} without");
+        assert!(with >= 2.0 * without && with > 0.5, "the heart moves the body: {with:.2} against {without:.2}");
+    }
+
+    /// **Condensed strikers take in their neighbours, charge, and take
+    /// more blows** (`Engine::condense`, `Game::time_strikers`;
+    /// 2026-11-20). A rule of the GPU engine alone (the owner's card, 11-17
+    /// 19:21Z), so its test is what it does on the software GPU. A race
+    /// world with one soldier standing 25 fine cells east of the mould's
+    /// home (it neither shoots nor moves); at 2 s the edge within 20 cells
+    /// of it condenses (every walker there tries).
+    ///
+    /// - The slime loses exactly the walkers taken in, and the condensed
+    ///   hold them all: no walker is made or lost.
+    /// - Over the next 6 s the condensed walkers close on the soldier (their
+    ///   mean distance at least halves) while the plain slime does not.
+    /// - A strike that kills every plain walker in its disc leaves most
+    ///   condensed walkers in it alive, each holding one walker fewer.
+    #[test]
+    fn condensed_strikers_take_in_their_neighbours_charge_and_take_more_blows() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let mut w = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        let home = w.crystals()[0].0;
+        let at = (home.0 + 25.0, home.1);
+        let f = Frame { units: vec![squad::UnitIn { x: at.0, y: at.1, touch: 1.5, ..Default::default() }], ..Frame::default() };
+        // The living walkers: (x, y, condensed, held).
+        let read = |w: &GpuWorld| -> Vec<(f32, f32, bool, u32)> {
+            let e = &w.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let life = e.life_of().0;
+            let dw = e.dense_of();
+            (0..e.n as usize)
+                .filter(|&q| (!e.grows || en[q] >= 0.0) && (!e.cycles || life[q] != crate::mould::big::LIFE_DEAD))
+                .map(|q| (wk[4 * q], wk[4 * q + 1], dw[q] & 0x10000 != 0, dw[q] >> 28))
+                .collect()
+        };
+        let mean = |v: &[(f32, f32, bool, u32)], cond: bool| {
+            let d: Vec<f32> = v.iter().filter(|p| p.2 == cond).map(|p| (p.0 - at.0).hypot(p.1 - at.1)).collect();
+            d.iter().sum::<f32>() / d.len().max(1) as f32
+        };
+        for _ in 0..2 {
+            w.frame(&f, 15);
+        }
+        assert_eq!(w.condense(20.0, 1.0, 3), None, "no condensing with the strikers off");
+        w.set_strikers(Some(1.5));
+        w.frame(&f, 1);
+        let before = read(&w).len();
+        let (_, _, took) = w.condense(20.0, 1.0, 3).expect("the GPU world condenses");
+        let v = read(&w);
+        let (live, held) = (v.iter().filter(|p| p.2).count(), v.iter().filter(|p| p.2).map(|p| p.3).sum::<u32>());
+        eprintln!("strikers: {before} walkers, {took} taken in by {live} condensed holding {held}, {} after", v.len());
+        assert!(took >= 30 && live >= 10, "the edge condenses: {took} taken in by {live}");
+        assert_eq!(before - v.len(), took as usize, "the slime loses only the walkers taken in");
+        assert_eq!(held, took, "and the condensed hold them all");
+        w.frame(&f, 1);
+        assert_eq!(w.mass(), w.living() + held as usize, "the slime's mass counts what they hold");
+        assert!(v.iter().filter(|p| p.2).all(|p| (1..=3).contains(&p.3)), "each holds one to three");
+        let (c0, p0) = (mean(&v, true), mean(&v, false));
+        for _ in 0..6 {
+            w.frame(&f, 15);
+        }
+        let v = read(&w);
+        let (c1, p1) = (mean(&v, true), mean(&v, false));
+        eprintln!("strikers: mean distance to the soldier, condensed {c0:.1} -> {c1:.1}, plain {p0:.1} -> {p1:.1}");
+        assert!(c1 <= 0.5 * c0, "the condensed charge the soldier: {c0:.1} -> {c1:.1}");
+        assert!(p1 >= 0.8 * p0, "the plain slime stays: {p0:.1} -> {p1:.1}");
+        // A strike over the soldier.
+        let r = 6.0;
+        let inside = |v: &[(f32, f32, bool, u32)], cond: bool| v.iter().filter(|p| p.2 == cond && (p.0 - at.0).hypot(p.1 - at.1) <= r - 1.0).count();
+        let (cin, pin) = (inside(&v, true), inside(&v, false));
+        let held0: u32 = v.iter().filter(|p| p.2 && (p.0 - at.0).hypot(p.1 - at.1) <= r - 1.0).map(|p| p.3).sum();
+        w.burst(&squad::Burst { at, r, kill: true, ..Default::default() }, &squad::BurstRules::default());
+        let v = read(&w);
+        let (cout, pout) = (inside(&v, true), inside(&v, false));
+        let held1: u32 = v.iter().filter(|p| p.2 && (p.0 - at.0).hypot(p.1 - at.1) <= r - 1.0).map(|p| p.3).sum();
+        eprintln!("strikers: a strike over the soldier leaves {cout} of {cin} condensed (holding {held0} -> {held1}) and {pout} of {pin} plain");
+        assert!(cin >= 5 && cout == cin && held1 + cin as u32 == held0, "every condensed walker in it takes the blow and lives, holding one fewer");
+        assert!(pout * 10 <= pin, "the plain walkers in it die: {pout} of {pin} left");
+        // A lump formed over all of them takes no striker (joining cleared
+        // the walkers a striker held, so a mini-boss or a fruit formed by
+        // strikers took that slime off the map).
+        let held2: u32 = v.iter().filter(|p| p.2).map(|p| p.3).sum();
+        w.form_lump(0, Some((at, 400.0)));
+        w.frame(&f, 1);
+        let v = read(&w);
+        let held3: u32 = v.iter().filter(|p| p.2).map(|p| p.3).sum();
+        assert_eq!(held3, held2, "a lump formed over the strikers leaves them and what they hold");
+        w.form_lump(0, None);
+    }
+
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,
     /// 2026-11-20, the owner: "Deep water shouldn't be traversable by
     /// player or slime"). A rule of the GPU engine alone (the owner's card,
@@ -2502,6 +2682,95 @@ mod tests {
         }
         assert_eq!(g.fruits.last.map(|l| l.1), Some(FruitEnd::Broken), "shot down it breaks");
         assert_eq!(g.fruits.sown, 0, "and sows nothing");
+    }
+
+    /// **A pinwheel's arms turn** (2026-11-20, `Lump::spin`, the Pinwheel
+    /// mini-boss; GPU only). A lump of about 400 walkers on a race world,
+    /// held in place by its pull, run 4 s with and without `spin`: with it
+    /// the members gather into three arms (the angular harmonic of order
+    /// `PIN_ARMS` round their centre, `h3`, is well above the still
+    /// lump's), and the arms turn (its phase keeps moving one way). On
+    /// llvmpipe (11-20): h3 0.159 spun against 0.064 still, 350 members;
+    /// the phase moved 9.7 rad in 3 s (0.2 turns a second x 3 arms is
+    /// 11.3). Walking to an aim it keeps most of a still lump's pace (7.5
+    /// cells in 4 s against 11.5 at haste 2; at 1, 5.5).
+    #[test]
+    fn a_spinning_lump_gathers_into_turning_arms() {
+        use crate::gpu::floats;
+        use crate::mould::big::{Lump, LUMP_BITS, LUMP_SHIFT};
+        use crate::mould::larder_world::{raid_cell, BossRules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 6_000);
+        // Per 0.25 s: the members' h3 (size, phase).
+        let run = |turns: f32, walk: f32| -> (Vec<(f32, f32)>, f32) {
+            let rules = Rules { boss: BossRules { every: 0.0, first: 0.0, ..BossRules::default() }, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            while g.time() < 2.0 {
+                g.step();
+            }
+            // The most crowded 12-cell square.
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let (w, h) = g.world.size();
+            let (bw, bh) = (w / 12 + 1, h / 12 + 1);
+            let mut bins = vec![0u32; bw * bh];
+            for q in 0..e.n as usize {
+                let (x, y) = (wk[4 * q], wk[4 * q + 1]);
+                if (!e.grows || en[q] >= 0.0) && x >= 0.0 && y >= 0.0 && (x as usize) < w && (y as usize) < h {
+                    bins[(y as usize / 12) * bw + x as usize / 12] += 1;
+                }
+            }
+            let top = (0..bins.len()).max_by_key(|&b| bins[b]).unwrap();
+            let at = ((top % bw) as f32 * 12.0 + 6.0, (top / bw) as f32 * 12.0 + 6.0);
+            let b = BossRules::default();
+            g.world.form_lump(0, Some((at, 12.0)));
+            let per_step = std::f32::consts::TAU / (15.0 * g.world.fine_steps().max(1) as f32);
+            let to = ((at.0 + walk).min(w as f32 - 2.0), at.1);
+            g.world.set_lump(0, Lump { aim: raid_cell(to, (w, h)), pull: b.pull, leash: b.leash_at(b.clench, 0.5), spin: turns * per_step, haste: if turns != 0.0 { 2.0 } else { 1.0 }, ..Lump::default() });
+            let mut out = Vec::new();
+            let start = g.world.lumps()[0].map_or(at, |l| (l.0, l.1));
+            let t0 = g.time();
+            while g.time() < t0 + 4.0 {
+                for _ in 0..4 {
+                    g.step();
+                }
+                let e = &g.world.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let news: Vec<u32> = read_back(&e.device, &e.queue, &e.news).chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+                let base = e.dense_at as usize / 4 + crate::gpu::DENSE_HEAD;
+                let m: Vec<(f32, f32)> = (0..e.n as usize).filter(|&q| (news[base + q] & LUMP_BITS) >> LUMP_SHIFT == 1).map(|q| (wk[4 * q], wk[4 * q + 1])).collect();
+                let n = m.len().max(1) as f32;
+                let (cx, cy) = (m.iter().map(|p| p.0).sum::<f32>() / n, m.iter().map(|p| p.1).sum::<f32>() / n);
+                let (mut re, mut im) = (0.0f32, 0.0f32);
+                for (x, y) in &m {
+                    let a = 3.0 * (y - cy).atan2(x - cx);
+                    re += a.cos();
+                    im += a.sin();
+                }
+                out.push(((re * re + im * im).sqrt() / n, im.atan2(re)));
+            }
+            let end = g.world.lumps()[0].map_or(start, |l| (l.0, l.1));
+            (out, end.0 - start.0)
+        };
+        let (still, _) = run(0.0, 0.0);
+        let (spun, _) = run(0.2, 0.0);
+        // Walking to an aim 40 cells off, it keeps most of a still lump's pace.
+        let (_, plain) = run(0.0, 40.0);
+        let (_, turning) = run(0.2, 40.0);
+        eprintln!("pinwheel: walked {turning:.1} cells in 4 s turning, {plain:.1} plain");
+        let mean = |v: &[(f32, f32)]| v[4..].iter().map(|p| p.0).sum::<f32>() / (v.len() - 4) as f32;
+        // How far the phase went, unwrapped, after the first second.
+        let turned = spun[4..].windows(2).map(|p| {
+            let mut d = p[1].1 - p[0].1;
+            while d > std::f32::consts::PI { d -= std::f32::consts::TAU; }
+            while d < -std::f32::consts::PI { d += std::f32::consts::TAU; }
+            d
+        }).sum::<f32>();
+        eprintln!("pinwheel: h3 still {:.3}, spun {:.3}; phase moved {turned:.2} rad in 3 s", mean(&still), mean(&spun));
+        assert!(mean(&spun) > 1.6 * mean(&still) && mean(&spun) > 0.1, "three arms: h3 {:.3} spun against {:.3} still", mean(&spun), mean(&still));
+        assert!(turned.abs() > 2.0, "and they turn: the phase moved {turned:.2} rad in 3 s");
+        assert!(turning > 0.5 * plain && plain > 5.0, "and it still walks: {turning:.1} cells turning against {plain:.1} plain");
     }
 
     #[test]

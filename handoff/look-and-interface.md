@@ -105,6 +105,9 @@ call in `main.rs`'s `start`), sent to the view with a walker's pace
 (`set_slime_look`; the `V` struct's last row, two words spare). Planned:
 the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
 Trunk thick veined cords with its amber walls.
+The Sprawler's threads lie in a faint film of their own trail (11-20,
+`THREAD_VEIL` 0.3 in `view.wgsl`, under the Drifter's
+`SHEET_VEIL` 0.4), so its loose front reads as one body.
 
 **The soldiers' Armour looks** (owner, 11-19 14:41Z: "our base soldier
 should be olive that upgraded to slate that upgrades to heavy"; 15:11Z:
@@ -157,10 +160,55 @@ the old tiles that page. Bends shop B's half-size tiles (owner 11-15).
 The landing (11-20): each soldier drops in over its shadow in the
 first second (`landing`, `LAND_SECS`, `LAND_STAGGER`, `LAND_LIFT` in
 `draw.rs`); only the drawing. A dust ring was tried and dropped.
-Next in D: a win and a loss in the picture; the rest of the shop (the empty bag row, the pane's planet
-briefing repeated from the top bar), then the main menu and Options.
+The end (11-20): the world plays on for `END_BEAT` (2.4 s) before the
+card, the clock held and the camera drawing back 18% (`ending.rs`, one
+call in `main.rs`'s `step`, Engine told); in the window only, so headless
+runs, tests and the run bot end at once. Its frames carry no soldiers, so
+a charge on the squad breaks up as it would once they are gone. A win
+that shows the slime dying back would be a slime rule (Enemy's).
+The shop, 11-20: an empty bag is one strip with its use in a line, and
+the pane's idle page opens on a "THE PLANET AHEAD" label, not the top
+bar's heading again (`start/shop.rs`).
+The main menu, 11-20: its dish covers the window (`menu_camera` in
+`menu.rs`; the headless menu pictures frame it the same way), with a
+shade under the title and the foot hint (`start.rs`). Options looked
+sound as it is (filmed 11-20).
+The menu's dish is a run's planet 1 to 4 on the clock's seed while the
+sandbox map is its default (`open_menu`); a picked map still previews
+there. It starts again at its mission's verdict too (`main.rs`'s frame).
+The play-zoom pass (coordinator, 11-20), planets 1 to 3 at zoom 6 and
+12 with the greedy hand: fixed the Sprawler's loose dashes (above) and a
+squad's number floating between two groups (`LABEL_LINK` in `draw.rs`,
+over the soldier nearest its middle, clear of its group's soldiers in that column). Seen and
+left: the controlled squad's selection rings (one per straggler; thin, and
+they say who is in the squad); planet 4's squad fell in 18 s from a bare
+start, which no run reaches (Direction, 11-20: film late planets with a
+run's upgrades, the run bot or a dev-mode shop spend). On a funded run (`hand=strat:econ,
+go=4,aim=6 bank=20000`) the strikers read as gold beads in the Sprawler's
+film (planet 2, 64-70 s); no mortar formed on run 1's planet 4 by 120 s.
 
-**Open branch:** none (`claude/project-thread-ho6vcd`, reused per PR).
+The shop, later 11-20: dimmed to 215 behind it (`start.rs`), and shelf
+rows grow to `SHELF_TALL` (112) with the counter's room, the icon, name
+and price up to a quarter larger and the whole `about` text.
+Planets 2 and 3's ground (#574, Reports/planet-ground-2026-11-20/): mud
+plates, salt pan, scrub with shadows; fen reeds and moss; Form::fall plant
+shadows (a helper thread under this lane; page
+https://claude.ai/artifact/Vk2jnBLdLoVFrCGmYHEAZu).
+#581, round 2 of Reports/planet-ground-2026-11-20/: fen bog water
+(`wet_rgb`/`deep_rgb`), fen reeds spaced for zoom 6, a per-planet
+`rock_tint` in `ter_cell`. Its next ideas need new fields: duckweed on
+fen water, wind-blown dust on the barrens.
+
+The HUD, 11-20 (planet 2 at play zoom): a squad tile grows to 168, not
+136, so one squad's says "working" whole beside YOU, and a long state
+("working, 3 on guard") falls back to its first word where it does not
+fit (`ui.rs`). The top bar, goal pill and command grid read sound.
+The end card's stars are star icons, 26 units, the middle one raised
+(`Icon::Star`, `StarOpen`; three 11-unit discs read as loading dots).
+The Campaign and Keys pages were filmed and left; What is new cuts long
+rows to one line with the whole in its pane, as designed.
+
+**Open branch:** `claude/project-thread-wypzro`, reused per PR.
 
 **The Sprawler's look (#510):**
 
@@ -201,7 +249,8 @@ while Squad asked to keep it.
    one.
 3. Look C, rest: shadows for buildings if they float; traits for
    planets 4 to 8 after Milestone 1 (parked: more planet polish).
-4. A landing, a win and a loss that happen in the picture (D's next).
+4. A landing, a win and a loss that happen in the picture: done 11-20
+   (the landing, and the end's beat).
 5. Picks done 11-19: the fen moat deleted; the hunter stays violet
    (filmed on planet 8, bright and glossy over its dark purple plants,
    framed by the gold it forms in); the fort walls' tops smooth

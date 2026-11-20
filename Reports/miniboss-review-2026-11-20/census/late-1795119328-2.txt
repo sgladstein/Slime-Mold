@@ -1,0 +1,39 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+STRAT t 0 build mould 13155 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 13291 soldiers 4 hp 1.00 bank 42 killed 18 turret 0 pumps 3 buildings 3
+STRAT t 20 out mould 13519 soldiers 4 hp 0.91 bank 184 killed 273 turret 0 pumps 3 buildings 3
+  surge 1 starts at t 27.3 s (the slime has eaten 109 food)
+STRAT t 30 out mould 13942 soldiers 4 hp 0.80 bank 120 killed 737 turret 0 pumps 3 buildings 3
+STRAT t 40 out mould 14701 soldiers 4 hp 0.58 bank 388 killed 1465 turret 0 pumps 2 buildings 2
+  surge 2 starts at t 44.0 s (the slime has eaten 218 food)
+STRAT t 50 out mould 15331 soldiers 4 hp 0.46 bank 90 killed 2070 turret 0 pumps 1 buildings 1
+  surge 3 starts at t 58.3 s (the slime has eaten 327 food)
+STRAT t 60 back mould 16671 soldiers 4 hp 0.27 bank 140 killed 2679 turret 0 pumps 1 buildings 1
+  raid 1 at t 65.0 s: Soldiers(0) at 400,54, reach 148 cells holding 7086 walkers, share 0.60, size 24% of the slime
+  march t 65 s: lump 3, 0 members (first 0), at 268,188, spread 3.22, 94 cells to go
+  march t 66 s: lump 3, 6467 members (first 6467), at 226,194, spread 1.72, 112 cells to go
+  march t 67 s: lump 3, 6467 members (first 6467), at 242,184, spread 1.64, 102 cells to go
+  march t 68 s: lump 3, 6467 members (first 6467), at 258,172, spread 1.53, 92 cells to go
+  march t 69 s: lump 3, 6467 members (first 6467), at 274,162, spread 1.30, 83 cells to go
+  march t 70 s: lump 3, 6467 members (first 6467), at 290,154, spread 1.09, 74 cells to go
+STRAT t 70 out mould 22256 soldiers 4 hp 0.12 bank 144 killed 3125 turret 0 pumps 0 buildings 0
+  surge 4 starts at t 74.5 s (the slime has eaten 436 food)
+STRAT t 80 out mould 24070 soldiers 4 hp 0.10 bank 235 killed 3449 turret 0 pumps 0 buildings 0
+  surge 5 starts at t 89.3 s (the slime has eaten 545 food)
+STRAT t 90 back mould 25214 soldiers 3 hp 0.16 bank 299 killed 3870 turret 0 pumps 0 buildings 0
+  boss t 93.0 s: Crowd hunter formed on lump 0 at 279,145 (crowd top 1.73); grade 0.49: 9 blows a member, touches as 3, pace x1.19
+  boss t 93 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 279,145, spread 0.72, stolen 0.0; nearest soldier 116.0, 1 alive
+  boss t 94 s: lump 0 hunter Gather, 812 members (first 812, 0 hurt), at 278,144, spread 0.80, stolen 0.0; nearest soldier 111.9, 1 alive
+/tmp/claude-0/cen/late/1795119328-2/planet-2-1795119328-strat:econ,go=4,aim=6-420s-all.png
+/tmp/claude-0/cen/late/1795119328-2/planet-2-1795119328-strat:econ,go=4,aim=6-420s-near.png
+  CPU: ground field 2.36 ms (once a game second), model and HUD 0.164 ms a frame
+  t 94 s: mould 25485, soldiers 0, bank 299, harvested 1131, rendered 0, shots 434, killed 4269, took 47%, crystals left 0.965, ended: squad wiped
+  surge: the slime ate 583 food (6.2/s); meter 37.9 of 109, 5 surges
+  dense: 0 condensed or thick walkers, mass 25485 (readout 25513); 1526 breaking away
+  loose: 7730 walkers alone or in twos in a dish cell, 30.3% of 25483; 2498 with at most one other round them
+    pump at (374, 88): hp 0 / 200, built 1.0, worn down
+    pump at (234, 116): hp 0 / 200, built 0.0, worn down
+    pump at (419, 224): hp 0 / 200, built 1.0, worn down
+    pump at (303, 53): hp 0 / 200, built 1.0, worn down
+    pump at (303, 53): hp 0 / 200, built 1.0, worn down
+    pumped 607 food

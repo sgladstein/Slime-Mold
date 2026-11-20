@@ -271,6 +271,9 @@ impl<W: World> Game<W> {
         shooters.resize(shots.len(), (None, 0, None));
         self.building_units(&mut units, &mut shots, &mut shooters, &mut who, &mut from);
         shooters.resize(shots.len(), (None, 0, None));
+        // Starfall's ore and the cores (`starfall.rs`): they smell and
+        // read the walkers on them.
+        self.drop_units(&mut units, &mut who, &mut from);
         let fired = shots.len() as u32;
         let (shots, by) = self.fly(shots, &shooters, &aims, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
@@ -287,7 +290,8 @@ impl<W: World> Game<W> {
         // don't lead to it.
         if r.unit_paths {
             let size = self.world.size();
-            let masked = |w: &Who| matches!(*w, Who::Soldier(k) if self.soldiers[k].smell <= 0.0);
+            // Ore and cores are no unit to charge: the slime eats them.
+            let masked = |w: &Who| matches!(*w, Who::Soldier(k) if self.soldiers[k].smell <= 0.0) || matches!(*w, Who::Drop(_));
             self.raids.unit_cells = units.iter().zip(&who).take(squad::UNITS_MAX).filter(|(_, w)| !masked(w)).map(|(u, _)| super::raid_cell((u.x, u.y), size)).collect();
         }
         let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share, catch };
@@ -361,6 +365,10 @@ impl<W: World> Game<W> {
             }
             match *k {
                 Who::Building(b) => self.building_out(b, u, dt),
+                Who::Drop(i) => {
+                    self.drop_out(i, u.touching, dt);
+                    self.drift_core(i, dt);
+                }
                 Who::Soldier(k) => {
                     let s = &mut self.soldiers[k];
                     s.touching = u.touching;
@@ -407,6 +415,7 @@ impl<W: World> Game<W> {
                     if u.heat > 0.0 {
                         s.hp -= r.fire_hurt * u.heat * dt;
                         if s.hp <= 0.0 {
+                            self.fell_burned += u32::from(s.alive);
                             s.alive = false;
                             s.hp = 0.0;
                             s.carry = 0.0;
@@ -419,6 +428,7 @@ impl<W: World> Game<W> {
                         // Whole walkers: each bites `drain` at any mass, so walking into a thick body is very deadly (owner 11-12 22:22Z, #174).
                         s.hp -= r.drain * u.touching as f32 * dt;
                         if s.hp <= 0.0 {
+                            self.fell_bitten += u32::from(s.alive);
                             s.alive = false;
                             s.hp = 0.0;
                             s.carry = 0.0;
@@ -441,7 +451,9 @@ impl<W: World> Game<W> {
         self.time_surges(out.units.iter().map(|u| u.took as f64).sum());
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
-            self.mould = self.world.living();
+            // The mass: the living walkers and what condensed strikers
+            // hold (`World::mass`; 11-20, the review lane).
+            self.mould = self.world.mass();
             self.mark_bulwark();
             self.guard_pay();
             self.cover_turn();
@@ -456,6 +468,10 @@ impl<W: World> Game<W> {
             self.time_bosses();
             self.time_fruit();
             self.time_waves();
+            self.time_heart();
+            self.time_strikers();
+            self.time_cores();
+            self.time_starfall();
         }
         self.campaign_rules(now - t);
         self.check_end();
@@ -464,14 +480,29 @@ impl<W: World> Game<W> {
     /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):
     /// at the start and once a game second, so a range card moves it
     /// (`gun_range`, which the rounds' `Range` cards stretch).
+    ///
+    /// Once the slime falls under `Rules::late_at` of its peak it is
+    /// cornered for the rest of the planet: the reach takes `late_margin`
+    /// and the surges `late_haste`, where those are more (option B of the
+    /// 11-20 brief; see `Rules::late_at`). Once, so a slime that regrows a
+    /// little does not flicker between the two.
     pub(super) fn keep_panic_reach(&mut self) {
+        let r = &self.rules;
+        if !self.late && r.late_at > 0.0 && self.peak > 0 && (self.mould as f32) < r.late_at * self.peak as f32 {
+            self.late = true;
+            let haste = self.world.surge_haste();
+            if r.late_haste > haste {
+                self.world.set_surge_haste(r.late_haste);
+            }
+        }
         if self.rules.panic_margin >= 0.0 {
             // A wave's strike (`waves.rs`, 2026-11-20) reaches its masses,
             // which gathered `stand` past the guns' reach.
             let w = self.rules.wave;
             let strike = self.waves.live.as_ref().is_some_and(|v| v.phase == WavePhase::Strike);
             let extra = if strike { w.stand.max(0.0) + w.disc.max(0.0) } else { 0.0 };
-            self.world.set_panic_r(self.gun_range_max() + self.rules.panic_margin + extra);
+            let margin = if self.late { self.rules.panic_margin.max(self.rules.late_margin) } else { self.rules.panic_margin };
+            self.world.set_panic_r(self.gun_range_max() + margin + extra);
         }
     }
 

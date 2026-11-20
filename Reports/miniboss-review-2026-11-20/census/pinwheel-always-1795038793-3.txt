@@ -1,0 +1,252 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+STRAT t 0 build mould 42355 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 42744 soldiers 4 hp 1.00 bank 77 killed 2 turret 0 pumps 4 buildings 4
+STRAT t 20 build mould 43704 soldiers 4 hp 1.00 bank 215 killed 6 turret 0 pumps 4 buildings 4
+STRAT t 30 out mould 44842 soldiers 4 hp 0.97 bank 31 killed 166 turret 0 pumps 4 buildings 4
+  surge 1 starts at t 35.0 s (the slime has eaten 250 food)
+STRAT t 40 out mould 46241 soldiers 4 hp 0.94 bank 493 killed 331 turret 0 pumps 4 buildings 4
+STRAT t 50 out mould 47756 soldiers 4 hp 0.93 bank 314 killed 399 turret 0 pumps 5 buildings 5
+STRAT t 60 out mould 49448 soldiers 4 hp 0.93 bank 214 killed 401 turret 0 pumps 6 buildings 6
+  surge 2 starts at t 60.1 s (the slime has eaten 500 food)
+STRAT t 70 back mould 50212 soldiers 4 hp 0.44 bank 564 killed 927 turret 0 pumps 6 buildings 6
+STRAT t 80 back mould 50472 soldiers 4 hp 0.45 bank 513 killed 1883 turret 0 pumps 6 buildings 6
+  surge 3 starts at t 85.1 s (the slime has eaten 750 food)
+  boss t 87.0 s: Crowd pinwheel formed on lump 0 at 253,283 (crowd top 1.00); grade 0.15: 6 blows a member, touches as 2, pace x1.06
+  boss t 87 s: lump 0 pinwheel Gather, 0 members (first 0, 0 hurt), at 253,283, spread 1.00, stolen 0.0; nearest soldier 77.3, 4 alive
+  boss t 88 s: lump 0 pinwheel Gather, 285 members (first 285, 0 hurt), at 254,278, spread 0.98, stolen 0.0; nearest soldier 74.1, 4 alive
+  boss t 89 s: lump 0 pinwheel Gather, 285 members (first 285, 0 hurt), at 254,276, spread 0.94, stolen 0.0; nearest soldier 72.8, 4 alive
+  boss t 90 s: lump 0 pinwheel Gather, 285 members (first 285, 0 hurt), at 254,276, spread 0.91, stolen 0.0; nearest soldier 70.4, 4 alive
+STRAT t 90 out mould 49604 soldiers 4 hp 0.64 bank 538 killed 2420 turret 0 pumps 6 buildings 6
+  boss t 91 s: lump 0 pinwheel Gather, 285 members (first 285, 0 hurt), at 254,276, spread 0.84, stolen 0.0; nearest soldier 68.7, 4 alive
+  boss t 92 s: lump 0 pinwheel Gather, 285 members (first 285, 0 hurt), at 256,276, spread 0.86, stolen 0.0; nearest soldier 70.3, 4 alive
+  boss t 93 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 0 hurt), at 256,276, spread 0.88, stolen 0.0; nearest soldier 72.2, 4 alive
+  boss t 94 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 0 hurt), at 250,266, spread 1.48, stolen 0.0; nearest soldier 60.5, 4 alive
+  boss t 95 s: lump 0 pinwheel Hunt(Some(5)), 285 members (first 285, 0 hurt), at 252,262, spread 1.33, stolen 0.0; nearest soldier 57.0, 4 alive
+  boss t 96 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 0 hurt), at 252,264, spread 1.24, stolen 0.0; nearest soldier 59.1, 4 alive
+  boss t 97 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 0 hurt), at 252,260, spread 1.39, stolen 0.0; nearest soldier 57.3, 4 alive
+  boss t 98 s: lump 0 pinwheel Hunt(Some(5)), 285 members (first 285, 0 hurt), at 252,260, spread 1.31, stolen 0.0; nearest soldier 55.2, 4 alive
+  boss t 99 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 0 hurt), at 258,260, spread 1.66, stolen 0.0; nearest soldier 55.9, 4 alive
+  boss t 100 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 0 hurt), at 254,260, spread 1.39, stolen 0.0; nearest soldier 56.3, 4 alive
+STRAT t 100 out mould 48508 soldiers 4 hp 0.61 bank 232 killed 2805 turret 0 pumps 5 buildings 5
+  boss t 101 s: lump 0 pinwheel Hunt(Some(5)), 285 members (first 285, 0 hurt), at 254,260, spread 1.32, stolen 0.0; nearest soldier 56.4, 4 alive
+  boss t 102 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 9 hurt), at 254,260, spread 1.35, stolen 0.0; nearest soldier 54.8, 4 alive
+  boss t 103 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 44 hurt), at 254,262, spread 1.26, stolen 0.0; nearest soldier 55.6, 4 alive
+  boss t 104 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 260,262, spread 1.59, stolen 0.0; nearest soldier 55.4, 4 alive
+  boss t 105 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.34, stolen 0.0; nearest soldier 51.1, 4 alive
+  boss t 106 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,266, spread 1.09, stolen 0.0; nearest soldier 54.2, 4 alive
+  boss t 107 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,264, spread 1.16, stolen 0.0; nearest soldier 52.2, 4 alive
+  boss t 108 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,264, spread 1.15, stolen 0.0; nearest soldier 52.2, 4 alive
+  boss t 109 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 260,266, spread 1.33, stolen 0.0; nearest soldier 55.0, 4 alive
+  boss t 110 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,264, spread 1.22, stolen 0.0; nearest soldier 51.6, 4 alive
+STRAT t 110 out mould 48462 soldiers 4 hp 0.61 bank 423 killed 3053 turret 0 pumps 5 buildings 5
+  boss t 111 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,264, spread 1.23, stolen 0.0; nearest soldier 50.4, 4 alive
+  surge 4 starts at t 111.6 s (the slime has eaten 1000 food)
+  boss t 112 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.27, stolen 0.0; nearest soldier 47.7, 4 alive
+  boss t 113 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.24, stolen 0.0; nearest soldier 48.2, 4 alive
+  boss t 114 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,266, spread 1.41, stolen 0.0; nearest soldier 51.5, 4 alive
+  boss t 115 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,264, spread 1.22, stolen 0.0; nearest soldier 47.3, 4 alive
+  boss t 116 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,264, spread 1.23, stolen 0.0; nearest soldier 45.9, 4 alive
+  boss t 117 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.29, stolen 0.0; nearest soldier 43.9, 4 alive
+  boss t 118 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.23, stolen 0.0; nearest soldier 41.9, 4 alive
+  boss t 119 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,266, spread 1.44, stolen 0.0; nearest soldier 42.0, 4 alive
+  boss t 120 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.31, stolen 0.0; nearest soldier 36.9, 4 alive
+STRAT t 120 out mould 48837 soldiers 4 hp 0.52 bank 288 killed 3294 turret 0 pumps 5 buildings 5
+  boss t 121 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.21, stolen 0.0; nearest soldier 36.9, 4 alive
+  boss t 122 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,260, spread 1.31, stolen 0.0; nearest soldier 33.9, 4 alive
+  boss t 123 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.25, stolen 0.0; nearest soldier 32.6, 4 alive
+  boss t 124 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,266, spread 1.41, stolen 0.0; nearest soldier 35.9, 4 alive
+  boss t 125 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.23, stolen 0.0; nearest soldier 48.8, 4 alive
+  boss t 126 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.35, stolen 0.0; nearest soldier 48.5, 4 alive
+  boss t 127 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.28, stolen 0.0; nearest soldier 48.4, 4 alive
+  boss t 128 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.24, stolen 0.0; nearest soldier 48.5, 4 alive
+  boss t 129 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,266, spread 1.44, stolen 0.0; nearest soldier 51.2, 4 alive
+  boss t 130 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 91 hurt), at 256,262, spread 1.26, stolen 0.0; nearest soldier 57.4, 4 alive
+STRAT t 130 out mould 49499 soldiers 4 hp 0.46 bank 618 killed 3521 turret 0 pumps 5 buildings 5
+  boss t 131 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 91 hurt), at 256,262, spread 1.29, stolen 0.0; nearest soldier 52.8, 4 alive
+  boss t 132 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 91 hurt), at 256,262, spread 1.29, stolen 0.0; nearest soldier 51.4, 4 alive
+  boss t 133 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 91 hurt), at 256,262, spread 1.30, stolen 0.0; nearest soldier 51.7, 4 alive
+  boss t 134 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 91 hurt), at 258,266, spread 1.40, stolen 0.0; nearest soldier 54.8, 4 alive
+  boss t 135 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.28, stolen 0.0; nearest soldier 58.2, 4 alive
+  boss t 136 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.22, stolen 0.0; nearest soldier 53.2, 4 alive
+  boss t 137 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.27, stolen 0.0; nearest soldier 51.8, 4 alive
+  boss t 138 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.35, stolen 0.0; nearest soldier 52.2, 4 alive
+  surge 5 starts at t 138.3 s (the slime has eaten 1249 food)
+  boss t 139 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 260,266, spread 1.42, stolen 0.0; nearest soldier 56.5, 4 alive
+  boss t 140 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.25, stolen 0.0; nearest soldier 51.8, 4 alive
+STRAT t 140 out mould 50633 soldiers 4 hp 0.46 bank 236 killed 3524 turret 0 pumps 5 buildings 5
+  boss t 141 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.23, stolen 0.0; nearest soldier 51.3, 4 alive
+  boss t 142 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,260, spread 1.29, stolen 0.0; nearest soldier 49.4, 4 alive
+  boss t 143 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.32, stolen 0.0; nearest soldier 50.1, 4 alive
+  boss t 144 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 260,262, spread 1.63, stolen 0.0; nearest soldier 51.5, 4 alive
+  boss t 145 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,260, spread 1.39, stolen 0.0; nearest soldier 49.6, 4 alive
+  boss t 146 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 258,262, spread 1.28, stolen 0.0; nearest soldier 50.6, 4 alive
+  boss t 147 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,260, spread 1.32, stolen 0.0; nearest soldier 49.4, 4 alive
+  boss t 148 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 256,262, spread 1.26, stolen 0.0; nearest soldier 50.1, 4 alive
+  boss t 149 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 91 hurt), at 262,262, spread 1.63, stolen 0.0; nearest soldier 34.5, 4 alive
+  boss t 150 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 111 hurt), at 258,262, spread 1.42, stolen 0.0; nearest soldier 21.7, 4 alive
+STRAT t 150 back mould 51922 soldiers 4 hp 0.46 bank 345 killed 3591 turret 0 pumps 5 buildings 5
+  boss t 151 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 127 hurt), at 258,262, spread 1.26, stolen 0.0; nearest soldier 23.1, 4 alive
+  boss t 152 s: lump 0 pinwheel Hunt(Some(4)), 285 members (first 285, 137 hurt), at 258,262, spread 1.33, stolen 0.0; nearest soldier 20.7, 4 alive
+  boss t 153 s: lump 0 pinwheel Hunt(Some(1)), 285 members (first 285, 141 hurt), at 260,264, spread 1.28, stolen 0.0; nearest soldier 60.6, 3 alive
+  boss t 154 s: lump 0 pinwheel Hunt(Some(3)), 285 members (first 285, 141 hurt), at 262,262, spread 1.58, stolen 0.0; nearest soldier 75.5, 3 alive
+  boss t 155 s: lump 0 pinwheel Hunt(Some(3)), 285 members (first 0, 0 hurt), at 258,262, spread 1.92, stolen 0.0; nearest soldier 87.8, 3 alive
+  boss t 156 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 0 hurt), at 266,262, spread 0.99, stolen 0.0; nearest soldier 105.6, 3 alive
+  boss t 157 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 0 hurt), at 264,258, spread 1.11, stolen 0.0; nearest soldier 107.2, 4 alive
+  boss t 158 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 0 hurt), at 262,260, spread 1.06, stolen 0.0; nearest soldier 93.1, 4 alive
+  boss t 159 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 0 hurt), at 266,258, spread 1.18, stolen 0.0; nearest soldier 74.1, 4 alive
+  boss t 160 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 0 hurt), at 264,258, spread 1.05, stolen 0.0; nearest soldier 56.9, 4 alive
+STRAT t 160 out mould 52768 soldiers 4 hp 0.61 bank 370 killed 3865 turret 0 pumps 5 buildings 5
+  boss t 161 s: lump 0 pinwheel Hunt(Some(6)), 309 members (first 309, 0 hurt), at 262,258, spread 1.11, stolen 0.0; nearest soldier 54.4, 4 alive
+  boss t 162 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 0 hurt), at 262,258, spread 1.08, stolen 0.0; nearest soldier 53.8, 4 alive
+  boss t 163 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 15 hurt), at 264,260, spread 1.03, stolen 0.0; nearest soldier 55.7, 4 alive
+  surge 6 starts at t 164.0 s (the slime has eaten 1499 food)
+  boss t 164 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 28 hurt), at 268,258, spread 1.17, stolen 0.0; nearest soldier 53.9, 4 alive
+  boss t 165 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 28 hurt), at 264,260, spread 0.98, stolen 0.0; nearest soldier 51.8, 4 alive
+  boss t 166 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 28 hurt), at 262,258, spread 1.15, stolen 0.0; nearest soldier 50.4, 4 alive
+  boss t 167 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 28 hurt), at 262,256, spread 1.15, stolen 0.0; nearest soldier 48.2, 4 alive
+  boss t 168 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 40 hurt), at 260,256, spread 1.21, stolen 0.0; nearest soldier 31.6, 4 alive
+  boss t 169 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 64 hurt), at 260,252, spread 1.47, stolen 0.0; nearest soldier 17.7, 5 alive
+  boss t 170 s: lump 0 pinwheel Hunt(Some(3)), 309 members (first 309, 144 hurt), at 260,254, spread 1.36, stolen 0.0; nearest soldier 17.6, 5 alive
+STRAT t 170 out mould 53783 soldiers 5 hp 0.53 bank 217 killed 4168 turret 0 pumps 4 buildings 4
+  boss t 171 s: lump 0 pinwheel Hunt(Some(7)), 308 members (first 309, 163 hurt), at 258,254, spread 1.32, stolen 0.0; nearest soldier 43.3, 4 alive
+  boss t 172 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 256,254, spread 1.42, stolen 0.0; nearest soldier 65.2, 3 alive
+  boss t 173 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 254,252, spread 1.57, stolen 0.0; nearest soldier 81.1, 3 alive
+  boss t 174 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 256,252, spread 1.73, stolen 0.0; nearest soldier 92.7, 4 alive
+  boss t 175 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 254,250, spread 1.71, stolen 0.0; nearest soldier 103.7, 4 alive
+  boss t 176 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 254,250, spread 1.56, stolen 0.0; nearest soldier 116.8, 4 alive
+  boss t 177 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 256,250, spread 1.67, stolen 0.0; nearest soldier 109.2, 4 alive
+  boss t 178 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 254,248, spread 1.72, stolen 0.0; nearest soldier 93.9, 4 alive
+  boss t 179 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 256,254, spread 1.53, stolen 0.0; nearest soldier 107.9, 4 alive
+  boss t 180 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 254,250, spread 1.64, stolen 0.0; nearest soldier 115.4, 5 alive
+STRAT t 180 out mould 55207 soldiers 5 hp 0.79 bank 80 killed 4235 turret 0 pumps 3 buildings 3
+  boss t 181 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 254,250, spread 1.56, stolen 0.0; nearest soldier 129.5, 5 alive
+  boss t 182 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 256,250, spread 1.49, stolen 0.0; nearest soldier 146.3, 5 alive
+  boss t 183 s: lump 0 pinwheel Hunt(Some(5)), 308 members (first 309, 162 hurt), at 256,250, spread 1.58, stolen 0.0; nearest soldier 162.4, 5 alive
+  boss t 184 s: lump 0 pinwheel ended Spent (308 members of 309; stole 0.0, 0.0 given back so far)
+  surge 7 starts at t 189.6 s (the slime has eaten 1748 food)
+STRAT t 190 out mould 56049 soldiers 6 hp 0.80 bank 389 killed 4533 turret 0 pumps 3 buildings 3
+STRAT t 200 out mould 56949 soldiers 8 hp 0.79 bank 373 killed 4868 turret 0 pumps 2 buildings 2
+STRAT t 210 out mould 58143 soldiers 10 hp 0.83 bank 167 killed 4940 turret 0 pumps 2 buildings 2
+  boss t 213.0 s: Crowd pinwheel formed on lump 0 at 323,211 (crowd top 1.39); grade 0.46: 9 blows a member, touches as 3, pace x1.18
+  boss t 213 s: lump 0 pinwheel Gather, 0 members (first 0, 0 hurt), at 323,211, spread 1.07, stolen 0.0; nearest soldier 267.5, 10 alive
+  boss t 214 s: lump 0 pinwheel Gather, 372 members (first 372, 0 hurt), at 324,212, spread 0.92, stolen 0.0; nearest soldier 270.5, 10 alive
+  boss t 215 s: lump 0 pinwheel Gather, 372 members (first 372, 0 hurt), at 324,214, spread 0.89, stolen 0.0; nearest soldier 271.1, 11 alive
+  surge 8 starts at t 215.1 s (the slime has eaten 1998 food)
+  boss t 216 s: lump 0 pinwheel Gather, 372 members (first 372, 0 hurt), at 326,212, spread 0.91, stolen 0.0; nearest soldier 272.0, 11 alive
+  boss t 217 s: lump 0 pinwheel Gather, 372 members (first 372, 0 hurt), at 326,214, spread 0.87, stolen 0.0; nearest soldier 274.3, 11 alive
+  boss t 218 s: lump 0 pinwheel Gather, 372 members (first 372, 0 hurt), at 326,216, spread 0.84, stolen 0.0; nearest soldier 275.2, 11 alive
+  boss t 219 s: lump 0 pinwheel Hunt(Some(5)), 372 members (first 372, 0 hurt), at 328,216, spread 0.96, stolen 0.0; nearest soldier 276.9, 12 alive
+  boss t 220 s: lump 0 pinwheel Hunt(Some(5)), 372 members (first 372, 0 hurt), at 316,208, spread 1.41, stolen 0.0; nearest soldier 262.6, 12 alive
+STRAT t 220 out mould 58853 soldiers 12 hp 0.85 bank 221 killed 5147 turret 0 pumps 2 buildings 2
+  boss t 221 s: lump 0 pinwheel Hunt(Some(5)), 372 members (first 372, 0 hurt), at 314,200, spread 1.27, stolen 0.0; nearest soldier 259.4, 12 alive
+  boss t 222 s: lump 0 pinwheel Hunt(Some(5)), 372 members (first 372, 0 hurt), at 308,190, spread 1.19, stolen 0.0; nearest soldier 249.8, 12 alive
+  boss t 223 s: lump 0 pinwheel Hunt(Some(5)), 372 members (first 372, 0 hurt), at 300,182, spread 1.08, stolen 0.0; nearest soldier 240.3, 13 alive
+  boss t 224 s: lump 0 pinwheel Hunt(Some(5)), 372 members (first 372, 0 hurt), at 296,178, spread 0.95, stolen 0.0; nearest soldier 236.1, 13 alive
+  boss t 225 s: lump 0 pinwheel Hunt(Some(13)), 372 members (first 372, 0 hurt), at 288,168, spread 1.30, stolen 0.0; nearest soldier 224.9, 13 alive
+  boss t 226 s: lump 0 pinwheel Hunt(Some(13)), 372 members (first 372, 0 hurt), at 288,168, spread 0.92, stolen 0.0; nearest soldier 218.4, 13 alive
+  boss t 227 s: lump 0 pinwheel Hunt(Some(13)), 372 members (first 372, 0 hurt), at 288,168, spread 0.96, stolen 0.0; nearest soldier 209.8, 13 alive
+  boss t 228 s: lump 0 pinwheel Hunt(Some(13)), 372 members (first 372, 0 hurt), at 286,168, spread 0.88, stolen 0.0; nearest soldier 198.1, 13 alive
+  boss t 229 s: lump 0 pinwheel Hunt(Some(13)), 372 members (first 372, 0 hurt), at 286,166, spread 0.93, stolen 0.0; nearest soldier 181.1, 14 alive
+  boss t 230 s: lump 0 pinwheel Hunt(Some(13)), 372 members (first 372, 0 hurt), at 282,158, spread 1.32, stolen 0.0; nearest soldier 162.3, 14 alive
+STRAT t 230 out mould 59881 soldiers 14 hp 0.85 bank 129 killed 5687 turret 0 pumps 2 buildings 2
+  boss t 231 s: lump 0 pinwheel Hunt(Some(13)), 372 members (first 372, 0 hurt), at 284,162, spread 0.95, stolen 0.0; nearest soldier 159.2, 14 alive
+  boss t 232 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 284,160, spread 1.02, stolen 0.0; nearest soldier 158.1, 14 alive
+  boss t 233 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 282,160, spread 0.96, stolen 0.0; nearest soldier 173.0, 14 alive
+  boss t 234 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 284,160, spread 0.95, stolen 0.0; nearest soldier 188.3, 15 alive
+  boss t 235 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 278,154, spread 1.29, stolen 0.0; nearest soldier 190.9, 15 alive
+  boss t 236 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 280,158, spread 0.96, stolen 0.0; nearest soldier 190.5, 15 alive
+  boss t 237 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 280,156, spread 1.00, stolen 0.0; nearest soldier 181.5, 15 alive
+  boss t 238 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 280,158, spread 1.01, stolen 0.0; nearest soldier 180.3, 15 alive
+  boss t 239 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 280,156, spread 0.97, stolen 0.0; nearest soldier 190.3, 15 alive
+  boss t 240 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 274,150, spread 1.38, stolen 0.0; nearest soldier 164.2, 15 alive
+STRAT t 240 out mould 60215 soldiers 15 hp 0.80 bank 121 killed 6467 turret 0 pumps 3 buildings 3
+  surge 9 starts at t 240.4 s (the slime has eaten 2248 food)
+  boss t 241 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 276,154, spread 1.02, stolen 0.0; nearest soldier 154.5, 15 alive
+  boss t 242 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 274,154, spread 1.07, stolen 0.0; nearest soldier 147.0, 15 alive
+  boss t 243 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 274,154, spread 1.09, stolen 0.0; nearest soldier 136.6, 15 alive
+  boss t 244 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 274,152, spread 1.01, stolen 0.0; nearest soldier 125.4, 15 alive
+  boss t 245 s: lump 0 pinwheel Hunt(Some(16)), 372 members (first 372, 0 hurt), at 268,146, spread 1.41, stolen 0.0; nearest soldier 108.7, 15 alive
+  boss t 246 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 264,146, spread 1.17, stolen 0.0; nearest soldier 98.9, 15 alive
+  boss t 247 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 262,146, spread 1.22, stolen 0.0; nearest soldier 100.2, 15 alive
+  boss t 248 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 258,144, spread 1.27, stolen 0.0; nearest soldier 103.2, 15 alive
+  boss t 249 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 252,142, spread 1.20, stolen 0.0; nearest soldier 108.8, 15 alive
+  boss t 250 s: lump 0 pinwheel Hunt(Some(15)), 372 members (first 372, 0 hurt), at 240,132, spread 1.89, stolen 0.0; nearest soldier 111.7, 15 alive
+STRAT t 250 out mould 60596 soldiers 15 hp 0.80 bank 118 killed 6506 turret 0 pumps 2 buildings 2
+  boss t 251 s: lump 0 pinwheel Hunt(Some(15)), 372 members (first 372, 0 hurt), at 238,130, spread 1.77, stolen 0.0; nearest soldier 126.8, 15 alive
+  boss t 252 s: lump 0 pinwheel Hunt(Some(10)), 372 members (first 372, 0 hurt), at 238,130, spread 1.70, stolen 0.0; nearest soldier 126.7, 15 alive
+  raid 1 at t 253.0 s: Building(3) at 74,269, reach 133 cells holding 17779 walkers, share 0.60, size 18% of the slime
+  boss t 253 s: lump 0 pinwheel Hunt(Some(10)), 372 members (first 372, 0 hurt), at 236,128, spread 1.74, stolen 0.0; nearest soldier 126.4, 15 alive
+  march t 253 s: lump 3, 0 members (first 0), at 291,129, spread 1.08, 129 cells to go
+  boss t 254 s: lump 0 pinwheel Hunt(Some(15)), 372 members (first 372, 0 hurt), at 236,128, spread 1.68, stolen 0.0; nearest soldier 120.8, 15 alive
+  march t 254 s: lump 3, 15944 members (first 15944), at 282,132, spread 0.90, 125 cells to go
+  boss t 255 s: lump 0 pinwheel Hunt(Some(15)), 372 members (first 372, 0 hurt), at 236,126, spread 1.78, stolen 0.0; nearest soldier 134.1, 15 alive
+  march t 255 s: lump 3, 15944 members (first 15944), at 270,138, spread 0.83, 118 cells to go
+  boss t 256 s: lump 0 pinwheel Hunt(Some(15)), 372 members (first 372, 0 hurt), at 236,126, spread 1.72, stolen 0.0; nearest soldier 136.8, 15 alive
+  boss t 257 s: lump 0 pinwheel Hunt(Some(8)), 372 members (first 372, 0 hurt), at 236,128, spread 1.67, stolen 0.0; nearest soldier 134.4, 15 alive
+  boss t 258 s: lump 0 pinwheel Hunt(Some(18)), 372 members (first 372, 0 hurt), at 236,128, spread 1.69, stolen 0.0; nearest soldier 130.9, 15 alive
+  boss t 259 s: lump 0 pinwheel Hunt(Some(15)), 372 members (first 0, 0 hurt), at 236,130, spread 1.54, stolen 0.0; nearest soldier 123.4, 15 alive
+  boss t 260 s: lump 0 pinwheel Hunt(Some(15)), 386 members (first 386, 0 hurt), at 222,140, spread 1.27, stolen 0.0; nearest soldier 100.9, 15 alive
+STRAT t 260 out mould 66279 soldiers 15 hp 0.78 bank 248 killed 7067 turret 0 pumps 3 buildings 3
+  boss t 261 s: lump 0 pinwheel Hunt(Some(15)), 386 members (first 386, 0 hurt), at 224,140, spread 0.89, stolen 0.0; nearest soldier 96.6, 15 alive
+  boss t 262 s: lump 0 pinwheel Hunt(Some(15)), 386 members (first 386, 0 hurt), at 224,140, spread 0.89, stolen 0.0; nearest soldier 94.7, 15 alive
+  boss t 263 s: lump 0 pinwheel Hunt(Some(15)), 386 members (first 386, 0 hurt), at 222,142, spread 0.89, stolen 0.0; nearest soldier 92.0, 15 alive
+  boss t 264 s: lump 0 pinwheel Hunt(Some(15)), 386 members (first 386, 0 hurt), at 222,140, spread 0.82, stolen 0.0; nearest soldier 93.4, 15 alive
+  surge 10 starts at t 264.6 s (the slime has eaten 2498 food)
+  boss t 265 s: lump 0 pinwheel Hunt(Some(15)), 386 members (first 386, 0 hurt), at 220,140, spread 1.24, stolen 0.0; nearest soldier 94.0, 15 alive
+  boss t 266 s: lump 0 pinwheel Hunt(Some(15)), 386 members (first 0, 0 hurt), at 220,140, spread 1.25, stolen 0.0; nearest soldier 82.2, 15 alive
+  boss t 267 s: lump 0 pinwheel Hunt(Some(15)), 436 members (first 436, 0 hurt), at 214,146, spread 0.93, stolen 0.0; nearest soldier 61.2, 15 alive
+  boss t 268 s: lump 0 pinwheel Hunt(Some(15)), 436 members (first 436, 0 hurt), at 214,146, spread 0.97, stolen 0.0; nearest soldier 48.2, 15 alive
+  boss t 269 s: lump 0 pinwheel Hunt(Some(15)), 436 members (first 436, 0 hurt), at 214,146, spread 0.95, stolen 0.0; nearest soldier 36.0, 15 alive
+  boss t 270 s: lump 0 pinwheel Hunt(Some(6)), 436 members (first 436, 14 hurt), at 210,148, spread 1.00, stolen 0.0; nearest soldier 19.5, 15 alive
+STRAT t 270 out mould 67768 soldiers 15 hp 0.74 bank 332 killed 7477 turret 0 pumps 4 buildings 4
+  boss t 271 s: lump 0 pinwheel Hunt(Some(6)), 436 members (first 436, 137 hurt), at 212,146, spread 0.92, stolen 0.0; nearest soldier 14.5, 15 alive
+  boss t 272 s: lump 0 pinwheel Hunt(Some(15)), 436 members (first 436, 164 hurt), at 212,146, spread 0.98, stolen 0.0; nearest soldier 13.5, 14 alive
+  boss t 273 s: lump 0 pinwheel Hunt(Some(19)), 436 members (first 436, 174 hurt), at 212,146, spread 0.98, stolen 0.0; nearest soldier 14.2, 13 alive
+  boss t 274 s: lump 0 pinwheel Hunt(Some(19)), 404 members (first 436, 216 hurt), at 214,146, spread 1.05, stolen 0.0; nearest soldier 11.0, 12 alive
+  boss t 275 s: lump 0 pinwheel Hunt(Some(10)), 404 members (first 0, 0 hurt), at 212,146, spread 1.01, stolen 0.0; nearest soldier 89.7, 11 alive
+  boss t 276 s: lump 0 pinwheel Hunt(Some(10)), 432 members (first 432, 0 hurt), at 212,150, spread 0.95, stolen 0.0; nearest soldier 87.0, 11 alive
+  boss t 277 s: lump 0 pinwheel Hunt(Some(10)), 432 members (first 432, 0 hurt), at 212,148, spread 0.97, stolen 0.0; nearest soldier 87.7, 11 alive
+  boss t 278 s: lump 0 pinwheel Hunt(Some(10)), 432 members (first 432, 0 hurt), at 212,150, spread 0.96, stolen 0.0; nearest soldier 87.0, 11 alive
+  boss t 279 s: lump 0 pinwheel Hunt(Some(10)), 432 members (first 432, 0 hurt), at 212,150, spread 0.95, stolen 0.0; nearest soldier 87.0, 11 alive
+  boss t 280 s: lump 0 pinwheel Hunt(Some(10)), 432 members (first 432, 0 hurt), at 210,152, spread 0.95, stolen 0.0; nearest soldier 84.6, 11 alive
+STRAT t 280 out mould 68607 soldiers 11 hp 0.81 bank 710 killed 7662 turret 0 pumps 4 buildings 4
+  boss t 281 s: lump 0 pinwheel Hunt(Some(10)), 432 members (first 432, 0 hurt), at 212,150, spread 0.86, stolen 0.0; nearest soldier 85.8, 11 alive
+  boss t 282 s: lump 0 pinwheel Hunt(Some(10)), 432 members (first 0, 0 hurt), at 212,150, spread 1.42, stolen 0.0; nearest soldier 86.7, 11 alive
+  boss t 283 s: lump 0 pinwheel Hunt(Some(10)), 473 members (first 473, 0 hurt), at 208,158, spread 1.05, stolen 0.0; nearest soldier 77.1, 11 alive
+  boss t 284 s: lump 0 pinwheel Hunt(Some(10)), 473 members (first 473, 0 hurt), at 208,158, spread 1.06, stolen 0.0; nearest soldier 77.1, 11 alive
+  boss t 285 s: lump 0 pinwheel Hunt(Some(10)), 473 members (first 473, 0 hurt), at 206,160, spread 1.06, stolen 0.0; nearest soldier 75.9, 11 alive
+  boss t 286 s: lump 0 pinwheel Hunt(Some(10)), 473 members (first 473, 0 hurt), at 208,158, spread 1.04, stolen 0.0; nearest soldier 77.1, 11 alive
+  boss t 287 s: lump 0 pinwheel Hunt(Some(10)), 473 members (first 473, 0 hurt), at 208,158, spread 1.04, stolen 0.0; nearest soldier 77.1, 11 alive
+  surge 11 starts at t 287.4 s (the slime has eaten 2748 food)
+  boss t 288 s: lump 0 pinwheel Hunt(Some(10)), 473 members (first 473, 0 hurt), at 208,160, spread 1.04, stolen 0.0; nearest soldier 76.1, 11 alive
+  boss t 289 s: lump 0 pinwheel Hunt(Some(10)), 473 members (first 0, 0 hurt), at 208,158, spread 1.60, stolen 0.0; nearest soldier 77.1, 11 alive
+  boss t 290 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.81, stolen 0.0; nearest soldier 64.4, 11 alive
+STRAT t 290 out mould 69357 soldiers 11 hp 0.81 bank 341 killed 7662 turret 0 pumps 4 buildings 4
+  boss t 291 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.82, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 292 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.81, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 293 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.82, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 294 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.81, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 295 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.82, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 296 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.81, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 297 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.81, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 298 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.81, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 299 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.81, stolen 0.0; nearest soldier 64.4, 11 alive
+  boss t 300 s: lump 0 pinwheel Hunt(Some(10)), 516 members (first 516, 0 hurt), at 202,170, spread 0.82, stolen 0.0; nearest soldier 64.4, 11 alive
+/tmp/claude-0/cen/pin/1795038793-3/planet-3-1795038793-strat:econ,go=4,aim=6-300s-all.png
+/tmp/claude-0/cen/pin/1795038793-3/planet-3-1795038793-strat:econ,go=4,aim=6-300s-near.png
+  CPU: ground field 3.02 ms (once a game second), model and HUD 0.098 ms a frame
+  t 300 s: mould 69873, soldiers 11, bank 432, harvested 16640, rendered 0, shots 1071, killed 7674, took 61%, crystals left 0.735; squad at 196.9,244.5
+  surge: the slime ate 2886 food (9.6/s); meter 138.6 of 249, 11 surges
+  dense: 0 condensed or thick walkers, mass 69873 (readout 69873); 4608 breaking away
+  loose: 3589 walkers alone or in twos in a dish cell, 5.1% of 69869; 821 with at most one other round them
+  squad: touching 0.0 mean, 0 most; health 81 mean
+    pump at (76, 196): hp 0 / 200, built 1.0, worn down
+    pump at (68, 94): hp 0 / 200, built 1.0, worn down
+    pump at (104, 53): hp 0 / 200, built 1.0, worn down
+    pump at (74, 269): hp 110 / 200, built 1.0, standing, working
+    pump at (160, 60): hp 0 / 200, built 1.0, worn down
+    pump at (123, 218): hp 0 / 200, built 1.0, worn down
+    pump at (104, 53): hp 200 / 200, built 1.0, standing, working
+    pump at (123, 218): hp 160 / 200, built 1.0, standing, working
+    pump at (169, 242): hp 200 / 200, built 1.0, standing, working
+    pumped 12210 food

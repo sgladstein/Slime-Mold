@@ -12,8 +12,10 @@ struct Set {
 // heads for (x | y << 16), its pull, its leash as `Lump::leash_k` (0 none)
 // and its members' haste (0 is 1).
 // `armour` and `bite` the mini-bosses' strength (`big::Lump`); `ring` its
-// band round `aim` (`Lump::ring`, 0 none); `_b` pads the row to 32 bytes.
-struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, ring: f32, _b: u32 };
+// band round `aim` (`Lump::ring`, 0 none); `spin` its turn about its
+// members' centre (`Lump::spin`, 0 none; the row's last word, its pad
+// until 2026-11-20).
+struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, ring: f32, spin: f32 };
 struct Params {
     w: u32, h: u32, n: u32, crowd: u32,
     s_turn: u32, s_blocked: u32, s_claim: u32, s_jump: u32,
@@ -151,25 +153,28 @@ struct Params {
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
     // The wave's pull (`wave`, 2026-11-20, `Engine::write_wave_field`;
-    // 0 while no wave field is written), a free word (written 0), the
-    // fort's flag and the tether. The first two words
+    // 0 while no wave field is written), the heartbeat's lean (`heart`,
+    // 2026-11-20, `Engine::heart`; 0 off), the fort's flag and the
+    // tether. The first two words
     // were the lone step (2026-11-12, `BigParams::lone_step`: a walker
     // with few others round it stepped shorter), whose half in this engine
     // was deleted on 11-17 (Reports/dead-ends.md); the last was
     // `fed_crowd`'s until 11-17. `fort` (2026-11-18): 1 while the game has
     // written a fort mask (`fort_at`), else 0. `tether` (2026-11-18): the
     // walkers a marcher's next cell must touch (`tethered`), 0 off.
-    wave: f32, lone_free1: f32, fort: u32, tether: u32,
+    wave: f32, heart: f32, fort: u32, tether: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
-    // condense thread). The first is free since 11-17 (`condense`, the
-    // steps a walker had to be ripe, deleted); the specks keep the crowd
+    // condense thread). The first was free from 11-17 (`condense`, the
+    // steps a walker had to be ripe, deleted) and is the heartbeat's clock
+    // since 11-20: its period in steps (low 16 bits) and its wavelength in
+    // fine cells (high 16; `heart_beat`). The specks keep the crowd
     // that makes a walker ripe (`ccrowd` low 16 bits, `condense_crowd`) and
     // its square's radius (bits 16-23, `condense_r`; bits 24-31 were
     // `thicken`'s, free since 11-17), and the stream of their draw (big.rs
     // `DRAW_ROAM`).
-    fling_dep: f32, fling_free: u32, ccrowd: u32, s_condense: u32,
+    fling_dep: f32, heart_clock: u32, ccrowd: u32, s_condense: u32,
     // Condensed slime breaks away (`BigParams::roam`, 11-14; Params grew
     // from 912 to 928 for this row): steps between chances to leave (0
     // off), how far its crystal must be and how near it lands, in whole
@@ -178,9 +183,9 @@ struct Params {
     // The ground row (new ground kinds, 11-14; Params grew from 928 to
     // 944): a walker's step in deep water is x `deep_step` on top of
     // `wet_step` (`BigParams::deep_step`); deep water as a wall to the
-    // slime (`Settings::deep_wall`, 11-20; `shut`). Two words kept for the
-    // next ground kinds.
-    deep_step: f32, deep_wall: u32, _g2: f32, _g3: f32,
+    // slime (`Settings::deep_wall`, 11-20; `shut`). The last two are the
+    // heartbeat's source, in fine cells (2026-11-20, `heart_beat`).
+    deep_step: f32, deep_wall: u32, heart_x: f32, heart_y: f32,
     // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
     // Params grew from 944 to 960): the steps between surges (0 off), the
     // creep's steps in the low half of `surge_ld` and the lunge's in the
@@ -207,9 +212,16 @@ struct Params {
     raid_at: u32, raid_to: u32, raid_r2: u32, s_raid: u32,
     raid_share: f32, raid_ld: u32, raid_haste: f32, raid_field: u32,
     // The lump rows (`BigParams::lumps`, 2026-11-16, the mini-boss thread;
-    // Params grew from 1008 to 1152): whether any lump is on, three spare
-    // words, then each lump's row.
-    lump_on: u32, _l1: u32, _l2: u32, _l3: u32,
+    // Params grew from 1008 to 1152): whether any lump is on (or any
+    // walker is condensed: the bite cells and the dense words are read
+    // then), then the condensed strikers' three numbers (its three spare
+    // words until 11-20, `condense`): a condensed walker's haste as it
+    // charges (0 off: no walker is condensed then), the reach squared from
+    // a soldier inside which a walker may condense (whole fine cells), and
+    // the share that tries each time the pass runs (the reach in its low 24
+    // bits, the most a striker takes in in bits 24-27, and bit 31: by the
+    // units' walking distance); then each lump's row.
+    lump_on: u32, cond: f32, cond_r2: u32, cond_share: f32,
     lumps: array<Lump, 4>,
     // The Mind row (the gun cards' Mind family, 2026-11-16; Params grew
     // from 1152 to 1168, after the lump rows; mod.rs's `MIND_AT`): whether
@@ -432,6 +444,16 @@ fn lump_of(k: u32) -> u32 {
     if (P.lump_on == 0u) { return 0u; }
     return (dense_word(k) & LUMP_BITS) >> LUMP_SHIFT;
 }
+// **A condensed striker** (2026-11-20, `condense`): bit 16 of its word
+// (condensing's old `DENSE_BIT`, free since 11-17; the view reads the same
+// bit), and in `HURT_BITS` the walkers it took in that are left, each one
+// blow it can take and one bite more. Never a lump's member (`lumpform`
+// clears the bit as one joins), so the hits bits are its own.
+const DENSE_BIT: u32 = 0x10000u;
+// The most walkers a striker takes in (`StrikerRules::most`, 1 to 15;
+// bits 24-27 of `cond_r2`, 3 until 11-20's retune).
+fn cond_most() -> u32 { return max((P.cond_r2 >> 24u) & 15u, 1u); }
+fn condensed(k: u32) -> bool { return P.cond > 0.0 && (dense_word(k) & DENSE_BIT) != 0u; }
 // Specks are on (`roam`, 11-16, the owner's "Remove the bronze, keep the
 // specks"; with growth). Until 11-17 this was `condenses()`, also on for
 // condensing and thickening, both deleted.
@@ -448,6 +470,15 @@ fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | H
 // it took the blow so. One thread a walker writes its word.
 fn armoured(k: u32) -> bool {
     let lb = lump_of(k);
+    // A condensed striker takes a blow for each walker it took in that is
+    // left, losing one with each (`condense`).
+    if (lb == 0u && condensed(k)) {
+        let wd = dense_word(k);
+        let left = wd >> HURT_SHIFT;
+        if (left == 0u) { return false; }
+        set_dense(k, (wd & ~HURT_BITS) | ((left - 1u) << HURT_SHIFT));
+        return true;
+    }
     // A set walker (`set_scar`) takes `set_armour` blows, counted in its
     // set word, as the CPU's `armoured`.
     if (lb == 0u && is_set(k)) {
@@ -654,6 +685,14 @@ const DOZE: u32 = 0x1000u;
 // CPU's `BigDish::flung`), not fruited: it flies straight at `fling_st`
 // and lands with no rest. `alight` clears it.
 const FLUNG: u32 = 0x2000u;
+// A pinwheel's arms (`Lump::spin`).
+const PIN_ARMS: f32 = 3.0;
+// How much harder than the lump's pull a member leans into its arm, and
+// how far an arm trails per cell out (radians), so the arms curve like a
+// pinwheel's. At 1x and straight spokes (11-20 first film) the march's
+// own pull smeared the arms into a bar.
+const PIN_LEAN: f32 = 3.0;
+const PIN_TWIST: f32 = 0.08;
 // `DOOM` (bit 14, gun look 2026-11-15): a flung spore that is a shot's
 // spray droplet (the CPU's `BigDish::doomed`): a struck walker thrown out of
 // the hit (`strike`). It slows to a stop, lays nothing, and dies where it
@@ -896,6 +935,26 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
     // A still walker (`MIND_STILL`) neither breaks away, raids, panics nor
     // surges.
     if (mind_of(k, S.t) == MIND_STILL) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    // A condensed striker (`condense`) charges the nearest soldier,
+    // wherever it is, at `cond` of its pace, down the units' walking
+    // distance where there is one (`goal_unit`).
+    if (condensed(k)) {
+        let cx = i32(here % P.w);
+        let cy = i32(here / P.w);
+        var best = -1;
+        var bx = 0;
+        var by = 0;
+        for (var u = 0u; u < P.nunits; u++) {
+            let dx = i32(SQ.units[u].x) - cx;
+            let dy = i32(SQ.units[u].y) - cy;
+            let d2 = dx * dx + dy * dy;
+            if (best < 0 || d2 < best) { best = d2; bx = i32(SQ.units[u].x); by = i32(SQ.units[u].y); }
+        }
+        if (best >= 0) {
+            goal_unit = true;
+            return vec3<f32>(f32(bx) + 0.5, f32(by) + 0.5, P.cond);
+        }
+    }
     // A breakaway (`roam`) runs for its crystal at its own pace, and
     // does not panic.
     if (roaming(k)) {
@@ -1102,6 +1161,27 @@ fn wave_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
     if (d == 0xFFFFFFFFu) { return 0.0; }
     return f32(dh) - f32(d);
 }
+// **The heartbeat** (2026-11-20, `Game::time_heart`): real slime mould
+// pulses, its cytoplasm streaming out and back every minute or two in
+// waves that run through the whole body. Here a beat runs outward from the
+// slime's heart (its home crystal while it holds it, else its crystal with
+// the most slime) every period: the phase at a walker falls with its
+// distance from the heart, so each beat is a ring moving out through the
+// body. On the beat a calm walker leans away from the heart and steps up
+// to `HEART_HASTE` faster, so the edge swells toward whatever is round it;
+// between beats it leans back. The unit vector from the heart and the beat
+// (-1 to 1) at (x, y), or zeros with no heart.
+const HEART_HASTE: f32 = 0.6;
+fn heart_beat(x: f32, y: f32, t: u32) -> vec3<f32> {
+    let per = P.heart_clock & 0xFFFFu;
+    let len = f32(P.heart_clock >> 16u);
+    if (per == 0u || len <= 0.0) { return vec3<f32>(0.0, 0.0, 0.0); }
+    let dx = x - P.heart_x;
+    let dy = y - P.heart_y;
+    let d = max(sqrt(dx * dx + dy * dy), 1.0e-3);
+    let s = sin(TAU * (f32(t % per) / f32(per) - d / len));
+    return vec3<f32>(dx / d, dy / d, s);
+}
 // The lure at a sensor: how much nearer the lure its block is than the
 // walker's own (`dh`). A block the field does not reach (rock, a wall, or
 // past the lure's reach) reads no lean either way, as in the lab's rig
@@ -1255,6 +1335,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // 1 above).
     let lb = lump_of(k);
     if (lb != 0u && P.lumps[lb - 1u].haste > 0.0) { st *= P.lumps[lb - 1u].haste; }
+    // **The heartbeat** (`heart_beat`): a calm walker's pace swells as the
+    // beat passes outward through it.
+    var beat = vec3<f32>(0.0, 0.0, 0.0);
+    if (P.heart > 0.0 && lb == 0u && !scared) {
+        beat = heart_beat(wk.x, wk.y, t);
+        st *= 1.0 + HEART_HASTE * max(beat.z, 0.0);
+    }
     var f: f32; var fl: f32; var fr: f32;
     if (scared && P.raid_field != 0u && raid_to(k, here).z > 0.0 && raid_dist(here) != 0xFFFFFFFFu) {
         f = raid_at_sensor(wk.x, wk.y, h, so);
@@ -1299,6 +1386,29 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
             fl += l.pull * (cos(h - sa) * dx + sin(h - sa) * dy) / r;
             fr += l.pull * (cos(h + sa) * dx + sin(h + sa) * dy) / r;
         }
+        // A lump's arms (`Lump::spin`, the Pinwheel, 2026-11-20): round
+        // its members' centre, `PIN_ARMS` spokes turn at `spin` radians a
+        // step, and each member leans along the tangent toward the
+        // nearest, as hard as the lump's pull, so the body gathers into
+        // arms that sweep round. A plain lean along the tangent (its
+        // first version) only turned a disc, which looks the same at
+        // every turn: no arms showed on the owner's planets 3 and 4.
+        if (lb != 0u && P.lumps[lb - 1u].spin != 0.0) {
+            let lc = lump_centre(lb - 1u);
+            if (lc.z > 0.0) {
+                let l = P.lumps[lb - 1u];
+                let rx = wk.x - lc.x;
+                let ry = wk.y - lc.y;
+                let r = max(sqrt(rx * rx + ry * ry), 1.0e-3);
+                let to_arm = sin(PIN_ARMS * (l.spin * f32(S.t) - atan2(ry, rx) + PIN_TWIST * r));
+                let s = PIN_LEAN * abs(l.pull) * to_arm;
+                let tx = -ry / r;
+                let ty = rx / r;
+                f += s * (cos(h) * tx + sin(h) * ty);
+                fl += s * (cos(h - sa) * tx + sin(h - sa) * ty);
+                fr += s * (cos(h + sa) * tx + sin(h + sa) * ty);
+            }
+        }
         // The far smell (S2; the CPU's): a hungry walker leans down the
         // walking distance to untouched crystals, x its hunger.
         if (lb == 0u && P.far > 0.0 && growth() && P.hat > 0.0) {
@@ -1328,6 +1438,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (fl > -1.0e5) { fl += P.lure * lure_near(wk.x, wk.y, h - sa, so, dh); }
                 if (fr > -1.0e5) { fr += P.lure * lure_near(wk.x, wk.y, h + sa, so, dh); }
             }
+        }
+        // The heartbeat's lean, outward on the beat and home between.
+        if (beat.z != 0.0) {
+            let w = P.heart * beat.z;
+            if (f > -1.0e5) { f += w * (cos(h) * beat.x + sin(h) * beat.y); }
+            if (fl > -1.0e5) { fl += w * (cos(h - sa) * beat.x + sin(h - sa) * beat.y); }
+            if (fr > -1.0e5) { fr += w * (cos(h + sa) * beat.x + sin(h + sa) * beat.y); }
         }
         // **The wave** (2026-11-20; `wave_dist`): a calm walker inside the
         // wave's field leans down it, x `wave`, as the lure's. Calm only,
@@ -3864,6 +3981,8 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (P.roam == 0u) { return; }
     let wd = dense_word(k);
     if (!ordinary(k)) { return; }
+    // A condensed striker never leaves as a speck.
+    if ((wd & DENSE_BIT) != 0u) { return; }
     // A breakaway (`roam`, 11-16, the CPU's specks) lands within
     // `roam_land` of its crystal or when it runs dry, or gives up after
     // `SPECK_TRIP` steps on its way (its low bits count them), and is
@@ -3912,12 +4031,17 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n || !lives(k)) { return; }
     let lb = lump_of(k);
-    if (lb == 0u) { return; }
+    // A condensed striker bites once more for each walker it took in that
+    // is left (`condense`).
+    var bite = 0u;
+    if (lb != 0u) { bite = P.lumps[lb - 1u].bite; } else if (condensed(k)) { bite = dense_word(k) >> HURT_SHIFT; }
+    if (bite == 0u) { return; }
     let st = state(k);
     if (st == L_SPORE || st == L_DEAD) { return; }
     let wk = walkers[k];
     let c = cell(wk.x, wk.y);
-    if (P.lumps[lb - 1u].bite > 0u) { atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + c], P.lumps[lb - 1u].bite); }
+    if (c == NONE) { return; }
+    atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + c], bite);
 }
 
 // **Lumps** (held bodies, `BigParams::lumps`, 2026-11-16, the mini-boss
@@ -3965,18 +4089,116 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let dx = i32(floor(wk.x)) - i32(c & 0xFFFFu);
     let dy = i32(floor(wk.y)) - i32(c >> 16u);
-    let within = ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
+    // A condensed striker never joins (the review of 11-20 evening): its
+    // word's hurt bits are the walkers it holds, and joining cleared them,
+    // so every lump that formed by a striker (a mini-boss, a fruit, a
+    // march) took that slime off the map.
+    let within = ordinary(k) && (wd & DENSE_BIT) == 0u && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
     if ((word & 256u) != 0u) {
         if (within && (wd & LUMP_BITS) == 0u) {
-            set_dense(k, (wd & ~(HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
+            set_dense(k, (wd & ~(HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
         }
         return;
     }
     if (within) {
-        set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
+        set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
     } else if ((wd & LUMP_BITS) == mine) {
         set_dense(k, wd & ~(LUMP_BITS | HURT_BITS));
     }
+}
+
+// **Condensed strikers** (2026-11-20, the thread "Make the slime a more
+// interesting enemy"; `Game::time_strikers`). The owner, 11-20 14:10Z: once
+// the squad is big enough "the slime cannot touch them, so it doesn't matter
+// how much slime their is", and condensing "and get tougher" was a way back
+// "although the visuals and mechanics of that would need to be much
+// improved". 14:16Z: hardened slime "doesn't attack you. It makes it
+// easier." So a condensed walker charges.
+//
+// Run by the game once a game second late in a planet, off the frame:
+// `condense`, a thread a slot, then `condlead`, a thread a `RAID_BLOCK`
+// block. An ordinary calm walker within `cond_r2` of a soldier (the body's
+// edge facing the squad) tries with chance `cond_share`; the tries in a
+// block are counted on its word (the count in the top 8 bits). The first is
+// its leader (its slot in the low 24); the next `cond_most()` are taken in,
+// dying where they stand (not counted as kills); the rest stay as they
+// are. Then the leader of a block with any taken in condenses, holding
+// what it took in (`armoured`, `dcount`, `panic_to`), and the word is
+// cleared. The mass is the same and so is the bite: the slime counts one
+// walker less for each taken in. The words are the raid region's third
+// quarter, after the raid's and the wave's blocks.
+//
+// The old condensing (11-14 to 11-17, Reports/dead-ends.md) packed thick
+// slime anywhere: its lobes sat on their crystals and thick walkers stuck
+// inside the body. This one condenses only the edge facing the squad, and
+// every condensed walker charges.
+//
+// `condense` also counts the condensed walkers living into `wstat[8]` and
+// what they hold into `wstat[9]`, and the walkers taken in into
+// `wstat[10]` (`Engine::condense` clears them first).
+fn cond_word(q: u32) -> u32 {
+    let nb = ((P.w + RAID_BLOCK - 1u) / RAID_BLOCK) * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    return dense_base() + DENSE_HEAD + P.n + P.w * P.h + 2u * nb + q;
+}
+
+@compute @workgroup_size(256)
+fn condense(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || P.cond <= 0.0 || !ordinary(k)) { return; }
+    let wd = dense_word(k);
+    if ((wd & DENSE_BIT) != 0u) {
+        atomicAdd(&wstat[8], 1u);
+        atomicAdd(&wstat[9], wd >> HURT_SHIFT);
+        return;
+    }
+    if (lump_of(k) != 0u || (wd & ROAM_BIT) != 0u || is_set(k) || mind_of(k, S.t) == MIND_STILL) { return; }
+    let wk = walkers[k];
+    let here = cell(wk.x, wk.y);
+    if (here == NONE) { return; }
+    // Within reach of a soldier by walking, where the units' walking
+    // distance is kept (bit 31 of `cond_r2`), else as the crow flies. By
+    // walking, slime across deep water or behind rock from the squad (the
+    // first films, planet 3: 2,000 of them pressed on a bank for a minute
+    // with the squad shooting across) never condenses: it could not charge.
+    let r2 = f32(P.cond_r2 & 0xFFFFFFu);
+    var near = false;
+    if ((P.cond_r2 & 0x80000000u) != 0u) {
+        let ud = units_dist(here);
+        near = ud != 0xFFFFFFFFu && f32(ud) * f32(ud) <= r2;
+    } else {
+        for (var u = 0u; u < P.nunits; u++) {
+            let dx = f32(SQ.units[u].x) + 0.5 - wk.x;
+            let dy = f32(SQ.units[u].y) + 0.5 - wk.y;
+            if (dx * dx + dy * dy <= r2) { near = true; break; }
+        }
+    }
+    if (!near || unit(keyed(P.s_condense, S.t, k ^ 0x2C1B3C6Du)) >= P.cond_share) { return; }
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let q = ((here / P.w) / RAID_BLOCK) * bw + (here % P.w) / RAID_BLOCK;
+    let c = atomicAdd(&news[cond_word(q)], 1u << 24u) >> 24u;
+    if (c == 0u) {
+        atomicOr(&news[cond_word(q)], k & 0xFFFFFFu);
+    } else if (c <= cond_most()) {
+        // Taken in: dead where it stands, as `strike` kills, not counted.
+        atomicAdd(&wstat[10], 1u);
+        atomicSub(&occ[here], 1u);
+        spec[k] = (spec[k] & 0xFFFF01FFu) | (L_DEAD << 9u);
+        if (P.upkeep > 0.0) { energy[k] = -1.0; }
+    }
+}
+
+@compute @workgroup_size(256)
+fn condlead(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let nb = ((P.w + RAID_BLOCK - 1u) / RAID_BLOCK) * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    if (gid.x >= nb) { return; }
+    let v = atomicLoad(&news[cond_word(gid.x)]);
+    if (v == 0u) { return; }
+    atomicStore(&news[cond_word(gid.x)], 0u);
+    let took = min((v >> 24u) - 1u, cond_most());
+    if (took == 0u) { return; }
+    let k = v & 0xFFFFFFu;
+    let wd = dense_word(k);
+    set_dense(k, (wd & ~(HURT_BITS | RIPE_BITS)) | DENSE_BIT | (took << HURT_SHIFT));
 }
 
 // **Plants** (2026-11-14, the CPU's `mould::plants`): in `news` after the
