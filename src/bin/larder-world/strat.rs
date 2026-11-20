@@ -24,7 +24,14 @@
 //!   (`back`), and how thin the slime by its home must be before it walks
 //!   in (`per`);
 //! - **the shop** between planets (`shop`, `cards`), read by the league
-//!   (`league.rs`), not by the hand.
+//!   (`league.rs`), not by the hand;
+//! - **switching** in the game (2026-11-20; the owner's "a bot that can
+//!   switch/test different strategies", and planet 2 on today's game,
+//!   where the plans that build first won 9 of 66 games and most squads
+//!   were wiped by 3:04): all-out soldiers while the slime outgrows its
+//!   start (`grow`), falling back home to rebuild a beaten squad
+//!   (`regroup`), and a soldier's price kept back so a wiped squad is not
+//!   the end of the planet (`spare`).
 //!
 //! It never changes the game's numbers: it plays through `Game::apply`
 //! as the window does, and builds only what the run has unlocked (`own`,
@@ -113,6 +120,23 @@ pub(super) struct Plan {
     /// `econ,cards=0` brought 70k slime down to 2 and ran out the clock
     /// draining crystals (11-19, p3 gen1).
     pub mop: u32,
+    /// Switch to soldiers: while the slime is over this many times its
+    /// size at the landing (0: never), every point goes to soldiers, no
+    /// building is placed, and the squad goes out, as `rush` plays; back
+    /// to the plan once the slime is down to its landing size. On planet 2
+    /// map 3 (11-20) the slime doubled in three minutes under every
+    /// build-first plan while it waited for pumps.
+    pub grow: f32,
+    /// Fall back: once out, a squad down to fewer than this many soldiers
+    /// (0: never) goes home and rebuilds, and goes out again at `go` or
+    /// twice this, whichever is more. The owner's planet 2 (11-18) went
+    /// down to one soldier at 2:00 and came back; the bots' squads fought
+    /// to the last.
+    pub regroup: u32,
+    /// Soldiers' prices the bank keeps back from buildings and upgrades
+    /// (0: none). A squad wiped with a soldier's price in the bank waits
+    /// for its recruit; with less, the planet is lost (`check_end`).
+    pub spare: u32,
 }
 
 impl Default for Plan {
@@ -144,6 +168,9 @@ impl Default for Plan {
             group: 4,
             want: Vec::new(),
             mop: 0,
+            grow: 0.0,
+            regroup: 0,
+            spare: 0,
         }
     }
 }
@@ -172,7 +199,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 26] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop"];
+    pub const DIALS: [&'static str; 29] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -219,6 +246,9 @@ impl Plan {
             "group" => self.group = whole(v)?.clamp(1, 40),
             "want" => self.want = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             "mop" => self.mop = whole(v)?,
+            "grow" => self.grow = num(v)?.max(0.0),
+            "regroup" => self.regroup = whole(v)?,
+            "spare" => self.spare = whole(v)?.min(20),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -275,6 +305,15 @@ struct Memory {
     pub secs: [u32; 4],
     /// Holding groups (`Plan::split`): squad and its crystal.
     held: Vec<(usize, usize)>,
+    /// The slime at the landing (`Plan::grow`), and whether the plan is
+    /// switched to soldiers now.
+    start: f32,
+    rushing: bool,
+    /// The squad has been out (`Plan::regroup`), and is home rebuilding.
+    been_out: bool,
+    regrouping: bool,
+    /// Seconds switched to soldiers and falling back, for the league's row.
+    pub switched: [u32; 2],
 }
 
 thread_local! {
@@ -285,6 +324,12 @@ thread_local! {
 /// alive, and the seconds home, out, building and stepping back.
 pub(super) fn tally() -> (u32, usize, [u32; 4]) {
     MEM.with_borrow(|m| (m.bought, m.peak, m.secs))
+}
+
+/// Seconds the plan spent switched to soldiers (`grow`) and falling back
+/// home (`regroup`).
+pub(super) fn switched() -> [u32; 2] {
+    MEM.with_borrow(|m| m.switched)
 }
 
 /// Slime squares (`mould_grid`) round a point and on a line, shared by
@@ -520,7 +565,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
                 return;
             }
         };
-        MEM.with_borrow_mut(|m| *m = Memory { spec: spec.to_string(), plan, ..Memory::default() });
+        MEM.with_borrow_mut(|m| *m = Memory { spec: spec.to_string(), plan, start: g.mould as f32, ..Memory::default() });
     }
     let p = MEM.with_borrow(|m| m.plan.clone());
     let sc = g.world.scale();
@@ -564,8 +609,45 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
             }
         }
     });
-    let out = g.alive() as u32 >= p.go || mopping;
+    // Switching (`grow`, `regroup`): each with a way in and a way out, so
+    // the plan does not flicker at the line.
+    let alive = g.alive() as u32;
+    let (rushing, regrouping) = MEM.with_borrow_mut(|mm| {
+        let size = g.mould as f32;
+        if p.grow > 0.0 && mm.start > 0.0 {
+            if !mm.rushing && size > p.grow * mm.start {
+                mm.rushing = true;
+            } else if mm.rushing && size <= mm.start {
+                mm.rushing = false;
+            }
+        }
+        if p.regroup > 0 {
+            if !mm.regrouping && mm.been_out && alive < p.regroup {
+                mm.regrouping = true;
+            } else if mm.regrouping && alive >= p.go.max(2 * p.regroup) {
+                mm.regrouping = false;
+                mm.been_out = false;
+            }
+        }
+        if mm.rushing {
+            mm.switched[0] += 1;
+        }
+        if mm.regrouping {
+            mm.switched[1] += 1;
+        }
+        (mm.rushing, mm.regrouping)
+    });
+    let out = (alive >= p.go || mopping || rushing) && !regrouping;
+    if out {
+        MEM.with_borrow_mut(|mm| mm.been_out = true);
+    }
+    // What buildings and upgrades may spend: the bank less `spare`
+    // soldiers' prices.
+    let keep = p.spare as f32 * g.rules.soldier_cost;
     let want = |g: &Game<GpuWorld>| -> Option<Want> {
+        if rushing {
+            return None;
+        }
         let (pumps, home, mut refused) = MEM.with_borrow(|mm| (mm.pumps.clone(), mm.home, mm.refused.clone()));
         refused.extend(MEM.with_borrow(|mm| mm.eaten.iter().map(|e| e.0).collect::<Vec<_>>()));
         let base = home.unwrap_or(g.larder);
@@ -629,7 +711,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
         }
         match want(g) {
             Some(w) => {
-                let cost = price(g, w);
+                let cost = price(g, w) + keep;
                 if g.bank >= cost {
                     MEM.with_borrow_mut(|mm| mm.saving = None);
                     if !place(g, &p, w, &sense) {
@@ -741,7 +823,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     }
     // Home: guard the first pump (or the landing) until `go` soldiers;
     // with no pump to guard and no plan to build one, drain as the run bot.
-    let has_home = MEM.with_borrow(|mm| mm.home.is_some()) || p.pumps > 0;
+    let has_home = MEM.with_borrow(|mm| mm.home.is_some()) || p.pumps > 0 || regrouping;
     if !out && has_home {
         let o = Order::Guard(home.0, home.1);
         if fresh_order(g, o) && dist(m, home) > 0.25 * range {

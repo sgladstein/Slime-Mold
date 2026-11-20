@@ -37,7 +37,7 @@ Score of one game: a win is 1 plus up to 1 for speed ((cap - secs) / cap);
 a game not won is its progress, 1 - slime left / the slime's peak, times
 0.9, so any win beats any loss. A plan's score is the mean over its games.
 """
-import argparse, json, math, os, random, re, subprocess, sys, time
+import argparse, glob, json, math, os, random, re, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
@@ -195,6 +195,10 @@ SPACE = {
     "split": [0, 1, 2, 3, 4, 6],
     "group": [2, 3, 4, 6, 8],
     "mop": [0, 100, 300, 1000, 3000],
+    # 11-20: switching in the game (strat.rs `grow`, `regroup`, `spare`).
+    "grow": [0, 1.2, 1.3, 1.5, 2],
+    "regroup": [0, 2, 3, 4, 8],
+    "spare": [0, 1, 2],
 }
 SHOP_KEYS = ["strike", "rate", "hp", "squad", "harvest", "range", "bank", "turret", "turret+", "pump+", "mortar", "draw"]
 
@@ -304,7 +308,7 @@ def cross(a, b, rng):
     keys = set(a) | set(b)
     return {k: (a if rng.random() < 0.5 else b).get(k, (b if k in b else a).get(k)) for k in keys if (k in a or k in b)}
 
-STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0"}
+STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0", "grow": "0", "regroup": "0", "spare": "0"}
 
 def presets():
     """The strategy bot's named families, read from strat.rs."""
@@ -320,7 +324,7 @@ def canon(plan, _p={}):
     d.pop("name", None)
     if d.get("@") == "util:":
         full = {k: f"{v:.3g}" for k, v in util_weights().items()}
-        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0"})
+        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0", "grow": "0", "regroup": "0", "spare": "0"})
     else:
         full = dict(STRAT_DEFAULTS)
         full.update({k: v for k, v in dials_of(_p.get(d.get("@", ""), "")).items() if k != "@"})
@@ -580,10 +584,14 @@ def read_cfg(path):
             cfg[k.strip()] = v.strip()
     return cfg
 
+EVOLVE_NEXT = 0
+
 def next_work(chunk):
     """The next games: the first job file in queue/pc/ (by name) with games
-    left, else the next games of the search that queue/pc-evolve.txt sets.
-    Returns (games, results file) or None."""
+    left, else the next chunk of one of the searches that the files
+    queue/pc-evolve*.txt set, taking them in turn (11-20: planet 2 and
+    planet 3 side by side). Returns (games, results file) or None."""
+    global EVOLVE_NEXT
     if os.path.isdir(QUEUE):
         for name in sorted(os.listdir(QUEUE)):
             if name.endswith(".txt"):
@@ -591,9 +599,19 @@ def next_work(chunk):
                 todo = pending(os.path.join(QUEUE, name), out)
                 if todo:
                     return todo[:chunk], out
-    cfg_path = os.path.join(HERE, "queue", "pc-evolve.txt")
-    if not os.path.exists(cfg_path):
-        return None
+    cfgs = sorted(glob.glob(os.path.join(HERE, "queue", "pc-evolve*.txt")))
+    for i in range(len(cfgs)):
+        k = (EVOLVE_NEXT + i) % len(cfgs)
+        w = search_work(cfgs[k], chunk)
+        if w:
+            EVOLVE_NEXT = (k + 1) % len(cfgs)
+            return w
+    return None
+
+def search_work(cfg_path, chunk):
+    """The next chunk of the search that file `cfg_path` sets, breeding its
+    next generation when the last one is played. None when it has nothing
+    new to play."""
     c = read_cfg(cfg_path)
     d = os.path.join(OUT, c["name"])
     os.makedirs(d, exist_ok=True)
