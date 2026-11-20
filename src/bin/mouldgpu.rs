@@ -4165,11 +4165,13 @@ mod tests {
             ("growth on crystals", Settings { wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             // Soil: the trail's keep on sand and clay, barren upkeep and no
             // births there; then with two species (each field x the keep).
-            ("soil bands, growth on crystals", grow(w(small(0))), soil),
+            // Deep water as a wall (`deep_wall`, 11-20) is the engine's own
+            // rule with no CPU twin, so it is off here.
+            ("soil bands, growth on crystals", Settings { deep_wall: false, ..grow(w(small(0))) }, soil),
             // One a cell: with no limit a child lands on a crystal cell
             // others share, and the take check (a cell's share against each
             // living walker's take) counts the newborn, which took nothing.
-            ("soil bands, two species", Settings { species: 2, ..grow(w(small(0))) }, soil),
+            ("soil bands, two species", Settings { species: 2, deep_wall: false, ..grow(w(small(0))) }, soil),
             // One body (2026-11-12): energy evens out between neighbouring
             // cells (`esum`, `egain`) and hungry walkers weigh the scent
             // harder, at the one-body thread's lead (0.05, 8), over walls

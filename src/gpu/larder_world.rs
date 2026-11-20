@@ -1082,7 +1082,13 @@ impl World for GpuWorld {
 
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
-        Some((self.e.dish.agar.clone(), self.e.dish.w, self.e.dish.h))
+        // Deep water is a wall to this engine's slime (`Settings::
+        // deep_wall`, 2026-11-20), so the ways it walks (a raid's, a
+        // charge's, the far smell's, the lure's) go round by the fords and
+        // bridges rather than pressing on the bank.
+        let d = &self.e.dish;
+        let ground = if self.s.deep_wall { (0..d.w * d.h).map(|i| d.agar[i] && !d.deep(i)).collect() } else { d.agar.clone() };
+        Some((ground, d.w, d.h))
     }
 
     fn food_deposit(&self) -> f32 {
@@ -2067,6 +2073,64 @@ mod tests {
         if !ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
             assert_eq!(off.world.hash(), bare.world.hash(), "pull 0 is the game with no lure");
         }
+    }
+
+    /// **Deep water is a wall to the slime** (`Settings::deep_wall`,
+    /// 2026-11-20, the owner: "Deep water shouldn't be traversable by
+    /// player or slime"). A rule of the GPU engine alone (the owner's card,
+    /// 11-17 19:21Z: no CPU twin), so its test is what it does on the
+    /// software GPU. The river map (`map::river`, a deep band 16 dish cells
+    /// wide with a ford) with the slime's start moved to 15 dish cells from
+    /// its east bank, so its edge starts in the water; on and off alike for 20
+    /// game seconds:
+    ///
+    /// - On, no walker goes into the deep water (the count in it never
+    ///   rises) and those that start in it swim out (most are out by 20 s);
+    ///   off, the slime stays in it and spreads through it.
+    /// - On, the slime's ways (`raid_ground`) are shut over the deep water
+    ///   and open over the ford.
+    #[test]
+    fn deep_water_is_a_wall_to_the_slime() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut m = crate::mould::map::river(true, false);
+        m.items.moulds = vec![(604.0, 200.0)];
+        let play = |on: bool| {
+            let s = Settings { deep_wall: on, ..race_settings(seed, scale, walkers) };
+            Game::new(GpuWorld::with_map(&device, &queue, s, scale, &m), Rules::default(), seed)
+        };
+        let in_deep = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let d = &e.dish;
+            (0..e.n as usize)
+                .filter(|&q| (!e.grows || en[q] >= 0.0) && d.deep((wk[4 * q + 1] as usize).min(d.h - 1) * d.w + (wk[4 * q] as usize).min(d.w - 1)))
+                .count()
+        };
+        let (mut on, mut off) = (play(true), play(false));
+        let start = in_deep(&on);
+        assert!(start >= 50 && in_deep(&off) == start, "the slime's edge starts in the water: {start} walkers");
+        // A map cell's fine cell (a dish cell is 4 map cells, at scale 1).
+        let (ground, w, _) = on.world.raid_ground().unwrap();
+        let at = |x: usize, y: usize| (y / 4) * w + x / 4;
+        assert!(!ground[at(512, 200)] && ground[at(512, 320)] && ground[at(460, 200)], "the ways are shut over deep water, open over the ford and the bank");
+        assert!(off.world.raid_ground().unwrap().0[at(512, 200)], "off, the ways cross it as before");
+        let (mut last, mut without) = (start, 0);
+        for secs in [2.0, 5.0, 10.0, 15.0, 20.0] {
+            for g in [&mut on, &mut off] {
+                while g.time() < secs {
+                    g.step();
+                }
+            }
+            let (a, b) = (in_deep(&on), in_deep(&off));
+            eprintln!("deep water at {secs} s: {a} walkers in it with the wall, {b} without (of {start} at the start; {} and {} alive)", on.world.living(), off.world.living());
+            assert!(a <= last, "with the wall none goes into the water: {a} at {secs} s, {last} before");
+            (last, without) = (a, b);
+        }
+        assert!(last * 2 <= start, "with the wall most swim out: {last} of {start} left");
+        assert!(without >= start, "without the wall the slime stays and spreads in the water: {without} against {start}");
     }
 
     /// **The tether** (`Settings::tether`, 2026-11-18, the Enemy lane, from
