@@ -683,8 +683,8 @@ pub struct Ending {
     /// A win (green), a loss (red), or neither (a sandbox round at its
     /// clock: the accent).
     pub won: Option<bool>,
-    /// A mission's stars, of three: three discs under the title, the
-    /// earned ones in the outcome's colour.
+    /// A mission's stars, of three: three stars under the title, the
+    /// earned ones filled in the outcome's colour.
     pub stars: Option<u8>,
     /// What the slime did to you, one sentence (a run's planet:
     /// `run::does_to_you`), under the title.
@@ -2838,7 +2838,7 @@ impl Hud {
             let h = 28.0 * s
                 + if e.place.is_empty() { 0.0 } else { 22.0 * s }
                 + title.len() as f32 * 34.0 * s
-                + if stars.is_some() { 22.0 * s } else { 0.0 }
+                + if stars.is_some() { 34.0 * s } else { 0.0 }
                 + says.len() as f32 * 21.0 * s
                 + 14.0 * s
                 + tiles_h
@@ -2873,17 +2873,21 @@ impl Hud {
             y += 34.0 * s;
         }
         if let Some(n) = stars {
-            let (d, gap) = (11.0 * s, 8.0 * s);
+            // Stars, the middle one raised and larger (Look D, 11-20: three
+            // 11-unit discs read as loading dots, not a score).
+            let (d, gap) = (26.0 * s, 4.0 * s);
             let x0 = r.x + w / 2.0 - (3.0 * d + 2.0 * gap) / 2.0;
             for k in 0..3u8 {
-                let b = Rect::new(x0 + k as f32 * (d + gap), y + 9.0 * s, d, d);
+                let big = if k == 1 { 1.15 } else { 1.0 };
+                let px = d * big;
+                let at = (x0 + k as f32 * (d + gap) + (d - px) / 2.0, y + 2.0 * s + if k == 1 { -3.0 * s } else { 0.0 });
                 if k < n {
-                    c.rrect(b, d / 2.0, tone);
+                    c.icon(Icon::Star, at, px, tone);
                 } else {
-                    c.outline(b, d / 2.0, 1.5 * s, [255, 255, 255, 60]);
+                    c.icon(Icon::StarOpen, at, px, [255, 255, 255, 70]);
                 }
             }
-            y += 22.0 * s;
+            y += 34.0 * s;
         }
         for l in &says {
             y += 21.0 * s;

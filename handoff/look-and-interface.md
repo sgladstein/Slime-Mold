@@ -199,6 +199,8 @@ The HUD, 11-20 (planet 2 at play zoom): a squad tile grows to 168, not
 136, so one squad's says "working" whole beside YOU, and a long state
 ("working, 3 on guard") falls back to its first word where it does not
 fit (`ui.rs`). The top bar, goal pill and command grid read sound.
+The end card's stars are star icons, 26 units, the middle one raised
+(`Icon::Star`, `StarOpen`; three 11-unit discs read as loading dots).
 The Campaign and Keys pages were filmed and left; What is new cuts long
 rows to one line with the whole in its pane, as designed.
 
