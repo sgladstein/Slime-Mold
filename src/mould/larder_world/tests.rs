@@ -2502,6 +2502,25 @@ fn a_rate_card_fires_twice_as_often() {
     assert_eq!(g.shot_gap(0), (plain as f32 / 4.0).round().max(1.0) as u64, "three cards, four times");
 }
 
+/// **Heavier shots buy the controlled squad something** (2026-11-20,
+/// Direction): its strike is at the engines' cap already, so the area a
+/// level would add past the cap comes back as faster shots.
+#[test]
+fn heavier_shots_past_the_cap_fire_faster() {
+    let mut g = small(1);
+    g.active = Some(0);
+    assert!(g.leads(0));
+    // This small world's scale is 1, not the run's 2: set its strike where
+    // the run's controlled squad stands, right at the cap.
+    g.rules.strike = squad::R_MAX / (g.s() * g.rules.lead.strike);
+    let (gap, r) = (g.shot_gap(0), g.strike_of(0));
+    assert!((r - squad::R_MAX).abs() < 1e-3 && (g.strike_over(0) - 1.0).abs() < 1e-3, "the controlled squad strikes at the cap: {r}");
+    g.rules.strike *= 1.2;
+    assert!((g.strike_of(0) - squad::R_MAX).abs() < 1e-3, "still capped");
+    assert!((g.strike_over(0) - 1.44).abs() < 1e-3, "{}", g.strike_over(0));
+    assert!((g.shot_gap(0) as f32) < gap as f32 / 1.3, "a level fires faster: {} against {gap}", g.shot_gap(0));
+}
+
 /// Open ground `d` dish cells from squad 0's middle.
 fn open_near(g: &Game<BigDish>, d: f32) -> (f32, f32) {
     let m = g.middle(0).unwrap();

@@ -931,13 +931,32 @@ impl<W: World> Game<W> {
         let every = self.gun(q).every() / if self.leads(q) { self.rules.lead.rate.max(0.01) } else { 1.0 };
         // The rounds' `Rate` cards (11-14): x (1 + rate_card) a card.
         let every = every / (1.0 + self.rules.rate_card * self.mods(q).rate as f32).max(0.01);
+        // Strike past the engines' cap fires faster instead (2026-11-20,
+        // Direction): the controlled squad's strike is 2.5 x 2 x 1.4 = 7,
+        // `squad::R_MAX` already, so the shop's Heavier shots (x1.2 a level)
+        // bought it nothing (strategy bots, planet 2 map 3: identical games
+        // with and without). The area it would have struck comes back as
+        // shots: (wanted / cap) squared times as often. Raising the cap was
+        // rejected: it is the GPU's 15 x 15 box a shot.
+        let every = every / self.strike_over(q);
         self.secs(every).max(1)
+    }
+
+    /// Strike radius squad `q`'s shots would have with no cap, fine cells.
+    fn strike_want(&self, q: usize) -> f32 {
+        let lead = if self.leads(q) { self.rules.lead.strike } else { 1.0 };
+        self.rules.strike * self.s() * lead
+    }
+
+    /// How many times the capped strike's area squad `q`'s strike wants
+    /// (1 at or under `squad::R_MAX`): its shots come that much faster.
+    pub(super) fn strike_over(&self, q: usize) -> f32 {
+        (self.strike_want(q) / squad::R_MAX).max(1.0).powi(2)
     }
 
     /// Strike radius of squad `q`'s shots, fine cells.
     pub(super) fn strike_of(&self, q: usize) -> f32 {
-        let lead = if self.leads(q) { self.rules.lead.strike } else { 1.0 };
-        (self.rules.strike * self.s() * lead).min(squad::R_MAX)
+        self.strike_want(q).min(squad::R_MAX)
     }
 
     /// Applies a squad command (`Game::apply`). True if it took effect.
