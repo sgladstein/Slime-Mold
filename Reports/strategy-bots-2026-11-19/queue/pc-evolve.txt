@@ -10,6 +10,6 @@ top=6
 kids=18
 util_share=0
 # 11-19 19:15Z: breed from the aim and leave-home tests too, and keep their best in every generation.
-also=01-aim.jsonl,02-leave.jsonl,03-kite.jsonl,04-split.jsonl,05-decks.jsonl,06-mop.jsonl
-always=econ,go=4,aim=6;lure,go=4,aim=6;turtle,go=4,aim=6;econ,aim=6;rush,aim=6;econ,cards=0,mop=300;econ,go=4,aim=6,mop=300
+also=01-aim.jsonl,02-leave.jsonl,03-kite.jsonl,04-split.jsonl,05-decks.jsonl,06-mop.jsonl,07-deck-families.jsonl
+always=econ,go=4,aim=6;lure,go=4,aim=6;turtle,go=4,aim=6;econ,aim=6;rush,aim=6;econ,cards=0,mop=300;econ,go=4,aim=6,mop=300;econ,go=4,aim=6,cards=0,want=seek/wide/blast.needle;econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle
 # 11-19 19:40Z: same plan, same seed, same result, so the seeds are the noise: 16 seeds a plan. The utility bot won 0 of 192 planet 3 games: dropped. The split test joins the breeding pool.
