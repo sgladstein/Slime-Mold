@@ -182,7 +182,26 @@ pub(super) struct Plan {
     /// away when there is any (0: the heaviest in range), so a bullet that
     /// lights the ground lights it away from the squad.
     pub standoff: f32,
+    /// A second gun body (11-20, the helper thread "Teach the bot tools
+    /// and guns": no bot had ever bought a gun, `Pick::Gun`): the kind the
+    /// league's shop buys once the points allow, after the wanted cards
+    /// (`rifle`, `carbine`, `long`, `scatter`; `any`: the best-rolled gun
+    /// on offer; None: never). With `shelf` a kind not on offer is rolled
+    /// for the shop as if it were, as wanted cards are.
+    pub gun: Option<String>,
+    /// Who fires the bought gun: 0 the main squad (it goes in loadout 1,
+    /// whose cards move to it, and the rifle stays in the armory), 1 the
+    /// holding groups (`split`), from a loadout of their own (`GROUPS`)
+    /// with the cards in `want2`, while the main squad keeps the rifle.
+    pub arm: u32,
+    /// Cards for the holding groups' loadout (`arm=1`), as `want` takes
+    /// them, bought after the gun.
+    pub want2: Vec<String>,
 }
+
+/// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
+/// 0 the squads', 1 the turrets', so the first new one).
+pub(super) const GROUPS: usize = 2;
 
 impl Default for Plan {
     /// The run bot's play (`hands::bot_hand`).
@@ -222,6 +241,9 @@ impl Default for Plan {
             points: 0,
             fire: 0.0,
             standoff: 0.0,
+            gun: None,
+            arm: 0,
+            want2: Vec::new(),
         }
     }
 }
@@ -250,7 +272,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 35] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff"];
+    pub const DIALS: [&'static str; 38] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "gun", "arm", "want2"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -306,6 +328,15 @@ impl Plan {
             "points" => self.points = whole(v)?,
             "fire" => self.fire = num(v)?.clamp(0.0, 1.0),
             "standoff" => self.standoff = num(v)?.clamp(0.0, 0.95),
+            "gun" => {
+                self.gun = match v {
+                    "" | "0" | "none" => None,
+                    "any" => Some(v.to_string()),
+                    k => Some(slime_mould::mould::guns::GunKind::parse(k).ok_or_else(|| format!("strat: gun={k}: rifle, carbine, long, scatter, any or none"))?.key().to_string()),
+                }
+            }
+            "arm" => self.arm = whole(v)?.min(1),
+            "want2" => self.want2 = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -379,6 +410,18 @@ struct Memory {
 
 thread_local! {
     static MEM: RefCell<Memory> = RefCell::new(Memory::default());
+    /// The holding groups' gun and cards (`Plan::arm`), from the run's
+    /// `GROUPS` loadout: the hand sees only the game, so the league sets
+    /// it before each planet (`arm_groups`).
+    static GROUP_ARMS: RefCell<Option<(Gun, Vec<rounds::Card>)>> = const { RefCell::new(None) };
+}
+
+/// What the holding groups fire on the next planet: the run's `GROUPS`
+/// loadout's gun (with the run's upgrades) and cards, or None (they fire
+/// the main squad's, as a split keeps).
+pub(super) fn arm_groups(r: &Run) {
+    let a = r.gun_of(GROUPS).map(|_| (r.squad_gun(GROUPS), r.cards_of(GROUPS)));
+    GROUP_ARMS.with_borrow_mut(|g| *g = a);
 }
 
 /// What the league reads back after a game: soldiers bought, the most
@@ -1040,6 +1083,13 @@ fn hold(g: &mut Game<GpuWorld>, p: &Plan, q: usize) {
             by.sort_by(|&a, &b| dist((g.soldiers[a].x, g.soldiers[a].y), cs[c].0).total_cmp(&dist((g.soldiers[b].x, g.soldiers[b].y), cs[c].0)));
             for &k in by.iter().take(p.group as usize) {
                 g.apply(Cmd::Join(k, s as u8));
+            }
+            // With a gun of their own (`Plan::arm`), from their loadout, as
+            // the window arms a squad given one in the field (`arm_squads`).
+            if let Some((gun, cards)) = GROUP_ARMS.with_borrow(|a| a.clone()) {
+                g.apply(Cmd::Arm(s as u8, Some(gun)));
+                g.apply(Cmd::Load(s as u8, Some(rounds::Deck::new(&cards))));
+                g.squads[s].loadout = GROUPS as u8;
             }
             let at = cs[c].0;
             g.apply(Cmd::SquadOrder(s as u8, Order::Clear(at.0, at.1)));
