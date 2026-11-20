@@ -1,0 +1,2 @@
+# Pause windows for the PC worker (league.py `paused`): START END in UTC, then a note. It starts no game inside a window; games already running finish (planet games take up to about 2 minutes). Push a change at least 15 minutes ahead; the worker reads this file at each sync.
+2026-11-21T00:30Z 2026-11-21T02:00Z the engine lane's GPU timing batch on the GTX 1070 (coordinator 11-20 23:43Z)

@@ -607,9 +607,62 @@ def pending(jobs_path, out_path):
                 done.add(r["job"])
     return [j for j in jobs if key(j) not in done]
 
+# **Pausing the worker** (11-20 23:45Z, the engine lane's GPU timing needs
+# the GTX 1070 to itself; a `bench=` game counts as a bot's, so it does not
+# pause the worker as the owner's game does). Before each game the worker
+# waits while either holds:
+# - `queue/pc-pause.txt` on the branch has a line `START END` (UTC,
+#   `2026-11-21T00:30Z 2026-11-21T02:00Z`, then any note) whose window
+#   holds now; it is read as of the worker's last sync, so push it at least
+#   15 minutes ahead;
+# - a file named `PAUSE` stands in the worker's folder (the clone's root);
+#   delete it to go on.
+# Games already running finish first: a planet game takes up to about 2
+# minutes on the PC, a whole run up to about 15.
+PAUSE_WINDOWS = os.path.join(HERE, "queue", "pc-pause.txt")
+PAUSE_FILE = os.path.join(ROOT, "PAUSE")
+
+def utc(s):
+    from datetime import datetime, timezone
+    return datetime.strptime(s.rstrip("Z"), "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc).timestamp()
+
+def paused():
+    """Why the worker should wait now, or ""."""
+    if os.path.exists(PAUSE_FILE):
+        return "a PAUSE file"
+    try:
+        lines = open(PAUSE_WINDOWS).read().splitlines()
+    except OSError:
+        return ""
+    now = time.time()
+    for l in lines:
+        w = l.split()
+        if len(w) >= 2 and not l.startswith("#"):
+            try:
+                if utc(w[0]) <= now < utc(w[1]):
+                    return f"queue/pc-pause.txt: {w[0]} to {w[1]}"
+            except ValueError:
+                continue
+    return ""
+
+PAUSE_LOCK = __import__("threading").Lock()
+
+def wait_for_pause():
+    why = paused()
+    if not why:
+        return
+    with PAUSE_LOCK:
+        if not paused():
+            return
+        log(f"worker: paused ({why})")
+        while paused():
+            time.sleep(30)
+        log("worker: the pause is over; going on")
+
 def play(todo, out_path, binary, workers, timeout):
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     def one(j):
+        wait_for_pause()
         wait_for_owner(binary)
         return run_one(binary, j, timeout)
     with open(out_path, "a") as f, ThreadPoolExecutor(workers) as ex:
