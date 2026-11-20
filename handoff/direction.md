@@ -146,12 +146,14 @@ end.
   are not retuned for short planets; Needle Blast gets no further change
   (1 run in 213 meets the best deck by planet 3). The strategy thread gets
   a planet 2 job on today's game, with slug bullets in its split test,
-  before anyone touches the Sprawler. **For his morning, one batch:**
-  - D7 as the army snowball. Pick: surges and raids that grow with the army.
-  - What a time-out is. Pick: the run goes on at base pay 150, and the screen
-    says the slime survived.
-  - The shop-money doc's pay for pumped crystals held
-    (https://claude.ai/artifact/XHLmAP2RFnSAHba6orJLjW).
+  before anyone touches the Sprawler. **His answers, 11-20 14:10Z**
+  (rows in `wiki/decisions-game.md`): no countdown clock, but a count-up
+  clock with stars for being under a time. On the snowball, no slime that
+  grows with the army; the real problem is that a big squad can't be
+  touched. He suggests stronger mini-bosses late in a planet and condensed,
+  tougher slime. Both went to the balance thread, which owns the ideas (his
+  word). Crystal pay stays with the shop-money thread, where he is
+  answering.
 - **Mini-boss errands** (11-20, #547's question): leeches and sappers
   never reached their pump or wall in 5:00. The nearest target was 150 to
   250 units off, at 1 to 4 units a second, on a 90 s trip. Direction's call:
