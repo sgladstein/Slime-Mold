@@ -613,7 +613,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if let Some(g) = app.game.as_ref() {
                 for b in g.bosses.live.iter().filter(|b| !bosses_born.contains(&b.born) && b.cause != slime_mould::mould::larder_world::BossCause::Staged) {
                     let r = &g.rules.boss;
-                    println!("  boss t {:.1} s: {:?} {} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.kind.name(), b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
+                    println!("  boss t {:.1} s: {:?} {} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}{}", g.time(), b.cause, b.kind.name(), b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade), if g.boss_late() { "; late" } else { "" });
                 }
             }
             // Each mini-boss once a game second, and each one that ends
@@ -623,7 +623,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 // How tight each one is: its members' mean distance from
                 // its centre over a packed disc's (a walker a fine cell, 1
                 // packed), from the walkers read back (a look's cost only).
-                let (ws, dw) = if g.bosses.live.is_empty() && g.raids.marching.is_empty() { (Vec::new(), Vec::new()) } else { (slime_mould::gpu::floats(&read_back(&device, &queue, &g.world.e.walkers)), g.world.e.dense_of()) };
+                let (ws, dw) = if g.bosses.live.is_empty() && g.raids.marching.is_empty() && g.bosses.shells.is_empty() { (Vec::new(), Vec::new()) } else { (slime_mould::gpu::floats(&read_back(&device, &queue, &g.world.e.walkers)), g.world.e.dense_of()) };
                 for b in &g.bosses.live {
                     let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - b.centre.0).hypot(s.y - b.centre.1)).fold(f32::INFINITY, f32::min);
                     let ds: Vec<f32> = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1).map(|k| (ws[4 * k] - b.centre.0).hypot(ws[4 * k + 1] - b.centre.1)).collect();
@@ -648,6 +648,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                         let cr = g.buildings.iter().find(|w| w.alive && (w.at.0 - p.0).hypot(w.at.1 - p.1) < 1.0).and_then(|w| w.crystal).map_or(0.0, |c| g.world.crystal_r(c));
                         println!("    ring: crystal radius {cr:.1}, rig {:.1}, ring {:.1}; from the pump {:.1} / {:.1} / {:.1} (10% / median / 90%); by eighths {eighths:?}", 1.3 * cr, g.rules.boss.ring * cr, q(0.1), q(0.5), q(0.9));
                     }
+                }
+                // A mortar's throw still its own (`Shell`): its members, how
+                // far they lie from the target (median), and the soldiers
+                // within 15 units of it with their mean health.
+                for sh in &g.bosses.shells {
+                    let mut d: Vec<f32> = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == sh.lump as u32 + 1).map(|k| (ws[4 * k] - sh.target.0).hypot(ws[4 * k + 1] - sh.target.1)).collect();
+                    d.sort_by(f32::total_cmp);
+                    let by: Vec<f32> = g.soldiers.iter().filter(|s| s.alive && (s.x - sh.target.0).hypot(s.y - sh.target.1) < 15.0).map(|s| s.hp).collect();
+                    println!("  shell t {:.0} s: lump {} at {:.0},{:.0}, {} members, median {:.1} from it; {} soldiers within 15, health {:.0}; {} walkers thrown in {} shells so far", g.time(), sh.lump, sh.target.0, sh.target.1, d.len(), d.get(d.len() / 2).copied().unwrap_or(0.0), by.len(), by.iter().sum::<f32>() / by.len().max(1) as f32, g.bosses.thrown, g.bosses.shelled);
                 }
                 for (b, e, _) in &g.bosses.ended[bosses_ended..] {
                     println!("  boss t {:.0} s: lump {} {} ended {e:?} ({} members of {}; stole {:.1}, {:.1} given back so far)", g.time(), b.lump, b.kind.name(), b.members, b.first, b.stolen, g.bosses.returned);
@@ -900,9 +909,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // past the world's edges (fit with no insets).
         app.prepare();
         for tag in ["all", "near"] {
-            let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
-            app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
-            app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            if tag == "all" && app.menu.is_some() {
+                // A menu's picture as the window frames its dish (`menu_camera`).
+                app.menu_camera();
+            } else {
+                let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
+                app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
+                app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            }
             if tag == "near" {
                 let (sx, sy) = app.shake();
                 (app.camera.x, app.camera.y) = (app.camera.x + sx, app.camera.y + sy);

@@ -401,7 +401,16 @@ impl StartMenu {
         }
         self.bag_sheet = self.bag_sheet.min(pages - 1);
         let shown = &bag[(self.bag_sheet * per).min(bag.len())..((self.bag_sheet + 1) * per).min(bag.len())];
-        for k in 0..places {
+        // An empty bag is one quiet place that says what it is for, not a
+        // row of empty outlines (Look D, 11-20).
+        if bag.is_empty() {
+            let r = Rect::new(sx, bag_y, sroom, ch);
+            c.rrect(r, 8.0 * s, [255, 255, 255, 6]);
+            c.outline(r, 8.0 * s, 1.0, [255, 255, 255, 24]);
+            let say = if shop.range { "Cards off the gun wait here" } else { "Cards with no room on the gun wait here" };
+            c.text_fit(Weight::Medium, 13.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 5.0 * s), Align::Centre, say, r.w - 24.0 * s, FAINT);
+        }
+        for k in 0..if bag.is_empty() { 0 } else { places } {
             let r = Rect::new(sx + k as f32 * (bw + g), bag_y, bw, ch);
             match shown.get(k) {
                 Some(&i) => {
@@ -709,10 +718,15 @@ impl StartMenu {
             _ => None,
         };
         let Some((i, row)) = row else {
-            // Nothing picked: the planet ahead, then how to buy.
+            // Nothing picked: the planet ahead, then how to buy. The top
+            // bar holds the heading, so the pane names its subject in small
+            // capitals and goes straight to the briefing (Look D, 11-20; it
+            // repeated the heading word for word).
             let limit = r.bottom() - p;
-            y += 18.0 * s;
-            y += para(c, Weight::SemiBold, 18.0 * s, (r.x + p, y), iw, 24.0 * s, &shop.heading, TEXT, limit) + 8.0 * s;
+            y += 14.0 * s;
+            let label = if shop.range { "THE RANGE" } else { "THE PLANET AHEAD" };
+            c.text(Weight::SemiBold, 12.5 * s, (r.x + p, y), Align::Left, label, ACCENT);
+            y += 22.0 * s;
             for l in &shop.lines {
                 y += para(c, Weight::Medium, 14.5 * s, (r.x + p, y), iw, 21.0 * s, l, [201, 210, 219, 255], limit) + 6.0 * s;
             }

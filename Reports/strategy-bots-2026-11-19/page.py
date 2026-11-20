@@ -18,11 +18,30 @@ import league as L  # noqa: E402
 SCOTT_SEED = 1795038793
 SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, SCOTT_SEED]
 SEEDS17 = list(range(1, 17)) + [SCOTT_SEED]
+# Planet 2 (Direction's job, 11-20 06:24Z): maps 1-8 and Scott's three
+# planet 2 runs, with his times there from his play logs (the last line of
+# each planet 2 log, a game of 11-18 or 11-19, before the two fixes).
+P2_SEEDS = list(range(1, 9)) + [SCOTT_SEED, 1795106014, 1795119328]
+YOURS = {SCOTT_SEED: "yours", 1795106014: "yours 2", 1795119328: "yours 3"}
+P2_SCOTT = {SCOTT_SEED: 451, 1795106014: 545, 1795119328: 817}
+P2_FAST = ["rush", "rush,aim=6", "bot", "taker"]
+P2_SLOW = ["econ", "turtle", "scott", "econ,go=4,aim=6", "scott,go=4,aim=6", "econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle"]
+# The split, Heave and slug test played again on the game as it is now
+# (job 10-split-now; slug bullets added by Direction, 11-20 06:25Z).
+TESTS_NOW = [
+    ("Hold crystals with split groups", [("econ,go=4,aim=6", "econ,go=4,aim=6,split=2"), ("econ,go=4,aim=6", "econ,go=4,aim=6,split=4"), ("lure,go=4,aim=6", "lure,go=4,aim=6,split=2"), ("rush,aim=6", "rush,aim=6,split=2")]),
+    ("Push gun (Heave)", [("econ,go=4,aim=6", "econ,go=4,aim=6,want=heave"), ("lure,go=4,aim=6", "lure,go=4,aim=6,want=heave"), ("rush,aim=6", "rush,aim=6,want=heave")]),
+    ("Split groups with Heave", [("econ,go=4,aim=6", "econ,go=4,aim=6,split=2,want=heave"), ("econ,go=4,aim=6", "econ,go=4,aim=6,split=4,want=heave"), ("lure,go=4,aim=6", "lure,go=4,aim=6,split=4,want=heave")]),
+    ("Slug bullets, which shove", [("econ,go=4,aim=6", "econ,go=4,aim=6,want=plain.slug"), ("lure,go=4,aim=6", "lure,go=4,aim=6,want=plain.slug"), ("rush,aim=6", "rush,aim=6,want=plain.slug")]),
+    ("Split groups with slug bullets", [("econ,go=4,aim=6", "econ,go=4,aim=6,split=2,want=plain.slug"), ("econ,go=4,aim=6", "econ,go=4,aim=6,split=4,want=plain.slug"), ("lure,go=4,aim=6", "lure,go=4,aim=6,split=4,want=plain.slug"), ("rush,aim=6", "rush,aim=6,split=2,want=plain.slug")]),
+]
 # The game changed twice on 20 November, so a result belongs to the game it
 # was played on, named by the `code` stamp (the src tree the worker built).
 # "old": the 19 November game. "set": shots stop at set slime (5be6b0b,
 # merged into the branch at 01:45Z). "now": Needle Blast bursts once per
-# bullet (#532, merged 05:02Z) and any later code. The page's older
+# bullet (#532, merged 05:02Z) and any later code (main's eb959ba, merged
+# 06:30Z, only stops the pump lamp blinking: `working` of a pump is read by
+# the drawing and sound, not the play). The page's older
 # sections show the old game only; mixing games made one plan's row a
 # patchwork of two games (the first page after the fixes did).
 OLD_CODES = {None, "9a4b83191084", "3052b1da7102", "68f057590a7b", "de884269a412"}
@@ -65,15 +84,15 @@ TESTS = [
 ]
 
 
-def rows():
+def rows(depth=3):
     out = []
-    for f in sorted(glob.glob(os.path.join(HERE, "pc", "0*.jsonl"))) + sorted(glob.glob(os.path.join(HERE, "pc", "p3", "gen*.jsonl"))) + sorted(glob.glob(os.path.join(HERE, "pc", "p3n", "gen*.jsonl"))):
+    for f in sorted(glob.glob(os.path.join(HERE, "pc", "[0-9][0-9]-*.jsonl"))) + sorted(glob.glob(os.path.join(HERE, "pc", "p3", "gen*.jsonl"))) + sorted(glob.glob(os.path.join(HERE, "pc", "p3n", "gen*.jsonl"))):
         for line in open(f):
             try:
                 r = json.loads(line)
             except ValueError:
                 continue
-            if "error" in r or int(r["depth"]) != 3:
+            if "error" in r or int(r["depth"]) != depth:
                 continue
             out.append(r)
     return out
@@ -123,7 +142,7 @@ def cell(r):
 
 
 def grid(by, names, plans, caption, seeds=SEEDS):
-    head = "".join(f"<th>{s}</th>" if s != SCOTT_SEED else '<th class="you">yours</th>' for s in seeds)
+    head = "".join(f'<th class="you">{YOURS[s]}</th>' if s in YOURS else f"<th>{s}</th>" for s in seeds)
     body = []
     for c in plans:
         g = by[c]
@@ -144,9 +163,9 @@ def seed_row(by):
     return cells
 
 
-def tests(by):
+def tests(by, spec=None):
     out = []
-    for q, pairs in TESTS:
+    for q, pairs in spec or TESTS:
         items = []
         for a, b in pairs:
             ca, cb = L.canon(a), L.canon(b)
@@ -202,7 +221,8 @@ def on_yours(r):
         return f"won in {mmss(r['secs'])}"
     if r["how"] == "lost":
         return f"wiped at {mmss(r['secs'])}, {cleared(r) * 100:.0f}% cleared"
-    return f"time ran out, {int(r['mould']):,} walkers left"
+    n = int(r["mould"])
+    return f"time ran out, {n:,} walker{'' if n == 1 else 's'} left"
 
 
 def decks(old, now):
@@ -390,6 +410,24 @@ def main():
         grid_now = grid(by_now, names_now, best_now, f"The best plans on the game as it is now, by mean score over 17 maps ({len(now_rs):,} games so far)", SEEDS17)
     else:
         grid_now = f'<p class="pending">The search on the game as it is now has played {len(now_rs):,} games; its first plans finish all 17 maps within a few hours.</p>'
+    ts_now = tests(by_now, TESTS_NOW)
+    ncomp_now = sum(len(i) for _, i in ts_now)
+    p2 = rows(2)
+    by2, names2 = table(p2)
+    p2_order = sorted(by2, key=lambda c: -sum(L.score(by2[c][s]) for s in P2_SEEDS if s in by2[c]))
+    p2_won = sum(r["how"] == "won" for r in p2)
+    p2_lost = sorted(r["secs"] for r in p2 if r["how"] == "lost")
+    grp = lambda names: (sum(r["how"] == "won" for r in p2 if L.canon(r["plan"]) in {L.canon(n) for n in names}), sum(L.canon(r["plan"]) in {L.canon(n) for n in names} for r in p2))  # noqa: E731
+    p2_fast, p2_slow = grp(P2_FAST), grp(P2_SLOW)
+    p2_maps = {s: sum(by2[c][s]["how"] == "won" for c in by2 if s in by2[c]) for s in P2_SEEDS}
+    p2_best = {s: min((by2[c][s]["secs"] for c in by2 if s in by2[c] and by2[c][s]["how"] == "won"), default=None) for s in YOURS}
+    lst = lambda xs: ", ".join(xs[:-1]) + " and " + xs[-1]  # noqa: E731
+    p2_yours = (
+        f"On your three runs you won in about {lst([mmss(P2_SCOTT[s]) for s in YOURS])}. "
+        f"The bots' fastest wins there were {lst([mmss(p2_best[s]) if p2_best[s] else 'none' for s in YOURS])}, "
+        f"and {lst([str(p2_maps[s]) for s in YOURS])} of the {len(by2)} plans won them."
+    )
+    p2_grid = grid(by2, names2, p2_order, f"Planet 2 on the game as it is now: {len(p2)} games, by mean score over the {len(P2_SEEDS)} maps", P2_SEEDS) if p2 else ""
     deck_plans = [L.canon(b) for b in DECK_BASES[:1]] + [L.canon(DECK_BASES[0] + ",want=" + d) for d in DECKS]
     deck_grid = grid(by_now, names_now, [c for c in deck_plans if c in by_now], "The econ bot with each deck, map by map, on the game as it is now")
     seed_cells = "".join(
@@ -435,6 +473,18 @@ def main():
         .replace("{{DECK_TABLE}}", decks(by, by_now))
         .replace("{{DECK_GRID}}", deck_grid)
         .replace("{{GRID_NOW}}", grid_now)
+        .replace("{{TESTS_NOW}}", tests_html(ts_now, ncomp_now))
+        .replace("{{NCOMP_NOW}}", str(ncomp_now))
+        .replace("{{P2_GRID}}", p2_grid)
+        .replace("{{P2_GAMES}}", str(len(p2)))
+        .replace("{{P2_PLANS}}", str(len(by2)))
+        .replace("{{P2_WON}}", str(p2_won))
+        .replace("{{P2_LOST}}", str(len(p2_lost)))
+        .replace("{{P2_LOSS_MED}}", mmss(p2_lost[len(p2_lost) // 2]) if p2_lost else "-")
+        .replace("{{P2_FAST}}", f"{p2_fast[0]} of {p2_fast[1]}")
+        .replace("{{P2_SLOW}}", f"{p2_slow[0]} of {p2_slow[1]}")
+        .replace("{{P2_NONE}}", ", ".join(str(s) for s in P2_SEEDS if p2_maps[s] == 0 and s not in YOURS) or "none")
+        .replace("{{P2_YOURS}}", p2_yours)
     )
     open(os.path.join(HERE, "page.html"), "w").write(out)
     print(f"page.html: {games} games ({len(now_rs)} on the game now), {plans_all} plans, old-game top {names[top]} {score[top]:.3f}, {ncomp} paired comparisons, {len(full_now)} plans with all 17 maps now")
