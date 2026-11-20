@@ -1,0 +1,28 @@
+# The late-threat measure (2026-11-20): PLAN DEPTH SEED SECS [ARGS]; see measure.py.
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 2 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 3 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 4 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 5 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 6 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 7 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 8 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1795038793 720
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 2 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 3 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 4 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 5 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 6 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 7 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 8 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1795038793 720 set=late_at=0.4
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 2 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 3 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 4 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 5 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 6 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 7 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 8 720 set=wave=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 3 1795038793 720 set=wave=0

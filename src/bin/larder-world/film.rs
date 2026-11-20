@@ -220,6 +220,86 @@ fn film_ends() {
     }
 }
 
+/// **The end's beat** (Look and interface, 2026-11-20, `ending`): a run's
+/// planet played by `FILM_HAND` (greedy) to its verdict or `FILM_SECS`
+/// game seconds, ended as `film_ends` ends it if it has not ended, then
+/// the beat filmed as the window plays it, `FILM_FPS` (15) frames a
+/// second at zoom `FILM_ZOOM` (6) on the squad, until a second after the
+/// card is up: `DIR/<case>/f0000.png` on. `FILM_CASES` (`won,lost`): the
+/// Drifter's planet 1 and the Trunk's planet 3 of run seed 1, as
+/// `film_ends`.
+///
+/// `FILM=DIR cargo test --release --bin larder-world film_end_beat --
+/// --ignored --nocapture`
+#[test]
+#[ignore]
+fn film_end_beat() {
+    use slime_mould::mould::larder::End;
+    let env = |k: &str| std::env::var(k).ok();
+    let num = |k: &str, d: f32| env(k).map_or(d, |v| v.parse().unwrap());
+    let dir = env("FILM").expect("FILM=DIR");
+    let Some((device, queue)) = gpu() else { panic!("no gpu") };
+    let size = env("FILM_SIZE").map_or((960, 540), |v| {
+        let (a, b) = v.split_once('x').unwrap();
+        (a.parse().unwrap(), b.parse().unwrap())
+    });
+    let secs = num("FILM_SECS", 90.0);
+    let hand = env("FILM_HAND").unwrap_or("greedy".into());
+    let zoom = num("FILM_ZOOM", 6.0);
+    let dt = 1.0 / num("FILM_FPS", 15.0);
+    for case in env("FILM_CASES").unwrap_or("won,lost".into()).split(',') {
+        let out = format!("{dir}/{case}");
+        std::fs::create_dir_all(&out).unwrap();
+        let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, ..Default::default() };
+        let mut r = Run::new(1);
+        r.depth = if case == "won" { 1 } else { 3 };
+        let mut app = offscreen(run_args(&base, &start_menu(&base), &r), size, &device, &queue).unwrap();
+        app.prepare();
+        let mut last = u64::MAX;
+        let over = |app: &App| app.game.as_ref().is_none_or(|g| g.end.is_some() || g.time() >= secs) || app.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+        while !over(&app) {
+            let g = app.game.as_mut().unwrap();
+            let sec = g.world.ticks() / g.rules.tps as u64;
+            if sec != last {
+                last = sec;
+                hands::plan(g, &hand);
+            }
+            app.step(1.0 / 15.0);
+        }
+        let verdict = app.mission.as_ref().and_then(|m| m.verdict);
+        let g = app.game.as_mut().unwrap();
+        if g.end.is_none() && verdict.is_none() {
+            if case == "lost" {
+                for s in g.soldiers.iter_mut() {
+                    s.alive = false;
+                }
+            }
+            let t = g.time();
+            g.end = Some(if case == "won" { End::MouldWiped(t) } else { End::SquadWiped(t) });
+        }
+        println!("{case}: t {:.1}, end {:?}, verdict {:?}, mould {}", g.time(), g.end, verdict.map(|v| (v.cause, v.stars)), g.mould);
+        let n = g.soldiers.len().max(1) as f32;
+        let at = g.soldiers.iter().fold((0.0, 0.0), |a, s| (a.0 + s.x / n, a.1 + s.y / n));
+        app.beat = Some(Default::default());
+        app.camera.centre_on(at);
+        app.camera.zoom_to(zoom, app.camera.to_screen(at));
+        app.camera.centre_on(at);
+        for f in 0..((ending::END_BEAT + 1.0) / dt) as usize {
+            app.step(dt);
+            app.marks();
+            app.prepare();
+            let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+            let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("film") });
+            view.record(&mut enc, &app.camera, None);
+            cp.record(&mut enc, &view.out, view.stride);
+            queue.submit([enc.finish()]);
+            view.picture().save(format!("{out}/f{f:04}.png")).unwrap();
+        }
+        let g = app.game.as_ref().unwrap();
+        println!("{case}: after the beat, world living {}, card {}", g.world.living(), app.model(None, None).end.is_some());
+    }
+}
+
 /// **The pause menu's pictures** (Look and interface, 2026-11-19): a
 /// sandbox round on the Fork a few seconds in, Esc pressed, and the
 /// menu filmed; with `FILM_PAGES=main,experiments` each page in turn

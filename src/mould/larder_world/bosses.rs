@@ -108,6 +108,16 @@ pub struct BossRules {
     /// 1 + `faster`).
     pub grade_lo: f32,
     pub grade_hi: f32,
+    /// **Late in a planet** (the owner, 11-20: a late-game army crushes
+    /// mini-bosses without trouble; the balance thread's brief): once the
+    /// slime is under `late` of its peak mass, each one's grade is drawn
+    /// from at least `late_grade`, so the last ones are the strongest.
+    /// The strikers' 0.4 (`StrikerRules::below`) was tried first: on the
+    /// owner's three runs, planets 2 to 4 to 7:00, no boss formed with
+    /// the slime that low (its least was 0.44). At 0.6, 2 of 24 did, at
+    /// 351 s and 393 s.
+    pub late: f32,
+    pub late_grade: f32,
     pub armour_lo: f32,
     pub armour_hi: f32,
     pub bite_lo: f32,
@@ -133,11 +143,12 @@ pub struct BossRules {
     pub fade: f32,
     /// **The kinds** (owner 04:58Z: "all of them"; a mix of hunters and
     /// kinds with an errand): each one's kind is drawn as it forms, by
-    /// these weights (hunter, wanderer, sapper, leech, mortar), among the kinds it
-    /// has a target for (a sapper needs something built, a leech a pump, a
-    /// wanderer a fresh crystal far off); a cut-off part makes only the
-    /// runners (hunter, wanderer). `kind` 1-4 forces one (0 draws).
-    pub kinds: [f32; 5],
+    /// these weights (hunter, wanderer, sapper, leech, mortar, pinwheel),
+    /// among the kinds it has a target for (a sapper needs something
+    /// built, a leech a pump, a wanderer a fresh crystal far off); a
+    /// cut-off part makes only the runners (hunter, wanderer, pinwheel).
+    /// `kind` 1-6 forces one (0 draws).
+    pub kinds: [f32; 6],
     pub kind: f32,
     /// **The mortar** (the owner's pick, 2026-11-20 13:21Z, "Mortar
     /// first"): every `lob_every` seconds it throws the slime in a ring
@@ -150,7 +161,33 @@ pub struct BossRules {
     /// afar, weak up close (the owner's balance rule, 11-18).
     pub lob: f32,
     pub lob_every: f32,
+    /// **The pinwheel** (the owner's doc's second proposal, built
+    /// 2026-11-20 after the Mortar): a hunter whose body gathers into
+    /// three arms that turn about its centre at `spin` turns a second
+    /// (`Lump::spin`; the way by the lump it holds, so two turn opposite
+    /// ways) and sweep across the squad; its lunge is a faster turn
+    /// (x `lunge_pull`) instead of a harder pull. From planet 3.
+    pub spin: f32,
+    /// The pinwheel's pace on top of its grade's (`haste_at`): leaning into
+    /// its arms, members spend their steps going round, and without it
+    /// one walked at 2.4 units a second against a hunter's 6.3 (median 2
+    /// against 4) on the owner's planet 3 and 4 maps, and reached the
+    /// squad 3 times of 7. At 3 a lump walking to an aim 40 cells off on
+    /// the GPU test world went as far turning as plain (11.5 cells in
+    /// 4 s; 2: 7.5), but on the owner's planet 4 the body tore apart along
+    /// a rock (spread 1 to 4): its arms now turn only within `spin_near`
+    /// world units of its prey, and this is a small push there.
+    pub spin_haste: f32,
+    pub spin_near: f32,
     pub shell: f32,
+    /// **What a throw does** (2026-11-20, after the owner's "a late-game
+    /// army crushes minibosses"): the ring thrown stays the mortar's for
+    /// `shell_life` seconds, in a lump of its own (`Shell`) aimed at the
+    /// target, with the mortar's bite and its armour, and its look, so it
+    /// lands and bites as the boss's own; then it is let go into the
+    /// slime. Let go as it was thrown (before), the ring landed as
+    /// ordinary slime that touches as one walker and the squad shot it.
+    pub shell_life: f32,
     /// The wanderer: a fresh crystal (at least `fresh` of its charge left)
     /// at least `far` dish cells off; it roots there `root` seconds, eats,
     /// takes in the slime there (its reach x `grow`), and sets off again.
@@ -196,7 +233,7 @@ impl BossRules {
             grade_lo: 0.4 * t,
             grade_hi: 0.6 + 0.4 * t,
             // The mortar from planet 4 (the proposal the owner picked).
-            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }],
+            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }, if depth >= 3 { 1.0 } else { 0.0 }],
             ..BossRules::default()
         }
     }
@@ -262,6 +299,8 @@ impl Default for BossRules {
             near: 40.0,
             grade_lo: 0.0,
             grade_hi: 1.0,
+            late: 0.6,
+            late_grade: 0.8,
             // 4 to 15 blows a member against ordinary slime's 1, and
             // touching as 2 to 5 walkers. Packed as it is, each shot that
             // lands blows about 30 members at once (planet 3, seed 1, 8
@@ -281,11 +320,15 @@ impl Default for BossRules {
             lunge_pull: 2.0,
             lunge_haste: 2.0,
             fade: 1.5,
-            kinds: [1.0, 1.0, 1.0, 1.0, 0.0],
+            kinds: [1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
             kind: 0.0,
             lob: 30.0,
             lob_every: 5.0,
+            spin: 0.2,
+            spin_haste: 1.3,
+            spin_near: 90.0,
             shell: 1.5,
+            shell_life: 8.0,
             far: 40.0,
             fresh: 0.5,
             root: 15.0,
@@ -328,10 +371,12 @@ pub enum BossKind {
     /// Sits where it formed and lobs the slime round it at the nearest
     /// soldier or building in reach (`BossRules::lob`).
     Mortar = 5,
+    /// A hunter whose body turns in arms (`BossRules::spin`).
+    Pinwheel = 6,
 }
 
 impl BossKind {
-    pub const ALL: [BossKind; 5] = [BossKind::Hunter, BossKind::Wanderer, BossKind::Sapper, BossKind::Leech, BossKind::Mortar];
+    pub const ALL: [BossKind; 6] = [BossKind::Hunter, BossKind::Wanderer, BossKind::Sapper, BossKind::Leech, BossKind::Mortar, BossKind::Pinwheel];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -340,6 +385,7 @@ impl BossKind {
             BossKind::Sapper => "sapper",
             BossKind::Leech => "leech",
             BossKind::Mortar => "mortar",
+            BossKind::Pinwheel => "pinwheel",
         }
     }
 }
@@ -380,6 +426,9 @@ pub enum BossCause {
     Cut,
     /// Staged (a film's `boss=`, a test).
     Staged,
+    /// Formed again on its core, the walkers there having taken it back
+    /// first (`cores.rs`, 2026-11-20).
+    Core,
 }
 
 /// How a mini-boss ended.
@@ -428,8 +477,25 @@ pub struct Bosses {
     ways: Vec<BossWay>,
     /// How many times one stalled on its way and gathered again (`STALL`).
     pub regrouped: u32,
+    /// The mortars' throws still in flight or biting (`BossRules::
+    /// shell_life`).
+    pub shells: Vec<Shell>,
+    /// Walkers thrown, and how many throws kept their own lump.
+    pub thrown: u64,
+    pub shelled: u32,
     /// Their own draws, apart from `Game::rng`.
     rng: Rng,
+}
+
+/// **A mortar's throw** while it is still the mortar's (`BossRules::
+/// shell_life`): its lump, where it was thrown, its mortar's look word
+/// (`Game::lump_looks`) and the tick it is let go.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Shell {
+    pub lump: usize,
+    pub target: (f32, f32),
+    pub look: u16,
+    pub until: u64,
 }
 
 /// **A mini-boss's way** (2026-11-20): the walking distance to its goal
@@ -479,10 +545,13 @@ const WAY_MOVED: f32 = 6.0;
 /// A mortar's thrown walker's speed x `step` (as `RoundRules::fling_speed`,
 /// the shove cards' push).
 const MORTAR_FLING: f32 = 1.5;
+/// The share of a mortar's walkers it keeps when it throws: the rest of
+/// its body, and `BossRules::shell` past it, is the throw.
+const SHELL_CORE: f32 = 0.6;
 
 impl Bosses {
     pub fn new(seed: u64) -> Bosses {
-        Bosses { live: Vec::new(), ended: Vec::new(), fading: Vec::new(), stolen: 0.0, returned: 0.0, next: None, crowd_top: 0.0, ways: Vec::new(), regrouped: 0, rng: Rng::new(seed ^ 0xb055_5eed) }
+        Bosses { live: Vec::new(), ended: Vec::new(), fading: Vec::new(), stolen: 0.0, returned: 0.0, next: None, crowd_top: 0.0, ways: Vec::new(), regrouped: 0, shells: Vec::new(), thrown: 0, shelled: 0, rng: Rng::new(seed ^ 0xb055_5eed) }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -514,6 +583,15 @@ impl<W: World> Game<W> {
             let keep = now < until;
             if !keep {
                 world.form_lump(b.lump, None);
+            }
+            keep
+        });
+        // Throws past their time are let go into the slime.
+        self.bosses.shells.retain(|sh| {
+            let keep = now < sh.until;
+            if !keep {
+                world.set_lump(sh.lump, Lump::default());
+                world.form_lump(sh.lump, None);
             }
             keep
         });
@@ -560,7 +638,7 @@ impl<W: World> Game<W> {
                 continue;
             }
             let hunt = b.born + secs(r.gather);
-            let errand = if now < hunt || matches!(b.kind, BossKind::Hunter | BossKind::Mortar) { None } else { self.errand(&mut b, now) };
+            let errand = if now < hunt || matches!(b.kind, BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel) { None } else { self.errand(&mut b, now) };
             let size = self.world.size();
             let cell = move |p: (f32, f32)| crate::mould::larder_world::raid_cell(p, size);
             let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
@@ -619,7 +697,26 @@ impl<W: World> Game<W> {
                         // The lunge: harder and faster for a moment.
                         let (pull, haste) = if r.lunging(now - hunt, tps) { (r.lunge_pull.max(0.0), r.lunge_haste.max(1.0)) } else { (1.0, 1.0) };
                         let aim = self.boss_steer(b.lump, (self.soldiers[s].x, self.soldiers[s].y), true, centre, body);
-                        Lump { aim: cell(aim), pull: r.pull * pull, leash, haste: r.haste_at(b.grade) * haste, ..strong }
+                        // A pinwheel's arms turn at one rate: the engine
+                        // sets them at `spin` x its step count, so a faster
+                        // turn for the lunge (tried first) jumped them round.
+                        // Its arms only near its prey (`spin_near`): turning
+                        // the whole way, leaning into the arms halved its
+                        // pace (2.4 units a second against a hunter's 6.3,
+                        // the squad reached 3 times of 7 on the owner's
+                        // planet 3 and 4 maps), and three times the haste
+                        // to make up for it tore the body apart on rock.
+                        // Far off it walks as a compact hunter; close, it
+                        // unfurls, which is also its tell.
+                        let near = (self.soldiers[s].x - centre.0).hypot(self.soldiers[s].y - centre.1) < r.spin_near;
+                        let spin = if b.kind == BossKind::Pinwheel && near {
+                            let way = if b.lump.is_multiple_of(2) { 1.0 } else { -1.0 };
+                            way * r.spin * std::f32::consts::TAU / (tps * self.world.fine_steps().max(1) as f32)
+                        } else {
+                            0.0
+                        };
+                        let haste = if spin != 0.0 { haste * r.spin_haste.max(1.0) } else { haste };
+                        Lump { aim: cell(aim), pull: r.pull * pull, leash, haste: r.haste_at(b.grade) * haste, spin, ..strong }
                     }
                     None => Lump { aim: cell(centre), leash, ..strong },
                 }
@@ -737,26 +834,66 @@ impl<W: World> Game<W> {
         if last > 0 && now < last + every.max(1) {
             return true;
         }
+        // `walker_step` is in fine cells, as the target's distance.
         let per = (self.world.walker_step() * MORTAR_FLING).max(1e-3);
         let steps = (d(t) / per).round().clamp(1.0, u16::MAX as f32) as u16;
-        // From half a body past its edge: a fling moves its members too,
-        // and a member thrown stays one, lands by the target and runs
-        // home past its leash, dragging the centre after it (from its
-        // edge, a staged one on the CPU dish drifted 15 cells in 11 s).
-        let inner = (1.5 * body / sc).max(2.0);
-        let throw = Burst { at: (centre.0 / sc, centre.1 / sc), r: inner, fling: inner + r.shell.max(0.1), fling_steps: steps, push: Some((t.1 - centre.1).atan2(t.0 - centre.0)), ..Burst::default() };
+        // The throw is its body's outer part, past the disc holding
+        // `SHELL_CORE` of its walkers out to `shell` dish cells past its
+        // edge, let go of first
+        // so no member flies (a member thrown stays one, lands by the
+        // target and runs home past its leash, dragging the centre after
+        // it: a staged one of 47 on the CPU dish drifted 20 cells toward
+        // the squad). From one and a half radii, its first version, a
+        // throw took only the slime round it: after the first, the throws
+        // on the owner's planet 4 (run 1795038793) took 1 walker each.
+        // Measured on the mould grid, not from its walker count: a
+        // mortar clenched on its spot packs its walkers two to a cell (a
+        // spread of 0.55 of a packed disc's on the owner's planet 4), so
+        // a ring from 0.7 to 1 of the packed radius held 7 to 12 of 244.
+        let n = b.members.max(1) as f32;
+        let inner = self.reach_holding(centre, (body / sc).max(1.0), SHELL_CORE * n);
+        let outer = self.reach_holding(centre, (2.0 * body / sc).max(inner + 1.0), n).max(inner) + r.shell.max(0.1);
+        self.world.form_lump(b.lump, Some((centre, inner)));
+        // The ring a lump of its own (`Shell`), when one is free: it grows
+        // from the walkers in no lump in the ring, flies as one (a flung
+        // walker keeps its lump) and lands as the mortar's own, aimed at
+        // the target, with its bite and its look.
+        // Only while another lump stays free after it (the review lane,
+        // 11-20): the world has `LUMPS` (4) for bosses, marches, fruits
+        // and shells, and a mortar throwing every 5 s with shells living
+        // 8 s held three, so a raid found none and streamed loose, a fruit
+        // could not start and no other boss could form. Without a lump the
+        // ring flies as ordinary slime, as before shells.
+        let free: Vec<usize> = (0..crate::mould::big::LUMPS).filter(|&l| !self.lump_taken(l)).collect();
+        let free = if free.len() >= 2 { free.first().copied() } else { None };
+        if let Some(sl) = free {
+            self.world.grow_lump(sl, (centre, outer));
+            let cell = crate::mould::larder_world::raid_cell(t, self.world.size());
+            // No leash: a ring walker the throw missed stays by the
+            // mortar as a member, and with one the landed shell ran back
+            // to its members' centre, halfway home, as a stream (filmed
+            // on the owner's planet 4, run 1795038793 at 1:34). Its pull
+            // brings every member to the target instead.
+            self.world.set_lump(sl, Lump { aim: cell, pull: r.pull, armour: r.armour_at(0.5 * b.grade), bite: r.bite_at(b.grade), ..Lump::default() });
+            let look = self.lump_looks()[b.lump];
+            self.bosses.shells.push(Shell { lump: sl, target: t, look, until: now + ((r.shell_life.max(0.0) * self.rules.tps as f32).round() as u64).max(1) });
+            self.bosses.shelled += 1;
+        }
+        let throw = Burst { at: (centre.0 / sc, centre.1 / sc), r: inner, fling: outer, fling_steps: steps, push: Some((t.1 - centre.1).atan2(t.0 - centre.0)), ..Burst::default() };
         let out = self.world.burst(&throw, &BurstRules { fling_speed: MORTAR_FLING, ..BurstRules::default() });
         b.visited += out.flung as u64;
-        // Its members thrown with the ring let go: a member in flight stays
-        // one, lands by the target and runs home past its leash, dragging
-        // the centre after it (a staged one of 47 on the CPU dish had 54
-        // members three bodies off after four throws and drifted 20 cells
-        // toward the squad). Formed again on its own area, which lets
-        // every member in flight go (`World::form_lump`) and, as a regroup
-        // does, heals its members' blows: a mortar's blows count between
-        // its throws only, and it takes half its grade's.
-        let keep = self.reach_holding(b.at, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
-        self.world.form_lump(b.lump, Some((b.at, keep)));
+        self.bosses.thrown += out.flung as u64;
+        // Fed again from the slime round it while the shell holds the
+        // thrown (none of them ordinary to take back): as far round as
+        // holds its old body, which, as a regroup does, heals its
+        // members' blows (`World::form_lump`): a mortar's blows count
+        // between its throws only, and it takes half its grade's. With
+        // no lump free for a shell, the thrown are ordinary walkers still
+        // beside it, and stay let go.
+        if free.is_some() {
+            let keep = self.reach_holding(b.at, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
+            self.world.form_lump(b.lump, Some((b.at, keep)));
+        }
         b.phase = BossPhase::Sit(t, now);
         true
     }
@@ -951,7 +1088,11 @@ impl<W: World> Game<W> {
         }
         // A lump no boss, march or fruit holds.
         let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
-        let (lo, hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
+        let (mut lo, mut hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
+        if self.boss_late() {
+            lo = lo.max(r.late_grade.clamp(0.0, 1.0));
+            hi = hi.max(lo);
+        }
         let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();
         self.world.form_lump(lump, Some((at, r.reach_at(reach, grade))));
         let cell = crate::mould::larder_world::raid_cell(at, self.world.size());
@@ -974,8 +1115,8 @@ impl<W: World> Game<W> {
             .iter()
             .enumerate()
             .map(|(i, &kind)| {
-                let runner = matches!(kind, BossKind::Hunter | BossKind::Wanderer);
-                let able = matches!(kind, BossKind::Hunter | BossKind::Mortar) || self.boss_goal(&Boss { kind, ..*b }).is_some();
+                let runner = matches!(kind, BossKind::Hunter | BossKind::Wanderer | BossKind::Pinwheel);
+                let able = matches!(kind, BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel) || self.boss_goal(&Boss { kind, ..*b }).is_some();
                 if (b.cause != BossCause::Cut || runner) && able { r.kinds[i].max(0.0) } else { 0.0 }
             })
             .collect();
@@ -1001,7 +1142,7 @@ impl<W: World> Game<W> {
         let d = |p: (f32, f32)| (p.0 - b.centre.0).hypot(p.1 - b.centre.1);
         let near = |ps: Vec<(f32, f32)>| ps.into_iter().min_by(|a, c| d(*a).total_cmp(&d(*c)));
         match b.kind {
-            BossKind::Hunter | BossKind::Mortar => None,
+            BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel => None,
             BossKind::Wanderer => {
                 // A hop toward the player (2026-11-20): the nearest fresh
                 // crystal to it of those nearer the player's things than it
@@ -1151,7 +1292,7 @@ impl<W: World> Game<W> {
     fn goal_holds(&self, b: &Boss, q: (f32, f32)) -> bool {
         let r = self.rules.boss;
         match b.kind {
-            BossKind::Hunter | BossKind::Mortar => false,
+            BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel => false,
             BossKind::Wanderer => self.world.crystals().iter().enumerate().any(|(j, c)| c.0 == q && (j >= 64 || b.visited & 1 << j == 0) && c.1 > 0.0 && c.1 >= r.fresh * self.start_charge.get(j).copied().unwrap_or(0.0)),
             BossKind::Sapper => self.on_wall(q) || self.buildings.iter().any(|w| w.alive && !matches!(w.kind, Kind::Wall { .. }) && w.at == q),
             BossKind::Leech => self.buildings.iter().any(|w| w.alive && w.kind == Kind::Pump && w.up() && w.at == q),
@@ -1340,12 +1481,21 @@ impl<W: World> Game<W> {
         for b in &self.bosses.live {
             out[b.lump] = word(b);
         }
+        for sh in &self.bosses.shells {
+            out[sh.lump] = sh.look;
+        }
         let (now, fade) = (self.world.ticks(), (self.rules.boss.fade.max(0.0) * self.rules.tps as f32).max(1.0));
         for (b, until) in &self.bosses.fading {
             let gone = (fade - until.saturating_sub(now) as f32).clamp(0.0, fade) / fade;
             out[b.lump] = word(b) | 1 << 8 | ((gone * 127.0).round() as u16) << 9;
         }
         out
+    }
+
+    /// Late in the planet (`BossRules::late`): the slime under that share
+    /// of its peak mass.
+    pub fn boss_late(&self) -> bool {
+        self.peak > 0 && (self.mould as f32) < self.rules.boss.late * self.peak as f32
     }
 
     /// Where the player's things stand (fine cells): live soldiers and

@@ -255,3 +255,104 @@ Scott's three planet 4 maps with every mini-boss a mortar (`set=boss_kind=5`,
 
 Clips (`mortar/`, zoom 3.5 and 8, run 1795038793 planet 4, `set=boss_kind=5`):
 `mortar-wide.mp4` (92-112 s, 2x) and `mortar-close.mp4` (97-107 s, 2x). Page: https://claude.ai/artifact/RPtr4iteMNYdKhbRbp12xH (copy `mortar/page.html`).
+
+## The Mortar's throws hurt; late mini-bosses are the strongest (11-20)
+
+Asked by the coordinator after the balance thread's brief: a late-game army
+crushes mini-bosses without trouble, and the owner wants stronger ones near
+the end of each planet.
+
+**Shells.** A throw used to land as ordinary slime: walkers with no lump,
+which the squad shot like any other. Now `Game::mortar` takes the body's
+outer part (the walkers past the radius holding 60% of them,
+`SHELL_CORE`), grows them into a free lump as a **shell**
+(`Bosses::shells`) and flings it at the target. A shell's lump carries the
+mortar's bite, the armour of half its grade, no leash, and the mortar's look, and
+lets go after `shell_life` (8 s). The rest of the body refills from the
+slime round it, if a lump was free to throw into. A shell takes a lump only
+while another stays free after it (the review lane's catch: the world
+has four lumps for bosses, marches, fruits and shells, and a mortar's
+shells held three, so raids streamed loose and fruits could not start);
+without one, the ring flies as ordinary slime.
+
+Three things were wrong on the way, each seen in the `shell t` rows the
+play log now prints:
+- the landed shell streamed back to the mortar, because a lump's leash
+  pulls to its members' centre and stragglers left behind were members;
+  the shell has no leash;
+- throws after the first held 7 to 12 walkers: a mortar's members pack
+  tightly, and a ring at 0.7 to 1 of the packed radius was mostly empty;
+  the ring is now cut where the body holds 60% (throws of 96, 42, 33, 39);
+- a `scale()` multiply on the flight (tried, reverted): `walker_step` is in
+  fine cells already, so it halved every flight.
+
+Scott's three planet 4 maps with every boss a mortar (`shells` lines,
+`tools/shells.py`): 15 shells; median 84 walkers each when nearest its
+target, 10.3 units from it; 14 of 15 stood with soldiers within 15 units
+(median 8 of them). A squad of 34 filmed shooting one: a shell of about
+200 went in about 2 s. The test `a_mortar_sits_and_throws_at_the_squad`
+gives four soldiers 1000 health and finds 2653 of it gone.
+
+**Late bosses.** `BossRules::late`: when the slime is under `late` (0.6)
+of its peak mass, a new boss's grade is drawn from at least `late_grade`
+(0.8) instead of `grade_lo`: at 0.8, 12 blows a member, touches as 4,
+pace x1.29, the largest reach. The play log's formed line ends "; late".
+The strikers' 0.4 was tried first: on the same nine games to 7:00 (`late`
+lines) no boss formed with the slime that low (least 0.44); at 0.6, 2 of
+24 did (a hunter at 351 s, a sapper at 393 s), the last of their games.
+Whether they now hold off a late army is not measured. Set keys
+`boss_shell_life`, `boss_late`, `boss_late_grade`.
+
+## The Pinwheel (11-20)
+
+The owner's second pick from his doc (after the Mortar). `BossKind::Pinwheel`
+(6), drawn from planet 3 on (`kinds[5]`), a runner that hunts like the
+hunter. Its look is the members themselves: within `spin_near` (90 world
+units) of its prey its lump's arms turn (`Lump::spin`, the engine's, GPU
+only): round the members' centre three spokes (`PIN_ARMS`) turn at `spin`
+(0.2 turns a second, one way on even lumps and the other on odd), curving
+outward (`PIN_TWIST`), and each member leans along the tangent toward the
+nearest spoke, three times the lump's pull (`PIN_LEAN`). Skin deep cobalt,
+core sky blue (`LumpLook::Pinwheel`, `view.wgsl` case 7).
+
+On the way:
+- a plain lean along the tangent turned a disc, which looks the same at
+  every turn: no arms showed;
+- spokes at 1x the pull, straight: the march's own pull smeared them into
+  a bar (film, run 1795038793 planet 4 at 1:36);
+- a faster turn for the hunter's lunge jumped the arms round, since the
+  engine sets them at `spin` x its step count: the turn is now constant;
+- arms all the way halved its pace (`pinwheel-always` lines, run stopped
+  at 4:50 on the planet 4 maps: 2.4 units a second against the hunter's
+  6.3 in `final`, reached the squad 7 of 18); three times the haste to make
+  up for it tore the body apart along a rock (spread 1 to 4, filmed);
+  so the arms turn only near its prey, with a 1.3x push there
+  (`spin_haste`). Far off it walks as a compact hunter; it unfurls as it
+  closes, which is also its tell.
+
+The GPU test `a_spinning_lump_gathers_into_turning_arms`: a lump of 350 on
+a race world gathers into three arms (the order-3 angular harmonic round
+its centre 0.159 against 0.064 still) whose phase moves 9.7 rad in 3 s
+(11.3 set), and walking to an aim keeps most of a still lump's pace.
+
+Scott's run seeds, planets 3 and 4, every boss a pinwheel
+(`set=boss_kind=6`, `pinwheel` lines, to 5:00):
+
+| | pinwheel |
+| --- | --- |
+| formed | 21 |
+| reached squad (<20 units) | 8 |
+| stalled 10 s or more | 4 |
+| ended Broken | 8 |
+| ended Spent | 6 |
+| ended Fizzled | 2 |
+| still alive | 5 |
+
+- Pace while hunting: mean 4.4 units a second (arms always: 3.4; the
+  hunter: 6.4), median spread 1.45 (hunter 1.13).
+- Reached the squad 8 of 21, as with the arms all the way (7 of 18); what
+  its arms cost the squad is not measured. Tuning (`boss_spin`,
+  `boss_spin_near`, `boss_spin_haste`) waits on play.
+
+Clips (`pinwheel/`, run 1795119328 planet 4, `set=boss_kind=6`, zoom 6 and
+12, 1:56 to 2:06, 1x): a pinwheel of 561 closing on the squad.

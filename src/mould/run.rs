@@ -396,7 +396,32 @@ pub const LURE_PULL: f32 = 10.0;
 /// the slime near the squad pulls back past the guns' reach to two or
 /// three points round it, masses there for 12 s, and comes in from all of
 /// them at once for 8 s. 45 s apart at least. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0)];
+///
+/// **The slime beats** (`heart`, 2026-11-20, the same thread;
+/// `larder_world/heart.rs`): every 6 s a beat runs out from its home
+/// crystal (else the crystal it holds most) through the body, and the
+/// calm slime leans out and quickens as it passes, so the edge swells
+/// toward you and ebbs. GPU only.
+///
+/// **The slime condenses into strikers late in a planet** (`strikers`,
+/// 2026-11-20, the owner's pick that day; `larder_world/strikers.rs`):
+/// under 40% of its peak, its edge within the guns' reach and 12 dish
+/// cells of a soldier condenses once a second, each condensing walker
+/// taking in up to three neighbours; a condensed walker takes a blow for
+/// each, bites once more for each, and charges the nearest soldier. GPU
+/// only.
+///
+/// **A cornered slime lunges** (`late_at`, 2026-11-20, the balance thread,
+/// the owner's same pick; `Game::keep_panic_reach`): under 40% of its
+/// peak, for the rest of the planet its charges reach 25 dish cells past
+/// the guns and its surges lunge at 3x, the Swarmer's numbers (on the
+/// Swarmer it changes nothing). On with the strikers, at the same share,
+/// as one cornered phase. Measured on the strategy league
+/// (`Reports/late-threat-2026-11-20`): with it the slime bit no more of a
+/// big army than without (planet 2: up on 1 map, down on 1, tied on 7;
+/// planet 3: up on 1, down on 2, tied on 6), and nor did the strikers; on
+/// with that said, for the owner to judge in play.
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
@@ -444,7 +469,7 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // to 23 at 2:00 and down by 2:21 with it; pump_smell 2 to 8 was too
         // weak to see.
         Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder and a Torch", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
+        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder and a Torch, and keep your soldiers out of the flames: fire burns them too", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
         // Until 2026-11-17 the Trunk had the Drifter's row (the same pump
         // smell: the first two pumps at 185 and 167 hp at 2:30 without it,
         // 160 and 160 with it; modest, as its cords are slow to turn), so
@@ -578,8 +603,19 @@ pub fn bring_shell(tier: Tier) -> Option<Shell> {
 }
 
 /// Points a won level pays: more the deeper it was and the more stars.
+///
+/// 175 + 25 a planet since the starfall (Direction, 2026-11-20): ore
+/// worth 30 + 10 a planet falls at least three times a planet, about 4.2
+/// on average (`StarRules::for_depth`, `fall_count`), so what grows with
+/// depth is now mostly what the squad goes out and takes. Planet 1 still
+/// pays 200, which the first unlock and the Torch-and-Tinder pair before
+/// planet 2 are priced on (`ammo_price`); from planet 2 the base pays 25
+/// less a planet than the old 150 + 50 a planet (planet 3: 250, not 300;
+/// planet 8: 375, not 550). Rejected: the brainstorm's 100 + 25 a planet,
+/// which takes the planet 1 floor under both buys while no bot collects
+/// drops, so nothing yet says how much of the ore a player takes.
 pub fn reward(depth: u32, stars: u8) -> u32 {
-    150 + 50 * depth + 50 * u32::from(stars.saturating_sub(1))
+    175 + 25 * depth + 50 * u32::from(stars.saturating_sub(1))
 }
 
 /// What a shop row is.
@@ -637,7 +673,7 @@ pub struct Item {
 /// (`run_lock`), as it never locks the pump.
 pub const ITEMS: [Item; 18] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
-    Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
+    Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Shots a fifth wider; past the widest, they fire faster", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
     Item { key: "range", name: "Longer barrels", group: Group::Squad, about: "3 more cells of sight and reach", max: 3, cost: 100, needs: None },
     Item { key: "squad", name: "Bigger landing", group: Group::Squad, about: "Two more soldiers land with you", max: 4, cost: 150, needs: None },
@@ -1016,6 +1052,10 @@ impl Run {
             for &(k, v) in does_to_you(self.level().tier).rules {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }
+            // Starfall and boss cores (2026-11-20, `larder_world/starfall.rs`;
+            // the owner, 19:06Z: "I like starfall with boss cores"): shop
+            // points the squad takes on the planet, on top of `reward`.
+            r.star = crate::mould::larder_world::StarRules::for_depth(self.depth);
         }
         // A run is lost when its last soldier falls, food in the bank or
         // not (owner, 2026-11-18 15:56Z; `Rules::wipe_ends`).
@@ -1468,6 +1508,13 @@ impl Run {
             })
             .filter(|g| !self.guns.contains(g))
             .collect();
+    }
+
+    /// Shop points the squad took on the planet (`Game::starfall`: ore
+    /// from the sky and boss cores), kept whether it is won or lost.
+    /// Before `won`, so the end screen's sum is the shop's.
+    pub fn found(&mut self, points: u32) {
+        self.points += points;
     }
 
     /// The current level was won with `stars` (1-3): its points, the next

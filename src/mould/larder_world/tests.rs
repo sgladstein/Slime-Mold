@@ -518,6 +518,40 @@ fn a_scared_piece_sees_past_the_guns() {
     assert_eq!(g.world.p.panic_r, 7.0);
 }
 
+/// A cornered slime lunges (`Rules::late_at`, the 11-20 brief's option
+/// B): under `late_at` of its peak its charges reach `late_margin` past
+/// the guns and its surges lunge at `late_haste`, for the rest of the
+/// planet; off (0) nothing changes; a world already faster keeps its own.
+#[test]
+fn a_cornered_slime_lunges_from_further_out() {
+    let mut g = small(1);
+    g.rules.late_at = 0.4;
+    let haste = g.world.p.surge_haste;
+    assert!(haste < g.rules.late_haste && g.rules.panic_margin < g.rules.late_margin);
+    g.keep_panic_reach();
+    assert!(!g.late, "whole, it is not cornered");
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.panic_margin);
+    g.peak = g.mould * 3;
+    g.keep_panic_reach();
+    assert!(g.late);
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.late_margin);
+    assert_eq!(g.world.p.surge_haste, g.rules.late_haste);
+    g.peak = g.mould;
+    g.keep_panic_reach();
+    assert!(g.late, "once cornered, cornered for the rest of the planet");
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.late_margin);
+    // Off, or a world that already lunges harder (the Swarmer).
+    let mut off = small(1);
+    off.peak = off.mould * 3;
+    off.keep_panic_reach();
+    assert!(!off.late);
+    assert_eq!((off.world.p.panic_r, off.world.p.surge_haste), (off.gun_range_max() + off.rules.panic_margin, haste));
+    let mut fast = small(1);
+    (fast.rules.late_at, fast.world.p.surge_haste, fast.peak) = (0.4, 5.0, fast.mould * 3);
+    fast.keep_panic_reach();
+    assert_eq!(fast.world.p.surge_haste, 5.0);
+}
+
 /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
 /// mould's home stops nothing, and births go on.
 #[test]
@@ -830,6 +864,12 @@ impl World for Later {
     }
     fn set_panic_r(&mut self, r: f32) {
         World::set_panic_r(&mut self.d, r)
+    }
+    fn surge_haste(&self) -> f32 {
+        World::surge_haste(&self.d)
+    }
+    fn set_surge_haste(&mut self, h: f32) {
+        World::set_surge_haste(&mut self.d, h)
     }
     fn surge_every(&self) -> u32 {
         World::surge_every(&self.d)
@@ -4350,9 +4390,15 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     // The squad brought round the race world's middle rock, which blocks
     // the line from the slime's side (a mortar with no clear line walks:
     // the next test).
+    // Tough enough to outlive the test (a squad of four at full health
+    // was eaten by the third throw), so the throws are counted at a
+    // standing target and what they cost read off its health.
     for (k, s) in g.soldiers.iter_mut().enumerate() {
         (s.x, s.y) = (100.0 + (k % 3) as f32, 78.0 + (k / 3) as f32);
+        s.hp = 1000.0;
     }
+    let health = |g: &Game<BigDish>| g.soldiers.iter().map(|s| s.hp).sum::<f32>();
+    let full = health(&g);
     let squad = |g: &Game<BigDish>| {
         let alive: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
         (alive.iter().map(|s| s.x).sum::<f32>() / alive.len().max(1) as f32, alive.iter().map(|s| s.y).sum::<f32>() / alive.len().max(1) as f32)
@@ -4361,6 +4407,9 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     let mut throws = Vec::new();
     for _ in 0..12 * tps {
         g.step();
+        // A lump always left for a march, fruit or boss (shells take one
+        // only while two are free).
+        assert!((0..crate::mould::big::LUMPS).any(|l| !g.lump_taken(l)), "the shells took every lump at {:.1} s", g.time());
         let Some(b) = g.bosses.live.first().copied() else { break };
         if let BossPhase::Sit(_, t) = b.phase {
             first.get_or_insert(b.centre);
@@ -4379,11 +4428,25 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     assert!(throws.len() >= 3, "a throw every 3 s: {throws:?}");
     assert!(throws.windows(2).all(|w| w[1] - w[0] >= 3 * tps as u64), "no faster than every 3 s: {throws:?}");
     assert!(b.visited > 0, "it threw walkers");
+    // The throws bite: the squad loses health to them.
+    eprintln!("mortar: the squad lost {:.0} health", full - health(&g));
+    assert!(health(&g) < full, "the throws cost the squad nothing");
     // Held on where it formed (its first sitting centre is still
     // gathering in from the knot round it).
     assert!(first.is_some());
     assert!((b.centre.0 - b.at.0).hypot(b.centre.1 - b.at.1) < 6.0, "it stays put: formed at {:?}, now {:?}", b.at, b.centre);
     assert_eq!(g.lump_looks()[b.lump] & 7, BossKind::Mortar as u16);
+    // Each throw its own lump while one is free, in the mortar's look,
+    // aimed at its target, and let go after `shell_life`.
+    assert!(g.bosses.shelled as usize >= throws.len().min(2), "{} of {} throws kept as shells", g.bosses.shelled, throws.len());
+    assert!(g.bosses.thrown > 0);
+    let now = g.world.ticks();
+    for sh in &g.bosses.shells {
+        assert_eq!(g.lump_looks()[sh.lump] & 7, BossKind::Mortar as u16);
+        assert!(sh.until > now && sh.until <= now + 8 * tps as u64 + 1);
+    }
+    // (One may be shot to nothing already.)
+    assert!(g.bosses.shells.iter().any(|sh| g.world.lumps()[sh.lump].is_some_and(|l| l.2 > 0)), "a shell has walkers");
 }
 
 #[test]
@@ -4410,4 +4473,52 @@ fn a_mortar_with_no_clear_line_walks_until_it_has_one() {
     eprintln!("mortar walk: {before:.0} -> {:.0} from the squad, walked {} s, {:?}", near(&g, b.centre), b.walked, b.phase);
     assert!(walked && b.walked > 0.0, "it walked on its trip: {b:?}");
     assert!(near(&g, b.centre) < before - 20.0, "toward the squad: {before} -> {}", near(&g, b.centre));
+}
+
+#[test]
+fn a_late_mini_boss_is_a_strong_one() {
+    // Under `late` of its peak, the slime's mini-bosses are drawn from
+    // `late_grade` up; before that, from the whole range.
+    let draw = |late: bool| {
+        let mut g = small(2);
+        g.rules.boss = BossRules { least: 1, grade_lo: 0.0, grade_hi: 1.0, kind: 1.0, ..BossRules::default() };
+        g.peak = if late { g.mould * 10 } else { g.mould };
+        assert_eq!(g.boss_late(), late);
+        let w = &g.world;
+        let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+        let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+        assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+        g.bosses.live[0].grade
+    };
+    let (early, late) = (draw(false), draw(true));
+    eprintln!("grade early {early:.2}, late {late:.2}");
+    assert!(late >= BossRules::default().late_grade, "late {late}");
+    assert!(late > early, "the same draw, raised: {early} -> {late}");
+}
+
+/// **The Pinwheel** (2026-11-20, the owner's doc's second proposal): a
+/// runner from planet 3 that hunts like the hunter with its lump's arms
+/// turning (`Lump::spin`, the engine's; `a_spinning_lump_gathers_into_
+/// turning_arms` on the GPU) once it is within `spin_near` of its prey,
+/// and not farther; a hunter's lump has none.
+#[test]
+fn a_pinwheel_hunts_with_its_arms_turning() {
+    assert_eq!(BossRules::for_depth(2).kinds[5], 0.0, "not on planet 2");
+    assert!(BossRules::for_depth(3).kinds[5] > 0.0, "from planet 3");
+    let hunt = |kind: f32, spin_near: f32| {
+        let mut g = small(2);
+        g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, kind, spin_near, ..BossRules::default() };
+        for _ in 0..10 * g.rules.tps as usize {
+            g.step();
+            if let Some(b) = g.bosses.live.first().filter(|b| matches!(b.phase, BossPhase::Hunt(Some(_)))) {
+                return (b.kind, g.world.p.lumps[b.lump].spin);
+            }
+        }
+        panic!("no boss hunted");
+    };
+    let (kind, spin) = hunt(6.0, 1.0e6);
+    assert_eq!(kind, BossKind::Pinwheel);
+    assert!(spin.abs() > 0.0, "its arms turn: spin {spin}");
+    assert_eq!(hunt(6.0, 0.0), (BossKind::Pinwheel, 0.0), "not while its prey is far");
+    assert_eq!(hunt(1.0, 1.0e6), (BossKind::Hunter, 0.0));
 }

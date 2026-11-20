@@ -163,6 +163,28 @@ end.
   thread's proposal, a drawn leech or sapper forms at the crowded knot
   nearest its target. It keeps all four kinds, as he asked, and the 90 s
   trip.
+- **Condensed strikers + late lunge** (his card, 11-20 15:10Z, row in
+  `wiki/decisions-game.md`): the slime thread builds the strikers, the
+  balance thread the late lunge. This lane only records it.
+- **Heavier shots past the strike cap** (#557, merged 11-20): the squad
+  you lead was already at `squad::R_MAX` (7), so the card did nothing for
+  it. Past the cap it now fires faster by (wanted / cap) squared, about
+  1.4 times a level. Raising the cap was rejected: the GPU clears a
+  15 x 15 box a shot.
+- **The Pull card's units were checked** (coordinator's question, 11-20):
+  no fix is needed. `walker_step` is in fine cells, as is the room, and the
+  mortar (`bosses.rs`) uses the same formula.
+- **Heavier shots measured** (bot job 14-a, 192 games): with a Blast deck
+  it is about equal to Armour (18 and 19 wins of 24; Faster trigger 13,
+  none 9), so no retune. Four levels cost 1,200 points, not 480.
+- **Own fire** (#564, bot jobs 14 and 14-b): `fire_hurt` 25 to 10, and the
+  planet 2 card warns of it. Job 14-0-a re-scores fire at 10 and 5; its
+  verdict, whether the Torch is now a real choice or too strong, comes to
+  this lane.
+- **Base pay with the starfall** (#573 built it, Scott's 19:06Z pick):
+  `reward` 175 + 25 a planet plus 50 a star (was 150 + 50 a planet), so
+  planet 1 keeps 200 and depth growth comes from drops. Retune once a bot
+  or his play shows how much ore a player takes.
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the

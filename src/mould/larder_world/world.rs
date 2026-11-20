@@ -94,6 +94,14 @@ pub trait World {
     /// dish cells): the game keeps it past the gun's range
     /// (`Rules::panic_margin`). A world with no panic ignores it.
     fn set_panic_r(&mut self, _r: f32) {}
+    /// How much faster than its pace a surge lunges
+    /// (`BigParams::surge_haste`), and setting it: a cornered slime
+    /// lunges harder (`Rules::late_haste`). A world with no surge reads 0
+    /// and ignores the set.
+    fn surge_haste(&self) -> f32 {
+        0.0
+    }
+    fn set_surge_haste(&mut self, _h: f32) {}
     /// The surges' switch and longest wait, fine steps
     /// (`BigParams::surge_every`; 0 off, or a world with no surge).
     fn surge_every(&self) -> u32 {
@@ -185,6 +193,24 @@ pub trait World {
     /// never sends a wave.
     fn can_wave(&self) -> bool {
         false
+    }
+    /// **The heartbeat** (2026-11-20, `Game::time_heart`): where it beats
+    /// from (fine cells; None off), a calm walker's lean, the steps a beat
+    /// and its wavelength in fine cells (`gpu::Engine::heart`). A rule of
+    /// the GPU engine only.
+    fn set_heart(&mut self, _at: Option<(f32, f32)>, _lean: f32, _period: u32, _len: u32) {}
+    /// **Condensed strikers** (2026-11-20, `Game::time_strikers`): a
+    /// condensed walker's haste as it charges (None off; `gpu::Engine::
+    /// strikers`). A rule of the GPU engine only.
+    fn set_strikers(&mut self, _haste: Option<f32>) {}
+    /// Condenses the edge facing the squad at once (engine.wgsl's
+    /// `condense`): each ordinary walker within `reach` (fine cells) of a
+    /// soldier tries with chance `share`, and the first in each block takes
+    /// in up to `most` of the rest. The condensed walkers living before it
+    /// ran, what they held, and the walkers taken in; None for a world
+    /// that cannot (the CPU engine), or with the strikers off.
+    fn condense(&mut self, _reach: f32, _share: f32, _most: u32) -> Option<(u32, u32, u32)> {
+        None
     }
     /// The ground a raid walks (the slime's agar, `w` x `h` fine cells),
     /// copied so the game can build the raid's way round walls off the
@@ -359,6 +385,14 @@ impl World for BigDish {
 
     fn set_panic_r(&mut self, r: f32) {
         self.p.panic_r = r;
+    }
+
+    fn surge_haste(&self) -> f32 {
+        self.p.surge_haste
+    }
+
+    fn set_surge_haste(&mut self, h: f32) {
+        self.p.surge_haste = h;
     }
 
     fn surge_every(&self) -> u32 {

@@ -54,6 +54,10 @@ mod raids;
 mod bosses;
 mod fruit;
 mod waves;
+mod heart;
+mod strikers;
+mod starfall;
+mod cores;
 mod rules;
 mod paths;
 mod cmd;
@@ -79,9 +83,13 @@ pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
 pub use doors::WALL_LEVELS;
-pub use raids::{LureMark, March, Raid, RaidAim, RaidRules, Raids};
+pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};
+pub use heart::HeartRules;
+pub use strikers::{StrikerRules, Strikers};
+pub use starfall::{fall_count, CoreFrom, Drop, DropKind, StarRules, Starfall};
+pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
@@ -460,6 +468,16 @@ pub struct Game<W: World> {
     /// When the mould broke (`Rules::broken`), and the upkeep it had then,
     /// given back if it recovers; None while it is whole.
     pub broken: Option<(u64, f32)>,
+    /// The slime has fallen under `Rules::late_at` of its peak: its
+    /// charges reach and lunge as a cornered slime's for the rest of the
+    /// planet (`Game::keep_panic_reach`).
+    pub late: bool,
+    /// Soldiers killed by the slime's touch (`Rules::drain`) and by
+    /// standing in fire (`Rules::fire_hurt`): the rest of the fallen died
+    /// to blasts and other casts. The 11-20 late-threat measure counts the
+    /// slime's own kills apart from the squad's.
+    pub fell_bitten: u32,
+    pub fell_burned: u32,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -534,6 +552,15 @@ pub struct Game<W: World> {
     /// ended.
     pub fruits: Fruits,
     pub waves: Waves,
+    /// Where the slime's heart beats from now (`heart.rs`), fine cells.
+    pub heart_at: Option<(f32, f32)>,
+    /// The condensed strikers (`strikers.rs`).
+    pub strikers: Strikers,
+    /// Starfall and boss cores (`Rules::star`, `starfall.rs`): the falls
+    /// due, what is down and the shop points taken.
+    pub starfall: Starfall,
+    /// Boss cores that re-form their boss, and raids' cores (`cores.rs`).
+    pub cores: Cores,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
@@ -651,6 +678,9 @@ impl<W: World> Game<W> {
             mould,
             peak: mould,
             broken: None,
+            late: false,
+            fell_bitten: 0,
+            fell_burned: 0,
             start_charge,
             taken,
             start_mould: mould,
@@ -684,6 +714,10 @@ impl<W: World> Game<W> {
             bosses: Bosses::new(seed),
             fruits: Fruits::default(),
             waves: Waves::default(),
+            heart_at: None,
+            strikers: Strikers::default(),
+            starfall: Starfall::new(seed),
+            cores: Cores::default(),
             rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();

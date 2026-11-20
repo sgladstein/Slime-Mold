@@ -46,6 +46,21 @@ pub const DEVICE_COMPILED: bool = cfg!(any(target_os = "macos", target_os = "win
 pub struct Output {
     #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
     device: device::Device,
+    /// **Reopening** (2026-11-20, the owner: "the sound was working and
+    /// partway through cut out"). A stream that errored or stopped asking
+    /// for samples is replaced by a fresh one on the default device; the
+    /// seed for its bank, the last master volume sent (so the new bank is
+    /// at the player's volume), when to try next, and the wait after a
+    /// failed try (2 s, doubling to 30 s, so a machine with no device left
+    /// is not asked every frame).
+    #[allow(dead_code)]
+    seed: u64,
+    #[allow(dead_code)]
+    master: Option<SoundCmd>,
+    #[allow(dead_code)]
+    retry: (std::time::Instant, f32),
+    /// Times the device was reopened.
+    pub reopened: u32,
 }
 
 impl Output {
@@ -55,7 +70,7 @@ impl Output {
     pub fn open(seed: u64) -> Result<Output, String> {
         #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
         {
-            device::Device::open(seed).map(|device| Output { device })
+            device::Device::open(seed).map(|device| Output { device, seed, master: None, retry: (std::time::Instant::now(), 2.0), reopened: 0 })
         }
         #[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
         {
@@ -66,7 +81,30 @@ impl Output {
 
     pub fn send(&mut self, cmds: impl IntoIterator<Item = SoundCmd>) {
         #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
-        self.device.send(cmds);
+        {
+            if !self.device.healthy() && self.retry.0 <= std::time::Instant::now() {
+                match device::Device::open(self.seed.wrapping_add(self.reopened as u64 + 1)) {
+                    Ok(mut d) => {
+                        d.dropped = self.device.dropped;
+                        d.send(self.master);
+                        self.device = d;
+                        self.reopened += 1;
+                        self.retry = (std::time::Instant::now() + std::time::Duration::from_secs(2), 2.0);
+                        eprintln!("sound: reopened the output device ({} time(s))", self.reopened);
+                    }
+                    Err(e) => {
+                        eprintln!("sound: could not reopen the output device ({e}); trying again in {:.0} s", self.retry.1);
+                        self.retry = (std::time::Instant::now() + std::time::Duration::from_secs_f32(self.retry.1), (self.retry.1 * 2.0).min(30.0));
+                    }
+                }
+            }
+            let master = &mut self.master;
+            self.device.send(cmds.into_iter().inspect(|c| {
+                if let SoundCmd::Master(_) = c {
+                    *master = Some(*c);
+                }
+            }));
+        }
         #[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
         drop(cmds.into_iter());
     }
