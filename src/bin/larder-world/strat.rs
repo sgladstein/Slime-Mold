@@ -142,7 +142,8 @@ pub(super) struct Plan {
     /// when the run offers them (false), as a real run plays. With the
     /// shelf, Wide + Rate + Needle Blast won all 17 planet 3 maps (11-20,
     /// p3n generation 5); a run that has to be offered three cards is
-    /// another game.
+    /// another game. Without the shelf a payload named bare (`torch`)
+    /// takes the shop's bullet of that shell in whatever set it rolled.
     pub shelf: bool,
 }
 

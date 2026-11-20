@@ -21,6 +21,8 @@
 
 use super::strat::{self, Plan};
 use super::*;
+use slime_mould::mould::bullets::Shell;
+use slime_mould::mould::rounds::Card;
 use slime_mould::mould::run::{self, Pick, ITEMS};
 
 /// The unlocks a plan may build with, as `Run::has` keys.
@@ -37,13 +39,20 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     // bought only from what the run offers.
     for name in &p.want {
         let Some(c) = want_card(name, r.depth) else { continue };
-        if r.cards.iter().any(|&(x, _)| card_key(x) == card_key(c)) {
+        // A payload named bare (`torch`) is any bullet of that shell, in
+        // whatever set it rolled: off the shelf it takes the shop's own (the
+        // shop before the Sprawler and the Trunk puts a Torch first,
+        // `run::bring_shell`, and the planet's card says to bring one).
+        let shell = (!name.contains('.')).then(|| Shell::ALL.into_iter().find(|s| s.card() == c)).flatten();
+        let same = |o: Card| card_key(o) == card_key(c) || matches!((o, shell), (Card::Ammo(a), Some(s)) if a.shell == s);
+        if r.cards.iter().any(|&(x, _)| same(x)) {
             continue;
         }
         if !p.shelf {
-            if let Some(i) = r.offers.iter().position(|&o| card_key(o) == card_key(c)) {
+            if let Some(i) = r.offers.iter().position(|&o| same(o)) {
+                let o = r.offers[i];
                 if r.pick(Pick::Offer(i)) {
-                    bought.push(card_key(c));
+                    bought.push(card_key(o));
                 }
             }
             continue;
@@ -324,5 +333,29 @@ pub(super) fn parse(v: &str) -> Result<Job, String> {
             secs: rest.first().map_or(Ok(0.0), |x| num(x))?,
         }),
         _ => Err(format!("league={v}: DEPTH:SEED[:SECS] or run:SEED[:TO[:SECS]]")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_bare_payload_off_the_shelf_takes_the_shops_own_bullet() {
+        // The shop before the Sprawler puts a Torch first; without the shelf
+        // `want=torch` buys that one, in whatever set it rolled.
+        for seed in 1..=4 {
+            let mut r = Run::new(seed);
+            r.restock();
+            r.won(2);
+            let offered = r.offers.iter().find_map(|&o| match o {
+                Card::Ammo(a) if a.shell == Shell::Torch => Some(card_key(o)),
+                _ => None,
+            });
+            let p = Plan::parse("want=torch,shelf=0,cards=0,shop=").unwrap();
+            let bought = shop(&mut r, &p);
+            assert_eq!(bought.first(), offered.as_ref(), "seed {seed}: {bought:?}");
+            assert!(bought.first().is_some_and(|b| b.starts_with("torch.")), "seed {seed}: {bought:?}");
+        }
     }
 }
