@@ -269,7 +269,11 @@ outer part (the walkers past the radius holding 60% of them,
 (`Bosses::shells`) and flings it at the target. A shell's lump carries the
 mortar's bite, the armour of half its grade, no leash, and the mortar's look, and
 lets go after `shell_life` (8 s). The rest of the body refills from the
-slime round it, if a lump was free to throw into.
+slime round it, if a lump was free to throw into. A shell takes a lump only
+while another stays free after it (the review lane's catch: the world
+has four lumps for bosses, marches, fruits and shells, and a mortar's
+shells held three, so raids streamed loose and fruits could not start);
+without one, the ring flies as ordinary slime.
 
 Three things were wrong on the way, each seen in the `shell t` rows the
 play log now prints:

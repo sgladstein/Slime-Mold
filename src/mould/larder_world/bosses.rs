@@ -811,7 +811,14 @@ impl<W: World> Game<W> {
         // from the walkers in no lump in the ring, flies as one (a flung
         // walker keeps its lump) and lands as the mortar's own, aimed at
         // the target, with its bite and its look.
-        let free = (0..crate::mould::big::LUMPS).find(|&l| !self.lump_taken(l));
+        // Only while another lump stays free after it (the review lane,
+        // 11-20): the world has `LUMPS` (4) for bosses, marches, fruits
+        // and shells, and a mortar throwing every 5 s with shells living
+        // 8 s held three, so a raid found none and streamed loose, a fruit
+        // could not start and no other boss could form. Without a lump the
+        // ring flies as ordinary slime, as before shells.
+        let free: Vec<usize> = (0..crate::mould::big::LUMPS).filter(|&l| !self.lump_taken(l)).collect();
+        let free = if free.len() >= 2 { free.first().copied() } else { None };
         if let Some(sl) = free {
             self.world.grow_lump(sl, (centre, outer));
             let cell = crate::mould::larder_world::raid_cell(t, self.world.size());

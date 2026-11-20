@@ -4367,6 +4367,9 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     let mut throws = Vec::new();
     for _ in 0..12 * tps {
         g.step();
+        // A lump always left for a march, fruit or boss (shells take one
+        // only while two are free).
+        assert!((0..crate::mould::big::LUMPS).any(|l| !g.lump_taken(l)), "the shells took every lump at {:.1} s", g.time());
         let Some(b) = g.bosses.live.first().copied() else { break };
         if let BossPhase::Sit(_, t) = b.phase {
             first.get_or_insert(b.centre);
