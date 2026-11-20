@@ -212,6 +212,9 @@ planet 3, its trail off the body a translucent raised tube (`CORD_VEIL`,
 where its alarm flushes it, its height grows (`SWELL_GAIN`, `SWELL_RISE`),
 so alarmed walkers are raised beads, not a flat glow. Sporer, Sleeper and
 Grudge are still Plain: the next slime looks.
+Bullets in a crowd share their light (`dim_crowded` in `draw.rs`): each
+bullet's light over the square root of the bullets within its reach, after
+46 rifles down one lane on planet 4 lit a white column over the slime.
 Selection rings join within `RING_LINK` (3.5 rings centre to centre,
 `controls.rs`): a 51-soldier squad on planet 3 wore 51 rings at zoom 6.
 The play alerts (top left) hide while the end card is up: the card says
