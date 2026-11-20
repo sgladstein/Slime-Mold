@@ -38,6 +38,23 @@ After, merged with main, same nine games: 7 of 18 reached the squad,
 39 s stood still against 258, none swallowed; no errand reached in 5:00
 (pumps 150-250 units off; the trip or a nearer pick is tuning, unreviewed).
 
+Then (#548, Direction's call): the kind is drawn first and a crowd's leech
+or sapper forms at the crowded knot nearest its pump or wall; one sapper
+reached its wall, 2 of 3 leeches met the squad guarding the pumps.
+
+Then the Mortar (the owner's pick, 11-20 13:21Z, "Mortar first", over the
+Pinwheel): `BossKind::Mortar` (5), drawn from planet 4 on
+(`BossRules::for_depth`, `kinds[4]`). It forms at the crowded knot nearest
+a player thing it can see along a clear line, never walks, and every
+`lob_every` (5 s) throws the ring of its own body's edge at the nearest
+player thing just past the guns (`lob` 30 dish cells past the longest
+gun's reach and the panic margin) as one `squad::Burst` with `push`
+(`Game::mortar`); thrown members are let go and the rest formed again on
+its spot. Moss skin, acid core (`LumpLook::Mortar`, Look's
+`view.wgsl` case 6). Also: a fruit grows its lump instead of forming it,
+so it no longer swallows a mini-boss beside it (3 of 14 had been). Set
+keys `boss_mortar`, `boss_lob`, `boss_lob_every`, `boss_shell`.
+
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand
 (`crowded_knot(Some(&boss))`). Drawing them only with a target within
@@ -376,5 +393,5 @@ Start from `handoff/slime-enemy.md`, `handoff/simulation-use.md`,
   alarm, `squad::Burst`).
 - Quote the frame cost of anything that runs every step. The GTX 1070
   runs go in one batch before the milestone check; ask Engine and tools.
-- New mini-boss kinds are parked until Scott has said how the four built
-  ones play.
+- New mini-boss kinds: Scott picked the Mortar first (11-20 13:21Z);
+  the Pinwheel (his doc's second proposal) is next.

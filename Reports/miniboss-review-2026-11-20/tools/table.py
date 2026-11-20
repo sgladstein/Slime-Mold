@@ -19,6 +19,8 @@ for f in sorted(glob.glob(sys.argv[1]+'/*/log.txt')):
     if m and m.group(2) in live and int(m.group(1))<=CUT and live[m.group(2)]['end'] is None:
       g=re.search(r"(?:Go|Sit)\(\(([\d.]+), ([\d.]+)\)",l)
       if g: live[m.group(2)].setdefault('gap',[]).append(math.hypot(float(g.group(1))-int(m.group(8)),float(g.group(2))-int(m.group(9))))
+      th=re.search(r"Sit\(\([\d.]+, [\d.]+\), (\d+)\)",l)
+      if th and int(th.group(1))>0: live[m.group(2)].setdefault('ticks',set()).add(int(th.group(1)))
       live[m.group(2)]['rows'].append((int(m.group(1)),m.group(4),int(m.group(5)),int(m.group(8)),int(m.group(9)),float(m.group(12)),float(m.group(11))))
       continue
     m=end.search(l)
@@ -33,8 +35,9 @@ for f in sorted(glob.glob(sys.argv[1]+'/*/log.txt')):
     if not r: continue
     if min(x[5] for x in r)<20: c['reached squad (<20 units)']+=1
     if max(x[6] for x in r)>0: c['took food']+=1
-    if any(x[1]=='Sit' for x in r): c['got to its errand']+=1
-    if b.get('gap') and min(b['gap'])<30: c['came within 30 units of its errand']+=1
+    if kind=='mortar': c['throws (mortar)']+=len(b.get('ticks',()))
+    elif any(x[1]=='Sit' for x in r): c['got to its errand']+=1
+    if kind!='mortar' and b.get('gap') and min(b['gap'])<30: c['came within 30 units of its errand']+=1
     s=sum(1 for i in range(10,len(r)) if r[i][1] in('Go','Hunt') and math.hypot(r[i][3]-r[i-10][3],r[i][4]-r[i-10][4])<3)
     c['stood still 10 s+ (seconds)']+=s
     if s>=10: c['stalled 10 s or more']+=1
@@ -43,8 +46,8 @@ for f in sorted(glob.glob(sys.argv[1]+'/*/log.txt')):
       c['ended '+e[0]]+=1
       if e[0]=='Broken' and r[-1][2]>0 and any(abs(t-e[1])<=2 for t in marches) and r[-1][2]>0.5*max(x[2] for x in r): c['swallowed by a march']+=1
     else: c['still alive']+=1
-keys=['formed','reached squad (<20 units)','came within 30 units of its errand','got to its errand','took food','stalled 10 s or more','stood still 10 s+ (seconds)','swallowed by a march','ended Broken','ended Spent','ended Fizzled','still alive']
-kinds=['hunter','leech','sapper','wanderer']
+keys=['formed','reached squad (<20 units)','came within 30 units of its errand','got to its errand','throws (mortar)','took food','stalled 10 s or more','stood still 10 s+ (seconds)','swallowed by a march','ended Broken','ended Spent','ended Fizzled','still alive']
+kinds=['hunter','leech','sapper','wanderer','mortar']
 print('| | '+' | '.join(kinds)+' | all |'); print('|'+' --- |'*(len(kinds)+2))
 for k in keys:
   v=[K[x][k] for x in kinds]; print(f'| {k} | '+' | '.join(map(str,v))+f' | {sum(v)} |')

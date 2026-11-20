@@ -4314,3 +4314,49 @@ fn one_walker_does_not_stop_an_attack_moving_squad() {
     aim(&mut g, 1);
     assert!(g.engaged(m[0]), "fight_hold=0: one walker stops it, as before");
 }
+
+/// **The mortar** (the owner's pick, 2026-11-20): staged on the CPU dish
+/// with the squad in reach, it stays where it formed, throws the slime
+/// round its body at the squad every `lob_every` seconds, and its throws
+/// fly the slime toward the squad.
+#[test]
+fn a_mortar_sits_and_throws_at_the_squad() {
+    let mut g = small(2);
+    g.rules.boss = BossRules { least: 1, gather: 1.0, life: 60.0, quorum: 0.0, kind: BossKind::Mortar as u8 as f32, lob: 400.0, lob_every: 3.0, ..BossRules::default() };
+    let tps = g.rules.tps as usize;
+    let w = &g.world;
+    let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+    let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+    assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+    let squad = |g: &Game<BigDish>| {
+        let alive: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
+        (alive.iter().map(|s| s.x).sum::<f32>() / alive.len().max(1) as f32, alive.iter().map(|s| s.y).sum::<f32>() / alive.len().max(1) as f32)
+    };
+    let mut first = None;
+    let mut throws = Vec::new();
+    for _ in 0..12 * tps {
+        g.step();
+        let Some(b) = g.bosses.live.first().copied() else { break };
+        if let BossPhase::Sit(_, t) = b.phase {
+            first.get_or_insert(b.centre);
+            if t > 0 && throws.last() != Some(&t) {
+                throws.push(t);
+            }
+        }
+    }
+    let b = g.bosses.live.first().copied().expect("it still stands");
+    assert_eq!(b.kind, BossKind::Mortar);
+    let body = (b.members as f32 / std::f32::consts::PI).sqrt();
+    let far = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(b.lump) && (g.world.walkers[k].0 - b.at.0).hypot(g.world.walkers[k].1 - b.at.1) > 3.0 * body).count();
+    // Its thrown members let go: none lands far off and runs home.
+    assert_eq!(far, 0, "{far} of its members past three bodies");
+    eprintln!("mortar: {} throws at ticks {throws:?}, {} walkers thrown, squad at {:?}, it at {:?}", throws.len(), b.visited, squad(&g), b.centre);
+    assert!(throws.len() >= 3, "a throw every 3 s: {throws:?}");
+    assert!(throws.windows(2).all(|w| w[1] - w[0] >= 3 * tps as u64), "no faster than every 3 s: {throws:?}");
+    assert!(b.visited > 0, "it threw walkers");
+    // Held on where it formed (its first sitting centre is still
+    // gathering in from the knot round it).
+    assert!(first.is_some());
+    assert!((b.centre.0 - b.at.0).hypot(b.centre.1 - b.at.1) < 6.0, "it stays put: formed at {:?}, now {:?}", b.at, b.centre);
+    assert_eq!(g.lump_looks()[b.lump] & 7, BossKind::Mortar as u16);
+}

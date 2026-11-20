@@ -39,6 +39,7 @@
 use super::raids::{down_way, Way};
 use super::{Game, Kind, Rng, World};
 use crate::mould::big::{Lump, LUMPS, RAID_BLOCK};
+use crate::mould::squad::{Burst, BurstRules};
 
 /// The mini-bosses' numbers. Times in game seconds, distances in dish
 /// cells.
@@ -132,12 +133,24 @@ pub struct BossRules {
     pub fade: f32,
     /// **The kinds** (owner 04:58Z: "all of them"; a mix of hunters and
     /// kinds with an errand): each one's kind is drawn as it forms, by
-    /// these weights (hunter, wanderer, sapper, leech), among the kinds it
+    /// these weights (hunter, wanderer, sapper, leech, mortar), among the kinds it
     /// has a target for (a sapper needs something built, a leech a pump, a
     /// wanderer a fresh crystal far off); a cut-off part makes only the
     /// runners (hunter, wanderer). `kind` 1-4 forces one (0 draws).
-    pub kinds: [f32; 4],
+    pub kinds: [f32; 5],
     pub kind: f32,
+    /// **The mortar** (the owner's pick, 2026-11-20 13:21Z, "Mortar
+    /// first"): every `lob_every` seconds it throws the slime in a ring
+    /// `shell` dish cells thick just outside its body at the nearest
+    /// soldier or building within the guns' reach and `lob` dish cells
+    /// more of its edge (it forms just outside the guns), each
+    /// walker flying the same way (a push, `squad::Burst::push`), so the
+    /// ring comes down round the target and lives on there. It does not
+    /// walk, and takes half its grade's blows (`armour_at`): strong from
+    /// afar, weak up close (the owner's balance rule, 11-18).
+    pub lob: f32,
+    pub lob_every: f32,
+    pub shell: f32,
     /// The wanderer: a fresh crystal (at least `fresh` of its charge left)
     /// at least `far` dish cells off; it roots there `root` seconds, eats,
     /// takes in the slime there (its reach x `grow`), and sets off again.
@@ -182,6 +195,8 @@ impl BossRules {
             // last, and a wide spread on each.
             grade_lo: 0.4 * t,
             grade_hi: 0.6 + 0.4 * t,
+            // The mortar from planet 4 (the proposal the owner picked).
+            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }],
             ..BossRules::default()
         }
     }
@@ -266,8 +281,11 @@ impl Default for BossRules {
             lunge_pull: 2.0,
             lunge_haste: 2.0,
             fade: 1.5,
-            kinds: [1.0, 1.0, 1.0, 1.0],
+            kinds: [1.0, 1.0, 1.0, 1.0, 0.0],
             kind: 0.0,
+            lob: 30.0,
+            lob_every: 5.0,
+            shell: 1.5,
             far: 40.0,
             fresh: 0.5,
             root: 15.0,
@@ -307,10 +325,13 @@ pub enum BossKind {
     /// Goes for a pump and sits on it: the pump's income is its own while
     /// it sits; breaking it pays the stolen food back.
     Leech = 4,
+    /// Sits where it formed and lobs the slime round it at the nearest
+    /// soldier or building in reach (`BossRules::lob`).
+    Mortar = 5,
 }
 
 impl BossKind {
-    pub const ALL: [BossKind; 4] = [BossKind::Hunter, BossKind::Wanderer, BossKind::Sapper, BossKind::Leech];
+    pub const ALL: [BossKind; 5] = [BossKind::Hunter, BossKind::Wanderer, BossKind::Sapper, BossKind::Leech, BossKind::Mortar];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -318,6 +339,7 @@ impl BossKind {
             BossKind::Wanderer => "wanderer",
             BossKind::Sapper => "sapper",
             BossKind::Leech => "leech",
+            BossKind::Mortar => "mortar",
         }
     }
 }
@@ -454,6 +476,9 @@ const STALL: u32 = 6;
 /// second to the next within the squad (on the bar map it pressed up the
 /// rock's near side, its way always a second stale).
 const WAY_MOVED: f32 = 6.0;
+/// A mortar's thrown walker's speed x `step` (as `RoundRules::fling_speed`,
+/// the shove cards' push).
+const MORTAR_FLING: f32 = 1.5;
 
 impl Bosses {
     pub fn new(seed: u64) -> Bosses {
@@ -535,7 +560,7 @@ impl<W: World> Game<W> {
                 continue;
             }
             let hunt = b.born + secs(r.gather);
-            let errand = if now < hunt || b.kind == BossKind::Hunter { None } else { self.errand(&mut b, now) };
+            let errand = if now < hunt || matches!(b.kind, BossKind::Hunter | BossKind::Mortar) { None } else { self.errand(&mut b, now) };
             let size = self.world.size();
             let cell = move |p: (f32, f32)| crate::mould::larder_world::raid_cell(p, size);
             let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
@@ -549,6 +574,12 @@ impl<W: World> Game<W> {
             let lump = if now < hunt {
                 b.phase = BossPhase::Gather;
                 Lump { aim: cell(centre), leash: clench, ..strong }
+            } else if b.kind == BossKind::Mortar {
+                self.mortar(&mut b, centre, body, now, secs(r.lob_every));
+                // Held on where it formed (its aim its own centre let the
+                // body drift with the slime round it: 28 cells in 11 s on
+                // the CPU dish).
+                Lump { aim: cell(b.at), pull: 0.5 * r.pull, leash: clench, armour: r.armour_at(0.5 * b.grade), ..strong }
             } else if let Some(p) = errand {
                 // On its errand: going there, or sitting on it (a wanderer
                 // rooted and eating, a leech holding on, both clenched; a
@@ -639,6 +670,74 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// The ground a mini-boss walks and throws over: the slime's ground
+    /// (`slime_ground`: rock, the slime's and the player's walls closed)
+    /// with deep water closed too.
+    fn boss_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
+        self.slime_ground().map(|(mut g, w, h)| {
+            let open = self.world.open_cells();
+            if open.len() == g.len() {
+                for (a, o) in g.iter_mut().zip(open) {
+                    *a &= o;
+                }
+            }
+            (g, w, h)
+        })
+    }
+
+    /// **A mortar's second** (`BossRules::lob`): its target, the nearest
+    /// soldier or building past its body and within `lob` dish cells of its
+    /// edge, kept in its phase (`Sit`, with the tick it last threw), and,
+    /// `every` ticks after its last throw, the throw: the ring `shell`
+    /// dish cells thick round its body pushed at the target as one (a
+    /// fling with a heading, `squad::Burst::push`, every walker the same
+    /// way for the same steps), so the ring lands round the target. Its
+    /// walkers thrown are counted in `visited`.
+    fn mortar(&mut self, b: &mut Boss, centre: (f32, f32), body: f32, now: u64, every: u64) {
+        let r = self.rules.boss;
+        let sc = self.world.scale();
+        let reach = body + (self.gun_range_max() + self.rules.panic_margin.max(0.0) + r.lob.max(0.0)) * sc;
+        let d = |p: (f32, f32)| (p.0 - centre.0).hypot(p.1 - centre.1);
+        // Only along a clear line: a thrown walker that meets rock, deep
+        // water or a wall turns aside and lands there, and on the owner's
+        // planet 4 (run 1795038793) the first throws filmed splashed on a
+        // rock ridge between it and the squad. Your walls block it.
+        let ground = self.boss_ground();
+        let short = 4.0 * sc;
+        let seen = |p: (f32, f32)| ground.as_ref().is_none_or(|(g, w, h)| line_clear(g, *w, *h, centre, p, short));
+        let target = self.player_things().into_iter().filter(|&p| d(p) > body && d(p) <= reach && seen(p)).min_by(|a, c| d(*a).total_cmp(&d(*c)));
+        let last = match b.phase {
+            BossPhase::Sit(_, t) => t,
+            _ => 0,
+        };
+        b.phase = BossPhase::Sit(target.unwrap_or(centre), last);
+        let Some(t) = target else { return };
+        if last > 0 && now < last + every.max(1) {
+            return;
+        }
+        let per = (self.world.walker_step() * MORTAR_FLING).max(1e-3);
+        let steps = (d(t) / per).round().clamp(1.0, u16::MAX as f32) as u16;
+        // From half a body past its edge: a fling moves its members too,
+        // and a member thrown stays one, lands by the target and runs
+        // home past its leash, dragging the centre after it (from its
+        // edge, a staged one on the CPU dish drifted 15 cells in 11 s).
+        let inner = (1.5 * body / sc).max(2.0);
+        let throw = Burst { at: (centre.0 / sc, centre.1 / sc), r: inner, fling: inner + r.shell.max(0.1), fling_steps: steps, push: Some((t.1 - centre.1).atan2(t.0 - centre.0)), ..Burst::default() };
+        let out = self.world.burst(&throw, &BurstRules { fling_speed: MORTAR_FLING, ..BurstRules::default() });
+        b.visited += out.flung as u64;
+        // Its members thrown with the ring let go: a member in flight stays
+        // one, lands by the target and runs home past its leash, dragging
+        // the centre after it (a staged one of 47 on the CPU dish had 54
+        // members three bodies off after four throws and drifted 20 cells
+        // toward the squad). Formed again on its own area, which lets
+        // every member in flight go (`World::form_lump`) and, as a regroup
+        // does, heals its members' blows: a mortar's blows count between
+        // its throws only, and it takes half its grade's.
+        let keep = self.reach_holding(b.at, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
+        self.world.form_lump(b.lump, Some((b.at, keep)));
+        b.phase = BossPhase::Sit(t, now);
+    }
+
     /// **Where the mini-boss on `lump` steers for, going to `to`** (fine
     /// cells; its centre `centre`, its body's radius `body`, fine cells): a
     /// body's length and ten dish cells down its way (`BossWay`), as a
@@ -669,15 +768,7 @@ impl<W: World> Game<W> {
         // Deep water closed too: the slime crawls there slowly, and on the
         // owner's planet 4 (run 1795038793) a hunter of 398 stood 70 s at a
         // river's edge on a raid's ground, which counts the river open.
-        let ground = self.slime_ground().map(|(mut g, w, h)| {
-            let open = self.world.open_cells();
-            if open.len() == g.len() {
-                for (a, o) in g.iter_mut().zip(open) {
-                    *a &= o;
-                }
-            }
-            (g, w, h)
-        });
+        let ground = self.boss_ground();
         let i = match self.bosses.ways.iter().position(|w| w.lump == lump) {
             Some(i) => i,
             None => {
@@ -813,7 +904,11 @@ impl<W: World> Game<W> {
         let mut b = Boss { lump: 0, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade: 0.0, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
         b.kind = self.pick_kind(&b);
         let mut at = at;
-        if cause == BossCause::Crowd && matches!(b.kind, BossKind::Leech | BossKind::Sapper) {
+        // A mortar likewise takes the crowded knot nearest the player's
+        // things, which (never inside the guns, `crowded_knot`) is at the
+        // edge of their reach: from the knot weighted by nearness the first
+        // one filmed sat 260 units off with nothing to throw at.
+        if cause == BossCause::Crowd && matches!(b.kind, BossKind::Leech | BossKind::Sapper | BossKind::Mortar) {
             if let Some(p) = self.crowded_knot(Some(&b)) {
                 at = p;
             }
@@ -849,7 +944,7 @@ impl<W: World> Game<W> {
     fn pick_kind(&mut self, b: &Boss) -> BossKind {
         let r = self.rules.boss;
         let forced = r.kind.round() as usize;
-        if (1..=4).contains(&forced) {
+        if (1..=BossKind::ALL.len()).contains(&forced) {
             return BossKind::ALL[forced - 1];
         }
         let w: Vec<f32> = BossKind::ALL
@@ -857,7 +952,7 @@ impl<W: World> Game<W> {
             .enumerate()
             .map(|(i, &kind)| {
                 let runner = matches!(kind, BossKind::Hunter | BossKind::Wanderer);
-                let able = kind == BossKind::Hunter || self.boss_goal(&Boss { kind, ..*b }).is_some();
+                let able = matches!(kind, BossKind::Hunter | BossKind::Mortar) || self.boss_goal(&Boss { kind, ..*b }).is_some();
                 if (b.cause != BossCause::Cut || runner) && able { r.kinds[i].max(0.0) } else { 0.0 }
             })
             .collect();
@@ -883,7 +978,7 @@ impl<W: World> Game<W> {
         let d = |p: (f32, f32)| (p.0 - b.centre.0).hypot(p.1 - b.centre.1);
         let near = |ps: Vec<(f32, f32)>| ps.into_iter().min_by(|a, c| d(*a).total_cmp(&d(*c)));
         match b.kind {
-            BossKind::Hunter => None,
+            BossKind::Hunter | BossKind::Mortar => None,
             BossKind::Wanderer => {
                 // A hop toward the player (2026-11-20): the nearest fresh
                 // crystal to it of those nearer the player's things than it
@@ -1033,7 +1128,7 @@ impl<W: World> Game<W> {
     fn goal_holds(&self, b: &Boss, q: (f32, f32)) -> bool {
         let r = self.rules.boss;
         match b.kind {
-            BossKind::Hunter => false,
+            BossKind::Hunter | BossKind::Mortar => false,
             BossKind::Wanderer => self.world.crystals().iter().enumerate().any(|(j, c)| c.0 == q && (j >= 64 || b.visited & 1 << j == 0) && c.1 > 0.0 && c.1 >= r.fresh * self.start_charge.get(j).copied().unwrap_or(0.0)),
             BossKind::Sapper => self.on_wall(q) || self.buildings.iter().any(|w| w.alive && !matches!(w.kind, Kind::Wall { .. }) && w.at == q),
             BossKind::Leech => self.buildings.iter().any(|w| w.alive && w.kind == Kind::Pump && w.up() && w.at == q),
@@ -1131,7 +1226,14 @@ impl<W: World> Game<W> {
             })
             .collect();
         if let Some(e) = errand {
-            let to_goal = |p: (f32, f32)| self.boss_goal(&Boss { centre: p, ..*e }).map_or(f32::INFINITY, |g| (g.0 - p.0).hypot(g.1 - p.1));
+            // A mortar's goal is the player's nearest thing.
+            // (one it can throw at: a clear line, `Game::mortar`).
+            let ground = if e.kind == BossKind::Mortar { self.boss_ground() } else { None };
+            let short = 4.0 * sc;
+            let to_goal = |p: (f32, f32)| match e.kind {
+                BossKind::Mortar => mine.iter().filter(|q| ground.as_ref().is_none_or(|(g, w, h)| line_clear(g, *w, *h, p, **q, short))).map(|q| (q.0 - p.0).hypot(q.1 - p.1)).fold(f32::INFINITY, f32::min),
+                _ => self.boss_goal(&Boss { centre: p, ..*e }).map_or(f32::INFINITY, |g| (g.0 - p.0).hypot(g.1 - p.1)),
+            };
             let i = sums.iter().zip(&weights).filter(|(_, &w)| w > 0.0).map(|(s, _)| (s.0, to_goal(at(s.0)))).filter(|s| s.1.is_finite()).min_by(|a, c| a.1.total_cmp(&c.1))?.0;
             return Some(at(i));
         }
