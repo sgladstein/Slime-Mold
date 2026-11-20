@@ -149,6 +149,12 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
 - Tinder's costs (2, so 4 with the torch, past the blast's 3 and ahead
   of it in 9 of 9 windows) wait for the balance pass too
   ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
+- Bought alone, Tinder does nothing: the strategy bots took it before
+  the Sprawler (the planet's card) with no Torch, and on planet 2 map 3
+  the plan with Tinder and Heavier shots played the same game to the
+  walker as the plan with an empty shop (11-20, cloud; the PC job
+  14-fire-p2 tests every map,
+  [strategy bots](../../Reports/strategy-bots-2026-11-19/README.md)).
 - The Torch's own planet, the Sporer's jungle (5), has no window: in the
   planet 4 and 5 scenes the squads had not met the slime by 50 s
   ([element](../../Reports/gun-element-2026-11-17/README.md)).

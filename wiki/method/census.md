@@ -71,13 +71,15 @@ with the counts beside each, and the page's source is saved under
 **Larder World's strategy bots** (2026-11-19). `hand=strat:PLAN` is a
 family plus dials (`econ,go=4,aim=6`), and `league=DEPTH:SEED` lands a plan
 on a planet with the earlier planets counted as won. The worker on the
-owner's PC plays job files and an evolving search, planet 3 only. A plan
+owner's PC plays job files and evolving searches. A plan
 plays the same game on the same map and machine, so the maps are the noise.
 A game change makes a new game: results are kept by the `code` stamp of the
 build they were played on. After set-slime shots and One burst per bullet
 (2026-11-20), `econ,go=4,aim=6,cards=0` wins 5 of 9 planet 3 maps with no
 cards, 7 with seek+wide+blast.needle (9 before) and 8 with
-wide/rate/blast.needle
+wide/rate/blast.needle. A plan may be one a planet (`a|b|c`, the last
+for every planet after), and since 11-20 the worker also searches planet 2
+and plays whole runs
 ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
 
 | Hand | What it does | Where |
