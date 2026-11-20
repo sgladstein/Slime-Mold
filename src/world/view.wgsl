@@ -1022,6 +1022,13 @@ fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
 // A spent crystal keeps this share of its height: a low stub of grey rock,
 // not a hole.
 const GEM_STUB: f32 = 0.1;
+// A spent crystal's husk (`shaded`): shaded as if this share of a full
+// crystal's height, its shards this share of its radius across, and its
+// frosted glass's albedo.
+const GEM_HUSK: f32 = 0.45;
+const GEM_SHARD: f32 = 0.3;
+const GEM_RAYS: f32 = 11.0;
+const GEM_SPENT: vec3<f32> = vec3<f32>(66.0, 70.0, 76.0);
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
@@ -2829,31 +2836,71 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         if (cover > 0.0) {
             let a = gems[k].z * 0.8660254;
             let depth = clamp(gi.x / a, 0.0, 1.0);
-            // Spent, it is worn stone (art director, 11-14: a dry crystal
-            // "reads like a UI block"): darker than the rock round it, matte,
-            // and stepped in three hexagonal terraces from its depth field,
-            // each step's riser (two pixels) tilted out so the light catches
-            // one side and shades the other, as a worn step pyramid. The
-            // steps come in as the charge goes, so a live crystal is clean
-            // glass. Before: a flat (84,88,92) grey, steps tried as dark
-            // seams alone read as a target.
+            // Spent, it is the same crystal emptied (Look C, 2026-11-20): a
+            // husk of frosted, cracked glass. Its six faces still light and
+            // shade as the live one's do, a little lower; it breaks into
+            // shards about a third of its radius across, each tilted and toned on
+            // its own, with dark cracks between, and the cracks and tilts
+            // come in as the charge goes, so a draining crystal crazes from
+            // its spent side. Matte, a cool pale grey above rock and under a
+            // live face (the only cyan in the world is charge).
+            // Before (11-14 to 11-20): worn stone darker than rock, stepped
+            // in three hexagonal terraces; at zoom 12 it read as a smooth
+            // dark CAD block. Before that a flat (84,88,92) grey, and steps
+            // tried as dark seams alone read as a target.
             let spent = 1.0 - v;
-            let tf = fract(depth * 3.0 + 0.5);
-            let tw = 2.0 * 3.0 / max(a * P.zoom, 1.0);
-            let riser = (1.0 - smoothstep(0.0, tw, min(tf, 1.0 - tf) * 2.0)) * spent;
+            let craze = smoothstep(0.25, 0.85, spent);
+            // Cracked as glass cracks from a blow at its middle: rays out
+            // from the centre a little off even, and chords across each
+            // ray's wedge, each wedge's chords at its own radii, so the
+            // shards are its own (not the hardpan's polygons round it).
+            let rel = vec2<f32>(x, y) - gems[k].xy;
+            let rad = length(rel);
+            let rt = (atan2(rel.y, rel.x) / 6.2831853 + hash2(vec2<f32>(f32(k), 1.3))) * GEM_RAYS;
+            let ri = floor(rt);
+            var lo = -99.0; var hi = 99.0;
+            for (var q = -1; q <= 2; q++) {
+                let bi = ri + f32(q);
+                // (Round the circle by the ray's index, or the seam where
+                // the angle wraps shows as a straight crack.)
+                let bm = bi - GEM_RAYS * floor(bi / GEM_RAYS);
+                let bq = bi + 0.55 * (hash2(vec2<f32>(bm, f32(k) * 1.9 + 0.4)) - 0.5);
+                if (bq <= rt) { lo = max(lo, bq); } else { hi = min(hi, bq); }
+            }
+            let wl = floor(lo + 0.5);
+            let wedge = wl - GEM_RAYS * floor(wl / GEM_RAYS);
+            let ray_px = min(rt - lo, hi - rt) * (6.2831853 / GEM_RAYS) * rad * P.zoom;
+            let mid = ((lo + hi) * 0.5 / GEM_RAYS - hash2(vec2<f32>(f32(k), 1.3))) * 6.2831853;
+            let pr = dot(rel, vec2<f32>(cos(mid), sin(mid)));
+            let sp = max(GEM_SHARD * gems[k].z, 1.5);
+            let ru = pr / sp + 0.7 * hash2(vec2<f32>(wedge, f32(k) + 5.7));
+            let ring = floor(ru);
+            let ring_px = min(fract(ru), 1.0 - fract(ru)) * sp * P.zoom * select(1.0, 99.0, pr < 0.5 * sp);
+            let c1 = vec2<f32>(wedge, ring + f32(k) * 13.0);
+            // The crack: about a pixel and a half wide at any zoom, a
+            // little wider deep in the husk where it is oldest; the rays
+            // stop short of the middle, where they would close up.
+            let ray = (1.0 - smoothstep(0.5, 1.5 + depth, ray_px)) * smoothstep(0.1, 0.22, rad / gems[k].z);
+            let chord = 1.0 - smoothstep(0.5, 1.2 + 0.6 * depth, ring_px);
+            let crack = max(ray, chord) * craze;
+            let tilt = (vec2<f32>(hash2(c1 * 4.7 + 1.1), hash2(c1 * 5.3 + 6.2)) - 0.5) * 0.6 * craze;
             // The pyramid's face: height (0.6 + 9 depth) tall(v), so its
-            // slope is 9 tall(v) / a along the distance's gradient; a riser
-            // adds a steep outward tilt.
-            let s = 9.0 * gem_tall(v) / a + 2.2 * riser;
-            let gn = normalize(vec3<f32>(-s * gi.y, -s * gi.z, 1.0));
+            // slope is 9 tall(v) / a along the distance's gradient; the
+            // husk is shaded as if half again its stub's height, so its
+            // faces read, and each shard tilts on its own.
+            let s = 9.0 * max(gem_tall(v), GEM_HUSK) / a;
+            let gn = normalize(vec3<f32>(-s * gi.y + tilt.x, -s * gi.z + tilt.y, 1.0));
             var gs = 1.0 + 1.25 * (dot(gn, l) - l.z);
-            // Charged, it is glassy cyan lit from inside; spent, matte stone
-            // (the only cyan in the world is charge).
-            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v);
-            let worn = 0.6 + 0.3 * depth;
+            // Charged, it is glassy cyan lit from inside; spent, frosted:
+            // a broad dull sheen, no glint.
+            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v) + pow(max(dot(gn, half_v), 0.0), 6.0) * 0.1 * spent;
+            // Milky toward its middle, each shard its own tone, a fine
+            // frost from zoom 8 (under that it is under 2 px and shimmers).
+            let frost = 1.0 + 0.1 * (vnoise(rel * 2.6 + 5.0) - 0.5) * 2.0 * smoothstep(7.0, 11.0, P.zoom);
+            let worn = (0.82 + 0.22 * depth) * (0.9 + 0.2 * hash2(c1 * 9.1 + 2.7) * craze) * frost * (1.0 - 0.6 * crack);
             // Charged faces from about 110 in grey (rule 2: above rock, soft
             // rock and the thin film; the review 11-15 measured 93-126).
-            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(38.0, 142.0, 165.0), v);
+            var alb = mix(GEM_SPENT * worn, vec3<f32>(38.0, 142.0, 165.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
@@ -2873,13 +2920,13 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let film = GEM_FILM * (1.0 - exp(-40.0 * th));
             // The faces' light compressed toward the middle while charged
             // (a shaded face of a live crystal stays above 110 in grey;
-            // the spent stone keeps the full relief of its steps).
+            // the spent husk keeps the full relief of its faces and shards).
             var rock = alb * max(mix(gs, 1.0 + 0.6 * (gs - 1.0), v), 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
             // And a floor: a face holding charge never reads under 112 in
             // grey with its glow (art lead 11-15: crystals are the
             // objective; the compression alone left meadow 2 at 101 and
             // caves at 105-109, shaded faces and part-charged cells). The
-            // floor fades in with the charge, so spent stone stays dark.
+            // floor fades in with the charge, so the spent husk stays under it.
             let rl = dot(rock + glow, vec3<f32>(0.299, 0.587, 0.114));
             let want = 112.0 * smoothstep(0.15, 0.45, v);
             rock *= max(1.0, (want - (rl - dot(rock, vec3<f32>(0.299, 0.587, 0.114)))) / max(dot(rock, vec3<f32>(0.299, 0.587, 0.114)), 1.0));

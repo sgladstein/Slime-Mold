@@ -1,6 +1,6 @@
 # Look and interface: state and brief
 
-## State (2026-11-19)
+## State (2026-11-20)
 
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
 page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
@@ -135,6 +135,10 @@ level at its feet and dims while it is out, its helmet white
 zoom 5-10, cracks in patches; `ROCK_MOTTLE`, `ROCK_CRACK*` in
 `terrain_top`) and planet 1's meadow in patches by the water (#535:
 `flora_form` flora 0 meadow, clump 0.6, wet 0.4, spring-green tips).
+A spent crystal is a cracked husk of frosted glass (11-20, this
+thread's first PR): rays and chords from its middle, each shard tilted
+and toned, the cracks coming in with `1 - charge`; the old terraces
+(`riser`) are gone. `GEM_HUSK`, `GEM_SHARD`, `GEM_RAYS`, `GEM_SPENT`.
 
 **Open branch:** none (`claude/project-thread-ho6vcd`, reused per PR).
 
@@ -175,9 +179,8 @@ while Squad asked to keep it.
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
-3. Look C, rest: a trait for planet 2 (barrens) and planet 3, faint
-   grounding shadows at play zoom, spent crystals' material
-   (art-direction's C line).
+3. Look C, rest: a trait for planet 2 (barrens) and planet 3 (fen),
+   faint grounding shadows at play zoom (art-direction's C line).
 4. A landing, a win and a loss that happen in the picture (D's next).
 5. Picks done 11-19: the fen moat deleted; the hunter stays violet
    (filmed on planet 8, bright and glossy over its dark purple plants,
