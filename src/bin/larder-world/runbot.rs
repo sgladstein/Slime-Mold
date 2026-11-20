@@ -194,7 +194,10 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
         return Ok(());
     }
     r.guns = vec![gun];
-    r.carry = 0;
+    // The shown loadout fires the lab's gun (loadouts, 2026-11-19).
+    if let Some(l) = r.loadouts.get_mut(r.editing) {
+        l.gun = Some(0);
+    }
     r.cards = cards.iter().map(|&c| (c, true)).collect();
     let l = r.level();
     let mut args = base;
