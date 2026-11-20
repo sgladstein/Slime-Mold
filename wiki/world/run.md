@@ -37,8 +37,10 @@ code:
   - FruitRules
   - Game::boss_aim
   - Game::fruit_looks
+  - Game::heart_site
   - Game::lump_taken
   - Game::wave_points
+  - HeartRules
   - LADDER
   - LURE_PULL
   - LureMark
@@ -85,6 +87,7 @@ code:
   - tier_size
   - time_fort
   - time_fruit
+  - time_heart
   - time_lure_paths
   - time_waves
   - two_stars
@@ -138,6 +141,10 @@ On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is
 ## Waves
 
 On since 2026-11-20 (the same thread as fruiting; `larder_world/waves.rs`, `WaveRules`, `run::ENEMY_RULES`' `wave`): from 1:30, when the squad's kills over 20 s reach an eighth of the slime's mass and the mass is down over those 20 s, the slime reads its losses. A field (`World::set_wave_field`, engine.wgsl's `wave_dist` in the raid region after the raid's blocks, pull 40, calm walkers only) leans it to two or three points 20 dish cells past the guns' reach round the thickest knot of soldiers, the points with the most slime near them, at least 70 degrees apart; for 12 s it masses there, then the field turns to the soldiers and a surge starts with the panic reach stretched to the masses (`Game::keep_panic_reach`), so it comes in from every point at once for 8 s. 45 s from one's end to the next. GPU only.
+
+## The heartbeat
+
+On since 2026-11-20 (the same thread; `larder_world/heart.rs`, `HeartRules`, `run::ENEMY_RULES`' `heart`): every 6 s a beat runs out from the slime's heart (its home crystal, `Game::core`, while 30 walkers stand on it, else the crystal it holds with the most) as a ring 80 dish cells long (engine.wgsl's `heart_beat`). As it passes, a calm walker leans away from the heart (25, in the readings' units; the lure's pull is 10) and steps up to 60% faster, then leans home between beats. Planet 1, run seed 1, greedy hand, 0:40 to 0:54: the slime covers 38% to 58% of a zoom 12 frame on a 6 s rhythm against 43% to 49% off; by 0:54 the squad had killed 1,242 against 707, each swell carrying slime into the guns ([report](../../Reports/heartbeat-2026-11-20/README.md)). GPU only.
 
 ## Mini-bosses since the review of 11-20
 

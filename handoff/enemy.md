@@ -68,6 +68,19 @@ pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
 Proposals in the report and the owner's doc: the Mortar first from planet
 4 after Milestone 1, the Pinwheel second; a bounty; an off-screen tell.
 
+## Heartbeat (2026-11-20, the same thread)
+
+The third rule, on by default on every run planet (`ENEMY_RULES`' `heart`;
+`larder_world/heart.rs`). Every 6 s a beat runs out from the home crystal
+(else the crystal held most) through the body; calm walkers lean out
+(25) and quicken (up to 60%, `HEART_HASTE`) as it passes. Params: the
+heart's place in the ground row's last two words, its lean in the lone
+step row's second, its clock (period steps | wavelength << 16) in the
+fling row's second (`Engine::heart`). The balance thread's options brief
+(late-planet threat) is at https://claude.ai/artifact/YD9LSGAkAorDNKg5WA2zZH:
+its A (condensed strikers) and D (last-stand heart) are this lane's to
+build once the owner picks.
+
 ## Waves (2026-11-20, the thread "Make the slime a more interesting enemy")
 
 Its second rule after fruiting, on by default on every run planet

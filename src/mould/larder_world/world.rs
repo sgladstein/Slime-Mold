@@ -186,6 +186,11 @@ pub trait World {
     fn can_wave(&self) -> bool {
         false
     }
+    /// **The heartbeat** (2026-11-20, `Game::time_heart`): where it beats
+    /// from (fine cells; None off), a calm walker's lean, the steps a beat
+    /// and its wavelength in fine cells (`gpu::Engine::heart`). A rule of
+    /// the GPU engine only.
+    fn set_heart(&mut self, _at: Option<(f32, f32)>, _lean: f32, _period: u32, _len: u32) {}
     /// The ground a raid walks (the slime's agar, `w` x `h` fine cells),
     /// copied so the game can build the raid's way round walls off the
     /// frame; None for a world with no raids.

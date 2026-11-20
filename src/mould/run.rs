@@ -396,7 +396,13 @@ pub const LURE_PULL: f32 = 10.0;
 /// the slime near the squad pulls back past the guns' reach to two or
 /// three points round it, masses there for 12 s, and comes in from all of
 /// them at once for 8 s. 45 s apart at least. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0)];
+///
+/// **The slime beats** (`heart`, 2026-11-20, the same thread;
+/// `larder_world/heart.rs`): every 6 s a beat runs out from its home
+/// crystal (else the crystal it holds most) through the body, and the
+/// calm slime leans out and quickens as it passes, so the edge swells
+/// toward you and ebbs. GPU only.
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)

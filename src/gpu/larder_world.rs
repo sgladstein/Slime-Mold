@@ -1099,6 +1099,10 @@ impl World for GpuWorld {
         true
     }
 
+    fn set_heart(&mut self, at: Option<(f32, f32)>, lean: f32, period: u32, len: u32) {
+        self.e.heart = at.map(|at| crate::gpu::Heart { at, lean, period, len });
+    }
+
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         // Deep water is a wall to this engine's slime (`Settings::
@@ -1388,6 +1392,9 @@ mod tests {
         }
         fn can_wave(&self) -> bool {
             self.g.can_wave()
+        }
+        fn set_heart(&mut self, at: Option<(f32, f32)>, lean: f32, period: u32, len: u32) {
+            self.g.set_heart(at, lean, period, len)
         }
     }
 
@@ -2173,6 +2180,49 @@ mod tests {
         assert!(with >= 3 * without + 30, "the wave draws the slime: {with} walkers round its point against {without}");
         pulled.world.set_wave_field(Vec::new(), 0.0);
         assert!(!pulled.world.e.waved && blocks(&pulled).iter().all(|&v| v == 0), "an empty field clears it");
+    }
+
+    /// **The slime's edge swells and ebbs with its heartbeat**
+    /// (`Engine::heart`, `Game::time_heart`; 2026-11-20). Two race worlds
+    /// alike, one given a heart at the mould's home at 1 s (lean 25, a beat
+    /// every 4 game seconds, 80 fine cells long), the other none. Over the
+    /// next 8 s, the walkers' mean distance from the home (read every half
+    /// second) swings at least twice as far with the heart as without.
+    #[test]
+    fn the_slime_edge_swells_and_ebbs_with_its_heartbeat() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let new = || Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules::default(), seed);
+        let mean = |g: &Game<GpuWorld>, at: (f32, f32)| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let ds: Vec<f32> = (0..e.n as usize).filter(|&q| !e.grows || en[q] >= 0.0).map(|q| (wk[4 * q] - at.0).hypot(wk[4 * q + 1] - at.1)).collect();
+            ds.iter().sum::<f32>() / ds.len().max(1) as f32
+        };
+        let swing = |beats: bool| {
+            let mut g = new();
+            let home = g.world.crystals()[0].0;
+            while g.time() < 1.0 {
+                g.step();
+            }
+            if beats {
+                let steps = 4 * g.rules.tps * g.world.fine_steps().max(1);
+                g.world.set_heart(Some(home), 25.0, steps, 80);
+            }
+            let mut m: Vec<f32> = Vec::new();
+            for k in 1..=16 {
+                while g.time() < 1.0 + 0.5 * k as f32 {
+                    g.step();
+                }
+                m.push(mean(&g, home));
+            }
+            m.iter().copied().fold(f32::MIN, f32::max) - m.iter().copied().fold(f32::MAX, f32::min)
+        };
+        let (with, without) = (swing(true), swing(false));
+        eprintln!("heart: the mean distance from home swings {with:.2} fine cells with a heart, {without:.2} without");
+        assert!(with >= 2.0 * without && with > 0.5, "the heart moves the body: {with:.2} against {without:.2}");
     }
 
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,

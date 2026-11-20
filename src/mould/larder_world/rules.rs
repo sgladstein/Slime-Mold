@@ -605,6 +605,11 @@ pub struct Rules {
     /// squad, masses there and comes in from all of them at once. Off
     /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
     pub wave: super::WaveRules,
+    /// **The heartbeat** (2026-11-20; `heart.rs`): beats run outward from
+    /// the slime's heart through its body, and its edge swells and ebbs
+    /// with them. Off here; a run turns it on (`run::ENEMY_RULES`). GPU
+    /// only.
+    pub heart: super::HeartRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -689,6 +694,10 @@ impl Rules {
                 self.wave.on = v > 0.0;
                 return true;
             }
+            "heart" => {
+                self.heart.on = v > 0.0;
+                return true;
+            }
             "wave_sides" => {
                 self.wave.sides = v.clamp(0.0, 8.0) as u32;
                 return true;
@@ -741,6 +750,10 @@ impl Rules {
             "fruit_pull" => &mut self.fruit.pull,
             "fruit_leash" => &mut self.fruit.leash,
             "fruit_spread" => &mut self.fruit.spread,
+            "heart_lean" => &mut self.heart.lean,
+            "heart_period" => &mut self.heart.period,
+            "heart_len" => &mut self.heart.len,
+            "heart_held" => &mut self.heart.held,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
@@ -931,6 +944,7 @@ impl Default for Rules {
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),
+            heart: super::HeartRules::default(),
         }
     }
 }

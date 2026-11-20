@@ -1643,6 +1643,12 @@ pub struct Engine {
     /// walker reads no word for it.
     pub waved: bool,
     pub wave_w: f32,
+    /// **The heartbeat** (2026-11-20, `Game::time_heart`, engine.wgsl's
+    /// `heart_beat`): where it beats from (fine cells), its lean, its
+    /// period in steps and its wavelength in fine cells; None off. Sent in
+    /// the ground row's last two words, the lone step row's second and the
+    /// fling row's second.
+    pub heart: Option<Heart>,
     /// A fort mask is written and marks some block (`write_fort`,
     /// 2026-11-18): only then is the fort's flag sent (Params word 888),
     /// so with no fort a walker reads no word for it.
@@ -2001,6 +2007,7 @@ impl Engine {
             lured: false,
             waved: false,
             wave_w: 0.0,
+            heart: None,
             forted: false,
             mind_until: mind_until(&d),
             clouded: false,
@@ -2395,7 +2402,8 @@ impl Engine {
         // flag (`forted`, 11-18), its last the tether since 11-18
         // (`Settings::tether`).
         let wave = if self.waved { self.wave_w } else { 0.0 };
-        b.extend(u32_bytes(&[wave.to_bits(), 0, self.forted as u32, s.tether]));
+        let heart = self.heart.map_or(0.0, |h| h.lean);
+        b.extend(u32_bytes(&[wave.to_bits(), heart.to_bits(), self.forted as u32, s.tether]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then
@@ -2404,7 +2412,10 @@ impl Engine {
         let r = s.condense_r.clamp(1, 8) as u32;
         assert!(r <= 0xFF, "condense_r fits ccrowd's bits 16-23");
         b.extend(f32_bytes(&[s.fling_deposit]));
-        b.extend(u32_bytes(&[0, s.condense_crowd.min(0xFFFF) | (r << 16), stream(seed, DRAW_ROAM)]));
+        // The first is the heartbeat's clock (2026-11-20): its period in
+        // steps and its wavelength in fine cells, 16 bits each.
+        let clock = self.heart.map_or(0, |h| h.period.min(0xFFFF) | (h.len.min(0xFFFF) << 16));
+        b.extend(u32_bytes(&[clock, s.condense_crowd.min(0xFFFF) | (r << 16), stream(seed, DRAW_ROAM)]));
         // The breakaway row (11-14, the condense thread; Params grew from
         // 912 to 928 for it): steps between chances to leave (0 off), how
         // far the crystal must be and how near a landing is, in whole fine
@@ -2424,7 +2435,9 @@ impl Engine {
         // 2026-11-20).
         b.extend(f32_bytes(&[t.deep_step]));
         b.extend(u32_bytes(&[s.deep_wall as u32]));
-        b.extend(f32_bytes(&[0.0, 0.0]));
+        // The last two, the heartbeat's source (2026-11-20).
+        let at = self.heart.map_or((0.0, 0.0), |h| h.at);
+        b.extend(f32_bytes(&[at.0, at.1]));
         assert_eq!(b.len(), SURGE_AT, "Params rows before the surge row moved");
         let sm = crate::mould::big::SURGE_MAX;
         b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm) | s.surge_dash.min(sm) << 16, s.surge_at]));
@@ -3582,6 +3595,18 @@ fn block_words(field: &[u32], w: usize, h: usize) -> Vec<u32> {
     let mut v: Vec<u32> = field.iter().take(nb).map(|&d| d.wrapping_add(1)).collect();
     v.resize(nb, 0);
     v
+}
+
+/// **The heartbeat** (2026-11-20; `Engine::heart`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Heart {
+    /// Where it beats from, fine cells.
+    pub at: (f32, f32),
+    /// A calm walker's lean outward on the beat (and home between).
+    pub lean: f32,
+    /// Steps a beat, and its wavelength in fine cells.
+    pub period: u32,
+    pub len: u32,
 }
 
 /// Each slot's condensing word as the GPU holds it (`BigDish::dense`).

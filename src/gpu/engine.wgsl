@@ -151,25 +151,28 @@ struct Params {
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
     // The wave's pull (`wave`, 2026-11-20, `Engine::write_wave_field`;
-    // 0 while no wave field is written), a free word (written 0), the
-    // fort's flag and the tether. The first two words
+    // 0 while no wave field is written), the heartbeat's lean (`heart`,
+    // 2026-11-20, `Engine::heart`; 0 off), the fort's flag and the
+    // tether. The first two words
     // were the lone step (2026-11-12, `BigParams::lone_step`: a walker
     // with few others round it stepped shorter), whose half in this engine
     // was deleted on 11-17 (Reports/dead-ends.md); the last was
     // `fed_crowd`'s until 11-17. `fort` (2026-11-18): 1 while the game has
     // written a fort mask (`fort_at`), else 0. `tether` (2026-11-18): the
     // walkers a marcher's next cell must touch (`tethered`), 0 off.
-    wave: f32, lone_free1: f32, fort: u32, tether: u32,
+    wave: f32, heart: f32, fort: u32, tether: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
-    // condense thread). The first is free since 11-17 (`condense`, the
-    // steps a walker had to be ripe, deleted); the specks keep the crowd
+    // condense thread). The first was free from 11-17 (`condense`, the
+    // steps a walker had to be ripe, deleted) and is the heartbeat's clock
+    // since 11-20: its period in steps (low 16 bits) and its wavelength in
+    // fine cells (high 16; `heart_beat`). The specks keep the crowd
     // that makes a walker ripe (`ccrowd` low 16 bits, `condense_crowd`) and
     // its square's radius (bits 16-23, `condense_r`; bits 24-31 were
     // `thicken`'s, free since 11-17), and the stream of their draw (big.rs
     // `DRAW_ROAM`).
-    fling_dep: f32, fling_free: u32, ccrowd: u32, s_condense: u32,
+    fling_dep: f32, heart_clock: u32, ccrowd: u32, s_condense: u32,
     // Condensed slime breaks away (`BigParams::roam`, 11-14; Params grew
     // from 912 to 928 for this row): steps between chances to leave (0
     // off), how far its crystal must be and how near it lands, in whole
@@ -178,9 +181,9 @@ struct Params {
     // The ground row (new ground kinds, 11-14; Params grew from 928 to
     // 944): a walker's step in deep water is x `deep_step` on top of
     // `wet_step` (`BigParams::deep_step`); deep water as a wall to the
-    // slime (`Settings::deep_wall`, 11-20; `shut`). Two words kept for the
-    // next ground kinds.
-    deep_step: f32, deep_wall: u32, _g2: f32, _g3: f32,
+    // slime (`Settings::deep_wall`, 11-20; `shut`). The last two are the
+    // heartbeat's source, in fine cells (2026-11-20, `heart_beat`).
+    deep_step: f32, deep_wall: u32, heart_x: f32, heart_y: f32,
     // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
     // Params grew from 944 to 960): the steps between surges (0 off), the
     // creep's steps in the low half of `surge_ld` and the lunge's in the
@@ -1102,6 +1105,27 @@ fn wave_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
     if (d == 0xFFFFFFFFu) { return 0.0; }
     return f32(dh) - f32(d);
 }
+// **The heartbeat** (2026-11-20, `Game::time_heart`): real slime mould
+// pulses, its cytoplasm streaming out and back every minute or two in
+// waves that run through the whole body. Here a beat runs outward from the
+// slime's heart (its home crystal while it holds it, else its crystal with
+// the most slime) every period: the phase at a walker falls with its
+// distance from the heart, so each beat is a ring moving out through the
+// body. On the beat a calm walker leans away from the heart and steps up
+// to `HEART_HASTE` faster, so the edge swells toward whatever is round it;
+// between beats it leans back. The unit vector from the heart and the beat
+// (-1 to 1) at (x, y), or zeros with no heart.
+const HEART_HASTE: f32 = 0.6;
+fn heart_beat(x: f32, y: f32, t: u32) -> vec3<f32> {
+    let per = P.heart_clock & 0xFFFFu;
+    let len = f32(P.heart_clock >> 16u);
+    if (per == 0u || len <= 0.0) { return vec3<f32>(0.0, 0.0, 0.0); }
+    let dx = x - P.heart_x;
+    let dy = y - P.heart_y;
+    let d = max(sqrt(dx * dx + dy * dy), 1.0e-3);
+    let s = sin(TAU * (f32(t % per) / f32(per) - d / len));
+    return vec3<f32>(dx / d, dy / d, s);
+}
 // The lure at a sensor: how much nearer the lure its block is than the
 // walker's own (`dh`). A block the field does not reach (rock, a wall, or
 // past the lure's reach) reads no lean either way, as in the lab's rig
@@ -1255,6 +1279,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // 1 above).
     let lb = lump_of(k);
     if (lb != 0u && P.lumps[lb - 1u].haste > 0.0) { st *= P.lumps[lb - 1u].haste; }
+    // **The heartbeat** (`heart_beat`): a calm walker's pace swells as the
+    // beat passes outward through it.
+    var beat = vec3<f32>(0.0, 0.0, 0.0);
+    if (P.heart > 0.0 && lb == 0u && !scared) {
+        beat = heart_beat(wk.x, wk.y, t);
+        st *= 1.0 + HEART_HASTE * max(beat.z, 0.0);
+    }
     var f: f32; var fl: f32; var fr: f32;
     if (scared && P.raid_field != 0u && raid_to(k, here).z > 0.0 && raid_dist(here) != 0xFFFFFFFFu) {
         f = raid_at_sensor(wk.x, wk.y, h, so);
@@ -1328,6 +1359,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (fl > -1.0e5) { fl += P.lure * lure_near(wk.x, wk.y, h - sa, so, dh); }
                 if (fr > -1.0e5) { fr += P.lure * lure_near(wk.x, wk.y, h + sa, so, dh); }
             }
+        }
+        // The heartbeat's lean, outward on the beat and home between.
+        if (beat.z != 0.0) {
+            let w = P.heart * beat.z;
+            if (f > -1.0e5) { f += w * (cos(h) * beat.x + sin(h) * beat.y); }
+            if (fl > -1.0e5) { fl += w * (cos(h - sa) * beat.x + sin(h - sa) * beat.y); }
+            if (fr > -1.0e5) { fr += w * (cos(h + sa) * beat.x + sin(h + sa) * beat.y); }
         }
         // **The wave** (2026-11-20; `wave_dist`): a calm walker inside the
         // wave's field leans down it, x `wave`, as the lure's. Calm only,
