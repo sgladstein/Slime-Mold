@@ -4914,3 +4914,52 @@
 2026-11-20 10:12:53   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0 planet 2.0 seed 1795119328.0: lost 186.9 (8 s)
 2026-11-20 10:12:56   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 1.0: lost 111.2 (5 s)
 2026-11-20 10:13:07   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 2.0: lost 372.9 (13 s)
+2026-11-20 10:13:09 worker: could not take the branch's new commits: ?? league-pc.log
+?? league-pc.out
+?? worker.log
+?? worker.out
+?? worker2.log
+?? worker2.out
+?? worker3.log
+?? worker3.out
+
+2026-11-20 10:13:37   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 3.0: lost 592.9 (27 s)
+2026-11-20 10:13:37   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 4.0: lost 417.8 (19 s)
+2026-11-20 10:13:54   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 5.0: won 443.0 (23 s)
+2026-11-20 10:13:57   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 6.0: lost 362.8 (19 s)
+2026-11-20 10:13:57   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 7.0: lost 41.7 (2 s)
+2026-11-20 10:14:35   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 8.0: open 900.1 (37 s)
+2026-11-20 10:14:35   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 1795038793.0: lost 176.4 (8 s)
+2026-11-20 10:14:46   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 1795106014.0: lost 891.7 (37 s)
+2026-11-20 10:14:46   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,want=torch planet 2.0 seed 1795119328.0: lost 101.2 (5 s)
+2026-11-20 10:15:16   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 1.0: won 643.0 (34 s)
+2026-11-20 10:15:16   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 2.0: won 422.0 (21 s)
+2026-11-20 10:15:16   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 3.0: lost 86.5 (4 s)
+2026-11-20 10:16:01   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 4.0: open 900.1 (46 s)
+2026-11-20 10:16:01   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 5.0: won 144.0 (8 s)
+2026-11-20 10:16:01   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 6.0: won 385.0 (22 s)
+2026-11-20 10:16:15   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 7.0: lost 547.5 (25 s)
+2026-11-20 10:16:18   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 8.0: lost 368.8 (16 s)
+2026-11-20 10:16:43   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 1795038793.0: won 446.0 (26 s)
+2026-11-20 10:16:43   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 1795106014.0: won 393.0 (23 s)
+2026-11-20 10:16:57   lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,wa planet 2.0 seed 1795119328.0: won 241.0 (14 s)
+2026-11-20 10:17:02   rush,aim=6,shop=strike planet 2.0 seed 1.0: won 375.0 (18 s)
+2026-11-20 10:17:12   rush,aim=6,shop=strike planet 2.0 seed 2.0: won 287.0 (13 s)
+2026-11-20 10:17:17   rush,aim=6,shop=strike planet 2.0 seed 3.0: lost 318.4 (14 s)
+2026-11-20 10:17:40   rush,aim=6,shop=strike planet 2.0 seed 4.0: won 526.0 (27 s)
+2026-11-20 10:17:40   rush,aim=6,shop=strike planet 2.0 seed 5.0: won 265.0 (16 s)
+2026-11-20 10:17:52   rush,aim=6,shop=strike planet 2.0 seed 6.0: lost 343.2 (16 s)
+2026-11-20 10:18:14   rush,aim=6,shop=strike planet 2.0 seed 7.0: lost 802.9 (33 s)
+2026-11-20 10:18:14   rush,aim=6,shop=strike planet 2.0 seed 8.0: won 215.0 (9 s)
+2026-11-20 10:18:20   rush,aim=6,shop=strike planet 2.0 seed 1795038793.0: won 353.0 (16 s)
+2026-11-20 10:18:30   rush,aim=6,shop=strike planet 2.0 seed 1795106014.0: won 295.0 (14 s)
+2026-11-20 10:18:34   rush,aim=6,shop=strike planet 2.0 seed 1795119328.0: won 227.0 (12 s)
+2026-11-20 10:18:47   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 1.0: won 375.0 (16 s)
+2026-11-20 10:18:47   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 2.0: won 287.0 (11 s)
+2026-11-20 10:19:00   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 3.0: lost 318.4 (13 s)
+2026-11-20 10:19:10   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 4.0: won 526.0 (22 s)
+2026-11-20 10:19:14   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 5.0: won 265.0 (13 s)
+2026-11-20 10:19:26   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 6.0: lost 343.2 (15 s)
+2026-11-20 10:19:47   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 7.0: lost 802.9 (31 s)
+2026-11-20 10:19:47   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 8.0: won 215.0 (8 s)
+2026-11-20 10:19:51   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 1795038793.0: won 353.0 (14 s)
