@@ -216,6 +216,14 @@ pub(super) struct Plan {
     /// named keep their places after these. Empty: the shop's own order
     /// (flight cards, then modifiers and triggers, then bullets).
     pub order: Vec<String>,
+    /// **Drops** (11-20; the coordinator for Direction, to price the
+    /// win's base pay: no bot went for starfall ore or a boss's core, so
+    /// the league's numbers showed what drops pay only by chance): the
+    /// squad walks to the richest ore or core on the ground that it can
+    /// reach before it is gone, while at most this many walkers a soldier
+    /// lie within its range of the drop (a core: of where it slides to).
+    /// The risk dial: 0 never; 5 only quiet ones; 60 most of them.
+    pub drops: u32,
 }
 
 /// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
@@ -267,6 +275,7 @@ impl Default for Plan {
             want2: Vec::new(),
             tcards: Vec::new(),
             order: Vec::new(),
+            drops: 0,
         }
     }
 }
@@ -295,7 +304,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 42] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order"];
+    pub const DIALS: [&'static str; 43] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -364,6 +373,7 @@ impl Plan {
             "want2" => self.want2 = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             "tcards" => self.tcards = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             "order" => self.order = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
+            "drops" => self.drops = whole(v)?,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -435,6 +445,9 @@ struct Memory {
     pub burnt: u32,
     /// Blasts thrown and mines laid (`tools`).
     tools: [u32; 2],
+    /// The drops the squad set out for, by the tick each landed
+    /// (`Plan::drops`).
+    chased: Vec<u64>,
 }
 
 thread_local! {
@@ -659,6 +672,42 @@ pub(super) fn tools(g: &mut Game<GpuWorld>, kit: &mut Kit, p: &Plan) {
 }
 
 /// Blasts thrown and mines laid this game (`tools`).
+/// Drops the squad set out for this planet (`Plan::drops`).
+pub(super) fn drops_chased() -> u32 {
+    MEM.with_borrow(|mm| mm.chased.len() as u32)
+}
+
+/// The drop to walk to (`Plan::drops`): the most points left, less for a
+/// longer walk, of the ore and cores down that the squad reaches with a
+/// second to spare and whose ground holds at most `drops` walkers a
+/// soldier within `range`. A core is judged where it slides to (the
+/// thickest slime near it, `cores.rs`), since that is where the squad
+/// will stand by the time it is drained.
+fn drop_to_take(g: &Game<GpuWorld>, p: &Plan, m: (f32, f32), range: f32, sense: &Sense, n: usize) -> Option<(f32, f32)> {
+    let sc = g.world.scale();
+    let now = g.world.ticks();
+    let tps = g.rules.tps.max(1) as f32;
+    let speed = (g.rules.speed * sc).max(1e-3);
+    let (at, lands, _) = g
+        .starfall
+        .live
+        .iter()
+        .filter(|d| d.down && d.left >= 5.0)
+        .filter_map(|d| {
+            let walk = dist(d.at, m) / speed;
+            let life = d.ends.saturating_sub(now) as f32 / tps;
+            let lies = if d.kind == slime_mould::mould::larder_world::DropKind::Core { d.home.unwrap_or(d.at) } else { d.at };
+            (walk + 1.0 < life && sense.mass_near(lies, range) <= p.drops * n as u32).then_some((d.at, d.lands, d.left / (1.0 + walk / 20.0)))
+        })
+        .max_by(|a, b| a.2.total_cmp(&b.2))?;
+    MEM.with_borrow_mut(|mm| {
+        if !mm.chased.contains(&lands) {
+            mm.chased.push(lands);
+        }
+    });
+    Some(at)
+}
+
 pub(super) fn tools_used() -> [u32; 2] {
     MEM.with_borrow(|mm| mm.tools)
 }
@@ -1009,6 +1058,17 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
             g.apply(Cmd::Heal(q as u8));
         }
         return fin(g, 3);
+    }
+    // A drop on the ground (`drops`): it lasts a minute (a core 15 s), so
+    // it comes before raising, guarding and the hunt.
+    if p.drops > 0 {
+        if let Some(at) = drop_to_take(g, &p, m, range, &sense, n) {
+            let o = Order::Move(at.0, at.1);
+            if fresh_order(g, o) {
+                g.apply(Cmd::SquadOrder(q as u8, o));
+            }
+            return fin(g, 1);
+        }
     }
     // A ghost of ours to raise, with no thick slime on it: the squad
     // raises it (builders add up).
