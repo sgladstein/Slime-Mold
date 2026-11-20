@@ -8,8 +8,8 @@
 //! foraging, streams into a few knots, and each rises into a sporangium
 //! that scatters spores far from the dying body. Here the slime fruits
 //! when it is hurt: once your squad has killed a share of its mass in a
-//! short window (or it has fallen well under its peak), it picks the
-//! thickest slime out of your guns' reach and streams walkers into one
+//! short window, it picks the thickest slime
+//! out of your guns' reach and streams walkers into one
 //! knot there (a lump, `big::Lump`, the mini-bosses' and the marches'
 //! machinery). The knot packs, swells as more slime joins it, and ripens
 //! for `FruitRules::ripen` seconds. Ripe, it bursts: every walker in it is
@@ -52,13 +52,12 @@ pub struct FruitRules {
     /// this share of the slime's mass now.
     pub hurt: f32,
     pub window: f32,
-    /// Or down to this share of its peak (0 off). Off since its first
-    /// films: on planet 3 the Trunk fell from 43,000 to 26,000 by 1:50
-    /// against a squad of four that had killed 3,556, and fruited with the
-    /// squad nowhere near it, so it fired on a slime that was not being
-    /// beaten. The hurt test covers the end of a planet too: a fifth of a
-    /// small slime is a few kills.
-    pub below: f32,
+    // A second trigger, the slime fallen under 60% of its peak, was tried
+    // and deleted (Reports/dead-ends.md): on planet 3 the Trunk fell from
+    // 43,000 to 26,000 by 1:50 against a squad of four that had killed
+    // 3,556, and fruited with the squad nowhere near it, so it fired on a
+    // slime that was not being beaten. The hurt test covers the end of a
+    // planet too: a fifth of a small slime is a few kills.
     /// None under this share of its peak: the last of a planet's slime is
     /// a mop-up, not a new spread.
     pub floor: f32,
@@ -101,7 +100,6 @@ impl Default for FruitRules {
             first: 90.0,
             hurt: 0.2,
             window: 30.0,
-            below: 0.0,
             floor: 0.08,
             every: 40.0,
             size: 0.08,
@@ -206,8 +204,7 @@ impl<W: World> Game<W> {
             return;
         }
         let hurt = self.killed.saturating_sub(*self.fruits.kills.front().unwrap_or(&self.killed)) as f32;
-        if hurt < r.hurt * mass && mass > r.below * peak {
-            // (`below` 0: `mass > 0` always, so only the hurt test starts one.)
+        if hurt < r.hurt * mass {
             return;
         }
         self.start_fruit();

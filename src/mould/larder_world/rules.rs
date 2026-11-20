@@ -704,7 +704,6 @@ impl Rules {
             "fruit_first" => &mut self.fruit.first,
             "fruit_hurt" => &mut self.fruit.hurt,
             "fruit_window" => &mut self.fruit.window,
-            "fruit_below" => &mut self.fruit.below,
             "fruit_floor" => &mut self.fruit.floor,
             "fruit_every" => &mut self.fruit.every,
             "fruit_size" => &mut self.fruit.size,

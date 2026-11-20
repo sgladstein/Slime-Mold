@@ -12,7 +12,7 @@ Think outside the box". Built on by default on every run planet
 (`run::ENEMY_RULES`' `fruit`; `larder_world/fruit.rs`,
 [report](../Reports/fruiting-2026-11-20/README.md)): from 1:30 after the
 landing, once the squad has killed a fifth of the slime's mass in 30 s
-(the fall-under-peak test, `below`, is off: it fired on planet 3's Trunk
+(a fall-under-peak test was tried and deleted: it fired on planet 3's Trunk
 with the squad nowhere near), the slime takes a lump (`big::LUMPS`, shared:
 `Game::lump_taken` now covers bosses, marches and fruits) for 8% of
 itself at its thickest square out of the guns' reach plus 15 cells, holds

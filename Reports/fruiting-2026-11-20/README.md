@@ -60,7 +60,7 @@ Tried and changed in the first films:
 - **The slime under 60% of its peak** as a second trigger: on planet 3, run
   seed 1, the strategy bot's squad of four had killed 3,556 when the Trunk
   fell from 43,000 to 26,000 by 1:50 and fruited, the squad nowhere near.
-  Off (`below` 0); the hurt test covers the end of a planet, where a fifth
+  Deleted (`Reports/dead-ends.md`); the hurt test covers the end of a planet, where a fifth
   of a small slime is a few kills.
 - **A tenth of the slime, at most 3,000, growing 3 cells a step**: the
   knot reached 4,945 of planet 1's 11,000 (one grow overshoots its cap) and
@@ -99,7 +99,7 @@ Software GPU (llvmpipe), run seed 1, one film each, so first numbers.
   down. The bot does not aim at the knot, so it never breaks one. Each knot
   grew once (856 to 1,836, 528 to 1,245) and then stopped at twice its first
   look.
-- **Earlier tuning** (a tenth, at most 3,000, below 60% on): planet 1 knots
+- **Earlier tuning** (a tenth, at most 3,000, the under-60% trigger on): planet 1 knots
   of 2,341 and 3,599, the slime 10,034 before the first burst and 12,861
   twenty seconds after; planet 3 a knot of 4,327.
 
