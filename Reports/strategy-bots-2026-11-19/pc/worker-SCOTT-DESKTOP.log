@@ -4974,3 +4974,8 @@
 
 2026-11-20 10:20:06   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 1795106014.0: won 295.0 (12 s)
 2026-11-20 10:20:06   rush,aim=6,shop=strike,cards=0 planet 2.0 seed 1795119328.0: won 227.0 (10 s)
+2026-11-20 10:20:11 worker: the game's code changed (now c03ed2f7); building
+2026-11-20 10:22:16 worker: built the game in 125 s (src 82e97ab89af3)
+2026-11-20 10:22:16 worker: league.py changed; restarting
+2026-11-20 10:22:16 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-20 10:22:17 worker: built the game in 1 s (src 82e97ab89af3)
