@@ -1,5 +1,4 @@
 # Fire on planet 2 (11-20 15:10Z). Every plan so far bought Tinder before the Sprawler (cards=1, the planet's card) but no Torch to light it: Tinder lays brush and kills nothing until a fire runs along it (run.rs bring_shell). On map 3 in the cloud, rush,aim=6 without Tinder (its 100 points to the shop list instead) had 34 soldiers at 3:50 where with Tinder it was wiped at 3:47. Each base plan: as before (Tinder), no Tinder (cards=0), Tinder and the shop's own Torch bullet (want=torch,shelf=0), and the Torch alone. Maps 1-8 and Scott's three planet 2 runs, 900 s. 220 games, about 50 minutes. Deciding measure: wins of 11 and paired score against the plan as before. Last, Tinder's own effect apart from its 100 points: rush,aim=6 with the shop cut to strike, with and without Tinder (both then buy the same 120 points of strike), 22 games.
-# code-bound: played again whole on a new build (main's #557 and #554 came in 11-20 15:50Z).
 rush,aim=6 2 1 900
 rush,aim=6 2 2 900
 rush,aim=6 2 3 900

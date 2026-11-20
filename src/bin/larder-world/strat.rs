@@ -168,6 +168,16 @@ pub(super) struct Plan {
     /// (Direction's 11-20 job: Heavier shots 4 against Faster trigger 4,
     /// 480 points each, from planet 1).
     pub points: u32,
+    /// Out of fire (11-20; the balance thread counted 2,387 of 2,598
+    /// soldiers lost on planet 3 to fire, the bot's own Needle Blast
+    /// lighting the Trunk's crust, 31 to the slime's touch): a squad with a
+    /// member hurt this turn while no slime is near it steps back as a
+    /// bitten one does.
+    pub fire: bool,
+    /// The volley takes the heaviest slime at least this share of the range
+    /// away when there is any (0: the heaviest in range), so a bullet that
+    /// lights the ground lights it away from the squad.
+    pub standoff: f32,
 }
 
 impl Default for Plan {
@@ -206,6 +216,8 @@ impl Default for Plan {
             starve: 0,
             deep: false,
             points: 0,
+            fire: false,
+            standoff: 0.0,
         }
     }
 }
@@ -234,7 +246,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 33] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points"];
+    pub const DIALS: [&'static str; 35] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -288,6 +300,8 @@ impl Plan {
             "starve" => self.starve = whole(v)?,
             "deep" => self.deep = num(v)? > 0.0,
             "points" => self.points = whole(v)?,
+            "fire" => self.fire = num(v)? > 0.0,
+            "standoff" => self.standoff = num(v)?.clamp(0.0, 0.95),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -353,6 +367,10 @@ struct Memory {
     regrouping: bool,
     /// Seconds switched to soldiers and falling back, for the league's row.
     pub switched: [u32; 2],
+    /// Each member's health at the last turn (`Plan::fire`), and seconds
+    /// stepped back from fire, for the league's row.
+    hp: Vec<(usize, f32)>,
+    pub burnt: u32,
 }
 
 thread_local! {
@@ -369,6 +387,11 @@ pub(super) fn tally() -> (u32, usize, [u32; 4]) {
 /// home (`regroup`).
 pub(super) fn switched() -> [u32; 2] {
     MEM.with_borrow(|m| m.switched)
+}
+
+/// Turns the squad stepped back from fire (`Plan::fire`).
+pub(super) fn burnt() -> u32 {
+    MEM.with_borrow(|m| m.burnt)
 }
 
 /// Slime squares (`mould_grid`) round a point and on a line, shared by
@@ -469,14 +492,14 @@ thread_local! {
 /// (both bots' targeting); with `kite` above 0, steers the squad away from
 /// slime closer than that share of its range and lets go once clear;
 /// with `mop`, aims at the last scraps too (`Plan::mop`).
-pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32) {
+pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32, standoff: f32) {
     let Some(q) = g.active else { return };
     let Some(m) = g.middle(q) else { return };
     let range = g.gun_range(q) * g.world.scale();
     let mut sense = Sense::of(g);
     sense.mop(mop);
     if refire {
-        let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
+        let near = aim_at(g, &sense, m, range, standoff);
         g.apply(Cmd::Fire(q as u8, near));
     }
     if kite > 0.0 {
@@ -501,6 +524,14 @@ pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32)
             KITING.with_borrow_mut(|k| *k = false);
         }
     }
+}
+
+/// The volley's mark: the heaviest slime in range with a clear line, at
+/// least `standoff` of the range away when there is any (`Plan::standoff`).
+fn aim_at(g: &Game<GpuWorld>, sense: &Sense, m: (f32, f32), range: f32, standoff: f32) -> Option<(f32, f32)> {
+    let ranked = sense.ranked(m, range);
+    let ok = |&(a, d): &((f32, f32), f32)| d <= range && sense.clear(g, m, a);
+    ranked.iter().find(|x| x.1 >= standoff * range && ok(x)).or_else(|| ranked.iter().find(|x| ok(x))).map(|&(a, _)| a)
 }
 
 /// Where the last walkers are, for the league line once the slime is down
@@ -794,9 +825,23 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     let n = members.len().max(1);
     let hp = members.iter().map(|&k| g.soldiers[k].hp).sum::<f32>() / n as f32 / g.rules.hp.max(1.0);
     let bitten = members.iter().filter(|&&k| g.soldiers[k].touching > 0).count();
-    let eaten = hp < p.back && bitten > 0;
+    // In fire (`fire`): a member hurt since the last turn with no slime on
+    // it or near it (the soldiers' own heat is not read back to the hand).
+    let burning = MEM.with_borrow_mut(|mm| {
+        let hurt = p.fire
+            && members.iter().any(|&k| {
+                let s = &g.soldiers[k];
+                s.touching == 0 && sense.mass_near((s.x, s.y), 0.2 * range) < 5 && mm.hp.iter().any(|&(j, h)| j == k && s.hp < h - 0.5)
+            });
+        mm.hp = members.iter().map(|&k| (k, g.soldiers[k].hp)).collect();
+        if hurt {
+            mm.burnt += 1;
+        }
+        hurt
+    });
+    let eaten = (hp < p.back && bitten > 0) || burning;
     // The volley: the heaviest slime in range with a clear line.
-    let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
+    let near = aim_at(g, &sense, m, range, p.standoff);
     g.apply(Cmd::Fire(q as u8, near));
     let fresh_order = |g: &Game<GpuWorld>, o: Order| !members.iter().all(|&k| g.soldiers[k].order == o);
     let log = (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(10);
