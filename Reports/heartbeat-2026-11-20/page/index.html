@@ -1,0 +1,87 @@
+<title>Slime Heartbeat</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; the knot's life told in order (forms, ripens, bursts, lands), then a planet played with it on and off */
+:root{
+  --bg:#f2f0ea; --panel:#e6e2d6; --fg:#1e1b16; --muted:#5f5a4e;
+  --accent:#7a4a1e; --soft:#efe2cf; --line:#cdc6b4;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15120e; --panel:#221d17; --fg:#ece6db; --muted:#a89f8e;
+  --accent:#d39a5e; --soft:#30261b; --line:#3b3228; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15120e; --panel:#221d17; --fg:#ece6db; --muted:#a89f8e;
+  --accent:#d39a5e; --soft:#30261b; --line:#3b3228; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:32px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:10px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:460px){.grid4{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure video,figure img{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{display:flex;flex-direction:column;gap:2px;font-size:.92rem;color:var(--muted)}
+.side{font:750 1.05rem/1.2 var(--display);color:var(--fg)}
+.counts{font:13px/1.4 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.note{background:var(--soft);border-radius:8px;padding:16px 18px;max-width:760px;display:flex;flex-direction:column;gap:8px}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:760px}
+.tablewrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.95rem;min-width:520px}
+th,td{text-align:right;padding:6px 12px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font:600 .85rem/1.2 var(--body);color:var(--muted)}
+td.mono{font-family:var(--mono);font-size:.86rem}
+footer{font-size:.85rem;color:var(--muted);max-width:760px;display:flex;flex-direction:column;gap:6px}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · Enemy · 2026-11-20</span>
+  <h1>The slime has a heartbeat</h1>
+  <p class="lede">The third rule against "masses of uniform orange", after fruiting and waves. Real slime mould pulses: its body streams out and back in waves you can watch. Now every 6 seconds a beat runs out from the slime's home crystal through its body. As it passes, the calm slime leans outward and moves up to 60% faster, so the edge swells toward whatever is round it. Between beats it leans back home.</p>
+</header>
+
+<section>
+  <h2>On and off, the same planet and moment</h2>
+  <p class="prose">Planet 1, run seed 1, greedy hand, 0:40 to 0:54 at real speed, the camera on the home body's edge. Each count is the share of the frame the slime covers, lowest to highest over the clip.</p>
+  <div class="grid">
+    <figure><video src="heart12-on.mp4" poster="heart12-on.jpg" autoplay muted loop playsinline aria-label="Heartbeat on, zoom 12"></video>
+      <figcaption><span class="side">Heartbeat on, zoom 12</span><span class="counts">slime covers 38% to 58% of the frame, peaks 6 s apart</span></figcaption></figure>
+    <figure><video src="heart12-off.mp4" poster="heart12-off.jpg" autoplay muted loop playsinline aria-label="Heartbeat off, zoom 12"></video>
+      <figcaption><span class="side">Off, zoom 12</span><span class="counts">43% to 49%, no rhythm</span></figcaption></figure>
+    <figure><video src="heart6-on.mp4" poster="heart6-on.jpg" autoplay muted loop playsinline aria-label="Heartbeat on, zoom 6"></video>
+      <figcaption><span class="side">Heartbeat on, zoom 6</span><span class="counts">26% to 37%</span></figcaption></figure>
+    <figure><video src="heart6-off.mp4" poster="heart6-off.jpg" autoplay muted loop playsinline aria-label="Heartbeat off, zoom 6"></video>
+      <figcaption><span class="side">Off, zoom 6</span><span class="counts">28% to 30%</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>What it does to the fight</h2>
+  <ul>
+    <li>The front is no longer a still wall. It comes at you in pulses you can see coming, and draws back between them.</li>
+    <li>First number, one game: by 0:54 the greedy squad had killed 1,242 walkers with the heartbeat against 707 without, because each swell carries slime into the guns. So on its own it feeds the guns more. The next step is to make the beat carry a threat (a surge on the beat, the balance thread's lunge for every slime), so the swell reaches you instead of dying in the open.</li>
+    <li>The heart is the home crystal while 30 walkers stand on it, else the crystal the slime holds with the most. The beat is a ring 80 dish cells long, so it reaches the whole body on most planets.</li>
+  </ul>
+</section>
+
+<footer>
+  <p>Software GPU (llvmpipe) in the cloud. Frame cost: one sine and a square root per calm walker per step, no new pass; not timed on the GTX 1070.</p>
+  <p>Source: <code>Reports/heartbeat-2026-11-20/</code>; clips from <code>make_clips.py</code>.</p>
+</footer>
+</main>

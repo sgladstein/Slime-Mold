@@ -684,6 +684,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let pts: Vec<String> = w.points.iter().zip(&at).map(|(p, n)| format!("{:.0},{:.0}: {n}", p.0, p.1)).collect();
                     println!("  wave t {:.0} s: {:?} ({} sent), points [{}], {front} walkers near the squad at {:.0},{:.0}", g.time(), w.phase, g.waves.sent, pts.join("; "), w.centre.0, w.centre.1);
                 }
+                // The condensed strikers (`strikers.rs`, 2026-11-20): how
+                // many live, what they hold, and the walkers taken in.
+                if g.strikers.on {
+                    let mid = g.active.and_then(|q| g.middle(q)).unwrap_or((0.0, 0.0));
+                    println!("  strikers t {:.0} s: {} condensed holding {}, {} taken in all, slime {} of peak {}, squad at {:.0},{:.0}", g.time(), g.strikers.live, g.strikers.held, g.strikers.took, g.mould, g.peak, mid.0, mid.1);
+                }
                 if let Some((t, how, n)) = g.fruits.last.filter(|l| l.0 + g.rules.tps as u64 > g.world.ticks()) {
                     println!("  fruit ended t {:.1} s: {how:?} with {n} members ({} burst, {} broken, {} walkers sown in all)", t as f32 / g.rules.tps as f32, g.fruits.burst, g.fruits.broken, g.fruits.sown);
                 }

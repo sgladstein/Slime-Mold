@@ -42,6 +42,10 @@ const ROW: f32 = 30.0;
 const ROW_LEAST: f32 = 22.0;
 /// The pager's strip under a paged counter.
 const PAGER: f32 = 36.0;
+/// A shelf row on the counter (Look D, 2026-11-20): its height, and the
+/// least width of a column of them.
+const SHELF_H: f32 = 74.0;
+const SHELF_W: f32 = 420.0;
 
 /// What a shop tab holds, so how its counter is laid out.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -82,6 +86,23 @@ fn para(c: &mut Canvas, weight: Weight, px: f32, at: (f32, f32), max: f32, lead:
         y += lead;
     }
     y - at.1
+}
+
+/// The counter as shelves (Look D, 2026-11-20): every offer a row with its
+/// one-sentence text, in as many columns as fit, when all of them fit on
+/// one page; None leaves the tiles, which page.
+fn shelf(n: usize, area: Rect, g: f32, s: f32) -> Option<(usize, f32, f32)> {
+    if n == 0 {
+        return None;
+    }
+    let cols = (((area.w + g) / (SHELF_W * s + g)).floor() as usize).clamp(1, 3);
+    let rows = ((area.h + g) / (SHELF_H * s + g)).floor() as usize;
+    let cols = cols.min(n);
+    if rows * cols < n {
+        return None;
+    }
+    let w = (area.w - (cols - 1) as f32 * g) / cols as f32;
+    Some((cols, w, SHELF_H * s))
 }
 
 /// How `n` boxes at least `w` wide and `h` tall sit in `area`: the boxes a
@@ -469,6 +490,15 @@ impl StartMenu {
                     let range = page(per, n.div_ceil(per.max(1)).max(1), self);
                     self.gun_table(&shop, &tab.rows[range], area, head, rh, ring, c, s);
                 }
+                TabKind::Tiles if shelf(n, area, g, s).is_some() => {
+                    let (cols, w, h) = shelf(n, area, g, s).unwrap_or((1, area.w, SHELF_H * s));
+                    page(n, 1, self);
+                    for (j, &i) in tab.rows.iter().enumerate() {
+                        let r = Rect::new(area.x + (j % cols) as f32 * (w + g), area.y + (j / cols) as f32 * (h + g), w, h);
+                        self.shelf_row(&shop.rows[i], r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hits.push((r, Hit::Buy(i)));
+                    }
+                }
                 TabKind::Tiles => {
                     let (per_row, w, per, pages) = flow(n, area, TILE_W * s, TILE_W * s * 1.3, TILE_H * s, g, PAGER * s);
                     let range = page(per, pages, self);
@@ -480,7 +510,18 @@ impl StartMenu {
                     }
                 }
                 TabKind::Cards => {
-                    if !self.card_grid(&shop, tab, area, ring, &mut from, c, s) {
+                    if self.card_grid(&shop, tab, area, ring, &mut from, c, s) {
+                    } else if let Some((cols, w, h)) = shelf(n, area, g, s) {
+                        page(n, 1, self);
+                        for (j, &i) in tab.rows.iter().enumerate() {
+                            let r = Rect::new(area.x + (j % cols) as f32 * (w + g), area.y + (j / cols) as f32 * (h + g), w, h);
+                            self.shelf_row(&shop.rows[i], r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.hits.push((r, Hit::Buy(i)));
+                            if drag == Some(i) {
+                                from = Some(r);
+                            }
+                        }
+                    } else {
                         let (per_row, w, per, pages) = flow(n, area, CARD_W * s, CARD_MAX * s, ch, g, PAGER * s);
                         let range = page(per, pages, self);
                         for (j, k) in range.clone().enumerate() {
@@ -799,6 +840,64 @@ impl StartMenu {
             c.icon(Icon::Check, (r.right() - 18.0 * s, r.y + 5.0 * s), 13.0 * s, GOOD);
         } else if !row.price.is_empty() {
             c.text(Weight::SemiBold, 12.5 * s, (r.right() - 6.0 * s, r.bottom() - 5.0 * s), Align::Right, &row.price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
+        }
+    }
+
+    /// An offer on the counter's shelf (Look D, 2026-11-20): the counter
+    /// held five half-size tiles in its top corner and two thirds of the
+    /// screen stood empty, and what a card does showed only once picked.
+    /// Now each offer is a row: its kind's band down the left, its icon
+    /// large, its name, its one sentence (`about`, cut to two lines), and
+    /// at the right its price over its budget pips or levels. Bends the
+    /// 11-15 "half-size tiles" of shop B while every offer fits on one
+    /// page: the row adds what the tile left out; more offers than fit
+    /// go back to tiles that page.
+    #[allow(clippy::too_many_arguments)]
+    fn shelf_row(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+        let done = owned(row);
+        self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
+        let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
+        c.rrect(Rect::new(r.x + 3.0 * s, r.y + 6.0 * s, 3.0 * s, r.h - 12.0 * s), 1.5 * s, with_alpha(if done { GOOD } else { row.tint }, 0.9 * dim));
+        let ic = 30.0 * s;
+        c.icon(row.icon, (r.x + 16.0 * s, r.y + (r.h - ic) / 2.0), ic, with_alpha(if done { GOOD } else { row.tint }, dim));
+        let tx = r.x + 16.0 * s + ic + 14.0 * s;
+        // The right column: the price (or a tick), the pips under it.
+        let price = if done { String::new() } else { row.price.clone() };
+        let pw = if price.is_empty() { 0.0 } else { c.atlas.measure(Weight::SemiBold, 16.0 * s, &price) };
+        let d = 6.0 * s;
+        let pips = if row.area == ShopArea::Cards { row.cost.min(6) } else if row.level.1 > 1 { row.level.1.min(8) as u32 } else { 0 };
+        let pips_w = if pips > 0 { pips as f32 * (d + 3.0 * s) - 3.0 * s } else { 0.0 };
+        let right = pw.max(pips_w).max(if done { 18.0 * s } else { 0.0 });
+        let rx = r.right() - 12.0 * s;
+        if done {
+            c.icon(Icon::Check, (rx - 16.0 * s, r.y + 14.0 * s), 16.0 * s, GOOD);
+        } else if !price.is_empty() {
+            c.text(Weight::SemiBold, 16.0 * s, (rx, r.y + 27.0 * s), Align::Right, &price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
+        }
+        for k in 0..pips {
+            let lit = if row.area == ShopArea::Cards { true } else { k < row.level.0 as u32 };
+            let at = Rect::new(rx - pips_w + k as f32 * (d + 3.0 * s), r.bottom() - 17.0 * s, d, d);
+            c.rrect(at, d / 2.0, if lit { with_alpha(if row.area == ShopArea::Cards { ENERGY } else { ACCENT }, 0.85 * dim.max(0.6)) } else { [255, 255, 255, 40] });
+        }
+        // The name, a badge after it, and the sentence.
+        let room = (rx - right - 14.0 * s - tx).max(40.0 * s);
+        let ink = with_alpha(TEXT, dim.max(0.6));
+        let nw = c.text_fit(Weight::SemiBold, 15.5 * s, (tx, r.y + 24.0 * s), Align::Left, &row.name, room, ink);
+        if let Some(b) = row.badge {
+            let bs = 14.0 * s;
+            if nw + 8.0 * s + bs <= room {
+                c.icon(b, (tx + nw + 8.0 * s, r.y + 12.0 * s), bs, with_alpha(TEXT, 0.8 * dim.max(0.6)));
+            }
+        }
+        // The text: the first sentence of `about`, two lines at most.
+        let about = row.about.split_inclusive(". ").next().unwrap_or("").trim();
+        if !about.is_empty() {
+            let lines = c.wrap(Weight::Medium, 13.0 * s, room, about);
+            for (k, l) in lines.iter().take(2).enumerate() {
+                let cut = k == 1 && lines.len() > 2;
+                let text = if cut { format!("{}…", l.trim_end_matches(['.', ',', ' '])) } else { l.clone() };
+                c.text_fit(Weight::Medium, 13.0 * s, (tx, r.y + 44.0 * s + k as f32 * 17.0 * s), Align::Left, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
+            }
         }
     }
 
