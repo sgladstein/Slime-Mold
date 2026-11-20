@@ -666,7 +666,18 @@ impl<W: World> Game<W> {
         // block nearest it, which may be on its far side, and a sapper
         // led by it round its wall's end ate at the end and holed it at
         // 99 s against 30 s straight.
-        let ground = self.slime_ground();
+        // Deep water closed too: the slime crawls there slowly, and on the
+        // owner's planet 4 (run 1795038793) a hunter of 398 stood 70 s at a
+        // river's edge on a raid's ground, which counts the river open.
+        let ground = self.slime_ground().map(|(mut g, w, h)| {
+            let open = self.world.open_cells();
+            if open.len() == g.len() {
+                for (a, o) in g.iter_mut().zip(open) {
+                    *a &= o;
+                }
+            }
+            (g, w, h)
+        });
         if ground.as_ref().is_none_or(|(g, w, h)| line_clear(g, *w, *h, centre, to, body + 3.0 * sc)) {
             self.bosses.ways.retain(|w| w.lump != lump);
             return to;
@@ -727,12 +738,46 @@ impl<W: World> Game<W> {
         let near = self.soldiers.iter().any(|s| s.alive && (s.x - centre.0).hypot(s.y - centre.1) < fight);
         if self.bosses.ways[i].still >= STALL && !near {
             let lead = ahead.iter().take_while(|&&p| (p.0 - from.0).hypot(p.1 - from.1) <= body).last().copied().unwrap_or(from);
-            let reach = (1.5 * body / sc).max(1.0);
+            // As far round as holds no more walkers than it has: forming
+            // takes every walker in reach, and in a thick body a first cut
+            // at one and a half radii took in the slime round it (a hunter
+            // of 437 on the owner's planet 3 came out at 4,630).
+            let reach = self.reach_holding(lead, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
             self.world.form_lump(lump, Some((lead, reach)));
             (self.bosses.ways[i].mark, self.bosses.ways[i].still) = (lead, 0);
             self.bosses.regrouped += 1;
         }
         aim
+    }
+
+    /// The largest reach round `at` (dish cells), up to `most`, whose
+    /// walkers on the mould grid number no more than `want` (at least one
+    /// dish cell); `most` with no grid.
+    fn reach_holding(&self, at: (f32, f32), most: f32, want: f32) -> f32 {
+        let Some((g, gw, gh, bin)) = self.boss_grid() else { return most };
+        let sc = self.world.scale();
+        let b = bin as f32;
+        let mut near: Vec<(f32, u32)> = Vec::new();
+        let r = most * sc;
+        let (x0, x1) = (((at.0 - r) / b).floor().max(0.0) as usize, (((at.0 + r) / b) as usize).min(gw - 1));
+        let (y0, y1) = (((at.1 - r) / b).floor().max(0.0) as usize, (((at.1 + r) / b) as usize).min(gh - 1));
+        for y in y0..=y1 {
+            for x in x0..=x1 {
+                let d = ((x as f32 + 0.5) * b - at.0).hypot((y as f32 + 0.5) * b - at.1);
+                if d <= r && g[y * gw + x] > 0 {
+                    near.push((d, g[y * gw + x]));
+                }
+            }
+        }
+        near.sort_by(|a, c| a.0.total_cmp(&c.0));
+        let mut held = 0.0;
+        for &(d, n) in &near {
+            held += n as f32;
+            if held > want {
+                return (d / sc).clamp(1.0, most);
+            }
+        }
+        most
     }
 
     /// Forms a mini-boss round `at` (fine cells), of the walkers within
@@ -1029,11 +1074,20 @@ impl<W: World> Game<W> {
         }
         self.bosses.crowd_top = sums.iter().map(|s| s.1 as f32 / full).fold(0.0, f32::max);
         // Nearer the player's things more likely (`BossRules::near`).
+        // Never within the squad's guns (and the panic margin past them):
+        // it clenches first, its tell, and one that formed on top of the
+        // owner's 78 soldiers on his planet 4 (run 1795038793) was shot to
+        // nothing in 3 s, still clenching.
         let mine = self.player_things();
+        let fight = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * sc;
         let at = |i: usize| (((i % gw) as f32 + 0.5) * bin as f32, ((i / gw) as f32 + 0.5) * bin as f32);
+        let shot = |p: (f32, f32)| self.soldiers.iter().any(|s| s.alive && (s.x - p.0).hypot(s.y - p.1) < fight);
         let weights: Vec<f64> = sums
             .iter()
             .map(|&(i, b)| {
+                if shot(at(i)) {
+                    return 0.0;
+                }
                 let d = mine.iter().map(|q| (q.0 - at(i).0).hypot(q.1 - at(i).1)).fold(f32::INFINITY, f32::min) / sc;
                 let w = if r.near > 0.0 && d.is_finite() { 1.0 / (1.0 + (d / r.near).powi(2)) } else { 1.0 };
                 b as f64 * w as f64
