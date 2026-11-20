@@ -668,3 +668,8 @@
 2026-11-19 18:37:48   econ,go=4,aim=6,want=seek/wide/blast.needle planet 3.0 seed 7.0: won 202.0 (14 s)
 2026-11-19 18:38:10   econ,go=4,aim=6,want=seek/wide/blast.needle planet 3.0 seed 8.0: won 325.0 (23 s)
 2026-11-19 18:38:10   econ,go=4,aim=6,want=seek/wide/blast.needle planet 3.0 seed 1795038793.0: won 245.0 (17 s)
+2026-11-19 18:39:09   econ,cards=0,mop=300 planet 3.0 seed 1795038793.0: open 720.1 (54 s)
+2026-11-19 18:39:12   econ,cards=0,mop=300 planet 3.0 seed 3.0: open 720.1 (57 s)
+2026-11-19 18:40:01   scott,mop=300 planet 3.0 seed 4.0: open 720.1 (51 s)
+2026-11-19 18:40:01   turtle,mop=300 planet 3.0 seed 4.0: open 720.1 (47 s)
+2026-11-19 18:40:59   econ,go=4,aim=6,mop=300 planet 3.0 seed 8.0: open 720.1 (58 s)
