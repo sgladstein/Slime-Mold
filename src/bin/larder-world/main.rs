@@ -2174,6 +2174,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
     // planet TO (3) or a loss, with no window (`runbot`).
     let mut runbot: Option<(u64, u32)> = None;
+    // `gunlab=DEPTH:SEED[:SECS]` with `deck=CARDS` (and `gun=KIND`): one
+    // deck on one planet with the bot hand (`runbot::gun_lab`).
+    let mut gunlab: Option<(u32, u64, f32)> = None;
+    let mut deck = String::new();
+    // `arena=N[:focus]`: the gun lab's arena, N soldiers and no economy
+    // (`runbot::arena_hand`); `tail=T`: seconds more with fire held.
+    let mut arena = 0usize;
+    let mut focus = false;
+    let mut guard = false;
+    let mut tail = 0.0f32;
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut viewpasses = 0u32;
@@ -2290,6 +2300,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(());
             }
             "look" => look = Some(v.to_string()),
+            "gunlab" => {
+                let w: Vec<&str> = v.split(':').collect();
+                let depth = w.first().ok_or("gunlab=DEPTH:SEED[:SECS]")?.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
+                let seed = w.get(1).map_or(Ok(1), |s| s.parse::<u64>())?;
+                let secs = w.get(2).map_or(Ok(0.0), |s| s.parse::<f32>())?;
+                gunlab = Some((depth, seed, secs));
+            }
+            "deck" => deck = v.to_string(),
+            "arena" => {
+                let (n, how) = v.split_once(':').unwrap_or((v, ""));
+                arena = n.parse()?;
+                focus = how == "focus";
+                guard = how == "guard";
+            }
+            "tail" => tail = v.parse()?,
             "runbot" => {
                 let (seed, to) = v.split_once(':').unwrap_or((v, "3"));
                 runbot = Some((seed.parse()?, to.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS)));
@@ -2538,6 +2563,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre, viewpasses }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
+        return Ok(());
+    }
+    if let Some((depth, seed, secs)) = gunlab {
+        let (device, queue) = gpu().ok_or("no GPU adapter")?;
+        let kind = base.gun.clone().unwrap_or_else(|| "rifle".into());
+        runbot::gun_lab(base, (depth, seed, secs, arena), (&kind, &deck, focus, tail, guard), &device, &queue)?;
         return Ok(());
     }
     if let Some((seed, to)) = runbot {

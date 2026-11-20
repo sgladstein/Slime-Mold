@@ -2,8 +2,9 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-18
+updated: 2026-11-20
 sources:
+  - Reports/gun-builds-2026-11-19/README.md
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-mind-2026-11-16/README.md
@@ -102,6 +103,14 @@ the Swarmer's first minute holds a big part behind necks), so starving is
 done with walls and positioning, which withering and panic already reward
 ([cut count](../../Reports/gun-cut-count-2026-11-17/README.md)).
 
+**Strongest decks** (gun lab, 2026-11-19, about 9,700 arena games, research
+only): one common shell, Needle Blast, is the base of every top deck, and
+no top deck needs a rare card, against the owner's Noita rule. Seek + Wide +
+Needle Blast is best moving (+21.8k slime on planet 3) and won 9 of 9 full
+planet 3 games; holding a crystal, Needle Blast alone is within 2% of the
+best combo. Germ is the only rare card that earns its slot
+([gun builds](../../Reports/gun-builds-2026-11-19/README.md)).
+
 **Merge or cut candidates.** Pull and Thrift (no planet); Trigger and
 Expire; Gas and Mist. Wide and Multicast are general on purpose. Blind and
 Sour may not read apart (the Mind quiz was dropped 11-17; play shows it).
@@ -142,3 +151,4 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
 - [mould tiers](../../Reports/mould-tiers-2026-11-11.md): each tier's counter.
 - [rounds](../../Reports/rounds-2026-11-12.md): the Sleeper ignores every round.
 - [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Heave (Corral until 2026-11-18), Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.
+- [gun builds](../../Reports/gun-builds-2026-11-19/README.md): the strongest decks by arena, defend test and full planet 3 games.

@@ -1,0 +1,59 @@
+# The gun lab's sweeps (2026-11-19, the gun-building research thread):
+# each line of the job list named in `Reports/gun-builds-2026-11-19/run.txt`
+# is one game, `DEPTH SEED SECS GUN DECK [KEYS...]`, played by `larder-world gunlab=`
+# (the run bot with that gun and deck on that planet) on Mesa's software
+# Vulkan. The list is split over SHARDS jobs by (planet, seed): every
+# deck of one planet and seed plays on one runner, since software Vulkan
+# on two machines can give slightly different games (11-19: the cloud and
+# the 1070 differed), and decks are compared paired by seed. Each job
+# prints its `gunlab` lines to the log and uploads them.
+#
+# WHY ON A PUSH TO THE THREAD'S BRANCH: a sweep is about a thousand games
+# of 1 to 5 real minutes each (the owner's card of 11-18: long runs go to
+# GitHub's checks from a pushed branch), and `workflow_dispatch` needs the
+# workflow on main. It runs only when `run.txt` changes.
+name: Gun lab
+
+on:
+  push:
+    branches: [claude/project-thread-i0vg7o]
+    paths: [Reports/gun-builds-2026-11-19/run.txt]
+
+permissions:
+  contents: read
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: gun-lab
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: cargo build --release --locked --bin larder-world
+      - name: games
+        env:
+          WGPU_BACKEND: vulkan
+          SHARD: ${{ matrix.shard }}
+          SHARDS: 20
+        run: |
+          list="Reports/gun-builds-2026-11-19/$(head -1 Reports/gun-builds-2026-11-19/run.txt)"
+          : > lab.txt
+          grep -v '^#' "$list" | grep -v '^$' | awk '{k=$1":"$2; if(!(k in g)) g[k]=n++; print g[k], $0}' | while read -r grp depth seed secs gun deck keys; do
+            if [ $((grp % SHARDS)) -eq "$SHARD" ]; then
+              ./target/release/larder-world gunlab=$depth:$seed:$secs gun=$gun deck=$deck $keys 2>/dev/null | grep '^gunlab' | tee -a lab.txt || echo "gunlab depth=$depth seed=$seed gun=$gun deck=$deck how=error" | tee -a lab.txt
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gun-lab-${{ matrix.shard }}
+          path: lab.txt

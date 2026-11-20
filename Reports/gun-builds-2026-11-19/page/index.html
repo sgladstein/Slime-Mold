@@ -1,0 +1,196 @@
+<title>Gun Build Findings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap">
+<style>
+/* Layout: one reading column of lab findings; tables scroll in their own boxes; slime-green accent, card-tier chips. */
+:root {
+  --bg: #f6f7f2; --surface: #ffffff; --fg: #1d221b; --muted: #5d6658; --line: #dde2d6;
+  --accent: #4f7d1f; --accent-soft: #e5efd6; --bad: #b4412e; --bad-soft: #f6e0db;
+  --rare: #7a4bb0; --rare-soft: #ece3f6; --uncommon: #2d6f9e; --uncommon-soft: #ddeaf4;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141712; --surface: #1c2019; --fg: #e5e9df; --muted: #9aa392; --line: #2f352b;
+  --accent: #9cca62; --accent-soft: #26331a; --bad: #e88a76; --bad-soft: #3a211b;
+  --rare: #c09ae8; --rare-soft: #2e2340; --uncommon: #7fb7e0; --uncommon-soft: #1b2b38; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141712; --surface: #1c2019; --fg: #e5e9df; --muted: #9aa392; --line: #2f352b;
+  --accent: #9cca62; --accent-soft: #26331a; --bad: #e88a76; --bad-soft: #3a211b;
+  --rare: #c09ae8; --rare-soft: #2e2340; --uncommon: #7fb7e0; --uncommon-soft: #1b2b38; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+main { max-width: 900px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 44px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); }
+h2 { font-size: 23px; }
+p { margin: 0; max-width: 68ch; }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 18px; max-width: 62ch; }
+.verdict { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 14px 18px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+.verdict strong { color: var(--fg); }
+.muted { color: var(--muted); font-size: 13.5px; }
+.clips { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+video { width: 100%; max-width: 100%; border-radius: 4px; background: #000; display: block; }
+figcaption { font-size: 13.5px; color: var(--muted); }
+figcaption b { color: var(--fg); font-family: var(--mono); font-weight: 500; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+th:first-child, td:first-child { text-align: left; }
+tr:last-child td { border-bottom: none; }
+.deck { font-family: var(--mono); font-size: 13px; }
+.chip { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+.common { background: var(--accent-soft); color: var(--accent); }
+.uncommon { background: var(--uncommon-soft); color: var(--uncommon); }
+.rare { background: var(--rare-soft); color: var(--rare); }
+.neg { color: var(--bad); }
+.pos { color: var(--accent); }
+.bars { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.bar { display: grid; grid-template-columns: 150px 1fr 64px; align-items: center; gap: 10px; }
+.bar .name { font-family: var(--mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .track { position: relative; height: 14px; }
+.bar .track::before { content: ""; position: absolute; left: var(--zero); top: -2px; bottom: -2px; width: 1px; background: var(--muted); opacity: .6; }
+.bar .fill { position: absolute; top: 0; height: 100%; border-radius: 2px; }
+.bar .val { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+code { font-family: var(--mono); font-size: 13px; }
+@media (max-width: 520px) { .bar { grid-template-columns: 110px 1fr 54px; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <div class="eyebrow">Gun lab · 2026-11-19 · about 9,700 games on the GTX 1070 and GitHub</div>
+    <h1>Gun Build Findings</h1>
+    <p class="lede">Which card decks remove the most slime, and do the best ones follow the rule that strong builds come from combinations, often with rarer cards?</p>
+  </header>
+
+  <div class="verdict">
+    <p><strong>No. One common shell decides the ranking.</strong> Needle Blast (cost 4, from planet 1) is the base of every top deck in both tests. On its own it already removes +16k slime on planet 3 against a rifle with no cards. In the defend test it is within 2% of the best combo on planet 4.</p>
+    <p><strong>Combos do add, but only to Needle Blast.</strong> Seek + Wide + Needle Blast adds 6k to 12k over Needle Blast alone on planets 3 and 4. No top deck needs a rare card. Germ is the only rare card that earns its slot, mainly when holding a crystal.</p>
+  </div>
+
+  <section>
+    <div class="eyebrow">Look first</div>
+    <h2>Needle Blast against an empty rifle</h2>
+    <p>The same planet 3 game (run seed 1, the squad bot) from 20 to 50 s, played once with Needle Blast and once with no cards. Near view at zoom 6, 0.25 s a frame.</p>
+    <div class="clips">
+      <figure>
+        <video src="plain.mp4" controls muted loop playsinline preload="metadata"></video>
+        <figcaption>No cards. <b>39.7k</b> walkers on the planet at 0:40.</figcaption>
+      </figure>
+      <figure>
+        <video src="needle.mp4" controls muted loop playsinline preload="metadata"></video>
+        <figcaption>Needle Blast. <b>30.7k</b> walkers at 0:40, 23% fewer.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Test 1 · moving arena · 3 and 4 card guns</div>
+    <h2>The strongest decks</h2>
+    <p>Nine soldiers on a run planet, no economy, the game's own aim, firing for 90 s and walking toward the slime. Each cell is the median slime removed against the empty deck on fresh seeds 7 to 12. All six seeds were better in every cell. A planet 1 score of +15.9k is a full clear, so planet 1 cannot separate the top decks.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Deck</th><th>Cost</th><th>From</th><th>Planet 1</th><th>Planet 3</th><th>Planet 4</th></tr></thead>
+      <tbody>
+        <tr><td class="deck">seek + wide + needle blast<span class="chip uncommon">uncommon</span></td><td>8</td><td>2</td><td>+13.1k</td><td>+21.8k</td><td>+18.6k</td></tr>
+        <tr><td class="deck">seek + wide + rate + needle blast<span class="chip uncommon">uncommon</span></td><td>10</td><td>2</td><td>+8.8k</td><td>+19.5k</td><td>+23.8k</td></tr>
+        <tr><td class="deck">wide + scorch + needle blast<span class="chip uncommon">uncommon</span></td><td>9</td><td>2</td><td>+14.4k</td><td>+19.5k</td><td>+16.2k</td></tr>
+        <tr><td class="deck">wide + trigger + needle blast + torch<span class="chip uncommon">uncommon</span></td><td>10</td><td>2</td><td>+15.9k</td><td>+16.0k</td><td>+17.2k</td></tr>
+        <tr><td class="deck">wide + rate + needle blast<span class="chip common">common</span></td><td>8</td><td>1</td><td>+15.9k</td><td>+14.6k</td><td>+15.8k</td></tr>
+        <tr><td class="deck">seek + scatter + germ needle<span class="chip rare">rare</span></td><td>9</td><td>4</td><td>+15.9k</td><td>+19.5k</td><td>+9.0k</td></tr>
+        <tr><td class="deck">needle blast alone<span class="chip common">common</span></td><td>4</td><td>1</td><td>+11.1k</td><td>+16.2k</td><td>+13.2k</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">The chip names the rarest card in the deck. "From" is the first planet whose average rifle can hold it. The single-card row is from seeds 1 to 6.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Test 2 · defend · 1,560 games</div>
+    <h2>Holding a crystal</h2>
+    <p>The same nine soldiers stand on the slimiest crystal with the game's own Guard order and Defend stance for 90 s. Cells show slime removed against the empty deck, with the soldiers alive at 90 s. With no cards the squad keeps 2 of 9 on planet 1 and 0 of 9 on planet 4.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Deck</th><th>Planet 1</th><th>Planet 3</th><th>Planet 4</th><th>Alive, planet 4</th></tr></thead>
+      <tbody>
+        <tr><td class="deck">seek + wide + rate + needle blast</td><td>+2.5k</td><td>+13.9k</td><td>+24.9k</td><td>9</td></tr>
+        <tr><td class="deck">wide + rate + pierce + needle blast</td><td>+2.4k</td><td>+14.6k</td><td>+24.8k</td><td>9</td></tr>
+        <tr><td class="deck">seek + wide + needle blast</td><td>+2.4k</td><td>+14.1k</td><td>+24.7k</td><td>9</td></tr>
+        <tr><td class="deck">needle blast alone</td><td>+2.2k</td><td>+13.3k</td><td>+24.4k</td><td>9</td></tr>
+        <tr><td class="deck">seek + scatter + germ needle<span class="chip rare">rare</span></td><td>+10.2k</td><td>+14.9k</td><td>+20.0k</td><td>6</td></tr>
+        <tr><td class="deck">germ needle alone<span class="chip rare">rare</span></td><td>+7.6k</td><td>+14.5k</td><td>+19.4k</td><td>4</td></tr>
+        <tr><td class="deck">blast (standard)</td><td>+1.6k</td><td>+12.4k</td><td>+23.5k</td><td>6</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">On planet 1 the slime reaches the crystal slowly, so the blast decks barely differ there. Germ spreads from walker to walker and finds them before they arrive.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Full games</div>
+    <h2>Does it hold in a real run?</h2>
+    <p>The strategy bots played full planet 3 games with each deck bought as soon as it could be, on 9 maps including your own planet 3. With no cards the bot won 5 of 9. With Needle Blast it won 7 of 9. With <span class="deck">seek + wide + needle blast</span> it won 9 of 9, better on every map (sign test p = 0.004), in about 4:50 on average. It cleared your planet 3 in 4:05, against your 7:21.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Test 1 · one card each · seeds 1 to 6</div>
+    <h2>Every single card</h2>
+    <p>Median slime removed against the empty deck. Cards that need a payload were tested with plain Blast, and payload shells with each set. Several cards score exactly the same as Blast alone (Trigger, Thrift, Multicast, Expire), because a deck of one payload gives them nothing to act on.</p>
+    <div class="tabs" role="group" aria-label="Planet">
+      <button type="button" id="p1" data-p="0">Planet 1</button>
+      <button type="button" id="p2" data-p="1">Planet 2</button>
+      <button type="button" id="p3" data-p="2" aria-pressed="true">Planet 3</button>
+      <button type="button" id="p4" data-p="3">Planet 4</button>
+    </div>
+    <div class="bars" id="bars"></div>
+    <p class="muted">On planet 2 the slime outgrows nine soldiers whatever they carry, so the differences there are small.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Scope</div>
+    <h2>Not measured by this method</h2>
+    <p>Both tests measure slime removed while shooting or holding still. Cards that only pay off with a plan of their own score near zero here. That says nothing about their worth.</p>
+    <ul>
+      <li><b>Lures and movers:</b> Bait, Provoke, Pull, Heave. Your split-and-hold play with Heave needs its own strategy. The strategy bots tried it, and it did worse on 7 of 9 maps for them.</li>
+      <li><b>Slow and stop:</b> Still, Smother, Blind, Sour, Mist, Spin. Alone they did not keep slime off a held crystal either. They may need a damage card beside them.</li>
+      <li><b>Timing and chains:</b> Delay, Trigger, Expire, Tinder with Torch, Shatter, Detonate. These need a second payload or fire on the ground to act on.</li>
+      <li><b>Turret builds</b> were not tested.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="eyebrow">Method</div>
+    <h2>How it was measured</h2>
+    <ul>
+      <li>The <code>gunlab=</code> key in <code>larder-world</code> lands a run on a planet with one deck, bought at the shop's average grade for that depth. It refuses decks over the gun's budget or slots.</li>
+      <li>Each deck is compared with the empty deck on the same seeds on the same machine, because results differ slightly between machines.</li>
+      <li>The search went in stages: every single card, then pairs within card families, then 3 and 4 card guns from the best pairs on fresh seeds.</li>
+      <li>An independent review found 14 problems before the main runs. Among them, stalls were counted as wins and gas deaths were missed. All 14 were fixed in the harness first.</li>
+      <li>Raw rows and tables are in <code>Reports/gun-builds-2026-11-19/</code> on the branch <code>claude/project-thread-i0vg7o</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const S = {"bait":[968,2044,1250,-2153],"blast.buckshot":[174,-160,-366,-3576],"blast.needle":[11070,364,16246,13156],"blast.slug":[-273,-1300,1539,-2670],"blast.standard":[2922,-226,3118,2388],"blind":[-214,-541,-330,-3792],"bomb.buckshot":[-768,-1558,-1326,-7379],"bomb.needle":[-518,-766,303,-2142],"bomb.slug":[-2150,-1824,-730,-4422],"bomb.standard":[-3472,-1830,-480,-3529],"delay+blast":[337,-256,2375,2218],"flare":[-626,-1342,140,198],"gas.buckshot":[-718,-1894,-1564,-4856],"gas.needle":[7044,2062,1940,3340],"gas.slug":[-3078,-1366,-3628,-4768],"gas.standard":[494,-136,-146,-2530],"germ.buckshot":[4542,0,-69,-5675],"germ.needle":[15134,1687,4039,9394],"germ.slug":[14796,-522,6437,-2044],"germ.standard":[11492,-14,599,468],"heave+blast":[-1044,-2036,-348,-8326],"mist":[18,-618,124,-72],"pierce":[650,-264,156,790],"plain.buckshot":[-254,-23,-296,-5594],"plain.needle":[4066,424,2580,9824],"plain.slug":[-486,-1484,-679,-3364],"provoke":[162,-204,66,358],"pull+blast":[128,-147,598,-1698],"quiet+blast":[1155,57,3238,632],"range":[430,647,-2,-1440],"rate":[364,-435,-44,2316],"scatter+blast":[1304,-111,1852,-804],"scorch":[843,356,1584,2078],"seek":[126,-100,342,519],"smother":[-18,-636,-156,336],"sour":[-153,-849,-286,-2920],"spin":[266,-510,-212,-1022],"split":[938,-284,724,6576],"still":[-42,-200,330,704],"thick+blast":[443,-30,3824,1013],"torch":[458,-260,1526,-32],"trigger, thrift, multicast or expire + blast":[2922,-448,4685,2240],"wide+blast":[7791,-243,9116,10018]};
+const lo = -9000, hi = 17000, span = hi - lo, zero = (-lo / span * 100).toFixed(2) + "%";
+function draw(p) {
+  const rows = Object.entries(S).sort((a, b) => b[1][p] - a[1][p]);
+  const box = document.getElementById("bars");
+  box.innerHTML = "";
+  for (const [name, v] of rows) {
+    const x = v[p], w = Math.abs(x) / span * 100, left = x >= 0 ? -lo / span * 100 : (x - lo) / span * 100;
+    const r = document.createElement("div"); r.className = "bar";
+    r.innerHTML = `<span class="name" title="${name}">${name}</span><span class="track" style="--zero:${zero}"><span class="fill" style="left:${left}%;width:${w}%;background:var(${x >= 0 ? "--accent" : "--bad"})"></span></span><span class="val ${x >= 0 ? "pos" : "neg"}">${x >= 0 ? "+" : "−"}${(Math.abs(x) / 1000).toFixed(1)}k</span>`;
+    box.appendChild(r);
+  }
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.p === p)));
+}
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => draw(+b.dataset.p)));
+draw(2);
+</script>
