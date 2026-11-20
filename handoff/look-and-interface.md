@@ -159,7 +159,8 @@ while Squad asked to keep it.
 
 **Next, in order.**
 
-1. Look B: the Drifter's and the Trunk's looks, then the thick body's veins
+1. Look B: the Drifter's is done (#526). The Trunk's look stays its amber
+   walls and packed body until a slime rule gives it flow; then the thick body's veins
    and flow; iterate the Sprawler's dashes on what the owner says in play.
    Tried and not kept (`Reports/dead-ends.md`, 11-19): the Trunk's film
    along each walker's way, and a smooth droplet for the Drifter (blurry at
