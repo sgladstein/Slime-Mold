@@ -66,7 +66,8 @@ ranked look jobs, in the owner's order.
    violet (skin hue about 265, core 280), the wanderer pale bone, the
    leech near-black ink whose core turns the charge's cyan as it drinks a
    pump, the sapper ember crimson at your
-   walls; dark, mid and pale, parting by value as well as hue; not
+   walls, the mortar (11-20, planet 4 on) moss green lit by an acid core,
+   saturated where the plants are muted; dark, mid and pale, parting by value as well as hue; not
    bronze (owner 11-16); its colour, dome and core light all from where its
    members are (once out on its errand, wherever they stand, however thick
    the slime round them), and a broken or spent one's look drains into the slime

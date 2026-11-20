@@ -1606,6 +1606,11 @@ fn lump_skin(k: u32) -> vec3<f32> {
         // The fruit (2026-11-20, `fruit.rs`): dark umber, a sporangium's
         // colour, darkening from a dull rust as it ripens (`lump_mat`).
         case 5u: { return vec3<f32>(62.0, 34.0, 16.0); }
+        // The mortar (2026-11-20, the Enemy lane): deep moss, a hue
+        // nothing else on the slime uses; its core's light brings it up
+        // to a saturated green, apart from the plants' muted greens
+        // (filmed on planet 4 at zoom 9 beside the grass).
+        case 6u: { return vec3<f32>(34.0, 58.0, 18.0); }
         default: { return MOULD_HUE; }
     }
 }
@@ -1620,6 +1625,8 @@ fn lump_core(k: u32) -> vec3<f32> {
         // (`lump_mat`): at full a cream light washed a packed knot pale
         // tan, the bone wanderer's read.
         case 5u: { return vec3<f32>(255.0, 220.0, 150.0); }
+        // The mortar's acid yellow-green core.
+        case 6u: { return vec3<f32>(196.0, 245.0, 70.0); }
         default: { return vec3<f32>(0.0); }
     }
 }

@@ -105,6 +105,10 @@ pub enum LumpLook {
     /// **A fruit** (2026-11-20, `larder_world::fruit`): umber over a warm
     /// cream core, darkening from rust as it ripens (its strength).
     Fruit = 5,
+    /// **A mortar** (2026-11-20, the Enemy lane, `BossKind::Mortar`): deep
+    /// moss skin over an acid yellow-green core, a hue no other kind or
+    /// the slime uses, so the thing throwing at you is found at once.
+    Mortar = 6,
 }
 
 impl LumpLook {
@@ -117,6 +121,7 @@ impl LumpLook {
             "ink" | "3" => Self::Ink,
             "bone" | "4" => Self::Bone,
             "fruit" | "5" => Self::Fruit,
+            "mortar" | "6" => Self::Mortar,
             _ => return None,
         })
     }

@@ -190,13 +190,15 @@ use winit::window::{Window, WindowId};
 /// on every planet. The hunter violet (the hue nothing else on screen
 /// uses), the wanderer pale bone (a fat grub that grows as it grazes), the
 /// sapper ember (an acid red at your walls), the leech ink (dark tar on the
-/// pump rig, its core turning the charge's cyan as it drinks).
+/// pump rig, its core turning the charge's cyan as it drinks), the mortar
+/// moss with an acid core (2026-11-20).
 fn kind_look(kind: u16) -> LumpLook {
     match kind {
         1 => LumpLook::Violet,
         2 => LumpLook::Bone,
         3 => LumpLook::Ember,
         4 => LumpLook::Ink,
+        5 => LumpLook::Mortar,
         _ => LumpLook::Plain,
     }
 }
