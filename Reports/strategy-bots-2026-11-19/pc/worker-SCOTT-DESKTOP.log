@@ -4614,3 +4614,8 @@
 2026-11-20 08:56:58   rush,aim=6,hold=8,grow=1.3,regroup=3,spare=1 planet 3.0 seed 7.0: open 900.1 (62 s)
 2026-11-20 08:57:09   rush,aim=6,hold=8,grow=1.3,regroup=3,spare=1 planet 3.0 seed 8.0: won 470.0 (39 s)
 2026-11-20 08:57:52   rush,aim=6,hold=8,grow=1.3,regroup=3,spare=1 planet 3.0 seed 1795038793.0: open 900.1 (52 s)
+2026-11-20 08:57:56 worker: the game's code changed (now 4e37a463); building
+2026-11-20 08:59:58 worker: built the game in 121 s (src 1e3a1ff92093)
+2026-11-20 08:59:58 worker: league.py changed; restarting
+2026-11-20 08:59:58 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-20 08:59:58 worker: built the game in 1 s (src 1e3a1ff92093)
