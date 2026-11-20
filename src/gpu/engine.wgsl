@@ -218,8 +218,9 @@ struct Params {
     // words until 11-20, `condense`): a condensed walker's haste as it
     // charges (0 off: no walker is condensed then), the reach squared from
     // a soldier inside which a walker may condense (whole fine cells), and
-    // the share that tries each time the pass runs (bit 31 of the reach:
-    // by the units' walking distance); then each lump's row.
+    // the share that tries each time the pass runs (the reach in its low 24
+    // bits, the most a striker takes in in bits 24-27, and bit 31: by the
+    // units' walking distance); then each lump's row.
     lump_on: u32, cond: f32, cond_r2: u32, cond_share: f32,
     lumps: array<Lump, 4>,
     // The Mind row (the gun cards' Mind family, 2026-11-16; Params grew
@@ -449,7 +450,9 @@ fn lump_of(k: u32) -> u32 {
 // blow it can take and one bite more. Never a lump's member (`lumpform`
 // clears the bit as one joins), so the hits bits are its own.
 const DENSE_BIT: u32 = 0x10000u;
-const COND_MOST: u32 = 3u;
+// The most walkers a striker takes in (`StrikerRules::most`, 1 to 15;
+// bits 24-27 of `cond_r2`, 3 until 11-20's retune).
+fn cond_most() -> u32 { return max((P.cond_r2 >> 24u) & 15u, 1u); }
 fn condensed(k: u32) -> bool { return P.cond > 0.0 && (dense_word(k) & DENSE_BIT) != 0u; }
 // Specks are on (`roam`, 11-16, the owner's "Remove the bronze, keep the
 // specks"; with growth). Until 11-17 this was `condenses()`, also on for
@@ -4086,7 +4089,11 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let dx = i32(floor(wk.x)) - i32(c & 0xFFFFu);
     let dy = i32(floor(wk.y)) - i32(c >> 16u);
-    let within = ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
+    // A condensed striker never joins (the review of 11-20 evening): its
+    // word's hurt bits are the walkers it holds, and joining cleared them,
+    // so every lump that formed by a striker (a mini-boss, a fruit, a
+    // march) took that slime off the map.
+    let within = ordinary(k) && (wd & DENSE_BIT) == 0u && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
     if ((word & 256u) != 0u) {
         if (within && (wd & LUMP_BITS) == 0u) {
             set_dense(k, (wd & ~(HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
@@ -4113,7 +4120,7 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
 // block. An ordinary calm walker within `cond_r2` of a soldier (the body's
 // edge facing the squad) tries with chance `cond_share`; the tries in a
 // block are counted on its word (the count in the top 8 bits). The first is
-// its leader (its slot in the low 24); the next `COND_MOST` are taken in,
+// its leader (its slot in the low 24); the next `cond_most()` are taken in,
 // dying where they stand (not counted as kills); the rest stay as they
 // are. Then the leader of a block with any taken in condenses, holding
 // what it took in (`armoured`, `dcount`, `panic_to`), and the word is
@@ -4153,7 +4160,7 @@ fn condense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // walking, slime across deep water or behind rock from the squad (the
     // first films, planet 3: 2,000 of them pressed on a bank for a minute
     // with the squad shooting across) never condenses: it could not charge.
-    let r2 = f32(P.cond_r2 & 0x7FFFFFFFu);
+    let r2 = f32(P.cond_r2 & 0xFFFFFFu);
     var near = false;
     if ((P.cond_r2 & 0x80000000u) != 0u) {
         let ud = units_dist(here);
@@ -4171,7 +4178,7 @@ fn condense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let c = atomicAdd(&news[cond_word(q)], 1u << 24u) >> 24u;
     if (c == 0u) {
         atomicOr(&news[cond_word(q)], k & 0xFFFFFFu);
-    } else if (c <= COND_MOST) {
+    } else if (c <= cond_most()) {
         // Taken in: dead where it stands, as `strike` kills, not counted.
         atomicAdd(&wstat[10], 1u);
         atomicSub(&occ[here], 1u);
@@ -4187,7 +4194,7 @@ fn condlead(@builtin(global_invocation_id) gid: vec3<u32>) {
     let v = atomicLoad(&news[cond_word(gid.x)]);
     if (v == 0u) { return; }
     atomicStore(&news[cond_word(gid.x)], 0u);
-    let took = min((v >> 24u) - 1u, COND_MOST);
+    let took = min((v >> 24u) - 1u, cond_most());
     if (took == 0u) { return; }
     let k = v & 0xFFFFFFu;
     let wd = dense_word(k);

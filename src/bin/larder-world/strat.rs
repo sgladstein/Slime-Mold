@@ -24,7 +24,16 @@
 //!   (`back`), and how thin the slime by its home must be before it walks
 //!   in (`per`);
 //! - **the shop** between planets (`shop`, `cards`), read by the league
-//!   (`league.rs`), not by the hand.
+//!   (`league.rs`), not by the hand;
+//! - **switching** in the game (2026-11-20; the owner's "a bot that can
+//!   switch/test different strategies", and planet 2 on today's game,
+//!   where the plans that build first won 9 of 66 games and most squads
+//!   were wiped by 3:04): all-out soldiers while the slime outgrows its
+//!   start (`grow`), falling back home to rebuild a beaten squad
+//!   (`regroup`), and a soldier's price kept back so a wiped squad is not
+//!   the end of the planet (`spare`);
+//! - **starving** the slime (`starve`, 11-20): with enough soldiers, clear
+//!   and drain the crystal the most slime sits on, its home among them.
 //!
 //! It never changes the game's numbers: it plays through `Game::apply`
 //! as the window does, and builds only what the run has unlocked (`own`,
@@ -113,6 +122,66 @@ pub(super) struct Plan {
     /// `econ,cards=0` brought 70k slime down to 2 and ran out the clock
     /// draining crystals (11-19, p3 gen1).
     pub mop: u32,
+    /// Switch to soldiers: while the slime is over this many times its
+    /// size at the landing (0: never), every point goes to soldiers, no
+    /// building is placed, and the squad goes out, as `rush` plays; back
+    /// to the plan once the slime is down to its landing size. On planet 2
+    /// map 3 (11-20) the slime doubled in three minutes under every
+    /// build-first plan while it waited for pumps.
+    pub grow: f32,
+    /// Fall back: once out, a squad down to fewer than this many soldiers
+    /// (0: never) goes home and rebuilds, and goes out again at `go` or
+    /// twice this, whichever is more. The owner's planet 2 (11-18) went
+    /// down to one soldier at 2:00 and came back; the bots' squads fought
+    /// to the last.
+    pub regroup: u32,
+    /// Soldiers' prices the bank keeps back from buildings and upgrades
+    /// (0: none). A squad wiped with a soldier's price in the bank waits
+    /// for its recruit; with less, the planet is lost (`check_end`).
+    pub spare: u32,
+    /// Where wanted cards come from in the league's shop: set on the
+    /// shelf as if offered (true, the default since 11-19), or bought only
+    /// when the run offers them (false), as a real run plays. With the
+    /// shelf, Wide + Rate + Needle Blast won all 17 planet 3 maps (11-20,
+    /// p3n generation 5); a run that has to be offered three cards is
+    /// another game. Without the shelf a payload named bare (`torch`)
+    /// takes the shop's bullet of that shell in whatever set it rolled.
+    pub shelf: bool,
+    /// Starve the slime (0: never): out of home with at least this many
+    /// soldiers, the squad goes for the crystal with the most slime on it
+    /// that it can take (under `per` walkers a soldier, the slime's home
+    /// among them) and clears and drains it, in place of the crystal with
+    /// the most charge (`deep`: whatever its size). On planet 2 map 3
+    /// (11-20) the slime held about 13k for four minutes while the squad
+    /// killed 50 walkers a second elsewhere: what it lost it grew back from
+    /// the big crystal it sat on.
+    pub starve: u32,
+    /// Starving takes the crystal with the most slime whatever its size
+    /// (`true`), not only one under `per` walkers a soldier. On planet 2
+    /// map 3 in the cloud (11-20) `rush,aim=6,cards=0,starve=30` built
+    /// this way won in 8:20 with 41 soldiers left, the first bot win there;
+    /// at `starve=20` the squad fell from 20 to 8 in a minute in the home
+    /// blob and lost.
+    pub deep: bool,
+    /// Points the league adds to the run before its first shop (0: none),
+    /// so a measure can buy what a planet's own points would not reach
+    /// (Direction's 11-20 job: Heavier shots 4 against Faster trigger 4,
+    /// 480 points each, from planet 1).
+    pub points: u32,
+    /// Out of fire (11-20; the balance thread counted 2,387 of 2,598
+    /// soldiers lost on planet 3 to fire, the bot's own Needle Blast
+    /// lighting the Trunk's crust, 31 to the slime's touch): a squad with a
+    /// member hurt this turn while no slime is near it, and under this
+    /// share of full health, steps back as a bitten one does (0: never; 1:
+    /// at the first burn). At 1 (job 14-b, 11-20) the Needle Blast deck on
+    /// planet 3 lost 253 soldiers in 9 games against 1,033 but won 4 of 9
+    /// against 8: four ran out the clock stepping back, so a lower share
+    /// keeps the push and only saves the soldiers fire is about to kill.
+    pub fire: f32,
+    /// The volley takes the heaviest slime at least this share of the range
+    /// away when there is any (0: the heaviest in range), so a bullet that
+    /// lights the ground lights it away from the squad.
+    pub standoff: f32,
 }
 
 impl Default for Plan {
@@ -144,6 +213,15 @@ impl Default for Plan {
             group: 4,
             want: Vec::new(),
             mop: 0,
+            grow: 0.0,
+            regroup: 0,
+            spare: 0,
+            shelf: true,
+            starve: 0,
+            deep: false,
+            points: 0,
+            fire: 0.0,
+            standoff: 0.0,
         }
     }
 }
@@ -172,7 +250,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 26] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop"];
+    pub const DIALS: [&'static str; 35] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -219,6 +297,15 @@ impl Plan {
             "group" => self.group = whole(v)?.clamp(1, 40),
             "want" => self.want = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             "mop" => self.mop = whole(v)?,
+            "grow" => self.grow = num(v)?.max(0.0),
+            "regroup" => self.regroup = whole(v)?,
+            "spare" => self.spare = whole(v)?.min(20),
+            "shelf" => self.shelf = num(v)? > 0.0,
+            "starve" => self.starve = whole(v)?,
+            "deep" => self.deep = num(v)? > 0.0,
+            "points" => self.points = whole(v)?,
+            "fire" => self.fire = num(v)?.clamp(0.0, 1.0),
+            "standoff" => self.standoff = num(v)?.clamp(0.0, 0.95),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -275,6 +362,19 @@ struct Memory {
     pub secs: [u32; 4],
     /// Holding groups (`Plan::split`): squad and its crystal.
     held: Vec<(usize, usize)>,
+    /// The slime at the landing (`Plan::grow`), and whether the plan is
+    /// switched to soldiers now.
+    start: f32,
+    rushing: bool,
+    /// The squad has been out (`Plan::regroup`), and is home rebuilding.
+    been_out: bool,
+    regrouping: bool,
+    /// Seconds switched to soldiers and falling back, for the league's row.
+    pub switched: [u32; 2],
+    /// Each member's health at the last turn (`Plan::fire`), and seconds
+    /// stepped back from fire, for the league's row.
+    hp: Vec<(usize, f32)>,
+    pub burnt: u32,
 }
 
 thread_local! {
@@ -285,6 +385,17 @@ thread_local! {
 /// alive, and the seconds home, out, building and stepping back.
 pub(super) fn tally() -> (u32, usize, [u32; 4]) {
     MEM.with_borrow(|m| (m.bought, m.peak, m.secs))
+}
+
+/// Seconds the plan spent switched to soldiers (`grow`) and falling back
+/// home (`regroup`).
+pub(super) fn switched() -> [u32; 2] {
+    MEM.with_borrow(|m| m.switched)
+}
+
+/// Turns the squad stepped back from fire (`Plan::fire`).
+pub(super) fn burnt() -> u32 {
+    MEM.with_borrow(|m| m.burnt)
 }
 
 /// Slime squares (`mould_grid`) round a point and on a line, shared by
@@ -385,14 +496,14 @@ thread_local! {
 /// (both bots' targeting); with `kite` above 0, steers the squad away from
 /// slime closer than that share of its range and lets go once clear;
 /// with `mop`, aims at the last scraps too (`Plan::mop`).
-pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32) {
+pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32, standoff: f32) {
     let Some(q) = g.active else { return };
     let Some(m) = g.middle(q) else { return };
     let range = g.gun_range(q) * g.world.scale();
     let mut sense = Sense::of(g);
     sense.mop(mop);
     if refire {
-        let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
+        let near = aim_at(g, &sense, m, range, standoff);
         g.apply(Cmd::Fire(q as u8, near));
     }
     if kite > 0.0 {
@@ -417,6 +528,14 @@ pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32)
             KITING.with_borrow_mut(|k| *k = false);
         }
     }
+}
+
+/// The volley's mark: the heaviest slime in range with a clear line, at
+/// least `standoff` of the range away when there is any (`Plan::standoff`).
+fn aim_at(g: &Game<GpuWorld>, sense: &Sense, m: (f32, f32), range: f32, standoff: f32) -> Option<(f32, f32)> {
+    let ranked = sense.ranked(m, range);
+    let ok = |&(a, d): &((f32, f32), f32)| d <= range && sense.clear(g, m, a);
+    ranked.iter().find(|x| x.1 >= standoff * range && ok(x)).or_else(|| ranked.iter().find(|x| ok(x))).map(|&(a, _)| a)
 }
 
 /// Where the last walkers are, for the league line once the slime is down
@@ -520,7 +639,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
                 return;
             }
         };
-        MEM.with_borrow_mut(|m| *m = Memory { spec: spec.to_string(), plan, ..Memory::default() });
+        MEM.with_borrow_mut(|m| *m = Memory { spec: spec.to_string(), plan, start: g.mould as f32, ..Memory::default() });
     }
     let p = MEM.with_borrow(|m| m.plan.clone());
     let sc = g.world.scale();
@@ -564,8 +683,45 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
             }
         }
     });
-    let out = g.alive() as u32 >= p.go || mopping;
+    // Switching (`grow`, `regroup`): each with a way in and a way out, so
+    // the plan does not flicker at the line.
+    let alive = g.alive() as u32;
+    let (rushing, regrouping) = MEM.with_borrow_mut(|mm| {
+        let size = g.mould as f32;
+        if p.grow > 0.0 && mm.start > 0.0 {
+            if !mm.rushing && size > p.grow * mm.start {
+                mm.rushing = true;
+            } else if mm.rushing && size <= mm.start {
+                mm.rushing = false;
+            }
+        }
+        if p.regroup > 0 {
+            if !mm.regrouping && mm.been_out && alive < p.regroup {
+                mm.regrouping = true;
+            } else if mm.regrouping && alive >= p.go.max(2 * p.regroup) {
+                mm.regrouping = false;
+                mm.been_out = false;
+            }
+        }
+        if mm.rushing {
+            mm.switched[0] += 1;
+        }
+        if mm.regrouping {
+            mm.switched[1] += 1;
+        }
+        (mm.rushing, mm.regrouping)
+    });
+    let out = (alive >= p.go || mopping || rushing) && !regrouping;
+    if out {
+        MEM.with_borrow_mut(|mm| mm.been_out = true);
+    }
+    // What buildings and upgrades may spend: the bank less `spare`
+    // soldiers' prices.
+    let keep = p.spare as f32 * g.rules.soldier_cost;
     let want = |g: &Game<GpuWorld>| -> Option<Want> {
+        if rushing {
+            return None;
+        }
         let (pumps, home, mut refused) = MEM.with_borrow(|mm| (mm.pumps.clone(), mm.home, mm.refused.clone()));
         refused.extend(MEM.with_borrow(|mm| mm.eaten.iter().map(|e| e.0).collect::<Vec<_>>()));
         let base = home.unwrap_or(g.larder);
@@ -629,7 +785,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
         }
         match want(g) {
             Some(w) => {
-                let cost = price(g, w);
+                let cost = price(g, w) + keep;
                 if g.bank >= cost {
                     MEM.with_borrow_mut(|mm| mm.saving = None);
                     if !place(g, &p, w, &sense) {
@@ -673,9 +829,26 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     let n = members.len().max(1);
     let hp = members.iter().map(|&k| g.soldiers[k].hp).sum::<f32>() / n as f32 / g.rules.hp.max(1.0);
     let bitten = members.iter().filter(|&&k| g.soldiers[k].touching > 0).count();
-    let eaten = hp < p.back && bitten > 0;
+    // In fire (`fire`): a member hurt since the last turn with no slime on
+    // it or near it (the soldiers' own heat is not read back to the hand).
+    let burning = MEM.with_borrow_mut(|mm| {
+        let hurt = p.fire > 0.0
+            && members.iter().any(|&k| {
+                let s = &g.soldiers[k];
+                s.touching == 0
+                    && s.hp < p.fire * g.rules.hp.max(1.0) + 0.5
+                    && sense.mass_near((s.x, s.y), 0.2 * range) < 5
+                    && mm.hp.iter().any(|&(j, h)| j == k && s.hp < h - 0.5)
+            });
+        mm.hp = members.iter().map(|&k| (k, g.soldiers[k].hp)).collect();
+        if hurt {
+            mm.burnt += 1;
+        }
+        hurt
+    });
+    let eaten = (hp < p.back && bitten > 0) || burning;
     // The volley: the heaviest slime in range with a clear line.
-    let near = sense.ranked(m, range).into_iter().find(|&(a, d)| d <= range && sense.clear(g, m, a)).map(|(a, _)| a);
+    let near = aim_at(g, &sense, m, range, p.standoff);
     g.apply(Cmd::Fire(q as u8, near));
     let fresh_order = |g: &Game<GpuWorld>, o: Order| !members.iter().all(|&k| g.soldiers[k].order == o);
     let log = (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(10);
@@ -741,7 +914,7 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     }
     // Home: guard the first pump (or the landing) until `go` soldiers;
     // with no pump to guard and no plan to build one, drain as the run bot.
-    let has_home = MEM.with_borrow(|mm| mm.home.is_some()) || p.pumps > 0;
+    let has_home = MEM.with_borrow(|mm| mm.home.is_some()) || p.pumps > 0 || regrouping;
     if !out && has_home {
         let o = Order::Guard(home.0, home.1);
         if fresh_order(g, o) && dist(m, home) > 0.25 * range {
@@ -890,6 +1063,22 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     let barren = MEM.with_borrow(|b| b.barren.clone());
     let held: Vec<usize> = MEM.with_borrow(|b| b.held.iter().map(|h| h.1).collect());
     let strong = out || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
+    // Starving (`starve`): the crystal with the most slime on it.
+    if p.starve > 0 && out && !mopping && g.alive() as u32 >= p.starve {
+        let feed = (0..cs.len())
+            .filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none() && !held.contains(&c))
+            .map(|c| (c, sense.mass_near(cs[c].0, g.world.crystal_r(c) + range)))
+            .filter(|&(_, n)| n > 0 && (p.deep || (n as f32) < p.per * g.alive() as f32))
+            .max_by_key(|&(_, n)| n);
+        if let Some((c, _)) = feed {
+            let at = cs[c].0;
+            let o = Order::Clear(at.0, at.1);
+            if fresh(g, o) {
+                g.apply(Cmd::SquadOrder(q as u8, o));
+            }
+            return;
+        }
+    }
     let drains = p.take == 0 && !mopping;
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = drains

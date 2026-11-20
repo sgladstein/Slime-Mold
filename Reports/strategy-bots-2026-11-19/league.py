@@ -37,7 +37,7 @@ Score of one game: a win is 1 plus up to 1 for speed ((cap - secs) / cap);
 a game not won is its progress, 1 - slime left / the slime's peak, times
 0.9, so any win beats any loss. A plan's score is the mean over its games.
 """
-import argparse, json, math, os, random, re, subprocess, sys, time
+import argparse, glob, json, math, os, random, re, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
@@ -59,29 +59,50 @@ def parse_line(line):
     return out
 
 def key(job):
-    return f"{job[0]}|{job[1]}|{job[2]}|{job[3]}"
+    # Words after SECS are extra game arguments (`set=late_at=0.4`), part
+    # of the job's name (2026-11-20, the balance thread's late-threat
+    # measure): a job of four words keys as it always did.
+    return "|".join(job)
 
 DEADLINE = None
 
+# A whole run's planets keep these fields in its row's `planets`.
+RUN_KEYS = ("depth", "tier", "how", "secs", "mould", "start_mould", "peak_mould", "alive", "peak_alive", "bought", "killed", "pumps", "turrets", "walls", "t_rush", "t_regroup")
+
 def run_one(binary, job, timeout):
+    """One job: `PLAN DEPTH SEED SECS` plays one planet; `PLAN run SEED
+    SECS` a whole run from planet 1 until a planet is lost (depth 0 in
+    its row, with each planet in `planets` and the planets won in
+    `won`)."""
     if DEADLINE and time.time() > DEADLINE:
         return None
-    plan, depth, seed, secs = job
-    cmd = [binary, f"league={depth}:{seed}:{secs}", f"plan={plan}"]
+    plan, depth, seed, secs, *extra = job
+    whole = depth == "run"
+    cmd = [binary, f"league=run:{seed}:8:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}", *extra]
+    d = 0 if whole else int(depth)
     t0 = time.time()
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout * (8 if whole else 1), cwd=ROOT)
     except subprocess.TimeoutExpired:
-        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": "timeout", "wall": time.time() - t0, "code": CODE}
-    rows = [parse_line(l) for l in p.stdout.splitlines() if l.startswith("league ")]
+        return {"job": key(job), "plan": plan, "depth": d, "seed": int(seed), "error": "timeout", "wall": time.time() - t0, "code": CODE}
+    lines = [l for l in p.stdout.splitlines() if l.startswith("league ")]
+    rows = [parse_line(l) for l in lines]
+    if whole:
+        planets = [x for x in rows if "how" in x and "tier" in x]
+        final = [x for x in rows if "to" in x and "how" not in x]
+        rows = [{"depth": 0, "seed": int(seed), "won": final[-1]["won"], "secs": final[-1]["secs"], "reached": max((int(x["depth"]) for x in planets), default=0),
+                 "planets": [{k: x.get(k) for k in RUN_KEYS} for x in planets],
+                 "shops": [x.get("bought", "") for x in rows if "bought" in x and "how" not in x]}] if final else []
     if p.returncode != 0 or not rows:
-        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0, "code": CODE}
+        return {"job": key(job), "plan": plan, "depth": d, "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0, "code": CODE}
     r = rows[-1]
     if CODE:
         r["code"] = CODE
     r["job"] = key(job)
     r["plan"] = plan
     r["cap"] = float(secs)
+    if extra:
+        r["extra"] = " ".join(extra)
     return r
 
 def cmd_run(a):
@@ -195,6 +216,10 @@ SPACE = {
     "split": [0, 1, 2, 3, 4, 6],
     "group": [2, 3, 4, 6, 8],
     "mop": [0, 100, 300, 1000, 3000],
+    # 11-20: switching in the game (strat.rs `grow`, `regroup`, `spare`).
+    "grow": [0, 1.2, 1.3, 1.5, 2],
+    "regroup": [0, 2, 3, 4, 8],
+    "spare": [0, 1, 2],
 }
 SHOP_KEYS = ["strike", "rate", "hp", "squad", "harvest", "range", "bank", "turret", "turret+", "pump+", "mortar", "draw"]
 
@@ -304,7 +329,7 @@ def cross(a, b, rng):
     keys = set(a) | set(b)
     return {k: (a if rng.random() < 0.5 else b).get(k, (b if k in b else a).get(k)) for k in keys if (k in a or k in b)}
 
-STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0"}
+STRAT_DEFAULTS = {"pumps": "0", "walk": "4", "up": "0", "guard": "0", "turrets": "0", "walls": "0", "lure": "0", "first": "guard", "hold": "0", "go": "30", "cap": "80", "back": "0.5", "per": "200", "defend": "0", "more": "0", "take": "0", "shop": "strike/rate/hp/squad/harvest/range/bank", "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0", "grow": "0", "regroup": "0", "spare": "0"}
 
 def presets():
     """The strategy bot's named families, read from strat.rs."""
@@ -320,7 +345,7 @@ def canon(plan, _p={}):
     d.pop("name", None)
     if d.get("@") == "util:":
         full = {k: f"{v:.3g}" for k, v in util_weights().items()}
-        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0"})
+        full.update({"shop": STRAT_DEFAULTS["shop"], "cards": "1", "aim": "1", "kite": "0", "split": "0", "group": "4", "want": "", "mop": "0", "grow": "0", "regroup": "0", "spare": "0"})
     else:
         full = dict(STRAT_DEFAULTS)
         full.update({k: v for k, v in dials_of(_p.get(d.get("@", ""), "")).items() if k != "@"})
@@ -514,9 +539,15 @@ def sync(binary, push_results, now=False):
         if go:
             LAST_PUSH = time.time()
     if git("fetch", "-q", "origin", BRANCH).returncode == 0:
-        if git("rebase", "-q", "FETCH_HEAD").returncode != 0:
+        # A machine with no git name cannot replay its own result commits
+        # (11-20: since results are pushed hourly there are some to replay,
+        # and the PC took no new commits from 15:19Z until a push, which
+        # passes a name). Same name as push().
+        who = [] if git("config", "user.email").stdout.strip() else ["-c", "user.name=Strategy league", "-c", "user.email=strategy-league@localhost.invalid"]
+        r = git(*who, "rebase", "-q", "FETCH_HEAD")
+        if r.returncode != 0:
             git("rebase", "--abort")
-            log("worker: could not take the branch's new commits: " + git("status", "--short").stdout[-300:])
+            log("worker: could not take the branch's new commits: " + (r.stderr or r.stdout)[-300:])
     if built_from() != BUILT:
         log(f"worker: the game's code changed (now {git('rev-parse', '--short', 'HEAD').stdout.strip()}); building")
         build()
@@ -545,13 +576,27 @@ def build():
         log("worker: the build failed; playing on with the last binary: " + b.stderr[-600:])
 
 def pending(jobs_path, out_path):
-    jobs = [tuple(l.split()) for l in open(jobs_path) if l.strip() and not l.startswith("#")]
+    """The games of a job file not yet played. A file whose comment lines
+    say `code-bound` counts only games played on the current build (11-20:
+    main's Heavier shots fix and new clock came in while jobs were queued;
+    a job whose base and variants straddle two games compares nothing),
+    so a new build plays it again and its rows are told apart by `code`.
+    Codes named on that line (`# code-bound: 1eec8cf8f4b3`) count too: a
+    build that changes only a dial its jobs leave at its default plays the
+    same games, so the rows it has keep (11-20 18:00Z, `fire` became a
+    share)."""
+    lines = [l for l in open(jobs_path) if l.strip()]
+    bound = any(l.startswith("#") and "code-bound" in l for l in lines)
+    also = {w for l in lines if l.startswith("#") and "code-bound" in l for w in re.findall(r"\b[0-9a-f]{12}\b", l)}
+    jobs = [tuple(l.split()) for l in lines if not l.startswith("#")]
     done = set()
     if os.path.exists(out_path):
         for l in open(out_path):
             try:
                 r = json.loads(l)
             except json.JSONDecodeError:
+                continue
+            if bound and r.get("code") != CODE and r.get("code") not in also:
                 continue
             if "error" not in r or r.get("code") == CODE:
                 done.add(r["job"])
@@ -580,10 +625,14 @@ def read_cfg(path):
             cfg[k.strip()] = v.strip()
     return cfg
 
+EVOLVE_NEXT = 0
+
 def next_work(chunk):
     """The next games: the first job file in queue/pc/ (by name) with games
-    left, else the next games of the search that queue/pc-evolve.txt sets.
-    Returns (games, results file) or None."""
+    left, else the next chunk of one of the searches that the files
+    queue/pc-evolve*.txt set, taking them in turn (11-20: planet 2 and
+    planet 3 side by side). Returns (games, results file) or None."""
+    global EVOLVE_NEXT
     if os.path.isdir(QUEUE):
         for name in sorted(os.listdir(QUEUE)):
             if name.endswith(".txt"):
@@ -591,9 +640,19 @@ def next_work(chunk):
                 todo = pending(os.path.join(QUEUE, name), out)
                 if todo:
                     return todo[:chunk], out
-    cfg_path = os.path.join(HERE, "queue", "pc-evolve.txt")
-    if not os.path.exists(cfg_path):
-        return None
+    cfgs = sorted(glob.glob(os.path.join(HERE, "queue", "pc-evolve*.txt")))
+    for i in range(len(cfgs)):
+        k = (EVOLVE_NEXT + i) % len(cfgs)
+        w = search_work(cfgs[k], chunk)
+        if w:
+            EVOLVE_NEXT = (k + 1) % len(cfgs)
+            return w
+    return None
+
+def search_work(cfg_path, chunk):
+    """The next chunk of the search that file `cfg_path` sets, breeding its
+    next generation when the last one is played. None when it has nothing
+    new to play."""
     c = read_cfg(cfg_path)
     d = os.path.join(OUT, c["name"])
     os.makedirs(d, exist_ok=True)

@@ -1659,6 +1659,9 @@ pub struct Engine {
     /// None off (no walker is condensed, and the bite cells are counted
     /// only for lumps). Sent in the lump row's second word.
     pub strikers: Option<f32>,
+    /// The walkers the condensed strikers held at the last `condense`
+    /// (`World::mass` adds them back).
+    pub striker_held: u32,
     /// A fort mask is written and marks some block (`write_fort`,
     /// 2026-11-18): only then is the fort's flag sent (Params word 888),
     /// so with no fort a walker reads no word for it.
@@ -2019,6 +2022,7 @@ impl Engine {
             wave_w: 0.0,
             heart: None,
             strikers: None,
+            striker_held: 0,
             forted: false,
             mind_until: mind_until(&d),
             clouded: false,
@@ -3763,7 +3767,7 @@ impl Engine {
     /// with it). Returns the condensed walkers living before it ran, what
     /// they held, and the walkers it took in. GPU only (the owner's 11-17
     /// 19:21Z card): no CPU twin.
-    pub fn condense(&self, shared: &Shared, reach: f32, share: f32) -> (u32, u32, u32) {
+    pub fn condense(&mut self, shared: &Shared, reach: f32, share: f32, most: u32) -> (u32, u32, u32) {
         let Some(haste) = self.strikers else { return (0, 0, 0) };
         let b = crate::mould::big::RAID_BLOCK;
         let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
@@ -3773,12 +3777,14 @@ impl Engine {
         }
         // Bit 31: by the units' walking distance, where it is kept.
         let walk = if self.dish.units_field.is_empty() { 0 } else { 1 << 31 };
-        let r2 = ((reach.max(0.0) * reach.max(0.0)) as u32).min(0x7FFF_FFFF) | walk;
+        let r2 = ((reach.max(0.0) * reach.max(0.0)) as u32).min(0xFF_FFFF) | most.clamp(1, 15) << 24 | walk;
         self.queue.write_buffer(&self.params, LUMP_AT as u64, &u32_bytes(&[1, haste.to_bits(), r2, share.clamp(0.0, 1.0).to_bits()]));
         self.queue.write_buffer(&self.wstat, 32, &[0u8; 12]);
         self.run(shared, &[(CONDENSE, self.n.div_ceil(256)), (CONDLEAD, (nb as u32).div_ceil(256))]);
         let w = read_back_range(&self.device, &self.queue, &self.wstat, 32, 12);
         let v: Vec<u32> = w.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        // What they hold now: what they held, and what this pass took in.
+        self.striker_held = v[1] + v[2];
         (v[0], v[1], v[2])
     }
 
