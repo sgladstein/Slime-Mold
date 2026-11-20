@@ -26,8 +26,8 @@ errand, and how long they stand still on the way.
 | --- | --- | --- | --- | --- | --- |
 | formed | 6 | 4 | 4 | 3 | 17 |
 | reached squad (<20 units) | 2 | 1 | 0 | 0 | 3 |
-| came within 30 units of its errand | 0 | 0 | 0 | 0 | 0 |
-| got to its errand | 0 | 0 | 0 | 0 | 0 |
+| came within 30 units of its errand | 0 | 0 | 0 | 1 | 1 |
+| got to its errand | 0 | 0 | 0 | 1 | 1 |
 | took food | 0 | 0 | 0 | 0 | 0 |
 | stalled 10 s or more | 2 | 2 | 2 | 3 | 9 |
 | stood still 10 s+ (seconds) | 25 | 78 | 84 | 71 | 258 |
@@ -37,8 +37,9 @@ errand, and how long they stand still on the way.
 | ended Fizzled | 0 | 0 | 0 | 0 | 0 |
 | still alive | 2 | 1 | 2 | 2 | 7 |
 
-- No leech, sapper or wanderer came within 30 world units of its errand;
-  the leeches' pumps were 150 to 250 units away.
+- No leech or sapper came within 30 world units of its errand (one
+  wanderer rooted on its crystal); the leeches' pumps were 150 to 250
+  units away.
 - 9 of 17 stood 10 s or more within 3 units of where they were (258 s in
   all), pressed on rock, a fort's ring, a river's edge, or with the tail
   wedged in packed slime and the leash holding the head back.
@@ -97,18 +98,18 @@ history) gave 6 reached the squad, 4 stalled 10 s+ (133 s), 0 swallowed.
 | --- | --- | --- | --- | --- | --- |
 | formed | 7 | 4 | 2 | 5 | 18 |
 | reached squad (<20 units) | 4 | 0 | 0 | 3 | 7 |
-| came within 30 units of its errand | 0 | 1 | 0 | 1 | 2 |
-| got to its errand | 0 | 0 | 0 | 0 | 0 |
+| came within 30 units of its errand | 0 | 1 | 0 | 2 | 3 |
+| got to its errand | 0 | 0 | 0 | 2 | 2 |
 | took food | 0 | 0 | 0 | 0 | 0 |
 | stalled 10 s or more | 0 | 1 | 1 | 0 | 2 |
-| stood still 10 s+ (seconds) | 6 | 13 | 19 | 1 | 39 |
+| stood still 10 s+ (seconds) | 6 | 13 | 19 | 2 | 40 |
 | swallowed by a march | 0 | 0 | 0 | 0 | 0 |
 | ended Broken | 4 | 0 | 1 | 1 | 6 |
 | ended Spent | 0 | 2 | 1 | 1 | 4 |
 | ended Fizzled | 0 | 0 | 0 | 0 | 0 |
 | still alive | 3 | 2 | 0 | 3 | 8 |
 
-- Standing still: 258 s to 39 s; bosses stalled 10 s or more: 9 to 2.
+- Standing still: 258 s to 40 s; bosses stalled 10 s or more: 9 to 2.
 - Reached the squad: 3 to 7 (hunters 2 to 4, wanderers 0 to 3).
 - Swallowed by a march: 3 to 0.
 - Still no errand reached in 5:00: the planet 3 leech came within 18 units
@@ -137,3 +138,45 @@ The Mortar first (sits at the slime's edge and lobs spores at the nearest
 soldier or building past gun range; from planet 4, after Milestone 1), the
 Pinwheel second (a hunter whose arms sweep round); a bounty for a kill; an
 off-screen tell when one forms; a size that follows the squad.
+
+## Follow-up: a leech or sapper forms by its errand (Direction's call, 11-20)
+
+Direction's first rule, a leech or sapper drawn only when its pump or wall
+is within reach of where it forms, drew none at all in the same nine games
+at a reach of 100 or of 180 world units (2 units a second times the 90 s
+trip): no pump or wall stood that near a crowded knot (planet 3, run
+1795119328: the nearest pump 196 units off at 72 s). Dropped. Direction's
+pick instead: the kind is drawn first, and a crowd's leech or sapper forms
+at the crowded knot nearest its pump or wall (`Game::form_boss`,
+`Game::crowded_knot` with the errand); the others keep the knot nearest
+the player; all four kinds and the 90 s trip stay. The kind is now drawn
+before the grade, so a seed's bosses differ from before.
+
+The same nine games (`knot` lines in `census/`):
+
+| | hunter | leech | sapper | wanderer | all |
+| --- | --- | --- | --- | --- | --- |
+| formed | 6 | 3 | 1 | 4 | 14 |
+| reached squad (<20 units) | 3 | 2 | 0 | 1 | 6 |
+| came within 30 units of its errand | 0 | 0 | 1 | 1 | 2 |
+| got to its errand | 0 | 0 | 1 | 1 | 2 |
+| took food | 0 | 0 | 0 | 0 | 0 |
+| stalled 10 s or more | 0 | 1 | 1 | 0 | 2 |
+| stood still 10 s+ (seconds) | 0 | 14 | 17 | 0 | 31 |
+| swallowed by a march | 0 | 0 | 0 | 0 | 0 |
+| ended Broken | 4 | 1 | 1 | 3 | 9 |
+| ended Spent | 0 | 0 | 0 | 1 | 1 |
+| ended Fizzled | 0 | 0 | 0 | 0 | 0 |
+| still alive | 2 | 2 | 0 | 0 | 4 |
+
+- Leeches and sappers: 6 formed (4 and 2) before, 4 (3 and 1) now; got to
+  their errand 0 before, 1 now (a sapper on its wall at 4:53, run
+  1795106014 planet 3).
+- The leeches now form 50 to 130 units from a pump, but the bot keeps its
+  pumps by its squad and builds new ones meanwhile, so by the time a leech
+  has gathered its nearest pump has moved and the squad stands between:
+  2 of 3 met the squad on the way (planet 3: a leech of 495 formed 56
+  units from a pump and was shot to 475 with 389 hurt by the squad round
+  it). A leech that reaches a pump has to come through the guns that
+  guard it, which reads as intended.
+- Standing still 40 s to 31 s; no boss swallowed by a march.

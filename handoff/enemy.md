@@ -38,6 +38,11 @@ After, merged with main, same nine games: 7 of 18 reached the squad,
 39 s stood still against 258, none swallowed; no errand reached in 5:00
 (pumps 150-250 units off; the trip or a nearer pick is tuning, unreviewed).
 
+Follow-up (Direction's call): the kind is drawn before the knot, and a
+crowd's leech or sapper forms at the crowded knot nearest its errand
+(`crowded_knot(Some(&boss))`). Drawing them only with a target within
+100 or 180 units drew none at all on these maps (dropped).
+
 Known limit: a lump has one aim, so on a rock bar a third of a body stays
 pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
 Proposals in the report and the owner's doc: the Mortar first from planet

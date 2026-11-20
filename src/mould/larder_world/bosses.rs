@@ -633,7 +633,7 @@ impl<W: World> Game<W> {
         if now < next || self.bosses.live.len() >= r.most.min(LUMPS) {
             return;
         }
-        if let Some(at) = self.crowded_knot() {
+        if let Some(at) = self.crowded_knot(None) {
             self.bosses.next = Some(now + gap(&mut self.bosses, r.every, r.every_sd));
             self.form_boss(at, r.reach, BossCause::Crowd);
         }
@@ -801,6 +801,23 @@ impl<W: World> Game<W> {
     /// first free lump, its grade drawn (`BossRules::grade_lo`); false with
     /// none free.
     pub fn form_boss(&mut self, at: (f32, f32), reach: f32, cause: BossCause) -> bool {
+        // Its kind first. A crowd's leech or sapper forms at the crowded
+        // knot nearest its pump or wall (Direction's call, 2026-11-20): from
+        // the knot nearest the player their errands were 150 to 250 world
+        // units off, walked at 1 to 4 units a second, and none of six on
+        // the owner's nine maps got there inside its `trip`. Drawing them
+        // only with a target within reach (Direction's first rule) drew
+        // none at all: no pump or wall stood within 180 units of a knot.
+        let now = self.world.ticks();
+        let r = self.rules.boss;
+        let mut b = Boss { lump: 0, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade: 0.0, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        b.kind = self.pick_kind(&b);
+        let mut at = at;
+        if cause == BossCause::Crowd && matches!(b.kind, BossKind::Leech | BossKind::Sapper) {
+            if let Some(p) = self.crowded_knot(Some(&b)) {
+                at = p;
+            }
+        }
         // Never on a march (`RaidRules::march`): a lump forming takes every
         // walker in its reach from its lump, and a march is both a crowded
         // knot and a part away from food.
@@ -816,15 +833,12 @@ impl<W: World> Game<W> {
         }
         // A lump no boss, march or fruit holds.
         let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
-        let r = self.rules.boss;
         let (lo, hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
         let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();
         self.world.form_lump(lump, Some((at, r.reach_at(reach, grade))));
         let cell = crate::mould::larder_world::raid_cell(at, self.world.size());
         self.world.set_lump(lump, Lump { aim: cell, leash: r.leash_at(r.clench, grade), armour: r.armour_at(grade), bite: r.bite_at(grade), ..Lump::default() });
-        let now = self.world.ticks();
-        let mut b = Boss { lump, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
-        b.kind = self.pick_kind(&b);
+        (b.lump, b.at, b.centre, b.grade) = (lump, at, at, grade);
         self.bosses.live.push(b);
         true
     }
@@ -1055,8 +1069,10 @@ impl<W: World> Game<W> {
 
     /// A crowded knot (fine cells): of the squares whose square of side
     /// 2 `reach` + 1 round them is at least `crowd` full, one picked
-    /// weighted by how full, away from the live mini-bosses.
-    fn crowded_knot(&mut self) -> Option<(f32, f32)> {
+    /// weighted by how full, away from the live mini-bosses. With `errand`
+    /// (a leech or sapper drawn there), the one nearest its pump or wall
+    /// instead (`Game::form_boss`).
+    fn crowded_knot(&mut self, errand: Option<&Boss>) -> Option<(f32, f32)> {
         let r = self.rules.boss;
         let sc = self.world.scale();
         let (g, gw, gh, bin) = self.boss_grid()?;
@@ -1114,6 +1130,11 @@ impl<W: World> Game<W> {
                 b as f64 * w as f64
             })
             .collect();
+        if let Some(e) = errand {
+            let to_goal = |p: (f32, f32)| self.boss_goal(&Boss { centre: p, ..*e }).map_or(f32::INFINITY, |g| (g.0 - p.0).hypot(g.1 - p.1));
+            let i = sums.iter().zip(&weights).filter(|(_, &w)| w > 0.0).map(|(s, _)| (s.0, to_goal(at(s.0)))).filter(|s| s.1.is_finite()).min_by(|a, c| a.1.total_cmp(&c.1))?.0;
+            return Some(at(i));
+        }
         let total: f64 = weights.iter().sum();
         let mut pick = self.bosses.rng.f32() as f64 * total;
         let i = sums.iter().zip(&weights).find(|(_, &w)| {
