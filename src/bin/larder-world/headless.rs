@@ -613,7 +613,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if let Some(g) = app.game.as_ref() {
                 for b in g.bosses.live.iter().filter(|b| !bosses_born.contains(&b.born) && b.cause != slime_mould::mould::larder_world::BossCause::Staged) {
                     let r = &g.rules.boss;
-                    println!("  boss t {:.1} s: {:?} {} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.kind.name(), b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
+                    println!("  boss t {:.1} s: {:?} {} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}{}", g.time(), b.cause, b.kind.name(), b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade), if g.boss_late() { "; late" } else { "" });
                 }
             }
             // Each mini-boss once a game second, and each one that ends

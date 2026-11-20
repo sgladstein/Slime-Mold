@@ -4431,3 +4431,24 @@ fn a_mortar_with_no_clear_line_walks_until_it_has_one() {
     assert!(walked && b.walked > 0.0, "it walked on its trip: {b:?}");
     assert!(near(&g, b.centre) < before - 20.0, "toward the squad: {before} -> {}", near(&g, b.centre));
 }
+
+#[test]
+fn a_late_mini_boss_is_a_strong_one() {
+    // Under `late` of its peak, the slime's mini-bosses are drawn from
+    // `late_grade` up; before that, from the whole range.
+    let draw = |late: bool| {
+        let mut g = small(2);
+        g.rules.boss = BossRules { least: 1, grade_lo: 0.0, grade_hi: 1.0, kind: 1.0, ..BossRules::default() };
+        g.peak = if late { g.mould * 10 } else { g.mould };
+        assert_eq!(g.boss_late(), late);
+        let w = &g.world;
+        let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+        let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+        assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+        g.bosses.live[0].grade
+    };
+    let (early, late) = (draw(false), draw(true));
+    eprintln!("grade early {early:.2}, late {late:.2}");
+    assert!(late >= BossRules::default().late_grade, "late {late}");
+    assert!(late > early, "the same draw, raised: {early} -> {late}");
+}

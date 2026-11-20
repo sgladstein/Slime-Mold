@@ -108,6 +108,13 @@ pub struct BossRules {
     /// 1 + `faster`).
     pub grade_lo: f32,
     pub grade_hi: f32,
+    /// **Late in a planet** (the owner, 11-20: a late-game army crushes
+    /// mini-bosses without trouble; the balance thread's brief): once the
+    /// slime is under `late` of its peak mass (the strikers' 0.4,
+    /// `StrikerRules::below`), each one's grade is drawn from at least
+    /// `late_grade`, so the last ones are the strongest.
+    pub late: f32,
+    pub late_grade: f32,
     pub armour_lo: f32,
     pub armour_hi: f32,
     pub bite_lo: f32,
@@ -270,6 +277,8 @@ impl Default for BossRules {
             near: 40.0,
             grade_lo: 0.0,
             grade_hi: 1.0,
+            late: 0.4,
+            late_grade: 0.8,
             // 4 to 15 blows a member against ordinary slime's 1, and
             // touching as 2 to 5 walkers. Packed as it is, each shot that
             // lands blows about 30 members at once (planet 3, seed 1, 8
@@ -1022,7 +1031,11 @@ impl<W: World> Game<W> {
         }
         // A lump no boss, march or fruit holds.
         let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
-        let (lo, hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
+        let (mut lo, mut hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
+        if self.boss_late() {
+            lo = lo.max(r.late_grade.clamp(0.0, 1.0));
+            hi = hi.max(lo);
+        }
         let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();
         self.world.form_lump(lump, Some((at, r.reach_at(reach, grade))));
         let cell = crate::mould::larder_world::raid_cell(at, self.world.size());
@@ -1420,6 +1433,12 @@ impl<W: World> Game<W> {
             out[b.lump] = word(b) | 1 << 8 | ((gone * 127.0).round() as u16) << 9;
         }
         out
+    }
+
+    /// Late in the planet (`BossRules::late`): the slime under that share
+    /// of its peak mass.
+    pub fn boss_late(&self) -> bool {
+        self.peak > 0 && (self.mould as f32) < self.rules.boss.late * self.peak as f32
     }
 
     /// Where the player's things stand (fine cells): live soldiers and
