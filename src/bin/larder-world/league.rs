@@ -134,6 +134,8 @@ struct Played {
     stars: u8,
     secs: f32,
     line: String,
+    /// Shop points from starfall and boss cores (`Game::starfall`).
+    found: u32,
 }
 
 /// Plays the run's current planet with plan `spec` to its verdict or
@@ -245,7 +247,8 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
         // Where the last walkers were, when a game ends with a few left.
         if how != "won" && g.mould <= 50 { strat::remnant(g) } else { "-".to_string() }
     );
-    Ok(Played { how, stars, secs: end, line })
+    let found = g.starfall.earned();
+    Ok(Played { how, stars, secs: end, line, found })
 }
 
 /// `league=DEPTH:SEED[:SECS]` (see the module's docs).
@@ -279,6 +282,7 @@ pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, d
             break;
         }
         won += 1;
+        r.found(out.found);
         r.won(out.stars.max(1));
         if r.over || r.depth > to {
             break;

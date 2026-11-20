@@ -932,6 +932,8 @@ impl App {
     pub(super) fn carry_on(&mut self) -> Result<(), String> {
         let Some(v) = self.mission.as_ref().and_then(|t| t.verdict) else { return Ok(()) };
         let Some(mut r) = self.args.run.clone() else { return Ok(()) };
+        // What the squad took from starfall and boss cores (`Game::starfall`).
+        r.found(self.game.as_ref().map_or(0, |g| g.starfall.earned()));
         if v.stars > 0 {
             r.won(v.stars);
         } else {

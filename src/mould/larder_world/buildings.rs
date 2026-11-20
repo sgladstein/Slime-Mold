@@ -401,6 +401,8 @@ pub(super) enum Who {
     Soldier(usize),
     Larder,
     Building(usize),
+    /// What lies on the ground (`starfall.rs`): a fall or a core.
+    Drop(usize),
 }
 
 impl<W: World> Game<W> {
