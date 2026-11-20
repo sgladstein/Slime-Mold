@@ -756,7 +756,16 @@ impl<W: World> Game<W> {
         }
         for k in 0..self.buildings.len() {
             let bd = self.buildings[k];
-            self.buildings[k].working = false;
+            // A pump's `working` is decided after the frame
+            // (`building_out`), so it is not cleared here: the window
+            // draws while the GPU runs the frame (`begin_step` then
+            // `finish_step` apart), and clearing it here put every
+            // pump's lamps and charge out for one drawn frame in two, a
+            // rapid blink (owner, 2026-11-20: "The crystal pump rapid
+            // blinking looks bad").
+            if bd.kind != Kind::Pump {
+                self.buildings[k].working = false;
+            }
             if !bd.alive || matches!(bd.kind, Kind::Wall { .. }) {
                 continue;
             }
@@ -957,6 +966,10 @@ impl<W: World> Game<W> {
         bd.dense = u.dense;
         bd.drew = 0.0;
         let (up, kind, crystal) = (bd.up(), bd.kind, bd.crystal);
+        if kind == Kind::Pump {
+            // Cleared here, not before the frame (`building_units`).
+            bd.working = false;
+        }
         if up && kind == Kind::Pump {
             if let Some(c) = crystal.filter(|&c| self.pump_flows(c)) {
                 let food = self.pump_draw(k) * dt * self.pump_yield(k);
@@ -1402,6 +1415,13 @@ mod tests {
         assert!(g.world.crystals()[c].1 >= charge - 1e-3 * charge, "{} of {charge} left", g.world.crystals()[c].1);
         assert_eq!(g.taken[c], 0.0, "the pump took no charge");
         assert!(g.last_takes.iter().any(|t| t.by.is_none() && t.crystal == c), "the crystal's working spot lights");
+        // The window draws between `begin_step` and `finish_step`: a pump
+        // that is working stays lit there too, or it blinks (2026-11-20).
+        assert!(g.buildings[0].working, "the pump works");
+        g.begin_step();
+        assert!(g.buildings[0].working, "a pump stays lit while the frame runs");
+        g.finish_step();
+        assert!(g.buildings[0].working, "and after it");
     }
 
     #[test]
