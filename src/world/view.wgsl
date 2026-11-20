@@ -1536,6 +1536,29 @@ fn look_trail(x: f32, y: f32) -> f32 {
     return t / ws;
 }
 
+// The trail, bilinear: four reads, for a look on every bare pixel.
+fn trail_lin(x: f32, y: f32) -> f32 {
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let fx = ux - floor(ux); let fy = uy - floor(uy);
+    let a = mix(byte(look[cidx(ix, iy)], 0u), byte(look[cidx(ix + 1, iy)], 0u), fx);
+    let b = mix(byte(look[cidx(ix, iy + 1)], 0u), byte(look[cidx(ix + 1, iy + 1)], 0u), fx);
+    return mix(a, b, fy);
+}
+
+// The barrens' dust tracks (`shaded`): the trail that starts and fills a
+// track, how much of the way to worn dust a full track goes, and the
+// dust's lift over the soil.
+const DUST_TRAIL: vec2<f32> = vec2<f32>(0.02, 0.2);
+const DUST: f32 = 0.8;
+const DUST_LIFT: f32 = 1.3;
+// The fen's slick (`shaded`): how much darker the wet mud's own colour
+// goes, the cool sheen of the sky on it (on mud already near black a
+// darker trail alone did not show), and its glints' light.
+const SLICK_DARK: f32 = 0.3;
+const SLICK_SHEEN: vec3<f32> = vec3<f32>(14.0, 20.0, 24.0);
+const SLICK_GLINT: vec3<f32> = vec3<f32>(100.0, 110.0, 105.0);
+
 // ---- Mini-boss bodies (2026-11-16) ----
 //
 // A mini-boss is a lump of the slime's own walkers held together and
@@ -2631,6 +2654,28 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let under = 1.0 - smoothstep(0.004, 0.05, th_here);
     let sd = soil_detail(x, y, exp(-30.0 * th_here) * under * m.vis);
     m.albedo = (m.albedo + sd.yzw) * sd.x;
+    // The barrens' trait (Look C, 2026-11-20): the slime's trail scuffs the
+    // dust, so the lanes its threads run along stay on the bare ground as
+    // pale worn tracks with the hardpan's seams rubbed out, fading as the
+    // trail does. Only on bare land: under the film it is the slime's.
+    // The fen's (the same day): the trail leaves the mud wet and slick,
+    // darker, with the key light caught in pin glints along it, as a
+    // snail's track shines.
+    if ((P.flora == 1u || P.flora == 2u) && under * m.vis > 0.01) {
+        let tr = trail_lin(x, y);
+        if (tr > DUST_TRAIL.x && (ground[cidx(i32(floor(x)), i32(floor(y)))] & 15u) != WET) {
+            let k = smoothstep(DUST_TRAIL.x, DUST_TRAIL.y, tr) * under * m.vis;
+            if (P.flora == 1u) {
+                let flat = m.albedo / max(sd.x, 0.5);
+                let grain = 1.0 + 0.06 * (vnoise(vec2<f32>(x, y) * 2.9 + 31.0) - 0.5) * 2.0 * smoothstep(5.0, 9.0, P.zoom);
+                m.albedo = mix(m.albedo, flat * DUST_LIFT * grain, DUST * k);
+            } else {
+                let q = vec2<f32>(0.8 * x - 0.6 * y, 0.6 * x + 0.8 * y);
+                let glint = smoothstep(0.86, 0.96, vnoise(q * 3.7 + 51.0)) * smoothstep(4.0, 8.0, P.zoom);
+                m.albedo = m.albedo * (1.0 - SLICK_DARK * k) + (SLICK_SHEEN + SLICK_GLINT * glint) * k;
+            }
+        }
+    }
     // Burnt ground, then the plants, at this pixel and under the slime
     // (`vis`): one B-spline of the plant fields (`plant_px`), which the
     // fire below shares.
