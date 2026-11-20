@@ -2,11 +2,12 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-18
+updated: 2026-11-20
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/enemy-switches-2026-11-17/README.md
   - Reports/flinch-2026-11-15/README.md
+  - Reports/fruiting-2026-11-20/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-steering-2026-11-17/README.md
@@ -31,7 +32,10 @@ sources:
   - Reports/whole-game-review-2026-11-15/README.md
 code:
   - BossRules::for_depth
+  - FruitRules
   - Game::boss_aim
+  - Game::fruit_looks
+  - Game::lump_taken
   - LADDER
   - LURE_PULL
   - LureMark
@@ -74,6 +78,7 @@ code:
   - surge_secs
   - tier_size
   - time_fort
+  - time_fruit
   - time_lure_paths
   - two_stars
 ---
@@ -118,6 +123,10 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 
 Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
+
+## Fruiting
+
+On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is just lots of shooting through masses of uniform orange. Think outside the box"): when the squad is winning, the slime streams 8% of itself (at most 2,500 walkers) into a knot at its thickest slime out of the guns' reach (`larder_world/fruit.rs`, `FruitRules`, on every run planet by `ENEMY_RULES`). The knot is a lump (`Game::lump_taken`: bosses, marches and fruits share `big::LUMPS`) whose members take two blows, it swells to twice its first size, and it is drawn umber, darkening as it ripens (`LumpLook::Fruit`, its strength the ripeness, `Game::fruit_looks`). After 30 s it bursts and every walker in it flies out as a spore that homes on food and lands as living slime (`World::sow`, the engine's `sow_pass`; GPU only); shot under 35% of its most members it breaks. It starts from 1:30 after the landing once kills over 30 s reach a fifth of the slime's mass (a fall under its peak, `below`, is off: on planet 3 it fired against a squad of four nowhere near), and not under 8% of its peak; one at a time, 40 s apart ([report](../../Reports/fruiting-2026-11-20/README.md)).
 
 ## Ending early, the play log, pressure by depth
 

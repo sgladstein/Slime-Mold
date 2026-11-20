@@ -560,8 +560,13 @@ impl<W: World> Game<W> {
         if self.raids.marching.iter().any(on) {
             return false;
         }
-        // A lump no boss and no march holds.
-        let Some(lump) = (0..LUMPS).find(|&l| self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).all(|b| b.lump != l) && self.raids.marching.iter().all(|m| m.lump != l)) else { return false };
+        // Nor on a ripening fruit (`fruit.rs`, 2026-11-20), for the same
+        // reason.
+        if self.fruits.live.is_some_and(|f| (f.centre.0 - at.0).hypot(f.centre.1 - at.1) < (f.members as f32 / std::f32::consts::PI).sqrt() + 2.0 * reach * sc) {
+            return false;
+        }
+        // A lump no boss, march or fruit holds.
+        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
         let r = self.rules.boss;
         let (lo, hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
         let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();

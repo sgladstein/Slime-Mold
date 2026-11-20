@@ -454,6 +454,7 @@ impl<W: World> Game<W> {
             self.time_lure_paths();
             self.time_fort();
             self.time_bosses();
+            self.time_fruit();
         }
         self.campaign_rules(now - t);
         self.check_end();

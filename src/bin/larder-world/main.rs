@@ -2067,6 +2067,13 @@ impl App {
                     *l = LumpBody { at: b.centre, look, strength: ((code >> 4) & 15) as f32 / 15.0, remain, fill: take / (take + LEECH_HALF), held };
                 }
             }
+            // The fruit (`fruit.rs`, 2026-11-20): its own look, its
+            // strength its ripeness, its members' density carrying it.
+            if let Some((l, at, ripe)) = g.fruit_looks() {
+                if let Some(b) = lumps.get_mut(l) {
+                    *b = LumpBody { at, look: LumpLook::Fruit, strength: ripe, remain: 1.0, fill: 0.0, held: 1.0 };
+                }
+            }
             v.set_lumps(&lumps);
         }
         self.marks();

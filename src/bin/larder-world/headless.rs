@@ -662,6 +662,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let go = (m.centre.0 - m.to.0).hypot(m.centre.1 - m.to.1) / g.world.scale();
                     println!("  march t {:.0} s: lump {}, {} members (first {}), at {:.0},{:.0}, spread {tight:.2}, {go:.0} cells to go", g.time(), m.lump, m.members, m.first, m.centre.0, m.centre.1);
                 }
+                // The fruit ripening (`fruit.rs`, 2026-11-20): its members,
+                // centre, ripeness and nearest soldier (world units), and
+                // how the last one ended.
+                if let Some(f) = g.fruits.live {
+                    let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - f.centre.0).hypot(s.y - f.centre.1)).fold(f32::INFINITY, f32::min);
+                    println!("  fruit t {:.0} s: lump {}, {} members (most {}), at {:.0},{:.0}, ripe {:.2}; nearest soldier {near:.1}", g.time(), f.lump, f.members, f.most, f.centre.0, f.centre.1, f.ripe);
+                }
+                if let Some((t, how, n)) = g.fruits.last.filter(|l| l.0 + g.rules.tps as u64 > g.world.ticks()) {
+                    println!("  fruit ended t {:.1} s: {how:?} with {n} members ({} burst, {} broken, {} walkers sown in all)", t as f32 / g.rules.tps as f32, g.fruits.burst, g.fruits.broken, g.fruits.sown);
+                }
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
                 let g = app.game.as_ref().unwrap();

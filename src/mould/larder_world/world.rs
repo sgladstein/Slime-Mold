@@ -165,6 +165,16 @@ pub trait World {
     fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
         [None; crate::mould::big::LUMPS]
     }
+    /// **Sowing** (2026-11-20, `fruit.rs`): every walker within `r` dish
+    /// cells of `at` (fine cells) leaves as a spore thrown straight out for
+    /// `steps` steps, which homes on food and lands as living slime
+    /// (`gpu::Engine::sow_pass`). A world that cannot (`can_sow` false: the
+    /// CPU engine, which takes no new slime rules) ignores it.
+    fn sow(&mut self, _at: (f32, f32), _r: f32, _steps: u16) {}
+    /// Whether `sow` does anything, so a world that cannot never fruits.
+    fn can_sow(&self) -> bool {
+        false
+    }
     /// The ground a raid walks (the slime's agar, `w` x `h` fine cells),
     /// copied so the game can build the raid's way round walls off the
     /// frame; None for a world with no raids.

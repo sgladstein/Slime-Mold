@@ -587,6 +587,11 @@ pub struct Rules {
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
     /// and `boss_cut` 0); a run sets `BossRules::for_depth`.
     pub boss: super::BossRules,
+    /// **Fruiting** (2026-11-20; `fruit.rs`): hurt, the slime streams
+    /// into a knot out of the guns' reach that ripens and bursts into
+    /// spores over the planet. Off here; a run turns it on
+    /// (`run::ENEMY_RULES`). GPU only.
+    pub fruit: super::FruitRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -650,6 +655,23 @@ impl Rules {
             self.funnel = v > 0.0;
             return true;
         }
+        // Fruiting (`FruitRules`, 2026-11-20): `fruit=1` on; `fruit_armour`
+        // and `fruit_throw` whole numbers.
+        match name {
+            "fruit" => {
+                self.fruit.on = v > 0.0;
+                return true;
+            }
+            "fruit_armour" => {
+                self.fruit.armour = v.clamp(0.0, 15.0) as u32;
+                return true;
+            }
+            "fruit_throw" => {
+                self.fruit.throw = v.clamp(2.0, 60000.0) as u16;
+                return true;
+            }
+            _ => {}
+        }
         if name == "unit_paths" {
             self.unit_paths = v > 0.0;
             return true;
@@ -679,6 +701,24 @@ impl Rules {
             "raid_march_stall" => &mut self.raid.march_stall,
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
+            "fruit_first" => &mut self.fruit.first,
+            "fruit_hurt" => &mut self.fruit.hurt,
+            "fruit_window" => &mut self.fruit.window,
+            "fruit_below" => &mut self.fruit.below,
+            "fruit_floor" => &mut self.fruit.floor,
+            "fruit_every" => &mut self.fruit.every,
+            "fruit_size" => &mut self.fruit.size,
+            "fruit_swell" => &mut self.fruit.swell,
+            "fruit_least" => &mut self.fruit.least,
+            "fruit_most" => &mut self.fruit.most,
+            "fruit_ripen" => &mut self.fruit.ripen,
+            "fruit_grow_every" => &mut self.fruit.grow_every,
+            "fruit_grow" => &mut self.fruit.grow,
+            "fruit_quorum" => &mut self.fruit.quorum,
+            "fruit_clear" => &mut self.fruit.clear,
+            "fruit_pull" => &mut self.fruit.pull,
+            "fruit_leash" => &mut self.fruit.leash,
+            "fruit_spread" => &mut self.fruit.spread,
             "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
@@ -848,6 +888,7 @@ impl Default for Rules {
             unit_paths: false,
             lure_reach: 60.0,
             boss: super::BossRules::default(),
+            fruit: super::FruitRules::default(),
         }
     }
 }

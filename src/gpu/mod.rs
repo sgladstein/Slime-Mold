@@ -3249,6 +3249,25 @@ impl Engine {
         self.run(shared, &[(FLING, self.n.div_ceil(256))]);
     }
 
+    /// **A sowing** (2026-11-20, a ripe fruit bursting,
+    /// `larder_world::fruit`): every living ordinary or dormant walker
+    /// within `rr` dish cells of (`x`, `y`) (dish cells) leaves as a homing
+    /// spore (`SOWN` in engine.wgsl), thrown straight out from the centre
+    /// for `steps` steps: straight while its timer is over the dish's
+    /// `spore_steps` / 2, then by scent, coming down on food (`spore_land`)
+    /// or where its timer runs out. The fling's pass with `kir` 2; counted
+    /// on the `news` gas word 3, as a fling. GPU only (the owner's 11-17
+    /// 19:21Z card: new slime rules on the GPU engine, no CPU twin).
+    pub fn sow_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, rr: f32, steps: u16) {
+        let k = self.dish.p.scale as f32;
+        self.cycles = true;
+        self.write_params(s, Hand::default(), 0);
+        let rr = rr * k;
+        let inv = 1.0 / (rr * rr).max(1e-6);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, 0.0, inv, rr, 0.0, steps.max(2) as f32, 2.0]));
+        self.run(shared, &[(FLING, self.n.div_ceil(256))]);
+    }
+
     /// The alarm field now (zeros without one).
     /// The crater countdown a cell (the damage memory's first block), read
     /// back: the CPU's `BigDish::scorch`.
