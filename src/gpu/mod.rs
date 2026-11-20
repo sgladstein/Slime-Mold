@@ -217,8 +217,9 @@ const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking 
 
 /// The wall counters' first bytes (`Engine::wstat`): bites, broken cells,
 /// the eviction's moves, the struck, the living walkers, the own mould's,
-/// the cap's two counts, four spare (word 8 held the enemy's condensed
-/// walkers 11-15 to 11-17, for the mass; condensing was deleted). The
+/// the cap's two counts, then the condensed strikers' counts (words 8-10,
+/// `Engine::condense`, 2026-11-20; word 8 held the old condensing's
+/// walkers 11-15 to 11-17) and one spare. The
 /// mould grid follows (`Engine::record_count`), room for squares down to a
 /// game cell or `GRID_MIN` dish cells, whichever is smaller
 /// (`Engine::grid_max`).
@@ -1515,9 +1516,13 @@ pub const READKILL: usize = 68;
 /// The set walkers a cell (E2b, `BigDish::set_cells`): cleared, then counted.
 pub const SETCLEAR: usize = 69;
 pub const SETCOUNT: usize = 70;
+/// Condensed strikers (2026-11-20, `Engine::condense`): the edge facing
+/// the squad condenses, then each block's leader takes what it took in.
+pub const CONDENSE: usize = 71;
+pub const CONDLEAD: usize = 72;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 71] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount",
+pub const PASSES: [&str; 73] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount", "condense", "condlead",
 ];
 
 impl Shared {
@@ -1643,6 +1648,17 @@ pub struct Engine {
     /// walker reads no word for it.
     pub waved: bool,
     pub wave_w: f32,
+    /// **The heartbeat** (2026-11-20, `Game::time_heart`, engine.wgsl's
+    /// `heart_beat`): where it beats from (fine cells), its lean, its
+    /// period in steps and its wavelength in fine cells; None off. Sent in
+    /// the ground row's last two words, the lone step row's second and the
+    /// fling row's second.
+    pub heart: Option<Heart>,
+    /// **Condensed strikers** (2026-11-20, `Game::time_strikers`,
+    /// engine.wgsl's `condense`): a condensed walker's haste as it charges;
+    /// None off (no walker is condensed, and the bite cells are counted
+    /// only for lumps). Sent in the lump row's second word.
+    pub strikers: Option<f32>,
     /// A fort mask is written and marks some block (`write_fort`,
     /// 2026-11-18): only then is the fort's flag sent (Params word 888),
     /// so with no fort a walker reads no word for it.
@@ -2001,6 +2017,8 @@ impl Engine {
             lured: false,
             waved: false,
             wave_w: 0.0,
+            heart: None,
+            strikers: None,
             forted: false,
             mind_until: mind_until(&d),
             clouded: false,
@@ -2395,7 +2413,8 @@ impl Engine {
         // flag (`forted`, 11-18), its last the tether since 11-18
         // (`Settings::tether`).
         let wave = if self.waved { self.wave_w } else { 0.0 };
-        b.extend(u32_bytes(&[wave.to_bits(), 0, self.forted as u32, s.tether]));
+        let heart = self.heart.map_or(0.0, |h| h.lean);
+        b.extend(u32_bytes(&[wave.to_bits(), heart.to_bits(), self.forted as u32, s.tether]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then
@@ -2404,7 +2423,10 @@ impl Engine {
         let r = s.condense_r.clamp(1, 8) as u32;
         assert!(r <= 0xFF, "condense_r fits ccrowd's bits 16-23");
         b.extend(f32_bytes(&[s.fling_deposit]));
-        b.extend(u32_bytes(&[0, s.condense_crowd.min(0xFFFF) | (r << 16), stream(seed, DRAW_ROAM)]));
+        // The first is the heartbeat's clock (2026-11-20): its period in
+        // steps and its wavelength in fine cells, 16 bits each.
+        let clock = self.heart.map_or(0, |h| h.period.min(0xFFFF) | (h.len.min(0xFFFF) << 16));
+        b.extend(u32_bytes(&[clock, s.condense_crowd.min(0xFFFF) | (r << 16), stream(seed, DRAW_ROAM)]));
         // The breakaway row (11-14, the condense thread; Params grew from
         // 912 to 928 for it): steps between chances to leave (0 off), how
         // far the crystal must be and how near a landing is, in whole fine
@@ -2424,7 +2446,9 @@ impl Engine {
         // 2026-11-20).
         b.extend(f32_bytes(&[t.deep_step]));
         b.extend(u32_bytes(&[s.deep_wall as u32]));
-        b.extend(f32_bytes(&[0.0, 0.0]));
+        // The last two, the heartbeat's source (2026-11-20).
+        let at = self.heart.map_or((0.0, 0.0), |h| h.at);
+        b.extend(f32_bytes(&[at.0, at.1]));
         assert_eq!(b.len(), SURGE_AT, "Params rows before the surge row moved");
         let sm = crate::mould::big::SURGE_MAX;
         b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm) | s.surge_dash.min(sm) << 16, s.surge_at]));
@@ -2435,7 +2459,9 @@ impl Engine {
         b.extend(u32_bytes(&raid_row(s, self.dish.p.scale as f32, !self.dish.raid_field.is_empty())));
         assert_eq!(b.len(), LUMP_AT, "Params rows before the lump rows moved");
         self.lumps_on = s.lumps.iter().any(crate::mould::big::Lump::on);
-        b.extend(u32_bytes(&[self.lumps_on as u32, 0, 0, 0]));
+        // The condense pass's reach and share are written by `condense`
+        // alone; a step reads only the haste.
+        b.extend(u32_bytes(&[(self.lumps_on || self.strikers.is_some()) as u32, self.strikers.unwrap_or(0.0).to_bits(), 0, 0]));
         for l in &s.lumps {
             b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), 0]));
         }
@@ -2634,7 +2660,7 @@ impl Engine {
             // come back on (a lump formed) starts from clear cells, and the
             // units read the cells only under the same gate (`P.lump_on`;
             // 11-16, the tech lead's review).
-            if self.lumps_on {
+            if self.lumps_on || self.strikers.is_some() {
                 if !std::mem::take(&mut self.plant_no_clear) {
                     out.push((DCLEAR, self.cells.div_ceil(256), s));
                 }
@@ -3584,6 +3610,18 @@ fn block_words(field: &[u32], w: usize, h: usize) -> Vec<u32> {
     v
 }
 
+/// **The heartbeat** (2026-11-20; `Engine::heart`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Heart {
+    /// Where it beats from, fine cells.
+    pub at: (f32, f32),
+    /// A calm walker's lean outward on the beat (and home between).
+    pub lean: f32,
+    /// Steps a beat, and its wavelength in fine cells.
+    pub period: u32,
+    pub len: u32,
+}
+
 /// Each slot's condensing word as the GPU holds it (`BigDish::dense`).
 impl Engine {
     /// Writes the mirror dish's raid walking distance (`BigDish::
@@ -3714,6 +3752,34 @@ impl Engine {
         assert!(b < crate::mould::big::LUMPS, "lump {b}");
         self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[(b as u32 + 1) | 1 << 8, at.0, at.1]));
         self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
+    }
+
+    /// **Condenses the edge facing the squad** (2026-11-20, engine.wgsl's
+    /// `condense` and `condlead`; `Game::time_strikers`), at once between
+    /// steps: each ordinary walker within `reach` fine cells of a soldier
+    /// (walking, where the units' walking distance is kept) tries with
+    /// chance `share`, and in each block the first takes in up
+    /// to three of the rest. Needs `strikers` on (and the params written
+    /// with it). Returns the condensed walkers living before it ran, what
+    /// they held, and the walkers it took in. GPU only (the owner's 11-17
+    /// 19:21Z card): no CPU twin.
+    pub fn condense(&self, shared: &Shared, reach: f32, share: f32) -> (u32, u32, u32) {
+        let Some(haste) = self.strikers else { return (0, 0, 0) };
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        // Its words are the raid region's third quarter.
+        if 3 * nb > self.cells as usize {
+            return (0, 0, 0);
+        }
+        // Bit 31: by the units' walking distance, where it is kept.
+        let walk = if self.dish.units_field.is_empty() { 0 } else { 1 << 31 };
+        let r2 = ((reach.max(0.0) * reach.max(0.0)) as u32).min(0x7FFF_FFFF) | walk;
+        self.queue.write_buffer(&self.params, LUMP_AT as u64, &u32_bytes(&[1, haste.to_bits(), r2, share.clamp(0.0, 1.0).to_bits()]));
+        self.queue.write_buffer(&self.wstat, 32, &[0u8; 12]);
+        self.run(shared, &[(CONDENSE, self.n.div_ceil(256)), (CONDLEAD, (nb as u32).div_ceil(256))]);
+        let w = read_back_range(&self.device, &self.queue, &self.wstat, 32, 12);
+        let v: Vec<u32> = w.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        (v[0], v[1], v[2])
     }
 
     /// Each lump's (x, y, members) sums as the last tick began (header
