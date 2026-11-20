@@ -63,19 +63,35 @@ def key(job):
 
 DEADLINE = None
 
+# A whole run's planets keep these fields in its row's `planets`.
+RUN_KEYS = ("depth", "tier", "how", "secs", "mould", "start_mould", "peak_mould", "alive", "peak_alive", "bought", "killed", "pumps", "turrets", "walls", "t_rush", "t_regroup")
+
 def run_one(binary, job, timeout):
+    """One job: `PLAN DEPTH SEED SECS` plays one planet; `PLAN run SEED
+    SECS` a whole run from planet 1 until a planet is lost (depth 0 in
+    its row, with each planet in `planets` and the planets won in
+    `won`)."""
     if DEADLINE and time.time() > DEADLINE:
         return None
     plan, depth, seed, secs = job
-    cmd = [binary, f"league={depth}:{seed}:{secs}", f"plan={plan}"]
+    whole = depth == "run"
+    cmd = [binary, f"league=run:{seed}:8:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}"]
+    d = 0 if whole else int(depth)
     t0 = time.time()
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout * (8 if whole else 1), cwd=ROOT)
     except subprocess.TimeoutExpired:
-        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": "timeout", "wall": time.time() - t0, "code": CODE}
-    rows = [parse_line(l) for l in p.stdout.splitlines() if l.startswith("league ")]
+        return {"job": key(job), "plan": plan, "depth": d, "seed": int(seed), "error": "timeout", "wall": time.time() - t0, "code": CODE}
+    lines = [l for l in p.stdout.splitlines() if l.startswith("league ")]
+    rows = [parse_line(l) for l in lines]
+    if whole:
+        planets = [x for x in rows if "how" in x and "tier" in x]
+        final = [x for x in rows if "to" in x and "how" not in x]
+        rows = [{"depth": 0, "seed": int(seed), "won": final[-1]["won"], "secs": final[-1]["secs"], "reached": max((int(x["depth"]) for x in planets), default=0),
+                 "planets": [{k: x.get(k) for k in RUN_KEYS} for x in planets],
+                 "shops": [x.get("bought", "") for x in rows if "bought" in x and "how" not in x]}] if final else []
     if p.returncode != 0 or not rows:
-        return {"job": key(job), "plan": plan, "depth": int(depth), "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0, "code": CODE}
+        return {"job": key(job), "plan": plan, "depth": d, "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0, "code": CODE}
     r = rows[-1]
     if CODE:
         r["code"] = CODE

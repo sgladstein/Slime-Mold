@@ -137,6 +137,13 @@ pub(super) struct Plan {
     /// (0: none). A squad wiped with a soldier's price in the bank waits
     /// for its recruit; with less, the planet is lost (`check_end`).
     pub spare: u32,
+    /// Where wanted cards come from in the league's shop: set on the
+    /// shelf as if offered (true, the default since 11-19), or bought only
+    /// when the run offers them (false), as a real run plays. With the
+    /// shelf, Wide + Rate + Needle Blast won all 17 planet 3 maps (11-20,
+    /// p3n generation 5); a run that has to be offered three cards is
+    /// another game.
+    pub shelf: bool,
 }
 
 impl Default for Plan {
@@ -171,6 +178,7 @@ impl Default for Plan {
             grow: 0.0,
             regroup: 0,
             spare: 0,
+            shelf: true,
         }
     }
 }
@@ -199,7 +207,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 29] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare"];
+    pub const DIALS: [&'static str; 30] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -249,6 +257,7 @@ impl Plan {
             "grow" => self.grow = num(v)?.max(0.0),
             "regroup" => self.regroup = whole(v)?,
             "spare" => self.spare = whole(v)?.min(20),
+            "shelf" => self.shelf = num(v)? > 0.0,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),

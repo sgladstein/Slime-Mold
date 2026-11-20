@@ -32,11 +32,20 @@ const UNLOCKS: [&str; 7] = ["walls", "turret", "mortar", "blast", "mine", "cord"
 /// the gun. Returns what it bought.
 pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     let mut bought = Vec::new();
-    // Cards the plan wants (`Plan::want`), set on the shelf as if offered
-    // and bought while the points reach, before anything else.
+    // Cards the plan wants (`Plan::want`), in its order, before anything
+    // else: set on the shelf as if offered (`shelf`, the default), or
+    // bought only from what the run offers.
     for name in &p.want {
         let Some(c) = want_card(name, r.depth) else { continue };
         if r.cards.iter().any(|&(x, _)| card_key(x) == card_key(c)) {
+            continue;
+        }
+        if !p.shelf {
+            if let Some(i) = r.offers.iter().position(|&o| card_key(o) == card_key(c)) {
+                if r.pick(Pick::Offer(i)) {
+                    bought.push(card_key(c));
+                }
+            }
             continue;
         }
         r.offers.push(c);
