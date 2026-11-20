@@ -280,7 +280,7 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
         (Some(_), _) | (None, Some(_)) => "lost",
         (None, None) => "open",
     };
-    let ro = &app.rounds;
+    let ro = &g.rounds;
     println!(
         "{head} how={how} cause={cause} won={} stars={stars} secs={ended:.1} killed={} mould={} start_mould={start_mould} mould_fire={} mould_mean={:.0} alive_fire={} hp_lost_fire={:.2} alive={} peak={peak_alive} min_alive={} hp={:.3} hp_lost={hp_lost:.2} bank={:.0} shots={} hits={} hit_cells={} shot_kills={shot_kills} kill_range={:.1} far_share={:.3} round_kills={} fire_kills={} gassed={} flung={} dropped={} unsupported={} bullets_dropped={} harvest={:.0} on_crystal={:.0} best10={best10} first_kill={:.1} near={:.0} per10={} wall={:.0} marks={}",
         u8::from(won),

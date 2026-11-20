@@ -842,7 +842,7 @@ impl App {
                 rounds::Card::Germ => g.world.has_germ(),
                 _ => true,
             };
-            let cast = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| self.rounds.cast_of(g, s.squad as usize, b.cast)).filter(castable);
+            let cast = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| g.rounds.cast_of(g, s.squad as usize, b.cast)).filter(castable);
             let look = card_look(cast.map(|c| c.payload));
             // Wide, and the bullet's damage (`Ammo::reach`), widen it.
             let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32) * cast.map_or(1.0, |c| c.ammo.reach());
@@ -887,7 +887,7 @@ impl App {
             // shows what it carries: a short bead at its head in the carried
             // cast's colour, so a plain bullet carrying a blast reads as one.
             if b.carry > 0 {
-                if let Some(c) = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| self.rounds.cast_of(g, s.squad as usize, b.carry)).filter(castable) {
+                if let Some(c) = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| g.rounds.cast_of(g, s.squad as usize, b.carry)).filter(castable) {
                     let l = card_look(Some(c.payload));
                     let bead = core * 0.7;
                     let tail = (head.0 - b.dir.0 * 3.0 * bead, head.1 - b.dir.1 * 3.0 * bead);
@@ -926,7 +926,7 @@ impl App {
         for (k, s) in g.soldiers.iter().enumerate() {
             let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flash > 0.0) else { continue };
             let kind = g.squads.get(s.squad as usize).and_then(|q| q.gun).map_or(GunKind::Rifle, |gun| gun.kind);
-            let look = card_look(self.rounds.cast_of(g, s.squad as usize, l.cast).map(|c| c.payload));
+            let look = card_look(g.rounds.cast_of(g, s.squad as usize, l.cast).map(|c| c.payload));
             let at = drawn_at(s, l, body_r);
             let tip = muzzle(at, l.facing, body_r, mouth);
             let (len, id) = match kind {
@@ -976,7 +976,7 @@ impl App {
         // explosion light lasts 0.08 s at 8 radii), brighter the more it
         // killed; after that only what it did stays: the hole, the crater,
         // the sleepers, the sick colour.
-        for p in self.rounds.pops.iter().rev() {
+        for p in g.rounds.pops.iter().rev() {
             let age = (t.saturating_sub(p.tick)) as f32 / tps;
             if age > BURST_LIGHT {
                 break;
@@ -1006,7 +1006,7 @@ impl App {
         // the burst light above, so one cast onto bare ground to draw a
         // Swarmer would have shown nothing.
         let flare = card_look(Some(rounds::Card::Flare));
-        for (at, reach, left) in self.rounds.burning(t) {
+        for (at, reach, left) in g.rounds.burning(t) {
             let f = (left as f32 / tps / FLARE_GUTTER).min(1.0);
             let at = (at.0 * sc, at.1 * sc);
             self.marks.streak(at, at, (0.3 * sc * zoom).clamp(1.5, 6.0), [flare.glow[0], flare.glow[1], flare.glow[2], (255.0 * f) as u8], flare.core);
@@ -1068,10 +1068,10 @@ impl App {
         }
         // A lodged cast (delay, thick) is an ember where it waits, its light
         // swelling as its fuse burns down (delay) or steady (thick).
-        for (c, at, due) in self.rounds.lodged() {
+        for (c, at, due) in g.rounds.lodged() {
             let look = card_look(Some(c.payload));
             let left = due.saturating_sub(t) as f32 / tps;
-            let f = if c.trigger == Some(rounds::Card::Delay) { 1.0 - (left / self.rounds.rules.delay_secs).clamp(0.0, 1.0) } else { 0.4 };
+            let f = if c.trigger == Some(rounds::Card::Delay) { 1.0 - (left / g.rounds.rules.delay_secs).clamp(0.0, 1.0) } else { 0.4 };
             self.marks.streak(at, at, (0.18 * sc * zoom).clamp(1.2, 4.0), [look.glow[0], look.glow[1], look.glow[2], (90.0 + 150.0 * f) as u8], look.core);
             self.lights.push(Light { at, reach: MUZZLE_LIGHT * sc, lift: 2.0, colour: look.light, strength: 0.3 + 0.7 * f });
         }
@@ -1272,7 +1272,7 @@ impl App {
                     ("Range".into(), format!("{:.0} cells", g.gun_range(s.squad as usize))),
                     ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", g.gun(s.squad as usize).every()) }),
                     ("Mould on it".into(), format!("{}", s.touching)),
-                    ("Tools held".into(), format!("{} / {}", self.kit.held(k), self.kit.rules.carry_max)),
+                    ("Tools held".into(), format!("{} / {}", g.kit.held(k), g.kit.rules.carry_max)),
                 ],
                 note: None,
             });
@@ -1438,7 +1438,7 @@ impl App {
             road = Some(Command { ready: any, on: all(Task::Road), why_not: no_sel(), about: "Lay a road of your mould's trail where the soldier walks, free: your mould follows it. Lead it to food or into the enemy, where it converts the enemy's slime it outweighs. Press again to stop.".into(), ..Command::new(ROAD, (1, 0), Icon::Move, "Lay a road", KeyCode::KeyY) });
         }
         if self.tools_page {
-            let k = &self.kit;
+            let k = &g.kit;
             let kr = k.rules;
             let held: u32 = (0..g.soldiers.len()).filter(|&i| g.soldiers[i].alive).map(|i| k.held(i)).sum();
             let tool = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, target: Target, price: f32, works: bool, about: String| Command {
@@ -1726,7 +1726,7 @@ impl App {
     /// of the one selected soldier (or the first selected, or the first
     /// alive) lit at the cast its next shot fires.
     fn loadout(&self, g: &Game<GpuWorld>, sel: &[usize]) -> Loadout {
-        let rd = &self.rounds;
+        let rd = &g.rounds;
         let scope: Vec<usize> = if sel.is_empty() { (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect() } else { sel.to_vec() };
         let lead = scope.first().copied();
         // The squad owns the gun and its cards (owner 11-14 16:46Z): the
@@ -1774,6 +1774,9 @@ impl App {
                 Some(format!("Cost {} of {}", rounds::cost(&round), gun.budget))
             },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
+            // Every squad's gun, so the strip keeps its width as the
+            // commanded squad changes (the steady-HUD pass, 11-20).
+            widest: (0..g.squads.len()).map(|q| g.gun(q).slots as usize).max().unwrap_or(0),
         }
     }
 }
@@ -1815,7 +1818,7 @@ impl App {
     /// cursor. None for anything but the thrown tools, or with no soldier
     /// able to throw at all.
     pub(super) fn throw_ghost(&self, g: &Game<GpuWorld>, id: u32, at: (f32, f32), from: Option<(f32, f32)>) -> Option<(Throw, bool, String)> {
-        let kr = self.kit.rules;
+        let kr = g.kit.rules;
         let sc = g.world.scale();
         // The tools' colours: fire for the blasts, amber for a mine that
         // waits, sickly green for the germ, the gas's lavender.
@@ -1835,7 +1838,7 @@ impl App {
             (T_CORD, Some(f)) => ((f.0 + at.0) / 2.0, (f.1 + at.1) / 2.0),
             _ => at,
         };
-        let (k, near) = self.kit.thrower(g, land)?;
+        let (k, near) = g.kit.thrower(g, land)?;
         let s = g.soldiers[k];
         let reach = kr.reach * sc;
         let d = (s.x - land.0).hypot(s.y - land.1);

@@ -398,3 +398,47 @@ coordinator):
   engine (Engine's and Enemy's), scaled to the army.
 
 Recommended: A and B (no engine change; the army has to move).
+
+## Late against a big army: Mortars and errands round it (11-20)
+
+Direction's pick of the options above, A and B, scaled by the squad as the
+strikers are (`StrikerRules::few` 8, `full` 24: nothing against 8 soldiers
+or fewer):
+- **A.** Once the slime is late, the Mortar's weight in the draw rises by
+  `late_mortar` (3) times that scale, from planet 2 (`kinds[4]` is 0 on
+  planets 2 and 3 until then). On planet 2's rules a big squad then draws
+  it 126 times in 200 (test), a small one or an early slime never.
+- **B.** From the full scale (24 soldiers), a late hunter or pinwheel
+  goes round the squad (`Game::round_errand`): to the standing building
+  or pump nearest it that no soldier's guns reach, within `round_far`
+  (160 dish cells), else once to the squad's far side, from which it
+  hunts. It aims past the squad's guns (`round_squad`) and its walk is
+  its trip. Sitting on the building, it presses in.
+
+The play log now counts soldiers fallen by a mini-boss (`bossfell`: one
+that dies within 10 world units of a live boss's body or 15 of a live
+shell's target; a proxy). `tools/bigarmy.py MAIN NEW` pairs games.
+
+Today's main (`bigarmy-base2`) against A and B (`bigarmy-ab`), the
+owner's 9 maps, planets 2 to 4, to 7:00: the bot's slime rarely gets late
+(1 late boss in 9 games), so A and B hardly fired. The games with 8
+soldiers or fewer ended alike. Two binaries do not play the same game
+(spreads differ in the second decimal by 104 s), so the rest diverge.
+
+Every boss late on both sides (`set=boss_late=1.01`; `bigarmy-baseL`,
+`bigarmy-abL`), the 4 maps whose armies grew:
+
+| map | main: soldiers fallen by a boss (last quarter; against 30+) | A and B |
+| --- | --- | --- |
+| 1795038793 planet 3 (peak 23 / 13) | 4 (3; 0) | 6 (5; 0) |
+| 1795038793 planet 4 (peak 71 / 67) | 36 (31; 5) | 50 (43; 17) |
+| 1795106014 planet 3 (peak 61 / 80) | 1 (1; 1) | 3 (3; 3) |
+| 1795106014 planet 4 (peak 8) | 7 (7; 0) | 7 (7; 0) |
+
+- Against 30 or more soldiers: 6 fallen to bosses on main, 20 with A and
+  B (in the last quarter 1 against 13). Two maps grew such an army, so it
+  is a direction, not a test that survives correction.
+- Hunters went round: 149 rows on their way (`Go`), one of 982 walkers
+  ending 22 units from the squad from behind its line.
+- The small squad (1795106014 planet 4, 8 soldiers) lost the planet at
+  the same 104 s with the same 7 fallen.

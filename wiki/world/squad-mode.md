@@ -136,7 +136,11 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   [rework](../../Reports/squad-movement-2026-11-16/README.md)).
 - **Building** is shared with the RTS round: ghosts soldiers raise from reach 6,
   Shift queues, an unfinished one can be called off for the whole price
-  ([report](../../Reports/build-flow-2026-11-14/README.md)).
+  ([report](../../Reports/build-flow-2026-11-14/README.md)). Since
+  2026-11-20 Shift + a build, harvest, guard or attack-move goes on the
+  squad's own queue (`Cmd::SquadQueue`), so move then Shift + build raises
+  it once the squad gets there; before, Shift skipped the squad and the
+  build was never raised (owner's report, 2026-11-20).
 
 Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 
