@@ -2,7 +2,7 @@
 title: Squad mode
 kind: design
 status: open
-updated: 2026-11-18
+updated: 2026-11-20
 sources:
   - Reports/auto-fire-2026-11-18/README.md
   - Reports/bug-sweep-2026-11-14.md
@@ -18,6 +18,7 @@ sources:
 code:
   - Game::demolish
   - Game::drawn_between
+  - Game::fight_turn
   - Game::guard_zone
   - Game::heal
   - Game::rank_squad
@@ -64,11 +65,28 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   still puts every bullet on the cursor: spreading it over the slime round
   the cursor won at a body's edge but lost among loose walkers, so it was not
   kept ([dead ends](../../Reports/dead-ends.md)).
+- **Attack-move stands only for a fight** (owner, 2026-11-19 16:55Z: one
+  walker stopped the whole squad). A squad on attack-move stands to fight
+  when the walkers in its members' reach reach `Rules::fight_hold` (1) a
+  living member, at least `FIGHT_LEAST` (3), or a mini-boss is in reach, and
+  stands till under half that (`Game::fight_turn`, `Squad::holding`);
+  fewer, and it walks on, shooting as it goes. `set=fight_hold=0` is the old
+  way, where any soldier with a walker in reach stood still.
 - **Commanding.** The bottom bar's middle panel has a tile per squad (hotkey,
-  soldiers, health, state). Click a tile or press its number to take command;
-  Ctrl + wheel switches. **Esc** or *Let go* commands none: every squad shows
+  soldiers, health, state); with more than fit, every tile shrinks to its
+  key, count and health rather than some hiding behind "+N" (11-19). Click a
+  tile or press its number to take command; ` (Shift + ` back) and Ctrl +
+  wheel go round them. **Esc** or *Let go* commands none: every squad shows
   AUTO, WASD pans, and a click on a squad takes it back
   ([free camera](../../Reports/free-camera-2026-11-15/README.md)).
+- **Loadouts** (owner, 2026-11-19 19:22Z; `run::Loadout`, `Run::loadouts`).
+  A loadout is a gun, or none, plus its cards; each squad (`Squad::loadout`)
+  and each turret (`Building::loadout`, `Building::deck`, `Cmd::TurretLoad`)
+  fires one, and a change to it changes all of them. A gun or a card is in
+  one loadout at a time. Squads land on the first; new turrets fire
+  `Run::turret_loadout`'s cards (the turrets' deck). A loadout with no gun
+  fits the turrets' rack. On a planet H opens the panel, paused, with
+  nothing for sale; changes apply at once, with no reload.
 - **Split, join, link.** Y splits the front half off; J or the tile's + joins
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.

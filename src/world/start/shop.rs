@@ -160,7 +160,10 @@ impl StartMenu {
         v.extend(self.gun_cards().into_iter().map(Hit::Buy));
         v.extend(self.bag_cards().into_iter().map(Hit::Buy));
         v.extend(self.tools().into_iter().map(Hit::Do));
-        v.extend([Hit::Next, Hit::EndRun]);
+        v.push(Hit::Next);
+        if !self.shop.as_ref().is_some_and(|s| s.field) {
+            v.push(Hit::EndRun);
+        }
         v
     }
 
@@ -247,13 +250,17 @@ impl StartMenu {
         let by = sh - BOTTOM * s;
         c.rrect(Rect::new(0.0, by, sw, sh - by), 0.0, [8, 11, 14, 236]);
         c.rrect(Rect::new(0.0, by, sw, s.max(1.0)), 0.0, EDGE);
-        let (next, end) = if shop.range { ("Back to the range", "Leave the range") } else { ("Land on the next planet", "Give up the run") };
+        let (next, end) = if shop.range { ("Back to the range", "Leave the range") } else if shop.field { ("Back to the planet", "") } else { ("Land on the next planet", "Give up the run") };
         let bh = 40.0 * s;
         let bt = by + (BOTTOM * s - bh) / 2.0;
         let wn = c.atlas.measure(Weight::SemiBold, 18.0 * s, next) + 36.0 * s;
         let we = c.atlas.measure(Weight::SemiBold, 18.0 * s, end) + 36.0 * s;
         self.item(Rect::new(x, bt, wn, bh), next, "", Hit::Next, true, ring(Hit::Next), c, s);
-        self.item(Rect::new(x + wn + 10.0 * s, bt, we, bh), end, "", Hit::EndRun, false, ring(Hit::EndRun), c, s);
+        // The loadout panel on a planet has no way out but back.
+        let we = if shop.field { -10.0 * s } else { we };
+        if !shop.field {
+            self.item(Rect::new(x + wn + 10.0 * s, bt, we, bh), end, "", Hit::EndRun, false, ring(Hit::EndRun), c, s);
+        }
         let mut bx = x + wn + 10.0 * s + we + 20.0 * s;
         let tools = self.tools();
         if !tools.is_empty() {
@@ -270,7 +277,12 @@ impl StartMenu {
                 if ring(Hit::Do(i)) {
                     c.outline(r.inset(-2.0 * s), 9.0 * s, 1.5 * s, ACCENT);
                 }
-                c.text(Weight::SemiBold, px, (r.x + pad, r.y + r.h / 2.0 + px * 0.36), Align::Left, name, TEXT);
+                // The one on (the loadout the gun slots show) reads as on.
+                let on = shop.rows[i].on;
+                if on {
+                    c.outline(r, 7.0 * s, 1.5 * s, ACCENT);
+                }
+                c.text(Weight::SemiBold, px, (r.x + pad, r.y + r.h / 2.0 + px * 0.36), Align::Left, name, if on { ACCENT } else { TEXT });
                 self.hits.push((r, Hit::Do(i)));
                 bx = r.right() + 6.0 * s;
             }
@@ -303,7 +315,13 @@ impl StartMenu {
         let lw = pane.x - 16.0 * s - x;
 
         // The bench: the carried gun's slots and the bag, pinned.
-        let gun_name = if shop.turrets { "Every turret" } else { shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on).map_or("Your gun", |r| r.name.as_str()) };
+        let gun_name = if !shop.bench.is_empty() {
+            shop.bench.as_str()
+        } else if shop.turrets {
+            "Every turret"
+        } else {
+            shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on).map_or("Your gun", |r| r.name.as_str())
+        };
         let gy = top + 30.0 * s;
         let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
         let on = self.gun_cards();

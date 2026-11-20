@@ -417,11 +417,19 @@ impl Card {
 
     /// How rare the card is: 1 common, 2 uncommon, 3 rare. A run hands
     /// out higher tiers deeper in (the roguelike thread's rewards).
+    ///
+    /// Gas uncommon and Mist rare since 2026-11-18 (Direction, on the
+    /// owner's play that day: sleep on his gun made planet 3 "way too
+    /// easy" and Mist on his planet 4 turrets "basically stopped
+    /// everything"; "there are no single OP spells"). Gas was common and
+    /// sold from planet 1, Mist uncommon; the sleep is a find, not a
+    /// default (`Reports/sleep-wears-off-2026-11-18/`, the audit).
     pub fn tier(self) -> u8 {
         match self {
             Card::Ammo(a) => a.shell.card().tier(),
-            Card::Bomb | Card::Germ | Card::Multicast => 3,
-            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Pull | Card::Seek => 2,
+            Card::Bomb | Card::Germ | Card::Multicast | Card::Mist => 3,
+            Card::Gas => 2,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Pull | Card::Seek => 2,
             Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Flare | Card::Torch | Card::Tinder => 2,
             Card::Detonate => 3,
             _ => 1,
@@ -578,6 +586,42 @@ pub struct RoundRules {
     /// (`Reports/explosions-2026-11-14/README.md`), and the two read as a
     /// big and a small hole.
     pub bomb_r: f32,
+    /// **A blast hurts your own** (2026-11-18, the owner's Noita rule:
+    /// "Any single spell that is incredibly powerful is also really
+    /// dangerous"): health a living soldier inside a `Blast`'s kill disc
+    /// loses (`Rules::hp` is 100). Shots stop at the first slime, so a
+    /// blast reaches soldiers when it goes off in slime on top of them:
+    /// firing blasts into a body that has reached the squad is a choice.
+    /// 0 is off.
+    pub blast_hurt: f32,
+    /// Game seconds after a blast hurts a soldier before another can: a
+    /// gun firing blasts into slime round the squad lands several a
+    /// second, and at 5 health each with no gap the greedy squad on
+    /// planet 3 (run 1795038793) still shot itself to nothing.
+    pub blast_gap: f32,
+    /// **Fire on its own keeps its dangers off the squad** (2026-11-19,
+    /// Direction's rule on the dangers): a soldier or turret firing on its
+    /// own, not a squad's aimed volley, holds a payload whose kill disc
+    /// (a Blast's, with `blast_hurt`) or sleep gas or cloud (a Gas's, with
+    /// `Rules::doze`) would reach a living soldier: its bullet's strike
+    /// kills as a plain shot's does and the payload is not cast. The reach
+    /// is the burst's own radius plus these dish cells (a cloud spreads
+    /// past its burst). Your own aimed volleys, and a cloud drifting onto
+    /// the squad, keep the whole danger. Why: soldiers fire on their own at
+    /// the slime at their feet, so with both dangers and no hold the greedy
+    /// squad on planet 3 shot or gassed itself to nothing at every strength
+    /// tried (`Reports/own-goal-2026-11-18/`). Tried first and dropped:
+    /// holding by the aim point in `Game::begin_step`, which stopped a
+    /// one-card gun from firing at all and missed where the shot really
+    /// stops (the first slime on its line). Measured on planet 3,
+    /// `hand=greedy`, soldiers standing at 120 s (none lost to it alone):
+    /// a gun of plain+gas with a gas margin of 4 still wiped on run 1 (21
+    /// standing with no doze); 8 left 11 (and 1 on run 1795038793, which
+    /// is wiped at 114 s with no doze). Plain+blast at margin 1: 8 and 13
+    /// standing against 13 and 20 with no hurt. A doze threshold of 2
+    /// instead of a wider margin did not help (1 standing on run 1).
+    pub blast_margin: f32,
+    pub gas_margin: f32,
     pub bomb_ring: f32,
     pub bomb_secs: f32,
     pub fling_speed: f32,
@@ -689,6 +733,10 @@ impl Default for RoundRules {
             thick_r: 5.0,
             thick_secs: 30.0,
             bomb_r: 2.5,
+            blast_hurt: 40.0,
+            blast_gap: 2.0,
+            blast_margin: 1.0,
+            gas_margin: 8.0,
             bomb_ring: 4.0,
             bomb_secs: 0.7,
             fling_speed: 1.5,
@@ -761,6 +809,10 @@ impl RoundRules {
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
             "mind_rest" => &mut self.mind_rest,
+            "blast_hurt" => &mut self.blast_hurt,
+            "blast_gap" => &mut self.blast_gap,
+            "blast_margin" => &mut self.blast_margin,
+            "gas_margin" => &mut self.gas_margin,
             "spin_curl" => &mut self.spin_curl,
             "provoke_secs" => &mut self.kit.provoke_secs,
             "still_secs" => &mut self.kit.still_secs,
@@ -842,6 +894,17 @@ pub const VOLLEY_FAN: f32 = 0.08;
 /// a deck, so plain turrets cast nothing.
 pub fn turret_casts<W: World>(g: &Game<W>) -> Vec<Cast> {
     g.turret_deck.map(|d| casts(&d.cards())).unwrap_or_default()
+}
+
+/// Turret `b`'s casts: its own cards (`Building::deck`, 2026-11-19), else
+/// the turrets' deck (`Game::turret_cards`).
+pub fn turret_casts_of<W: World>(g: &Game<W>, b: Option<usize>) -> Vec<Cast> {
+    g.turret_cards(b).map(|d| casts(&d.cards())).unwrap_or_default()
+}
+
+/// Turret `b` fires cards of its own, not the turrets' deck.
+fn own_deck<W: World>(g: &Game<W>, b: Option<usize>) -> bool {
+    b.and_then(|b| g.buildings.get(b)).is_some_and(|b| b.deck.is_some())
 }
 
 pub fn casts(round: &[Card]) -> Vec<Cast> {
@@ -1095,6 +1158,8 @@ struct Pending {
     due: u64,
     /// A turret's: its kills are the turrets' (`Game::turret_killed`).
     turret: bool,
+    /// Fired on its own (`Rounds::auto`).
+    auto: bool,
 }
 
 /// A burning flare (`Card::Flare`, 2026-11-17): its alarm burst, the tick
@@ -1158,6 +1223,19 @@ pub struct Rounds {
     pub short: u32,
     /// Walkers put to sleep by rounds' gas (`squad::BurstOut::gassed`).
     pub gassed: usize,
+    /// Soldiers a blast hurt, and of them those it killed
+    /// (`RoundRules::blast_hurt`).
+    pub blast_hits: u32,
+    pub blast_kills: u32,
+    /// The tick before which each soldier cannot be hurt by a blast again
+    /// (`RoundRules::blast_gap`).
+    blast_safe: Vec<u64>,
+    /// Payloads held because they would have reached the squad
+    /// (`RoundRules::blast_margin`).
+    pub held_own: u32,
+    /// The cast going off now was fired on its own (not a squad's aimed
+    /// volley), so `fire` keeps its dangers off the squad.
+    auto: bool,
     pub pops: Vec<Pop>,
     /// This step's payload and shove bursts, run as one batch at its end
     /// (`World::bursts`; `Rounds::flush`), with what each counts for.
@@ -1202,6 +1280,16 @@ impl Rounds {
     pub fn new(round: Vec<Card>, rules: RoundRules) -> Self {
         let casts = casts(&round);
         Rounds { rules, round, casts, ..Default::default() }
+    }
+
+    /// The army's round changed mid-planet (the loadout panel): its cards
+    /// and budget, keeping what is live (casts lodged or on a fuse, flares
+    /// burning, the counts). A new `Rounds` dropped them (review,
+    /// 2026-11-20).
+    pub fn set_round(&mut self, round: Vec<Card>, budget: u32) {
+        self.casts = casts(&round);
+        self.round = round;
+        self.rules.budget = budget;
     }
 
     /// A gun with these cards if they fit `rules.budget` (`fit`): how a
@@ -1341,11 +1429,20 @@ impl Rounds {
                 None => (g.squads.len(), turret.and_then(|t| g.buildings.get(t)).map(|b| b.at)),
             };
             self.by_turret = by.is_none();
+            // A turret fires on its own; a soldier does unless its squad
+            // has a fire order (the player's aimed volley).
+            self.auto = by.is_none() || g.squads.get(q).is_none_or(|sq| sq.fire.is_none());
             if q >= by_squad.len() {
                 continue;
             }
-            let cs = by_squad[q].get_or_insert_with(|| if by.is_none() { turret_casts(g) } else { self.casts_of(g, q) });
-            let Some(&c) = cs.get(cast as usize - 1) else { continue };
+            // A turret with its own cards (`Building::deck`) casts from
+            // them; the rest share the turrets' deck's slot.
+            let c = if by.is_none() && own_deck(g, turret) {
+                turret_casts_of(g, turret).get(cast as usize - 1).copied()
+            } else {
+                by_squad[q].get_or_insert_with(|| if by.is_none() { turret_casts(g) } else { self.casts_of(g, q) }).get(cast as usize - 1).copied()
+            };
+            let Some(c) = c else { continue };
             // A slug shoves where it hits, whatever it carries, and so does
             // any bullet with a shove card.
             let shape = c.ammo.set.shape();
@@ -1365,13 +1462,14 @@ impl Rounds {
                             self.dropped += 1;
                         } else {
                             let secs = if tr == Card::Delay { self.rules.delay_secs } else { self.rules.thick_secs };
-                            self.pending.push(Pending { cast: c, at: hit, dir, due: t + (secs * tps as f32).round() as u64, turret: by.is_none() });
+                            self.pending.push(Pending { cast: c, at: hit, dir, due: t + (secs * tps as f32).round() as u64, turret: by.is_none(), auto: self.auto });
                         }
                     }
                 }
             }
         }
         self.by_turret = false;
+        self.auto = false;
         self.burn(g);
         self.flush(g);
         if self.pending.is_empty() {
@@ -1392,8 +1490,10 @@ impl Rounds {
         });
         for p in go {
             self.by_turret = p.turret;
+            self.auto = p.auto;
             self.fire(g, &p.cast, p.at, Some(p.dir));
             self.by_turret = false;
+            self.auto = false;
         }
         self.flush(g);
     }
@@ -1485,13 +1585,19 @@ impl Rounds {
             .iter()
             .map(|s| (s, s.by.map_or(tq, |k| g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
             .map(|(s, q)| {
-                let n = *of[q].get_or_insert_with(|| {
-                    let mut n = trails(&if q == tq { g.turret_deck.map(|d| d.cards()).unwrap_or_default() } else { self.cards_of(g, q) });
+                let find = |cards: Vec<Card>| {
+                    let mut n = trails(&cards);
                     if !gas {
                         n[2] = 0;
                     }
                     n
-                });
+                };
+                // A turret with its own cards lays their trails.
+                let n = if q == tq && own_deck(g, s.turret) {
+                    find(g.turret_cards(s.turret).map(|d| d.cards()).unwrap_or_default())
+                } else {
+                    *of[q].get_or_insert_with(|| find(if q == tq { g.turret_deck.map(|d| d.cards()).unwrap_or_default() } else { self.cards_of(g, q) }))
+                };
                 for (a, b) in any.iter_mut().zip(n) {
                     *a = (*a).max(b);
                 }
@@ -1508,6 +1614,8 @@ impl Rounds {
         let mut burned = 0;
         let n = any;
         // Where the living soldiers stand (dish cells), for Tinder's gap.
+        let doze = g.rules.doze > 0.0;
+        let soldiers: Vec<(f32, f32)> = if n[2] > 0 && doze { g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x / s, x.y / s)).collect() } else { Vec::new() };
         let near: Vec<(f32, f32)> = if n[4] > 0 { g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x / s, x.y / s)).collect() } else { Vec::new() };
         for ((from, to), legn) in legs {
             if legn == [0; TRAILS] {
@@ -1516,6 +1624,17 @@ impl Rounds {
             let mut discs = trail_bursts(legn, from, to, &self.rules, s, fine, smell);
             if legn[4] > 0 {
                 keep_clear(&mut discs, &near, self.rules.trail_fuel_gap);
+            }
+            // Mist laid from the muzzle would sleep its own shooter
+            // (`Rules::doze`, 2026-11-19): no cloud disc within its radius
+            // and `gas_margin` of a living soldier.
+            if legn[2] > 0 && doze {
+                for b in discs.iter_mut() {
+                    if b.cloud > 0.0 && soldiers.iter().any(|&(x, y)| (x - b.at.0).hypot(y - b.at.1) <= b.r + self.rules.gas_margin) {
+                        b.cloud = 0.0;
+                    }
+                }
+                discs.retain(|b| b.burn || b.crater > 0 || b.bait > 0.0 || b.smother || b.cloud > 0.0 || b.fuel > 0.0);
             }
             for b in discs {
                 burned += g.world.burst(&b, &k).killed as usize;
@@ -1618,6 +1737,25 @@ impl Rounds {
         self.queued_turret.push(self.by_turret);
     }
 
+    /// Whether a cast's bursts would put a danger on a living soldier: a
+    /// Blast's kill disc (with `blast_hurt`), or gas or cloud (with
+    /// `Rules::doze`), each with its margin (`RoundRules::blast_margin`).
+    fn reaches_squad<W: World>(&self, g: &Game<W>, c: &Cast, bs: &[Burst]) -> bool {
+        let s = g.world.scale();
+        let blast = c.payload == Card::Blast && self.rules.blast_hurt > 0.0;
+        let gas = g.rules.doze > 0.0;
+        bs.iter().any(|b| {
+            let r = if blast && b.kill {
+                b.r + self.rules.blast_margin
+            } else if gas && (b.gas > 0 || b.cloud > 0.0) {
+                b.r + self.rules.gas_margin
+            } else {
+                return false;
+            };
+            g.soldiers.iter().any(|x| x.alive && (x.x / s - b.at.0).hypot(x.y / s - b.at.1) <= r)
+        })
+    }
+
     /// Casts `c` at `at` (fine cells), from a bullet heading `dir` (None:
     /// a staged cast, `cast_at`).
     ///
@@ -1634,7 +1772,12 @@ impl Rounds {
         let t = g.world.ticks();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
         let k = self.rules.burst_rules(fine);
-        for b in bursts(c, at, &self.rules, s, fine) {
+        let bs = bursts(c, at, &self.rules, s, fine);
+        if self.auto && self.reaches_squad(g, c, &bs) {
+            self.held_own += 1;
+            return;
+        }
+        for b in bs {
             let (burst, throw) = match dir.filter(|_| b.fling > b.r) {
                 Some(d) => {
                     let back = (b.at.0 - d.0 * b.r, b.at.1 - d.1 * b.r);
@@ -1649,6 +1792,28 @@ impl Rounds {
                 self.queued_turret.push(self.by_turret);
             }
             self.pops.push(Pop { burst, throw, payload: c.payload, tick: t, killed: 0, flung: 0 });
+            // A blast hurts the soldiers in its kill disc (2026-11-18,
+            // `RoundRules::blast_hurt`).
+            if c.payload == Card::Blast && burst.kill && self.rules.blast_hurt > 0.0 {
+                let (cx, cy, rr) = (burst.at.0 * s, burst.at.1 * s, burst.r * s);
+                let gap = (self.rules.blast_gap * g.rules.tps as f32).round() as u64;
+                self.blast_safe.resize(g.soldiers.len(), 0);
+                for (j, sd) in g.soldiers.iter_mut().enumerate().filter(|(_, sd)| sd.alive && (sd.x - cx).hypot(sd.y - cy) <= rr) {
+                    if t < self.blast_safe[j] {
+                        continue;
+                    }
+                    self.blast_safe[j] = t + gap;
+                    sd.hp -= self.rules.blast_hurt;
+                    sd.rest = 0.0;
+                    self.blast_hits += 1;
+                    if sd.hp <= 0.0 {
+                        sd.alive = false;
+                        sd.hp = 0.0;
+                        sd.carry = 0.0;
+                        self.blast_kills += 1;
+                    }
+                }
+            }
             // A flare burns on (`burn`), its first lay this one.
             if c.payload == Card::Flare && burst.alarm > 0.0 {
                 if self.burning.len() >= PENDING_MAX {
@@ -2104,6 +2269,46 @@ mod tests {
         assert_eq!(rd.cast, [0; 8], "a trail casts nothing");
     }
 
+    /// **A blast hurts your own** (2026-11-18, `RoundRules::blast_hurt`):
+    /// a blast cast on a soldier takes `blast_hurt` off it and every other
+    /// soldier inside its kill disc, and none outside it; at 0 it hurts
+    /// no one.
+    #[test]
+    fn a_blast_hurts_the_soldiers_in_its_disc() {
+        use crate::mould::larder_world::race_world;
+        let run = |hurt: f32| {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            let at = (g.soldiers[0].x, g.soldiers[0].y);
+            let mut rd = Rounds::new(parse("blast").unwrap(), RoundRules { blast_hurt: hurt, ..RoundRules::default() });
+            let reach = rd.rules.kit.blast_r * g.world.scale();
+            let inside: Vec<bool> = g.soldiers.iter().map(|s| (s.x - at.0).hypot(s.y - at.1) <= reach).collect();
+            rd.cast_at(&mut g, at);
+            (inside, g.soldiers.iter().map(|s| s.hp).collect::<Vec<f32>>(), rd.blast_hits)
+        };
+        let (inside, hp, hits) = run(40.0);
+        let full = Rules::default().hp;
+        assert!(inside[0] && hits as usize == inside.iter().filter(|&&i| i).count(), "every soldier in the disc is hit: {hits}, {inside:?}");
+        for (i, h) in inside.iter().zip(&hp) {
+            assert_eq!(*h, if *i { full - 40.0 } else { full }, "{inside:?} {hp:?}");
+        }
+        let (_, hp, hits) = run(0.0);
+        assert!(hits == 0 && hp.iter().all(|&h| h == full), "off hurts no one");
+        // Fired on its own (`Rounds::auto`, 2026-11-19), a blast or gas
+        // that would reach a soldier is held, and one well clear goes off.
+        for round in ["blast", "gas"] {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            let at = (g.soldiers[0].x, g.soldiers[0].y);
+            let mut rd = Rounds::new(parse(round).unwrap(), RoundRules::default());
+            rd.auto = true;
+            rd.cast_at(&mut g, at);
+            assert!(rd.held_own == 1 && rd.pops.is_empty() && rd.blast_hits == 0, "{round}: held at the squad's feet");
+            let far = (at.0 + 60.0 * g.world.scale(), at.1);
+            assert!(g.soldiers.iter().all(|s| (s.x - far.0).hypot(s.y - far.1) > 30.0 * g.world.scale()));
+            rd.cast_at(&mut g, far);
+            assert!(rd.held_own == 1 && !rd.pops.is_empty(), "{round}: cast clear of the squad");
+        }
+    }
+
     /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch
     /// bullet's flight dies, counted in the game's kills, and more dies
     /// than the plain bullets alone kill on the same seed.
@@ -2383,7 +2588,8 @@ mod tests {
             lodged.after_step(&mut h);
         }
         assert!(lodged.cast[0] > 0 && lodged.pops.iter().all(|p| p.payload == Card::Blast));
-        assert!(lodged.pops.len() as u32 + lodged.waiting() as u32 + lodged.dropped >= lodged.cast[0]);
+        // (Or held: a blast going off by the squad, `RoundRules::blast_margin`.)
+        assert!(lodged.pops.len() as u32 + lodged.waiting() as u32 + lodged.dropped + lodged.held_own >= lodged.cast[0]);
         // Firing is free (owner 18:38Z: "The bank is just to build the
         // gun"): an empty bank still blasts, and the round spends none.
         let mut p = game(2);
@@ -2623,7 +2829,12 @@ mod tests {
         for round in ["trigger+plain+blast", "plain+blast"] {
             let mut g = attacking(2);
             g.apply(Cmd::Load(0, Some(Deck::new(&parse(round).unwrap()))));
-            let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+            // Where a carried blast lands, not what it does to the squad:
+            // with `blast_hurt` on (2026-11-18) the squad attacking at close
+            // range killed itself down to 3 of 8 by 30 s, and one blast
+            // released from a fallen soldier's bullet landed 16.8 dish cells
+            // from any plain hit counted here.
+            let mut rd = Rounds::new(Vec::new(), RoundRules { blast_hurt: 0.0, ..RoundRules::default() });
             // Each plain hit and the bullet's heading.
             let mut hits: Vec<((f32, f32), (f32, f32))> = Vec::new();
             let (mut near, mut far, mut off) = (0, 0, 0);

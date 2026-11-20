@@ -48,6 +48,51 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-20, batch 6b (a review of batch 6).** Nine fixes: the cycle key
+skips linked squads; L on a turret steps back to the default; a gunless
+loadout arms squads with the rifle plus upgrades (`Run::squad_gun`); a
+turret deck is cut to its rack (`Run::turret_deck_of`); closing the panel
+keeps the pause and only re-arms on a changed choice (`Rounds::set_round`
+keeps live state); attack-move's hold counts only fighters; build reach is
+per turret. Window test for the panel added.
+
+**2026-11-20, batch 6 (the owner's play notes of 11-19 16:55Z; thread
+"Improve squad control and gun loadouts").**
+
+- Merged #524: attack-move stands only for a fight (`Game::fight_turn`,
+  `Rules::fight_hold` 1 a member, at least 3, hold till half); ` cycles
+  squads (Shift back); squad tiles shrink instead of "+N".
+- Open branch `claude/project-thread-gdv9rz`: loadouts. The owner's rulings
+  (19:22Z): a loadout is a gun plus cards; each squad and turret uses one;
+  a card or gun in one loadout at a time; H opens the panel paused on a
+  planet, no reload; a default for turrets, each changeable. Built:
+  `run::Loadout`, `Run::{loadouts, editing, turret_loadout, field,
+  field_squad}`, picks `Edit`, `NewLoadout`, `TurretsUse`, `SquadUses`;
+  `Squad::loadout`; `Building::{deck, loadout}` with `Cmd::TurretLoad`
+  (turret shots read `Game::mods_by(by, turret)`); the window's
+  `open_loadouts`, `close_loadouts`, `arm_squads`, the turret card's
+  Loadout button (`TURRET_LOADOUT`, L).
+- Next: film the panel at 1080p and 150% UI (the bottom bar holds up to
+  8 loadout buttons; check it fits); the run bot does not use loadouts yet.
+- Unspent shop points carry to the next shop (`Run::won` only adds);
+  planet food does not.
+
+**2026-11-19, batch 5 (sleep wears off; Gas and Blast bite the squad).**
+
+- Merged: #505 (a walker sleeps once, then shrugs off gas and Mind statuses
+  for 20 s) and #513 (Gas's cloud dozes soldiers standing in it,
+  `Rules::doze`; a Blast takes 40 off every soldier in its disc,
+  `RoundRules::blast_hurt`; fire on its own holds a payload that would reach
+  a soldier, `blast_margin` 1 / `gas_margin` 8, checked in `Rounds::fire` at
+  the real hit; Mist lays no cloud by a soldier). On by default, Direction's
+  call. Reports: `Reports/sleep-wears-off-2026-11-18/`,
+  `Reports/own-goal-2026-11-18/` (planet 3 numbers).
+- Open branch: `claude/project-thread-vzzzbe` (this handoff only).
+- Next: a dozing soldier has no look of its own (Look; `Soldier::doze` is
+  there to draw from). Planet 3's tuning waits on the owner (he said review
+  first; the review found Gas, not the Trunk's hardening). The play log
+  should carry the army round (Engine and tools).
+
 **2026-11-18, batch 4 (auto-fire against loose walkers; Scott 17:01Z).**
 
 - The commanded squad now fires by its own fire mode when not volleying

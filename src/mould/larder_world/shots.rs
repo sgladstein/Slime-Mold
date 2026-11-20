@@ -39,7 +39,7 @@ impl<W: World> Game<W> {
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
             // A turret's (`by` None) carries the turrets' deck (`turret_mods`).
-            let m = self.mods_by(b);
+            let m = self.mods_by(b, turret);
             let ammo = if cast > 0 { m.ammo.get(cast as usize - 1).copied() } else { None };
             let speed = ammo.map_or(1.0, |a| a.speed());
             // A needle flies on through its set's hits on top of the
@@ -108,7 +108,7 @@ impl<W: World> Game<W> {
                 })
                 .collect()
         } else {
-            by.iter().map(|&(k, _, _, _)| n(self.mods_by(k).seek, true)).collect()
+            by.iter().map(|&(k, _, _, t)| n(self.mods_by(k, t).seek, true)).collect()
         };
         if catch.iter().all(|&c| c == 0) {
             Vec::new()
@@ -219,7 +219,7 @@ impl<W: World> Game<W> {
         // deck, a turret's strike and reach, and over walls as its shells
         // fly (`BuildRules::turret_over`).
         let q = o.by.map(|k| self.soldiers[k].squad as usize);
-        let m = self.mods_by(o.by);
+        let m = self.mods_by(o.by, o.turret);
         let b = self.rules.build;
         let (strike, range, over) = match q {
             Some(q) => (self.strike_of(q), self.gun_range(q), false),

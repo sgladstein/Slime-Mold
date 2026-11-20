@@ -76,6 +76,11 @@ pub(super) fn overlapping(g: &Game<GpuWorld>, q: usize) -> Vec<usize> {
 pub(super) const SPLIT: KeyCode = KeyCode::KeyY;
 pub(super) const MERGE: KeyCode = KeyCode::KeyJ;
 pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
+/// One key to go through the squads in turn, Shift for back (owner,
+/// 2026-11-19 16:55Z: "there should be a single button to cycle through
+/// squads"). The key left of 1, by the squads' own number keys: Tab was
+/// taken by four times faster, and every letter near WASD by the card.
+pub(super) const CYCLE: KeyCode = KeyCode::Backquote;
 /// The card's Lookouts and Heal (Card 2, 2026-11-15 19:38Z; they were the
 /// squad panel's Guards and Heal). Heal: owner 2026-11-15 07:41Z,
 /// "Healing should be a specific action". On the build page I and L are
@@ -118,6 +123,7 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("Ctrl + right click".into(), "On a crystal: drain it (fast, then it is gone)".into()),
         ("Right click a half-built building".into(), "Back to building it (nothing paid again)".into()),
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
+        (format!("{0}, Shift + {0}", k(CYCLE)), "The next squad, or the one before".into()),
         (k(SPLIT), "Split: the half nearer the cursor becomes a new squad".into()),
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
@@ -306,9 +312,13 @@ impl App {
             }
             return false;
         }
-        let ours = matches!(code, SPLIT | MERGE | FORMATION) || digit(code).is_some();
+        let ours = matches!(code, SPLIT | MERGE | FORMATION | CYCLE) || digit(code).is_some();
         if !pressed || repeat || !ours {
             return ours;
+        }
+        if code == CYCLE {
+            self.cycle_squad(if self.shift { -1 } else { 1 });
+            return true;
         }
         let at = self.cursor_world();
         let Some(q) = self.active() else { return true };
@@ -538,16 +548,32 @@ impl App {
         if self.sq.is_none() || !self.ctrl || notches == 0 {
             return false;
         }
-        let Some(g) = self.game.as_ref() else { return false };
+        self.cycle_squad(-notches.signum());
+        true
+    }
+
+    /// Command the squad `step` (1 or -1) on from the one commanded, by
+    /// key, round to the first after the last (`CYCLE`, Ctrl + wheel).
+    /// With none commanded, from the one last commanded.
+    pub(super) fn cycle_squad(&mut self, step: i32) {
+        let Some(g) = self.game.as_ref() else { return };
         let live = g.live_squads();
         if live.is_empty() {
-            return true;
+            return;
         }
-        let i = g.active.and_then(|a| live.iter().position(|&q| q == a)).unwrap_or(0) as i32;
+        let from = g.active.or_else(|| self.sq.as_ref().and_then(|sq| sq.last).map(usize::from));
         let n = live.len() as i32;
-        let j = (i - notches.signum()).rem_euclid(n) as usize;
+        // Past every squad linked with the one commanded: linked, it is
+        // commanded already, and `switch_to` only brings the camera to it,
+        // so the cycle stuck there (review, 2026-11-20).
+        let linked = g.active.map(|a| g.linked(a)).unwrap_or_default();
+        let j = match from.and_then(|a| live.iter().position(|&q| q == a)) {
+            Some(i) => (1..=n).map(|k| (i as i32 + step * k).rem_euclid(n) as usize).find(|&j| !linked.contains(&live[j])),
+            // None commanded (or it died): the one after where it was.
+            None => Some(from.map_or(0, |a| live.iter().position(|&q| q > a).unwrap_or(0))),
+        };
+        let Some(j) = j else { return };
         self.switch_to(live[j] as u8);
-        true
     }
 
     /// The wheel in the squad mode while the camera follows the squad: zoom

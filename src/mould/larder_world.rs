@@ -178,6 +178,10 @@ pub struct Soldier {
     /// glides at the screen's frame rate instead of jumping 15 times a
     /// second.
     pub was: (f32, f32),
+    /// The sleep gas cloud where it stood last frame, in the levels that
+    /// put the slime to sleep (`World::clouds`); at `Rules::doze` or over
+    /// it dozes (`Game::dozing`).
+    pub doze: f32,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -723,12 +727,24 @@ impl<W: World> Game<W> {
         self.turret_deck.map_or_else(BulletMods::default, |d| super::rounds::flight(&d.cards()))
     }
 
+    /// The cards turret `b` fires: its own (`Building::deck`), else the
+    /// turrets' deck; None (a turret's shot with no turret known) the
+    /// turrets' deck.
+    pub fn turret_cards(&self, b: Option<usize>) -> Option<Deck> {
+        b.and_then(|b| self.buildings.get(b)).and_then(|b| b.deck).or(self.turret_deck)
+    }
+
+    /// What turret `b`'s bullets carry (`turret_cards`).
+    pub fn turret_mods_of(&self, b: Option<usize>) -> BulletMods {
+        self.turret_cards(b).map_or_else(BulletMods::default, |d| super::rounds::flight(&d.cards()))
+    }
+
     /// What the bullets of shooter `by` carry: its squad's (`mods`), or
-    /// the turrets' for None.
-    pub fn mods_by(&self, by: Option<usize>) -> BulletMods {
+    /// for None turret `turret`'s (`turret_mods_of`).
+    pub fn mods_by(&self, by: Option<usize>, turret: Option<usize>) -> BulletMods {
         match by {
             Some(k) => self.soldiers.get(k).map_or_else(BulletMods::default, |s| self.mods(s.squad as usize)),
-            None => self.turret_mods(),
+            None => self.turret_mods_of(turret),
         }
     }
 
@@ -811,6 +827,7 @@ impl<W: World> Game<W> {
             vx: 0.0,
             vy: 0.0,
             was: (x, y),
+            doze: 0.0,
         });
     }
 

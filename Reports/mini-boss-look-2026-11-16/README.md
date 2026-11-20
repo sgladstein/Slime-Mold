@@ -89,6 +89,10 @@ fading flag and progress); a lump-tagged wake later.
   grades (strength) on screen.
 - Violet sits near the core planet's purple flora (hue 290-320; the
   hunter's skin is about 265, its core 280): look at it on planet 8.
+  Checked 11-19 (Look and interface lane): planet 8, run seed 1, a
+  violet mini-boss formed in the slime at 16 s, zoom 6. It reads bright
+  and glossy over the plants' dark purple beads, framed by the gold body
+  it forms in; the hunter stays violet.
 - 1070 frame cost.
 
 ## Round 2: a look a kind, and the fade (2026-11-16)

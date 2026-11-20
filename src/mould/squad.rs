@@ -730,7 +730,11 @@ pub fn shots_seeking(d: &mut BigDish, shots: &[ShotIn], catch: &[u16], slime: f3
             // squad: the rush hand's squad was wiped on 12 of 16 race seeds
             // (1 of 16 without craters), and the GPU shots pass reads the
             // same. Presence (any living walker, at any mass); elsewhere the trail, not a count.
-            let stops = |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0);
+            // A set walker (`set_scar`) lays no trail either, so it stops a
+            // shot by its count (`count_set`): without it set slime whose
+            // trail had faded let every bullet through (the owner's planet
+            // 3 round, 2026-11-19: 41 set walkers, 3,200 shots, no kill).
+            let stops = |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0) || (d.p.set_scar > 0.0 && d.set_cells.get(i).is_some_and(|&n| n > 0));
             let c = catch.get(q).copied().unwrap_or(0);
             // A seeker stops at live walkers too (`trace`).
             let walker = |i: usize| d.occupancy()[i] > 0;

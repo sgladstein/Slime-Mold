@@ -14,6 +14,7 @@
 use super::*;
 use slime_mould::build::switches::{self, Switch, SWITCHES};
 use slime_mould::world::start::{Opt, StartMenu};
+use slime_mould::world::ui::{ExpInfo, Experiment};
 
 /// What a round's keys make of switch `s`: the name of its choice, its
 /// default's when nothing of it is set, or "custom" for a film's own
@@ -22,9 +23,97 @@ fn now(keys: &[(String, String)], s: &Switch) -> &'static str {
     switches::state(keys).into_iter().find(|(o, _)| o.key == s.key).map_or(s.default, |(_, c)| c)
 }
 
+/// A pick of switch `s` takes effect at once in play: every key it sets
+/// is the window's own (`win:`, read each frame: shake and hit-stop). An
+/// engine setting or a rule is read when the round is built, so it waits
+/// for the next one (Restart).
+pub(super) fn live(s: &Switch) -> bool {
+    s.choices.iter().flat_map(|c| c.keys.iter()).all(|(k, _)| k.starts_with(switches::WINDOW_KEY))
+}
+
+/// What the Experiments cards say of `s`.
+fn info(s: &Switch) -> ExpInfo {
+    ExpInfo { lane: s.lane.name().into(), since: s.since.into(), sees: s.sees.into(), why_off: s.why_off.into(), live: live(s) }
+}
+
 /// One option a switch, preset from the command line's keys.
 pub(super) fn options(base: &Args) -> Vec<Opt> {
-    SWITCHES.iter().map(|s| Opt::new(&s.opt_key(), s.label, &s.names(), s.default, now(&base.keys, s), &format!("{}. Not on yet: {}", s.sees, s.why_off)).in_tab("Experiments")).collect()
+    SWITCHES.iter().map(|s| Opt::new(&s.opt_key(), s.label, &s.names(), s.default, now(&base.keys, s), &format!("{}. Not on yet: {}", s.sees, s.why_off)).in_tab("Experiments").experiment(info(s))).collect()
+}
+
+/// **The pause menu's Experiments page** (2026-11-19): each switch as the
+/// round's keys play it, and the pick in `next` that waits for the next
+/// round, in the list's order (a row's index is its `SWITCHES` index).
+pub(super) fn rows(keys: &[(String, String)], next: &[(&'static str, &'static str)]) -> Vec<Experiment> {
+    SWITCHES
+        .iter()
+        .map(|s| {
+            let mut choices = s.names();
+            let at_name = now(keys, s);
+            if !choices.contains(&at_name) {
+                choices.push(at_name);
+            }
+            let find = |n: &str| choices.iter().position(|c| *c == n).unwrap_or(0);
+            let at = find(at_name);
+            let next = next.iter().find(|(k, _)| *k == s.key).map(|(_, c)| find(c)).filter(|&k| k != at);
+            Experiment { key: s.key.into(), label: s.label.into(), choices: choices.iter().map(|c| c.to_string()).collect(), default: find(s.default), at, next, info: info(s) }
+        })
+        .collect()
+}
+
+/// Puts choice `c` of switch `s` on a round's keys: the keys any of its
+/// choices set come off, then `c`'s go on (the default's are none).
+pub(super) fn set_choice(keys: &mut Vec<(String, String)>, s: &Switch, c: &switches::Choice) {
+    keys.retain(|(k, _)| !s.choices.iter().any(|o| o.keys.iter().any(|(n, _)| n == k)));
+    keys.extend(switches::keys_of(c));
+}
+
+impl App {
+    /// **A pick on the pause menu's Experiments page**: switch `row` of
+    /// the list to its choice `choice`, as the page numbers them
+    /// (`rows`). A live switch (`live`: shake and hit-stop) plays it at
+    /// once; any other waits in `exp_next` for the next round this window
+    /// starts (Restart, the next planet, N), which `start` puts on its
+    /// keys. Either way the start menu kept under play (`parked`) takes
+    /// it too, so the rounds it starts after play it: a pick lasts until
+    /// the game closes, as one on the Options page does.
+    pub(super) fn pick_experiment(&mut self, row: usize, choice: usize) -> Result<(), String> {
+        let rows = rows(&self.args.keys, &self.exp_next);
+        let (Some(s), Some(e)) = (SWITCHES.get(row), rows.get(row)) else { return Ok(()) };
+        let Some(c) = e.choices.get(choice).and_then(|n| s.choice(n)) else { return Ok(()) };
+        if let Some(o) = self.parked.as_mut().and_then(|m| m.options.iter_mut().find(|o| o.key == s.opt_key())) {
+            if let Some(k) = o.choices.iter().position(|n| n == c.name) {
+                o.at = k;
+            }
+        }
+        self.exp_next.retain(|(k, _)| *k != s.key);
+        if live(s) {
+            set_choice(&mut self.args.keys, s, c);
+            // Back to the window's own defaults first: the off choice
+            // sets no keys, so it would leave the last pick's standing.
+            let plain = Args::default();
+            for name in s.choices.iter().flat_map(|o| o.keys.iter()).filter_map(|(k, _)| k.strip_prefix(switches::WINDOW_KEY)) {
+                reset_window_key(&mut self.args, &plain, name);
+            }
+            for (k, v) in c.keys {
+                if let Some(name) = k.strip_prefix(switches::WINDOW_KEY) {
+                    set_window_key(&mut self.args, name, v)?;
+                }
+            }
+        } else if now(&self.args.keys, s) != c.name {
+            self.exp_next.push((s.key, c.name));
+        }
+        Ok(())
+    }
+
+    /// The picks waiting for a new round, onto its keys (`start`).
+    pub(super) fn take_experiments(&mut self) {
+        for (key, choice) in std::mem::take(&mut self.exp_next) {
+            if let Some((s, c)) = switches::find(key).and_then(|s| s.choice(choice).map(|c| (s, c))) {
+                set_choice(&mut self.args.keys, s, c);
+            }
+        }
+    }
 }
 
 /// The menu's picks over the command line's keys in `a`. A switch the
@@ -51,6 +140,16 @@ pub(super) fn apply(a: &mut Args, base: &Args, menu: &StartMenu) {
 /// hit (off at 0, the Squad lane's toggle). (`setlook`, the set slime's
 /// look, was one to 2026-11-18: amber is what the game draws.)
 pub(super) const WINDOW_KEYS: [&str; 2] = ["shake", "hitstop"];
+
+/// Window key `name` back to its value in `plain` (the window's own
+/// default, `Args::default()`).
+fn reset_window_key(a: &mut Args, plain: &Args, name: &str) {
+    match name {
+        "shake" => a.shake = plain.shake,
+        "hitstop" => a.hitstop = plain.hitstop,
+        _ => {}
+    }
+}
 
 /// Sets window key `name` (a switch's `win:NAME`) on a round's args
 /// (`App::start`, before the round is built).
@@ -114,7 +213,13 @@ mod tests {
         // and quit, for CI), kept apart from TOOLS so that lanes editing
         // that line and this lane do not conflict.
         const ENGINE_TOOLS: &str = "version runbot";
-        let tools: Vec<&str> = TOOLS.split(' ').chain(ENGINE_TOOLS.split(' ')).collect();
+        // The gun lab's research keys (`gunlab=` with `deck=`, `arena=`,
+        // `tail=`: one deck on a run planet, printing one line).
+        const LAB_TOOLS: &str = "gunlab deck arena tail";
+        // The strategy league's keys (`league=` with `plan=`: one plan on a
+        // run planet, printing one line; `league.rs`).
+        const BOT_TOOLS: &str = "league plan";
+        let tools: Vec<&str> = TOOLS.split(' ').chain(ENGINE_TOOLS.split(' ')).chain(LAB_TOOLS.split(' ')).chain(BOT_TOOLS.split(' ')).collect();
         let declared: Vec<&str> = SWITCHES.iter().flat_map(|s| s.choices.iter()).flat_map(|c| c.keys.iter()).filter_map(|(k, _)| k.strip_prefix(WINDOW_KEY)).collect();
         for k in keys {
             if WINDOW_KEYS.contains(&k) {
@@ -173,6 +278,45 @@ mod tests {
         let menu = start_menu(&film);
         assert_eq!(menu.option("exp:crystal_regrow").map(|o| o.value()), Some("custom"));
         assert!(round_args(&film, false, &menu, &StartEvent::Sandbox).keys.contains(&("crystal_regrow".into(), "0.01".into())));
+    }
+
+    /// **The pause menu's picks** (2026-11-19): shake and hit-stop at
+    /// once, on the round's keys and the window's own numbers, and back
+    /// off again; crystals refill waits for the next round, shown as
+    /// waiting, then is on its keys after `start`; either way the start
+    /// menu kept under play takes the pick.
+    #[test]
+    fn the_pause_menu_picks_apply_live_or_at_restart() {
+        let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() };
+        let mut app = App::new(base.clone());
+        app.parked = Some(start_menu(&base));
+        let row = |k: &str| SWITCHES.iter().position(|s| s.key == k).unwrap();
+        let on = |app: &App, k: &str| rows(&app.args.keys, &app.exp_next)[row(k)].choices.iter().position(|c| c == "on").unwrap();
+        let (feel, regrow) = (row("feel"), row("crystal_regrow"));
+        assert!(rows(&app.args.keys, &app.exp_next).iter().all(|e| e.at == e.default && e.next.is_none()));
+        assert!(live(&SWITCHES[feel]) && !live(&SWITCHES[regrow]));
+        app.pick_experiment(feel, on(&app, "feel")).unwrap();
+        assert_eq!(switches::log_word(&app.args.keys), "feel:on");
+        assert!(app.args.shake > 0.0 && app.args.hitstop > 0.0, "shake and hit-stop at once");
+        assert_eq!(app.parked.as_ref().and_then(|m| m.option("exp:feel")).map(|o| o.value()), Some("on"));
+        app.pick_experiment(feel, 0).unwrap();
+        assert_eq!(switches::log_word(&app.args.keys), "none");
+        assert!(app.args.shake == 0.0 && app.args.hitstop == 0.0, "and off at once");
+        app.pick_experiment(regrow, on(&app, "crystal_regrow")).unwrap();
+        assert_eq!(switches::log_word(&app.args.keys), "none", "crystals refill waits for a restart");
+        let e = &rows(&app.args.keys, &app.exp_next)[regrow];
+        assert_eq!((e.at, e.next), (e.default, Some(on(&app, "crystal_regrow"))));
+        assert_eq!(app.parked.as_ref().and_then(|m| m.option("exp:crystal_regrow")).map(|o| o.value()), Some("on"));
+        // Picked back before the restart: nothing waits.
+        app.pick_experiment(regrow, 0).unwrap();
+        assert!(app.exp_next.is_empty());
+        app.pick_experiment(regrow, on(&app, "crystal_regrow")).unwrap();
+        app.take_experiments();
+        assert_eq!(switches::log_word(&app.args.keys), "crystal_regrow:on");
+        assert!(app.exp_next.is_empty() && rows(&app.args.keys, &app.exp_next)[regrow].next.is_none());
+        // The menu's own rounds play it too.
+        let menu = app.parked.take().unwrap();
+        assert_eq!(switches::log_word(&round_args(&base, false, &menu, &StartEvent::Sandbox).keys), "crystal_regrow:on");
     }
 
     /// The play log's header names the build and the switches.

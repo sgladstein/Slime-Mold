@@ -842,8 +842,18 @@ impl<W: World> Game<W> {
     }
 
     /// An attack-moving soldier (`Order::Fight`) with mould it can shoot in
-    /// sight: it stands and fights instead of walking on.
+    /// sight, in a squad that stands to fight (`Squad::holding`, decided in
+    /// `Game::fight_turn`): it stands and fights instead of walking on.
+    /// With too little slime in reach for its squad to stand, it walks on
+    /// and shoots as it goes (its stance is free on an attack-move,
+    /// `Game::stance_of`, and nothing holds a walking soldier's fire).
     pub(super) fn engaged(&self, k: usize) -> bool {
+        self.in_contact(k) && (self.rules.fight_hold <= 0.0 || self.squads.get(self.soldiers[k].squad as usize).is_some_and(|q| q.holding))
+    }
+
+    /// Soldier `k` on an attack-move with slime it can shoot: in reach, on
+    /// an open line. (Before 2026-11-19 this alone stood it still.)
+    pub(super) fn in_contact(&self, k: usize) -> bool {
         let s = self.soldiers[k];
         let Order::Fight(..) = s.order else { return false };
         let Some(aim) = s.aim else { return false };

@@ -2,8 +2,9 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-19
+updated: 2026-11-20
 sources:
+  - Reports/gun-builds-2026-11-19/README.md
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-mind-2026-11-16/README.md
@@ -68,8 +69,8 @@ this thread's judgement.
 | Pierce | 1 | Trunk | J | runs on along a long cord | the bullet carries on past its first hit |
 | Trigger, Expire | 2 | Trunk | J | carry a payload past the cords to a body | a second payload goes off past the first |
 | Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food | the slime loses its line to a crystal |
-| Gas | 1 | Swarmer | J | the charge sleeps before it bites | a grey, still patch |
-| Mist | 2 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
+| Gas | 2 | Swarmer | J | the charge sleeps before it bites | a grey, still patch |
+| Mist | 4 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
 | Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it |
 | Spin | 2 | Swarmer | J | rings stop a charge | the vein beads into knots |
 | Heave | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone); with no turret near it pushes the swarm back | the slime shoved as a block, toward a turret if one is near |
@@ -102,6 +103,14 @@ without food (the largest part under 2% of the slime in most counts; only
 the Swarmer's first minute holds a big part behind necks), so starving is
 done with walls and positioning, which withering and panic already reward
 ([cut count](../../Reports/gun-cut-count-2026-11-17/README.md)).
+
+**Strongest decks** (gun lab, 2026-11-19, about 9,700 arena games, research
+only): one common shell, Needle Blast, is the base of every top deck, and
+no top deck needs a rare card, against the owner's Noita rule. Seek + Wide +
+Needle Blast is best moving (+21.8k slime on planet 3) and won 9 of 9 full
+planet 3 games; holding a crystal, Needle Blast alone is within 2% of the
+best combo. Germ is the only rare card that earns its slot
+([gun builds](../../Reports/gun-builds-2026-11-19/README.md)).
 
 **Merge or cut candidates.** Pull and Thrift (no planet); Trigger and
 Expire; Gas and Mist. Wide and Multicast are general on purpose. Blind and
@@ -150,3 +159,4 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
 - [mould tiers](../../Reports/mould-tiers-2026-11-11.md): each tier's counter.
 - [rounds](../../Reports/rounds-2026-11-12.md): the Sleeper ignores every round.
 - [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Heave (Corral until 2026-11-18), Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.
+- [gun builds](../../Reports/gun-builds-2026-11-19/README.md): the strongest decks by arena, defend test and full planet 3 games.

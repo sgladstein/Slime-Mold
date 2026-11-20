@@ -321,6 +321,31 @@ impl Marks {
         }
     }
 
+    /// The soldier marks pushed since `from` (`len()` before a
+    /// `soldier_bitten` or `soldier_head`) dressed in Armour look `skin`:
+    /// 0 olive, 1 slate, 2 dark camo (owner, 2026-11-19; `view.wgsl`,
+    /// `skin_body`). It rides at bits 27-28 of `extra`.
+    pub fn dress_since(&mut self, from: usize, skin: u32) {
+        for m in self.list.iter_mut().skip(from).filter(|m| m.shape == Shape::Soldier) {
+            m.extra |= skin.min(2) << 27;
+        }
+    }
+
+    /// The soldier marks pushed since `from` (`len()` before a
+    /// `soldier_bitten` or `soldier_head`) asleep in their own gas
+    /// (`Rules::doze`, 2026-11-19): `tint` 0-1 how much of the gas's
+    /// lavender the figure takes (the cloud's level at its feet), `asleep`
+    /// whether it is out (it neither fires nor walks), which also dims
+    /// it. Both ride where a soldier mark has room: the tint in the second
+    /// colour's top byte, the flag at bit 26 of `extra`.
+    pub fn doze_since(&mut self, from: usize, tint: f32, asleep: bool) {
+        let byte = (tint.clamp(0.0, 1.0) * 255.0).round() as u32;
+        for m in self.list.iter_mut().skip(from).filter(|m| m.shape == Shape::Soldier) {
+            m.colour2[3] = byte as u8;
+            m.extra |= (asleep as u32) << 26;
+        }
+    }
+
     /// A fallen soldier at `at`, `r` world cells across the radius, lying
     /// as it fell from facing `facing` radians (it fell back, so its head
     /// lies behind it), over a pool of blood spread `pool` 0-1 of the way

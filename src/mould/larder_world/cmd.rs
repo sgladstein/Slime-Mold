@@ -78,6 +78,10 @@ pub enum Cmd {
     Arm(u8, Option<Gun>),
     /// Squad `q` takes its own cards (`Game::load`); None the army's.
     Load(u8, Option<Deck>),
+    /// Turret (or mortar) `b` takes its own cards from the run's loadout
+    /// `l` (`Building::deck`, `Building::loadout`; owner 2026-11-19: each
+    /// turret changed one by one); None, None: back on the turrets' deck.
+    TurretLoad(u32, Option<u8>, Option<Deck>),
     /// Squad `q` stops and heals (`Squad::heal`).
     Heal(u8),
     /// A door between two points, fine cells (`Game::door`): a wall the
@@ -120,6 +124,7 @@ impl Cmd {
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
             Cmd::Load(q, None) => format!("load {q} army"),
             Cmd::Load(q, Some(d)) => format!("load {q} {}", super::super::rounds::name(&d.cards())),
+            Cmd::TurretLoad(b, l, d) => format!("tload {b} {} {}", l.map_or("-".to_string(), |l| l.to_string()), d.map_or("army".to_string(), |d| super::super::rounds::name(&d.cards()))),
             Cmd::Door(a, b) => format!("door {} {} {} {}", a.0, a.1, b.0, b.1),
         }
     }
@@ -152,6 +157,17 @@ impl Cmd {
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
             "load" if w.get(2) == Some(&"army") => return Some(Cmd::Load(w.get(1)?.parse().ok()?, None)),
             "load" => return Some(Cmd::Load(w.get(1)?.parse().ok()?, Some(Deck::new(&super::super::rounds::parse(w.get(2)?)?)))),
+            "tload" => {
+                let l = match *w.get(2)? {
+                    "-" => None,
+                    l => Some(l.parse().ok()?),
+                };
+                let d = match *w.get(3)? {
+                    "army" => None,
+                    d => Some(Deck::new(&super::super::rounds::parse(d)?)),
+                };
+                return Some(Cmd::TurretLoad(w.get(1)?.parse().ok()?, l, d));
+            }
             v @ ("sorder" | "squeue") => {
                 let q: u8 = w.get(1)?.parse().ok()?;
                 let rest = w[2..].join(" ");
@@ -248,6 +264,15 @@ impl<W: World> Game<W> {
             }
             Cmd::Arm(q, g) => self.arm(q as usize, g),
             Cmd::Load(q, d) => self.load(q as usize, d),
+            Cmd::TurretLoad(b, l, d) => match self.buildings.get_mut(b as usize).filter(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar)) {
+                Some(bd) => {
+                    bd.deck = d;
+                    bd.loadout = l;
+                    bd.next = 0;
+                    true
+                }
+                None => false,
+            },
             Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Cover(..) | Cmd::Heal(..) => self.squad_cmd(c),
             _ => false,
         }

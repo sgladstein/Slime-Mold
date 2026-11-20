@@ -543,6 +543,34 @@ fn the_squad_panel_splits_switches_and_combines() {
     assert_eq!(active(&app), Some(1));
     app.squad_key(KeyCode::Digit1, true, false, false);
     assert_eq!(active(&app), Some(1), "key 1's squad is gone");
+    // One key goes through the squads in turn, round from the last
+    // (owner, 2026-11-19 16:55Z), Shift back.
+    assert!(app.squad_key(squadmode::CYCLE, true, false, false));
+    assert_eq!(active(&app), Some(2));
+    app.squad_key(squadmode::CYCLE, true, false, false);
+    assert_eq!(active(&app), Some(1), "round to the first");
+    app.shift = true;
+    app.squad_key(squadmode::CYCLE, true, false, false);
+    app.shift = false;
+    assert_eq!(active(&app), Some(2), "Shift goes back");
+    // Past a squad linked with yours (review, 2026-11-20: the cycle stuck
+    // on it, already commanded).
+    let big = {
+        let g = app.game.as_ref().unwrap();
+        g.live_squads().into_iter().max_by_key(|&q| g.members(q).len()).unwrap()
+    };
+    let g = app.game.as_mut().unwrap();
+    assert!(g.apply(Cmd::Active(big as u8)));
+    let m = g.middle(big).unwrap();
+    assert!(g.apply(Cmd::Split(big as u8, m)), "{} in the biggest squad", g.members(big).len());
+    let live = app.game.as_ref().unwrap().live_squads();
+    assert_eq!(live.len(), 3, "{live:?}");
+    let a = active(&app).unwrap();
+    let i = live.iter().position(|&q| q == a).unwrap();
+    let next = live[(i + 1) % 3];
+    assert!(app.game.as_mut().unwrap().apply(Cmd::Link(a as u8, next as u8)));
+    app.squad_key(squadmode::CYCLE, true, false, false);
+    assert_eq!(active(&app), Some(live[(i + 2) % 3]), "the linked squad is skipped");
     // The build page has no Outpost without the larder.
     app.build_page = true;
     let cmds = app.model(None, None).commands;
@@ -979,6 +1007,53 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
     assert_eq!(app.name, "planet:2:1");
+    // Loadouts on the planet (owner, 2026-11-19 19:22Z): H opens their
+    // panel, paused, nothing for sale; the commanded squad is given the
+    // turrets' loadout (Gas, no gun) and fires it once back, the run
+    // keeping the choice; a turret's card steps its own loadout and back
+    // to the default; opening and closing with nothing picked changes
+    // nothing and keeps a pause (review, 2026-11-20).
+    {
+        use slime_mould::mould::run::Pick;
+        app.next_round();
+        assert!(app.in_menu() && app.paused && app.fielding(), "H opens the loadout panel, paused");
+        let shop = app.menu.as_ref().unwrap().shop.clone().unwrap();
+        assert!(shop.field && !shop.rows.iter().any(|r| !r.price.is_empty()), "nothing for sale on a planet");
+        let r = app.run.as_mut().unwrap();
+        assert_eq!((r.editing, r.field_squad), (0, Some((0, 0))), "it opens on the squad's loadout");
+        assert!(r.pick(Pick::Edit(1)) && r.pick(Pick::SquadUses));
+        app.menu_event(StartEvent::NextLevel).unwrap();
+        assert!(!app.in_menu() && !app.paused && !app.fielding());
+        let r = app.args.run.clone().unwrap();
+        let g = app.game.as_ref().unwrap();
+        assert_eq!(g.squads[0].loadout, 1);
+        assert_eq!((g.squads[0].gun, g.squads[0].deck.map(|d| d.cards())), (Some(r.squad_gun(1)), Some(vec![rounds::Card::Gas])), "squad 1 fires loadout 2: the rifle, Gas");
+        assert_eq!((r.field, r.editing, r.depth), (false, 1, 2), "the planet's run keeps it");
+        // A turret: its card's Loadout button steps it on, then back.
+        let g = app.game.as_mut().unwrap();
+        g.bank = 10_000.0;
+        let (at, sc) = (g.larder, g.world.scale());
+        let spot = (0..64).map(|i| i as f32 * 0.1).flat_map(|a| [12.0f32, 18.0, 24.0].map(|d| (at.0 + d * sc * a.cos(), at.1 + d * sc * a.sin()))).find(|&p| g.build_blocked(Kind::Turret, p).is_none()).expect("ground for a turret");
+        assert!(g.apply(Cmd::Build(Kind::Turret, spot)));
+        let b = g.buildings.len() - 1;
+        g.buildings[b].built = 1.0;
+        app.building_sel = Some(b);
+        app.hud_event(HudEvent::Command { id: TURRET_LOADOUT }).unwrap();
+        let bd = app.game.as_ref().unwrap().buildings[b];
+        assert_eq!((bd.loadout, bd.deck.map(|d| d.cards())), (Some(0), Some(r.turret_deck_of(0))), "from the default to loadout 1, fitted to the turrets' rack");
+        for _ in 0..r.loadouts.len() {
+            app.hud_event(HudEvent::Command { id: TURRET_LOADOUT }).unwrap();
+        }
+        let bd = app.game.as_ref().unwrap().buildings[b];
+        assert_eq!((bd.loadout, bd.deck), (None, None), "back on the turrets' default");
+        app.building_sel = None;
+        app.paused = true;
+        app.next_round();
+        app.menu_event(StartEvent::NextLevel).unwrap();
+        assert!(app.paused, "paused as before the panel");
+        app.paused = false;
+        assert_eq!(app.game.as_ref().unwrap().squads[0].loadout, 1, "nothing picked: unchanged");
+    }
     // A lost level ends the run.
     app.mission.as_mut().unwrap().verdict = Some(Verdict { stars: 0, cause: Cause::SquadWiped, ..win });
     assert_eq!(app.model(None, None).carry_on.as_deref(), Some("End the run"));
@@ -1024,6 +1099,39 @@ fn a_run_planet_ended_by_the_game_carries_on() {
         assert_eq!(v.unwrap().stars > 0, matches!(end, End::MouldWiped(_)), "{end:?}: {v:?}");
         assert_eq!(app.model(None, None).carry_on.as_deref(), Some(label), "{end:?}");
     }
+}
+
+/// The play log names the loadout (coordinator, 2026-11-18: the logs did
+/// not say which cards Scott's gun and turrets carried): the head's `gun=`,
+/// `turrets=` and `bought=`, and a `gun t=..` line when the gun's cards
+/// change mid-round.
+#[test]
+fn the_play_log_names_the_gun_and_turret_cards() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut a = run_base();
+    let mut r = Run::new(1);
+    r.owned[0] = 2;
+    a.run = Some(r);
+    let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+    app.prepare();
+    let keys: Vec<(&str, String)> = app.log_loadout();
+    let first = slime_mould::mould::run::ITEMS[0].key;
+    assert_eq!(keys[..2], [("gun", rounds::name(&app.rounds.round)), ("turrets", "none".to_string())]);
+    // A new run already owns its free items (the walls), so only ours is checked.
+    assert!(keys[2].0 == "bought" && keys[2].1.split('+').any(|w| w == format!("{first}2")), "{keys:?}");
+    let dir = std::env::temp_dir().join(format!("playlog-loadout-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("log.txt");
+    std::fs::write(&path, "").unwrap();
+    app.log_path = Some(path.to_string_lossy().into_owned());
+    app.log_gun = rounds::name(&app.rounds.round);
+    app.rounds.round = rounds::parse("blast+wide").unwrap();
+    for _ in 0..30 {
+        app.step(0.1);
+    }
+    let log = std::fs::read_to_string(&path).unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+    assert_eq!(log.lines().filter(|l| l.starts_with("gun t=") && l.ends_with(" blast+wide")).count(), 1, "{log}");
 }
 
 #[test]

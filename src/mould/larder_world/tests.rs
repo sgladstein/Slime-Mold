@@ -1159,7 +1159,7 @@ fn a_walking_squad_or_a_standing_pump_is_not_stuck() {
     let mut g = small(1);
     hold(&mut g);
     let at = (g.soldiers[0].x, g.soldiers[0].y);
-    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0 });
+    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None });
     assert_eq!(stuck_for(&mut g), 0, "a standing pump is something");
     // Worn down, it no longer is.
     g.buildings[0].alive = false;
@@ -2177,9 +2177,11 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
         s.aim = Some(far);
         s.dense = 50;
     }
+    g.fight_turn();
     assert!(!g.engaged(0), "30 cells is past the plain range");
     g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
     assert!((g.gun_range(0) - 48.0).abs() < 1e-4, "one card doubles the range (owner: 2-4x)");
+    g.fight_turn();
     assert!(g.engaged(0), "one Range card reaches 48 cells");
     // Fired legs: free fire with the card flies out to 48 cells.
     let mut g = small(3);
@@ -4185,4 +4187,49 @@ fn the_game_sets_the_far_smell_every_two_seconds() {
     assert!(!fresh.is_empty() && reach * 2 > f.len(), "the field is set and reaches most of the world");
     assert!(fresh.iter().all(|&c| at(c) <= 8), "near zero at each untouched crystal");
     assert!(play(false).world.food_field.is_empty(), "off: none");
+}
+
+/// A smarter attack-move (owner, 2026-11-19 16:55Z: "when one single
+/// walker gets in the range of one soldier the whole squad stops"): a
+/// squad on attack-move stands to fight only with about a walker in reach
+/// per member (`Rules::fight_hold`, at least `FIGHT_LEAST`); with fewer it
+/// walks on, shooting. Once standing it stands till under half that.
+#[test]
+fn one_walker_does_not_stop_an_attack_moving_squad() {
+    let mut g = squads(1);
+    let sc = g.s();
+    let m = g.members(0);
+    assert!(m.len() >= 3, "a squad to test with");
+    let (x, y) = (g.soldiers[m[0]].x, g.soldiers[m[0]].y);
+    let d = 10.0 * sc;
+    let near = [(1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0)]
+        .into_iter()
+        .map(|(u, v): (f32, f32)| (x + u * d, y + v * d))
+        .find(|&p| g.clear_line((x, y), p))
+        .expect("an open line 10 cells out");
+    for &k in &m {
+        g.soldiers[k].order = Order::Fight(x + 40.0 * sc, y);
+        g.soldiers[k].aim = None;
+        g.soldiers[k].dense = 0;
+    }
+    g.squads[0].fight = true;
+    let aim = |g: &mut Game<BigDish>, dense: u32| {
+        let s = &mut g.soldiers[m[0]];
+        s.aim = Some(near);
+        s.dense = dense;
+        g.fight_turn();
+    };
+    aim(&mut g, 1);
+    assert!(g.in_contact(m[0]) && !g.engaged(m[0]), "one walker in reach: it walks on, shooting");
+    let need = (g.rules.fight_hold * m.len() as f32).max(squads::FIGHT_LEAST).ceil() as u32;
+    aim(&mut g, need);
+    assert!(g.engaged(m[0]), "{need} walkers in reach: the squad stands to fight");
+    aim(&mut g, need.div_ceil(2));
+    assert!(g.engaged(m[0]), "it stands till under half that");
+    aim(&mut g, 0);
+    assert!(!g.engaged(m[0]), "nothing in reach: it walks on");
+    // 0 is the old way: one walker stands the soldier still.
+    g.rules.fight_hold = 0.0;
+    aim(&mut g, 1);
+    assert!(g.engaged(m[0]), "fight_hold=0: one walker stops it, as before");
 }

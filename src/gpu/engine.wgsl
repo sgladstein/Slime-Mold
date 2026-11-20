@@ -2580,9 +2580,13 @@ fn isqrt(r2: u32) -> i32 {
 }
 
 // Whether a shot stops at cell i: slime, or a walker in a crater (which
-// holds no trail; `squad::shots`).
+// holds no trail; `squad::shots`), or a set walker (`set_scar`), which
+// lays none either. Without the last, set slime whose trail had faded let
+// every bullet through: the owner's planet 3 round of 2026-11-19 ended on
+// 41 set walkers that 3,200 shots in 85 s never hit (`setc_at`'s count
+// is last tick's, as `stops` reads the trail).
 fn stops(i: u32) -> bool {
-    return enemy_trail(i) >= P.slime || ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u);
+    return enemy_trail(i) >= P.slime || ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u) || (P.set_scar > 0.0 && atomicLoad(&news[setc_at() + i]) > 0u);
 }
 
 // What a seeking shot's catch strikes (`squad::trace`): a cell that stops
@@ -3686,6 +3690,21 @@ fn gasp(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn calm(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
+    // **Your own sleep gas** (2026-11-18, Squad and arsenal's change to
+    // this pass; `Rules::doze`): thread k < the points also writes the
+    // cloud at point k, in levels that put a walker to sleep, into the
+    // point's fourth word. Both halves of the germ field's pair are read,
+    // so the step's swap does not matter.
+    if (k < gas_word(1u)) {
+        let o = GAS_UNITS + 4u * k;
+        let i = cell(bitcast<f32>(gas_word(o)), bitcast<f32>(gas_word(o + 1u)));
+        var lv = 0.0;
+        if (i != NONE) {
+            let c = P.w * P.h;
+            lv = max(germ_in[2u * c + i], germ_out[2u * c + i]) / max(gas_sleep(), 1.0e-6);
+        }
+        atomicStore(&news[gas_base() + o + 3u], bitcast<u32>(lv));
+    }
     if (k >= P.n || !lives(k) || state(k) != L_DORMANT || !gassed_at(k, gas_word(0u))) { return; }
     let wk = walkers[k];
     let nu = gas_word(1u);

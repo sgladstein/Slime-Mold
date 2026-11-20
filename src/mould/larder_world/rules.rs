@@ -161,6 +161,14 @@ pub struct Rules {
     /// "It should hurt the player too". 25: four seconds in the hottest
     /// fire kills, so a soldier walking out of a front lives.
     pub fire_hurt: f32,
+    /// **Your own sleep gas** (2026-11-18, the owner's Noita rule: "Any
+    /// single spell that is incredibly powerful is also really
+    /// dangerous"): a soldier standing where the gas cloud is this many
+    /// times the level that puts the slime to sleep (`KitRules::gas_sleep`)
+    /// dozes: it does not fire until the cloud thins (it still walks, 11-19)
+    /// (`Soldier::doze`, read by `World::clouds`). 0 is off. Fire on its
+    /// own does not cast gas onto the squad (`RoundRules::gas_margin`).
+    pub doze: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
     /// Elbow room: the least distance between two living soldiers'
@@ -235,6 +243,14 @@ pub struct Rules {
     /// hit nothing at 1 and 2 of 199 at 4). Whole walkers, not by mass:
     /// at 1 it is presence, the same at any mass.
     pub aim_min: u32,
+    /// Walkers in reach, per living member, a squad on attack-move must
+    /// see before it stands to fight (`Game::fight_turn`); fewer, and it
+    /// walks on, shooting them as it goes. At least `FIGHT_LEAST`. 0: the
+    /// old way, where any soldier with one walker in reach stood still.
+    /// The owner, 2026-11-19 16:55Z: "when one single walker gets in the
+    /// range of one soldier the whole squad stops ... one walker is too
+    /// few to stop everyone. Think about a smarter attack move".
+    pub fight_hold: f32,
     pub core_r: f32,
     pub core_secs: f32,
     /// The core's pull (`Core::pull` for a mould with no tier of its own):
@@ -663,6 +679,7 @@ impl Rules {
             "raid_march_stall" => &mut self.raid.march_stall,
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
+            "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
             "boss_first" => &mut self.boss.first,
@@ -716,6 +733,7 @@ impl Rules {
             "surge_min" => &mut self.surge_min,
             "range" => &mut self.range,
             "drain" => &mut self.drain,
+            "doze" => &mut self.doze,
             "cap" => &mut self.cap,
             "start_bank" => &mut self.start_bank,
             "soldier_cost" => &mut self.soldier_cost,
@@ -768,6 +786,7 @@ impl Default for Rules {
             hp: 100.0,
             drain: 2.0,
             fire_hurt: 25.0,
+            doze: 1.0,
             touch: 1.5,
             elbow: 1.6,
             corners: true,
@@ -781,6 +800,7 @@ impl Default for Rules {
             defend: 7.5,
             guard_r: 8.0,
             aim_min: 1,
+            fight_hold: 1.0,
             core_r: 5.0,
             core_secs: 5.0,
             core_pull: 8.0,

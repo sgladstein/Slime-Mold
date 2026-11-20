@@ -834,6 +834,10 @@ impl World for GpuWorld {
         self.e.calm(&self.shared, at, r)
     }
 
+    fn clouds(&self) -> Vec<f32> {
+        self.e.clouds.borrow().clone()
+    }
+
     fn has_gas(&self) -> bool {
         true
     }
@@ -1685,6 +1689,49 @@ mod tests {
         assert!(new[3] > 20, "after the rest gas takes them again: {new:?}");
     }
 
+    /// **Asleep in your own gas** (2026-11-18, `Rules::doze`): a thick
+    /// sleep cloud laid on a soldier puts it to sleep the next frame: it
+    /// fires no shot but still walks where it is sent (since 11-19), and
+    /// once the cloud thins it wakes. With `doze` 0 it never sleeps.
+    #[test]
+    fn a_soldier_sleeps_in_its_own_gas_cloud() {
+        use crate::mould::kit::KitRules;
+        use crate::mould::larder_world::{Cmd, Order};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let run = |doze: f32| {
+            let rules = Rules { cap: 30.0, doze, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let sc = g.world.scale();
+            let fine = 30.0 * g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), fine);
+            let at = (g.soldiers[0].x, g.soldiers[0].y);
+            g.world.burst(&squad::Burst { at: (at.0 / sc, at.1 / sc), r: 6.0, cloud: 4.0, ..Default::default() }, &k);
+            g.step();
+            g.step();
+            let asleep = g.dozing(0);
+            let level = g.soldiers[0].doze;
+            // Sent to the crystal: one dozing still walks (11-19).
+            let goal = g.world.crystals()[1].0;
+            assert!(g.apply(Cmd::Order(0, Order::Move(goal.0, goal.1))));
+            let before = (g.soldiers[0].x, g.soldiers[0].y);
+            for _ in 0..5 {
+                g.step();
+            }
+            let moved = (g.soldiers[0].x - before.0).hypot(g.soldiers[0].y - before.1);
+            while g.time() < 60.0 && g.dozing(0) {
+                g.step();
+            }
+            (asleep, level, moved, g.dozing(0), g.time())
+        };
+        let (asleep, level, moved, still, woke) = run(1.0);
+        eprintln!("cloud on the soldier {level:.1} sleep levels; asleep {asleep}, moved {moved:.2} fine cells asleep; awake again at {woke:.1} s");
+        assert!(asleep && level >= 1.0 && moved > 0.1, "asleep in the cloud yet walking: level {level}, moved {moved}");
+        assert!(!still && woke < 60.0, "it wakes when the cloud thins");
+        let (asleep, _, moved, _, _) = run(0.0);
+        assert!(!asleep && moved > 0.1, "doze 0: it walks on ({moved})");
+    }
+
     /// **The germ runs on the GPU world** (2026-11-14, cloud plan C5): a
     /// kit germ at the mould's home makes the same walkers sick there as
     /// on the CPU race world (the same mould, before any tick; within 1%,
@@ -2162,6 +2209,57 @@ mod tests {
         let m = mask(&fort);
         assert!(!fort.world.e.forted && m.iter().all(|&v| v == 0) && fort.fort_held.is_empty(), "the mask is cleared with the rule off");
         assert_eq!(set(&fort, &m).0, 0, "and the walls wake");
+    }
+
+    /// **A shot stops at set slime** (the owner's planet 3 round,
+    /// 2026-11-19 20:46Z: "slime that i couldn't kill they were not moving
+    /// but all my soliders would shoot them over and over and nothing hurt
+    /// them"). A set walker lays no trail, and a shot stopped only where
+    /// the trail looked like slime, so once the live slime round a wall
+    /// had gone its trail faded and every bullet flew through it: that
+    /// round ended on 41 set walkers that 3,200 shots in 85 s never hit.
+    /// The fort's world of the test above at 20 s, its trail then wiped
+    /// as if the live slime had long gone: a shot at a set walker's cell
+    /// hits it, and it dies within its armour's blows.
+    #[test]
+    fn a_shot_stops_at_set_slime_with_no_trail() {
+        use crate::gpu::floats;
+        use crate::mould::squad::{slime_trail, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let mut s = race_settings(seed, scale, walkers);
+        crate::gpu::set(&mut s, "alarm_keep", "0.9").unwrap();
+        crate::gpu::set(&mut s, "setting", "1").unwrap();
+        crate::gpu::set(&mut s, "crust_rise", "0.02").unwrap();
+        crate::gpu::set(&mut s, "crust_trail", "0").unwrap();
+        let armour = s.set_armour;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { set_block: 5.0, fort: 2.0, ..Rules::default() }, seed);
+        while g.time() < 20.0 {
+            g.step();
+        }
+        let slime = slime_trail(6.0);
+        let e = &g.world.e;
+        let w = e.dish.w;
+        // The trail faded: both sides wiped.
+        let none = crate::gpu::f32_bytes(&vec![0.0; w * e.dish.h]);
+        for side in &e.trail {
+            e.queue.write_buffer(side, 0, &none);
+        }
+        let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+        let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+        let words = e.set_of();
+        let set: Vec<usize> = (0..e.n as usize).filter(|&q| words[q] > 0 && en[q] >= 0.0).map(|q| wk[4 * q + 1] as usize * w + wk[4 * q] as usize).collect();
+        assert!(!set.is_empty(), "nothing set (the case is not made)");
+        let c = set[0];
+        let at = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+        let shot = Frame { shots: vec![ShotIn { from: at, to: at, r: 0.0, over: false }], slime, ..Frame::default() };
+        let mut killed = 0;
+        for n in 0..=armour {
+            let out = g.world.frame(&shot, 0);
+            assert!(out.shots[0].hit.is_some(), "shot {n} flew through the set walker at {at:?}");
+            killed += out.shots[0].killed;
+        }
+        assert!(killed >= 1, "{} shots at a set walker killed none", armour + 1);
     }
 
     /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,

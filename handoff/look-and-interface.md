@@ -1,6 +1,6 @@
 # Look and interface: state and brief
 
-## State (2026-11-18)
+## State (2026-11-19)
 
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
 page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
@@ -89,17 +89,64 @@ cell (4.6 to 5.5) in a frame and between frames (0.60 to 0.65). The
 squares noted on 11-18 were in Enemy's #451 clip, scaled to 0.75 and
 squeezed to 8 frames a second; fire has been drawn per pixel since 11-14.
 
-**Open branch:** `claude/project-thread-8bv885`, one pull request at a
-time.
+**Also on main:** the Sprawler's dashes (#510, below) and the goal pill
+kept off the top bar's numbers at every UI size (#512). From #504, the end screens (the brief's job 4;
+`Reports/end-screens-2026-11-18/`, page
+https://claude.ai/artifact/YSjVHU9Es2ztXjeE52VLt1): `ui::Ending`
+(`Model::end`), filled in `draw.rs`, drawn and shrunk to fit by
+`Hud::end_screen`; `film_ends` (ignored, `film.rs`) makes the pictures.
+The Experiments tab as cards and an Experiments page on the Esc menu were
+built by a helper thread under this lane (#509, reviewed and queued 11-19).
 
-- The end screens (the brief's job 4; `Reports/end-screens-2026-11-18/`,
-  page https://claude.ai/artifact/YSjVHU9Es2ztXjeE52VLt1): `ui::Ending`
-  (`Model::end`) holds where (a run's planet and its slime), the title by
-  how it ended, stars, the tier's sentence (`run::does_to_you`), six
-  number tiles and lines; `draw.rs` fills it (`end_screen`,
-  `mission_screen`, `end_tiles`, `App::model`), `Hud::end_screen` draws
-  it and shrinks it to fit. `film_ends` (ignored, `film.rs`) makes the
-  pictures.
+**Look B, a look a slime** (the owner, 11-19 00:08Z: "multiple looks could
+eventually apply to different slimes"; 00:13Z: iterate, they need not all
+be right at once). `view::SlimeLook`, by the tier (`SlimeLook::of`, one
+call in `main.rs`'s `start`), sent to the view with a walker's pace
+(`set_slime_look`; the `V` struct's last row, two words spare). Planned:
+the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
+Trunk thick veined cords with its amber walls.
+
+**The soldiers' Armour looks** (owner, 11-19 14:41Z: "our base soldier
+should be olive that upgraded to slate that upgrades to heavy"; 15:11Z:
+"Replace heavy with dark camo"): three designs from the owner's image-model
+sheet (`sprites/soldiers-2026-11-19.jpg`, cells 1, 2 and 6) are atlas tiles 17-22, body then helmet, cut by
+`sprites/cut.py` (run it after `render.js`). The run's Armour level
+(`run::ITEMS` "hp") picks one for every soldier (`armour_skin` in
+`draw.rs`: 0 olive, 1-2 slate, 3-4 dark camo; `Marks::dress_since`,
+`extra` bits 27-28; `skin_body` in `view.wgsl`). `MUZZLE` holds each
+look's barrel mouth (cut.py prints them). The fallen wear the look too:
+tile 3 (sprite A's fallen olive) and its slate and dark camo recolours,
+tiles 23 and 24 (`fallen` in cut.py, `skin_dead`). Not done: a design for
+each gun if the owner wants that. Generating designs:
+small edits of a sheet he likes, one change a request (a long rule list
+made the model draw the guns side-on). Test page:
+https://claude.ai/artifact/Q4hcuw3SVcPJVNbVG4s5tD
+(`Reports/soldier-skins-2026-11-19/`).
+
+**A soldier asleep in its own Gas** (Squad's #513 puts soldiers to sleep
+in their own cloud): its body takes the gas's lavender by the cloud's
+level at its feet and dims while it is out, its helmet white
+(`Marks::doze_since`, `doze_tint` in `draw.rs`, the `DOZE_*` constants in
+`soldier_at`; doze is `extra` bit 26, beside the Armour look's bits
+27-28). Filmed on planet 1 (Gas cast on the squad at 40 s): lavender at
+42 s, olive and firing at 48 s.
+
+**Open branch:** `claude/project-thread-8bv885`, one pull request at a
+time: the fallen in each Armour look (the dozing look is #523).
+
+**The Sprawler's look (#510):**
+
+- The Sprawler's dashes (`SlimeLook::Threads`): each walker's speck is a
+  dash along the way it came over `STREAK_SECS` (0.1 s, 2.25 cells at its
+  22.5 cells a second; `speck_line`), and its film is laid along the same
+  dash holding one walker in all (`lay_streak`). A first cut weighed every
+  cell of the dash as a whole walker: the loose walkers turned into fat
+  slugs and planet 2's hub filled in as a thick body. Stills only, by the
+  owner's 11-19 ruling (pages for big looks only).
+- Baseline stills and clips of planets 1 to 3 at 60 s, zoom 6 and 12,
+  from main at 74aeb46, are on the film helper's branch
+  `claude/project-thread-5qskxs` (`Reports/look-b-baseline-2026-11-19/`;
+  not merged, for this lane's checking).
 
 **The Lure** is in the game from planet 1 (Squad's #461 and #464; Enemy's
 #457 calls `set_steer` each frame), its pull round on open ground since
@@ -112,18 +159,30 @@ while Squad asked to keep it.
 
 **Next, in order.**
 
-1. The rest of Look A: film the squad's spacing when Squad lands it; a
+1. Look B: the Drifter's is done (#526). The Trunk's look stays its amber
+   walls and packed body until a slime rule gives it flow; then the thick body's veins
+   and flow; iterate the Sprawler's dashes on what the owner says in play.
+   Tried and not kept (`Reports/dead-ends.md`, 11-19): the Trunk's film
+   along each walker's way, and a smooth droplet for the Drifter (blurry at
+   zoom 6). The Trunk's body has no flow or tubes to draw (headings every
+   which way, the trail flat even at `knee=60`, the shared food a smooth
+   pool round each crystal): Direction parked its veins for Milestone 2
+   (11-19).
+2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
-2. The Experiments tab's own look (still Engine's first tab, one row a
-   switch), and the experiments in the pause menu.
 3. A landing, a win and a loss that happen in the picture (D's next).
-4. Picks still open: the mini-boss colours; delete the fen moat A/B's
-   unused side.
-5. Seen and left: at 200% on 1080 lines the goal's pill covers the top
-   bar's fourth number.
-6. The fort walls' tops still mottle at zoom 12 (pale flecks that are not
-   their height), and their arcs show cell steps.
+4. Picks done 11-19: the fen moat deleted; the hunter stays violet
+   (filmed on planet 8, bright and glossy over its dark purple plants,
+   framed by the gold it forms in); the fort walls' tops smooth
+   (`SET_SOFT`, #517); soldiers dressed by Armour (above).
+5. Soldier looks: a design per gun if the owner asks.
+
+**Helpers** (11-19, the owner offered them): a film runner thread (builds
+and films on its own machine; send it exact commands, it pushes the output
+to its branch and sends back the log lines asked for) and the Experiments
+builder (#509). To save tokens (owner, 11-19 04:17Z): look at crops at
+about a third of the size, one 2 x 2 sheet for motion, single log lines.
 
 **Reviews sent** (11-18, through the coordinator): Squad and arsenal's
 Provoke and Still (#448) and Enemy's amber set slime (#451), both fine to
@@ -149,8 +208,8 @@ the raised walls above.
   11-18): one word a walker slot at `mind_at() + k`, kind in the top three
   bits, the step it ends in the low 29 (`View::set_minds`). A per-cell
   count (the pattern is `setcount`) would need a pass from Enemy.
-- The view's `V` struct has no spare words left (`mind_at` and
-  `mind_fade` took the old haze strengths' two).
+- The view's `V` struct has two spare words, in its last row (since
+  11-19; `mind_at` and `mind_fade` took the old haze strengths' two).
 - The owner asked (11-18 03:05Z) whether any green should show in the
   flinch look, since he saw none, and said "Overall it is better". None
   is drawn; Direction recorded it as a question, not a ruling.
@@ -221,7 +280,8 @@ way.
 4. **Win and lose screens** that show the planet's numbers.
 5. **Pending picks that are now yours to decide**: the set slime's look
    (glaze or amber), the haze strength, the mini-boss colours. Delete the
-   fen moat A/B's unused side: Scott could not see the difference.
+   fen moat A/B's unused side: Scott could not see the difference (done
+   11-19).
 
 ## How a look is judged
 
