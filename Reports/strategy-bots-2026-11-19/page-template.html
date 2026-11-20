@@ -105,7 +105,7 @@ table.tests td.bar { width: 34%; }
 .lg.neg { background: var(--neg); } .lg.pos { background: var(--pos); }
 td.sig { font-weight: 600; color: var(--ink); }
 td.hint { color: var(--ink); }
-td.pending { color: var(--muted); font-style: italic; }
+td.pending, p.pending { color: var(--muted); font-style: italic; }
 table.plain { min-width: 620px; }
 table.plain td, table.plain th { border-bottom: 1px solid var(--rule); }
 table.plain tbody th { font-weight: 500; }
@@ -123,9 +123,9 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
 
 <div class="page">
 <header>
-  <div class="eyebrow">Strategy bots · planet 3 · 19 November 2026</div>
+  <div class="eyebrow">Strategy bots · planet 3 · 19 and 20 November 2026</div>
   <h1>Planet 3 Bot League</h1>
-  <p class="lede">Bots with different strategies played your planet 3 and eight other planet 3 maps on your PC. This page shows which strategies win, how they compare with your 7:21 win, and what the bots are still bad at.</p>
+  <p class="lede">Bots with different strategies played your planet 3 and other planet 3 maps on your PC. This page shows which strategies win, how they compare with your 7:21 win, and what the bots are still bad at. The game changed twice on 20 November, so the newest results come first and the older ones are marked as the 19 November game.</p>
 </header>
 
 <section class="answer" aria-label="The short answer">
@@ -133,12 +133,18 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
     <div><b>{{GAMES}}</b><span>planet 3 games</span></div>
     <div><b>{{PLANS}}</b><span>plans tried</span></div>
     <div><b>{{WON}}</b><span>games won</span></div>
-    <div><b>{{YOURS_WON}} of {{YOURS_N}}</b><span>plans that won your planet</span></div>
+    <div><b>{{YOURS_WON}} of {{YOURS_N}}</b><span>games on your planet won</span></div>
   </div>
   <ul>
-    <li>The best plan so far is <code>{{TOP}}</code>. It builds pumps first, aims six times a second, leaves home at once and buys the gun lab's Seek, Wide and Needle Blast cards. It won {{TOP_WINS}} maps in {{TOP_MEAN}} on average (fastest {{TOP_FAST}}), and your planet in {{TOP_YOURS}}. You won yours in 7:21.</li>
-    <li>The gun makes the difference. The same plan without those three cards won {{BASE_WINS}}. That combination may break your rule that no cheap combination should win everything, so it is flagged here and not retuned. One caveat: the bot buys the cards as soon as it wants them, but a real run has to offer them first.</li>
-    <li>Without that deck, the map matters more than the plan. One map falls to most plans, and three maps, yours among them, fall to almost none.</li>
+    <li>After Needle Blast went to one burst per bullet, the Seek, Wide and Needle Blast deck won {{NOW_SEEK}} of 9 maps for the econ bot, against {{NOW_BASE}} of 9 with no cards. It had won all 9. Its wins take {{NOW_SEEK_MEAN}} on average instead of 4:50. On your planet: {{NOW_SEEK_YOURS}}.</li>
+    <li>Wide, Rate and Needle Blast is now the strongest deck. It won {{NOW_WRN}} of 9 and did better than no cards on {{NOW_WRN_B}} of 9 maps. It is the deck to watch under your rule that no cheap combination should win everything. That call is Direction's, so nothing is retuned here. One caveat: the bot buys the cards as soon as it wants them, but a real run has to offer them first.</li>
+    <li>For the lure plan, no deck helps any more.</li>
+    <li>Shots that stop at set slime made planet 3 winnable without a deck. On that game the best plans without one won {{SET_ND}} of 17 maps. <code>{{SET_YOURS_PLAN}}</code> won your planet in {{SET_YOURS}}, the bots' first win there without a deck. The last walkers that mop-up could not kill were that set slime.</li>
+  </ul>
+  <h3>On the 19 November game</h3>
+  <ul>
+    <li>The best plan was <code>{{TOP}}</code>. It builds pumps first, aims six times a second, leaves home at once and buys the gun lab's Seek, Wide and Needle Blast cards. It won {{TOP_WINS}} maps in {{TOP_MEAN}} on average (fastest {{TOP_FAST}}), and your planet in {{TOP_YOURS}}. You won yours in 7:21. The same plan without those three cards won {{BASE_WINS}}.</li>
+    <li>Without that deck, the map mattered more than the plan. One map fell to most plans, and three maps, yours among them, fell to almost none.</li>
     <li>Your crystal-holding play did not help the bots. Split groups on their own were mixed, and split groups with Heave did worse on 7 of 9 maps. The bot probably holds crystals more clumsily than you do.</li>
     <li>Choosing plans by how fast they cleared planet 1 taught the bots nothing for planet 3. Searching on planet 3 alone does improve them.</li>
   </ul>
@@ -146,7 +152,20 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
 
 <section>
   <div class="prose">
-    <h2>Your planet, minute by minute</h2>
+    <h2>The game as it is now</h2>
+    <p>Two changes landed on 20 November. First, shots stop at set slime that has no trail. Planet 3's walls of hardened slime used to take shots without being hurt, and they were the walkers that no plan could finish. Second, Needle Blast bursts once per bullet, at its first slime hit, instead of again at every hit. On the game with only the first change, the search played {{SET_GAMES}} games on 17 maps: plans with a Needle deck won up to {{SET_DECK}} of 17, and plans without a Needle deck up to {{SET_ND}}. The table and the grid below are the deck test played again after the second change, on the same nine maps as before.</p>
+  </div>
+  {{DECK_TABLE}}
+  {{DECK_GRID}}
+  <div class="prose">
+    <p>The planet 3 search started again on the game as it is now: 19 plans on 16 maps plus yours, bred from the best each generation. It runs on your PC all day and night, and this page shows its best plans as they finish.</p>
+  </div>
+  {{GRID_NOW}}
+</section>
+
+<section>
+  <div class="prose">
+    <h2>Your planet, minute by minute, on the 19 November game</h2>
     <p>Without a strong gun, the bots let the slime double while they build, but you never let it grow. Your four soldiers and four turrets held it near its starting size for two minutes. Then you broke it between 2:20 and 5:00 with 12 to 48 soldiers, aiming about 6.6 times a second. The bot with Seek, Wide and Needle Blast is a different game: its four soldiers killed almost eight times as many walkers as you in the first two minutes.</p>
   </div>
   <figure>
@@ -158,7 +177,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
 
 <section>
   <div class="prose">
-    <h2>Every plan on every planet</h2>
+    <h2>Every plan on every planet, on the 19 November game</h2>
     <p>Each row is one plan, and each column is one planet 3 map. The same plan on the same map always plays the same game on one machine, so the maps are the only noise. A plan's score is its mean over the nine maps: a win counts 1 plus the share of the 12 minutes left, and anything else counts 0.9 times the share of the slime's peak that was cleared.</p>
   </div>
   <div class="legend">
@@ -175,8 +194,8 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
 
 <section>
   <div class="prose">
-    <h2>What changed the result</h2>
-    <p>Each row takes one plan and changes one thing, then plays both on the same maps. The bar shows how many maps got better (right) or worse (left). The p value is a sign test. With {{NCOMP}} comparisons on this page, only a p below 0.05 divided by {{NCOMP}} would survive a correction for testing so many, and bold marks those. Nine maps a plan is enough for a strong hint, rarely for proof.</p>
+    <h2>What changed the result, on the 19 November game</h2>
+    <p>These tests were played before the two fixes; the search plays their best plans again on the new game. Each row takes one plan and changes one thing, then plays both on the same maps. The bar shows how many maps got better (right) or worse (left). The p value is a sign test. With {{NCOMP}} comparisons on this page, only a p below 0.05 divided by {{NCOMP}} would survive a correction for testing so many, and bold marks those. Nine maps a plan is enough for a strong hint, rarely for proof.</p>
   </div>
   {{TESTS}}
 </section>
@@ -209,9 +228,9 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
 <section class="prose">
   <h2>Next</h2>
   <ol class="next">
-    <li>The Seek, Wide and Needle Blast deck in every family, to see whether the deck wins whatever the plan.</li>
-    <li>Why mop-up misses the last walkers. The dial stops the draining, but the last 2 walkers on your planet still survive the clock.</li>
-    <li>More generations of the planet 3 search on 16 maps plus yours, all day and night on your PC. Both three-card decks join every generation.</li>
+    <li>More generations of the planet 3 search on the game as it is now, on 16 maps plus yours, all day and night on your PC. The Seek deck and the best plan without a deck join every generation.</li>
+    <li>Whether Wide, Rate and Needle Blast is too strong for one cheap combination. That is Direction's call.</li>
+    <li>The tests on this page played again on the new game, starting with split groups and Heave, where your play did better than the bots.</li>
   </ol>
 </section>
 

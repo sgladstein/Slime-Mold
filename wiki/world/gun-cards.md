@@ -122,12 +122,15 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
 
 ## Open
 
-- Seek + Wide + Needle Blast (three cards, cost 8) may break the owner's
-  rule against cheap combinations that win everything. With it, the strategy
-  bot's `econ,go=4,aim=6,cards=0` won 9 of 9 planet 3 maps, against 5 of 9
-  without it. It was better on all 9 (p 0.004), and won his planet in 4:05
-  against his 7:21. The league buys wanted cards when it can, so a real run
-  that has to be offered them is harder. Flagged for Direction, not retuned
+- Needle decks against the owner's rule on cheap combinations. Before One
+  burst per bullet, Seek + Wide + Needle Blast (three cards, cost 8) took the
+  strategy bot's `econ,go=4,aim=6,cards=0` from 5 to 9 of 9 planet 3 maps and
+  won his planet in 4:05 (his 7:21). After it (2026-11-20), the same deck
+  wins 7 of 9 in 6:26 on average and loses his planet; Wide + Rate + Needle
+  Blast is the strongest, 8 of 9 and better than no cards on all 9 maps
+  (p 0.004). No deck helps the lure plan now. The league buys wanted cards
+  when it can, so a real run that has to be offered them is harder. For
+  Direction, not retuned
   ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
 - A J row becomes M when a run pits the card against its planet, paired
   windows as for seek and the readers.

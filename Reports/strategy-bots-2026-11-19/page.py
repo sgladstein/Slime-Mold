@@ -17,6 +17,22 @@ import league as L  # noqa: E402
 
 SCOTT_SEED = 1795038793
 SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, SCOTT_SEED]
+SEEDS17 = list(range(1, 17)) + [SCOTT_SEED]
+# The game changed twice on 20 November, so a result belongs to the game it
+# was played on, named by the `code` stamp (the src tree the worker built).
+# "old": the 19 November game. "set": shots stop at set slime (5be6b0b,
+# merged into the branch at 01:45Z). "now": Needle Blast bursts once per
+# bullet (#532, merged 05:02Z) and any later code. The page's older
+# sections show the old game only; mixing games made one plan's row a
+# patchwork of two games (the first page after the fixes did).
+OLD_CODES = {None, "9a4b83191084", "3052b1da7102", "68f057590a7b", "de884269a412"}
+SET_CODES = {"49cc46f036ba"}
+
+
+def era(r):
+    c = r.get("code")
+    return "old" if c in OLD_CODES else "set" if c in SET_CODES else "now"
+
 FAMILIES = ["bot", "rush", "econ", "turtle", "scott", "lure", "boom", "taker"]
 FAMILY_TEXT = {
     "bot": "The run bot as it plays today: drains crystals, buys soldiers, hunts the heaviest slime.",
@@ -51,7 +67,7 @@ TESTS = [
 
 def rows():
     out = []
-    for f in sorted(glob.glob(os.path.join(HERE, "pc", "0*.jsonl"))) + sorted(glob.glob(os.path.join(HERE, "pc", "p3", "gen*.jsonl"))):
+    for f in sorted(glob.glob(os.path.join(HERE, "pc", "0*.jsonl"))) + sorted(glob.glob(os.path.join(HERE, "pc", "p3", "gen*.jsonl"))) + sorted(glob.glob(os.path.join(HERE, "pc", "p3n", "gen*.jsonl"))):
         for line in open(f):
             try:
                 r = json.loads(line)
@@ -106,15 +122,15 @@ def cell(r):
     return f'<td class="c {cls}" data-tip="{esc(tip)}"><span>{lab}</span><i style="width:{pct * 100:.0f}%"></i></td>'
 
 
-def grid(by, names, plans, caption):
-    head = "".join(f"<th>{s}</th>" if s != SCOTT_SEED else '<th class="you">yours</th>' for s in SEEDS)
+def grid(by, names, plans, caption, seeds=SEEDS):
+    head = "".join(f"<th>{s}</th>" if s != SCOTT_SEED else '<th class="you">yours</th>' for s in seeds)
     body = []
     for c in plans:
         g = by[c]
-        ss = [s for s in SEEDS if s in g]
+        ss = [s for s in seeds if s in g]
         w = [g[s] for s in ss if g[s]["how"] == "won"]
         sc = sum(L.score(g[s]) for s in ss) / max(1, len(ss))
-        cells = "".join(cell(g.get(s)) for s in SEEDS)
+        cells = "".join(cell(g.get(s)) for s in seeds)
         body.append(f'<tr><th class="plan"><code>{esc(names[c])}</code></th>{cells}<td class="num">{len(w)}/{len(ss)}</td><td class="num">{sc:.2f}</td></tr>')
     return f'<div class="scroll"><table class="grid"><caption>{caption}</caption><thead><tr><th class="plan">plan</th>{head}<th>wins</th><th>score</th></tr></thead><tbody>{"".join(body)}</tbody></table></div>'
 
@@ -168,6 +184,62 @@ def tests_html(ts, ncomp):
                 f'<td class="num {sig}">wins {wa}→{wb} · p {p:.2f}</td></tr>'
             )
     return f'<div class="scroll"><table class="tests"><thead><tr><th>change</th><th><span class="lg neg"></span>worse · better<span class="lg pos"></span></th><th>seeds</th><th>wins, sign test</th></tr></thead><tbody>{"".join(rows_)}</tbody></table></div>'
+
+
+DECKS = ["blast.needle", "seek/wide/blast.needle", "wide/rate/blast.needle"]
+DECK_NAMES = {"blast.needle": "Needle Blast alone", "seek/wide/blast.needle": "Seek + Wide + Needle Blast", "wide/rate/blast.needle": "Wide + Rate + Needle Blast"}
+DECK_BASES = ["econ,go=4,aim=6,cards=0", "lure,go=4,aim=6,cards=0"]
+
+
+def wins(g):
+    return [g[s] for s in SEEDS if s in g and g[s]["how"] == "won"]
+
+
+def on_yours(r):
+    if r is None:
+        return "-"
+    if r["how"] == "won":
+        return f"won in {mmss(r['secs'])}"
+    if r["how"] == "lost":
+        return f"wiped at {mmss(r['secs'])}, {cleared(r) * 100:.0f}% cleared"
+    return f"time ran out, {int(r['mould']):,} walkers left"
+
+
+def decks(old, now):
+    """The gun lab's decks before the two fixes and now: wins of the nine
+    maps, and now against the same plan with no cards, map by map."""
+    out, ncomp = [], 0
+    for base in DECK_BASES:
+        cb = L.canon(base)
+        if cb not in now:
+            continue
+        b_now, b_old = now[cb], old.get(cb, {})
+        out.append(f'<tr class="q"><th colspan="6"><code>{esc(base)}</code></th></tr>')
+        out.append(f'<tr><th>No cards</th><td class="num">{len(wins(b_old))}</td><td class="num">{len(wins(b_now))}</td><td class="num">-</td><td class="num">{mmss(sum(r["secs"] for r in wins(b_now)) / len(wins(b_now))) if wins(b_now) else "-"}</td><td>{on_yours(b_now.get(SCOTT_SEED))}</td></tr>')
+        for d in DECKS:
+            c = L.canon(base + ",want=" + d)
+            if c not in now:
+                continue
+            g, go = now[c], old.get(c, {})
+            common = [s for s in SEEDS if s in g and s in b_now]
+            better = sum(L.score(g[s]) > L.score(b_now[s]) + 1e-9 for s in common)
+            worse = sum(L.score(b_now[s]) > L.score(g[s]) + 1e-9 for s in common)
+            ncomp += 1
+            p = sign_p(better, worse)
+            out.append((better, worse, p, f'<tr><th>{DECK_NAMES[d]}</th><td class="num">{len(wins(go))}</td><td class="num">{len(wins(g))}</td><td class="num {{SIG}}">{better}↑ {worse}↓ · p {p:.3f}</td><td class="num">{mmss(sum(r["secs"] for r in wins(g)) / len(wins(g))) if wins(g) else "-"}</td><td>{on_yours(g.get(SCOTT_SEED))}</td></tr>'))
+    rows_ = []
+    for x in out:
+        if isinstance(x, tuple):
+            better, worse, p, row = x
+            rows_.append(row.replace("{SIG}", "sig" if p * ncomp <= 0.05 else ("hint" if p <= 0.1 else "")))
+        else:
+            rows_.append(x)
+    return (
+        '<div class="scroll"><table class="tests plain"><caption>Wins of the nine maps, before the two fixes and now. The arrows count the maps where the deck did better or worse than no cards, on the game as it is now. '
+        f'Bold survives a correction for the {ncomp} comparisons in this table (p below 0.05/{ncomp}).</caption>'
+        '<thead><tr><th>deck</th><th class="num">19 Nov</th><th class="num">now</th><th class="num">against no cards</th><th class="num">mean win</th><th>your planet</th></tr></thead>'
+        f'<tbody>{"".join(rows_)}</tbody></table></div>'
+    )
 
 
 def curves(by, names):
@@ -268,8 +340,12 @@ def early_table(scott, bots):
 
 
 def main():
-    rs = rows()
+    every = rows()
+    rs = [r for r in every if era(r) == "old"]
     by, names = table(rs)
+    by_set, names_set = table([r for r in every if era(r) == "set"])
+    now_rs = [r for r in every if era(r) == "now"]
+    by_now, names_now = table(now_rs)
     full = [c for c in by if all(s in by[c] for s in SEEDS)]
     score = {c: sum(L.score(by[c][s]) for s in SEEDS) / len(SEEDS) for c in full}
     ranked = sorted(full, key=lambda c: -score[c])
@@ -282,14 +358,40 @@ def main():
     top = ranked[0]
     tw = [by[top][s] for s in SEEDS if by[top][s]["how"] == "won"]
     near = min((by[c][SCOTT_SEED] for c in by if SCOTT_SEED in by[c] and by[c][SCOTT_SEED]["how"] == "open"), key=lambda r: r["mould"])
-    games = len(rs)
+    games = len(every)
     mine = by[top].get(SCOTT_SEED)
     yours = mmss(mine["secs"]) if mine and mine["how"] == "won" else "not yet"
     base = L.canon(",".join(x for x in names[top].split(",") if not x.startswith("want=")))
     base_w = sum(by[base][s]["how"] == "won" for s in SEEDS if s in by.get(base, {})) if base in by else None
-    yours_won = sum(1 for c in by if SCOTT_SEED in by[c] and by[c][SCOTT_SEED]["how"] == "won")
-    yours_n = sum(1 for c in by if SCOTT_SEED in by[c])
-    won_any = sum(1 for c in by for s in by[c] if by[c][s]["how"] == "won")
+    yours_won = sum(1 for r in every if int(r["seed"]) == SCOTT_SEED and r["how"] == "won")
+    yours_n = sum(1 for r in every if int(r["seed"]) == SCOTT_SEED)
+    won_any = sum(1 for r in every if r["how"] == "won")
+    plans_all = len({L.canon(r["plan"]) for r in every})
+    # The game with set-slime shots: the best plans without a Needle deck on
+    # its 17 maps, and the first bot win on Scott's planet without one.
+    full_set = [c for c in by_set if all(s in by_set[c] for s in SEEDS17)]
+    needle = lambda c: "needle" in dict(c[1]).get("want", "")  # noqa: E731
+    nodeck = [c for c in full_set if not needle(c)]
+    set_nd = max((sum(by_set[c][s]["how"] == "won" for s in SEEDS17) for c in nodeck), default=0)
+    set_won = sorted((by_set[c][SCOTT_SEED]["secs"], c) for c in by_set if not needle(c) and SCOTT_SEED in by_set[c] and by_set[c][SCOTT_SEED]["how"] == "won")
+    set_yours = set_won[0][0] if set_won else None
+    set_yours_plan = names_set[set_won[0][1]] if set_won else "-"
+    set_deck = max((sum(by_set[c][s]["how"] == "won" for s in SEEDS17) for c in full_set if needle(c)), default=0)
+    # The game now: the decks, and the search's best plans once they have
+    # played all 17 maps.
+    seek = by_now.get(L.canon("econ,go=4,aim=6,cards=0,want=seek/wide/blast.needle"), {})
+    wrn = by_now.get(L.canon("econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle"), {})
+    nob = by_now.get(L.canon("econ,go=4,aim=6,cards=0"), {})
+    wrn_better = sum(L.score(wrn[s]) > L.score(nob[s]) + 1e-9 for s in SEEDS if s in wrn and s in nob)
+    full_now = [c for c in by_now if all(s in by_now[c] for s in SEEDS17)]
+    score17 = {c: sum(L.score(by_now[c][s]) for s in SEEDS17) / len(SEEDS17) for c in full_now}
+    best_now = sorted(full_now, key=lambda c: -score17[c])[:10]
+    if best_now:
+        grid_now = grid(by_now, names_now, best_now, f"The best plans on the game as it is now, by mean score over 17 maps ({len(now_rs):,} games so far)", SEEDS17)
+    else:
+        grid_now = f'<p class="pending">The search on the game as it is now has played {len(now_rs):,} games; its first plans finish all 17 maps within a few hours.</p>'
+    deck_plans = [L.canon(b) for b in DECK_BASES[:1]] + [L.canon(DECK_BASES[0] + ",want=" + d) for d in DECKS]
+    deck_grid = grid(by_now, names_now, [c for c in deck_plans if c in by_now], "The econ bot with each deck, map by map, on the game as it is now")
     seed_cells = "".join(
         f'<td class="num{" you" if s == SCOTT_SEED else ""}">{w}/{n}<small>{mmss(f) if f else "never"}</small></td>' for s, w, n, f in seeds
     )
@@ -297,7 +399,7 @@ def main():
     tpl = open(os.path.join(HERE, "page-template.html")).read()
     out = (
         tpl.replace("{{GAMES}}", f"{games:,}")
-        .replace("{{PLANS}}", str(len(by)))
+        .replace("{{PLANS}}", str(plans_all))
         .replace("{{WON}}", f"{won_any:,}")
         .replace("{{TOP}}", esc(names[top]))
         .replace("{{TOP_WINS}}", f"{len(tw)} of {len(SEEDS)}")
@@ -319,9 +421,23 @@ def main():
         .replace("{{TESTS}}", tests_html(ts, ncomp))
         .replace("{{NCOMP}}", str(ncomp))
         .replace("{{FAMILY_ROWS}}", fam_rows)
+        .replace("{{NOW_SEEK}}", str(len(wins(seek))))
+        .replace("{{NOW_BASE}}", str(len(wins(nob))))
+        .replace("{{NOW_SEEK_MEAN}}", mmss(sum(r["secs"] for r in wins(seek)) / len(wins(seek))) if wins(seek) else "-")
+        .replace("{{NOW_SEEK_YOURS}}", on_yours(seek.get(SCOTT_SEED)))
+        .replace("{{NOW_WRN}}", str(len(wins(wrn))))
+        .replace("{{NOW_WRN_B}}", str(wrn_better))
+        .replace("{{SET_ND}}", str(set_nd))
+        .replace("{{SET_DECK}}", str(set_deck))
+        .replace("{{SET_GAMES}}", f"{sum(len(g) for g in by_set.values()):,}")
+        .replace("{{SET_YOURS}}", mmss(set_yours) if set_yours else "-")
+        .replace("{{SET_YOURS_PLAN}}", esc(set_yours_plan))
+        .replace("{{DECK_TABLE}}", decks(by, by_now))
+        .replace("{{DECK_GRID}}", deck_grid)
+        .replace("{{GRID_NOW}}", grid_now)
     )
     open(os.path.join(HERE, "page.html"), "w").write(out)
-    print(f"page.html: {games} games, {len(by)} plans, top {names[top]} {score[top]:.3f}, {ncomp} paired comparisons")
+    print(f"page.html: {games} games ({len(now_rs)} on the game now), {plans_all} plans, old-game top {names[top]} {score[top]:.3f}, {ncomp} paired comparisons, {len(full_now)} plans with all 17 maps now")
 
 
 if __name__ == "__main__":

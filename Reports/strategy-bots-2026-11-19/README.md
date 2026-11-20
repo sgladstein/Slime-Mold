@@ -18,7 +18,7 @@ Page: [Planet 3 Bot League](https://claude.ai/artifact/3pLVvJbt8JxP59oMvWE1Dk). 
   - It plays the job files in `queue/pc/` first, then the search in `queue/pc-evolve.txt`.
   - It rebuilds when `src/` changes and restarts when `league.py` changes.
   - It waits while the owner's own game is open.
-  - It pushes only `pc/`, at most once an hour or when a job file finishes. Each push re-runs the pull request's CI, so pushing every chunk cancelled 24 of 26 runs on 11-20.
+  - It pushes only `pc/`, at most once an hour or when a job file finishes.
 - GitHub batches (`.github/workflows/strategy-league.yml`, which runs 4 shards at a time) were used for generation 0 only. The account's 20 runners are shared with CI.
 
 The same plan on the same map, with the same binary on the same machine, always plays the same game. So the maps are the noise, and plans are compared by paired maps with a sign test.
@@ -44,8 +44,26 @@ The score of a game is 1 plus the share of the 12 minutes left for a win, and ot
   With seek+wide+blast.needle the bot won in a mean of about 4:50, and won the owner's planet in 4:05 against his 7:21. Its 4 soldiers killed 34,821 walkers in the first 2 minutes; he killed 4,547. lure,go=4,aim=6,cards=0 with the same deck went from 4 to 6 wins, better on 8 of 9 (p 0.039).
 
   **This deck may break the owner's rule** that no cheap combination should win everything (three cards, cost 8). It is flagged here, not retuned; tuning is Direction's. One caveat: the league puts wanted cards on the shelf, so the bot always gets them, while a real run has to offer them.
-- **Mop-up** (`mop=300` and `mop=1000`) changed 2 of 36 games. On the owner's planet, econ,cards=0 cleared all but 2 walkers by 11:00 with or without it. The draining stops, but the last walkers are still not killed (open).
+- **Mop-up** (`mop=300` and `mop=1000`) changed 2 of 36 games. On the owner's planet, econ,cards=0 cleared all but 2 walkers by 11:00 with or without it. The `rest=` field (job 08-rest) showed why: the last walkers were set slime that shots passed through. Main's 5be6b0b (shots stop at set slime) fixed that.
 - **Map difficulty.** Without the deck, map 6 was won by 32 of 40 plans and maps 1, 5 and the owner's by none.
+
+## After the two fixes of 2026-11-20
+
+Two changes on main changed planet 3, so results are kept by the game they were played on (the `code` stamp; `page.py` names the three games):
+
+- **Shots stop at set slime** (5be6b0b). The planet 3 search on that game (`pc/p3/gen3-5`, 992 games on maps 1-16 and the owner's) found plans without a Needle deck winning up to 13 of 17 maps. `econ,go=4,aim=6,mop=300` won the owner's planet in 8:03, the first bot win there without a deck. Plans with a Needle deck won 16 or 17 of 17.
+- **Needle Blast bursts once per bullet** (#532, the owner's card 11-20 01:23Z). Job 09-needle-once played the deck test again on maps 1-8 and the owner's:
+
+  | econ,go=4,aim=6,cards=0 with | Wins of 9 (19 Nov game) | Wins of 9 now | Better/worse than no cards | Sign p | Owner's planet |
+  |---|---|---|---|---|---|
+  | no cards | 5 | 5 | | | not cleared |
+  | blast.needle | 7 | 8 | 8/1 | 0.039 | 8:52 |
+  | seek/wide/blast.needle | 9 | 7 | 8/1 | 0.039 | wiped at 6:03 |
+  | wide/rate/blast.needle | 8 | 8 | 9/0 | 0.004 | 6:10 |
+
+  Only wide/rate/blast.needle survives a correction for the six comparisons (p < 0.0083). The Seek deck's wins take 6:26 on average (4:50 before). On the game with set-slime shots alone it won 8 of these 9 maps, so #532 cost it the owner's planet and about two minutes a win. With `lure,go=4,aim=6,cards=0` (4 of 9 without cards) no deck helps now: 4, 4 and 3 of 9.
+- The search restarted as `pc/p3n/` on the current game (16 plans in `p3n-plans.txt` plus three kept plans, 17 maps). Job 10-split-now plays the split and Heave test again on it.
+- The worker now pushes hourly. Each push to a branch with an open pull request re-runs the whole CI; pushing every chunk cancelled 24 of 26 runs on 11-20.
 
 ## Files
 
