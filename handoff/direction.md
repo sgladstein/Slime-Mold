@@ -139,6 +139,19 @@ end.
   drift: Look C (rock) began before A and B were done. Next: one bot
   through 1 to 3 (Engine and tools with the strategy bots), planet 3's
   length after #532, and the two switches.
+- **The balance review** (11-20, #539, doc
+  https://claude.ai/artifact/EbhGU5rMAt7XC8P5zocjYc), taken by this lane:
+  exit test 1 now reads about 30 minutes for planets 1 to 3 (his clean runs
+  took 18:27 and 21:18), with "held on" counted apart from a win; slime sizes
+  are not retuned for short planets; Needle Blast gets no further change
+  (1 run in 213 meets the best deck by planet 3). The strategy thread gets
+  a planet 2 job on today's game, with slug bullets in its split test,
+  before anyone touches the Sprawler. **For his morning, one batch:**
+  - D7 as the army snowball. Pick: surges and raids that grow with the army.
+  - What a time-out is. Pick: the run goes on at base pay 150, and the screen
+    says the slime survived.
+  - The shop-money doc's pay for pumped crystals held
+    (https://claude.ai/artifact/XHLmAP2RFnSAHba6orJLjW).
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the

@@ -13,7 +13,7 @@ The game is the roguelike run in squad mode. The milestone is planets 1 to 3
 as one sitting of about 30 minutes that the owner wants to replay and likes
 to look at. It is done when all six hold:
 
-1. A scripted player (the run bot) lands, pumps, defends, wins and shops through planets 1 to 3 without a soft lock, each planet in 8 to 12 minutes, and so can the owner.
+1. A scripted player (the run bot) lands, pumps, defends, wins and shops through planets 1 to 3 without a soft lock, in about 30 minutes for the three (planet 1 may be the short opener), and so can the owner. A planet held to the clock ("held on") is counted apart from a win.
 2. The fight looks good in motion at zoom 6 to 12 on his PC: shots, hits and the slime's reaction are clear.
 3. The rush is not the best plan. The brake is his call (D7) and he is holding it until he has played more: **add no rush brake unasked.**
 4. After playing he can say in a sentence what each of the three slimes did to him.
@@ -25,14 +25,12 @@ chosen run length, the bot's curve over all eight planets, save and resume,
 the core world at 60 frames a second. A release only if the owner chooses one.
 
 **Where it stands (11-20, [check](handoff/direction.md)).** Nothing is
-closed yet. Behind: test 1. The run bot wins planet 1 and stalls on planet 2
-(since 11-18). The strategy bots (#529) win planet 3 started there, in
-4:50 on average with the best deck; after Needle Blast's one burst a
-bullet (#532) that deck wins 7 of 9 maps (was 9), in 6:25, still under the
-8 to 12 wanted. Wide+Rate+Needle Blast (8 of 9, better than no cards on all
-9) is the one to watch under the Noita rule; no change on a guess. Built and his to judge in play:
-2, 4, 5. Test 3: the bots' mixed-planet search learned to rush planets 1
-and 2 (data for D7, no brake). Test 6: two switches off, both overdue.
+closed. Behind: test 1 (the run bot loses planet 2 on seed 2; its planet 3
+win is a clock "held on"). Built, his to judge: 2, 4, 5. Test 6: two
+switches off, overdue. The balance review (#539): every planet is a
+stand-off, then a collapse once the army is big; that is D7's question,
+his. No further Needle change: a real run meets the best deck by planet 3
+in 1 run of 213.
 
 ## Each lane's top jobs
 
