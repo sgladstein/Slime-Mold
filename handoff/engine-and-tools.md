@@ -253,8 +253,22 @@ archive branch. It shrinks the checkout, not the clone (history keeps them,
 1.6 GB of .git on 11-20), and it breaks every report's links to its
 films, so it waits for Direction to want it. The lint caps were already in.
 
-**Next:** seed 3's planet 1 (above), then the bot on planet 2: clear a
-held crystal by hunting the slime on it before draining it (land, back off to a quiet crystal, hold it
-with the volley, build up), then planet 3; then whether the old run smoke
-rounds (`the_window_plays_a_runs_planet`, RTS mode) go, measured against
-the bot's coverage. After job 4: job 5's housekeeping.
+Job 6 (11-20, no Squad and arsenal thread was running, so the coordinator
+said go): the kit and the army's gun cards live on the library's `Game`
+(`Game::kit`, `Game::rounds`, `larder_world/gear.rs`) and run at the end
+of every `finish_step` (`Game::gear_turn`), so the library's tests, the
+census and the bots cast cards and restock tools as the window does. The
+window copies its selection into `Game::carry_full` each frame (selected
+soldiers restock to the full carry). `Game::kit_out(&Run, RoundRules)`
+sets a planet up from its run (tool prices, army round and budget, turret
+deck); the caller still arms the gun. Kit or rounds calls that need the
+game too go through `Game::with_kit`, `with_rounds` or `use_tool`. Two
+small differences: a step a command finished runs its kit and cards
+before the command, not after; the range's tools now cost what the run's
+"tools+" level says. The run itself (`Run`) stays on the window's `App`
+and the menu, since it lives between planets; `league::whole_run` drives
+it for the bots.
+
+**Next:** watch the run bot's curve once the strategy thread sets the
+plan (planet 1 got harder on main after about 21:30Z on 11-20: all three
+seeds lost it); job 7, one GTX 1070 timing batch through Remote Control.

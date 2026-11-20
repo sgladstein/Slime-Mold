@@ -47,10 +47,10 @@ impl App {
                 format!("Squad {} round", q + 1)
             }
             (_, g) => {
-                self.rounds = Rounds::new(round.clone(), RoundRules::default());
                 // Squad 0 may hold rolled bullets of its own (Ctrl+H):
                 // back to the army's round.
                 if let Some(g) = g {
+                    g.rounds = Rounds::new(round.clone(), RoundRules::default());
                     g.apply(Cmd::Load(0, None));
                 }
                 "Round".to_string()
@@ -610,7 +610,7 @@ impl App {
             self.catch_up();
         }
         let Some(g) = self.game.as_mut() else { return };
-        let k = &self.kit;
+        let k = &g.kit;
         let at = match t {
             Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => p,
             Tool::Cord(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
@@ -619,7 +619,7 @@ impl App {
         let held = g.soldiers.iter().enumerate().any(|(i, s)| s.alive && k.held(i) > 0);
         let near = k.in_reach(g, at);
         let r = k.rules;
-        if !self.kit.use_tool(g, t) {
+        if !g.use_tool(t) {
             let why = if !held {
                 "No soldier holds a tool: soldiers take them at the larder".to_string()
             } else if !near {
