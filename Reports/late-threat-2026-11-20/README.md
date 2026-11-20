@@ -74,6 +74,36 @@ strikers nor the lunge, at their first numbers, make the slime bite an
 walkers a second at range, so a charge four times as tough, or three times
 as fast, still dies before it touches.
 
+## The striker retune (the slime thread's arms, 18:00Z)
+
+Planet 2, main at dc30d20 plus this branch (strikers, waves, the lunge
+on); 27 games, run 44787524336 (`jobs-strikers-retune.txt`,
+`strikers-retune-rows.jsonl`). H: `set=strikers_haste=3`. W:
+`set=strikers_haste=3 set=strikers_share=1 set=strikers_band=30
+set=strikers_below=0.6`: everyone in a wider band condenses, from 60% of
+peak instead of 40%.
+
+| Arm against the run as it is | Late bites up | down | tied | sign p |
+| --- | --- | --- | --- | --- |
+| H | 2 | 0 | 7 | 0.50 |
+| W | 5 | 0 | 4 | 0.062 |
+
+Neither survives the correction for two arms (0.025), but W is the first
+setting that bites the big army, on all three maps where the bot builds
+one:
+
+| Map | Base: late bites, soldiers left | W: late bites, soldiers left |
+| --- | --- | --- |
+| 1 | 4, 80 of 80 (won 7:09) | 80, 5 of 80 (won 7:13; 79 died between 6:30 and 7:00 while the slime fell from 14,038 to 17) |
+| 2 | 0, 74 (won 8:43) | 18, 42 of a peak 45 (won 8:24) |
+| 5 | 0, 80 (won 4:24) | 17, 80 after rebuying (won 3:44) |
+
+The cost falls on small squads: on map 8 the bot's four soldiers won at
+4:38 in the base and H, and with W lost at 2:05. Map 7, the four-soldier
+game, now loses in every arm (base 1:47, H 1:40, W 1:26); before the
+lunge and strikers it won at 4:21. The lone losses on maps 3, 4, 6 and
+1795038793 are the same game in every arm.
+
 ## What landed
 
 `late_at` 0.4 on every run planet (`run::ENEMY_RULES`), with
