@@ -5840,6 +5840,11 @@ mod tests {
             let mods = BulletMods { pierce: 1, split: 1, ..BulletMods::default() };
             cpu.bullet_mods = mods;
             gpu.bullet_mods = mods;
+            // The game arms the army's round after every step (`Game::rounds`,
+            // 11-20), so the round holds the cards too.
+            let cards = vec![slime_mould::mould::rounds::Card::Pierce, slime_mould::mould::rounds::Card::Split];
+            cpu.rounds.round = cards.clone();
+            gpu.rounds.round = cards;
             for k in 0..cpu.soldiers.len() {
                 assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)));
             }

@@ -387,12 +387,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 let g = app.game.as_mut().unwrap();
                 if g.time() >= bt && !boomed.contains(&j) {
                     boomed.push(j);
-                    let (k0, f0, s0) = (app.rounds.killed, app.rounds.flung, app.rounds.gassed);
-                    match cards {
-                        Some(c) => app.rounds.cast_cards_at(g, (bx, by), c),
-                        None => app.rounds.cast_at(g, (bx, by)),
-                    }
-                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung, {} gassed", g.time(), app.rounds.killed - k0, app.rounds.flung - f0, app.rounds.gassed - s0);
+                    let (k0, f0, s0) = (g.rounds.killed, g.rounds.flung, g.rounds.gassed);
+                    g.with_rounds(|rd, g| match cards {
+                        Some(c) => rd.cast_cards_at(g, (bx, by), c),
+                        None => rd.cast_at(g, (bx, by)),
+                    });
+                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung, {} gassed", g.time(), g.rounds.killed - k0, g.rounds.flung - f0, g.rounds.gassed - s0);
                 }
             }
             // `light=T,X,Y,R`: a plain fire lit there once T has come.
@@ -424,7 +424,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     trailed.push(j);
                     // The line as given, whole (no brush gap: that is
                     // `rounds::keep_clear`, round the soldiers, in play).
-                    let r = &app.rounds.rules;
+                    let r = &g.rounds.rules;
                     let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
                     let k = rounds::burst_rules(&r.kit, fine);
                     let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
@@ -845,7 +845,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
         }
         let g = app.game.as_ref().unwrap();
-        let rd = &app.rounds;
+        let rd = &g.rounds;
         // Squads with their own cards (`load=`) and loaded turrets (`tload=`) count here too. A new count
         // goes last, so the reports' parsers (`raw/make_clips.py`) still match;
         // seeker turns stay printed as 0 since steering was deleted (11-17).

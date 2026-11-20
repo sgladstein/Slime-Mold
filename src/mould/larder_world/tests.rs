@@ -220,9 +220,13 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
 fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
     // In a real fight: pieces and pierced legs land hits of their own,
     // the buffer is never overrun, and the same seed plays the same.
-    let run = |mods: BulletMods| {
+    // The mods come from the army's round, which the game arms after
+    // every step (`Game::rounds`, 11-20), so the cards are set, not the mods.
+    use crate::mould::rounds::{flight, Card};
+    let run = |cards: &[Card]| {
         let mut g = small(3);
-        g.bullet_mods = mods;
+        g.rounds.round = cards.to_vec();
+        g.bullet_mods = flight(cards);
         for k in 0..g.soldiers.len() {
             g.apply(Cmd::Order(k, Order::Attack));
         }
@@ -237,10 +241,11 @@ fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
         }
         (g.shots, later, g.killed, g.mould)
     };
-    let both = BulletMods { pierce: 1, split: 2, ..BulletMods::default() };
-    let a = run(both);
-    assert_eq!(a, run(both), "the same seed played twice");
-    let plain = run(BulletMods::default());
+    let both = [Card::Pierce, Card::Split, Card::Split];
+    assert_eq!((flight(&both).pierce, flight(&both).split), (1, 2));
+    let a = run(&both);
+    assert_eq!(a, run(&both), "the same seed played twice");
+    let plain = run(&[]);
     assert!(a.1 > plain.1, "later hits: mods {a:?} plain {plain:?}");
 }
 
@@ -2225,6 +2230,8 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     assert!(g.engaged(0), "one Range card reaches 48 cells");
     // Fired legs: free fire with the card flies out to 48 cells.
     let mut g = small(3);
+    // The army's round, which the game arms after every step (11-20).
+    g.rounds.round = vec![crate::mould::rounds::Card::Range];
     g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
     for k in 0..g.soldiers.len() {
         g.apply(Cmd::Order(k, Order::Attack));
