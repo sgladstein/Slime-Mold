@@ -57,6 +57,7 @@ mod waves;
 mod heart;
 mod strikers;
 mod starfall;
+mod cores;
 mod rules;
 mod paths;
 mod cmd;
@@ -82,12 +83,13 @@ pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
 pub use doors::WALL_LEVELS;
-pub use raids::{LureMark, March, Raid, RaidAim, RaidRules, Raids};
+pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};
 pub use heart::HeartRules;
 pub use strikers::{StrikerRules, Strikers};
-pub use starfall::{fall_count, Drop, DropKind, StarRules, Starfall};
+pub use starfall::{fall_count, CoreFrom, Drop, DropKind, StarRules, Starfall};
+pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
@@ -547,6 +549,8 @@ pub struct Game<W: World> {
     /// Starfall and boss cores (`Rules::star`, `starfall.rs`): the falls
     /// due, what is down and the shop points taken.
     pub starfall: Starfall,
+    /// Boss cores that re-form their boss, and raids' cores (`cores.rs`).
+    pub cores: Cores,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
@@ -700,6 +704,7 @@ impl<W: World> Game<W> {
             heart_at: None,
             strikers: Strikers::default(),
             starfall: Starfall::new(seed),
+            cores: Cores::default(),
             rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
