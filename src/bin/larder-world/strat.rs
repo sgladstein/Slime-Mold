@@ -419,6 +419,36 @@ pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32)
     }
 }
 
+/// Where the last walkers are, for the league line once the slime is down
+/// to a few (why `Plan::mop` misses them): a square each, `;` between, at
+/// most 6, as `x:y:walkers:set:ground:dist:clear`. `set` counts set
+/// (crust) cells in the square; `dist` and `clear` (a line of fire) are
+/// from the controlled squad's middle, -1 and 0 with no squad.
+pub(super) fn remnant(g: &Game<GpuWorld>) -> String {
+    let sense = Sense::of(g);
+    let m = g.active.and_then(|q| g.middle(q));
+    let h = sense.set.len().checked_div(sense.w).unwrap_or(0);
+    let v: Vec<String> = sense
+        .grid
+        .iter()
+        .enumerate()
+        .filter(|&(_, &c)| c > 0)
+        .take(6)
+        .map(|(i, &c)| {
+            let a = sense.centre(i);
+            let (x0, y0) = ((i % sense.gw) * sense.bin, (i / sense.gw) * sense.bin);
+            let set = (y0..(y0 + sense.bin).min(h)).flat_map(|y| (x0..(x0 + sense.bin).min(sense.w)).map(move |x| (x, y))).filter(|&(x, y)| sense.set[y * sense.w + x] > 0).count();
+            let (d, clear) = m.map_or((-1.0, false), |m| (dist(a, m), sense.clear(g, m, a)));
+            format!("{:.0}:{:.0}:{c}:{set}:{}:{d:.0}:{}", a.0, a.1, u8::from(g.ground(a.0, a.1)), u8::from(clear))
+        })
+        .collect();
+    if v.is_empty() {
+        "none".into()
+    } else {
+        v.join(";")
+    }
+}
+
 pub(super) fn dist(a: (f32, f32), b: (f32, f32)) -> f32 {
     (a.0 - b.0).hypot(a.1 - b.1)
 }
