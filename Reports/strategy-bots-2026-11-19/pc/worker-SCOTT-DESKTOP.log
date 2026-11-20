@@ -2134,3 +2134,52 @@
 2026-11-20 00:32:13   econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle planet 3.0 seed 9.0: won 622.0 (76 s)
 2026-11-20 00:32:45   econ,go=4,aim=6,cards=0,want=blast.needle planet 3.0 seed 9.0: open 720.1 (89 s)
 2026-11-20 00:33:49   econ,go=4,aim=6,cards=0,want=trigger/blast.standard/gas.stan planet 3.0 seed 9.0: open 720.1 (95 s)
+2026-11-20 00:33:51 worker: could not take the branch's new commits: ?? league-pc.log
+?? league-pc.out
+?? worker.log
+?? worker.out
+?? worker2.log
+?? worker2.out
+?? worker3.log
+?? worker3.out
+
+2026-11-20 00:35:13   econ,aim=6 planet 3.0 seed 10.0: won 627.0 (81 s)
+2026-11-20 00:35:13   econ,cards=0,mop=300 planet 3.0 seed 10.0: open 720.1 (73 s)
+2026-11-20 00:36:07   econ,go=4,aim=6 planet 3.0 seed 10.0: won 404.0 (60 s)
+2026-11-20 00:36:14   econ,go=4,aim=6,mop=300 planet 3.0 seed 10.0: won 399.0 (59 s)
+2026-11-20 00:37:04   lure,go=4,aim=6 planet 3.0 seed 10.0: won 396.0 (55 s)
+2026-11-20 00:37:28   turtle,go=4,aim=6 planet 3.0 seed 10.0: won 489.0 (72 s)
+2026-11-20 00:38:41   rush,aim=6 planet 3.0 seed 10.0: open 720.1 (96 s)
+2026-11-20 00:38:46   scott,go=4,aim=6 planet 3.0 seed 10.0: won 509.0 (77 s)
+2026-11-20 00:40:27   boom,aim=6 planet 3.0 seed 10.0: open 720.1 (105 s)
+2026-11-20 00:40:58   bot,aim=6 planet 3.0 seed 10.0: open 720.1 (131 s)
+2026-11-20 00:41:09   econ,go=4,aim=6,cards=0,want=seek/wide/blast.needle planet 3.0 seed 10.0: won 315.0 (41 s)
+2026-11-20 00:41:53   econ,aim=6,cards=0,go=4,split=6,walk=4,want=seek/wide/blast. planet 3.0 seed 10.0: won 370.0 (53 s)
+2026-11-20 00:41:57   econ,aim=6,go=4,mop=3000,split=2,want=seek/wide/blast.needle planet 3.0 seed 10.0: won 332.0 (47 s)
+2026-11-20 00:42:34   econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle planet 3.0 seed 10.0: won 297.0 (40 s)
+2026-11-20 00:43:19   econ,go=4,aim=6,cards=0,want=blast.needle planet 3.0 seed 10.0: open 720.1 (81 s)
+2026-11-20 00:44:00   econ,go=4,aim=6,cards=0,want=trigger/blast.standard/gas.stan planet 3.0 seed 10.0: open 720.1 (84 s)
+2026-11-20 00:44:29   econ,aim=6 planet 3.0 seed 11.0: won 493.0 (68 s)
+2026-11-20 00:44:54   econ,cards=0,mop=300 planet 3.0 seed 11.0: won 477.0 (52 s)
+2026-11-20 00:45:46   econ,go=4,aim=6 planet 3.0 seed 11.0: won 537.0 (75 s)
+2026-11-20 00:46:12   econ,go=4,aim=6,mop=300 planet 3.0 seed 11.0: won 532.0 (76 s)
+2026-11-20 00:47:05   lure,go=4,aim=6 planet 3.0 seed 11.0: won 564.0 (78 s)
+2026-11-20 00:47:49   turtle,go=4,aim=6 planet 3.0 seed 11.0: open 720.1 (96 s)
+2026-11-20 00:48:45   rush,aim=6 planet 3.0 seed 11.0: open 720.1 (98 s)
+2026-11-20 00:49:35   scott,go=4,aim=6 planet 3.0 seed 11.0: open 720.1 (104 s)
+2026-11-20 00:50:11   boom,aim=6 planet 3.0 seed 11.0: won 549.0 (83 s)
+2026-11-20 00:51:38   bot,aim=6 planet 3.0 seed 11.0: open 720.1 (121 s)
+2026-11-20 00:51:38   econ,go=4,aim=6,cards=0,want=seek/wide/blast.needle planet 3.0 seed 11.0: won 328.0 (41 s)
+2026-11-20 00:51:40   econ,aim=6,cards=0,go=4,split=6,walk=4,want=seek/wide/blast. planet 3.0 seed 11.0: won 351.0 (45 s)
+2026-11-20 00:52:13   econ,aim=6,go=4,mop=3000,split=2,want=seek/wide/blast.needle planet 3.0 seed 11.0: won 317.0 (33 s)
+2026-11-20 00:52:32   econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle planet 3.0 seed 11.0: won 468.0 (50 s)
+2026-11-20 00:53:26   econ,go=4,aim=6,cards=0,want=blast.needle planet 3.0 seed 11.0: won 617.0 (71 s)
+2026-11-20 00:54:16   econ,go=4,aim=6,cards=0,want=trigger/blast.standard/gas.stan planet 3.0 seed 11.0: open 720.1 (102 s)
+2026-11-20 00:54:16   econ,aim=6 planet 3.0 seed 12.0: won 274.0 (35 s)
+2026-11-20 00:54:30   econ,cards=0,mop=300 planet 3.0 seed 12.0: won 241.0 (25 s)
+2026-11-20 00:54:53   econ,go=4,aim=6 planet 3.0 seed 12.0: won 269.0 (36 s)
+2026-11-20 00:55:08   econ,go=4,aim=6,mop=300 planet 3.0 seed 12.0: won 269.0 (37 s)
+2026-11-20 00:56:08   lure,go=4,aim=6 planet 3.0 seed 12.0: won 647.0 (73 s)
+2026-11-20 00:56:08   turtle,go=4,aim=6 planet 3.0 seed 12.0: won 270.0 (36 s)
+2026-11-20 00:56:21   rush,aim=6 planet 3.0 seed 12.0: won 277.0 (34 s)
+2026-11-20 00:56:34   scott,go=4,aim=6 planet 3.0 seed 12.0: won 250.0 (24 s)
