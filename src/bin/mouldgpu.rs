@@ -4301,7 +4301,7 @@ mod tests {
                 let b = *living.iter().find(|p| (p.0 - a.0).hypot(p.1 - a.1) > 30.0).expect("walkers apart");
                 let cell = |p: (f32, f32)| p.0 as u32 | (p.1 as u32) << 16;
                 let far = cell(((cpu.w - 2) as f32, (cpu.h / 2) as f32));
-                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5, armour: 4, bite: 2, ring: 0.0 };
+                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5, armour: 4, bite: 2, ring: 0.0, spin: 0.0 };
                 s.lumps[1] = Lump { leash: 0.8, ..Lump::default() };
                 // Lump 3 rings (`Lump::ring`, a leech round its pump) the
                 // most crowded of every 50th walker apart from both, aimed

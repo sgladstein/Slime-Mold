@@ -12,8 +12,10 @@ struct Set {
 // heads for (x | y << 16), its pull, its leash as `Lump::leash_k` (0 none)
 // and its members' haste (0 is 1).
 // `armour` and `bite` the mini-bosses' strength (`big::Lump`); `ring` its
-// band round `aim` (`Lump::ring`, 0 none); `_b` pads the row to 32 bytes.
-struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, ring: f32, _b: u32 };
+// band round `aim` (`Lump::ring`, 0 none); `spin` its turn about its
+// members' centre (`Lump::spin`, 0 none; the row's last word, its pad
+// until 2026-11-20).
+struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, ring: f32, spin: f32 };
 struct Params {
     w: u32, h: u32, n: u32, crowd: u32,
     s_turn: u32, s_blocked: u32, s_claim: u32, s_jump: u32,
@@ -683,6 +685,14 @@ const DOZE: u32 = 0x1000u;
 // CPU's `BigDish::flung`), not fruited: it flies straight at `fling_st`
 // and lands with no rest. `alight` clears it.
 const FLUNG: u32 = 0x2000u;
+// A pinwheel's arms (`Lump::spin`).
+const PIN_ARMS: f32 = 3.0;
+// How much harder than the lump's pull a member leans into its arm, and
+// how far an arm trails per cell out (radians), so the arms curve like a
+// pinwheel's. At 1x and straight spokes (11-20 first film) the march's
+// own pull smeared the arms into a bar.
+const PIN_LEAN: f32 = 3.0;
+const PIN_TWIST: f32 = 0.08;
 // `DOOM` (bit 14, gun look 2026-11-15): a flung spore that is a shot's
 // spray droplet (the CPU's `BigDish::doomed`): a struck walker thrown out of
 // the hit (`strike`). It slows to a stop, lays nothing, and dies where it
@@ -1375,6 +1385,29 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
             f += l.pull * (cos(h) * dx + sin(h) * dy) / r;
             fl += l.pull * (cos(h - sa) * dx + sin(h - sa) * dy) / r;
             fr += l.pull * (cos(h + sa) * dx + sin(h + sa) * dy) / r;
+        }
+        // A lump's arms (`Lump::spin`, the Pinwheel, 2026-11-20): round
+        // its members' centre, `PIN_ARMS` spokes turn at `spin` radians a
+        // step, and each member leans along the tangent toward the
+        // nearest, as hard as the lump's pull, so the body gathers into
+        // arms that sweep round. A plain lean along the tangent (its
+        // first version) only turned a disc, which looks the same at
+        // every turn: no arms showed on the owner's planets 3 and 4.
+        if (lb != 0u && P.lumps[lb - 1u].spin != 0.0) {
+            let lc = lump_centre(lb - 1u);
+            if (lc.z > 0.0) {
+                let l = P.lumps[lb - 1u];
+                let rx = wk.x - lc.x;
+                let ry = wk.y - lc.y;
+                let r = max(sqrt(rx * rx + ry * ry), 1.0e-3);
+                let to_arm = sin(PIN_ARMS * (l.spin * f32(S.t) - atan2(ry, rx) + PIN_TWIST * r));
+                let s = PIN_LEAN * abs(l.pull) * to_arm;
+                let tx = -ry / r;
+                let ty = rx / r;
+                f += s * (cos(h) * tx + sin(h) * ty);
+                fl += s * (cos(h - sa) * tx + sin(h - sa) * ty);
+                fr += s * (cos(h + sa) * tx + sin(h + sa) * ty);
+            }
         }
         // The far smell (S2; the CPU's): a hungry walker leans down the
         // walking distance to untouched crystals, x its hunger.

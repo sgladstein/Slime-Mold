@@ -302,3 +302,57 @@ lines) no boss formed with the slime that low (least 0.44); at 0.6, 2 of
 24 did (a hunter at 351 s, a sapper at 393 s), the last of their games.
 Whether they now hold off a late army is not measured. Set keys
 `boss_shell_life`, `boss_late`, `boss_late_grade`.
+
+## The Pinwheel (11-20)
+
+The owner's second pick from his doc (after the Mortar). `BossKind::Pinwheel`
+(6), drawn from planet 3 on (`kinds[5]`), a runner that hunts like the
+hunter. Its look is the members themselves: within `spin_near` (90 world
+units) of its prey its lump's arms turn (`Lump::spin`, the engine's, GPU
+only): round the members' centre three spokes (`PIN_ARMS`) turn at `spin`
+(0.2 turns a second, one way on even lumps and the other on odd), curving
+outward (`PIN_TWIST`), and each member leans along the tangent toward the
+nearest spoke, three times the lump's pull (`PIN_LEAN`). Skin deep cobalt,
+core sky blue (`LumpLook::Pinwheel`, `view.wgsl` case 7).
+
+On the way:
+- a plain lean along the tangent turned a disc, which looks the same at
+  every turn: no arms showed;
+- spokes at 1x the pull, straight: the march's own pull smeared them into
+  a bar (film, run 1795038793 planet 4 at 1:36);
+- a faster turn for the hunter's lunge jumped the arms round, since the
+  engine sets them at `spin` x its step count: the turn is now constant;
+- arms all the way halved its pace (`pinwheel-always` lines, run stopped
+  at 4:50 on the planet 4 maps: 2.4 units a second against the hunter's
+  6.3 in `final`, reached the squad 7 of 18); three times the haste to make
+  up for it tore the body apart along a rock (spread 1 to 4, filmed);
+  so the arms turn only near its prey, with a 1.3x push there
+  (`spin_haste`). Far off it walks as a compact hunter; it unfurls as it
+  closes, which is also its tell.
+
+The GPU test `a_spinning_lump_gathers_into_turning_arms`: a lump of 350 on
+a race world gathers into three arms (the order-3 angular harmonic round
+its centre 0.159 against 0.064 still) whose phase moves 9.7 rad in 3 s
+(11.3 set), and walking to an aim keeps most of a still lump's pace.
+
+Scott's run seeds, planets 3 and 4, every boss a pinwheel
+(`set=boss_kind=6`, `pinwheel` lines, to 5:00):
+
+| | pinwheel |
+| --- | --- |
+| formed | 21 |
+| reached squad (<20 units) | 8 |
+| stalled 10 s or more | 4 |
+| ended Broken | 8 |
+| ended Spent | 6 |
+| ended Fizzled | 2 |
+| still alive | 5 |
+
+- Pace while hunting: mean 4.4 units a second (arms always: 3.4; the
+  hunter: 6.4), median spread 1.45 (hunter 1.13).
+- Reached the squad 8 of 21, as with the arms all the way (7 of 18); what
+  its arms cost the squad is not measured. Tuning (`boss_spin`,
+  `boss_spin_near`, `boss_spin_haste`) waits on play.
+
+Clips (`pinwheel/`, run 1795119328 planet 4, `set=boss_kind=6`, zoom 6 and
+12, 1:56 to 2:06, 1x): a pinwheel of 561 closing on the squad.

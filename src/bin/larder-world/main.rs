@@ -191,7 +191,7 @@ use winit::window::{Window, WindowId};
 /// uses), the wanderer pale bone (a fat grub that grows as it grazes), the
 /// sapper ember (an acid red at your walls), the leech ink (dark tar on the
 /// pump rig, its core turning the charge's cyan as it drinks), the mortar
-/// moss with an acid core (2026-11-20).
+/// moss with an acid core and the pinwheel cobalt (2026-11-20).
 fn kind_look(kind: u16) -> LumpLook {
     match kind {
         1 => LumpLook::Violet,
@@ -199,6 +199,7 @@ fn kind_look(kind: u16) -> LumpLook {
         3 => LumpLook::Ember,
         4 => LumpLook::Ink,
         5 => LumpLook::Mortar,
+        6 => LumpLook::Pinwheel,
         _ => LumpLook::Plain,
     }
 }
