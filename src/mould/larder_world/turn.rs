@@ -476,6 +476,9 @@ impl<W: World> Game<W> {
         }
         self.campaign_rules(now - t);
         self.check_end();
+        // The kit and the gun cards read the step just finished (`gear.rs`),
+        // after its end too, as the window did before 2026-11-20.
+        self.gear_turn();
     }
 
     /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):

@@ -144,7 +144,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{garden_settings, race_settings, GpuWorld};
 use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
-use slime_mould::mould::kit::{Kit, KitRules, Tool};
+use slime_mould::mould::kit::{Kit, Tool};
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
 use slime_mould::mould::guns::{Gun, GunKind};
 
@@ -322,21 +322,6 @@ commands! {
     // A turret's or mortar's card in a run (owner 2026-11-19: each turret
     // can be changed one by one): the next loadout it fires.
     TURRET_LOADOUT = 40,
-}
-
-/// Between two steps: every living soldier at the larder takes one tool
-/// (`KitRules::carry_each`), a selected one as many as it may hold
-/// (`carry_max`; each would cost carry, `tool_weight`, but that is 0 since
-/// 2026-11-14: loaded soldiers looked as if they refused harvest orders),
-/// and mines with enough mould on them go off.
-fn kit_between(kit: &mut Kit, g: &mut Game<GpuWorld>, selected: &[usize]) {
-    for k in 0..g.soldiers.len() {
-        let n = if selected.contains(&k) { kit.rules.carry_max } else { kit.rules.carry_each };
-        if g.soldiers[k].alive && kit.held(k) < n {
-            kit.restock(g, k, n);
-        }
-    }
-    kit.frame(g);
 }
 
 /// The building a build-page command places.
@@ -657,10 +642,12 @@ struct Args {
     spray: Option<(f32, f32)>,
     /// `shake=K`: camera shake on blasts (the whole-game review's D6; the
     /// owner 11-15 21:41Z: "Let me see the video"), K times the normal
-    /// strength; 0, the default, none.
+    /// strength; 1 in the game since 2026-11-20 (his card: "Turn them
+    /// on"), 0 none (and `Args::default()`'s 0, for the tests).
     shake: f32,
     /// `hitstop=K`: the game holds still for a moment when a big blast
-    /// lands (D6), K times the normal hold; 0, the default, none.
+    /// lands (D6), K times the normal hold; 1 in the game since
+    /// 2026-11-20, 0 none.
     hitstop: f32,
     /// `real=1`: a headless frame sequence steps the window's way, a
     /// frame's real seconds at a time from the first frame on, so a
@@ -790,7 +777,8 @@ const SHAKE_PX: f32 = 12.0;
 const SHAKE_FALL: f32 = 2.2;
 
 /// **Feel a blast** (the whole-game review's D6, 11-15: camera shake and
-/// hit-stop, both off unless `shake=` or `hitstop=`): each blast since
+/// hit-stop, on in the game since 2026-11-20, `shake=0 hitstop=0` off):
+/// each blast since
 /// `felt` adds to the shake by its size (its kills over 150 and its throw
 /// over 400, up to 1), 0.12 to 0.72 of a full shake at `shake=1` (a bomb
 /// of 6 kills and 80 thrown, size 0.24, adds 0.26); the biggest, if at
@@ -952,12 +940,6 @@ struct App {
     log_gun: String,
     /// The command card shows the build page (Q).
     build_page: bool,
-    /// The squad toolkit (`mould::kit`) and whether the card shows its page
-    /// (E). Tools are not in the game's replay (the kit is outside `Game`).
-    kit: Kit,
-    /// The squad's round (`mould::rounds`, after Flashes of Chaos's ammo
-    /// cards; 2026-11-12): `rounds=` at the start, H cycles `LOADOUTS`.
-    rounds: Rounds,
     round: usize,
     /// The planet's depth this game (`map=planet:DEPTH`, else 1), and the
     /// test guns (Shift+H) and bullet loads (Ctrl+H) rolled so far.
@@ -1100,8 +1082,6 @@ impl App {
             log_notes: 0,
             log_gun: String::new(),
             build_page: false,
-            kit: Kit::new(KitRules::default()),
-            rounds: Rounds::new(Vec::new(), RoundRules::default()),
             tools_page: false,
             mission: None,
             mission_sec: 0,
@@ -1333,32 +1313,17 @@ impl App {
             // The range: the armory's gun as it is.
             game.apply(Cmd::Arm(0, Some(r.carried())));
         }
-        let mut kit = KitRules::default();
-        if let Some(r) = &a.run {
-            r.kit(&mut kit);
-        }
-        self.kit = Kit::new(kit);
-        // A run's gun is the cards it bought (`Run::gun`), the range's the
-        // ones put in at its armory; H does not cycle either.
-        let armed = a.run.as_ref().or(a.range.as_ref());
-        let gun = match armed {
-            Some(r) => r.squad_cards(),
-            None => rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(),
-        };
-        let budget = armed.map_or(RoundRules::default().budget, Run::budget);
-        let mut rr = RoundRules { budget, ..RoundRules::default() };
+        // A run's tools, gun cards and turret deck (`Game::kit_out`): the
+        // cards it bought (`Run::gun`), the range's the ones put in at its
+        // armory; H does not cycle either. Off a run, the H loadout's.
+        let mut rr = RoundRules::default();
         // The round rules' `set=` keys (the Mind bullets', 2026-11-16).
         for (k, v) in a.keys.iter().filter_map(|(k, v)| k.strip_prefix(RULE_KEY).map(|k| (k, v))) {
             rr.set(k, v.parse().map_err(|e| format!("set={k}={v}: {e}"))?);
         }
-        self.rounds = Rounds::new(gun, rr);
-        // A run's turrets fire its turret deck (`Run::turret_cards`, the
-        // turrets thread): none without turrets or cards for them.
-        if let Some(r) = armed {
-            let t = r.turret_cards();
-            if !t.is_empty() {
-                game.apply(Cmd::Load(slime_mould::mould::larder_world::TURRET_DECK, Some(rounds::Deck::new(&t))));
-            }
+        match a.run.as_ref().or(a.range.as_ref()) {
+            Some(r) => game.kit_out(r, rr),
+            None => game.rounds = Rounds::new(rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(), rr),
         }
         if let Some(v) = &a.ammo {
             let cards = match v.parse::<u32>() {
@@ -1391,6 +1356,8 @@ impl App {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
             v.set_alive(e.grows.then_some(&e.energy));
+            // The Sleeper's crust (Look B, 11-20): each walker's life word.
+            v.set_life(Some(&e.spec));
             // Each walker's news of food (plan C8, 2026-11-14): a cut-off
             // walker's speck amber while it leans, red once it bolts; the
             // mould ashen by the share cut off. Only when the world withers
@@ -1553,7 +1520,7 @@ impl App {
             extra.push(("planet", self.planet_depth.to_string()));
         }
         extra.extend(self.log_loadout());
-        self.log_gun = rounds::name(&self.rounds.round);
+        self.log_gun = self.gun_name();
         extra.extend(log_keys(&self.args.keys));
         let head = playlog::Playlog::head(&self.name, self.args.seed, &extra);
         match std::fs::create_dir_all(playlog::DIR).and_then(|()| std::fs::write(&path, head)) {
@@ -1570,8 +1537,14 @@ impl App {
     /// the shop's upgrades owned, as key and level. The gun itself (kind,
     /// range, rate) is already the log's `arm` line, and the turrets' deck
     /// its `load 255` line, but only once a turret is built.
+    /// The army's round as the log names it (`rounds::name`): the game's
+    /// (`Game::rounds`), empty with none.
+    fn gun_name(&self) -> String {
+        self.game.as_ref().map_or_else(String::new, |g| rounds::name(&g.rounds.round))
+    }
+
     fn log_loadout(&self) -> Vec<(&'static str, String)> {
-        let mut v = vec![("gun", rounds::name(&self.rounds.round))];
+        let mut v = vec![("gun", self.gun_name())];
         if let Some(r) = self.args.run.as_ref() {
             v.push(("turrets", rounds::name(&r.turret_cards())));
             let owned: Vec<String> = slime_mould::mould::run::ITEMS.iter().zip(r.owned).filter(|(_, n)| *n > 0).map(|(i, n)| format!("{}{n}", i.key)).collect();
@@ -1701,6 +1674,8 @@ impl App {
         // A step a command finished since the last frame (`catch_up`).
         self.catch_up();
         let Some(g) = self.game.as_mut() else { return };
+        // The selected soldiers restock to the full carry (`Game::carry_full`).
+        g.carry_full.clone_from(&self.controls.selected);
         turn_turrets(g, &mut self.blooks, dt);
         self.banked = (self.banked - dt).max(0.0);
         // A bought soldier (by the card or a replay) joins the notes.
@@ -1714,9 +1689,7 @@ impl App {
         // verdict the census steps no more, so neither does this.
         if g.in_flight() && g.step_ready() && !mission_over {
             g.finish_step();
-            kit_between(&mut self.kit, g, &self.controls.selected);
-            self.rounds.after_step(g);
-            feel(&self.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+            feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
             turret_fired(g, &mut self.blooks);
@@ -1753,9 +1726,7 @@ impl App {
         while self.owed >= step && g.end.is_none() {
             if g.in_flight() {
                 g.finish_step();
-                kit_between(&mut self.kit, g, &self.controls.selected);
-                self.rounds.after_step(g);
-                feel(&self.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+                feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 turret_fired(g, &mut self.blooks);
@@ -1787,7 +1758,7 @@ impl App {
             if sec > self.log_sec {
                 self.log_sec = sec;
                 let mut line = self.playlog.second(g);
-                let gun = rounds::name(&self.rounds.round);
+                let gun = rounds::name(&g.rounds.round);
                 if gun != self.log_gun {
                     line += &format!("gun t={t:.1} {gun}\n");
                     self.log_gun = gun;
@@ -1897,11 +1868,11 @@ impl App {
         if let Some(g) = self.game.as_mut().filter(|g| g.in_flight()) {
             g.finish_step();
         }
-        // The step's notes, as `step` takes them: rounds read its hits (the
-        // headless looks settle every step), and the kit restocks and sets
-        // off its mines. (Before the review after the bug sweep,
-        // 2026-11-14, this was a copy without `kit_between`, so no
-        // headless run ever ran the kit.)
+        // The step's notes, as `step` takes them (the headless looks settle
+        // every step). The kit and the rounds ran in `finish_step`
+        // (`Game::gear_turn`); before the review after the bug sweep,
+        // 2026-11-14, this was a copy without the kit, so no headless run
+        // ever ran it, which the move into the game (11-20) rules out.
         self.catch_up();
     }
 
@@ -1909,7 +1880,8 @@ impl App {
     /// finishes a running step first, and before the bug sweep
     /// (2026-11-14) the window never saw that step. Its bullets' legs,
     /// muzzle flashes and facings were lost, its hits cast no round and
-    /// laid no trail, and the kit skipped it. In the squad mode the cursor
+    /// laid no trail, and the kit skipped it (both run in the game since
+    /// 11-20, `Game::gear_turn`, so only the window's notes are left here). In the squad mode the cursor
     /// sent a command almost every frame (`Cmd::Face`, `Cmd::Fire`), so
     /// most steps went unseen: the owner's playtest, 08:01Z, "the gun
     /// animation gets messed up sometimes". Runs before the next step
@@ -1920,9 +1892,7 @@ impl App {
             return;
         }
         self.seen = g.world.ticks();
-        kit_between(&mut self.kit, g, &self.controls.selected);
-        self.rounds.after_step(g);
-        feel(&self.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+        feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
         shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         turret_fired(g, &mut self.blooks);
         step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
@@ -1938,9 +1908,9 @@ impl App {
         }
         let t0 = Instant::now();
         // The kit's blasts (mines, thrown charges), heard where they went off.
-        l.bangs(&self.kit.bangs);
+        l.bangs(&g.kit.bangs);
         // The gun cards' payloads (sound pass two, 2026-11-20).
-        l.pops(&self.rounds.pops);
+        l.pops(&g.rounds.pops);
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
@@ -2213,7 +2183,10 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
+    // Shake and hit-stop are on in the game (the owner's card, 2026-11-20
+    // 22:05Z: "Turn them on"); `Args::default()` keeps them at 0 for the
+    // tests' rounds, and `shake=0 hitstop=0` turns them off for a film.
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, shake: 1.0, hitstop: 1.0, ..Default::default() };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
     // planet TO (3) or a loss, with no window: the strategy bot's whole run

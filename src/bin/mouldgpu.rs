@@ -3571,6 +3571,9 @@ mod tests {
         }
         let rr = RoundRules::default();
         let mut rc = Rounds::new(parse("bomb").unwrap(), rr);
+        // The test casts with its own `Rounds` from the world before the
+        // casts, so the game's own (`Game::gear`, 11-20) stays off.
+        cpu.gear = false;
         let fine = rules.tps as f32 * cpu.world.fine_steps() as f32;
         let k = BurstRules { fling_speed: rr.fling_speed, ..burst_rules(&rr.kit, fine) };
         let (mut frames, mut checked, mut after_off) = (0, 0, 0);
@@ -5840,6 +5843,11 @@ mod tests {
             let mods = BulletMods { pierce: 1, split: 1, ..BulletMods::default() };
             cpu.bullet_mods = mods;
             gpu.bullet_mods = mods;
+            // The game arms the army's round after every step (`Game::rounds`,
+            // 11-20), so the round holds the cards too.
+            let cards = vec![slime_mould::mould::rounds::Card::Pierce, slime_mould::mould::rounds::Card::Split];
+            cpu.rounds.round = cards.clone();
+            gpu.rounds.round = cards;
             for k in 0..cpu.soldiers.len() {
                 assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)));
             }

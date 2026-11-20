@@ -156,6 +156,11 @@ struct V {
 // gas; `alarm_side` says which is current.
 @group(0) @binding(25) var<storage, read> germ0: array<f32>;
 @group(0) @binding(26) var<storage, read> germ1: array<f32>;
+// Each walker's life word, the engine's `spec` (`View::set_life`, Look B
+// 2026-11-20): bits 9-10 its state (0 walker, 1 spore, 2 dormant, 3 dead,
+// the engine's `state`); `look_spare0` is 1 when it is bound. Read only by
+// the Sleeper's look.
+@group(0) @binding(27) var<storage, read> life_words: array<u32>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -1577,6 +1582,57 @@ fn flush_mat(m0: Mat, k: f32) -> Mat {
 const SHEET_VEIL: f32 = 0.4;
 // The Sprawler's film under its threads (`prep`'s `th0`).
 const THREAD_VEIL: f32 = 0.3;
+// The Trunk's cords off its body (`SlimeLook::Cords`, play-zoom pass,
+// 11-20): the colour's thickness at full trail (0.55 read as solid slime,
+// the same amber as the body; 0.3 a translucent tube), and the height at
+// full trail, by trail squared so a cord is round, highest down its line.
+// Both fade out as the wide count rises, so the body keeps its own grain:
+// over the whole body, the first cut smoothed it into a glossy sheet.
+const CORD_VEIL: f32 = 0.3;
+const CORD_RISE: f32 = 0.5;
+// The Swarmer's swell (`SlimeLook::Swell`, 11-20): by the alarm's flush
+// (`flush_at`, 0-1) its height grows by up to `SWELL_GAIN` times, and its
+// walkers there stand up by `SWELL_RISE` more, so an alarmed loose edge is
+// a field of beads, not a flat glow. Filmed on planet 4 at zoom 12.
+const SWELL_GAIN: f32 = 1.5;
+const SWELL_RISE: f32 = 0.25;
+// The Sleeper's crust (`SlimeLook::Dormant`, 11-20): where its walkers lie
+// dormant, its albedo falls to a dull, desaturated `DORMANT_DIM` of its
+// brightness, its gloss by `DORMANT_MATTE` and its glow to none, so the
+// sleeping crust is a dark matte rind and the walkers awake keep the gold.
+const DORMANT_DIM: f32 = 0.7;
+const DORMANT_MATTE: f32 = 0.6;
+// The share of the walkers dormant round fine cell (gx, gy): over the 5 x 5
+// fine cells round it, Gaussian-weighted, the dormant count (the fine grid's
+// third part, low 16 bits) over dormant and awake (high 16), both from
+// `draw_specks`. A plain 3 x 3 window, tried first, left each waking walker
+// a square gold pixel in the crust at zoom 6.
+fn dormant_share(gx: u32, gy: u32) -> f32 {
+    if (P.slime_look != 5u || P.look_spare0 == 0u) { return 0.0; }
+    var d = 0.0;
+    var a = 0.0;
+    for (var dy = -2; dy <= 2; dy++) {
+        for (var dx = -2; dx <= 2; dx++) {
+            let x = i32(gx) + dx; let y = i32(gy) + dy;
+            if (x < 0 || y < 0 || x >= i32(P.rw) || y >= i32(P.rh)) { continue; }
+            let v = atomicLoad(&fgrid[2u * P.fhalf + u32(y) * P.rw + u32(x)]);
+            let w = exp(-f32(dx * dx + dy * dy) / 4.5);
+            d += w * f32(v & 0xFFFFu);
+            a += w * f32(v >> 16u);
+        }
+    }
+    return smoothstep(0.2, 0.8, d / max(d + a, 1e-3));
+}
+fn dormant_mat(m0: Mat, d: f32) -> Mat {
+    if (d <= 0.0) { return m0; }
+    var m = m0;
+    let grey = dot(m.albedo, vec3<f32>(0.3, 0.5, 0.2));
+    let dull = grey * vec3<f32>(0.86, 0.84, 0.8) * DORMANT_DIM;
+    m.albedo = mix(m.albedo, dull, d);
+    m.gloss *= 1.0 - DORMANT_MATTE * d;
+    m.glow *= 1.0 - d;
+    return m;
+}
 
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
@@ -2043,6 +2099,9 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // walkers instead of a single slime unit" (11-18 15:56Z). A third of
     // the Drifter's sheet, so the dashes still show through as threads.
     if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail); }
+    // The Trunk's cords (`SlimeLook::Cords`): off the body only (`off`).
+    let off = 1.0 - smoothstep(0.25, 0.55, wide);
+    if (P.slime_look == 3u) { th0 = max(th0, CORD_VEIL * trail * off); }
     // Condensed mould keeps tight, raised edges (art director, 11-14: it
     // should read tougher at a glance): where it has condensed the
     // thickness is pushed through a steep curve, so the body is a full,
@@ -2061,6 +2120,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // sheen runs over it as over dense wet metal; only its colour takes the
     // plateau. The first cut fed the plateau to the height too.
     var th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share) * smoothstep(0.3, 0.6, wide);
+    if (P.slime_look == 3u) { th_h = max(th_h, CORD_RISE * trail * trail * off); }
     // A mini-boss's body (2026-11-16): its members' share of the walkers
     // round the cell (a member counts once in `n` and once in `lc`), and the
     // nearest lump's look. Where its members are, it stands up from the
@@ -2091,6 +2151,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The alarm on the slime here (`flush_at`), under a mini-boss's skin
     // and the set slime's, which keep their own colours.
     let hot = flush_at(wx, wy, tm);
+    if (P.slime_look == 4u) { th_h = th_h * (1.0 + SWELL_GAIN * hot) + SWELL_RISE * hot * smoothstep(0.1, 0.4, near); }
     let ss = set_share(wx, wy);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
@@ -2104,6 +2165,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         m1 = flush_mat(m1, hot);
         m1 = lump_mat(m1, lump, tm);
         m1 = set_mat(m1, ss, wide);
+        m1 = dormant_mat(m1, dormant_share(gid.x, gid.y));
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -2132,6 +2194,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     mt = flush_mat(mt, hot);
     mt = lump_mat(mt, lump, tm);
     mt = set_mat(mt, ss, wide);
+    mt = dormant_mat(mt, dormant_share(gid.x, gid.y));
     hcell[i] = h.x + set_rise(ss, wide);
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
@@ -3790,6 +3853,12 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (streak) { lay_streak(w, cnt, kf); }
     if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) {
         if (!streak) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt); }
+        // The Sleeper's crust: this walker dormant (low 16 bits) or awake
+        // (high), for `dormant_share`.
+        if (P.slime_look == 5u && P.look_spare0 != 0u && !member) {
+            let dorm = ((life_words[k] >> 9u) & 3u) == 2u;
+            atomicAdd(&fgrid[2u * P.fhalf + u32(gy) * P.rw + u32(gx)], select(1u << 16u, 1u, dorm));
+        }
         if (dcnt > 0u) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], dcnt); }
         if (member) { atomicOr(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << (FG_FLAGS + lump_k - 1u)); }
     }
