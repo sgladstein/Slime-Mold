@@ -4589,3 +4589,47 @@ fn a_squad_moved_then_shift_built_raises_the_build_once_there() {
     }
     assert!(g.buildings[b1].up() && g.buildings[b2].up(), "both queued builds rose");
 }
+
+/// **Late against a big army** (2026-11-20, Direction's pick A): once the
+/// slime is late, a big squad draws the Mortar far more often, from planet
+/// 2 (none there before, nor against a small squad).
+#[test]
+fn late_against_a_big_army_the_mortar_comes_from_planet_2() {
+    let draws = |late: bool, big: bool| {
+        let mut g = small(2);
+        g.rules.boss = BossRules::for_depth(2);
+        (g.rules.strikers.few, g.rules.strikers.full) = if big { (0.0, 1.0) } else { (100.0, 200.0) };
+        g.peak = if late { g.mould * 10 } else { g.mould };
+        let c = (g.soldiers[0].x, g.soldiers[0].y);
+        let b = Boss { lump: 0, born: 0, at: c, cause: BossCause::Crowd, phase: BossPhase::Gather, first: 0, members: 0, centre: c, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        (0..200).filter(|_| g.pick_kind(&b) == BossKind::Mortar).count()
+    };
+    let (early, small_squad, big) = (draws(false, true), draws(true, false), draws(true, true));
+    eprintln!("mortars of 200 draws on planet 2: early {early}, late small squad {small_squad}, late big squad {big}");
+    assert_eq!((early, small_squad), (0, 0));
+    assert!(big >= 40, "{big} of 200");
+}
+
+/// **Round the army** (2026-11-20, Direction's pick B): late, against a
+/// big squad, a hunter goes for a standing building out of the guns'
+/// reach instead of the squad; against a small squad it hunts.
+#[test]
+fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
+    let errand = |big: bool| {
+        let mut g = small(2);
+        (g.rules.strikers.few, g.rules.strikers.full) = if big { (0.0, 1.0) } else { (100.0, 200.0) };
+        g.peak = g.mould * 10;
+        let c = (g.soldiers[0].x, g.soldiers[0].y);
+        let (w, h) = g.world.size();
+        // A pump on the far side of the dish from the squad.
+        let at = (if c.0 < w as f32 / 2.0 { w as f32 - 20.0 } else { 20.0 }, if c.1 < h as f32 / 2.0 { h as f32 - 20.0 } else { 20.0 });
+        g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None });
+        let from = ((c.0 + at.0) / 2.0, (c.1 + at.1) / 2.0);
+        let mut b = Boss { lump: 0, born: 0, at: from, cause: BossCause::Crowd, phase: BossPhase::Hunt(None), first: 100, members: 100, centre: from, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        let round = g.boss_late() && g.army_scale() >= 1.0;
+        (round, if round { g.round_errand(&mut b, 0) } else { None }, at)
+    };
+    let (round, to, pump) = errand(true);
+    assert!(round && to == Some(pump), "a big squad: round to the pump at {pump:?}, got {to:?}");
+    assert!(!errand(false).0, "a small squad: it hunts");
+}

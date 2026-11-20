@@ -1,0 +1,159 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+STRAT t 0 build mould 13155 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+  cores t 1 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 2 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 3 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 4 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 5 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 6 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 7 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 8 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 9 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 10 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 10 build mould 13291 soldiers 4 hp 1.00 bank 42 killed 18 turret 0 pumps 3 buildings 3
+  cores t 11 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 12 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 13 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 14 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 15 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 16 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 17 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 18 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 19 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 20 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 20 out mould 13519 soldiers 4 hp 0.91 bank 184 killed 273 turret 0 pumps 3 buildings 3
+  cores t 21 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 22 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 23 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 24 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 25 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 26 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 27 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  surge 1 starts at t 27.3 s (the slime has eaten 109 food)
+  cores t 28 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 29 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 30 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 30 out mould 13942 soldiers 4 hp 0.80 bank 120 killed 737 turret 0 pumps 3 buildings 3
+  cores t 31 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 32 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 33 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 34 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 35 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 36 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 37 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 38 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 39 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 40 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 40 out mould 14701 soldiers 4 hp 0.58 bank 388 killed 1465 turret 0 pumps 2 buildings 2
+  cores t 41 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 42 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 43 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  surge 2 starts at t 44.0 s (the slime has eaten 218 food)
+  cores t 44 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 45 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 46 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 47 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 48 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 49 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 50 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 50 out mould 15331 soldiers 4 hp 0.46 bank 90 killed 2070 turret 0 pumps 1 buildings 1
+  cores t 51 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 52 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 53 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 54 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 55 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 56 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 57 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 58 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  surge 3 starts at t 58.3 s (the slime has eaten 327 food)
+  cores t 59 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 60 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 60 back mould 16671 soldiers 4 hp 0.27 bank 140 killed 2679 turret 0 pumps 1 buildings 1
+  cores t 61 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 62 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 63 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 64 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  raid 1 at t 65.0 s: Soldiers(0) at 400,54, reach 148 cells holding 7086 walkers, share 0.60, size 24% of the slime
+  march t 65 s: lump 3, 0 members (first 0), at 268,188, spread 3.22, 94 cells to go
+  cores t 65 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  march t 66 s: lump 3, 6467 members (first 6467), at 226,194, spread 1.72, 112 cells to go
+  cores t 66 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  march t 67 s: lump 3, 6467 members (first 6467), at 242,184, spread 1.64, 102 cells to go
+  cores t 67 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  march t 68 s: lump 3, 6467 members (first 6467), at 258,172, spread 1.53, 92 cells to go
+  cores t 68 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  march t 69 s: lump 3, 6467 members (first 6467), at 274,162, spread 1.30, 83 cells to go
+  cores t 69 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  march t 70 s: lump 3, 6467 members (first 6467), at 290,154, spread 1.09, 74 cells to go
+  cores t 70 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 70 out mould 22256 soldiers 4 hp 0.12 bank 144 killed 3125 turret 0 pumps 0 buildings 0
+  cores t 71 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 72 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 73 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 74 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  surge 4 starts at t 74.5 s (the slime has eaten 436 food)
+  cores t 75 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 76 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 77 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 78 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 79 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 80 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 80 out mould 24070 soldiers 4 hp 0.10 bank 235 killed 3449 turret 0 pumps 0 buildings 0
+  cores t 81 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 82 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 83 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 84 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 85 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  drop t 86 s: Ore Sky at 304,142, worth 50, taken 0.0, eaten 0.0, 0 soldiers and 0 walkers on it; nearest soldier 71.8
+  cores t 86 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  drop t 87 s: Ore Sky at 304,142, worth 50, taken 0.0, eaten 5.2, 0 soldiers and 20 walkers on it; nearest soldier 76.0
+  cores t 87 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 5.2
+  drop t 88 s: Ore Sky at 304,142, worth 50, taken 0.0, eaten 15.3, 0 soldiers and 33 walkers on it; nearest soldier 72.0
+  cores t 88 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 15.3
+  surge 5 starts at t 88.7 s (the slime has eaten 540 food)
+  drop t 89 s: Ore Sky at 304,142, worth 50, taken 0.0, eaten 33.0, 0 soldiers and 53 walkers on it; nearest soldier 72.1
+  cores t 89 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 33.0
+  cores t 90 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+STRAT t 90 back mould 25088 soldiers 3 hp 0.18 bank 299 killed 4055 turret 0 pumps 0 buildings 0
+  cores t 91 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  cores t 92 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 93.0 s: Crowd hunter formed on lump 0 at 271,143 (crowd top 2.02); grade 0.49: 9 blows a member, touches as 3, pace x1.19
+  boss t 93 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 271,143, spread 0.87, stolen 0.0; nearest soldier 91.9, 2 alive
+  cores t 93 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 94 s: lump 0 hunter Gather, 676 members (first 676, 0 hurt), at 270,140, spread 0.78, stolen 0.0; nearest soldier 93.3, 2 alive
+  cores t 94 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 95 s: lump 0 hunter Gather, 676 members (first 676, 0 hurt), at 268,140, spread 0.81, stolen 0.0; nearest soldier 101.0, 2 alive
+  cores t 95 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 96 s: lump 0 hunter Gather, 676 members (first 676, 0 hurt), at 264,138, spread 0.86, stolen 0.0; nearest soldier 103.8, 2 alive
+  cores t 96 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 97 s: lump 0 hunter Gather, 676 members (first 676, 0 hurt), at 262,136, spread 0.84, stolen 0.0; nearest soldier 107.6, 2 alive
+  cores t 97 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 98 s: lump 0 hunter Gather, 676 members (first 676, 0 hurt), at 258,134, spread 0.84, stolen 0.0; nearest soldier 109.9, 2 alive
+  cores t 98 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 99 s: lump 0 hunter Hunt(Some(2)), 676 members (first 676, 0 hurt), at 256,134, spread 0.81, stolen 0.0; nearest soldier 114.6, 2 alive
+  cores t 99 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 100 s: lump 0 hunter Hunt(Some(2)), 676 members (first 676, 0 hurt), at 274,118, spread 1.35, stolen 0.0; nearest soldier 93.2, 2 alive
+  cores t 100 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+STRAT t 100 home mould 25823 soldiers 2 hp 0.10 bank 299 killed 4749 turret 0 pumps 0 buildings 0
+  boss t 101 s: lump 0 hunter Hunt(Some(2)), 676 members (first 676, 0 hurt), at 270,108, spread 1.00, stolen 0.0; nearest soldier 94.7, 2 alive
+  cores t 101 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 102 s: lump 0 hunter Hunt(Some(2)), 676 members (first 676, 0 hurt), at 272,102, spread 1.07, stolen 0.0; nearest soldier 92.9, 2 alive
+  cores t 102 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  boss t 103 s: lump 0 hunter Hunt(Some(2)), 676 members (first 676, 0 hurt), at 272,100, spread 0.96, stolen 0.0; nearest soldier 92.5, 2 alive
+  cores t 103 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+  surge 6 starts at t 103.1 s (the slime has eaten 649 food)
+  boss t 104 s: lump 0 hunter Hunt(Some(2)), 676 members (first 676, 0 hurt), at 276,98, spread 1.18, stolen 0.0; nearest soldier 88.2, 2 alive
+  cores t 104 s: 0 dropped, pot 0 of 200, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 50.0
+/tmp/claude-0/cen/base2/1795119328-2/planet-2-1795119328-strat:econ,go=4,aim=6-420s-all.png
+/tmp/claude-0/cen/base2/1795119328-2/planet-2-1795119328-strat:econ,go=4,aim=6-420s-near.png
+  CPU: ground field 3.53 ms (once a game second), model and HUD 0.453 ms a frame
+  t 105 s: mould 25839, soldiers 0, bank 299, harvested 1131, rendered 0, shots 480, killed 5141, took 44%, crystals left 0.963, ended: squad wiped
+  surge: the slime ate 661 food (6.3/s); meter 12.5 of 109, 6 surges
+  dense: 0 condensed or thick walkers, mass 25839 (readout 25843); 1625 breaking away
+  loose: 5264 walkers alone or in twos in a dish cell, 20.4% of 25802; 1865 with at most one other round them
+    pump at (374, 88): hp 0 / 200, built 1.0, worn down
+    pump at (234, 116): hp 0 / 200, built 0.0, worn down
+    pump at (419, 224): hp 0 / 200, built 1.0, worn down
+    pump at (303, 53): hp 0 / 200, built 1.0, worn down
+    pump at (303, 53): hp 0 / 200, built 1.0, worn down
+    pumped 607 food
