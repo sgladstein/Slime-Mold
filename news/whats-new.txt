@@ -76,3 +76,4 @@
 2026-11-20 | direction | A needle bullet carrying a Blast, Gas, Germ or Bomb now bursts once, at the first slime it hits, then flies on through the next two as a plain needle; before, it burst at all three, which made Needle Blast the base of every top build | Load a Needle Blast and watch one crater per shot, with the needle going on past it
 2026-11-20 | look | Rock is stone now, not a flat grey slab: soft mottling, a fine grit when zoomed in, and a few thin cracks, still darker than the slime | Look at the grey rock on planet 2 at zoom 6 and 12
 2026-11-20 | look | Planet 1's meadow grows in patches, thickest by the water, with paler spring-green tips, instead of one even green felt | Land on planet 1 and look at the grass at zoom 6
+2026-11-20 | look | A working crystal pump's lamps and charge lines now glow steadily; before, they flickered off every other frame while the game ran its step | Build a pump on a crystal and watch its corner lamps
