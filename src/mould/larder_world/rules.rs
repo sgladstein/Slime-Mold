@@ -708,6 +708,10 @@ impl Rules {
                 self.strikers.on = v > 0.0;
                 return true;
             }
+            "strikers_most" => {
+                self.strikers.most = v.clamp(1.0, 15.0) as u32;
+                return true;
+            }
             "wave_sides" => {
                 self.wave.sides = v.clamp(0.0, 8.0) as u32;
                 return true;

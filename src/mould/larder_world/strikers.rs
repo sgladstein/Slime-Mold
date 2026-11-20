@@ -51,11 +51,14 @@ pub struct StrikerRules {
     pub share: f32,
     /// A condensed walker's pace as it charges, times its own.
     pub haste: f32,
+    /// The most walkers one takes in (1 to 15): it takes that many blows
+    /// more and bites that many times more.
+    pub most: u32,
 }
 
 impl Default for StrikerRules {
     fn default() -> Self {
-        StrikerRules { on: false, below: 0.4, band: 12.0, share: 0.5, haste: 1.5 }
+        StrikerRules { on: false, below: 0.4, band: 12.0, share: 0.5, haste: 1.5, most: 3 }
     }
 }
 
@@ -93,7 +96,7 @@ impl<W: World> Game<W> {
         self.strikers.on = true;
         let share = if low && self.soldiers.iter().any(|s| s.alive) { r.share } else { 0.0 };
         let reach = (self.gun_range_max() + r.band).max(0.0) * self.world.scale();
-        if let Some((live, held, took)) = self.world.condense(reach, share) {
+        if let Some((live, held, took)) = self.world.condense(reach, share, r.most) {
             (self.strikers.live, self.strikers.held) = (live, held);
             self.strikers.took += took as u64;
         }

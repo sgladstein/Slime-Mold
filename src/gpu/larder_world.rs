@@ -1115,10 +1115,10 @@ impl World for GpuWorld {
     }
 
     /// At once, after the running step's shares, as `form_lump`.
-    fn condense(&mut self, reach: f32, share: f32) -> Option<(u32, u32, u32)> {
+    fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
         self.e.strikers?;
         self.flush();
-        Some(self.e.condense(&self.shared, reach, share))
+        Some(self.e.condense(&self.shared, reach, share, most))
     }
 
     /// The mirror's ground, which the world's walls keep (`build_wall`).
@@ -1417,8 +1417,8 @@ mod tests {
         fn set_strikers(&mut self, haste: Option<f32>) {
             self.g.set_strikers(haste)
         }
-        fn condense(&mut self, reach: f32, share: f32) -> Option<(u32, u32, u32)> {
-            self.g.condense(reach, share)
+        fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
+            self.g.condense(reach, share, most)
         }
     }
 
@@ -2291,11 +2291,11 @@ mod tests {
         for _ in 0..2 {
             w.frame(&f, 15);
         }
-        assert_eq!(w.condense(20.0, 1.0), None, "no condensing with the strikers off");
+        assert_eq!(w.condense(20.0, 1.0, 3), None, "no condensing with the strikers off");
         w.set_strikers(Some(1.5));
         w.frame(&f, 1);
         let before = read(&w).len();
-        let (_, _, took) = w.condense(20.0, 1.0).expect("the GPU world condenses");
+        let (_, _, took) = w.condense(20.0, 1.0, 3).expect("the GPU world condenses");
         let v = read(&w);
         let (live, held) = (v.iter().filter(|p| p.2).count(), v.iter().filter(|p| p.2).map(|p| p.3).sum::<u32>());
         eprintln!("strikers: {before} walkers, {took} taken in by {live} condensed holding {held}, {} after", v.len());
