@@ -168,6 +168,8 @@ page. A bigger look, one that changes how the slime, the fight or a planet
 reads, keeps a before-and-after page. Threads still film to check their own
 work. Rejected: a page for every change, and no pages at all.
 
+A pull request adds at most 12 MB of pictures and films, none over 3 MB
+(the lint; `Big-media: <why>` in a commit message for an exception).
 Pictures and clips go on an Artifact page linked in the thread, with the
 counts beside each picture, never as chat attachments. A look is judged in
 motion, never from stills alone. Small visual choices are the lane's; a

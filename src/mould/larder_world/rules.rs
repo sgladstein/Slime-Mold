@@ -643,6 +643,11 @@ pub struct Rules {
     /// slime eats it. Off here; a run turns it on
     /// (`StarRules::for_depth`).
     pub star: super::StarRules,
+    /// **The last-stand heart** (2026-11-20; `stand.rs`): late in a planet
+    /// against an army, what is left of the slime gathers into one
+    /// armoured heart on its heart crystal that lunges at the squad. Off
+    /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
+    pub stand: super::StandRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -753,6 +758,18 @@ impl Rules {
                 self.strikers.most = v.clamp(1.0, 15.0) as u32;
                 return true;
             }
+            "stand" => {
+                self.stand.on = v > 0.0;
+                return true;
+            }
+            "stand_armour" => {
+                self.stand.armour = v.clamp(0.0, 15.0) as u32;
+                return true;
+            }
+            "stand_bite" => {
+                self.stand.bite = v.clamp(0.0, 15.0) as u32;
+                return true;
+            }
             "wave_sides" => {
                 self.wave.sides = v.clamp(0.0, 8.0) as u32;
                 return true;
@@ -837,6 +854,17 @@ impl Rules {
             "strikers_haste" => &mut self.strikers.haste,
             "strikers_few" => &mut self.strikers.few,
             "strikers_full" => &mut self.strikers.full,
+            "stand_at" => &mut self.stand.at,
+            "stand_army" => &mut self.stand.army,
+            "stand_pull" => &mut self.stand.pull,
+            "stand_leash" => &mut self.stand.leash,
+            "stand_lunge_leash" => &mut self.stand.lunge_leash,
+            "stand_every" => &mut self.stand.every,
+            "stand_lunge" => &mut self.stand.lunge,
+            "stand_haste" => &mut self.stand.haste,
+            "stand_grow_every" => &mut self.stand.grow_every,
+            "stand_last" => &mut self.stand.last,
+            "stand_life" => &mut self.stand.life,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
@@ -1046,6 +1074,7 @@ impl Default for Rules {
             heart: super::HeartRules::default(),
             strikers: super::StrikerRules::default(),
             star: super::StarRules::default(),
+            stand: super::StandRules::default(),
         }
     }
 }

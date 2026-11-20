@@ -24,13 +24,15 @@ Next is Milestone 2, "A whole run": the origin as the way a planet is won, a
 chosen run length, the bot's curve over all eight planets, save and resume,
 the core world at 60 frames a second. A release only if the owner chooses one.
 
-**Where it stands (11-20, [check](handoff/direction.md)).** Nothing is
-closed. Behind: test 1 (the run bot loses planet 2 on seed 2; its planet 3
-win is a clock "held on"). Built, his to judge: 2, 4, 5. Test 6: two
-switches off, overdue. The balance review (#539): every planet is a
-stand-off, then a collapse once the army is big; that is D7's question,
-his. No further Needle change: a real run meets the best deck by planet 3
-in 1 run of 213.
+**Where it stands (11-20 evening, [check](handoff/direction.md)).** Nothing
+is closed. Test 1 is behind: one bot now plays the run (the strategy bot's
+plan by planet), and planet 1 is its weak point (no plan wins more than 6 of
+11 maps; rush,aim=6 wins all 11 of planet 2). Built today, his to judge: the
+count-up clock, condensed strikers and the late lunge against a big army,
+starfall and boss cores (base pay 175 + 25 a planet), own fire at 10 health
+a second, late mini-bosses that shell or go round a big army (building).
+Tests 2, 4 and 5: built, his. Test 6: two switches off, `feel` (his D6) and
+`crystal_regrow` (one side of D7, held with the rush).
 
 ## Each lane's top jobs
 

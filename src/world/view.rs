@@ -127,6 +127,11 @@ pub enum LumpLook {
     /// cobalt skin over an ice-blue core, the one blue on the slime, so
     /// its turning arms read apart from the gold round them.
     Pinwheel = 7,
+    /// **The last-stand heart** (2026-11-20, the Enemy lane,
+    /// `larder_world::stand`): a deep amber over a hot amber core, the
+    /// slime's own gold run dark and hot, dimming as it is cut down (its
+    /// strength).
+    Heart = 8,
 }
 
 impl LumpLook {
@@ -141,6 +146,7 @@ impl LumpLook {
             "fruit" | "5" => Self::Fruit,
             "mortar" | "6" => Self::Mortar,
             "pinwheel" | "7" => Self::Pinwheel,
+            "heart" | "8" => Self::Heart,
             _ => return None,
         })
     }

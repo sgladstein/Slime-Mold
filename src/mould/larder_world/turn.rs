@@ -472,6 +472,7 @@ impl<W: World> Game<W> {
             self.time_strikers();
             self.time_cores();
             self.time_starfall();
+            self.time_stand();
         }
         self.campaign_rules(now - t);
         self.check_end();

@@ -118,7 +118,23 @@ score (planet 2, 36 games) found the first numbers did not bite an
 `full` 24 soldiers; `most` (blows a striker takes, 1-15, packed in the
 condense row's reach word) is a rule now, default still 3. The probes and
 why are in `StrikerRules::default`'s comment. The balance thread scores
-the retune next. Next: D, the last-stand heart.
+the retune: small squads win again, 80-soldier armies lose 28 to 37 late
+and still win; map 2's mid army now loses (haste 2 is the fallback).
+Merged in #566, with a fix: a lump forming over strikers no longer
+deletes what they hold (lumpform skips DENSE_BIT).
+
+## Last-stand heart (2026-11-20 evening, the same thread)
+
+D of the brief: `larder_world/stand.rs` (`StandRules`, `Stand`,
+`Heart`), on in every run (`ENEMY_RULES`' `stand`), GPU only. Under 20%
+of peak against 24+ soldiers, every free walker grows into one lump on
+`Game::heart_site` (armour 4, bite 1, regrown every 3 s), lunging at the
+nearest soldier every 20 s (haste 3, 10 s); it breaks under 15% of its
+most or at 150 s (keeping it to the end stalled planets). Look
+`LumpLook::Heart` (view.wgsl case 7). Report and clips:
+`Reports/stand-2026-11-20/`. Next: the balance thread can score it on its
+planet 2 jobs (bites in the last quarter); then F (buried knots) if
+Scott wants more.
 
 ## Heartbeat (2026-11-20, the same thread)
 
