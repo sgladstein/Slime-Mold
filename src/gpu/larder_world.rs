@@ -2211,6 +2211,57 @@ mod tests {
         assert_eq!(set(&fort, &m).0, 0, "and the walls wake");
     }
 
+    /// **A shot stops at set slime** (the owner's planet 3 round,
+    /// 2026-11-19 20:46Z: "slime that i couldn't kill they were not moving
+    /// but all my soliders would shoot them over and over and nothing hurt
+    /// them"). A set walker lays no trail, and a shot stopped only where
+    /// the trail looked like slime, so once the live slime round a wall
+    /// had gone its trail faded and every bullet flew through it: that
+    /// round ended on 41 set walkers that 3,200 shots in 85 s never hit.
+    /// The fort's world of the test above at 20 s, its trail then wiped
+    /// as if the live slime had long gone: a shot at a set walker's cell
+    /// hits it, and it dies within its armour's blows.
+    #[test]
+    fn a_shot_stops_at_set_slime_with_no_trail() {
+        use crate::gpu::floats;
+        use crate::mould::squad::{slime_trail, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let mut s = race_settings(seed, scale, walkers);
+        crate::gpu::set(&mut s, "alarm_keep", "0.9").unwrap();
+        crate::gpu::set(&mut s, "setting", "1").unwrap();
+        crate::gpu::set(&mut s, "crust_rise", "0.02").unwrap();
+        crate::gpu::set(&mut s, "crust_trail", "0").unwrap();
+        let armour = s.set_armour;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { set_block: 5.0, fort: 2.0, ..Rules::default() }, seed);
+        while g.time() < 20.0 {
+            g.step();
+        }
+        let slime = slime_trail(6.0);
+        let e = &g.world.e;
+        let w = e.dish.w;
+        // The trail faded: both sides wiped.
+        let none = crate::gpu::f32_bytes(&vec![0.0; w * e.dish.h]);
+        for side in &e.trail {
+            e.queue.write_buffer(side, 0, &none);
+        }
+        let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+        let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+        let words = e.set_of();
+        let set: Vec<usize> = (0..e.n as usize).filter(|&q| words[q] > 0 && en[q] >= 0.0).map(|q| wk[4 * q + 1] as usize * w + wk[4 * q] as usize).collect();
+        assert!(!set.is_empty(), "nothing set (the case is not made)");
+        let c = set[0];
+        let at = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+        let shot = Frame { shots: vec![ShotIn { from: at, to: at, r: 0.0, over: false }], slime, ..Frame::default() };
+        let mut killed = 0;
+        for n in 0..=armour {
+            let out = g.world.frame(&shot, 0);
+            assert!(out.shots[0].hit.is_some(), "shot {n} flew through the set walker at {at:?}");
+            killed += out.shots[0].killed;
+        }
+        assert!(killed >= 1, "{} shots at a set walker killed none", armour + 1);
+    }
+
     /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,
     /// `mould::plants`): a map with plants of all four kinds, sparse so
     /// they spread, run side by side; a burn lit at 3 s. The plants,
