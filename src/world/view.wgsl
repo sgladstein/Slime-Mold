@@ -433,7 +433,7 @@ fn crust_over(a: vec3<f32>, x: f32, y: f32, gv: f32) -> vec3<f32> {
 // of lit crowns and shaded gaps. `a` is the crown's cover, antialiased
 // over about a pixel; `tone` is the crown's own hash (a little value and
 // hue each). No stamp or sprite: a crown's size is the field's value.
-struct Crown { a: f32, lit: f32, tone: f32, dome: f32, at: vec2<f32> }
+struct Crown { a: f32, lit: f32, tone: f32, dome: f32, at: vec2<f32>, sh: f32 }
 // One kind's form on one flora (`flora_form`): the grid's spacing `s`,
 // the crown's radius `r0` of it, `stretch` along y, the outline's `lobe`
 // and the dome's `relief`, its `shape` (0 a lobed dome, 1 a blade, 2 a
@@ -442,8 +442,11 @@ struct Crown { a: f32, lit: f32, tone: f32, dome: f32, at: vec2<f32> }
 // cover staying with the density) and its colour; `wet` gathers the
 // patches onto the wettest ground (the moisture field, so along the
 // water) instead of the noise alone, and `tip` (when not zero) is the
-// colour each crown's top turns toward.
-struct Form { s: f32, r0: f32, stretch: f32, lobe: f32, relief: f32, shape: u32, clump: f32, col: vec3<f32>, wet: f32, tip: vec3<f32> }
+// colour each crown's top turns toward. `fall` (when not zero) is how far
+// each crown's shadow falls from it, away from the light, in its own
+// radius: a plant that stands up off the ground (`sh` in `Crown`, the
+// share of the point in a crown's shadow).
+struct Form { s: f32, r0: f32, stretch: f32, lobe: f32, relief: f32, shape: u32, clump: f32, col: vec3<f32>, wet: f32, tip: vec3<f32>, fall: f32 }
 // `lobe` ruffles each crown's outline (five to eight lobes, so a grass tuft is
 // spiky and a tree's crown leafy, not a pebble: the first cut's round
 // domes read as cobbles, and seven deep lobes on every tuft as stars);
@@ -461,13 +464,15 @@ fn lobe_wave(u: vec2<f32>, n: u32, phi: f32) -> f32 {
 
 fn crowns(x: f32, y: f32, fm: Form, dk: f32, seed: f32) -> Crown {
     var o: Crown;
-    o.a = 0.0; o.lit = 1.0; o.tone = 0.5; o.dome = 0.0; o.at = vec2<f32>(x, y);
+    o.a = 0.0; o.lit = 1.0; o.tone = 0.5; o.dome = 0.0; o.at = vec2<f32>(x, y); o.sh = 0.0;
     let s = fm.s;
     let q = vec2<f32>(x, y / fm.stretch) / s;
     let qi = floor(q);
     let rr = fm.r0 * sqrt(min(dk, 1.0));
     let aa = 1.2 / (P.zoom * s);
     let l = normalize(LIGHT);
+    // Toward the light in the grid's own units (y squashed by `stretch`).
+    let toward = normalize(vec2<f32>(l.x, l.y / fm.stretch));
     var top = -1.0;
     for (var j = -1; j <= 1; j++) {
         for (var i = -1; i <= 1; i++) {
@@ -490,12 +495,23 @@ fn crowns(x: f32, y: f32, fm: Form, dk: f32, seed: f32) -> Crown {
             if (r <= 0.0) { continue; }
             var rel = q - ctr;
             var reach = r * (1.0 + fm.lobe);
+            // The crown's shadow (planets 2 and 3's plants, Look C
+            // 2026-11-20): this point moved toward the light by `fall`
+            // radii lands in the crown, drawn as the crown's plain outline
+            // (no lobes or thorns: a shadow on dust is soft), a little
+            // smaller, with a soft edge. Within the 3 x 3 cells looked at
+            // while fall x r stays under about 0.6 of the spacing.
+            var srel = rel + toward * (fm.fall * r);
             if (fm.shape == 1u) {
                 // A blade: a thin ellipse leaning up to 35 degrees.
                 let t = (h1 - 0.5) * 1.2;
                 let cs = cos(t); let sn = sin(t);
                 rel = vec2<f32>(cs * rel.x - sn * rel.y, sn * rel.x + cs * rel.y) * vec2<f32>(2.2, 0.45);
+                srel = vec2<f32>(cs * srel.x - sn * srel.y, sn * srel.x + cs * srel.y) * vec2<f32>(2.2, 0.45);
                 reach = r * 2.4;
+            }
+            if (fm.fall > 0.0) {
+                o.sh = max(o.sh, clamp((0.85 * r - length(srel)) / (aa + 0.3 * r) + 0.5, 0.0, 1.0));
             }
             let dd = length(rel);
             if (dd > reach + aa) { continue; }
@@ -547,7 +563,7 @@ fn crowns(x: f32, y: f32, fm: Form, dk: f32, seed: f32) -> Crown {
 fn flora_form(fl: u32, k: u32) -> Form {
     // Flora 0 (meadow), and every kind a flora leaves alone.
     var f: Form;
-    f.stretch = 1.0; f.shape = 0u; f.clump = 0.0; f.col = plant_rgb(k); f.wet = 0.0; f.tip = vec3<f32>(0.0);
+    f.stretch = 1.0; f.shape = 0u; f.clump = 0.0; f.col = plant_rgb(k); f.wet = 0.0; f.tip = vec3<f32>(0.0); f.fall = 0.0;
     // Meadow (planet 1's own trait, Look C 2026-11-20: at zoom 6 its even
     // tufts read as green felt, one tone from shore to shore): the tufts
     // gather into patches, thickest along the water (the moisture field),
@@ -558,17 +574,29 @@ fn flora_form(fl: u32, k: u32) -> Form {
     else { f.s = 1.7; f.r0 = 0.85; f.lobe = 0.12; f.relief = 0.9; }
     if (fl == 1u) {
         // Barrens: dry grass blades; thorn bushes in patches; oasis palms.
-        if (k == 0u) { f.shape = 1u; f.s = 0.55; f.r0 = 0.7; f.relief = 0.3; f.col = vec3<f32>(58.0, 60.0, 42.0); }
-        else if (k == 3u) { f.shape = 2u; f.s = 1.3; f.r0 = 0.5; f.lobe = 0.45; f.clump = 0.8; f.col = vec3<f32>(58.0, 56.0, 40.0); }
-        else if (k == 1u) { f.shape = 2u; f.s = 1.6; f.lobe = 0.35; f.col = vec3<f32>(30.0, 48.0, 30.0); }
+        // Look C 2026-11-20 (planet 2's pass, as planet 1's meadow): the
+        // thorn scrub was (58,56,40) on a hardpan of about the same value
+        // and could not be found at zoom 6. Now each bush is a dark dry
+        // olive with sun-bleached straw tips and a shadow down-light, so
+        // it stands up off the dust; the oasis grass's blades bleach at
+        // their tops, and palms cast a shadow too.
+        if (k == 0u) { f.shape = 1u; f.s = 0.55; f.r0 = 0.7; f.relief = 0.3; f.col = vec3<f32>(52.0, 58.0, 38.0); f.tip = vec3<f32>(96.0, 92.0, 60.0); f.clump = 0.4; f.fall = 0.5; }
+        else if (k == 3u) { f.shape = 2u; f.s = 1.3; f.r0 = 0.68; f.lobe = 0.45; f.relief = 0.8; f.clump = 0.8; f.col = vec3<f32>(46.0, 44.0, 30.0); f.tip = vec3<f32>(112.0, 98.0, 62.0); f.fall = 0.55; }
+        else if (k == 1u) { f.shape = 2u; f.s = 1.6; f.lobe = 0.35; f.col = vec3<f32>(30.0, 48.0, 30.0); f.fall = 0.6; }
     } else if (fl == 2u) {
         // Fen: wet moss hummocks, dark olive-brown with yellow-green tips,
         // gathered along the water (art lead 11-15: the fen's green round
         // clumps were the closest pair with the meadow's; in grey it is a
         // coarser, darker grain). Before: even green cushions 0.6 apart,
         // (34,58,36), clumped by noise alone.
-        if (k == 0u) { f.s = 0.85; f.r0 = 0.95; f.lobe = 0.08; f.relief = 0.95; f.clump = 0.9; f.wet = 0.6; f.col = vec3<f32>(30.0, 29.0, 16.0); f.tip = vec3<f32>(62.0, 74.0, 28.0); }
-        else if (k == 1u) { f.s = 1.1; f.r0 = 0.8; f.lobe = 0.15; f.col = vec3<f32>(24.0, 44.0, 30.0); }
+        if (k == 0u) { f.s = 0.85; f.r0 = 0.95; f.lobe = 0.16; f.relief = 0.75; f.clump = 0.9; f.wet = 0.6; f.col = vec3<f32>(30.0, 29.0, 16.0); f.tip = vec3<f32>(62.0, 74.0, 28.0); f.fall = 0.45; }
+        else if (k == 1u) { f.s = 1.1; f.r0 = 0.8; f.lobe = 0.15; f.col = vec3<f32>(24.0, 44.0, 30.0); f.fall = 0.6; }
+        // Reed beds (Look C 2026-11-20, planet 3's pass): the reeds round
+        // every pool were the default small green ovals and read as dots
+        // on the shore. Now standing blades in tussocks, straw-green with
+        // pale tops, each with its shadow, thickest at the water's edge
+        // (the reeds' own density).
+        else if (k == 2u) { f.shape = 1u; f.s = 0.42; f.r0 = 0.95; f.stretch = 1.0; f.relief = 0.45; f.clump = 0.55; f.col = vec3<f32>(46.0, 58.0, 34.0); f.tip = vec3<f32>(104.0, 106.0, 64.0); f.fall = 0.6; }
     } else if (fl == 3u) {
         // River valley: long grass, blade by blade.
         if (k == 0u) { f.shape = 1u; f.s = 0.6; f.r0 = 0.95; f.relief = 0.3; f.col = vec3<f32>(46.0, 68.0, 42.0); }
@@ -609,7 +637,11 @@ fn flora_form(fl: u32, k: u32) -> Form {
 // `fl` and `fc` are the crowns' own flames (premultiplied, and their
 // cover), `fw` how much of the cover is drawn as crowns (not the far
 // view's mean), for `shaded`'s mix with the smooth flame.
-struct PlantLayer { rgb: vec3<f32>, cover: f32, fl: vec3<f32>, fc: f32, fw: f32 }
+// `dark` is what the crowns' shadows leave of the light on the ground
+// under them (1 where none falls).
+// How dark a plant's shadow is on what lies under it (`Form::fall`).
+const PLANT_SHADOW: f32 = 0.45;
+struct PlantLayer { rgb: vec3<f32>, cover: f32, fl: vec3<f32>, fc: f32, fw: f32, dark: f32 }
 fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f32, hot: bool) {
     if (dk <= 0.003) { return; }
     let fm = flora_form(P.flora, k);
@@ -618,8 +650,10 @@ fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f3
     var col = fm.col;
     var fa = 0.0;
     var fl = vec3<f32>(0.0);
+    var sh = 0.0;
     if (f > 0.0) {
         let cr = crowns(x, y, fm, dk, f32(k) * 101.0 + 7.0);
+        sh = PLANT_SHADOW * cr.sh * f;
         let tint = mix(vec3<f32>(1.06, 1.0, 0.9), vec3<f32>(0.92, 1.0, 1.08), cr.tone);
         a = mix(a, cr.a, f);
         var cc = col;
@@ -646,6 +680,9 @@ fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f3
             fl = mix(flame_body(h), FLAME_CORE, core) * fa;
         }
     }
+    // This kind's shadows fall on the ground and the lower kinds under it.
+    (*o).rgb *= 1.0 - sh;
+    (*o).dark *= 1.0 - sh;
     (*o).rgb = (*o).rgb * (1.0 - a) + col * a;
     (*o).cover = (*o).cover + a * (1.0 - (*o).cover);
     (*o).fl = (*o).fl * (1.0 - a) + fl;
@@ -654,7 +691,7 @@ fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f3
 }
 fn plant_layer(x: f32, y: f32, d: vec4<f32>, hot: bool) -> PlantLayer {
     var o: PlantLayer;
-    o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.fl = vec3<f32>(0.0); o.fc = 0.0; o.fw = 0.0;
+    o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.fl = vec3<f32>(0.0); o.fc = 0.0; o.fw = 0.0; o.dark = 1.0;
     // Meadow, scrub, reeds, jungle, each in its flora's form
     // (`flora_form`; on flora 0: fine spiky tufts half a cell apart,
     // bushes a cell apart with sand between, narrow stems long along y,
@@ -761,6 +798,14 @@ fn plain_soil(e: f32) -> vec3<f32> {
 const SAND_RGB: vec3<f32> = vec3<f32>(50.0, 48.0, 42.0);
 const CLAY_RGB: vec3<f32> = vec3<f32>(38.0, 28.0, 26.0);
 const BARREN_RGB: vec3<f32> = vec3<f32>(55.0, 55.0, 53.0);
+// On the barrens (planet 2) the barren ground is a salt pan (Look C
+// 2026-11-20, planet 2's pass): the barren bands across its route were the
+// ash grey of every planet, mottled, and read as concrete beside the rock.
+// A warm pale crust instead, its value where the ash's was (a step under
+// rock), with raised crust ridges (`soil_detail`). The slime cannot be
+// born on it, which a salt flat says on sight.
+const SALT_RGB: vec3<f32> = vec3<f32>(60.0, 56.0, 47.0);
+fn barren_rgb() -> vec3<f32> { return select(BARREN_RGB, SALT_RGB, P.flora == 1u); }
 // Standing water: a clear step darker than any ground, so it reads as a
 // hollow in a grey thumbnail (art lead 11-14 18:56Z: wet was the ground's
 // value at (10,24,34), and Fen read as one flat field); its lit shore and
@@ -1202,7 +1247,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // is the middle of the range.
     var base = plain_soil(byte(g, 3u));
     let sk = (g >> 4u) & 7u;
-    if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
+    if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = barren_rgb(); }
     if (kind == RUBBLE) { base = rubble_rgb(ix, iy); }
     // Burnt ground and the plants are laid per pixel in `shaded`
     // (`plant_px`), under the slime by `vis`.
@@ -2205,7 +2250,7 @@ fn ground_cell(ix: i32, iy: i32) -> GroundB {
     let sk = (g >> 4u) & 7u;
     o.elev = byte(g, 3u);
     var base = plain_soil(o.elev);
-    if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
+    if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = barren_rgb(); }
     if (kind == RUBBLE) { base = rubble_rgb(ix, iy); }
     if (kind == WET) { base = WET_RGB; }
     o.col = base;
@@ -2257,6 +2302,19 @@ fn ground_elev(x: f32, y: f32) -> f32 {
 // share of its colour. Every grid is turned off the cells' axes (value
 // noise on the axes shows squares at zoom 24) and costs one to three
 // value noises a pixel; the highlands' gravel adds one 3 x 3 cell search.
+// The barrens' plates: how far each plate's value strays from the
+// ground's (a share), how wide the turned-up rim is (cells: about three
+// pixels at zoom 6), and how strongly it takes the light.
+const HARDPAN_PLATE: f32 = 0.05;
+const HARDPAN_RIM: f32 = 0.45;
+const HARDPAN_CURL: f32 = 0.18;
+// The salt pan's crust (`SALT_RGB`): the net's size and a ridge's half
+// width (cells), how much lighter its crest is and how much the light's
+// side of it differs from the far side.
+const SALT_NET: f32 = 2.8;
+const SALT_RIDGE: f32 = 0.22;
+const SALT_CREST: f32 = 0.22;
+const SALT_FLANK: f32 = 0.18;
 fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
     let q1 = vec2<f32>(0.8 * p.x - 0.6 * p.y, 0.6 * p.x + 0.8 * p.y);
     let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
@@ -2271,16 +2329,31 @@ fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
         let g = p / 4.0;
         let gi = floor(g);
         var d1 = 9.0; var d2 = 9.0;
+        var o1 = vec2<f32>(0.0); var o2 = vec2<f32>(0.0); var c1 = vec2<f32>(0.0);
         for (var j = -1; j <= 1; j++) {
             for (var i = -1; i <= 1; i++) {
                 let c = gi + vec2<f32>(f32(i), f32(j));
                 let o = c + vec2<f32>(hash2(c * 1.9 + 0.7), hash2(c * 3.1 + 4.3)) * 0.8 + 0.1;
                 let d = length(g - o);
-                if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) { d2 = d; }
+                if (d < d1) { d2 = d1; o2 = o1; d1 = d; o1 = o; c1 = c; } else if (d < d2) { d2 = d; o2 = o; }
             }
         }
         let seam = 1.0 - smoothstep(0.8, 2.2, (d2 - d1) * 4.0 * P.zoom);
-        return 0.7 * speck + streak - 0.10 * seam;
+        // Curled plates (Look C 2026-11-20, planet 2's pass): each plate a
+        // shade of its own, and its rim along a seam turned up, so the rim
+        // that faces the light is lit and the far one shaded: the hardpan
+        // reads as baked mud plates, not a crack pattern drawn on one
+        // flat brown. 2 (d2 - d1) is about the distance to the seam in
+        // cells, and the rim faces from the plate's middle toward its
+        // neighbour's.
+        let plate = HARDPAN_PLATE * (hash2(c1 * 5.3 + 2.1) - 0.5) * 2.0;
+        let w = (d2 - d1) * 2.0;
+        let rim = (1.0 - smoothstep(0.05, HARDPAN_RIM, w)) * (1.0 - seam) * smoothstep(3.0, 6.0, P.zoom);
+        // The rim rises toward the seam, so it faces back toward the
+        // plate's middle: lit on the plate's far side from the light (a
+        // dish; the other sign drew pillows, which read as paving).
+        let face = dot(normalize(o1 - o2), normalize(LIGHT.xy));
+        return 0.7 * speck + streak - 0.10 * seam + plate + HARDPAN_CURL * rim * face;
     }
     if (fl == 2u) {
         // Fen: mud, darker wet blotches a couple of cells across, with a
@@ -2458,8 +2531,34 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
         let n = 0.5 + 1.4 * (0.5 * (vnoise(q1 * 1.3 + 5.0) + vnoise(q2 * 1.5 + 21.0)) - 0.5);
         let clump = smoothstep(0.4, 0.7, vnoise(p / 3.5 + 11.0));
-        let sp = (0.2 * smoothstep(0.6, 0.85, n) - 0.15 * smoothstep(0.6, 0.85, 1.0 - n)) * clump;
+        var sp = (0.2 * smoothstep(0.6, 0.85, n) - 0.15 * smoothstep(0.6, 0.85, 1.0 - n)) * clump;
         let fade = smoothstep(2.0, 4.0, P.zoom);
+        if (P.flora == 1u) {
+            // The salt pan's crust: a net of raised ridges about
+            // `SALT_NET` cells across, pale along their crests and their
+            // flank toward the light, a little shade on the far one; the
+            // ash's grain kept faint between. The net is bent by a slow
+            // noise and its ridges rise and sink along their length, or
+            // it read as a tiled floor (first cut, 11-20).
+            let wv = vec2<f32>(vnoise(p * 0.45 + 3.0), vnoise(p * 0.45 + 71.0)) - 0.5;
+            let g = (p + 1.6 * wv) / SALT_NET;
+            let gi = floor(g);
+            var d1 = 9.0; var d2 = 9.0;
+            var o1 = vec2<f32>(0.0); var o2 = vec2<f32>(0.0);
+            for (var j = -1; j <= 1; j++) {
+                for (var i = -1; i <= 1; i++) {
+                    let c = gi + vec2<f32>(f32(i), f32(j));
+                    let o = c + vec2<f32>(hash2(c * 2.7 + 1.1), hash2(c * 1.3 + 8.7)) * 0.8 + 0.1;
+                    let d = length(g - o);
+                    if (d < d1) { d2 = d1; o2 = o1; d1 = d; o1 = o; } else if (d < d2) { d2 = d; o2 = o; }
+                }
+            }
+            // About the distance to the ridge's crest, in cells.
+            let w = 0.5 * (d2 - d1) * SALT_NET;
+            let crest = (1.0 - smoothstep(0.0, SALT_RIDGE, w)) * smoothstep(0.2, 0.75, vnoise(p * 0.6 + 29.0));
+            let face = dot(normalize(o1 - o2), normalize(LIGHT.xy));
+            sp = 0.35 * sp + crest * (SALT_CREST + SALT_FLANK * face) * smoothstep(3.0, 6.0, P.zoom);
+        }
         mul *= 1.0 + sp * ws.z * fade * bare;
     }
     // Plain soil: each planet's own ground up close (art lead's planet
@@ -2479,7 +2578,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // water's edges are redrawn at the pixel. (Plants and char are drawn
     // over all this in `shaded`.)
     let est = ground_est(x, y);
-    let land = SAND_RGB * ls.x + CLAY_RGB * ls.y + BARREN_RGB * ls.z + plain_soil(ground_elev(x, y)) * ls.w;
+    let land = SAND_RGB * ls.x + CLAY_RGB * ls.y + barren_rgb() * ls.z + plain_soil(ground_elev(x, y)) * ls.w;
     var want = land;
     // Wet: the water's edge is where the smooth wet share crosses one
     // half, worked out at the pixel (one pixel antialiased, as rock's), so
@@ -2688,7 +2787,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // fire below shares.
     let pp = plant_px(x, y);
     var pl: PlantLayer;
-    pl.fl = vec3<f32>(0.0); pl.fc = 0.0; pl.fw = 0.0;
+    pl.fl = vec3<f32>(0.0); pl.fc = 0.0; pl.fw = 0.0; pl.dark = 1.0;
     if (P.plant_at != 0u) {
         // Char: near-black grey with a crisp edge (a narrow rise of the
         // per-pixel char, a few pixels at zoom 24), a little ash grain.
@@ -2715,7 +2814,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         }
         let gv = m.vis * under;
         let pv = pl.cover * gv;
-        m.albedo = m.albedo * (1.0 - pv) + pl.rgb * gv;
+        m.albedo = m.albedo * (1.0 - pv) * mix(1.0, pl.dark, gv) + pl.rgb * gv;
         m.gloss *= 1.0 - pv;
         // Over the plants too: what is left of a burnt stand is stubble.
         let ch = smoothstep(0.06, 0.3, pp.char) * (0.85 + 0.15 * smoothstep(0.3, 0.8, pp.char));
@@ -3635,14 +3734,14 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (px < 0 || py < 0 || px >= i32(P.sw) || py >= i32(P.sh)) { return; }
     // A walker an explosion threw (the engine's `fling`, 11-14) has 1 in
     // its fourth word while it flies: a hot speck, a pixel more each side
-    // per 4 of zoom, so the throw shows as the mould itself in the air
+    // per 4 of zoom, so the fall shows as the mould itself in the air
     // and not only as the streak it lays. It counts 6 calm walkers a pixel
     // (the calm bits, 0-9, so it never reads as cut off).
     // Since the gun look (2026-11-15) it is a droplet drawn out along its
     // flight (its heading, the third word): a round head zoom / 4 pixels
     // across the radius and a tail that thins behind it over 0.8 of the
     // cells it flies a tick (the fourth word, from the engine's `fly`; at
-    // least half a cell, at most three), so a throw or a shot's spray reads
+    // least half a cell, at most three), so a fall or a shot's spray reads
     // as mould flying out, its frames joined into one motion, and not as a
     // spray of squares (the square was 2 zoom / 4 + 1 pixels a side: 13 x
     // 13 at zoom 24). A shot's spray droplet slows to a stop, so its tail
@@ -3658,7 +3757,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // the dark ground alike. A shot's spray droplet (the engine writes its
     // flight below 0) is a killed walker blown out: hot while it is fast
     // (white-hot until 11-18, now the slime's gold glowing), cooling to
-    // deep orange as it slows to land. A blast's throw is living mould and
+    // deep orange as it slows to land. A blast's fall is living mould and
     // keeps its gold.
     // In the slime's material (Look A3, 2026-11-18): the dark rim was an
     // ink outline, a cartoon chip beside a body drawn with light (the
@@ -3686,7 +3785,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         // Heat by its flight a tick: about 0.9 cells for the fastest
         // droplet as it leaves (`spray_reach` 7 over 0.45 s; its tail at
         // zoom 12 about 9 pixels), under 0.2 as the slowest lands.
-        // Four bits: 0 a blast's living throw (gold), 1-15 a spray's heat
+        // Four bits: 0 a blast's living fall (gold), 1-15 a spray's heat
         // from landing to leaving.
         var heat = 0.0;
         if (spray) { heat = clamp((fl - 0.2) / 0.6, 0.0, 1.0); }
@@ -3767,7 +3866,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
 }
 
 // A flung walker's droplet (`draw_specks`, the bold spray, 11-15): a
-// blast's living throw, and a shot's spray from fast (hot) to landing
+// blast's living fall, and a shot's spray from fast (hot) to landing
 // (cool). Since 11-18 a lit bead with a shadow, not a chip in a dark rim
 // (`DROP_RIM` (34, 18, 6) at 0.8, a rim zoom / 12 pixels wide).
 // The shadow: how far it falls from the droplet in head radii, and how
@@ -3782,7 +3881,7 @@ const DROP_FLOOR: f32 = 0.55;
 // A shot's spray: a killed walker blown out, the slime's gold while it is
 // fast, glowing this share of the way to `DROP_HEAT` over its shading
 // (so even the fastest keeps a shaded side), cooling to deep orange as it
-// slows to land. A blast's throw is living mould: gold, no glow.
+// slows to land. A blast's fall is living mould: gold, no glow.
 // (Tried 11-18 and not kept: the 11-15 white-hot (`DROP_HOT` (255, 246,
 // 214)) at 0.6 and at 0.3 over a base a fifth to a third of the way to
 // it: pale cream or grey-brown seeds, not the slime.)
