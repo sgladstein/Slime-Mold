@@ -29,6 +29,7 @@ sources:
   - Reports/sim-use-2026-11-17/s2-far-smell.md
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
+  - Reports/starfall-2026-11-20/README.md
   - Reports/strikers-2026-11-20/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/trunk-fort-2026-11-18/README.md
@@ -51,6 +52,7 @@ code:
   - REF_OPEN
   - Run::buy_into
   - Run::carried
+  - Run::found
   - Run::gun
   - Run::level
   - Run::put_in
@@ -58,6 +60,7 @@ code:
   - Run::rules
   - Run::shop
   - STUCK_WARN
+  - StarRules::for_depth
   - StrikerRules
   - WIN_SHARE
   - WaveRules
@@ -68,6 +71,7 @@ code:
   - clock
   - does_to_you
   - enemy_keys
+  - fall_count
   - fort_mask
   - gun_price
   - head_start
@@ -91,6 +95,7 @@ code:
   - time_fruit
   - time_heart
   - time_lure_paths
+  - time_starfall
   - time_waves
   - two_stars
 ---
@@ -151,6 +156,10 @@ On since 2026-11-20 (the same thread; `larder_world/heart.rs`, `HeartRules`, `ru
 ## Condensed strikers
 
 On since 2026-11-20 (the same thread, the owner's pick on the balance thread's card that day, "Condensed strikers + late lunge"; `larder_world/strikers.rs`, `StrikerRules`, `run::ENEMY_RULES`' `strikers`). His notes that day: once the squad is big enough "the slime cannot touch them", condensing could come back "although the visuals and mechanics of that would need to be much improved", and hardened slime "doesn't attack you. It makes it easier." So under 60% of its peak the slime's edge facing the squad condenses once a game second: each ordinary walker within the guns' reach and 30 dish cells of a soldier, by walking (the units' walking distance), tries with chance 1, scaled by the squad (none against 8 soldiers or fewer, all from 24: `few`, `full`), and in each 2 x 2 block of fine cells the first that tries takes in up to three of the rest (`strikers_most`, 1 to 15; engine.wgsl's `condense` and `condlead`). A condensed walker is one walker on the ground, but the slime's mass (`World::mass`, which the HUD, the goals, fruiting and waves read) counts what it holds too; it takes a blow for each walker it holds and one more to die, bites once more for each, and charges the nearest soldier at 3 times its pace; mass and bite stay the same. It is drawn as a bead in the slime's gold, larger by what it holds, with a slow pulse (view.wgsl's `draw_striker`), not the old bronze. Unlike the old condensing (11-14 to 11-17, [dead ends](../../Reports/dead-ends.md)), only the edge that can reach the squad condenses, and every condensed walker charges ([report](../../Reports/strikers-2026-11-20/README.md)). Retuned the same evening (first numbers 40%, 12 cells, 0.5, 1.5 and every squad): the balance thread's 36 planet 2 games found those bit an 80-soldier army no more than strikers off; on one planet 2 map the retune took the army from 80 to 65 late and its bank from 22,434 to 670, and a four-soldier squad on another won as it did with no strikers. GPU only.
+
+## Starfall and boss cores
+
+On since 2026-11-20 (the owner's pick, 19:06Z: "I like starfall with boss cores. The amount of star fall should have a minimum but can sometimes happen a lot. Random selection from distribution as normal"; the options and why the first round was dropped are in the [doc](https://claude.ai/artifact/XHLmAP2RFnSAHba6orJLjW); [page](../../Reports/starfall-2026-11-20/README.md)). A planet pays shop points on top of `reward` from what the squad picks up on it (`larder_world/starfall.rs`, `StarRules::for_depth`, set by `Run::rules`; `Run::found` adds them before `won`). **Starfall:** at least 3 falls a planet, then each more with chance 0.55, at most 12 (`fall_count`: 3 or 4 on about two planets in three, 7 or more on about one in ten), at times drawn between 0:50 and 10:00 after the landing, 25 s apart at least. A fall lands 14 to 60 dish cells from the nearest soldier, by slime where the grid shows some; its shadow shows for 10 s, then it lands as a blast (kill radius 4, a 20 s crater over 6, 60 health off a soldier under it). The ore is 2.5 dish cells across, worth 30 + 10 per planet, and lasts 60 s: each soldier within 2 cells of its rim drains 2.5 points a second (times the planet's harvest, so Quick hands drains faster), each walker on it eats 1 point times the slime's mass a second, and once the slime has eaten half of one its next surge is fed (`surge_meter`). It smells three times a soldier and is a lure (`LureMark`) for its life, so the GPU slime streams to it. **Boss cores:** a mini-boss broken (`BossEnd::Broken`) drops a core worth 40 + 40 x its grade, a fruit shot down (`FruitEnd::Broken`) one worth 40; it lasts 15 s and walkers on it soak it back. Nothing more is drawn once a planet starts, so waiting earns nothing (the owner's 13:49Z objection to paying for crystals held). The base pay is unchanged for now; Direction tunes both after play. The bots do not go for drops yet.
 
 ## Mini-bosses since the review of 11-20
 

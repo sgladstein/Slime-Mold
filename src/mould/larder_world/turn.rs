@@ -271,6 +271,9 @@ impl<W: World> Game<W> {
         shooters.resize(shots.len(), (None, 0, None));
         self.building_units(&mut units, &mut shots, &mut shooters, &mut who, &mut from);
         shooters.resize(shots.len(), (None, 0, None));
+        // Starfall's ore and the cores (`starfall.rs`): they smell and
+        // read the walkers on them.
+        self.drop_units(&mut units, &mut who, &mut from);
         let fired = shots.len() as u32;
         let (shots, by) = self.fly(shots, &shooters, &aims, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
@@ -287,7 +290,8 @@ impl<W: World> Game<W> {
         // don't lead to it.
         if r.unit_paths {
             let size = self.world.size();
-            let masked = |w: &Who| matches!(*w, Who::Soldier(k) if self.soldiers[k].smell <= 0.0);
+            // Ore and cores are no unit to charge: the slime eats them.
+            let masked = |w: &Who| matches!(*w, Who::Soldier(k) if self.soldiers[k].smell <= 0.0) || matches!(*w, Who::Drop(_));
             self.raids.unit_cells = units.iter().zip(&who).take(squad::UNITS_MAX).filter(|(_, w)| !masked(w)).map(|(u, _)| super::raid_cell((u.x, u.y), size)).collect();
         }
         let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share, catch };
@@ -361,6 +365,7 @@ impl<W: World> Game<W> {
             }
             match *k {
                 Who::Building(b) => self.building_out(b, u, dt),
+                Who::Drop(i) => self.drop_out(i, u.touching, dt),
                 Who::Soldier(k) => {
                     let s = &mut self.soldiers[k];
                     s.touching = u.touching;
@@ -460,6 +465,7 @@ impl<W: World> Game<W> {
             self.time_waves();
             self.time_heart();
             self.time_strikers();
+            self.time_starfall();
         }
         self.campaign_rules(now - t);
         self.check_end();

@@ -622,6 +622,12 @@ pub struct Rules {
     /// charges. Off here; a run turns it on (`run::ENEMY_RULES`). GPU
     /// only.
     pub strikers: super::StrikerRules,
+    /// **Starfall and boss cores** (2026-11-20; `starfall.rs`): ore falls
+    /// a few times a planet and broken mini-bosses and fruits drop cores,
+    /// each paying shop points to the soldiers who reach it before the
+    /// slime eats it. Off here; a run turns it on
+    /// (`StarRules::for_depth`).
+    pub star: super::StarRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -692,6 +698,20 @@ impl Rules {
                 self.fruit.on = v > 0.0;
                 return true;
             }
+            // Starfall (`StarRules`, 2026-11-20): `star=1` on, `star=0` off;
+            // `star_least` and `star_most` whole numbers.
+            "star" => {
+                self.star.on = v > 0.0;
+                return true;
+            }
+            "star_least" => {
+                self.star.least = v.clamp(0.0, 64.0) as u32;
+                return true;
+            }
+            "star_most" => {
+                self.star.most = v.clamp(0.0, 64.0) as u32;
+                return true;
+            }
             "fruit_armour" => {
                 self.fruit.armour = v.clamp(0.0, 15.0) as u32;
                 return true;
@@ -753,6 +773,20 @@ impl Rules {
             "raid_march_stall" => &mut self.raid.march_stall,
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
+            "star_tail" => &mut self.star.tail,
+            "star_first" => &mut self.star.first,
+            "star_last" => &mut self.star.last,
+            "star_gap" => &mut self.star.gap,
+            "star_warn" => &mut self.star.warn,
+            "star_life" => &mut self.star.life,
+            "star_worth" => &mut self.star.worth,
+            "star_take" => &mut self.star.take,
+            "star_eat" => &mut self.star.eat,
+            "star_near" => &mut self.star.near,
+            "star_far" => &mut self.star.far,
+            "star_hurt" => &mut self.star.hurt,
+            "core_worth" => &mut self.star.core_worth,
+            "core_life" => &mut self.star.core_life,
             "fruit_first" => &mut self.fruit.first,
             "fruit_hurt" => &mut self.fruit.hurt,
             "fruit_window" => &mut self.fruit.window,
@@ -978,6 +1012,7 @@ impl Default for Rules {
             wave: super::WaveRules::default(),
             heart: super::HeartRules::default(),
             strikers: super::StrikerRules::default(),
+            star: super::StarRules::default(),
         }
     }
 }

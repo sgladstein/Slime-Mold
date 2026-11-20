@@ -132,6 +132,7 @@ pub(super) fn run_bot(base: Args, seed: u64, to: u32, device: &wgpu::Device, que
         let g = app.game.as_ref().unwrap();
         let verdict = app.mission.as_ref().and_then(|m| m.verdict);
         let landed = g.landed as f32 / g.rules.tps as f32;
+        let found = g.starfall.earned();
         let mut p = Planet {
             depth: r.depth,
             stars: verdict.map_or(0, |v| v.stars),
@@ -153,6 +154,7 @@ pub(super) fn run_bot(base: Args, seed: u64, to: u32, device: &wgpu::Device, que
             out.push(p);
             break;
         }
+        r.found(found);
         r.won(p.stars);
         if r.over || r.depth > to {
             println!("runbot {}", p.line());
