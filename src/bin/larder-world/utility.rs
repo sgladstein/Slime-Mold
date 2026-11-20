@@ -86,7 +86,7 @@ impl Weights {
             let (k, v) = item.split_once('=').ok_or_else(|| format!("util: {item}: key=value"))?;
             match WEIGHTS.iter().position(|x| x.0 == k) {
                 Some(i) => w[i] = v.parse::<f32>().map_err(|e| format!("util: {k}={v}: {e}"))?,
-                None if ["shop", "cards", "own", "name", "aim", "kite", "want", "mop", "grow", "regroup", "spare", "shelf"].contains(&k) => plan_keys.push(item),
+                None if ["shop", "cards", "own", "name", "aim", "kite", "want", "mop", "grow", "regroup", "spare", "shelf", "starve"].contains(&k) => plan_keys.push(item),
                 None => return Err(format!("util: no weight {k}")),
             }
         }

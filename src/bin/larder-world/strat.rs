@@ -31,7 +31,9 @@
 //!   were wiped by 3:04): all-out soldiers while the slime outgrows its
 //!   start (`grow`), falling back home to rebuild a beaten squad
 //!   (`regroup`), and a soldier's price kept back so a wiped squad is not
-//!   the end of the planet (`spare`).
+//!   the end of the planet (`spare`);
+//! - **starving** the slime (`starve`, 11-20): with enough soldiers, clear
+//!   and drain the crystal the most slime sits on, its home among them.
 //!
 //! It never changes the game's numbers: it plays through `Game::apply`
 //! as the window does, and builds only what the run has unlocked (`own`,
@@ -145,6 +147,14 @@ pub(super) struct Plan {
     /// another game. Without the shelf a payload named bare (`torch`)
     /// takes the shop's bullet of that shell in whatever set it rolled.
     pub shelf: bool,
+    /// Starve the slime (0: never): out of home with at least this many
+    /// soldiers, the squad goes for the crystal with the most slime on it
+    /// (the slime's home among them, however thick) and clears and drains
+    /// it, in place of the crystal with the most charge. On planet 2 map 3
+    /// (11-20) the slime held about 13k for four minutes while the squad
+    /// killed 50 walkers a second elsewhere: what it lost it grew back from
+    /// the big crystal it sat on.
+    pub starve: u32,
 }
 
 impl Default for Plan {
@@ -180,6 +190,7 @@ impl Default for Plan {
             regroup: 0,
             spare: 0,
             shelf: true,
+            starve: 0,
         }
     }
 }
@@ -208,7 +219,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 30] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf"];
+    pub const DIALS: [&'static str; 31] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -259,6 +270,7 @@ impl Plan {
             "regroup" => self.regroup = whole(v)?,
             "spare" => self.spare = whole(v)?.min(20),
             "shelf" => self.shelf = num(v)? > 0.0,
+            "starve" => self.starve = whole(v)?,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -982,6 +994,22 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     let barren = MEM.with_borrow(|b| b.barren.clone());
     let held: Vec<usize> = MEM.with_borrow(|b| b.held.iter().map(|h| h.1).collect());
     let strong = out || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
+    // Starving (`starve`): the crystal with the most slime on it.
+    if p.starve > 0 && out && !mopping && g.alive() as u32 >= p.starve {
+        let feed = (0..cs.len())
+            .filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none() && !held.contains(&c))
+            .map(|c| (c, sense.mass_near(cs[c].0, g.world.crystal_r(c) + range)))
+            .filter(|&(_, n)| n > 0)
+            .max_by_key(|&(_, n)| n);
+        if let Some((c, _)) = feed {
+            let at = cs[c].0;
+            let o = Order::Clear(at.0, at.1);
+            if fresh(g, o) {
+                g.apply(Cmd::SquadOrder(q as u8, o));
+            }
+            return;
+        }
+    }
     let drains = p.take == 0 && !mopping;
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = drains

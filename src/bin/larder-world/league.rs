@@ -16,6 +16,13 @@
 //! A plan that starts `util:` is the utility bot's weights (`utility.rs`)
 //! with its own `shop` and `cards`; any other is the strategy bot's.
 //!
+//! **A plan by planet** (2026-11-20): plans joined by `|` are played one a
+//! planet, the last for every planet after (`stage`), and the shop before
+//! a planet spends by that planet's plan. On today's game the plans that
+//! win planet 3 (build at home first) won 9 of 66 planet 2 games and the
+//! rush that wins planet 2 lost planet 3 more often, so a run needs both:
+//! `rush,aim=6|rush,aim=6|econ,go=4,aim=6`.
+//!
 //! The game's steps are the window's (`App::step`, then `App::settle`), as
 //! the run bot's, so what the league plays is what the window plays.
 
@@ -269,30 +276,39 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     Ok(Played { how, stars, secs: end, line })
 }
 
+/// The plan for planet `depth` of a plan by planet (`a|b|c`): the
+/// `depth`th, or the last for any planet after it.
+fn stage(spec: &str, depth: u32) -> &str {
+    let parts: Vec<&str> = spec.split('|').collect();
+    parts[(depth.max(1) as usize - 1).min(parts.len() - 1)]
+}
+
 /// `league=DEPTH:SEED[:SECS]` (see the module's docs).
 pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
-    let p = shop_plan(spec)?;
     let mut r = Run::new(seed);
     r.restock();
     let mut bought = Vec::new();
     while r.depth < depth {
         r.won(2);
+        let p = shop_plan(stage(spec, r.depth))?;
         bought.extend(shop(&mut r, &p));
     }
-    let out = play(&base, &r, spec, secs, device, queue)?;
+    let out = play(&base, &r, stage(spec, depth), secs, device, queue)?;
     println!("league plan={spec} {} shop={} gun={}", out.line, bought.join("/"), r.gun_text());
     Ok(())
 }
 
 /// `league=run:SEED[:TO[:SECS]]` (see the module's docs).
 pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
-    let p = shop_plan(spec)?;
+    for part in spec.split('|') {
+        shop_plan(part)?;
+    }
     let mut r = Run::new(seed);
     r.restock();
     let mut won = 0;
     let mut total = 0.0;
     loop {
-        let out = play(&base, &r, spec, secs, device, queue)?;
+        let out = play(&base, &r, stage(spec, r.depth), secs, device, queue)?;
         total += out.secs;
         println!("league plan={spec} run=1 {} gun={}", out.line, r.gun_text());
         if out.how != "won" {
@@ -304,6 +320,7 @@ pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, d
         if r.over || r.depth > to {
             break;
         }
+        let p = shop_plan(stage(spec, r.depth))?;
         let b = shop(&mut r, &p);
         println!("league plan={spec} shop depth={} bought={}", r.depth, b.join("/"));
     }
@@ -357,5 +374,12 @@ mod tests {
             assert_eq!(bought.first(), offered.as_ref(), "seed {seed}: {bought:?}");
             assert!(bought.first().is_some_and(|b| b.starts_with("torch.")), "seed {seed}: {bought:?}");
         }
+    }
+
+    #[test]
+    fn a_plan_by_planet_plays_one_a_planet_and_the_last_after() {
+        let spec = "rush|econ,go=4|lure";
+        assert_eq!([1, 2, 3, 4, 8].map(|d| stage(spec, d)), ["rush", "econ,go=4", "lure", "lure", "lure"]);
+        assert_eq!(stage("rush,aim=6", 5), "rush,aim=6");
     }
 }
