@@ -220,6 +220,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut crossed = 0usize;
     let mut picked = false;
     let mut bossed: Vec<usize> = Vec::new();
+    // Soldiers fallen by a mini-boss (`bossfell` lines; the big-army census,
+    // 2026-11-20): one that dies within 10 world units of a live boss's
+    // body (its centre plus its radius as a packed disc) or 15 of a live
+    // shell's target. A proxy: the play does not record what killed whom.
+    let mut boss_fallen = 0u32;
     // `turret=X,Y,T`: the buildings still to stand, at their seconds.
     let mut late: Vec<usize> = (0..turrets.len()).filter(|&i| turrets[i].2 > 0.0).collect();
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
@@ -387,12 +392,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 let g = app.game.as_mut().unwrap();
                 if g.time() >= bt && !boomed.contains(&j) {
                     boomed.push(j);
-                    let (k0, f0, s0) = (app.rounds.killed, app.rounds.flung, app.rounds.gassed);
-                    match cards {
-                        Some(c) => app.rounds.cast_cards_at(g, (bx, by), c),
-                        None => app.rounds.cast_at(g, (bx, by)),
-                    }
-                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung, {} gassed", g.time(), app.rounds.killed - k0, app.rounds.flung - f0, app.rounds.gassed - s0);
+                    let (k0, f0, s0) = (g.rounds.killed, g.rounds.flung, g.rounds.gassed);
+                    g.with_rounds(|rd, g| match cards {
+                        Some(c) => rd.cast_cards_at(g, (bx, by), c),
+                        None => rd.cast_at(g, (bx, by)),
+                    });
+                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung, {} gassed", g.time(), g.rounds.killed - k0, g.rounds.flung - f0, g.rounds.gassed - s0);
                 }
             }
             // `light=T,X,Y,R`: a plain fire lit there once T has come.
@@ -424,7 +429,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     trailed.push(j);
                     // The line as given, whole (no brush gap: that is
                     // `rounds::keep_clear`, round the soldiers, in play).
-                    let r = &app.rounds.rules;
+                    let r = &g.rounds.rules;
                     let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
                     let k = rounds::burst_rules(&r.kit, fine);
                     let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
@@ -534,11 +539,24 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let boss_sec = app.game.as_ref().map_or(0, |g| g.time().floor() as u64);
             let bosses_ended = app.game.as_ref().map_or(0, |g| g.bosses.ended.len());
             let bosses_born: Vec<u64> = app.game.as_ref().map_or(Vec::new(), |g| g.bosses.live.iter().map(|b| b.born).collect());
+            let alive_before: Vec<bool> = app.game.as_ref().map_or(Vec::new(), |g| g.soldiers.iter().map(|s| s.alive).collect());
             app.step(if real { t - at[fi - 1] } else { step });
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
             app.settle();
+            if let Some(g) = app.game.as_ref() {
+                let by_boss = |x: f32, y: f32| {
+                    g.bosses.live.iter().filter(|b| b.members > 0).any(|b| (b.centre.0 - x).hypot(b.centre.1 - y) < (b.members as f32 / std::f32::consts::PI).sqrt() + 10.0)
+                        || g.bosses.shells.iter().any(|sh| (sh.target.0 - x).hypot(sh.target.1 - y) < 15.0)
+                };
+                let fell: Vec<(f32, f32)> = g.soldiers.iter().zip(&alive_before).filter(|(s, &was)| was && !s.alive).map(|(s, _)| (s.x, s.y)).collect();
+                let n = fell.iter().filter(|&&(x, y)| by_boss(x, y)).count() as u32;
+                if n > 0 {
+                    boss_fallen += n;
+                    println!("  bossfell t {:.1} s: {n} soldiers fell by a mini-boss ({boss_fallen} in all), {} alive", g.time(), g.alive());
+                }
+            }
             // `necks=T,...`: the cut count at each T (`mould::necks`), after
             // the step, so a T that is also the run's last frame counts (the
             // first census lost its 300 s count with the check before it).
@@ -847,7 +865,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
         }
         let g = app.game.as_ref().unwrap();
-        let rd = &app.rounds;
+        let rd = &g.rounds;
         // Squads with their own cards (`load=`) and loaded turrets (`tload=`) count here too. A new count
         // goes last, so the reports' parsers (`raw/make_clips.py`) still match;
         // seeker turns stay printed as 0 since steering was deleted (11-17).

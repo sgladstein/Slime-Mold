@@ -301,7 +301,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         if sec != last_sec {
             last_sec = sec;
             if let Some(tp) = &tool_plan {
-                strat::tools(g, &mut app.kit, tp);
+                g.with_kit(|kit, g| strat::tools(g, kit, tp));
             }
             hands::plan(g, &hand);
             peak_mould = peak_mould.max(g.mould);
@@ -349,7 +349,8 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let mark = |m: Option<(u32, usize, usize)>| m.map_or("-".to_string(), |(k, s, a)| format!("{k}/{s}/{a}"));
     // Blasts thrown, mines laid, and the walkers each killed (`Plan::blast`, `mines`).
     let used = if spec.starts_with("util:") { [0, 0] } else { strat::tools_used() };
-    let tools = format!("{}/{}/{}/{}", used[0], used[1], app.kit.killed[0], app.kit.killed[1]);
+    let kills = app.game.as_ref().map_or([0; 8], |g| g.kit.killed);
+    let tools = format!("{}/{}/{}/{}", used[0], used[1], kills[0], kills[1]);
     let line = format!(
         "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} late={} rest={}",
         r.depth,

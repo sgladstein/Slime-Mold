@@ -854,8 +854,8 @@ impl App {
         }
         self.paused = false;
         let Some(r) = self.range.clone() else { return };
-        self.rounds = Rounds::new(r.squad_cards(), RoundRules { budget: r.budget(), ..RoundRules::default() });
         if let Some(g) = self.game.as_mut() {
+            g.rounds = Rounds::new(r.squad_cards(), RoundRules { budget: r.budget(), ..RoundRules::default() });
             let gun = r.carried();
             for q in 0..g.squads.len() {
                 g.apply(Cmd::Arm(q as u8, Some(gun)));
@@ -921,9 +921,9 @@ impl App {
         let chosen = r.field_squad.take();
         let r = r.clone();
         self.args.run = Some(r.clone());
-        // The army's round, keeping what is live (`Rounds::set_round`).
-        self.rounds.set_round(r.squad_cards(), r.budget());
         let Some(g) = self.game.as_mut() else { return };
+        // The army's round, keeping what is live (`Rounds::set_round`).
+        g.rounds.set_round(r.squad_cards(), r.budget());
         // Only a squad given another loadout (`Pick::SquadUses`), and its
         // links, change: opening and closing set every linked squad to the
         // commanded one's (review, 2026-11-20).

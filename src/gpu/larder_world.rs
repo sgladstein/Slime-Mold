@@ -1126,7 +1126,7 @@ impl World for GpuWorld {
     }
 
     /// At once, after the running step's shares, as `form_lump`.
-    fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
+    fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32, u32)> {
         self.e.strikers?;
         self.flush();
         Some(self.e.condense(&self.shared, reach, share, most))
@@ -1434,7 +1434,7 @@ mod tests {
         fn set_strikers(&mut self, haste: Option<f32>) {
             self.g.set_strikers(haste)
         }
-        fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
+        fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32, u32)> {
             self.g.condense(reach, share, most)
         }
     }
@@ -2312,11 +2312,12 @@ mod tests {
         w.set_strikers(Some(1.5));
         w.frame(&f, 1);
         let before = read(&w).len();
-        let (_, _, took) = w.condense(20.0, 1.0, 3).expect("the GPU world condenses");
+        let (_, _, took, band) = w.condense(20.0, 1.0, 3).expect("the GPU world condenses");
         let v = read(&w);
         let (live, held) = (v.iter().filter(|p| p.2).count(), v.iter().filter(|p| p.2).map(|p| p.3).sum::<u32>());
         eprintln!("strikers: {before} walkers, {took} taken in by {live} condensed holding {held}, {} after", v.len());
         assert!(took >= 30 && live >= 10, "the edge condenses: {took} taken in by {live}");
+        assert!(band >= took + live as u32, "the band counts every walker that could try: {band}, {took} taken in by {live}");
         assert_eq!(before - v.len(), took as usize, "the slime loses only the walkers taken in");
         assert_eq!(held, took, "and the condensed hold them all");
         w.frame(&f, 1);

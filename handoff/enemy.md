@@ -67,14 +67,18 @@ planet (slime under `late` 0.6 of its peak, `Game::boss_late`) a new boss
 is drawn from `late_grade` 0.8 up. Numbers in the report's last section.
 Then the Pinwheel (the owner's second pick): `BossKind::Pinwheel` (6),
 planet 3 on (`kinds[5]`), a hunter whose lump's arms turn within
-`spin_near` (90) of its prey: `Lump::spin` (the 32-byte row's old pad),
+`spin_near` (45 dish cells, 90 world units) of its prey: `Lump::spin` (the 32-byte row's old pad),
 engine.wgsl's spokes after the lump pull (`PIN_ARMS` 3, `PIN_LEAN` 3,
 `PIN_TWIST` 0.08); the turn must stay constant (phase is spin x S.t).
 Look's `LumpLook::Pinwheel` (7, cobalt). Set keys `boss_pinwheel`,
 `boss_spin`, `boss_spin_haste`, `boss_spin_near`. Then the big-army census: no grade or size outlasts 50 guns (a member
 takes at most 15 blows); options A to E in the report, sent to
-Direction. Next: what Direction picks; what the Pinwheel's arms cost the
-squad; the off-screen tell from the owner's doc.
+Direction. Direction picked A and B: `late_mortar` (Mortar weight x army
+scale when late, from planet 2) and `Game::round_errand` (from the
+full army scale, a late hunter or pinwheel goes to an out-of-reach
+building or the squad's far side; `round_far` 160). Play log
+`bossfell` lines. Next: what the Pinwheel's arms cost the squad; the
+off-screen tell from the owner's doc.
 
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand

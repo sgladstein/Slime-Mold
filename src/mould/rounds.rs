@@ -2374,6 +2374,9 @@ mod tests {
             let mut rd = Rounds::new(Vec::new(), RoundRules::default());
             if own {
                 g.apply(Cmd::Load(0, Some(Deck::new(&[Card::Blast]))));
+                // This test runs its own `Rounds` to look between a step and its
+                // casts, so the game's own (`Game::gear`, 11-20) stays off.
+                g.gear = false;
             }
             for k in 0..g.soldiers.len() {
                 g.apply(Cmd::Order(k, Order::Attack));
@@ -2721,6 +2724,9 @@ mod tests {
         let round: Vec<Card> = Set::ALL.into_iter().map(plain).collect();
         let mut g = attacking(2);
         g.apply(Cmd::Load(0, Some(Deck::new(&round))));
+        // This test runs its own `Rounds` to look between a step and its
+        // casts, so the game's own (`Game::gear`, 11-20) stays off.
+        g.gear = false;
         let mut rd = Rounds::new(Vec::new(), r);
         let strike = (g.rules.strike * g.world.scale()).min(crate::mould::squad::R_MAX);
         // By set (cast 1 standard, 2 slug, 3 needle, 4 buckshot): shots
@@ -2777,6 +2783,9 @@ mod tests {
         let needle = Card::Ammo(Ammo { set: Set::Needle, ..Ammo::standard(Shell::Blast) });
         let mut g = attacking(2);
         g.apply(Cmd::Load(0, Some(Deck::new(&[needle]))));
+        // This test runs its own `Rounds` to look between a step and its
+        // casts, so the game's own (`Game::gear`, 11-20) stays off.
+        g.gear = false;
         let mut rd = Rounds::new(Vec::new(), RoundRules::default());
         let (mut bullets, mut bursting, mut on) = (0u32, 0u32, 0u32);
         for _ in 0..15 * 30 {
@@ -2808,6 +2817,9 @@ mod tests {
             let slug = card != Card::Bomb;
             let mut g = attacking(seed);
             g.apply(Cmd::Load(0, Some(Deck::new(&[card]))));
+            // This test runs its own `Rounds` to look between a step and its
+            // casts, so the game's own (`Game::gear`, 11-20) stays off.
+            g.gear = false;
             let mut rd = Rounds::new(Vec::new(), RoundRules::default());
             let mut checked = false;
             for _ in 0..15 * 30 {
@@ -2883,6 +2895,9 @@ mod tests {
         for round in ["trigger+plain+blast", "plain+blast"] {
             let mut g = attacking(2);
             g.apply(Cmd::Load(0, Some(Deck::new(&parse(round).unwrap()))));
+            // This test runs its own `Rounds` to look between a step and its
+            // casts, so the game's own (`Game::gear`, 11-20) stays off.
+            g.gear = false;
             // Where a carried blast lands, not what it does to the squad:
             // with `blast_hurt` on (2026-11-18) the squad attacking at close
             // range killed itself down to 3 of 8 by 30 s, and one blast
@@ -2966,6 +2981,9 @@ mod tests {
         for round in ["multicast+plain+blast", "plain+blast"] {
             let mut g = attacking(2);
             g.apply(Cmd::Load(0, Some(Deck::new(&parse(round).unwrap()))));
+            // This test runs its own `Rounds` to look between a step and its
+            // casts, so the game's own (`Game::gear`, 11-20) stays off.
+            g.gear = false;
             let mut rd = Rounds::new(Vec::new(), RoundRules::default());
             let (mut fired, mut pairs) = ([0u32; 3], 0);
             for _ in 0..15 * 30 {
@@ -3008,6 +3026,9 @@ mod tests {
         for (round, deck, with_turret) in [("heave", "heave+plain", false), ("two heaves", "heave+heave+plain", false), ("heave by a turret", "heave+plain", true), ("pull", "pull+plain", true)] {
             let mut g = attacking(2);
             g.apply(Cmd::Load(0, Some(Deck::new(&parse(deck).unwrap()))));
+            // This test runs its own `Rounds` to look between a step and its
+            // casts, so the game's own (`Game::gear`, 11-20) stays off.
+            g.gear = false;
             let sc = g.world.scale();
             // A turret beside the first soldier to hit slime, 12 cells off
             // its line, for the heave to push toward.
