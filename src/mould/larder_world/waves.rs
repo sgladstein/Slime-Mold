@@ -182,6 +182,12 @@ impl<W: World> Game<W> {
         if self.waves.last.is_some_and(|t| now < t + secs(r.every)) {
             return;
         }
+        // One nameable thing at a time (the review lane, 11-20: fruiting
+        // and waves fire on nearly the same signal, so nearly every fruit
+        // came with a wave): none while a fruit ripens.
+        if self.fruits.live.is_some() {
+            return;
+        }
         let (Some(&(k0, m0)), Some(&(k1, m1))) = (self.waves.kills.front(), self.waves.kills.back()) else { return };
         if self.waves.kills.len() < keep || m1 >= m0 || (k1.saturating_sub(k0) as f32) < r.loss * m1 as f32 {
             return;

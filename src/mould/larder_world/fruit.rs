@@ -207,6 +207,11 @@ impl<W: World> Game<W> {
         if hurt < r.hurt * mass {
             return;
         }
+        // One at a time: none while a wave gathers or strikes (`waves.rs`;
+        // the review lane, 11-20, saw nearly every fruit come with a wave).
+        if self.waves.live.is_some() {
+            return;
+        }
         self.start_fruit();
     }
 
