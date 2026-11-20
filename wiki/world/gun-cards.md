@@ -109,7 +109,9 @@ no top deck needs a rare card, against the owner's Noita rule. Seek + Wide +
 Needle Blast is best moving (+21.8k slime on planet 3) and won 9 of 9 full
 planet 3 games; holding a crystal, Needle Blast alone is within 2% of the
 best combo. Germ is the only rare card that earns its slot
-([gun builds](../../Reports/gun-builds-2026-11-19/README.md)).
+([gun builds](../../Reports/gun-builds-2026-11-19/README.md)). These games ran before
+"One burst per bullet" (#532, 2026-11-20), the likely cause of Needle Blast's
+lead; the ranking is being re-run on it.
 
 **Merge or cut candidates.** Pull and Thrift (no planet); Trigger and
 Expire; Gas and Mist. Wide and Multicast are general on purpose. Blind and
