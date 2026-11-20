@@ -59,7 +59,10 @@ def parse_line(line):
     return out
 
 def key(job):
-    return f"{job[0]}|{job[1]}|{job[2]}|{job[3]}"
+    # Words after SECS are extra game arguments (`set=late_at=0.4`), part
+    # of the job's name (2026-11-20, the balance thread's late-threat
+    # measure): a job of four words keys as it always did.
+    return "|".join(job)
 
 DEADLINE = None
 
@@ -73,9 +76,9 @@ def run_one(binary, job, timeout):
     `won`)."""
     if DEADLINE and time.time() > DEADLINE:
         return None
-    plan, depth, seed, secs = job
+    plan, depth, seed, secs, *extra = job
     whole = depth == "run"
-    cmd = [binary, f"league=run:{seed}:8:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}"]
+    cmd = [binary, f"league=run:{seed}:8:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}", *extra]
     d = 0 if whole else int(depth)
     t0 = time.time()
     try:
@@ -98,6 +101,8 @@ def run_one(binary, job, timeout):
     r["job"] = key(job)
     r["plan"] = plan
     r["cap"] = float(secs)
+    if extra:
+        r["extra"] = " ".join(extra)
     return r
 
 def cmd_run(a):
@@ -575,9 +580,14 @@ def pending(jobs_path, out_path):
     say `code-bound` counts only games played on the current build (11-20:
     main's Heavier shots fix and new clock came in while jobs were queued;
     a job whose base and variants straddle two games compares nothing),
-    so a new build plays it again and its rows are told apart by `code`."""
+    so a new build plays it again and its rows are told apart by `code`.
+    Codes named on that line (`# code-bound: 1eec8cf8f4b3`) count too: a
+    build that changes only a dial its jobs leave at its default plays the
+    same games, so the rows it has keep (11-20 18:00Z, `fire` became a
+    share)."""
     lines = [l for l in open(jobs_path) if l.strip()]
     bound = any(l.startswith("#") and "code-bound" in l for l in lines)
+    also = {w for l in lines if l.startswith("#") and "code-bound" in l for w in re.findall(r"\b[0-9a-f]{12}\b", l)}
     jobs = [tuple(l.split()) for l in lines if not l.startswith("#")]
     done = set()
     if os.path.exists(out_path):
@@ -586,7 +596,7 @@ def pending(jobs_path, out_path):
                 r = json.loads(l)
             except json.JSONDecodeError:
                 continue
-            if bound and r.get("code") != CODE:
+            if bound and r.get("code") != CODE and r.get("code") not in also:
                 continue
             if "error" not in r or r.get("code") == CODE:
                 done.add(r["job"])

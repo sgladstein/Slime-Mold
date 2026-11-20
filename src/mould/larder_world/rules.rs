@@ -827,6 +827,9 @@ impl Rules {
             "wipe_ends" => &mut self.wipe_ends,
             "set_block" => &mut self.set_block,
             "fort" => &mut self.fort,
+            // Fire on soldiers (11-20, Direction's slope check: the strategy
+            // bot's fire arms at 5, 10 and 25 a second).
+            "fire_hurt" => &mut self.fire_hurt,
             _ => return false,
         };
         *f = v;

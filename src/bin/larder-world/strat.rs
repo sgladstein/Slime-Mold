@@ -171,9 +171,13 @@ pub(super) struct Plan {
     /// Out of fire (11-20; the balance thread counted 2,387 of 2,598
     /// soldiers lost on planet 3 to fire, the bot's own Needle Blast
     /// lighting the Trunk's crust, 31 to the slime's touch): a squad with a
-    /// member hurt this turn while no slime is near it steps back as a
-    /// bitten one does.
-    pub fire: bool,
+    /// member hurt this turn while no slime is near it, and under this
+    /// share of full health, steps back as a bitten one does (0: never; 1:
+    /// at the first burn). At 1 (job 14-b, 11-20) the Needle Blast deck on
+    /// planet 3 lost 253 soldiers in 9 games against 1,033 but won 4 of 9
+    /// against 8: four ran out the clock stepping back, so a lower share
+    /// keeps the push and only saves the soldiers fire is about to kill.
+    pub fire: f32,
     /// The volley takes the heaviest slime at least this share of the range
     /// away when there is any (0: the heaviest in range), so a bullet that
     /// lights the ground lights it away from the squad.
@@ -216,7 +220,7 @@ impl Default for Plan {
             starve: 0,
             deep: false,
             points: 0,
-            fire: false,
+            fire: 0.0,
             standoff: 0.0,
         }
     }
@@ -300,7 +304,7 @@ impl Plan {
             "starve" => self.starve = whole(v)?,
             "deep" => self.deep = num(v)? > 0.0,
             "points" => self.points = whole(v)?,
-            "fire" => self.fire = num(v)? > 0.0,
+            "fire" => self.fire = num(v)?.clamp(0.0, 1.0),
             "standoff" => self.standoff = num(v)?.clamp(0.0, 0.95),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
@@ -828,10 +832,13 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     // In fire (`fire`): a member hurt since the last turn with no slime on
     // it or near it (the soldiers' own heat is not read back to the hand).
     let burning = MEM.with_borrow_mut(|mm| {
-        let hurt = p.fire
+        let hurt = p.fire > 0.0
             && members.iter().any(|&k| {
                 let s = &g.soldiers[k];
-                s.touching == 0 && sense.mass_near((s.x, s.y), 0.2 * range) < 5 && mm.hp.iter().any(|&(j, h)| j == k && s.hp < h - 0.5)
+                s.touching == 0
+                    && s.hp < p.fire * g.rules.hp.max(1.0) + 0.5
+                    && sense.mass_near((s.x, s.y), 0.2 * range) < 5
+                    && mm.hp.iter().any(|&(j, h)| j == k && s.hp < h - 0.5)
             });
         mm.hp = members.iter().map(|&k| (k, g.soldiers[k].hp)).collect();
         if hurt {
