@@ -534,9 +534,15 @@ def sync(binary, push_results, now=False):
         if go:
             LAST_PUSH = time.time()
     if git("fetch", "-q", "origin", BRANCH).returncode == 0:
-        if git("rebase", "-q", "FETCH_HEAD").returncode != 0:
+        # A machine with no git name cannot replay its own result commits
+        # (11-20: since results are pushed hourly there are some to replay,
+        # and the PC took no new commits from 15:19Z until a push, which
+        # passes a name). Same name as push().
+        who = [] if git("config", "user.email").stdout.strip() else ["-c", "user.name=Strategy league", "-c", "user.email=strategy-league@localhost.invalid"]
+        r = git(*who, "rebase", "-q", "FETCH_HEAD")
+        if r.returncode != 0:
             git("rebase", "--abort")
-            log("worker: could not take the branch's new commits: " + git("status", "--short").stdout[-300:])
+            log("worker: could not take the branch's new commits: " + (r.stderr or r.stdout)[-300:])
     if built_from() != BUILT:
         log(f"worker: the game's code changed (now {git('rev-parse', '--short', 'HEAD').stdout.strip()}); building")
         build()
