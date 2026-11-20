@@ -378,7 +378,7 @@ impl Way {
     /// (`round_walk`, so a lure in a closed block starts from the open
     /// block nearest it), kept out to `reach` fine cells of walking and
     /// `u32::MAX` past it. Off the frame as `start`'s.
-    fn start_lures(ground: Option<(Vec<bool>, usize, usize)>, lures: Vec<u32>, reach: u32) -> Way {
+    pub(super) fn start_lures(ground: Option<(Vec<bool>, usize, usize)>, lures: Vec<u32>, reach: u32) -> Way {
         let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
         let build = move || round_walk(&agar, w, h, &lures, reach);
         #[cfg(not(target_arch = "wasm32"))]
@@ -719,7 +719,7 @@ impl<W: World> Game<W> {
 
     /// The live soldier with the most live soldiers within 15 dish cells
     /// (ties to the first).
-    fn thickest_knot(&self) -> Option<usize> {
+    pub(super) fn thickest_knot(&self) -> Option<usize> {
         let r = 15.0 * self.world.scale();
         let live: Vec<usize> = (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).collect();
         live.iter()

@@ -150,14 +150,16 @@ struct Params {
     // shot's hit sets the countdown on its struck agar cells to at least
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
-    // Three free words (written 0) and the fort's flag. The first three
+    // The wave's pull (`wave`, 2026-11-20, `Engine::write_wave_field`;
+    // 0 while no wave field is written), a free word (written 0), the
+    // fort's flag and the tether. The first two words
     // were the lone step (2026-11-12, `BigParams::lone_step`: a walker
     // with few others round it stepped shorter), whose half in this engine
     // was deleted on 11-17 (Reports/dead-ends.md); the last was
     // `fed_crowd`'s until 11-17. `fort` (2026-11-18): 1 while the game has
     // written a fort mask (`fort_at`), else 0. `tether` (2026-11-18): the
     // walkers a marcher's next cell must touch (`tethered`), 0 off.
-    lone_free0: f32, lone_free1: f32, fort: u32, tether: u32,
+    wave: f32, lone_free1: f32, fort: u32, tether: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
@@ -1078,6 +1080,28 @@ fn lure_dist(i: u32) -> u32 {
     if (v == 0u) { return 0xFFFFFFFFu; }
     return v - 1u;
 }
+// **The slime's wave field** (2026-11-20, `Game::time_waves`): a slime
+// losing walkers fast pulls back to two or three points out of the guns'
+// reach round the squad, masses there, and then comes in from all of them
+// at once. The field is the walking distance to the wave's points (the
+// gathering points, then the soldiers), in the raid's region after the
+// raid's own blocks, in the lure's words. Written once a game second
+// (`Engine::write_wave_field`); no CPU twin.
+fn wave_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    let v = atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + P.w * P.h + nb + q]);
+    if (v == 0u) { return 0xFFFFFFFFu; }
+    return v - 1u;
+}
+fn wave_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE) { return 0.0; }
+    let d = wave_dist(i);
+    if (d == 0xFFFFFFFFu) { return 0.0; }
+    return f32(dh) - f32(d);
+}
 // The lure at a sensor: how much nearer the lure its block is than the
 // walker's own (`dh`). A block the field does not reach (rock, a wall, or
 // past the lure's reach) reads no lean either way, as in the lab's rig
@@ -1303,6 +1327,17 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (f > -1.0e5) { f += P.lure * lure_near(wk.x, wk.y, h, so, dh); }
                 if (fl > -1.0e5) { fl += P.lure * lure_near(wk.x, wk.y, h - sa, so, dh); }
                 if (fr > -1.0e5) { fr += P.lure * lure_near(wk.x, wk.y, h + sa, so, dh); }
+            }
+        }
+        // **The wave** (2026-11-20; `wave_dist`): a calm walker inside the
+        // wave's field leans down it, x `wave`, as the lure's. Calm only,
+        // as the lure: a walker already charging keeps its charge.
+        if (lb == 0u && P.wave > 0.0) {
+            let dh = wave_dist(here);
+            if (dh != 0xFFFFFFFFu) {
+                if (f > -1.0e5) { f += P.wave * wave_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += P.wave * wave_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += P.wave * wave_near(wk.x, wk.y, h + sa, so, dh); }
             }
         }
     }

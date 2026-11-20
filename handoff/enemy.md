@@ -48,6 +48,23 @@ pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
 Proposals in the report and the owner's doc: the Mortar first from planet
 4 after Milestone 1, the Pinwheel second; a bounty; an off-screen tell.
 
+## Waves (2026-11-20, the thread "Make the slime a more interesting enemy")
+
+Its second rule after fruiting, on by default on every run planet
+(`run::ENEMY_RULES`' `wave`; `larder_world/waves.rs`). Losing fast (the
+squad's kills over 20 s at least an eighth of the slime's mass, the mass
+down over them), from 1:30: a field in the raid region after the raid's
+blocks (`Engine::write_wave_field`, engine.wgsl `wave_dist`, the pull in
+Params word 880, the lone step row's first) leans calm walkers to two or
+three points 20 dish cells past the guns round the thickest knot of
+soldiers for 12 s, then to the soldiers for 8 s with a surge whose reach
+is stretched to the masses (`keep_panic_reach`). `write_raid_field` now
+writes only its own blocks so it never clears the wave's. The owner
+dropped the rind and the civil war (11-20 14:16Z: hardened slime does not
+attack, so it makes the game easier); the late-planet problem (a big
+squad the slime cannot touch) is shared with the balance thread
+"Keep big squads under threat late in a planet".
+
 ## Fruiting (2026-11-20, the thread "Make the slime a more interesting enemy")
 
 Not this lane's thread, but the slime's rules, so recorded here. The owner

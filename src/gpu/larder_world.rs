@@ -1091,6 +1091,14 @@ impl World for GpuWorld {
         true
     }
 
+    fn set_wave_field(&mut self, field: Vec<u32>, pull: f32) {
+        self.e.write_wave_field(&field, pull);
+    }
+
+    fn can_wave(&self) -> bool {
+        true
+    }
+
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         // Deep water is a wall to this engine's slime (`Settings::
@@ -1374,6 +1382,12 @@ mod tests {
         }
         fn can_sow(&self) -> bool {
             self.g.can_sow()
+        }
+        fn set_wave_field(&mut self, field: Vec<u32>, pull: f32) {
+            self.g.set_wave_field(field, pull)
+        }
+        fn can_wave(&self) -> bool {
+            self.g.can_wave()
         }
     }
 
@@ -2090,6 +2104,75 @@ mod tests {
         if !ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
             assert_eq!(off.world.hash(), bare.world.hash(), "pull 0 is the game with no lure");
         }
+    }
+
+    /// **The wave's field draws the calm slime, and a raid leaves it**
+    /// (`Engine::write_wave_field`, `Game::time_waves`; 2026-11-20). A rule
+    /// of the GPU engine alone, so its test is what it does on the software
+    /// GPU. Two race worlds alike, each given at 1 s a field to a point 25
+    /// dish cells from the mould's home, one at pull 40 and one at pull 0.
+    ///
+    /// - With pull 40 the field is held and its pull is sent; at pull 0 too
+    ///   the blocks are written but no walker leans.
+    /// - At 11 s the pulled slime has several times the walkers round the
+    ///   point that the other has.
+    /// - A raid's field written after it (`write_raid_field`) leaves the
+    ///   wave's blocks as they were (they share the raid's region).
+    /// - An empty field clears it.
+    #[test]
+    fn a_wave_field_draws_the_calm_slime_and_a_raid_leaves_it() {
+        use crate::gpu::{floats, DENSE_HEAD};
+        use crate::mould::big::RAID_BLOCK;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let k = scale as f32;
+        let new = || {
+            let s = race_settings(seed, scale, walkers);
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        let near = |g: &Game<GpuWorld>, at: (f32, f32), r: f32| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            (0..e.n as usize).filter(|&q| (!e.grows || en[q] >= 0.0) && (wk[4 * q] - at.0).hypot(wk[4 * q + 1] - at.1) <= r).count()
+        };
+        // The wave's blocks as the engine holds them (the raid's region,
+        // after its own blocks; engine.wgsl's `wave_dist`).
+        let blocks = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let nb = e.dish.w.div_ceil(RAID_BLOCK) * e.dish.h.div_ceil(RAID_BLOCK);
+            let from = e.dense_at as usize + 4 * (DENSE_HEAD + e.n as usize + e.cells as usize + nb);
+            read_back(&e.device, &e.queue, &e.news)[from..from + 4 * nb].chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<u32>>()
+        };
+        let (mut pulled, mut still) = (new(), new());
+        assert!(pulled.world.can_wave());
+        let home = pulled.world.crystals()[0].0;
+        let (w, _) = pulled.world.size();
+        let at = (if home.0 < w as f32 / 2.0 { home.0 + 25.0 * k } else { home.0 - 25.0 * k }, home.1);
+        let cell = (at.0 as u32) | ((at.1 as u32) << 16);
+        for (g, pull) in [(&mut pulled, 40.0), (&mut still, 0.0)] {
+            to(g, 1.0);
+            let (agar, gw, gh) = g.world.raid_ground().expect("the race world has ground");
+            g.world.set_wave_field(crate::mould::big::units_field_for(&agar, gw, gh, &[cell]), pull);
+        }
+        assert!(pulled.world.e.waved && pulled.world.e.wave_w == 40.0);
+        let before = blocks(&pulled);
+        assert!(before.iter().filter(|&&v| v > 0).count() > 50, "the field is written");
+        pulled.world.e.write_raid_field();
+        assert_eq!(blocks(&pulled), before, "a raid's field leaves the wave's blocks");
+        to(&mut pulled, 11.0);
+        to(&mut still, 11.0);
+        let r = 8.0 * k;
+        let (with, without) = (near(&pulled, at, r), near(&still, at, r));
+        eprintln!("wave: at 11 s {with} walkers within {r} of the point with pull 40, {without} with 0 ({} and {} alive)", pulled.world.e.alive(), still.world.e.alive());
+        assert!(with >= 3 * without + 30, "the wave draws the slime: {with} walkers round its point against {without}");
+        pulled.world.set_wave_field(Vec::new(), 0.0);
+        assert!(!pulled.world.e.waved && blocks(&pulled).iter().all(|&v| v == 0), "an empty field clears it");
     }
 
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,

@@ -592,6 +592,11 @@ pub struct Rules {
     /// spores over the planet. Off here; a run turns it on
     /// (`run::ENEMY_RULES`). GPU only.
     pub fruit: super::FruitRules,
+    /// **Waves** (2026-11-20; `waves.rs`): losing walkers fast, the slime
+    /// pulls back out of the guns' reach to two or three points round the
+    /// squad, masses there and comes in from all of them at once. Off
+    /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
+    pub wave: super::WaveRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -670,6 +675,16 @@ impl Rules {
                 self.fruit.throw = v.clamp(2.0, 60000.0) as u16;
                 return true;
             }
+            // Waves (`WaveRules`, 2026-11-20): `wave=1` on; `wave_sides`
+            // a whole number.
+            "wave" => {
+                self.wave.on = v > 0.0;
+                return true;
+            }
+            "wave_sides" => {
+                self.wave.sides = v.clamp(0.0, 8.0) as u32;
+                return true;
+            }
             _ => {}
         }
         if name == "unit_paths" {
@@ -718,6 +733,19 @@ impl Rules {
             "fruit_pull" => &mut self.fruit.pull,
             "fruit_leash" => &mut self.fruit.leash,
             "fruit_spread" => &mut self.fruit.spread,
+            "wave_first" => &mut self.wave.first,
+            "wave_window" => &mut self.wave.window,
+            "wave_loss" => &mut self.wave.loss,
+            "wave_every" => &mut self.wave.every,
+            "wave_apart" => &mut self.wave.apart,
+            "wave_stand" => &mut self.wave.stand,
+            "wave_disc" => &mut self.wave.disc,
+            "wave_least" => &mut self.wave.least,
+            "wave_gather" => &mut self.wave.gather,
+            "wave_gather_pull" => &mut self.wave.gather_pull,
+            "wave_reach" => &mut self.wave.reach,
+            "wave_strike" => &mut self.wave.strike,
+            "wave_strike_pull" => &mut self.wave.strike_pull,
             "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
@@ -888,6 +916,7 @@ impl Default for Rules {
             lure_reach: 60.0,
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
+            wave: super::WaveRules::default(),
         }
     }
 }
