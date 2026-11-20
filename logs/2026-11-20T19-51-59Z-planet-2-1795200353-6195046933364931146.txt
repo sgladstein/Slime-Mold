@@ -1,0 +1,1702 @@
+log map=planet:2:1795200353 seed=6195046933364931146 when=2026-11-20T19:51:59Z build=2487:dc30d20:2026-11-20 mode=squads mission=Planet_2_of_8,_Grida tier=sprawler planet=2 run=1795200353 gun=pierce turrets=none bought=walls1 switches=none keys=none
+cmd t=0.0 active 0
+cmd t=0.0 arm 0 rifle 1 24 1 0.5 1 10 4 1
+cmd t=0.9 wall 327.43918 94.668396 374.3806 176.0974
+cmd t=0.9 sorder 0 build 0
+t=1 mould=15342 mass=15342 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1396262 took=0.000 stuck=0 p50=20.0 p95=53.0
+t=2 mould=15342 mass=15342 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1396115 took=0.000 stuck=0 p50=6.8 p95=51.2
+t=3 mould=15342 mass=15342 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1395982 took=0.000 stuck=0 p50=6.9 p95=51.3
+t=4 mould=15387 mass=15387 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=2 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1395864 took=0.000 stuck=0 p50=17.1 p95=51.7
+t=5 mould=15375 mass=15375 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=5 killed=21 pumps=0 turrets=0 walls=0 other=0 charge=1395716 took=0.000 stuck=0 p50=17.3 p95=43.4
+t=6 mould=15341 mass=15341 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=10 killed=56 pumps=0 turrets=0 walls=0 other=0 charge=1395554 took=0.000 stuck=0 p50=17.0 p95=53.9
+t=7 mould=15331 mass=15331 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=15 killed=66 pumps=0 turrets=0 walls=0 other=0 charge=1395379 took=0.000 stuck=0 p50=6.9 p95=71.6
+t=8 mould=15330 mass=15330 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=20 killed=70 pumps=0 turrets=0 walls=0 other=0 charge=1395144 took=0.000 stuck=0 p50=23.8 p95=71.6
+t=9 mould=15361 mass=15361 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=20 killed=70 pumps=0 turrets=0 walls=0 other=0 charge=1394880 took=0.000 stuck=0 p50=23.3 p95=49.1
+t=10 mould=15398 mass=15398 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=22 killed=72 pumps=0 turrets=0 walls=0 other=0 charge=1394626 took=0.000 stuck=0 p50=23.2 p95=63.5
+t=11 mould=15389 mass=15389 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=23 killed=72 pumps=0 turrets=0 walls=0 other=0 charge=1394382 took=0.000 stuck=0 p50=24.1 p95=46.9
+t=12 mould=15383 mass=15383 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=26 killed=72 pumps=0 turrets=0 walls=0 other=0 charge=1394165 took=0.000 stuck=0 p50=6.8 p95=64.2
+t=13 mould=15361 mass=15361 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=31 killed=96 pumps=0 turrets=0 walls=1 other=0 charge=1393953 took=0.000 stuck=0 p50=6.9 p95=64.2
+t=14 mould=15348 mass=15348 soldiers=4 squads=1 bank=1060 income=0 pumped=0 shots=38 killed=98 pumps=0 turrets=0 walls=1 other=0 charge=1393687 took=0.000 stuck=0 p50=20.3 p95=64.5
+cmd t=14.7 wall 357.0833 205.24582 357 243.16249
+cmd t=14.7 sorder 0 build 1
+t=15 mould=15358 mass=15358 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=40 killed=99 pumps=0 turrets=0 walls=1 other=0 charge=1393408 took=0.000 stuck=0 p50=6.6 p95=59.4
+t=16 mould=15375 mass=15375 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=44 killed=100 pumps=0 turrets=0 walls=1 other=0 charge=1393117 took=0.000 stuck=0 p50=23.3 p95=46.3
+t=17 mould=15378 mass=15378 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=44 killed=100 pumps=0 turrets=0 walls=1 other=0 charge=1392828 took=0.000 stuck=0 p50=20.4 p95=48.7
+t=18 mould=15379 mass=15379 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=46 killed=103 pumps=0 turrets=0 walls=1 other=0 charge=1392559 took=0.000 stuck=0 p50=19.5 p95=49.3
+t=19 mould=15377 mass=15377 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=50 killed=143 pumps=0 turrets=0 walls=1 other=0 charge=1392305 took=0.000 stuck=0 p50=7.1 p95=62.7
+t=20 mould=15347 mass=15347 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=55 killed=168 pumps=0 turrets=0 walls=1 other=0 charge=1392017 took=0.000 stuck=0 p50=23.8 p95=49.4
+t=21 mould=15378 mass=15378 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=60 killed=183 pumps=0 turrets=0 walls=1 other=0 charge=1391723 took=0.000 stuck=0 p50=20.4 p95=48.9
+t=22 mould=15408 mass=15408 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=65 killed=198 pumps=0 turrets=0 walls=1 other=0 charge=1391421 took=0.000 stuck=0 p50=23.8 p95=60.7
+t=23 mould=15410 mass=15410 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=69 killed=209 pumps=0 turrets=0 walls=1 other=0 charge=1391124 took=0.000 stuck=0 p50=24.0 p95=47.0
+t=24 mould=15419 mass=15419 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=72 killed=212 pumps=0 turrets=0 walls=2 other=0 charge=1390845 took=0.000 stuck=0 p50=23.3 p95=50.1
+cmd t=24.4 steer 0 1 0
+cmd t=25.0 steer 0 0 0
+t=25 mould=15400 mass=15400 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=78 killed=261 pumps=0 turrets=0 walls=2 other=0 charge=1390585 took=0.000 stuck=0 p50=7.0 p95=63.3
+cmd t=25.1 sorder 0 move 410.16666 135.825
+t=26 mould=15410 mass=15410 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=86 killed=322 pumps=0 turrets=0 walls=2 other=0 charge=1390288 took=0.000 stuck=0 p50=6.9 p95=46.6
+t=27 mould=15449 mass=15449 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=90 killed=322 pumps=0 turrets=0 walls=2 other=0 charge=1389982 took=0.000 stuck=0 p50=21.7 p95=49.3
+t=28 mould=15545 mass=15545 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=97 killed=326 pumps=0 turrets=0 walls=2 other=0 charge=1389665 took=0.000 stuck=0 p50=23.6 p95=63.0
+t=29 mould=15562 mass=15562 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=103 killed=341 pumps=0 turrets=0 walls=2 other=0 charge=1389357 took=0.000 stuck=0 p50=21.0 p95=63.6
+t=30 mould=15585 mass=15585 soldiers=4 squads=1 bank=681 income=0 pumped=0 shots=109 killed=352 pumps=0 turrets=0 walls=2 other=0 charge=1389067 took=0.000 stuck=0 p50=7.1 p95=65.1
+cmd t=30.2 build pump 427.6667 92.05395
+cmd t=30.2 sorder 0 build 2
+t=31 mould=15601 mass=15601 soldiers=4 squads=1 bank=181 income=0 pumped=0 shots=115 killed=377 pumps=0 turrets=0 walls=2 other=0 charge=1388797 took=0.000 stuck=0 p50=6.8 p95=65.2
+t=32 mould=15637 mass=15637 soldiers=4 squads=1 bank=183 income=3 pumped=0 shots=119 killed=389 pumps=0 turrets=0 walls=2 other=0 charge=1388497 took=0.000 stuck=0 p50=23.9 p95=62.8
+t=33 mould=15758 mass=15758 soldiers=4 squads=1 bank=186 income=5 pumped=0 shots=123 killed=399 pumps=0 turrets=0 walls=2 other=0 charge=1388179 took=0.000 stuck=0 p50=20.8 p95=64.0
+t=34 mould=15848 mass=15848 soldiers=4 squads=1 bank=189 income=8 pumped=0 shots=128 killed=423 pumps=1 turrets=0 walls=2 other=0 charge=1387852 took=0.000 stuck=0 p50=21.0 p95=64.5
+cmd t=34.1 steer 0 1 0
+cmd t=34.3 steer 0 0 0
+t=35 mould=15885 mass=15885 soldiers=4 squads=1 bank=196 income=15 pumped=5 shots=131 killed=430 pumps=1 turrets=0 walls=2 other=0 charge=1387536 took=0.000 stuck=0 p50=22.1 p95=51.4
+t=36 mould=15924 mass=15924 soldiers=4 squads=1 bank=204 income=23 pumped=10 shots=131 killed=430 pumps=1 turrets=0 walls=2 other=0 charge=1387252 took=0.000 stuck=0 p50=20.5 p95=63.5
+t=37 mould=15939 mass=15939 soldiers=4 squads=1 bank=211 income=30 pumped=15 shots=133 killed=431 pumps=1 turrets=0 walls=2 other=0 charge=1386991 took=0.000 stuck=0 p50=20.7 p95=64.9
+t=38 mould=16003 mass=16003 soldiers=4 squads=1 bank=219 income=38 pumped=20 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1386685 took=0.000 stuck=0 p50=20.4 p95=63.8
+t=39 mould=16167 mass=16167 soldiers=4 squads=1 bank=226 income=45 pumped=25 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1386341 took=0.000 stuck=0 p50=7.2 p95=65.4
+t=40 mould=16325 mass=16325 soldiers=4 squads=1 bank=234 income=53 pumped=30 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1385996 took=0.000 stuck=0 p50=20.5 p95=59.1
+t=41 mould=16386 mass=16386 soldiers=4 squads=1 bank=242 income=61 pumped=35 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1385667 took=0.000 stuck=0 p50=6.8 p95=68.0
+t=42 mould=16434 mass=16434 soldiers=4 squads=1 bank=249 income=68 pumped=40 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1385358 took=0.000 stuck=0 p50=6.9 p95=71.5
+t=43 mould=16457 mass=16457 soldiers=4 squads=1 bank=257 income=76 pumped=45 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1385077 took=0.000 stuck=0 p50=7.1 p95=71.1
+t=44 mould=16560 mass=16560 soldiers=4 squads=1 bank=264 income=83 pumped=50 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1384754 took=0.000 stuck=0 p50=19.7 p95=65.1
+cmd t=44.2 steer 0 0 -1
+cmd t=44.2 steer 0 1 -1
+cmd t=44.9 steer 0 1 0
+t=45 mould=16785 mass=16785 soldiers=4 squads=1 bank=272 income=91 pumped=55 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1384390 took=0.000 stuck=0 p50=24.4 p95=50.5
+cmd t=45.2 steer 0 0 0
+cmd t=45.4 steer 0 -1 0
+cmd t=45.5 steer 0 -1 -1
+t=46 mould=16999 mass=16999 soldiers=4 squads=1 bank=279 income=98 pumped=60 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1384034 took=0.000 stuck=0 p50=6.9 p95=65.0
+cmd t=46.5 steer 0 -1 0
+cmd t=46.9 steer 0 0 0
+t=47 mould=17097 mass=17097 soldiers=4 squads=1 bank=287 income=106 pumped=65 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1383696 took=0.000 stuck=0 p50=24.1 p95=62.8
+cmd t=47.4 steer 0 0 1
+t=48 mould=17150 mass=17150 soldiers=4 squads=1 bank=294 income=114 pumped=70 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1383371 took=0.000 stuck=0 p50=17.7 p95=67.1
+cmd t=48.3 steer 0 -1 1
+t=49 mould=17194 mass=17194 soldiers=4 squads=1 bank=299 income=119 pumped=75 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1383077 took=0.000 stuck=0 p50=6.6 p95=48.3
+cmd t=49.5 steer 0 0 1
+cmd t=49.9 steer 0 -1 1
+t=50 mould=17326 mass=17326 soldiers=4 squads=1 bank=304 income=124 pumped=80 shots=136 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1382747 took=0.000 stuck=0 p50=12.1 p95=48.3
+cmd t=50.2 steer 0 0 1
+cmd t=50.5 steer 0 -1 1
+t=51 mould=17631 mass=17631 soldiers=4 squads=1 bank=309 income=129 pumped=85 shots=140 killed=432 pumps=1 turrets=0 walls=2 other=0 charge=1382368 took=0.000 stuck=0 p50=6.9 p95=48.8
+cmd t=51.1 steer 0 -1 0
+cmd t=51.7 steer 0 -1 1
+cmd t=51.7 steer 0 0 1
+cmd t=51.7 steer 0 1 1
+cmd t=51.7 steer 0 1 0
+cmd t=52.0 steer 0 1 -1
+t=52 mould=17953 mass=17953 soldiers=4 squads=1 bank=314 income=134 pumped=90 shots=140 killed=434 pumps=1 turrets=0 walls=2 other=0 charge=1381991 took=0.000 stuck=0 p50=6.8 p95=48.2
+cmd t=52.5 steer 0 0 -1
+t=53 mould=18044 mass=18044 soldiers=4 squads=1 bank=319 income=139 pumped=95 shots=140 killed=434 pumps=1 turrets=0 walls=2 other=0 charge=1381640 took=0.000 stuck=0 p50=6.7 p95=48.1
+cmd t=53.5 steer 0 -1 -1
+cmd t=53.7 steer 0 0 -1
+t=54 mould=18110 mass=18110 soldiers=4 squads=1 bank=324 income=144 pumped=100 shots=140 killed=434 pumps=1 turrets=0 walls=2 other=0 charge=1381311 took=0.000 stuck=0 p50=6.7 p95=48.2
+cmd t=54.5 steer 0 -1 -1
+cmd t=55.0 steer 0 0 -1
+t=55 mould=18176 mass=18176 soldiers=4 squads=1 bank=329 income=149 pumped=105 shots=146 killed=436 pumps=1 turrets=0 walls=2 other=0 charge=1380998 took=0.000 stuck=0 p50=6.7 p95=48.4
+cmd t=55.9 steer 0 0 0
+cmd t=56.0 steer 0 1 0
+t=56 mould=18317 mass=18317 soldiers=4 squads=1 bank=337 income=156 pumped=110 shots=147 killed=436 pumps=1 turrets=0 walls=2 other=0 charge=1380652 took=0.000 stuck=0 p50=6.8 p95=47.8
+cmd t=56.5 steer 0 0 0
+cmd t=56.6 steer 0 -1 0
+cmd t=56.9 steer 0 -1 -1
+t=57 mould=18658 mass=18658 soldiers=4 squads=1 bank=345 income=164 pumped=115 shots=149 killed=437 pumps=1 turrets=0 walls=2 other=0 charge=1380252 took=0.000 stuck=0 p50=6.8 p95=47.9
+cmd t=57.2 steer 0 0 -1
+cmd t=57.3 steer 0 0 0
+t=58 mould=19014 mass=19014 soldiers=4 squads=1 bank=352 income=171 pumped=120 shots=151 killed=439 pumps=1 turrets=0 walls=2 other=0 charge=1379854 took=0.000 stuck=0 p50=6.7 p95=48.1
+t=59 mould=19105 mass=19105 soldiers=4 squads=1 bank=360 income=179 pumped=125 shots=158 killed=439 pumps=1 turrets=0 walls=2 other=0 charge=1379477 took=0.000 stuck=0 p50=6.8 p95=65.1
+t=60 mould=19180 mass=19180 soldiers=4 squads=1 bank=367 income=186 pumped=130 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1379122 took=0.000 stuck=0 p50=22.8 p95=64.1
+t=61 mould=19247 mass=19247 soldiers=4 squads=1 bank=375 income=194 pumped=135 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1378781 took=0.000 stuck=0 p50=19.9 p95=50.0
+t=62 mould=19378 mass=19378 soldiers=4 squads=1 bank=382 income=201 pumped=140 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1378412 took=0.000 stuck=0 p50=16.4 p95=46.7
+t=63 mould=19721 mass=19721 soldiers=4 squads=1 bank=390 income=209 pumped=145 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1377992 took=0.000 stuck=0 p50=6.7 p95=48.3
+t=64 mould=20102 mass=20109 soldiers=4 squads=1 bank=398 income=217 pumped=150 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1377548 took=0.000 stuck=0 p50=6.7 p95=50.5
+t=65 mould=20226 mass=20226 soldiers=4 squads=1 bank=405 income=224 pumped=155 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1377180 took=0.000 stuck=0 p50=7.1 p95=69.5
+t=66 mould=20338 mass=20338 soldiers=4 squads=1 bank=413 income=232 pumped=160 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1376802 took=0.000 stuck=0 p50=22.0 p95=69.5
+t=67 mould=20410 mass=20410 soldiers=4 squads=1 bank=420 income=239 pumped=165 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1376445 took=0.000 stuck=0 p50=7.2 p95=69.7
+t=68 mould=20533 mass=20533 soldiers=4 squads=1 bank=428 income=247 pumped=170 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1376057 took=0.000 stuck=0 p50=25.6 p95=70.2
+t=69 mould=20883 mass=20883 soldiers=4 squads=1 bank=435 income=254 pumped=175 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1375618 took=0.000 stuck=0 p50=6.9 p95=70.5
+t=70 mould=21263 mass=21263 soldiers=4 squads=1 bank=443 income=262 pumped=180 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1375179 took=0.000 stuck=0 p50=22.2 p95=70.2
+t=71 mould=21413 mass=21413 soldiers=4 squads=1 bank=450 income=270 pumped=185 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1374756 took=0.000 stuck=0 p50=7.0 p95=69.6
+cmd t=71.4 steer 0 0 1
+t=72 mould=21541 mass=21541 soldiers=4 squads=1 bank=458 income=277 pumped=190 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1374364 took=0.000 stuck=0 p50=6.8 p95=70.1
+t=73 mould=21641 mass=21641 soldiers=4 squads=1 bank=463 income=282 pumped=195 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1373994 took=0.000 stuck=0 p50=6.7 p95=48.1
+cmd t=73.3 steer 0 0 0
+cmd t=73.5 steer 0 -1 0
+cmd t=73.7 steer 0 -1 -1
+t=74 mould=21795 mass=21795 soldiers=4 squads=1 bank=468 income=287 pumped=200 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1373585 took=0.000 stuck=0 p50=6.6 p95=48.4
+cmd t=74.5 steer 0 -1 0
+cmd t=74.5 steer 0 0 0
+t=75 mould=22172 mass=22172 soldiers=4 squads=1 bank=473 income=292 pumped=205 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1373126 took=0.000 stuck=0 p50=17.9 p95=48.6
+cmd t=75.1 steer 0 -1 0
+cmd t=75.1 steer 0 -1 -1
+cmd t=75.5 steer 0 0 -1
+cmd t=75.5 steer 0 1 -1
+cmd t=75.5 steer 0 1 0
+cmd t=75.8 steer 0 0 0
+t=76 mould=22563 mass=22563 soldiers=4 squads=1 bank=478 income=297 pumped=210 shots=161 killed=441 pumps=1 turrets=0 walls=2 other=0 charge=1372669 took=0.000 stuck=0 p50=6.7 p95=48.0
+cmd t=77.0 steer 0 0 -1
+t=77 mould=22717 mass=22717 soldiers=4 squads=1 bank=483 income=302 pumped=215 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1372222 took=0.000 stuck=0 p50=22.2 p95=51.1
+cmd t=77.2 steer 0 1 -1
+cmd t=78.0 steer 0 0 -1
+t=78 mould=22848 mass=22848 soldiers=4 squads=1 bank=491 income=310 pumped=220 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1371807 took=0.000 stuck=0 p50=6.8 p95=64.5
+cmd t=78.3 steer 0 0 0
+t=79 mould=22943 mass=22943 soldiers=4 squads=1 bank=498 income=317 pumped=225 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1371413 took=0.000 stuck=0 p50=23.3 p95=47.1
+cmd t=79.3 steer 0 0 -1
+cmd t=79.5 steer 0 0 0
+cmd t=79.5 steer 0 0 1
+t=80 mould=23094 mass=23094 soldiers=4 squads=1 bank=506 income=325 pumped=230 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1370981 took=0.000 stuck=0 p50=6.6 p95=65.2
+t=81 mould=23456 mass=23456 soldiers=4 squads=1 bank=511 income=330 pumped=235 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1370500 took=0.000 stuck=0 p50=25.2 p95=69.9
+cmd t=81.1 steer 0 1 1
+cmd t=81.2 steer 0 0 1
+cmd t=81.8 steer 0 0 0
+t=82 mould=23872 mass=23872 soldiers=4 squads=1 bank=516 income=335 pumped=240 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1370029 took=0.000 stuck=0 p50=13.2 p95=40.3
+cmd t=82.0 steer 0 0 -1
+cmd t=82.1 steer 0 -1 -1
+cmd t=82.9 steer 0 0 -1
+t=83 mould=24055 mass=24055 soldiers=4 squads=1 bank=521 income=340 pumped=245 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1369563 took=0.000 stuck=0 p50=16.0 p95=49.5
+cmd t=83.5 steer 0 0 0
+t=84 mould=24204 mass=24204 soldiers=4 squads=1 bank=526 income=345 pumped=250 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1369122 took=0.000 stuck=0 p50=24.0 p95=48.0
+t=85 mould=24311 mass=24311 soldiers=4 squads=1 bank=531 income=350 pumped=255 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1368704 took=0.000 stuck=0 p50=23.8 p95=50.5
+cmd t=85.3 build pump 381.16666 80.85
+cmd t=85.3 sorder 0 build 3
+t=86 mould=24477 mass=24477 soldiers=4 squads=1 bank=38 income=357 pumped=260 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1368255 took=0.000 stuck=0 p50=27.4 p95=64.7
+t=87 mould=24822 mass=24822 soldiers=4 squads=1 bank=44 income=363 pumped=265 shots=162 killed=442 pumps=1 turrets=0 walls=2 other=0 charge=1367759 took=0.000 stuck=0 p50=19.6 p95=62.5
+t=88 mould=25232 mass=25232 soldiers=4 squads=1 bank=52 income=371 pumped=271 shots=162 killed=442 pumps=2 turrets=0 walls=2 other=0 charge=1367265 took=0.000 stuck=0 p50=6.9 p95=64.9
+t=89 mould=25423 mass=25423 soldiers=4 squads=1 bank=64 income=383 pumped=281 shots=162 killed=442 pumps=2 turrets=0 walls=2 other=0 charge=1366778 took=0.000 stuck=0 p50=6.8 p95=64.4
+cmd t=89.5 steer 0 0 1
+t=90 mould=25604 mass=25604 soldiers=4 squads=1 bank=76 income=395 pumped=291 shots=162 killed=442 pumps=2 turrets=0 walls=2 other=0 charge=1366311 took=0.000 stuck=0 p50=24.4 p95=47.4
+cmd t=90.3 steer 0 0 0
+cmd t=90.7 sorder 0 move 394.33334 227.35
+t=91 mould=25734 mass=25734 soldiers=4 squads=1 bank=87 income=406 pumped=301 shots=162 killed=442 pumps=2 turrets=0 walls=2 other=0 charge=1365871 took=0.000 stuck=0 p50=23.4 p95=62.8
+t=92 mould=25886 mass=25886 soldiers=4 squads=1 bank=97 income=416 pumped=311 shots=162 killed=442 pumps=2 turrets=0 walls=2 other=0 charge=1365402 took=0.000 stuck=0 p50=20.3 p95=64.4
+t=93 mould=26228 mass=26228 soldiers=4 squads=1 bank=107 income=426 pumped=321 shots=162 killed=442 pumps=2 turrets=0 walls=2 other=0 charge=1364891 took=0.000 stuck=0 p50=7.0 p95=65.0
+t=94 mould=26679 mass=26679 soldiers=4 squads=1 bank=117 income=436 pumped=331 shots=163 killed=442 pumps=2 turrets=0 walls=2 other=0 charge=1364378 took=0.000 stuck=0 p50=6.8 p95=64.6
+t=95 mould=26876 mass=26876 soldiers=4 squads=1 bank=127 income=446 pumped=341 shots=166 killed=444 pumps=2 turrets=0 walls=2 other=0 charge=1363870 took=0.000 stuck=0 p50=7.0 p95=68.9
+t=96 mould=27051 mass=27051 soldiers=4 squads=1 bank=137 income=456 pumped=351 shots=167 killed=445 pumps=2 turrets=0 walls=2 other=0 charge=1363376 took=0.000 stuck=0 p50=21.4 p95=68.9
+t=97 mould=27214 mass=27214 soldiers=4 squads=1 bank=147 income=466 pumped=361 shots=167 killed=445 pumps=2 turrets=0 walls=2 other=0 charge=1362914 took=0.000 stuck=0 p50=27.4 p95=63.0
+t=98 mould=27348 mass=27348 soldiers=4 squads=1 bank=157 income=476 pumped=371 shots=168 killed=445 pumps=2 turrets=0 walls=2 other=0 charge=1362428 took=0.000 stuck=0 p50=27.7 p95=63.2
+boss t=99.0 formed kind=sapper cause=Crowd grade=0.18 at=313,59
+t=99 mould=27672 mass=27672 soldiers=4 squads=1 bank=167 income=486 pumped=381 shots=170 killed=446 pumps=2 turrets=0 walls=2 other=0 charge=1361907 took=0.000 stuck=0 p50=6.9 p95=65.7
+t=100 mould=28156 mass=28156 soldiers=4 squads=1 bank=177 income=496 pumped=391 shots=174 killed=446 pumps=2 turrets=0 walls=2 other=0 charge=1361385 took=0.000 stuck=0 p50=27.3 p95=61.7
+cmd t=100.4 wall 362 207.07686 362.75 224.26436
+cmd t=100.4 sorder 0 build 4
+t=101 mould=28347 mass=28347 soldiers=4 squads=1 bank=15 income=506 pumped=401 shots=174 killed=446 pumps=2 turrets=0 walls=2 other=0 charge=1360856 took=0.000 stuck=0 p50=6.5 p95=58.9
+t=102 mould=28515 mass=28515 soldiers=4 squads=1 bank=25 income=516 pumped=411 shots=174 killed=446 pumps=2 turrets=0 walls=2 other=0 charge=1360338 took=0.000 stuck=0 p50=27.5 p95=60.1
+t=103 mould=28661 mass=28661 soldiers=4 squads=1 bank=35 income=526 pumped=421 shots=176 killed=447 pumps=2 turrets=0 walls=2 other=0 charge=1359842 took=0.000 stuck=0 p50=26.8 p95=61.0
+boss t=104.0 kind=sapper phase=gather members=254 at=298,44 near=190
+t=104 mould=28810 mass=28810 soldiers=4 squads=1 bank=45 income=536 pumped=431 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1359320 took=0.000 stuck=0 p50=26.7 p95=61.3
+t=105 mould=29076 mass=29076 soldiers=4 squads=1 bank=55 income=546 pumped=441 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1358779 took=0.000 stuck=0 p50=6.8 p95=61.3
+t=106 mould=29482 mass=29482 soldiers=4 squads=1 bank=65 income=556 pumped=451 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1358246 took=0.000 stuck=0 p50=6.9 p95=61.5
+t=107 mould=29683 mass=29683 soldiers=4 squads=1 bank=75 income=566 pumped=461 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1357703 took=0.000 stuck=0 p50=27.6 p95=47.7
+t=108 mould=29835 mass=29835 soldiers=4 squads=1 bank=85 income=576 pumped=471 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1357170 took=0.000 stuck=0 p50=29.1 p95=61.2
+boss t=109.1 kind=sapper phase=sit members=254 at=322,84 near=144
+t=109 mould=29990 mass=29990 soldiers=4 squads=1 bank=95 income=586 pumped=481 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1356658 took=0.000 stuck=0 p50=26.6 p95=61.9
+t=110 mould=30080 mass=30080 soldiers=4 squads=1 bank=105 income=596 pumped=491 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1356130 took=0.000 stuck=0 p50=23.1 p95=47.8
+t=111 mould=30200 mass=30200 soldiers=4 squads=1 bank=115 income=606 pumped=501 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1355585 took=0.000 stuck=0 p50=24.8 p95=48.0
+cmd t=111.9 sorder 0 clear 422.875 188.50839
+t=112 mould=30411 mass=30411 soldiers=4 squads=1 bank=125 income=616 pumped=511 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1355049 took=0.000 stuck=0 p50=6.6 p95=59.3
+t=113 mould=30537 mass=30537 soldiers=4 squads=1 bank=135 income=626 pumped=521 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1354503 took=0.000 stuck=0 p50=28.3 p95=46.1
+boss t=114.1 kind=sapper phase=sit members=254 at=324,92 near=134
+t=114 mould=30575 mass=30575 soldiers=4 squads=1 bank=145 income=636 pumped=531 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1353972 took=0.000 stuck=0 p50=23.7 p95=63.6
+t=115 mould=30613 mass=30613 soldiers=4 squads=1 bank=163 income=654 pumped=541 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1353080 took=0.011 stuck=0 p50=27.4 p95=63.1
+t=116 mould=30630 mass=30630 soldiers=4 squads=1 bank=192 income=683 pumped=551 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1351493 took=0.034 stuck=0 p50=20.5 p95=48.6
+cmd t=116.4 sorder 0 move 385.875 229.33493
+cmd t=116.8 wall 361.1875 224.52444 360.375 239.71194
+cmd t=116.8 sorder 0 build 5
+t=117 mould=30648 mass=30648 soldiers=4 squads=1 bank=60 income=703 pumped=561 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1350333 took=0.045 stuck=0 p50=6.6 p95=45.5
+t=118 mould=30669 mass=30669 soldiers=4 squads=1 bank=70 income=713 pumped=571 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1349800 took=0.044 stuck=0 p50=23.6 p95=62.8
+boss t=119.1 kind=sapper phase=sit members=254 at=324,92 near=141
+t=119 mould=30677 mass=30677 soldiers=4 squads=1 bank=80 income=723 pumped=581 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1349260 took=0.044 stuck=0 p50=24.5 p95=64.7
+t=120 mould=30682 mass=30682 soldiers=4 squads=1 bank=90 income=733 pumped=591 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1348737 took=0.043 stuck=0 p50=24.6 p95=66.2
+t=121 mould=30682 mass=30682 soldiers=4 squads=1 bank=100 income=743 pumped=601 shots=176 killed=447 pumps=2 turrets=0 walls=3 other=0 charge=1348231 took=0.043 stuck=0 p50=27.2 p95=64.1
+t=122 mould=30682 mass=30682 soldiers=4 squads=1 bank=110 income=753 pumped=611 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1347709 took=0.042 stuck=0 p50=26.9 p95=61.4
+t=123 mould=30683 mass=30683 soldiers=4 squads=1 bank=120 income=763 pumped=621 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1347164 took=0.042 stuck=0 p50=6.8 p95=60.0
+cmd t=123.2 sorder 0 move 402.1875 210.77696
+boss t=124.1 kind=sapper phase=sit members=254 at=324,92 near=135
+t=124 mould=30683 mass=30683 soldiers=4 squads=1 bank=130 income=773 pumped=631 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1346639 took=0.041 stuck=0 p50=6.8 p95=60.6
+cmd t=124.1 steer 0 0 -1
+cmd t=124.1 steer 0 1 -1
+cmd t=124.8 steer 0 0 -1
+t=125 mould=30683 mass=30683 soldiers=4 squads=1 bank=140 income=783 pumped=641 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1346104 took=0.041 stuck=0 p50=6.8 p95=62.4
+cmd t=125.8 steer 0 1 -1
+t=126 mould=30683 mass=30683 soldiers=4 squads=1 bank=150 income=793 pumped=651 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1345585 took=0.040 stuck=0 p50=27.2 p95=64.6
+cmd t=126.3 steer 0 0 -1
+cmd t=126.6 steer 0 -1 -1
+cmd t=126.8 steer 0 0 -1
+t=127 mould=30682 mass=30682 soldiers=4 squads=1 bank=160 income=803 pumped=661 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1345085 took=0.040 stuck=0 p50=24.4 p95=65.8
+cmd t=127.2 steer 0 0 0
+cmd t=127.5 steer 0 0 -1
+cmd t=127.7 steer 0 -1 -1
+t=128 mould=30682 mass=30682 soldiers=4 squads=1 bank=170 income=813 pumped=671 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1344569 took=0.040 stuck=0 p50=22.6 p95=62.7
+cmd t=128.4 steer 0 0 -1
+cmd t=128.6 steer 0 1 -1
+cmd t=128.8 steer 0 0 -1
+cmd t=128.9 steer 0 -1 -1
+boss t=129.1 kind=sapper phase=sit members=254 at=324,94 near=86
+t=129 mould=30682 mass=30682 soldiers=4 squads=1 bank=180 income=823 pumped=681 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1344030 took=0.039 stuck=0 p50=7.0 p95=62.8
+cmd t=129.1 steer 0 -1 0
+cmd t=129.1 steer 0 0 0
+t=130 mould=30683 mass=30683 soldiers=4 squads=1 bank=190 income=833 pumped=691 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1343514 took=0.039 stuck=0 p50=6.8 p95=63.3
+t=131 mould=30683 mass=30683 soldiers=4 squads=1 bank=200 income=843 pumped=701 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1342991 took=0.038 stuck=0 p50=27.6 p95=63.9
+cmd t=131.8 wall 359.70834 153.62024 368.875 168.74518
+cmd t=131.8 sorder 0 build 6
+t=132 mould=30683 mass=30683 soldiers=4 squads=1 bank=33 income=853 pumped=711 shots=176 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1342477 took=0.038 stuck=0 p50=8.6 p95=63.3
+t=133 mould=30682 mass=30682 soldiers=4 squads=1 bank=43 income=863 pumped=721 shots=180 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1341983 took=0.038 stuck=0 p50=20.3 p95=63.7
+boss t=134.0 kind=sapper phase=sit members=254 at=324,94 near=81
+t=134 mould=30682 mass=30682 soldiers=4 squads=1 bank=53 income=873 pumped=731 shots=180 killed=447 pumps=2 turrets=0 walls=4 other=0 charge=1341468 took=0.037 stuck=0 p50=27.0 p95=64.0
+t=135 mould=30631 mass=30631 soldiers=4 squads=1 bank=63 income=883 pumped=741 shots=184 killed=585 pumps=2 turrets=0 walls=5 other=0 charge=1340942 took=0.037 stuck=0 p50=27.5 p95=65.6
+cmd t=135.2 steer 0 1 0
+cmd t=135.9 steer 0 1 1
+t=136 mould=30670 mass=30670 soldiers=4 squads=1 bank=73 income=893 pumped=751 shots=184 killed=585 pumps=2 turrets=0 walls=5 other=0 charge=1340431 took=0.037 stuck=0 p50=22.5 p95=64.0
+cmd t=136.5 steer 0 1 0
+t=137 mould=30681 mass=30681 soldiers=4 squads=1 bank=83 income=903 pumped=761 shots=184 killed=585 pumps=2 turrets=0 walls=5 other=0 charge=1339904 took=0.036 stuck=0 p50=19.8 p95=63.2
+cmd t=137.3 steer 0 1 1
+cmd t=137.5 steer 0 0 1
+t=138 mould=30680 mass=30680 soldiers=4 squads=1 bank=95 income=915 pumped=771 shots=184 killed=585 pumps=2 turrets=0 walls=5 other=0 charge=1339380 took=0.036 stuck=0 p50=6.8 p95=61.1
+cmd t=138.3 steer 0 1 1
+cmd t=138.5 steer 0 1 0
+cmd t=138.7 steer 0 0 0
+boss t=139.1 kind=sapper phase=sit members=254 at=328,94 near=121
+t=139 mould=30678 mass=30678 soldiers=4 squads=1 bank=107 income=927 pumped=781 shots=184 killed=585 pumps=2 turrets=0 walls=5 other=0 charge=1338874 took=0.036 stuck=0 p50=7.0 p95=63.0
+cmd t=139.6 steer 0 0 1
+cmd t=139.7 steer 0 1 1
+cmd t=139.9 steer 0 1 0
+t=140 mould=30678 mass=30678 soldiers=4 squads=1 bank=120 income=940 pumped=791 shots=186 killed=585 pumps=2 turrets=0 walls=5 other=0 charge=1338356 took=0.035 stuck=0 p50=9.7 p95=49.7
+cmd t=140.4 steer 0 0 0
+t=141 mould=30669 mass=30669 soldiers=4 squads=1 bank=132 income=952 pumped=801 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1337828 took=0.035 stuck=0 p50=23.4 p95=63.1
+t=142 mould=30671 mass=30671 soldiers=4 squads=1 bank=144 income=964 pumped=811 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1337316 took=0.035 stuck=0 p50=22.5 p95=60.6
+cmd t=142.6 sorder 0 clear 420.625 188.1097
+t=143 mould=30673 mass=30673 soldiers=4 squads=1 bank=160 income=980 pumped=821 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1336483 took=0.041 stuck=0 p50=20.4 p95=62.1
+boss t=144.0 kind=sapper phase=sit members=254 at=334,92 near=122
+t=144 mould=30673 mass=30673 soldiers=4 squads=1 bank=194 income=1014 pumped=831 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1334433 took=0.065 stuck=0 p50=27.0 p95=62.8
+cmd t=144.7 steer 0 0 1
+t=145 mould=30679 mass=30679 soldiers=4 squads=1 bank=224 income=1044 pumped=841 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1332708 took=0.081 stuck=0 p50=22.6 p95=62.9
+cmd t=145.1 steer 0 -1 1
+cmd t=145.4 steer 0 0 1
+t=146 mould=30680 mass=30680 soldiers=4 squads=1 bank=235 income=1056 pumped=851 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1332201 took=0.080 stuck=0 p50=7.0 p95=62.6
+cmd t=146.4 steer 0 0 0
+t=147 mould=30680 mass=30680 soldiers=4 squads=1 bank=245 income=1066 pumped=861 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1331675 took=0.079 stuck=0 p50=27.0 p95=62.2
+cmd t=147.4 steer 0 0 1
+t=148 mould=30680 mass=30680 soldiers=4 squads=1 bank=255 income=1076 pumped=871 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1331159 took=0.079 stuck=0 p50=23.4 p95=47.2
+cmd t=148.1 steer 0 1 1
+cmd t=148.9 steer 0 0 1
+boss t=149.1 kind=sapper phase=sit members=254 at=336,88 near=165
+t=149 mould=30681 mass=30681 soldiers=4 squads=1 bank=265 income=1086 pumped=881 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1330626 took=0.078 stuck=0 p50=6.8 p95=59.5
+cmd t=149.6 steer 0 -1 1
+cmd t=149.9 steer 0 0 1
+cmd t=149.9 steer 0 0 0
+t=150 mould=30683 mass=30683 soldiers=4 squads=1 bank=279 income=1099 pumped=891 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1330107 took=0.077 stuck=0 p50=6.9 p95=54.9
+t=151 mould=30683 mass=30683 soldiers=4 squads=1 bank=293 income=1113 pumped=901 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1329611 took=0.077 stuck=0 p50=6.9 p95=56.1
+t=152 mould=30683 mass=30683 soldiers=4 squads=1 bank=307 income=1127 pumped=911 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1329102 took=0.076 stuck=0 p50=6.8 p95=54.9
+t=153 mould=30683 mass=30683 soldiers=4 squads=1 bank=321 income=1141 pumped=921 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1328583 took=0.076 stuck=0 p50=7.2 p95=54.9
+cmd t=153.8 steer 0 0 -1
+boss t=154.1 kind=sapper phase=sit members=254 at=342,86 near=173
+t=154 mould=30683 mass=30683 soldiers=4 squads=1 bank=335 income=1155 pumped=931 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1328085 took=0.075 stuck=0 p50=6.8 p95=48.7
+cmd t=154.1 steer 0 0 0
+t=155 mould=30683 mass=30683 soldiers=4 squads=1 bank=349 income=1169 pumped=941 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1327561 took=0.074 stuck=0 p50=6.8 p95=48.2
+cmd t=155.1 steer 0 0 -1
+cmd t=155.3 steer 0 1 -1
+cmd t=155.6 steer 0 0 -1
+t=156 mould=30683 mass=30683 soldiers=4 squads=1 bank=359 income=1179 pumped=951 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1327052 took=0.074 stuck=0 p50=18.9 p95=60.5
+cmd t=157.0 steer 0 -1 -1
+t=157 mould=30683 mass=30683 soldiers=4 squads=1 bank=369 income=1189 pumped=961 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1326560 took=0.073 stuck=0 p50=9.9 p95=60.6
+cmd t=157.6 steer 0 0 -1
+t=158 mould=30683 mass=30683 soldiers=4 squads=1 bank=381 income=1201 pumped=971 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1326054 took=0.073 stuck=0 p50=16.2 p95=49.6
+boss t=159.0 kind=sapper phase=sit members=254 at=342,86 near=126
+t=159 mould=30683 mass=30683 soldiers=4 squads=1 bank=393 income=1213 pumped=981 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1325548 took=0.072 stuck=0 p50=18.1 p95=62.0
+cmd t=159.1 steer 0 -1 -1
+cmd t=159.5 steer 0 0 -1
+t=160 mould=30683 mass=30683 soldiers=4 squads=1 bank=405 income=1225 pumped=991 shots=187 killed=586 pumps=2 turrets=0 walls=5 other=0 charge=1325063 took=0.072 stuck=0 p50=23.7 p95=48.3
+cmd t=160.3 steer 0 -1 -1
+cmd t=160.5 steer 0 -1 0
+cmd t=160.6 fire 0 429.1667 100.49165
+cmd t=160.7 steer 0 -1 -1
+cmd t=160.8 fire 0 443.5 106.49165
+cmd t=160.9 steer 0 0 -1
+cmd t=160.9 fire 0 448 111.49165
+cmd t=160.9 fire 0 449.5 115.99165
+t=161 mould=30683 mass=30683 soldiers=4 squads=1 bank=415 income=1235 pumped=1001 shots=191 killed=587 pumps=2 turrets=0 walls=5 other=0 charge=1324554 took=0.071 stuck=0 p50=6.9 p95=64.0
+cmd t=161.3 fire 0 436.3333 99.49165
+cmd t=161.3 fire 0 413.83334 76.31535
+cmd t=161.4 fire 0 403.16666 67.54863
+cmd t=161.6 fire 0 406 67.5173
+cmd t=161.7 fire 0 407.83334 72.38823
+cmd t=161.7 fire 0 408.16666 77.2067
+cmd t=161.9 steer 0 -1 -1
+cmd t=161.9 fire 0 408.16666 75.60612
+cmd t=161.9 fire 0 none
+t=162 mould=30682 mass=30682 soldiers=4 squads=1 bank=425 income=1245 pumped=1011 shots=199 killed=588 pumps=2 turrets=0 walls=5 other=0 charge=1324045 took=0.071 stuck=0 p50=20.1 p95=62.9
+cmd t=162.3 fire 0 358.16666 95.42851
+cmd t=162.3 fire 0 348 97.270226
+cmd t=162.4 fire 0 343.5 96.51762
+cmd t=162.5 fire 0 341.5 95.632545
+cmd t=162.7 fire 0 341.5 93.79134
+cmd t=162.8 fire 0 341.5 90.13694
+cmd t=162.9 fire 0 341.5 85.17995
+cmd t=162.9 steer 0 0 -1
+t=163 mould=30682 mass=30682 soldiers=4 squads=1 bank=435 income=1255 pumped=1021 shots=207 killed=588 pumps=2 turrets=0 walls=5 other=0 charge=1323551 took=0.070 stuck=0 p50=24.3 p95=63.2
+cmd t=163.1 fire 0 341.83334 83.37085
+cmd t=163.2 fire 0 342.33334 81.09595
+cmd t=163.3 steer 0 -1 -1
+cmd t=163.3 fire 0 344.16666 80.10902
+cmd t=163.4 fire 0 345.66666 82.612625
+cmd t=163.7 fire 0 345.66666 81.01265
+cmd t=163.8 steer 0 0 -1
+cmd t=163.9 fire 0 345.66666 78.50386
+cmd t=164.0 fire 0 345.33334 76.58634
+boss t=164.1 kind=sapper phase=sit members=254 at=344,84 near=56
+t=164 mould=30683 mass=30683 soldiers=4 squads=1 bank=445 income=1265 pumped=1031 shots=215 killed=588 pumps=2 turrets=0 walls=5 other=0 charge=1323050 took=0.070 stuck=0 p50=20.2 p95=65.8
+cmd t=164.1 fire 0 343.83334 75.36538
+cmd t=164.2 fire 0 343.83334 73.581985
+cmd t=164.3 steer 0 -1 -1
+cmd t=164.3 fire 0 342 76.062744
+cmd t=164.4 fire 0 336.5 80.35
+cmd t=164.5 fire 0 334 81.35
+cmd t=164.6 fire 0 328.83334 83.85
+cmd t=164.7 fire 0 320.83334 93.51666
+cmd t=164.7 fire 0 317.33334 100.35
+cmd t=164.8 fire 0 316.5 102.183334
+t=165 mould=30683 mass=30683 soldiers=4 squads=1 bank=455 income=1275 pumped=1041 shots=223 killed=589 pumps=2 turrets=0 walls=5 other=0 charge=1322558 took=0.069 stuck=0 p50=20.4 p95=65.1
+cmd t=165.1 steer 0 0 -1
+cmd t=165.2 fire 0 318.66666 102.183334
+cmd t=165.3 fire 0 320.5 102.683334
+cmd t=165.5 steer 0 0 0
+cmd t=165.5 fire 0 323.83334 105.18333
+cmd t=165.7 fire 0 326.33334 93.51666
+t=166 mould=30683 mass=30683 soldiers=4 squads=1 bank=465 income=1285 pumped=1051 shots=227 killed=591 pumps=2 turrets=0 walls=5 other=0 charge=1322091 took=0.069 stuck=0 p50=23.4 p95=65.5
+cmd t=166.1 fire 0 326.83334 91.01666
+cmd t=166.3 fire 0 302.375 96.88157
+cmd t=166.4 fire 0 277.5833 100.7289
+cmd t=166.5 fire 0 329.15283 97.48282
+cmd t=166.5 fire 0 347.8333 95.47185
+cmd t=166.6 fire 0 355.9167 91.74374
+cmd t=166.7 fire 0 358.9167 88.40729
+cmd t=166.7 fire 0 363.25 85.45566
+t=167 mould=30675 mass=30675 soldiers=4 squads=1 bank=475 income=1295 pumped=1061 shots=235 killed=629 pumps=2 turrets=0 walls=5 other=0 charge=1321592 took=0.069 stuck=0 p50=7.0 p95=69.0
+cmd t=167.0 fire 0 358.1667 90.06511
+cmd t=167.1 fire 0 354.8333 93.69968
+cmd t=167.2 fire 0 351.5 93.46623
+cmd t=167.3 fire 0 346 92.532524
+cmd t=167.3 fire 0 343 92.52513
+cmd t=167.7 steer 0 -1 0
+t=168 mould=30670 mass=30670 soldiers=4 squads=1 bank=485 income=1305 pumped=1071 shots=243 killed=688 pumps=2 turrets=0 walls=5 other=0 charge=1321088 took=0.068 stuck=0 p50=6.8 p95=70.2
+cmd t=168.5 steer 0 0 0
+cmd t=168.5 fire 0 350.25 89.1649
+cmd t=168.6 fire 0 362.25 81.089386
+cmd t=168.7 fire 0 363.8333 79.86061
+boss t=169.1 kind=sapper phase=go members=168 at=350,76 near=27
+t=169 mould=30678 mass=30678 soldiers=4 squads=1 bank=495 income=1315 pumped=1081 shots=251 killed=719 pumps=2 turrets=0 walls=5 other=0 charge=1320598 took=0.068 stuck=0 p50=29.3 p95=69.3
+cmd t=169.2 steer 0 -1 0
+cmd t=169.3 fire 0 361.4167 82.12277
+cmd t=169.4 fire 0 360.1667 83.29574
+cmd t=169.5 steer 0 0 0
+cmd t=170.0 fire 0 none
+cmd t=170.0 wall 328.9681 95.16616 331.2181 102.957825
+cmd t=170.0 sorder 0 build 7
+t=170 mould=30669 mass=30669 soldiers=4 squads=1 bank=424 income=1325 pumped=1091 shots=259 killed=757 pumps=2 turrets=0 walls=5 other=0 charge=1320107 took=0.067 stuck=0 p50=21.0 p95=64.1
+t=171 mould=30670 mass=30670 soldiers=4 squads=1 bank=434 income=1335 pumped=1101 shots=264 killed=842 pumps=2 turrets=0 walls=5 other=0 charge=1319634 took=0.067 stuck=0 p50=20.3 p95=65.3
+t=172 mould=30644 mass=30644 soldiers=4 squads=1 bank=444 income=1345 pumped=1111 shots=269 killed=922 pumps=2 turrets=0 walls=5 other=0 charge=1319184 took=0.066 stuck=0 p50=20.9 p95=64.3
+t=173 mould=30678 mass=30678 soldiers=4 squads=1 bank=454 income=1355 pumped=1121 shots=273 killed=1039 pumps=2 turrets=0 walls=6 other=0 charge=1318705 took=0.066 stuck=0 p50=9.1 p95=64.1
+cmd t=173.1 steer 0 1 0
+cmd t=173.4 steer 0 1 -1
+cmd t=173.8 fire 0 373.75 55.1576
+cmd t=173.9 fire 0 374.5 50.118576
+boss t=174.1 kind=sapper phase=go members=109 at=366,42 near=49
+t=174 mould=30683 mass=30683 soldiers=4 squads=1 bank=464 income=1365 pumped=1131 shots=281 killed=1043 pumps=2 turrets=0 walls=6 other=0 charge=1318217 took=0.066 stuck=0 p50=22.4 p95=68.4
+cmd t=174.1 fire 0 374.5 48.224754
+cmd t=174.1 fire 0 380.4167 47.697113
+cmd t=174.2 fire 0 390.6667 47.81874
+cmd t=174.3 steer 0 1 0
+cmd t=174.3 fire 0 392.66666 46.093697
+cmd t=174.4 fire 0 395.33334 46.008507
+cmd t=174.5 fire 0 408.58334 57.01672
+cmd t=174.6 fire 0 420.25 68.36548
+cmd t=174.7 fire 0 422.25 70.16916
+cmd t=175.0 fire 0 425 70.2229
+t=175 mould=30679 mass=30679 soldiers=4 squads=1 bank=475 income=1377 pumped=1141 shots=289 killed=1057 pumps=2 turrets=0 walls=6 other=0 charge=1317746 took=0.065 stuck=0 p50=30.1 p95=69.4
+cmd t=175.1 fire 0 427.08334 71.6899
+cmd t=175.1 fire 0 428.33334 73.598145
+cmd t=175.2 fire 0 429.66666 79.28563
+cmd t=175.3 steer 0 1 1
+cmd t=175.3 fire 0 428.75 91.15403
+cmd t=175.3 fire 0 425.83334 93.55523
+cmd t=175.4 fire 0 423.66666 94.342705
+cmd t=175.5 fire 0 416.33334 94.14686
+cmd t=175.5 fire 0 411.91666 94.370575
+cmd t=175.6 fire 0 405.83334 96.64397
+cmd t=175.7 fire 0 404.83334 100.24742
+cmd t=175.7 steer 0 1 0
+cmd t=175.7 fire 0 412.41666 101.41606
+cmd t=175.8 fire 0 425.83334 93.24704
+cmd t=175.9 fire 0 436.91666 86.63662
+cmd t=175.9 fire 0 438.33334 85.46371
+cmd t=176.0 fire 0 440.66666 82.14343
+t=176 mould=30682 mass=30682 soldiers=4 squads=1 bank=487 income=1388 pumped=1151 shots=297 killed=1057 pumps=2 turrets=0 walls=6 other=0 charge=1317280 took=0.065 stuck=0 p50=30.2 p95=69.4
+cmd t=176.1 fire 0 441.58334 80.85571
+cmd t=176.3 fire 0 442.58334 78.86325
+cmd t=176.4 fire 0 442.83334 77.07943
+cmd t=176.7 fire 0 444.5 77.07019
+cmd t=176.9 fire 0 444.08334 87.19032
+cmd t=177.0 fire 0 443.41666 93.42997
+t=177 mould=30683 mass=30683 soldiers=4 squads=1 bank=497 income=1398 pumped=1161 shots=301 killed=1057 pumps=2 turrets=0 walls=6 other=0 charge=1316836 took=0.064 stuck=0 p50=21.9 p95=69.9
+cmd t=177.1 steer 0 1 1
+cmd t=177.1 steer 0 0 1
+cmd t=177.3 fire 0 none
+cmd t=177.3 steer 0 0 0
+cmd t=177.5 steer 0 0 -1
+cmd t=177.7 fire 0 383.3333 79.79228
+cmd t=177.7 fire 0 381.1667 79.20895
+cmd t=177.7 fire 0 369.0833 67.71716
+cmd t=177.8 fire 0 365.4167 65.33555
+cmd t=177.9 fire 0 363.4167 65.04883
+cmd t=178.0 fire 0 362.75 63.457478
+t=178 mould=30682 mass=30682 soldiers=4 squads=1 bank=507 income=1408 pumped=1171 shots=312 killed=1059 pumps=2 turrets=0 walls=6 other=0 charge=1316409 took=0.064 stuck=0 p50=21.8 p95=69.9
+cmd t=178.1 fire 0 363.3333 60.88843
+cmd t=178.2 fire 0 366 59.414646
+cmd t=178.3 fire 0 380.3333 56.10779
+cmd t=178.4 fire 0 398.91666 51.551746
+cmd t=178.5 fire 0 404.58334 48.105473
+cmd t=178.5 fire 0 406.41666 45.20765
+cmd t=178.6 steer 0 1 -1
+cmd t=178.7 fire 0 406.41666 42.967445
+cmd t=178.7 fire 0 412.41666 47.56359
+cmd t=178.9 fire 0 416 49.048855
+boss t=179.0 kind=sapper phase=go members=95 at=362,42 near=50
+t=179 mould=30679 mass=30679 soldiers=4 squads=1 bank=517 income=1418 pumped=1181 shots=320 killed=1065 pumps=2 turrets=0 walls=6 other=0 charge=1315948 took=0.064 stuck=0 p50=21.7 p95=69.8
+cmd t=179.0 fire 0 416 50.659843
+cmd t=179.1 fire 0 408.5 78.287094
+cmd t=179.2 fire 0 none
+cmd t=179.4 steer 0 0 -1
+cmd t=179.4 steer 0 -1 -1
+cmd t=179.6 steer 0 -1 0
+cmd t=179.6 steer 0 0 0
+t=180 mould=30680 mass=30680 soldiers=4 squads=1 bank=527 income=1428 pumped=1191 shots=326 killed=1074 pumps=2 turrets=0 walls=6 other=0 charge=1315476 took=0.063 stuck=0 p50=6.9 p95=69.7
+t=181 mould=30683 mass=30683 soldiers=4 squads=1 bank=537 income=1438 pumped=1201 shots=329 killed=1079 pumps=2 turrets=0 walls=6 other=0 charge=1315008 took=0.063 stuck=0 p50=29.6 p95=68.5
+cmd t=181.1 stance 0 free
+cmd t=181.1 stance 1 free
+cmd t=181.1 stance 2 free
+cmd t=181.1 stance 3 free
+cmd t=181.1 build pump 420.66666 42.83045
+cmd t=181.1 sorder 0 build 8
+t=182 mould=30682 mass=30682 soldiers=4 squads=1 bank=50 income=1451 pumped=1211 shots=334 killed=1084 pumps=2 turrets=0 walls=6 other=0 charge=1314544 took=0.063 stuck=0 p50=25.2 p95=51.6
+t=183 mould=30679 mass=30679 soldiers=4 squads=1 bank=63 income=1464 pumped=1221 shots=339 killed=1088 pumps=2 turrets=0 walls=6 other=0 charge=1314107 took=0.062 stuck=0 p50=7.0 p95=67.3
+boss t=184.1 kind=sapper phase=go members=80 at=354,46 near=60
+t=184 mould=30683 mass=30683 soldiers=4 squads=1 bank=75 income=1476 pumped=1231 shots=344 killed=1090 pumps=2 turrets=0 walls=6 other=0 charge=1313680 took=0.062 stuck=0 p50=29.0 p95=51.7
+t=185 mould=30683 mass=30683 soldiers=4 squads=1 bank=92 income=1493 pumped=1244 shots=351 killed=1092 pumps=3 turrets=0 walls=6 other=0 charge=1313212 took=0.062 stuck=0 p50=6.9 p95=67.6
+cmd t=185.3 steer 0 -1 0
+t=186 mould=30683 mass=30683 soldiers=4 squads=1 bank=109 income=1511 pumped=1259 shots=359 killed=1093 pumps=3 turrets=0 walls=6 other=0 charge=1312738 took=0.061 stuck=0 p50=29.2 p95=67.8
+cmd t=186.3 steer 0 -1 1
+cmd t=186.8 steer 0 0 1
+cmd t=187.0 steer 0 -1 1
+boss t=187.1 ended=Broken kind=sapper members=72 first=254 stole=0
+t=187 mould=30683 mass=30682 soldiers=4 squads=1 bank=125 income=1527 pumped=1275 shots=367 killed=1099 pumps=3 turrets=0 walls=6 other=0 charge=1312232 took=0.061 stuck=0 p50=25.0 p95=67.0
+cmd t=187.6 steer 0 -1 0
+cmd t=187.7 steer 0 0 0
+t=188 mould=30681 mass=30681 soldiers=4 squads=1 bank=141 income=1542 pumped=1289 shots=372 killed=1111 pumps=3 turrets=0 walls=6 other=0 charge=1311802 took=0.061 stuck=0 p50=13.9 p95=67.6
+t=189 mould=30683 mass=30683 soldiers=4 squads=1 bank=158 income=1559 pumped=1304 shots=380 killed=1112 pumps=3 turrets=0 walls=6 other=0 charge=1311371 took=0.060 stuck=0 p50=21.5 p95=69.1
+cmd t=189.6 steer 0 0 1
+cmd t=189.8 steer 0 1 1
+t=190 mould=30682 mass=30682 soldiers=4 squads=1 bank=175 income=1576 pumped=1319 shots=388 killed=1115 pumps=3 turrets=0 walls=6 other=0 charge=1310946 took=0.060 stuck=0 p50=25.0 p95=69.5
+cmd t=190.3 steer 0 1 0
+cmd t=190.3 steer 0 0 0
+cmd t=190.7 steer 0 0 1
+cmd t=190.8 steer 0 1 1
+cmd t=191.0 steer 0 0 1
+t=191 mould=30682 mass=30682 soldiers=4 squads=1 bank=192 income=1593 pumped=1334 shots=395 killed=1116 pumps=3 turrets=0 walls=6 other=0 charge=1310483 took=0.060 stuck=0 p50=6.9 p95=69.8
+t=192 mould=30683 mass=30683 soldiers=4 squads=1 bank=207 income=1608 pumped=1349 shots=403 killed=1116 pumps=3 turrets=0 walls=6 other=0 charge=1310010 took=0.059 stuck=0 p50=30.7 p95=70.4
+cmd t=192.4 steer 0 0 0
+cmd t=192.7 steer 0 0 1
+t=193 mould=30683 mass=30683 soldiers=4 squads=1 bank=222 income=1623 pumped=1364 shots=411 killed=1116 pumps=3 turrets=0 walls=6 other=0 charge=1309540 took=0.059 stuck=0 p50=22.3 p95=69.5
+t=194 mould=30682 mass=30682 soldiers=4 squads=1 bank=237 income=1638 pumped=1379 shots=419 killed=1117 pumps=3 turrets=0 walls=6 other=0 charge=1309090 took=0.059 stuck=0 p50=25.2 p95=71.8
+cmd t=194.7 steer 0 -1 1
+t=195 mould=30683 mass=30683 soldiers=4 squads=1 bank=252 income=1653 pumped=1394 shots=424 killed=1117 pumps=3 turrets=0 walls=6 other=0 charge=1308665 took=0.058 stuck=0 p50=6.7 p95=69.6
+cmd t=195.3 steer 0 0 1
+cmd t=195.7 steer 0 -1 1
+cmd t=195.9 steer 0 0 1
+cmd t=196.0 steer 0 0 0
+t=196 mould=30683 mass=30683 soldiers=4 squads=1 bank=267 income=1668 pumped=1409 shots=432 killed=1118 pumps=3 turrets=0 walls=6 other=0 charge=1308237 took=0.058 stuck=0 p50=25.0 p95=69.1
+cmd t=196.2 steer 0 -1 0
+cmd t=196.2 steer 0 -1 -1
+cmd t=196.7 steer 0 -1 0
+cmd t=196.7 steer 0 0 0
+t=197 mould=30683 mass=30683 soldiers=4 squads=1 bank=282 income=1683 pumped=1424 shots=440 killed=1118 pumps=3 turrets=0 walls=6 other=0 charge=1307776 took=0.058 stuck=0 p50=6.9 p95=69.0
+cmd t=197.2 steer 0 0 1
+cmd t=197.3 steer 0 0 0
+cmd t=197.9 wall 368.8125 169.41524 370.125 173.47774
+cmd t=197.9 sorder 0 build 9
+t=198 mould=30683 mass=30683 soldiers=4 squads=1 bank=254 income=1698 pumped=1439 shots=448 killed=1119 pumps=3 turrets=0 walls=6 other=0 charge=1307300 took=0.058 stuck=0 p50=21.3 p95=50.1
+t=199 mould=30669 mass=30669 soldiers=4 squads=1 bank=269 income=1713 pumped=1454 shots=451 killed=1145 pumps=3 turrets=0 walls=6 other=0 charge=1306827 took=0.057 stuck=0 p50=23.5 p95=50.1
+t=200 mould=30683 mass=30683 soldiers=4 squads=1 bank=284 income=1728 pumped=1469 shots=456 killed=1147 pumps=3 turrets=0 walls=6 other=0 charge=1306375 took=0.057 stuck=0 p50=23.6 p95=63.1
+t=201 mould=30683 mass=30683 soldiers=4 squads=1 bank=299 income=1743 pumped=1484 shots=459 killed=1147 pumps=3 turrets=0 walls=7 other=0 charge=1305951 took=0.057 stuck=0 p50=8.8 p95=64.1
+cmd t=201.1 wall 351.625 134.26067 359 151.69817
+cmd t=201.1 sorder 0 build 10
+t=202 mould=30683 mass=30683 soldiers=4 squads=1 bank=125 income=1758 pumped=1499 shots=462 killed=1147 pumps=3 turrets=0 walls=7 other=0 charge=1305530 took=0.056 stuck=0 p50=19.7 p95=62.7
+t=203 mould=30673 mass=30673 soldiers=4 squads=1 bank=140 income=1773 pumped=1514 shots=465 killed=1193 pumps=3 turrets=0 walls=7 other=0 charge=1305072 took=0.056 stuck=0 p50=27.8 p95=49.6
+t=204 mould=30679 mass=30679 soldiers=4 squads=1 bank=155 income=1788 pumped=1529 shots=469 killed=1342 pumps=3 turrets=0 walls=8 other=0 charge=1304593 took=0.056 stuck=0 p50=24.0 p95=63.3
+cmd t=204.3 steer 0 0 -1
+cmd t=204.7 steer 0 1 -1
+t=205 mould=30680 mass=30680 soldiers=4 squads=1 bank=170 income=1803 pumped=1544 shots=475 killed=1342 pumps=3 turrets=0 walls=8 other=0 charge=1304113 took=0.056 stuck=0 p50=7.2 p95=64.8
+cmd t=205.2 steer 0 0 -1
+cmd t=205.6 steer 0 0 0
+t=206 mould=30683 mass=30683 soldiers=4 squads=1 bank=185 income=1818 pumped=1559 shots=483 killed=1342 pumps=3 turrets=0 walls=8 other=0 charge=1303663 took=0.055 stuck=0 p50=27.7 p95=64.6
+cmd t=206.1 steer 0 0 -1
+cmd t=206.1 steer 0 -1 -1
+cmd t=206.9 steer 0 -1 0
+t=207 mould=30683 mass=30683 soldiers=4 squads=1 bank=200 income=1833 pumped=1574 shots=487 killed=1343 pumps=3 turrets=0 walls=8 other=0 charge=1303243 took=0.055 stuck=0 p50=24.1 p95=66.7
+cmd t=207.5 steer 0 0 0
+cmd t=207.7 steer 0 1 0
+cmd t=207.9 steer 0 1 1
+t=208 mould=30683 mass=30683 soldiers=4 squads=1 bank=215 income=1848 pumped=1589 shots=487 killed=1343 pumps=3 turrets=0 walls=8 other=0 charge=1302821 took=0.055 stuck=0 p50=21.2 p95=63.5
+cmd t=208.1 steer 0 1 0
+cmd t=208.1 steer 0 0 0
+cmd t=208.2 steer 0 -1 0
+cmd t=208.2 steer 0 -1 -1
+t=209 mould=30683 mass=30683 soldiers=4 squads=1 bank=230 income=1863 pumped=1604 shots=495 killed=1343 pumps=3 turrets=0 walls=8 other=0 charge=1302367 took=0.055 stuck=0 p50=23.8 p95=64.1
+cmd t=209.1 steer 0 -1 0
+cmd t=209.1 steer 0 0 0
+cmd t=209.9 steer 0 1 0
+t=210 mould=30683 mass=30683 soldiers=4 squads=1 bank=245 income=1878 pumped=1619 shots=503 killed=1343 pumps=3 turrets=0 walls=8 other=0 charge=1301899 took=0.054 stuck=0 p50=7.0 p95=65.3
+cmd t=210.4 steer 0 0 0
+t=211 mould=30682 mass=30682 soldiers=4 squads=1 bank=260 income=1893 pumped=1634 shots=511 killed=1347 pumps=3 turrets=0 walls=8 other=0 charge=1301430 took=0.054 stuck=0 p50=23.3 p95=51.6
+t=212 mould=30683 mass=30683 soldiers=4 squads=1 bank=275 income=1908 pumped=1649 shots=515 killed=1347 pumps=3 turrets=0 walls=8 other=0 charge=1300999 took=0.054 stuck=0 p50=29.0 p95=65.5
+t=213 mould=30683 mass=30683 soldiers=4 squads=1 bank=290 income=1923 pumped=1664 shots=523 killed=1347 pumps=3 turrets=0 walls=8 other=0 charge=1300587 took=0.054 stuck=0 p50=6.8 p95=65.4
+cmd t=213.1 steer 0 0 1
+cmd t=213.2 steer 0 1 1
+cmd t=213.7 steer 0 1 0
+t=214 mould=30683 mass=30683 soldiers=4 squads=1 bank=305 income=1938 pumped=1679 shots=531 killed=1347 pumps=3 turrets=0 walls=8 other=0 charge=1300168 took=0.053 stuck=0 p50=24.6 p95=74.2
+cmd t=214.1 steer 0 1 -1
+cmd t=214.9 steer 0 1 0
+t=215 mould=30683 mass=30683 soldiers=4 squads=1 bank=320 income=1953 pumped=1694 shots=539 killed=1347 pumps=3 turrets=0 walls=8 other=0 charge=1299716 took=0.053 stuck=0 p50=23.8 p95=74.2
+cmd t=215.7 steer 0 1 1
+t=216 mould=30683 mass=30683 soldiers=4 squads=1 bank=335 income=1968 pumped=1709 shots=547 killed=1348 pumps=3 turrets=0 walls=8 other=0 charge=1299248 took=0.053 stuck=0 p50=32.1 p95=75.6
+cmd t=216.1 steer 0 1 0
+cmd t=216.7 steer 0 1 1
+cmd t=216.7 steer 0 0 1
+t=217 mould=30682 mass=30682 soldiers=4 squads=1 bank=350 income=1983 pumped=1724 shots=555 killed=1349 pumps=3 turrets=0 walls=8 other=0 charge=1298775 took=0.053 stuck=0 p50=18.5 p95=48.6
+t=218 mould=30682 mass=30682 soldiers=4 squads=1 bank=365 income=1998 pumped=1739 shots=563 killed=1354 pumps=3 turrets=0 walls=8 other=0 charge=1298336 took=0.052 stuck=0 p50=15.2 p95=48.8
+t=219 mould=30683 mass=30683 soldiers=4 squads=1 bank=380 income=2013 pumped=1754 shots=566 killed=1354 pumps=3 turrets=0 walls=8 other=0 charge=1297925 took=0.052 stuck=0 p50=6.7 p95=48.3
+cmd t=219.3 steer 0 1 1
+cmd t=219.3 steer 0 1 0
+cmd t=219.5 steer 0 1 -1
+cmd t=219.9 steer 0 0 -1
+t=220 mould=30681 mass=30681 soldiers=4 squads=1 bank=395 income=2028 pumped=1769 shots=570 killed=1357 pumps=3 turrets=0 walls=8 other=0 charge=1297506 took=0.052 stuck=0 p50=18.1 p95=48.7
+cmd t=221.0 steer 0 0 0
+t=221 mould=30683 mass=30683 soldiers=4 squads=1 bank=410 income=2043 pumped=1784 shots=570 killed=1357 pumps=3 turrets=0 walls=8 other=0 charge=1297062 took=0.052 stuck=0 p50=22.7 p95=48.7
+cmd t=221.1 steer 0 0 1
+cmd t=221.7 steer 0 0 0
+cmd t=221.9 sorder 0 move 398 213.13124
+t=222 mould=30683 mass=30683 soldiers=4 squads=1 bank=425 income=2058 pumped=1799 shots=573 killed=1357 pumps=3 turrets=0 walls=8 other=0 charge=1296600 took=0.051 stuck=0 p50=6.7 p95=48.6
+t=223 mould=30683 mass=30683 soldiers=4 squads=1 bank=440 income=2073 pumped=1814 shots=580 killed=1357 pumps=3 turrets=0 walls=8 other=0 charge=1296127 took=0.051 stuck=0 p50=18.0 p95=48.6
+t=224 mould=30683 mass=30683 soldiers=4 squads=1 bank=456 income=2090 pumped=1829 shots=586 killed=1358 pumps=3 turrets=0 walls=8 other=0 charge=1295693 took=0.051 stuck=0 p50=18.0 p95=48.7
+t=225 mould=30683 mass=30683 soldiers=4 squads=1 bank=473 income=2106 pumped=1844 shots=588 killed=1358 pumps=3 turrets=0 walls=8 other=0 charge=1295281 took=0.051 stuck=0 p50=22.3 p95=67.6
+t=226 mould=30682 mass=30682 soldiers=4 squads=1 bank=488 income=2121 pumped=1859 shots=593 killed=1359 pumps=3 turrets=0 walls=8 other=0 charge=1294872 took=0.051 stuck=0 p50=7.0 p95=67.7
+t=227 mould=30683 mass=30683 soldiers=4 squads=1 bank=503 income=2136 pumped=1874 shots=599 killed=1359 pumps=3 turrets=0 walls=8 other=0 charge=1294452 took=0.050 stuck=0 p50=6.8 p95=67.4
+cmd t=227.6 steer 0 0 -1
+t=228 mould=30683 mass=30683 soldiers=4 squads=1 bank=518 income=2152 pumped=1889 shots=601 killed=1360 pumps=3 turrets=0 walls=8 other=0 charge=1294007 took=0.050 stuck=0 p50=7.9 p95=67.4
+t=229 mould=30683 mass=30683 soldiers=4 squads=1 bank=533 income=2167 pumped=1904 shots=605 killed=1360 pumps=3 turrets=0 walls=8 other=0 charge=1293547 took=0.050 stuck=0 p50=28.6 p95=66.1
+t=230 mould=30683 mass=30683 soldiers=4 squads=1 bank=548 income=2182 pumped=1919 shots=610 killed=1360 pumps=3 turrets=0 walls=8 other=0 charge=1293129 took=0.050 stuck=0 p50=27.5 p95=64.7
+t=231 mould=30683 mass=30683 soldiers=4 squads=1 bank=563 income=2197 pumped=1934 shots=614 killed=1360 pumps=3 turrets=0 walls=8 other=0 charge=1292731 took=0.049 stuck=0 p50=27.4 p95=50.5
+cmd t=231.6 steer 0 -1 -1
+t=232 mould=30682 mass=30682 soldiers=4 squads=1 bank=578 income=2212 pumped=1949 shots=622 killed=1365 pumps=3 turrets=0 walls=8 other=0 charge=1292314 took=0.049 stuck=0 p50=24.3 p95=51.0
+cmd t=232.4 steer 0 0 -1
+cmd t=232.9 steer 0 -1 -1
+t=233 mould=30683 mass=30683 soldiers=4 squads=1 bank=593 income=2227 pumped=1964 shots=630 killed=1368 pumps=3 turrets=0 walls=8 other=0 charge=1291871 took=0.049 stuck=0 p50=6.9 p95=66.4
+cmd t=233.4 steer 0 0 -1
+t=234 mould=30683 mass=30683 soldiers=4 squads=1 bank=608 income=2242 pumped=1979 shots=634 killed=1368 pumps=3 turrets=0 walls=8 other=0 charge=1291427 took=0.049 stuck=0 p50=29.0 p95=66.2
+cmd t=234.3 steer 0 1 -1
+cmd t=234.6 steer 0 1 0
+cmd t=234.7 steer 0 1 1
+cmd t=234.9 steer 0 0 1
+t=235 mould=30683 mass=30683 soldiers=4 squads=1 bank=623 income=2257 pumped=1994 shots=642 killed=1467 pumps=3 turrets=0 walls=8 other=0 charge=1290975 took=0.049 stuck=0 p50=6.8 p95=66.3
+t=236 mould=30679 mass=30679 soldiers=4 squads=1 bank=638 income=2271 pumped=2009 shots=650 killed=1479 pumps=3 turrets=0 walls=8 other=0 charge=1290565 took=0.048 stuck=0 p50=23.8 p95=64.5
+cmd t=236.7 steer 0 1 1
+t=237 mould=30683 mass=30683 soldiers=4 squads=1 bank=653 income=2286 pumped=2024 shots=658 killed=1483 pumps=3 turrets=0 walls=8 other=0 charge=1290165 took=0.048 stuck=0 p50=6.8 p95=66.4
+cmd t=237.7 steer 0 0 1
+cmd t=237.9 steer 0 0 0
+t=238 mould=30682 mass=30682 soldiers=4 squads=1 bank=668 income=2301 pumped=2039 shots=666 killed=1485 pumps=3 turrets=0 walls=8 other=0 charge=1289749 took=0.048 stuck=0 p50=24.8 p95=48.6
+cmd t=238.6 build pump 415.83334 264.9231
+cmd t=238.6 sorder 0 build 11
+t=239 mould=30683 mass=30683 soldiers=4 squads=1 bank=183 income=2316 pumped=2054 shots=674 killed=1485 pumps=3 turrets=0 walls=8 other=0 charge=1289317 took=0.048 stuck=0 p50=6.8 p95=65.3
+t=240 mould=30682 mass=30682 soldiers=4 squads=1 bank=200 income=2333 pumped=2069 shots=678 killed=1486 pumps=3 turrets=0 walls=8 other=0 charge=1288881 took=0.048 stuck=0 p50=28.2 p95=66.3
+t=241 mould=30677 mass=30677 soldiers=4 squads=1 bank=215 income=2348 pumped=2084 shots=680 killed=1507 pumps=3 turrets=0 walls=8 other=0 charge=1288442 took=0.047 stuck=0 p50=27.7 p95=64.5
+t=242 mould=30680 mass=30680 soldiers=4 squads=1 bank=230 income=2363 pumped=2099 shots=683 killed=1525 pumps=3 turrets=0 walls=8 other=0 charge=1288042 took=0.047 stuck=0 p50=27.9 p95=64.2
+t=243 mould=30683 mass=30683 soldiers=4 squads=1 bank=249 income=2382 pumped=2114 shots=688 killed=1529 pumps=3 turrets=0 walls=8 other=0 charge=1287642 took=0.047 stuck=0 p50=6.9 p95=64.9
+t=244 mould=30682 mass=30682 soldiers=4 squads=1 bank=268 income=2401 pumped=2129 shots=693 killed=1538 pumps=3 turrets=0 walls=8 other=0 charge=1287229 took=0.047 stuck=0 p50=23.6 p95=64.9
+t=245 mould=30682 mass=30682 soldiers=4 squads=1 bank=289 income=2422 pumped=2146 shots=698 killed=1547 pumps=4 turrets=0 walls=8 other=0 charge=1286816 took=0.047 stuck=0 p50=24.5 p95=64.6
+t=246 mould=30682 mass=30682 soldiers=4 squads=1 bank=313 income=2446 pumped=2166 shots=704 killed=1551 pumps=4 turrets=0 walls=8 other=0 charge=1286400 took=0.047 stuck=0 p50=28.3 p95=66.6
+t=247 mould=30683 mass=30683 soldiers=4 squads=1 bank=337 income=2470 pumped=2186 shots=704 killed=1551 pumps=4 turrets=0 walls=8 other=0 charge=1285979 took=0.046 stuck=0 p50=27.5 p95=62.5
+boss t=248.0 formed kind=sapper cause=Crowd grade=0.00 at=345,225
+t=248 mould=30683 mass=30683 soldiers=4 squads=1 bank=361 income=2494 pumped=2206 shots=704 killed=1551 pumps=4 turrets=0 walls=8 other=0 charge=1285580 took=0.046 stuck=0 p50=27.4 p95=64.8
+t=249 mould=30683 mass=30683 soldiers=4 squads=1 bank=385 income=2518 pumped=2226 shots=708 killed=1552 pumps=4 turrets=0 walls=8 other=0 charge=1285171 took=0.046 stuck=0 p50=22.9 p95=63.1
+t=250 mould=30683 mass=30683 soldiers=4 squads=1 bank=409 income=2542 pumped=2246 shots=716 killed=1553 pumps=4 turrets=0 walls=8 other=0 charge=1284748 took=0.046 stuck=0 p50=29.2 p95=50.5
+cmd t=250.1 steer 0 0 -1
+t=251 mould=30683 mass=30683 soldiers=4 squads=1 bank=429 income=2562 pumped=2266 shots=722 killed=1553 pumps=4 turrets=0 walls=8 other=0 charge=1284318 took=0.046 stuck=0 p50=20.7 p95=65.3
+cmd t=252.0 steer 0 0 0
+t=252 mould=30683 mass=30683 soldiers=4 squads=1 bank=449 income=2582 pumped=2286 shots=725 killed=1554 pumps=4 turrets=0 walls=8 other=0 charge=1283884 took=0.046 stuck=0 p50=27.8 p95=64.9
+cmd t=252.3 steer 0 1 0
+cmd t=252.4 steer 0 1 -1
+cmd t=252.5 steer 0 0 -1
+boss t=253.1 kind=sapper phase=gather members=192 at=344,222 near=63
+t=253 mould=30681 mass=30681 soldiers=4 squads=1 bank=471 income=2604 pumped=2306 shots=732 killed=1563 pumps=4 turrets=0 walls=8 other=0 charge=1283446 took=0.045 stuck=0 p50=6.7 p95=64.5
+cmd t=253.5 steer 0 -1 -1
+t=254 mould=30682 mass=30682 soldiers=4 squads=1 bank=492 income=2626 pumped=2326 shots=740 killed=1571 pumps=4 turrets=0 walls=8 other=0 charge=1283031 took=0.045 stuck=0 p50=8.4 p95=64.7
+cmd t=254.2 steer 0 0 -1
+t=255 mould=30682 mass=30682 soldiers=4 squads=1 bank=514 income=2647 pumped=2346 shots=747 killed=1583 pumps=4 turrets=0 walls=8 other=0 charge=1282619 took=0.045 stuck=0 p50=24.8 p95=63.4
+cmd t=255.5 steer 0 -1 -1
+t=256 mould=30675 mass=30675 soldiers=4 squads=1 bank=534 income=2667 pumped=2366 shots=755 killed=1607 pumps=4 turrets=0 walls=8 other=0 charge=1282207 took=0.045 stuck=0 p50=23.8 p95=50.9
+cmd t=256.5 steer 0 0 -1
+cmd t=256.9 steer 0 -1 -1
+t=257 mould=30681 mass=30681 soldiers=4 squads=1 bank=554 income=2687 pumped=2386 shots=763 killed=1621 pumps=4 turrets=0 walls=8 other=0 charge=1281796 took=0.045 stuck=0 p50=20.4 p95=65.8
+cmd t=257.1 steer 0 0 -1
+boss t=258.0 kind=sapper phase=go members=192 at=358,216 near=82
+t=258 mould=30670 mass=30670 soldiers=4 squads=1 bank=574 income=2707 pumped=2406 shots=771 killed=1694 pumps=4 turrets=0 walls=8 other=0 charge=1281385 took=0.045 stuck=0 p50=6.9 p95=67.3
+cmd t=258.5 steer 0 -1 -1
+cmd t=258.7 steer 0 0 -1
+t=259 mould=30648 mass=30648 soldiers=4 squads=1 bank=594 income=2727 pumped=2426 shots=776 killed=1795 pumps=4 turrets=0 walls=8 other=0 charge=1280972 took=0.044 stuck=0 p50=24.0 p95=67.0
+cmd t=259.5 steer 0 1 -1
+cmd t=259.7 steer 0 0 -1
+cmd t=259.8 steer 0 -1 -1
+cmd t=260.0 steer 0 -1 0
+t=260 mould=30668 mass=30668 soldiers=4 squads=1 bank=614 income=2747 pumped=2446 shots=784 killed=1872 pumps=4 turrets=0 walls=8 other=0 charge=1280578 took=0.044 stuck=0 p50=8.5 p95=66.6
+cmd t=260.3 steer 0 0 0
+cmd t=260.5 steer 0 0 1
+cmd t=260.7 steer 0 0 0
+t=261 mould=30675 mass=30675 soldiers=4 squads=1 bank=634 income=2767 pumped=2466 shots=792 killed=1889 pumps=4 turrets=0 walls=8 other=0 charge=1280174 took=0.044 stuck=0 p50=6.8 p95=66.9
+cmd t=261.4 wall 333.9375 95.75467 362.4375 149.25467
+cmd t=261.4 sorder 0 build 12
+t=262 mould=30680 mass=30680 soldiers=4 squads=1 bank=48 income=2787 pumped=2486 shots=798 killed=1918 pumps=4 turrets=0 walls=8 other=0 charge=1279760 took=0.044 stuck=0 p50=21.8 p95=50.5
+boss t=263.1 kind=sapper phase=go members=184 at=358,220 near=88
+t=263 mould=30680 mass=30680 soldiers=4 squads=1 bank=68 income=2807 pumped=2506 shots=799 killed=1971 pumps=4 turrets=0 walls=8 other=0 charge=1279336 took=0.044 stuck=0 p50=20.4 p95=66.4
+t=264 mould=30683 mass=30683 soldiers=4 squads=1 bank=88 income=2827 pumped=2526 shots=800 killed=2047 pumps=4 turrets=0 walls=8 other=0 charge=1278902 took=0.044 stuck=0 p50=24.6 p95=65.8
+t=265 mould=30663 mass=30663 soldiers=4 squads=1 bank=108 income=2847 pumped=2546 shots=803 killed=2311 pumps=4 turrets=0 walls=8 other=0 charge=1278471 took=0.043 stuck=0 p50=20.9 p95=66.9
+t=266 mould=30632 mass=30632 soldiers=4 squads=1 bank=128 income=2867 pumped=2566 shots=806 killed=2508 pumps=4 turrets=0 walls=8 other=0 charge=1278078 took=0.043 stuck=0 p50=20.7 p95=66.0
+t=267 mould=30676 mass=30676 soldiers=4 squads=1 bank=148 income=2887 pumped=2586 shots=807 killed=2541 pumps=4 turrets=0 walls=8 other=0 charge=1277680 took=0.043 stuck=0 p50=7.2 p95=66.6
+boss t=268.1 kind=sapper phase=hunt members=184 at=360,214 near=82
+t=268 mould=30662 mass=30669 soldiers=4 squads=1 bank=169 income=2909 pumped=2608 shots=810 killed=2638 pumps=4 turrets=0 walls=8 other=0 charge=1277254 took=0.043 stuck=0 p50=20.3 p95=66.5
+t=269 mould=30665 mass=30665 soldiers=4 squads=1 bank=188 income=2927 pumped=2626 shots=811 killed=2724 pumps=4 turrets=0 walls=8 other=0 charge=1276873 took=0.043 stuck=0 p50=23.5 p95=65.6
+t=270 mould=30663 mass=30663 soldiers=4 squads=1 bank=208 income=2947 pumped=2646 shots=815 killed=2844 pumps=4 turrets=0 walls=9 other=0 charge=1276464 took=0.043 stuck=0 p50=29.2 p95=66.6
+cmd t=270.4 steer 0 1 0
+cmd t=270.6 steer 0 1 1
+t=271 mould=30662 mass=30662 soldiers=4 squads=1 bank=228 income=2967 pumped=2666 shots=823 killed=2931 pumps=4 turrets=0 walls=9 other=0 charge=1276057 took=0.043 stuck=0 p50=24.7 p95=66.6
+cmd t=271.5 steer 0 0 1
+t=272 mould=30681 mass=30681 soldiers=4 squads=1 bank=248 income=2987 pumped=2686 shots=828 killed=2949 pumps=4 turrets=0 walls=9 other=0 charge=1275672 took=0.042 stuck=0 p50=6.8 p95=66.6
+cmd t=272.3 steer 0 1 1
+cmd t=272.7 steer 0 1 0
+cmd t=272.7 steer 0 0 0
+boss t=273.0 kind=sapper phase=hunt members=184 at=360,216 near=61
+t=273 mould=30672 mass=30672 soldiers=4 squads=1 bank=268 income=3007 pumped=2706 shots=834 killed=3112 pumps=4 turrets=0 walls=9 other=0 charge=1275279 took=0.042 stuck=0 p50=20.6 p95=65.5
+t=274 mould=30660 mass=30660 soldiers=4 squads=1 bank=288 income=3027 pumped=2726 shots=842 killed=3231 pumps=4 turrets=0 walls=9 other=0 charge=1274881 took=0.042 stuck=0 p50=23.6 p95=64.6
+t=275 mould=30681 mass=30681 soldiers=4 squads=1 bank=308 income=3047 pumped=2746 shots=848 killed=3265 pumps=4 turrets=0 walls=9 other=0 charge=1274474 took=0.042 stuck=0 p50=21.0 p95=64.2
+cmd t=275.5 wall 365.8125 152.14523 377.25 170.70773
+cmd t=275.5 sorder 0 build 13
+t=276 mould=30659 mass=30659 soldiers=4 squads=1 bank=110 income=3067 pumped=2766 shots=852 killed=3556 pumps=4 turrets=0 walls=9 other=0 charge=1274063 took=0.042 stuck=0 p50=20.8 p95=65.8
+t=277 mould=30675 mass=30675 soldiers=4 squads=1 bank=130 income=3087 pumped=2786 shots=856 killed=3559 pumps=4 turrets=0 walls=9 other=0 charge=1273654 took=0.042 stuck=0 p50=28.5 p95=65.2
+boss t=278.1 kind=sapper phase=hunt members=184 at=362,216 near=60
+t=278 mould=30624 mass=30624 soldiers=4 squads=1 bank=150 income=3107 pumped=2806 shots=860 killed=3877 pumps=4 turrets=0 walls=9 other=0 charge=1273267 took=0.042 stuck=0 p50=27.8 p95=74.0
+t=279 mould=30680 mass=30680 soldiers=4 squads=1 bank=170 income=3127 pumped=2826 shots=867 killed=3898 pumps=4 turrets=0 walls=10 other=0 charge=1272874 took=0.042 stuck=0 p50=23.8 p95=72.8
+t=280 mould=30682 mass=30682 soldiers=4 squads=1 bank=190 income=3147 pumped=2846 shots=875 killed=3912 pumps=4 turrets=0 walls=10 other=0 charge=1272480 took=0.041 stuck=0 p50=6.8 p95=75.2
+cmd t=280.3 steer 0 0 1
+cmd t=280.5 steer 0 1 1
+t=281 mould=30681 mass=30681 soldiers=4 squads=1 bank=210 income=3167 pumped=2866 shots=883 killed=3924 pumps=4 turrets=0 walls=10 other=0 charge=1272070 took=0.041 stuck=0 p50=6.8 p95=73.5
+t=282 mould=30683 mass=30683 soldiers=4 squads=1 bank=230 income=3187 pumped=2886 shots=890 killed=3928 pumps=4 turrets=0 walls=10 other=0 charge=1271651 took=0.041 stuck=0 p50=25.4 p95=72.7
+cmd t=282.5 steer 0 0 1
+cmd t=283.0 fire 0 370.5 211.95901
+boss t=283.1 kind=sapper phase=hunt members=133 at=358,206 near=41
+t=283 mould=30666 mass=30666 soldiers=4 squads=1 bank=250 income=3207 pumped=2906 shots=898 killed=3996 pumps=4 turrets=0 walls=10 other=0 charge=1271218 took=0.041 stuck=0 p50=25.6 p95=70.8
+cmd t=283.1 fire 0 370.5 213.47495
+cmd t=283.2 fire 0 363.625 214.06552
+cmd t=283.3 fire 0 361.75 215.23044
+cmd t=283.3 fire 0 359.625 216.19125
+cmd t=283.5 fire 0 357.375 217.7699
+cmd t=283.5 fire 0 356.375 218.982
+cmd t=283.7 steer 0 -1 1
+cmd t=283.7 fire 0 355.625 220.73016
+cmd t=284.0 fire 0 351.625 221.24374
+t=284 mould=30673 mass=30673 soldiers=4 squads=1 bank=270 income=3227 pumped=2926 shots=906 killed=4098 pumps=4 turrets=0 walls=10 other=0 charge=1270809 took=0.041 stuck=0 p50=7.0 p95=68.9
+cmd t=284.1 fire 0 348.75 221.24374
+cmd t=284.6 fire 0 349.375 222.61874
+cmd t=284.9 steer 0 0 1
+t=285 mould=30680 mass=30680 soldiers=4 squads=1 bank=290 income=3247 pumped=2946 shots=914 killed=4111 pumps=4 turrets=0 walls=10 other=0 charge=1270399 took=0.041 stuck=0 p50=6.9 p95=68.2
+cmd t=285.4 steer 0 -1 1
+cmd t=285.5 steer 0 0 1
+cmd t=285.7 steer 0 0 0
+t=286 mould=30628 mass=30628 soldiers=4 squads=1 bank=310 income=3267 pumped=2966 shots=922 killed=4395 pumps=4 turrets=0 walls=10 other=0 charge=1269997 took=0.041 stuck=0 p50=7.0 p95=68.1
+cmd t=286.3 fire 0 347.25 220.86874
+cmd t=286.5 fire 0 345.125 220.24374
+cmd t=286.7 fire 0 343.375 219.86874
+cmd t=286.8 steer 0 -1 0
+cmd t=286.8 fire 0 340.875 219.49374
+cmd t=286.9 fire 0 338 219.49374
+cmd t=286.9 fire 0 334.375 219.11874
+cmd t=287.0 fire 0 332.625 219.11874
+t=287 mould=30655 mass=30655 soldiers=4 squads=1 bank=330 income=3287 pumped=2986 shots=930 killed=4436 pumps=4 turrets=0 walls=10 other=0 charge=1269604 took=0.040 stuck=0 p50=6.8 p95=68.3
+cmd t=287.1 fire 0 329.375 218.74374
+cmd t=287.1 steer 0 0 0
+boss t=288.1 kind=sapper phase=hunt members=101 at=350,200 near=33
+t=288 mould=30673 mass=30673 soldiers=4 squads=1 bank=350 income=3307 pumped=3006 shots=938 killed=4511 pumps=4 turrets=0 walls=10 other=0 charge=1269214 took=0.040 stuck=0 p50=24.1 p95=67.7
+t=289 mould=30646 mass=30646 soldiers=4 squads=1 bank=370 income=3327 pumped=3026 shots=946 killed=4678 pumps=4 turrets=0 walls=10 other=0 charge=1268809 took=0.040 stuck=0 p50=29.5 p95=67.9
+cmd t=289.5 fire 0 none
+cmd t=289.5 wall 360.5625 213.4961 362.4375 225.9961
+cmd t=289.5 sorder 0 build 14
+t=290 mould=30613 mass=30613 soldiers=4 squads=1 bank=264 income=3347 pumped=3046 shots=953 killed=4793 pumps=4 turrets=0 walls=10 other=0 charge=1268428 took=0.040 stuck=0 p50=21.2 p95=61.9
+t=291 mould=30650 mass=30650 soldiers=4 squads=1 bank=284 income=3367 pumped=3066 shots=955 killed=4940 pumps=4 turrets=0 walls=10 other=0 charge=1268037 took=0.040 stuck=0 p50=27.8 p95=65.5
+boss t=292.1 ended=Broken kind=sapper members=53 first=184 stole=0
+t=292 mould=30621 mass=30621 soldiers=4 squads=1 bank=304 income=3387 pumped=3086 shots=960 killed=5139 pumps=4 turrets=0 walls=10 other=0 charge=1267638 took=0.040 stuck=0 p50=23.7 p95=48.8
+cmd t=292.5 steer 0 1 0
+cmd t=292.6 fire 0 387.75 231.16084
+cmd t=292.7 fire 0 390.1875 233.88362
+cmd t=292.8 fire 0 393.3125 236.15848
+cmd t=292.9 fire 0 400.0625 240.62123
+cmd t=292.9 fire 0 404.5 246.11322
+t=293 mould=30677 mass=30677 soldiers=4 squads=1 bank=324 income=3407 pumped=3106 shots=968 killed=5155 pumps=4 turrets=0 walls=11 other=0 charge=1267231 took=0.040 stuck=0 p50=20.4 p95=64.7
+cmd t=293.0 fire 0 405.5625 247.9789
+cmd t=293.1 fire 0 407.8125 245.52309
+cmd t=293.5 steer 0 1 1
+cmd t=293.5 fire 0 none
+t=294 mould=30680 mass=30680 soldiers=4 squads=1 bank=344 income=3427 pumped=3126 shots=976 killed=5169 pumps=4 turrets=0 walls=11 other=0 charge=1266813 took=0.040 stuck=0 p50=7.0 p95=65.0
+cmd t=294.2 steer 0 1 0
+t=295 mould=30673 mass=30673 soldiers=4 squads=1 bank=364 income=3447 pumped=3146 shots=984 killed=5212 pumps=4 turrets=0 walls=11 other=0 charge=1266384 took=0.039 stuck=0 p50=6.8 p95=63.7
+cmd t=295.7 steer 0 1 1
+cmd t=295.8 steer 0 0 1
+t=296 mould=30674 mass=30674 soldiers=4 squads=1 bank=384 income=3467 pumped=3166 shots=992 killed=5227 pumps=4 turrets=0 walls=11 other=0 charge=1265985 took=0.039 stuck=0 p50=27.3 p95=63.9
+cmd t=296.2 steer 0 -1 1
+cmd t=296.9 steer 0 0 1
+t=297 mould=30677 mass=30677 soldiers=4 squads=1 bank=408 income=3491 pumped=3186 shots=1000 killed=5243 pumps=4 turrets=0 walls=11 other=0 charge=1265580 took=0.039 stuck=0 p50=6.9 p95=61.3
+cmd t=297.1 steer 0 0 0
+t=298 mould=30682 mass=30682 soldiers=4 squads=1 bank=432 income=3515 pumped=3206 shots=1008 killed=5250 pumps=4 turrets=0 walls=11 other=0 charge=1265173 took=0.039 stuck=0 p50=22.4 p95=57.8
+cmd t=298.7 steer 0 0 -1
+t=299 mould=30682 mass=30682 soldiers=4 squads=1 bank=456 income=3539 pumped=3226 shots=1012 killed=5257 pumps=4 turrets=0 walls=11 other=0 charge=1264757 took=0.039 stuck=0 p50=6.9 p95=59.7
+cmd t=299.6 steer 0 1 -1
+cmd t=299.8 steer 0 0 -1
+cmd t=299.9 steer 0 0 0
+t=300 mould=30683 mass=30683 soldiers=4 squads=1 bank=476 income=3559 pumped=3246 shots=1020 killed=5259 pumps=4 turrets=0 walls=11 other=0 charge=1264329 took=0.039 stuck=0 p50=6.8 p95=60.7
+cmd t=300.1 steer 0 0 1
+cmd t=301.0 steer 0 -1 1
+t=301 mould=30682 mass=30682 soldiers=4 squads=1 bank=499 income=3583 pumped=3266 shots=1028 killed=5264 pumps=4 turrets=0 walls=11 other=0 charge=1263890 took=0.039 stuck=0 p50=23.3 p95=62.0
+cmd t=301.1 steer 0 0 1
+cmd t=301.2 steer 0 0 0
+t=302 mould=30682 mass=30682 soldiers=4 squads=1 bank=523 income=3607 pumped=3286 shots=1036 killed=5266 pumps=4 turrets=0 walls=11 other=0 charge=1263485 took=0.039 stuck=0 p50=18.8 p95=59.5
+t=303 mould=30683 mass=30683 soldiers=4 squads=1 bank=547 income=3631 pumped=3306 shots=1044 killed=5268 pumps=4 turrets=0 walls=11 other=0 charge=1263077 took=0.038 stuck=0 p50=19.0 p95=49.3
+t=304 mould=30682 mass=30682 soldiers=4 squads=1 bank=571 income=3655 pumped=3326 shots=1052 killed=5273 pumps=4 turrets=0 walls=11 other=0 charge=1262654 took=0.038 stuck=0 p50=6.8 p95=68.9
+cmd t=304.5 steer 0 1 0
+cmd t=304.7 steer 0 1 1
+t=305 mould=30683 mass=30683 soldiers=4 squads=1 bank=595 income=3679 pumped=3346 shots=1060 killed=5273 pumps=4 turrets=0 walls=11 other=0 charge=1262232 took=0.038 stuck=0 p50=7.1 p95=68.1
+cmd t=305.4 steer 0 1 0
+cmd t=305.7 steer 0 1 -1
+cmd t=305.8 steer 0 0 -1
+cmd t=305.8 steer 0 -1 -1
+t=306 mould=30682 mass=30682 soldiers=4 squads=1 bank=619 income=3703 pumped=3366 shots=1064 killed=5276 pumps=4 turrets=0 walls=11 other=0 charge=1261807 took=0.038 stuck=0 p50=6.8 p95=67.8
+cmd t=306.5 steer 0 0 -1
+t=307 mould=30683 mass=30683 soldiers=4 squads=1 bank=639 income=3723 pumped=3386 shots=1064 killed=5276 pumps=4 turrets=0 walls=11 other=0 charge=1261376 took=0.038 stuck=0 p50=24.1 p95=66.7
+t=308 mould=30681 mass=30681 soldiers=4 squads=1 bank=659 income=3743 pumped=3406 shots=1072 killed=5280 pumps=4 turrets=0 walls=11 other=0 charge=1260982 took=0.038 stuck=0 p50=29.6 p95=69.4
+cmd t=308.8 build pump 420 188.24374
+cmd t=308.8 sorder 0 build 15
+t=309 mould=30683 mass=30683 soldiers=4 squads=1 bank=181 income=3765 pumped=3426 shots=1080 killed=5281 pumps=4 turrets=0 walls=11 other=0 charge=1260580 took=0.038 stuck=0 p50=6.8 p95=68.0
+cmd t=309.1 steer 0 0 0
+t=310 mould=30682 mass=30682 soldiers=4 squads=1 bank=203 income=3786 pumped=3446 shots=1084 killed=5282 pumps=4 turrets=0 walls=11 other=0 charge=1260166 took=0.038 stuck=0 p50=6.9 p95=68.4
+t=311 mould=30683 mass=30683 soldiers=4 squads=1 bank=225 income=3808 pumped=3466 shots=1088 killed=5282 pumps=5 turrets=0 walls=11 other=0 charge=1259739 took=0.038 stuck=0 p50=29.6 p95=51.8
+cmd t=311.4 steer 0 0 -1
+cmd t=311.4 steer 0 -1 -1
+t=312 mould=30683 mass=30683 soldiers=4 squads=1 bank=251 income=3835 pumped=3491 shots=1094 killed=5282 pumps=5 turrets=0 walls=11 other=0 charge=1259309 took=0.037 stuck=0 p50=7.0 p95=68.0
+t=313 mould=30682 mass=30682 soldiers=4 squads=1 bank=278 income=3862 pumped=3516 shots=1100 killed=5287 pumps=5 turrets=0 walls=11 other=0 charge=1258879 took=0.037 stuck=0 p50=30.5 p95=70.1
+cmd t=313.8 steer 0 0 -1
+t=314 mould=30681 mass=30681 soldiers=4 squads=1 bank=303 income=3887 pumped=3541 shots=1107 killed=5290 pumps=5 turrets=0 walls=11 other=0 charge=1258484 took=0.037 stuck=0 p50=6.9 p95=71.1
+cmd t=314.4 steer 0 1 -1
+t=315 mould=30683 mass=30683 soldiers=4 squads=1 bank=328 income=3912 pumped=3566 shots=1115 killed=5292 pumps=5 turrets=0 walls=11 other=0 charge=1258082 took=0.037 stuck=0 p50=26.1 p95=71.6
+cmd t=315.6 steer 0 0 -1
+t=316 mould=30681 mass=30681 soldiers=4 squads=1 bank=353 income=3937 pumped=3591 shots=1122 killed=5298 pumps=5 turrets=0 walls=11 other=0 charge=1257669 took=0.037 stuck=0 p50=7.0 p95=75.7
+cmd t=316.3 steer 0 1 -1
+t=317 mould=30682 mass=30682 soldiers=4 squads=1 bank=378 income=3962 pumped=3616 shots=1127 killed=5304 pumps=5 turrets=0 walls=11 other=0 charge=1257248 took=0.037 stuck=0 p50=7.1 p95=77.5
+cmd t=317.1 steer 0 0 -1
+cmd t=317.5 steer 0 -1 -1
+cmd t=317.9 steer 0 0 -1
+t=318 mould=30682 mass=30682 soldiers=4 squads=1 bank=403 income=3987 pumped=3641 shots=1135 killed=5307 pumps=5 turrets=0 walls=11 other=0 charge=1256826 took=0.037 stuck=0 p50=6.8 p95=77.1
+cmd t=318.3 steer 0 -1 -1
+cmd t=318.7 steer 0 0 -1
+t=319 mould=30679 mass=30679 soldiers=4 squads=1 bank=428 income=4012 pumped=3666 shots=1143 killed=5316 pumps=5 turrets=0 walls=11 other=0 charge=1256403 took=0.037 stuck=0 p50=32.0 p95=77.1
+t=320 mould=30681 mass=30681 soldiers=4 squads=1 bank=456 income=4039 pumped=3691 shots=1151 killed=5317 pumps=5 turrets=0 walls=11 other=0 charge=1256010 took=0.037 stuck=0 p50=23.3 p95=75.6
+cmd t=320.7 steer 0 0 0
+t=321 mould=30683 mass=30683 soldiers=4 squads=1 bank=483 income=4067 pumped=3716 shots=1159 killed=5317 pumps=5 turrets=0 walls=11 other=0 charge=1255604 took=0.036 stuck=0 p50=31.2 p95=56.5
+cmd t=321.8 steer 0 0 1
+t=322 mould=30681 mass=30681 soldiers=4 squads=1 bank=511 income=4094 pumped=3741 shots=1167 killed=5319 pumps=5 turrets=0 walls=11 other=0 charge=1255186 took=0.036 stuck=0 p50=6.9 p95=72.3
+cmd t=322.3 steer 0 0 0
+t=323 mould=30681 mass=30681 soldiers=4 squads=1 bank=538 income=4122 pumped=3766 shots=1175 killed=5324 pumps=5 turrets=0 walls=11 other=0 charge=1254762 took=0.036 stuck=0 p50=26.5 p95=74.2
+t=324 mould=30681 mass=30681 soldiers=4 squads=1 bank=566 income=4149 pumped=3791 shots=1179 killed=5328 pumps=5 turrets=0 walls=11 other=0 charge=1254346 took=0.036 stuck=0 p50=31.5 p95=73.4
+cmd t=324.3 steer 0 0 1
+t=325 mould=30682 mass=30682 soldiers=4 squads=1 bank=594 income=4177 pumped=3816 shots=1183 killed=5329 pumps=5 turrets=0 walls=11 other=0 charge=1253932 took=0.036 stuck=0 p50=6.9 p95=72.9
+raid t=326.1 to=422,188 held=8653 share=0.60 size=0.17
+t=326 mould=30682 mass=30682 soldiers=4 squads=1 bank=619 income=4202 pumped=3841 shots=1191 killed=5329 pumps=5 turrets=0 walls=11 other=0 charge=1253540 took=0.036 stuck=0 p50=6.7 p95=74.9
+cmd t=326.1 steer 0 1 1
+cmd t=326.5 steer 0 0 1
+t=327 mould=30682 mass=30682 soldiers=4 squads=1 bank=644 income=4227 pumped=3866 shots=1199 killed=5329 pumps=5 turrets=0 walls=11 other=0 charge=1253156 took=0.036 stuck=0 p50=32.7 p95=76.9
+cmd t=327.2 steer 0 -1 1
+cmd t=327.5 steer 0 0 1
+cmd t=328.0 steer 0 0 0
+cmd t=328.0 steer 0 -1 0
+t=328 mould=30683 mass=30683 soldiers=4 squads=1 bank=669 income=4252 pumped=3891 shots=1207 killed=5338 pumps=5 turrets=0 walls=11 other=0 charge=1252743 took=0.036 stuck=0 p50=27.7 p95=77.0
+cmd t=328.2 steer 0 -1 -1
+cmd t=329.0 steer 0 0 -1
+cmd t=329.0 steer 0 1 -1
+t=329 mould=30671 mass=30671 soldiers=4 squads=1 bank=694 income=4277 pumped=3916 shots=1215 killed=5380 pumps=5 turrets=0 walls=11 other=0 charge=1252346 took=0.036 stuck=0 p50=32.6 p95=78.7
+cmd t=329.3 steer 0 0 -1
+cmd t=329.5 steer 0 -1 -1
+cmd t=329.5 steer 0 -1 0
+cmd t=329.5 steer 0 0 0
+cmd t=329.7 steer 0 0 1
+t=330 mould=30674 mass=30674 soldiers=4 squads=1 bank=719 income=4302 pumped=3941 shots=1222 killed=5391 pumps=5 turrets=0 walls=11 other=0 charge=1251973 took=0.036 stuck=0 p50=8.5 p95=78.1
+cmd t=330.6 steer 0 0 0
+t=331 mould=30672 mass=30672 soldiers=4 squads=1 bank=744 income=4327 pumped=3966 shots=1230 killed=5419 pumps=5 turrets=0 walls=11 other=0 charge=1251599 took=0.035 stuck=0 p50=32.9 p95=76.8
+t=332 mould=30675 mass=30675 soldiers=4 squads=1 bank=769 income=4352 pumped=3991 shots=1235 killed=5429 pumps=5 turrets=0 walls=11 other=0 charge=1251243 took=0.035 stuck=0 p50=32.4 p95=78.2
+t=333 mould=30667 mass=30667 soldiers=4 squads=1 bank=794 income=4377 pumped=4016 shots=1243 killed=5448 pumps=5 turrets=0 walls=11 other=0 charge=1250864 took=0.035 stuck=0 p50=7.0 p95=77.9
+t=334 mould=30668 mass=30668 soldiers=4 squads=1 bank=819 income=4402 pumped=4041 shots=1251 killed=5471 pumps=5 turrets=0 walls=11 other=0 charge=1250494 took=0.035 stuck=0 p50=27.5 p95=78.0
+t=335 mould=30672 mass=30672 soldiers=4 squads=1 bank=844 income=4427 pumped=4066 shots=1259 killed=5490 pumps=5 turrets=0 walls=11 other=0 charge=1250130 took=0.035 stuck=0 p50=32.4 p95=78.2
+t=336 mould=30672 mass=30672 soldiers=4 squads=1 bank=869 income=4452 pumped=4091 shots=1267 killed=5506 pumps=5 turrets=0 walls=11 other=0 charge=1249780 took=0.035 stuck=0 p50=32.9 p95=78.0
+t=337 mould=30674 mass=30674 soldiers=4 squads=1 bank=894 income=4477 pumped=4116 shots=1275 killed=5528 pumps=5 turrets=0 walls=11 other=0 charge=1249429 took=0.035 stuck=0 p50=32.3 p95=77.3
+t=338 mould=30671 mass=30671 soldiers=4 squads=1 bank=919 income=4502 pumped=4141 shots=1282 killed=5545 pumps=5 turrets=0 walls=11 other=0 charge=1249087 took=0.035 stuck=0 p50=32.5 p95=78.2
+t=339 mould=30670 mass=30670 soldiers=4 squads=1 bank=944 income=4527 pumped=4166 shots=1290 killed=5557 pumps=5 turrets=0 walls=11 other=0 charge=1248714 took=0.035 stuck=0 p50=33.0 p95=77.4
+t=340 mould=30668 mass=30668 soldiers=4 squads=1 bank=969 income=4552 pumped=4191 shots=1295 killed=5577 pumps=5 turrets=0 walls=11 other=0 charge=1248340 took=0.035 stuck=0 p50=33.0 p95=78.2
+cmd t=340.7 steer 0 0 -1
+cmd t=340.7 steer 0 1 -1
+t=341 mould=30672 mass=30672 soldiers=4 squads=1 bank=994 income=4577 pumped=4216 shots=1303 killed=5589 pumps=5 turrets=0 walls=11 other=0 charge=1247974 took=0.035 stuck=0 p50=32.4 p95=79.6
+cmd t=342.0 steer 0 0 -1
+cmd t=342.0 steer 0 -1 -1
+t=342 mould=30674 mass=30674 soldiers=4 squads=1 bank=1019 income=4602 pumped=4241 shots=1311 killed=5602 pumps=5 turrets=0 walls=11 other=0 charge=1247618 took=0.034 stuck=0 p50=33.2 p95=76.6
+cmd t=342.2 steer 0 0 -1
+cmd t=342.7 steer 0 1 -1
+cmd t=343.0 steer 0 0 -1
+t=343 mould=30678 mass=30677 soldiers=4 squads=1 bank=1045 income=4629 pumped=4268 shots=1319 killed=5610 pumps=5 turrets=0 walls=11 other=0 charge=1247240 took=0.034 stuck=0 p50=24.6 p95=77.0
+cmd t=343.5 steer 0 1 -1
+t=344 mould=30679 mass=30679 soldiers=4 squads=1 bank=1071 income=4655 pumped=4291 shots=1327 killed=5616 pumps=5 turrets=0 walls=11 other=0 charge=1246917 took=0.034 stuck=0 p50=10.7 p95=77.4
+cmd t=344.5 steer 0 0 -1
+cmd t=344.5 steer 0 0 0
+t=345 mould=30678 mass=30678 soldiers=4 squads=1 bank=1099 income=4682 pumped=4316 shots=1335 killed=5621 pumps=5 turrets=0 walls=11 other=0 charge=1246541 took=0.034 stuck=0 p50=22.8 p95=73.3
+cmd t=345.2 heal 0
+t=346 mould=30681 mass=30681 soldiers=4 squads=1 bank=1126 income=4710 pumped=4341 shots=1342 killed=5621 pumps=5 turrets=0 walls=11 other=0 charge=1246152 took=0.034 stuck=0 p50=6.8 p95=74.1
+t=347 mould=30682 mass=30682 soldiers=4 squads=1 bank=1154 income=4737 pumped=4366 shots=1350 killed=5624 pumps=5 turrets=0 walls=11 other=0 charge=1245761 took=0.034 stuck=0 p50=32.4 p95=74.9
+t=348 mould=30683 mass=30683 soldiers=4 squads=1 bank=1181 income=4765 pumped=4391 shots=1355 killed=5626 pumps=5 turrets=0 walls=11 other=0 charge=1245380 took=0.034 stuck=0 p50=32.6 p95=74.6
+t=349 mould=30683 mass=30683 soldiers=4 squads=1 bank=1209 income=4793 pumped=4416 shots=1363 killed=5628 pumps=5 turrets=0 walls=11 other=0 charge=1245001 took=0.034 stuck=0 p50=23.5 p95=74.3
+cmd t=349.9 buy
+t=350 mould=30681 mass=30681 soldiers=5 squads=1 bank=836 income=4820 pumped=4441 shots=1372 killed=5630 pumps=5 turrets=0 walls=11 other=0 charge=1244611 took=0.034 stuck=0 p50=32.6 p95=74.4
+cmd t=350.1 buy
+cmd t=350.2 buy
+t=351 mould=30681 mass=30681 soldiers=7 squads=1 bank=64 income=4848 pumped=4466 shots=1384 killed=5633 pumps=5 turrets=0 walls=11 other=0 charge=1244193 took=0.034 stuck=0 p50=32.8 p95=75.4
+t=352 mould=30683 mass=30683 soldiers=7 squads=1 bank=92 income=4875 pumped=4491 shots=1397 killed=5634 pumps=5 turrets=0 walls=11 other=0 charge=1243766 took=0.034 stuck=0 p50=27.4 p95=77.4
+t=353 mould=30682 mass=30682 soldiers=7 squads=1 bank=119 income=4903 pumped=4516 shots=1409 killed=5637 pumps=5 turrets=0 walls=11 other=0 charge=1243342 took=0.034 stuck=0 p50=7.1 p95=79.0
+t=354 mould=30681 mass=30681 soldiers=7 squads=1 bank=147 income=4930 pumped=4541 shots=1413 killed=5639 pumps=5 turrets=0 walls=11 other=0 charge=1242935 took=0.033 stuck=0 p50=32.2 p95=76.2
+t=355 mould=30682 mass=30682 soldiers=7 squads=1 bank=174 income=4958 pumped=4566 shots=1420 killed=5640 pumps=5 turrets=0 walls=11 other=0 charge=1242533 took=0.033 stuck=0 p50=27.2 p95=54.9
+t=356 mould=30682 mass=30682 soldiers=7 squads=1 bank=202 income=4985 pumped=4591 shots=1433 killed=5642 pumps=5 turrets=0 walls=11 other=0 charge=1242123 took=0.033 stuck=0 p50=7.1 p95=76.3
+cmd t=356.1 steer 0 0 -1
+cmd t=356.3 steer 0 -1 -1
+cmd t=356.5 steer 0 0 -1
+cmd t=356.7 steer 0 0 0
+cmd t=356.9 heal 0
+t=357 mould=30682 mass=30682 soldiers=7 squads=1 bank=229 income=5013 pumped=4616 shots=1444 killed=5644 pumps=5 turrets=0 walls=11 other=0 charge=1241690 took=0.033 stuck=0 p50=7.2 p95=75.9
+t=358 mould=30683 mass=30683 soldiers=7 squads=1 bank=257 income=5041 pumped=4641 shots=1453 killed=5644 pumps=5 turrets=0 walls=11 other=0 charge=1241264 took=0.033 stuck=0 p50=6.9 p95=75.8
+t=359 mould=30683 mass=30683 soldiers=7 squads=1 bank=284 income=5068 pumped=4666 shots=1458 killed=5645 pumps=5 turrets=0 walls=11 other=0 charge=1240839 took=0.033 stuck=0 p50=6.8 p95=75.1
+t=360 mould=30683 mass=30683 soldiers=7 squads=1 bank=312 income=5096 pumped=4691 shots=1466 killed=5647 pumps=5 turrets=0 walls=11 other=0 charge=1240408 took=0.033 stuck=0 p50=23.2 p95=75.5
+t=361 mould=30682 mass=30682 soldiers=7 squads=1 bank=335 income=5123 pumped=4716 shots=1466 killed=5647 pumps=5 turrets=0 walls=11 other=0 charge=1239981 took=0.033 stuck=0 p50=31.9 p95=73.2
+cmd t=361.5 steer 0 0 -1
+cmd t=361.6 steer 0 0 0
+cmd t=361.9 heal 0
+t=362 mould=30681 mass=30681 soldiers=7 squads=1 bank=360 income=5151 pumped=4741 shots=1470 killed=5648 pumps=5 turrets=0 walls=11 other=0 charge=1239561 took=0.033 stuck=0 p50=30.5 p95=72.7
+t=363 mould=30683 mass=30683 soldiers=7 squads=1 bank=387 income=5178 pumped=4766 shots=1475 killed=5649 pumps=5 turrets=0 walls=11 other=0 charge=1239119 took=0.033 stuck=0 p50=23.3 p95=73.7
+t=364 mould=30682 mass=30681 soldiers=7 squads=1 bank=412 income=5203 pumped=4788 shots=1489 killed=5650 pumps=4 turrets=0 walls=11 other=0 charge=1238641 took=0.033 stuck=0 p50=6.9 p95=76.2
+t=365 mould=30679 mass=30679 soldiers=7 squads=1 bank=433 income=5224 pumped=4807 shots=1498 killed=5658 pumps=4 turrets=0 walls=11 other=0 charge=1238239 took=0.032 stuck=0 p50=32.4 p95=75.0
+cmd t=365.3 steer 0 0 1
+cmd t=365.5 steer 0 -1 1
+t=366 mould=30683 mass=30683 soldiers=7 squads=1 bank=456 income=5247 pumped=4827 shots=1502 killed=5659 pumps=4 turrets=0 walls=11 other=0 charge=1237826 took=0.032 stuck=0 p50=31.0 p95=74.2
+cmd t=366.5 steer 0 0 1
+t=367 mould=30683 mass=30683 soldiers=7 squads=1 bank=477 income=5268 pumped=4848 shots=1513 killed=5662 pumps=4 turrets=0 walls=11 other=0 charge=1237382 took=0.032 stuck=0 p50=7.0 p95=77.2
+cmd t=367.1 steer 0 -1 1
+cmd t=367.5 steer 0 -1 0
+cmd t=367.9 steer 0 -1 1
+t=368 mould=30682 mass=30682 soldiers=7 squads=1 bank=496 income=5287 pumped=4867 shots=1525 killed=5665 pumps=4 turrets=0 walls=11 other=0 charge=1236987 took=0.032 stuck=0 p50=33.9 p95=77.8
+cmd t=368.8 steer 0 0 1
+t=369 mould=30682 mass=30682 soldiers=7 squads=1 bank=516 income=5307 pumped=4887 shots=1538 killed=5670 pumps=4 turrets=0 walls=11 other=0 charge=1236539 took=0.032 stuck=0 p50=7.1 p95=77.9
+cmd t=369.5 steer 0 1 1
+cmd t=369.6 steer 0 0 1
+t=370 mould=30683 mass=30683 soldiers=7 squads=1 bank=536 income=5327 pumped=4907 shots=1547 killed=5670 pumps=4 turrets=0 walls=11 other=0 charge=1236100 took=0.032 stuck=0 p50=6.9 p95=77.8
+cmd t=370.3 buy
+cmd t=371.0 fire 0 434.5 258.23618
+boss t=371.1 formed kind=sapper cause=Crowd grade=0.59 at=357,227
+t=371 mould=30683 mass=30683 soldiers=8 squads=1 bank=156 income=5347 pumped=4927 shots=1558 killed=5683 pumps=4 turrets=0 walls=11 other=0 charge=1235677 took=0.032 stuck=0 p50=32.1 p95=75.8
+cmd t=371.1 fire 0 434.125 260.00177
+cmd t=371.2 fire 0 431.375 261.45145
+cmd t=371.5 steer 0 0 0
+cmd t=371.5 steer 0 -1 0
+cmd t=371.5 fire 0 430.25 263.44965
+cmd t=371.7 fire 0 430.875 265.09027
+cmd t=371.7 steer 0 -1 -1
+t=372 mould=30670 mass=30670 soldiers=8 squads=1 bank=176 income=5367 pumped=4947 shots=1574 killed=5705 pumps=4 turrets=0 walls=11 other=0 charge=1235265 took=0.032 stuck=0 p50=6.9 p95=74.1
+cmd t=372.1 steer 0 0 -1
+cmd t=372.9 steer 0 0 0
+t=373 mould=30666 mass=30666 soldiers=8 squads=1 bank=196 income=5387 pumped=4967 shots=1590 killed=5746 pumps=4 turrets=0 walls=11 other=0 charge=1234848 took=0.032 stuck=0 p50=6.8 p95=75.0
+cmd t=373.1 steer 0 0 1
+cmd t=373.3 steer 0 0 0
+cmd t=373.4 steer 0 0 -1
+cmd t=373.8 steer 0 0 0
+t=374 mould=30674 mass=30674 soldiers=8 squads=1 bank=216 income=5407 pumped=4987 shots=1606 killed=5774 pumps=4 turrets=0 walls=11 other=0 charge=1234432 took=0.032 stuck=0 p50=8.7 p95=76.8
+cmd t=374.8 fire 0 375.625 247.29407
+cmd t=374.9 fire 0 378.625 243.91595
+cmd t=374.9 fire 0 383.625 238.53976
+t=375 mould=30676 mass=30676 soldiers=8 squads=1 bank=236 income=5427 pumped=5007 shots=1622 killed=5792 pumps=4 turrets=0 walls=11 other=0 charge=1233987 took=0.032 stuck=0 p50=28.2 p95=77.6
+cmd t=375.1 fire 0 386.5 234.91336
+cmd t=375.2 fire 0 395.25 222.66296
+boss t=376.1 kind=sapper phase=gather members=370 at=350,238 near=84
+t=376 mould=30682 mass=30682 soldiers=8 squads=1 bank=256 income=5447 pumped=5027 shots=1638 killed=5796 pumps=4 turrets=0 walls=11 other=0 charge=1233551 took=0.031 stuck=0 p50=28.5 p95=78.8
+cmd t=376.6 fire 0 401.25 218.03775
+cmd t=376.7 fire 0 425.375 204.78775
+cmd t=376.7 fire 0 433 204.66275
+cmd t=376.8 fire 0 435.5 204.91275
+cmd t=376.9 fire 0 438.875 204.91275
+t=377 mould=30681 mass=30681 soldiers=8 squads=1 bank=276 income=5467 pumped=5047 shots=1654 killed=5809 pumps=4 turrets=0 walls=11 other=0 charge=1233129 took=0.031 stuck=0 p50=33.3 p95=78.8
+cmd t=377.1 fire 0 431.5 212.91275
+cmd t=377.3 fire 0 429.875 214.03775
+cmd t=377.4 fire 0 429.25 216.16275
+cmd t=377.5 fire 0 426.125 223.78775
+cmd t=377.5 fire 0 424.625 227.16275
+cmd t=378.0 steer 0 0 1
+t=378 mould=30671 mass=30671 soldiers=8 squads=1 bank=296 income=5487 pumped=5067 shots=1670 killed=5846 pumps=4 turrets=0 walls=11 other=0 charge=1232708 took=0.031 stuck=0 p50=32.7 p95=79.3
+cmd t=378.4 fire 0 424.625 229.22916
+cmd t=378.5 fire 0 424.625 231.64447
+cmd t=378.7 fire 0 424.625 233.81326
+cmd t=378.8 fire 0 424.625 236.28772
+cmd t=378.9 fire 0 424.625 238.12723
+t=379 mould=30678 mass=30678 soldiers=8 squads=1 bank=316 income=5507 pumped=5087 shots=1678 killed=5862 pumps=4 turrets=0 walls=11 other=0 charge=1232283 took=0.031 stuck=0 p50=6.8 p95=78.1
+cmd t=379.1 fire 0 424.625 240.55081
+cmd t=379.2 fire 0 424.625 242.18347
+cmd t=379.3 fire 0 424.625 244.45465
+cmd t=379.5 fire 0 424.625 246.6579
+cmd t=379.6 fire 0 413.375 252.56625
+cmd t=379.7 fire 0 412.625 254.08353
+cmd t=379.7 fire 0 398.375 258.9028
+cmd t=379.8 fire 0 393 263.43777
+cmd t=379.9 fire 0 392.625 265.02036
+cmd t=380.0 fire 0 394.25 267.49585
+t=380 mould=30674 mass=30674 soldiers=8 squads=1 bank=336 income=5527 pumped=5107 shots=1694 killed=5878 pumps=4 turrets=0 walls=11 other=0 charge=1231871 took=0.031 stuck=0 p50=30.4 p95=73.8
+cmd t=380.2 fire 0 394.625 269.25162
+cmd t=380.3 fire 0 394.625 271.29587
+cmd t=380.5 fire 0 394.375 273.13907
+cmd t=380.6 fire 0 395.625 274.35556
+cmd t=380.7 fire 0 396.75 275.49954
+cmd t=380.7 fire 0 401.125 275.50156
+cmd t=380.8 fire 0 416.5 272.88037
+cmd t=380.9 fire 0 418.375 272.92218
+boss t=381.1 kind=sapper phase=sit members=370 at=354,240 near=48
+t=381 mould=30634 mass=30634 soldiers=8 squads=1 bank=356 income=5547 pumped=5127 shots=1710 killed=5979 pumps=4 turrets=0 walls=11 other=0 charge=1231446 took=0.031 stuck=0 p50=7.0 p95=71.4
+cmd t=381.1 steer 0 0 0
+cmd t=381.1 fire 0 419.125 270.49374
+cmd t=381.2 fire 0 420.25 266.11874
+cmd t=381.3 fire 0 421.5 262.49374
+cmd t=381.3 fire 0 422.5 259.99374
+cmd t=381.4 steer 0 0 -1
+cmd t=381.6 fire 0 424 259.11874
+cmd t=381.7 fire 0 425.75 260.24374
+cmd t=381.7 fire 0 429.375 262.74374
+cmd t=381.8 steer 0 1 -1
+cmd t=381.9 fire 0 431.125 263.86874
+t=382 mould=30643 mass=30643 soldiers=8 squads=1 bank=376 income=5567 pumped=5147 shots=1726 killed=6080 pumps=4 turrets=0 walls=11 other=0 charge=1231027 took=0.031 stuck=0 p50=7.0 p95=71.6
+cmd t=382.5 fire 0 431.125 262.11276
+cmd t=382.7 fire 0 429.125 262.3789
+cmd t=382.8 fire 0 417.125 262.21387
+cmd t=382.9 fire 0 408.25 260.97208
+cmd t=382.9 steer 0 1 0
+cmd t=382.9 fire 0 403.375 260.079
+cmd t=383.0 fire 0 390.625 259.34167
+t=383 mould=30651 mass=30651 soldiers=8 squads=1 bank=397 income=5589 pumped=5167 shots=1742 killed=6220 pumps=4 turrets=0 walls=11 other=0 charge=1230614 took=0.031 stuck=0 p50=7.0 p95=71.4
+cmd t=383.1 fire 0 387.125 258.64813
+cmd t=383.2 steer 0 1 1
+cmd t=383.2 fire 0 378.375 257.84293
+cmd t=383.3 steer 0 0 1
+cmd t=383.3 fire 0 372.375 254.13544
+cmd t=383.4 fire 0 369 251.98404
+cmd t=383.5 fire 0 365.5 249.0091
+cmd t=383.6 fire 0 362.125 247.6666
+cmd t=383.7 fire 0 359.625 245.0091
+cmd t=383.8 fire 0 358.125 244.00742
+cmd t=383.9 fire 0 356.375 241.49374
+cmd t=384.0 fire 0 355.625 240.11874
+t=384 mould=30670 mass=30670 soldiers=8 squads=1 bank=419 income=5611 pumped=5187 shots=1758 killed=6239 pumps=4 turrets=0 walls=11 other=0 charge=1230208 took=0.031 stuck=0 p50=28.8 p95=70.6
+cmd t=384.1 steer 0 -1 1
+cmd t=384.1 fire 0 353.375 233.61874
+cmd t=384.6 steer 0 0 1
+t=385 mould=30634 mass=30634 soldiers=8 squads=1 bank=439 income=5631 pumped=5207 shots=1774 killed=6302 pumps=4 turrets=0 walls=11 other=0 charge=1229800 took=0.031 stuck=0 p50=30.6 p95=69.0
+cmd t=385.4 fire 0 351.625 230.49374
+boss t=386.0 kind=sapper phase=sit members=367 at=358,240 near=36
+t=386 mould=30599 mass=30599 soldiers=8 squads=1 bank=463 income=5655 pumped=5227 shots=1790 killed=6579 pumps=4 turrets=0 walls=11 other=0 charge=1229391 took=0.031 stuck=0 p50=25.1 p95=70.7
+cmd t=386.3 steer 0 0 0
+t=387 mould=30646 mass=30646 soldiers=8 squads=1 bank=487 income=5678 pumped=5247 shots=1798 killed=6667 pumps=4 turrets=0 walls=11 other=0 charge=1228969 took=0.031 stuck=0 p50=24.7 p95=70.0
+cmd t=387.7 fire 0 351.875 234.86874
+cmd t=387.8 fire 0 352.25 238.24374
+t=388 mould=30666 mass=30666 soldiers=8 squads=1 bank=511 income=5702 pumped=5267 shots=1814 killed=6699 pumps=4 turrets=0 walls=11 other=0 charge=1228548 took=0.031 stuck=0 p50=25.3 p95=70.4
+t=389 mould=30651 mass=30651 soldiers=8 squads=1 bank=535 income=5726 pumped=5287 shots=1830 killed=6856 pumps=4 turrets=0 walls=11 other=0 charge=1228139 took=0.030 stuck=0 p50=25.3 p95=70.1
+t=390 mould=30645 mass=30647 soldiers=8 squads=1 bank=560 income=5752 pumped=5309 shots=1846 killed=6960 pumps=4 turrets=0 walls=11 other=0 charge=1227710 took=0.030 stuck=0 p50=7.1 p95=70.4
+boss t=391.0 kind=sapper phase=sit members=164 at=358,254 near=38
+t=391 mould=30623 mass=30623 soldiers=8 squads=1 bank=583 income=5774 pumped=5327 shots=1862 killed=7092 pumps=4 turrets=0 walls=11 other=0 charge=1227332 took=0.030 stuck=0 p50=10.0 p95=69.9
+cmd t=391.0 fire 0 354.125 251.99374
+cmd t=391.1 fire 0 355.25 257.99374
+cmd t=391.4 fire 0 358.75 264.11874
+cmd t=391.5 fire 0 363.75 273.49374
+cmd t=391.7 fire 0 361.625 268.61874
+cmd t=391.7 fire 0 360.75 260.86874
+cmd t=391.8 fire 0 360.375 258.24374
+cmd t=392.0 fire 0 359.625 256.49374
+t=392 mould=30637 mass=30637 soldiers=8 squads=1 bank=607 income=5798 pumped=5347 shots=1878 killed=7208 pumps=4 turrets=0 walls=11 other=0 charge=1226931 took=0.030 stuck=0 p50=18.8 p95=71.3
+boss t=393.1 ended=Broken kind=sapper members=77 first=370 stole=0
+t=393 mould=30638 mass=30638 soldiers=8 squads=1 bank=631 income=5822 pumped=5367 shots=1894 killed=7293 pumps=4 turrets=0 walls=11 other=0 charge=1226515 took=0.030 stuck=0 p50=25.3 p95=70.3
+cmd t=393.4 fire 0 357.875 252.36874
+cmd t=393.5 fire 0 356.75 249.49374
+cmd t=393.5 fire 0 356.375 246.49374
+cmd t=393.7 fire 0 355.625 244.36874
+t=394 mould=30657 mass=30657 soldiers=8 squads=1 bank=655 income=5846 pumped=5387 shots=1910 killed=7332 pumps=4 turrets=0 walls=11 other=0 charge=1226093 took=0.030 stuck=0 p50=7.0 p95=71.3
+cmd t=394.3 fire 0 354.125 240.74374
+cmd t=394.4 fire 0 353.5 238.61874
+cmd t=394.5 fire 0 352.375 235.99374
+cmd t=394.6 fire 0 352 234.24374
+cmd t=394.8 fire 0 350.625 233.49374
+cmd t=394.9 steer 0 -1 0
+cmd t=394.9 fire 0 347.375 232.49374
+t=395 mould=30658 mass=30658 soldiers=8 squads=1 bank=679 income=5870 pumped=5407 shots=1918 killed=7405 pumps=4 turrets=0 walls=11 other=0 charge=1225677 took=0.030 stuck=0 p50=7.0 p95=71.3
+cmd t=395.5 fire 0 346.375 229.61874
+cmd t=395.5 fire 0 346 220.86874
+t=396 mould=30617 mass=30617 soldiers=8 squads=1 bank=699 income=5890 pumped=5427 shots=1934 killed=7676 pumps=4 turrets=0 walls=11 other=0 charge=1225271 took=0.030 stuck=0 p50=25.0 p95=70.6
+cmd t=396.1 steer 0 0 0
+cmd t=396.2 steer 0 0 1
+cmd t=396.6 fire 0 346 217.49374
+cmd t=396.7 fire 0 346 215.74374
+t=397 mould=30488 mass=30488 soldiers=8 squads=1 bank=719 income=5910 pumped=5447 shots=1950 killed=8042 pumps=4 turrets=0 walls=11 other=0 charge=1224881 took=0.030 stuck=0 p50=7.0 p95=70.8
+cmd t=397.1 steer 0 1 1
+cmd t=397.2 steer 0 1 0
+cmd t=397.5 fire 0 344.5 215.99374
+cmd t=397.5 fire 0 343.125 217.74374
+cmd t=397.6 fire 0 342 219.49374
+cmd t=397.7 fire 0 341.375 222.36874
+cmd t=397.7 fire 0 341.375 224.24374
+cmd t=397.9 fire 0 345.75 224.86874
+cmd t=398.0 fire 0 388.5 224.24374
+t=398 mould=30563 mass=30563 soldiers=8 squads=1 bank=743 income=5934 pumped=5467 shots=1966 killed=8215 pumps=4 turrets=0 walls=11 other=0 charge=1224504 took=0.030 stuck=0 p50=24.8 p95=69.2
+cmd t=398.1 steer 0 1 1
+cmd t=398.1 fire 0 446.875 222.24374
+cmd t=398.2 steer 0 0 1
+cmd t=398.2 fire 0 447.75 231.99374
+cmd t=398.3 fire 0 447.5 236.74374
+cmd t=398.7 fire 0 445 235.74374
+cmd t=398.7 fire 0 441.625 231.49374
+cmd t=398.8 steer 0 1 1
+cmd t=399.0 fire 0 438.375 230.86874
+t=399 mould=30639 mass=30639 soldiers=8 squads=1 bank=767 income=5958 pumped=5487 shots=1982 killed=8266 pumps=4 turrets=0 walls=11 other=0 charge=1224110 took=0.030 stuck=0 p50=6.9 p95=71.3
+cmd t=399.1 steer 0 1 0
+cmd t=399.1 fire 0 425.875 230.36874
+cmd t=399.1 fire 0 404.875 230.36874
+cmd t=399.2 fire 0 399.75 230.61874
+cmd t=399.3 fire 0 396.25 231.36874
+cmd t=399.4 fire 0 393.125 231.74374
+cmd t=399.5 fire 0 391.25 232.24374
+cmd t=399.5 fire 0 370 239.99374
+cmd t=399.7 fire 0 365.25 241.24374
+cmd t=399.8 steer 0 1 -1
+cmd t=399.8 fire 0 362.75 239.61874
+cmd t=399.9 fire 0 360.625 237.11874
+t=400 mould=30667 mass=30667 soldiers=8 squads=1 bank=790 income=5982 pumped=5507 shots=1998 killed=8287 pumps=4 turrets=0 walls=11 other=0 charge=1223714 took=0.030 stuck=0 p50=6.9 p95=70.7
+cmd t=400.2 steer 0 0 -1
+cmd t=400.5 fire 0 360.25 235.36874
+cmd t=400.6 steer 0 -1 -1
+cmd t=400.6 fire 0 358.875 232.11874
+cmd t=400.8 fire 0 358.125 230.74374
+t=401 mould=30668 mass=30668 soldiers=8 squads=1 bank=814 income=6006 pumped=5527 shots=2014 killed=8355 pumps=4 turrets=0 walls=11 other=0 charge=1223321 took=0.030 stuck=0 p50=9.8 p95=70.8
+cmd t=401.1 steer 0 0 -1
+cmd t=401.7 steer 0 -1 -1
+t=402 mould=30635 mass=30635 soldiers=8 squads=1 bank=838 income=6030 pumped=5547 shots=2030 killed=8472 pumps=4 turrets=0 walls=11 other=0 charge=1222919 took=0.030 stuck=0 p50=30.8 p95=69.5
+cmd t=402.5 fire 0 356.625 231.99374
+cmd t=402.5 fire 0 353.375 234.99374
+cmd t=403.0 steer 0 -1 0
+t=403 mould=30628 mass=30628 soldiers=8 squads=1 bank=858 income=6050 pumped=5567 shots=2038 killed=8650 pumps=4 turrets=0 walls=11 other=0 charge=1222513 took=0.029 stuck=0 p50=24.9 p95=70.3
+cmd t=403.3 fire 0 351.875 235.74374
+cmd t=403.6 fire 0 351.125 234.36874
+cmd t=403.7 fire 0 349.75 231.11874
+cmd t=403.7 fire 0 349 228.61874
+cmd t=403.9 steer 0 -1 -1
+cmd t=403.9 steer 0 0 -1
+t=404 mould=30562 mass=30562 soldiers=8 squads=1 bank=878 income=6070 pumped=5587 shots=2054 killed=8943 pumps=4 turrets=0 walls=11 other=0 charge=1222121 took=0.029 stuck=0 p50=7.0 p95=70.1
+cmd t=404.0 fire 0 347.25 229.24374
+cmd t=404.1 fire 0 344.25 232.24374
+cmd t=404.1 fire 0 342.125 235.11874
+cmd t=404.2 steer 0 0 0
+cmd t=404.2 fire 0 341 236.24374
+cmd t=404.3 fire 0 340 237.99374
+cmd t=404.3 fire 0 338.875 239.49374
+cmd t=404.4 fire 0 337.125 240.49374
+cmd t=404.5 fire 0 335.75 241.24374
+cmd t=404.5 fire 0 331 242.49374
+cmd t=404.6 fire 0 318.5 244.74374
+cmd t=404.7 fire 0 314.125 245.61874
+cmd t=404.7 fire 0 301.25 251.61874
+cmd t=404.9 fire 0 310.125 233.86874
+cmd t=405.0 fire 0 324.25 207.24374
+t=405 mould=30474 mass=30474 soldiers=8 squads=1 bank=898 income=6090 pumped=5607 shots=2070 killed=9367 pumps=4 turrets=0 walls=11 other=0 charge=1221721 took=0.029 stuck=0 p50=24.8 p95=69.7
+cmd t=405.4 fire 0 318.875 200.74374
+cmd t=405.6 fire 0 316.125 200.49374
+cmd t=405.9 fire 0 311.75 202.36874
+cmd t=405.9 fire 0 307.625 203.86874
+t=406 mould=30473 mass=30473 soldiers=8 squads=1 bank=918 income=6110 pumped=5627 shots=2086 killed=9696 pumps=4 turrets=0 walls=11 other=0 charge=1221320 took=0.029 stuck=0 p50=7.0 p95=69.2
+cmd t=406.1 fire 0 304.625 203.86874
+cmd t=406.1 fire 0 302.5 203.86874
+cmd t=406.2 fire 0 299.5 206.49374
+cmd t=406.3 fire 0 296.5 208.99374
+cmd t=406.3 fire 0 292.5 216.61874
+cmd t=406.4 fire 0 286.125 235.86874
+cmd t=406.5 fire 0 280.625 259.49374
+cmd t=406.5 fire 0 279.5 264.49374
+cmd t=406.7 fire 0 278 265.24374
+cmd t=406.9 fire 0 275.125 263.49374
+t=407 mould=30542 mass=30542 soldiers=8 squads=1 bank=938 income=6130 pumped=5647 shots=2102 killed=10028 pumps=4 turrets=0 walls=11 other=0 charge=1220922 took=0.029 stuck=0 p50=26.7 p95=69.4
+cmd t=407.0 fire 0 274.125 253.49374
+cmd t=407.1 fire 0 277.75 243.99374
+cmd t=407.1 fire 0 278.875 241.99374
+cmd t=407.2 fire 0 280.375 242.61874
+cmd t=407.3 fire 0 283.75 245.11874
+cmd t=407.3 fire 0 289.5 250.36874
+cmd t=407.5 fire 0 287 242.11874
+cmd t=407.6 fire 0 286.25 239.24374
+cmd t=407.7 fire 0 none
+t=408 mould=30503 mass=30503 soldiers=8 squads=1 bank=958 income=6150 pumped=5667 shots=2118 killed=10497 pumps=4 turrets=0 walls=11 other=0 charge=1220523 took=0.029 stuck=0 p50=7.2 p95=70.2
+t=409 mould=30400 mass=30400 soldiers=8 squads=1 bank=978 income=6170 pumped=5687 shots=2134 killed=11011 pumps=4 turrets=0 walls=11 other=0 charge=1220120 took=0.029 stuck=0 p50=21.6 p95=69.7
+t=410 mould=30378 mass=30378 soldiers=7 squads=1 bank=998 income=6190 pumped=5707 shots=2148 killed=11244 pumps=4 turrets=0 walls=11 other=0 charge=1219729 took=0.029 stuck=0 p50=22.4 p95=70.0
+t=411 mould=30461 mass=30461 soldiers=7 squads=1 bank=1022 income=6213 pumped=5727 shots=2155 killed=11546 pumps=4 turrets=0 walls=11 other=0 charge=1219329 took=0.029 stuck=0 p50=6.9 p95=70.3
+t=412 mould=30504 mass=30504 soldiers=7 squads=1 bank=1045 income=6237 pumped=5747 shots=2169 killed=11695 pumps=4 turrets=0 walls=11 other=0 charge=1218937 took=0.029 stuck=0 p50=7.1 p95=67.9
+cmd t=412.6 steer 0 1 0
+t=413 mould=30543 mass=30543 soldiers=7 squads=1 bank=1065 income=6257 pumped=5767 shots=2183 killed=11737 pumps=4 turrets=0 walls=11 other=0 charge=1218545 took=0.029 stuck=0 p50=25.2 p95=67.8
+cmd t=413.7 steer 0 1 1
+t=414 mould=30592 mass=30592 soldiers=7 squads=1 bank=1085 income=6277 pumped=5787 shots=2197 killed=11806 pumps=4 turrets=0 walls=11 other=0 charge=1218146 took=0.029 stuck=0 p50=25.9 p95=69.2
+t=415 mould=30598 mass=30598 soldiers=7 squads=1 bank=1109 income=6301 pumped=5807 shots=2211 killed=11839 pumps=4 turrets=0 walls=11 other=0 charge=1217740 took=0.029 stuck=0 p50=24.3 p95=68.8
+cmd t=415.5 steer 0 0 1
+cmd t=415.5 steer 0 -1 1
+cmd t=416.0 steer 0 0 1
+t=416 mould=30600 mass=30600 soldiers=7 squads=1 bank=1133 income=6325 pumped=5827 shots=2225 killed=11876 pumps=4 turrets=0 walls=11 other=0 charge=1217343 took=0.029 stuck=0 p50=29.9 p95=64.8
+cmd t=416.5 steer 0 1 1
+cmd t=416.8 steer 0 1 0
+t=417 mould=30621 mass=30621 soldiers=7 squads=1 bank=1157 income=6349 pumped=5847 shots=2235 killed=11885 pumps=4 turrets=0 walls=11 other=0 charge=1216940 took=0.029 stuck=0 p50=21.4 p95=59.5
+cmd t=417.3 steer 0 1 -1
+cmd t=417.8 steer 0 0 -1
+cmd t=417.9 steer 0 0 0
+t=418 mould=30634 mass=30634 soldiers=7 squads=1 bank=1181 income=6373 pumped=5867 shots=2246 killed=11910 pumps=4 turrets=0 walls=11 other=0 charge=1216539 took=0.029 stuck=0 p50=27.8 p95=47.2
+t=419 mould=30629 mass=30629 soldiers=7 squads=1 bank=1205 income=6397 pumped=5887 shots=2257 killed=11935 pumps=4 turrets=0 walls=11 other=0 charge=1216133 took=0.028 stuck=0 p50=27.4 p95=62.6
+cmd t=419.1 heal 0
+t=420 mould=30638 mass=30638 soldiers=7 squads=1 bank=1229 income=6421 pumped=5907 shots=2271 killed=11950 pumps=4 turrets=0 walls=11 other=0 charge=1215724 took=0.028 stuck=0 p50=6.9 p95=60.7
+t=421 mould=30652 mass=30652 soldiers=7 squads=1 bank=1253 income=6445 pumped=5927 shots=2285 killed=11959 pumps=4 turrets=0 walls=11 other=0 charge=1215292 took=0.028 stuck=0 p50=27.6 p95=61.3
+t=422 mould=30664 mass=30664 soldiers=7 squads=1 bank=1274 income=6469 pumped=5948 shots=2291 killed=11961 pumps=4 turrets=0 walls=11 other=0 charge=1214854 took=0.028 stuck=0 p50=7.1 p95=61.3
+cmd t=422.1 steer 0 0 -1
+cmd t=422.1 steer 0 -1 -1
+cmd t=422.9 fire 0 369.125 241.41458
+t=423 mould=30633 mass=30633 soldiers=6 squads=1 bank=1297 income=6492 pumped=5968 shots=2309 killed=12031 pumps=4 turrets=0 walls=11 other=0 charge=1214413 took=0.028 stuck=0 p50=15.4 p95=57.4
+cmd t=423.2 fire 0 367.20834 241.16458
+cmd t=423.6 fire 0 365.91666 240.34055
+cmd t=423.8 fire 0 365.91666 238.6217
+cmd t=423.9 fire 0 366 236.85596
+t=424 mould=30560 mass=30560 soldiers=6 squads=1 bank=1317 income=6513 pumped=5988 shots=2315 killed=12298 pumps=4 turrets=0 walls=11 other=0 charge=1214008 took=0.028 stuck=0 p50=7.0 p95=61.7
+cmd t=424.1 fire 0 366.125 235.21759
+cmd t=424.3 fire 0 366.58334 233.38892
+cmd t=424.5 fire 0 366.58334 231.55438
+cmd t=424.7 fire 0 366.83334 229.25554
+cmd t=424.8 steer 0 0 -1
+cmd t=425.0 fire 0 365.93198 230.90398
+t=425 mould=30504 mass=30504 soldiers=6 squads=1 bank=1337 income=6533 pumped=6008 shots=2327 killed=12547 pumps=4 turrets=0 walls=11 other=0 charge=1213622 took=0.028 stuck=0 p50=26.9 p95=66.3
+cmd t=425.1 fire 0 363.82794 231.9525
+cmd t=425.3 fire 0 360.59662 233.85704
+cmd t=425.3 steer 0 -1 -1
+cmd t=425.4 fire 0 357.24216 237.40176
+cmd t=425.5 fire 0 356.068 238.89366
+cmd t=425.7 fire 0 353.54553 237.74275
+cmd t=425.8 steer 0 0 -1
+cmd t=425.8 steer 0 1 -1
+cmd t=425.8 fire 0 352.32074 236.33058
+cmd t=425.9 steer 0 1 0
+cmd t=425.9 fire 0 351.13306 234.47514
+t=426 mould=30303 mass=30303 soldiers=6 squads=1 bank=1357 income=6553 pumped=6028 shots=2339 killed=13210 pumps=4 turrets=0 walls=11 other=0 charge=1213247 took=0.028 stuck=0 p50=24.0 p95=67.3
+cmd t=426.1 fire 0 350.60486 233.00093
+cmd t=426.2 fire 0 348.8022 232.42833
+cmd t=426.3 fire 0 346.49542 231.77022
+cmd t=426.3 steer 0 1 1
+cmd t=426.3 fire 0 344.55582 231.05765
+cmd t=426.4 fire 0 340.46524 230.23785
+cmd t=426.5 fire 0 335.39465 229.49454
+cmd t=426.6 fire 0 331.36133 228.60207
+cmd t=426.7 steer 0 0 1
+cmd t=426.7 fire 0 326.58875 225.38515
+cmd t=426.8 steer 0 -1 1
+cmd t=426.8 fire 0 324.198 219.61313
+cmd t=426.9 fire 0 323.9227 216.3177
+cmd t=427.0 fire 0 323.43423 213.97276
+raid t=427.1 to=422,188 held=4505 share=0.60 size=0.09
+t=427 mould=30270 mass=30270 soldiers=6 squads=1 bank=1377 income=6573 pumped=6048 shots=2351 killed=13639 pumps=4 turrets=0 walls=11 other=0 charge=1212866 took=0.028 stuck=0 p50=6.7 p95=65.8
+cmd t=427.1 steer 0 0 1
+cmd t=427.1 steer 0 0 0
+cmd t=427.3 fire 0 322.5398 215.20287
+cmd t=427.6 fire 0 323.96774 217.84114
+cmd t=427.9 steer 0 1 0
+cmd t=427.9 fire 0 325.70825 218.00423
+t=428 mould=30204 mass=30204 soldiers=4 squads=1 bank=1397 income=6593 pumped=6068 shots=2361 killed=14686 pumps=4 turrets=0 walls=11 other=0 charge=1212486 took=0.028 stuck=0 p50=7.1 p95=64.8
+cmd t=428.6 fire 0 327.2929 218.43883
+t=429 mould=29941 mass=29941 soldiers=4 squads=1 bank=1417 income=6613 pumped=6088 shots=2369 killed=15321 pumps=4 turrets=0 walls=11 other=0 charge=1212101 took=0.028 stuck=0 p50=20.2 p95=64.4
+cmd t=429.1 fire 0 329.0806 218.52791
+cmd t=429.6 fire 0 330.69846 218.45932
+cmd t=429.9 steer 0 1 -1
+t=430 mould=30032 mass=30032 soldiers=4 squads=1 bank=1437 income=6633 pumped=6108 shots=2377 killed=15780 pumps=4 turrets=0 walls=11 other=0 charge=1211747 took=0.028 stuck=0 p50=6.9 p95=65.2
+cmd t=430.0 fire 0 332.51883 218.59567
+cmd t=430.3 fire 0 334.0705 217.672
+cmd t=430.7 fire 0 335.3788 216.39554
+cmd t=430.9 fire 0 336.16666 214.65945
+t=431 mould=30133 mass=30133 soldiers=4 squads=1 bank=1457 income=6653 pumped=6128 shots=2385 killed=16135 pumps=4 turrets=0 walls=11 other=0 charge=1211411 took=0.028 stuck=0 p50=6.9 p95=65.5
+cmd t=431.3 fire 0 336.16666 212.76147
+cmd t=431.7 fire 0 336.16666 210.94489
+cmd t=431.9 fire 0 336.16666 208.89377
+t=432 mould=30243 mass=30243 soldiers=3 squads=1 bank=1477 income=6673 pumped=6148 shots=2388 killed=16363 pumps=4 turrets=0 walls=11 other=0 charge=1211057 took=0.028 stuck=0 p50=28.8 p95=65.1
+cmd t=432.1 fire 0 336.16666 206.99002
+cmd t=432.2 fire 0 336.16666 205.3522
+cmd t=432.3 fire 0 336.16666 203.76215
+cmd t=432.5 fire 0 336.16666 201.62875
+cmd t=432.7 fire 0 337.25 200.34395
+cmd t=432.9 fire 0 339.375 201.04066
+t=433 mould=30439 mass=30439 soldiers=3 squads=1 bank=1497 income=6693 pumped=6168 shots=2394 killed=16419 pumps=4 turrets=0 walls=11 other=0 charge=1210696 took=0.028 stuck=0 p50=27.5 p95=65.1
+cmd t=433.1 fire 0 340.58334 202.32732
+cmd t=433.2 fire 0 340.75 204.37274
+cmd t=433.3 fire 0 341 206.09476
+cmd t=433.5 fire 0 341.125 204.47134
+cmd t=433.7 fire 0 341.125 201.93213
+cmd t=433.9 fire 0 341.125 200.22217
+cmd t=434.0 fire 0 341.125 198.06134
+t=434 mould=30568 mass=30568 soldiers=3 squads=1 bank=1519 income=6714 pumped=6188 shots=2400 killed=16432 pumps=4 turrets=0 walls=11 other=0 charge=1210331 took=0.028 stuck=0 p50=23.7 p95=50.3
+cmd t=434.2 fire 0 341.125 196.05997
+cmd t=434.3 steer 0 0 -1
+cmd t=434.3 fire 0 341.125 194.3648
+cmd t=434.5 fire 0 341.125 192.17404
+cmd t=434.6 steer 0 -1 -1
+cmd t=434.6 fire 0 338.75 180.21945
+cmd t=434.7 fire 0 339.08334 173.06898
+cmd t=434.7 fire 0 347.29166 165.77632
+cmd t=434.8 fire 0 361.33334 164.14581
+cmd t=434.9 fire 0 362.45834 165.54636
+cmd t=434.9 fire 0 360.58334 171.64723
+cmd t=435.0 fire 0 358.83334 174.66292
+t=435 mould=30617 mass=30617 soldiers=3 squads=1 bank=1539 income=6734 pumped=6208 shots=2406 killed=16448 pumps=4 turrets=0 walls=11 other=0 charge=1209944 took=0.028 stuck=0 p50=24.8 p95=66.7
+cmd t=435.2 steer 0 0 -1
+cmd t=435.2 steer 0 1 -1
+cmd t=435.2 fire 0 358.83334 172.11528
+cmd t=435.3 fire 0 358.91666 170.49643
+cmd t=435.3 steer 0 0 -1
+cmd t=435.4 fire 0 359.625 168.99149
+cmd t=435.7 steer 0 -1 -1
+cmd t=435.8 fire 0 359.91666 167.34639
+t=436 mould=30578 mass=30578 soldiers=3 squads=1 bank=1559 income=6754 pumped=6228 shots=2412 killed=16614 pumps=4 turrets=0 walls=11 other=0 charge=1209558 took=0.027 stuck=0 p50=6.8 p95=67.5
+cmd t=436.0 fire 0 358.875 166.12244
+cmd t=436.2 fire 0 358.75 163.98996
+cmd t=436.4 fire 0 358.75 162.11636
+cmd t=436.6 fire 0 358.75 160.1513
+cmd t=437.0 fire 0 358.33334 158.31776
+t=437 mould=30260 mass=30260 soldiers=3 squads=1 bank=1579 income=6774 pumped=6248 shots=2418 killed=17054 pumps=4 turrets=0 walls=11 other=0 charge=1209196 took=0.027 stuck=0 p50=21.6 p95=65.4
+cmd t=437.2 steer 0 0 -1
+cmd t=437.4 fire 0 359.25 156.8898
+cmd t=437.7 fire 0 359.625 159.8876
+t=438 mould=30345 mass=30345 soldiers=3 squads=1 bank=1599 income=6794 pumped=6268 shots=2424 killed=17303 pumps=4 turrets=0 walls=11 other=0 charge=1208843 took=0.027 stuck=0 p50=9.0 p95=67.0
+cmd t=438.2 fire 0 359.5 157.55951
+cmd t=438.3 fire 0 358.875 152.5677
+cmd t=438.3 fire 0 358.5 144.97159
+cmd t=438.4 fire 0 358.04166 141.63121
+cmd t=438.5 fire 0 357.70834 139.748
+cmd t=438.5 fire 0 357.33334 137.23404
+cmd t=438.7 steer 0 1 -1
+cmd t=438.7 fire 0 356.625 133.9348
+cmd t=438.8 steer 0 0 -1
+cmd t=438.8 fire 0 356.375 132.33167
+cmd t=439.0 fire 0 356.375 130.04886
+t=439 mould=30500 mass=30500 soldiers=3 squads=1 bank=1619 income=6814 pumped=6288 shots=2430 killed=17312 pumps=4 turrets=0 walls=11 other=0 charge=1208489 took=0.027 stuck=0 p50=23.9 p95=66.5
+cmd t=439.1 fire 0 356.45834 128.51215
+cmd t=439.3 fire 0 357 125.88574
+cmd t=439.3 fire 0 364.66666 118.061745
+cmd t=439.4 fire 0 370.54166 111.945625
+cmd t=439.5 fire 0 372 110.07788
+cmd t=439.6 fire 0 372.125 108.119
+cmd t=439.7 fire 0 372.125 105.897575
+cmd t=439.9 fire 0 372.125 103.79662
+t=440 mould=30553 mass=30553 soldiers=3 squads=1 bank=1639 income=6834 pumped=6308 shots=2433 killed=17361 pumps=4 turrets=0 walls=11 other=0 charge=1208124 took=0.027 stuck=0 p50=30.1 p95=68.7
+cmd t=440.0 fire 0 373.20834 101.22513
+cmd t=440.1 fire 0 374.20834 98.42667
+cmd t=440.2 fire 0 376.70834 96.841995
+cmd t=440.3 fire 0 381.5 95.26284
+cmd t=440.3 fire 0 385.125 92.117966
+cmd t=440.4 fire 0 385.29166 89.97816
+cmd t=440.7 fire 0 397.41666 105.340256
+cmd t=440.8 fire 0 403.83334 109.55371
+cmd t=440.9 fire 0 404.79166 107.67554
+cmd t=441.0 fire 0 407.66666 107.53079
+t=441 mould=30625 mass=30625 soldiers=3 squads=1 bank=1661 income=6856 pumped=6328 shots=2439 killed=17363 pumps=4 turrets=0 walls=11 other=0 charge=1207723 took=0.027 stuck=0 p50=21.5 p95=68.5
+cmd t=441.1 steer 0 1 -1
+cmd t=441.1 fire 0 410.75 105.71838
+cmd t=441.1 fire 0 411.83334 104.44585
+cmd t=441.3 fire 0 411.95834 102.63876
+cmd t=441.5 fire 0 411.95834 100.54399
+cmd t=441.5 fire 0 413.91666 98.20935
+cmd t=441.6 fire 0 416.08334 95.2966
+cmd t=441.7 fire 0 417.125 93.68059
+cmd t=441.9 fire 0 417.83334 96.96597
+t=442 mould=30650 mass=30650 soldiers=3 squads=1 bank=1681 income=6876 pumped=6348 shots=2445 killed=17390 pumps=4 turrets=0 walls=11 other=0 charge=1207316 took=0.027 stuck=0 p50=24.7 p95=69.4
+cmd t=442.3 fire 0 417.16666 95.22829
+cmd t=442.4 fire 0 415.08334 95.34728
+cmd t=442.6 fire 0 413.79166 93.91011
+cmd t=442.9 fire 0 413.41666 91.460785
+cmd t=443.0 fire 0 none
+t=443 mould=30666 mass=30666 soldiers=3 squads=1 bank=1704 income=6899 pumped=6368 shots=2451 killed=17392 pumps=4 turrets=0 walls=11 other=0 charge=1206946 took=0.027 stuck=0 p50=29.8 p95=70.5
+cmd t=443.7 steer 0 0 -1
+cmd t=443.7 steer 0 0 0
+cmd t=443.9 buy
+t=444 mould=30661 mass=30661 soldiers=4 squads=1 bank=1324 income=6919 pumped=6388 shots=2457 killed=17441 pumps=4 turrets=0 walls=11 other=0 charge=1206605 took=0.027 stuck=0 p50=6.9 p95=73.0
+cmd t=444.1 buy
+cmd t=444.3 buy
+cmd t=444.5 buy
+t=445 mould=30624 mass=30624 soldiers=7 squads=1 bank=146 income=6941 pumped=6408 shots=2470 killed=17523 pumps=4 turrets=0 walls=11 other=0 charge=1206281 took=0.027 stuck=0 p50=7.4 p95=74.5
+t=446 mould=30643 mass=30643 soldiers=7 squads=1 bank=169 income=6964 pumped=6428 shots=2484 killed=17551 pumps=4 turrets=0 walls=11 other=0 charge=1205921 took=0.027 stuck=0 p50=31.9 p95=74.8
+cmd t=446.1 steer 0 0 1
+cmd t=446.2 fire 0 392.95834 79.057236
+cmd t=446.3 fire 0 392.875 80.79199
+cmd t=446.4 fire 0 395.25 91.09045
+cmd t=446.5 fire 0 396.54166 98.808075
+cmd t=446.5 fire 0 396.95834 101.40988
+cmd t=446.7 fire 0 396.95834 103.64909
+cmd t=446.8 fire 0 396.16666 105.10231
+cmd t=446.9 steer 0 -1 1
+cmd t=446.9 fire 0 394.875 106.54802
+cmd t=446.9 fire 0 392.66666 108.34333
+t=447 mould=30670 mass=30670 soldiers=7 squads=1 bank=187 income=6982 pumped=6443 shots=2500 killed=17558 pumps=3 turrets=0 walls=11 other=0 charge=1205512 took=0.027 stuck=0 p50=9.7 p95=73.2
+cmd t=447.1 fire 0 392.54166 109.99349
+cmd t=447.3 fire 0 391.75 112.14254
+cmd t=447.3 fire 0 375.25 111.67857
+cmd t=447.5 fire 0 372.83334 112.75751
+cmd t=447.6 fire 0 371.875 114.01962
+cmd t=447.7 fire 0 367.16666 114.791016
+cmd t=447.9 fire 0 361.66666 112.23964
+t=448 mould=30671 mass=30671 soldiers=7 squads=1 bank=204 income=7000 pumped=6458 shots=2514 killed=17580 pumps=3 turrets=0 walls=11 other=0 charge=1205093 took=0.027 stuck=0 p50=22.9 p95=72.5
+cmd t=448.1 fire 0 361.16666 113.892365
+cmd t=448.3 fire 0 362.08334 116.82175
+cmd t=448.4 fire 0 362.58334 118.3891
+cmd t=448.5 fire 0 360.41666 116.11499
+cmd t=448.5 fire 0 352.58334 106.3575
+cmd t=448.6 fire 0 347.45834 101.92836
+cmd t=448.8 fire 0 347 103.7973
+cmd t=448.9 fire 0 340.125 98.436356
+t=449 mould=30678 mass=30678 soldiers=7 squads=1 bank=219 income=7015 pumped=6473 shots=2528 killed=17627 pumps=3 turrets=0 walls=11 other=0 charge=1204689 took=0.027 stuck=0 p50=23.7 p95=70.9
+cmd t=449.2 steer 0 -1 0
+cmd t=449.2 fire 0 339.66666 101.00557
+cmd t=449.4 fire 0 339.66666 102.80548
+cmd t=449.9 fire 0 341.20834 104.7088
+t=450 mould=30655 mass=30655 soldiers=7 squads=1 bank=234 income=7030 pumped=6488 shots=2542 killed=17685 pumps=3 turrets=0 walls=11 other=0 charge=1204303 took=0.027 stuck=0 p50=30.3 p95=71.3
+cmd t=450.0 fire 0 342.29166 107.67287
+cmd t=450.1 fire 0 342.91666 110.777405
+cmd t=450.3 fire 0 341.875 113.775604
+cmd t=450.3 fire 0 340.95834 115.385605
+cmd t=450.4 fire 0 339.79166 117.66041
+cmd t=450.5 fire 0 337.95834 121.77594
+cmd t=450.5 fire 0 337.331 123.67775
+cmd t=450.7 fire 0 336.4287 125.001274
+cmd t=450.8 fire 0 334.3325 125.24095
+cmd t=450.9 fire 0 332.58286 125.5706
+cmd t=450.9 fire 0 329.20117 126.900986
+cmd t=451.0 fire 0 327.35797 127.02368
+t=451 mould=30590 mass=30590 soldiers=7 squads=1 bank=249 income=7045 pumped=6503 shots=2549 killed=17873 pumps=3 turrets=0 walls=11 other=0 charge=1203922 took=0.027 stuck=0 p50=22.2 p95=69.2
+cmd t=451.1 fire 0 323.42722 127.020905
+cmd t=451.2 fire 0 321.86838 127.0195
+cmd t=451.3 fire 0 319.646 126.56012
+cmd t=451.4 fire 0 316.57693 126.43323
+cmd t=451.5 fire 0 314.17438 126.431946
+cmd t=451.6 fire 0 312.67105 126.431274
+cmd t=451.7 fire 0 310.02945 126.34696
+cmd t=451.9 fire 0 308.04926 126.34639
+cmd t=451.9 steer 0 -1 1
+cmd t=452.0 fire 0 305.12888 124.94217
+t=452 mould=30628 mass=30628 soldiers=7 squads=1 bank=264 income=7060 pumped=6518 shots=2563 killed=17917 pumps=3 turrets=0 walls=11 other=0 charge=1203520 took=0.027 stuck=0 p50=9.9 p95=70.4
+cmd t=452.1 fire 0 303.65848 123.38985
+cmd t=452.1 fire 0 302.75397 119.719025
+cmd t=452.2 fire 0 302.4217 117.19083
+cmd t=452.3 fire 0 301.98837 115.64543
+cmd t=452.4 fire 0 301.68195 113.29469
+cmd t=452.5 fire 0 300.1271 112.647354
+cmd t=452.6 fire 0 299.3836 110.60277
+cmd t=452.7 fire 0 298.63937 109.142
+cmd t=452.9 steer 0 -1 0
+cmd t=452.9 fire 0 296.6512 109.4163
+t=453 mould=30633 mass=30633 soldiers=7 squads=1 bank=279 income=7075 pumped=6533 shots=2577 killed=17967 pumps=3 turrets=0 walls=11 other=0 charge=1203083 took=0.027 stuck=0 p50=10.0 p95=67.4
+cmd t=453.0 fire 0 294.9004 108.57438
+cmd t=453.1 fire 0 295.23105 104.38644
+cmd t=453.1 fire 0 296.6593 98.360146
+cmd t=453.2 fire 0 298.06116 94.30184
+cmd t=453.3 fire 0 300.44983 90.75269
+cmd t=453.3 fire 0 302.91083 87.36944
+cmd t=453.5 fire 0 300.63895 87.53273
+cmd t=453.5 fire 0 307.47412 99.2423
+cmd t=453.6 fire 0 309.66934 103.34129
+cmd t=453.7 fire 0 321.00296 120.3073
+cmd t=453.7 fire 0 324.00043 126.8678
+cmd t=453.8 fire 0 327.54453 133.07993
+cmd t=453.9 fire 0 327.42172 134.62193
+cmd t=454.0 fire 0 325.5568 134.73708
+t=454 mould=30550 mass=30550 soldiers=7 squads=1 bank=294 income=7090 pumped=6548 shots=2591 killed=18340 pumps=3 turrets=0 walls=11 other=0 charge=1202645 took=0.026 stuck=0 p50=10.0 p95=70.3
+cmd t=454.3 fire 0 325.01245 136.64629
+cmd t=454.5 fire 0 322.13623 137.31517
+cmd t=454.7 fire 0 319.4397 137.35355
+cmd t=454.8 steer 0 -1 1
+cmd t=454.9 fire 0 317.72827 137.38664
+t=455 mould=30372 mass=30372 soldiers=7 squads=1 bank=309 income=7105 pumped=6563 shots=2605 killed=18855 pumps=3 turrets=0 walls=11 other=0 charge=1202224 took=0.026 stuck=0 p50=25.9 p95=70.6
+cmd t=455.1 fire 0 315.41858 138.02377
+cmd t=455.1 fire 0 310.7131 129.29918
+cmd t=455.2 fire 0 308.02878 122.30181
+cmd t=455.3 fire 0 304.5794 111.69477
+cmd t=455.3 fire 0 303.1018 107.86803
+cmd t=455.4 fire 0 301.84088 106.36589
+cmd t=455.5 steer 0 -1 0
+cmd t=455.5 fire 0 299.83978 103.32635
+cmd t=455.6 fire 0 298.09726 103.38372
+cmd t=455.7 fire 0 295.84387 102.37668
+cmd t=455.8 fire 0 293.76172 102.247894
+cmd t=455.9 fire 0 292.19934 102.2344
+t=456 mould=30303 mass=30303 soldiers=7 squads=1 bank=324 income=7120 pumped=6578 shots=2619 killed=19321 pumps=3 turrets=0 walls=11 other=0 charge=1201815 took=0.026 stuck=0 p50=21.8 p95=69.6
+cmd t=456.1 fire 0 290.15506 102.14929
+cmd t=456.3 fire 0 288.53018 102.097115
+cmd t=456.4 fire 0 286.5343 102.04802
+cmd t=456.5 steer 0 -1 1
+cmd t=456.5 fire 0 284.04636 102.00532
+cmd t=456.7 fire 0 282.22803 102.15004
+cmd t=456.8 fire 0 280.75732 103.0679
+cmd t=456.9 steer 0 -1 0
+cmd t=456.9 fire 0 279.67548 104.14439
+cmd t=457.0 fire 0 281.25876 113.554565
+t=457 mould=30095 mass=30095 soldiers=7 squads=1 bank=339 income=7135 pumped=6593 shots=2633 killed=20113 pumps=3 turrets=0 walls=11 other=0 charge=1201416 took=0.026 stuck=0 p50=24.3 p95=68.7
+cmd t=457.1 fire 0 283.38004 120.75802
+cmd t=457.1 fire 0 287.6217 130.57245
+cmd t=457.2 fire 0 288.55032 134.03404
+cmd t=457.3 fire 0 289.62213 136.55392
+cmd t=457.4 fire 0 291.93933 137.39308
+cmd t=457.7 fire 0 290.0679 137.2592
+cmd t=457.9 fire 0 285.3527 131.53493
+cmd t=457.9 fire 0 283.82278 130.94264
+cmd t=458.0 fire 0 282.26028 130.26129
+t=458 mould=29886 mass=29886 soldiers=6 squads=1 bank=354 income=7150 pumped=6608 shots=2646 killed=20851 pumps=3 turrets=0 walls=11 other=0 charge=1201000 took=0.026 stuck=0 p50=6.9 p95=67.4
+cmd t=458.1 steer 0 -1 1
+cmd t=458.1 fire 0 278.09604 130.04689
+cmd t=458.2 fire 0 273.1856 129.17795
+cmd t=458.4 fire 0 271.61032 129.91101
+cmd t=458.5 steer 0 -1 0
+cmd t=458.7 fire 0 269.99423 130.57352
+cmd t=458.7 fire 0 268.28516 130.9807
+cmd t=458.9 fire 0 266.31613 130.88052
+t=459 mould=29865 mass=29865 soldiers=5 squads=1 bank=369 income=7165 pumped=6624 shots=2652 killed=21225 pumps=3 turrets=0 walls=11 other=0 charge=1200545 took=0.026 stuck=0 p50=6.8 p95=68.6
+cmd t=459.1 fire 0 264.3779 130.91162
+cmd t=459.3 fire 0 262.40967 130.88167
+cmd t=459.4 fire 0 260.6471 130.85527
+cmd t=459.5 fire 0 258.49136 130.82597
+cmd t=459.6 steer 0 -1 1
+cmd t=459.7 fire 0 256.03824 130.80388
+cmd t=459.8 fire 0 253.3652 126.63902
+cmd t=459.9 fire 0 251.44492 121.985825
+cmd t=459.9 fire 0 249.14323 119.97536
+t=460 mould=29851 mass=29851 soldiers=5 squads=1 bank=384 income=7180 pumped=6639 shots=2662 killed=21625 pumps=3 turrets=0 walls=11 other=0 charge=1200150 took=0.026 stuck=0 p50=6.9 p95=69.1
+cmd t=460.1 fire 0 247.18181 121.41556
+cmd t=460.2 steer 0 -1 0
+cmd t=460.3 fire 0 245.818 122.76927
+cmd t=460.4 fire 0 244.20094 123.56795
+cmd t=460.6 fire 0 241.9051 123.80347
+cmd t=460.7 fire 0 237.675 119.83069
+cmd t=460.8 fire 0 216.125 111.944756
+t=461 mould=29954 mass=29954 soldiers=5 squads=1 bank=399 income=7195 pumped=6654 shots=2672 killed=21676 pumps=3 turrets=0 walls=11 other=0 charge=1199764 took=0.026 stuck=0 p50=21.0 p95=68.9
+cmd t=461.9 fire 0 218.375 115.20736
+t=462 mould=30165 mass=30165 soldiers=5 squads=1 bank=414 income=7210 pumped=6669 shots=2682 killed=21731 pumps=3 turrets=0 walls=11 other=0 charge=1199355 took=0.026 stuck=0 p50=7.1 p95=79.5
+cmd t=462.0 fire 0 219.375 130.20288
+cmd t=462.1 fire 0 221.75 153.32663
+cmd t=462.1 fire 0 222.25 155.94952
+t=463 mould=30130 mass=30130 soldiers=5 squads=1 bank=429 income=7225 pumped=6684 shots=2692 killed=22159 pumps=3 turrets=0 walls=11 other=0 charge=1198855 took=0.026 stuck=0 p50=27.8 p95=77.5
+cmd t=463.4 fire 0 228.875 140.56839
+cmd t=463.5 fire 0 236.75 123.89988
+cmd t=463.6 fire 0 239.75 115.38592
+cmd t=463.7 fire 0 240.875 111.377556
+cmd t=463.7 steer 0 -1 1
+t=464 mould=29818 mass=29818 soldiers=4 squads=1 bank=440 income=7236 pumped=6695 shots=2701 killed=22773 pumps=1 turrets=0 walls=11 other=0 charge=1198358 took=0.026 stuck=0 p50=33.4 p95=75.7
+cmd t=464.1 fire 0 243.125 117.968895
+cmd t=464.2 fire 0 245.25 123.66854
+cmd t=464.3 fire 0 245.625 125.2149
+cmd t=464.4 fire 0 246 127.63198
+cmd t=464.5 fire 0 248.625 134.38675
+cmd t=464.6 fire 0 249.625 135.9719
+cmd t=464.7 fire 0 250.75 137.70892
+cmd t=464.8 fire 0 251.125 140.5344
+t=465 mould=29550 mass=29550 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2709 killed=23237 pumps=0 turrets=0 walls=11 other=0 charge=1197872 took=0.026 stuck=0 p50=6.9 p95=76.2
+cmd t=465.0 fire 0 251.5 142.19913
+cmd t=465.1 fire 0 251.5 143.82104
+cmd t=465.3 fire 0 251.5 145.84995
+cmd t=465.4 fire 0 251.5 147.82312
+cmd t=465.5 fire 0 251.5 151.87097
+cmd t=465.6 fire 0 251.5 155.92917
+cmd t=465.9 steer 0 0 1
+cmd t=465.9 fire 0 251.5 158.49713
+t=466 mould=29391 mass=29414 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2717 killed=23510 pumps=0 turrets=0 walls=11 other=0 charge=1197367 took=0.026 stuck=0 p50=6.9 p95=75.2
+cmd t=466.1 fire 0 251.5 161.26962
+cmd t=466.3 steer 0 -1 1
+cmd t=466.3 fire 0 251.5 163.78604
+cmd t=466.5 fire 0 251.5 165.55927
+cmd t=466.6 steer 0 0 1
+cmd t=466.6 fire 0 251.5 167.91422
+cmd t=466.7 fire 0 251.5 170.0842
+cmd t=466.7 fire 0 251.5 177.86334
+cmd t=466.8 fire 0 250.625 186.44217
+cmd t=466.9 fire 0 249 193.90115
+cmd t=466.9 fire 0 248.25 197.67606
+cmd t=467.0 fire 0 247 202.66742
+t=467 mould=29518 mass=29518 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2721 killed=23674 pumps=0 turrets=0 walls=11 other=0 charge=1196934 took=0.026 stuck=0 p50=31.9 p95=74.3
+cmd t=467.1 fire 0 245.25 209.04489
+cmd t=467.1 fire 0 243.25 214.80963
+cmd t=467.2 fire 0 241.125 220.95297
+cmd t=467.3 fire 0 239.25 226.9747
+cmd t=467.3 fire 0 236.75 233.78568
+cmd t=467.4 fire 0 234.375 239.75815
+cmd t=467.5 fire 0 233.625 242.36267
+cmd t=467.5 fire 0 232.25 247.33649
+cmd t=467.6 fire 0 231.5 249.23297
+cmd t=467.7 fire 0 230.875 253.0401
+cmd t=467.8 fire 0 230.5 254.58789
+cmd t=467.9 steer 0 1 1
+cmd t=467.9 fire 0 230.5 257.1059
+t=468 mould=29571 mass=29571 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2729 killed=23863 pumps=0 turrets=0 walls=11 other=0 charge=1196479 took=0.026 stuck=0 p50=24.9 p95=70.7
+cmd t=468.1 fire 0 230.5 259.071
+cmd t=468.2 fire 0 230.125 261.28625
+cmd t=468.3 fire 0 213.375 211.44177
+cmd t=468.4 fire 0 211 202.4201
+cmd t=468.5 fire 0 209.75 196.43826
+cmd t=468.5 fire 0 201.875 174.08401
+cmd t=468.6 fire 0 198.25 167.2732
+cmd t=468.7 fire 0 194 159.62259
+cmd t=468.7 fire 0 192 157.88736
+cmd t=468.8 fire 0 189.5 153.72272
+cmd t=468.9 fire 0 188.5 150.11874
+t=469 mould=29760 mass=29760 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2737 killed=24055 pumps=0 turrets=0 walls=11 other=0 charge=1196036 took=0.026 stuck=0 p50=21.8 p95=69.5
+cmd t=469.1 fire 0 191.25 149.74374
+cmd t=469.1 fire 0 194.125 150.11874
+cmd t=469.2 fire 0 197 150.74374
+cmd t=469.3 fire 0 198.75 151.86874
+cmd t=469.3 steer 0 0 1
+cmd t=469.4 steer 0 -1 1
+cmd t=469.4 fire 0 201.625 153.61874
+cmd t=469.5 fire 0 203.375 156.49374
+cmd t=469.5 fire 0 204.5 158.24374
+cmd t=469.6 fire 0 206.25 161.24374
+cmd t=469.7 fire 0 209.25 167.36874
+cmd t=469.7 fire 0 211.875 175.24374
+cmd t=469.8 fire 0 215 182.49374
+cmd t=469.9 fire 0 218.875 190.36874
+cmd t=469.9 fire 0 221.25 195.61874
+cmd t=470.0 fire 0 222.25 197.86874
+t=470 mould=29683 mass=29683 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2745 killed=24328 pumps=0 turrets=0 walls=11 other=0 charge=1195583 took=0.026 stuck=0 p50=9.9 p95=68.7
+cmd t=470.1 steer 0 -1 0
+cmd t=470.1 fire 0 223 199.24374
+cmd t=470.2 steer 0 -1 -1
+cmd t=470.5 fire 0 223.75 202.11874
+cmd t=470.6 fire 0 224.125 205.24374
+cmd t=470.7 fire 0 224.125 207.74374
+t=471 mould=29482 mass=29467 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2753 killed=24911 pumps=0 turrets=0 walls=11 other=0 charge=1195067 took=0.025 stuck=0 p50=9.7 p95=68.3
+cmd t=471.2 fire 0 224.25 210.24374
+cmd t=471.4 fire 0 223.5 212.74374
+cmd t=471.6 fire 0 222.75 214.49374
+cmd t=472.0 steer 0 0 -1
+t=472 mould=29394 mass=29403 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2761 killed=25056 pumps=0 turrets=0 walls=11 other=0 charge=1194585 took=0.025 stuck=0 p50=6.9 p95=68.2
+t=473 mould=29546 mass=29546 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2769 killed=25138 pumps=0 turrets=0 walls=11 other=0 charge=1194157 took=0.025 stuck=0 p50=7.0 p95=68.4
+cmd t=473.3 fire 0 222.375 211.87262
+cmd t=473.5 fire 0 222.375 209.75479
+cmd t=473.6 fire 0 222.375 208.14978
+cmd t=473.8 fire 0 222.375 206.09415
+t=474 mould=29595 mass=29595 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2777 killed=25346 pumps=0 turrets=0 walls=11 other=0 charge=1193712 took=0.025 stuck=0 p50=25.0 p95=70.0
+cmd t=474.1 fire 0 222.375 204.13443
+cmd t=474.6 fire 0 222.375 202.49188
+cmd t=474.9 fire 0 222.375 200.47116
+t=475 mould=29554 mass=29554 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2781 killed=25503 pumps=0 turrets=0 walls=11 other=0 charge=1193262 took=0.025 stuck=0 p50=6.9 p95=71.5
+cmd t=475.1 fire 0 220.25 201.33344
+cmd t=475.3 fire 0 218.875 202.0159
+cmd t=475.5 fire 0 217.5 201.36597
+cmd t=475.6 fire 0 217.5 199.54578
+cmd t=475.7 fire 0 217.5 198.02621
+cmd t=475.9 fire 0 217.5 195.42242
+cmd t=476.0 fire 0 217.5 193.67557
+t=476 mould=29599 mass=29599 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2789 killed=25669 pumps=0 turrets=0 walls=11 other=0 charge=1192777 took=0.025 stuck=0 p50=24.9 p95=71.1
+cmd t=476.1 fire 0 217.625 192.12943
+cmd t=476.2 fire 0 219.125 191.9581
+cmd t=476.3 fire 0 222.875 192.06192
+cmd t=476.4 fire 0 224.25 191.06851
+cmd t=476.5 fire 0 225 189.30762
+cmd t=476.7 fire 0 225.25 187.56207
+cmd t=476.8 fire 0 225.25 185.79343
+cmd t=476.9 fire 0 225.25 183.94125
+t=477 mould=29659 mass=29659 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2797 killed=25783 pumps=0 turrets=0 walls=11 other=0 charge=1192259 took=0.025 stuck=0 p50=6.7 p95=72.8
+cmd t=477.1 fire 0 225.25 181.33148
+cmd t=477.2 fire 0 225.125 179.37906
+cmd t=477.3 fire 0 225.125 177.35059
+cmd t=477.5 fire 0 225.125 175.35852
+cmd t=477.6 fire 0 225.125 173.15762
+cmd t=477.7 fire 0 225.125 171.32147
+cmd t=477.9 fire 0 225.125 169.17279
+cmd t=478.0 fire 0 225.125 167.36185
+t=478 mould=29705 mass=29705 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2805 killed=25811 pumps=0 turrets=0 walls=11 other=0 charge=1191759 took=0.025 stuck=0 p50=6.9 p95=76.1
+cmd t=478.2 fire 0 224.75 165.2616
+cmd t=478.3 fire 0 218 170.6607
+cmd t=478.3 fire 0 213.25 172.76465
+cmd t=478.4 fire 0 201.875 176.86444
+cmd t=478.5 fire 0 193.625 178.8778
+cmd t=478.7 fire 0 193.25 176.7795
+cmd t=478.8 fire 0 193.25 174.73459
+cmd t=478.9 fire 0 193.25 172.3851
+t=479 mould=29842 mass=29842 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2813 killed=25839 pumps=0 turrets=0 walls=11 other=0 charge=1191289 took=0.025 stuck=0 p50=23.9 p95=76.2
+cmd t=479.1 fire 0 193.25 170.54631
+cmd t=479.3 fire 0 192.5 168.54941
+cmd t=479.5 fire 0 198.5 165.76157
+cmd t=479.6 fire 0 206.375 163.90448
+cmd t=479.7 fire 0 207.25 162.36078
+cmd t=479.7 fire 0 213.25 159.30356
+cmd t=479.9 fire 0 219 150.07466
+cmd t=479.9 fire 0 226.375 132.331
+cmd t=480.0 fire 0 228.125 121.88726
+t=480 mould=29894 mass=29894 soldiers=4 squads=1 bank=442 income=7238 pumped=6696 shots=2821 killed=25964 pumps=0 turrets=0 walls=11 other=0 charge=1190813 took=0.025 stuck=0 p50=6.8 p95=78.1
+cmd t=480.1 fire 0 228 116.94759
+cmd t=480.1 fire 0 228.125 113.1079
+cmd t=480.2 fire 0 228.625 109.04865
+cmd t=480.3 fire 0 229.125 104.803024
+cmd t=480.4 fire 0 229.125 102.6391
+cmd t=480.9 fire 0 229.125 100.72595
+t=481 mould=29764 mass=29764 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2824 killed=26136 pumps=0 turrets=0 walls=11 other=0 charge=1190342 took=0.025 stuck=0 p50=9.8 p95=74.9
+cmd t=481.1 fire 0 229.125 97.56733
+cmd t=481.2 fire 0 229.125 95.21081
+cmd t=481.5 fire 0 229.125 98.1375
+cmd t=481.5 fire 0 230.5 103.2625
+cmd t=481.6 fire 0 233.5 110.8875
+cmd t=481.7 fire 0 235.375 114.3875
+t=482 mould=29818 mass=29818 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2826 killed=26147 pumps=0 turrets=0 walls=11 other=0 charge=1189857 took=0.025 stuck=0 p50=25.9 p95=71.9
+cmd t=482.1 fire 0 233.5 108.5125
+cmd t=482.2 fire 0 232.25 102.6375
+cmd t=482.3 fire 0 231.875 99.2625
+cmd t=482.4 fire 0 231.625 96.0125
+cmd t=482.5 fire 0 231.625 93.5125
+cmd t=482.9 fire 0 243.375 92.2625
+cmd t=482.9 fire 0 248.375 90.8875
+cmd t=483.0 fire 0 257.25 86.8875
+t=483 mould=29930 mass=29930 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2827 killed=26163 pumps=0 turrets=0 walls=11 other=0 charge=1189360 took=0.025 stuck=0 p50=7.0 p95=71.8
+cmd t=483.1 fire 0 263 82.3875
+cmd t=483.1 fire 0 271.5 71.6375
+cmd t=483.2 fire 0 276.5 59.762497
+cmd t=483.3 fire 0 278.625 51.887497
+t=484 mould=29980 mass=29980 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2829 killed=26178 pumps=0 turrets=0 walls=11 other=0 charge=1188897 took=0.025 stuck=0 p50=25.8 p95=71.9
+t=485 mould=30026 mass=30026 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2831 killed=26197 pumps=0 turrets=0 walls=11 other=0 charge=1188453 took=0.025 stuck=0 p50=6.8 p95=74.7
+cmd t=485.4 steer 0 1 -1
+cmd t=485.4 fire 0 280.5 51.137497
+cmd t=485.5 fire 0 none
+cmd t=485.6 steer 0 1 0
+t=486 mould=30073 mass=30073 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2833 killed=26210 pumps=0 turrets=0 walls=11 other=0 charge=1187986 took=0.025 stuck=0 p50=6.8 p95=72.2
+cmd t=486.5 fire 0 357.875 76.8875
+cmd t=486.7 fire 0 348.5 69.5125
+cmd t=486.7 fire 0 345 67.0125
+cmd t=486.8 fire 0 337.25 62.887497
+cmd t=487.0 fire 0 326.125 65.0125
+t=487 mould=30148 mass=30148 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2835 killed=26278 pumps=0 turrets=0 walls=11 other=0 charge=1187531 took=0.025 stuck=0 p50=6.7 p95=72.4
+cmd t=487.1 fire 0 313 65.5125
+cmd t=487.4 steer 0 1 -1
+t=488 mould=30124 mass=30124 soldiers=1 squads=1 bank=442 income=7238 pumped=6696 shots=2837 killed=26465 pumps=0 turrets=0 walls=11 other=0 charge=1187105 took=0.025 stuck=0 p50=6.8 p95=72.0
