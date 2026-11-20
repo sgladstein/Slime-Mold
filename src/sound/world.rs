@@ -616,6 +616,12 @@ impl WorldListener {
                 End::Cap(share) => SoundCmd::Alert { kind: AlertKind::Bell, weight: share.clamp(0.0, 1.0), pan: 0.0 },
                 End::SquadWiped(_) | End::Overrun(_) => SoundCmd::Alert { kind: AlertKind::Died, weight: 1.0, pan: 0.0 },
             });
+            // A lost planet: under the falling bells the slime rises
+            // (sound pass two).
+            if matches!(end, End::SquadWiped(_) | End::Overrun(_)) {
+                let (pan, _) = ear.place(g.core);
+                out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan: pan * 0.5, gain: 0.5, delay: 0.2 });
+            }
         }
         self.ended = g.end.is_some();
         self.body(g, ear, dt, killed, &mut out);
@@ -813,21 +819,21 @@ impl WorldListener {
                 }
                 Card::Gas => out.push(SoundCmd::Grain { kind: GrainKind::Hiss, pan, gain: 0.45 * g1, delay }),
                 Card::Germ | Card::Detonate => {
-                    out.push(SoundCmd::Burst { kind: GrainKind::Pop, rate: 45.0, secs: 0.35, pan, spread: 0.2, gain: 0.25 * g1 });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Pop, rate: 45.0, secs: 0.35, pan, spread: 0.2, gain: 0.4 * g1 });
                     if p.killed > 0 {
                         out.push(SoundCmd::Impact { weight: w, pan, gain: (0.2 + 0.3 * w) * g1, delay, far });
                     }
                 }
                 Card::Flare | Card::Torch => {
-                    out.push(SoundCmd::Grain { kind: GrainKind::Whoosh, pan, gain: 0.25 * g1, delay });
-                    out.push(SoundCmd::Burst { kind: GrainKind::Sizzle, rate: 70.0, secs: 0.5, pan, spread: 0.2, gain: 0.2 * g1 });
+                    out.push(SoundCmd::Grain { kind: GrainKind::Whoosh, pan, gain: 0.45 * g1, delay });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Sizzle, rate: 70.0, secs: 0.5, pan, spread: 0.2, gain: 0.35 * g1 });
                 }
                 Card::Shatter => {
                     out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.3 * g1, delay });
                     out.push(SoundCmd::Burst { kind: GrainKind::Crackle, rate: 25.0 + 2.0 * p.killed.min(60) as f32, secs: 0.25, pan, spread: 0.2, gain: 0.25 * g1 });
                 }
                 // The mind rounds kill nothing: a soft shimmer, rising drips.
-                _ => out.push(SoundCmd::Burst { kind: GrainKind::Drip, rate: 30.0, secs: 0.25, pan, spread: 0.3, gain: 0.12 * g1 }),
+                _ => out.push(SoundCmd::Burst { kind: GrainKind::Drip, rate: 30.0, secs: 0.25, pan, spread: 0.3, gain: 0.25 * g1 }),
             }
             self.stats.payloads += 1;
         }

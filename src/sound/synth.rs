@@ -339,6 +339,8 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             verb: 0.35,
             ..base
         },
+        // A click on a menu or the HUD: a small soft tick, dry.
+        GrainKind::Tick => Spec { len: 0.025, attack: 0.0003, noise: 0.25, noise_tau: 0.0015, band: rng.range(3200.0, 3800.0), q: 1.5, sine: 0.2, sine_tau: 0.004, freq: rng.range(1400.0, 1600.0), verb: 0.05, ..base },
         // A walker killed (`TextureKind::Kill`, 2026-11-20): a tiny wet
         // pop, a sine blip whose pitch jumps up as it bursts (a bubble's
         // way) with a breath of noise. Replaced the starving crackle in a
@@ -1071,6 +1073,11 @@ impl VoiceBank {
                 let n = (w * 3.0).round() as usize;
                 for (j, f) in [392.0, 493.88, 587.33].iter().enumerate().take(n.max(1)) {
                     notes[j] = (*f, 0.18 * j as f32, if n == 0 { 0.08 } else { 0.18 }, true);
+                }
+                // A whole win (sound pass two, 2026-11-20) climbs on to
+                // the octave, held: the arpeggio resolves.
+                if n >= 3 {
+                    notes[3] = (783.99, 0.54, 0.22, true);
                 }
             }
             // A siren: a two-tone wail, high-low-high-low, plain sines

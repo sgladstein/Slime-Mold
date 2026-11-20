@@ -174,10 +174,12 @@ pub enum GrainKind {
     Swell,
     /// Larder World: a building set down, a metal clank.
     Clank,
+    /// The menus and the HUD answering a click: a small soft tick.
+    Tick,
 }
 
 impl GrainKind {
-    pub const ALL: [GrainKind; 25] = [
+    pub const ALL: [GrainKind; 26] = [
         GrainKind::Squelch,
         GrainKind::Slurp,
         GrainKind::Crackle,
@@ -203,6 +205,7 @@ impl GrainKind {
         GrainKind::Hiss,
         GrainKind::Swell,
         GrainKind::Clank,
+        GrainKind::Tick,
     ];
 }
 
