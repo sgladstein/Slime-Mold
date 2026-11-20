@@ -404,6 +404,8 @@ pub struct Bosses {
     pub crowd_top: f32,
     /// Each live one's way to where it is going (`Game::boss_steer`).
     ways: Vec<BossWay>,
+    /// How many times one stalled on its way and gathered again (`STALL`).
+    pub regrouped: u32,
     /// Their own draws, apart from `Game::rng`.
     rng: Rng,
 }
@@ -425,7 +427,24 @@ struct BossWay {
     goal: Option<(f32, f32)>,
     field: Vec<u32>,
     building: Option<(Way, Option<(f32, f32)>)>,
+    /// Where it stood when it last got anywhere (fine cells) and the
+    /// seconds since (`STALL`).
+    mark: (f32, f32),
+    still: u32,
 }
+
+/// **A body wrapped round rock gathers again on its leading part**
+/// (2026-11-20): a lump steers its members by one aim, so a body that has
+/// flowed round both sides of a rock pillar is pulled into the rock from
+/// one side whatever the aim, its leash holding it on the rock between
+/// (on the owner's planet 2, run 1795106014, a wanderer of 249 stood 90 s
+/// wrapped round a pillar with its goal in plain sight of one arm). Not
+/// two dish cells on in `STALL` seconds of walking a way, and with no
+/// soldier near, it forms again round the point a body's length down its
+/// way (one and a half times its radius round it), counted as a new body: the arm left behind goes back to the
+/// slime, and the re-formed members' hits are healed (`World::form_lump`),
+/// which is why it never happens in a fight.
+const STALL: u32 = 6;
 
 /// A goal that has moved this far (dish cells) from its way's gets a new
 /// way (a goal changed: a leech's pump worn down, a sapper through its
@@ -438,7 +457,7 @@ const WAY_MOVED: f32 = 6.0;
 
 impl Bosses {
     pub fn new(seed: u64) -> Bosses {
-        Bosses { live: Vec::new(), ended: Vec::new(), fading: Vec::new(), stolen: 0.0, returned: 0.0, next: None, crowd_top: 0.0, ways: Vec::new(), rng: Rng::new(seed ^ 0xb055_5eed) }
+        Bosses { live: Vec::new(), ended: Vec::new(), fading: Vec::new(), stolen: 0.0, returned: 0.0, next: None, crowd_top: 0.0, ways: Vec::new(), regrouped: 0, rng: Rng::new(seed ^ 0xb055_5eed) }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -526,6 +545,7 @@ impl<W: World> Game<W> {
             // On the way (an errand's walk, a hunt): down its way round
             // rock and the slime's own walls, not straight at it.
             let body = (members as f32 / std::f32::consts::PI).sqrt();
+            let regrouped = self.bosses.regrouped;
             let lump = if now < hunt {
                 b.phase = BossPhase::Gather;
                 Lump { aim: cell(centre), leash: clench, ..strong }
@@ -557,6 +577,12 @@ impl<W: World> Game<W> {
                 }
             };
             self.world.set_lump(b.lump, lump);
+            // Gathered again (`STALL`): counted again as a new body next
+            // second, so a remnant under `least` fizzles and the quorum is
+            // the new body's.
+            if self.bosses.regrouped != regrouped {
+                b.first = 0;
+            }
             // A second of its life, or of its walk: a leech's or a
             // sapper's way to its errand (not a sapper's way on through
             // its hole, `visited` 1) is its trip.
@@ -648,7 +674,7 @@ impl<W: World> Game<W> {
         let i = match self.bosses.ways.iter().position(|w| w.lump == lump) {
             Some(i) => i,
             None => {
-                self.bosses.ways.push(BossWay { lump, goal, field: Vec::new(), building: None });
+                self.bosses.ways.push(BossWay { lump, goal, field: Vec::new(), building: None, mark: centre, still: 0 });
                 self.bosses.ways.len() - 1
             }
         };
@@ -689,7 +715,24 @@ impl<W: World> Game<W> {
         // 90 s on a rock ridge with its way round it.
         let seen = |p: (f32, f32)| ground.as_ref().is_none_or(|(g, gw, gh)| line_clear(g, *gw, *gh, from, p, 0.0));
         let ahead = way_points(&w.field, bw, from, 4.0 * look);
-        ahead.iter().rev().find(|&&p| seen(p)).copied().or_else(|| down_way(&w.field, bw, from, look)).unwrap_or(to)
+        let aim = ahead.iter().rev().find(|&&p| seen(p)).copied().or_else(|| down_way(&w.field, bw, from, look)).unwrap_or(to);
+        // Stalled (`STALL`): it gathers again on its leading part.
+        let w = &mut self.bosses.ways[i];
+        if (centre.0 - w.mark.0).hypot(centre.1 - w.mark.1) > 2.0 * sc {
+            (w.mark, w.still) = (centre, 0);
+        } else {
+            w.still += 1;
+        }
+        let fight = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * sc + body;
+        let near = self.soldiers.iter().any(|s| s.alive && (s.x - centre.0).hypot(s.y - centre.1) < fight);
+        if self.bosses.ways[i].still >= STALL && !near {
+            let lead = ahead.iter().take_while(|&&p| (p.0 - from.0).hypot(p.1 - from.1) <= body).last().copied().unwrap_or(from);
+            let reach = (1.5 * body / sc).max(1.0);
+            self.world.form_lump(lump, Some((lead, reach)));
+            (self.bosses.ways[i].mark, self.bosses.ways[i].still) = (lead, 0);
+            self.bosses.regrouped += 1;
+        }
+        aim
     }
 
     /// Forms a mini-boss round `at` (fine cells), of the walkers within
