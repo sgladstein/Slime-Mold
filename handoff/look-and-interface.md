@@ -163,8 +163,10 @@ call in `main.rs`'s `step`, Engine told); in the window only, so headless
 runs, tests and the run bot end at once. Its frames carry no soldiers, so
 a charge on the squad breaks up as it would once they are gone. A win
 that shows the slime dying back would be a slime rule (Enemy's).
-Next in D: the rest of the shop (the empty bag row, the pane's planet
-briefing repeated from the top bar), then the main menu and Options.
+The shop, 11-20: an empty bag is one strip with its use in a line, and
+the pane's idle page opens on a "THE PLANET AHEAD" label, not the top
+bar's heading again (`start/shop.rs`).
+Next in D: the main menu and Options.
 
 **Open branch:** `claude/project-thread-wypzro`, reused per PR.
 
