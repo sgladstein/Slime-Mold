@@ -657,10 +657,12 @@ struct Args {
     spray: Option<(f32, f32)>,
     /// `shake=K`: camera shake on blasts (the whole-game review's D6; the
     /// owner 11-15 21:41Z: "Let me see the video"), K times the normal
-    /// strength; 0, the default, none.
+    /// strength; 1 in the game since 2026-11-20 (his card: "Turn them
+    /// on"), 0 none (and `Args::default()`'s 0, for the tests).
     shake: f32,
     /// `hitstop=K`: the game holds still for a moment when a big blast
-    /// lands (D6), K times the normal hold; 0, the default, none.
+    /// lands (D6), K times the normal hold; 1 in the game since
+    /// 2026-11-20, 0 none.
     hitstop: f32,
     /// `real=1`: a headless frame sequence steps the window's way, a
     /// frame's real seconds at a time from the first frame on, so a
@@ -790,7 +792,8 @@ const SHAKE_PX: f32 = 12.0;
 const SHAKE_FALL: f32 = 2.2;
 
 /// **Feel a blast** (the whole-game review's D6, 11-15: camera shake and
-/// hit-stop, both off unless `shake=` or `hitstop=`): each blast since
+/// hit-stop, on in the game since 2026-11-20, `shake=0 hitstop=0` off):
+/// each blast since
 /// `felt` adds to the shake by its size (its kills over 150 and its throw
 /// over 400, up to 1), 0.12 to 0.72 of a full shake at `shake=1` (a bomb
 /// of 6 kills and 80 thrown, size 0.24, adds 0.26); the biggest, if at
@@ -2215,7 +2218,10 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
+    // Shake and hit-stop are on in the game (the owner's card, 2026-11-20
+    // 22:05Z: "Turn them on"); `Args::default()` keeps them at 0 for the
+    // tests' rounds, and `shake=0 hitstop=0` turns them off for a film.
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, shake: 1.0, hitstop: 1.0, ..Default::default() };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
     // planet TO (3) or a loss, with no window: the strategy bot's whole run
