@@ -176,8 +176,15 @@ sound as it is (filmed 11-20).
 The menu's dish is a run's planet 1 to 4 on the clock's seed while the
 sandbox map is its default (`open_menu`); a picked map still previews
 there. It starts again at its mission's verdict too (`main.rs`'s frame).
-Next (coordinator, 11-20): a pass at play zoom on planets 1 to 4 (fights,
-slime bodies, condensed strikers, the mortar, HUD clarity).
+The play-zoom pass (coordinator, 11-20), planets 1 to 3 at zoom 6 and
+12 with the greedy hand: fixed the Sprawler's loose dashes (above) and a
+squad's number floating between two groups (`LABEL_LINK` in `draw.rs`,
+over the soldier nearest its middle, clear of its group's soldiers in that column). Seen and
+left: the controlled squad's selection rings (one per straggler; thin, and
+they say who is in the squad); planet 4's squad fell in 18 s from a bare
+start (a balance note, not a look). On a funded run (`hand=strat:econ,
+go=4,aim=6 bank=20000`) the strikers read as gold beads in the Sprawler's
+film (planet 2, 64-70 s); no mortar formed on run 1's planet 4 by 120 s.
 
 **Open branch:** `claude/project-thread-wypzro`, reused per PR.
 
