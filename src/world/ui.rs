@@ -1544,7 +1544,12 @@ impl Hud {
             (Some(l), Some((k, r))) => self.loadout_tip(l, r, k == usize::MAX - 1, c, s),
             _ => {}
         }
-        self.alerts_draw(c, world, s);
+        // Not under the end card (Look D, 11-20): its lines say the same
+        // ("Goal met", "Your last soldier fell"), and a stale "the mould is
+        // at the larder" beside a won planet's card read as still in play.
+        if m.end.is_none() {
+            self.alerts_draw(c, world, s);
+        }
         self.ghost(m, cam, c, world, s);
         let key = m.hover.as_ref().filter(|_| self.hover.is_some() && self.targeting.is_none()).map(|h| h.title.as_str());
         let quiet = m.aiming || self.held.iter().any(|&h| h);
