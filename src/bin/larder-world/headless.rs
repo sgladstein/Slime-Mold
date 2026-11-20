@@ -690,6 +690,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let mid = g.active.and_then(|q| g.middle(q)).unwrap_or((0.0, 0.0));
                     println!("  strikers t {:.0} s: {} condensed holding {}, {} taken in all, slime {} of peak {}, squad at {:.0},{:.0}", g.time(), g.strikers.live, g.strikers.held, g.strikers.took, g.mould, g.peak, mid.0, mid.1);
                 }
+                // Starfall's ore and the cores (`starfall.rs`, `cores.rs`):
+                // each on the ground, what it is worth, what the squad took
+                // and the slime ate, and who is on it.
+                for d in g.starfall.live.iter().filter(|d| d.down) {
+                    let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - d.at.0).hypot(s.y - d.at.1)).fold(f32::INFINITY, f32::min);
+                    println!("  drop t {:.0} s: {:?} {:?} at {:.0},{:.0}, worth {:.0}, taken {:.1}, eaten {:.1}, {} soldiers and {} walkers on it; nearest soldier {near:.1}", g.time(), d.kind, d.from, d.at.0, d.at.1, d.worth, d.taken, d.eaten, d.takers, d.eaters);
+                }
+                if g.rules.star.on {
+                    println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);
+                }
                 // The last-stand heart (`stand.rs`, 2026-11-20): its members,
                 // centre, nearest soldier (world units), lunging or at rest.
                 if let Some(h) = g.stand.live {

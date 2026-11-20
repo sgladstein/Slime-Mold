@@ -365,7 +365,10 @@ impl<W: World> Game<W> {
             }
             match *k {
                 Who::Building(b) => self.building_out(b, u, dt),
-                Who::Drop(i) => self.drop_out(i, u.touching, dt),
+                Who::Drop(i) => {
+                    self.drop_out(i, u.touching, dt);
+                    self.drift_core(i, dt);
+                }
                 Who::Soldier(k) => {
                     let s = &mut self.soldiers[k];
                     s.touching = u.touching;
@@ -467,6 +470,7 @@ impl<W: World> Game<W> {
             self.time_waves();
             self.time_heart();
             self.time_strikers();
+            self.time_cores();
             self.time_starfall();
             self.time_stand();
         }

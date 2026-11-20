@@ -25,7 +25,10 @@
 //! **Boss cores.** A mini-boss broken (`BossEnd::Broken`) or a fruit shot
 //! down (`FruitEnd::Broken`) drops its core where it was, worth more the
 //! stronger the boss: it lasts `core_life` seconds, and walkers on it soak
-//! it back. Planet 1 has no mini-bosses, so its cores are fruits'.
+//! it back. Planet 1 has no mini-bosses, so its cores are fruits' and
+//! raids'. A beaten raid drops one too, walkers stream back to every core,
+//! a boss whose core they take back re-forms, and a planet's cores hold no
+//! more than `core_pot` in all (`cores.rs`).
 //!
 //! Why these cannot be farmed (the owner's 13:49Z objection to paying for
 //! crystals held: "I just kind of wall it in and then I can easily take
@@ -89,6 +92,32 @@ pub struct StarRules {
     pub core_grade: f32,
     pub core_life: f32,
     pub core_r: f32,
+    /// **The boss re-forms** (`cores.rs`): once walkers have eaten
+    /// `core_reform` of a mini-boss's core, and more than the squad took,
+    /// the boss forms again on it, as it was, carrying what the core had
+    /// left. `core_pot`: the most the planet's cores may hold in all
+    /// (fresh ones; a re-formed boss's core is its old one again).
+    pub core_reform: f32,
+    pub core_pot: f32,
+    /// Points a second each walker on a core eats, times the slime's mass
+    /// (`eat` is ore's): at ore's 1, a core landing in thick slime was half
+    /// eaten in 2 s and a wanderer re-formed 3 s after it broke (planet 2,
+    /// run 1795106014).
+    pub core_eat: f32,
+    /// **A core runs home** (`cores.rs`): it slides at `core_drift` dish
+    /// cells a second to the thickest slime within `core_drift_r` of where
+    /// it dropped, so the squad must reach into the slime for it.
+    pub core_drift: f32,
+    pub core_drift_r: f32,
+    /// **A beaten raid's core** (`cores.rs`): a march shot apart on its
+    /// way, or one that met the squad and lost `raid_beat` of its members
+    /// to the guns within `raid_window` seconds, drops a core worth
+    /// `core_worth` plus `core_grade` times its members over `raid_full`
+    /// (to 1), where it was. Walkers that eat half of it feed the slime's
+    /// next surge.
+    pub raid_beat: f32,
+    pub raid_window: f32,
+    pub raid_full: f32,
 }
 
 impl Default for StarRules {
@@ -121,6 +150,14 @@ impl Default for StarRules {
             core_grade: 40.0,
             core_life: 15.0,
             core_r: 2.0,
+            core_reform: 0.5,
+            core_pot: 200.0,
+            core_eat: 0.3,
+            core_drift: 8.0,
+            core_drift_r: 60.0,
+            raid_beat: 0.5,
+            raid_window: 20.0,
+            raid_full: 400.0,
         }
     }
 }
@@ -128,7 +165,7 @@ impl Default for StarRules {
 impl StarRules {
     /// A run's planet: on, the ore worth 30 points and 10 more a planet.
     pub fn for_depth(depth: u32) -> StarRules {
-        StarRules { on: true, worth: 30.0 + 10.0 * depth.max(1) as f32, ..StarRules::default() }
+        StarRules { on: true, worth: 30.0 + 10.0 * depth.max(1) as f32, core_pot: 120.0 + 40.0 * depth.max(1) as f32, ..StarRules::default() }
     }
 }
 
@@ -137,14 +174,29 @@ impl StarRules {
 pub enum DropKind {
     /// Ore from the sky.
     Ore,
-    /// A broken mini-boss's or fruit's core.
+    /// A broken mini-boss's, fruit's or raid's core.
     Core,
+}
+
+/// What dropped a core (`cores.rs`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CoreFrom {
+    /// Ore from the sky.
+    Sky,
+    /// A mini-boss broken: its kind and grade, which it re-forms with.
+    Boss { kind: BossKind, grade: f32 },
+    Fruit,
+    /// A beaten raid.
+    Raid,
 }
 
 /// One fall or core.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Drop {
     pub kind: DropKind,
+    pub from: CoreFrom,
+    /// Where a core is sliding to (fine cells; `cores.rs`), once chosen.
+    pub home: Option<(f32, f32)>,
     /// Fine cells.
     pub at: (f32, f32),
     /// The tick it lands (a core's: the tick it dropped) and the tick it is
@@ -168,6 +220,14 @@ pub struct Drop {
 }
 
 impl Drop {
+    /// A core dropped at tick `now` (`cores.rs`), gone at `ends`, `r` fine
+    /// cells round.
+    pub fn core(at: (f32, f32), worth: f32, from: CoreFrom, now: u64, ends: u64, r: f32) -> Drop {
+        // A raid's core feeds the next surge once half is eaten; a boss's
+        // re-forms it instead (`Game::time_cores`).
+        Drop { kind: DropKind::Core, from, home: None, at, lands: now, ends, warned: now, down: true, r, worth, left: worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: from != CoreFrom::Raid }
+    }
+
     /// Its warmth, 1 as it lands to 0 when gone (a shadow's, 0 to 1 as it
     /// comes).
     pub fn warmth(&self, now: u64) -> f32 {
@@ -253,7 +313,7 @@ impl<W: World> Game<W> {
             self.starfall.plan.as_mut().map(|p| p.pop());
             if let Some(at) = self.fall_spot() {
                 let lands = now + secs(r.warn);
-                self.starfall.live.push(Drop { kind: DropKind::Ore, at, lands, ends: lands + secs(r.life), warned: now, down: false, r: r.ore_r * sc, worth: r.worth, left: r.worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: false });
+                self.starfall.live.push(Drop { kind: DropKind::Ore, from: CoreFrom::Sky, home: None, at, lands, ends: lands + secs(r.life), warned: now, down: false, r: r.ore_r * sc, worth: r.worth, left: r.worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: false });
             }
         }
         // Landing: the blast under it, a hurt to soldiers there, and its
@@ -280,25 +340,49 @@ impl<W: World> Game<W> {
             }
             self.lure_marks.push(LureMark { at: d.at, until: d.ends });
         }
-        // Cores: each mini-boss broken since the last look, and the fruit
-        // that broke (its centre the last second it lived).
-        let ended: Vec<(f32, f32, f32)> = self.bosses.ended[self.starfall.bosses_seen.min(self.bosses.ended.len())..].iter().filter(|e| e.1 == BossEnd::Broken).map(|e| (e.0.centre.0, e.0.centre.1, e.0.grade)).collect();
+        // Cores: each mini-boss broken since the last look (a re-formed
+        // one's worth what its core had left, `cores.rs`), the fruit that
+        // broke (its centre the last second it lived), and each raid
+        // beaten (`Game::raid_cores`).
+        let ended: Vec<Boss> = self.bosses.ended[self.starfall.bosses_seen.min(self.bosses.ended.len())..].iter().filter(|e| e.1 == BossEnd::Broken).map(|e| e.0).collect();
         self.starfall.bosses_seen = self.bosses.ended.len();
-        let mut cores: Vec<((f32, f32), f32)> = ended.into_iter().map(|(x, y, g)| ((x, y), r.core_worth + r.core_grade * g.clamp(0.0, 1.0))).collect();
+        // (where, worth, from, fresh: counted against `core_pot`)
+        let mut cores: Vec<((f32, f32), f32, CoreFrom, bool)> = Vec::new();
+        for b in ended {
+            let from = CoreFrom::Boss { kind: b.kind, grade: b.grade };
+            match self.cores.carried(&b) {
+                Some(carry) => cores.push((b.centre, carry, from, false)),
+                None => cores.push((b.centre, r.core_worth + r.core_grade * b.grade.clamp(0.0, 1.0), from, true)),
+            }
+        }
         if let Some((t, end, _)) = self.fruits.last {
             if self.starfall.fruit_seen != Some(t) {
                 self.starfall.fruit_seen = Some(t);
                 if end == FruitEnd::Broken {
                     if let Some(at) = self.starfall.fruit_at {
-                        cores.push((at, r.core_worth));
+                        cores.push((at, r.core_worth, CoreFrom::Fruit, true));
                     }
                 }
             }
         }
         self.starfall.fruit_at = self.fruits.live.map(|f| f.centre);
-        for (at, worth) in cores {
+        cores.extend(self.raid_cores().into_iter().map(|(at, worth)| (at, worth, CoreFrom::Raid, true)));
+        for (at, worth, from, fresh) in cores {
+            // The planet's pot: fresh cores hold no more than `core_pot` in
+            // all, so waiting for more bosses and raids pays nothing more.
+            let worth = if fresh { worth.min(r.core_pot - self.cores.pot) } else { worth };
+            if worth < 1.0 {
+                continue;
+            }
+            if fresh {
+                self.cores.pot += worth;
+            }
             self.starfall.cores += 1;
-            self.starfall.live.push(Drop { kind: DropKind::Core, at, lands: now, ends: now + secs(r.core_life), warned: now, down: true, r: r.core_r * sc, worth, left: worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: true });
+            let ends = now + secs(r.core_life);
+            // It runs home to the slime, and walkers stream back to it: it
+            // smells (`drop_units`) and is a lure where it goes
+            // (`Game::time_cores`).
+            self.starfall.live.push(Drop::core(at, worth, from, now, ends, r.core_r * sc));
         }
         self.starfall.live.retain(|d| !(d.down && (now >= d.ends || d.left <= 0.01)));
     }
@@ -361,13 +445,14 @@ impl<W: World> Game<W> {
             if !d.down || units.len() >= squad::UNITS_MAX {
                 continue;
             }
-            let ore = d.kind == DropKind::Ore;
+            // A core smells as ore does, so the slime streams back to it
+            // (`cores.rs`).
             units.push(UnitIn {
                 x: d.at.0,
                 y: d.at.1,
                 touch: d.r,
-                smell_r: if ore { r.smell_r * sc } else { 0.0 },
-                smell: if ore { self.world.food_deposit() * self.rules.smell * r.smell * self.rules.frame_ticks as f32 } else { 0.0 },
+                smell_r: r.smell_r * sc,
+                smell: self.world.food_deposit() * self.rules.smell * r.smell * self.rules.frame_ticks as f32,
                 ..UnitIn::default()
             });
             who.push(Who::Drop(i));
@@ -386,7 +471,10 @@ impl<W: World> Game<W> {
         let takers = self.soldiers.iter().filter(|s| s.alive && (s.x - d.at.0).hypot(s.y - d.at.1) <= reach).count() as u32;
         let hands = self.rules.harvest / Rules::default().harvest.max(1e-6);
         let took = (takers as f32 * r.take * hands * dt).min(d.left);
-        let ate = (touching as f32 * r.eat * self.rules.mass * dt).min(d.left - took);
+        // A core is eaten slower than ore (`core_eat`), so a boss broken by
+        // thick slime gives the squad a few seconds before it re-forms.
+        let eat = if d.kind == DropKind::Core { r.core_eat } else { r.eat };
+        let ate = (touching as f32 * eat * self.rules.mass * dt).min(d.left - took);
         let d = &mut self.starfall.live[i];
         d.left -= took + ate;
         d.taken += took;

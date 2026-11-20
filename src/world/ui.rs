@@ -683,8 +683,8 @@ pub struct Ending {
     /// A win (green), a loss (red), or neither (a sandbox round at its
     /// clock: the accent).
     pub won: Option<bool>,
-    /// A mission's stars, of three: three discs under the title, the
-    /// earned ones in the outcome's colour.
+    /// A mission's stars, of three: three stars under the title, the
+    /// earned ones filled in the outcome's colour.
     pub stars: Option<u8>,
     /// What the slime did to you, one sentence (a run's planet:
     /// `run::does_to_you`), under the title.
@@ -1544,7 +1544,12 @@ impl Hud {
             (Some(l), Some((k, r))) => self.loadout_tip(l, r, k == usize::MAX - 1, c, s),
             _ => {}
         }
-        self.alerts_draw(c, world, s);
+        // Not under the end card (Look D, 11-20): its lines say the same
+        // ("Goal met", "Your last soldier fell"), and a stale "the mould is
+        // at the larder" beside a won planet's card read as still in play.
+        if m.end.is_none() {
+            self.alerts_draw(c, world, s);
+        }
         self.ghost(m, cam, c, world, s);
         let key = m.hover.as_ref().filter(|_| self.hover.is_some() && self.targeting.is_none()).map(|h| h.title.as_str());
         let quiet = m.aiming || self.held.iter().any(|&h| h);
@@ -1970,6 +1975,9 @@ impl Hud {
         // its tooltip, in the room the panel had spare.
         // (Narrower, down to the old 72, where the row cannot hold them all.)
         // (At least 86, for the squad thread's AUTO / YOU tag.)
+        // (At most 168, up from 136 in the play-zoom pass, 11-20: one
+        // squad's tile in a panel with room for three cut "working" to
+        // "working..." beside the YOU tag.)
         // Too many squads for the row at full size: the tiles shrink, all
         // of them, till every squad has one (owner, 2026-11-19 16:55Z:
         // "when we have too many squads to show in the squad panel of the
@@ -1980,7 +1988,7 @@ impl Hud {
         let top = inner.y + 26.0 * s;
         let layout = |f: f32| {
             let cgap = 7.0 * s * f.max(0.5);
-            let cw = ((inner.w + cgap) / n.max(1) as f32 - cgap).clamp(86.0 * s * f, 136.0 * s * f);
+            let cw = ((inner.w + cgap) / n.max(1) as f32 - cgap).clamp(86.0 * s * f, 168.0 * s * f);
             let ch = 54.0 * s * f;
             let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
             let rows = ((inner.bottom() - top + cgap) / (ch + cgap)).floor().max(1.0) as usize;
@@ -2055,6 +2063,10 @@ impl Hud {
             if let Some(state) = Some(q.state.as_str()).filter(|t| !t.is_empty()).or(first) {
                 let sx = cell.x + 32.0 * u + nw + 8.0 * u;
                 if end - sx >= 30.0 * u {
+                    // "working, 3 on guard" where it fits, else "working":
+                    // a whole word reads, a cut one ("working, 3 o...") not.
+                    let fits = c.atlas.measure(Weight::Medium, 12.5 * u, state) <= end - sx;
+                    let state = if fits { state } else { state.split(", ").next().unwrap_or(state) };
                     c.text_fit(Weight::Medium, 12.5 * u, (sx, cell.y + 36.0 * u), Align::Left, state, end - sx, MUTED);
                 }
             }
@@ -2831,7 +2843,7 @@ impl Hud {
             let h = 28.0 * s
                 + if e.place.is_empty() { 0.0 } else { 22.0 * s }
                 + title.len() as f32 * 34.0 * s
-                + if stars.is_some() { 22.0 * s } else { 0.0 }
+                + if stars.is_some() { 34.0 * s } else { 0.0 }
                 + says.len() as f32 * 21.0 * s
                 + 14.0 * s
                 + tiles_h
@@ -2866,17 +2878,21 @@ impl Hud {
             y += 34.0 * s;
         }
         if let Some(n) = stars {
-            let (d, gap) = (11.0 * s, 8.0 * s);
+            // Stars, the middle one raised and larger (Look D, 11-20: three
+            // 11-unit discs read as loading dots, not a score).
+            let (d, gap) = (26.0 * s, 4.0 * s);
             let x0 = r.x + w / 2.0 - (3.0 * d + 2.0 * gap) / 2.0;
             for k in 0..3u8 {
-                let b = Rect::new(x0 + k as f32 * (d + gap), y + 9.0 * s, d, d);
+                let big = if k == 1 { 1.15 } else { 1.0 };
+                let px = d * big;
+                let at = (x0 + k as f32 * (d + gap) + (d - px) / 2.0, y + 2.0 * s + if k == 1 { -3.0 * s } else { 0.0 });
                 if k < n {
-                    c.rrect(b, d / 2.0, tone);
+                    c.icon(Icon::Star, at, px, tone);
                 } else {
-                    c.outline(b, d / 2.0, 1.5 * s, [255, 255, 255, 60]);
+                    c.icon(Icon::StarOpen, at, px, [255, 255, 255, 70]);
                 }
             }
-            y += 22.0 * s;
+            y += 34.0 * s;
         }
         for l in &says {
             y += 21.0 * s;

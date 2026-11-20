@@ -426,6 +426,9 @@ pub enum BossCause {
     Cut,
     /// Staged (a film's `boss=`, a test).
     Staged,
+    /// Formed again on its core, the walkers there having taken it back
+    /// first (`cores.rs`, 2026-11-20).
+    Core,
 }
 
 /// How a mini-boss ended.

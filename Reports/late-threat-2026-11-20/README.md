@@ -133,6 +133,57 @@ and 5, which the bot rebuys and still wins. Its cost is map 2, where the
 strikers hold the army near 24 to 30 and finally break it; haste 2 keeps
 that win and bites less. The pick is the slime thread's.
 
+## The new strikers on planets 1 and 3 (21:10Z)
+
+Main at 554d0d5 (#566's strikers, the lunge, Starfall), GitHub lavapipe,
+run 44809389422 (`jobs-strikers-566-p13.txt`,
+`strikers-566-p13-rows.jsonl`); 36 games. Arms: #566's default against
+the first numbers (`set=strikers_below=0.4 set=strikers_band=12
+set=strikers_share=0.5 set=strikers_haste=1.5 set=strikers_few=0
+set=strikers_full=1`).
+
+**Planet 1**: the same game in both arms on all nine maps. The strikers
+never start: the slime is never cut under 60% of its peak. The plan (the
+planets 2 and 3 deck to watch) loses planet 1 on every map with 4 to 18
+soldiers, which is the plan's planet, not the strikers'.
+
+**Planet 3** (the Trunk): fire still kills most soldiers (the bot's own
+Needle Blast). Late bites against the first numbers: up 4, down 3, tied 2
+(p 1.0). Wins: 8 of 9 with the new numbers, 9 of 9 with the first. The
+ninth, map 5, did not end: from 10:00 to the 12:00 cap the bot had all 80
+soldiers and the slime sat at 6,500 to 8,700 walkers (15 to 20% of its
+peak), regrowing as fast as it was cut; the first numbers broke it at
+6:30. Before that the strikers held the army at 29 to 48 for five
+minutes. The new numbers made the game longer on 6 of 9 maps (median
+5:11 against 4:42) and cost fewer soldiers on 6 of 9.
+
+## The last-stand heart (PR #580, 21:15Z)
+
+The slime thread's option D (key `stand`): under 20% of its peak, against
+24 soldiers or more, every free walker gathers into one armoured heart on
+its heart crystal that lunges every 20 s. Scored in the cloud session on
+lavapipe, #580 merged locally onto main at 554d0d5 (so with #566's
+strikers, the lunge and Starfall); one game a map and arm; 27 games,
+`jobs-heart-580.txt`, `heart-580-rows.jsonl`. Arms: the default (D), the
+heart off (`set=stand=0`), armour 2 (`set=stand_armour=2`).
+
+| Map | D: late bites, result | Heart off | Armour 2 |
+| --- | --- | --- | --- |
+| 1 (army 80) | 28, won 4:37 | 28, won 4:52 | 28, won 4:46 |
+| 5 (army 80) | 46, won 3:58 | 26, won 3:42 | 1 (33 in all), won 4:03 |
+| 6 (army 58) | 50, won 8:57 with 7 left | 35, won 9:31 with 7 | 23, lost 11:15 |
+| 2 (army 19) | 7, not over at 12:00 | 19, lost 5:41 | 18, lost 5:03 |
+| 7 (army 43) | 0, won 4:54 | 0, won 5:03 | 0, won 6:29 |
+| 8 (army 53) | 1, won 6:25 | 1, won 5:57 | 1, won 6:25 |
+
+Maps 3, 4 and 1795038793 are the same loss in every arm. The heart
+against off: late bites up on 2 maps, down on 1, tied on 6 (p 1.0); wins
+5 and 5 (armour 2: 4). It adds bites where the army is big when the
+slime is nearly gone (maps 5 and 6: 20 and 15 more), and on map 1, where
+the strikers already took 28 at 4:30, it adds none. Map 2's army never
+reached 24, so its difference is the game going another way, not the
+heart.
+
 ## What landed
 
 `late_at` 0.4 on every run planet (`run::ENEMY_RULES`), with
