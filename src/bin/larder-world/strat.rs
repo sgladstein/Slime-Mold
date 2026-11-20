@@ -149,8 +149,11 @@ pub(super) struct Plan {
     pub shelf: bool,
     /// Starve the slime (0: never): out of home with at least this many
     /// soldiers, the squad goes for the crystal with the most slime on it
-    /// (the slime's home among them, however thick) and clears and drains
-    /// it, in place of the crystal with the most charge. On planet 2 map 3
+    /// that it can take (under `per` walkers a soldier, the slime's home
+    /// among them) and clears and drains it, in place of the crystal with
+    /// the most charge. A first build took the thickest whatever its size:
+    /// on map 3 at 20 soldiers the squad walked into the home blob and was
+    /// down to 8 in a minute (cloud, 11-20). On planet 2 map 3
     /// (11-20) the slime held about 13k for four minutes while the squad
     /// killed 50 walkers a second elsewhere: what it lost it grew back from
     /// the big crystal it sat on.
@@ -999,7 +1002,7 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
         let feed = (0..cs.len())
             .filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none() && !held.contains(&c))
             .map(|c| (c, sense.mass_near(cs[c].0, g.world.crystal_r(c) + range)))
-            .filter(|&(_, n)| n > 0)
+            .filter(|&(_, n)| n > 0 && (n as f32) < p.per * g.alive() as f32)
             .max_by_key(|&(_, n)| n);
         if let Some((c, _)) = feed {
             let at = cs[c].0;
