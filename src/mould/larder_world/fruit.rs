@@ -282,7 +282,7 @@ impl<W: World> Game<W> {
 
     /// Lump `l` taken by a mini-boss, a march or a fruit.
     pub(super) fn lump_taken(&self, l: usize) -> bool {
-        self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).any(|b| b.lump == l) || self.raids.marching.iter().any(|m| m.lump == l) || self.fruits.holds(l)
+        self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).any(|b| b.lump == l) || self.raids.marching.iter().any(|m| m.lump == l) || self.fruits.holds(l) || self.bosses.shells.iter().any(|sh| sh.lump == l)
     }
 
     fn start_fruit(&mut self) {

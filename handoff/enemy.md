@@ -58,6 +58,16 @@ is not measured yet). Moss skin, acid core (`LumpLook::Mortar`, Look's
 so it no longer swallows a mini-boss beside it (3 of 14 had been). Set
 keys `boss_mortar`, `boss_lob`, `boss_lob_every`, `boss_shell`.
 
+Then (11-20 evening, the coordinator's ask from the balance brief): a
+throw lands as a shell (`Bosses::shells`, a lump with the mortar's bite,
+the armour of half its grade and its look, no leash, for `shell_life` 8 s), cut from
+the body's outer part where it holds 60% (`SHELL_CORE`), and only
+while another lump stays free after it (4 lumps in all); and late in a
+planet (slime under `late` 0.6 of its peak, `Game::boss_late`) a new boss
+is drawn from `late_grade` 0.8 up. Numbers in the report's last section.
+Next: the Pinwheel (`BossKind::Pinwheel`, `Lump::spin`, branch work in
+progress).
+
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand
 (`crowded_knot(Some(&boss))`). Drawing them only with a target within
