@@ -30,8 +30,14 @@ pub const PER_KIND_CAP: usize = 4;
 const BURSTS: usize = 6;
 const TONES: usize = 8;
 /// The first-run master level: well below full, so the first launch is
-/// never loud. S in the window steps it.
+/// never loud. The Options page's Volume scales it (`master_at`).
 pub const DEFAULT_MASTER: f32 = 0.5;
+
+/// The master for the Options page's `volume` (1 = 100%, the first-run
+/// level): `SoundCmd::Master` squares it, so the steps are even in dB.
+pub fn master_at(volume: f32) -> f32 {
+    (DEFAULT_MASTER * volume).clamp(0.0, 1.0)
+}
 /// Room tone with the lamp off: a little low air, about -40 dB under a
 /// full-scale grain. Enough that a still dish reads as quiet, not broken.
 const ROOM_LEVEL: f32 = 0.010;

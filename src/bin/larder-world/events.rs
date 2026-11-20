@@ -46,7 +46,11 @@ impl ApplicationHandler for App {
         self.pixels = Some(pixels);
         self.window = Some(window);
         self.speaker = match sound::Output::open(self.args.seed) {
-            Ok(o) => Some(o),
+            // At the saved volume (`volume`), not the first-run level.
+            Ok(mut o) => {
+                o.send([master_now(self.sound_on)]);
+                Some(o)
+            }
             Err(e) => {
                 eprintln!("larder-world: no sound ({e}); playing silent");
                 None
