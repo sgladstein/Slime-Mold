@@ -1029,6 +1029,10 @@ const GEM_HUSK: f32 = 0.45;
 const GEM_SHARD: f32 = 0.3;
 const GEM_RAYS: f32 = 11.0;
 const GEM_SPENT: vec3<f32> = vec3<f32>(66.0, 70.0, 76.0);
+// A crystal's cast shadow (`shaded`): how far a full crystal's falls, a
+// share of its radius, and how dark it is at the crystal's foot.
+const GEM_CAST: f32 = 0.55;
+const GEM_SHADOW: f32 = 0.6;
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
@@ -2691,8 +2695,41 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // A short cast shadow: something taller toward the light.
     // (Bilinear: the shadow is soft anyway, and it saves a B-spline.)
     let tx = x + l.x * 3.0; let ty = y + l.y * 3.0;
-    let toward = max(cells_height_lin(tx, ty), gem_height(tx, ty));
+    let toward = cells_height_lin(tx, ty);
     shade *= 1.0 - 0.35 * clamp((toward - h - 0.3) * 0.5, 0.0, 1.0);
+    // A crystal's own cast shadow (Look C, 2026-11-20: crystals stood on
+    // the ground with no shadow at play zoom and read pasted on; the
+    // short sample above caught only a sliver past their far faces, 35%
+    // dark on ground already near black). Its hexagon swept away from
+    // the light by `GEM_CAST` of its radius (at most 8 cells,
+    // the search's reach) times its height share (so a spent
+    // husk casts next to none), on the slime as on the ground, soft over a pixel at the crystal's foot
+    // and wider toward the shadow's end, and lighter there. Not from the
+    // pyramid's own heights: its faces slope about as the sun's line, so
+    // that shadow was a sliver a cell wide.
+    let ld = normalize(l.xy);
+    var gem_shade = 0.0;
+    var gk = 0u;
+    for (var si = 0; si < 4 && gk == 0u; si++) {
+        let sd = 1.5 + 2.0 * f32(si);
+        gk = gem_near(x + ld.x * sd, y + ld.y * sd);
+    }
+    // Not on the crystal's own faces, where the film lies on them and is
+    // shaded by the face (first cut: the film over a crystal's lit rim
+    // went dark in cell-sized steps).
+    if (gk > 0u && gem_in(gk - 1u, x, y).x <= 0.0) {
+        let k = gk - 1u;
+        let cc = gems[k].xy;
+        let reach = min(GEM_CAST * gems[k].z, 8.0) * gem_tall(cell_share(k, cidx(i32(cc.x), i32(cc.y))));
+        var gsh = 0.0;
+        for (var si = 0; si <= 8; si++) {
+            let t = reach * f32(si) / 8.0;
+            let gd = gem_in(k, x + ld.x * t, y + ld.y * t).x;
+            let soft = 0.5 / P.zoom + 0.25 * t;
+            gsh = max(gsh, smoothstep(-soft, soft, gd) * (1.0 - 0.45 * t / max(reach, 1.0)));
+        }
+        gem_shade = GEM_SHADOW * gsh;
+    }
     let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
     // A wet sheet: the glossier (thicker) the mould, the tighter and
     // brighter its highlight, so a raised vein carries a sharp white glint
@@ -2728,7 +2765,9 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             spec *= 1.0 + 0.6 * bs;
         }
     }
-    var c = m.albedo * max(shade, thin_floor) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
+    // The crystal's cast shadow under the thin film's floor too: the floor
+    // is for the film's own far flank, and a shadow is not.
+    var c = m.albedo * max(shade, thin_floor) * (1.0 - gem_shade) + vec3<f32>(255.0, 250.0, 236.0) * spec * (1.0 - gem_shade) + m.glow;
     // The fire's body, at this pixel (`flame_body` of the B-spline heat):
     // worked out in `prep` per fine cell it stair-stepped at the owner's
     // zoom 24 (11-14 20:21Z). The heat comes with the plants' own reads.
@@ -2977,6 +3016,11 @@ const TER_ISO: f32 = 0.4;
 // a cell of the terrain's height.
 const TER_BEVEL: f32 = 0.9;
 const TER_SHADOW: f32 = 0.35;
+// How far rock's cast shadow falls (cells) and how dark it is. Look C,
+// 2026-11-20, with the crystals' cast shadows: 1.6 and 0.55, from 1.2 and
+// 0.45, so rock stands on the ground as the crystals do at play zoom.
+const TER_CAST: f32 = 1.6;
+const TER_SHADE: f32 = 0.55;
 // Rock's stone (`terrain_top`): the mottling's size in cells, and how dark
 // and wide (in the noise's units) its cracks are.
 const ROCK_MOTTLE: f32 = 2.5;
@@ -3213,7 +3257,7 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
         // The shadow on the ground: the terrain a short way toward the
         // light, as far as its height casts; soft over about a cell.
         let ld = normalize(l.xy);
-        let q = terrain(x + ld.x * 1.2, y + ld.y * 1.2);
+        let q = terrain(x + ld.x * TER_CAST, y + ld.y * TER_CAST);
         if (q.s > 0.0) {
             let reach = clamp(q.h * TER_SHADOW, 0.0, 1.0);
             // Its edge is the offset terrain's own edge, antialiased over
@@ -3221,7 +3265,7 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
             // soft band 20-25 px wide at zoom 24; it faded over the field's
             // 0.05-0.6, a cell or so).
             let qd = (q.s - TER_ISO) / max(length(q.grad), 1e-4);
-            c *= 1.0 - 0.45 * reach * clamp(0.5 + 0.5 * qd * P.zoom, 0.0, 1.0);
+            c *= 1.0 - TER_SHADE * reach * clamp(0.5 + 0.5 * qd * P.zoom, 0.0, 1.0);
         }
     }
     if (cov <= 0.0) { return c; }
