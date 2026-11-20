@@ -153,7 +153,7 @@ fn the_window_uses_the_tools() {
     for _ in 0..10 {
         app.step(1.0 / 15.0);
     }
-    let held: u32 = (0..app.game.as_ref().unwrap().soldiers.len()).map(|k| app.kit.held(k)).sum();
+    let held: u32 = (0..app.game.as_ref().unwrap().soldiers.len()).map(|k| app.game.as_ref().unwrap().kit.held(k)).sum();
     assert!(held > 0, "soldiers took tools at the larder");
     app.tools_page = true;
     let m = app.model(None, None);
@@ -169,12 +169,12 @@ fn the_window_uses_the_tools() {
     // Provoke (2026-11-17): a Mind status on the engine.
     app.use_tool(Tool::Provoke((s.x, s.y + 10.0 * k)));
     let g = app.game.as_ref().unwrap();
-    assert_eq!((app.kit.uses[0], app.kit.uses[2], app.kit.uses[4], app.kit.uses[6]), (1, 1, 1, 1), "the blast, the cord, the gas and provoke were used");
+    assert_eq!((g.kit.uses[0], g.kit.uses[2], g.kit.uses[4], g.kit.uses[6]), (1, 1, 1, 1), "the blast, the cord, the gas and provoke were used");
     assert!(g.world.e.minds, "provoke stamped a Mind status on the GPU");
     assert!(g.bank < 10_000.0, "and paid");
     let cratered = g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
     assert!(cratered > 0, "the blast left a crater");
-    assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 4, "four held tools spent");
+    assert_eq!((0..g.soldiers.len()).map(|k| g.kit.held(k)).sum::<u32>(), held - 4, "four held tools spent");
 }
 
 /// Aiming a tool (owner 2026-11-16: a better visual "for aiming and
@@ -192,8 +192,8 @@ fn a_tool_is_aimed_with_its_thrower_and_reach() {
     let g = app.game.as_mut().unwrap();
     g.bank = 10_000.0;
     let sc = g.world.scale();
-    let reach = app.kit.rules.reach * sc;
-    let (k, _) = app.kit.thrower(g, g.larder).expect("a soldier holds a tool");
+    let reach = g.kit.rules.reach * sc;
+    let (k, _) = g.kit.thrower(g, g.larder).expect("a soldier holds a tool");
     let s = g.soldiers[k];
     // Open ground a few cells from the thrower, in reach.
     let near = (0..16).map(|i| i as f32 / 16.0 * std::f32::consts::TAU).map(|a| (s.x + 6.0 * sc * a.cos(), s.y + 6.0 * sc * a.sin())).find(|p| g.world.open(p.0, p.1)).expect("open ground by the squad");
@@ -1023,7 +1023,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     app.menu_event(StartEvent::NextLevel).unwrap();
     assert!(!app.in_menu());
     assert_eq!(app.game.as_ref().unwrap().turret_deck.map(|d| d.cards()), Some(vec![rounds::Card::Gas]));
-    assert_eq!(app.rounds.round, [rounds::Card::Blast, rounds::Card::Wide]);
+    assert_eq!(app.game.as_ref().unwrap().rounds.round, [rounds::Card::Blast, rounds::Card::Wide]);
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
     assert_eq!(app.name, "planet:2:1");
@@ -1136,7 +1136,7 @@ fn the_play_log_names_the_gun_and_turret_cards() {
     app.prepare();
     let keys: Vec<(&str, String)> = app.log_loadout();
     let first = slime_mould::mould::run::ITEMS[0].key;
-    assert_eq!(keys[..2], [("gun", rounds::name(&app.rounds.round)), ("turrets", "none".to_string())]);
+    assert_eq!(keys[..2], [("gun", app.gun_name()), ("turrets", "none".to_string())]);
     // A new run already owns its free items (the walls), so only ours is checked.
     assert!(keys[2].0 == "bought" && keys[2].1.split('+').any(|w| w == format!("{first}2")), "{keys:?}");
     let dir = std::env::temp_dir().join(format!("playlog-loadout-{}", std::process::id()));
@@ -1144,8 +1144,8 @@ fn the_play_log_names_the_gun_and_turret_cards() {
     let path = dir.join("log.txt");
     std::fs::write(&path, "").unwrap();
     app.log_path = Some(path.to_string_lossy().into_owned());
-    app.log_gun = rounds::name(&app.rounds.round);
-    app.rounds.round = rounds::parse("blast+wide").unwrap();
+    app.log_gun = app.gun_name();
+    app.game.as_mut().unwrap().rounds.round = rounds::parse("blast+wide").unwrap();
     for _ in 0..30 {
         app.step(0.1);
     }
@@ -1180,7 +1180,7 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
     let g = app.game.as_ref().unwrap();
     assert!(g.rules.cap >= 3600.0 && g.bank >= 100_000.0, "cap {} bank {}", g.rules.cap, g.bank);
     assert_eq!(g.gun(0), r.carried());
-    assert_eq!(app.rounds.cards_of(g, 0), r.gun());
+    assert_eq!(g.rounds.cards_of(g, 0), r.gun());
     app.prepare();
     let m = app.model(None, None);
     assert!(!m.clock.contains('/') && m.objective.as_deref().is_some_and(|o| o.starts_with("Gun range")), "{} {:?}", m.clock, m.objective);
@@ -1203,7 +1203,7 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
     let g = app.game.as_ref().unwrap();
     assert!(g.time() >= t, "the same round: {} then {t}", g.time());
     assert!((0..g.squads.len()).all(|q| g.gun(q).kind == GunKind::Long));
-    assert_eq!(app.rounds.cards_of(g, 0), r.gun(), "the cards came along");
+    assert_eq!(g.rounds.cards_of(g, 0), r.gun(), "the cards came along");
     // Restart keeps the range's gun.
     app.start().unwrap();
     assert_eq!(app.game.as_ref().unwrap().gun(0).kind, GunKind::Long);

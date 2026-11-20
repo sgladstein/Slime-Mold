@@ -207,9 +207,10 @@ pub trait World {
     /// `condense`): each ordinary walker within `reach` (fine cells) of a
     /// soldier tries with chance `share`, and the first in each block takes
     /// in up to `most` of the rest. The condensed walkers living before it
-    /// ran, what they held, and the walkers taken in; None for a world
-    /// that cannot (the CPU engine), or with the strikers off.
-    fn condense(&mut self, _reach: f32, _share: f32, _most: u32) -> Option<(u32, u32, u32)> {
+    /// ran, what they held, the walkers taken in, and the walkers in the
+    /// band (within reach and able to try); None for a world that cannot
+    /// (the CPU engine), or with the strikers off.
+    fn condense(&mut self, _reach: f32, _share: f32, _most: u32) -> Option<(u32, u32, u32, u32)> {
         None
     }
     /// The ground a raid walks (the slime's agar, `w` x `h` fine cells),

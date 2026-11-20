@@ -118,6 +118,20 @@ pub struct BossRules {
     /// 351 s and 393 s.
     pub late: f32,
     pub late_grade: f32,
+    /// **Late against a big army** (11-20, Direction's pick of the
+    /// review's options A and B, after the big-army census: a boss walking
+    /// into 30 or more soldiers lived 1 to 3 s at any grade or size). Scaled
+    /// by the squad as the strikers are (`StrikerRules::few`, `full`: none
+    /// against `few` soldiers or fewer, all of it from `full`):
+    /// - A: the Mortar's weight in the draw rises by `late_mortar` x that
+    ///   scale once the slime is late, from planet 2 (`kinds[4]` is 0 there
+    ///   until then), so the late threat lands as shells;
+    /// - B: from the full scale, a late hunter or pinwheel goes round the
+    ///   squad to a building or pump out of its guns' reach (else to the
+    ///   squad's far side) instead of charging its front, choosing the one
+    ///   nearest it within `round_far` dish cells so the trip fits.
+    pub late_mortar: f32,
+    pub round_far: f32,
     pub armour_lo: f32,
     pub armour_hi: f32,
     pub bite_lo: f32,
@@ -176,7 +190,9 @@ pub struct BossRules {
     /// the GPU test world went as far turning as plain (11.5 cells in
     /// 4 s; 2: 7.5), but on the owner's planet 4 the body tore apart along
     /// a rock (spread 1 to 4): its arms now turn only within `spin_near`
-    /// world units of its prey, and this is a small push there.
+    /// dish cells of its prey (45: 90 world units at the run's scale 2;
+    /// the first cut compared 90 unscaled, the review lane's catch), and
+    /// this is a small push there.
     pub spin_haste: f32,
     pub spin_near: f32,
     pub shell: f32,
@@ -301,6 +317,8 @@ impl Default for BossRules {
             grade_hi: 1.0,
             late: 0.6,
             late_grade: 0.8,
+            late_mortar: 3.0,
+            round_far: 160.0,
             // 4 to 15 blows a member against ordinary slime's 1, and
             // touching as 2 to 5 walkers. Packed as it is, each shot that
             // lands blows about 30 members at once (planet 3, seed 1, 8
@@ -326,7 +344,7 @@ impl Default for BossRules {
             lob_every: 5.0,
             spin: 0.2,
             spin_haste: 1.3,
-            spin_near: 90.0,
+            spin_near: 45.0,
             shell: 1.5,
             shell_life: 8.0,
             far: 40.0,
@@ -638,7 +656,16 @@ impl<W: World> Game<W> {
                 continue;
             }
             let hunt = b.born + secs(r.gather);
-            let errand = if now < hunt || matches!(b.kind, BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel) { None } else { self.errand(&mut b, now) };
+            let round = now >= hunt && matches!(b.kind, BossKind::Hunter | BossKind::Pinwheel) && self.boss_late() && self.army_scale() >= 1.0;
+            let errand = if now < hunt || b.kind == BossKind::Mortar {
+                None
+            } else if round {
+                self.round_errand(&mut b, now)
+            } else if matches!(b.kind, BossKind::Hunter | BossKind::Pinwheel) {
+                None
+            } else {
+                self.errand(&mut b, now)
+            };
             let size = self.world.size();
             let cell = move |p: (f32, f32)| crate::mould::larder_world::raid_cell(p, size);
             let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
@@ -680,7 +707,9 @@ impl<W: World> Game<W> {
                 // rooted and eating, a leech holding on, both clenched; a
                 // sapper pressing into the wall).
                 match (b.phase, b.kind) {
-                    (BossPhase::Sit(..), BossKind::Sapper) => go(p),
+                    (BossPhase::Sit(..), BossKind::Sapper | BossKind::Hunter | BossKind::Pinwheel) => go(p),
+                    // Round the squad: aimed past it, not through its guns.
+                    (_, BossKind::Hunter | BossKind::Pinwheel) => go(self.boss_steer(b.lump, self.round_squad(centre, p, body), false, centre, body)),
                     (BossPhase::Sit(..), kind) => {
                         // A leech rings its pump (`ring`): the pull still
                         // presses it in, onto the ring's inner edge.
@@ -708,7 +737,7 @@ impl<W: World> Game<W> {
                         // to make up for it tore the body apart on rock.
                         // Far off it walks as a compact hunter; close, it
                         // unfurls, which is also its tell.
-                        let near = (self.soldiers[s].x - centre.0).hypot(self.soldiers[s].y - centre.1) < r.spin_near;
+                        let near = (self.soldiers[s].x - centre.0).hypot(self.soldiers[s].y - centre.1) < r.spin_near * self.world.scale();
                         let spin = if b.kind == BossKind::Pinwheel && near {
                             let way = if b.lump.is_multiple_of(2) { 1.0 } else { -1.0 };
                             way * r.spin * std::f32::consts::TAU / (tps * self.world.fine_steps().max(1) as f32)
@@ -730,10 +759,11 @@ impl<W: World> Game<W> {
             }
             // A second of its life, or of its walk: a leech's or a
             // sapper's way to its errand (not a sapper's way on through
-            // its hole, `visited` 1) is its trip.
+            // its hole, `visited` 1), a mortar's to a shot and a late
+            // runner's round a big squad are its trip.
             if now >= hunt {
                 match (b.phase, b.kind, b.visited) {
-                    (BossPhase::Go(_), BossKind::Leech | BossKind::Sapper, 0) | (BossPhase::Go(_), BossKind::Mortar, _) => b.walked += 1.0,
+                    (BossPhase::Go(_), BossKind::Leech | BossKind::Sapper, 0) | (BossPhase::Go(_), BossKind::Mortar | BossKind::Hunter | BossKind::Pinwheel, _) => b.walked += 1.0,
                     _ => b.lived += 1.0,
                 }
             }
@@ -1105,19 +1135,21 @@ impl<W: World> Game<W> {
     /// Its kind (`BossRules::kinds`): forced by `kind`, else drawn by the
     /// weights among the kinds with a target from where it formed (a
     /// cut-off part: the runners only).
-    fn pick_kind(&mut self, b: &Boss) -> BossKind {
+    pub(super) fn pick_kind(&mut self, b: &Boss) -> BossKind {
         let r = self.rules.boss;
         let forced = r.kind.round() as usize;
         if (1..=BossKind::ALL.len()).contains(&forced) {
             return BossKind::ALL[forced - 1];
         }
+        let army = if self.boss_late() { self.army_scale() } else { 0.0 };
         let w: Vec<f32> = BossKind::ALL
             .iter()
             .enumerate()
             .map(|(i, &kind)| {
                 let runner = matches!(kind, BossKind::Hunter | BossKind::Wanderer | BossKind::Pinwheel);
                 let able = matches!(kind, BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel) || self.boss_goal(&Boss { kind, ..*b }).is_some();
-                if (b.cause != BossCause::Cut || runner) && able { r.kinds[i].max(0.0) } else { 0.0 }
+                let late = if kind == BossKind::Mortar { r.late_mortar.max(0.0) * army } else { 0.0 };
+                if (b.cause != BossCause::Cut || runner) && able { r.kinds[i].max(0.0) + late } else { 0.0 }
             })
             .collect();
         let sum: f32 = w.iter().sum();
@@ -1132,6 +1164,104 @@ impl<W: World> Game<W> {
             x -= wi;
         }
         BossKind::Hunter
+    }
+
+    /// The squad's size on the strikers' scale (`StrikerRules::few`,
+    /// `full`): 0 at `few` live soldiers or fewer, 1 from `full`.
+    pub fn army_scale(&self) -> f32 {
+        let r = self.rules.strikers;
+        let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
+        ((alive - r.few) / (r.full - r.few).max(1.0)).clamp(0.0, 1.0)
+    }
+
+    /// The live soldiers' centre and the farthest of them from it (fine
+    /// cells), and the guns' reach round them; None with no soldier.
+    fn squad_ring(&self) -> Option<((f32, f32), f32)> {
+        let live: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        if live.is_empty() {
+            return None;
+        }
+        let n = live.len() as f32;
+        let c = (live.iter().map(|p| p.0).sum::<f32>() / n, live.iter().map(|p| p.1).sum::<f32>() / n);
+        let spread = live.iter().map(|p| (p.0 - c.0).hypot(p.1 - c.1)).fold(0.0, f32::max);
+        let fight = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * self.world.scale();
+        Some((c, spread + fight))
+    }
+
+    /// Where a body at `from` of radius `body` aims on its way to `to`
+    /// round the squad (`squad_ring`): `to` while the straight line keeps
+    /// clear of the ring, else the point beside the ring on `from`'s side.
+    fn round_squad(&self, from: (f32, f32), to: (f32, f32), body: f32) -> (f32, f32) {
+        let Some((c, ring)) = self.squad_ring() else { return to };
+        let ring = ring + body;
+        let n = nearest_on(from, to, c);
+        if (n.0 - c.0).hypot(n.1 - c.1) >= ring || (from.0 - c.0).hypot(from.1 - c.1) < ring {
+            return to;
+        }
+        // Off the line through the centre, on the side `from` is on.
+        let (dx, dy) = (to.0 - from.0, to.1 - from.1);
+        let l = dx.hypot(dy).max(1e-3);
+        let mut side = (-dy / l, dx / l);
+        if (from.0 - c.0) * side.0 + (from.1 - c.1) * side.1 < 0.0 {
+            side = (-side.0, -side.1);
+        }
+        (c.0 + side.0 * 1.2 * ring, c.1 + side.1 * 1.2 * ring)
+    }
+
+    /// A late boss's errand round a big squad (`BossRules::round_far`):
+    /// the standing building or pump nearest it that no soldier's guns
+    /// reach, within `round_far`, held while it stands and stays out of
+    /// reach; else the squad's far side, from which it hunts. None: it
+    /// hunts as before.
+    pub(super) fn round_errand(&mut self, b: &mut Boss, now: u64) -> Option<(f32, f32)> {
+        let r = self.rules.boss;
+        let sc = self.world.scale();
+        let (c, ring) = self.squad_ring()?;
+        let fight = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * sc;
+        let body = (b.members as f32 / std::f32::consts::PI).sqrt();
+        let soldiers: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        let clear = |p: (f32, f32)| soldiers.iter().all(|q| (q.0 - p.0).hypot(q.1 - p.1) > fight);
+        let d = |p: (f32, f32)| (p.0 - b.centre.0).hypot(p.1 - b.centre.1);
+        let standing = |q: (f32, f32)| self.buildings.iter().any(|w| w.alive && !matches!(w.kind, Kind::Wall { .. }) && w.at == q);
+        let held = match b.phase {
+            BossPhase::Go(q) | BossPhase::Sit(q, _) if standing(q) && clear(q) => Some(q),
+            _ => None,
+        };
+        let p = held.or_else(|| {
+            self.buildings
+                .iter()
+                .filter(|w| w.alive && !matches!(w.kind, Kind::Wall { .. }) && clear(w.at) && d(w.at) <= r.round_far * sc)
+                .map(|w| w.at)
+                .min_by(|a, q| d(*a).total_cmp(&d(*q)))
+        });
+        let p = match p {
+            Some(p) => p,
+            None => {
+                // The far side, once: there it hunts (`visited` 1).
+                if b.visited != 0 {
+                    return None;
+                }
+                let (dx, dy) = (c.0 - b.centre.0, c.1 - b.centre.1);
+                let l = dx.hypot(dy).max(1e-3);
+                let far = (c.0 + dx / l * (ring + body), c.1 + dy / l * (ring + body));
+                if !self.world.open(far.0, far.1) || d(far) > r.round_far * sc {
+                    return None;
+                }
+                if (far.0 - b.centre.0).hypot(far.1 - b.centre.1) <= body + 2.0 * sc {
+                    b.visited = 1;
+                    return None;
+                }
+                b.phase = BossPhase::Go(far);
+                return Some(far);
+            }
+        };
+        let off = d(p);
+        b.phase = match b.phase {
+            BossPhase::Sit(q, since) if q == p && off <= 2.0 * (body + 2.0 * sc) => BossPhase::Sit(q, since),
+            _ if off <= body + 2.0 * sc => BossPhase::Sit(p, now),
+            _ => BossPhase::Go(p),
+        };
+        Some(p)
     }
 
     /// Where boss `b`'s errand takes it (fine cells): a wanderer's next

@@ -1196,7 +1196,7 @@ mod tests {
     /// The squad holds fire, so every shot and cast is the turret's.
     #[test]
     fn turrets_fire_the_turret_deck() {
-        use crate::mould::rounds::{parse, Deck, RoundRules, Rounds};
+        use crate::mould::rounds::{parse, Deck};
         let run = |deck: Option<&str>, own: bool| {
             let mut g = small(3);
             let at = open_near(&g, (g.core.0 + 10.0, g.core.1));
@@ -1213,15 +1213,15 @@ mod tests {
                 Some(d) => assert!(g.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&parse(d).unwrap()))))),
                 None => {}
             }
-            let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+            // The game casts its turrets' cards itself (`Game::rounds`,
+            // 11-20; until then this test ran a `Rounds` of its own).
             let (mut carried, mut soldiers) = (0, 0);
             for _ in 0..(g.rules.tps * 10) {
                 g.step();
                 carried += g.last_shots.iter().filter(|s| s.by.is_none() && s.fired && s.cast > 0).count();
                 soldiers += g.last_shots.iter().filter(|s| s.by.is_some()).count();
-                rd.after_step(&mut g);
             }
-            (g.shots, carried, rd.cast.iter().sum::<u32>(), soldiers, g.killed, g.turret_killed, g.rendered)
+            (g.shots, carried, g.rounds.cast.iter().sum::<u32>(), soldiers, g.killed, g.turret_killed, g.rendered)
         };
         let (shots, carried, cast, soldiers, plain, by_turret, plain_paid) = run(None, false);
         assert_eq!(by_turret, plain, "plain: every kill is the turret's");
