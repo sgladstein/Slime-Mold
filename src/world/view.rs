@@ -48,6 +48,18 @@ pub enum SlimeLook {
     /// (`SHEET_VEIL` in `view.wgsl`), so the body trails a fading wake
     /// as it drifts.
     Sheet = 2,
+    /// The Trunk's cords (play-zoom pass, 11-20): its trail, kept 0.95,
+    /// runs as long straight cords between its few big bodies, and off the
+    /// body it stands up as a rounded, translucent tube (`CORD_VEIL`,
+    /// `CORD_RISE` in `view.wgsl`), so the network you cut to starve it is
+    /// seen. Plain, the cords were a few loose specks on bare ground.
+    Cords = 3,
+    /// The Swarmer's swell (11-20): it walks toward the alarm a strike
+    /// lays, so where its alarm is, its body stands up, rounder and taller
+    /// (`SWELL_GAIN`, `SWELL_RISE` in `view.wgsl`), and its loose walkers
+    /// there are beads, not a flat glow: the swarm visibly gathers where
+    /// it was hit. Plain, an alarmed Swarmer was a flat orange haze.
+    Swell = 4,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -59,6 +71,8 @@ impl SlimeLook {
         match tier {
             Some(crate::mould::tiers::Tier::Sprawler) => SlimeLook::Threads,
             Some(crate::mould::tiers::Tier::Drifter) => SlimeLook::Sheet,
+            Some(crate::mould::tiers::Tier::Trunk) => SlimeLook::Cords,
+            Some(crate::mould::tiers::Tier::Swarmer) => SlimeLook::Swell,
             _ => SlimeLook::Plain,
         }
     }

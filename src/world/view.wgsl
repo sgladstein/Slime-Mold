@@ -1577,6 +1577,20 @@ fn flush_mat(m0: Mat, k: f32) -> Mat {
 const SHEET_VEIL: f32 = 0.4;
 // The Sprawler's film under its threads (`prep`'s `th0`).
 const THREAD_VEIL: f32 = 0.3;
+// The Trunk's cords off its body (`SlimeLook::Cords`, play-zoom pass,
+// 11-20): the colour's thickness at full trail (0.55 read as solid slime,
+// the same amber as the body; 0.3 a translucent tube), and the height at
+// full trail, by trail squared so a cord is round, highest down its line.
+// Both fade out as the wide count rises, so the body keeps its own grain:
+// over the whole body, the first cut smoothed it into a glossy sheet.
+const CORD_VEIL: f32 = 0.3;
+const CORD_RISE: f32 = 0.5;
+// The Swarmer's swell (`SlimeLook::Swell`, 11-20): by the alarm's flush
+// (`flush_at`, 0-1) its height grows by up to `SWELL_GAIN` times, and its
+// walkers there stand up by `SWELL_RISE` more, so an alarmed loose edge is
+// a field of beads, not a flat glow. Filmed on planet 4 at zoom 12.
+const SWELL_GAIN: f32 = 1.5;
+const SWELL_RISE: f32 = 0.25;
 
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
@@ -2043,6 +2057,9 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // walkers instead of a single slime unit" (11-18 15:56Z). A third of
     // the Drifter's sheet, so the dashes still show through as threads.
     if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail); }
+    // The Trunk's cords (`SlimeLook::Cords`): off the body only (`off`).
+    let off = 1.0 - smoothstep(0.25, 0.55, wide);
+    if (P.slime_look == 3u) { th0 = max(th0, CORD_VEIL * trail * off); }
     // Condensed mould keeps tight, raised edges (art director, 11-14: it
     // should read tougher at a glance): where it has condensed the
     // thickness is pushed through a steep curve, so the body is a full,
@@ -2061,6 +2078,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // sheen runs over it as over dense wet metal; only its colour takes the
     // plateau. The first cut fed the plateau to the height too.
     var th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share) * smoothstep(0.3, 0.6, wide);
+    if (P.slime_look == 3u) { th_h = max(th_h, CORD_RISE * trail * trail * off); }
     // A mini-boss's body (2026-11-16): its members' share of the walkers
     // round the cell (a member counts once in `n` and once in `lc`), and the
     // nearest lump's look. Where its members are, it stands up from the
@@ -2091,6 +2109,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The alarm on the slime here (`flush_at`), under a mini-boss's skin
     // and the set slime's, which keep their own colours.
     let hot = flush_at(wx, wy, tm);
+    if (P.slime_look == 4u) { th_h = th_h * (1.0 + SWELL_GAIN * hot) + SWELL_RISE * hot * smoothstep(0.1, 0.4, near); }
     let ss = set_share(wx, wy);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));

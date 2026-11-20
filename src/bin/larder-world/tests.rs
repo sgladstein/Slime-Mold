@@ -1811,3 +1811,62 @@ fn blasts_shake_and_hold_only_when_asked() {
     feel(&[pop(10), pop(12)], &mut felt, &mut trauma, &mut stop, &mut cool, (1.0, 1.0));
     assert!(trauma > t0 && stop == 0.0, "shake {trauma}, hold {stop}");
 }
+
+/// **Move, then Shift + a build** (owner 2026-11-20: "If I tell a squad to
+/// move here then shift (queue) build it doesn't work"): a right click
+/// sends the squad, the build card with Shift held queues the build on the
+/// squad (`Cmd::SquadQueue`), and the squad raises it once it gets there.
+/// Before, Shift skipped the squad and queued the build soldier by soldier.
+#[test]
+fn a_squad_sent_then_shift_built_raises_it_once_there() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.game.as_mut().unwrap().bank = 1e6;
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    let (q, m, sc) = {
+        let g = app.game.as_ref().unwrap();
+        let q = g.active.unwrap();
+        (q, g.middle(q).unwrap(), g.world.scale())
+    };
+    let open = |app: &App, p: (f32, f32)| {
+        let g = app.game.as_ref().unwrap();
+        g.standable(p.0, p.1) && g.build_blocked(Kind::Turret, p).is_none() && g.crystal_at(p).is_none()
+    };
+    let to = (0..32)
+        .map(|i| i as f32 / 32.0 * std::f32::consts::TAU)
+        .map(|a| (m.0 + 25.0 * sc * a.cos(), m.1 + 25.0 * sc * a.sin()))
+        .find(|&p| open(&app, p) && open(&app, (p.0, p.1 + 8.0 * sc)))
+        .expect("open ground to send the squad to");
+    // Right click there.
+    let c = app.camera.to_screen(to);
+    app.controls.cursor = Some(c);
+    app.hud.moved(Some(c));
+    assert!(app.squad_button(Button::Right, true));
+    app.squad_button(Button::Right, false);
+    app.squad_frame(dt);
+    app.step(dt);
+    assert!(app.game.as_ref().unwrap().squads[q].dest.is_some(), "on its way");
+    // Shift + the turret card beside where it goes.
+    let at = (to.0, to.1 + 8.0 * sc);
+    app.shift = true;
+    app.hud_event(HudEvent::Point { id: TURRET, at }).unwrap();
+    app.shift = false;
+    let b = app.game.as_ref().unwrap().buildings.len() - 1;
+    {
+        let g = app.game.as_ref().unwrap();
+        assert_eq!(g.buildings[b].at, at, "the turret's ghost was placed");
+        assert_eq!(g.squads[q].queued, 1, "the build is queued on the squad");
+        assert!(g.squads[q].dest.is_some(), "and the move goes on");
+    }
+    let built = |app: &App| app.game.as_ref().unwrap().buildings[b].built;
+    for _ in 0..6000 {
+        if built(&app) >= 1.0 {
+            break;
+        }
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let g = app.game.as_ref().unwrap();
+    assert!(built(&app) >= 1.0, "the queued build rose: {:.0}% built, squad work {:?}", built(&app) * 100.0, g.squads[q].work);
+}
