@@ -240,6 +240,7 @@ impl Mission {
                 "squad" => r.squad = *v as usize,
                 "soldier_cost" => r.soldier_cost = *v,
                 "cap" => r.cap = *v,
+                "par" => r.par = *v,
                 "smell" => r.smell = *v,
                 "overrun" => r.overrun = *v,
                 "reserve" => r.reserve = *v,
@@ -251,7 +252,7 @@ impl Mission {
     }
 }
 
-const RULE_KEYS: [&str; 9] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain"];
+const RULE_KEYS: [&str; 10] = ["price", "start_bank", "squad", "soldier_cost", "cap", "par", "smell", "overrun", "reserve", "drain"];
 
 /// A walker's bite on a soldier in a mission (`Rules::drain`) unless its
 /// file sets one (`rule drain N`): 1, the bite the missions were tuned on.
@@ -295,7 +296,8 @@ pub const PHASES: [f32; 3] = [120.0, 360.0, 660.0];
 pub enum Cause {
     /// The bar filled.
     Goal,
-    /// The 15:00 cap (graded by the bar).
+    /// The cap (graded by the bar): the missions' 15:00, or in a run the
+    /// stalemate limit (`run::limit`), as the clock counts up.
     Cap,
     SquadWiped,
     /// The Game's `End::Overrun`: walkers on the larder with the bank empty
@@ -614,9 +616,12 @@ impl Tracker {
             None => false,
         };
         let graded = |best: f32| if best >= 0.5 { 1 } else { 0 };
+        // The speed star: before the rules' par (a run's planet, counting
+        // up), else before four fifths of the cap (the missions).
+        let quick = u8::from(if r.par > 0.0 { t < r.par } else { t < two_stars(r.cap) });
         let v = |cause, stars| Some(Verdict { cause, at: t, stars, best: self.best });
         self.verdict = if met {
-            v(Cause::Goal, 1 + u8::from(t < two_stars(r.cap)) + u8::from(bonus))
+            v(Cause::Goal, 1 + quick + u8::from(bonus))
         } else if matches!(g.end, Some(End::SquadWiped(_))) {
             // With the reserve on, an empty squad is no loss while a recruit
             // can still come; the Game ends the round when none can.
@@ -629,7 +634,7 @@ impl Tracker {
             // Only a squad goal can't be met by wiping the mould.
             match self.mission.goal {
                 Goal::Squad { .. } => v(Cause::MouldWiped, graded(self.best)),
-                _ => v(Cause::Goal, 1 + u8::from(t < two_stars(r.cap)) + u8::from(bonus)),
+                _ => v(Cause::Goal, 1 + quick + u8::from(bonus)),
             }
         } else if t >= r.cap || matches!(g.end, Some(End::Cap(_))) {
             v(Cause::Cap, graded(self.best))
@@ -704,7 +709,9 @@ impl Tracker {
         let best = format!("best {:.0}% of the goal", 100.0 * v.best);
         match v.cause {
             Cause::Goal => format!("Goal met at {at}: {} star{}", v.stars, if v.stars == 1 { "" } else { "s" }),
-            Cause::Cap => format!("Time: {} ({best})", if v.stars > 0 { "held on, 1 star" } else { "lost" }),
+            // Said as what happened, not as a win (balance review, 11-20:
+            // the old "Time: held on" read as "Mission won").
+            Cause::Cap => format!("The slime held on until {at}: {} ({best})", if v.stars > 0 { "you cut it to half, 1 star" } else { "lost" }),
             Cause::SquadWiped => format!("Your last soldier fell at {at} ({best})"),
             Cause::Overrun => format!("The mould took the larder at {at} with the bank empty ({best})"),
             Cause::Stuck => format!("No food to buy or fire with since {} ({best})", {

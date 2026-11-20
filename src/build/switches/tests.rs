@@ -178,6 +178,7 @@ const DISH: &str = "a rule of the paused dish games' model, which shape C never 
 const CAST: &str = "set by the game when a round or tool is cast, not by a key";
 const FILM: &str = "a film's override; 0 leaves the game's own draw";
 const CAMPAIGN: &str = "a rule the frozen campaign's missions set themselves; the run never uses it";
+const LEVEL: &str = "set on each run planet by its mission's rules (`run::level`), which `Run::rules` does not hold";
 const NOT_SWITCHES: &[(&str, &str)] = &[
     ("graze", DISH),
     ("respawn", DISH),
@@ -216,6 +217,10 @@ const NOT_SWITCHES: &[(&str, &str)] = &[
     // no-soft-lock pick of 11-12); squad mode has no larder to send one
     // from, and his pick for the game was free recruits off.
     ("set:reserve", CAMPAIGN),
+    // The speed star's time (`Rules::par`, the count-up clock, 11-20): 0
+    // is the missions' old rule (four fifths of the cap); every run planet
+    // sets its own (`run::par`: 8:00, 10:00, 10:00, ...) in its level.
+    ("set:par", LEVEL),
 ];
 
 /// **The test the plan asks for** (job 1: "A test fails on a switch that

@@ -121,10 +121,15 @@ pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, place: String) -> Ending 
 /// numbers, and how it ended. A run's planet adds its own (`App::model`).
 pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
     let v = tr.verdict.expect("a verdict");
-    let title = if v.stars > 0 {
+    use slime_mould::mould::campaign::Cause;
+    let title = if v.cause == Cause::Cap {
+        // A stalemate's limit (`run::limit`), or a mission's cap: the slime
+        // was not beaten, whatever the star (balance review, 11-20: "Mission
+        // won" over a planet still holding 22,090 walkers).
+        "The slime held on".to_string()
+    } else if v.stars > 0 {
         "Mission won".to_string()
     } else {
-        use slime_mould::mould::campaign::Cause;
         match v.cause {
             Cause::SquadWiped => "The squad is lost",
             Cause::Overrun => "The slime took the larder",
@@ -1073,8 +1078,23 @@ impl App {
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: if g.world.garden.is_some() { "The enemy mould: walkers alive".into() } else { "The mould: walkers alive".into() }, value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
                 Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },
             ],
-            // The gun range has no time limit to show.
-            clock: if self.args.range.is_some() { clock(t) } else { format!("{} / {}", clock(t), clock(r.cap)) },
+            // The gun range has no time limit to show. A run's planet counts
+            // up (owner, 2026-11-20 14:10Z: "there should not be a countdown
+            // clock"): the time, then the speed star's time until it passes,
+            // and the stalemate's limit only in its last two minutes.
+            clock: if self.args.range.is_some() {
+                clock(t)
+            } else if r.par > 0.0 {
+                if t < r.par {
+                    format!("{}  \u{b7}  star by {}", clock(t), clock(r.par))
+                } else if t >= r.cap - 120.0 {
+                    format!("{}  \u{b7}  the planet ends at {}", clock(t), clock(r.cap))
+                } else {
+                    clock(t)
+                }
+            } else {
+                format!("{} / {}", clock(t), clock(r.cap))
+            },
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             // The switches this round plays off their default (the play
             // log's `switches=` says the same).
@@ -1546,7 +1566,9 @@ impl App {
                 let tier = r.level().tier;
                 end.place = format!("Planet {} of {} · {} · {}", r.depth, run::PLANETS, r.planet().name, title_case(tier.name()));
                 end.says = run::does_to_you(tier).says.to_string();
-                if v.stars > 0 {
+                // A stalemate's limit keeps its own title ("The slime held
+                // on"): the run goes on, but the planet is not freed.
+                if v.stars > 0 && v.cause != slime_mould::mould::campaign::Cause::Cap {
                     end.title = if last { "The home world is free".into() } else { format!("Planet {} freed", r.depth) };
                 }
                 let (label, line) = match (v.stars > 0, last) {

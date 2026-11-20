@@ -262,8 +262,16 @@ pub struct Rules {
     /// strike's takes to 2 of 8, where 8 left random none and strike its
     /// 3. See `Core` for the census.
     pub core_pull: f32,
-    /// The cap, game seconds (owner, 04:04Z: 15 minutes).
+    /// The cap, game seconds (owner, 04:04Z: 15 minutes). In a run it is
+    /// no countdown since 2026-11-20 (owner, 14:10Z: "there should not be a
+    /// countdown clock"): only a stalemate reaches it (`run::limit`).
     pub cap: f32,
+    /// The speed star's time, game seconds: a goal met before it earns a
+    /// star (`campaign::Tracker`). 0 is the missions' old rule, four fifths
+    /// of the cap (`campaign::two_stars`). A run sets it by planet
+    /// (`run::par`) and the clock counts up to it (owner, 2026-11-20 14:10Z:
+    /// "a count up clock and stars ... for being under a certain time").
+    pub par: f32,
     pub start_bank: f32,
     pub squad: usize,
     pub soldier_cost: f32,
@@ -802,6 +810,7 @@ impl Rules {
             "drain" => &mut self.drain,
             "doze" => &mut self.doze,
             "cap" => &mut self.cap,
+            "par" => &mut self.par,
             "start_bank" => &mut self.start_bank,
             "soldier_cost" => &mut self.soldier_cost,
             // Walls (the walls thread, 11-16): thickness films and tries.
@@ -872,6 +881,7 @@ impl Default for Rules {
             core_secs: 5.0,
             core_pull: 8.0,
             cap: 900.0,
+            par: 0.0,
             start_bank: 2000.0,
             squad: 4,
             soldier_cost: 400.0,
