@@ -3509,8 +3509,10 @@ fn draw_striker(k: u32, s: vec2<f32>, cond: u32) {
     // Its own phase: a cheap mix of its slot (Knuth's multiplier).
     let ph = f32(state[0] % 48u) / 48.0 + f32((k * 2654435761u) >> 22u) / 1024.0;
     let beat = sin(6.2831853 * ph);
-    let rh = max(P.zoom * (0.22 + 0.09 * f32(min(cond, 4u))) * (1.0 + 0.12 * beat), 1.0);
-    let h4 = u32(round(11.0 + 4.0 * beat));
+    // First try 0.22 + 0.09 a walker held, heat 11 +- 4: at zoom 12 a
+    // striker read as a stray droplet, not a core (planet 2, 1:08).
+    let rh = max(P.zoom * (0.30 + 0.14 * f32(min(cond, 4u))) * (1.0 + 0.12 * beat), 1.0);
+    let h4 = u32(round(13.0 + 2.0 * beat));
     let l = normalize(LIGHT);
     let sh = -normalize(l.xy) * max(DROP_SHADOW * rh, 1.0);
     let pad = vec2<f32>(rh + 1.0);
