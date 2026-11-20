@@ -4331,9 +4331,15 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     // The squad brought round the race world's middle rock, which blocks
     // the line from the slime's side (a mortar with no clear line walks:
     // the next test).
+    // Tough enough to outlive the test (a squad of four at full health
+    // was eaten by the third throw), so the throws are counted at a
+    // standing target and what they cost read off its health.
     for (k, s) in g.soldiers.iter_mut().enumerate() {
         (s.x, s.y) = (100.0 + (k % 3) as f32, 78.0 + (k / 3) as f32);
+        s.hp = 1000.0;
     }
+    let health = |g: &Game<BigDish>| g.soldiers.iter().map(|s| s.hp).sum::<f32>();
+    let full = health(&g);
     let squad = |g: &Game<BigDish>| {
         let alive: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
         (alive.iter().map(|s| s.x).sum::<f32>() / alive.len().max(1) as f32, alive.iter().map(|s| s.y).sum::<f32>() / alive.len().max(1) as f32)
@@ -4360,11 +4366,25 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     assert!(throws.len() >= 3, "a throw every 3 s: {throws:?}");
     assert!(throws.windows(2).all(|w| w[1] - w[0] >= 3 * tps as u64), "no faster than every 3 s: {throws:?}");
     assert!(b.visited > 0, "it threw walkers");
+    // The throws bite: the squad loses health to them.
+    eprintln!("mortar: the squad lost {:.0} health", full - health(&g));
+    assert!(health(&g) < full, "the throws cost the squad nothing");
     // Held on where it formed (its first sitting centre is still
     // gathering in from the knot round it).
     assert!(first.is_some());
     assert!((b.centre.0 - b.at.0).hypot(b.centre.1 - b.at.1) < 6.0, "it stays put: formed at {:?}, now {:?}", b.at, b.centre);
     assert_eq!(g.lump_looks()[b.lump] & 7, BossKind::Mortar as u16);
+    // Each throw its own lump while one is free, in the mortar's look,
+    // aimed at its target, and let go after `shell_life`.
+    assert!(g.bosses.shelled as usize >= throws.len().min(2), "{} of {} throws kept as shells", g.bosses.shelled, throws.len());
+    assert!(g.bosses.thrown > 0);
+    let now = g.world.ticks();
+    for sh in &g.bosses.shells {
+        assert_eq!(g.lump_looks()[sh.lump] & 7, BossKind::Mortar as u16);
+        assert!(sh.until > now && sh.until <= now + 8 * tps as u64 + 1);
+    }
+    // (One may be shot to nothing already.)
+    assert!(g.bosses.shells.iter().any(|sh| g.world.lumps()[sh.lump].is_some_and(|l| l.2 > 0)), "a shell has walkers");
 }
 
 #[test]

@@ -793,6 +793,7 @@ impl Rules {
             "boss_lob" => &mut self.boss.lob,
             "boss_lob_every" => &mut self.boss.lob_every,
             "boss_shell" => &mut self.boss.shell,
+            "boss_shell_life" => &mut self.boss.shell_life,
             "boss_far" => &mut self.boss.far,
             "boss_fresh" => &mut self.boss.fresh,
             "boss_root" => &mut self.boss.root,

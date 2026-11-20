@@ -151,6 +151,14 @@ pub struct BossRules {
     pub lob: f32,
     pub lob_every: f32,
     pub shell: f32,
+    /// **What a throw does** (2026-11-20, after the owner's "a late-game
+    /// army crushes minibosses"): the ring thrown stays the mortar's for
+    /// `shell_life` seconds, in a lump of its own (`Shell`) aimed at the
+    /// target, with the mortar's bite and its armour, and its look, so it
+    /// lands and bites as the boss's own; then it is let go into the
+    /// slime. Let go as it was thrown (before), the ring landed as
+    /// ordinary slime that touches as one walker and the squad shot it.
+    pub shell_life: f32,
     /// The wanderer: a fresh crystal (at least `fresh` of its charge left)
     /// at least `far` dish cells off; it roots there `root` seconds, eats,
     /// takes in the slime there (its reach x `grow`), and sets off again.
@@ -286,6 +294,7 @@ impl Default for BossRules {
             lob: 30.0,
             lob_every: 5.0,
             shell: 1.5,
+            shell_life: 8.0,
             far: 40.0,
             fresh: 0.5,
             root: 15.0,
@@ -428,8 +437,25 @@ pub struct Bosses {
     ways: Vec<BossWay>,
     /// How many times one stalled on its way and gathered again (`STALL`).
     pub regrouped: u32,
+    /// The mortars' throws still in flight or biting (`BossRules::
+    /// shell_life`).
+    pub shells: Vec<Shell>,
+    /// Walkers thrown, and how many throws kept their own lump.
+    pub thrown: u64,
+    pub shelled: u32,
     /// Their own draws, apart from `Game::rng`.
     rng: Rng,
+}
+
+/// **A mortar's throw** while it is still the mortar's (`BossRules::
+/// shell_life`): its lump, where it was thrown, its mortar's look word
+/// (`Game::lump_looks`) and the tick it is let go.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Shell {
+    pub lump: usize,
+    pub target: (f32, f32),
+    pub look: u16,
+    pub until: u64,
 }
 
 /// **A mini-boss's way** (2026-11-20): the walking distance to its goal
@@ -479,10 +505,13 @@ const WAY_MOVED: f32 = 6.0;
 /// A mortar's thrown walker's speed x `step` (as `RoundRules::fling_speed`,
 /// the shove cards' push).
 const MORTAR_FLING: f32 = 1.5;
+/// The share of a mortar's walkers it keeps when it throws: the rest of
+/// its body, and `BossRules::shell` past it, is the throw.
+const SHELL_CORE: f32 = 0.6;
 
 impl Bosses {
     pub fn new(seed: u64) -> Bosses {
-        Bosses { live: Vec::new(), ended: Vec::new(), fading: Vec::new(), stolen: 0.0, returned: 0.0, next: None, crowd_top: 0.0, ways: Vec::new(), regrouped: 0, rng: Rng::new(seed ^ 0xb055_5eed) }
+        Bosses { live: Vec::new(), ended: Vec::new(), fading: Vec::new(), stolen: 0.0, returned: 0.0, next: None, crowd_top: 0.0, ways: Vec::new(), regrouped: 0, shells: Vec::new(), thrown: 0, shelled: 0, rng: Rng::new(seed ^ 0xb055_5eed) }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -514,6 +543,15 @@ impl<W: World> Game<W> {
             let keep = now < until;
             if !keep {
                 world.form_lump(b.lump, None);
+            }
+            keep
+        });
+        // Throws past their time are let go into the slime.
+        self.bosses.shells.retain(|sh| {
+            let keep = now < sh.until;
+            if !keep {
+                world.set_lump(sh.lump, Lump::default());
+                world.form_lump(sh.lump, None);
             }
             keep
         });
@@ -737,26 +775,59 @@ impl<W: World> Game<W> {
         if last > 0 && now < last + every.max(1) {
             return true;
         }
+        // `walker_step` is in fine cells, as the target's distance.
         let per = (self.world.walker_step() * MORTAR_FLING).max(1e-3);
         let steps = (d(t) / per).round().clamp(1.0, u16::MAX as f32) as u16;
-        // From half a body past its edge: a fling moves its members too,
-        // and a member thrown stays one, lands by the target and runs
-        // home past its leash, dragging the centre after it (from its
-        // edge, a staged one on the CPU dish drifted 15 cells in 11 s).
-        let inner = (1.5 * body / sc).max(2.0);
-        let throw = Burst { at: (centre.0 / sc, centre.1 / sc), r: inner, fling: inner + r.shell.max(0.1), fling_steps: steps, push: Some((t.1 - centre.1).atan2(t.0 - centre.0)), ..Burst::default() };
+        // The throw is its body's outer part, past the disc holding
+        // `SHELL_CORE` of its walkers out to `shell` dish cells past its
+        // edge, let go of first
+        // so no member flies (a member thrown stays one, lands by the
+        // target and runs home past its leash, dragging the centre after
+        // it: a staged one of 47 on the CPU dish drifted 20 cells toward
+        // the squad). From one and a half radii, its first version, a
+        // throw took only the slime round it: after the first, the throws
+        // on the owner's planet 4 (run 1795038793) took 1 walker each.
+        // Measured on the mould grid, not from its walker count: a
+        // mortar clenched on its spot packs its walkers two to a cell (a
+        // spread of 0.55 of a packed disc's on the owner's planet 4), so
+        // a ring from 0.7 to 1 of the packed radius held 7 to 12 of 244.
+        let n = b.members.max(1) as f32;
+        let inner = self.reach_holding(centre, (body / sc).max(1.0), SHELL_CORE * n);
+        let outer = self.reach_holding(centre, (2.0 * body / sc).max(inner + 1.0), n).max(inner) + r.shell.max(0.1);
+        self.world.form_lump(b.lump, Some((centre, inner)));
+        // The ring a lump of its own (`Shell`), when one is free: it grows
+        // from the walkers in no lump in the ring, flies as one (a flung
+        // walker keeps its lump) and lands as the mortar's own, aimed at
+        // the target, with its bite and its look.
+        let free = (0..crate::mould::big::LUMPS).find(|&l| !self.lump_taken(l));
+        if let Some(sl) = free {
+            self.world.grow_lump(sl, (centre, outer));
+            let cell = crate::mould::larder_world::raid_cell(t, self.world.size());
+            // No leash: a ring walker the throw missed stays by the
+            // mortar as a member, and with one the landed shell ran back
+            // to its members' centre, halfway home, as a stream (filmed
+            // on the owner's planet 4, run 1795038793 at 1:34). Its pull
+            // brings every member to the target instead.
+            self.world.set_lump(sl, Lump { aim: cell, pull: r.pull, armour: r.armour_at(0.5 * b.grade), bite: r.bite_at(b.grade), ..Lump::default() });
+            let look = self.lump_looks()[b.lump];
+            self.bosses.shells.push(Shell { lump: sl, target: t, look, until: now + ((r.shell_life.max(0.0) * self.rules.tps as f32).round() as u64).max(1) });
+            self.bosses.shelled += 1;
+        }
+        let throw = Burst { at: (centre.0 / sc, centre.1 / sc), r: inner, fling: outer, fling_steps: steps, push: Some((t.1 - centre.1).atan2(t.0 - centre.0)), ..Burst::default() };
         let out = self.world.burst(&throw, &BurstRules { fling_speed: MORTAR_FLING, ..BurstRules::default() });
         b.visited += out.flung as u64;
-        // Its members thrown with the ring let go: a member in flight stays
-        // one, lands by the target and runs home past its leash, dragging
-        // the centre after it (a staged one of 47 on the CPU dish had 54
-        // members three bodies off after four throws and drifted 20 cells
-        // toward the squad). Formed again on its own area, which lets
-        // every member in flight go (`World::form_lump`) and, as a regroup
-        // does, heals its members' blows: a mortar's blows count between
-        // its throws only, and it takes half its grade's.
-        let keep = self.reach_holding(b.at, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
-        self.world.form_lump(b.lump, Some((b.at, keep)));
+        self.bosses.thrown += out.flung as u64;
+        // Fed again from the slime round it while the shell holds the
+        // thrown (none of them ordinary to take back): as far round as
+        // holds its old body, which, as a regroup does, heals its
+        // members' blows (`World::form_lump`): a mortar's blows count
+        // between its throws only, and it takes half its grade's. With
+        // no lump free for a shell, the thrown are ordinary walkers still
+        // beside it, and stay let go.
+        if free.is_some() {
+            let keep = self.reach_holding(b.at, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
+            self.world.form_lump(b.lump, Some((b.at, keep)));
+        }
         b.phase = BossPhase::Sit(t, now);
         true
     }
@@ -1339,6 +1410,9 @@ impl<W: World> Game<W> {
         let word = |b: &Boss| b.kind as u16 | (!matches!(b.phase, BossPhase::Gather) as u16) << 3 | ((b.grade.clamp(0.0, 1.0) * 15.0).round() as u16) << 4;
         for b in &self.bosses.live {
             out[b.lump] = word(b);
+        }
+        for sh in &self.bosses.shells {
+            out[sh.lump] = sh.look;
         }
         let (now, fade) = (self.world.ticks(), (self.rules.boss.fade.max(0.0) * self.rules.tps as f32).max(1.0));
         for (b, until) in &self.bosses.fading {
