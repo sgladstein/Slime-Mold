@@ -1,0 +1,20 @@
+# Planet 3 search, restarted 2026-11-20 05:10Z on the game after One burst per bullet (#532) and shots stopping at set slime (5be6b0b): every earlier planet 3 result is on an older game.
+# The best without a deck on the set-slime game (12-13 of 17 maps):
+econ,aim=6
+econ,cards=0,mop=300
+econ,go=4,aim=6
+econ,go=4,aim=6,mop=300
+lure,go=4,aim=6
+turtle,go=4,aim=6
+rush,aim=6
+scott,go=4,aim=6
+boom,aim=6
+bot,aim=6
+# The best with a deck before #532 (13 of 13 maps):
+econ,go=4,aim=6,cards=0,want=seek/wide/blast.needle
+econ,aim=6,cards=0,go=4,split=6,walk=4,want=seek/wide/blast.needle
+econ,aim=6,go=4,mop=3000,split=2,want=seek/wide/blast.needle
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle
+econ,go=4,aim=6,cards=0,want=blast.needle
+# The gun lab's best deck without Needle Blast:
+econ,go=4,aim=6,cards=0,want=trigger/blast.standard/gas.standard

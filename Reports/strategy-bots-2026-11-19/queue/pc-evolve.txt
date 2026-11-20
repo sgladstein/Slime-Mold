@@ -1,8 +1,8 @@
 # The search the PC worker runs when queue/pc/ has no job files (league.py worker).
 # Planet 3 only (Scott 11-19 14:09Z: "Can we just focus on beating 3"), seeds 1-8 and
 # his own planet 3 (run 1795038793, which he won in 7:21 on 11-18).
-name=p3
-plans=Reports/strategy-bots-2026-11-19/p3-plans.txt
+name=p3n
+plans=Reports/strategy-bots-2026-11-19/p3n-plans.txt
 depths=3
 seeds=1-16,1795038793
 secs=720
@@ -10,6 +10,7 @@ top=6
 kids=18
 util_share=0
 # 11-19 19:15Z: breed from the aim and leave-home tests too, and keep their best in every generation.
-also=01-aim.jsonl,02-leave.jsonl,03-kite.jsonl,04-split.jsonl,05-decks.jsonl,06-mop.jsonl,07-deck-families.jsonl
-always=econ,go=4,aim=6;lure,go=4,aim=6;turtle,go=4,aim=6;econ,aim=6;rush,aim=6;econ,cards=0,mop=300;econ,go=4,aim=6,mop=300;econ,go=4,aim=6,cards=0,want=seek/wide/blast.needle;econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle
+also=09-needle-once.jsonl
+always=econ,go=4,aim=6,mop=300;lure,go=4,aim=6;econ,go=4,aim=6,cards=0,want=seek/wide/blast.needle
 # 11-19 19:40Z: same plan, same seed, same result, so the seeds are the noise: 16 seeds a plan. The utility bot won 0 of 192 planet 3 games: dropped. The split test joins the breeding pool.
+# 11-20 05:10Z: restarted as p3n on the game after One burst per bullet (#532) and set-slime shots (5be6b0b); p3 stays as the record of the older game.
