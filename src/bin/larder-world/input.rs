@@ -306,12 +306,24 @@ impl App {
             // one that follows the default goes on after the default.
             TURRET_LOADOUT => {
                 let Some(r) = self.args.run.as_ref() else { return };
-                let now = bd.loadout.map_or(r.turret_loadout, usize::from);
-                let l = (now + 1) % r.loadouts.len();
-                if g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.cards_of(l))))) {
-                    let names: Vec<String> = r.cards_of(l).iter().map(|c| c.title()).collect();
+                // The default, then each loadout, then the default again: a
+                // turret back on the default follows "Turrets use this"
+                // (review, 2026-11-20).
+                let next = match bd.loadout {
+                    None => Some(0),
+                    Some(l) if (l as usize) + 1 < r.loadouts.len() => Some(l as usize + 1),
+                    Some(_) => None,
+                };
+                let cmd = match next {
+                    Some(l) => Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.turret_deck_of(l)))),
+                    None => Cmd::TurretLoad(b as u32, None, None),
+                };
+                if g.apply(cmd) {
+                    let l = next.unwrap_or(r.turret_loadout);
+                    let names: Vec<String> = r.turret_deck_of(l).iter().map(|c| c.title()).collect();
                     let cards = if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") };
-                    self.hud.alert(&format!("This {what} fires {}: {cards}", r.loadout_name(l)), Some(bd.at), theme::GOOD);
+                    let tag = if next.is_none() { ", the turrets' default" } else { "" };
+                    self.hud.alert(&format!("This {what} fires {}{tag}: {cards}", r.loadout_name(l)), Some(bd.at), theme::GOOD);
                 }
             }
             _ => {}

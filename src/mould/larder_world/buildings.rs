@@ -541,12 +541,14 @@ impl<W: World> Game<W> {
         }
         // The turrets' reach with their deck's Range cards (`turret_mods`),
         // as they aim and fire (independent review, 2026-11-16).
-        let reach = b.turret_range * self.s() * (1.0 + self.rules.range_card * self.turret_mods().reach as f32);
-        let renders: Vec<(f32, f32)> = self.buildings.iter().filter(|t| t.up() && t.kind == Kind::Turret && t.level >= 2).map(|t| t.at).collect();
+        // Each turret's own Range cards when it has a deck of its own
+        // (`Building::deck`, 2026-11-19).
+        let reach_of = |k: usize| b.turret_range * self.s() * (1.0 + self.rules.range_card * self.turret_mods_of(Some(k)).reach as f32);
+        let renders: Vec<((f32, f32), f32)> = self.buildings.iter().enumerate().filter(|(_, t)| t.up() && t.kind == Kind::Turret && t.level >= 2).map(|(k, t)| (t.at, reach_of(k))).collect();
         if renders.is_empty() {
             return 0.0;
         }
-        let n: u32 = hits.iter().filter_map(|&(h, k)| h.filter(|h| renders.iter().any(|t| (t.0 - h.0).hypot(t.1 - h.1) <= reach)).map(|_| k)).sum();
+        let n: u32 = hits.iter().filter_map(|&(h, k)| h.filter(|h| renders.iter().any(|&(t, reach)| (t.0 - h.0).hypot(t.1 - h.1) <= reach)).map(|_| k)).sum();
         let food = n as f32 * b.render_food;
         self.bank += food;
         self.rendered += food;

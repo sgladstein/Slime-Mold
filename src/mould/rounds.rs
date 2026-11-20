@@ -1282,6 +1282,16 @@ impl Rounds {
         Rounds { rules, round, casts, ..Default::default() }
     }
 
+    /// The army's round changed mid-planet (the loadout panel): its cards
+    /// and budget, keeping what is live (casts lodged or on a fuse, flares
+    /// burning, the counts). A new `Rounds` dropped them (review,
+    /// 2026-11-20).
+    pub fn set_round(&mut self, round: Vec<Card>, budget: u32) {
+        self.casts = casts(&round);
+        self.round = round;
+        self.rules.budget = budget;
+    }
+
     /// A gun with these cards if they fit `rules.budget` (`fit`): how a
     /// run equips the cards a player owns.
     pub fn build(round: Vec<Card>, rules: RoundRules) -> Result<Self, Over> {

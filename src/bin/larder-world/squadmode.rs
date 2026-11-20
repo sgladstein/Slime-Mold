@@ -563,11 +563,16 @@ impl App {
         }
         let from = g.active.or_else(|| self.sq.as_ref().and_then(|sq| sq.last).map(usize::from));
         let n = live.len() as i32;
+        // Past every squad linked with the one commanded: linked, it is
+        // commanded already, and `switch_to` only brings the camera to it,
+        // so the cycle stuck there (review, 2026-11-20).
+        let linked = g.active.map(|a| g.linked(a)).unwrap_or_default();
         let j = match from.and_then(|a| live.iter().position(|&q| q == a)) {
-            Some(i) => (i as i32 + step).rem_euclid(n) as usize,
+            Some(i) => (1..=n).map(|k| (i as i32 + step * k).rem_euclid(n) as usize).find(|&j| !linked.contains(&live[j])),
             // None commanded (or it died): the one after where it was.
-            None => from.map_or(0, |a| live.iter().position(|&q| q > a).unwrap_or(0)),
+            None => Some(from.map_or(0, |a| live.iter().position(|&q| q > a).unwrap_or(0))),
         };
+        let Some(j) = j else { return };
         self.switch_to(live[j] as u8);
     }
 
