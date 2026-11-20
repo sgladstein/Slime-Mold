@@ -77,8 +77,9 @@ Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
 cell a second on dry ground (was 5), goes out and smoulders where damp,
 flickers and leaves embers; moisture (`plants::moisture`) comes from the
 map's `moisture BASE SPREAD` line (levelgen, by biome), water within 8
-cells and noise. Fire hurts soldiers (`Rules::fire_hurt` 25 hp/s at full
-heat) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
+cells and noise. Fire hurts soldiers (`Rules::fire_hurt` 10 hp/s at full
+heat since 2026-11-20, was 25: the strategy bot's squads burned in their own
+Torch fires on planet 2) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
 
 **Laid fuel** (2026-11-17, the Tinder gun card): `BigDish::lay_fuel`
 (GPU: the IGNITE pass in lay mode) plants open, dry ground up to a level,
