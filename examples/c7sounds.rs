@@ -40,7 +40,7 @@ fn main() {
     let parts: Vec<(f32, &str, Vec<SoundCmd>, Option<Each>)> = vec![
         (2.0, "three bullets whizz past (zip), left to right", vec![grain(GrainKind::Crack, 0.4, -0.8, 0.0), grain(GrainKind::Zip, 0.22, -0.2, 0.25), grain(GrainKind::Crack, 0.4, -0.8, 0.5), grain(GrainKind::Zip, 0.22, 0.0, 0.75), grain(GrainKind::Crack, 0.4, -0.8, 1.0), grain(GrainKind::Zip, 0.22, 0.2, 1.25)], None),
         (3.0, "a siren calls", vec![SoundCmd::Alert { kind: AlertKind::Siren, weight: 1.0, pan: 0.3 }], None),
-        (2.5, "a kit blast that killed 40 walkers", vec![grain(GrainKind::Thud, 0.8, 0.0, 0.0), SoundCmd::Impact { weight: 0.7, pan: 0.0, gain: 0.61, delay: 0.02 }, SoundCmd::Burst { kind: GrainKind::Grit, rate: 120.0, secs: 0.25, pan: 0.0, spread: 0.3, gain: 0.3 }], None),
+        (2.5, "a kit blast that killed 40 walkers", vec![grain(GrainKind::Thud, 0.8, 0.0, 0.0), SoundCmd::Impact { weight: 0.7, pan: 0.0, gain: 0.61, delay: 0.02, far: 0.0 }, SoundCmd::Burst { kind: GrainKind::Grit, rate: 120.0, secs: 0.25, pan: 0.0, spread: 0.3, gain: 0.3 }], None),
         (2.0, "a piece tears off the body", vec![grain(GrainKind::Tear, 0.5, -0.3, 0.0)], None),
         (2.0, "a scared piece charges (the snarl)", vec![grain(GrainKind::Snarl, 0.5, 0.3, 0.0)], None),
         (2.0, "a piece withers out", vec![SoundCmd::Burst { kind: GrainKind::Wilt, rate: 60.0, secs: 0.4, pan: 0.2, spread: 0.1, gain: 0.25 }], None),
