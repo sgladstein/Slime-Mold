@@ -566,7 +566,8 @@ impl<W: World> Game<W> {
             let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
             let leash = r.leash_at(r.leash, b.grade);
             let clench = r.leash_at(r.clench, b.grade);
-            let go = |p: (f32, f32)| Lump { aim: cell(p), pull: r.pull, leash, haste: r.haste_at(b.grade), ..strong };
+            let haste = r.haste_at(b.grade);
+            let go = move |p: (f32, f32)| Lump { aim: cell(p), pull: r.pull, leash, haste, ..strong };
             // On the way (an errand's walk, a hunt): down its way round
             // rock and the slime's own walls, not straight at it.
             let body = (members as f32 / std::f32::consts::PI).sqrt();
@@ -575,11 +576,27 @@ impl<W: World> Game<W> {
                 b.phase = BossPhase::Gather;
                 Lump { aim: cell(centre), leash: clench, ..strong }
             } else if b.kind == BossKind::Mortar {
-                self.mortar(&mut b, centre, body, now, secs(r.lob_every));
-                // Held on where it formed (its aim its own centre let the
+                // Held on where it sat down (its aim its own centre let the
                 // body drift with the slime round it: 28 cells in 11 s on
                 // the CPU dish).
-                Lump { aim: cell(b.at), pull: 0.5 * r.pull, leash: clench, armour: r.armour_at(0.5 * b.grade), ..strong }
+                let hold = Lump { aim: cell(b.at), pull: 0.5 * r.pull, leash: clench, armour: r.armour_at(0.5 * b.grade), ..strong };
+                if self.mortar(&mut b, centre, body, now, secs(r.lob_every)) {
+                    hold
+                } else {
+                    // Nothing in reach along a clear line: it walks toward
+                    // the player's nearest thing until something is, on its
+                    // trip's clock. Sitting where it formed, one on the
+                    // owner's planet 4 (run 1795119328) never threw in
+                    // 90 s, its nearest thing past its reach.
+                    let near = self.player_things().into_iter().min_by(|a, c| (a.0 - centre.0).hypot(a.1 - centre.1).total_cmp(&(c.0 - centre.0).hypot(c.1 - centre.1)));
+                    match near {
+                        Some(p) => {
+                            b.phase = BossPhase::Go(p);
+                            go(self.boss_steer(b.lump, p, false, centre, body))
+                        }
+                        None => hold,
+                    }
+                }
             } else if let Some(p) = errand {
                 // On its errand: going there, or sitting on it (a wanderer
                 // rooted and eating, a leech holding on, both clenched; a
@@ -619,7 +636,7 @@ impl<W: World> Game<W> {
             // its hole, `visited` 1) is its trip.
             if now >= hunt {
                 match (b.phase, b.kind, b.visited) {
-                    (BossPhase::Go(_), BossKind::Leech | BossKind::Sapper, 0) => b.walked += 1.0,
+                    (BossPhase::Go(_), BossKind::Leech | BossKind::Sapper, 0) | (BossPhase::Go(_), BossKind::Mortar, _) => b.walked += 1.0,
                     _ => b.lived += 1.0,
                 }
             }
@@ -693,7 +710,8 @@ impl<W: World> Game<W> {
     /// fling with a heading, `squad::Burst::push`, every walker the same
     /// way for the same steps), so the ring lands round the target. Its
     /// walkers thrown are counted in `visited`.
-    fn mortar(&mut self, b: &mut Boss, centre: (f32, f32), body: f32, now: u64, every: u64) {
+    /// False with nothing in reach along a clear line: it walks then.
+    fn mortar(&mut self, b: &mut Boss, centre: (f32, f32), body: f32, now: u64, every: u64) -> bool {
         let r = self.rules.boss;
         let sc = self.world.scale();
         let reach = body + (self.gun_range_max() + self.rules.panic_margin.max(0.0) + r.lob.max(0.0)) * sc;
@@ -706,14 +724,18 @@ impl<W: World> Game<W> {
         let short = 4.0 * sc;
         let seen = |p: (f32, f32)| ground.as_ref().is_none_or(|(g, w, h)| line_clear(g, *w, *h, centre, p, short));
         let target = self.player_things().into_iter().filter(|&p| d(p) > body && d(p) <= reach && seen(p)).min_by(|a, c| d(*a).total_cmp(&d(*c)));
+        let Some(t) = target else { return false };
         let last = match b.phase {
             BossPhase::Sit(_, t) => t,
-            _ => 0,
+            // Arrived from a walk (or first sat): held here from now on.
+            _ => {
+                b.at = centre;
+                0
+            }
         };
-        b.phase = BossPhase::Sit(target.unwrap_or(centre), last);
-        let Some(t) = target else { return };
+        b.phase = BossPhase::Sit(t, last);
         if last > 0 && now < last + every.max(1) {
-            return;
+            return true;
         }
         let per = (self.world.walker_step() * MORTAR_FLING).max(1e-3);
         let steps = (d(t) / per).round().clamp(1.0, u16::MAX as f32) as u16;
@@ -736,6 +758,7 @@ impl<W: World> Game<W> {
         let keep = self.reach_holding(b.at, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
         self.world.form_lump(b.lump, Some((b.at, keep)));
         b.phase = BossPhase::Sit(t, now);
+        true
     }
 
     /// **Where the mini-boss on `lump` steers for, going to `to`** (fine

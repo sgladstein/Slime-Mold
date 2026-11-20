@@ -7,7 +7,8 @@ end=re.compile(r"boss t (\d+) s: lump (\d) (\w+) ended (\w+) \((\d+) members of 
 march=re.compile(r"march t (\d+) s")
 K=collections.defaultdict(lambda: collections.Counter())
 stuck=collections.Counter()
-for f in sorted(glob.glob(sys.argv[1]+'/*/log.txt')):
+# a census folder of DIR/*/log.txt, or a glob such as 'census/knot-*.txt'
+for f in sorted(glob.glob(sys.argv[1]) if '*' in sys.argv[1] else glob.glob(sys.argv[1]+'/*/log.txt')):
   live={}; marches=set()
   for l in open(f):
     m=march.search(l)

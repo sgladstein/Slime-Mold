@@ -180,3 +180,78 @@ The same nine games (`knot` lines in `census/`):
   it). A leech that reaches a pump has to come through the guns that
   guard it, which reads as intended.
 - Standing still 40 s to 31 s; no boss swallowed by a march.
+
+## The Mortar, and fruit no longer swallowing a mini-boss (11-20)
+
+The owner picked the Mortar first (11-20 13:21Z card, over the Pinwheel).
+`BossKind::Mortar` (5) is drawn from planet 4 on (`BossRules::for_depth`,
+`kinds[4]`), formed at the crowded knot nearest a player thing it can see
+along a clear line. It does not walk while it has a shot: every
+`lob_every` (5 s) it throws the ring at its body's edge (`shell` 1.5 dish
+cells thick, from 1.5 radii) at the nearest player thing within
+`lob` (30 dish cells) past the longest gun's reach and the panic margin,
+as one `squad::Burst` pushed one way (`Game::mortar`), so the ring flies
+as a crescent and lands round the target as ordinary slime. Thrown members
+are let go and the rest formed again on its spot (which heals it, so its
+blows count between throws; its armour is half its grade's). It throws
+its own body away: a mortar of 249 on run 1795038793 planet 4 was down to
+nothing after about seven throws. Rock, deep water or a wall in the line
+blocks a throw (the first throws filmed splashed on a rock ridge), so walls
+are the answer. With nothing in reach along a clear line it walks toward
+the player's nearest thing on its trip's clock (90 s) until it has one:
+without that, the one mortar of the census below formed out of reach and
+sat 90 s without a throw. Look: moss skin with an acid core
+(`LumpLook::Mortar`, `view.wgsl` case 6), which its core light brings up
+to a saturated green, apart from the plants' muted greens.
+
+Fruit: `start_fruit` formed its lump, which takes every ordinary walker in
+reach, a mini-boss's members too; in the knot census 3 of 14 mini-bosses
+were broken that way (a hunter of 400 on run 1795038793 planet 4). It now
+grows its lump from walkers in no lump (`World::grow_lump`), as a march does.
+
+The same nine games with both (`mortar` lines in `census/`; the Mortar's
+walk added after, so its one mortar here never threw):
+
+| | hunter | leech | sapper | wanderer | mortar | all |
+| --- | --- | --- | --- | --- | --- | --- |
+| formed | 7 | 2 | 3 | 3 | 1 | 16 |
+| reached squad (<20 units) | 5 | 1 | 1 | 1 | 0 | 8 |
+| came within 30 units of its errand | 0 | 0 | 2 | 0 | 0 | 2 |
+| got to its errand | 0 | 0 | 2 | 0 | 0 | 2 |
+| throws (mortar) | 0 | 0 | 0 | 0 | 0 | 0 |
+| took food | 0 | 0 | 0 | 0 | 0 | 0 |
+| stalled 10 s or more | 1 | 1 | 1 | 0 | 0 | 3 |
+| stood still 10 s+ (seconds) | 12 | 14 | 19 | 0 | 0 | 45 |
+| swallowed by a march | 0 | 0 | 0 | 0 | 0 | 0 |
+| ended Broken | 3 | 0 | 2 | 2 | 0 | 7 |
+| ended Spent | 0 | 0 | 0 | 1 | 1 | 2 |
+| ended Fizzled | 0 | 0 | 0 | 0 | 0 | 0 |
+| still alive | 4 | 2 | 1 | 0 | 0 | 7 |
+
+- Reached the squad 6 of 14 (knot census) to 8 of 16; sappers at their wall
+  1 to 2; no boss swallowed by a fruit or a march.
+
+Scott's three planet 4 maps with every mini-boss a mortar (`set=boss_kind=5`,
+`forced` lines), the walk in:
+
+| | hunter | leech | sapper | wanderer | mortar | all |
+| --- | --- | --- | --- | --- | --- | --- |
+| formed | 0 | 0 | 0 | 0 | 7 | 7 |
+| reached squad (<20 units) | 0 | 0 | 0 | 0 | 1 | 1 |
+| throws (mortar) | 0 | 0 | 0 | 0 | 48 | 48 |
+| stalled 10 s or more | 0 | 0 | 0 | 0 | 0 | 0 |
+| ended Broken | 0 | 0 | 0 | 0 | 4 | 4 |
+| ended Spent | 0 | 0 | 0 | 0 | 1 | 1 |
+| ended Fizzled | 0 | 0 | 0 | 0 | 1 | 1 |
+| still alive | 0 | 0 | 0 | 0 | 1 | 1 |
+
+- 48 throws from 7 mortars; 3 walked first (44 to 51 s), one of them never
+  found a shot and fizzled when it regathered on its front with no walkers
+  there. Four ended Broken, mostly by throwing themselves away.
+- What the throws cost the player does not show in three games: soldiers
+  at the last row (290 s, or the end) were 61, 65 and 33 against 38, 75
+  and 19 in the knot census,
+  whose bosses differ too. Tuning (`lob_every`, `shell`) waits on play.
+
+Clips (`mortar/`, zoom 3.5 and 8, run 1795038793 planet 4, `set=boss_kind=5`):
+`mortar-wide.mp4` (92-112 s, 2x) and `mortar-close.mp4` (97-107 s, 2x). Page: https://claude.ai/artifact/RPtr4iteMNYdKhbRbp12xH (copy `mortar/page.html`).

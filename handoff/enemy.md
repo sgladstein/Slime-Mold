@@ -50,7 +50,10 @@ a player thing it can see along a clear line, never walks, and every
 player thing just past the guns (`lob` 30 dish cells past the longest
 gun's reach and the panic margin) as one `squad::Burst` with `push`
 (`Game::mortar`); thrown members are let go and the rest formed again on
-its spot. Moss skin, acid core (`LumpLook::Mortar`, Look's
+its spot; with no shot along a clear line it walks toward the nearest
+player thing on its trip's clock (on the owner's three planet 4 maps, all
+bosses mortars: 7 mortars, 48 throws by 5:00; what they cost the player
+is not measured yet). Moss skin, acid core (`LumpLook::Mortar`, Look's
 `view.wgsl` case 6). Also: a fruit grows its lump instead of forming it,
 so it no longer swallows a mini-boss beside it (3 of 14 had been). Set
 keys `boss_mortar`, `boss_lob`, `boss_lob_every`, `boss_shell`.

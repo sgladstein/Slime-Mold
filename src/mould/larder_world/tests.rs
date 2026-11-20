@@ -4328,6 +4328,12 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
     let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
     assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+    // The squad brought round the race world's middle rock, which blocks
+    // the line from the slime's side (a mortar with no clear line walks:
+    // the next test).
+    for (k, s) in g.soldiers.iter_mut().enumerate() {
+        (s.x, s.y) = (100.0 + (k % 3) as f32, 78.0 + (k / 3) as f32);
+    }
     let squad = |g: &Game<BigDish>| {
         let alive: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
         (alive.iter().map(|s| s.x).sum::<f32>() / alive.len().max(1) as f32, alive.iter().map(|s| s.y).sum::<f32>() / alive.len().max(1) as f32)
@@ -4359,4 +4365,30 @@ fn a_mortar_sits_and_throws_at_the_squad() {
     assert!(first.is_some());
     assert!((b.centre.0 - b.at.0).hypot(b.centre.1 - b.at.1) < 6.0, "it stays put: formed at {:?}, now {:?}", b.at, b.centre);
     assert_eq!(g.lump_looks()[b.lump] & 7, BossKind::Mortar as u16);
+}
+
+#[test]
+fn a_mortar_with_no_clear_line_walks_until_it_has_one() {
+    // The race world's middle rock stands between the slime and the
+    // squad: it walks toward the nearest thing, on its trip's clock.
+    let mut g = small(2);
+    g.rules.boss = BossRules { least: 1, gather: 1.0, life: 60.0, quorum: 0.0, kind: BossKind::Mortar as u8 as f32, lob: 20.0, lob_every: 3.0, ..BossRules::default() };
+    let tps = g.rules.tps as usize;
+    let w = &g.world;
+    let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+    let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+    let at = (x / living.len() as f32, y / living.len() as f32);
+    assert!(g.form_boss(at, 6.0, BossCause::Staged));
+    let near = |g: &Game<BigDish>, p: (f32, f32)| g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - p.0).hypot(s.y - p.1)).fold(f32::INFINITY, f32::min);
+    let before = near(&g, at);
+    let mut walked = false;
+    for _ in 0..15 * tps {
+        g.step();
+        let Some(b) = g.bosses.live.first().copied() else { break };
+        walked |= matches!(b.phase, BossPhase::Go(_));
+    }
+    let b = g.bosses.live.first().copied().expect("it still stands");
+    eprintln!("mortar walk: {before:.0} -> {:.0} from the squad, walked {} s, {:?}", near(&g, b.centre), b.walked, b.phase);
+    assert!(walked && b.walked > 0.0, "it walked on its trip: {b:?}");
+    assert!(near(&g, b.centre) < before - 20.0, "toward the squad: {before} -> {}", near(&g, b.centre));
 }
