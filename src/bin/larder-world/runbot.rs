@@ -46,11 +46,27 @@ impl Planet {
 const WANTS: [&str; 7] = ["strike", "rate", "hp", "squad", "harvest", "range", "bank"];
 
 /// Spends the run's points (`Run::pick`), returning what it bought:
-/// first the card the planet ahead asks for (`run::bring`, the planet
-/// card's advice: Tinder for planet 2's Sprawler), then `WANTS`.
+/// first the bullet the planet ahead asks for (`run::bring_shell`, a Torch
+/// for planets 2 and 3), then its card (`run::bring`, the planet card's
+/// advice: Tinder for planet 2's Sprawler), then `WANTS`.
+///
+/// The Torch comes first because Tinder lays brush and kills nothing until
+/// a fire runs along it. Until 2026-11-20 the bot bought Tinder alone, so
+/// on every run bot check its planet 2 gun laid brush that never burned
+/// (the balance review, `Reports/balance-review-2026-11-20/`).
 pub(super) fn shop(r: &mut Run) -> Vec<String> {
     let mut bought = Vec::new();
-    if let Some(c) = slime_mould::mould::run::bring(r.level().tier) {
+    let tier = r.level().tier;
+    if let Some(shell) = slime_mould::mould::run::bring_shell(tier) {
+        let asked = |o: &slime_mould::mould::rounds::Card| matches!(o, slime_mould::mould::rounds::Card::Ammo(a) if a.shell == shell);
+        if let Some(i) = r.offers.iter().position(asked) {
+            let c = r.offers[i];
+            if r.pick(slime_mould::mould::run::Pick::Offer(i)) {
+                bought.push(format!("{} (the gun now fires {})", c.title(), r.gun_text()));
+            }
+        }
+    }
+    if let Some(c) = slime_mould::mould::run::bring(tier) {
         if let Some(i) = r.offers.iter().position(|&o| o == c) {
             if r.pick(slime_mould::mould::run::Pick::Offer(i)) {
                 bought.push(format!("{c:?} (the gun now fires {})", r.gun_text()));
