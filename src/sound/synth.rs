@@ -18,11 +18,12 @@
 //! draws from the dish's random stream, so sound cannot change a game
 //! (`Dish::state_hash` is the check).
 
-use super::{AlertKind, GrainKind, SoundCmd, TextureKind};
+use super::{AlertKind, GrainKind, GunVoice, SoundCmd, TextureKind};
 
 /// Grains that can sound at once, across every texture, burst and verb.
-/// Over this the quietest playing grain is stolen.
-pub const GRAIN_POOL: usize = 64;
+/// Over this the quietest playing grain is stolen. 64 until 2026-11-20,
+/// when a gunshot became four to six grains.
+pub const GRAIN_POOL: usize = 96;
 /// The most grains of one kind fired by *verbs* that may sound together;
 /// past it the oldest of that kind is replaced.
 pub const PER_KIND_CAP: usize = 4;
@@ -137,15 +138,49 @@ pub struct Spec {
     pub freq: f32,
     /// Frequency at the end of the grain as a multiple of `freq`.
     pub freq_end: f32,
-    /// Extra pitch at the onset that falls away in ~20 ms: an impact.
+    /// Extra pitch at the onset that falls away in `drop_tau`: an impact.
     pub drop: f32,
+    /// Seconds the onset pitch takes to fall away; 0 is 20 ms.
+    pub drop_tau: f32,
+    /// Its send to the reverb (`VoiceBank::render`), 0 ..= 1. Until
+    /// 2026-11-20 the whole mix went to the reverb at 0.35, the mould's
+    /// drone and the pulse too, and the reverb was the loudest thing in a
+    /// fight (the mix meter, `SynthStats::energy`). Now a gun's report
+    /// rings and a texture stays dry.
+    pub verb: f32,
+    /// Its low-pass, Hz; 0 is `LP_HZ`.
+    pub lp_hz: f32,
 }
+
+/// Every grain's low-pass when its recipe sets none: takes the edge off.
+const LP_HZ: f32 = 12_000.0;
+/// The least low-pass of a sound far off screen (`SoundCmd::Gun`'s
+/// `far` 1): air takes the top off a distant sound before its body, so a
+/// fight across the map is duller, not only quieter.
+const FAR_LP_HZ: f32 = 1_800.0;
+/// Samples a stolen grain takes to fade out (about 4 ms at 48 kHz), so a
+/// grain cut short by a newer one is a fade, not a click.
+const FADE_SAMPLES: f32 = 192.0;
+/// A tone's reverb send (a chime, a bell, a siren).
+const TONE_VERB: f32 = 0.4;
+/// The reverb's input level: the old mix sent half of left plus right at
+/// 0.35; a send of 1 here is about what that was.
+const VERB_IN: f32 = 0.35;
+/// The reverb's input high-pass, Hz: a room rings in its mids, so low
+/// sound in the reverb is only mud.
+const VERB_HP_HZ: f32 = 280.0;
+/// The master high-pass, Hz: below this a speaker only moves air the ear
+/// does not hear and the limiter does (it also takes off any offset).
+const MASTER_HP_HZ: f32 = 28.0;
 
 /// **The recipes.** First guesses, to be tuned by ear against the offline
 /// renders on the listening page; jitter is drawn here so two grains of one
 /// kind are never identical (the machine-gun effect).
 fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
-    let base = Spec { band_end: 1.0, freq_end: 1.0, q: 1.4, ..Spec::default() };
+    let base = Spec { band_end: 1.0, freq_end: 1.0, q: 1.4, verb: 0.35, ..Spec::default() };
+    // The quiet beds stay dry: a texture spawns hundreds of grains a
+    // second and in the reverb they only wash.
+    let dry = Spec { verb: 0.1, ..base };
     match kind {
         // A wet tick as the mould pushes out: low, soft, a falling sine
         // under a dull noise band. Lower and longer than an ant's step.
@@ -162,7 +197,7 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
                 sine_tau: 0.012,
                 freq: f,
                 freq_end: rng.range(0.55, 0.8),
-                ..base
+                ..dry
             }
         }
         // Feeding on a pile: a rough, mid scrape, like Pixel_Physics's dig.
@@ -175,7 +210,7 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             q: 0.8,
             band_end: 0.7,
             rough: 0.8,
-            ..base
+            ..dry
         },
         // Starving mould: a dry pop, its loudness drawn skewed so a few
         // stand out.
@@ -186,7 +221,7 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             noise_tau: 0.0012,
             band: rng.range(1800.0, 4500.0),
             q: 1.1,
-            ..base
+            ..dry
         },
         // Oats set down: a soft low thunk.
         GrainKind::Thunk => Spec {
@@ -240,52 +275,93 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             let f = rng.range(55.0, 95.0);
             Spec { len: 0.25, attack: 0.001, noise: 0.35, noise_tau: 0.03, band: 300.0, q: 0.7, sine: 0.9, sine_tau: 0.08, freq: f, drop: 1.5, ..base }
         }
-        // A shot: a bright, very short crack over a small low punch, so it
-        // reads as a gun and not as the mould's own wet sounds.
+        // A shot's crack heard alone (a `Grain` command; the game's guns
+        // send `SoundCmd::Gun`, which builds its crack in `gun_layers`).
+        // Until 2026-11-20 this was the whole gunshot: a 3-5 ms noise snap
+        // at 2.5-3.8 kHz over a 160 Hz blip, the same for every gun.
         GrainKind::Crack => Spec {
             len: 0.09,
             attack: 0.0003,
             noise: 0.7,
-            noise_tau: rng.range(0.003, 0.005),
-            band: rng.range(2500.0, 3800.0),
-            q: 0.7,
-            band_end: 0.5,
-            sine: 0.45,
-            sine_tau: 0.018,
-            freq: rng.range(140.0, 180.0),
-            freq_end: 0.7,
-            drop: 2.0,
+            noise_tau: rng.range(0.004, 0.006),
+            band: rng.range(2600.0, 3600.0),
+            q: 0.6,
+            band_end: 0.55,
+            sine: 0.5,
+            sine_tau: 0.04,
+            freq: rng.range(90.0, 105.0),
+            freq_end: 0.75,
+            drop: 2.5,
+            drop_tau: 0.012,
+            verb: 0.3,
             ..base
         },
-        // A shot striking slime: a wet, rough, low slap (weight in
-        // `weighted`).
+        // A gun's punch, its report and its action heard alone; the guns
+        // build their own (`gun_layers`).
+        GrainKind::Punch => Spec { len: 0.2, attack: 0.0005, sine: 0.9, sine_tau: 0.045, freq: rng.range(85.0, 100.0), freq_end: 0.8, drop: 2.5, drop_tau: 0.012, noise: 0.3, noise_tau: 0.015, band: 320.0, q: 0.8, verb: 0.05, ..base },
+        GrainKind::Report => Spec { len: 0.5, attack: 0.006, noise: 0.3, noise_tau: 0.15, band: rng.range(800.0, 1000.0), q: 0.7, band_end: 0.5, rough: 0.3, verb: 0.6, ..base },
+        GrainKind::Action => Spec { len: 0.02, attack: 0.0002, noise: 0.25, noise_tau: 0.0015, band: rng.range(4000.0, 5000.0), q: 4.0, verb: 0.1, ..base },
+        // A walker killed (`TextureKind::Kill`, 2026-11-20): a tiny wet
+        // pop, a sine blip whose pitch jumps up as it bursts (a bubble's
+        // way) with a breath of noise. Replaced the starving crackle in a
+        // fight: its 2-5 kHz noise ticks, hundreds a second, read as static.
+        GrainKind::Pop => {
+            let len = rng.range(0.012, 0.024);
+            Spec {
+                len,
+                attack: 0.0006,
+                sine: 0.5,
+                sine_tau: len / 3.0,
+                freq: rng.range(380.0, 900.0),
+                freq_end: rng.range(1.5, 2.3),
+                noise: 0.08,
+                noise_tau: 0.002,
+                band: rng.range(1500.0, 2500.0),
+                q: 1.0,
+                verb: 0.08,
+                lp_hz: 7_000.0,
+                ..base
+            }
+        }
+        // A shot striking slime (weight in `weighted`): a wet slap with a
+        // falling squelch in it, set in the low mids (220-300 Hz) where a
+        // small speaker still plays it. Until 2026-11-20 its sine sat at
+        // 115-145 Hz, under a laptop's speakers and over the gun's body on
+        // big ones; a heavy hit's extra low weight is now `weighted`'s.
         GrainKind::Splat => Spec {
             len: 0.12,
-            attack: 0.001,
-            noise: 0.45,
-            noise_tau: rng.range(0.018, 0.03),
-            band: rng.range(500.0, 900.0),
-            q: 0.9,
-            band_end: 0.6,
-            rough: 0.5,
-            sine: 0.6,
-            sine_tau: 0.04,
-            freq: rng.range(115.0, 145.0),
-            freq_end: 0.6,
-            drop: 1.0,
+            attack: 0.0008,
+            noise: 0.5,
+            noise_tau: rng.range(0.012, 0.02),
+            band: rng.range(700.0, 1100.0),
+            q: 1.0,
+            band_end: 0.5,
+            rough: 0.6,
+            sine: 0.55,
+            sine_tau: 0.03,
+            freq: rng.range(220.0, 300.0),
+            freq_end: 0.5,
+            drop: 0.6,
+            drop_tau: 0.008,
+            verb: 0.15,
+            ..base
         },
-        // A heartbeat: a low soft sine thump.
+        // A heartbeat: a soft thump. Its sine sits at 60-66 Hz with a
+        // noise band at 160 Hz so a small speaker still hears the beat,
+        // and it is dry: in the reverb (until 2026-11-20) its boom rang
+        // on under the whole fight.
         GrainKind::Heart => Spec {
-            len: 0.22,
+            len: 0.2,
             attack: 0.004,
-            noise: 0.12,
-            noise_tau: 0.01,
-            band: 220.0,
-            q: 0.8,
-            sine: 0.9,
-            sine_tau: 0.06,
-            freq: rng.range(52.0, 58.0),
+            noise: 0.18,
+            noise_tau: 0.012,
+            band: 160.0,
+            q: 1.0,
+            sine: 0.7,
+            sine_tau: 0.05,
+            freq: rng.range(60.0, 66.0),
             freq_end: 0.8,
+            verb: 0.0,
             ..base
         },
         // A bullet flying past: a thin band of noise sweeping down, the
@@ -323,6 +399,7 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             freq: rng.range(90.0, 110.0),
             freq_end: 0.6,
             drop: 1.0,
+            ..base
         },
         // Withering: a soft dry fizz, duller than starving's crackle.
         GrainKind::Wilt => Spec {
@@ -334,7 +411,7 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             q: 1.2,
             band_end: 0.6,
             rough: 0.6,
-            ..base
+            ..dry
         },
         // A soldier hurt: a short, rough, falling mid groan.
         GrainKind::Hurt => Spec {
@@ -361,13 +438,96 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
 /// nearer, not bigger).
 fn weighted(mut s: Spec, weight: f32) -> Spec {
     let w = weight.clamp(0.0, 1.0);
-    s.freq *= 1.0 - 0.45 * w;
+    s.freq *= 1.0 - 0.5 * w;
     s.band *= 1.0 - 0.4 * w;
     s.len *= 1.0 + 1.2 * w;
     s.noise_tau *= 1.0 + 1.0 * w;
     s.sine_tau *= 1.0 + 1.5 * w;
     s.sine *= 1.0 + 0.6 * w;
     s
+}
+
+/// **A gun's numbers** (`gun_layers`): its crack (a noise band), its punch
+/// (a falling sine), its report (a long noise band falling in pitch) and
+/// its action (two small metal clicks after, 0 for none). Levels are
+/// against the rifle's.
+struct GunSound {
+    /// The crack's band, Hz, its Q, its decay, s, and level.
+    snap: (f32, f32, f32, f32),
+    /// The first millisecond's click, level.
+    click: f32,
+    /// The punch's pitch, Hz, its onset drop, its decay, s, and level.
+    punch: (f32, f32, f32, f32),
+    /// The report's band, Hz, its end as a multiple, its decay, s, its
+    /// length, s, and level.
+    report: (f32, f32, f32, f32, f32),
+    /// The action's delay after the shot, s, and level.
+    action: (f32, f32),
+}
+
+/// **The guns' voices** (2026-11-20). One of each layer, set apart by kind
+/// the way the shop tells them apart (`guns::GunKind::about`): the rifle
+/// firm and middle, the carbine light and high and short (it fires twice
+/// as often), the long gun deep with a long rolling report and a bolt, the
+/// scattergun one wide blast with a pump, a turret ringing and metallic
+/// (a narrow crack band) so it is told from the squad by ear.
+fn gun_sound(v: GunVoice) -> GunSound {
+    // First cut (2026-11-20) had the punches 4 dB up and the cracks 2 dB
+    // down from these: in planets 1-3's recordings the punch was the mix's
+    // biggest source and the 100-300 Hz band its loudest.
+    match v {
+        GunVoice::Rifle => GunSound { snap: (3200.0, 0.6, 0.005, 0.9), click: 0.55, punch: (92.0, 2.5, 0.045, 0.55), report: (900.0, 0.5, 0.14, 0.5, 0.3), action: (0.0, 0.0) },
+        GunVoice::Carbine => GunSound { snap: (4300.0, 0.7, 0.0035, 0.75), click: 0.5, punch: (135.0, 2.0, 0.025, 0.35), report: (1300.0, 0.5, 0.07, 0.3, 0.18), action: (0.0, 0.0) },
+        GunVoice::Long => GunSound { snap: (2600.0, 0.5, 0.007, 1.0), click: 0.65, punch: (62.0, 3.5, 0.09, 0.7), report: (650.0, 0.4, 0.33, 1.1, 0.4), action: (0.42, 0.35) },
+        GunVoice::Scatter => GunSound { snap: (2000.0, 0.35, 0.009, 1.0), click: 0.55, punch: (75.0, 3.0, 0.07, 0.6), report: (800.0, 0.45, 0.22, 0.8, 0.35), action: (0.34, 0.3) },
+        GunVoice::Turret => GunSound { snap: (2400.0, 2.5, 0.006, 0.6), click: 0.35, punch: (115.0, 1.5, 0.03, 0.35), report: (1100.0, 0.6, 0.09, 0.4, 0.15), action: (0.0, 0.0) },
+    }
+}
+
+/// The layers of one shot (`SoundCmd::Gun`): each a grain kind, its
+/// recipe, and its delay after the shot, s. A fixed array, so the audio
+/// thread allocates nothing; an unused layer has `len` 0. Every number is
+/// jittered a few per cent, so a volley is never one sound repeated.
+fn gun_layers(v: GunVoice, rng: &mut Xs) -> [(GrainKind, Spec, f32); 6] {
+    let g = gun_sound(v);
+    let base = Spec { band_end: 1.0, freq_end: 1.0, q: 1.0, ..Spec::default() };
+    let j = |rng: &mut Xs, x: f32, by: f32| x * (1.0 + by * rng.bipolar());
+    let none = (GrainKind::Action, base, 0.0);
+    let mut out = [none; 6];
+    // The click: the first millisecond, wide and bright.
+    out[0] = (GrainKind::Crack, Spec { len: 0.008, attack: 0.0001, noise: g.click, noise_tau: 0.0007, band: j(rng, 5500.0, 0.1), q: 0.5, verb: 0.1, lp_hz: 15_000.0, ..base }, 0.0);
+    // The crack: the gun's own band, falling a little.
+    let (hz, q, tau, lvl) = g.snap;
+    out[1] = (GrainKind::Crack, Spec { len: (tau * 10.0).max(0.04), attack: 0.0002, noise: j(rng, lvl, 0.1), noise_tau: j(rng, tau, 0.15), band: j(rng, hz, 0.08), q, band_end: 0.6, verb: 0.25, ..base }, 0.0);
+    // The punch: a falling sine with a low noise thump under it.
+    let (hz, drop, tau, lvl) = g.punch;
+    out[2] = (
+        GrainKind::Punch,
+        Spec { len: tau * 5.0, attack: 0.0004, sine: j(rng, lvl, 0.1), sine_tau: tau, freq: j(rng, hz, 0.06), freq_end: 0.75, drop, drop_tau: 0.012, noise: 0.35 * lvl, noise_tau: 0.012, band: j(rng, 300.0, 0.1), q: 0.8, verb: 0.05, ..base },
+        0.0,
+    );
+    // The report: the tail that rolls off, rough, wet, a breath after.
+    let (hz, end, tau, len, lvl) = g.report;
+    out[3] = (GrainKind::Report, Spec { len, attack: 0.008, noise: j(rng, lvl, 0.15), noise_tau: j(rng, tau, 0.15), band: j(rng, hz, 0.1), q: 0.7, band_end: end, rough: 0.35, verb: 0.6, lp_hz: 8_000.0, ..base }, 0.004);
+    // The action: two small clicks, the second lower.
+    let (at, lvl) = g.action;
+    if lvl > 0.0 {
+        let click = |band: f32| Spec { len: 0.02, attack: 0.0002, noise: lvl, noise_tau: 0.0018, band, q: 3.5, verb: 0.1, ..base };
+        out[4] = (GrainKind::Action, click(j(rng, 4800.0, 0.05)), j(rng, at, 0.05));
+        out[5] = (GrainKind::Action, click(j(rng, 3400.0, 0.05)), at + j(rng, 0.09, 0.1));
+    }
+    out
+}
+
+/// The most grains of each kind fired by verbs that may sound together
+/// (`PER_KIND_CAP` but for the guns' layers: a volley's cracks are short
+/// and its reports long, so both need room).
+fn kind_cap(kind: GrainKind) -> usize {
+    match kind {
+        GrainKind::Crack => 10,
+        GrainKind::Punch | GrainKind::Report => 6,
+        _ => PER_KIND_CAP,
+    }
 }
 
 #[derive(Clone, Copy, Default)]
@@ -399,6 +559,13 @@ struct Grain {
     lp_c: f32,
     gl: f32,
     gr: f32,
+    /// The onset pitch's envelope and its decay a sample.
+    drop_env: f32,
+    drop_k: f32,
+    /// Its reverb send.
+    verb: f32,
+    /// Fading out (stolen): samples left of `FADE_SAMPLES`, 0 not fading.
+    fade: f32,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -545,7 +712,7 @@ impl Reverb {
 
 /// What the voice bank did: the counters a listening page puts beside each
 /// recording, because "did it fire" needs a number, not a recording.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct SynthStats {
     pub grains: u64,
     pub grains_by_texture: [u64; TextureKind::COUNT],
@@ -554,6 +721,43 @@ pub struct SynthStats {
     pub alerts: u64,
     pub steals: u64,
     pub samples: u64,
+    /// **The mix meter**: the energy (sum of squares, both channels, before
+    /// the master) each source put in, so a recording says what it was
+    /// mostly made of: one per `GrainKind`, then `MIX_TONES`, `MIX_BODY`,
+    /// `MIX_ROOM` and `MIX_VERB`.
+    pub energy: [f64; MIX_SOURCES],
+    /// Samples the limiter pulled down, and the deepest it went (a gain).
+    pub limited: u64,
+    pub limit_min: f32,
+}
+
+/// The mix meter's sources past the grains (`SynthStats::energy`).
+pub const MIX_TONES: usize = GrainKind::ALL.len();
+pub const MIX_BODY: usize = MIX_TONES + 1;
+pub const MIX_ROOM: usize = MIX_TONES + 2;
+pub const MIX_VERB: usize = MIX_TONES + 3;
+pub const MIX_SOURCES: usize = MIX_TONES + 4;
+
+/// A name for each mix meter source, for printing.
+pub fn mix_name(i: usize) -> String {
+    match i {
+        MIX_TONES => "tones".into(),
+        MIX_BODY => "voice".into(),
+        MIX_ROOM => "room".into(),
+        MIX_VERB => "reverb".into(),
+        _ => GrainKind::ALL.get(i).map_or("?".into(), |k| format!("{k:?}").to_lowercase()),
+    }
+}
+
+impl SynthStats {
+    /// The sources, loudest first, each in dB against the whole mix's
+    /// energy, down to `floor_db`.
+    pub fn mix(&self, floor_db: f32) -> Vec<(String, f32)> {
+        let total: f64 = self.energy.iter().sum::<f64>().max(1e-12);
+        let mut v: Vec<(String, f32)> = (0..MIX_SOURCES).map(|i| (mix_name(i), (10.0 * (self.energy[i].max(1e-30) / total).log10()) as f32)).filter(|x| x.1 > floor_db).collect();
+        v.sort_by(|a, b| b.1.total_cmp(&a.1));
+        v
+    }
 }
 
 pub struct VoiceBank {
@@ -576,6 +780,11 @@ pub struct VoiceBank {
     k_slow: f32,
     k_mid: f32,
     k_hush: f32,
+    /// The reverb input's and the master's high-pass states and rates.
+    verb_lp: f32,
+    k_verb_hp: f32,
+    master_lp: [f32; 2],
+    k_master_hp: f32,
     block: u32,
     pub stats: SynthStats,
 }
@@ -625,8 +834,12 @@ impl VoiceBank {
             k_slow: coef(0.4, sr),
             k_mid: coef(0.2, sr),
             k_hush: coef(0.1, sr),
+            verb_lp: 0.0,
+            k_verb_hp: 1.0 - (-std::f32::consts::TAU * VERB_HP_HZ / sr).exp(),
+            master_lp: [0.0; 2],
+            k_master_hp: 1.0 - (-std::f32::consts::TAU * MASTER_HP_HZ / sr).exp(),
             block: 0,
-            stats: SynthStats::default(),
+            stats: SynthStats { limit_min: 1.0, ..SynthStats::default() },
         }
     }
 
@@ -657,13 +870,14 @@ impl VoiceBank {
                 }
             }
             SoundCmd::Alert { kind, weight, pan } => self.alert(kind, weight, pan),
-            SoundCmd::Impact { weight, pan, gain, delay } => {
-                self.spawn_weighted(GrainKind::Splat, pan, gain, (delay.max(0.0) * self.sr) as u32, true, 255, Some(weight));
+            SoundCmd::Impact { weight, pan, gain, delay, far } => {
+                self.spawn_weighted(GrainKind::Splat, pan, gain, (delay.max(0.0) * self.sr) as u32, true, 255, Some(weight), far);
                 // A heavy hit ducks the mould's voices so it still punches.
                 for b in self.body.iter_mut() {
                     b.duck = b.duck.min(1.0 - 0.6 * weight.clamp(0.0, 1.0));
                 }
             }
+            SoundCmd::Gun { voice, pan, gain, delay, far } => self.gun(voice, pan, gain, (delay.max(0.0) * self.sr) as u32, far),
             SoundCmd::Body { slot, level, pitch, breath, rough, bright, pan } => {
                 let Some(b) = self.body.get_mut(slot as usize) else { return };
                 b.level.target = level.clamp(0.0, 1.0);
@@ -688,41 +902,75 @@ impl VoiceBank {
     /// Start a grain, stealing the quietest if the pool is full. `tag` is
     /// the texture index (255 = not a texture), kept for its counter.
     fn spawn(&mut self, kind: GrainKind, pan: f32, gain: f32, wait: u32, from_verb: bool, tag: u8) {
-        self.spawn_weighted(kind, pan, gain, wait, from_verb, tag, None);
+        self.spawn_weighted(kind, pan, gain, wait, from_verb, tag, None, 0.0);
     }
 
-    /// `spawn`, with the recipe shaped by `weight` when given (`weighted`).
+    /// `spawn`, with the recipe shaped by `weight` when given (`weighted`)
+    /// and dulled by `far`.
     #[allow(clippy::too_many_arguments)]
-    fn spawn_weighted(&mut self, kind: GrainKind, pan: f32, gain: f32, wait: u32, from_verb: bool, tag: u8, weight: Option<f32>) {
+    fn spawn_weighted(&mut self, kind: GrainKind, pan: f32, gain: f32, wait: u32, from_verb: bool, tag: u8, weight: Option<f32>, far: f32) {
         if gain <= 1e-5 {
             return;
         }
-        let kind_tag = kind as u8;
-        let slot = if from_verb && self.grains.iter().filter(|g| g.active && g.from_verb && g.kind_tag == kind_tag).count() >= PER_KIND_CAP {
-            self.grains.iter().enumerate().filter(|(_, g)| g.active && g.from_verb && g.kind_tag == kind_tag).max_by_key(|(_, g)| g.t).map(|(i, _)| i)
-        } else {
-            self.grains.iter().position(|g| !g.active)
-        };
-        let i = match slot {
-            Some(i) => i,
-            None => {
-                self.stats.steals += 1;
-                let loud = |g: &Grain| g.noise * g.noise_env + g.sine * g.sine_env;
-                self.grains.iter().enumerate().min_by(|a, b| loud(a.1).total_cmp(&loud(b.1))).map(|(i, _)| i).unwrap_or(0)
-            }
-        };
         let s = recipe(kind, &mut self.rng);
         let s = match weight {
             Some(w) => weighted(s, w),
             None => s,
         };
+        self.start(kind, s, pan, gain, wait, from_verb, tag, far);
+    }
+
+    /// One shot of a gun: its layers (`gun_layers`), `far` taking the
+    /// crack and click down and leaving the report, as distance does.
+    fn gun(&mut self, voice: GunVoice, pan: f32, gain: f32, wait: u32, far: f32) {
+        if gain <= 1e-5 {
+            return;
+        }
+        let far = far.clamp(0.0, 1.0);
+        for (kind, spec, delay) in gun_layers(voice, &mut self.rng) {
+            if spec.len <= 0.0 {
+                continue;
+            }
+            let near = match kind {
+                GrainKind::Crack | GrainKind::Action => 1.0 - 0.7 * far,
+                GrainKind::Punch => 1.0 - 0.4 * far,
+                _ => 1.0,
+            };
+            self.start(kind, spec, pan, gain * near, wait + (delay * self.sr) as u32, true, 255, far);
+        }
+    }
+
+    /// Start a grain of `spec`. Over its kind's cap of verbs, the oldest
+    /// of the kind fades out (`FADE_SAMPLES`) rather than being cut; with
+    /// no free slot the quietest grain is taken, a fading one first.
+    #[allow(clippy::too_many_arguments)]
+    fn start(&mut self, kind: GrainKind, s: Spec, pan: f32, gain: f32, wait: u32, from_verb: bool, tag: u8, far: f32) {
+        let kind_tag = kind as u8;
+        if from_verb && self.grains.iter().filter(|g| g.active && g.from_verb && g.kind_tag == kind_tag && g.fade == 0.0).count() >= kind_cap(kind) {
+            if let Some(old) = self.grains.iter_mut().filter(|g| g.active && g.from_verb && g.kind_tag == kind_tag && g.fade == 0.0).max_by_key(|g| g.t) {
+                old.fade = FADE_SAMPLES;
+            }
+        }
+        let i = match self.grains.iter().position(|g| !g.active) {
+            Some(i) => i,
+            None => {
+                self.stats.steals += 1;
+                let loud = |g: &Grain| (g.noise * g.noise_env + g.sine * g.sine_env) * if g.fade > 0.0 { 0.01 } else { 1.0 };
+                self.grains.iter().enumerate().min_by(|a, b| loud(a.1).total_cmp(&loud(b.1))).map(|(i, _)| i).unwrap_or(0)
+            }
+        };
         let sr = self.sr;
         let (gl, gr) = pan_gains(pan);
         let mut band = Biquad::default();
         band.set(s.band.max(40.0), s.q, sr);
-        // A gentle fixed low-pass at ~12 kHz takes the edge off every grain.
-        let lp_c = 1.0 - (-std::f32::consts::TAU * 12_000.0 / sr).exp();
+        // A gentle fixed low-pass (`LP_HZ`, or the recipe's) takes the edge
+        // off every grain; a far one is duller (`FAR_LP_HZ`).
+        let far = far.clamp(0.0, 1.0);
+        let lp_hz = if s.lp_hz > 0.0 { s.lp_hz } else { LP_HZ };
+        let lp_hz = lp_hz * (FAR_LP_HZ / lp_hz).min(1.0).powf(far);
+        let lp_c = 1.0 - (-std::f32::consts::TAU * lp_hz / sr).exp();
         let decay = |tau: f32| if tau > 0.0 { (-1.0 / (tau * sr)).exp() } else { 0.0 };
+        let drop_tau = if s.drop_tau > 0.0 { s.drop_tau } else { 0.02 };
         self.grains[i] = Grain {
             active: true,
             kind_tag,
@@ -751,6 +999,11 @@ impl VoiceBank {
             lp_c,
             gl,
             gr,
+            drop_env: 1.0,
+            drop_k: decay(drop_tau),
+            // A far sound is more room than source.
+            verb: (s.verb * (1.0 + 0.8 * far)).min(1.0),
+            fade: 0.0,
         };
         self.stats.grains += 1;
         if from_verb {
@@ -892,8 +1145,9 @@ impl VoiceBank {
                 }
             }
 
-            // Grains.
-            let (mut l, mut r) = (0.0f32, 0.0f32);
+            // Grains. `send` is what goes to the reverb (each source's own
+            // share, `Spec::verb`).
+            let (mut l, mut r, mut send) = (0.0f32, 0.0f32, 0.0f32);
             for g in self.grains.iter_mut() {
                 if !g.active {
                     continue;
@@ -921,7 +1175,8 @@ impl VoiceBank {
                     g.noise_env *= g.noise_decay;
                 }
                 if g.sine > 0.0 {
-                    let f = g.freq * (1.0 + (g.freq_end - 1.0) * life) * (1.0 + g.drop * (-tf / (0.02 * sr)).exp());
+                    let f = g.freq * (1.0 + (g.freq_end - 1.0) * life) * (1.0 + g.drop * g.drop_env);
+                    g.drop_env *= g.drop_k;
                     y += g.phase.sin() * g.sine * g.sine_env;
                     g.phase += std::f32::consts::TAU * f / sr;
                     if g.phase > std::f32::consts::TAU {
@@ -930,10 +1185,19 @@ impl VoiceBank {
                     g.sine_env *= g.sine_decay;
                 }
                 y *= att;
+                if g.fade > 0.0 {
+                    y *= g.fade / FADE_SAMPLES;
+                    g.fade -= 1.0;
+                    if g.fade <= 0.0 {
+                        g.active = false;
+                    }
+                }
                 g.lp[0] += (y - g.lp[0]) * g.lp_c;
                 g.lp[1] += (g.lp[0] - g.lp[1]) * g.lp_c;
                 l += g.lp[1] * g.gl;
                 r += g.lp[1] * g.gr;
+                send += g.lp[1] * g.verb;
+                self.stats.energy[g.kind_tag as usize] += (g.lp[1] * g.lp[1] * (g.gl * g.gl + g.gr * g.gr)) as f64;
                 g.t += 1;
                 if g.t >= g.len || (g.noise_env + g.sine_env < 1e-4 && g.t > g.attack) {
                     g.active = false;
@@ -963,6 +1227,8 @@ impl VoiceBank {
                 y *= att;
                 l += y * t.gl;
                 r += y * t.gr;
+                send += y * TONE_VERB;
+                self.stats.energy[MIX_TONES] += (y * y * (t.gl * t.gl + t.gr * t.gr)) as f64;
                 t.t += 1;
                 if t.t >= t.len {
                     t.active = false;
@@ -1000,6 +1266,7 @@ impl VoiceBank {
                     let (gl, gr) = pan_gains(pan);
                     l += y * gl;
                     r += y * gr;
+                    self.stats.energy[MIX_BODY] += (y * y) as f64;
                 }
             }
 
@@ -1014,10 +1281,25 @@ impl VoiceBank {
             let hum = hum * 0.6 * ROOM_LEVEL * LAMP_HUM * lamp;
             let (hl, hr) = pan_gains(self.lamp_pan);
 
-            let wet = self.reverb.run((l + r) * 0.5 * 0.35);
+            // The reverb hears each source's send, its lows taken off
+            // (`VERB_HP_HZ`). The mould's voice and the room stay dry.
+            self.verb_lp += (send - self.verb_lp) * self.k_verb_hp;
+            let wet = self.reverb.run((send - self.verb_lp) * VERB_IN);
             let master = self.master.step(self.k_mid, self.k_mid) * MAKEUP;
-            let lo = limit((l + wet[0] + air + hum * hl) * master);
-            let ro = limit((r + wet[1] + air + hum * hr) * master);
+            self.stats.energy[MIX_ROOM] += (2.0 * air * air + hum * hum) as f64;
+            self.stats.energy[MIX_VERB] += (wet[0] * wet[0] + wet[1] * wet[1]) as f64;
+            let (mut pre_l, mut pre_r) = ((l + wet[0] + air + hum * hl) * master, (r + wet[1] + air + hum * hr) * master);
+            // The master high-pass (`MASTER_HP_HZ`).
+            self.master_lp[0] += (pre_l - self.master_lp[0]) * self.k_master_hp;
+            self.master_lp[1] += (pre_r - self.master_lp[1]) * self.k_master_hp;
+            (pre_l, pre_r) = (pre_l - self.master_lp[0], pre_r - self.master_lp[1]);
+            let lo = limit(pre_l);
+            let ro = limit(pre_r);
+            let peak = pre_l.abs().max(pre_r.abs());
+            if peak > 0.6 {
+                self.stats.limited += 1;
+                self.stats.limit_min = self.stats.limit_min.min(lo.abs().max(ro.abs()) / peak);
+            }
             match channels {
                 1 => frame[0] = (lo + ro) * 0.5,
                 _ => {
@@ -1130,8 +1412,57 @@ mod tests {
         for _ in 0..10 {
             b.apply(SoundCmd::Grain { kind: GrainKind::Thunk, pan: 0.0, gain: 0.5, delay: 0.0 });
         }
-        let live = b.grains.iter().filter(|g| g.active && g.kind_tag == GrainKind::Thunk as u8).count();
-        assert_eq!(live, PER_KIND_CAP);
+        // Past the cap the oldest fade out rather than being cut (a cut
+        // is a click), and are gone once the fade is done.
+        let live = |b: &VoiceBank| b.grains.iter().filter(|g| g.active && g.kind_tag == GrainKind::Thunk as u8 && g.fade == 0.0).count();
+        assert_eq!(live(&b), PER_KIND_CAP);
+        assert!(b.grains.iter().filter(|g| g.active && g.fade > 0.0).count() == 10 - PER_KIND_CAP);
+        render(&mut b, 2.0 * FADE_SAMPLES / 48_000.0);
+        assert_eq!(b.grains.iter().filter(|g| g.active && g.kind_tag == GrainKind::Thunk as u8).count(), PER_KIND_CAP);
+    }
+
+    /// A grain taken over its kind's cap fades: no sample jumps by more
+    /// than the loudest grain could move in one sample's fade step.
+    #[test]
+    fn a_stolen_grain_fades_instead_of_clicking() {
+        let mut b = VoiceBank::new(48_000, 5);
+        b.apply(SoundCmd::Master(1.0));
+        let mut x = Vec::new();
+        for _ in 0..12 {
+            b.apply(SoundCmd::Grain { kind: GrainKind::Thud, pan: 0.0, gain: 1.0, delay: 0.0 });
+            x.extend(render(&mut b, 0.01));
+        }
+        let jump = x.windows(4).map(|w| (w[2] - w[0]).abs()).fold(0.0f32, f32::max);
+        assert!(jump < 0.5, "a sample jumped by {jump}");
+    }
+
+    /// Every gun makes a bounded sound; the long gun rings on longest and
+    /// the carbine stops soonest; a far shot is duller than a near one.
+    #[test]
+    fn each_gun_has_its_own_report_and_far_is_duller() {
+        let shot = |voice: GunVoice, far: f32| {
+            let mut b = VoiceBank::new(48_000, 17);
+            b.apply(SoundCmd::Gun { voice, pan: 0.0, gain: 0.5, delay: 0.0, far });
+            let x = render(&mut b, 1.2);
+            assert!(x.iter().all(|v| v.is_finite() && v.abs() <= 1.0), "{voice:?}");
+            let left: Vec<f32> = x.iter().step_by(2).copied().collect();
+            let peak = left.iter().fold(0.0f32, |m, v| m.max(v.abs()));
+            let tail = left.iter().rposition(|v| v.abs() > peak * 0.1).unwrap_or(0) as f32 / 48_000.0;
+            // Brightness: the share of the first 50 ms's change a sample
+            // (a rough high-frequency measure).
+            let head = &left[..2_400];
+            let bright = head.windows(2).map(|w| (w[1] - w[0]).abs()).sum::<f32>() / head.iter().map(|v| v.abs()).sum::<f32>().max(1e-9);
+            (tail, bright, rms(&x))
+        };
+        for v in GunVoice::ALL {
+            assert!(shot(v, 0.0).2 > 0.005, "{v:?} made no sound");
+        }
+        let (long, _, _) = shot(GunVoice::Long, 0.0);
+        let (carbine, _, _) = shot(GunVoice::Carbine, 0.0);
+        assert!(long > carbine * 2.0, "long gun {long} s vs carbine {carbine} s");
+        let (_, near, _) = shot(GunVoice::Rifle, 0.0);
+        let (_, far, _) = shot(GunVoice::Rifle, 1.0);
+        assert!(far < near * 0.7, "far {far} vs near {near}");
     }
 
     #[test]
@@ -1152,7 +1483,7 @@ mod tests {
     fn a_heavier_impact_rings_longer_and_fuller() {
         let hit = |weight: f32| {
             let mut b = VoiceBank::new(48_000, 13);
-            b.apply(SoundCmd::Impact { weight, pan: 0.0, gain: 0.5, delay: 0.0 });
+            b.apply(SoundCmd::Impact { weight, pan: 0.0, gain: 0.5, delay: 0.0, far: 0.0 });
             let x = render(&mut b, 0.6);
             let peak = x.iter().fold(0.0f32, |m, v| m.max(v.abs()));
             let tail = x.iter().rposition(|v| v.abs() > peak * 0.1).unwrap_or(0);
@@ -1179,7 +1510,7 @@ mod tests {
         let mut quiet = VoiceBank::new(8_000, 21);
         let room = rms(&render(&mut quiet, 1.0));
         assert!(rms(&x) > room * 3.0, "voice {} vs room {room}", rms(&x));
-        b.apply(SoundCmd::Impact { weight: 1.0, pan: 0.0, gain: 0.0, delay: 0.0 });
+        b.apply(SoundCmd::Impact { weight: 1.0, pan: 0.0, gain: 0.0, delay: 0.0, far: 0.0 });
         assert!(b.body[0].duck < 0.5, "a heavy hit did not duck the voice");
         render(&mut b, 1.5);
         assert!(b.body[0].duck > 0.95, "the duck did not recover: {}", b.body[0].duck);
