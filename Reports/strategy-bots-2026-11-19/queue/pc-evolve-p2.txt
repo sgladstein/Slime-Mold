@@ -1,0 +1,11 @@
+# Planet 2 search (11-20 13:30Z): on today's game the bots won 57 of 143 planet 2 games, and the plans that build first 9 of 66 (job 11-planet2).
+# Seeds 1-16 and Scott's three planet 2 runs (1795038793, 1795106014, 1795119328), the game's own 15-minute clock.
+name=p2c
+plans=Reports/strategy-bots-2026-11-19/p2c-plans.txt
+depths=2
+seeds=1-16,1795038793,1795106014,1795119328
+secs=900
+top=6
+kids=18
+util_share=0
+always=rush;rush,aim=6;econ,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1

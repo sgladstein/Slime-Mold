@@ -577,10 +577,13 @@ impl App {
         Ok(())
     }
 
-    /// The whole map, under no HUD.
+    /// The map filling the window, under no HUD (Look D, 11-20): zoomed to
+    /// cover the screen, its edges cropped, not fitted whole inside black
+    /// bands as a board on a table (before 11-20).
     pub(super) fn menu_camera(&mut self) {
         self.camera.set_inset(0.0, 0.0);
-        let z = self.camera.fit();
+        let (screen, world) = (self.camera.screen, self.camera.world);
+        let z = (screen.0 / world.0).max(screen.1 / world.1).max(self.camera.fit());
         self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
         self.camera.centre_on((self.camera.world.0 / 2.0, self.camera.world.1 / 2.0));
     }

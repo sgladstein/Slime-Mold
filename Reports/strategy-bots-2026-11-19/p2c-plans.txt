@@ -1,0 +1,17 @@
+# Planet 2 search on the game's own 15-minute clock (11-20 13:30Z). Job 11-planet2 (12 minutes): rush 10 of 11, bot 8, rush,aim=6 8, taker 7; build-first plans 9 of 66.
+rush
+rush,aim=6
+bot
+taker
+boom
+lure,go=4,aim=6
+lure
+econ
+scott
+econ,go=4,aim=6,hold=8
+econ,go=4,aim=6,grow=1.3,regroup=3,spare=1
+scott,go=4,aim=6,hold=8,grow=1.3
+lure,go=4,aim=6,hold=8,regroup=3
+rush,aim=6,regroup=3,spare=1
+rush,aim=6,split=2,want=plain.slug
+taker,aim=6,spare=1

@@ -58,6 +58,16 @@ is not measured yet). Moss skin, acid core (`LumpLook::Mortar`, Look's
 so it no longer swallows a mini-boss beside it (3 of 14 had been). Set
 keys `boss_mortar`, `boss_lob`, `boss_lob_every`, `boss_shell`.
 
+Then (11-20 evening, the coordinator's ask from the balance brief): a
+throw lands as a shell (`Bosses::shells`, a lump with the mortar's bite,
+the armour of half its grade and its look, no leash, for `shell_life` 8 s), cut from
+the body's outer part where it holds 60% (`SHELL_CORE`), and only
+while another lump stays free after it (4 lumps in all); and late in a
+planet (slime under `late` 0.6 of its peak, `Game::boss_late`) a new boss
+is drawn from `late_grade` 0.8 up. Numbers in the report's last section.
+Next: the Pinwheel (`BossKind::Pinwheel`, `Lump::spin`, branch work in
+progress).
+
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand
 (`crowded_knot(Some(&boss))`). Drawing them only with a target within
@@ -93,8 +103,14 @@ lit bead in the droplets' layer, radius by what it holds, a 48-step pulse;
 it counts as its walkers in the body, no bronze. Test:
 `condensed_strikers_take_in_their_neighbours_charge_and_take_more_blows`.
 The balance thread (cmsg_01LaKUNJU8dhcZFTMf8VboUgN41f84yygVjCkvqcyxGYdX)
-measures it against `set=strikers=0` with its late lunge (B). Next: D,
-the last-stand heart, once A is judged.
+measures it against `set=strikers=0` with its late lunge (B). Its first
+score (planet 2, 36 games) found the first numbers did not bite an
+80-soldier army, so A was retuned that evening: `below` 0.6, `band` 30,
+`share` 1, `haste` 3, and the share scaled by the squad from `few` 8 to
+`full` 24 soldiers; `most` (blows a striker takes, 1-15, packed in the
+condense row's reach word) is a rule now, default still 3. The probes and
+why are in `StrikerRules::default`'s comment. The balance thread scores
+the retune next. Next: D, the last-stand heart.
 
 ## Heartbeat (2026-11-20, the same thread)
 

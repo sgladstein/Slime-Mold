@@ -158,8 +158,14 @@ pub struct Rules {
     pub drain: f32,
     /// Health a soldier standing in fire loses a game second at full heat
     /// (x the heat on its cell, `UnitOut::heat`): the owner (11-14 19:18Z)
-    /// "It should hurt the player too". 25: four seconds in the hottest
-    /// fire kills, so a soldier walking out of a front lives.
+    /// "It should hurt the player too". 10 (Direction, 2026-11-20): ten
+    /// seconds in the hottest fire kills, so it still hurts but a squad
+    /// can fight beside its own fire. Was 25 (four seconds), and the
+    /// strategy bot (jobs 14 and 14-b, Reports/strategy-bots-2026-11-19/pc/)
+    /// found the planet 2 card's advice, Tinder and a Torch, ruinous: rush
+    /// won 11 of 11 maps without fire cards and 2 with them (p .001), the
+    /// squad burning, and stepping back out of hurt changed little (1 of
+    /// 11); on planet 3 stepping back lost 253 soldiers against 1,033.
     pub fire_hurt: f32,
     /// **Your own sleep gas** (2026-11-18, the owner's Noita rule: "Any
     /// single spell that is incredibly powerful is also really
@@ -728,6 +734,10 @@ impl Rules {
                 self.strikers.on = v > 0.0;
                 return true;
             }
+            "strikers_most" => {
+                self.strikers.most = v.clamp(1.0, 15.0) as u32;
+                return true;
+            }
             "wave_sides" => {
                 self.wave.sides = v.clamp(0.0, 8.0) as u32;
                 return true;
@@ -809,6 +819,8 @@ impl Rules {
             "strikers_band" => &mut self.strikers.band,
             "strikers_share" => &mut self.strikers.share,
             "strikers_haste" => &mut self.strikers.haste,
+            "strikers_few" => &mut self.strikers.few,
+            "strikers_full" => &mut self.strikers.full,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
@@ -861,6 +873,9 @@ impl Rules {
             "boss_lob" => &mut self.boss.lob,
             "boss_lob_every" => &mut self.boss.lob_every,
             "boss_shell" => &mut self.boss.shell,
+            "boss_shell_life" => &mut self.boss.shell_life,
+            "boss_late" => &mut self.boss.late,
+            "boss_late_grade" => &mut self.boss.late_grade,
             "boss_far" => &mut self.boss.far,
             "boss_fresh" => &mut self.boss.fresh,
             "boss_root" => &mut self.boss.root,
@@ -895,6 +910,9 @@ impl Rules {
             "wipe_ends" => &mut self.wipe_ends,
             "set_block" => &mut self.set_block,
             "fort" => &mut self.fort,
+            // Fire on soldiers (11-20, Direction's slope check: the strategy
+            // bot's fire arms at 5, 10 and 25 a second).
+            "fire_hurt" => &mut self.fire_hurt,
             _ => return false,
         };
         *f = v;
@@ -933,7 +951,7 @@ impl Default for Rules {
             price: 0.0,
             hp: 100.0,
             drain: 2.0,
-            fire_hurt: 25.0,
+            fire_hurt: 10.0,
             doze: 1.0,
             touch: 1.5,
             elbow: 1.6,

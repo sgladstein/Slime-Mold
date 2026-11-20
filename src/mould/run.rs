@@ -458,7 +458,7 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // to 23 at 2:00 and down by 2:21 with it; pump_smell 2 to 8 was too
         // weak to see.
         Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder and a Torch", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
+        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder and a Torch, and keep your soldiers out of the flames: fire burns them too", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
         // Until 2026-11-17 the Trunk had the Drifter's row (the same pump
         // smell: the first two pumps at 185 and 167 hp at 2:30 without it,
         // 160 and 160 with it; modest, as its cords are slow to turn), so
