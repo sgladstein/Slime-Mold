@@ -170,9 +170,11 @@ The main menu, 11-20: its dish covers the window (`menu_camera` in
 `menu.rs`; the headless menu pictures frame it the same way), with a
 shade under the title and the foot hint (`start.rs`). Options looked
 sound as it is (filmed 11-20).
-Next in D: nothing planned; the menu dish is still the sandbox's map (the
-menu's Planet options preview on it), and a run planet behind the main
-page would be the next step if the owner wants one.
+The menu's dish is a run's planet 1 to 4 on the clock's seed while the
+sandbox map is its default (`open_menu`); a picked map still previews
+there. It starts again at its mission's verdict too (`main.rs`'s frame).
+Next (coordinator, 11-20): a pass at play zoom on planets 1 to 4 (fights,
+slime bodies, condensed strikers, the mortar, HUD clarity).
 
 **Open branch:** `claude/project-thread-wypzro`, reused per PR.
 

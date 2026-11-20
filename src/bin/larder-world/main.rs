@@ -1976,7 +1976,9 @@ impl App {
         self.step(dt);
         // The dish under the menu plays on: a round it ends starts again.
         // (Not the gun range's paused under its armory.)
-        if self.in_menu() && !self.armory && self.game.as_ref().is_some_and(|g| g.end.is_some()) {
+        // A run planet's dish ends at its mission's verdict (`open_menu`).
+        let over = self.game.as_ref().is_some_and(|g| g.end.is_some()) || self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+        if self.in_menu() && !self.armory && over {
             if let Err(e) = self.open_menu() {
                 return self.fail(event_loop, e);
             }

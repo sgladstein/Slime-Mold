@@ -468,6 +468,26 @@ fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
     }
 }
 
+/// The start menu's dish is a run's planet, one of 1 to 4, while the
+/// sandbox map is its default and none was given on the command line
+/// (Look D, 11-20), and it plays. Skips with no GPU (CI); the cloud's
+/// software Vulkan runs it.
+#[test]
+fn the_menu_dish_is_a_run_planet() {
+    let Some((device, queue)) = gpu() else { return };
+    let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
+    let mut app = offscreen(base.clone(), (640, 400), &device, &queue).unwrap();
+    app.base = Some((base.clone(), false));
+    app.menu = Some(start_menu(&base));
+    app.open_menu().unwrap();
+    let depth = app.args.run.as_ref().map(|r| r.depth);
+    assert!(depth.is_some_and(|d| (1..=4).contains(&d)) && app.mission.is_some() && app.run.is_none(), "{depth:?}");
+    for _ in 0..10 {
+        app.step(0.1);
+    }
+    assert!(app.game.as_ref().is_some_and(|g| g.time() > 0.5));
+}
+
 /// Turning the sandbox map (or the own mould) on the start menu starts the
 /// dish behind it again on that map (owner, 11-14 05:04Z); turning another
 /// option, or moving between rows, leaves the dish playing. Skips with no
