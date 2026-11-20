@@ -42,6 +42,12 @@ pub enum SlimeLook {
     /// way it has just come (`draw_specks`' `lay_streak`), so a fast walker
     /// is a dash and walkers on one path join into a thread.
     Threads = 1,
+    /// The Drifter's soft sheet: its own trail, which fades fast
+    /// (`keep` 0.93) and spreads wide (sensors at 90 degrees, 18 cells
+    /// out), shows as a thin gel round and behind its walkers
+    /// (`SHEET_VEIL` in `view.wgsl`), so the body trails a fading wake
+    /// as it drifts.
+    Sheet = 2,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -52,6 +58,7 @@ impl SlimeLook {
     pub fn of(tier: Option<crate::mould::tiers::Tier>) -> SlimeLook {
         match tier {
             Some(crate::mould::tiers::Tier::Sprawler) => SlimeLook::Threads,
+            Some(crate::mould::tiers::Tier::Drifter) => SlimeLook::Sheet,
             _ => SlimeLook::Plain,
         }
     }

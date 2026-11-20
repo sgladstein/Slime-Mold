@@ -1500,6 +1500,11 @@ fn flush_mat(m0: Mat, k: f32) -> Mat {
     return m;
 }
 
+// The thickness the Drifter's trail alone is drawn at, at full trail
+// (filmed on planet 1 at 0.3 x trail squared, barely seen, and 0.5,
+// a blur over the droplets at zoom 6).
+const SHEET_VEIL: f32 = 0.4;
+
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var t = 0.0;
@@ -1878,7 +1883,14 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // fine grid, while the wide share keeps them calm (all-sharp, at four
     // fine cells a cell, was lumpy squares).
     let dense = smoothstep(0.15, 0.45, wide) * 0.6;
-    let th0 = look_trail(wx, wy) * mix(near, wide, dense);
+    let trail = look_trail(wx, wy);
+    var th0 = trail * mix(near, wide, dense);
+    // The Drifter's sheet (`SlimeLook::Sheet`, Look B, 2026-11-19): its
+    // trail where its walkers have just been is a thin gel of its own, so
+    // the body drags a fading wake as it drifts. Only its colour's
+    // thickness: the height still rises with the walkers (`th_h` takes the
+    // wide count), so the sheet lies flat round the raised body.
+    if (P.slime_look == 2u) { th0 = max(th0, SHEET_VEIL * trail); }
     // Condensed mould keeps tight, raised edges (art director, 11-14: it
     // should read tougher at a glance): where it has condensed the
     // thickness is pushed through a steep curve, so the body is a full,
