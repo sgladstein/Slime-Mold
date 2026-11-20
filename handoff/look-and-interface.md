@@ -154,7 +154,10 @@ the squad shot the slime back and as a halo round the body.
 offer a row with its icon, name, the first sentence of its `about`, price
 and pips, in columns of at least 420 units, while all fit on one page; else
 the old tiles that page. Bends shop B's half-size tiles (owner 11-15).
-Next in D: the rest of the shop (the empty bag row, the pane's planet
+The landing (11-20): each soldier drops in over its shadow in the
+first second (`landing`, `LAND_SECS`, `LAND_STAGGER`, `LAND_LIFT` in
+`draw.rs`); only the drawing. A dust ring was tried and dropped.
+Next in D: a win and a loss in the picture; the rest of the shop (the empty bag row, the pane's planet
 briefing repeated from the top bar), then the main menu and Options.
 
 **Open branch:** none (`claude/project-thread-ho6vcd`, reused per PR).
