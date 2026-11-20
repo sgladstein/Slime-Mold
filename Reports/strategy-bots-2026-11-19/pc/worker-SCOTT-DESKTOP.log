@@ -4226,3 +4226,8 @@
 2026-11-20 07:35:51   econ,aim=2,back=0.3,cards=0,go=4,group=3,hold=4,lure=1,mop=3 planet 3.0 seed 1795038793.0: won 224.0 (15 s)
 2026-11-20 07:36:02   econ,aim=3,back=0.3,cards=0,go=4,mop=3000,pumps=6,split=2,ta planet 3.0 seed 1795038793.0: won 230.0 (16 s)
 2026-11-20 07:36:42   econ,aim=6,back=0.7,cards=1,go=80,hold=4,more=2,per=150,spli planet 3.0 seed 1795038793.0: open 720.1 (49 s)
+2026-11-20 07:36:46 worker: the game's code changed (now 8de00183); building
+2026-11-20 07:38:44 worker: built the game in 118 s (src 28eac73140ac)
+2026-11-20 07:38:44 worker: league.py changed; restarting
+2026-11-20 07:38:44 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-20 07:38:45 worker: built the game in 1 s (src 28eac73140ac)
