@@ -582,6 +582,11 @@ pub struct Game<W: World> {
     /// rather than `carry_each`: the window's selection, copied in each
     /// frame. Empty without a window.
     pub carry_full: Vec<usize>,
+    /// Whether the game runs its kit and rounds itself after each step
+    /// (`Game::gear_turn`): always in play. False only for a test that
+    /// runs a `Rounds` of its own to look between a step and its casts
+    /// (the walkers before a shove, the pops a step let out).
+    pub gear: bool,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -742,6 +747,7 @@ impl<W: World> Game<W> {
             kit: Kit::new(Default::default()),
             rounds: Rounds::new(Vec::new(), Default::default()),
             carry_full: Vec::new(),
+            gear: true,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.charge_was = g.crystal_full.iter().map(|&c| c as f64).sum();

@@ -3571,6 +3571,9 @@ mod tests {
         }
         let rr = RoundRules::default();
         let mut rc = Rounds::new(parse("bomb").unwrap(), rr);
+        // The test casts with its own `Rounds` from the world before the
+        // casts, so the game's own (`Game::gear`, 11-20) stays off.
+        cpu.gear = false;
         let fine = rules.tps as f32 * cpu.world.fine_steps() as f32;
         let k = BurstRules { fling_speed: rr.fling_speed, ..burst_rules(&rr.kit, fine) };
         let (mut frames, mut checked, mut after_off) = (0, 0, 0);

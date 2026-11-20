@@ -24,6 +24,9 @@ impl<W: World> Game<W> {
     /// and sets off its mines, then the gun cards cast on the step's hits
     /// (`Rounds::after_step`).
     pub(super) fn gear_turn(&mut self) {
+        if !self.gear {
+            return;
+        }
         let full = std::mem::take(&mut self.carry_full);
         self.with_kit(|kit, g| {
             for k in 0..g.soldiers.len() {
