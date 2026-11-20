@@ -1672,6 +1672,10 @@ fn lump_skin(k: u32) -> vec3<f32> {
         // The pinwheel (2026-11-20, the Enemy lane): cobalt, the one blue
         // on the slime, so its turning arms read against the gold.
         case 7u: { return vec3<f32>(26.0, 44.0, 120.0); }
+        // The last-stand heart (2026-11-20, the Enemy lane, `stand.rs`):
+        // the slime's own gold run dark, so it reads as the slime's heart,
+        // not a mini-boss (none of their skins is gold).
+        case 8u: { return vec3<f32>(110.0, 48.0, 4.0); }
         default: { return MOULD_HUE; }
     }
 }
@@ -1690,6 +1694,8 @@ fn lump_core(k: u32) -> vec3<f32> {
         case 6u: { return vec3<f32>(196.0, 245.0, 70.0); }
         // The pinwheel's ice-blue core.
         case 7u: { return vec3<f32>(150.0, 205.0, 255.0); }
+        // The heart's hot amber core.
+        case 8u: { return vec3<f32>(255.0, 196.0, 80.0); }
         default: { return vec3<f32>(0.0); }
     }
 }

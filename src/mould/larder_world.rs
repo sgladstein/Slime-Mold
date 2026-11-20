@@ -55,6 +55,7 @@ mod bosses;
 mod fruit;
 mod waves;
 mod heart;
+mod stand;
 mod strikers;
 mod starfall;
 mod cores;
@@ -87,6 +88,7 @@ pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, R
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};
 pub use heart::HeartRules;
+pub use stand::{Heart, Stand, StandRules};
 pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
@@ -561,6 +563,8 @@ pub struct Game<W: World> {
     pub starfall: Starfall,
     /// Boss cores that re-form their boss, and raids' cores (`cores.rs`).
     pub cores: Cores,
+    /// The last-stand heart (`stand.rs`).
+    pub stand: Stand,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
@@ -718,6 +722,7 @@ impl<W: World> Game<W> {
             strikers: Strikers::default(),
             starfall: Starfall::new(seed),
             cores: Cores::default(),
+            stand: Stand::default(),
             rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
