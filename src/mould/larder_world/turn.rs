@@ -407,6 +407,7 @@ impl<W: World> Game<W> {
                     if u.heat > 0.0 {
                         s.hp -= r.fire_hurt * u.heat * dt;
                         if s.hp <= 0.0 {
+                            self.fell_burned += u32::from(s.alive);
                             s.alive = false;
                             s.hp = 0.0;
                             s.carry = 0.0;
@@ -419,6 +420,7 @@ impl<W: World> Game<W> {
                         // Whole walkers: each bites `drain` at any mass, so walking into a thick body is very deadly (owner 11-12 22:22Z, #174).
                         s.hp -= r.drain * u.touching as f32 * dt;
                         if s.hp <= 0.0 {
+                            self.fell_bitten += u32::from(s.alive);
                             s.alive = false;
                             s.hp = 0.0;
                             s.carry = 0.0;
@@ -464,14 +466,29 @@ impl<W: World> Game<W> {
     /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):
     /// at the start and once a game second, so a range card moves it
     /// (`gun_range`, which the rounds' `Range` cards stretch).
+    ///
+    /// Once the slime falls under `Rules::late_at` of its peak it is
+    /// cornered for the rest of the planet: the reach takes `late_margin`
+    /// and the surges `late_haste`, where those are more (option B of the
+    /// 11-20 brief; see `Rules::late_at`). Once, so a slime that regrows a
+    /// little does not flicker between the two.
     pub(super) fn keep_panic_reach(&mut self) {
+        let r = &self.rules;
+        if !self.late && r.late_at > 0.0 && self.peak > 0 && (self.mould as f32) < r.late_at * self.peak as f32 {
+            self.late = true;
+            let haste = self.world.surge_haste();
+            if r.late_haste > haste {
+                self.world.set_surge_haste(r.late_haste);
+            }
+        }
         if self.rules.panic_margin >= 0.0 {
             // A wave's strike (`waves.rs`, 2026-11-20) reaches its masses,
             // which gathered `stand` past the guns' reach.
             let w = self.rules.wave;
             let strike = self.waves.live.as_ref().is_some_and(|v| v.phase == WavePhase::Strike);
             let extra = if strike { w.stand.max(0.0) + w.disc.max(0.0) } else { 0.0 };
-            self.world.set_panic_r(self.gun_range_max() + self.rules.panic_margin + extra);
+            let margin = if self.late { self.rules.panic_margin.max(self.rules.late_margin) } else { self.rules.panic_margin };
+            self.world.set_panic_r(self.gun_range_max() + margin + extra);
         }
     }
 

@@ -460,6 +460,16 @@ pub struct Game<W: World> {
     /// When the mould broke (`Rules::broken`), and the upkeep it had then,
     /// given back if it recovers; None while it is whole.
     pub broken: Option<(u64, f32)>,
+    /// The slime has fallen under `Rules::late_at` of its peak: its
+    /// charges reach and lunge as a cornered slime's for the rest of the
+    /// planet (`Game::keep_panic_reach`).
+    pub late: bool,
+    /// Soldiers killed by the slime's touch (`Rules::drain`) and by
+    /// standing in fire (`Rules::fire_hurt`): the rest of the fallen died
+    /// to blasts and other casts. The 11-20 late-threat measure counts the
+    /// slime's own kills apart from the squad's.
+    pub fell_bitten: u32,
+    pub fell_burned: u32,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -651,6 +661,9 @@ impl<W: World> Game<W> {
             mould,
             peak: mould,
             broken: None,
+            late: false,
+            fell_bitten: 0,
+            fell_burned: 0,
             start_charge,
             taken,
             start_mould: mould,

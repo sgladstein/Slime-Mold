@@ -552,6 +552,21 @@ pub struct Rules {
     /// first rule's margin (29 at range 24). Negative leaves the world's
     /// own `panic_r` (a test or a probe that sets it).
     pub panic_margin: f32,
+    /// **A cornered slime lunges** (2026-11-20, the balance thread, the
+    /// brief "Keeping a big squad under threat", option B): once the slime
+    /// falls under `late_at` of its peak (0 off), for the rest of the
+    /// planet its surges reach `late_margin` dish cells past the guns (if
+    /// that is more than `panic_margin`) and lunge at `late_haste` (if
+    /// faster than the world's `surge_haste`). Why: in the owner's 19 play
+    /// logs the slime killed 1 to 1.6 soldiers a minute at every army
+    /// size, so a 41+ army lost 2.4% of itself a minute; the one rule that
+    /// took a big army apart was the Swarmer's lunge (`panic_margin` 25,
+    /// `surge_haste` 3: 32 soldiers in 30 s on his 11-19 planet 4). The
+    /// slime's size is not touched (the owner, 11-20 14:10Z: no slime that
+    /// grows with the army); only how far and fast what is left charges.
+    pub late_at: f32,
+    pub late_margin: f32,
+    pub late_haste: f32,
     /// **The slime surges when it has eaten** (2026-11-15, the slime-enemy
     /// thread with the game designer, after #343's fixed clock): food (in
     /// the bank's units, `charge` a food) the slime eats from its crystals
@@ -804,6 +819,9 @@ impl Rules {
             "smell_r" => &mut self.smell_r,
             "hoard" => &mut self.hoard,
             "panic_margin" => &mut self.panic_margin,
+            "late_at" => &mut self.late_at,
+            "late_margin" => &mut self.late_margin,
+            "late_haste" => &mut self.late_haste,
             "surge_food" => &mut self.surge_food,
             "surge_min" => &mut self.surge_min,
             "range" => &mut self.range,
@@ -919,6 +937,9 @@ impl Default for Rules {
             broken: 0.03,
             broken_starve: 50.0,
             panic_margin: 5.0,
+            late_at: 0.0,
+            late_margin: 25.0,
+            late_haste: 3.0,
             surge_food: SURGE_FOOD,
             surge_min: 10.0,
             raid: super::RaidRules::default(),

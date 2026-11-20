@@ -59,15 +59,18 @@ def parse_line(line):
     return out
 
 def key(job):
-    return f"{job[0]}|{job[1]}|{job[2]}|{job[3]}"
+    # Words after SECS are extra game arguments (`set=late_at=0.4`), part
+    # of the job's name (2026-11-20, the balance thread's late-threat
+    # measure): a job of four words keys as it always did.
+    return "|".join(job)
 
 DEADLINE = None
 
 def run_one(binary, job, timeout):
     if DEADLINE and time.time() > DEADLINE:
         return None
-    plan, depth, seed, secs = job
-    cmd = [binary, f"league={depth}:{seed}:{secs}", f"plan={plan}"]
+    plan, depth, seed, secs, *extra = job
+    cmd = [binary, f"league={depth}:{seed}:{secs}", f"plan={plan}", *extra]
     t0 = time.time()
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
@@ -82,6 +85,8 @@ def run_one(binary, job, timeout):
     r["job"] = key(job)
     r["plan"] = plan
     r["cap"] = float(secs)
+    if extra:
+        r["extra"] = " ".join(extra)
     return r
 
 def cmd_run(a):

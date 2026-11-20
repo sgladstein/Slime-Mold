@@ -94,6 +94,14 @@ pub trait World {
     /// dish cells): the game keeps it past the gun's range
     /// (`Rules::panic_margin`). A world with no panic ignores it.
     fn set_panic_r(&mut self, _r: f32) {}
+    /// How much faster than its pace a surge lunges
+    /// (`BigParams::surge_haste`), and setting it: a cornered slime
+    /// lunges harder (`Rules::late_haste`). A world with no surge reads 0
+    /// and ignores the set.
+    fn surge_haste(&self) -> f32 {
+        0.0
+    }
+    fn set_surge_haste(&mut self, _h: f32) {}
     /// The surges' switch and longest wait, fine steps
     /// (`BigParams::surge_every`; 0 off, or a world with no surge).
     fn surge_every(&self) -> u32 {
@@ -359,6 +367,14 @@ impl World for BigDish {
 
     fn set_panic_r(&mut self, r: f32) {
         self.p.panic_r = r;
+    }
+
+    fn surge_haste(&self) -> f32 {
+        self.p.surge_haste
+    }
+
+    fn set_surge_haste(&mut self, h: f32) {
+        self.p.surge_haste = h;
     }
 
     fn surge_every(&self) -> u32 {
