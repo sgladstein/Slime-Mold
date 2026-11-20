@@ -3906,7 +3906,9 @@ fn planet_eight_bosses_leave_the_first_minute_playable() {
 #[test]
 fn a_mini_boss_forms_at_a_crowd_and_hunts() {
     let mut g = small(2);
-    g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, ..BossRules::default() };
+    // A hunter (`kind` 1): drawn, its kind fell to the seed's draw, and
+    // since 11-20 the kind is drawn before the grade.
+    g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, kind: 1.0, ..BossRules::default() };
     let tps = g.rules.tps as usize;
     let mut formed = None;
     for _ in 0..10 * tps {

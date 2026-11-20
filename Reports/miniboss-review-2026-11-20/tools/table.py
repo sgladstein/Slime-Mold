@@ -2,7 +2,7 @@ import re,sys,glob,math,collections
 # per-kind table over a census folder, bosses formed before CUT s, rows up to CUT
 CUT=float(sys.argv[2]) if len(sys.argv)>2 else 300
 form=re.compile(r"boss t ([\d.]+) s: (\w+) (\w+) formed on lump (\d) at (\d+),(\d+).*grade ([\d.]+)")
-row=re.compile(r"boss t (\d+) s: lump (\d) (\w+) (\w+)(?:\(\([\d.]+, [\d.]+\)\)|\(Some\(\d+\)\)|\(None\))?, (\d+) members \(first (\d+), (\d+) hurt\), at (\d+),(\d+), spread ([\d.]+), stolen ([\d.]+); nearest soldier ([\d.inf]+), (\d+) alive")
+row=re.compile(r"boss t (\d+) s: lump (\d) (\w+) (\w+)(?:\(\([\d.]+, [\d.]+\)(?:, \d+)?\)|\(Some\(\d+\)\)|\(None\))?, (\d+) members \(first (\d+), (\d+) hurt\), at (\d+),(\d+), spread ([\d.]+), stolen ([\d.]+); nearest soldier ([\d.inf]+), (\d+) alive")
 end=re.compile(r"boss t (\d+) s: lump (\d) (\w+) ended (\w+) \((\d+) members of (\d+)")
 march=re.compile(r"march t (\d+) s")
 K=collections.defaultdict(lambda: collections.Counter())
@@ -17,7 +17,7 @@ for f in sorted(glob.glob(sys.argv[1]+'/*/log.txt')):
       live[m.group(4)]=dict(kind=m.group(3),rows=[],end=None); K[m.group(3)]['formed']+=1; continue
     m=row.search(l)
     if m and m.group(2) in live and int(m.group(1))<=CUT and live[m.group(2)]['end'] is None:
-      g=re.search(r"Go\(\(([\d.]+), ([\d.]+)\)",l)
+      g=re.search(r"(?:Go|Sit)\(\(([\d.]+), ([\d.]+)\)",l)
       if g: live[m.group(2)].setdefault('gap',[]).append(math.hypot(float(g.group(1))-int(m.group(8)),float(g.group(2))-int(m.group(9))))
       live[m.group(2)]['rows'].append((int(m.group(1)),m.group(4),int(m.group(5)),int(m.group(8)),int(m.group(9)),float(m.group(12)),float(m.group(11))))
       continue
