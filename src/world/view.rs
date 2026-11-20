@@ -48,6 +48,12 @@ pub enum SlimeLook {
     /// (`SHEET_VEIL` in `view.wgsl`), so the body trails a fading wake
     /// as it drifts.
     Sheet = 2,
+    /// The Trunk's cords (play-zoom pass, 11-20): its trail, kept 0.95,
+    /// runs as long straight cords between its few big bodies, and off the
+    /// body it stands up as a rounded, translucent tube (`CORD_VEIL`,
+    /// `CORD_RISE` in `view.wgsl`), so the network you cut to starve it is
+    /// seen. Plain, the cords were a few loose specks on bare ground.
+    Cords = 3,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -59,6 +65,7 @@ impl SlimeLook {
         match tier {
             Some(crate::mould::tiers::Tier::Sprawler) => SlimeLook::Threads,
             Some(crate::mould::tiers::Tier::Drifter) => SlimeLook::Sheet,
+            Some(crate::mould::tiers::Tier::Trunk) => SlimeLook::Cords,
             _ => SlimeLook::Plain,
         }
     }
