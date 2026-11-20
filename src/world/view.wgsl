@@ -548,7 +548,11 @@ fn flora_form(fl: u32, k: u32) -> Form {
     // Flora 0 (meadow), and every kind a flora leaves alone.
     var f: Form;
     f.stretch = 1.0; f.shape = 0u; f.clump = 0.0; f.col = plant_rgb(k); f.wet = 0.0; f.tip = vec3<f32>(0.0);
-    if (k == 0u) { f.s = 0.45; f.r0 = 0.8; f.lobe = 0.2; f.relief = 0.35; }
+    // Meadow (planet 1's own trait, Look C 2026-11-20: at zoom 6 its even
+    // tufts read as green felt, one tone from shore to shore): the tufts
+    // gather into patches, thickest along the water (the moisture field),
+    // and each tuft's top turns a paler spring green.
+    if (k == 0u) { f.s = 0.45; f.r0 = 0.8; f.lobe = 0.2; f.relief = 0.35; if (fl == 0u) { f.clump = 0.6; f.wet = 0.4; f.tip = vec3<f32>(72.0, 88.0, 50.0); } }
     else if (k == 3u) { f.s = 1.1; f.r0 = 0.5; f.lobe = 0.25; f.relief = 0.6; }
     else if (k == 2u) { f.s = 0.4; f.r0 = 0.6; f.stretch = 2.4; f.lobe = 0.15; f.relief = 0.4; }
     else { f.s = 1.7; f.r0 = 0.85; f.lobe = 0.12; f.relief = 0.9; }
