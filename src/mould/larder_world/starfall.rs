@@ -114,7 +114,7 @@ impl Default for StarRules {
             worth: 40.0,
             take: 2.5,
             reach: 2.0,
-            eat: 0.25,
+            eat: 1.0,
             smell: 3.0,
             smell_r: 8.0,
             core_worth: 40.0,
