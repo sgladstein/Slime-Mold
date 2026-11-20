@@ -100,14 +100,14 @@ pub(super) fn live_code(g: &Game<GpuWorld>, depth: &[u8], i: usize, old: u32, ch
 
 /// A round's end, not a mission's (the sandbox): what ended it in the
 /// title, the round's numbers, and the score. `place` is the map.
-pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, place: String) -> Ending {
+pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, t: f32, place: String) -> Ending {
     let (title, won, at) = match end {
         End::MouldWiped(t) => ("The mould is wiped out", Some(true), t),
         End::SquadWiped(t) => ("The squad is lost", Some(false), t),
         End::Overrun(t) => ("The mould overran the larder", Some(false), t),
-        End::Cap(s) if s > 0.5 => ("Time: you took more of the crystals", Some(true), g.time()),
-        End::Cap(s) if s < 0.5 => ("Time: the mould took more of the crystals", Some(false), g.time()),
-        End::Cap(_) => ("Time: an even race", None, g.time()),
+        End::Cap(s) if s > 0.5 => ("Time: you took more of the crystals", Some(true), t),
+        End::Cap(s) if s < 0.5 => ("Time: the mould took more of the crystals", Some(false), t),
+        End::Cap(_) => ("Time: an even race", None, t),
     };
     let mut lines = Vec::new();
     if let End::Cap(s) = end {
@@ -1071,7 +1071,8 @@ impl App {
         let r = g.rules;
         let sc = g.world.scale();
         let sel = self.living(&self.controls.selected);
-        let t = g.time();
+        // Held at the end through its beat (`ending`).
+        let t = self.clock_now(g);
         let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
         // Income only (owner, 2026-11-15: the flow "should always be
         // positive"; build costs "should just come out of the bank"): the
@@ -1571,7 +1572,9 @@ impl App {
             Some((PUMP, at, _)) => g.pump_crystal(at).map(|c| (g.world.crystals()[c].0, pump_rig_r(g, c))),
             _ => None,
         };
-        if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
+        // The card waits while the end plays out in the picture (`ending`).
+        let shown = self.end_shown();
+        if let Some(tr) = self.mission.as_ref().filter(|t| shown && t.verdict.is_some()) {
             let mut end = mission_screen(tr, g);
             if let (Some(r), Some(v)) = (&self.args.run, tr.verdict) {
                 use slime_mould::mould::run;
@@ -1596,8 +1599,8 @@ impl App {
                 m.carry_on = Some(label.into());
             }
             m.end = Some(end);
-        } else if let Some(end) = g.end {
-            m.end = Some(end_screen(end, g, map_title(&self.name, self.args.seed)));
+        } else if let Some(end) = g.end.filter(|_| shown) {
+            m.end = Some(end_screen(end, g, t, map_title(&self.name, self.args.seed)));
         }
         m.help = if self.sq.is_some() {
             m.help_base = Some(squad_help());
