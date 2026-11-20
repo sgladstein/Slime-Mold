@@ -166,7 +166,13 @@ that shows the slime dying back would be a slime rule (Enemy's).
 The shop, 11-20: an empty bag is one strip with its use in a line, and
 the pane's idle page opens on a "THE PLANET AHEAD" label, not the top
 bar's heading again (`start/shop.rs`).
-Next in D: the main menu and Options.
+The main menu, 11-20: its dish covers the window (`menu_camera` in
+`menu.rs`; the headless menu pictures frame it the same way), with a
+shade under the title and the foot hint (`start.rs`). Options looked
+sound as it is (filmed 11-20).
+Next in D: nothing planned; the menu dish is still the sandbox's map (the
+menu's Planet options preview on it), and a run planet behind the main
+page would be the next step if the owner wants one.
 
 **Open branch:** `claude/project-thread-wypzro`, reused per PR.
 

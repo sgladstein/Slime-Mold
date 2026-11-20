@@ -900,9 +900,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // past the world's edges (fit with no insets).
         app.prepare();
         for tag in ["all", "near"] {
-            let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
-            app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
-            app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            if tag == "all" && app.menu.is_some() {
+                // A menu's picture as the window frames its dish (`menu_camera`).
+                app.menu_camera();
+            } else {
+                let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
+                app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
+                app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            }
             if tag == "near" {
                 let (sx, sy) = app.shake();
                 (app.camera.x, app.camera.y) = (app.camera.x + sx, app.camera.y + sy);
