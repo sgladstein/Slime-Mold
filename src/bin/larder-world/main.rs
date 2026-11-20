@@ -2449,6 +2449,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "centre" => {
                 // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
+                // The bench also takes `centre=larder[,ZOOM]`: the squad's
+                // base, wherever the map put it (NaN here; only `bench`
+                // reads it, the GTX 1070 batch's zoomed runs, 11-20).
+                let v = v.replacen("larder", "NaN,NaN", 1);
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, zoom @ ..] = w.as_slice() else { return Err("centre=X,Y[,ZOOM]".into()) };
                 centre = Some((*x, *y, zoom.first().copied().unwrap_or(6.0)));
