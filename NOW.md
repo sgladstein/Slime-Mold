@@ -1,7 +1,7 @@
 # Now
 
 The front page: what is being built, who builds it, and what waits on the
-owner. Kept by the Direction lane (last change 2026-11-18), which owns it; send it
+owner. Kept by the Direction lane (last change 2026-11-20), which owns it; send it
 changes, don't edit it. At most 100 lines. The rules are in
 [`CLAUDE.md`](CLAUDE.md), each lane's state in `handoff/<lane>.md`, the
 reasons in [the plan](Reports/continuation-plan-2026-11-17.md) the owner
@@ -24,6 +24,14 @@ Next is Milestone 2, "A whole run": the origin as the way a planet is won, a
 chosen run length, the bot's curve over all eight planets, save and resume,
 the core world at 60 frames a second. A release only if the owner chooses one.
 
+**Where it stands (11-20, [check](handoff/direction.md)).** Nothing is
+closed yet. Behind: test 1. The run bot wins planet 1 and stalls on planet 2
+(since 11-18). The strategy bots (#529) win planet 3 started there, in
+about 4 to 5 minutes with the best deck, under the 8 to 12 wanted, before
+Needle Blast's one burst a bullet (#532). Built and his to judge in play:
+2, 4, 5. Test 3: the bots' mixed-planet search learned to rush planets 1
+and 2 (data for D7, no brake). Test 6: two switches off, both overdue.
+
 ## Each lane's top jobs
 
 | Lane | Exit test | Top three jobs, in order |
@@ -32,7 +40,7 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 | Enemy | 4 | Done: the off switches settled (#451), the lure's field (#457), walls that guard the Trunk's crystals as a base (#473, his note 11-18 03:11Z). Make each of planets 1 to 3 do one nameable thing to the player by minute 2, with a clip a planet; then the origin, as a design page to Direction first. |
 | Squad and arsenal | 5 | Done: the brief's five jobs, with Provoke and Still (#448) and the shop's offers (#459); no new card families; the Lure building, from planet 1 (#461, #464). Next is what his play notes say about control and the gun. |
 | Look and interface | 2 | The pages that say what a build holds: the Experiments tab, "what is new", "things to try", the build number. Look A, the fight round the squad (the flinch's look is done, #454). One ranked list of look jobs and a review of every lane's visible change; win and lose screens. |
-| Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452); the run bot's first cut (#463). The run bot: planet 1 to a win or a loss, then planets 1 to 3 with the shop. |
+| Engine and tools | 1, 6 | Done: the switch list, build number and "what is new" file with its lint (#449); the play record and a Windows build from CI (#452); the run bot's first cut (#463), planet 1 won. **First:** one bot through planets 1 to 3 in a run, joined with the strategy bots (#529) rather than a second bot; then each planet's length against 8 to 12 minutes. |
 | Lab | none | Delivered 11-17 and 11-18: steering (four parts, in the game as the Lure), a second species that hunts the first (parked), and the forest floor, rain that pools and dries ([report](Reports/lab-forest-2026-11-18/README.md); recommendation: change, then build). With the rot, and (11-18, his play notes) the slime as one body: marchers that will not step where fewer than two others touch keep a raid in one piece, 114 loose walkers against 365 ([report](Reports/lab-body-2026-11-18/README.md)); Enemy builds it into the raid march. The lab waits for a brief. |
 
 **The Lure is in, from planet 1** (his card, 11-18 03:03Z: "Lure now, in

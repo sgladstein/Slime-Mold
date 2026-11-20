@@ -130,6 +130,15 @@ end.
   **Next:** the bots re-check planet 3 (seek+wide+blast.needle won 9 of 9
   maps before; no cards 5 of 9). Once #527 is on main, add a line on it to
   `wiki/world/gun-cards.md`.
+- **Roadmap check, 11-20 05:40Z** (his ask, 01:24Z): 89 PRs since 11-18,
+  nearly all in the milestone. Test 1 is behind: the run bot stalls on
+  planet 2, and the strategy bots win planet 3 only when started there, in
+  4 to 5 minutes. Tests 2, 4 and 5 are built and his to judge. On test 3,
+  the bots' mixed search learned to rush planets 1 and 2. On test 6, `feel`
+  (D6, his) and `crystal_regrow` (Enemy, since 11-11) are still off. Small
+  drift: Look C (rock) began before A and B were done. Next: one bot
+  through 1 to 3 (Engine and tools with the strategy bots), planet 3's
+  length after #532, and the two switches.
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the
