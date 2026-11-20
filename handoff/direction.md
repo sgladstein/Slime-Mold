@@ -193,6 +193,13 @@ end.
   `reward` 175 + 25 a planet plus 50 a star (was 150 + 50 a planet), so
   planet 1 keeps 200 and depth growth comes from drops. Retune once a bot
   or his play shows how much ore a player takes.
+- **Late bosses against a big army** (#587's options, 11-20 21:35Z,
+  Direction's pick, not raised to the owner: it is how to build his
+  "stronger mini-bosses near the end"): A, the Mortar weighted up late and
+  allowed late from planet 2 (the big armies are on planet 2), and B, a
+  big army's late bosses run errands round it instead of charging its
+  front. Not C, D or E. Measure: boss kills in a game's last quarter
+  against 30 or more soldiers, paired by map; small squads no worse.
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the
