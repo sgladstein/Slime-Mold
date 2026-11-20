@@ -396,7 +396,18 @@ impl WorldListener {
             self.rebaseline(g);
         }
         out.push(SoundCmd::Hush(hushed));
-        let dt = dt.max(1e-3);
+        // A rate that went NaN once (a 0/0 in the game's numbers) would
+        // stay NaN in its smoothing for good; start it again from zero.
+        // The voice bank refuses what is left (`VoiceBank::apply`).
+        for x in [&mut self.kill_rate, &mut self.steal_rate, &mut self.natural, &mut self.eat_rate, &mut self.flinch, &mut self.beat] {
+            if !x.is_finite() {
+                *x = 0.0;
+            }
+        }
+        if !(self.charge.is_finite() && self.carried.is_finite()) {
+            (self.charge, self.carried) = (0.0, 0.0);
+        }
+        let dt = if dt.is_finite() { dt.max(1e-3) } else { 1e-3 };
         let k = 1.0 - (-dt / RATE_SMOOTH).exp();
 
         // --- shots -----------------------------------------------------

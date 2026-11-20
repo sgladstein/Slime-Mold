@@ -1041,6 +1041,10 @@ impl Run {
             for &(k, v) in does_to_you(self.level().tier).rules {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }
+            // Starfall and boss cores (2026-11-20, `larder_world/starfall.rs`;
+            // the owner, 19:06Z: "I like starfall with boss cores"): shop
+            // points the squad takes on the planet, on top of `reward`.
+            r.star = crate::mould::larder_world::StarRules::for_depth(self.depth);
         }
         // A run is lost when its last soldier falls, food in the bank or
         // not (owner, 2026-11-18 15:56Z; `Rules::wipe_ends`).
@@ -1493,6 +1497,13 @@ impl Run {
             })
             .filter(|g| !self.guns.contains(g))
             .collect();
+    }
+
+    /// Shop points the squad took on the planet (`Game::starfall`: ore
+    /// from the sky and boss cores), kept whether it is won or lost.
+    /// Before `won`, so the end screen's sum is the shop's.
+    pub fn found(&mut self, points: u32) {
+        self.points += points;
     }
 
     /// The current level was won with `stars` (1-3): its points, the next

@@ -30,6 +30,7 @@ sources:
   - Reports/sim-use-2026-11-17/s2-far-smell.md
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
+  - Reports/starfall-2026-11-20/README.md
   - Reports/strikers-2026-11-20/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/trunk-fort-2026-11-18/README.md
@@ -53,6 +54,7 @@ code:
   - REF_OPEN
   - Run::buy_into
   - Run::carried
+  - Run::found
   - Run::gun
   - Run::level
   - Run::put_in
@@ -60,6 +62,7 @@ code:
   - Run::rules
   - Run::shop
   - STUCK_WARN
+  - StarRules::for_depth
   - StrikerRules
   - WIN_SHARE
   - WaveRules
@@ -70,6 +73,7 @@ code:
   - clock
   - does_to_you
   - enemy_keys
+  - fall_count
   - fort_mask
   - gun_price
   - head_start
@@ -93,6 +97,7 @@ code:
   - time_fruit
   - time_heart
   - time_lure_paths
+  - time_starfall
   - time_waves
   - two_stars
 ---
@@ -157,6 +162,10 @@ On since 2026-11-20 (the same thread, the owner's pick on the balance thread's c
 ## A cornered slime lunges
 
 On since 2026-11-20 (the balance thread, the other half of the owner's pick that day; `Rules::late_at`, `late_margin`, `late_haste`, `Game::keep_panic_reach`, `run::ENEMY_RULES`' `late_at` 0.4). Once the slime falls under 40% of its peak, for the rest of the planet its charges reach 25 dish cells past the guns and its surges lunge at 3x, the Swarmer's numbers, the one rule in his 19 logs that took a big army apart (32 soldiers in 30 s on his 11-19 planet 4). On the Swarmer it changes nothing. Measured with the strikers on the strategy league, by soldiers the slime bites to death in a game's last quarter (the league now counts bites apart from fire and blasts): neither made the slime bite the bot's 80-soldier army more, on planet 2 (36 games) or planet 3 (27 games, where 92% of the bot's dead burned in its own fire) ([report](../../Reports/late-threat-2026-11-20/README.md)). On as the owner's pick, its line saying so; the strikers' retune is scored the same way.
+
+## Starfall and boss cores
+
+On since 2026-11-20 (the owner's pick, 19:06Z: "I like starfall with boss cores. The amount of star fall should have a minimum but can sometimes happen a lot. Random selection from distribution as normal"; the options and why the first round was dropped are in the [doc](https://claude.ai/artifact/XHLmAP2RFnSAHba6orJLjW); [page](../../Reports/starfall-2026-11-20/README.md)). A planet pays shop points on top of `reward` from what the squad picks up on it (`larder_world/starfall.rs`, `StarRules::for_depth`, set by `Run::rules`; `Run::found` adds them before `won`). **Starfall:** at least 3 falls a planet, then each more with chance 0.55, at most 12 (`fall_count`: 3 or 4 on about two planets in three, 7 or more on about one in ten), at times drawn between 0:50 and 10:00 after the landing, 25 s apart at least. A fall lands 14 to 60 dish cells from the nearest soldier, by slime where the grid shows some; its shadow shows for 10 s, then it lands as a blast (kill radius 4, a 20 s crater over 6, 60 health off a soldier under it). The ore is 2.5 dish cells across, worth 30 + 10 per planet, and lasts 60 s: each soldier within 2 cells of its rim drains 2.5 points a second (times the planet's harvest, so Quick hands drains faster), each walker on it eats 1 point times the slime's mass a second, and once the slime has eaten half of one its next surge is fed (`surge_meter`). It smells three times a soldier and is a lure (`LureMark`) for its life, so the GPU slime streams to it. **Boss cores:** a mini-boss broken (`BossEnd::Broken`) drops a core worth 40 + 40 x its grade, a fruit shot down (`FruitEnd::Broken`) one worth 40; it lasts 15 s and walkers on it soak it back. Nothing more is drawn once a planet starts, so waiting earns nothing (the owner's 13:49Z objection to paying for crystals held). The base pay is unchanged for now; Direction tunes both after play. The bots do not go for drops yet.
 
 ## Mini-bosses since the review of 11-20
 
