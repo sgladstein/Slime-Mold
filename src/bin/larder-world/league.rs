@@ -153,17 +153,18 @@ fn shop_plan(spec: &str) -> Result<Plan, String> {
     }
 }
 
-/// One planet played: the `league` line's numbers.
-struct Played {
-    how: &'static str,
-    stars: u8,
-    secs: f32,
-    line: String,
+/// One planet played: the `league` line's numbers. The window's planet 1
+/// test (`the_window_plays_planet_1_with_the_run_bot`) reads it too.
+pub(super) struct Played {
+    pub how: &'static str,
+    pub stars: u8,
+    pub secs: f32,
+    pub line: String,
 }
 
 /// Plays the run's current planet with plan `spec` to its verdict or
 /// `secs` game seconds (0: its clock and a minute).
-fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Played, String> {
+pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Played, String> {
     let l = r.level();
     let mut args = base.clone();
     args.seed = l.seed;
