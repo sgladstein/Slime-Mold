@@ -6107,3 +6107,6 @@
 2026-11-20 16:05:54   rush,aim=6,cards=0,shop=mine/strike/rate/hp,mines=3 planet 2.0 seed 2.0: lost 476.1 (34 s)
 2026-11-20 16:05:54   rush,aim=6,cards=0,shop=mine/strike/rate/hp,mines=3 planet 2.0 seed 3.0: lost 206.5 (14 s)
 2026-11-20 16:06:08   rush,aim=6,cards=0,shop=mine/strike/rate/hp,mines=3 planet 2.0 seed 4.0: won 354.0 (20 s)
+2026-11-20 16:06:09 worker: league.py changed; restarting
+2026-11-20 16:06:10 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-20 16:06:10 worker: built the game in 1 s (src 976b5aeab30c)
