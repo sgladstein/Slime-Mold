@@ -772,6 +772,8 @@ impl Rules {
             "strikers_band" => &mut self.strikers.band,
             "strikers_share" => &mut self.strikers.share,
             "strikers_haste" => &mut self.strikers.haste,
+            "strikers_few" => &mut self.strikers.few,
+            "strikers_full" => &mut self.strikers.full,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,

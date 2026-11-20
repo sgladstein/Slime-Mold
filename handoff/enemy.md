@@ -93,8 +93,14 @@ lit bead in the droplets' layer, radius by what it holds, a 48-step pulse;
 it counts as its walkers in the body, no bronze. Test:
 `condensed_strikers_take_in_their_neighbours_charge_and_take_more_blows`.
 The balance thread (cmsg_01LaKUNJU8dhcZFTMf8VboUgN41f84yygVjCkvqcyxGYdX)
-measures it against `set=strikers=0` with its late lunge (B). Next: D,
-the last-stand heart, once A is judged.
+measures it against `set=strikers=0` with its late lunge (B). Its first
+score (planet 2, 36 games) found the first numbers did not bite an
+80-soldier army, so A was retuned that evening: `below` 0.6, `band` 30,
+`share` 1, `haste` 3, and the share scaled by the squad from `few` 8 to
+`full` 24 soldiers; `most` (blows a striker takes, 1-15, packed in the
+condense row's reach word) is a rule now, default still 3. The probes and
+why are in `StrikerRules::default`'s comment. The balance thread scores
+the retune next. Next: D, the last-stand heart.
 
 ## Heartbeat (2026-11-20, the same thread)
 
