@@ -1922,6 +1922,8 @@ impl App {
         let t0 = Instant::now();
         // The kit's blasts (mines, thrown charges), heard where they went off.
         l.bangs(&self.kit.bangs);
+        // The gun cards' payloads (sound pass two, 2026-11-20).
+        l.pops(&self.rounds.pops);
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {

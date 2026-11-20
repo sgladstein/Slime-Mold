@@ -30,7 +30,8 @@
 //! does not sound like the one in front of you.
 
 use crate::mould::kit::Bang;
-use crate::mould::larder_world::{Game, Kind, Shot, World};
+use crate::mould::larder_world::{BossEnd, Game, Kind, Shot, World};
+use crate::mould::rounds::{Card, Pop};
 
 use super::pieces::{blobs, Pieces};
 use crate::mould::larder::End;
@@ -210,6 +211,17 @@ pub struct WorldStats {
     /// against what shots really kill.
     pub kill_hist: [u32; 8],
     pub full: f32,
+    /// Sound pass two (2026-11-20): the gun cards' payloads heard (blast,
+    /// bomb, gas, germ, flare, torch, the mind and reader rounds), raids
+    /// and surges starting, mini-bosses formed and broken, buildings set
+    /// down and lost.
+    pub payloads: u32,
+    pub raids: u32,
+    pub surges: u32,
+    pub bosses: u32,
+    pub broken: u32,
+    pub built: u32,
+    pub lost: u32,
 }
 
 /// The upper ends of `WorldStats::kill_hist`'s bins.
@@ -258,6 +270,16 @@ pub struct WorldListener {
     bangs: Vec<Bang>,
     last_grid: Vec<u32>,
     held: Vec<SoundCmd>,
+    /// Sound pass two: the rounds' pops heard so far (`pops`) and the new
+    /// ones waiting for `hear`; raids, surges, bosses formed and ended
+    /// already heard; each building's last life.
+    pops_seen: usize,
+    pops_new: Vec<Pop>,
+    raids_seen: usize,
+    surges_seen: u32,
+    boss_born: u64,
+    boss_ended: usize,
+    buildings: Vec<bool>,
     pub stats: WorldStats,
 }
 
@@ -302,6 +324,13 @@ impl WorldListener {
             bangs: Vec::new(),
             last_grid: Vec::new(),
             held: Vec::new(),
+            pops_seen: 0,
+            pops_new: Vec::new(),
+            raids_seen: 0,
+            surges_seen: 0,
+            boss_born: 0,
+            boss_ended: 0,
+            buildings: Vec::new(),
             stats: WorldStats::default(),
         };
         l.rebaseline(g);
@@ -338,6 +367,12 @@ impl WorldListener {
         self.bangs.clear();
         self.last_grid.clear();
         self.held.clear();
+        self.pops_new.clear();
+        self.raids_seen = g.raids.sent.len();
+        self.surges_seen = g.surges;
+        self.boss_born = g.bosses.live.iter().map(|b| b.born).max().unwrap_or(0).max(self.ticks);
+        self.boss_ended = g.bosses.ended.len();
+        self.buildings = g.buildings.iter().map(|b| b.alive).collect();
         self.stats.rebaselines += 1;
     }
 
@@ -585,6 +620,7 @@ impl WorldListener {
         self.ended = g.end.is_some();
         self.body(g, ear, dt, killed, &mut out);
         self.news(g, ear, &mut out);
+        self.events(g, ear, &mut out);
         self.ticks = ticks;
         out
     }
@@ -675,6 +711,14 @@ const TURRET: f32 = 0.5;
 /// A gunshot's level on screen (`SoundCmd::Gun`). The old crack was 0.4
 /// of a thinner sound.
 const GUN_LEVEL: f32 = 0.38;
+/// Whether a payload makes a sound of its own: every payload but the
+/// plain bullet's, which the gun and the hit already voice.
+fn payload_heard(c: Card) -> bool {
+    !matches!(c, Card::Plain | Card::Ammo(_))
+}
+
+/// The gun cards' payloads voiced a drawn frame (`events`).
+const PAYLOADS_VOICED: usize = 4;
 /// Bullets heard whizzing past a drawn frame.
 const ZIPS_VOICED: usize = 4;
 /// A piece's least walkers, as a share of the mould at the start: 100 of
@@ -726,6 +770,136 @@ impl WorldListener {
         if let Some(t) = bangs.iter().map(|b| b.tick).max() {
             self.bang_tick = self.bang_tick.max(t);
         }
+    }
+
+    /// The rounds' pops (`Rounds::pops`, the gun cards' payloads going
+    /// off), called with the whole list each frame like `bangs`: the ones
+    /// past the last call are heard at the next `hear`. A shorter list is a
+    /// new round's.
+    pub fn pops(&mut self, pops: &[Pop]) {
+        if pops.len() < self.pops_seen {
+            self.pops_seen = 0;
+        }
+        self.pops_new.extend(pops[self.pops_seen..].iter().copied().filter(|p| payload_heard(p.payload)));
+        self.pops_seen = pops.len();
+    }
+
+    /// **Sound pass two** (2026-11-20): what made no sound before. A gun
+    /// card's payload going off, in its own voice and no bigger than what
+    /// it did (a blast's and a bomb's weight is the walkers they killed);
+    /// a raid or a surge starting, the slime gathering itself; a mini-boss
+    /// forming, and breaking; a building set down, and lost.
+    fn events<W: World>(&mut self, g: &Game<W>, ear: Ear, out: &mut Vec<SoundCmd>) {
+        let sc = g.world.scale().max(1.0);
+        // Payloads: the heaviest few a frame; the rest are in the kill
+        // pops already.
+        let mut pops = std::mem::take(&mut self.pops_new);
+        pops.sort_by_key(|p| std::cmp::Reverse(p.killed));
+        for (j, p) in pops.iter().take(PAYLOADS_VOICED).enumerate() {
+            let at = (p.burst.at.0 * sc, p.burst.at.1 * sc);
+            let (pan, gain) = ear.place(at);
+            let far = ear.far(at);
+            let delay = 0.02 * j as f32;
+            let w = kill_weight(p.killed as u32, self.full);
+            // A bigger disc is a bigger sound, up to the kit blast's.
+            let size = (p.burst.r / 6.0).clamp(0.4, 1.0);
+            let g1 = gain * size;
+            match p.payload {
+                Card::Blast | Card::Bomb => {
+                    let bomb = p.payload == Card::Bomb;
+                    out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: (0.35 + 0.35 * w) * g1 * if bomb { 1.2 } else { 1.0 }, delay });
+                    out.push(SoundCmd::Impact { weight: w.max(0.3), pan, gain: (0.25 + 0.3 * w) * g1, delay: delay + 0.015, far });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: if bomb { 140.0 } else { 90.0 }, secs: if bomb { 0.35 } else { 0.2 }, pan, spread: 0.3, gain: 0.22 * g1 });
+                }
+                Card::Gas => out.push(SoundCmd::Grain { kind: GrainKind::Hiss, pan, gain: 0.45 * g1, delay }),
+                Card::Germ | Card::Detonate => {
+                    out.push(SoundCmd::Burst { kind: GrainKind::Pop, rate: 45.0, secs: 0.35, pan, spread: 0.2, gain: 0.25 * g1 });
+                    if p.killed > 0 {
+                        out.push(SoundCmd::Impact { weight: w, pan, gain: (0.2 + 0.3 * w) * g1, delay, far });
+                    }
+                }
+                Card::Flare | Card::Torch => {
+                    out.push(SoundCmd::Grain { kind: GrainKind::Whoosh, pan, gain: 0.25 * g1, delay });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Sizzle, rate: 70.0, secs: 0.5, pan, spread: 0.2, gain: 0.2 * g1 });
+                }
+                Card::Shatter => {
+                    out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.3 * g1, delay });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Crackle, rate: 25.0 + 2.0 * p.killed.min(60) as f32, secs: 0.25, pan, spread: 0.2, gain: 0.25 * g1 });
+                }
+                // The mind rounds kill nothing: a soft shimmer, rising drips.
+                _ => out.push(SoundCmd::Burst { kind: GrainKind::Drip, rate: 30.0, secs: 0.25, pan, spread: 0.3, gain: 0.12 * g1 }),
+            }
+            self.stats.payloads += 1;
+        }
+        let alive = g.end.is_none();
+        // A raid starting: a groan where it is headed; the last stand
+        // groans twice, louder, with a snarl.
+        for r in g.raids.sent.iter().skip(self.raids_seen) {
+            if !alive {
+                break;
+            }
+            let (pan, gain) = ear.place(r.to);
+            let gain = gain.max(ALERT_FLOOR);
+            out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan, gain: if r.last_stand { 0.55 } else { 0.4 } * gain, delay: 0.0 });
+            if r.last_stand {
+                out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.45 * gain, delay: 0.9 });
+            }
+            self.stats.raids += 1;
+        }
+        self.raids_seen = g.raids.sent.len();
+        // A surge: the whole body gathers, at its home.
+        if g.surges > self.surges_seen && alive {
+            let (pan, _) = ear.place(g.core);
+            out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan: pan * 0.5, gain: 0.45, delay: 0.0 });
+            self.stats.surges += g.surges - self.surges_seen;
+        }
+        self.surges_seen = g.surges;
+        // Mini-bosses: a deep growl as one forms; a tear and a wither as
+        // the squad breaks it; a fizzle as one comes to nothing.
+        for b in g.bosses.live.iter().filter(|b| b.born > self.boss_born) {
+            let (pan, gain) = ear.place(b.at);
+            out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan, gain: 0.45 * gain.max(ALERT_FLOOR), delay: 0.0 });
+            out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.4 * gain.max(ALERT_FLOOR), delay: 0.6 });
+            self.stats.bosses += 1;
+        }
+        self.boss_born = g.bosses.live.iter().map(|b| b.born).max().unwrap_or(0).max(self.boss_born);
+        for (b, end, _) in g.bosses.ended.iter().skip(self.boss_ended) {
+            let (pan, gain) = ear.place(b.centre);
+            match end {
+                BossEnd::Broken => {
+                    out.push(SoundCmd::Grain { kind: GrainKind::Tear, pan, gain: 0.5 * gain.max(0.5), delay: 0.0 });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Wilt, rate: 70.0, secs: 0.5, pan, spread: 0.2, gain: 0.25 * gain.max(0.5) });
+                    self.stats.broken += 1;
+                }
+                BossEnd::Fizzled | BossEnd::Spent => out.push(SoundCmd::Burst { kind: GrainKind::Wilt, rate: 40.0, secs: 0.4, pan, spread: 0.2, gain: 0.15 * gain }),
+            }
+        }
+        self.boss_ended = g.bosses.ended.len();
+        // Buildings: set down (a clank and a thunk), and lost (a crunch).
+        for (i, b) in g.buildings.iter().enumerate() {
+            let (pan, gain) = ear.place(b.at);
+            match self.buildings.get(i).copied() {
+                None => {
+                    if b.alive {
+                        out.push(SoundCmd::Grain { kind: GrainKind::Clank, pan, gain: 0.35 * gain, delay: 0.0 });
+                        out.push(SoundCmd::Grain { kind: GrainKind::Thunk, pan, gain: 0.3 * gain, delay: 0.03 });
+                        self.stats.built += 1;
+                    }
+                    self.buildings.push(b.alive);
+                }
+                Some(was) => {
+                    if was && !b.alive {
+                        let gain = gain.max(ALERT_FLOOR);
+                        out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.45 * gain, delay: 0.0 });
+                        out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 110.0, secs: 0.3, pan, spread: 0.3, gain: 0.25 * gain });
+                        out.push(SoundCmd::Grain { kind: GrainKind::Clank, pan, gain: 0.2 * gain, delay: 0.05 });
+                        self.stats.lost += 1;
+                    }
+                    self.buildings[i] = b.alive;
+                }
+            }
+        }
+        self.buildings.truncate(g.buildings.len());
     }
 
     /// **What the cloud plan's C7 added** (2026-11-14): sirens, the kit's
@@ -1077,6 +1251,37 @@ mod tests {
         assert_eq!(gun_voice(&g, &shot(Some(0), None)), GunVoice::Long);
         assert_eq!(gun_voice(&g, &shot(None, Some(0))), GunVoice::Turret);
         assert_eq!(gun_voice(&g, &shot(None, None)), GunVoice::Turret);
+    }
+
+    /// Sound pass two: a gun card's payload is heard once, in its own
+    /// voice; a plain bullet's is not (the gun and the hit voice it); a
+    /// raid and a surge starting groan once each.
+    #[test]
+    fn payloads_raids_and_surges_are_heard_once() {
+        use crate::mould::larder_world::{Raid, RaidAim};
+        use crate::mould::rounds::Burst;
+        let mut g = small(1);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let pop = |payload: Card| Pop { burst: Burst { at: (20.0, 20.0), r: 4.0, kill: true, ..Burst::default() }, throw: None, payload, tick: 3, killed: 12, flung: 0 };
+        let has = |c: &[SoundCmd], k: GrainKind| c.iter().any(|c| matches!(c, SoundCmd::Grain { kind, .. } | SoundCmd::Burst { kind, .. } if *kind == k));
+        let mut pops = vec![pop(Card::Gas)];
+        l.pops(&pops);
+        assert!(has(&l.hear(&g, ear, 1.0 / 60.0, false), GrainKind::Hiss));
+        l.pops(&pops);
+        assert!(!has(&l.hear(&g, ear, 1.0 / 60.0, false), GrainKind::Hiss), "the same pop again is not new");
+        pops.push(pop(Card::Blast));
+        pops.push(pop(Card::Plain));
+        l.pops(&pops);
+        let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
+        assert!(has(&cmds, GrainKind::Thud) && has(&cmds, GrainKind::Grit));
+        assert_eq!(l.stats.payloads, 2, "the plain bullet's pop is the gun's and the hit's");
+        g.raids.sent.push(Raid { tick: 5, aim: RaidAim::Building(0), to: (30.0, 30.0), reach: 10.0, size: 0.1, held: 100, share: 0.5, last_stand: false });
+        g.surges += 1;
+        let swells = |c: &[SoundCmd]| c.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Swell, .. })).count();
+        assert_eq!(swells(&l.hear(&g, ear, 1.0 / 60.0, false)), 2);
+        assert_eq!(swells(&l.hear(&g, ear, 1.0 / 60.0, false)), 0);
+        assert_eq!((l.stats.raids, l.stats.surges), (1, 1));
     }
 
     #[test]

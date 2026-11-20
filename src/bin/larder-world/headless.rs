@@ -1021,6 +1021,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             "  heard (C7): zips {}, sirens {}, blasts {}, pieces torn {} rejoined {} withered out {}, tells {} (charges {}); at the end {} pieces losing {:.0} walkers/s",
             s.zips, s.sirens, s.blasts, s.torn, s.rejoined, s.withered, s.tells, s.charges, s.pieces, s.withering
         );
+        println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost);
         println!("  hits by kills (0, 1, 2, 3-4, 5-8, 9-16, 17-32, 33+): {:?}; full weight at {:.0} kills", s.kill_hist, s.full);
         let b = bank.stats;
         println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);

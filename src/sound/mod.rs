@@ -167,10 +167,17 @@ pub enum GrainKind {
     Action,
     /// Larder World: a walker killed, a small wet pop (`TextureKind::Kill`).
     Pop,
+    /// Larder World: a gas round's cloud let out, a long falling hiss.
+    Hiss,
+    /// Larder World: the slime gathering itself (a raid or a surge
+    /// starting, a mini-boss forming), a low rough groan that rises.
+    Swell,
+    /// Larder World: a building set down, a metal clank.
+    Clank,
 }
 
 impl GrainKind {
-    pub const ALL: [GrainKind; 22] = [
+    pub const ALL: [GrainKind; 25] = [
         GrainKind::Squelch,
         GrainKind::Slurp,
         GrainKind::Crackle,
@@ -193,6 +200,9 @@ impl GrainKind {
         GrainKind::Report,
         GrainKind::Action,
         GrainKind::Pop,
+        GrainKind::Hiss,
+        GrainKind::Swell,
+        GrainKind::Clank,
     ];
 }
 
