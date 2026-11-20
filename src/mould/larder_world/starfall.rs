@@ -99,6 +99,11 @@ pub struct StarRules {
     /// (fresh ones; a re-formed boss's core is its old one again).
     pub core_reform: f32,
     pub core_pot: f32,
+    /// Points a second each walker on a core eats, times the slime's mass
+    /// (`eat` is ore's): at ore's 1, a core landing in thick slime was half
+    /// eaten in 2 s and a wanderer re-formed 3 s after it broke (planet 2,
+    /// run 1795106014).
+    pub core_eat: f32,
     /// **A core runs home** (`cores.rs`): it slides at `core_drift` dish
     /// cells a second to the thickest slime within `core_drift_r` of where
     /// it dropped, so the squad must reach into the slime for it.
@@ -147,6 +152,7 @@ impl Default for StarRules {
             core_r: 2.0,
             core_reform: 0.5,
             core_pot: 200.0,
+            core_eat: 0.3,
             core_drift: 8.0,
             core_drift_r: 60.0,
             raid_beat: 0.5,
@@ -465,7 +471,10 @@ impl<W: World> Game<W> {
         let takers = self.soldiers.iter().filter(|s| s.alive && (s.x - d.at.0).hypot(s.y - d.at.1) <= reach).count() as u32;
         let hands = self.rules.harvest / Rules::default().harvest.max(1e-6);
         let took = (takers as f32 * r.take * hands * dt).min(d.left);
-        let ate = (touching as f32 * r.eat * self.rules.mass * dt).min(d.left - took);
+        // A core is eaten slower than ore (`core_eat`), so a boss broken by
+        // thick slime gives the squad a few seconds before it re-forms.
+        let eat = if d.kind == DropKind::Core { r.core_eat } else { r.eat };
+        let ate = (touching as f32 * eat * self.rules.mass * dt).min(d.left - took);
         let d = &mut self.starfall.live[i];
         d.left -= took + ate;
         d.taken += took;

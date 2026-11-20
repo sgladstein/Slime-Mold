@@ -789,6 +789,7 @@ impl Rules {
             "core_life" => &mut self.star.core_life,
             "core_reform" => &mut self.star.core_reform,
             "core_pot" => &mut self.star.core_pot,
+            "core_eat" => &mut self.star.core_eat,
             "core_drift" => &mut self.star.core_drift,
             "core_drift_r" => &mut self.star.core_drift_r,
             "core_raid_beat" => &mut self.star.raid_beat,
