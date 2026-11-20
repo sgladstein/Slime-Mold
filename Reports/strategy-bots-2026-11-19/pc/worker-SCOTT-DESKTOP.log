@@ -1958,3 +1958,6 @@
 2026-11-19 23:20:43   lure,go=4,aim=6,cards=0 planet 3.0 seed 2.0: open 720.1 (61 s)
 2026-11-19 23:21:26   lure,go=4,aim=6,cards=0 planet 3.0 seed 3.0: open 720.1 (58 s)
 2026-11-19 23:21:26   lure,go=4,aim=6,cards=0 planet 3.0 seed 4.0: won 343.0 (25 s)
+2026-11-19 23:21:30 worker: league.py changed; restarting
+2026-11-19 23:21:30 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-19 23:21:31 worker: built the game in 1 s (src fd31271036ff)
