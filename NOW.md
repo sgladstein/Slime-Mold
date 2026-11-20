@@ -27,8 +27,10 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 **Where it stands (11-20, [check](handoff/direction.md)).** Nothing is
 closed yet. Behind: test 1. The run bot wins planet 1 and stalls on planet 2
 (since 11-18). The strategy bots (#529) win planet 3 started there, in
-about 4 to 5 minutes with the best deck, under the 8 to 12 wanted, before
-Needle Blast's one burst a bullet (#532). Built and his to judge in play:
+4:50 on average with the best deck; after Needle Blast's one burst a
+bullet (#532) that deck wins 7 of 9 maps (was 9), in 6:25, still under the
+8 to 12 wanted. Wide+Rate+Needle Blast (8 of 9, better than no cards on all
+9) is the one to watch under the Noita rule; no change on a guess. Built and his to judge in play:
 2, 4, 5. Test 3: the bots' mixed-planet search learned to rush planets 1
 and 2 (data for D7, no brake). Test 6: two switches off, both overdue.
 
