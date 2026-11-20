@@ -4522,3 +4522,63 @@ fn a_pinwheel_hunts_with_its_arms_turning() {
     assert_eq!(hunt(6.0, 0.0), (BossKind::Pinwheel, 0.0), "not while its prey is far");
     assert_eq!(hunt(1.0, 1.0e6), (BossKind::Hunter, 0.0));
 }
+
+/// Move, then Shift + a build: the window queues the build on the squad
+/// (`Cmd::SquadQueue`), which starts it once the squad gets there and
+/// raises it at the default raise time (owner 2026-11-20: "If I tell a
+/// squad to move here then shift (queue) build it doesn't work").
+#[test]
+fn a_squad_moved_then_shift_built_raises_the_build_once_there() {
+    let mut g = squads(17);
+    g.bank = 1e6;
+    g.rules.build.raise = BuildRules::default().raise;
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let sc = g.s();
+    let m = g.middle(0).unwrap();
+    let to = (0..32)
+        .map(|i| i as f32 / 32.0 * std::f32::consts::TAU)
+        .map(|a| room_near(&g, (m.0 + 20.0 * sc * a.cos(), m.1 + 20.0 * sc * a.sin())))
+        .find(|q| (q.0 - m.0).hypot(q.1 - m.1) > 15.0 * sc)
+        .expect("somewhere to send it");
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    g.step();
+    let at = room_near(&g, (to.0, to.1 + 9.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+    let b = g.buildings.len() - 1;
+    assert!(g.buildings[b].built < 1.0, "a ghost to raise");
+    assert!(g.apply(Cmd::SquadQueue(0, Order::Build(b))));
+    assert_eq!(g.squads[0].queued, 1, "queued behind the move, not started");
+    assert!(g.squads[0].dest.is_some(), "the move goes on");
+    let mut working = false;
+    for _ in 0..frames(&g, 90.0) {
+        g.step();
+        working |= g.squads[0].work == Some(Order::Build(b));
+        if g.buildings[b].up() {
+            break;
+        }
+    }
+    assert!(working, "the squad set to work on the build once there");
+    assert!(g.buildings[b].up(), "the queued build rose ({:.0}% built)", g.buildings[b].built * 100.0);
+    // Two in a row: the second waits for the first.
+    let at2 = room_near(&g, (to.0 + 9.0 * sc, to.1 - 6.0 * sc));
+    let at3 = room_near(&g, (to.0 - 9.0 * sc, to.1 - 6.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at2)));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at3)));
+    let (b1, b2) = (g.buildings.len() - 2, g.buildings.len() - 1);
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1 - 12.0 * sc)));
+    assert!(g.apply(Cmd::SquadQueue(0, Order::Build(b1))));
+    assert!(g.apply(Cmd::SquadQueue(0, Order::Build(b2))));
+    let mut first = None;
+    for t in 0..frames(&g, 180.0) {
+        g.step();
+        if first.is_none() && g.buildings[b1].up() {
+            first = Some(t);
+        }
+        if g.buildings[b2].up() {
+            assert!(first.is_some(), "the second queued build rose before the first");
+            break;
+        }
+    }
+    assert!(g.buildings[b1].up() && g.buildings[b2].up(), "both queued builds rose");
+}

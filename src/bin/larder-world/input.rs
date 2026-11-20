@@ -134,11 +134,16 @@ impl App {
     /// in the RTS round (or with no squad controlled). Every order the
     /// card gives goes this way there (drain, attack-move, burn, build):
     /// given soldier by soldier, a squad on the move took them back at its
-    /// next step (`Game::squad_turn`; bug sweep, 2026-11-14).
+    /// next step (`Game::squad_turn`; bug sweep, 2026-11-14). With Shift
+    /// held it is queued after the squad's orders (`Cmd::SquadQueue`), as
+    /// a Shift + right click is: given soldier by soldier, a queued order
+    /// was dropped the same way (owner 2026-11-20: "If I tell a squad to
+    /// move here then shift (queue) build it doesn't work").
     pub(super) fn squad_order(&mut self, o: Order) -> bool {
         let q = self.game.as_ref().filter(|g| g.rules.squads && self.sq.is_some()).and_then(|g| g.active);
+        let shift = self.shift;
         match (q, self.game.as_mut()) {
-            (Some(q), Some(g)) => g.apply(Cmd::SquadOrder(q as u8, o)),
+            (Some(q), Some(g)) => g.apply(if shift { Cmd::SquadQueue(q as u8, o) } else { Cmd::SquadOrder(q as u8, o) }),
             _ => false,
         }
     }
@@ -164,23 +169,27 @@ impl App {
     /// builder works down the queue rather than each ghost taking another.
     /// In the squad mode the controlled squad goes as a squad
     /// (`Cmd::SquadOrder`, which also ends a move it was sent on; before,
-    /// that move took the build order back the next step).
+    /// that move took the build order back the next step), and with Shift
+    /// it queues the build after its orders (`Cmd::SquadQueue`). Before
+    /// 2026-11-20 Shift skipped the squad: the build went to its soldiers
+    /// one by one, which the squad's move overrode, or to the nearest free
+    /// soldier, so move then Shift + build did nothing the owner could see.
     pub(super) fn builders(&mut self, sel: &[usize]) {
         let Some(g) = &self.game else { return };
         let Some(b) = g.buildings.len().checked_sub(1) else { return };
         if g.buildings[b].built >= 1.0 {
             return;
         }
-        let squad = g.active.filter(|_| self.sq.is_some() && !self.shift);
+        if self.squad_order(Order::Build(b)) {
+            return;
+        }
+        let Some(g) = &self.game else { return };
         let last = self.last_sent.filter(|&k| self.shift && g.soldiers.get(k).is_some_and(|s| s.alive && matches!(s.order, Order::Build(_))));
-        let picked = !self.living(sel).is_empty();
-        if picked && squad.is_none() {
+        if !self.living(sel).is_empty() {
             return self.order_all(sel, |_| Order::Build(b));
         }
         let Some(g) = self.game.as_mut() else { return };
-        if let Some(q) = squad {
-            g.apply(Cmd::SquadOrder(q as u8, Order::Build(b)));
-        } else if let Some(k) = last {
+        if let Some(k) = last {
             g.apply(Cmd::Queue(k, Order::Build(b)));
         } else if g.apply(Cmd::Send(b)) {
             // The one soldier `send` put on it.
