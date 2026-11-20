@@ -194,6 +194,10 @@ Planets 2 and 3's ground (#574, Reports/planet-ground-2026-11-20/): mud
 plates, salt pan, scrub with shadows; fen reeds and moss; Form::fall plant
 shadows (a helper thread under this lane; page
 https://claude.ai/artifact/Vk2jnBLdLoVFrCGmYHEAZu).
+#581, round 2 of Reports/planet-ground-2026-11-20/: fen bog water
+(`wet_rgb`/`deep_rgb`), fen reeds spaced for zoom 6, a per-planet
+`rock_tint` in `ter_cell`. Its next ideas need new fields: duckweed on
+fen water, wind-blown dust on the barrens.
 
 The HUD, 11-20 (planet 2 at play zoom): a squad tile grows to 168, not
 136, so one squad's says "working" whole beside YOU, and a long state
