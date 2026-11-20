@@ -970,7 +970,11 @@ impl StartMenu {
         // dish; the shop and the inner pages span the screen, so they dim
         // all of it.
         if self.page == Page::Shop || inner {
-            c.rrect(Rect::new(0.0, 0.0, sw, sh), 0.0, [4, 6, 8, 150]);
+            // The shop darker (Look D, 11-20): its gun and bag rows sit on
+            // the dimmed planet with no panel, and at 150 a crystal behind
+            // them read brighter than an empty slot's text.
+            let a = if self.page == Page::Shop { 215 } else { 150 };
+            c.rrect(Rect::new(0.0, 0.0, sw, sh), 0.0, [4, 6, 8, a]);
         }
         let shade_w = (720.0 * s).min(sw);
         // (Forty thin steps: twelve showed as bands on the 1600-wide shot.)

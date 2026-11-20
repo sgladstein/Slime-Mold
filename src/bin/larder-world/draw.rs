@@ -480,9 +480,42 @@ impl App {
                     let label = format!("{}{}", n + 1, if lit { " *" } else if g.leads(q) { "" } else { " auto" });
                     // Above its topmost soldier, so the soldiers' sprites
                     // don't cover the number (the longer "N auto" label of
-                    // 11-15 showed only its tail over a spread squad).
-                    let top = g.members(q).iter().map(|&k| g.soldiers[k].y).fold(m.1, f32::min);
-                    self.marks.label((m.0, top), (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
+                    // 11-15 showed only its tail over a spread squad). Over
+                    // the soldiers round the one nearest its middle (play-zoom
+                    // pass, 11-20): a squad in two groups put its number at
+                    // the middle's x and the far group's top, over empty
+                    // ground or water between them.
+                    let members = g.members(q);
+                    let d = |k: usize| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1);
+                    let core = members.iter().copied().min_by(|&a, &b| d(a).total_cmp(&d(b)));
+                    // Its group: the soldiers linked to that one through
+                    // neighbours at most `LABEL_LINK` cells apart. The number
+                    // goes over that soldier, above the group's soldiers in
+                    // its column (`LABEL_COLUMN`), so a squad strung out on a
+                    // slant has it over its middle, not over empty ground
+                    // level with its top end.
+                    let (x, top) = core.map_or((m.0, m.1), |c| {
+                        let at: Vec<(f32, f32)> = members.iter().map(|&k| (g.soldiers[k].x, g.soldiers[k].y)).collect();
+                        let first = members.iter().position(|&k| k == c).unwrap_or(0);
+                        let x = at[first].0;
+                        let mut seen = vec![false; at.len()];
+                        let mut todo = vec![first];
+                        seen[first] = true;
+                        let mut top = at[first].1;
+                        while let Some(i) = todo.pop() {
+                            if (at[i].0 - x).abs() <= LABEL_COLUMN * sc {
+                                top = top.min(at[i].1);
+                            }
+                            for j in 0..at.len() {
+                                if !seen[j] && (at[j].0 - at[i].0).hypot(at[j].1 - at[i].1) <= LABEL_LINK * sc {
+                                    seen[j] = true;
+                                    todo.push(j);
+                                }
+                            }
+                        }
+                        (x, top)
+                    });
+                    self.marks.label((x, top), (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
                 }
             }
         }
@@ -2086,6 +2119,13 @@ pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
 const LAND_SECS: f32 = 0.55;
 const LAND_STAGGER: f32 = 0.04;
 const LAND_LIFT: f32 = 7.0;
+
+/// How far apart two soldiers of a squad may stand and still count as one
+/// group for its number (`App::marks`' squad labels), in dish cells.
+const LABEL_LINK: f32 = 4.0;
+/// Half the width of the column over that soldier whose soldiers the
+/// number clears, in dish cells.
+const LABEL_COLUMN: f32 = 1.5;
 
 /// Soldier `k`'s landing `since` game seconds after the landing, `r` its
 /// body radius: how far up it is drawn (world cells), its size's factor,
