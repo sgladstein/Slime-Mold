@@ -2326,6 +2326,16 @@ mod tests {
         eprintln!("strikers: a strike over the soldier leaves {cout} of {cin} condensed (holding {held0} -> {held1}) and {pout} of {pin} plain");
         assert!(cin >= 5 && cout == cin && held1 + cin as u32 == held0, "every condensed walker in it takes the blow and lives, holding one fewer");
         assert!(pout * 10 <= pin, "the plain walkers in it die: {pout} of {pin} left");
+        // A lump formed over all of them takes no striker (joining cleared
+        // the walkers a striker held, so a mini-boss or a fruit formed by
+        // strikers took that slime off the map).
+        let held2: u32 = v.iter().filter(|p| p.2).map(|p| p.3).sum();
+        w.form_lump(0, Some((at, 400.0)));
+        w.frame(&f, 1);
+        let v = read(&w);
+        let held3: u32 = v.iter().filter(|p| p.2).map(|p| p.3).sum();
+        assert_eq!(held3, held2, "a lump formed over the strikers leaves them and what they hold");
+        w.form_lump(0, None);
     }
 
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,

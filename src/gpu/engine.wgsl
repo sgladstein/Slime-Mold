@@ -4056,7 +4056,11 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let dx = i32(floor(wk.x)) - i32(c & 0xFFFFu);
     let dy = i32(floor(wk.y)) - i32(c >> 16u);
-    let within = ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
+    // A condensed striker never joins (the review of 11-20 evening): its
+    // word's hurt bits are the walkers it holds, and joining cleared them,
+    // so every lump that formed by a striker (a mini-boss, a fruit, a
+    // march) took that slime off the map.
+    let within = ordinary(k) && (wd & DENSE_BIT) == 0u && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
     if ((word & 256u) != 0u) {
         if (within && (wd & LUMP_BITS) == 0u) {
             set_dense(k, (wd & ~(HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
