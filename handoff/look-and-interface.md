@@ -182,7 +182,8 @@ squad's number floating between two groups (`LABEL_LINK` in `draw.rs`,
 over the soldier nearest its middle, clear of its group's soldiers in that column). Seen and
 left: the controlled squad's selection rings (one per straggler; thin, and
 they say who is in the squad); planet 4's squad fell in 18 s from a bare
-start (a balance note, not a look). On a funded run (`hand=strat:econ,
+start, which no run reaches (Direction, 11-20: film late planets with a
+run's upgrades, the run bot or a dev-mode shop spend). On a funded run (`hand=strat:econ,
 go=4,aim=6 bank=20000`) the strikers read as gold beads in the Sprawler's
 film (planet 2, 64-70 s); no mortar formed on run 1's planet 4 by 120 s.
 
@@ -193,6 +194,15 @@ Planets 2 and 3's ground (#574, Reports/planet-ground-2026-11-20/): mud
 plates, salt pan, scrub with shadows; fen reeds and moss; Form::fall plant
 shadows (a helper thread under this lane; page
 https://claude.ai/artifact/Vk2jnBLdLoVFrCGmYHEAZu).
+
+The HUD, 11-20 (planet 2 at play zoom): a squad tile grows to 168, not
+136, so one squad's says "working" whole beside YOU, and a long state
+("working, 3 on guard") falls back to its first word where it does not
+fit (`ui.rs`). The top bar, goal pill and command grid read sound.
+The end card's stars are star icons, 26 units, the middle one raised
+(`Icon::Star`, `StarOpen`; three 11-unit discs read as loading dots).
+The Campaign and Keys pages were filmed and left; What is new cuts long
+rows to one line with the whole in its pane, as designed.
 
 **Open branch:** `claude/project-thread-wypzro`, reused per PR.
 
