@@ -333,7 +333,7 @@ fn way_delay() {
 }
 
 #[derive(Debug)]
-enum Way {
+pub(super) enum Way {
     Ready(Vec<u32>),
     #[cfg(not(target_arch = "wasm32"))]
     Building(std::thread::JoinHandle<Vec<u32>>),
@@ -342,7 +342,7 @@ enum Way {
 impl Way {
     /// Built off the frame where threads exist (the native game), at once
     /// on the web build.
-    fn start(ground: Option<(Vec<bool>, usize, usize)>, to: u32) -> Way {
+    pub(super) fn start(ground: Option<(Vec<bool>, usize, usize)>, to: u32) -> Way {
         let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -359,7 +359,7 @@ impl Way {
 
     /// The units' walking distance (`big::units_field_for`), off the
     /// frame as `start`'s.
-    fn start_units(ground: Option<(Vec<bool>, usize, usize)>, units: Vec<u32>) -> Way {
+    pub(super) fn start_units(ground: Option<(Vec<bool>, usize, usize)>, units: Vec<u32>) -> Way {
         let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -394,7 +394,7 @@ impl Way {
         }
     }
 
-    fn finish(self) -> Vec<u32> {
+    pub(super) fn finish(self) -> Vec<u32> {
         match self {
             Way::Ready(f) => f,
             #[cfg(not(target_arch = "wasm32"))]
@@ -538,7 +538,7 @@ impl<W: World> Game<W> {
     /// the slime's own wall led a charge to press on it from behind; with
     /// the walls taken out the ways go through a fort's gates and round a
     /// wall the shots made.
-    fn slime_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
+    pub(super) fn slime_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         let (mut ground, w, h) = self.world.raid_ground()?;
         if self.bulwark.len() == ground.len() {
             for (g, &wall) in ground.iter_mut().zip(&self.bulwark) {
@@ -749,7 +749,14 @@ impl<W: World> Game<W> {
         let held = |l: usize| self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).any(|b| b.lump == l) || self.raids.marching.iter().any(|m| m.lump == l);
         let Some(lump) = (0..crate::mould::big::LUMPS).rev().find(|&l| !held(l)) else { return Some(field) };
         let Some((at, r)) = self.march_from(d.to, self.rules.raid.march_size.max(0.0) * d.size * self.world.mass() as f32, &field) else { return Some(field) };
-        self.world.form_lump(lump, Some((at, r)));
+        // Grown, not formed: only walkers in no lump join, so a march
+        // never takes a mini-boss's members. Formed, it took them all: on
+        // the owner's own planet 3 (run 1795119328) a hunter of 437 fell
+        // to 15 the second a march budded off beside it and broke, and a
+        // sapper of 421 on his planet 4 (run 1795038793) went to none
+        // (the mini-boss thread, 2026-11-20). The lump is free, so it holds
+        // no members of its own to keep.
+        self.world.grow_lump(lump, (at, r));
         let mut m = March { lump, to: d.to, first: 0, members: 0, centre: at, since: self.world.ticks(), field, reach: d.reach, share: d.share, start: f32::MAX };
         self.steer_march(&mut m, r * self.world.scale());
         self.raids.marching.push(m);
