@@ -1,0 +1,91 @@
+STRAT t 0 build mould 13155 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 13269 soldiers 4 hp 1.00 bank 42 killed 0 turret 0 pumps 3 buildings 3
+STRAT t 20 out mould 13527 soldiers 4 hp 0.96 bank 180 killed 93 turret 0 pumps 3 buildings 3
+STRAT t 30 out mould 13888 soldiers 4 hp 0.92 bank 117 killed 310 turret 0 pumps 3 buildings 3
+STRAT t 40 out mould 14552 soldiers 4 hp 0.89 bank 377 killed 525 turret 0 pumps 3 buildings 3
+STRAT t 50 back mould 14931 soldiers 4 hp 0.46 bank 172 killed 1110 turret 0 pumps 3 buildings 3
+STRAT t 60 out mould 15613 soldiers 4 hp 0.39 bank 375 killed 1303 turret 0 pumps 2 buildings 2
+  raid 1 at t 65.0 s: Building(2) at 419,224, reach 154 cells holding 6440 walkers, share 0.60, size 24% of the slime
+  march t 65 s: lump 3, 0 members (first 0), at 190,209, spread 1.42, 115 cells to go
+  march t 66 s: lump 3, 5865 members (first 5865), at 196,216, spread 1.15, 112 cells to go
+  march t 67 s: lump 3, 5865 members (first 5865), at 208,212, spread 1.14, 105 cells to go
+  march t 68 s: lump 3, 5865 members (first 5865), at 216,210, spread 1.17, 102 cells to go
+  march t 69 s: lump 3, 5865 members (first 5865), at 224,208, spread 1.18, 98 cells to go
+  march t 70 s: lump 3, 5865 members (first 5865), at 228,208, spread 1.16, 96 cells to go
+STRAT t 70 back mould 18403 soldiers 4 hp 0.35 bank 208 killed 1485 turret 0 pumps 1 buildings 1
+  march t 71 s: lump 3, 5865 members (first 5865), at 234,208, spread 1.16, 93 cells to go
+  march t 72 s: lump 3, 5865 members (first 5865), at 240,208, spread 1.20, 90 cells to go
+  march t 73 s: lump 3, 5865 members (first 5865), at 244,210, spread 1.26, 88 cells to go
+  march t 74 s: lump 3, 5865 members (first 5865), at 250,212, spread 1.34, 85 cells to go
+  march t 75 s: lump 3, 5865 members (first 5865), at 254,216, spread 1.42, 82 cells to go
+  march t 76 s: lump 3, 5865 members (first 5865), at 262,218, spread 1.52, 79 cells to go
+  march t 77 s: lump 3, 5865 members (first 5865), at 268,220, spread 1.59, 75 cells to go
+  march t 78 s: lump 3, 5865 members (first 5865), at 276,222, spread 1.65, 72 cells to go
+  march t 79 s: lump 3, 5865 members (first 5865), at 284,222, spread 1.69, 67 cells to go
+  march t 80 s: lump 3, 5865 members (first 5865), at 294,224, spread 1.71, 62 cells to go
+STRAT t 80 back mould 20475 soldiers 4 hp 0.29 bank 393 killed 1633 turret 0 pumps 0 buildings 0
+  march t 81 s: lump 3, 5865 members (first 5865), at 304,224, spread 1.72, 57 cells to go
+  march t 82 s: lump 3, 5865 members (first 5865), at 314,226, spread 1.72, 52 cells to go
+  march t 83 s: lump 3, 5865 members (first 5865), at 326,226, spread 1.70, 47 cells to go
+  march t 84 s: lump 3, 5865 members (first 5865), at 336,226, spread 1.63, 42 cells to go
+  march t 85 s: lump 3, 5865 members (first 5865), at 344,226, spread 1.53, 38 cells to go
+  march t 86 s: lump 3, 5865 members (first 5865), at 352,226, spread 1.41, 33 cells to go
+STRAT t 90 out mould 21761 soldiers 5 hp 0.34 bank 110 killed 1910 turret 0 pumps 0 buildings 0
+  boss t 93.0 s: Crowd wanderer formed on lump 0 at 81,163 (crowd top 2.46); grade 0.22: 6 blows a member, touches as 3, pace x1.09
+  boss t 93 s: lump 0 wanderer Gather, 0 members (first 0, 0 hurt), at 81,163, spread 1.01, stolen 0.0; nearest soldier 240.2, 5 alive
+  boss t 94 s: lump 0 wanderer Gather, 305 members (first 305, 0 hurt), at 78,156, spread 0.83, stolen 0.0; nearest soldier 239.5, 5 alive
+  boss t 95 s: lump 0 wanderer Gather, 305 members (first 305, 0 hurt), at 78,152, spread 0.76, stolen 0.0; nearest soldier 250.8, 5 alive
+  boss t 96 s: lump 0 wanderer Gather, 305 members (first 305, 0 hurt), at 76,148, spread 0.69, stolen 0.0; nearest soldier 263.4, 5 alive
+  boss t 97 s: lump 0 wanderer Gather, 305 members (first 305, 0 hurt), at 76,148, spread 0.62, stolen 0.0; nearest soldier 265.0, 5 alive
+  boss t 98 s: lump 0 wanderer Gather, 305 members (first 305, 0 hurt), at 76,146, spread 0.62, stolen 0.0; nearest soldier 264.7, 5 alive
+  boss t 99 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 76,146, spread 0.62, stolen 0.0; nearest soldier 278.5, 5 alive
+  boss t 100 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 62,162, spread 1.19, stolen 0.0; nearest soldier 295.6, 5 alive
+STRAT t 100 back mould 22664 soldiers 5 hp 0.30 bank 133 killed 2151 turret 0 pumps 0 buildings 0
+  boss t 101 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 56,172, spread 1.31, stolen 0.0; nearest soldier 304.7, 5 alive
+  boss t 102 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 52,176, spread 1.28, stolen 0.0; nearest soldier 313.6, 5 alive
+  boss t 103 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 48,182, spread 1.27, stolen 0.0; nearest soldier 318.2, 5 alive
+  boss t 104 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 46,184, spread 1.33, stolen 0.0; nearest soldier 322.0, 5 alive
+  boss t 105 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 44,188, spread 1.31, stolen 0.0; nearest soldier 323.9, 5 alive
+  boss t 106 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.31, stolen 0.0; nearest soldier 325.8, 5 alive
+  boss t 107 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.28, stolen 0.0; nearest soldier 326.4, 5 alive
+  boss t 108 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.36, stolen 0.0; nearest soldier 326.4, 5 alive
+  boss t 109 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.26, stolen 0.0; nearest soldier 325.4, 5 alive
+  boss t 110 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.27, stolen 0.0; nearest soldier 327.3, 5 alive
+STRAT t 110 back mould 23599 soldiers 5 hp 0.26 bank 269 killed 2327 turret 0 pumps 0 buildings 0
+  boss t 111 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.23, stolen 0.0; nearest soldier 327.3, 3 alive
+  boss t 112 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.27, stolen 0.0; nearest soldier 327.6, 3 alive
+  boss t 113 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.23, stolen 0.0; nearest soldier 330.4, 3 alive
+  boss t 114 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.27, stolen 0.0; nearest soldier 330.4, 3 alive
+  boss t 115 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.29, stolen 0.0; nearest soldier 330.4, 3 alive
+  boss t 116 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.25, stolen 0.0; nearest soldier 331.2, 3 alive
+  boss t 117 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.28, stolen 0.0; nearest soldier 330.2, 3 alive
+  boss t 118 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.29, stolen 0.0; nearest soldier 331.2, 3 alive
+  boss t 119 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.20, stolen 0.0; nearest soldier 329.9, 3 alive
+  boss t 120 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.27, stolen 0.0; nearest soldier 329.9, 3 alive
+STRAT t 120 home mould 24750 soldiers 3 hp 0.36 bank 310 killed 2626 turret 0 pumps 0 buildings 0
+  boss t 121 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.30, stolen 0.0; nearest soldier 331.0, 3 alive
+  boss t 122 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.29, stolen 0.0; nearest soldier 331.6, 2 alive
+  boss t 123 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.30, stolen 0.0; nearest soldier 330.9, 2 alive
+  boss t 124 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.23, stolen 0.0; nearest soldier 332.4, 2 alive
+  boss t 125 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.25, stolen 0.0; nearest soldier 332.4, 2 alive
+  boss t 126 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.27, stolen 0.0; nearest soldier 331.4, 2 alive
+  boss t 127 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.31, stolen 0.0; nearest soldier 331.9, 2 alive
+  boss t 128 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.35, stolen 0.0; nearest soldier 330.3, 2 alive
+  boss t 129 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.25, stolen 0.0; nearest soldier 330.8, 2 alive
+  boss t 130 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.28, stolen 0.0; nearest soldier 330.7, 2 alive
+STRAT t 130 home mould 25764 soldiers 2 hp 0.31 bank 350 killed 2969 turret 0 pumps 0 buildings 0
+  boss t 131 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.36, stolen 0.0; nearest soldier 330.6, 2 alive
+  boss t 132 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.27, stolen 0.0; nearest soldier 331.1, 1 alive
+  boss t 133 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.23, stolen 0.0; nearest soldier 335.2, 1 alive
+  boss t 134 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.33, stolen 0.0; nearest soldier 334.0, 1 alive
+  boss t 135 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.27, stolen 0.0; nearest soldier 335.0, 1 alive
+  boss t 136 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.27, stolen 0.0; nearest soldier 334.3, 1 alive
+  boss t 137 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.24, stolen 0.0; nearest soldier 334.3, 1 alive
+  boss t 138 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.30, stolen 0.0; nearest soldier 334.3, 1 alive
+  boss t 139 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.27, stolen 0.0; nearest soldier 334.3, 1 alive
+  boss t 140 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.26, stolen 0.0; nearest soldier 335.2, 1 alive
+STRAT t 140 home mould 26252 soldiers 1 hp 0.24 bank 357 killed 3235 turret 0 pumps 0 buildings 0
+  boss t 141 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.31, stolen 0.0; nearest soldier 334.0, 1 alive
+  boss t 142 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.29, stolen 0.0; nearest soldier 335.0, 1 alive
+  boss t 143 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,186, spread 1.35, stolen 0.0; nearest soldier 335.0, 1 alive
+  boss t 144 s: lump 0 wanderer Go((23.0, 217.0)), 305 members (first 305, 0 hurt), at 42,188, spread 1.26, stolen 0.0; nearest soldier 335.2, 1 alive
