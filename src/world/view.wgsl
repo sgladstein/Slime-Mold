@@ -2894,6 +2894,11 @@ const TER_ISO: f32 = 0.4;
 // a cell of the terrain's height.
 const TER_BEVEL: f32 = 0.9;
 const TER_SHADOW: f32 = 0.35;
+// Rock's stone (`terrain_top`): the mottling's size in cells, and how dark
+// and wide (in the noise's units) its cracks are.
+const ROCK_MOTTLE: f32 = 2.5;
+const ROCK_CRACK: f32 = 0.3;
+const ROCK_CRACK_W: f32 = 0.012;
 
 // A cell's own terrain, packed as `tcell` holds it (byte 0 left 255 for
 // solid, 0 open; `prep` smooths it). Off the world is rock, as before.
@@ -3071,6 +3076,28 @@ fn terrain_top(ta: TerAt) -> vec3<f32> {
         let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
         let gr = vnoise(q1 / 1.5 + 3.0) * 0.6 + vnoise(q2 * 2.3 + 11.0) * 0.4;
         alb *= mix(1.0, (0.72 + 0.56 * gr) * (0.8 + 0.2 * smoothstep(0.0, 0.6, d)), t.wall);
+    }
+    // Rock's stone (Look C, 2026-11-20: rock read as a flat slate slab,
+    // one grey from rim to rim): broad mottling a few cells across, a fine
+    // grit faded in from zoom 5 to 10 (under that it is under 2 px and
+    // shimmers), and a few thin dark cracks along a noise's half-way line. All
+    // within about +-12% of the rock's value, so it stays in its band
+    // (50-60, under the thin film). Value noise on turned grids, as the
+    // hedge's, so it never shows the cell squares.
+    if (t.wall < 1.0) {
+        let p = ta.p;
+        let q1 = vec2<f32>(0.8 * p.x - 0.6 * p.y, 0.6 * p.x + 0.8 * p.y);
+        let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
+        let mott = vnoise(q1 / ROCK_MOTTLE + 5.0) * 0.7 + vnoise(q2 / (0.45 * ROCK_MOTTLE) + 9.0) * 0.3;
+        let grit = (vnoise(q2 * 3.1 + 2.0) - 0.5) * smoothstep(5.0, 10.0, P.zoom);
+        let cn = vnoise(q1 * 0.3 + 17.0) * 0.8 + vnoise(q2 * 1.3 + 23.0) * 0.2;
+        // Only in patches (a fifth of the rock or so), or the half-way
+        // line of value noise nets the whole face like crazed glaze (the
+        // first cut, every cell crossed).
+        let crackle = smoothstep(0.55, 0.75, vnoise(q2 * 0.18 + 41.0));
+        let crack = crackle * (1.0 - smoothstep(0.0, ROCK_CRACK_W + 0.5 / P.zoom, abs(cn - 0.5)));
+        let stone = (0.88 + 0.24 * mott) * (1.0 + 0.14 * grit) * (1.0 - ROCK_CRACK * crack * smoothstep(0.3, 1.2, d));
+        alb *= mix(stone, 1.0, t.wall);
     }
     // A door's grate: bars on the cells' middles both ways, dark between,
     // a pixel of smoothing at any zoom. Read from the cell under the pixel
