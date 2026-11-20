@@ -220,6 +220,7 @@ as lines.
 - 2026-11-14 08:07Z: "We need an option to scale the UI/text etc, because they look too small on my screen."
 - 2026-11-14 08:33Z: "re-arrange the bottom menu to be one row for the squad and two rows for the other buttons so the whole thing is wider but shorter"; 08:46Z: "gun/card menu should go on the far left to fill the rest of the screen."
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand."
+- 2026-11-20 22:08Z: "My main complaint is that it changes as tiles resize. if we have many squads then the actions shrink or once we have guns with lots of cards the actions shrink. Things should stay more consistent. squads or gun cards can shrink themselves within their own panel." Done the same day: `Hud::bar_fit` reads only the window, the UI size and the widest gun any squad carries (`Loadout::widest`), so the command card keeps one size and place; the gun strip sheds its name, then Swap, then shrinks its cards inside its panel; squad tiles shrink inside theirs; top bar numbers are measured at their widest digits. At 125% on the 1600 x 972 window the card had flipped between labels and icons with the squad count and gun (stills `Reports/pr-stills/steady-hud-before.jpg`, `-after.jpg`).
 
 ## Open
 
