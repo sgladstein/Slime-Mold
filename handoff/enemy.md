@@ -71,8 +71,10 @@ planet 3 on (`kinds[5]`), a hunter whose lump's arms turn within
 engine.wgsl's spokes after the lump pull (`PIN_ARMS` 3, `PIN_LEAN` 3,
 `PIN_TWIST` 0.08); the turn must stay constant (phase is spin x S.t).
 Look's `LumpLook::Pinwheel` (7, cobalt). Set keys `boss_pinwheel`,
-`boss_spin`, `boss_spin_haste`, `boss_spin_near`. Next: what the arms
-cost the squad, and the off-screen tell from the owner's doc.
+`boss_spin`, `boss_spin_haste`, `boss_spin_near`. Then the big-army census: no grade or size outlasts 50 guns (a member
+takes at most 15 blows); options A to E in the report, sent to
+Direction. Next: what Direction picks; what the Pinwheel's arms cost the
+squad; the off-screen tell from the owner's doc.
 
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand
