@@ -18,7 +18,7 @@ Page: [Planet 3 Bot League](https://claude.ai/artifact/3pLVvJbt8JxP59oMvWE1Dk). 
   - It plays the job files in `queue/pc/` first, then the search in `queue/pc-evolve.txt`.
   - It rebuilds when `src/` changes and restarts when `league.py` changes.
   - It waits while the owner's own game is open.
-  - It pushes only `pc/`.
+  - It pushes only `pc/`, at most once an hour or when a job file finishes. Each push re-runs the pull request's CI, so pushing every chunk cancelled 24 of 26 runs on 11-20.
 - GitHub batches (`.github/workflows/strategy-league.yml`, which runs 4 shards at a time) were used for generation 0 only. The account's 20 runners are shared with CI.
 
 The same plan on the same map, with the same binary on the same machine, always plays the same game. So the maps are the noise, and plans are compared by paired maps with a sign test.

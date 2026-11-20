@@ -381,11 +381,12 @@ def cmd_evolve(a):
         plans = breed(rows, a.top // 2, half, gen, lambda p: not p.startswith("util:")) + breed(rows, a.top - a.top // 2, a.kids - half, gen + 1000, lambda p: p.startswith("util:"))
         gen += 1
 
-def push(d, msg):
+def push(d, msg, publish=True):
     """Commits folder `d` and pushes it to the branch the worktree came from,
     rebasing on whatever was pushed meanwhile. A machine with no git name
     commits as "Strategy league" (11-19: Scott-Desktop has none, so the
-    first night's commits failed and nothing was pushed until morning)."""
+    first night's commits failed and nothing was pushed until morning).
+    With publish False it only commits; the next push carries it."""
     br = "claude/project-thread-8grg6d"
     run = lambda *c: subprocess.run(c, cwd=ROOT, capture_output=True, text=True)
     who = []
@@ -395,6 +396,8 @@ def push(d, msg):
     c = run("git", *who, "commit", "-q", "-m", msg + "\n\nNothing-new: strategy league results only.")
     if c.returncode != 0 and "nothing to commit" not in c.stdout + c.stderr and "nothing added to commit" not in c.stdout + c.stderr:
         print("league: commit failed: " + (c.stderr or c.stdout)[-300:], file=sys.stderr)
+    if not publish:
+        return
     for _ in range(4):
         run("git", "fetch", "-q", "origin", br)
         if run("git", *who, "rebase", "-q", "FETCH_HEAD").returncode != 0:
@@ -486,7 +489,15 @@ def own_text():
 
 SELF = own_text()
 
-def sync(binary, push_results):
+# Seconds between the worker's pushes. Until 11-20 it pushed after every
+# chunk (about every 15 min), and each push re-ran the whole CI of the
+# branch's pull request and cancelled the run before: 26 runs from 01:45 to
+# 05:03Z, two of them finished, on runners the account shares with every
+# lane (20 at once). Between pushes the results are committed locally.
+PUSH_EVERY = 3600
+LAST_PUSH = 0.0
+
+def sync(binary, push_results, now=False):
     """Pushes results, then takes what the branch has: rebuilds the game
     when what it is built from differs from the last build, and restarts
     this script when its file differs from the one running. Both compare
@@ -494,9 +505,14 @@ def sync(binary, push_results):
     and after its fetch, but push() had already rebased onto the branch,
     so it never saw a change, and the PC played the kiting test on the old
     binary (27 errors) and never restarted. Returns False when the branch
-    asks the worker to stop."""
+    asks the worker to stop. Results are pushed at most every PUSH_EVERY
+    seconds, or `now` (a job file just finished)."""
+    global LAST_PUSH
     if push_results:
-        push(OUT, f"Strategy league: results from {os.environ.get('COMPUTERNAME', 'the worker')}")
+        go = now or time.time() - LAST_PUSH >= PUSH_EVERY
+        push(OUT, f"Strategy league: results from {os.environ.get('COMPUTERNAME', 'the worker')}", publish=go)
+        if go:
+            LAST_PUSH = time.time()
     if git("fetch", "-q", "origin", BRANCH).returncode == 0:
         if git("rebase", "-q", "FETCH_HEAD").returncode != 0:
             git("rebase", "--abort")
@@ -617,7 +633,8 @@ def next_work(chunk):
 def cmd_worker(a):
     log(f"worker: started in {ROOT}, {a.workers} games at once")
     build()
-    while sync(a.bin, a.push):
+    last = False
+    while sync(a.bin, a.push, now=last):
         work = next_work(a.chunk)
         if not work:
             log("worker: nothing queued; looking again in 5 minutes")
@@ -625,6 +642,8 @@ def cmd_worker(a):
             continue
         todo, out = work
         play(todo, out, a.bin, a.workers, a.timeout)
+        # A short chunk was the file's last: push it now, not within the hour.
+        last = len(todo) < a.chunk
     log("worker: queue/pc-stop is on the branch; stopping")
 
 def cmd_breed(a):
