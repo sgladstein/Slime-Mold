@@ -208,7 +208,10 @@ The end card's stars are star icons, 26 units, the middle one raised
 The Trunk's cords (11-20, `Reports/trunk-cords-2026-11-20/`, page
 https://claude.ai/artifact/Xi8hjRyFbnbnWgsxsx9f7c): `SlimeLook::Cords` for
 planet 3, its trail off the body a translucent raised tube (`CORD_VEIL`,
-`CORD_RISE`). Sporer and later tiers are still Plain: the next slime looks.
+`CORD_RISE`). The Swarmer's swell (11-20, `SlimeLook::Swell`, planet 4):
+where its alarm flushes it, its height grows (`SWELL_GAIN`, `SWELL_RISE`),
+so alarmed walkers are raised beads, not a flat glow. Sporer, Sleeper and
+Grudge are still Plain: the next slime looks.
 Selection rings join within `RING_LINK` (3.5 rings centre to centre,
 `controls.rs`): a 51-soldier squad on planet 3 wore 51 rings at zoom 6.
 The play alerts (top left) hide while the end card is up: the card says
