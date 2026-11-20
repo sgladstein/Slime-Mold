@@ -245,9 +245,13 @@ the rest with the commits main has no copy of in the run's summary, for
 Direction. Its first run (11-18 13:52Z, actions run 44317767827) deleted
 91 (a session's shallow clone had found 18) and listed 56 not in main,
 most of them 11-10 to 11-12 runner and census branches with one commit
-each. Still open in job 5: films to an archive
-branch with a size cap a pull request (gifs and mp4s are 1.2 GB of
-main's 1.47 GB tree). The lint caps were already in.
+each. Job 5's size cap is in (11-20): `wiki/lint.py` fails a pull request
+that adds over 12 MB of pictures, films or sound outside `assets/`, or one
+file over 3 MB, unless a commit line says `Big-media: <why>`; the 60 PRs
+before it added at most 10.1 MB. Still open: moving the old films to an
+archive branch. It shrinks the checkout, not the clone (history keeps them,
+1.6 GB of .git on 11-20), and it breaks every report's links to its
+films, so it waits for Direction to want it. The lint caps were already in.
 
 **Next:** seed 3's planet 1 (above), then the bot on planet 2: clear a
 held crystal by hunting the slime on it before draining it (land, back off to a quiet crystal, hold it
