@@ -38,6 +38,26 @@ After, merged with main, same nine games: 7 of 18 reached the squad,
 39 s stood still against 258, none swallowed; no errand reached in 5:00
 (pumps 150-250 units off; the trip or a nearer pick is tuning, unreviewed).
 
+Then (#548, Direction's call): the kind is drawn first and a crowd's leech
+or sapper forms at the crowded knot nearest its pump or wall; one sapper
+reached its wall, 2 of 3 leeches met the squad guarding the pumps.
+
+Then the Mortar (the owner's pick, 11-20 13:21Z, "Mortar first", over the
+Pinwheel): `BossKind::Mortar` (5), drawn from planet 4 on
+(`BossRules::for_depth`, `kinds[4]`). It forms at the crowded knot nearest
+a player thing it can see along a clear line, never walks, and every
+`lob_every` (5 s) throws the ring of its own body's edge at the nearest
+player thing just past the guns (`lob` 30 dish cells past the longest
+gun's reach and the panic margin) as one `squad::Burst` with `push`
+(`Game::mortar`); thrown members are let go and the rest formed again on
+its spot; with no shot along a clear line it walks toward the nearest
+player thing on its trip's clock (on the owner's three planet 4 maps, all
+bosses mortars: 7 mortars, 48 throws by 5:00; what they cost the player
+is not measured yet). Moss skin, acid core (`LumpLook::Mortar`, Look's
+`view.wgsl` case 6). Also: a fruit grows its lump instead of forming it,
+so it no longer swallows a mini-boss beside it (3 of 14 had been). Set
+keys `boss_mortar`, `boss_lob`, `boss_lob_every`, `boss_shell`.
+
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand
 (`crowded_knot(Some(&boss))`). Drawing them only with a target within
@@ -47,6 +67,47 @@ Known limit: a lump has one aim, so on a rock bar a third of a body stays
 pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
 Proposals in the report and the owner's doc: the Mortar first from planet
 4 after Milestone 1, the Pinwheel second; a bounty; an off-screen tell.
+
+## Condensed strikers (2026-11-20, the thread "Make the slime a more interesting enemy")
+
+The owner's pick on the balance thread's card (11-20 15:10Z, "Condensed
+strikers + late lunge"; the brief is the options doc linked under
+Heartbeat). A is this lane's: `larder_world/strikers.rs`
+(`StrikerRules`, `Game::time_strikers`), on in every run
+(`ENEMY_RULES`' `strikers`), GPU only (`World::set_strikers`,
+`World::condense`, `gpu::Engine::strikers` and `Engine::condense`).
+Under 40% of its peak, once a game second, `condense` (a thread a slot)
+lets each ordinary walker within the guns' reach + 12 dish cells of a
+soldier (by the units' walking distance, bit 31 of `cond_r2`; as the crow
+flies without one) try with chance 0.5; tries count on a word a
+`RAID_BLOCK` block in the raid region's third quarter (count << 24 | the
+first's slot); the next three die, taken in. `condlead` (a thread a
+block) marks the first condensed (`DENSE_BIT`, bit 16 of its dense word)
+holding them in `HURT_BITS`. Params' lump row: `lump_on` is also 1 with
+strikers (bite cells counted), then `cond` (haste), `cond_r2`,
+`cond_share`. `armoured` spends one held a blow, `dcount` adds the held
+to its cell's bite, `panic_to` sends it at the nearest soldier,
+`lumpform` clears the bit on joining, `ripen` never sends one off as a
+speck. Counts in `wstat[8..10]`. The look: view.wgsl's `draw_striker`, a
+lit bead in the droplets' layer, radius by what it holds, a 48-step pulse;
+it counts as its walkers in the body, no bronze. Test:
+`condensed_strikers_take_in_their_neighbours_charge_and_take_more_blows`.
+The balance thread (cmsg_01LaKUNJU8dhcZFTMf8VboUgN41f84yygVjCkvqcyxGYdX)
+measures it against `set=strikers=0` with its late lunge (B). Next: D,
+the last-stand heart, once A is judged.
+
+## Heartbeat (2026-11-20, the same thread)
+
+The third rule, on by default on every run planet (`ENEMY_RULES`' `heart`;
+`larder_world/heart.rs`). Every 6 s a beat runs out from the home crystal
+(else the crystal held most) through the body; calm walkers lean out
+(25) and quicken (up to 60%, `HEART_HASTE`) as it passes. Params: the
+heart's place in the ground row's last two words, its lean in the lone
+step row's second, its clock (period steps | wavelength << 16) in the
+fling row's second (`Engine::heart`). The balance thread's options brief
+(late-planet threat) is at https://claude.ai/artifact/YD9LSGAkAorDNKg5WA2zZH:
+its A (condensed strikers) and D (last-stand heart) are this lane's to
+build once the owner picks.
 
 ## Waves (2026-11-20, the thread "Make the slime a more interesting enemy")
 
@@ -393,5 +454,5 @@ Start from `handoff/slime-enemy.md`, `handoff/simulation-use.md`,
   alarm, `squad::Burst`).
 - Quote the frame cost of anything that runs every step. The GTX 1070
   runs go in one batch before the milestone check; ask Engine and tools.
-- New mini-boss kinds are parked until Scott has said how the four built
-  ones play.
+- New mini-boss kinds: Scott picked the Mortar first (11-20 13:21Z);
+  the Pinwheel (his doc's second proposal) is next.

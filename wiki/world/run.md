@@ -29,6 +29,7 @@ sources:
   - Reports/sim-use-2026-11-17/s2-far-smell.md
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
+  - Reports/strikers-2026-11-20/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/trunk-fort-2026-11-18/README.md
   - Reports/whole-game-review-2026-11-15/README.md
@@ -37,8 +38,10 @@ code:
   - FruitRules
   - Game::boss_aim
   - Game::fruit_looks
+  - Game::heart_site
   - Game::lump_taken
   - Game::wave_points
+  - HeartRules
   - LADDER
   - LURE_PULL
   - LureMark
@@ -55,6 +58,7 @@ code:
   - Run::rules
   - Run::shop
   - STUCK_WARN
+  - StrikerRules
   - WIN_SHARE
   - WaveRules
   - ammo_price
@@ -85,6 +89,7 @@ code:
   - tier_size
   - time_fort
   - time_fruit
+  - time_heart
   - time_lure_paths
   - time_waves
   - two_stars
@@ -106,7 +111,7 @@ that get better deeper; a lost planet ends the run. The shop page is one
 screen at every UI size (shop B, the owner's pick of 2026-11-15 19:37Z):
 the planet's line and the points along the top, the carried gun's slots
 and the bag pinned under it, a row of tabs (Cards, Guns, Squad, Buildings,
-Tools) over a counter of half-size tiles that pages rather than scrolls,
+Tools) over a counter of offer rows (11-20) that pages, never scrolls,
 and a pane at the right that tells the picked tile, else the planet's
 briefing, with its Buy button; a click picks, Enter or the button buys
 ([report](../../Reports/shop-b-2026-11-15/README.md)). Until then it had
@@ -137,11 +142,21 @@ On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is
 
 ## Waves
 
-On since 2026-11-20 (the same thread as fruiting; `larder_world/waves.rs`, `WaveRules`, `run::ENEMY_RULES`' `wave`): from 1:30, when the squad's kills over 20 s reach an eighth of the slime's mass and the mass is down over those 20 s, the slime reads its losses. A field (`World::set_wave_field`, engine.wgsl's `wave_dist` in the raid region after the raid's blocks, pull 40, calm walkers only) leans it to two or three points 20 dish cells past the guns' reach round the thickest knot of soldiers, the points with the most slime near them, at least 70 degrees apart; for 12 s it masses there, then the field turns to the soldiers and a surge starts with the panic reach stretched to the masses (`Game::keep_panic_reach`), so it comes in from every point at once for 8 s. 45 s from one's end to the next. GPU only.
+On since 2026-11-20 (the same thread as fruiting; `larder_world/waves.rs`, `WaveRules`, `run::ENEMY_RULES`' `wave`): from 1:30, when the squad's kills over 20 s reach an eighth of the slime's mass and the mass is down over those 20 s, the slime reads its losses. A field (`World::set_wave_field`, engine.wgsl's `wave_dist` in the raid region after the raid's blocks, pull 40, calm walkers only) leans it to two or three points 20 dish cells past the guns' reach round the thickest knot of soldiers, the points with the most slime near them, at least 70 degrees apart; for 12 s it masses there, then the field turns to the soldiers and a surge starts with the panic reach stretched to the masses (`Game::keep_panic_reach`), so it comes in from every point at once for 8 s. 45 s from one's end to the next. Since the review lane's note of 11-20 (the two fire on nearly the same signal, so nearly every fruit came with a wave) a wave and a fruit take turns: neither starts while the other runs. GPU only.
+
+## The heartbeat
+
+On since 2026-11-20 (the same thread; `larder_world/heart.rs`, `HeartRules`, `run::ENEMY_RULES`' `heart`): every 6 s a beat runs out from the slime's heart (its home crystal, `Game::core`, while 30 walkers stand on it, else the crystal it holds with the most) as a ring 80 dish cells long (engine.wgsl's `heart_beat`). As it passes, a calm walker leans away from the heart (25, in the readings' units; the lure's pull is 10) and steps up to 60% faster, then leans home between beats. Planet 1, run seed 1, greedy hand, 0:40 to 0:54: the slime covers 38% to 58% of a zoom 12 frame on a 6 s rhythm against 43% to 49% off; by 0:54 the squad had killed 1,242 against 707, each swell carrying slime into the guns ([report](../../Reports/heartbeat-2026-11-20/README.md)). GPU only.
+
+## Condensed strikers
+
+On since 2026-11-20 (the same thread, the owner's pick on the balance thread's card that day, "Condensed strikers + late lunge"; `larder_world/strikers.rs`, `StrikerRules`, `run::ENEMY_RULES`' `strikers`). His notes that day: once the squad is big enough "the slime cannot touch them", condensing could come back "although the visuals and mechanics of that would need to be much improved", and hardened slime "doesn't attack you. It makes it easier." So under 40% of its peak the slime's edge facing the squad condenses once a game second: each ordinary walker within the guns' reach and 12 dish cells of a soldier, by walking (the units' walking distance), tries with chance 0.5, and in each 2 x 2 block of fine cells the first that tries takes in up to three of the rest (engine.wgsl's `condense` and `condlead`). A condensed walker counts once, takes a blow for each walker it holds and one more to die, bites once more for each, and charges the nearest soldier at 1.5 times its pace; mass and bite stay the same. It is drawn as a bead in the slime's gold, larger by what it holds, with a slow pulse (view.wgsl's `draw_striker`), not the old bronze. Unlike the old condensing (11-14 to 11-17, [dead ends](../../Reports/dead-ends.md)), only the edge that can reach the squad condenses, and every condensed walker charges ([report](../../Reports/strikers-2026-11-20/README.md)). GPU only.
 
 ## Mini-bosses since the review of 11-20
 
 The owner (11-20 05:41Z) asked for the mini-bosses to be analysed against his play and improved ([review](../../Reports/miniboss-review-2026-11-20/README.md)). On his own maps to 5:00, 3 of 17 reached the squad, none reached its errand, and 9 stood 10 s or more pressed on rock or wedged in packed slime. Now a boss forms at the crowded knot nearest the player but never inside a soldier's guns (`BossRules::near` 40 dish cells), walks round rock, walls and deep water down a walking field aimed at the farthest point it can see (`Game::boss_steer`), re-forms on its front after 6 s stuck (`Game::boss_stall`), a leech's or sapper's walk has its own 90 s clock (`BossRules::trip`), a wanderer hops to fresh crystals nearer the player, and a raid's march grows its lump from free walkers so it never takes a boss's members. After: 7 of 18 reached the squad and 40 s stood still against 258; errands are still too far to reach in 5:00. So (Direction, 11-20) the kind is drawn first and a crowd's leech or sapper forms at the crowded knot nearest its pump or wall: in the same games one sapper reached its wall, and 2 of 3 leeches met the squad guarding the pumps.
+
+The Mortar (the owner's pick of his doc's two proposals, 11-20 13:21Z, "Mortar first"): a fifth kind, from planet 4 on (`BossRules::for_depth`), moss with an acid core. It forms at the crowded knot nearest a player thing it can see along a clear line, never walks, and every 5 s (`lob_every`) throws the ring at its body's edge at the nearest player thing just past the guns (`lob` 30 dish cells past the longest gun's reach and the panic margin) as one `squad::Burst` pushed one way (`Game::mortar`); the thrown walkers land as ordinary slime and the rest re-form on its spot. Rock, deep water or a wall in the line stops it: walls are the answer. With nothing in reach along a clear line it walks toward your nearest thing on its trip's clock until it has a shot (one formed out of reach sat 90 s without a throw). It throws its own body away, about seven throws for one of 249; on the owner's three planet 4 maps with every boss a mortar, 7 threw 48 times by 5:00. Since the same change a fruit grows its lump instead of forming it, so it no longer swallows a mini-boss beside it (3 of 14 had been).
 
 ## Ending early, the play log, pressure by depth
 

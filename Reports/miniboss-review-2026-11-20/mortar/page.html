@@ -1,0 +1,94 @@
+<title>The Slime's Mortar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; each clip sits beside the counts it shows. */
+:root {
+  --bg: #f3f4ef; --fg: #1d211a; --muted: #5d6555; --line: #d5d9cc; --card: #ffffff;
+  --moss: #4d6b1c; --acid: #9bc23a;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121510; --fg: #e4e8dc; --muted: #9aa38f; --line: #2c3326; --card: #1a1f17; --moss: #a9cf55; --acid: #c4f046; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #121510; --fg: #e4e8dc; --muted: #9aa38f; --line: #2c3326; --card: #1a1f17; --moss: #a9cf55; --acid: #c4f046; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2rem 3rem; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 2.2rem; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; color: var(--moss); }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+section { display: grid; gap: .8rem; }
+video, img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--line); background: #000; display: block; }
+.pair { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1.2rem; align-items: start; }
+@media (max-width: 720px) { .pair { grid-template-columns: 1fr; } }
+.facts { display: grid; gap: .5rem; font-size: .95rem; min-width: 0; }
+.facts div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line); padding-block: .3rem; }
+.facts b { font-variant-numeric: tabular-nums; }
+.wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .92rem; min-width: 520px; }
+th, td { padding: .35rem .7rem; border-bottom: 1px solid var(--line); text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--display); font-weight: 500; color: var(--muted); }
+.small { font-size: .85rem; color: var(--muted); }
+</style>
+<main>
+  <header style="display:grid;gap:.6rem">
+    <h1>The slime's Mortar</h1>
+    <p class="lede">A fifth mini-boss, from planet 4 on, picked by you over the Pinwheel. It forms in a crowded knot that can see your things, never comes into your guns, and every 5 s throws the ring at its own edge at your nearest pump, building or soldier just past your guns' reach. The thrown slime lands as ordinary slime. A rock, river or wall in its line blocks the throw. With nothing in reach it walks toward you until it has a shot.</p>
+  </header>
+
+  <section>
+    <h2>Throwing at your pumps, wide (zoom 3.5)</h2>
+    <div class="pair">
+      <video src="mortar-wide.mp4" controls muted loop playsinline autoplay></video>
+      <div class="facts">
+        <div><span>Map</span><b>run 1795038793, planet 4</b></div>
+        <div><span>Game time</span><b>1:32 to 1:52, 2x</b></div>
+        <div><span>Mortar</span><b>249 to 273 walkers</b></div>
+        <div><span>Target</span><b>about 160 units off</b></div>
+        <div><span>Throws in the clip</span><b>4, every 5 s</b></div>
+        <p class="small">Every boss forced to a mortar for the film (<code>set=boss_kind=5</code>). The crescent flying south-west is one throw.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Close (zoom 8)</h2>
+    <div class="pair">
+      <video src="mortar-close.mp4" controls muted loop playsinline autoplay></video>
+      <div class="facts">
+        <div><span>Game time</span><b>1:37 to 1:47, 2x</b></div>
+        <div><span>Look</span><b>moss skin, acid core</b></div>
+        <p class="small">The green knot is the mortar, beside the slime's brown fruit. Before this change the fruit would have swallowed it as it formed; it now leaves a mini-boss its walkers.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>On your three planet 4 maps, every boss a mortar</h2>
+    <p>Strategy bot, to 5:00. Seven mortars threw 48 times. Three walked first (44 to 51 s) to get a shot; one never found one. Most ended by throwing their own body away.</p>
+    <div class="wrap"><table>
+      <tr><th></th><th>mortars</th></tr>
+      <tr><td>formed</td><td>7</td></tr>
+      <tr><td>throws</td><td>48</td></tr>
+      <tr><td>reached the squad</td><td>1</td></tr>
+      <tr><td>ended broken (thrown away or shot)</td><td>4</td></tr>
+      <tr><td>ended spent</td><td>1</td></tr>
+      <tr><td>fizzled</td><td>1</td></tr>
+      <tr><td>still alive at 5:00</td><td>1</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>The other mini-bosses, same nine games, with the fruit fix</h2>
+    <div class="wrap"><table>
+      <tr><th></th><th>hunter</th><th>leech</th><th>sapper</th><th>wanderer</th><th>all</th></tr>
+      <tr><td>formed (before)</td><td>7 (6)</td><td>2 (3)</td><td>3 (1)</td><td>3 (4)</td><td>15 (14)</td></tr>
+      <tr><td>reached the squad (before)</td><td>5 (3)</td><td>1 (2)</td><td>1 (0)</td><td>1 (1)</td><td>8 (6)</td></tr>
+      <tr><td>got to its errand (before)</td><td></td><td>0 (0)</td><td>2 (1)</td><td>0 (1)</td><td>2 (2)</td></tr>
+      <tr><td>swallowed by a fruit or march</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0 (3 before)</td></tr>
+    </table></div>
+    <p class="small">Your run seeds 1795038793, 1795106014 and 1795119328, planets 2 to 4. "Before" is the census after the errand-knot change; one mortar also formed here and is left out.</p>
+  </section>
+</main>

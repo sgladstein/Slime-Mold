@@ -1,0 +1,68 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+STRAT t 0 build mould 13109 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 13178 soldiers 4 hp 1.00 bank 68 killed 23 turret 0 pumps 3 buildings 3
+STRAT t 20 out mould 13263 soldiers 4 hp 0.95 bank 209 killed 171 turret 0 pumps 3 buildings 3
+STRAT t 30 out mould 13599 soldiers 4 hp 0.85 bank 467 killed 445 turret 0 pumps 3 buildings 3
+  surge 1 starts at t 33.4 s (the slime has eaten 109 food)
+STRAT t 40 out mould 14182 soldiers 4 hp 0.79 bank 152 killed 640 turret 0 pumps 3 buildings 3
+STRAT t 50 out mould 14880 soldiers 4 hp 0.61 bank 376 killed 987 turret 0 pumps 3 buildings 3
+  surge 2 starts at t 56.7 s (the slime has eaten 219 food)
+STRAT t 60 out mould 14867 soldiers 4 hp 0.29 bank 304 killed 1887 turret 0 pumps 3 buildings 3
+STRAT t 70 back mould 15094 soldiers 4 hp 0.12 bank 523 killed 2713 turret 0 pumps 3 buildings 3
+  surge 3 starts at t 78.9 s (the slime has eaten 328 food)
+STRAT t 80 back mould 15465 soldiers 3 hp 0.33 bank 333 killed 3350 turret 0 pumps 3 buildings 3
+STRAT t 90 home mould 15637 soldiers 2 hp 0.55 bank 94 killed 4117 turret 0 pumps 2 buildings 2
+  boss t 93.0 s: Crowd leech formed on lump 0 at 267,245 (crowd top 1.00); grade 0.51: 10 blows a member, touches as 4, pace x1.20
+  boss t 93 s: lump 0 leech Gather, 0 members (first 0, 0 hurt), at 267,245, spread 1.06, stolen 0.0; nearest soldier 125.9, 2 alive
+  raid 1 at t 94.0 s: Building(1) at 122,221, reach 66 cells holding 1219 walkers, share 0.60, size 5% of the slime
+  boss t 94 s: lump 0 leech Gather, 401 members (first 401, 0 hurt), at 262,246, spread 1.04, stolen 0.0; nearest soldier 123.1, 2 alive
+  march t 94 s: lump 3, 0 members (first 0), at 171,182, spread 4.48, 31 cells to go
+  boss t 95 s: lump 0 leech Gather, 401 members (first 401, 0 hurt), at 260,248, spread 1.12, stolen 0.0; nearest soldier 122.5, 2 alive
+  boss t 96 s: lump 0 leech Gather, 401 members (first 401, 0 hurt), at 258,248, spread 1.21, stolen 0.0; nearest soldier 132.9, 2 alive
+  boss t 97 s: lump 0 leech Gather, 401 members (first 401, 0 hurt), at 256,250, spread 1.21, stolen 0.0; nearest soldier 133.1, 2 alive
+  boss t 98 s: lump 0 leech Gather, 401 members (first 401, 0 hurt), at 256,250, spread 1.18, stolen 0.0; nearest soldier 145.9, 2 alive
+  boss t 99 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 256,252, spread 1.24, stolen 0.0; nearest soldier 160.6, 2 alive
+  boss t 100 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 248,250, spread 1.54, stolen 0.0; nearest soldier 150.2, 2 alive
+STRAT t 100 back mould 15756 soldiers 2 hp 0.29 bank 243 killed 5029 turret 0 pumps 1 buildings 1
+  surge 4 starts at t 100.5 s (the slime has eaten 437 food)
+  boss t 101 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 242,250, spread 1.75, stolen 0.0; nearest soldier 160.1, 2 alive
+  boss t 102 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 236,250, spread 1.90, stolen 0.0; nearest soldier 148.0, 2 alive
+  boss t 103 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 228,248, spread 2.01, stolen 0.0; nearest soldier 149.5, 1 alive
+  boss t 104 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 214,246, spread 1.85, stolen 0.0; nearest soldier 158.3, 1 alive
+  boss t 105 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 196,242, spread 1.85, stolen 0.0; nearest soldier 134.6, 1 alive
+  boss t 106 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 190,240, spread 1.56, stolen 0.0; nearest soldier 147.0, 1 alive
+  boss t 107 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 186,242, spread 1.62, stolen 0.0; nearest soldier 148.3, 1 alive
+  boss t 108 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 184,242, spread 1.78, stolen 0.0; nearest soldier 133.7, 1 alive
+  boss t 109 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 182,242, spread 1.85, stolen 0.0; nearest soldier 128.9, 1 alive
+  boss t 110 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 180,240, spread 1.95, stolen 0.0; nearest soldier 127.8, 1 alive
+STRAT t 110 back mould 16510 soldiers 1 hp 0.28 bank 353 killed 5398 turret 0 pumps 1 buildings 1
+  boss t 111 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 174,238, spread 2.06, stolen 0.0; nearest soldier 140.8, 1 alive
+  boss t 112 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 172,240, spread 1.95, stolen 0.0; nearest soldier 142.3, 1 alive
+  boss t 113 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 170,240, spread 1.87, stolen 0.0; nearest soldier 130.9, 1 alive
+  boss t 114 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 166,240, spread 1.89, stolen 0.0; nearest soldier 129.9, 1 alive
+  boss t 115 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 164,240, spread 1.79, stolen 0.0; nearest soldier 140.5, 1 alive
+  boss t 116 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 164,240, spread 1.80, stolen 0.0; nearest soldier 130.9, 2 alive
+  boss t 117 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 162,240, spread 1.79, stolen 0.0; nearest soldier 128.5, 2 alive
+  boss t 118 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 162,240, spread 1.81, stolen 0.0; nearest soldier 128.4, 2 alive
+  boss t 119 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 162,240, spread 1.81, stolen 0.0; nearest soldier 128.2, 2 alive
+  boss t 120 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 162,240, spread 1.78, stolen 0.0; nearest soldier 136.9, 2 alive
+STRAT t 120 back mould 17346 soldiers 2 hp 0.44 bank 64 killed 5822 turret 0 pumps 1 buildings 1
+  surge 5 starts at t 120.5 s (the slime has eaten 547 food)
+  boss t 121 s: lump 0 leech Go((122.5, 221.0)), 401 members (first 401, 0 hurt), at 160,240, spread 1.80, stolen 0.0; nearest soldier 155.7, 1 alive
+  boss t 122 s: lump 0 leech Hunt(Some(6)), 401 members (first 401, 0 hurt), at 160,238, spread 1.96, stolen 0.0; nearest soldier 145.2, 1 alive
+  boss t 123 s: lump 0 leech Hunt(Some(6)), 401 members (first 401, 0 hurt), at 160,232, spread 2.24, stolen 0.0; nearest soldier 136.3, 1 alive
+  boss t 124 s: lump 0 leech Hunt(Some(6)), 401 members (first 401, 0 hurt), at 160,226, spread 2.29, stolen 0.0; nearest soldier 123.2, 1 alive
+  boss t 125 s: lump 0 leech Hunt(Some(6)), 401 members (first 401, 0 hurt), at 156,218, spread 2.51, stolen 0.0; nearest soldier 122.7, 1 alive
+/tmp/claude-0/cen/mortar/1795038793-2/planet-2-1795038793-strat:econ,go=4,aim=6-300s-all.png
+/tmp/claude-0/cen/mortar/1795038793-2/planet-2-1795038793-strat:econ,go=4,aim=6-300s-near.png
+  CPU: ground field 3.26 ms (once a game second), model and HUD 0.190 ms a frame
+  t 126 s: mould 17549, soldiers 0, bank 83, harvested 2080, rendered 0, shots 523, killed 6492, took 35%, crystals left 0.965, ended: squad wiped
+  surge: the slime ate 579 food (4.6/s); meter 32.1 of 109, 5 surges
+  dense: 0 condensed or thick walkers, mass 17549 (readout 17596); 920 breaking away
+  loose: 4602 walkers alone or in twos in a dish cell, 26.2% of 17573; 2450 with at most one other round them
+    pump at (184, 132): hp 0 / 200, built 0.0, worn down
+    pump at (122, 221): hp 0 / 200, built 1.0, worn down
+    pump at (212, 249): hp 0 / 200, built 1.0, worn down
+    pump at (88, 176): hp 0 / 200, built 1.0, worn down
+    pump at (88, 254): hp 0 / 200, built 1.0, worn down
+    pumped 1765 food

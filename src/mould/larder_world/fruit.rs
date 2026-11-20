@@ -207,6 +207,11 @@ impl<W: World> Game<W> {
         if hurt < r.hurt * mass {
             return;
         }
+        // One at a time: none while a wave gathers or strikes (`waves.rs`;
+        // the review lane, 11-20, saw nearly every fruit come with a wave).
+        if self.waves.live.is_some() {
+            return;
+        }
         self.start_fruit();
     }
 
@@ -286,7 +291,12 @@ impl<W: World> Game<W> {
         let Some(at) = self.fruit_site() else { return };
         let want = (r.size * self.mould as f32).clamp(r.least, r.most.max(r.least));
         let reach = self.fruit_reach(at, want);
-        self.world.form_lump(lump, Some((at, reach)));
+        // Grown, not formed: only walkers in no lump join. Formed, it took
+        // every walker in reach, a mini-boss's or a march's members too: on
+        // the owner's maps (2026-11-20, nine of his planets 2 to 4) 3 of 14
+        // mini-bosses went to nothing the second a fruit formed beside them
+        // (a hunter of 400 on run 1795038793 planet 4, 8 s after it formed).
+        self.world.grow_lump(lump, (at, reach));
         let size = self.world.size();
         self.world.set_lump(lump, Lump { aim: super::raid_cell(at, size), pull: r.pull, leash: r.leash, armour: r.armour, ..Lump::default() });
         let now = self.world.ticks();

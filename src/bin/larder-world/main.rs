@@ -190,13 +190,15 @@ use winit::window::{Window, WindowId};
 /// on every planet. The hunter violet (the hue nothing else on screen
 /// uses), the wanderer pale bone (a fat grub that grows as it grazes), the
 /// sapper ember (an acid red at your walls), the leech ink (dark tar on the
-/// pump rig, its core turning the charge's cyan as it drinks).
+/// pump rig, its core turning the charge's cyan as it drinks), the mortar
+/// moss with an acid core (2026-11-20).
 fn kind_look(kind: u16) -> LumpLook {
     match kind {
         1 => LumpLook::Violet,
         2 => LumpLook::Bone,
         3 => LumpLook::Ember,
         4 => LumpLook::Ink,
+        5 => LumpLook::Mortar,
         _ => LumpLook::Plain,
     }
 }
@@ -210,6 +212,7 @@ mod args;
 mod experiments;
 mod input;
 mod draw;
+mod ending;
 mod events;
 mod headless;
 mod bench;
@@ -874,6 +877,9 @@ struct App {
     spread: bool,
     /// Game seconds owed to the game (the accumulator).
     owed: f32,
+    /// The end's beat (`ending::Beat`), in the window; None in a headless
+    /// run, whose end card is at once.
+    beat: Option<ending::Beat>,
     /// The camera's shake, 0-1 (`shake=`; D6): each blast adds to it by
     /// its size, it falls by `SHAKE_FALL` a second, and the camera wobbles
     /// by its square (`shake`).
@@ -1058,6 +1064,7 @@ impl App {
             fast: false,
             spread: true,
             owed: 0.0,
+            beat: None,
             trauma: 0.0,
             clock: 0.0,
             stop: 0.0,
@@ -1477,6 +1484,8 @@ impl App {
         }
         self.game = Some(game);
         self.seen = 0;
+        // The end's beat (`ending`), in the window only.
+        self.beat = self.window.is_some().then(ending::Beat::default);
         if let Some(tr) = &self.mission {
             self.name = tr.mission.map.clone();
         }
@@ -1724,7 +1733,12 @@ impl App {
             // walker dying (WIN_SHARE 0, #487) ended the Game before the
             // mission saw it, and a run showed only "Play again" (the
             // owner's play, 2026-11-18 17:20Z).
+            let (paused, ended) = (self.paused, g.end.is_some() || mission_over);
             self.follow_mission();
+            // The end plays out in the picture before its card (`ending`).
+            if ended && !paused {
+                self.play_on(dt);
+            }
             return;
         }
         let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;

@@ -1,0 +1,114 @@
+<title>Condensed Strikers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; the same fight with strikers on and off at two zooms, then the numbers */
+:root{
+  --bg:#f2f0ea; --panel:#e6e2d6; --fg:#1e1b16; --muted:#5f5a4e;
+  --accent:#7a4a1e; --soft:#efe2cf; --line:#cdc6b4;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15120e; --panel:#221d17; --fg:#ece6db; --muted:#a89f8e;
+  --accent:#d39a5e; --soft:#30261b; --line:#3b3228; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15120e; --panel:#221d17; --fg:#ece6db; --muted:#a89f8e;
+  --accent:#d39a5e; --soft:#30261b; --line:#3b3228; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:32px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:10px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:460px){.grid4{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure video,figure img{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{display:flex;flex-direction:column;gap:2px;font-size:.92rem;color:var(--muted)}
+.side{font:750 1.05rem/1.2 var(--display);color:var(--fg)}
+.counts{font:13px/1.4 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.note{background:var(--soft);border-radius:8px;padding:16px 18px;max-width:760px;display:flex;flex-direction:column;gap:8px}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:760px}
+.tablewrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.95rem;min-width:520px}
+th,td{text-align:right;padding:6px 12px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font:600 .85rem/1.2 var(--body);color:var(--muted)}
+td.mono{font-family:var(--mono);font-size:.86rem}
+footer{font-size:.85rem;color:var(--muted);max-width:760px;display:flex;flex-direction:column;gap:6px}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · Enemy · 2026-11-20</span>
+  <h1>Late in a planet the slime condenses and charges</h1>
+  <p class="lede">Your pick on the balance card was "Condensed strikers + late lunge", and this page is the strikers half. Once the slime is under 40% of its biggest, its edge facing your squad condenses. Each condensing walker takes in up to three neighbours and becomes a bright gold bead with a slow pulse. A bead takes one shot for each walker it holds, plus one, and bites as hard as all of them together. Every bead charges your nearest soldier. No slime is added, because what a bead takes in, the slime loses.</p>
+</header>
+
+<section>
+  <h2>The same fight, on and off</h2>
+  <p class="prose">Planet 2, run seed 1, the strategy bot with 20,000 to spend, 1:02 to 1:16, with the camera fixed on the crystal the squad fights over. Both games are the same up to 1:02. The clips run at half a second a frame.</p>
+  <div class="grid">
+    <figure>
+      <video src="on12.mp4" poster="on12.jpg" autoplay muted loop playsinline aria-label="Strikers on, zoom 12: gold beads rush the squad on the crystal"></video>
+      <figcaption><span class="side">On, zoom 12</span><span class="counts">1:04 · 254 strikers holding 239 walkers · 445 taken in so far</span></figcaption>
+    </figure>
+    <figure>
+      <video src="off12.mp4" poster="off12.jpg" autoplay muted loop playsinline aria-label="Strikers off, zoom 12: the plain slime round the same crystal"></video>
+      <figcaption><span class="side">Off, zoom 12</span><span class="counts">1:04 · plain slime</span></figcaption>
+    </figure>
+    <figure>
+      <video src="on6.mp4" poster="on6.jpg" autoplay muted loop playsinline aria-label="Strikers on, zoom 6"></video>
+      <figcaption><span class="side">On, zoom 6</span><span class="counts">1:02 to 1:16 · 157 to 254 strikers alive at a time · 629 taken in by 1:16</span></figcaption>
+    </figure>
+    <figure>
+      <video src="off6.mp4" poster="off6.jpg" autoplay muted loop playsinline aria-label="Strikers off, zoom 6"></video>
+      <figcaption><span class="side">Off, zoom 6</span><span class="counts">same minutes, plain slime</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <h2>First numbers</h2>
+  <p class="prose">These come from one game each way, so they are a first look only. The balance thread is measuring it properly: 9 maps on planet 3, on and off, counting the soldiers the slime bites to death in the last quarter.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Strikers on</th><th>Strikers off</th></tr></thead>
+    <tbody>
+      <tr><td>Planet 2 at 1:10: soldiers, health</td><td class="mono">45, 0.53</td><td class="mono">47, 0.52</td></tr>
+      <tr><td>Planet 2: strikers alive, 1:04 to 1:16</td><td class="mono">157 to 254</td><td class="mono">none</td></tr>
+      <tr><td>Engine test: a strike over the soldier</td><td class="mono">58 of 58 strikers live, each holding one fewer</td><td class="mono">0 of 5 plain walkers live</td></tr>
+      <tr><td>Engine test: closing on the soldier in 6 s</td><td class="mono">mean distance 13.6 to 5.4 cells</td><td class="mono">plain slime 35.4 to 38.7</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>What it is made of</h2>
+  <ul>
+    <li><b>Where:</b> once a game second, each walker that can walk to within your guns' reach plus 12 cells of a soldier has an even chance to try. Slime across deep water or behind rock never tries. A first version used straight-line distance instead. On planet 3 that left 2,000 strikers stuck on a river bank for a minute while the squad shot across.</li>
+    <li><b>How:</b> in each small block of ground, the first walker that tries takes in up to three of the others. Those walkers are gone, and their weight is now its own.</li>
+    <li><b>Why it is harder:</b> one shot kills every plain walker in its blast. Four walkers merged into one bead take four shots. The same slime crosses your guns four times as tough, and it is coming at you.</li>
+    <li><b>The look:</b> each bead is the walker itself, drawn as a lit gold drop. It grows with what it holds, and its glow brightens and dims on a slow pulse. A crowd of them reads as a hot front. There is no bronze and no outline, and the look is open to change.</li>
+  </ul>
+  <div class="note">
+    <h3>Also in this change</h3>
+    <p>The fruiting knot and the waves now take turns: neither starts while the other is under way. The review lane saw almost every fruit come with a wave. The heartbeat also goes in with this change, so the slime's edge swells and ebbs every 6 seconds.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Filmed on a software GPU (llvmpipe) in the cloud. The frame cost on the GTX 1070 is not measured yet. Condensing is two passes once a game second, and each step every bead checks which soldier is nearest.</p>
+  <p>Source: <code>Reports/strikers-2026-11-20/</code>. The commands are in its README.</p>
+</footer>
+</main>

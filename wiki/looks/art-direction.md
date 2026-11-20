@@ -66,7 +66,8 @@ ranked look jobs, in the owner's order.
    violet (skin hue about 265, core 280), the wanderer pale bone, the
    leech near-black ink whose core turns the charge's cyan as it drinks a
    pump, the sapper ember crimson at your
-   walls; dark, mid and pale, parting by value as well as hue; not
+   walls, the mortar (11-20, planet 4 on) moss green lit by an acid core,
+   saturated where the plants are muted; dark, mid and pale, parting by value as well as hue; not
    bronze (owner 11-16); its colour, dome and core light all from where its
    members are (once out on its errand, wherever they stand, however thick
    the slime round them), and a broken or spent one's look drains into the slime
@@ -144,7 +145,7 @@ In the owner's order; A is Milestone 1's look test (`NOW.md`, exit test 2).
 
 **C. Planets and terrain**: stronger grounding (faint shadows at play zoom; 11-20: each crystal casts its hexagon swept away from the light, `GEM_CAST` 0.55 of its radius times its height share, at most 8 cells, `GEM_SHADOW` 0.6 dark at its foot, on the slime as on the ground; rock's cast `TER_CAST` 1.6 cells, `TER_SHADE` 0.55); done 11-20: rock as stone (#534), planet 1's meadow in patches by the water (#535), a spent crystal a cracked husk of frosted glass (its six faces kept, rays and chords from a blow at its middle, coming in as the charge goes; `GEM_HUSK`, `GEM_SHARD`, `GEM_RAYS`, `GEM_SPENT` in `view.wgsl`; value about 70, between rock and a live face); one visual trait a planet that only it has (planet 1 done; 11-20, planets 2 and 3: the slime's trail on bare land, as pale dust tracks on the barrens, `DUST*`, and a wet slick with a cool sheen and glints in the fen, `SLICK_*`, both in `shaded` from `trail_lin`).
 
-**D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture; then the shop and the menus.
+**D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture (the landing done 11-20: the soldiers drop in one by one over their shadows, `draw::landing`; a dust ring at their feet tried and dropped as a drawn pulse; the end done 11-20: the world plays on for 2.4 s with the clock held and the camera drawing back before the card, `ending.rs`); then the shop and the menus. Shop, 11-20: the counter's offers as shelf rows with their one-line effect (`shelf_row` in `start/shop.rs`; bends shop B's half-size tiles while every offer fits on one page).
 
 Also open: the 1070 cost of the new looks (one batch); the first review's open issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 

@@ -396,7 +396,21 @@ pub const LURE_PULL: f32 = 10.0;
 /// the slime near the squad pulls back past the guns' reach to two or
 /// three points round it, masses there for 12 s, and comes in from all of
 /// them at once for 8 s. 45 s apart at least. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0)];
+///
+/// **The slime beats** (`heart`, 2026-11-20, the same thread;
+/// `larder_world/heart.rs`): every 6 s a beat runs out from its home
+/// crystal (else the crystal it holds most) through the body, and the
+/// calm slime leans out and quickens as it passes, so the edge swells
+/// toward you and ebbs. GPU only.
+///
+/// **The slime condenses into strikers late in a planet** (`strikers`,
+/// 2026-11-20, the owner's pick that day; `larder_world/strikers.rs`):
+/// under 40% of its peak, its edge within the guns' reach and 12 dish
+/// cells of a soldier condenses once a second, each condensing walker
+/// taking in up to three neighbours; a condensed walker takes a blow for
+/// each, bites once more for each, and charges the nearest soldier. GPU
+/// only.
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
@@ -637,7 +651,7 @@ pub struct Item {
 /// (`run_lock`), as it never locks the pump.
 pub const ITEMS: [Item; 18] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
-    Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
+    Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Shots a fifth wider; past the widest, they fire faster", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
     Item { key: "range", name: "Longer barrels", group: Group::Squad, about: "3 more cells of sight and reach", max: 3, cost: 100, needs: None },
     Item { key: "squad", name: "Bigger landing", group: Group::Squad, about: "Two more soldiers land with you", max: 4, cost: 150, needs: None },

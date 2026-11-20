@@ -1110,6 +1110,21 @@ impl World for GpuWorld {
         true
     }
 
+    fn set_heart(&mut self, at: Option<(f32, f32)>, lean: f32, period: u32, len: u32) {
+        self.e.heart = at.map(|at| crate::gpu::Heart { at, lean, period, len });
+    }
+
+    fn set_strikers(&mut self, haste: Option<f32>) {
+        self.e.strikers = haste;
+    }
+
+    /// At once, after the running step's shares, as `form_lump`.
+    fn condense(&mut self, reach: f32, share: f32) -> Option<(u32, u32, u32)> {
+        self.e.strikers?;
+        self.flush();
+        Some(self.e.condense(&self.shared, reach, share))
+    }
+
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         // Deep water is a wall to this engine's slime (`Settings::
@@ -1405,6 +1420,15 @@ mod tests {
         }
         fn can_wave(&self) -> bool {
             self.g.can_wave()
+        }
+        fn set_heart(&mut self, at: Option<(f32, f32)>, lean: f32, period: u32, len: u32) {
+            self.g.set_heart(at, lean, period, len)
+        }
+        fn set_strikers(&mut self, haste: Option<f32>) {
+            self.g.set_strikers(haste)
+        }
+        fn condense(&mut self, reach: f32, share: f32) -> Option<(u32, u32, u32)> {
+            self.g.condense(reach, share)
         }
     }
 
@@ -2190,6 +2214,126 @@ mod tests {
         assert!(with >= 3 * without + 30, "the wave draws the slime: {with} walkers round its point against {without}");
         pulled.world.set_wave_field(Vec::new(), 0.0);
         assert!(!pulled.world.e.waved && blocks(&pulled).iter().all(|&v| v == 0), "an empty field clears it");
+    }
+
+    /// **The slime's edge swells and ebbs with its heartbeat**
+    /// (`Engine::heart`, `Game::time_heart`; 2026-11-20). Two race worlds
+    /// alike, one given a heart at the mould's home at 1 s (lean 25, a beat
+    /// every 4 game seconds, 80 fine cells long), the other none. Over the
+    /// next 8 s, the walkers' mean distance from the home (read every half
+    /// second) swings at least twice as far with the heart as without.
+    #[test]
+    fn the_slime_edge_swells_and_ebbs_with_its_heartbeat() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let new = || Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules::default(), seed);
+        let mean = |g: &Game<GpuWorld>, at: (f32, f32)| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let ds: Vec<f32> = (0..e.n as usize).filter(|&q| !e.grows || en[q] >= 0.0).map(|q| (wk[4 * q] - at.0).hypot(wk[4 * q + 1] - at.1)).collect();
+            ds.iter().sum::<f32>() / ds.len().max(1) as f32
+        };
+        let swing = |beats: bool| {
+            let mut g = new();
+            let home = g.world.crystals()[0].0;
+            while g.time() < 1.0 {
+                g.step();
+            }
+            if beats {
+                let steps = 4 * g.rules.tps * g.world.fine_steps().max(1);
+                g.world.set_heart(Some(home), 25.0, steps, 80);
+            }
+            let mut m: Vec<f32> = Vec::new();
+            for k in 1..=16 {
+                while g.time() < 1.0 + 0.5 * k as f32 {
+                    g.step();
+                }
+                m.push(mean(&g, home));
+            }
+            m.iter().copied().fold(f32::MIN, f32::max) - m.iter().copied().fold(f32::MAX, f32::min)
+        };
+        let (with, without) = (swing(true), swing(false));
+        eprintln!("heart: the mean distance from home swings {with:.2} fine cells with a heart, {without:.2} without");
+        assert!(with >= 2.0 * without && with > 0.5, "the heart moves the body: {with:.2} against {without:.2}");
+    }
+
+    /// **Condensed strikers take in their neighbours, charge, and take
+    /// more blows** (`Engine::condense`, `Game::time_strikers`;
+    /// 2026-11-20). A rule of the GPU engine alone (the owner's card, 11-17
+    /// 19:21Z), so its test is what it does on the software GPU. A race
+    /// world with one soldier standing 25 fine cells east of the mould's
+    /// home (it neither shoots nor moves); at 2 s the edge within 20 cells
+    /// of it condenses (every walker there tries).
+    ///
+    /// - The slime loses exactly the walkers taken in, and the condensed
+    ///   hold them all: no walker is made or lost.
+    /// - Over the next 6 s the condensed walkers close on the soldier (their
+    ///   mean distance at least halves) while the plain slime does not.
+    /// - A strike that kills every plain walker in its disc leaves most
+    ///   condensed walkers in it alive, each holding one walker fewer.
+    #[test]
+    fn condensed_strikers_take_in_their_neighbours_charge_and_take_more_blows() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let mut w = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        let home = w.crystals()[0].0;
+        let at = (home.0 + 25.0, home.1);
+        let f = Frame { units: vec![squad::UnitIn { x: at.0, y: at.1, touch: 1.5, ..Default::default() }], ..Frame::default() };
+        // The living walkers: (x, y, condensed, held).
+        let read = |w: &GpuWorld| -> Vec<(f32, f32, bool, u32)> {
+            let e = &w.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let life = e.life_of().0;
+            let dw = e.dense_of();
+            (0..e.n as usize)
+                .filter(|&q| (!e.grows || en[q] >= 0.0) && (!e.cycles || life[q] != crate::mould::big::LIFE_DEAD))
+                .map(|q| (wk[4 * q], wk[4 * q + 1], dw[q] & 0x10000 != 0, dw[q] >> 28))
+                .collect()
+        };
+        let mean = |v: &[(f32, f32, bool, u32)], cond: bool| {
+            let d: Vec<f32> = v.iter().filter(|p| p.2 == cond).map(|p| (p.0 - at.0).hypot(p.1 - at.1)).collect();
+            d.iter().sum::<f32>() / d.len().max(1) as f32
+        };
+        for _ in 0..2 {
+            w.frame(&f, 15);
+        }
+        assert_eq!(w.condense(20.0, 1.0), None, "no condensing with the strikers off");
+        w.set_strikers(Some(1.5));
+        w.frame(&f, 1);
+        let before = read(&w).len();
+        let (_, _, took) = w.condense(20.0, 1.0).expect("the GPU world condenses");
+        let v = read(&w);
+        let (live, held) = (v.iter().filter(|p| p.2).count(), v.iter().filter(|p| p.2).map(|p| p.3).sum::<u32>());
+        eprintln!("strikers: {before} walkers, {took} taken in by {live} condensed holding {held}, {} after", v.len());
+        assert!(took >= 30 && live >= 10, "the edge condenses: {took} taken in by {live}");
+        assert_eq!(before - v.len(), took as usize, "the slime loses only the walkers taken in");
+        assert_eq!(held, took, "and the condensed hold them all");
+        assert!(v.iter().filter(|p| p.2).all(|p| (1..=3).contains(&p.3)), "each holds one to three");
+        let (c0, p0) = (mean(&v, true), mean(&v, false));
+        for _ in 0..6 {
+            w.frame(&f, 15);
+        }
+        let v = read(&w);
+        let (c1, p1) = (mean(&v, true), mean(&v, false));
+        eprintln!("strikers: mean distance to the soldier, condensed {c0:.1} -> {c1:.1}, plain {p0:.1} -> {p1:.1}");
+        assert!(c1 <= 0.5 * c0, "the condensed charge the soldier: {c0:.1} -> {c1:.1}");
+        assert!(p1 >= 0.8 * p0, "the plain slime stays: {p0:.1} -> {p1:.1}");
+        // A strike over the soldier.
+        let r = 6.0;
+        let inside = |v: &[(f32, f32, bool, u32)], cond: bool| v.iter().filter(|p| p.2 == cond && (p.0 - at.0).hypot(p.1 - at.1) <= r - 1.0).count();
+        let (cin, pin) = (inside(&v, true), inside(&v, false));
+        let held0: u32 = v.iter().filter(|p| p.2 && (p.0 - at.0).hypot(p.1 - at.1) <= r - 1.0).map(|p| p.3).sum();
+        w.burst(&squad::Burst { at, r, kill: true, ..Default::default() }, &squad::BurstRules::default());
+        let v = read(&w);
+        let (cout, pout) = (inside(&v, true), inside(&v, false));
+        let held1: u32 = v.iter().filter(|p| p.2 && (p.0 - at.0).hypot(p.1 - at.1) <= r - 1.0).map(|p| p.3).sum();
+        eprintln!("strikers: a strike over the soldier leaves {cout} of {cin} condensed (holding {held0} -> {held1}) and {pout} of {pin} plain");
+        assert!(cin >= 5 && cout == cin && held1 + cin as u32 == held0, "every condensed walker in it takes the blow and lives, holding one fewer");
+        assert!(pout * 10 <= pin, "the plain walkers in it die: {pout} of {pin} left");
     }
 
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,

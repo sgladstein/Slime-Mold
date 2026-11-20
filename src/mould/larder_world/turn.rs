@@ -458,6 +458,8 @@ impl<W: World> Game<W> {
             self.time_bosses();
             self.time_fruit();
             self.time_waves();
+            self.time_heart();
+            self.time_strikers();
         }
         self.campaign_rules(now - t);
         self.check_end();
