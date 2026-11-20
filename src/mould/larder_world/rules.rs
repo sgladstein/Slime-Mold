@@ -924,6 +924,8 @@ impl Rules {
             "boss_shell_life" => &mut self.boss.shell_life,
             "boss_late" => &mut self.boss.late,
             "boss_late_grade" => &mut self.boss.late_grade,
+            "boss_late_mortar" => &mut self.boss.late_mortar,
+            "boss_round_far" => &mut self.boss.round_far,
             "boss_far" => &mut self.boss.far,
             "boss_fresh" => &mut self.boss.fresh,
             "boss_root" => &mut self.boss.root,

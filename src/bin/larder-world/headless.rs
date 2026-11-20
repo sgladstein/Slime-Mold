@@ -220,6 +220,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut crossed = 0usize;
     let mut picked = false;
     let mut bossed: Vec<usize> = Vec::new();
+    // Soldiers fallen by a mini-boss (`bossfell` lines; the big-army census,
+    // 2026-11-20): one that dies within 10 world units of a live boss's
+    // body (its centre plus its radius as a packed disc) or 15 of a live
+    // shell's target. A proxy: the play does not record what killed whom.
+    let mut boss_fallen = 0u32;
     // `turret=X,Y,T`: the buildings still to stand, at their seconds.
     let mut late: Vec<usize> = (0..turrets.len()).filter(|&i| turrets[i].2 > 0.0).collect();
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
@@ -532,11 +537,24 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let boss_sec = app.game.as_ref().map_or(0, |g| g.time().floor() as u64);
             let bosses_ended = app.game.as_ref().map_or(0, |g| g.bosses.ended.len());
             let bosses_born: Vec<u64> = app.game.as_ref().map_or(Vec::new(), |g| g.bosses.live.iter().map(|b| b.born).collect());
+            let alive_before: Vec<bool> = app.game.as_ref().map_or(Vec::new(), |g| g.soldiers.iter().map(|s| s.alive).collect());
             app.step(if real { t - at[fi - 1] } else { step });
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
             app.settle();
+            if let Some(g) = app.game.as_ref() {
+                let by_boss = |x: f32, y: f32| {
+                    g.bosses.live.iter().filter(|b| b.members > 0).any(|b| (b.centre.0 - x).hypot(b.centre.1 - y) < (b.members as f32 / std::f32::consts::PI).sqrt() + 10.0)
+                        || g.bosses.shells.iter().any(|sh| (sh.target.0 - x).hypot(sh.target.1 - y) < 15.0)
+                };
+                let fell: Vec<(f32, f32)> = g.soldiers.iter().zip(&alive_before).filter(|(s, &was)| was && !s.alive).map(|(s, _)| (s.x, s.y)).collect();
+                let n = fell.iter().filter(|&&(x, y)| by_boss(x, y)).count() as u32;
+                if n > 0 {
+                    boss_fallen += n;
+                    println!("  bossfell t {:.1} s: {n} soldiers fell by a mini-boss ({boss_fallen} in all), {} alive", g.time(), g.alive());
+                }
+            }
             // `necks=T,...`: the cut count at each T (`mould::necks`), after
             // the step, so a T that is also the run's last frame counts (the
             // first census lost its 300 s count with the check before it).
