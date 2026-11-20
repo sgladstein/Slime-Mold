@@ -52,7 +52,7 @@ jobs:
           WGPU_BACKEND: vulkan
         run: |
           python3 Reports/strategy-bots-2026-11-19/league.py run \
-            Reports/late-threat-2026-11-20/jobs-planet2.txt league-${{ matrix.shard }}.jsonl \
+            Reports/late-threat-2026-11-20/jobs.txt league-${{ matrix.shard }}.jsonl \
             --shard ${{ matrix.shard }}/12 --workers 1 --timeout 2400
       # The rows in the log too: a cloud session reads job logs, but its
       # proxy refuses the artifact store (fetch.sh reads these lines).
