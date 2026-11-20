@@ -2649,6 +2649,9 @@ mod tests {
                         seen[1] += 1;
                         assert_eq!(b.speed, 2.0);
                     }
+                    // A blast needle past its burst flies on with no cast
+                    // (one burst per bullet, 2026-11-20).
+                    0 => assert!(b.speed == 2.0 && b.pierce < crate::mould::bullets::NEEDLE_PIERCE, "only a needle past its burst flies on with no cast: {b:?}"),
                     c => panic!("a plain bullet from a loaded squad: cast {c}"),
                 }
             }
@@ -2744,6 +2747,38 @@ mod tests {
         let c = casts(&[Card::Ammo(Ammo { set: Set::Buckshot, ..Ammo::standard(Shell::Blast) })])[0];
         let b = bursts(&c, (50.0, 50.0), &r, 2.0, 30.0);
         assert!((b[0].r - 0.5 * r.kit.blast_r).abs() < 1e-4, "{}", b[0].r);
+    }
+
+    /// **One burst per bullet** (owner's card, 2026-11-20 01:23Z): a
+    /// needle carrying a Blast bursts at its first slime hit only and
+    /// flies on through its other hits as a plain needle (cast 0); until
+    /// then it burst at each of its three hits.
+    #[test]
+    fn a_needle_blast_bursts_once_a_bullet() {
+        let needle = Card::Ammo(Ammo { set: Set::Needle, ..Ammo::standard(Shell::Blast) });
+        let mut g = attacking(2);
+        g.apply(Cmd::Load(0, Some(Deck::new(&[needle]))));
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        let (mut bullets, mut bursting, mut on) = (0u32, 0u32, 0u32);
+        for _ in 0..15 * 30 {
+            g.step();
+            // Squad 0's soldiers, the ones with the deck.
+            for s in g.last_shots.iter().filter(|s| s.by.is_some_and(|k| g.soldiers[k].squad == 0)) {
+                bullets += s.fired as u32;
+                if s.hit.is_some() {
+                    if s.cast > 0 {
+                        bursting += 1;
+                    } else {
+                        on += 1;
+                    }
+                }
+            }
+            rd.after_step(&mut g);
+        }
+        eprintln!("bullets {bullets}, hits carrying the blast {bursting}, plain hits flown on {on}");
+        assert!(bursting > 0 && bursting <= bullets, "{bursting} bursting hits from {bullets} bullets");
+        // Before the rule every hit of theirs carried the blast.
+        assert!(on > 0, "the needle flies on past its burst");
     }
 
     /// A slug's shove throws the slime it hits away from the gun, and the
