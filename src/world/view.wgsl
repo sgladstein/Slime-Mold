@@ -1519,6 +1519,8 @@ fn flush_mat(m0: Mat, k: f32) -> Mat {
 // (filmed on planet 1 at 0.3 x trail squared, barely seen, and 0.5,
 // a blur over the droplets at zoom 6).
 const SHEET_VEIL: f32 = 0.4;
+// The Sprawler's film under its threads (`prep`'s `th0`).
+const THREAD_VEIL: f32 = 0.3;
 
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
@@ -1968,6 +1970,12 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // thickness: the height still rises with the walkers (`th_h` takes the
     // wide count), so the sheet lies flat round the raised body.
     if (P.slime_look == 2u) { th0 = max(th0, SHEET_VEIL * trail); }
+    // The Sprawler's threads (`SlimeLook::Threads`) lie in a faint film of
+    // their own trail (play-zoom pass, 11-20): bare, its loose front was a
+    // spray of separate glowing dashes, the owner's "a bunch of individual
+    // walkers instead of a single slime unit" (11-18 15:56Z). A third of
+    // the Drifter's sheet, so the dashes still show through as threads.
+    if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail); }
     // Condensed mould keeps tight, raised edges (art director, 11-14: it
     // should read tougher at a glance): where it has condensed the
     // thickness is pushed through a steep curve, so the body is a full,

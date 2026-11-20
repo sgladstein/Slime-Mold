@@ -105,6 +105,9 @@ call in `main.rs`'s `start`), sent to the view with a walker's pace
 (`set_slime_look`; the `V` struct's last row, two words spare). Planned:
 the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
 Trunk thick veined cords with its amber walls.
+The Sprawler's threads lie in a faint film of their own trail (11-20,
+`THREAD_VEIL` 0.3 in `view.wgsl`, under the Drifter's
+`SHEET_VEIL` 0.4), so its loose front reads as one body.
 
 **The soldiers' Armour looks** (owner, 11-19 14:41Z: "our base soldier
 should be olive that upgraded to slate that upgrades to heavy"; 15:11Z:
