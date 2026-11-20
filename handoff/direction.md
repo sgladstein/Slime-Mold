@@ -193,6 +193,13 @@ end.
   `reward` 175 + 25 a planet plus 50 a star (was 150 + 50 a planet), so
   planet 1 keeps 200 and depth growth comes from drops. Retune once a bot
   or his play shows how much ore a player takes.
+- **Starfall by half the par** (11-20, the bug check's finding): falls
+  were drawn across 0:50 to 10:00 while his planet 1 took a median 4:05,
+  so a short planet saw one of its three or four. Now the window ends by
+  half the planet's par if sooner (`StarRules::par_share` 0.5,
+  `set=star_par`): 4:00 on planet 1, 5:00 on planets 2 and 3. Ore paid is
+  higher as a result (about 4 falls seen, not 1 or 2); retune `worth` once
+  his play or a drop-taking bot shows what is taken.
 - **Late bosses against a big army** (#587's options, 11-20 21:35Z,
   Direction's pick, not raised to the owner: it is how to build his
   "stronger mini-bosses near the end"): A, the Mortar weighted up late and
