@@ -1547,7 +1547,7 @@ fn look_trail(x: f32, y: f32) -> f32 {
 // members a cell the sharp window holds about one member, so the ratio is
 // shot noise: about 30% of the body crossed the threshold by chance and
 // re-rolled every frame, and the body boiled. The wide count is steady.
-struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32 };
+struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32, dens: f32 };
 
 // Each look's skin (the body's albedo), core light (emissive, where its
 // members are thickest) and hit colour (a member's dot as it takes hits).
@@ -1569,6 +1569,9 @@ fn lump_skin(k: u32) -> vec3<f32> {
         case 2u: { return vec3<f32>(120.0, 56.0, 190.0); }
         case 3u: { return vec3<f32>(26.0, 20.0, 34.0); }
         case 4u: { return vec3<f32>(140.0, 134.0, 152.0); }
+        // The fruit (2026-11-20, `fruit.rs`): dark umber, a sporangium's
+        // colour, darkening from a dull rust as it ripens (`lump_mat`).
+        case 5u: { return vec3<f32>(62.0, 34.0, 16.0); }
         default: { return MOULD_HUE; }
     }
 }
@@ -1578,6 +1581,11 @@ fn lump_core(k: u32) -> vec3<f32> {
         case 2u: { return vec3<f32>(220.0, 150.0, 255.0); }
         case 3u: { return vec3<f32>(200.0, 180.0, 255.0); }
         case 4u: { return vec3<f32>(120.0, 90.0, 74.0); }
+        // The fruit's spores: cream points, its members' own dots
+        // (`draw_specks`). Its body's light is a fifth of the others'
+        // (`lump_mat`): at full a cream light washed a packed knot pale
+        // tan, the bone wanderer's read.
+        case 5u: { return vec3<f32>(255.0, 220.0, 150.0); }
         default: { return vec3<f32>(0.0); }
     }
 }
@@ -1596,6 +1604,8 @@ fn lump_glow(k: u32, fill: f32) -> vec3<f32> {
     return mix(lump_core(k), CHARGE, clamp(fill, 0.0, 1.0));
 }
 const LUMP_GLOSS: f32 = 0.9;
+// A fruit's rise as a share of a mini-boss's (`lump_here`).
+const FRUIT_RISE: f32 = 0.4;
 const LUMP_RISE: f32 = 1.1;
 // How bright the core light burns at full (0.9 in round 1). Since the
 // mini-boss engine's tighter clench (11-16, round 3) a body that sits (a
@@ -1634,7 +1644,7 @@ const LUMP_SPECK: f32 = 0.75;
 // not on a line between their centres).
 fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     var l: Lump;
-    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0; l.fill = 0.0;
+    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0; l.fill = 0.0; l.dens = wide;
     if (P.n_lumps == 0u || wide <= 1e-3) { return l; }
     var best = 1e30;
     var bk = 0u;
@@ -1667,6 +1677,12 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     // a cell, cover 0.25) adds nothing.
     let own = smoothstep(LUMP_OWN.x, LUMP_OWN.y, l.cover) * clamp(P.lump_held[bk], 0.0, 1.0);
     l.share = max(smoothstep(0.05, 0.7, clamp(share, 0.0, 1.0)), own) * rem;
+    // A fruit's few strays round its rim (2026-11-20): where only they
+    // stand, their share of the walkers is whole however thin they are,
+    // and the share stopped dead where the Gaussian's nine cells ran out,
+    // so its skin ended in squares the shape of that window (a dark stair
+    // a cell wide at zoom 12). By its members' cover, it fades out first.
+    if (l.look == 5u) { l.share *= smoothstep(0.05, 0.35, l.cover); }
     // A leech's drink lights the whole of it (`LUMP_DRINK`), wherever its
     // members are, not only where they pack: on its pump it sits under the
     // rig and on the crystal, and only a glow round them showed it there.
@@ -1674,6 +1690,10 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     // bank).
     l.core = l.share * (smoothstep(LUMP_HOT.x, LUMP_HOT.y, wide) * (0.6 + 0.4 * l.strength) + LUMP_DRINK * l.fill) * rem;
     l.rise = LUMP_RISE * l.share * l.cover * l.cover * (0.7 + 0.3 * l.strength);
+    // A fruit (2026-11-20) packs three and four members a cell over a
+    // span of 30 cells and more: at the full rise its edge was a cliff
+    // that shaded as dark steps a cell wide at zoom 12. It swells low.
+    if (l.look == 5u) { l.rise *= FRUIT_RISE; }
     return l;
 }
 
@@ -1687,10 +1707,22 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
     // wet membrane where their cover falls off (`rim`, its slope's middle),
     // lighter inside where they are thick.
     let rim = 4.0 * l.cover * (1.0 - l.cover);
-    let skin = lump_skin(l.look) * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
+    var sk = lump_skin(l.look);
+    var core = LUMP_CORE;
+    // A fruit darkens as it ripens: from a dull rust, still slime, to
+    // umber at its burst, so the clock reads on the knot itself. Where its
+    // members pack tighter it is darker, where they thin lighter, so the
+    // knot is mottled by its own walkers' churn rather than flat (it packs
+    // past the cover's 1 - 1/e everywhere, so `cover` alone is even).
+    if (l.look == 5u) {
+        sk = mix(vec3<f32>(150.0, 84.0, 30.0), sk, 0.25 + 0.75 * clamp(l.strength, 0.0, 1.0));
+        sk *= mix(1.35, 0.8, smoothstep(0.6, 3.2, l.dens));
+        core *= 0.2;
+    }
+    let skin = sk * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
     m.albedo = mix(m.albedo, skin, s);
     m.gloss = mix(m.gloss, min(LUMP_GLOSS + 0.1 * rim, 1.0), s);
-    m.glow = m.glow * (1.0 - s) + lump_glow(l.look, l.fill) * LUMP_CORE * l.core;
+    m.glow = m.glow * (1.0 - s) + lump_glow(l.look, l.fill) * core * l.core;
     return m;
 }
 

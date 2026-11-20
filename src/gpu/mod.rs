@@ -95,8 +95,9 @@ pub const FLING_AT: usize = 896;
 /// The breakaway row (`BigParams::roam`, 11-14).
 pub const ROAM_AT: usize = 912;
 /// The ground row (new ground kinds, 11-14; Params grew from 928 to 944):
-/// deep water's step (`BigParams::deep_step`), then three words kept for
-/// the next ground kinds.
+/// deep water's step (`BigParams::deep_step`), deep water as a wall
+/// (`Settings::deep_wall`, 11-20), then two words kept for the next ground
+/// kinds.
 pub const GROUND_AT: usize = 928;
 /// The surge row (`BigParams::surge_every`, 11-15, the slime-enemy thread;
 /// Params grew from 944 to 960): the steps between surges, the creep's and
@@ -494,6 +495,19 @@ pub struct Settings {
     /// run's planets set it (`run::TETHER`). Params word 892, the lone
     /// step row's last.
     pub tether: u32,
+    /// **Deep water is a wall to the slime** (`deep_wall=0` turns it off;
+    /// on, as here, 2026-11-20, the owner: "Deep water shouldn't be
+    /// traversable by player or slime"). A walker on dry or shallow ground
+    /// never steps or jumps into deep water (`big::SOIL_DEEP`) and its
+    /// sensors read it as rock, so the slime goes round a river by its
+    /// fords and bridges as soldiers do; one already in it (flung, or put
+    /// there by a map) swims out at `deep_step`. The slime's ways (raids,
+    /// charges, the far smell, the lure) are built with it shut
+    /// (`GpuWorld::raid_ground`). This engine's own rule with no
+    /// `BigParams` field (the owner's card, 11-17 19:21Z: no CPU twin, so
+    /// the CPU dish's slime still crawls through and the twin test turns
+    /// it off). Params word 929, the ground row's second.
+    pub deep_wall: bool,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -759,6 +773,7 @@ impl Settings {
             far_smell: t.far_smell,
             lure_pull: 0.0,
             tether: 0,
+            deep_wall: true,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1089,6 +1104,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // the body steps only where it touches N others (Lab, one body:
         // Reports/lab-body-2026-11-18; 2 its pick).
         "tether" => s.tether = int()?.min(8),
+        // Deep water as a wall to the slime (`deep_wall=0` off; on by
+        // default, 2026-11-20).
+        "deep_wall" => s.deep_wall = int()? != 0,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -2391,7 +2409,11 @@ impl Engine {
         b.extend(u32_bytes(&[roam, far, land]));
         b.extend(f32_bytes(&[s.roam_share]));
         assert_eq!(b.len(), GROUND_AT, "Params rows before the ground row moved");
-        b.extend(f32_bytes(&[t.deep_step, 0.0, 0.0, 0.0]));
+        // Its second word is deep water as a wall (`Settings::deep_wall`,
+        // 2026-11-20).
+        b.extend(f32_bytes(&[t.deep_step]));
+        b.extend(u32_bytes(&[s.deep_wall as u32]));
+        b.extend(f32_bytes(&[0.0, 0.0]));
         assert_eq!(b.len(), SURGE_AT, "Params rows before the surge row moved");
         let sm = crate::mould::big::SURGE_MAX;
         b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm) | s.surge_dash.min(sm) << 16, s.surge_at]));
@@ -3246,6 +3268,25 @@ impl Engine {
         // The strike row as the `fling` pass reads it: `kalarm` holds `inv`.
         let (head, pushed) = push.map_or((0.0, 0.0), |a| (a, 1.0));
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, head, steps as f32, pushed]));
+        self.run(shared, &[(FLING, self.n.div_ceil(256))]);
+    }
+
+    /// **A sowing** (2026-11-20, a ripe fruit bursting,
+    /// `larder_world::fruit`): every living ordinary or dormant walker
+    /// within `rr` dish cells of (`x`, `y`) (dish cells) leaves as a homing
+    /// spore (`SOWN` in engine.wgsl), thrown straight out from the centre
+    /// for `steps` steps: straight while its timer is over the dish's
+    /// `spore_steps` / 2, then by scent, coming down on food (`spore_land`)
+    /// or where its timer runs out. The fling's pass with `kir` 2; counted
+    /// on the `news` gas word 3, as a fling. GPU only (the owner's 11-17
+    /// 19:21Z card: new slime rules on the GPU engine, no CPU twin).
+    pub fn sow_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, rr: f32, steps: u16) {
+        let k = self.dish.p.scale as f32;
+        self.cycles = true;
+        self.write_params(s, Hand::default(), 0);
+        let rr = rr * k;
+        let inv = 1.0 / (rr * rr).max(1e-6);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, 0.0, inv, rr, 0.0, steps.max(2) as f32, 2.0]));
         self.run(shared, &[(FLING, self.n.div_ceil(256))]);
     }
 

@@ -3,6 +3,31 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
+## Fruiting (2026-11-20, the thread "Make the slime a more interesting enemy")
+
+Not this lane's thread, but the slime's rules, so recorded here. The owner
+(11-20 05:46Z): the slime is interesting early "but once I get strong
+enough there is just lots of shooting through masses of uniform orange.
+Think outside the box". Built on by default on every run planet
+(`run::ENEMY_RULES`' `fruit`; `larder_world/fruit.rs`,
+[report](../Reports/fruiting-2026-11-20/README.md)): from 1:30 after the
+landing, once the squad has killed a fifth of the slime's mass in 30 s
+(a fall-under-peak test was tried and deleted: it fired on planet 3's Trunk
+with the squad nowhere near), the slime takes a lump (`big::LUMPS`, shared:
+`Game::lump_taken` now covers bosses, marches and fruits) for 8% of
+itself at its thickest square out of the guns' reach plus 15 cells, holds
+it with pull 40 and leash 1 (armour 2), swells it to twice its first size
+(at most 2,500) and after 30 s bursts it: engine.wgsl's `fling` with `kir`
+2 (`Engine::sow_pass`, `World::sow`) throws every walker in the knot out
+as a homing spore (`SOWN`, bit 15 of `spec`) that lands on food
+(`spore_reach` 36 and `spore_land` 1 are now in `run::enemy_keys` for every
+planet). Under 35% of its most members it breaks. One at a time, 40 s from
+one's end to the next. The view draws it as `LumpLook::Fruit` (umber,
+darkening as it ripens), from the window's `main.rs`. GPU only
+(`World::can_sow`). Next ideas from the same thread, not built: a slime
+that reads its losses and comes in waves from several sides; a heartbeat;
+a rind that grows on the side being shot.
+
 ## State (2026-11-18, the march)
 
 **Open branch:** none (`claude/project-thread-s5k9cw` restarts from main

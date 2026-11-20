@@ -1,0 +1,10 @@
+3302 games
+group  planet  games  won   median win  wins under 8:00  median peak army (wins)
+first       1    334   64%        4:05              91%          45
+first       2    320   24%        6:26              79%          35
+first       3    320    2%       10:59               0%          74
+old         1    334   64%        4:05              91%          45
+old         2    320   24%        6:26              79%          35
+old         3   1584   30%        7:24              61%          80
+set         3    992   89%        4:50              91%          66
+now         3     72   60%        5:27              79%          65

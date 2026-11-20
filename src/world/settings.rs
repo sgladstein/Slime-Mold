@@ -1,6 +1,7 @@
-//! **The player's settings that outlive a run**: today only the UI size
-//! (owner, 2026-11-14 08:07Z: "We need an option to scale the UI/text
-//! etc, because they look too small on my screen").
+//! **The player's settings that outlive a run**: the UI size (owner,
+//! 2026-11-14 08:07Z: "We need an option to scale the UI/text etc, because
+//! they look too small on my screen") and the sound's volume (sound pass
+//! two, 2026-11-20; until then O was the only control, on or off).
 //!
 //! The UI was already drawn in units that grow with the window's height
 //! (1 at 1080 lines, `UiSize::px`), so on a tall screen it grew, but a
@@ -149,6 +150,32 @@ pub fn save_ui(user: f32) {
     }
 }
 
+/// The volumes the Options page steps through, as a share of the first-run
+/// level (`sound::synth::DEFAULT_MASTER`; `master_at`). The master squares
+/// its value, so 50% is -12 dB and 200% +12 dB (the master at full).
+pub const VOLUME_STEPS: [f32; 9] = [0.0, 0.1, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+
+/// A volume from the Options page or the file: `75%` or `0.75`.
+pub fn parse_volume(v: &str) -> Option<f32> {
+    let n = match v.strip_suffix('%') {
+        Some(p) => p.trim().parse::<f32>().ok()? / 100.0,
+        None => v.trim().parse::<f32>().ok()?,
+    };
+    (n.is_finite() && (0.0..=2.0).contains(&n)).then_some(n)
+}
+
+/// The saved volume (`volume=` in the file), 100% when there is none.
+pub fn saved_volume() -> f32 {
+    get("volume").as_deref().and_then(parse_volume).unwrap_or(1.0)
+}
+
+/// Saves the volume, with a word on stderr if it could not.
+pub fn save_volume(v: f32) {
+    if let Err(e) = set("volume", &percent(v)) {
+        eprintln!("larder-world: the volume was not saved ({e})");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -185,6 +212,17 @@ mod tests {
         assert_eq!(step(1.0, -1), 0.9);
         assert_eq!(step(3.0, 1), 3.0);
         assert_eq!(step(1.3, 1), 1.5);
+    }
+
+    #[test]
+    fn volumes_parse_and_print() {
+        assert_eq!(parse_volume("75%"), Some(0.75));
+        assert_eq!(parse_volume("0%"), Some(0.0));
+        assert_eq!(parse_volume("300%"), None);
+        assert_eq!(parse_volume("loud"), None);
+        for v in VOLUME_STEPS {
+            assert_eq!(parse_volume(&percent(v)), Some(v));
+        }
     }
 
     #[test]

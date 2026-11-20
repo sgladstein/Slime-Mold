@@ -34,8 +34,9 @@ pub const G_CLAY: u8 = 0x20;
 pub const G_BARREN: u8 = 0x30;
 
 /// Deep water, the ground thread's (soil kind 4 with the wet bit,
-/// `map::G_DEEP`): soldiers cannot stand in it, shots fly over, the slime
-/// crawls through. The rivers' fords and bridges and the lakes' rims are
+/// `map::G_DEEP`): soldiers cannot stand in it, shots fly over, and the
+/// GPU engine's slime cannot enter it either (`gpu::Settings::deep_wall`,
+/// 2026-11-20; the CPU dish's still crawls through). The rivers' fords and bridges and the lakes' rims are
 /// shallow or dry, and the walk checks (`walkable`, `map::standable`) see
 /// it, so a planet that water cuts off is rebuilt.
 const DEEP: u8 = G_DEEP;

@@ -102,6 +102,9 @@ pub enum LumpLook {
     Ink = 3,
     /// Pale bone-grey skin over a faint warm core; hits show rose.
     Bone = 4,
+    /// **A fruit** (2026-11-20, `larder_world::fruit`): umber over a warm
+    /// cream core, darkening from rust as it ripens (its strength).
+    Fruit = 5,
 }
 
 impl LumpLook {
@@ -113,6 +116,7 @@ impl LumpLook {
             "violet" | "2" => Self::Violet,
             "ink" | "3" => Self::Ink,
             "bone" | "4" => Self::Bone,
+            "fruit" | "5" => Self::Fruit,
             _ => return None,
         })
     }

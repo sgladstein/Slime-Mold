@@ -309,6 +309,12 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("far_smell", "1".to_string()),
         ("lure_pull", format!("{LURE_PULL}")),
         ("tether", format!("{TETHER}")),
+        // A fruit's spores (`ENEMY_RULES`' `fruit`) home on food 36 fine
+        // cells out and land over a scent of 1, the Sporer's own numbers
+        // (`tiers::SPORE`); no other spore flies on these planets but the
+        // Sporer's, which already has them.
+        ("spore_reach", "36".to_string()),
+        ("spore_land", "1".to_string()),
     ]
 }
 
@@ -339,7 +345,18 @@ pub const LURE_PULL: f32 = 10.0;
 /// soldier (`Reports/sim-use-2026-11-17/s1-unit-paths.md`). The field is
 /// built on a worker thread once a game second (2.0 ms on planet 3, 7.4 ms
 /// on planet 8, off the frame).
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0)];
+///
+/// **The slime fruits when it is hurt** (`fruit`, 2026-11-20, the thread
+/// "Make the slime a more interesting enemy"; `larder_world/fruit.rs`). The
+/// owner, 11-20 05:46Z: the slime is interesting early in a planet "when I
+/// am poor and weak but once I get strong enough there is just lots of
+/// shooting through masses of uniform orange". From 1:30 after the
+/// landing, once the squad has killed a fifth of the slime's mass in 30 s,
+/// the slime streams a twelfth of itself (at most 2,500 walkers)
+/// into a dark knot out of the guns' reach. Break it within 30 s or it
+/// bursts and throws its walkers over the planet as spores that land on
+/// food as new slime. One at a time, 40 s apart at least. GPU only.
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
@@ -1304,7 +1321,7 @@ impl Run {
 
     /// Fills the shop's offer for the current depth: `OFFER` cards plus
     /// `draw`'s, of the powers this depth has reached, not already owned
-    /// (a card may be offered again once owned only if every card is).
+    /// but for the last slot, which may sell a second copy of one.
     pub fn restock(&mut self) {
         if self.range {
             let z = mix(mix(self.seed ^ 0x7A46_E000) ^ u64::from(self.depth)) ^ self.rerolls;
@@ -1327,8 +1344,19 @@ impl Run {
         let n = OFFER + self.level_of("draw") as usize;
         let pool: Vec<Card> = Card::ALL.into_iter().filter(|&c| c.kind() != Kind::Payload && card_power(c).is_some_and(|p| power_from(p) <= self.depth)).collect();
         let owned = self.all_cards();
+        // A carrier (Trigger, Expire, Multicast) acts on a bullet card after
+        // it, so none is sold while the run owns no bullet card (balance
+        // review, 2026-11-20; restock already held back Shatter and
+        // Detonate this way). Modifiers work on the plain bullet
+        // (`rounds::casts`), so they stay in.
+        let has_bullet = owned.iter().any(|c| c.kind() == Kind::Payload);
+        let pool: Vec<Card> = pool.into_iter().filter(|c| has_bullet || c.kind() != Kind::Trigger || matches!(c, Card::Delay | Card::Thick)).collect();
         let fresh: Vec<Card> = pool.iter().copied().filter(|c| !owned.contains(c)).collect();
-        let mut from = if fresh.is_empty() { pool } else { fresh };
+        // The cards owned come back into the draw for the last card slot,
+        // so a second loadout can buy its own copy (balance review,
+        // 2026-11-20); the other slots are cards not yet owned, as before.
+        let mut again: Vec<Card> = pool.iter().copied().filter(|c| owned.contains(c)).collect();
+        let mut from = if fresh.is_empty() { std::mem::take(&mut again) } else { fresh };
         let mut z = mix(mix(mix(self.seed ^ 0xC0FF_EE00) ^ u64::from(self.depth)) ^ self.rerolls);
         self.offers.clear();
         // The card the planet ahead asks for (`bring`), when not owned,
@@ -1374,8 +1402,16 @@ impl Run {
         let bullets = self.offers.len();
         self.offers.extend(wanted);
         while self.offers.len() < n + bullets && !from.is_empty() {
+            // The last slot draws from the new cards and the owned alike.
+            if self.offers.len() + 1 == n + bullets && !again.is_empty() {
+                from.append(&mut again);
+            }
             z = mix(z);
             self.offers.push(from.remove((z % from.len() as u64) as usize));
+        }
+        if self.offers.len() < n + bullets && !again.is_empty() {
+            z = mix(z);
+            self.offers.push(again.remove((z % again.len() as u64) as usize));
         }
         // Guns for the planet ahead, each its own seed: two kinds, and
         // neither the kind in hand (2026-11-18: a gun of another kind is
@@ -1776,6 +1812,37 @@ mod tests {
         assert_eq!(Mission::parse(&text).unwrap(), l.mission);
     }
 
+    /// Balance review, 2026-11-20: no carrier is sold while the run owns
+    /// no bullet card, and an owned card can come back in the last slot.
+    #[test]
+    fn the_shop_holds_back_carriers_and_sells_owned_cards_again() {
+        let carrier = |c: &Card| matches!(c, Card::Trigger | Card::Expire | Card::Multicast);
+        let (mut again, mut carriers) = (0, 0);
+        for seed in 1..=20 {
+            let mut r = Run::new(seed);
+            for d in 1..=4 {
+                r.depth = d;
+                for k in 0..5 {
+                    r.rerolls = k;
+                    r.restock();
+                    assert!(!r.offers.iter().any(carrier), "seed {seed} depth {d}: a carrier with no bullet owned: {:?}", r.offers);
+                }
+            }
+            r.cards = vec![(Card::Blast, true), (Card::Wide, false), (Card::Pierce, false)];
+            for d in 1..=4 {
+                r.depth = d;
+                for k in 0..5 {
+                    r.rerolls = k;
+                    r.restock();
+                    carriers += r.offers.iter().filter(|c| carrier(c)).count();
+                    again += r.offers.iter().filter(|c| matches!(c, Card::Wide | Card::Pierce)).count();
+                }
+            }
+        }
+        assert!(carriers > 0, "carriers sold once a bullet is owned");
+        assert!(again > 0, "owned cards come back into the draw");
+    }
+
     #[test]
     fn the_shop_before_the_sprawler_offers_tinder() {
         // Run seed 1's planet 2 is the Sprawler, which shies from fire that
@@ -1900,7 +1967,7 @@ mod tests {
         let quiet = r.cards.iter().position(|c| c.0 == Card::Quiet).unwrap();
         assert!(r.pick(Pick::Move(quiet, 1)));
         assert_eq!(r.gun_text(), "gas+quiet+blast+wide");
-        assert_eq!(rounds::casts(&r.gun()).len(), 2, "gas, then quiet blast; the trailing wide waits for a bullet");
+        assert_eq!(rounds::casts(&r.gun()).len(), 3, "gas, then quiet blast, then a wide plain bullet");
         // A bag card that does not fit stays in the bag.
         r.guns = vec![Gun { budget: 9, slots: 5, ..first_gun() }];
         r.cards.push((Card::Bomb, false));

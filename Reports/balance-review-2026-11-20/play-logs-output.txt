@@ -1,0 +1,26 @@
+P1 2026-11-18 7:26: peak 16909, above half the peak 57% of the planet, half to 5% in 3.5 min, army 22, food left 1477
+P2 2026-11-18 2:42: not won (slime 10013 of peak 21694, soldiers 1)
+P1 2026-11-18 4:05: peak 17786, above half the peak 64% of the planet, half to 5% in 1.3 min, army 38, food left 12628
+P1 2026-11-18 3:14: peak 17189, above half the peak 74% of the planet, half to 5% in 0.7 min, army 86, food left 1567
+P1 2026-11-18 3:33: peak 16754, above half the peak 51% of the planet, half to 5% in 1.4 min, army 15, food left 694
+P2 2026-11-18 7:31: peak 22865, above half the peak 42% of the planet, half to 5% in 2.6 min, army 42, food left 3805
+P3 2026-11-18 7:23: peak 43116, above half the peak 50% of the planet, half to 5% in 1.6 min, army 85, food left 2947
+P4 2026-11-18 9:11: peak 57053, above half the peak 83% of the planet, half to 5% in 1.2 min, army 103, food left 3378
+P1 2026-11-19 7:10: peak 23305, above half the peak 80% of the planet, half to 5% in 1.3 min, army 20, food left 3708
+P2 2026-11-19 9:05: peak 15846, above half the peak 84% of the planet, half to 5% in 1.1 min, army 67, food left 11121
+P3 2026-11-19 5:03: peak 31571, above half the peak 77% of the planet, half to 5% in 0.8 min, army 38, food left 3681
+P4 2026-11-19 9:51: peak 63355, above half the peak 75% of the planet, half to 5% in 2.0 min, army 39, food left 10200
+P5 2026-11-19 1:51: not won (slime 71588 of peak 92623, soldiers 1)
+P1 2026-11-19 4:05: peak 15243, above half the peak 81% of the planet, half to 5% in 0.7 min, army 29, food left 1371
+P2 2026-11-19 13:37: peak 26310, above half the peak 80% of the planet, half to 5% in 2.3 min, army 104, food left 7068
+P3 2026-11-19 17:59: peak 56193, above half the peak 63% of the planet, half to 5% in 4.0 min, army 43, food left 11006
+
+14 won planets
+above half the peak: median 75% of the planet
+half to 5%: median 1.37 min
+planet 1: army at the win 15 to 86; times 7:26, 4:05, 3:14, 3:33, 7:10, 4:05
+planet 2: army at the win 42 to 104; times 7:31, 9:05, 13:37
+planet 3: army at the win 38 to 85; times 7:23, 5:03, 17:59
+planet 4: army at the win 39 to 103; times 9:11, 9:51
+food left at the win: 694 to 12628, over 3,500 on 8 of 14
+399 chart rows to Reports/balance-review-2026-11-20/chart-rows.json

@@ -1080,9 +1080,26 @@ impl World for GpuWorld {
         })
     }
 
+    /// A ripe fruit's burst (`fruit.rs`), at once, as `form_lump`.
+    fn sow(&mut self, at: (f32, f32), r: f32, steps: u16) {
+        self.flush();
+        let sc = self.e.dish.p.scale as f32;
+        self.e.sow_pass(&self.shared, &self.s, at.0 / sc, at.1 / sc, r, steps);
+    }
+
+    fn can_sow(&self) -> bool {
+        true
+    }
+
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
-        Some((self.e.dish.agar.clone(), self.e.dish.w, self.e.dish.h))
+        // Deep water is a wall to this engine's slime (`Settings::
+        // deep_wall`, 2026-11-20), so the ways it walks (a raid's, a
+        // charge's, the far smell's, the lure's) go round by the fords and
+        // bridges rather than pressing on the bank.
+        let d = &self.e.dish;
+        let ground = if self.s.deep_wall { (0..d.w * d.h).map(|i| d.agar[i] && !d.deep(i)).collect() } else { d.agar.clone() };
+        Some((ground, d.w, d.h))
     }
 
     fn food_deposit(&self) -> f32 {
@@ -1351,6 +1368,12 @@ mod tests {
         }
         fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
             self.g.lumps()
+        }
+        fn sow(&mut self, at: (f32, f32), r: f32, steps: u16) {
+            self.g.sow(at, r, steps)
+        }
+        fn can_sow(&self) -> bool {
+            self.g.can_sow()
         }
     }
 
@@ -2069,6 +2092,64 @@ mod tests {
         }
     }
 
+    /// **Deep water is a wall to the slime** (`Settings::deep_wall`,
+    /// 2026-11-20, the owner: "Deep water shouldn't be traversable by
+    /// player or slime"). A rule of the GPU engine alone (the owner's card,
+    /// 11-17 19:21Z: no CPU twin), so its test is what it does on the
+    /// software GPU. The river map (`map::river`, a deep band 16 dish cells
+    /// wide with a ford) with the slime's start moved to 15 dish cells from
+    /// its east bank, so its edge starts in the water; on and off alike for 20
+    /// game seconds:
+    ///
+    /// - On, no walker goes into the deep water (the count in it never
+    ///   rises) and those that start in it swim out (most are out by 20 s);
+    ///   off, the slime stays in it and spreads through it.
+    /// - On, the slime's ways (`raid_ground`) are shut over the deep water
+    ///   and open over the ford.
+    #[test]
+    fn deep_water_is_a_wall_to_the_slime() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut m = crate::mould::map::river(true, false);
+        m.items.moulds = vec![(604.0, 200.0)];
+        let play = |on: bool| {
+            let s = Settings { deep_wall: on, ..race_settings(seed, scale, walkers) };
+            Game::new(GpuWorld::with_map(&device, &queue, s, scale, &m), Rules::default(), seed)
+        };
+        let in_deep = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let d = &e.dish;
+            (0..e.n as usize)
+                .filter(|&q| (!e.grows || en[q] >= 0.0) && d.deep((wk[4 * q + 1] as usize).min(d.h - 1) * d.w + (wk[4 * q] as usize).min(d.w - 1)))
+                .count()
+        };
+        let (mut on, mut off) = (play(true), play(false));
+        let start = in_deep(&on);
+        assert!(start >= 50 && in_deep(&off) == start, "the slime's edge starts in the water: {start} walkers");
+        // A map cell's fine cell (a dish cell is 4 map cells, at scale 1).
+        let (ground, w, _) = on.world.raid_ground().unwrap();
+        let at = |x: usize, y: usize| (y / 4) * w + x / 4;
+        assert!(!ground[at(512, 200)] && ground[at(512, 320)] && ground[at(460, 200)], "the ways are shut over deep water, open over the ford and the bank");
+        assert!(off.world.raid_ground().unwrap().0[at(512, 200)], "off, the ways cross it as before");
+        let (mut last, mut without) = (start, 0);
+        for secs in [2.0, 5.0, 10.0, 15.0, 20.0] {
+            for g in [&mut on, &mut off] {
+                while g.time() < secs {
+                    g.step();
+                }
+            }
+            let (a, b) = (in_deep(&on), in_deep(&off));
+            eprintln!("deep water at {secs} s: {a} walkers in it with the wall, {b} without (of {start} at the start; {} and {} alive)", on.world.living(), off.world.living());
+            assert!(a <= last, "with the wall none goes into the water: {a} at {secs} s, {last} before");
+            (last, without) = (a, b);
+        }
+        assert!(last * 2 <= start, "with the wall most swim out: {last} of {start} left");
+        assert!(without >= start, "without the wall the slime stays and spreads in the water: {without} against {start}");
+    }
+
     /// **The tether** (`Settings::tether`, 2026-11-18, the Enemy lane, from
     /// the Lab's one-body prototype; the owner's play notes that day: slime
     /// that leaves the blob as "individual walkers ... is problematic"). A
@@ -2267,6 +2348,79 @@ mod tests {
     /// they spread, run side by side; a burn lit at 3 s. The plants,
     /// kinds, fire and char match at every check (exact on llvmpipe, a
     /// little slack on a card), and fire kills count in `burned` on both.
+    /// **A hurt slime fruits** (2026-11-20, `larder_world/fruit.rs`; the
+    /// owner, 11-20 05:46Z, on the slime late in a planet: "lots of
+    /// shooting through masses of uniform orange"). With fruiting on and
+    /// the hurt test at 0 (so it may fruit at once) on a race world:
+    /// - a knot of lump members forms out of the guns' reach and swells;
+    /// - left alone it bursts when ripe: its walkers leave as spores in the
+    ///   air, nearly all come down living, and they land farther from the
+    ///   knot than they stood;
+    /// - struck down under its quorum it breaks instead, and sows nothing.
+    #[test]
+    fn a_fruit_ripens_and_sows_or_breaks() {
+        use crate::gpu::floats;
+        use crate::mould::big::LIFE_SPORE;
+        use crate::mould::larder_world::{FruitEnd, FruitRules};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let fruit = FruitRules { on: true, first: 2.0, hurt: 0.0, least: 50.0, size: 0.15, ripen: 6.0, clear: 0.0, ..FruitRules::default() };
+        let play = || {
+            let mut s = race_settings(seed, scale, walkers);
+            // The run's keys for the spores' homing and landing.
+            crate::gpu::set(&mut s, "spore_reach", "36").unwrap();
+            crate::gpu::set(&mut s, "spore_land", "1").unwrap();
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { fruit, ..Rules::default() }, seed)
+        };
+        let to = |g: &mut Game<GpuWorld>, secs: f32| {
+            while g.time() < secs {
+                g.step();
+            }
+        };
+        // The living walkers' mean distance from `at`.
+        let spread = |g: &Game<GpuWorld>, at: (f32, f32)| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let d: Vec<f32> = (0..e.n as usize).filter(|&q| !e.grows || en[q] >= 0.0).map(|q| (wk[4 * q] - at.0).hypot(wk[4 * q + 1] - at.1)).collect();
+            d.iter().sum::<f32>() / d.len().max(1) as f32
+        };
+        // Ripe, it bursts.
+        let mut g = play();
+        to(&mut g, 4.5);
+        let f = g.fruits.live.expect("the slime may fruit from 2 s and it is hurt enough (0)");
+        assert!(f.members >= 50, "a knot of the slime's walkers: {} members", f.members);
+        let (at, alive, near) = (f.centre, g.world.e.alive(), spread(&g, f.centre));
+        while g.fruits.last.is_none() && g.time() < 15.0 {
+            g.step();
+        }
+        assert_eq!(g.fruits.last.map(|l| l.1), Some(FruitEnd::Burst), "left alone it bursts when ripe");
+        let sown = g.fruits.sown;
+        let flying = g.world.e.life_of().0.iter().filter(|&&l| l == LIFE_SPORE).count();
+        let t = g.time();
+        to(&mut g, t + 12.0);
+        let (after, far) = (g.world.e.alive(), spread(&g, at));
+        eprintln!("fruit: {} members at 4.5 s (most {}), {sown} sown, {flying} in the air just after; alive {alive} -> {after}; mean distance from the knot {near:.1} -> {far:.1}", f.members, g.fruits.last.unwrap().2);
+        assert!(sown >= 50 && flying as u64 >= sown / 2, "its walkers leave as spores: {sown} sown, {flying} flying");
+        assert!(10 * after >= 8 * alive, "and come down living: {alive} -> {after}");
+        assert!(far > near, "farther from the knot than they stood: {near:.1} -> {far:.1}");
+        // Struck down, it breaks.
+        let mut g = play();
+        to(&mut g, 4.5);
+        let f = g.fruits.live.expect("a fruit as before");
+        let sc = g.world.scale();
+        let r = 2.0 * (f.members as f32 / std::f32::consts::PI).sqrt() / sc + 4.0;
+        for _ in 0..3 {
+            g.world.burst(&squad::Burst { at: (f.centre.0 / sc, f.centre.1 / sc), r, kill: true, ..Default::default() }, &squad::BurstRules::default());
+            g.step();
+        }
+        while g.fruits.last.is_none() && g.time() < 15.0 {
+            g.step();
+        }
+        assert_eq!(g.fruits.last.map(|l| l.1), Some(FruitEnd::Broken), "shot down it breaks");
+        assert_eq!(g.fruits.sown, 0, "and sows nothing");
+    }
+
     #[test]
     fn plants_and_fire_run_on_the_gpu_as_on_the_cpu() {
         use crate::mould::big::BigDish;

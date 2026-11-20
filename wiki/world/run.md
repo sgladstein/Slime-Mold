@@ -2,11 +2,13 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-18
+updated: 2026-11-20
 sources:
+  - Reports/balance-review-2026-11-20/README.md
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/enemy-switches-2026-11-17/README.md
   - Reports/flinch-2026-11-15/README.md
+  - Reports/fruiting-2026-11-20/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-steering-2026-11-17/README.md
@@ -31,7 +33,10 @@ sources:
   - Reports/whole-game-review-2026-11-15/README.md
 code:
   - BossRules::for_depth
+  - FruitRules
   - Game::boss_aim
+  - Game::fruit_looks
+  - Game::lump_taken
   - LADDER
   - LURE_PULL
   - LureMark
@@ -74,6 +79,7 @@ code:
   - surge_secs
   - tier_size
   - time_fort
+  - time_fruit
   - time_lure_paths
   - two_stars
 ---
@@ -118,6 +124,10 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 
 Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
+
+## Fruiting
+
+On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is just lots of shooting through masses of uniform orange. Think outside the box"): when the squad is winning, the slime streams 8% of itself (at most 2,500 walkers) into a knot at its thickest slime out of the guns' reach (`larder_world/fruit.rs`, `FruitRules`, on every run planet by `ENEMY_RULES`). The knot is a lump (`Game::lump_taken`: bosses, marches and fruits share `big::LUMPS`) whose members take two blows, it swells to twice its first size, and it is drawn umber, darkening as it ripens (`LumpLook::Fruit`, its strength the ripeness, `Game::fruit_looks`). After 30 s it bursts and every walker in it flies out as a spore that homes on food and lands as living slime (`World::sow`, the engine's `sow_pass`; GPU only); shot under 35% of its most members it breaks. It starts from 1:30 after the landing once kills over 30 s reach a fifth of the slime's mass (a trigger on a fall under its peak was tried and deleted: on planet 3 it fired against a squad of four nowhere near), and not under 8% of its peak; one at a time, 40 s apart ([report](../../Reports/fruiting-2026-11-20/README.md)).
 
 ## Ending early, the play log, pressure by depth
 
@@ -328,11 +338,13 @@ armory over the paused round and Back re-arms every squad
 - Mini-boss slimes: hunter, wanderer, sapper and leech are built and on in the run (Now); Mortar and Pinwheel, each kind's look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 3).
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
+- The balance review (11-20, [report](../../Reports/balance-review-2026-11-20/README.md)): in the owner's 14 won planets the slime holds at half its peak or more for a median 75% of the planet, then breaks in about 1.4 minutes, so the army's size decides a planet, rush or not (put to him with D7, nothing built). At the clock a planet cut to half its peak is a 1-star win (`Cause::Cap`), which is the run bot's only planet 3 win on main; whether a time-out should carry on at base pay is Direction's question for him. Planet 2 is now the hardest of the three and is not yet measured on today's game.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
 - The core world with C: 364,924 walkers, frame p95 12-14 ms on the 1070 (planet 1 4.6 ms) and a 12 s head-start pause before landing; kept until play says otherwise.
 
 ## Sources
 
+- [balance review](../../Reports/balance-review-2026-11-20/README.md), *Findings*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
 - [arranging the gun](../../Reports/gun-order-2026-11-14.md), *What was built*.
 - [the gun range](../../Reports/gun-range-2026-11-15.md), *What was built*.
