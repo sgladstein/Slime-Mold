@@ -42,6 +42,7 @@
 //! the world, at full health, when it is whole.
 
 use super::{Game, Shot, World};
+use crate::mould::rounds::Deck;
 use crate::mould::squad::{Burst, BurstRules, ShotIn, UnitIn, UnitOut};
 
 /// What a building is. A wall carries its far end (fine cells); its near
@@ -135,6 +136,14 @@ pub struct Building {
     /// A turret's next cast in the turrets' deck's turn
     /// (`Game::turret_deck`), as `Soldier::next` is a soldier's.
     pub next: u8,
+    /// A turret's own cards (`Cmd::TurretLoad`, owner 2026-11-19: each
+    /// turret can be changed one by one); None fires the turrets' deck
+    /// (`Game::turret_deck`, the default). Read it through
+    /// `Game::turret_cards`.
+    pub deck: Option<Deck>,
+    /// The run's loadout its `deck` came from, for the window to name and
+    /// re-arm; None while it follows the default.
+    pub loadout: Option<u8>,
 }
 
 /// A mortar's shell in the air (`Kind::Mortar`, `Game::shells`): fired
@@ -587,7 +596,7 @@ impl<W: World> Game<W> {
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
         let home = if let Kind::Wall { to } = kind { self.wall_home(at, to) } else { (0.0, 0.0) };
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false, next: 0 });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false, next: 0, deck: None, loadout: None });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -721,8 +730,9 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let t = self.world.ticks();
         let strike = (r.strike * sc).min(crate::mould::squad::R_MAX);
-        // The turrets' cards, read once a step (`Game::turret_deck`).
-        let tm = self.turret_mods();
+        // The turrets' cards, read once a step (`Game::turret_deck`), and
+        // each turret with its own (`Building::deck`) by itself.
+        let tm0 = self.turret_mods();
         // Mortar shells that come down this frame: a short leg into their
         // landing point, as wide as the shell's strike, fired by their
         // mortar (`Firer`), so its cast, kills and Render go to it. The
@@ -765,7 +775,7 @@ impl<W: World> Game<W> {
                     // shot carries the next cast in the deck's turn, as a
                     // soldier's does (`Building::next`). No deck, plain
                     // strikes as before.
-                    let m = tm;
+                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
                     let reach = b.turret_range * sc * (1.0 + r.range_card * m.reach as f32);
                     u.sight = reach;
                     // A turret sees and fires over walls (`UnitIn::over`,
@@ -834,8 +844,8 @@ impl<W: World> Game<W> {
                     // The turrets' deck as a turret fires it: Range cards
                     // stretch its reach, Rate cards its rate, each shell
                     // carries the next cast (multicast and pellets fan
-                    // shells round the aim).
-                    let m = tm;
+                    // shells round the aim). Its own cards if it has them.
+                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
                     let reach = b.mortar_range * sc * (1.0 + r.range_card * m.reach as f32);
                     // It looks only the frame before it may fire: its sight
                     // reads (reach / BIN)^2 blocks, about 6,000 at reach
@@ -1170,7 +1180,7 @@ mod tests {
     #[test]
     fn turrets_fire_the_turret_deck() {
         use crate::mould::rounds::{parse, Deck, RoundRules, Rounds};
-        let run = |deck: Option<&str>| {
+        let run = |deck: Option<&str>, own: bool| {
             let mut g = small(3);
             let at = open_near(&g, (g.core.0 + 10.0, g.core.1));
             stand(&mut g, at);
@@ -1180,8 +1190,11 @@ mod tests {
             assert!(g.build(Kind::Turret, at));
             // It renders (`render_pay`), so the kill box's pay is read too.
             assert!(g.upgrade(0));
-            if let Some(d) = deck {
-                assert!(g.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&parse(d).unwrap())))));
+            match deck {
+                // A turret's own cards (`Cmd::TurretLoad`, 2026-11-19).
+                Some(d) if own => assert!(g.apply(Cmd::TurretLoad(0, Some(2), Some(Deck::new(&parse(d).unwrap()))))),
+                Some(d) => assert!(g.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&parse(d).unwrap()))))),
+                None => {}
             }
             let mut rd = Rounds::new(Vec::new(), RoundRules::default());
             let (mut carried, mut soldiers) = (0, 0);
@@ -1193,10 +1206,10 @@ mod tests {
             }
             (g.shots, carried, rd.cast.iter().sum::<u32>(), soldiers, g.killed, g.turret_killed, g.rendered)
         };
-        let (shots, carried, cast, soldiers, plain, by_turret, plain_paid) = run(None);
+        let (shots, carried, cast, soldiers, plain, by_turret, plain_paid) = run(None, false);
         assert_eq!(by_turret, plain, "plain: every kill is the turret's");
         assert!(shots > 5 && carried == 0 && cast == 0 && soldiers == 0, "plain: {shots} shots, {carried} carrying, {cast} cast");
-        let (shots, carried, cast, soldiers, killed, by_turret, paid) = run(Some("blast"));
+        let (shots, carried, cast, soldiers, killed, by_turret, paid) = run(Some("blast"), false);
         eprintln!("blast turret: {shots} shots, {carried} carrying a cast, {cast} cast, killed {killed} against {plain} plain; rendered {paid:.1} against {plain_paid:.1}");
         // Its blasts' kills are the turret's (`Rounds::flush`), and they
         // pay in its render reach, so a blasting kill box pays more than a
@@ -1208,6 +1221,13 @@ mod tests {
         // The command round-trips, so replays keep it.
         let c = Cmd::Load(TURRET_DECK, Some(Deck::new(&parse("blast").unwrap())));
         assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+        // One turret with blast cards of its own (a loadout, owner
+        // 2026-11-19) and the turrets' deck empty: the same as the deck's.
+        let (_, carried, cast, _, own, ..) = run(Some("blast"), true);
+        assert!(carried > 5 && cast > 0 && own > plain, "its own blast: {carried} carrying, {cast} cast, killed {own} against {plain} plain");
+        for c in [Cmd::TurretLoad(4, Some(2), Some(Deck::new(&parse("blast+wide").unwrap()))), Cmd::TurretLoad(0, None, None)] {
+            assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+        }
     }
 
     /// **A mortar lobs shells far, and they strike only where they land**

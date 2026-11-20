@@ -235,6 +235,10 @@ pub struct Squad {
     /// slime is in reach that walking on would leave it behind. Members
     /// in contact stand and fire, the anchor stops and the rest close up.
     pub holding: bool,
+    /// The run's loadout it fires (`run::Run::loadouts`, owner 2026-11-19):
+    /// the window arms it from that loadout (`Cmd::Arm`, `Cmd::Load`); this
+    /// is which one, so the panel can say and a split keeps it.
+    pub loadout: u8,
 }
 
 /// Orders a squad holds queued.
@@ -267,6 +271,7 @@ impl Default for Squad {
             rank_at: (f32::NAN, f32::NAN),
             rank_face: (1.0, 0.0),
             holding: false,
+            loadout: 0,
             rank_shape: (Formation::Blob, false),
         }
     }
@@ -279,7 +284,7 @@ impl Squad {
     /// gun." (From 17:40Z to then the new half took the standard rifle and
     /// the army's round, so a great gun was never copied.)
     fn offshoot(&self) -> Squad {
-        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, ..Squad::default() }
+        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, loadout: self.loadout, ..Squad::default() }
     }
 }
 

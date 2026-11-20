@@ -279,6 +279,12 @@ pub struct Shop {
     /// The gun slots show the turrets' deck (`run::Pick::EditTurrets`):
     /// the bench is named for them, not the carried gun.
     pub turrets: bool,
+    /// The bench's name: the loadout shown and its gun (2026-11-19); empty
+    /// names it by the carried gun, as before.
+    pub bench: String,
+    /// The loadout panel opened on a planet (H): its one button goes back
+    /// to the planet, as Esc does, and nothing is for sale.
+    pub field: bool,
 }
 
 /// The Options page's last tab, the key list (also F1 or ?).
@@ -766,7 +772,7 @@ impl StartMenu {
     /// Esc (or a right click) on the gun range's armory: back to the
     /// range, not to the main page.
     fn leaves_armory(&self) -> bool {
-        self.page == Page::Shop && self.shop.as_ref().is_some_and(|s| s.range)
+        self.page == Page::Shop && self.shop.as_ref().is_some_and(|s| s.range || s.field)
     }
 
     pub fn moved(&mut self, p: Option<(f32, f32)>) {
@@ -1991,7 +1997,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -2040,7 +2046,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the

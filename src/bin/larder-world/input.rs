@@ -17,9 +17,10 @@ impl App {
             return self.open_armory();
         }
         // A run's gun is what its shop built.
+        // A run's loadouts: H (and Shift or Ctrl + H) opens their panel
+        // (owner, 2026-11-19 19:22Z).
         if self.args.run.is_some() {
-            self.hud.alert("In a run the gun holds the cards you bought: change it in the shop between planets", None, theme::WARN);
-            return;
+            return self.open_loadouts();
         }
         let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
             rounds::Card::Gas => g.world.has_gas(),
@@ -69,9 +70,10 @@ impl App {
             return self.open_armory();
         }
         // A run's guns come from its shop (the roguelike thread).
+        // A run's loadouts: H (and Shift or Ctrl + H) opens their panel
+        // (owner, 2026-11-19 19:22Z).
         if self.args.run.is_some() {
-            self.hud.alert("In a run the squad's gun is the one it carries: change it in the shop between planets", None, theme::WARN);
-            return;
+            return self.open_loadouts();
         }
         let Some(g) = self.game.as_mut() else { return };
         let q = g.active.unwrap_or(0);
@@ -94,9 +96,10 @@ impl App {
         if self.args.range.is_some() {
             return self.open_armory();
         }
+        // A run's loadouts: H (and Shift or Ctrl + H) opens their panel
+        // (owner, 2026-11-19 19:22Z).
         if self.args.run.is_some() {
-            self.hud.alert("In a run the gun holds the bullets you bought: change them in the shop between planets", None, theme::WARN);
-            return;
+            return self.open_loadouts();
         }
         let Some(g) = self.game.as_mut() else { return };
         let q = g.active.unwrap_or(0);
@@ -299,6 +302,18 @@ impl App {
             SWITCH => {
                 g.apply(Cmd::Toggle(b));
             }
+            // The run's next loadout, round from the last to the first;
+            // one that follows the default goes on after the default.
+            TURRET_LOADOUT => {
+                let Some(r) = self.args.run.as_ref() else { return };
+                let now = bd.loadout.map_or(r.turret_loadout, usize::from);
+                let l = (now + 1) % r.loadouts.len();
+                if g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.cards_of(l))))) {
+                    let names: Vec<String> = r.cards_of(l).iter().map(|c| c.title()).collect();
+                    let cards = if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") };
+                    self.hud.alert(&format!("This {what} fires {}: {cards}", r.loadout_name(l)), Some(bd.at), theme::GOOD);
+                }
+            }
             _ => {}
         }
     }
@@ -358,7 +373,7 @@ impl App {
                 }
                 HudEvent::Command { id } => match id {
                     NEXT_ROUND => self.next_round(),
-                    CANCEL_BUILD | DEMOLISH | UPGRADE | SWITCH => self.building_action(id),
+                    CANCEL_BUILD | DEMOLISH | UPGRADE | SWITCH | TURRET_LOADOUT => self.building_action(id),
                     HEAL_ORDER => self.squad_heal(),
                     LOOKOUTS => self.squad_lookouts(),
                     // The fire button (Card 2): hold, defend, free, round

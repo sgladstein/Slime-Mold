@@ -1633,16 +1633,17 @@ impl App {
             // The budget (owner's card, 11-14 15:34Z) under the cards.
             note: if self.args.range.is_some() {
                 Some(if round.is_empty() { "No cards: H, the armory".into() } else { format!("Cost {} of {}  ·  H, the armory", rounds::cost(&round), gun.budget) })
-            } else if self.args.run.is_some() {
-                // (A run's gun is what its shop built: H only refused there,
-                // so it has no button; the review, 11-15.)
-                Some(if round.is_empty() { "No cards: the shop between planets sells them".into() } else { format!("Cost {} of {}  ·  change it in the shop between planets", rounds::cost(&round), gun.budget) })
+            } else if let Some(r) = self.args.run.as_ref() {
+                // A run's loadouts: H opens their panel (2026-11-19; before,
+                // H only refused in a run, so the strip had no button).
+                let l = r.loadout_name(g.squads.get(q).map_or(0, |s| s.loadout as usize));
+                Some(if round.is_empty() { format!("{l}, no cards  ·  H, loadouts") } else { format!("{l}  ·  cost {} of {}  ·  H, loadouts", rounds::cost(&round), gun.budget) })
             } else if round.is_empty() {
                 Some("No cards: H or the button for a loadout".into())
             } else {
                 Some(format!("Cost {} of {}", rounds::cost(&round), gun.budget))
             },
-            cycle: if self.args.run.is_some() { None } else { Some((NEXT_ROUND, KeyCode::KeyH)) },
+            cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
         }
     }
 }
@@ -2217,6 +2218,21 @@ impl App {
                 }),
                 about: format!("Render: every walker killed within {:.0} cells of it, by any shot, pays {:.2} food.", b.turret_range, b.render_food),
                 ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Render", KeyCode::KeyU)
+            });
+        }
+        // Its loadout in a run (owner 2026-11-19 19:22Z: "a default loadout
+        // for turrets and then it can be changed one by one in the game"):
+        // each press the next; H edits what they hold.
+        if let (Some(r), true) = (self.args.run.as_ref(), matches!(bd.kind, Kind::Turret | Kind::Mortar)) {
+            let now = bd.loadout.map_or(r.turret_loadout, usize::from);
+            let cards: Vec<String> = r.cards_of(now).iter().map(|c| c.title()).collect();
+            let cards = if cards.is_empty() { "no cards".to_string() } else { cards.join(", ") };
+            let follows = if bd.loadout.is_none() { ", the turrets' default" } else { "" };
+            cmds.push(Command {
+                ready: r.loadouts.len() > 1,
+                why_not: Some("One loadout only: make another with H".into()),
+                about: format!("It fires {}{follows} ({cards}). Click for the next loadout; H edits them.", r.loadout_name(now)),
+                ..Command::new(TURRET_LOADOUT, (0, 2), Icon::Upgrade, &format!("Loadout {}", now + 1), KeyCode::KeyL)
             });
         }
         // Thicken (owner 2026-11-16 14:25Z): a band of a wall's width on

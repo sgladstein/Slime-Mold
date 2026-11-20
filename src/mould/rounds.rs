@@ -896,6 +896,17 @@ pub fn turret_casts<W: World>(g: &Game<W>) -> Vec<Cast> {
     g.turret_deck.map(|d| casts(&d.cards())).unwrap_or_default()
 }
 
+/// Turret `b`'s casts: its own cards (`Building::deck`, 2026-11-19), else
+/// the turrets' deck (`Game::turret_cards`).
+pub fn turret_casts_of<W: World>(g: &Game<W>, b: Option<usize>) -> Vec<Cast> {
+    g.turret_cards(b).map(|d| casts(&d.cards())).unwrap_or_default()
+}
+
+/// Turret `b` fires cards of its own, not the turrets' deck.
+fn own_deck<W: World>(g: &Game<W>, b: Option<usize>) -> bool {
+    b.and_then(|b| g.buildings.get(b)).is_some_and(|b| b.deck.is_some())
+}
+
 pub fn casts(round: &[Card]) -> Vec<Cast> {
     let mut out: Vec<Cast> = Vec::new();
     let (mut wide, mut scatter, mut quiet, mut trigger, mut carry) = (0, false, false, None, None);
@@ -1414,8 +1425,14 @@ impl Rounds {
             if q >= by_squad.len() {
                 continue;
             }
-            let cs = by_squad[q].get_or_insert_with(|| if by.is_none() { turret_casts(g) } else { self.casts_of(g, q) });
-            let Some(&c) = cs.get(cast as usize - 1) else { continue };
+            // A turret with its own cards (`Building::deck`) casts from
+            // them; the rest share the turrets' deck's slot.
+            let c = if by.is_none() && own_deck(g, turret) {
+                turret_casts_of(g, turret).get(cast as usize - 1).copied()
+            } else {
+                by_squad[q].get_or_insert_with(|| if by.is_none() { turret_casts(g) } else { self.casts_of(g, q) }).get(cast as usize - 1).copied()
+            };
+            let Some(c) = c else { continue };
             // A slug shoves where it hits, whatever it carries, and so does
             // any bullet with a shove card.
             let shape = c.ammo.set.shape();
@@ -1558,13 +1575,19 @@ impl Rounds {
             .iter()
             .map(|s| (s, s.by.map_or(tq, |k| g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
             .map(|(s, q)| {
-                let n = *of[q].get_or_insert_with(|| {
-                    let mut n = trails(&if q == tq { g.turret_deck.map(|d| d.cards()).unwrap_or_default() } else { self.cards_of(g, q) });
+                let find = |cards: Vec<Card>| {
+                    let mut n = trails(&cards);
                     if !gas {
                         n[2] = 0;
                     }
                     n
-                });
+                };
+                // A turret with its own cards lays their trails.
+                let n = if q == tq && own_deck(g, s.turret) {
+                    find(g.turret_cards(s.turret).map(|d| d.cards()).unwrap_or_default())
+                } else {
+                    *of[q].get_or_insert_with(|| find(if q == tq { g.turret_deck.map(|d| d.cards()).unwrap_or_default() } else { self.cards_of(g, q) }))
+                };
                 for (a, b) in any.iter_mut().zip(n) {
                     *a = (*a).max(b);
                 }
