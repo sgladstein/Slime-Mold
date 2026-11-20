@@ -1,4 +1,4 @@
-# Fire on planet 2 (11-20 15:10Z). Every plan so far bought Tinder before the Sprawler (cards=1, the planet's card) but no Torch to light it: Tinder lays brush and kills nothing until a fire runs along it (run.rs bring_shell). On map 3 in the cloud, rush,aim=6 without Tinder (its 100 points to the shop list instead) had 34 soldiers at 3:50 where with Tinder it was wiped at 3:47. Each base plan: as before (Tinder), no Tinder (cards=0), Tinder and the shop's own Torch bullet (want=torch,shelf=0), and the Torch alone. Maps 1-8 and Scott's three planet 2 runs, 900 s. 220 games, about 50 minutes. Deciding measure: wins of 11 and paired score against the plan as before.
+# Fire on planet 2 (11-20 15:10Z). Every plan so far bought Tinder before the Sprawler (cards=1, the planet's card) but no Torch to light it: Tinder lays brush and kills nothing until a fire runs along it (run.rs bring_shell). On map 3 in the cloud, rush,aim=6 without Tinder (its 100 points to the shop list instead) had 34 soldiers at 3:50 where with Tinder it was wiped at 3:47. Each base plan: as before (Tinder), no Tinder (cards=0), Tinder and the shop's own Torch bullet (want=torch,shelf=0), and the Torch alone. Maps 1-8 and Scott's three planet 2 runs, 900 s. 220 games, about 50 minutes. Deciding measure: wins of 11 and paired score against the plan as before. Last, Tinder's own effect apart from its 100 points: rush,aim=6 with the shop cut to strike, with and without Tinder (both then buy the same 120 points of strike), 22 games.
 rush,aim=6 2 1 900
 rush,aim=6 2 2 900
 rush,aim=6 2 3 900
@@ -219,3 +219,25 @@ lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,want=torch,shelf=0 2 8
 lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,want=torch,shelf=0 2 1795038793 900
 lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,want=torch,shelf=0 2 1795106014 900
 lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,cards=0,want=torch,shelf=0 2 1795119328 900
+rush,aim=6,shop=strike 2 1 900
+rush,aim=6,shop=strike 2 2 900
+rush,aim=6,shop=strike 2 3 900
+rush,aim=6,shop=strike 2 4 900
+rush,aim=6,shop=strike 2 5 900
+rush,aim=6,shop=strike 2 6 900
+rush,aim=6,shop=strike 2 7 900
+rush,aim=6,shop=strike 2 8 900
+rush,aim=6,shop=strike 2 1795038793 900
+rush,aim=6,shop=strike 2 1795106014 900
+rush,aim=6,shop=strike 2 1795119328 900
+rush,aim=6,shop=strike,cards=0 2 1 900
+rush,aim=6,shop=strike,cards=0 2 2 900
+rush,aim=6,shop=strike,cards=0 2 3 900
+rush,aim=6,shop=strike,cards=0 2 4 900
+rush,aim=6,shop=strike,cards=0 2 5 900
+rush,aim=6,shop=strike,cards=0 2 6 900
+rush,aim=6,shop=strike,cards=0 2 7 900
+rush,aim=6,shop=strike,cards=0 2 8 900
+rush,aim=6,shop=strike,cards=0 2 1795038793 900
+rush,aim=6,shop=strike,cards=0 2 1795106014 900
+rush,aim=6,shop=strike,cards=0 2 1795119328 900
