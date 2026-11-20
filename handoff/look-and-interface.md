@@ -205,6 +205,8 @@ The HUD, 11-20 (planet 2 at play zoom): a squad tile grows to 168, not
 fit (`ui.rs`). The top bar, goal pill and command grid read sound.
 The end card's stars are star icons, 26 units, the middle one raised
 (`Icon::Star`, `StarOpen`; three 11-unit discs read as loading dots).
+Selection rings join within `RING_LINK` (3.5 rings centre to centre,
+`controls.rs`): a 51-soldier squad on planet 3 wore 51 rings at zoom 6.
 The play alerts (top left) hide while the end card is up: the card says
 the same, and a stale "the mould is at the larder" read as still in play.
 The Campaign and Keys pages were filmed and left; What is new cuts long
