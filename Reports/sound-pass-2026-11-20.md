@@ -91,11 +91,26 @@ up and cracks 2 dB down from the kept numbers: the punch became the mix's
 biggest source and 100-300 Hz its loudest band. A pulse floor of 0.45 with
 any touch as full danger still beat 246 times on planet 1.
 
+## Pass two: what made no sound (2026-11-20, later)
+
+| Event | Read from | Sound |
+|---|---|---|
+| A gun card's payload | `Rounds::pops` (`WorldListener::pops`, new each frame) | Blast and Bomb: thud, impact by kills, debris; Gas: a hiss (`GrainKind::Hiss`); Germ and Detonate: wet pops; Flare and Torch: whoosh and sizzle; Shatter: knock and crackle; the mind rounds: a soft shimmer. Up to `PAYLOADS_VOICED` (4) a frame, sized by the burst's radius |
+| A raid starting | `Game::raids.sent` | a rising groan where it heads (`GrainKind::Swell`); the last stand louder, with a snarl |
+| A surge | `Game::surges` | a groan at the slime's home |
+| A mini-boss | `Game::bosses` | forming: groan and snarl; broken: a tear and a wither |
+| A building | `Game::buildings` | set down: a clank (`GrainKind::Clank`) and a thunk; lost: a thud, debris and a clank |
+| Menus and HUD | the window's picks and HUD events (`App::click_sound`), straight to the speaker | a tick (`GrainKind::Tick`); buying a chime; a card into a slot a knock; landing a whoosh |
+| A planet won or lost | `Game::end` | a win's arpeggio climbs to the octave; a loss's falling bells have the slime's groan under them |
+
+Recorded: planet 2 with a Blast, Gas, Germ and Flare gun heard 111
+payloads in 30 s (before: none); planet 1 (greedy) heard its 3 surges,
+planet 3 (squads) its 2 surges and a mini-boss. Each sound's level was set
+against the rifle's shot in `examples/shotsound.rs events=1` (first cut:
+the flare, the germ, the mind rounds and the landing whoosh were 40-48 dB
+under a blast, too quiet to hear in a fight; raised).
+
 ## Open
 
-- Batch 2: sounds for what makes none today: the gun cards' payloads
-  (`rounds::Pop`: blast, bomb, gas, germ, flare, torch), raids and surges
-  starting, bosses, buildings placed and lost, the menus and shop, and a
-  planet won or lost.
 - A volume setting in Options (today O and K toggle, `DEFAULT_MASTER` 0.5).
 - The owner's ears: he plays on his own time; the page has the clips.

@@ -14,7 +14,10 @@
 //!
 //! `guns=1` plays the guns' voices instead (`SoundCmd::Gun`, 2026-11-20):
 //! each kind three times on screen, then three times a view off it, then a
-//! squad of four firing it together twice. The shots come from
+//! squad of four firing it together twice.
+//!
+//! `events=1` plays sound pass two's new sounds one after another, at the
+//! levels the game's listener and window send them on screen (2026-11-20). The shots come from
 //! the left of the view and land in its middle. The game round under them
 //! is a fresh one, never stepped, so nothing else is heard but the room.
 
@@ -31,7 +34,10 @@ fn main() {
             "kills" => kills = v.split(',').map(|s| s.parse().unwrap()).collect(),
             "seed" => seed = v.parse().unwrap(),
             "guns" => guns = v == "1",
-            _ => panic!("unknown argument {k} (out, kills, seed, guns)"),
+            "events" => {
+                return event_ladder(&out, seed);
+            }
+            _ => panic!("unknown argument {k} (out, kills, seed, guns, events)"),
         }
     }
     if guns {
@@ -106,4 +112,50 @@ fn gun_ladder(out: &str, seed: u64) {
     slime_mould::wav::write(std::path::Path::new(out), &samples, 2, sr).expect("write the WAV");
     let peak = samples.iter().fold(0.0f32, |m, v| m.max(v.abs()));
     println!("{out}: {:.1} s, peak {peak:.3}; mix {:?}", samples.len() as f32 / 2.0 / sr as f32, bank.stats.mix(-30.0));
+}
+
+/// `events=1`: sound pass two's sounds, each 1.6 s apart.
+fn event_ladder(out: &str, seed: u64) {
+    use slime_mould::sound::{AlertKind, GrainKind, SoundCmd};
+    let g = |kind, gain: f32, delay: f32| SoundCmd::Grain { kind, pan: 0.0, gain, delay };
+    let burst = |kind, rate: f32, secs: f32, gain: f32| SoundCmd::Burst { kind, rate, secs, pan: 0.0, spread: 0.3, gain };
+    let list: Vec<(&str, Vec<SoundCmd>)> = vec![
+        ("a Blast round that killed 30", vec![g(GrainKind::Thud, 0.35 + 0.35 * 0.5, 0.0), SoundCmd::Impact { weight: 0.5, pan: 0.0, gain: 0.4, delay: 0.015, far: 0.0 }, burst(GrainKind::Grit, 90.0, 0.2, 0.22)]),
+        ("a Bomb round that killed 80", vec![g(GrainKind::Thud, 0.84, 0.0), SoundCmd::Impact { weight: 0.8, pan: 0.0, gain: 0.5, delay: 0.015, far: 0.0 }, burst(GrainKind::Grit, 140.0, 0.35, 0.22)]),
+        ("a Gas round", vec![g(GrainKind::Hiss, 0.45, 0.0)]),
+        ("a Germ round", vec![burst(GrainKind::Pop, 45.0, 0.35, 0.4)]),
+        ("a Flare or Torch", vec![g(GrainKind::Whoosh, 0.45, 0.0), burst(GrainKind::Sizzle, 70.0, 0.5, 0.35)]),
+        ("a Shatter round", vec![g(GrainKind::Knock, 0.3, 0.0), burst(GrainKind::Crackle, 65.0, 0.25, 0.25)]),
+        ("a mind round (Blind, Sour, Spin, Provoke, Still)", vec![burst(GrainKind::Drip, 30.0, 0.25, 0.25)]),
+        ("a raid starting", vec![g(GrainKind::Swell, 0.4, 0.0)]),
+        ("the last stand", vec![g(GrainKind::Swell, 0.55, 0.0), g(GrainKind::Snarl, 0.45, 0.9)]),
+        ("a mini-boss forming", vec![g(GrainKind::Swell, 0.45, 0.0), g(GrainKind::Snarl, 0.4, 0.6)]),
+        ("a mini-boss broken", vec![g(GrainKind::Tear, 0.5, 0.0), burst(GrainKind::Wilt, 70.0, 0.5, 0.25)]),
+        ("a building set down", vec![g(GrainKind::Clank, 0.35, 0.0), g(GrainKind::Thunk, 0.3, 0.03)]),
+        ("a building lost", vec![g(GrainKind::Thud, 0.45, 0.0), burst(GrainKind::Grit, 110.0, 0.3, 0.25), g(GrainKind::Clank, 0.2, 0.05)]),
+        ("a menu click", vec![g(GrainKind::Tick, 0.45, 0.0)]),
+        ("buying in the shop", vec![SoundCmd::Alert { kind: AlertKind::Joined, weight: 0.8, pan: 0.0 }]),
+        ("a card dropped in a slot", vec![g(GrainKind::Knock, 0.3, 0.0)]),
+        ("landing on a planet", vec![g(GrainKind::Whoosh, 0.55, 0.0)]),
+        ("a planet won", vec![SoundCmd::Alert { kind: AlertKind::Bell, weight: 1.0, pan: 0.0 }]),
+        ("a planet lost", vec![SoundCmd::Alert { kind: AlertKind::Died, weight: 1.0, pan: 0.0 }, g(GrainKind::Swell, 0.5, 0.2)]),
+    ];
+    let sr = 48_000u32;
+    let mut bank = VoiceBank::new(sr, seed);
+    let mut samples = Vec::new();
+    let mut buf = vec![0.0f32; (1.6 * sr as f32) as usize * 2];
+    for (i, (what, cmds)) in list.iter().enumerate() {
+        println!("{:>5.1} s: {what}", i as f32 * 1.6);
+        for &c in cmds {
+            bank.apply(c);
+        }
+        bank.render(&mut buf, 2);
+        samples.extend_from_slice(&buf);
+    }
+    let mut tail = vec![0.0f32; sr as usize * 2 * 2];
+    bank.render(&mut tail, 2);
+    samples.extend_from_slice(&tail);
+    slime_mould::wav::write(std::path::Path::new(out), &samples, 2, sr).expect("write the WAV");
+    let peak = samples.iter().fold(0.0f32, |m, v| m.max(v.abs()));
+    println!("{out}: {:.1} s, peak {peak:.3}", samples.len() as f32 / 2.0 / sr as f32);
 }

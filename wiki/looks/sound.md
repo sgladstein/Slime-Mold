@@ -29,6 +29,7 @@ code:
   - VoiceBank
   - WorldListener
   - WorldListener::bangs
+  - WorldListener::pops
   - density
   - full_kill
   - gun_layers
@@ -60,6 +61,9 @@ too. Reverb is per sound and high-passed (`VERB_HP_HZ`). Tables:
 [sound pass one](../../Reports/sound-pass-2026-11-20.md) (2026-11-20: the
 gun 36-61% of the mix, was 4-9%; under 100 Hz 10-13%, was 34-41%). The
 voice bank prints a mix meter under every recording (`SynthStats::mix`).
+Since pass two the gun cards' payloads, raids, surges, mini-bosses,
+buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
+`App::click_sound`).
 
 ## Owner's word
 
@@ -83,9 +87,7 @@ voice bank prints a mix meter under every recording (`SynthStats::mix`).
 
 ## Open
 
-- Sound pass two: the events that make no sound yet (card payloads, raids,
-  bosses, buildings, menus and shop, a planet won or lost), and a volume
-  setting ([report](../../Reports/sound-pass-2026-11-20.md), *Open*).
+- A volume setting ([report](../../Reports/sound-pass-2026-11-20.md), *Open*).
 
 - The owner's ears on the [Larder Sound page](https://claude.ai/artifact/P4hk1fsSXQj3qXuwieffa7):
   does a big kill feel big; is the pulse help or noise; shot levels; does

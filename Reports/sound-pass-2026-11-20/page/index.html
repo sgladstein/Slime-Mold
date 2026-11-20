@@ -60,7 +60,7 @@ th { color: var(--muted); font-weight: 500; }
 <main>
   <header class="lede">
     <h1>Sound Pass One</h1>
-    <p>The first batch of the sound overhaul: the mix and the guns. The same three games are played twice by the same bot with the same seed, once on the old sound and once on the new, so the only difference is the sound. Use headphones or real speakers; a laptop speaker hides the old sound's main fault, the rumble.</p>
+    <p>The sound overhaul in two passes: first the mix and the guns, then sounds for everything that was silent. The same three games are played twice by the same bot with the same seed, once on the old sound and once on the new, so the only difference is the sound. Use headphones or real speakers; a laptop speaker hides the old sound's main fault, the rumble.</p>
     <p class="meta">2026-11-20 · recorded headless with the game's own sound engine (run seed 1, 48 kHz), 20 s from each game · bars show each source's share of the sound's energy over the whole game</p>
   </header>
 
@@ -177,11 +177,11 @@ th { color: var(--muted); font-weight: 500; }
     <p>Each gun three times on screen, three times a view off screen (duller and quieter), then a squad of four firing it together twice.</p>
     <audio id="guns" controls preload="none" src="guns.mp3"></audio>
     <div class="chapters" aria-label="Jump to a gun">
-      <button type="button" data-t="0">Rifle</button>
-      <button type="button" data-t="6.8">Carbine</button>
-      <button type="button" data-t="13.6">Long gun</button>
-      <button type="button" data-t="20.4">Scattergun</button>
-      <button type="button" data-t="27.2">Turret</button>
+      <button type="button" data-a="guns" data-t="0">Rifle</button>
+      <button type="button" data-a="guns" data-t="6.8">Carbine</button>
+      <button type="button" data-a="guns" data-t="13.6">Long gun</button>
+      <button type="button" data-a="guns" data-t="20.4">Scattergun</button>
+      <button type="button" data-a="guns" data-t="27.2">Turret</button>
     </div>
   </section>
 
@@ -189,6 +189,38 @@ th { color: var(--muted); font-weight: 500; }
     <h2>The hit, by walkers killed</h2>
     <p>A rifle shot once a second, each killing more: stopped by rock (no hit), then 0, 1, 5, 15, 37, 56 and 80 walkers killed. The weight follows the kill count, so an effect is never bigger than its damage.</p>
     <audio id="hits" controls preload="none" src="hits.mp3"></audio>
+  </section>
+
+  <section>
+    <h2>Pass two: what made no sound before</h2>
+    <p>The gun cards' payloads, raids and surges starting, mini-bosses, buildings, the menus and shop, and winning or losing a planet were all silent. Each now has a sound, sized by what it did: a blast or bomb weighs the walkers it killed, and rounds that kill nothing stay small.</p>
+    <audio id="events" controls preload="none" src="events.mp3"></audio>
+    <div class="chapters" aria-label="Jump to a sound">
+      <button type="button" data-a="events" data-t="0">Blast</button>
+      <button type="button" data-a="events" data-t="1.6">Bomb</button>
+      <button type="button" data-a="events" data-t="3.2">Gas</button>
+      <button type="button" data-a="events" data-t="4.8">Germ</button>
+      <button type="button" data-a="events" data-t="6.4">Flare, Torch</button>
+      <button type="button" data-a="events" data-t="8.0">Shatter</button>
+      <button type="button" data-a="events" data-t="9.6">Mind rounds</button>
+      <button type="button" data-a="events" data-t="11.2">Raid</button>
+      <button type="button" data-a="events" data-t="12.8">Last stand</button>
+      <button type="button" data-a="events" data-t="14.4">Mini-boss</button>
+      <button type="button" data-a="events" data-t="16.0">Mini-boss broken</button>
+      <button type="button" data-a="events" data-t="17.6">Building set down</button>
+      <button type="button" data-a="events" data-t="19.2">Building lost</button>
+      <button type="button" data-a="events" data-t="20.8">Menu click</button>
+      <button type="button" data-a="events" data-t="22.4">Buying</button>
+      <button type="button" data-a="events" data-t="24.0">Card into a slot</button>
+      <button type="button" data-a="events" data-t="25.6">Landing</button>
+      <button type="button" data-a="events" data-t="27.2">Planet won</button>
+      <button type="button" data-a="events" data-t="28.8">Planet lost</button>
+    </div>
+    <div class="pair">
+      <h3>Planet 2 with a Blast, Gas, Germ and Flare gun</h3>
+      <p class="what">The squads bot with the four cards loaded, 8 to 28 s. 111 payloads in 30 s; before this pass every one of them was silent.</p>
+      <audio controls preload="none" src="cards.mp3"></audio>
+    </div>
   </section>
 
   <section>
@@ -215,9 +247,9 @@ th { color: var(--muted); font-weight: 500; }
 <script>
   const players = Array.from(document.querySelectorAll("audio"));
   players.forEach(a => a.addEventListener("play", () => players.forEach(b => { if (b !== a) b.pause(); })));
-  const guns = document.getElementById("guns");
   document.querySelectorAll(".chapters button").forEach(btn => btn.addEventListener("click", () => {
-    guns.currentTime = Number(btn.dataset.t);
-    guns.play().catch(() => {});
+    const a = document.getElementById(btn.dataset.a);
+    a.currentTime = Number(btn.dataset.t);
+    a.play().catch(() => {});
   }));
 </script>

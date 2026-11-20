@@ -301,6 +301,46 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
         GrainKind::Punch => Spec { len: 0.2, attack: 0.0005, sine: 0.9, sine_tau: 0.045, freq: rng.range(85.0, 100.0), freq_end: 0.8, drop: 2.5, drop_tau: 0.012, noise: 0.3, noise_tau: 0.015, band: 320.0, q: 0.8, verb: 0.05, ..base },
         GrainKind::Report => Spec { len: 0.5, attack: 0.006, noise: 0.3, noise_tau: 0.15, band: rng.range(800.0, 1000.0), q: 0.7, band_end: 0.5, rough: 0.3, verb: 0.6, ..base },
         GrainKind::Action => Spec { len: 0.02, attack: 0.0002, noise: 0.25, noise_tau: 0.0015, band: rng.range(4000.0, 5000.0), q: 4.0, verb: 0.1, ..base },
+        // Gas let out (sound pass two, 2026-11-20): a soft puff into a
+        // long hiss that falls as the cloud spreads.
+        GrainKind::Hiss => Spec { len: 0.9, attack: 0.02, noise: 0.3, noise_tau: 0.28, band: rng.range(4200.0, 5200.0), q: 0.7, band_end: 0.55, rough: 0.25, verb: 0.3, ..base },
+        // The slime gathering itself: a low rough groan that rises over a
+        // second, under a sine that climbs with it.
+        GrainKind::Swell => Spec {
+            len: 1.7,
+            attack: 0.9,
+            noise: 0.45,
+            noise_tau: 0.7,
+            band: rng.range(170.0, 220.0),
+            q: 1.3,
+            band_end: 2.6,
+            rough: 0.85,
+            sine: 0.35,
+            sine_tau: 0.8,
+            freq: rng.range(70.0, 80.0),
+            freq_end: 1.6,
+            verb: 0.3,
+            ..base
+        },
+        // A building set down: a short metal clank, a ringing band over a
+        // falling mid tone.
+        GrainKind::Clank => Spec {
+            len: 0.3,
+            attack: 0.0005,
+            noise: 0.35,
+            noise_tau: 0.05,
+            band: rng.range(2200.0, 2900.0),
+            q: 6.0,
+            sine: 0.3,
+            sine_tau: 0.09,
+            freq: rng.range(420.0, 520.0),
+            freq_end: 0.97,
+            drop: 0.3,
+            verb: 0.35,
+            ..base
+        },
+        // A click on a menu or the HUD: a small soft tick, dry.
+        GrainKind::Tick => Spec { len: 0.025, attack: 0.0003, noise: 0.25, noise_tau: 0.0015, band: rng.range(3200.0, 3800.0), q: 1.5, sine: 0.2, sine_tau: 0.004, freq: rng.range(1400.0, 1600.0), verb: 0.05, ..base },
         // A walker killed (`TextureKind::Kill`, 2026-11-20): a tiny wet
         // pop, a sine blip whose pitch jumps up as it bursts (a bubble's
         // way) with a breath of noise. Replaced the starving crackle in a
@@ -1033,6 +1073,11 @@ impl VoiceBank {
                 let n = (w * 3.0).round() as usize;
                 for (j, f) in [392.0, 493.88, 587.33].iter().enumerate().take(n.max(1)) {
                     notes[j] = (*f, 0.18 * j as f32, if n == 0 { 0.08 } else { 0.18 }, true);
+                }
+                // A whole win (sound pass two, 2026-11-20) climbs on to
+                // the octave, held: the arpeggio resolves.
+                if n >= 3 {
+                    notes[3] = (783.99, 0.54, 0.22, true);
                 }
             }
             // A siren: a two-tone wail, high-low-high-low, plain sines
