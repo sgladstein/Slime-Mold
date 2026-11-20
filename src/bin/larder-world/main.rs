@@ -901,6 +901,8 @@ struct App {
     /// robbed (game second), out of food.
     dry: Vec<bool>,
     core_told: bool,
+    /// Starfall's falls landed and cores dropped already told (`starfall.rs`).
+    drops_told: (u32, u32),
     /// The broken mould (`Rules::broken`) told.
     broken_told: bool,
     /// Raids the HUD has told of (`Game::raids`).
@@ -1062,6 +1064,7 @@ impl App {
             building_sel: None,
             dry: Vec::new(),
             core_told: false,
+            drops_told: (0, 0),
             broken_told: false,
             raids_told: 0,
             robbed_at: None,
@@ -1346,6 +1349,7 @@ impl App {
         let size = (e.dish.w, e.dish.h);
         self.charge0 = game.world.crystals().iter().map(|c| c.1).collect();
         self.dry = vec![false; self.charge0.len()];
+        self.drops_told = (0, 0);
         self.depth = look::crystal_depth(e.dish.w, e.dish.w * e.dish.h, &e.dish.pile_of);
         let codes = ground_codes(&game, &self.depth, None, None);
         let ground = look::ground_buffer(device, queue, &codes);
@@ -1818,6 +1822,30 @@ impl App {
                 self.hud.alert(&format!("{} has run dry", crystal_name(i)), Some(c), theme::WARN);
             }
         }
+        // Ore landed and cores dropped (owner's play, 11-20 23:17Z: "it
+        // isn't clear how to collect the miniboss hearts"): an alert that
+        // says what to do, pointing at it.
+        if (g.starfall.landed, g.starfall.cores) != self.drops_told {
+            use slime_mould::mould::larder_world::{CoreFrom, DropKind};
+            let (landed, cores) = self.drops_told;
+            self.drops_told = (g.starfall.landed, g.starfall.cores);
+            let newest = |kind: DropKind| g.starfall.live.iter().rev().find(|d| d.down && d.kind == kind);
+            if g.starfall.landed > landed {
+                if let Some(d) = newest(DropKind::Ore) {
+                    self.hud.alert("Ore has landed: send a squad to stand on it for shop points", Some(d.at), theme::WARN);
+                }
+            }
+            if g.starfall.cores > cores {
+                if let Some(d) = newest(DropKind::Core) {
+                    let what = match d.from {
+                        CoreFrom::Boss { .. } => "A mini-boss dropped its core: stand a squad on it for shop points before the slime eats it back",
+                        CoreFrom::Raid => "The beaten raid dropped a core: stand a squad on it for shop points",
+                        _ => "A core dropped: stand a squad on it for shop points",
+                    };
+                    self.hud.alert(what, Some(d.at), theme::WARN);
+                }
+            }
+        }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
             self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
@@ -2030,7 +2058,12 @@ impl App {
             let b = slime_mould::mould::big::RAID_BLOCK;
             let nb = (e.dish.w.div_ceil(b) * e.dish.h.div_ceil(b)) as u32;
             let field = (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32 + e.n + 2 * nb;
-            v.set_steer(if e.lured { field } else { 0 });
+            // Only round a standing Lure (or siren): ore and cores are lures
+            // too (`LureMark`), and their rings spread across the map round
+            // a thing you cannot place or move (owner's play, 11-20 23:17Z:
+            // "Why do they have circles that spread across the whole map?").
+            let lure_up = g.buildings.iter().any(|b| b.alive && matches!(b.kind, slime_mould::mould::larder_world::Kind::Lure | slime_mould::mould::larder_world::Kind::Siren));
+            v.set_steer(if e.lured && lure_up { field } else { 0 });
             // How far it reaches, as `time_lure_paths` builds it, so no
             // ring is drawn on its rim (Look and interface, 2026-11-18).
             v.set_steer_reach(((g.rules.lure_reach.max(0.0) * g.world.scale()) as u32) as f32);
