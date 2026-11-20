@@ -48,3 +48,29 @@ GPU tail a frame, llvmpipe, 4 s bench at zoom 6, median, runs taken in
 turn: planet 2 (300,300) main 116, 126, 121 ms against 120, 119, 116;
 planet 3 (300,100) main 145, 148, 143, 154, 155, 156 against 169, 158, 150,
 153, 155, 159. Inside the bench's 10-20% run-to-run noise on both.
+
+## Round 2 (2026-11-20, later): water and rock
+
+What still read flat at zoom 6 after round 1 (stills at 0:30 and 1:00 over
+the fen's lakes and both planets' rock):
+
+- The fen's lakes were the navy of every planet's water, the largest flat
+  thing on planet 3, and with the walkers' specks in them read as night sky.
+  Now bog water, green-black (`FEN_WET_RGB` (20,33,27), `FEN_DEEP_RGB`
+  (4,9,6), `FEN_SHALLOW` for the margin; `wet_rgb()`, `deep_rgb()`), at the
+  navy's values, so water keeps its step under the ground.
+- The fen's reeds at zoom 6 were half blended into their far view (spacing
+  0.42 x 6 = 2.5 px against the 1.6-3.2 fade). Spacing 0.55, `r0` 0.9: whole
+  blades from zoom 6.
+- Rock was the same slate on every planet. Planet 2: a rose-tan sandstone
+  (`rock_tint()` (1.24,0.96,0.84) in `ter_cell`, so every zoom) in beds
+  `STRATA` 2.6 cells thick, each its own shade, bent by noise. Beds 1.4
+  cells apart with a strong swell read as wood grain at zoom 12 (first cut).
+  Planet 3: wet stone (tint (0.94,1.02,0.97)) with moss in patches over its
+  top (`ROCK_MOSS` (42,56,30), `MOSS_COVER` 0.75), away from its edge.
+
+Stills on the page (`fen-water6.jpg`, `sandstone12.jpg`, `fen-rock12.jpg`).
+Cost, llvmpipe GPU tail p50, 4 s at zoom 6, round 1's shader against
+round 2's, runs 2 and 3 (run 1 overlapped with filming and is dropped):
+planet 2 (300,330) 129, 127 ms against 134, 126; planet 3 (360,90) 166,
+156 against 169, 168. Inside the noise.
