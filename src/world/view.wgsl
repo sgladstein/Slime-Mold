@@ -1585,6 +1585,12 @@ const THREAD_VEIL: f32 = 0.3;
 // over the whole body, the first cut smoothed it into a glossy sheet.
 const CORD_VEIL: f32 = 0.3;
 const CORD_RISE: f32 = 0.5;
+// The Swarmer's swell (`SlimeLook::Swell`, 11-20): by the alarm's flush
+// (`flush_at`, 0-1) its height grows by up to `SWELL_GAIN` times, and its
+// walkers there stand up by `SWELL_RISE` more, so an alarmed loose edge is
+// a field of beads, not a flat glow. Filmed on planet 4 at zoom 12.
+const SWELL_GAIN: f32 = 1.5;
+const SWELL_RISE: f32 = 0.25;
 
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
@@ -2103,6 +2109,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The alarm on the slime here (`flush_at`), under a mini-boss's skin
     // and the set slime's, which keep their own colours.
     let hot = flush_at(wx, wy, tm);
+    if (P.slime_look == 4u) { th_h = th_h * (1.0 + SWELL_GAIN * hot) + SWELL_RISE * hot * smoothstep(0.1, 0.4, near); }
     let ss = set_share(wx, wy);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
