@@ -48,7 +48,7 @@ for f in sorted(glob.glob(sys.argv[1]) if '*' in sys.argv[1] else glob.glob(sys.
       if e[0]=='Broken' and r[-1][2]>0 and any(abs(t-e[1])<=2 for t in marches) and r[-1][2]>0.5*max(x[2] for x in r): c['swallowed by a march']+=1
     else: c['still alive']+=1
 keys=['formed','reached squad (<20 units)','came within 30 units of its errand','got to its errand','throws (mortar)','took food','stalled 10 s or more','stood still 10 s+ (seconds)','swallowed by a march','ended Broken','ended Spent','ended Fizzled','still alive']
-kinds=['hunter','leech','sapper','wanderer','mortar']
+kinds=['hunter','leech','sapper','wanderer','mortar','pinwheel']
 print('| | '+' | '.join(kinds)+' | all |'); print('|'+' --- |'*(len(kinds)+2))
 for k in keys:
   v=[K[x][k] for x in kinds]; print(f'| {k} | '+' | '.join(map(str,v))+f' | {sum(v)} |')

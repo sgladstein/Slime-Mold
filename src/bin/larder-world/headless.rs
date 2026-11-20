@@ -1072,6 +1072,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);
         println!("  mix: {}", b.mix(-30.0).iter().map(|(n, db)| format!("{n} {db:.1}")).collect::<Vec<_>>().join(", "));
         println!("  limiter: {:.2}% of samples pulled down, deepest gain {:.2}", 100.0 * b.limited as f64 / b.samples.max(1) as f64, b.limit_min);
+        println!("  not finite: {} command(s) refused, {} recover(s) (both should be 0)", b.refused, b.recovers);
         let us = &app.hear_us;
         println!("  listener: mean {:.1} us, max {:.1} us a frame over {} frames", us.iter().sum::<f32>() / us.len().max(1) as f32, us.iter().fold(0.0f32, |a, &b| a.max(b)), us.len());
     }

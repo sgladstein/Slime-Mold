@@ -518,6 +518,40 @@ fn a_scared_piece_sees_past_the_guns() {
     assert_eq!(g.world.p.panic_r, 7.0);
 }
 
+/// A cornered slime lunges (`Rules::late_at`, the 11-20 brief's option
+/// B): under `late_at` of its peak its charges reach `late_margin` past
+/// the guns and its surges lunge at `late_haste`, for the rest of the
+/// planet; off (0) nothing changes; a world already faster keeps its own.
+#[test]
+fn a_cornered_slime_lunges_from_further_out() {
+    let mut g = small(1);
+    g.rules.late_at = 0.4;
+    let haste = g.world.p.surge_haste;
+    assert!(haste < g.rules.late_haste && g.rules.panic_margin < g.rules.late_margin);
+    g.keep_panic_reach();
+    assert!(!g.late, "whole, it is not cornered");
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.panic_margin);
+    g.peak = g.mould * 3;
+    g.keep_panic_reach();
+    assert!(g.late);
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.late_margin);
+    assert_eq!(g.world.p.surge_haste, g.rules.late_haste);
+    g.peak = g.mould;
+    g.keep_panic_reach();
+    assert!(g.late, "once cornered, cornered for the rest of the planet");
+    assert_eq!(g.world.p.panic_r, g.gun_range_max() + g.rules.late_margin);
+    // Off, or a world that already lunges harder (the Swarmer).
+    let mut off = small(1);
+    off.peak = off.mould * 3;
+    off.keep_panic_reach();
+    assert!(!off.late);
+    assert_eq!((off.world.p.panic_r, off.world.p.surge_haste), (off.gun_range_max() + off.rules.panic_margin, haste));
+    let mut fast = small(1);
+    (fast.rules.late_at, fast.world.p.surge_haste, fast.peak) = (0.4, 5.0, fast.mould * 3);
+    fast.keep_panic_reach();
+    assert_eq!(fast.world.p.surge_haste, 5.0);
+}
+
 /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
 /// mould's home stops nothing, and births go on.
 #[test]
@@ -830,6 +864,12 @@ impl World for Later {
     }
     fn set_panic_r(&mut self, r: f32) {
         World::set_panic_r(&mut self.d, r)
+    }
+    fn surge_haste(&self) -> f32 {
+        World::surge_haste(&self.d)
+    }
+    fn set_surge_haste(&mut self, h: f32) {
+        World::set_surge_haste(&mut self.d, h)
     }
     fn surge_every(&self) -> u32 {
         World::surge_every(&self.d)
@@ -4454,4 +4494,31 @@ fn a_late_mini_boss_is_a_strong_one() {
     eprintln!("grade early {early:.2}, late {late:.2}");
     assert!(late >= BossRules::default().late_grade, "late {late}");
     assert!(late > early, "the same draw, raised: {early} -> {late}");
+}
+
+/// **The Pinwheel** (2026-11-20, the owner's doc's second proposal): a
+/// runner from planet 3 that hunts like the hunter with its lump's arms
+/// turning (`Lump::spin`, the engine's; `a_spinning_lump_gathers_into_
+/// turning_arms` on the GPU) once it is within `spin_near` of its prey,
+/// and not farther; a hunter's lump has none.
+#[test]
+fn a_pinwheel_hunts_with_its_arms_turning() {
+    assert_eq!(BossRules::for_depth(2).kinds[5], 0.0, "not on planet 2");
+    assert!(BossRules::for_depth(3).kinds[5] > 0.0, "from planet 3");
+    let hunt = |kind: f32, spin_near: f32| {
+        let mut g = small(2);
+        g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, kind, spin_near, ..BossRules::default() };
+        for _ in 0..10 * g.rules.tps as usize {
+            g.step();
+            if let Some(b) = g.bosses.live.first().filter(|b| matches!(b.phase, BossPhase::Hunt(Some(_)))) {
+                return (b.kind, g.world.p.lumps[b.lump].spin);
+            }
+        }
+        panic!("no boss hunted");
+    };
+    let (kind, spin) = hunt(6.0, 1.0e6);
+    assert_eq!(kind, BossKind::Pinwheel);
+    assert!(spin.abs() > 0.0, "its arms turn: spin {spin}");
+    assert_eq!(hunt(6.0, 0.0), (BossKind::Pinwheel, 0.0), "not while its prey is far");
+    assert_eq!(hunt(1.0, 1.0e6), (BossKind::Hunter, 0.0));
 }

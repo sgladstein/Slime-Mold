@@ -229,8 +229,12 @@ run=1:2 mode=squads hand=bot`):
   `bot,want=torch.standard`): seed 1 won planet 1 at 4:08 then lost
   planet 2 at 3:14; seed 2 lost planet 1 at 7:25; seed 3 won planet 1 at
   5:42 then lost planet 2 at 2:29. Both wins are short of 8 minutes.
-  **Next:** once #567 lands, retire `runbot.rs`'s own loop (its planet 1
-  PR test moves to the league's play), so one bot is left.
+  Its own loop went once #567 landed (11-20): `runbot=SEED[:TO]` is now
+  short for `league=run:SEED:TO` with `runbot::PLAN` (or `plan=`), and
+  each PR's planet 1 test plays `league::play`. One bot is left; the
+  `bot_hand` stays only for the gun lab. CI tests run on ubuntu-24.04
+  since #572 (26.04's Mesa 26.0.8 hung the GPU tests on 11-20), with a
+  40-minute limit (#568).
 
 Job 5, branches (11-18): a thread cannot delete another's branch (the
 proxy refused both `git push --delete` and the refs API), so on Scott's

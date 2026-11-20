@@ -191,7 +191,7 @@ use winit::window::{Window, WindowId};
 /// uses), the wanderer pale bone (a fat grub that grows as it grazes), the
 /// sapper ember (an acid red at your walls), the leech ink (dark tar on the
 /// pump rig, its core turning the charge's cyan as it drinks), the mortar
-/// moss with an acid core (2026-11-20).
+/// moss with an acid core and the pinwheel cobalt (2026-11-20).
 fn kind_look(kind: u16) -> LumpLook {
     match kind {
         1 => LumpLook::Violet,
@@ -199,6 +199,7 @@ fn kind_look(kind: u16) -> LumpLook {
         3 => LumpLook::Ember,
         4 => LumpLook::Ink,
         5 => LumpLook::Mortar,
+        6 => LumpLook::Pinwheel,
         _ => LumpLook::Plain,
     }
 }
@@ -1976,7 +1977,9 @@ impl App {
         self.step(dt);
         // The dish under the menu plays on: a round it ends starts again.
         // (Not the gun range's paused under its armory.)
-        if self.in_menu() && !self.armory && self.game.as_ref().is_some_and(|g| g.end.is_some()) {
+        // A run planet's dish ends at its mission's verdict (`open_menu`).
+        let over = self.game.as_ref().is_some_and(|g| g.end.is_some()) || self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
+        if self.in_menu() && !self.armory && over {
             if let Err(e) = self.open_menu() {
                 return self.fail(event_loop, e);
             }
@@ -2213,7 +2216,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
-    // planet TO (3) or a loss, with no window (`runbot`).
+    // planet TO (3) or a loss, with no window: the strategy bot's whole run
+    // (`league::whole_run`) with `runbot::PLAN` or `plan=`.
     let mut runbot: Option<(u64, u32)> = None;
     // `league=...` and `plan=PLAN`: the strategy league (`league.rs`).
     let (mut league_job, mut league_plan) = (None::<league::Job>, String::new());
@@ -2630,7 +2634,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some((seed, to)) = runbot {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
-        runbot::run_bot(base, seed, to, &device, &queue)?;
+        let plan = if league_plan.is_empty() { runbot::PLAN } else { league_plan.as_str() };
+        league::whole_run(base, seed, to, 0.0, plan, &device, &queue)?;
         return Ok(());
     }
     if let Some(dir) = look {

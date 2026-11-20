@@ -12,6 +12,7 @@ sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-steering-2026-11-17/README.md
+  - Reports/late-threat-2026-11-20/README.md
   - Reports/lure-field-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/mini-boss-2026-11-16/README.md
@@ -30,6 +31,7 @@ sources:
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/stand-2026-11-20/README.md
+  - Reports/starfall-2026-11-20/README.md
   - Reports/strikers-2026-11-20/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/trunk-fort-2026-11-18/README.md
@@ -40,6 +42,7 @@ code:
   - Game::boss_aim
   - Game::fruit_looks
   - Game::heart_site
+  - Game::keep_panic_reach
   - Game::lump_taken
   - Game::wave_points
   - HeartRules
@@ -52,6 +55,7 @@ code:
   - REF_OPEN
   - Run::buy_into
   - Run::carried
+  - Run::found
   - Run::gun
   - Run::level
   - Run::put_in
@@ -60,6 +64,7 @@ code:
   - Run::shop
   - STUCK_WARN
   - StandRules
+  - StarRules::for_depth
   - StrikerRules
   - WIN_SHARE
   - WaveRules
@@ -70,6 +75,7 @@ code:
   - clock
   - does_to_you
   - enemy_keys
+  - fall_count
   - fort_mask
   - gun_price
   - head_start
@@ -93,6 +99,7 @@ code:
   - time_fruit
   - time_heart
   - time_lure_paths
+  - time_starfall
   - time_waves
   - two_stars
 ---
@@ -158,11 +165,21 @@ On since 2026-11-20 (the same thread, the owner's pick on the balance thread's c
 
 On since 2026-11-20 evening (the same thread; D of the balance thread's brief, which put it after strikers and the lunge "as every planet's end, once A works"; `larder_world/stand.rs`, `StandRules`, `run::ENEMY_RULES`' `stand`). Once the slime is under 20% of its peak against a squad of 24 or more (`at`, `army`, the strikers' `full`), every walker left that is in no other lump gathers into one heart (a lump, as the mini-bosses' and the fruit's) on its heart crystal (the heartbeat's, `Game::heart_site`), leaving the crystals it held; it takes in the slime grown since every 3 s. Each member takes 4 blows and bites as two walkers (`armour`, `bite`). It attacks, as the owner's 14:16Z note asked of any tough slime: every 20 s the whole heart lunges at the nearest soldier at 3 times its pace for 10 s (`every`, `haste`, `lunge`), then draws back to its crystal. Condensed strikers never join a lump, so its strikers keep charging round it. No new slime, and the planet is won as before at the last walker. It is drawn with its own look (`LumpLook::Heart`, a deep gold over a hot white-gold core), dimming as it is cut down. Cut under 15% of the most it held, or 150 s old (`last`, `life`), it breaks and is slime again, which starves off its food as a broken slime does: kept to the end, a heart cut low sat 130 s on its crystal, and one that charged to the end held 29 walkers pressed on the ground until the game's cap (lavapipe, the strat bot, planet 2). Once a planet; a smaller squad mops up as before ([report](../../Reports/stand-2026-11-20/README.md)). GPU only.
 
+## A cornered slime lunges
+
+On since 2026-11-20 (the balance thread, the other half of the owner's pick that day; `Rules::late_at`, `late_margin`, `late_haste`, `Game::keep_panic_reach`, `run::ENEMY_RULES`' `late_at` 0.4). Once the slime falls under 40% of its peak, for the rest of the planet its charges reach 25 dish cells past the guns and its surges lunge at 3x, the Swarmer's numbers, the one rule in his 19 logs that took a big army apart (32 soldiers in 30 s on his 11-19 planet 4). On the Swarmer it changes nothing. Measured with the strikers on the strategy league, by soldiers the slime bites to death in a game's last quarter (the league now counts bites apart from fire and blasts): neither made the slime bite the bot's 80-soldier army more, on planet 2 (36 games) or planet 3 (27 games, where 92% of the bot's dead burned in its own fire) ([report](../../Reports/late-threat-2026-11-20/README.md)). On as the owner's pick, its line saying so; the strikers' retune is scored the same way.
+
+## Starfall and boss cores
+
+On since 2026-11-20 (the owner's pick, 19:06Z: "I like starfall with boss cores. The amount of star fall should have a minimum but can sometimes happen a lot. Random selection from distribution as normal"; the options and why the first round was dropped are in the [doc](https://claude.ai/artifact/XHLmAP2RFnSAHba6orJLjW); [page](../../Reports/starfall-2026-11-20/README.md)). A planet pays shop points on top of `reward` from what the squad picks up on it (`larder_world/starfall.rs`, `StarRules::for_depth`, set by `Run::rules`; `Run::found` adds them before `won`). **Starfall:** at least 3 falls a planet, then each more with chance 0.55, at most 12 (`fall_count`: 3 or 4 on about two planets in three, 7 or more on about one in ten), at times drawn between 0:50 and 10:00 after the landing, 25 s apart at least. A fall lands 14 to 60 dish cells from the nearest soldier, by slime where the grid shows some; its shadow shows for 10 s, then it lands as a blast (kill radius 4, a 20 s crater over 6, 60 health off a soldier under it). The ore is 2.5 dish cells across, worth 30 + 10 per planet, and lasts 60 s: each soldier within 2 cells of its rim drains 2.5 points a second (times the planet's harvest, so Quick hands drains faster), each walker on it eats 1 point times the slime's mass a second, and once the slime has eaten half of one its next surge is fed (`surge_meter`). It smells three times a soldier and is a lure (`LureMark`) for its life, so the GPU slime streams to it. **Boss cores:** a mini-boss broken (`BossEnd::Broken`) drops a core worth 40 + 40 x its grade, a fruit shot down (`FruitEnd::Broken`) one worth 40; it lasts 15 s and walkers on it soak it back. Nothing more is drawn once a planet starts, so waiting earns nothing (the owner's 13:49Z objection to paying for crystals held). Since the starfall the base pay (`reward`) is 175 + 25 a planet plus 50 a star, not 150 + 50 a planet (Direction, 11-20): planet 1 still pays the 200 its buys are priced on, and the growth with depth comes from the drops; both are retuned after play. The bots do not go for drops yet.
+
 ## Mini-bosses since the review of 11-20
 
 The owner (11-20 05:41Z) asked for the mini-bosses to be analysed against his play and improved ([review](../../Reports/miniboss-review-2026-11-20/README.md)). On his own maps to 5:00, 3 of 17 reached the squad, none reached its errand, and 9 stood 10 s or more pressed on rock or wedged in packed slime. Now a boss forms at the crowded knot nearest the player but never inside a soldier's guns (`BossRules::near` 40 dish cells), walks round rock, walls and deep water down a walking field aimed at the farthest point it can see (`Game::boss_steer`), re-forms on its front after 6 s stuck (`Game::boss_stall`), a leech's or sapper's walk has its own 90 s clock (`BossRules::trip`), a wanderer hops to fresh crystals nearer the player, and a raid's march grows its lump from free walkers so it never takes a boss's members. After: 7 of 18 reached the squad and 40 s stood still against 258; errands are still too far to reach in 5:00. So (Direction, 11-20) the kind is drawn first and a crowd's leech or sapper forms at the crowded knot nearest its pump or wall: in the same games one sapper reached its wall, and 2 of 3 leeches met the squad guarding the pumps.
 
 The Mortar (the owner's pick of his doc's two proposals, 11-20 13:21Z, "Mortar first"): a fifth kind, from planet 4 on (`BossRules::for_depth`), moss with an acid core. It forms at the crowded knot nearest a player thing it can see along a clear line, never walks, and every 5 s (`lob_every`) throws the ring at its body's edge at the nearest player thing just past the guns (`lob` 30 dish cells past the longest gun's reach and the panic margin) as one `squad::Burst` pushed one way (`Game::mortar`); the thrown walkers land as ordinary slime and the rest re-form on its spot. Rock, deep water or a wall in the line stops it: walls are the answer. With nothing in reach along a clear line it walks toward your nearest thing on its trip's clock until it has a shot (one formed out of reach sat 90 s without a throw). It throws its own body away, about seven throws for one of 249; on the owner's three planet 4 maps with every boss a mortar, 7 threw 48 times by 5:00. Since the same change a fruit grows its lump instead of forming it, so it no longer swallows a mini-boss beside it (3 of 14 had been). Since 11-20 evening a throw lands as a **shell**: the body's outer part (past the radius that holds 60% of it) flung as its own lump with the mortar's bite, its look and the armour of half its grade, for 8 s (`shell_life`), then ordinary slime; on the three maps 15 shells landed a median 10 units from their target, 14 with soldiers by them. **Late in a planet** (the slime under 60% of its peak, `BossRules::late`), every new mini-boss is drawn from the top grades (`late_grade` 0.8 up), so the last are the strongest; 2 of 24 on the owner's nine maps to 7:00 ([report](../../Reports/miniboss-review-2026-11-20/README.md)).
+
+The Pinwheel (the owner's second pick, 11-20): a sixth kind, from planet 3 on, a runner that hunts like the hunter in deep cobalt with a sky-blue core. Within 90 world units of its prey (`spin_near`) its body unfurls into three curved arms that turn round it (`Lump::spin`, the engine's: each member leans toward the nearest of three turning spokes); farther off it walks compact, since turning all the way halved its pace. On the owner's planet 3 and 4 maps with every boss a pinwheel it reached the squad 8 times of 21 ([report](../../Reports/miniboss-review-2026-11-20/README.md)).
 
 ## Ending early, the play log, pressure by depth
 
@@ -372,7 +389,7 @@ armory over the paused round and Back re-arms every squad
 
 - The origin as the win rule (Milestone 2; the owner, 11-16 04:58Z): designed 11-18 as a sitting lump of the slime's walkers on its home crystal whose death wins the planet, with three questions for the owner; not built ([design](../../Reports/origin-design-2026-11-18/README.md)).
 - The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
-- Mini-boss slimes: hunter, wanderer, sapper, leech and Mortar (planet 4 on) are built and on in the run (Now); the Pinwheel, each kind's look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 3).
+- Mini-boss slimes: hunter, wanderer, sapper, leech, Mortar (planet 4 on) and Pinwheel (planet 3 on) are built and on in the run (Now); each kind's look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 3).
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - The balance review (11-20, [report](../../Reports/balance-review-2026-11-20/README.md)): in the owner's 14 won planets the slime holds at half its peak or more for a median 75% of the planet, then breaks in about 1.4 minutes, so the army's size decides a planet, rush or not (put to him with D7, nothing built). At the clock a planet cut to half its peak was a 1-star win (`Cause::Cap`), the run bot's only planet 3 win on main; the owner's answer (11-20 14:10Z) is a clock that counts up, built the same day (above). On the army he answered that the slime must not grow with it; the options for a squad the slime cannot touch are the balance thread's next job, with the slime-enemy thread. Planet 2 is now the hardest of the three and is not yet measured on today's game.

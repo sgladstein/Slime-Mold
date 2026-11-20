@@ -480,9 +480,42 @@ impl App {
                     let label = format!("{}{}", n + 1, if lit { " *" } else if g.leads(q) { "" } else { " auto" });
                     // Above its topmost soldier, so the soldiers' sprites
                     // don't cover the number (the longer "N auto" label of
-                    // 11-15 showed only its tail over a spread squad).
-                    let top = g.members(q).iter().map(|&k| g.soldiers[k].y).fold(m.1, f32::min);
-                    self.marks.label((m.0, top), (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
+                    // 11-15 showed only its tail over a spread squad). Over
+                    // the soldiers round the one nearest its middle (play-zoom
+                    // pass, 11-20): a squad in two groups put its number at
+                    // the middle's x and the far group's top, over empty
+                    // ground or water between them.
+                    let members = g.members(q);
+                    let d = |k: usize| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1);
+                    let core = members.iter().copied().min_by(|&a, &b| d(a).total_cmp(&d(b)));
+                    // Its group: the soldiers linked to that one through
+                    // neighbours at most `LABEL_LINK` cells apart. The number
+                    // goes over that soldier, above the group's soldiers in
+                    // its column (`LABEL_COLUMN`), so a squad strung out on a
+                    // slant has it over its middle, not over empty ground
+                    // level with its top end.
+                    let (x, top) = core.map_or((m.0, m.1), |c| {
+                        let at: Vec<(f32, f32)> = members.iter().map(|&k| (g.soldiers[k].x, g.soldiers[k].y)).collect();
+                        let first = members.iter().position(|&k| k == c).unwrap_or(0);
+                        let x = at[first].0;
+                        let mut seen = vec![false; at.len()];
+                        let mut todo = vec![first];
+                        seen[first] = true;
+                        let mut top = at[first].1;
+                        while let Some(i) = todo.pop() {
+                            if (at[i].0 - x).abs() <= LABEL_COLUMN * sc {
+                                top = top.min(at[i].1);
+                            }
+                            for j in 0..at.len() {
+                                if !seen[j] && (at[j].0 - at[i].0).hypot(at[j].1 - at[i].1) <= LABEL_LINK * sc {
+                                    seen[j] = true;
+                                    todo.push(j);
+                                }
+                            }
+                        }
+                        (x, top)
+                    });
+                    self.marks.label((x, top), (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
                 }
             }
         }
@@ -685,6 +718,48 @@ impl App {
             }
             if !b.up() {
                 progress(&mut self.marks, b.at, below + 4.0);
+            }
+        }
+        // Starfall and boss cores (`Game::starfall`, 2026-11-20): what is
+        // coming down and what lies on the ground, drawn from the game's
+        // own drops. A fall's shadow darkens and its ring tightens as it
+        // comes, the ore itself a streak dropping onto it; down, ore is a
+        // hot gold lump and a core a red one, each shrinking with what is
+        // left in it and dimming as it cools, with its points beside it.
+        // The impact itself is the engine's blast and crater.
+        {
+            use slime_mould::mould::larder_world::DropKind;
+            let now = g.world.ticks();
+            let star = g.rules.star;
+            for d in &g.starfall.live {
+                let w = d.warmth(now);
+                if !d.down {
+                    let hit = star.kill_r * sc;
+                    self.marks.disc(d.at, hit * (0.35 + 0.65 * w), [8, 6, 16, (50.0 + 110.0 * w) as u8], false);
+                    self.marks.ring(d.at, hit, [255, 196, 110, (70.0 + 160.0 * w) as u8]);
+                    // Coming in from high up and to the right, fast at the end.
+                    let fall = (1.0 - w).powf(1.6) * 70.0 * sc;
+                    let head = (d.at.0 + 0.55 * fall, d.at.1 - fall);
+                    let tail = (head.0 + 0.55 * 9.0 * sc, head.1 - 9.0 * sc);
+                    self.marks.streak(head, tail, 3.0, [255, 150, 60, 150], [255, 240, 200, 255]);
+                    glows.push(Light { at: head, reach: 6.0 * sc, lift: 6.0, colour: [255.0, 170.0, 90.0], strength: 0.6 + 0.8 * w });
+                    continue;
+                }
+                let full = (d.left / d.worth.max(1e-3)).clamp(0.0, 1.0);
+                let (glow, core, light) = match d.kind {
+                    DropKind::Ore => ([255, 190, 70, 200], [255, 244, 200, 255], [255.0, 200.0, 90.0]),
+                    DropKind::Core => ([235, 60, 80, 200], [255, 210, 220, 255], [240.0, 70.0, 90.0]),
+                };
+                let heat = 0.35 + 0.65 * w;
+                let r = d.r * (0.45 + 0.55 * full.sqrt());
+                let fade = |c: [u8; 4], a: f32| [c[0], c[1], c[2], (c[3] as f32 * a) as u8];
+                self.marks.disc(d.at, r * 1.25, fade(glow, 0.55 * heat), true);
+                self.marks.disc(d.at, r * 0.6, fade(core, heat), false);
+                // How long it lasts: a ring that closes as it cools.
+                self.marks.ring(d.at, d.r * (1.0 + 1.2 * w), fade(glow, 0.5));
+                glows.push(Light { at: d.at, reach: (4.0 + 4.0 * full) * sc, lift: 3.0, colour: light, strength: 1.4 * heat * full.max(0.2) });
+                let below = (d.r * zoom).max(4.0) + 4.0;
+                self.marks.label(d.at, (-6.0, -below - 10.0), &format!("{}", d.left.ceil() as u32), 1.5, fade(core, 0.95));
             }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
@@ -1592,7 +1667,12 @@ impl App {
                 }
                 let (label, line) = match (v.stars > 0, last) {
                     (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
-                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", run::reward(r.depth, v.stars), r.points + run::reward(r.depth, v.stars))),
+                    (true, false) => {
+                        // Starfall and boss cores (`Game::starfall`) on top of the win's.
+                        let (won, found) = (run::reward(r.depth, v.stars), g.starfall.earned());
+                        let line = if found > 0 { format!("+{won} points for the planet, +{found} from starfall and cores ({} now)", r.points + won + found) } else { format!("+{won} points for the shop ({} now)", r.points + won) };
+                        ("On to the shop", line)
+                    }
                     (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
                 };
                 end.lines.push(line);
@@ -2039,6 +2119,13 @@ pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
 const LAND_SECS: f32 = 0.55;
 const LAND_STAGGER: f32 = 0.04;
 const LAND_LIFT: f32 = 7.0;
+
+/// How far apart two soldiers of a squad may stand and still count as one
+/// group for its number (`App::marks`' squad labels), in dish cells.
+const LABEL_LINK: f32 = 4.0;
+/// Half the width of the column over that soldier whose soldiers the
+/// number clears, in dish cells.
+const LABEL_COLUMN: f32 = 1.5;
 
 /// Soldier `k`'s landing `since` game seconds after the landing, `r` its
 /// body radius: how far up it is drawn (world cells), its size's factor,

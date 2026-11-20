@@ -1,5 +1,5 @@
 # Planet 1 (11-20 19:25Z). The first 40 whole runs of 14-0-runs-now (today's game, fire 25) lost planet 1 on 5 of 11 runs for every plan, rush,aim=6 included (runs 2, 4, 5 and Scott's 1795038793 and 1795106014; he won all three of his). A run bot that loses planet 1 half the time tests little past it. Here planet 1 of each run (the map a whole run lands on first): rush,aim=6 and six dials on it (regroup, waiting for 4 or 8 soldiers, stepping back sooner, mopping up, starving the crystal the most slime is on), the econ and lure switch plans, the run bot plain and at aim 6, boom and taker. 143 games, about 12 minutes. Deciding measure: wins of 11, paired score against rush,aim=6.
-# code-bound
+# code-bound Rows of 8682041ef71a count too (the 20:00Z build adds the off-by-default mines, blast and gun dials).
 rush,aim=6 1 1795038793 900 set=fire_hurt=10
 rush,aim=6 1 1795106014 900 set=fire_hurt=10
 rush,aim=6 1 1795119328 900 set=fire_hurt=10

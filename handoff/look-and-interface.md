@@ -105,6 +105,9 @@ call in `main.rs`'s `start`), sent to the view with a walker's pace
 (`set_slime_look`; the `V` struct's last row, two words spare). Planned:
 the Drifter a soft drifting sheet, the Sprawler fast thin threads, the
 Trunk thick veined cords with its amber walls.
+The Sprawler's threads lie in a faint film of their own trail (11-20,
+`THREAD_VEIL` 0.3 in `view.wgsl`, under the Drifter's
+`SHEET_VEIL` 0.4), so its loose front reads as one body.
 
 **The soldiers' Armour looks** (owner, 11-19 14:41Z: "our base soldier
 should be olive that upgraded to slate that upgrades to heavy"; 15:11Z:
@@ -170,9 +173,26 @@ The main menu, 11-20: its dish covers the window (`menu_camera` in
 `menu.rs`; the headless menu pictures frame it the same way), with a
 shade under the title and the foot hint (`start.rs`). Options looked
 sound as it is (filmed 11-20).
-Next in D: nothing planned; the menu dish is still the sandbox's map (the
-menu's Planet options preview on it), and a run planet behind the main
-page would be the next step if the owner wants one.
+The menu's dish is a run's planet 1 to 4 on the clock's seed while the
+sandbox map is its default (`open_menu`); a picked map still previews
+there. It starts again at its mission's verdict too (`main.rs`'s frame).
+The play-zoom pass (coordinator, 11-20), planets 1 to 3 at zoom 6 and
+12 with the greedy hand: fixed the Sprawler's loose dashes (above) and a
+squad's number floating between two groups (`LABEL_LINK` in `draw.rs`,
+over the soldier nearest its middle, clear of its group's soldiers in that column). Seen and
+left: the controlled squad's selection rings (one per straggler; thin, and
+they say who is in the squad); planet 4's squad fell in 18 s from a bare
+start (a balance note, not a look). On a funded run (`hand=strat:econ,
+go=4,aim=6 bank=20000`) the strikers read as gold beads in the Sprawler's
+film (planet 2, 64-70 s); no mortar formed on run 1's planet 4 by 120 s.
+
+The shop, later 11-20: dimmed to 215 behind it (`start.rs`), and shelf
+rows grow to `SHELF_TALL` (112) with the counter's room, the icon, name
+and price up to a quarter larger and the whole `about` text.
+Planets 2 and 3's ground (#574, Reports/planet-ground-2026-11-20/): mud
+plates, salt pan, scrub with shadows; fen reeds and moss; Form::fall plant
+shadows (a helper thread under this lane; page
+https://claude.ai/artifact/Vk2jnBLdLoVFrCGmYHEAZu).
 
 **Open branch:** `claude/project-thread-wypzro`, reused per PR.
 

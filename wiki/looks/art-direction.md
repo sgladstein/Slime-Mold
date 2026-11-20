@@ -2,7 +2,7 @@
 title: Art direction for Larder World (the style guide)
 kind: look
 status: open
-updated: 2026-11-19
+updated: 2026-11-20
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/biome-ground-2026-11-15/README.md
@@ -17,6 +17,7 @@ sources:
   - Reports/levelgen-review-2026-11-14/README.md
   - Reports/lure-rings-2026-11-18/README.md
   - Reports/mini-boss-look-2026-11-16/README.md
+  - Reports/planet-ground-2026-11-20/README.md
   - Reports/raised-walls-2026-11-18/README.md
   - Reports/river-look-2026-11-14/README.md
   - Reports/sim-use-2026-11-17/e2b-look.md
@@ -67,7 +68,9 @@ ranked look jobs, in the owner's order.
    leech near-black ink whose core turns the charge's cyan as it drinks a
    pump, the sapper ember crimson at your
    walls, the mortar (11-20, planet 4 on) moss green lit by an acid core,
-   saturated where the plants are muted; dark, mid and pale, parting by value as well as hue; not
+   saturated where the plants are muted; the pinwheel (11-20, planet 3 on)
+   deep cobalt with a sky-blue core, bluer and darker than the hunter's
+   violet, its three arms the members' own; dark, mid and pale, parting by value as well as hue; not
    bronze (owner 11-16); its colour, dome and core light all from where its
    members are (once out on its errand, wherever they stand, however thick
    the slime round them), and a broken or spent one's look drains into the slime
@@ -141,11 +144,11 @@ In the owner's order; A is Milestone 1's look test (`NOW.md`, exit test 2).
 5. Done (11-18): status slime glows rose ([mind](../../Reports/mind-status-2026-11-18/README.md)).
 6. Checked (11-18): fire at zoom 12 has no cell steps.
 
-**B. The slime itself**, a look a slime (owner, 11-19): Sprawler dashes (done, `SlimeLook`); veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; the origin's look once Enemy builds it.
+**B. The slime itself**, a look a slime (owner, 11-19): Sprawler dashes (done, `SlimeLook`); veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles (the Sprawler's threads lie in a faint film of their trail since 11-20, `THREAD_VEIL`); the origin's look once Enemy builds it.
 
-**C. Planets and terrain**: stronger grounding (faint shadows at play zoom; 11-20: each crystal casts its hexagon swept away from the light, `GEM_CAST` 0.55 of its radius times its height share, at most 8 cells, `GEM_SHADOW` 0.6 dark at its foot, on the slime as on the ground; rock's cast `TER_CAST` 1.6 cells, `TER_SHADE` 0.55); done 11-20: rock as stone (#534), planet 1's meadow in patches by the water (#535), a spent crystal a cracked husk of frosted glass (its six faces kept, rays and chords from a blow at its middle, coming in as the charge goes; `GEM_HUSK`, `GEM_SHARD`, `GEM_RAYS`, `GEM_SPENT` in `view.wgsl`; value about 70, between rock and a live face); one visual trait a planet that only it has (planet 1 done; 11-20, planets 2 and 3: the slime's trail on bare land, as pale dust tracks on the barrens, `DUST*`, and a wet slick with a cool sheen and glints in the fen, `SLICK_*`, both in `shaded` from `trail_lin`).
+**C. Planets and terrain**: stronger grounding (faint shadows at play zoom; 11-20: each crystal casts its hexagon swept away from the light, `GEM_CAST` 0.55 of its radius times its height share, at most 8 cells, `GEM_SHADOW` 0.6 dark at its foot, on the slime as on the ground; rock's cast `TER_CAST` 1.6 cells, `TER_SHADE` 0.55); done 11-20: rock as stone (#534), planet 1's meadow in patches by the water (#535), a spent crystal a cracked husk of frosted glass (its six faces kept, rays and chords from a blow at its middle, coming in as the charge goes; `GEM_HUSK`, `GEM_SHARD`, `GEM_RAYS`, `GEM_SPENT` in `view.wgsl`; value about 70, between rock and a live face); one visual trait a planet that only it has (planet 1 done; 11-20, planets 2 and 3: the slime's trail on bare land, as pale dust tracks on the barrens, `DUST*`, and a wet slick with a cool sheen and glints in the fen, `SLICK_*`, both in `shaded` from `trail_lin`). Also 11-20, planets 2 and 3's ground and plants, as planet 1's meadow ([barrens and fen ground](../../Reports/planet-ground-2026-11-20/README.md)): the barrens' hardpan as mud plates with curled rims (`HARDPAN_*`), its barren bands a salt pan at the ash's value (`SALT_*`), thorn scrub dark olive with straw tips; the fen's reeds as standing blades in tussocks and its moss as cushions; their plants cast shadows away from the light (`Form::fall`, `PLANT_SHADOW`). Round 2: the fen's water green-black bog water at the navy's values (`FEN_WET_RGB`, `FEN_DEEP_RGB`), rock by planet (`rock_tint`: barrens sandstone in beds, `STRATA`; fen wet stone with moss patches, `ROCK_MOSS`).
 
-**D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture (the landing done 11-20: the soldiers drop in one by one over their shadows, `draw::landing`; a dust ring at their feet tried and dropped as a drawn pulse; the end done 11-20: the world plays on for 2.4 s with the clock held and the camera drawing back before the card, `ending.rs`); then the shop and the menus. Shop, 11-20: the counter's offers as shelf rows with their one-line effect (`shelf_row` in `start/shop.rs`; bends shop B's half-size tiles while every offer fits on one page); an empty bag as one strip saying what it holds, and the pane's idle page without the top bar's heading again. Menus, 11-20: the main menu's dish fills the window, with a shade under the title.
+**D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture (the landing done 11-20: the soldiers drop in one by one over their shadows, `draw::landing`; a dust ring at their feet tried and dropped as a drawn pulse; the end done 11-20: the world plays on for 2.4 s with the clock held and the camera drawing back before the card, `ending.rs`); then the shop and the menus. Shop, 11-20: the counter's offers as shelf rows with their one-line effect (`shelf_row` in `start/shop.rs`; bends shop B's half-size tiles while every offer fits on one page); an empty bag as one strip saying what it holds, and the pane's idle page without the top bar's heading again; the shop dimmed darker behind, and its rows taller with the whole text when the counter has room. Menus, 11-20: the main menu's dish fills the window, with a shade under the title, and is a run's planet 1 to 4 (the Fork while a sandbox map is picked).
 
 Also open: the 1070 cost of the new looks (one batch); the first review's open issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
