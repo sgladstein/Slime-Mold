@@ -889,6 +889,37 @@ impl<W: World> Game<W> {
         self.harvested + self.guard_paid + self.rendered
     }
 
+    /// Every living soldier and squad this step as CSV rows, dish cells
+    /// (the path probe: `LARDER_PATHLOG` in the window's headless runs,
+    /// `examples/pathprobe`; read by
+    /// `Reports/pathfinding-2026-11-20/tools/paths.py`).
+    /// `s,tick,k,squad,x,y,vx,vy,goal x,goal y,touching,order,cover,hp` and
+    /// `q,tick,q,anchor x,anchor y,dest x,dest y,steer x,steer y,holding,column,fight`.
+    pub fn path_rows(&self, f: &mut impl std::io::Write) -> std::io::Result<()> {
+        let t = self.world.ticks();
+        let s = self.s();
+        for (k, so) in self.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+            let (gx, gy) = self.goal(k).unwrap_or((f32::NAN, f32::NAN));
+            let o = match so.order {
+                Order::Hold => 'h',
+                Order::Move(..) => 'm',
+                Order::Fight(..) => 'f',
+                Order::Guard(..) => 'g',
+                Order::Build(..) => 'b',
+                Order::Clear(..) => 'c',
+                _ => 'o',
+            };
+            writeln!(f, "s,{t},{k},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{o},{},{:.0}", so.squad, so.x / s, so.y / s, so.vx / s, so.vy / s, gx / s, gy / s, so.touching, so.cover as u8, so.hp)?;
+        }
+        for q in self.live_squads() {
+            let sq = self.squads[q];
+            let (ax, ay) = sq.anchor.unwrap_or((f32::NAN, f32::NAN));
+            let (dx, dy) = sq.dest.unwrap_or((f32::NAN, f32::NAN));
+            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8)?;
+        }
+        Ok(())
+    }
+
     pub fn time(&self) -> f32 {
         (self.world.ticks() - self.landed) as f32 / self.rules.tps as f32
     }
@@ -921,3 +952,5 @@ mod narrow_tests;
 mod wall_side_tests;
 #[cfg(test)]
 mod move_tests;
+#[cfg(test)]
+mod path_tests;

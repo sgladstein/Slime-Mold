@@ -12,6 +12,7 @@ sources:
   - Reports/guards-2026-11-15/README.md
   - Reports/map-sharing-2026-11-16/README.md
   - Reports/narrow-squads-2026-11-15/README.md
+  - Reports/pathfinding-2026-11-20/README.md
   - Reports/soldier-cap-2026-11-16/README.md
   - Reports/squad-mode-2026-11-14/README.md
   - Reports/squad-movement-2026-11-16/README.md
@@ -22,6 +23,7 @@ code:
   - Game::guard_zone
   - Game::heal
   - Game::rank_squad
+  - Game::steer_point
   - MAP_NEAR
   - Rules::funnel
   - Rules::guard
@@ -129,6 +131,14 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   [page](https://claude.ai/artifact/MWtDtnMANViS1NytZLwaNB). Jerk lower on
   23 of 24 planet runs, turning on 24 of 24; 200 sent on open ground
   4.9 -> 0.9 ms a step.
+  Pathfinding review (2026-11-20): a squad steered past a rock's tip or
+  along a slanting wall now walks round it (it stood for good: the point
+  40 cells ahead fell in rock, `Game::steer_point`), an anchor beside a
+  crystal takes its map, and members behind a crystal walk to the anchor.
+  Steered squads reached 4.8 crystals a map against 1.9 (19 of 24 maps
+  more, none fewer), back-and-forth walking 9.7% -> 4.9%
+  ([report](../../Reports/pathfinding-2026-11-20/README.md)). Open: walking
+  maps don't steer round slime or fire.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
   column ends once its tail is near the anchor

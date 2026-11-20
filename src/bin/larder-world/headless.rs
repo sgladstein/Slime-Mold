@@ -537,6 +537,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
             app.settle();
+            if let Some(g) = app.game.as_ref() {
+                path_log(g);
+            }
             // `necks=T,...`: the cut count at each T (`mould::necks`), after
             // the step, so a T that is also the run's last frame counts (the
             // first census lost its 300 s count with the check before it).
@@ -1289,4 +1292,12 @@ fn stand(g: &mut Game<GpuWorld>, kind: Kind, at: (f32, f32), render: bool) -> Re
         b.level = 2;
     }
     Ok(())
+}
+
+/// `LARDER_PATHLOG=FILE`: every living soldier and squad, each step, as
+/// CSV rows (`Game::path_rows`; the pathfinding thread's probe, 2026-11-20).
+fn path_log<W: slime_mould::mould::larder_world::World>(g: &slime_mould::mould::larder_world::Game<W>) {
+    static LOG: std::sync::OnceLock<Option<std::sync::Mutex<std::io::BufWriter<std::fs::File>>>> = std::sync::OnceLock::new();
+    let Some(m) = LOG.get_or_init(|| std::env::var("LARDER_PATHLOG").ok().and_then(|p| std::fs::File::create(p).ok()).map(|f| std::sync::Mutex::new(std::io::BufWriter::new(f)))) else { return };
+    let _ = g.path_rows(&mut *m.lock().unwrap());
 }
