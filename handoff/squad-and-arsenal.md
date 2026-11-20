@@ -48,6 +48,12 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
+the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or
+Thick) a plain cast, so they work on the plain bullet. Restock holds back
+carriers until a bullet card is owned. The last card slot draws from owned
+cards too, so a second loadout can get its own copy.
+
 **2026-11-20, batch 6b (a review of batch 6).** Nine fixes: the cycle key
 skips linked squads; L on a turret steps back to the default; a gunless
 loadout arms squads with the rifle plus upgrades (`Run::squad_gun`); a
