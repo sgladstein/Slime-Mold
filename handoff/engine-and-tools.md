@@ -218,6 +218,20 @@ run=1:2 mode=squads hand=bot`):
   Direction adopts "held on" (a 1-star time-out) as an outcome, the
   bot's summary should count it apart from wins (the review's ask).
 
+- **One bot** (11-20, NOW.md: "joined with the strategy bots rather than
+  a second bot"): CI's run bot (`run-bot.yml`) plays
+  `league=run:SEED:3 plan=PLAN`, the plan the first line of
+  `scripts/run-bot-plan.txt`, which the strategy bot's thread sets once
+  its plan-by-planet runs (#567) are measured on main
+  (provisionally `rush,aim=6|rush,aim=6,cards=0|econ,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1`).
+  `scripts/run_bot_summary.py` writes a row a planet with its length
+  against 8 to 12 minutes. First try (branch run 44777837761, plan
+  `bot,want=torch.standard`): seed 1 won planet 1 at 4:08 then lost
+  planet 2 at 3:14; seed 2 lost planet 1 at 7:25; seed 3 won planet 1 at
+  5:42 then lost planet 2 at 2:29. Both wins are short of 8 minutes.
+  **Next:** once #567 lands, retire `runbot.rs`'s own loop (its planet 1
+  PR test moves to the league's play), so one bot is left.
+
 Job 5, branches (11-18): a thread cannot delete another's branch (the
 proxy refused both `git push --delete` and the refs API), so on Scott's
 card ("Let CI delete them", 13:17Z) `.github/workflows/branches.yml` runs
