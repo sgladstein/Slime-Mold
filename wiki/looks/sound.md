@@ -36,6 +36,7 @@ code:
   - gun_sound
   - gun_voice
   - kill_weight
+  - master_at
 ---
 
 # Sound
@@ -47,7 +48,8 @@ On by default where the build has a device (macOS, Windows; Linux with
 listener only reads, so sound on and off play the same game bit for bit.
 The dish's sounds are in the [dish report](../../Reports/mould-sound-2026-11-10.md).
 
-**Larder World** (`WorldListener`, O toggles, K the mould's voice) places
+**Larder World** (`WorldListener`; Options' Volume, saved, via `master_at`;
+O mutes, K the mould's voice) places
 each sound by the camera's view (`Ear`), quieter and duller off screen
 (`Ear::far`). Each gun has its own shot (`GunVoice`, `gun_sound`: crack,
 punch, report, a bolt or pump), one a trigger pull, turrets under the
@@ -86,8 +88,6 @@ buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
   ([report](../../Reports/larder-sound-2026-11-12.md), C7 section).
 
 ## Open
-
-- A volume setting ([report](../../Reports/sound-pass-2026-11-20.md), *Open*).
 
 - The owner's ears on the [Larder Sound page](https://claude.ai/artifact/P4hk1fsSXQj3qXuwieffa7):
   does a big kill feel big; is the pulse help or noise; shot levels; does

@@ -129,6 +129,11 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // lane, 11-17), one row each on their own tab: `experiments.rs` says
     // what is on it, this file and `start.rs` how it is drawn.
     o.extend(experiments::options(base));
+    // The volume (sound pass two, 2026-11-20), second: taken at once and
+    // saved, like the UI size; not a round's setting.
+    let vols: Vec<String> = settings::VOLUME_STEPS.iter().map(|&v| settings::percent(v)).collect();
+    let vols: Vec<&str> = vols.iter().map(String::as_str).collect();
+    o.insert(0, Opt::new("volume", "Volume", &vols, "100%", &settings::percent(volume_user()), "Every sound, over the first-run level; 0% is silent, and O mutes in play"));
     o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -587,6 +592,9 @@ impl App {
         // The UI size option, applied the moment it turns.
         if let Some(v) = m.option("ui").and_then(|o| settings::parse_size(o.value())).filter(|&v| v != ui_user()) {
             self.set_ui(v);
+        }
+        if let Some(v) = self.menu.as_ref().and_then(|m| m.option("volume")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != volume_user()) {
+            self.set_volume(v);
         }
         let Some(m) = self.menu.as_mut() else { return Ok(picks) };
         if picks.is_empty() && dish_key(m) != before {

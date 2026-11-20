@@ -110,7 +110,15 @@ against the rifle's shot in `examples/shotsound.rs events=1` (first cut:
 the flare, the germ, the mind rounds and the landing whoosh were 40-48 dB
 under a blast, too quiet to hear in a fight; raised).
 
+## Volume (2026-11-20, later)
+
+Options, Game tab, second row: Volume, 0% to 200% of the first-run level
+(`settings::VOLUME_STEPS`, `synth::master_at`; the master squares it, so
+50% is -12 dB and 200% +12 dB), taken at once with a tick at the new
+level, saved in `settings.txt` beside the UI size, and kept by All to
+defaults. O still mutes, now back to this volume
+([still](sound-pass-2026-11-20/options-volume.png)).
+
 ## Open
 
-- A volume setting in Options (today O and K toggle, `DEFAULT_MASTER` 0.5).
 - The owner's ears: he plays on his own time; the page has the clips.
