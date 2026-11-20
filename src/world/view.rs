@@ -109,6 +109,10 @@ pub enum LumpLook {
     /// moss skin over an acid yellow-green core, a hue no other kind or
     /// the slime uses, so the thing throwing at you is found at once.
     Mortar = 6,
+    /// **A pinwheel** (2026-11-20, the Enemy lane, `BossKind::Pinwheel`):
+    /// cobalt skin over an ice-blue core, the one blue on the slime, so
+    /// its turning arms read apart from the gold round them.
+    Pinwheel = 7,
 }
 
 impl LumpLook {
@@ -122,6 +126,7 @@ impl LumpLook {
             "bone" | "4" => Self::Bone,
             "fruit" | "5" => Self::Fruit,
             "mortar" | "6" => Self::Mortar,
+            "pinwheel" | "7" => Self::Pinwheel,
             _ => return None,
         })
     }

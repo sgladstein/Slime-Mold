@@ -2648,6 +2648,95 @@ mod tests {
         assert_eq!(g.fruits.sown, 0, "and sows nothing");
     }
 
+    /// **A pinwheel's arms turn** (2026-11-20, `Lump::spin`, the Pinwheel
+    /// mini-boss; GPU only). A lump of about 400 walkers on a race world,
+    /// held in place by its pull, run 4 s with and without `spin`: with it
+    /// the members gather into three arms (the angular harmonic of order
+    /// `PIN_ARMS` round their centre, `h3`, is well above the still
+    /// lump's), and the arms turn (its phase keeps moving one way). On
+    /// llvmpipe (11-20): h3 0.159 spun against 0.064 still, 350 members;
+    /// the phase moved 9.7 rad in 3 s (0.2 turns a second x 3 arms is
+    /// 11.3). Walking to an aim it keeps most of a still lump's pace (7.5
+    /// cells in 4 s against 11.5 at haste 2; at 1, 5.5).
+    #[test]
+    fn a_spinning_lump_gathers_into_turning_arms() {
+        use crate::gpu::floats;
+        use crate::mould::big::{Lump, LUMP_BITS, LUMP_SHIFT};
+        use crate::mould::larder_world::{raid_cell, BossRules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 6_000);
+        // Per 0.25 s: the members' h3 (size, phase).
+        let run = |turns: f32, walk: f32| -> (Vec<(f32, f32)>, f32) {
+            let rules = Rules { boss: BossRules { every: 0.0, first: 0.0, ..BossRules::default() }, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            while g.time() < 2.0 {
+                g.step();
+            }
+            // The most crowded 12-cell square.
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let (w, h) = g.world.size();
+            let (bw, bh) = (w / 12 + 1, h / 12 + 1);
+            let mut bins = vec![0u32; bw * bh];
+            for q in 0..e.n as usize {
+                let (x, y) = (wk[4 * q], wk[4 * q + 1]);
+                if (!e.grows || en[q] >= 0.0) && x >= 0.0 && y >= 0.0 && (x as usize) < w && (y as usize) < h {
+                    bins[(y as usize / 12) * bw + x as usize / 12] += 1;
+                }
+            }
+            let top = (0..bins.len()).max_by_key(|&b| bins[b]).unwrap();
+            let at = ((top % bw) as f32 * 12.0 + 6.0, (top / bw) as f32 * 12.0 + 6.0);
+            let b = BossRules::default();
+            g.world.form_lump(0, Some((at, 12.0)));
+            let per_step = std::f32::consts::TAU / (15.0 * g.world.fine_steps().max(1) as f32);
+            let to = ((at.0 + walk).min(w as f32 - 2.0), at.1);
+            g.world.set_lump(0, Lump { aim: raid_cell(to, (w, h)), pull: b.pull, leash: b.leash_at(b.clench, 0.5), spin: turns * per_step, haste: if turns != 0.0 { 2.0 } else { 1.0 }, ..Lump::default() });
+            let mut out = Vec::new();
+            let start = g.world.lumps()[0].map_or(at, |l| (l.0, l.1));
+            let t0 = g.time();
+            while g.time() < t0 + 4.0 {
+                for _ in 0..4 {
+                    g.step();
+                }
+                let e = &g.world.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let news: Vec<u32> = read_back(&e.device, &e.queue, &e.news).chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+                let base = e.dense_at as usize / 4 + crate::gpu::DENSE_HEAD;
+                let m: Vec<(f32, f32)> = (0..e.n as usize).filter(|&q| (news[base + q] & LUMP_BITS) >> LUMP_SHIFT == 1).map(|q| (wk[4 * q], wk[4 * q + 1])).collect();
+                let n = m.len().max(1) as f32;
+                let (cx, cy) = (m.iter().map(|p| p.0).sum::<f32>() / n, m.iter().map(|p| p.1).sum::<f32>() / n);
+                let (mut re, mut im) = (0.0f32, 0.0f32);
+                for (x, y) in &m {
+                    let a = 3.0 * (y - cy).atan2(x - cx);
+                    re += a.cos();
+                    im += a.sin();
+                }
+                out.push(((re * re + im * im).sqrt() / n, im.atan2(re)));
+            }
+            let end = g.world.lumps()[0].map_or(start, |l| (l.0, l.1));
+            (out, end.0 - start.0)
+        };
+        let (still, _) = run(0.0, 0.0);
+        let (spun, _) = run(0.2, 0.0);
+        // Walking to an aim 40 cells off, it keeps most of a still lump's pace.
+        let (_, plain) = run(0.0, 40.0);
+        let (_, turning) = run(0.2, 40.0);
+        eprintln!("pinwheel: walked {turning:.1} cells in 4 s turning, {plain:.1} plain");
+        let mean = |v: &[(f32, f32)]| v[4..].iter().map(|p| p.0).sum::<f32>() / (v.len() - 4) as f32;
+        // How far the phase went, unwrapped, after the first second.
+        let turned = spun[4..].windows(2).map(|p| {
+            let mut d = p[1].1 - p[0].1;
+            while d > std::f32::consts::PI { d -= std::f32::consts::TAU; }
+            while d < -std::f32::consts::PI { d += std::f32::consts::TAU; }
+            d
+        }).sum::<f32>();
+        eprintln!("pinwheel: h3 still {:.3}, spun {:.3}; phase moved {turned:.2} rad in 3 s", mean(&still), mean(&spun));
+        assert!(mean(&spun) > 1.6 * mean(&still) && mean(&spun) > 0.1, "three arms: h3 {:.3} spun against {:.3} still", mean(&spun), mean(&still));
+        assert!(turned.abs() > 2.0, "and they turn: the phase moved {turned:.2} rad in 3 s");
+        assert!(turning > 0.5 * plain && plain > 5.0, "and it still walks: {turning:.1} cells turning against {plain:.1} plain");
+    }
+
     #[test]
     fn plants_and_fire_run_on_the_gpu_as_on_the_cpu() {
         use crate::mould::big::BigDish;
