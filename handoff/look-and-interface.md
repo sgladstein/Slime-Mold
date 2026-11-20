@@ -278,6 +278,19 @@ look of its own (A5, done), and burning slabs draw as cell-sized squares
 at zoom 12 (A6, checked: not so now). Enemy's Trunk fort (#473): fine to land; its flat walls led to
 the raised walls above.
 
+**Steady bottom bar (11-20, helper thread "Keep the HUD layout steady",
+branch `claude/project-thread-v4utuv`).** Scott: the actions shrank as
+squads or gun cards grew. `Hud::bar_fit` now reads only the room and the
+widest gun (`Loadout::widest`, filled in `draw.rs`): the command card's
+labels depend on the window and UI size alone (`SEL_FLOOR` 270,
+`GUN_FLOOR` a rifle's bare strip); the gun strip sheds name, then Swap,
+then scales its cards; squad tiles shrink inside the selection. Stubs for
+empty slots are gone. Top bar numbers are measured at their widest digits
+(`steady_w`). Test: `the_command_card_and_gun_strip_hold_still`. Stills:
+`Reports/pr-stills/steady-hud-{before,after}.jpg`. Film hand used (not
+committed): `split:N:SLOTS:CARDS` in `hands.rs`, buys 3N+2 soldiers and
+splits the biggest squad until N (the game stops at 9 here).
+
 **Worth knowing.**
 
 - `LARDER_VIEW_WGSL=path` swaps the view shader at run time, in the game

@@ -1765,6 +1765,9 @@ impl App {
                 Some(format!("Cost {} of {}", rounds::cost(&round), gun.budget))
             },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
+            // Every squad's gun, so the strip keeps its width as the
+            // commanded squad changes (the steady-HUD pass, 11-20).
+            widest: (0..g.squads.len()).map(|q| g.gun(q).slots as usize).max().unwrap_or(0),
         }
     }
 }

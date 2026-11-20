@@ -109,38 +109,45 @@ const BAR: f32 = 1.0;
 const MINIMAP_W: f32 = 300.0;
 
 /// What the gun strip shows, as the bar's allocator (`Hud::draw`) gives
-/// it room: its empty slots full size or as stubs, Swap, the name column
-/// (or only the gun's icon, its names in the tooltip), and the size it
-/// draws at.
+/// it room: Swap, the name column (or only the gun's icon, its names in
+/// the tooltip), and the size it draws at. (Empty slots drew as 14-unit
+/// stubs on a short row from 11-15 until the steady-HUD pass, 11-20: the
+/// strip then changed width as cards went in, and the row with it.)
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct GunFit {
-    stubs: bool,
     swap: bool,
     name: bool,
     /// 1, or down to 0.6 where even the barest row leaves the selection
-    /// under its floor (a gun with many slots at a big UI size).
+    /// under its floor (a gun with many slots at a big UI size): the
+    /// cards shrink inside their own panel.
     scale: f32,
 }
 
 impl GunFit {
-    #[cfg(test)]
-    const FULL: GunFit = GunFit { stubs: false, swap: true, name: true, scale: 1.0 };
-    const BARE: GunFit = GunFit { stubs: true, swap: false, name: false, scale: 1.0 };
+    const FULL: GunFit = GunFit { swap: true, name: true, scale: 1.0 };
+    const BARE: GunFit = GunFit { swap: false, name: false, scale: 1.0 };
 }
 
-/// An empty slot's width as a stub, and the gun's icon where the name
-/// column is shed, UI units.
-const STUB: f32 = 14.0;
+/// The gun's icon where the name column is shed, UI units.
 const GUN_TAB: f32 = 24.0;
 
-/// The loadout strip's width: its slots, the name and state (or the
-/// gun's icon), and Swap, as `f` shows them.
+/// The selection panel's least width in the row, units: the squad
+/// header's three buttons with their keys, and the panel's padding
+/// (`Hud::bar_fit`). The tiles shrink inside it to fit every squad (300,
+/// three tiles at their 86-unit least, cost the rifle its Swap at 125% on
+/// the game's 1600 x 972 window).
+const SEL_FLOOR: f32 = 270.0;
+/// The gun strip's width the command card's labels leave room for: the
+/// rifle's four cards and the gun's icon, no Swap (`Hud::bar_fit`).
+const GUN_FLOOR: f32 = 2.0 * 8.0 + 4.0 * LOADOUT_CELL + 3.0 * 5.0 + 10.0 + GUN_TAB;
+
+/// The loadout strip's width: its slots (the widest gun's in play), the
+/// name and state (or the gun's icon), and Swap, as `f` shows them. How
+/// many cards are in is no part of it.
 fn loadout_w(l: &Loadout, f: GunFit, s: f32) -> f32 {
     let s = s * f.scale;
-    let filled = l.cards.len();
-    let slots = l.slots.max(filled).max(1);
-    let empty = (slots - filled) as f32;
-    let cards = filled as f32 * LOADOUT_CELL + empty * if f.stubs { STUB } else { LOADOUT_CELL } + (slots - 1) as f32 * 5.0;
+    let slots = l.slots.max(l.widest).max(l.cards.len()).max(1);
+    let cards = slots as f32 * LOADOUT_CELL + (slots - 1) as f32 * 5.0;
     let info = if f.name { LOADOUT_INFO } else { GUN_TAB };
     (2.0 * 8.0 + cards + 10.0 + info + if f.swap && l.cycle.is_some() { 36.0 } else { 0.0 }) * s
 }
@@ -179,6 +186,16 @@ fn header_w(c: &Canvas, labels: &[(String, Option<String>)], head: &str, step: (
     let (px, keys, with_head) = step;
     let row: f32 = labels.iter().map(|(l, k)| c.atlas.measure(Weight::SemiBold, px * s, &header_text(l, k, keys)) + 26.0 * s).sum();
     row + if with_head { c.atlas.measure(Weight::SemiBold, 16.0 * s, head) + 12.0 * s } else { 0.0 }
+}
+
+/// `text`'s width with every digit as wide as the font's widest (Inter's
+/// digits are proportional), so a number that ticks keeps what follows it
+/// still (the steady-HUD pass, 11-20).
+fn steady_w(c: &Canvas, w: Weight, px: f32, text: &str) -> f32 {
+    let dw = |d: char| c.atlas.measure(w, px, d.encode_utf8(&mut [0; 4]));
+    let wide = ('0'..='9').max_by(|a, b| dw(*a).total_cmp(&dw(*b))).unwrap_or('0');
+    let t: String = text.chars().map(|ch| if ch.is_ascii_digit() { wide } else { ch }).collect();
+    c.atlas.measure(w, px, &t).max(c.atlas.measure(w, px, text))
 }
 
 /// The squad count over the tiles.
@@ -507,6 +524,10 @@ pub struct Loadout {
     /// ("Lucky carbine") and its numbers, shown by the name and in the
     /// tooltip. None draws the strip as before.
     pub gun: Option<(Icon, String, String)>,
+    /// The most slots of any gun in play (every squad's), so the strip
+    /// keeps one width as the commanded squad changes; 0 for this gun's
+    /// own (`slots`). The room past this gun's slots goes to its name.
+    pub widest: usize,
 }
 
 /// One squad on the squad panel (`SquadPanel::rows`).
@@ -1514,7 +1535,7 @@ impl Hud {
         // card (one card row tall, owner 08:33Z), all in the one row (owner,
         // 11-15 07:51Z: "everything was supposed to be on one row, why is
         // the gun in a seperate row on top").
-        let (labelled, fit) = self.bar_fit(m, c, right - 8.0 * b, b);
+        let (labelled, fit) = Hud::bar_fit(m, right - 8.0 * b, b);
         let card_w = if labelled { card_of(CELL_W * b) } else { card_of(cell) };
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
         let gun = m.loadout.as_ref().map(|l| Rect::new(8.0 * b, top_of, loadout_w(l, fit, b), panel_h));
@@ -1565,9 +1586,12 @@ impl Hud {
         }
     }
 
-    /// The selection panel's widths, pixels, for `bar_fit`: the least that
-    /// shows all it holds (every squad button, three tiles), then with the
-    /// squad header's keys, then everything at full size.
+    /// The selection panel's widths, pixels: the least that shows all it
+    /// holds (every squad button, three tiles), then with the squad
+    /// header's keys, then everything at full size. The allocator of 11-15
+    /// gave the row out by these; since the steady-HUD pass (11-20) only
+    /// the printout reads them, against `SEL_FLOOR`.
+    #[cfg(test)]
     fn sel_needs(&self, m: &Model, c: &Canvas, s: f32) -> [f32; 3] {
         // The panel's padding, and a unit spare: a need met to the last
         // float dropped Guards at 200% (`squad_tiles` measures again).
@@ -1597,54 +1621,46 @@ impl Hud {
         [one; 3]
     }
 
-    /// The bottom row's allocator (the three-reviewer review, 11-15).
-    /// Until then each panel gave way on its own threshold, one after
-    /// another: the command card lost its labels where the selection would
-    /// keep under 340 units beside a full gun strip, the strip then drew
-    /// down to 60% where the selection kept under 300, and the squad header
-    /// stepped down on its own. At 125% on 1920 x 1080 the card went to
-    /// icons while the squad panel kept about 450 px of empty glass, and at
-    /// 200% the gun's name was drawn smaller than at 150%.
+    /// The bottom row's allocator. Since the steady-HUD pass (owner,
+    /// 2026-11-20 22:08Z: "it changes as tiles resize. if we have many
+    /// squads then the actions shrink or once we have guns with lots of
+    /// cards the actions shrink. Things should stay more consistent. squads
+    /// or gun cards can shrink themselves within their own panel") it
+    /// reads only the room and the gun's widest slot count, never what is
+    /// selected:
     ///
-    /// Now the row starts bare: square buttons; the gun's cards, its icon
-    /// and stubs for its empty slots; the selection at the least that
-    /// shows what it holds. The rest of `room` (pixels from the bar's left
-    /// margin to the minimap) goes out in one order, each part where it
-    /// still fits: the command labels, the squad header's keys, the gun's
-    /// empty slots full size, Swap, the gun's name column (the designer's
-    /// order: what the player reads to act first). The selection takes
-    /// what is left: wider tiles, then its header word and bigger text.
-    /// Only where the barest row leaves the selection under its floor does
-    /// the strip draw smaller, down to 60%. Returns whether the card is
-    /// labelled, and the strip's fit.
-    fn bar_fit(&self, m: &Model, c: &Canvas, room: f32, b: f32) -> (bool, GunFit) {
-        let need = self.sel_needs(m, c, b);
+    /// - The command card is labelled wherever the row holds it beside a
+    ///   rifle's bare strip (`GUN_FLOOR`) and the selection's floor
+    ///   (`SEL_FLOOR`), so its buttons keep one size and place for the
+    ///   window and UI size.
+    /// - The gun strip takes the room left over the selection's floor, at
+    ///   the richest fit that goes in (the name sheds first, then Swap),
+    ///   and below the bare strip its cards draw smaller, down to 60%. Its width follows the widest gun in
+    ///   play (`Loadout::widest`), so commanding another squad does not
+    ///   move it.
+    /// - The selection takes the rest: squad tiles shrink inside it.
+    ///
+    /// The allocator before (the three-reviewer review, 11-15) gave the
+    /// row out by what the selection held (`sel_needs`): labels where the
+    /// selection kept its need, then the squad keys, empty slots, Swap and
+    /// the gun's name. It used the space better, but at 125% on the game's
+    /// 1600 x 972 window the card went square with four squads and a
+    /// 6-slot gun and labelled again with nine squads and two slots, and
+    /// the gun strip changed width with them. Returns whether the card is labelled, and the strip's fit.
+    fn bar_fit(m: &Model, room: f32, b: f32) -> (bool, GunFit) {
         let gap = CELL_GAP * b;
         let card_of = |w: f32| CARD_COLS as f32 * w + (CARD_COLS - 1) as f32 * gap + 2.0 * CARD_PAD * b;
-        let gun_w = |f: GunFit| m.loadout.as_ref().map_or(0.0, |l| loadout_w(l, f, b) + 8.0 * b);
-        // What the selection keeps: the row less the gun, a gap and the card.
-        let left = |labelled: bool, f: GunFit| room - gun_w(f) - 8.0 * b - card_of(if labelled { CELL_W } else { CELL } * b);
-        let mut f = GunFit::BARE;
-        let labelled = left(true, f) >= need[0];
-        let want = if left(labelled, f) >= need[1] { need[1] } else { need[0] };
-        let ups: [fn(GunFit) -> GunFit; 3] = [|f| GunFit { stubs: false, ..f }, |f| GunFit { swap: true, ..f }, |f| GunFit { name: true, ..f }];
-        for up in ups {
-            let g = up(f);
-            if left(labelled, g) >= want {
-                f = g;
-            }
+        // The selection's floor and the two gaps either side of it.
+        let sel = (8.0 + SEL_FLOOR + 8.0) * b;
+        let labelled = room - card_of(CELL_W * b) - sel >= GUN_FLOOR * b;
+        let Some(l) = &m.loadout else { return (labelled, GunFit::FULL) };
+        let budget = room - card_of(if labelled { CELL_W } else { CELL } * b) - sel;
+        let fits = [GunFit::FULL, GunFit { name: false, ..GunFit::FULL }, GunFit::BARE];
+        if let Some(f) = fits.into_iter().find(|&f| loadout_w(l, f, b) <= budget) {
+            return (labelled, f);
         }
-        // The last resort: the bare strip (cards and the gun's icon, no
-        // words) smaller so the selection keeps its floor: every squad
-        // button (they are orders, Heal among them), or 300 units of
-        // soldiers' cards (the rest go under a "+N").
-        let floor = if m.squads.is_some() { need[0] } else { need[0].min(300.0 * b) };
-        let short = left(labelled, f);
-        if let (Some(l), true) = (&m.loadout, short < floor) {
-            let w = loadout_w(l, f, b);
-            f.scale = ((w - (floor - short)) / w).clamp(0.6, 1.0);
-        }
-        (labelled, f)
+        let w = loadout_w(l, GunFit::BARE, b);
+        (labelled, GunFit { scale: (budget / w).clamp(0.6, 1.0), ..GunFit::BARE })
     }
 
     fn glass(&mut self, r: Rect, radius: f32, c: &mut Canvas, s: f32) {
@@ -1665,7 +1681,10 @@ impl Hud {
         // Resources: a pill of icon, value and rate each.
         let mut widths = Vec::new();
         for r in &m.resources {
-            let w = 18.0 * s + 6.0 * s + c.atlas.measure(Weight::SemiBold, px, &r.value) + r.rate.as_ref().map(|t| 6.0 * s + c.atlas.measure(Weight::Medium, small, t)).unwrap_or(0.0);
+            // Each number as wide as its widest digits (`steady_w`): the
+            // food ticking from 1,111 to 1,088 moved every pill after it
+            // and the objective a pixel or two a frame.
+            let w = 18.0 * s + 6.0 * s + steady_w(c, Weight::SemiBold, px, &r.value) + r.rate.as_ref().map(|t| 6.0 * s + steady_w(c, Weight::Medium, small, t)).unwrap_or(0.0);
             widths.push(w);
         }
         let inner: f32 = widths.iter().sum::<f32>() + (widths.len().saturating_sub(1)) as f32 * 20.0 * s;
@@ -1676,7 +1695,8 @@ impl Hud {
             for (r, w) in m.resources.iter().zip(&widths) {
                 c.icon(r.icon, (x, y + (h - 18.0 * s) / 2.0), 18.0 * s, r.colour);
                 let tx = x + 24.0 * s;
-                let vw = c.text(Weight::SemiBold, px, (tx, base), Align::Left, &r.value, TEXT);
+                c.text(Weight::SemiBold, px, (tx, base), Align::Left, &r.value, TEXT);
+                let vw = steady_w(c, Weight::SemiBold, px, &r.value);
                 if let Some(rate) = &r.rate {
                     let col = if rate.starts_with('-') { BAD } else { GOOD };
                     c.text(Weight::Medium, small, (tx + vw + 6.0 * s, base), Align::Left, rate, col);
@@ -1697,7 +1717,7 @@ impl Hud {
         c.panel(menu, h / 2.0, t, b, 1.0, EDGE);
         c.icon(Icon::Menu, (menu.x + (h - 18.0 * s) / 2.0, y + (h - 18.0 * s) / 2.0), 18.0 * s, TEXT);
         self.hits.push((menu, Hit::MenuButton));
-        let cw = c.atlas.measure(Weight::SemiBold, px, &m.clock);
+        let cw = steady_w(c, Weight::SemiBold, px, &m.clock);
         let chip = m.speed.as_ref().map(|t| c.atlas.measure(Weight::SemiBold, small, &t.to_uppercase()) + 16.0 * s).unwrap_or(0.0);
         let w = 14.0 * s + 18.0 * s + 6.0 * s + cw + if chip > 0.0 { 10.0 * s + chip } else { 0.0 } + 14.0 * s;
         let pill = Rect::new(menu.x - 8.0 * s - w, y, w, h);
@@ -1705,7 +1725,8 @@ impl Hud {
         let mut x = pill.x + 14.0 * s;
         c.icon(Icon::Clock, (x, y + (h - 18.0 * s) / 2.0), 18.0 * s, MUTED);
         x += 24.0 * s;
-        x += c.text(Weight::SemiBold, px, (x, base), Align::Left, &m.clock, TEXT) + 10.0 * s;
+        c.text(Weight::SemiBold, px, (x, base), Align::Left, &m.clock, TEXT);
+        x += cw + 10.0 * s;
         if let Some(sp) = &m.speed {
             let r = Rect::new(x, y + 9.0 * s, chip, h - 18.0 * s);
             c.rrect(r, r.h / 2.0, alpha(WARN, 0.18));
@@ -1923,9 +1944,12 @@ impl Hud {
         ];
         let buttons: Vec<_> = labels.iter().zip(what).map(|((l, k), (off, hit, about))| (l.as_str(), k.clone(), off, hit, about)).collect();
         let label = header_text;
+        // Measured as two digits' worth, so the header word does not come
+        // and go as a squad splits from 9 to 10 (the steady-HUD pass, 11-20).
+        let measure = squads_head(n.max(10));
         let (bpx, keys, with_head) = HEADER_STEPS
             .into_iter()
-            .find(|&step| header_w(c, &labels, &head, step, s) <= inner.w)
+            .find(|&step| header_w(c, &labels, &measure, step, s) <= inner.w)
             .map(|(px, keys, h)| (px * s, keys, h))
             .unwrap_or((12.0 * s, false, false));
         let hw = if with_head { c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT) } else { -12.0 * s };
@@ -2297,9 +2321,8 @@ impl Hud {
         let mut x = r.x + pad;
         for i in 0..slots {
             let Some(k) = l.cards.get(i) else {
-                // An empty slot, or a stub of one where the row is short
-                // (only the shop or H fills it: the designer, 11-15).
-                let b = Rect::new(x, y, if fit.stubs { STUB * s } else { cell }, cell);
+                // An empty slot (only the shop or H fills it).
+                let b = Rect::new(x, y, cell, cell);
                 x = b.right() + gap;
                 c.rrect(b, (7.0 * s).min(b.w / 2.0), [255, 255, 255, 8]);
                 c.outline(b, (7.0 * s).min(b.w / 2.0), 1.0, [255, 255, 255, 18]);
@@ -2334,8 +2357,11 @@ impl Hud {
                 tip = Some((i, b));
             }
         }
-        // The name and the state, after the last slot.
+        // The name and the state, after the last slot, to Swap: past a
+        // gun with fewer slots than the widest in play the name has their
+        // room (`Loadout::widest`).
         let tx = x - gap + 10.0 * s;
+        let info_w = (r.right() - pad - if fit.swap && l.cycle.is_some() { swap + 6.0 * s } else { 0.0 } - tx).max(info_w);
         if !fit.name {
             // Only the gun's icon where the row is short: its names are in
             // the tooltip it opens (the review, 11-15: shed parts, never
@@ -3111,6 +3137,7 @@ mod tests {
             note: None,
             cycle: Some((NOW + 10, KeyCode::KeyH)),
             gun: None,
+            widest: 0,
         }
     }
 
@@ -3497,7 +3524,7 @@ mod tests {
             }
             if fit.scale < 1.0 {
                 // Only the bare strip, which has no words, draws smaller.
-                assert!(!fit.name && !fit.swap && fit.stubs, "{at}: {fit:?}");
+                assert!(!fit.name && !fit.swap, "{at}: {fit:?}");
                 assert!(!runs.iter().any(|t| t.ink.0 < gun.right()), "{at}: words in a smaller strip");
                 shrunk.push((at.clone(), s));
             }
@@ -3511,11 +3538,52 @@ mod tests {
             labelled += *lab as usize;
         });
         // The strip draws smaller only near the biggest UI sizes (the
-        // screen at 1.3 units a pixel or more): at 200% on 1600 x 972 a
-        // 4-slot gun's bare strip at 0.8, so the squad panel keeps all five
-        // orders.
-        assert!(shrunk.iter().all(|a| a.1 >= 1.3), "the strip shrank at a small size: {shrunk:?}");
+        // screen at 1.3 units a pixel or more), and below that only a gun
+        // of more than the rifle's four slots: since the steady-HUD pass
+        // (11-20) a 6-slot gun's cards shrink inside their panel at 125%
+        // on 1600 x 972 and 1280 x 800, where the command card went square
+        // for it before.
+        assert!(shrunk.iter().all(|(at, s)| *s >= 1.3 || at.ends_with("6 slots")), "the strip shrank at a small size: {shrunk:?}");
         assert!(labelled > cases / 4, "labels in only {labelled} of {cases} cases");
+    }
+
+    /// The owner's ask (2026-11-20 22:08Z): "if we have many squads then
+    /// the actions shrink or once we have guns with lots of cards the
+    /// actions shrink. Things should stay more consistent." Over every
+    /// case of `bar_cases`, the command card keeps one place and size for
+    /// the window and UI size whatever the squads, the page or the gun, and
+    /// the gun strip one width whatever the selection; a gun with fewer
+    /// slots than the widest in play keeps the widest's width.
+    #[test]
+    fn the_command_card_and_gun_strip_hold_still() {
+        use std::collections::HashMap;
+        let key = |r: Rect| [r.x, r.y, r.w, r.h].map(|v| (v * 4.0).round() as i32);
+        let mut cards: HashMap<String, ([i32; 4], String)> = HashMap::new();
+        let mut guns: HashMap<String, ([i32; 4], String)> = HashMap::new();
+        bar_cases(|screen, user, what, slots, r| {
+            let (panels, ..) = &r.hud.row;
+            let at = format!("{screen:?} at {user}");
+            let card = key(panels[2]);
+            let (was, first) = cards.entry(at.clone()).or_insert((card, format!("{what}, {slots} slots")));
+            assert_eq!(*was, card, "{at}: the command card moved between {first} and {what}, {slots} slots");
+            let gun = key(panels[0]);
+            let (was, first) = guns.entry(format!("{at}, {slots} slots")).or_insert((gun, what.to_string()));
+            assert_eq!(*was, gun, "{at}, {slots} slots: the gun strip changed between {first} and {what}");
+        });
+        // A squad with a 2-slot gun beside one with a 6-slot gun.
+        for screen in [(1600, 972), (1920, 1080), (2560, 1440)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                let gun = |slots: usize, widest: usize| Loadout { slots, widest, cards: loadout().cards.into_iter().take(slots).collect(), ..loadout() };
+                r.m.loadout = Some(gun(6, 6));
+                r.draw();
+                let wide = r.hud.row.0[0];
+                r.m.loadout = Some(gun(2, 6));
+                r.draw();
+                assert_eq!(key(r.hud.row.0[0]), key(wide), "{screen:?} at {user}: the strip changed width with the commanded squad's gun");
+            }
+        }
     }
 
     /// The owner's case (the review, 11-15): 125% on 1920 x 1080, one
