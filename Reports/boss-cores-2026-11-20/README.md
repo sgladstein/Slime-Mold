@@ -52,3 +52,20 @@ A staged film (`hand=hold@230,200 boss=20,330,205`) showed the slide best: a
 wanderer broken 16 units from a held squad at 0:42, its core at the slime's
 edge 52 units off by 0:46. At ore's eat rate it re-formed there at 0:57; at
 `core_eat` 0.3 the thin slime there eats only 4 of 43 before the core cools.
+
+## Readable cores (after the owner's play, 11-20 23:17Z)
+
+"It isn't clear how to collect the miniboss hearts. Why do they have
+circles that spread across the whole map?" The circles were the Lure
+building's field rings (`View::set_steer`): a core and ore are lures
+(`LureMark`), and the window drew the field's rings, every 20 cells out to
+120, whenever any lure stood. They now show only while a Lure (or siren)
+building stands. Collecting now reads: an alert when ore lands or a core
+drops, saying to stand a squad on it; a thin ring at the soldiers' reach;
+the points larger, with a shadow; a gold bar of what the squad took, and
+`+N` once soldiers are in the ring.
+
+- `4-collect-ring-z12.jpg`: a wanderer's core at 0:55 (run 1795106014
+  planet 2, `hand=hold@262,181 boss=20,330,205`), its ring, 29 left.
+- `5-no-map-rings.jpg`: the whole map at 0:46 of the earlier film, a core
+  sliding home and no rings across the map.
