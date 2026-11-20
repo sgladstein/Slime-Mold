@@ -2377,7 +2377,9 @@ mod tests {
             w.frame(&f, 15);
         }
         w.set_strikers(Some(1.5));
-        let (_, _, took) = w.condense(20.0, 1.0, 3).expect("the GPU world condenses");
+        // By position, not by pattern: the slime thread's #598 adds a
+        // fourth number (the band) and either may land first.
+        let took = w.condense(20.0, 1.0, 3).expect("the GPU world condenses").2;
         assert!(took >= 30, "the edge condenses: {took} taken in");
         for _ in 0..12 {
             w.frame(&f, 15);

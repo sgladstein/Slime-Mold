@@ -3769,12 +3769,6 @@ impl Engine {
     /// 19:21Z card): no CPU twin.
     pub fn condense(&mut self, shared: &Shared, reach: f32, share: f32, most: u32) -> (u32, u32, u32) {
         let Some(haste) = self.strikers else { return (0, 0, 0) };
-        // It marks the walkers it takes in dead, so the life states go on,
-        // as with every pass that kills (`burst`): off, a child born into
-        // such a slot kept the mark, lived and was never counted (the bug
-        // check, 2026-11-20; in a game the first shot's spray had turned
-        // them on long before).
-        self.cycles = true;
         let b = crate::mould::big::RAID_BLOCK;
         let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
         // Its words are the raid region's third quarter.
@@ -3783,6 +3777,12 @@ impl Engine {
         }
         // Bit 31: by the units' walking distance, where it is kept.
         let walk = if self.dish.units_field.is_empty() { 0 } else { 1 << 31 };
+        // It marks the walkers it takes in dead, so the life states go on,
+        // as with every pass that kills (`burst`): off, a child born into
+        // such a slot kept the mark, lived and was never counted (the bug
+        // check, 2026-11-20; in a game the first shot's spray had turned
+        // them on long before).
+        self.cycles = true;
         let r2 = ((reach.max(0.0) * reach.max(0.0)) as u32).min(0xFF_FFFF) | most.clamp(1, 15) << 24 | walk;
         self.queue.write_buffer(&self.params, LUMP_AT as u64, &u32_bytes(&[1, haste.to_bits(), r2, share.clamp(0.0, 1.0).to_bits()]));
         self.queue.write_buffer(&self.wstat, 32, &[0u8; 12]);
