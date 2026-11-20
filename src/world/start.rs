@@ -978,6 +978,18 @@ impl StartMenu {
             let f = k as f32 / 40.0;
             c.rrect(Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh), 0.0, [4, 6, 8, (9.0 * (1.0 - f)) as u8 + 2]);
         }
+        // The main page's title and its foot hint over a dish that fills the
+        // window (`menu_camera`, 11-20): a shade down from the top and up
+        // from the foot, so a crystal under the title does not wash it out.
+        if self.page == Page::Main {
+            let (top_h, foot_h) = (130.0 * s, 60.0 * s);
+            for k in 0..24 {
+                let f = k as f32 / 24.0;
+                let a = (7.0 * (1.0 - f)) as u8 + 1;
+                c.rrect(Rect::new(0.0, 0.0, sw, top_h * (1.0 - f)), 0.0, [4, 6, 8, a]);
+                c.rrect(Rect::new(0.0, sh - foot_h * (1.0 - f), sw, foot_h * (1.0 - f)), 0.0, [4, 6, 8, a]);
+            }
+        }
         // The shop and the gun range's armory: one screen of their own
         // (`shop.rs`, Shop B), never scrolled.
         if self.page == Page::Shop {

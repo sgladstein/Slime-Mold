@@ -1,0 +1,10 @@
+# The plan CI's run bot plays (.github/workflows/run-bot.yml), as
+# `larder-world league=run:SEED:3 plan=PLAN`: one strategy bot plan
+# (src/bin/larder-world/strat.rs), or once plans by planet are on main, one
+# a planet joined by `|`. The first line that is not a comment is the plan.
+# The strategy bot's thread sets it to the run plan it rates best.
+#
+# `bot` is the old run bot's play (drain, buy, hunt). `want=torch.standard`
+# buys the Torch before planet 2, as the old bot's shop did after the
+# balance review (2026-11-20); Tinder lays brush that only a fire kills.
+bot,want=torch.standard

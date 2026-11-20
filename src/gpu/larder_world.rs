@@ -868,8 +868,12 @@ impl World for GpuWorld {
 
     /// The enemy's living, from the same readout, so no read-back (until
     /// 11-17 plus its condensed walkers, `wstat[8]`).
+    /// With the walkers condensed strikers hold (`Engine::striker_held`,
+    /// as the last `condense` read them; the review lane, 11-20: without
+    /// them the HUD, the end card, fruit's floor and the wave's trigger saw
+    /// up to four times less slime than there is).
     fn mass(&self) -> usize {
-        self.living - self.own
+        self.living - self.own + self.e.striker_held as usize
     }
 
     fn set_task(&mut self, k: usize, t: Task) {
@@ -1116,13 +1120,16 @@ impl World for GpuWorld {
 
     fn set_strikers(&mut self, haste: Option<f32>) {
         self.e.strikers = haste;
+        if haste.is_none() {
+            self.e.striker_held = 0;
+        }
     }
 
     /// At once, after the running step's shares, as `form_lump`.
-    fn condense(&mut self, reach: f32, share: f32) -> Option<(u32, u32, u32)> {
+    fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
         self.e.strikers?;
         self.flush();
-        Some(self.e.condense(&self.shared, reach, share))
+        Some(self.e.condense(&self.shared, reach, share, most))
     }
 
     /// The mirror's ground, which the world's walls keep (`build_wall`).
@@ -1427,8 +1434,8 @@ mod tests {
         fn set_strikers(&mut self, haste: Option<f32>) {
             self.g.set_strikers(haste)
         }
-        fn condense(&mut self, reach: f32, share: f32) -> Option<(u32, u32, u32)> {
-            self.g.condense(reach, share)
+        fn condense(&mut self, reach: f32, share: f32, most: u32) -> Option<(u32, u32, u32)> {
+            self.g.condense(reach, share, most)
         }
     }
 
@@ -2301,17 +2308,19 @@ mod tests {
         for _ in 0..2 {
             w.frame(&f, 15);
         }
-        assert_eq!(w.condense(20.0, 1.0), None, "no condensing with the strikers off");
+        assert_eq!(w.condense(20.0, 1.0, 3), None, "no condensing with the strikers off");
         w.set_strikers(Some(1.5));
         w.frame(&f, 1);
         let before = read(&w).len();
-        let (_, _, took) = w.condense(20.0, 1.0).expect("the GPU world condenses");
+        let (_, _, took) = w.condense(20.0, 1.0, 3).expect("the GPU world condenses");
         let v = read(&w);
         let (live, held) = (v.iter().filter(|p| p.2).count(), v.iter().filter(|p| p.2).map(|p| p.3).sum::<u32>());
         eprintln!("strikers: {before} walkers, {took} taken in by {live} condensed holding {held}, {} after", v.len());
         assert!(took >= 30 && live >= 10, "the edge condenses: {took} taken in by {live}");
         assert_eq!(before - v.len(), took as usize, "the slime loses only the walkers taken in");
         assert_eq!(held, took, "and the condensed hold them all");
+        w.frame(&f, 1);
+        assert_eq!(w.mass(), w.living() + held as usize, "the slime's mass counts what they hold");
         assert!(v.iter().filter(|p| p.2).all(|p| (1..=3).contains(&p.3)), "each holds one to three");
         let (c0, p0) = (mean(&v, true), mean(&v, false));
         for _ in 0..6 {
@@ -2334,6 +2343,16 @@ mod tests {
         eprintln!("strikers: a strike over the soldier leaves {cout} of {cin} condensed (holding {held0} -> {held1}) and {pout} of {pin} plain");
         assert!(cin >= 5 && cout == cin && held1 + cin as u32 == held0, "every condensed walker in it takes the blow and lives, holding one fewer");
         assert!(pout * 10 <= pin, "the plain walkers in it die: {pout} of {pin} left");
+        // A lump formed over all of them takes no striker (joining cleared
+        // the walkers a striker held, so a mini-boss or a fruit formed by
+        // strikers took that slime off the map).
+        let held2: u32 = v.iter().filter(|p| p.2).map(|p| p.3).sum();
+        w.form_lump(0, Some((at, 400.0)));
+        w.frame(&f, 1);
+        let v = read(&w);
+        let held3: u32 = v.iter().filter(|p| p.2).map(|p| p.3).sum();
+        assert_eq!(held3, held2, "a lump formed over the strikers leaves them and what they hold");
+        w.form_lump(0, None);
     }
 
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,
