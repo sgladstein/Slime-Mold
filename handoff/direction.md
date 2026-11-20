@@ -123,6 +123,13 @@ end.
   half of the squad by 120 s (Squad's check, greedy hand). Judge it from
   his next play and the run bot, not on a guess. A dozing soldier has no
   look yet; asked of Look and interface.
+- **Needle Blast, one burst per bullet** (his card, 11-20 01:23Z): the gun
+  lab (#527) and the strategy bots (#529) found Needle Blast, common, the
+  base of every top deck. A needle now lets its payload out at its first
+  slime hit and flies on plain (`shots.rs`, Squad's file, built here).
+  **Next:** the bots re-check planet 3 (seek+wide+blast.needle won 9 of 9
+  maps before; no cards 5 of 9). Once #527 is on main, add a line on it to
+  `wiki/world/gun-cards.md`.
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the

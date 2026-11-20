@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-18
+updated: 2026-11-20
 sources:
   - CLAUDE.md
   - Reports/bug-check-2026-11-15/README.md
@@ -60,6 +60,7 @@ live only in [NOW.md](../NOW.md), *What waits on the owner* (since
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-20 01:23, card | Needle Blast is reined in by one burst per bullet: a needle carrying a payload (Blast, Gas, Germ, Bomb) bursts at its first slime hit and flies on through its other hits as a plain needle. It stays common. Asked because the gun lab and the strategy bots found it broke his Noita rule: one common card was the base of every top deck (`Reports/gun-builds-2026-11-19/`), and seek+wide+blast.needle won 9 of 9 planet 3 maps against 5 with no cards (`Reports/strategy-bots-2026-11-19/`). Built by Direction in `shots.rs` (Squad's file) | Card "One burst per bullet" (over "Make Needle payloads rare" and "Leave it as it is") | [gun cards](world/gun-cards.md) |
 | 2026-11-19 00:13 | The slime looks need not all be right on the first try: iterate on them | "You can iterate on this too, but you don't have to get three. Looks correct on your first try" | [art direction](looks/art-direction.md) |
 | 2026-11-19 00:08 | Look B builds several slime looks, one per slime, rather than a single look; Look and interface does them one at a time, the Sprawler's dashes first (#510), then the Trunk's and the Drifter's | "Sounds good. It would also be interesting instead of having a single look to build multiple looks could eventually apply to different slimes" | [art direction](looks/art-direction.md) |
 | 2026-11-18 22:35 | Review planet 3 before changing it: it may be the sleep, or the hardening, which he does not see as a planet 3 thing. Squad and arsenal's review found the sleep (Gas kept the squad at health 92-97 with none lost against 53-61 with a plain gun); planet 3's numbers unchanged | "dont automatically rebalance planet 3, it could have just been the sleep. review first"; "or it is the hardening slime, which i don't think is specifically a planet 3 thing" | [guns](world/guns.md) |

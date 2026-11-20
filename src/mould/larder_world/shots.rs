@@ -139,6 +139,24 @@ impl<W: World> Game<W> {
         // Where, which way, by whom and what each carrier lets out, and
         // whether it stopped at a wall.
         let mut out_casts: Vec<Release> = Vec::new();
+        // One burst per bullet (owner's card, 2026-11-20 01:23Z, "One burst
+        // per bullet"): a needle carrying a payload (Blast, Gas, Germ, Bomb)
+        // lets it out at its first slime hit and flies on as a plain
+        // needle. It burst at each of its three hits until then, so one
+        // common card got about three blasts a shot: the gun lab and the
+        // strategy bots found Needle Blast the base of every top deck and
+        // seek+wide+blast.needle won 9 of 9 planet 3 maps against 5 with no
+        // cards (`Reports/gun-builds-2026-11-19/`,
+        // `Reports/strategy-bots-2026-11-19/`). A payload that is not a
+        // needle but pierces by Pierce cards still bursts at each hit: that
+        // is two cards together, which the owner's Noita rule allows.
+        let one_burst: Vec<bool> = self
+            .bullets
+            .iter()
+            .enumerate()
+            // Only a piercing hit asks, so the deck is read for few bullets.
+            .map(|(q, b)| out.get(q).is_some_and(|o| o.hit.is_some()) && b.pierce > 0 && b.cast > 0 && self.mods_by(b.by, b.turret).ammo.get(b.cast as usize - 1).is_some_and(|a| a.set == crate::mould::bullets::Set::Needle && a.shell != crate::mould::bullets::Shell::Plain))
+            .collect();
         let mut k = 0;
         self.bullets.retain_mut(|b| {
             let q = k;
@@ -155,6 +173,9 @@ impl<W: World> Game<W> {
                 // On a wall a leg ends with no hit; only slime gets here.
                 if b.pierce > 0 {
                     b.pierce -= 1;
+                    if one_burst.get(q).copied().unwrap_or(false) {
+                        b.cast = 0;
+                    }
                     let gap = r.pierce_gap * b.r + 1.0;
                     let at = (h.0 + b.dir.0 * gap, h.1 + b.dir.1 * gap);
                     let went = (at.0 - l.from.0).hypot(at.1 - l.from.1);
