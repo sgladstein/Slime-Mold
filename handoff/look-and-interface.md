@@ -186,6 +186,14 @@ start (a balance note, not a look). On a funded run (`hand=strat:econ,
 go=4,aim=6 bank=20000`) the strikers read as gold beads in the Sprawler's
 film (planet 2, 64-70 s); no mortar formed on run 1's planet 4 by 120 s.
 
+The shop, later 11-20: dimmed to 215 behind it (`start.rs`), and shelf
+rows grow to `SHELF_TALL` (112) with the counter's room, the icon, name
+and price up to a quarter larger and the whole `about` text.
+Planets 2 and 3's ground (#574, Reports/planet-ground-2026-11-20/): mud
+plates, salt pan, scrub with shadows; fen reeds and moss; Form::fall plant
+shadows (a helper thread under this lane; page
+https://claude.ai/artifact/Vk2jnBLdLoVFrCGmYHEAZu).
+
 **Open branch:** `claude/project-thread-wypzro`, reused per PR.
 
 **The Sprawler's look (#510):**

@@ -45,6 +45,8 @@ const PAGER: f32 = 36.0;
 /// A shelf row on the counter (Look D, 2026-11-20): its height, and the
 /// least width of a column of them.
 const SHELF_H: f32 = 74.0;
+/// The tallest a shelf row grows when the counter has room (`shelf`).
+const SHELF_TALL: f32 = 112.0;
 const SHELF_W: f32 = 420.0;
 
 /// What a shop tab holds, so how its counter is laid out.
@@ -102,7 +104,12 @@ fn shelf(n: usize, area: Rect, g: f32, s: f32) -> Option<(usize, f32, f32)> {
         return None;
     }
     let w = (area.w - (cols - 1) as f32 * g) / cols as f32;
-    Some((cols, w, SHELF_H * s))
+    // Taller rows while the counter has the room (Look D, 11-20): five
+    // offers at 74 left three quarters of the counter empty. Up to
+    // `SHELF_TALL`, which shows the whole of what an offer does.
+    let used = n.div_ceil(cols) as f32;
+    let h = ((area.h - (used - 1.0) * g) / used).clamp(SHELF_H * s, SHELF_TALL * s);
+    Some((cols, w, h))
 }
 
 /// How `n` boxes at least `w` wide and `h` tall sit in `area`: the boxes a
@@ -867,7 +874,11 @@ impl StartMenu {
     /// page: the row adds what the tile left out; more offers than fit
     /// go back to tiles that page.
     #[allow(clippy::too_many_arguments)]
-    fn shelf_row(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+    fn shelf_row(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s0: f32) {
+        // A taller row (`shelf`) draws its icon, name and price up to a
+        // third larger, and its whole text where one sentence was cut.
+        let tall = r.h > SHELF_H * s0 * 1.1;
+        let s = s0 * (r.h / (SHELF_H * s0)).clamp(1.0, 1.25);
         let done = owned(row);
         self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
         let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
@@ -903,12 +914,14 @@ impl StartMenu {
                 c.icon(b, (tx + nw + 8.0 * s, r.y + 12.0 * s), bs, with_alpha(TEXT, 0.8 * dim.max(0.6)));
             }
         }
-        // The text: the first sentence of `about`, two lines at most.
-        let about = row.about.split_inclusive(". ").next().unwrap_or("").trim();
+        // The text: the first sentence of `about`, two lines at most; in a
+        // tall row all of it, as many lines as fit over the pips.
+        let about = if tall { row.about.trim() } else { row.about.split_inclusive(". ").next().unwrap_or("").trim() };
         if !about.is_empty() {
             let lines = c.wrap(Weight::Medium, 13.0 * s, room, about);
-            for (k, l) in lines.iter().take(2).enumerate() {
-                let cut = k == 1 && lines.len() > 2;
+            let fit = if tall { (((r.h - 44.0 * s - 10.0 * s0) / (17.0 * s)).floor() as usize + 1).max(2) } else { 2 };
+            for (k, l) in lines.iter().take(fit).enumerate() {
+                let cut = k + 1 == fit && lines.len() > fit;
                 let text = if cut { format!("{}…", l.trim_end_matches(['.', ',', ' '])) } else { l.clone() };
                 c.text_fit(Weight::Medium, 13.0 * s, (tx, r.y + 44.0 * s + k as f32 * 17.0 * s), Align::Left, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
             }
