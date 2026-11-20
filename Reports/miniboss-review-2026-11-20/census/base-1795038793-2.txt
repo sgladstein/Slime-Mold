@@ -1,0 +1,53 @@
+STRAT t 0 build mould 13109 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 13178 soldiers 4 hp 1.00 bank 68 killed 23 turret 0 pumps 3 buildings 3
+STRAT t 20 out mould 13263 soldiers 4 hp 0.95 bank 209 killed 171 turret 0 pumps 3 buildings 3
+STRAT t 30 out mould 13599 soldiers 4 hp 0.85 bank 467 killed 445 turret 0 pumps 3 buildings 3
+STRAT t 40 out mould 14182 soldiers 4 hp 0.79 bank 152 killed 640 turret 0 pumps 3 buildings 3
+STRAT t 50 out mould 14880 soldiers 4 hp 0.61 bank 376 killed 987 turret 0 pumps 3 buildings 3
+STRAT t 60 out mould 14867 soldiers 4 hp 0.29 bank 304 killed 1887 turret 0 pumps 3 buildings 3
+STRAT t 70 back mould 15094 soldiers 4 hp 0.12 bank 523 killed 2713 turret 0 pumps 3 buildings 3
+STRAT t 80 back mould 15465 soldiers 3 hp 0.33 bank 333 killed 3350 turret 0 pumps 3 buildings 3
+STRAT t 90 home mould 15637 soldiers 2 hp 0.55 bank 94 killed 4117 turret 0 pumps 2 buildings 2
+  boss t 93.0 s: Crowd leech formed on lump 0 at 327,121 (crowd top 1.00); grade 0.59: 11 blows a member, touches as 4, pace x1.24
+  boss t 93 s: lump 0 leech Gather, 0 members (first 0, 0 hurt), at 327,121, spread 1.06, stolen 0.0; nearest soldier 149.5, 2 alive
+  raid 1 at t 94.0 s: Building(1) at 122,221, reach 66 cells holding 1219 walkers, share 0.60, size 5% of the slime
+  boss t 94 s: lump 0 leech Gather, 470 members (first 470, 0 hurt), at 328,120, spread 1.01, stolen 0.0; nearest soldier 150.3, 2 alive
+  march t 94 s: lump 3, 0 members (first 0), at 171,182, spread 4.48, 31 cells to go
+  boss t 95 s: lump 0 leech Gather, 470 members (first 470, 0 hurt), at 326,118, spread 1.05, stolen 0.0; nearest soldier 159.6, 2 alive
+  boss t 96 s: lump 0 leech Gather, 470 members (first 470, 0 hurt), at 326,116, spread 1.10, stolen 0.0; nearest soldier 154.9, 2 alive
+  boss t 97 s: lump 0 leech Gather, 470 members (first 470, 0 hurt), at 326,116, spread 1.16, stolen 0.0; nearest soldier 160.8, 2 alive
+  boss t 98 s: lump 0 leech Gather, 470 members (first 470, 0 hurt), at 324,116, spread 1.25, stolen 0.0; nearest soldier 162.8, 2 alive
+  boss t 99 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 324,116, spread 1.14, stolen 0.0; nearest soldier 162.4, 2 alive
+  boss t 100 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 314,122, spread 1.33, stolen 0.0; nearest soldier 151.8, 2 alive
+STRAT t 100 back mould 15843 soldiers 2 hp 0.31 bank 242 killed 4971 turret 0 pumps 1 buildings 1
+  boss t 101 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,130, spread 1.31, stolen 0.0; nearest soldier 154.0, 2 alive
+  boss t 102 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,134, spread 1.24, stolen 0.0; nearest soldier 145.5, 2 alive
+  boss t 103 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,134, spread 1.21, stolen 0.0; nearest soldier 152.8, 2 alive
+  boss t 104 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.22, stolen 0.0; nearest soldier 154.4, 2 alive
+  boss t 105 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.23, stolen 0.0; nearest soldier 146.2, 2 alive
+  boss t 106 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.17, stolen 0.0; nearest soldier 144.9, 2 alive
+  boss t 107 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.16, stolen 0.0; nearest soldier 144.8, 2 alive
+  boss t 108 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.17, stolen 0.0; nearest soldier 144.9, 2 alive
+  boss t 109 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.20, stolen 0.0; nearest soldier 144.9, 2 alive
+  boss t 110 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.21, stolen 0.0; nearest soldier 144.9, 2 alive
+STRAT t 110 home mould 16106 soldiers 2 hp 0.24 bank 352 killed 5918 turret 0 pumps 1 buildings 1
+  boss t 111 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.25, stolen 0.0; nearest soldier 144.9, 2 alive
+  boss t 112 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.25, stolen 0.0; nearest soldier 144.9, 2 alive
+  boss t 113 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.20, stolen 0.0; nearest soldier 153.6, 2 alive
+  boss t 114 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.20, stolen 0.0; nearest soldier 144.8, 2 alive
+  boss t 115 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.21, stolen 0.0; nearest soldier 148.0, 1 alive
+  boss t 116 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.18, stolen 0.0; nearest soldier 145.3, 2 alive
+  boss t 117 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.19, stolen 0.0; nearest soldier 145.6, 2 alive
+  boss t 118 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.16, stolen 0.0; nearest soldier 146.2, 2 alive
+  boss t 119 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.18, stolen 0.0; nearest soldier 146.1, 2 alive
+  boss t 120 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.20, stolen 0.0; nearest soldier 146.6, 2 alive
+STRAT t 120 home mould 16667 soldiers 2 hp 0.64 bank 63 killed 6606 turret 0 pumps 1 buildings 1
+  boss t 121 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.13, stolen 0.0; nearest soldier 146.0, 2 alive
+  boss t 122 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.17, stolen 0.0; nearest soldier 145.8, 2 alive
+  boss t 123 s: lump 0 leech Go((122.5, 221.0)), 470 members (first 470, 0 hurt), at 310,136, spread 1.13, stolen 0.0; nearest soldier 150.8, 1 alive
+  boss t 124 s: lump 0 leech Hunt(Some(6)), 470 members (first 470, 0 hurt), at 310,136, spread 1.15, stolen 0.0; nearest soldier 148.7, 1 alive
+  boss t 125 s: lump 0 leech Hunt(Some(6)), 470 members (first 470, 0 hurt), at 312,134, spread 1.74, stolen 0.0; nearest soldier 155.3, 1 alive
+  boss t 126 s: lump 0 leech Hunt(Some(6)), 470 members (first 470, 0 hurt), at 310,132, spread 1.45, stolen 0.0; nearest soldier 146.7, 1 alive
+  boss t 127 s: lump 0 leech Hunt(Some(6)), 470 members (first 470, 0 hurt), at 308,132, spread 1.39, stolen 0.0; nearest soldier 161.1, 1 alive
+  boss t 128 s: lump 0 leech Hunt(Some(6)), 470 members (first 470, 0 hurt), at 308,132, spread 1.42, stolen 0.0; nearest soldier 149.1, 1 alive
+  boss t 129 s: lump 0 leech Hunt(Some(6)), 470 members (first 470, 0 hurt), at 308,132, spread 1.37, stolen 0.0; nearest soldier 146.1, 1 alive

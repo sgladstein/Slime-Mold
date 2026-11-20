@@ -67,19 +67,40 @@ code { font-family: var(--mono); font-size: 13px; }
 
 <main>
   <header style="display:flex;flex-direction:column;gap:12px">
-    <div class="eyebrow">Gun lab · 2026-11-19 · about 9,700 games on the GTX 1070 and GitHub</div>
+    <div class="eyebrow">Gun lab · 2026-11-19, re-run 2026-11-20 · about 11,200 games on the GTX 1070 and GitHub</div>
     <h1>Gun Build Findings</h1>
     <p class="lede">Which card decks remove the most slime, and do the best ones follow the rule that strong builds come from combinations, often with rarer cards?</p>
   </header>
 
   <div class="verdict">
-    <p><strong>No. One common shell decides the ranking.</strong> Needle Blast (cost 4, from planet 1) is the base of every top deck in both tests. On its own it already removes +16k slime on planet 3 against a rifle with no cards. In the defend test it is within 2% of the best combo on planet 4.</p>
-    <p><strong>Since changed:</strong> these games ran before you picked "One burst per bullet" (PR #532). A needle carrying a payload now bursts at its first slime hit and flies on plain. Before, it burst at every hit, which is likely much of Needle Blast's lead. The ranking should be re-run on the new rule.</p>
-    <p><strong>Combos do add, but only to Needle Blast.</strong> Seek + Wide + Needle Blast adds 6k to 12k over Needle Blast alone on planets 3 and 4. No top deck needs a rare card. Germ is the only rare card that earns its slot, mainly when holding a crystal.</p>
+    <p><strong>After "One burst per bullet" (#532, re-run 2026-11-20): Needle Blast is no longer a deck on its own, but it is still the base.</strong> Alone it now removes +10.6k slime on planet 3 against an empty rifle, down from +16.2k. Every top deck is still built on it, and none needs a rare card.</p>
+    <p><strong>Combos now carry more of the strength, and Wide is the card that matters.</strong> Wide + Pierce + Needle Blast (cost 8, all common, planet 1) is the best moving deck at +12.2k / +16.8k / +21.3k on planets 1 / 3 / 4, adding 2k to 9k over Needle Blast alone. Seek + Wide + Needle Blast fell from +21.8k to +7.7k on planet 3. Holding a crystal, Needle Blast alone is still within 5% of the best combo on planet 4.</p>
+    <p><strong>In full planet 3 games</strong> (the strategy bots, 9 maps): no cards win 5 of 9, Needle Blast 8 of 9, Wide + Rate + Needle Blast 8 of 9 (better on all 9 maps), Seek + Wide + Needle Blast 7 of 9 (was 9 of 9).</p>
+    <p class="muted">The re-run build also had "shots stop at set slime" (5be6b0b), so not all of the change is #532. The sections below the re-rank are the first runs, before #532.</p>
   </div>
 
   <section>
-    <div class="eyebrow">Look first</div>
+    <div class="eyebrow">Re-rank · after #532 · 1,548 games · seeds 1 to 6</div>
+    <h2>The strongest decks now</h2>
+    <p>Moving arena: median slime removed against the empty deck, with the gain over Needle Blast alone. All six seeds were better in every cell.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Deck</th><th>Cost</th><th>From</th><th>Planet 1</th><th>Planet 3</th><th>Planet 4</th></tr></thead>
+      <tbody>
+        <tr><td class="deck">wide + pierce + needle blast<span class="chip common">common</span></td><td>8</td><td>1</td><td>+12.2k</td><td>+16.8k</td><td>+21.3k</td></tr>
+        <tr><td class="deck">wide + rate + pierce + needle blast<span class="chip common">common</span></td><td>10</td><td>1</td><td>+12.2k</td><td>+17.7k</td><td>+19.4k</td></tr>
+        <tr><td class="deck">wide + needle blast<span class="chip common">common</span></td><td>6</td><td>1</td><td>+12.2k</td><td>+16.4k</td><td>+19.9k</td></tr>
+        <tr><td class="deck">wide + rate + needle blast<span class="chip common">common</span></td><td>8</td><td>1</td><td>+12.2k</td><td>+17.7k</td><td>+17.8k</td></tr>
+        <tr><td class="deck">seek + wide + rate + needle blast<span class="chip uncommon">uncommon</span></td><td>10</td><td>2</td><td>+10.3k</td><td>+13.8k</td><td>+23.6k</td></tr>
+        <tr><td class="deck">seek + wide + needle blast<span class="chip uncommon">uncommon</span></td><td>8</td><td>2</td><td>+12.2k</td><td>+7.7k</td><td>+18.9k</td></tr>
+        <tr><td class="deck">germ needle alone<span class="chip rare">rare</span></td><td>5</td><td>4</td><td>+15.2k</td><td>+8.9k</td><td>+8.6k</td></tr>
+        <tr><td class="deck">needle blast alone<span class="chip common">common</span></td><td>4</td><td>1</td><td>+9.8k</td><td>+10.6k</td><td>+12.0k</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">Full tables: <code>rerank-table.md</code>. Planet 1 still nearly clears with any Wide deck, so it does not separate them.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Look first · before #532</div>
     <h2>Needle Blast against an empty rifle</h2>
     <p>The same planet 3 game (run seed 1, the squad bot) from 20 to 50 s, played once with Needle Blast and once with no cards. Near view at zoom 6, 0.25 s a frame.</p>
     <div class="clips">
@@ -95,7 +116,7 @@ code { font-family: var(--mono); font-size: 13px; }
   </section>
 
   <section>
-    <div class="eyebrow">Test 1 · moving arena · 3 and 4 card guns</div>
+    <div class="eyebrow">Before #532 · moving arena · 3 and 4 card guns</div>
     <h2>The strongest decks</h2>
     <p>Nine soldiers on a run planet, no economy, the game's own aim, firing for 90 s and walking toward the slime. Each cell is the median slime removed against the empty deck on fresh seeds 7 to 12. All six seeds were better in every cell. A planet 1 score of +15.9k is a full clear, so planet 1 cannot separate the top decks.</p>
     <div class="tbl"><table>
@@ -114,7 +135,7 @@ code { font-family: var(--mono); font-size: 13px; }
   </section>
 
   <section>
-    <div class="eyebrow">Test 2 · defend · 1,560 games</div>
+    <div class="eyebrow">Before #532 · defend · 1,560 games</div>
     <h2>Holding a crystal</h2>
     <p>The same nine soldiers stand on the slimiest crystal with the game's own Guard order and Defend stance for 90 s. Cells show slime removed against the empty deck, with the soldiers alive at 90 s. With no cards the squad keeps 2 of 9 on planet 1 and 0 of 9 on planet 4.</p>
     <div class="tbl"><table>
@@ -139,7 +160,7 @@ code { font-family: var(--mono); font-size: 13px; }
   </section>
 
   <section>
-    <div class="eyebrow">Test 1 · one card each · seeds 1 to 6</div>
+    <div class="eyebrow">Before #532 · one card each · seeds 1 to 6</div>
     <h2>Every single card</h2>
     <p>Median slime removed against the empty deck. Cards that need a payload were tested with plain Blast, and payload shells with each set. Several cards score exactly the same as Blast alone (Trigger, Thrift, Multicast, Expire), because a deck of one payload gives them nothing to act on.</p>
     <div class="tabs" role="group" aria-label="Planet">

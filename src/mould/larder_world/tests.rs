@@ -3427,6 +3427,85 @@ fn a_raid_marches_as_one_body() {
     assert!(g.world.lumps()[l].is_none(), "its lump is free");
 }
 
+/// **A march leaves a mini-boss its members** (2026-11-20): a march buds
+/// off by growing its lump, so only walkers in no lump join. It formed its
+/// lump until then and took every walker in its disc: on the owner's own
+/// planet 3 (run 1795119328) a hunter of 437 fell to 15 the second a
+/// march budded off beside it. Here a mini-boss holds most of the race
+/// world's slime when the raid sets off.
+#[test]
+fn a_march_leaves_a_mini_boss_its_members() {
+    let mut g = small(1);
+    g.rules.raid = RaidRules { first: 3.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 1.0e4, every_sd: 0.0, late: 1.0, size_sd: 0.0, ..RaidRules::default() };
+    g.rules.boss = BossRules { least: 1, gather: 1.0e3, life: 1.0e3, quorum: 0.0, kind: BossKind::Hunter as u8 as f32, ..BossRules::default() };
+    g.bank = 1.0e6;
+    let cs = g.world.crystals();
+    let home = g.core;
+    let far = (0..cs.len()).max_by(|&a, &b| (cs[a].0 .0 - home.0).hypot(cs[a].0 .1 - home.1).total_cmp(&(cs[b].0 .0 - home.0).hypot(cs[b].0 .1 - home.1))).unwrap();
+    assert!(g.build(Kind::Pump, cs[far].0), "a pump on the farthest crystal");
+    g.step();
+    let w = &g.world;
+    let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+    let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+    assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 12.0, BossCause::Staged));
+    let l = g.bosses.live[0].lump;
+    let held = |g: &Game<BigDish>| (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(l)).count();
+    g.step();
+    let before = held(&g);
+    while g.raids.marching.is_empty() && g.time() < 10.0 {
+        g.step();
+    }
+    assert!(!g.raids.marching.is_empty(), "a raid marched");
+    g.step();
+    let (after, march) = (held(&g), g.raids.marching.first().map_or(0, |m| m.members));
+    eprintln!("the mini-boss held {before} walkers before the march and {after} after; the march {march}");
+    assert!(before > 100 && after * 10 >= before * 9, "the march took the mini-boss's walkers: {before} -> {after}");
+}
+
+/// **A mini-boss walks round rock** (`Game::boss_steer`, 2026-11-20): on
+/// the bar map a hunter staged in the slime east of the bar, whose
+/// straight line to the squad runs into the bar, gets round its end to the
+/// squad's side (west of the bar) down its way. Its pull was straight at
+/// its aim until then, and on the owner's own maps 11 of 20 mini-bosses
+/// stood 10 s or more against rock or a fort's ring.
+#[test]
+fn a_mini_boss_walks_round_rock() {
+    let mut g = bar_game(1024, 640, true, false);
+    for _ in 0..4 {
+        g.apply(Cmd::Buy);
+    }
+    g.rules.boss = BossRules { least: 1, gather: 1.0, life: 1.0e3, quorum: 0.0, armour_lo: 15.0, armour_hi: 15.0, kind: BossKind::Hunter as u8 as f32, ..BossRules::default() };
+    let tps = g.rules.tps as usize;
+    g.step();
+    // The slime's middle (fine 480, 300; the bar is fine x 200 to 224, y
+    // 60 to 260, the squad at about 150, 160).
+    assert!(g.form_boss((480.0, 300.0), 12.0, BossCause::Staged));
+    let mut west = None;
+    for s in 0..240 {
+        for _ in 0..tps {
+            g.step();
+        }
+        let Some(b) = g.bosses.live.first() else { break };
+        if s % 20 == 0 {
+            let xs: Vec<(f32, f32)> = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(b.lump)).map(|k| (g.world.walkers[k].0, g.world.walkers[k].1)).collect();
+            let (w, e) = (xs.iter().filter(|p| p.0 < 200.0).count(), xs.iter().filter(|p| p.0 >= 224.0).count());
+            let ymax = xs.iter().map(|p| p.1).fold(0.0, f32::max);
+            eprintln!("{s} s: {:?} {} members at {:.0},{:.0}; {w} west of the bar, {e} east, lowest y {ymax:.0}", b.phase, b.members, b.centre.0, b.centre.1);
+        }
+        // Most of its members past the bar: one aim pulls every member
+        // straight, so those still behind the rock press on it (a third
+        // of them on this map) while the rest go round.
+        let behind = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(b.lump)).map(|k| g.world.walkers[k].0);
+        let (past, all) = behind.fold((0, 0), |(p, a), x| (p + usize::from(x < 200.0), a + 1));
+        if 2 * past > all {
+            west = Some(s);
+            break;
+        }
+    }
+    eprintln!("most of it west of the bar at {west:?} s");
+    assert!(west.is_some_and(|s| s <= 120), "it got round the bar: {:?}", g.bosses.live.first().or(g.bosses.ended.last().map(|e| &e.0)));
+}
+
 /// A march that gets no nearer its target (`RaidRules::march_stall`,
 /// 2026-11-18: one formed inside planet 1's rock ring stood there) lets go
 /// and streams to the target with the raid's own reach and share, so a raid
@@ -3585,7 +3664,7 @@ fn squads_shoot_a_mini_boss_first() {
     // Its body's edge within the defend reach: the mini-boss first, slime
     // on the soldier or not.
     let close = at(r + 0.5 * g.rules.defend * sc);
-    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0 };
+    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
     g.bosses.live.push(boss);
     for touching in [0, 2] {
         set(&mut g, touching);
@@ -3827,7 +3906,9 @@ fn planet_eight_bosses_leave_the_first_minute_playable() {
 #[test]
 fn a_mini_boss_forms_at_a_crowd_and_hunts() {
     let mut g = small(2);
-    g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, ..BossRules::default() };
+    // A hunter (`kind` 1): drawn, its kind fell to the seed's draw, and
+    // since 11-20 the kind is drawn before the grade.
+    g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, kind: 1.0, ..BossRules::default() };
     let tps = g.rules.tps as usize;
     let mut formed = None;
     for _ in 0..10 * tps {

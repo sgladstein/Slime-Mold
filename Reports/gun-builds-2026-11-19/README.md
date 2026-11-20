@@ -6,7 +6,7 @@ Page: [Gun Build Findings](https://claude.ai/artifact/5DfhD7vyJPpb1m2LQ1DF6A) (s
 
 ## Findings
 
-**Since changed (2026-11-20):** the owner picked "One burst per bullet" (PR #532): a Needle bullet carrying a payload bursts at its first slime hit and flies on plain. These games ran before it, when a needle's payload burst at all three of its pierced hits, which is the likely cause of Needle Blast's lead. Re-run the ranking on the new rule before citing it.
+**Re-rank after One burst per bullet (#532), 2026-11-20** ([table](rerank-table.md), 1,548 games, seeds 1-6, build d045b77 which also has 5be6b0b): Needle Blast alone fell to +9.8k / +10.6k / +12.0k on planets 1 / 3 / 4 (planet 3 was +16.2k). Best moving deck wide+pierce+blast.needle (cost 8, all common) +12.2k / +16.8k / +21.3k; seek+wide+blast.needle fell to +7.7k on planet 3. Every top deck is still Needle Blast based and needs no rare card; Wide is now the combo card that matters. Defend: Needle Blast alone within 5% of the best on planet 4. Full planet 3 games (strategy bots): none 5/9, Needle Blast 8/9, wide+rate+blast.needle 8/9, seek+wide+blast.needle 7/9 (was 9/9). The findings below are the first runs, before #532.
 
 - **Needle Blast (common, cost 4, planet 1) decides the ranking.** Alone it removes +11k / +16k / +13k slime on planets 1 / 3 / 4 against the empty deck (arena, 9 soldiers, 90 s, seeds 1-6, 6/6 seeds each).
 - **Top 3 and 4 card guns** (seeds 7-12, `triples-table.md`): seek+wide+blast.needle +13.1k / +21.8k / +18.6k; seek+wide+rate+blast.needle +8.8k / +19.5k / +23.8k; wide+rate+blast.needle (all common) +15.9k / +14.6k / +15.8k. None needs a rare card; every one is built on Needle Blast.

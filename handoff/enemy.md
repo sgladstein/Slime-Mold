@@ -3,6 +3,51 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
+## Mini-boss review (2026-11-20, the thread "Analyse and improve the minibosses")
+
+Not this lane's thread, but the lane's file (`bosses.rs`), so recorded
+here. The owner (11-20 05:41Z): "analyze the minibosses, including looking
+at my playtests and improve them". His 13 logged rounds had no boss lines,
+so the review ran the strategy bot on his own maps (run seeds 1795038793,
+1795106014, 1795119328, planets 2-4) to 300 s, per-kind table in the
+[report](../Reports/miniboss-review-2026-11-20/README.md). Before, on 17
+bosses: 2 reached the squad (both hunters), no leech or sapper got to its
+errand, 3 were swallowed by a raid's march, 11 of 20 (to 420 s) stood 10 s
+or more pressed on rock. Built, on by default, no engine change:
+
+- A march grows its lump (`World::grow_lump`) instead of forming it, so it
+  never takes a mini-boss's members (`start_march`, `raids.rs`).
+- Bosses walk round rock: `Game::boss_steer` goes straight while the line
+  is clear, else builds a `Way` off-frame (`Way::start_units` to every
+  soldier for a hunter, rebuilt each second; `Way::start` to the goal
+  otherwise) on the slime's ground with deep water closed, and aims at the
+  farthest point down the way it can see (string-pulled). A body stuck 6 s
+  with no soldier near regathers on its leading part, holding no more
+  walkers than its own area (`reach_holding`), `Bosses::regrouped`;
+  on a straight walk too (`Game::boss_stall`): a tail wedged in packed
+  slime held a planet 3 leech 54 s on open ground with a clear line.
+- They form nearer the player: a crowded knot weighs 1/(1+(d/`near`)^2),
+  `BossRules::near` 40 dish cells, and none forms inside a soldier's guns.
+- A leech's or sapper's walk runs on its own clock (`BossRules::trip`
+  90 s), `life` counts only the time after.
+- A wanderer hops toward the player (the nearest fresh crystal nearer the
+  player's things than it is).
+- The play log writes `raid` and `boss` lines (formed, every 5 s, ended).
+
+After, merged with main, same nine games: 7 of 18 reached the squad,
+39 s stood still against 258, none swallowed; no errand reached in 5:00
+(pumps 150-250 units off; the trip or a nearer pick is tuning, unreviewed).
+
+Follow-up (Direction's call): the kind is drawn before the knot, and a
+crowd's leech or sapper forms at the crowded knot nearest its errand
+(`crowded_knot(Some(&boss))`). Drawing them only with a target within
+100 or 180 units drew none at all on these maps (dropped).
+
+Known limit: a lump has one aim, so on a rock bar a third of a body stays
+pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
+Proposals in the report and the owner's doc: the Mortar first from planet
+4 after Milestone 1, the Pinwheel second; a bounty; an off-screen tell.
+
 ## Fruiting (2026-11-20, the thread "Make the slime a more interesting enemy")
 
 Not this lane's thread, but the slime's rules, so recorded here. The owner
