@@ -2580,9 +2580,13 @@ fn isqrt(r2: u32) -> i32 {
 }
 
 // Whether a shot stops at cell i: slime, or a walker in a crater (which
-// holds no trail; `squad::shots`).
+// holds no trail; `squad::shots`), or a set walker (`set_scar`), which
+// lays none either. Without the last, set slime whose trail had faded let
+// every bullet through: the owner's planet 3 round of 2026-11-19 ended on
+// 41 set walkers that 3,200 shots in 85 s never hit (`setc_at`'s count
+// is last tick's, as `stops` reads the trail).
 fn stops(i: u32) -> bool {
-    return enemy_trail(i) >= P.slime || ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u);
+    return enemy_trail(i) >= P.slime || ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u) || (P.set_scar > 0.0 && atomicLoad(&news[setc_at() + i]) > 0u);
 }
 
 // What a seeking shot's catch strikes (`squad::trace`): a cell that stops
