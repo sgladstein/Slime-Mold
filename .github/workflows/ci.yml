@@ -113,6 +113,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    # A hung test fails the part instead of running to GitHub's six hours:
+    # on 2026-11-20 the window part of the merge queue's candidate (#564)
+    # hung at 16:28Z, and as the queue runs one candidate at a time every
+    # PR queued after it waited behind it. A part takes 8 to 13 minutes
+    # with its build; 40 leaves room for a cold cache.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -160,6 +166,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    # As the tests' limit: about 2 minutes, 30 for a cold cache.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
