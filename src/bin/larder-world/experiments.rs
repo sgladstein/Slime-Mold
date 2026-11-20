@@ -136,10 +136,13 @@ pub(super) fn apply(a: &mut Args, base: &Args, menu: &StartMenu) {
 
 /// The window keys a switch may set (`the_switches_window_keys_are_read`
 /// holds the list to these), as the command line's own keys of the same
-/// names: `shake` and `hitstop`, the camera's shake and the freeze on a
-/// hit (off at 0, the Squad lane's toggle). (`setlook`, the set slime's
-/// look, was one to 2026-11-18: amber is what the game draws.)
-pub(super) const WINDOW_KEYS: [&str; 2] = ["shake", "hitstop"];
+/// names. None today: `setlook`, the set slime's look, was one to
+/// 2026-11-18 (amber is what the game draws), and `shake` and `hitstop`,
+/// the camera's shake and the freeze on a hit, to 2026-11-20, when they
+/// went on in the game (the owner's card: "Turn them on"); they are
+/// films' tools now (`shake=0 hitstop=0`), and `set_window_key` still
+/// reads them for a row that wants them back.
+pub(super) const WINDOW_KEYS: [&str; 0] = [];
 
 /// Window key `name` back to its value in `plain` (the window's own
 /// default, `Args::default()`).
@@ -189,7 +192,7 @@ mod tests {
     /// switches: what sets a round up (map, seed, run, mode, gun), the
     /// films' and the bench's tools (look, at, hand, boom, turret, bench),
     /// and numbers a film forces for a picture (crater, wade, spray, aim).
-    const TOOLS: &str = "map seed scale walkers mission run range dev grow mode crater scent follow boss_look core_pull bullet own mass shape wade real sink spray aim gun ammo look ui menu hand rounds sound voice at bench fps stamps grid fast passes viewpasses settle squad1 spread holes select drag scroll card hover bank set centre cut turret turret2 mortar lure pump outpost siren wall boss load try crustlook watch tload boom light lure_mark trail cross fencepick necks cutsquad screen";
+    const TOOLS: &str = "map seed scale walkers mission run range dev grow mode crater scent follow boss_look core_pull bullet own mass shape wade real sink spray aim gun ammo look ui menu hand rounds sound voice at bench fps stamps grid fast passes viewpasses settle squad1 spread holes select drag scroll card hover bank set centre cut turret turret2 mortar lure pump outpost siren wall boss load try crustlook watch tload boom light lure_mark trail cross fencepick necks cutsquad screen shake hitstop";
 
     /// **No switch hides as a window key** (the plan's rule 3: "A switch
     /// that exists only as a command-line key is not allowed"). The
@@ -248,30 +251,27 @@ mod tests {
         }
         let plain = round_args(&bare, false, &menu, &StartEvent::Sandbox);
         assert_eq!(switches::log_word(&plain.keys), "none");
-        // The rows this plays are the two left since the Enemy lane
-        // settled the 11-17 list (the far smell, the trap and the crust,
-        // which this test turned until then, are no longer rows) and the
-        // free recruits left it (11-18).
+        // The row this plays is the one left since the Enemy lane settled
+        // the 11-17 list (the far smell, the trap and the crust, which this
+        // test turned until then, are no longer rows), the free recruits
+        // left it (11-18) and shake and hit-stop went on (11-20).
         turn(&mut menu, "crystal_regrow", "on");
-        turn(&mut menu, "feel", "on");
         let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
-        assert_eq!(switches::log_word(&a.keys), "feel:on,crystal_regrow:on");
-        assert!(a.keys.contains(&("crystal_regrow".into(), "0.001".into())) && a.keys.contains(&("win:hitstop".into(), "1".into())));
-        let run = run_args(&bare, &menu, &Run::new(1));
-        assert_eq!(switches::log_word(&run.keys), "feel:on,crystal_regrow:on", "a run's planets play the picks");
-        // The command line's `try=feel try=crystal_regrow` presets the
-        // rows; turning one off in the menu takes its keys off the round.
-        let mut cli = bare.clone();
-        for t in ["feel", "crystal_regrow"] {
-            cli.keys.extend(switches::keys_of(switches::parse_try(t).unwrap().1));
-        }
-        let mut menu = start_menu(&cli);
-        assert_eq!(menu.option("exp:feel").map(|o| o.value()), Some("on"));
-        assert_eq!(switches::log_word(&round_args(&cli, false, &menu, &StartEvent::Sandbox).keys), "feel:on,crystal_regrow:on");
-        turn(&mut menu, "feel", "off");
-        let a = round_args(&cli, false, &menu, &StartEvent::Sandbox);
         assert_eq!(switches::log_word(&a.keys), "crystal_regrow:on");
-        assert!(!a.keys.iter().any(|(k, _)| k == "win:shake" || k == "win:hitstop"));
+        assert!(a.keys.contains(&("crystal_regrow".into(), "0.001".into())));
+        let run = run_args(&bare, &menu, &Run::new(1));
+        assert_eq!(switches::log_word(&run.keys), "crystal_regrow:on", "a run's planets play the picks");
+        // The command line's `try=crystal_regrow` presets the row; turning
+        // it off in the menu takes its keys off the round.
+        let mut cli = bare.clone();
+        cli.keys.extend(switches::keys_of(switches::parse_try("crystal_regrow").unwrap().1));
+        let mut menu = start_menu(&cli);
+        assert_eq!(menu.option("exp:crystal_regrow").map(|o| o.value()), Some("on"));
+        assert_eq!(switches::log_word(&round_args(&cli, false, &menu, &StartEvent::Sandbox).keys), "crystal_regrow:on");
+        turn(&mut menu, "crystal_regrow", "off");
+        let a = round_args(&cli, false, &menu, &StartEvent::Sandbox);
+        assert_eq!(switches::log_word(&a.keys), "none");
+        assert!(!a.keys.iter().any(|(k, _)| k == "crystal_regrow"));
         // A film's own number shows as custom and is left alone.
         let mut film = bare.clone();
         film.keys.push(("crystal_regrow".into(), "0.01".into()));
@@ -280,11 +280,11 @@ mod tests {
         assert!(round_args(&film, false, &menu, &StartEvent::Sandbox).keys.contains(&("crystal_regrow".into(), "0.01".into())));
     }
 
-    /// **The pause menu's picks** (2026-11-19): shake and hit-stop at
-    /// once, on the round's keys and the window's own numbers, and back
-    /// off again; crystals refill waits for the next round, shown as
-    /// waiting, then is on its keys after `start`; either way the start
-    /// menu kept under play takes the pick.
+    /// **The pause menu's picks** (2026-11-19): crystals refill waits for
+    /// the next round, shown as waiting, then is on its keys after
+    /// `start`; the start menu kept under play takes the pick. (Shake and
+    /// hit-stop were the live pick, applied at once, until they went on in
+    /// the game on 11-20; the live path, `live`, has no row today.)
     #[test]
     fn the_pause_menu_picks_apply_live_or_at_restart() {
         let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() };
@@ -292,16 +292,9 @@ mod tests {
         app.parked = Some(start_menu(&base));
         let row = |k: &str| SWITCHES.iter().position(|s| s.key == k).unwrap();
         let on = |app: &App, k: &str| rows(&app.args.keys, &app.exp_next)[row(k)].choices.iter().position(|c| c == "on").unwrap();
-        let (feel, regrow) = (row("feel"), row("crystal_regrow"));
+        let regrow = row("crystal_regrow");
         assert!(rows(&app.args.keys, &app.exp_next).iter().all(|e| e.at == e.default && e.next.is_none()));
-        assert!(live(&SWITCHES[feel]) && !live(&SWITCHES[regrow]));
-        app.pick_experiment(feel, on(&app, "feel")).unwrap();
-        assert_eq!(switches::log_word(&app.args.keys), "feel:on");
-        assert!(app.args.shake > 0.0 && app.args.hitstop > 0.0, "shake and hit-stop at once");
-        assert_eq!(app.parked.as_ref().and_then(|m| m.option("exp:feel")).map(|o| o.value()), Some("on"));
-        app.pick_experiment(feel, 0).unwrap();
-        assert_eq!(switches::log_word(&app.args.keys), "none");
-        assert!(app.args.shake == 0.0 && app.args.hitstop == 0.0, "and off at once");
+        assert!(!live(&SWITCHES[regrow]));
         app.pick_experiment(regrow, on(&app, "crystal_regrow")).unwrap();
         assert_eq!(switches::log_word(&app.args.keys), "none", "crystals refill waits for a restart");
         let e = &rows(&app.args.keys, &app.exp_next)[regrow];
@@ -323,13 +316,13 @@ mod tests {
     #[test]
     fn the_logs_header_names_the_build_and_the_switches() {
         let mut keys = vec![("panic".to_string(), "1".to_string())];
-        keys.extend(switches::keys_of(switches::parse_try("feel:on").unwrap().1));
+        keys.extend(switches::keys_of(switches::parse_try("crystal_regrow:on").unwrap().1));
         let extra = log_keys(&keys);
         let head = slime_mould::mould::playlog::Playlog::head("planet:1:7", 7, &[("build", slime_mould::build::build().word())].into_iter().chain(extra).collect::<Vec<_>>());
         let r = slime_mould::mould::playlog::read(&head);
         let get = |k: &str| r.head.iter().find(|(n, _)| n == k).map(|(_, v)| v.as_str());
         assert_eq!(get("build").and_then(slime_mould::build::parse).map(|b| b.1), Some(slime_mould::build::build().commit.to_string()));
-        assert_eq!(get("switches"), Some("feel:on"));
-        assert_eq!(get("keys"), Some("panic=1,win:shake=1,win:hitstop=1"));
+        assert_eq!(get("switches"), Some("crystal_regrow:on"));
+        assert_eq!(get("keys"), Some("panic=1,crystal_regrow=0.001"));
     }
 }

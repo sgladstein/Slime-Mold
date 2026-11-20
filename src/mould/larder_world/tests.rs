@@ -220,9 +220,13 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
 fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
     // In a real fight: pieces and pierced legs land hits of their own,
     // the buffer is never overrun, and the same seed plays the same.
-    let run = |mods: BulletMods| {
+    // The mods come from the army's round, which the game arms after
+    // every step (`Game::rounds`, 11-20), so the cards are set, not the mods.
+    use crate::mould::rounds::{flight, Card};
+    let run = |cards: &[Card]| {
         let mut g = small(3);
-        g.bullet_mods = mods;
+        g.rounds.round = cards.to_vec();
+        g.bullet_mods = flight(cards);
         for k in 0..g.soldiers.len() {
             g.apply(Cmd::Order(k, Order::Attack));
         }
@@ -237,10 +241,11 @@ fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
         }
         (g.shots, later, g.killed, g.mould)
     };
-    let both = BulletMods { pierce: 1, split: 2, ..BulletMods::default() };
-    let a = run(both);
-    assert_eq!(a, run(both), "the same seed played twice");
-    let plain = run(BulletMods::default());
+    let both = [Card::Pierce, Card::Split, Card::Split];
+    assert_eq!((flight(&both).pierce, flight(&both).split), (1, 2));
+    let a = run(&both);
+    assert_eq!(a, run(&both), "the same seed played twice");
+    let plain = run(&[]);
     assert!(a.1 > plain.1, "later hits: mods {a:?} plain {plain:?}");
 }
 
@@ -2225,6 +2230,8 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     assert!(g.engaged(0), "one Range card reaches 48 cells");
     // Fired legs: free fire with the card flies out to 48 cells.
     let mut g = small(3);
+    // The army's round, which the game arms after every step (11-20).
+    g.rounds.round = vec![crate::mould::rounds::Card::Range];
     g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
     for k in 0..g.soldiers.len() {
         g.apply(Cmd::Order(k, Order::Attack));
@@ -4521,4 +4528,108 @@ fn a_pinwheel_hunts_with_its_arms_turning() {
     assert!(spin.abs() > 0.0, "its arms turn: spin {spin}");
     assert_eq!(hunt(6.0, 0.0), (BossKind::Pinwheel, 0.0), "not while its prey is far");
     assert_eq!(hunt(1.0, 1.0e6), (BossKind::Hunter, 0.0));
+}
+
+/// Move, then Shift + a build: the window queues the build on the squad
+/// (`Cmd::SquadQueue`), which starts it once the squad gets there and
+/// raises it at the default raise time (owner 2026-11-20: "If I tell a
+/// squad to move here then shift (queue) build it doesn't work").
+#[test]
+fn a_squad_moved_then_shift_built_raises_the_build_once_there() {
+    let mut g = squads(17);
+    g.bank = 1e6;
+    g.rules.build.raise = BuildRules::default().raise;
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let sc = g.s();
+    let m = g.middle(0).unwrap();
+    let to = (0..32)
+        .map(|i| i as f32 / 32.0 * std::f32::consts::TAU)
+        .map(|a| room_near(&g, (m.0 + 20.0 * sc * a.cos(), m.1 + 20.0 * sc * a.sin())))
+        .find(|q| (q.0 - m.0).hypot(q.1 - m.1) > 15.0 * sc)
+        .expect("somewhere to send it");
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    g.step();
+    let at = room_near(&g, (to.0, to.1 + 9.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+    let b = g.buildings.len() - 1;
+    assert!(g.buildings[b].built < 1.0, "a ghost to raise");
+    assert!(g.apply(Cmd::SquadQueue(0, Order::Build(b))));
+    assert_eq!(g.squads[0].queued, 1, "queued behind the move, not started");
+    assert!(g.squads[0].dest.is_some(), "the move goes on");
+    let mut working = false;
+    for _ in 0..frames(&g, 90.0) {
+        g.step();
+        working |= g.squads[0].work == Some(Order::Build(b));
+        if g.buildings[b].up() {
+            break;
+        }
+    }
+    assert!(working, "the squad set to work on the build once there");
+    assert!(g.buildings[b].up(), "the queued build rose ({:.0}% built)", g.buildings[b].built * 100.0);
+    // Two in a row: the second waits for the first.
+    let at2 = room_near(&g, (to.0 + 9.0 * sc, to.1 - 6.0 * sc));
+    let at3 = room_near(&g, (to.0 - 9.0 * sc, to.1 - 6.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at2)));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at3)));
+    let (b1, b2) = (g.buildings.len() - 2, g.buildings.len() - 1);
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1 - 12.0 * sc)));
+    assert!(g.apply(Cmd::SquadQueue(0, Order::Build(b1))));
+    assert!(g.apply(Cmd::SquadQueue(0, Order::Build(b2))));
+    let mut first = None;
+    for t in 0..frames(&g, 180.0) {
+        g.step();
+        if first.is_none() && g.buildings[b1].up() {
+            first = Some(t);
+        }
+        if g.buildings[b2].up() {
+            assert!(first.is_some(), "the second queued build rose before the first");
+            break;
+        }
+    }
+    assert!(g.buildings[b1].up() && g.buildings[b2].up(), "both queued builds rose");
+}
+
+/// **Late against a big army** (2026-11-20, Direction's pick A): once the
+/// slime is late, a big squad draws the Mortar far more often, from planet
+/// 2 (none there before, nor against a small squad).
+#[test]
+fn late_against_a_big_army_the_mortar_comes_from_planet_2() {
+    let draws = |late: bool, big: bool| {
+        let mut g = small(2);
+        g.rules.boss = BossRules::for_depth(2);
+        (g.rules.strikers.few, g.rules.strikers.full) = if big { (0.0, 1.0) } else { (100.0, 200.0) };
+        g.peak = if late { g.mould * 10 } else { g.mould };
+        let c = (g.soldiers[0].x, g.soldiers[0].y);
+        let b = Boss { lump: 0, born: 0, at: c, cause: BossCause::Crowd, phase: BossPhase::Gather, first: 0, members: 0, centre: c, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        (0..200).filter(|_| g.pick_kind(&b) == BossKind::Mortar).count()
+    };
+    let (early, small_squad, big) = (draws(false, true), draws(true, false), draws(true, true));
+    eprintln!("mortars of 200 draws on planet 2: early {early}, late small squad {small_squad}, late big squad {big}");
+    assert_eq!((early, small_squad), (0, 0));
+    assert!(big >= 40, "{big} of 200");
+}
+
+/// **Round the army** (2026-11-20, Direction's pick B): late, against a
+/// big squad, a hunter goes for a standing building out of the guns'
+/// reach instead of the squad; against a small squad it hunts.
+#[test]
+fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
+    let errand = |big: bool| {
+        let mut g = small(2);
+        (g.rules.strikers.few, g.rules.strikers.full) = if big { (0.0, 1.0) } else { (100.0, 200.0) };
+        g.peak = g.mould * 10;
+        let c = (g.soldiers[0].x, g.soldiers[0].y);
+        let (w, h) = g.world.size();
+        // A pump on the far side of the dish from the squad.
+        let at = (if c.0 < w as f32 / 2.0 { w as f32 - 20.0 } else { 20.0 }, if c.1 < h as f32 / 2.0 { h as f32 - 20.0 } else { 20.0 });
+        g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None });
+        let from = ((c.0 + at.0) / 2.0, (c.1 + at.1) / 2.0);
+        let mut b = Boss { lump: 0, born: 0, at: from, cause: BossCause::Crowd, phase: BossPhase::Hunt(None), first: 100, members: 100, centre: from, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        let round = g.boss_late() && g.army_scale() >= 1.0;
+        (round, if round { g.round_errand(&mut b, 0) } else { None }, at)
+    };
+    let (round, to, pump) = errand(true);
+    assert!(round && to == Some(pump), "a big squad: round to the pump at {pump:?}, got {to:?}");
+    assert!(!errand(false).0, "a small squad: it hunts");
 }
