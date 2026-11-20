@@ -2,7 +2,7 @@
 title: Squad mode
 kind: design
 status: open
-updated: 2026-11-19
+updated: 2026-11-20
 sources:
   - Reports/auto-fire-2026-11-18/README.md
   - Reports/bug-sweep-2026-11-14.md
@@ -79,6 +79,14 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   wheel go round them. **Esc** or *Let go* commands none: every squad shows
   AUTO, WASD pans, and a click on a squad takes it back
   ([free camera](../../Reports/free-camera-2026-11-15/README.md)).
+- **Loadouts** (owner, 2026-11-19 19:22Z; `run::Loadout`, `Run::loadouts`).
+  A loadout is a gun, or none, plus its cards; each squad (`Squad::loadout`)
+  and each turret (`Building::loadout`, `Building::deck`, `Cmd::TurretLoad`)
+  fires one, and a change to it changes all of them. A gun or a card is in
+  one loadout at a time. Squads land on the first; new turrets fire
+  `Run::turret_loadout`'s cards (the turrets' deck). A loadout with no gun
+  fits the turrets' rack. On a planet H opens the panel, paused, with
+  nothing for sale; changes apply at once, with no reload.
 - **Split, join, link.** Y splits the front half off; J or the tile's + joins
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.

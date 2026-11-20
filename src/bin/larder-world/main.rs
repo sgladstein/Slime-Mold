@@ -310,6 +310,9 @@ commands! {
     // B2, 2026-11-17): Mind statuses as test devices; runs leave them out.
     T_PROVOKE = 38,
     T_STILL = 39,
+    // A turret's or mortar's card in a run (owner 2026-11-19: each turret
+    // can be changed one by one): the next loadout it fires.
+    TURRET_LOADOUT = 40,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool

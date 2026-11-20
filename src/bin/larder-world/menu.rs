@@ -299,7 +299,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
     // The slots and budget of what the gun slots show: the squad's gun,
     // or the turrets' rack (`Run::rack`).
-    let gun = if r.editing_turrets { r.rack() } else { r.armed() };
+    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
     let rows = r
         .shop()
         .into_iter()
@@ -310,7 +310,8 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 Group::Dev if r.range => (String::new(), ShopArea::Upgrades),
                 // The gun slots' switch to the turrets' deck: a bottom-bar
                 // button (`Pick::EditTurrets`).
-                _ if row.pick == Pick::EditTurrets => (String::new(), ShopArea::Upgrades),
+                // The loadouts' buttons too (2026-11-19).
+                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::SquadUses) => (String::new(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 // Each a tab of the shop's counter (Shop B, 11-15).
@@ -377,7 +378,12 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         slots: gun.slots,
         budget: (slime_mould::mould::rounds::cost(&r.gun()), gun.budget),
         range: r.range,
-        turrets: r.editing_turrets,
+        turrets: r.editing_turrets(),
+        bench: {
+            let gun = r.gun_of(r.editing).map_or_else(|| "no gun: the turrets' rack, a squad fires the plain rifle".to_string(), |g| draw::capital(&g.title()));
+            format!("{}  ·  {gun}", r.loadout_name(r.editing))
+        },
+        field: r.field,
     }
 }
 
@@ -607,6 +613,8 @@ impl App {
         match ev {
             StartEvent::Quit => return Ok(true),
             StartEvent::Range => self.show_armory(),
+            StartEvent::NextLevel if self.fielding() => self.close_loadouts(),
+            StartEvent::EndRun if self.fielding() => self.close_loadouts(),
             StartEvent::NextLevel if self.ranging() => {
                 if self.armory {
                     self.close_armory();
@@ -817,6 +825,73 @@ impl App {
         self.args.range = Some(r);
     }
 
+    /// The loadout panel is up over a run's planet (`Run::field`).
+    pub(super) fn fielding(&self) -> bool {
+        self.armory && self.run.as_ref().is_some_and(|r| r.field)
+    }
+
+    /// H on a run's planet (owner, 2026-11-19 19:22Z: "A key (or a HUD
+    /// button) opens the loadout panel and pauses the game"): the shop's
+    /// page with only the guns and cards owned, nothing for sale, showing
+    /// the loadout the commanded squad uses, the planet paused under it.
+    pub(super) fn open_loadouts(&mut self) {
+        if self.args.run.is_none() || self.in_menu() {
+            return;
+        }
+        let Some((base, _)) = self.base.clone() else { return };
+        let Some(g) = self.game.as_ref() else { return };
+        let q = g.active.or_else(|| g.live_squads().first().copied()).unwrap_or(0);
+        let l = g.squads.get(q).map_or(0, |s| s.loadout as usize);
+        // The run as the planet has it (`args.run`), the menu's copy too.
+        let Some(mut r) = self.args.run.clone() else { return };
+        r.field = true;
+        r.field_squad = Some((q as u8, l));
+        r.edit(l.min(r.loadouts.len() - 1));
+        self.run = Some(r);
+        let mut menu = self.parked.take().unwrap_or_else(|| start_menu(&base));
+        if self.window.is_some() {
+            menu.build = Some(build_page(&self.memory));
+        }
+        self.menu = Some(menu);
+        self.set_armory(true);
+        self.paused = true;
+        self.show_shop();
+    }
+
+    /// Back to the planet from the loadout panel: every squad armed from
+    /// the loadout it uses (the panel's squad from the one picked for it),
+    /// the turrets from theirs, at once (no reload, owner 19:22Z), the run
+    /// kept for the next shop, play on.
+    pub(super) fn close_loadouts(&mut self) {
+        self.set_armory(false);
+        if let Some(mut m) = self.menu.take() {
+            m.shop = None;
+            m.show(Page::Main);
+            self.parked = Some(m);
+        }
+        self.paused = false;
+        let Some(r) = self.run.as_mut() else { return };
+        r.field = false;
+        let chosen = r.field_squad.take();
+        let r = r.clone();
+        self.args.run = Some(r.clone());
+        self.rounds = Rounds::new(r.squad_cards(), RoundRules { budget: r.budget(), ..self.rounds.rules });
+        let Some(g) = self.game.as_mut() else { return };
+        if let Some((q, l)) = chosen {
+            // The squad and every squad linked with it.
+            for o in g.linked(q as usize) {
+                if let Some(s) = g.squads.get_mut(o) {
+                    s.loadout = l as u8;
+                }
+            }
+        }
+        arm_squads(g, &r);
+        let names: Vec<String> = r.cards_of(chosen.map_or(0, |c| c.1)).iter().map(|c| c.title()).collect();
+        let l = chosen.map_or(0, |c| c.1);
+        let what = format!("{}: {}", r.loadout_name(l), if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") });
+        self.hud.alert(&what, None, theme::ACCENT);
+    }
+
     /// The shop page, filled from the run (the menu up, its dish behind).
     pub(super) fn show_shop(&mut self) {
         if self.ranging() {
@@ -906,4 +981,26 @@ fn launch_editor() -> Result<(), String> {
         return Err("No map editor built: cargo build --release --bin larder-edit".into());
     }
     std::process::Command::new(&exe).current_dir(slime_mould::build::root()).spawn().map(|_| ()).map_err(|e| format!("The map editor did not start: {e}"))
+}
+
+/// Every live squad armed from the run's loadout it uses (`Squad::loadout`,
+/// `Cmd::Arm` and `Cmd::Load`, so a replay keeps it), and the turrets from
+/// theirs (`Run::turret_cards`). A loadout past the run's (an old replay)
+/// is the first.
+pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
+    for q in g.live_squads() {
+        let l = (g.squads[q].loadout as usize).min(r.loadouts.len() - 1);
+        g.apply(Cmd::Arm(q as u8, r.armed_of(l)));
+        g.apply(Cmd::Load(q as u8, Some(rounds::Deck::new(&r.cards_of(l)))));
+    }
+    let t = r.turret_cards();
+    g.apply(Cmd::Load(slime_mould::mould::larder_world::TURRET_DECK, (!t.is_empty()).then(|| rounds::Deck::new(&t))));
+    // Turrets on a loadout of their own (`Building::loadout`) take its
+    // cards as they now stand.
+    for b in 0..g.buildings.len() {
+        if let Some(l) = g.buildings[b].loadout.filter(|_| g.buildings[b].alive) {
+            let l = (l as usize).min(r.loadouts.len() - 1);
+            g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.cards_of(l)))));
+        }
+    }
 }

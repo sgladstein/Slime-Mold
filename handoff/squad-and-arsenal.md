@@ -48,6 +48,27 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-20, batch 6 (the owner's play notes of 11-19 16:55Z; thread
+"Improve squad control and gun loadouts").**
+
+- Merged #524: attack-move stands only for a fight (`Game::fight_turn`,
+  `Rules::fight_hold` 1 a member, at least 3, hold till half); ` cycles
+  squads (Shift back); squad tiles shrink instead of "+N".
+- Open branch `claude/project-thread-gdv9rz`: loadouts. The owner's rulings
+  (19:22Z): a loadout is a gun plus cards; each squad and turret uses one;
+  a card or gun in one loadout at a time; H opens the panel paused on a
+  planet, no reload; a default for turrets, each changeable. Built:
+  `run::Loadout`, `Run::{loadouts, editing, turret_loadout, field,
+  field_squad}`, picks `Edit`, `NewLoadout`, `TurretsUse`, `SquadUses`;
+  `Squad::loadout`; `Building::{deck, loadout}` with `Cmd::TurretLoad`
+  (turret shots read `Game::mods_by(by, turret)`); the window's
+  `open_loadouts`, `close_loadouts`, `arm_squads`, the turret card's
+  Loadout button (`TURRET_LOADOUT`, L).
+- Next: film the panel at 1080p and 150% UI (the bottom bar holds up to
+  8 loadout buttons; check it fits); the run bot does not use loadouts yet.
+- Unspent shop points carry to the next shop (`Run::won` only adds);
+  planet food does not.
+
 **2026-11-19, batch 5 (sleep wears off; Gas and Blast bite the squad).**
 
 - Merged: #505 (a walker sleeps once, then shrugs off gas and Mind statuses
