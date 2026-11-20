@@ -830,6 +830,7 @@ impl App {
         // speed, and stops at what it hit.
         let between = self.between();
         let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+        let first_bullet = self.lights.len();
         for (leg, b) in g.last_shots.iter().zip(&g.flown) {
             let end = leg.hit.unwrap_or(leg.to);
             let gone = (end.0 - leg.from.0).hypot(end.1 - leg.from.1);
@@ -910,6 +911,14 @@ impl App {
             // that goes out. it is too much").
             self.lights.push(Light { at: head, reach: b.r, lift: 3.0, colour: look.light, strength: lit * if quiet { 0.2 } else { 0.5 } });
         }
+        // Bullets in a crowd share their light (play-zoom pass, 11-20): 46
+        // rifles firing down one lane on planet 4 added up to a white
+        // column over the slime they hit, an effect far bigger than its
+        // damage. Each bullet's light is divided by the square root of the
+        // bullets within its reach (itself counted), so a lone shot lights
+        // as before and a volley lights a little more than one, not 46
+        // times.
+        dim_crowded(&mut self.lights[first_bullet..]);
         // Each soldier's muzzle flash while it burns (`FLASH`), at the
         // mouth of its kicked-back barrel, under the soldiers so the
         // barrel is drawn over the flash's root. Its colour is the cast the
@@ -2061,6 +2070,18 @@ const MUZZLE_CORE: [u8; 4] = [255, 250, 232, 255];
 fn flame(look: &CardLook) -> [u8; 4] {
     [look.glow[0], (look.glow[1] as f32 * 0.75) as u8, (look.glow[2] as f32 * 0.5) as u8, 255]
 }
+/// Divides each light's strength by the square root of how many of
+/// `lights` lie within its reach, itself counted (`O(n²)`: a few hundred
+/// bullets at most).
+fn dim_crowded(lights: &mut [Light]) {
+    let at: Vec<((f32, f32), f32)> = lights.iter().map(|l| (l.at, l.reach)).collect();
+    for (i, l) in lights.iter_mut().enumerate() {
+        let r2 = at[i].1 * at[i].1;
+        let n = at.iter().filter(|(p, _)| (p.0 - at[i].0 .0).powi(2) + (p.1 - at[i].0 .1).powi(2) <= r2).count().max(1);
+        l.strength /= (n as f32).sqrt();
+    }
+}
+
 /// Seconds of a bullet's flight its tracer shows.
 const TRACE_SECS: f32 = 0.08;
 /// A mortar shell's arc: its peak lifts it this share of its flight's
