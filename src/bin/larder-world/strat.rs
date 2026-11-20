@@ -182,6 +182,15 @@ pub(super) struct Plan {
     /// away when there is any (0: the heaviest in range), so a bullet that
     /// lights the ground lights it away from the squad.
     pub standoff: f32,
+    /// Mines (11-20, the owner: "Do they use bombs/mines?"; no plan had
+    /// used a tool): at most this many laid and not gone off, each half way
+    /// from the squad to the heaviest slime near it, in a holder's reach
+    /// (`tools`). 0: none. Needs the run's Mines (`own`, the shop's `mine`).
+    pub mines: u32,
+    /// Thrown blasts: one a second at the heaviest slime in reach while a
+    /// blast there would take at least this many walkers (0: never). Needs
+    /// the run's Blasts (the shop's `blast`).
+    pub blast: u32,
 }
 
 impl Default for Plan {
@@ -222,6 +231,8 @@ impl Default for Plan {
             points: 0,
             fire: 0.0,
             standoff: 0.0,
+            mines: 0,
+            blast: 0,
         }
     }
 }
@@ -250,7 +261,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 35] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff"];
+    pub const DIALS: [&'static str; 37] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -306,6 +317,8 @@ impl Plan {
             "points" => self.points = whole(v)?,
             "fire" => self.fire = num(v)?.clamp(0.0, 1.0),
             "standoff" => self.standoff = num(v)?.clamp(0.0, 0.95),
+            "mines" => self.mines = whole(v)?.min(12),
+            "blast" => self.blast = whole(v)?,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -375,6 +388,8 @@ struct Memory {
     /// stepped back from fire, for the league's row.
     hp: Vec<(usize, f32)>,
     pub burnt: u32,
+    /// Blasts thrown and mines laid (`tools`).
+    tools: [u32; 2],
 }
 
 thread_local! {
@@ -532,6 +547,65 @@ pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32,
 
 /// The volley's mark: the heaviest slime in range with a clear line, at
 /// least `standoff` of the range away when there is any (`Plan::standoff`).
+/// The squad's tools (`Plan::mines`, `Plan::blast`), once a second from
+/// the league before the hand's turn (so a tool comes before the next
+/// soldier: at 400 a soldier, a rush never kept a soldier's price and a
+/// mine's 80 spare): the kit is the app's, not the game's, so the hand
+/// cannot reach it. Soldiers take one tool each at the larder
+/// (`kit_between`); a tool is paid from the bank when used, and only one
+/// the run owns is used.
+pub(super) fn tools(g: &mut Game<GpuWorld>, kit: &mut Kit, p: &Plan) {
+    if p.blast == 0 && p.mines == 0 {
+        return;
+    }
+    let Some(q) = g.active.or_else(|| g.live_squads().first().copied()) else { return };
+    let Some(m) = g.middle(q) else { return };
+    let sense = Sense::of(g);
+    let sc = g.world.scale();
+    let reach = kit.rules.reach * sc;
+    if p.blast > 0 && p.owns("blast") && g.bank >= kit.rules.blast_price {
+        let r = kit.rules.blast_r * sc;
+        let best = sense.ranked(m, reach).into_iter().filter(|&(_, d)| d <= reach).map(|(a, _)| (a, sense.mass_near(a, r))).filter(|&(a, n)| n >= p.blast && kit.in_reach(g, a)).max_by_key(|&(_, n)| n);
+        if let Some((a, _)) = best {
+            if kit.use_tool(g, Tool::Blast(a)) {
+                MEM.with_borrow_mut(|mm| mm.tools[0] += 1);
+            }
+        }
+    }
+    // A mine waits for `mine_trigger` walkers, so it goes where slime will
+    // come: round home (the first pump, else the landing) on the slime's
+    // side while the squad is there, for the raids; out, under the squad
+    // while slime bites it, since the slime follows where soldiers stood.
+    // Two tries in the 11-20 cloud games laid 3 that nothing set off in
+    // 2:30: half way to the heaviest slime, and under the squad whenever
+    // thick slime was in reach (the rush walked on and the slime never
+    // came back there).
+    if p.mines > 0 && p.owns("mine") && (kit.mines.len() as u32) < p.mines && g.bank >= kit.rules.mine_price {
+        let home = MEM.with_borrow(|mm| mm.home).unwrap_or(g.larder);
+        let apart = 2.0 * kit.rules.mine_r * sc;
+        let free = |at: (f32, f32)| kit.mines.iter().all(|&x| dist(x, at) > apart);
+        let at = if dist(m, home) < reach {
+            let to = sense.middle().unwrap_or(m);
+            let face = (to.1 - home.1).atan2(to.0 - home.0);
+            let r = 0.6 * reach;
+            [0.0f32, 0.5, -0.5, 1.0, -1.0, 1.5, -1.5].into_iter().map(|k| (home.0 + r * (face + k * 0.5).cos(), home.1 + r * (face + k * 0.5).sin())).find(|&a| free(a) && g.world.open(a.0, a.1) && kit.in_reach(g, a))
+        } else {
+            let bitten = g.members(q).iter().any(|&k| g.soldiers[k].touching > 0);
+            (bitten && free(m)).then_some(m)
+        };
+        if let Some(at) = at {
+            if kit.use_tool(g, Tool::Mine(at)) {
+                MEM.with_borrow_mut(|mm| mm.tools[1] += 1);
+            }
+        }
+    }
+}
+
+/// Blasts thrown and mines laid this game (`tools`).
+pub(super) fn tools_used() -> [u32; 2] {
+    MEM.with_borrow(|mm| mm.tools)
+}
+
 fn aim_at(g: &Game<GpuWorld>, sense: &Sense, m: (f32, f32), range: f32, standoff: f32) -> Option<(f32, f32)> {
     let ranked = sense.ranked(m, range);
     let ok = |&(a, d): &((f32, f32), f32)| d <= range && sense.clear(g, m, a);

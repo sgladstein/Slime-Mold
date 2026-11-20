@@ -174,6 +174,9 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     args.mission = None;
     let hand = hand_for(spec, r);
     let pl = shop_plan(spec)?;
+    // The tools pass needs the run's unlocks (`own`), which the hand's
+    // spec carries and the shop plan does not.
+    let tool_plan = hand.strip_prefix("strat:").map(Plan::parse).transpose()?.filter(|p| p.mines > 0 || p.blast > 0);
     let (aim_hz, kite, mop, standoff) = (pl.aim, pl.kite, pl.mop, pl.standoff);
     // Between turns: at the aim rate, or five times a second to kite.
     let tick_hz = if kite > 0.0 { aim_hz.max(5.0) } else { aim_hz };
@@ -199,6 +202,9 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
         let sec = g.world.ticks() / g.rules.tps as u64;
         if sec != last_sec {
             last_sec = sec;
+            if let Some(tp) = &tool_plan {
+                strat::tools(g, &mut app.kit, tp);
+            }
             hands::plan(g, &hand);
             peak_mould = peak_mould.max(g.mould);
             if since > 5.0 {
@@ -237,8 +243,11 @@ fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::Device, queu
     let (bought, peak_alive, secs_in) = if spec.starts_with("util:") { super::utility::tally() } else { strat::tally() };
     let switched = if spec.starts_with("util:") { [0, 0] } else { strat::switched() };
     let mark = |m: Option<(u32, usize, usize)>| m.map_or("-".to_string(), |(k, s, a)| format!("{k}/{s}/{a}"));
+    // Blasts thrown, mines laid, and the walkers each killed (`Plan::blast`, `mines`).
+    let used = if spec.starts_with("util:") { [0, 0] } else { strat::tools_used() };
+    let tools = format!("{}/{}/{}/{}", used[0], used[1], app.kit.killed[0], app.kit.killed[1]);
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} at150={} at300={} at600={} wall={:.0} marks={} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} rest={}",
         r.depth,
         r.seed,
         l.seed,
