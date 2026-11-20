@@ -868,8 +868,12 @@ impl World for GpuWorld {
 
     /// The enemy's living, from the same readout, so no read-back (until
     /// 11-17 plus its condensed walkers, `wstat[8]`).
+    /// With the walkers condensed strikers hold (`Engine::striker_held`,
+    /// as the last `condense` read them; the review lane, 11-20: without
+    /// them the HUD, the end card, fruit's floor and the wave's trigger saw
+    /// up to four times less slime than there is).
     fn mass(&self) -> usize {
-        self.living - self.own
+        self.living - self.own + self.e.striker_held as usize
     }
 
     fn set_task(&mut self, k: usize, t: Task) {
@@ -1105,6 +1109,9 @@ impl World for GpuWorld {
 
     fn set_strikers(&mut self, haste: Option<f32>) {
         self.e.strikers = haste;
+        if haste.is_none() {
+            self.e.striker_held = 0;
+        }
     }
 
     /// At once, after the running step's shares, as `form_lump`.
@@ -2295,6 +2302,8 @@ mod tests {
         assert!(took >= 30 && live >= 10, "the edge condenses: {took} taken in by {live}");
         assert_eq!(before - v.len(), took as usize, "the slime loses only the walkers taken in");
         assert_eq!(held, took, "and the condensed hold them all");
+        w.frame(&f, 1);
+        assert_eq!(w.mass(), w.living() + held as usize, "the slime's mass counts what they hold");
         assert!(v.iter().filter(|p| p.2).all(|p| (1..=3).contains(&p.3)), "each holds one to three");
         let (c0, p0) = (mean(&v, true), mean(&v, false));
         for _ in 0..6 {

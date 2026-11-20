@@ -441,7 +441,9 @@ impl<W: World> Game<W> {
         self.time_surges(out.units.iter().map(|u| u.took as f64).sum());
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
-            self.mould = self.world.living();
+            // The mass: the living walkers and what condensed strikers
+            // hold (`World::mass`; 11-20, the review lane).
+            self.mould = self.world.mass();
             self.mark_bulwark();
             self.guard_pay();
             self.cover_turn();
