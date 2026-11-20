@@ -495,12 +495,17 @@ def owner_playing(binary):
     else:
         out = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True).stdout
         procs = [[os.path.basename(l.split()[0]), l] for l in out.splitlines() if l.split() and os.path.basename(l.split()[0]) in ("larder-world", "larder-edit")]
-    return any(name.startswith("larder-edit") or not any(k in cmd for k in BOT_KEYS) for name, cmd in procs)
+    # The first such process's command line (or ""), so the log says what
+    # held the worker: 11-20 12:45-14:02 it waited 77 min on a process the
+    # owner had not started ("the game has not been running on my pc for
+    # hours?").
+    return next((cmd.strip() or name for name, cmd in procs if name.startswith("larder-edit") or not any(k in cmd for k in BOT_KEYS)), "")
 
 def wait_for_owner(binary):
-    if not owner_playing(binary):
+    seen = owner_playing(binary)
+    if not seen:
         return
-    log("worker: the game is open on this PC; waiting until it closes")
+    log(f"worker: the game is open on this PC; waiting until it closes ({seen[:200]})")
     while owner_playing(binary):
         time.sleep(30)
     log("worker: the game closed; going on")
