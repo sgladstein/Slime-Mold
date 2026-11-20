@@ -178,9 +178,17 @@ end.
   it is about equal to Armour (18 and 19 wins of 24; Faster trigger 13,
   none 9), so no retune. Four levels cost 1,200 points, not 480.
 - **Own fire** (#564, bot jobs 14 and 14-b): `fire_hurt` 25 to 10, and the
-  planet 2 card warns of it. Job 14-0-a re-scores fire at 10 and 5; its
-  verdict, whether the Torch is now a real choice or too strong, comes to
-  this lane.
+  planet 2 card warns of it. Job 14-0-a (321 games, 11-20 21:22Z) scored
+  10 and 5. At 10, Tinder and a Torch are still a cost on planet 2 (rush
+  11 / 3 of 11 wins, no fire against Torch; +200 points changes nothing,
+  so it is the fire), never too strong. At 5 they become a real choice
+  (rush 11 / 7, lure 5 / 7). On planet 3 the Needle Blast deck's own
+  fires kill 1,033 soldiers at 25, 856 at 10 and 342 at 5, with 8, 9 and 9
+  wins of 9. **Kept at 10**: it keeps blast fire dangerous (the Noita
+  rule), and the bot never aims fire away from its squad, so a careful
+  player does better than these rows. If his play finds the Torch still
+  a trap, 5 is measured and ready, or give the Torch more upside rather
+  than a lower price.
 - **Base pay with the starfall** (#573 built it, Scott's 19:06Z pick):
   `reward` 175 + 25 a planet plus 50 a star (was 150 + 50 a planet), so
   planet 1 keeps 200 and depth growth comes from drops. Retune once a bot
