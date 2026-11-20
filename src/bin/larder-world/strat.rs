@@ -151,13 +151,18 @@ pub(super) struct Plan {
     /// soldiers, the squad goes for the crystal with the most slime on it
     /// that it can take (under `per` walkers a soldier, the slime's home
     /// among them) and clears and drains it, in place of the crystal with
-    /// the most charge. A first build took the thickest whatever its size:
-    /// on map 3 at 20 soldiers the squad walked into the home blob and was
-    /// down to 8 in a minute (cloud, 11-20). On planet 2 map 3
+    /// the most charge (`deep`: whatever its size). On planet 2 map 3
     /// (11-20) the slime held about 13k for four minutes while the squad
     /// killed 50 walkers a second elsewhere: what it lost it grew back from
     /// the big crystal it sat on.
     pub starve: u32,
+    /// Starving takes the crystal with the most slime whatever its size
+    /// (`true`), not only one under `per` walkers a soldier. On planet 2
+    /// map 3 in the cloud (11-20) `rush,aim=6,cards=0,starve=30` built
+    /// this way won in 8:20 with 41 soldiers left, the first bot win there;
+    /// at `starve=20` the squad fell from 20 to 8 in a minute in the home
+    /// blob and lost.
+    pub deep: bool,
 }
 
 impl Default for Plan {
@@ -194,6 +199,7 @@ impl Default for Plan {
             spare: 0,
             shelf: true,
             starve: 0,
+            deep: false,
         }
     }
 }
@@ -222,7 +228,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 31] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve"];
+    pub const DIALS: [&'static str; 32] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -274,6 +280,7 @@ impl Plan {
             "spare" => self.spare = whole(v)?.min(20),
             "shelf" => self.shelf = num(v)? > 0.0,
             "starve" => self.starve = whole(v)?,
+            "deep" => self.deep = num(v)? > 0.0,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -1002,7 +1009,7 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
         let feed = (0..cs.len())
             .filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none() && !held.contains(&c))
             .map(|c| (c, sense.mass_near(cs[c].0, g.world.crystal_r(c) + range)))
-            .filter(|&(_, n)| n > 0 && (n as f32) < p.per * g.alive() as f32)
+            .filter(|&(_, n)| n > 0 && (p.deep || (n as f32) < p.per * g.alive() as f32))
             .max_by_key(|&(_, n)| n);
         if let Some((c, _)) = feed {
             let at = cs[c].0;
