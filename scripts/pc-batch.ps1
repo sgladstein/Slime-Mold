@@ -131,6 +131,13 @@ if ($Timing) {
         foreach ($k in 1..5) { $util += [int](nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | Select-Object -First 1).Trim(); Start-Sleep -Seconds 1 }
     }
     $busy = if (($util | Measure-Object -Maximum).Maximum -gt 5) { "GPU load % over 5 s: $($util -join ', ')" } else { $null }
+    # The league worker between its games shows no load: look for its game
+    # too (pause it with an empty PAUSE file in slime-league, never by
+    # stopping its Python).
+    if (-not $DryRun) {
+        $league = @(Get-CimInstance Win32_Process -Filter "Name='larder-world.exe'" | Where-Object { $_.CommandLine -match "league=" })
+        if ($league.Count -gt 0) { $busy = "a league game is running (pid $($league[0].ProcessId)): pause the worker first" }
+    }
     "GPU load % before timing: $($util -join ', ')"
     if ($busy) {
         "GPU busy, no timing run: $busy" | Set-Content (Join-Path $dir "timing-refused.txt")
