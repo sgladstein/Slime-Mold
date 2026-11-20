@@ -1000,6 +1000,18 @@ impl App {
         // (`Rules::elbow`, 1.6 touch radii) keeps the bodies apart. The
         // dead first, so the living are drawn over them.
         let r = body_r;
+        let since = g.time();
+        // The landing (Look D, 2026-11-20): each soldier drops in, its
+        // shadow on the ground firming under it (`landing`).
+        if since < LAND_SECS + LAND_STAGGER * g.soldiers.len() as f32 {
+            for (k, s) in g.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+                let (_, _, u) = landing(k, since, r);
+                if u < 1.0 {
+                    let a = (40.0 + 110.0 * u) as u8;
+                    self.marks.disc((s.x, s.y), r * (0.55 + 0.35 * u), [0, 0, 0, a], false);
+                }
+            }
+        }
         let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
         for (k, s) in order {
             let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
@@ -1019,7 +1031,9 @@ impl App {
             // No sprite flash: the muzzle flash is its own mark, drawn
             // above as light (gun look, 2026-11-15).
             let n = self.marks.len();
-            self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
+            let (lift, grow, _) = landing(k, since, r);
+            let at = (at.0, at.1 - lift);
+            self.marks.soldier_bitten(at, r * grow, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
             self.marks.dress_since(n, skin);
             self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
@@ -1032,7 +1046,9 @@ impl App {
             let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
             let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
             let n = self.marks.len();
-            self.marks.soldier_head(drawn_at(s, &l, r), r, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
+            let (lift, grow, _) = landing(k, since, r);
+            let at = drawn_at(s, &l, r);
+            self.marks.soldier_head((at.0, at.1 - lift), r * grow, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
             self.marks.dress_since(n, skin);
             self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
@@ -2008,6 +2024,28 @@ pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
 /// place, jerked back from a bite (a fifth of `r` at once, easing home over
 /// `FLINCH`) and kicked back along its aim by its last shot (gun look,
 /// 2026-11-15: a fifth of `r` at once, easing home over `KICK`).
+/// The landing (Look D, 2026-11-20: a planet began with the squad simply
+/// there; the brief's "a landing that happens in the picture"): soldier
+/// `k` drops over `LAND_SECS`, one after another `LAND_STAGGER` apart, from
+/// `LAND_LIFT` body radii up the screen and half again its size, easing in
+/// as it falls, over its shadow on the ground, which firms as it comes
+/// down. Only the drawing: the soldier stands where it is from the first
+/// tick. Tried and dropped: a ring of dust spreading from each soldier's
+/// feet, which read as a drawn pulse (art direction rule 1), a UI ring,
+/// not dust.
+const LAND_SECS: f32 = 0.55;
+const LAND_STAGGER: f32 = 0.04;
+const LAND_LIFT: f32 = 7.0;
+
+/// Soldier `k`'s landing `since` game seconds after the landing, `r` its
+/// body radius: how far up it is drawn (world cells), its size's factor,
+/// and how far down it has come (0-1).
+pub(super) fn landing(k: usize, since: f32, r: f32) -> (f32, f32, f32) {
+    let u = ((since - LAND_STAGGER * k as f32) / LAND_SECS).clamp(0.0, 1.0);
+    let e = (1.0 - u) * (1.0 - u);
+    (LAND_LIFT * r * e, 1.0 + 0.5 * e, u)
+}
+
 pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, r: f32) -> (f32, f32) {
     let jerk = (l.flinch / FLINCH).powi(2) * 0.2 * r;
     let kick = (l.kick / KICK).powi(2) * 0.2 * r;

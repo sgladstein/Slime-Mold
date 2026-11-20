@@ -149,6 +149,17 @@ Planets 2 and 3's traits (11-20): the slime's trail on bare land
 packed body leaves little bare trail, so the slick shows mostly where
 the squad shot the slime back and as a halo round the body.
 
+**Look D started (11-20):** the shop's counter as shelf rows
+(`shelf`, `shelf_row`, `SHELF_H`, `SHELF_W` in `start/shop.rs`): every
+offer a row with its icon, name, the first sentence of its `about`, price
+and pips, in columns of at least 420 units, while all fit on one page; else
+the old tiles that page. Bends shop B's half-size tiles (owner 11-15).
+The landing (11-20): each soldier drops in over its shadow in the
+first second (`landing`, `LAND_SECS`, `LAND_STAGGER`, `LAND_LIFT` in
+`draw.rs`); only the drawing. A dust ring was tried and dropped.
+Next in D: a win and a loss in the picture; the rest of the shop (the empty bag row, the pane's planet
+briefing repeated from the top bar), then the main menu and Options.
+
 **Open branch:** none (`claude/project-thread-ho6vcd`, reused per PR).
 
 **The Sprawler's look (#510):**

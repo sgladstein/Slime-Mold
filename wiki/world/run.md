@@ -106,7 +106,7 @@ that get better deeper; a lost planet ends the run. The shop page is one
 screen at every UI size (shop B, the owner's pick of 2026-11-15 19:37Z):
 the planet's line and the points along the top, the carried gun's slots
 and the bag pinned under it, a row of tabs (Cards, Guns, Squad, Buildings,
-Tools) over a counter of half-size tiles that pages rather than scrolls,
+Tools) over a counter of offer rows (11-20) that pages, never scrolls,
 and a pane at the right that tells the picked tile, else the planet's
 briefing, with its Buy button; a click picks, Enter or the button buys
 ([report](../../Reports/shop-b-2026-11-15/README.md)). Until then it had
