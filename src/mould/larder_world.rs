@@ -727,12 +727,24 @@ impl<W: World> Game<W> {
         self.turret_deck.map_or_else(BulletMods::default, |d| super::rounds::flight(&d.cards()))
     }
 
+    /// The cards turret `b` fires: its own (`Building::deck`), else the
+    /// turrets' deck; None (a turret's shot with no turret known) the
+    /// turrets' deck.
+    pub fn turret_cards(&self, b: Option<usize>) -> Option<Deck> {
+        b.and_then(|b| self.buildings.get(b)).and_then(|b| b.deck).or(self.turret_deck)
+    }
+
+    /// What turret `b`'s bullets carry (`turret_cards`).
+    pub fn turret_mods_of(&self, b: Option<usize>) -> BulletMods {
+        self.turret_cards(b).map_or_else(BulletMods::default, |d| super::rounds::flight(&d.cards()))
+    }
+
     /// What the bullets of shooter `by` carry: its squad's (`mods`), or
-    /// the turrets' for None.
-    pub fn mods_by(&self, by: Option<usize>) -> BulletMods {
+    /// for None turret `turret`'s (`turret_mods_of`).
+    pub fn mods_by(&self, by: Option<usize>, turret: Option<usize>) -> BulletMods {
         match by {
             Some(k) => self.soldiers.get(k).map_or_else(BulletMods::default, |s| self.mods(s.squad as usize)),
-            None => self.turret_mods(),
+            None => self.turret_mods_of(turret),
         }
     }
 
