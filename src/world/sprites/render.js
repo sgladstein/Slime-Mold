@@ -4,7 +4,9 @@
 // Tiles 0-3 are soldier.svg's body, helmet, flash and dead; 4-15 are
 // buildings.svg's turret, lure, pump, outpost, siren and larder, each body then its lamp
 // (`*-lit`); 16 is the turret's head, which turns on its base. Run: node src/world/sprites/render.js from the repo root (needs
-// Playwright's Chromium).
+// Playwright's Chromium), then python3 src/world/sprites/cut.py, which adds
+// tiles 17-24, the soldiers' Armour looks and their fallen (the game
+// checks the atlas is 25 tiles wide). Since 11-19 no living soldier wears tiles 0 and 1.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');

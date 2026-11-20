@@ -2,10 +2,11 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-17
+updated: 2026-11-19
 sources:
   - Reports/first-reach-2026-11-11.md
   - Reports/gun-route-2026-11-17/README.md
+  - Reports/lab-veins-2026-11-19/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-tiers-2026-11-11.md
@@ -101,6 +102,7 @@ nothing, and only a wipe ends it.
   adds at most 0.74 ms a frame at 100,000 walkers: [life cycle on the
   GPU](../../Reports/life-gpu-2026-11-11.md), *On the GTX 1070*.)
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
+- The Trunk's veins (lab, 11-19): its body is packed a walker a cell, so rules on walker motion (deposit by flow, aligning to it) drew no veins inside it and only made the cords bolder; the flow that moves inside a packed body is the shared food, not yet drawn ([Trunk veins](../../Reports/lab-veins-2026-11-19/README.md)).
 
 ## Sources
 
@@ -111,3 +113,4 @@ nothing, and only a wipe ends it.
 - [species-sets-2026-11-11.md](../../Reports/species-sets-2026-11-11.md): per-species settings, two species on one dish.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species rules on the GPU engine.
 - [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle on the GPU engine.
+- [Trunk veins](../../Reports/lab-veins-2026-11-19/README.md): walker-motion rules for veins inside the Trunk, and the food flow.

@@ -834,6 +834,10 @@ impl World for GpuWorld {
         self.e.calm(&self.shared, at, r)
     }
 
+    fn clouds(&self) -> Vec<f32> {
+        self.e.clouds.borrow().clone()
+    }
+
     fn has_gas(&self) -> bool {
         true
     }
@@ -1683,6 +1687,49 @@ mod tests {
         assert!(new[0] > 20 && new[1] == 0, "a second gas while asleep takes none: {new:?}");
         assert!(new[2] * 2 < old[2], "a gas just after they wake finds them resting: {new:?} against {old:?}");
         assert!(new[3] > 20, "after the rest gas takes them again: {new:?}");
+    }
+
+    /// **Asleep in your own gas** (2026-11-18, `Rules::doze`): a thick
+    /// sleep cloud laid on a soldier puts it to sleep the next frame: it
+    /// fires no shot but still walks where it is sent (since 11-19), and
+    /// once the cloud thins it wakes. With `doze` 0 it never sleeps.
+    #[test]
+    fn a_soldier_sleeps_in_its_own_gas_cloud() {
+        use crate::mould::kit::KitRules;
+        use crate::mould::larder_world::{Cmd, Order};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let run = |doze: f32| {
+            let rules = Rules { cap: 30.0, doze, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let sc = g.world.scale();
+            let fine = 30.0 * g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), fine);
+            let at = (g.soldiers[0].x, g.soldiers[0].y);
+            g.world.burst(&squad::Burst { at: (at.0 / sc, at.1 / sc), r: 6.0, cloud: 4.0, ..Default::default() }, &k);
+            g.step();
+            g.step();
+            let asleep = g.dozing(0);
+            let level = g.soldiers[0].doze;
+            // Sent to the crystal: one dozing still walks (11-19).
+            let goal = g.world.crystals()[1].0;
+            assert!(g.apply(Cmd::Order(0, Order::Move(goal.0, goal.1))));
+            let before = (g.soldiers[0].x, g.soldiers[0].y);
+            for _ in 0..5 {
+                g.step();
+            }
+            let moved = (g.soldiers[0].x - before.0).hypot(g.soldiers[0].y - before.1);
+            while g.time() < 60.0 && g.dozing(0) {
+                g.step();
+            }
+            (asleep, level, moved, g.dozing(0), g.time())
+        };
+        let (asleep, level, moved, still, woke) = run(1.0);
+        eprintln!("cloud on the soldier {level:.1} sleep levels; asleep {asleep}, moved {moved:.2} fine cells asleep; awake again at {woke:.1} s");
+        assert!(asleep && level >= 1.0 && moved > 0.1, "asleep in the cloud yet walking: level {level}, moved {moved}");
+        assert!(!still && woke < 60.0, "it wakes when the cloud thins");
+        let (asleep, _, moved, _, _) = run(0.0);
+        assert!(!asleep && moved > 0.1, "doze 0: it walks on ({moved})");
     }
 
     /// **The germ runs on the GPU world** (2026-11-14, cloud plan C5): a

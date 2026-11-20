@@ -26,6 +26,7 @@ sources:
   - Reports/gun-triggers-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/no-recharge-2026-11-14.md
+  - Reports/own-goal-2026-11-18/README.md
   - Reports/rolled-bullets-2026-11-14.md
   - Reports/sleep-wears-off-2026-11-18/README.md
   - Reports/spray-share-ab-2026-11-15/README.md
@@ -77,6 +78,10 @@ sells guns and cards, and the gun range (`Run::range`, start menu) is a free
 armory to try any of them against slime ([the run](run.md)). The H loadouts
 are test presets, not the game's way to arm. Nothing here is balanced.
 
+Strong single cards wear off or carry a danger to the squad: see *Wear-off and danger* below.
+
+## Wear-off and danger
+
 **Sleep and the Mind statuses wear off** (2026-11-18, after the owner's
 playtest: Mist on his turrets "basically stopped everything"): a walker
 sleeps once, no gas or cloud lengthens that sleep, and once awake it shrugs
@@ -86,6 +91,17 @@ On his planet 3 Gas alone had kept the squad at 92-97 health against 53-61
 with a plain gun, and the Trunk's hardening was not the cause
 ([report](../../Reports/sleep-wears-off-2026-11-18/README.md)), which also
 lists the Noita-rule audit of the other single cards.
+
+Two strong cards are dangerous to the squad (2026-11-19, on): a soldier in
+a sleep cloud thick enough to sleep the slime dozes and cannot fire (it still
+walks, since 11-19) until it thins (`Rules::doze`), and a blast takes 40 health off every
+soldier in its kill disc (`RoundRules::blast_hurt`). Fire on its own (a
+soldier or turret, not an aimed volley) holds a payload that would reach a
+soldier and lands as a plain shot (`RoundRules::blast_margin`,
+`gas_margin`), and Mist lays no cloud by a soldier, so the danger is your
+own aim and drifting clouds; with no hold the greedy squad on planet 3
+gassed or blasted itself to nothing
+([report](../../Reports/own-goal-2026-11-18/README.md)).
 
 ## The cards, family by family
 

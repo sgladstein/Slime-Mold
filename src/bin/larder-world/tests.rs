@@ -543,6 +543,16 @@ fn the_squad_panel_splits_switches_and_combines() {
     assert_eq!(active(&app), Some(1));
     app.squad_key(KeyCode::Digit1, true, false, false);
     assert_eq!(active(&app), Some(1), "key 1's squad is gone");
+    // One key goes through the squads in turn, round from the last
+    // (owner, 2026-11-19 16:55Z), Shift back.
+    assert!(app.squad_key(squadmode::CYCLE, true, false, false));
+    assert_eq!(active(&app), Some(2));
+    app.squad_key(squadmode::CYCLE, true, false, false);
+    assert_eq!(active(&app), Some(1), "round to the first");
+    app.shift = true;
+    app.squad_key(squadmode::CYCLE, true, false, false);
+    app.shift = false;
+    assert_eq!(active(&app), Some(2), "Shift goes back");
     // The build page has no Outpost without the larder.
     app.build_page = true;
     let cmds = app.model(None, None).commands;
@@ -1024,6 +1034,39 @@ fn a_run_planet_ended_by_the_game_carries_on() {
         assert_eq!(v.unwrap().stars > 0, matches!(end, End::MouldWiped(_)), "{end:?}: {v:?}");
         assert_eq!(app.model(None, None).carry_on.as_deref(), Some(label), "{end:?}");
     }
+}
+
+/// The play log names the loadout (coordinator, 2026-11-18: the logs did
+/// not say which cards Scott's gun and turrets carried): the head's `gun=`,
+/// `turrets=` and `bought=`, and a `gun t=..` line when the gun's cards
+/// change mid-round.
+#[test]
+fn the_play_log_names_the_gun_and_turret_cards() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut a = run_base();
+    let mut r = Run::new(1);
+    r.owned[0] = 2;
+    a.run = Some(r);
+    let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+    app.prepare();
+    let keys: Vec<(&str, String)> = app.log_loadout();
+    let first = slime_mould::mould::run::ITEMS[0].key;
+    assert_eq!(keys[..2], [("gun", rounds::name(&app.rounds.round)), ("turrets", "none".to_string())]);
+    // A new run already owns its free items (the walls), so only ours is checked.
+    assert!(keys[2].0 == "bought" && keys[2].1.split('+').any(|w| w == format!("{first}2")), "{keys:?}");
+    let dir = std::env::temp_dir().join(format!("playlog-loadout-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("log.txt");
+    std::fs::write(&path, "").unwrap();
+    app.log_path = Some(path.to_string_lossy().into_owned());
+    app.log_gun = rounds::name(&app.rounds.round);
+    app.rounds.round = rounds::parse("blast+wide").unwrap();
+    for _ in 0..30 {
+        app.step(0.1);
+    }
+    let log = std::fs::read_to_string(&path).unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+    assert_eq!(log.lines().filter(|l| l.starts_with("gun t=") && l.ends_with(" blast+wide")).count(), 1, "{log}");
 }
 
 #[test]

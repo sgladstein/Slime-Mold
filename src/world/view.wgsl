@@ -79,6 +79,10 @@ struct V {
     // in `news` where its blocks start, 0 hidden; and how far it reaches in
     // cells (`View::set_steer_reach`), 0 unknown.
     crust_at: u32, setc_at: u32, steer_reach: f32, steer_at: u32,
+    // The slime's own look (`View::set_slime_look`, Look B, 2026-11-19):
+    // 0 plain, 1 the Sprawler's threads (`LOOK_THREADS`); and how far
+    // behind a walker its streak runs, cells (0 none). Two spare words.
+    slime_look: u32, streak: f32, look_spare0: u32, look_spare1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -100,9 +104,10 @@ struct V {
 @group(0) @binding(8) var<storage, read> ground: array<u32>;
 @group(0) @binding(9) var<storage, read> walkers: array<vec4<f32>>;
 @group(0) @binding(10) var<storage, read_write> specks: array<atomic<u32>>;
-// The sprites (`src/world/sprites/`): 2176 x 160 RGBA, seventeen 128 px
-// tiles (soldier body, helmet, flash, dead; six buildings, each body then
-// lamp; the turret's head) above the same at 32 px.
+// The sprites (`src/world/sprites/`): 3200 x 160 RGBA, twenty-five 128 px
+// tiles (sprite A's body, helmet, flash, dead; six buildings, each body then
+// lamp; the turret's head; the three Armour looks, each body then helmet;
+// the fallen in slate and dark camo) above the same at 32 px.
 @group(0) @binding(11) var<storage, read> atlas: array<u32>;
 // Each shown cell's height and material, worked out once a frame by `prep`
 // (rows `rw` apart from cell ox, oy). `base` reads these: a pixel needs 24
@@ -1495,6 +1500,11 @@ fn flush_mat(m0: Mat, k: f32) -> Mat {
     return m;
 }
 
+// The thickness the Drifter's trail alone is drawn at, at full trail
+// (filmed on planet 1 at 0.3 x trail squared, barely seen, and 0.5,
+// a blur over the droplets at zoom 6).
+const SHEET_VEIL: f32 = 0.4;
+
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var t = 0.0;
@@ -1691,8 +1701,9 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
 // mark a wall that stops soldiers looked like slime they can walk
 // (`Reports/dead-ends.md`). Not dark ridges (they read as the player's
 // walls), not bronze (the owner turned it down). The body's opacity stays
-// the sheet's; its edge is the set walkers' own, smoothed over the 4 x 4
-// cells round (a lone set walker is a fleck, a set rim a band).
+// the sheet's; its edge is the set walkers' own, smoothed over the 6 x 6
+// cells round (`SET_SOFT`; a lone set walker is a faint fleck, a set rim
+// a band).
 // It stands `SET_RISE` above the sheet (2026-11-18). To then it kept the
 // sheet's height too (the graphics thread, 11-17), which was a detail while
 // it formed only under fire; the Trunk's fort (Enemy, #473) made it a ring
@@ -1702,28 +1713,43 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
 fn set_c(ix: i32, iy: i32) -> f32 { return f32(news[P.setc_at + cidx(ix, iy)]); }
 fn set_share(x: f32, y: f32) -> f32 {
     if (P.setc_at == 0u) { return 0.0; }
-    let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
+    let ix = i32(floor(x - 0.5)) - 2; let iy = i32(floor(y - 0.5)) - 2;
     var c = 0.0;
     var ws = 0.0;
-    for (var dy = 0; dy < 4; dy++) {
-        for (var dx = 0; dx < 4; dx++) {
+    for (var dy = 0; dy < 6; dy++) {
+        for (var dx = 0; dx < 6; dx++) {
             let d = vec2<f32>(f32(ix + dx) + 0.5 - x, f32(iy + dy) + 0.5 - y);
-            let w = exp(-dot(d, d) / (2.0 * 0.7 * 0.7));
+            let w = exp(-dot(d, d) / (2.0 * SET_SOFT * SET_SOFT));
             c += w * set_c(ix + dx, iy + dy);
             ws += w;
         }
     }
     return smoothstep(0.2, 0.6, c / ws);
 }
+// How wide the set walkers are smoothed, cells (11-19; 0.7 over 4 x 4
+// cells to then). A walker holds a cell to itself, so a wall's cells are
+// set or not one by one; at 0.7 its share swung cell to cell and so did
+// its `SET_RISE` of height: the Trunk's fort walls had pale flecks and
+// dark pits on top that were not their height, and their arcs stepped by
+// the cell at zoom 12. At 1.2, over 6 x 6 cells, the share is the wall's
+// fill and its flank about a cell and a half wide.
+const SET_SOFT: f32 = 1.2;
 const SET_AMBER: vec3<f32> = vec3<f32>(112.0, 46.0, 14.0);
 const SET_AMBER_GLOW: vec3<f32> = vec3<f32>(255.0, 110.0, 30.0);
 // How far set slime stands above the sheet: the dense body is at most 5.
 const SET_RISE: f32 = 4.0;
-fn set_rise(share: f32, th: f32) -> f32 { return SET_RISE * share * smoothstep(0.02, 0.2, th); }
-fn set_mat(m0: Mat, share: f32, th: f32) -> Mat {
+// Both by the wide count (`wide`, 11-19), not the colour's thickness: set
+// walkers lay little trail, so inside a wall that thickness was the sharp
+// count's, which goes cell to cell as a walker holds a cell or not; the
+// rise and the amber went with it, and the Trunk's fort walls had pale
+// flecks and dark pits on top at zoom 12 that were not their height (with
+// the rise at 0 the wall was flat and smooth: it was the rise).
+fn set_body(wide: f32) -> f32 { return smoothstep(0.15, 0.45, wide); }
+fn set_rise(share: f32, wide: f32) -> f32 { return SET_RISE * share * set_body(wide); }
+fn set_mat(m0: Mat, share: f32, wide: f32) -> Mat {
     if (share <= 0.0) { return m0; }
     var m = m0;
-    let s = share * smoothstep(0.02, 0.2, th);
+    let s = share * set_body(wide);
     m.albedo = mix(m.albedo, SET_AMBER, s);
     m.gloss = mix(m.gloss, 0.5, s);
     m.glow = m.glow + SET_AMBER_GLOW * 0.14 * s;
@@ -1857,7 +1883,14 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // fine grid, while the wide share keeps them calm (all-sharp, at four
     // fine cells a cell, was lumpy squares).
     let dense = smoothstep(0.15, 0.45, wide) * 0.6;
-    let th0 = look_trail(wx, wy) * mix(near, wide, dense);
+    let trail = look_trail(wx, wy);
+    var th0 = trail * mix(near, wide, dense);
+    // The Drifter's sheet (`SlimeLook::Sheet`, Look B, 2026-11-19): its
+    // trail where its walkers have just been is a thin gel of its own, so
+    // the body drags a fading wake as it drifts. Only its colour's
+    // thickness: the height still rises with the walkers (`th_h` takes the
+    // wide count), so the sheet lies flat round the raised body.
+    if (P.slime_look == 2u) { th0 = max(th0, SHEET_VEIL * trail); }
     // Condensed mould keeps tight, raised edges (art director, 11-14: it
     // should read tougher at a glance): where it has condensed the
     // thickness is pushed through a steep curve, so the body is a full,
@@ -1910,7 +1943,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         let hh = cell_height(ix, iy, th_h);
-        hcell[i] = hh.x + set_rise(ss, tm);
+        hcell[i] = hh.x + set_rise(ss, wide);
         hcell[P.rw * P.rh + i] = hh.y;
         hcell[2u * P.rw * P.rh + i] = ground_pack(ground_cell(ix, iy).col);
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
@@ -1918,7 +1951,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         m1.glow += ABSORB_RGB * 0.45 * flash;
         m1 = flush_mat(m1, hot);
         m1 = lump_mat(m1, lump, tm);
-        m1 = set_mat(m1, ss, tm);
+        m1 = set_mat(m1, ss, wide);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -1946,8 +1979,8 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     mt.glow += ABSORB_RGB * 0.45 * flash;
     mt = flush_mat(mt, hot);
     mt = lump_mat(mt, lump, tm);
-    mt = set_mat(mt, ss, tm);
-    hcell[i] = h.x + set_rise(ss, tm);
+    mt = set_mat(mt, ss, wide);
+    hcell[i] = h.x + set_rise(ss, wide);
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
     mcell[i] = mat_pack(mt);
@@ -3193,6 +3226,70 @@ fn draw_mind(k: u32, s: vec2<f32>) {
 
 // Every walker a speck of light at its own position (one thread a walker),
 // counted a screen pixel; `base` adds and clears them.
+// ---- The slime's own looks (Look B, 2026-11-19) ----
+//
+// The owner (00:08Z): "instead of having a single look to build multiple
+// looks could eventually apply to different slimes". Each look is how that
+// slime's own walkers lay their film, so it shows what the slime does.
+const LOOK_THREADS: u32 = 1u;
+
+// The Sprawler's threads: its explorers walk away from trail at 1.5 times
+// the plain pace and only then join the mesh, so in the plain look its
+// edge was a field of separate glowing beads (the baseline films, 11-19:
+// planet 2's "fast threads" read as rows of dots). Here each walker lays
+// its film along the way it has just come, `P.streak` cells behind it
+// (its pace over `STREAK_SECS`), heaviest where it stands and tapering to
+// nothing at the tail: a fast walker is a dash pointing where it goes, and
+// walkers on one path overlap into a thread. The dash holds one walker in
+// all, so the slime reads no bigger than it is and the thick body, the
+// same walkers spread a little, looks as it did. (First cut, 11-19: every
+// fine cell of the dash at up to a whole walker, which drew the loose
+// walkers as fat slugs six cells long and filled planet 2's hub in as a
+// thick body.) Its cut-off share runs down the dash with its count, so a
+// cut-off walker's ash does too.
+// Its speck is the same dash at the pixel: the walker's way over
+// `STREAK_SECS` (`P.streak` cells, at most 48 pixels), `d` pixels wide at
+// the walker and thinning to a pixel at the tail, each pixel lit as a
+// walker's speck (`base`). At zoom 12 the Sprawler goes about 9 pixels a
+// frame, so its dot jumped from place to place and read as a scatter of
+// beads; the dash is where it has just been. Stepped a pixel at a time
+// along the longer axis, so no pixel is lit twice.
+fn speck_line(s: vec2<f32>, h: f32, d: i32, add: u32) {
+    let dir = vec2<f32>(cos(h), sin(h));
+    let len = min(P.streak * P.zoom, 48.0);
+    let ax = abs(dir.x) >= abs(dir.y);
+    let major = max(abs(dir.x), abs(dir.y));
+    let n = max(i32(ceil(len * major)), 1);
+    for (var j = 0; j <= n; j++) {
+        let t = f32(j) / f32(n);
+        let q = s - dir * (len * t);
+        let dj = max(i32(round(f32(d) * (1.0 - 0.75 * t))), 1);
+        for (var k = 0; k < dj; k++) {
+            var qx = i32(floor(q.x)); var qy = i32(floor(q.y));
+            if (ax) { qy += k - dj / 2; } else { qx += k - dj / 2; }
+            if (qx >= 0 && qy >= 0 && qx < i32(P.sw) && qy < i32(P.sh)) { atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], add); }
+        }
+    }
+}
+
+fn lay_streak(w: vec4<f32>, cnt: u32, kf: f32) {
+    let dir = vec2<f32>(cos(w.z), sin(w.z));
+    let m = clamp(i32(round(P.streak * kf)), 1, 12);
+    let head = f32(cnt & 0xFFFFu);
+    let cut = f32(cnt >> 16u);
+    // Weights m + 1 - i for i = 0 (the walker) to m, summing to this.
+    let sum = f32((m + 1) * (m + 2) / 2);
+    for (var i = 0; i <= m; i++) {
+        let f = f32(m + 1 - i) / sum;
+        let p = w.xy - dir * (f32(i) / kf);
+        let gx = i32(floor((p.x - f32(P.ox)) * kf));
+        let gy = i32(floor((p.y - f32(P.oy)) * kf));
+        if (gx < 0 || gy < 0 || gx >= i32(P.rw) || gy >= i32(P.rh)) { continue; }
+        let add = u32(round(head * f)) | (u32(round(cut * f)) << 16u);
+        if (add > 0u) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], add); }
+    }
+}
+
 @compute @workgroup_size(256)
 fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -3277,8 +3374,10 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let kf = f32(P.fine);
     let gx = i32(floor((w.x - f32(P.ox)) * kf));
     let gy = i32(floor((w.y - f32(P.oy)) * kf));
+    let streak = P.streak > 0.0 && !member && w.w == 0.0;
+    if (streak) { lay_streak(w, cnt, kf); }
     if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) {
-        atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt);
+        if (!streak) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt); }
         if (dcnt > 0u) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], dcnt); }
         if (member) { atomicOr(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << (FG_FLAGS + lump_k - 1u)); }
     }
@@ -3407,6 +3506,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // ones too since the owner's playtest, 11-14: lone walkers read dim);
     // from 3 pixels its corners are left off, so it is a dot, not a square.
     let d = clamp(i32(round(P.zoom / 3.0)), 1, 4);
+    if (P.streak > 0.0) { speck_line(s, w.z, d, add); return; }
     for (var dy = 0; dy < d; dy++) {
         for (var dx = 0; dx < d; dx++) {
             if (d >= 3 && (dx == 0 || dx == d - 1) && (dy == 0 || dy == d - 1)) { continue; }
@@ -3637,14 +3737,15 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 2176u + u32(clamp(x, 0, 2175))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 3200u + u32(clamp(x, 0, 3199))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
 
 // Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-15 the buildings, each
 // body then lamp: turret, lure, pump, outpost, siren, larder; 16 the
-// turret's head) at point `p` in radii
+// turret's head; 17-22 the Armour looks, `skin_body`; 23-24 the fallen in
+// slate and dark camo, `skin_dead`) at point `p` in radii
 // (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
 fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
     var size = 128.0; var oy = 0.0;
@@ -3689,7 +3790,7 @@ const INK: vec3<f32> = vec3<f32>(14.0, 13.0, 10.0);
 
 // The living soldier's silhouette (body and helmet) at `p`, 0-1.
 fn silhouette(p: vec2<f32>, small: bool) -> f32 {
-    return max(sprite(0u, p, small).w, sprite(1u, p, small).w);
+    return max(sprite(skin_body(), p, small).w, sprite(skin_body() + 1u, p, small).w);
 }
 
 // Harvesting (art direction, the owner's playtest 11-14 04:53Z:
@@ -3763,7 +3864,7 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
         // `flash` is how far its pool has spread, `carry` its seed
         // (`Marks::fallen`).
         let lp = vec2<f32>(l.x * ca + l.y * sa, -l.x * sa + l.y * ca);
-        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), sprite(3u, p, small));
+        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), sprite(skin_dead(), p, small));
         if (c.w <= 0.0) { return vec4<f32>(0.0); }
         return vec4<f32>(c.xyz / c.w, c.w);
     }
@@ -3778,9 +3879,9 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
         grown = max(grown, silhouette(p + vec2<f32>(cos(a), sin(a)) * o, small));
     }
     out = pm_over(out, vec4<f32>(INK * grown, grown));
-    let body = sprite(0u, p, small);
+    let body = sprite(skin_body(), p, small);
     out = pm_over(out, body);
-    let h = sprite(1u, p, small);
+    let h = sprite(skin_body() + 1u, p, small);
     out = pm_over(out, vec4<f32>(h.xyz * team / 255.0, h.w));
     // The rim: inside the silhouette, where one pixel toward the light
     // (screen space, turned into the sprite's frame) is outside it.
@@ -4376,8 +4477,24 @@ fn flash_at(b: u32, p: vec2<f32>) -> vec2<f32> {
 // where its helmet is, so a soldier standing alone looks as it did.
 const HEAD_ONLY: u32 = 1u << 25u;
 
+// **The soldiers' Armour looks** (owner, 2026-11-19 14:41Z: "our base
+// soldier should be olive that upgraded to slate that upgrades to heavy",
+// then 15:11Z "Replace heavy with dark camo"; `Marks::dress_since`, `extra`
+// bits 27-28): 0 olive, 1 slate, 2 dark camo,
+// each its body tile then its helmet (`src/world/sprites/cut.py`, from the
+// owner's image-model sheet). Sprite A (tiles 0 and 1, the owner's pick of
+// 11-11) drew every living soldier to then; its dead body (tile 3) still
+// draws the fallen. Set per mark in `soldier_at`, read by `soldier`,
+// `silhouette` and the helmet masks.
+var<private> SKIN: u32 = 0u;
+const SKIN_SHIFT: u32 = 27u;
+fn skin_body() -> u32 { return 17u + 2u * min(SKIN, 2u); }
+// The fallen in the look they wore: olive is sprite A's fallen (tile 3),
+// slate and dark camo its recolours (23, 24; `cut.py`, `fallen`).
+fn skin_dead() -> u32 { return select(22u + min(SKIN, 2u), 3u, SKIN == 0u); }
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
+    SKIN = (extra >> SKIN_SHIFT) & 3u;
     let ang = bitcast<f32>(marks[b + 9u]);
     var f = soldier(d, r, ang, unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
     if ((extra & HEAD_ONLY) != 0u) {
@@ -4389,10 +4506,10 @@ fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
         let s = d / r;
         let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
         let small = r < 12.0;
-        var head = sprite(1u, p, small).w;
+        var head = sprite(skin_body() + 1u, p, small).w;
         for (var i = 0u; i < 8u; i++) {
             let a = f32(i) * 0.785398;
-            head = max(head, sprite(1u, p + vec2<f32>(cos(a), sin(a)) * OUTLINE / r, small).w);
+            head = max(head, sprite(skin_body() + 1u, p + vec2<f32>(cos(a), sin(a)) * OUTLINE / r, small).w);
         }
         if (head <= 0.004) { return vec4<f32>(0.0); }
     }
@@ -4407,11 +4524,33 @@ fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     if (bite > 0.0 && f.w > 0.0) {
         let s = d / r;
         let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
-        let helmet = sprite(1u, p, r < 12.0).w;
+        let helmet = sprite(skin_body() + 1u, p, r < 12.0).w;
         f = vec4<f32>(mix(f.xyz, BITE_HOT, bite * 0.45 * (1.0 - helmet)), f.w);
+    }
+    // Asleep in its own gas (`Marks::doze_since`, `Rules::doze`, 11-19):
+    // the body takes the gas's lavender by the cloud's level at its feet,
+    // so a squad gassed with the slime reads as gassed, and it clears as
+    // the cloud thins; while it is out (it neither fires nor walks) the
+    // figure dims too. The helmet stays white, so the squad can still be
+    // counted.
+    let tint = f32(w >> 24u) / 255.0;
+    if (tint > 0.0 && f.w > 0.0) {
+        let s = d / r;
+        let p = vec2<f32>(s.x * cos(ang) + s.y * sin(ang), -s.x * sin(ang) + s.y * cos(ang));
+        let helmet = sprite(1u, p, r < 12.0).w;
+        var body = mix(f.xyz, DOZE_TINT, tint * DOZE_MAX);
+        if ((extra & DOZE_OUT) != 0u) { body = body * DOZE_DIM; }
+        f = vec4<f32>(mix(body, f.xyz, helmet), f.w);
     }
     return f;
 }
+// The sleep gas's lavender (the gas tool's colour in the window's
+// `draw.rs`), how far toward it the deepest cloud takes a body, and how
+// much an asleep figure dims.
+const DOZE_TINT: vec3<f32> = vec3<f32>(176.0, 156.0, 255.0);
+const DOZE_MAX: f32 = 0.6;
+const DOZE_DIM: f32 = 0.78;
+const DOZE_OUT: u32 = 1u << 26u;
 
 // **The slime on a soldier** (the owner, 2026-11-18 18:04Z: "When the
 // slime is attacking/damagin my soliders, I cannot really tell. It just

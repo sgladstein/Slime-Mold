@@ -28,7 +28,43 @@ pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (44 words, then the four lumps' vec4s since the
 /// mini-bosses, 2026-11-16, and their fade, fill and held vec4s).
-const PARAMS_BYTES: usize = 304;
+/// The slime's own look (Look B, 2026-11-19): the owner asked for several
+/// looks, each for a slime, so you tell them apart on sight (00:08Z: "It
+/// would also be interesting instead of having a single look to build
+/// multiple looks could eventually apply to different slimes"). Each is
+/// drawn from that slime's own walkers, never painted on.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SlimeLook {
+    /// Every walker's film a soft disc round it: the look before 11-19.
+    #[default]
+    Plain = 0,
+    /// The Sprawler's fast threads: each walker lays its film along the
+    /// way it has just come (`draw_specks`' `lay_streak`), so a fast walker
+    /// is a dash and walkers on one path join into a thread.
+    Threads = 1,
+    /// The Drifter's soft sheet: its own trail, which fades fast
+    /// (`keep` 0.93) and spreads wide (sensors at 90 degrees, 18 cells
+    /// out), shows as a thin gel round and behind its walkers
+    /// (`SHEET_VEIL` in `view.wgsl`), so the body trails a fading wake
+    /// as it drifts.
+    Sheet = 2,
+}
+
+/// The game seconds of a walker's way that `SlimeLook::Threads` draws.
+pub const STREAK_SECS: f32 = 0.1;
+
+impl SlimeLook {
+    /// The look for a slime of `tier` (`None`: the sandbox's plain mould).
+    pub fn of(tier: Option<crate::mould::tiers::Tier>) -> SlimeLook {
+        match tier {
+            Some(crate::mould::tiers::Tier::Sprawler) => SlimeLook::Threads,
+            Some(crate::mould::tiers::Tier::Drifter) => SlimeLook::Sheet,
+            _ => SlimeLook::Plain,
+        }
+    }
+}
+
+const PARAMS_BYTES: usize = 320;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
@@ -285,6 +321,10 @@ pub struct View {
     steer_at: u32,
     /// How far that field reaches, cells (`set_steer_reach`), 0 unknown.
     steer_reach: f32,
+    /// The slime's own look (`set_slime_look`, Look B, 2026-11-19) and
+    /// how far behind each walker its streak runs, cells.
+    slime_look: SlimeLook,
+    streak: f32,
     flora: u32,
     ripe_at: u32,
     lag: u32,
@@ -429,6 +469,8 @@ impl View {
             setc_at: 0,
             steer_at: 0,
             steer_reach: 0.0,
+            slime_look: SlimeLook::Plain,
+            streak: 0.0,
             flora: 0,
             ripe_at: 0,
             lag: 0,
@@ -471,10 +513,10 @@ impl View {
     }
 
     /// The soldier sprite atlas on the GPU: `SPRITES` decoded, a u32 RGBA
-    /// a texel, 2176 x 160 (17 tiles).
+    /// a texel, 3200 x 160 (25 tiles).
     fn atlas(dev: &wgpu::Device, queue: &wgpu::Queue) -> wgpu::Buffer {
         let img = image::load_from_memory(SPRITES).expect("sprites.png").to_rgba8();
-        assert_eq!(img.dimensions(), (2176, 160), "the atlas the view's shader expects");
+        assert_eq!(img.dimensions(), (3200, 160), "the atlas the view's shader expects");
         let b = storage(dev, "sprites", img.as_raw().len() as u64);
         queue.write_buffer(&b, 0, img.as_raw());
         b
@@ -819,6 +861,15 @@ impl View {
         self.rebind();
     }
 
+    /// Gives the slime its own look (Look B, 2026-11-19; the owner, 00:08Z:
+    /// several looks, each for a slime). `streak` is how far a walker goes
+    /// in `STREAK_SECS`, cells: its pace, which `SlimeLook::Threads` draws
+    /// behind it.
+    pub fn set_slime_look(&mut self, look: SlimeLook, streak: f32) {
+        self.slime_look = look;
+        self.streak = streak.max(0.0);
+    }
+
     /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)
     /// from the engine's `news` word `at` (`gpu::Engine::crust_at` / 4 +
     /// cells + walkers), bound with the crust (`set_crust` first), as amber
@@ -1031,6 +1082,10 @@ impl View {
         // The third word was set slime's look to 2026-11-18; since, the
         // Lure's reach.
         for v in [self.crust_at, self.setc_at, self.steer_reach.to_bits(), self.steer_at] {
+            b.extend(v.to_le_bytes());
+        }
+        let streak = if self.slime_look == SlimeLook::Threads { self.streak } else { 0.0 };
+        for v in [self.slime_look as u32, streak.to_bits(), 0, 0] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
@@ -2453,6 +2508,157 @@ mod tests {
         assert!(most <= 2, "a lone soldier's head is its own figure's: {most}");
     }
 
+    /// The Armour looks (`Marks::dress_since`, owner 2026-11-19 14:41Z):
+    /// three soldiers facing east in olive (A, no Armour), slate (B) and
+    /// dark camo (C). B's shoulder is bluer than its red where A's is not;
+    /// C's is darker than A's; the helmets stay the same white, so the squad
+    /// can still be counted. Against the shader before the Armour looks
+    /// every skin draws as sprite A and it fails.
+    #[test]
+    fn each_armour_look_draws_its_own_body_under_the_same_white_helmet() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [40u8, 44, 40, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let (r, team) = (2.0, crate::world::marks::team_colour(0));
+        let (a, b, c) = ((14.0, 16.0), (24.0, 16.0), (34.0, 16.0));
+        let mut m = Marks::default();
+        for (p, skin) in [(a, 0), (b, 1), (c, 2)] {
+            let n = m.len();
+            m.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+            m.soldier_head(p, r, 0.0, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+            m.dress_since(n, skin);
+        }
+        view.set_marks(&m);
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        let px_at = |p: (f32, f32)| {
+            let (sx, sy) = cam.to_screen(p);
+            pic.get_pixel(sx as u32, sy as u32).0.map(i32::from)
+        };
+        // Half a radius out across the facing: the shoulder.
+        let [sa, sb, sc] = [a, b, c].map(|p| px_at((p.0, p.1 + 0.5 * r)));
+        assert!(sb[2] > sb[0] && sa[2] + 15 < sa[0], "B slate, A olive: A {sa:?}, B {sb:?}");
+        assert!(sc[..3].iter().sum::<i32>() + 40 < sa[..3].iter().sum::<i32>(), "C's dark camo darker than A's olive: A {sa:?}, C {sc:?}");
+        let [ha, hb, hc] = [a, b, c].map(|p| px_at((p.0 + 0.04 * r, p.1)));
+        let white = |p: [i32; 4]| p[..3].iter().min().copied().unwrap() > 150;
+        assert!(white(ha) && (0..3).all(|k| (ha[k] - hb[k]).abs() <= 8 && (ha[k] - hc[k]).abs() <= 8), "the helmets the same white: {ha:?}, {hb:?}, {hc:?}");
+    }
+
+    /// Asleep in its own gas (`Marks::doze_since`, 2026-11-19): two
+    /// soldiers facing east, B in a deep cloud and out. B's shoulder goes
+    /// toward the gas's lavender (bluer than its green, where A's is not);
+    /// C, as tinted but not out, is brighter than B (the out figure dims);
+    /// the helmets stay the same white, so the squad can still be counted.
+    /// With the 11-18 shader B draws as A and it fails.
+    #[test]
+    fn a_soldier_asleep_in_its_gas_takes_its_lavender_and_keeps_a_white_helmet() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [40u8, 44, 40, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let (r, team) = (2.0, crate::world::marks::team_colour(0));
+        let (a, b, c) = ((14.0, 16.0), (24.0, 16.0), (34.0, 16.0));
+        let mut m = Marks::default();
+        for (p, tint, out) in [(a, 0.0, false), (b, 1.0, true), (c, 1.0, false)] {
+            let n = m.len();
+            m.soldier_bitten(p, r, 0.0, team, 0.0, true, 0.0, 0.0, 0.0, 0.0);
+            m.soldier_head(p, r, 0.0, team, 0.0, 0.0, 0.0, 0.0, 0.0);
+            m.doze_since(n, tint, out);
+        }
+        view.set_marks(&m);
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        let px_at = |p: (f32, f32)| {
+            let (sx, sy) = cam.to_screen(p);
+            pic.get_pixel(sx as u32, sy as u32).0.map(i32::from)
+        };
+        // Half a radius out across the facing: the shoulder.
+        let [sa, sb, sc] = [a, b, c].map(|p| px_at((p.0, p.1 + 0.5 * r)));
+        assert!(sb[2] - sb[1] > sa[2] - sa[1] + 25, "B's shoulder goes lavender: A {sa:?}, B {sb:?}");
+        assert!(sc[..3].iter().sum::<i32>() > sb[..3].iter().sum::<i32>() + 30, "out, B dims: B {sb:?}, C {sc:?}");
+        let [ha, hb, hc] = [a, b, c].map(|p| px_at((p.0 + 0.04 * r, p.1)));
+        assert!((0..3).all(|k| (ha[k] - hb[k]).abs() <= 2 && (ha[k] - hc[k]).abs() <= 2), "the helmets the same white: {ha:?}, {hb:?}, {hc:?}");
+    }
+
+    /// The Sprawler's threads (Look B, 2026-11-19): two lone walkers on
+    /// bare ground, A heading east and B west. In the plain look each is a
+    /// round speck and film (lit on one flank by the key light); as threads
+    /// each is a dash along the way it came, so a cell and a half behind it
+    /// is lit and as far ahead is not. At zoom 12 and 6. With the plain
+    /// look's 11-18 shader the two looks draw the same and it fails.
+    #[test]
+    fn the_sprawlers_walkers_draw_as_dashes_along_the_way_they_came() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let walk = [16.5f32, 20.5, 0.0, 0.0, 48.5, 20.5, std::f32::consts::PI, 0.0];
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&vec![0u32; w * h]));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 2);
+        for zoom in [12.0f32, 6.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            // The summed channels of the 3 x 3 pixels round each point.
+            let mut shot = |look: SlimeLook, centre: (f32, f32), ps: [(f32, f32); 2]| {
+                view.set_slime_look(look, 2.25);
+                cam.centre_on(centre);
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, &cam, None);
+                q.submit([enc.finish()]);
+                let pic = view.picture();
+                ps.map(|p| {
+                    let (sx, sy) = cam.to_screen(p);
+                    let mut c = 0i32;
+                    for dy in -1..=1 {
+                        for dx in -1..=1 {
+                            let v = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                            c += v[0] as i32 + v[1] as i32 + v[2] as i32;
+                        }
+                    }
+                    c / 9
+                })
+            };
+            // Behind, then ahead, a cell and a half from each walker.
+            let a = [(15.0, 20.5), (18.0, 20.5)];
+            let b = [(50.0, 20.5), (47.0, 20.5)];
+            for (name, c, ps) in [("A", (16.5, 20.5), a), ("B", (48.5, 20.5), b)] {
+                let [pb, pa] = shot(SlimeLook::Plain, c, ps);
+                let [tb, ta] = shot(SlimeLook::Threads, c, ps);
+                // Plain, the key light makes one flank brighter (about 70
+                // apart, either way); as a thread it is about 300 to 370.
+                assert!(tb > ta + 200, "zoom {zoom}: {name} as a thread is lit behind it: behind {tb}, ahead {ta}");
+                assert!(tb > pb + 150, "zoom {zoom}: {name}'s dash is brighter behind it than its plain speck: {pb} -> {tb}");
+                assert!(ta < pa, "zoom {zoom}: {name}'s film ahead of it thins, as the dash holds one walker: {pa} -> {ta}");
+            }
+        }
+    }
+
     /// A Mind status on the slime it holds (Look A5, 2026-11-18): two
     /// pieces of gold slime, A's walkers with no status and B's under one
     /// (a Mind word: kind 3, spin, ending 200 steps on); B's middle turns
@@ -2629,7 +2835,8 @@ mod tests {
     /// olive over a pool of blood that spreads after the fall: beside its
     /// chest the bare ground the moment it falls and blood once the pool
     /// has spread, and the chest olive. Against the 11-14 corpse (a cold
-    /// grey figure, no pool) it fails on the blood.
+    /// grey figure, no pool) it fails on the blood. In the slate Armour
+    /// look (`Marks::dress_since`, 2026-11-19) the chest is slate.
     #[test]
     fn a_fallen_soldier_lies_olive_in_a_pool_of_blood_that_spreads() {
         let Some((dev, q)) = test_gpu() else { return };
@@ -2644,16 +2851,17 @@ mod tests {
         cam.centre_on((24.0, 16.0));
         // Facing east (0 radians): the body's frame is the screen's.
         let r = 2.0;
-        let mut shot = |pool: f32| {
+        let mut shot = |pool: f32, skin: u32| {
             let mut m = Marks::default();
             m.fallen((24.0, 16.0), r, 0.0, crate::world::marks::team_colour(0), pool, 7);
+            m.dress_since(0, skin);
             view.set_marks(&m);
             let mut enc = dev.create_command_encoder(&Default::default());
             view.record(&mut enc, &cam, None);
             q.submit([enc.finish()]);
             view.picture()
         };
-        let (fresh, spread) = (shot(0.0), shot(1.0));
+        let (fresh, spread, slate) = (shot(0.0, 0), shot(1.0, 0), shot(1.0, 1));
         // A point in radii of the body's frame (+x the way it faced).
         let at = |pic: &image::RgbaImage, bx: f32, by: f32| {
             let (sx, sy) = cam.to_screen((24.0 + bx * r, 16.0 + by * r));
@@ -2666,6 +2874,8 @@ mod tests {
         assert!(beside[0] as i32 > beside[1] as i32 + 60 && beside[0] as i32 > beside[2] as i32 + 60, "blood there once spread: {beside:?}");
         let chest = at(&spread, -0.3, 0.0);
         assert!(chest[1] as i32 > chest[2] as i32 + 20 && chest[1] as i32 + 10 >= chest[0] as i32, "the chest our olive: {chest:?}");
+        let cloth = at(&slate, -0.3, 0.0);
+        assert!(cloth[2] as i32 > cloth[1] as i32 && cloth[2] as i32 > cloth[0] as i32 + 10, "the chest slate in slate Armour: {cloth:?}");
     }
 
     /// A shot's flung droplet (Look A3, 2026-11-18) is a bead in the

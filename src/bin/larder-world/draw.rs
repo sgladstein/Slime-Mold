@@ -435,6 +435,9 @@ impl App {
         let Some(g) = &self.game else { return };
         let sc = g.world.scale();
         let zoom = self.camera.zoom;
+        // The squad's look and its barrels' mouths, by the run's Armour.
+        let skin = armour_skin(self.run.as_ref().map_or(0, |r| r.level_of("hp")));
+        let mouth = MUZZLE[skin as usize];
         // The larder (the squad's base: bought soldiers stand there and
         // carried food is banked there) and the core's ring (stand in it
         // with no mould near for 5 s to take it). Game objects, not the
@@ -780,13 +783,13 @@ impl App {
             let mut lit = 1.0;
             if let Some(s) = b.by.and_then(|k| g.soldiers.get(k)).filter(|s| s.alive) {
                 let from = (b.at.0 - s.x).hypot(b.at.1 - s.y);
-                let out = from - MUZZLE.0 * body_r;
+                let out = from - mouth.0 * body_r;
                 if out <= 0.0 {
                     continue;
                 }
                 lit = (out / (3.0 * body_r)).clamp(0.0, 1.0);
                 len = len.min(out);
-                let side = (-b.dir.1 * MUZZLE.1 * body_r, b.dir.0 * MUZZLE.1 * body_r);
+                let side = (-b.dir.1 * mouth.1 * body_r, b.dir.0 * mouth.1 * body_r);
                 let near = |d: f32| (1.0 - d / (4.0 * body_r)).clamp(0.0, 1.0);
                 head = (b.at.0 + side.0 * near(out), b.at.1 + side.1 * near(out));
                 let back = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
@@ -836,7 +839,7 @@ impl App {
             let kind = g.squads.get(s.squad as usize).and_then(|q| q.gun).map_or(GunKind::Rifle, |gun| gun.kind);
             let look = card_look(self.rounds.cast_of(g, s.squad as usize, l.cast).map(|c| c.payload));
             let at = drawn_at(s, l, body_r);
-            let tip = muzzle(at, l.facing, body_r);
+            let tip = muzzle(at, l.facing, body_r, mouth);
             let (len, id) = match kind {
                 GunKind::Rifle => (1.15, 0),
                 GunKind::Carbine => (1.0, 1),
@@ -956,7 +959,7 @@ impl App {
             if let Some(l) = self.looks.get(k).filter(|_| s.alive && fl > 0.0) {
                 // At the barrel's mouth (gun look, 2026-11-15; was at the
                 // soldier's middle, under its body).
-                let tip = muzzle(drawn_at(s, l, body_r), l.facing, body_r);
+                let tip = muzzle(drawn_at(s, l, body_r), l.facing, body_r, mouth);
                 self.lights.push(Light { at: tip, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
             }
             // The slime biting it (the owner, 2026-11-18 18:04Z and
@@ -1003,12 +1006,17 @@ impl App {
             // The fallen lie as they fell, in a pool of blood that spreads
             // over `POOL_GROW` (the owner's playtest, 2026-11-18 16:12Z).
             if !s.alive {
+                let n = self.marks.len();
                 self.marks.fallen(at, r, l.facing, team_colour(0), (l.fallen / POOL_GROW).min(1.0), k as u32 * 97 + 13);
+                self.marks.dress_since(n, skin);
                 continue;
             }
             // No sprite flash: the muzzle flash is its own mark, drawn
             // above as light (gun look, 2026-11-15).
+            let n = self.marks.len();
             self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
+            self.marks.dress_since(n, skin);
+            self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
         // Every living soldier's head again, above every body, so a packed
         // squad shows each one (Look A3, a squad of 40 you can count: at
@@ -1018,7 +1026,10 @@ impl App {
         for (k, s) in g.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
             let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
             let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
+            let n = self.marks.len();
             self.marks.soldier_head(drawn_at(s, &l, r), r, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
+            self.marks.dress_since(n, skin);
+            self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {
@@ -1068,6 +1079,9 @@ impl App {
             // The switches this round plays off their default (the play
             // log's `switches=` says the same).
             trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).collect(),
+            // Every switch, for the pause menu's Experiments page.
+            experiments: experiments::rows(&self.args.keys, &self.exp_next),
+            most_off: slime_mould::build::switches::MOST_OFF,
             objective: Some(if let Some(tr) = &self.mission {
                 tr.progress_line()
             } else if self.args.range.is_some() {
@@ -1906,10 +1920,13 @@ const BURST_LIGHT: f32 = 0.12;
 /// hit once every shot carried a card (owner 20:09Z: "it is too much");
 /// #296 cut them to 2.5 cells and 1.5 radii.
 const MUZZLE_LIGHT: f32 = 1.0;
-/// The mouth of a soldier's barrel in its sprite's frame, body radii
-/// (src/world/sprites/soldier.svg: the rifle runs out to x 1.45 at y 0.22
-/// to 0.39, on the right hand's side).
-const MUZZLE: (f32, f32) = (1.45, 0.305);
+/// The mouth of a soldier's barrel in its sprite's frame, body radii, for
+/// each Armour look (`armour_skin`): olive, slate, dark camo. Measured by
+/// src/world/sprites/cut.py, which puts every gun's tip at x 1.45; across,
+/// on the right hand's side. Until 11-19 it was one point, (1.45, 0.305),
+/// sprite A's rifle (soldier.svg: y 0.22 to 0.39), which no living soldier
+/// wears now.
+const MUZZLE: [(f32, f32); 3] = [(1.45, 0.11), (1.45, 0.12), (1.45, 0.23)];
 /// A muzzle flash's white-hot core.
 const MUZZLE_CORE: [u8; 4] = [255, 250, 232, 255];
 
@@ -1926,8 +1943,40 @@ const TRACE_SECS: f32 = 0.08;
 /// lift and the shadow under it are what read as height).
 const MORTAR_ARC: f32 = 0.25;
 
+/// The soldiers' look by the run's Armour upgrade (`run::ITEMS` "hp", 0 to
+/// 4 levels; owner, 2026-11-19 14:41Z: "our base soldier should be olive
+/// that upgraded to slate that upgrades to heavy", and 15:11Z: "Replace
+/// heavy with dark camo"): olive with none, slate at 1 and 2, dark camo at
+/// 3 and 4, so the squad shows what you bought (`Marks::dress_since`).
+pub(super) fn armour_skin(level: u8) -> u32 {
+    match level {
+        0 => 0,
+        1 | 2 => 1,
+        _ => 2,
+    }
+}
+
 /// A soldier's drawn radius, world cells: its touch 1.15 times over, and
 /// at least 10 pixels, so it reads at any zoom (see `marks`).
+/// How much of the sleep gas's lavender a soldier takes (`Marks::doze_since`,
+/// 2026-11-19), from the cloud's level at its feet (`Soldier::doze`) over
+/// the level that puts it out (`Rules::doze`, `at`): a faint quarter as the
+/// cloud reaches toward that level, then from 0.4 while it is out up to all
+/// of it at `DOZE_DEEP` times the level, so a gassed squad shows how deep it
+/// sleeps and clears as the cloud thins (a cast's cloud starts near 20
+/// times the level and thins to it in about 15 s).
+fn doze_tint(doze: f32, at: f32) -> f32 {
+    if at <= 0.0 || doze <= 0.0 {
+        return 0.0;
+    }
+    let l = doze / at;
+    if l < 1.0 { 0.25 * l } else { 0.4 + 0.6 * ((l - 1.0) / (DOZE_DEEP - 1.0)).min(1.0) }
+}
+
+/// The cloud's level, in times the level that puts a soldier out, at which
+/// it takes all of the gas's lavender (`doze_tint`).
+const DOZE_DEEP: f32 = 8.0;
+
 pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
     (g.rules.touch * g.world.scale() * 1.15).max(10.0 / zoom)
 }
@@ -1943,10 +1992,10 @@ pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, 
 }
 
 /// The mouth of the barrel of a soldier drawn at `at`, facing `facing`,
-/// `r` world cells across the radius (`MUZZLE`).
-pub(super) fn muzzle(at: (f32, f32), facing: f32, r: f32) -> (f32, f32) {
+/// `r` world cells across the radius, `mouth` in its frame (`MUZZLE`).
+pub(super) fn muzzle(at: (f32, f32), facing: f32, r: f32, mouth: (f32, f32)) -> (f32, f32) {
     let (c, s) = (facing.cos(), facing.sin());
-    (at.0 + r * (MUZZLE.0 * c - MUZZLE.1 * s), at.1 + r * (MUZZLE.0 * s + MUZZLE.1 * c))
+    (at.0 + r * (mouth.0 * c - mouth.1 * s), at.1 + r * (mouth.0 * s + mouth.1 * c))
 }
 
 /// A payload's colours: the streak's glow and hot core, and its light.

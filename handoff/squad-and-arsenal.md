@@ -48,6 +48,22 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-19, batch 5 (sleep wears off; Gas and Blast bite the squad).**
+
+- Merged: #505 (a walker sleeps once, then shrugs off gas and Mind statuses
+  for 20 s) and #513 (Gas's cloud dozes soldiers standing in it,
+  `Rules::doze`; a Blast takes 40 off every soldier in its disc,
+  `RoundRules::blast_hurt`; fire on its own holds a payload that would reach
+  a soldier, `blast_margin` 1 / `gas_margin` 8, checked in `Rounds::fire` at
+  the real hit; Mist lays no cloud by a soldier). On by default, Direction's
+  call. Reports: `Reports/sleep-wears-off-2026-11-18/`,
+  `Reports/own-goal-2026-11-18/` (planet 3 numbers).
+- Open branch: `claude/project-thread-vzzzbe` (this handoff only).
+- Next: a dozing soldier has no look of its own (Look; `Soldier::doze` is
+  there to draw from). Planet 3's tuning waits on the owner (he said review
+  first; the review found Gas, not the Trunk's hardening). The play log
+  should carry the army round (Engine and tools).
+
 **2026-11-18, batch 4 (auto-fire against loose walkers; Scott 17:01Z).**
 
 - The commanded squad now fires by its own fire mode when not volleying

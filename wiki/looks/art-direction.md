@@ -2,7 +2,7 @@
 title: Art direction for Larder World (the style guide)
 kind: look
 status: open
-updated: 2026-11-18
+updated: 2026-11-19
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/biome-ground-2026-11-15/README.md
@@ -21,6 +21,7 @@ sources:
   - Reports/river-look-2026-11-14/README.md
   - Reports/sim-use-2026-11-17/e2b-look.md
   - Reports/soil-materials-2026-11-14/README.md
+  - Reports/soldier-skins-2026-11-19/README.md
   - Reports/squad-heads-2026-11-18/README.md
   - Reports/value-order-2026-11-15/README.md
 code:
@@ -37,9 +38,9 @@ light on dark ground**. The slime is the brightest, warmest, most detailed
 thing on screen; the ground is dark and quiet; hard shapes (rock, walls,
 crystals) are crisp; your units are high-contrast and countable; light
 (muzzle, impact, crystal charge) only ever shows something the simulation
-did. The first review (11-14) found the slime out of focus, cell staircases on every hard shape, a squad you can't count and a HUD that hides the fight; by 68870d0 those are fixed and the ground dark (#247); what is open is the tint discs, a frontier that reads as pebbles, spent crystals as flat grey blocks and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
-Since 2026-11-17 the Look and interface lane holds this guide and the
-ranked list of look jobs at its end, in the owner's order.
+did. The first review (11-14) found the slime out of focus, cell stairs on hard shapes, an uncountable squad and a HUD over the fight; by 68870d0 those are fixed and the ground dark (#247); open: the tint discs, a pebbly frontier, flat grey spent crystals and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
+Since 2026-11-17 the Look and interface lane holds this guide and its
+ranked look jobs, in the owner's order.
 
 ## The rules
 
@@ -64,13 +65,13 @@ ranked list of look jobs at its end, in the owner's order.
    mini-boss its members' own skin, by kind (`LumpLook`): the hunter
    violet (skin hue about 265, core 280), the wanderer pale bone, the
    leech near-black ink whose core turns the charge's cyan as it drinks a
-   pump (the cyan means charge there too), the sapper ember crimson at your
-   walls; dark, mid and pale, so they part by value as well as hue; not
+   pump, the sapper ember crimson at your
+   walls; dark, mid and pale, parting by value as well as hue; not
    bronze (owner 11-16); its colour, dome and core light all from where its
    members are (once out on its errand, wherever they stand, however thick
    the slime round them), and a broken or spent one's look drains into the slime
    over its 1.5 s fade ([mini-boss look](../../Reports/mini-boss-look-2026-11-16/README.md),
-   round 2; the owner's A/B pick for the hunter open). A new colour needs a role nobody has.
+   round 2; the hunter kept violet 11-19). A new colour needs a role nobody has.
    The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)). Each soil has its own material from the soil field since 11-14 (sand ripples, clay cracks, ash speckle, dark water with a smooth edge and shore, raised rock with a lit rim), so planets read apart in grey; the ripples bend and fade out below zoom 3, and barren ash sits a clear step under rock ([soil materials](../../Reports/soil-materials-2026-11-14/README.md)). Water is a clear step darker than any ground, deep water darker again toward its middle, with a shallow margin, waterline and damp bank; bridges are plank decks; soft rock at full health is a mid-grey under thin slime ([river look](../../Reports/river-look-2026-11-14/README.md)). Play is assumed zoomed in (owner, 11-14 20:21Z): every boundary between grounds, soils, water and plant patches and kinds, is drawn crisp at the pixel up to 24 px a cell, and no texture shows the cell grid ([ground edges](../../Reports/ground-edges-2026-11-14/README.md)); a shortcut past the soil spline must cover all 4 x 4 cells it reads, or the shore and bridge shading steps at cell middles; the full test costs about 0.2 ms of GPU a frame on the 1070 ([bug check](../../Reports/bug-check-2026-11-15/README.md)). Value order since 11-15, on every planet: ground 41-51, rock 50-60 (hedges and rubble too), soft rock 60-72 darkening with damage, thin slime above rock with a shade floor on its far flank, crystal faces 110 and up, thick slime 140 and up; shallow water about 20 above deep; off the map is darker than cave rock; hedges are lumpy and grained, not tubes; the rock bevel is at most 5 px; below zoom 1 and on the minimap each cell is drawn from the shaded materials ([value order](../../Reports/value-order-2026-11-15/README.md)). Each planet's plain soil has its own hue at every zoom and its own close look from its biome (the map's `flora`): brown meadow loam, tan barrens hardpan, olive fen mud, warm valley silt, red-brown jungle humus, neutral highland gravel, blue-grey cave dust, the texture in from zoom 3 to 8, all kept in the ground's value band; thin film has an absolute floor of 95 before shading over any ground ([planet ground](../../Reports/biome-ground-2026-11-15/README.md)).
 4. **Sharp at every zoom, 1 to 24.** Hard shapes have exact edges worked
    out at the screen pixel and antialiased over one pixel; no cell stair is
@@ -100,8 +101,9 @@ ranked list of look jobs at its end, in the owner's order.
 7. **The HUD serves the fight.** In play the HUD covers at most about 15% of
    the screen, collapses when nothing is selected, and never sits over what
    the camera opens on. Its look stays the `theme` set in `ui.rs`.
-8. **Shapes the owner fixed**: crystals are hexagons; soldiers are sprite A;
-   shots stop at the first slime (owner 11-11 15:50-16:48Z).
+8. **Shapes the owner fixed**: crystals are hexagons; shots stop at the
+   first slime (owner 11-11 15:50-16:48Z); soldiers wear their Armour:
+   olive, slate, dark camo (11-19, [skins](../../Reports/soldier-skins-2026-11-19/README.md)).
 
 ## How a look is judged and shipped
 
@@ -114,37 +116,37 @@ ranked list of look jobs at its end, in the owner's order.
 - A look lands when it works and can be seen (testing rule, 11-12 17:26Z):
   if a better look changes balance, retune the numbers, don't keep the
   uglier look.
-- One owner: the Look and interface lane (`CLAUDE.md`, *Lanes*) reviews
-  every lane's visible change against this guide.
+- One owner: the Look and interface lane reviews every lane's visible
+  change against this guide.
 
 ## Owner's word
 
 - 2026-11-14 01:49Z: "Graphics need a big improvement. The crystals are pixelated. The slime looks very blurry/out of focus. The flashes of chaos bullets are really bad."
 - 2026-11-14 01:50Z: "The bullets shouldn't just be flashy effects. Research how noita does their wand animations."
-- 2026-11-14 02:24Z: "I want another thread to review all graphics in general and mange the current graphics work and start new work where it sees issues. We need to polish this game up"
+- 2026-11-14 02:24Z: "I want another thread to review all graphics ... We need to polish this game up"
 - 2026-11-17 17:39Z: "we should explore all your suggestions, priority in the order that you listed A->B->C->D"
+- 2026-11-19 00:08Z: "multiple looks could eventually apply to different slimes"
 
 ## Look jobs, ranked
 
-In the owner's order. A is Milestone 1's look test (`NOW.md`, exit test 2);
-B starts once A passes his eye.
+In the owner's order; A is Milestone 1's look test (`NOW.md`, exit test 2).
 
 **A. The fight round the squad**
 
-1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart in value ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
+1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
 2. A hit is the slime's own reaction: the hole and how it closes (shots fly as comets).
 3. Done (11-18): a squad countable by its heads ([heads](../../Reports/squad-heads-2026-11-18/README.md)).
 4. Done (11-18): no light past its damage; biting slime crimson ([bite](../../Reports/biting-slime-2026-11-18/README.md)).
 5. Done (11-18): status slime glows rose ([mind](../../Reports/mind-status-2026-11-18/README.md)).
 6. Checked (11-18): fire at zoom 12 has no cell steps.
 
-**B. The slime itself**: veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; a look for the origin when Enemy builds it.
+**B. The slime itself**, a look a slime (owner, 11-19): Sprawler dashes (done, `SlimeLook`); veins and flow inside the thick body; set slime as a hard material (raised 11-18, [raised walls](../../Reports/raised-walls-2026-11-18/README.md)); loose specks that read as one body, not pebbles; the origin's look once Enemy builds it.
 
 **C. Planets and terrain**: stronger grounding (faint shadows at play zoom); materials for rock and spent crystals, flat grey today; one visual trait a planet that only it has.
 
 **D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture; then the shop and the menus.
 
-Also open: the 1070 cost of the new looks (one batch); the first review's remaining issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
+Also open: the 1070 cost of the new looks (one batch); the first review's open issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
 ## Sources
 

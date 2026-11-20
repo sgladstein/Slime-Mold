@@ -1603,6 +1603,9 @@ pub struct Engine {
     /// that walker again; 0 the old rule. The gas header's word 7, written
     /// with each Mind status laid.
     pub mind_rest: u32,
+    /// The cloud at each point of the last `calm`, in sleep levels (the
+    /// points' fourth words; `Rules::doze`). Empty when `calm` read none.
+    pub clouds: std::cell::RefCell<Vec<f32>>,
     /// Whether any walker has had a Mind status (`mind_pass`, or a dish
     /// loaded with one), and the last step any lasts to: the Mind row's
     /// first word (`minds_on`), so `sense` reads the words (after the
@@ -1969,6 +1972,7 @@ impl Engine {
             gas_until: gas_until(&d),
             gas_immune: 0,
             mind_rest: 0,
+            clouds: Default::default(),
             minds: !d.mind.is_empty(),
             lured: false,
             forted: false,
@@ -3122,6 +3126,7 @@ impl Engine {
     pub fn calm(&self, shared: &Shared, at: &[(f32, f32)], r: f32) -> Vec<u32> {
         let n = at.len().min(squad::UNITS_MAX);
         if self.done >= self.gas_until.max(self.cloud_until) || n == 0 {
+            self.clouds.borrow_mut().clear();
             return vec![0; at.len()];
         }
         let mut words = vec![self.done as u32, n as u32, 0, 0];
@@ -3135,9 +3140,15 @@ impl Engine {
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&words[..2]));
         self.queue.write_buffer(&self.news, self.gas_at + 4 * GAS_HEAD as u64, &u32_bytes(&words[GAS_HEAD..]));
         self.run(shared, &[(CALM, self.n.div_ceil(256))]);
-        let calm = self.gas_at + 4 * (GAS_HEAD + 4 * squad::UNITS_MAX) as u64;
-        let b = read_back_range(&self.device, &self.queue, &self.news, calm, 4 * n as u64);
-        let mut out: Vec<u32> = b.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        // One read-back: the points (the cloud in each one's fourth word,
+        // 2026-11-18) and the counts after them.
+        let pts = self.gas_at + 4 * GAS_HEAD as u64;
+        let b = read_back_range(&self.device, &self.queue, &self.news, pts, 4 * (4 * squad::UNITS_MAX + n) as u64);
+        let word = |i: usize| u32::from_le_bytes(b[4 * i..4 * i + 4].try_into().unwrap());
+        let mut clouds: Vec<f32> = (0..n).map(|u| f32::from_bits(word(4 * u + 3))).collect();
+        clouds.resize(at.len(), 0.0);
+        *self.clouds.borrow_mut() = clouds;
+        let mut out: Vec<u32> = (0..n).map(|u| word(4 * squad::UNITS_MAX + u)).collect();
         out.resize(at.len(), 0);
         out
     }
