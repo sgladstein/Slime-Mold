@@ -104,6 +104,35 @@ game, now loses in every arm (base 1:47, H 1:40, W 1:26); before the
 lunge and strikers it won at 4:21. The lone losses on maps 3, 4, 6 and
 1795038793 are the same game in every arm.
 
+## The army-scaled strikers (PR #566, 19:00Z)
+
+The slime thread's next defaults: W, with the share of strikers scaled by
+soldiers alive (none at 8 or fewer, `strikers_few`; full from 24,
+`strikers_full`), plus its mass fix. Scored in the cloud session on
+lavapipe (not GitHub's; one game a map and arm, so read it beside the run
+above, not paired with it), #566 merged into this branch locally; 27
+games, `strikers-566-rows.jsonl`. Arms: the new default (D), W unscaled
+(`set=strikers_few=0 set=strikers_full=1`), a softer charge
+(`set=strikers_haste=2`).
+
+| Map | D: late bites, result | W unscaled | Haste 2 |
+| --- | --- | --- | --- |
+| 1 (army 80) | 37, won 7:01 with 78 | 35, won 7:27 | 26, won 7:01 |
+| 2 | 33, lost 8:36 (army peaked at 30) | 25, lost 5:02 | 9, won 6:07 (peak 22) |
+| 5 (army 80) | 28, won 3:32 | 25, won 3:32 | 9, won 3:30 |
+| 7 (small squad) | 2, won 4:23 | 4, lost 1:14 | 2, won 4:23 |
+| 8 (small squad) | 1, won 4:58 | 5, lost 2:04 | 1, won 4:58 |
+
+Maps 3, 4, 6 and 1795038793 are the same loss in every arm. Against D:
+W unscaled up 2, down 3, tied 4 (p 1.0); haste 2 up 0, down 3, tied 6
+(p 0.25). Wins: D 4 of 9, W unscaled 2, haste 2 5.
+
+So the scaling does what it was for: small squads win again (maps 7 and
+8), and the big army is still bitten, 28 to 37 soldiers late on maps 1
+and 5, which the bot rebuys and still wins. Its cost is map 2, where the
+strikers hold the army near 24 to 30 and finally break it; haste 2 keeps
+that win and bites less. The pick is the slime thread's.
+
 ## What landed
 
 `late_at` 0.4 on every run planet (`run::ENEMY_RULES`), with
