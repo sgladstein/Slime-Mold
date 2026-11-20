@@ -1,0 +1,95 @@
+<title>The Slime's Pinwheel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; each clip sits beside the counts it shows. */
+:root {
+  --bg: #f3f4ef; --fg: #1d211a; --muted: #5d6555; --line: #d5d9cc; --card: #ffffff;
+  --moss: #24407a; --acid: #5fa8e8;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121510; --fg: #e4e8dc; --muted: #9aa38f; --line: #2c3326; --card: #1a1f17; --moss: #8fb6f0; --acid: #a8d4ff; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #121510; --fg: #e4e8dc; --muted: #9aa38f; --line: #2c3326; --card: #1a1f17; --moss: #8fb6f0; --acid: #a8d4ff; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2rem 3rem; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 2.2rem; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; color: var(--moss); }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+section { display: grid; gap: .8rem; }
+video, img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--line); background: #000; display: block; }
+.pair { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1.2rem; align-items: start; }
+@media (max-width: 720px) { .pair { grid-template-columns: 1fr; } }
+.facts { display: grid; gap: .5rem; font-size: .95rem; min-width: 0; }
+.facts div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line); padding-block: .3rem; }
+.facts b { font-variant-numeric: tabular-nums; }
+.wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .92rem; min-width: 520px; }
+th, td { padding: .35rem .7rem; border-bottom: 1px solid var(--line); text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--display); font-weight: 500; color: var(--muted); }
+.small { font-size: .85rem; color: var(--muted); }
+</style>
+<main>
+<main>
+  <header style="display:grid;gap:.6rem">
+    <h1>The slime's Pinwheel</h1>
+    <p class="lede">Your second pick, from planet 3 on. A deep cobalt mini-boss that hunts your squad like the hunter. Far off it walks compact; within 90 units of its prey its body unfurls into three curved arms that sweep round it. The arms are the slime itself: each walker in the boss leans toward the nearest of three turning spokes, so the body gathers into them and they turn.</p>
+  </header>
+
+  <section>
+    <h2>Closing on your squad (zoom 6)</h2>
+    <div class="pair">
+      <video src="pinwheel-zoom6.mp4" controls muted loop playsinline autoplay></video>
+      <div class="facts">
+        <div><span>Map</span><b>run 1795119328, planet 4</b></div>
+        <div><span>Game time</span><b>1:56 to 2:06, 1x</b></div>
+        <div><span>Pinwheel</span><b>561 walkers</b></div>
+        <div><span>Nearest soldier</span><b>59 to 18 units</b></div>
+        <div><span>Squad</span><b>22 to 14 soldiers</b></div>
+        <p class="small">Every boss forced to a pinwheel for the film (<code>set=boss_kind=6</code>). Hemmed in by two rocks, its arms reach along the gaps; one sweeps into the squad from 2:02.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Close (zoom 12)</h2>
+    <div class="pair">
+      <video src="pinwheel-zoom12.mp4" controls muted loop playsinline autoplay></video>
+      <div class="facts">
+        <div><span>Game time</span><b>1:56 to 2:06, 1x</b></div>
+        <div><span>Look</span><b>cobalt skin, sky-blue core</b></div>
+        <p class="small">Bluer and darker than the hunter's violet, apart from the slime's orange and the leech's ink.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>In open ground</h2>
+    <div class="pair">
+      <video src="pinwheel-open.mp4" controls muted loop playsinline autoplay></video>
+      <div class="facts">
+        <div><span>Map</span><b>run 1795038793, planet 4</b></div>
+        <div><span>Game time</span><b>1:32 to 1:38, 1x</b></div>
+        <div><span>Pinwheel</span><b>268 walkers</b></div>
+        <p class="small">An earlier build with the arms turning all the way, far from the squad, on open slime: the three-armed shape turning reads best here. The arms are the same; it now walks compact until it is near.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>On your planet 3 and 4 maps, every boss a pinwheel</h2>
+    <p>Strategy bot, to 5:00. Turning all the way, leaning into its arms halved its pace; three times the speed to make up for it tore the body apart on rock. So the arms now turn only near its prey.</p>
+    <div class="wrap"><table>
+      <tr><th></th><th>arms near prey</th><th>arms always</th><th>hunter</th></tr>
+      <tr><td>formed</td><td>21</td><td>18</td><td></td></tr>
+      <tr><td>reached the squad</td><td>8</td><td>7</td><td></td></tr>
+      <tr><td>pace hunting (units a second, mean)</td><td>4.4</td><td>3.4</td><td>6.4</td></tr>
+      <tr><td>ended broken</td><td>8</td><td>6</td><td></td></tr>
+      <tr><td>still alive at 5:00</td><td>5</td><td>6</td><td></td></tr>
+    </table></div>
+    <p class="small">Your run seeds 1795038793, 1795106014 and 1795119328. "Arms always" stopped at about 4:50 on planet 4. The hunter's pace is from the earlier census on the same maps. What its arms cost your squad is not measured yet.</p>
+  </section>
+</main>

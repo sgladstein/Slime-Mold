@@ -2467,7 +2467,7 @@ impl Engine {
         // alone; a step reads only the haste.
         b.extend(u32_bytes(&[(self.lumps_on || self.strikers.is_some()) as u32, self.strikers.unwrap_or(0.0).to_bits(), 0, 0]));
         for l in &s.lumps {
-            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), 0]));
+            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), l.spin.to_bits()]));
         }
         assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
         b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), 0, 0]));

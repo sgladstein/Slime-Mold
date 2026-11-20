@@ -720,6 +720,48 @@ impl App {
                 progress(&mut self.marks, b.at, below + 4.0);
             }
         }
+        // Starfall and boss cores (`Game::starfall`, 2026-11-20): what is
+        // coming down and what lies on the ground, drawn from the game's
+        // own drops. A fall's shadow darkens and its ring tightens as it
+        // comes, the ore itself a streak dropping onto it; down, ore is a
+        // hot gold lump and a core a red one, each shrinking with what is
+        // left in it and dimming as it cools, with its points beside it.
+        // The impact itself is the engine's blast and crater.
+        {
+            use slime_mould::mould::larder_world::DropKind;
+            let now = g.world.ticks();
+            let star = g.rules.star;
+            for d in &g.starfall.live {
+                let w = d.warmth(now);
+                if !d.down {
+                    let hit = star.kill_r * sc;
+                    self.marks.disc(d.at, hit * (0.35 + 0.65 * w), [8, 6, 16, (50.0 + 110.0 * w) as u8], false);
+                    self.marks.ring(d.at, hit, [255, 196, 110, (70.0 + 160.0 * w) as u8]);
+                    // Coming in from high up and to the right, fast at the end.
+                    let fall = (1.0 - w).powf(1.6) * 70.0 * sc;
+                    let head = (d.at.0 + 0.55 * fall, d.at.1 - fall);
+                    let tail = (head.0 + 0.55 * 9.0 * sc, head.1 - 9.0 * sc);
+                    self.marks.streak(head, tail, 3.0, [255, 150, 60, 150], [255, 240, 200, 255]);
+                    glows.push(Light { at: head, reach: 6.0 * sc, lift: 6.0, colour: [255.0, 170.0, 90.0], strength: 0.6 + 0.8 * w });
+                    continue;
+                }
+                let full = (d.left / d.worth.max(1e-3)).clamp(0.0, 1.0);
+                let (glow, core, light) = match d.kind {
+                    DropKind::Ore => ([255, 190, 70, 200], [255, 244, 200, 255], [255.0, 200.0, 90.0]),
+                    DropKind::Core => ([235, 60, 80, 200], [255, 210, 220, 255], [240.0, 70.0, 90.0]),
+                };
+                let heat = 0.35 + 0.65 * w;
+                let r = d.r * (0.45 + 0.55 * full.sqrt());
+                let fade = |c: [u8; 4], a: f32| [c[0], c[1], c[2], (c[3] as f32 * a) as u8];
+                self.marks.disc(d.at, r * 1.25, fade(glow, 0.55 * heat), true);
+                self.marks.disc(d.at, r * 0.6, fade(core, heat), false);
+                // How long it lasts: a ring that closes as it cools.
+                self.marks.ring(d.at, d.r * (1.0 + 1.2 * w), fade(glow, 0.5));
+                glows.push(Light { at: d.at, reach: (4.0 + 4.0 * full) * sc, lift: 3.0, colour: light, strength: 1.4 * heat * full.max(0.2) });
+                let below = (d.r * zoom).max(4.0) + 4.0;
+                self.marks.label(d.at, (-6.0, -below - 10.0), &format!("{}", d.left.ceil() as u32), 1.5, fade(core, 0.95));
+            }
+        }
         for (k, s) in g.soldiers.iter().enumerate() {
             if !s.alive {
                 continue;
@@ -1625,7 +1667,12 @@ impl App {
                 }
                 let (label, line) = match (v.stars > 0, last) {
                     (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
-                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", run::reward(r.depth, v.stars), r.points + run::reward(r.depth, v.stars))),
+                    (true, false) => {
+                        // Starfall and boss cores (`Game::starfall`) on top of the win's.
+                        let (won, found) = (run::reward(r.depth, v.stars), g.starfall.earned());
+                        let line = if found > 0 { format!("+{won} points for the planet, +{found} from starfall and cores ({} now)", r.points + won + found) } else { format!("+{won} points for the shop ({} now)", r.points + won) };
+                        ("On to the shop", line)
+                    }
                     (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
                 };
                 end.lines.push(line);

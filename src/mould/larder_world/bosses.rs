@@ -143,11 +143,12 @@ pub struct BossRules {
     pub fade: f32,
     /// **The kinds** (owner 04:58Z: "all of them"; a mix of hunters and
     /// kinds with an errand): each one's kind is drawn as it forms, by
-    /// these weights (hunter, wanderer, sapper, leech, mortar), among the kinds it
-    /// has a target for (a sapper needs something built, a leech a pump, a
-    /// wanderer a fresh crystal far off); a cut-off part makes only the
-    /// runners (hunter, wanderer). `kind` 1-4 forces one (0 draws).
-    pub kinds: [f32; 5],
+    /// these weights (hunter, wanderer, sapper, leech, mortar, pinwheel),
+    /// among the kinds it has a target for (a sapper needs something
+    /// built, a leech a pump, a wanderer a fresh crystal far off); a
+    /// cut-off part makes only the runners (hunter, wanderer, pinwheel).
+    /// `kind` 1-6 forces one (0 draws).
+    pub kinds: [f32; 6],
     pub kind: f32,
     /// **The mortar** (the owner's pick, 2026-11-20 13:21Z, "Mortar
     /// first"): every `lob_every` seconds it throws the slime in a ring
@@ -160,6 +161,24 @@ pub struct BossRules {
     /// afar, weak up close (the owner's balance rule, 11-18).
     pub lob: f32,
     pub lob_every: f32,
+    /// **The pinwheel** (the owner's doc's second proposal, built
+    /// 2026-11-20 after the Mortar): a hunter whose body gathers into
+    /// three arms that turn about its centre at `spin` turns a second
+    /// (`Lump::spin`; the way by the lump it holds, so two turn opposite
+    /// ways) and sweep across the squad; its lunge is a faster turn
+    /// (x `lunge_pull`) instead of a harder pull. From planet 3.
+    pub spin: f32,
+    /// The pinwheel's pace on top of its grade's (`haste_at`): leaning into
+    /// its arms, members spend their steps going round, and without it
+    /// one walked at 2.4 units a second against a hunter's 6.3 (median 2
+    /// against 4) on the owner's planet 3 and 4 maps, and reached the
+    /// squad 3 times of 7. At 3 a lump walking to an aim 40 cells off on
+    /// the GPU test world went as far turning as plain (11.5 cells in
+    /// 4 s; 2: 7.5), but on the owner's planet 4 the body tore apart along
+    /// a rock (spread 1 to 4): its arms now turn only within `spin_near`
+    /// world units of its prey, and this is a small push there.
+    pub spin_haste: f32,
+    pub spin_near: f32,
     pub shell: f32,
     /// **What a throw does** (2026-11-20, after the owner's "a late-game
     /// army crushes minibosses"): the ring thrown stays the mortar's for
@@ -214,7 +233,7 @@ impl BossRules {
             grade_lo: 0.4 * t,
             grade_hi: 0.6 + 0.4 * t,
             // The mortar from planet 4 (the proposal the owner picked).
-            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }],
+            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }, if depth >= 3 { 1.0 } else { 0.0 }],
             ..BossRules::default()
         }
     }
@@ -301,10 +320,13 @@ impl Default for BossRules {
             lunge_pull: 2.0,
             lunge_haste: 2.0,
             fade: 1.5,
-            kinds: [1.0, 1.0, 1.0, 1.0, 0.0],
+            kinds: [1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
             kind: 0.0,
             lob: 30.0,
             lob_every: 5.0,
+            spin: 0.2,
+            spin_haste: 1.3,
+            spin_near: 90.0,
             shell: 1.5,
             shell_life: 8.0,
             far: 40.0,
@@ -349,10 +371,12 @@ pub enum BossKind {
     /// Sits where it formed and lobs the slime round it at the nearest
     /// soldier or building in reach (`BossRules::lob`).
     Mortar = 5,
+    /// A hunter whose body turns in arms (`BossRules::spin`).
+    Pinwheel = 6,
 }
 
 impl BossKind {
-    pub const ALL: [BossKind; 5] = [BossKind::Hunter, BossKind::Wanderer, BossKind::Sapper, BossKind::Leech, BossKind::Mortar];
+    pub const ALL: [BossKind; 6] = [BossKind::Hunter, BossKind::Wanderer, BossKind::Sapper, BossKind::Leech, BossKind::Mortar, BossKind::Pinwheel];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -361,6 +385,7 @@ impl BossKind {
             BossKind::Sapper => "sapper",
             BossKind::Leech => "leech",
             BossKind::Mortar => "mortar",
+            BossKind::Pinwheel => "pinwheel",
         }
     }
 }
@@ -610,7 +635,7 @@ impl<W: World> Game<W> {
                 continue;
             }
             let hunt = b.born + secs(r.gather);
-            let errand = if now < hunt || matches!(b.kind, BossKind::Hunter | BossKind::Mortar) { None } else { self.errand(&mut b, now) };
+            let errand = if now < hunt || matches!(b.kind, BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel) { None } else { self.errand(&mut b, now) };
             let size = self.world.size();
             let cell = move |p: (f32, f32)| crate::mould::larder_world::raid_cell(p, size);
             let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
@@ -669,7 +694,26 @@ impl<W: World> Game<W> {
                         // The lunge: harder and faster for a moment.
                         let (pull, haste) = if r.lunging(now - hunt, tps) { (r.lunge_pull.max(0.0), r.lunge_haste.max(1.0)) } else { (1.0, 1.0) };
                         let aim = self.boss_steer(b.lump, (self.soldiers[s].x, self.soldiers[s].y), true, centre, body);
-                        Lump { aim: cell(aim), pull: r.pull * pull, leash, haste: r.haste_at(b.grade) * haste, ..strong }
+                        // A pinwheel's arms turn at one rate: the engine
+                        // sets them at `spin` x its step count, so a faster
+                        // turn for the lunge (tried first) jumped them round.
+                        // Its arms only near its prey (`spin_near`): turning
+                        // the whole way, leaning into the arms halved its
+                        // pace (2.4 units a second against a hunter's 6.3,
+                        // the squad reached 3 times of 7 on the owner's
+                        // planet 3 and 4 maps), and three times the haste
+                        // to make up for it tore the body apart on rock.
+                        // Far off it walks as a compact hunter; close, it
+                        // unfurls, which is also its tell.
+                        let near = (self.soldiers[s].x - centre.0).hypot(self.soldiers[s].y - centre.1) < r.spin_near;
+                        let spin = if b.kind == BossKind::Pinwheel && near {
+                            let way = if b.lump.is_multiple_of(2) { 1.0 } else { -1.0 };
+                            way * r.spin * std::f32::consts::TAU / (tps * self.world.fine_steps().max(1) as f32)
+                        } else {
+                            0.0
+                        };
+                        let haste = if spin != 0.0 { haste * r.spin_haste.max(1.0) } else { haste };
+                        Lump { aim: cell(aim), pull: r.pull * pull, leash, haste: r.haste_at(b.grade) * haste, spin, ..strong }
                     }
                     None => Lump { aim: cell(centre), leash, ..strong },
                 }
@@ -1068,8 +1112,8 @@ impl<W: World> Game<W> {
             .iter()
             .enumerate()
             .map(|(i, &kind)| {
-                let runner = matches!(kind, BossKind::Hunter | BossKind::Wanderer);
-                let able = matches!(kind, BossKind::Hunter | BossKind::Mortar) || self.boss_goal(&Boss { kind, ..*b }).is_some();
+                let runner = matches!(kind, BossKind::Hunter | BossKind::Wanderer | BossKind::Pinwheel);
+                let able = matches!(kind, BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel) || self.boss_goal(&Boss { kind, ..*b }).is_some();
                 if (b.cause != BossCause::Cut || runner) && able { r.kinds[i].max(0.0) } else { 0.0 }
             })
             .collect();
@@ -1095,7 +1139,7 @@ impl<W: World> Game<W> {
         let d = |p: (f32, f32)| (p.0 - b.centre.0).hypot(p.1 - b.centre.1);
         let near = |ps: Vec<(f32, f32)>| ps.into_iter().min_by(|a, c| d(*a).total_cmp(&d(*c)));
         match b.kind {
-            BossKind::Hunter | BossKind::Mortar => None,
+            BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel => None,
             BossKind::Wanderer => {
                 // A hop toward the player (2026-11-20): the nearest fresh
                 // crystal to it of those nearer the player's things than it
@@ -1245,7 +1289,7 @@ impl<W: World> Game<W> {
     fn goal_holds(&self, b: &Boss, q: (f32, f32)) -> bool {
         let r = self.rules.boss;
         match b.kind {
-            BossKind::Hunter | BossKind::Mortar => false,
+            BossKind::Hunter | BossKind::Mortar | BossKind::Pinwheel => false,
             BossKind::Wanderer => self.world.crystals().iter().enumerate().any(|(j, c)| c.0 == q && (j >= 64 || b.visited & 1 << j == 0) && c.1 > 0.0 && c.1 >= r.fresh * self.start_charge.get(j).copied().unwrap_or(0.0)),
             BossKind::Sapper => self.on_wall(q) || self.buildings.iter().any(|w| w.alive && !matches!(w.kind, Kind::Wall { .. }) && w.at == q),
             BossKind::Leech => self.buildings.iter().any(|w| w.alive && w.kind == Kind::Pump && w.up() && w.at == q),

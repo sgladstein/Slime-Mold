@@ -160,6 +160,14 @@ pub struct Lump {
     /// `pull` is away from its members' centre instead of to `aim`, so a
     /// ring bunched on one side spreads round.
     pub ring: f32,
+    /// **Arms** (2026-11-20, the Pinwheel, the owner's second pick of his
+    /// mini-boss doc): three spokes round its members' centre turn at
+    /// `spin` radians a fine step (anticlockwise when positive), and each
+    /// member leans along the tangent toward the nearest, as hard as its
+    /// `pull`, so the body gathers into arms that sweep round. The GPU
+    /// engine only (no new CPU twin, owner 2026-11-17): the CPU dish
+    /// ignores it.
+    pub spin: f32,
 }
 
 impl Lump {
