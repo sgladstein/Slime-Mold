@@ -277,10 +277,12 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     if !does.is_empty() {
         lines[0] += &format!(". {does}");
     }
-    // The level's clock and head start (`run::clock`, `run::head_start`).
-    let cap = l.mission.rules(Rules::default()).cap;
-    let secs = cap.round() as u32;
-    let mut clock = format!("{}:{:02} on the clock", secs / 60, secs % 60);
+    // The level's speed star and head start (`run::par`, `run::head_start`);
+    // the clock counts up (owner, 2026-11-20), so there is no time limit to
+    // tell, only the star's.
+    let par = l.mission.rules(Rules::default()).par;
+    let secs = par.round() as u32;
+    let mut clock = format!("A star for clearing it under {}:{:02}", secs / 60, secs % 60);
     if l.grow > 0.0 {
         clock += &format!("; the slime spreads for {:.0} s before you land", l.grow);
     }

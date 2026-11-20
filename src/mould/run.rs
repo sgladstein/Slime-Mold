@@ -158,10 +158,12 @@ pub fn area_of(p: &Planet) -> f32 {
     (p.size.0 * p.size.1) as f32 / (MAP_W * MAP_H) as f32
 }
 
-/// The level's clock (`Rules::cap`, game seconds) for a planet of `area`
+/// The level's old countdown (game seconds) for a planet of `area`
 /// (`area_of`): 15 minutes on planet 1's 0.6 and 7.5 minutes more for
 /// each whole map of area, in half minutes: 15:00, 16:30, 18:00, 21:00,
-/// 25:30, 31:30, 40:30 and 55:30 on today's eight planets.
+/// 25:30, 31:30, 40:30 and 55:30 on today's eight planets. Since
+/// 2026-11-20 the clock counts up (owner, 14:10Z: "there should not be a
+/// countdown clock"), and this is the measure `limit` and `par` scale from.
 ///
 /// Why (the planet review, 11-15, finding 6): the clock was 900 s on
 /// every planet, while the walk to the far nest grows from 14 s to 60 s
@@ -172,6 +174,37 @@ pub fn area_of(p: &Planet) -> f32 {
 pub fn clock(area: f32) -> f32 {
     let secs = 900.0 + 450.0 * (area - 0.6).max(0.0);
     (secs / 30.0).round() * 30.0
+}
+
+/// The speed star's time on planet `depth` of `area` (`Rules::par`, game
+/// seconds): the goal met before it earns a star, and the clock counts up
+/// to it. 8:00 on planet 1 and 10:00 on planets 2 and 3 (Direction,
+/// 2026-11-20, for the owner's count-up clock: "stars ... are for being
+/// under a certain time", 14:10Z; in line with Milestone 1's planets of
+/// 8 to 12 minutes, about 30 for the three). Deeper planets scale planet
+/// 3's 10:00 by their old clock, in half minutes: 11:30, 14:00, 17:30,
+/// 22:30 and 31:00 on planets 4-8. Before, the star came at four fifths of
+/// the countdown (12:00 on planet 1), which the balance review (11-20)
+/// found near free: his planets took a median 4:05 on planet 1.
+pub fn par(depth: u32, area: f32) -> f32 {
+    match depth {
+        0 | 1 => 480.0,
+        2 | 3 => 600.0,
+        _ => (600.0 * clock(area) / clock(levelgen::AREA[2]) / 30.0).round() * 30.0,
+    }
+}
+
+/// When a stalemate ends a planet (`Rules::cap`, game seconds): twice the
+/// old countdown, 30:00 on planet 1. The clock counts up and nothing shows
+/// this until its last two minutes, so it ends only a planet neither side
+/// can win: a slime the squad cannot finish and that cannot finish the
+/// squad (owner's 11-19 planet 3 sat 18 minutes on 40 walkers it could not
+/// kill). It is graded as the countdown was: cut to half the peak, 1 star
+/// and the run goes on; else lost. The choice was Direction's to give
+/// this thread (2026-11-20): a far limit, not none, so no planet can run
+/// forever and the run bot's checks still end.
+pub fn limit(area: f32) -> f32 {
+    2.0 * clock(area)
 }
 
 /// Game seconds the slime grows alone before the squad lands on a planet
@@ -947,8 +980,9 @@ impl Run {
             bonus: Some(Bonus::LoseAtMost(2)),
             // Free play's bite (2), not the missions' older 1: walking into
             // the slime is very deadly (owner, 11-12).
-            // The clock grows with the planet (`clock`).
-            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), clock(area_of(&planet)))],
+            // The clock counts up to the speed star (`par`); only a
+            // stalemate meets the far limit (`limit`).
+            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), limit(area_of(&planet))), ("par".into(), par(d, area_of(&planet)))],
             own: false,
         };
         // Walkers scale with the planet's area too (the level-gen thread,
@@ -1778,17 +1812,22 @@ mod tests {
 
     /// The planet review's finding 6 and 5 (11-15): the clock grows with
     /// the planet's area from 15 minutes, and the slime grows first on
-    /// planets bigger than today's map.
+    /// planets bigger than today's map. Since 2026-11-20 the clock counts
+    /// up: the level carries the speed star's time (`par`) and twice the
+    /// old clock as a stalemate's limit (`limit`).
     #[test]
     fn bigger_planets_get_a_longer_clock_and_a_grown_slime() {
         let at: Vec<(f32, f32)> = levelgen::AREA.iter().map(|&a| (clock(a), head_start(a))).collect();
         assert_eq!(at, [(900.0, 0.0), (990.0, 0.0), (1080.0, 0.0), (1260.0, 11.0), (1530.0, 25.0), (1890.0, 40.0), (2430.0, 60.0), (3330.0, 87.0)]);
+        let pars: Vec<f32> = levelgen::AREA.iter().zip(1..).map(|(&a, d)| par(d, a)).collect();
+        assert_eq!(pars, [480.0, 600.0, 600.0, 690.0, 840.0, 1050.0, 1350.0, 1860.0], "8:00, then 10:00, then scaled by the old clock");
         let mut r = Run::new(3);
         for d in 1..=PLANETS {
             r.depth = d;
             let (l, a) = (r.level(), area_of(&r.planet()));
-            let cap = l.mission.rules(Rules::default()).cap;
-            assert_eq!((cap, l.grow), (clock(a), head_start(a)), "planet {d}: the level's rules carry its clock");
+            let rules = l.mission.rules(Rules::default());
+            assert_eq!((rules.cap, rules.par, l.grow), (limit(a), par(d, a), head_start(a)), "planet {d}: the level's rules carry its limit and par");
+            assert!(rules.par < rules.cap / 2.0, "planet {d}: the stalemate limit is far past the star");
         }
     }
 
@@ -1808,7 +1847,7 @@ mod tests {
     #[test]
     fn a_level_is_a_mission_the_campaign_would_take() {
         let l = Run::new(1).level();
-        let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain, clock(0.6));
+        let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\nrule par {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain, limit(0.6), par(1, 0.6));
         assert_eq!(Mission::parse(&text).unwrap(), l.mission);
     }
 
