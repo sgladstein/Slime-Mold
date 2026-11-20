@@ -2,7 +2,7 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-14
+updated: 2026-11-19
 sources:
   - Reports/census-shape-c-2026-11-14/README.md
   - Reports/gpu-plan-2026-11-10.md
@@ -15,6 +15,7 @@ sources:
   - Reports/mould-scratch-2026-11-10/README.md
   - Reports/mould-wild-one-2026-11-10.md
   - Reports/pixel-physics-review-2026-11-10.md
+  - Reports/strategy-bots-2026-11-19/README.md
   - Reports/testing-practice-2026-11-12.md
 code:
   - Dish::step_cost
@@ -66,6 +67,15 @@ with the counts beside each, and the page's source is saved under
 `Reports/` ([pages.md](../../Reports/pages.md)).
 
 ## The hands
+
+**Larder World's strategy bots** (2026-11-19). `hand=strat:PLAN` is a
+family plus dials (`econ,go=4,aim=6`), and `league=DEPTH:SEED` lands a plan
+on a planet with the earlier planets counted as won. The worker on the
+owner's PC plays job files and an evolving search, planet 3 only. A plan
+plays the same game on the same map and machine, so the maps are the noise.
+Best so far: `econ,go=4,aim=6,cards=0` with seek+wide+blast.needle wins 9 of
+9 planet 3 maps, and without that deck 5 of 9
+([report](../../Reports/strategy-bots-2026-11-19/README.md)).
 
 | Hand | What it does | Where |
 |---|---|---|

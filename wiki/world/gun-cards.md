@@ -2,7 +2,7 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-18
+updated: 2026-11-19
 sources:
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
@@ -16,6 +16,7 @@ sources:
   - Reports/mould-tiers-2026-11-11.md
   - Reports/rounds-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
+  - Reports/strategy-bots-2026-11-19/README.md
 code:
   - Card::tier
   - power_from
@@ -110,6 +111,13 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
 
 ## Open
 
+- Seek + Wide + Needle Blast (three cards, cost 8) may break the owner's
+  rule against cheap combinations that win everything. With it, the strategy
+  bot's `econ,go=4,aim=6,cards=0` won 9 of 9 planet 3 maps, against 5 of 9
+  without it. It was better on all 9 (p 0.004), and won his planet in 4:05
+  against his 7:21. The league buys wanted cards when it can, so a real run
+  that has to be offered them is harder. Flagged for Direction, not retuned
+  ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
 - A J row becomes M when a run pits the card against its planet, paired
   windows as for seek and the readers.
 - The germ, retuned per planet on the game designer's call (11-17 05:40Z
