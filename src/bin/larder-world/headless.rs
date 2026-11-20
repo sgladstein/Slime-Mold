@@ -700,6 +700,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 if g.rules.star.on {
                     println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);
                 }
+                // The last-stand heart (`stand.rs`, 2026-11-20): its members,
+                // centre, nearest soldier (world units), lunging or at rest.
+                if let Some(h) = g.stand.live {
+                    let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - h.centre.0).hypot(s.y - h.centre.1)).fold(f32::INFINITY, f32::min);
+                    let alive = g.soldiers.iter().filter(|s| s.alive).count();
+                    println!("  heart t {:.0} s: lump {}, {} members (most {}), at {:.0},{:.0}, {}; {} lunges; nearest soldier {near:.1}; {alive} soldiers, slime {}", g.time(), h.lump, h.members, h.most, h.centre.0, h.centre.1, if h.lunging.is_some() { "lunging" } else { "at rest" }, g.stand.lunges, g.mould);
+                } else if let Some((t, most)) = g.stand.fell.filter(|f| f.0 + g.rules.tps as u64 > g.world.ticks()) {
+                    println!("  heart fell t {:.1} s (it held {most} at the most, {} lunges)", t as f32 / g.rules.tps as f32, g.stand.lunges);
+                }
                 if let Some((t, how, n)) = g.fruits.last.filter(|l| l.0 + g.rules.tps as u64 > g.world.ticks()) {
                     println!("  fruit ended t {:.1} s: {how:?} with {n} members ({} burst, {} broken, {} walkers sown in all)", t as f32 / g.rules.tps as f32, g.fruits.burst, g.fruits.broken, g.fruits.sown);
                 }

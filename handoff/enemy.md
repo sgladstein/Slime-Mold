@@ -71,8 +71,10 @@ planet 3 on (`kinds[5]`), a hunter whose lump's arms turn within
 engine.wgsl's spokes after the lump pull (`PIN_ARMS` 3, `PIN_LEAN` 3,
 `PIN_TWIST` 0.08); the turn must stay constant (phase is spin x S.t).
 Look's `LumpLook::Pinwheel` (7, cobalt). Set keys `boss_pinwheel`,
-`boss_spin`, `boss_spin_haste`, `boss_spin_near`. Next: what the arms
-cost the squad, and the off-screen tell from the owner's doc.
+`boss_spin`, `boss_spin_haste`, `boss_spin_near`. Then the big-army census: no grade or size outlasts 50 guns (a member
+takes at most 15 blows); options A to E in the report, sent to
+Direction. Next: what Direction picks; what the Pinwheel's arms cost the
+squad; the off-screen tell from the owner's doc.
 
 Follow-up (Direction's call): the kind is drawn before the knot, and a
 crowd's leech or sapper forms at the crowded knot nearest its errand
@@ -116,7 +118,23 @@ score (planet 2, 36 games) found the first numbers did not bite an
 `full` 24 soldiers; `most` (blows a striker takes, 1-15, packed in the
 condense row's reach word) is a rule now, default still 3. The probes and
 why are in `StrikerRules::default`'s comment. The balance thread scores
-the retune next. Next: D, the last-stand heart.
+the retune: small squads win again, 80-soldier armies lose 28 to 37 late
+and still win; map 2's mid army now loses (haste 2 is the fallback).
+Merged in #566, with a fix: a lump forming over strikers no longer
+deletes what they hold (lumpform skips DENSE_BIT).
+
+## Last-stand heart (2026-11-20 evening, the same thread)
+
+D of the brief: `larder_world/stand.rs` (`StandRules`, `Stand`,
+`Heart`), on in every run (`ENEMY_RULES`' `stand`), GPU only. Under 20%
+of peak against 24+ soldiers, every free walker grows into one lump on
+`Game::heart_site` (armour 4, bite 1, regrown every 3 s), lunging at the
+nearest soldier every 20 s (haste 3, 10 s); it breaks under 15% of its
+most or at 150 s (keeping it to the end stalled planets). Look
+`LumpLook::Heart` (view.wgsl case 7). Report and clips:
+`Reports/stand-2026-11-20/`. Next: the balance thread can score it on its
+planet 2 jobs (bites in the last quarter); then F (buried knots) if
+Scott wants more.
 
 ## Heartbeat (2026-11-20, the same thread)
 

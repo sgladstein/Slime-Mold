@@ -357,7 +357,12 @@ impl Controls {
 /// a ring per soldier tangled into a mesh that hid the figures). Returns
 /// (centre, radius) in world units; a lone unit keeps its own ring.
 /// Groups join through any overlapping pair (union-find, O(n²): 780 pairs
-/// at 40 units).
+/// at 40 units), or any pair closer than `RING_LINK` rings centre to
+/// centre: a big squad stands a little over two rings apart, so until the
+/// play-zoom pass (11-20; 51 soldiers on planet 3 at zoom 6) every one
+/// kept its own ring, a field of bubbles over the fight.
+pub const RING_LINK: f32 = 3.5;
+
 pub fn ring_groups(at: &[(f32, f32)], ring: f32) -> Vec<((f32, f32), f32)> {
     let n = at.len();
     let mut parent: Vec<usize> = (0..n).collect();
@@ -370,7 +375,7 @@ pub fn ring_groups(at: &[(f32, f32)], ring: f32) -> Vec<((f32, f32), f32)> {
     }
     for i in 0..n {
         for j in i + 1..n {
-            if (at[i].0 - at[j].0).hypot(at[i].1 - at[j].1) < 2.0 * ring {
+            if (at[i].0 - at[j].0).hypot(at[i].1 - at[j].1) < RING_LINK * ring {
                 let (a, b) = (root(&mut parent, i), root(&mut parent, j));
                 parent[a.max(b)] = a.min(b);
             }
@@ -421,6 +426,14 @@ mod tests {
         }
         assert!(g.iter().any(|&(c, r)| c == (0.0, 0.0) && r == 2.0), "a lone unit keeps its own ring");
         assert!(ring_groups(&[], 2.0).is_empty());
+    }
+
+    #[test]
+    fn a_big_squad_in_open_order_has_one_ring() {
+        // Fifty soldiers 2.3 rings apart (a big squad at zoom 6): one
+        // ring round them all, not fifty.
+        let at: Vec<(f32, f32)> = (0..50).map(|k| ((k % 10) as f32 * 4.6, (k / 10) as f32 * 4.6)).collect();
+        assert_eq!(ring_groups(&at, 2.0).len(), 1);
     }
 
     fn squad() -> Vec<Unit> {

@@ -2355,6 +2355,56 @@ mod tests {
         w.form_lump(0, None);
     }
 
+    /// **The last-stand heart** (2026-11-20, `larder_world/stand.rs`), a
+    /// rule of the GPU engine alone (the owner's card, 11-17 19:21Z), so its
+    /// test is what it does on the software GPU: a race world with its
+    /// soldiers, the heart's share and army set so it gathers at once, a
+    /// lunge every 4 s for 3 s.
+    ///
+    /// - It forms on the heart crystal and takes in nearly every walker.
+    /// - Its members gather: their spread round its centre shrinks.
+    /// - Lunging, its centre closes on the nearest soldier; at rest after,
+    ///   it draws back toward its crystal.
+    #[test]
+    fn the_last_stand_heart_gathers_the_slime_and_lunges() {
+        use crate::mould::larder_world::StandRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 3_000);
+        let mut rules = Rules { cap: 120.0, ..Rules::default() };
+        rules.stand = StandRules { on: true, at: 2.0, army: 1.0, every: 4.0, lunge: 8.0, ..StandRules::default() };
+        let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        // Its soldiers stand still (no orders), so the lunge's aim holds.
+        let near = |g: &Game<GpuWorld>, c: (f32, f32)| g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - c.0).hypot(s.y - c.1)).fold(f32::INFINITY, f32::min);
+        while g.stand.live.is_none_or(|h| h.most == 0) && g.time() < 10.0 {
+            g.step();
+        }
+        let h = g.stand.live.expect("the heart forms");
+        let home = h.home;
+        let first = (h.members, (h.centre.0 - home.0).hypot(h.centre.1 - home.1));
+        let mass0 = g.mould;
+        // Gathering, up to its first lunge.
+        while g.stand.live.is_some_and(|h| h.lunging.is_none()) && g.time() < 30.0 {
+            g.step();
+        }
+        let h = g.stand.live.expect("the heart lives");
+        let (rest_c, rest_n) = (h.centre, h.members);
+        let d0 = near(&g, rest_c);
+        while g.stand.live.is_some_and(|h| h.lunging.is_some()) && g.time() < 50.0 {
+            g.step();
+        }
+        let h = g.stand.live.expect("the heart lives through its lunge");
+        let d1 = near(&g, h.centre);
+        let out = (h.centre.0 - home.0).hypot(h.centre.1 - home.1);
+        for _ in 0..(3 * g.rules.tps) {
+            g.step();
+        }
+        let back = g.stand.live.map(|h| (h.centre.0 - home.0).hypot(h.centre.1 - home.1)).unwrap_or(0.0);
+        eprintln!("heart: formed with {} of {mass0} walkers {:.1} fine cells from its crystal; {rest_n} members at its first lunge; nearest soldier {d0:.1} -> {d1:.1} lunging; {out:.1} from its crystal after, {back:.1} 3 s later; {} lunges", first.0, first.1, g.stand.lunges);
+        assert!(rest_n as f32 >= 0.8 * mass0 as f32, "it takes in nearly all the slime: {rest_n} of {mass0}");
+        assert!(d1 < 0.8 * d0, "lunging, it closes on the soldier: {d0:.1} -> {d1:.1}");
+        assert!(back < out, "at rest, it draws back home: {out:.1} -> {back:.1}");
+    }
+
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,
     /// 2026-11-20, the owner: "Deep water shouldn't be traversable by
     /// player or slime"). A rule of the GPU engine alone (the owner's card,

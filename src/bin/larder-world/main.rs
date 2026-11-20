@@ -2095,6 +2095,13 @@ impl App {
                     *b = LumpBody { at, look: LumpLook::Fruit, strength: ripe, remain: 1.0, fill: 0.0, held: 1.0 };
                 }
             }
+            // The last-stand heart (`stand.rs`, 2026-11-20): its own look,
+            // its strength what is left of it.
+            if let Some((l, at, left)) = g.heart_looks() {
+                if let Some(b) = lumps.get_mut(l) {
+                    *b = LumpBody { at, look: LumpLook::Heart, strength: left, remain: 1.0, fill: 0.0, held: 1.0 };
+                }
+            }
             v.set_lumps(&lumps);
         }
         self.marks();

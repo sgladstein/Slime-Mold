@@ -48,6 +48,12 @@ pub enum SlimeLook {
     /// (`SHEET_VEIL` in `view.wgsl`), so the body trails a fading wake
     /// as it drifts.
     Sheet = 2,
+    /// The Trunk's cords (play-zoom pass, 11-20): its trail, kept 0.95,
+    /// runs as long straight cords between its few big bodies, and off the
+    /// body it stands up as a rounded, translucent tube (`CORD_VEIL`,
+    /// `CORD_RISE` in `view.wgsl`), so the network you cut to starve it is
+    /// seen. Plain, the cords were a few loose specks on bare ground.
+    Cords = 3,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -59,6 +65,7 @@ impl SlimeLook {
         match tier {
             Some(crate::mould::tiers::Tier::Sprawler) => SlimeLook::Threads,
             Some(crate::mould::tiers::Tier::Drifter) => SlimeLook::Sheet,
+            Some(crate::mould::tiers::Tier::Trunk) => SlimeLook::Cords,
             _ => SlimeLook::Plain,
         }
     }
@@ -113,6 +120,11 @@ pub enum LumpLook {
     /// cobalt skin over an ice-blue core, the one blue on the slime, so
     /// its turning arms read apart from the gold round them.
     Pinwheel = 7,
+    /// **The last-stand heart** (2026-11-20, the Enemy lane,
+    /// `larder_world::stand`): a deep amber over a hot amber core, the
+    /// slime's own gold run dark and hot, dimming as it is cut down (its
+    /// strength).
+    Heart = 8,
 }
 
 impl LumpLook {
@@ -127,6 +139,7 @@ impl LumpLook {
             "fruit" | "5" => Self::Fruit,
             "mortar" | "6" => Self::Mortar,
             "pinwheel" | "7" => Self::Pinwheel,
+            "heart" | "8" => Self::Heart,
             _ => return None,
         })
     }

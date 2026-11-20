@@ -1,0 +1,777 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 11 s alone in 16.3 s
+STRAT t 0 build mould 52758 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 53148 soldiers 4 hp 1.00 bank 297 killed 13 turret 0 pumps 4 buildings 4
+STRAT t 20 build mould 53985 soldiers 4 hp 1.00 bank 105 killed 13 turret 0 pumps 4 buildings 4
+STRAT t 30 build mould 55149 soldiers 4 hp 1.00 bank 27 killed 15 turret 0 pumps 5 buildings 5
+STRAT t 40 out mould 56386 soldiers 4 hp 1.00 bank 332 killed 15 turret 0 pumps 5 buildings 5
+  surge 1 starts at t 45.0 s (the slime has eaten 348 food)
+STRAT t 50 out mould 57262 soldiers 4 hp 0.95 bank 539 killed 509 turret 0 pumps 6 buildings 6
+STRAT t 60 out mould 58542 soldiers 4 hp 0.95 bank 186 killed 544 turret 0 pumps 7 buildings 7
+STRAT t 70 out mould 57743 soldiers 9 hp 0.79 bank 313 killed 2973 turret 0 pumps 7 buildings 7
+STRAT t 80 out mould 53114 soldiers 18 hp 0.88 bank 365 killed 4093 turret 0 pumps 7 buildings 7
+  surge 2 starts at t 81.0 s (the slime has eaten 696 food)
+  boss t 83.0 s: Crowd hunter formed on lump 0 at 489,277 (crowd top 1.00); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 83 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 489,277, spread 1.05, stolen 0.0; nearest soldier 341.7, 20 alive
+  boss t 84 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.60, stolen 0.0; nearest soldier 360.1, 21 alive
+  boss t 85 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.61, stolen 0.0; nearest soldier 362.4, 22 alive
+  boss t 86 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.61, stolen 0.0; nearest soldier 363.8, 23 alive
+  boss t 87 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.61, stolen 0.0; nearest soldier 364.5, 24 alive
+  boss t 88 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.63, stolen 0.0; nearest soldier 348.0, 25 alive
+  boss t 89 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 492,276, spread 0.63, stolen 0.0; nearest soldier 345.6, 26 alive
+  boss t 90 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 472,266, spread 1.17, stolen 0.0; nearest soldier 328.2, 27 alive
+STRAT t 90 out mould 50319 soldiers 28 hp 0.90 bank 381 killed 5082 turret 0 pumps 7 buildings 7
+  boss t 91 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 470,260, spread 0.91, stolen 0.0; nearest soldier 336.4, 28 alive
+  boss t 92 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 468,256, spread 0.89, stolen 0.0; nearest soldier 334.5, 30 alive
+  boss t 93 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 468,252, spread 0.88, stolen 0.0; nearest soldier 319.8, 31 alive
+  boss t 94 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 464,248, spread 0.91, stolen 0.0; nearest soldier 314.5, 32 alive
+  surge 3 starts at t 94.6 s (the slime has eaten 820 food)
+  boss t 95 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 450,232, spread 1.16, stolen 0.0; nearest soldier 289.7, 33 alive
+  boss t 96 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 444,222, spread 1.13, stolen 0.0; nearest soldier 286.1, 34 alive
+  boss t 97 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 436,216, spread 1.25, stolen 0.0; nearest soldier 291.0, 35 alive
+  boss t 98 s: lump 0 hunter Hunt(Some(18)), 554 members (first 554, 0 hurt), at 428,208, spread 1.13, stolen 0.0; nearest soldier 280.0, 36 alive
+  boss t 99 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 420,202, spread 0.97, stolen 0.0; nearest soldier 262.0, 37 alive
+  boss t 100 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 398,186, spread 1.07, stolen 0.0; nearest soldier 251.0, 38 alive
+STRAT t 100 out mould 49189 soldiers 39 hp 0.92 bank 232 killed 5781 turret 0 pumps 7 buildings 7
+  boss t 101 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 390,182, spread 1.00, stolen 0.0; nearest soldier 259.0, 39 alive
+  boss t 102 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 384,178, spread 1.19, stolen 0.0; nearest soldier 269.4, 40 alive
+  boss t 103 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 380,176, spread 1.35, stolen 0.0; nearest soldier 278.2, 40 alive
+  boss t 104 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 376,172, spread 1.39, stolen 0.0; nearest soldier 292.1, 41 alive
+  boss t 105 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 360,160, spread 1.64, stolen 0.0; nearest soldier 274.1, 42 alive
+  boss t 106 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 348,154, spread 1.48, stolen 0.0; nearest soldier 259.8, 43 alive
+  boss t 107 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 336,148, spread 1.46, stolen 0.0; nearest soldier 258.2, 44 alive
+  boss t 108 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 324,144, spread 1.50, stolen 0.0; nearest soldier 230.5, 45 alive
+  boss t 109 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 314,138, spread 1.54, stolen 0.0; nearest soldier 200.3, 45 alive
+  boss t 110 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 292,130, spread 1.50, stolen 0.0; nearest soldier 159.1, 46 alive
+STRAT t 110 out mould 48969 soldiers 47 hp 0.93 bank 158 killed 6376 turret 0 pumps 7 buildings 7
+  boss t 111 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 286,128, spread 1.20, stolen 0.0; nearest soldier 134.7, 47 alive
+  boss t 112 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 284,128, spread 1.11, stolen 0.0; nearest soldier 115.3, 48 alive
+  boss t 113 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 280,126, spread 1.00, stolen 0.0; nearest soldier 98.5, 48 alive
+  boss t 114 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 276,126, spread 0.96, stolen 0.0; nearest soldier 78.0, 49 alive
+  boss t 115 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 268,124, spread 1.13, stolen 0.0; nearest soldier 53.1, 50 alive
+  boss t 116 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 262,126, spread 1.02, stolen 0.0; nearest soldier 29.3, 50 alive
+  boss t 117 s: lump 0 hunter Hunt(Some(26)), 450 members (first 554, 253 hurt), at 258,126, spread 1.14, stolen 0.0; nearest soldier 13.7, 51 alive
+  boss t 118 s: lump 0 hunter Hunt(Some(22)), 252 members (first 554, 445 hurt), at 256,128, spread 1.27, stolen 0.0; nearest soldier 9.1, 50 alive
+  boss t 119 s: lump 0 hunter ended Broken (159 members of 554; stole 0.0, 0.0 given back so far)
+STRAT t 120 out mould 48505 soldiers 48 hp 0.82 bank 173 killed 8108 turret 0 pumps 7 buildings 7
+  fruit t 129 s: lump 0, 0 members (most 0), at 569,33, ripe 0.00; nearest soldier 337.9
+  fruit t 130 s: lump 0, 2569 members (most 2569), at 572,42, ripe 0.03; nearest soldier 340.9
+STRAT t 130 out mould 44508 soldiers 43 hp 0.59 bank 228 killed 16020 turret 0 pumps 7 buildings 7
+  fruit t 131 s: lump 0, 2569 members (most 2569), at 572,42, ripe 0.07; nearest soldier 347.5
+  surge 4 starts at t 131.1 s (the slime has eaten 1169 food)
+  fruit t 132 s: lump 0, 2569 members (most 2569), at 572,42, ripe 0.10; nearest soldier 355.5
+  fruit t 133 s: lump 0, 2569 members (most 2569), at 572,42, ripe 0.13; nearest soldier 360.0
+  fruit t 134 s: lump 0, 2569 members (most 2569), at 572,40, ripe 0.17; nearest soldier 355.9
+  fruit t 135 s: lump 0, 2569 members (most 2569), at 572,40, ripe 0.20; nearest soldier 342.5
+  fruit t 136 s: lump 0, 2569 members (most 2569), at 572,40, ripe 0.23; nearest soldier 338.5
+  fruit t 137 s: lump 0, 2569 members (most 2569), at 572,40, ripe 0.27; nearest soldier 344.2
+  fruit t 138 s: lump 0, 2569 members (most 2569), at 572,40, ripe 0.30; nearest soldier 347.2
+  fruit t 139 s: lump 0, 2569 members (most 2569), at 572,40, ripe 0.33; nearest soldier 364.7
+  fruit t 140 s: lump 0, 2569 members (most 2569), at 570,40, ripe 0.37; nearest soldier 362.0
+STRAT t 140 out mould 40775 soldiers 30 hp 0.42 bank 349 killed 23841 turret 0 pumps 7 buildings 7
+  fruit t 141 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.40; nearest soldier 366.7
+  fruit t 142 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.43; nearest soldier 365.9
+  fruit t 143 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.47; nearest soldier 365.0
+  fruit t 144 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.50; nearest soldier 363.0
+  fruit t 145 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.53; nearest soldier 367.8
+  fruit t 146 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.57; nearest soldier 362.3
+  fruit t 147 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.60; nearest soldier 370.7
+  fruit t 148 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.63; nearest soldier 370.5
+  fruit t 149 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.67; nearest soldier 364.7
+  fruit t 150 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.70; nearest soldier 348.5
+STRAT t 150 out mould 40199 soldiers 41 hp 0.57 bank 149 killed 25894 turret 0 pumps 7 buildings 7
+  fruit t 151 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.73; nearest soldier 352.0
+  fruit t 152 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.77; nearest soldier 369.4
+  fruit t 153 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.80; nearest soldier 368.1
+  fruit t 154 s: lump 0, 2569 members (most 2569), at 570,38, ripe 0.83; nearest soldier 371.4
+  fruit t 155 s: lump 0, 2569 members (most 2569), at 570,36, ripe 0.87; nearest soldier 354.9
+  fruit t 156 s: lump 0, 2569 members (most 2569), at 570,36, ripe 0.90; nearest soldier 348.2
+  boss t 157.0 s: Cut wanderer formed on lump 1 at 269,138 (crowd top 1.00); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 157 s: lump 1 wanderer Gather, 0 members (first 0, 0 hurt), at 269,138, spread 2.26, stolen 0.0; nearest soldier 98.3, 49 alive
+  fruit t 157 s: lump 0, 2569 members (most 2569), at 570,36, ripe 0.93; nearest soldier 350.9
+  boss t 158 s: lump 1 wanderer Gather, 310 members (first 310, 0 hurt), at 270,140, spread 0.82, stolen 0.0; nearest soldier 113.4, 50 alive
+  fruit t 158 s: lump 0, 2569 members (most 2569), at 570,36, ripe 0.97; nearest soldier 369.4
+  boss t 159 s: lump 1 wanderer Gather, 310 members (first 310, 0 hurt), at 270,140, spread 0.62, stolen 0.0; nearest soldier 117.2, 51 alive
+  fruit ended t 170.0 s: Burst with 2569 members (1 burst, 0 broken, 2569 walkers sown in all)
+  boss t 160 s: lump 1 wanderer Gather, 310 members (first 310, 0 hurt), at 270,140, spread 0.63, stolen 0.0; nearest soldier 117.8, 53 alive
+STRAT t 160 out mould 40935 soldiers 54 hp 0.67 bank 162 killed 26415 turret 0 pumps 7 buildings 7
+  boss t 161 s: lump 1 wanderer Gather, 310 members (first 310, 0 hurt), at 270,142, spread 0.64, stolen 0.0; nearest soldier 99.8, 54 alive
+  boss t 162 s: lump 1 wanderer Gather, 310 members (first 310, 0 hurt), at 272,142, spread 0.68, stolen 0.0; nearest soldier 94.5, 55 alive
+  boss t 163 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 272,142, spread 0.71, stolen 0.0; nearest soldier 95.1, 57 alive
+  boss t 164 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 270,146, spread 0.82, stolen 0.0; nearest soldier 107.4, 58 alive
+  boss t 165 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 270,152, spread 0.80, stolen 0.0; nearest soldier 91.4, 59 alive
+  boss t 166 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 268,158, spread 0.84, stolen 0.0; nearest soldier 81.1, 61 alive
+  boss t 167 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 268,164, spread 0.97, stolen 0.0; nearest soldier 91.5, 62 alive
+  boss t 168 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 270,174, spread 1.17, stolen 0.0; nearest soldier 68.0, 64 alive
+  boss t 169 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 272,190, spread 1.00, stolen 0.0; nearest soldier 47.3, 65 alive
+  boss t 170 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 0 hurt), at 274,208, spread 1.01, stolen 0.0; nearest soldier 37.9, 65 alive
+STRAT t 170 out mould 41421 soldiers 65 hp 0.73 bank 398 killed 27275 turret 0 pumps 5 buildings 5
+  boss t 171 s: lump 1 wanderer Go((294.5, 273.0)), 310 members (first 310, 124 hurt), at 274,226, spread 1.04, stolen 0.0; nearest soldier 16.3, 65 alive
+  boss t 172 s: lump 1 wanderer Go((117.5, 299.0)), 203 members (first 310, 303 hurt), at 276,236, spread 0.71, stolen 0.0; nearest soldier 9.4, 66 alive
+  boss t 173 s: lump 1 wanderer ended Broken (6 members of 310; stole 0.0, 0.0 given back so far)
+  surge 5 starts at t 177.1 s (the slime has eaten 1517 food)
+STRAT t 180 out mould 40574 soldiers 62 hp 0.71 bank 348 killed 30850 turret 0 pumps 5 buildings 5
+  strikers t 189 s: 0 condensed holding 0, 995 taken in all, slime 35048 of peak 58941, squad at 357,318
+  strikers t 190 s: 622 condensed holding 909, 1304 taken in all, slime 35008 of peak 58941, squad at 354,308
+STRAT t 190 build mould 35008 soldiers 53 hp 0.60 bank 232 killed 39428 turret 0 pumps 4 buildings 4
+  strikers t 191 s: 720 condensed holding 1068, 1426 taken in all, slime 34986 of peak 58941, squad at 352,294
+  strikers t 192 s: 721 condensed holding 1022, 1498 taken in all, slime 34890 of peak 58941, squad at 351,284
+  strikers t 193 s: 606 condensed holding 789, 1572 taken in all, slime 34607 of peak 58941, squad at 350,275
+  strikers t 194 s: 600 condensed holding 740, 1611 taken in all, slime 34275 of peak 58941, squad at 346,268
+  strikers t 195 s: 588 condensed holding 729, 1632 taken in all, slime 34151 of peak 58941, squad at 339,261
+  strikers t 196 s: 561 condensed holding 714, 1647 taken in all, slime 34201 of peak 58941, squad at 328,254
+  strikers t 197 s: 547 condensed holding 705, 1671 taken in all, slime 34330 of peak 58941, squad at 317,253
+  strikers t 198 s: 538 condensed holding 698, 1703 taken in all, slime 34439 of peak 58941, squad at 302,260
+  fruit t 199 s: lump 0, 0 members (most 0), at 453,39, ripe 0.00; nearest soldier 240.8
+  strikers t 199 s: 544 condensed holding 697, 1741 taken in all, slime 34467 of peak 58941, squad at 298,262
+  fruit t 200 s: lump 0, 2695 members (most 2695), at 456,48, ripe 0.03; nearest soldier 235.5
+  strikers t 200 s: 549 condensed holding 721, 1741 taken in all, slime 35468 of peak 58941, squad at 297,263
+STRAT t 200 back mould 35468 soldiers 31 hp 0.49 bank 224 killed 40381 turret 0 pumps 1 buildings 1
+  fruit t 201 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.07; nearest soldier 236.4
+  strikers t 201 s: 524 condensed holding 699, 1741 taken in all, slime 35491 of peak 58941, squad at 297,263
+  fruit t 202 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.10; nearest soldier 239.6
+  strikers t 202 s: 521 condensed holding 699, 1741 taken in all, slime 35616 of peak 58941, squad at 312,253
+  fruit t 203 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.13; nearest soldier 239.3
+  strikers t 203 s: 517 condensed holding 699, 1741 taken in all, slime 35837 of peak 58941, squad at 313,253
+  fruit t 204 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.17; nearest soldier 239.3
+  strikers t 204 s: 517 condensed holding 699, 1741 taken in all, slime 36022 of peak 58941, squad at 313,253
+  fruit t 205 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.20; nearest soldier 236.6
+  strikers t 205 s: 517 condensed holding 699, 1741 taken in all, slime 36123 of peak 58941, squad at 325,252
+  fruit t 206 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.23; nearest soldier 239.0
+  strikers t 206 s: 511 condensed holding 682, 1741 taken in all, slime 36103 of peak 58941, squad at 337,260
+  fruit t 207 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.27; nearest soldier 240.8
+  strikers t 207 s: 492 condensed holding 637, 1741 taken in all, slime 36021 of peak 58941, squad at 345,271
+  fruit t 208 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.30; nearest soldier 239.4
+  strikers t 208 s: 464 condensed holding 610, 1741 taken in all, slime 36014 of peak 58941, squad at 351,283
+  fruit t 209 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.33; nearest soldier 239.0
+  strikers t 209 s: 423 condensed holding 530, 1741 taken in all, slime 36146 of peak 58941, squad at 357,299
+  fruit t 210 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.37; nearest soldier 239.1
+  strikers t 210 s: 354 condensed holding 422, 1741 taken in all, slime 36196 of peak 58941, squad at 359,304
+STRAT t 210 back mould 36196 soldiers 26 hp 0.49 bank 377 killed 40990 turret 0 pumps 1 buildings 1
+  fruit t 211 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.40; nearest soldier 239.1
+  strikers t 211 s: 235 condensed holding 255, 1741 taken in all, slime 36051 of peak 58941, squad at 359,304
+  fruit t 212 s: lump 0, 2695 members (most 2695), at 456,46, ripe 0.43; nearest soldier 239.1
+  strikers t 212 s: 140 condensed holding 152, 1741 taken in all, slime 35743 of peak 58941, squad at 359,304
+  fruit t 213 s: lump 0, 2695 members (most 2695), at 456,44, ripe 0.47; nearest soldier 240.0
+  strikers t 213 s: 55 condensed holding 43, 1741 taken in all, slime 35517 of peak 58941, squad at 359,304
+  fruit t 214 s: lump 0, 2695 members (most 2695), at 456,44, ripe 0.50; nearest soldier 240.0
+  strikers t 214 s: 16 condensed holding 8, 1741 taken in all, slime 35463 of peak 58941, squad at 359,304
+  fruit t 215 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.53; nearest soldier 239.5
+  strikers t 215 s: 6 condensed holding 1, 1741 taken in all, slime 35624 of peak 58941, squad at 358,306
+  fruit t 216 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.57; nearest soldier 239.5
+  strikers t 216 s: 3 condensed holding 1, 1741 taken in all, slime 35778 of peak 58941, squad at 358,306
+  fruit t 217 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.60; nearest soldier 243.8
+  strikers t 217 s: 3 condensed holding 1, 1741 taken in all, slime 35886 of peak 58941, squad at 359,312
+  fruit t 218 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.63; nearest soldier 256.5
+  strikers t 218 s: 3 condensed holding 1, 1741 taken in all, slime 35866 of peak 58941, squad at 359,312
+  raid 1 at t 219.0 s: Building(9) at 242,303, reach 146 cells holding 10938 walkers, share 0.60, size 18% of the slime
+  boss t 219.0 s: Cut hunter formed on lump 1 at 275,116 (crowd top 1.00); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 219 s: lump 1 hunter Gather, 0 members (first 0, 0 hurt), at 275,116, spread 1.83, stolen 0.0; nearest soldier 199.4, 24 alive
+  march t 219 s: lump 3, 0 members (first 0), at 456,210, spread 1.97, 117 cells to go
+  fruit t 219 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.67; nearest soldier 272.8
+  strikers t 219 s: 3 condensed holding 1, 1741 taken in all, slime 35883 of peak 58941, squad at 359,316
+  boss t 220 s: lump 1 hunter Gather, 307 members (first 307, 0 hurt), at 274,120, spread 0.55, stolen 0.0; nearest soldier 200.9, 24 alive
+  fruit t 220 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.70; nearest soldier 278.6
+  strikers t 220 s: 3 condensed holding 1, 1741 taken in all, slime 38830 of peak 58941, squad at 359,319
+STRAT t 220 out mould 38830 soldiers 24 hp 0.43 bank 95 killed 41770 turret 0 pumps 2 buildings 2
+  boss t 221 s: lump 1 hunter Gather, 307 members (first 307, 0 hurt), at 274,120, spread 0.53, stolen 0.0; nearest soldier 184.9, 24 alive
+  fruit t 221 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.73; nearest soldier 266.0
+  strikers t 221 s: 3 condensed holding 1, 1741 taken in all, slime 39127 of peak 58941, squad at 354,304
+  boss t 222 s: lump 1 hunter Gather, 307 members (first 307, 0 hurt), at 274,120, spread 0.53, stolen 0.0; nearest soldier 166.6, 24 alive
+  fruit t 222 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.77; nearest soldier 248.1
+  strikers t 222 s: 3 condensed holding 1, 1741 taken in all, slime 39418 of peak 58941, squad at 351,290
+  boss t 223 s: lump 1 hunter Gather, 307 members (first 307, 0 hurt), at 274,122, spread 0.50, stolen 0.0; nearest soldier 146.9, 24 alive
+  fruit t 223 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.80; nearest soldier 240.5
+  strikers t 223 s: 3 condensed holding 1, 1741 taken in all, slime 39642 of peak 58941, squad at 350,278
+  boss t 224 s: lump 1 hunter Gather, 307 members (first 307, 0 hurt), at 274,122, spread 0.50, stolen 0.0; nearest soldier 128.2, 24 alive
+  fruit t 224 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.83; nearest soldier 235.8
+  strikers t 224 s: 3 condensed holding 1, 1741 taken in all, slime 39754 of peak 58941, squad at 347,267
+  boss t 225 s: lump 1 hunter Hunt(Some(75)), 307 members (first 307, 0 hurt), at 274,122, spread 0.51, stolen 0.0; nearest soldier 110.0, 24 alive
+  fruit t 225 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.87; nearest soldier 231.9
+  strikers t 225 s: 3 condensed holding 1, 1741 taken in all, slime 39863 of peak 58941, squad at 339,255
+  boss t 226 s: lump 1 hunter Hunt(Some(75)), 307 members (first 307, 0 hurt), at 278,134, spread 0.96, stolen 0.0; nearest soldier 95.2, 24 alive
+  fruit t 226 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.90; nearest soldier 231.6
+  strikers t 226 s: 3 condensed holding 1, 1741 taken in all, slime 39899 of peak 58941, squad at 337,253
+  boss t 227 s: lump 1 hunter Hunt(Some(75)), 307 members (first 307, 0 hurt), at 280,140, spread 0.85, stolen 0.0; nearest soldier 73.0, 24 alive
+  fruit t 227 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.93; nearest soldier 227.6
+  strikers t 227 s: 3 condensed holding 1, 1741 taken in all, slime 40031 of peak 58941, squad at 324,239
+  boss t 228 s: lump 1 hunter Hunt(Some(75)), 307 members (first 307, 0 hurt), at 282,150, spread 1.06, stolen 0.0; nearest soldier 62.6, 24 alive
+  fruit t 228 s: lump 0, 2695 members (most 2695), at 454,44, ripe 0.97; nearest soldier 227.4
+  strikers t 228 s: 3 condensed holding 1, 1741 taken in all, slime 40171 of peak 58941, squad at 324,238
+  boss t 229 s: lump 1 hunter Hunt(Some(75)), 307 members (first 307, 0 hurt), at 284,164, spread 0.97, stolen 0.0; nearest soldier 33.3, 24 alive
+  strikers t 229 s: 3 condensed holding 1, 1741 taken in all, slime 40352 of peak 58941, squad at 310,225
+  fruit ended t 240.0 s: Burst with 2695 members (2 burst, 0 broken, 5264 walkers sown in all)
+  surge 6 starts at t 229.9 s (the slime has eaten 1865 food)
+  boss t 230 s: lump 1 hunter Hunt(Some(104)), 307 members (first 307, 181 hurt), at 284,178, spread 0.86, stolen 0.0; nearest soldier 14.2, 24 alive
+  strikers t 230 s: 3 condensed holding 1, 1741 taken in all, slime 40662 of peak 58941, squad at 296,211
+STRAT t 230 out mould 40662 soldiers 24 hp 0.43 bank 538 killed 42119 turret 0 pumps 2 buildings 2
+  boss t 231 s: lump 1 hunter Hunt(Some(107)), 292 members (first 307, 307 hurt), at 284,188, spread 0.78, stolen 0.0; nearest soldier 7.9, 21 alive
+  strikers t 231 s: 3 condensed holding 1, 1741 taken in all, slime 40933 of peak 58941, squad at 286,202
+  boss t 232 s: lump 1 hunter ended Broken (5 members of 307; stole 0.0, 0.0 given back so far)
+  strikers t 232 s: 3 condensed holding 1, 1741 taken in all, slime 41271 of peak 58941, squad at 288,211
+  strikers t 233 s: 3 condensed holding 1, 1741 taken in all, slime 41744 of peak 58941, squad at 288,212
+  strikers t 234 s: 3 condensed holding 1, 1741 taken in all, slime 41639 of peak 58941, squad at 275,198
+  strikers t 235 s: 3 condensed holding 1, 1741 taken in all, slime 41737 of peak 58941, squad at 275,197
+  boss t 236.0 s: Crowd leech formed on lump 0 at 373,317 (crowd top 2.45); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 236 s: lump 0 leech Gather, 0 members (first 0, 0 hurt), at 373,317, spread 1.01, stolen 0.0; nearest soldier 155.5, 20 alive
+  strikers t 236 s: 3 condensed holding 1, 1741 taken in all, slime 42062 of peak 58941, squad at 265,182
+  boss t 237 s: lump 0 leech Gather, 535 members (first 535, 0 hurt), at 374,316, spread 0.55, stolen 0.0; nearest soldier 156.8, 20 alive
+  strikers t 237 s: 3 condensed holding 1, 1741 taken in all, slime 43167 of peak 58941, squad at 264,181
+  boss t 238 s: lump 0 leech Gather, 535 members (first 535, 0 hurt), at 374,316, spread 0.57, stolen 0.0; nearest soldier 173.1, 20 alive
+  strikers t 238 s: 3 condensed holding 1, 1741 taken in all, slime 43413 of peak 58941, squad at 259,165
+  boss t 239 s: lump 0 leech Gather, 535 members (first 535, 0 hurt), at 374,316, spread 0.59, stolen 0.0; nearest soldier 172.9, 20 alive
+  strikers t 239 s: 3 condensed holding 1, 1741 taken in all, slime 43662 of peak 58941, squad at 259,164
+  boss t 240 s: lump 0 leech Gather, 535 members (first 535, 0 hurt), at 374,316, spread 0.56, stolen 0.0; nearest soldier 181.0, 20 alive
+  strikers t 240 s: 3 condensed holding 1, 1741 taken in all, slime 43811 of peak 58941, squad at 252,151
+STRAT t 240 out mould 43811 soldiers 20 hp 0.37 bank 197 killed 43312 turret 0 pumps 1 buildings 1
+  boss t 241 s: lump 0 leech Gather, 535 members (first 535, 0 hurt), at 374,316, spread 0.56, stolen 0.0; nearest soldier 192.8, 20 alive
+  strikers t 241 s: 3 condensed holding 1, 1741 taken in all, slime 43921 of peak 58941, squad at 245,143
+  boss t 242 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 374,316, spread 0.57, stolen 0.0; nearest soldier 192.9, 20 alive
+  strikers t 242 s: 3 condensed holding 1, 1741 taken in all, slime 43999 of peak 58941, squad at 244,143
+  boss t 243 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 366,316, spread 0.77, stolen 0.0; nearest soldier 203.9, 20 alive
+  strikers t 243 s: 3 condensed holding 1, 1741 taken in all, slime 44093 of peak 58941, squad at 235,141
+  boss t 244 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 364,310, spread 0.80, stolen 0.0; nearest soldier 197.4, 20 alive
+  strikers t 244 s: 2 condensed holding 1, 1741 taken in all, slime 44236 of peak 58941, squad at 236,140
+  boss t 245 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 360,306, spread 0.77, stolen 0.0; nearest soldier 203.1, 20 alive
+  strikers t 245 s: 2 condensed holding 1, 1741 taken in all, slime 44459 of peak 58941, squad at 217,150
+  boss t 246 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 358,302, spread 0.79, stolen 0.0; nearest soldier 205.9, 20 alive
+  strikers t 246 s: 2 condensed holding 1, 1741 taken in all, slime 44572 of peak 58941, squad at 207,160
+  boss t 247 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 358,298, spread 0.83, stolen 0.0; nearest soldier 203.1, 20 alive
+  strikers t 247 s: 2 condensed holding 1, 1741 taken in all, slime 44688 of peak 58941, squad at 206,161
+  boss t 248 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 356,296, spread 0.87, stolen 0.0; nearest soldier 200.3, 20 alive
+  strikers t 248 s: 2 condensed holding 1, 1741 taken in all, slime 44798 of peak 58941, squad at 206,161
+  boss t 249.0 s: Cut hunter formed on lump 1 at 364,51 (crowd top 2.45); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 249 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 356,292, spread 0.94, stolen 0.0; nearest soldier 202.4, 20 alive
+  boss t 249 s: lump 1 hunter Gather, 0 members (first 0, 0 hurt), at 364,51, spread 4.48, stolen 0.0; nearest soldier 170.3, 20 alive
+  strikers t 249 s: 2 condensed holding 1, 1741 taken in all, slime 44865 of peak 58941, squad at 188,166
+  boss t 250 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 356,288, spread 1.01, stolen 0.0; nearest soldier 200.2, 20 alive
+  boss t 250 s: lump 1 hunter Gather, 119 members (first 119, 0 hurt), at 366,46, spread 0.91, stolen 0.0; nearest soldier 195.4, 20 alive
+  strikers t 250 s: 2 condensed holding 1, 1741 taken in all, slime 45052 of peak 58941, squad at 174,181
+STRAT t 250 out mould 45052 soldiers 20 hp 0.37 bank 368 killed 43555 turret 0 pumps 1 buildings 1
+  boss t 251 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 354,284, spread 1.10, stolen 0.0; nearest soldier 198.4, 20 alive
+  boss t 251 s: lump 1 hunter Gather, 119 members (first 119, 0 hurt), at 370,44, spread 0.73, stolen 0.0; nearest soldier 218.0, 20 alive
+  strikers t 251 s: 2 condensed holding 1, 1741 taken in all, slime 45289 of peak 58941, squad at 160,195
+  boss t 252 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 352,278, spread 1.10, stolen 0.0; nearest soldier 207.7, 20 alive
+  boss t 252 s: lump 1 hunter Gather, 119 members (first 119, 0 hurt), at 372,42, spread 0.74, stolen 0.0; nearest soldier 240.4, 20 alive
+  strikers t 252 s: 2 condensed holding 1, 1741 taken in all, slime 45418 of peak 58941, squad at 149,190
+  boss t 253 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 350,274, spread 1.08, stolen 0.0; nearest soldier 214.2, 21 alive
+  boss t 253 s: lump 1 hunter Gather, 119 members (first 119, 0 hurt), at 376,40, spread 0.79, stolen 0.0; nearest soldier 256.8, 21 alive
+  strikers t 253 s: 2 condensed holding 1, 1741 taken in all, slime 45558 of peak 58941, squad at 146,188
+  boss t 254 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 350,270, spread 0.87, stolen 0.0; nearest soldier 215.4, 21 alive
+  boss t 254 s: lump 1 hunter Gather, 119 members (first 119, 0 hurt), at 376,40, spread 0.74, stolen 0.0; nearest soldier 263.8, 21 alive
+  strikers t 254 s: 2 condensed holding 1, 1741 taken in all, slime 45687 of peak 58941, squad at 144,186
+  boss t 255 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 350,270, spread 0.86, stolen 0.0; nearest soldier 209.6, 21 alive
+  boss t 255 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 378,38, spread 0.74, stolen 0.0; nearest soldier 255.6, 21 alive
+  strikers t 255 s: 2 condensed holding 1, 1741 taken in all, slime 45828 of peak 58941, squad at 145,183
+  boss t 256 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 346,266, spread 1.14, stolen 0.0; nearest soldier 199.2, 21 alive
+  boss t 256 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 348,58, spread 1.74, stolen 0.0; nearest soldier 221.3, 21 alive
+  strikers t 256 s: 2 condensed holding 1, 1741 taken in all, slime 45978 of peak 58941, squad at 144,183
+  boss t 257 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 344,262, spread 1.25, stolen 0.0; nearest soldier 202.4, 21 alive
+  boss t 257 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 336,66, spread 1.33, stolen 0.0; nearest soldier 224.2, 21 alive
+  strikers t 257 s: 2 condensed holding 1, 1741 taken in all, slime 46265 of peak 58941, squad at 135,198
+  boss t 258 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 340,258, spread 1.22, stolen 0.0; nearest soldier 207.3, 21 alive
+  boss t 258 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 326,76, spread 1.29, stolen 0.0; nearest soldier 230.1, 21 alive
+  strikers t 258 s: 2 condensed holding 1, 1741 taken in all, slime 46434 of peak 58941, squad at 124,213
+  boss t 259 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 334,254, spread 1.24, stolen 0.0; nearest soldier 212.0, 21 alive
+  boss t 259 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 318,82, spread 1.13, stolen 0.0; nearest soldier 239.5, 21 alive
+  strikers t 259 s: 2 condensed holding 1, 1741 taken in all, slime 46615 of peak 58941, squad at 114,229
+  boss t 260 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 330,254, spread 1.18, stolen 0.0; nearest soldier 212.4, 22 alive
+  boss t 260 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 312,88, spread 1.11, stolen 0.0; nearest soldier 246.3, 22 alive
+  strikers t 260 s: 2 condensed holding 1, 1741 taken in all, slime 46558 of peak 58941, squad at 107,240
+STRAT t 260 back mould 46558 soldiers 22 hp 0.43 bank 40 killed 44277 turret 0 pumps 1 buildings 1
+  boss t 261 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 328,252, spread 1.08, stolen 0.0; nearest soldier 197.2, 22 alive
+  boss t 261 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 304,96, spread 1.82, stolen 0.0; nearest soldier 218.7, 22 alive
+  strikers t 261 s: 2 condensed holding 1, 1741 taken in all, slime 46342 of peak 58941, squad at 116,232
+  boss t 262 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 326,252, spread 0.99, stolen 0.0; nearest soldier 194.8, 22 alive
+  boss t 262 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 296,98, spread 1.74, stolen 0.0; nearest soldier 211.4, 22 alive
+  strikers t 262 s: 2 condensed holding 1, 1741 taken in all, slime 46495 of peak 58941, squad at 117,231
+  boss t 263 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 326,250, spread 0.93, stolen 0.0; nearest soldier 206.7, 22 alive
+  boss t 263 s: lump 1 hunter Hunt(Some(81)), 119 members (first 119, 0 hurt), at 288,102, spread 1.78, stolen 0.0; nearest soldier 219.4, 22 alive
+  strikers t 263 s: 2 condensed holding 1, 1741 taken in all, slime 46588 of peak 58941, squad at 107,244
+  boss t 264 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 324,250, spread 0.87, stolen 0.0; nearest soldier 209.8, 22 alive
+  boss t 264 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 278,108, spread 1.21, stolen 0.0; nearest soldier 211.6, 22 alive
+  strikers t 264 s: 2 condensed holding 1, 1741 taken in all, slime 46444 of peak 58941, squad at 105,249
+  surge 7 starts at t 265.0 s (the slime has eaten 2213 food)
+  boss t 265 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 324,248, spread 0.83, stolen 0.0; nearest soldier 193.8, 22 alive
+  boss t 265 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 268,114, spread 1.02, stolen 0.0; nearest soldier 182.7, 22 alive
+  strikers t 265 s: 2 condensed holding 1, 1741 taken in all, slime 46184 of peak 58941, squad at 116,244
+  boss t 266 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 320,252, spread 1.27, stolen 0.0; nearest soldier 200.5, 22 alive
+  boss t 266 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 246,128, spread 1.44, stolen 0.0; nearest soldier 170.8, 22 alive
+  strikers t 266 s: 2 condensed holding 1, 1741 taken in all, slime 45942 of peak 58941, squad at 108,253
+  boss t 267 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 316,256, spread 1.52, stolen 0.0; nearest soldier 206.8, 22 alive
+  boss t 267 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 240,134, spread 1.65, stolen 0.0; nearest soldier 178.4, 22 alive
+  strikers t 267 s: 2 condensed holding 1, 1741 taken in all, slime 45699 of peak 58941, squad at 97,263
+  boss t 268 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 312,260, spread 1.61, stolen 0.0; nearest soldier 201.5, 21 alive
+  boss t 268 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 238,132, spread 1.20, stolen 0.0; nearest soldier 173.7, 21 alive
+  strikers t 268 s: 2 condensed holding 1, 1741 taken in all, slime 45176 of peak 58941, squad at 100,256
+  boss t 269 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 308,262, spread 1.57, stolen 0.0; nearest soldier 186.2, 20 alive
+  boss t 269 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 238,132, spread 0.99, stolen 0.0; nearest soldier 159.6, 20 alive
+  strikers t 269 s: 2 condensed holding 1, 1741 taken in all, slime 45213 of peak 58941, squad at 111,252
+  boss t 270 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 304,266, spread 1.60, stolen 0.0; nearest soldier 171.0, 20 alive
+  boss t 270 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 234,138, spread 2.10, stolen 0.0; nearest soldier 141.4, 20 alive
+  strikers t 270 s: 2 condensed holding 1, 1741 taken in all, slime 45118 of peak 58941, squad at 122,244
+STRAT t 270 back mould 45118 soldiers 20 hp 0.37 bank 313 killed 48384 turret 0 pumps 1 buildings 1
+  boss t 271 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 300,270, spread 1.62, stolen 0.0; nearest soldier 166.9, 20 alive
+  boss t 271 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 236,146, spread 4.28, stolen 0.0; nearest soldier 135.6, 20 alive
+  strikers t 271 s: 2 condensed holding 1, 1741 taken in all, slime 45101 of peak 58941, squad at 123,244
+  boss t 272 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 296,272, spread 1.60, stolen 0.0; nearest soldier 178.5, 20 alive
+  boss t 272 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 236,148, spread 4.16, stolen 0.0; nearest soldier 151.9, 20 alive
+  strikers t 272 s: 2 condensed holding 1, 1741 taken in all, slime 45011 of peak 58941, squad at 108,253
+  boss t 273 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 292,276, spread 1.60, stolen 0.0; nearest soldier 185.1, 21 alive
+  boss t 273 s: lump 1 hunter Hunt(Some(105)), 119 members (first 119, 0 hurt), at 234,150, spread 4.36, stolen 0.0; nearest soldier 167.4, 21 alive
+  strikers t 273 s: 2 condensed holding 1, 1741 taken in all, slime 45060 of peak 58941, squad at 97,262
+  boss t 274 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 288,278, spread 1.64, stolen 0.0; nearest soldier 180.8, 21 alive
+  boss t 274 s: lump 1 hunter Hunt(Some(86)), 119 members (first 119, 0 hurt), at 236,150, spread 4.48, stolen 0.0; nearest soldier 173.9, 21 alive
+  strikers t 274 s: 2 condensed holding 1, 1741 taken in all, slime 45197 of peak 58941, squad at 93,265
+  boss t 275 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 284,282, spread 1.63, stolen 0.0; nearest soldier 177.0, 21 alive
+  boss t 275 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 234,152, spread 4.69, stolen 0.0; nearest soldier 174.3, 21 alive
+  strikers t 275 s: 2 condensed holding 1, 1741 taken in all, slime 45491 of peak 58941, squad at 92,267
+  boss t 276 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 278,286, spread 1.65, stolen 0.0; nearest soldier 171.7, 21 alive
+  boss t 276 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 232,158, spread 5.61, stolen 0.0; nearest soldier 168.0, 21 alive
+  strikers t 276 s: 2 condensed holding 1, 1741 taken in all, slime 45666 of peak 58941, squad at 92,267
+  boss t 277 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 274,290, spread 1.65, stolen 0.0; nearest soldier 167.1, 21 alive
+  boss t 277 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 230,156, spread 5.14, stolen 0.0; nearest soldier 167.9, 21 alive
+  strikers t 277 s: 2 condensed holding 1, 1741 taken in all, slime 45773 of peak 58941, squad at 92,267
+  boss t 278 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 268,294, spread 1.60, stolen 0.0; nearest soldier 162.6, 21 alive
+  boss t 278 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 232,156, spread 5.18, stolen 0.0; nearest soldier 169.4, 21 alive
+  strikers t 278 s: 2 condensed holding 1, 1741 taken in all, slime 45802 of peak 58941, squad at 92,267
+  boss t 279 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 264,296, spread 1.55, stolen 0.0; nearest soldier 157.8, 21 alive
+  boss t 279 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 234,156, spread 5.20, stolen 0.0; nearest soldier 170.2, 21 alive
+  strikers t 279 s: 2 condensed holding 1, 1741 taken in all, slime 45858 of peak 58941, squad at 92,267
+  boss t 280 s: lump 0 leech Go((241.5, 303.0)), 535 members (first 535, 0 hurt), at 260,298, spread 1.58, stolen 0.0; nearest soldier 154.2, 21 alive
+  boss t 280 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 232,158, spread 5.35, stolen 0.0; nearest soldier 168.7, 21 alive
+  strikers t 280 s: 2 condensed holding 1, 1741 taken in all, slime 45999 of peak 58941, squad at 92,267
+STRAT t 280 out mould 45999 soldiers 21 hp 0.51 bank 364 killed 48677 turret 0 pumps 2 buildings 2
+  boss t 281 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 256,300, spread 1.64, stolen 0.0; nearest soldier 154.3, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 4.5 / 11.2 / 17.9 (10% / median / 90%); by eighths [85, 12, 1, 0, 1, 2, 70, 364]
+  boss t 281 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 232,162, spread 6.20, stolen 0.0; nearest soldier 155.1, 21 alive
+  strikers t 281 s: 2 condensed holding 1, 1741 taken in all, slime 46298 of peak 58941, squad at 95,256
+  boss t 282 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 256,300, spread 1.73, stolen 17.6; nearest soldier 153.5, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 9.7 / 12.7 / 17.0 (10% / median / 90%); by eighths [95, 26, 8, 1, 9, 23, 110, 263]
+  boss t 282 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 232,166, spread 6.32, stolen 0.0; nearest soldier 147.1, 21 alive
+  strikers t 282 s: 2 condensed holding 1, 1741 taken in all, slime 46483 of peak 58941, squad at 100,251
+  boss t 283 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 254,300, spread 1.98, stolen 35.2; nearest soldier 161.5, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 11.1 / 13.3 / 17.5 (10% / median / 90%); by eighths [96, 49, 12, 13, 36, 36, 118, 175]
+  boss t 283 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 232,162, spread 6.13, stolen 0.0; nearest soldier 164.3, 21 alive
+  strikers t 283 s: 2 condensed holding 1, 1741 taken in all, slime 46564 of peak 58941, squad at 84,253
+  boss t 284 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 250,302, spread 2.20, stolen 52.7; nearest soldier 170.6, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 11.7 / 13.4 / 17.4 (10% / median / 90%); by eighths [72, 62, 28, 20, 63, 56, 117, 117]
+  boss t 284 s: lump 1 hunter Hunt(Some(110)), 119 members (first 119, 0 hurt), at 236,160, spread 5.95, stolen 0.0; nearest soldier 180.9, 21 alive
+  strikers t 284 s: 2 condensed holding 1, 1741 taken in all, slime 46574 of peak 58941, squad at 69,255
+  boss t 285 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 248,302, spread 2.34, stolen 70.3; nearest soldier 172.4, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 11.8 / 13.6 / 17.6 (10% / median / 90%); by eighths [43, 75, 35, 22, 86, 84, 113, 77]
+  boss t 285 s: lump 1 hunter Hunt(Some(110)), 119 members (first 119, 0 hurt), at 234,164, spread 6.22, stolen 0.0; nearest soldier 181.1, 21 alive
+  strikers t 285 s: 2 condensed holding 1, 1741 taken in all, slime 46628 of peak 58941, squad at 67,255
+  boss t 286 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 246,302, spread 2.36, stolen 87.9; nearest soldier 154.8, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.0 / 14.1 / 18.1 (10% / median / 90%); by eighths [34, 79, 31, 28, 105, 101, 97, 60]
+  boss t 286 s: lump 1 hunter Hunt(Some(78)), 119 members (first 119, 0 hurt), at 230,168, spread 6.60, stolen 0.0; nearest soldier 161.1, 21 alive
+  strikers t 286 s: 2 condensed holding 1, 1741 taken in all, slime 46766 of peak 58941, squad at 82,251
+  boss t 287 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 244,302, spread 2.38, stolen 105.5; nearest soldier 144.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.0 / 14.1 / 18.0 (10% / median / 90%); by eighths [32, 68, 41, 33, 114, 126, 74, 47]
+  boss t 287 s: lump 1 hunter Hunt(Some(98)), 119 members (first 119, 0 hurt), at 232,170, spread 6.64, stolen 0.0; nearest soldier 162.4, 21 alive
+  strikers t 287 s: 2 condensed holding 1, 1741 taken in all, slime 47032 of peak 58941, squad at 76,260
+  boss t 288 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 244,302, spread 2.42, stolen 123.0; nearest soldier 143.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.1 / 14.3 / 18.2 (10% / median / 90%); by eighths [32, 75, 29, 42, 118, 122, 83, 34]
+  boss t 288 s: lump 1 hunter Hunt(Some(98)), 119 members (first 119, 0 hurt), at 232,168, spread 6.61, stolen 0.0; nearest soldier 167.1, 21 alive
+  strikers t 288 s: 2 condensed holding 1, 1741 taken in all, slime 47227 of peak 58941, squad at 65,270
+  boss t 289 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 244,300, spread 2.43, stolen 140.6; nearest soldier 145.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.5 / 18.7 (10% / median / 90%); by eighths [26, 59, 40, 43, 145, 112, 78, 32]
+  boss t 289 s: lump 1 hunter Hunt(Some(98)), 119 members (first 119, 0 hurt), at 232,166, spread 6.30, stolen 0.0; nearest soldier 182.1, 21 alive
+  strikers t 289 s: 2 condensed holding 1, 1741 taken in all, slime 47326 of peak 58941, squad at 64,286
+  boss t 290 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,300, spread 2.40, stolen 158.2; nearest soldier 156.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.1 / 14.3 / 18.0 (10% / median / 90%); by eighths [25, 52, 48, 52, 149, 109, 71, 29]
+  boss t 290 s: lump 1 hunter Hunt(Some(98)), 119 members (first 119, 0 hurt), at 232,166, spread 6.59, stolen 0.0; nearest soldier 197.4, 21 alive
+  strikers t 290 s: 2 condensed holding 1, 1741 taken in all, slime 47334 of peak 58941, squad at 65,296
+STRAT t 290 out mould 47334 soldiers 21 hp 0.51 bank 165 killed 48781 turret 0 pumps 4 buildings 4
+  boss t 291 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,300, spread 2.40, stolen 175.8; nearest soldier 138.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.5 / 17.6 (10% / median / 90%); by eighths [26, 48, 45, 63, 157, 110, 60, 26]
+  boss t 291 s: lump 1 hunter Hunt(Some(98)), 119 members (first 119, 0 hurt), at 232,170, spread 6.62, stolen 0.0; nearest soldier 181.5, 21 alive
+  strikers t 291 s: 2 condensed holding 1, 1741 taken in all, slime 47384 of peak 58941, squad at 79,300
+  boss t 292 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.36, stolen 193.4; nearest soldier 133.1, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.1 / 14.4 / 17.7 (10% / median / 90%); by eighths [28, 46, 53, 54, 158, 130, 42, 24]
+  boss t 292 s: lump 1 hunter Hunt(Some(73)), 119 members (first 0, 0 hurt), at 232,168, spread 10.85, stolen 0.0; nearest soldier 171.3, 21 alive
+  strikers t 292 s: 2 condensed holding 1, 1741 taken in all, slime 47511 of peak 58941, squad at 93,300
+  boss t 293 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.40, stolen 210.9; nearest soldier 131.5, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.2 / 18.1 (10% / median / 90%); by eighths [24, 49, 49, 65, 153, 118, 48, 29]
+  boss t 293 s: lump 1 hunter ended Fizzled (20 members of 20; stole 0.0, 0.0 given back so far)
+  strikers t 293 s: 2 condensed holding 1, 1741 taken in all, slime 47800 of peak 58941, squad at 101,298
+  boss t 294.0 s: Cut hunter formed on lump 1 at 295,136 (crowd top 2.45); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 294 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.39, stolen 228.5; nearest soldier 127.7, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.2 / 17.9 (10% / median / 90%); by eighths [30, 53, 50, 68, 146, 113, 54, 21]
+  boss t 294 s: lump 1 hunter Gather, 0 members (first 0, 0 hurt), at 295,136, spread 1.58, stolen 0.0; nearest soldier 237.8, 21 alive
+  strikers t 294 s: 2 condensed holding 1, 1741 taken in all, slime 48029 of peak 58941, squad at 107,298
+  boss t 295 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.32, stolen 246.1; nearest soldier 125.1, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.3 / 17.7 (10% / median / 90%); by eighths [38, 50, 53, 63, 133, 125, 59, 14]
+  boss t 295 s: lump 1 hunter Gather, 783 members (first 783, 0 hurt), at 290,128, spread 0.80, stolen 0.0; nearest soldier 237.5, 21 alive
+  strikers t 295 s: 2 condensed holding 1, 1741 taken in all, slime 48143 of peak 58941, squad at 109,299
+  boss t 296 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.31, stolen 263.7; nearest soldier 128.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.8 (10% / median / 90%); by eighths [33, 55, 51, 58, 143, 146, 38, 11]
+  boss t 296 s: lump 1 hunter Gather, 783 members (first 783, 0 hurt), at 290,126, spread 0.63, stolen 0.0; nearest soldier 228.3, 21 alive
+  strikers t 296 s: 2 condensed holding 1, 1741 taken in all, slime 48159 of peak 58941, squad at 107,284
+  boss t 297 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.29, stolen 281.3; nearest soldier 128.3, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.3 / 17.6 (10% / median / 90%); by eighths [36, 45, 54, 59, 143, 152, 38, 8]
+  boss t 297 s: lump 1 hunter Gather, 783 members (first 783, 0 hurt), at 288,126, spread 0.60, stolen 0.0; nearest soldier 219.3, 21 alive
+  strikers t 297 s: 2 condensed holding 1, 1741 taken in all, slime 48171 of peak 58941, squad at 105,265
+  boss t 298 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.30, stolen 298.8; nearest soldier 127.8, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.5 / 17.7 (10% / median / 90%); by eighths [37, 45, 53, 58, 154, 141, 37, 10]
+  boss t 298 s: lump 1 hunter Gather, 783 members (first 783, 0 hurt), at 288,126, spread 0.59, stolen 0.0; nearest soldier 205.0, 21 alive
+  strikers t 298 s: 2 condensed holding 1, 1741 taken in all, slime 48288 of peak 58941, squad at 113,249
+  boss t 299 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.30, stolen 316.4; nearest soldier 128.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.9 (10% / median / 90%); by eighths [32, 58, 46, 56, 151, 140, 40, 12]
+  boss t 299 s: lump 1 hunter Gather, 783 members (first 783, 0 hurt), at 288,126, spread 0.58, stolen 0.0; nearest soldier 190.6, 21 alive
+  strikers t 299 s: 2 condensed holding 1, 1741 taken in all, slime 48600 of peak 58941, squad at 120,232
+  boss t 300 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.31, stolen 334.0; nearest soldier 138.9, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.5 / 18.3 (10% / median / 90%); by eighths [31, 68, 47, 53, 142, 136, 49, 9]
+  boss t 300 s: lump 1 hunter Hunt(Some(73)), 783 members (first 783, 0 hurt), at 288,126, spread 0.59, stolen 0.0; nearest soldier 177.3, 21 alive
+  strikers t 300 s: 2 condensed holding 1, 1741 taken in all, slime 48790 of peak 58941, squad at 118,217
+STRAT t 300 out mould 48790 soldiers 21 hp 0.51 bank 104 killed 48887 turret 0 pumps 5 buildings 5
+  boss t 301 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.29, stolen 351.6; nearest soldier 150.2, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.3 / 17.8 (10% / median / 90%); by eighths [30, 67, 50, 42, 140, 146, 52, 8]
+  boss t 301 s: lump 1 hunter Hunt(Some(68)), 783 members (first 783, 0 hurt), at 278,130, spread 0.89, stolen 0.0; nearest soldier 159.3, 21 alive
+  strikers t 301 s: 2 condensed holding 1, 1741 taken in all, slime 48862 of peak 58941, squad at 114,200
+  boss t 302 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.28, stolen 369.1; nearest soldier 158.3, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.5 / 17.6 (10% / median / 90%); by eighths [36, 57, 48, 56, 138, 151, 39, 10]
+  boss t 302 s: lump 1 hunter Hunt(Some(95)), 783 members (first 783, 0 hurt), at 274,130, spread 0.82, stolen 0.0; nearest soldier 150.9, 21 alive
+  strikers t 302 s: 2 condensed holding 1, 1741 taken in all, slime 48876 of peak 58941, squad at 118,183
+  boss t 303 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.28, stolen 386.7; nearest soldier 164.8, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.5 / 17.7 (10% / median / 90%); by eighths [36, 54, 50, 55, 141, 155, 35, 9]
+  boss t 303 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 270,130, spread 0.87, stolen 0.0; nearest soldier 134.4, 21 alive
+  strikers t 303 s: 2 condensed holding 1, 1741 taken in all, slime 48891 of peak 58941, squad at 121,174
+  surge 8 starts at t 303.4 s (the slime has eaten 2560 food)
+  boss t 304 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.30, stolen 404.3; nearest soldier 165.1, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.6 (10% / median / 90%); by eighths [35, 50, 58, 62, 145, 155, 24, 6]
+  boss t 304 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 266,130, spread 0.96, stolen 0.0; nearest soldier 116.9, 21 alive
+  strikers t 304 s: 2 condensed holding 1, 1741 taken in all, slime 48902 of peak 58941, squad at 139,152
+  boss t 305 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.23, stolen 421.9; nearest soldier 157.2, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.1 / 14.2 / 17.8 (10% / median / 90%); by eighths [37, 36, 68, 48, 172, 146, 23, 5]
+  boss t 305 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 264,130, spread 1.01, stolen 0.0; nearest soldier 104.4, 21 alive
+  strikers t 305 s: 2 condensed holding 1, 1741 taken in all, slime 48935 of peak 58941, squad at 140,164
+  boss t 306 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.23, stolen 439.5; nearest soldier 156.8, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.4 / 17.6 (10% / median / 90%); by eighths [36, 34, 67, 58, 155, 156, 25, 4]
+  boss t 306 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 252,132, spread 1.15, stolen 0.0; nearest soldier 92.3, 21 alive
+  strikers t 306 s: 2 condensed holding 1, 1741 taken in all, slime 48752 of peak 58941, squad at 141,164
+  boss t 307 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.24, stolen 457.0; nearest soldier 141.4, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.5 / 17.4 (10% / median / 90%); by eighths [28, 40, 64, 60, 153, 145, 39, 6]
+  boss t 307 s: lump 1 hunter Hunt(Some(95)), 783 members (first 783, 0 hurt), at 246,132, spread 0.88, stolen 0.0; nearest soldier 91.7, 21 alive
+  strikers t 307 s: 2 condensed holding 1, 1741 taken in all, slime 48555 of peak 58941, squad at 139,178
+  boss t 308 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.28, stolen 474.6; nearest soldier 140.8, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.6 / 17.6 (10% / median / 90%); by eighths [23, 37, 70, 57, 155, 153, 27, 13]
+  boss t 308 s: lump 1 hunter Hunt(Some(95)), 783 members (first 783, 0 hurt), at 244,132, spread 0.73, stolen 0.0; nearest soldier 89.9, 21 alive
+  strikers t 308 s: 2 condensed holding 1, 1741 taken in all, slime 48429 of peak 58941, squad at 139,179
+  boss t 309 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.27, stolen 492.2; nearest soldier 159.2, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.7 / 17.6 (10% / median / 90%); by eighths [24, 48, 61, 56, 154, 148, 32, 12]
+  boss t 309 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 244,132, spread 0.69, stolen 0.0; nearest soldier 98.7, 21 alive
+  strikers t 309 s: 2 condensed holding 1, 1741 taken in all, slime 48469 of peak 58941, squad at 132,168
+  boss t 310 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.26, stolen 509.8; nearest soldier 165.3, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.5 / 18.0 (10% / median / 90%); by eighths [26, 51, 58, 48, 161, 152, 27, 12]
+  boss t 310 s: lump 1 hunter Hunt(Some(86)), 783 members (first 783, 0 hurt), at 242,132, spread 0.66, stolen 0.0; nearest soldier 112.4, 21 alive
+  strikers t 310 s: 2 condensed holding 1, 1741 taken in all, slime 48518 of peak 58941, squad at 119,158
+STRAT t 310 back mould 48518 soldiers 21 hp 0.46 bank 492 killed 50219 turret 0 pumps 5 buildings 5
+  boss t 311 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.25, stolen 527.3; nearest soldier 166.2, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.3 / 17.6 (10% / median / 90%); by eighths [28, 45, 63, 58, 153, 138, 36, 14]
+  boss t 311 s: lump 1 hunter Hunt(Some(86)), 783 members (first 783, 0 hurt), at 240,132, spread 0.82, stolen 0.0; nearest soldier 111.5, 21 alive
+  strikers t 311 s: 2 condensed holding 1, 1741 taken in all, slime 48611 of peak 58941, squad at 118,158
+  boss t 312 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.25, stolen 544.9; nearest soldier 183.7, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.2 / 18.0 (10% / median / 90%); by eighths [30, 47, 61, 71, 143, 120, 49, 14]
+  boss t 312 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 240,132, spread 0.71, stolen 0.0; nearest soldier 118.6, 21 alive
+  strikers t 312 s: 2 condensed holding 1, 1741 taken in all, slime 48730 of peak 58941, squad at 108,150
+  boss t 313 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.27, stolen 562.5; nearest soldier 185.7, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.2 / 17.5 (10% / median / 90%); by eighths [35, 39, 59, 62, 149, 124, 55, 12]
+  boss t 313 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 234,134, spread 1.11, stolen 0.0; nearest soldier 113.5, 21 alive
+  strikers t 313 s: 2 condensed holding 1, 1741 taken in all, slime 48634 of peak 58941, squad at 107,149
+  boss t 314 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.22, stolen 580.1; nearest soldier 184.3, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.5 / 18.0 (10% / median / 90%); by eighths [31, 51, 47, 60, 155, 117, 63, 11]
+  boss t 314 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 228,134, spread 1.30, stolen 0.0; nearest soldier 106.4, 21 alive
+  strikers t 314 s: 2 condensed holding 1, 1741 taken in all, slime 48451 of peak 58941, squad at 107,149
+  boss t 315 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.24, stolen 597.7; nearest soldier 185.0, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.4 / 17.7 (10% / median / 90%); by eighths [33, 48, 53, 57, 150, 118, 65, 11]
+  boss t 315 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 220,136, spread 1.36, stolen 0.0; nearest soldier 98.2, 21 alive
+  strikers t 315 s: 2 condensed holding 1, 1741 taken in all, slime 48261 of peak 58941, squad at 107,149
+  boss t 316 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.25, stolen 615.2; nearest soldier 185.7, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.1 / 14.3 / 17.8 (10% / median / 90%); by eighths [29, 53, 51, 55, 147, 123, 56, 21]
+  boss t 316 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 192,142, spread 1.41, stolen 0.0; nearest soldier 70.5, 21 alive
+  strikers t 316 s: 2 condensed holding 1, 1741 taken in all, slime 48271 of peak 58941, squad at 107,149
+  boss t 317 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.24, stolen 632.8; nearest soldier 185.7, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.0 / 14.1 / 17.5 (10% / median / 90%); by eighths [28, 63, 46, 46, 148, 120, 57, 27]
+  boss t 317 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 0 hurt), at 178,146, spread 1.32, stolen 0.0; nearest soldier 55.3, 21 alive
+  strikers t 317 s: 2 condensed holding 1, 1741 taken in all, slime 48487 of peak 58941, squad at 107,149
+  boss t 318 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.26, stolen 650.4; nearest soldier 197.5, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.0 / 14.2 / 17.5 (10% / median / 90%); by eighths [34, 45, 56, 43, 161, 102, 68, 26]
+  boss t 318 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 72 hurt), at 166,146, spread 1.33, stolen 0.0; nearest soldier 52.2, 21 alive
+  strikers t 318 s: 2 condensed holding 1, 1741 taken in all, slime 48635 of peak 58941, squad at 93,137
+  boss t 319 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.26, stolen 668.0; nearest soldier 198.1, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.4 / 17.6 (10% / median / 90%); by eighths [32, 53, 40, 41, 177, 92, 73, 27]
+  boss t 319 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 72 hurt), at 158,148, spread 1.27, stolen 0.0; nearest soldier 44.1, 21 alive
+  strikers t 319 s: 2 condensed holding 1, 1741 taken in all, slime 48622 of peak 58941, squad at 92,136
+  raid 2 at t 320.0 s: Building(11) at 84,278, reach 145 cells holding 9498 walkers, share 0.60, size 12% of the slime
+  boss t 320 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.25, stolen 685.5; nearest soldier 198.1, 22 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.7 (10% / median / 90%); by eighths [33, 34, 50, 57, 158, 107, 72, 24]
+  boss t 320 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 72 hurt), at 148,148, spread 1.29, stolen 0.0; nearest soldier 35.0, 22 alive
+  march t 320 s: lump 3, 0 members (first 0), at 250,147, spread 3.83, 106 cells to go
+  strikers t 320 s: 2 condensed holding 1, 1741 taken in all, slime 48419 of peak 58941, squad at 92,136
+STRAT t 320 out mould 48419 soldiers 22 hp 0.48 bank 271 killed 51815 turret 0 pumps 5 buildings 5
+  boss t 321 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.23, stolen 703.1; nearest soldier 213.8, 22 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.3 / 17.6 (10% / median / 90%); by eighths [32, 31, 50, 59, 162, 109, 79, 13]
+  boss t 321 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 111 hurt), at 132,150, spread 1.44, stolen 0.0; nearest soldier 31.9, 22 alive
+  march t 321 s: lump 3, 7403 members (first 7403), at 322,168, spread 2.75, 132 cells to go
+  strikers t 321 s: 2 condensed holding 1, 1741 taken in all, slime 48777 of peak 58941, squad at 80,124
+  boss t 322 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.22, stolen 720.7; nearest soldier 214.0, 23 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.1 / 14.3 / 17.5 (10% / median / 90%); by eighths [34, 31, 48, 64, 140, 118, 90, 10]
+  boss t 322 s: lump 1 hunter Hunt(Some(105)), 783 members (first 783, 132 hurt), at 126,150, spread 1.38, stolen 0.0; nearest soldier 27.1, 23 alive
+  march t 322 s: lump 3, 7401 members (first 7403), at 316,162, spread 2.36, 130 cells to go
+  strikers t 322 s: 2 condensed holding 1, 1741 taken in all, slime 48840 of peak 58941, squad at 77,122
+  boss t 323 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.22, stolen 738.3; nearest soldier 221.1, 22 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.5 (10% / median / 90%); by eighths [37, 34, 45, 66, 138, 109, 99, 7]
+  boss t 323 s: lump 1 hunter Hunt(Some(105)), 776 members (first 783, 169 hurt), at 124,148, spread 1.47, stolen 0.0; nearest soldier 30.9, 22 alive
+  march t 323 s: lump 3, 7401 members (first 7403), at 306,154, spread 2.07, 128 cells to go
+  strikers t 323 s: 2 condensed holding 1, 1741 taken in all, slime 49079 of peak 58941, squad at 68,118
+  boss t 324 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.21, stolen 755.9; nearest soldier 221.1, 23 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.3 / 17.2 (10% / median / 90%); by eighths [41, 36, 41, 70, 122, 121, 94, 10]
+  boss t 324 s: lump 1 hunter Hunt(Some(105)), 767 members (first 783, 177 hurt), at 122,148, spread 1.63, stolen 0.0; nearest soldier 28.6, 23 alive
+  march t 324 s: lump 3, 7401 members (first 7403), at 296,150, spread 1.85, 125 cells to go
+  strikers t 324 s: 2 condensed holding 1, 1741 taken in all, slime 49205 of peak 58941, squad at 68,119
+  boss t 325 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.23, stolen 773.4; nearest soldier 232.8, 22 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.4 / 17.7 (10% / median / 90%); by eighths [40, 37, 46, 65, 128, 117, 95, 7]
+  boss t 325 s: lump 1 hunter Hunt(Some(98)), 763 members (first 783, 205 hurt), at 122,148, spread 1.60, stolen 0.0; nearest soldier 40.9, 22 alive
+  march t 325 s: lump 3, 7400 members (first 7403), at 290,148, spread 1.69, 122 cells to go
+  strikers t 325 s: 2 condensed holding 1, 1741 taken in all, slime 49237 of peak 58941, squad at 68,119
+  boss t 326 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.24, stolen 791.0; nearest soldier 246.4, 23 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.3 / 17.6 (10% / median / 90%); by eighths [35, 48, 39, 73, 117, 131, 80, 12]
+  boss t 326 s: lump 1 hunter Hunt(Some(98)), 763 members (first 783, 217 hurt), at 120,152, spread 1.67, stolen 0.0; nearest soldier 54.9, 23 alive
+  march t 326 s: lump 3, 7400 members (first 7403), at 284,146, spread 1.55, 120 cells to go
+  strikers t 326 s: 2 condensed holding 1, 1741 taken in all, slime 49137 of peak 58941, squad at 57,106
+  boss t 327 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.27, stolen 808.6; nearest soldier 266.4, 24 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.6 / 17.9 (10% / median / 90%); by eighths [39, 52, 42, 61, 126, 127, 80, 8]
+  boss t 327 s: lump 1 hunter Hunt(Some(98)), 763 members (first 783, 217 hurt), at 116,150, spread 1.73, stolen 0.0; nearest soldier 69.8, 24 alive
+  march t 327 s: lump 3, 7400 members (first 7403), at 280,146, spread 1.46, 119 cells to go
+  strikers t 327 s: 2 condensed holding 1, 1741 taken in all, slime 48973 of peak 58941, squad at 45,93
+  boss t 328 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.26, stolen 826.2; nearest soldier 281.5, 24 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.6 / 17.7 (10% / median / 90%); by eighths [35, 52, 48, 55, 129, 130, 74, 12]
+  boss t 328 s: lump 1 hunter Hunt(Some(98)), 763 members (first 783, 217 hurt), at 114,146, spread 1.83, stolen 0.0; nearest soldier 81.5, 24 alive
+  march t 328 s: lump 3, 7400 members (first 7403), at 276,146, spread 1.40, 117 cells to go
+  strikers t 328 s: 2 condensed holding 1, 1741 taken in all, slime 48928 of peak 58941, squad at 40,85
+  boss t 329 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.26, stolen 843.8; nearest soldier 286.5, 25 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.5 / 18.0 (10% / median / 90%); by eighths [37, 56, 47, 51, 133, 129, 75, 7]
+  boss t 329 s: lump 1 hunter Hunt(Some(98)), 763 members (first 783, 217 hurt), at 110,144, spread 1.90, stolen 0.0; nearest soldier 81.8, 25 alive
+  march t 329 s: lump 3, 7400 members (first 7403), at 274,148, spread 1.36, 115 cells to go
+  strikers t 329 s: 2 condensed holding 1, 1741 taken in all, slime 49196 of peak 58941, squad at 40,83
+  boss t 330 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.26, stolen 861.3; nearest soldier 289.5, 26 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.5 (10% / median / 90%); by eighths [32, 52, 52, 59, 121, 143, 69, 7]
+  boss t 330 s: lump 1 hunter Hunt(Some(111)), 763 members (first 783, 217 hurt), at 108,142, spread 1.94, stolen 0.0; nearest soldier 81.7, 26 alive
+  march t 330 s: lump 3, 7400 members (first 7403), at 270,150, spread 1.31, 113 cells to go
+  strikers t 330 s: 2 condensed holding 1, 1741 taken in all, slime 49449 of peak 58941, squad at 38,81
+STRAT t 330 out mould 49449 soldiers 26 hp 0.56 bank 393 killed 53134 turret 0 pumps 5 buildings 5
+  boss t 331 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.29, stolen 878.9; nearest soldier 271.9, 26 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.4 / 17.6 (10% / median / 90%); by eighths [28, 48, 62, 63, 133, 128, 58, 15]
+  boss t 331 s: lump 1 hunter Hunt(Some(111)), 763 members (first 783, 217 hurt), at 102,136, spread 2.23, stolen 0.0; nearest soldier 56.5, 26 alive
+  march t 331 s: lump 3, 7400 members (first 7403), at 266,150, spread 1.30, 112 cells to go
+  strikers t 331 s: 2 condensed holding 1, 1741 taken in all, slime 49519 of peak 58941, squad at 50,91
+  boss t 332 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.29, stolen 896.5; nearest soldier 253.2, 27 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.6 (10% / median / 90%); by eighths [32, 45, 52, 69, 133, 134, 51, 19]
+  boss t 332 s: lump 1 hunter Hunt(Some(111)), 763 members (first 783, 259 hurt), at 100,134, spread 2.16, stolen 0.0; nearest soldier 35.3, 27 alive
+  march t 332 s: lump 3, 7400 members (first 7403), at 262,152, spread 1.29, 109 cells to go
+  strikers t 332 s: 2 condensed holding 1, 1741 taken in all, slime 49558 of peak 58941, squad at 63,104
+  boss t 333 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.32, stolen 914.1; nearest soldier 234.5, 25 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.6 / 17.7 (10% / median / 90%); by eighths [31, 56, 40, 66, 139, 140, 49, 14]
+  boss t 333 s: lump 1 hunter Hunt(Some(78)), 728 members (first 783, 485 hurt), at 100,132, spread 2.23, stolen 0.0; nearest soldier 22.3, 25 alive
+  march t 333 s: lump 3, 7400 members (first 7403), at 260,154, spread 1.30, 108 cells to go
+  strikers t 333 s: 2 condensed holding 1, 1741 taken in all, slime 49589 of peak 58941, squad at 72,115
+  boss t 334 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.26, stolen 931.6; nearest soldier 223.3, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.6 (10% / median / 90%); by eighths [29, 58, 50, 65, 143, 145, 27, 18]
+  boss t 334 s: lump 1 hunter Hunt(Some(75)), 623 members (first 783, 539 hurt), at 102,132, spread 2.42, stolen 0.0; nearest soldier 20.6, 21 alive
+  march t 334 s: lump 3, 7400 members (first 7403), at 256,156, spread 1.30, 105 cells to go
+  strikers t 334 s: 2 condensed holding 1, 1741 taken in all, slime 49661 of peak 58941, squad at 76,121
+  boss t 335 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.23, stolen 949.2; nearest soldier 229.4, 13 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.5 / 17.6 (10% / median / 90%); by eighths [29, 60, 58, 65, 133, 143, 35, 12]
+  boss t 335 s: lump 1 hunter Hunt(Some(110)), 434 members (first 783, 542 hurt), at 112,136, spread 2.93, stolen 0.0; nearest soldier 31.5, 13 alive
+  march t 335 s: lump 3, 7400 members (first 7403), at 252,158, spread 1.31, 104 cells to go
+  strikers t 335 s: 2 condensed holding 1, 1741 taken in all, slime 49804 of peak 58941, squad at 72,120
+  boss t 336 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.22, stolen 966.8; nearest soldier 218.1, 11 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.5 / 17.7 (10% / median / 90%); by eighths [34, 67, 41, 74, 126, 149, 30, 14]
+  boss t 336 s: lump 1 hunter Hunt(Some(110)), 399 members (first 783, 544 hurt), at 124,152, spread 3.54, stolen 0.0; nearest soldier 35.8, 11 alive
+  strikers t 336 s: 2 condensed holding 1, 1741 taken in all, slime 49950 of peak 58941, squad at 79,129
+  boss t 337 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.22, stolen 984.4; nearest soldier 202.4, 11 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.2 / 14.4 / 17.6 (10% / median / 90%); by eighths [29, 69, 54, 67, 123, 152, 30, 11]
+  boss t 337 s: lump 1 hunter Hunt(Some(110)), 343 members (first 783, 600 hurt), at 128,158, spread 3.84, stolen 0.0; nearest soldier 24.5, 11 alive
+  strikers t 337 s: 2 condensed holding 1, 1741 taken in all, slime 50013 of peak 58941, squad at 91,140
+  boss t 338 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.29, stolen 1002.0; nearest soldier 195.9, 11 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.4 / 17.8 (10% / median / 90%); by eighths [23, 75, 52, 66, 126, 145, 30, 18]
+  boss t 338 s: lump 1 hunter Hunt(Some(68)), 311 members (first 783, 634 hurt), at 136,164, spread 4.39, stolen 0.0; nearest soldier 25.9, 11 alive
+  strikers t 338 s: 2 condensed holding 1, 1741 taken in all, slime 49989 of peak 58941, squad at 103,148
+  boss t 339 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.29, stolen 1019.5; nearest soldier 190.2, 12 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.5 / 17.5 (10% / median / 90%); by eighths [27, 63, 62, 65, 131, 147, 24, 16]
+  boss t 339 s: lump 1 hunter Hunt(Some(118)), 278 members (first 783, 734 hurt), at 146,170, spread 5.05, stolen 0.0; nearest soldier 29.7, 12 alive
+  strikers t 339 s: 2 condensed holding 1, 1741 taken in all, slime 50005 of peak 58941, squad at 114,152
+  boss t 340 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.25, stolen 1037.1; nearest soldier 187.4, 13 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.6 / 17.9 (10% / median / 90%); by eighths [30, 63, 56, 68, 147, 131, 23, 17]
+  boss t 340 s: lump 1 hunter Hunt(Some(119)), 248 members (first 783, 739 hurt), at 156,176, spread 5.75, stolen 0.0; nearest soldier 35.5, 13 alive
+  strikers t 340 s: 2 condensed holding 1, 1741 taken in all, slime 50044 of peak 58941, squad at 124,150
+STRAT t 340 out mould 50044 soldiers 13 hp 0.57 bank 281 killed 53764 turret 0 pumps 5 buildings 5
+  boss t 341 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.23, stolen 1054.7; nearest soldier 186.1, 12 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.4 / 17.5 (10% / median / 90%); by eighths [31, 71, 44, 84, 131, 141, 21, 12]
+  boss t 341 s: lump 1 hunter ended Broken (229 members of 783; stole 0.0, 0.0 given back so far)
+  strikers t 341 s: 2 condensed holding 1, 1741 taken in all, slime 50081 of peak 58941, squad at 133,142
+  boss t 342 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.22, stolen 1072.3; nearest soldier 186.6, 13 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.5 / 17.6 (10% / median / 90%); by eighths [32, 68, 52, 74, 126, 147, 21, 15]
+  strikers t 342 s: 2 condensed holding 1, 1741 taken in all, slime 50153 of peak 58941, squad at 141,129
+  boss t 343 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.23, stolen 1089.8; nearest soldier 186.3, 13 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.7 / 17.6 (10% / median / 90%); by eighths [27, 74, 54, 61, 141, 145, 19, 14]
+  strikers t 343 s: 2 condensed holding 1, 1741 taken in all, slime 49936 of peak 58941, squad at 147,120
+  surge 9 starts at t 343.5 s (the slime has eaten 2908 food)
+  boss t 344 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.22, stolen 1107.4; nearest soldier 183.1, 14 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.5 / 17.7 (10% / median / 90%); by eighths [29, 75, 51, 63, 139, 149, 18, 11]
+  strikers t 344 s: 2 condensed holding 1, 1741 taken in all, slime 49737 of peak 58941, squad at 152,116
+  boss t 345 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.29, stolen 1125.0; nearest soldier 181.8, 15 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.8 / 17.6 (10% / median / 90%); by eighths [28, 90, 44, 49, 145, 147, 21, 11]
+  strikers t 345 s: 2 condensed holding 1, 1741 taken in all, slime 49571 of peak 58941, squad at 153,114
+  boss t 346 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.26, stolen 1142.6; nearest soldier 184.9, 15 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.6 / 14.7 / 17.6 (10% / median / 90%); by eighths [30, 84, 47, 63, 136, 144, 19, 12]
+  strikers t 346 s: 2 condensed holding 1, 1741 taken in all, slime 49554 of peak 58941, squad at 154,115
+  boss t 347 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.28, stolen 1160.2; nearest soldier 185.5, 16 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.7 / 17.7 (10% / median / 90%); by eighths [37, 76, 52, 52, 145, 145, 16, 12]
+  strikers t 347 s: 2 condensed holding 1, 1741 taken in all, slime 49613 of peak 58941, squad at 154,115
+  boss t 348 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.27, stolen 1177.7; nearest soldier 181.9, 16 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.3 / 14.6 / 17.5 (10% / median / 90%); by eighths [32, 79, 55, 53, 140, 147, 16, 13]
+  strikers t 348 s: 2 condensed holding 1, 1741 taken in all, slime 49703 of peak 58941, squad at 156,114
+  boss t 349 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.28, stolen 1195.3; nearest soldier 181.9, 17 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.9 / 17.9 (10% / median / 90%); by eighths [41, 84, 41, 49, 143, 150, 13, 14]
+  strikers t 349 s: 2 condensed holding 1, 1741 taken in all, slime 49697 of peak 58941, squad at 156,115
+  boss t 350 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.25, stolen 1212.9; nearest soldier 183.8, 16 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.8 / 17.7 (10% / median / 90%); by eighths [21, 90, 48, 60, 132, 147, 18, 19]
+  strikers t 350 s: 2 condensed holding 1, 1741 taken in all, slime 49487 of peak 58941, squad at 154,115
+STRAT t 350 out mould 49487 soldiers 17 hp 0.69 bank 187 killed 55789 turret 0 pumps 5 buildings 5
+  boss t 351 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.24, stolen 1230.5; nearest soldier 190.3, 17 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.6 / 14.7 / 17.9 (10% / median / 90%); by eighths [30, 83, 46, 56, 149, 144, 11, 16]
+  strikers t 351 s: 2 condensed holding 1, 1741 taken in all, slime 49385 of peak 58941, squad at 155,113
+  boss t 352 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,304, spread 2.24, stolen 1248.0; nearest soldier 187.2, 18 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.7 / 17.6 (10% / median / 90%); by eighths [28, 98, 40, 59, 134, 147, 16, 13]
+  strikers t 352 s: 2 condensed holding 1, 1741 taken in all, slime 49427 of peak 58941, squad at 155,111
+  boss t 353 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,304, spread 2.27, stolen 1265.6; nearest soldier 187.8, 18 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.9 / 17.6 (10% / median / 90%); by eighths [29, 107, 34, 44, 149, 141, 16, 15]
+  strikers t 353 s: 2 condensed holding 1, 1741 taken in all, slime 49613 of peak 58941, squad at 154,112
+  boss t 354 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,304, spread 2.21, stolen 1283.2; nearest soldier 186.6, 19 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.7 / 17.5 (10% / median / 90%); by eighths [34, 100, 42, 50, 131, 152, 14, 12]
+  strikers t 354 s: 2 condensed holding 1, 1741 taken in all, slime 49542 of peak 58941, squad at 155,111
+  boss t 355 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,304, spread 2.22, stolen 1300.8; nearest soldier 186.7, 19 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.6 / 14.9 / 17.6 (10% / median / 90%); by eighths [38, 104, 36, 49, 136, 154, 12, 6]
+  strikers t 355 s: 2 condensed holding 1, 1741 taken in all, slime 49249 of peak 58941, squad at 154,111
+  boss t 356 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.23, stolen 1318.4; nearest soldier 186.8, 20 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.9 / 17.6 (10% / median / 90%); by eighths [34, 101, 33, 40, 158, 143, 15, 11]
+  strikers t 356 s: 2 condensed holding 1, 1741 taken in all, slime 49092 of peak 58941, squad at 155,111
+  boss t 357 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.21, stolen 1335.9; nearest soldier 188.4, 20 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.8 / 17.6 (10% / median / 90%); by eighths [38, 99, 32, 36, 172, 130, 19, 9]
+  strikers t 357 s: 2 condensed holding 1, 1741 taken in all, slime 49028 of peak 58941, squad at 153,110
+  boss t 358 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.28, stolen 1353.5; nearest soldier 193.3, 21 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.6 / 15.0 / 17.8 (10% / median / 90%); by eighths [41, 96, 34, 38, 160, 144, 12, 10]
+  strikers t 358 s: 2 condensed holding 1, 1741 taken in all, slime 49004 of peak 58941, squad at 153,111
+  boss t 359 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.22, stolen 1371.1; nearest soldier 187.4, 22 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.7 / 15.0 / 17.5 (10% / median / 90%); by eighths [33, 109, 25, 50, 146, 143, 20, 9]
+  strikers t 359 s: 2 condensed holding 1, 1741 taken in all, slime 49154 of peak 58941, squad at 154,111
+  boss t 360 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,304, spread 2.25, stolen 1388.7; nearest soldier 184.3, 22 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.8 / 17.5 (10% / median / 90%); by eighths [34, 105, 29, 54, 130, 145, 28, 10]
+  strikers t 360 s: 2 condensed holding 1, 1741 taken in all, slime 49347 of peak 58941, squad at 154,108
+STRAT t 360 out mould 49347 soldiers 23 hp 0.76 bank 75 killed 56963 turret 0 pumps 5 buildings 5
+  boss t 361 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.24, stolen 1406.3; nearest soldier 188.2, 23 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.7 / 17.6 (10% / median / 90%); by eighths [29, 98, 43, 55, 124, 144, 31, 11]
+  strikers t 361 s: 2 condensed holding 1, 1741 taken in all, slime 49397 of peak 58941, squad at 156,110
+  boss t 362 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 242,302, spread 2.25, stolen 1423.8; nearest soldier 186.2, 23 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.8 / 17.4 (10% / median / 90%); by eighths [34, 105, 33, 49, 129, 155, 19, 11]
+  strikers t 362 s: 2 condensed holding 1, 1741 taken in all, slime 49391 of peak 58941, squad at 155,109
+  boss t 363 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.20, stolen 1441.4; nearest soldier 184.6, 24 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.6 / 14.7 / 17.2 (10% / median / 90%); by eighths [31, 91, 44, 45, 142, 147, 25, 10]
+  strikers t 363 s: 2 condensed holding 1, 1741 taken in all, slime 49353 of peak 58941, squad at 155,109
+  boss t 364 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.19, stolen 1459.0; nearest soldier 182.1, 24 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.6 / 17.6 (10% / median / 90%); by eighths [30, 91, 43, 51, 143, 141, 23, 13]
+  strikers t 364 s: 2 condensed holding 1, 1741 taken in all, slime 49297 of peak 58941, squad at 155,109
+  boss t 365 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.19, stolen 1476.6; nearest soldier 179.9, 25 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.7 / 17.8 (10% / median / 90%); by eighths [41, 83, 43, 52, 135, 148, 24, 9]
+  strikers t 365 s: 2 condensed holding 1, 1741 taken in all, slime 49460 of peak 58941, squad at 155,107
+  boss t 366 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.18, stolen 1494.1; nearest soldier 181.4, 26 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.4 / 14.6 / 17.7 (10% / median / 90%); by eighths [33, 85, 51, 51, 133, 144, 30, 8]
+  strikers t 366 s: 2 condensed holding 1, 1741 taken in all, slime 49631 of peak 58941, squad at 154,108
+  boss t 367 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.18, stolen 1511.7; nearest soldier 179.7, 26 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.6 / 17.6 (10% / median / 90%); by eighths [36, 89, 40, 41, 137, 162, 20, 10]
+  strikers t 367 s: 2 condensed holding 1, 1741 taken in all, slime 49662 of peak 58941, squad at 153,106
+  boss t 368.0 s: Crowd pinwheel formed on lump 1 at 483,95 (crowd top 2.41); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 368 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.20, stolen 1529.3; nearest soldier 180.1, 27 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.9 / 17.7 (10% / median / 90%); by eighths [31, 90, 36, 45, 141, 167, 14, 11]
+  boss t 368 s: lump 1 pinwheel Gather, 0 members (first 0, 0 hurt), at 483,95, spread 1.00, stolen 0.0; nearest soldier 302.1, 27 alive
+  strikers t 368 s: 2 condensed holding 1, 1741 taken in all, slime 49646 of peak 58941, squad at 155,106
+  boss t 369 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.19, stolen 1546.9; nearest soldier 178.0, 27 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.6 / 14.9 / 17.7 (10% / median / 90%); by eighths [33, 85, 36, 37, 156, 151, 26, 11]
+  boss t 369 s: lump 1 pinwheel Gather, 633 members (first 633, 0 hurt), at 482,94, spread 0.58, stolen 0.0; nearest soldier 305.0, 27 alive
+  strikers t 369 s: 2 condensed holding 1, 1741 taken in all, slime 50041 of peak 58941, squad at 153,105
+  boss t 370 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.17, stolen 1564.5; nearest soldier 178.7, 28 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.7 / 17.5 (10% / median / 90%); by eighths [39, 82, 35, 48, 144, 160, 13, 14]
+  boss t 370 s: lump 1 pinwheel Gather, 633 members (first 633, 0 hurt), at 482,94, spread 0.59, stolen 0.0; nearest soldier 303.3, 28 alive
+  strikers t 370 s: 2 condensed holding 1, 1741 taken in all, slime 50108 of peak 58941, squad at 153,102
+STRAT t 370 out mould 50108 soldiers 28 hp 0.80 bank 363 killed 57384 turret 0 pumps 5 buildings 5
+  boss t 371 s: lump 0 leech Sit((241.5, 303.0), 4380), 535 members (first 535, 0 hurt), at 240,302, spread 2.16, stolen 1582.0; nearest soldier 174.0, 28 alive
+    ring: crystal radius 8.0, rig 10.4, ring 12.0; from the pump 12.5 / 14.6 / 17.4 (10% / median / 90%); by eighths [38, 83, 35, 50, 137, 161, 17, 14]
+  boss t 371 s: lump 1 pinwheel Gather, 633 members (first 633, 0 hurt), at 482,94, spread 0.60, stolen 0.0; nearest soldier 300.4, 28 alive
+  strikers t 371 s: 2 condensed holding 1, 1741 taken in all, slime 50321 of peak 58941, squad at 153,105
+  boss t 372 s: lump 1 pinwheel Gather, 633 members (first 633, 0 hurt), at 482,94, spread 0.63, stolen 0.0; nearest soldier 300.7, 29 alive
+  boss t 372 s: lump 0 leech ended Spent (535 members of 535; stole 1599.6, 0.0 given back so far)
+  strikers t 372 s: 2 condensed holding 1, 1741 taken in all, slime 50502 of peak 58941, squad at 150,103
+  boss t 373 s: lump 1 pinwheel Gather, 633 members (first 633, 0 hurt), at 482,94, spread 0.64, stolen 0.0; nearest soldier 304.0, 30 alive
+  strikers t 373 s: 2 condensed holding 1, 1741 taken in all, slime 50553 of peak 58941, squad at 152,101
+  boss t 374 s: lump 1 pinwheel Hunt(Some(122)), 633 members (first 633, 0 hurt), at 482,94, spread 0.63, stolen 0.0; nearest soldier 302.5, 30 alive
+  strikers t 374 s: 2 condensed holding 1, 1741 taken in all, slime 50544 of peak 58941, squad at 152,104
+  boss t 375 s: lump 1 pinwheel Hunt(Some(122)), 633 members (first 633, 0 hurt), at 458,92, spread 1.01, stolen 0.0; nearest soldier 278.5, 31 alive
+  strikers t 375 s: 2 condensed holding 1, 1741 taken in all, slime 50596 of peak 58941, squad at 152,103
+  boss t 376.0 s: Cut pinwheel formed on lump 0 at 266,171 (crowd top 2.41); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 376 s: lump 1 pinwheel Hunt(Some(130)), 633 members (first 633, 0 hurt), at 452,90, spread 0.79, stolen 0.0; nearest soldier 258.1, 31 alive
+  boss t 376 s: lump 0 pinwheel Gather, 0 members (first 0, 0 hurt), at 266,171, spread 0.90, stolen 0.0; nearest soldier 79.2, 31 alive
+  strikers t 376 s: 2 condensed holding 1, 1741 taken in all, slime 50636 of peak 58941, squad at 164,116
+  boss t 377 s: lump 1 pinwheel Hunt(Some(130)), 633 members (first 633, 0 hurt), at 448,88, spread 0.78, stolen 0.0; nearest soldier 236.4, 32 alive
+  boss t 377 s: lump 0 pinwheel Gather, 2619 members (first 2619, 0 hurt), at 264,168, spread 0.79, stolen 0.0; nearest soldier 59.6, 32 alive
+  strikers t 377 s: 2 condensed holding 1, 1741 taken in all, slime 50832 of peak 58941, squad at 180,126
+  boss t 378 s: lump 1 pinwheel Hunt(Some(130)), 633 members (first 633, 0 hurt), at 444,88, spread 0.78, stolen 0.0; nearest soldier 213.5, 33 alive
+  boss t 378 s: lump 0 pinwheel Gather, 2619 members (first 2619, 0 hurt), at 264,166, spread 0.76, stolen 0.0; nearest soldier 44.5, 33 alive
+  strikers t 378 s: 2 condensed holding 1, 1741 taken in all, slime 50973 of peak 58941, squad at 195,131
+  boss t 379 s: lump 1 pinwheel Hunt(Some(130)), 633 members (first 633, 0 hurt), at 440,86, spread 0.86, stolen 0.0; nearest soldier 201.4, 33 alive
+  boss t 379 s: lump 0 pinwheel Gather, 2619 members (first 2619, 23 hurt), at 264,166, spread 0.72, stolen 0.0; nearest soldier 33.9, 33 alive
+  strikers t 379 s: 2 condensed holding 1, 1741 taken in all, slime 50948 of peak 58941, squad at 213,132
+  boss t 380 s: lump 1 pinwheel Hunt(Some(130)), 633 members (first 633, 0 hurt), at 428,82, spread 1.08, stolen 0.0; nearest soldier 186.8, 34 alive
+  boss t 380 s: lump 0 pinwheel Gather, 2619 members (first 2619, 146 hurt), at 264,166, spread 0.69, stolen 0.0; nearest soldier 28.7, 34 alive
+  strikers t 380 s: 2 condensed holding 1, 1741 taken in all, slime 50951 of peak 58941, squad at 228,133
+STRAT t 380 out mould 50951 soldiers 34 hp 0.78 bank 299 killed 58005 turret 0 pumps 4 buildings 4
+  boss t 381 s: lump 1 pinwheel Hunt(Some(118)), 633 members (first 633, 0 hurt), at 422,80, spread 0.95, stolen 0.0; nearest soldier 177.7, 33 alive
+  boss t 381 s: lump 0 pinwheel Gather, 2618 members (first 2619, 238 hurt), at 262,166, spread 0.69, stolen 0.0; nearest soldier 27.4, 33 alive
+  strikers t 381 s: 2 condensed holding 1, 1741 taken in all, slime 50858 of peak 58941, squad at 237,133
+  boss t 382 s: lump 1 pinwheel Hunt(Some(81)), 633 members (first 633, 0 hurt), at 418,80, spread 0.97, stolen 0.0; nearest soldier 169.5, 28 alive
+  boss t 382 s: lump 0 pinwheel Hunt(Some(140)), 2611 members (first 2619, 333 hurt), at 262,164, spread 0.71, stolen 0.0; nearest soldier 31.1, 28 alive
+  strikers t 382 s: 2 condensed holding 1, 1741 taken in all, slime 50904 of peak 58941, squad at 240,132
+  boss t 383 s: lump 1 pinwheel Hunt(Some(129)), 633 members (first 633, 0 hurt), at 414,80, spread 0.97, stolen 0.0; nearest soldier 171.7, 15 alive
+  boss t 383 s: lump 0 pinwheel Hunt(Some(145)), 2591 members (first 2619, 488 hurt), at 258,160, spread 0.97, stolen 0.0; nearest soldier 31.6, 15 alive
+  strikers t 383 s: 2 condensed holding 1, 1741 taken in all, slime 51142 of peak 58941, squad at 237,131
+  boss t 384 s: lump 1 pinwheel Hunt(Some(121)), 633 members (first 633, 0 hurt), at 410,80, spread 1.01, stolen 0.0; nearest soldier 168.8, 8 alive
+  boss t 384 s: lump 0 pinwheel Hunt(Some(145)), 2574 members (first 2619, 796 hurt), at 256,158, spread 0.98, stolen 0.0; nearest soldier 29.3, 8 alive
+  strikers t 384 s: 2 condensed holding 1, 1741 taken in all, slime 51322 of peak 58941, squad at 237,132
+  surge 10 starts at t 384.4 s (the slime has eaten 3256 food)
+  boss t 385 s: lump 1 pinwheel Hunt(Some(139)), 633 members (first 633, 0 hurt), at 402,80, spread 1.25, stolen 0.0; nearest soldier 174.1, 1 alive
+  boss t 385 s: lump 0 pinwheel Hunt(Some(139)), 2561 members (first 2619, 842 hurt), at 256,156, spread 1.00, stolen 0.0; nearest soldier 33.0, 1 alive
+  strikers t 385 s: 2 condensed holding 1, 1741 taken in all, slime 51461 of peak 58941, squad at 236,130
+/tmp/claude-0/cen/sized/1795038793-4/planet-4-1795038793-strat:econ,go=4,aim=6-420s-all.png
+/tmp/claude-0/cen/sized/1795038793-4/planet-4-1795038793-strat:econ,go=4,aim=6-420s-near.png
+  CPU: ground field 3.46 ms (once a game second), model and HUD 0.148 ms a frame
+  t 385 s: mould 51461, soldiers 0, bank 334, harvested 76400, rendered 0, shots 8373, killed 58410, took 78%, crystals left 0.593, ended: squad wiped
+  surge: the slime ate 3265 food (8.5/s); meter 8.6 of 348, 10 surges
+  dense: 0 condensed or thick walkers, mass 51461 (readout 51496); 2526 breaking away
+  loose: 4426 walkers alone or in twos in a dish cell, 8.6% of 51486; 1406 with at most one other round them
+    pump at (84, 278): hp 0 / 200, built 1.0, worn down
+    pump at (259, 273): hp 0 / 200, built 0.0, worn down
+    pump at (153, 110): hp 0 / 200, built 1.0, worn down
+    pump at (60, 316): hp 0 / 200, built 1.0, worn down
+    pump at (50, 258): hp 0 / 200, built 1.0, worn down
+    pump at (103, 246): hp 0 / 200, built 1.0, worn down
+    pump at (118, 299): hp 0 / 200, built 1.0, worn down
+    pump at (142, 183): hp 0 / 200, built 1.0, worn down
+    pump at (37, 80): hp 0 / 200, built 1.0, worn down
+    pump at (242, 303): hp 0 / 200, built 1.0, worn down
+    pump at (361, 330): hp 0 / 200, built 1.0, worn down
+    pump at (84, 278): hp 144 / 200, built 1.0, standing, working
+    pump at (50, 258): hp 177 / 200, built 1.0, standing, working
+    pump at (60, 316): hp 191 / 200, built 1.0, standing, working
+    pump at (118, 299): hp 198 / 200, built 1.0, standing, working
+    pumped 65309 food

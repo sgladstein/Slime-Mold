@@ -1,0 +1,57 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 11 s alone in 37.6 s
+STRAT t 0 build mould 62004 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 62155 soldiers 4 hp 1.00 bank 241 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 20 build mould 62266 soldiers 4 hp 1.00 bank 248 killed 39 turret 0 pumps 4 buildings 4
+STRAT t 30 out mould 62145 soldiers 4 hp 0.95 bank 2 killed 427 turret 0 pumps 4 buildings 4
+STRAT t 40 out mould 61976 soldiers 4 hp 0.91 bank 577 killed 721 turret 0 pumps 4 buildings 4
+STRAT t 50 out mould 62116 soldiers 4 hp 0.91 bank 275 killed 759 turret 0 pumps 5 buildings 5
+  surge 1 starts at t 58.1 s (the slime has eaten 400 food)
+STRAT t 60 out mould 62328 soldiers 4 hp 0.91 bank 398 killed 775 turret 0 pumps 5 buildings 5
+STRAT t 70 build mould 62700 soldiers 4 hp 0.91 bank 569 killed 775 turret 0 pumps 6 buildings 6
+  boss t 80.0 s: Crowd hunter formed on lump 0 at 343,309 (crowd top 1.00); grade 0.56: 10 blows a member, touches as 4, pace x1.23
+  boss t 80 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 343,309, spread 1.00, stolen 0.0; nearest soldier 227.2, 4 alive
+STRAT t 80 out mould 46319 soldiers 4 hp 0.91 bank 375 killed 847 turret 0 pumps 5 buildings 5
+  boss t 81 s: lump 0 hunter Gather, 489 members (first 489, 0 hurt), at 346,306, spread 0.65, stolen 0.0; nearest soldier 237.0, 4 alive
+  boss t 82 s: lump 0 hunter Gather, 489 members (first 489, 0 hurt), at 346,306, spread 0.68, stolen 0.0; nearest soldier 240.6, 4 alive
+  boss t 83 s: lump 0 hunter Gather, 489 members (first 489, 0 hurt), at 346,306, spread 0.72, stolen 0.0; nearest soldier 240.5, 4 alive
+  boss t 84 s: lump 0 hunter Gather, 489 members (first 489, 0 hurt), at 346,306, spread 0.73, stolen 0.0; nearest soldier 240.8, 4 alive
+  boss t 85 s: lump 0 hunter Gather, 489 members (first 489, 0 hurt), at 346,306, spread 0.74, stolen 0.0; nearest soldier 240.8, 4 alive
+  boss t 86 s: lump 0 hunter Hunt(Some(3)), 489 members (first 489, 0 hurt), at 346,304, spread 0.74, stolen 0.0; nearest soldier 236.3, 4 alive
+  boss t 87 s: lump 0 hunter Hunt(Some(0)), 489 members (first 489, 0 hurt), at 330,286, spread 1.22, stolen 0.0; nearest soldier 212.6, 4 alive
+  boss t 88 s: lump 0 hunter Hunt(Some(0)), 489 members (first 489, 0 hurt), at 326,280, spread 1.00, stolen 0.0; nearest soldier 216.6, 4 alive
+  boss t 89 s: lump 0 hunter Hunt(Some(0)), 489 members (first 489, 0 hurt), at 326,278, spread 0.94, stolen 0.0; nearest soldier 228.6, 4 alive
+  boss t 90 s: lump 0 hunter Hunt(Some(2)), 489 members (first 489, 0 hurt), at 322,274, spread 1.04, stolen 0.0; nearest soldier 227.0, 4 alive
+STRAT t 90 out mould 41381 soldiers 5 hp 0.81 bank 126 killed 1674 turret 0 pumps 6 buildings 6
+  boss t 91 s: lump 0 hunter Hunt(Some(2)), 489 members (first 489, 0 hurt), at 318,272, spread 1.19, stolen 0.0; nearest soldier 211.9, 5 alive
+  boss t 92 s: lump 0 hunter Hunt(Some(2)), 489 members (first 489, 0 hurt), at 306,262, spread 1.68, stolen 0.0; nearest soldier 187.4, 6 alive
+  boss t 93 s: lump 0 hunter Hunt(Some(2)), 489 members (first 489, 0 hurt), at 302,260, spread 1.57, stolen 0.0; nearest soldier 170.5, 6 alive
+  boss t 94 s: lump 0 hunter Hunt(Some(1)), 489 members (first 489, 0 hurt), at 300,256, spread 1.50, stolen 0.0; nearest soldier 158.7, 6 alive
+  boss t 95 s: lump 0 hunter Hunt(Some(1)), 489 members (first 489, 0 hurt), at 298,252, spread 1.53, stolen 0.0; nearest soldier 140.4, 7 alive
+  boss t 96 s: lump 0 hunter Hunt(Some(1)), 489 members (first 489, 0 hurt), at 294,246, spread 1.65, stolen 0.0; nearest soldier 127.2, 8 alive
+  boss t 97 s: lump 0 hunter Hunt(Some(9)), 489 members (first 489, 0 hurt), at 290,230, spread 1.99, stolen 0.0; nearest soldier 99.4, 9 alive
+  boss t 98 s: lump 0 hunter Hunt(Some(8)), 489 members (first 489, 0 hurt), at 286,218, spread 1.88, stolen 0.0; nearest soldier 83.4, 8 alive
+  boss t 99 s: lump 0 hunter Hunt(Some(9)), 489 members (first 489, 0 hurt), at 282,210, spread 2.00, stolen 0.0; nearest soldier 72.4, 8 alive
+  boss t 100 s: lump 0 hunter Hunt(Some(9)), 489 members (first 489, 0 hurt), at 278,202, spread 2.01, stolen 0.0; nearest soldier 67.9, 9 alive
+STRAT t 100 back mould 37945 soldiers 10 hp 0.47 bank 129 killed 4872 turret 0 pumps 6 buildings 6
+  boss t 101 s: lump 0 hunter Hunt(Some(11)), 489 members (first 489, 0 hurt), at 274,194, spread 2.07, stolen 0.0; nearest soldier 49.9, 9 alive
+  boss t 102 s: lump 0 hunter Hunt(Some(9)), 489 members (first 489, 0 hurt), at 270,178, spread 2.25, stolen 0.0; nearest soldier 18.3, 10 alive
+  boss t 103 s: lump 0 hunter Hunt(Some(13)), 489 members (first 489, 424 hurt), at 266,172, spread 2.05, stolen 0.0; nearest soldier 15.0, 4 alive
+  boss t 104 s: lump 0 hunter Hunt(Some(10)), 489 members (first 489, 443 hurt), at 264,170, spread 1.85, stolen 0.0; nearest soldier 13.1, 1 alive
+/tmp/claude-0/cen/lateoff/1795106014-4/planet-4-1795106014-strat:econ,go=4,aim=6-300s-all.png
+/tmp/claude-0/cen/lateoff/1795106014-4/planet-4-1795106014-strat:econ,go=4,aim=6-300s-near.png
+  CPU: ground field 5.24 ms (once a game second), model and HUD 0.203 ms a frame
+  t 104 s: mould 37245, soldiers 0, bank 296, harvested 16695, rendered 0, shots 339, killed 5862, took 23%, crystals left 0.967, ended: squad wiped
+  surge: the slime ate 758 food (7.3/s); meter 358.6 of 400, 1 surges
+  dense: 0 condensed or thick walkers, mass 37245 (readout 37221); 2130 breaking away
+  loose: 5991 walkers alone or in twos in a dish cell, 16.1% of 37221; 2216 with at most one other round them
+    pump at (147, 150): hp 0 / 200, built 1.0, worn down
+    pump at (166, 199): hp 199 / 200, built 1.0, standing, working
+    pump at (293, 34): hp 0 / 200, built 1.0, worn down
+    pump at (294, 64): hp 0 / 200, built 1.0, worn down
+    pump at (112, 319): hp 183 / 200, built 1.0, standing, working
+    pump at (158, 288): hp 200 / 200, built 1.0, standing, working
+    pump at (156, 318): hp 200 / 200, built 1.0, standing, working
+    pump at (152, 348): hp 200 / 200, built 1.0, standing, working
+    pump at (147, 150): hp 54 / 200, built 1.0, standing, working
+    pumped 16472 food
