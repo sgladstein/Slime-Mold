@@ -656,6 +656,13 @@ const FLUNG: u32 = 0x2000u;
 // the hit (`strike`). It slows to a stop, lays nothing, and dies where it
 // lands (`fly`).
 const DOOM: u32 = 0x4000u;
+// `SOWN` (bit 15, 2026-11-20, fruiting): a spore a ripe fruit threw
+// (`fling` with `kir` 2, `Engine::sow_pass`). It flies and homes as a
+// fruited spore does (straight while its timer is over `spore_steps` / 2,
+// then by scent, landing over `spore_land`), but it is drawn in the air as
+// a flung walker is (its fourth word its flight, `draw_specks`) so the
+// burst reads, and it lands with no rest. `alight` clears it.
+const SOWN: u32 = 0x8000u;
 fn state(k: u32) -> u32 { if (!cycles()) { return L_WALKER; } return (spec[k] >> 9u) & 3u; }
 // An ordinary walker (the CPU's `active`): living, and not a spore,
 // dormant or dead.
@@ -3382,7 +3389,7 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A shot's spray droplet writes it below 0 (the bold spray, 11-15), so
     // the view draws a killed walker's droplet hot and a blast's living
     // throw in the mould's own gold.
-    var fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung);
+    var fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung || (w & SOWN) != 0u);
     if (doom) { fw = -fw; }
     var at = vec4<f32>(nx, ny, h, fw);
     if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
@@ -3441,7 +3448,7 @@ fn alight(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (won) { atomicStore(&claim[i], NONE); }
         atomicAdd(&occ[i], 1u);
         // A flung walker lands with no rest, and is no longer flung.
-        let rest = select(min(P.spore_rest, 65535u), 0u, (spec[k] & FLUNG) != 0u);
+        let rest = select(min(P.spore_rest, 65535u), 0u, (spec[k] & (FLUNG | SOWN)) != 0u);
         spec[k] = (spec[k] & 0x1FFu) | (rest << 16u);
         walkers[k].w = 0.0;
         now_active(k, i, ill, ex);
@@ -3741,6 +3748,20 @@ fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
     let steps = u32(P.kcs);
     var tm = clamp(u32(floor(P.kcs * ((P.kar * P.kar - d2) * P.kalarm))), 1u, max(steps, 1u));
     var head = atan2(dy, dx);
+    // A sowing (`kir` 2, a ripe fruit bursting, 2026-11-20): every walker
+    // in the disc leaves as a homing spore (`SOWN`), straight out from the
+    // centre give or take a fifth of a radian, each for the whole `kcs`
+    // steps, so the fruit throws its walkers over the planet and they come
+    // down on food. One at the very centre takes its own heading.
+    if (P.kir > 1.5) {
+        let j = (unit(keyed(P.s_spore_h, S.t, k | 0x20000000u)) - 0.5) * 0.4;
+        if (d2 < 1.0e-6) { head = unit(keyed(P.s_spore_h, S.t, k | 0x10000000u)) * TAU; }
+        atomicSub(&occ[cell(wk.x, wk.y)], 1u);
+        spec[k] = (w & 0x1FFu) | (L_SPORE << 9u) | SOWN | (max(steps, 2u) << 16u);
+        walkers[k] = vec4<f32>(wk.x, wk.y, head + j, 1.0);
+        atomicAdd(&news[gas_base() + 3u], 1u);
+        return;
+    }
     if (P.kir > 0.5) {
         tm = max(steps, 1u);
         head = P.kcr;

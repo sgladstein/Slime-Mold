@@ -309,6 +309,12 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("far_smell", "1".to_string()),
         ("lure_pull", format!("{LURE_PULL}")),
         ("tether", format!("{TETHER}")),
+        // A fruit's spores (`ENEMY_RULES`' `fruit`) home on food 36 fine
+        // cells out and land over a scent of 1, the Sporer's own numbers
+        // (`tiers::SPORE`); no other spore flies on these planets but the
+        // Sporer's, which already has them.
+        ("spore_reach", "36".to_string()),
+        ("spore_land", "1".to_string()),
     ]
 }
 
@@ -339,7 +345,18 @@ pub const LURE_PULL: f32 = 10.0;
 /// soldier (`Reports/sim-use-2026-11-17/s1-unit-paths.md`). The field is
 /// built on a worker thread once a game second (2.0 ms on planet 3, 7.4 ms
 /// on planet 8, off the frame).
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0)];
+///
+/// **The slime fruits when it is hurt** (`fruit`, 2026-11-20, the thread
+/// "Make the slime a more interesting enemy"; `larder_world/fruit.rs`). The
+/// owner, 11-20 05:46Z: the slime is interesting early in a planet "when I
+/// am poor and weak but once I get strong enough there is just lots of
+/// shooting through masses of uniform orange". From 1:30 after the
+/// landing, once the squad has killed a fifth of the slime's mass in 30 s,
+/// the slime streams a twelfth of itself (at most 2,500 walkers)
+/// into a dark knot out of the guns' reach. Break it within 30 s or it
+/// bursts and throws its walkers over the planet as spores that land on
+/// food as new slime. One at a time, 40 s apart at least. GPU only.
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)

@@ -746,8 +746,7 @@ impl<W: World> Game<W> {
     /// size (`march_from`). None once it has; the way back when it cannot
     /// (no lump free, no grid), for the raid to stream.
     fn start_march(&mut self, d: &Raid, field: Vec<u32>) -> Option<Vec<u32>> {
-        let held = |l: usize| self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).any(|b| b.lump == l) || self.raids.marching.iter().any(|m| m.lump == l);
-        let Some(lump) = (0..crate::mould::big::LUMPS).rev().find(|&l| !held(l)) else { return Some(field) };
+        let Some(lump) = (0..crate::mould::big::LUMPS).rev().find(|&l| !self.lump_taken(l)) else { return Some(field) };
         let Some((at, r)) = self.march_from(d.to, self.rules.raid.march_size.max(0.0) * d.size * self.world.mass() as f32, &field) else { return Some(field) };
         self.world.form_lump(lump, Some((at, r)));
         let mut m = March { lump, to: d.to, first: 0, members: 0, centre: at, since: self.world.ticks(), field, reach: d.reach, share: d.share, start: f32::MAX };
