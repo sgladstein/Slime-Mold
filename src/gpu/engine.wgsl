@@ -150,14 +150,16 @@ struct Params {
     // shot's hit sets the countdown on its struck agar cells to at least
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
-    // Three free words (written 0) and the fort's flag. The first three
+    // The wave's pull (`wave`, 2026-11-20, `Engine::write_wave_field`;
+    // 0 while no wave field is written), a free word (written 0), the
+    // fort's flag and the tether. The first two words
     // were the lone step (2026-11-12, `BigParams::lone_step`: a walker
     // with few others round it stepped shorter), whose half in this engine
     // was deleted on 11-17 (Reports/dead-ends.md); the last was
     // `fed_crowd`'s until 11-17. `fort` (2026-11-18): 1 while the game has
     // written a fort mask (`fort_at`), else 0. `tether` (2026-11-18): the
     // walkers a marcher's next cell must touch (`tethered`), 0 off.
-    lone_free0: f32, lone_free1: f32, fort: u32, tether: u32,
+    wave: f32, lone_free1: f32, fort: u32, tether: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
@@ -175,9 +177,10 @@ struct Params {
     roam: u32, roam_far: u32, roam_land: u32, roam_share: f32,
     // The ground row (new ground kinds, 11-14; Params grew from 928 to
     // 944): a walker's step in deep water is x `deep_step` on top of
-    // `wet_step` (`BigParams::deep_step`). Three words kept for the next
-    // ground kinds.
-    deep_step: f32, _g1: f32, _g2: f32, _g3: f32,
+    // `wet_step` (`BigParams::deep_step`); deep water as a wall to the
+    // slime (`Settings::deep_wall`, 11-20; `shut`). Two words kept for the
+    // next ground kinds.
+    deep_step: f32, deep_wall: u32, _g2: f32, _g3: f32,
     // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
     // Params grew from 944 to 960): the steps between surges (0 off), the
     // creep's steps in the low half of `surge_ld` and the lunge's in the
@@ -656,6 +659,13 @@ const FLUNG: u32 = 0x2000u;
 // the hit (`strike`). It slows to a stop, lays nothing, and dies where it
 // lands (`fly`).
 const DOOM: u32 = 0x4000u;
+// `SOWN` (bit 15, 2026-11-20, fruiting): a spore a ripe fruit threw
+// (`fling` with `kir` 2, `Engine::sow_pass`). It flies and homes as a
+// fruited spore does (straight while its timer is over `spore_steps` / 2,
+// then by scent, landing over `spore_land`), but it is drawn in the air as
+// a flung walker is (its fourth word its flight, `draw_specks`) so the
+// burst reads, and it lands with no rest. `alight` clears it.
+const SOWN: u32 = 0x8000u;
 fn state(k: u32) -> u32 { if (!cycles()) { return L_WALKER; } return (spec[k] >> 9u) & 3u; }
 // An ordinary walker (the CPU's `active`): living, and not a spore,
 // dormant or dead.
@@ -719,6 +729,17 @@ fn soil(i: u32) -> u32 {
     if (!world(SOIL)) { return 0u; }
     return (ground[i] >> 12u) & 15u;
 }
+// **Deep water is a wall to the slime** (`deep_wall`, 2026-11-20, the
+// owner: "Deep water shouldn't be traversable by player or slime"; until
+// then the slime crawled through at `deep_step`). With it on, cell j is
+// deep water a walker on dry or shallow ground never steps or jumps into,
+// and a sensor reads it as rock, so the slime hugs a river's bank and
+// crosses by its fords and bridges, as soldiers do. A walker already in
+// deep water (flung, or a map's start) may still step on through it at
+// `deep_step` until it reaches a bank; were it held, a walker five cells
+// into a river could never leave and a planet won on its last walker would
+// never end. No CPU twin (the owner's card, 11-17 19:21Z).
+fn deep_shut(j: u32) -> bool { return P.deep_wall != 0u && soil(j) == SOIL_DEEP; }
 // What the trail on cell i keeps of its spread value (the CPU's `tick`
 // multiplies after the spread, and the trail after the species' sum).
 fn soil_keep(i: u32) -> f32 {
@@ -797,7 +818,7 @@ fn trail_at(i: u32, sp: u32) -> f32 {
 fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
-    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    if (i == NONE || agar[i] == 0u || deep_shut(i)) { return -1.0e6; }
     // `sw` is 1, or more for a hungry walker (`hunger_scent`); x 1 is exact.
     var v = trail_at(i, sp) + sw * scent_at(x + c * sso, y + s * sso);
     // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
@@ -1059,6 +1080,28 @@ fn lure_dist(i: u32) -> u32 {
     if (v == 0u) { return 0xFFFFFFFFu; }
     return v - 1u;
 }
+// **The slime's wave field** (2026-11-20, `Game::time_waves`): a slime
+// losing walkers fast pulls back to two or three points out of the guns'
+// reach round the squad, masses there, and then comes in from all of them
+// at once. The field is the walking distance to the wave's points (the
+// gathering points, then the soldiers), in the raid's region after the
+// raid's own blocks, in the lure's words. Written once a game second
+// (`Engine::write_wave_field`); no CPU twin.
+fn wave_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    let v = atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + P.w * P.h + nb + q]);
+    if (v == 0u) { return 0xFFFFFFFFu; }
+    return v - 1u;
+}
+fn wave_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE) { return 0.0; }
+    let d = wave_dist(i);
+    if (d == 0xFFFFFFFFu) { return 0.0; }
+    return f32(dh) - f32(d);
+}
 // The lure at a sensor: how much nearer the lure its block is than the
 // walker's own (`dh`). A block the field does not reach (rock, a wall, or
 // past the lure's reach) reads no lean either way, as in the lab's rig
@@ -1104,7 +1147,7 @@ fn raid_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
 fn panic_at(x: f32, y: f32, a: f32, so: f32, g: vec3<f32>) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
-    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    if (i == NONE || agar[i] == 0u || deep_shut(i)) { return -1.0e6; }
     return c * (g.x - x) + s * (g.y - y);
 }
 
@@ -1286,6 +1329,17 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (fr > -1.0e5) { fr += P.lure * lure_near(wk.x, wk.y, h + sa, so, dh); }
             }
         }
+        // **The wave** (2026-11-20; `wave_dist`): a calm walker inside the
+        // wave's field leans down it, x `wave`, as the lure's. Calm only,
+        // as the lure: a walker already charging keeps its charge.
+        if (lb == 0u && P.wave > 0.0) {
+            let dh = wave_dist(here);
+            if (dh != 0xFFFFFFFFu) {
+                if (f > -1.0e5) { f += P.wave * wave_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += P.wave * wave_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += P.wave * wave_near(wk.x, wk.y, h + sa, so, dh); }
+            }
+        }
     }
     // Blind reads 0 and Sour the negative, after whatever made the
     // readings (the CPU's `big::mind_reads`: x 0 and x -1); a wall stays a
@@ -1354,7 +1408,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
+        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
@@ -1834,7 +1888,7 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = jump_of(k, S.t);
     if (j.w == 0.0) { return; }
     let to = cell(j.x, j.y);
-    if (to == NONE || agar[to] == 0u) { return; }
+    if (to == NONE || agar[to] == 0u || deep_shut(to)) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     let cr = crowd_of(species_of(k));
@@ -3382,7 +3436,7 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A shot's spray droplet writes it below 0 (the bold spray, 11-15), so
     // the view draws a killed walker's droplet hot and a blast's living
     // throw in the mould's own gold.
-    var fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung);
+    var fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung || (w & SOWN) != 0u);
     if (doom) { fw = -fw; }
     var at = vec4<f32>(nx, ny, h, fw);
     if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
@@ -3441,7 +3495,7 @@ fn alight(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (won) { atomicStore(&claim[i], NONE); }
         atomicAdd(&occ[i], 1u);
         // A flung walker lands with no rest, and is no longer flung.
-        let rest = select(min(P.spore_rest, 65535u), 0u, (spec[k] & FLUNG) != 0u);
+        let rest = select(min(P.spore_rest, 65535u), 0u, (spec[k] & (FLUNG | SOWN)) != 0u);
         spec[k] = (spec[k] & 0x1FFu) | (rest << 16u);
         walkers[k].w = 0.0;
         now_active(k, i, ill, ex);
@@ -3741,6 +3795,20 @@ fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
     let steps = u32(P.kcs);
     var tm = clamp(u32(floor(P.kcs * ((P.kar * P.kar - d2) * P.kalarm))), 1u, max(steps, 1u));
     var head = atan2(dy, dx);
+    // A sowing (`kir` 2, a ripe fruit bursting, 2026-11-20): every walker
+    // in the disc leaves as a homing spore (`SOWN`), straight out from the
+    // centre give or take a fifth of a radian, each for the whole `kcs`
+    // steps, so the fruit throws its walkers over the planet and they come
+    // down on food. One at the very centre takes its own heading.
+    if (P.kir > 1.5) {
+        let j = (unit(keyed(P.s_spore_h, S.t, k | 0x20000000u)) - 0.5) * 0.4;
+        if (d2 < 1.0e-6) { head = unit(keyed(P.s_spore_h, S.t, k | 0x10000000u)) * TAU; }
+        atomicSub(&occ[cell(wk.x, wk.y)], 1u);
+        spec[k] = (w & 0x1FFu) | (L_SPORE << 9u) | SOWN | (max(steps, 2u) << 16u);
+        walkers[k] = vec4<f32>(wk.x, wk.y, head + j, 1.0);
+        atomicAdd(&news[gas_base() + 3u], 1u);
+        return;
+    }
     if (P.kir > 0.5) {
         tm = max(steps, 1u);
         head = P.kcr;

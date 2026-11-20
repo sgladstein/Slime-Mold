@@ -1,6 +1,6 @@
 # Look and interface: state and brief
 
-## State (2026-11-19)
+## State (2026-11-20)
 
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
 page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
@@ -135,6 +135,30 @@ level at its feet and dims while it is out, its helmet white
 zoom 5-10, cracks in patches; `ROCK_MOTTLE`, `ROCK_CRACK*` in
 `terrain_top`) and planet 1's meadow in patches by the water (#535:
 `flora_form` flora 0 meadow, clump 0.6, wet 0.4, spring-green tips).
+A spent crystal is a cracked husk of frosted glass (11-20, #550): rays and chords from its middle, each shard tilted
+and toned, the cracks coming in with `1 - charge`; the old terraces
+(`riser`) are gone. `GEM_HUSK`, `GEM_SHARD`, `GEM_RAYS`, `GEM_SPENT`.
+Crystals cast shadows (#553, 11-20): the hexagon swept away
+from the light in `shaded` (`GEM_CAST`, `GEM_SHADOW`; applied under the
+thin film's floor, never on the crystal's own faces); rock's cast
+shadow `TER_CAST` 1.6, `TER_SHADE` 0.55 (`terrain_over`).
+Planets 2 and 3's traits (11-20): the slime's trail on bare land
+(`trail_lin`, bilinear `look` byte 0) as pale dust tracks on the barrens
+(`DUST_TRAIL`, `DUST`, `DUST_LIFT`) and a wet slick in the fen
+(`SLICK_DARK`, `SLICK_SHEEN`, `SLICK_GLINT`). On planet 3 the Trunk's
+packed body leaves little bare trail, so the slick shows mostly where
+the squad shot the slime back and as a halo round the body.
+
+**Look D started (11-20):** the shop's counter as shelf rows
+(`shelf`, `shelf_row`, `SHELF_H`, `SHELF_W` in `start/shop.rs`): every
+offer a row with its icon, name, the first sentence of its `about`, price
+and pips, in columns of at least 420 units, while all fit on one page; else
+the old tiles that page. Bends shop B's half-size tiles (owner 11-15).
+The landing (11-20): each soldier drops in over its shadow in the
+first second (`landing`, `LAND_SECS`, `LAND_STAGGER`, `LAND_LIFT` in
+`draw.rs`); only the drawing. A dust ring was tried and dropped.
+Next in D: a win and a loss in the picture; the rest of the shop (the empty bag row, the pane's planet
+briefing repeated from the top bar), then the main menu and Options.
 
 **Open branch:** none (`claude/project-thread-ho6vcd`, reused per PR).
 
@@ -175,9 +199,8 @@ while Squad asked to keep it.
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
-3. Look C, rest: a trait for planet 2 (barrens) and planet 3, faint
-   grounding shadows at play zoom, spent crystals' material
-   (art-direction's C line).
+3. Look C, rest: shadows for buildings if they float; traits for
+   planets 4 to 8 after Milestone 1 (parked: more planet polish).
 4. A landing, a win and a loss that happen in the picture (D's next).
 5. Picks done 11-19: the fen moat deleted; the hunter stays violet
    (filmed on planet 8, bright and glossy over its dark purple plants,

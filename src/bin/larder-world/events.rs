@@ -46,7 +46,11 @@ impl ApplicationHandler for App {
         self.pixels = Some(pixels);
         self.window = Some(window);
         self.speaker = match sound::Output::open(self.args.seed) {
-            Ok(o) => Some(o),
+            // At the saved volume (`volume`), not the first-run level.
+            Ok(mut o) => {
+                o.send([master_now(self.sound_on)]);
+                Some(o)
+            }
             Err(e) => {
                 eprintln!("larder-world: no sound ({e}); playing silent");
                 None
@@ -212,12 +216,18 @@ impl ApplicationHandler for App {
                 };
                 if self.in_menu() {
                     match self.menu_input(|m| m.button(b, down)) {
-                        Ok(picks) => self.menu_events(picks, event_loop),
+                        Ok(picks) => {
+                            self.click_sound(&picks);
+                            self.menu_events(picks, event_loop)
+                        }
                         Err(e) => self.fail(event_loop, e),
                     }
                     return;
                 }
                 let (took, events) = self.hud.button(b, down, &self.camera, self.shift);
+                if !events.is_empty() {
+                    self.ui_sound(&[slime_mould::sound::SoundCmd::Grain { kind: slime_mould::sound::GrainKind::Tick, pan: 0.0, gain: 0.45, delay: 0.0 }]);
+                }
                 self.hud_events(events, event_loop);
                 if took {
                     return;
@@ -260,5 +270,31 @@ impl ApplicationHandler for App {
         if let Some(window) = &self.window {
             window.request_redraw();
         }
+    }
+}
+
+/// **The menus and the HUD answer a click** (sound pass two, 2026-11-20;
+/// until then they were silent). Straight to the speaker: a click is the
+/// player's, not the game's, so it never goes through the listener.
+impl App {
+    pub(super) fn ui_sound(&mut self, cmds: &[slime_mould::sound::SoundCmd]) {
+        if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
+            sp.send(cmds.iter().copied());
+        }
+    }
+
+    /// A pick's sound: buying chimes, a card dropped in a slot knocks,
+    /// landing on a planet whooshes, anything else ticks.
+    fn click_sound(&mut self, picks: &[slime_mould::world::start::StartEvent]) {
+        use slime_mould::sound::{AlertKind, GrainKind, SoundCmd};
+        use slime_mould::world::start::StartEvent;
+        let Some(p) = picks.first() else { return };
+        let cmd = match p {
+            StartEvent::Buy(_) => SoundCmd::Alert { kind: AlertKind::Joined, weight: 0.8, pan: 0.0 },
+            StartEvent::Move(..) => SoundCmd::Grain { kind: GrainKind::Knock, pan: 0.0, gain: 0.3, delay: 0.0 },
+            StartEvent::NextLevel | StartEvent::Run | StartEvent::Sandbox | StartEvent::Mission(_) | StartEvent::RandomPlanet => SoundCmd::Grain { kind: GrainKind::Whoosh, pan: 0.0, gain: 0.55, delay: 0.0 },
+            _ => SoundCmd::Grain { kind: GrainKind::Tick, pan: 0.0, gain: 0.45, delay: 0.0 },
+        };
+        self.ui_sound(&[cmd]);
     }
 }

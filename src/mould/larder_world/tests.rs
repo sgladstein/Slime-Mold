@@ -2502,6 +2502,25 @@ fn a_rate_card_fires_twice_as_often() {
     assert_eq!(g.shot_gap(0), (plain as f32 / 4.0).round().max(1.0) as u64, "three cards, four times");
 }
 
+/// **Heavier shots buy the controlled squad something** (2026-11-20,
+/// Direction): its strike is at the engines' cap already, so the area a
+/// level would add past the cap comes back as faster shots.
+#[test]
+fn heavier_shots_past_the_cap_fire_faster() {
+    let mut g = small(1);
+    g.active = Some(0);
+    assert!(g.leads(0));
+    // This small world's scale is 1, not the run's 2: set its strike where
+    // the run's controlled squad stands, right at the cap.
+    g.rules.strike = squad::R_MAX / (g.s() * g.rules.lead.strike);
+    let (gap, r) = (g.shot_gap(0), g.strike_of(0));
+    assert!((r - squad::R_MAX).abs() < 1e-3 && (g.strike_over(0) - 1.0).abs() < 1e-3, "the controlled squad strikes at the cap: {r}");
+    g.rules.strike *= 1.2;
+    assert!((g.strike_of(0) - squad::R_MAX).abs() < 1e-3, "still capped");
+    assert!((g.strike_over(0) - 1.44).abs() < 1e-3, "{}", g.strike_over(0));
+    assert!((g.shot_gap(0) as f32) < gap as f32 / 1.3, "a level fires faster: {} against {gap}", g.shot_gap(0));
+}
+
 /// Open ground `d` dish cells from squad 0's middle.
 fn open_near(g: &Game<BigDish>, d: f32) -> (f32, f32) {
     let m = g.middle(0).unwrap();
@@ -3427,6 +3446,85 @@ fn a_raid_marches_as_one_body() {
     assert!(g.world.lumps()[l].is_none(), "its lump is free");
 }
 
+/// **A march leaves a mini-boss its members** (2026-11-20): a march buds
+/// off by growing its lump, so only walkers in no lump join. It formed its
+/// lump until then and took every walker in its disc: on the owner's own
+/// planet 3 (run 1795119328) a hunter of 437 fell to 15 the second a
+/// march budded off beside it. Here a mini-boss holds most of the race
+/// world's slime when the raid sets off.
+#[test]
+fn a_march_leaves_a_mini_boss_its_members() {
+    let mut g = small(1);
+    g.rules.raid = RaidRules { first: 3.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 1.0e4, every_sd: 0.0, late: 1.0, size_sd: 0.0, ..RaidRules::default() };
+    g.rules.boss = BossRules { least: 1, gather: 1.0e3, life: 1.0e3, quorum: 0.0, kind: BossKind::Hunter as u8 as f32, ..BossRules::default() };
+    g.bank = 1.0e6;
+    let cs = g.world.crystals();
+    let home = g.core;
+    let far = (0..cs.len()).max_by(|&a, &b| (cs[a].0 .0 - home.0).hypot(cs[a].0 .1 - home.1).total_cmp(&(cs[b].0 .0 - home.0).hypot(cs[b].0 .1 - home.1))).unwrap();
+    assert!(g.build(Kind::Pump, cs[far].0), "a pump on the farthest crystal");
+    g.step();
+    let w = &g.world;
+    let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+    let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+    assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 12.0, BossCause::Staged));
+    let l = g.bosses.live[0].lump;
+    let held = |g: &Game<BigDish>| (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(l)).count();
+    g.step();
+    let before = held(&g);
+    while g.raids.marching.is_empty() && g.time() < 10.0 {
+        g.step();
+    }
+    assert!(!g.raids.marching.is_empty(), "a raid marched");
+    g.step();
+    let (after, march) = (held(&g), g.raids.marching.first().map_or(0, |m| m.members));
+    eprintln!("the mini-boss held {before} walkers before the march and {after} after; the march {march}");
+    assert!(before > 100 && after * 10 >= before * 9, "the march took the mini-boss's walkers: {before} -> {after}");
+}
+
+/// **A mini-boss walks round rock** (`Game::boss_steer`, 2026-11-20): on
+/// the bar map a hunter staged in the slime east of the bar, whose
+/// straight line to the squad runs into the bar, gets round its end to the
+/// squad's side (west of the bar) down its way. Its pull was straight at
+/// its aim until then, and on the owner's own maps 11 of 20 mini-bosses
+/// stood 10 s or more against rock or a fort's ring.
+#[test]
+fn a_mini_boss_walks_round_rock() {
+    let mut g = bar_game(1024, 640, true, false);
+    for _ in 0..4 {
+        g.apply(Cmd::Buy);
+    }
+    g.rules.boss = BossRules { least: 1, gather: 1.0, life: 1.0e3, quorum: 0.0, armour_lo: 15.0, armour_hi: 15.0, kind: BossKind::Hunter as u8 as f32, ..BossRules::default() };
+    let tps = g.rules.tps as usize;
+    g.step();
+    // The slime's middle (fine 480, 300; the bar is fine x 200 to 224, y
+    // 60 to 260, the squad at about 150, 160).
+    assert!(g.form_boss((480.0, 300.0), 12.0, BossCause::Staged));
+    let mut west = None;
+    for s in 0..240 {
+        for _ in 0..tps {
+            g.step();
+        }
+        let Some(b) = g.bosses.live.first() else { break };
+        if s % 20 == 0 {
+            let xs: Vec<(f32, f32)> = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(b.lump)).map(|k| (g.world.walkers[k].0, g.world.walkers[k].1)).collect();
+            let (w, e) = (xs.iter().filter(|p| p.0 < 200.0).count(), xs.iter().filter(|p| p.0 >= 224.0).count());
+            let ymax = xs.iter().map(|p| p.1).fold(0.0, f32::max);
+            eprintln!("{s} s: {:?} {} members at {:.0},{:.0}; {w} west of the bar, {e} east, lowest y {ymax:.0}", b.phase, b.members, b.centre.0, b.centre.1);
+        }
+        // Most of its members past the bar: one aim pulls every member
+        // straight, so those still behind the rock press on it (a third
+        // of them on this map) while the rest go round.
+        let behind = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(b.lump)).map(|k| g.world.walkers[k].0);
+        let (past, all) = behind.fold((0, 0), |(p, a), x| (p + usize::from(x < 200.0), a + 1));
+        if 2 * past > all {
+            west = Some(s);
+            break;
+        }
+    }
+    eprintln!("most of it west of the bar at {west:?} s");
+    assert!(west.is_some_and(|s| s <= 120), "it got round the bar: {:?}", g.bosses.live.first().or(g.bosses.ended.last().map(|e| &e.0)));
+}
+
 /// A march that gets no nearer its target (`RaidRules::march_stall`,
 /// 2026-11-18: one formed inside planet 1's rock ring stood there) lets go
 /// and streams to the target with the raid's own reach and share, so a raid
@@ -3585,7 +3683,7 @@ fn squads_shoot_a_mini_boss_first() {
     // Its body's edge within the defend reach: the mini-boss first, slime
     // on the soldier or not.
     let close = at(r + 0.5 * g.rules.defend * sc);
-    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0 };
+    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
     g.bosses.live.push(boss);
     for touching in [0, 2] {
         set(&mut g, touching);
@@ -3827,7 +3925,9 @@ fn planet_eight_bosses_leave_the_first_minute_playable() {
 #[test]
 fn a_mini_boss_forms_at_a_crowd_and_hunts() {
     let mut g = small(2);
-    g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, ..BossRules::default() };
+    // A hunter (`kind` 1): drawn, its kind fell to the seed's draw, and
+    // since 11-20 the kind is drawn before the grade.
+    g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, kind: 1.0, ..BossRules::default() };
     let tps = g.rules.tps as usize;
     let mut formed = None;
     for _ in 0..10 * tps {
@@ -4232,4 +4332,82 @@ fn one_walker_does_not_stop_an_attack_moving_squad() {
     g.rules.fight_hold = 0.0;
     aim(&mut g, 1);
     assert!(g.engaged(m[0]), "fight_hold=0: one walker stops it, as before");
+}
+
+/// **The mortar** (the owner's pick, 2026-11-20): staged on the CPU dish
+/// with the squad in reach, it stays where it formed, throws the slime
+/// round its body at the squad every `lob_every` seconds, and its throws
+/// fly the slime toward the squad.
+#[test]
+fn a_mortar_sits_and_throws_at_the_squad() {
+    let mut g = small(2);
+    g.rules.boss = BossRules { least: 1, gather: 1.0, life: 60.0, quorum: 0.0, kind: BossKind::Mortar as u8 as f32, lob: 400.0, lob_every: 3.0, ..BossRules::default() };
+    let tps = g.rules.tps as usize;
+    let w = &g.world;
+    let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+    let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+    assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+    // The squad brought round the race world's middle rock, which blocks
+    // the line from the slime's side (a mortar with no clear line walks:
+    // the next test).
+    for (k, s) in g.soldiers.iter_mut().enumerate() {
+        (s.x, s.y) = (100.0 + (k % 3) as f32, 78.0 + (k / 3) as f32);
+    }
+    let squad = |g: &Game<BigDish>| {
+        let alive: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
+        (alive.iter().map(|s| s.x).sum::<f32>() / alive.len().max(1) as f32, alive.iter().map(|s| s.y).sum::<f32>() / alive.len().max(1) as f32)
+    };
+    let mut first = None;
+    let mut throws = Vec::new();
+    for _ in 0..12 * tps {
+        g.step();
+        let Some(b) = g.bosses.live.first().copied() else { break };
+        if let BossPhase::Sit(_, t) = b.phase {
+            first.get_or_insert(b.centre);
+            if t > 0 && throws.last() != Some(&t) {
+                throws.push(t);
+            }
+        }
+    }
+    let b = g.bosses.live.first().copied().expect("it still stands");
+    assert_eq!(b.kind, BossKind::Mortar);
+    let body = (b.members as f32 / std::f32::consts::PI).sqrt();
+    let far = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(b.lump) && (g.world.walkers[k].0 - b.at.0).hypot(g.world.walkers[k].1 - b.at.1) > 3.0 * body).count();
+    // Its thrown members let go: none lands far off and runs home.
+    assert_eq!(far, 0, "{far} of its members past three bodies");
+    eprintln!("mortar: {} throws at ticks {throws:?}, {} walkers thrown, squad at {:?}, it at {:?}", throws.len(), b.visited, squad(&g), b.centre);
+    assert!(throws.len() >= 3, "a throw every 3 s: {throws:?}");
+    assert!(throws.windows(2).all(|w| w[1] - w[0] >= 3 * tps as u64), "no faster than every 3 s: {throws:?}");
+    assert!(b.visited > 0, "it threw walkers");
+    // Held on where it formed (its first sitting centre is still
+    // gathering in from the knot round it).
+    assert!(first.is_some());
+    assert!((b.centre.0 - b.at.0).hypot(b.centre.1 - b.at.1) < 6.0, "it stays put: formed at {:?}, now {:?}", b.at, b.centre);
+    assert_eq!(g.lump_looks()[b.lump] & 7, BossKind::Mortar as u16);
+}
+
+#[test]
+fn a_mortar_with_no_clear_line_walks_until_it_has_one() {
+    // The race world's middle rock stands between the slime and the
+    // squad: it walks toward the nearest thing, on its trip's clock.
+    let mut g = small(2);
+    g.rules.boss = BossRules { least: 1, gather: 1.0, life: 60.0, quorum: 0.0, kind: BossKind::Mortar as u8 as f32, lob: 20.0, lob_every: 3.0, ..BossRules::default() };
+    let tps = g.rules.tps as usize;
+    let w = &g.world;
+    let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+    let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+    let at = (x / living.len() as f32, y / living.len() as f32);
+    assert!(g.form_boss(at, 6.0, BossCause::Staged));
+    let near = |g: &Game<BigDish>, p: (f32, f32)| g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - p.0).hypot(s.y - p.1)).fold(f32::INFINITY, f32::min);
+    let before = near(&g, at);
+    let mut walked = false;
+    for _ in 0..15 * tps {
+        g.step();
+        let Some(b) = g.bosses.live.first().copied() else { break };
+        walked |= matches!(b.phase, BossPhase::Go(_));
+    }
+    let b = g.bosses.live.first().copied().expect("it still stands");
+    eprintln!("mortar walk: {before:.0} -> {:.0} from the squad, walked {} s, {:?}", near(&g, b.centre), b.walked, b.phase);
+    assert!(walked && b.walked > 0.0, "it walked on its trip: {b:?}");
+    assert!(near(&g, b.centre) < before - 20.0, "toward the squad: {before} -> {}", near(&g, b.centre));
 }

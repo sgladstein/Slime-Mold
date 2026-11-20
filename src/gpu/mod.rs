@@ -95,8 +95,9 @@ pub const FLING_AT: usize = 896;
 /// The breakaway row (`BigParams::roam`, 11-14).
 pub const ROAM_AT: usize = 912;
 /// The ground row (new ground kinds, 11-14; Params grew from 928 to 944):
-/// deep water's step (`BigParams::deep_step`), then three words kept for
-/// the next ground kinds.
+/// deep water's step (`BigParams::deep_step`), deep water as a wall
+/// (`Settings::deep_wall`, 11-20), then two words kept for the next ground
+/// kinds.
 pub const GROUND_AT: usize = 928;
 /// The surge row (`BigParams::surge_every`, 11-15, the slime-enemy thread;
 /// Params grew from 944 to 960): the steps between surges, the creep's and
@@ -494,6 +495,19 @@ pub struct Settings {
     /// run's planets set it (`run::TETHER`). Params word 892, the lone
     /// step row's last.
     pub tether: u32,
+    /// **Deep water is a wall to the slime** (`deep_wall=0` turns it off;
+    /// on, as here, 2026-11-20, the owner: "Deep water shouldn't be
+    /// traversable by player or slime"). A walker on dry or shallow ground
+    /// never steps or jumps into deep water (`big::SOIL_DEEP`) and its
+    /// sensors read it as rock, so the slime goes round a river by its
+    /// fords and bridges as soldiers do; one already in it (flung, or put
+    /// there by a map) swims out at `deep_step`. The slime's ways (raids,
+    /// charges, the far smell, the lure) are built with it shut
+    /// (`GpuWorld::raid_ground`). This engine's own rule with no
+    /// `BigParams` field (the owner's card, 11-17 19:21Z: no CPU twin, so
+    /// the CPU dish's slime still crawls through and the twin test turns
+    /// it off). Params word 929, the ground row's second.
+    pub deep_wall: bool,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -759,6 +773,7 @@ impl Settings {
             far_smell: t.far_smell,
             lure_pull: 0.0,
             tether: 0,
+            deep_wall: true,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1089,6 +1104,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // the body steps only where it touches N others (Lab, one body:
         // Reports/lab-body-2026-11-18; 2 its pick).
         "tether" => s.tether = int()?.min(8),
+        // Deep water as a wall to the slime (`deep_wall=0` off; on by
+        // default, 2026-11-20).
+        "deep_wall" => s.deep_wall = int()? != 0,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1619,6 +1637,12 @@ pub struct Engine {
     /// (`write_lure_field`): only then is `Settings::lure_pull` sent, so
     /// with no lure standing a calm walker reads no word for it.
     pub lured: bool,
+    /// The slime's wave field is written and reaches somewhere
+    /// (`write_wave_field`, 2026-11-20): only then is its pull (`wave_w`)
+    /// sent, in the lone step row's first word, so with no wave a calm
+    /// walker reads no word for it.
+    pub waved: bool,
+    pub wave_w: f32,
     /// A fort mask is written and marks some block (`write_fort`,
     /// 2026-11-18): only then is the fort's flag sent (Params word 888),
     /// so with no fort a walker reads no word for it.
@@ -1975,6 +1999,8 @@ impl Engine {
             clouds: Default::default(),
             minds: !d.mind.is_empty(),
             lured: false,
+            waved: false,
+            wave_w: 0.0,
             forted: false,
             mind_until: mind_until(&d),
             clouded: false,
@@ -2182,6 +2208,7 @@ impl Engine {
         // none); the game writes them again within a game second. The
         // fort's mask the same (`Game::time_fort` writes it again).
         self.lured = false;
+        self.waved = false;
         self.forted = false;
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.specks = self.grows && d.p.roam > 0;
@@ -2363,10 +2390,12 @@ impl Engine {
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
-        // The lone step's row, free since 11-17 (`LONE_AT`) but for its
-        // third word, the fort's flag (`forted`, 11-18).
-        // Its last word, the tether since 11-18 (`Settings::tether`).
-        b.extend(u32_bytes(&[0, 0, self.forted as u32, s.tether]));
+        // The lone step's row, free since 11-17 (`LONE_AT`): its first
+        // word the wave's pull (`waved`, 2026-11-20), its third the fort's
+        // flag (`forted`, 11-18), its last the tether since 11-18
+        // (`Settings::tether`).
+        let wave = if self.waved { self.wave_w } else { 0.0 };
+        b.extend(u32_bytes(&[wave.to_bits(), 0, self.forted as u32, s.tether]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then
@@ -2391,7 +2420,11 @@ impl Engine {
         b.extend(u32_bytes(&[roam, far, land]));
         b.extend(f32_bytes(&[s.roam_share]));
         assert_eq!(b.len(), GROUND_AT, "Params rows before the ground row moved");
-        b.extend(f32_bytes(&[t.deep_step, 0.0, 0.0, 0.0]));
+        // Its second word is deep water as a wall (`Settings::deep_wall`,
+        // 2026-11-20).
+        b.extend(f32_bytes(&[t.deep_step]));
+        b.extend(u32_bytes(&[s.deep_wall as u32]));
+        b.extend(f32_bytes(&[0.0, 0.0]));
         assert_eq!(b.len(), SURGE_AT, "Params rows before the surge row moved");
         let sm = crate::mould::big::SURGE_MAX;
         b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm) | s.surge_dash.min(sm) << 16, s.surge_at]));
@@ -3249,6 +3282,25 @@ impl Engine {
         self.run(shared, &[(FLING, self.n.div_ceil(256))]);
     }
 
+    /// **A sowing** (2026-11-20, a ripe fruit bursting,
+    /// `larder_world::fruit`): every living ordinary or dormant walker
+    /// within `rr` dish cells of (`x`, `y`) (dish cells) leaves as a homing
+    /// spore (`SOWN` in engine.wgsl), thrown straight out from the centre
+    /// for `steps` steps: straight while its timer is over the dish's
+    /// `spore_steps` / 2, then by scent, coming down on food (`spore_land`)
+    /// or where its timer runs out. The fling's pass with `kir` 2; counted
+    /// on the `news` gas word 3, as a fling. GPU only (the owner's 11-17
+    /// 19:21Z card: new slime rules on the GPU engine, no CPU twin).
+    pub fn sow_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, rr: f32, steps: u16) {
+        let k = self.dish.p.scale as f32;
+        self.cycles = true;
+        self.write_params(s, Hand::default(), 0);
+        let rr = rr * k;
+        let inv = 1.0 / (rr * rr).max(1e-6);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, 0.0, inv, rr, 0.0, steps.max(2) as f32, 2.0]));
+        self.run(shared, &[(FLING, self.n.div_ceil(256))]);
+    }
+
     /// The alarm field now (zeros without one).
     /// The crater countdown a cell (the damage memory's first block), read
     /// back: the CPU's `BigDish::scorch`.
@@ -3536,11 +3588,17 @@ fn block_words(field: &[u32], w: usize, h: usize) -> Vec<u32> {
 impl Engine {
     /// Writes the mirror dish's raid walking distance (`BigDish::
     /// raid_field`) to `news` after the dense cells; zeros with none.
+    ///
+    /// Only its blocks (`RAID_BLOCK`, a quarter of the region): the
+    /// region's second quarter is the wave's field (`write_wave_field`,
+    /// 2026-11-20), which a raid must not clear.
     pub fn write_raid_field(&self) {
         let cells = self.cells as usize;
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = (self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b)).min(cells);
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + cells) as u64;
-        let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(cells).collect();
-        w.resize(cells, 0);
+        let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(nb).collect();
+        w.resize(nb, 0);
         self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
     }
 
@@ -3585,6 +3643,30 @@ impl Engine {
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 2 * nb) as u64;
         self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
         self.lured = reaches;
+    }
+
+    /// **Writes the slime's wave field** (engine.wgsl's `wave_dist`;
+    /// 2026-11-20, `Game::time_waves`): each block's walking distance to
+    /// the nearest of the wave's points (`big::units_field_for`'s blocks,
+    /// `u32::MAX` where none reaches), in the second quarter of the raid's
+    /// region (after the raid's own blocks), and the pull a calm walker
+    /// leans down it with. An empty field clears it. No CPU twin (the
+    /// owner's card, 11-17 19:21Z). Nothing is written while there was no
+    /// wave and there is none.
+    pub fn write_wave_field(&mut self, field: &[u32], pull: f32) {
+        let reaches = field.iter().any(|&d| d != u32::MAX);
+        if !reaches && !self.waved {
+            return;
+        }
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        if 2 * nb > self.cells as usize {
+            return;
+        }
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + self.cells as usize + nb) as u64;
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
+        self.waved = reaches;
+        self.wave_w = pull;
     }
 
     /// **Writes the fort's mask** (engine.wgsl's `fort_at`; 2026-11-18,

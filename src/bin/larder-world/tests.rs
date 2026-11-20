@@ -1226,17 +1226,23 @@ fn the_window_plays_planet_1_with_the_run_bot() {
     assert!(p.secs >= 60.0, "planet 1 ended in under a minute: {}", p.line());
 }
 
-/// The run bot's shop buys the card planet 2 asks for (Tinder, for the
-/// Sprawler) and spends the rest on the squad.
+/// The run bot's shop buys the bullet and the card planet 2 asks for (a
+/// Torch, then Tinder, for the Sprawler) and spends what is left on the
+/// squad. Before 2026-11-20 it bought the Tinder alone, which kills nothing
+/// without fire; with both, planet 1's 250 points leave too few for a squad
+/// item on run seed 1.
 #[test]
 fn the_run_bots_shop_spends_its_points() {
-    let mut r = Run::new(1);
-    r.restock();
-    r.won(2);
-    let points = r.points;
-    let bought = runbot::shop(&mut r);
-    assert!(bought.iter().any(|b| b.starts_with("Tinder")), "{bought:?}");
-    assert!(bought.len() >= 2 && r.points < points, "{bought:?}, {} of {points} points left", r.points);
+    for seed in 1..=3 {
+        let mut r = Run::new(seed);
+        r.restock();
+        r.won(2);
+        let points = r.points;
+        let bought = runbot::shop(&mut r);
+        assert!(bought.first().is_some_and(|b| b.contains("orch")), "seed {seed}: the Torch first: {bought:?}");
+        assert!(bought.iter().any(|b| b.starts_with("Tinder")), "seed {seed}: {bought:?}");
+        assert!(r.points < points, "seed {seed}: {bought:?}, {} of {points} points left", r.points);
+    }
 }
 
 /// **A run's level does not panic the window's loop** (the smoke test's

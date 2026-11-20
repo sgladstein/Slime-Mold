@@ -683,7 +683,7 @@ impl App {
             KeyCode::KeyO => {
                 self.sound_on = !self.sound_on;
                 if let Some(sp) = self.speaker.as_mut() {
-                    sp.send([SoundCmd::Master(if self.sound_on { DEFAULT_MASTER } else { 0.0 })]);
+                    sp.send([master_now(self.sound_on)]);
                 }
                 let what = match (self.speaker.is_some(), self.sound_on) {
                     (false, _) => "No sound on this machine",

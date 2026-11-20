@@ -3,6 +3,113 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
+## Mini-boss review (2026-11-20, the thread "Analyse and improve the minibosses")
+
+Not this lane's thread, but the lane's file (`bosses.rs`), so recorded
+here. The owner (11-20 05:41Z): "analyze the minibosses, including looking
+at my playtests and improve them". His 13 logged rounds had no boss lines,
+so the review ran the strategy bot on his own maps (run seeds 1795038793,
+1795106014, 1795119328, planets 2-4) to 300 s, per-kind table in the
+[report](../Reports/miniboss-review-2026-11-20/README.md). Before, on 17
+bosses: 2 reached the squad (both hunters), no leech or sapper got to its
+errand, 3 were swallowed by a raid's march, 11 of 20 (to 420 s) stood 10 s
+or more pressed on rock. Built, on by default, no engine change:
+
+- A march grows its lump (`World::grow_lump`) instead of forming it, so it
+  never takes a mini-boss's members (`start_march`, `raids.rs`).
+- Bosses walk round rock: `Game::boss_steer` goes straight while the line
+  is clear, else builds a `Way` off-frame (`Way::start_units` to every
+  soldier for a hunter, rebuilt each second; `Way::start` to the goal
+  otherwise) on the slime's ground with deep water closed, and aims at the
+  farthest point down the way it can see (string-pulled). A body stuck 6 s
+  with no soldier near regathers on its leading part, holding no more
+  walkers than its own area (`reach_holding`), `Bosses::regrouped`;
+  on a straight walk too (`Game::boss_stall`): a tail wedged in packed
+  slime held a planet 3 leech 54 s on open ground with a clear line.
+- They form nearer the player: a crowded knot weighs 1/(1+(d/`near`)^2),
+  `BossRules::near` 40 dish cells, and none forms inside a soldier's guns.
+- A leech's or sapper's walk runs on its own clock (`BossRules::trip`
+  90 s), `life` counts only the time after.
+- A wanderer hops toward the player (the nearest fresh crystal nearer the
+  player's things than it is).
+- The play log writes `raid` and `boss` lines (formed, every 5 s, ended).
+
+After, merged with main, same nine games: 7 of 18 reached the squad,
+39 s stood still against 258, none swallowed; no errand reached in 5:00
+(pumps 150-250 units off; the trip or a nearer pick is tuning, unreviewed).
+
+Then (#548, Direction's call): the kind is drawn first and a crowd's leech
+or sapper forms at the crowded knot nearest its pump or wall; one sapper
+reached its wall, 2 of 3 leeches met the squad guarding the pumps.
+
+Then the Mortar (the owner's pick, 11-20 13:21Z, "Mortar first", over the
+Pinwheel): `BossKind::Mortar` (5), drawn from planet 4 on
+(`BossRules::for_depth`, `kinds[4]`). It forms at the crowded knot nearest
+a player thing it can see along a clear line, never walks, and every
+`lob_every` (5 s) throws the ring of its own body's edge at the nearest
+player thing just past the guns (`lob` 30 dish cells past the longest
+gun's reach and the panic margin) as one `squad::Burst` with `push`
+(`Game::mortar`); thrown members are let go and the rest formed again on
+its spot; with no shot along a clear line it walks toward the nearest
+player thing on its trip's clock (on the owner's three planet 4 maps, all
+bosses mortars: 7 mortars, 48 throws by 5:00; what they cost the player
+is not measured yet). Moss skin, acid core (`LumpLook::Mortar`, Look's
+`view.wgsl` case 6). Also: a fruit grows its lump instead of forming it,
+so it no longer swallows a mini-boss beside it (3 of 14 had been). Set
+keys `boss_mortar`, `boss_lob`, `boss_lob_every`, `boss_shell`.
+
+Follow-up (Direction's call): the kind is drawn before the knot, and a
+crowd's leech or sapper forms at the crowded knot nearest its errand
+(`crowded_knot(Some(&boss))`). Drawing them only with a target within
+100 or 180 units drew none at all on these maps (dropped).
+
+Known limit: a lump has one aim, so on a rock bar a third of a body stays
+pressed on the near side (unit test `a_mini_boss_walks_round_rock`).
+Proposals in the report and the owner's doc: the Mortar first from planet
+4 after Milestone 1, the Pinwheel second; a bounty; an off-screen tell.
+
+## Waves (2026-11-20, the thread "Make the slime a more interesting enemy")
+
+Its second rule after fruiting, on by default on every run planet
+(`run::ENEMY_RULES`' `wave`; `larder_world/waves.rs`). Losing fast (the
+squad's kills over 20 s at least an eighth of the slime's mass, the mass
+down over them), from 1:30: a field in the raid region after the raid's
+blocks (`Engine::write_wave_field`, engine.wgsl `wave_dist`, the pull in
+Params word 880, the lone step row's first) leans calm walkers to two or
+three points 20 dish cells past the guns round the thickest knot of
+soldiers for 12 s, then to the soldiers for 8 s with a surge whose reach
+is stretched to the masses (`keep_panic_reach`). `write_raid_field` now
+writes only its own blocks so it never clears the wave's. The owner
+dropped the rind and the civil war (11-20 14:16Z: hardened slime does not
+attack, so it makes the game easier); the late-planet problem (a big
+squad the slime cannot touch) is shared with the balance thread
+"Keep big squads under threat late in a planet".
+
+## Fruiting (2026-11-20, the thread "Make the slime a more interesting enemy")
+
+Not this lane's thread, but the slime's rules, so recorded here. The owner
+(11-20 05:46Z): the slime is interesting early "but once I get strong
+enough there is just lots of shooting through masses of uniform orange.
+Think outside the box". Built on by default on every run planet
+(`run::ENEMY_RULES`' `fruit`; `larder_world/fruit.rs`,
+[report](../Reports/fruiting-2026-11-20/README.md)): from 1:30 after the
+landing, once the squad has killed a fifth of the slime's mass in 30 s
+(a fall-under-peak test was tried and deleted: it fired on planet 3's Trunk
+with the squad nowhere near), the slime takes a lump (`big::LUMPS`, shared:
+`Game::lump_taken` now covers bosses, marches and fruits) for 8% of
+itself at its thickest square out of the guns' reach plus 15 cells, holds
+it with pull 40 and leash 1 (armour 2), swells it to twice its first size
+(at most 2,500) and after 30 s bursts it: engine.wgsl's `fling` with `kir`
+2 (`Engine::sow_pass`, `World::sow`) throws every walker in the knot out
+as a homing spore (`SOWN`, bit 15 of `spec`) that lands on food
+(`spore_reach` 36 and `spore_land` 1 are now in `run::enemy_keys` for every
+planet). Under 35% of its most members it breaks. One at a time, 40 s from
+one's end to the next. The view draws it as `LumpLook::Fruit` (umber,
+darkening as it ripens), from the window's `main.rs`. GPU only
+(`World::can_sow`). Next ideas from the same thread, not built: a slime
+that reads its losses and comes in waves from several sides; a heartbeat;
+a rind that grows on the side being shot.
+
 ## State (2026-11-18, the march)
 
 **Open branch:** none (`claude/project-thread-s5k9cw` restarts from main
@@ -306,5 +413,5 @@ Start from `handoff/slime-enemy.md`, `handoff/simulation-use.md`,
   alarm, `squad::Burst`).
 - Quote the frame cost of anything that runs every step. The GTX 1070
   runs go in one batch before the milestone check; ask Engine and tools.
-- New mini-boss kinds are parked until Scott has said how the four built
-  ones play.
+- New mini-boss kinds: Scott picked the Mortar first (11-20 13:21Z);
+  the Pinwheel (his doc's second proposal) is next.

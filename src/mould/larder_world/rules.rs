@@ -262,8 +262,16 @@ pub struct Rules {
     /// strike's takes to 2 of 8, where 8 left random none and strike its
     /// 3. See `Core` for the census.
     pub core_pull: f32,
-    /// The cap, game seconds (owner, 04:04Z: 15 minutes).
+    /// The cap, game seconds (owner, 04:04Z: 15 minutes). In a run it is
+    /// no countdown since 2026-11-20 (owner, 14:10Z: "there should not be a
+    /// countdown clock"): only a stalemate reaches it (`run::limit`).
     pub cap: f32,
+    /// The speed star's time, game seconds: a goal met before it earns a
+    /// star (`campaign::Tracker`). 0 is the missions' old rule, four fifths
+    /// of the cap (`campaign::two_stars`). A run sets it by planet
+    /// (`run::par`) and the clock counts up to it (owner, 2026-11-20 14:10Z:
+    /// "a count up clock and stars ... for being under a certain time").
+    pub par: f32,
     pub start_bank: f32,
     pub squad: usize,
     pub soldier_cost: f32,
@@ -587,6 +595,16 @@ pub struct Rules {
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
     /// and `boss_cut` 0); a run sets `BossRules::for_depth`.
     pub boss: super::BossRules,
+    /// **Fruiting** (2026-11-20; `fruit.rs`): hurt, the slime streams
+    /// into a knot out of the guns' reach that ripens and bursts into
+    /// spores over the planet. Off here; a run turns it on
+    /// (`run::ENEMY_RULES`). GPU only.
+    pub fruit: super::FruitRules,
+    /// **Waves** (2026-11-20; `waves.rs`): losing walkers fast, the slime
+    /// pulls back out of the guns' reach to two or three points round the
+    /// squad, masses there and comes in from all of them at once. Off
+    /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
+    pub wave: super::WaveRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -650,6 +668,33 @@ impl Rules {
             self.funnel = v > 0.0;
             return true;
         }
+        // Fruiting (`FruitRules`, 2026-11-20): `fruit=1` on; `fruit_armour`
+        // and `fruit_throw` whole numbers.
+        match name {
+            "fruit" => {
+                self.fruit.on = v > 0.0;
+                return true;
+            }
+            "fruit_armour" => {
+                self.fruit.armour = v.clamp(0.0, 15.0) as u32;
+                return true;
+            }
+            "fruit_throw" => {
+                self.fruit.throw = v.clamp(2.0, 60000.0) as u16;
+                return true;
+            }
+            // Waves (`WaveRules`, 2026-11-20): `wave=1` on; `wave_sides`
+            // a whole number.
+            "wave" => {
+                self.wave.on = v > 0.0;
+                return true;
+            }
+            "wave_sides" => {
+                self.wave.sides = v.clamp(0.0, 8.0) as u32;
+                return true;
+            }
+            _ => {}
+        }
         if name == "unit_paths" {
             self.unit_paths = v > 0.0;
             return true;
@@ -679,6 +724,36 @@ impl Rules {
             "raid_march_stall" => &mut self.raid.march_stall,
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
+            "fruit_first" => &mut self.fruit.first,
+            "fruit_hurt" => &mut self.fruit.hurt,
+            "fruit_window" => &mut self.fruit.window,
+            "fruit_floor" => &mut self.fruit.floor,
+            "fruit_every" => &mut self.fruit.every,
+            "fruit_size" => &mut self.fruit.size,
+            "fruit_swell" => &mut self.fruit.swell,
+            "fruit_least" => &mut self.fruit.least,
+            "fruit_most" => &mut self.fruit.most,
+            "fruit_ripen" => &mut self.fruit.ripen,
+            "fruit_grow_every" => &mut self.fruit.grow_every,
+            "fruit_grow" => &mut self.fruit.grow,
+            "fruit_quorum" => &mut self.fruit.quorum,
+            "fruit_clear" => &mut self.fruit.clear,
+            "fruit_pull" => &mut self.fruit.pull,
+            "fruit_leash" => &mut self.fruit.leash,
+            "fruit_spread" => &mut self.fruit.spread,
+            "wave_first" => &mut self.wave.first,
+            "wave_window" => &mut self.wave.window,
+            "wave_loss" => &mut self.wave.loss,
+            "wave_every" => &mut self.wave.every,
+            "wave_apart" => &mut self.wave.apart,
+            "wave_stand" => &mut self.wave.stand,
+            "wave_disc" => &mut self.wave.disc,
+            "wave_least" => &mut self.wave.least,
+            "wave_gather" => &mut self.wave.gather,
+            "wave_gather_pull" => &mut self.wave.gather_pull,
+            "wave_reach" => &mut self.wave.reach,
+            "wave_strike" => &mut self.wave.strike,
+            "wave_strike_pull" => &mut self.wave.strike_pull,
             "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
@@ -714,6 +789,10 @@ impl Rules {
             "boss_wanderer" => &mut self.boss.kinds[1],
             "boss_sapper" => &mut self.boss.kinds[2],
             "boss_leech" => &mut self.boss.kinds[3],
+            "boss_mortar" => &mut self.boss.kinds[4],
+            "boss_lob" => &mut self.boss.lob,
+            "boss_lob_every" => &mut self.boss.lob_every,
+            "boss_shell" => &mut self.boss.shell,
             "boss_far" => &mut self.boss.far,
             "boss_fresh" => &mut self.boss.fresh,
             "boss_root" => &mut self.boss.root,
@@ -735,6 +814,7 @@ impl Rules {
             "drain" => &mut self.drain,
             "doze" => &mut self.doze,
             "cap" => &mut self.cap,
+            "par" => &mut self.par,
             "start_bank" => &mut self.start_bank,
             "soldier_cost" => &mut self.soldier_cost,
             // Walls (the walls thread, 11-16): thickness films and tries.
@@ -805,6 +885,7 @@ impl Default for Rules {
             core_secs: 5.0,
             core_pull: 8.0,
             cap: 900.0,
+            par: 0.0,
             start_bank: 2000.0,
             squad: 4,
             soldier_cost: 400.0,
@@ -848,6 +929,8 @@ impl Default for Rules {
             unit_paths: false,
             lure_reach: 60.0,
             boss: super::BossRules::default(),
+            fruit: super::FruitRules::default(),
+            wave: super::WaveRules::default(),
         }
     }
 }

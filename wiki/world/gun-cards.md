@@ -4,6 +4,7 @@ kind: design
 status: open
 updated: 2026-11-20
 sources:
+  - Reports/balance-review-2026-11-20/README.md
   - Reports/gun-builds-2026-11-19/README.md
   - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
@@ -110,9 +111,11 @@ no top deck needs a rare card, against the owner's Noita rule. Seek + Wide +
 Needle Blast is best moving (+21.8k slime on planet 3) and won 9 of 9 full
 planet 3 games; holding a crystal, Needle Blast alone is within 2% of the
 best combo. Germ is the only rare card that earns its slot
-([gun builds](../../Reports/gun-builds-2026-11-19/README.md)). These games ran before
-"One burst per bullet" (#532, 2026-11-20), the likely cause of Needle Blast's
-lead; the ranking is being re-run on it.
+([gun builds](../../Reports/gun-builds-2026-11-19/README.md)). Re-run after "One burst
+per bullet" (#532, 2026-11-20): Needle Blast alone fell from +16.2k to
++10.6k on planet 3 and is still the base of every top deck; Wide is now the
+card that combines with it (wide+pierce+blast.needle, all common, +16.8k),
+and seek+wide+blast.needle fell to +7.7k.
 
 **Merge or cut candidates.** Pull and Thrift (no planet); Trigger and
 Expire; Gas and Mist. Wide and Multicast are general on purpose. Blind and
@@ -132,6 +135,14 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   when it can, so a real run that has to be offered them is harder. For
   Direction, not retuned
   ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
+- Cards that do nothing on their own in the run shop (the balance review,
+  11-20, [report](../../Reports/balance-review-2026-11-20/README.md)):
+  Trigger, Expire and Multicast with one bullet card, and Wide, Scatter,
+  Quiet, Delay and Thick on a plain bullet; 64% of planet 2 shops offer one.
+  A real run is offered Needle Blast by planet 3 in 7.8% of runs and the
+  whole Wide + Rate + Needle Blast deck in 0.47%. Owned cards are never
+  offered again, so a second loadout can't get its own copy. Proposals to
+  Squad and arsenal, not built.
 - A J row becomes M when a run pits the card against its planet, paired
   windows as for seek and the readers.
 - The germ, retuned per planet on the game designer's call (11-17 05:40Z
@@ -171,3 +182,4 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
 - [rounds](../../Reports/rounds-2026-11-12.md): the Sleeper ignores every round.
 - [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Heave (Corral until 2026-11-18), Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder. [cut count](../../Reports/gun-cut-count-2026-11-17/README.md): no Cut card.
 - [gun builds](../../Reports/gun-builds-2026-11-19/README.md): the strongest decks by arena, defend test and full planet 3 games.
+- [balance review](../../Reports/balance-review-2026-11-20/README.md), findings 4 to 6: cards dead on their own, owned cards never re-offered, how often a run is offered Needle Blast.

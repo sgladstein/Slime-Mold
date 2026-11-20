@@ -454,6 +454,8 @@ impl<W: World> Game<W> {
             self.time_lure_paths();
             self.time_fort();
             self.time_bosses();
+            self.time_fruit();
+            self.time_waves();
         }
         self.campaign_rules(now - t);
         self.check_end();
@@ -464,7 +466,12 @@ impl<W: World> Game<W> {
     /// (`gun_range`, which the rounds' `Range` cards stretch).
     pub(super) fn keep_panic_reach(&mut self) {
         if self.rules.panic_margin >= 0.0 {
-            self.world.set_panic_r(self.gun_range_max() + self.rules.panic_margin);
+            // A wave's strike (`waves.rs`, 2026-11-20) reaches its masses,
+            // which gathered `stand` past the guns' reach.
+            let w = self.rules.wave;
+            let strike = self.waves.live.as_ref().is_some_and(|v| v.phase == WavePhase::Strike);
+            let extra = if strike { w.stand.max(0.0) + w.disc.max(0.0) } else { 0.0 };
+            self.world.set_panic_r(self.gun_range_max() + self.rules.panic_margin + extra);
         }
     }
 

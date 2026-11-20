@@ -662,6 +662,22 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let go = (m.centre.0 - m.to.0).hypot(m.centre.1 - m.to.1) / g.world.scale();
                     println!("  march t {:.0} s: lump {}, {} members (first {}), at {:.0},{:.0}, spread {tight:.2}, {go:.0} cells to go", g.time(), m.lump, m.members, m.first, m.centre.0, m.centre.1);
                 }
+                // The fruit ripening (`fruit.rs`, 2026-11-20): its members,
+                // centre, ripeness and nearest soldier (world units), and
+                // how the last one ended.
+                if let Some(f) = g.fruits.live {
+                    let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - f.centre.0).hypot(s.y - f.centre.1)).fold(f32::INFINITY, f32::min);
+                    println!("  fruit t {:.0} s: lump {}, {} members (most {}), at {:.0},{:.0}, ripe {:.2}; nearest soldier {near:.1}", g.time(), f.lump, f.members, f.most, f.centre.0, f.centre.1, f.ripe);
+                }
+                // The wave (`waves.rs`, 2026-11-20): its phase, the walkers
+                // at each of its points and within reach of the squad.
+                if let (Some(w), Some((at, front))) = (g.waves.live.as_ref(), g.wave_counts()) {
+                    let pts: Vec<String> = w.points.iter().zip(&at).map(|(p, n)| format!("{:.0},{:.0}: {n}", p.0, p.1)).collect();
+                    println!("  wave t {:.0} s: {:?} ({} sent), points [{}], {front} walkers near the squad at {:.0},{:.0}", g.time(), w.phase, g.waves.sent, pts.join("; "), w.centre.0, w.centre.1);
+                }
+                if let Some((t, how, n)) = g.fruits.last.filter(|l| l.0 + g.rules.tps as u64 > g.world.ticks()) {
+                    println!("  fruit ended t {:.1} s: {how:?} with {n} members ({} burst, {} broken, {} walkers sown in all)", t as f32 / g.rules.tps as f32, g.fruits.burst, g.fruits.broken, g.fruits.sown);
+                }
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
                 let g = app.game.as_ref().unwrap();
@@ -1021,8 +1037,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             "  heard (C7): zips {}, sirens {}, blasts {}, pieces torn {} rejoined {} withered out {}, tells {} (charges {}); at the end {} pieces losing {:.0} walkers/s",
             s.zips, s.sirens, s.blasts, s.torn, s.rejoined, s.withered, s.tells, s.charges, s.pieces, s.withering
         );
+        println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost);
+        println!("  hits by kills (0, 1, 2, 3-4, 5-8, 9-16, 17-32, 33+): {:?}; full weight at {:.0} kills", s.kill_hist, s.full);
         let b = bank.stats;
-        println!("  played: grains {} (touch {} stolen {} kills {} wither {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.verb_grains, b.bursts, b.alerts, b.steals);
+        println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);
+        println!("  mix: {}", b.mix(-30.0).iter().map(|(n, db)| format!("{n} {db:.1}")).collect::<Vec<_>>().join(", "));
+        println!("  limiter: {:.2}% of samples pulled down, deepest gain {:.2}", 100.0 * b.limited as f64 / b.samples.max(1) as f64, b.limit_min);
         let us = &app.hear_us;
         println!("  listener: mean {:.1} us, max {:.1} us a frame over {} frames", us.iter().sum::<f32>() / us.len().max(1) as f32, us.iter().fold(0.0f32, |a, &b| a.max(b)), us.len());
     }

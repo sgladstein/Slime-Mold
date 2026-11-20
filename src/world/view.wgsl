@@ -1022,6 +1022,17 @@ fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
 // A spent crystal keeps this share of its height: a low stub of grey rock,
 // not a hole.
 const GEM_STUB: f32 = 0.1;
+// A spent crystal's husk (`shaded`): shaded as if this share of a full
+// crystal's height, its shards this share of its radius across, and its
+// frosted glass's albedo.
+const GEM_HUSK: f32 = 0.45;
+const GEM_SHARD: f32 = 0.3;
+const GEM_RAYS: f32 = 11.0;
+const GEM_SPENT: vec3<f32> = vec3<f32>(66.0, 70.0, 76.0);
+// A crystal's cast shadow (`shaded`): how far a full crystal's falls, a
+// share of its radius, and how dark it is at the crystal's foot.
+const GEM_CAST: f32 = 0.55;
+const GEM_SHADOW: f32 = 0.6;
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
@@ -1525,6 +1536,29 @@ fn look_trail(x: f32, y: f32) -> f32 {
     return t / ws;
 }
 
+// The trail, bilinear: four reads, for a look on every bare pixel.
+fn trail_lin(x: f32, y: f32) -> f32 {
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let fx = ux - floor(ux); let fy = uy - floor(uy);
+    let a = mix(byte(look[cidx(ix, iy)], 0u), byte(look[cidx(ix + 1, iy)], 0u), fx);
+    let b = mix(byte(look[cidx(ix, iy + 1)], 0u), byte(look[cidx(ix + 1, iy + 1)], 0u), fx);
+    return mix(a, b, fy);
+}
+
+// The barrens' dust tracks (`shaded`): the trail that starts and fills a
+// track, how much of the way to worn dust a full track goes, and the
+// dust's lift over the soil.
+const DUST_TRAIL: vec2<f32> = vec2<f32>(0.02, 0.2);
+const DUST: f32 = 0.8;
+const DUST_LIFT: f32 = 1.3;
+// The fen's slick (`shaded`): how much darker the wet mud's own colour
+// goes, the cool sheen of the sky on it (on mud already near black a
+// darker trail alone did not show), and its glints' light.
+const SLICK_DARK: f32 = 0.3;
+const SLICK_SHEEN: vec3<f32> = vec3<f32>(14.0, 20.0, 24.0);
+const SLICK_GLINT: vec3<f32> = vec3<f32>(100.0, 110.0, 105.0);
+
 // ---- Mini-boss bodies (2026-11-16) ----
 //
 // A mini-boss is a lump of the slime's own walkers held together and
@@ -1547,7 +1581,7 @@ fn look_trail(x: f32, y: f32) -> f32 {
 // members a cell the sharp window holds about one member, so the ratio is
 // shot noise: about 30% of the body crossed the threshold by chance and
 // re-rolled every frame, and the body boiled. The wide count is steady.
-struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32 };
+struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32, dens: f32 };
 
 // Each look's skin (the body's albedo), core light (emissive, where its
 // members are thickest) and hit colour (a member's dot as it takes hits).
@@ -1569,6 +1603,14 @@ fn lump_skin(k: u32) -> vec3<f32> {
         case 2u: { return vec3<f32>(120.0, 56.0, 190.0); }
         case 3u: { return vec3<f32>(26.0, 20.0, 34.0); }
         case 4u: { return vec3<f32>(140.0, 134.0, 152.0); }
+        // The fruit (2026-11-20, `fruit.rs`): dark umber, a sporangium's
+        // colour, darkening from a dull rust as it ripens (`lump_mat`).
+        case 5u: { return vec3<f32>(62.0, 34.0, 16.0); }
+        // The mortar (2026-11-20, the Enemy lane): deep moss, a hue
+        // nothing else on the slime uses; its core's light brings it up
+        // to a saturated green, apart from the plants' muted greens
+        // (filmed on planet 4 at zoom 9 beside the grass).
+        case 6u: { return vec3<f32>(34.0, 58.0, 18.0); }
         default: { return MOULD_HUE; }
     }
 }
@@ -1578,6 +1620,13 @@ fn lump_core(k: u32) -> vec3<f32> {
         case 2u: { return vec3<f32>(220.0, 150.0, 255.0); }
         case 3u: { return vec3<f32>(200.0, 180.0, 255.0); }
         case 4u: { return vec3<f32>(120.0, 90.0, 74.0); }
+        // The fruit's spores: cream points, its members' own dots
+        // (`draw_specks`). Its body's light is a fifth of the others'
+        // (`lump_mat`): at full a cream light washed a packed knot pale
+        // tan, the bone wanderer's read.
+        case 5u: { return vec3<f32>(255.0, 220.0, 150.0); }
+        // The mortar's acid yellow-green core.
+        case 6u: { return vec3<f32>(196.0, 245.0, 70.0); }
         default: { return vec3<f32>(0.0); }
     }
 }
@@ -1596,6 +1645,8 @@ fn lump_glow(k: u32, fill: f32) -> vec3<f32> {
     return mix(lump_core(k), CHARGE, clamp(fill, 0.0, 1.0));
 }
 const LUMP_GLOSS: f32 = 0.9;
+// A fruit's rise as a share of a mini-boss's (`lump_here`).
+const FRUIT_RISE: f32 = 0.4;
 const LUMP_RISE: f32 = 1.1;
 // How bright the core light burns at full (0.9 in round 1). Since the
 // mini-boss engine's tighter clench (11-16, round 3) a body that sits (a
@@ -1634,7 +1685,7 @@ const LUMP_SPECK: f32 = 0.75;
 // not on a line between their centres).
 fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     var l: Lump;
-    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0; l.fill = 0.0;
+    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0; l.fill = 0.0; l.dens = wide;
     if (P.n_lumps == 0u || wide <= 1e-3) { return l; }
     var best = 1e30;
     var bk = 0u;
@@ -1667,6 +1718,12 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     // a cell, cover 0.25) adds nothing.
     let own = smoothstep(LUMP_OWN.x, LUMP_OWN.y, l.cover) * clamp(P.lump_held[bk], 0.0, 1.0);
     l.share = max(smoothstep(0.05, 0.7, clamp(share, 0.0, 1.0)), own) * rem;
+    // A fruit's few strays round its rim (2026-11-20): where only they
+    // stand, their share of the walkers is whole however thin they are,
+    // and the share stopped dead where the Gaussian's nine cells ran out,
+    // so its skin ended in squares the shape of that window (a dark stair
+    // a cell wide at zoom 12). By its members' cover, it fades out first.
+    if (l.look == 5u) { l.share *= smoothstep(0.05, 0.35, l.cover); }
     // A leech's drink lights the whole of it (`LUMP_DRINK`), wherever its
     // members are, not only where they pack: on its pump it sits under the
     // rig and on the crystal, and only a glow round them showed it there.
@@ -1674,6 +1731,10 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     // bank).
     l.core = l.share * (smoothstep(LUMP_HOT.x, LUMP_HOT.y, wide) * (0.6 + 0.4 * l.strength) + LUMP_DRINK * l.fill) * rem;
     l.rise = LUMP_RISE * l.share * l.cover * l.cover * (0.7 + 0.3 * l.strength);
+    // A fruit (2026-11-20) packs three and four members a cell over a
+    // span of 30 cells and more: at the full rise its edge was a cliff
+    // that shaded as dark steps a cell wide at zoom 12. It swells low.
+    if (l.look == 5u) { l.rise *= FRUIT_RISE; }
     return l;
 }
 
@@ -1687,10 +1748,22 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
     // wet membrane where their cover falls off (`rim`, its slope's middle),
     // lighter inside where they are thick.
     let rim = 4.0 * l.cover * (1.0 - l.cover);
-    let skin = lump_skin(l.look) * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
+    var sk = lump_skin(l.look);
+    var core = LUMP_CORE;
+    // A fruit darkens as it ripens: from a dull rust, still slime, to
+    // umber at its burst, so the clock reads on the knot itself. Where its
+    // members pack tighter it is darker, where they thin lighter, so the
+    // knot is mottled by its own walkers' churn rather than flat (it packs
+    // past the cover's 1 - 1/e everywhere, so `cover` alone is even).
+    if (l.look == 5u) {
+        sk = mix(vec3<f32>(150.0, 84.0, 30.0), sk, 0.25 + 0.75 * clamp(l.strength, 0.0, 1.0));
+        sk *= mix(1.35, 0.8, smoothstep(0.6, 3.2, l.dens));
+        core *= 0.2;
+    }
+    let skin = sk * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
     m.albedo = mix(m.albedo, skin, s);
     m.gloss = mix(m.gloss, min(LUMP_GLOSS + 0.1 * rim, 1.0), s);
-    m.glow = m.glow * (1.0 - s) + lump_glow(l.look, l.fill) * LUMP_CORE * l.core;
+    m.glow = m.glow * (1.0 - s) + lump_glow(l.look, l.fill) * core * l.core;
     return m;
 }
 
@@ -2588,6 +2661,28 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let under = 1.0 - smoothstep(0.004, 0.05, th_here);
     let sd = soil_detail(x, y, exp(-30.0 * th_here) * under * m.vis);
     m.albedo = (m.albedo + sd.yzw) * sd.x;
+    // The barrens' trait (Look C, 2026-11-20): the slime's trail scuffs the
+    // dust, so the lanes its threads run along stay on the bare ground as
+    // pale worn tracks with the hardpan's seams rubbed out, fading as the
+    // trail does. Only on bare land: under the film it is the slime's.
+    // The fen's (the same day): the trail leaves the mud wet and slick,
+    // darker, with the key light caught in pin glints along it, as a
+    // snail's track shines.
+    if ((P.flora == 1u || P.flora == 2u) && under * m.vis > 0.01) {
+        let tr = trail_lin(x, y);
+        if (tr > DUST_TRAIL.x && (ground[cidx(i32(floor(x)), i32(floor(y)))] & 15u) != WET) {
+            let k = smoothstep(DUST_TRAIL.x, DUST_TRAIL.y, tr) * under * m.vis;
+            if (P.flora == 1u) {
+                let flat = m.albedo / max(sd.x, 0.5);
+                let grain = 1.0 + 0.06 * (vnoise(vec2<f32>(x, y) * 2.9 + 31.0) - 0.5) * 2.0 * smoothstep(5.0, 9.0, P.zoom);
+                m.albedo = mix(m.albedo, flat * DUST_LIFT * grain, DUST * k);
+            } else {
+                let q = vec2<f32>(0.8 * x - 0.6 * y, 0.6 * x + 0.8 * y);
+                let glint = smoothstep(0.86, 0.96, vnoise(q * 3.7 + 51.0)) * smoothstep(4.0, 8.0, P.zoom);
+                m.albedo = m.albedo * (1.0 - SLICK_DARK * k) + (SLICK_SHEEN + SLICK_GLINT * glint) * k;
+            }
+        }
+    }
     // Burnt ground, then the plants, at this pixel and under the slime
     // (`vis`): one B-spline of the plant fields (`plant_px`), which the
     // fire below shares.
@@ -2652,8 +2747,41 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // A short cast shadow: something taller toward the light.
     // (Bilinear: the shadow is soft anyway, and it saves a B-spline.)
     let tx = x + l.x * 3.0; let ty = y + l.y * 3.0;
-    let toward = max(cells_height_lin(tx, ty), gem_height(tx, ty));
+    let toward = cells_height_lin(tx, ty);
     shade *= 1.0 - 0.35 * clamp((toward - h - 0.3) * 0.5, 0.0, 1.0);
+    // A crystal's own cast shadow (Look C, 2026-11-20: crystals stood on
+    // the ground with no shadow at play zoom and read pasted on; the
+    // short sample above caught only a sliver past their far faces, 35%
+    // dark on ground already near black). Its hexagon swept away from
+    // the light by `GEM_CAST` of its radius (at most 8 cells,
+    // the search's reach) times its height share (so a spent
+    // husk casts next to none), on the slime as on the ground, soft over a pixel at the crystal's foot
+    // and wider toward the shadow's end, and lighter there. Not from the
+    // pyramid's own heights: its faces slope about as the sun's line, so
+    // that shadow was a sliver a cell wide.
+    let ld = normalize(l.xy);
+    var gem_shade = 0.0;
+    var gk = 0u;
+    for (var si = 0; si < 4 && gk == 0u; si++) {
+        let sd = 1.5 + 2.0 * f32(si);
+        gk = gem_near(x + ld.x * sd, y + ld.y * sd);
+    }
+    // Not on the crystal's own faces, where the film lies on them and is
+    // shaded by the face (first cut: the film over a crystal's lit rim
+    // went dark in cell-sized steps).
+    if (gk > 0u && gem_in(gk - 1u, x, y).x <= 0.0) {
+        let k = gk - 1u;
+        let cc = gems[k].xy;
+        let reach = min(GEM_CAST * gems[k].z, 8.0) * gem_tall(cell_share(k, cidx(i32(cc.x), i32(cc.y))));
+        var gsh = 0.0;
+        for (var si = 0; si <= 8; si++) {
+            let t = reach * f32(si) / 8.0;
+            let gd = gem_in(k, x + ld.x * t, y + ld.y * t).x;
+            let soft = 0.5 / P.zoom + 0.25 * t;
+            gsh = max(gsh, smoothstep(-soft, soft, gd) * (1.0 - 0.45 * t / max(reach, 1.0)));
+        }
+        gem_shade = GEM_SHADOW * gsh;
+    }
     let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
     // A wet sheet: the glossier (thicker) the mould, the tighter and
     // brighter its highlight, so a raised vein carries a sharp white glint
@@ -2689,7 +2817,9 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             spec *= 1.0 + 0.6 * bs;
         }
     }
-    var c = m.albedo * max(shade, thin_floor) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
+    // The crystal's cast shadow under the thin film's floor too: the floor
+    // is for the film's own far flank, and a shadow is not.
+    var c = m.albedo * max(shade, thin_floor) * (1.0 - gem_shade) + vec3<f32>(255.0, 250.0, 236.0) * spec * (1.0 - gem_shade) + m.glow;
     // The fire's body, at this pixel (`flame_body` of the B-spline heat):
     // worked out in `prep` per fine cell it stair-stepped at the owner's
     // zoom 24 (11-14 20:21Z). The heat comes with the plants' own reads.
@@ -2797,31 +2927,71 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         if (cover > 0.0) {
             let a = gems[k].z * 0.8660254;
             let depth = clamp(gi.x / a, 0.0, 1.0);
-            // Spent, it is worn stone (art director, 11-14: a dry crystal
-            // "reads like a UI block"): darker than the rock round it, matte,
-            // and stepped in three hexagonal terraces from its depth field,
-            // each step's riser (two pixels) tilted out so the light catches
-            // one side and shades the other, as a worn step pyramid. The
-            // steps come in as the charge goes, so a live crystal is clean
-            // glass. Before: a flat (84,88,92) grey, steps tried as dark
-            // seams alone read as a target.
+            // Spent, it is the same crystal emptied (Look C, 2026-11-20): a
+            // husk of frosted, cracked glass. Its six faces still light and
+            // shade as the live one's do, a little lower; it breaks into
+            // shards about a third of its radius across, each tilted and toned on
+            // its own, with dark cracks between, and the cracks and tilts
+            // come in as the charge goes, so a draining crystal crazes from
+            // its spent side. Matte, a cool pale grey above rock and under a
+            // live face (the only cyan in the world is charge).
+            // Before (11-14 to 11-20): worn stone darker than rock, stepped
+            // in three hexagonal terraces; at zoom 12 it read as a smooth
+            // dark CAD block. Before that a flat (84,88,92) grey, and steps
+            // tried as dark seams alone read as a target.
             let spent = 1.0 - v;
-            let tf = fract(depth * 3.0 + 0.5);
-            let tw = 2.0 * 3.0 / max(a * P.zoom, 1.0);
-            let riser = (1.0 - smoothstep(0.0, tw, min(tf, 1.0 - tf) * 2.0)) * spent;
+            let craze = smoothstep(0.25, 0.85, spent);
+            // Cracked as glass cracks from a blow at its middle: rays out
+            // from the centre a little off even, and chords across each
+            // ray's wedge, each wedge's chords at its own radii, so the
+            // shards are its own (not the hardpan's polygons round it).
+            let rel = vec2<f32>(x, y) - gems[k].xy;
+            let rad = length(rel);
+            let rt = (atan2(rel.y, rel.x) / 6.2831853 + hash2(vec2<f32>(f32(k), 1.3))) * GEM_RAYS;
+            let ri = floor(rt);
+            var lo = -99.0; var hi = 99.0;
+            for (var q = -1; q <= 2; q++) {
+                let bi = ri + f32(q);
+                // (Round the circle by the ray's index, or the seam where
+                // the angle wraps shows as a straight crack.)
+                let bm = bi - GEM_RAYS * floor(bi / GEM_RAYS);
+                let bq = bi + 0.55 * (hash2(vec2<f32>(bm, f32(k) * 1.9 + 0.4)) - 0.5);
+                if (bq <= rt) { lo = max(lo, bq); } else { hi = min(hi, bq); }
+            }
+            let wl = floor(lo + 0.5);
+            let wedge = wl - GEM_RAYS * floor(wl / GEM_RAYS);
+            let ray_px = min(rt - lo, hi - rt) * (6.2831853 / GEM_RAYS) * rad * P.zoom;
+            let mid = ((lo + hi) * 0.5 / GEM_RAYS - hash2(vec2<f32>(f32(k), 1.3))) * 6.2831853;
+            let pr = dot(rel, vec2<f32>(cos(mid), sin(mid)));
+            let sp = max(GEM_SHARD * gems[k].z, 1.5);
+            let ru = pr / sp + 0.7 * hash2(vec2<f32>(wedge, f32(k) + 5.7));
+            let ring = floor(ru);
+            let ring_px = min(fract(ru), 1.0 - fract(ru)) * sp * P.zoom * select(1.0, 99.0, pr < 0.5 * sp);
+            let c1 = vec2<f32>(wedge, ring + f32(k) * 13.0);
+            // The crack: about a pixel and a half wide at any zoom, a
+            // little wider deep in the husk where it is oldest; the rays
+            // stop short of the middle, where they would close up.
+            let ray = (1.0 - smoothstep(0.5, 1.5 + depth, ray_px)) * smoothstep(0.1, 0.22, rad / gems[k].z);
+            let chord = 1.0 - smoothstep(0.5, 1.2 + 0.6 * depth, ring_px);
+            let crack = max(ray, chord) * craze;
+            let tilt = (vec2<f32>(hash2(c1 * 4.7 + 1.1), hash2(c1 * 5.3 + 6.2)) - 0.5) * 0.6 * craze;
             // The pyramid's face: height (0.6 + 9 depth) tall(v), so its
-            // slope is 9 tall(v) / a along the distance's gradient; a riser
-            // adds a steep outward tilt.
-            let s = 9.0 * gem_tall(v) / a + 2.2 * riser;
-            let gn = normalize(vec3<f32>(-s * gi.y, -s * gi.z, 1.0));
+            // slope is 9 tall(v) / a along the distance's gradient; the
+            // husk is shaded as if half again its stub's height, so its
+            // faces read, and each shard tilts on its own.
+            let s = 9.0 * max(gem_tall(v), GEM_HUSK) / a;
+            let gn = normalize(vec3<f32>(-s * gi.y + tilt.x, -s * gi.z + tilt.y, 1.0));
             var gs = 1.0 + 1.25 * (dot(gn, l) - l.z);
-            // Charged, it is glassy cyan lit from inside; spent, matte stone
-            // (the only cyan in the world is charge).
-            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v);
-            let worn = 0.6 + 0.3 * depth;
+            // Charged, it is glassy cyan lit from inside; spent, frosted:
+            // a broad dull sheen, no glint.
+            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v) + pow(max(dot(gn, half_v), 0.0), 6.0) * 0.1 * spent;
+            // Milky toward its middle, each shard its own tone, a fine
+            // frost from zoom 8 (under that it is under 2 px and shimmers).
+            let frost = 1.0 + 0.1 * (vnoise(rel * 2.6 + 5.0) - 0.5) * 2.0 * smoothstep(7.0, 11.0, P.zoom);
+            let worn = (0.82 + 0.22 * depth) * (0.9 + 0.2 * hash2(c1 * 9.1 + 2.7) * craze) * frost * (1.0 - 0.6 * crack);
             // Charged faces from about 110 in grey (rule 2: above rock, soft
             // rock and the thin film; the review 11-15 measured 93-126).
-            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(38.0, 142.0, 165.0), v);
+            var alb = mix(GEM_SPENT * worn, vec3<f32>(38.0, 142.0, 165.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
@@ -2841,13 +3011,13 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let film = GEM_FILM * (1.0 - exp(-40.0 * th));
             // The faces' light compressed toward the middle while charged
             // (a shaded face of a live crystal stays above 110 in grey;
-            // the spent stone keeps the full relief of its steps).
+            // the spent husk keeps the full relief of its faces and shards).
             var rock = alb * max(mix(gs, 1.0 + 0.6 * (gs - 1.0), v), 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
             // And a floor: a face holding charge never reads under 112 in
             // grey with its glow (art lead 11-15: crystals are the
             // objective; the compression alone left meadow 2 at 101 and
             // caves at 105-109, shaded faces and part-charged cells). The
-            // floor fades in with the charge, so spent stone stays dark.
+            // floor fades in with the charge, so the spent husk stays under it.
             let rl = dot(rock + glow, vec3<f32>(0.299, 0.587, 0.114));
             let want = 112.0 * smoothstep(0.15, 0.45, v);
             rock *= max(1.0, (want - (rl - dot(rock, vec3<f32>(0.299, 0.587, 0.114)))) / max(dot(rock, vec3<f32>(0.299, 0.587, 0.114)), 1.0));
@@ -2898,6 +3068,11 @@ const TER_ISO: f32 = 0.4;
 // a cell of the terrain's height.
 const TER_BEVEL: f32 = 0.9;
 const TER_SHADOW: f32 = 0.35;
+// How far rock's cast shadow falls (cells) and how dark it is. Look C,
+// 2026-11-20, with the crystals' cast shadows: 1.6 and 0.55, from 1.2 and
+// 0.45, so rock stands on the ground as the crystals do at play zoom.
+const TER_CAST: f32 = 1.6;
+const TER_SHADE: f32 = 0.55;
 // Rock's stone (`terrain_top`): the mottling's size in cells, and how dark
 // and wide (in the noise's units) its cracks are.
 const ROCK_MOTTLE: f32 = 2.5;
@@ -3134,7 +3309,7 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
         // The shadow on the ground: the terrain a short way toward the
         // light, as far as its height casts; soft over about a cell.
         let ld = normalize(l.xy);
-        let q = terrain(x + ld.x * 1.2, y + ld.y * 1.2);
+        let q = terrain(x + ld.x * TER_CAST, y + ld.y * TER_CAST);
         if (q.s > 0.0) {
             let reach = clamp(q.h * TER_SHADOW, 0.0, 1.0);
             // Its edge is the offset terrain's own edge, antialiased over
@@ -3142,7 +3317,7 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
             // soft band 20-25 px wide at zoom 24; it faded over the field's
             // 0.05-0.6, a cell or so).
             let qd = (q.s - TER_ISO) / max(length(q.grad), 1e-4);
-            c *= 1.0 - 0.45 * reach * clamp(0.5 + 0.5 * qd * P.zoom, 0.0, 1.0);
+            c *= 1.0 - TER_SHADE * reach * clamp(0.5 + 0.5 * qd * P.zoom, 0.0, 1.0);
         }
     }
     if (cov <= 0.0) { return c; }

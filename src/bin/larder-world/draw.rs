@@ -121,10 +121,15 @@ pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, place: String) -> Ending 
 /// numbers, and how it ended. A run's planet adds its own (`App::model`).
 pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
     let v = tr.verdict.expect("a verdict");
-    let title = if v.stars > 0 {
+    use slime_mould::mould::campaign::Cause;
+    let title = if v.cause == Cause::Cap {
+        // A stalemate's limit (`run::limit`), or a mission's cap: the slime
+        // was not beaten, whatever the star (balance review, 11-20: "Mission
+        // won" over a planet still holding 22,090 walkers).
+        "The slime held on".to_string()
+    } else if v.stars > 0 {
         "Mission won".to_string()
     } else {
-        use slime_mould::mould::campaign::Cause;
         match v.cause {
             Cause::SquadWiped => "The squad is lost",
             Cause::Overrun => "The slime took the larder",
@@ -995,6 +1000,18 @@ impl App {
         // (`Rules::elbow`, 1.6 touch radii) keeps the bodies apart. The
         // dead first, so the living are drawn over them.
         let r = body_r;
+        let since = g.time();
+        // The landing (Look D, 2026-11-20): each soldier drops in, its
+        // shadow on the ground firming under it (`landing`).
+        if since < LAND_SECS + LAND_STAGGER * g.soldiers.len() as f32 {
+            for (k, s) in g.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+                let (_, _, u) = landing(k, since, r);
+                if u < 1.0 {
+                    let a = (40.0 + 110.0 * u) as u8;
+                    self.marks.disc((s.x, s.y), r * (0.55 + 0.35 * u), [0, 0, 0, a], false);
+                }
+            }
+        }
         let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
         for (k, s) in order {
             let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
@@ -1014,7 +1031,9 @@ impl App {
             // No sprite flash: the muzzle flash is its own mark, drawn
             // above as light (gun look, 2026-11-15).
             let n = self.marks.len();
-            self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
+            let (lift, grow, _) = landing(k, since, r);
+            let at = (at.0, at.1 - lift);
+            self.marks.soldier_bitten(at, r * grow, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
             self.marks.dress_since(n, skin);
             self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
@@ -1027,7 +1046,9 @@ impl App {
             let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
             let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
             let n = self.marks.len();
-            self.marks.soldier_head(drawn_at(s, &l, r), r, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
+            let (lift, grow, _) = landing(k, since, r);
+            let at = drawn_at(s, &l, r);
+            self.marks.soldier_head((at.0, at.1 - lift), r * grow, l.facing, team_colour(0), 0.0, carry, l.take / TAKE, l.flinch / FLINCH, l.bite);
             self.marks.dress_since(n, skin);
             self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
@@ -1073,8 +1094,23 @@ impl App {
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: if g.world.garden.is_some() { "The enemy mould: walkers alive".into() } else { "The mould: walkers alive".into() }, value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
                 Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },
             ],
-            // The gun range has no time limit to show.
-            clock: if self.args.range.is_some() { clock(t) } else { format!("{} / {}", clock(t), clock(r.cap)) },
+            // The gun range has no time limit to show. A run's planet counts
+            // up (owner, 2026-11-20 14:10Z: "there should not be a countdown
+            // clock"): the time, then the speed star's time until it passes,
+            // and the stalemate's limit only in its last two minutes.
+            clock: if self.args.range.is_some() {
+                clock(t)
+            } else if r.par > 0.0 {
+                if t < r.par {
+                    format!("{}  \u{b7}  star by {}", clock(t), clock(r.par))
+                } else if t >= r.cap - 120.0 {
+                    format!("{}  \u{b7}  the planet ends at {}", clock(t), clock(r.cap))
+                } else {
+                    clock(t)
+                }
+            } else {
+                format!("{} / {}", clock(t), clock(r.cap))
+            },
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             // The switches this round plays off their default (the play
             // log's `switches=` says the same).
@@ -1546,7 +1582,9 @@ impl App {
                 let tier = r.level().tier;
                 end.place = format!("Planet {} of {} · {} · {}", r.depth, run::PLANETS, r.planet().name, title_case(tier.name()));
                 end.says = run::does_to_you(tier).says.to_string();
-                if v.stars > 0 {
+                // A stalemate's limit keeps its own title ("The slime held
+                // on"): the run goes on, but the planet is not freed.
+                if v.stars > 0 && v.cause != slime_mould::mould::campaign::Cause::Cap {
                     end.title = if last { "The home world is free".into() } else { format!("Planet {} freed", r.depth) };
                 }
                 let (label, line) = match (v.stars > 0, last) {
@@ -1986,6 +2024,28 @@ pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
 /// place, jerked back from a bite (a fifth of `r` at once, easing home over
 /// `FLINCH`) and kicked back along its aim by its last shot (gun look,
 /// 2026-11-15: a fifth of `r` at once, easing home over `KICK`).
+/// The landing (Look D, 2026-11-20: a planet began with the squad simply
+/// there; the brief's "a landing that happens in the picture"): soldier
+/// `k` drops over `LAND_SECS`, one after another `LAND_STAGGER` apart, from
+/// `LAND_LIFT` body radii up the screen and half again its size, easing in
+/// as it falls, over its shadow on the ground, which firms as it comes
+/// down. Only the drawing: the soldier stands where it is from the first
+/// tick. Tried and dropped: a ring of dust spreading from each soldier's
+/// feet, which read as a drawn pulse (art direction rule 1), a UI ring,
+/// not dust.
+const LAND_SECS: f32 = 0.55;
+const LAND_STAGGER: f32 = 0.04;
+const LAND_LIFT: f32 = 7.0;
+
+/// Soldier `k`'s landing `since` game seconds after the landing, `r` its
+/// body radius: how far up it is drawn (world cells), its size's factor,
+/// and how far down it has come (0-1).
+pub(super) fn landing(k: usize, since: f32, r: f32) -> (f32, f32, f32) {
+    let u = ((since - LAND_STAGGER * k as f32) / LAND_SECS).clamp(0.0, 1.0);
+    let e = (1.0 - u) * (1.0 - u);
+    (LAND_LIFT * r * e, 1.0 + 0.5 * e, u)
+}
+
 pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, r: f32) -> (f32, f32) {
     let jerk = (l.flinch / FLINCH).powi(2) * 0.2 * r;
     let kick = (l.kick / KICK).powi(2) * 0.2 * r;

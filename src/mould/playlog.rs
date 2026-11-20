@@ -36,7 +36,7 @@
 //! points a thread at the exact second of the log. It has no words of its
 //! own yet: typing in play needs a text field the HUD does not have.
 
-use super::larder_world::{Game, Kind, World};
+use super::larder_world::{BossPhase, Game, Kind, World};
 
 /// The folder the window writes its logs in, beside the game.
 pub const DIR: &str = "play-logs";
@@ -72,6 +72,11 @@ pub fn file_name(when: &str, map: &str, seed: u64) -> String {
 pub struct Playlog {
     frames: Vec<f32>,
     cmds: usize,
+    /// The raids and ended mini-bosses already written, and the ticks the
+    /// live mini-bosses written formed at (`events`).
+    raids: usize,
+    ended: usize,
+    born: Vec<u64>,
 }
 
 /// Frame-time quantile `q` (0-1) in milliseconds of `ms` (sorted here).
@@ -120,10 +125,59 @@ impl Playlog {
         s
     }
 
-    /// The second's line (with the commands before it), and the frame
-    /// times start again.
+    /// **The slime's events since the last call** (2026-11-20, the
+    /// mini-boss thread): each raid sent, each mini-boss as it forms and
+    /// ends, and every 5 game seconds each live one's phase, members and
+    /// place (world units) and its nearest soldier. The logs said nothing
+    /// of either until then, so a thread reading the owner's play could not
+    /// tell what a mini-boss had done to him.
+    ///
+    /// ```text
+    /// raid t=204.0 to=22,170 held=14738 share=0.60 size=0.17
+    /// boss t=190.0 formed kind=hunter cause=Crowd grade=0.50 at=325,69
+    /// boss t=195.0 kind=hunter phase=hunt members=437 at=324,70 near=330
+    /// boss t=205.0 ended=Broken kind=hunter members=15 first=437 stole=0
+    /// ```
+    pub fn events<W: World>(&mut self, g: &Game<W>) -> String {
+        let mut s = String::new();
+        let t = g.time();
+        if g.raids.sent.len() < self.raids || g.bosses.ended.len() < self.ended {
+            (self.raids, self.ended) = (0, 0);
+            self.born.clear();
+        }
+        for r in &g.raids.sent[self.raids..] {
+            s += &format!("raid t={t:.1} to={:.0},{:.0} held={} share={:.2} size={:.2}{}\n", r.to.0, r.to.1, r.held, r.share, r.size, if r.last_stand { " last_stand=1" } else { "" });
+        }
+        self.raids = g.raids.sent.len();
+        for (b, how, _) in &g.bosses.ended[self.ended..] {
+            s += &format!("boss t={t:.1} ended={how:?} kind={} members={} first={} stole={:.0}\n", b.kind.name(), b.members, b.first, b.stolen);
+        }
+        self.ended = g.bosses.ended.len();
+        let every = (5 * g.rules.tps) as u64;
+        for b in &g.bosses.live {
+            if !self.born.contains(&b.born) {
+                self.born.push(b.born);
+                s += &format!("boss t={t:.1} formed kind={} cause={:?} grade={:.2} at={:.0},{:.0}\n", b.kind.name(), b.cause, b.grade, b.at.0, b.at.1);
+            } else if g.world.ticks().saturating_sub(b.born) / every != g.world.ticks().saturating_sub(b.born + g.rules.tps as u64) / every {
+                let phase = match b.phase {
+                    BossPhase::Gather => "gather",
+                    BossPhase::Hunt(_) => "hunt",
+                    BossPhase::Go(_) => "go",
+                    BossPhase::Sit(..) => "sit",
+                };
+                let near = g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x - b.centre.0).hypot(x.y - b.centre.1)).fold(f32::INFINITY, f32::min);
+                s += &format!("boss t={t:.1} kind={} phase={phase} members={} at={:.0},{:.0} near={near:.0}\n", b.kind.name(), b.members, b.centre.0, b.centre.1);
+            }
+        }
+        self.born.retain(|&k| g.bosses.live.iter().any(|b| b.born == k));
+        s
+    }
+
+    /// The second's line (with the commands and the slime's events before
+    /// it), and the frame times start again.
     pub fn second<W: World>(&mut self, g: &Game<W>) -> String {
         let mut s = self.commands(g);
+        s += &self.events(g);
         let up = |k: fn(&Kind) -> bool| g.buildings.iter().filter(|b| b.up() && k(&b.kind)).count();
         let pumps = up(|k| *k == Kind::Pump);
         let turrets = up(|k| *k == Kind::Turret);
@@ -351,5 +405,32 @@ mod tests {
         // A cut-off line is skipped, not an error.
         let cut = read(&format!("{text}t=4 mould=1"));
         assert_eq!(cut.secs.len(), 4);
+    }
+
+    /// The slime's events (`Playlog::events`, 2026-11-20): a mini-boss's
+    /// forming, its state every 5 game seconds and its end are lines of
+    /// their own, which the reader skips.
+    #[test]
+    fn a_log_writes_a_mini_boss_as_it_forms_and_ends() {
+        use crate::mould::larder_world::{BossCause, BossRules};
+        let mut g = Game::new(race_world(1, 1, 1_000), Rules::default(), 1);
+        g.rules.boss = BossRules { least: 1, gather: 1.0, life: 6.0, quorum: 0.0, kind: 1.0, ..BossRules::default() };
+        g.step();
+        let living: Vec<usize> = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k)).collect();
+        let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + g.world.walkers[k].0, a.1 + g.world.walkers[k].1));
+        assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+        let mut log = Playlog::default();
+        let mut text = String::new();
+        for _ in 0..12 {
+            for _ in 0..g.rules.tps {
+                g.step();
+            }
+            text += &log.second(&g);
+        }
+        eprintln!("{text}");
+        assert_eq!(text.matches(" formed kind=hunter cause=Staged").count(), 1, "formed once");
+        assert!(text.contains(" kind=hunter phase=hunt members="), "its state");
+        assert_eq!(text.matches(" ended=Spent kind=hunter").count(), 1, "ended once");
+        assert_eq!(read(&text).secs.len(), 12, "the seconds read back as before");
     }
 }

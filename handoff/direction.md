@@ -139,6 +139,30 @@ end.
   drift: Look C (rock) began before A and B were done. Next: one bot
   through 1 to 3 (Engine and tools with the strategy bots), planet 3's
   length after #532, and the two switches.
+- **The balance review** (11-20, #539, doc
+  https://claude.ai/artifact/EbhGU5rMAt7XC8P5zocjYc), taken by this lane:
+  exit test 1 now reads about 30 minutes for planets 1 to 3 (his clean runs
+  took 18:27 and 21:18), with "held on" counted apart from a win; slime sizes
+  are not retuned for short planets; Needle Blast gets no further change
+  (1 run in 213 meets the best deck by planet 3). The strategy thread gets
+  a planet 2 job on today's game, with slug bullets in its split test,
+  before anyone touches the Sprawler. **His answers, 11-20 14:10Z**
+  (rows in `wiki/decisions-game.md`): no countdown clock, but a count-up
+  clock with stars for being under a time. On the snowball, no slime that
+  grows with the army; the real problem is that a big squad can't be
+  touched. He suggests stronger mini-bosses late in a planet and condensed,
+  tougher slime. Both went to the balance thread, which owns the ideas (his
+  word). Crystal pay stays with the shop-money thread, where he is
+  answering.
+- **Mini-boss errands** (11-20, #547's question): leeches and sappers
+  never reached their pump or wall in 5:00. The nearest target was 150 to
+  250 units off, at 1 to 4 units a second, on a 90 s trip. Direction's call:
+  a nearer target, with the trip unchanged. A first rule, drawing a leech
+  or sapper only with its target within reach, drew none on his maps: every
+  crowded knot was 190 to 250 units from a pump or wall. So, on the
+  thread's proposal, a drawn leech or sapper forms at the crowded knot
+  nearest its target. It keeps all four kinds, as he asked, and the 90 s
+  trip.
 - **The Trunk's veins are parked until Milestone 2** (11-19): the Lab's
   prototype (#515) and Look's three checks found nothing to draw, because
   the body is packed. The idea worth keeping is food flowing along the

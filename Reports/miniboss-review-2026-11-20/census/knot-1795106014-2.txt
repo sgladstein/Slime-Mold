@@ -1,0 +1,39 @@
+STRAT t 0 build mould 12030 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 12131 soldiers 4 hp 1.00 bank 53 killed 3 turret 0 pumps 4 buildings 4
+STRAT t 20 out mould 11941 soldiers 4 hp 0.95 bank 322 killed 168 turret 0 pumps 3 buildings 3
+STRAT t 30 out mould 11762 soldiers 4 hp 0.90 bank 59 killed 323 turret 0 pumps 3 buildings 3
+STRAT t 40 out mould 11554 soldiers 4 hp 0.81 bank 479 killed 513 turret 0 pumps 3 buildings 3
+STRAT t 50 out mould 11303 soldiers 4 hp 0.67 bank 290 killed 849 turret 0 pumps 4 buildings 4
+STRAT t 60 out mould 11030 soldiers 4 hp 0.53 bank 240 killed 1174 turret 0 pumps 5 buildings 5
+STRAT t 70 back mould 10644 soldiers 4 hp 0.41 bank 201 killed 1656 turret 0 pumps 5 buildings 5
+  boss t 77.0 s: Crowd hunter formed on lump 0 at 389,217 (crowd top 1.00); grade 0.28: 7 blows a member, touches as 3, pace x1.11
+  boss t 77 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 389,217, spread 1.01, stolen 0.0; nearest soldier 135.5, 4 alive
+  boss t 78 s: lump 0 hunter Gather, 349 members (first 349, 0 hurt), at 386,214, spread 0.93, stolen 0.0; nearest soldier 132.0, 4 alive
+  boss t 79 s: lump 0 hunter Gather, 349 members (first 349, 0 hurt), at 386,212, spread 0.97, stolen 0.0; nearest soldier 129.6, 4 alive
+  boss t 80 s: lump 0 hunter Gather, 349 members (first 349, 0 hurt), at 384,210, spread 0.97, stolen 0.0; nearest soldier 132.5, 4 alive
+STRAT t 80 back mould 10399 soldiers 4 hp 0.31 bank 202 killed 2165 turret 0 pumps 4 buildings 4
+  boss t 81 s: lump 0 hunter Gather, 349 members (first 349, 0 hurt), at 382,208, spread 0.95, stolen 0.0; nearest soldier 131.6, 4 alive
+  boss t 82 s: lump 0 hunter Gather, 349 members (first 349, 0 hurt), at 382,208, spread 0.92, stolen 0.0; nearest soldier 130.3, 4 alive
+  boss t 83 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 380,206, spread 0.92, stolen 0.0; nearest soldier 127.8, 4 alive
+  boss t 84 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 340,186, spread 1.57, stolen 0.0; nearest soldier 83.4, 4 alive
+  boss t 85 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 328,176, spread 1.37, stolen 0.0; nearest soldier 81.6, 4 alive
+  boss t 86 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 320,174, spread 1.58, stolen 0.0; nearest soldier 73.4, 4 alive
+  boss t 87 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 316,172, spread 1.71, stolen 0.0; nearest soldier 69.5, 4 alive
+  boss t 88 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 312,174, spread 2.08, stolen 0.0; nearest soldier 65.4, 4 alive
+  boss t 89 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 310,190, spread 2.82, stolen 0.0; nearest soldier 66.3, 4 alive
+  boss t 90 s: lump 0 hunter Hunt(Some(0)), 349 members (first 349, 0 hurt), at 312,192, spread 2.69, stolen 0.0; nearest soldier 78.0, 3 alive
+STRAT t 90 back mould 9869 soldiers 4 hp 0.37 bank 41 killed 2943 turret 0 pumps 2 buildings 2
+  boss t 91 s: lump 0 hunter Hunt(Some(4)), 349 members (first 349, 0 hurt), at 312,190, spread 2.56, stolen 0.0; nearest soldier 75.1, 4 alive
+  boss t 92 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 312,188, spread 2.54, stolen 0.0; nearest soldier 69.4, 4 alive
+  boss t 93 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 312,186, spread 2.41, stolen 0.0; nearest soldier 69.5, 4 alive
+  boss t 94 s: lump 0 hunter Hunt(Some(3)), 349 members (first 349, 0 hurt), at 312,190, spread 2.83, stolen 0.0; nearest soldier 69.4, 4 alive
+  boss t 95 s: lump 0 hunter Hunt(Some(4)), 349 members (first 0, 0 hurt), at 312,188, spread 2.57, stolen 0.0; nearest soldier 75.2, 4 alive
+  boss t 96 s: lump 0 hunter Hunt(Some(4)), 350 members (first 350, 0 hurt), at 324,176, spread 11.49, stolen 0.0; nearest soldier 85.2, 4 alive
+  boss t 97 s: lump 0 hunter ended Broken (26 members of 350; stole 0.0, 0.0 given back so far)
+STRAT t 100 back mould 9532 soldiers 4 hp 0.25 bank 202 killed 3609 turret 0 pumps 2 buildings 2
+STRAT t 110 home mould 9641 soldiers 2 hp 0.38 bank 322 killed 3965 turret 0 pumps 2 buildings 2
+STRAT t 120 home mould 9774 soldiers 2 hp 0.70 bank 82 killed 4231 turret 0 pumps 2 buildings 2
+STRAT t 130 home mould 10363 soldiers 2 hp 0.62 bank 182 killed 4413 turret 0 pumps 2 buildings 2
+STRAT t 140 back mould 10525 soldiers 2 hp 0.48 bank 282 killed 4728 turret 0 pumps 2 buildings 2
+STRAT t 150 back mould 10525 soldiers 2 hp 0.38 bank 306 killed 5029 turret 0 pumps 0 buildings 0
+STRAT t 160 back mould 10640 soldiers 1 hp 0.35 bank 306 killed 5345 turret 0 pumps 0 buildings 0

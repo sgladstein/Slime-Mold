@@ -93,11 +93,15 @@ pub enum TextureKind {
     /// Larder World: a cut-off piece withering, walkers it loses a second
     /// (`world::WorldListener`, from the mould grid).
     Wither = 3,
+    /// Larder World: walkers the squad kills a second, a wet pop each
+    /// (2026-11-20; until then the starving crackle, which made a fight
+    /// sound like radio static).
+    Kill = 4,
 }
 
 impl TextureKind {
-    pub const COUNT: usize = 4;
-    pub const ALL: [TextureKind; 4] = [TextureKind::Creep, TextureKind::Feed, TextureKind::Starve, TextureKind::Wither];
+    pub const COUNT: usize = 5;
+    pub const ALL: [TextureKind; 5] = [TextureKind::Creep, TextureKind::Feed, TextureKind::Starve, TextureKind::Wither, TextureKind::Kill];
 
     /// The grain one of this texture's events is made of.
     pub fn grain(self) -> GrainKind {
@@ -106,6 +110,7 @@ impl TextureKind {
             TextureKind::Feed => GrainKind::Slurp,
             TextureKind::Starve => GrainKind::Crackle,
             TextureKind::Wither => GrainKind::Wilt,
+            TextureKind::Kill => GrainKind::Pop,
         }
     }
 }
@@ -152,10 +157,29 @@ pub enum GrainKind {
     Tear,
     /// Larder World: a withering piece, a soft dry fizz.
     Wilt,
+    /// Larder World: a gun's low body, under its crack (`SoundCmd::Gun`).
+    Punch,
+    /// Larder World: a gun's report, the tail that rolls off across the
+    /// planet (`SoundCmd::Gun`).
+    Report,
+    /// Larder World: a gun's action, the bolt or pump after a heavy shot
+    /// (`SoundCmd::Gun`).
+    Action,
+    /// Larder World: a walker killed, a small wet pop (`TextureKind::Kill`).
+    Pop,
+    /// Larder World: a gas round's cloud let out, a long falling hiss.
+    Hiss,
+    /// Larder World: the slime gathering itself (a raid or a surge
+    /// starting, a mini-boss forming), a low rough groan that rises.
+    Swell,
+    /// Larder World: a building set down, a metal clank.
+    Clank,
+    /// The menus and the HUD answering a click: a small soft tick.
+    Tick,
 }
 
 impl GrainKind {
-    pub const ALL: [GrainKind; 18] = [
+    pub const ALL: [GrainKind; 26] = [
         GrainKind::Squelch,
         GrainKind::Slurp,
         GrainKind::Crackle,
@@ -174,7 +198,38 @@ impl GrainKind {
         GrainKind::Snarl,
         GrainKind::Tear,
         GrainKind::Wilt,
+        GrainKind::Punch,
+        GrainKind::Report,
+        GrainKind::Action,
+        GrainKind::Pop,
+        GrainKind::Hiss,
+        GrainKind::Swell,
+        GrainKind::Clank,
+        GrainKind::Tick,
     ];
+}
+
+/// **A gun's voice** (`SoundCmd::Gun`, 2026-11-20): each kind of gun its
+/// own report, so the squad's gun is heard for what it is and a turret is
+/// told from a soldier. Until then every shot was the same 4 ms tick
+/// (`GrainKind::Crack` alone).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GunVoice {
+    /// The starting gun: a firm crack, a mid punch, a short report.
+    Rifle,
+    /// Fast and short: lighter, higher, a short tail, fired twice as often.
+    Carbine,
+    /// Slow and far: a deep boom, a long rolling report and a bolt after.
+    Long,
+    /// A fan of bullets: one wide blast a shot (not one a pellet) and a
+    /// pump after.
+    Scatter,
+    /// A turret: a metallic, ringing, quieter shot, set under the squad's.
+    Turret,
+}
+
+impl GunVoice {
+    pub const ALL: [GunVoice; 5] = [GunVoice::Rifle, GunVoice::Carbine, GunVoice::Long, GunVoice::Scatter, GunVoice::Turret];
 }
 
 /// The moments that matter, as tuned tones.
@@ -210,7 +265,11 @@ pub enum SoundCmd {
     /// A `GrainKind::Splat` shaped by `weight` (0 ..= 1): at 0 a light wet
     /// tap, at 1 a heavy low slap about twice as long. Larder World's shot
     /// sends the share of a big kill it made (`world::kill_weight`).
-    Impact { weight: f32, pan: f32, gain: f32, delay: f32 },
+    /// `far` (0 on screen ..= 1 far off it) dulls it (`world::Ear::far`).
+    Impact { weight: f32, pan: f32, gain: f32, delay: f32, far: f32 },
+    /// Larder World: a gunshot, several layers at once (`synth::gun`):
+    /// `far` dulls the crack and leaves the report, as distance does.
+    Gun { voice: GunVoice, pan: f32, gain: f32, delay: f32, far: f32 },
     /// The lamp's hum, where the lamp stands.
     Lamp { on: bool, pan: f32 },
     /// Larder World: **the mould's own voice**, one breathing drone for the

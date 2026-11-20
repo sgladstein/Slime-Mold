@@ -168,9 +168,9 @@ use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::run::{Ground as RunGround, Run};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;
-use slime_mould::sound::synth::{VoiceBank, DEFAULT_MASTER};
+use slime_mould::sound::synth::VoiceBank;
 use slime_mould::sound::world::{Ear, WorldListener};
-use slime_mould::sound::{self, SoundCmd};
+use slime_mould::sound;
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::{team_colour, SLASH, STANDING, TURRET_DRY, TURRET_IDLE, TURRET_TRACKING, WALKING};
@@ -190,13 +190,15 @@ use winit::window::{Window, WindowId};
 /// on every planet. The hunter violet (the hue nothing else on screen
 /// uses), the wanderer pale bone (a fat grub that grows as it grazes), the
 /// sapper ember (an acid red at your walls), the leech ink (dark tar on the
-/// pump rig, its core turning the charge's cyan as it drinks).
+/// pump rig, its core turning the charge's cyan as it drinks), the mortar
+/// moss with an acid core (2026-11-20).
 fn kind_look(kind: u16) -> LumpLook {
     match kind {
         1 => LumpLook::Violet,
         2 => LumpLook::Bone,
         3 => LumpLook::Ember,
         4 => LumpLook::Ink,
+        5 => LumpLook::Mortar,
         _ => LumpLook::Plain,
     }
 }
@@ -221,7 +223,9 @@ mod league;
 mod menu;
 mod squadmode;
 mod uisize;
+mod volume;
 use uisize::*;
+use volume::*;
 use slime_mould::world::settings::{self, UiSize};
 use squadmode::{squad_card_key, squad_help, SquadInput};
 // The moved modules' functions, reached as before from here and from each
@@ -1922,6 +1926,8 @@ impl App {
         let t0 = Instant::now();
         // The kit's blasts (mines, thrown charges), heard where they went off.
         l.bangs(&self.kit.bangs);
+        // The gun cards' payloads (sound pass two, 2026-11-20).
+        l.pops(&self.rounds.pops);
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
@@ -2065,6 +2071,13 @@ impl App {
                     // members' own density carries its look.
                     let held = if code & 8 != 0 { 1.0 } else { 0.0 };
                     *l = LumpBody { at: b.centre, look, strength: ((code >> 4) & 15) as f32 / 15.0, remain, fill: take / (take + LEECH_HALF), held };
+                }
+            }
+            // The fruit (`fruit.rs`, 2026-11-20): its own look, its
+            // strength its ripeness, its members' density carrying it.
+            if let Some((l, at, ripe)) = g.fruit_looks() {
+                if let Some(b) = lumps.get_mut(l) {
+                    *b = LumpBody { at, look: LumpLook::Fruit, strength: ripe, remain: 1.0, fill: 0.0, held: 1.0 };
                 }
             }
             v.set_lumps(&lumps);
@@ -2554,6 +2567,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The pictures and the bench draw at `ui=` or 100%, never at a size
     // saved on this machine; the window opens at the saved size.
     set_ui_user(ui.unwrap_or_else(|| if look.is_some() || bench_secs.is_some() { 1.0 } else { settings::saved_ui() }));
+    // The saved volume (`volume`); the pictures' recordings stay at 100%.
+    if look.is_none() && bench_secs.is_none() {
+        set_volume_user(settings::saved_volume());
+    }
     if !mode_given && look.is_none() && bench_secs.is_none() {
         args.squads = true;
     }

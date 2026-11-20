@@ -30,13 +30,15 @@
 //! does not sound like the one in front of you.
 
 use crate::mould::kit::Bang;
-use crate::mould::larder_world::{Game, Kind, Shot, World};
+use crate::mould::larder_world::{BossEnd, Game, Kind, Shot, World};
+use crate::mould::rounds::{Card, Pop};
 
 use super::pieces::{blobs, Pieces};
 use crate::mould::larder::End;
 
 use super::listen::density;
-use super::{AlertKind, GrainKind, SoundCmd, TextureKind};
+use super::{AlertKind, GrainKind, GunVoice, SoundCmd, TextureKind};
+use crate::mould::guns::GunKind;
 
 /// Walkers a shot must kill to sound at full weight: the 90th centile of a
 /// rush on fork seed 1 (2026-11-12, 43 shots: 10th centile 1, quartiles 5,
@@ -73,13 +75,23 @@ const HURT_EVERY: f32 = 8.0;
 const HURT_GAP: f32 = 0.35;
 /// The pulse: beats a minute with mould just in sight, and with it on a
 /// soldier; quieter than that, no pulse at all.
-const PULSE_SLOW: f32 = 54.0;
+const PULSE_SLOW: f32 = 60.0;
 const PULSE_FAST: f32 = 150.0;
-const PULSE_FLOOR: f32 = 0.05;
+/// Danger under which there is no pulse. 0.05 until 2026-11-20, when a
+/// squad that saw mould anywhere in its gun's range heard it: the pulse
+/// played most of every fight (236 beats in 150 s on planet 1) and was
+/// the loudest thing after the reverb. Now it starts with mould within
+/// a third of the range or 9 walkers on a soldier (`TOUCH_FULL`; at 0.45,
+/// half the range, with any touch full, planet 1 still beat 246 times
+/// in 150 s), and tempo and level run from there.
+const PULSE_FLOOR: f32 = 0.7;
+/// Walkers on one soldier that are full danger to the pulse.
+const TOUCH_FULL: f32 = 12.0;
 /// The least gap between banking chimes, seconds. Carriers bank a few food
 /// at a time: the farm hand banked 325 times in two minutes (1,770 food),
 /// which chimed nearly three times a second, so banking is gathered.
-const BANK_GAP: f32 = 1.0;
+/// 1 s until 2026-11-20: a chime a second through a whole planet.
+const BANK_GAP: f32 = 2.5;
 /// The least level of a where-to-look sound off screen (the larder robbed,
 /// a crystal run dry), against 1 on screen.
 const ALERT_FLOOR: f32 = 0.7;
@@ -118,6 +130,29 @@ impl Ear {
         let (dx, dy) = ((p.0 - self.centre.0) / hx, (p.1 - self.centre.1) / hy);
         let out = (dx.abs() - 1.0).max(0.0).hypot((dy.abs() - 1.0).max(0.0));
         (dx.clamp(-1.0, 1.0), 1.0 / (1.0 + 2.0 * out))
+    }
+
+    /// How far off screen `p` is, 0 (on it) ..= 1, for the voice bank's
+    /// dulling (`SoundCmd::Gun`'s `far`): a view away is 0.5.
+    pub fn far(&self, p: (f32, f32)) -> f32 {
+        1.0 - self.place(p).1.powf(0.6)
+    }
+}
+
+/// The voice of the gun that fired `s` (`GunVoice`): a turret's, or its
+/// soldier's squad's gun's kind.
+pub fn gun_voice<W: World>(g: &Game<W>, s: &Shot) -> GunVoice {
+    if s.turret.is_some() {
+        return GunVoice::Turret;
+    }
+    match s.by.and_then(|i| g.soldiers.get(i)) {
+        Some(soldier) => match g.gun(soldier.squad as usize).kind {
+            GunKind::Rifle => GunVoice::Rifle,
+            GunKind::Carbine => GunVoice::Carbine,
+            GunKind::Long => GunVoice::Long,
+            GunKind::Scatter => GunVoice::Scatter,
+        },
+        None => GunVoice::Turret,
     }
 }
 
@@ -170,7 +205,27 @@ pub struct WorldStats {
     pub charges: u32,
     pub pieces: u32,
     pub withering: f32,
+    /// Hits that struck slime by walkers killed: 0, 1, 2, 3-4, 5-8,
+    /// 9-16, 17-32, 33 and over (`KILL_BINS`), and the round's full
+    /// weight (`full_kill`), so the impact's weight can be checked
+    /// against what shots really kill.
+    pub kill_hist: [u32; 8],
+    pub full: f32,
+    /// Sound pass two (2026-11-20): the gun cards' payloads heard (blast,
+    /// bomb, gas, germ, flare, torch, the mind and reader rounds), raids
+    /// and surges starting, mini-bosses formed and broken, buildings set
+    /// down and lost.
+    pub payloads: u32,
+    pub raids: u32,
+    pub surges: u32,
+    pub bosses: u32,
+    pub broken: u32,
+    pub built: u32,
+    pub lost: u32,
 }
+
+/// The upper ends of `WorldStats::kill_hist`'s bins.
+pub const KILL_BINS: [u32; 7] = [0, 1, 2, 4, 8, 16, 32];
 
 pub struct WorldListener {
     ticks: u64,
@@ -215,6 +270,16 @@ pub struct WorldListener {
     bangs: Vec<Bang>,
     last_grid: Vec<u32>,
     held: Vec<SoundCmd>,
+    /// Sound pass two: the rounds' pops heard so far (`pops`) and the new
+    /// ones waiting for `hear`; raids, surges, bosses formed and ended
+    /// already heard; each building's last life.
+    pops_seen: usize,
+    pops_new: Vec<Pop>,
+    raids_seen: usize,
+    surges_seen: u32,
+    boss_born: u64,
+    boss_ended: usize,
+    buildings: Vec<bool>,
     pub stats: WorldStats,
 }
 
@@ -259,6 +324,13 @@ impl WorldListener {
             bangs: Vec::new(),
             last_grid: Vec::new(),
             held: Vec::new(),
+            pops_seen: 0,
+            pops_new: Vec::new(),
+            raids_seen: 0,
+            surges_seen: 0,
+            boss_born: 0,
+            boss_ended: 0,
+            buildings: Vec::new(),
             stats: WorldStats::default(),
         };
         l.rebaseline(g);
@@ -295,6 +367,12 @@ impl WorldListener {
         self.bangs.clear();
         self.last_grid.clear();
         self.held.clear();
+        self.pops_new.clear();
+        self.raids_seen = g.raids.sent.len();
+        self.surges_seen = g.surges;
+        self.boss_born = g.bosses.live.iter().map(|b| b.born).max().unwrap_or(0).max(self.ticks);
+        self.boss_ended = g.bosses.ended.len();
+        self.buildings = g.buildings.iter().map(|b| b.alive).collect();
         self.stats.rebaselines += 1;
     }
 
@@ -333,52 +411,74 @@ impl WorldListener {
         }
         self.stats.shots += shots.iter().filter(|s| s.fired).count() as u64;
         self.stats.kills += killed as u64;
-        // The heaviest shots are the ones heard; a stable sort keeps the
-        // order the game fired them among equals.
-        let mut order: Vec<usize> = (0..shots.len()).collect();
-        order.sort_by_key(|&i| std::cmp::Reverse(shots[i].killed));
-        let voiced = order.len().min(SHOTS_VOICED);
+        // **The guns** (2026-11-20): one report a trigger pull, in the
+        // voice of the gun that fired it (`gun_voice`). A scattergun's
+        // pellets and a multicast's bullets leave one gun at once and are
+        // one shot to the ear; until then each bullet was its own crack,
+        // so a scattergun was four ticks. The nearest pulls are voiced
+        // first, the squad's before the turrets'.
+        let mut pulls: Vec<(usize, Option<usize>, Option<usize>)> = Vec::new();
+        for (i, s) in shots.iter().enumerate().filter(|(_, s)| s.fired) {
+            if !pulls.iter().any(|&(j, by, turret)| by == s.by && turret == s.turret && (shots[j].from.0 - s.from.0).abs() + (shots[j].from.1 - s.from.1).abs() < 1.0) {
+                pulls.push((i, s.by, s.turret));
+            }
+        }
+        pulls.sort_by(|a, b| {
+            let key = |p: &(usize, Option<usize>, Option<usize>)| (p.1.is_none(), -ear.place(shots[p.0].from).1);
+            let (x, y) = (key(a), key(b));
+            x.0.cmp(&y.0).then(x.1.total_cmp(&y.1))
+        });
+        let voiced = pulls.len().min(SHOTS_VOICED);
         // Spread over the frame so a volley is a rattle, not one flam.
         let gap = if voiced > 1 { (dt / voiced as f32).min(0.03) } else { 0.0 };
         let mut zips = 0;
-        for (j, &i) in order.iter().take(voiced).enumerate() {
+        for (j, &(i, _, _)) in pulls.iter().take(voiced).enumerate() {
             let s = shots[i];
             let delay = gap * j as f32;
-            if s.fired {
-                let (pan, gain) = ear.place(s.from);
-                // A turret's shot (no soldier) sits under the ones the
-                // player orders, or a kill zone is a wall of cracks (design
-                // review of #96).
-                let own = if s.by.is_some() { 1.0 } else { TURRET };
-                out.push(SoundCmd::Grain { kind: GrainKind::Crack, pan, gain: 0.4 * gain * own, delay });
-                self.stats.voiced += 1;
-                // A bullet in flight (`Rules::bullet_speed`) whizzes past
-                // halfway, where and when it is halfway.
-                if g.rules.bullet_speed > 0.0 && zips < ZIPS_VOICED {
-                    let end = s.hit.unwrap_or(s.to);
-                    let mid = ((s.from.0 + end.0) * 0.5, (s.from.1 + end.1) * 0.5);
-                    let half = (end.0 - s.from.0).hypot(end.1 - s.from.1) * 0.5 / (g.rules.bullet_speed * g.world.scale()).max(1.0);
-                    let (pan, gain) = ear.place(mid);
-                    out.push(SoundCmd::Grain { kind: GrainKind::Zip, pan, gain: 0.22 * gain * own, delay: delay + half });
-                    zips += 1;
-                    self.stats.zips += 1;
-                }
+            let (pan, gain) = ear.place(s.from);
+            // A turret's shot (no soldier) sits under the ones the player
+            // orders, or a kill zone is a wall of cracks (design review of
+            // #96).
+            let own = if s.by.is_some() { 1.0 } else { TURRET };
+            out.push(SoundCmd::Gun { voice: gun_voice(g, &s), pan, gain: GUN_LEVEL * gain * own, delay, far: ear.far(s.from) });
+            self.stats.voiced += 1;
+            // A bullet in flight (`Rules::bullet_speed`) whizzes past
+            // halfway, where and when it is halfway.
+            if g.rules.bullet_speed > 0.0 && zips < ZIPS_VOICED {
+                let end = s.hit.unwrap_or(s.to);
+                let mid = ((s.from.0 + end.0) * 0.5, (s.from.1 + end.1) * 0.5);
+                let half = (end.0 - s.from.0).hypot(end.1 - s.from.1) * 0.5 / (g.rules.bullet_speed * g.world.scale()).max(1.0);
+                let (pan, gain) = ear.place(mid);
+                out.push(SoundCmd::Grain { kind: GrainKind::Zip, pan, gain: 0.16 * gain * own, delay: delay + half });
+                zips += 1;
+                self.stats.zips += 1;
             }
-            if let Some(h) = s.hit {
-                let w = kill_weight(s.killed, self.full);
-                let (pan, gain) = ear.place(h);
-                // The flight: the farther it struck, the later it lands
-                // (a few hundredths of a second at most; the ear hears
-                // the crack and the slap as two sounds, from and to).
-                let flight = ((h.0 - s.from.0).hypot(h.1 - s.from.1) / ear.half.0.max(1.0) * 0.04).min(0.05);
-                let level = if s.killed > 0 { 0.28 + 0.37 * w } else { 0.12 };
-                out.push(SoundCmd::Impact { weight: w, pan, gain: level * gain, delay: delay + 0.012 + flight });
-                self.stats.impacts += 1;
-                match w {
-                    w if w < 1.0 / 3.0 => self.stats.light += 1,
-                    w if w < 2.0 / 3.0 => self.stats.mid += 1,
-                    _ => self.stats.heavy += 1,
-                }
+        }
+        // The hits, heaviest first: a stable sort keeps the order the game
+        // fired them among equals.
+        let mut hits: Vec<usize> = (0..shots.len()).filter(|&i| shots[i].hit.is_some()).collect();
+        hits.sort_by_key(|&i| std::cmp::Reverse(shots[i].killed));
+        let voiced = hits.len().min(SHOTS_VOICED);
+        let gap = if voiced > 1 { (dt / voiced as f32).min(0.03) } else { 0.0 };
+        for (j, &i) in hits.iter().take(voiced).enumerate() {
+            let s = shots[i];
+            let Some(h) = s.hit else { continue };
+            let w = kill_weight(s.killed, self.full);
+            self.stats.kill_hist[KILL_BINS.iter().position(|&b| s.killed <= b).unwrap_or(7)] += 1;
+            self.stats.full = self.full;
+            let (pan, gain) = ear.place(h);
+            // The flight: the farther it struck, the later it lands (a few
+            // hundredths of a second at most; the ear hears the crack and
+            // the slap as two sounds, from and to). With bullets the hit is
+            // a later leg of its own and lands when it lands.
+            let flight = if s.fired { ((h.0 - s.from.0).hypot(h.1 - s.from.1) / ear.half.0.max(1.0) * 0.04).min(0.05) } else { 0.0 };
+            let level = if s.killed > 0 { 0.3 + 0.4 * w } else { 0.12 };
+            out.push(SoundCmd::Impact { weight: w, pan, gain: level * gain, delay: gap * j as f32 + 0.012 + flight, far: ear.far(h) });
+            self.stats.impacts += 1;
+            match w {
+                w if w < 1.0 / 3.0 => self.stats.light += 1,
+                w if w < 2.0 / 3.0 => self.stats.mid += 1,
+                _ => self.stats.heavy += 1,
             }
         }
         // The kill crackle: a pop a walker killed, where they died.
@@ -387,8 +487,8 @@ impl WorldListener {
             self.kill_at = (kx / killed as f32, ky / killed as f32);
         }
         let (kill_pan, kill_gain) = ear.place(self.kill_at);
-        let (rate, level) = density(self.kill_rate, 1.0, 60.0, 0.22);
-        out.push(SoundCmd::Texture { kind: TextureKind::Starve, rate, level: level * kill_gain, pan: kill_pan, spread: 0.25 });
+        let (rate, level) = density(self.kill_rate, 1.0, 60.0, 0.2);
+        out.push(SoundCmd::Texture { kind: TextureKind::Kill, rate, level: level * kill_gain, pan: kill_pan, spread: 0.25 });
         self.stats.kills_per_sec = self.kill_rate;
 
         // --- the mould closing in --------------------------------------
@@ -402,11 +502,11 @@ impl WorldListener {
             touching += s.touching;
             tx += s.x * s.touching as f32;
             ty += s.y * s.touching as f32;
-            let near = if s.touching > 0 {
-                1.0
-            } else {
-                s.aim.map_or(0.0, |a| (1.0 - (a.0 - s.x).hypot(a.1 - s.y) / reach.max(1.0)).clamp(0.0, 1.0))
-            };
+            // Walkers on the soldier count by how many (`TOUCH_FULL`), as
+            // the bite does: until 2026-11-20 one walker touching was full
+            // danger, and slime brushes a squad most of a fight.
+            let aim = s.aim.map_or(0.0, |a| (1.0 - (a.0 - s.x).hypot(a.1 - s.y) / reach.max(1.0)).clamp(0.0, 1.0));
+            let near = aim.max((s.touching as f32 / TOUCH_FULL).min(1.0));
             danger = danger.max(near * ear.place((s.x, s.y)).1);
             // Hurt: health lost, in chunks.
             if let (Some(hp), Some(acc), Some(wait)) = (self.hp.get_mut(i), self.hurt.get_mut(i), self.hurt_wait.get_mut(i)) {
@@ -431,10 +531,11 @@ impl WorldListener {
         // The pulse is the squad's, so it sits in the middle; the beat's
         // second thump ("dub") is quieter and a fifth of a second after.
         if danger > PULSE_FLOOR && !hushed && g.end.is_none() {
-            self.beat += dt * (PULSE_SLOW + (PULSE_FAST - PULSE_SLOW) * danger) / 60.0;
+            let d = ((danger - PULSE_FLOOR) / (1.0 - PULSE_FLOOR)).clamp(0.0, 1.0);
+            self.beat += dt * (PULSE_SLOW + (PULSE_FAST - PULSE_SLOW) * d) / 60.0;
             if self.beat >= 1.0 {
                 self.beat -= self.beat.floor();
-                let gain = 0.15 + 0.4 * danger;
+                let gain = 0.12 + 0.3 * d;
                 out.push(SoundCmd::Grain { kind: GrainKind::Heart, pan: 0.0, gain, delay: 0.0 });
                 out.push(SoundCmd::Grain { kind: GrainKind::Heart, pan: 0.0, gain: gain * 0.6, delay: 0.19 });
                 self.stats.beats += 1;
@@ -515,15 +616,26 @@ impl WorldListener {
                 End::Cap(share) => SoundCmd::Alert { kind: AlertKind::Bell, weight: share.clamp(0.0, 1.0), pan: 0.0 },
                 End::SquadWiped(_) | End::Overrun(_) => SoundCmd::Alert { kind: AlertKind::Died, weight: 1.0, pan: 0.0 },
             });
+            // A lost planet: under the falling bells the slime rises
+            // (sound pass two).
+            if matches!(end, End::SquadWiped(_) | End::Overrun(_)) {
+                let (pan, _) = ear.place(g.core);
+                out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan: pan * 0.5, gain: 0.5, delay: 0.2 });
+            }
         }
         self.ended = g.end.is_some();
         self.body(g, ear, dt, killed, &mut out);
         self.news(g, ear, &mut out);
+        self.events(g, ear, &mut out);
         self.ticks = ticks;
         out
     }
 }
 
+/// The mould's voice at its fullest (a big mould). 0.18 until 2026-11-20,
+/// when with the pulse it was most of the mix's energy, a 48 Hz drone
+/// under everything.
+const VOICE_LEVEL: f32 = 0.12;
 /// The voice's breaths a second at rest (one every 4 s), and its sub
 /// tone's pitch, Hz.
 const BREATH: f32 = 0.25;
@@ -591,7 +703,7 @@ impl WorldListener {
         let eating = (self.eat_rate / FULL_EAT).clamp(0.0, 1.0);
         (self.stats.hunger, self.stats.growth, self.stats.eating) = (hunger, self.natural, self.eat_rate);
         let alive = g.mould > 0 && g.end.is_none();
-        let level = if self.voice && alive { 0.18 * ((1.0 + mould / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) } else { 0.0 };
+        let level = if self.voice && alive { VOICE_LEVEL * ((1.0 + mould / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) } else { 0.0 };
         let pitch = PITCH * (1.0 + 0.12 * growth - 0.22 * hunger + 0.08 * self.flinch);
         let breath = BREATH * (1.0 - 0.4 * hunger + 1.4 * self.flinch);
         let rough = (0.15 + 0.7 * hunger + 0.3 * self.flinch).min(1.0);
@@ -602,6 +714,17 @@ impl WorldListener {
 
 /// A turret's shot against one the player ordered.
 const TURRET: f32 = 0.5;
+/// A gunshot's level on screen (`SoundCmd::Gun`). The old crack was 0.4
+/// of a thinner sound.
+const GUN_LEVEL: f32 = 0.38;
+/// Whether a payload makes a sound of its own: every payload but the
+/// plain bullet's, which the gun and the hit already voice.
+fn payload_heard(c: Card) -> bool {
+    !matches!(c, Card::Plain | Card::Ammo(_))
+}
+
+/// The gun cards' payloads voiced a drawn frame (`events`).
+const PAYLOADS_VOICED: usize = 4;
 /// Bullets heard whizzing past a drawn frame.
 const ZIPS_VOICED: usize = 4;
 /// A piece's least walkers, as a share of the mould at the start: 100 of
@@ -655,6 +778,136 @@ impl WorldListener {
         }
     }
 
+    /// The rounds' pops (`Rounds::pops`, the gun cards' payloads going
+    /// off), called with the whole list each frame like `bangs`: the ones
+    /// past the last call are heard at the next `hear`. A shorter list is a
+    /// new round's.
+    pub fn pops(&mut self, pops: &[Pop]) {
+        if pops.len() < self.pops_seen {
+            self.pops_seen = 0;
+        }
+        self.pops_new.extend(pops[self.pops_seen..].iter().copied().filter(|p| payload_heard(p.payload)));
+        self.pops_seen = pops.len();
+    }
+
+    /// **Sound pass two** (2026-11-20): what made no sound before. A gun
+    /// card's payload going off, in its own voice and no bigger than what
+    /// it did (a blast's and a bomb's weight is the walkers they killed);
+    /// a raid or a surge starting, the slime gathering itself; a mini-boss
+    /// forming, and breaking; a building set down, and lost.
+    fn events<W: World>(&mut self, g: &Game<W>, ear: Ear, out: &mut Vec<SoundCmd>) {
+        let sc = g.world.scale().max(1.0);
+        // Payloads: the heaviest few a frame; the rest are in the kill
+        // pops already.
+        let mut pops = std::mem::take(&mut self.pops_new);
+        pops.sort_by_key(|p| std::cmp::Reverse(p.killed));
+        for (j, p) in pops.iter().take(PAYLOADS_VOICED).enumerate() {
+            let at = (p.burst.at.0 * sc, p.burst.at.1 * sc);
+            let (pan, gain) = ear.place(at);
+            let far = ear.far(at);
+            let delay = 0.02 * j as f32;
+            let w = kill_weight(p.killed as u32, self.full);
+            // A bigger disc is a bigger sound, up to the kit blast's.
+            let size = (p.burst.r / 6.0).clamp(0.4, 1.0);
+            let g1 = gain * size;
+            match p.payload {
+                Card::Blast | Card::Bomb => {
+                    let bomb = p.payload == Card::Bomb;
+                    out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: (0.35 + 0.35 * w) * g1 * if bomb { 1.2 } else { 1.0 }, delay });
+                    out.push(SoundCmd::Impact { weight: w.max(0.3), pan, gain: (0.25 + 0.3 * w) * g1, delay: delay + 0.015, far });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: if bomb { 140.0 } else { 90.0 }, secs: if bomb { 0.35 } else { 0.2 }, pan, spread: 0.3, gain: 0.22 * g1 });
+                }
+                Card::Gas => out.push(SoundCmd::Grain { kind: GrainKind::Hiss, pan, gain: 0.45 * g1, delay }),
+                Card::Germ | Card::Detonate => {
+                    out.push(SoundCmd::Burst { kind: GrainKind::Pop, rate: 45.0, secs: 0.35, pan, spread: 0.2, gain: 0.4 * g1 });
+                    if p.killed > 0 {
+                        out.push(SoundCmd::Impact { weight: w, pan, gain: (0.2 + 0.3 * w) * g1, delay, far });
+                    }
+                }
+                Card::Flare | Card::Torch => {
+                    out.push(SoundCmd::Grain { kind: GrainKind::Whoosh, pan, gain: 0.45 * g1, delay });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Sizzle, rate: 70.0, secs: 0.5, pan, spread: 0.2, gain: 0.35 * g1 });
+                }
+                Card::Shatter => {
+                    out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.3 * g1, delay });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Crackle, rate: 25.0 + 2.0 * p.killed.min(60) as f32, secs: 0.25, pan, spread: 0.2, gain: 0.25 * g1 });
+                }
+                // The mind rounds kill nothing: a soft shimmer, rising drips.
+                _ => out.push(SoundCmd::Burst { kind: GrainKind::Drip, rate: 30.0, secs: 0.25, pan, spread: 0.3, gain: 0.25 * g1 }),
+            }
+            self.stats.payloads += 1;
+        }
+        let alive = g.end.is_none();
+        // A raid starting: a groan where it is headed; the last stand
+        // groans twice, louder, with a snarl.
+        for r in g.raids.sent.iter().skip(self.raids_seen) {
+            if !alive {
+                break;
+            }
+            let (pan, gain) = ear.place(r.to);
+            let gain = gain.max(ALERT_FLOOR);
+            out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan, gain: if r.last_stand { 0.55 } else { 0.4 } * gain, delay: 0.0 });
+            if r.last_stand {
+                out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.45 * gain, delay: 0.9 });
+            }
+            self.stats.raids += 1;
+        }
+        self.raids_seen = g.raids.sent.len();
+        // A surge: the whole body gathers, at its home.
+        if g.surges > self.surges_seen && alive {
+            let (pan, _) = ear.place(g.core);
+            out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan: pan * 0.5, gain: 0.45, delay: 0.0 });
+            self.stats.surges += g.surges - self.surges_seen;
+        }
+        self.surges_seen = g.surges;
+        // Mini-bosses: a deep growl as one forms; a tear and a wither as
+        // the squad breaks it; a fizzle as one comes to nothing.
+        for b in g.bosses.live.iter().filter(|b| b.born > self.boss_born) {
+            let (pan, gain) = ear.place(b.at);
+            out.push(SoundCmd::Grain { kind: GrainKind::Swell, pan, gain: 0.45 * gain.max(ALERT_FLOOR), delay: 0.0 });
+            out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.4 * gain.max(ALERT_FLOOR), delay: 0.6 });
+            self.stats.bosses += 1;
+        }
+        self.boss_born = g.bosses.live.iter().map(|b| b.born).max().unwrap_or(0).max(self.boss_born);
+        for (b, end, _) in g.bosses.ended.iter().skip(self.boss_ended) {
+            let (pan, gain) = ear.place(b.centre);
+            match end {
+                BossEnd::Broken => {
+                    out.push(SoundCmd::Grain { kind: GrainKind::Tear, pan, gain: 0.5 * gain.max(0.5), delay: 0.0 });
+                    out.push(SoundCmd::Burst { kind: GrainKind::Wilt, rate: 70.0, secs: 0.5, pan, spread: 0.2, gain: 0.25 * gain.max(0.5) });
+                    self.stats.broken += 1;
+                }
+                BossEnd::Fizzled | BossEnd::Spent => out.push(SoundCmd::Burst { kind: GrainKind::Wilt, rate: 40.0, secs: 0.4, pan, spread: 0.2, gain: 0.15 * gain }),
+            }
+        }
+        self.boss_ended = g.bosses.ended.len();
+        // Buildings: set down (a clank and a thunk), and lost (a crunch).
+        for (i, b) in g.buildings.iter().enumerate() {
+            let (pan, gain) = ear.place(b.at);
+            match self.buildings.get(i).copied() {
+                None => {
+                    if b.alive {
+                        out.push(SoundCmd::Grain { kind: GrainKind::Clank, pan, gain: 0.35 * gain, delay: 0.0 });
+                        out.push(SoundCmd::Grain { kind: GrainKind::Thunk, pan, gain: 0.3 * gain, delay: 0.03 });
+                        self.stats.built += 1;
+                    }
+                    self.buildings.push(b.alive);
+                }
+                Some(was) => {
+                    if was && !b.alive {
+                        let gain = gain.max(ALERT_FLOOR);
+                        out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.45 * gain, delay: 0.0 });
+                        out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 110.0, secs: 0.3, pan, spread: 0.3, gain: 0.25 * gain });
+                        out.push(SoundCmd::Grain { kind: GrainKind::Clank, pan, gain: 0.2 * gain, delay: 0.05 });
+                        self.stats.lost += 1;
+                    }
+                    self.buildings[i] = b.alive;
+                }
+            }
+        }
+        self.buildings.truncate(g.buildings.len());
+    }
+
     /// **What the cloud plan's C7 added** (2026-11-14): sirens, the kit's
     /// blasts and the mould's cut-off pieces (`pieces`), each from a count
     /// the game already has.
@@ -674,7 +927,7 @@ impl WorldListener {
             let gain = gain.max(0.5);
             let w = kill_weight(b.killed as u32, self.full);
             out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.8 * gain, delay: 0.0 });
-            out.push(SoundCmd::Impact { weight: w.max(0.5), pan, gain: (0.4 + 0.3 * w) * gain, delay: 0.02 });
+            out.push(SoundCmd::Impact { weight: w.max(0.5), pan, gain: (0.4 + 0.3 * w) * gain, delay: 0.02, far: ear.far(b.at) });
             out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 120.0, secs: 0.25, pan, spread: 0.3, gain: 0.3 * gain });
             self.stats.blasts += 1;
         }
@@ -766,7 +1019,7 @@ impl WorldListener {
             // as it withers, quick and rising as it charges.
             let charge = (approach / CHARGE_AT).clamp(0.0, 1.0);
             let wither = (-p.change / 0.05).clamp(0.0, 1.0);
-            let level = 0.6 * 0.18 * ((1.0 + p.walkers as f32 / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) * (1.0 + 0.6 * charge);
+            let level = 0.6 * VOICE_LEVEL * ((1.0 + p.walkers as f32 / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) * (1.0 + 0.6 * charge);
             let pitch = PITCH * (1.5 + 0.12 * p.slot as f32) * (1.0 - 0.15 * wither + 0.5 * charge);
             let breath = BREATH * 2.0 * (1.0 - 0.3 * wither + 3.0 * charge);
             let rough = (0.25 + 0.65 * wither + 0.3 * charge).min(1.0);
@@ -954,7 +1207,7 @@ mod tests {
         l.shots(&[Shot { hit: None, killed: 0, ..shot(0) }]);
         let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
         assert!(impact(cmds.clone()).is_none());
-        assert!(cmds.iter().any(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Crack, .. })));
+        assert!(cmds.iter().any(|c| matches!(c, SoundCmd::Gun { .. })));
     }
 
     #[test]
@@ -962,14 +1215,79 @@ mod tests {
         let g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shots: Vec<Shot> = (0..20).map(|k| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed: k, by: None, turret: None, fired: true, cast: 0, r: 2.0 }).collect();
+        // Twenty guns, each at its own spot.
+        let shots: Vec<Shot> = (0..20).map(|k| Shot { from: (10.0 + 2.0 * k as f32, 10.0), to: (60.0, 10.0), hit: Some((58.0, 10.0)), killed: k, by: None, turret: None, fired: true, cast: 0, r: 2.0 }).collect();
         l.shots(&shots);
         let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
-        let cracks = cmds.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Crack, .. })).count();
-        assert_eq!(cracks, SHOTS_VOICED);
+        let guns = cmds.iter().filter(|c| matches!(c, SoundCmd::Gun { .. })).count();
+        assert_eq!(guns, SHOTS_VOICED);
+        let impacts = cmds.iter().filter(|c| matches!(c, SoundCmd::Impact { .. })).count();
+        assert_eq!(impacts, SHOTS_VOICED);
         let least = cmds.iter().filter_map(|c| if let SoundCmd::Impact { weight, .. } = c { Some(*weight) } else { None }).fold(1.0f32, f32::min);
         assert!(least >= kill_weight_ref(20 - SHOTS_VOICED as u32), "a light shot was voiced over a heavy one: {least}");
         assert_eq!(l.stats.kills, (0..20).sum::<u64>(), "every kill counts in the crackle");
+    }
+
+    /// A scattergun's pellets leave one gun at once: one report, however
+    /// many bullets (2026-11-20; each was its own crack before). Two
+    /// soldiers firing at once are two.
+    #[test]
+    fn one_trigger_pull_is_one_report() {
+        let g = small(1);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let pellet = |by: usize, dy: f32| Shot { from: (10.0 + 5.0 * by as f32, 10.0), to: (40.0, 10.0 + dy), hit: None, killed: 0, by: Some(by), turret: None, fired: true, cast: 0, r: 2.0 };
+        let guns = |c: &[SoundCmd]| c.iter().filter(|c| matches!(c, SoundCmd::Gun { .. })).count();
+        l.shots(&[pellet(0, -2.0), pellet(0, -1.0), pellet(0, 1.0), pellet(0, 2.0)]);
+        assert_eq!(guns(&l.hear(&g, ear, 1.0 / 60.0, false)), 1);
+        l.shots(&[pellet(0, 0.0), pellet(1, 0.0)]);
+        assert_eq!(guns(&l.hear(&g, ear, 1.0 / 60.0, false)), 2);
+        assert_eq!(l.stats.voiced, 3);
+    }
+
+    /// Each gun is heard in its own voice: the squad's gun's kind, and a
+    /// turret's ring.
+    #[test]
+    fn a_gun_is_heard_in_its_own_voice() {
+        let mut g = small(1);
+        let shot = |by: Option<usize>, turret: Option<usize>| Shot { from: (10.0, 10.0), to: (40.0, 10.0), hit: None, killed: 0, by, turret, fired: true, cast: 0, r: 2.0 };
+        assert_eq!(gun_voice(&g, &shot(Some(0), None)), GunVoice::Rifle, "the standard gun is a rifle");
+        let q = g.soldiers[0].squad as usize;
+        assert!(g.arm(q, Some(GunKind::Long.average())));
+        assert_eq!(gun_voice(&g, &shot(Some(0), None)), GunVoice::Long);
+        assert_eq!(gun_voice(&g, &shot(None, Some(0))), GunVoice::Turret);
+        assert_eq!(gun_voice(&g, &shot(None, None)), GunVoice::Turret);
+    }
+
+    /// Sound pass two: a gun card's payload is heard once, in its own
+    /// voice; a plain bullet's is not (the gun and the hit voice it); a
+    /// raid and a surge starting groan once each.
+    #[test]
+    fn payloads_raids_and_surges_are_heard_once() {
+        use crate::mould::larder_world::{Raid, RaidAim};
+        use crate::mould::rounds::Burst;
+        let mut g = small(1);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let pop = |payload: Card| Pop { burst: Burst { at: (20.0, 20.0), r: 4.0, kill: true, ..Burst::default() }, throw: None, payload, tick: 3, killed: 12, flung: 0 };
+        let has = |c: &[SoundCmd], k: GrainKind| c.iter().any(|c| matches!(c, SoundCmd::Grain { kind, .. } | SoundCmd::Burst { kind, .. } if *kind == k));
+        let mut pops = vec![pop(Card::Gas)];
+        l.pops(&pops);
+        assert!(has(&l.hear(&g, ear, 1.0 / 60.0, false), GrainKind::Hiss));
+        l.pops(&pops);
+        assert!(!has(&l.hear(&g, ear, 1.0 / 60.0, false), GrainKind::Hiss), "the same pop again is not new");
+        pops.push(pop(Card::Blast));
+        pops.push(pop(Card::Plain));
+        l.pops(&pops);
+        let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
+        assert!(has(&cmds, GrainKind::Thud) && has(&cmds, GrainKind::Grit));
+        assert_eq!(l.stats.payloads, 2, "the plain bullet's pop is the gun's and the hit's");
+        g.raids.sent.push(Raid { tick: 5, aim: RaidAim::Building(0), to: (30.0, 30.0), reach: 10.0, size: 0.1, held: 100, share: 0.5, last_stand: false });
+        g.surges += 1;
+        let swells = |c: &[SoundCmd]| c.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Swell, .. })).count();
+        assert_eq!(swells(&l.hear(&g, ear, 1.0 / 60.0, false)), 2);
+        assert_eq!(swells(&l.hear(&g, ear, 1.0 / 60.0, false)), 0);
+        assert_eq!((l.stats.raids, l.stats.surges), (1, 1));
     }
 
     #[test]

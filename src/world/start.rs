@@ -723,9 +723,10 @@ impl StartMenu {
             }
             // On the keyboard, Enter on an option's row turns it on.
             Hit::Reset(i) => self.options[i].turn(1),
-            // Every rule back, the UI size kept (a display choice, not a rule).
+            // Every rule back, the UI size and the volume kept (the
+            // player's choices, not rules).
             Hit::ResetAll => {
-                for o in self.options.iter_mut().filter(|o| o.key != "ui") {
+                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume")) {
                     o.at = o.default;
                 }
             }
@@ -1133,9 +1134,9 @@ impl StartMenu {
     /// is. Until then every row carried its line under its name, 66 units
     /// a row, and at 200% the list ran under the hint and scrolled.
     fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
-        // The rules changed, by their labels; the UI size is not a rule
-        // ("Free play, with ui 200%", the review 11-15).
-        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && o.key != "ui").map(|o| format!("{} {}", o.label, o.value())).collect();
+        // The rules changed, by their labels; the UI size and the volume
+        // are not rules ("Free play, with ui 200%", the review 11-15).
+        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume")).map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
@@ -2363,11 +2364,14 @@ mod tests {
     fn all_to_defaults_keeps_the_ui_size() {
         let mut m = menu();
         m.options.push(Opt::new("ui", "UI and text size", &["100%", "150%", "200%"], "100%", "200%", ""));
+        // The volume too (sound pass two, 2026-11-20).
+        m.options.push(Opt::new("volume", "Volume", &["50%", "100%"], "100%", "50%", ""));
         let mut c = Canvas::new((1280, 800));
         m.show(Page::Options);
         click(&mut m, &mut c, Hit::Turn(1, 1));
         click(&mut m, &mut c, Hit::ResetAll);
         assert_eq!(m.changed("ui"), Some("200%"));
+        assert_eq!(m.changed("volume"), Some("50%"));
         assert_eq!(m.changed("panic"), None);
     }
 

@@ -2,61 +2,70 @@
 title: Sound
 kind: look
 status: current
-updated: 2026-11-14
+updated: 2026-11-20
 sources:
   - Reports/larder-sound-2026-11-12.md
   - Reports/mould-sound-2026-11-10.md
+  - Reports/sound-pass-2026-11-20.md
 code:
+  - BANK_GAP
   - DEFAULT_MASTER
+  - Ear::far
+  - FAR_LP_HZ
   - FULL_KILL
+  - GunVoice
   - LOUDNESS_LAW
   - Listener::hear
   - PIECE_MIN
   - PIECE_SHARE
+  - PULSE_FLOOR
   - Pieces
   - SETTLE
   - SHOTS_VOICED
   - TEXTURE_RATE_CAP
+  - TOUCH_FULL
+  - VERB_HP_HZ
+  - VOICE_LEVEL
   - VoiceBank
   - WorldListener
   - WorldListener::bangs
+  - WorldListener::pops
   - density
   - full_kill
+  - gun_layers
+  - gun_sound
+  - gun_voice
   - kill_weight
+  - master_at
 ---
 
 # Sound
 
 ## Now
 
-The game is heard as well as seen, on by default where the build has a
-device (macOS, Windows; Linux with `--features audio-alsa`); S turns it off
-and on. Every sound is a count read off the dish: growth is walkers born per
-second, feeding is walkers on food, starving is deaths per second, and each
-tool, join, pile arrival, storm and ending sounds when its tally moves
-(table in the [report](../../Reports/mould-sound-2026-11-10.md), *What was
-built*). The listener only reads the dish, so sound on and off play the same
-game bit for bit. Levels are first guesses; the owner has not listened yet.
+On by default where the build has a device (macOS, Windows; Linux with
+`--features audio-alsa`). Every sound is a count read off the game, and the
+listener only reads, so sound on and off play the same game bit for bit.
+The dish's sounds are in the [dish report](../../Reports/mould-sound-2026-11-10.md).
 
-**Larder World** has its own listener, `WorldListener`, on the same voice
-bank (2026-11-12, after the owner's playtest found shooting unsatisfying).
-A shot is a crack at the soldier and an impact at the hit whose weight is
-the walkers it killed (`kill_weight`, full at `FULL_KILL` = 80 at 5,000 walkers, the
-rush's 90th centile, scaled by density to the 0.3 power, `full_kill`), so a shot into a vein is a heavy low slap and a graze a tap;
-kills crackle, a pulse quickens as the mould nears the squad, hurt soldiers
-groan, and the economy answers (table and measurements in the
-[report](../../Reports/larder-sound-2026-11-12.md)). Placed by the camera's
-view, quieter off screen. The mould has a
-voice of its own (`SoundCmd::Body`): one breathing drone for the whole
-body, from its size, its natural change (hunger and growth), its eating and
-gunfire. O toggles all sound in `larder-world`, K the voice; 2-3.5 us a
-frame, no new GPU read-back.
-
-Since 2026-11-14 (cloud plan C7): bullets zip past, sirens wail, kit
-blasts thud, and the mould's cut-off pieces (`sound::pieces`, `Pieces`)
-tear, wither, rejoin and snarl as they charge, each with its own fainter
-voice; 21-23 us a frame (C7 section of the report).
-
+**Larder World** (`WorldListener`; Options' Volume, saved, via `master_at`;
+O mutes, K the mould's voice) places
+each sound by the camera's view (`Ear`), quieter and duller off screen
+(`Ear::far`). Each gun has its own shot (`GunVoice`, `gun_sound`: crack,
+punch, report, a bolt or pump), one a trigger pull, turrets under the
+squad. A hit weighs the walkers it killed (`kill_weight`, `full_kill`);
+kills pop; a pulse starts when mould is close or on a soldier
+(`PULSE_FLOOR`, `TOUCH_FULL`); the mould has one breathing drone
+(`VOICE_LEVEL`), and its cut-off pieces tear, wither and snarl
+(`Pieces`). The economy, sirens, kit blasts and bullets in flight answer
+too. Reverb is per sound and high-passed (`VERB_HP_HZ`). Tables:
+[2026-11-12](../../Reports/larder-sound-2026-11-12.md),
+[sound pass one](../../Reports/sound-pass-2026-11-20.md) (2026-11-20: the
+gun 36-61% of the mix, was 4-9%; under 100 Hz 10-13%, was 34-41%). The
+voice bank prints a mix meter under every recording (`SynthStats::mix`).
+Since pass two the gun cards' payloads, raids, surges, mini-bosses,
+buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
+`App::click_sound`).
 
 ## Owner's word
 
@@ -64,6 +73,8 @@ voice; 21-23 us a frame (C7 section of the report).
 - 2026-11-12 04:13Z, Larder World playtest: "shooting the slime didn't feel
   satisfying. I know it was killing lots of individual walkers but visually
   it didn't impact much"; sound and hit feel approved 04:25Z.
+- 2026-11-20 05:40Z: "I want a high effort opus that to improve the sound
+  design of the game, which is really bad right now".
 
 ## Tried and rejected
 
@@ -92,5 +103,6 @@ voice; 21-23 us a frame (C7 section of the report).
 
 ## Sources
 
+- [sound-pass-2026-11-20.md](../../Reports/sound-pass-2026-11-20.md); page source in `Reports/sound-pass-2026-11-20/page/`.
 - [mould-sound-2026-11-10.md](../../Reports/mould-sound-2026-11-10.md); page source in `Reports/mould-sound-2026-11-10/`.
 - [larder-sound-2026-11-12.md](../../Reports/larder-sound-2026-11-12.md); page source in `Reports/larder-sound-2026-11-12/`.

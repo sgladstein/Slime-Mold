@@ -364,9 +364,9 @@ impl Card {
             Card::Rate => "Fires twice as often.",
             Card::Thrift => "The next card costs less budget.",
             Card::Smother => "Bullets wipe the scent slime follows to food.",
-            Card::Trigger => "Carries the next bullet and lets it out where it hits.",
-            Card::Expire => "Carries the next bullet and lets it out where it stops.",
-            Card::Multicast => "Fires the next bullet with it, in the same shot.",
+            Card::Trigger => "Carries the next bullet and lets it out where it hits. Needs a bullet after it.",
+            Card::Expire => "Carries the next bullet and lets it out where it stops. Needs a bullet after it.",
+            Card::Multicast => "Fires the next bullet with it, in the same shot. Needs a bullet after it.",
             Card::Seek => "Bullets that just miss strike slime beside them.",
             Card::Blind => "Blinds slime where it hits: it walks straight on.",
             Card::Sour => "Slime where it hits turns from its own trail.",
@@ -935,6 +935,20 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
                 (wide, scatter, quiet, trigger, carry) = (0, false, false, None, None);
                 (heave, herd, multi) = (0, None, 0);
             }
+        }
+    }
+    // Modifiers and a Delay or Thick with no payload after them work on
+    // the gun's plain bullet (balance review, 2026-11-20): a cast of
+    // `Card::Plain` takes them, so a lone Wide or Scatter bought in the
+    // first shop changes the rifle's shots (exit test 5) instead of doing
+    // nothing. Carriers and Multicast still need a cast after them: a
+    // plain one would carry nothing.
+    if wide > 0 || scatter || quiet || trigger.is_some() || heave > 0 || herd.is_some() {
+        let ammo = Card::Plain.ammo().unwrap_or_default();
+        out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: false, heave, herd, with: None });
+        multis.push(multi);
+        if carry.is_some() {
+            out.last_mut().unwrap().child = Some(u8::MAX);
         }
     }
     // Each carrier takes the cast after it, and each multicast the next
@@ -2404,8 +2418,13 @@ mod tests {
         assert_eq!(c.len(), 2);
         assert_eq!((c[0].payload, c[0].wide, c[0].trigger), (Card::Blast, 1, None));
         assert_eq!((c[1].payload, c[1].wide, c[1].trigger), (Card::Gas, 0, Some(Card::Thick)));
-        // Cards after the last payload do nothing.
-        assert_eq!(casts(&parse("blast+quiet").unwrap()), casts(&parse("blast").unwrap()));
+        // Modifiers after the last payload work on a plain bullet
+        // (2026-11-20); a carrier there carries nothing.
+        let c = casts(&parse("blast+quiet").unwrap());
+        assert_eq!((c.len(), c[1].payload, c[1].quiet), (2, Card::Plain, true));
+        assert_eq!(casts(&parse("blast+trigger").unwrap()), casts(&parse("blast").unwrap()));
+        let c = casts(&parse("wide").unwrap());
+        assert_eq!((c.len(), c[0].payload, c[0].wide), (1, Card::Plain, 1), "a lone Wide widens the plain bullet");
         // A round reads up to `MAX_SLOTS` (a rolled gun's most, 6); the
         // rifle's 4 is `fit`'s to check.
         assert!(parse("blast+blast+blast+blast+blast+blast+blast").is_none());

@@ -1,0 +1,328 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 11 s alone in 21.9 s
+STRAT t 0 build mould 59420 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+STRAT t 10 build mould 59683 soldiers 4 hp 1.00 bank 131 killed 9 turret 0 pumps 4 buildings 4
+STRAT t 20 build mould 60028 soldiers 4 hp 1.00 bank 241 killed 131 turret 0 pumps 4 buildings 4
+STRAT t 30 out mould 60692 soldiers 4 hp 1.00 bank 64 killed 189 turret 0 pumps 5 buildings 5
+STRAT t 40 build mould 61572 soldiers 4 hp 1.00 bank 336 killed 201 turret 0 pumps 5 buildings 5
+  surge 1 starts at t 44.2 s (the slime has eaten 367 food)
+STRAT t 50 build mould 61634 soldiers 4 hp 0.65 bank 760 killed 1092 turret 0 pumps 6 buildings 6
+STRAT t 60 out mould 62429 soldiers 8 hp 0.81 bank 392 killed 1249 turret 0 pumps 5 buildings 5
+STRAT t 70 out mould 62439 soldiers 17 hp 0.91 bank 131 killed 2158 turret 0 pumps 4 buildings 4
+  boss t 76.0 s: Crowd mortar formed on lump 0 at 315,287 (crowd top 1.00); grade 0.18: 6 blows a member, touches as 3, pace x1.07
+  boss t 76 s: lump 0 mortar Gather, 0 members (first 0, 0 hurt), at 315,287, spread 1.02, stolen 0.0; nearest soldier 229.8, 19 alive
+  boss t 77 s: lump 0 mortar Gather, 277 members (first 277, 0 hurt), at 314,288, spread 0.69, stolen 0.0; nearest soldier 230.3, 20 alive
+  boss t 78 s: lump 0 mortar Gather, 277 members (first 277, 0 hurt), at 314,288, spread 0.84, stolen 0.0; nearest soldier 230.5, 21 alive
+  boss t 79 s: lump 0 mortar Gather, 277 members (first 277, 0 hurt), at 316,288, spread 0.85, stolen 0.0; nearest soldier 231.5, 21 alive
+  boss t 80 s: lump 0 mortar Gather, 277 members (first 277, 0 hurt), at 316,288, spread 0.81, stolen 0.0; nearest soldier 228.7, 22 alive
+STRAT t 80 out mould 52615 soldiers 22 hp 0.92 bank 286 killed 2423 turret 0 pumps 4 buildings 4
+  boss t 81 s: lump 0 mortar Gather, 277 members (first 277, 0 hurt), at 314,288, spread 0.77, stolen 0.0; nearest soldier 230.2, 22 alive
+  boss t 82 s: lump 0 mortar Sit((314.5, 288.5), 0), 277 members (first 277, 0 hurt), at 314,288, spread 0.76, stolen 0.0; nearest soldier 226.2, 23 alive
+  surge 2 starts at t 82.1 s (the slime has eaten 733 food)
+  boss t 83 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 231.9, 23 alive
+  boss t 84 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.56, stolen 0.0; nearest soldier 232.4, 24 alive
+  boss t 85 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 233.1, 24 alive
+  boss t 86 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 233.0, 25 alive
+  boss t 87 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 233.5, 26 alive
+  boss t 88 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 224.5, 26 alive
+  boss t 89 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 233.5, 27 alive
+  boss t 90 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.61, stolen 0.0; nearest soldier 233.5, 27 alive
+STRAT t 90 out mould 48194 soldiers 28 hp 0.94 bank 235 killed 2732 turret 0 pumps 4 buildings 4
+  boss t 91 s: lump 0 mortar Sit((315.5, 288.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 235.0, 28 alive
+  boss t 92 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 233.5, 29 alive
+  boss t 93 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 234.4, 29 alive
+  boss t 94 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 235.0, 30 alive
+  boss t 95 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 235.2, 30 alive
+  boss t 96 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 236.1, 31 alive
+  boss t 97 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 236.9, 32 alive
+  boss t 98 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 237.4, 32 alive
+  boss t 99 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 236.2, 33 alive
+  boss t 100 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 237.0, 33 alive
+STRAT t 100 out mould 47632 soldiers 34 hp 0.95 bank 118 killed 2958 turret 0 pumps 2 buildings 2
+  boss t 101 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 237.7, 34 alive
+  boss t 102 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 228.2, 34 alive
+  boss t 103 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 242.3, 34 alive
+  boss t 104 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 262.0, 35 alive
+  boss t 105 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 281.8, 35 alive
+  boss t 106 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 297.7, 35 alive
+  boss t 107 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 315.0, 35 alive
+  boss t 108 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 318.7, 35 alive
+  boss t 109 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 318.7, 36 alive
+  boss t 110 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 321.3, 37 alive
+STRAT t 110 out mould 46044 soldiers 37 hp 0.93 bank 324 killed 5278 turret 0 pumps 2 buildings 2
+  boss t 111 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.56, stolen 0.0; nearest soldier 333.2, 37 alive
+  boss t 112 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.56, stolen 0.0; nearest soldier 319.4, 38 alive
+  boss t 113 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 333.2, 39 alive
+  boss t 114 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 335.7, 39 alive
+  boss t 115 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 336.2, 40 alive
+  boss t 116 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 336.6, 40 alive
+  boss t 117 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 337.0, 41 alive
+  surge 3 starts at t 117.2 s (the slime has eaten 1100 food)
+  boss t 118 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 337.4, 42 alive
+  boss t 119 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 337.8, 42 alive
+  boss t 120 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 326.5, 43 alive
+STRAT t 120 out mould 46407 soldiers 44 hp 0.94 bank 25 killed 5458 turret 0 pumps 1 buildings 1
+  boss t 121 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 336.3, 44 alive
+  boss t 122 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 339.1, 44 alive
+  boss t 123 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 339.1, 45 alive
+  boss t 124 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 339.5, 46 alive
+  boss t 125 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 339.8, 46 alive
+  boss t 126 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 340.4, 47 alive
+  boss t 127 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 326.7, 48 alive
+  boss t 128 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 339.7, 49 alive
+  boss t 129 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 342.1, 49 alive
+  boss t 130 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 331.5, 50 alive
+STRAT t 130 out mould 46693 soldiers 51 hp 0.95 bank 133 killed 5607 turret 0 pumps 1 buildings 1
+  boss t 131 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.56, stolen 0.0; nearest soldier 323.8, 51 alive
+  boss t 132 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 333.2, 52 alive
+  boss t 133 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 344.4, 52 alive
+  boss t 134 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 333.8, 53 alive
+  boss t 135 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 344.9, 54 alive
+  boss t 136 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 330.8, 55 alive
+  boss t 137 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 344.3, 55 alive
+  boss t 138 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 338.0, 56 alive
+  boss t 139 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 332.0, 57 alive
+  boss t 140 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 346.5, 58 alive
+STRAT t 140 out mould 47008 soldiers 58 hp 0.95 bank 329 killed 5807 turret 0 pumps 1 buildings 1
+  boss t 141 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 329.9, 58 alive
+  boss t 142 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 319.9, 59 alive
+  boss t 143 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 317.5, 59 alive
+  boss t 144 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 335.3, 59 alive
+  boss t 145 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 335.4, 60 alive
+  boss t 146 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 333.8, 60 alive
+  boss t 147 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 330.3, 60 alive
+  boss t 148 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 325.0, 60 alive
+  surge 4 starts at t 148.9 s (the slime has eaten 1466 food)
+  boss t 149 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 310.2, 61 alive
+  boss t 150 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 296.0, 61 alive
+STRAT t 150 out mould 47790 soldiers 61 hp 0.95 bank 48 killed 5992 turret 0 pumps 1 buildings 1
+  boss t 151 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 282.5, 61 alive
+  boss t 152 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 269.6, 61 alive
+  boss t 153 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 257.5, 61 alive
+  boss t 154 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 246.4, 61 alive
+  boss t 155 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 236.2, 61 alive
+  boss t 156 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 226.9, 61 alive
+  boss t 157 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 219.1, 61 alive
+  boss t 158 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.56, stolen 0.0; nearest soldier 213.4, 61 alive
+  boss t 159 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 209.3, 61 alive
+  boss t 160 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 207.1, 61 alive
+STRAT t 160 out mould 48308 soldiers 61 hp 0.95 bank 224 killed 6832 turret 0 pumps 1 buildings 1
+  boss t 161 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 205.1, 61 alive
+  boss t 162 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.62, stolen 0.0; nearest soldier 200.7, 61 alive
+  boss t 163 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 197.7, 61 alive
+  boss t 164 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 196.0, 61 alive
+  boss t 165 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 196.0, 62 alive
+  boss t 166 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 196.3, 62 alive
+  boss t 167 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 197.7, 63 alive
+  boss t 168 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.57, stolen 0.0; nearest soldier 197.6, 63 alive
+  boss t 169 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.61, stolen 0.0; nearest soldier 197.5, 64 alive
+  boss t 170 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.60, stolen 0.0; nearest soldier 198.1, 65 alive
+STRAT t 170 out mould 46370 soldiers 65 hp 0.93 bank 251 killed 10292 turret 0 pumps 1 buildings 1
+  boss t 171 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.58, stolen 0.0; nearest soldier 185.3, 65 alive
+  boss t 172 s: lump 0 mortar Sit((315.5, 287.5), 0), 277 members (first 277, 0 hurt), at 316,288, spread 0.59, stolen 0.0; nearest soldier 199.0, 66 alive
+  boss t 173 s: lump 0 mortar ended Spent (277 members of 277; stole 0.0, 0.0 given back so far)
+  boss t 176.0 s: Crowd wanderer formed on lump 0 at 359,341 (crowd top 1.22); grade 0.38: 8 blows a member, touches as 3, pace x1.15
+  boss t 176 s: lump 0 wanderer Gather, 0 members (first 0, 0 hurt), at 359,341, spread 1.00, stolen 0.0; nearest soldier 258.3, 67 alive
+  boss t 177 s: lump 0 wanderer Gather, 377 members (first 377, 0 hurt), at 360,338, spread 0.71, stolen 0.0; nearest soldier 279.5, 67 alive
+  boss t 178 s: lump 0 wanderer Gather, 377 members (first 377, 0 hurt), at 360,336, spread 0.76, stolen 0.0; nearest soldier 293.7, 67 alive
+  boss t 179 s: lump 0 wanderer Gather, 377 members (first 377, 0 hurt), at 362,334, spread 0.74, stolen 0.0; nearest soldier 301.9, 67 alive
+  boss t 180 s: lump 0 wanderer Gather, 377 members (first 377, 0 hurt), at 362,332, spread 0.77, stolen 0.0; nearest soldier 294.8, 68 alive
+STRAT t 180 out mould 46383 soldiers 68 hp 0.93 bank 153 killed 11128 turret 0 pumps 1 buildings 1
+  boss t 181 s: lump 0 wanderer Gather, 377 members (first 377, 0 hurt), at 364,330, spread 0.77, stolen 0.0; nearest soldier 284.6, 68 alive
+  boss t 182 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 364,328, spread 0.80, stolen 0.0; nearest soldier 271.1, 68 alive
+  boss t 183 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 364,320, spread 0.97, stolen 0.0; nearest soldier 258.6, 68 alive
+  boss t 184 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 366,312, spread 0.97, stolen 0.0; nearest soldier 247.2, 68 alive
+  surge 5 starts at t 184.7 s (the slime has eaten 1833 food)
+  boss t 185 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 368,304, spread 0.95, stolen 0.0; nearest soldier 235.2, 68 alive
+  boss t 186 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 368,298, spread 0.99, stolen 0.0; nearest soldier 222.8, 68 alive
+  boss t 187 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 368,292, spread 0.93, stolen 0.0; nearest soldier 212.1, 68 alive
+  boss t 188 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 368,286, spread 0.92, stolen 0.0; nearest soldier 203.8, 68 alive
+  boss t 189 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 368,280, spread 0.90, stolen 0.0; nearest soldier 195.0, 68 alive
+  boss t 190 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,276, spread 0.90, stolen 0.0; nearest soldier 190.4, 68 alive
+STRAT t 190 out mould 46613 soldiers 68 hp 0.92 bank 329 killed 11700 turret 0 pumps 1 buildings 1
+  boss t 191 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,272, spread 0.97, stolen 0.0; nearest soldier 184.2, 68 alive
+  boss t 192 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,268, spread 0.97, stolen 0.0; nearest soldier 180.3, 68 alive
+  boss t 193 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,264, spread 0.97, stolen 0.0; nearest soldier 179.6, 68 alive
+  boss t 194 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,262, spread 0.96, stolen 0.0; nearest soldier 178.5, 68 alive
+  boss t 195 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,258, spread 1.05, stolen 0.0; nearest soldier 179.3, 68 alive
+  boss t 196 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,254, spread 1.04, stolen 0.0; nearest soldier 179.3, 69 alive
+  boss t 197 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,248, spread 1.07, stolen 0.0; nearest soldier 179.9, 69 alive
+  boss t 198 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,244, spread 1.08, stolen 0.0; nearest soldier 177.7, 69 alive
+  boss t 199 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 372,238, spread 1.07, stolen 0.0; nearest soldier 178.1, 69 alive
+  boss t 200 s: lump 0 wanderer Go((255.5, 64.5)), 377 members (first 377, 0 hurt), at 370,234, spread 1.08, stolen 0.0; nearest soldier 172.7, 69 alive
+STRAT t 200 out mould 44277 soldiers 69 hp 0.86 bank 152 killed 15853 turret 0 pumps 1 buildings 1
+  boss t 201 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 370,230, spread 1.05, stolen 0.0; nearest soldier 159.3, 69 alive
+  boss t 202 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 368,226, spread 1.32, stolen 0.0; nearest soldier 159.0, 69 alive
+  boss t 203 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 368,220, spread 1.45, stolen 0.0; nearest soldier 160.7, 69 alive
+  boss t 204 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 368,212, spread 1.76, stolen 0.0; nearest soldier 154.7, 70 alive
+  boss t 205 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 366,202, spread 1.65, stolen 0.0; nearest soldier 140.1, 70 alive
+  boss t 206 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 366,188, spread 1.47, stolen 0.0; nearest soldier 121.5, 70 alive
+  boss t 207 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 364,172, spread 1.37, stolen 0.0; nearest soldier 107.1, 70 alive
+  boss t 208 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 362,156, spread 1.29, stolen 0.0; nearest soldier 86.3, 70 alive
+  fruit t 208 s: lump 1, 0 members (most 0), at 329,283, ripe 0.00; nearest soldier 208.9
+  raid 1 at t 209.0 s: Building(4) at 56,97, reach 165 cells holding 6934 walkers, share 0.60, size 10% of the slime
+  boss t 209 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 360,140, spread 1.27, stolen 0.0; nearest soldier 70.2, 70 alive
+  march t 209 s: lump 3, 0 members (first 0), at 342,91, spread 1.89, 143 cells to go
+  fruit t 209 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.03; nearest soldier 215.7
+  boss t 210 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 358,124, spread 1.25, stolen 0.0; nearest soldier 55.3, 66 alive
+  fruit t 210 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.07; nearest soldier 215.5
+STRAT t 210 out mould 44079 soldiers 66 hp 0.69 bank 310 killed 24770 turret 0 pumps 1 buildings 1
+  boss t 211 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 356,108, spread 1.24, stolen 0.0; nearest soldier 46.9, 63 alive
+  fruit t 211 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.10; nearest soldier 222.4
+  boss t 212 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 0 hurt), at 350,92, spread 1.22, stolen 0.0; nearest soldier 24.3, 64 alive
+  fruit t 212 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.13; nearest soldier 218.2
+  boss t 213 s: lump 0 wanderer Go((350.5, 36.0)), 377 members (first 377, 192 hurt), at 346,76, spread 1.07, stolen 0.0; nearest soldier 14.2, 62 alive
+  fruit t 213 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.17; nearest soldier 224.4
+  boss t 214 s: lump 0 wanderer ended Broken (95 members of 377; stole 0.0, 0.0 given back so far)
+  fruit t 214 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.20; nearest soldier 222.3
+  fruit t 215 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.23; nearest soldier 216.6
+  fruit t 216 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.27; nearest soldier 204.1
+  fruit t 217 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.30; nearest soldier 206.9
+  fruit t 218 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.33; nearest soldier 206.9
+  fruit t 219 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.37; nearest soldier 211.3
+  fruit t 220 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.40; nearest soldier 212.4
+STRAT t 220 out mould 36213 soldiers 62 hp 0.68 bank 195 killed 32410 turret 0 pumps 1 buildings 1
+  fruit t 221 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.43; nearest soldier 209.3
+  fruit t 222 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.47; nearest soldier 206.8
+  fruit t 223 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.50; nearest soldier 206.7
+  fruit t 224 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.53; nearest soldier 207.0
+  fruit t 225 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.57; nearest soldier 206.9
+  fruit t 226 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.60; nearest soldier 208.4
+  fruit t 227 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.63; nearest soldier 213.6
+  fruit t 228 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.67; nearest soldier 220.9
+  fruit t 229 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.70; nearest soldier 229.7
+  surge 6 starts at t 229.1 s (the slime has eaten 2199 food)
+  fruit t 230 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.73; nearest soldier 237.6
+STRAT t 230 out mould 35994 soldiers 64 hp 0.69 bank 140 killed 32910 turret 0 pumps 2 buildings 2
+  fruit t 231 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.77; nearest soldier 237.7
+  fruit t 232 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.80; nearest soldier 242.2
+  fruit t 233 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.83; nearest soldier 248.0
+  fruit t 234 s: lump 1, 2638 members (most 2638), at 336,286, ripe 0.87; nearest soldier 255.3
+  fruit t 235 s: lump 1, 2638 members (most 2638), at 336,284, ripe 0.90; nearest soldier 262.9
+  fruit t 236 s: lump 1, 2638 members (most 2638), at 336,284, ripe 0.93; nearest soldier 269.6
+  fruit t 237 s: lump 1, 2638 members (most 2638), at 336,284, ripe 0.97; nearest soldier 275.2
+  fruit ended t 249.0 s: Burst with 2638 members (1 burst, 0 broken, 2638 walkers sown in all)
+STRAT t 240 out mould 32946 soldiers 63 hp 0.62 bank 538 killed 38172 turret 0 pumps 3 buildings 3
+STRAT t 250 out mould 33945 soldiers 59 hp 0.61 bank 237 killed 42708 turret 0 pumps 2 buildings 2
+  boss t 254.0 s: Cut hunter formed on lump 0 at 221,194 (crowd top 1.22); grade 0.43: 9 blows a member, touches as 3, pace x1.17
+  boss t 254 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 221,194, spread 1.88, stolen 0.0; nearest soldier 322.3, 59 alive
+  boss t 255 s: lump 0 hunter Gather, 148 members (first 148, 0 hurt), at 216,196, spread 0.89, stolen 0.0; nearest soldier 322.4, 59 alive
+  boss t 256 s: lump 0 hunter Gather, 148 members (first 148, 0 hurt), at 214,196, spread 0.94, stolen 0.0; nearest soldier 321.1, 59 alive
+  boss t 257 s: lump 0 hunter Gather, 148 members (first 148, 0 hurt), at 212,196, spread 0.94, stolen 0.0; nearest soldier 312.2, 59 alive
+  boss t 258 s: lump 0 hunter Gather, 148 members (first 148, 0 hurt), at 210,194, spread 0.89, stolen 0.0; nearest soldier 303.0, 59 alive
+  boss t 259 s: lump 0 hunter Gather, 148 members (first 148, 0 hurt), at 208,194, spread 0.81, stolen 0.0; nearest soldier 290.9, 59 alive
+  boss t 260 s: lump 0 hunter Hunt(Some(59)), 148 members (first 148, 0 hurt), at 204,194, spread 0.74, stolen 0.0; nearest soldier 279.6, 59 alive
+STRAT t 260 out mould 33852 soldiers 59 hp 0.59 bank 657 killed 43596 turret 0 pumps 2 buildings 2
+  boss t 261 s: lump 0 hunter Hunt(Some(59)), 148 members (first 148, 0 hurt), at 226,182, spread 1.49, stolen 0.0; nearest soldier 242.7, 59 alive
+  boss t 262 s: lump 0 hunter Hunt(Some(59)), 148 members (first 148, 0 hurt), at 246,176, spread 1.15, stolen 0.0; nearest soldier 209.9, 59 alive
+  boss t 263 s: lump 0 hunter Hunt(Some(59)), 148 members (first 148, 0 hurt), at 262,170, spread 1.13, stolen 0.0; nearest soldier 181.8, 59 alive
+  boss t 264 s: lump 0 hunter Hunt(Some(59)), 148 members (first 148, 0 hurt), at 280,166, spread 1.08, stolen 0.0; nearest soldier 157.2, 59 alive
+  boss t 265 s: lump 0 hunter Hunt(Some(64)), 148 members (first 148, 0 hurt), at 296,160, spread 1.14, stolen 0.0; nearest soldier 138.1, 59 alive
+  boss t 266 s: lump 0 hunter Hunt(Some(50)), 148 members (first 148, 0 hurt), at 308,146, spread 3.83, stolen 0.0; nearest soldier 115.7, 59 alive
+  boss t 267 s: lump 0 hunter Hunt(Some(50)), 148 members (first 148, 0 hurt), at 308,146, spread 3.45, stolen 0.0; nearest soldier 112.4, 58 alive
+  boss t 268 s: lump 0 hunter Hunt(Some(41)), 148 members (first 148, 0 hurt), at 308,146, spread 3.46, stolen 0.0; nearest soldier 103.3, 58 alive
+  boss t 269 s: lump 0 hunter Hunt(Some(16)), 148 members (first 148, 0 hurt), at 308,146, spread 3.52, stolen 0.0; nearest soldier 92.5, 57 alive
+  boss t 270 s: lump 0 hunter Hunt(Some(16)), 148 members (first 148, 0 hurt), at 308,144, spread 3.71, stolen 0.0; nearest soldier 86.1, 57 alive
+STRAT t 270 out mould 31584 soldiers 57 hp 0.54 bank 472 killed 48890 turret 0 pumps 3 buildings 3
+  boss t 271 s: lump 0 hunter Hunt(Some(16)), 148 members (first 148, 0 hurt), at 310,142, spread 4.42, stolen 0.0; nearest soldier 82.3, 57 alive
+  boss t 272 s: lump 0 hunter Hunt(Some(69)), 148 members (first 148, 0 hurt), at 312,140, spread 4.30, stolen 0.0; nearest soldier 81.9, 57 alive
+  boss t 273 s: lump 0 hunter Hunt(Some(27)), 148 members (first 148, 0 hurt), at 312,142, spread 4.07, stolen 0.0; nearest soldier 78.4, 57 alive
+  boss t 274 s: lump 0 hunter Hunt(Some(62)), 148 members (first 148, 0 hurt), at 312,142, spread 4.13, stolen 0.0; nearest soldier 76.6, 57 alive
+  boss t 275 s: lump 0 hunter Hunt(Some(47)), 148 members (first 148, 0 hurt), at 312,142, spread 4.23, stolen 0.0; nearest soldier 76.1, 57 alive
+  boss t 276 s: lump 0 hunter Hunt(Some(11)), 148 members (first 148, 0 hurt), at 312,138, spread 4.77, stolen 0.0; nearest soldier 75.2, 56 alive
+  boss t 277.0 s: Crowd sapper formed on lump 1 at 497,139 (crowd top 1.00); grade 0.22: 6 blows a member, touches as 3, pace x1.09
+  boss t 277 s: lump 0 hunter Hunt(Some(49)), 148 members (first 148, 0 hurt), at 312,140, spread 4.39, stolen 0.0; nearest soldier 76.3, 56 alive
+  boss t 277 s: lump 1 sapper Gather, 0 members (first 0, 0 hurt), at 497,139, spread 1.05, stolen 0.0; nearest soldier 98.3, 56 alive
+  raid 2 at t 278.0 s: Building(9) at 350,36, reach 87 cells holding 4047 walkers, share 0.60, size 8% of the slime
+  boss t 278 s: lump 0 hunter Hunt(Some(4)), 148 members (first 148, 0 hurt), at 312,138, spread 4.35, stolen 0.0; nearest soldier 74.2, 56 alive
+  boss t 278 s: lump 1 sapper Gather, 277 members (first 277, 0 hurt), at 494,142, spread 0.86, stolen 0.0; nearest soldier 94.9, 56 alive
+  march t 278 s: lump 3, 0 members (first 0), at 428,144, spread 1.48, 66 cells to go
+  fruit t 278 s: lump 2, 0 members (most 0), at 493,147, ripe 0.00; nearest soldier 93.2
+  boss t 279 s: lump 0 hunter Hunt(Some(4)), 148 members (first 148, 0 hurt), at 310,140, spread 4.42, stolen 0.0; nearest soldier 78.6, 55 alive
+  boss t 279 s: lump 1 sapper Gather, 277 members (first 277, 0 hurt), at 494,144, spread 0.78, stolen 0.0; nearest soldier 94.3, 55 alive
+  fruit t 279 s: lump 2, 1684 members (most 1684), at 494,154, ripe 0.03; nearest soldier 94.8
+  boss t 280 s: lump 0 hunter Hunt(Some(9)), 148 members (first 148, 0 hurt), at 312,136, spread 4.62, stolen 0.0; nearest soldier 81.8, 55 alive
+  boss t 280 s: lump 1 sapper Gather, 277 members (first 277, 0 hurt), at 494,144, spread 0.77, stolen 0.0; nearest soldier 97.4, 55 alive
+  fruit t 280 s: lump 2, 1684 members (most 1684), at 494,154, ripe 0.07; nearest soldier 94.2
+STRAT t 280 back mould 32878 soldiers 55 hp 0.49 bank 350 killed 52025 turret 0 pumps 2 buildings 2
+  boss t 281 s: lump 0 hunter Hunt(Some(9)), 148 members (first 148, 0 hurt), at 312,136, spread 4.77, stolen 0.0; nearest soldier 77.7, 51 alive
+  boss t 281 s: lump 1 sapper Gather, 277 members (first 277, 0 hurt), at 492,144, spread 0.82, stolen 0.0; nearest soldier 98.0, 51 alive
+  fruit t 281 s: lump 2, 1684 members (most 1684), at 492,154, ripe 0.10; nearest soldier 93.3
+  boss t 282 s: lump 0 hunter Hunt(Some(56)), 148 members (first 148, 0 hurt), at 312,138, spread 4.45, stolen 0.0; nearest soldier 77.0, 51 alive
+  boss t 282 s: lump 1 sapper Gather, 277 members (first 277, 0 hurt), at 492,144, spread 0.82, stolen 0.0; nearest soldier 97.8, 51 alive
+  fruit t 282 s: lump 2, 3185 members (most 3185), at 490,156, ripe 0.13; nearest soldier 90.6
+  boss t 283 s: lump 0 hunter Hunt(Some(56)), 148 members (first 148, 0 hurt), at 312,136, spread 4.54, stolen 0.0; nearest soldier 77.4, 52 alive
+  boss t 283 s: lump 1 sapper Go((549.0, 26.0)), 277 members (first 277, 0 hurt), at 492,144, spread 0.83, stolen 0.0; nearest soldier 97.5, 52 alive
+  fruit t 283 s: lump 2, 3185 members (most 3185), at 490,156, ripe 0.17; nearest soldier 90.5
+  boss t 284 s: lump 0 hunter Hunt(Some(56)), 148 members (first 148, 0 hurt), at 312,136, spread 4.68, stolen 0.0; nearest soldier 77.4, 52 alive
+  boss t 284 s: lump 1 sapper Go((549.0, 26.0)), 277 members (first 277, 0 hurt), at 494,142, spread 1.05, stolen 0.0; nearest soldier 99.3, 52 alive
+  fruit t 284 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.20; nearest soldier 90.9
+  surge 7 starts at t 284.3 s (the slime has eaten 2565 food)
+  boss t 285 s: lump 0 hunter Hunt(Some(9)), 148 members (first 148, 0 hurt), at 312,138, spread 4.51, stolen 0.0; nearest soldier 67.1, 52 alive
+  boss t 285 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 494,140, spread 1.16, stolen 0.0; nearest soldier 102.7, 52 alive
+  fruit t 285 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.23; nearest soldier 95.0
+  boss t 286 s: lump 0 hunter Hunt(Some(9)), 148 members (first 148, 0 hurt), at 312,136, spread 4.80, stolen 0.0; nearest soldier 66.0, 52 alive
+  boss t 286 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 492,142, spread 0.99, stolen 0.0; nearest soldier 99.1, 52 alive
+  fruit t 286 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.27; nearest soldier 94.3
+  boss t 287 s: lump 0 hunter Hunt(Some(9)), 148 members (first 148, 0 hurt), at 312,136, spread 4.62, stolen 0.0; nearest soldier 59.1, 52 alive
+  boss t 287 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 490,142, spread 1.22, stolen 0.0; nearest soldier 97.4, 52 alive
+  fruit t 287 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.30; nearest soldier 94.3
+  boss t 288 s: lump 0 hunter Hunt(Some(9)), 148 members (first 148, 0 hurt), at 312,138, spread 4.58, stolen 0.0; nearest soldier 58.7, 52 alive
+  boss t 288 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 488,142, spread 1.38, stolen 0.0; nearest soldier 93.9, 52 alive
+  fruit t 288 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.33; nearest soldier 92.8
+  boss t 289 s: lump 0 hunter Hunt(Some(9)), 148 members (first 148, 0 hurt), at 312,138, spread 4.46, stolen 0.0; nearest soldier 58.7, 52 alive
+  boss t 289 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 488,142, spread 1.44, stolen 0.0; nearest soldier 93.0, 52 alive
+  fruit t 289 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.37; nearest soldier 91.9
+  boss t 290 s: lump 0 hunter Hunt(Some(64)), 148 members (first 148, 9 hurt), at 310,138, spread 4.48, stolen 0.0; nearest soldier 57.5, 52 alive
+  boss t 290 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 486,142, spread 1.51, stolen 0.0; nearest soldier 94.0, 52 alive
+  fruit t 290 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.40; nearest soldier 93.8
+STRAT t 290 back mould 30784 soldiers 52 hp 0.48 bank 194 killed 57358 turret 0 pumps 1 buildings 1
+  boss t 291 s: lump 0 hunter Hunt(Some(64)), 148 members (first 148, 13 hurt), at 312,138, spread 4.67, stolen 0.0; nearest soldier 56.2, 52 alive
+  boss t 291 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 486,142, spread 1.54, stolen 0.0; nearest soldier 94.0, 52 alive
+  fruit t 291 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.43; nearest soldier 93.8
+  boss t 292 s: lump 0 hunter Hunt(Some(64)), 148 members (first 148, 26 hurt), at 312,138, spread 4.29, stolen 0.0; nearest soldier 56.2, 52 alive
+  boss t 292 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 486,142, spread 1.53, stolen 0.0; nearest soldier 94.0, 52 alive
+  fruit t 292 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.47; nearest soldier 93.8
+  boss t 293 s: lump 0 hunter Hunt(Some(75)), 148 members (first 148, 26 hurt), at 310,140, spread 4.22, stolen 0.0; nearest soldier 57.6, 52 alive
+  boss t 293 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 486,142, spread 1.55, stolen 0.0; nearest soldier 97.2, 52 alive
+  fruit t 293 s: lump 2, 3185 members (most 3185), at 490,154, ripe 0.50; nearest soldier 96.5
+  boss t 294 s: lump 0 hunter Hunt(Some(75)), 148 members (first 148, 30 hurt), at 310,140, spread 4.18, stolen 0.0; nearest soldier 57.6, 52 alive
+  boss t 294 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 486,142, spread 1.57, stolen 0.0; nearest soldier 96.8, 52 alive
+  fruit t 294 s: lump 2, 3185 members (most 3185), at 490,152, ripe 0.53; nearest soldier 97.2
+  boss t 295 s: lump 0 hunter Hunt(Some(75)), 148 members (first 148, 30 hurt), at 310,140, spread 4.22, stolen 0.0; nearest soldier 57.4, 52 alive
+  boss t 295 s: lump 1 sapper Go((56.5, 97.0)), 277 members (first 277, 0 hurt), at 486,142, spread 1.60, stolen 0.0; nearest soldier 96.8, 52 alive
+  fruit t 295 s: lump 2, 3185 members (most 3185), at 490,152, ripe 0.57; nearest soldier 97.2
+  boss t 296 s: lump 0 hunter Hunt(Some(75)), 148 members (first 148, 30 hurt), at 312,134, spread 4.98, stolen 0.0; nearest soldier 54.8, 52 alive
+  boss t 296 s: lump 1 sapper Hunt(Some(74)), 277 members (first 277, 0 hurt), at 486,142, spread 1.61, stolen 0.0; nearest soldier 96.8, 52 alive
+  fruit t 296 s: lump 2, 3185 members (most 3185), at 490,152, ripe 0.60; nearest soldier 97.2
+  boss t 297 s: lump 0 hunter Hunt(Some(41)), 148 members (first 148, 30 hurt), at 312,136, spread 4.53, stolen 0.0; nearest soldier 56.3, 52 alive
+  boss t 297 s: lump 1 sapper Hunt(Some(74)), 277 members (first 277, 0 hurt), at 486,144, spread 1.52, stolen 0.0; nearest soldier 98.8, 52 alive
+  fruit t 297 s: lump 2, 3185 members (most 3185), at 490,152, ripe 0.63; nearest soldier 101.6
+  boss t 298 s: lump 0 hunter Hunt(Some(62)), 148 members (first 148, 34 hurt), at 312,134, spread 4.82, stolen 0.0; nearest soldier 57.5, 52 alive
+  boss t 298 s: lump 1 sapper Hunt(Some(74)), 277 members (first 277, 0 hurt), at 486,144, spread 1.53, stolen 0.0; nearest soldier 100.7, 52 alive
+  fruit t 298 s: lump 2, 3185 members (most 3185), at 490,152, ripe 0.67; nearest soldier 105.4
+  boss t 299 s: lump 0 hunter Hunt(Some(58)), 148 members (first 148, 41 hurt), at 312,138, spread 4.33, stolen 0.0; nearest soldier 62.3, 52 alive
+  boss t 299 s: lump 1 sapper Hunt(Some(74)), 277 members (first 277, 0 hurt), at 484,146, spread 1.64, stolen 0.0; nearest soldier 105.8, 52 alive
+  fruit t 299 s: lump 2, 3185 members (most 3185), at 490,152, ripe 0.70; nearest soldier 112.7
+  boss t 300 s: lump 0 hunter Hunt(Some(58)), 148 members (first 148, 41 hurt), at 312,136, spread 4.59, stolen 0.0; nearest soldier 61.6, 52 alive
+  boss t 300 s: lump 1 sapper Hunt(Some(74)), 277 members (first 277, 0 hurt), at 484,146, spread 1.60, stolen 0.0; nearest soldier 106.3, 52 alive
+  fruit t 300 s: lump 2, 3185 members (most 3185), at 490,152, ripe 0.73; nearest soldier 113.3
+/tmp/claude-0/cen/mortar/1795119328-4/planet-4-1795119328-strat:econ,go=4,aim=6-300s-all.png
+/tmp/claude-0/cen/mortar/1795119328-4/planet-4-1795119328-strat:econ,go=4,aim=6-300s-near.png
+  CPU: ground field 5.12 ms (once a game second), model and HUD 0.127 ms a frame
+  t 300 s: mould 30451, soldiers 52, bank 337, harvested 41640, rendered 0, shots 8261, killed 59007, took 88%, crystals left 0.421; squad at 360.6,74.3
+  surge: the slime ate 2676 food (8.9/s); meter 110.6 of 366, 7 surges
+  dense: 0 condensed or thick walkers, mass 30451 (readout 30451); 1598 breaking away
+  loose: 1988 walkers alone or in twos in a dish cell, 6.5% of 30441; 686 with at most one other round them
+  squad: touching 0.0 mean, 0 most; health 49 mean
+    pump at (40, 56): hp 0 / 200, built 1.0, worn down
+    pump at (120, 136): hp 0 / 200, built 1.0, worn down
+    pump at (102, 321): hp 0 / 200, built 1.0, worn down
+    pump at (82, 40): hp 0 / 200, built 1.0, worn down
+    pump at (56, 97): hp 0 / 200, built 1.0, worn down
+    pump at (32, 330): hp 0 / 200, built 1.0, worn down
+    pump at (102, 321): hp 0 / 200, built 1.0, worn down
+    pump at (350, 36): hp 0 / 200, built 1.0, worn down
+    pump at (549, 26): hp 0 / 200, built 1.0, worn down
+    pump at (350, 36): hp 0 / 200, built 1.0, worn down
+    pumped 23022 food
