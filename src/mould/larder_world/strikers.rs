@@ -13,7 +13,9 @@
 //! So late in a planet (under `below` of its peak), the slime's edge facing
 //! a big squad condenses: once a game second each ordinary walker within
 //! the guns' reach and `band` dish cells of a soldier tries with chance
-//! `share` (none against `few` soldiers or fewer, all of it from `full`), and in each block of fine cells the first that tries takes in
+//! `share` (none against `few` soldiers or fewer, all of it from `full`;
+//! the run sets the share by planet, and `rate` caps how many form a
+//! second), and in each block of fine cells the first that tries takes in
 //! up to three of the rest (engine.wgsl's `condense`). A condensed walker
 //! counts once, takes a blow for each walker it took in (and one more to
 //! die), and bites once more for each. Mass and bite stay what they were:
@@ -60,6 +62,18 @@ pub struct StrikerRules {
     /// answer a big army, not a small squad.
     pub few: f32,
     pub full: f32,
+    /// The most strikers formed a game second: `rate`, or `rate_share` of
+    /// the living slime, whichever is fewer (0 `rate`: no cap). The share
+    /// a walker tries with is cut to what would form about that many, from
+    /// the walkers in the band the last pass counted (each striker takes
+    /// in up to `most`). Without it (the retune of 11-20 evening) planet 1,
+    /// run seed 1, 2:27, condensed 4,218 walkers into 1,607 strikers in one
+    /// second against 43 soldiers, and all 43 died within 8 s (strikers
+    /// off: won, 2 stars, 53 alive). Direction's numbers, 11-20 22:25Z:
+    /// about 150 a second or 2% of the slime, so a strike builds over
+    /// seconds you can see and answer.
+    pub rate: f32,
+    pub rate_share: f32,
 }
 
 impl Default for StrikerRules {
@@ -75,7 +89,7 @@ impl Default for StrikerRules {
         // blows added little (62, 113, 328). Map 7, four soldiers: lost at
         // 2:33 with the first numbers, 1:14 with these and no squad scale,
         // won at 4:21 (as with no strikers on the GPU) with few 8, full 24.
-        StrikerRules { on: false, below: 0.6, band: 30.0, share: 1.0, haste: 3.0, most: 3, few: 8.0, full: 24.0 }
+        StrikerRules { on: false, below: 0.6, band: 30.0, share: 1.0, haste: 3.0, most: 3, few: 8.0, full: 24.0, rate: 150.0, rate_share: 0.02 }
     }
 }
 
@@ -92,6 +106,8 @@ pub struct Strikers {
     pub held: u32,
     /// The walkers taken in, all told.
     pub took: u64,
+    /// The walkers in the band at the last pass (`StrikerRules::rate`).
+    pub band: u32,
 }
 
 impl<W: World> Game<W> {
@@ -119,10 +135,18 @@ impl<W: World> Game<W> {
         // with the share scaled straight by the squad over 20 soldiers).
         let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
         let army = ((alive - r.few) / (r.full - r.few).max(1.0)).clamp(0.0, 1.0);
-        let share = if low { r.share * army } else { 0.0 };
+        let mut share = if low { r.share * army } else { 0.0 };
+        // The rate cap: about `cap` strikers this second, each the first of
+        // up to `most + 1` tries in its block, from the band the last pass
+        // counted (none counted yet: this pass only counts).
+        if r.rate > 0.0 {
+            let cap = r.rate.min(r.rate_share * self.mould as f32).max(0.0);
+            let tries = cap * (r.most + 1) as f32;
+            share = if self.strikers.band == 0 { 0.0 } else { share.min(tries / self.strikers.band as f32) };
+        }
         let reach = (self.gun_range_max() + r.band).max(0.0) * self.world.scale();
-        if let Some((live, held, took)) = self.world.condense(reach, share, r.most) {
-            (self.strikers.live, self.strikers.held) = (live, held);
+        if let Some((live, held, took, band)) = self.world.condense(reach, share, r.most) {
+            (self.strikers.live, self.strikers.held, self.strikers.band) = (live, held, band);
             self.strikers.took += took as u64;
         }
     }

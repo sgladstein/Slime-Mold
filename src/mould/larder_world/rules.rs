@@ -854,6 +854,8 @@ impl Rules {
             "strikers_haste" => &mut self.strikers.haste,
             "strikers_few" => &mut self.strikers.few,
             "strikers_full" => &mut self.strikers.full,
+            "strikers_rate" => &mut self.strikers.rate,
+            "strikers_rate_share" => &mut self.strikers.rate_share,
             "stand_at" => &mut self.stand.at,
             "stand_army" => &mut self.stand.army,
             "stand_pull" => &mut self.stand.pull,
