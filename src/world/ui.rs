@@ -1970,6 +1970,9 @@ impl Hud {
         // its tooltip, in the room the panel had spare.
         // (Narrower, down to the old 72, where the row cannot hold them all.)
         // (At least 86, for the squad thread's AUTO / YOU tag.)
+        // (At most 168, up from 136 in the play-zoom pass, 11-20: one
+        // squad's tile in a panel with room for three cut "working" to
+        // "working..." beside the YOU tag.)
         // Too many squads for the row at full size: the tiles shrink, all
         // of them, till every squad has one (owner, 2026-11-19 16:55Z:
         // "when we have too many squads to show in the squad panel of the
@@ -1980,7 +1983,7 @@ impl Hud {
         let top = inner.y + 26.0 * s;
         let layout = |f: f32| {
             let cgap = 7.0 * s * f.max(0.5);
-            let cw = ((inner.w + cgap) / n.max(1) as f32 - cgap).clamp(86.0 * s * f, 136.0 * s * f);
+            let cw = ((inner.w + cgap) / n.max(1) as f32 - cgap).clamp(86.0 * s * f, 168.0 * s * f);
             let ch = 54.0 * s * f;
             let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
             let rows = ((inner.bottom() - top + cgap) / (ch + cgap)).floor().max(1.0) as usize;
@@ -2055,6 +2058,10 @@ impl Hud {
             if let Some(state) = Some(q.state.as_str()).filter(|t| !t.is_empty()).or(first) {
                 let sx = cell.x + 32.0 * u + nw + 8.0 * u;
                 if end - sx >= 30.0 * u {
+                    // "working, 3 on guard" where it fits, else "working":
+                    // a whole word reads, a cut one ("working, 3 o...") not.
+                    let fits = c.atlas.measure(Weight::Medium, 12.5 * u, state) <= end - sx;
+                    let state = if fits { state } else { state.split(", ").next().unwrap_or(state) };
                     c.text_fit(Weight::Medium, 12.5 * u, (sx, cell.y + 36.0 * u), Align::Left, state, end - sx, MUTED);
                 }
             }
