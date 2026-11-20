@@ -216,7 +216,10 @@ mod tests {
         // The gun lab's research keys (`gunlab=` with `deck=`, `arena=`,
         // `tail=`: one deck on a run planet, printing one line).
         const LAB_TOOLS: &str = "gunlab deck arena tail";
-        let tools: Vec<&str> = TOOLS.split(' ').chain(ENGINE_TOOLS.split(' ')).chain(LAB_TOOLS.split(' ')).collect();
+        // The strategy league's keys (`league=` with `plan=`: one plan on a
+        // run planet, printing one line; `league.rs`).
+        const BOT_TOOLS: &str = "league plan";
+        let tools: Vec<&str> = TOOLS.split(' ').chain(ENGINE_TOOLS.split(' ')).chain(LAB_TOOLS.split(' ')).chain(BOT_TOOLS.split(' ')).collect();
         let declared: Vec<&str> = SWITCHES.iter().flat_map(|s| s.choices.iter()).flat_map(|c| c.keys.iter()).filter_map(|(k, _)| k.strip_prefix(WINDOW_KEY)).collect();
         for k in keys {
             if WINDOW_KEYS.contains(&k) {

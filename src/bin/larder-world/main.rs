@@ -215,6 +215,9 @@ mod headless;
 mod bench;
 mod hands;
 mod runbot;
+mod strat;
+mod utility;
+mod league;
 mod menu;
 mod squadmode;
 mod uisize;
@@ -2180,6 +2183,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // `runbot=SEED[:TO]`: the run bot plays run SEED from planet 1 to
     // planet TO (3) or a loss, with no window (`runbot`).
     let mut runbot: Option<(u64, u32)> = None;
+    // `league=...` and `plan=PLAN`: the strategy league (`league.rs`).
+    let (mut league_job, mut league_plan) = (None::<league::Job>, String::new());
     // `gunlab=DEPTH:SEED[:SECS]` with `deck=CARDS` (and `gun=KIND`): one
     // deck on one planet with the bot hand (`runbot::gun_lab`).
     let mut gunlab: Option<(u32, u64, f32)> = None;
@@ -2306,6 +2311,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(());
             }
             "look" => look = Some(v.to_string()),
+            "league" => league_job = Some(league::parse(v)?),
+            "plan" => league_plan = v.to_string(),
             "gunlab" => {
                 let w: Vec<&str> = v.split(':').collect();
                 let depth = w.first().ok_or("gunlab=DEPTH:SEED[:SECS]")?.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
@@ -2569,6 +2576,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre, viewpasses }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
+        return Ok(());
+    }
+    if let Some(job) = league_job {
+        let (device, queue) = gpu().ok_or("no GPU adapter")?;
+        match job {
+            league::Job::Planet { depth, seed, secs } => league::planet(base, depth, seed, secs, &league_plan, &device, &queue)?,
+            league::Job::Run { seed, to, secs } => league::whole_run(base, seed, to, secs, &league_plan, &device, &queue)?,
+        }
         return Ok(());
     }
     if let Some((depth, seed, secs)) = gunlab {

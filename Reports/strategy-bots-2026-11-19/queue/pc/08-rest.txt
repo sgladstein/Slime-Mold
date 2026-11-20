@@ -1,0 +1,6 @@
+# Where the last walkers are when a near-win runs out of time (the league line's rest=, at most 6 squares as x:y:walkers:set:ground:dist:clear). Near-misses from p3 gen1 and 06-mop, with mop=300.
+econ,cards=0,mop=300 3 1795038793 720
+econ,cards=0,mop=300 3 3 720
+scott,mop=300 3 4 720
+turtle,mop=300 3 4 720
+econ,go=4,aim=6,mop=300 3 8 720

@@ -1,0 +1,264 @@
+<title>Planet 3 Bot League</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; charts and tables break out to a wider measure and scroll sideways inside their own box on a phone. */
+:root {
+  --bg: #f3f5f1; --surface: #ffffff; --ink: #142019; --muted: #56635a; --rule: #d6ddd5; --wash: #e8ede6;
+  --accent: #9a7000;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #c98500;
+  --w1: #1c5cab; --w2: #3987e5; --w3: #86b6ef; --w-ink: #ffffff; --w3-ink: #0d366b;
+  --pos: #2a78d6; --neg: #e34948; --mid: #b9c0b8;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111612; --surface: #182019; --ink: #e6ece6; --muted: #a2ada4; --rule: #2b352d; --wash: #1f2921;
+    --accent: #e0b42a;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --w1: #6da7ec; --w2: #2a78d6; --w3: #184f95; --w-ink: #0b1a10; --w3-ink: #e6ece6;
+    --pos: #3987e5; --neg: #e66767; --mid: #4a544c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111612; --surface: #182019; --ink: #e6ece6; --muted: #a2ada4; --rule: #2b352d; --wash: #1f2921;
+  --accent: #e0b42a;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --w1: #6da7ec; --w2: #2a78d6; --w3: #184f95; --w-ink: #0b1a10; --w3-ink: #e6ece6;
+  --pos: #3987e5; --neg: #e66767; --mid: #4a544c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); }
+.page { max-width: 1040px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 44px; }
+.prose { max-width: 68ch; }
+header { display: grid; gap: 10px; }
+.eyebrow { font: 500 12px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(30px, 5vw, 46px)/1.08 var(--display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+h2 { font: 600 22px/1.25 var(--display); margin: 0 0 6px; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--display); margin: 0; }
+p { margin: 0 0 10px; }
+.lede { font-size: 17px; color: var(--muted); max-width: 64ch; }
+code { font: 500 0.86em/1.3 var(--mono); background: var(--wash); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+table code { white-space: nowrap; overflow-wrap: normal; }
+section { display: grid; gap: 14px; min-width: 0; }
+.answer { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 20px 22px; display: grid; gap: 12px; }
+.answer ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 76ch; }
+.answer li::marker { color: var(--accent); }
+.stats { display: flex; flex-wrap: wrap; gap: 10px 28px; font-variant-numeric: tabular-nums; }
+.stats div { display: grid; }
+.stats b { font: 600 24px/1.1 var(--display); }
+.stats span { font-size: 12px; color: var(--muted); }
+.scroll { overflow-x: auto; min-width: 0; }
+figure { margin: 0; display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; min-width: 0; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 80ch; }
+svg { display: block; width: 100%; height: auto; min-width: 600px; }
+svg .grid { stroke: var(--rule); stroke-width: 1; }
+svg .tick, svg .lab { fill: var(--muted); font: 12px var(--body); }
+svg .lab { fill: var(--ink); font-weight: 500; }
+svg .lab.sub { fill: var(--muted); font-weight: 400; }
+svg .s { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+svg .s1 { stroke: var(--s1); fill: var(--s1); } svg path.s1 { fill: none; stroke-width: 2.5; }
+svg .s2 { stroke: var(--s2); fill: var(--s2); } svg path.s2 { fill: none; }
+svg .s3 { stroke: var(--s3); fill: var(--s3); } svg path.s3 { fill: none; }
+svg .s4 { stroke: var(--s4); fill: var(--s4); } svg path.s4 { fill: none; }
+svg .dot { stroke: var(--surface); stroke-width: 2; }
+svg .sw { stroke: none; }
+svg .hair { stroke: var(--muted); stroke-dasharray: 3 3; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+caption { text-align: left; font: 600 14px/1.4 var(--display); padding-bottom: 8px; }
+th, td { padding: 6px 8px; text-align: left; vertical-align: middle; }
+thead th { font: 500 12px/1.3 var(--body); color: var(--muted); border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.num { text-align: right; white-space: nowrap; }
+table.grid { min-width: 760px; }
+table.grid th.plan { min-width: 220px; font-weight: 400; }
+table.grid thead th:not(.plan) { text-align: center; }
+table.grid th.you, table.grid td.you { color: var(--accent); }
+td.c { width: 62px; height: 34px; text-align: center; font: 500 12px/1 var(--mono); position: relative; border: 2px solid var(--surface); border-radius: 6px; cursor: default; }
+td.c.w1 { background: var(--w1); color: var(--w-ink); }
+td.c.w2 { background: var(--w2); color: var(--w-ink); }
+td.c.w3 { background: var(--w3); color: var(--w3-ink); }
+td.c.open, td.c.lost { background: var(--wash); color: var(--muted); }
+td.c.lost span { color: var(--neg); }
+td.c i { position: absolute; left: 4px; bottom: 4px; height: 3px; max-width: calc(100% - 8px); background: var(--mid); border-radius: 2px; }
+td.c.none { color: var(--rule); }
+td.c:focus-visible { outline: 2px solid var(--accent); }
+tr.seeds td small { display: block; font-size: 11px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); align-items: center; }
+.legend .k { display: inline-flex; gap: 6px; align-items: center; }
+.legend .chip { width: 22px; height: 14px; border-radius: 3px; display: inline-block; }
+table.tests { width: 100%; min-width: 700px; }
+table.tests tr.q th { font: 600 14px/1.4 var(--display); padding-top: 16px; border-bottom: 1px solid var(--rule); }
+table.tests td.pair { font-size: 13px; }
+table.tests .plus { color: var(--muted); }
+table.tests td.bar { width: 34%; }
+.div { display: grid; grid-template-columns: 1fr 2px 1fr; align-items: center; height: 18px; }
+.div .neg, .div .pos { height: 12px; }
+.div .neg { background: var(--neg); border-radius: 4px 0 0 4px; justify-self: end; }
+.div .pos { background: var(--pos); border-radius: 0 4px 4px 0; justify-self: start; }
+.div .mid { width: 2px; height: 18px; background: var(--muted); }
+.lg { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 5px; vertical-align: -1px; }
+.lg.neg { background: var(--neg); } .lg.pos { background: var(--pos); }
+td.sig { font-weight: 600; color: var(--ink); }
+td.hint { color: var(--ink); }
+td.pending { color: var(--muted); font-style: italic; }
+table.plain { min-width: 620px; }
+table.plain td, table.plain th { border-bottom: 1px solid var(--rule); }
+table.plain tbody th { font-weight: 500; }
+table.fam th { white-space: nowrap; vertical-align: top; }
+table.fam td, table.fam th { border-bottom: 1px solid var(--rule); }
+dl.dials { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; max-width: 80ch; }
+dl.dials dt { font: 500 13px/1.6 var(--mono); }
+dl.dials dd { margin: 0; }
+ol.next { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 76ch; }
+.tip { position: fixed; z-index: 5; pointer-events: none; max-width: 300px; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 6px; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; display: grid; gap: 6px; }
+@media (max-width: 560px) { dl.dials { grid-template-columns: 1fr; } dl.dials dd { margin-bottom: 6px; } }
+@media (prefers-reduced-motion: no-preference) { td.c { transition: transform .12s; } td.c:hover { transform: scale(1.06); } }
+</style>
+
+<div class="page">
+<header>
+  <div class="eyebrow">Strategy bots · planet 3 · 19 November 2026</div>
+  <h1>Planet 3 Bot League</h1>
+  <p class="lede">Bots with different strategies played your planet 3 and eight other planet 3 maps on your PC. This page shows which strategies win, how they compare with your 7:21 win, and what the bots are still bad at.</p>
+</header>
+
+<section class="answer" aria-label="The short answer">
+  <div class="stats">
+    <div><b>{{GAMES}}</b><span>planet 3 games</span></div>
+    <div><b>{{PLANS}}</b><span>plans tried</span></div>
+    <div><b>{{WON}}</b><span>games won</span></div>
+    <div><b>{{YOURS_WON}} of {{YOURS_N}}</b><span>plans that won your planet</span></div>
+  </div>
+  <ul>
+    <li>The best plan so far is <code>{{TOP}}</code>. It builds pumps first, aims six times a second, leaves home at once and buys the gun lab's Seek, Wide and Needle Blast cards. It won {{TOP_WINS}} maps in {{TOP_MEAN}} on average (fastest {{TOP_FAST}}), and your planet in {{TOP_YOURS}}. You won yours in 7:21.</li>
+    <li>The gun makes the difference. The same plan without those three cards won {{BASE_WINS}}. That combination may break your rule that no cheap combination should win everything, so it is flagged here and not retuned. One caveat: the bot buys the cards as soon as it wants them, but a real run has to offer them first.</li>
+    <li>Without that deck, the map matters more than the plan. One map falls to most plans, and three maps, yours among them, fall to almost none.</li>
+    <li>Your crystal-holding play did not help the bots. Split groups on their own were mixed, and split groups with Heave did worse on 7 of 9 maps. The bot probably holds crystals more clumsily than you do.</li>
+    <li>Choosing plans by how fast they cleared planet 1 taught the bots nothing for planet 3. Searching on planet 3 alone does improve them.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="prose">
+    <h2>Your planet, minute by minute</h2>
+    <p>Without a strong gun, the bots let the slime double while they build, but you never let it grow. Your four soldiers and four turrets held it near its starting size for two minutes. Then you broke it between 2:20 and 5:00 with 12 to 48 soldiers, aiming about 6.6 times a second. The bot with Seek, Wide and Needle Blast is a different game: its four soldiers killed almost eight times as many walkers as you in the first two minutes.</p>
+  </div>
+  <figure>
+    <div class="scroll">{{CURVES}}</div>
+    <figcaption>Walkers alive on your planet 3 (run 1795038793). Your line is from your play log, one point every 5 seconds. Each bot's line is from its league game on the same planet, one point every 30 seconds. The bots shown are the best plan, the same plan without its deck, and the plan without a deck that got furthest on your planet. That last one cleared all but 2 walkers and ran out of time. Hover for values.</figcaption>
+  </figure>
+  {{EARLY}}
+</section>
+
+<section>
+  <div class="prose">
+    <h2>Every plan on every planet</h2>
+    <p>Each row is one plan, and each column is one planet 3 map. The same plan on the same map always plays the same game on one machine, so the maps are the only noise. A plan's score is its mean over the nine maps: a win counts 1 plus the share of the 12 minutes left, and anything else counts 0.9 times the share of the slime's peak that was cleared.</p>
+  </div>
+  <div class="legend">
+    <span class="k"><span class="chip" style="background:var(--w1)"></span>won under 7:00</span>
+    <span class="k"><span class="chip" style="background:var(--w2)"></span>won 7:00 to 9:00</span>
+    <span class="k"><span class="chip" style="background:var(--w3)"></span>won after 9:00</span>
+    <span class="k"><span class="chip" style="background:var(--wash)"></span>% = slime cleared when the 12 minutes ran out</span>
+    <span class="k">✕ = squad wiped at that time</span>
+  </div>
+  {{GRID_BEST}}
+  {{GRID_FAMILIES}}
+  <div class="scroll"><table class="grid"><caption>How hard each map is: plans that won it, out of plans that played it, and the fastest win</caption><thead><tr><th class="plan">map</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th class="you">yours</th></tr></thead><tbody><tr class="seeds"><th class="plan">plans that won</th>{{SEED_CELLS}}</tr></tbody></table></div>
+</section>
+
+<section>
+  <div class="prose">
+    <h2>What changed the result</h2>
+    <p>Each row takes one plan and changes one thing, then plays both on the same maps. The bar shows how many maps got better (right) or worse (left). The p value is a sign test. With {{NCOMP}} comparisons on this page, only a p below 0.05 divided by {{NCOMP}} would survive a correction for testing so many, and bold marks those. Nine maps a plan is enough for a strong hint, rarely for proof.</p>
+  </div>
+  {{TESTS}}
+</section>
+
+<section>
+  <div class="prose">
+    <h2>How the bots play</h2>
+    <p>A bot's plan is a family plus dials, written as one line, such as <code>econ,go=4,aim=6</code>. The family sets a starting style and the dials override it. Every second the bot spends its points by the plan, then picks what the squad does: guard home, raise a building, pump or drain a crystal, or hunt the heaviest slime it can shoot. Between those turns it re-aims the volley as often as the aim dial says. The search keeps the best plans, changes one or two dials on each to make new ones, and plays the new ones on every map.</p>
+  </div>
+  <div class="scroll"><table class="fam"><caption>The eight families</caption><tbody>{{FAMILY_ROWS}}</tbody></table></div>
+  <dl class="dials">
+    <dt>go</dt><dd>How many soldiers before the squad leaves home.</dd>
+    <dt>aim</dt><dd>How many times a second the squad re-aims at the heaviest slime in range. You aim about 3 times a second, 6.6 in your big push.</dd>
+    <dt>pumps, turrets, walls, guard</dt><dd>What to build at home, and how many pumps get turrets round them.</dd>
+    <dt>more, take</dt><dd>Pumps on crystals out in the field, or draining them instead.</dd>
+    <dt>shop, cards</dt><dd>What the points buy between planets, and whether to buy the card the next planet asks for.</dd>
+    <dt>kite</dt><dd>Back away from slime that gets this close, as a share of the gun's range.</dd>
+    <dt>split, group</dt><dd>Your crystal-holding play: send groups of this many soldiers to drain and hold one crystal each.</dd>
+    <dt>want</dt><dd>Gun cards to buy when the run offers them, such as <code>heave</code> or the gun lab's <code>seek/wide/blast.needle</code>.</dd>
+    <dt>mop</dt><dd>Once the slime is down to this many walkers, stop building and draining and hunt every last scrap.</dd>
+  </dl>
+</section>
+
+<section class="prose">
+  <h2>Is the search learning?</h2>
+  <p>Overnight, the search scored plans on planets 1 to 3 together, 974 games in three generations. It learned to clear planets 1 and 2 faster with rush plans, and planet 3 wins fell from 6 of 128 games to none. That is what you predicted: speed on planet 1 picks strategies that fail on planet 3.</p>
+  <p>Since 14:30 UTC on 19 November the search plays planet 3 only. Two changes copied from your play log made the biggest gains: aiming several times a second instead of once, and leaving home at once instead of waiting for 40 soldiers. Before them the best plan won 3 of 9 maps in about 10 minutes. With them it wins 3 of 9 in 6:20 and comes close on more. The utility bot, whose dials are 40 weights, won none of 192 planet 3 games, so the search dropped it.</p>
+</section>
+
+<section class="prose">
+  <h2>Next</h2>
+  <ol class="next">
+    <li>The Seek, Wide and Needle Blast deck in every family, to see whether the deck wins whatever the plan.</li>
+    <li>Why mop-up misses the last walkers. The dial stops the draining, but the last 2 walkers on your planet still survive the clock.</li>
+    <li>More generations of the planet 3 search on 16 maps plus yours, all day and night on your PC. Both three-card decks join every generation.</li>
+  </ol>
+</section>
+
+<footer>
+  <span>Every number here comes from the results files on branch <code>claude/project-thread-8grg6d</code>, under <code>Reports/strategy-bots-2026-11-19/</code>. <code>page.py</code> rebuilds this page from them.</span>
+  <span>Bots play headless on your GTX 1070 through the league runner, two games at a time, and pause while you play.</span>
+</footer>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+<script>
+(function () {
+  const tip = document.getElementById("tip");
+  function show(text, x, y) {
+    tip.textContent = text;
+    tip.hidden = false;
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 14)) + "px";
+    tip.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, y + 14)) + "px";
+  }
+  function hide() { tip.hidden = true; }
+  document.querySelectorAll("td[data-tip]").forEach(function (td) {
+    td.tabIndex = 0;
+    td.addEventListener("mousemove", function (e) { show(td.dataset.tip, e.clientX, e.clientY); });
+    td.addEventListener("mouseleave", hide);
+    td.addEventListener("focus", function () { const r = td.getBoundingClientRect(); show(td.dataset.tip, r.right, r.bottom); });
+    td.addEventListener("blur", hide);
+  });
+  const C = {{CURVE_JSON}};
+  const svg = document.getElementById("curves");
+  const hit = document.getElementById("hit"), hair = document.getElementById("hair");
+  if (!svg || !hit) return;
+  function mmss(t) { t = Math.round(t); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); }
+  hit.addEventListener("mousemove", function (e) {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const g = C.geo, t = Math.max(0, Math.min(g.span, (p.x - g.ml) / (g.W - g.ml - g.mr) * g.span));
+    hair.setAttribute("x1", p.x); hair.setAttribute("x2", p.x); hair.setAttribute("visibility", "visible");
+    const lines = ["at " + mmss(t)];
+    C.series.forEach(function (s) {
+      let best = null;
+      s.pts.forEach(function (q) { if (q[0] <= t + 0.5) best = q; });
+      if (best && t <= s.pts[s.pts.length - 1][0] + 15) lines.push(s.name + ": " + best[1].toLocaleString() + " walkers");
+      else if (best) lines.push(s.name + ": " + s.end);
+    });
+    show(lines.join("\n"), e.clientX, e.clientY);
+  });
+  hit.addEventListener("mouseleave", function () { hide(); hair.setAttribute("visibility", "hidden"); });
+})();
+</script>

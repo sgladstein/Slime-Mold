@@ -85,6 +85,14 @@ pub(super) fn volley(g: &mut Game<GpuWorld>, free: bool) {
 }
 
 pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
+    // `strat:PLAN`: the strategy bot (`strat.rs`), its play set by dials.
+    if let Some(spec) = hand.strip_prefix("strat:") {
+        return super::strat::strat_hand(g, spec);
+    }
+    // `util:WEIGHTS`: the utility bot (`utility.rs`), its choices scored.
+    if let Some(spec) = hand.strip_prefix("util:") {
+        return super::utility::util_hand(g, spec);
+    }
     if hand == "squads" {
         return squads_hand(g);
     }

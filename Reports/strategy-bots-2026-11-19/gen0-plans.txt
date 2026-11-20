@@ -1,0 +1,8 @@
+bot
+rush
+econ
+turtle
+scott
+lure
+boom
+taker
