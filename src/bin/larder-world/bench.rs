@@ -81,10 +81,30 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
         let index = queue.submit([enc.finish()]);
         let rec = ms(t2);
         let t3 = Instant::now();
-        device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: None }).map_err(|e| format!("poll: {e}"))?;
+        // A GPU that never finishes the frame is an error, not a hang (as
+        // `STALL`): two minutes, against a few milliseconds a frame.
+        device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: Some(std::time::Duration::from_secs(120)) }).map_err(|e| format!("poll: {e}"))?;
         Ok([ms(t0), step, prep, rec, ms(t3)])
     };
+    // A bench that stops gaining game time ends in an error, not a hang
+    // (2026-11-20: CI's `the_window_takes_every_command` ran for hours in
+    // the merge queue's candidates while every PR queued behind it; the
+    // loop below ends only on game time, which a paused game, e.g. a
+    // pressed command that opens a pausing panel, never gains). Frames
+    // where the time did not move are counted; `STALL` of them in a row,
+    // 50 s at the tests' 24 frames a second, is a stall.
+    const STALL: u32 = 1200;
+    let (mut stalled, mut seen) = (0u32, f32::NEG_INFINITY);
     while app.game.as_ref().is_some_and(|g| g.time() < secs) && !over(&app) {
+        let now = app.game.as_ref().map_or(0.0, |g| g.time());
+        if now > seen {
+            (seen, stalled) = (now, 0);
+        } else {
+            stalled += 1;
+            if stalled >= STALL {
+                return Err(format!("bench: game time stuck at {now:.1} s for {STALL} frames (paused {}, menu {}, loadout panel or other pause?)", app.paused, app.menu.is_some()));
+            }
+        }
         let t0 = Instant::now();
         // Whole steps: the hand plans on the step that crossed the second
         // once it has finished, as it did before the split (a step left
