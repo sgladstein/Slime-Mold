@@ -163,6 +163,11 @@ pub(super) struct Plan {
     /// at `starve=20` the squad fell from 20 to 8 in a minute in the home
     /// blob and lost.
     pub deep: bool,
+    /// Points the league adds to the run before its first shop (0: none),
+    /// so a measure can buy what a planet's own points would not reach
+    /// (Direction's 11-20 job: Heavier shots 4 against Faster trigger 4,
+    /// 480 points each, from planet 1).
+    pub points: u32,
 }
 
 impl Default for Plan {
@@ -200,6 +205,7 @@ impl Default for Plan {
             shelf: true,
             starve: 0,
             deep: false,
+            points: 0,
         }
     }
 }
@@ -228,7 +234,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 32] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep"];
+    pub const DIALS: [&'static str; 33] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -281,6 +287,7 @@ impl Plan {
             "shelf" => self.shelf = num(v)? > 0.0,
             "starve" => self.starve = whole(v)?,
             "deep" => self.deep = num(v)? > 0.0,
+            "points" => self.points = whole(v)?,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),

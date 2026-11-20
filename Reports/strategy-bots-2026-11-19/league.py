@@ -565,13 +565,22 @@ def build():
         log("worker: the build failed; playing on with the last binary: " + b.stderr[-600:])
 
 def pending(jobs_path, out_path):
-    jobs = [tuple(l.split()) for l in open(jobs_path) if l.strip() and not l.startswith("#")]
+    """The games of a job file not yet played. A file whose comment lines
+    say `code-bound` counts only games played on the current build (11-20:
+    main's Heavier shots fix and new clock came in while jobs were queued;
+    a job whose base and variants straddle two games compares nothing),
+    so a new build plays it again and its rows are told apart by `code`."""
+    lines = [l for l in open(jobs_path) if l.strip()]
+    bound = any(l.startswith("#") and "code-bound" in l for l in lines)
+    jobs = [tuple(l.split()) for l in lines if not l.startswith("#")]
     done = set()
     if os.path.exists(out_path):
         for l in open(out_path):
             try:
                 r = json.loads(l)
             except json.JSONDecodeError:
+                continue
+            if bound and r.get("code") != CODE:
                 continue
             if "error" not in r or r.get("code") == CODE:
                 done.add(r["job"])

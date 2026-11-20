@@ -1,4 +1,5 @@
 # Starving the slime (11-20 15:25Z, strat.rs `starve`, `deep`): out with at least N soldiers the squad clears and drains the crystal with the most slime on it, only one under per=200 walkers a soldier, or with deep=1 whatever its size. In the cloud, rush,aim=6,cards=0,starve=30 (the deep build) won planet 2 map 3 in 8:20 with 41 soldiers left, the first bot win there; starve=20 lost at 7:25 and the plan without starve timed out with 14.7k slime. Planet 2 (maps 1-8, Scott's three): rush,aim=6,cards=0 and the econ switch plan with cards=0, each with starve 20 and 30, plain and deep, 88 games. Planet 3 (maps 1-8, Scott's): econ,go=4,aim=6,mop=300 and lure,go=4,aim=6 with starve 20, 30 and 30 deep, 54 games. Each base plan is played here too (40 games first), so the job stands alone when main's Heavier shots fix (#557) changes the game under the queue; rows carry their `code` stamp. Deciding measure: wins and paired score; planet 2 map 3 named in advance.
+# code-bound: played again whole on a new build (main's #557 and #554 came in 11-20 15:50Z).
 rush,aim=6,cards=0 2 1 900
 rush,aim=6,cards=0 2 2 900
 rush,aim=6,cards=0 2 3 900

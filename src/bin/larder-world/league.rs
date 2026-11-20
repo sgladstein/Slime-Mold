@@ -287,7 +287,14 @@ fn stage(spec: &str, depth: u32) -> &str {
 pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
     let mut r = Run::new(seed);
     r.restock();
+    // `Plan::points`: added before the first shop, which on planet 1 is a
+    // shop of its own before the landing.
+    let extra = shop_plan(stage(spec, depth))?.points;
+    r.points += extra;
     let mut bought = Vec::new();
+    if depth == 1 && extra > 0 {
+        bought.extend(shop(&mut r, &shop_plan(stage(spec, 1))?));
+    }
     while r.depth < depth {
         r.won(2);
         let p = shop_plan(stage(spec, r.depth))?;
