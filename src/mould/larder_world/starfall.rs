@@ -333,6 +333,7 @@ impl<W: World> Game<W> {
             for s in self.soldiers.iter_mut().filter(|s| s.alive && (s.x - d.at.0).hypot(s.y - d.at.1) <= hit) {
                 s.hp -= r.hurt;
                 if s.hp <= 0.0 {
+                    self.fell_starfall += 1;
                     s.alive = false;
                     s.hp = 0.0;
                     s.carry = 0.0;
@@ -549,6 +550,27 @@ mod tests {
             off.step();
         }
         assert!(off.starfall.plan.is_none() && off.starfall.live.is_empty() && off.starfall.points == 0.0, "off, nothing falls");
+    }
+
+    /// A star that lands on soldiers kills the ones it hurts past their
+    /// health, and the game counts them apart from the slime's kills
+    /// (`Game::fell_starfall`, the bot's `starfall_end`).
+    #[test]
+    fn a_star_landing_on_soldiers_is_counted_as_their_death() {
+        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, ..StarRules::for_depth(1) };
+        let mut g = starry(3, star);
+        while g.time() < 40.0 && g.end.is_none() && g.starfall.landed == 0 {
+            if let Some(d) = g.starfall.live.iter().find(|d| !d.down).copied() {
+                for s in g.soldiers.iter_mut().filter(|s| s.alive) {
+                    (s.x, s.y) = d.at;
+                    s.hp = s.hp.min(1.0);
+                }
+            }
+            g.step();
+        }
+        assert!(g.starfall.landed >= 1, "one landed by {}", g.time());
+        let dead = (g.soldiers.len() - g.alive()) as u32;
+        assert!(dead > 0 && g.fell_starfall == dead && g.fell_bitten + g.fell_burned == 0, "{dead} dead, {} to the star", g.fell_starfall);
     }
 
     /// Waiting makes no more: every fall is drawn at the start, none after
