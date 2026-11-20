@@ -638,6 +638,24 @@ impl App {
         match ev {
             StartEvent::Quit => return Ok(true),
             StartEvent::Range => self.show_armory(),
+            // The slime viewer (`viewer.rs`): a run's planet 1, its panel
+            // open; Main menu leaves it.
+            StartEvent::Viewer => {
+                let Some((base, _)) = self.base.clone() else { return Ok(false) };
+                let Some(menu) = self.menu.take() else { return Ok(false) };
+                let mut r = Run::new(fresh_seed());
+                r.dev = true;
+                r.restock();
+                self.args = run_args(&base, &menu, &r);
+                (self.args.viewer, self.args.squads, self.args.dev) = (true, true, true);
+                self.round = self.args.round;
+                self.parked = Some(menu);
+                self.tweaks = slime_mould::world::tweaks::Tweaks::load();
+                self.viewer = Some(viewer::Viewer::new(&self.tweaks));
+                self.apply_look_tweaks();
+                self.start()?;
+                self.paused = false;
+            }
             StartEvent::NextLevel if self.fielding() => self.close_loadouts(),
             StartEvent::EndRun if self.fielding() => self.close_loadouts(),
             StartEvent::NextLevel if self.ranging() => {
@@ -984,6 +1002,12 @@ impl App {
     pub(super) fn back_to_menu(&mut self) -> Result<(), String> {
         self.save_replay();
         self.set_armory(false);
+        // Out of the slime viewer: the look as saved, not as left.
+        if self.viewer.take().is_some() {
+            self.args.viewer = false;
+            self.tweaks = slime_mould::world::tweaks::Tweaks::load();
+            self.reset_look();
+        }
         self.menu = self.parked.take();
         if let Some(m) = self.menu.as_mut() {
             m.show(Page::Main);

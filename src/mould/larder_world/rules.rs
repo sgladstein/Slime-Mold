@@ -780,7 +780,52 @@ impl Rules {
             self.unit_paths = v > 0.0;
             return true;
         }
-        let f = match name {
+        match self.float_mut(name) {
+            Some(f) => {
+                *f = v;
+                true
+            }
+            None => false,
+        }
+    }
+
+    /// **A rule's value by name** (the slime viewer, 2026-11-20: its Rules
+    /// page shows each number before it is changed): the value `set`
+    /// takes, a switch as 1 or 0. None for a name `set` does not know.
+    pub fn get(&self, name: &str) -> Option<f32> {
+        let on = |b: bool| if b { 1.0 } else { 0.0 };
+        Some(match name {
+            "last_stand" => on(self.raid.last_stand),
+            "raid_march" => on(self.raid.march),
+            "turret_over" => on(self.build.turret_over),
+            "boss_least" => self.boss.least as f32,
+            "boss_cut_least" => self.boss.cut_least as f32,
+            "boss_most" => self.boss.most as f32,
+            "max_squad" => self.max_squad as f32,
+            "steer" => on(self.steer),
+            "funnel" => on(self.funnel),
+            "fruit" => on(self.fruit.on),
+            "star" => on(self.star.on),
+            "star_least" => self.star.least as f32,
+            "star_most" => self.star.most as f32,
+            "fruit_armour" => self.fruit.armour as f32,
+            "fruit_throw" => self.fruit.throw as f32,
+            "wave" => on(self.wave.on),
+            "heart" => on(self.heart.on),
+            "strikers" => on(self.strikers.on),
+            "strikers_most" => self.strikers.most as f32,
+            "stand" => on(self.stand.on),
+            "stand_armour" => self.stand.armour as f32,
+            "stand_bite" => self.stand.bite as f32,
+            "wave_sides" => self.wave.sides as f32,
+            "unit_paths" => on(self.unit_paths),
+            _ => *self.clone().float_mut(name)?,
+        })
+    }
+
+    /// The rules that are one number each, by name (`set` and `get`).
+    fn float_mut(&mut self, name: &str) -> Option<&mut f32> {
+        Some(match name {
             "raid_first" => &mut self.raid.first,
             "raid_first_sd" => &mut self.raid.first_sd,
             "raid_min" => &mut self.raid.min,
@@ -964,10 +1009,8 @@ impl Rules {
             // Fire on soldiers (11-20, Direction's slope check: the strategy
             // bot's fire arms at 5, 10 and 25 a second).
             "fire_hurt" => &mut self.fire_hurt,
-            _ => return false,
-        };
-        *f = v;
-        true
+            _ => return None,
+        })
     }
 
     /// The fight weight of one walker in a mould that starts with

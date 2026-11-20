@@ -1655,6 +1655,28 @@ const SLICK_GLINT: vec3<f32> = vec3<f32>(100.0, 110.0, 105.0);
 // re-rolled every frame, and the body boiled. The wide count is steady.
 struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32, dens: f32 };
 
+// The mini-bosses', the fruit's and the heart's colours, by the view's
+// kind (`LumpLook`: 1 ember, 2 violet, 3 ink, 4 bone, 5 fruit, 6 mortar,
+// 7 pinwheel, 8 heart): the skin, then the core's light. Constants since
+// 2026-11-20 so the slime viewer can tune them (`tweaks.rs`); the values
+// and the notes on each are in `lump_skin` and `lump_core`.
+const LUMP_SKIN_EMBER: vec3<f32> = vec3<f32>(96.0, 14.0, 26.0);
+const LUMP_SKIN_VIOLET: vec3<f32> = vec3<f32>(120.0, 56.0, 190.0);
+const LUMP_SKIN_INK: vec3<f32> = vec3<f32>(26.0, 20.0, 34.0);
+const LUMP_SKIN_BONE: vec3<f32> = vec3<f32>(140.0, 134.0, 152.0);
+const LUMP_SKIN_FRUIT: vec3<f32> = vec3<f32>(62.0, 34.0, 16.0);
+const LUMP_SKIN_MORTAR: vec3<f32> = vec3<f32>(34.0, 58.0, 18.0);
+const LUMP_SKIN_PINWHEEL: vec3<f32> = vec3<f32>(26.0, 44.0, 120.0);
+const LUMP_SKIN_HEART: vec3<f32> = vec3<f32>(110.0, 48.0, 4.0);
+const LUMP_CORE_EMBER: vec3<f32> = vec3<f32>(255.0, 120.0, 60.0);
+const LUMP_CORE_VIOLET: vec3<f32> = vec3<f32>(220.0, 150.0, 255.0);
+const LUMP_CORE_INK: vec3<f32> = vec3<f32>(200.0, 180.0, 255.0);
+const LUMP_CORE_BONE: vec3<f32> = vec3<f32>(120.0, 90.0, 74.0);
+const LUMP_CORE_FRUIT: vec3<f32> = vec3<f32>(255.0, 220.0, 150.0);
+const LUMP_CORE_MORTAR: vec3<f32> = vec3<f32>(196.0, 245.0, 70.0);
+const LUMP_CORE_PINWHEEL: vec3<f32> = vec3<f32>(150.0, 205.0, 255.0);
+const LUMP_CORE_HEART: vec3<f32> = vec3<f32>(255.0, 196.0, 80.0);
+
 // Each look's skin (the body's albedo), core light (emissive, where its
 // members are thickest) and hit colour (a member's dot as it takes hits).
 // Violet is the hunter's: the one hue the screen did not use (the slime
@@ -1671,45 +1693,45 @@ struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover:
 // leech ink.
 fn lump_skin(k: u32) -> vec3<f32> {
     switch k {
-        case 1u: { return vec3<f32>(96.0, 14.0, 26.0); }
-        case 2u: { return vec3<f32>(120.0, 56.0, 190.0); }
-        case 3u: { return vec3<f32>(26.0, 20.0, 34.0); }
-        case 4u: { return vec3<f32>(140.0, 134.0, 152.0); }
+        case 1u: { return LUMP_SKIN_EMBER; }
+        case 2u: { return LUMP_SKIN_VIOLET; }
+        case 3u: { return LUMP_SKIN_INK; }
+        case 4u: { return LUMP_SKIN_BONE; }
         // The fruit (2026-11-20, `fruit.rs`): dark umber, a sporangium's
         // colour, darkening from a dull rust as it ripens (`lump_mat`).
-        case 5u: { return vec3<f32>(62.0, 34.0, 16.0); }
+        case 5u: { return LUMP_SKIN_FRUIT; }
         // The mortar (2026-11-20, the Enemy lane): deep moss, a hue
         // nothing else on the slime uses; its core's light brings it up
         // to a saturated green, apart from the plants' muted greens
         // (filmed on planet 4 at zoom 9 beside the grass).
-        case 6u: { return vec3<f32>(34.0, 58.0, 18.0); }
+        case 6u: { return LUMP_SKIN_MORTAR; }
         // The pinwheel (2026-11-20, the Enemy lane): cobalt, the one blue
         // on the slime, so its turning arms read against the gold.
-        case 7u: { return vec3<f32>(26.0, 44.0, 120.0); }
+        case 7u: { return LUMP_SKIN_PINWHEEL; }
         // The last-stand heart (2026-11-20, the Enemy lane, `stand.rs`):
         // the slime's own gold run dark, so it reads as the slime's heart,
         // not a mini-boss (none of their skins is gold).
-        case 8u: { return vec3<f32>(110.0, 48.0, 4.0); }
+        case 8u: { return LUMP_SKIN_HEART; }
         default: { return MOULD_HUE; }
     }
 }
 fn lump_core(k: u32) -> vec3<f32> {
     switch k {
-        case 1u: { return vec3<f32>(255.0, 120.0, 60.0); }
-        case 2u: { return vec3<f32>(220.0, 150.0, 255.0); }
-        case 3u: { return vec3<f32>(200.0, 180.0, 255.0); }
-        case 4u: { return vec3<f32>(120.0, 90.0, 74.0); }
+        case 1u: { return LUMP_CORE_EMBER; }
+        case 2u: { return LUMP_CORE_VIOLET; }
+        case 3u: { return LUMP_CORE_INK; }
+        case 4u: { return LUMP_CORE_BONE; }
         // The fruit's spores: cream points, its members' own dots
         // (`draw_specks`). Its body's light is a fifth of the others'
         // (`lump_mat`): at full a cream light washed a packed knot pale
         // tan, the bone wanderer's read.
-        case 5u: { return vec3<f32>(255.0, 220.0, 150.0); }
+        case 5u: { return LUMP_CORE_FRUIT; }
         // The mortar's acid yellow-green core.
-        case 6u: { return vec3<f32>(196.0, 245.0, 70.0); }
+        case 6u: { return LUMP_CORE_MORTAR; }
         // The pinwheel's ice-blue core.
-        case 7u: { return vec3<f32>(150.0, 205.0, 255.0); }
+        case 7u: { return LUMP_CORE_PINWHEEL; }
         // The heart's hot amber core.
-        case 8u: { return vec3<f32>(255.0, 196.0, 80.0); }
+        case 8u: { return LUMP_CORE_HEART; }
         default: { return vec3<f32>(0.0); }
     }
 }

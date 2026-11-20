@@ -222,6 +222,12 @@ pub struct Drop {
 impl Drop {
     /// A core dropped at tick `now` (`cores.rs`), gone at `ends`, `r` fine
     /// cells round.
+    /// Ore from the sky, warned of at `now`, landing at `lands` (the
+    /// slime viewer drops one where it is clicked, `Game::force_ore`).
+    pub fn ore(at: (f32, f32), worth: f32, now: u64, lands: u64, ends: u64, r: f32) -> Drop {
+        Drop { kind: DropKind::Ore, from: CoreFrom::Sky, home: None, at, lands, ends, warned: now, down: false, r, worth, left: worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: false }
+    }
+
     pub fn core(at: (f32, f32), worth: f32, from: CoreFrom, now: u64, ends: u64, r: f32) -> Drop {
         // A raid's core feeds the next surge once half is eaten; a boss's
         // re-forms it instead (`Game::time_cores`).
@@ -313,7 +319,7 @@ impl<W: World> Game<W> {
             self.starfall.plan.as_mut().map(|p| p.pop());
             if let Some(at) = self.fall_spot() {
                 let lands = now + secs(r.warn);
-                self.starfall.live.push(Drop { kind: DropKind::Ore, from: CoreFrom::Sky, home: None, at, lands, ends: lands + secs(r.life), warned: now, down: false, r: r.ore_r * sc, worth: r.worth, left: r.worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: false });
+                self.starfall.live.push(Drop::ore(at, r.worth, now, lands, lands + secs(r.life), r.ore_r * sc));
             }
         }
         // Landing: the blast under it, a hurt to soldiers there, and its
