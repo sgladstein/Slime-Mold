@@ -287,8 +287,8 @@ the view, a dark rim, white-hot cooling to orange, 0.45 s and 7 cells
 rim is gone: each droplet is a bead in the slime's gold lit by its key
 light, with a small shadow
 ([droplets](../../Reports/droplets-2026-11-18/README.md)). Camera shake
-and hit-stop on blasts are built and off (`shake=K`, `hitstop=K`; the
-review's D6, waiting on the owner).
+and hit-stop on blasts are on in the game since 2026-11-20 (the owner's
+card, "Turn them on"; the review's D6), `shake=0 hitstop=0` off for a film.
 
 ## Owner's word
 

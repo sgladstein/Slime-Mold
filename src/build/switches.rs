@@ -154,22 +154,15 @@ const _: () = assert!(SETTLING || SWITCHES.len() <= MOST_OFF, "more switches are
 /// Look and interface settled the set slime's look on 11-18: amber is
 /// what the game draws, and its glaze and its unmarked side were deleted
 /// with the window key `setlook` (`Reports/dead-ends.md`).
+/// Shake and hit-stop (`feel`, the window keys `shake` and `hitstop`) went
+/// on in the default game on the owner's card of 2026-11-20 22:05Z ("Turn
+/// them on"); `shake=0 hitstop=0` turns them off for a film.
 ///
 /// To add one: a row here, in the same change as the key. To settle one:
 /// make its choice the engine's or the rules' own default (or a tier's
 /// trait in `tiers.rs` / `run::does_to_you`) and delete the row, or delete
 /// the feature and the row and add the `Reports/dead-ends.md` line.
 pub const SWITCHES: &[Switch] = &[
-    Switch {
-        key: "feel",
-        label: "Shake and hit-stop",
-        choices: &[OFF, on(&[("win:shake", "1"), ("win:hitstop", "1")])],
-        default: "off",
-        lane: Lane::Squad,
-        since: "2026-11-15",
-        sees: "The camera shakes on blasts, and the game holds still for a moment when a big blast lands",
-        why_off: "The owner asked to see it before it goes on (11-15, D6); his play with it on decides",
-    },
     Switch {
         key: "crystal_regrow",
         label: "Crystals refill",
@@ -280,7 +273,7 @@ pub fn state(keys: &[(String, String)]) -> Vec<(&'static Switch, &'static str)> 
     out
 }
 
-/// The play log's word for `state`: `feel:on,crystal_regrow:on`, or
+/// The play log's word for `state`: `crystal_regrow:on`, or
 /// `none`.
 pub fn log_word(keys: &[(String, String)]) -> String {
     let on = state(keys);
