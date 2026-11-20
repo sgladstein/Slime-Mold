@@ -356,7 +356,14 @@ pub const LURE_PULL: f32 = 10.0;
 /// into a dark knot out of the guns' reach. Break it within 30 s or it
 /// bursts and throws its walkers over the planet as spores that land on
 /// food as new slime. One at a time, 40 s apart at least. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0)];
+///
+/// **The slime comes in waves when it is losing** (`wave`, 2026-11-20, the
+/// same thread; `larder_world/waves.rs`). From 1:30, once the squad has
+/// killed an eighth of the slime's mass in 20 s and the slime is shrinking,
+/// the slime near the squad pulls back past the guns' reach to two or
+/// three points round it, masses there for 12 s, and comes in from all of
+/// them at once for 8 s. 45 s apart at least. GPU only.
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0)];
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)

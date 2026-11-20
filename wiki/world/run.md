@@ -38,6 +38,7 @@ code:
   - Game::boss_aim
   - Game::fruit_looks
   - Game::lump_taken
+  - Game::wave_points
   - LADDER
   - LURE_PULL
   - LureMark
@@ -55,6 +56,7 @@ code:
   - Run::shop
   - STUCK_WARN
   - WIN_SHARE
+  - WaveRules
   - ammo_price
   - area_of
   - bring
@@ -82,6 +84,7 @@ code:
   - time_fort
   - time_fruit
   - time_lure_paths
+  - time_waves
   - two_stars
 ---
 
@@ -129,6 +132,10 @@ The gun range plays with its shop as a free armory (below).
 ## Fruiting
 
 On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is just lots of shooting through masses of uniform orange. Think outside the box"): when the squad is winning, the slime streams 8% of itself (at most 2,500 walkers) into a knot at its thickest slime out of the guns' reach (`larder_world/fruit.rs`, `FruitRules`, on every run planet by `ENEMY_RULES`). The knot is a lump (`Game::lump_taken`: bosses, marches and fruits share `big::LUMPS`) whose members take two blows, it swells to twice its first size, and it is drawn umber, darkening as it ripens (`LumpLook::Fruit`, its strength the ripeness, `Game::fruit_looks`). After 30 s it bursts and every walker in it flies out as a spore that homes on food and lands as living slime (`World::sow`, the engine's `sow_pass`; GPU only); shot under 35% of its most members it breaks. It starts from 1:30 after the landing once kills over 30 s reach a fifth of the slime's mass (a trigger on a fall under its peak was tried and deleted: on planet 3 it fired against a squad of four nowhere near), and not under 8% of its peak; one at a time, 40 s apart ([report](../../Reports/fruiting-2026-11-20/README.md)).
+
+## Waves
+
+On since 2026-11-20 (the same thread as fruiting; `larder_world/waves.rs`, `WaveRules`, `run::ENEMY_RULES`' `wave`): from 1:30, when the squad's kills over 20 s reach an eighth of the slime's mass and the mass is down over those 20 s, the slime reads its losses. A field (`World::set_wave_field`, engine.wgsl's `wave_dist` in the raid region after the raid's blocks, pull 40, calm walkers only) leans it to two or three points 20 dish cells past the guns' reach round the thickest knot of soldiers, the points with the most slime near them, at least 70 degrees apart; for 12 s it masses there, then the field turns to the soldiers and a surge starts with the panic reach stretched to the masses (`Game::keep_panic_reach`), so it comes in from every point at once for 8 s. 45 s from one's end to the next. GPU only.
 
 ## Mini-bosses since the review of 11-20
 

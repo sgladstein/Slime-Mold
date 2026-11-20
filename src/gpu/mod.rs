@@ -1637,6 +1637,12 @@ pub struct Engine {
     /// (`write_lure_field`): only then is `Settings::lure_pull` sent, so
     /// with no lure standing a calm walker reads no word for it.
     pub lured: bool,
+    /// The slime's wave field is written and reaches somewhere
+    /// (`write_wave_field`, 2026-11-20): only then is its pull (`wave_w`)
+    /// sent, in the lone step row's first word, so with no wave a calm
+    /// walker reads no word for it.
+    pub waved: bool,
+    pub wave_w: f32,
     /// A fort mask is written and marks some block (`write_fort`,
     /// 2026-11-18): only then is the fort's flag sent (Params word 888),
     /// so with no fort a walker reads no word for it.
@@ -1993,6 +1999,8 @@ impl Engine {
             clouds: Default::default(),
             minds: !d.mind.is_empty(),
             lured: false,
+            waved: false,
+            wave_w: 0.0,
             forted: false,
             mind_until: mind_until(&d),
             clouded: false,
@@ -2200,6 +2208,7 @@ impl Engine {
         // none); the game writes them again within a game second. The
         // fort's mask the same (`Game::time_fort` writes it again).
         self.lured = false;
+        self.waved = false;
         self.forted = false;
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.specks = self.grows && d.p.roam > 0;
@@ -2381,10 +2390,12 @@ impl Engine {
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
-        // The lone step's row, free since 11-17 (`LONE_AT`) but for its
-        // third word, the fort's flag (`forted`, 11-18).
-        // Its last word, the tether since 11-18 (`Settings::tether`).
-        b.extend(u32_bytes(&[0, 0, self.forted as u32, s.tether]));
+        // The lone step's row, free since 11-17 (`LONE_AT`): its first
+        // word the wave's pull (`waved`, 2026-11-20), its third the fort's
+        // flag (`forted`, 11-18), its last the tether since 11-18
+        // (`Settings::tether`).
+        let wave = if self.waved { self.wave_w } else { 0.0 };
+        b.extend(u32_bytes(&[wave.to_bits(), 0, self.forted as u32, s.tether]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words, condensing's (11-14, the condense
         // thread): the first is free since 11-17 (`condense`, deleted), then
@@ -3577,11 +3588,17 @@ fn block_words(field: &[u32], w: usize, h: usize) -> Vec<u32> {
 impl Engine {
     /// Writes the mirror dish's raid walking distance (`BigDish::
     /// raid_field`) to `news` after the dense cells; zeros with none.
+    ///
+    /// Only its blocks (`RAID_BLOCK`, a quarter of the region): the
+    /// region's second quarter is the wave's field (`write_wave_field`,
+    /// 2026-11-20), which a raid must not clear.
     pub fn write_raid_field(&self) {
         let cells = self.cells as usize;
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = (self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b)).min(cells);
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + cells) as u64;
-        let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(cells).collect();
-        w.resize(cells, 0);
+        let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(nb).collect();
+        w.resize(nb, 0);
         self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
     }
 
@@ -3626,6 +3643,30 @@ impl Engine {
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 2 * nb) as u64;
         self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
         self.lured = reaches;
+    }
+
+    /// **Writes the slime's wave field** (engine.wgsl's `wave_dist`;
+    /// 2026-11-20, `Game::time_waves`): each block's walking distance to
+    /// the nearest of the wave's points (`big::units_field_for`'s blocks,
+    /// `u32::MAX` where none reaches), in the second quarter of the raid's
+    /// region (after the raid's own blocks), and the pull a calm walker
+    /// leans down it with. An empty field clears it. No CPU twin (the
+    /// owner's card, 11-17 19:21Z). Nothing is written while there was no
+    /// wave and there is none.
+    pub fn write_wave_field(&mut self, field: &[u32], pull: f32) {
+        let reaches = field.iter().any(|&d| d != u32::MAX);
+        if !reaches && !self.waved {
+            return;
+        }
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        if 2 * nb > self.cells as usize {
+            return;
+        }
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + self.cells as usize + nb) as u64;
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
+        self.waved = reaches;
+        self.wave_w = pull;
     }
 
     /// **Writes the fort's mask** (engine.wgsl's `fort_at`; 2026-11-18,

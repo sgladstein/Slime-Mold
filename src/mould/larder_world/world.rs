@@ -175,6 +175,17 @@ pub trait World {
     fn can_sow(&self) -> bool {
         false
     }
+    /// **The wave's field** (2026-11-20, `Game::time_waves`): each block's
+    /// walking distance to the nearest of the wave's points (`u32::MAX`
+    /// past its reach), or empty for none, and the pull a calm walker
+    /// leans down it with (`gpu::Engine::write_wave_field`). A rule of the
+    /// GPU engine only, as the lure's field is.
+    fn set_wave_field(&mut self, _field: Vec<u32>, _pull: f32) {}
+    /// Whether `set_wave_field` does anything, so a world that cannot
+    /// never sends a wave.
+    fn can_wave(&self) -> bool {
+        false
+    }
     /// The ground a raid walks (the slime's agar, `w` x `h` fine cells),
     /// copied so the game can build the raid's way round walls off the
     /// frame; None for a world with no raids.
