@@ -54,6 +54,14 @@ pub(super) const STEER_NEAR: f32 = 10.0;
 /// bank, dish cells (`Rules::crystal_solid`).
 pub(super) const RIM: f32 = 1.0;
 
+/// Dish cells between soldiers' spots round a crystal (`Game::rim_spots`):
+/// a drawn figure's width (`soldier_r`, 1.15 touch radii a side), so each
+/// stands clear of the next at zoom 12.
+pub(super) const SPOT: f32 = 3.5;
+/// Rings of spots round a crystal at most (only the first is in a
+/// harvester's reach).
+const RIM_RINGS: usize = 4;
+
 /// How far from a goal in rock or a wall `Game::goal` looks for ground,
 /// and how far a soldier shut in a wall looks for a way out
 /// (`Game::walk`), dish cells.
@@ -307,7 +315,11 @@ impl<W: World> Game<W> {
     /// `goal`, and whether it was moved off rock or a wall onto ground.
     pub(super) fn goal_ground(&self, k: usize) -> Option<((f32, f32), bool)> {
         let s = self.soldiers[k];
-        let g = self.rim(self.goal_raw(k)?, (s.x, s.y));
+        let raw = self.goal_raw(k)?;
+        // Round a crystal: its own spot on the rim (`rim_spots`), if it
+        // has one for this crystal.
+        let spot = self.paths.rim_spot.get(k).copied().flatten().filter(|&p| self.solid_at(raw).is_some_and(|(c, r)| (p.0 - c.0).hypot(p.1 - c.1) < r + (RIM + 4.0 * SPOT) * self.s()));
+        let g = spot.unwrap_or_else(|| self.rim(raw, (s.x, s.y)));
         // A goal in rock or a wall (a click on one, or a squad slot past a
         // wall's edge) is the nearest ground a soldier can stand on. Before
         // (2026-11-14), the walking map from a walled-in goal reached no
@@ -599,6 +611,104 @@ impl<W: World> Game<W> {
         if self.paths.building.is_some() {
             self.paths.build_stale = true;
         }
+    }
+
+    /// Each living soldier's own spot round the crystal its goal falls in
+    /// (`Paths::rim_spot`), for `goal`: once a step, before the soldiers
+    /// walk (`squad_turn`).
+    ///
+    /// Without them each goal in a crystal went to the rim on its
+    /// soldier's own side (`rim`), so a squad harvesting, guarding or
+    /// standing round a crystal pressed into one arc of the rim, each
+    /// pulled in until its neighbours' elbow room held it: harvesters
+    /// stood 2.1 dish cells from their nearest (median; planet 1, run seed
+    /// 1, `hand=greedy`), where a drawn figure is 3.45 across, stacked at
+    /// zoom 6 and 12 (Direction, from the Look lane's exit test 2,
+    /// 2026-11-21). Now the soldiers at one crystal take spots on the ring
+    /// just past the rim, `SPOT` apart or closer (down to elbow room) when
+    /// the ring must hold them all, the nearest first to the side they
+    /// stand on; past that, rings `SPOT` x 0.87 further out, every other
+    /// one turned half a spot. They are handed out in the order the
+    /// soldiers stand round the crystal, so none crosses another to its
+    /// spot. A first try put a second ring out before the first went
+    /// round: its soldiers stood out of a harvester's reach, and the
+    /// greedy hand's harvest at 60 s fell from 4,081 to 2,040.
+    pub(super) fn rim_spots(&mut self) {
+        let n = self.soldiers.len();
+        let mut spots = vec![None; n];
+        if !self.rules.squads || self.solid.is_empty() {
+            self.paths.rim_spot = spots;
+            return;
+        }
+        let sc = self.s();
+        let sep = SPOT * sc;
+        // Who stands round which crystal: its goal falls in the disc.
+        let mut at: Vec<Vec<usize>> = vec![Vec::new(); self.solid.len()];
+        for k in 0..n {
+            if !self.soldiers[k].alive {
+                continue;
+            }
+            let Some(g) = self.goal_raw(k) else { continue };
+            if let Some(i) = self.solid.iter().position(|&(c, r)| (g.0 - c.0).hypot(g.1 - c.1) < r) {
+                at[i].push(k);
+            }
+        }
+        for (i, ks) in at.iter().enumerate() {
+            if ks.is_empty() {
+                continue;
+            }
+            let (c, r) = self.solid[i];
+            let ang = |p: (f32, f32)| (p.1 - c.1).atan2(p.0 - c.0);
+            // The side they stand on: the way to their middle.
+            let (mx, my) = ks.iter().fold((0.0, 0.0), |a, &k| (a.0 + self.soldiers[k].x, a.1 + self.soldiers[k].y));
+            let side = (my / ks.len() as f32 - c.1).atan2(mx / ks.len() as f32 - c.0);
+            let turn = |a: f32| {
+                let d = (a - side).rem_euclid(std::f32::consts::TAU);
+                if d > std::f32::consts::PI { d - std::f32::consts::TAU } else { d }
+            };
+            // Spots, ring by ring, scored by how far round and out. The
+            // first ring is the one in a harvester's reach (`turn.rs`: the
+            // crystal's whole radius and 2 cells), so it fills all the way
+            // round before the next, its spots closing up to elbow room to
+            // hold everyone if need be.
+            let r0 = r + RIM * sc;
+            let tau = std::f32::consts::TAU;
+            let tight = self.rules.elbow * self.rules.touch * sc;
+            let sep0 = (tau * r0 / ks.len() as f32).clamp(tight.min(sep), sep);
+            let mut cand: Vec<(f32, f32, (f32, f32))> = Vec::new();
+            for ring in 0..RIM_RINGS {
+                let rr = r0 + ring as f32 * 0.87 * sep;
+                let sep = if ring == 0 { sep0 } else { sep };
+                let m = ((tau * rr / sep).floor() as usize).max(1);
+                let step = std::f32::consts::TAU / m as f32;
+                let half = if ring % 2 == 1 { 0.5 * step } else { 0.0 };
+                for j in 0..m {
+                    let a = side + half + j as f32 * step;
+                    let p = (c.0 + rr * a.cos(), c.1 + rr * a.sin());
+                    if !self.standable(p.0, p.1) {
+                        continue;
+                    }
+                    let t = turn(a);
+                    cand.push((t.abs() * r0 + ring as f32 * tau * rr, t, p));
+                }
+                if cand.len() >= 3 * ks.len() {
+                    break;
+                }
+            }
+            cand.sort_by(|a, b| a.0.total_cmp(&b.0));
+            cand.truncate(ks.len());
+            // In order round the crystal, from the side.
+            cand.sort_by(|a, b| a.1.total_cmp(&b.1));
+            let mut order: Vec<usize> = ks.clone();
+            order.sort_by(|&a, &b| {
+                let (pa, pb) = ((self.soldiers[a].x, self.soldiers[a].y), (self.soldiers[b].x, self.soldiers[b].y));
+                turn(ang(pa)).total_cmp(&turn(ang(pb))).then(a.cmp(&b))
+            });
+            for (&k, spot) in order.iter().zip(&cand) {
+                spots[k] = Some(spot.2);
+            }
+        }
+        self.paths.rim_spot = spots;
     }
 
     /// `p`, or if it is on a solid crystal, the point just past that

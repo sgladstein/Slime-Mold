@@ -260,3 +260,18 @@ nearest ground.
 Frame cost: a squad that sees fire on its way plans on squares a sixteenth
 the dish's cells (about 4,000 on planet 1) once a game second; squads with
 no fire ahead check 40 cells of line.
+
+## Own spots round a crystal: kept (2026-11-21)
+
+Look's exit test 2 pass found soldiers stacked round crystals at zoom 6 and
+12. Each soldier's goal inside a solid crystal was projected to the rim on
+its own side (`Game::rim`), so a squad pressed into one arc. Now
+`Game::rim_spots` gives each its own spot round the rim, `SPOT` 3.5 dish
+cells apart, filling ring 0 all the way round before a second ring.
+Planet 1, run seed 1, `hand=greedy`, `LARDER_PATHLOG` with
+[tools/spacing.py](tools/spacing.py): nearest neighbour of standing
+soldiers 2.12 -> 3.54 cells median, under 2.4 cells 92% -> 0%, under
+3.45 cells 93% -> 20%; harvest at 60 s 4,081 -> 4,199, soldiers 18 -> 19.
+Tried first and changed: rings filled nearest-first put a second ring out
+before the first was full and halved the harvest at 60 s (2,040), since
+only ring 0 is in reach. Still: [crystal-spots/zoom12-before-after.png](crystal-spots/zoom12-before-after.png).
