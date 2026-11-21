@@ -3388,7 +3388,7 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
         (g, top)
     };
     // Streams (`march` off): the world's raid words are what this tests.
-    let fast = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, late: 1.0, size_sd: 0.0, march: false, ..RaidRules::default() };
+    let fast = RaidRules { first: 2.0, first_sd: 0.0, early: 0.0, min: 1.0, gap_min: 0.0, every: 5.0, every_sd: 0.0, late: 1.0, size_sd: 0.0, march: false, ..RaidRules::default() };
     let (g, top) = play(fast, false, 14.0);
     eprintln!("raids: {:?}", g.raids.sent);
     assert!(g.raids.sent.len() >= 2, "a raid every 5 s: {}", g.raids.sent.len());
@@ -3423,7 +3423,7 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert!(!RaidRules::default().last_stand);
     // Random (owner 2026-11-16 01:48Z): each raid draws its gap and its
     // size from a normal distribution, within the floor and the bounds.
-    let spread = RaidRules { first: 2.0, first_sd: 1.0, early: 0.0, min: 2.0, every: 4.0, every_sd: 2.0, late: 1.0, size: 0.15, size_sd: 0.06, ..RaidRules::default() };
+    let spread = RaidRules { first: 2.0, first_sd: 1.0, early: 0.0, min: 2.0, gap_min: 0.0, every: 4.0, every_sd: 2.0, late: 1.0, size: 0.15, size_sd: 0.06, ..RaidRules::default() };
     let (g, _) = play(spread, false, 30.0);
     let r = &g.raids.sent;
     assert!(r.len() >= 4, "{} raids in 30 s", r.len());
@@ -3433,6 +3433,11 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert!(gaps.iter().all(|&a| a >= 2 * g.rules.tps as u64), "never under the floor: {gaps:?}");
     assert!(r.iter().any(|d| d.size != r[0].size), "the sizes vary");
     assert!(r.iter().all(|d| (spread.size_min..=spread.size_max).contains(&d.size)));
+    // The gap floor (`gap_min`, Direction 2026-11-21): no two raids closer
+    // than it, whatever the draw.
+    let (g, _) = play(RaidRules { gap_min: 6.0, ..spread }, false, 30.0);
+    let gaps: Vec<u64> = g.raids.sent.windows(2).map(|w| w[1].tick - w[0].tick).collect();
+    assert!(gaps.len() >= 2 && gaps.iter().all(|&a| a >= 6 * g.rules.tps as u64), "never closer than gap_min: {gaps:?}");
 }
 
 /// **The march** (`RaidRules::march`, 2026-11-18, the owner's play notes:

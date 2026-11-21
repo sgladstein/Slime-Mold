@@ -78,6 +78,13 @@ pub struct RaidRules {
     pub early_at: f32,
     pub early_sd: f32,
     pub min: f32,
+    /// The least time between two raids, whatever the draw (Direction,
+    /// 2026-11-21). The owner's target was a gap of about 45 s by 10:00;
+    /// the draw's spread (45 +/- 13.5 s from then on) still came under it,
+    /// and his planet 1 game (`planet:1:1795236572`) had raids 26 s apart
+    /// at 12:53, one of which took a third of his squad. `min` stays the
+    /// floor for the first raid.
+    pub gap_min: f32,
     /// The raid's size, a share of the slime's mass: drawn from a normal
     /// distribution with this mean and `size_sd` each raid, kept within
     /// `size_min`..`size_max`.
@@ -148,6 +155,7 @@ impl Default for RaidRules {
             early_at: 80.0,
             early_sd: 20.0,
             min: 20.0,
+            gap_min: 45.0,
             size: 0.15,
             size_sd: 0.06,
             size_min: 0.04,
@@ -692,7 +700,7 @@ impl<W: World> Game<W> {
         if r.every <= 0.0 {
             return;
         }
-        let gap = |raids: &mut Raids, m: f32, sd: f32| secs(raids.normal(m, sd).max(r.min));
+        let gap = |raids: &mut Raids, m: f32, sd: f32| secs(raids.normal(m, sd).max(r.min).max(r.gap_min));
         let next = match self.raids.next {
             Some(t) => t,
             None => {
@@ -1041,6 +1049,7 @@ mod tests {
         let (m, sd) = r.gap_at(600.0);
         assert!((m - 45.0).abs() < 1e-3 && (sd - 13.5).abs() < 1e-3, "{m} {sd} at 10:00");
         assert_eq!(r.gap_at(900.0), r.gap_at(600.0), "and stays there");
+        assert_eq!(r.gap_min, 45.0, "never closer than 45 s, whatever the draw");
         assert!((1..60).all(|k| r.gap_at(k as f32 * 10.0).0 < r.gap_at((k - 1) as f32 * 10.0).0), "falls all the way");
         // No ramp: the gap stays `every`; no early chance: always `first`.
         let flat = RaidRules { late: 1.0, early: 0.0, ..r };
