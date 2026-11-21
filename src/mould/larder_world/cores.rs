@@ -120,7 +120,8 @@ impl<W: World> Game<W> {
                 i += 1;
                 continue;
             }
-            self.starfall.live.remove(i);
+            let d = self.starfall.live.remove(i);
+            self.drop_gone(&d);
         }
     }
 
@@ -175,6 +176,7 @@ impl<W: World> Game<W> {
                 let h = self.core_home(d.at);
                 self.starfall.live[i].home = Some(h);
                 self.lure_marks.push(LureMark { at: h, until: d.ends });
+                self.starfall.live[i].lure = Some(h);
                 h
             }
         };
