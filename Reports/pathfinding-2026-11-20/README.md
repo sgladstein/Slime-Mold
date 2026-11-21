@@ -275,3 +275,17 @@ soldiers 2.12 -> 3.54 cells median, under 2.4 cells 92% -> 0%, under
 Tried first and changed: rings filled nearest-first put a second ring out
 before the first was full and halved the harvest at 60 s (2,040), since
 only ring 0 is in reach. Still: [crystal-spots/zoom12-before-after.png](crystal-spots/zoom12-before-after.png).
+
+Smoke check on CI's run bot (seeds 1 to 3, planets 1 to 3; main just
+before #674, 474dde43, against just after, 618f6964, the only change):
+all 9 planets won both times, stars 23 -> 24, soldiers lost 59 -> 31,
+harvest 172,205 -> 164,540, but planets 2,540 -> 2,957 s in all, 6 of 9
+longer (seed 3's planet 3 400 -> 647 s, 2 stars -> 1). The harvest was not
+it (equal income to 160 s in a local replay of seed 2's planet 1): the
+bot's rush is an attack-move onto the slime's home crystal, and spots
+spread it round the whole rim, half of it through the slime. Follow-up:
+spots only for move, guard and drain orders. Local replays of planet 1
+(main with #674 against the follow-up): seed 2 wiped at 268 -> 247 s;
+seed 3 at 300 s slime left 11,959 -> 1, harvest 13,373 -> 18,422. The
+greedy hand's spacing round a crystal stays (3.6 cells median, harvest
+at 60 s 4,199).

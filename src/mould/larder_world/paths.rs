@@ -58,8 +58,7 @@ pub(super) const RIM: f32 = 1.0;
 /// a drawn figure's width (`soldier_r`, 1.15 touch radii a side), so each
 /// stands clear of the next at zoom 12.
 pub(super) const SPOT: f32 = 3.5;
-/// Rings of spots round a crystal at most (only the first is in a
-/// harvester's reach).
+/// Rings of spots past a harvester's reach round a crystal at most.
 const RIM_RINGS: usize = 4;
 
 /// How far from a goal in rock or a wall `Game::goal` looks for ground,
@@ -632,7 +631,9 @@ impl<W: World> Game<W> {
     /// soldiers stand round the crystal, so none crosses another to its
     /// spot. A first try put a second ring out before the first went
     /// round: its soldiers stood out of a harvester's reach, and the
-    /// greedy hand's harvest at 60 s fell from 4,081 to 2,040.
+    /// greedy hand's harvest at 60 s fell from 4,081 to 2,040. Since the
+    /// disc shrinks as it is drained while reach is from its whole radius,
+    /// every ring still in reach fills before any ring past it.
     pub(super) fn rim_spots(&mut self) {
         let n = self.soldiers.len();
         let mut spots = vec![None; n];
@@ -645,7 +646,14 @@ impl<W: World> Game<W> {
         // Who stands round which crystal: its goal falls in the disc.
         let mut at: Vec<Vec<usize>> = vec![Vec::new(); self.solid.len()];
         for k in 0..n {
-            if !self.soldiers[k].alive {
+            // Only standing, guarding and draining orders. Not attack-move
+            // or attack: a squad sent to fight at a crystal (the run bot's
+            // rush at the slime's home crystal) spread round the
+            // whole rim, half of it walking round through the slime, and
+            // CI's run bot took 16% longer over planets 1 to 3 (6 of 9
+            // planets longer, seed 3's planet 3 400 -> 647 s; harvest and
+            // losses no worse). Fighters stand on their own side, as before.
+            if !self.soldiers[k].alive || !matches!(self.soldiers[k].order, Order::Move(..) | Order::Guard(..) | Order::Clear(..)) {
                 continue;
             }
             let Some(g) = self.goal_raw(k) else { continue };
@@ -666,21 +674,31 @@ impl<W: World> Game<W> {
                 let d = (a - side).rem_euclid(std::f32::consts::TAU);
                 if d > std::f32::consts::PI { d - std::f32::consts::TAU } else { d }
             };
-            // Spots, ring by ring, scored by how far round and out. The
-            // first ring is the one in a harvester's reach (`turn.rs`: the
-            // crystal's whole radius and 2 cells), so it fills all the way
-            // round before the next, its spots closing up to elbow room to
-            // hold everyone if need be.
+            // Spots, ring by ring, scored by how far round and out. Every
+            // ring inside a harvester's reach (`turn.rs`: the crystal's
+            // whole radius and `RIM` + 1 cells, while the disc shrinks
+            // with the charge) comes before any ring past it, each going
+            // all the way round before the next, `SPOT` apart or as much
+            // closer (down to elbow room) as it takes to hold the squad
+            // inside reach. Rings past reach, `SPOT` apart, hold the rest.
             let r0 = r + RIM * sc;
             let tau = std::f32::consts::TAU;
             let tight = self.rules.elbow * self.rules.touch * sc;
-            let sep0 = (tau * r0 / ks.len() as f32).clamp(tight.min(sep), sep);
+            let full = self.world.crystals().iter().position(|x| x.0 == c).map_or(r, |j| self.world.crystal_r(j));
+            let reach = (full + (RIM + 1.0) * sc - 0.25 * sc).max(r0);
+            let rings_in = |gap: f32| {
+                let pitch = 0.87 * gap;
+                (0..).map(move |ring| r0 + ring as f32 * pitch).take_while(move |&rr| rr <= reach)
+            };
+            let room = |gap: f32| rings_in(gap).map(|rr| (tau * rr / gap).floor() as usize).sum::<usize>();
+            let mut gap = sep;
+            while gap > tight && room(gap) < ks.len() {
+                gap = (gap * 0.9).max(tight);
+            }
             let mut cand: Vec<(f32, f32, (f32, f32))> = Vec::new();
-            for ring in 0..RIM_RINGS {
-                let rr = r0 + ring as f32 * 0.87 * sep;
-                let sep = if ring == 0 { sep0 } else { sep };
-                let m = ((tau * rr / sep).floor() as usize).max(1);
-                let step = std::f32::consts::TAU / m as f32;
+            let add = |rr: f32, gap: f32, ring: usize, past: bool, cand: &mut Vec<(f32, f32, (f32, f32))>| {
+                let m = ((tau * rr / gap).floor() as usize).max(1);
+                let step = tau / m as f32;
                 let half = if ring % 2 == 1 { 0.5 * step } else { 0.0 };
                 for j in 0..m {
                     let a = side + half + j as f32 * step;
@@ -689,11 +707,23 @@ impl<W: World> Game<W> {
                         continue;
                     }
                     let t = turn(a);
-                    cand.push((t.abs() * r0 + ring as f32 * tau * rr, t, p));
+                    cand.push((if past { 1e9 } else { 0.0 } + t.abs() * r0 + ring as f32 * tau * rr, t, p));
                 }
+            };
+            let mut last = r0;
+            let mut ring = 0;
+            for rr in rings_in(gap) {
+                add(rr, gap, ring, false, &mut cand);
+                last = rr;
+                ring += 1;
+            }
+            for _ in 0..RIM_RINGS {
                 if cand.len() >= 3 * ks.len() {
                     break;
                 }
+                last += 0.87 * sep;
+                add(last, sep, ring, true, &mut cand);
+                ring += 1;
             }
             cand.sort_by(|a, b| a.0.total_cmp(&b.0));
             cand.truncate(ks.len());

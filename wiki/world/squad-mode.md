@@ -204,6 +204,13 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   neighbour 2.1 -> 3.5 cells median, under 2.4 cells 92% -> 0%, harvest
   at 60 s 4,081 -> 4,199. A first try that put a second ring out before the
   first was full halved the harvest (the outer ring is out of reach).
+  Since the follow-up (same day) only move, guard and drain orders take
+  spots: on attack-move or attack at a crystal (the run bot's rush at the
+  slime's home crystal) the squad spread round the whole rim, half of it
+  through the slime, and CI's run bot took 16% longer over seeds 1 to 3
+  (6 of 9 planets longer; losses 59 -> 31, harvest no worse). Every ring
+  inside harvest reach (the shrinking disc to the whole radius) fills
+  before any past it.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
   column ends once its tail is near the anchor; since 2026-11-21 no
