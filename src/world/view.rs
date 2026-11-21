@@ -65,6 +65,12 @@ pub enum SlimeLook {
     /// awake keep the gold, so a wave waking reads as gold spreading over
     /// the crust (`DORMANT_DIM`, `DORMANT_MATTE` in `view.wgsl`).
     Dormant = 5,
+    /// The Grudge's scars (11-20): it remembers where it was hurt (the
+    /// engine's scar, `set_scar`) and shuns that ground, so where the scar
+    /// lies its body is knotted, darker scar tissue and bare ground there
+    /// keeps a faint bruise (`SCAR_FULL`, `SCAR_BRUISE` in `view.wgsl`):
+    /// you see where it will not come back to.
+    Scarred = 6,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -79,6 +85,7 @@ impl SlimeLook {
             Some(crate::mould::tiers::Tier::Trunk) => SlimeLook::Cords,
             Some(crate::mould::tiers::Tier::Swarmer) => SlimeLook::Swell,
             Some(crate::mould::tiers::Tier::Sleeper) => SlimeLook::Dormant,
+            Some(crate::mould::tiers::Tier::Grudge) => SlimeLook::Scarred,
             _ => SlimeLook::Plain,
         }
     }
@@ -92,8 +99,10 @@ const MARGIN: u32 = 4;
 /// The bindings after the first twenty, in `bind`'s order: 20 the lights,
 /// then 21-24 the crystals' live charge, their heat (`drain`), the terrain
 /// cells (`tcell`) and the crystal cells listed, and 25-26 the engine's two
-/// germ fields, whose second block is the alarm (`set_alarm`).
-const BINDINGS_AFTER: [u32; 8] = [LIGHTS_BINDING, 21, 22, 23, 24, 25, 26, 27];
+/// germ fields, whose second block is the alarm (`set_alarm`), 27 each
+/// walker's life word (`set_life`) and 28 the engine's damage memory, whose
+/// second block is the scar (`set_scar`).
+const BINDINGS_AFTER: [u32; 9] = [LIGHTS_BINDING, 21, 22, 23, 24, 25, 26, 27, 28];
 
 /// The most point lights a frame (`View::set_lights`); `shaded` loops over
 /// them a pixel, so the cap bounds that loop.
@@ -328,6 +337,12 @@ pub struct View {
     life: wgpu::Buffer,
     /// Whether `life` is the engine's.
     life_on: bool,
+    /// The engine's damage memory (`set_scar`; its `crater`, whose second
+    /// block is the Grudge's scar a cell), for the Grudge's look; a 16-byte
+    /// stand-in otherwise.
+    scar: wgpu::Buffer,
+    /// Whether `scar` is the engine's.
+    scar_on: bool,
     /// Food's news (`set_news`): the engine's news (the step each walker
     /// last heard of food) and state (the step now) buffers, and the
     /// engine's lag and lean in steps.
@@ -458,7 +473,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro), entry(25, ro), entry(26, ro), entry(27, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro), entry(25, ro), entry(26, ro), entry(27, ro), entry(28, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -475,13 +490,14 @@ impl View {
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
         let life = storage(device, "life", 16);
+        let scar = storage(device, "scar", 16);
         let lights = storage(device, "lights", (MAX_LIGHTS * 32) as u64);
         let (news, state) = (storage(device, "news", 16), storage(device, "state", 16));
         let fgrid = Self::fine_buffer(device, screen);
         let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
         let (charge, heat, gem_list) = (storage(device, "charge", 16), storage(device, "crystal heat", 16), storage(device, "crystal list", 16));
         let germ = [storage(device, "germ 0", 16), storage(device, "germ 1", 16)];
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1], &life]);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1], &life, &scar]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -502,6 +518,8 @@ impl View {
             lives: false,
             life,
             life_on: false,
+            scar,
+            scar_on: false,
             news,
             state,
             fgrid,
@@ -613,14 +631,14 @@ impl View {
     }
 
     /// The bind group: `bufs` in binding order, 0-19 then `BINDINGS_AFTER`.
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 28]) -> wgpu::BindGroup {
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 29]) -> wgpu::BindGroup {
         let binding = |i: usize| if i < 20 { i as u32 } else { BINDINGS_AFTER[i - 20] };
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1], &self.life]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1], &self.life, &self.scar]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -661,6 +679,17 @@ impl View {
         (self.life, self.life_on) = match spec {
             Some(b) => (b.clone(), true),
             None => (storage(&self.device, "life", 16), false),
+        };
+        self.rebind();
+    }
+
+    /// The engine's damage memory (its `crater` buffer: the crater's
+    /// countdown a cell, then the scar a cell), for the Grudge's scars
+    /// (`SlimeLook::Scarred`, Look B 2026-11-20). None: not shown.
+    pub fn set_scar(&mut self, crater: Option<&wgpu::Buffer>) {
+        (self.scar, self.scar_on) = match crater {
+            Some(b) => (b.clone(), true),
+            None => (storage(&self.device, "scar", 16), false),
         };
         self.rebind();
     }
@@ -1147,7 +1176,7 @@ impl View {
             b.extend(v.to_le_bytes());
         }
         let streak = if self.slime_look == SlimeLook::Threads { self.streak } else { 0.0 };
-        for v in [self.slime_look as u32, streak.to_bits(), self.life_on as u32, 0] {
+        for v in [self.slime_look as u32, streak.to_bits(), self.life_on as u32, self.scar_on as u32] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
@@ -2719,6 +2748,67 @@ mod tests {
                 assert!(ta < pa, "zoom {zoom}: {name}'s film ahead of it thins, as the dash holds one walker: {pa} -> {ta}");
             }
         }
+    }
+
+    /// The Grudge's scars (Look B, 2026-11-20): bare ground, its west half
+    /// scarred (the engine's damage memory's second block) and its east
+    /// half not. With the Grudge's look the scarred ground is darker than
+    /// the clean; plain, or with no damage memory bound, the two halves
+    /// draw alike. At zoom 6.
+    #[test]
+    fn the_grudges_scarred_ground_stays_marked() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let world = buf("world", &px);
+        let look_b = buf("look", &crate::gpu::u32_bytes(&vec![0u32; w * h]));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let mut crater = vec![0f32; 2 * w * h];
+        for y in 0..h {
+            for x in 0..w / 2 {
+                crater[w * h + y * w + x] = 5.0;
+            }
+        }
+        let crater_b = buf("crater", &crater.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on((32.0, 20.0));
+        // The summed channels of the 5 x 5 pixels round each point.
+        let shot = |view: &mut View, look: SlimeLook| {
+            view.set_slime_look(look, 0.0);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            let pic = view.picture();
+            [(20.0f32, 20.0f32), (44.0, 20.0)].map(|p| {
+                let (sx, sy) = cam.to_screen(p);
+                let mut c = 0i32;
+                for dy in -2..=2 {
+                    for dx in -2..=2 {
+                        let v = pic.get_pixel((sx as i32 + dx) as u32, (sy as i32 + dy) as u32).0;
+                        c += v[0] as i32 + v[1] as i32 + v[2] as i32;
+                    }
+                }
+                c / 25
+            })
+        };
+        let [ps, pc] = shot(&mut view, SlimeLook::Scarred);
+        // The ground's own grain parts the two spots by a few levels.
+        assert!((ps - pc).abs() <= 6, "no damage memory bound: the halves draw alike ({ps}, {pc})");
+        view.set_scar(Some(&crater_b));
+        let [gs, gc] = shot(&mut view, SlimeLook::Scarred);
+        assert!(gc - gs > pc - ps + 15, "the Grudge's scarred ground is darker: scarred {gs}, clean {gc} (unbound {ps}, {pc})");
+        let [ls, lc] = shot(&mut view, SlimeLook::Plain);
+        assert!((ls - ps).abs() <= 1 && (lc - pc).abs() <= 1, "plain, the scar draws nothing ({ls}, {lc})");
     }
 
     /// A Mind status on the slime it holds (Look A5, 2026-11-18): two

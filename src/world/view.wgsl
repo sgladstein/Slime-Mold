@@ -161,6 +161,11 @@ struct V {
 // the engine's `state`); `look_spare0` is 1 when it is bound. Read only by
 // the Sleeper's look.
 @group(0) @binding(27) var<storage, read> life_words: array<u32>;
+// The engine's damage memory (`View::set_scar`, Look B 2026-11-20): its
+// `crater` buffer, the crater's countdown a cell and then the Grudge's scar
+// a cell, f32 bits; `look_spare1` is 1 when it is bound. Read only by the
+// Grudge's look.
+@group(0) @binding(28) var<storage, read> scar_words: array<u32>;
 
 fn unpack(c: u32) -> vec3<f32> {
     return vec3<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u));
@@ -1634,6 +1639,47 @@ fn dormant_mat(m0: Mat, d: f32) -> Mat {
     return m;
 }
 
+// The Grudge's scars (`SlimeLook::Scarred`, 11-20): the engine's scar, the
+// memory of where it was hurt that it steers away from (`scar_weight`).
+// The scar that reads full is `SCAR_FULL`. Slime on scarred ground is scar
+// tissue: paler and glossier than its gold, the way a healed wound is, by
+// up to `SCAR_TISSUE`; bare scarred ground darkens by up to `SCAR_BRUISE`,
+// so the places it shuns stay marked after it has left them.
+const SCAR_FULL: f32 = 1.0;
+const SCAR_TISSUE: f32 = 0.5;
+const SCAR_BRUISE: f32 = 0.3;
+fn scar_cell(ix: i32, iy: i32) -> f32 {
+    return bitcast<f32>(scar_words[P.ww * P.wh + cidx(ix, iy)]);
+}
+// The scar at (x, y), 0-1 of full, bilinear over the open cells round it
+// (as `alarm_at`: the engine keeps none in rock or walls).
+fn scar_share(x: f32, y: f32) -> f32 {
+    if (P.slime_look != 6u || P.look_spare1 == 0u) { return 0.0; }
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - f32(ix); let ty = fy - f32(iy);
+    let w = vec4<f32>((1.0 - tx) * (1.0 - ty) * alarm_open(ix, iy), tx * (1.0 - ty) * alarm_open(ix + 1, iy),
+        (1.0 - tx) * ty * alarm_open(ix, iy + 1), tx * ty * alarm_open(ix + 1, iy + 1));
+    let s = w.x + w.y + w.z + w.w;
+    if (s <= 0.0) { return 0.0; }
+    let a = vec4<f32>(scar_cell(ix, iy), scar_cell(ix + 1, iy), scar_cell(ix, iy + 1), scar_cell(ix + 1, iy + 1));
+    return 1.0 - exp(-max(dot(w, a) / s, 0.0) / SCAR_FULL);
+}
+// `tm` the slime's thickness here: the tissue only where there is slime
+// (its gloss over bare ground drew pale glossy streaks in the first cut),
+// the bruise only where there is none. The bare ground's colour is this
+// material's (`soil_detail` adds only its grain), so the bruise goes here,
+// not in the ground estimate (`hg`), which the grain would cancel.
+fn scar_mat(m0: Mat, s: f32, tm: f32) -> Mat {
+    if (s <= 0.0) { return m0; }
+    var m = m0;
+    let slime = smoothstep(0.05, 0.3, tm);
+    let pale = mix(m.albedo, vec3<f32>(dot(m.albedo, vec3<f32>(0.3, 0.5, 0.2))) * vec3<f32>(1.15, 1.05, 0.9), 0.6) * 1.15;
+    m.albedo = mix(m.albedo * (1.0 - SCAR_BRUISE * s * (1.0 - slime)), pale, SCAR_TISSUE * s * slime);
+    m.gloss = mix(m.gloss, max(m.gloss, 0.9), SCAR_TISSUE * s * slime);
+    return m;
+}
+
 fn look_trail(x: f32, y: f32) -> f32 {
     let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
     var t = 0.0;
@@ -2166,6 +2212,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         m1 = lump_mat(m1, lump, tm);
         m1 = set_mat(m1, ss, wide);
         m1 = dormant_mat(m1, dormant_share(gid.x, gid.y));
+        m1 = scar_mat(m1, scar_share(wx, wy), tm);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -2195,6 +2242,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     mt = lump_mat(mt, lump, tm);
     mt = set_mat(mt, ss, wide);
     mt = dormant_mat(mt, dormant_share(gid.x, gid.y));
+    mt = scar_mat(mt, scar_share(wx, wy), tm);
     hcell[i] = h.x + set_rise(ss, wide);
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);

@@ -2356,6 +2356,46 @@ mod tests {
         w.form_lump(0, None);
     }
 
+    /// **A walker born where a striker took one in is counted** (the bug
+    /// check, 2026-11-20). Condensing marks the walkers it takes in dead,
+    /// as a strike does; a child born into such a slot takes its parent's
+    /// life state only with the life states on (`born`), so until this the
+    /// child of a world that condensed before anything turned them on
+    /// (every pass that kills does; in a game the first shot's spray does)
+    /// kept the dead mark: it lived and moved but was never counted. A
+    /// nearly full world, so the births land in those slots.
+    #[test]
+    fn walkers_born_where_strikers_took_walkers_in_are_counted() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let s = Settings { capacity: 2_100, ..race_settings(seed, scale, walkers) };
+        let mut w = GpuWorld::new(&device, &queue, s, scale);
+        let home = w.crystals()[0].0;
+        let at = (home.0 + 25.0, home.1);
+        let f = Frame { units: vec![squad::UnitIn { x: at.0, y: at.1, touch: 1.5, ..Default::default() }], ..Frame::default() };
+        for _ in 0..2 {
+            w.frame(&f, 15);
+        }
+        w.set_strikers(Some(1.5));
+        // By position, not by pattern: the slime thread's #598 adds a
+        // fourth number (the band) and either may land first.
+        let took = w.condense(20.0, 1.0, 3).expect("the GPU world condenses").2;
+        assert!(took >= 30, "the edge condenses: {took} taken in");
+        for _ in 0..12 {
+            w.frame(&f, 15);
+        }
+        let e = &w.e;
+        let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+        let life = e.life_of().0;
+        let live = (0..e.n as usize).filter(|&q| en[q] >= 0.0).count();
+        let marked = (0..e.n as usize).filter(|&q| en[q] >= 0.0 && life[q] == crate::mould::big::LIFE_DEAD).count();
+        eprintln!("strikers on a full world: {took} taken in; {live} slots live, {marked} of them marked dead, counted {}", w.living());
+        assert!(live > 2_000 - took as usize, "the slime was born into the room: {live} live");
+        assert_eq!(marked, 0, "no walker born into a taken-in walker's slot keeps its dead mark");
+        assert_eq!(w.living(), live, "so the count sees every one");
+    }
+
     /// **The last-stand heart** (2026-11-20, `larder_world/stand.rs`), a
     /// rule of the GPU engine alone (the owner's card, 11-17 19:21Z), so its
     /// test is what it does on the software GPU: a race world with its
