@@ -5,14 +5,14 @@
 use super::*;
 use crate::mould::big::BigDish;
 
-/// A squad-mode game, 8 soldiers off the start crystal, slime called near
-/// (`CoverRules::near` 0, so defenders come out as by the mould).
+/// A squad-mode game, 8 soldiers off the start crystal. (Until 2026-11-21
+/// slime was called near here so the squad's lookouts came out; they are
+/// gone.)
 fn eight(seed: u64) -> Game<BigDish> {
     let mut g = Game::new(race_world(seed, 1, 1_000), Rules { start_bank: 1e6, squads: true, ..Rules::default() }, seed);
     while g.members(0).len() < 8 {
         assert!(g.apply(Cmd::Buy));
     }
-    g.rules.cover.near = 0;
     g
 }
 

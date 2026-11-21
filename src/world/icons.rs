@@ -110,6 +110,17 @@ pub enum Icon {
     // one earned, open for one missed.
     Star,
     StarOpen,
+    // The squad's formations (the Formation page, 2026-11-21): each its
+    // soldiers as dots, the front (where it faces) to the right; and Hold
+    // fire, a crosshair struck through.
+    FormBlob,
+    FormSpread,
+    FormLine,
+    FormWedge,
+    FormRing,
+    FormColumn,
+    HoldFire,
+    Formation,
 }
 
 impl Icon {
@@ -206,6 +217,15 @@ impl Icon {
             Icon::Still => &["M3 7.5 C5.8 4.5 8.2 10.5 12 7.5 C15.8 4.5 18.2 10.5 21 7.5", "M3 13 L21 13", "M3 18 L21 18"],
             Icon::Star => &["FM12.0 2.8 L14.5 9.4 L21.5 9.7 L16.0 14.1 L17.9 20.9 L12.0 17.0 L6.1 20.9 L8.0 14.1 L2.5 9.7 L9.5 9.4 Z"],
             Icon::StarOpen => &["M12.0 2.8 L14.5 9.4 L21.5 9.7 L16.0 14.1 L17.9 20.9 L12.0 17.0 L6.1 20.9 L8.0 14.1 L2.5 9.7 L9.5 9.4 Z"],
+            Icon::FormBlob => &["FO12.0 12.0 1.7", "FO8.0 9.0 1.7", "FO16.0 9.0 1.7", "FO8.0 15.0 1.7", "FO16.0 15.0 1.7", "FO12.0 6.5 1.7", "FO12.0 17.5 1.7", "FO5.0 12.0 1.7", "FO19.0 12.0 1.7"],
+            Icon::FormSpread => &["FO12.0 12.0 1.5", "FO5.0 5.0 1.5", "FO19.0 5.0 1.5", "FO5.0 19.0 1.5", "FO19.0 19.0 1.5", "FO12.0 4.0 1.5", "FO12.0 20.0 1.5", "FO4.0 12.0 1.5", "FO20.0 12.0 1.5"],
+            Icon::FormLine => &["FO14.0 3.0 1.7", "FO14.0 7.5 1.7", "FO14.0 12.0 1.7", "FO14.0 16.5 1.7", "FO14.0 21.0 1.7", "FO8.0 5.2 1.7", "FO8.0 9.8 1.7", "FO8.0 14.2 1.7", "FO8.0 18.8 1.7"],
+            Icon::FormWedge => &["FO19.0 12.0 1.7", "FO14.5 8.5 1.7", "FO14.5 15.5 1.7", "FO10.0 5.5 1.7", "FO10.0 18.5 1.7", "FO5.0 2.5 1.7", "FO5.0 21.5 1.7"],
+            Icon::FormRing => &["FO20.0 12.0 1.7", "FO17.7 17.7 1.7", "FO12.0 20.0 1.7", "FO6.3 17.7 1.7", "FO4.0 12.0 1.7", "FO6.3 6.3 1.7", "FO12.0 4.0 1.7", "FO17.7 6.3 1.7"],
+            Icon::FormColumn => &["FO3.5 9.0 1.7", "FO3.5 15.0 1.7", "FO9.2 9.0 1.7", "FO9.2 15.0 1.7", "FO14.8 9.0 1.7", "FO14.8 15.0 1.7", "FO20.5 9.0 1.7", "FO20.5 15.0 1.7"],
+            Icon::HoldFire => &["O12 12 7", "M12 2 L12 6", "M12 18 L12 22", "M2 12 L6 12", "M18 12 L22 12", "M4.5 19.5 L19.5 4.5"],
+            // The Formation button: a small wedge and a line behind it.
+            Icon::Formation => &["FO19.0 12.0 1.7", "FO14.0 8.0 1.7", "FO14.0 16.0 1.7", "FO9.0 4.5 1.7", "FO9.0 19.5 1.7", "M4 4 L4 20"],
             Icon::Tinder => &["M2 20 L19 20", "M3.5 20 L5.5 14", "M6.5 20 L7 15", "M9 20 L11 13.5", "M12 20 L12.5 15.5", "M14.5 20 L16.5 14", "M3 20 L1.8 16.5", "M8 20 L7.2 16.8", "M13.5 20 L13 17", "FO20.5 8 2", "M18.5 10 L16.5 12"],
             Icon::Multicast => &["M2 12 L6 12", "M6 12 L13 7.5", "M6 12 L13 16.5", "M13 5 L19 5 C21 5 22 6 22 7.5 C22 9 21 10 19 10 L13 10 Z", "M13 14 L19 14 C21 14 22 15 22 16.5 C22 18 21 19 19 19 L13 19 Z"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],

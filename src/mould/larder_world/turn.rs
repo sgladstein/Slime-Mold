@@ -158,7 +158,7 @@ impl<W: World> Game<W> {
                     // From its rim (`Rules::crystal_solid`), with the slot's room.
                     let room = if self.rules.crystal_solid { RIM + 1.0 } else { 1.0 };
                     if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + room * sc {
-                        take = (r.harvest * if r.larder { 1.0 } else { r.hand } * dt * self.work_boost(k)).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
+                        take = (r.harvest * if r.larder { 1.0 } else { r.hand } * dt).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
                         at_crystal = Some(i);
                     }
                 }
@@ -239,9 +239,9 @@ impl<W: World> Game<W> {
                                 }
                             }
                         }
-                        // A worker of a squad shoots less often (`CoverRules::work_fire`).
+                        // A worker fires at its full rate: it fired at half
+                        // while lookouts stood guard (`cover`, gone 11-21).
                         let gap = self.shot_gap(q);
-                        let gap = if r.squads && self.working(k) { ((gap as f32 / r.cover.work_fire.max(0.01)).round() as u64).max(1) } else { gap };
                         self.soldiers[k].ready = t + gap;
                         shot = true;
                         self.bank -= r.price;

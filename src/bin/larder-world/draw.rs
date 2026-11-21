@@ -1571,6 +1571,16 @@ impl App {
             g.gun_range(sel.first().map_or(0, |&k| g.soldiers[k].squad as usize)),
             if r.price > 0.0 { format!("; every shot costs {:.0} food", r.price) } else { String::new() }
         );
+        // The squad mode's fire mode, apart from Hold fire (owner 2026-11-21
+        // 05:04Z: "hold fire should be a separate button from defend vs
+        // free fire"): a held soldier's mode is the one it goes back to
+        // (`App::unheld`).
+        let mode_of = |k: usize| match g.soldiers[k].stance {
+            Stance::HoldFire => self.unheld.get(&k).copied().unwrap_or(Stance::Defend),
+            st => st,
+        };
+        let mode = sel.first().map(|&k| mode_of(k)).filter(|&f| sel.iter().all(|&k| mode_of(k) == f));
+        let held = any && sel.iter().all(|&k| g.soldiers[k].stance == Stance::HoldFire);
         let mut cmds = vec![
             Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Walk there, stopping to fire freely at any mould in reach on the way. Click the core to attack it: stand on it with no mould near for {:.0} s and it can grow no more. Shift queues it.", r.core_secs), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack-move", KeyCode::KeyA) },
             Command { ready: any, why_not: no_sel(), about: "Drop the order and stand still; still fires by its stance.".into(), ..Command::new(STOP, (0, 1), Icon::Stop, "Stop", KeyCode::KeyS) },
@@ -1582,16 +1592,35 @@ impl App {
                 about: format!("Click a spot, a building or a crystal: the {} goes there and shoots mould coming onto it ({:.0} cells round a spot, {:.0} past a crystal's or a building's edge), on top of its own defence, till it gets another order. Not on hold fire.", if squads { "squad" } else { "soldier" }, r.guard_r, GUARD_RIM),
                 ..Command::new(GUARD, at((0, 3), (0, 1)), Icon::Shield, "Guard", KeyCode::KeyF)
             },
-            Command {
-                ready: any,
-                why_not: no_sel(),
-                about: fire_about,
-                also: vec![(KeyCode::KeyZ, HOLD_FIRE), (KeyCode::KeyX, DEFEND), (KeyCode::KeyC, FREE)],
-                ..Command::new(FIRE, at((0, 4), (0, 3)), match stance {
-                    Some(Stance::HoldFire) => Icon::Close,
-                    Some(Stance::Free) => Icon::Target,
-                    _ => Icon::Eye,
-                }, fire_name, KeyCode::KeyX)
+            if squads {
+                Command {
+                    ready: any,
+                    why_not: no_sel(),
+                    about: format!(
+                        "Click to switch what the soldiers shoot by themselves: defend (only mould within {:.0} cells, on a crystal it works or on what it guards; the default) or free fire (the thickest mould in reach, {:.0} cells{}). Hold fire is its own button; switched here while held, they fire this way once it is let go.",
+                        r.defend,
+                        g.gun_range(sel.first().map_or(0, |&k| g.soldiers[k].squad as usize)),
+                        if r.price > 0.0 { format!("; every shot costs {:.0} food", r.price) } else { String::new() }
+                    ),
+                    ..Command::new(FIRE, (0, 3), if mode == Some(Stance::Free) { Icon::Target } else { Icon::Eye }, match mode {
+                        Some(Stance::Free) => "Fire: free",
+                        Some(_) => "Fire: defend",
+                        None if any => "Fire: mixed",
+                        None => "Fire",
+                    }, KeyCode::KeyX)
+                }
+            } else {
+                Command {
+                    ready: any,
+                    why_not: no_sel(),
+                    about: fire_about,
+                    also: vec![(KeyCode::KeyZ, HOLD_FIRE), (KeyCode::KeyX, DEFEND), (KeyCode::KeyC, FREE)],
+                    ..Command::new(FIRE, (0, 4), match stance {
+                        Some(Stance::HoldFire) => Icon::Close,
+                        Some(Stance::Free) => Icon::Target,
+                        _ => Icon::Eye,
+                    }, fire_name, KeyCode::KeyX)
+                }
             },
             Command {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
@@ -1600,26 +1629,51 @@ impl App {
                 about: "A new soldier at the larder.".into(),
                 ..Command::new(BUY, (1, 0), Icon::Recruit, "Buy a soldier", KeyCode::KeyB)
             },
+            // Pump's main-card slot is Heal's in the squad mode (below,
+            // 2026-11-21); there Pump is on the Build page only.
             pump((1, 1)),
-            Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, at((1, 3), (1, 2)), Icon::Turret, "Build", KeyCode::KeyQ) },
+            Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, (1, 3), Icon::Turret, "Build", KeyCode::KeyQ) },
             Command {
                 about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
-                ..Command::new(TOOLS_PAGE, at((1, 4), (1, 3)), Icon::Grenade, "Tools", KeyCode::KeyE)
+                ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
             },
         ];
-        // The squad's own orders, off the squad panel (Card 2): Heal and
-        // its lookouts while it works.
-        if let (true, Some(a)) = (squads, g.active) {
-            let heal_off = super::squadmode::heal_off(g, a);
-            cmds.push(Command { ready: heal_off.is_none(), why_not: heal_off, about: "The squad stops where it is and heals, paying food from the bank: fast by a crystal you hold, slow elsewhere. Any order ends it.".into(), ..Command::new(HEAL_ORDER, (0, 4), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
-            let cover = g.squads[a].cover;
+        // The squad mode's Hold fire and Formation (owner 2026-11-21
+        // 05:04Z). Hold fire takes Heal's (0, 4), beside the fire button;
+        // Formation takes the last slot, (1, 5), and opens the Formation
+        // page.
+        if squads {
+            // The card's sixth column (owner 06:21Z: "Shrink the gun section
+            // to get another column. Add walls to the main page."): Heal at
+            // (0, 5), the wall at (1, 2) (as on the Build page, V). For a
+            // few minutes Heal sat on the Formation page and then in Pump's
+            // slot (owner 06:14Z: "heal is in formation?").
+            let heal_off = g.active.map_or(no_sel(), |a| super::squadmode::heal_off(g, a));
+            cmds.push(Command { ready: heal_off.is_none(), why_not: heal_off, about: "The squad stops where it is and heals, paying food from the bank: fast by a crystal you hold, slow elsewhere. Any order ends it.".into(), ..Command::new(HEAL_ORDER, (0, 5), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
             cmds.push(Command {
-                about: format!("How many of the squad keep watch with slime near while it drains or builds: none, some or more (now {}). Click to change. Lookouts work slower but shoot what comes.", cover.name()),
-                ..Command::new(LOOKOUTS, (1, 4), Icon::Eye, &format!("Lookouts: {}", cover.name()), super::squadmode::LOOKOUTS_KEY)
+                target: Target::Line { width: r.wall_width * sc },
+                // The price a cell, bare: "20/cell" ran past the narrower
+                // button's edge.
+                cost: Some(format!("{:.0}", r.wall_cost)),
+                ready: g.bank >= r.wall_cost,
+                why_not: need(r.wall_cost),
+                about: format!("A wall the mould has to wear through, slowly. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_cost),
+                ..Command::new(WALL, (1, 2), Icon::Wall, "Wall", KeyCode::KeyV)
             });
-        } else if squads {
-            cmds.push(Command { ready: false, why_not: no_sel(), about: "The squad stops where it is and heals for food.".into(), ..Command::new(HEAL_ORDER, (0, 4), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
-            cmds.push(Command { ready: false, why_not: no_sel(), about: "How many of the squad keep watch while it drains or builds.".into(), ..Command::new(LOOKOUTS, (1, 4), Icon::Eye, "Lookouts", super::squadmode::LOOKOUTS_KEY) });
+            cmds.push(Command {
+                ready: any,
+                on: held,
+                why_not: no_sel(),
+                about: "Click to stop the squad shooting by itself, and again to let it fire as the fire button says. Holding the left button still fires its volley at the cursor.".into(),
+                ..Command::new(HOLD_FIRE, (0, 4), Icon::HoldFire, if held { "Hold fire: on" } else { "Hold fire" }, KeyCode::KeyZ)
+            });
+            let f = g.active.map(|a| g.squads[a].formation);
+            cmds.push(Command {
+                ready: f.is_some(),
+                why_not: no_sel(),
+                about: format!("How the squad stands and walks: blob, spread, line, wedge, column or ring (now {}). Opens the formation page.", f.map_or("none", |f| f.name())),
+                ..Command::new(FORM_PAGE, (1, 5), f.map_or(Icon::Formation, form_icon), &f.map_or("Formation".to_string(), |f| format!("Formation: {}", f.name())), super::squadmode::FORMATION)
+            });
         }
         // The rally point at (1, 2), or on the build page with the larder's
         // other places when sowing has that slot (own=1 fills the main
@@ -1648,6 +1702,24 @@ impl App {
                 cmds.push(s);
             }
             road = Some(Command { ready: any, on: all(Task::Road), why_not: no_sel(), about: "Lay a road of your mould's trail where the soldier walks, free: your mould follows it. Lead it to food or into the enemy, where it converts the enemy's slime it outweighs. Press again to stop.".into(), ..Command::new(ROAD, (1, 0), Icon::Move, "Lay a road", KeyCode::KeyY) });
+        }
+        if self.form_page && squads {
+            let now = g.active.map(|a| g.squads[a].formation);
+            let form = |id: u32, slot: (u8, u8), key: KeyCode, about: &str| {
+                let f = super::form_of(id).unwrap_or_default();
+                let mut name = f.name().to_string();
+                name[..1].make_ascii_uppercase();
+                Command { ready: now.is_some(), on: now == Some(f), why_not: no_sel(), about: about.into(), ..Command::new(id, slot, form_icon(f), &name, key) }
+            };
+            cmds = vec![
+                form(F_BLOB, (0, 0), KeyCode::KeyZ, "A tight crowd round its middle: the default. Every gun near every other."),
+                form(F_SPREAD, (0, 1), KeyCode::KeyX, "The blob loosened to about twice its room: fewer soldiers in one bite of a surge, and fire spread over more of the mould. Wider through gaps."),
+                form(F_LINE, (0, 2), KeyCode::KeyC, "Shoulder to shoulder across the way it faces (the cursor, for the squad you command), rows of eight: every gun has a clear line forward."),
+                form(F_WEDGE, (0, 3), KeyCode::KeyV, "A V with its point toward the cursor: a narrow front that pushes into the mould with guns down both sides."),
+                form(F_COLUMN, (0, 4), KeyCode::KeyF, "Two abreast, front to back, facing where it walks: files through doors, bridges and gaps between rocks without bunching."),
+                form(F_RING, (0, 5), KeyCode::KeyG, "A circle facing out, for holding ground with mould on every side."),
+                Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 5), Icon::Close, "Back", super::squadmode::FORMATION) },
+            ];
         }
         if self.tools_page {
             let k = &g.kit;
@@ -2459,6 +2531,19 @@ pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
 /// lures' switch were hidden with them until 2026-11-18 (owner's card,
 /// 03:03Z: "Lure now, in the three planets"); it needs no unlock
 /// (`run_lock`).
+/// A formation's icon on the card: its soldiers as dots.
+fn form_icon(f: slime_mould::mould::larder_world::Formation) -> Icon {
+    use slime_mould::mould::larder_world::Formation;
+    match f {
+        Formation::Blob => Icon::FormBlob,
+        Formation::Line => Icon::FormLine,
+        Formation::Wedge => Icon::FormWedge,
+        Formation::Ring => Icon::FormRing,
+        Formation::Column => Icon::FormColumn,
+        Formation::Spread => Icon::FormSpread,
+    }
+}
+
 pub(super) fn run_hidden(id: u32) -> bool {
     // Provoke and Still are test devices until the gun thread's cards.
     matches!(id, SIREN | OUTPOST | T_PROVOKE | T_STILL)

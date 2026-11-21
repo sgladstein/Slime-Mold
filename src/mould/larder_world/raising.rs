@@ -72,14 +72,9 @@ impl<W: World> Game<W> {
                 }
             }
             Some(_) => {
-                // A wall's defenders stand with its builders but don't
-                // raise it (`cover_one`).
-                if self.at_site(k, b) && !s.cover {
+                if self.at_site(k, b) {
                     let secs = self.raise_secs(b);
-                    // A working squad's builders make up for its defenders
-                    // (`Game::work_boost`).
-                    let boost = self.work_boost(k);
-                    let mut amount = if secs > 0.0 { dt / secs * boost } else { 1.0 };
+                    let mut amount = if secs > 0.0 { dt / secs } else { 1.0 };
                     // A wall doesn't close on a soldier still in its
                     // footprint: it waits at its last sliver while they
                     // step out to its home side (`goal_raw`), so nobody is

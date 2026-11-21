@@ -19,7 +19,8 @@
 //!   you control that one. **Shift + drag** a box pulls the soldiers in it
 //!   out into a squad of their own. **J** joins the nearest squad within
 //!   reach into it.
-//! - **T** cycles its formation: blob, line, wedge, ring.
+//! - **T** opens the card's Formation page: blob, spread, line, wedge,
+//!   column, ring (a squad key that cycled them until 2026-11-21).
 //! - **Esc** lets go of it (and the panel's Let go button): nothing is
 //!   controlled, every squad keeps its last orders, fires at slime in reach
 //!   and guards on its own ("auto" on its tile and over it), and WASD pans
@@ -75,17 +76,21 @@ pub(super) fn overlapping(g: &Game<GpuWorld>, q: usize) -> Vec<usize> {
 /// The squad's own keys after the card's (`App::squad_key`).
 pub(super) const SPLIT: KeyCode = KeyCode::KeyY;
 pub(super) const MERGE: KeyCode = KeyCode::KeyJ;
+/// The card's Formation button and the Formation page's Back (2026-11-21;
+/// until then T cycled blob, line, wedge, ring as a squad key).
 pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
 /// One key to go through the squads in turn, Shift for back (owner,
 /// 2026-11-19 16:55Z: "there should be a single button to cycle through
 /// squads"). The key left of 1, by the squads' own number keys: Tab was
 /// taken by four times faster, and every letter near WASD by the card.
 pub(super) const CYCLE: KeyCode = KeyCode::Backquote;
-/// The card's Lookouts and Heal (Card 2, 2026-11-15 19:38Z; they were the
-/// squad panel's Guards and Heal). Heal: owner 2026-11-15 07:41Z,
-/// "Healing should be a specific action". On the build page I and L are
-/// the outpost and the lure's, as every card key is that page's there.
-pub(super) const LOOKOUTS_KEY: KeyCode = KeyCode::KeyI;
+/// The card's Heal (Card 2, 2026-11-15 19:38Z; it was the squad panel's).
+/// Heal: owner 2026-11-15 07:41Z, "Healing should be a specific action".
+/// Since 2026-11-21 it is on the main card's sixth column, and L heals
+/// from the other pages too (`App::squad_key`), bar the build page, where
+/// L is the lure's, as
+/// every card key is that page's there. (The card's Lookouts, I, went
+/// 2026-11-21 with the lookouts.)
 pub(super) const HEAL_KEY: KeyCode = KeyCode::KeyL;
 
 /// The bearing (radians) the cursor must swing round the controlled
@@ -128,10 +133,10 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
         ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
-        (k(LOOKOUTS_KEY), "Lookouts while working: none, some, more (on the card)".into()),
         (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
+        ("Z".into(), "Hold fire: on and off; the fire button (X) picks defend or free fire".into()),
         ("Click a building".into(), "With no squad commanded: select it (its health and state; cancel, demolish, upgrade, switch)".into()),
-        (k(FORMATION), "Formation: blob, line, wedge, ring".into()),
+        (k(FORMATION), "Formation page: blob, spread, line, wedge, column, ring (on the card)".into()),
         ("Wheel, middle drag".into(), "Zoom, pan; Space brings the camera back".into()),
     ]
     .into_iter()
@@ -312,12 +317,17 @@ impl App {
             }
             return false;
         }
-        let ours = matches!(code, SPLIT | MERGE | FORMATION | CYCLE) || digit(code).is_some();
+        let ours = matches!(code, SPLIT | MERGE | HEAL_KEY | CYCLE) || digit(code).is_some();
         if !pressed || repeat || !ours {
             return ours;
         }
         if code == CYCLE {
             self.cycle_squad(if self.shift { -1 } else { 1 });
+            return true;
+        }
+        // Heal from wherever the card is (it sits on the Formation page).
+        if code == HEAL_KEY {
+            self.squad_heal();
             return true;
         }
         let at = self.cursor_world();
@@ -335,17 +345,6 @@ impl App {
                     g.apply(Cmd::Merge(q, o as u8));
                 } else {
                     self.hud.alert("No squad overlaps yours: bring them together to combine, or link them (Ctrl + its number)", None, theme::WARN);
-                }
-            }
-            FORMATION => {
-                let f = g.squads[q as usize].formation.next();
-                for r in g.linked(q as usize) {
-                    g.apply(Cmd::Formation(r as u8, f));
-                }
-                self.hud.alert(&format!("Formation: {}", f.name()), None, theme::TEXT);
-                if let Some(sq) = self.sq.as_mut() {
-                    // A line or wedge turns to the cursor at once.
-                    sq.face_at = None;
                 }
             }
             _ => {
@@ -702,7 +701,6 @@ impl App {
                 if sq.formation != Formation::Blob {
                     note.push(sq.formation.name().to_string());
                 }
-                let guards = g.members(q).iter().filter(|&&k| g.soldiers[k].cover).count();
                 if g.active != Some(q) && !g.leads(q) {
                     note.push("on its own".into());
                 }
@@ -710,8 +708,6 @@ impl App {
                     "firing".to_string()
                 } else if sq.heal {
                     "healing".to_string()
-                } else if sq.work.is_some() && guards > 0 {
-                    format!("working, {guards} on guard")
                 } else if sq.work.is_some() {
                     "working".to_string()
                 } else if sq.steer != (0.0, 0.0) || sq.dest.is_some_and(|d| g.middle(q).is_some_and(|m| (m.0 - d.0).hypot(m.1 - d.1) > 4.0 * g.world.scale())) {
@@ -764,15 +760,62 @@ impl App {
         }
     }
 
-    /// The card's Lookouts: the next setting for the squad you command and
-    /// its link.
-    pub(super) fn squad_lookouts(&mut self) {
+    /// The Formation page's pick: the controlled squad and its link take
+    /// formation `f`.
+    pub(super) fn squad_formation(&mut self, f: Formation) {
         let (Some(q), Some(g)) = (self.active(), self.game.as_mut()) else { return };
-        let c = g.squads[q as usize].cover.next();
         for r in g.linked(q as usize) {
-            g.apply(Cmd::Cover(r as u8, c));
+            g.apply(Cmd::Formation(r as u8, f));
         }
-        self.hud.alert(&format!("Lookouts while working: {}", c.name()), None, theme::TEXT);
+        self.hud.alert(&format!("Formation: {}", f.name()), None, theme::TEXT);
+        if let Some(sq) = self.sq.as_mut() {
+            // A line or wedge turns to the cursor at once.
+            sq.face_at = None;
+        }
+    }
+
+    /// The fire button in the squad mode: defend and free in turn, by
+    /// the first soldier's mode. A soldier on hold fire keeps holding; the
+    /// mode is the one it fires once let go (`App::unheld`).
+    pub(super) fn squad_fire_mode(&mut self, sel: &[usize]) {
+        let Some(g) = self.game.as_mut() else { return };
+        let mode = |k: usize| match g.soldiers[k].stance {
+            Stance::HoldFire => self.unheld.get(&k).copied().unwrap_or(Stance::Defend),
+            st => st,
+        };
+        let next = if sel.first().map(|&k| mode(k)) == Some(Stance::Free) { Stance::Defend } else { Stance::Free };
+        let mut holding = false;
+        for &k in sel {
+            if g.soldiers[k].stance == Stance::HoldFire {
+                self.unheld.insert(k, next);
+                holding = true;
+            } else {
+                g.apply(Cmd::Stance(k, next));
+            }
+        }
+        let note = if holding { " (holding fire till you let go)" } else { "" };
+        self.hud.alert(&format!("Fire: {}{note}", stance_name(next)), None, theme::TEXT);
+    }
+
+    /// Hold fire in the squad mode, a toggle: on unless every soldier
+    /// already holds, then off, back to the mode each had.
+    pub(super) fn squad_hold_fire(&mut self, sel: &[usize]) {
+        let Some(g) = self.game.as_mut() else { return };
+        if sel.is_empty() {
+            return;
+        }
+        let hold = !sel.iter().all(|&k| g.soldiers[k].stance == Stance::HoldFire);
+        for &k in sel {
+            let st = g.soldiers[k].stance;
+            if hold && st != Stance::HoldFire {
+                self.unheld.insert(k, st);
+                g.apply(Cmd::Stance(k, Stance::HoldFire));
+            } else if !hold {
+                let back = self.unheld.remove(&k).unwrap_or(Stance::Defend);
+                g.apply(Cmd::Stance(k, back));
+            }
+        }
+        self.hud.alert(if hold { "Hold fire: on (the left button still fires a volley)" } else { "Hold fire: off" }, None, theme::TEXT);
     }
 
     /// A squad panel event: command a squad, bring one in, split, combine.

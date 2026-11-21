@@ -85,7 +85,7 @@ pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
-pub use cover::{Cover, CoverRules, HealRules};
+pub use cover::HealRules;
 pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
@@ -185,8 +185,6 @@ pub struct Soldier {
     pub load: f32,
     /// Its squad (`squads`), an index into `Game::squads`.
     pub squad: u8,
-    /// Standing guard while the rest of its squad works (`Game::cover_turn`).
-    pub cover: bool,
     /// Game seconds it has stood still, unbitten and not firing: it heals
     /// once this reaches `HealRules::wait` (`Game::heal`).
     pub rest: f32,
@@ -930,7 +928,6 @@ impl<W: World> Game<W> {
             smell: 1.0,
             load: 0.0,
             squad: 0,
-            cover: false,
             rest: 0.0,
             next: 0,
             vx: 0.0,
@@ -954,7 +951,8 @@ impl<W: World> Game<W> {
     /// (the path probe: `LARDER_PATHLOG` in the window's headless runs,
     /// `examples/pathprobe`; read by
     /// `Reports/pathfinding-2026-11-20/tools/paths.py`).
-    /// `s,tick,k,squad,x,y,vx,vy,goal x,goal y,touching,order,cover,hp` and
+    /// `s,tick,k,squad,x,y,vx,vy,goal x,goal y,touching,order,cover,hp` (cover
+    /// always 0 since lookouts went, 2026-11-21, kept so old tools read it) and
     /// `q,tick,q,anchor x,anchor y,dest x,dest y,steer x,steer y,holding,column,fight`.
     pub fn path_rows(&self, f: &mut impl std::io::Write) -> std::io::Result<()> {
         let t = self.world.ticks();
@@ -970,7 +968,7 @@ impl<W: World> Game<W> {
                 Order::Clear(..) => 'c',
                 _ => 'o',
             };
-            writeln!(f, "s,{t},{k},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{o},{},{:.0}", so.squad, so.x / s, so.y / s, so.vx / s, so.vy / s, gx / s, gy / s, so.touching, so.cover as u8, so.hp)?;
+            writeln!(f, "s,{t},{k},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{o},{},{:.0}", so.squad, so.x / s, so.y / s, so.vx / s, so.vy / s, gx / s, gy / s, so.touching, 0, so.hp)?;
         }
         for q in self.live_squads() {
             let sq = self.squads[q];
