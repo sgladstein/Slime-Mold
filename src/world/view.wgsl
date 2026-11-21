@@ -1967,7 +1967,11 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     // and the share stopped dead where the Gaussian's nine cells ran out,
     // so its skin ended in squares the shape of that window (a dark stair
     // a cell wide at zoom 12). By its members' cover, it fades out first.
-    if (l.look == 5u) { l.share *= smoothstep(0.05, 0.35, l.cover); }
+    // Every lump since 11-21 (exit test 2 pass): a hunter's strays round a
+    // body sitting in a thin sheet drew the same, a flat band of violet a
+    // cell wide stepped by the cell along its rim (run 1:3,
+    // `boss=85,310,85`, 95 s, zoom 12).
+    l.share *= smoothstep(0.05, 0.35, l.cover);
     // A leech's drink lights the whole of it (`LUMP_DRINK`), wherever its
     // members are, not only where they pack: on its pump it sits under the
     // rig and on the crystal, and only a glow round them showed it there.
