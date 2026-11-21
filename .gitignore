@@ -17,3 +17,6 @@ __pycache__/
 # Since 2026-11-17 a file a round in this folder; `play.cmd` sends them to
 # the `play-logs` branch and moves them to `play-logs/sent/`.
 /play-logs/
+# The slime viewer's saved tweaks (`viewer.cmd`, src/world/tweaks.rs): one
+# player's look numbers and rules, which the game reads at every start.
+/slime-tweaks.txt

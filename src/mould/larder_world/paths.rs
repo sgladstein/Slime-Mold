@@ -175,6 +175,54 @@ pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize, corners: bool)
     best
 }
 
+/// `i`, or if walking map `map` doesn't reach it, the nearest cell to it
+/// that the map does (within `ONTO_MAP` fine cells; nearest the goal of
+/// those as near); None if none is.
+/// A point on open ground can sit in a cell the map has no way from: a
+/// cell whose middle is in a crystal's disc while the point is just past
+/// its rim, or a crystal eaten smaller since the map was built (maps are
+/// built every `PATHS_EVERY`). Taken as off the map, a squad sent past a
+/// crystal it stood beside stood there for good while its members walked
+/// on without it, and a soldier at a crystal's rim stood 77 s 28 cells
+/// from its steered squad (pathfinding thread, 2026-11-20: planet 3, run
+/// seed 1).
+pub(super) fn onto_map(w: usize, h: usize, map: &[u32], i: usize) -> Option<usize> {
+    if map[i] != u32::MAX {
+        return Some(i);
+    }
+    let (x, y) = ((i % w) as i64, (i / w) as i64);
+    // Rings outward, the first with a cell on the map; in it, the cell
+    // nearest the goal (ties to the lower cell).
+    for r in 1..=ONTO_MAP {
+        let mut best: Option<(u32, usize)> = None;
+        for dy in -r..=r {
+            for dx in -r..=r {
+                if dx.abs().max(dy.abs()) != r {
+                    continue;
+                }
+                let (nx, ny) = (x + dx, y + dy);
+                if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                    continue;
+                }
+                let j = ny as usize * w + nx as usize;
+                if map[j] != u32::MAX && best.is_none_or(|b| (map[j], j) < b) {
+                    best = Some((map[j], j));
+                }
+            }
+        }
+        if let Some(b) = best {
+            return Some(b.1);
+        }
+    }
+    None
+}
+
+/// Fine cells round a cell off a walking map that `onto_map` looks for one
+/// on it: the band a crystal eaten since the map was built leaves (a
+/// standing squad eats one by a few cells in `PATHS_EVERY`; within two
+/// cells, at first, a soldier in that band at a crystal's rim stood 24 s).
+const ONTO_MAP: i64 = 8;
+
 /// The point of the segment `a`-`b` nearest `p`.
 pub(super) fn nearest_on(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> (f32, f32) {
     let (dx, dy) = (b.0 - a.0, b.1 - a.1);

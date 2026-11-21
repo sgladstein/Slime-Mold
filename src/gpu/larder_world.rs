@@ -416,6 +416,20 @@ impl GpuWorld {
         out
     }
 
+    /// `grid`, summed in squares of `b` cells, added up in squares of
+    /// `bin` (a whole number of `b`): what `grid_now(bin)` reads, as of the
+    /// same tick.
+    fn coarser(&self, grid: &[u32], b: usize, bin: usize) -> Vec<u32> {
+        let (w, h) = (self.e.dish.w, self.e.dish.h);
+        let (fw, k) = (w.div_ceil(b), bin / b);
+        let gw = w.div_ceil(bin);
+        let mut out = vec![0u32; gw * h.div_ceil(bin)];
+        for (i, &n) in grid.iter().enumerate() {
+            out[(i / fw / k) * gw + (i % fw) / k] += n;
+        }
+        out
+    }
+
     /// Submits `enc` and asks for the readout it fills.
     fn submit(&mut self, enc: wgpu::CommandEncoder) {
         assert!(!self.ro.busy, "a frame's readout is still out (frame_finish first)");
@@ -1160,12 +1174,22 @@ impl World for GpuWorld {
     /// first ask, or a new square, is read back once. The CPU world's grid
     /// is the tick's own, so a goal read off it lands up to a second later
     /// here.
+    ///
+    /// A square a whole number of times the summed one is added up from
+    /// it, and leaves the GPU's square as it was (the bug hunt, 11-21): the
+    /// game's rules ask at `scale` and the bots at 4 x `scale`, and while
+    /// each ask moved the square, every rule's ask after a bot's missed and
+    /// read the cells back fresh, so a bot's game saw a fresher grid than
+    /// play does (one `walkers_in` call more turned a planet 2 loss on run
+    /// seed 1 into a win).
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
-        self.want.set(bin);
         match &self.grid {
-            Some((b, _, g)) if *b == bin => Some(g.clone()),
-            _ => Some(self.grid_now(bin)),
+            Some((b, _, g)) if *b == bin => return Some(g.clone()),
+            Some((b, _, g)) if *b > 0 && bin.is_multiple_of(*b) => return Some(self.coarser(g, *b, bin)),
+            _ => {}
         }
+        self.want.set(bin);
+        Some(self.grid_now(bin))
     }
 
     /// Read back once a game second while a rule wants it (`Game::mark_bulwark`).
@@ -1477,6 +1501,34 @@ mod tests {
             assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
         }
+    }
+
+    /// **A bot's coarser ask leaves the rules' grid alone** (the bug hunt,
+    /// 11-21): asked for squares four times the summed ones, the grid is
+    /// added up from the summed one, equal to the cells' own sum as of its
+    /// tick, and the GPU goes on summing the rules' square, so the rules'
+    /// next ask is still the summed grid and reads nothing back.
+    #[test]
+    fn a_coarser_grid_is_added_up_from_the_summed_one() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { cap: 30.0, ..Rules::default() }, seed);
+        let mut checked = 0;
+        while g.time() < 6.0 && g.end.is_none() {
+            let _ = g.world.mould_grid(1);
+            g.step();
+            let w = &g.world;
+            let Some((b, at, _)) = w.grid.as_ref().map(|(b, at, v)| (*b, *at, v.len())) else { continue };
+            assert_eq!(b, 1, "the rules' square is summed");
+            if at != w.ticks() {
+                continue;
+            }
+            let coarse = w.mould_grid(4).unwrap();
+            assert_eq!(coarse, w.grid_now(4), "at {at}: the coarse grid is the cells' sum");
+            assert_eq!(w.want.get(), 1, "the coarse ask left the square");
+            checked += 1;
+        }
+        assert!(checked >= 3, "{checked} whole seconds checked");
     }
 
     /// **A turret sees and fires over a wall on both engines** (owner,
@@ -2354,6 +2406,46 @@ mod tests {
         let held3: u32 = v.iter().filter(|p| p.2).map(|p| p.3).sum();
         assert_eq!(held3, held2, "a lump formed over the strikers leaves them and what they hold");
         w.form_lump(0, None);
+    }
+
+    /// **A walker born where a striker took one in is counted** (the bug
+    /// check, 2026-11-20). Condensing marks the walkers it takes in dead,
+    /// as a strike does; a child born into such a slot takes its parent's
+    /// life state only with the life states on (`born`), so until this the
+    /// child of a world that condensed before anything turned them on
+    /// (every pass that kills does; in a game the first shot's spray does)
+    /// kept the dead mark: it lived and moved but was never counted. A
+    /// nearly full world, so the births land in those slots.
+    #[test]
+    fn walkers_born_where_strikers_took_walkers_in_are_counted() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let s = Settings { capacity: 2_100, ..race_settings(seed, scale, walkers) };
+        let mut w = GpuWorld::new(&device, &queue, s, scale);
+        let home = w.crystals()[0].0;
+        let at = (home.0 + 25.0, home.1);
+        let f = Frame { units: vec![squad::UnitIn { x: at.0, y: at.1, touch: 1.5, ..Default::default() }], ..Frame::default() };
+        for _ in 0..2 {
+            w.frame(&f, 15);
+        }
+        w.set_strikers(Some(1.5));
+        // By position, not by pattern: the slime thread's #598 adds a
+        // fourth number (the band) and either may land first.
+        let took = w.condense(20.0, 1.0, 3).expect("the GPU world condenses").2;
+        assert!(took >= 30, "the edge condenses: {took} taken in");
+        for _ in 0..12 {
+            w.frame(&f, 15);
+        }
+        let e = &w.e;
+        let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+        let life = e.life_of().0;
+        let live = (0..e.n as usize).filter(|&q| en[q] >= 0.0).count();
+        let marked = (0..e.n as usize).filter(|&q| en[q] >= 0.0 && life[q] == crate::mould::big::LIFE_DEAD).count();
+        eprintln!("strikers on a full world: {took} taken in; {live} slots live, {marked} of them marked dead, counted {}", w.living());
+        assert!(live > 2_000 - took as usize, "the slime was born into the room: {live} live");
+        assert_eq!(marked, 0, "no walker born into a taken-in walker's slot keeps its dead mark");
+        assert_eq!(w.living(), live, "so the count sees every one");
     }
 
     /// **The last-stand heart** (2026-11-20, `larder_world/stand.rs`), a

@@ -757,9 +757,23 @@ impl App {
                 self.marks.disc(d.at, r * 0.6, fade(core, heat), false);
                 // How long it lasts: a ring that closes as it cools.
                 self.marks.ring(d.at, d.r * (1.0 + 1.2 * w), fade(glow, 0.5));
+                // Where to stand to collect it (owner's play, 11-20 23:17Z:
+                // "it isn't clear how to collect the miniboss hearts"): a
+                // thin ring at the soldiers' reach (`StarRules::reach`),
+                // bright while soldiers stand in it.
+                let reach = d.r + star.reach * sc;
+                let on = d.takers > 0;
+                self.marks.ring(d.at, reach, fade(core, if on { 0.9 } else { 0.4 }));
                 glows.push(Light { at: d.at, reach: (4.0 + 4.0 * full) * sc, lift: 3.0, colour: light, strength: 1.4 * heat * full.max(0.2) });
                 let below = (d.r * zoom).max(4.0) + 4.0;
-                self.marks.label(d.at, (-6.0, -below - 10.0), &format!("{}", d.left.ceil() as u32), 1.5, fade(core, 0.95));
+                // Its points, and a bar of what the squad has taken from it
+                // (gold) against what the slime ate (dark).
+                let text = if on { format!("+{}", d.taken.floor() as u32) } else { format!("{}", d.left.ceil() as u32) };
+                // A dark shadow under it, so it reads on the slime's gold.
+                let x = -4.5 * text.len() as f32;
+                self.marks.label(d.at, (x + 1.5, -below - 12.5), &text, 1.8, [20, 10, 10, 220]);
+                self.marks.label(d.at, (x, -below - 14.0), &text, 1.8, fade(core, 0.95));
+                self.marks.bar(d.at, -below - 18.0, (10.0, 1.5), d.taken / d.worth.max(1e-3), [255, 214, 90, 255], [40, 30, 30, 200]);
             }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
@@ -1199,7 +1213,8 @@ impl App {
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             // The switches this round plays off their default (the play
             // log's `switches=` says the same).
-            trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).collect(),
+            // The slime viewer's saved tweaks count as not the default game.
+            trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).chain((!self.tweaks.is_empty()).then(|| format!("your slime tweaks ({})", self.tweaks.count()))).collect(),
             // Every switch, for the pause menu's Experiments page.
             experiments: experiments::rows(&self.args.keys, &self.exp_next),
             most_off: slime_mould::build::switches::MOST_OFF,

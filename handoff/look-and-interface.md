@@ -2,6 +2,26 @@
 
 ## State (2026-11-20)
 
+**Slime viewer (branch `claude/project-thread-517zll`, the thread "Build a
+slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
+main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the
+gun range's clock with a panel at the right (`src/bin/larder-world/viewer.rs`;
+F1 hides it). Four tabs: Slime (the planet's slime, its body look, and its
+on-off rules), Spawn (every mini-boss kind, fruit, wave, the last-stand
+heart, strikers, heartbeat, ore, core, raid at the click, by
+`larder_world/force.rs`, which calls play's own starts), Look (every plain
+number or colour `const` at the top of `view.wgsl`, grouped by its comment,
+changed live by text-substituting the shader and rebuilding its pipelines,
+`View::reshade`), Rules (the slime's rule keys, `Rules::get`/`set`, and 20
+engine keys). Save writes `slime-tweaks.txt` at the repo root
+(`world::tweaks`, gitignored; `LARDER_TWEAKS` overrides), which every game
+then plays, with "your slime tweaks (N)" in the corner; a copy goes to
+`play-logs/`. A new look `const` in `view.wgsl` shows up in the Look tab by
+itself if it is a plain number or `vecN<f32>` at the top level; the lump
+colours were lifted into `LUMP_SKIN_*`/`LUMP_CORE_*` for it. Headless
+checks: `LARDER_VIEWER_TAB=look|spawn|rules|slime`,
+`LARDER_VIEWER_SPAWN="T:NAME[@X,Y];.."`.
+
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
 page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
 a warm flush on the slime (`flush_at` in `view.wgsl`), bare ground shows
@@ -219,7 +239,15 @@ dull grey-brown matte (`DORMANT_DIM` 0.7, `DORMANT_MATTE` 0.6, no glow);
 walkers awake keep the gold. A 3 x 3 window left square gold pixels, so the
 share is a Gaussian 5 x 5. Sporer: Enemy is making a flying spore set the
 walker's 4th word, which `draw_specks` already draws as a droplet; film
-planet 5 when that lands. Grudge is still Plain: the next slime look.
+planet 5 when that lands. The Grudge's scars (11-20, `SlimeLook::Scarred`,
+planet 7): the view binds the engine's `crater` (binding 28,
+`View::set_scar`; a second line in `main.rs`), whose second block is the
+scar; bare scarred ground darkens by up to `SCAR_BRUISE` 0.3 (in the
+material, since `soil_detail` cancels a change to the ground estimate
+`hg`), slime on it turns paler and glossier scar tissue (`SCAR_TISSUE`
+0.5), `SCAR_FULL` 1.0. Filmed at 80 s on run 1:7: the fight's ground
+reads darker; the tissue is rarely seen, since the Grudge shuns its scars.
+If it should show more, raise `SCAR_TISSUE` or lower `SCAR_FULL`.
 Bullets in a crowd share their light (`dim_crowded` in `draw.rs`): each
 bullet's light over the square root of the bullets within its reach, after
 46 rifles down one lane on planet 4 lit a white column over the slime.
