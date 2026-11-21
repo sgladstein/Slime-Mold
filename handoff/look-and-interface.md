@@ -296,8 +296,9 @@ while Squad asked to keep it.
    3.2 to 3.5 ms of a 5 ms frame. `Reports/view-cost-2026-11-21/variants.py`
    (#621) writes shaders each with one part out. Timed (11-21): plants 1.04
    ms, soil 0.49, all of `shaded`'s lighting 2.65. Cut: plant crowns only
-   where bare ground shows or they burn. Next if needed: `shaded`'s slope
-   and highlight samples.
+   where bare ground shows or they burn; re-timed 11-21, no saving in the
+   larder shot (little slime over plants). Next if needed: a cheaper plant
+   layer on bare ground, or `shaded`'s slope and highlight samples.
 0b. Crystals under the slime show their charge (11-21, Direction's ask
    from the regrowth review): the film over a crystal thins by
    `GEM_THROUGH` (0.55) of its charge share, so a full one reads as cyan
@@ -321,7 +322,9 @@ while Squad asked to keep it.
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
-3. Look C, rest: shadows for buildings if they float; traits for
+3. Look C, rest: buildings cast their own silhouette (11-21,
+   `BUILD_CAST`, `BUILD_SHADOW`; the pump's rig stays flat, a platform);
+   traits for
    planets 4 to 8 after Milestone 1 (parked: more planet polish).
 4. A landing, a win and a loss that happen in the picture: done 11-20
    (the landing, and the end's beat).

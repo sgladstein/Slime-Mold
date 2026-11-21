@@ -4730,6 +4730,10 @@ fn pump_rig(d: vec2<f32>, r: f32, built: f32, health: f32, working: bool, pulse:
     return vec4<f32>(out.xyz / out.w, out.w);
 }
 
+// A building's cast shadow (`building`): how far it falls in the
+// building's radii, toward the far tap 1.6 times that, and how dark.
+const BUILD_CAST: f32 = 0.22;
+const BUILD_SHADOW: f32 = 0.5;
 fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32, state: u32) -> vec4<f32> {
     if (kind == 6u) { return pump_rig(d, r, built, health, working, pulse, state); }
     let aa = 1.0 / max(r, 1.0);
@@ -4775,8 +4779,19 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     let cellp = floor(p * 9.0);
     let n = fract(sin(dot(cellp, vec2<f32>(12.9898, 78.233))) * 43758.5453);
     if (n < 0.55 * hurt) { body = vec4<f32>(body.xyz * 0.3, body.w); }
+    // Its shadow (Look C, 11-21: a building on the slime or bright
+    // ground read as pasted on, its shadow a disc as wide as its box at
+    // 0.32 that the slime's glow washed out). Now its own silhouette cast
+    // away from the light, two taps along the light for a soft far edge,
+    // darker (`BUILD_SHADOW`), over the old disc kept faint as the contact
+    // shadow at its foot. One more sprite read a tap, in building boxes
+    // only.
+    let lo = vec2<f32>(l.x, l.y);
+    let thrown = 0.5 * (building_body(k, p + lo * BUILD_CAST, small, turret, ca, sa, recoil, false, mortar).w
+        + building_body(k, p + lo * (BUILD_CAST * 1.6), small, turret, ca, sa, recoil, false, mortar).w);
     let sh = sd_ellipse(p, vec2<f32>(-l.x, -l.y) * 0.3, vec2<f32>(1.0, 1.0));
-    var out = vec4<f32>(0.0, 0.0, 0.0, 0.32 * cover(sh, aa * 2.5) * max(built, 0.3));
+    let foot = 0.18 * cover(sh, aa * 2.5);
+    var out = vec4<f32>(0.0, 0.0, 0.0, max(BUILD_SHADOW * thrown, foot) * max(built, 0.3));
     if (built >= 1.0) {
         out = pm_over(out, vec4<f32>(INK * edge, edge));
     } else if (!up) {
