@@ -1,0 +1,25 @@
+# The heart's lunge cap (2026-11-21, Direction's ask): planet 2, the heart forced on (set=stand=1; it plays from planet 4 once #606 lands), capped (default) against uncapped (main's heart), and the bug check's whole run, both ways: PLAN DEPTH SEED SECS [ARGS]. Measure named before the run: per map, soldiers bitten to death in the heart's first 10 s and in its worst lunge's 10 s (stand=BORN:LUNGES:FIRST:WORST:KILLED); bar about 20 or a quarter of the squad, the heart still biting; squads of 8 or fewer lose no more planets.
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 1 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 2 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 3 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 4 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 5 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 6 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 7 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 8 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 1795038793 720 set=stand=1
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 1 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 2 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 3 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 4 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 5 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 6 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 7 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 8 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+econ,go=4,aim=6,cards=0,want=wide/rate/blast.needle 2 1795038793 720 set=stand=1 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+rush,aim=6|rush,aim=6|econ,go=4,aim=6 run 1 720
+rush,aim=6|rush,aim=6|econ,go=4,aim=6 run 2 720
+rush,aim=6|rush,aim=6|econ,go=4,aim=6 run 3 720
+rush,aim=6|rush,aim=6|econ,go=4,aim=6 run 1 720 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+rush,aim=6|rush,aim=6|econ,go=4,aim=6 run 2 720 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
+rush,aim=6|rush,aim=6|econ,go=4,aim=6 run 3 720 set=stand_cap=1 set=stand_cap_most=1000 set=stand_sated=0
