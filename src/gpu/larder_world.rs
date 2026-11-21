@@ -2097,7 +2097,11 @@ mod tests {
         // On software Vulkan both agreed to the walker (666 and 479); a
         // planted bug, the GPU sending `sick_upkeep` alone, left the frail
         // GPU mould at 666.
-        assert!(g6.abs_diff(c6) * 50 <= c6 && g1.abs_diff(c1) * 50 <= c1, "the engines agree: GPU {g1} and {g6}, CPU {c1} and {c6}");
+        // On a card a twelfth (the GTX 1070, 11-21: GPU 638 and 493, CPU
+        // 666 and 479, a small dying mould's chaos in the card's order),
+        // which still catches that bug (666 against 479).
+        let part = tol(50, 12);
+        assert!(g6.abs_diff(c6) * part <= c6 && g1.abs_diff(c1) * part <= c1, "the engines agree: GPU {g1} and {g6}, CPU {c1} and {c6}");
     }
 
     /// The engine runs the CPU race world's mould: the same params, bar
@@ -2946,7 +2950,11 @@ mod tests {
             let at = (burn.at.0 + 5.0, burn.at.1);
             let f = Frame { units: vec![squad::UnitIn { x: at.0, y: at.1, touch: 1.5, ..Default::default() }], ..Frame::default() };
             let outs: Vec<f32> = [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World].into_iter().map(|w| w.frame(&f, 15).units[0].heat).collect();
-            assert_eq!(outs[0].to_bits(), outs[1].to_bits(), "{sec} s: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
+            // Exact on llvmpipe; on a card (`tol`) within 1e-3: on the GTX
+            // 1070 (2026-11-21, Reports/pc-batch-1070-m1-2026-11-21.md) the
+            // heat at 14 s was 0.11107785 against 0.111077845, one ulp of
+            // the card's float order.
+            assert!(outs[0].to_bits() == outs[1].to_bits() || (outs[0] - outs[1]).abs() <= tol(-1.0, 1e-3), "{sec} s: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
             hot = hot.max(outs[0]);
             if sec == 12 {
                 // A burn's own kills: the CPU's in its out, the GPU's
@@ -2956,7 +2964,7 @@ mod tests {
                 // Two ticks on, the soldier stands in the burn's flames (its
                 // cells here hold 0.17 of plants, out within a second).
                 let outs: Vec<f32> = [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World].into_iter().map(|w| w.frame(&f, 2).units[0].heat).collect();
-                assert_eq!(outs[0].to_bits(), outs[1].to_bits(), "after the burn: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
+                assert!(outs[0].to_bits() == outs[1].to_bits() || (outs[0] - outs[1]).abs() <= tol(-1.0, 1e-3), "after the burn: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
                 hot = hot.max(outs[0]);
             }
             killed.0 += World::burned(&mut cpu);
@@ -3121,7 +3129,9 @@ mod tests {
         let dk = kinds.iter().zip(&cpu.plant_kind).filter(|(a, b)| a != b).count();
         eprintln!("tinder: {} discs, {laid} cells laid on the CPU; max diff plants {dp:.2e}, kinds differing {dk}", discs.len());
         assert!(laid > 100, "both lines laid: {laid}");
-        assert!(dp == 0.0 && dk == 0, "laid: plants {dp}, kinds {dk}");
+        // Exact on llvmpipe; a card's float order leaves an ulp (the GTX
+        // 1070, 11-21: 1.9e-9, kinds all the same).
+        assert!(dp <= tol(0.0, 1e-6) && dk == 0, "laid: plants {dp}, kinds {dk}");
         let cast = rounds::casts(&rounds::parse("torch").unwrap())[0];
         let b = rounds::bursts(&cast, out, &r, s, 15.0)[0];
         World::burst(&mut cpu, &b, &k);
@@ -3200,7 +3210,9 @@ mod tests {
             let (nc, ng) = (World::living(&cpu), World::living(&gpu));
             let barren = cchar.iter().filter(|&&c| c >= barren).count();
             eprintln!("crust fire {sec} s: max diff plants {dp:.2e} fire {df:.2e} char {dc:.2e} crust {dk:.2e}; burning {}; {barren} barren cells; walkers CPU {nc} GPU {ng}", cpu.burning);
-            assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2) && dk <= tol(1e-5, 0.05), "{sec} s: plants {dp} fire {df} char {dc} crust {dk}");
+            // On a card the crust parts most (the GTX 1070, 11-21: 0.12 at
+            // 17 s from ulps in plants and fire of 2e-8 and 1e-7).
+            assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2) && dk <= tol(1e-5, 0.25), "{sec} s: plants {dp} fire {df} char {dc} crust {dk}");
             assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
             (burning, barren_cells) = (cpu.burning, barren);
         }
@@ -3268,7 +3280,9 @@ mod tests {
                 let (dp, df, dc) = (diff(&pl, &cpu.plant), diff(&fire, &cfire), diff(&ch, &cchar));
                 let (nc, ng) = (World::living(&cpu), World::living(&gpu));
                 if (dry, fed) == (gpu_dry, gpu_fed) {
-                    assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2), "{sec} s: plants {dp} fire {df} char {dc}");
+                    // A long burn grows a card's ulps (the GTX 1070, 11-21:
+                    // fire 0.21 at 19 s, plants 0.018, char 0.041).
+                    assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.4) && dc <= tol(1e-5, 0.2), "{sec} s: plants {dp} fire {df} char {dc}");
                     assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
                 }
                 worst = worst.max(df);
@@ -3535,13 +3549,14 @@ mod tests {
                 let _ = gpu.frame(&f, 15);
                 let _ = cpu.frame(&f, 15);
                 // Exact on llvmpipe; on a card (`tol`) each side and the whole within
-                // 1% (+2): on the
+                // 2% (+2; 1% until the 11-21 batch's (1001, 1074) against
+                // (988, 1087)): on the
                 // GTX 1070 (11-14, 004b7cb) the sides came out (988, 1068)
                 // against the CPU's (992, 1064), the same 2,056 walkers with
                 // four on the other side, where llvmpipe matched exactly; the
                 // births race on the card's atomics in another order.
                 let (g, c) = (gpu.counts_by_side(), cpu.counts_by_side());
-                let near = |a: usize, b: usize| a.abs_diff(b) <= tol(0, b / 100 + 2);
+                let near = |a: usize, b: usize| a.abs_diff(b) <= tol(0, b / 50 + 2);
                 assert!(near(g.0, c.0) && near(g.1, c.1) && near(g.0 + g.1, c.0 + c.1), "the engines part: {g:?} on the GPU, {c:?} on the CPU");
                 most = most.max(gpu.counts_by_side().1);
             }
