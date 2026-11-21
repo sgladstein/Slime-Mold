@@ -352,7 +352,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let kills = app.game.as_ref().map_or([0; 8], |g| g.kit.killed);
     let tools = format!("{}/{}/{}/{}", used[0], used[1], kills[0], kills[1]);
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
         r.depth,
         r.seed,
         l.seed,
@@ -395,7 +395,11 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         // The last-stand heart: the second it formed (0 none), its lunges,
         // soldiers bitten to death in its first 10 s and in the worst 10 s
         // from a lunge's start, and all it bit (`Stand`).
-        format!("{}:{}:{}:{}:{}", g.stand.born_sec, g.stand.lunges, g.stand.first, g.stand.worst, g.stand.killed),
+        g.stand.born_sec,
+        g.stand.lunges,
+        g.stand.first,
+        g.stand.worst,
+        g.stand.killed,
         // Where the last walkers were, when a game ends with a few left.
         if how != "won" && g.mould <= 50 { strat::remnant(g) } else { "-".to_string() }
     );
