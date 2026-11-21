@@ -144,7 +144,7 @@ In the owner's order; A is Milestone 1's look test (`NOW.md`, exit test 2).
 **A. The fight round the squad**
 
 1. Done (11-17, 18): the flinch on the slime alone ([flinch look](../../Reports/flinch-look-2026-11-17/README.md)); the Lure's rings ([lure rings](../../Reports/lure-rings-2026-11-18/README.md)); flushed and set slime apart ([settled](../../Reports/sim-use-2026-11-17/e2b-look.md)); droplets of slime ([droplets](../../Reports/droplets-2026-11-18/README.md)); the fallen in blood ([fallen](../../Reports/fallen-soldier-2026-11-18/README.md)).
-2. A hit is the slime's own reaction: the hole and how it closes (shots fly as comets).
+2. A hit is the slime's own reaction: the hole and how it closes (shots fly as comets). 11-21: a shot crossing its own squad is dimmed until it clears the front (`draw.rs`, `IN_SQUAD`), so a 40-soldier squad at zoom 12 is not a field of streaks; the hole that holds is Enemy's #670 (crater cells shut to walkers), its view side next.
 3. Done (11-18): a squad countable by its heads ([heads](../../Reports/squad-heads-2026-11-18/README.md)).
 4. Done (11-18): no light past its damage; biting slime crimson ([bite](../../Reports/biting-slime-2026-11-18/README.md)).
 5. Done (11-18): status slime glows rose ([mind](../../Reports/mind-status-2026-11-18/README.md)).
