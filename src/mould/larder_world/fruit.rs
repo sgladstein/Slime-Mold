@@ -41,7 +41,7 @@ use crate::mould::big::{Lump, LUMPS};
 
 /// Fruiting's numbers. Times in game seconds, distances in dish cells.
 /// Off by default (the campaign and the sandbox are frozen); a run turns
-/// it on for every planet (`run::ENEMY_RULES`).
+/// it on from its planet (`run::ENEMY_RULES`, `run::FIRST_PLANET`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FruitRules {
     pub on: bool,
