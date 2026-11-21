@@ -95,7 +95,11 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.
 - **Orders.** Right click sends, Ctrl + right click drains or guards a crystal,
-  Shift queues up to six. Formations: blob (default), line, wedge, ring.
+  Shift queues up to six. A tap of WASD is the stop (the card has no Stop)
+  and drops the queue (2026-11-21; before, the squad walked off to its next
+  queued order once let go). A bought soldier and a squad combined into
+  yours take your squad's fire mode. Formations: blob (default), line,
+  wedge, ring.
 - **Lookouts** (called Guards until 2026-11-15 19:51Z, so the word stays the
   Guard order's). A squad draining or building with slime near posts a share of
   itself as lookouts (the card's Lookouts, key I: none, some, more) at the work's edge on the slime's

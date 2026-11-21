@@ -1792,6 +1792,12 @@ impl App {
         if !g.rules.star.on {
             m.resources.retain(|r| r.icon != Icon::Upgrade);
         }
+        // A run's planet is won by wiping the slime out, with no score at
+        // 15:00, so the share of the crystals' charge taken said nothing
+        // there (controls review, 2026-11-21: "0%" sat on the bar all game).
+        if self.args.run.is_some() {
+            m.resources.retain(|r| r.icon != Icon::Target);
+        }
         if g.world.garden.is_some() {
             // The player's own mould beside the enemy's, in its colour.
             let own = g.world.counts_by_side().0;
@@ -1932,9 +1938,16 @@ impl App {
                 ("P".into(), "Pause".into()),
                 ("Tab".into(), "Four times faster, or back".into()),
                 ("N".into(), "Start the next map".into()),
-                ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
+                // The squad mode's build page has no outpost (no larder) and
+                // has walls, doors and the mortar (controls review,
+                // 2026-11-21: this row still named the RTS round's page).
+                ("Q".into(), "Build page: wall, door, turret, mortar, pump, lure; Q again goes back".into()),
                 ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
             ]
+            .into_iter()
+            // In a run N does not skip the planet (`App::key`).
+            .filter(|(k, _): &(String, String)| !(self.args.run.is_some() && k == "N"))
+            .collect()
         } else { vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
             ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
