@@ -1111,6 +1111,10 @@ const GEM_SHADOW: f32 = 0.6;
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
 const GEM_FILM: f32 = 0.92;
+// The share of that cover a full crystal's charge shines through
+// (`shaded`), falling with the charge, so the food left under the slime
+// shows.
+const GEM_THROUGH: f32 = 0.55;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -3315,8 +3319,16 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // crystal's glow shines through it, weakened by the cover; and
             // a mould that is draining it (`hot`, the same charge loss the
             // harvest glow shows) takes a cyan cast.
+            // The charge shines up through the film (`GEM_THROUGH`, 11-21):
+            // the fuller the crystal, the less of it the mould hides, so a
+            // full crystal the slime sits on reads as cyan glass under a gold
+            // veil, one it has eaten down sinks under the gold, and a spent
+            // one is a husk under a full mat. Until then a full and an
+            // eaten crystal under the slime were the same gold hexagon (the
+            // regrowth review, 11-21: crystals held 401k charge at a game's
+            // end, and nothing on screen said so).
             let th = film_th(x, y);
-            let film = GEM_FILM * (1.0 - exp(-40.0 * th));
+            let film = GEM_FILM * (1.0 - exp(-40.0 * th)) * (1.0 - GEM_THROUGH * v);
             // The faces' light compressed toward the middle while charged
             // (a shaded face of a live crystal stays above 110 in grey;
             // the spent husk keeps the full relief of its faces and shards).
