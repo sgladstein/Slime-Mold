@@ -60,6 +60,11 @@ pub enum SlimeLook {
     /// there are beads, not a flat glow: the swarm visibly gathers where
     /// it was hit. Plain, an alarmed Swarmer was a flat orange haze.
     Swell = 4,
+    /// The Sleeper's crust (11-20): its dormant walkers (the engine's life
+    /// state 2, `set_life`) are a dull, matte, darker crust, and the ones
+    /// awake keep the gold, so a wave waking reads as gold spreading over
+    /// the crust (`DORMANT_DIM`, `DORMANT_MATTE` in `view.wgsl`).
+    Dormant = 5,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -73,6 +78,7 @@ impl SlimeLook {
             Some(crate::mould::tiers::Tier::Drifter) => SlimeLook::Sheet,
             Some(crate::mould::tiers::Tier::Trunk) => SlimeLook::Cords,
             Some(crate::mould::tiers::Tier::Swarmer) => SlimeLook::Swell,
+            Some(crate::mould::tiers::Tier::Sleeper) => SlimeLook::Dormant,
             _ => SlimeLook::Plain,
         }
     }
@@ -87,7 +93,7 @@ const MARGIN: u32 = 4;
 /// then 21-24 the crystals' live charge, their heat (`drain`), the terrain
 /// cells (`tcell`) and the crystal cells listed, and 25-26 the engine's two
 /// germ fields, whose second block is the alarm (`set_alarm`).
-const BINDINGS_AFTER: [u32; 7] = [LIGHTS_BINDING, 21, 22, 23, 24, 25, 26];
+const BINDINGS_AFTER: [u32; 8] = [LIGHTS_BINDING, 21, 22, 23, 24, 25, 26, 27];
 
 /// The most point lights a frame (`View::set_lights`); `shaded` loops over
 /// them a pixel, so the cap bounds that loop.
@@ -316,6 +322,12 @@ pub struct View {
     lights: wgpu::Buffer,
     n_lights: u32,
     lives: bool,
+    /// Each walker's life word, the engine's `spec` (`set_life`; Look B,
+    /// 2026-11-20): bits 9-10 its state, 2 dormant. Read only with the
+    /// Sleeper's look; a 16-byte stand-in otherwise.
+    life: wgpu::Buffer,
+    /// Whether `life` is the engine's.
+    life_on: bool,
     /// Food's news (`set_news`): the engine's news (the step each walker
     /// last heard of food) and state (the step now) buffers, and the
     /// engine's lag and lean in steps.
@@ -446,7 +458,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro), entry(25, ro), entry(26, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro), entry(25, ro), entry(26, ro), entry(27, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -462,13 +474,14 @@ impl View {
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
+        let life = storage(device, "life", 16);
         let lights = storage(device, "lights", (MAX_LIGHTS * 32) as u64);
         let (news, state) = (storage(device, "news", 16), storage(device, "state", 16));
         let fgrid = Self::fine_buffer(device, screen);
         let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
         let (charge, heat, gem_list) = (storage(device, "charge", 16), storage(device, "crystal heat", 16), storage(device, "crystal list", 16));
         let germ = [storage(device, "germ 0", 16), storage(device, "germ 1", 16)];
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1]]);
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1], &life]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -487,6 +500,8 @@ impl View {
             lights,
             n_lights: 0,
             lives: false,
+            life,
+            life_on: false,
             news,
             state,
             fgrid,
@@ -581,7 +596,9 @@ impl View {
     /// cut-off ones), then the condensing weights (`set_dense`: condensed
     /// and ripening in the low 16 bits, fresh absorptions above).
     fn fine_buffer(dev: &wgpu::Device, screen: (u32, u32)) -> wgpu::Buffer {
-        storage(dev, "fine walkers", Self::fine_half(screen) as u64 * 8)
+        // Three halves (a third since 11-20): the walkers, the dense and
+        // lump counts, and the Sleeper's dormant and awake counts.
+        storage(dev, "fine walkers", Self::fine_half(screen) as u64 * 12)
     }
 
     fn fine_half(screen: (u32, u32)) -> u32 {
@@ -596,14 +613,14 @@ impl View {
     }
 
     /// The bind group: `bufs` in binding order, 0-19 then `BINDINGS_AFTER`.
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 27]) -> wgpu::BindGroup {
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 28]) -> wgpu::BindGroup {
         let binding = |i: usize| if i < 20 { i as u32 } else { BINDINGS_AFTER[i - 20] };
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1]]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1], &self.life]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -637,6 +654,17 @@ impl View {
     /// slots sit stacked at the dish's centre and its dead where they
     /// died, so the Larder world drew a bright dot in the middle and the
     /// ghosts of every walker its shots killed (W2c, 2026-11-12).
+    /// Each walker's life word (the engine's `spec`, Look B 2026-11-20),
+    /// for the Sleeper's look: its dormant crust drawn dull and matte
+    /// (`SlimeLook::Dormant`). None: no life cycle on this world.
+    pub fn set_life(&mut self, spec: Option<&wgpu::Buffer>) {
+        (self.life, self.life_on) = match spec {
+            Some(b) => (b.clone(), true),
+            None => (storage(&self.device, "life", 16), false),
+        };
+        self.rebind();
+    }
+
     pub fn set_alive(&mut self, energy: Option<&wgpu::Buffer>) {
         (self.alive, self.lives) = match energy {
             Some(b) => (b.clone(), true),
@@ -1119,7 +1147,7 @@ impl View {
             b.extend(v.to_le_bytes());
         }
         let streak = if self.slime_look == SlimeLook::Threads { self.streak } else { 0.0 };
-        for v in [self.slime_look as u32, streak.to_bits(), 0, 0] {
+        for v in [self.slime_look as u32, streak.to_bits(), self.life_on as u32, 0] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);

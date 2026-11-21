@@ -210,8 +210,19 @@ https://claude.ai/artifact/Xi8hjRyFbnbnWgsxsx9f7c): `SlimeLook::Cords` for
 planet 3, its trail off the body a translucent raised tube (`CORD_VEIL`,
 `CORD_RISE`). The Swarmer's swell (11-20, `SlimeLook::Swell`, planet 4):
 where its alarm flushes it, its height grows (`SWELL_GAIN`, `SWELL_RISE`),
-so alarmed walkers are raised beads, not a flat glow. Sporer, Sleeper and
-Grudge are still Plain: the next slime looks.
+so alarmed walkers are raised beads, not a flat glow. The Sleeper's crust
+(11-20, `SlimeLook::Dormant`, planet 6): the view binds the engine's life
+words (`spec`, binding 27, `View::set_life`; one line in Engine's
+`main.rs`), `draw_specks` counts dormant and awake walkers per fine cell
+in the fine grid's third part, and where most are dormant the body turns a
+dull grey-brown matte (`DORMANT_DIM` 0.7, `DORMANT_MATTE` 0.6, no glow);
+walkers awake keep the gold. A 3 x 3 window left square gold pixels, so the
+share is a Gaussian 5 x 5. Sporer: Enemy is making a flying spore set the
+walker's 4th word, which `draw_specks` already draws as a droplet; film
+planet 5 when that lands. Grudge is still Plain: the next slime look.
+Bullets in a crowd share their light (`dim_crowded` in `draw.rs`): each
+bullet's light over the square root of the bullets within its reach, after
+46 rifles down one lane on planet 4 lit a white column over the slime.
 Selection rings join within `RING_LINK` (3.5 rings centre to centre,
 `controls.rs`): a 51-soldier squad on planet 3 wore 51 rings at zoom 6.
 The play alerts (top left) hide while the end card is up: the card says
@@ -280,6 +291,19 @@ land. Owed from them to the look list: a stilled or provoked body has no
 look of its own (A5, done), and burning slabs draw as cell-sized squares
 at zoom 12 (A6, checked: not so now). Enemy's Trunk fort (#473): fine to land; its flat walls led to
 the raised walls above.
+
+**Steady bottom bar (11-20, helper thread "Keep the HUD layout steady",
+branch `claude/project-thread-v4utuv`).** Scott: the actions shrank as
+squads or gun cards grew. `Hud::bar_fit` now reads only the room and the
+widest gun (`Loadout::widest`, filled in `draw.rs`): the command card's
+labels depend on the window and UI size alone (`SEL_FLOOR` 270,
+`GUN_FLOOR` a rifle's bare strip); the gun strip sheds name, then Swap,
+then scales its cards; squad tiles shrink inside the selection. Stubs for
+empty slots are gone. Top bar numbers are measured at their widest digits
+(`steady_w`). Test: `the_command_card_and_gun_strip_hold_still`. Stills:
+`Reports/pr-stills/steady-hud-{before,after}.jpg`. Film hand used (not
+committed): `split:N:SLOTS:CARDS` in `hands.rs`, buys 3N+2 soldiers and
+splits the biggest squad until N (the game stops at 9 here).
 
 **Worth knowing.**
 

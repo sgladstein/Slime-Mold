@@ -73,6 +73,7 @@ mod steer;
 mod cover;
 mod doors;
 mod bulwark;
+mod gear;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -101,6 +102,8 @@ use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
 pub use super::guns::Gun;
 pub use super::rounds::Deck;
+use super::kit::Kit;
+use super::rounds::Rounds;
 
 pub use super::larder::{End, Order, Stance};
 
@@ -567,6 +570,23 @@ pub struct Game<W: World> {
     pub stand: Stand,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
+    /// The squad's tools (`mould::kit`) and the army's gun cards
+    /// (`mould::rounds`), run after every finished step (`gear.rs`). Until
+    /// 2026-11-20 the window's `App` held and ran both, so a game played
+    /// without the window (the library's tests, the census) fired its gun
+    /// with no card cast and never restocked a tool (Engine and tools, job
+    /// 6). Set a planet's up from its run with `Game::kit_out`.
+    pub kit: Kit,
+    pub rounds: Rounds,
+    /// Soldiers the kit restocks to its full carry (`KitRules::carry_max`)
+    /// rather than `carry_each`: the window's selection, copied in each
+    /// frame. Empty without a window.
+    pub carry_full: Vec<usize>,
+    /// Whether the game runs its kit and rounds itself after each step
+    /// (`Game::gear_turn`): always in play. False only for a test that
+    /// runs a `Rounds` of its own to look between a step and its casts
+    /// (the walkers before a shove, the pops a step let out).
+    pub gear: bool,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -724,6 +744,10 @@ impl<W: World> Game<W> {
             cores: Cores::default(),
             stand: Stand::default(),
             rendered: 0.0,
+            kit: Kit::new(Default::default()),
+            rounds: Rounds::new(Vec::new(), Default::default()),
+            carry_full: Vec::new(),
+            gear: true,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.charge_was = g.crystal_full.iter().map(|&c| c as f64).sum();

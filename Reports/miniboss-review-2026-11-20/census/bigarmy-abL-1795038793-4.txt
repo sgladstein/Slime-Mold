@@ -1,0 +1,765 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 11 s alone in 19.1 s
+STRAT t 0 build mould 52758 soldiers 4 hp 1.00 bank 0 killed 0 turret 0 pumps 4 buildings 4
+  cores t 1 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 2 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 3 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 4 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 5 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 6 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 7 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 8 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 9 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 10 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 10 build mould 53148 soldiers 4 hp 1.00 bank 297 killed 13 turret 0 pumps 4 buildings 4
+  cores t 11 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 12 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 13 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 14 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 15 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 16 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 17 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 18 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 19 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 20 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 20 build mould 53985 soldiers 4 hp 1.00 bank 105 killed 13 turret 0 pumps 4 buildings 4
+  cores t 21 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 22 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 23 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 24 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 25 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 26 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 27 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 28 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 29 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 30 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 30 build mould 55149 soldiers 4 hp 1.00 bank 27 killed 15 turret 0 pumps 5 buildings 5
+  cores t 31 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 32 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 33 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 34 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 35 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 36 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 37 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 38 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 39 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 40 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 40 out mould 56386 soldiers 4 hp 1.00 bank 332 killed 15 turret 0 pumps 5 buildings 5
+  cores t 41 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 42 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 43 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 44 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  surge 1 starts at t 45.0 s (the slime has eaten 348 food)
+  cores t 45 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 46 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 47 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 48 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 49 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 50 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 50 out mould 57262 soldiers 4 hp 0.95 bank 539 killed 509 turret 0 pumps 6 buildings 6
+  cores t 51 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 52 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 53 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 54 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 55 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 56 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 57 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 58 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 59 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 60 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 60 out mould 58542 soldiers 4 hp 0.95 bank 186 killed 544 turret 0 pumps 7 buildings 7
+  cores t 61 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 62 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 63 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 64 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 65 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 66 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 67 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 68 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 69 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 70 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 70 out mould 57743 soldiers 9 hp 0.79 bank 313 killed 2973 turret 0 pumps 7 buildings 7
+  cores t 71 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 72 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 73 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 74 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 75 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 76 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 77 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 78 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 79 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 80 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+STRAT t 80 out mould 53114 soldiers 18 hp 0.88 bank 365 killed 4093 turret 0 pumps 7 buildings 7
+  surge 2 starts at t 81.0 s (the slime has eaten 696 food)
+  cores t 81 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  cores t 82 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  boss t 83.0 s: Crowd hunter formed on lump 0 at 489,277 (crowd top 1.00); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 83 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 489,277, spread 1.05, stolen 0.0; nearest soldier 341.7, 20 alive
+  cores t 83 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  boss t 84 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.60, stolen 0.0; nearest soldier 360.1, 21 alive
+  cores t 84 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  boss t 85 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.61, stolen 0.0; nearest soldier 362.4, 22 alive
+  cores t 85 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  boss t 86 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.61, stolen 0.0; nearest soldier 363.8, 23 alive
+  cores t 86 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  boss t 87 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.61, stolen 0.0; nearest soldier 364.5, 24 alive
+  drop t 87 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 0.0, 0 soldiers and 0 walkers on it; nearest soldier 71.0
+  cores t 87 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  boss t 88 s: lump 0 hunter Gather, 554 members (first 554, 0 hurt), at 492,276, spread 0.63, stolen 0.0; nearest soldier 348.0, 25 alive
+  drop t 88 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 0.0, 0 soldiers and 0 walkers on it; nearest soldier 85.3
+  cores t 88 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.0
+  boss t 89 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 492,276, spread 0.63, stolen 0.0; nearest soldier 345.6, 26 alive
+  drop t 89 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 0.4, 0 soldiers and 5 walkers on it; nearest soldier 83.7
+  cores t 89 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 0.4
+  boss t 90 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 472,266, spread 1.17, stolen 0.0; nearest soldier 328.2, 27 alive
+  drop t 90 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 3.7, 0 soldiers and 56 walkers on it; nearest soldier 73.8
+  cores t 90 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 3.7
+STRAT t 90 out mould 50319 soldiers 28 hp 0.90 bank 381 killed 5082 turret 0 pumps 7 buildings 7
+  boss t 91 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 470,260, spread 0.91, stolen 0.0; nearest soldier 336.4, 28 alive
+  drop t 91 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 9.8, 0 soldiers and 67 walkers on it; nearest soldier 85.6
+  cores t 91 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 9.8
+  boss t 92 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 468,256, spread 0.89, stolen 0.0; nearest soldier 334.5, 30 alive
+  drop t 92 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 16.3, 0 soldiers and 70 walkers on it; nearest soldier 86.8
+  cores t 92 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 16.3
+  boss t 93 s: lump 0 hunter Hunt(Some(16)), 554 members (first 554, 0 hurt), at 468,252, spread 0.88, stolen 0.0; nearest soldier 319.8, 31 alive
+  drop t 93 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 23.5, 0 soldiers and 76 walkers on it; nearest soldier 83.8
+  cores t 93 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 23.5
+  boss t 94 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 464,248, spread 0.91, stolen 0.0; nearest soldier 314.5, 32 alive
+  drop t 94 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 30.9, 0 soldiers and 79 walkers on it; nearest soldier 73.8
+  cores t 94 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 30.9
+  surge 3 starts at t 94.6 s (the slime has eaten 820 food)
+  boss t 95 s: lump 0 hunter Hunt(Some(26)), 554 members (first 554, 0 hurt), at 450,232, spread 1.16, stolen 0.0; nearest soldier 289.7, 33 alive
+  drop t 95 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 38.3, 0 soldiers and 74 walkers on it; nearest soldier 80.7
+  cores t 95 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 38.3
+  boss t 96 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 444,222, spread 1.13, stolen 0.0; nearest soldier 286.1, 34 alive
+  drop t 96 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 43.9, 0 soldiers and 54 walkers on it; nearest soldier 75.2
+  cores t 96 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 43.9
+  boss t 97 s: lump 0 hunter Hunt(Some(29)), 554 members (first 554, 0 hurt), at 436,216, spread 1.25, stolen 0.0; nearest soldier 291.0, 35 alive
+  drop t 97 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 46.2, 0 soldiers and 1 walkers on it; nearest soldier 88.5
+  cores t 97 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 46.2
+  boss t 98 s: lump 0 hunter Hunt(Some(18)), 554 members (first 554, 0 hurt), at 428,208, spread 1.13, stolen 0.0; nearest soldier 280.0, 36 alive
+  drop t 98 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 47.1, 0 soldiers and 28 walkers on it; nearest soldier 79.5
+  cores t 98 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 47.1
+  boss t 99 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 420,202, spread 0.97, stolen 0.0; nearest soldier 262.0, 37 alive
+  drop t 99 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 51.3, 0 soldiers and 57 walkers on it; nearest soldier 71.2
+  cores t 99 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 51.3
+  boss t 100 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 412,202, spread 0.97, stolen 0.0; nearest soldier 269.2, 38 alive
+  drop t 100 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 57.8, 0 soldiers and 73 walkers on it; nearest soldier 53.1
+  cores t 100 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 57.8
+STRAT t 100 out mould 49189 soldiers 39 hp 0.92 bank 232 killed 5781 turret 0 pumps 7 buildings 7
+  boss t 101 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 404,196, spread 0.96, stolen 0.0; nearest soldier 277.6, 39 alive
+  drop t 101 s: Ore Sky at 105,21, worth 70, taken 0.0, eaten 65.0, 0 soldiers and 75 walkers on it; nearest soldier 34.7
+  cores t 101 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 65.0
+  boss t 102 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 398,192, spread 0.94, stolen 0.0; nearest soldier 286.5, 40 alive
+  cores t 102 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 103 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 392,188, spread 0.91, stolen 0.0; nearest soldier 293.8, 40 alive
+  cores t 103 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 104 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 388,186, spread 1.05, stolen 0.0; nearest soldier 308.7, 41 alive
+  cores t 104 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 105 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 386,182, spread 1.21, stolen 0.0; nearest soldier 306.6, 42 alive
+  cores t 105 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 106 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 382,180, spread 1.34, stolen 0.0; nearest soldier 303.1, 43 alive
+  cores t 106 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 107 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 380,178, spread 1.43, stolen 0.0; nearest soldier 310.5, 44 alive
+  cores t 107 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 108 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 376,176, spread 1.49, stolen 0.0; nearest soldier 291.2, 45 alive
+  cores t 108 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 109 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 372,172, spread 1.57, stolen 0.0; nearest soldier 269.9, 45 alive
+  cores t 109 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 110 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 366,172, spread 1.72, stolen 0.0; nearest soldier 246.0, 46 alive
+  cores t 110 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+STRAT t 110 out mould 48810 soldiers 47 hp 0.93 bank 158 killed 6366 turret 0 pumps 7 buildings 7
+  boss t 111 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 360,168, spread 1.74, stolen 0.0; nearest soldier 219.6, 47 alive
+  cores t 111 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 112 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 350,166, spread 1.74, stolen 0.0; nearest soldier 192.3, 48 alive
+  cores t 112 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 113 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 342,164, spread 1.78, stolen 0.0; nearest soldier 167.1, 48 alive
+  cores t 113 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 114 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 334,162, spread 1.82, stolen 0.0; nearest soldier 140.7, 49 alive
+  cores t 114 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 115 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 328,170, spread 1.78, stolen 0.0; nearest soldier 118.8, 50 alive
+  cores t 115 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 116 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 324,180, spread 1.76, stolen 0.0; nearest soldier 100.2, 50 alive
+  cores t 116 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 117 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 314,176, spread 1.72, stolen 0.0; nearest soldier 71.4, 51 alive
+  cores t 117 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 118 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 304,172, spread 1.69, stolen 0.0; nearest soldier 48.3, 52 alive
+  cores t 118 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 119 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 0 hurt), at 296,166, spread 1.66, stolen 0.0; nearest soldier 32.5, 53 alive
+  cores t 119 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 120 s: lump 0 hunter Go((117.5, 299.0)), 554 members (first 554, 298 hurt), at 286,162, spread 1.66, stolen 0.0; nearest soldier 17.1, 53 alive
+  cores t 120 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+STRAT t 120 out mould 48370 soldiers 54 hp 0.89 bank 173 killed 7985 turret 0 pumps 7 buildings 7
+  bossfell t 120.3 s: 1 soldiers fell by a mini-boss (1 in all), 53 alive
+  bossfell t 120.5 s: 1 soldiers fell by a mini-boss (2 in all), 52 alive
+  bossfell t 120.9 s: 2 soldiers fell by a mini-boss (4 in all), 50 alive
+  boss t 121 s: lump 0 hunter Go((117.5, 299.0)), 516 members (first 554, 466 hurt), at 280,162, spread 1.56, stolen 0.0; nearest soldier 12.2, 50 alive
+  cores t 121 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  bossfell t 121.3 s: 1 soldiers fell by a mini-boss (5 in all), 50 alive
+  boss t 122 s: lump 0 hunter Go((117.5, 299.0)), 214 members (first 554, 519 hurt), at 292,170, spread 2.87, stolen 0.0; nearest soldier 17.7, 50 alive
+  cores t 122 s: 0 dropped, pot 0 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  boss t 123 s: lump 0 hunter ended Broken (122 members of 554; stole 0.0, 0.0 given back so far)
+  drop t 123 s: Core Boss { kind: Hunter, grade: 0.8 } at 320,184, worth 72, taken 0.0, eaten 0.0, 0 soldiers and 0 walkers on it; nearest soldier 41.6
+  cores t 123 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.0
+  drop t 124 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 0.7, 0 soldiers and 12 walkers on it; nearest soldier 37.4
+  cores t 124 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.7
+  drop t 125 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 0.8, 0 soldiers and 2 walkers on it; nearest soldier 39.3
+  cores t 125 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.8
+  drop t 126 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 0.8, 0 soldiers and 0 walkers on it; nearest soldier 43.1
+  cores t 126 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.8
+  drop t 127 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 0.8, 0 soldiers and 1 walkers on it; nearest soldier 48.2
+  cores t 127 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.8
+  fruit t 128 s: lump 0, 0 members (most 0), at 477,39, ripe 0.00; nearest soldier 268.7
+  drop t 128 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 0.9, 0 soldiers and 7 walkers on it; nearest soldier 55.6
+  cores t 128 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 70.9
+  fruit t 129 s: lump 0, 2647 members (most 2647), at 476,48, ripe 0.03; nearest soldier 275.8
+  drop t 129 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 1.6, 0 soldiers and 41 walkers on it; nearest soldier 67.6
+  cores t 129 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 71.6
+  fruit t 130 s: lump 0, 2647 members (most 2647), at 476,48, ripe 0.07; nearest soldier 284.0
+  drop t 130 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 3.0, 0 soldiers and 49 walkers on it; nearest soldier 76.4
+  cores t 130 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 73.0
+STRAT t 130 out mould 44548 soldiers 45 hp 0.66 bank 238 killed 17244 turret 0 pumps 7 buildings 7
+  fruit t 131 s: lump 0, 2647 members (most 2647), at 476,48, ripe 0.10; nearest soldier 285.9
+  drop t 131 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 4.4, 0 soldiers and 49 walkers on it; nearest soldier 79.1
+  cores t 131 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 74.4
+  fruit t 132 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.13; nearest soldier 287.2
+  drop t 132 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 5.8, 0 soldiers and 49 walkers on it; nearest soldier 80.5
+  cores t 132 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 75.8
+  surge 4 starts at t 132.1 s (the slime has eaten 1169 food)
+  fruit t 133 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.17; nearest soldier 286.0
+  drop t 133 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 7.2, 0 soldiers and 49 walkers on it; nearest soldier 80.2
+  cores t 133 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 77.2
+  fruit t 134 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.20; nearest soldier 289.0
+  drop t 134 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 8.4, 0 soldiers and 40 walkers on it; nearest soldier 82.6
+  cores t 134 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 78.4
+  fruit t 135 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.23; nearest soldier 288.7
+  drop t 135 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 9.3, 0 soldiers and 37 walkers on it; nearest soldier 81.1
+  cores t 135 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 79.3
+  fruit t 136 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.27; nearest soldier 289.3
+  drop t 136 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 10.7, 0 soldiers and 48 walkers on it; nearest soldier 81.3
+  cores t 136 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 80.7
+  fruit t 137 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.30; nearest soldier 288.1
+  drop t 137 s: Core Boss { kind: Hunter, grade: 0.8 } at 319,185, worth 72, taken 0.0, eaten 12.0, 0 soldiers and 49 walkers on it; nearest soldier 80.6
+  cores t 137 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 82.0
+  fruit t 138 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.33; nearest soldier 292.8
+  cores t 138 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 139 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.37; nearest soldier 293.6
+  cores t 139 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 140 s: lump 0, 2647 members (most 2647), at 476,46, ripe 0.40; nearest soldier 292.1
+  cores t 140 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 140 out mould 41167 soldiers 41 hp 0.54 bank 279 killed 23638 turret 0 pumps 7 buildings 7
+  fruit t 141 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.43; nearest soldier 293.8
+  cores t 141 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 142 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.47; nearest soldier 282.5
+  cores t 142 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 143 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.50; nearest soldier 280.3
+  cores t 143 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 144 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.53; nearest soldier 283.8
+  cores t 144 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 145 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.57; nearest soldier 281.2
+  cores t 145 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 146 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.60; nearest soldier 295.4
+  cores t 146 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 147 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.63; nearest soldier 298.2
+  cores t 147 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 148 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.67; nearest soldier 287.1
+  cores t 148 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 149 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.70; nearest soldier 291.8
+  cores t 149 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 150 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.73; nearest soldier 286.2
+  cores t 150 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 150 out mould 41511 soldiers 53 hp 0.66 bank 272 killed 24788 turret 0 pumps 7 buildings 7
+  fruit t 151 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.77; nearest soldier 286.1
+  cores t 151 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 152 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.80; nearest soldier 285.1
+  cores t 152 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 153 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.83; nearest soldier 298.6
+  cores t 153 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 154 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.87; nearest soldier 301.2
+  cores t 154 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 155 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.90; nearest soldier 291.8
+  cores t 155 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 156 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.93; nearest soldier 283.1
+  cores t 156 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit t 157 s: lump 0, 2647 members (most 2647), at 476,44, ripe 0.97; nearest soldier 286.9
+  cores t 157 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  cores t 158 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit ended t 169.0 s: Burst with 2647 members (1 burst, 0 broken, 2647 walkers sown in all)
+  cores t 159 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  cores t 160 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 160 out mould 42754 soldiers 66 hp 0.73 bank 155 killed 25369 turret 0 pumps 6 buildings 6
+  cores t 161 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  cores t 162 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  cores t 163 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  cores t 164 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  cores t 165 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  cores t 166 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 167.0 s: Cut wanderer formed on lump 0 at 274,147 (crowd top 1.00); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 167 s: lump 0 wanderer Gather, 0 members (first 0, 0 hurt), at 274,147, spread 1.57, stolen 0.0; nearest soldier 98.4, 66 alive
+  cores t 167 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 168 s: lump 0 wanderer Gather, 809 members (first 809, 0 hurt), at 268,154, spread 0.81, stolen 0.0; nearest soldier 96.7, 66 alive
+  cores t 168 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 169 s: lump 0 wanderer Gather, 809 members (first 809, 0 hurt), at 268,154, spread 0.70, stolen 0.0; nearest soldier 97.8, 67 alive
+  cores t 169 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 170 s: lump 0 wanderer Gather, 809 members (first 809, 0 hurt), at 268,154, spread 0.65, stolen 0.0; nearest soldier 102.0, 67 alive
+  cores t 170 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 170 out mould 42972 soldiers 67 hp 0.69 bank 316 killed 28706 turret 0 pumps 6 buildings 6
+  boss t 171 s: lump 0 wanderer Gather, 809 members (first 809, 0 hurt), at 268,154, spread 0.63, stolen 0.0; nearest soldier 102.3, 66 alive
+  cores t 171 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 172 s: lump 0 wanderer Gather, 809 members (first 809, 0 hurt), at 266,154, spread 0.64, stolen 0.0; nearest soldier 106.2, 64 alive
+  cores t 172 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 173 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 266,156, spread 0.67, stolen 0.0; nearest soldier 113.3, 63 alive
+  cores t 173 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 174 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 264,156, spread 0.81, stolen 0.0; nearest soldier 129.5, 62 alive
+  cores t 174 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 175 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 262,154, spread 0.92, stolen 0.0; nearest soldier 142.4, 61 alive
+  cores t 175 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 176 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 260,152, spread 0.98, stolen 0.0; nearest soldier 162.8, 59 alive
+  cores t 176 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 177 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 256,148, spread 1.07, stolen 0.0; nearest soldier 179.0, 57 alive
+  cores t 177 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 178 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 254,146, spread 1.07, stolen 0.0; nearest soldier 185.2, 56 alive
+  cores t 178 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 179 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 252,144, spread 1.10, stolen 0.0; nearest soldier 190.7, 56 alive
+  cores t 179 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 180 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 250,142, spread 1.10, stolen 0.0; nearest soldier 195.7, 55 alive
+  cores t 180 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 180 out mould 36918 soldiers 56 hp 0.66 bank 174 killed 37695 turret 0 pumps 5 buildings 5
+  surge 5 starts at t 180.7 s (the slime has eaten 1517 food)
+  boss t 181 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 248,140, spread 1.08, stolen 0.0; nearest soldier 196.1, 55 alive
+  cores t 181 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 182 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 246,138, spread 0.99, stolen 0.0; nearest soldier 200.8, 56 alive
+  cores t 182 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 183 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 244,136, spread 0.90, stolen 0.0; nearest soldier 201.4, 56 alive
+  cores t 183 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 184 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 244,134, spread 0.81, stolen 0.0; nearest soldier 204.5, 57 alive
+  cores t 184 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 185 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 244,134, spread 0.80, stolen 0.0; nearest soldier 205.3, 58 alive
+  cores t 185 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 186 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 242,134, spread 0.75, stolen 0.0; nearest soldier 206.1, 59 alive
+  cores t 186 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 187 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 242,132, spread 0.71, stolen 0.0; nearest soldier 209.1, 59 alive
+  cores t 187 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 188 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 242,132, spread 0.69, stolen 0.0; nearest soldier 210.2, 60 alive
+  cores t 188 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 189 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 240,132, spread 0.66, stolen 0.0; nearest soldier 212.9, 61 alive
+  cores t 189 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 190 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 236,134, spread 1.02, stolen 0.0; nearest soldier 210.4, 61 alive
+  cores t 190 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 190 out mould 35764 soldiers 61 hp 0.67 bank 159 killed 39860 turret 0 pumps 4 buildings 4
+  boss t 191 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 232,136, spread 1.27, stolen 0.0; nearest soldier 196.1, 61 alive
+  cores t 191 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 192 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 226,140, spread 1.42, stolen 0.0; nearest soldier 181.1, 61 alive
+  cores t 192 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 193 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 220,144, spread 1.53, stolen 0.0; nearest soldier 165.2, 61 alive
+  cores t 193 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 194 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 214,148, spread 1.57, stolen 0.0; nearest soldier 148.2, 61 alive
+  cores t 194 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 195 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 206,152, spread 1.57, stolen 0.0; nearest soldier 130.9, 61 alive
+  cores t 195 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 196 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 200,158, spread 1.62, stolen 0.0; nearest soldier 114.6, 61 alive
+  cores t 196 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 197 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 192,162, spread 1.61, stolen 0.0; nearest soldier 101.0, 61 alive
+  cores t 197 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 198 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 0 hurt), at 184,166, spread 1.63, stolen 0.0; nearest soldier 89.5, 61 alive
+  fruit t 198 s: lump 1, 0 members (most 0), at 175,165, ripe 0.00; nearest soldier 98.1
+  cores t 198 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 199 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 14 hurt), at 176,170, spread 1.66, stolen 0.0; nearest soldier 84.7, 61 alive
+  fruit t 199 s: lump 1, 1702 members (most 1702), at 136,224, ripe 0.03; nearest soldier 135.8
+  cores t 199 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 200 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 27 hurt), at 170,174, spread 1.69, stolen 0.0; nearest soldier 88.6, 61 alive
+  fruit t 200 s: lump 1, 1636 members (most 1702), at 138,220, ripe 0.07; nearest soldier 130.9
+  cores t 200 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 200 out mould 37121 soldiers 61 hp 0.65 bank 50 killed 40251 turret 0 pumps 4 buildings 4
+  boss t 201 s: lump 0 wanderer Go((141.5, 183.0)), 809 members (first 809, 38 hurt), at 166,178, spread 1.64, stolen 0.0; nearest soldier 90.6, 60 alive
+  fruit t 201 s: lump 1, 1591 members (most 1702), at 140,216, ripe 0.10; nearest soldier 122.7
+  cores t 201 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 202 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 806 members (first 809, 41 hurt), at 162,180, spread 1.63, stolen 0.0; nearest soldier 93.8, 58 alive
+  fruit t 202 s: lump 1, 1549 members (most 1702), at 142,212, ripe 0.13; nearest soldier 119.0
+  cores t 202 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 203 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 804 members (first 809, 46 hurt), at 160,182, spread 1.57, stolen 0.0; nearest soldier 95.3, 59 alive
+  fruit t 203 s: lump 1, 1495 members (most 1702), at 140,210, ripe 0.17; nearest soldier 119.4
+  cores t 203 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 204 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 798 members (first 809, 58 hurt), at 158,182, spread 1.56, stolen 0.0; nearest soldier 89.7, 54 alive
+  fruit t 204 s: lump 1, 1463 members (most 1702), at 140,208, ripe 0.20; nearest soldier 118.1
+  cores t 204 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 205 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 792 members (first 809, 58 hurt), at 158,182, spread 1.51, stolen 0.0; nearest soldier 71.1, 53 alive
+  fruit t 205 s: lump 1, 1463 members (most 1702), at 142,204, ripe 0.23; nearest soldier 96.4
+  cores t 205 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 206 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 784 members (first 809, 65 hurt), at 156,184, spread 1.44, stolen 0.0; nearest soldier 54.2, 54 alive
+  fruit t 206 s: lump 1, 1461 members (most 1702), at 144,200, ripe 0.27; nearest soldier 72.8
+  cores t 206 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 207 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 780 members (first 809, 65 hurt), at 154,184, spread 1.44, stolen 0.0; nearest soldier 37.2, 54 alive
+  fruit t 207 s: lump 1, 1461 members (most 1702), at 144,198, ripe 0.30; nearest soldier 51.2
+  cores t 207 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 208 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 777 members (first 809, 192 hurt), at 156,184, spread 1.47, stolen 0.0; nearest soldier 21.8, 54 alive
+  fruit t 208 s: lump 1, 1281 members (most 1702), at 144,196, ripe 0.33; nearest soldier 32.6
+  cores t 208 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 209 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 774 members (first 809, 331 hurt), at 158,184, spread 1.48, stolen 0.0; nearest soldier 14.0, 54 alive
+  fruit t 209 s: lump 1, 1071 members (most 1702), at 146,194, ripe 0.37; nearest soldier 18.8
+  cores t 209 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 210 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 701 members (first 809, 432 hurt), at 160,186, spread 1.48, stolen 0.0; nearest soldier 13.5, 55 alive
+  fruit t 210 s: lump 1, 884 members (most 1702), at 148,192, ripe 0.40; nearest soldier 16.4
+  cores t 210 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+STRAT t 210 out mould 37837 soldiers 55 hp 0.61 bank 205 killed 41422 turret 0 pumps 4 buildings 4
+  boss t 211 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 511 members (first 809, 502 hurt), at 162,188, spread 1.53, stolen 0.0; nearest soldier 8.7, 54 alive
+  fruit t 211 s: lump 1, 639 members (most 1702), at 150,190, ripe 0.43; nearest soldier 15.7
+  cores t 211 s: 1 dropped, pot 72 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  boss t 212 s: lump 0 wanderer Sit((141.5, 183.0), 3195), 269 members (first 809, 755 hurt), at 166,190, spread 1.49, stolen 0.0; nearest soldier 4.5, 54 alive
+  drop t 212 s: Core Fruit at 150,190, worth 40, taken 0.0, eaten 0.0, 0 soldiers and 0 walkers on it; nearest soldier 15.7
+  cores t 212 s: 2 dropped, pot 112 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 83.4
+  fruit ended t 223.0 s: Broken with 148 members (1 burst, 1 broken, 2647 walkers sown in all)
+  bossfell t 212.6 s: 1 soldiers fell by a mini-boss (6 in all), 54 alive
+  bossfell t 212.9 s: 1 soldiers fell by a mini-boss (7 in all), 53 alive
+  boss t 213 s: lump 0 wanderer ended Broken (188 members of 809; stole 0.0, 0.0 given back so far)
+  drop t 213 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 18.3
+  drop t 213 s: Core Boss { kind: Wanderer, grade: 0.8 } at 182,198, worth 72, taken 0.0, eaten 0.0, 0 soldiers and 0 walkers on it; nearest soldier 7.2
+  cores t 213 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 0.0 (ore 0.0, cores 0.0), the slime ate 84.1
+  drop t 214 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 13.0
+  drop t 214 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 12.3, eaten 0.0, 5 soldiers and 0 walkers on it; nearest soldier 1.8
+  cores t 214 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 12.3 (ore 0.0, cores 12.3), the slime ate 84.1
+  drop t 215 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 16.5
+  drop t 215 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 26.3, eaten 0.0, 6 soldiers and 0 walkers on it; nearest soldier 2.9
+  cores t 215 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 26.3 (ore 0.0, cores 26.3), the slime ate 84.1
+  drop t 216 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 17.2
+  drop t 216 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 34.0, eaten 0.0, 3 soldiers and 0 walkers on it; nearest soldier 5.6
+  cores t 216 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 34.0 (ore 0.0, cores 34.0), the slime ate 84.1
+  drop t 217 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 17.2
+  drop t 217 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 41.7, eaten 0.0, 4 soldiers and 0 walkers on it; nearest soldier 3.1
+  cores t 217 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 41.7 (ore 0.0, cores 41.7), the slime ate 84.1
+  drop t 218 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 18.1
+  drop t 218 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 50.3, eaten 0.0, 2 soldiers and 0 walkers on it; nearest soldier 3.2
+  cores t 218 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 50.3 (ore 0.0, cores 50.3), the slime ate 84.1
+  raid 1 at t 219.0 s: Building(6) at 118,299, reach 195 cells holding 11260 walkers, share 0.60, size 18% of the slime
+  march t 219 s: lump 3, 0 members (first 0), at 314,143, spread 3.96, 125 cells to go
+  drop t 219 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 19.9
+  drop t 219 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 54.8, eaten 0.0, 2 soldiers and 0 walkers on it; nearest soldier 6.6
+  cores t 219 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 54.8 (ore 0.0, cores 54.8), the slime ate 84.1
+  march t 220 s: lump 3, 10390 members (first 10390), at 432,114, spread 1.31, 182 cells to go
+  drop t 220 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.6, 0 soldiers and 0 walkers on it; nearest soldier 19.4
+  drop t 220 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 56.7, eaten 0.0, 1 soldiers and 0 walkers on it; nearest soldier 7.8
+  cores t 220 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 56.7 (ore 0.0, cores 56.7), the slime ate 84.1
+STRAT t 220 build mould 39862 soldiers 48 hp 0.55 bank 326 killed 44189 turret 0 pumps 4 buildings 4
+  drop t 221 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 0.8, 0 soldiers and 16 walkers on it; nearest soldier 33.8
+  drop t 221 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 57.5, eaten 0.0, 0 soldiers and 2 walkers on it; nearest soldier 17.9
+  cores t 221 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 84.3
+  drop t 222 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 1.0, 0 soldiers and 0 walkers on it; nearest soldier 52.1
+  drop t 222 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 57.5, eaten 0.1, 0 soldiers and 2 walkers on it; nearest soldier 37.2
+  cores t 222 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 84.5
+  drop t 223 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 1.0, 0 soldiers and 0 walkers on it; nearest soldier 71.3
+  drop t 223 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 57.5, eaten 0.1, 0 soldiers and 2 walkers on it; nearest soldier 56.9
+  cores t 223 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 84.5
+  drop t 224 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 1.0, 0 soldiers and 0 walkers on it; nearest soldier 90.9
+  drop t 224 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 57.5, eaten 0.3, 0 soldiers and 6 walkers on it; nearest soldier 76.5
+  cores t 224 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 84.7
+  drop t 225 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 1.0, 0 soldiers and 1 walkers on it; nearest soldier 106.3
+  drop t 225 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 57.5, eaten 0.5, 0 soldiers and 8 walkers on it; nearest soldier 79.5
+  cores t 225 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 84.9
+  surge 6 starts at t 225.3 s (the slime has eaten 1864 food)
+  drop t 226 s: Core Fruit at 149,187, worth 40, taken 0.0, eaten 1.0, 0 soldiers and 1 walkers on it; nearest soldier 106.2
+  drop t 226 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 57.5, eaten 0.7, 0 soldiers and 5 walkers on it; nearest soldier 79.5
+  cores t 226 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.1
+  drop t 227 s: Core Boss { kind: Wanderer, grade: 0.8 } at 175,195, worth 72, taken 57.5, eaten 0.9, 0 soldiers and 9 walkers on it; nearest soldier 79.2
+  cores t 227 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.3
+  cores t 228 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  cores t 229 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  cores t 230 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 230 out mould 42235 soldiers 49 hp 0.55 bank 80 killed 44815 turret 0 pumps 3 buildings 3
+  cores t 231 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  cores t 232 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  cores t 233 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  cores t 234 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  cores t 235 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 236.0 s: Crowd hunter formed on lump 0 at 441,89 (crowd top 3.10); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 236 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 441,89, spread 0.61, stolen 0.0; nearest soldier 192.2, 44 alive
+  cores t 236 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 237 s: lump 0 hunter Gather, 1697 members (first 1697, 0 hurt), at 442,88, spread 0.55, stolen 0.0; nearest soldier 195.2, 44 alive
+  cores t 237 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 238 s: lump 0 hunter Gather, 1697 members (first 1697, 0 hurt), at 442,88, spread 0.53, stolen 0.0; nearest soldier 198.3, 44 alive
+  cores t 238 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 239 s: lump 0 hunter Gather, 1697 members (first 1697, 0 hurt), at 444,88, spread 0.53, stolen 0.0; nearest soldier 204.2, 43 alive
+  cores t 239 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 240 s: lump 0 hunter Gather, 1697 members (first 1697, 0 hurt), at 444,88, spread 0.54, stolen 0.0; nearest soldier 217.2, 42 alive
+  cores t 240 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 240 out mould 41168 soldiers 42 hp 0.54 bank 525 killed 48610 turret 0 pumps 3 buildings 3
+  boss t 241 s: lump 0 hunter Gather, 1697 members (first 1697, 0 hurt), at 444,88, spread 0.54, stolen 0.0; nearest soldier 234.5, 42 alive
+  cores t 241 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 242 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 444,88, spread 0.55, stolen 0.0; nearest soldier 252.2, 41 alive
+  cores t 242 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 243 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 442,90, spread 0.59, stolen 0.0; nearest soldier 268.6, 41 alive
+  cores t 243 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 244 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 442,92, spread 0.60, stolen 0.0; nearest soldier 280.4, 40 alive
+  cores t 244 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 245 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 442,94, spread 0.60, stolen 0.0; nearest soldier 296.6, 39 alive
+  cores t 245 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 246 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 440,96, spread 0.61, stolen 0.0; nearest soldier 310.4, 39 alive
+  cores t 246 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 247 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 440,96, spread 0.62, stolen 0.0; nearest soldier 309.7, 39 alive
+  cores t 247 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 248 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 442,98, spread 0.65, stolen 0.0; nearest soldier 310.3, 39 alive
+  cores t 248 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 249 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 444,98, spread 0.68, stolen 0.0; nearest soldier 329.9, 39 alive
+  cores t 249 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 250 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 444,100, spread 0.71, stolen 0.0; nearest soldier 346.0, 39 alive
+  cores t 250 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 250 out mould 39647 soldiers 39 hp 0.49 bank 445 killed 51084 turret 0 pumps 5 buildings 5
+  boss t 251 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 442,102, spread 0.71, stolen 0.0; nearest soldier 364.5, 39 alive
+  cores t 251 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 252 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 444,102, spread 0.73, stolen 0.0; nearest soldier 367.3, 39 alive
+  cores t 252 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 253 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 446,104, spread 0.76, stolen 0.0; nearest soldier 367.8, 39 alive
+  cores t 253 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 254 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 446,104, spread 0.79, stolen 0.0; nearest soldier 353.3, 39 alive
+  cores t 254 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 255.0 s: Cut hunter formed on lump 1 at 259,143 (crowd top 3.10); grade 0.80: 13 blows a member, touches as 4, pace x1.32; late
+  boss t 255 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,106, spread 0.80, stolen 0.0; nearest soldier 337.8, 39 alive
+  boss t 255 s: lump 1 hunter Gather, 0 members (first 0, 0 hurt), at 259,143, spread 1.22, stolen 0.0; nearest soldier 148.8, 39 alive
+  cores t 255 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 256 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,108, spread 0.82, stolen 0.0; nearest soldier 323.6, 39 alive
+  boss t 256 s: lump 1 hunter Gather, 1096 members (first 1096, 0 hurt), at 266,140, spread 0.87, stolen 0.0; nearest soldier 140.3, 39 alive
+  cores t 256 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 257 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,110, spread 0.84, stolen 0.0; nearest soldier 317.3, 39 alive
+  boss t 257 s: lump 1 hunter Gather, 1096 members (first 1096, 0 hurt), at 266,140, spread 0.78, stolen 0.0; nearest soldier 134.1, 39 alive
+  cores t 257 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 258 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,112, spread 0.85, stolen 0.0; nearest soldier 304.4, 39 alive
+  boss t 258 s: lump 1 hunter Gather, 1096 members (first 1096, 0 hurt), at 266,138, spread 0.74, stolen 0.0; nearest soldier 118.7, 39 alive
+  cores t 258 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 259 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 452,114, spread 0.86, stolen 0.0; nearest soldier 302.6, 39 alive
+  boss t 259 s: lump 1 hunter Gather, 1096 members (first 1096, 0 hurt), at 268,138, spread 0.68, stolen 0.0; nearest soldier 117.1, 39 alive
+  cores t 259 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 260 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,116, spread 0.86, stolen 0.0; nearest soldier 287.5, 39 alive
+  boss t 260 s: lump 1 hunter Gather, 1096 members (first 1096, 0 hurt), at 268,138, spread 0.68, stolen 0.0; nearest soldier 104.1, 39 alive
+  cores t 260 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 260 out mould 40237 soldiers 39 hp 0.50 bank 650 killed 51427 turret 0 pumps 7 buildings 7
+  boss t 261 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,116, spread 0.86, stolen 0.0; nearest soldier 270.3, 39 alive
+  boss t 261 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 0 hurt), at 268,138, spread 0.67, stolen 0.0; nearest soldier 88.6, 39 alive
+  cores t 261 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 262 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,118, spread 0.86, stolen 0.0; nearest soldier 268.0, 39 alive
+  boss t 262 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 0 hurt), at 268,142, spread 0.67, stolen 0.0; nearest soldier 87.7, 39 alive
+  cores t 262 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 263 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,120, spread 0.86, stolen 0.0; nearest soldier 251.5, 39 alive
+  boss t 263 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 0 hurt), at 266,146, spread 0.67, stolen 0.0; nearest soldier 69.3, 39 alive
+  cores t 263 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 264 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,120, spread 0.86, stolen 0.0; nearest soldier 230.6, 39 alive
+  boss t 264 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 0 hurt), at 266,148, spread 0.70, stolen 0.0; nearest soldier 49.9, 39 alive
+  cores t 264 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 265 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,122, spread 0.87, stolen 0.0; nearest soldier 228.2, 39 alive
+  boss t 265 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 0 hurt), at 266,150, spread 0.73, stolen 0.0; nearest soldier 49.3, 39 alive
+  cores t 265 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 266 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,124, spread 0.86, stolen 0.0; nearest soldier 229.1, 39 alive
+  boss t 266 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 0 hurt), at 264,154, spread 0.75, stolen 0.0; nearest soldier 49.6, 39 alive
+  cores t 266 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 267 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,126, spread 0.86, stolen 0.0; nearest soldier 213.0, 39 alive
+  boss t 267 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 1 hurt), at 264,156, spread 0.77, stolen 0.0; nearest soldier 35.4, 39 alive
+  cores t 267 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 268 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,126, spread 0.86, stolen 0.0; nearest soldier 201.4, 39 alive
+  boss t 268 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 47 hurt), at 262,158, spread 0.81, stolen 0.0; nearest soldier 23.8, 39 alive
+  cores t 268 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 268.9 s: 1 soldiers fell by a mini-boss (8 in all), 38 alive
+  boss t 269 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,128, spread 0.88, stolen 0.0; nearest soldier 199.4, 38 alive
+  boss t 269 s: lump 1 hunter Go((241.5, 303.0)), 1096 members (first 1096, 154 hurt), at 260,160, spread 0.85, stolen 0.0; nearest soldier 25.1, 38 alive
+  cores t 269 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 269.4 s: 1 soldiers fell by a mini-boss (9 in all), 37 alive
+  bossfell t 269.6 s: 1 soldiers fell by a mini-boss (10 in all), 36 alive
+  boss t 270 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 448,130, spread 0.83, stolen 0.0; nearest soldier 201.8, 35 alive
+  boss t 270 s: lump 1 hunter Go((241.5, 303.0)), 1091 members (first 1096, 173 hurt), at 260,160, spread 0.93, stolen 0.0; nearest soldier 26.9, 35 alive
+  cores t 270 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 270 back mould 41359 soldiers 35 hp 0.46 bank 19 killed 51769 turret 0 pumps 7 buildings 7
+  bossfell t 270.3 s: 1 soldiers fell by a mini-boss (11 in all), 33 alive
+  boss t 271 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,130, spread 0.81, stolen 0.0; nearest soldier 202.8, 33 alive
+  boss t 271 s: lump 1 hunter Go((241.5, 303.0)), 1076 members (first 1096, 197 hurt), at 258,162, spread 1.00, stolen 0.0; nearest soldier 32.2, 33 alive
+  cores t 271 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 272 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,132, spread 0.79, stolen 0.0; nearest soldier 205.6, 31 alive
+  boss t 272 s: lump 1 hunter Go((241.5, 303.0)), 1065 members (first 1096, 214 hurt), at 258,162, spread 0.99, stolen 0.0; nearest soldier 32.2, 31 alive
+  cores t 272 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 273 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 452,132, spread 0.78, stolen 0.0; nearest soldier 198.1, 30 alive
+  boss t 273 s: lump 1 hunter Go((241.5, 303.0)), 1058 members (first 1096, 234 hurt), at 258,162, spread 1.01, stolen 0.0; nearest soldier 27.7, 30 alive
+  cores t 273 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 273.1 s: 1 soldiers fell by a mini-boss (12 in all), 29 alive
+  boss t 274 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,134, spread 0.87, stolen 0.0; nearest soldier 203.8, 25 alive
+  boss t 274 s: lump 1 hunter Go((241.5, 303.0)), 1042 members (first 1096, 263 hurt), at 258,162, spread 1.03, stolen 0.0; nearest soldier 32.6, 25 alive
+  cores t 274 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 275 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 446,136, spread 0.95, stolen 0.0; nearest soldier 204.4, 25 alive
+  boss t 275 s: lump 1 hunter Go((241.5, 303.0)), 1039 members (first 1096, 267 hurt), at 258,162, spread 1.08, stolen 0.0; nearest soldier 33.6, 25 alive
+  cores t 275 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 276 s: lump 0 hunter Hunt(Some(80)), 1697 members (first 1697, 0 hurt), at 446,136, spread 1.00, stolen 0.0; nearest soldier 214.9, 23 alive
+  boss t 276 s: lump 1 hunter Hunt(Some(100)), 1022 members (first 1096, 281 hurt), at 258,162, spread 1.06, stolen 0.0; nearest soldier 36.9, 23 alive
+  cores t 276 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  surge 7 starts at t 276.7 s (the slime has eaten 2213 food)
+  boss t 277 s: lump 0 hunter Hunt(Some(80)), 1697 members (first 1697, 0 hurt), at 442,136, spread 1.04, stolen 0.0; nearest soldier 225.0, 23 alive
+  boss t 277 s: lump 1 hunter Hunt(Some(80)), 1021 members (first 1096, 282 hurt), at 256,160, spread 1.24, stolen 0.0; nearest soldier 41.1, 23 alive
+  cores t 277 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 278 s: lump 0 hunter Hunt(Some(80)), 1697 members (first 1697, 0 hurt), at 446,136, spread 0.86, stolen 0.0; nearest soldier 245.7, 23 alive
+  boss t 278 s: lump 1 hunter Hunt(Some(80)), 1021 members (first 1096, 282 hurt), at 256,158, spread 1.21, stolen 0.0; nearest soldier 55.2, 23 alive
+  cores t 278 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 279 s: lump 0 hunter Hunt(Some(80)), 1697 members (first 1697, 0 hurt), at 448,136, spread 0.81, stolen 0.0; nearest soldier 263.4, 23 alive
+  boss t 279 s: lump 1 hunter Hunt(Some(80)), 1021 members (first 1096, 282 hurt), at 256,156, spread 1.17, stolen 0.0; nearest soldier 71.6, 23 alive
+  cores t 279 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 280 s: lump 0 hunter Hunt(Some(80)), 1697 members (first 1697, 0 hurt), at 448,136, spread 0.79, stolen 0.0; nearest soldier 279.2, 23 alive
+  boss t 280 s: lump 1 hunter Hunt(Some(80)), 1021 members (first 1096, 281 hurt), at 256,154, spread 1.12, stolen 0.0; nearest soldier 86.4, 23 alive
+  cores t 280 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 280 out mould 42269 soldiers 23 hp 0.52 bank 139 killed 52053 turret 0 pumps 7 buildings 7
+  boss t 281 s: lump 0 hunter Hunt(Some(80)), 1697 members (first 1697, 0 hurt), at 450,136, spread 0.77, stolen 0.0; nearest soldier 297.7, 23 alive
+  boss t 281 s: lump 1 hunter Hunt(Some(80)), 1021 members (first 1096, 281 hurt), at 256,154, spread 1.05, stolen 0.0; nearest soldier 104.1, 23 alive
+  cores t 281 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 282 s: lump 0 hunter Hunt(Some(80)), 1697 members (first 1697, 0 hurt), at 450,138, spread 0.76, stolen 0.0; nearest soldier 315.9, 23 alive
+  boss t 282 s: lump 1 hunter Hunt(Some(80)), 1021 members (first 1096, 281 hurt), at 256,152, spread 1.03, stolen 0.0; nearest soldier 121.5, 23 alive
+  cores t 282 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 283 s: lump 0 hunter Hunt(Some(106)), 1697 members (first 1697, 0 hurt), at 452,140, spread 0.78, stolen 0.0; nearest soldier 326.3, 23 alive
+  boss t 283 s: lump 1 hunter Hunt(Some(106)), 1021 members (first 1096, 281 hurt), at 256,150, spread 0.97, stolen 0.0; nearest soldier 130.1, 23 alive
+  cores t 283 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 284 s: lump 0 hunter Hunt(Some(106)), 1697 members (first 1697, 0 hurt), at 452,140, spread 0.71, stolen 0.0; nearest soldier 335.8, 23 alive
+  boss t 284 s: lump 1 hunter Hunt(Some(106)), 1021 members (first 1096, 281 hurt), at 254,148, spread 1.05, stolen 0.0; nearest soldier 136.7, 23 alive
+  cores t 284 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 285 s: lump 0 hunter Hunt(Some(106)), 1697 members (first 1697, 0 hurt), at 452,140, spread 0.70, stolen 0.0; nearest soldier 351.0, 23 alive
+  boss t 285 s: lump 1 hunter Hunt(Some(106)), 1021 members (first 1096, 281 hurt), at 252,146, spread 1.08, stolen 0.0; nearest soldier 150.0, 23 alive
+  cores t 285 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 286 s: lump 0 hunter Hunt(Some(106)), 1697 members (first 1697, 0 hurt), at 454,142, spread 0.68, stolen 0.0; nearest soldier 345.0, 23 alive
+  boss t 286 s: lump 1 hunter Hunt(Some(106)), 1021 members (first 1096, 281 hurt), at 250,144, spread 1.06, stolen 0.0; nearest soldier 142.0, 23 alive
+  cores t 286 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 287 s: lump 0 hunter Hunt(Some(106)), 1697 members (first 1697, 0 hurt), at 454,142, spread 0.67, stolen 0.0; nearest soldier 345.0, 23 alive
+  boss t 287 s: lump 1 hunter Hunt(Some(106)), 1021 members (first 1096, 280 hurt), at 246,140, spread 1.10, stolen 0.0; nearest soldier 137.2, 23 alive
+  cores t 287 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 288 s: lump 0 hunter Hunt(Some(106)), 1697 members (first 1697, 0 hurt), at 454,144, spread 0.69, stolen 0.0; nearest soldier 345.0, 23 alive
+  boss t 288 s: lump 1 hunter Hunt(Some(106)), 1021 members (first 1096, 280 hurt), at 244,138, spread 0.92, stolen 0.0; nearest soldier 136.3, 23 alive
+  cores t 288 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 289 s: lump 0 hunter Hunt(Some(106)), 1697 members (first 1697, 0 hurt), at 454,144, spread 0.67, stolen 0.0; nearest soldier 357.8, 23 alive
+  boss t 289 s: lump 1 hunter Hunt(Some(106)), 1021 members (first 1096, 280 hurt), at 244,136, spread 0.85, stolen 0.0; nearest soldier 148.8, 23 alive
+  cores t 289 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 290 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 454,144, spread 0.67, stolen 0.0; nearest soldier 371.8, 24 alive
+  boss t 290 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1096, 279 hurt), at 244,136, spread 0.80, stolen 0.0; nearest soldier 161.8, 24 alive
+  cores t 290 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 290 build mould 42483 soldiers 24 hp 0.53 bank 398 killed 53238 turret 0 pumps 8 buildings 8
+  boss t 291 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,146, spread 0.88, stolen 0.0; nearest soldier 384.0, 24 alive
+  boss t 291 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1096, 279 hurt), at 244,138, spread 0.99, stolen 0.0; nearest soldier 177.7, 24 alive
+  cores t 291 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 292 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 450,146, spread 0.76, stolen 0.0; nearest soldier 390.4, 25 alive
+  boss t 292 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1096, 279 hurt), at 244,140, spread 0.96, stolen 0.0; nearest soldier 185.6, 25 alive
+  cores t 292 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 293 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 452,146, spread 0.72, stolen 0.0; nearest soldier 379.2, 25 alive
+  boss t 293 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1096, 279 hurt), at 246,140, spread 0.91, stolen 0.0; nearest soldier 174.7, 25 alive
+  cores t 293 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 294 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 1697, 0 hurt), at 452,146, spread 0.69, stolen 0.0; nearest soldier 364.2, 25 alive
+  boss t 294 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 0, 0 hurt), at 248,142, spread 1.09, stolen 0.0; nearest soldier 160.3, 25 alive
+  cores t 294 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 295 s: lump 0 hunter Go((241.5, 303.0)), 1697 members (first 0, 0 hurt), at 452,146, spread 0.67, stolen 0.0; nearest soldier 350.8, 25 alive
+  boss t 295 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 258,146, spread 0.69, stolen 0.0; nearest soldier 155.8, 25 alive
+  cores t 295 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 296 s: lump 0 hunter Go((241.5, 303.0)), 1691 members (first 1691, 0 hurt), at 446,154, spread 0.94, stolen 0.0; nearest soldier 328.0, 25 alive
+  boss t 296 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 258,148, spread 0.77, stolen 0.0; nearest soldier 140.1, 25 alive
+  cores t 296 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 297 s: lump 0 hunter Go((241.5, 303.0)), 1691 members (first 1691, 0 hurt), at 440,158, spread 1.09, stolen 0.0; nearest soldier 309.9, 26 alive
+  boss t 297 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 258,152, spread 0.82, stolen 0.0; nearest soldier 127.8, 26 alive
+  cores t 297 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 298 s: lump 0 hunter Go((241.5, 303.0)), 1691 members (first 1691, 0 hurt), at 434,164, spread 1.15, stolen 0.0; nearest soldier 286.2, 27 alive
+  boss t 298 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 258,154, spread 0.82, stolen 0.0; nearest soldier 110.1, 27 alive
+  cores t 298 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 299 s: lump 0 hunter Go((241.5, 303.0)), 1691 members (first 1691, 0 hurt), at 430,168, spread 1.12, stolen 0.0; nearest soldier 263.9, 27 alive
+  boss t 299 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 260,156, spread 0.79, stolen 0.0; nearest soldier 94.2, 27 alive
+  cores t 299 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 300 s: lump 0 hunter Go((241.5, 303.0)), 1691 members (first 1691, 0 hurt), at 424,172, spread 1.09, stolen 0.0; nearest soldier 248.1, 28 alive
+  boss t 300 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 260,158, spread 0.77, stolen 0.0; nearest soldier 84.3, 28 alive
+  cores t 300 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 300 out mould 43330 soldiers 29 hp 0.61 bank 138 killed 53717 turret 0 pumps 8 buildings 8
+  boss t 301 s: lump 0 hunter Go((241.5, 303.0)), 1691 members (first 1691, 0 hurt), at 420,176, spread 1.07, stolen 0.0; nearest soldier 247.4, 29 alive
+  boss t 301 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 260,158, spread 0.76, stolen 0.0; nearest soldier 87.0, 29 alive
+  cores t 301 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 302 s: lump 0 hunter Go((241.5, 303.0)), 1691 members (first 1691, 0 hurt), at 416,180, spread 1.08, stolen 0.0; nearest soldier 251.9, 30 alive
+  boss t 302 s: lump 1 hunter Go((241.5, 303.0)), 1021 members (first 1021, 0 hurt), at 260,160, spread 0.74, stolen 0.0; nearest soldier 95.1, 30 alive
+  cores t 302 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 303 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 412,184, spread 1.07, stolen 0.0; nearest soldier 236.9, 30 alive
+  boss t 303 s: lump 1 hunter Go((103.0, 246.5)), 1021 members (first 1021, 0 hurt), at 260,160, spread 0.72, stolen 0.0; nearest soldier 85.7, 30 alive
+  cores t 303 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 304 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 406,186, spread 1.08, stolen 0.0; nearest soldier 219.7, 31 alive
+  boss t 304 s: lump 1 hunter Go((103.0, 246.5)), 1021 members (first 1021, 0 hurt), at 260,160, spread 0.81, stolen 0.0; nearest soldier 72.1, 31 alive
+  cores t 304 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 305 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 402,188, spread 1.06, stolen 0.0; nearest soldier 198.3, 32 alive
+  boss t 305 s: lump 1 hunter Go((103.0, 246.5)), 1021 members (first 1021, 0 hurt), at 260,158, spread 0.83, stolen 0.0; nearest soldier 53.9, 32 alive
+  cores t 305 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 306 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 398,190, spread 1.04, stolen 0.0; nearest soldier 176.7, 33 alive
+  boss t 306 s: lump 1 hunter Go((103.0, 246.5)), 1021 members (first 1021, 2 hurt), at 258,158, spread 0.85, stolen 0.0; nearest soldier 36.7, 33 alive
+  cores t 306 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  boss t 307 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 394,194, spread 1.02, stolen 0.0; nearest soldier 163.7, 33 alive
+  boss t 307 s: lump 1 hunter Go((103.0, 246.5)), 1021 members (first 1021, 36 hurt), at 258,156, spread 0.86, stolen 0.0; nearest soldier 27.5, 33 alive
+  cores t 307 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 307.9 s: 1 soldiers fell by a mini-boss (13 in all), 32 alive
+  boss t 308 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 390,196, spread 1.02, stolen 0.0; nearest soldier 157.9, 32 alive
+  boss t 308 s: lump 1 hunter Go((103.0, 246.5)), 1021 members (first 1021, 69 hurt), at 258,156, spread 0.91, stolen 0.0; nearest soldier 22.8, 32 alive
+  cores t 308 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 308.2 s: 1 soldiers fell by a mini-boss (14 in all), 32 alive
+  bossfell t 308.8 s: 1 soldiers fell by a mini-boss (15 in all), 31 alive
+  bossfell t 308.9 s: 1 soldiers fell by a mini-boss (16 in all), 30 alive
+  boss t 309 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 388,200, spread 1.00, stolen 0.0; nearest soldier 154.1, 30 alive
+  boss t 309 s: lump 1 hunter Go((103.0, 246.5)), 1018 members (first 1021, 168 hurt), at 258,154, spread 0.92, stolen 0.0; nearest soldier 23.5, 30 alive
+  cores t 309 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 309.1 s: 1 soldiers fell by a mini-boss (17 in all), 29 alive
+  bossfell t 309.3 s: 1 soldiers fell by a mini-boss (18 in all), 28 alive
+  bossfell t 309.5 s: 1 soldiers fell by a mini-boss (19 in all), 27 alive
+  bossfell t 309.7 s: 2 soldiers fell by a mini-boss (21 in all), 25 alive
+  bossfell t 309.8 s: 1 soldiers fell by a mini-boss (22 in all), 24 alive
+  boss t 310 s: lump 0 hunter Go((103.0, 246.5)), 1691 members (first 1691, 0 hurt), at 384,202, spread 1.03, stolen 0.0; nearest soldier 150.5, 24 alive
+  boss t 310 s: lump 1 hunter Go((103.0, 246.5)), 982 members (first 1021, 229 hurt), at 258,152, spread 0.99, stolen 0.0; nearest soldier 22.1, 24 alive
+  cores t 310 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+STRAT t 310 out mould 43597 soldiers 25 hp 0.65 bank 220 killed 54541 turret 0 pumps 7 buildings 7
+  bossfell t 310.1 s: 1 soldiers fell by a mini-boss (23 in all), 24 alive
+  bossfell t 310.3 s: 1 soldiers fell by a mini-boss (24 in all), 23 alive
+  bossfell t 310.6 s: 1 soldiers fell by a mini-boss (25 in all), 22 alive
+  bossfell t 310.7 s: 1 soldiers fell by a mini-boss (26 in all), 21 alive
+  bossfell t 310.7 s: 2 soldiers fell by a mini-boss (28 in all), 19 alive
+  boss t 311 s: lump 0 hunter Hunt(Some(66)), 1691 members (first 1691, 0 hurt), at 382,204, spread 1.02, stolen 0.0; nearest soldier 145.9, 19 alive
+  boss t 311 s: lump 1 hunter Hunt(Some(66)), 950 members (first 1021, 375 hurt), at 256,150, spread 1.05, stolen 0.0; nearest soldier 20.1, 19 alive
+  cores t 311 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 311.2 s: 3 soldiers fell by a mini-boss (31 in all), 17 alive
+  bossfell t 311.3 s: 2 soldiers fell by a mini-boss (33 in all), 14 alive
+  bossfell t 311.5 s: 2 soldiers fell by a mini-boss (35 in all), 12 alive
+  bossfell t 311.7 s: 1 soldiers fell by a mini-boss (36 in all), 11 alive
+  bossfell t 311.7 s: 1 soldiers fell by a mini-boss (37 in all), 10 alive
+  bossfell t 311.9 s: 1 soldiers fell by a mini-boss (38 in all), 9 alive
+  boss t 312 s: lump 0 hunter Hunt(Some(114)), 1691 members (first 1691, 0 hurt), at 380,204, spread 1.00, stolen 0.0; nearest soldier 150.9, 9 alive
+  boss t 312 s: lump 1 hunter Hunt(Some(114)), 913 members (first 1021, 542 hurt), at 252,144, spread 1.17, stolen 0.0; nearest soldier 16.5, 9 alive
+  cores t 312 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 312.1 s: 2 soldiers fell by a mini-boss (40 in all), 7 alive
+  bossfell t 312.3 s: 1 soldiers fell by a mini-boss (41 in all), 6 alive
+  bossfell t 312.4 s: 1 soldiers fell by a mini-boss (42 in all), 5 alive
+  bossfell t 312.9 s: 3 soldiers fell by a mini-boss (45 in all), 2 alive
+  boss t 313 s: lump 0 hunter Hunt(Some(122)), 1691 members (first 1691, 0 hurt), at 374,212, spread 0.99, stolen 0.0; nearest soldier 155.5, 2 alive
+  boss t 313 s: lump 1 hunter Hunt(Some(122)), 891 members (first 1021, 655 hurt), at 250,140, spread 1.00, stolen 0.0; nearest soldier 15.2, 2 alive
+  cores t 313 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 313.2 s: 1 soldiers fell by a mini-boss (46 in all), 2 alive
+  bossfell t 313.3 s: 1 soldiers fell by a mini-boss (47 in all), 1 alive
+  boss t 314 s: lump 0 hunter Hunt(Some(116)), 1691 members (first 1691, 0 hurt), at 372,214, spread 0.91, stolen 0.0; nearest soldier 159.6, 1 alive
+  boss t 314 s: lump 1 hunter Hunt(Some(116)), 875 members (first 1021, 680 hurt), at 248,138, spread 0.88, stolen 0.0; nearest soldier 15.0, 1 alive
+  cores t 314 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 314.3 s: 1 soldiers fell by a mini-boss (48 in all), 1 alive
+  boss t 315 s: lump 0 hunter Hunt(Some(132)), 1691 members (first 1691, 0 hurt), at 370,216, spread 0.84, stolen 0.0; nearest soldier 160.9, 1 alive
+  boss t 315 s: lump 1 hunter Hunt(Some(132)), 867 members (first 1021, 685 hurt), at 246,136, spread 0.78, stolen 0.0; nearest soldier 15.2, 1 alive
+  cores t 315 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 315.4 s: 1 soldiers fell by a mini-boss (49 in all), 1 alive
+  boss t 316 s: lump 0 hunter Hunt(Some(133)), 1691 members (first 1691, 0 hurt), at 368,218, spread 0.79, stolen 0.0; nearest soldier 161.2, 1 alive
+  boss t 316 s: lump 1 hunter Hunt(Some(133)), 846 members (first 1021, 715 hurt), at 246,136, spread 0.72, stolen 0.0; nearest soldier 13.4, 1 alive
+  cores t 316 s: 3 dropped, pot 184 of 280, 0 re-formed, 0 raids beaten; points 57.5 (ore 0.0, cores 57.5), the slime ate 85.6
+  bossfell t 316.1 s: 1 soldiers fell by a mini-boss (50 in all), 0 alive
+/tmp/claude-0/cen/abL/1795038793-4/planet-4-1795038793-strat:econ,go=4,aim=6-420s-all.png
+/tmp/claude-0/cen/abL/1795038793-4/planet-4-1795038793-strat:econ,go=4,aim=6-420s-near.png
+  CPU: ground field 3.87 ms (once a game second), model and HUD 0.181 ms a frame
+  t 316 s: mould 44169, soldiers 0, bank 347, harvested 73817, rendered 0, shots 7070, killed 54756, took 83%, crystals left 0.598, ended: squad wiped
+  surge: the slime ate 2486 food (7.9/s); meter 273.9 of 348, 7 surges
+  dense: 0 condensed or thick walkers, mass 44169 (readout 44189); 2735 breaking away
+  loose: 5884 walkers alone or in twos in a dish cell, 13.3% of 44170; 2061 with at most one other round them
+    pump at (84, 278): hp 0 / 200, built 1.0, worn down
+    pump at (259, 273): hp 0 / 200, built 0.0, worn down
+    pump at (153, 110): hp 0 / 200, built 1.0, worn down
+    pump at (60, 316): hp 26 / 200, built 1.0, standing, working
+    pump at (50, 258): hp 0 / 200, built 1.0, worn down
+    pump at (103, 246): hp 0 / 200, built 1.0, worn down
+    pump at (118, 299): hp 178 / 200, built 1.0, standing, working
+    pump at (142, 183): hp 0 / 200, built 1.0, worn down
+    pump at (37, 80): hp 0 / 200, built 1.0, worn down
+    pump at (361, 330): hp 0 / 200, built 1.0, worn down
+    pump at (242, 303): hp 0 / 200, built 1.0, worn down
+    pump at (84, 278): hp 26 / 200, built 1.0, standing, working
+    pump at (103, 246): hp 199 / 200, built 1.0, standing, working
+    pump at (50, 258): hp 192 / 200, built 1.0, standing, working
+    pump at (142, 183): hp 195 / 200, built 1.0, standing, working
+    pump at (37, 80): hp 178 / 200, built 1.0, standing, working
+    pumped 62117 food
