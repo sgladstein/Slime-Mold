@@ -315,8 +315,12 @@ is the strategy thread's `bot,want=torch.standard|rush,aim=6,cards=0`
 (11-21), kept equal to `runbot::PLAN` by a test; their #640 makes siege=3
 the bot's default.
 
-**Next:** each planet's length against 8 to 12 minutes from the curve on
-that plan (send Direction the lengths); the next 1070 batch times the
+With #640's siege=3 the curve wins planets 1 to 3 on all three seeds
+(every curve since e4db42d8, 11-21 06:18Z): planets 2:48 to 7:54, runs 12
+to 17 minutes, every planet by its goal. Lengths went to Direction (all
+short of 8 to 12; the bot's rush is a floor).
+
+**Next:** the next 1070 batch times the
 view's `full` after the Look lane's #638 (plant crowns skipped under the
 slime) and sends them the saving against 3.42 ms; `pump_maps` spikes
 (4.4 ms) if Squad and arsenal hand them back.
