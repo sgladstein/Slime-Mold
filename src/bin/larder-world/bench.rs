@@ -38,6 +38,8 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     app.fast = b.fast;
     app.spread = b.spread;
     app.game.as_mut().unwrap().world.e.squad_one = b.squad1;
+    // The step's CPU parts (`Game::costs`, 11-21), printed after the run.
+    app.game.as_mut().unwrap().costs = Some(Vec::new());
     if let Some((x, y, zoom)) = b.view {
         // `centre=larder,ZOOM`: on the squad's base (NaN from the parser).
         let (x, y) = if x.is_nan() { app.game.as_ref().map_or((0.0, 0.0), |g| g.larder) } else { (x, y) };
@@ -224,6 +226,7 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     let verdict = app.mission.as_ref().and_then(|m| m.verdict).map_or(String::new(), |v| format!(", mission: {} star{} ({:?})", v.stars, if v.stars == 1 { "" } else { "s" }, v.cause));
     let last = format!("  t {:.0} s: mould {}, soldiers {}, buildings {}, harvested {:.0}, shots {}, killed {}{}{verdict}", g.time(), g.mould, g.alive(), g.buildings.len(), g.harvested, g.shots, g.killed, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
     println!("{last}");
+    print_costs(g);
     if b.passes > 0 && stamped && !over(&app) {
         print_passes(&mut app, b.passes, dt);
     }
@@ -456,4 +459,18 @@ pub(super) fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, q
     app.apply_look_tweaks();
     app.start()?;
     Ok(app)
+}
+
+/// The step's CPU parts over the timed run (`Game::costs`), the costliest
+/// first: total, mean and longest ms a call, and the calls. The ones run
+/// once a game second (`time_*` and the like) are what make a step frame
+/// long once a second (planet 3 on the GTX 1070, 11-21: step p95 5 ms).
+fn print_costs(g: &Game<GpuWorld>) {
+    let Some(c) = g.costs.as_ref() else { return };
+    let mut c = c.clone();
+    c.sort_by(|a, b| b.1.total_cmp(&a.1));
+    println!("  CPU a step, by part (ms): total, mean a call, longest, calls");
+    for (name, total, max, n) in c {
+        println!("    {name:<18} {total:9.1} {:8.3} {max:8.3} {n:6}", total / f64::from(n.max(1)));
+    }
 }
