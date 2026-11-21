@@ -98,12 +98,17 @@ pub struct StandRules {
     pub cap: f32,
     pub cap_most: f32,
     /// **Sated** (with the cap): for `sated` seconds after a bout takes
-    /// its cap, no soldier within the heart's reach (its lunge leash times
-    /// its radius, plus a touch) is bitten, so it lets go of the soldiers
-    /// it lies on as it draws back. Without it the cap held deaths to one
-    /// of four only until the cap was hit, and the body still on the rest
+    /// its cap the slime bites no soldier, so it lets go of the soldiers it
+    /// lies on as it draws back. Without it the cap held deaths to one of
+    /// four only until the cap was hit, and the body still on the rest
     /// took two more as it went (the GPU test's race world, 8.4 s into a
-    /// lunge): a heart is too thick to leave a squad in a step.
+    /// lunge): a heart is too thick to leave a squad in a step. Sated only
+    /// within the heart's reach (its lunge leash times its radius, plus a
+    /// touch), tried next, still let a bout run past its cap: a heart's
+    /// members are spread over the map while it gathers, and its strikers
+    /// are not in it (the league on GitHub, strikers on: a forming bout
+    /// capped at 20 took 24 of 80, a lunge capped at 9 took 17 of 35). The
+    /// whole slime pauses, then: at a planet's end it is nearly all heart.
     pub sated: f32,
 }
 
@@ -267,8 +272,8 @@ impl<W: World> Game<W> {
     }
 
     /// Every step: a lunge that has taken its cap in health draws back to
-    /// its crystal at the lunge's pace, sated, biting no soldier in its
-    /// reach for a while (`StandRules::cap`, `StandRules::sated`), so a
+    /// its crystal at the lunge's pace, sated, the slime biting no soldier
+    /// for a while (`StandRules::cap`, `StandRules::sated`), so a
     /// heart takes a bite out of an army rather than the army.
     pub(super) fn cap_heart(&mut self) {
         let Some(mut h) = self.stand.live else { return };
@@ -311,16 +316,10 @@ impl<W: World> Game<W> {
         h.armed = true;
     }
 
-    /// While the heart is sated, its centre and reach (fine cells): a
-    /// soldier in it is not bitten (`StandRules::sated`).
-    pub(super) fn sated_reach(&self) -> Option<((f32, f32), f32)> {
-        let h = self.stand.live?;
-        if self.world.ticks() >= h.sated {
-            return None;
-        }
-        let r = self.rules.stand;
-        let radius = (h.members as f32 / std::f32::consts::PI).sqrt();
-        Some((h.centre, r.lunge_leash.max(r.leash) * radius + self.rules.touch * self.s()))
+    /// Whether the heart is sated: the slime bites no soldier
+    /// (`StandRules::sated`).
+    pub(super) fn sated(&self) -> bool {
+        self.stand.live.is_some_and(|h| self.world.ticks() < h.sated)
     }
 
     /// The lunge: the heart's aim on the soldier nearest its centre.
