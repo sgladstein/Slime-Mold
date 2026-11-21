@@ -114,6 +114,9 @@ soldier whose goal is in a crystal its own spot round the rim, `SPOT` 3.5
 dish cells apart, ring 0 filled all the way round first (closing down to
 elbow room) since only ring 0 is in harvest reach. Nearest neighbour 2.1
 -> 3.5 cells median on planet 1; harvest at 60 s 4,081 -> 4,199.
+Follow-up: only move, guard and drain orders take spots (the run bot's
+rush, an attack-move onto the slime's home crystal, spread round the rim
+and planets ran 16% longer on CI's run bot); rings inside reach first.
 
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or
