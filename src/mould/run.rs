@@ -449,10 +449,9 @@ pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), (
 /// something new:
 ///
 /// - planet 1, the Drifter: the slime itself (surges, raids, specks, the
-///   lure, the heartbeat) and fruiting, its one answer to a squad that is
-///   winning;
+///   lure, the heartbeat);
 /// - planet 2, the Sprawler: mini-bosses (`BossRules::for_depth`, since
-///   11-18) and the strikers, at `STRIKER_SHARE`'s 0.6;
+///   11-18), fruiting, and the strikers, at `STRIKER_SHARE`'s 0.6;
 /// - planet 3, the Trunk: waves and the late lunge, the slime fighting
 ///   back as a whole when it is losing, the Pinwheel (`BossRules`), and
 ///   the strikers in full;
@@ -463,7 +462,15 @@ pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), (
 /// the waves, the late lunge and the heart that were built for the big
 /// armies of planets 2 and up (`Reports/late-threat-2026-11-20`). A rule
 /// missing here plays from planet 1. Direction's numbers to move.
-pub const FIRST_PLANET: &[(&str, u32)] = &[("strikers", 2), ("wave", 3), ("late_at", 3), ("stand", 4)];
+///
+/// Fruiting joined planet 2 on 11-21 (his play that night, 05:21Z, on a
+/// build with the fruit fixes of #608: "I just played planet 1 and their
+/// was mini-bosses. There were these events where the slime dispersed
+/// across the map and surrounded me randomly, halving the squad each
+/// time"). His log: at 8:44 the slime's mass rose 14,045 to 17,936 in 3 s
+/// as a fruit burst, and 21 of 28 soldiers died in those 3 s; the dark
+/// knot it grows from reads as a mini-boss.
+pub const FIRST_PLANET: &[(&str, u32)] = &[("fruit", 2), ("strikers", 2), ("wave", 3), ("late_at", 3), ("stand", 4)];
 
 /// The planet `rule` (one of `ENEMY_RULES`) first plays on (`FIRST_PLANET`).
 pub fn first_planet(rule: &str) -> u32 {
@@ -1874,12 +1881,12 @@ mod tests {
         // Wherever the strikers can be on, their share and cap are not 0.
         assert!(STRIKER_SHARE.iter().all(|&k| k > 0.0), "a 0 share leaves strikers on and doing nothing");
         let p1 = rules(1);
-        assert!(p1.fruit.on && p1.heart.on && p1.unit_paths, "planet 1 keeps fruiting, the heartbeat and charges round walls");
-        assert!(!p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
+        assert!(p1.heart.on && p1.unit_paths, "planet 1 keeps the heartbeat and charges round walls");
+        assert!(!p1.fruit.on && !p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
         assert_eq!(p1.boss.every, 0.0, "nor mini-bosses");
         assert!(p1.star.on, "planet 1 keeps starfall and cores");
         let p2 = rules(2);
-        assert!(p2.strikers.on && p2.strikers.share > 0.0 && !p2.wave.on && p2.late_at == 0.0 && !p2.stand.on);
+        assert!(p2.fruit.on && p2.strikers.on && p2.strikers.share > 0.0 && !p2.wave.on && p2.late_at == 0.0 && !p2.stand.on);
         let p3 = rules(3);
         assert!(p3.strikers.on && p3.wave.on && p3.late_at > 0.0 && !p3.stand.on);
         for d in 4..=PLANETS {

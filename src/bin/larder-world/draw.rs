@@ -3,7 +3,7 @@
 //! unchanged (C9, 2026-11-14).
 
 use super::*;
-use slime_mould::world::ui::Ending;
+use slime_mould::world::ui::{Ending, SquadFact};
 
 /// The look's ground field from the game's world: rock, wet and agar from
 /// the engine's CPU mirror; crystals from its own cells (`pile_of`, so
@@ -47,7 +47,7 @@ pub(super) fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f3
 /// the ground's `look::FAR` bit round them (`refresh_ground`).
 const WALL_TILE: usize = 32;
 /// Seconds a drop's "+N" rises and fades after the squad empties it.
-const CASHED_SECS: f32 = 1.6;
+const CASHED_SECS: f32 = 2.2;
 /// A label drawn after the soldiers (`App::marks`' `over`): where, its
 /// offset in pixels, the text, its scale and colour.
 type OverLabel = ((f32, f32), (f32, f32), String, f32, [u8; 4]);
@@ -119,7 +119,7 @@ pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, t: f32, place: String) ->
         lines.push(format!("You took {:.0}% of the charge gone from the crystals", s * 100.0));
     }
     lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
-    Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines }
+    Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines, curve: g.curve.clone() }
 }
 
 /// A mission's end: the cause in the title (stars when won), the round's
@@ -144,7 +144,7 @@ pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
         }
         .to_string()
     };
-    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()] }
+    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()], curve: g.curve.clone() }
 }
 
 /// The end screen's numbers (Look and interface, 2026-11-18): how long
@@ -283,6 +283,20 @@ pub(super) fn crystal_name(i: usize) -> String {
         "The mould's home crystal".into()
     } else {
         format!("Crystal {i}")
+    }
+}
+
+/// An order in a few words, for the squad strip's queue.
+fn order_word(o: Order) -> &'static str {
+    match o {
+        Order::Hold => "hold",
+        Order::Move(..) => "move",
+        Order::Fight(..) => "attack-move",
+        Order::Clear(..) => "drain a crystal",
+        Order::Build(..) => "build",
+        Order::Burn(..) => "burn a line",
+        Order::Guard(..) => "guard",
+        Order::Attack => "attack the core",
     }
 }
 
@@ -877,28 +891,79 @@ impl App {
                 over.push((d.at, (x, -below - 14.0), text, 1.8, if on { GOLD } else { fade(pale, 0.95) }));
             }
             // The moment the points come in (Boss cores thread, 2026-11-21):
-            // a drop the squad emptied leaves its "+N" in gold, rising and
-            // fading over `CASHED_SECS`, as the coin chime rings, with a
-            // burst of gold where it lay. Before, the drop just shrank away
-            // and nothing said it had paid.
+            // a drop the squad emptied leaves its "+N" in gold as the coin
+            // chime rings. Before, the drop just shrank away and nothing
+            // said it had paid. The owner after playing (11-21 05:38Z):
+            // "starfall +xxx animation needs to be bigger and better". Now
+            // it pops: the number punches in from small to 6.4 pixels a
+            // font pixel (the drop's label is 1.8, the old "+N" 2.4) in
+            // white-hot as it leaps up clear of the squad, settles to 5
+            // and turns gold, then rises and
+            // fades over `CASHED_SECS`; it is cut as a bevelled gold
+            // stamp (a dark outline all round, a deep amber edge under the
+            // gold face) so it reads on the slime's own gold. A spray of
+            // coins skids out from the drop and glints, a gold
+            // burst rings out where it lay and the ground there lights up.
             for c in &g.starfall.cashed {
                 let age = (ticks - c.tick as f32) / tps;
                 if age >= CASHED_SECS {
                     continue;
                 }
-                if age < 0.6 {
-                    let k = age.max(0.0) / 0.6;
-                    let seed = (c.at.0 * 5.0 + c.at.1 * 11.0) as u32;
-                    self.marks.star(c.at, star.ore_r * sc * 2.4, STAR_BURST, k, seed, 0.0, 0.0, GOLD, GOLD_HOT, false);
-                    glows.push(Light { at: c.at, reach: 6.0 * sc, lift: 4.0, colour: [255.0, 214.0, 90.0], strength: 2.5 * (1.0 - k) });
+                let seed = (c.at.0 * 5.0 + c.at.1 * 11.0) as u32;
+                if age < 0.7 {
+                    let k = age.max(0.0) / 0.7;
+                    self.marks.star(c.at, star.ore_r * sc * 3.6, STAR_BURST, k, seed, 0.0, 0.0, GOLD, GOLD_HOT, false);
+                    glows.push(Light { at: c.at, reach: 9.0 * sc, lift: 5.0, colour: [255.0, 214.0, 90.0], strength: 3.5 * (1.0 - k).powi(2) });
                 }
-                let k = age.max(0.0) / CASHED_SECS;
+                // The coins: sprayed out all round from the drop, a little
+                // more away from the camera's top, slowing as they skid to
+                // rest on the ground, glinting as they turn, then gone.
+                if age < 1.4 {
+                    let n = (6.0 + c.taken / 6.0).clamp(10.0, 18.0) as u32;
+                    for i in 0..n {
+                        let h = |j: u32| ((seed.wrapping_mul(2654435761).wrapping_add(i * 97 + j * 31)) % 1000) as f32 / 1000.0;
+                        let ang = std::f32::consts::TAU * (i as f32 + 0.6 * h(1)) / n as f32;
+                        let reach = (5.0 + 6.0 * h(2)) * sc;
+                        let t = age - 0.05 * h(3);
+                        if t <= 0.0 {
+                            continue;
+                        }
+                        // Out to `reach` with a drag (most of it in the
+                        // first third of a second).
+                        let d = |t: f32| reach * (1.0 - (-6.0 * t).exp());
+                        let at = |t: f32| (c.at.0 + ang.cos() * d(t), c.at.1 + ang.sin() * d(t) * 0.85 - 2.0 * sc * (1.0 - (-6.0 * t).exp()));
+                        let left = (1.0 - ((t - 0.9) / 0.5).max(0.0)).clamp(0.0, 1.0);
+                        let glint = 0.55 + 0.45 * (age * 14.0 + 6.0 * h(4)).sin().abs();
+                        self.marks.streak(at(t), at((t - 0.035).max(0.0)), 3.2, fade(GOLD, 0.75 * left), fade(GOLD_HOT, left * glint));
+                    }
+                }
+                // The number: punch in, settle, rise and fade.
+                let scale = if age < 0.12 {
+                    2.0 + 4.4 * (age / 0.12)
+                } else if age < 0.3 {
+                    6.4 - 1.4 * ((age - 0.12) / 0.18)
+                } else {
+                    5.0
+                };
+                // Up out of the squad at once (it stood on the drop and hid
+                // a number drawn among it), then on up as it fades.
+                let k = (age - 0.3).max(0.0) / (CASHED_SECS - 0.3);
+                let lift = 1.0 - (-age / 0.12).exp();
+                let y = -30.0 * lift - 40.0 * k.sqrt() - 3.5 * scale - (star.reach + star.ore_r) * sc * zoom * lift;
+                let a = (1.0 - k.powi(3)).clamp(0.0, 1.0);
+                let hot = 1.0 - (age / 0.35).clamp(0.0, 1.0);
+                let mixc = |a: [u8; 4], b: [u8; 4], t: f32| [0, 1, 2, 3].map(|i| (a[i] as f32 + (b[i] as f32 - a[i] as f32) * t) as u8);
+                let face = fade(mixc(GOLD, [255, 252, 235, 255], hot), a);
+                let edge = fade([196, 112, 20, 255], a);
+                let ink = [16, 8, 4, (235.0 * a) as u8];
                 let text = format!("+{}", c.taken.round() as u32);
-                let x = -6.0 * text.len() as f32;
-                let y = -18.0 - 34.0 * k.sqrt();
-                let a = (1.0 - k * k).clamp(0.0, 1.0);
-                over.push((c.at, (x + 2.0, y + 2.0), text.clone(), 2.4, [20, 10, 10, (220.0 * a) as u8]));
-                over.push((c.at, (x, y), text, 2.4, [255, 224, 110, (255.0 * a) as u8]));
+                let x = -3.0 * scale * text.len() as f32;
+                let o = (0.5 * scale).max(1.0);
+                for (dx, dy) in [(-o, -o), (0.0, -o), (o, -o), (-o, 0.0), (o, 0.0), (-o, o), (0.0, o), (o, o), (0.0, 2.0 * o)] {
+                    over.push((c.at, (x + dx, y + dy + o), text.clone(), scale, ink));
+                }
+                over.push((c.at, (x, y + o), text.clone(), scale, edge));
+                over.push((c.at, (x, y), text, scale, face));
             }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
@@ -1650,7 +1715,7 @@ impl App {
                     ready: g.bank >= r.wall_cost,
                     why_not: need(r.wall_cost),
                     about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Click a wall to cut one in, at once and as thick as the wall (a rising wall gets it as it rises). Costs as a wall that long.".into(),
-                    ..Command::new(DOOR, (1, 3), Icon::Wall, "Door", KeyCode::KeyG)
+                    ..Command::new(DOOR, (1, 3), Icon::Door, "Door", KeyCode::KeyG)
                 },
                 place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
                 place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
@@ -1726,6 +1791,12 @@ impl App {
         // Shop points only where ore falls (a run's planets).
         if !g.rules.star.on {
             m.resources.retain(|r| r.icon != Icon::Upgrade);
+        }
+        // A run's planet is won by wiping the slime out, with no score at
+        // 15:00, so the share of the crystals' charge taken said nothing
+        // there (controls review, 2026-11-21: "0%" sat on the bar all game).
+        if self.args.run.is_some() {
+            m.resources.retain(|r| r.icon != Icon::Target);
         }
         if g.world.garden.is_some() {
             // The player's own mould beside the enemy's, in its colour.
@@ -1867,9 +1938,16 @@ impl App {
                 ("P".into(), "Pause".into()),
                 ("Tab".into(), "Four times faster, or back".into()),
                 ("N".into(), "Start the next map".into()),
-                ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
+                // The squad mode's build page has no outpost (no larder) and
+                // has walls, doors and the mortar (controls review,
+                // 2026-11-21: this row still named the RTS round's page).
+                ("Q".into(), "Build page: wall, door, turret, mortar, pump, lure; Q again goes back".into()),
                 ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
             ]
+            .into_iter()
+            // In a run N does not skip the planet (`App::key`).
+            .filter(|(k, _): &(String, String)| !(self.args.run.is_some() && k == "N"))
+            .collect()
         } else { vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
             ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
@@ -1888,7 +1966,52 @@ impl App {
         // b); a click on open ground, a tile's number or Space gives the
         // squads back.
         m.squads = if self.building_sel.is_some() && m.info.is_some() && sel.is_empty() { None } else { self.squad_panel() };
+        if m.squads.is_some() {
+            m.squad_facts = self.squad_facts(g);
+        }
         m
+    }
+
+    /// The commanded squad's settings for the squad panel's strip (controls
+    /// review, 2026-11-21), most wanted first: its formation, what it
+    /// shoots by itself, its queued orders, its loadout in a run, and the
+    /// tools its soldiers carry. Fire and lookouts also name themselves on
+    /// the card's buttons; the strip is where the rest had no place.
+    fn squad_facts(&self, g: &Game<GpuWorld>) -> Vec<SquadFact> {
+        let Some(q) = g.active else { return Vec::new() };
+        let Some(sq) = g.squads.get(q) else { return Vec::new() };
+        let members = g.members(q);
+        let mut out = vec![SquadFact {
+            icon: Icon::Group,
+            text: format!("{} formation", sq.formation.name()),
+            about: format!("How the squad stands as it moves and holds: blob, line, wedge or ring ({} cycles it)", slime_mould::world::ui::key_name(super::squadmode::FORMATION).unwrap_or_default()),
+        }];
+        let stance = members.first().map(|&k| g.soldiers[k].stance).filter(|&st| members.iter().all(|&k| g.soldiers[k].stance == st));
+        out.push(SquadFact {
+            icon: Icon::Target,
+            text: match stance { Some(st) => format!("fire: {}", stance_name(st)), None => "fire: mixed".into() },
+            about: "What its soldiers shoot by themselves, the card's Fire button: hold fire, defend or free fire".into(),
+        });
+        let queued: Vec<&str> = sq.queue.iter().take(sq.queued as usize).map(|&o| order_word(o)).collect();
+        out.push(SquadFact {
+            icon: Icon::Move,
+            text: if queued.is_empty() { "no orders queued".into() } else { format!("{} queued", queued.len()) },
+            about: if queued.is_empty() { "Shift with an order queues it after the one it is on".into() } else { format!("Next: {}. Shift with an order adds one", queued.join(", then ")) },
+        });
+        if let Some(r) = self.args.run.as_ref() {
+            out.push(SquadFact {
+                icon: gun_icon(g.gun(q).kind),
+                text: r.loadout_name(sq.loadout as usize),
+                about: format!("It fires {} with {}'s cards. H edits the loadouts", g.gun(q).title(), r.loadout_name(sq.loadout as usize)),
+            });
+        }
+        let tools: u32 = members.iter().map(|&k| g.kit.held(k)).sum();
+        out.push(SquadFact {
+            icon: Icon::Grenade,
+            text: if tools == 1 { "1 tool".into() } else { format!("{tools} tools") },
+            about: format!("Tools its soldiers carry, at most {} each: E opens the Tools page", g.kit.rules.carry_max),
+        });
+        out
     }
 
     /// The loadout panel (`ui::Loadout`): the squad's round, with the gun
@@ -2496,7 +2619,7 @@ impl App {
         };
         stats.push(("Mould on it".into(), format!("{}", bd.touching)));
         Info {
-            icon: building_icon(bd.kind),
+            icon: if bd.door { Icon::Door } else { building_icon(bd.kind) },
             colour: theme::TEXT,
             title: if bd.door { "Door".into() } else { building_title(bd.kind) },
             subtitle,

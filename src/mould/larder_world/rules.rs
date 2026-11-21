@@ -838,6 +838,7 @@ impl Rules {
             "raid_first" => &mut self.raid.first,
             "raid_first_sd" => &mut self.raid.first_sd,
             "raid_min" => &mut self.raid.min,
+            "raid_gap_min" => &mut self.raid.gap_min,
             "raid_every" => &mut self.raid.every,
             "raid_every_sd" => &mut self.raid.every_sd,
             "raid_size" => &mut self.raid.size,

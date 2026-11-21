@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-18
+updated: 2026-11-21
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/condense-2026-11-14/README.md
@@ -15,6 +15,7 @@ sources:
   - Reports/one-body-2026-11-12.md
   - Reports/raid-march-2026-11-18/README.md
   - Reports/slime-enemy-review-2026-11-12.md
+  - Reports/slime-regrowth-2026-11-21/README.md
   - Reports/specks-2026-11-16/README.md
   - Reports/thicken-2026-11-15/README.md
 code:
@@ -226,6 +227,11 @@ the strength that grows instead, and keep the dense word for their members.
   crystal emptied it holds 50,000 for two minutes and falls to 10,000 by
   six; with four kept it is at 47,000 at six minutes (seed 1,
   `examples/foodprobe.rs`; [fed mould, *Does its size follow*](../../Reports/fed-mould-2026-11-13/README.md)).
+  In the run (11-21, the owner's planet 1) the slime's ceiling is its slots,
+  twice its start, and one fully covered crystal of radius 20 pays the upkeep
+  of about 25,000 walkers, so it refilled from 11,367 to its 28,640 ceiling in
+  under 3 min; a big crystal pays a pump 6-9x the median one and feeds the
+  slime about 3x ([slime regrowth](../../Reports/slime-regrowth-2026-11-21/README.md)).
   The one-body page's 25,000-walker films ran with one walker a cell off
   (corrected 11-12 17:10Z); the 5,000-walker game and the CPU numbers here
   are unaffected ([slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).

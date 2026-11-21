@@ -1126,6 +1126,13 @@ impl<W: World> Game<W> {
                     self.squads[q].fight = false;
                     self.squads[q].heal = false;
                     self.squads[q].guard = None;
+                    // Steering is the squad mode's stop (its card has no
+                    // Stop: a tap of WASD stops the squad), so it drops
+                    // what was queued (Shift), as any order not queued
+                    // does. Until 2026-11-21 only the members' own queues
+                    // went: the squad's stayed, and once let go the squad
+                    // walked off to its next queued order (controls review).
+                    self.squads[q].queued = 0;
                 } else if was != (0.0, 0.0) {
                     // Let go: settle round where it stands.
                     self.squads[q].dest = self.stop_point(q);
@@ -1241,11 +1248,18 @@ impl<W: World> Game<W> {
             }
             Cmd::Merge(a, b) if ok(a) && ok(b) && a != b => {
                 let ms = self.members(b as usize);
-                if ms.is_empty() || self.members(a as usize).is_empty() {
+                let Some(&lead) = self.members(a as usize).first() else { return false };
+                if ms.is_empty() {
                     return false;
                 }
+                // The joining soldiers fire as the squad they join (its
+                // first member's stance), as they take its formation and
+                // orders: kept, a defending squad merged into one told to
+                // hold fire shot anyway (controls review, 2026-11-21).
+                let stance = self.soldiers[lead].stance;
                 for k in ms {
                     self.soldiers[k].squad = a;
+                    self.soldiers[k].stance = stance;
                 }
                 // A gun and cards are not lost to a merge: a squad with
                 // none of its own takes the joining squad's.

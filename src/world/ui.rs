@@ -584,6 +584,19 @@ pub struct SquadPanel {
     pub free_key: Option<String>,
 }
 
+/// One of the commanded squad's settings on the squad panel (controls
+/// review, 2026-11-21: with one to three squads the tiles fill a third of
+/// the panel on a wide screen and the rest sat empty, while the squad's
+/// formation, queue and tools showed nowhere). An icon and a few words
+/// ("line", "2 queued"), and its tooltip. The window lists them most
+/// wanted first; the strip drops from the end what does not fit.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SquadFact {
+    pub icon: Icon,
+    pub text: String,
+    pub about: String,
+}
+
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Model {
@@ -642,6 +655,9 @@ pub struct Model {
     pub loadout: Option<Loadout>,
     /// The squad mode's squads, a panel at the top right.
     pub squads: Option<SquadPanel>,
+    /// The commanded squad's settings, a strip right of its tiles where
+    /// the row leaves room (`SquadFact`).
+    pub squad_facts: Vec<SquadFact>,
     /// The player is steering (WASD in the squad mode): the screen moves
     /// under a still cursor, so the hover card stays away (`HoverCard`).
     pub aiming: bool,
@@ -715,6 +731,11 @@ pub struct Ending {
     pub tiles: Vec<(String, String)>,
     /// Lines under the numbers: how it ended, the run's points.
     pub lines: Vec<String>,
+    /// The slime's walkers and the soldiers standing, a game second each
+    /// (`Game::curve`), drawn as a graph under the numbers; empty for none.
+    /// The owner, 2026-11-21: "I would be curious to see slime population
+    /// overtime after each match".
+    pub curve: Vec<(u32, u32)>,
 }
 
 impl Ending {
@@ -1846,7 +1867,7 @@ impl Hud {
 
         let inner = r.inset(pad);
         if let Some(p) = &m.squads {
-            self.squad_tiles(p, inner, c, s);
+            self.squad_tiles(p, &m.squad_facts, inner, c, s);
             return;
         }
         if let Some(info) = &m.info {
@@ -1925,7 +1946,7 @@ impl Hud {
     /// end, and a tile a squad the size of a soldier's card (wider, for the
     /// count): its hotkey, soldiers, their health, and a + that brings it
     /// into the squad you command. The one you command is outlined.
-    fn squad_tiles(&mut self, p: &SquadPanel, inner: Rect, c: &mut Canvas, s: f32) {
+    fn squad_tiles(&mut self, p: &SquadPanel, facts: &[SquadFact], inner: Rect, c: &mut Canvas, s: f32) {
         let n = p.rows.len();
         let head = squads_head(n);
         // The header's buttons, from the right end; smaller, then without
@@ -2114,6 +2135,45 @@ impl Hud {
             } else if hot {
                 let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it (key {})", q.name, q.soldiers, q.key) };
                 tip = Some((what, cell));
+            }
+        }
+        // The commanded squad's settings, right of the tiles in the room
+        // a short row leaves: two lines of icon-and-words, flowed in the
+        // window's order, and what does not fit is left off (not cut).
+        if n <= cols && !p.free && !facts.is_empty() {
+            let x0 = inner.x + n as f32 * (cw + cgap) - cgap + 12.0 * s;
+            if inner.right() - x0 >= 120.0 * s {
+                c.rrect(Rect::new(x0, top + 4.0 * s, s.max(1.0), ch - 8.0 * s), 0.0, EDGE);
+                let left = x0 + 12.0 * s;
+                let lh = ch / 2.0;
+                // Placed first, so a strip that fits on one line sits on
+                // the tiles' middle rather than on their top half.
+                let (mut x, mut line) = (left, 0);
+                let mut placed = Vec::new();
+                for f in facts {
+                    let w = 21.0 * s + c.atlas.measure(Weight::Medium, 12.5 * s, &f.text);
+                    if x + w > inner.right() && x > left {
+                        line += 1;
+                        x = left;
+                    }
+                    if line > 1 || x + w > inner.right() {
+                        continue;
+                    }
+                    placed.push((f, x, line, w));
+                    x += w + 16.0 * s;
+                }
+                let one = placed.iter().all(|p| p.2 == 0);
+                for (f, x, line, w) in placed {
+                    let y = top + if one { lh / 2.0 } else { line as f32 * lh };
+                    let hit = Rect::new(x - 3.0 * s, y + 2.0 * s, w + 6.0 * s, lh - 4.0 * s);
+                    let hot = self.hover.is_some_and(|h| hit.contains(h));
+                    c.icon(f.icon, (x, y + lh / 2.0 - 8.0 * s), 16.0 * s, if hot { TEXT } else { MUTED });
+                    c.text(Weight::Medium, 12.5 * s, (x + 21.0 * s, y + lh / 2.0 + 4.5 * s), Align::Left, &f.text, if hot { TEXT } else { MUTED });
+                    self.hits.push((hit, Hit::Panel));
+                    if hot {
+                        tip = Some((f.about.clone(), hit));
+                    }
+                }
             }
         }
         if let Some((t, at)) = tip {
@@ -2866,7 +2926,9 @@ impl Hud {
             let title = c.wrap(Weight::SemiBold, 28.0 * s, inner, &e.title);
             let says = if e.says.is_empty() { Vec::new() } else { c.wrap(Weight::Medium, 15.0 * s, inner, &e.says) };
             let tiles_h = if rows == 0 { 0.0 } else { rows as f32 * 64.0 * s + (rows - 1) as f32 * 10.0 * s + 20.0 * s };
+            let graph_h = if e.curve.len() >= 2 { CURVE_H * s + 14.0 * s } else { 0.0 };
             let h = 28.0 * s
+                + graph_h
                 + if e.place.is_empty() { 0.0 } else { 22.0 * s }
                 + title.len() as f32 * 34.0 * s
                 + if stars.is_some() { 34.0 * s } else { 0.0 }
@@ -2941,6 +3003,10 @@ impl Hud {
             }
             y += rows as f32 * tile_h + (rows - 1) as f32 * gap + 14.0 * s;
         }
+        if e.curve.len() >= 2 {
+            end_curve(&e.curve, Rect::new(r.x + pad, y, inner, CURVE_H * s), c, s);
+            y += CURVE_H * s + 14.0 * s;
+        }
         for l in &e.lines {
             y += 21.0 * s;
             c.text_fit(Weight::Medium, 14.0 * s, (r.x + w / 2.0, y - 4.0 * s), Align::Centre, l, inner, MUTED);
@@ -2991,6 +3057,62 @@ impl Hud {
     pub fn age(&self) -> f32 {
         self.started.elapsed().as_secs_f32()
     }
+}
+
+/// The end screen's graph's height, UI units.
+const CURVE_H: f32 = 112.0;
+/// The slime's colour on the end screen's graph: the amber the slime is
+/// drawn in on the planet, so the bars read as the slime.
+const CURVE_SLIME: Rgba = [236, 150, 52, 210];
+
+/// **The match's curve on the end screen** (2026-11-21, the owner: "I
+/// would be curious to see slime population overtime after each match"):
+/// the slime's walkers as amber columns, one per few seconds (the most in
+/// each, so a peak is never averaged away), and the soldiers standing as
+/// cyan dots on their own scale, with the slime's peak and the clock at
+/// both ends. Plain rectangles, as the rest of the card: the canvas draws
+/// no lines.
+fn end_curve(curve: &[(u32, u32)], r: Rect, c: &mut Canvas, s: f32) {
+    c.panel(r, 10.0 * s, [255, 255, 255, 12], [255, 255, 255, 6], 1.0, EDGE);
+    let (padx, top, bottom) = (12.0 * s, 26.0 * s, 20.0 * s);
+    let plot = Rect::new(r.x + padx, r.y + top, r.w - 2.0 * padx, r.h - top - bottom);
+    let peak = curve.iter().map(|p| p.0).max().unwrap_or(0).max(1) as f32;
+    let most = curve.iter().map(|p| p.1).max().unwrap_or(0).max(1) as f32;
+    // The key, left; the peak, right.
+    let ky = r.y + 15.0 * s;
+    c.rrect(Rect::new(r.x + padx, ky - 5.0 * s, 9.0 * s, 9.0 * s), 2.0 * s, CURVE_SLIME);
+    let w = c.text(Weight::Medium, 12.5 * s, (r.x + padx + 14.0 * s, ky + 4.0 * s), Align::Left, "Slime", MUTED);
+    let kx = r.x + padx + 14.0 * s + w + 14.0 * s;
+    c.rrect(Rect::new(kx, ky - 3.0 * s, 6.0 * s, 6.0 * s), 3.0 * s, ACCENT);
+    c.text(Weight::Medium, 12.5 * s, (kx + 11.0 * s, ky + 4.0 * s), Align::Left, &format!("Soldiers (most {})", most as u32), MUTED);
+    let peak_label = if peak >= 10_000.0 { format!("peak {:.1}k", peak / 1000.0) } else { format!("peak {}", peak as u32) };
+    c.text(Weight::Medium, 12.5 * s, (r.right() - padx, ky + 4.0 * s), Align::Right, &peak_label, MUTED);
+    // The floor.
+    c.rrect(Rect::new(plot.x, plot.bottom(), plot.w, 1.0 * s), 0.0, TRACK);
+    // A column every 3 units or more, each the most of its seconds.
+    let n = curve.len().min((plot.w / (3.0 * s)).floor().max(1.0) as usize);
+    let cw = plot.w / n as f32;
+    let gap = if cw > 2.5 * s { 1.0 * s } else { 0.0 };
+    for k in 0..n {
+        let (a, b) = (k * curve.len() / n, ((k + 1) * curve.len() / n).max(k * curve.len() / n + 1));
+        let part = &curve[a..b.min(curve.len())];
+        let v = part.iter().map(|p| p.0).max().unwrap_or(0) as f32;
+        let x = plot.x + k as f32 * cw;
+        if v > 0.0 {
+            let h = (v / peak * plot.h).max(1.0 * s);
+            c.rrect(Rect::new(x, plot.bottom() - h, cw - gap, h), 0.0, CURVE_SLIME);
+        }
+        let men = part.last().map_or(0, |p| p.1) as f32;
+        let d = 3.0 * s;
+        let my = plot.bottom() - men / most * (plot.h - d) - d;
+        c.rrect(Rect::new(x + (cw - gap - d) / 2.0, my, d, d), d / 2.0, ACCENT);
+    }
+    // The clock under it, from the landing to the end.
+    let secs = curve.len() as u32;
+    let by = r.bottom() - 6.0 * s;
+    c.text(Weight::Medium, 11.5 * s, (plot.x, by), Align::Left, "0:00", FAINT);
+    c.text(Weight::Medium, 11.5 * s, (plot.x + plot.w / 2.0, by), Align::Centre, &format!("{}:{:02}", secs / 2 / 60, secs / 2 % 60), FAINT);
+    c.text(Weight::Medium, 11.5 * s, (plot.right(), by), Align::Right, &format!("{}:{:02}", secs / 60, secs % 60), FAINT);
 }
 
 /// A command's name as its button shows it: the little words dropped
@@ -3315,6 +3437,46 @@ mod tests {
                     for b in &tiles[i + 1..] {
                         let apart = a.right() <= b.x + 0.5 || b.right() <= a.x + 0.5 || a.bottom() <= b.y + 0.5 || b.bottom() <= a.y + 0.5;
                         assert!(apart, "{screen:?}, {n} squads: {a:?} and {b:?} overlap");
+                    }
+                }
+            }
+        }
+    }
+
+    /// The commanded squad's strip (controls review, 11-21): right of the
+    /// tiles, inside the panel, none over another; on a wide screen with
+    /// one squad all five show; with no squad commanded, none.
+    #[test]
+    fn the_squad_strip_sits_right_of_the_tiles() {
+        let row = |k: usize| SquadRow { key: format!("{}", k + 1), name: format!("Squad {}", k + 1), soldiers: 4, hp: 0.8, note: Some("holding".into()), active: k == 0, near: false, linked: false, auto: k != 0, state: String::new() };
+        let fact = |t: &str| SquadFact { icon: Icon::Group, text: t.into(), about: "x".into() };
+        let facts = vec![fact("line formation"), fact("fire: defend"), fact("2 queued"), fact("Loadout 1"), fact("4 tools")];
+        for screen in [(1920, 1080), (1600, 972), (1280, 720)] {
+            for n in [1, 2, 3] {
+                for free in [false, true] {
+                    let mut r = Rig::new(screen);
+                    r.m.squads = Some(SquadPanel { rows: (0..n).map(row).collect(), split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, free, free_key: Some("Esc".into()) });
+                    r.m.squad_facts = facts.clone();
+                    r.m.loadout = Some(loadout());
+                    r.draw();
+                    let tiles: Vec<Rect> = (0..n).filter_map(|i| r.hud.hits.iter().find(|(_, h)| *h == Hit::Squad(i)).map(|(b, _)| *b)).collect();
+                    let end = tiles.iter().map(|t| t.right()).fold(0.0, f32::max);
+                    let (row_top, row_bottom) = (tiles[0].y, tiles[0].bottom());
+                    let shown: Vec<Rect> = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.x > end && b.y >= row_top - 1.0 && b.bottom() <= row_bottom + 1.0 && b.h < 40.0).map(|(b, _)| *b).collect();
+                    if free {
+                        assert!(shown.is_empty(), "{screen:?}, {n} squads, none commanded: {} facts drawn", shown.len());
+                        continue;
+                    }
+                    if screen.0 == 1920 && n == 1 {
+                        assert_eq!(shown.len(), facts.len(), "{screen:?}: one squad leaves room for every fact");
+                    }
+                    let panel = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.contains((tiles[0].x, tiles[0].y))).map(|(b, _)| *b).fold(None, |a: Option<Rect>, b| Some(a.map_or(b, |a| if b.w > a.w { b } else { a }))).unwrap();
+                    for (i, a) in shown.iter().enumerate() {
+                        assert!(a.right() <= panel.right() + 0.5, "{screen:?}, {n} squads: fact {a:?} runs out of the panel {panel:?}");
+                        for b in &shown[i + 1..] {
+                            let apart = a.right() <= b.x + 0.5 || b.right() <= a.x + 0.5 || a.bottom() <= b.y + 0.5 || b.bottom() <= a.y + 0.5;
+                            assert!(apart, "{screen:?}, {n} squads: facts {a:?} and {b:?} overlap");
+                        }
                     }
                 }
             }
@@ -3882,7 +4044,7 @@ mod tests {
     fn the_end_screen_shows_the_planets_numbers_and_fits() {
         let says = "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch";
         let tiles: Vec<(String, String)> = [("9:41", "played"), ("12,604", "walkers killed"), ("1,520", "shots, 8.3 kills each"), ("0", "soldiers standing, 9 lost"), ("5,700", "food harvested"), ("42.3k of 43.4k", "slime left, of its peak")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
-        let end = Ending { place: "Planet 3 of 8 · Drevix · The Trunk".into(), title: "The squad is lost".into(), won: Some(false), stars: Some(0), says: says.into(), tiles, lines: vec!["Your last soldier fell at 9:41 (best 40% of the goal)".into(), "The run ends on planet 3".into()] };
+        let end = Ending { place: "Planet 3 of 8 · Drevix · The Trunk".into(), title: "The squad is lost".into(), won: Some(false), stars: Some(0), says: says.into(), tiles, lines: vec!["Your last soldier fell at 9:41 (best 40% of the goal)".into(), "The run ends on planet 3".into()], curve: (0..581u32).map(|t| (20_000 + (t * 37 % 9_000), 30 - t / 20)).collect() };
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
             for user in crate::world::settings::STEPS {
                 let mut r = Rig::new(screen);
@@ -3893,7 +4055,7 @@ mod tests {
                 r.draw();
                 let quit = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::Quit)).map(|(b, _)| *b).unwrap();
                 assert!(quit.bottom() <= screen.1 as f32 && quit.y > 0.0 && quit.x >= 0.0 && quit.right() <= screen.0 as f32, "{screen:?} at {user}: Quit {quit:?} off screen");
-                for t in ["12,604", "walkers killed", "42.3k of 43.4k", "THE TRUNK"] {
+                for t in ["12,604", "walkers killed", "42.3k of 43.4k", "THE TRUNK", "Slime", "peak ", "9:41"] {
                     assert!(r.c.runs.iter().any(|x| x.text.contains(t)), "{screen:?} at {user}: no {t}");
                 }
                 assert!(r.c.runs.iter().any(|x| x.text.starts_with("It walls the crystals")), "{screen:?} at {user}: the slime's sentence");

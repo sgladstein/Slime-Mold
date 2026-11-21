@@ -1,0 +1,58 @@
+<title>What Each Slime Does</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* One column of three planet cards, each a clip and the sentence it should earn. */
+:root {
+  --bg: #f3f4f1; --panel: #ffffff; --fg: #1d221c; --muted: #5c6658; --line: #d9ddd4; --amber: #b8780a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #121511; --panel: #1b1f19; --fg: #e8ebe4; --muted: #a3ab9d; --line: #2e342b; --amber: #f0b13a; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #121511; --panel: #1b1f19; --fg: #e8ebe4; --muted: #a3ab9d; --line: #2e342b; --amber: #f0b13a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); padding-block: 32px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.planet { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; }
+.tag { font: 600 0.75rem/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); }
+.say { font-family: var(--display); font-size: 1.1rem; }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 10; border-radius: 6px; background: #000; }
+.facts { color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.note { border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 8px; color: var(--muted); }
+</style>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>What each slime does by minute 2</h1>
+    <p class="lede">Exit test 4 of Milestone 1: after playing, Scott can say in a sentence what each slime did to him. One clip per planet. Each is the run on main as of 11-21 (after the pacing, #606 and #644), the greedy or pumps bot, software Vulkan, zoom 6. Clips play a game second in 1/8 s (planet 3: a half second).</p>
+  </header>
+
+  <section class="planet">
+    <span class="tag">Planet 1 · the Drifter</span>
+    <p class="say">It smells your pumps, streams out to them and eats them.</p>
+    <video src="planet1-pumps.mp4" controls muted loop playsinline preload="metadata"></video>
+    <p class="facts">Run seed 1, pumps hand, 0:26 to 1:15. The slime eats 103 food and surges at 0:29; a gold arm runs from its crystal to the near pump, which goes from 194 to 0 health by 1:10 and is rebuilt. The planet card says it: "It smells your pumps and comes to eat their crystals". Fruiting no longer plays here (#644), so this is planet 1's one thing.</p>
+  </section>
+
+  <section class="planet">
+    <span class="tag">Planet 2 · the Sprawler</span>
+    <p class="say">Its fast threads find your squad from far off, and mini-bosses come out of it.</p>
+    <video src="planet2-hunted.mp4" controls muted loop playsinline preload="metadata"></video>
+    <p class="facts">Run seed 2, greedy hand, 1:18 to 2:00, the camera on the squad. Thin streaming threads cross the squad's path from every side; a hunter of 316 walkers forms at 1:16 (the violet body on the rock edge late in the clip sits where the log puts it). On seeds 1 to 3 a mini-boss formed by 1:25 on 2 of 3 and a pod (fruiting) by 1:30 on 2 of 3. Strikers, at 0.6, formed on none of the three by 3:00.</p>
+  </section>
+
+  <section class="planet">
+    <span class="tag">Planet 3 · the Trunk</span>
+    <p class="say">Cut down, its edge condenses into gold strikers that charge your squad.</p>
+    <video src="planet3-strikers.mp4" controls muted loop playsinline preload="metadata"></video>
+    <p class="facts">Run seed 1, greedy hand, 1:26 to 1:46, the camera on the squad. Under 60% of its peak at 1:28, the edge facing the squad condenses: 60 strikers at 1:30, 413 at 1:39, 994 walkers taken in by 1:50. On seeds 1 to 3: strikers by 1:30 on 2 of 3, a mini-boss by 1:40 on 3 of 3 (a Pinwheel on seed 3). Waves and the late lunge come later in the planet. The amber walls round its crystals (the card's line) show from the landing.</p>
+  </section>
+
+  <div class="note">
+    <p><strong>Also in this change:</strong> a pod's burst no longer rains slime on the squad (PR #648). Its throw of 600 fine cells, wider than a planet 1 map, now stops short of the guns' reach from the nearest soldier. Planet 2 run seed 3: 8 soldiers left at 3:00 before, 23 after.</p>
+    <p><strong>Seen while filming:</strong> on planet 2 seed 2 the hunter sat pressed on a rock edge from 1:44, 50 to 100 cells from the squad, and never reached it.</p>
+  </div>
+</main>
