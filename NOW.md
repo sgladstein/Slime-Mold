@@ -87,9 +87,10 @@ asks at most once a session with a recommendation.
 
 At most five, most important first; offers, not requests. The game shows them
 beside "What is new": [`news/things-to-try.txt`](news/things-to-try.txt).
-Today: the rush on planet 1 against building first now that raids come late (D7), the Lure, camera shake and hit-stop (D6,
-on the Experiments tab), what each of planets 1 to 3 does to you, the
-starting rifle and the two new bullets. What each build holds is in
+Today: the pacing of threats across planets 1 to 3, starfall and boss
+cores, the rush on planet 1 against building first (D7), what each of
+planets 1 to 3 does to you, the starting rifle and one shop visit.
+What each build holds is in
 [`news/whats-new.txt`](news/whats-new.txt).
 
 ## Where things are
