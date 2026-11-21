@@ -2,7 +2,7 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-20
+updated: 2026-11-21
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/gun-builds-2026-11-19/README.md
@@ -134,6 +134,12 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   (p 0.004). No deck helps the lure plan now. The league buys wanted cards
   when it can, so a real run that has to be offered them is harder. For
   Direction, not retuned
+  ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
+- Gun bodies with the strategy bots (job 14-0-d-guns, 11-20): a carbine
+  bought before planet 2 took rush from 7 to 9 of 11 planet 2 maps (better
+  on 10, p 0.012) and the lure plan from 4 to 8 of 9 on planet 3; a long
+  gun cost every plan (rush 7 to 2, lure 4 to 1). No comparison survives a
+  correction. For Direction, not retuned
   ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
 - Cards that do nothing on their own in the run shop (the balance review,
   11-20, [report](../../Reports/balance-review-2026-11-20/README.md)):
