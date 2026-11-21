@@ -2165,7 +2165,7 @@ impl Hud {
         // The commanded squad's settings, right of the tiles in the room
         // a short row leaves: two lines of icon-and-words, flowed in the
         // window's order, and what does not fit is left off (not cut).
-        if n <= cols && !p.free && !facts.is_empty() {
+        if n > 0 && n <= cols && !p.free && !facts.is_empty() {
             let x0 = inner.x + n as f32 * (cw + cgap) - cgap + 12.0 * s;
             if inner.right() - x0 >= 120.0 * s {
                 c.rrect(Rect::new(x0, top + 4.0 * s, s.max(1.0), ch - 8.0 * s), 0.0, EDGE);

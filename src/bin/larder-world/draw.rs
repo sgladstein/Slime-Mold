@@ -2103,6 +2103,11 @@ impl App {
         let Some(q) = g.active else { return Vec::new() };
         let Some(sq) = g.squads.get(q) else { return Vec::new() };
         let members = g.members(q);
+        // A squad wiped out stays `active` (the HUD read "0 squads" over a
+        // strip of "fire: mixed, 0 tools" at a loss, 11-21): nothing to say.
+        if members.is_empty() {
+            return Vec::new();
+        }
         let mut out = vec![SquadFact {
             icon: Icon::Group,
             text: format!("{} formation", sq.formation.name()),
