@@ -106,6 +106,11 @@ ranked look jobs, in the owner's order.
 7. **The HUD serves the fight.** In play the HUD covers at most about 15% of
    the screen, collapses when nothing is selected, and never sits over what
    the camera opens on. Its look stays the `theme` set in `ui.rs`.
+   The mouse cursor says what a click will do (owner 11-21): a crosshair
+   while a squad is commanded, its own look for every command waiting for a
+   point, the arrow lit over anything clickable; all drawn by the game as
+   system cursors with one outline, shadow and top light, in the roles'
+   colours (`cursor.rs`, [sheet](../../Reports/cursors-2026-11-21/sheet.png)).
 8. **Shapes the owner fixed**: crystals are hexagons; shots stop at the
    first slime (owner 11-11 15:50-16:48Z); soldiers wear their Armour:
    olive, slate, dark camo (11-19, [skins](../../Reports/soldier-skins-2026-11-19/README.md)).

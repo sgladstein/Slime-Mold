@@ -210,6 +210,7 @@ fn kind_look(kind: u16) -> LumpLook {
 /// reads as two-thirds cyan, never all of it (that is a crystal's).
 const LEECH_HALF: f32 = 150.0;
 mod args;
+mod cursor;
 mod experiments;
 mod input;
 mod draw;
@@ -815,6 +816,8 @@ const TURRET_TURN: f32 = 5.0;
 struct App {
     args: Args,
     window: Option<Arc<Window>>,
+    /// The mouse cursor's looks, made when the window opens (`cursor.rs`).
+    cursors: Option<cursor::Cursors>,
     pixels: Option<Pixels<'static>>,
     /// The window's GPU (pixels'), or the headless run's.
     gpu: Option<(wgpu::Device, wgpu::Queue)>,
@@ -1036,6 +1039,7 @@ impl App {
             armory_minimap: false,
             args,
             window: None,
+            cursors: None,
             pixels: None,
             gpu: None,
             game: None,
@@ -2072,6 +2076,7 @@ impl App {
         let t0 = Instant::now();
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
+        self.update_cursor(event_loop);
         if !self.in_menu() {
             // WASD pans only while paused (`Controls::wasd_pan`): set here
             // too, so a key held through P stops panning as play resumes.

@@ -792,6 +792,12 @@ impl StartMenu {
         }
     }
 
+    /// The cursor is over something a click works on (a button, a row, a
+    /// card), not only a panel: the window lights its cursor.
+    pub fn over_button(&self) -> bool {
+        self.hover.and_then(|p| self.hit(p)).is_some_and(|h| h != Hit::Panel)
+    }
+
     fn hit(&self, p: (f32, f32)) -> Option<Hit> {
         // Last drawn is on top.
         self.hits.iter().rev().find(|(r, _)| r.contains(p)).map(|&(_, h)| h)

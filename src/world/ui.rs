@@ -1178,6 +1178,13 @@ impl Hud {
         self.menu.is_some() || self.end || self.hits.iter().any(|(r, _)| r.contains(p)) || self.on_minimap(p).is_some()
     }
 
+    /// Whether a click at screen point `p` works on something there (a
+    /// button, a tile, a menu row), not only the HUD's glass: the cursor
+    /// lights over it (`larder-world`'s `cursor.rs`).
+    pub fn clickable(&self, p: (f32, f32)) -> bool {
+        self.hit(p).is_some_and(|h| h != Hit::Panel)
+    }
+
     /// The world point a screen point on the minimap stands for.
     pub fn on_minimap(&self, p: (f32, f32)) -> Option<(f32, f32)> {
         let mm = self.minimap?;
