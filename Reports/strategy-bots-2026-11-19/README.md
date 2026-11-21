@@ -8,12 +8,18 @@ Page: [Planet 3 Bot League](https://claude.ai/artifact/3pLVvJbt8JxP59oMvWE1Dk). 
 
 ## What was built
 
-- **The strategy bot**, `hand=strat:PLAN` (`src/bin/larder-world/strat.rs`). A plan is one of eight families (bot, rush, econ, turtle, scott, lure, boom, taker) plus dials, for example `econ,go=4,aim=6`. There are 26 dials. Besides the build and shop dials, they include:
+- **The strategy bot**, `hand=strat:PLAN` (`src/bin/larder-world/strat.rs`). A plan is one of eight families (bot, rush, econ, turtle, scott, lure, boom, taker) plus dials, for example `econ,go=4,aim=6`. There are 46 dials (`Plan::DIALS`). Besides the build and shop dials, they include:
   - `aim`: re-aims a second
   - `kite`: steering away from close slime
   - `split` and `group`: the owner's crystal holding
   - `want`: gun cards the shop buys, including ammo as `shell.set`
   - `mop`: hunt the last walkers
+  - `grow`, `regroup`, `spare`, `starve`, `deep`: switches in the game (below)
+  - `fire`: step back out of fire under that share of health; `cool`: step toward the squad's cool members when a quarter stands in fire (off)
+  - `mines`, `blast`: the thrown tools; `gun`, `arm`, `want2`, `tcards`, `order`: guns and turrets (the helper thread's)
+  - `drops`: chase starfall ore and boss cores while at most that many walkers a soldier are near (off)
+  - `broke` (20, on): poor and no harvest for that long, drain crystals with slime on them; `siege` (off): stalled with only the slime's home left, shoot into it (below)
+  - `STRAT_DBG=1` in the environment prints the hunt's choice and every crystal each 10 s.
 - **The utility bot**, `hand=util:WEIGHTS` (`utility.rs`). It scores 41 actions by weights the search can tune.
 - **The league**, `league=DEPTH:SEED[:SECS] plan=PLAN` (`league.rs`). It lands a plan on planet DEPTH of run SEED with the earlier planets counted as 2-star wins. The plan's own shop spends the points. Each game prints one `league` line of key=value pairs.
 - **The driver**, `league.py`, with the commands run, jobs, table, rank, breed, evolve and worker. `league.py worker --push` runs on the owner's PC from its own worktree (`C:\Users\Scott\Code\slime-league`):
@@ -73,6 +79,28 @@ Two changes on main changed planet 3, so results are kept by the game they were 
 - Main's pump-lamp fix (eb959ba) changed the build but not the play: 16 games replayed on both builds came out identical.
 - The search restarted as `pc/p3n/` on the current game (16 plans in `p3n-plans.txt` plus three kept plans, 17 maps).
 - The worker now pushes hourly. Each push to a branch with an open pull request re-runs the whole CI; pushing every chunk cancelled 24 of 26 runs on 11-20.
+
+## 11-20 evening and 11-21
+
+- **Fire slope** (job 14-0-a, Direction's ask). The Torch with Tinder costs every planet 2 plan at fire_hurt 25 and still at 10 (rush,aim=6 from 11 wins to 3); it is a real choice only at 5. Direction kept 10 (#586: "the fire is the deck's price"). On planet 3 the Needle Blast deck plan lost 856 soldiers to its own fires at 10; `fire=0.5` (step back under half health) kept 9 of 9 wins and lost 141.
+- **Planet 1** (job 14-0-b). No plan beat rush,aim=6 (6 of 11 maps), but plans won different maps (9 of 11 between them), so a switch by map is the open idea.
+- **The planet 1 regression** (Direction, 11-20 evening): CI's run bot went from 2 wins of 2 to 0. A bisect of main's merges, two maps each, found #566 (the strikers retune). #598's cap won back map 1 only. Then #606 moved strikers to planet 2 and later (the owner's 23:32Z ruling).
+- **Tools** (job 14-0-c, code 87872e355961). On planet 2, rush,aim=6,cards=0 won 9 of 11 maps. The same plan unlocking blasts (at 40, 60 or 80 walkers), mines, or both won 2 or 3 of 11. Blasts kill a lot, but their unlocks take the points from upgrades. Given 150 extra points to pay for the blasts, it won 7. On planet 3, the lure plan with the switches won 3 of 9 maps both with and without tools (2 or 3 with).
+- **Two planet 1 stalls** on main with #606 (cloud, CI's plan `bot,want=torch.standard`).
+  - First stall: on run seed 3 the bot held 16 soldiers and 228 points for four minutes. It drained only crystals with under 30 walkers on them. `broke=20` (now on) fixes this one. Seed 2 now wins at 358 s, where broke=0 lost at 333 s.
+  - Second stall: seed 3 then held 43 soldiers and 56 points to the 1,800 s limit. Every crystal but the slime's home was dry. The home held 11,600 walkers, and the hunt shot only at the thin slime away from it. There are two fixes:
+    - A dry line: a crystal under 640, ten points, counts as empty.
+    - `siege=R`: the hunt shoots into the home once the home holds under R × `per` walkers a soldier.
+  - Siege smoke test (one cloud game each): siege=1.5 won seed 2 at 311 s and seed 3 at 360 s. Off, seed 2 lost at 315 s and seed 3 was still open at 900 s. With no limit, 30 soldiers went in at 2.1 times and died in ten seconds. Job 00-a plays broke, siege 1.5 and 3, and cool on the PC.
+- **The PC worker** now also pauses for windows in `queue/pc-pause.txt` (Engine's GPU timing, 11-21 00:30-03:00Z) and while a `PAUSE` file sits in its clone. It logs the command line that made it wait for the owner's game.
+- **Queued on main through #612**:
+  - 00-a: the bot fixes, for Direction.
+  - 00-b-curve: planets 2 to 5, for the thread pacing threats.
+  - 14-0-d: guns.
+  - 14-0-e: the planet 3 step-back.
+  - 14-0-f: drops, for Direction's base pay.
+  - 14-0-runs-now: whole runs.
+  - 14-0-s: turret cards.
 
 ## Files
 
