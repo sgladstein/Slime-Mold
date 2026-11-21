@@ -578,6 +578,19 @@ pub struct Rules {
     pub late_at: f32,
     pub late_margin: f32,
     pub late_haste: f32,
+    /// **The slime's size follows the crystal it holds** (2026-11-21, the
+    /// thread "Make the slime a more interesting enemy"; the owner's pick
+    /// "1", 06:34Z, after his 06:30Z ruling that only the squad empties a
+    /// crystal). Once a game second (`Game::time_ceiling`) the slime's
+    /// ceiling is the crystal cells it covers (with charge and a walker on
+    /// them, smoothed) times its walkers a covered cell at landing, at
+    /// least `ceiling`; never over `ceiling_roof` times its landing walkers
+    /// (or its slots). Over it no walker is born and its upkeep rises, to
+    /// `ceiling_upkeep` times 20% over, so a slime that loses a crystal
+    /// shrinks to what the rest holds. 0 is off (`ceiling.rs`).
+    pub ceiling: f32,
+    pub ceiling_roof: f32,
+    pub ceiling_upkeep: f32,
     /// **The slime surges when it has eaten** (2026-11-15, the slime-enemy
     /// thread with the game designer, after #343's fixed clock): food (in
     /// the bank's units, `charge` a food) the slime eats from its crystals
@@ -1005,6 +1018,9 @@ impl Rules {
             "hoard" => &mut self.hoard,
             "panic_margin" => &mut self.panic_margin,
             "late_at" => &mut self.late_at,
+            "ceiling" => &mut self.ceiling,
+            "ceiling_roof" => &mut self.ceiling_roof,
+            "ceiling_upkeep" => &mut self.ceiling_upkeep,
             "late_margin" => &mut self.late_margin,
             "late_haste" => &mut self.late_haste,
             "surge_food" => &mut self.surge_food,
@@ -1125,6 +1141,9 @@ impl Default for Rules {
             broken_starve: 50.0,
             panic_margin: 5.0,
             late_at: 0.0,
+            ceiling: 0.0,
+            ceiling_roof: 3.0,
+            ceiling_upkeep: 3.0,
             late_margin: 25.0,
             late_haste: 3.0,
             surge_food: SURGE_FOOD,

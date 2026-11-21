@@ -342,6 +342,14 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// breakaway or a cut-off walker making for food steps only where it
 /// touches others (engine.wgsl's `tethered`); a raid goes as one body by
 /// its march (`RaidRules::march`).
+///
+/// **The slime eats without emptying a crystal** (`crystal_keep`,
+/// 2026-11-21, the thread "Make the slime a more interesting enemy"; the
+/// owner, 11-21 06:30Z: "crystals never run out from eating or pumping,
+/// and only your squad can empty one by draining it ... this 100%"). Walkers
+/// still take their bite and the crystal keeps its charge; what they ate is
+/// counted on the GPU (`pilesum`) so the surge clock (`time_surges`) runs
+/// as before.
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
     vec![
@@ -358,6 +366,9 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         // these planets but the Sporer's, which already has them.
         ("spore_reach", "36".to_string()),
         ("spore_land", "1".to_string()),
+        // Crystals never run out from the slime's eating (the owner,
+        // 11-21 06:30Z): only the squad empties one, by draining it.
+        ("crystal_keep", "1".to_string()),
     ]
 }
 
@@ -376,6 +387,12 @@ pub const TETHER: u32 = 2;
 /// (`Reports/lab-steering-2026-11-17`). Those were measured with the far
 /// smell off; here both are on.
 pub const LURE_PULL: f32 = 10.0;
+
+/// **The slime's least walkers a covered crystal cell** (`Rules::ceiling`,
+/// 2026-11-21; `larder_world/ceiling.rs`): its ceiling is the crystal it
+/// covers times its landing density, at least this. On planet 1 (run seeds
+/// 1-3) it landed with 14 to 21 a cell, so this lifts only a thin landing.
+pub const CEILING: f32 = 12.0;
 
 /// **Game rules every planet's slime plays by** (`Rules::set` names), set
 /// in `Run::rules` before the tier's own (`does_to_you`). Today one:
@@ -438,7 +455,7 @@ pub const LURE_PULL: f32 = 10.0;
 /// or more, every walker left gathers into one armoured heart on its heart
 /// crystal, which lunges at the nearest soldier every 20 s, until it is cut
 /// under 15% of the most it held or is 150 s old. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0)];
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING)];
 
 /// **The planet each of `ENEMY_RULES` first plays on** (2026-11-20, the
 /// thread "Pace threats across the planets"; the owner that night, after a
@@ -1912,10 +1929,10 @@ mod tests {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" || k == "tether" {
+                if k == "lure_pull" || k == "tether" || k == "crystal_keep" {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER, "planet {d}: {k}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();

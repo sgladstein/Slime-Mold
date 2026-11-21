@@ -53,6 +53,7 @@ mod world;
 mod raids;
 mod bosses;
 mod fruit;
+mod ceiling;
 mod waves;
 mod heart;
 mod stand;
@@ -493,6 +494,8 @@ pub struct Game<W: World> {
     /// When the mould broke (`Rules::broken`), and the upkeep it had then,
     /// given back if it recovers; None while it is whole.
     pub broken: Option<(u64, f32)>,
+    /// The slime's birth ceiling (`Rules::ceiling`, `ceiling.rs`).
+    pub ceiling: ceiling::Ceiling,
     /// The slime has fallen under `Rules::late_at` of its peak: its
     /// charges reach and lunge as a cornered slime's for the rest of the
     /// planet (`Game::keep_panic_reach`).
@@ -571,6 +574,8 @@ pub struct Game<W: World> {
     surge_last: u64,
     surge_timed: bool,
     charge_was: f64,
+    /// `World::slime_ate` at the last frame (`time_surges`).
+    ate_was: f64,
     /// Raids (`Rules::raid`, `raids.rs`): the meter and every raid sent.
     pub raids: Raids,
     /// Lures with no building (`raids::LureMark`; the lure's field,
@@ -734,6 +739,7 @@ impl<W: World> Game<W> {
             peak: mould,
             curve: Vec::new(),
             broken: None,
+            ceiling: Default::default(),
             late: false,
             fell_bitten: 0,
             bitten_hp: 0.0,
@@ -767,6 +773,7 @@ impl<W: World> Game<W> {
             surge_last: 0,
             surge_timed: false,
             charge_was: 0.0,
+            ate_was: 0.0,
             raids: Raids::new(seed),
             lure_marks: Vec::new(),
             bosses: Bosses::new(seed),

@@ -255,8 +255,11 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // `full` is the pile's charge a full cell (`BigDish::pile_fill`: a map
 // gives each crystal its own, else every pile's is `crystal_charge`).
 // `centre`: the pile's centre as a fine cell, x | y << 16 (`BigDish::
-// pile_centre`), where a panicking walker runs.
-struct Pile { start: u32, count: u32, cells: u32, centre: u32, sum: f32, left: f32, full: f32, _b: f32 };
+// pile_centre`), where a panicking walker runs. `_b`: what the slime ate
+// here in all, in sixteenths as a u32 (`KEEP`). `covered`: its cells with
+// charge and a walker on them at the last `pilesum` (the slime's birth
+// ceiling, `CEIL`; Rust's `PILE_WORDS`).
+struct Pile { start: u32, count: u32, cells: u32, centre: u32, sum: f32, left: f32, full: f32, _b: f32, covered: u32, _c: u32, _d: u32, _e: u32 };
 // A wall being built (`Engine::build_wall`): the segment and its half
 // width in fine cells, the health it starts with, the box of cells the
 // `build` pass covers, whether it lets scent through, and how far a
@@ -740,6 +743,11 @@ const SOIL: u32 = 16u;
 const GARDEN: u32 = 32u;
 // The dish has plants (`plant_words` in `news`; mod.rs `WORLD_PLANTS`).
 const PLANTS: u32 = 64u;
+// The slime eats without emptying a crystal (mod.rs `WORLD_KEEP`).
+const KEEP: u32 = 128u;
+// The slime's births stop at a ceiling, species 0's `cap` (mod.rs
+// `WORLD_CEIL`), outside a garden too.
+const CEIL: u32 = 256u;
 const OWN_SP: u32 = 3u;
 const PILE_BITS: u32 = 0xFFu;
 const WET: u32 = 0x100u;
@@ -1914,6 +1922,10 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
         let sp = species_of(k);
         let held = select(atomicLoad(&wstat[6]), atomicLoad(&wstat[7]), sp == OWN_SP);
         if (held >= P.sets[sp].cap) { return; }
+    } else if (world(CEIL) && atomicLoad(&wstat[6]) >= P.sets[0].cap) {
+        // The slime's birth ceiling (`Game::time_ceiling`, 11-21): the
+        // walkers its covered crystal holds, counted as a garden's side.
+        return;
     }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
@@ -2628,7 +2640,10 @@ fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (((ground[i] & PILE_BITS) != 0u || garden()) && n > 0u) {
         var c = charge[i];
         t = min(P.eat, c / f32(n));
-        if (t > 0.0) {
+        // With `KEEP` (2026-11-21, the owner: crystals never run out from
+        // eating, only the squad empties one) the cell keeps its charge:
+        // the walkers take their share and `pilesum` counts it.
+        if (t > 0.0 && !world(KEEP)) {
             for (var m = 0u; m < eaters; m++) { c = max(c - t, 0.0); }
             charge[i] = c;
         }
@@ -2642,6 +2657,8 @@ fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
 // share left, for the scent.
 var<workgroup> psum: array<f32, 256>;
 var<workgroup> pcnt: array<u32, 256>;
+var<workgroup> pate: array<f32, 256>;
+var<workgroup> pcov: array<u32, 256>;
 
 @compute @workgroup_size(256)
 fn pilesum(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
@@ -2650,27 +2667,47 @@ fn pilesum(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_inde
     let count = piles[p].count;
     var s = 0.0;
     var c = 0u;
+    var a = 0.0;
+    var v = 0u;
+    let keep = world(KEEP);
     for (var q = li; q < count; q += 256u) {
         let i = pcell[start + q];
         if ((ground[i] & PILE_BITS) == p + 1u) {
             s += charge[i];
             c += 1u;
+            if (charge[i] > 0.0 && atomicLoad(&occ[i]) > 0u) { v += 1u; }
+            // What the slime ate here this tick (`KEEP`): each ordinary
+            // walker's share, as `eat` gave it.
+            if (keep) {
+                var eaters = atomicLoad(&occ[i]);
+                if (cycles()) { eaters = eaters - atomicLoad(&gdep[2u * P.w * P.h + i]); }
+                a += share[i] * f32(eaters);
+            }
         }
     }
     psum[li] = s;
     pcnt[li] = c;
+    pate[li] = a;
+    pcov[li] = v;
     workgroupBarrier();
     for (var k = 128u; k > 0u; k >>= 1u) {
         if (li < k) {
             psum[li] += psum[li + k];
             pcnt[li] += pcnt[li + k];
+            pate[li] += pate[li + k];
+            pcov[li] += pcov[li + k];
         }
         workgroupBarrier();
     }
     if (li == 0u) {
+        // A running total in sixteenths, as a u32 in the pile's last word
+        // (`Engine::pile_eaten` reads it; a world that flows sums twice a
+        // tick, which the host halves).
+        if (keep) { piles[p]._b = bitcast<f32>(bitcast<u32>(piles[p]._b) + u32(round(pate[0] * 16.0))); }
         let full = piles[p].full * f32(pcnt[0]);
         piles[p].sum = psum[0];
         piles[p].cells = pcnt[0];
+        piles[p].covered = pcov[0];
         var left = 1.0;
         if (full > 0.0) { left = max(psum[0] / full, 0.0); }
         piles[p].left = left;
