@@ -340,6 +340,25 @@ pub fn minimap_world(rect: (u32, u32, u32, u32), world: (usize, usize), at: (f32
     (u >= 0.0 && v >= 0.0 && u < w as f32 && v < h as f32).then(|| (u / w as f32 * world.0 as f32, v / h as f32 * world.1 as f32))
 }
 
+/// The view's pipelines from one shader source (`View::reshade_later`).
+pub struct Shaded([wgpu::ComputePipeline; 6]);
+
+/// The six pipelines from `source`, on the bindings `bgl` (error scopes
+/// are the thread's own, so this runs on any thread).
+fn compile(device: &wgpu::Device, bgl: &wgpu::BindGroupLayout, source: &str) -> Result<Shaded, String> {
+    let scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
+    let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(source.into()) });
+    let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(bgl)], immediate_size: 0 });
+    let pipe = |entry_point: &str| {
+        device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
+    };
+    let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep"), pipe("drain")];
+    if let Some(e) = crate::gpu::block_on(scope.pop()) {
+        return Err(e.to_string());
+    }
+    Ok(Shaded(pipes))
+}
+
 pub struct View {
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -1010,18 +1029,30 @@ impl View {
     /// pipelines are made again; the old ones stay if the source does not
     /// compile, and the error says why.
     pub fn reshade(&mut self, source: &str) -> Result<(), String> {
-        let scope = self.device.push_error_scope(wgpu::ErrorFilter::Validation);
-        let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(source.into()) });
-        let layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&self.bgl)], immediate_size: 0 });
-        let pipe = |entry_point: &str| {
-            self.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
-        };
-        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep"), pipe("drain")];
-        if let Some(e) = crate::gpu::block_on(scope.pop()) {
-            return Err(e.to_string());
-        }
-        self.pipes = pipes;
+        self.pipes = compile(&self.device, &self.bgl, source)?.0;
         Ok(())
+    }
+
+    /// **`reshade` on another thread** (the owner, 11-21: "the slime
+    /// viewer is so slow"). Making the six pipelines again is the driver's
+    /// whole compile of this shader, and the viewer did it on the frame's
+    /// own thread up to three times a second while a look bar moved, so
+    /// the picture stopped each time. Now the old look keeps drawing and
+    /// the new one comes back on the channel with the ms it took (`take`
+    /// it with `reshaded`); a compile error comes back instead.
+    pub fn reshade_later(&self, source: String) -> std::sync::mpsc::Receiver<Result<(Shaded, f64), String>> {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let (device, bgl) = (self.device.clone(), self.bgl.clone());
+        std::thread::spawn(move || {
+            let t = std::time::Instant::now();
+            let _ = tx.send(compile(&device, &bgl, &source).map(|s| (s, t.elapsed().as_secs_f64() * 1e3)));
+        });
+        rx
+    }
+
+    /// The pipelines `reshade_later` made.
+    pub fn reshaded(&mut self, s: Shaded) {
+        self.pipes = s.0;
     }
 
     /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)

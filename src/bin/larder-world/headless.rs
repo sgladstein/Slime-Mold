@@ -917,6 +917,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         }
         app.hud.moved(hover);
         app.controls.cursor = hover;
+        // The slime viewer's pointer too (its rows' hover box, 11-21).
+        if hover.is_some() {
+            app.viewer_moved(hover);
+        }
         // `hand=buildq` with `hover=`: the turret is being placed under the
         // cursor (Q, then T), so the picture shows the placing ghost and its
         // reach ring (2026-11-14, the build-flow thread).

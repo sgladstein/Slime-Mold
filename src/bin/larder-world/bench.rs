@@ -227,6 +227,9 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     let last = format!("  t {:.0} s: mould {}, soldiers {}, buildings {}, harvested {:.0}, shots {}, killed {}{}{verdict}", g.time(), g.mould, g.alive(), g.buildings.len(), g.harvested, g.shots, g.killed, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())));
     println!("{last}");
     print_costs(g);
+    if app.viewer.is_some() {
+        println!("{}", app.viewer_bench()?);
+    }
     if b.passes > 0 && stamped && !over(&app) {
         print_passes(&mut app, b.passes, dt);
     }
