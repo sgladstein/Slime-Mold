@@ -544,6 +544,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // they did before the step split.
             app.settle();
             if let Some(g) = app.game.as_ref() {
+                path_log(g);
                 let by_boss = |x: f32, y: f32| {
                     g.bosses.live.iter().filter(|b| b.members > 0).any(|b| (b.centre.0 - x).hypot(b.centre.1 - y) < (b.members as f32 / std::f32::consts::PI).sqrt() + 10.0)
                         || g.bosses.shells.iter().any(|sh| (sh.target.0 - x).hypot(sh.target.1 - y) < 15.0)
@@ -1307,4 +1308,12 @@ fn stand(g: &mut Game<GpuWorld>, kind: Kind, at: (f32, f32), render: bool) -> Re
         b.level = 2;
     }
     Ok(())
+}
+
+/// `LARDER_PATHLOG=FILE`: every living soldier and squad, each step, as
+/// CSV rows (`Game::path_rows`; the pathfinding thread's probe, 2026-11-20).
+fn path_log<W: slime_mould::mould::larder_world::World>(g: &slime_mould::mould::larder_world::Game<W>) {
+    static LOG: std::sync::OnceLock<Option<std::sync::Mutex<std::io::BufWriter<std::fs::File>>>> = std::sync::OnceLock::new();
+    let Some(m) = LOG.get_or_init(|| std::env::var("LARDER_PATHLOG").ok().and_then(|p| std::fs::File::create(p).ok()).map(|f| std::sync::Mutex::new(std::io::BufWriter::new(f)))) else { return };
+    let _ = g.path_rows(&mut *m.lock().unwrap());
 }
