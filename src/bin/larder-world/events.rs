@@ -37,6 +37,8 @@ impl ApplicationHandler for App {
         // A placeholder world frame until the round starts.
         let frame = pixels.device().create_buffer(&wgpu::BufferDescriptor { label: Some("no world"), size: 16, usage: wgpu::BufferUsages::STORAGE, mapped_at_creation: false });
         self.view = Some(View::new(pixels.device(), pixels.queue(), &frame, (1, 1), (w, h)));
+        // The look the slime viewer saved (`tweaks.rs`), or its own.
+        self.apply_look_tweaks();
         // The UI size: the saved or `ui=` size over the window's DPI scale.
         let mut canvas = Canvas::new((w, h));
         canvas.ui = UiSize { user: ui_user(), dpi: window.scale_factor() as f32 };
@@ -113,6 +115,10 @@ impl ApplicationHandler for App {
                     self.drop_note();
                     return;
                 }
+                // The slime viewer's F3 and Esc (`viewer.rs`).
+                if pressed && !event.repeat && !self.in_menu() && self.viewer_key(code) {
+                    return;
+                }
                 // The start menu takes every key while it is up.
                 if self.in_menu() {
                     let repeat = event.repeat && !matches!(code, KeyCode::ArrowUp | KeyCode::ArrowDown);
@@ -172,8 +178,11 @@ impl ApplicationHandler for App {
                     return;
                 }
                 let mm = self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera));
-                self.hud.moved(Some(at));
-                self.controls.moved(Some(at), &mut self.camera, mm);
+                // Over the slime viewer's panel the world and HUD see no
+                // cursor (`viewer.rs`).
+                let at = if self.viewer_moved(Some(at)) { None } else { Some(at) };
+                self.hud.moved(at);
+                self.controls.moved(at, &mut self.camera, mm);
             }
             WindowEvent::CursorLeft { .. } => {
                 if let Some(m) = self.menu.as_mut() {
@@ -201,7 +210,7 @@ impl ApplicationHandler for App {
                     }
                     return;
                 }
-                if self.squad_wheel(notches) || self.squad_zoom(notches) {
+                if self.viewer_wheel(notches) || self.squad_wheel(notches) || self.squad_zoom(notches) {
                     return;
                 }
                 self.controls.wheel(notches, &mut self.camera);
@@ -222,6 +231,9 @@ impl ApplicationHandler for App {
                         }
                         Err(e) => self.fail(event_loop, e),
                     }
+                    return;
+                }
+                if self.viewer_button(b, down) {
                     return;
                 }
                 let (took, events) = self.hud.button(b, down, &self.camera, self.shift);

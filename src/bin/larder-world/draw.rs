@@ -46,6 +46,11 @@ pub(super) fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f3
 /// The side of the tiles a new wall's cells are grouped in, to re-mark
 /// the ground's `look::FAR` bit round them (`refresh_ground`).
 const WALL_TILE: usize = 32;
+/// Seconds a drop's "+N" rises and fades after the squad empties it.
+const CASHED_SECS: f32 = 1.6;
+/// A label drawn after the soldiers (`App::marks`' `over`): where, its
+/// offset in pixels, the text, its scale and colour.
+type OverLabel = ((f32, f32), (f32, f32), String, f32, [u8; 4]);
 
 /// The cells a timed ground refresh can change (`App::refresh_ground`):
 /// the crystals' (their charge) and the walls' (their health), row-major,
@@ -727,11 +732,19 @@ impl App {
         // hot gold lump and a core a red one, each shrinking with what is
         // left in it and dimming as it cools, with its points beside it.
         // The impact itself is the engine's blast and crater.
+        // Their words go on after the soldiers (`over`, below): at zoom 12 a
+        // squad standing on a drop hid its points and its "+N".
+        let mut over: Vec<OverLabel> = Vec::new();
         {
             use slime_mould::mould::larder_world::DropKind;
             let now = g.world.ticks();
             let star = g.rules.star;
             for d in &g.starfall.live {
+                // Emptied by the squad this second: its points are in, and
+                // the "+N" below takes its place (`Starfall::cashed`).
+                if d.down && d.left <= 0.01 {
+                    continue;
+                }
                 let w = d.warmth(now);
                 if !d.down {
                     let hit = star.kill_r * sc;
@@ -771,9 +784,27 @@ impl App {
                 let text = if on { format!("+{}", d.taken.floor() as u32) } else { format!("{}", d.left.ceil() as u32) };
                 // A dark shadow under it, so it reads on the slime's gold.
                 let x = -4.5 * text.len() as f32;
-                self.marks.label(d.at, (x + 1.5, -below - 12.5), &text, 1.8, [20, 10, 10, 220]);
-                self.marks.label(d.at, (x, -below - 14.0), &text, 1.8, fade(core, 0.95));
+                over.push((d.at, (x + 1.5, -below - 12.5), text.clone(), 1.8, [20, 10, 10, 220]));
+                over.push((d.at, (x, -below - 14.0), text, 1.8, fade(core, 0.95)));
                 self.marks.bar(d.at, -below - 18.0, (10.0, 1.5), d.taken / d.worth.max(1e-3), [255, 214, 90, 255], [40, 30, 30, 200]);
+            }
+            // The moment the points come in (Boss cores thread, 2026-11-21):
+            // a drop the squad emptied leaves its "+N" in gold, rising and
+            // fading over `CASHED_SECS`, as the coin chime rings. Before,
+            // the drop just shrank away and nothing said it had paid.
+            let tps = g.rules.tps.max(1) as f32;
+            for c in &g.starfall.cashed {
+                let age = now.saturating_sub(c.tick) as f32 / tps;
+                if age >= CASHED_SECS {
+                    continue;
+                }
+                let k = age / CASHED_SECS;
+                let text = format!("+{}", c.taken.round() as u32);
+                let x = -6.0 * text.len() as f32;
+                let y = -18.0 - 34.0 * k.sqrt();
+                let a = (1.0 - k * k).clamp(0.0, 1.0);
+                over.push((c.at, (x + 2.0, y + 2.0), text.clone(), 2.4, [20, 10, 10, (220.0 * a) as u8]));
+                over.push((c.at, (x, y), text, 2.4, [255, 224, 110, (255.0 * a) as u8]));
             }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
@@ -1159,6 +1190,9 @@ impl App {
 
             }
         }
+        for (at, off, text, scale, colour) in over {
+            self.marks.label(at, off, &text, scale, colour);
+        }
         let units = self.units();
         self.controls.prune(&units);
         self.controls.marks(&units, &self.camera, r, &mut self.marks);
@@ -1189,6 +1223,24 @@ impl App {
                     value: format!("{:.0}", g.bank),
                     rate: rate.map(|v| format!("+{v:.0}/s")),
                 },
+                // Starfall and cores (Boss cores thread, 2026-11-21): the
+                // shop points found this planet, with what is coming in now
+                // (the drops soldiers stand on, and those just emptied), so
+                // a pickup is seen to pay where the money is counted.
+                // Before, they showed only on the planet's end screen.
+                Resource {
+                    icon: Icon::Upgrade,
+                    colour: [255, 214, 90, 255],
+                    label: "Shop points found on this planet: stand soldiers by fallen ore or a broken boss's core to take them. The win pays its own points at the end".into(),
+                    value: format!("{}", g.starfall.earned()),
+                    rate: {
+                        let now = g.world.ticks();
+                        let recent = (CASHED_SECS * g.rules.tps as f32) as u64;
+                        let taking: f32 = g.starfall.live.iter().filter(|d| d.down && d.takers > 0 && d.left > 0.01).map(|d| d.taken).sum::<f32>()
+                            + g.starfall.cashed.iter().filter(|c| now.saturating_sub(c.tick) < recent).map(|c| c.taken).sum::<f32>();
+                        (taking >= 1.0).then(|| format!("+{}", taking.floor() as u32))
+                    },
+                },
                 Resource { icon: Icon::Soldier, colour: theme::TEXT, label: format!("Soldiers alive (at most {})", r.max_squad), value: format!("{}", g.alive()), rate: (lost > 0).then(|| format!("-{lost} lost")) },
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: if g.world.garden.is_some() { "The enemy mould: walkers alive".into() } else { "The mould: walkers alive".into() }, value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
                 Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },
@@ -1213,7 +1265,8 @@ impl App {
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             // The switches this round plays off their default (the play
             // log's `switches=` says the same).
-            trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).collect(),
+            // The slime viewer's saved tweaks count as not the default game.
+            trying: slime_mould::build::switches::state(&self.args.keys).into_iter().map(|(s, choice)| format!("{} {choice}", s.label)).chain((!self.tweaks.is_empty()).then(|| format!("your slime tweaks ({})", self.tweaks.count()))).collect(),
             // Every switch, for the pause menu's Experiments page.
             experiments: experiments::rows(&self.args.keys, &self.exp_next),
             most_off: slime_mould::build::switches::MOST_OFF,
@@ -1498,11 +1551,11 @@ impl App {
                     ..Command::new(WALL, (0, 2), Icon::Wall, "Wall", KeyCode::KeyV)
                 },
                 Command {
-                    target: Target::Line { width: r.wall_width * sc },
+                    target: Target::Point { radius: 0.5 * slime_mould::mould::larder_world::DOOR_WIDTHS * r.wall_width * sc },
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
                     ready: g.bank >= r.wall_cost,
                     why_not: need(r.wall_cost),
-                    about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Draw it along a wall to cut it in (at once, as thick as the wall), or across a gap to build it. Costs as a wall that long.".into(),
+                    about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Click a wall to cut one in, at once and as thick as the wall (a rising wall gets it as it rises). Costs as a wall that long.".into(),
                     ..Command::new(DOOR, (1, 3), Icon::Wall, "Door", KeyCode::KeyG)
                 },
                 place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
@@ -1576,10 +1629,16 @@ impl App {
                 c.why_not = None;
             }
         }
+        // Shop points only where ore falls (a run's planets).
+        if !g.rules.star.on {
+            m.resources.retain(|r| r.icon != Icon::Upgrade);
+        }
         if g.world.garden.is_some() {
             // The player's own mould beside the enemy's, in its colour.
             let own = g.world.counts_by_side().0;
-            m.resources.insert(3, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: format!("Your own mould (green): walkers alive. Sow it ({}); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs", if self.sq.is_some() { "U" } else { "W" }), value: thousands(own), rate: None });
+            // After the enemy's (a run's shop points sit before the soldiers).
+            let at = m.resources.iter().position(|r| r.icon == Icon::Mould).map_or(3, |i| i + 1);
+            m.resources.insert(at, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: format!("Your own mould (green): walkers alive. Sow it ({}); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs", if self.sq.is_some() { "U" } else { "W" }), value: thousands(own), rate: None });
         }
         m.commands = cmds;
         m.buildings = g
@@ -1619,20 +1678,22 @@ impl App {
             }
             Some((WALL, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
             // A door: where it goes (`Game::door_line`), and so its price.
-            Some((DOOR, at, Some(from))) => {
-                let (a, b, host) = g.door_line(from, at);
-                let price = g.wall_price(a, b);
-                if g.bank < price {
-                    (false, Some(format!("{price:.0} food, {:.0} short", price - g.bank)))
-                } else if let Some(why) = g.build_blocked(Kind::Wall { to: b }, a) {
-                    (false, Some(why.into()))
-                } else if host.is_some() {
-                    (true, Some(format!("{price:.0} food, release to cut a door in this wall")))
-                } else {
-                    (true, Some(format!("{price:.0} food, release to build a door")))
+            // A door: a click on a wall (`Game::door_from_click`), and so
+            // its price.
+            Some((DOOR, at, _)) => match g.door_from_click(at) {
+                None => (false, Some("click on a wall".into())),
+                Some((from, to)) => {
+                    let (a, b, _) = g.door_line(from, to);
+                    let price = g.wall_price(a, b);
+                    if g.bank < price {
+                        (false, Some(format!("{price:.0} food, {:.0} short", price - g.bank)))
+                    } else if let Some(why) = g.build_blocked(Kind::Wall { to: b }, a) {
+                        (false, Some(why.into()))
+                    } else {
+                        (true, Some(format!("{price:.0} food, click to cut a door in this wall")))
+                    }
                 }
-            }
-            Some((DOOR, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            },
             // On a crystal with a pump: the pump's upgrade (owner,
             // 2026-11-15: "you should be able to upgrade them").
             Some((PUMP, at, _)) if g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some() => {

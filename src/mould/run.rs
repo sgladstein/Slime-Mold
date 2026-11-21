@@ -271,11 +271,14 @@ pub const WIN_SHARE: f32 = 0.0;
 const SURGE_FOOD_SHARE: [f32; 8] = [1.33, 1.33, 1.0, 1.0, 0.83, 0.67, 0.67, 0.5];
 const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// The strikers' share by planet (`StrikerRules::share`; 2026-11-20 night,
-/// Direction's numbers): a quarter on planet 1, where the player is
-/// poorest and weakest, 0.6 on planet 2, all of it from planet 3, as the
+/// Direction's numbers): 0.6 on planet 2, all of it from planet 3, as the
 /// big-army problem is planets 2 and up. It scales the rate cap
-/// (`StrikerRules::rate`) as well: about 37 strikers a second on planet 1,
-/// 90 on planet 2, 150 from planet 3.
+/// (`StrikerRules::rate`) as well: about 90 strikers a second on planet 2,
+/// 150 from planet 3, and a quarter (about 37 a second) on planet 1. Since
+/// the same night the strikers wait for planet 2 (`FIRST_PLANET`), so
+/// planet 1's quarter plays only when they are turned on there
+/// (`set=strikers=1`, or `FIRST_PLANET` moved back); a 0 here would leave
+/// them on and doing nothing (the bug check's note on #606).
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
@@ -349,10 +352,10 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("far_smell", "1".to_string()),
         ("lure_pull", format!("{LURE_PULL}")),
         ("tether", format!("{TETHER}")),
-        // A fruit's spores (`ENEMY_RULES`' `fruit`) home on food 36 fine
-        // cells out and land over a scent of 1, the Sporer's own numbers
-        // (`tiers::SPORE`); no other spore flies on these planets but the
-        // Sporer's, which already has them.
+        // The Sporer's own spore numbers (`tiers::SPORE`) on every
+        // planet: a fruit's spores homed by them until 11-21 (they no
+        // longer home: engine.wgsl's `fly`), and no other spore flies on
+        // these planets but the Sporer's, which already has them.
         ("spore_reach", "36".to_string()),
         ("spore_land", "1".to_string()),
     ]
@@ -436,6 +439,42 @@ pub const LURE_PULL: f32 = 10.0;
 /// crystal, which lunges at the nearest soldier every 20 s, until it is cut
 /// under 15% of the most it held or is 150 s old. GPU only.
 pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0)];
+
+/// **The planet each of `ENEMY_RULES` first plays on** (2026-11-20, the
+/// thread "Pace threats across the planets"; the owner that night, after a
+/// planet 1 on a good map: "We don't need all these mini-bosses, strikers,
+/// etc. in planet one. We should save some thing for later planets", and
+/// the strikers "still fucked my shit up (on planet 1)"). Every rule stays
+/// on in the game; each waits for its planet, so each planet brings
+/// something new:
+///
+/// - planet 1, the Drifter: the slime itself (surges, raids, specks, the
+///   lure, the heartbeat) and fruiting, its one answer to a squad that is
+///   winning;
+/// - planet 2, the Sprawler: mini-bosses (`BossRules::for_depth`, since
+///   11-18) and the strikers, at `STRIKER_SHARE`'s 0.6;
+/// - planet 3, the Trunk: waves and the late lunge, the slime fighting
+///   back as a whole when it is losing, the Pinwheel (`BossRules`), and
+///   the strikers in full;
+/// - planet 4, the Swarmer: the slime's mortar (`BossRules`) and the
+///   last-stand heart.
+///
+/// Before, all seven played from planet 1, so planet 1 had the strikers,
+/// the waves, the late lunge and the heart that were built for the big
+/// armies of planets 2 and up (`Reports/late-threat-2026-11-20`). A rule
+/// missing here plays from planet 1. Direction's numbers to move.
+pub const FIRST_PLANET: &[(&str, u32)] = &[("strikers", 2), ("wave", 3), ("late_at", 3), ("stand", 4)];
+
+/// The planet `rule` (one of `ENEMY_RULES`) first plays on (`FIRST_PLANET`).
+pub fn first_planet(rule: &str) -> u32 {
+    FIRST_PLANET.iter().find(|&&(k, _)| k == rule).map_or(1, |&(_, d)| d)
+}
+
+/// `ENEMY_RULES` on planet `depth`: each at its value from its planet
+/// (`FIRST_PLANET`), 0 (off) before it.
+pub fn enemy_rules(depth: u32) -> impl Iterator<Item = (&'static str, f32)> {
+    ENEMY_RULES.iter().map(move |&(k, v)| (k, if depth.max(1) >= first_planet(k) { v } else { 0.0 }))
+}
 
 fn depth_index(depth: u32) -> usize {
     (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
@@ -1059,8 +1098,9 @@ impl Run {
             // chance rises with the planet (owner, 04:58Z: "Chance increases
             // with progression into the run"); a tier's own rules after.
             r.boss = crate::mould::larder_world::BossRules::for_depth(self.depth);
-            // What every planet's slime does (`ENEMY_RULES`).
-            for &(k, v) in ENEMY_RULES {
+            // What every planet's slime does from its planet on
+            // (`ENEMY_RULES`, `FIRST_PLANET`).
+            for (k, v) in enemy_rules(self.depth) {
                 assert!(r.set(k, v), "ENEMY_RULES: no rule {k}");
             }
             // The planet's share scales the rate cap too, since the cap,
@@ -1814,6 +1854,39 @@ fn title(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Each late threat waits for its planet (`FIRST_PLANET`, the owner
+    /// 11-20 23:32Z): planet 1 has fruiting and the heartbeat but no
+    /// strikers, waves, late lunge or last-stand heart; each joins on its
+    /// planet and stays on deeper; every scheduled rule is one of
+    /// `ENEMY_RULES` and every rule plays by planet 4.
+    #[test]
+    fn late_threats_wait_for_their_planet() {
+        for &(k, d) in FIRST_PLANET {
+            assert!(ENEMY_RULES.iter().any(|&(n, _)| n == k), "FIRST_PLANET names {k}, not one of ENEMY_RULES");
+            assert!((1..=4).contains(&d), "{k} first on planet {d}");
+        }
+        let rules = |d: u32| {
+            let mut r = Rules::default();
+            Run { depth: d, ..Run::new(1) }.rules(&mut r);
+            r
+        };
+        // Wherever the strikers can be on, their share and cap are not 0.
+        assert!(STRIKER_SHARE.iter().all(|&k| k > 0.0), "a 0 share leaves strikers on and doing nothing");
+        let p1 = rules(1);
+        assert!(p1.fruit.on && p1.heart.on && p1.unit_paths, "planet 1 keeps fruiting, the heartbeat and charges round walls");
+        assert!(!p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
+        assert_eq!(p1.boss.every, 0.0, "nor mini-bosses");
+        assert!(p1.star.on, "planet 1 keeps starfall and cores");
+        let p2 = rules(2);
+        assert!(p2.strikers.on && p2.strikers.share > 0.0 && !p2.wave.on && p2.late_at == 0.0 && !p2.stand.on);
+        let p3 = rules(3);
+        assert!(p3.strikers.on && p3.wave.on && p3.late_at > 0.0 && !p3.stand.on);
+        for d in 4..=PLANETS {
+            let r = rules(d);
+            assert!(r.strikers.on && r.wave.on && r.late_at > 0.0 && r.stand.on && r.fruit.on && r.heart.on, "planet {d}");
+        }
+    }
 
     /// Deeper, the slime surges no less often, lunges no shorter and
     /// sends specks no more often; planet 1 is gentler than the sandbox's shape C

@@ -332,6 +332,9 @@ pub enum StartEvent {
     /// The gun range's armory (owner, 11-15 02:55Z: "a test environment
     /// ... where I can play with the guns and cards and bullets").
     Range,
+    /// The slime viewer (2026-11-20, `viewer.rs` in the window: each slime
+    /// and its events on demand, its looks and rules to tune).
+    Viewer,
     /// Shop row `i` picked.
     Buy(usize),
     /// Shop row `i` (a bullet card) dragged to the carried gun's slot
@@ -367,6 +370,7 @@ enum Hit {
     Sandbox,
     Run,
     Range,
+    Viewer,
     /// A shop row: a click picks it (the pane tells it), Enter buys it.
     Buy(usize),
     /// Shop row `i` bought or done at once (the pane's button, the gun
@@ -654,7 +658,7 @@ impl StartMenu {
         match self.page {
             // (No Keys row since 11-15: the key list is Options' last tab,
             // and F1 or ? opens it from anywhere.)
-            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range]).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Viewer]).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -696,6 +700,7 @@ impl StartMenu {
             Hit::Sandbox => return Some(StartEvent::Sandbox),
             Hit::Run => return Some(StartEvent::Run),
             Hit::Range => return Some(StartEvent::Range),
+            Hit::Viewer => return Some(StartEvent::Viewer),
             // (A new try: the game says again if it can't be done.)
             Hit::Buy(i) | Hit::Do(i) => {
                 self.notice = None;
@@ -1168,6 +1173,7 @@ impl StartMenu {
             items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false, false));
         }
         items.push(("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false, false));
+        items.push(("Slime viewer", "Each slime and its events on demand; tune its looks and rules, and save them".into(), Hit::Viewer, false, false));
         // What the build holds, first of the rows that are not a way to
         // play: how much is new since the last build played here, and
         // what is left to try.
@@ -1186,13 +1192,15 @@ impl StartMenu {
         let w = (longest + 48.0 * s + if fresh > 0 { 70.0 * s } else { 0.0 }).max(280.0 * s);
         // Rows of 40 units, down to 34 where the page would otherwise run
         // under the hint: with the "What is new" row the page has nine,
-        // and at 200% on 1080 lines nine rows of 40 scrolled (11-18).
+        // and at 200% on 1080 lines nine rows of 40 scrolled (11-18). Down
+        // to 30 since the slime viewer's row made ten (11-20: at 200% on a
+        // 1280x540 window ten rows of 34 ran 28 units under the hint).
         let (gap, apart_by) = (4.0 * s, 12.0 * s);
         let aparts = items.iter().filter(|it| it.4).count() as f32;
         // (Half a pixel under the room: filled to the last bit, the sum
         // of the rows came out 0.00003 over and the page scrolled.)
         let room = c.screen.1 as f32 - (FOOT + 12.0) * s - (top + self.scroll + 8.0 * s) - 0.5;
-        let rh = ((room - aparts * apart_by) / items.len() as f32 - gap).clamp(34.0 * s, 40.0 * s);
+        let rh = ((room - aparts * apart_by) / items.len() as f32 - gap).clamp(30.0 * s, 40.0 * s);
         let mut y = top + 8.0 * s;
         let mut placed = Vec::new();
         for (label, sub, hit, primary, apart) in items {
@@ -2573,7 +2581,7 @@ mod tests {
         m.build = Some(build_page(6, 2));
         c.clear();
         m.draw(&mut c);
-        assert_eq!(m.rows(), [Hit::Run, Hit::Sandbox, Hit::Campaign, Hit::Range, Hit::Build, Hit::Options, Hit::Quit]);
+        assert_eq!(m.rows(), [Hit::Run, Hit::Sandbox, Hit::Campaign, Hit::Range, Hit::Viewer, Hit::Build, Hit::Options, Hit::Quit]);
         assert_eq!((said(&c, "2 new"), said(&c, "build 3127 (d08583d, 2026-11-18)"), said(&c, "Experiment on: Shake")), (1, 1, 0));
         // An experiment that is on is named in the corner; two are counted.
         m.options.push(Opt::new("exp:feel", "Shake", &["off", "on"], "off", "on", "").in_tab("Experiments"));

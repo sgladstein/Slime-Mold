@@ -28,9 +28,12 @@
 //!   Too few came back and it fizzles, the core lost to the slime.
 //! - **A beaten raid drops a core.** A march shot apart on its way, or one
 //!   that met the squad and lost `raid_beat` of its members within
-//!   `raid_window` seconds (the walkers the game killed, a whole-game
-//!   count, so a fight elsewhere in that window counts too), drops a core
-//!   where it was. It does not re-form (a raid is no body once it pours);
+//!   `raid_window` seconds, drops a core where it was. Its losses are the
+//!   shots' kills within its fight's reach (`MarchEnd::reach`: its body
+//!   and the squad's guns round where it met them). The first cut counted
+//!   every kill in the game in the window, and nearly every raid dropped a
+//!   core (Direction's bug check, 11-20): a strong squad kills a raid's
+//!   size of ordinary slime in 20 s anywhere. It does not re-form (a raid is no body once it pours);
 //!   walkers who eat half of it feed the slime's next surge.
 //! - **The planet's pot.** Fresh cores hold at most `StarRules::core_pot`
 //!   in all, so waiting for more bosses and raids pays nothing more
@@ -55,9 +58,10 @@ pub struct Cores {
     carry: Vec<(u64, usize, f32)>,
     /// Raids beaten and the cores they dropped.
     pub raids_beaten: u32,
-    /// Marches that met the squad, waiting on `raid_window`; how many of
-    /// `Raids::ends` were looked at.
-    meeting: Vec<MarchEnd>,
+    /// Marches that met the squad, waiting on `raid_window`, each with the
+    /// guns' kills within its reach so far; how many of `Raids::ends` were
+    /// looked at.
+    meeting: Vec<(MarchEnd, u32)>,
     ends_seen: usize,
 }
 
@@ -84,21 +88,29 @@ impl<W: World> Game<W> {
         for e in new {
             match e.how {
                 MarchHow::Broken => beaten.push(e),
-                MarchHow::Met => self.cores.meeting.push(e),
+                MarchHow::Met => self.cores.meeting.push((e, 0)),
             }
         }
         // A march that met the squad is beaten once the guns have killed
-        // `raid_beat` of what it brought, inside the window.
-        let killed = self.killed;
-        self.cores.meeting.retain(|e| {
-            let won = killed.saturating_sub(e.killed) as f32 >= r.raid_beat * e.members.max(1) as f32;
+        // `raid_beat` of what it brought, round it, inside the window.
+        self.cores.meeting.retain(|&(e, hits)| {
+            let won = hits as f32 >= r.raid_beat * e.members.max(1) as f32;
             if won {
-                beaten.push(*e);
+                beaten.push(e);
             }
             !won && now < e.tick + window
         });
         self.cores.raids_beaten += beaten.len() as u32;
         beaten.iter().map(|e| (e.at, r.core_worth + r.core_grade * (e.first.max(e.members) as f32 / r.raid_full.max(1.0)).min(1.0))).collect()
+    }
+
+    /// The shots' kills this frame (where each hit, and how many it
+    /// killed) counted to each raid fighting the squad whose reach holds
+    /// the hit.
+    pub(super) fn raid_hits(&mut self, hits: &[(Option<(f32, f32)>, u32)]) {
+        for (e, n) in self.cores.meeting.iter_mut() {
+            *n += hits.iter().filter_map(|&(h, k)| h.filter(|p| (p.0 - e.at.0).hypot(p.1 - e.at.1) <= e.reach).map(|_| k)).sum::<u32>();
+        }
     }
 
     /// Once a game second, before `time_starfall` (which clears a core
@@ -314,23 +326,26 @@ mod tests {
         let now = g.world.ticks();
         let at = slime_centre(&g);
         let killed = g.killed;
-        g.raids.ends.push(MarchEnd { how: MarchHow::Broken, at, first: 200, members: 40, tick: now, killed });
-        g.raids.ends.push(MarchEnd { how: MarchHow::Met, at: (at.0 + 30.0, at.1), first: 3000, members: 3000, tick: now, killed });
+        g.raids.ends.push(MarchEnd { how: MarchHow::Broken, at, first: 200, members: 40, tick: now, killed, reach: 20.0 });
+        g.raids.ends.push(MarchEnd { how: MarchHow::Met, at: (at.0 + 30.0, at.1), first: 3000, members: 3000, tick: now, killed, reach: 20.0 });
         let t = g.time();
         run_to(&mut g, t + 1.5);
         let raid = |g: &Game<BigDish>| g.starfall.live.iter().filter(|d| d.from == CoreFrom::Raid).count();
         assert_eq!(raid(&g), 1, "the broken march's core");
         let r = g.rules.star;
         assert!((g.starfall.live.iter().find(|d| d.from == CoreFrom::Raid).unwrap().worth - (r.core_worth + r.core_grade * 0.5)).abs() < 1e-3);
-        // The squad's guns kill what the meeting march brought.
-        g.killed += 1500;
+        // Kills away from it count for nothing; the squad's guns killing
+        // what the meeting march brought, round it, beat it.
+        g.raid_hits(&[(Some((at.0 + 300.0, at.1)), 5000)]);
+        assert_eq!(g.cores.raids_beaten, 1, "kills elsewhere are not its");
+        g.raid_hits(&[(Some((at.0 + 30.0, at.1 + 5.0)), 1500), (None, 800)]);
         let t = g.time();
         run_to(&mut g, t + 1.5);
         assert_eq!(g.cores.raids_beaten, 2);
         // 60 then 80, capped at the pot of 100: the second is 40.
         assert!((g.cores.pot - 100.0).abs() < 1e-3, "pot {}", g.cores.pot);
         // Past the pot nothing more drops.
-        g.raids.ends.push(MarchEnd { how: MarchHow::Broken, at, first: 200, members: 40, tick: g.world.ticks(), killed: g.killed });
+        g.raids.ends.push(MarchEnd { how: MarchHow::Broken, at, first: 200, members: 40, tick: g.world.ticks(), killed: g.killed, reach: 20.0 });
         let n = g.starfall.cores;
         let t = g.time();
         run_to(&mut g, t + 1.5);

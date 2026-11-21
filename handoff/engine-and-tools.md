@@ -269,6 +269,41 @@ before the command, not after; the range's tools now cost what the run's
 and the menu, since it lives between planets; `league::whole_run` drives
 it for the bots.
 
-**Next:** watch the run bot's curve once the strategy thread sets the
-plan (planet 1 got harder on main after about 21:30Z on 11-20: all three
-seeds lost it); job 7, one GTX 1070 timing batch through Remote Control.
+After #595: #604 counts soldiers a falling star kills (`Game::fell_starfall`)
+and the squad's own blasts' (`blasted_end`) in the league line; the bug
+hunt's grid finding is fixed (a bot's coarser `mould_grid` ask is added up
+from the summed grid and no longer moves the GPU's square, so bots' games
+see play's grid; the league numbers shift from that commit on).
+
+Job 7: `scripts/pc-batch.ps1 -Timing` is Milestone 1's batch (planets 1
+to 3 of run 1 in the squad mode, `hand=strat:rush,aim=6`, each played 300
+game s twice, each pass at 120 s, the view at zoom 6 and 12 on the larder
+via `centre=larder,ZOOM`). It needs the PC to itself: the strategy
+thread pauses its league worker (a PAUSE file in slime-league, or the
+window in its `queue/pc-pause.txt`), and the script refuses while a league
+game runs. Run `-DryRun` first, then `-Timing`; commit the m1-*.txt
+files whole and write the report from them.
+
+Job 7 ran 11-21 00:49-01:16Z on main 71af78c3
+([report](../Reports/pc-batch-1070-m1-2026-11-21.md); raw on branch
+`runner-out-1070-m1`): every frame under 7.2 ms p95 on planets 1 to 3, the
+view's base pass 3.2-3.5 ms of it, planet 3's step frames 10 ms p95 from
+the CPU half of a step; four fire twins need card tolerances (sent to
+Enemy). Gotcha: the script's 2 GB free-RAM check failed at 2.00 GB with
+Chrome open; Scott closed it.
+
+Planet 3's CPU step (#624, 11-21): `bench=` now prints the CPU step by
+part (`Game::costs`, filled by `Game::costed` only in the bench). The
+once-a-second set-slime mask (`mark_bulwark`, Enemy's file) was 2.94 ms of
+it on llvmpipe; a two-pass box sum made it 1.19 ms. The next spike is
+`pump_maps` (paths, Squad and arsenal's), 4-6 ms longest, 0.09 ms mean:
+reported to them.
+
+The follow-up batch (`pc-batch.ps1 -Followup -Timing`, about 35 min)
+reruns the six twins #620 gave card tolerances, times the Look lane's nine
+view variants (Reports/view-cost-2026-11-21; send each `base` line to the
+Look lane) and planet 3's step frames after #624. It needs Scott's OK,
+Chrome closed and the league paused, as job 7 did.
+
+**Next:** the follow-up batch; watch the run bot's curve once the
+strategy thread sets the plan.

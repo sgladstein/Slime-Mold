@@ -51,6 +51,9 @@ use super::*;
 
 /// Most squads at once (ids are reused once a squad is empty).
 pub const SQUADS_MAX: usize = 16;
+/// Dish cells ahead of its anchor a steered squad heads for
+/// (`Game::steer_point`).
+pub const STEER_AHEAD: f32 = 40.0;
 /// How far ahead of its middle a steered or sent squad's anchor goes, dish
 /// cells.
 pub const LEAD: f32 = 4.0;
@@ -239,6 +242,12 @@ pub struct Squad {
     /// the window arms it from that loadout (`Cmd::Arm`, `Cmd::Load`); this
     /// is which one, so the panel can say and a split keeps it.
     pub loadout: u8,
+    /// On a plain move whose way crosses fire, the point its anchor heads
+    /// for on its way round (`Game::fire_via`), the tick it was planned and
+    /// the destination it was planned to.
+    pub via: Option<(f32, f32)>,
+    pub via_at: Option<u64>,
+    pub via_to: Option<(f32, f32)>,
 }
 
 /// Orders a squad holds queued.
@@ -273,6 +282,9 @@ impl Default for Squad {
             holding: false,
             loadout: 0,
             rank_shape: (Formation::Blob, false),
+            via: None,
+            via_at: None,
+            via_to: None,
         }
     }
 }
@@ -553,14 +565,23 @@ impl<W: World> Game<W> {
     /// `to` is 40 cells ahead and moves every step, so the whole line would
     /// build a walking map (15 ms at scale 2) each step it is not clear,
     /// and a player steering at a wall expects to walk up to it.
-    fn guide(&mut self, from: (f32, f32), to: (f32, f32), lead: f32, sent: bool) -> (f32, f32) {
+    ///
+    /// `whole`: the line must be open all the way to `to` before it walks
+    /// straight; a sent squad always, a steered one while it is on a
+    /// walking map (it took one last step). With the step's check alone, a
+    /// squad steered along a slanting wall stepped straight where the step
+    /// was open and back up the map where it was not, and stood at the
+    /// wall shuffling for good (pathfinding thread, 2026-11-20: planet 3,
+    /// run seed 1795038793, 15 steered south-east from 12 s to the end,
+    /// the anchor's two steps cancelling).
+    fn guide(&mut self, from: (f32, f32), to: (f32, f32), lead: f32, sent: bool, whole: bool) -> (f32, f32) {
         self.guided = None;
         let d = (to.0 - from.0).hypot(to.1 - from.1);
         if d <= lead {
             return self.slide(from, to);
         }
         let straight = (from.0 + (to.0 - from.0) / d * lead, from.1 + (to.1 - from.1) / d * lead);
-        if self.walk_line(from, if sent { to } else { straight }) {
+        if self.walk_line(from, if sent || whole { to } else { straight }) {
             return straight;
         }
         let (w, h) = self.world.size();
@@ -580,8 +601,7 @@ impl<W: World> Game<W> {
         };
         self.guided = Some(key);
         let map = &self.paths.maps[&key].0;
-        let mut at = cell(w, h, from);
-        if map[at] == u32::MAX {
+        let Some(mut at) = onto_map(w, h, map, cell(w, h, from)) else {
             // The middle is on no walkable way to the point (it sits on a
             // crystal the squad stands round, or the point is in rock):
             // straight on, and each soldier finds its own way. Not into
@@ -593,7 +613,7 @@ impl<W: World> Game<W> {
             // stuck and cannot move anymore"; 15 of 32 squads steered into
             // the edge or rock for 25 s on seeds 1-4).
             return self.slide(from, straight);
-        }
+        };
         // A step's walk (`steer`): straight at the furthest cell of the way
         // in a straight walk (`ahead_on_map`), so the anchor goes at any
         // angle; through the cells' centres, below, it went in 45-degree
@@ -629,17 +649,57 @@ impl<W: World> Game<W> {
         p
     }
 
+    /// Where a squad steered `dir` (a unit vector) from anchor `a` heads,
+    /// fine cells: `STEER_AHEAD` dish cells on, or if a soldier can't stand
+    /// there, the furthest point short of it on the same line that one can.
+    ///
+    /// Before (to 2026-11-20) it was the point 40 cells on, wherever it
+    /// fell. In rock, its walking map reached no ground (a map grows from
+    /// its goal over open cells only), so the anchor slid along the grid
+    /// alone, and at a rock's corner, steered diagonally past it, it stood
+    /// for good with the way round in sight (pathfinding thread: planet 2,
+    /// run seed 1795038793, a squad of 15 steered south-east from the
+    /// landing stood at a bar's tip from 5 s to the end, 175 s).
+    pub(super) fn steer_point(&self, a: (f32, f32), dir: (f32, f32)) -> (f32, f32) {
+        let sc = self.s();
+        let at = |d: f32| (a.0 + dir.0 * d * sc, a.1 + dir.1 * d * sc);
+        let mut d = STEER_AHEAD;
+        while d > 0.0 {
+            let p = at(d);
+            if self.standable(p.0, p.1) {
+                return p;
+            }
+            d -= 1.0;
+        }
+        at(STEER_AHEAD)
+    }
+
     /// `to` if a soldier can stand there, else as far as it can go along
     /// one axis from `from` (as `walk` does), else `from`. From ground a
     /// soldier can't stand on, `to` as it is (the way out).
     fn slide(&self, from: (f32, f32), to: (f32, f32)) -> (f32, f32) {
+        // An axis that doesn't move is no way along: steered due east
+        // into a wall, the north-south "slide" was the anchor's own point.
+        let moves = |d: f32| d.abs() > 1e-4;
         if self.standable(to.0, to.1) || !self.standable(from.0, from.1) {
             to
-        } else if self.standable(to.0, from.1) {
+        } else if moves(to.0 - from.0) && self.standable(to.0, from.1) {
             (to.0, from.1)
-        } else if self.standable(from.0, to.1) {
+        } else if moves(to.1 - from.1) && self.standable(from.0, to.1) {
             (from.0, to.1)
         } else {
+            // Into rock both ways along the grid (steered east into a wall
+            // that slants down-left): along it, the step turned 45 degrees
+            // either way, so it slides down the wall's face.
+            // (Pathfinding thread, 2026-11-20.)
+            let (dx, dy) = (to.0 - from.0, to.1 - from.1);
+            let r = std::f32::consts::FRAC_1_SQRT_2;
+            for sgn in [1.0, -1.0] {
+                let t = (from.0 + (dx - sgn * dy) * r, from.1 + (dy + sgn * dx) * r);
+                if self.standable(t.0, t.1) {
+                    return t;
+                }
+            }
             from
         }
     }
@@ -781,8 +841,19 @@ impl<W: World> Game<W> {
                 Some(d) => step.min(((d.0 - at.0).hypot(d.1 - at.1) / super::steer::EASE).max(0.3 * self.rules.speed * sc) * dt),
                 None => step,
             };
-            let target = if steering { (at.0 + sq.steer.0 * 40.0 * sc, at.1 + sq.steer.1 * 40.0 * sc) } else { sq.dest.unwrap_or(at) };
-            let a = if step > 0.0 { self.guide(at, target, step, !steering) } else { at };
+            // On a plain move, round fire (`fireway.rs`).
+            let via = match sq.dest {
+                Some(d) if !steering && !sq.fight => self.fire_via(q, at, d),
+                _ => {
+                    self.drop_via(q);
+                    None
+                }
+            };
+            let target = if steering { self.steer_point(at, sq.steer) } else { via.or(sq.dest).unwrap_or(at) };
+            // A steered squad that took its walking map last step keeps to
+            // it until the whole line to where it heads is open (`guide`).
+            let whole = !steering || sq.map.is_some();
+            let a = if step > 0.0 { self.guide(at, target, step, !steering, whole) } else { at };
             let map = self.guided;
             let a = if self.rules.steer {
                 // Eases off as the squad falls behind instead of stopping
@@ -817,10 +888,10 @@ impl<W: World> Game<W> {
             // the squad's front (its furthest member along the way).
             let a = if self.rules.funnel && step > 0.0 {
                 let look = (self.formation_width(q) + self.gap()) * sc;
-                let far = self.guide(at, target, look, !steering);
+                let far = self.guide(at, target, look, !steering, whole);
                 let dir = unit((far.0 - at.0, far.1 - at.1)).unwrap_or(sq.face);
                 let lead = self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0) * dir.0 + (self.soldiers[k].y - at.1) * dir.1).fold(0.0, f32::max);
-                let front = if self.columns[q].on || lead <= 0.0 { a } else { self.guide(at, target, lead.min(look), !steering) };
+                let front = if self.columns[q].on || lead <= 0.0 { a } else { self.guide(at, target, lead.min(look), !steering, whole) };
                 self.funnel(q, at, a, far, front)
             } else {
                 a

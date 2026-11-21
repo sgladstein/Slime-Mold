@@ -39,7 +39,7 @@ use crate::mould::big::{Lump, LUMPS};
 
 /// The heart's numbers. Times in game seconds, distances in dish cells.
 /// Off by default (the campaign and the sandbox are frozen); a run turns it
-/// on for every planet (`run::ENEMY_RULES`).
+/// on from its planet (`run::ENEMY_RULES`, `run::FIRST_PLANET`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct StandRules {
     pub on: bool,
@@ -197,10 +197,17 @@ impl<W: World> Game<W> {
         if (self.soldiers.iter().filter(|s| s.alive).count() as f32) < r.army {
             return;
         }
-        // A free lump, else wait for one (a mini-boss, a march or a fruit
-        // ends in seconds).
-        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return };
-        let Some(home) = self.heart_site() else { return };
+        self.start_stand();
+    }
+
+    /// The heart gathering now on the heart's crystal; false with no free
+    /// lump (a mini-boss, a march or a fruit ends in seconds, so play
+    /// waits for one) or no slime on a crystal. Called by `time_stand`,
+    /// and by the slime viewer whenever it is asked (`Game::force_stand`).
+    pub(super) fn start_stand(&mut self) -> bool {
+        let r = self.rules.stand;
+        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
+        let Some(home) = self.heart_site() else { return false };
         self.world.grow_lump(lump, (home, self.whole_map()));
         let size = self.world.size();
         self.world.set_lump(lump, Lump { aim: super::raid_cell(home, size), pull: r.pull, leash: r.leash, armour: r.armour, bite: r.bite, ..Lump::default() });
@@ -212,6 +219,7 @@ impl<W: World> Game<W> {
         self.stand.done = true;
         self.stand.born_sec = (now / self.rules.tps.max(1) as u64) as u32;
         self.stand.bit_born = self.fell_bitten;
+        true
     }
 
     /// A reach (dish cells) round any point that holds the whole map.

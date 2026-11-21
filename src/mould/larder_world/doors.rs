@@ -25,6 +25,10 @@ use super::*;
 /// A wall's top level: one band at placing, three more by Thicken.
 pub const WALL_LEVELS: u8 = 4;
 
+/// A clicked door's length, in wall widths (`Game::door_from_click`): 6
+/// cells at the default width and scale 1, the doors the tests drew.
+pub const DOOR_WIDTHS: f32 = 3.0;
+
 impl<W: World> Game<W> {
     /// A door's cell at `(x, y)` (fine cells): a standing door's wall cell,
     /// or one worn to rubble.
@@ -155,6 +159,24 @@ impl<W: World> Game<W> {
             }
             None => (a, b, None),
         }
+    }
+
+    /// Where a door clicked at `at` goes (owner, 2026-11-21: "doors should
+    /// be created with just a click, not dragging"): `DOOR_WIDTHS` wall
+    /// widths along the plain wall under the click (standing or rising,
+    /// `door_host`'s footprint), centred on the click and kept inside the
+    /// wall's ends (a wall shorter than that is a door whole). None off
+    /// every wall. Dragging a door across a gap went with the drag.
+    pub fn door_from_click(&self, at: (f32, f32)) -> Option<((f32, f32), (f32, f32))> {
+        let h = self.door_host(at, at)?;
+        let bd = self.buildings[h];
+        let Kind::Wall { to } = bd.kind else { return None };
+        let l = (to.0 - bd.at.0).hypot(to.1 - bd.at.1);
+        let u = ((to.0 - bd.at.0) / l, (to.1 - bd.at.1) / l);
+        let half = (0.5 * DOOR_WIDTHS * self.rules.wall_width * self.s()).min(l / 2.0);
+        let along = ((at.0 - bd.at.0) * u.0 + (at.1 - bd.at.1) * u.1).clamp(half, l - half);
+        let c = (bd.at.0 + u.0 * along, bd.at.1 + u.1 * along);
+        Some(((c.0 - u.0 * half, c.1 - u.1 * half), (c.0 + u.0 * half, c.1 + u.1 * half)))
     }
 
     /// A door from `a` to `b` (`Cmd::Door`), paid as a wall that long.
@@ -369,5 +391,34 @@ mod tests {
         let door = g.world.cell_at(mid.0, mid.1).unwrap();
         assert!(g.world.wall[door] && !g.world.agar[door]);
         assert_eq!(g.world.wall_health[door], g.world.wall_health[wall]);
+    }
+
+    /// **A click makes a door** (owner, 2026-11-21: "doors should be
+    /// created with just a click, not dragging"): on a standing wall, a
+    /// door `DOOR_WIDTHS` widths long along it, centred on the click, cut
+    /// at once; near a wall's end it stays inside the wall; off every wall,
+    /// nothing.
+    #[test]
+    fn a_click_on_a_wall_cuts_a_door() {
+        let (mut g, w, a, b) = walled();
+        let sc = g.s();
+        let len = DOOR_WIDTHS * g.rules.wall_width * sc;
+        let mid = (a.0, g.soldiers[0].y);
+        // A little off the line, inside its footprint.
+        let (da, db) = g.door_from_click((mid.0 + 0.4 * sc, mid.1)).expect("a door on the wall");
+        assert!(((da.0 - db.0).hypot(da.1 - db.1) - len).abs() < 1e-3, "{len} long: {da:?} to {db:?}");
+        assert!((da.0 - a.0).abs() < 1e-3 && (db.0 - a.0).abs() < 1e-3, "on the wall's line");
+        assert!((((da.1 + db.1) / 2.0) - mid.1).abs() < 1e-3, "centred on the click");
+        assert!(g.apply(Cmd::Door(da, db)));
+        let d = g.buildings.len() - 1;
+        assert!(g.buildings[d].door && g.buildings[d].up(), "cut at once");
+        assert_eq!(g.wall_of(d), w);
+        assert!(g.standable(mid.0, mid.1), "soldiers stand in it");
+        // At the wall's end: kept inside it.
+        let lo = a.1.min(b.1);
+        let (ea, eb) = g.door_from_click((a.0, lo + 0.5 * sc)).unwrap();
+        assert!(ea.1.min(eb.1) >= lo - 1e-3 && ((ea.1 - eb.1).abs() - len).abs() < 1e-3, "inside the wall: {ea:?} to {eb:?}");
+        // Off every wall.
+        assert!(g.door_from_click((a.0 + 10.0 * sc, mid.1)).is_none());
     }
 }

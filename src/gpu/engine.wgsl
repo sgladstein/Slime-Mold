@@ -699,9 +699,9 @@ const PIN_TWIST: f32 = 0.08;
 // lands (`fly`).
 const DOOM: u32 = 0x4000u;
 // `SOWN` (bit 15, 2026-11-20, fruiting): a spore a ripe fruit threw
-// (`fling` with `kir` 2, `Engine::sow_pass`). It flies and homes as a
-// fruited spore does (straight while its timer is over `spore_steps` / 2,
-// then by scent, landing over `spore_land`), but it is drawn in the air as
+// (`fling` with `kir` 2, `Engine::sow_pass`). It flies straight out and
+// lands where its throw ends (it homed by scent as a fruited spore does
+// until 11-21, and the scent led it to the squad: `fly`), drawn in the air as
 // a flung walker is (its fourth word its flight, `draw_specks`) so the
 // burst reads, and it lands with no rest. `alight` clears it.
 const SOWN: u32 = 0x8000u;
@@ -778,7 +778,74 @@ fn soil(i: u32) -> u32 {
 // `deep_step` until it reaches a bank; were it held, a walker five cells
 // into a river could never leave and a planet won on its last walker would
 // never end. No CPU twin (the owner's card, 11-17 19:21Z).
-fn deep_shut(j: u32) -> bool { return P.deep_wall != 0u && soil(j) == SOIL_DEEP; }
+fn deep_shut(j: u32) -> bool { return (P.deep_wall & 1u) != 0u && soil(j) == SOIL_DEEP; }
+// **A wall holds until it is worn through** (`solid_walls`, 2026-11-21,
+// the owner: "Sometimes slime is able to get through my walls even when
+// they have no burrowed a full hole yet"; bit 1 of the `deep_wall` word).
+// A step tested only the cell it lands in, so a step longer than a wall is
+// thick (a surge's, a raid's, a striker's or the heartbeat's lunge at 2 to
+// 3 times the pace, or a spore's flight at 3) jumped it whole, and a step
+// slanting past a corner slipped between two wall cells that touch only
+// there (a slanted wall's edge, or a hole worn in a staircase). With it on,
+// a step or flight from (x0, y0) to (x1, y1) is stopped by the first built
+// wall cell it crosses on the way (every cell the segment passes through,
+// Amanatides and Woo's walk; the end cell is the caller's own test). Only
+// built walls (`WALL`): rock keeps the old rule, so the CPU twin tests on
+// rock still match. The first wall cell crossed, or NONE; a step of about
+// one cell crosses at most two cells, so this costs a few reads, and only
+// on a dish with a wall built. No CPU twin (the owner's card, 11-17 19:21Z).
+fn solid() -> bool { return (P.deep_wall & 2u) != 0u && world(WALLS); }
+fn wall_between(x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
+    if (!solid()) { return NONE; }
+    var cx = i32(floor(x0));
+    var cy = i32(floor(y0));
+    let ex = i32(floor(x1));
+    let ey = i32(floor(y1));
+    let dx = x1 - x0;
+    let dy = y1 - y0;
+    let sx = select(-1, 1, dx > 0.0);
+    let sy = select(-1, 1, dy > 0.0);
+    // The distance along the segment (0 to 1) to the next column and row
+    // line, and between lines.
+    let big = 1.0e9;
+    var tx = big;
+    var ty = big;
+    var dtx = big;
+    var dty = big;
+    if (abs(dx) > 1.0e-6) {
+        dtx = 1.0 / abs(dx);
+        tx = (select(f32(cx), f32(cx + 1), dx > 0.0) - x0) / dx;
+    }
+    if (abs(dy) > 1.0e-6) {
+        dty = 1.0 / abs(dy);
+        ty = (select(f32(cy), f32(cy + 1), dy > 0.0) - y0) / dy;
+    }
+    for (var n = 0u; n < 64u; n++) {
+        if (cx == ex && cy == ey) { return NONE; }
+        if (tx < ty) {
+            cx += sx;
+            tx += dtx;
+        } else if (ty < tx) {
+            cy += sy;
+            ty += dty;
+        } else {
+            // Through a corner exactly: both cells beside it count, so two
+            // wall cells touching there shut it.
+            let a = cell(f32(cx + sx) + 0.5, f32(cy) + 0.5);
+            let b = cell(f32(cx) + 0.5, f32(cy + sy) + 0.5);
+            if (a != NONE && b != NONE && (ground[a] & WALL) != 0u && (ground[b] & WALL) != 0u) { return a; }
+            cx += sx;
+            cy += sy;
+            tx += dtx;
+            ty += dty;
+        }
+        if (cx == ex && cy == ey) { return NONE; }
+        if (cx < 0 || cy < 0) { return NONE; }
+        let j = cell(f32(cx) + 0.5, f32(cy) + 0.5);
+        if (j != NONE && (ground[j] & WALL) != 0u) { return j; }
+    }
+    return NONE;
+}
 // What the trail on cell i keeps of its spread value (the CPU's `tick`
 // multiplies after the spread, and the trail after the species' sum).
 fn soil_keep(i: u32) -> f32 {
@@ -1521,6 +1588,16 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         icell[k] = NONE;
         return;
     }
+    // A built wall the step would cross (`solid_walls`): blocked there, as
+    // at the wall's own cell, so it bites that cell.
+    if (there != NONE && there != here) {
+        let wc = wall_between(wk.x, wk.y, nx, ny);
+        if (wc != NONE) {
+            intent[k] = vec4<f32>(f32(wc % P.w) + 0.5, f32(wc / P.w) + 0.5, h, 0.0);
+            icell[k] = NONE;
+            return;
+        }
+    }
     var aim = NONE;
     if (there != NONE) {
         if (there == here) {
@@ -1844,6 +1921,9 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j)) { return; }
+    // Not past a built wall's corner (`solid_walls`).
+    let pw = walkers[k];
+    if (wall_between(pw.x, pw.y, at.x, at.y) != NONE) { return; }
     if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
     icell[k] = j;
 }
@@ -3522,7 +3602,14 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     let tt = w >> 16u;
     // A flung spore (`FLUNG`) never homes, and flies at `fling_st`.
     let flung = (w & FLUNG) != 0u;
-    let homing = !flung && tt > 0u && tt <= P.spore_steps / 2u;
+    // A fruit's sown spore (`SOWN`) never homes either, since 2026-11-21
+    // (the bug hunt): the scent it climbed holds the soldiers' smell
+    // (`smell`), a squad's far the strongest, so a burst came down on the
+    // squad and bit at once (CI's run bot, run seed 2, planet 1: 2,533
+    // sown at 5:59, 1,455 down round the squad at 6:02, 21 of 30 soldiers
+    // bitten in 5 s, the planet lost). It flies straight out and lands
+    // where its throw ends, scattering the slime round the fruit.
+    let homing = !flung && (w & SOWN) == 0u && tt > 0u && tt <= P.spore_steps / 2u;
     if (P.spore_reach > 0.0 && homing) {
         let f = spore_sense(wk.x, wk.y, h);
         let fl = spore_sense(wk.x, wk.y, h - P.sa);
@@ -3553,10 +3640,15 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A shot's spray droplet writes it below 0 (the bold spray, 11-15), so
     // the view draws a killed walker's droplet hot and a blast's living
     // throw in the mould's own gold.
-    var fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung || (w & SOWN) != 0u);
+    // Every flying spore writes it since 2026-11-20 night (the look lane's
+    // ask, for the Sporer's own look): until then only a flung or sown one
+    // did, and the Sporer's own spores (`spore_rate`, `spore_burst`, the
+    // only tier that fruits them) flew with 0, so the view could not tell
+    // them from the walkers on the ground and drew them as body.
+    var fw = max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01);
     if (doom) { fw = -fw; }
     var at = vec4<f32>(nx, ny, h, fw);
-    if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
+    if (j == NONE || agar[j] == 0u || wall_between(wk.x, wk.y, nx, ny) != NONE) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
     walkers[k] = at;
     let i = cell(at.x, at.y);
     let c = P.w * P.h;

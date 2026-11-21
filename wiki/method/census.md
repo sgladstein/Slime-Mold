@@ -2,7 +2,7 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-20
+updated: 2026-11-21
 sources:
   - Reports/census-shape-c-2026-11-14/README.md
   - Reports/gpu-plan-2026-11-10.md
@@ -79,7 +79,8 @@ build they were played on. After set-slime shots and One burst per bullet
 cards, 7 with seek+wide+blast.needle (9 before) and 8 with
 wide/rate/blast.needle. A plan may be one a planet (`a|b|c`, the last
 for every planet after), and since 11-20 the worker also searches planet 2
-and plays whole runs
+and plays whole runs; since 11-21 the bot also buys a gun (`gun`, `arm`),
+loads its turrets (`tcards`) and orders its cards (`order`)
 ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
 
 | Hand | What it does | Where |

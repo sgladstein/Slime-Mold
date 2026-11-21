@@ -532,6 +532,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     }
                 }
             }
+            // The slime viewer's staged spawns (`LARDER_VIEWER_SPAWN`).
+            app.viewer_staged();
             let surges = app.game.as_ref().map_or(0, |g| g.surges);
             let raids = app.game.as_ref().map_or(0, |g| g.raids.sent.len());
             let boss_sec = app.game.as_ref().map_or(0, |g| g.time().floor() as u64);
@@ -544,6 +546,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // they did before the step split.
             app.settle();
             if let Some(g) = app.game.as_ref() {
+                path_log(g);
                 let by_boss = |x: f32, y: f32| {
                     g.bosses.live.iter().filter(|b| b.members > 0).any(|b| (b.centre.0 - x).hypot(b.centre.1 - y) < (b.members as f32 / std::f32::consts::PI).sqrt() + 10.0)
                         || g.bosses.shells.iter().any(|sh| (sh.target.0 - x).hypot(sh.target.1 - y) < 15.0)
@@ -1094,7 +1097,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             "  heard (C7): zips {}, sirens {}, blasts {}, pieces torn {} rejoined {} withered out {}, tells {} (charges {}); at the end {} pieces losing {:.0} walkers/s",
             s.zips, s.sirens, s.blasts, s.torn, s.rejoined, s.withered, s.tells, s.charges, s.pieces, s.withering
         );
-        println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost);
+        println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}; coin ticks {}, drops emptied {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost, s.coins, s.cashed);
         println!("  hits by kills (0, 1, 2, 3-4, 5-8, 9-16, 17-32, 33+): {:?}; full weight at {:.0} kills", s.kill_hist, s.full);
         let b = bank.stats;
         println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);
@@ -1307,4 +1310,12 @@ fn stand(g: &mut Game<GpuWorld>, kind: Kind, at: (f32, f32), render: bool) -> Re
         b.level = 2;
     }
     Ok(())
+}
+
+/// `LARDER_PATHLOG=FILE`: every living soldier and squad, each step, as
+/// CSV rows (`Game::path_rows`; the pathfinding thread's probe, 2026-11-20).
+fn path_log<W: slime_mould::mould::larder_world::World>(g: &slime_mould::mould::larder_world::Game<W>) {
+    static LOG: std::sync::OnceLock<Option<std::sync::Mutex<std::io::BufWriter<std::fs::File>>>> = std::sync::OnceLock::new();
+    let Some(m) = LOG.get_or_init(|| std::env::var("LARDER_PATHLOG").ok().and_then(|p| std::fs::File::create(p).ok()).map(|f| std::sync::Mutex::new(std::io::BufWriter::new(f)))) else { return };
+    let _ = g.path_rows(&mut *m.lock().unwrap());
 }

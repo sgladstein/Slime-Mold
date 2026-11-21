@@ -193,6 +193,31 @@ end.
   `reward` 175 + 25 a planet plus 50 a star (was 150 + 50 a planet), so
   planet 1 keeps 200 and depth growth comes from drops. Retune once a bot
   or his play shows how much ore a player takes.
+- **Starfall by half the par** (11-20, the bug check's finding): falls
+  were drawn across 0:50 to 10:00 while his planet 1 took a median 4:05,
+  so a short planet saw one of its three or four. Now the window ends by
+  half the planet's par if sooner (`StarRules::par_share` 0.5,
+  `set=star_par`): 4:00 on planet 1, 5:00 on planets 2 and 3. Ore paid is
+  higher as a result (about 4 falls seen, not 1 or 2); retune `worth` once
+  his play or a drop-taking bot shows what is taken.
+- **Planet 1 regression and the pacing** (11-20 night): the bot lost
+  maps 1 and 2 of CI's run seeds that the 17:00Z build won. The bot thread
+  bisected it to #566 (strikers retune); #598's rate cap alone won back map
+  1, not map 2. Scott then ruled (23:32, "We don't need all these
+  mini-bosses, strikers, etc. in planet one") and #606 gates each threat by
+  planet (`FIRST_PLANET` in `run.rs`): strikers from 2, waves and the late
+  lunge from 3, the heart from 4; it wins seeds 1 and 2 back. Seed 3 is a
+  bot harvest stall (the bot thread's `broke` dial, in hand).
+- **Own fire: no automatic step-out** (Direction, 11-21 00:45Z, to the
+  pathfinding thread): on planet 3, 92% of the bot's deaths are its own
+  Needle Blast fire, but burning yourself is the deck's price (Noita rule;
+  11-13 16:15 ruling), and the bot's step-out dial cost wins. Revisit only
+  if his play says it feels wrong; the step-out is built and is the first
+  thing to try.
+- **The bug check's balance items** (11-20): the heart's 68 soldiers in
+  8 s goes to the balance thread (bar: about 20 in its first 10 s; it now
+  starts on planet 4); striker regrowth was the mass condense, covered by
+  #598; raid cores count only kills in the raid's own fight (#610).
 - **Late bosses against a big army** (#587's options, 11-20 21:35Z,
   Direction's pick, not raised to the owner: it is how to build his
   "stronger mini-bosses near the end"): A, the Mortar weighted up late and

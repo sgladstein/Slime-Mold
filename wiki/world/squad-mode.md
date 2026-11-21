@@ -2,7 +2,7 @@
 title: Squad mode
 kind: design
 status: open
-updated: 2026-11-20
+updated: 2026-11-21
 sources:
   - Reports/auto-fire-2026-11-18/README.md
   - Reports/bug-sweep-2026-11-14.md
@@ -12,6 +12,7 @@ sources:
   - Reports/guards-2026-11-15/README.md
   - Reports/map-sharing-2026-11-16/README.md
   - Reports/narrow-squads-2026-11-15/README.md
+  - Reports/pathfinding-2026-11-20/README.md
   - Reports/soldier-cap-2026-11-16/README.md
   - Reports/squad-mode-2026-11-14/README.md
   - Reports/squad-movement-2026-11-16/README.md
@@ -21,8 +22,11 @@ code:
   - Game::fight_turn
   - Game::guard_zone
   - Game::heal
+  - Game::mark_hot
   - Game::rank_squad
+  - Game::steer_point
   - MAP_NEAR
+  - Rules::fireway
   - Rules::funnel
   - Rules::guard
   - Rules::max_squad
@@ -129,9 +133,25 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   [page](https://claude.ai/artifact/MWtDtnMANViS1NytZLwaNB). Jerk lower on
   23 of 24 planet runs, turning on 24 of 24; 200 sent on open ground
   4.9 -> 0.9 ms a step.
+  Pathfinding review (2026-11-20): a squad steered past a rock's tip or
+  along a slanting wall now walks round it (it stood for good: the point
+  40 cells ahead fell in rock, `Game::steer_point`), an anchor beside a
+  crystal takes its map, and members behind a crystal walk to the anchor.
+  Steered squads reached 4.8 crystals a map against 1.9 (19 of 24 maps
+  more, none fewer), back-and-forth walking 9.7% -> 4.9%
+  ([report](../../Reports/pathfinding-2026-11-20/README.md)). Routing round
+  slime was tried and not kept: the slime comes to the squad anyway.
+  **Round fire on a move** (2026-11-21, `Rules::fireway`, on; Direction's
+  call): a squad sent with a plain move walks round ground marked burning
+  (a burn or light burst, or a soldier that felt heat, for 15 s) where
+  there is a way round; a squad standing to fight in fire stays, the price
+  of a fire deck. Health lost to fire on the way 413 -> 274 (24 of 24 maps
+  lower), trips no slower on the probe's maps.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
-  column ends once its tail is near the anchor
+  column ends once its tail is near the anchor; since 2026-11-21 no
+  column place lies past a wall from its trail (60 soldiers leaving a
+  walled base by a 4-cell door stood inside for good; now out in 26 s)
   ([report](../../Reports/narrow-squads-2026-11-15/README.md),
   [rework](../../Reports/squad-movement-2026-11-16/README.md)).
 - **Building** is shared with the RTS round: ghosts soldiers raise from reach 6,

@@ -59,6 +59,7 @@ mod stand;
 mod strikers;
 mod starfall;
 mod cores;
+mod force;
 mod rules;
 mod paths;
 mod cmd;
@@ -73,6 +74,7 @@ mod steer;
 mod cover;
 mod doors;
 mod bulwark;
+mod fireway;
 mod gear;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
@@ -84,14 +86,14 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
-pub use doors::WALL_LEVELS;
+pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};
 pub use heart::HeartRules;
 pub use stand::{Heart, Stand, StandRules};
 pub use strikers::{StrikerRules, Strikers};
-pub use starfall::{fall_count, CoreFrom, Drop, DropKind, StarRules, Starfall};
+pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
@@ -132,6 +134,12 @@ struct Paths {
     /// Whether the map being built went stale while it was built (a wall
     /// went up): it joins `stale` when done.
     build_stale: bool,
+    /// Which coarse squares a soldier can mostly stand on (`fireway.rs`),
+    /// until the maps go stale.
+    coarse: Option<Vec<bool>>,
+    /// Fire seen lately: where, how far round (fine cells), and the tick
+    /// it cools (`Game::mark_hot`).
+    hot: Vec<((f32, f32), f32, u64)>,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.
@@ -594,6 +602,10 @@ pub struct Game<W: World> {
     /// runs a `Rounds` of its own to look between a step and its casts
     /// (the walkers before a shove, the pops a step let out).
     pub gear: bool,
+    /// The CPU time of each part of a step, when on (`Game::costed`): name,
+    /// total ms, the longest ms and the calls. None in play; the bench
+    /// turns it on and prints it.
+    pub costs: Option<Vec<(&'static str, f64, f64, u32)>>,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -758,6 +770,7 @@ impl<W: World> Game<W> {
             rounds: Rounds::new(Vec::new(), Default::default()),
             carry_full: Vec::new(),
             gear: true,
+            costs: None,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.charge_was = g.crystal_full.iter().map(|&c| c as f64).sum();
@@ -923,6 +936,38 @@ impl<W: World> Game<W> {
         self.harvested + self.guard_paid + self.rendered
     }
 
+    /// Every living soldier and squad this step as CSV rows, dish cells
+    /// (the path probe: `LARDER_PATHLOG` in the window's headless runs,
+    /// `examples/pathprobe`; read by
+    /// `Reports/pathfinding-2026-11-20/tools/paths.py`).
+    /// `s,tick,k,squad,x,y,vx,vy,goal x,goal y,touching,order,cover,hp` and
+    /// `q,tick,q,anchor x,anchor y,dest x,dest y,steer x,steer y,holding,column,fight`.
+    pub fn path_rows(&self, f: &mut impl std::io::Write) -> std::io::Result<()> {
+        let t = self.world.ticks();
+        let s = self.s();
+        for (k, so) in self.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+            let (gx, gy) = self.goal(k).unwrap_or((f32::NAN, f32::NAN));
+            let o = match so.order {
+                Order::Hold => 'h',
+                Order::Move(..) => 'm',
+                Order::Fight(..) => 'f',
+                Order::Guard(..) => 'g',
+                Order::Build(..) => 'b',
+                Order::Clear(..) => 'c',
+                _ => 'o',
+            };
+            writeln!(f, "s,{t},{k},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{o},{},{:.0}", so.squad, so.x / s, so.y / s, so.vx / s, so.vy / s, gx / s, gy / s, so.touching, so.cover as u8, so.hp)?;
+        }
+        for q in self.live_squads() {
+            let sq = self.squads[q];
+            let (ax, ay) = sq.anchor.unwrap_or((f32::NAN, f32::NAN));
+            let (dx, dy) = sq.dest.unwrap_or((f32::NAN, f32::NAN));
+            let (vx, vy) = sq.via.unwrap_or((f32::NAN, f32::NAN));
+            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{},{:.2},{:.2}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8, vx / s, vy / s)?;
+        }
+        Ok(())
+    }
+
     pub fn time(&self) -> f32 {
         (self.world.ticks() - self.landed) as f32 / self.rules.tps as f32
     }
@@ -955,3 +1000,5 @@ mod narrow_tests;
 mod wall_side_tests;
 #[cfg(test)]
 mod move_tests;
+#[cfg(test)]
+mod path_tests;

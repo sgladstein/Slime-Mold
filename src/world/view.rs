@@ -71,6 +71,11 @@ pub enum SlimeLook {
     /// keeps a faint bruise (`SCAR_FULL`, `SCAR_BRUISE` in `view.wgsl`):
     /// you see where it will not come back to.
     Scarred = 6,
+    /// The Sporer's spores (11-21): each spore in flight (the engine writes
+    /// its flight into the walker's fourth word) is a small round bead with
+    /// a short tail, a seed blown off the body, not a droplet's long
+    /// tracer streak (`SPORE_HEAD`, `SPORE_TAIL` in `view.wgsl`).
+    Spores = 7,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -86,8 +91,31 @@ impl SlimeLook {
             Some(crate::mould::tiers::Tier::Swarmer) => SlimeLook::Swell,
             Some(crate::mould::tiers::Tier::Sleeper) => SlimeLook::Dormant,
             Some(crate::mould::tiers::Tier::Grudge) => SlimeLook::Scarred,
+            Some(crate::mould::tiers::Tier::Sporer) => SlimeLook::Spores,
             _ => SlimeLook::Plain,
         }
+    }
+
+    /// Every look, in the order the slime viewer lists them.
+    pub const ALL: [SlimeLook; 8] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant, SlimeLook::Scarred, SlimeLook::Spores];
+
+    /// Its name, as the tweaks file writes it (`body TIER = NAME`).
+    pub fn name(self) -> &'static str {
+        match self {
+            SlimeLook::Plain => "plain",
+            SlimeLook::Threads => "threads",
+            SlimeLook::Sheet => "sheet",
+            SlimeLook::Cords => "cords",
+            SlimeLook::Swell => "swell",
+            SlimeLook::Dormant => "crust",
+            SlimeLook::Scarred => "scars",
+            SlimeLook::Spores => "seeds",
+        }
+    }
+
+    /// By name (`name`).
+    pub fn parse(s: &str) -> Option<SlimeLook> {
+        SlimeLook::ALL.into_iter().find(|l| l.name() == s)
     }
 }
 
@@ -959,6 +987,31 @@ impl View {
     pub fn set_slime_look(&mut self, look: SlimeLook, streak: f32) {
         self.slime_look = look;
         self.streak = streak.max(0.0);
+    }
+
+    /// The slime's look as last set (`set_slime_look`).
+    pub fn slime_look(&self) -> SlimeLook {
+        self.slime_look
+    }
+
+    /// **The view's shader again, from `source`** (the slime viewer,
+    /// 2026-11-20: `tweaks::apply`'s copy of `SHADER` with the owner's
+    /// look numbers in it). The bindings are the same, so only the
+    /// pipelines are made again; the old ones stay if the source does not
+    /// compile, and the error says why.
+    pub fn reshade(&mut self, source: &str) -> Result<(), String> {
+        let scope = self.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(source.into()) });
+        let layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&self.bgl)], immediate_size: 0 });
+        let pipe = |entry_point: &str| {
+            self.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
+        };
+        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep"), pipe("drain")];
+        if let Some(e) = crate::gpu::block_on(scope.pop()) {
+            return Err(e.to_string());
+        }
+        self.pipes = pipes;
+        Ok(())
     }
 
     /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)

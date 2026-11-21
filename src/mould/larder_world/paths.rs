@@ -31,6 +31,8 @@ const MAP_CELLS_MAX: usize = 32 << 20;
 /// frame, whatever the number of soldiers"). One whole map a step was
 /// tried first: 28 ms a step at 6x on the cloud CPU, still over a frame.
 pub(super) const MAP_POPS: usize = 1 << 17;
+/// A step's cells for a stale map while no goal waits (`pump_maps`).
+const STALE_POPS: usize = MAP_POPS / 4;
 
 /// How far from a soldier's goal another goal's walking map serves it,
 /// dish cells, when that goal is in a straight walk of its own: a squad's
@@ -85,7 +87,7 @@ pub struct MapBuild {
     pub(super) goal: usize,
     ok: Vec<bool>,
     dist: Vec<u32>,
-    ring: [Vec<usize>; 8],
+    ring: [Vec<u32>; 8],
     pending: usize,
     d: u32,
 }
@@ -94,9 +96,9 @@ impl MapBuild {
     /// A map to `goal` over the cells `ok` marks open.
     pub fn new(w: usize, h: usize, goal: usize, ok: Vec<bool>) -> Self {
         let mut dist = vec![u32::MAX; w * h];
-        let mut ring: [Vec<usize>; 8] = Default::default();
+        let mut ring: [Vec<u32>; 8] = Default::default();
         dist[goal] = 0;
-        ring[0].push(goal);
+        ring[0].push(goal as u32);
         MapBuild { goal, ok, dist, ring, pending: 1, d: 0 }
     }
 
@@ -111,42 +113,84 @@ impl MapBuild {
     }
 
     /// Take up to `pops` cells off the queue; how many were taken.
+    ///
+    /// A cell off the world's edge checks its neighbours one by one; one
+    /// inside it (nearly all) takes them by fixed offsets with no bounds
+    /// checks. The per-neighbour checks were most of a map's cost: a whole
+    /// 512 x 320 map took 5.3 to 6.2 ms on the cloud CPU, a step's spike
+    /// when a squad was sent somewhere new or the maps went stale (Engine's
+    /// bench, 2026-11-21: `pump_maps` 4.2 to 5.8 ms on planet 3).
     pub fn advance(&mut self, w: usize, h: usize, pops: usize) -> usize {
         let mut n = 0;
+        // Side steps cost 5, diagonals 7; a diagonal only past two open
+        // side cells (`distance_map`).
+        let side = [1isize, -1, w as isize, -(w as isize)];
+        let diag = [(-1isize, -1isize), (1, -1), (-1, 1), (1, 1)];
         while self.pending > 0 && n < pops {
             let b = (self.d % 8) as usize;
             let Some(i) = self.ring[b].pop() else {
                 self.d += 1;
                 continue;
             };
+            let i = i as usize;
             self.pending -= 1;
             n += 1;
             if self.dist[i] != self.d {
                 continue;
             }
-            let (x, y) = ((i % w) as i64, (i / w) as i64);
-            for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
-                let (nx, ny) = (x + dx, y + dy);
-                if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
-                    continue;
+            let (x, y) = (i % w, i / w);
+            if x == 0 || y == 0 || x + 1 == w || y + 1 == h {
+                self.edge(w, h, i);
+                continue;
+            }
+            let ns = self.d + 5;
+            let nd = self.d + 7;
+            for o in side {
+                let j = (i as isize + o) as usize;
+                if self.ok[j] && ns < self.dist[j] {
+                    self.dist[j] = ns;
+                    self.ring[(ns % 8) as usize].push(j as u32);
+                    self.pending += 1;
                 }
-                let j = ny as usize * w + nx as usize;
-                if !self.ok[j] {
-                    continue;
-                }
-                let diag = dx != 0 && dy != 0;
-                if diag && (!self.ok[y as usize * w + nx as usize] || !self.ok[ny as usize * w + x as usize]) {
-                    continue;
-                }
-                let nd = self.d + if diag { 7 } else { 5 };
-                if nd < self.dist[j] {
+            }
+            for (dx, dy) in diag {
+                let sx = (i as isize + dx) as usize;
+                let sy = (i as isize + dy * w as isize) as usize;
+                let j = (sy as isize + dx) as usize;
+                if self.ok[j] && self.ok[sx] && self.ok[sy] && nd < self.dist[j] {
                     self.dist[j] = nd;
-                    self.ring[(nd % 8) as usize].push(j);
+                    self.ring[(nd % 8) as usize].push(j as u32);
                     self.pending += 1;
                 }
             }
         }
         n
+    }
+
+    /// `advance`'s step out of cell `i` on the world's edge, checking each
+    /// neighbour is in the world.
+    fn edge(&mut self, w: usize, h: usize, i: usize) {
+        let (x, y) = ((i % w) as i64, (i / w) as i64);
+        for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
+            let (nx, ny) = (x + dx, y + dy);
+            if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                continue;
+            }
+            let j = ny as usize * w + nx as usize;
+            if !self.ok[j] {
+                continue;
+            }
+            let diag = dx != 0 && dy != 0;
+            if diag && (!self.ok[y as usize * w + nx as usize] || !self.ok[ny as usize * w + x as usize]) {
+                continue;
+            }
+            let nd = self.d + if diag { 7 } else { 5 };
+            if nd < self.dist[j] {
+                self.dist[j] = nd;
+                self.ring[(nd % 8) as usize].push(j as u32);
+                self.pending += 1;
+            }
+        }
     }
 }
 
@@ -174,6 +218,54 @@ pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize, corners: bool)
     }
     best
 }
+
+/// `i`, or if walking map `map` doesn't reach it, the nearest cell to it
+/// that the map does (within `ONTO_MAP` fine cells; nearest the goal of
+/// those as near); None if none is.
+/// A point on open ground can sit in a cell the map has no way from: a
+/// cell whose middle is in a crystal's disc while the point is just past
+/// its rim, or a crystal eaten smaller since the map was built (maps are
+/// built every `PATHS_EVERY`). Taken as off the map, a squad sent past a
+/// crystal it stood beside stood there for good while its members walked
+/// on without it, and a soldier at a crystal's rim stood 77 s 28 cells
+/// from its steered squad (pathfinding thread, 2026-11-20: planet 3, run
+/// seed 1).
+pub(super) fn onto_map(w: usize, h: usize, map: &[u32], i: usize) -> Option<usize> {
+    if map[i] != u32::MAX {
+        return Some(i);
+    }
+    let (x, y) = ((i % w) as i64, (i / w) as i64);
+    // Rings outward, the first with a cell on the map; in it, the cell
+    // nearest the goal (ties to the lower cell).
+    for r in 1..=ONTO_MAP {
+        let mut best: Option<(u32, usize)> = None;
+        for dy in -r..=r {
+            for dx in -r..=r {
+                if dx.abs().max(dy.abs()) != r {
+                    continue;
+                }
+                let (nx, ny) = (x + dx, y + dy);
+                if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
+                    continue;
+                }
+                let j = ny as usize * w + nx as usize;
+                if map[j] != u32::MAX && best.is_none_or(|b| (map[j], j) < b) {
+                    best = Some((map[j], j));
+                }
+            }
+        }
+        if let Some(b) = best {
+            return Some(b.1);
+        }
+    }
+    None
+}
+
+/// Fine cells round a cell off a walking map that `onto_map` looks for one
+/// on it: the band a crystal eaten since the map was built leaves (a
+/// standing squad eats one by a few cells in `PATHS_EVERY`; within two
+/// cells, at first, a soldier in that band at a crystal's rim stood 24 s).
+const ONTO_MAP: i64 = 8;
 
 /// The point of the segment `a`-`b` nearest `p`.
 pub(super) fn nearest_on(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> (f32, f32) {
@@ -418,6 +510,15 @@ impl<W: World> Game<W> {
         self.paths.asked.retain(|&(_, t)| t + 1 >= step);
         let (w, h) = self.world.size();
         let mut pops = self.rules.map_pops;
+        // A stale map is walked while it is rebuilt, so with no goal asked
+        // for it builds at a quarter of the pace: every `PATHS_EVERY` the
+        // maps went stale together and were rebuilt one a step, a run of
+        // 5 to 6 ms steps on planet 3 (cloud CPU; Engine's bench,
+        // 2026-11-21). A goal someone waits for keeps the whole pace.
+        let slow = |g: &Self| g.paths.asked.is_empty() && !g.paths.asked_last;
+        if self.paths.building.is_some() && slow(self) {
+            pops = pops.min(STALE_POPS);
+        }
         let mut started = false;
         loop {
             if self.paths.building.is_none() {
@@ -443,6 +544,9 @@ impl<W: World> Game<W> {
                 };
                 let Some(gi) = next else { break };
                 self.paths.asked_last = ask;
+                if slow(self) {
+                    pops = pops.min(STALE_POPS);
+                }
                 started = true;
                 self.paths.building = Some(MapBuild::new(w, h, gi, self.standable_cells()));
             }
@@ -486,6 +590,7 @@ impl<W: World> Game<W> {
         let mut keys: Vec<usize> = self.paths.maps.keys().copied().collect();
         keys.sort_unstable();
         self.paths.stale = keys;
+        self.paths.coarse = None;
         // A map being built finishes on the ground it started on and goes
         // stale then, walked meanwhile like the rest. Starting it again,
         // as at first, starved it: at 6x a wall going up every 6 steps or

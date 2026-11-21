@@ -5,35 +5,42 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1            # twins only
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -Timing    # twins, then timing
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -DryRun    # first: print every step, run nothing
+#   ... pc-batch.ps1 -Followup -Timing   # M1 follow-up: six twins, nine view variants, planet 3 (about 35 min)
 #
 # Run -DryRun first (seconds, nothing built): nobody can parse-check this
 # file in the cloud, so a syntax slip shows there, not an hour into twins.
 #
-# -Timing only once the owner has said timing may run (booking.md): a timing
-# run needs the PC to itself, and the script checks that nothing else is on
-# the GPU before it times anything.
+# -Timing only once the owner has said timing may run (booking.md; standing
+# OK for tests, 11-11): a timing run needs the PC to itself, so stop the
+# strategy bots' league worker first, and the script checks that nothing
+# else is on the GPU before it times anything. About 45 minutes of timing.
 #
 # Every job writes one output file, and the batch ends with summary.txt: the
 # lines to send back (each test binary's result line, each bench's lines,
 # the shas and the driver). Send summary.txt as it is, and with -Timing
-# commit every r7-*.txt file whole to a runner branch (job 7 needs the full
-# per-pass tables). Keep the folder for anyone who asks for more.
+# commit every m1-*.txt (with -Followup: view-*.txt and f-*.txt) file
+# whole to a runner branch (the per-pass tables
+# are in them, not in the summary). Keep the folder for anyone who asks.
 #
-# Why one commit for the twins: main at $Commit contains #181 (shots sink),
-# #183 (fed packing) and #198 (aims that see), whose 1070 twins never ran,
-# and #208 (each side's birth cap), and everything merged after them, so
-# one run covers all four.
+# Why one commit for the twins: the whole suite at one main covers every
+# GPU rule merged since the last batch (11-14), each tested on the card.
 #
 # Technical lead's review (11-14 00:52Z), all in: a GPU-free check and the
 # card's clocks in every timing file; 90 s cool-down before timing; A/B
-# pairs interleaved (before, after, before, after) so clock drift shows as
-# spread, not as a difference; one shared CARGO_TARGET_DIR so dependencies
+# runs interleaved (1, 2, 3, 1, 2, 3) so clock drift shows as spread, not
+# as a difference; one shared CARGO_TARGET_DIR so dependencies
 # build once, with each commit's exe copied out under its sha; the shas and
 # driver in the summary header.
 
 param(
     [switch]$Timing,
     [switch]$DryRun,
+    # Milestone 1's follow-up (11-21): the six twins Enemy gave card
+    # tolerances (#620) instead of the whole suite, and with -Timing the
+    # view's nine base-pass variants (Look and interface,
+    # Reports/view-cost-2026-11-21) and planet 3's CPU step after #624,
+    # instead of the M1 block.
+    [switch]$Followup,
     [string]$Commit = "origin/main",
     [string]$Repo = "C:\Users\Scott\Code\Slime Mold",
     [string]$Tree = "C:\Users\Scott\Code\sm-batch",
@@ -103,35 +110,54 @@ if (-not $DryRun) { Copy-Item "$env:CARGO_TARGET_DIR\release\larder-world.exe" "
 # ---- Twins (compute; allowed whenever the PC is on and quiet) ----
 Run "machine" "$bins\lw-main.exe bench=20 hand=farm"
 
-# Own-mould thread, PR #208 (merged 11-14 01:02Z, a WGSL change): its
-# twin is the whole suite at the batch main, which holds it. New test:
-# gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu. The skirmish bank
-# test and the life-cycle twin fail on main too (known).
-Run "twins-all" "cargo test --release --locked --no-fail-fast"
+# The whole suite on the card: every GPU test since 11-14 (the Lure, the
+# fort, walls, tether, march, condensing, the heart, fire) ran only on
+# llvmpipe until now. Known on Windows since 11-12: the life-cycle twin.
+if ($Followup) {
+    # Each by name: cargo takes one filter a run.
+    foreach ($t in "gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu",
+                   "a_frail_mould_dies_of_the_germ_on_both_engines",
+                   "plants_and_fire_run_on_the_gpu_as_on_the_cpu",
+                   "crust_burns_on_the_gpu_as_on_the_cpu",
+                   "dry_slime_burns_on_the_gpu_as_on_the_cpu",
+                   "tinder_lays_and_burns_on_the_gpu_as_on_the_cpu") {
+        Run "twin-$t" "cargo test --release --locked --lib $t"
+    }
+} else {
+    Run "twins-all" "cargo test --release --locked --no-fail-fast"
+}
 
 # ---- Timing (only with -Timing; the PC to itself, checked) ----
+# Milestone 1's batch (Engine and tools, job 7; 2026-11-20). The 11-14
+# batch's timing (shapes, own mould, the crater countdown A/B at a56f644
+# and e8d9501) is recorded in Reports/pc-batch-1070-2026-11-14.md and
+# needs no rerun. This one times the game the owner plays: planets 1 to 3
+# of a run in the squad mode, with every rule since then on by default
+# (the Lure's field, the Trunk's fort, raised walls, the tether and the
+# raid march, condensing and the heart, fire, starfall), played by the
+# strategy bot's rush. Each planet twice, interleaved (1 2 3 1 2 3), so
+# clock drift shows as spread.
 if ($Timing) {
-    # GPU thread job 7 part 1 needs two more builds: the crater countdown
-    # before (a56f644, the same GPU code as #157's first parent) and after
-    # (e8d9501). Build both first so the runs can interleave.
-    foreach ($pair in @(@("a56f644", "before"), @("e8d9501", "after"))) {
-        $sha, $tag = $pair
-        $s = At $sha "$Tree-$tag"
-        $shas += "r7-$tag $s"
-        Run "r7-$tag-build" "cargo build --release --locked --bin larder-world"
-        if (-not $DryRun) { Copy-Item "$env:CARGO_TARGET_DIR\release\larder-world.exe" "$bins\lw-$tag.exe" }
-    }
     if (-not $DryRun) { Set-Location $Tree }
 
     # Is anything else using the card? Not --query-compute-apps: on Windows
     # (WDDM) it lists every desktop app with "N/A" memory, so it always
     # refused (dry run at 004b7cb). The card's own load instead: five
-    # samples a second apart, busy if any is over 5%.
+    # samples a second apart, busy if any is over 5%. The strategy bots'
+    # league worker (slime-league) must be stopped first: it plays games
+    # on this card all day.
     $util = @()
     if (-not $DryRun) {
         foreach ($k in 1..5) { $util += [int](nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | Select-Object -First 1).Trim(); Start-Sleep -Seconds 1 }
     }
     $busy = if (($util | Measure-Object -Maximum).Maximum -gt 5) { "GPU load % over 5 s: $($util -join ', ')" } else { $null }
+    # The league worker between its games shows no load: look for its game
+    # too (pause it with an empty PAUSE file in slime-league, never by
+    # stopping its Python).
+    if (-not $DryRun) {
+        $league = @(Get-CimInstance Win32_Process -Filter "Name='larder-world.exe'" | Where-Object { $_.CommandLine -match "league=" })
+        if ($league.Count -gt 0) { $busy = "a league game is running (pid $($league[0].ProcessId)): pause the worker first" }
+    }
     "GPU load % before timing: $($util -join ', ')"
     if ($busy) {
         "GPU busy, no timing run: $busy" | Set-Content (Join-Path $dir "timing-refused.txt")
@@ -140,64 +166,62 @@ if ($Timing) {
         # Cool down after the test suites, so timing doesn't start hot.
         if (-not $DryRun) { Start-Sleep -Seconds 90 }
         $lw = "$bins\lw-main.exe"
-        # Shapes A, C (the default) and D (shapes thread, job 12).
-        Time "time-shape-a" "$lw shape=a bench=120"
-        Time "time-shape-c" "$lw shape=c bench=120"
-        Time "time-shape-d" "$lw shape=d bench=120"
-        # Pairs interleaved, twice each (A B A B).
+        $hand = "hand=strat:rush,aim=6"
+        if ($Followup) {
+            # The view's base pass, part by part: each variant swaps one
+            # part out (LARDER_VIEW_WGSL, no rebuild); its drop in `base`
+            # against `full` is that part's cost. Interleaved twice.
+            $vc = Join-Path $dir "vc"
+            Run "view-variants" "python Reports\view-cost-2026-11-21\variants.py $vc"
+            foreach ($i in 1, 2) {
+                foreach ($v in "full", "soil", "plants", "crust", "water", "gems", "terrain", "lights", "flat") {
+                    $env:LARDER_VIEW_WGSL = Join-Path $vc "$v.wgsl"
+                    # The game falls back to its own shader on a missing
+                    # file, which would time `full` under the variant's name.
+                    if (-not $DryRun -and -not (Test-Path $env:LARDER_VIEW_WGSL)) { "no $v.wgsl" | Set-Content (Join-Path $dir "view-$v-$i.txt"); Remove-Item Env:\LARDER_VIEW_WGSL; continue }
+                    Time "view-$v-$i" "$lw run=1:3 mode=squads bench=60 $hand centre=larder,6 viewpasses=30"
+                    Remove-Item Env:\LARDER_VIEW_WGSL
+                }
+            }
+            # Planet 3's step frames after #624 (M1: 10.1 ms p95, the CPU
+            # step 5.2 ms p95), with the CPU step's parts.
+            foreach ($i in 1, 2) {
+                Time "f-planet3-play-$i" "$lw run=1:3 mode=squads bench=300 $hand"
+            }
+        } else {
+        # The played game, as the window plays it (steps spread over
+        # frames): frame p50/p95 against the W2c gate (10 ms p95). 300 game
+        # seconds reach the first raid (mostly 3:00 to 5:00).
         foreach ($i in 1, 2) {
-            # The player's own mould at 5k and 20k walkers (own-mould thread).
-            Time "time-own-5k-off-$i" "$lw walkers=5000 bench=30"
-            Time "time-own-5k-on-$i" "$lw walkers=5000 own=1 bench=30"
-            Time "time-own-20k-off-$i" "$lw walkers=20000 bench=30"
-            Time "time-own-20k-on-$i" "$lw walkers=20000 own=1 bench=30"
-            # Bullets in flight against hitscan (bullets thread, #191).
-            Time "time-bullet-45-$i" "$lw bullet=45 bench=30 hand=farm"
-            Time "time-bullet-0-$i" "$lw bullet=0 bench=30 hand=farm"
-            # GPU thread job 7 part 1, the crater countdown.
-            foreach ($tag in "before", "after") {
-                Time "r7-$tag-100k-$i" "$bins\lw-$tag.exe bench=60 hand=strike scale=8 walkers=100000 spread=0 passes=30"
-                Time "r7-$tag-20k-$i" "$bins\lw-$tag.exe bench=60 hand=strike scale=4 walkers=20000 spread=0 passes=30"
+            foreach ($p in 1, 2, 3) {
+                Time "m1-planet$p-play-$i" "$lw run=1:$p mode=squads bench=300 $hand"
             }
         }
-        # The draw (technical lead, 11-14 07:42Z): the view shaders cost about
-        # 6 ms a frame on llvmpipe after #228, #230 and #241, which says
-        # nothing of the 1070. bench draws every frame as the window does
-        # (view and canvas, GPU waited for; with timestamps "its drawing" ms
-        # beside the step's ticks), here at the window's opening view and,
-        # with centre=, over C's body at zoom 6 and at full zoom-in (24 px a
-        # cell, where prep's fine cells are most). Twice each, interleaved.
-        foreach ($i in 1, 2) {
-            Time "time-view-open-$i" "$lw bench=30 hand=farm"
-            Time "time-view-z6-$i" "$lw bench=30 hand=farm centre=175,215,6"
-            Time "time-view-z24-$i" "$lw bench=30 hand=farm centre=175,215,24"
+        # Each pass's GPU ms a step, timed alone (spread=0: whole steps, so
+        # the step timestamps are whole too), 30 steps at 120 s.
+        foreach ($p in 1, 2, 3) {
+            Time "m1-planet$p-passes" "$lw run=1:$p mode=squads bench=120 $hand spread=0 passes=30"
         }
-        # Panic and withering on shape C (slime-enemy thread).
-        Time "time-c-default" "$lw bench=30 hand=farm"
-        Time "time-c-panic0" "$lw panic=0 bench=30 hand=farm"
-        Time "time-c-wither0" "$lw wither=0 bench=30 hand=farm"
-        # Job 7 part 2: shape C at 25k, the window's default with no
-        # walkers=. idle is the mould at full growth, step not spread; farm
-        # is a played game with the step spread over frames as the window does.
-        Time "r7-c25k-idle" "$lw bench=20 hand=idle spread=0 passes=30"
-        Time "r7-c25k-farm" "$lw bench=20 hand=farm passes=30"
+        # The draw at the review's two zooms, on the squad's first view
+        # (planet 3, the biggest map, on the larder), with each view pass timed.
+        foreach ($z in 6, 12) {
+            Time "m1-planet3-zoom$z" "$lw run=1:3 mode=squads bench=60 $hand centre=larder,$z viewpasses=30"
+        }
+        }
     }
 }
 
 # ---- What to send back ----
 Set-Location $Out
 $sum = Join-Path $dir "summary.txt"
-"batch $stamp, timing $Timing, dry run $DryRun" | Set-Content $sum
+"batch $stamp, timing $Timing, follow-up $Followup, dry run $DryRun" | Set-Content $sum
 "shas: " + ($shas -join "; ") | Add-Content $sum
 "driver: " + (nvidia-smi --query-gpu=name,driver_version --format=csv,noheader) | Add-Content $sum
 Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } | Sort-Object Name | ForEach-Object {
     "--- $($_.BaseName)" | Add-Content $sum
-    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s|^  view:|GPU load" | ForEach-Object { $_.Line } | Add-Content $sum
+    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s|^  view|^    base |GPU load|CPU a step|^    (mark_bulwark|set_cells|pump_maps|time_unit_paths) " | ForEach-Object { $_.Line } | Add-Content $sum
     Get-Content $_.FullName -Tail 3 | Add-Content $sum
 }
-# The worktrees go; the shared target and the exes stay for a rerun (delete
-# "$Tree-target" and "$Tree-bins" to free the space).
-foreach ($p in "$Tree-before", "$Tree-after") {
-    if (-not $DryRun -and (Test-Path $p)) { git -C $Repo worktree remove --force $p }
-}
+# The shared target and the exes stay for a rerun (delete "$Tree-target"
+# and "$Tree-bins" to free the space).
 "Done. Send back: $sum"
