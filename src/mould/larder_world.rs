@@ -92,7 +92,7 @@ pub use waves::{Wave, WavePhase, WaveRules, Waves};
 pub use heart::HeartRules;
 pub use stand::{Heart, Stand, StandRules};
 pub use strikers::{StrikerRules, Strikers};
-pub use starfall::{fall_count, CoreFrom, Drop, DropKind, StarRules, Starfall};
+pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};

@@ -92,6 +92,10 @@ const TOUCH_FULL: f32 = 12.0;
 /// which chimed nearly three times a second, so banking is gathered.
 /// 1 s until 2026-11-20: a chime a second through a whole planet.
 const BANK_GAP: f32 = 2.5;
+/// The least gap between coin ticks while soldiers take shop points
+/// (`WorldListener::coins`): ten soldiers drain planet 1's 40-point ore in
+/// about 1.6 s, so about ten ticks run up the scale.
+const COIN_GAP: f32 = 0.15;
 /// The least level of a where-to-look sound off screen (the larder robbed,
 /// a crystal run dry), against 1 on screen.
 const ALERT_FLOOR: f32 = 0.7;
@@ -222,6 +226,10 @@ pub struct WorldStats {
     pub broken: u32,
     pub built: u32,
     pub lost: u32,
+    /// Starfall and cores (2026-11-21): coin ticks while soldiers take
+    /// shop points, and drops the squad emptied.
+    pub coins: u32,
+    pub cashed: u32,
 }
 
 /// The upper ends of `WorldStats::kill_hist`'s bins.
@@ -280,6 +288,11 @@ pub struct WorldListener {
     boss_born: u64,
     boss_ended: usize,
     buildings: Vec<bool>,
+    /// Starfall: shop points heard taken, the wait to the next coin tick,
+    /// and drops emptied already heard.
+    found: f32,
+    coin_wait: f32,
+    cashed_seen: u32,
     pub stats: WorldStats,
 }
 
@@ -331,6 +344,9 @@ impl WorldListener {
             boss_born: 0,
             boss_ended: 0,
             buildings: Vec::new(),
+            found: 0.0,
+            coin_wait: 0.0,
+            cashed_seen: 0,
             stats: WorldStats::default(),
         };
         l.rebaseline(g);
@@ -373,7 +389,45 @@ impl WorldListener {
         self.boss_born = g.bosses.live.iter().map(|b| b.born).max().unwrap_or(0).max(self.ticks);
         self.boss_ended = g.bosses.ended.len();
         self.buildings = g.buildings.iter().map(|b| b.alive).collect();
+        (self.found, self.coin_wait, self.cashed_seen) = (g.starfall.points, 0.0, g.starfall.cashed_n);
         self.stats.rebaselines += 1;
+    }
+
+    /// **Shop points coming in** (starfall's ore and the cores; Boss cores
+    /// thread, 2026-11-21: "make core pickup feel good"). Until then
+    /// taking points made no sound at all, so a squad on a core heard only
+    /// the fight round it. While soldiers take, a coin tick every
+    /// `COIN_GAP` whose note climbs with the share of the drop they have
+    /// taken, so a drain is heard as a scale running up; a drop emptied by
+    /// the squad rings a quick high arpeggio (`AlertKind::Cashed`). Both are
+    /// alerts, at full level wherever the drop is: the squad is yours, as a
+    /// soldier falling is. Nothing for points the slime eats back: the bar and the
+    /// re-forming boss's groan say that.
+    fn coins<W: World>(&mut self, g: &Game<W>, ear: Ear, dt: f32, out: &mut Vec<SoundCmd>) {
+        let sf = &g.starfall;
+        let gained = sf.points - self.found;
+        self.found = sf.points;
+        self.coin_wait -= dt;
+        if gained > 0.0 && self.coin_wait <= 0.0 {
+            // The drop the most soldiers stand on, and how far through it.
+            if let Some(d) = sf.live.iter().filter(|d| d.down && d.takers > 0).max_by_key(|d| d.takers) {
+                let (pan, _) = ear.place(d.at);
+                let share = (d.taken / d.worth.max(1e-3)).clamp(0.0, 1.0);
+                out.push(SoundCmd::Alert { kind: AlertKind::Coin, weight: share, pan });
+                self.stats.coins += 1;
+                self.coin_wait = COIN_GAP;
+            }
+        }
+        if sf.cashed_n > self.cashed_seen {
+            if let Some(c) = sf.cashed.last() {
+                let (pan, _) = ear.place(c.at);
+                // A core rings the whole run up to the octave; ore stops short.
+                let weight = if c.kind == crate::mould::larder_world::DropKind::Core { 1.0 } else { 0.6 };
+                out.push(SoundCmd::Alert { kind: AlertKind::Cashed, weight, pan });
+                self.stats.cashed += sf.cashed_n - self.cashed_seen;
+            }
+            self.cashed_seen = sf.cashed_n;
+        }
     }
 
     /// The shots of one game step (`Game::last_shots`), called after every
@@ -620,6 +674,7 @@ impl WorldListener {
             self.stats.cores += 1;
         }
         self.core_down = g.core_down.is_some();
+        self.coins(g, ear, dt, &mut out);
         if let (Some(end), false) = (g.end, self.ended) {
             self.stats.endings += 1;
             out.push(match end {
@@ -1178,6 +1233,45 @@ mod tests {
     }
 
     /// A siren's call wails once per call, and a kit blast is heard once.
+    /// Soldiers draining ore tick coins up the scale, and the squad
+    /// emptying it rings once (2026-11-21, "make core pickup feel good").
+    #[test]
+    fn taking_ore_ticks_coins_and_emptying_it_rings() {
+        use crate::mould::larder_world::{DropKind, StarRules};
+        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, ..StarRules::for_depth(1) };
+        let mut g = Game::new(race_world(3, 1, 1_000), Rules { star, ..Rules::default() }, 3);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let dt = 1.0 / g.rules.tps as f32;
+        let (mut coins, mut cashed, mut notes) = (0, 0, Vec::new());
+        while g.time() < 40.0 && g.end.is_none() && g.starfall.cashed_n == 0 {
+            g.step();
+            if let Some(d) = g.starfall.live.iter().find(|d| d.down && d.kind == DropKind::Ore && d.left > 0.01).copied() {
+                for s in g.soldiers.iter_mut().filter(|s| s.alive) {
+                    (s.x, s.y) = d.at;
+                }
+            }
+            for c in l.hear(&g, ear, dt, false) {
+                match c {
+                    SoundCmd::Alert { kind: AlertKind::Coin, weight, .. } => {
+                        coins += 1;
+                        notes.push(weight);
+                    }
+                    SoundCmd::Alert { kind: AlertKind::Cashed, .. } => cashed += 1,
+                    _ => {}
+                }
+            }
+        }
+        assert_eq!(g.starfall.cashed_n, 1, "the squad emptied an ore by {}", g.time());
+        let c = g.starfall.cashed[0];
+        assert!(c.taken > 0.9 * star.worth, "the squad took {} of {}", c.taken, star.worth);
+        assert!(coins >= 3, "{coins} coin ticks while draining");
+        assert!(notes.windows(2).all(|w| w[1] >= w[0]), "the ticks climb: {notes:?}");
+        assert!(notes.last().is_some_and(|&w| w > 0.5), "and run up most of the scale: {notes:?}");
+        assert_eq!((cashed, l.stats.cashed), (1, 1), "emptied once, rung once");
+        assert_eq!(l.stats.coins, coins);
+    }
+
     #[test]
     fn a_siren_wails_and_a_blast_booms_once() {
         let mut g = small(1);

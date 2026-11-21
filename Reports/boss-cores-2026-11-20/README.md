@@ -69,3 +69,38 @@ the points larger, with a shadow; a gold bar of what the squad took, and
   planet 2, `hand=hold@262,181 boss=20,330,205`), its ring, 29 left.
 - `5-no-map-rings.jpg`: the whole map at 0:46 of the earlier film, a core
   sliding home and no rings across the map.
+
+## Collecting feels like collecting (2026-11-21)
+
+The coordinator's ask after the readable-cores change: make the pickup feel
+good, the sound and the moment the money comes in. Until now taking points
+made no sound, and an emptied drop just shrank away, with its points shown
+only on the planet's end screen.
+
+- **Coin ticks**: every 0.15 s while soldiers take, a short glassy coin
+  whose note climbs two octaves of C major pentatonic (E5 to E7) with the
+  share of the drop taken (`AlertKind::Coin`, `WorldListener::coins`). The
+  recorded film's loudest tone in 600 to 2,800 Hz climbs 657, 780, 880,
+  1,173, 1,567 and 1,760 Hz over the drain, 5 to 10 times the band's
+  median over the gunfire.
+- **Paid**: when the squad empties a drop (`Starfall::cashed`) it rings
+  C6, E6 and G6, quick, and a held C7 for a core (`AlertKind::Cashed`);
+  the drop vanishes at once and its `+N` rises 34 pixels in gold and fades
+  over 1.6 s (`CASHED_SECS`).
+- **Counted**: the HUD's resource row shows the shop points found on the
+  planet (gold, the shop icon), with `+N` beside them while they come in.
+- The drop's points and the `+N` are drawn after the soldiers: at zoom 12 a
+  squad standing on a drop hid them.
+
+The synth has 12 tone voices, not 8, so a run of coins never takes the slot
+of a soldier's fall. 25 coin ticks and 1 drop emptied in the film.
+
+- `pickup-z12.mp4`, `pickup-z6.mp4`: real time with sound, 0:11.5 to 0:17.6.
+  Planet 1, run 1, a held squad walked onto ore staged by its side:
+  `larder-world look=DIR run=1:1 mode=squads hand=hold@340,70,8,376,149
+  at=11.5,11.6,...,17.5 centre=376,149,12 sound=out.wav set=star_first=6
+  set=star_last=7 set=star_near=0 set=star_far=4 set=star_warn=3
+  set=star_gap=8 set=star_hurt=0`.
+- `6-pickup-z12.jpg`: 0:14.1 (`+23` while draining, 23 at the top), 0:15.9,
+  0:16.3 and 0:16.7 (`+40` rising and fading after it paid).
+- `7-pickup-z6.jpg`: 0:14.1 and 0:16.2 at zoom 6.
