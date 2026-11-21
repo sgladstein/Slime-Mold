@@ -5,6 +5,31 @@
 use super::*;
 
 impl<W: World> Game<W> {
+    /// Runs `f`, and with `Game::costs` on adds its CPU time under `name`
+    /// (the bench's table of the step's CPU parts, 11-21: planet 3's step
+    /// frames reached 10 ms p95 on the GTX 1070 from the CPU half of a
+    /// step). Off, it is `f` alone.
+    #[inline]
+    pub(super) fn costed<R>(&mut self, name: &'static str, f: impl FnOnce(&mut Self) -> R) -> R {
+        if self.costs.is_none() {
+            return f(self);
+        }
+        let t0 = std::time::Instant::now();
+        let out = f(self);
+        let ms = t0.elapsed().as_secs_f64() * 1e3;
+        if let Some(c) = self.costs.as_mut() {
+            match c.iter_mut().find(|e| e.0 == name) {
+                Some(e) => {
+                    e.1 += ms;
+                    e.2 = e.2.max(ms);
+                    e.3 += 1;
+                }
+                None => c.push((name, ms, ms, 1)),
+            }
+        }
+        out
+    }
+
     /// One squad frame (`Rules::frame_ticks` ticks) with the squad's turn
     /// around it. Does nothing once the round has ended. It is
     /// `begin_step` then `finish_step` (2026-11-12): the window calls the
@@ -42,16 +67,16 @@ impl<W: World> Game<W> {
         if self.end.is_some() {
             return;
         }
-        self.solid = self.solid_now();
-        self.pump_maps();
+        self.costed("solid", |g| g.solid = g.solid_now());
+        self.costed("pump_maps", Self::pump_maps);
         let r = self.rules;
         let sc = self.s();
         let t = self.world.ticks();
         let dt = r.frame_ticks as f32 / r.tps as f32;
         // Which squads on attack-move stand to fight (`fight_turn`), then
         // steered and sent squads move their anchors (`squads`).
-        self.fight_turn();
-        self.squad_turn(dt);
+        self.costed("fight_turn", Self::fight_turn);
+        self.costed("squad_turn", |g| g.squad_turn(dt));
         let mut units = Vec::new();
         let mut who = Vec::new();
         let mut from = Vec::new();
@@ -454,32 +479,32 @@ impl<W: World> Game<W> {
         if now / r.tps as u64 != t / r.tps as u64 {
             // The mass: the living walkers and what condensed strikers
             // hold (`World::mass`; 11-20, the review lane).
-            self.mould = self.world.mass();
-            self.mark_bulwark();
-            self.guard_pay();
-            self.cover_turn();
-            self.count_stuck();
-            self.check_broken();
-            self.keep_panic_reach();
-            self.time_raids();
-            self.time_unit_paths();
-            self.time_food_paths();
-            self.time_lure_paths();
-            self.time_fort();
-            self.time_bosses();
-            self.time_fruit();
-            self.time_waves();
-            self.time_heart();
-            self.time_strikers();
-            self.time_cores();
-            self.time_starfall();
-            self.time_stand();
+            self.costed("mass", |g| g.mould = g.world.mass());
+            self.costed("mark_bulwark", |g| g.mark_bulwark());
+            self.costed("guard_pay", |g| g.guard_pay());
+            self.costed("cover_turn", |g| g.cover_turn());
+            self.costed("count_stuck", |g| g.count_stuck());
+            self.costed("check_broken", |g| g.check_broken());
+            self.costed("keep_panic_reach", |g| g.keep_panic_reach());
+            self.costed("time_raids", |g| g.time_raids());
+            self.costed("time_unit_paths", |g| g.time_unit_paths());
+            self.costed("time_food_paths", |g| g.time_food_paths());
+            self.costed("time_lure_paths", |g| g.time_lure_paths());
+            self.costed("time_fort", |g| g.time_fort());
+            self.costed("time_bosses", |g| g.time_bosses());
+            self.costed("time_fruit", |g| g.time_fruit());
+            self.costed("time_waves", |g| g.time_waves());
+            self.costed("time_heart", |g| g.time_heart());
+            self.costed("time_strikers", |g| g.time_strikers());
+            self.costed("time_cores", |g| g.time_cores());
+            self.costed("time_starfall", |g| g.time_starfall());
+            self.costed("time_stand", |g| g.time_stand());
         }
         self.campaign_rules(now - t);
         self.check_end();
         // The kit and the gun cards read the step just finished (`gear.rs`),
         // after its end too, as the window did before 2026-11-20.
-        self.gear_turn();
+        self.costed("gear_turn", Self::gear_turn);
     }
 
     /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):

@@ -592,6 +592,10 @@ pub struct Game<W: World> {
     /// runs a `Rounds` of its own to look between a step and its casts
     /// (the walkers before a shove, the pops a step let out).
     pub gear: bool,
+    /// The CPU time of each part of a step, when on (`Game::costed`): name,
+    /// total ms, the longest ms and the calls. None in play; the bench
+    /// turns it on and prints it.
+    pub costs: Option<Vec<(&'static str, f64, f64, u32)>>,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -755,6 +759,7 @@ impl<W: World> Game<W> {
             rounds: Rounds::new(Vec::new(), Default::default()),
             carry_full: Vec::new(),
             gear: true,
+            costs: None,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.charge_was = g.crystal_full.iter().map(|&c| c as f64).sum();
