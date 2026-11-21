@@ -154,3 +154,21 @@ and the league has no planet 4 rows with drops.
 
 So on every planet the win pays nine tenths or more of the money, and the
 pickups are a small extra the slime mostly eats.
+
+## The teaching fall (2026-11-21)
+
+Direction's go on the proposal above: on planet 1 the first fall's shadow
+shows at 0:50 and it lands at 1:00 on open ground 14 to 30 dish cells from
+the nearest soldier, where the fewest walkers are (`StarRules::teach` 50,
+`teach_far` 30). Planet 1's other falls, and every other planet's, keep the
+window and land by slime.
+
+Planet 1, run 1. With the greedy hand the shadow fell 40 units from the
+squad, on bare ground. The greedy hand never walks to ore, so walkers found
+it from 1:13 and had eaten 24 of 40 by 1:20. With a squad held there and
+sent to the ore as it landed (`hand=hold@218,50,60,263,19`), it took 39 of
+40, the slime 0.6, with 26 coin ticks and the payout chime.
+
+- `teach-fall-z6.mp4`: 0:48 to 1:12, real time with sound, zoom 6.
+- `8-teach-fall.jpg`: 0:52 (the shadow by the squad), 0:59 (the ore
+  coming in), 1:02 (landed, the alert, +3), 1:06 (+35).
