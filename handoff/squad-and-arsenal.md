@@ -55,8 +55,8 @@ Lookouts removed (`cover.rs` keeps only the work's end and heal's end;
 own toggle in the squad mode (`App::squad_hold_fire`, `App::unheld` keeps
 each held soldier's mode); the fire button picks defend or free. The card's
 Formation button (T, `FORM_PAGE`) opens a page of six formations, two new
-(`Formation::Column`, `Formation::Spread`), with Heal moved there (L heals
-from any page). A column faces where it walks and counts as a pair wide to
+(`Formation::Column`, `Formation::Spread`), and Heal in Pump's main-card slot (Pump on
+the Build page). A column faces where it walks and counts as a pair wide to
 the funnel. The bot check (before/after, planets 1-3) is in the PR.
 
 **2026-11-20, pathfinding review (its own thread, the owner's ask).**

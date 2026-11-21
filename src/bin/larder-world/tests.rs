@@ -672,6 +672,9 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     assert_eq!(key_of("Fire: defend"), Some(KeyCode::KeyX));
     assert_eq!(key_of("Hold fire"), Some(KeyCode::KeyZ));
     assert_eq!(key_of("Formation: blob"), Some(KeyCode::KeyT));
+    // Heal has Pump's slot; Pump is on the Build page.
+    assert_eq!(key_of("Heal"), Some(KeyCode::KeyL));
+    assert!(m.commands.iter().all(|c| c.id != PUMP));
     assert!(m.help_base.as_ref().is_some_and(|h| h.iter().any(|r| r.1.starts_with("Split"))), "F1 lists the squad's keys");
     // G is the card's: it aims a drain, and merges nothing.
     assert!(!app.squad_key(KeyCode::KeyG, true, false, false));
@@ -729,7 +732,7 @@ fn hold_fire_toggles_apart_from_the_fire_mode_and_the_formation_page_picks() {
     // The Formation page: its buttons, the current one lit, a pick closes it.
     app.hud_event(HudEvent::Command { id: FORM_PAGE }).unwrap();
     let m = app.model(None, None);
-    for id in [F_BLOB, F_SPREAD, F_LINE, F_WEDGE, F_COLUMN, F_RING, HEAL_ORDER, F_BACK] {
+    for id in [F_BLOB, F_SPREAD, F_LINE, F_WEDGE, F_COLUMN, F_RING, F_BACK] {
         assert!(m.commands.iter().any(|c| c.id == id), "the page has {id}");
     }
     assert!(m.commands.iter().any(|c| c.id == F_BLOB && c.on));

@@ -1578,6 +1578,8 @@ impl App {
                 about: "A new soldier at the larder.".into(),
                 ..Command::new(BUY, (1, 0), Icon::Recruit, "Buy a soldier", KeyCode::KeyB)
             },
+            // Pump's main-card slot is Heal's in the squad mode (below,
+            // 2026-11-21); there Pump is on the Build page only.
             pump((1, 1)),
             Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, at((1, 3), (1, 2)), Icon::Turret, "Build", KeyCode::KeyQ) },
             Command {
@@ -1588,9 +1590,14 @@ impl App {
         // The squad mode's Hold fire and Formation (owner 2026-11-21
         // 05:04Z). Hold fire takes Heal's (0, 4), beside the fire button;
         // Formation takes the Lookouts' (1, 4), which went with the
-        // lookouts, and opens the Formation page, where Heal now is (its
-        // L still heals from this page, `squadmode::HEAL_KEY`).
+        // lookouts, and opens the Formation page.
         if squads {
+            // Heal back on the main card in Pump's (1, 1); Pump stays on the
+            // Build page (Q, then U). A night on the Formation page read as
+            // an odd fit (owner 06:14Z: "heal is in formation?").
+            cmds.retain(|c| c.id != PUMP);
+            let heal_off = g.active.map_or(no_sel(), |a| super::squadmode::heal_off(g, a));
+            cmds.push(Command { ready: heal_off.is_none(), why_not: heal_off, about: "The squad stops where it is and heals, paying food from the bank: fast by a crystal you hold, slow elsewhere. Any order ends it.".into(), ..Command::new(HEAL_ORDER, (1, 1), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
             cmds.push(Command {
                 ready: any,
                 on: held,
@@ -1602,7 +1609,7 @@ impl App {
             cmds.push(Command {
                 ready: f.is_some(),
                 why_not: no_sel(),
-                about: format!("How the squad stands and walks: blob, spread, line, wedge, column or ring (now {}). Opens the formation page; Heal is there too.", f.map_or("none", |f| f.name())),
+                about: format!("How the squad stands and walks: blob, spread, line, wedge, column or ring (now {}). Opens the formation page.", f.map_or("none", |f| f.name())),
                 ..Command::new(FORM_PAGE, (1, 4), f.map_or(Icon::Formation, form_icon), &f.map_or("Formation".to_string(), |f| format!("Formation: {}", f.name())), super::squadmode::FORMATION)
             });
         }
@@ -1636,7 +1643,6 @@ impl App {
         }
         if self.form_page && squads {
             let now = g.active.map(|a| g.squads[a].formation);
-            let heal_off = g.active.map_or(no_sel(), |a| super::squadmode::heal_off(g, a));
             let form = |id: u32, slot: (u8, u8), key: KeyCode, about: &str| {
                 let f = super::form_of(id).unwrap_or_default();
                 let mut name = f.name().to_string();
@@ -1650,7 +1656,6 @@ impl App {
                 form(F_WEDGE, (0, 3), KeyCode::KeyV, "A V with its point toward the cursor: a narrow front that pushes into the mould with guns down both sides."),
                 form(F_COLUMN, (0, 4), KeyCode::KeyF, "Two abreast, front to back, facing where it walks: files through doors, bridges and gaps between rocks without bunching."),
                 form(F_RING, (1, 0), KeyCode::KeyG, "A circle facing out, for holding ground with mould on every side."),
-                Command { ready: heal_off.is_none(), why_not: heal_off, about: "The squad stops where it is and heals, paying food from the bank: fast by a crystal you hold, slow elsewhere. Any order ends it. L heals from the main page too.".into(), ..Command::new(HEAL_ORDER, (1, 3), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) },
                 Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 4), Icon::Close, "Back", super::squadmode::FORMATION) },
             ];
         }

@@ -100,9 +100,10 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   Shift queues up to six.
 - **Formations** (the card's Formation button, T, opens its page; owner
   2026-11-21 05:04Z): blob (default), spread (the blob at 1.9 times its room,
-  `SPREAD`), line, wedge, column (two abreast, facing where it walks, as wide
-  as a pair to the funnel, so it files through doors without funnelling) and
-  ring (`Formation`, `Game::rank_squad`). The page holds Heal too.
+  `SPREAD`), line, wedge, column (two abreast, facing where it walks; moving, it
+  always walks as the funnel's column two abreast, so it files through doors
+  and round rock) and
+  ring (`Formation`, `Game::rank_squad`).
 - **No lookouts** (owner 2026-11-21 05:04Z: "remove the feature that some
   soldiers guard while harvesting"). From 2026-11-14 to 11-21 a squad
   draining or building with slime near posted a share of itself as lookouts
@@ -119,13 +120,14 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
 - **The command card** is Card 2 (owner 19:38Z) as changed 2026-11-21: 5 x 2,
   Attack-move, Guard, Drain, the fire button (X: defend or free fire), Hold
   fire (Z, a toggle; a held soldier fires the button's mode once let go,
-  `App::unheld` in the window); Buy, Pump, Build, Tools, Formation. (The RTS
+  `App::unheld` in the window); Buy, Heal, Build, Tools, Formation (Pump is
+  on the Build page). (The RTS
   round keeps one fire button that cycles hold, defend and free.) The Build page (option 1, 19:53Z):
   turret, pump, wall, lure, siren, then the lures' switch and Back. With no
   squad commanded a click on a building selects it: its health, level and
   state, and its card (call off, demolish for half its price back, upgrade a
   pump, switch a lure).
-- **Healing is an order** (#330): tell a squad to heal (Heal on the Formation page, key L from any page; the
+- **Healing is an order** (#330): tell a squad to heal (Heal on the card, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order
   (`Game::heal`, `Cmd::Heal`). Nothing heals on its own.

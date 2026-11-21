@@ -86,8 +86,9 @@ pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
 pub(super) const CYCLE: KeyCode = KeyCode::Backquote;
 /// The card's Heal (Card 2, 2026-11-15 19:38Z; it was the squad panel's).
 /// Heal: owner 2026-11-15 07:41Z, "Healing should be a specific action".
-/// Since 2026-11-21 it sits on the Formation page, and L still heals from
-/// the main page (`App::squad_key`). On the build page L is the lure's, as
+/// Since 2026-11-21 it has Pump's slot on the main card (Pump is on the
+/// Build page), and L heals from the other pages too (`App::squad_key`),
+/// bar the build page, where L is the lure's, as
 /// every card key is that page's there. (The card's Lookouts, I, went
 /// 2026-11-21 with the lookouts.)
 pub(super) const HEAL_KEY: KeyCode = KeyCode::KeyL;
@@ -132,7 +133,7 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
         ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
-        (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the formation page)".into()),
+        (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
         ("Z".into(), "Hold fire: on and off; the fire button (X) picks defend or free fire".into()),
         ("Click a building".into(), "With no squad commanded: select it (its health and state; cancel, demolish, upgrade, switch)".into()),
         (k(FORMATION), "Formation page: blob, spread, line, wedge, column, ring (on the card)".into()),
