@@ -509,6 +509,19 @@ pub struct Settings {
     /// the CPU dish's slime still crawls through and the twin test turns
     /// it off). Params word 929, the ground row's second.
     pub deep_wall: bool,
+    /// **A wall holds until it is worn through** (`solid_walls=0` turns it
+    /// off; on, as here, 2026-11-21, the owner: "Sometimes slime is able to
+    /// get through my walls even when they have no burrowed a full hole
+    /// yet"). A walker's step, a birth beside its parent and a spore's
+    /// flight are stopped by any built wall cell they would cross, not only
+    /// one they would land in: a hasted step (a surge, a raid, a striker,
+    /// the heartbeat, 2 to 3 cells) jumped a wall 2 cells thick (scale 1),
+    /// and a slanting step slipped between two wall cells touching at a
+    /// corner. A stopped walker bites the wall cell it met. This engine's
+    /// own rule with no `BigParams` field (no CPU twin, the owner's card,
+    /// 11-17 19:21Z); built walls only, so twins on rock still match.
+    /// Params word 929's bit 1 (bit 0 is `deep_wall`).
+    pub solid_walls: bool,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -775,6 +788,7 @@ impl Settings {
             lure_pull: 0.0,
             tether: 0,
             deep_wall: true,
+            solid_walls: true,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1108,6 +1122,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
         "deep_wall" => s.deep_wall = int()? != 0,
+        // A step, birth or flight never crosses a built wall cell
+        // (`solid_walls=0` off; on by default, 2026-11-21).
+        "solid_walls" => s.solid_walls = int()? != 0,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -2449,7 +2466,9 @@ impl Engine {
         // Its second word is deep water as a wall (`Settings::deep_wall`,
         // 2026-11-20).
         b.extend(f32_bytes(&[t.deep_step]));
-        b.extend(u32_bytes(&[s.deep_wall as u32]));
+        // Bit 1: built walls are solid to a step (`Settings::solid_walls`,
+        // 2026-11-21).
+        b.extend(u32_bytes(&[s.deep_wall as u32 | (s.solid_walls as u32) << 1]));
         // The last two, the heartbeat's source (2026-11-20).
         let at = self.heart.map_or((0.0, 0.0), |h| h.at);
         b.extend(f32_bytes(&[at.0, at.1]));
