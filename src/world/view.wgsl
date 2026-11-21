@@ -998,6 +998,15 @@ fn film_h(x: f32, y: f32) -> f32 {
     let tx = f.x - floor(f.x); let ty = f.y - floor(f.y);
     return mix(mix(hm(ix, iy), hm(ix + 1, iy), tx), mix(hm(ix, iy + 1), hm(ix + 1, iy + 1), tx), ty);
 }
+// A mini-boss's skin over the point (`lump_mat`'s share, the material's
+// third word's second byte), bilinear between fine cells.
+fn lump_c(ix: i32, iy: i32) -> f32 { return f32((mcell[ridx(ix, iy)].z >> 8u) & 255u) / 255.0; }
+fn lump_on(x: f32, y: f32) -> f32 {
+    let f = fpos(x, y);
+    let ix = i32(floor(f.x)); let iy = i32(floor(f.y));
+    let tx = f.x - floor(f.x); let ty = f.y - floor(f.y);
+    return mix(mix(lump_c(ix, iy), lump_c(ix + 1, iy), tx), mix(lump_c(ix, iy + 1), lump_c(ix + 1, iy + 1), tx), ty);
+}
 fn film_th(x: f32, y: f32) -> f32 {
     return -log(1.0 - clamp(film_h(x, y) * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
 }
@@ -1115,6 +1124,8 @@ const GEM_FILM: f32 = 0.92;
 // (`shaded`), falling with the charge, so the food left under the slime
 // shows.
 const GEM_THROUGH: f32 = 0.55;
+// How much of a crystal a mini-boss's body over it hides (`shaded`).
+const LUMP_ON_GEM: f32 = 0.9;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -1187,7 +1198,7 @@ fn cells_height(x: f32, y: f32) -> f32 {
 // wound had (no wound is drawn, see `shaded`), for the specks' light.
 // `vis`: how much of the ground shows through the slime (1 bare, 0.05
 // under an opaque body), so `shaded` lays the plants and char under it.
-struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, body: f32, gem: f32, vis: f32 };
+struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, body: f32, gem: f32, vis: f32, lump: f32 };
 
 // A cell's material: the engine's colour for agar (mould, scent, species,
 // germ, grass all in it), the ground kinds in their own colours, scaled by
@@ -1421,7 +1432,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
 fn mat_pack(m: Mat) -> vec4<u32> {
     let a = vec4<u32>(vec4<f32>(clamp(m.albedo, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.gloss, 0.0, 1.0) * 255.0) + 0.5);
     let g = vec4<u32>(vec4<f32>(clamp(m.glow, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.body, 0.0, 1.0) * 255.0) + 0.5);
-    let v = u32(clamp(m.vis, 0.0, 1.0) * 255.0 + 0.5);
+    let v = u32(clamp(m.vis, 0.0, 1.0) * 255.0 + 0.5) | u32(clamp(m.lump, 0.0, 1.0) * 255.0 + 0.5) << 8u;
     return vec4<u32>(a.x | a.y << 8u | a.z << 16u | a.w << 24u, g.x | g.y << 8u | g.z << 16u | g.w << 24u, v, 0u);
 }
 
@@ -1434,6 +1445,7 @@ fn mc(ix: i32, iy: i32) -> Mat {
     m.body = byte(p.y, 3u);
     m.gem = 0.0;
     m.vis = f32(p.z & 255u) / 255.0;
+    m.lump = f32((p.z >> 8u) & 255u) / 255.0;
     return m;
 }
 
@@ -1776,7 +1788,7 @@ const SLICK_GLINT: vec3<f32> = vec3<f32>(100.0, 110.0, 105.0);
 // members a cell the sharp window holds about one member, so the ratio is
 // shot noise: about 30% of the body crossed the threshold by chance and
 // re-rolled every frame, and the body boiled. The wide count is steady.
-struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32, dens: f32 };
+struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32, dens: f32, pack: f32 };
 
 // The mini-bosses', the fruit's and the heart's colours, by the view's
 // kind (`LumpLook`: 1 ember, 2 violet, 3 ink, 4 bone, 5 fruit, 6 mortar,
@@ -1892,6 +1904,10 @@ const LUMP_DRINK: f32 = 1.5;
 // its own scale; at 0.5 a cell the cover was 0.98 at 2 members a cell, so
 // a denser body read the same.
 const LUMP_N: f32 = 0.35;
+// How much more a lump rises as it packs past its cover (`lump_here`), and
+// the members a cell over which it does.
+const LUMP_PACK: f32 = 2.0;
+const LUMP_PACK_N: vec2<f32> = vec2<f32>(0.5, 2.2);
 // The cover over which a held lump's own members carry its look whatever
 // the sheet round them (`lump_here`): 0.2 is 0.08 members a cell, 0.8 is
 // 0.56.
@@ -1913,7 +1929,7 @@ const LUMP_SPECK: f32 = 0.75;
 // not on a line between their centres).
 fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     var l: Lump;
-    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0; l.fill = 0.0; l.dens = wide;
+    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0; l.fill = 0.0; l.dens = wide; l.pack = 0.0;
     if (P.n_lumps == 0u || wide <= 1e-3) { return l; }
     var best = 1e30;
     var bk = 0u;
@@ -1963,6 +1979,16 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     // span of 30 cells and more: at the full rise its edge was a cliff
     // that shaded as dark steps a cell wide at zoom 12. It swells low.
     if (l.look == 5u) { l.rise *= FRUIT_RISE; }
+    // Past the cover's saturation (exit test 2 pass, 11-21): a gathering
+    // or sitting body packs 0.6 to 2 members a cell, where `cover` is 1
+    // everywhere, so by the cover alone it was one even slab the light
+    // washed pale. It keeps rising with its members, so where they pack it
+    // swells and where they thin it dips, and the sheen runs over that.
+    // Added to the cell's height after `cell_height`'s saturating curve,
+    // as set slime's rise is: added to `rise` before it, the curve took
+    // it flat (raised 1.6 and 3.0 that way, the slab did not change).
+    // Not the fruit's: it packs its own way and swells low on purpose.
+    if (l.look != 5u) { l.pack = LUMP_PACK * l.share * smoothstep(LUMP_PACK_N.x, LUMP_PACK_N.y, wide); }
     return l;
 }
 
@@ -1991,6 +2017,7 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
     let skin = sk * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
     m.albedo = mix(m.albedo, skin, s);
     m.gloss = mix(m.gloss, min(LUMP_GLOSS + 0.1 * rim, 1.0), s);
+    m.lump = max(m.lump, s);
     m.glow = m.glow * (1.0 - s) + lump_glow(l.look, l.fill) * core * l.core;
     return m;
 }
@@ -2262,7 +2289,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         let hh = cell_height(ix, iy, th_h);
-        hcell[i] = hh.x + set_rise(ss, wide);
+        hcell[i] = hh.x + set_rise(ss, wide) + lump.pack;
         hcell[P.rw * P.rh + i] = hh.y;
         hcell[2u * P.rw * P.rh + i] = ground_pack(ground_cell(ix, iy).col);
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
@@ -2303,7 +2330,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     mt = set_mat(mt, ss, wide);
     mt = dormant_mat(mt, dormant_share(gid.x, gid.y));
     mt = scar_mat(mt, scar_share(wx, wy), tm);
-    hcell[i] = h.x + set_rise(ss, wide);
+    hcell[i] = h.x + set_rise(ss, wide) + lump.pack;
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
     mcell[i] = mat_pack(mt);
@@ -3360,7 +3387,14 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // full crystal, so a covered crystal still glows cyan.
             let through = glow * (1.0 - 0.8 * film) + vec3<f32>(8.0, 40.0, 50.0) * v * depth * film;
             let gc = mix(rock * rim, on, film) + through;
-            c = mix(c, gc, cover);
+            // A mini-boss on a crystal stands over it (exit test 2 pass,
+            // 11-21): a raised body, it is drawn as off the crystal, with
+            // its own relief and sheen, and the crystal shows round it and
+            // a little through its thin edge. Until then it was a film on
+            // the faces like the sheet's, and a wanderer rooted on its
+            // crystal was hidden but for a few beads at the hexagon's rim.
+            let over = LUMP_ON_GEM * smoothstep(0.15, 0.7, lump_on(x, y));
+            c = mix(c, gc, cover * (1.0 - over));
         }
         if (cover < 1.0 && hot > 0.0) {
             // Where its rim is being taken, the light spills a little onto
