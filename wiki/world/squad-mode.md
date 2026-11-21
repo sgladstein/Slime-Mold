@@ -149,7 +149,9 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   lower), trips no slower on the probe's maps.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
-  column ends once its tail is near the anchor
+  column ends once its tail is near the anchor; since 2026-11-21 no
+  column place lies past a wall from its trail (60 soldiers leaving a
+  walled base by a 4-cell door stood inside for good; now out in 26 s)
   ([report](../../Reports/narrow-squads-2026-11-15/README.md),
   [rework](../../Reports/squad-movement-2026-11-16/README.md)).
 - **Building** is shared with the RTS round: ghosts soldiers raise from reach 6,

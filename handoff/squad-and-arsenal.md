@@ -69,8 +69,13 @@ Test with `hand=movetour,N,clear,fire` or `examples/pathprobe fire=6`.
 inner cells skip bounds checks, same distances), and stale maps rebuild at
 a quarter pace when no goal waits: planet 3's `pump_maps` spikes of 5 to
 7 ms are now 4.2 at most (a new order's map), stale steps under 1 ms.
-Next on this thread: how fast a squad answers a new order, and how
-soldiers path round your own buildings and walls.
+11-21: a squad answers a new order in 0.07 s median (sent) and 0.2 s
+(steered about-turn) on the 24 maps; nothing to fix. A squad of 60 sent
+out of a walled base by a 4-cell door stood inside for good: the
+column's places fell past the base's walls (`column_places` now keeps
+each on its trail point's side, `a_squad_leaves_a_walled_base_by_its_
+door`; `fort_numbers` is the harness). Turrets and pumps don't block
+soldiers at all (only walls, doors, crystals and the bulwark do).
 
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or
