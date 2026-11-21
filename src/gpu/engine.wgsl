@@ -800,9 +800,16 @@ fn deep_shut(j: u32) -> bool { return (P.deep_wall & 1u) != 0u && soil(j) == SOI
 // the hole closes from the rim in. Until then the hole refilled in a
 // median 0.5 to 0.9 s while its ember lasted 2 s
 // (Reports/larder-crater-2s-2026-11-14.md). No CPU twin.
+// A shot's crater only: one whose countdown is still over `crater`, the
+// guns' (2 s), was written by a blast, a mine, det cord or the Blast card
+// (20 s, `kcs`) and is never shut, else det cord stood as a wall to the
+// slime for 19 s and a blast left a no-go disc (the review lane, 11-21).
+// Such a crater still passes through the shut window in its last 2 s and
+// is shut for about 1 s then, as the cells cannot tell who wrote them.
 fn crater_shut(j: u32) -> bool {
     let t = P.deep_wall >> 16u;
-    return t != 0xFFFFu && crater_at(j) > f32(t);
+    let c = crater_at(j);
+    return t != 0xFFFFu && c > f32(t) && c <= P.crater;
 }
 // **A wall holds until it is worn through** (`solid_walls`, 2026-11-21,
 // the owner: "Sometimes slime is able to get through my walls even when
@@ -1128,7 +1135,9 @@ fn lump_flinch(here: u32) -> vec3<f32> {
     let t = (P.deep_wall >> 3u) & 0x1FFFu;
     if (t == 0x1FFFu || here == NONE) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let c = crater_at(here);
-    if (c <= f32(t)) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    // A shot's crater only, as `crater_shut`: in a blast's 20 s crater a
+    // member flinched for 19 s.
+    if (c <= f32(t) || c > P.crater) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let x = i32(here % P.w);
     let y = i32(here / P.w);
     var best = c;

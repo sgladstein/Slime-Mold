@@ -330,14 +330,21 @@ while Squad asked to keep it.
    members a cell, not the fruit) is now added after the curve, as set
    slime's rise is, and it shows folds. A mini-boss on a crystal is drawn
    over it (`LUMP_ON_GEM` 0.9, its share in the material's third word,
-   `lump_on`). Open: a held lump's rim steps by the cell on one side at
-   zoom 12 (run 1:3, `boss=85,310,85`, 95 s; old and new alike). Also open: a tan patch with cell-stepped edges over planet
+   `lump_on`). A lump's strays in a thin sheet drew a flat skin band
+   stepped by the cell along its rim (run 1:3, `boss=85,310,85`, 95 s): the
+   fruit's fade by its members' cover now holds for every lump. Also open: a tan patch with cell-stepped edges over planet
    3's strikers (run 1:3, 101 s on c05df943; not seen on main since #670);
    the fallen: inked and rim-lit as the living are (`soldier`'s dead
    branch; size kept, a body lying down is that long; its tile is still
    sprite A's, a gen-AI fallen tile would match the skins). Runs are
    repeatable only with identical `at=` lists (a different frame list
    changes the game).
+0f. Look C on planets 1 to 3 (11-21, Direction's next): filmed at the
+   landing and 3:00, zoom 6 and 12, run 1, `hand=strat:bot`. Planets 1
+   (meadow) and 3 (fen) were the same dark slate at play zoom; their soil
+   tints (`biome_tint`) are now an umber loam and an olive mud at the same
+   value. Still to look at: planet 1 at 3:00 is mostly grey sand ripples
+   and blue channels (its soil kinds, not its plain soil).
 1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber
