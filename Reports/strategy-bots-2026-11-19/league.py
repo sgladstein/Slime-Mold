@@ -476,13 +476,44 @@ def log(msg):
     """To stderr, and to pc/worker-MACHINE.log, which goes up with the
     results so the log can be read from the branch."""
     line = time.strftime("%Y-%m-%d %H:%M:%S ") + msg
-    print(line, file=sys.stderr, flush=True)
+    # The file first: a closed console window fails the print (11-21).
     try:
         os.makedirs(OUT, exist_ok=True)
         with open(os.path.join(OUT, f"worker-{os.environ.get('COMPUTERNAME', 'local')}.log"), "a") as f:
             f.write(line + "\n")
     except OSError:
         pass
+    try:
+        print(line, file=sys.stderr, flush=True)
+    except (OSError, ValueError):
+        pass
+
+def watch_exits():
+    """Log why the worker stops. 11-21: on 11-20 at 23:22 local the worker
+    and the game it was running died together with no traceback, an empty
+    stderr file and no Windows error, and the PC had not restarted; the
+    likeliest cause is its console window (or the shell it ran in) being
+    closed, which ends every process in that console. So: an uncaught
+    error in any thread, a hard crash (faulthandler), and on Windows the
+    console's close, log-off and shut-down events go to the worker log."""
+    import faulthandler, threading, traceback
+    sys.excepthook = lambda t, v, b: log("worker: stopped by an error:\n" + "".join(traceback.format_exception(t, v, b)))
+    threading.excepthook = lambda a: log(f"worker: error in {a.thread.name if a.thread else 'a thread'}:\n" + "".join(traceback.format_exception(a.exc_type, a.exc_value, a.exc_traceback)))
+    try:
+        os.makedirs(OUT, exist_ok=True)
+        watch_exits.crash = open(os.path.join(OUT, f"worker-{os.environ.get('COMPUTERNAME', 'local')}.log"), "a")
+        faulthandler.enable(watch_exits.crash)
+    except OSError:
+        pass
+    if os.name == "nt":
+        import ctypes
+        why = {0: "Ctrl+C", 1: "Ctrl+Break", 2: "its console window was closed", 5: "Windows logged off", 6: "Windows is shutting down"}
+        @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
+        def on_event(ev):
+            log(f"worker: stopping: {why.get(ev, f'console event {ev}')}")
+            return 0  # and let Windows (or Python, for Ctrl+C) go on
+        watch_exits.handler = on_event  # kept, or Windows calls freed memory
+        ctypes.windll.kernel32.SetConsoleCtrlHandler(on_event, 1)
 
 BOT_KEYS = ("league=", "gunlab=", "runbot=", "look=", "bench=")
 
@@ -771,7 +802,8 @@ def search_work(cfg_path, chunk):
     return pending(tag + "-jobs.txt", tag + ".jsonl")[:chunk], tag + ".jsonl"
 
 def cmd_worker(a):
-    log(f"worker: started in {ROOT}, {a.workers} games at once")
+    watch_exits()
+    log(f"worker: started in {ROOT}, {a.workers} games at once (pid {os.getpid()})")
     build()
     last = False
     while sync(a.bin, a.push, now=last):
