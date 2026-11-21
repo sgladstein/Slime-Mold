@@ -65,6 +65,10 @@ squads at any distance ([report](../Reports/pathfinding-2026-11-20/README.md)).
 bursts and from soldiers that feel heat, 15 s each, and a coarse plan
 round them. Fire on the way 413 -> 274 on the 24 maps, trips no slower.
 Test with `hand=movetour,N,clear,fire` or `examples/pathprobe fire=6`.
+11-21: walking maps build in about 60% of the time (`MapBuild::advance`'s
+inner cells skip bounds checks, same distances), and stale maps rebuild at
+a quarter pace when no goal waits: planet 3's `pump_maps` spikes of 5 to
+7 ms are now 4.2 at most (a new order's map), stale steps under 1 ms.
 Next on this thread: how fast a squad answers a new order, and how
 soldiers path round your own buildings and walls.
 
