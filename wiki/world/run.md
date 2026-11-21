@@ -165,6 +165,8 @@ Since 2026-11-20 night (the owner, 23:32Z, after a planet 1 on a good map: "We d
 | 3 | Trunk | waves and the late lunge, the Pinwheel, the strikers in full |
 | 4 | Swarmer | the slime's mortar and the last-stand heart |
 
+What each of planets 1 to 3 does to you by about 2:00 (11-21, exit test 4, one clip a planet): planet 1 smells your pumps and eats them, planet 2's threads find the squad and mini-bosses form, planet 3's edge condenses into strikers ([report](../../Reports/planet-things-2026-11-21/README.md)).
+
 Until then the strikers, waves, late lunge and last-stand heart, built for the big armies of planets 2 and up, all played from planet 1.
 
 Fruiting moved to planet 2 on 11-21 after his play that night (05:21Z: "I just played planet 1 and their was mini-bosses. There were these events where the slime dispersed across the map and surrounded me randomly, halving the squad each time"). His log, on a build with the fruit fixes: at 8:44 a fruit burst raised the slime's mass from 14,045 to 17,936 in 3 s and 21 of his 28 soldiers died in those 3 s.
