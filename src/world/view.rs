@@ -349,13 +349,37 @@ fn compile(device: &wgpu::Device, bgl: &wgpu::BindGroupLayout, source: &str) -> 
     let scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
     let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(source.into()) });
     let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(bgl)], immediate_size: 0 });
-    let pipe = |entry_point: &str| {
-        device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
-    };
-    let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep"), pipe("drain")];
     if let Some(e) = crate::gpu::block_on(scope.pop()) {
         return Err(e.to_string());
     }
+    // The six pipelines at once, a thread each (GTX 1070, 11-21: one
+    // after another a look change took 3.1 s to show in the viewer). Each
+    // thread keeps its own error scope.
+    let made: Vec<Result<wgpu::ComputePipeline, String>> = std::thread::scope(|sc| {
+        let jobs: Vec<_> = ["base", "draw_marks", "compose", "draw_specks", "prep", "drain"]
+            .into_iter()
+            .map(|entry_point| {
+                let (module, layout) = (&module, &layout);
+                sc.spawn(move || {
+                    let scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
+                    let t = std::time::Instant::now();
+                    let p = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(layout), module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None });
+                    // `LARDER_COMPILE_MS=1`: each pipeline's ms (llvmpipe 11-21: base
+                    // 1166 of 1190; the other five 3 to 202).
+                    if std::env::var_os("LARDER_COMPILE_MS").is_some() {
+                        eprintln!("view compile: {entry_point} {:.0} ms", t.elapsed().as_secs_f64() * 1e3);
+                    }
+                    match crate::gpu::block_on(scope.pop()) {
+                        Some(e) => Err(e.to_string()),
+                        None => Ok(p),
+                    }
+                })
+            })
+            .collect();
+        jobs.into_iter().map(|j| j.join().unwrap_or_else(|_| Err("a view pipeline's compile panicked".into()))).collect()
+    });
+    let pipes: Vec<wgpu::ComputePipeline> = made.into_iter().collect::<Result<_, _>>()?;
+    let pipes: [wgpu::ComputePipeline; 6] = pipes.try_into().map_err(|_| "six view pipelines".to_string())?;
     Ok(Shaded(pipes))
 }
 
