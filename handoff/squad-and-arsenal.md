@@ -60,6 +60,13 @@ on headless runs, `hand=steer@X,Y[,N]`, and
 `Reports/pathfinding-2026-11-20/tools/` (faults, sign test, track plots).
 Routing round slime was tried (11-21) and not kept (dead-ends); bots merge
 squads at any distance ([report](../Reports/pathfinding-2026-11-20/README.md)).
+11-21: a squad on a plain move walks round fire (`fireway.rs`,
+`Rules::fireway`, on; Direction's call): fire marks from burn and light
+bursts and from soldiers that feel heat, 15 s each, and a coarse plan
+round them. Fire on the way 413 -> 274 on the 24 maps, trips no slower.
+Test with `hand=movetour,N,clear,fire` or `examples/pathprobe fire=6`.
+Next on this thread: how fast a squad answers a new order, and how
+soldiers path round your own buildings and walls.
 
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or

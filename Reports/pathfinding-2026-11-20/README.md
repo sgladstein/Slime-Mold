@@ -183,3 +183,80 @@ Tools added for this:
 
 The CPU probe's slime of 25,000 walkers touched sent squads on only 1 to 3%
 of the way, against 10% in the real game. Measure this on the GPU.
+
+## Walking round fire on a move: kept (2026-11-21)
+
+Direction's call: a soldier standing to fight in fire stays (burning is the
+price of the Needle Blast deck), but a squad given a move order should walk
+round burning ground where there is a way round. It didn't: squads walked
+straight through. Built and kept, on by default (`fireway.rs`,
+`Rules::fireway`, `set=fireway=0` turns it off).
+
+**How it works.** The GPU sends back no fire field, only each soldier's
+heat, so the game keeps fire marks: a burn or light burst (`Rounds::flush`)
+or a soldier feeling heat (`turn.rs`) marks its spot hot for 15 s. A squad
+on a plain move whose next 40 cells cross a mark plans a way round once a
+game second on 4-cell squares. A square is hot if its middle is within the
+mark's reach plus 2 cells and a quarter of the squad's width, and costs
+twice a cold one. The anchor heads for the furthest point of that way it can
+walk to in a straight line crossing no more hot squares than the way does.
+Within 10 cells of where it was sent it walks straight in. Attack-moves,
+drains, steering and standing squads are unchanged.
+
+**Measured.**
+- CPU probe (`examples/pathprobe fire=6`, a 6-cell fire lit halfway along
+  every move order, marked only where it caught), the 24 maps, 120 s
+  ([fire-compare.txt](data/fire-compare.txt), [tools/fire.py](tools/fire.py)):
+
+  | Measure | Off | On | Maps lower / higher | Sign p |
+  |---|---|---|---|---|
+  | Health lost to fire on the way (no walkers on the soldier) | 413 | 274 | 24 / 0 | < 0.001 |
+  | Health lost to fire, all | 1400 | 1212 | 22 / 2 | < 0.001 |
+  | Trip time, median s | 10.6 | 10.6 | 12 / 11 | 1.0 |
+  | Move trips finished | 16.3 | 15.9 | 9 / 0 | 0.004 |
+
+  Both burn lines and trips finished survive a Bonferroni correction over
+  four. A way round is a little longer, so a few trips that go round don't
+  finish before the probe sends the squad on (every 20 s).
+- Real game (GPU, run seed 1795038793, 30 soldiers sent crystal to crystal
+  with a burn lit halfway on ground, `hand=movetour,30,clear,fire`, 90 s;
+  one run each, and the tours part after the first trip):
+  - Planet 1: health lost to fire while walking 515 off, 337 on; standing
+    180 against 53. Trips took longer (median 3.3 s against 6.9 s; 16
+    against 13 trips): the squad tours a tight ring of crystals at the
+    map's west edge and the fires add up there.
+  - Planet 2: the burns barely caught (8 health off, none on); 10 trips
+    each, median 5.1 s against 6.4 s.
+
+Film, the second trip on planet 1 (10 to 23 s), the burn lit halfway along
+it, off on the left: [zoom 6](films/fire-pair.mp4),
+[zoom 12](films/fire-z12-pair.mp4), stills [zoom 6](films/fire-still.jpg)
+and [zoom 12](films/fire-z12-still.jpg). Off, the squad walks through the
+burning ground between two crystals and loses 139 health to fire on that
+trip; on, it goes south of the crystal and loses 20.
+
+**Tried on the way, not kept.**
+- *Wider marks and dearer fire.* Half the squad's width plus half a square,
+  a hot square costing 3: fire on the way 248 on the 24 maps (against 274
+  now), but trips took 11.4 s against 10.6, and on planet 1 of the real
+  game 12.2 s against 6.9. A cost of 6 and 3 cells of spread went further
+  still (13.4 trips finished a map against 16.3 off). Half the squad's
+  width with no half square: 282, no better than a quarter's 274. The lean
+  marks keep five sixths of the gain at no cost in trip time; the flank of
+  a squad of 15 may brush a fire's edge (its nearest member 4.5 cells from
+  a 6-cell fire's middle, `a_squad_sent_past_fire_walks_round_it`).
+- *Any straight cut once the way must cross fire* (the first version): on
+  planet 1 of the real game, with fire between close crystals covering
+  where the squad was sent, walking burn was 471 against 515 off. Now a cut
+  crosses no more hot squares than the way it stands for.
+- *No point when the line to the next square clips a hot corner*: the
+  squad then walked straight at where it was sent, into the fire, for
+  2 s at its edge (seen in the film). It takes the next square's point.
+
+The test hand first lit some of its fires inside crystals, where nothing
+burns but the mark still turned the squad; it now lights them on the
+nearest ground.
+
+Frame cost: a squad that sees fire on its way plans on squares a sixteenth
+the dish's cells (about 4,000 on planet 1) once a game second; squads with
+no fire ahead check 40 cells of line.

@@ -380,6 +380,8 @@ impl<W: World> Game<W> {
         let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
         let mut empty = Vec::new();
+        // Where soldiers felt fire this frame (`Game::mark_hot`).
+        let mut felt = Vec::new();
         self.last_takes.clear();
         for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
             if let Some(c) = *c {
@@ -439,6 +441,7 @@ impl<W: World> Game<W> {
                         }
                     }
                     if u.heat > 0.0 {
+                        felt.push((ask.x, ask.y));
                         s.hp -= r.fire_hurt * u.heat * dt;
                         if s.hp <= 0.0 {
                             self.fell_burned += u32::from(s.alive);
@@ -472,6 +475,9 @@ impl<W: World> Game<W> {
         }
         for (k, i) in empty {
             self.after_dry(k, Some(i));
+        }
+        for p in felt {
+            self.mark_hot(p, 0.0);
         }
         self.check_core();
         self.time_surges(out.units.iter().map(|u| u.took as f64).sum());

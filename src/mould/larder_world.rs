@@ -74,6 +74,7 @@ mod steer;
 mod cover;
 mod doors;
 mod bulwark;
+mod fireway;
 mod gear;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
@@ -133,6 +134,12 @@ struct Paths {
     /// Whether the map being built went stale while it was built (a wall
     /// went up): it joins `stale` when done.
     build_stale: bool,
+    /// Which coarse squares a soldier can mostly stand on (`fireway.rs`),
+    /// until the maps go stale.
+    coarse: Option<Vec<bool>>,
+    /// Fire seen lately: where, how far round (fine cells), and the tick
+    /// it cools (`Game::mark_hot`).
+    hot: Vec<((f32, f32), f32, u64)>,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.
@@ -951,7 +958,8 @@ impl<W: World> Game<W> {
             let sq = self.squads[q];
             let (ax, ay) = sq.anchor.unwrap_or((f32::NAN, f32::NAN));
             let (dx, dy) = sq.dest.unwrap_or((f32::NAN, f32::NAN));
-            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8)?;
+            let (vx, vy) = sq.via.unwrap_or((f32::NAN, f32::NAN));
+            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{},{:.2},{:.2}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8, vx / s, vy / s)?;
         }
         Ok(())
     }
