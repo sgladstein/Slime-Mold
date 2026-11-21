@@ -1,0 +1,62 @@
+== card before: 1936 MHz, 4006 MHz, 66, 48.84 W
+== m1-planet1-passes-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:1 mode=squads bench=120 hand=strat:rush,aim=6 spread=0 passes=30) started 2026-11-20T19:13:37.3803583-06:00
+larder-world machine at the start: RAM 3.3 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+STRAT t 0 out mould 13119 soldiers 9 hp 1.00 bank 0 killed 0 turret 0 pumps 0 buildings 0
+STRAT t 10 out mould 12776 soldiers 9 hp 0.96 bank 159 killed 359 turret 0 pumps 0 buildings 0
+STRAT t 20 out mould 12285 soldiers 10 hp 0.95 bank 316 killed 717 turret 0 pumps 0 buildings 0
+STRAT t 30 out mould 12018 soldiers 13 hp 0.95 bank 71 killed 899 turret 0 pumps 0 buildings 0
+STRAT t 40 out mould 11870 soldiers 15 hp 0.94 bank 220 killed 990 turret 0 pumps 0 buildings 0
+STRAT t 50 out mould 11622 soldiers 18 hp 0.94 bank 132 killed 1190 turret 0 pumps 0 buildings 0
+STRAT t 60 out mould 11280 soldiers 21 hp 0.94 bank 398 killed 1480 turret 0 pumps 0 buildings 0
+STRAT t 70 out mould 10873 soldiers 25 hp 0.94 bank 340 killed 1839 turret 0 pumps 0 buildings 0
+STRAT t 80 out mould 10093 soldiers 30 hp 0.94 bank 104 killed 2600 turret 0 pumps 0 buildings 0
+STRAT t 90 out mould 9515 soldiers 34 hp 0.94 bank 355 killed 3020 turret 0 pumps 0 buildings 0
+STRAT t 100 out mould 8943 soldiers 39 hp 0.94 bank 324 killed 3545 turret 0 pumps 0 buildings 0
+STRAT t 110 out mould 8808 soldiers 45 hp 0.95 bank 170 killed 3665 turret 0 pumps 0 buildings 0
+larder-world bench: planet:1:1 seed 14804443570064328175, 400 x 248 cells, 26239 slots, one walker a cell, scale 2 walkers 12860; hand strat:rush,aim=6, 120 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 100.5 MB for 400 x 248 cells (1013 bytes a cell), the biggest 16.7 MB
+  7200 frames, 1800 game steps; 0.07 read-backs a step, 0.00 waits a step (0.00 ms a step waiting); steps finished once in 1799, when the next was due 0
+  every frame (7200 of them), ms: frame p50 5.15 p95 6.98 max 36.26; step  p50 0.03 p95 0.90 max 5.37; prepare  p50 0.20 p95 0.24 max 2.74; record  p50 0.10 p95 0.13 max 3.17; GPU tail  p50 4.82 p95 5.73 max 35.83
+  frames with a step (1800 of them), ms: frame p50 6.64 p95 7.43 max 33.04; step  p50 0.83 p95 1.05 max 5.37; prepare  p50 0.20 p95 0.23 max 0.74; record  p50 0.11 p95 0.12 max 1.44; GPU tail  p50 5.50 p95 6.04 max 31.39
+  after the first game second (7140 frames), ms: frame max 36.26; step max 3.96; prepare max 1.10
+  longest frames, at game time: 92.43 s: 36.26 (step 0.01, prepare 0.26, record 0.17, tail 35.83); 92.45 s: 33.04 (step 1.18, prepare 0.28, record 0.19, tail 31.39, stepped); 92.47 s: 32.79 (step 0.06, prepare 0.27, record 0.23, tail 32.23)
+  ground refresh: 119 of them, ms: mean 0.35 max 0.48, of which the read-back at most 0.26; 3661 live cells
+  GPU (timestamps, median of 1800 steps): the step's ticks 0.74 ms, its drawing 0.18 ms
+  t 120 s: mould 8707, soldiers 46, buildings 0, harvested 11950, shots 2277, killed 3824
+  GPU a step, every pass timed alone (median of 30 steps): 0.890 ms in all
+    shots        1 a step    0.015 ms a step    0.015 ms a run    1.7%, on 29 of 30 steps
+    strike       1 a step    0.009 ms a step    0.009 ms a run    1.0%, on 29 of 30 steps
+    cut          1 a step    0.005 ms a step    0.005 ms a run    0.5%, on 29 of 30 steps
+    shout        1 a step    0.007 ms a step    0.007 ms a run    0.8%, on 29 of 30 steps
+    smell        1 a step    0.041 ms a step    0.041 ms a run    4.6%
+    sense        2 a step    0.096 ms a step    0.049 ms a run   10.8%
+    walk         2 a step    0.016 ms a step    0.008 ms a run    1.8%
+    walls        2 a step    0.009 ms a step    0.005 ms a run    1.0%
+    fate         2 a step    0.009 ms a step    0.005 ms a run    1.1%
+    fly          2 a step    0.010 ms a step    0.005 ms a run    1.1%
+    alight       2 a step    0.005 ms a step    0.002 ms a run    0.6%
+    eat          2 a step    0.008 ms a step    0.004 ms a run    0.9%
+    pilesum      4 a step    0.023 ms a step    0.006 ms a run    2.6%
+    flow         2 a step    0.005 ms a step    0.003 ms a run    0.6%
+    ngather      2 a step    0.012 ms a step    0.006 ms a run    1.3%
+    nspread      2 a step    0.018 ms a step    0.009 ms a run    2.1%
+    nab          2 a step    0.016 ms a step    0.008 ms a run    1.8%
+    nhear        2 a step    0.010 ms a step    0.005 ms a run    1.2%
+    esum         2 a step    0.011 ms a step    0.005 ms a run    1.2%
+    egain        2 a step    0.028 ms a step    0.014 ms a run    3.1%
+    ripen        2 a step    0.029 ms a step    0.014 ms a run    3.2%
+    life         2 a step    0.017 ms a step    0.008 ms a run    1.9%
+    breed        2 a step    0.012 ms a step    0.006 ms a run    1.4%
+    born         2 a step    0.010 ms a step    0.005 ms a run    1.1%
+    trail        2 a step    0.164 ms a step    0.082 ms a run   18.5%
+    scent        2 a step    0.098 ms a step    0.049 ms a run   11.0%
+    plant        1 a step    0.029 ms a step    0.029 ms a run    3.3%
+    fire         1 a step    0.038 ms a step    0.038 ms a run    4.3%
+    pcopy        1 a step    0.007 ms a step    0.007 ms a run    0.8%
+    firekill     1 a step    0.006 ms a step    0.006 ms a run    0.7%
+    units        1 a step    0.070 ms a step    0.070 ms a run    7.9%
+    harvest      1 a step    0.032 ms a step    0.032 ms a run    3.6%
+    draw         1 a step    0.026 ms a step    0.026 ms a run    2.9%
+  machine at the end: RAM 3.2 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== m1-planet1-passes-run exit 0 at 2026-11-20T19:14:19.0416966-06:00

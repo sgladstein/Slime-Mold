@@ -1,0 +1,67 @@
+== card before: 1936 MHz, 4006 MHz, 65, 48.56 W
+== m1-planet3-passes-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=120 hand=strat:rush,aim=6 spread=0 passes=30) started 2026-11-20T19:14:54.0877356-06:00
+larder-world machine at the start: RAM 3.3 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+STRAT t 0 out mould 43304 soldiers 9 hp 1.00 bank 0 killed 0 turret 0 pumps 0 buildings 0
+STRAT t 10 out mould 43259 soldiers 9 hp 0.99 bank 0 killed 251 turret 0 pumps 0 buildings 0
+STRAT t 20 out mould 39835 soldiers 9 hp 0.66 bank 264 killed 3796 turret 0 pumps 0 buildings 0
+STRAT t 30 out mould 38402 soldiers 7 hp 0.74 bank 220 killed 5152 turret 0 pumps 0 buildings 0
+STRAT t 40 out mould 37458 soldiers 7 hp 0.83 bank 131 killed 6090 turret 0 pumps 0 buildings 0
+STRAT t 50 out mould 36669 soldiers 8 hp 0.80 bank 68 killed 6772 turret 0 pumps 0 buildings 0
+STRAT t 60 out mould 35824 soldiers 10 hp 0.83 bank 2 killed 7529 turret 0 pumps 0 buildings 0
+STRAT t 70 out mould 35041 soldiers 12 hp 0.85 bank 7 killed 8201 turret 0 pumps 0 buildings 0
+STRAT t 80 out mould 34396 soldiers 14 hp 0.87 bank 72 killed 8695 turret 0 pumps 0 buildings 0
+STRAT t 90 out mould 18756 soldiers 16 hp 0.88 bank 176 killed 9236 turret 0 pumps 0 buildings 0
+STRAT t 100 out mould 15976 soldiers 18 hp 0.90 bank 328 killed 9273 turret 0 pumps 0 buildings 0
+STRAT t 110 out mould 15910 soldiers 21 hp 0.91 bank 292 killed 9282 turret 0 pumps 0 buildings 0
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 120 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 121.5 MB for 512 x 320 cells (742 bytes a cell), the biggest 16.7 MB
+  7200 frames, 1800 game steps; 0.22 read-backs a step, 0.00 waits a step (0.00 ms a step waiting); steps finished once in 1799, when the next was due 0
+  every frame (7200 of them), ms: frame p50 4.69 p95 7.15 max 12.10; step  p50 0.03 p95 1.09 max 6.16; prepare  p50 0.19 p95 0.23 max 2.51; record  p50 0.10 p95 0.13 max 1.39; GPU tail  p50 4.35 p95 5.63 max 6.88
+  frames with a step (1800 of them), ms: frame p50 6.70 p95 10.89 max 12.10; step  p50 0.80 p95 4.98 max 6.16; prepare  p50 0.19 p95 0.23 max 0.72; record  p50 0.12 p95 0.13 max 1.39; GPU tail  p50 5.57 p95 5.73 max 6.77
+  after the first game second (7140 frames), ms: frame max 12.10; step max 6.16; prepare max 1.09
+  longest frames, at game time: 98.12 s: 12.10 (step 6.16, prepare 0.23, record 0.13, tail 5.59, stepped); 113.12 s: 11.79 (step 5.28, prepare 0.22, record 0.12, tail 6.17, stepped); 113.32 s: 11.76 (step 5.26, prepare 0.22, record 0.13, tail 6.15, stepped)
+  ground refresh: 119 of them, ms: mean 0.32 max 0.49, of which the read-back at most 0.25; 3148 live cells
+  GPU (timestamps, median of 1800 steps): the step's ticks 1.27 ms, its drawing 0.15 ms
+  t 120 s: mould 15890, soldiers 22, buildings 0, harvested 5677, shots 708, killed 9573
+  GPU a step, every pass timed alone (median of 30 steps): 1.467 ms in all
+    shots        1 a step    0.010 ms a step    0.015 ms a run    0.7%, on 15 of 30 steps
+    strike       1 a step    0.008 ms a step    0.009 ms a run    0.6%, on 15 of 30 steps
+    cut          1 a step    0.002 ms a step    0.002 ms a run    0.1%, on 15 of 30 steps
+    shout        1 a step    0.002 ms a step    0.003 ms a run    0.1%, on 15 of 30 steps
+    smell        1 a step    0.025 ms a step    0.025 ms a run    1.7%
+    lumpclear    2 a step    0.005 ms a step    0.003 ms a run    0.4%
+    lumpsum      2 a step    0.018 ms a step    0.010 ms a run    1.2%
+    sense        2 a step    0.363 ms a step    0.181 ms a run   24.7%
+    walk         2 a step    0.035 ms a step    0.017 ms a run    2.4%
+    fate         2 a step    0.018 ms a step    0.009 ms a run    1.2%
+    fly          2 a step    0.011 ms a step    0.005 ms a run    0.7%
+    alight       2 a step    0.007 ms a step    0.003 ms a run    0.4%
+    eat          2 a step    0.009 ms a step    0.004 ms a run    0.6%
+    pilesum      4 a step    0.022 ms a step    0.006 ms a run    1.5%
+    flow         2 a step    0.005 ms a step    0.003 ms a run    0.4%
+    ngather      2 a step    0.025 ms a step    0.013 ms a run    1.7%
+    nspread      2 a step    0.026 ms a step    0.013 ms a run    1.8%
+    nab          2 a step    0.022 ms a step    0.011 ms a run    1.5%
+    nhear        2 a step    0.027 ms a step    0.013 ms a run    1.8%
+    esum         2 a step    0.021 ms a step    0.010 ms a run    1.4%
+    egain        2 a step    0.055 ms a step    0.027 ms a run    3.8%
+    ripen        2 a step    0.039 ms a step    0.020 ms a run    2.7%
+    life         2 a step    0.037 ms a step    0.018 ms a run    2.5%
+    breed        2 a step    0.022 ms a step    0.011 ms a run    1.5%
+    born         2 a step    0.011 ms a step    0.005 ms a run    0.7%
+    trail        2 a step    0.239 ms a step    0.119 ms a run   16.3%
+    scent        2 a step    0.127 ms a step    0.063 ms a run    8.6%
+    plant        1 a step    0.042 ms a step    0.042 ms a run    2.9%
+    fire         1 a step    0.086 ms a step    0.086 ms a run    5.9%
+    pcopy        1 a step    0.013 ms a step    0.013 ms a run    0.9%
+    firekill     1 a step    0.012 ms a step    0.012 ms a run    0.8%
+    setclear     1 a step    0.004 ms a step    0.004 ms a run    0.3%
+    setcount     1 a step    0.009 ms a step    0.009 ms a run    0.6%
+    dclear       1 a step    0.004 ms a step    0.004 ms a run    0.3%
+    dcount       1 a step    0.008 ms a step    0.008 ms a run    0.5%
+    units        1 a step    0.051 ms a step    0.051 ms a run    3.5%
+    harvest      1 a step    0.017 ms a step    0.017 ms a run    1.2%
+    draw         1 a step    0.037 ms a step    0.037 ms a run    2.5%
+  machine at the end: RAM 3.2 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== m1-planet3-passes-run exit 0 at 2026-11-20T19:15:34.9670277-06:00
