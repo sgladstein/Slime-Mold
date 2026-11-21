@@ -327,7 +327,10 @@ a session but not every time. and they can happen often later on in a
 session, but not right at the begining"; `RaidRules::gap_at`,
 `Raids::first_raid`): counted from the landing, the first comes at 4:00
 +/- 40 s, or in one game in five at 1:20 +/- 20 s, and the wait falls in a
-line from 150 +/- 45 s at the landing to 45 +/- 13.5 s by 10:00 (until
+line from 150 +/- 45 s at the landing to 45 +/- 13.5 s by 10:00, never
+under 45 s between two raids since 11-21 (`RaidRules::gap_min`, Direction:
+the owner's planet 1 game drew gaps down to 26 s past 10:00, and one raid
+took a third of his squad) (until
 then 60 +/- 20 s all game and the first about 1:15, so his planet 1 and 2
 rounds that day met raids at 1:08 and 0:54; planet 1 of run seed 1 now
 raids from 3:15 and its first pump stands to 3:24, against 0:59 and 1:12:
