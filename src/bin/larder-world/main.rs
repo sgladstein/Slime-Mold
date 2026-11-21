@@ -2783,6 +2783,53 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         league::whole_run(base, seed, to, 0.0, plan, &device, &queue)?;
         return Ok(());
     }
+    // **A saved round replayed headless with a per-crystal trace**
+    // (2026-11-21, reviewing the owner's planet 1): `LARDER_REPLAY=FILE`
+    // with the round's own keys (for a run's planet `run=RUN:DEPTH
+    // seed=SEED mode=squads`, from the play log's head) plays the window's
+    // `larder-world-replay-*.txt` and prints each crystal at the start,
+    // then a `sec` line a game second: the slime, soldiers, kills, what
+    // the slime and starfall ate, and each crystal's charge left and what
+    // the squad took. The GPU's atomics make it drift from the real game
+    // after some minutes; it is a trace, not a proof.
+    if let Ok(path) = std::env::var("LARDER_REPLAY") {
+        let (device, queue) = gpu().ok_or("no GPU adapter")?;
+        let text = std::fs::read_to_string(&path).map_err(|e| format!("{path}: {e}"))?;
+        let mut app = bench::offscreen(args, screen, &device, &queue)?;
+        let g = app.game.as_mut().ok_or("no game")?;
+        let cs = g.world.crystals();
+        for (i, c) in cs.iter().enumerate() {
+            println!("crystal {i} at={:.0},{:.0} r={:.1} charge={:.0}", c.0 .0, c.0 .1, g.world.crystal_r(i), c.1);
+        }
+        let mut lines = text.lines();
+        let head: Vec<&str> = lines.next().unwrap_or("").split_whitespace().collect();
+        let end: u64 = head.get(5).and_then(|v| v.parse().ok()).ok_or("bad replay head")?;
+        let mut cmds = Vec::new();
+        for l in lines {
+            let (t, rest) = l.split_once(' ').ok_or("bad line")?;
+            cmds.push((t.parse::<u64>()?, Cmd::parse(rest).ok_or_else(|| format!("bad cmd {rest}"))?));
+        }
+        let tps = g.rules.tps as u64;
+        let mut next = 0;
+        while g.world.ticks() < end && g.end.is_none() {
+            while next < cmds.len() && cmds[next].0 <= g.world.ticks() {
+                g.apply(cmds[next].1);
+                next += 1;
+            }
+            g.step();
+            if g.world.ticks() % tps == 0 {
+                let (taken, _) = g.crystal_takes();
+                let cs = g.world.crystals();
+                let mut s = format!("sec t={} mould={} soldiers={} killed={} ate={:.0} star_eaten={:.0}", g.world.ticks() / tps, g.mould, g.alive(), g.killed, g.slime_ate, g.starfall.eaten);
+                for (i, c) in cs.iter().enumerate() {
+                    s += &format!(" {i}:{:.0}:{:.0}", c.1, taken.get(i).copied().unwrap_or(0.0));
+                }
+                println!("{s}");
+            }
+        }
+        println!("end {:?} t={}", g.end, g.world.ticks() / tps);
+        return Ok(());
+    }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
         return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &bosses, &turrets, &renders, page, hover, hover_to, select, &drags, scroll)?);

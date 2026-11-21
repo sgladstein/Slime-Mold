@@ -484,6 +484,12 @@ pub struct Game<W: World> {
     pub mould: usize,
     /// The most walkers the mould has had at a count (`Rules::broken`).
     pub peak: usize,
+    /// **The match's curve** (2026-11-21, the owner after a planet 1 he
+    /// beat down several times: "I would be curious to see slime
+    /// population overtime after each match"): the walkers and the
+    /// soldiers standing at each game second's count, for the end screen's
+    /// graph. 8 bytes a second, about 8 KB for a 16-minute planet.
+    pub curve: Vec<(u32, u32)>,
     /// When the mould broke (`Rules::broken`), and the upkeep it had then,
     /// given back if it recovers; None while it is whole.
     pub broken: Option<(u64, f32)>,
@@ -726,6 +732,7 @@ impl<W: World> Game<W> {
             releases: 0,
             mould,
             peak: mould,
+            curve: Vec::new(),
             broken: None,
             late: false,
             fell_bitten: 0,

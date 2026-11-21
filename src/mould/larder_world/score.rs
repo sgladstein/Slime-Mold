@@ -48,6 +48,11 @@ impl<W: World> Game<W> {
     /// crystal with 0.8 charge left as one held). Weighing `share` by the
     /// charge left was tried first and put farm below idle on race seed 5
     /// (-0.265 against -0.232): harvesting empties the crystals you hold.
+    /// What the squad took from each crystal, and each crystal's charge at the start.
+    pub fn crystal_takes(&self) -> (&[f32], &[f32]) {
+        (&self.taken, &self.start_charge)
+    }
+
     pub fn take_share(&self) -> f32 {
         let cs = self.world.crystals();
         let ours: f64 = self.taken.iter().map(|&t| t as f64).sum::<f64>();

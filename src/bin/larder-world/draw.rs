@@ -119,7 +119,7 @@ pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, t: f32, place: String) ->
         lines.push(format!("You took {:.0}% of the charge gone from the crystals", s * 100.0));
     }
     lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
-    Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines }
+    Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines, curve: g.curve.clone() }
 }
 
 /// A mission's end: the cause in the title (stars when won), the round's
@@ -144,7 +144,7 @@ pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
         }
         .to_string()
     };
-    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()] }
+    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()], curve: g.curve.clone() }
 }
 
 /// The end screen's numbers (Look and interface, 2026-11-18): how long
