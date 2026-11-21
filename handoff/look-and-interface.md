@@ -339,6 +339,12 @@ while Squad asked to keep it.
    sprite A's, a gen-AI fallen tile would match the skins). Runs are
    repeatable only with identical `at=` lists (a different frame list
    changes the game).
+0f. Look C on planets 1 to 3 (11-21, Direction's next): filmed at the
+   landing and 3:00, zoom 6 and 12, run 1, `hand=strat:bot`. Planets 1
+   (meadow) and 3 (fen) were the same dark slate at play zoom; their soil
+   tints (`biome_tint`) are now an umber loam and an olive mud at the same
+   value. Still to look at: planet 1 at 3:00 is mostly grey sand ripples
+   and blue channels (its soil kinds, not its plain soil).
 1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber

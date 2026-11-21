@@ -779,14 +779,22 @@ const SOIL_HIGH: vec3<f32> = vec3<f32>(52.0, 55.0, 58.0);
 // 30 degrees), caves a cold blue-grey (about 220), meadow a little brown,
 // jungle a dark red-brown humus, fen olive mud, valley a warm silt;
 // highlands keep the neutral stone grey.
+// Look C, 11-21 (Direction: a planet recognisable from a still): the
+// meadow's and the fen's tints only cancelled the base's cool blue, so
+// both read as the same slate (grey 44 at saturation 0.02 and grey 40 at
+// 0.14, hue 160, at zoom 12 on run 1), and planets 1 and 3 were told
+// apart by their plants alone. The meadow is now a dark umber loam (hue
+// 26, saturation 0.3) under its green grass and the fen an olive mud (hue
+// 75, 0.35), both at the value they had; the barrens' tan stays the
+// lighter, yellower brown.
 fn biome_tint(fl: u32) -> vec3<f32> {
     if (fl == 1u) { return vec3<f32>(1.31, 1.04, 0.75); }
-    if (fl == 2u) { return vec3<f32>(0.95, 1.0, 0.88); }
+    if (fl == 2u) { return vec3<f32>(1.06, 1.06, 0.62); }
     if (fl == 3u) { return vec3<f32>(1.08, 1.0, 0.92); }
     if (fl == 4u) { return vec3<f32>(1.33, 0.88, 0.7); }
     if (fl == 5u) { return vec3<f32>(1.0, 1.0, 1.0); }
     if (fl == 6u) { return vec3<f32>(0.91, 0.99, 1.18); }
-    return vec3<f32>(1.08, 1.0, 0.9);
+    return vec3<f32>(1.25, 0.93, 0.7);
 }
 fn plain_soil(e: f32) -> vec3<f32> {
     return mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * e) * biome_tint(P.flora);
