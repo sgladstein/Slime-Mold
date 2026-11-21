@@ -300,6 +300,9 @@ pub struct MarchEnd {
     /// The tick, and the game's walkers killed by then (`Game::killed`).
     pub tick: u64,
     pub killed: u32,
+    /// How far round `at` the fight with it reaches (fine cells): its body
+    /// and the squad's reach that met it, so the guns' kills there are its.
+    pub reach: f32,
 }
 
 impl Raids {
@@ -888,7 +891,7 @@ impl<W: World> Game<W> {
             let secs = |s: f32| (s.max(0.0) * self.rules.tps as f32) as u64;
             let late = (now >= m.since + secs(r.march_stall) && off > m.start - 10.0 * sc) || now >= m.since + secs(r.march_time);
             let done = n == 0 || (n as f32) < r.march_quorum * m.first as f32;
-            let end = |how| MarchEnd { how, at: centre, first: m.first, members: n, tick: now, killed };
+            let end = |how| MarchEnd { how, at: centre, first: m.first, members: n, tick: now, killed, reach: edge + meet };
             if n > 0 && off <= edge + 3.0 * sc {
                 // There: onto the target, down its way.
                 pour = Some((m.to, (edge + 3.0 * sc) / sc, 1.0, std::mem::take(&mut m.field)));
