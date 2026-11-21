@@ -108,6 +108,12 @@ column's places fell past the base's walls (`column_places` now keeps
 each on its trail point's side, `a_squad_leaves_a_walled_base_by_its_
 door`; `fort_numbers` is the harness). Turrets and pumps don't block
 soldiers at all (only walls, doors, crystals and the bulwark do).
+11-21 (Look's exit test 2 pass): soldiers at a crystal no longer stack.
+`Game::rim_spots` (paths.rs, once a step from `squad_turn`) gives each
+soldier whose goal is in a crystal its own spot round the rim, `SPOT` 3.5
+dish cells apart, ring 0 filled all the way round first (closing down to
+elbow room) since only ring 0 is in harvest reach. Nearest neighbour 2.1
+-> 3.5 cells median on planet 1; harvest at 60 s 4,081 -> 4,199.
 
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or

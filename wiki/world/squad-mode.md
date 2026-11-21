@@ -25,6 +25,7 @@ code:
   - Game::heal
   - Game::mark_hot
   - Game::rank_squad
+  - Game::rim_spots
   - Game::steer_point
   - MAP_NEAR
   - Rules::fireway
@@ -194,6 +195,15 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   there is a way round; a squad standing to fight in fire stays, the price
   of a fire deck. Health lost to fire on the way 413 -> 274 (24 of 24 maps
   lower), trips no slower on the probe's maps.
+  **Own spots round a crystal** (2026-11-21, `Game::rim_spots`; Look's exit
+  test 2 pass): soldiers draining, guarding or standing at a crystal each
+  take their own spot round its rim, `SPOT` 3.5 dish cells apart (a drawn
+  figure's width), the ring filled all the way round before a second ring
+  starts. Before, each soldier stood at the rim on its own side, so the
+  squad pressed into one arc. Planet 1, seed 1, greedy hand: nearest
+  neighbour 2.1 -> 3.5 cells median, under 2.4 cells 92% -> 0%, harvest
+  at 60 s 4,081 -> 4,199. A first try that put a second ring out before the
+  first was full halved the harvest (the outer ring is out of reach).
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
   column ends once its tail is near the anchor; since 2026-11-21 no

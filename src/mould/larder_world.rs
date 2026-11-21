@@ -141,6 +141,9 @@ struct Paths {
     /// Fire seen lately: where, how far round (fine cells), and the tick
     /// it cools (`Game::mark_hot`).
     hot: Vec<((f32, f32), f32, u64)>,
+    /// Each soldier's own spot round the crystal its goal is in, fine
+    /// cells, or None (`Game::rim_spots`, once a step).
+    rim_spot: Vec<Option<(f32, f32)>>,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.

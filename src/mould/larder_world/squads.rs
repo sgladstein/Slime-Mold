@@ -835,6 +835,7 @@ impl<W: World> Game<W> {
     /// (`rank_squad`): round the anchor while it moves, round the point
     /// they all stand round while it rests.
     pub(super) fn squad_turn(&mut self, dt: f32) {
+        self.rim_spots();
         let sc = self.s();
         for q in self.live_squads() {
             let sq = self.squads[q];
