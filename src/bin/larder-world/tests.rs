@@ -1619,6 +1619,47 @@ fn the_squad_mode_throws_from_its_device_slot() {
     assert!(app.model(None, None).commands.iter().all(|c| c.id != TOOLS_PAGE), "no Tools button with every tool locked");
 }
 
+/// **Esc and Space in the squad mode** (controls review, 2026-11-21).
+/// Esc on a card page goes back to the main card and keeps the squad; the
+/// next Esc lets go. Space, while the camera follows the squad, looks at
+/// the newest alert that has a place; again, it comes back to the squad.
+#[test]
+fn esc_closes_a_card_page_and_space_looks_at_the_newest_alert() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    for page in [(true, false, false), (false, true, false), (false, false, true)] {
+        (app.build_page, app.tools_page, app.form_page) = page;
+        assert!(app.squad_key(KeyCode::Escape, true, false, true));
+        assert_eq!((app.build_page, app.tools_page, app.form_page), (false, false, false), "Esc closed the page {page:?}");
+        assert!(!app.squad_free(), "and kept the squad");
+    }
+    assert!(app.squad_key(KeyCode::Escape, true, false, true));
+    assert!(app.squad_free(), "on the main card Esc lets go");
+    assert!(app.squad_key(KeyCode::Space, true, false, true));
+    assert!(!app.squad_free() && app.sq.as_ref().unwrap().follow, "Space takes the squad back");
+    // An alert with a place, far from the squad.
+    let (m, far) = {
+        let g = app.game.as_ref().unwrap();
+        let m = g.middle(g.active.unwrap()).unwrap();
+        (m, (m.0 + 60.0 * g.world.scale(), m.1))
+    };
+    app.hud.alert("Raid coming", Some(far), theme::WARN);
+    assert!(app.squad_key(KeyCode::Space, true, false, true));
+    let c = app.camera.focus();
+    // (The camera stops at the map's edge, so near it, not on it.)
+    assert!((c.0 - far.0).hypot(c.1 - far.1) < 0.5 * (m.0 - far.0).hypot(m.1 - far.1), "Space looked at the alert: camera {c:?}, alert {far:?}");
+    assert!(!app.sq.as_ref().unwrap().follow);
+    assert!(app.squad_key(KeyCode::Space, true, false, true));
+    assert!(app.sq.as_ref().unwrap().follow, "again: back to the squad");
+    for _ in 0..240 {
+        app.squad_frame(dt);
+    }
+    let c = app.camera.focus();
+    assert!((c.0 - m.0).hypot(c.1 - m.1) < (c.0 - far.0).hypot(c.1 - far.1), "the camera came back to the squad: {c:?}");
+}
+
 /// A mouse button on the world, routed as the window's events route one
 /// past the HUD: the squad mode first, then the controls (their box).
 fn world_button(app: &mut App, b: Button, down: bool) {
@@ -1710,6 +1751,23 @@ fn a_drag_commands_every_squad_in_its_box_as_one() {
     drag(&mut app, a, b);
     let g = app.game.as_ref().unwrap();
     assert_eq!((g.active, g.banded()), (Some(other), false), "a plain drag with a squad commanded fires");
+    // The cursor says so: the crosshair while one is commanded, the pick's
+    // look over a squad with Ctrl held, the box while a Ctrl drag runs.
+    let s = { let g = app.game.as_ref().unwrap(); g.soldiers[g.members(live[1])[0]] };
+    app.controls.cursor = Some(app.camera.to_screen((s.x, s.y)));
+    assert_eq!(app.cursor_look(), cursor::Look::Aim);
+    app.ctrl = true;
+    assert_eq!(app.cursor_look(), cursor::Look::Select, "Ctrl over a squad: a click takes it");
+    app.controls.cursor = Some(a);
+    world_button(&mut app, Button::Left, true);
+    app.controls.cursor = Some(b);
+    assert_eq!(app.cursor_look(), cursor::Look::Boxing, "a Ctrl drag shows the box");
+    world_button(&mut app, Button::Left, false);
+    app.ctrl = false;
+    app.let_go();
+    assert!(app.squad_key(digit_key(other), true, false, false));
+    assert_eq!(app.game.as_ref().unwrap().active, Some(other), "with none commanded, a number takes command");
+    assert!(!app.squad_free());
     // Ctrl + drag picks them again, led by the one commanded.
     app.ctrl = true;
     drag(&mut app, a, b);
@@ -1730,6 +1788,15 @@ fn a_drag_commands_every_squad_in_its_box_as_one() {
     assert!(app.game.as_ref().unwrap().banded());
     app.let_go();
     assert!(!app.game.as_ref().unwrap().banded(), "letting go ends the pick");
+    // Shift + a click on a soldier splits nothing (only Shift's box does).
+    app.squad_key(KeyCode::Space, true, false, true);
+    let n = app.game.as_ref().unwrap().live_squads().len();
+    let s = { let g = app.game.as_ref().unwrap(); g.soldiers[g.members(live[0])[0]] };
+    let at = app.camera.to_screen((s.x, s.y));
+    app.shift = true;
+    drag(&mut app, at, at);
+    app.shift = false;
+    assert_eq!(app.game.as_ref().unwrap().live_squads().len(), n, "a Shift + click split a soldier off");
 }
 
 fn squads_spread() -> f32 {

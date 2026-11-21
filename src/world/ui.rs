@@ -1171,6 +1171,14 @@ impl Hud {
         self.menu.is_some()
     }
 
+    /// Where the newest alert still showing (`ALERT_LIFE`) that has a place
+    /// is: the squad mode's Space goes there while the camera follows the
+    /// squad (controls review, 2026-11-21: Space is the squad's there, so a
+    /// raid's or a landing ore's alert could only be reached by panning).
+    pub fn newest_place(&self) -> Option<(f32, f32)> {
+        self.alerts.iter().rev().filter(|a| a.when.elapsed() < ALERT_LIFE).find_map(|a| a.at)
+    }
+
     /// A targeted command is waiting for its point: its id and target, and
     /// a line's first end once pressed.
     pub fn targeting(&self) -> Option<Aim> {

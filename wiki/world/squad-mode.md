@@ -83,8 +83,17 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   key, count and health rather than some hiding behind "+N" (11-19). Click a
   tile or press its number to take command; ` (Shift + ` back) and Ctrl +
   wheel go round them. **Esc** or *Let go* commands none: every squad shows
-  AUTO, WASD pans, and a click on a squad takes it back
-  ([free camera](../../Reports/free-camera-2026-11-15/README.md)).
+  AUTO, WASD pans, and a click on a squad or its number takes it back
+  ([free camera](../../Reports/free-camera-2026-11-15/README.md); the number
+  did nothing here until 2026-11-21). The cursor is the crosshair while a
+  squad is commanded and the pick arrow while Ctrl is held, since a Ctrl
+  click or drag then picks squads instead of firing (`cursor.rs`). On a card
+  page (Build, Tools, Formation) Esc first goes back to the main card
+  (2026-11-21). **Space** brings the camera back to the squad; while it
+  already follows, Space looks at the newest alert that has a place (a raid,
+  landing ore) and Space again comes back (2026-11-21; Space is the alerts'
+  key outside the squad mode). Only a Shift + drag splits soldiers off: a
+  Shift + click no longer pulls the one soldier under it into a squad.
 - **Loadouts** (owner, 2026-11-19 19:22Z; `run::Loadout`, `Run::loadouts`).
   A loadout is a gun, or none, plus its cards; each squad (`Squad::loadout`)
   and each turret (`Building::loadout`, `Building::deck`, `Cmd::TurretLoad`)
