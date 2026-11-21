@@ -4501,7 +4501,22 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
         // `flash` is how far its pool has spread, `carry` its seed
         // (`Marks::fallen`).
         let lp = vec2<f32>(l.x * ca + l.y * sa, -l.x * sa + l.y * ca);
-        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), sprite(skin_dead(), p, small));
+        // Inked and rim-lit as the living are (exit test 2 pass, 11-21):
+        // the body tile alone, sprite A's flat olive figure, read as a
+        // cut-out beside the living skins' outlined, lit figures.
+        let o = OUTLINE / r;
+        var grown = 0.0;
+        for (var i = 0u; i < 8u; i++) {
+            let a = f32(i) * 0.785398;
+            grown = max(grown, sprite(skin_dead(), p + vec2<f32>(cos(a), sin(a)) * o, small).w);
+        }
+        var body = sprite(skin_dead(), p, small);
+        let ls = vec2<f32>(l.x, l.y) / r;
+        let lq = vec2<f32>(ls.x * ca + ls.y * sa, -ls.x * sa + ls.y * ca);
+        let rim = clamp(body.w - sprite(skin_dead(), p + lq * 1.2, small).w, 0.0, 1.0) * 0.6;
+        body = vec4<f32>(mix(body.xyz, RIM * body.w, rim), body.w);
+        let inked = pm_over(vec4<f32>(INK * grown, grown) * 0.85, body);
+        let c = pm_over(blood_pool(p, flash, carry * 255.0, aa, normalize(lp)), inked);
         if (c.w <= 0.0) { return vec4<f32>(0.0); }
         return vec4<f32>(c.xyz / c.w, c.w);
     }
