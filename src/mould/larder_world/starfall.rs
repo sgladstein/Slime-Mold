@@ -67,6 +67,19 @@ pub struct StarRules {
     /// so a planet played at his pace sees them all. Not a shorter `last`
     /// for every planet: deeper planets' par grows with their area.
     pub par_share: f32,
+    /// **The teaching fall** (Direction, 2026-11-21, after the owner's
+    /// 11-20 23:17Z "it isn't clear how to collect"): with `teach` over 0
+    /// the first fall's shadow shows at `teach` seconds (it lands `warn`
+    /// later: 0:50 and 1:00 on planet 1) and it lands on open ground
+    /// within `teach_far` of the nearest soldier (and still `near` from
+    /// every one), where the fewest walkers are within `slime_r`, so it
+    /// shows how a pickup pays before the slime eats it. The other falls
+    /// keep the window and the slime. On planet 1 only
+    /// (`StarRules::for_depth`): six planet 1 games with the strategy bot
+    /// chasing drops took 36 points of ore and cores and the slime ate 851
+    /// (`Reports/boss-cores-2026-11-20/`), since a fall lands by slime.
+    pub teach: f32,
+    pub teach_far: f32,
     pub gap: f32,
     /// Seconds its shadow shows before it lands.
     pub warn: f32,
@@ -139,6 +152,8 @@ impl Default for StarRules {
             first: 50.0,
             last: 600.0,
             par_share: 0.5,
+            teach: 0.0,
+            teach_far: 30.0,
             gap: 25.0,
             warn: 10.0,
             kill_r: 4.0,
@@ -175,7 +190,8 @@ impl Default for StarRules {
 impl StarRules {
     /// A run's planet: on, the ore worth 30 points and 10 more a planet.
     pub fn for_depth(depth: u32) -> StarRules {
-        StarRules { on: true, worth: 30.0 + 10.0 * depth.max(1) as f32, core_pot: 120.0 + 40.0 * depth.max(1) as f32, ..StarRules::default() }
+        let teach = if depth <= 1 { 50.0 } else { 0.0 };
+        StarRules { on: true, worth: 30.0 + 10.0 * depth.max(1) as f32, core_pot: 120.0 + 40.0 * depth.max(1) as f32, teach, ..StarRules::default() }
     }
 }
 
@@ -296,6 +312,9 @@ pub struct Starfall {
     /// `CASHED_KEPT`), and how many it has emptied this planet.
     pub cashed: Vec<Cashed>,
     pub cashed_n: u32,
+    /// Falls begun (their shadows shown): the first is the teaching
+    /// fall when `StarRules::teach` is set.
+    begun: u32,
     rng: Rng,
     /// Mini-bosses ended already looked at, and the fruit last seen (its
     /// centre) with the last fruit end already looked at.
@@ -306,7 +325,7 @@ pub struct Starfall {
 
 impl Starfall {
     pub fn new(seed: u64) -> Starfall {
-        Starfall { plan: None, falls: 0, live: Vec::new(), points: 0.0, ore_taken: 0.0, core_taken: 0.0, eaten: 0.0, landed: 0, cores: 0, cashed: Vec::new(), cashed_n: 0, rng: Rng::new(seed ^ 0x57a2_fa11), bosses_seen: 0, fruit_at: None, fruit_seen: None }
+        Starfall { plan: None, falls: 0, live: Vec::new(), points: 0.0, ore_taken: 0.0, core_taken: 0.0, eaten: 0.0, landed: 0, cores: 0, cashed: Vec::new(), cashed_n: 0, begun: 0, rng: Rng::new(seed ^ 0x57a2_fa11), bosses_seen: 0, fruit_at: None, fruit_seen: None }
     }
 
     /// The whole shop points taken this planet.
@@ -343,6 +362,13 @@ impl<W: World> Game<W> {
             let last = if self.rules.par > 0.0 && r.par_share > 0.0 { r.last.min(r.par_share * self.rules.par) } else { r.last };
             let mut at: Vec<f32> = (0..n).map(|_| r.first + (last - r.first).max(0.0) * rng.f32()).collect();
             at.sort_by(f32::total_cmp);
+            // The teaching fall is the first, at its own time; the rest
+            // keep their draws (pushed back by `gap` only if it crowds them).
+            if r.teach > 0.0 {
+                if let Some(t) = at.first_mut() {
+                    *t = r.teach;
+                }
+            }
             for i in 1..at.len() {
                 at[i] = at[i].max(at[i - 1] + r.gap);
             }
@@ -352,7 +378,9 @@ impl<W: World> Game<W> {
         let sc = self.world.scale();
         while self.starfall.plan.as_ref().and_then(|p| p.last()).is_some_and(|&t| t <= now) {
             self.starfall.plan.as_mut().map(|p| p.pop());
-            if let Some(at) = self.fall_spot() {
+            let teach = r.teach > 0.0 && self.starfall.begun == 0;
+            self.starfall.begun += 1;
+            if let Some(at) = self.fall_spot(teach) {
                 let lands = now + secs(r.warn);
                 self.starfall.live.push(Drop::ore(at, r.worth, now, lands, lands + secs(r.life), r.ore_r * sc));
             }
@@ -448,7 +476,11 @@ impl<W: World> Game<W> {
     /// Where the next fall lands (fine cells): open ground at least `near`
     /// from every live soldier and within `far` of one, away from what is
     /// already down, by slime where it can be; None with no open ground.
-    fn fall_spot(&mut self) -> Option<(f32, f32)> {
+    ///
+    /// `teach` (the teaching fall, `StarRules::teach`): within `teach_far`
+    /// of the nearest soldier, where the fewest walkers are, instead of
+    /// where the most are; today's rule if no such spot is found.
+    fn fall_spot(&mut self, teach: bool) -> Option<(f32, f32)> {
         let r = self.rules.star;
         let sc = self.world.scale();
         let (w, h) = self.world.size();
@@ -475,14 +507,29 @@ impl<W: World> Game<W> {
         let mut open = None;
         let mut fair = None;
         let mut best: Option<((f32, f32), u32)> = None;
-        for _ in 0..60 {
+        let mut calm: Option<((f32, f32), u32)> = None;
+        let far = if teach { r.teach_far.min(r.far) } else { r.far };
+        // Near the squad a random point rarely falls within `teach_far`:
+        // the teaching fall also tries points round each soldier.
+        let tries = if teach { 240 } else { 60 };
+        for k in 0..tries {
+            let p = if teach && k % 2 == 1 && !soldiers.is_empty() {
+                let q = soldiers[(self.starfall.rng.f32() * soldiers.len() as f32) as usize % soldiers.len()];
+                let (a, d) = (self.starfall.rng.f32() * std::f32::consts::TAU, (r.near + (far - r.near).max(0.0) * self.starfall.rng.f32()) * sc);
+                (q.0 + d * a.cos(), q.1 + d * a.sin())
+            } else {
+                (self.starfall.rng.f32() * w as f32, self.starfall.rng.f32() * h as f32)
+            };
+            if p.0 < 0.0 || p.1 < 0.0 || p.0 >= w as f32 || p.1 >= h as f32 {
+                continue;
+            }
             let p = (self.starfall.rng.f32() * w as f32, self.starfall.rng.f32() * h as f32);
             if !self.world.open(p.0, p.1) {
                 continue;
             }
             open.get_or_insert(p);
             let nearest = soldiers.iter().map(|q| (q.0 - p.0).hypot(q.1 - p.1)).fold(f32::INFINITY, f32::min);
-            if nearest < r.near * sc || (nearest > r.far * sc && !soldiers.is_empty()) || others.iter().any(|q| (q.0 - p.0).hypot(q.1 - p.1) < 2.0 * r.near * sc) {
+            if nearest < r.near * sc || (nearest > far * sc && !soldiers.is_empty()) || others.iter().any(|q| (q.0 - p.0).hypot(q.1 - p.1) < 2.0 * r.near * sc) {
                 continue;
             }
             fair.get_or_insert(p);
@@ -490,6 +537,16 @@ impl<W: World> Game<W> {
             if n > 0 && best.is_none_or(|b| n > b.1) {
                 best = Some((p, n));
             }
+            if calm.is_none_or(|c| n < c.1) {
+                calm = Some((p, n));
+            }
+        }
+        if teach {
+            if let Some(c) = calm {
+                return Some(c.0);
+            }
+            // Nowhere near the squad: an ordinary fall.
+            return self.fall_spot(false);
         }
         best.map(|b| b.0).or(fair).or(open)
     }
@@ -595,7 +652,7 @@ mod tests {
     /// off, nothing falls.
     #[test]
     fn ore_falls_lands_and_pays_who_reaches_it() {
-        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, ..StarRules::for_depth(1) };
+        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, teach: 0.0, ..StarRules::for_depth(1) };
         let mut g = starry(3, star);
         let mut drained = None;
         let mut ores: Vec<Drop> = Vec::new();
@@ -633,12 +690,37 @@ mod tests {
         assert!(off.starfall.plan.is_none() && off.starfall.live.is_empty() && off.starfall.points == 0.0, "off, nothing falls");
     }
 
+    /// Planet 1's first fall comes at `teach` and lands near the squad,
+    /// on less slime than an ordinary fall picks (Direction, 2026-11-21).
+    #[test]
+    fn the_teaching_fall_lands_near_the_squad_on_calm_ground() {
+        assert_eq!(StarRules::for_depth(1).teach, 50.0);
+        assert_eq!(StarRules::for_depth(2).teach, 0.0, "planet 1 only");
+        let first = |teach: f32| {
+            let mut g = starry(5, StarRules { teach, ..StarRules::for_depth(1) });
+            while g.starfall.live.is_empty() && g.time() < 300.0 && g.end.is_none() {
+                g.step();
+            }
+            let d = g.starfall.live[0];
+            let sc = g.world.scale();
+            let nearest = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - d.at.0).hypot(s.y - d.at.1)).fold(f32::INFINITY, f32::min) / sc;
+            (g.time(), nearest)
+        };
+        let (t, near) = first(50.0);
+        let r = StarRules::for_depth(1);
+        assert!((t - 50.0).abs() < 0.5, "its shadow shows at 0:50, to land at 1:00, not {t}");
+        assert!(near >= r.near - 0.5 && near <= r.teach_far + 0.5, "{near} dish cells from the squad");
+        let (t0, near0) = first(0.0);
+        assert!(t0 >= r.first - 0.5, "off, the window as before: {t0}");
+        assert!(near0 >= r.near - 0.5, "off, still clear of the squad: {near0}");
+    }
+
     /// A star that lands on soldiers kills the ones it hurts past their
     /// health, and the game counts them apart from the slime's kills
     /// (`Game::fell_starfall`, the bot's `starfall_end`).
     #[test]
     fn a_star_landing_on_soldiers_is_counted_as_their_death() {
-        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, ..StarRules::for_depth(1) };
+        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, teach: 0.0, ..StarRules::for_depth(1) };
         let mut g = starry(3, star);
         while g.time() < 40.0 && g.end.is_none() && g.starfall.landed == 0 {
             if let Some(d) = g.starfall.live.iter().find(|d| !d.down).copied() {

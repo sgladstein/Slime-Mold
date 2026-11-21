@@ -1238,7 +1238,7 @@ mod tests {
     #[test]
     fn taking_ore_ticks_coins_and_emptying_it_rings() {
         use crate::mould::larder_world::{DropKind, StarRules};
-        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, ..StarRules::for_depth(1) };
+        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, teach: 0.0, ..StarRules::for_depth(1) };
         let mut g = Game::new(race_world(3, 1, 1_000), Rules { star, ..Rules::default() }, 3);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
