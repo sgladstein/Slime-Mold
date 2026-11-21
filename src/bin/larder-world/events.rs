@@ -115,7 +115,7 @@ impl ApplicationHandler for App {
                     self.drop_note();
                     return;
                 }
-                // The slime viewer's F1 and Esc (`viewer.rs`).
+                // The slime viewer's F3 and Esc (`viewer.rs`).
                 if pressed && !event.repeat && !self.in_menu() && self.viewer_key(code) {
                     return;
                 }

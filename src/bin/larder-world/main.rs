@@ -1335,13 +1335,16 @@ impl App {
             rules.start_bank = rules.start_bank.max(RANGE_BANK);
             rules.wipe_ends = 0.0;
         }
-        // The tweaks file's rules (`rule NAME`), last.
+        // The tweaks file's rules for this slime (`rule TIER NAME`), last;
+        // a round with no slime tier (the sandbox, most missions) takes none.
         if let Some(vw) = self.viewer.as_mut() {
             vw.rules0 = Some(rules);
         }
-        for (k, v) in &self.tweaks.rules {
-            if !rules.set(k, *v) {
-                eprintln!("larder-world: the tweaks file's rule {k}: no such rule");
+        if let Some(t) = core_tier {
+            for (_, k, v) in self.tweaks.rules.iter().filter(|(tier, _, _)| tier == t.name()) {
+                if !rules.set(k, *v) {
+                    eprintln!("larder-world: the tweaks file's rule {} {k}: no such rule", t.name());
+                }
             }
         }
         let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
@@ -1567,7 +1570,10 @@ impl App {
         // The dish behind the start menu is not play: no log of it (until
         // 11-17 it wrote one, which the round picked from the menu then
         // wrote over; with a file a round it would fill the folder).
-        if self.window.is_none() || self.menu.is_some() {
+        // Nor is the slime viewer (review of #607, 11-21): its rounds run on
+        // a big bank with forced events, and each restart would add a log
+        // that reads as a real round in the owner's play record.
+        if self.window.is_none() || self.menu.is_some() || self.viewer.is_some() {
             return;
         }
         use slime_mould::mould::playlog;
@@ -1591,6 +1597,11 @@ impl App {
         extra.extend(self.log_loadout());
         self.log_gun = self.gun_name();
         extra.extend(log_keys(&self.args.keys));
+        // The slime viewer's saved tweaks change rules, engine keys and
+        // looks without a switch, so the log says so.
+        if !self.tweaks.is_empty() {
+            extra.push(("tweaks", self.tweaks.count().to_string()));
+        }
         let head = playlog::Playlog::head(&self.name, self.args.seed, &extra);
         match std::fs::create_dir_all(playlog::DIR).and_then(|()| std::fs::write(&path, head)) {
             Ok(()) => self.log_path = Some(path),
@@ -2683,6 +2694,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     // The slime viewer: a run landing on the planet asked for, in squad
     // mode, with the dev rows (`viewer.rs`).
+    let before_viewer = (args.dev, args.run.clone());
     if viewer_at > 0 {
         args.viewer = true;
         args.squads = true;
@@ -2691,7 +2703,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         r.depth = viewer_at.clamp(1, slime_mould::mould::run::PLANETS);
         args.run = Some(r);
     }
-    let base = args.clone();
+    // What the menu starts from leaves the viewer out: from `viewer.cmd`
+    // its Main menu had Dev mode on, so a Run started there got the dev
+    // shop (the review of #607).
+    let mut base = args.clone();
+    if viewer_at > 0 {
+        base.viewer = false;
+        (base.dev, base.run) = before_viewer;
+    }
     // A run keeps its tier's mould, as a mission does.
     if let Some(r) = args.run.as_mut() {
         r.dev = args.dev;
