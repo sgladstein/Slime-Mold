@@ -2874,7 +2874,7 @@ mod tests {
     /// **A hit's hole stays open while it is fresh** (`crater_shut`,
     /// 2026-11-21, the Look lane's A2). Engine rule with no CPU twin, so
     /// the test is what it does on the software GPU: two race worlds
-    /// alike, a kill and a 60-step crater on the home crystal's slime, one
+    /// alike, a kill and a crater as long as the guns' on the home crystal's slime, one
     /// with the first half of the crater shut. Walkers within the hole's
     /// inner two thirds: none back in the shut world while the whole hole
     /// is shut (a quarter of the crater), and fewer than in the open world
@@ -2900,7 +2900,11 @@ mod tests {
         let at = (home.0 / sc, home.1 / sc);
         let fine = open.world.fine_steps() as f32;
         let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
-        let hit = squad::Burst { at, r: 6.0, kill: true, crater: 60, crater_r: 6.0, ..Default::default() };
+        // The guns' own crater (fine steps, from the game's frame), as a
+        // shot's crater is shut and a longer one is not.
+        let cs = open.world.e.crater_steps;
+        assert!(cs >= 8, "the game lays craters: {cs}");
+        let hit = squad::Burst { at, r: 6.0, kill: true, crater: cs as _, crater_r: 6.0, ..Default::default() };
         // The walkers within 4 of the hit's centre (fine cells).
         let inside = |g: &Game<GpuWorld>| {
             let e = &g.world.e;
@@ -2912,11 +2916,10 @@ mod tests {
         let before = inside(&open);
         let mut counts = Vec::new();
         for g in [&mut open, &mut shut] {
-            g.world.e.crater_steps = 60;
             g.world.burst(&hit, &k);
             let mut c = Vec::new();
             for quarter in 1..=4 {
-                let until = g.world.ticks() + (15.0 / fine).ceil() as u64;
+                let until = g.world.ticks() + (cs as f32 / 4.0 / fine).ceil() as u64;
                 while g.world.ticks() < until {
                     g.step();
                 }
@@ -2931,11 +2934,50 @@ mod tests {
         assert!(counts[1][3].1 > 0, "the shut hole refills once it opens");
     }
 
+    /// **A blast's long crater is not shut** (the review lane, 11-21: det
+    /// cord stood as a wall for 19 s). Only a crater no longer than the
+    /// guns' (`crater`) is shut: a kill with a crater ten times as long on
+    /// a world with the first half of the guns' crater shut refills in its
+    /// first quarter-second as an open world's hole does.
+    #[test]
+    fn a_blasts_long_crater_is_not_shut() {
+        use crate::gpu::floats;
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        crate::gpu::set(&mut s, "crater_shut", "0.5").unwrap();
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+        while g.time() < 20.0 {
+            g.step();
+        }
+        let home = g.world.crystals()[0].0;
+        let sc = g.world.scale();
+        let at = (home.0 / sc, home.1 / sc);
+        let fine = g.world.fine_steps() as f32;
+        let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+        let cs = g.world.e.crater_steps;
+        g.world.burst(&squad::Burst { at, r: 6.0, kill: true, crater: (10 * cs) as _, crater_r: 6.0, ..Default::default() }, &k);
+        for _ in 0..2 {
+            let until = g.world.ticks() + (cs as f32 / 4.0 / fine).ceil() as u64;
+            while g.world.ticks() < until {
+                g.step();
+            }
+        }
+        let e = &g.world.e;
+        let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+        let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+        let (cx, cy, r) = (at.0 * e.dish.p.scale as f32, at.1 * e.dish.p.scale as f32, 4.0 * e.dish.p.scale as f32);
+        let back = (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count();
+        eprintln!("blast hole: {back} walkers back at half the guns' crater");
+        assert!(back > 0, "a blast's crater stays open to walkers");
+    }
+
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2; GPU
     /// only). Two race worlds alike, a lump of armoured members held in
     /// place by its pull, and a hit at its centre that hurts them and
-    /// leaves a 60-step crater; one world with members flinching for the
+    /// leaves a crater as long as the guns'; one world with members flinching for the
     /// first half of it, both with its first half shut (`crater_shut`, as
     /// in a run). A quarter of the crater on, the flinching lump
     /// holds fewer members within 3 cells of the hit (its hole) than the
@@ -2983,9 +3025,9 @@ mod tests {
             let (_, before) = members(&g);
             let fine = g.world.fine_steps() as f32;
             let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
-            g.world.e.crater_steps = 60;
-            g.world.burst(&squad::Burst { at, r: 5.0, kill: true, crater: 60, crater_r: 5.0, ..Default::default() }, &k);
-            let until = g.world.ticks() + (15.0 / fine).ceil() as u64;
+            let cs = g.world.e.crater_steps;
+            g.world.burst(&squad::Burst { at, r: 5.0, kill: true, crater: cs as _, crater_r: 5.0, ..Default::default() }, &k);
+            let until = g.world.ticks() + (cs as f32 / 4.0 / fine).ceil() as u64;
             while g.world.ticks() < until {
                 g.step();
             }
