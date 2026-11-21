@@ -6574,3 +6574,6 @@
 2026-11-20 21:07:39   bot,want=torch.standard,siege=3 planet 1.0 seed 5.0: won 448.0 (18 s)
 2026-11-20 21:07:45   bot,want=torch.standard,siege=3 planet 1.0 seed 6.0: won 463.0 (18 s)
 2026-11-20 21:07:49   bot,want=torch.standard,siege=3 planet 1.0 seed 7.0: won 219.0 (8 s)
+2026-11-20 21:07:53 worker: league.py changed; restarting
+2026-11-20 21:07:53 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-20 21:07:54 worker: built the game in 1 s (src 4180f5ed06c3)
