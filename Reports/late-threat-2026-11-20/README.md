@@ -184,6 +184,88 @@ the strikers already took 28 at 4:30, it adds none. Map 2's army never
 reached 24, so its difference is the game going another way, not the
 heart.
 
+## The closing measure on the striker rate cap (PR #598, 11-21 00:30Z)
+
+The whole late package (strikers, the lunge, the heart) against all three
+off, the same 36 jobs as the closing measure (`jobs-closing.txt`), rerun on
+main with #598 (strikers form at a capped rate: about 90 a second on
+planet 2, 150 from planet 3); GitHub run 44840663837,
+`closing-598-rows.jsonl`.
+
+| | Late bites, maps up / down / tied | Sign test p | Wins, package on / off |
+| --- | --- | --- | --- |
+| Planet 2, before #598 | 5 / 0 / 4 | 0.062 | |
+| Planet 2, with #598 | 5 / 1 / 3 | 0.22 | 4 / 6 |
+| Planet 3, with #598 | 4 / 1 / 4 | 0.38 | 9 / 9 |
+
+The rate cap softened the bite a little. On planet 2 the package still
+costs mid-size armies, not small squads: maps 2 and 6 run to the 12:00
+cap unfinished with it (27 at peak to 8 alive; 56 to 31), and the
+package-off arm wins them at 11:01 and 9:46; maps 3, 4 and 1795038793 lose
+the same way in both arms with 4 to 7 soldiers. Since #606 planet 2 keeps
+only the strikers (at 0.6), so those two maps are the ones to recheck.
+
+## The heart's bout cap (11-21, Direction's ask)
+
+The deep bug check found the last-stand heart's first lunge killing 68
+soldiers in under 8 s on planet 2 (a wipe; the whole-run bot lost the
+planet). Direction asked for it toned down, the method ours, with the
+measure named first: soldiers lost in the heart's first 10 s on planet 2's
+big-army maps, paired by map against main; at most about 20, or a quarter
+of the squad, while it still bites big armies late; squads of 8 or fewer
+lose no more planets.
+
+The change (`StandRules::cap`, `cap_most`, `sated`; `stand.rs`): a bout
+(the heart's forming, its first 10 s, or a lunge) stops once the slime's
+touch has taken a quarter of the squad's health (`Game::bitten_hp`;
+never more than 20 soldiers' worth). A lunge then draws back at its pace,
+and the whole slime bites no soldier for 5 s. What did not hold, in
+order: a cap on deaths (soldiers under a heart are all near death when
+the first dies: capped at 1 of 4 it killed 3, the GPU test); a health
+cap alone (the body still lies on the rest as it goes: 3 of 4); a pause
+only within the heart's reach (a gathering heart's members are spread
+over the map and its strikers are not in it: a forming bout capped at 20
+took 24 of 80, a lunge capped at 9 took 17 of 35; rows
+`heart-cap-reach-rows.jsonl`, run 44849983687).
+
+Measured on planet 2 with the heart forced on (`set=stand=1`; since #606
+it first plays on planet 4, and planet 2 has the only big-army maps the
+bot reaches reliably), the strat bot's big-army plan, strikers on, and
+three whole runs of the bug check's plan; capped (the default) against
+main's heart (`stand_cap=1 stand_cap_most=1000 stand_sated=0`); GitHub run
+44857683499, `jobs-heart-cap.txt`, `heart-cap-rows.jsonl`. The league line
+has `stand=BORN:LUNGES:FIRST:WORST:KILLED` (second formed, lunges,
+soldiers bitten to death in its first 10 s and in its worst bout's 10 s,
+all it bit).
+
+| Game | Main's heart: worst 10 s, all it bit, result | Capped |
+| --- | --- | --- |
+| Planet 2 map 1 (army 80) | 65 in one lunge, 65, won with 43 | 13, 13, won with 80 |
+| Planet 2 map 5 (army 80) | 10, 10, won | 10, 10, won |
+| Run 1 planet 1 (51) | 9, 12, won | 3, 6, won |
+| Run 3 planet 1 (43) | 13, 13, won | 13, 13, won (same game: the cap was not reached, the squad was already hurt) |
+| Run 3 planet 2 (37 to 48) | 19, 27, **lost** with all 37 dead | 0, 0, won with 48 |
+| Run 1 planet 2 (50 to 57) | 24, 24, won | 7, 7, won |
+| Run 1 planet 3 (75 to 80) | 11, 12, won | 3, 3, won |
+| Run 3 planets 3, 4 (80) | (run over) | 4 and 16, 14 and 37, won both |
+
+Runs 1 and 3 diverge from their first heart on, so only the first planet
+with a heart in each run is a clean pair. Clean pairs (the two planet 2
+maps, each run's first heart planet): the worst bout fell on 3 and tied
+on 2 (sign test p 0.25); in every game it is lower or equal capped. The
+whole runs reached planets 4, 1 and 5 capped against 4, 1 and 2. On the
+cloud session (lavapipe, strikers off, the bug check's own trace): run 2
+lost planet 2 to main's heart, all 44 bitten in its one lunge, and won it
+capped with a worst lunge of 4 (the heart still bit 28); run 1's planet 1
+heart took 22 of 51 forming, and 5 capped.
+
+The bar holds: no capped bout took more than 16 (20% of an army of 80)
+or more than a quarter of its squad, except run 3's planet 1 heart, which
+took 13 of 43 without reaching its cap in either arm. It still bites: 13,
+10, 37 and 14 over a heart's life on the big armies. Squads of 8 or
+fewer never meet it (it gathers only against 24 or more), and maps 3, 4,
+6, 7, 8 and 1795038793 play identically in both arms.
+
 ## What landed
 
 `late_at` 0.4 on every run planet (`run::ENEMY_RULES`), with

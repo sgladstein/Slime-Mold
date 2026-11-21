@@ -1006,6 +1006,10 @@ struct App {
     /// films and tests, which play the game's own).
     viewer: Option<viewer::Viewer>,
     tweaks: slime_mould::world::tweaks::Tweaks,
+    /// The slime this round plays, by the name the tweaks file gives it:
+    /// a rung's (`drifter`) or one of the owner's own (`custom NAME`), on
+    /// a run planet the tweaks file's `planet N` pick over the ladder's.
+    slime: Option<String>,
 }
 
 /// The play log header's words for a round's keys: the switches off their
@@ -1115,6 +1119,7 @@ impl App {
             exp_next: Vec::new(),
             result: Ok(()),
             tweaks: Default::default(),
+            slime: None,
             viewer: None,
         };
         if app.args.viewer {
@@ -1178,9 +1183,21 @@ impl App {
         }
         // The food the planet's slime eats to build a surge (`run::surge_food`).
         let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers));
+        // The slime: the mission's tier, unless the tweaks file puts
+        // another on this run planet (`planet N = SLIME`) or the viewer
+        // shows one of the owner's own; a custom plays its base tier with
+        // its own tweaks (`tweaks::Tweaks::custom`, 11-21).
+        let ladder = mission.as_ref().and_then(|m| m.tier.clone());
+        let picked = match (&self.viewer, &level) {
+            (Some(vw), _) => vw.slime.clone(),
+            (None, Some(l)) => self.tweaks.planet(l.depth).map(str::to_string),
+            _ => None,
+        };
+        let slime = picked.filter(|n| self.tweaks.base_of(n).is_some()).or(ladder);
+        let base = slime.as_deref().map(|n| self.tweaks.base_of(n).map_or(n.to_string(), |t| t.name().to_string()));
         // A ladder name not built yet (drifter, sprawler, trunk) plays
         // the plain mould, and says so.
-        if let Some(t) = mission.as_ref().and_then(|m| m.tier.as_deref()) {
+        if let Some(t) = base.as_deref() {
             match Tier::from_name(t) {
                 Some(tier) => {
                     tier.settings(&mut s)?;
@@ -1214,8 +1231,15 @@ impl App {
         if let Some(vw) = self.viewer.as_mut() {
             vw.engine0 = viewer::ENGINE_KEYS.iter().filter_map(|(k, _, _)| Some((*k, viewer::engine_get(&s, k)?))).collect();
         }
-        if let Some(t) = core_tier {
-            for (tier, k, v) in self.tweaks.slime.iter().filter(|(tier, _, _)| tier == t.name()) {
+        // The name the tweaks file keys this slime by: the round's slime,
+        // unless a `tier=` key put another tier in.
+        let who: Option<String> = match core_tier {
+            Some(t) if base.as_deref() == Some(t.name()) => slime.clone(),
+            Some(t) => Some(t.name().to_string()),
+            None => None,
+        };
+        if let Some(w) = who.as_deref() {
+            for (tier, k, v) in self.tweaks.slime.iter().filter(|(tier, _, _)| tier == w) {
                 if let Err(e) = slime_mould::gpu::set(&mut s, k, &format!("{v}")) {
                     eprintln!("larder-world: the tweaks file's slime {tier} {k}: {e}");
                 }
@@ -1347,10 +1371,10 @@ impl App {
         if let Some(vw) = self.viewer.as_mut() {
             vw.rules0 = Some(rules);
         }
-        if let Some(t) = core_tier {
-            for (_, k, v) in self.tweaks.rules.iter().filter(|(tier, _, _)| tier == t.name()) {
+        if let Some(w) = who.as_deref() {
+            for (_, k, v) in self.tweaks.rules.iter().filter(|(tier, _, _)| tier == w) {
                 if !rules.set(k, *v) {
-                    eprintln!("larder-world: the tweaks file's rule {} {k}: no such rule", t.name());
+                    eprintln!("larder-world: the tweaks file's rule {w} {k}: no such rule");
                 }
             }
         }
@@ -1455,7 +1479,7 @@ impl App {
             let pace = game.world.s.step / game.world.scale() * fine_tps;
             // The tweaks file's body look for this slime (`body TIER`) over
             // its own.
-            let body = core_tier.and_then(|t| self.tweaks.body_of(t.name())).and_then(slime_mould::world::view::SlimeLook::parse).unwrap_or(slime_mould::world::view::SlimeLook::of(core_tier));
+            let body = who.as_deref().and_then(|w| self.tweaks.body_of(w)).and_then(slime_mould::world::view::SlimeLook::parse).unwrap_or(slime_mould::world::view::SlimeLook::of(core_tier));
             v.set_slime_look(body, pace * slime_mould::world::view::STREAK_SECS);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
@@ -1522,14 +1546,15 @@ impl App {
         // The viewer's Reset values for this slime's walk: the world's own
         // as the round starts (the game sets some on its own, such as the
         // alarm's), but the value under a tweak for a tweaked key.
-        if let (Some(vw), Some(t)) = (self.viewer.as_mut(), core_tier) {
+        if let (Some(vw), Some(w)) = (self.viewer.as_mut(), who.as_deref()) {
             for (k, v) in vw.engine0.iter_mut() {
-                if self.tweaks.slime_of(t.name(), k).is_none() {
+                if self.tweaks.slime_of(w, k).is_none() {
                     *v = viewer::engine_get(&game.world.s, k).unwrap_or(*v);
                 }
             }
         }
         self.game = Some(game);
+        self.slime = who;
         self.seen = 0;
         // The end's beat (`ending`), in the window only.
         self.beat = self.window.is_some().then(ending::Beat::default);

@@ -76,6 +76,14 @@ pub enum SlimeLook {
     /// a short tail, a seed blown off the body, not a droplet's long
     /// tracer streak (`SPORE_HEAD`, `SPORE_TAIL` in `view.wgsl`).
     Spores = 7,
+    /// An old look given back (the slime viewer, 11-21, the owner's card
+    /// "Bring back old looks"): the first game's slime, 11-12 to 11-14, a
+    /// dim opaque paint, every walker a dome (`view.wgsl`, look 8).
+    Paint = 8,
+    /// An old look given back: the slime of 11-14 morning (#241), full
+    /// saturation and tight glints, which the art director called crumpled
+    /// gold foil (`view.wgsl`, look 9).
+    Foil = 9,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -97,7 +105,7 @@ impl SlimeLook {
     }
 
     /// Every look, in the order the slime viewer lists them.
-    pub const ALL: [SlimeLook; 8] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant, SlimeLook::Scarred, SlimeLook::Spores];
+    pub const ALL: [SlimeLook; 10] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant, SlimeLook::Scarred, SlimeLook::Spores, SlimeLook::Paint, SlimeLook::Foil];
 
     /// Its name, as the tweaks file writes it (`body TIER = NAME`).
     pub fn name(self) -> &'static str {
@@ -110,6 +118,8 @@ impl SlimeLook {
             SlimeLook::Dormant => "crust",
             SlimeLook::Scarred => "scars",
             SlimeLook::Spores => "seeds",
+            SlimeLook::Paint => "paint",
+            SlimeLook::Foil => "foil",
         }
     }
 
