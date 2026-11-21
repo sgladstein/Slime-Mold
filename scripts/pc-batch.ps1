@@ -6,6 +6,7 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -Timing    # twins, then timing
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -DryRun    # first: print every step, run nothing
 #   ... pc-batch.ps1 -Followup -Timing   # M1 follow-up: six twins, nine view variants, planet 3 (about 35 min)
+#   ... pc-batch.ps1 -Timing -Views full,plants,flat   # only those view variants, twice each (about 1.2 min a run)
 #
 # Run -DryRun first (seconds, nothing built): nobody can parse-check this
 # file in the cloud, so a syntax slip shows there, not an hour into twins.
@@ -41,6 +42,11 @@ param(
     # Reports/view-cost-2026-11-21) and planet 3's CPU step after #624,
     # instead of the M1 block.
     [switch]$Followup,
+    # A view-cost batch (Look and interface, 11-21): only these view
+    # variants, comma-separated names from
+    # Reports/view-cost-2026-11-21/variants.py, each twice, interleaved;
+    # no twins, no game timing. Needs -Timing.
+    [string]$Views = "",
     [string]$Commit = "origin/main",
     [string]$Repo = "C:\Users\Scott\Code\Slime Mold",
     [string]$Tree = "C:\Users\Scott\Code\sm-batch",
@@ -113,7 +119,9 @@ Run "machine" "$bins\lw-main.exe bench=20 hand=farm"
 # The whole suite on the card: every GPU test since 11-14 (the Lure, the
 # fort, walls, tether, march, condensing, the heart, fire) ran only on
 # llvmpipe until now. Known on Windows since 11-12: the life-cycle twin.
-if ($Followup) {
+if ($Views) {
+    # A view-cost batch: no twins.
+} elseif ($Followup) {
     # Each by name: cargo takes one filter a run.
     foreach ($t in "gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu",
                    "a_frail_mould_dies_of_the_germ_on_both_engines",
@@ -176,14 +184,15 @@ if ($Timing) {
         if (-not $DryRun) { Start-Sleep -Seconds 90 }
         $lw = "$bins\lw-main.exe"
         $hand = "hand=strat:rush,aim=6"
-        if ($Followup) {
+        $names = if ($Views) { @($Views.Split(",") | ForEach-Object { $_.Trim() } | Where-Object { $_ }) } else { @("full", "soil", "plants", "crust", "water", "gems", "terrain", "lights", "flat") }
+        if ($Views -or $Followup) {
             # The view's base pass, part by part: each variant swaps one
             # part out (LARDER_VIEW_WGSL, no rebuild); its drop in `base`
             # against `full` is that part's cost. Interleaved twice.
             $vc = Join-Path $dir "vc"
             Run "view-variants" "python Reports\view-cost-2026-11-21\variants.py $vc"
             foreach ($i in 1, 2) {
-                foreach ($v in "full", "soil", "plants", "crust", "water", "gems", "terrain", "lights", "flat") {
+                foreach ($v in $names) {
                     $env:LARDER_VIEW_WGSL = Join-Path $vc "$v.wgsl"
                     # The game falls back to its own shader on a missing
                     # file, which would time `full` under the variant's name.
@@ -194,9 +203,9 @@ if ($Timing) {
             }
             # Planet 3's step frames after #624 (M1: 10.1 ms p95, the CPU
             # step 5.2 ms p95), with the CPU step's parts.
-            foreach ($i in 1, 2) {
+            if (-not $Views) { foreach ($i in 1, 2) {
                 Time "f-planet3-play-$i" "$lw run=1:3 mode=squads bench=300 $hand"
-            }
+            } }
         } else {
         # The played game, as the window plays it (steps spread over
         # frames): frame p50/p95 against the W2c gate (10 ms p95). 300 game
@@ -223,7 +232,7 @@ if ($Timing) {
 # ---- What to send back ----
 Set-Location $Out
 $sum = Join-Path $dir "summary.txt"
-"batch $stamp, timing $Timing, follow-up $Followup, dry run $DryRun" | Set-Content $sum
+"batch $stamp, timing $Timing, follow-up $Followup, views $Views, dry run $DryRun" | Set-Content $sum
 "shas: " + ($shas -join "; ") | Add-Content $sum
 "driver: " + (nvidia-smi --query-gpu=name,driver_version --format=csv,noheader) | Add-Content $sum
 Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } | Sort-Object Name | ForEach-Object {
