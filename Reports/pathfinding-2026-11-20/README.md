@@ -133,9 +133,53 @@ cells. The walking map is built no more often than before.
 - **Bots merge squads at any distance**, while the window's J needs them to
   touch. The probe merges only once they overlap. Worth knowing when reading
   bot runs.
-- **Walking maps do not avoid slime or fire.** A sent squad walks the
-  shortest way through a body of walkers. Steering round slime would be a
-  rule change (attack-move already stands to fight), so it is left for the
-  Squad and arsenal lane's list, not this pass.
+- **Walking maps do not avoid slime or fire.** Tried next, below, and not
+  kept.
 - **The maps are rebuilt every 30 s**, so a crystal eaten since then still
   blocks its cells. No squad was seen held by one in these runs.
+
+## Routing round slime and fire: tried, not kept (2026-11-21)
+
+The coordinator's follow-up: make squads route round slime and fire.
+
+**What was built** ([patch](avoid-experiment.patch), `avoid.rs`,
+`Rules::avoid`). A squad on a plain move whose way ahead crossed slime
+replanned its way once a game second on 4-dish-cell squares. Each square cost
+more for each walker on it (`World::mould_grid`) and for fire seen there in
+the last 8 s: burn and light bursts, and soldiers that felt heat. The anchor
+headed for the furthest point of that way it could walk to in a straight
+line. Attack-moves, drains and steering were unchanged.
+
+**Measured in the real game** (GPU, run seed 1795038793, 20 soldiers sent
+from crystal to crystal, `hand=movetour,20[,clear]`, 120 s, the same
+binary with `set=avoid=0` as the pair). The three numbers in each cell are:
+- the share of the way with walkers on a soldier
+- health lost per soldier per trip
+- the median trip time
+
+| Run | As before | Round all slime | Round thick bodies only |
+|---|---|---|---|
+| Planet 3, far crystals | 10.3%, 8.0, 37 s | 10.7%, 6.6, 40 s | 9.9%, 7.8, 40 s |
+| Planet 2, crystals clear of slime | 15.1%, 9.0, 19 s | 17.3%, 9.6, 20 s | 16.7%, 9.8, 19 s |
+| Planet 3, crystals clear of slime | 4.3%, 2.3, 11 s | 5.1%, 3.0, 13 s | 7.4%, 5.2, 13 s |
+
+None of the six pairs was clearly better, and the trips took longer. The
+films show why:
+- On planet 3 the far crystals sit inside the body, so there is no way
+  round.
+- On planet 2 loose walkers stream over the whole map and come to the squad
+  wherever it walks.
+
+A longer way only means more time among them. Fire was never seen in these
+runs, so routing round it was not tested. Revisit only if the slime stops
+coming to the squad (a slime that holds still, or one held behind walls),
+or for fire alone with a hand that lights it.
+
+Tools added for this:
+- `hand=movetour,N[,clear]`
+- `examples/pathprobe orders=` (m, f and c)
+- [tools/slime.py](tools/slime.py), which measures what a sent squad walks
+  through
+
+The CPU probe's slime of 25,000 walkers touched sent squads on only 1 to 3%
+of the way, against 10% in the real game. Measure this on the GPU.

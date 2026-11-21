@@ -137,8 +137,8 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   crystal takes its map, and members behind a crystal walk to the anchor.
   Steered squads reached 4.8 crystals a map against 1.9 (19 of 24 maps
   more, none fewer), back-and-forth walking 9.7% -> 4.9%
-  ([report](../../Reports/pathfinding-2026-11-20/README.md)). Open: walking
-  maps don't steer round slime or fire.
+  ([report](../../Reports/pathfinding-2026-11-20/README.md)). Routing round
+  slime was tried and not kept: the slime comes to the squad anyway.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
   column ends once its tail is near the anchor

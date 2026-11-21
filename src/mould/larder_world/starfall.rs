@@ -13,7 +13,7 @@
 //! and each further fall comes with chance `tail` (a geometric tail: most
 //! planets see three or four, about one in ten seven or more, up to
 //! `most`), at times drawn across `first` to `last` seconds after the
-//! landing. Its shadow shows where for `warn` seconds; it lands as a blast
+//! landing (on a run's planet, to half its par if that is sooner). Its shadow shows where for `warn` seconds; it lands as a blast
 //! (a kill, a crater, and a hurt to any soldier under it). On the ground
 //! it is rich food: it smells as a soldier does, `smell` times over, and on
 //! the GPU world it is a lure (`LureMark`) for its life, so the slime
@@ -58,6 +58,15 @@ pub struct StarRules {
     /// at least `gap` apart.
     pub first: f32,
     pub last: f32,
+    /// On a planet with a speed star (`Rules::par`), the window ends by
+    /// `par_share` of the par if that is sooner than `last` (0: `last`
+    /// alone). Direction, 2026-11-20: the bug check found the falls drawn
+    /// across 0:50 to 10:00 while the owner's planet 1 took a median 4:05
+    /// (balance review), so a short planet saw one fall of its three or
+    /// four. Half the par is 4:00 on planet 1 and 5:00 on planets 2 and 3,
+    /// so a planet played at his pace sees them all. Not a shorter `last`
+    /// for every planet: deeper planets' par grows with their area.
+    pub par_share: f32,
     pub gap: f32,
     /// Seconds its shadow shows before it lands.
     pub warn: f32,
@@ -129,6 +138,7 @@ impl Default for StarRules {
             most: 12,
             first: 50.0,
             last: 600.0,
+            par_share: 0.5,
             gap: 25.0,
             warn: 10.0,
             kill_r: 4.0,
@@ -310,7 +320,8 @@ impl<W: World> Game<W> {
         if self.starfall.plan.is_none() {
             let rng = &mut self.starfall.rng;
             let n = fall_count(&r, || rng.f32());
-            let mut at: Vec<f32> = (0..n).map(|_| r.first + (r.last - r.first).max(0.0) * rng.f32()).collect();
+            let last = if self.rules.par > 0.0 && r.par_share > 0.0 { r.last.min(r.par_share * self.rules.par) } else { r.last };
+            let mut at: Vec<f32> = (0..n).map(|_| r.first + (last - r.first).max(0.0) * rng.f32()).collect();
             at.sort_by(f32::total_cmp);
             for i in 1..at.len() {
                 at[i] = at[i].max(at[i - 1] + r.gap);
@@ -626,5 +637,23 @@ mod tests {
         assert_eq!(g.starfall.falls, falls, "no more drawn");
         assert!(g.starfall.plan.as_ref().is_some_and(|p| p.is_empty()), "the plan is spent");
         assert!(g.starfall.live.iter().all(|d| d.kind == DropKind::Core), "every fall has cooled");
+    }
+
+    /// Direction, 2026-11-20: a planet with a par draws its falls by half
+    /// of it (a 4-minute planet saw one fall when they ran to 10:00).
+    #[test]
+    fn the_falls_come_by_half_the_par() {
+        let star = StarRules { gap: 1.0, ..StarRules::for_depth(1) };
+        for (par, by) in [(0.0, star.last), (160.0, 80.0)] {
+            let mut g = Game::new(race_world(5, 1, 1_000), Rules { star, par, ..Rules::default() }, 5);
+            g.step();
+            while g.starfall.plan.is_none() && g.end.is_none() {
+                g.step();
+            }
+            let tps = g.rules.tps as f32;
+            let late = g.starfall.plan.as_ref().and_then(|p| p.first()).map(|&t| (t - g.landed) as f32 / tps).unwrap();
+            assert!(late <= by + g.starfall.falls as f32 * star.gap, "par {par}: last fall at {late} s, window to {by}");
+            assert!(late > star.first, "par {par}: last fall at {late} s");
+        }
     }
 }
