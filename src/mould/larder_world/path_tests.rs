@@ -127,3 +127,73 @@ fn a_squad_sent_past_fire_walks_round_it() {
     assert!(round > 4.0, "a member walked into the fire: nearest {round:.1} cells");
     assert!(t.is_some(), "never arrived (nearest {round:.1} cells)");
 }
+
+/// **Out of a walled base and round to its far side, and back in**
+/// (pathfinding thread, 2026-11-21: how soldiers walk round your own
+/// walls). `n` soldiers inside a box of walls `half` dish cells from their
+/// middle, one door `door` cells wide in its east side; sent `out` (west
+/// of the box, so out the door and round) then back in. Per leg: seconds
+/// to arrive (None past `secs`), and the furthest member from the goal 5 s
+/// after (dish cells).
+fn fort_legs(n: usize, half: f32, door: f32, secs: f32) -> Vec<(Option<f32>, f32)> {
+    let mut g = move_game(&super::narrow_tests::door_map(0.0, 0.0, 0.0), 5, n);
+    g.rules.build.anywhere = true;
+    g.bank = 1e9;
+    let sc = g.s();
+    let m = g.middle(0).unwrap();
+    let h = half * sc;
+    let (x0, x1, y0, y1) = (m.0 - h, m.0 + h, m.1 - h, m.1 + h);
+    for (a, b) in [((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))] {
+        assert!(g.apply(Cmd::Wall(a, b)));
+        let w = g.buildings.len() - 1;
+        g.raise(w, 1.0);
+        assert!(g.buildings[w].up(), "wall up");
+    }
+    assert!(g.apply(Cmd::Door((x1, m.1 - door / 2.0 * sc), (x1, m.1 + door / 2.0 * sc))), "door cut");
+    let out = (x0 - 20.0 * sc, m.1);
+    let mut legs = Vec::new();
+    for goal in [out, m] {
+        g.apply(Cmd::SquadOrder(0, Order::Move(goal.0, goal.1)));
+        let t0 = g.time();
+        let mut at = None;
+        while g.time() - t0 < secs {
+            g.step();
+            if g.squads[0].dest.is_none() {
+                at = Some(g.time() - t0);
+                break;
+            }
+        }
+        let t1 = g.time();
+        while g.time() - t1 < 5.0 {
+            g.step();
+        }
+        let far = g.members(0).iter().map(|&k| (g.soldiers[k].x - goal.0).hypot(g.soldiers[k].y - goal.1) / sc).fold(0.0, f32::max);
+        legs.push((at, far));
+    }
+    legs
+}
+
+#[test]
+#[ignore = "measuring harness: cargo test --release fort_numbers -- --ignored --nocapture"]
+fn fort_numbers() {
+    let ns: Vec<usize> = std::env::var("FORT_N").ok().map_or(vec![8, 24, 60], |v| v.split(',').filter_map(|x| x.parse().ok()).collect());
+    let doors: Vec<f32> = std::env::var("FORT_DOOR").ok().map_or(vec![4.0, 8.0], |v| v.split(',').filter_map(|x| x.parse().ok()).collect());
+    for &n in &ns {
+        for &door in &doors {
+            let l = fort_legs(n, 25.0, door, 60.0);
+            eprintln!("n {n} door {door}: out {:?} back {:?}", l[0], l[1]);
+        }
+    }
+}
+
+/// **A squad leaves a walled base by its door** (2026-11-21). 60 soldiers
+/// sent out of a box of walls by a door 4 cells wide and round to its far
+/// side: along the base's outside the column's rows were laid partly past
+/// its walls, inside (`Game::column_places`). 7 got out; 53 stood in those
+/// places for good and the head waited for them. Now out and there in
+/// about 26 s.
+#[test]
+fn a_squad_leaves_a_walled_base_by_its_door() {
+    let l = fort_legs(60, 25.0, 4.0, 50.0);
+    assert!(l[0].0.is_some(), "never got out and round: furthest member {:.0} cells off", l[0].1);
+}
