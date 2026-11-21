@@ -6826,3 +6826,6 @@
 2026-11-20 23:21:23 worker: league.py changed; restarting
 2026-11-20 23:21:23 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
 2026-11-20 23:21:24 worker: built the game in 1 s (src 527355bf3e46)
+2026-11-20 23:22:30   bot,want=torch.standard|rush,aim=6,cards=0 planet 0 seed 1795038793: ? 1034.0 (0 s)
+2026-11-21 10:16:37 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-21 10:16:38 worker: built the game in 1 s (src 527355bf3e46)
