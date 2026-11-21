@@ -725,80 +725,174 @@ impl App {
                 progress(&mut self.marks, b.at, below + 4.0);
             }
         }
-        // Starfall and boss cores (`Game::starfall`, 2026-11-20): what is
-        // coming down and what lies on the ground, drawn from the game's
-        // own drops. A fall's shadow darkens and its ring tightens as it
-        // comes, the ore itself a streak dropping onto it; down, ore is a
-        // hot gold lump and a core a red one, each shrinking with what is
-        // left in it and dimming as it cools, with its points beside it.
-        // The impact itself is the engine's blast and crater.
-        // Their words go on after the soldiers (`over`, below): at zoom 12 a
-        // squad standing on a drop hid its points and its "+N".
+        // Starfall and boss cores (`Game::starfall`, 2026-11-20), drawn as
+        // an artist would (the visual pass, owner 2026-11-21 03:36Z; one
+        // mark shape, `Marks::star`, painted and lit in `view.wgsl`'s
+        // `star_at`), every part from the game's own drop. Before, discs
+        // and rings: a shadow disc, a ring and a short streak for a fall;
+        // a flat orange disc for ore and a pink one for a core, a ring
+        // that closed as it cooled, a thin ring to stand in and a bar.
+        // - Coming: a soft shadow growing under a dashed warning ring at
+        //   the kill radius, ticks closing onto it, and the ore itself, a
+        //   white-hot head and a cooling trail with sparks, coming down
+        //   from high up on the right and lighting the ground as it nears.
+        // - Landing: a flash, a ring of light out to the kill radius and
+        //   sparks thrown along it, a shake; the crater is the engine's.
+        // - Down: a lump of cut dark rock with molten cracks cooling from
+        //   white gold to ember red as its life runs out, gold flecks
+        //   glinting; a core is a cut crimson gem with a heart that beats
+        //   faster as its life runs out, cracking in its last third, and
+        //   breaks out of its boss with a burst. Both shrink with what is
+        //   left in them.
+        // - Collecting: the ring to stand in is a dial that fills gold
+        //   clockwise with what the squad took and dark from the other
+        //   side with what the slime ate (in place of the bar), and gold
+        //   motes stream from the drop to each soldier draining it.
+        // Their words go on after the soldiers (`over`, below): at zoom 12
+        // a squad standing on a drop hid its points and its "+N".
         let mut over: Vec<OverLabel> = Vec::new();
         {
             use slime_mould::mould::larder_world::DropKind;
+            use slime_mould::world::marks::{STAR_BURST, STAR_CORE, STAR_DIAL, STAR_METEOR, STAR_ORE, STAR_TARGET};
             let now = g.world.ticks();
             let star = g.rules.star;
-            for d in &g.starfall.live {
+            let tps = g.rules.tps.max(1) as f32;
+            // The game moves in ticks (15 a second) and the window draws
+            // between them: the window's own clock since the tick began
+            // carries a fall's descent and a burst on smoothly.
+            if self.star_tick.0 != now {
+                self.star_tick = (now, self.clock);
+            }
+            let sub = ((self.clock - self.star_tick.1) * tps).clamp(0.0, 1.0);
+            let ticks = now as f32 + sub;
+            // A landing shakes the camera a little (`shake=`, as a blast).
+            if g.starfall.landed != self.star_felt {
+                if g.starfall.landed > self.star_felt {
+                    self.trauma = (self.trauma + 0.35 * self.args.shake).min(1.0);
+                }
+                self.star_felt = g.starfall.landed;
+            }
+            let fade = |c: [u8; 4], a: f32| [c[0], c[1], c[2], (c[3] as f32 * a.clamp(0.0, 1.0)) as u8];
+            const ORE_GLOW: [u8; 4] = [255, 170, 60, 220];
+            const ORE_HOT: [u8; 4] = [255, 236, 180, 255];
+            const CORE_GLOW: [u8; 4] = [235, 60, 85, 220];
+            const CORE_PALE: [u8; 4] = [255, 210, 220, 255];
+            const WARN: [u8; 4] = [255, 92, 60, 255];
+            const GOLD: [u8; 4] = [255, 214, 90, 255];
+            const GOLD_HOT: [u8; 4] = [255, 246, 200, 255];
+            let soldiers: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+            for (n, d) in g.starfall.live.iter().enumerate() {
                 // Emptied by the squad this second: its points are in, and
                 // the "+N" below takes its place (`Starfall::cashed`).
                 if d.down && d.left <= 0.01 {
                     continue;
                 }
-                let w = d.warmth(now);
+                let seed = (d.at.0 * 7.0 + d.at.1 * 13.0) as u32 ^ d.lands as u32;
+                let hit = star.kill_r * sc;
                 if !d.down {
-                    let hit = star.kill_r * sc;
-                    self.marks.disc(d.at, hit * (0.35 + 0.65 * w), [8, 6, 16, (50.0 + 110.0 * w) as u8], false);
-                    self.marks.ring(d.at, hit, [255, 196, 110, (70.0 + 160.0 * w) as u8]);
-                    // Coming in from high up and to the right, fast at the end.
+                    // How near, smooth between ticks.
+                    let span = d.lands.saturating_sub(d.warned).max(1) as f32;
+                    let w = ((ticks - d.warned as f32) / span).clamp(0.0, 1.0);
+                    self.marks.star(d.at, hit * 1.4, STAR_TARGET, w, seed, 0.0, 0.0, WARN, ORE_GLOW, true);
+                    // In from high up and to the right, fast at the end,
+                    // growing as it comes down toward the camera.
                     let fall = (1.0 - w).powf(1.6) * 70.0 * sc;
-                    let head = (d.at.0 + 0.55 * fall, d.at.1 - fall);
-                    let tail = (head.0 + 0.55 * 9.0 * sc, head.1 - 9.0 * sc);
-                    self.marks.streak(head, tail, 3.0, [255, 150, 60, 150], [255, 240, 200, 255]);
-                    glows.push(Light { at: head, reach: 6.0 * sc, lift: 6.0, colour: [255.0, 170.0, 90.0], strength: 0.6 + 0.8 * w });
+                    let dir = (0.55f32 / 1.1413, -1.0f32 / 1.1413);
+                    let head = (d.at.0 + dir.0 * fall, d.at.1 + dir.1 * fall);
+                    let rc = (d.r * zoom * (0.12 + 0.3 * w * w)).max(1.2);
+                    let trail = (6.0 + 12.0 * w) * sc;
+                    let mid = (head.0 + dir.0 * 0.5 * trail, head.1 + dir.1 * 0.5 * trail);
+                    let phase = (self.clock * 1.3).fract();
+                    self.marks.star(mid, 0.5 * trail + 4.0 * rc / zoom.max(1e-3), STAR_METEOR, rc, seed, phase, 0.0, ORE_GLOW, ORE_HOT, false);
+                    glows.push(Light { at: head, reach: (4.0 + 4.0 * w) * sc, lift: 6.0, colour: [255.0, 170.0, 90.0], strength: 0.4 + 0.7 * w * w });
+                    // The ground under it, lit as it comes.
+                    if w > 0.6 {
+                        glows.push(Light { at: d.at, reach: hit * 1.6, lift: 4.0, colour: [255.0, 160.0, 80.0], strength: 0.8 * ((w - 0.6) / 0.4).powi(2) });
+                    }
                     continue;
                 }
+                let w = d.warmth(now);
                 let full = (d.left / d.worth.max(1e-3)).clamp(0.0, 1.0);
-                let (glow, core, light) = match d.kind {
-                    DropKind::Ore => ([255, 190, 70, 200], [255, 244, 200, 255], [255.0, 200.0, 90.0]),
-                    DropKind::Core => ([235, 60, 80, 200], [255, 210, 220, 255], [240.0, 70.0, 90.0]),
-                };
-                let heat = 0.35 + 0.65 * w;
-                let r = d.r * (0.45 + 0.55 * full.sqrt());
-                let fade = |c: [u8; 4], a: f32| [c[0], c[1], c[2], (c[3] as f32 * a) as u8];
-                self.marks.disc(d.at, r * 1.25, fade(glow, 0.55 * heat), true);
-                self.marks.disc(d.at, r * 0.6, fade(core, heat), false);
-                // How long it lasts: a ring that closes as it cools.
-                self.marks.ring(d.at, d.r * (1.0 + 1.2 * w), fade(glow, 0.5));
-                // Where to stand to collect it (owner's play, 11-20 23:17Z:
-                // "it isn't clear how to collect the miniboss hearts"): a
-                // thin ring at the soldiers' reach (`StarRules::reach`),
-                // bright while soldiers stand in it.
+                let age = (ticks - d.lands as f32) / tps;
                 let reach = d.r + star.reach * sc;
                 let on = d.takers > 0;
-                self.marks.ring(d.at, reach, fade(core, if on { 0.9 } else { 0.4 }));
-                glows.push(Light { at: d.at, reach: (4.0 + 4.0 * full) * sc, lift: 3.0, colour: light, strength: 1.4 * heat * full.max(0.2) });
-                let below = (d.r * zoom).max(4.0) + 4.0;
-                // Its points, and a bar of what the squad has taken from it
-                // (gold) against what the slime ate (dark).
+                let core = d.kind == DropKind::Core;
+                let (glow, pale) = if core { (CORE_GLOW, CORE_PALE) } else { (ORE_GLOW, ORE_HOT) };
+                let r = d.r * (0.5 + 0.5 * full.sqrt());
+                if core {
+                    // Its beat quickens from 1.1 to 3.5 a second as its
+                    // life runs out (the phase is that rate's integral, so
+                    // it never jumps).
+                    let life = d.ends.saturating_sub(d.lands).max(1) as f32 / tps;
+                    let a = age.max(0.0);
+                    let beat = (1.1 * a + 2.4 * a * a / (2.0 * life)).fract();
+                    self.marks.star(d.at, r * 2.2, STAR_CORE, w, seed, beat, full, glow, pale, true);
+                    let thump = (-(beat / 0.08).powi(2)).exp() + 0.6 * (-((beat - 0.2) / 0.08).powi(2)).exp();
+                    glows.push(Light { at: d.at, reach: (3.5 + 3.0 * full) * sc, lift: 3.0, colour: [240.0, 60.0, 90.0], strength: (0.7 + 0.9 * thump) * full.max(0.25) });
+                    // Breaking out of its boss.
+                    if age < 0.6 {
+                        self.marks.star(d.at, d.r * 3.0, STAR_BURST, age / 0.6, seed, 0.0, 0.0, glow, pale, false);
+                    }
+                } else {
+                    let phase = (self.clock * 0.45).fract();
+                    self.marks.star(d.at, r * 2.0, STAR_ORE, w, seed, phase, 0.0, glow, pale, true);
+                    glows.push(Light { at: d.at, reach: (3.0 + 3.0 * full) * sc, lift: 3.0, colour: [255.0, 190.0, 90.0], strength: (0.3 + 0.9 * w * w) * full.max(0.2) });
+                    // The impact: a flash, a ring out to the kill radius
+                    // and sparks along it (no bigger than its damage).
+                    if age < 0.8 {
+                        let k = age.max(0.0) / 0.8;
+                        self.marks.star(d.at, hit, STAR_BURST, k, seed, 0.0, 0.0, ORE_GLOW, [255, 250, 235, 255], false);
+                        glows.push(Light { at: d.at, reach: hit * 2.0, lift: 6.0, colour: [255.0, 210.0, 140.0], strength: 2.2 * (1.0 - k).powi(2) });
+                    }
+                }
+                // Where to stand to collect it (owner's play, 11-20 23:17Z:
+                // "it isn't clear how to collect the miniboss hearts"),
+                // filling with what was taken and eaten; over the drop,
+                // whose glow reaches past it.
+                let worth = d.worth.max(1e-3);
+                self.marks.star(d.at, reach, STAR_DIAL, d.taken / worth, seed, d.eaten / worth, if on { 1.0 } else { 0.0 }, pale, glow, false);
+                // Gold motes streaming from it to each soldier draining it:
+                // what the squad takes, seen going to them.
+                if on && d.left > 0.01 {
+                    for (j, &p) in soldiers.iter().enumerate().filter(|(_, p)| (p.0 - d.at.0).hypot(p.1 - d.at.1) <= reach) {
+                        let (dx, dy) = (p.0 - d.at.0, p.1 - d.at.1);
+                        let len = dx.hypot(dy).max(1e-3);
+                        let from = (d.at.0 + dx / len * r * 0.6, d.at.1 + dy / len * r * 0.6);
+                        for m in 0..4 {
+                            let t = (self.clock * 1.4 + m as f32 / 4.0 + (j * 7 + n * 3) as f32 * 0.137).fract();
+                            let e = t * t;
+                            let e0 = (t - 0.2).max(0.0).powi(2);
+                            let at = |e: f32| (from.0 + (p.0 - from.0) * e, from.1 + (p.1 - from.1) * e - 1.2 * sc * (std::f32::consts::PI * e).sin());
+                            let a = (1.0 - t) * 0.6 + 0.4;
+                            self.marks.streak(at(e), at(e0), 2.0, fade(GOLD, 0.8 * a), fade(GOLD_HOT, a));
+                        }
+                    }
+                }
+                let below = (reach * zoom).max(6.0) + 2.0;
+                // Its points, or what the squad has taken while it drains.
                 let text = if on { format!("+{}", d.taken.floor() as u32) } else { format!("{}", d.left.ceil() as u32) };
                 // A dark shadow under it, so it reads on the slime's gold.
                 let x = -4.5 * text.len() as f32;
                 over.push((d.at, (x + 1.5, -below - 12.5), text.clone(), 1.8, [20, 10, 10, 220]));
-                over.push((d.at, (x, -below - 14.0), text, 1.8, fade(core, 0.95)));
-                self.marks.bar(d.at, -below - 18.0, (10.0, 1.5), d.taken / d.worth.max(1e-3), [255, 214, 90, 255], [40, 30, 30, 200]);
+                over.push((d.at, (x, -below - 14.0), text, 1.8, if on { GOLD } else { fade(pale, 0.95) }));
             }
             // The moment the points come in (Boss cores thread, 2026-11-21):
             // a drop the squad emptied leaves its "+N" in gold, rising and
-            // fading over `CASHED_SECS`, as the coin chime rings. Before,
-            // the drop just shrank away and nothing said it had paid.
-            let tps = g.rules.tps.max(1) as f32;
+            // fading over `CASHED_SECS`, as the coin chime rings, with a
+            // burst of gold where it lay. Before, the drop just shrank away
+            // and nothing said it had paid.
             for c in &g.starfall.cashed {
-                let age = now.saturating_sub(c.tick) as f32 / tps;
+                let age = (ticks - c.tick as f32) / tps;
                 if age >= CASHED_SECS {
                     continue;
                 }
-                let k = age / CASHED_SECS;
+                if age < 0.6 {
+                    let k = age.max(0.0) / 0.6;
+                    let seed = (c.at.0 * 5.0 + c.at.1 * 11.0) as u32;
+                    self.marks.star(c.at, star.ore_r * sc * 2.4, STAR_BURST, k, seed, 0.0, 0.0, GOLD, GOLD_HOT, false);
+                    glows.push(Light { at: c.at, reach: 6.0 * sc, lift: 4.0, colour: [255.0, 214.0, 90.0], strength: 2.5 * (1.0 - k) });
+                }
+                let k = age.max(0.0) / CASHED_SECS;
                 let text = format!("+{}", c.taken.round() as u32);
                 let x = -6.0 * text.len() as f32;
                 let y = -18.0 - 34.0 * k.sqrt();

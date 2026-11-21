@@ -879,6 +879,11 @@ struct App {
     trauma: f32,
     /// The window's real seconds, for the shake's wobble.
     clock: f32,
+    /// Starfall's look (`App::marks`): the game tick last drawn and the
+    /// clock when it began (to carry a fall on between ticks), and the
+    /// falls landed that have shaken the camera.
+    star_tick: (u64, f32),
+    star_felt: u32,
     /// A hit-stop (`hitstop=`; D6): real seconds the game holds still, and
     /// until another may start.
     stop: f32,
@@ -1061,6 +1066,8 @@ impl App {
             beat: None,
             trauma: 0.0,
             clock: 0.0,
+            star_tick: (0, 0.0),
+            star_felt: 0,
             stop: 0.0,
             stop_cool: 0.0,
             felt: 0,

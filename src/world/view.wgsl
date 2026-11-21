@@ -4935,6 +4935,9 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
             on = soldier_at(b, d, h.x).w > 0.004;
         } else if (shape == BUILDING) {
             on = building_at(b, d, h.x).w > 0.004;
+        } else if (shape == STAR) {
+            let f = star_at(b, d);
+            on = f.a > 0.004 || max(f.add.x, max(f.add.y, f.add.z)) > 0.6;
         } else if (shape == GLYPH) {
             let gx = u32(floor((qx - floor(s.x)) / h.x));
             let gy = u32(floor((qy - floor(s.y)) / h.x));
@@ -5039,6 +5042,363 @@ fn flash_at(b: u32, p: vec2<f32>) -> vec2<f32> {
     }
     g = vec2<f32>(min(g.x + 0.8 * j.x, 1.0), max(g.y, j.y));
     return vec2<f32>(g.x * sqrt(left), g.y * (0.35 + 0.65 * left));
+}
+
+// ---- Starfall and boss cores (the visual pass, 2026-11-21) ----
+//
+// One mark shape (`STAR`, `Marks::star`) for everything a fall and a core
+// show, each a picture of the game's own drop (`starfall.rs`): what kind
+// it is in `extra` bits 0-3, a seed in bits 4-11, two shares in bits
+// 12-19 and 20-27, `fill` a third. Before (#573 to #622), discs and
+// rings: an orange disc and a pink one on the ground, a shadow disc and a
+// ring for a fall, a bar for what was taken; the owner asked for an
+// artist's pass (2026-11-21 03:36Z). Painted where it is matter (the
+// shadow, the rock, the gem, the dial), added as light where it burns
+// (the meteor, the molten cracks, the heart, the impact), as `streak_at`.
+//
+// - TARGET: the fall's shadow, growing and darkening as it comes, inside
+//   a dashed warning ring at the kill radius (`StarRules::kill_r`, which
+//   hurts a soldier: the only red here, art direction rule 3) with four
+//   ticks that close onto it as the ore comes. `fill` how near (0-1).
+// - METEOR: the ore coming in, a white-hot head and a trail that cools
+//   from gold to ember red to smoke, sparks shed along it. The anchor is
+//   the trail's middle; `fill` the head's radius in pixels.
+// - ORE: a lump of cut dark rock with molten cracks, white-gold as it
+//   lands, cooling through orange to dull red as its life runs out
+//   (`fill` its warmth), gold flecks glinting in it.
+// - CORE: a broken boss's heart, a cut crimson gem with a heart in it
+//   that beats faster as its life runs out (`fill`); cracks show in its
+//   last third; bits 12-19 the beat, 20-27 what is left in it.
+// - DIAL: where to stand to collect (the soldiers' reach,
+//   `StarRules::reach`), a dashed ring that fills gold clockwise from the
+//   top with what the squad took (`fill`) and dark from the other side
+//   with what the slime ate (bits 12-19); brighter and closer dashed
+//   while soldiers stand in it (bit 20). It replaces the bar under the
+//   number, and is drawn over the drop (only its band claims pixels).
+// - BURST: a ring of light out to the radius and sparks thrown along it,
+//   gone in under a second (`fill` how far through): the ore's impact (to
+//   the kill radius: never bigger than its damage), a core breaking out of
+//   its boss, a drop cashed (in gold).
+const STAR: u32 = 11u;
+const STAR_TARGET: u32 = 0u;
+const STAR_METEOR: u32 = 1u;
+const STAR_ORE: u32 = 2u;
+const STAR_CORE: u32 = 3u;
+const STAR_DIAL: u32 = 4u;
+const STAR_BURST: u32 = 5u;
+// The lumps' light, from the upper left as the soldiers' (x, y, up).
+const STAR_SUN: vec3<f32> = vec3<f32>(-0.55, -0.7, 0.75);
+// The ore's rock, in shadow and lit.
+const ORE_ROCK_DARK: vec3<f32> = vec3<f32>(32.0, 25.0, 22.0);
+const ORE_ROCK_LIT: vec3<f32> = vec3<f32>(132.0, 108.0, 82.0);
+// Its cracks from hot to cold: white gold, orange, dull ember.
+const ORE_HOT: vec3<f32> = vec3<f32>(255.0, 240.0, 190.0);
+const ORE_WARM: vec3<f32> = vec3<f32>(255.0, 150.0, 40.0);
+const ORE_COOL: vec3<f32> = vec3<f32>(150.0, 34.0, 12.0);
+// The gold flecks in it.
+const ORE_GOLD: vec3<f32> = vec3<f32>(255.0, 222.0, 120.0);
+// The core's gem, in shadow and lit, its top face and its heart.
+const CORE_DARK: vec3<f32> = vec3<f32>(62.0, 6.0, 18.0);
+const CORE_LIT: vec3<f32> = vec3<f32>(226.0, 52.0, 82.0);
+const CORE_TABLE: vec3<f32> = vec3<f32>(255.0, 150.0, 170.0);
+const CORE_HEART: vec3<f32> = vec3<f32>(255.0, 90.0, 120.0);
+// What the slime ate, on the dial.
+const DIAL_EATEN: vec3<f32> = vec3<f32>(96.0, 28.0, 24.0);
+
+struct StarPx { paint: vec3<f32>, a: f32, add: vec3<f32> }
+
+fn star_none() -> StarPx {
+    var o: StarPx;
+    o.paint = vec3<f32>(0.0); o.a = 0.0; o.add = vec3<f32>(0.0);
+    return o;
+}
+
+fn star_hash(i: f32, s: f32) -> f32 { return hash2(vec2<f32>(i * 17.13 + s * 3.7, s * 1.31 + i * 0.71 + 5.0)); }
+
+// The two nearest seed points' distances (F1, F2) of a cell noise at p.
+fn star_cells(p: vec2<f32>, s: f32) -> vec2<f32> {
+    let i = floor(p);
+    var f1 = 9.0;
+    var f2 = 9.0;
+    for (var y = -1; y <= 1; y++) {
+        for (var x = -1; x <= 1; x++) {
+            let c = i + vec2<f32>(f32(x), f32(y));
+            let q = c + vec2<f32>(hash2(c + vec2<f32>(s, 0.0)), hash2(c + vec2<f32>(0.0, s + 7.0))) * 0.8 + 0.1;
+            let dd = distance(p, q);
+            if (dd < f1) { f2 = f1; f1 = dd; } else if (dd < f2) { f2 = dd; }
+        }
+    }
+    return vec2<f32>(f1, f2);
+}
+
+// A cut lump's outline: `n` flat faces round, each pushed out by its own
+// share of `rough`; returns pixels inside the edge (negative outside) and
+// the face's middle angle.
+fn star_cut(d: vec2<f32>, rb: f32, n: f32, rough: f32, s: f32) -> vec2<f32> {
+    let tau = 6.2831853;
+    let ang = atan2(d.y, d.x) + s;
+    let k0 = floor(ang / tau * n + 0.5);
+    // The nearest face and its two neighbours, the nearest plane of the
+    // three (the nearest face's alone, each pushed out its own way, left
+    // spikes where two met).
+    var inside = 1e9;
+    var fa = k0 * tau / n;
+    for (var j = -1; j <= 1; j++) {
+        let k = k0 + f32(j);
+        let a = k * tau / n;
+        let push = 1.0 + rough * (star_hash(k - n * floor(k / n), s) - 0.5);
+        let e = rb * push - length(d) * cos(ang - a);
+        if (e < inside) { inside = e; fa = a; }
+    }
+    return vec2<f32>(inside, fa - s);
+}
+
+fn star_at(b: u32, d: vec2<f32>) -> StarPx {
+    let ex = marks[b + 11u];
+    let kind = ex & 15u;
+    let s = f32((ex >> 4u) & 255u);
+    let p1 = f32((ex >> 12u) & 255u) / 255.0;
+    let p2 = f32((ex >> 20u) & 255u) / 255.0;
+    let a0 = bitcast<f32>(marks[b + 9u]);
+    let col = unpack(marks[b + 7u]);
+    let col2 = unpack(marks[b + 8u]);
+    let h = half(b).x;
+    let r = length(d);
+    let tau = 6.2831853;
+    let sun = normalize(STAR_SUN);
+    var o = star_none();
+    if (kind == STAR_TARGET) {
+        let w = a0;
+        let big = h / 1.4;
+        // The shadow: soft, growing and darkening as the fall comes.
+        let rs = big * (0.3 + 0.7 * w);
+        o.paint = vec3<f32>(6.0, 4.0, 10.0);
+        o.a = (0.16 + 0.5 * w * w) * (1.0 - smoothstep(rs * 0.45, rs, r));
+        // The warning ring at the kill radius, sixteen dashes turning as
+        // it comes, and four ticks closing onto it.
+        let wide = 1.3 + 0.9 * w;
+        let ring = clamp(wide - abs(r - big + 0.5 * wide) + 0.5, 0.0, 1.0);
+        let ang = atan2(d.y, d.x);
+        let dash = step(0.38, fract(ang / tau * 16.0 + 1.5 * w));
+        var line = ring * dash * (0.4 + 0.6 * w);
+        let da = (fract((ang - tau / 8.0) / (tau / 4.0) + 0.5) - 0.5) * (tau / 4.0);
+        let along = r * cos(da);
+        let across = abs(r * sin(da));
+        let at = big * (1.06 + 0.3 * (1.0 - w));
+        let tick = step(at, along) * step(along, at + 0.22 * big) * clamp(1.2 + 0.6 * w - across, 0.0, 1.0);
+        line = max(line, tick * (0.55 + 0.45 * w));
+        o.paint = mix(o.paint, col, line);
+        o.a = max(o.a, line);
+        // The ground lit by the fireball in its last seconds.
+        let lit = smoothstep(0.6, 1.0, w);
+        o.add = col2 * 0.35 * lit * lit * exp(-(r * r) / (2.0 * 0.36 * big * big));
+        return o;
+    }
+    if (kind == STAR_METEOR) {
+        let rc = max(a0, 0.8);
+        let dir = normalize(vec2<f32>(0.55, -1.0));
+        let lt = max(h - 4.0 * rc, 1.0);
+        // From the head (at the far end from the tail) along the trail.
+        let q = d + dir * lt;
+        let t = dot(q, dir);
+        let side = q.x * dir.y - q.y * dir.x;
+        let u = clamp(t / (2.0 * lt), 0.0, 1.0);
+        let ph = p1;
+        let wob = (vnoise(vec2<f32>(t * 0.07 + s, ph * 6.0)) - 0.5) * rc * 1.6 * u;
+        var ac = abs(side - wob);
+        if (t < 0.0) { ac = length(q); }
+        let width = rc * mix(1.0, 0.3, u);
+        let fade = 1.0 - u;
+        let core = clamp(width - ac + 0.5, 0.0, 1.0) * pow(fade, 1.3);
+        let glow = exp(-(ac * ac) / (2.0 * 5.0 * width * width)) * pow(fade, 1.8);
+        var ramp = mix(col2, col, smoothstep(0.0, 0.3, u));
+        ramp = mix(ramp, vec3<f32>(120.0, 24.0, 10.0), smoothstep(0.3, 0.8, u));
+        let hl = length(q);
+        let head = clamp(rc * 1.1 - hl + 0.5, 0.0, 1.0);
+        let halo = exp(-(hl * hl) / (2.0 * 2.25 * rc * rc));
+        o.add = vec3<f32>(255.0, 250.0, 235.0) * head + col2 * halo * 0.7 + ramp * (core * 0.9 + glow * 0.5);
+        // Smoke where the trail cools, in front of nothing (no light).
+        let smoke = smoothstep(0.35, 1.0, u) * (1.0 - smoothstep(0.9, 1.0, u)) * exp(-(ac * ac) / (2.0 * 4.0 * rc * rc)) * vnoise(vec2<f32>(t * 0.12 - ph * 9.0, side * 0.2 + s));
+        o.paint = vec3<f32>(36.0, 32.0, 36.0);
+        o.a = 0.45 * smoke;
+        // Sparks shed along the trail, drifting off it as they fall back.
+        for (var i = 0; i < 7; i++) {
+            let fi = f32(i);
+            let st = fract(star_hash(fi, s) + ph * (0.8 + 0.4 * star_hash(fi + 9.0, s)));
+            let off = (star_hash(fi + 3.0, s) - 0.5) * rc * 5.0 * st;
+            let sp = -dir * lt + dir * (st * lt * 1.6) + vec2<f32>(dir.y, -dir.x) * off;
+            let sd = distance(d, sp);
+            let spark = clamp(1.3 - sd, 0.0, 1.0) * (1.0 - st);
+            o.add += mix(col2, col, st) * spark * 1.4;
+        }
+        return o;
+    }
+    if (kind == STAR_ORE) {
+        let heat = a0;
+        let rb = h / 2.0;
+        // Its shadow on the ground, down and right.
+        let sh = star_cut(d - vec2<f32>(0.12, 0.18) * rb, rb, 7.0, 0.35, s);
+        let cut = star_cut(d, rb, 7.0, 0.35, s);
+        let body = clamp(cut.x + 0.5, 0.0, 1.0);
+        let shadow = clamp(sh.x + 0.5, 0.0, 1.0) * (1.0 - body) * 0.55;
+        // Its heat ramp: white gold, orange, ember, out.
+        var hc = mix(ORE_COOL * 0.25, ORE_COOL, smoothstep(0.0, 0.33, heat));
+        hc = mix(hc, ORE_WARM, smoothstep(0.33, 0.66, heat));
+        hc = mix(hc, ORE_HOT, smoothstep(0.66, 1.0, heat));
+        // The glow round it while it is hot.
+        // (Gone by a radius out, inside the mark's box: past it the box's
+        // square edge showed.)
+        let outr = max(r - rb, 0.0);
+        let halo = exp(-(outr * outr) / (2.0 * 0.16 * rb * rb)) * (1.0 - smoothstep(0.5 * rb, 0.95 * rb, outr)) * (1.0 - body);
+        o.add = hc * halo * heat * 0.55;
+        o.paint = vec3<f32>(4.0, 3.0, 3.0);
+        o.a = shadow;
+        if (body <= 0.0) { return o; }
+        // Cut faces: a top face in the middle, sloping faces round it.
+        let rr = clamp(r / rb, 0.0, 1.0);
+        var n = vec3<f32>(0.0, 0.0, 1.0);
+        let face = star_cut(d, rb * 0.48, 5.0, 0.4, s + 1.7).x;
+        if (face < 0.0) {
+            let slope = 0.55 + 0.6 * rr;
+            n = normalize(vec3<f32>(cos(cut.y) * slope, sin(cut.y) * slope, 1.0));
+        }
+        let lam = clamp(dot(n, sun), 0.0, 1.0);
+        var rock = mix(ORE_ROCK_DARK, ORE_ROCK_LIT, lam);
+        // A thin lit rim on the faces toward the light, an edge round the top.
+        let rim = (1.0 - smoothstep(0.0, 1.6, cut.x)) * clamp(dot(vec2<f32>(cos(cut.y), sin(cut.y)), sun.xy) * 1.4, 0.0, 1.0);
+        rock = mix(rock, ORE_ROCK_LIT * 1.25, rim * 0.6);
+        let edge = 1.0 - smoothstep(0.0, 1.2, abs(face));
+        rock = rock * (1.0 - 0.35 * edge);
+        // Molten cracks between a few big cells of the rock, a hot thin
+        // seam in a wider glow, widest in the middle and closing as it
+        // cools (the rim's cells are whole rock).
+        let cells = star_cells(d / (rb * 0.75) + vec2<f32>(s * 0.37, s * 0.21), s);
+        let gap = (cells.y - cells.x) * rb * 0.75;
+        let wide = (0.4 + 1.1 * heat) * (1.2 - rr) * clamp(rb / 14.0, 0.6, 1.6);
+        let live = smoothstep(0.02, 0.15, heat) * (1.0 - smoothstep(0.75, 0.95, rr));
+        let seam = (1.0 - smoothstep(wide * 0.5, wide, gap)) * live;
+        let glow = exp(-(gap * gap) / (2.0 * 4.0 * wide * wide)) * live;
+        let deep = mix(ORE_COOL, ORE_WARM, smoothstep(0.4, 1.0, heat));
+        o.paint = mix(mix(rock, deep * 0.55, glow * 0.6), hc, seam);
+        o.add = hc * seam * heat * 0.35 + deep * glow * heat * 0.3;
+        // Gold flecks glinting in turn.
+        for (var i = 0; i < 5; i++) {
+            let fi = f32(i);
+            let fa = tau * star_hash(fi, s + 2.0);
+            let fp = vec2<f32>(cos(fa), sin(fa)) * rb * (0.2 + 0.55 * star_hash(fi + 5.0, s));
+            let q = abs(d - fp);
+            let glint = pow(max(sin(tau * (p1 + star_hash(fi + 11.0, s))), 0.0), 10.0);
+            let fleck = clamp(1.0 - length(q) / 1.4, 0.0, 1.0);
+            let star = (1.0 - smoothstep(0.0, 1.0, min(q.x, q.y))) * (1.0 - smoothstep(0.0, 1.5 + 0.12 * rb, max(q.x, q.y)));
+            o.paint = mix(o.paint, ORE_GOLD * 0.8, fleck * 0.8);
+            o.add += ORE_GOLD * star * glint * 0.9;
+        }
+        o.a = max(body, shadow);
+        if (body < 1.0) { o.paint = mix(vec3<f32>(4.0, 3.0, 3.0), o.paint, body / max(o.a, 1e-3)); }
+        return o;
+    }
+    if (kind == STAR_CORE) {
+        let life = a0;
+        let beat = p1;
+        let full = p2;
+        let rb = h / 2.2;
+        // A gem a little taller than wide.
+        let e = vec2<f32>(d.x, d.y / 1.18);
+        let sh = star_cut(e - vec2<f32>(0.12, 0.2) * rb, rb, 6.0, 0.0, s);
+        let cut = star_cut(e, rb, 6.0, 0.0, s);
+        let body = clamp(cut.x + 0.5, 0.0, 1.0);
+        let shadow = clamp(sh.x + 0.5, 0.0, 1.0) * (1.0 - body) * 0.5;
+        // Its beat: a strong pulse and a softer one after.
+        let q0 = beat / 0.07;
+        let q1 = (beat - 1.0) / 0.07;
+        let q2 = (beat - 0.2) / 0.07;
+        let b1 = exp(-q0 * q0) + exp(-q1 * q1);
+        let b2 = 0.6 * exp(-q2 * q2);
+        let thump = clamp(b1 + b2, 0.0, 1.0);
+        let strength = 0.3 + 0.7 * full;
+        let outr = max(r - rb, 0.0);
+        let halo = exp(-(outr * outr) / (2.0 * 0.16 * rb * rb)) * (1.0 - smoothstep(0.5 * rb, 1.1 * rb, outr)) * (1.0 - body);
+        o.add = col * halo * (0.25 + 0.55 * thump) * strength;
+        o.paint = vec3<f32>(4.0, 2.0, 3.0);
+        o.a = shadow;
+        if (body <= 0.0) { return o; }
+        let rr = clamp(length(e) / rb, 0.0, 1.0);
+        let face = star_cut(e, rb * 0.5, 6.0, 0.0, s).x;
+        var n = vec3<f32>(0.0, 0.0, 1.0);
+        if (face < 0.0) { n = normalize(vec3<f32>(cos(cut.y) * 0.9, sin(cut.y) * 0.9, 1.0)); }
+        let lam = clamp(dot(n, sun), 0.0, 1.0);
+        var gem = mix(CORE_DARK, CORE_LIT, lam);
+        if (face >= 0.0) { gem = mix(CORE_LIT, CORE_TABLE, 0.35 + 0.4 * thump); }
+        // Its facets' edges: the top face's rim, and the seams between
+        // the sloping faces.
+        let ang = atan2(e.y, e.x) + s;
+        let seam = abs(fract(ang / tau * 6.0) - 0.5) * tau / 6.0 * length(e);
+        let lines = max(1.0 - smoothstep(0.0, 1.1, abs(face)), (1.0 - smoothstep(0.0, 0.9, seam)) * step(face, 0.0));
+        gem = gem * (1.0 - 0.45 * lines);
+        // Cracks in its last third, darkening as it runs out.
+        let dying = 1.0 - smoothstep(0.0, 0.33, life);
+        if (dying > 0.0) {
+            let cells = star_cells(e / (rb * 0.5), s + 3.0);
+            let crack = 1.0 - smoothstep(0.03, 0.08, cells.y - cells.x);
+            gem = mix(gem, vec3<f32>(20.0, 4.0, 8.0), crack * dying * 0.85);
+        }
+        o.paint = gem;
+        // The heart inside, beating, and a glint on its upper left.
+        let heart = exp(-(rr * rr) / (2.0 * 0.18)) * (0.25 + 0.75 * thump) * strength;
+        let gl = distance(d, vec2<f32>(-0.38, -0.45) * rb);
+        let glint = clamp(1.0 - gl / max(0.16 * rb, 1.2), 0.0, 1.0);
+        o.add = CORE_HEART * heart * 0.8 + vec3<f32>(255.0, 235.0, 240.0) * glint * 0.8;
+        o.a = max(body, shadow);
+        if (body < 1.0) { o.paint = mix(vec3<f32>(4.0, 2.0, 3.0), o.paint, body / max(o.a, 1e-3)); }
+        return o;
+    }
+    if (kind == STAR_DIAL) {
+        let took = a0;
+        let ate = p1;
+        let on = p2 > 0.5;
+        let wide = clamp(0.045 * h, 1.6, 3.2);
+        let mid = h - 1.0 - 0.5 * wide;
+        let band = clamp(0.5 * wide + 0.5 - abs(r - mid), 0.0, 1.0);
+        let ink = clamp(0.5 * wide + 1.5 - abs(r - mid), 0.0, 1.0);
+        // Clockwise from the top.
+        let at = fract(atan2(d.x, -d.y) / tau + 1.0);
+        let seg = fract(at * 24.0);
+        let gap = select(0.2, 0.1, on);
+        let dash = smoothstep(0.0, 0.04, seg - gap * 0.5) * smoothstep(0.0, 0.04, 1.0 - gap * 0.5 - seg);
+        var c = col;
+        var a = select(0.5, 0.9, on);
+        if (at < took) { c = vec3<f32>(255.0, 214.0, 90.0); a = 1.0; }
+        else if (at > 1.0 - ate) { c = DIAL_EATEN; a = 0.9; }
+        o.paint = mix(vec3<f32>(12.0, 9.0, 8.0), c, band * dash);
+        o.a = max(ink * 0.45 * dash, band * dash * a);
+        return o;
+    }
+    if (kind == STAR_BURST) {
+        let k = clamp(a0, 0.0, 1.0);
+        let left = 1.0 - k;
+        // A flash in the middle.
+        let fr = max(0.35 * h * (0.6 + 0.4 * k), 1.0);
+        o.add = col2 * pow(left, 3.0) * exp(-(r * r) / (2.0 * fr * fr)) * 1.4;
+        // The ring of light out to the radius.
+        let rr = h * (0.15 + 0.85 * sqrt(k));
+        let w = 1.0 + 0.1 * h * left;
+        let qr = (r - rr) / w;
+        o.add += col * exp(-qr * qr) * pow(left, 1.5);
+        // Sparks thrown out along it.
+        for (var i = 0; i < 12; i++) {
+            let fi = f32(i);
+            let fa = tau * (fi + star_hash(fi, s)) / 12.0;
+            let dir = vec2<f32>(cos(fa), sin(fa));
+            let far = h * (0.5 + 0.5 * star_hash(fi + 4.0, s)) * (1.0 - pow(left, 2.2));
+            let len = 0.14 * h * left + 1.0;
+            let tt = clamp(dot(d, dir) - (far - len), 0.0, len);
+            let sd = distance(d, dir * (far - len + tt));
+            let spark = clamp(1.2 - sd, 0.0, 1.0) * left;
+            o.add += mix(col2, col, k) * spark * 1.3;
+        }
+        return o;
+    }
+    return o;
 }
 
 // A soldier mark that draws only the figure's helmet (`Marks::soldier_head`,
@@ -5187,6 +5547,9 @@ fn compose(@builtin(global_invocation_id) gid: vec3<u32>) {
             let world = c;
             c = c * (1.0 - f.w) + f.xyz * f.w;
             c = mix(c, world, slime_on(b, d, half(b).x, x, y) * f.w);
+        } else if (marks[b + 6u] == STAR && !in_minimap(x, y)) {
+            let f = star_at(b, vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b));
+            c = c * (1.0 - f.a) + f.paint * f.a + f.add;
         } else if (marks[b + 6u] == BUILDING && !in_minimap(x, y)) {
             let d = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5) - anchor(b);
             let f = building_at(b, d, half(b).x);

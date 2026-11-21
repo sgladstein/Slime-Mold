@@ -62,7 +62,7 @@ ranked look jobs, in the owner's order.
    your team cream and olive with one accent colour; danger red
    (`theme::BAD`) for warnings only; plants muted green (the fen's moss
    olive-brown, the caves' fungi mauve-grey), the core planet's flora
-   purple-magenta (hue 290-320), the only purple on the map
+   purple-magenta (hue 290-320), the only purple on the map; starfall's ore molten gold in dark rock and a boss core a crimson gem, both lit by their own heat, with a fall's warning ring the danger red (2026-11-21, [run](../world/run.md), *Starfall and boss cores*)
    ([review fixes](../../Reports/review-fixes-2026-11-15/README.md)); a
    mini-boss its members' own skin, by kind (`LumpLook`): the hunter
    violet (skin hue about 265, core 280), the wanderer pale bone, the
