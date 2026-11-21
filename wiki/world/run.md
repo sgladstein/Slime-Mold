@@ -19,6 +19,7 @@ sources:
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/miniboss-review-2026-11-20/README.md
   - Reports/origin-design-2026-11-18/README.md
+  - Reports/planet-curve-2026-11-21/README.md
   - Reports/planet-things-2026-11-18/README.md
   - Reports/planet2-sprawler-2026-11-18/README.md
   - Reports/pump-economy-2026-11-15/README.md
@@ -165,6 +166,8 @@ Since 2026-11-20 night (the owner, 23:32Z, after a planet 1 on a good map: "We d
 | 4 | Swarmer | the slime's mortar and the last-stand heart |
 
 Until then the strikers, waves, late lunge and last-stand heart, built for the big armies of planets 2 and up, all played from planet 1.
+
+The bot's curve on that schedule (11-21, three plans, 9 maps, before the heart cap): planets 2 to 5 won 20, 21, 12 and 2 of 27. Planet 4 drops, and planet 5 is a wall that was already there before the late threats ([report](../../Reports/planet-curve-2026-11-21/README.md)). Moving the heart to planet 5 waits on a rerun with the cap.
 
 ## Fruiting
 

@@ -67,7 +67,7 @@ def key(job):
 DEADLINE = None
 
 # A whole run's planets keep these fields in its row's `planets`.
-RUN_KEYS = ("depth", "tier", "how", "secs", "mould", "start_mould", "peak_mould", "alive", "peak_alive", "bought", "killed", "pumps", "turrets", "walls", "t_rush", "t_regroup", "fell_end", "bitten_end", "stand")
+RUN_KEYS = ("depth", "tier", "how", "ended", "secs", "mould", "start_mould", "peak_mould", "alive", "peak_alive", "bought", "killed", "pumps", "turrets", "walls", "t_rush", "t_regroup", "fell_end", "bitten_end", "stand")
 
 def run_one(binary, job, timeout):
     """One job: `PLAN DEPTH SEED SECS` plays one planet; `PLAN run SEED
