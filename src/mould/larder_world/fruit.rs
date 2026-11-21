@@ -13,9 +13,10 @@
 //! knot there (a lump, `big::Lump`, the mini-bosses' and the marches'
 //! machinery). The knot packs, swells as more slime joins it, and ripens
 //! for `FruitRules::ripen` seconds. Ripe, it bursts: every walker in it is
-//! thrown out over the planet as a spore that homes on food and lands as
-//! living slime (`World::sow`, the GPU's `sow_pass`), seeding new colonies
-//! on crystals the slime had lost or never held, your pumps' among them.
+//! thrown out over the planet as a spore that lands as living slime where
+//! its throw ends (`World::sow`, the GPU's `sow_pass`), seeding new
+//! colonies round it. (It homed on food until 11-21, but the food scent
+//! holds the soldiers' smell, and a burst came down on the squad.)
 //! Shot down under `quorum` of its most members, it breaks and is slime
 //! again.
 //!
@@ -359,7 +360,13 @@ impl<W: World> Game<W> {
                 // times its first members and `most`.
                 let cap = r.most.min(r.swell * f.first as f32);
                 if now >= f.grown + (r.grow_every.max(0.5) * tps) as u64 && (n as f32) < cap {
-                    self.world.grow_lump(f.lump, (f.centre, radius + r.grow));
+                    // Never past the cap in one grow (the bug hunt,
+                    // 11-21): a grow takes every free walker in its reach,
+                    // so on run seed 2's planet 1 a fruit of 975 (cap
+                    // 1,950) took 2,812 at once. The reach is held to what
+                    // holds `cap` walkers round it, its own members too.
+                    let reach = (radius + r.grow).min(self.fruit_reach(f.centre, cap));
+                    self.world.grow_lump(f.lump, (f.centre, reach));
                     f.grown = now;
                 }
                 self.fruits.live = Some(f);
