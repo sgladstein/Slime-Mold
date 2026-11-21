@@ -1267,9 +1267,18 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
 /// the card or the world (the command card's films, 2026-11-15).
 fn card_step(app: &mut App, step: &str) -> Result<(), String> {
     match step {
-        "main" | "" => (app.build_page, app.tools_page) = (false, false),
-        "build" => (app.build_page, app.tools_page) = (true, false),
-        "tools" => (app.build_page, app.tools_page) = (false, true),
+        "main" | "" => (app.build_page, app.tools_page, app.form_page) = (false, false, false),
+        "build" => (app.build_page, app.tools_page, app.form_page) = (true, false, false),
+        "tools" => (app.build_page, app.tools_page, app.form_page) = (false, true, false),
+        // The squad mode's Formation page, and a pick on it (2026-11-21).
+        "form" => (app.build_page, app.tools_page, app.form_page) = (false, false, true),
+        "hold" => {
+            app.hud_event(HudEvent::Command { id: HOLD_FIRE })?;
+        }
+        "blob" | "spread" | "line" | "wedge" | "column" | "ring" => {
+            let id = [F_BLOB, F_SPREAD, F_LINE, F_WEDGE, F_COLUMN, F_RING].into_iter().find(|&id| form_of(id).is_some_and(|f| f.name() == step)).unwrap_or(F_BLOB);
+            app.hud_event(HudEvent::Command { id })?;
+        }
         // Esc: no squad commanded, so a click on a building selects it.
         "free" => app.let_go(),
         // A click on the newest building (as the squad mode's click does
@@ -1290,7 +1299,7 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
             };
             app.hud_event(HudEvent::Command { id })?;
         }
-        _ => return Err(format!("card=: no step {step} (main, build, tools, free, pick, fire, upgrade, demolish, switch, cancel)")),
+        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, upgrade, demolish, switch, cancel, or a formation's name)")),
     }
     println!("  card: {step}");
     Ok(())

@@ -17,6 +17,7 @@ sources:
   - Reports/squad-mode-2026-11-14/README.md
   - Reports/squad-movement-2026-11-16/README.md
 code:
+  - Formation::Column
   - Game::demolish
   - Game::drawn_between
   - Game::fight_turn
@@ -32,6 +33,7 @@ code:
   - Rules::max_squad
   - Rules::squads
   - Rules::steer
+  - SPREAD
   - squad::UNITS_MAX
 ---
 
@@ -42,8 +44,8 @@ code:
 You steer one squad of soldiers with WASD; it volleys at the cursor while the
 left button is held, and fires twice as often with a 1.4x strike while it is
 the one you command. Let go of the button and it fires by its fire mode (Firing on its own, below). The squads you do not command keep their last order and fire on
-their own. Squads split, join, link, queue orders and stand guard while
-they drain or build; there is no larder. It is `mode=squads` (`Rules::squads`),
+their own. Squads split, join, link, queue orders, take a formation and
+drain or build with every member on the work; there is no larder. It is `mode=squads` (`Rules::squads`),
 the start menu's *Control* option. It is the window's default (2026-11-15, #330; owner 07:57Z); missions and
 headless `look=`/`bench` runs stay on the RTS round (`mode=rts` or Control: rts
 brings it back), so the campaign keeps the old mode (owner 08:09Z). Detail: [report](../../Reports/squad-mode-2026-11-14/README.md).
@@ -98,15 +100,19 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   Shift queues up to six. A tap of WASD is the stop (the card has no Stop)
   and drops the queue (2026-11-21; before, the squad walked off to its next
   queued order once let go). A bought soldier and a squad combined into
-  yours take your squad's fire mode. Formations: blob (default), line,
-  wedge, ring.
-- **Lookouts** (called Guards until 2026-11-15 19:51Z, so the word stays the
-  Guard order's). A squad draining or building with slime near posts a share of
-  itself as lookouts (the card's Lookouts, key I: none, some, more) at the work's edge on the slime's
-  side; 3 of 8 cost about a fifth of the work (`cover.rs`). Posted out in the
-  slime's film (#276) they died for nothing; at the edge they killed a third
-  more slime than none and the workers were bitten less, 4 of 4 seeds
-  ([report](../../Reports/guards-2026-11-15/README.md)).
+  yours take your squad's fire mode.
+- **Formations** (the card's Formation button, T, opens its page; owner
+  2026-11-21 05:04Z): blob (default), spread (the blob at 1.9 times its room,
+  `SPREAD`), line, wedge, column (two abreast, facing where it walks; moving, it
+  always walks as the funnel's column two abreast, so it files through doors
+  and round rock) and
+  ring (`Formation`, `Game::rank_squad`).
+- **No lookouts** (owner 2026-11-21 05:04Z: "remove the feature that some
+  soldiers guard while harvesting"). From 2026-11-14 to 11-21 a squad
+  draining or building with slime near posted a share of itself as lookouts
+  at the work's edge, and its workers fired at half rate; now every member
+  works and fires at full rate (`cover.rs`; the old measure is in the
+  [report](../../Reports/guards-2026-11-15/README.md)).
 - **Guard** (owner 2026-11-15 19:51Z, in Burn a line's place, which is gone):
   F, then click a spot, a building or a crystal. The squad walks there as one
   and shoots slime in the zone on top of its own defence: `Rules::guard_r` (8
@@ -114,9 +120,11 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   footprint (`Game::guard_zone`, `Squad::guard`, `Order::Guard`); a ring shows
   the zone. Steering or another order ends it. Defend stays the default fire
   mode ([report](../../Reports/command-card-2026-11-15/README.md)).
-- **The command card** is Card 2 (owner 19:38Z): 5 x 2, Attack-move, Guard,
-  Drain, one fire button that cycles hold, defend and free (Z, X, C pick one),
-  Heal; Buy, Pump, Build, Tools, Lookouts. The Build page (option 1, 19:53Z):
+- **The command card** is Card 2 (owner 19:38Z) as changed 2026-11-21, 6 x 2
+  with the gun strip narrower (06:21Z): Attack-move, Guard, Drain, the fire button (X: defend or free fire), Hold
+  fire (Z, a toggle; a held soldier fires the button's mode once let go,
+  `App::unheld` in the window), Heal; Buy, Pump, Wall, Build, Tools, Formation. (The RTS
+  round keeps one fire button that cycles hold, defend and free.) The Build page (option 1, 19:53Z):
   turret, pump, wall, lure, siren, then the lures' switch and Back. With no
   squad commanded a click on a building selects it: its health, level and
   state, and its card (call off, demolish for half its price back, upgrade a
@@ -177,6 +185,7 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 - 2026-11-15 07:41Z: "Healing should be a specific action".
 - 2026-11-15 19:38Z: "Card 2"; 19:51Z: "Remove burn line. Use options c for guard/defend. (b) Click a building to select it when no squad is selected."; 19:53Z: "Build option 1"; 21:37Z: "Demolishing a building giving half back is good. Canceling a partial build should give all of it back".
 - 2026-11-15 18:00Z, on guards while working: "It doesn't seem to work well. Either improve it or remove it." (Improved: posts at the work's edge.)
+- 2026-11-21 05:04Z: "remove the feature that some solider guard while harvesting. add a formations button to the hud with good formation options. hold fire should be a seperate button from defend vs free fire." (Built: lookouts removed, the Formation page, Hold fire its own toggle.)
 - 2026-11-16 05:17Z, of squad movement and pathfinding: "It is still clunky overall" (start over rather than patch).
 - 2026-11-18 17:01Z: "When I am surrounded by a bunch of individual walkers ... it isn't ideal to have all the soliders shooting at the same point anymore. So I typically stop manually shooting and let them shoot automatically, but the soliders seem to shoot much slower or not all of them are shooting" (fixed the same day: the commanded squad keeps its fire mode and defend reads what is near).
 - 2026-11-15 02:58Z: a way to deselect, move with WASD and see each squad run on its own (built as Esc and AUTO).

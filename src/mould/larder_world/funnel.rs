@@ -70,7 +70,12 @@ impl<W: World> Game<W> {
     pub(super) fn formation_width(&self, q: usize) -> f32 {
         let n = self.members(q).len();
         let sq = self.squads[q];
-        let far = (0..n).map(|r| sq.formation.offset(r, n, self.gap())).map(|o| o.0.hypot(o.1)).fold(0.0, f32::max);
+        // A column is as wide as a pair across its way, however long: it
+        // files through a door as it is, with no funnel.
+        let far = (0..n)
+            .map(|r| sq.formation.offset(r, n, self.gap()))
+            .map(|o| if sq.formation == Formation::Column { o.1.abs() } else { o.0.hypot(o.1) })
+            .fold(0.0, f32::max);
         2.0 * far + self.gap()
     }
 
@@ -121,7 +126,9 @@ impl<W: World> Game<W> {
     fn column_places(&self, q: usize, a: (f32, f32), n: usize) -> Vec<(f32, f32)> {
         let sc = self.s();
         let gap = self.gap() * sc;
-        let cols = ((n as f32).sqrt().ceil() as usize).max(1);
+        // A column (`Formation::Column`) files two abreast however wide the
+        // ground; any other formation as wide as its own blob.
+        let cols = if self.squads[q].formation == Formation::Column { 2.min(n) } else { ((n as f32).sqrt().ceil() as usize).max(1) };
         // The way back: the head, then the trail newest first.
         let mut way: Vec<(f32, f32)> = vec![a];
         way.extend(self.columns[q].trail.iter().rev().copied().filter(|p| (p.0 - a.0).hypot(p.1 - a.1) > 1e-3));
@@ -209,7 +216,12 @@ impl<W: World> Game<W> {
             self.columns[q].places.clear();
             return a;
         };
-        let tight = n > 1 && (self.narrow(a, dir, need) || self.narrow(ahead, dir, need));
+        // A column always walks as a funnel's column, two abreast along the
+        // way its head went, so it snakes round rock and through doors in
+        // file instead of holding a straight line that cuts the corners
+        // (2026-11-21; at rest it stands as its own formation).
+        let column = self.squads[q].formation == Formation::Column;
+        let tight = n > 1 && (column || self.narrow(a, dir, need) || self.narrow(ahead, dir, need));
         let was = self.columns[q].on;
         let a = if tight && !was {
             // Starting: the anchor goes to the squad's front, so nobody

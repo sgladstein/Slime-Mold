@@ -48,6 +48,17 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-21, squad controls (its own thread, the owner's ask 05:04Z).**
+Lookouts removed (`cover.rs` keeps only the work's end and heal's end;
+`Cover`, `CoverRules`, `Soldier::cover`, `work_boost`, `Cmd::Cover` and the
+`guardwork` film hand are gone; workers fire at full rate). Hold fire is its
+own toggle in the squad mode (`App::squad_hold_fire`, `App::unheld` keeps
+each held soldier's mode); the fire button picks defend or free. The card's
+Formation button (T, `FORM_PAGE`) opens a page of six formations, two new
+(`Formation::Column`, `Formation::Spread`), and a 6 x 2 card (`ui::CARD_COLS`, buttons 104 wide, the
+gun strip's floor at 0.7) with Heal and Wall on the main page. A column faces where it walks and counts as a pair wide to
+the funnel. The bot check (before/after, planets 1-3) is in the PR.
+
 **2026-11-20, pathfinding review (its own thread, the owner's ask).**
 Five fixes to how squads and soldiers walk: `Game::steer_point` (a steered
 squad's point ahead no longer falls in rock), `guide`'s `whole` and
