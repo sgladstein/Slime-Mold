@@ -2,7 +2,7 @@
 title: Art direction for Larder World (the style guide)
 kind: look
 status: open
-updated: 2026-11-20
+updated: 2026-11-21
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/biome-ground-2026-11-15/README.md
@@ -25,6 +25,7 @@ sources:
   - Reports/soldier-skins-2026-11-19/README.md
   - Reports/squad-heads-2026-11-18/README.md
   - Reports/value-order-2026-11-15/README.md
+  - Reports/view-cost-2026-11-21/README.md
 code:
   - LumpLook
   - theme
@@ -150,7 +151,7 @@ In the owner's order; A is Milestone 1's look test (`NOW.md`, exit test 2).
 
 **D. Menus, shop and screens**: win and lose screens with the planet's numbers (done 11-18, [ends](../../Reports/end-screens-2026-11-18/README.md)); a landing, a win and a loss that happen in the picture (the landing done 11-20: the soldiers drop in one by one over their shadows, `draw::landing`; a dust ring at their feet tried and dropped as a drawn pulse; the end done 11-20: the world plays on for 2.4 s with the clock held and the camera drawing back before the card, `ending.rs`); then the shop and the menus. Shop, 11-20: the counter's offers as shelf rows with their one-line effect (`shelf_row` in `start/shop.rs`; bends shop B's half-size tiles while every offer fits on one page); an empty bag as one strip saying what it holds, and the pane's idle page without the top bar's heading again; the shop dimmed darker behind, and its rows taller with the whole text when the counter has room. Menus, 11-20: the main menu's dish fills the window, with a shade under the title, and is a run's planet 1 to 4 (the Fork while a sandbox map is picked).
 
-Also open: the 1070 cost of the new looks (one batch); the first review's open issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
+Also open: the 1070 cost of the new looks: the 11-21 batch timed the view's `base` pass at 3.2 to 3.5 ms of a 5 ms frame, and [view cost](../../Reports/view-cost-2026-11-21/README.md) has shader variants to time it part by part; the first review's open issues ([review](../../Reports/art-review-2026-11-14/README.md), *Who takes what*).
 
 ## Sources
 
