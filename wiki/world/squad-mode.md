@@ -211,6 +211,9 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   (6 of 9 planets longer; losses 59 -> 31, harvest no worse). Every ring
   inside harvest reach (the shrinking disc to the whole radius) fills
   before any past it.
+  A squad draining a crystal the slime is on (`SLIMED` 40 walkers within
+  6 cells of its rim) takes only its own half of the rim (Direction's
+  call: losses on CI's run bot had gone 56 -> 97 with the whole rim).
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
   column ends once its tail is near the anchor; since 2026-11-21 no

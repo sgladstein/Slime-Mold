@@ -58,8 +58,15 @@ pub(super) const RIM: f32 = 1.0;
 /// a drawn figure's width (`soldier_r`, 1.15 touch radii a side), so each
 /// stands clear of the next at zoom 12.
 pub(super) const SPOT: f32 = 3.5;
-/// Rings of spots past a harvester's reach round a crystal at most.
+/// Rings of spots past a harvester's reach round a crystal at most (twice
+/// that on half a rim).
 const RIM_RINGS: usize = 4;
+/// Dish cells past a crystal's whole rim within which slime counts as on it
+/// (`Game::rim_spots`).
+const SLIME_NEAR: f32 = 6.0;
+/// Walkers within `SLIME_NEAR` that make a crystal slimed: a squad draining
+/// it takes only its own half of the rim (`Game::rim_spots`).
+const SLIMED: u32 = 40;
 
 /// How far from a goal in rock or a wall `Game::goal` looks for ground,
 /// and how far a soldier shut in a wall looks for a way out
@@ -661,6 +668,11 @@ impl<W: World> Game<W> {
                 at[i].push(k);
             }
         }
+        // The slime round each crystal a squad drains, read once a step
+        // only when one does (`World::mould_grid`, a dish cell a square).
+        let bin = (self.world.scale() as usize).max(1);
+        let grid = at.iter().any(|ks| ks.iter().any(|&k| matches!(self.soldiers[k].order, Order::Clear(..)))).then(|| self.world.mould_grid(bin)).flatten();
+        let gw = self.world.size().0.div_ceil(bin);
         for (i, ks) in at.iter().enumerate() {
             if ks.is_empty() {
                 continue;
@@ -686,11 +698,38 @@ impl<W: World> Game<W> {
             let tight = self.rules.elbow * self.rules.touch * sc;
             let full = self.world.crystals().iter().position(|x| x.0 == c).map_or(r, |j| self.world.crystal_r(j));
             let reach = (full + (RIM + 1.0) * sc - 0.25 * sc).max(r0);
+            // Draining a crystal the slime is on (`SLIMED` walkers within
+            // `SLIME_NEAR` dish cells of its whole rim): only the squad's
+            // own half of the rim, so spreading out never walks soldiers
+            // round into the slime. With the whole rim, the run bot's
+            // squads draining slimed crystals (its starve and work picks)
+            // fought worse: CI's run bot lost 97 soldiers over seeds 1 to
+            // 3 against 56 before (#677), 51 of them on seed 3's planet 3
+            // (Direction's call, 2026-11-21).
+            let slimed = ks.iter().any(|&k| matches!(self.soldiers[k].order, Order::Clear(..)))
+                && grid.as_ref().is_some_and(|g| {
+                    let b = bin as f32;
+                    let rr = full + SLIME_NEAR * sc;
+                    let (x0, x1) = (((c.0 - rr) / b).floor().max(0.0) as usize, ((c.0 + rr) / b).ceil().max(0.0) as usize);
+                    let (y0, y1) = (((c.1 - rr) / b).floor().max(0.0) as usize, ((c.1 + rr) / b).ceil().max(0.0) as usize);
+                    let mut n = 0u32;
+                    for y in y0..y1 {
+                        for x in x0..x1.min(gw) {
+                            let (px, py) = ((x as f32 + 0.5) * b, (y as f32 + 0.5) * b);
+                            if (px - c.0).hypot(py - c.1) <= rr {
+                                n += g.get(y * gw + x).copied().unwrap_or(0);
+                            }
+                        }
+                    }
+                    n >= SLIMED
+                });
+            let arc = if slimed { 0.5 * std::f32::consts::PI } else { std::f32::consts::PI };
+            let share = arc / std::f32::consts::PI;
             let rings_in = |gap: f32| {
                 let pitch = 0.87 * gap;
                 (0..).map(move |ring| r0 + ring as f32 * pitch).take_while(move |&rr| rr <= reach)
             };
-            let room = |gap: f32| rings_in(gap).map(|rr| (tau * rr / gap).floor() as usize).sum::<usize>();
+            let room = |gap: f32| rings_in(gap).map(|rr| (share * tau * rr / gap).floor() as usize).sum::<usize>();
             let mut gap = sep;
             while gap > tight && room(gap) < ks.len() {
                 gap = (gap * 0.9).max(tight);
@@ -707,6 +746,9 @@ impl<W: World> Game<W> {
                         continue;
                     }
                     let t = turn(a);
+                    if t.abs() > arc + 1e-3 {
+                        continue;
+                    }
                     cand.push((if past { 1e9 } else { 0.0 } + t.abs() * r0 + ring as f32 * tau * rr, t, p));
                 }
             };
@@ -717,7 +759,7 @@ impl<W: World> Game<W> {
                 last = rr;
                 ring += 1;
             }
-            for _ in 0..RIM_RINGS {
+            for _ in 0..2 * RIM_RINGS {
                 if cand.len() >= 3 * ks.len() {
                     break;
                 }
