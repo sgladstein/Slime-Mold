@@ -1488,8 +1488,10 @@ impl App {
                         SlimeLook::Dormant => "The Sleeper's: its sleeping walkers a dull dark crust, the waking ones gold.",
                         SlimeLook::Scarred => "The Grudge's: where it was hurt, pale glossy scar tissue and a bruise on bare ground.",
                         SlimeLook::Spores => "The Sporer's: its spores in flight small gold seeds with short tails.",
+                        SlimeLook::Paint => "Old look, Nov 12-14: the first game's slime, a dim opaque paint with flat ochre veins, every walker a dome.",
+                        SlimeLook::Foil => "Old look, Nov 14 morning: full saturation and tight glints (the art director's \"crumpled gold foil\"), the frontier as bubble wrap.",
                     };
-                    rows.push(Row::Choice { label: title(look.name()), note: if own { "its own".into() } else { String::new() }, hit: Hit::Body(look), on: now == Some(look), about: about.into() });
+                    rows.push(Row::Choice { label: title(look.name()), note: if own { "its own".into() } else if matches!(look, SlimeLook::Paint | SlimeLook::Foil) { "old".into() } else { String::new() }, hit: Hit::Body(look), on: now == Some(look), about: about.into() });
                 }
                 rows.push(Row::Head { text: "The round".into(), group: None, open: true });
                 rows.push(Row::Choice { label: "Restart".into(), note: String::new(), hit: Hit::Act(Act::Restart), on: false, about: "The same map from its landing.".into() });
