@@ -1277,6 +1277,15 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
     assert_eq!(app.menu.as_ref().unwrap().page, Page::Main);
 }
 
+/// CI's curve plays `scripts/run-bot-plan.txt`'s plan and the window's
+/// `runbot=` plays `runbot::PLAN`: the two stay one plan.
+#[test]
+fn the_run_bots_plan_is_the_one_ci_plays() {
+    let file = include_str!("../../../scripts/run-bot-plan.txt");
+    let line = file.lines().map(str::trim).find(|l| !l.is_empty() && !l.starts_with('#'));
+    assert_eq!(line, Some(runbot::PLAN), "scripts/run-bot-plan.txt and runbot::PLAN differ");
+}
+
 /// **The run bot plays planet 1 to a verdict** (the Engine and tools lane's
 /// job 4: the run bot in CI in place of smoke rounds of a fixed length).
 /// Run seed 1's planet 1 at the window's own scale, with the run bot's
@@ -1296,7 +1305,7 @@ fn the_window_plays_planet_1_with_the_run_bot() {
     let mut r = Run::new(1);
     r.restock();
     let t0 = Instant::now();
-    let p = league::play(&base, &r, runbot::PLAN, 0.0, &device, &queue).unwrap();
+    let p = league::play(&base, &r, league::stage(runbot::PLAN, 1), 0.0, &device, &queue).unwrap();
     eprintln!("run bot: {} ({:.0} s)", p.line, t0.elapsed().as_secs_f32());
     assert_ne!(p.how, "open", "no verdict by the clock and a minute: a soft lock: {}", p.line);
     assert!(p.secs >= 60.0, "planet 1 ended in under a minute: {}", p.line);

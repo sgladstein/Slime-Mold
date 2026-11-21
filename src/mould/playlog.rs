@@ -187,6 +187,15 @@ impl Playlog {
         squads.sort_unstable();
         squads.dedup();
         let full: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>();
+        // Every 10 s, each crystal's charge left and what the squad took
+        // from it (2026-11-21: a review of the owner's planet 1 could not
+        // tell which crystals still fed the slime from the total alone).
+        let sec = g.time().round() as u64;
+        if sec.is_multiple_of(10) {
+            let (taken, _) = g.crystal_takes();
+            let each: Vec<String> = g.world.crystals().iter().enumerate().map(|(i, c)| format!("{:.0}/{:.0}", c.1, taken.get(i).copied().unwrap_or(0.0))).collect();
+            s += &format!("crystals t={sec} {}\n", each.join(" "));
+        }
         let p50 = quantile(&mut self.frames, 0.5);
         let p95 = quantile(&mut self.frames, 0.95);
         self.frames.clear();

@@ -1,5 +1,5 @@
 # Mines and thrown blasts (11-20 19:55Z, strat.rs `mines`, `blast`; the owner 19:19Z: "Do they use bombs/mines?", no plan had used a tool). blast=N throws a blast a second at the heaviest slime in reach while it would take N walkers; mines=N keeps N laid, round home while the squad is there, else under a bitten squad. The shop must buy the unlock (`blast`, `mine`, 150 points each), so the tool arms give up upgrade levels, as a player would; points=150 buys Blasts on top. Cloud, planet 2 map 1 to 2:30: 5 blasts killed 1,486 walkers; mines were laid and none went off. Planet 2: rush,aim=6,cards=0 (11 of 11 on today's game, so the clear time decides) with Blasts at 40 and 80, Mines 3, both, and Blasts bought on top; planet 3: the lure switch plan with Blasts, Mines 4 (round its guarded pump) and both. 102 games, about 20 minutes. Deciding measure: paired score (clear time on planet 2) and soldiers lost against the same plan without tools; the row's tools= gives uses and kills.
-# code-bound
+# code-bound Rows of 87872e355961 count too (finished on it; retired 11-21 04:50Z, so a new build does not play it again).
 rush,aim=6,cards=0 2 1795038793 900 set=fire_hurt=10
 rush,aim=6,cards=0 2 1795106014 900 set=fire_hurt=10
 rush,aim=6,cards=0 2 1795119328 900 set=fire_hurt=10

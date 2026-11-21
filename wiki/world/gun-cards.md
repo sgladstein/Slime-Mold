@@ -172,6 +172,15 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   walker as the plan with an empty shop (11-20, cloud; the PC job
   14-fire-p2 tests every map,
   [strategy bots](../../Reports/strategy-bots-2026-11-19/README.md)).
+- With the fire at 10 (#564), the Torch bought with Tinder still costs
+  every planet 2 plan its wins: rush,aim=6 went from 11 wins of 11 to 3. It
+  is a real choice only at fire 5. Direction kept 10 ("the fire is the
+  deck's price"). A bot that steps out of its own fire (`cool`) did worse
+  (job 00-a, 11-21). On planet 2, rush,aim=6,cards=0 won 9 of 11. Unlocking
+  the thrown blasts or mines dropped it to 2 or 3 of 11, because the unlocks
+  take points from upgrades. With 150 extra points it won 7 of 11 (job
+  14-0-c,
+  [strategy bots](../../Reports/strategy-bots-2026-11-19/README.md)).
 - The Torch's own planet, the Sporer's jungle (5), has no window: in the
   planet 4 and 5 scenes the squads had not met the slime by 50 s
   ([element](../../Reports/gun-element-2026-11-17/README.md)).

@@ -294,9 +294,19 @@ while Squad asked to keep it.
 
 0. The view's frame cost (11-21): the 1070 batch (#617) timed `base` at
    3.2 to 3.5 ms of a 5 ms frame. `Reports/view-cost-2026-11-21/variants.py`
-   (#621) writes shaders each with one part out; Engine was asked to time
-   them in its next GPU batch. When the numbers come, cut the dearest part
-   (keeping its look at play zoom) and write the result in that report.
+   (#621) writes shaders each with one part out. Timed (11-21): plants 1.04
+   ms, soil 0.49, all of `shaded`'s lighting 2.65. Cut: plant crowns only
+   where bare ground shows or they burn. Next if needed: `shaded`'s slope
+   and highlight samples.
+0b. Crystals under the slime show their charge (11-21, Direction's ask
+   from the regrowth review): the film over a crystal thins by
+   `GEM_THROUGH` (0.55) of its charge share, so a full one reads as cyan
+   glass under a gold veil and an eaten one sinks under the gold.
+0c. Controls review (11-21, doc 12jZrjC3MHe7R54S7V7Ktq): the squad
+   panel's strip right of the tiles (`ui::SquadFact`, built in
+   `draw.rs::squad_facts`): formation, fire, queued orders, loadout (a
+   run), tools, flowed on two lines and dropped from the end where short.
+   Door has its own icon (`Icon::Door`) on the Build page and its panel.
 1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber

@@ -29,6 +29,7 @@
 use super::strat::{self, Plan};
 use super::*;
 use slime_mould::mould::bullets::Shell;
+use slime_mould::mould::campaign::Cause;
 use slime_mould::mould::guns::{Gun, GunKind};
 use slime_mould::mould::rounds::Card;
 use slime_mould::mould::run::{self, Pick, ITEMS};
@@ -343,6 +344,19 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         (Some(_), _) | (None, Some(_)) => "lost",
         (None, None) => "open",
     };
+    // How the planet ended (Direction, 11-21: the run bot's log tells a
+    // planet held on to the stalemate limit apart from one won by its goal;
+    // `how` still counts both as won, as the run does).
+    let ended = match (verdict.map(|v| v.cause), g.end) {
+        (Some(Cause::Goal), _) => "goal",
+        (Some(Cause::Cap), _) => "held",
+        (Some(Cause::SquadWiped), _) => "squad",
+        (Some(Cause::Overrun), _) => "overrun",
+        (Some(Cause::Stuck), _) => "stuck",
+        (Some(Cause::MouldWiped), _) => "cleared",
+        (None, Some(_)) => "game",
+        (None, None) => "open",
+    };
     let count = |k: fn(&Kind) -> bool| g.buildings.iter().filter(|b| b.alive && b.up() && k(&b.kind)).count();
     let (bought, peak_alive, secs_in) = if spec.starts_with("util:") { super::utility::tally() } else { strat::tally() };
     let switched = if spec.starts_with("util:") { [0, 0] } else { strat::switched() };
@@ -351,8 +365,13 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let used = if spec.starts_with("util:") { [0, 0] } else { strat::tools_used() };
     let kills = app.game.as_ref().map_or([0; 8], |g| g.kit.killed);
     let tools = format!("{}/{}/{}/{}", used[0], used[1], kills[0], kills[1]);
+    // Starfall and cores (`Plan::drops`): falls landed, cores dropped,
+    // points the squad took from ore and from cores, points the slime ate
+    // back, and drops the squad set out for.
+    let sf = &g.starfall;
+    let drops = format!("{}/{}/{:.0}/{:.0}/{:.0}/{}", sf.landed, sf.cores, sf.ore_taken, sf.core_taken, sf.eaten, if spec.starts_with("util:") { 0 } else { strat::drops_chased() });
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
         r.depth,
         r.seed,
         l.seed,
@@ -380,6 +399,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         switched[0],
         switched[1],
         if spec.starts_with("util:") { 0 } else { strat::burnt() },
+        if spec.starts_with("util:") { 0 } else { strat::cooled() },
         mark(at[0]),
         mark(at[1]),
         mark(at[2]),
@@ -422,7 +442,7 @@ fn arms(r: &Run) -> String {
 
 /// The plan for planet `depth` of a plan by planet (`a|b|c`): the
 /// `depth`th, or the last for any planet after it.
-fn stage(spec: &str, depth: u32) -> &str {
+pub(super) fn stage(spec: &str, depth: u32) -> &str {
     let parts: Vec<&str> = spec.split('|').collect();
     parts[(depth.max(1) as usize - 1).min(parts.len() - 1)]
 }

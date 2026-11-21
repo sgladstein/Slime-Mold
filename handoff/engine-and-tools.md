@@ -306,5 +306,17 @@ all six twins pass on the card, and the view variants went to the Look lane.
 The first try skipped timing on one 7% GPU-load sample, so #631 retries the
 idle check.
 
-**Next:** watch the run bot's curve once the strategy thread sets the
-plan; `pump_maps` spikes (4.4 ms) if Squad and arsenal hand them back.
+Exit test 1 in CI (Direction, 11-21): `run-bot.yml` plays planets 1 to 3
+as one run with the shop between; #639 adds `ended=` to the league line
+(goal, held, squad, overrun, stuck, cleared, game, open) and a
+`run_bot_summary.py --check` step that fails on a soft lock (no verdict by
+the clock and a minute, no end line) or a planet under a minute. The plan
+is the strategy thread's `bot,want=torch.standard|rush,aim=6,cards=0`
+(11-21), kept equal to `runbot::PLAN` by a test; their #640 makes siege=3
+the bot's default.
+
+**Next:** each planet's length against 8 to 12 minutes from the curve on
+that plan (send Direction the lengths); the next 1070 batch times the
+view's `full` after the Look lane's #638 (plant crowns skipped under the
+slime) and sends them the saving against 3.42 ms; `pump_maps` spikes
+(4.4 ms) if Squad and arsenal hand them back.

@@ -403,6 +403,7 @@ impl<W: World> Game<W> {
                     s.touching = u.touching;
                     s.aim = u.target;
                     s.dense = u.dense;
+                    s.heat = u.heat;
                     s.carry += u.took / r.charge;
                     if !r.larder {
                         // Drained straight into the bank: nothing to carry.
@@ -597,6 +598,7 @@ impl<W: World> Game<W> {
     pub(super) fn check_broken(&mut self) {
         let r = self.rules;
         self.peak = self.peak.max(self.mould);
+        self.curve.push((self.mould as u32, self.alive() as u32));
         if r.broken <= 0.0 {
             return;
         }

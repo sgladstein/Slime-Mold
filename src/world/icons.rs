@@ -121,6 +121,9 @@ pub enum Icon {
     FormColumn,
     HoldFire,
     Formation,
+    // A door in the Build page (controls review, 11-21: Wall and Door
+    // shared the brick glyph): a frame, its slab swung half open, a knob.
+    Door,
 }
 
 impl Icon {
@@ -131,6 +134,7 @@ impl Icon {
             Icon::Hold => &["M12 3 L19 6 L19 11 C19 16 16 19.5 12 21 C8 19.5 5 16 5 11 L5 6 Z", "M12 8 L12 15"],
             Icon::Attack => &["O12 12 7", "M12 2 L12 7", "M12 17 L12 22", "M2 12 L7 12", "M17 12 L22 12"],
             Icon::Burn => &["M12 21 C8 21 5.5 18.5 5.5 15 C5.5 11 9 9.5 9 5 C12 7 14 9 13.5 12 C15 11.5 16 10 16 8.5 C18 10.5 18.5 13 18.5 15 C18.5 18.5 16 21 12 21 Z"],
+            Icon::Door => &["M5 21 L5 3 L19 3 L19 21", "M2.5 21 L21.5 21", "M5 3 L13 5.5 L13 21", "FO11 13 1.2"],
             Icon::Wall => &["M3 6 L21 6 L21 18 L3 18 Z", "M3 12 L21 12", "M9 6 L9 12", "M15 6 L15 12", "M6 12 L6 18", "M12 12 L12 18", "M18 12 L18 18"],
             Icon::Turret => &["M7 21 L17 21", "M8.5 21 L9.5 11 L14.5 11 L15.5 21", "M12 11 L12 7", "M12 7 L20 4"],
             Icon::Bait => &["M12 3 C12 3 6 10 6 14.5 C6 18 8.7 21 12 21 C15.3 21 18 18 18 14.5 C18 10 12 3 12 3 Z"],
@@ -337,7 +341,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Pull, Multicast, Seek, Flare, Torch, Tinder, Provoke, Still] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Pull, Multicast, Seek, Flare, Torch, Tinder, Provoke, Still, Door] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

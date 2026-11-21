@@ -15,10 +15,13 @@
 use super::*;
 
 /// The run bot's plan when `plan=` names none, as the first line of
-/// `scripts/run-bot-plan.txt` (CI's) until the strategy bot's thread sets
-/// that file: the old run bot's play (`bot`) with the Torch bought before
-/// planet 2, as the old bot's shop did after the balance review (#539).
-pub(super) const PLAN: &str = "bot,want=torch.standard";
+/// `scripts/run-bot-plan.txt` (CI's), one plan a planet joined by `|`, the
+/// last playing every planet after (the strategy bot's thread, 11-21): the
+/// old run bot's play on planet 1, then the rush with no cards, which won
+/// 9 of 11 maps on planet 2 and 8 on planet 3 against 2 for the old
+/// play, whose Torch burned its own squad. The shop before each planet
+/// spends by that planet's plan, so the Torch is no longer bought.
+pub(super) const PLAN: &str = "bot,want=torch.standard|rush,aim=6,cards=0";
 
 /// The shop's items the bot buys, in this order, one level of each per
 /// pass while points last: what makes the squad kill faster and live

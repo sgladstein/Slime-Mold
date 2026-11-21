@@ -24,14 +24,14 @@ Next is Milestone 2, "A whole run": the origin as the way a planet is won, a
 chosen run length, the bot's curve over all eight planets, save and resume,
 the core world at 60 frames a second. A release only if the owner chooses one.
 
-**Where it stands (11-21 night, [check](handoff/direction.md)).** Nothing
-is closed. Test 1 is behind: planet 1 lost to the strikers' retune (#566,
-bisected) and to a bot harvest stall. His 23:32 ruling paces the threats
-(#606): planet 1 is the base slime plus fruiting; strikers from 2, waves and
-the late lunge from 3, the heart from 4. Built, his to judge: the count-up
-clock, starfall by half the par and boss cores, own fire at 10 a second,
-late Mortars and hunters round a big army. Tests 2, 4 and 5: built, his.
-Test 6: one switch off, `crystal_regrow` (one side of D7).
+**Where it stands (11-21 morning, [check](handoff/direction.md)).** Nothing
+is closed. Test 1's bot half passes: CI's run bot wins planets 1 to 3 on
+all three seeds (11-21, siege=3), planets 2:48 to 6:37, runs 12 to 17 min. His 23:32 ruling paces the
+threats (#606, #644): planet 1 the base slime; fruiting and strikers from
+2, waves and the late lunge from 3, the heart from 4. Test 4 by minute 2
+([clips](Reports/planet-things-2026-11-21/)): 1 smells your pumps and eats
+them; 2's threads find you from afar and spawn mini-bosses; 3's cut edge
+condenses into gold strikers. Tests 2, 5: his. Test 6: `crystal_regrow`.
 
 ## Each lane's top jobs
 

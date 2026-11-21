@@ -332,10 +332,13 @@ pub(super) struct Viewer {
     held: [bool; 3],
     /// What the next click on the map places.
     pub armed: Option<Spawn>,
-    /// The look's numbers moved since the shader was last compiled, and
-    /// when it was.
+    /// The look's numbers moved since the shader was last compiled.
     dirty: bool,
-    shaded: Instant,
+    /// The compile under way on its own thread (`View::reshade_later`):
+    /// one at a time, and the newest numbers go next.
+    compiling: Option<std::sync::mpsc::Receiver<Result<(slime_mould::world::view::Shaded, f64), String>>>,
+    /// The last compile's ms, for the Look tab's foot.
+    pub compile_ms: Option<f64>,
     /// Changes not saved yet; the line at the foot, and its seconds left.
     pub unsaved: bool,
     status: String,
@@ -429,7 +432,8 @@ impl Viewer {
             held: [false; 3],
             armed: None,
             dirty: false,
-            shaded: Instant::now(),
+            compiling: None,
+            compile_ms: None,
             unsaved: false,
             status: String::new(),
             status_secs: 0.0,
@@ -612,17 +616,36 @@ impl App {
     pub(super) fn viewer_frame(&mut self, dt: f32) {
         let Some(vw) = self.viewer.as_mut() else { return };
         vw.status_secs = (vw.status_secs - dt).max(0.0);
-        if vw.dirty && vw.shaded.elapsed().as_secs_f32() > 0.3 {
-            vw.dirty = false;
-            vw.shaded = Instant::now();
-            let src = vw.source();
-            if let Some(v) = self.view.as_mut() {
-                if let Err(e) = v.reshade(&src) {
-                    let line = e.lines().find(|l| !l.trim().is_empty()).unwrap_or("").to_string();
-                    if let Some(vw) = self.viewer.as_mut() {
-                        vw.say(format!("The look did not compile: {line}"));
+        // The look's shader compiles on its own thread and the frame goes
+        // on with the old one (the owner, 11-21: "the slime viewer is so
+        // slow"; until then it compiled here, stopping the picture up to
+        // three times a second while a look bar moved).
+        if let Some(rx) = vw.compiling.as_ref() {
+            match rx.try_recv() {
+                Ok(done) => {
+                    vw.compiling = None;
+                    match done {
+                        Ok((shaded, ms)) => {
+                            vw.compile_ms = Some(ms);
+                            if let Some(v) = self.view.as_mut() {
+                                v.reshaded(shaded);
+                            }
+                        }
+                        Err(e) => {
+                            let line = e.lines().find(|l| !l.trim().is_empty()).unwrap_or("").to_string();
+                            vw.say(format!("The look did not compile: {line}"));
+                        }
                     }
                 }
+                Err(std::sync::mpsc::TryRecvError::Empty) => {}
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => vw.compiling = None,
+            }
+        }
+        let Some(vw) = self.viewer.as_mut() else { return };
+        if vw.dirty && vw.compiling.is_none() {
+            if let Some(v) = self.view.as_ref() {
+                vw.dirty = false;
+                vw.compiling = Some(v.reshade_later(vw.source()));
             }
         }
         self.viewer_staged();
@@ -639,6 +662,23 @@ impl App {
                 vw.say("The round ended, so a fresh one started");
             }
         }
+    }
+
+    /// The viewer's own waits, for the bench (`bench=SECS viewer=N`,
+    /// 11-21): one look compile (the slime's hue nudged, so no driver
+    /// cache holds it), waited for, and one new round on the same planet.
+    pub(super) fn viewer_bench(&mut self) -> Result<String, String> {
+        let (Some(vw), Some(v)) = (self.viewer.as_mut(), self.view.as_ref()) else { return Ok(String::new()) };
+        let nudge = (std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.subsec_nanos()) % 997) as f32 / 1e4;
+        let src = tweaks::apply(&vw.base, &[("MOULD_HUE".to_string(), vec![240.0 + nudge, 165.9, 63.2])]);
+        let t = Instant::now();
+        let compiled = v.reshade_later(src).recv().map_err(|e| format!("viewer bench: {e}"))?;
+        let wall = t.elapsed().as_secs_f64() * 1e3;
+        let ms = compiled.map(|(_, ms)| ms)?;
+        let t = Instant::now();
+        self.viewer_restart(None, false)?;
+        let round = t.elapsed().as_secs_f64() * 1e3;
+        Ok(format!("  viewer: a look compile {ms:.0} ms on its own thread ({wall:.0} ms to the frame that takes it); a new round {round:.0} ms"))
     }
 
     /// The staged spawns whose time has come (`LARDER_VIEWER_SPAWN`), once
@@ -1276,7 +1316,7 @@ impl App {
         }
         yy += 34.0 * u;
         // The foot: help, the status line and the buttons.
-        let foot_h = 104.0 * u;
+        let foot_h = 120.0 * u;
         let list = Rect::new(inner, yy, iw, (y + h - foot_h - yy).max(40.0 * u));
         let tab_i = TABS.iter().position(|(t, _)| *t == vw.tab).unwrap_or(0);
         // Rows, scrolled; only whole rows inside the list are drawn.
@@ -1392,18 +1432,43 @@ impl App {
             c.rrect(track, 1.5 * u, theme::TRACK);
             c.rrect(knob, 1.5 * u, theme::MUTED);
         }
-        // The foot.
+        // The row under the cursor tells what it is in a box beside the
+        // panel, as long as it needs (the owner, 11-21: "the descriptions
+        // don't fit how they are displayed"; they ran into the status line
+        // and the buttons in the foot's two lines).
+        if !help.is_empty() {
+            if let Some(p) = vw.cursor.filter(|p| list.contains(*p)) {
+                let tw = (320.0 * u).min(x - 2.0 * pad).max(160.0 * u);
+                let lines = c.wrap(Weight::Medium, 12.5 * u, tw - 24.0 * u, &help);
+                let th = 18.0 * u + lines.len() as f32 * 17.0 * u;
+                let ty = (p.1 - th / 2.0).clamp(y, (y + h - th).max(y));
+                let b = Rect::new(x - tw - 8.0 * u, ty, tw, th);
+                c.shadow(b, 8.0 * u, 12.0 * u, 3.0 * u, theme::SHADOW);
+                c.panel(b, 8.0 * u, theme::PANEL_TOP, theme::PANEL_BOTTOM, 1.0, theme::EDGE);
+                for (k, l) in lines.iter().enumerate() {
+                    c.text(Weight::Medium, 12.5 * u, (b.x + 12.0 * u, b.y + 21.0 * u + k as f32 * 17.0 * u), Align::Left, l, theme::TEXT);
+                }
+            }
+        }
+        // The foot: the tab's own help (two lines at most), the status
+        // line (wrapped to two), the buttons.
         let fy = y + h - foot_h;
         c.rrect(Rect::new(inner, fy, iw, 1.0), 0.0, theme::EDGE);
-        if help.is_empty() {
+        {
             help = match vw.tab {
-                Tab::Look => "Drag a bar to change the picture; right click a row to put it back. Changed rows are yellow.".into(),
+                Tab::Look => match (vw.compiling.is_some(), vw.compile_ms) {
+                    (true, _) => "Making the new look; the old one shows until it is ready.".into(),
+                    (false, Some(ms)) => format!("Drag a bar to change the picture (the last change took {:.1} s to show); right click a row puts it back.", ms / 1e3),
+                    (false, None) => "Drag a bar to change the picture; right click a row to put it back. Changed rows are yellow.".into(),
+                },
                 Tab::Rules => "Everything here is saved for this slime only, on its planets. Right click a row to put it back.".into(),
                 Tab::Spawn => "Placed ones go where you click the map, again and again; right click puts it down.".into(),
                 Tab::Slime => "Each slime on its own planet, as a run lands there. The squad cannot lose here; B buys soldiers.".into(),
             };
         }
-        c.paragraph(Weight::Medium, 11.5 * u, (inner, fy + 17.0 * u), iw, 15.0 * u, &help, theme::MUTED);
+        for (k, l) in c.wrap(Weight::Medium, 11.5 * u, iw, &help).iter().take(2).enumerate() {
+            c.text(Weight::Medium, 11.5 * u, (inner, fy + 17.0 * u + k as f32 * 15.0 * u), Align::Left, l, theme::MUTED);
+        }
         let line = if vw.status_secs > 0.0 {
             vw.status.clone()
         } else if vw.unsaved {
@@ -1413,7 +1478,10 @@ impl App {
         } else {
             "The game's own look and rules".into()
         };
-        c.text_fit(Weight::SemiBold, 11.5 * u, (inner, fy + 56.0 * u), Align::Left, &line, iw, if vw.unsaved && vw.status_secs <= 0.0 { theme::WARN } else { theme::TEXT });
+        let col = if vw.unsaved && vw.status_secs <= 0.0 { theme::WARN } else { theme::TEXT };
+        for (k, l) in c.wrap(Weight::SemiBold, 11.5 * u, iw, &line).iter().take(2).enumerate() {
+            c.text(Weight::SemiBold, 11.5 * u, (inner, fy + 54.0 * u + k as f32 * 15.0 * u), Align::Left, l, col);
+        }
         let bh = 26.0 * u;
         let by = y + h - bh - 10.0 * u;
         let buttons: [(&str, Act); 3] = [("Save", Act::Save), ("Reset all", Act::ResetAll), ("Hide (F3)", Act::Hide)];

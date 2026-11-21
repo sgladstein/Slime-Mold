@@ -879,8 +879,16 @@ const LUMP_SHIFT: u32 = 25u;
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
-// The mould's gold (`draw`'s (255, 190, 90) over agar) as a hue at 240.
+// The slime's colour: the mould's gold (`draw`'s (255, 190, 90) over agar)
+// as a hue at 240. Every slime's colour is the engine's, scaled channel by
+// channel by this over the gold, so the slime viewer's colour bar recolours
+// the slime (the owner, 11-21: "changing the hue doesn't change the color
+// of the slime?"; until then it was only the fallback where the engine's
+// colour carried no mould, a few cells in a crater).
 const MOULD_HUE: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2);
+// The gold the engine paints, which MOULD_HUE is measured against (a worked
+// value, so the viewer leaves it out).
+const MOULD_GOLD: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2) * 1.0;
 
 // The mould's thickness as drawn: the trail's brightness (the look's byte
 // 0) times how many living walkers are near (byte 1 summed over the 5 x 5
@@ -1103,6 +1111,10 @@ const GEM_SHADOW: f32 = 0.6;
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
 const GEM_FILM: f32 = 0.92;
+// The share of that cover a full crystal's charge shines through
+// (`shaded`), falling with the charge, so the food left under the slime
+// shows.
+const GEM_THROUGH: f32 = 0.55;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -1257,7 +1269,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // walkers stay (`look_trail` 0, `tm` from the walkers alone). There the
     // hue is the mould's own gold (the engine's `draw` gold over agar),
     // taking the engine's hue as its colour carries mould.
-    hue = mix(MOULD_HUE, hue, smoothstep(6.0, 40.0, tmax));
+    hue = mix(MOULD_GOLD, hue, smoothstep(6.0, 40.0, tmax)) * (MOULD_HUE / MOULD_GOLD);
     // A piece cut off from food (C8, 2026-11-14) goes ashen and dull as its
     // walkers' news goes stale, before they wither: the share of stale
     // walkers is the fade, so a piece greys as it starves, not on a timer.
@@ -2970,7 +2982,10 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // fire below shares.
     let pp = plant_px(x, y);
     var pl: PlantLayer;
+    pl.rgb = vec3<f32>(0.0); pl.cover = 0.0;
     pl.fl = vec3<f32>(0.0); pl.fc = 0.0; pl.fw = 0.0; pl.dark = 1.0;
+    // How much of the bare ground (and so of its plants) shows here.
+    let gv = m.vis * under;
     if (P.plant_at != 0u) {
         // Char: near-black grey with a crisp edge (a narrow rise of the
         // per-pixel char, a few pixels at zoom 24), a little ash grain.
@@ -2983,19 +2998,27 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         // Zoomed out, where the crowns fade to their flat mean cover, that
         // cover is veiled over water too (the shallows read green at zoom
         // 4 with the thinning alone).
+        // The crowns only where they can show: on ground the slime leaves
+        // bare (`gv`), or burning (their flames light the slime over
+        // them too). Under the body they were worked out and then
+        // weighted by a `gv` of 0: on the 1070 the plants were the base
+        // pass's dearest part, 1.04 of its 3.42 ms on planet 3
+        // (`Reports/view-cost-2026-11-21`).
         var dp = pp.d;
         var ws = vec2<f32>(0.0);
-        if (dot(dp, vec4<f32>(1.0)) > 0.003) {
-            ws = water_share(x, y);
-            dp *= (1.0 - WATER_THIN * ws.x) * (1.0 - smoothstep(0.25, 0.6, ws.y));
+        let hot = pp.heat > 0.002;
+        if (gv > 0.001 || hot) {
+            if (dot(dp, vec4<f32>(1.0)) > 0.003) {
+                ws = water_share(x, y);
+                dp *= (1.0 - WATER_THIN * ws.x) * (1.0 - smoothstep(0.25, 0.6, ws.y));
+            }
+            pl = plant_layer(x, y, dp, hot);
         }
-        pl = plant_layer(x, y, dp, pp.heat > 0.002);
         if (ws.x > 0.0) {
             let far = 1.0 - clamp(pl.fw / max(pl.cover, 1e-3), 0.0, 1.0);
             let veil = 1.0 - WATER_VEIL * ws.x * far;
             pl.rgb *= veil; pl.cover *= veil;
         }
-        let gv = m.vis * under;
         let pv = pl.cover * gv;
         m.albedo = m.albedo * (1.0 - pv) * mix(1.0, pl.dark, gv) + pl.rgb * gv;
         m.gloss *= 1.0 - pv;
@@ -3296,8 +3319,16 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // crystal's glow shines through it, weakened by the cover; and
             // a mould that is draining it (`hot`, the same charge loss the
             // harvest glow shows) takes a cyan cast.
+            // The charge shines up through the film (`GEM_THROUGH`, 11-21):
+            // the fuller the crystal, the less of it the mould hides, so a
+            // full crystal the slime sits on reads as cyan glass under a gold
+            // veil, one it has eaten down sinks under the gold, and a spent
+            // one is a husk under a full mat. Until then a full and an
+            // eaten crystal under the slime were the same gold hexagon (the
+            // regrowth review, 11-21: crystals held 401k charge at a game's
+            // end, and nothing on screen said so).
             let th = film_th(x, y);
-            let film = GEM_FILM * (1.0 - exp(-40.0 * th));
+            let film = GEM_FILM * (1.0 - exp(-40.0 * th)) * (1.0 - GEM_THROUGH * v);
             // The faces' light compressed toward the middle while charged
             // (a shaded face of a live crystal stays above 110 in grey;
             // the spent husk keeps the full relief of its faces and shards).
@@ -4140,8 +4171,8 @@ const DROP_GLOW: f32 = 0.4;
 const DROP_HEAT: vec3<f32> = vec3<f32>(255.0, 238.0, 180.0);
 const DROP_GOLD: vec3<f32> = vec3<f32>(255.0, 196.0, 70.0);
 const DROP_COOL: vec3<f32> = vec3<f32>(238.0, 118.0, 24.0);
-const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // Off the map in the shaded view: darker than any ground or rock.
+const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // The micro-look's strength: the first cut (one) read only as a faint
 // grain at zoom 12 over ground at about 40 in grey.
 const PLAIN_AMP: f32 = 2.0;

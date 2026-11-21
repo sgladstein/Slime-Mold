@@ -67,7 +67,7 @@ def key(job):
 DEADLINE = None
 
 # A whole run's planets keep these fields in its row's `planets`.
-RUN_KEYS = ("depth", "tier", "how", "secs", "mould", "start_mould", "peak_mould", "alive", "peak_alive", "bought", "killed", "pumps", "turrets", "walls", "t_rush", "t_regroup", "fell_end", "bitten_end", "stand")
+RUN_KEYS = ("depth", "tier", "how", "ended", "secs", "mould", "start_mould", "peak_mould", "alive", "peak_alive", "bought", "killed", "pumps", "turrets", "walls", "t_rush", "t_regroup", "fell_end", "bitten_end", "stand")
 
 def run_one(binary, job, timeout):
     """One job: `PLAN DEPTH SEED SECS` plays one planet; `PLAN run SEED
@@ -77,8 +77,11 @@ def run_one(binary, job, timeout):
     if DEADLINE and time.time() > DEADLINE:
         return None
     plan, depth, seed, secs, *extra = job
-    whole = depth == "run"
-    cmd = [binary, f"league=run:{seed}:8:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}", *extra]
+    # `run` plays to planet 8; `runN` stops after planet N (11-21:
+    # Milestone 1's exit test is planets 1 to 3).
+    whole = depth.startswith("run")
+    to = int(depth[3:]) if whole and depth[3:] else 8
+    cmd = [binary, f"league=run:{seed}:{to}:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}", *extra]
     d = 0 if whole else int(depth)
     t0 = time.time()
     try:
@@ -495,12 +498,17 @@ def owner_playing(binary):
     else:
         out = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True).stdout
         procs = [[os.path.basename(l.split()[0]), l] for l in out.splitlines() if l.split() and os.path.basename(l.split()[0]) in ("larder-world", "larder-edit")]
-    return any(name.startswith("larder-edit") or not any(k in cmd for k in BOT_KEYS) for name, cmd in procs)
+    # The first such process's command line (or ""), so the log says what
+    # held the worker: 11-20 12:45-14:02 it waited 77 min on a process the
+    # owner had not started ("the game has not been running on my pc for
+    # hours?").
+    return next((cmd.strip() or name for name, cmd in procs if name.startswith("larder-edit") or not any(k in cmd for k in BOT_KEYS)), "")
 
 def wait_for_owner(binary):
-    if not owner_playing(binary):
+    seen = owner_playing(binary)
+    if not seen:
         return
-    log("worker: the game is open on this PC; waiting until it closes")
+    log(f"worker: the game is open on this PC; waiting until it closes ({seen[:200]})")
     while owner_playing(binary):
         time.sleep(30)
     log("worker: the game closed; going on")
@@ -532,7 +540,7 @@ def sync(binary, push_results, now=False):
     binary (27 errors) and never restarted. Returns False when the branch
     asks the worker to stop. Results are pushed at most every PUSH_EVERY
     seconds, or `now` (a job file just finished)."""
-    global LAST_PUSH
+    global LAST_PUSH, FETCHED_WINDOWS
     if push_results:
         go = now or time.time() - LAST_PUSH >= PUSH_EVERY
         push(OUT, f"Strategy league: results from {os.environ.get('COMPUTERNAME', 'the worker')}", publish=go)
@@ -548,6 +556,8 @@ def sync(binary, push_results, now=False):
         if r.returncode != 0:
             git("rebase", "--abort")
             log("worker: could not take the branch's new commits: " + (r.stderr or r.stdout)[-300:])
+        else:
+            FETCHED_WINDOWS = None  # the work tree's copy is the branch's now
     if built_from() != BUILT:
         log(f"worker: the game's code changed (now {git('rev-parse', '--short', 'HEAD').stdout.strip()}); building")
         build()
@@ -602,9 +612,80 @@ def pending(jobs_path, out_path):
                 done.add(r["job"])
     return [j for j in jobs if key(j) not in done]
 
+# **Pausing the worker** (11-20 23:45Z, the engine lane's GPU timing needs
+# the GTX 1070 to itself; a `bench=` game counts as a bot's, so it does not
+# pause the worker as the owner's game does). Before each game the worker
+# waits while either holds:
+# - `queue/pc-pause.txt` on the branch has a line `START END` (UTC,
+#   `2026-11-21T00:30Z 2026-11-21T02:00Z`, then any note) whose window
+#   holds now; it is read as of the worker's last sync, so push it at least
+#   15 minutes ahead. While paused, the worker fetches the branch's copy
+#   every 5 minutes and goes by it (11-21: it paused to 02:00Z by the copy
+#   it had and went on at 02:00Z, missing the push at 00:44Z that moved
+#   the end to 03:00Z);
+# - a file named `PAUSE` stands in the worker's folder (the clone's root);
+#   delete it to go on.
+# Games already running finish first: a planet game takes up to about 2
+# minutes on the PC, a whole run up to about 15.
+PAUSE_WINDOWS = os.path.join(HERE, "queue", "pc-pause.txt")
+PAUSE_FILE = os.path.join(ROOT, "PAUSE")
+
+def utc(s):
+    from datetime import datetime, timezone
+    return datetime.strptime(s.rstrip("Z"), "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc).timestamp()
+
+FETCHED_WINDOWS = None  # the branch's pc-pause.txt fetched while paused
+
+def fetch_windows():
+    """The branch's pc-pause.txt as of now, without touching the work
+    tree (a checkout would leave a change that stops the next rebase)."""
+    global FETCHED_WINDOWS
+    if git("fetch", "-q", "origin", BRANCH).returncode == 0:
+        path = os.path.relpath(PAUSE_WINDOWS, ROOT).replace(os.sep, "/")
+        r = git("show", f"FETCH_HEAD:{path}")
+        FETCHED_WINDOWS = r.stdout if r.returncode == 0 else ""
+
+def paused():
+    """Why the worker should wait now, or ""."""
+    if os.path.exists(PAUSE_FILE):
+        return "a PAUSE file"
+    try:
+        lines = (FETCHED_WINDOWS if FETCHED_WINDOWS is not None else open(PAUSE_WINDOWS).read()).splitlines()
+    except OSError:
+        return ""
+    now = time.time()
+    for l in lines:
+        w = l.split()
+        if len(w) >= 2 and not l.startswith("#"):
+            try:
+                if utc(w[0]) <= now < utc(w[1]):
+                    return f"queue/pc-pause.txt: {w[0]} to {w[1]}"
+            except ValueError:
+                continue
+    return ""
+
+PAUSE_LOCK = __import__("threading").Lock()
+
+def wait_for_pause():
+    why = paused()
+    if not why:
+        return
+    with PAUSE_LOCK:
+        if not paused():
+            return
+        log(f"worker: paused ({why})")
+        last = time.time()
+        while paused():
+            time.sleep(30)
+            if time.time() - last >= 300:
+                last = time.time()
+                fetch_windows()
+        log("worker: the pause is over; going on")
+
 def play(todo, out_path, binary, workers, timeout):
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     def one(j):
+        wait_for_pause()
         wait_for_owner(binary)
         return run_one(binary, j, timeout)
     with open(out_path, "a") as f, ThreadPoolExecutor(workers) as ex:
