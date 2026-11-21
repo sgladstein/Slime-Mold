@@ -160,12 +160,14 @@ Since 2026-11-20 night (the owner, 23:32Z, after a planet 1 on a good map: "We d
 
 | Planet | Slime | New here |
 |---|---|---|
-| 1 | Drifter | the slime itself (surges, raids, specks, the lure, the heartbeat), fruiting, starfall and cores |
-| 2 | Sprawler | mini-bosses (`BossRules::for_depth`, since 11-18) and the strikers at 0.6 of their share |
+| 1 | Drifter | the slime itself (surges, raids, specks, the lure, the heartbeat), starfall and raid cores |
+| 2 | Sprawler | mini-bosses (`BossRules::for_depth`, since 11-18), fruiting, and the strikers at 0.6 of their share |
 | 3 | Trunk | waves and the late lunge, the Pinwheel, the strikers in full |
 | 4 | Swarmer | the slime's mortar and the last-stand heart |
 
 Until then the strikers, waves, late lunge and last-stand heart, built for the big armies of planets 2 and up, all played from planet 1.
+
+Fruiting moved to planet 2 on 11-21 after his play that night (05:21Z: "I just played planet 1 and their was mini-bosses. There were these events where the slime dispersed across the map and surrounded me randomly, halving the squad each time"). His log, on a build with the fruit fixes: at 8:44 a fruit burst raised the slime's mass from 14,045 to 17,936 in 3 s and 21 of his 28 soldiers died in those 3 s.
 
 The bot's curve on that schedule (11-21, three plans, 9 maps, before the heart cap): planets 2 to 5 won 20, 21, 12 and 2 of 27. Planet 4 drops, and planet 5 is a wall that was already there before the late threats ([report](../../Reports/planet-curve-2026-11-21/README.md)). Moving the heart to planet 5 waits on a rerun with the cap.
 
