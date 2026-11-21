@@ -374,6 +374,12 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         // Look lane's A2; the owner, 11-12: "a bigger and bigger hole that
         // doesn't refill while being shot at").
         ("crater_shut", "0.5".to_string()),
+        // A mini-boss's walkers flinch out of a fresh hit for the first
+        // half of its crater, as long as the hole is shut (`boss_flinch`,
+        // 11-21, Direction's job from the Look lane's exit test 2; a
+        // quarter dented the wanderer less, and the whole crater blew it
+        // into specks that never regrouped).
+        ("boss_flinch", "0.5".to_string()),
     ]
 }
 
@@ -1942,10 +1948,10 @@ mod tests {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" {
+                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0, "planet {d}: {k}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();

@@ -184,8 +184,9 @@ struct Params {
     // 944): a walker's step in deep water is x `deep_step` on top of
     // `wet_step` (`BigParams::deep_step`); deep water as a wall to the
     // slime (`Settings::deep_wall`, 11-20; `shut`; bit 1 `solid_walls`,
-    // bits 16-31 the crater's shut steps, `crater_shut`). The last two are the
-    // heartbeat's source, in fine cells (2026-11-20, `heart_beat`).
+    // bits 3-15 the flinch's steps, `boss_flinch`; bits 16-31 the
+    // crater's shut steps, `crater_shut`). The last two are the heartbeat's
+    // source, in fine cells (2026-11-20, `heart_beat`).
     deep_step: f32, deep_wall: u32, heart_x: f32, heart_y: f32,
     // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
     // Params grew from 944 to 960): the steps between surges (0 off), the
@@ -1022,7 +1023,11 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
     // A lump's member neither panics, raids, surges nor breaks away: past
     // its leash it runs back to the lump's centre (the CPU's `lump_leash`).
     let lb = lump_of(k);
-    if (lb != 0u) { return lump_leash(lb - 1u, k); }
+    if (lb != 0u) {
+        let f = lump_flinch(here);
+        if (f.z > 0.0) { return f; }
+        return lump_leash(lb - 1u, k);
+    }
     // A still walker (`MIND_STILL`) neither breaks away, raids, panics nor
     // surges.
     if (mind_of(k, S.t) == MIND_STILL) { return vec3<f32>(-1.0, -1.0, 0.0); }
@@ -1100,6 +1105,49 @@ fn lump_centre(b: u32) -> vec3<f32> {
     let n = atomicLoad(&news[at + 2u]);
     if (n == 0u) { return vec3<f32>(-1.0, -1.0, 0.0); }
     return vec3<f32>(f32(atomicLoad(&news[at]) / n) + 0.5, f32(atomicLoad(&news[at + 1u]) / n) + 0.5, f32(n));
+}
+
+// **A mini-boss's walkers flinch out of a hit** (`Settings::boss_flinch`,
+// 2026-11-21, Direction's job from the Look lane's exit test 2: the
+// wanderer showed no hurt but its members' drawn tint). A lump's member on
+// a crater cell (an armoured member a shot hurt and left standing,
+// `armoured`) while its countdown is above the `deep_wall` word's bits
+// 3-15 (steps; 0x1FFF off) runs down the crater's slope: the crater is
+// deepest at the hit and shallower to its rim (`scorch_cone`), so of the 8
+// cells 2 out it heads for the lowest, 4 cells on, at `FLINCH_HASTE` of its
+// pace. A hit bites a hole into the body where it landed, ringed by the
+// members it pushed out, `crater_shut` keeps them out of it while it is
+// fresh, and then the leash and the pull close it. (x, y, haste); (-1, -1,
+// 0) when calm. Nine reads, for a member on a crater cell only. No CPU
+// twin.
+// Tried the same day: the whole crater (2 s) blew a wanderer of 87 into
+// specks that never regrouped and it lived 4 s under fire against 1 s; the
+// first half (the run's) dents it into a C and it lives about 1 s more.
+const FLINCH_HASTE: f32 = 1.5;
+fn lump_flinch(here: u32) -> vec3<f32> {
+    let t = (P.deep_wall >> 3u) & 0x1FFFu;
+    if (t == 0x1FFFu || here == NONE) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let c = crater_at(here);
+    if (c <= f32(t)) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let x = i32(here % P.w);
+    let y = i32(here / P.w);
+    var best = c;
+    var bd = vec2<i32>(0, 0);
+    var ways = array<vec2<i32>, 8>(
+        vec2<i32>(2, 0), vec2<i32>(1, 1), vec2<i32>(0, 2), vec2<i32>(-1, 1),
+        vec2<i32>(-2, 0), vec2<i32>(-1, -1), vec2<i32>(0, -2), vec2<i32>(1, -1));
+    for (var d = 0u; d < 8u; d++) {
+        let o = ways[d];
+        let nx = x + o.x;
+        let ny = y + o.y;
+        if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+        let j = u32(ny) * P.w + u32(nx);
+        if (agar[j] == 0u) { continue; }
+        let v = crater_at(j);
+        if (v < best) { best = v; bd = o; }
+    }
+    if (bd.x == 0 && bd.y == 0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    return vec3<f32>(f32(x + 2 * bd.x) + 0.5, f32(y + 2 * bd.y) + 0.5, FLINCH_HASTE);
 }
 
 // Where lump b's member k runs: its centre, at its own pace, once farther

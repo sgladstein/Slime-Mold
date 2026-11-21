@@ -179,6 +179,18 @@ Film tools: headless `LARDER_DRAIN=T`, `film_ends`' `FILM_DRAIN`,
 `FILM_KEYS`. Next if Scott wants a sharper shrink: `CEILING_OVER` 0.1 or
 `ceiling_upkeep` 4 (measure the starts again).
 
+## A hit's hole and a mini-boss's flinch (2026-11-21, the same thread)
+
+Both GPU only, in the `deep_wall` Params word (bit 0 deep wall, bit 1
+solid walls, bits 3-15 the flinch's steps, bits 16-31 the shut steps).
+`crater_shut` 0.5 (#670, the Look lane's A2): a crater cell is closed to
+walkers for the first half of its countdown. `boss_flinch` 0.5 (Direction's
+job from the Look lane's exit test 2): a lump's member on a fresh crater
+runs down its slope (`lump_flinch`), so a hit bites a hole into a
+mini-boss. The wanderer's flat look is the view's (a fringe and a looser
+rooted hold changed nothing; `Reports/boss-flinch-2026-11-21/`). The view
+side of both is the Look lane's.
+
 ## Heartbeat (2026-11-20, the same thread)
 
 The third rule, on by default on every run planet (`ENEMY_RULES`' `heart`;

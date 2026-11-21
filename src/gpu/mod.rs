@@ -555,6 +555,17 @@ pub struct Settings {
     /// above which a cell is shut (0xFFFF off). No CPU twin; a run's
     /// planets set it (`run::enemy_keys`).
     pub crater_shut: f32,
+    /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
+    /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
+    /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
+    /// lump's member on a crater cell in the first share S of its
+    /// countdown runs down the crater's slope, out of the hole, at
+    /// `FLINCH_HASTE` of its pace (engine.wgsl's `lump_flinch`), so a hit
+    /// opens a hole in the body where it landed and the leash closes it.
+    /// Params word 929's bits 3-15: the countdown steps above which a
+    /// member flinches (0x1FFF off). No CPU twin; a run's planets set it
+    /// (`run::enemy_keys`).
+    pub boss_flinch: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -823,6 +834,7 @@ impl Settings {
             crystal_keep: false,
             ceiling: 0,
             crater_shut: 0.0,
+            boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
             flinch: t.flinch,
@@ -1157,6 +1169,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "tether" => s.tether = int()?.min(8),
         "crystal_keep" => s.crystal_keep = int()? != 0,
         "crater_shut" => s.crater_shut = f()?.clamp(0.0, 1.0),
+        "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
         "deep_wall" => s.deep_wall = int()? != 0,
@@ -2521,10 +2534,14 @@ impl Engine {
         b.extend(f32_bytes(&[t.deep_step]));
         // Bit 1: built walls are solid to a step (`Settings::solid_walls`,
         // 2026-11-21).
+        // Bits 3-15: the crater countdown above which a mini-boss's member
+        // flinches out of it (`Settings::boss_flinch`, 2026-11-21; 0x1FFF
+        // off).
         // Bits 16-31: the crater countdown above which a cell is shut
         // (`Settings::crater_shut`, 2026-11-21; 0xFFFF off).
+        let flinch = if s.boss_flinch > 0.0 { ((self.crater_steps as f32 * (1.0 - s.boss_flinch)).round() as u32).min(0x1FFE) } else { 0x1FFF };
         let shut = if s.crater_shut > 0.0 { ((self.crater_steps as f32 * (1.0 - s.crater_shut)).round() as u32).min(0xFFFE) } else { 0xFFFF };
-        b.extend(u32_bytes(&[s.deep_wall as u32 | (s.solid_walls as u32) << 1 | shut << 16]));
+        b.extend(u32_bytes(&[s.deep_wall as u32 | (s.solid_walls as u32) << 1 | flinch << 3 | shut << 16]));
         // The last two, the heartbeat's source (2026-11-20).
         let at = self.heart.map_or((0.0, 0.0), |h| h.at);
         b.extend(f32_bytes(&[at.0, at.1]));
