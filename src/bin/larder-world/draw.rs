@@ -3,7 +3,7 @@
 //! unchanged (C9, 2026-11-14).
 
 use super::*;
-use slime_mould::world::ui::Ending;
+use slime_mould::world::ui::{Ending, SquadFact};
 
 /// The look's ground field from the game's world: rock, wet and agar from
 /// the engine's CPU mirror; crystals from its own cells (`pile_of`, so
@@ -283,6 +283,20 @@ pub(super) fn crystal_name(i: usize) -> String {
         "The mould's home crystal".into()
     } else {
         format!("Crystal {i}")
+    }
+}
+
+/// An order in a few words, for the squad strip's queue.
+fn order_word(o: Order) -> &'static str {
+    match o {
+        Order::Hold => "hold",
+        Order::Move(..) => "move",
+        Order::Fight(..) => "attack-move",
+        Order::Clear(..) => "drain a crystal",
+        Order::Build(..) => "build",
+        Order::Burn(..) => "burn a line",
+        Order::Guard(..) => "guard",
+        Order::Attack => "attack the core",
     }
 }
 
@@ -1701,7 +1715,7 @@ impl App {
                     ready: g.bank >= r.wall_cost,
                     why_not: need(r.wall_cost),
                     about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Click a wall to cut one in, at once and as thick as the wall (a rising wall gets it as it rises). Costs as a wall that long.".into(),
-                    ..Command::new(DOOR, (1, 3), Icon::Wall, "Door", KeyCode::KeyG)
+                    ..Command::new(DOOR, (1, 3), Icon::Door, "Door", KeyCode::KeyG)
                 },
                 place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
                 place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
@@ -1952,7 +1966,52 @@ impl App {
         // b); a click on open ground, a tile's number or Space gives the
         // squads back.
         m.squads = if self.building_sel.is_some() && m.info.is_some() && sel.is_empty() { None } else { self.squad_panel() };
+        if m.squads.is_some() {
+            m.squad_facts = self.squad_facts(g);
+        }
         m
+    }
+
+    /// The commanded squad's settings for the squad panel's strip (controls
+    /// review, 2026-11-21), most wanted first: its formation, what it
+    /// shoots by itself, its queued orders, its loadout in a run, and the
+    /// tools its soldiers carry. Fire and lookouts also name themselves on
+    /// the card's buttons; the strip is where the rest had no place.
+    fn squad_facts(&self, g: &Game<GpuWorld>) -> Vec<SquadFact> {
+        let Some(q) = g.active else { return Vec::new() };
+        let Some(sq) = g.squads.get(q) else { return Vec::new() };
+        let members = g.members(q);
+        let mut out = vec![SquadFact {
+            icon: Icon::Group,
+            text: format!("{} formation", sq.formation.name()),
+            about: format!("How the squad stands as it moves and holds: blob, line, wedge or ring ({} cycles it)", slime_mould::world::ui::key_name(super::squadmode::FORMATION).unwrap_or_default()),
+        }];
+        let stance = members.first().map(|&k| g.soldiers[k].stance).filter(|&st| members.iter().all(|&k| g.soldiers[k].stance == st));
+        out.push(SquadFact {
+            icon: Icon::Target,
+            text: match stance { Some(st) => format!("fire: {}", stance_name(st)), None => "fire: mixed".into() },
+            about: "What its soldiers shoot by themselves, the card's Fire button: hold fire, defend or free fire".into(),
+        });
+        let queued: Vec<&str> = sq.queue.iter().take(sq.queued as usize).map(|&o| order_word(o)).collect();
+        out.push(SquadFact {
+            icon: Icon::Move,
+            text: if queued.is_empty() { "no orders queued".into() } else { format!("{} queued", queued.len()) },
+            about: if queued.is_empty() { "Shift with an order queues it after the one it is on".into() } else { format!("Next: {}. Shift with an order adds one", queued.join(", then ")) },
+        });
+        if let Some(r) = self.args.run.as_ref() {
+            out.push(SquadFact {
+                icon: gun_icon(g.gun(q).kind),
+                text: r.loadout_name(sq.loadout as usize),
+                about: format!("It fires {} with {}'s cards. H edits the loadouts", g.gun(q).title(), r.loadout_name(sq.loadout as usize)),
+            });
+        }
+        let tools: u32 = members.iter().map(|&k| g.kit.held(k)).sum();
+        out.push(SquadFact {
+            icon: Icon::Grenade,
+            text: if tools == 1 { "1 tool".into() } else { format!("{tools} tools") },
+            about: format!("Tools its soldiers carry, at most {} each: E opens the Tools page", g.kit.rules.carry_max),
+        });
+        out
     }
 
     /// The loadout panel (`ui::Loadout`): the squad's round, with the gun
@@ -2560,7 +2619,7 @@ impl App {
         };
         stats.push(("Mould on it".into(), format!("{}", bd.touching)));
         Info {
-            icon: building_icon(bd.kind),
+            icon: if bd.door { Icon::Door } else { building_icon(bd.kind) },
             colour: theme::TEXT,
             title: if bd.door { "Door".into() } else { building_title(bd.kind) },
             subtitle,

@@ -302,6 +302,11 @@ while Squad asked to keep it.
    from the regrowth review): the film over a crystal thins by
    `GEM_THROUGH` (0.55) of its charge share, so a full one reads as cyan
    glass under a gold veil and an eaten one sinks under the gold.
+0c. Controls review (11-21, doc 12jZrjC3MHe7R54S7V7Ktq): the squad
+   panel's strip right of the tiles (`ui::SquadFact`, built in
+   `draw.rs::squad_facts`): formation, fire, queued orders, loadout (a
+   run), tools, flowed on two lines and dropped from the end where short.
+   Door has its own icon (`Icon::Door`) on the Build page and its panel.
 1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber
