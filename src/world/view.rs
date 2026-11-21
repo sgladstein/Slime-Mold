@@ -3210,9 +3210,11 @@ mod tests {
             pic.get_pixel(sx as u32, sy as u32).0
         };
         let ground = at(&fresh, -5.0, 0.0);
-        let then = at(&fresh, -0.3, -0.6);
+        // 0.7 radii out, past the ink line round the body (11-21: at 0.6
+        // the line's edge reads 73 against the ground's 90).
+        let then = at(&fresh, -0.3, -0.7);
         assert!((0..3).all(|c| (then[c] as i32 - ground[c] as i32).abs() <= 4), "the ground beside its chest as it falls: {then:?}, the ground {ground:?}");
-        let beside = at(&spread, -0.3, -0.6);
+        let beside = at(&spread, -0.3, -0.7);
         assert!(beside[0] as i32 > beside[1] as i32 + 60 && beside[0] as i32 > beside[2] as i32 + 60, "blood there once spread: {beside:?}");
         let chest = at(&spread, -0.3, 0.0);
         assert!(chest[1] as i32 > chest[2] as i32 + 20 && chest[1] as i32 + 10 >= chest[0] as i32, "the chest our olive: {chest:?}");
