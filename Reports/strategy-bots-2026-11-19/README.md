@@ -91,7 +91,12 @@ Two changes on main changed planet 3, so results are kept by the game they were 
   - Second stall: seed 3 then held 43 soldiers and 56 points to the 1,800 s limit. Every crystal but the slime's home was dry. The home held 11,600 walkers, and the hunt shot only at the thin slime away from it. There are two fixes:
     - A dry line: a crystal under 640, ten points, counts as empty.
     - `siege=R`: the hunt shoots into the home once the home holds under R × `per` walkers a soldier.
-  - Siege smoke test (one cloud game each): siege=1.5 won seed 2 at 311 s and seed 3 at 360 s. Off, seed 2 lost at 315 s and seed 3 was still open at 900 s. With no limit, 30 soldiers went in at 2.1 times and died in ten seconds. Job 00-a plays broke, siege 1.5 and 3, and cool on the PC.
+  - Siege smoke test (one cloud game each): siege=1.5 won seed 2 at 311 s and seed 3 at 360 s. Off, seed 2 lost at 315 s and seed 3 was still open at 900 s. With no limit, 30 soldiers went in at 2.1 times and died in ten seconds. Job 00-a played them on the PC (below).
+- **Job 00-a** (PC, 110 games, src 4180f5ed06c3, main through #612, CI's plan `bot,want=torch.standard`, SECS 0):
+  - Planet 1, broke=20 against broke=0: 6 wins of 11 either way. broke=20 was better on 6 maps and worse on 3 (p 0.51). Its losses were seed 3's second stall and 1795106014.
+  - Planet 1, siege=1.5: 7 wins (seed 3 gained).
+  - Planet 1, siege=3: 9 wins of 11. It gained seeds 3, 5 and 6 and lost none. Seed 7 was 8 s slower. That is 3 wins gained and none lost (p 0.25), but the mechanism is the stall the debug lines showed. siege=3 becomes the default once the curve job (00-b) has played on this code.
+  - Planet 2, cool: 8, 12 and 20 all took the plan from 2 wins to 1. Cool 12 took rush with the Torch from 6 wins to 1. Cool stays off and has a line in `Reports/dead-ends.md`.
 - **The PC worker** now also pauses for windows in `queue/pc-pause.txt` (Engine's GPU timing, 11-21 00:30-03:00Z) and while a `PAUSE` file sits in its clone. It logs the command line that made it wait for the owner's game.
 - **Queued on main through #612**:
   - 00-a: the bot fixes, for Direction.
