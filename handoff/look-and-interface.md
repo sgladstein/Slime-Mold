@@ -310,9 +310,9 @@ while Squad asked to keep it.
    Door has its own icon (`Icon::Door`) on the Build page and its panel.
 0d. Look D, shop (11-21): up to six offers on a tall counter are a
    hand of cards centred on it (`start/shop.rs::hand`, `hand_card`);
-   more offers, or a short window, keep the shelf rows and tiles. The
-   right pane stays mostly empty with nothing picked: a next step could
-   put the planet ahead's picture there.
+   more offers, or a short window, keep the shelf rows and tiles. With
+   nothing picked the pane shows the planet ahead as a small map
+   (`start::Glance`, `menu::glance_of`, kept for the last planet asked).
 1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber

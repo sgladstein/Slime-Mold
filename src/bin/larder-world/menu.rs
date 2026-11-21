@@ -22,7 +22,7 @@ use slime_mould::mould::run::{self as run, Pick};
 use slime_mould::mould::run::{Face, Group};
 use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::build::news::{self, Memory};
-use slime_mould::world::start::{BuildPage, Entry, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
+use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -391,6 +391,86 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             format!("{}  ·  {gun}", r.loadout_name(r.editing))
         },
         field: r.field,
+        glance: (!r.range).then(|| glance_of(r.seed, r.depth)),
+    }
+}
+
+/// The planet ahead drawn small for the shop's pane (`start::Glance`),
+/// from the map the level generator makes for the run's seed and depth.
+/// Kept for the last planet asked, since the shop is rebuilt after every
+/// buy and a map takes a moment to make.
+fn glance_of(seed: u64, depth: u32) -> Glance {
+    thread_local! {
+        static LAST: std::cell::RefCell<Option<((u64, u32), Glance)>> = const { std::cell::RefCell::new(None) };
+    }
+    if let Some(g) = LAST.with(|l| l.borrow().as_ref().filter(|(k, _)| *k == (seed, depth)).map(|(_, g)| g.clone())) {
+        return g;
+    }
+    let m = slime_mould::mould::levelgen::level(seed, depth);
+    let g = glance_from(&m, 64);
+    LAST.with(|l| *l.borrow_mut() = Some(((seed, depth), g.clone())));
+    g
+}
+
+/// `m` as a glance `across` cells wide: each cell the mean colour of the
+/// map cells under it, rock, deep and shallow water and the soils in the
+/// game's own dark values, so the shapes read as the planet will.
+pub(super) fn glance_from(m: &Map, across: usize) -> Glance {
+    use slime_mould::mould::{big, map};
+    let w = across.min(m.w).max(1);
+    let h = ((w * m.h) as f32 / m.w as f32).round().max(1.0) as usize;
+    let colour = |g: u8| -> [f32; 3] {
+        let soil = g >> 4;
+        if g & map::G_ROCK != 0 {
+            [92.0, 88.0, 82.0]
+        } else if soil == big::SOIL_DEEP {
+            [22.0, 40.0, 66.0]
+        } else if soil == big::SOIL_BRIDGE {
+            [104.0, 86.0, 60.0]
+        } else if g & map::G_WET != 0 {
+            [34.0, 58.0, 74.0]
+        } else {
+            match soil {
+                big::SOIL_SAND => [74.0, 68.0, 52.0],
+                big::SOIL_CLAY => [66.0, 54.0, 44.0],
+                big::SOIL_BARREN => [70.0, 68.0, 62.0],
+                _ => [44.0, 52.0, 40.0],
+            }
+        }
+    };
+    let mut cells = Vec::with_capacity(w * h);
+    for j in 0..h {
+        for i in 0..w {
+            let (x0, x1) = (i * m.w / w, ((i + 1) * m.w / w).max(i * m.w / w + 1));
+            let (y0, y1) = (j * m.h / h, ((j + 1) * m.h / h).max(j * m.h / h + 1));
+            let mut sum = [0.0f32; 3];
+            let mut n = 0.0;
+            // Every second map cell each way: the mean is as good, at a
+            // quarter of the reads.
+            for y in (y0..y1.min(m.h)).step_by(2) {
+                for x in (x0..x1.min(m.w)).step_by(2) {
+                    let c = colour(m.ground[y * m.w + x]);
+                    for k in 0..3 {
+                        sum[k] += c[k];
+                    }
+                    n += 1.0;
+                }
+            }
+            let n = f32::max(n, 1.0);
+            // A little under the game's values: the pane is darker than
+            // the world, and the marks on it must stand out.
+            let k = 0.8 / n;
+            cells.push([(sum[0] * k) as u8, (sum[1] * k) as u8, (sum[2] * k) as u8, 255]);
+        }
+    }
+    let (mw, mh) = (m.w as f32, m.h as f32);
+    Glance {
+        w,
+        h,
+        cells,
+        crystals: m.items.crystals.iter().map(|c| (c.x / mw, c.y / mh, c.r / mw)).collect(),
+        moulds: m.items.moulds.iter().map(|&(x, y)| (x / mw, y / mh)).collect(),
+        landing: m.items.landing.map(|(x, y)| (x / mw, y / mh)),
     }
 }
 
@@ -1059,6 +1139,25 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
         if let Some(l) = g.buildings[b].loadout.filter(|_| g.buildings[b].alive) {
             let l = (l as usize).min(r.loadouts.len() - 1);
             g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.turret_deck_of(l)))));
+        }
+    }
+}
+
+#[cfg(test)]
+mod glance_tests {
+    /// The shop's planet glance (Look D, 11-21) holds the whole planet:
+    /// every cell coloured, its crystals, a nest and the landing, all on
+    /// the map; and a second ask for the same planet is the same glance.
+    #[test]
+    fn the_glance_holds_the_planet() {
+        for depth in 1..=4 {
+            let g = super::glance_of(7, depth);
+            assert_eq!(g.w, 64, "planet {depth}");
+            assert_eq!(g.cells.len(), g.w * g.h, "planet {depth}");
+            assert!(g.crystals.len() >= 6 && !g.moulds.is_empty() && g.landing.is_some(), "planet {depth}: {} crystals, {} nests", g.crystals.len(), g.moulds.len());
+            let on = |x: f32, y: f32| (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y);
+            assert!(g.crystals.iter().all(|&(x, y, _)| on(x, y)) && g.moulds.iter().all(|&(x, y)| on(x, y)), "planet {depth}: a mark off the map");
+            assert_eq!(super::glance_of(7, depth), g, "planet {depth}: the kept glance differs");
         }
     }
 }
