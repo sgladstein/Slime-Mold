@@ -292,5 +292,18 @@ the CPU half of a step; four fire twins need card tolerances (sent to
 Enemy). Gotcha: the script's 2 GB free-RAM check failed at 2.00 GB with
 Chrome open; Scott closed it.
 
-**Next:** what in planet 3's CPU step costs 5 ms at p95; watch the run
-bot's curve once the strategy thread sets the plan.
+Planet 3's CPU step (#624, 11-21): `bench=` now prints the CPU step by
+part (`Game::costs`, filled by `Game::costed` only in the bench). The
+once-a-second set-slime mask (`mark_bulwark`, Enemy's file) was 2.94 ms of
+it on llvmpipe; a two-pass box sum made it 1.19 ms. The next spike is
+`pump_maps` (paths, Squad and arsenal's), 4-6 ms longest, 0.09 ms mean:
+reported to them.
+
+The follow-up batch (`pc-batch.ps1 -Followup -Timing`, about 35 min)
+reruns the six twins #620 gave card tolerances, times the Look lane's nine
+view variants (Reports/view-cost-2026-11-21; send each `base` line to the
+Look lane) and planet 3's step frames after #624. It needs Scott's OK,
+Chrome closed and the league paused, as job 7 did.
+
+**Next:** the follow-up batch; watch the run bot's curve once the
+strategy thread sets the plan.
