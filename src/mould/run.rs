@@ -274,9 +274,12 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// Direction's numbers): 0.6 on planet 2, all of it from planet 3, as the
 /// big-army problem is planets 2 and up. It scales the rate cap
 /// (`StrikerRules::rate`) as well: about 90 strikers a second on planet 2,
-/// 150 from planet 3. Planet 1 had a quarter (about 37 a second) until the
-/// same night, when the strikers left planet 1 (`FIRST_PLANET`).
-const STRIKER_SHARE: [f32; 8] = [0.0, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+/// 150 from planet 3, and a quarter (about 37 a second) on planet 1. Since
+/// the same night the strikers wait for planet 2 (`FIRST_PLANET`), so
+/// planet 1's quarter plays only when they are turned on there
+/// (`set=strikers=1`, or `FIRST_PLANET` moved back); a 0 here would leave
+/// them on and doing nothing (the bug check's note on #606).
+const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -1868,6 +1871,8 @@ mod tests {
             Run { depth: d, ..Run::new(1) }.rules(&mut r);
             r
         };
+        // Wherever the strikers can be on, their share and cap are not 0.
+        assert!(STRIKER_SHARE.iter().all(|&k| k > 0.0), "a 0 share leaves strikers on and doing nothing");
         let p1 = rules(1);
         assert!(p1.fruit.on && p1.heart.on && p1.unit_paths, "planet 1 keeps fruiting, the heartbeat and charges round walls");
         assert!(!p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
