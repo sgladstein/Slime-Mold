@@ -93,6 +93,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if let Some(spec) = hand.strip_prefix("util:") {
         return super::utility::util_hand(g, spec);
     }
+    if let Some(spec) = hand.strip_prefix("movetour") {
+        return move_tour(g, spec);
+    }
     if let Some(spec) = hand.strip_prefix("steer@") {
         return steer_hand(g, spec);
     }
@@ -1154,6 +1157,48 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
         g.apply(Cmd::SquadOrder(q as u8, Order::Fight(stand.0, stand.1)));
     }
 }
+
+/// `hand=movetour[,N[,clear]]` (pathfinding thread, 2026-11-20): buys N
+/// soldiers (15) into squad 0 and sends it on plain moves (right click)
+/// from crystal to crystal, each time it arrives the next of the further
+/// half of the crystals, by turns (with `clear`, of those with no slime
+/// round them); for measuring what a sent squad walks through.
+fn move_tour(g: &mut Game<GpuWorld>, spec: &str) {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static SENT: AtomicUsize = AtomicUsize::new(0);
+    let mut it = spec.trim_start_matches(',').split(',');
+    let n = it.next().and_then(|v| v.parse::<usize>().ok()).unwrap_or(15);
+    let clear = it.next() == Some("clear");
+    while g.time() < 1.0 && g.alive() < n && g.apply(Cmd::Buy) {}
+    if g.time() < 1.0 {
+        for k in 0..g.soldiers.len() {
+            if g.soldiers[k].alive && g.soldiers[k].squad != 0 {
+                g.apply(Cmd::Join(k, 0));
+            }
+        }
+        return;
+    }
+    let Some(m) = g.middle(0) else { return };
+    if g.squads[0].dest.is_some() {
+        return;
+    }
+    let mut by: Vec<(f32, f32)> = g.world.crystals().iter().map(|c| c.0).collect();
+    if clear {
+        // Only crystals with no slime within 8 dish cells of their rim.
+        let sc = g.world.scale();
+        let r: Vec<f32> = (0..by.len()).map(|c| g.world.crystal_r(c)).collect();
+        let near: Vec<u32> = by.iter().zip(&r).map(|(&p, &cr)| g.world.walkers_in(p, cr + 8.0 * sc)).collect();
+        let keep: Vec<(f32, f32)> = by.iter().zip(&near).filter(|(_, &n)| n < 5).map(|(&p, _)| p).collect();
+        if keep.len() >= 2 {
+            by = keep;
+        }
+    }
+    by.sort_by(|a, b| (b.0 - m.0).hypot(b.1 - m.1).total_cmp(&(a.0 - m.0).hypot(a.1 - m.1)));
+    let half = by.len().div_ceil(2).max(1);
+    let c = by[SENT.fetch_add(1, Ordering::Relaxed) * 7 % half];
+    g.apply(Cmd::SquadOrder(0, Order::Move(c.0, c.1)));
+}
+
 
 /// `steer@X,Y[,N]` (pathfinding thread, 2026-11-20): `N` soldiers (15)
 /// bought at the start into squad 0, steered with eight-way keys, as WASD

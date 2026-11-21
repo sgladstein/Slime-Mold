@@ -1,0 +1,627 @@
+diff --git a/examples/pathprobe.rs b/examples/pathprobe.rs
+index 0c275ca..91c994a 100644
+--- a/examples/pathprobe.rs
++++ b/examples/pathprobe.rs
+@@ -1,7 +1,7 @@
+ //! **How squads find their way across a run planet** (pathfinding thread,
+ //! 2026-11-20): `cargo run --release --example pathprobe -- [depth=3]
+ //! [seed=1795038793] [n=40] [squads=4] [secs=180] [every=20] [out=FILE]
+-//! [walkers=8000]`.
++//! [walkers=8000] [orders=mfc]`.
+ //!
+ //! Plays a run planet (`levelgen::level(seed, depth)`, the map
+ //! `run=SEED:DEPTH` lands on) on the CPU big dish in squad mode, buys `n`
+@@ -9,7 +9,7 @@
+ //! squad 0 is steered with eight-way keys at a far crystal, the next pick
+ //! once it is there; the others are sent (right click) to a new crystal
+ //! every `every` game seconds, by turns a move, an attack-move and a
+-//! drain; at 60 s squad 1 splits and both halves are sent on, at 120 s
++//! drain (`orders`: m, f and c, taken in turn); at 60 s squad 1 splits and both halves are sent on, at 120 s
+ //! they join again. Few walkers (`walkers`), so the soldiers live to walk.
+ //! Every step goes to `out` as `Game::path_rows` (read by
+ //! `Reports/pathfinding-2026-11-20/tools/paths.py`).
+@@ -21,6 +21,7 @@ use slime_mould::mould::levelgen::level;
+ fn main() {
+     let (mut depth, mut seed, mut n, mut nsq, mut secs, mut every, mut walkers) = (3u32, 1_795_038_793u64, 40usize, 4usize, 180.0f32, 20.0f32, 8000usize);
+     let mut out = String::from("pathprobe.csv");
++    let mut orders = String::from("mfc");
+     for a in std::env::args().skip(1) {
+         let (k, v) = a.split_once('=').expect("key=value");
+         match k {
+@@ -32,6 +33,7 @@ fn main() {
+             "every" => every = v.parse().unwrap(),
+             "walkers" => walkers = v.parse().unwrap(),
+             "out" => out = v.to_string(),
++            "orders" => orders = v.to_string(),
+             _ => panic!("no key {k}"),
+         }
+     }
+@@ -100,9 +102,9 @@ fn main() {
+         if step % (every as usize * tps) == 0 {
+             for q in g.live_squads().into_iter().filter(|&q| q != 0) {
+                 let c = crystals[next(crystals.len())];
+-                let o = match sent % 3 {
+-                    0 => Order::Move(c.0, c.1),
+-                    1 => Order::Fight(c.0, c.1),
++                let o = match orders.as_bytes()[sent % orders.len()] {
++                    b'm' => Order::Move(c.0, c.1),
++                    b'f' => Order::Fight(c.0, c.1),
+                     _ => Order::Clear(c.0, c.1),
+                 };
+                 sent += 1;
+diff --git a/src/bin/larder-world/hands.rs b/src/bin/larder-world/hands.rs
+index 3f05a6a..9fe3b72 100644
+--- a/src/bin/larder-world/hands.rs
++++ b/src/bin/larder-world/hands.rs
+@@ -93,6 +93,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
+     if let Some(spec) = hand.strip_prefix("util:") {
+         return super::utility::util_hand(g, spec);
+     }
++    if let Some(spec) = hand.strip_prefix("movetour") {
++        return move_tour(g, spec);
++    }
+     if let Some(spec) = hand.strip_prefix("steer@") {
+         return steer_hand(g, spec);
+     }
+@@ -1155,6 +1158,48 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
+     }
+ }
+ 
++/// `hand=movetour[,N[,clear]]` (pathfinding thread, 2026-11-20): buys N
++/// soldiers (15) into squad 0 and sends it on plain moves (right click)
++/// from crystal to crystal, each time it arrives the next of the further
++/// half of the crystals, by turns (with `clear`, of those with no slime
++/// round them); for measuring what a sent squad walks through.
++fn move_tour(g: &mut Game<GpuWorld>, spec: &str) {
++    use std::sync::atomic::{AtomicUsize, Ordering};
++    static SENT: AtomicUsize = AtomicUsize::new(0);
++    let mut it = spec.trim_start_matches(',').split(',');
++    let n = it.next().and_then(|v| v.parse::<usize>().ok()).unwrap_or(15);
++    let clear = it.next() == Some("clear");
++    while g.time() < 1.0 && g.alive() < n && g.apply(Cmd::Buy) {}
++    if g.time() < 1.0 {
++        for k in 0..g.soldiers.len() {
++            if g.soldiers[k].alive && g.soldiers[k].squad != 0 {
++                g.apply(Cmd::Join(k, 0));
++            }
++        }
++        return;
++    }
++    let Some(m) = g.middle(0) else { return };
++    if g.squads[0].dest.is_some() {
++        return;
++    }
++    let mut by: Vec<(f32, f32)> = g.world.crystals().iter().map(|c| c.0).collect();
++    if clear {
++        // Only crystals with no slime within 8 dish cells of their rim.
++        let sc = g.world.scale();
++        let r: Vec<f32> = (0..by.len()).map(|c| g.world.crystal_r(c)).collect();
++        let near: Vec<u32> = by.iter().zip(&r).map(|(&p, &cr)| g.world.walkers_in(p, cr + 8.0 * sc)).collect();
++        let keep: Vec<(f32, f32)> = by.iter().zip(&near).filter(|(_, &n)| n < 5).map(|(&p, _)| p).collect();
++        if keep.len() >= 2 {
++            by = keep;
++        }
++    }
++    by.sort_by(|a, b| (b.0 - m.0).hypot(b.1 - m.1).total_cmp(&(a.0 - m.0).hypot(a.1 - m.1)));
++    let half = by.len().div_ceil(2).max(1);
++    let c = by[SENT.fetch_add(1, Ordering::Relaxed) * 7 % half];
++    g.apply(Cmd::SquadOrder(0, Order::Move(c.0, c.1)));
++}
++
++
+ /// `steer@X,Y[,N]` (pathfinding thread, 2026-11-20): `N` soldiers (15)
+ /// bought at the start into squad 0, steered with eight-way keys, as WASD
+ /// gives, at (X, Y), world units as `centre=`; let go once its middle is
+diff --git a/src/mould/larder_world.rs b/src/mould/larder_world.rs
+index cac05c0..a3b0f77 100644
+--- a/src/mould/larder_world.rs
++++ b/src/mould/larder_world.rs
+@@ -73,6 +73,7 @@ mod steer;
+ mod cover;
+ mod doors;
+ mod bulwark;
++mod avoid;
+ // The moved modules' items keep their old paths (`larder_world::World`,
+ // `larder_world::Rules`, ...).
+ pub use cmd::*;
+@@ -129,6 +130,12 @@ struct Paths {
+     /// Whether the map being built went stale while it was built (a wall
+     /// went up): it joins `stale` when done.
+     build_stale: bool,
++    /// Which coarse squares a soldier can mostly stand on (`avoid.rs`),
++    /// until the maps go stale.
++    coarse: Option<Vec<bool>>,
++    /// Fire seen lately: where, how far round, and the tick it cools
++    /// (`Game::mark_hot`).
++    hot: Vec<((f32, f32), f32, u64)>,
+ }
+ 
+ /// Orders a soldier can hold in its queue after the one it is doing.
+@@ -915,7 +922,8 @@ impl<W: World> Game<W> {
+             let sq = self.squads[q];
+             let (ax, ay) = sq.anchor.unwrap_or((f32::NAN, f32::NAN));
+             let (dx, dy) = sq.dest.unwrap_or((f32::NAN, f32::NAN));
+-            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8)?;
++            let (vx, vy) = sq.via.unwrap_or((f32::NAN, f32::NAN));
++            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{},{:.2},{:.2}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8, vx / s, vy / s)?;
+         }
+         Ok(())
+     }
+diff --git a/src/mould/larder_world/paths.rs b/src/mould/larder_world/paths.rs
+index f26f0fd..04ed473 100644
+--- a/src/mould/larder_world/paths.rs
++++ b/src/mould/larder_world/paths.rs
+@@ -534,6 +534,7 @@ impl<W: World> Game<W> {
+         let mut keys: Vec<usize> = self.paths.maps.keys().copied().collect();
+         keys.sort_unstable();
+         self.paths.stale = keys;
++        self.paths.coarse = None;
+         // A map being built finishes on the ground it started on and goes
+         // stale then, walked meanwhile like the rest. Starting it again,
+         // as at first, starved it: at 6x a wall going up every 6 steps or
+diff --git a/src/mould/larder_world/rules.rs b/src/mould/larder_world/rules.rs
+index 3a15857..6e2f65f 100644
+--- a/src/mould/larder_world/rules.rs
++++ b/src/mould/larder_world/rules.rs
+@@ -469,6 +469,12 @@ pub struct Rules {
+     /// by steering (`Game::steer_all`). Off is the walk before it: full
+     /// speed straight at the place each step, shoved apart after.
+     pub steer: bool,
++    /// A squad on a plain move walks round slime and fire (`avoid.rs`,
++    /// pathfinding thread 2026-11-20): what each walker on a coarse square
++    /// adds to the square's cost, as a share of walking it (0.25: four
++    /// walkers make it cost twice). 0 walks straight through, as before
++    /// (`set=avoid=0`).
++    pub avoid: f32,
+     /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
+     /// rid of the whole larder system"), a crystal is *drained* or
+     /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
+@@ -964,6 +970,7 @@ impl Rules {
+             // Fire on soldiers (11-20, Direction's slope check: the strategy
+             // bot's fire arms at 5, 10 and 25 a second).
+             "fire_hurt" => &mut self.fire_hurt,
++            "avoid" => &mut self.avoid,
+             _ => return false,
+         };
+         *f = v;
+@@ -1046,6 +1053,7 @@ impl Default for Rules {
+             spray_share: 1.0,
+             lead: super::LeadRules::default(),
+             squads: false,
++            avoid: 0.25,
+             funnel: true,
+             steer: true,
+             larder: true,
+diff --git a/src/mould/larder_world/squads.rs b/src/mould/larder_world/squads.rs
+index 41ac4d4..368e11b 100644
+--- a/src/mould/larder_world/squads.rs
++++ b/src/mould/larder_world/squads.rs
+@@ -242,6 +242,12 @@ pub struct Squad {
+     /// the window arms it from that loadout (`Cmd::Arm`, `Cmd::Load`); this
+     /// is which one, so the panel can say and a split keeps it.
+     pub loadout: u8,
++    /// On a plain move whose way crosses slime, the point its anchor
++    /// heads for on its way round (`Game::squad_via`), the tick it was
++    /// planned and the destination it was planned to.
++    pub via: Option<(f32, f32)>,
++    pub via_at: Option<u64>,
++    pub via_to: Option<(f32, f32)>,
+ }
+ 
+ /// Orders a squad holds queued.
+@@ -276,6 +282,9 @@ impl Default for Squad {
+             holding: false,
+             loadout: 0,
+             rank_shape: (Formation::Blob, false),
++            via: None,
++            via_at: None,
++            via_to: None,
+         }
+     }
+ }
+@@ -832,7 +841,15 @@ impl<W: World> Game<W> {
+                 Some(d) => step.min(((d.0 - at.0).hypot(d.1 - at.1) / super::steer::EASE).max(0.3 * self.rules.speed * sc) * dt),
+                 None => step,
+             };
+-            let target = if steering { self.steer_point(at, sq.steer) } else { sq.dest.unwrap_or(at) };
++            // On a plain move, round the slime and fire (`avoid.rs`).
++            let via = match sq.dest {
++                Some(d) if !steering && !sq.fight => self.squad_via(q, at, d),
++                _ => {
++                    self.drop_via(q);
++                    None
++                }
++            };
++            let target = if steering { self.steer_point(at, sq.steer) } else { via.or(sq.dest).unwrap_or(at) };
+             // A steered squad that took its walking map last step keeps to
+             // it until the whole line to where it heads is open (`guide`).
+             let whole = !steering || sq.map.is_some();
+diff --git a/src/mould/larder_world/turn.rs b/src/mould/larder_world/turn.rs
+index 358fc76..418ef6a 100644
+--- a/src/mould/larder_world/turn.rs
++++ b/src/mould/larder_world/turn.rs
+@@ -354,6 +354,8 @@ impl<W: World> Game<W> {
+         let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
+         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
+         let mut empty = Vec::new();
++        // Where soldiers felt fire this frame (`Game::mark_hot`).
++        let mut felt = Vec::new();
+         self.last_takes.clear();
+         for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
+             if let Some(c) = *c {
+@@ -413,6 +415,7 @@ impl<W: World> Game<W> {
+                         }
+                     }
+                     if u.heat > 0.0 {
++                        felt.push((ask.x, ask.y));
+                         s.hp -= r.fire_hurt * u.heat * dt;
+                         if s.hp <= 0.0 {
+                             self.fell_burned += u32::from(s.alive);
+@@ -447,6 +450,9 @@ impl<W: World> Game<W> {
+         for (k, i) in empty {
+             self.after_dry(k, Some(i));
+         }
++        for p in felt {
++            self.mark_hot(p, 0.0);
++        }
+         self.check_core();
+         self.time_surges(out.units.iter().map(|u| u.took as f64).sum());
+         let now = self.world.ticks();
+diff --git a/src/mould/rounds.rs b/src/mould/rounds.rs
+index e5f814a..445af1e 100644
+--- a/src/mould/rounds.rs
++++ b/src/mould/rounds.rs
+@@ -1525,6 +1525,12 @@ impl Rounds {
+         let tur = std::mem::take(&mut self.queued_turret);
+         let list: Vec<(Burst, BurstRules)> = q.iter().map(|&(b, k, _)| (b, k)).collect();
+         let outs = g.world.bursts(&list);
++        // Fire lit: sent squads walk round it for a while (`avoid.rs`).
++        for (b, _) in &list {
++            if b.burn || b.light > 0.0 {
++                g.mark_hot(b.at, b.r);
++            }
++        }
+         self.batches += 1;
+         self.batched += q.len() as u32;
+         let sc = g.world.scale();
+diff --git a/Reports/pathfinding-2026-11-20/tools/slime.py b/Reports/pathfinding-2026-11-20/tools/slime.py
+new file mode 100644
+index 0000000..113f378
+--- /dev/null
++++ b/Reports/pathfinding-2026-11-20/tools/slime.py
+@@ -0,0 +1,93 @@
++#!/usr/bin/env python3
++"""What sent squads walk through on the way (pathfinding thread, 2026-11-20).
++
++    python3 slime.py LOG.csv [--tps 15] [--near 10]
++
++LOG.csv is `Game::path_rows` (examples/pathprobe or LARDER_PATHLOG). For
++each squad on a plain move (a destination, not an attack-move, not
++steered), while its anchor is over `near` dish cells from the destination
++(on the way, not at the crystal it was sent to):
++- touch: share of member-steps with walkers on the soldier
++- hurt: health its members lost, per member and trip
++- fell: members that died on the way
++- secs: seconds a finished trip took, median
++Writes LOG.csv.slime.json.
++"""
++import json
++import math
++import sys
++from collections import defaultdict
++
++
++def main():
++    a = sys.argv[1:]
++    path = a[0]
++    tps, near = 15, 10.0
++    for i, x in enumerate(a):
++        if x == "--tps":
++            tps = int(a[i + 1])
++        if x == "--near":
++            near = float(a[i + 1])
++    sq = {}  # (t, q) -> (ax, ay, dx, dy, steered, fight, holding)
++    mem = defaultdict(list)  # (t, q) -> [(k, touching, hp)]
++    for line in open(path):
++        p = line.rstrip("\n").split(",")
++        if p[0] == "s" and len(p) >= 14 and "" not in p:
++            mem[(int(p[1]), int(p[3]))].append((int(p[2]), int(p[10]), float(p[13])))
++        elif p[0] == "q" and len(p) >= 12 and "" not in p:
++            ax, ay, dx, dy, sx, sy = map(float, p[3:9])
++            sq[(int(p[1]), int(p[2]))] = (ax, ay, dx, dy, (sx, sy) != (0.0, 0.0), p[11] == "1", p[9] == "1")
++    steps = touched = 0
++    hurt = 0.0
++    trips = []
++    last_hp = {}
++    cur = {}
++    seen = {}
++    for (t, q) in sorted(sq, key=lambda k: (k[0], k[1])):
++        ax, ay, dx, dy, steered, fight, hold = sq[(t, q)]
++        plain = not math.isnan(dx) and not steered and not fight and not math.isnan(ax)
++        on_way = plain and math.hypot(dx - ax, dy - ay) > near
++        c = cur.get(q)
++        if plain and (c is None or c["d"] != (dx, dy)):
++            c = cur[q] = {"d": (dx, dy), "t0": t, "t1": t, "done": False, "hurt": 0.0, "n": 0}
++            trips.append(c)
++        elif not plain and c is not None:
++            c["done"] = math.isnan(dx)
++            cur.pop(q)
++            c = None
++        if c is not None:
++            c["t1"] = t
++        here = mem.get((t, q), [])
++        alive_now = [k for k, _, _ in here]
++        for k, touching, hp in here:
++            if on_way:
++                steps += 1
++                touched += touching > 0
++                lost = max(0.0, last_hp.get(k, hp) - hp)
++                hurt += lost
++                if c is not None:
++                    c["hurt"] += lost
++            last_hp[k] = hp
++        for k in alive_now:
++            seen[k] = (t, on_way)
++        if c is not None and on_way:
++            c["n"] = max(c["n"], len(here))
++    t_end = max((t for t, _ in sq), default=0)
++    fell = sum(1 for t, w in seen.values() if w and t < t_end)
++    done = sorted((c["t1"] - c["t0"]) / tps for c in trips if c["done"] and c["n"])
++    per = [c["hurt"] / c["n"] for c in trips if c["n"]]
++    out = {
++        "touch": touched / max(steps, 1),
++        "hurt": sum(per) / max(len(per), 1),
++        "fell": fell,
++        "secs": done[len(done) // 2] if done else 0.0,
++        "trips": len(per),
++        "steps": steps,
++    }
++    with open(path + ".slime.json", "w") as f:
++        json.dump(out, f)
++    print(f"{path}: {out['trips']} move trips, {steps} member-steps on the way: walkers on {out['touch'] * 100:.1f}%, health lost {out['hurt']:.1f} a member a trip, {fell} fell, trip median {out['secs']:.1f} s")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/src/mould/larder_world/avoid.rs b/src/mould/larder_world/avoid.rs
+new file mode 100644
+index 0000000..22ca003
+--- /dev/null
++++ b/src/mould/larder_world/avoid.rs
+@@ -0,0 +1,236 @@
++//! **A sent squad walks round the slime and fire** (pathfinding thread,
++//! 2026-11-20; `Rules::avoid`). On a plain move (a right click, or a
++//! guard's walk; not an attack-move, a drain or steering) a squad whose way
++//! ahead crosses slime plans its way again once a game second on coarse
++//! squares (`AVOID_BIN` dish cells a side), each costing more the more
++//! walkers are on it (`World::mould_grid`, read once a game second) or the
++//! hotter it is (fire seen there in the last `HOT_FOR` seconds), and its
++//! anchor heads for the furthest point of that way it can walk to in a
++//! straight line. Within `AVOID_NEAR` of where it was sent, and where the
++//! way ahead is clear, it walks as before.
++//!
++//! Why (measured first, the real game on the GPU): planet 3, run seed
++//! 1795038793, 20 soldiers sent from crystal to crystal (`hand=movetour`)
++//! had walkers on them for 10% of the way and lost 8 health each a trip;
++//! 20 were 9 at 2 minutes. The walking maps (`paths.rs`) know rock alone:
++//! they are built for 30 s and shared by every squad going near the same
++//! goal, so the slime, which moves every second, could not be in them.
++//! Coarse squares are about 10,000 on a run planet, so a plan is a small
++//! Dijkstra; nothing is planned while the way ahead is clear.
++use super::*;
++
++/// Dish cells a side of the squares a way round the slime is planned on.
++pub(super) const AVOID_BIN: usize = 4;
++/// Game seconds between a squad's plans (the mould grid is read once a
++/// game second on the GPU).
++pub(super) const AVOID_EVERY: f32 = 1.0;
++/// Dish cells of its way ahead a squad checks for slime, and the furthest
++/// it heads for at once.
++pub(super) const AVOID_LOOK: f32 = 40.0;
++/// Within this many dish cells of where it was sent a squad walks straight
++/// in: a crystal it was sent to is usually where the slime is.
++pub(super) const AVOID_NEAR: f32 = 12.0;
++/// Walkers on a square that a straight way may cross without planning one
++/// round them.
++pub(super) const AVOID_MIN: f32 = 3.0;
++/// The most a square's cost is multiplied by, so a way through a thick
++/// body is still found when there is none round it.
++pub(super) const AVOID_CAP: f32 = 30.0;
++/// How long ground stays hot after fire was seen there, game seconds.
++pub(super) const HOT_FOR: f32 = 8.0;
++/// A hot square counts as this many walkers.
++pub(super) const HOT_WALKERS: f32 = 60.0;
++/// Fire marks kept at once (the oldest go first).
++const HOT_MAX: usize = 256;
++
++impl<W: World> Game<W> {
++    /// Fire at `p` (fine cells) within `r`: a burn or a light went off
++    /// there (`Rounds::flush`) or a soldier felt heat there (`turn.rs`).
++    /// Sent squads plan round it for `HOT_FOR` seconds.
++    pub(crate) fn mark_hot(&mut self, p: (f32, f32), r: f32) {
++        let now = self.world.ticks();
++        let until = now + self.secs(HOT_FOR);
++        let sc = self.s();
++        self.paths.hot.retain(|h| h.2 > now);
++        if let Some(h) = self.paths.hot.iter_mut().find(|h| (h.0 .0 - p.0).hypot(h.0 .1 - p.1) < sc && h.1 >= r) {
++            h.2 = until;
++            return;
++        }
++        if self.paths.hot.len() >= HOT_MAX {
++            self.paths.hot.remove(0);
++        }
++        self.paths.hot.push((p, r, until));
++    }
++
++    /// Where squad `q`, its anchor at `at`, sent to `dest` on a plain
++    /// move, heads this step instead of `dest`: a point on its way round
++    /// the slime it can walk to in a straight line, or None to walk as
++    /// before. Planned once every `AVOID_EVERY` (or when it is nearly at
++    /// the last point), kept between.
++    pub(super) fn squad_via(&mut self, q: usize, at: (f32, f32), dest: (f32, f32)) -> Option<(f32, f32)> {
++        if self.rules.avoid <= 0.0 {
++            return None;
++        }
++        let now = self.world.ticks();
++        let sq = self.squads[q];
++        let near = |v: (f32, f32)| (v.0 - at.0).hypot(v.1 - at.1) < AVOID_BIN as f32 * self.s();
++        if sq.via_at.is_some_and(|t| now < t + self.secs(AVOID_EVERY)) && sq.via_to == Some(dest) && !sq.via.is_some_and(near) {
++            return sq.via.filter(|&v| self.walk_line(at, v));
++        }
++        let via = self.plan_via(at, dest);
++        let s = &mut self.squads[q];
++        s.via = via;
++        s.via_at = Some(now);
++        s.via_to = Some(dest);
++        via
++    }
++
++    /// Forget squad `q`'s plan (it was steered, attack-moved, or stopped).
++    pub(super) fn drop_via(&mut self, q: usize) {
++        let s = &mut self.squads[q];
++        s.via = None;
++        s.via_at = None;
++        s.via_to = None;
++    }
++
++    /// Which squares a soldier can mostly stand on (half their cells or
++    /// more), kept until the walking maps go stale (`stale_maps`).
++    fn coarse_open(&mut self, cw: usize, ch: usize, side: usize) -> Vec<bool> {
++        if let Some(c) = self.paths.coarse.as_ref().filter(|c| c.len() == cw * ch) {
++            return c.clone();
++        }
++        let (w, _) = self.world.size();
++        let mut n = vec![0u32; cw * ch];
++        for (i, ok) in self.standable_cells().into_iter().enumerate() {
++            if ok {
++                n[(i / w / side) * cw + (i % w) / side] += 1;
++            }
++        }
++        let open: Vec<bool> = n.iter().map(|&k| 2 * k as usize >= side * side).collect();
++        self.paths.coarse = Some(open.clone());
++        open
++    }
++
++    /// The point `squad_via` heads for: None while the straight way ahead
++    /// crosses no square with `AVOID_MIN` walkers, or within `AVOID_NEAR`
++    /// of `dest`, or when no point of the planned way is in a straight walk.
++    fn plan_via(&mut self, at: (f32, f32), dest: (f32, f32)) -> Option<(f32, f32)> {
++        let sc = self.s();
++        let d = (dest.0 - at.0).hypot(dest.1 - at.1);
++        if d < AVOID_NEAR * sc {
++            return None;
++        }
++        let (w, h) = self.world.size();
++        let bin = (sc as usize).max(1);
++        let grid = self.world.mould_grid(bin)?;
++        let (gw, gh) = (w.div_ceil(bin), h.div_ceil(bin));
++        let (cw, ch) = (gw.div_ceil(AVOID_BIN), gh.div_ceil(AVOID_BIN));
++        let side = AVOID_BIN * bin;
++        let sf = side as f32;
++        let mut walkers = vec![0.0f32; cw * ch];
++        for (i, &n) in grid.iter().enumerate().take(gw * gh) {
++            if n > 0 {
++                walkers[(i / gw / AVOID_BIN) * cw + (i % gw) / AVOID_BIN] += n as f32;
++            }
++        }
++        let sq_of = |p: (f32, f32)| ((p.1.max(0.0) / sf) as usize).min(ch - 1) * cw + ((p.0.max(0.0) / sf) as usize).min(cw - 1);
++        let centre = |c: usize| (((c % cw) as f32 + 0.5) * sf, ((c / cw) as f32 + 0.5) * sf);
++        let now = self.world.ticks();
++        for &(p, r, until) in &self.paths.hot {
++            if until <= now {
++                continue;
++            }
++            let r = r + 0.75 * sf;
++            let (x0, x1) = (((p.0 - r).max(0.0) / sf) as usize, (((p.0 + r) / sf) as usize).min(cw - 1));
++            let (y0, y1) = (((p.1 - r).max(0.0) / sf) as usize, (((p.1 + r) / sf) as usize).min(ch - 1));
++            for y in y0..=y1 {
++                for x in x0..=x1 {
++                    walkers[y * cw + x] += HOT_WALKERS;
++                }
++            }
++        }
++        // TMP-START
++        let floor: f32 = std::env::var("AVOID_FLOOR").ok().and_then(|v| v.parse().ok()).unwrap_or(0.0);
++        let amin: f32 = std::env::var("AVOID_MINV").ok().and_then(|v| v.parse().ok()).unwrap_or(AVOID_MIN);
++        for v in walkers.iter_mut() {
++            *v = (*v - floor).max(0.0);
++        }
++        // TMP-END
++        // The worst square on a straight line from `a` to `b`.
++        let worst = |a: (f32, f32), b: (f32, f32)| {
++            let l = (b.0 - a.0).hypot(b.1 - a.1);
++            let n = (l / (0.5 * sf)).ceil().max(1.0) as usize;
++            (0..=n).map(|i| i as f32 / n as f32).map(|t| walkers[sq_of((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t))]).fold(0.0, f32::max)
++        };
++        let look = (AVOID_LOOK * sc).min(d);
++        let ahead = (at.0 + (dest.0 - at.0) / d * look, at.1 + (dest.1 - at.1) / d * look);
++        if worst(at, ahead) < amin {
++            return None;
++        }
++        let open = self.coarse_open(cw, ch, side);
++        let (s0, g0) = (sq_of(at), sq_of(dest));
++        let ok = |c: usize| open[c] || c == s0 || c == g0;
++        let cost = |c: usize| (1.0 + self.rules.avoid * walkers[c]).min(AVOID_CAP);
++        let mut dist = vec![u32::MAX; cw * ch];
++        let mut from = vec![usize::MAX; cw * ch];
++        let mut heap = std::collections::BinaryHeap::new();
++        dist[s0] = 0;
++        heap.push(std::cmp::Reverse((0u32, s0)));
++        while let Some(std::cmp::Reverse((dc, c))) = heap.pop() {
++            if c == g0 {
++                break;
++            }
++            if dc > dist[c] {
++                continue;
++            }
++            let (x, y) = ((c % cw) as i64, (c / cw) as i64);
++            for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
++                let (nx, ny) = (x + dx, y + dy);
++                if nx < 0 || ny < 0 || nx >= cw as i64 || ny >= ch as i64 {
++                    continue;
++                }
++                let j = ny as usize * cw + nx as usize;
++                let diag = dx != 0 && dy != 0;
++                if !ok(j) || (diag && (!ok(y as usize * cw + nx as usize) || !ok(ny as usize * cw + x as usize))) {
++                    continue;
++                }
++                let nd = dc + ((if diag { 14.0 } else { 10.0 }) * cost(j)).round() as u32;
++                if nd < dist[j] {
++                    dist[j] = nd;
++                    from[j] = c;
++                    heap.push(std::cmp::Reverse((nd, j)));
++                }
++            }
++        }
++        if dist[g0] == u32::MAX {
++            return None;
++        }
++        let mut route = vec![g0];
++        while let Some(&c) = route.last().filter(|&&c| c != s0) {
++            route.push(from[c]);
++        }
++        route.reverse();
++        // The furthest point of the way within `AVOID_LOOK` that is a
++        // straight walk and crosses no worse slime than the way does to
++        // there (a straight cut across the corner of a body it goes round
++        // would walk into it).
++        let mut via = None;
++        let mut walked = 0.0;
++        let mut prev = at;
++        let mut way_worst = walkers[s0];
++        for &c in &route[1..] {
++            let p = if c == g0 { dest } else { self.nearest_standable(centre(c), 0.5 * sf).unwrap_or(centre(c)) };
++            walked += (p.0 - prev.0).hypot(p.1 - prev.1);
++            prev = p;
++            if walked > AVOID_LOOK * sc {
++                break;
++            }
++            way_worst = way_worst.max(walkers[c]);
++            if !self.walk_line(at, p) || worst(at, p) > way_worst + AVOID_MIN {
++                break;
++            }
++            via = Some(p);
++        }
++        via
++    }
++}
