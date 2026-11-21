@@ -181,6 +181,9 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   take points from upgrades. With 150 extra points it won 7 of 11 (job
   14-0-c,
   [strategy bots](../../Reports/strategy-bots-2026-11-19/README.md)).
+  On planet 3, stepping back from fire under half health (`fire=0.5`)
+  kept the econ switch plan's 7 wins of 9 and cut its burned dead from
+  367 to 164 (job 14-0-e, 11-21).
 - The Torch's own planet, the Sporer's jungle (5), has no window: in the
   planet 4 and 5 scenes the squads had not met the slime by 50 s
   ([element](../../Reports/gun-element-2026-11-17/README.md)).

@@ -1,0 +1,110 @@
+# Which threat makes planet 5 the wall (11-21 17:34Z, the thread pacing threats across planets, for Direction): 00-d's exact set (rush,aim=6,cards=0 and the lure switch plan with siege=0, planets 4 and 5, maps 1-8 and 1795038793, SECS 1200) in three arms on one build: as is (00-d's base again, since 00-d played fe6b8ad6 and this build has #647), set=stand=0 (the last-stand heart off) and set=strikers=0 (strikers off). 108 games. Deciding measure: planet 5 wins against the as-is arm, paired by map and plan, sign test; then planet 4, and lost planets' length.
+# code-bound
+rush,aim=6,cards=0,siege=0 4 1 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 1 1200
+rush,aim=6,cards=0,siege=0 4 2 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 2 1200
+rush,aim=6,cards=0,siege=0 4 3 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 3 1200
+rush,aim=6,cards=0,siege=0 4 4 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 4 1200
+rush,aim=6,cards=0,siege=0 4 5 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 5 1200
+rush,aim=6,cards=0,siege=0 4 6 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 6 1200
+rush,aim=6,cards=0,siege=0 4 7 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 7 1200
+rush,aim=6,cards=0,siege=0 4 8 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 8 1200
+rush,aim=6,cards=0,siege=0 4 1795038793 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 1795038793 1200
+rush,aim=6,cards=0,siege=0 5 1 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 1 1200
+rush,aim=6,cards=0,siege=0 5 2 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 2 1200
+rush,aim=6,cards=0,siege=0 5 3 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 3 1200
+rush,aim=6,cards=0,siege=0 5 4 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 4 1200
+rush,aim=6,cards=0,siege=0 5 5 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 5 1200
+rush,aim=6,cards=0,siege=0 5 6 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 6 1200
+rush,aim=6,cards=0,siege=0 5 7 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 7 1200
+rush,aim=6,cards=0,siege=0 5 8 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 8 1200
+rush,aim=6,cards=0,siege=0 5 1795038793 1200
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 1795038793 1200
+rush,aim=6,cards=0,siege=0 4 1 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 1 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 2 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 2 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 3 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 3 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 4 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 4 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 5 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 5 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 6 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 6 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 7 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 7 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 8 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 8 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 1795038793 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 1795038793 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 1 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 1 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 2 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 2 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 3 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 3 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 4 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 4 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 5 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 5 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 6 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 6 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 7 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 7 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 8 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 8 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 5 1795038793 1200 set=stand=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 1795038793 1200 set=stand=0
+rush,aim=6,cards=0,siege=0 4 1 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 1 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 2 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 2 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 3 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 3 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 4 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 4 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 5 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 5 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 6 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 6 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 7 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 7 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 8 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 8 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 4 1795038793 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 1795038793 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 1 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 1 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 2 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 2 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 3 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 3 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 4 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 4 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 5 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 5 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 6 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 6 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 7 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 7 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 8 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 8 1200 set=strikers=0
+rush,aim=6,cards=0,siege=0 5 1795038793 1200 set=strikers=0
+lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 5 1795038793 1200 set=strikers=0

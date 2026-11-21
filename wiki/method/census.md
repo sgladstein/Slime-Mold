@@ -86,7 +86,10 @@ bot result is read as balance, check that the bot did not stall. On
 11-21, CI's planet 1 plan sat with 43 soldiers to the 1,800 s limit
 beside the slime's home crystal, because every other crystal was dry. The
 bot's `siege` dial fixed it, and the same plan then won 9 of 11 maps, not
-6. `STRAT_DBG=1` prints the bot's choices every 10 s.
+6. `STRAT_DBG=1` prints the bot's choices every 10 s. Milestone 1's
+whole runs of planets 1 to 3 (job 00-c, 11-21): CI's run-bot plan won 10
+of 11 on the owner's maps, no planet ran to its clock and none
+soft-locked, and a won run took 13 to 15 minutes of game time.
 
 | Hand | What it does | Where |
 |---|---|---|

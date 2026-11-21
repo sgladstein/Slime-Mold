@@ -126,6 +126,22 @@ Two changes on main changed planet 3, so results are kept by the game they were 
   - 14-0-runs-now: whole runs.
   - 14-0-s: turret cards.
 
+## 11-21 afternoon: Milestone 1's runs, planets 4 and 5, the PC worker
+
+- **Job 00-c, Milestone 1's exit test 1** (for Direction): whole runs of planets 1 to 3 (`league=run:SEED:3:0`, the shop between planets, SECS 0 as CI) on main at fe6b8ad6 with siege=3 the default (one run on 527355bf3e46, the same game), the owner's three maps and maps 1-8. Per planet, won / held / lost of 11:
+
+  | Plan | Planet 1 | Planet 2 | Planet 3 | Runs won | Median planet length | A won run |
+  |---|---|---|---|---|---|---|
+  | CI's run bot (`bot,want=torch.standard\|rush,aim=6,cards=0`, #642) | 11/0/0 | 10/0/1 | 10/0/0 | 10 | 254 / 257 / 316 s | median 14.7 min (10.9-18.2) |
+  | `rush,aim=6,cards=0` | 11/0/0 | 10/0/1 | 10/0/0 | 10 | 234 / 259 / 308 s | median 13.0 min (11.4-17.6) |
+  | `bot,want=torch.standard` | 11/0/0 | 2/0/9 | 1/0/1 | 1 | 254 / 242 / 436 s | 20.9 min (one) |
+
+  No planet ran to its clock and none soft-locked: each ended by its goal or the squad's death. The best two plans' one loss is map 7's planet 2 (the squad dead at 95-123 s). A won run is 13 to 15 minutes of game time, about half of the "about 30 minutes for the three", before shop and landing time.
+- **Job 00-d, planets 4 and 5 again** (main at fe6b8ad6 with the heart cap #633, siege=0, SECS 1200), paired by map against 00-b: rush planet 4 5/9 (was 6), planet 5 3/9 (was 2); lure switch plan 4/9 (was 5) and 0/9 (was 0). No paired change near significance; every loss is the squad's death. Planet 5 stays the jump.
+- **Job 14-0-e, stepping back under half health on planet 3** (fire_hurt 10, src 1c02ff7086ca): the econ switch plan wins 7/9 with and without fire=0.5, and its burned dead fall from 367 to 164. With fire=0.5 the lure switch plan wins 8/9 (81 burned) and econ mop 6/9 (115 burned); their plain arms were played on older builds.
+- **Job 00-c5/00-c6, planet 3 before and after #647** (formations and hold fire; the coordinator's check saw 4 wins fall to 0): before, on fe6b8ad6, the lure switch plan won 17/17, rush 16/17, econ 14/17 and bot 11/17 over maps 1-16 and 1795038793. 00-c6 plays the same 68 games on #647's merge (6fd2be90, src 11f20b6b4a7a).
+- **The PC worker stopped silently** at 23:22 local on 11-20 (05:22Z): it and the game it was running ended together, with no traceback, an empty stderr file and no Windows error, and the PC had not restarted or slept. The likeliest cause is its console window or the shell it ran in being closed. It was restarted at 10:16 local on 11-21; it now logs an uncaught error, a hard crash and a closed console to its worker log, and its pid at start.
+
 ## Files
 
 - `strat.rs`, `utility.rs` and `league.rs` in `src/bin/larder-world/`.
