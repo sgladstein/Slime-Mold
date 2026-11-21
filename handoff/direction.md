@@ -200,6 +200,19 @@ end.
   `set=star_par`): 4:00 on planet 1, 5:00 on planets 2 and 3. Ore paid is
   higher as a result (about 4 falls seen, not 1 or 2); retune `worth` once
   his play or a drop-taking bot shows what is taken.
+- **11-21, Milestone 1 checks** (all docs in NOW.md): test 1's bot half
+  passes (job 00-c: the run bot wins 10 of 11 whole runs on his maps, no
+  soft lock, a won run 13 to 15 min; the rush plan does as well, which is
+  D7's question, his). Test 4's three sentences and clips are in
+  (`Reports/planet-things-2026-11-21/`). Look's test 2 pass is closed
+  (#670, #671, #675, #676, #678, #679; Look C #680). Rulings recorded:
+  fruiting to planet 2 (#644), crystals never run out (06:30), raid gap
+  floor 45 s (#652). Open: slime size following food waits on his card
+  in the regrowth thread (the slime thread builds it); planets 4 and 5
+  (rush 5 and 3 of 9) wait on the heart/strikers arms job on a build with
+  #681 before any row moves. Losses in the smoke table doubled between
+  the first and second day's main (59 to 115 on 9 planets, Enemy's #670
+  to #681); planets are still won.
 - **Planet 1 regression and the pacing** (11-20 night): the bot lost
   maps 1 and 2 of CI's run seeds that the 17:00Z build won. The bot thread
   bisected it to #566 (strikers retune); #598's rate cap alone won back map
