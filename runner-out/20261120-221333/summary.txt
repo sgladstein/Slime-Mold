@@ -1,0 +1,487 @@
+batch 20261120-221333, timing True, follow-up True, dry run False
+shas: batch main c241fd7e
+driver: NVIDIA GeForce GTX 1070, 582.78
+--- build
+== build (cargo build --release --locked --bins) started 2026-11-20T22:13:53.5733431-06:00
+== build exit 0 at 2026-11-20T22:16:17.2717526-06:00
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\sm-batch)
+    Finished `release` profile [optimized] target(s) in 2m 22s
+== build exit 0 at 2026-11-20T22:16:17.2717526-06:00
+--- f-planet3-play-1
+== card before: 1936 MHz, 4006 MHz, 66, 48.85 W
+== f-planet3-play-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=300 hand=strat:rush,aim=6) started 2026-11-20T22:27:41.9647736-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1676 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 300 game s at 60 frames a second, screen 1280x800
+  every frame (18000 of them), ms: frame p50 5.28 p95 6.56 max 38.66; step  p50 0.05 p95 1.56 max 33.42; prepare  p50 0.21 p95 0.24 max 10.99; record  p50 0.10 p95 0.15 max 6.04; GPU tail  p50 4.60 p95 5.40 max 18.42
+  frames with a step (4500 of them), ms: frame p50 5.91 p95 6.77 max 19.95; step  p50 0.96 p95 1.69 max 5.77; prepare  p50 0.21 p95 0.24 max 0.73; record  p50 0.14 p95 0.16 max 1.46; GPU tail  p50 4.54 p95 4.88 max 18.42
+  t 300 s: mould 14781, soldiers 22, buildings 0, harvested 9093, shots 2303, killed 13706
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              985.4    0.219    4.423   4500
+    mark_bulwark           231.8    0.773    1.586    300
+    time_unit_paths        104.8    0.349    0.453    300
+    set_cells               93.3    0.311    0.839    300
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1883 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== f-planet3-play-1-run exit 0 at 2026-11-20T22:29:21.2326495-06:00
+    mass                     0.0    0.000    0.000    300
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1883 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== f-planet3-play-1-run exit 0 at 2026-11-20T22:29:21.2326495-06:00
+--- f-planet3-play-2
+== card before: 1936 MHz, 4006 MHz, 66, 49.33 W
+== f-planet3-play-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=300 hand=strat:rush,aim=6) started 2026-11-20T22:29:21.3044577-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1676 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 300 game s at 60 frames a second, screen 1280x800
+  every frame (18000 of them), ms: frame p50 5.30 p95 6.56 max 130.08; step  p50 0.05 p95 1.56 max 97.93; prepare  p50 0.21 p95 0.25 max 20.00; record  p50 0.11 p95 0.16 max 16.62; GPU tail  p50 4.65 p95 5.44 max 123.35
+  frames with a step (4500 of them), ms: frame p50 5.91 p95 6.76 max 103.54; step  p50 0.90 p95 1.70 max 97.93; prepare  p50 0.21 p95 0.25 max 2.59; record  p50 0.14 p95 0.17 max 3.49; GPU tail  p50 4.49 p95 4.88 max 65.35
+  t 300 s: mould 14894, soldiers 10, buildings 0, harvested 9069, shots 2259, killed 13850
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              975.6    0.217    4.386   4500
+    mark_bulwark           228.3    0.761    2.156    300
+    time_unit_paths        105.8    0.353    0.531    300
+    set_cells               90.9    0.303    0.861    300
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1641 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== f-planet3-play-2-run exit 0 at 2026-11-20T22:31:01.7951487-06:00
+    mass                     0.0    0.000    0.000    300
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1641 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== f-planet3-play-2-run exit 0 at 2026-11-20T22:31:01.7951487-06:00
+--- machine
+== machine (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=20 hand=farm) started 2026-11-20T22:16:17.2817264-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2 surge=1800 flinch=0.9 germ_resist=10; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  every frame (1200 of them), ms: frame p50 5.59 p95 6.30 max 11.84; step  p50 0.04 p95 0.74 max 3.29; prepare  p50 0.18 p95 0.21 max 2.58; record  p50 0.10 p95 0.14 max 1.40; GPU tail  p50 4.90 p95 5.62 max 9.31
+  frames with a step (300 of them), ms: frame p50 5.88 p95 8.22 max 10.58; step  p50 0.70 p95 0.91 max 3.29; prepare  p50 0.18 p95 0.21 max 0.77; record  p50 0.13 p95 0.15 max 0.22; GPU tail  p50 4.86 p95 5.28 max 8.79
+  t 20 s: mould 23998, soldiers 10, buildings 0, harvested 1541, shots 95, killed 958
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps               25.5    0.085    2.466    300
+    mark_bulwark             0.0    0.001    0.018     20
+    time_unit_paths          0.0    0.000    0.003     20
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== machine exit 0 at 2026-11-20T22:16:28.8739081-06:00
+    mass                     0.0    0.000    0.000     20
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== machine exit 0 at 2026-11-20T22:16:28.8739081-06:00
+--- twin-a_frail_mould_dies_of_the_germ_on_both_engines
+== twin-a_frail_mould_dies_of_the_germ_on_both_engines (cargo test --release --locked --lib a_frail_mould_dies_of_the_germ_on_both_engines) started 2026-11-20T22:20:08.6828641-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 2.01s
+== twin-a_frail_mould_dies_of_the_germ_on_both_engines exit 0 at 2026-11-20T22:20:11.1822088-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 2.01s
+
+== twin-a_frail_mould_dies_of_the_germ_on_both_engines exit 0 at 2026-11-20T22:20:11.1822088-06:00
+--- twin-crust_burns_on_the_gpu_as_on_the_cpu
+== twin-crust_burns_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib crust_burns_on_the_gpu_as_on_the_cpu) started 2026-11-20T22:20:13.1551101-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 1.65s
+== twin-crust_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:15.2410763-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 1.65s
+
+== twin-crust_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:15.2410763-06:00
+--- twin-dry_slime_burns_on_the_gpu_as_on_the_cpu
+== twin-dry_slime_burns_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib dry_slime_burns_on_the_gpu_as_on_the_cpu) started 2026-11-20T22:20:15.2420752-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 6.80s
+== twin-dry_slime_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:22.4693103-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 6.80s
+
+== twin-dry_slime_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:22.4693103-06:00
+--- twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu
+== twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu (cargo test --release --locked --lib gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu) started 2026-11-20T22:16:28.8749064-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 3.84s
+== twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu exit 0 at 2026-11-20T22:20:08.6818660-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 3.84s
+
+== twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu exit 0 at 2026-11-20T22:20:08.6818660-06:00
+--- twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu
+== twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib plants_and_fire_run_on_the_gpu_as_on_the_cpu) started 2026-11-20T22:20:11.1832067-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 1.55s
+== twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:13.1541122-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 1.55s
+
+== twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:13.1541122-06:00
+--- twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu
+== twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib tinder_lays_and_burns_on_the_gpu_as_on_the_cpu) started 2026-11-20T22:20:22.4723024-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 1.43s
+== twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:24.3378272-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 720 filtered out; finished in 1.43s
+
+== twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T22:20:24.3378272-06:00
+--- view-crust-1
+== card before: 1949 MHz, 4006 MHz, 55, 45.83 W
+== view-crust-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:22:57.4209864-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.78 p95 5.71 max 12.74; step  p50 0.05 p95 1.43 max 3.48; prepare  p50 0.19 p95 0.26 max 1.14; record  p50 0.10 p95 0.14 max 1.40; GPU tail  p50 3.94 p95 4.50 max 9.83
+  frames with a step (900 of them), ms: frame p50 5.09 p95 5.86 max 12.74; step  p50 0.79 p95 1.59 max 3.48; prepare  p50 0.20 p95 0.24 max 0.72; record  p50 0.11 p95 0.16 max 1.40; GPU tail  p50 3.95 p95 4.03 max 9.83
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.6    0.190    2.584    900
+    mark_bulwark            47.2    0.787    1.434     60
+    time_unit_paths         20.8    0.347    0.479     60
+    set_cells               18.3    0.305    0.762     60
+  view, every pass timed alone (median of 30 frames): 3.684 ms in all
+    base       3.143 ms   85.3%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1547 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-crust-1-run exit 0 at 2026-11-20T22:23:18.4324366-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1547 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-crust-1-run exit 0 at 2026-11-20T22:23:18.4324366-06:00
+--- view-crust-2
+== card before: 1936 MHz, 4006 MHz, 66, 48.85 W
+== view-crust-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:25:53.6142056-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.82 p95 5.76 max 8.13; step  p50 0.05 p95 1.44 max 3.31; prepare  p50 0.19 p95 0.24 max 1.11; record  p50 0.10 p95 0.14 max 1.45; GPU tail  p50 3.97 p95 4.54 max 4.65
+  frames with a step (900 of them), ms: frame p50 5.13 p95 5.89 max 7.60; step  p50 0.79 p95 1.58 max 3.31; prepare  p50 0.20 p95 0.24 max 0.74; record  p50 0.11 p95 0.15 max 1.45; GPU tail  p50 3.99 p95 4.07 max 4.22
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.4    0.189    2.534    900
+    mark_bulwark            50.3    0.838    1.443     60
+    time_unit_paths         21.2    0.353    0.454     60
+    set_cells               19.4    0.324    0.781     60
+  view, every pass timed alone (median of 30 frames): 3.718 ms in all
+    base       3.173 ms   85.3%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1842 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-crust-2-run exit 0 at 2026-11-20T22:26:12.9287115-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1842 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-crust-2-run exit 0 at 2026-11-20T22:26:12.9287115-06:00
+--- view-flat-1
+== card before: 1936 MHz, 4006 MHz, 66, 48.70 W
+== view-flat-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:24:43.9707172-06:00
+larder-world machine at the start: RAM 3.2 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 2.38 p95 3.30 max 5.78; step  p50 0.05 p95 1.42 max 3.26; prepare  p50 0.23 p95 0.26 max 1.09; record  p50 0.10 p95 0.14 max 2.86; GPU tail  p50 1.51 p95 2.08 max 2.26
+  frames with a step (900 of them), ms: frame p50 2.66 p95 3.45 max 5.09; step  p50 0.77 p95 1.57 max 3.26; prepare  p50 0.23 p95 0.25 max 0.77; record  p50 0.11 p95 0.15 max 1.40; GPU tail  p50 1.54 p95 1.59 max 1.78
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              169.2    0.188    2.521    900
+    mark_bulwark            49.5    0.824    1.496     60
+    time_unit_paths         21.0    0.349    0.445     60
+    set_cells               19.3    0.321    0.830     60
+  view, every pass timed alone (median of 30 frames): 1.316 ms in all
+    base       0.772 ms   58.7%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-flat-1-run exit 0 at 2026-11-20T22:24:56.3659885-06:00
+    drain      0.003 ms    0.2%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-flat-1-run exit 0 at 2026-11-20T22:24:56.3659885-06:00
+--- view-flat-2
+== card before: 1936 MHz, 4006 MHz, 66, 49.23 W
+== view-flat-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:27:31.3516273-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 2.39 p95 3.31 max 5.66; step  p50 0.05 p95 1.42 max 3.27; prepare  p50 0.23 p95 0.26 max 1.09; record  p50 0.10 p95 0.14 max 1.46; GPU tail  p50 1.51 p95 2.08 max 3.10
+  frames with a step (900 of them), ms: frame p50 2.68 p95 3.47 max 5.12; step  p50 0.78 p95 1.57 max 3.27; prepare  p50 0.23 p95 0.25 max 0.78; record  p50 0.11 p95 0.15 max 1.46; GPU tail  p50 1.54 p95 1.60 max 2.71
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              169.2    0.188    2.521    900
+    mark_bulwark            50.5    0.842    1.627     60
+    time_unit_paths         21.0    0.349    0.472     60
+    set_cells               20.2    0.336    0.822     60
+  view, every pass timed alone (median of 30 frames): 1.317 ms in all
+    base       0.772 ms   58.7%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1883 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-flat-2-run exit 0 at 2026-11-20T22:27:41.8963904-06:00
+    drain      0.003 ms    0.2%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1883 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-flat-2-run exit 0 at 2026-11-20T22:27:41.8963904-06:00
+--- view-full-1
+== card before: 569 MHz, 405 MHz, 41, 7.20 W
+== view-full-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:22:00.0160464-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.97 p95 5.94 max 33.50; step  p50 0.05 p95 1.44 max 3.45; prepare  p50 0.19 p95 0.25 max 1.35; record  p50 0.10 p95 0.14 max 3.17; GPU tail  p50 4.13 p95 4.71 max 33.00
+  frames with a step (900 of them), ms: frame p50 5.29 p95 6.11 max 33.36; step  p50 0.79 p95 1.60 max 3.34; prepare  p50 0.20 p95 0.24 max 0.79; record  p50 0.11 p95 0.16 max 3.17; GPU tail  p50 4.15 p95 4.24 max 31.65
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.4    0.189    2.531    900
+    mark_bulwark            49.9    0.832    1.419     60
+    time_unit_paths         21.0    0.350    0.549     60
+    set_cells               19.6    0.326    0.782     60
+  view, every pass timed alone (median of 30 frames): 3.929 ms in all
+    base       3.391 ms   86.3%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-full-1-run exit 0 at 2026-11-20T22:22:20.2086626-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-full-1-run exit 0 at 2026-11-20T22:22:20.2086626-06:00
+--- view-full-2
+== card before: 1936 MHz, 4006 MHz, 65, 48.46 W
+== view-full-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:24:56.4348042-06:00
+larder-world machine at the start: RAM 3.2 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 5.08 p95 6.97 max 234.47; step  p50 0.05 p95 1.54 max 229.40; prepare  p50 0.20 p95 0.48 max 19.22; record  p50 0.11 p95 0.24 max 9.95; GPU tail  p50 4.22 p95 4.82 max 53.75
+  frames with a step (900 of them), ms: frame p50 5.38 p95 7.57 max 181.82; step  p50 0.80 p95 1.80 max 176.16; prepare  p50 0.20 p95 0.30 max 3.74; record  p50 0.11 p95 0.26 max 7.94; GPU tail  p50 4.24 p95 4.34 max 31.13
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              183.6    0.204    4.023    900
+    mark_bulwark            63.4    1.057    7.281     60
+    set_cells               30.4    0.507    6.403     60
+    time_unit_paths         21.6    0.360    0.694     60
+  view, every pass timed alone (median of 30 frames): 3.996 ms in all
+    base       3.449 ms   86.3%  (30 frames)
+  machine at the end: RAM 2.8 GB free of 8.0; GPU memory 1840 MB in use of 8192, 2% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-full-2-run exit 0 at 2026-11-20T22:25:18.6161699-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.8 GB free of 8.0; GPU memory 1840 MB in use of 8192, 2% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-full-2-run exit 0 at 2026-11-20T22:25:18.6161699-06:00
+--- view-gems-1
+== card before: 1936 MHz, 4006 MHz, 62, 47.22 W
+== view-gems-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:23:39.6813292-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.78 p95 5.75 max 8.13; step  p50 0.05 p95 1.46 max 3.29; prepare  p50 0.20 p95 0.24 max 1.04; record  p50 0.11 p95 0.14 max 1.41; GPU tail  p50 3.94 p95 4.51 max 4.69
+  frames with a step (900 of them), ms: frame p50 5.11 p95 5.89 max 7.57; step  p50 0.81 p95 1.60 max 3.29; prepare  p50 0.20 p95 0.24 max 0.72; record  p50 0.11 p95 0.15 max 1.41; GPU tail  p50 3.95 p95 4.03 max 4.19
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.0    0.189    2.521    900
+    mark_bulwark            49.9    0.832    1.495     60
+    time_unit_paths         21.0    0.350    0.433     60
+    set_cells               20.2    0.337    0.776     60
+  view, every pass timed alone (median of 30 frames): 3.716 ms in all
+    base       3.171 ms   85.3%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-gems-1-run exit 0 at 2026-11-20T22:24:00.5346770-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-gems-1-run exit 0 at 2026-11-20T22:24:00.5346770-06:00
+--- view-gems-2
+== card before: 1936 MHz, 4006 MHz, 66, 49.19 W
+== view-gems-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:26:32.3949385-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.80 p95 5.75 max 8.09; step  p50 0.05 p95 1.44 max 3.33; prepare  p50 0.19 p95 0.24 max 1.12; record  p50 0.11 p95 0.14 max 1.41; GPU tail  p50 3.95 p95 4.53 max 4.68
+  frames with a step (900 of them), ms: frame p50 5.11 p95 5.89 max 7.64; step  p50 0.80 p95 1.59 max 3.33; prepare  p50 0.20 p95 0.24 max 0.75; record  p50 0.11 p95 0.15 max 1.41; GPU tail  p50 3.97 p95 4.05 max 4.23
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              169.7    0.189    2.532    900
+    mark_bulwark            48.8    0.814    1.477     60
+    time_unit_paths         20.9    0.348    0.458     60
+    set_cells               19.4    0.324    0.823     60
+  view, every pass timed alone (median of 30 frames): 3.727 ms in all
+    base       3.181 ms   85.4%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-gems-2-run exit 0 at 2026-11-20T22:26:51.6524660-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-gems-2-run exit 0 at 2026-11-20T22:26:51.6524660-06:00
+--- view-lights-1
+== card before: 1936 MHz, 4006 MHz, 65, 48.33 W
+== view-lights-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:24:21.6282276-06:00
+larder-world machine at the start: RAM 3.2 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 5.03 p95 5.99 max 19.94; step  p50 0.05 p95 1.45 max 3.45; prepare  p50 0.19 p95 0.24 max 1.06; record  p50 0.10 p95 0.14 max 1.41; GPU tail  p50 4.18 p95 4.76 max 17.35
+  frames with a step (900 of them), ms: frame p50 5.35 p95 6.13 max 19.94; step  p50 0.80 p95 1.59 max 3.45; prepare  p50 0.20 p95 0.24 max 0.68; record  p50 0.11 p95 0.15 max 1.41; GPU tail  p50 4.21 p95 4.29 max 17.35
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              169.8    0.189    2.561    900
+    mark_bulwark            48.4    0.807    1.479     60
+    time_unit_paths         20.8    0.346    0.429     60
+    set_cells               18.7    0.311    0.807     60
+  view, every pass timed alone (median of 30 frames): 3.961 ms in all
+    base       3.417 ms   86.3%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-lights-1-run exit 0 at 2026-11-20T22:24:43.9038968-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-lights-1-run exit 0 at 2026-11-20T22:24:43.9038968-06:00
+--- view-lights-2
+== card before: 1936 MHz, 4006 MHz, 66, 49.29 W
+== view-lights-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:27:11.1383751-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 5.03 p95 5.99 max 8.37; step  p50 0.05 p95 1.45 max 3.28; prepare  p50 0.19 p95 0.25 max 1.04; record  p50 0.10 p95 0.14 max 1.40; GPU tail  p50 4.19 p95 4.76 max 4.96
+  frames with a step (900 of them), ms: frame p50 5.35 p95 6.14 max 7.80; step  p50 0.80 p95 1.59 max 3.28; prepare  p50 0.20 p95 0.24 max 0.71; record  p50 0.11 p95 0.15 max 1.40; GPU tail  p50 4.21 p95 4.29 max 4.45
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.3    0.189    2.526    900
+    mark_bulwark            55.1    0.919    1.519     60
+    set_cells               21.4    0.356    0.820     60
+    time_unit_paths         20.9    0.349    0.427     60
+  view, every pass timed alone (median of 30 frames): 3.963 ms in all
+    base       3.419 ms   86.3%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 4% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-lights-2-run exit 0 at 2026-11-20T22:27:31.2848064-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 4% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-lights-2-run exit 0 at 2026-11-20T22:27:31.2848064-06:00
+--- view-plants-1
+== card before: 1961 MHz, 4006 MHz, 53, 46.13 W
+== view-plants-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:22:39.6474675-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 3.98 p95 4.94 max 7.49; step  p50 0.05 p95 1.43 max 3.25; prepare  p50 0.20 p95 0.24 max 1.08; record  p50 0.10 p95 0.14 max 1.44; GPU tail  p50 3.18 p95 3.73 max 3.91
+  frames with a step (900 of them), ms: frame p50 4.32 p95 5.07 max 6.73; step  p50 0.78 p95 1.58 max 3.25; prepare  p50 0.20 p95 0.24 max 0.72; record  p50 0.11 p95 0.15 max 1.44; GPU tail  p50 3.18 p95 3.27 max 3.51
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              169.6    0.188    2.509    900
+    mark_bulwark            47.1    0.784    1.421     60
+    time_unit_paths         20.8    0.347    0.469     60
+    set_cells               18.1    0.302    0.772     60
+  view, every pass timed alone (median of 30 frames): 2.909 ms in all
+    base       2.368 ms   81.4%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-plants-1-run exit 0 at 2026-11-20T22:22:57.3531679-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-plants-1-run exit 0 at 2026-11-20T22:22:57.3531679-06:00
+--- view-plants-2
+== card before: 1936 MHz, 4006 MHz, 67, 49.08 W
+== view-plants-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:25:36.9419637-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.04 p95 4.99 max 7.35; step  p50 0.05 p95 1.44 max 3.37; prepare  p50 0.20 p95 0.25 max 2.33; record  p50 0.10 p95 0.14 max 1.46; GPU tail  p50 3.23 p95 3.79 max 4.04
+  frames with a step (900 of them), ms: frame p50 4.39 p95 5.13 max 7.08; step  p50 0.79 p95 1.60 max 3.37; prepare  p50 0.21 p95 0.24 max 0.68; record  p50 0.11 p95 0.15 max 1.46; GPU tail  p50 3.23 p95 3.33 max 3.52
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.4    0.189    2.514    900
+    mark_bulwark            50.0    0.833    1.465     60
+    time_unit_paths         20.8    0.347    0.417     60
+    set_cells               20.2    0.336    0.798     60
+  view, every pass timed alone (median of 30 frames): 2.934 ms in all
+    base       2.389 ms   81.4%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-plants-2-run exit 0 at 2026-11-20T22:25:53.5453906-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-plants-2-run exit 0 at 2026-11-20T22:25:53.5453906-06:00
+--- view-soil-1
+== card before: 1961 MHz, 4006 MHz, 48, 45.26 W
+== view-soil-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:22:20.2824657-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.41 p95 5.40 max 8.13; step  p50 0.05 p95 1.44 max 3.28; prepare  p50 0.20 p95 0.24 max 1.18; record  p50 0.10 p95 0.14 max 1.71; GPU tail  p50 3.59 p95 4.19 max 4.94
+  frames with a step (900 of them), ms: frame p50 4.75 p95 5.54 max 7.14; step  p50 0.79 p95 1.58 max 3.28; prepare  p50 0.20 p95 0.24 max 0.72; record  p50 0.11 p95 0.15 max 1.40; GPU tail  p50 3.61 p95 3.70 max 4.53
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              169.8    0.189    2.519    900
+    mark_bulwark            50.6    0.843    1.518     60
+    time_unit_paths         21.1    0.352    0.613     60
+    set_cells               19.3    0.322    0.806     60
+  view, every pass timed alone (median of 30 frames): 3.449 ms in all
+    base       2.910 ms   84.4%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1547 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-soil-1-run exit 0 at 2026-11-20T22:22:39.5766576-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1547 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-soil-1-run exit 0 at 2026-11-20T22:22:39.5766576-06:00
+--- view-soil-2
+== card before: 1936 MHz, 4006 MHz, 66, 48.88 W
+== view-soil-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:25:18.6859829-06:00
+larder-world machine at the start: RAM 2.9 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.48 p95 5.48 max 7.92; step  p50 0.05 p95 1.48 max 3.32; prepare  p50 0.20 p95 0.25 max 1.08; record  p50 0.10 p95 0.14 max 1.44; GPU tail  p50 3.65 p95 4.24 max 4.42
+  frames with a step (900 of them), ms: frame p50 4.83 p95 5.64 max 7.26; step  p50 0.83 p95 1.63 max 3.32; prepare  p50 0.20 p95 0.24 max 0.72; record  p50 0.11 p95 0.15 max 1.44; GPU tail  p50 3.65 p95 3.75 max 3.88
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.5    0.189    2.516    900
+    mark_bulwark            51.1    0.852    1.548     60
+    time_unit_paths         20.8    0.346    0.428     60
+    set_cells               20.0    0.333    0.864     60
+  view, every pass timed alone (median of 30 frames): 3.497 ms in all
+    base       2.954 ms   84.5%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1842 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-soil-2-run exit 0 at 2026-11-20T22:25:36.8721499-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1842 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-soil-2-run exit 0 at 2026-11-20T22:25:36.8721499-06:00
+--- view-terrain-1
+== card before: 1936 MHz, 4006 MHz, 64, 47.89 W
+== view-terrain-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:24:00.6034933-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.81 p95 5.77 max 8.05; step  p50 0.05 p95 1.43 max 3.26; prepare  p50 0.19 p95 0.24 max 1.09; record  p50 0.10 p95 0.14 max 1.40; GPU tail  p50 3.97 p95 4.54 max 4.74
+  frames with a step (900 of them), ms: frame p50 5.12 p95 5.90 max 7.54; step  p50 0.78 p95 1.59 max 3.25; prepare  p50 0.20 p95 0.24 max 0.72; record  p50 0.11 p95 0.15 max 1.40; GPU tail  p50 4.00 p95 4.07 max 4.69
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.1    0.189    2.517    900
+    mark_bulwark            52.3    0.872    1.406     60
+    time_unit_paths         21.0    0.350    0.457     60
+    set_cells               19.7    0.328    0.761     60
+  view, every pass timed alone (median of 30 frames): 3.748 ms in all
+    base       3.203 ms   85.4%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-terrain-1-run exit 0 at 2026-11-20T22:24:21.5594118-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-terrain-1-run exit 0 at 2026-11-20T22:24:21.5594118-06:00
+--- view-terrain-2
+== card before: 1936 MHz, 4006 MHz, 66, 49.29 W
+== view-terrain-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:26:51.7222790-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.82 p95 5.77 max 8.22; step  p50 0.05 p95 1.44 max 3.46; prepare  p50 0.20 p95 0.24 max 1.09; record  p50 0.10 p95 0.14 max 1.40; GPU tail  p50 3.97 p95 4.55 max 4.65
+  frames with a step (900 of them), ms: frame p50 5.13 p95 5.91 max 7.80; step  p50 0.80 p95 1.59 max 3.46; prepare  p50 0.20 p95 0.24 max 0.73; record  p50 0.11 p95 0.15 max 1.40; GPU tail  p50 4.00 p95 4.07 max 4.26
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.2    0.189    2.605    900
+    mark_bulwark            48.4    0.806    1.453     60
+    time_unit_paths         20.9    0.349    0.466     60
+    set_cells               18.3    0.305    0.806     60
+  view, every pass timed alone (median of 30 frames): 3.748 ms in all
+    base       3.203 ms   85.4%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-terrain-2-run exit 0 at 2026-11-20T22:27:11.0695602-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1840 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-terrain-2-run exit 0 at 2026-11-20T22:27:11.0695602-06:00
+--- view-variants
+== view-variants (python Reports\view-cost-2026-11-21\variants.py C:\Users\Scott\Code\pc-batch-out\20261120-221333\vc) started 2026-11-20T22:21:59.6260253-06:00
+== view-variants exit 0 at 2026-11-20T22:21:59.9452349-06:00
+C:\Users\Scott\Code\pc-batch-out\20261120-221333\vc\lights.wgsl
+C:\Users\Scott\Code\pc-batch-out\20261120-221333\vc\flat.wgsl
+== view-variants exit 0 at 2026-11-20T22:21:59.9452349-06:00
+--- view-water-1
+== card before: 1949 MHz, 4006 MHz, 59, 46.74 W
+== view-water-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:23:18.5002549-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.79 p95 5.75 max 8.27; step  p50 0.05 p95 1.44 max 3.26; prepare  p50 0.19 p95 0.24 max 1.04; record  p50 0.10 p95 0.14 max 1.41; GPU tail  p50 3.95 p95 4.54 max 5.36
+  frames with a step (900 of them), ms: frame p50 5.11 p95 5.89 max 7.54; step  p50 0.79 p95 1.58 max 3.26; prepare  p50 0.20 p95 0.24 max 0.69; record  p50 0.11 p95 0.15 max 1.41; GPU tail  p50 3.97 p95 4.06 max 4.96
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.1    0.189    2.514    900
+    mark_bulwark            49.3    0.821    1.482     60
+    time_unit_paths         21.0    0.350    0.432     60
+    set_cells               19.1    0.319    0.824     60
+  view, every pass timed alone (median of 30 frames): 3.740 ms in all
+    base       3.198 ms   85.5%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1547 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-water-1-run exit 0 at 2026-11-20T22:23:39.6140035-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1547 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-water-1-run exit 0 at 2026-11-20T22:23:39.6140035-06:00
+--- view-water-2
+== card before: 1936 MHz, 4006 MHz, 66, 49.08 W
+== view-water-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:26:12.9965299-06:00
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1633 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+  view: zoom 6 at 435,262
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 4.81 p95 5.78 max 8.33; step  p50 0.05 p95 1.48 max 3.30; prepare  p50 0.19 p95 0.25 max 1.08; record  p50 0.10 p95 0.14 max 1.44; GPU tail  p50 3.96 p95 4.54 max 4.62
+  frames with a step (900 of them), ms: frame p50 5.14 p95 5.94 max 7.58; step  p50 0.83 p95 1.64 max 3.30; prepare  p50 0.20 p95 0.24 max 0.70; record  p50 0.11 p95 0.15 max 1.44; GPU tail  p50 3.97 p95 4.05 max 4.23
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.5    0.189    2.526    900
+    mark_bulwark            47.5    0.791    1.410     60
+    time_unit_paths         21.1    0.352    0.564     60
+    set_cells               18.3    0.305    0.762     60
+  view, every pass timed alone (median of 30 frames): 3.748 ms in all
+    base       3.201 ms   85.4%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1842 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-water-2-run exit 0 at 2026-11-20T22:26:32.3261233-06:00
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1842 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-water-2-run exit 0 at 2026-11-20T22:26:32.3261233-06:00

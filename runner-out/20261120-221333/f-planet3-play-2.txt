@@ -1,0 +1,73 @@
+== card before: 1936 MHz, 4006 MHz, 66, 49.33 W
+== f-planet3-play-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=300 hand=strat:rush,aim=6) started 2026-11-20T22:29:21.3044577-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1676 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+STRAT t 0 out mould 43304 soldiers 9 hp 1.00 bank 0 killed 0 turret 0 pumps 0 buildings 0
+STRAT t 10 out mould 43199 soldiers 9 hp 1.00 bank 0 killed 303 turret 0 pumps 0 buildings 0
+STRAT t 20 out mould 39881 soldiers 8 hp 0.74 bank 277 killed 3825 turret 0 pumps 0 buildings 0
+STRAT t 30 out mould 38628 soldiers 8 hp 0.67 bank 266 killed 5007 turret 0 pumps 0 buildings 0
+STRAT t 40 out mould 37420 soldiers 9 hp 0.65 bank 273 killed 6106 turret 0 pumps 0 buildings 0
+STRAT t 50 out mould 36344 soldiers 11 hp 0.71 bank 45 killed 7140 turret 0 pumps 0 buildings 0
+STRAT t 60 out mould 35436 soldiers 13 hp 0.76 bank 106 killed 7890 turret 0 pumps 0 buildings 0
+STRAT t 70 out mould 34899 soldiers 15 hp 0.79 bank 230 killed 8302 turret 0 pumps 0 buildings 0
+STRAT t 80 out mould 34596 soldiers 18 hp 0.82 bank 19 killed 8576 turret 0 pumps 0 buildings 0
+STRAT t 90 out mould 18771 soldiers 20 hp 0.84 bank 262 killed 8906 turret 0 pumps 0 buildings 0
+STRAT t 100 out mould 16030 soldiers 23 hp 0.86 bank 120 killed 8927 turret 0 pumps 0 buildings 0
+STRAT t 110 out mould 15970 soldiers 24 hp 0.87 bank 27 killed 8938 turret 0 pumps 0 buildings 0
+STRAT t 120 out mould 15951 soldiers 24 hp 0.87 bank 45 killed 9146 turret 0 pumps 0 buildings 0
+STRAT t 130 out mould 16566 soldiers 24 hp 0.87 bank 62 killed 9260 turret 0 pumps 0 buildings 0
+STRAT t 140 out mould 16806 soldiers 24 hp 0.87 bank 74 killed 9344 turret 0 pumps 0 buildings 0
+STRAT t 150 back mould 15958 soldiers 14 hp 0.41 bank 74 killed 10045 turret 0 pumps 0 buildings 0
+STRAT t 160 back mould 15425 soldiers 14 hp 0.26 bank 74 killed 10324 turret 0 pumps 0 buildings 0
+STRAT t 170 out mould 15215 soldiers 12 hp 0.24 bank 107 killed 10619 turret 0 pumps 0 buildings 0
+STRAT t 180 back mould 14880 soldiers 13 hp 0.39 bank 19 killed 11133 turret 0 pumps 0 buildings 0
+STRAT t 190 out mould 14779 soldiers 14 hp 0.48 bank 83 killed 11370 turret 0 pumps 0 buildings 0
+STRAT t 200 out mould 14747 soldiers 15 hp 0.52 bank 129 killed 11538 turret 0 pumps 0 buildings 0
+STRAT t 210 out mould 14558 soldiers 16 hp 0.54 bank 15 killed 11908 turret 0 pumps 0 buildings 0
+STRAT t 220 out mould 14630 soldiers 17 hp 0.56 bank 43 killed 11950 turret 0 pumps 0 buildings 0
+STRAT t 230 out mould 16741 soldiers 17 hp 0.56 bank 312 killed 11989 turret 0 pumps 0 buildings 0
+STRAT t 240 out mould 16899 soldiers 18 hp 0.57 bank 120 killed 12024 turret 0 pumps 0 buildings 0
+STRAT t 250 out mould 17187 soldiers 19 hp 0.58 bank 209 killed 12033 turret 0 pumps 0 buildings 0
+STRAT t 260 out mould 17382 soldiers 20 hp 0.60 bank 152 killed 12045 turret 0 pumps 0 buildings 0
+STRAT t 270 back mould 15860 soldiers 14 hp 0.49 bank 353 killed 13188 turret 0 pumps 0 buildings 0
+STRAT t 280 out mould 15064 soldiers 11 hp 0.32 bank 359 killed 13539 turret 0 pumps 0 buildings 0
+STRAT t 290 back mould 14825 soldiers 11 hp 0.30 bank 359 killed 13742 turret 0 pumps 0 buildings 0
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 300 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 121.5 MB for 512 x 320 cells (742 bytes a cell), the biggest 16.7 MB
+  18000 frames, 4500 game steps; 0.25 read-backs a step, 0.00 waits a step (0.00 ms a step waiting); steps finished once in 4499, when the next was due 0
+  every frame (18000 of them), ms: frame p50 5.30 p95 6.56 max 130.08; step  p50 0.05 p95 1.56 max 97.93; prepare  p50 0.21 p95 0.25 max 20.00; record  p50 0.11 p95 0.16 max 16.62; GPU tail  p50 4.65 p95 5.44 max 123.35
+  frames with a step (4500 of them), ms: frame p50 5.91 p95 6.76 max 103.54; step  p50 0.90 p95 1.70 max 97.93; prepare  p50 0.21 p95 0.25 max 2.59; record  p50 0.14 p95 0.17 max 3.49; GPU tail  p50 4.49 p95 4.88 max 65.35
+  after the first game second (17940 frames), ms: frame max 130.08; step max 97.93; prepare max 20.00
+  longest frames, at game time: 214.22 s: 130.08 (step 0.07, prepare 4.95, record 1.70, tail 123.35); 213.52 s: 103.54 (step 97.93, prepare 0.33, record 0.28, tail 5.00, stepped); 214.23 s: 98.70 (step 0.01, prepare 0.36, record 0.31, tail 98.02)
+  ground refresh: 299 of them, ms: mean 0.26 max 1.53, of which the read-back at most 0.31; 3148 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 300 s: mould 14894, soldiers 10, buildings 0, harvested 9069, shots 2259, killed 13850
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              975.6    0.217    4.386   4500
+    mark_bulwark           228.3    0.761    2.156    300
+    guard_pay              109.2    0.364    1.159    300
+    time_unit_paths        105.8    0.353    0.531    300
+    set_cells               90.9    0.303    0.861    300
+    time_bosses             59.1    0.197    1.301    300
+    time_strikers           51.8    0.173    2.335    300
+    time_lure_paths         48.6    0.162    2.488    300
+    time_food_paths         48.5    0.162    0.407    300
+    cover_turn              15.3    0.051    0.095    300
+    gear_turn               12.7    0.003    0.065   4500
+    fight_turn              11.6    0.003    0.052   4500
+    time_fort                9.7    0.032    1.089    300
+    squad_turn               8.7    0.002    0.010   4500
+    time_heart               6.3    0.021    0.041    300
+    solid                    4.4    0.001    0.003   4500
+    time_raids               2.7    0.009    1.768    300
+    time_starfall            2.4    0.008    0.404    300
+    count_stuck              0.2    0.001    0.002    300
+    keep_panic_reach         0.1    0.000    0.012    300
+    time_fruit               0.1    0.000    0.013    300
+    time_waves               0.1    0.000    0.002    300
+    time_stand               0.1    0.000    0.002    300
+    time_cores               0.0    0.000    0.001    300
+    check_broken             0.0    0.000    0.000    300
+    mass                     0.0    0.000    0.000    300
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1641 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== f-planet3-play-2-run exit 0 at 2026-11-20T22:31:01.7951487-06:00

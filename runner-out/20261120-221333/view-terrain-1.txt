@@ -1,0 +1,57 @@
+== card before: 1936 MHz, 4006 MHz, 64, 47.89 W
+== view-terrain-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe run=1:3 mode=squads bench=60 hand=strat:rush,aim=6 centre=larder,6 viewpasses=30) started 2026-11-20T22:24:00.6034933-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+  view: zoom 6 at 435,262
+STRAT t 0 out mould 43304 soldiers 9 hp 1.00 bank 0 killed 0 turret 0 pumps 0 buildings 0
+STRAT t 10 out mould 43199 soldiers 9 hp 1.00 bank 0 killed 303 turret 0 pumps 0 buildings 0
+STRAT t 20 out mould 39881 soldiers 8 hp 0.74 bank 277 killed 3825 turret 0 pumps 0 buildings 0
+STRAT t 30 out mould 38628 soldiers 8 hp 0.67 bank 266 killed 5007 turret 0 pumps 0 buildings 0
+STRAT t 40 out mould 37420 soldiers 9 hp 0.65 bank 273 killed 6106 turret 0 pumps 0 buildings 0
+STRAT t 50 out mould 36344 soldiers 11 hp 0.71 bank 45 killed 7140 turret 0 pumps 0 buildings 0
+larder-world bench: planet:3:1 seed 10076887989998871526, 512 x 320 cells, 86609 slots, one walker a cell, scale 2 walkers 43204; hand strat:rush,aim=6, 60 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 121.5 MB for 512 x 320 cells (742 bytes a cell), the biggest 16.7 MB
+  3600 frames, 900 game steps; 0.20 read-backs a step, 0.00 waits a step (0.01 ms a step waiting); steps finished once in 899, when the next was due 0
+  every frame (3600 of them), ms: frame p50 4.81 p95 5.77 max 8.05; step  p50 0.05 p95 1.43 max 3.26; prepare  p50 0.19 p95 0.24 max 1.09; record  p50 0.10 p95 0.14 max 1.40; GPU tail  p50 3.97 p95 4.54 max 4.74
+  frames with a step (900 of them), ms: frame p50 5.12 p95 5.90 max 7.54; step  p50 0.78 p95 1.59 max 3.25; prepare  p50 0.20 p95 0.24 max 0.72; record  p50 0.11 p95 0.15 max 1.40; GPU tail  p50 4.00 p95 4.07 max 4.69
+  after the first game second (3540 frames), ms: frame max 8.05; step max 3.26; prepare max 1.09
+  longest frames, at game time: 32.02 s: 8.05 (step 3.26, prepare 0.65, record 0.13, tail 4.01); 8.02 s: 7.89 (step 2.75, prepare 1.03, record 0.14, tail 3.97); 13.45 s: 7.54 (step 3.25, prepare 0.24, record 0.14, tail 3.91, stepped)
+  ground refresh: 59 of them, ms: mean 0.33 max 0.45, of which the read-back at most 0.21; 3148 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 60 s: mould 35436, soldiers 13, buildings 0, harvested 2077, shots 470, killed 7890
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps              170.1    0.189    2.517    900
+    mark_bulwark            52.3    0.872    1.406     60
+    time_unit_paths         21.0    0.350    0.457     60
+    guard_pay               20.7    0.345    0.776     60
+    set_cells               19.7    0.328    0.761     60
+    time_food_paths          9.7    0.161    0.444     60
+    time_fort                5.6    0.093    1.079     60
+    cover_turn               3.4    0.057    0.073     60
+    fight_turn               2.4    0.003    0.011    900
+    gear_turn                2.3    0.003    0.011    900
+    squad_turn               1.4    0.002    0.005    900
+    time_heart               1.1    0.018    0.026     60
+    solid                    0.9    0.001    0.003    900
+    time_starfall            0.1    0.001    0.009     60
+    time_bosses              0.1    0.001    0.006     60
+    count_stuck              0.0    0.001    0.002     60
+    time_raids               0.0    0.000    0.004     60
+    keep_panic_reach         0.0    0.000    0.001     60
+    time_fruit               0.0    0.000    0.002     60
+    time_lure_paths          0.0    0.000    0.002     60
+    time_waves               0.0    0.000    0.002     60
+    time_stand               0.0    0.000    0.002     60
+    time_strikers            0.0    0.000    0.002     60
+    time_cores               0.0    0.000    0.000     60
+    check_broken             0.0    0.000    0.000     60
+    mass                     0.0    0.000    0.000     60
+  view, every pass timed alone (median of 30 frames): 3.748 ms in all
+    base       3.203 ms   85.4%  (30 frames)
+    marks      0.005 ms    0.1%  (30 frames)
+    compose    0.102 ms    2.7%  (30 frames)
+    specks     0.017 ms    0.5%  (30 frames)
+    prep       0.418 ms   11.2%  (30 frames)
+    drain      0.003 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== view-terrain-1-run exit 0 at 2026-11-20T22:24:21.5594118-06:00
