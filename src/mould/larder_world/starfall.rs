@@ -13,7 +13,7 @@
 //! and each further fall comes with chance `tail` (a geometric tail: most
 //! planets see three or four, about one in ten seven or more, up to
 //! `most`), at times drawn across `first` to `last` seconds after the
-//! landing. Its shadow shows where for `warn` seconds; it lands as a blast
+//! landing (on a run's planet, to half its par if that is sooner). Its shadow shows where for `warn` seconds; it lands as a blast
 //! (a kill, a crater, and a hurt to any soldier under it). On the ground
 //! it is rich food: it smells as a soldier does, `smell` times over, and on
 //! the GPU world it is a lure (`LureMark`) for its life, so the slime
@@ -58,6 +58,15 @@ pub struct StarRules {
     /// at least `gap` apart.
     pub first: f32,
     pub last: f32,
+    /// On a planet with a speed star (`Rules::par`), the window ends by
+    /// `par_share` of the par if that is sooner than `last` (0: `last`
+    /// alone). Direction, 2026-11-20: the bug check found the falls drawn
+    /// across 0:50 to 10:00 while the owner's planet 1 took a median 4:05
+    /// (balance review), so a short planet saw one fall of its three or
+    /// four. Half the par is 4:00 on planet 1 and 5:00 on planets 2 and 3,
+    /// so a planet played at his pace sees them all. Not a shorter `last`
+    /// for every planet: deeper planets' par grows with their area.
+    pub par_share: f32,
     pub gap: f32,
     /// Seconds its shadow shows before it lands.
     pub warn: f32,
@@ -129,6 +138,7 @@ impl Default for StarRules {
             most: 12,
             first: 50.0,
             last: 600.0,
+            par_share: 0.5,
             gap: 25.0,
             warn: 10.0,
             kill_r: 4.0,
@@ -217,15 +227,25 @@ pub struct Drop {
     pub takers: u32,
     pub eaters: u32,
     fed: bool,
+    /// Where its lure mark is (`Game::lure_marks`), once it has one: the
+    /// mark goes when it does (`Game::drop_gone`).
+    pub(super) lure: Option<(f32, f32)>,
 }
 
 impl Drop {
+    /// Ore from the sky, warned of at `now`, landing at `lands` (the
+    /// slime viewer drops one where it is clicked, `Game::force_ore`); its
+    /// lure mark is set when it lands.
+    pub fn ore(at: (f32, f32), worth: f32, now: u64, lands: u64, ends: u64, r: f32) -> Drop {
+        Drop { kind: DropKind::Ore, from: CoreFrom::Sky, home: None, at, lands, ends, warned: now, down: false, r, worth, left: worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: false, lure: None }
+    }
+
     /// A core dropped at tick `now` (`cores.rs`), gone at `ends`, `r` fine
     /// cells round.
     pub fn core(at: (f32, f32), worth: f32, from: CoreFrom, now: u64, ends: u64, r: f32) -> Drop {
         // A raid's core feeds the next surge once half is eaten; a boss's
         // re-forms it instead (`Game::time_cores`).
-        Drop { kind: DropKind::Core, from, home: None, at, lands: now, ends, warned: now, down: true, r, worth, left: worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: from != CoreFrom::Raid }
+        Drop { kind: DropKind::Core, from, home: None, at, lands: now, ends, warned: now, down: true, r, worth, left: worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: from != CoreFrom::Raid, lure: None }
     }
 
     /// Its warmth, 1 as it lands to 0 when gone (a shadow's, 0 to 1 as it
@@ -300,7 +320,8 @@ impl<W: World> Game<W> {
         if self.starfall.plan.is_none() {
             let rng = &mut self.starfall.rng;
             let n = fall_count(&r, || rng.f32());
-            let mut at: Vec<f32> = (0..n).map(|_| r.first + (r.last - r.first).max(0.0) * rng.f32()).collect();
+            let last = if self.rules.par > 0.0 && r.par_share > 0.0 { r.last.min(r.par_share * self.rules.par) } else { r.last };
+            let mut at: Vec<f32> = (0..n).map(|_| r.first + (last - r.first).max(0.0) * rng.f32()).collect();
             at.sort_by(f32::total_cmp);
             for i in 1..at.len() {
                 at[i] = at[i].max(at[i - 1] + r.gap);
@@ -313,7 +334,7 @@ impl<W: World> Game<W> {
             self.starfall.plan.as_mut().map(|p| p.pop());
             if let Some(at) = self.fall_spot() {
                 let lands = now + secs(r.warn);
-                self.starfall.live.push(Drop { kind: DropKind::Ore, from: CoreFrom::Sky, home: None, at, lands, ends: lands + secs(r.life), warned: now, down: false, r: r.ore_r * sc, worth: r.worth, left: r.worth, taken: 0.0, eaten: 0.0, takers: 0, eaters: 0, fed: false });
+                self.starfall.live.push(Drop::ore(at, r.worth, now, lands, lands + secs(r.life), r.ore_r * sc));
             }
         }
         // Landing: the blast under it, a hurt to soldiers there, and its
@@ -333,12 +354,14 @@ impl<W: World> Game<W> {
             for s in self.soldiers.iter_mut().filter(|s| s.alive && (s.x - d.at.0).hypot(s.y - d.at.1) <= hit) {
                 s.hp -= r.hurt;
                 if s.hp <= 0.0 {
+                    self.fell_starfall += 1;
                     s.alive = false;
                     s.hp = 0.0;
                     s.carry = 0.0;
                 }
             }
             self.lure_marks.push(LureMark { at: d.at, until: d.ends });
+            self.starfall.live[i].lure = Some(d.at);
         }
         // Cores: each mini-boss broken since the last look (a re-formed
         // one's worth what its core had left, `cores.rs`), the fruit that
@@ -384,7 +407,22 @@ impl<W: World> Game<W> {
             // (`Game::time_cores`).
             self.starfall.live.push(Drop::core(at, worth, from, now, ends, r.core_r * sc));
         }
+        let gone: Vec<Drop> = self.starfall.live.iter().filter(|d| d.down && (now >= d.ends || d.left <= 0.01)).copied().collect();
+        for d in &gone {
+            self.drop_gone(d);
+        }
         self.starfall.live.retain(|d| !(d.down && (now >= d.ends || d.left <= 0.01)));
+    }
+
+    /// Drop `d` is gone (drained, eaten, cooled or re-formed): its lure
+    /// goes with it. Until the bug check of 2026-11-20 the mark stayed to
+    /// the end of the drop's life: ore a squad drained in a second drew
+    /// the slime within `Rules::lure_reach` to where the squad stood for
+    /// the rest of its minute.
+    pub(super) fn drop_gone(&mut self, d: &Drop) {
+        if let Some(at) = d.lure {
+            self.lure_marks.retain(|m| !(m.at == at && m.until == d.ends));
+        }
     }
 
     /// Where the next fall lands (fine cells): open ground at least `near`
@@ -527,9 +565,13 @@ mod tests {
         let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, ..StarRules::for_depth(1) };
         let mut g = starry(3, star);
         let mut drained = None;
+        let mut ores: Vec<Drop> = Vec::new();
         while g.time() < 40.0 && g.end.is_none() {
             g.step();
             if let Some(d) = g.starfall.live.iter().find(|d| d.down && d.kind == DropKind::Ore).copied() {
+                if !ores.iter().any(|o| o.at == d.at) {
+                    ores.push(d);
+                }
                 // Every soldier on it, held there, until it is empty.
                 for s in g.soldiers.iter_mut().filter(|s| s.alive) {
                     (s.x, s.y) = d.at;
@@ -544,11 +586,39 @@ mod tests {
         assert!(g.starfall.landed >= 1, "one landed by {}", g.time());
         assert!(g.starfall.points > 0.0 && g.starfall.ore_taken > 0.0, "the squad took {}", g.starfall.points);
         assert!(g.starfall.points <= star.worth * g.starfall.falls as f32 + 1e-3, "never more than the falls hold");
+        // Drained long before it would have cooled, its lure went with it
+        // (the bug check, 2026-11-20): the slime is drawn to what is down.
+        let gone: Vec<&Drop> = ores.iter().filter(|o| !g.starfall.live.iter().any(|d| d.at == o.at)).collect();
+        assert!(gone.iter().any(|o| o.ends > g.world.ticks()), "an ore was drained before its time");
+        for o in gone {
+            assert!(!g.lure_marks.iter().any(|m| m.at == o.at), "a drained ore's lure stays at {:?}", o.at);
+        }
         let mut off = starry(3, StarRules { on: false, ..star });
         while off.time() < 20.0 && off.end.is_none() {
             off.step();
         }
         assert!(off.starfall.plan.is_none() && off.starfall.live.is_empty() && off.starfall.points == 0.0, "off, nothing falls");
+    }
+
+    /// A star that lands on soldiers kills the ones it hurts past their
+    /// health, and the game counts them apart from the slime's kills
+    /// (`Game::fell_starfall`, the bot's `starfall_end`).
+    #[test]
+    fn a_star_landing_on_soldiers_is_counted_as_their_death() {
+        let star = StarRules { first: 1.0, last: 3.0, gap: 1.0, warn: 2.0, near: 0.0, ..StarRules::for_depth(1) };
+        let mut g = starry(3, star);
+        while g.time() < 40.0 && g.end.is_none() && g.starfall.landed == 0 {
+            if let Some(d) = g.starfall.live.iter().find(|d| !d.down).copied() {
+                for s in g.soldiers.iter_mut().filter(|s| s.alive) {
+                    (s.x, s.y) = d.at;
+                    s.hp = s.hp.min(1.0);
+                }
+            }
+            g.step();
+        }
+        assert!(g.starfall.landed >= 1, "one landed by {}", g.time());
+        let dead = (g.soldiers.len() - g.alive()) as u32;
+        assert!(dead > 0 && g.fell_starfall == dead && g.fell_bitten + g.fell_burned == 0, "{dead} dead, {} to the star", g.fell_starfall);
     }
 
     /// Waiting makes no more: every fall is drawn at the start, none after
@@ -567,5 +637,23 @@ mod tests {
         assert_eq!(g.starfall.falls, falls, "no more drawn");
         assert!(g.starfall.plan.as_ref().is_some_and(|p| p.is_empty()), "the plan is spent");
         assert!(g.starfall.live.iter().all(|d| d.kind == DropKind::Core), "every fall has cooled");
+    }
+
+    /// Direction, 2026-11-20: a planet with a par draws its falls by half
+    /// of it (a 4-minute planet saw one fall when they ran to 10:00).
+    #[test]
+    fn the_falls_come_by_half_the_par() {
+        let star = StarRules { gap: 1.0, ..StarRules::for_depth(1) };
+        for (par, by) in [(0.0, star.last), (160.0, 80.0)] {
+            let mut g = Game::new(race_world(5, 1, 1_000), Rules { star, par, ..Rules::default() }, 5);
+            g.step();
+            while g.starfall.plan.is_none() && g.end.is_none() {
+                g.step();
+            }
+            let tps = g.rules.tps as f32;
+            let late = g.starfall.plan.as_ref().and_then(|p| p.first()).map(|&t| (t - g.landed) as f32 / tps).unwrap();
+            assert!(late <= by + g.starfall.falls as f32 * star.gap, "par {par}: last fall at {late} s, window to {by}");
+            assert!(late > star.first, "par {par}: last fall at {late} s");
+        }
     }
 }

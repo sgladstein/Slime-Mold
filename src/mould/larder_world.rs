@@ -59,6 +59,7 @@ mod stand;
 mod strikers;
 mod starfall;
 mod cores;
+mod force;
 mod rules;
 mod paths;
 mod cmd;
@@ -477,12 +478,14 @@ pub struct Game<W: World> {
     /// charges reach and lunge as a cornered slime's for the rest of the
     /// planet (`Game::keep_panic_reach`).
     pub late: bool,
-    /// Soldiers killed by the slime's touch (`Rules::drain`) and by
-    /// standing in fire (`Rules::fire_hurt`): the rest of the fallen died
-    /// to blasts and other casts. The 11-20 late-threat measure counts the
+    /// Soldiers killed by the slime's touch (`Rules::drain`), by
+    /// standing in fire (`Rules::fire_hurt`) and by a falling star's blast
+    /// (`StarRules::hurt`, 11-20); the squad's own blasts' kills are
+    /// `Rounds::blast_kills`. The 11-20 late-threat measure counts the
     /// slime's own kills apart from the squad's.
     pub fell_bitten: u32,
     pub fell_burned: u32,
+    pub fell_starfall: u32,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -557,8 +560,10 @@ pub struct Game<W: World> {
     /// ended.
     pub fruits: Fruits,
     pub waves: Waves,
-    /// Where the slime's heart beats from now (`heart.rs`), fine cells.
+    /// Where the slime's heart beats from now (`heart.rs`), fine cells,
+    /// and the tick it began beating there.
     pub heart_at: Option<(f32, f32)>,
+    pub heart_since: u64,
     /// The condensed strikers (`strikers.rs`).
     pub strikers: Strikers,
     /// Starfall and boss cores (`Rules::star`, `starfall.rs`): the falls
@@ -705,6 +710,7 @@ impl<W: World> Game<W> {
             late: false,
             fell_bitten: 0,
             fell_burned: 0,
+            fell_starfall: 0,
             start_charge,
             taken,
             start_mould: mould,
@@ -739,6 +745,7 @@ impl<W: World> Game<W> {
             fruits: Fruits::default(),
             waves: Waves::default(),
             heart_at: None,
+            heart_since: 0,
             strikers: Strikers::default(),
             starfall: Starfall::new(seed),
             cores: Cores::default(),
@@ -913,6 +920,37 @@ impl<W: World> Game<W> {
         self.harvested + self.guard_paid + self.rendered
     }
 
+    /// Every living soldier and squad this step as CSV rows, dish cells
+    /// (the path probe: `LARDER_PATHLOG` in the window's headless runs,
+    /// `examples/pathprobe`; read by
+    /// `Reports/pathfinding-2026-11-20/tools/paths.py`).
+    /// `s,tick,k,squad,x,y,vx,vy,goal x,goal y,touching,order,cover,hp` and
+    /// `q,tick,q,anchor x,anchor y,dest x,dest y,steer x,steer y,holding,column,fight`.
+    pub fn path_rows(&self, f: &mut impl std::io::Write) -> std::io::Result<()> {
+        let t = self.world.ticks();
+        let s = self.s();
+        for (k, so) in self.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+            let (gx, gy) = self.goal(k).unwrap_or((f32::NAN, f32::NAN));
+            let o = match so.order {
+                Order::Hold => 'h',
+                Order::Move(..) => 'm',
+                Order::Fight(..) => 'f',
+                Order::Guard(..) => 'g',
+                Order::Build(..) => 'b',
+                Order::Clear(..) => 'c',
+                _ => 'o',
+            };
+            writeln!(f, "s,{t},{k},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{o},{},{:.0}", so.squad, so.x / s, so.y / s, so.vx / s, so.vy / s, gx / s, gy / s, so.touching, so.cover as u8, so.hp)?;
+        }
+        for q in self.live_squads() {
+            let sq = self.squads[q];
+            let (ax, ay) = sq.anchor.unwrap_or((f32::NAN, f32::NAN));
+            let (dx, dy) = sq.dest.unwrap_or((f32::NAN, f32::NAN));
+            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8)?;
+        }
+        Ok(())
+    }
+
     pub fn time(&self) -> f32 {
         (self.world.ticks() - self.landed) as f32 / self.rules.tps as f32
     }
@@ -945,3 +983,5 @@ mod narrow_tests;
 mod wall_side_tests;
 #[cfg(test)]
 mod move_tests;
+#[cfg(test)]
+mod path_tests;

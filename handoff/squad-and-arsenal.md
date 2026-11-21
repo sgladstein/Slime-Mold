@@ -48,6 +48,19 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-20, pathfinding review (its own thread, the owner's ask).**
+Five fixes to how squads and soldiers walk: `Game::steer_point` (a steered
+squad's point ahead no longer falls in rock), `guide`'s `whole` and
+`slide`'s 45-degree turn (slanting walls), `paths::onto_map` (an anchor or
+member just off its map), steered members walk to the anchor
+(`squad_way`), and `want_round` counts no soldier nearer than its straight
+distance. Steered squads reached 4.8 crystals a map against 1.9 over 24
+maps. Tools for the next pass: `examples/pathprobe`, `LARDER_PATHLOG=FILE`
+on headless runs, `hand=steer@X,Y[,N]`, and
+`Reports/pathfinding-2026-11-20/tools/` (faults, sign test, track plots).
+Routing round slime was tried (11-21) and not kept (dead-ends); bots merge
+squads at any distance ([report](../Reports/pathfinding-2026-11-20/README.md)).
+
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or
 Thick) a plain cast, so they work on the plain bullet. Restock holds back

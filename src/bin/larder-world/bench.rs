@@ -39,6 +39,8 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     app.spread = b.spread;
     app.game.as_mut().unwrap().world.e.squad_one = b.squad1;
     if let Some((x, y, zoom)) = b.view {
+        // `centre=larder,ZOOM`: on the squad's base (NaN from the parser).
+        let (x, y) = if x.is_nan() { app.game.as_ref().map_or((0.0, 0.0), |g| g.larder) } else { (x, y) };
         // The HUD sets the camera's insets as it draws (as `headless`).
         app.prepare();
         app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
@@ -450,6 +452,8 @@ pub(super) fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, q
     app.canvas.as_mut().unwrap().ui.user = ui_user();
     app.canvas_pass = Some(CanvasPass::new(device, queue));
     app.gpu = Some((device.clone(), queue.clone()));
+    // The slime viewer's look (`viewer=`); nothing in other films.
+    app.apply_look_tweaks();
     app.start()?;
     Ok(app)
 }

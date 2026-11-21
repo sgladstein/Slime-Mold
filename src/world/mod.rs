@@ -27,6 +27,7 @@ pub mod look;
 pub mod marks;
 pub mod settings;
 pub mod start;
+pub mod tweaks;
 pub mod ui;
 pub mod view;
 

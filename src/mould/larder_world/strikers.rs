@@ -41,7 +41,7 @@
 use super::{Game, World};
 
 /// The strikers' numbers. Off by default (the campaign and the sandbox are
-/// frozen); a run turns it on for every planet (`run::ENEMY_RULES`).
+/// frozen); a run turns it on from its planet (`run::ENEMY_RULES`, `run::FIRST_PLANET`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct StrikerRules {
     pub on: bool,

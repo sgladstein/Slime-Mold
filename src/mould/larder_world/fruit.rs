@@ -13,9 +13,10 @@
 //! knot there (a lump, `big::Lump`, the mini-bosses' and the marches'
 //! machinery). The knot packs, swells as more slime joins it, and ripens
 //! for `FruitRules::ripen` seconds. Ripe, it bursts: every walker in it is
-//! thrown out over the planet as a spore that homes on food and lands as
-//! living slime (`World::sow`, the GPU's `sow_pass`), seeding new colonies
-//! on crystals the slime had lost or never held, your pumps' among them.
+//! thrown out over the planet as a spore that lands as living slime where
+//! its throw ends (`World::sow`, the GPU's `sow_pass`), seeding new
+//! colonies round it. (It homed on food until 11-21, but the food scent
+//! holds the soldiers' smell, and a burst came down on the squad.)
 //! Shot down under `quorum` of its most members, it breaks and is slime
 //! again.
 //!
@@ -286,9 +287,17 @@ impl<W: World> Game<W> {
     }
 
     fn start_fruit(&mut self) {
+        if let Some(at) = self.fruit_site() {
+            self.start_fruit_at(at);
+        }
+    }
+
+    /// A fruit round `at` (fine cells) on a free lump; false with none
+    /// free. Its site is `fruit_site`'s in play, the click in the slime
+    /// viewer (`Game::force_fruit`).
+    pub(super) fn start_fruit_at(&mut self, at: (f32, f32)) -> bool {
         let r = self.rules.fruit;
-        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return };
-        let Some(at) = self.fruit_site() else { return };
+        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
         let want = (r.size * self.mould as f32).clamp(r.least, r.most.max(r.least));
         let reach = self.fruit_reach(at, want);
         // Grown, not formed: only walkers in no lump join. Formed, it took
@@ -301,6 +310,7 @@ impl<W: World> Game<W> {
         self.world.set_lump(lump, Lump { aim: super::raid_cell(at, size), pull: r.pull, leash: r.leash, armour: r.armour, ..Lump::default() });
         let now = self.world.ticks();
         self.fruits.live = Some(Fruit { lump, at, born: now, first: 0, members: 0, most: 0, centre: at, ripe: 0.0, grown: now });
+        true
     }
 
     /// The fruit there is, once a game second: its count, its growth, and
@@ -350,7 +360,13 @@ impl<W: World> Game<W> {
                 // times its first members and `most`.
                 let cap = r.most.min(r.swell * f.first as f32);
                 if now >= f.grown + (r.grow_every.max(0.5) * tps) as u64 && (n as f32) < cap {
-                    self.world.grow_lump(f.lump, (f.centre, radius + r.grow));
+                    // Never past the cap in one grow (the bug hunt,
+                    // 11-21): a grow takes every free walker in its reach,
+                    // so on run seed 2's planet 1 a fruit of 975 (cap
+                    // 1,950) took 2,812 at once. The reach is held to what
+                    // holds `cap` walkers round it, its own members too.
+                    let reach = (radius + r.grow).min(self.fruit_reach(f.centre, cap));
+                    self.world.grow_lump(f.lump, (f.centre, reach));
                     f.grown = now;
                 }
                 self.fruits.live = Some(f);
