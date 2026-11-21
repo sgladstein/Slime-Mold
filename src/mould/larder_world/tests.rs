@@ -2705,6 +2705,59 @@ fn a_pick_commands_squads_as_one_till_another_is_taken() {
     assert_eq!(g.linked(live[1]), vec![live[1]]);
 }
 
+/// **One device slot per squad, on a cooldown** (owner 2026-11-21
+/// 06:55Z; `Cmd::Device`): the squad sets a tool off from a soldier in
+/// reach, free and holding nothing, then its slot waits the tool's own
+/// cooldown before any device goes again; squads commanded together each
+/// throw from their own slot, the one commanded first. It is a command, so
+/// it replays.
+#[test]
+fn a_squads_device_slot_throws_then_cools_down() {
+    use crate::mould::kit::Tool;
+    let mut g = squads(7);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    for k in 0..g.soldiers.len() {
+        if g.kit.held.len() > k {
+            g.kit.held[k] = 0;
+        }
+    }
+    g.bank = 0.0;
+    let near = open_near(&g, 4.0);
+    let t = Tool::Blast(near);
+    assert_eq!(Cmd::parse(&Cmd::Device(2, t).to_line()), Some(Cmd::Device(2, t)));
+    let cord = Tool::Cord(near, (near.0 + 3.0, near.1 - 2.0));
+    assert_eq!(Cmd::parse(&Cmd::Device(0, cord).to_line()), Some(Cmd::Device(0, cord)));
+    assert!(g.apply(Cmd::Device(0, t)), "a squad's device goes off free, with no tool held");
+    assert_eq!((g.kit.uses[0], g.bank), (1, 0.0));
+    let cd = g.kit.rules.cooldown(t);
+    assert!((g.device_wait(0) - cd).abs() < 0.2, "the slot waits the blast's {cd} s: {}", g.device_wait(0));
+    assert!(!g.apply(Cmd::Device(0, Tool::Mine(near))), "one slot: no second device while it cools");
+    let per_sec = g.rules.tps / g.rules.frame_ticks;
+    for _ in 0..(cd as u32 + 1) * per_sec {
+        g.step();
+    }
+    assert_eq!(g.device_wait(0), 0.0);
+    let far = open_near(&g, 3.0 * g.kit.rules.reach);
+    assert!(!g.apply(Cmd::Device(0, Tool::Blast(far))), "out of the squad's reach");
+    assert!(g.apply(Cmd::Device(0, Tool::Mine(near))));
+    assert_eq!(g.kit.mines.len(), 1);
+    assert!((g.device_wait(0) - g.kit.rules.cooldown(Tool::Mine(near))).abs() < 0.2, "the mine's own cooldown");
+    // Two squads commanded together: the second's slot throws next.
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, m)));
+    let b = g.active.unwrap();
+    assert_eq!(g.device_wait(b), 0.0, "a split half starts with its slot ready");
+    assert!(g.apply(Cmd::Link(0, b as u8)));
+    assert!(g.apply(Cmd::Device(0, Tool::Blast(g.middle(b).unwrap()))), "squad 0 cools, so its link throws");
+    assert!(g.device_wait(b) > 0.0);
+    assert!(!g.apply(Cmd::Device(b as u8, Tool::Blast(g.middle(b).unwrap()))), "both slots cool");
+    assert!(g.log.iter().filter(|(_, c)| matches!(c, Cmd::Device(..))).count() >= 3, "devices are in the replay log");
+}
+
 /// The fire mode is the squad's in the squad mode: a bought soldier and a
 /// merged squad's soldiers take the stance of the squad they join
 /// (controls review, 2026-11-21: they kept Defend, so a squad told to

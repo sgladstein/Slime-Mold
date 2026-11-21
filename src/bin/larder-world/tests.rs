@@ -1571,6 +1571,49 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
     assert_eq!(app.game.as_ref().unwrap().active, Some(q), "clicked squad taken");
 }
 
+/// **The squad's device slot** (owner 2026-11-21 06:55Z: "One device
+/// slot per squad, on a cooldown"): in the squad mode the Tools page
+/// throws from the commanded squad, free, and the slot's wait shows on
+/// every tool and on the Tools button; a throw while it cools is refused.
+/// A run with no tool yet (planet 1) has no Tools button.
+#[test]
+fn the_squad_mode_throws_from_its_device_slot() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    let (q, s, k) = {
+        let g = app.game.as_mut().unwrap();
+        g.bank = 0.0;
+        let q = g.active.unwrap();
+        (q, g.soldiers[g.members(q)[0]], g.world.scale())
+    };
+    app.tools_page = true;
+    let blast = |app: &App| app.model(None, None).commands.into_iter().find(|c| c.id == T_BLAST).unwrap();
+    let b = blast(&app);
+    assert!(b.ready, "ready with no food and no tool held: {:?}", b.why_not);
+    assert_eq!(b.cost.as_deref(), Some("20s"));
+    app.use_tool(Tool::Blast((s.x + 6.0 * k, s.y)));
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.kit.uses[0], g.bank), (1, 0.0), "thrown, free");
+    assert!(g.device_wait(q) > 19.0);
+    let b = blast(&app);
+    assert!(!b.ready && b.cooldown > 0.9 && b.cost.as_deref().is_some_and(|c| c.ends_with('s') && c != "20s"), "the slot cools, its seconds left on the price line: {b:?}");
+    let m = app.model(None, Some((T_BLAST, (s.x + 6.0 * k, s.y), None)));
+    assert!(!m.ghost_ok && m.ghost_note.as_deref().is_some_and(|n| n.starts_with("device ready in")), "{:?}", m.ghost_note);
+    app.use_tool(Tool::Gas((s.x, s.y - 6.0 * k)));
+    assert_eq!(app.game.as_ref().unwrap().kit.uses[4], 0, "no second device while it cools");
+    app.tools_page = false;
+    let tools = app.model(None, None).commands.into_iter().find(|c| c.id == TOOLS_PAGE).expect("a Tools button");
+    assert!(tools.cost.is_some() && tools.cooldown > 0.0, "the wait shows on the Tools button too: {tools:?}");
+    // A run's planet 1 owns no tool: no Tools button.
+    let mut a = run_base();
+    a.squads = true;
+    a.run = Some(Run::new(1));
+    let app = offscreen(a, (640, 400), &device, &queue).unwrap();
+    assert!(app.model(None, None).commands.iter().all(|c| c.id != TOOLS_PAGE), "no Tools button with every tool locked");
+}
+
 /// A mouse button on the world, routed as the window's events route one
 /// past the HUD: the squad mode first, then the controls (their box).
 fn world_button(app: &mut App, b: Button, down: bool) {

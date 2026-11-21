@@ -224,6 +224,12 @@ pub struct Squad {
     /// commands a squad outside them or lets go. Unlike a link it is not
     /// kept: it is the selection, and a link is the squads' own.
     pub band: bool,
+    /// **Its device slot** (`Cmd::Device`; owner 2026-11-21 06:55Z: "One
+    /// device slot per squad, on a cooldown"): the world tick it is ready
+    /// again (0, or past: ready), and the cooldown it was last set to,
+    /// seconds, for the HUD's ring.
+    pub device_at: u64,
+    pub device_secs: f32,
     /// Its gun (owner 11-14 16:46Z: "The squad owns the gun"); None fires
     /// the standard rifle (`Gun::standard`), so a game that hands out no
     /// guns plays as before. Read it through `Game::gun`.
@@ -305,6 +311,8 @@ impl Default for Squad {
             queued: 0,
             link: NO_LINK,
             band: false,
+            device_at: 0,
+            device_secs: 0.0,
             gun: None,
             deck: None,
             heal: false,

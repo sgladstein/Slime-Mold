@@ -1158,6 +1158,14 @@ impl Run {
         k.cord_price *= f;
         k.gas_price *= f;
         k.germ_price *= f;
+        // The squad mode's device slot is free a throw (2026-11-21), so
+        // the same upgrade shortens its cooldowns instead.
+        k.blast_cd *= f;
+        k.mine_cd *= f;
+        k.cord_cd *= f;
+        k.gas_cd *= f;
+        k.germ_cd *= f;
+        k.mind_cd *= f;
     }
 
     /// The gun shown in the shop's gun slots (the edited loadout's), else

@@ -140,6 +140,21 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   squad commanded a click on a building selects it: its health, level and
   state, and its card (call off, demolish for half its price back, upgrade a
   pump, switch a lure).
+- **The device slot** (owner 2026-11-21 06:55Z: "One device slot per squad,
+  on a cooldown", his 11-16 gun-system ruling, step E's first part). The
+  Tools page (E) throws from the squad you command: a soldier of it within
+  `reach` (24 cells) sets the tool off, free, with nothing held, and the
+  squad's one slot then waits that device's own cooldown before any device
+  goes again (`Cmd::Device`, `Game::device`, `KitRules::cooldown`: blast
+  20 s, mine 25, det cord 30, sleep gas 35, germ 40, provoke and still 30;
+  first guesses; the shop's cheaper-tools upgrade shortens them). Squads
+  commanded together each have their own slot, the commanded one first.
+  The wait shows on every tool and on the Tools button; with no tool owned
+  yet (a run's planet 1) the Tools button is gone. Before, the squad mode
+  kept the RTS round's carry rule: a soldier took a tool only within 6 cells
+  of the undrawn landing spot, so each threw one a planet and a bought one
+  none. Devices are commands, so they replay. Still to come from step E:
+  bodies holding gun cards, rolled stats, autocast.
 - **Healing is an order** (#330): tell a squad to heal (Heal on the card, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order

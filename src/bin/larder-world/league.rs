@@ -302,7 +302,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         if sec != last_sec {
             last_sec = sec;
             if let Some(tp) = &tool_plan {
-                g.with_kit(|kit, g| strat::tools(g, kit, tp));
+                strat::tools(g, tp);
             }
             hands::plan(g, &hand);
             peak_mould = peak_mould.max(g.mould);

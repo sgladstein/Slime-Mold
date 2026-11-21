@@ -1294,6 +1294,20 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         "fire" => {
             app.hud_event(HudEvent::Command { id: FIRE })?;
         }
+        // The Tools page, and a blast from the squad's device slot 8 cells
+        // ahead of it (2026-11-21), so the frame shows the slot cooling.
+        "throw" => {
+            app.tools_page = true;
+            let Some(g) = app.game.as_mut() else { return Ok(()) };
+            if let Some((q, m)) = g.active.and_then(|q| Some((q, g.middle(q)?))) {
+                let f = g.squads[q].face;
+                let sc = g.world.scale();
+                let at = (m.0 + f.0 * 8.0 * sc, m.1 + f.1 * 8.0 * sc);
+                if !g.apply(Cmd::Device(q as u8, slime_mould::mould::kit::Tool::Blast(at))) {
+                    return Err(format!("card=throw: the squad's device did not go off at {at:?}"));
+                }
+            }
+        }
         // Three squads picked as one, as a drag over them does, and sent
         // 15 cells to the right together (2026-11-21).
         "band" => {
@@ -1317,7 +1331,7 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
             };
             app.hud_event(HudEvent::Command { id })?;
         }
-        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, upgrade, demolish, switch, cancel, or a formation's name)")),
+        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, or a formation's name)")),
     }
     println!("  card: {step}");
     Ok(())
