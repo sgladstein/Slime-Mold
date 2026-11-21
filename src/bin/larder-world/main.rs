@@ -301,10 +301,13 @@ commands! {
     CANCEL_BUILD = 29,
     // Card 2 (owner 2026-11-15 19:38Z): the one fire button that cycles the
     // stances (Z, X and C still give HOLD_FIRE, DEFEND and FREE), and the
-    // squad's Heal and Lookouts off the squad panel.
+    // squad's Heal and Lookouts off the squad panel. Lookouts went
+    // 2026-11-21 (owner 05:04Z); its id is the Formation page's now, and
+    // in the squad mode FIRE switches defend and free while HOLD_FIRE is
+    // its own toggle ("hold fire should be a separate button").
     FIRE = 30,
     HEAL_ORDER = 31,
-    LOOKOUTS = 32,
+    FORM_PAGE = 32,
     // A building clicked with nothing else selected (owner 19:51Z, option
     // b): its card's actions. CANCEL_BUILD calls off a ghost there.
     DEMOLISH = 33,
@@ -323,6 +326,30 @@ commands! {
     // A turret's or mortar's card in a run (owner 2026-11-19: each turret
     // can be changed one by one): the next loadout it fires.
     TURRET_LOADOUT = 40,
+    // The Formation page (owner 2026-11-21 05:04Z: "a formations button
+    // to the hud with good formation options"): one button a formation,
+    // and back.
+    F_BLOB = 41,
+    F_LINE = 42,
+    F_WEDGE = 43,
+    F_RING = 44,
+    F_COLUMN = 45,
+    F_SPREAD = 46,
+    F_BACK = 47,
+}
+
+/// The formation a Formation page button picks.
+fn form_of(id: u32) -> Option<slime_mould::mould::larder_world::Formation> {
+    use slime_mould::mould::larder_world::Formation;
+    Some(match id {
+        F_BLOB => Formation::Blob,
+        F_LINE => Formation::Line,
+        F_WEDGE => Formation::Wedge,
+        F_RING => Formation::Ring,
+        F_COLUMN => Formation::Column,
+        F_SPREAD => Formation::Spread,
+        _ => return None,
+    })
 }
 
 /// The building a build-page command places.
@@ -576,8 +603,9 @@ struct Args {
     tload_at: Option<(f32, String)>,
     /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
     /// what the player does before frame N's picture, one step a frame
-    /// (`headless::card_step`): main, build, tools, free, pick, fire, and
-    /// the building card's upgrade, demolish, switch.
+    /// (`headless::card_step`): main, build, tools, form, free, pick, fire,
+    /// hold, a formation's name, and the building card's upgrade, demolish,
+    /// switch.
     card: Vec<String>,
     /// None: the race world from noise.
     map: Option<String>,
@@ -958,6 +986,13 @@ struct App {
     gun_rolls: u32,
     ammo_rolls: u32,
     tools_page: bool,
+    /// The command card shows the Formation page (squad mode, T).
+    form_page: bool,
+    /// What each held soldier fires once Hold fire is let go (the squad
+    /// mode's Hold fire toggle, 2026-11-21): the stance it had, or the one
+    /// the fire button picked while it held. A soldier on hold fire with
+    /// none here goes back to defend.
+    unheld: std::collections::HashMap<usize, Stance>,
     /// The mission being played, and the last game second it followed.
     mission: Option<Tracker>,
     mission_sec: u64,
@@ -1106,6 +1141,8 @@ impl App {
             log_gun: String::new(),
             build_page: false,
             tools_page: false,
+            form_page: false,
+            unheld: std::collections::HashMap::new(),
             mission: None,
             mission_sec: 0,
             speaker: None,
@@ -1556,6 +1593,8 @@ impl App {
         self.game = Some(game);
         self.slime = who;
         self.seen = 0;
+        self.unheld.clear();
+        self.form_page = false;
         // The end's beat (`ending`), in the window only.
         self.beat = self.window.is_some().then(ending::Beat::default);
         if let Some(tr) = &self.mission {

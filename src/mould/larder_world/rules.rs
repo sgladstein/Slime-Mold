@@ -498,10 +498,6 @@ pub struct Rules {
     /// second. With the larder, carrying is its own brake and this is
     /// not read.
     pub hand: f32,
-    /// Defenders while a squad works (`squads`, owner 2026-11-14 15:06Z):
-    /// some of a harvesting or building squad stand guard against nearby
-    /// slime while the rest work (`Game::cover_turn`).
-    pub cover: super::CoverRules,
     /// Healing (owner 2026-11-14 15:06Z: "Units should be able to heal but
     /// it cost energy, and requires units to be idle for bit, maybe only
     /// near a captured crystal"): `Game::heal`.
@@ -1116,7 +1112,6 @@ impl Default for Rules {
             guard: 120.0,
             guard_walkers: 8,
             hand: 0.2,
-            cover: super::CoverRules::default(),
             heal: super::HealRules::default(),
             spread: crate::mould::guns::RIFLE_SPREAD,
             crystal_solid: true,

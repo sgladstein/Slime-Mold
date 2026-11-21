@@ -1,39 +1,20 @@
-//! **Defenders while a squad works, and healing** (the squad mode, owner
-//! 2026-11-14 15:06Z).
+//! **A squad at work, and healing** (the squad mode).
 //!
-//! "When building or harvesting, there could be a percentage of soldiers
-//! who defend. Harvesters/builders can still shoot but slower. More
-//! defenders slows build harvest time, but only a bit, not linearly.
-//! Defenders will automatically position themselves in the best position
-//! based on the the slime is but we have to be careful it doesn't just make
-//! them run into the thickest part of the slime if the player tries to
-//! harvest/build right next to slime. If the there is no slime nearby no
-//! one defend by default. In the menu you get also change the squad
-//! behavior to never defenders or more defenders than default."
+//! A squad works when some of its members drain a crystal or raise a
+//! building (`Squad::work`, set by `Cmd::SquadOrder`). Once a game second
+//! (`cover_turn`) it is checked: once nobody is on the work any more it
+//! starts what it has queued.
 //!
-//! - A squad works when some of its members drain a crystal or raise a
-//!   building (`Squad::work`, set by `Cmd::SquadOrder`). Once a game second
-//!   (`cover_turn`) it looks for slime round the work: with enough within
-//!   `CoverRules::sense`, `Cover::share` of it (at least one, never all)
-//!   stand guard on the side the slime is on, each on its own bearing of a
-//!   small arc at the work's edge: the squad's front toward the slime,
-//!   still one body with the workers. With no slime near, everyone works.
-//! - Guards used to stand out from the work, up to 8 cells past its edge
-//!   where the slime under the post was thin (`out` 8, `thin` 4 walkers
-//!   within 2 cells; #276). Reverted 2026-11-15 after the owner's "It
-//!   doesn't seem to work well": on shape C a thin film reaches far round
-//!   the body, so the posts stood alone in it, out of the squad, and the
-//!   guards were bitten and died while the workers were bitten as often as
-//!   with no guards. Drain by hand, 8 soldiers, 60 s, seeds 1-4 (Fork): with
-//!   guards out, health at 60 s fell below guards off on 4 of 4 seeds and 5
-//!   soldiers died (none off); guards at the edge lost 1 and killed more
-//!   slime than guards off on 4 of 4 (summed health at 60 s: off 2462,
-//!   edge 2220, out 1781 of 3200; Reports/guards-2026-11-15).
-//! - The workers' rate rises so the squad's whole rate falls only by
-//!   `CoverRules::slow` times the defenders' share (`work_boost`): 3 of 8
-//!   on guard cost 22.5%, not 37.5%. (0.2 first, 7.5%: "seems too small to
-//!   even notice a difference", owner 15:49Z.)
-//! - A worker fires `CoverRules::work_fire` as often as it would.
+//! **Lookouts are gone** (owner, 2026-11-21 05:04Z: "remove the feature
+//! that some soldiers guard while harvesting"). From 2026-11-14 15:06Z
+//! (`Cover`, the card's Lookouts: none, some, more) a share of a working
+//! squad with slime within 30 cells stood guard on the slime's side of the
+//! work, the workers worked faster to make up most of it (`work_boost`)
+//! and fired at half rate (`work_fire`). Now every member works and fires
+//! at its full rate; the squad's guns, the fire button and the Guard order
+//! defend the work. Guards out past the work's edge were tried before and
+//! reverted 2026-11-15 (they stood alone in the slime's film and died;
+//! Reports/guards-2026-11-15).
 //!
 //! "Units should be able to heal but it cost energy, and requires units to
 //! be idle for bit, maybe only near a captured crystal" (`heal`). Healing is
@@ -47,70 +28,6 @@
 //! crystal (for a full heal); a full minute away").
 
 use super::*;
-
-/// How many of a working squad stand guard (`Cmd::Cover`; the owner's "never
-/// defenders or more defenders than default").
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum Cover {
-    Never,
-    #[default]
-    Some,
-    More,
-}
-
-impl Cover {
-    pub const ALL: [Cover; 3] = [Cover::Never, Cover::Some, Cover::More];
-
-    pub fn name(self) -> &'static str {
-        match self {
-            Cover::Never => "none",
-            Cover::Some => "some",
-            Cover::More => "more",
-        }
-    }
-
-    pub fn parse(s: &str) -> Option<Cover> {
-        Cover::ALL.into_iter().find(|c| c.name() == s)
-    }
-
-    pub fn next(self) -> Cover {
-        match self {
-            Cover::Never => Cover::Some,
-            Cover::Some => Cover::More,
-            Cover::More => Cover::Never,
-        }
-    }
-
-    /// The share of a working squad on guard while slime is near.
-    pub fn share(self, r: &CoverRules) -> f32 {
-        match self {
-            Cover::Never => 0.0,
-            Cover::Some => r.some,
-            Cover::More => r.more,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct CoverRules {
-    /// The share on guard for `Cover::Some` and `Cover::More`.
-    pub some: f32,
-    pub more: f32,
-    /// Dish cells round the work looked at for slime.
-    pub sense: f32,
-    /// Walkers within `sense` that call defenders out (fewer: everyone works).
-    pub near: u32,
-    /// The squad's whole work rate falls by this times the defenders' share.
-    pub slow: f32,
-    /// A worker fires this often as it would (0.5: half as often).
-    pub work_fire: f32,
-}
-
-impl Default for CoverRules {
-    fn default() -> Self {
-        CoverRules { some: 1.0 / 3.0, more: 0.5, sense: 30.0, near: 20, slow: 0.6, work_fire: 0.5 }
-    }
-}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct HealRules {
@@ -135,66 +52,12 @@ impl Default for HealRules {
     }
 }
 
-/// The mould's walkers on a coarse grid, read once (`World::mould_grid`),
-/// summed over discs without going back to the world each time.
-struct Walkers {
-    grid: Vec<u32>,
-    gw: usize,
-    gh: usize,
-    bin: f32,
-}
-
-impl Walkers {
-    fn within(&self, at: (f32, f32), r: f32) -> u32 {
-        let (cx, cy) = (at.0 / self.bin, at.1 / self.bin);
-        let rr = r / self.bin;
-        let (x0, x1) = ((cx - rr).floor().max(0.0) as usize, ((cx + rr).ceil() as usize).min(self.gw.saturating_sub(1)));
-        let (y0, y1) = ((cy - rr).floor().max(0.0) as usize, ((cy + rr).ceil() as usize).min(self.gh.saturating_sub(1)));
-        let mut n = 0;
-        for y in y0..=y1 {
-            for x in x0..=x1 {
-                if (x as f32 + 0.5 - cx).hypot(y as f32 + 0.5 - cy) <= rr {
-                    n += self.grid[y * self.gw + x];
-                }
-            }
-        }
-        n
-    }
-}
-
 impl<W: World> Game<W> {
-    fn walkers(&self) -> Option<Walkers> {
-        let bin = (self.s() as usize).max(1);
-        let grid = self.world.mould_grid(bin)?;
-        let (w, h) = self.world.size();
-        Some(Walkers { grid, gw: w.div_ceil(bin), gh: h.div_ceil(bin), bin: bin as f32 })
-    }
-
-    /// Where squad `q`'s work is: the crystal or building its workers are
-    /// at, fine cells.
-    fn work_at(&self, q: usize) -> Option<(f32, f32)> {
-        match self.squads[q].work? {
-            Order::Clear(x, y) => Some(self.crystal_at((x, y)).map_or((x, y), |c| c.1)),
-            // A wall's middle, not its first end (the guards' posts were
-            // round its end before, 2026-11-16).
-            Order::Build(b) => self.buildings.get(b).map(|b| match b.kind {
-                Kind::Wall { to } => ((b.at.0 + to.0) / 2.0, (b.at.1 + to.1) / 2.0),
-                _ => b.at,
-            }),
-            _ => None,
-        }
-    }
-
-    /// Whether soldier `k` is working (draining or raising) for its squad.
-    pub(super) fn working(&self, k: usize) -> bool {
-        let s = &self.soldiers[k];
-        !s.cover && matches!(s.order, Order::Clear(..) | Order::Build(_))
-    }
-
-    /// Once a game second: each working squad's defenders, called out to
-    /// face nearby slime or sent back to work. A squad most of whose
-    /// members took up the same work on their own (auto-harvest, a builder
-    /// taking a ghost) works it as if it had been ordered to.
+    /// Once a game second: each working squad that is done (nobody on its
+    /// work any more: the crystal ran dry, the building stands, or the
+    /// player sent them elsewhere) starts what it has queued. A squad most
+    /// of whose members took up the same work on their own (auto-harvest, a
+    /// builder taking a ghost) works it as if it had been ordered to.
     pub(super) fn cover_turn(&mut self) {
         if !self.rules.squads {
             return;
@@ -216,153 +79,13 @@ impl<W: World> Game<W> {
                 self.squads[q].work = Some(o);
             }
         }
-        let busy: Vec<usize> = self.live_squads().into_iter().filter(|&q| self.squads[q].work.is_some()).collect();
-        if busy.is_empty() {
-            return;
-        }
-        let walkers = self.walkers();
-        for q in busy {
-            self.cover_one(q, &walkers);
-        }
-    }
-
-    /// Squad `q`'s defenders now (a work order, a change of `Cover`).
-    pub(super) fn cover_squad(&mut self, q: usize) {
-        if self.rules.squads {
-            let walkers = self.walkers();
-            self.cover_one(q, &walkers);
-        }
-    }
-
-    fn cover_one(&mut self, q: usize, walkers: &Option<Walkers>) {
-        let r = self.rules.cover;
-        let sc = self.s();
-        let within = |g: &Self, at: (f32, f32), rad: f32| match walkers {
-            Some(w) => w.within(at, rad),
-            None => g.world.walkers_in(at, rad),
-        };
-        {
-            let Some(work) = self.squads[q].work else { return };
-            let m = self.members(q);
-            // Done: nobody on the work any more (the crystal ran dry, the
-            // building stands, or the player sent them elsewhere). The
-            // defenders come in, and the squad starts what it has queued.
-            if !m.iter().any(|&k| self.soldiers[k].order == work && !self.soldiers[k].cover) {
+        for q in self.live_squads() {
+            let Some(work) = self.squads[q].work else { continue };
+            if !self.members(q).iter().any(|&k| self.soldiers[k].order == work) {
                 self.squads[q].work = None;
-                let mid = self.middle(q);
-                for &k in &m {
-                    if self.soldiers[k].cover {
-                        self.soldiers[k].cover = false;
-                        self.soldiers[k].order = mid.map_or(Order::Hold, |p| Order::Move(p.0, p.1));
-                    }
-                }
                 self.squad_next(q);
-                return;
-            }
-            let Some(at) = self.work_at(q) else { return };
-            let near = within(self, at, r.sense * sc);
-            let share = self.squads[q].cover.share(&r);
-            let n = m.len();
-            // Not till the squad is there: guards called out at the start of
-            // the walk went by attack-move, stopped at every slime they saw
-            // on the way, and held up the workers with them (the film's
-            // first cut, Fork seed 1: 5 of 8 never reached the crystal).
-            let there = self.middle(q).is_some_and(|c| (c.0 - at.0).hypot(c.1 - at.1) <= r.sense * sc);
-            // Guards already out stay till the slime is half as near, so a
-            // count about the threshold doesn't send them out and back each
-            // second (seen in the film: 0, 1, 0 guards at 47-50 s).
-            let out = m.iter().any(|&k| self.soldiers[k].cover);
-            let call = if out { r.near / 2 } else { r.near };
-            let want = if near < call || n < 2 || !there { 0 } else { ((n as f32 * share).round() as usize).clamp(usize::from(share > 0.0), n - 1) };
-            // Which way the slime is: the walkers in twelve bearings at half
-            // the sensing range, summed as a vector.
-            let mut v = (0.0f32, 0.0f32);
-            for i in 0..12 {
-                let a = i as f32 * std::f32::consts::TAU / 12.0;
-                let (dx, dy) = (a.cos(), a.sin());
-                let p = (at.0 + dx * r.sense * 0.5 * sc, at.1 + dy * r.sense * 0.5 * sc);
-                let w = within(self, p, r.sense * 0.25 * sc) as f32;
-                v = (v.0 + dx * w, v.1 + dy * w);
-            }
-            let base = v.1.atan2(v.0);
-            // Keep the defenders already out (no reshuffle), call the ones
-            // nearest the slime's side first.
-            let mut on: Vec<usize> = m.iter().copied().filter(|&k| self.soldiers[k].cover).collect();
-            let mut off: Vec<usize> = m.iter().copied().filter(|&k| !self.soldiers[k].cover && self.soldiers[k].order == work).collect();
-            let toward = |g: &Self, k: usize| {
-                let s = &g.soldiers[k];
-                -((s.x - at.0) * base.cos() + (s.y - at.1) * base.sin())
-            };
-            off.sort_by(|&a, &b| toward(self, a).total_cmp(&toward(self, b)).then(a.cmp(&b)));
-            while on.len() < want && !off.is_empty() {
-                on.push(off.remove(0));
-            }
-            while on.len() > want {
-                let k = on.pop().unwrap();
-                self.soldiers[k].cover = false;
-                self.soldiers[k].order = work;
-            }
-            on.sort_unstable();
-            let g = on.len();
-            let rim = match work {
-                Order::Clear(..) => self.crystal_at(at).map_or(0.0, |c| self.world.crystal_r(c.0)) + RIM * sc,
-                _ => 2.0 * sc,
-            };
-            // A wall's defenders stand with its builders on its home side
-            // (`Building::home`, the Order::Build arm of `goal_raw`) and
-            // only fight: a post on the slime's bearing from the wall stood
-            // past its line, and the risen wall left that guard with the
-            // slime (owner's playtest, 2026-11-16 01:45Z). A post behind
-            // the line was tried first, but a move's goal is the post plus
-            // the soldier's place in its formation (`place_at`), which put
-            // some back over the line.
-            let wall = match work {
-                Order::Build(b) => self.buildings.get(b).is_some_and(|bd| matches!(bd.kind, Kind::Wall { .. }) && bd.home != (0.0, 0.0)),
-                _ => false,
-            };
-            for (i, &k) in on.iter().enumerate() {
-                let a = base + (i as f32 - (g as f32 - 1.0) / 2.0) * 0.45;
-                // At the work's edge on its bearing (see the module notes:
-                // posts out in the slime's film cost soldiers for nothing).
-                if wall {
-                    let s = &mut self.soldiers[k];
-                    s.cover = true;
-                    s.order = work;
-                    s.homing = false;
-                    continue;
-                }
-                let p = (at.0 + a.cos() * rim, at.1 + a.sin() * rim);
-                let p = if self.standable(p.0, p.1) && self.solid_at(p).is_none() {
-                    p
-                } else {
-                    self.nearest_standable(p, 6.0 * sc).unwrap_or((self.soldiers[k].x, self.soldiers[k].y))
-                };
-                // Walks to its post, then stands and fights there (an
-                // attack-move to it stopped at the first slime in reach).
-                let s = &mut self.soldiers[k];
-                let far = (s.x - p.0).hypot(s.y - p.1) > 2.0 * sc;
-                s.cover = true;
-                s.order = if far { Order::Move(p.0, p.1) } else { Order::Fight(p.0, p.1) };
-                s.homing = false;
             }
         }
-    }
-
-    /// The work rate of soldier `k` against one alone: a working squad's
-    /// workers make up most of what its defenders would have done.
-    pub(super) fn work_boost(&self, k: usize) -> f32 {
-        if !self.rules.squads {
-            return 1.0;
-        }
-        let q = self.soldiers[k].squad as usize;
-        let m = self.members(q);
-        let guards = m.iter().filter(|&&j| self.soldiers[j].cover).count();
-        if guards == 0 {
-            return 1.0;
-        }
-        let n = m.len() as f32;
-        let f = guards as f32 / n;
-        n * (1.0 - self.rules.cover.slow * f) / (n - guards as f32).max(1.0)
     }
 
     /// Healing, every step (`HealRules`): still, unbitten and not firing

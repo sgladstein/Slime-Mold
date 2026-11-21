@@ -1920,8 +1920,8 @@ fn squad_commands_round_trip_as_lines() {
         Cmd::SquadQueue(0, Order::Build(3)),
         Cmd::Link(0, 3),
         Cmd::Unlink(3),
-        Cmd::Cover(1, Cover::More),
-        Cmd::Cover(1, Cover::Never),
+        Cmd::Formation(0, Formation::Column),
+        Cmd::Formation(3, Formation::Spread),
         Cmd::Arm(2, None),
         Cmd::Arm(1, Some(Gun::roll(11, 3))),
         Cmd::Arm(0, Some(crate::mould::guns::GunKind::Scatter.average())),
@@ -2689,9 +2689,7 @@ fn linked_squads_take_orders_together_and_keep_their_own_settings() {
     assert!(g.leads(0), "linked with the controlled squad: the lead's edge");
     // Settings stay each squad's own.
     g.apply(Cmd::Formation(0, Formation::Line));
-    g.apply(Cmd::Cover(b as u8, Cover::Never));
     assert_eq!((g.squads[0].formation, g.squads[b].formation), (Formation::Line, Formation::Blob));
-    assert_eq!((g.squads[0].cover, g.squads[b].cover), (Cover::Some, Cover::Never));
     // One order moves both, each by where it stands in the link.
     let (m0, mb) = (g.middle(0).unwrap(), g.middle(b).unwrap());
     let to = open_near(&g, 20.0);
@@ -2715,57 +2713,30 @@ fn linked_squads_take_orders_together_and_keep_their_own_settings() {
     assert_ne!(g.squads[b].dest, Some(to));
 }
 
+/// Lookouts are gone (owner 2026-11-21 05:04Z: "remove the feature that
+/// some soldiers guard while harvesting"): a squad sent to drain puts every
+/// member on the work, slime near or not, and ends the work when sent
+/// elsewhere.
 #[test]
-fn a_working_squad_posts_defenders_when_slime_is_near_and_works_a_little_slower() {
+fn a_working_squad_puts_every_member_on_the_work() {
     let mut g = no_larder(9);
     g.bank = 1e6;
     while g.members(0).len() < 8 {
         assert!(g.apply(Cmd::Buy));
     }
     let (_, c) = near_crystal(&g);
-    let n = g.members(0).len();
-    assert_eq!(n, 8);
-    // Any slime counts as near (the dish's own may be far from this crystal).
-    g.rules.cover.near = 0;
-    g.apply(Cmd::SquadOrder(0, Order::Clear(c.0, c.1)));
-    assert_eq!(g.squads[0].work, Some(Order::Clear(c.0, c.1)));
-    let guards = |g: &Game<BigDish>| g.members(0).into_iter().filter(|&k| g.soldiers[k].cover).count();
-    assert_eq!(guards(&g), 3, "a third of 8 on guard");
-    for k in g.members(0) {
-        let s = g.soldiers[k];
-        assert_eq!(s.cover, matches!(s.order, Order::Fight(..) | Order::Move(..)), "a defender walks to its post and fights there, a worker drains");
+    let o = Order::Clear(c.0, c.1);
+    g.apply(Cmd::SquadOrder(0, o));
+    assert_eq!(g.squads[0].work, Some(o));
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+        for k in g.members(0) {
+            assert_eq!(g.soldiers[k].order, o, "nobody leaves the work to stand guard");
+        }
     }
-    let worker = g.members(0).into_iter().find(|&k| !g.soldiers[k].cover).unwrap();
-    let boost = g.work_boost(worker);
-    // 8 x (1 - 0.6 x 3/8) / 5: the squad's rate falls 22.5%, not 37.5%.
-    assert!((boost - 1.24).abs() < 1e-4, "workers' boost {boost}");
-    g.apply(Cmd::Cover(0, Cover::More));
-    assert_eq!(guards(&g), 4);
-    g.apply(Cmd::Cover(0, Cover::Never));
-    assert_eq!(guards(&g), 0);
-    assert_eq!(g.work_boost(worker), 1.0);
-    // With nothing near (the default threshold, set out of reach), nobody guards.
-    g.apply(Cmd::Cover(0, Cover::Some));
-    assert_eq!(guards(&g), 3);
-    g.rules.cover.near = u32::MAX;
-    g.apply(Cmd::Cover(0, Cover::Some));
-    assert_eq!(guards(&g), 0, "no slime near: everyone works");
-    // Defenders stand at the work's edge, with the squad, never out in the
-    // slime (posts out in its film cost soldiers, 2026-11-15).
-    g.rules.cover.near = 0;
-    g.apply(Cmd::Cover(0, Cover::Some));
-    let (ci, cc) = g.crystal_at(c).unwrap();
-    let edge = g.world.crystal_r(ci) + RIM * g.s();
-    for k in g.members(0).into_iter().filter(|&k| g.soldiers[k].cover) {
-        let (Order::Fight(x, y) | Order::Move(x, y)) = g.soldiers[k].order else { unreachable!() };
-        let d = (x - cc.0).hypot(y - cc.1);
-        assert!(d <= edge + 6.0 * g.s(), "a post {:.1} cells out, the edge at {:.1}", d / g.s(), edge / g.s());
-    }
-    // Sent elsewhere, the work ends and the defenders come in.
     let to = open_near(&g, 20.0);
     g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
     assert_eq!(g.squads[0].work, None);
-    assert_eq!(guards(&g), 0);
 }
 
 #[test]

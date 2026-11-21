@@ -396,7 +396,20 @@ impl App {
                     NEXT_ROUND => self.next_round(),
                     CANCEL_BUILD | DEMOLISH | UPGRADE | SWITCH | TURRET_LOADOUT => self.building_action(id),
                     HEAL_ORDER => self.squad_heal(),
-                    LOOKOUTS => self.squad_lookouts(),
+                    FORM_PAGE => (self.form_page, self.build_page, self.tools_page) = (true, false, false),
+                    F_BACK => self.form_page = false,
+                    F_BLOB..=F_SPREAD => {
+                        if let Some(f) = form_of(id) {
+                            self.squad_formation(f);
+                        }
+                        self.form_page = false;
+                    }
+                    // The squad mode's fire button: defend and free; Hold
+                    // fire is its own toggle (owner 2026-11-21 05:04Z). A
+                    // held soldier keeps holding and fires the new mode once
+                    // let go.
+                    FIRE if self.sq.is_some() => self.squad_fire_mode(&sel),
+                    HOLD_FIRE if self.sq.is_some() => self.squad_hold_fire(&sel),
                     // The fire button (Card 2): hold, defend, free, round
                     // again; a mixed selection goes to the stance after the
                     // first soldier's.

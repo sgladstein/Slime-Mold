@@ -217,6 +217,36 @@ fn a_big_squad_funnels_through_a_door_and_forms_up_after() {
     }
 }
 
+/// **A column files through** (the Formation page, owner 2026-11-21
+/// 05:04Z: "good formation options"). The same 24 soldiers through the long
+/// 6-cell door and over the 8-cell bridge in `Formation::Column`: two
+/// abreast all the way, so they are all through about as soon as the blob
+/// that funnels, with no worse a knot, and stand as a column past it.
+#[test]
+fn a_column_files_through_a_door_and_a_bridge() {
+    for name in ["door6long", "bridge8"] {
+        for seed in 1..=2 {
+            let mut over = [None; 2];
+            let mut worst = [0usize; 2];
+            for (i, f) in [Formation::Blob, Formation::Column].into_iter().enumerate() {
+                let (_, m, goal) = gaps().into_iter().find(|g| g.0 == name).unwrap();
+                let mut g = gap_game(&m, seed, 24);
+                g.apply(Cmd::Formation(0, f));
+                let sc = g.s();
+                let tr = cross(&mut g, (goal.0 * sc, goal.1 * sc), 24.0);
+                worst[i] = crowd(&tr, g.gap() * sc);
+                // Past dish x 136 (the bridge's end, the long door's middle):
+                // a column at rest stands 30 cells long back from its goal,
+                // so its tail is not past the door's far end.
+                over[i] = tr.iter().find(|(_, p)| p.iter().all(|q| q.0 > 136.0 * sc)).map(|t| t.0);
+            }
+            println!("{name} seed {seed}: all through at {over:?} s, worst knot {worst:?} (blob, column)");
+            assert!(over[1].is_some_and(|t| over[0].is_none_or(|u| t <= u + 2.0)), "{name} seed {seed}: through at {over:?} (blob, column)");
+            assert!(worst[1] <= worst[0].max(4), "{name} seed {seed}: worst knot {worst:?} (blob, column)");
+        }
+    }
+}
+
 /// A squad steered (WASD) at a bridge from off to one side crosses it
 /// funnelling, and one steered along the river bank does not funnel for
 /// good: open ground on its far side is room enough.
