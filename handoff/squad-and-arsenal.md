@@ -58,8 +58,8 @@ distance. Steered squads reached 4.8 crystals a map against 1.9 over 24
 maps. Tools for the next pass: `examples/pathprobe`, `LARDER_PATHLOG=FILE`
 on headless runs, `hand=steer@X,Y[,N]`, and
 `Reports/pathfinding-2026-11-20/tools/` (faults, sign test, track plots).
-Open: walking maps don't avoid slime or fire; bots merge squads at any
-distance ([report](../Reports/pathfinding-2026-11-20/README.md)).
+Routing round slime was tried (11-21) and not kept (dead-ends); bots merge
+squads at any distance ([report](../Reports/pathfinding-2026-11-20/README.md)).
 
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or

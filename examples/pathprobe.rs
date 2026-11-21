@@ -1,7 +1,7 @@
 //! **How squads find their way across a run planet** (pathfinding thread,
 //! 2026-11-20): `cargo run --release --example pathprobe -- [depth=3]
 //! [seed=1795038793] [n=40] [squads=4] [secs=180] [every=20] [out=FILE]
-//! [walkers=8000]`.
+//! [walkers=8000] [orders=mfc]`.
 //!
 //! Plays a run planet (`levelgen::level(seed, depth)`, the map
 //! `run=SEED:DEPTH` lands on) on the CPU big dish in squad mode, buys `n`
@@ -9,7 +9,7 @@
 //! squad 0 is steered with eight-way keys at a far crystal, the next pick
 //! once it is there; the others are sent (right click) to a new crystal
 //! every `every` game seconds, by turns a move, an attack-move and a
-//! drain; at 60 s squad 1 splits and both halves are sent on, at 120 s
+//! drain (`orders`: m, f and c, taken in turn); at 60 s squad 1 splits and both halves are sent on, at 120 s
 //! they join again. Few walkers (`walkers`), so the soldiers live to walk.
 //! Every step goes to `out` as `Game::path_rows` (read by
 //! `Reports/pathfinding-2026-11-20/tools/paths.py`).
@@ -21,6 +21,7 @@ use slime_mould::mould::levelgen::level;
 fn main() {
     let (mut depth, mut seed, mut n, mut nsq, mut secs, mut every, mut walkers) = (3u32, 1_795_038_793u64, 40usize, 4usize, 180.0f32, 20.0f32, 8000usize);
     let mut out = String::from("pathprobe.csv");
+    let mut orders = String::from("mfc");
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -32,6 +33,7 @@ fn main() {
             "every" => every = v.parse().unwrap(),
             "walkers" => walkers = v.parse().unwrap(),
             "out" => out = v.to_string(),
+            "orders" => orders = v.to_string(),
             _ => panic!("no key {k}"),
         }
     }
@@ -100,9 +102,9 @@ fn main() {
         if step % (every as usize * tps) == 0 {
             for q in g.live_squads().into_iter().filter(|&q| q != 0) {
                 let c = crystals[next(crystals.len())];
-                let o = match sent % 3 {
-                    0 => Order::Move(c.0, c.1),
-                    1 => Order::Fight(c.0, c.1),
+                let o = match orders.as_bytes()[sent % orders.len()] {
+                    b'm' => Order::Move(c.0, c.1),
+                    b'f' => Order::Fight(c.0, c.1),
                     _ => Order::Clear(c.0, c.1),
                 };
                 sent += 1;
