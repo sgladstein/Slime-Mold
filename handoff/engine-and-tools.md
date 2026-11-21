@@ -299,11 +299,12 @@ it on llvmpipe; a two-pass box sum made it 1.19 ms. The next spike is
 `pump_maps` (paths, Squad and arsenal's), 4-6 ms longest, 0.09 ms mean:
 reported to them.
 
-The follow-up batch (`pc-batch.ps1 -Followup -Timing`, about 35 min)
-reruns the six twins #620 gave card tolerances, times the Look lane's nine
-view variants (Reports/view-cost-2026-11-21; send each `base` line to the
-Look lane) and planet 3's step frames after #624. It needs Scott's OK,
-Chrome closed and the league paused, as job 7 did.
+The follow-up batch ran 11-21 04:13Z on c241fd7e (`-Followup -Timing`;
+raw on branch `runner-out-1070-followup`; numbers in the M1 report's
+follow-up section). Planet 3's step frames dropped from 10.1 to 6.8 ms p95,
+all six twins pass on the card, and the view variants went to the Look lane.
+The first try skipped timing on one 7% GPU-load sample, so #631 retries the
+idle check.
 
-**Next:** the follow-up batch; watch the run bot's curve once the
-strategy thread sets the plan.
+**Next:** watch the run bot's curve once the strategy thread sets the
+plan; `pump_maps` spikes (4.4 ms) if Squad and arsenal hand them back.
