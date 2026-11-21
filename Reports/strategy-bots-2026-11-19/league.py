@@ -537,7 +537,7 @@ def sync(binary, push_results, now=False):
     binary (27 errors) and never restarted. Returns False when the branch
     asks the worker to stop. Results are pushed at most every PUSH_EVERY
     seconds, or `now` (a job file just finished)."""
-    global LAST_PUSH
+    global LAST_PUSH, FETCHED_WINDOWS
     if push_results:
         go = now or time.time() - LAST_PUSH >= PUSH_EVERY
         push(OUT, f"Strategy league: results from {os.environ.get('COMPUTERNAME', 'the worker')}", publish=go)
@@ -553,6 +553,8 @@ def sync(binary, push_results, now=False):
         if r.returncode != 0:
             git("rebase", "--abort")
             log("worker: could not take the branch's new commits: " + (r.stderr or r.stdout)[-300:])
+        else:
+            FETCHED_WINDOWS = None  # the work tree's copy is the branch's now
     if built_from() != BUILT:
         log(f"worker: the game's code changed (now {git('rev-parse', '--short', 'HEAD').stdout.strip()}); building")
         build()
@@ -614,7 +616,10 @@ def pending(jobs_path, out_path):
 # - `queue/pc-pause.txt` on the branch has a line `START END` (UTC,
 #   `2026-11-21T00:30Z 2026-11-21T02:00Z`, then any note) whose window
 #   holds now; it is read as of the worker's last sync, so push it at least
-#   15 minutes ahead;
+#   15 minutes ahead. While paused, the worker fetches the branch's copy
+#   every 5 minutes and goes by it (11-21: it paused to 02:00Z by the copy
+#   it had and went on at 02:00Z, missing the push at 00:44Z that moved
+#   the end to 03:00Z);
 # - a file named `PAUSE` stands in the worker's folder (the clone's root);
 #   delete it to go on.
 # Games already running finish first: a planet game takes up to about 2
@@ -626,12 +631,23 @@ def utc(s):
     from datetime import datetime, timezone
     return datetime.strptime(s.rstrip("Z"), "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc).timestamp()
 
+FETCHED_WINDOWS = None  # the branch's pc-pause.txt fetched while paused
+
+def fetch_windows():
+    """The branch's pc-pause.txt as of now, without touching the work
+    tree (a checkout would leave a change that stops the next rebase)."""
+    global FETCHED_WINDOWS
+    if git("fetch", "-q", "origin", BRANCH).returncode == 0:
+        path = os.path.relpath(PAUSE_WINDOWS, ROOT).replace(os.sep, "/")
+        r = git("show", f"FETCH_HEAD:{path}")
+        FETCHED_WINDOWS = r.stdout if r.returncode == 0 else ""
+
 def paused():
     """Why the worker should wait now, or ""."""
     if os.path.exists(PAUSE_FILE):
         return "a PAUSE file"
     try:
-        lines = open(PAUSE_WINDOWS).read().splitlines()
+        lines = (FETCHED_WINDOWS if FETCHED_WINDOWS is not None else open(PAUSE_WINDOWS).read()).splitlines()
     except OSError:
         return ""
     now = time.time()
@@ -655,8 +671,12 @@ def wait_for_pause():
         if not paused():
             return
         log(f"worker: paused ({why})")
+        last = time.time()
         while paused():
             time.sleep(30)
+            if time.time() - last >= 300:
+                last = time.time()
+                fetch_windows()
         log("worker: the pause is over; going on")
 
 def play(todo, out_path, binary, workers, timeout):
