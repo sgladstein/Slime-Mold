@@ -144,7 +144,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{garden_settings, race_settings, GpuWorld};
 use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
-use slime_mould::mould::kit::{Kit, Tool};
+use slime_mould::mould::kit::Tool;
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
 use slime_mould::mould::guns::{Gun, GunKind};
 

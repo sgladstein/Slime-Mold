@@ -138,9 +138,38 @@ pub struct KitRules {
     pub provoke_price: f32,
     pub still_secs: f32,
     pub still_price: f32,
+    /// **The device slot's cooldowns**, seconds (`KitRules::cooldown`;
+    /// owner 2026-11-21 06:55Z, his 11-16 gun-system ruling built: "One
+    /// device slot per squad, on a cooldown"). In the squad mode each squad
+    /// sets off one tool at a time from its own slot (`Cmd::Device`), free,
+    /// and the slot waits this long, by the tool, before the next: the
+    /// cooldown is the device's own, guns keep none. First guesses,
+    /// untuned: the blast, the commonest, quickest; the gas and the germ,
+    /// which hold the slime longest, slowest.
+    pub blast_cd: f32,
+    pub mine_cd: f32,
+    pub cord_cd: f32,
+    pub germ_cd: f32,
+    pub gas_cd: f32,
+    /// Provoke's and Still's.
+    pub mind_cd: f32,
 }
 
 impl KitRules {
+    /// How long a squad's device slot waits after tool `t` (`blast_cd`
+    /// and on); 0 for the smell, which is no device.
+    pub fn cooldown(&self, t: Tool) -> f32 {
+        match t {
+            Tool::Blast(_) => self.blast_cd,
+            Tool::Mine(_) => self.mine_cd,
+            Tool::Cord(..) => self.cord_cd,
+            Tool::Germ(_) => self.germ_cd,
+            Tool::Gas(_) => self.gas_cd,
+            Tool::Provoke(_) | Tool::Still(_) => self.mind_cd,
+            Tool::Smell(..) => 0.0,
+        }
+    }
+
     /// The cloud's keep a fine step (0: no cloud) and its linger in fine
     /// steps, with `fine` fine steps a game second.
     pub fn gas_cloud(&self, fine: f32) -> (f32, u16) {
@@ -205,6 +234,12 @@ impl Default for KitRules {
             provoke_price: 100.0,
             still_secs: 10.0,
             still_price: 100.0,
+            blast_cd: 20.0,
+            mine_cd: 25.0,
+            cord_cd: 30.0,
+            germ_cd: 40.0,
+            gas_cd: 35.0,
+            mind_cd: 30.0,
         }
     }
 }
@@ -345,38 +380,82 @@ impl Kit {
 
     /// Uses a tool if the bank holds its price and a soldier is in reach
     /// (cord: of its middle, at most `cord_max` long). Returns whether it
-    /// was used. Logs nothing in the game's replay (CPU prototype).
+    /// was used. Logs nothing in the game's replay (CPU prototype); the
+    /// squad mode's devices do (`Cmd::Device`, `Kit::device`).
     pub fn use_tool<W: World>(&mut self, g: &mut Game<W>, t: Tool) -> bool {
-        let s = g.world.scale();
         let price = self.price(t);
         if g.bank < price {
             return false;
         }
         let ok = match t {
-            Tool::Germ(_) if !g.world.has_germ() => false,
-            Tool::Gas(_) if !g.world.has_gas() => false,
-            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => self.in_reach(g, p) && g.world.open(p.0, p.1),
-            Tool::Cord(a, b) => (a.0 - b.0).hypot(a.1 - b.1) <= self.rules.cord_max * s && self.in_reach(g, ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
             Tool::Smell(k, _) => g.soldiers.get(k).is_some_and(|x| x.alive),
+            _ => self.aimable(g, t) && self.in_reach(g, Self::aim(t)),
         };
         if !ok {
             return false;
         }
         if self.rules.carry_max > 0 && !matches!(t, Tool::Smell(..)) {
-            let mid = match t {
-                Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => p,
-                Tool::Cord(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
-                Tool::Smell(..) => unreachable!(),
-            };
-            let k = self.user(g, mid).expect("in reach");
+            let k = self.user(g, Self::aim(t)).expect("in reach");
             self.held[k] -= 1;
             g.soldiers[k].load = self.held[k] as f32 * self.rules.tool_weight;
         }
         g.bank -= price;
         g.spent += price;
+        self.spent[t.index()] += price;
+        self.cast(g, t);
+        true
+    }
+
+    /// Where tool `t` is aimed: its point, a cord's middle (the smell's
+    /// soldier has none: the origin).
+    pub fn aim(t: Tool) -> (f32, f32) {
+        match t {
+            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => p,
+            Tool::Cord(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
+            Tool::Smell(..) => (0.0, 0.0),
+        }
+    }
+
+    /// Whether tool `t` can go off where it is aimed, whoever throws it:
+    /// the world casts it, on open ground, a cord no longer than
+    /// `cord_max`. Not the smell.
+    fn aimable<W: World>(&self, g: &Game<W>, t: Tool) -> bool {
+        let p = Self::aim(t);
+        match t {
+            Tool::Germ(_) if !g.world.has_germ() => false,
+            Tool::Gas(_) if !g.world.has_gas() => false,
+            Tool::Smell(..) => false,
+            Tool::Cord(a, b) => (a.0 - b.0).hypot(a.1 - b.1) <= self.rules.cord_max * g.world.scale(),
+            _ => g.world.open(p.0, p.1),
+        }
+    }
+
+    /// The living soldier of squad `q` nearest `p`, and whether it is
+    /// within `reach`: who throws squad `q`'s device there (`Kit::device`),
+    /// for the aiming ghost too.
+    pub fn squad_thrower<W: World>(&self, g: &Game<W>, q: usize, p: (f32, f32)) -> Option<(usize, bool)> {
+        let r = self.rules.reach * g.world.scale();
+        let d = |k: usize| (g.soldiers[k].x - p.0).hypot(g.soldiers[k].y - p.1);
+        g.members(q).into_iter().min_by(|&a, &b| d(a).total_cmp(&d(b))).map(|k| (k, d(k) <= r))
+    }
+
+    /// Squad `q`'s device slot sets tool `t` off (`Cmd::Device`, which
+    /// keeps the slot's cooldown): a soldier of the squad within `reach`
+    /// throws it, free, with no tool held (the carry rule is the RTS
+    /// round's). Returns whether it went off.
+    pub fn device<W: World>(&mut self, g: &mut Game<W>, q: usize, t: Tool) -> bool {
+        if !self.aimable(g, t) || !self.squad_thrower(g, q, Self::aim(t)).is_some_and(|(_, near)| near) {
+            return false;
+        }
+        self.cast(g, t);
+        true
+    }
+
+    /// Tool `t` goes off, paid and thrown: counted, then its effect.
+    fn cast<W: World>(&mut self, g: &mut Game<W>, t: Tool) {
+        let s = g.world.scale();
         let i = t.index();
         self.uses[i] += 1;
-        self.spent[i] += price;
         let r = self.rules;
         let br = self.burst_rules(g);
         match t {
@@ -407,7 +486,6 @@ impl Kit {
                 g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.mind_r, mind: kind as u8, ..Burst::default() }, &BurstRules { mind_steps, ..br });
             }
         }
-        true
     }
 
     /// Fine steps a game second.

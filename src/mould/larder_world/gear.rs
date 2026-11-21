@@ -66,6 +66,49 @@ impl<W: World> Game<W> {
         self.with_kit(|kit, g| kit.use_tool(g, t))
     }
 
+    /// **The device slot** (`Cmd::Device`; owner 2026-11-21 06:55Z: "One
+    /// device slot per squad, on a cooldown", his 11-16 gun-system ruling):
+    /// squad `q`, or a squad commanded with it (its link, a drag's pick)
+    /// whose slot is ready, sets tool `t` off from a soldier within reach,
+    /// free, and its slot waits the tool's cooldown (`KitRules::cooldown`).
+    /// `q` goes first, then the others in id order, so a pick of three
+    /// squads throws three in a row. Why: the squad mode draws no larder,
+    /// so a soldier took a tool only near the landing spot and threw one a
+    /// planet (controls review, 2026-11-21).
+    pub fn device(&mut self, q: usize, t: Tool) -> bool {
+        if q >= self.squads.len() || matches!(t, Tool::Smell(..)) {
+            return false;
+        }
+        let now = self.world.ticks();
+        let mut order = self.linked(q);
+        order.sort_by_key(|&r| r != q);
+        for r in order {
+            if self.squads[r].device_at > now || self.members(r).is_empty() {
+                continue;
+            }
+            if self.with_kit(|kit, g| kit.device(g, r, t)) {
+                let secs = self.kit.rules.cooldown(t);
+                self.squads[r].device_at = now + ((secs * self.rules.tps as f32).round() as u64).max(1);
+                self.squads[r].device_secs = secs;
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Seconds until squad `q`'s device slot is ready (0: ready).
+    pub fn device_wait(&self, q: usize) -> f32 {
+        let at = self.squads.get(q).map_or(0, |s| s.device_at);
+        at.saturating_sub(self.world.ticks()) as f32 / self.rules.tps as f32
+    }
+
+    /// The device slot readiest among squad `q` and the squads commanded
+    /// with it: (seconds left, the cooldown it was set to); (0, _) when one
+    /// is ready.
+    pub fn device_ready_in(&self, q: usize) -> (f32, f32) {
+        self.linked(q).into_iter().map(|r| (self.device_wait(r), self.squads[r].device_secs)).min_by(|a, b| a.0.total_cmp(&b.0)).unwrap_or((0.0, 0.0))
+    }
+
     /// Kits a planet out from its run, or the range's armory: the run's
     /// tool prices (`Run::kit`), the army's round of the cards it bought
     /// with its budget (`Run::squad_cards`, `Run::budget`; the rest of

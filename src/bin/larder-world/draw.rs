@@ -1549,6 +1549,9 @@ impl App {
         }
         let any = !sel.is_empty();
         let squads = self.sq.is_some();
+        // The commanded squad's device slot (and those commanded with it):
+        // seconds left, the cooldown it was set to (`Game::device_ready_in`).
+        let device_slot = g.active.filter(|_| squads).map(|q| g.device_ready_in(q));
         let stance = sel.first().map(|&k| g.soldiers[k].stance).filter(|&f| sel.iter().all(|&k| g.soldiers[k].stance == f));
         let need = |cost: f32| (g.bank < cost).then(|| format!("Need {:.0} more food", cost - g.bank));
         let no_sel = || Some(if squads { "Take command of a squad first".to_string() } else { "Select soldiers first".to_string() });
@@ -1640,16 +1643,29 @@ impl App {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
                 ready: g.bank >= r.soldier_cost && !full,
                 why_not: if full { Some(format!("The squad is at its most, {}", r.max_squad)) } else { need(r.soldier_cost) },
-                about: "A new soldier at the larder.".into(),
+                about: if squads { "A new soldier, at the side of the squad you command (or your first squad), firing as it does.".into() } else { "A new soldier at the larder.".into() },
                 ..Command::new(BUY, (1, 0), Icon::Recruit, "Buy a soldier", KeyCode::KeyB)
             },
             // Pump's main-card slot is Heal's in the squad mode (below,
             // 2026-11-21); there Pump is on the Build page only.
             pump((1, 1)),
             Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, (1, 3), Icon::Turret, "Build", KeyCode::KeyQ) },
-            Command {
-                about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
-                ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
+            match device_slot {
+                // The device slot's wait shows on the button that opens
+                // the page too, so it is seen without opening it.
+                // The seconds left go on the price line (the middle's
+                // "14s" ran over the button's name).
+                Some((wait, total)) => Command {
+                    cooldown: if wait > 0.0 { (wait / total.max(1e-3)).min(1.0) } else { 0.0 },
+                    cost: (wait > 0.0).then(|| format!("{:.0}s", wait.ceil())),
+                    cost_icon: Icon::Clock,
+                    about: "The squad's device slot: blast, det cord, mine, sleep gas, whichever the run has. One at a time, free; after each the slot recharges (the device's own time) before the next.".into(),
+                    ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
+                },
+                None => Command {
+                    about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
+                    ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
+                },
             },
         ];
         // The squad mode's Hold fire and Formation (owner 2026-11-21
@@ -1739,17 +1755,46 @@ impl App {
             let k = &g.kit;
             let kr = k.rules;
             let held: u32 = (0..g.soldiers.len()).filter(|&i| g.soldiers[i].alive).map(|i| k.held(i)).sum();
-            let tool = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, target: Target, price: f32, works: bool, about: String| Command {
-                target,
-                cost: Some(format!("{price:.0}")),
-                ready: works && held > 0 && g.bank >= price,
-                why_not: if !works { Some("Not on the GPU world yet".into()) } else if held == 0 { Some("No soldier holds a tool; they take them at the larder".into()) } else { need(price) },
-                about,
-                ..Command::new(id, slot, icon, name, key)
+            let device = device_slot;
+            let tool = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, target: Target, price: f32, works: bool, about: String| match device {
+                // The squad mode's device slot (`Cmd::Device`; owner
+                // 2026-11-21 06:55Z): free, its cooldown beside it, and the
+                // slot's wait on every button, since they share it.
+                Some((wait, total)) => {
+                    let cd = match id {
+                        T_BLAST => kr.blast_cd,
+                        T_CORD => kr.cord_cd,
+                        T_MINE => kr.mine_cd,
+                        T_GERM => kr.germ_cd,
+                        T_GAS => kr.gas_cd,
+                        _ => kr.mind_cd,
+                    };
+                    // Ready: the device's own cooldown on the price line;
+                    // cooling: the slot's seconds left there instead (in
+                    // the button's middle they ran over its name).
+                    Command {
+                        target,
+                        cost: Some(if wait > 0.0 { format!("{:.0}s", wait.ceil()) } else { format!("{cd:.0}s") }),
+                        cost_icon: Icon::Clock,
+                        ready: works && wait <= 0.0,
+                        cooldown: if wait > 0.0 { (wait / total.max(1e-3)).min(1.0) } else { 0.0 },
+                        why_not: if !works { Some("Not on the GPU world yet".into()) } else { (wait > 0.0).then(|| format!("The squad's device slot recharges: ready in {:.0} s", wait.ceil())) },
+                        about: format!("{about} The squad's one device slot: a soldier of the squad within {:.0} cells sets it off, free, then the slot recharges for {cd:.0} s before any device goes again.", kr.reach),
+                        ..Command::new(id, slot, icon, name, key)
+                    }
+                }
+                None => Command {
+                    target,
+                    cost: Some(format!("{price:.0}")),
+                    ready: works && held > 0 && g.bank >= price,
+                    why_not: if !works { Some("Not on the GPU world yet".into()) } else if held == 0 { Some("No soldier holds a tool; they take them at the larder".into()) } else { need(price) },
+                    about,
+                    ..Command::new(id, slot, icon, name, key)
+                },
             };
             cmds = vec![
-                tool(T_BLAST, (0, 0), Icon::Grenade, "Blast", KeyCode::KeyB, Target::Point { radius: kr.blast_r * sc }, kr.blast_price, true, format!("Kills the mould within {:.0} cells and leaves a crater it can't hold trail in for {:.0} s. The blast's alarm wakes and stirs the mould nearby. Thrown by a soldier holding a tool within {:.0} cells.", kr.blast_r, kr.crater_secs, kr.reach)),
-                tool(T_CORD, (0, 1), Icon::Burn, "Det cord", KeyCode::KeyC, Target::Line { width: 2.0 * kr.cord_r * sc }, kr.cord_price, true, format!("A line of small blasts, each with its crater: a cut the mould can't knit for {:.0} s. {:.0} food a cell, at most {:.0} cells.", kr.crater_secs, kr.cord_price, kr.cord_max)),
+                tool(T_BLAST, (0, 0), Icon::Grenade, "Blast", KeyCode::KeyB, Target::Point { radius: kr.blast_r * sc }, kr.blast_price, true, format!("Kills the mould within {:.0} cells and leaves a crater it can't hold trail in for {:.0} s. The blast's alarm wakes and stirs the mould nearby.{}", kr.blast_r, kr.crater_secs, if device.is_some() { String::new() } else { format!(" Thrown by a soldier holding a tool within {:.0} cells.", kr.reach) })),
+                tool(T_CORD, (0, 1), Icon::Burn, "Det cord", KeyCode::KeyC, Target::Line { width: 2.0 * kr.cord_r * sc }, kr.cord_price, true, format!("A line of small blasts, each with its crater: a cut the mould can't knit for {:.0} s.{} At most {:.0} cells.", kr.crater_secs, if device.is_some() { String::new() } else { format!(" {:.0} food a cell.", kr.cord_price) }, kr.cord_max)),
                 tool(T_MINE, (0, 2), Icon::Target, "Mine", KeyCode::KeyD, Target::Point { radius: kr.mine_r * sc }, kr.mine_price, true, format!("Goes off as a blast when {} walkers stand within {:.0} cells of it.", k.mine_trigger(g), kr.mine_r)),
                 tool(T_GERM, (0, 3), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the mould within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
                 tool(T_GAS, (0, 4), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the mould within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
@@ -1839,6 +1884,11 @@ impl App {
         // dimmed, with where to get it.
         if let Some(run) = &self.args.run {
             cmds.retain(|c| !run_hidden(c.id));
+            // No Tools button while the run has no tool (planet 1): it
+            // opened a page of locks (controls review, 2026-11-21).
+            if [T_BLAST, T_CORD, T_MINE, T_GAS].iter().all(|&id| run_lock(id).is_some_and(|k| !run.has(k))) {
+                cmds.retain(|c| c.id != TOOLS_PAGE);
+            }
             for c in &mut cmds {
                 // A run has no sirens (`run_hidden`): the switch is the
                 // lures' alone.
@@ -2202,12 +2252,31 @@ impl App {
             (T_CORD, Some(f)) => ((f.0 + at.0) / 2.0, (f.1 + at.1) / 2.0),
             _ => at,
         };
-        let (k, near) = g.kit.thrower(g, land)?;
+        // The squad mode's device slot (`Cmd::Device`, 2026-11-21): the
+        // thrower is the nearest soldier of the squad whose slot goes (the
+        // one you command first, then those commanded with it), free, and
+        // the slot may be recharging.
+        let squad = g.active.filter(|_| g.rules.squads);
+        let (k, near) = match squad {
+            Some(q) => {
+                let mut order = g.linked(q);
+                order.sort_by_key(|&r| r != q);
+                let ready = |r: &usize| g.device_wait(*r) <= 0.0;
+                let r = order.iter().copied().filter(ready).find(|&r| g.kit.squad_thrower(g, r, land).is_some_and(|x| x.1)).or_else(|| order.iter().copied().find(ready)).unwrap_or(q);
+                g.kit.squad_thrower(g, r, land)?
+            }
+            None => g.kit.thrower(g, land)?,
+        };
+        let wait = squad.map_or(0.0, |q| g.device_ready_in(q).0);
+        let price = if squad.is_some() { 0.0 } else { price };
+        let food = |p: f32| if squad.is_some() { String::new() } else { format!("{p:.0} food, ") };
         let s = g.soldiers[k];
         let reach = kr.reach * sc;
         let d = (s.x - land.0).hypot(s.y - land.1);
         let (ok, note) = if !near {
             (false, format!("{:.0} cells out of reach", ((d - reach) / sc).max(1.0)))
+        } else if wait > 0.0 {
+            (false, format!("device ready in {:.0} s", wait.ceil()))
         } else if let (T_CORD, Some(f)) = (id, from) {
             let len = (f.0 - at.0).hypot(f.1 - at.1);
             if len > kr.cord_max * sc {
@@ -2215,16 +2284,16 @@ impl App {
             } else if g.bank < price {
                 (false, format!("{price:.0} food, {:.0} short", price - g.bank))
             } else {
-                (true, format!("{price:.0} food, release to lay"))
+                (true, format!("{}release to lay", food(price)))
             }
         } else if id == T_CORD {
-            (true, format!("{:.0} food a cell, drag to lay", kr.cord_price))
+            (true, if squad.is_some() { "drag to lay".to_string() } else { format!("{:.0} food a cell, drag to lay", kr.cord_price) })
         } else if !g.world.open(land.0, land.1) {
             (false, "not on open ground".to_string())
         } else if g.bank < price {
             (false, format!("{price:.0} food, {:.0} short", price - g.bank))
         } else {
-            (true, format!("{price:.0} food, click to throw"))
+            (true, format!("{}click to throw", food(price)))
         };
         let at = (land != at).then_some(land);
         Some((Throw { from: (s.x, s.y), from_r: 1.3 * soldier_r(g, self.camera.zoom), reach, tint, at, rings }, ok, note))

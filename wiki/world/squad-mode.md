@@ -96,6 +96,17 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
 - **Split, join, link.** Y splits the front half off; J or the tile's + joins
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.
+- **Picking squads with a drag** (owner 2026-11-21 06:53Z: "add click and
+  drag to select multiple squads"). With no squad commanded a plain left drag,
+  with one Ctrl + drag, boxes squads: every squad in the box is commanded as
+  one, as a link is (moves, queues, volleys, facing, heal, formation, fire
+  mode, Hold fire), led by the one you commanded if it was in the box
+  (`Cmd::Band`, `Squad::band`). Sent together, squads picked far apart close
+  up round the click, at most `BAND_SPREAD` (6) cells a squad from the middle.
+  It is a selection, not a link: a click on one squad (Ctrl + click with one
+  commanded), its number, its tile or Esc ends it. A plain drag with a squad
+  commanded still fires, and Shift + drag still splits. The fire button and
+  Hold fire now reach linked squads too (they changed only yours before).
 - **Orders.** Right click sends, Ctrl + right click drains or guards a crystal,
   Shift queues up to six. A tap of WASD is the stop (the card has no Stop)
   and drops the queue (2026-11-21; before, the squad walked off to its next
@@ -129,6 +140,21 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   squad commanded a click on a building selects it: its health, level and
   state, and its card (call off, demolish for half its price back, upgrade a
   pump, switch a lure).
+- **The device slot** (owner 2026-11-21 06:55Z: "One device slot per squad,
+  on a cooldown", his 11-16 gun-system ruling, step E's first part). The
+  Tools page (E) throws from the squad you command: a soldier of it within
+  `reach` (24 cells) sets the tool off, free, with nothing held, and the
+  squad's one slot then waits that device's own cooldown before any device
+  goes again (`Cmd::Device`, `Game::device`, `KitRules::cooldown`: blast
+  20 s, mine 25, det cord 30, sleep gas 35, germ 40, provoke and still 30;
+  first guesses; the shop's cheaper-tools upgrade shortens them). Squads
+  commanded together each have their own slot, the commanded one first.
+  The wait shows on every tool and on the Tools button; with no tool owned
+  yet (a run's planet 1) the Tools button is gone. Before, the squad mode
+  kept the RTS round's carry rule: a soldier took a tool only within 6 cells
+  of the undrawn landing spot, so each threw one a planet and a bought one
+  none. Devices are commands, so they replay. Still to come from step E:
+  bodies holding gun cards, rolled stats, autocast.
 - **Healing is an order** (#330): tell a squad to heal (Heal on the card, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order

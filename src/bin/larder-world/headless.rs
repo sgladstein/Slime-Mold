@@ -926,14 +926,18 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // one while its look drains rather than jumping to a newer one.
         let boss = g.bosses.live.iter().chain(g.bosses.fading.iter().map(|f| &f.0)).min_by_key(|b| b.born).filter(|_| app.args.follow_boss).map(|b| b.centre);
         let centre = boss.or(fixed.map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
-        app.controls.selected = match g.active.filter(|_| g.rules.squads) {
-            Some(q) => g.members(q),
-            None if select => (0..g.soldiers.len()).collect(),
-            None => Vec::new(),
-        };
         if let Some(step) = app.args.card.get(fi).cloned() {
             card_step(&mut app, &step)?;
         }
+        // Every squad commanded with it (its link, a drag's pick) is
+        // ringed, as in the window (`squad_frame`); after the card's step,
+        // which may pick them.
+        let g = app.game.as_ref().unwrap();
+        app.controls.selected = match g.active.filter(|_| g.rules.squads) {
+            Some(q) => g.linked(q).into_iter().flat_map(|r| g.members(r)).collect(),
+            None if select => (0..g.soldiers.len()).collect(),
+            None => Vec::new(),
+        };
         if app.sq.as_ref().is_some_and(|q| q.free) {
             app.controls.selected.clear();
         }
@@ -1312,6 +1316,34 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         "fire" => {
             app.hud_event(HudEvent::Command { id: FIRE })?;
         }
+        // The Tools page, and a blast from the squad's device slot 8 cells
+        // ahead of it (2026-11-21), so the frame shows the slot cooling.
+        "throw" => {
+            app.tools_page = true;
+            let Some(g) = app.game.as_mut() else { return Ok(()) };
+            if let Some((q, m)) = g.active.and_then(|q| Some((q, g.middle(q)?))) {
+                let f = g.squads[q].face;
+                let sc = g.world.scale();
+                let at = (m.0 + f.0 * 8.0 * sc, m.1 + f.1 * 8.0 * sc);
+                if !g.apply(Cmd::Device(q as u8, slime_mould::mould::kit::Tool::Blast(at))) {
+                    return Err(format!("card=throw: the squad's device did not go off at {at:?}"));
+                }
+            }
+        }
+        // Three squads picked as one, as a drag over them does, and sent
+        // 15 cells to the right together (2026-11-21).
+        "band" => {
+            app.hud_event(HudEvent::SquadSplit)?;
+            app.hud_event(HudEvent::SquadSplit)?;
+            let Some(g) = app.game.as_mut() else { return Ok(()) };
+            let live = g.live_squads();
+            g.apply(Cmd::Active(live[0] as u8));
+            g.apply(Cmd::Band(live.iter().fold(0u16, |m, &q| m | 1 << q)));
+            if let Some(m) = g.middle(live[0]) {
+                let to = (m.0 + 15.0 * g.world.scale(), m.1);
+                g.apply(Cmd::SquadOrder(live[0] as u8, Order::Move(to.0, to.1)));
+            }
+        }
         "upgrade" | "demolish" | "switch" | "cancel" => {
             let id = match step {
                 "upgrade" => UPGRADE,
@@ -1321,7 +1353,7 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
             };
             app.hud_event(HudEvent::Command { id })?;
         }
-        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, upgrade, demolish, switch, cancel, or a formation's name)")),
+        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, or a formation's name)")),
     }
     println!("  card: {step}");
     Ok(())

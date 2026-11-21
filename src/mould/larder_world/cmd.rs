@@ -2,6 +2,7 @@
 //! of `larder_world.rs` unchanged (C9, 2026-11-14).
 
 use super::*;
+use crate::mould::kit::Tool;
 
 /// Half a read block (`squad::BIN`, engine cells): about how far past a
 /// radius the centre of a block holding a walker inside it can lie, so a
@@ -71,6 +72,15 @@ pub enum Cmd {
     Link(u8, u8),
     /// Squad `q` leaves its link.
     Unlink(u8),
+    /// The squads whose bits are set (bit `q` for squad `q`), and every
+    /// squad linked with one, are picked together, as a drag over them
+    /// picks them (`Squad::band`; owner 2026-11-21 06:53Z): commanded as
+    /// one, as a link is, until the player commands a squad outside them or
+    /// lets go. 0 drops the pick.
+    Band(u16),
+    /// Squad `q` sets tool `t` off from its device slot (`Game::device`,
+    /// `Kit::device`; the squad mode's tools, owner 2026-11-21 06:55Z).
+    Device(u8, Tool),
     /// Squad `q` takes a gun (`Game::arm`; owner 11-14 16:46Z, "The squad
     /// owns the gun"); None gives back the standard rifle.
     Arm(u8, Option<Gun>),
@@ -116,6 +126,18 @@ impl Cmd {
             Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
+            Cmd::Band(m) => format!("band {m}"),
+            Cmd::Device(q, t) => {
+                let name = crate::mould::kit::TOOLS[t.index()];
+                match t {
+                    Tool::Cord(a, b) => format!("device {q} {name} {} {} {} {}", a.0, a.1, b.0, b.1),
+                    Tool::Smell(k, m) => format!("device {q} {name} {k} {m}"),
+                    _ => {
+                        let p = crate::mould::kit::Kit::aim(t);
+                        format!("device {q} {name} {} {}", p.0, p.1)
+                    }
+                }
+            }
             Cmd::Heal(q) => format!("heal {q}"),
             Cmd::Arm(q, None) => format!("arm {q} none"),
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
@@ -148,6 +170,22 @@ impl Cmd {
             "formation" => return Some(Cmd::Formation(w.get(1)?.parse().ok()?, Formation::parse(w.get(2)?)?)),
             "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
+            "band" => return Some(Cmd::Band(w.get(1)?.parse().ok()?)),
+            "device" => {
+                let q = w.get(1)?.parse().ok()?;
+                let p = (f(3)?, f(4)?);
+                let t = match *w.get(2)? {
+                    "blast" => Tool::Blast(p),
+                    "mine" => Tool::Mine(p),
+                    "cord" => Tool::Cord(p, (f(5)?, f(6)?)),
+                    "germ" => Tool::Germ(p),
+                    "gas" => Tool::Gas(p),
+                    "provoke" => Tool::Provoke(p),
+                    "still" => Tool::Still(p),
+                    _ => return None,
+                };
+                return Some(Cmd::Device(q, t));
+            }
             "heal" => return Some(Cmd::Heal(w.get(1)?.parse().ok()?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
@@ -269,7 +307,8 @@ impl<W: World> Game<W> {
                 }
                 None => false,
             },
-            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Band(..) | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Device(q, t) => self.device(q as usize, t),
             _ => false,
         }
     }
