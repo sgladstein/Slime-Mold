@@ -1616,6 +1616,12 @@ fn flush_mat(m0: Mat, k: f32) -> Mat {
 const SHEET_VEIL: f32 = 0.4;
 // The Sprawler's film under its threads (`prep`'s `th0`).
 const THREAD_VEIL: f32 = 0.3;
+// The Sprawler's dashes, the colour a walker's light goes to (Look A,
+// 11-21): every other slime's specks go to a pale gold (255, 222, 130),
+// and the Sprawler's, drawn as dashes, read round the squad as a spray of
+// the shots' own gold tracers. Its body's amber, deeper and redder, away
+// from the shots' and the strikers' gold.
+const THREAD_RGB: vec3<f32> = vec3<f32>(226.0, 112.0, 40.0);
 // The Trunk's cords off its body (`SlimeLook::Cords`, play-zoom pass,
 // 11-20): the colour's thickness at full trail (0.55 read as solid slime,
 // the same amber as the body; 0.3 a translucent tube), and the height at
@@ -4268,7 +4274,7 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             let dens = -log(max(1.0 - under_body, 0.004)) * n0 / 25.0;
             let per = 0.95 / (1.0 + (dens / 0.35) * (dens / 0.35));
             let lit = 1.0 - pow(1.0 - per, f32(n & 1023u));
-            c = mix(c, vec3<f32>(255.0, 222.0, 130.0), lit * 0.92);
+            c = mix(c, select(vec3<f32>(255.0, 222.0, 130.0), THREAD_RGB, P.slime_look == 1u && P.streak > 0.0), lit * 0.92);
             // An absorbed walker's streak (`draw_absorbed`) takes its
             // warm-white outright, as the phases below do.
             let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);

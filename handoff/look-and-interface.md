@@ -317,7 +317,10 @@ while Squad asked to keep it.
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber
    walls and packed body until a slime rule gives it flow; then the thick body's veins
-   and flow; iterate the Sprawler's dashes on what the owner says in play.
+   and flow; iterate the Sprawler's dashes on what the owner says in play
+   (11-21: recoloured to a deeper amber, `THREAD_RGB`, so they no longer
+   read as the shots' gold tracers; shorter, fatter dashes tried first
+   and looked the same, since they were already short at zoom 6).
    Tried and not kept (`Reports/dead-ends.md`, 11-19): the Trunk's film
    along each walker's way, and a smooth droplet for the Drifter (blurry at
    zoom 6). The Trunk's body has no flow or tubes to draw (headings every

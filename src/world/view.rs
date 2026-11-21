@@ -2929,9 +2929,12 @@ mod tests {
                 let [pb, pa] = shot(SlimeLook::Plain, c, ps);
                 let [tb, ta] = shot(SlimeLook::Threads, c, ps);
                 // Plain, the key light makes one flank brighter (about 70
-                // apart, either way); as a thread it is about 300 to 370.
-                assert!(tb > ta + 200, "zoom {zoom}: {name} as a thread is lit behind it: behind {tb}, ahead {ta}");
-                assert!(tb > pb + 150, "zoom {zoom}: {name}'s dash is brighter behind it than its plain speck: {pb} -> {tb}");
+                // apart, either way); as a thread it was about 300 to 370
+                // in the pale gold, and about 0.6 of that since the
+                // dashes' light is the deeper amber (`THREAD_RGB`, 11-21:
+                // 168 at zoom 12).
+                assert!(tb > ta + 120, "zoom {zoom}: {name} as a thread is lit behind it: behind {tb}, ahead {ta}");
+                assert!(tb > pb + 90, "zoom {zoom}: {name}'s dash is brighter behind it than its plain speck: {pb} -> {tb}");
                 assert!(ta < pa, "zoom {zoom}: {name}'s film ahead of it thins, as the dash holds one walker: {pa} -> {ta}");
             }
         }
