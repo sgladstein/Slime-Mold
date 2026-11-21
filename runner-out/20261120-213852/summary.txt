@@ -1,0 +1,73 @@
+batch 20261120-213852, timing True, follow-up True, dry run False
+shas: batch main 6baaa65b
+driver: NVIDIA GeForce GTX 1070, 582.78
+--- build
+== build (cargo build --release --locked --bins) started 2026-11-20T21:39:12.6220557-06:00
+== build exit 0 at 2026-11-20T21:41:39.0985059-06:00
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\sm-batch)
+    Finished `release` profile [optimized] target(s) in 2m 25s
+== build exit 0 at 2026-11-20T21:41:39.0985059-06:00
+--- machine
+== machine (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=20 hand=farm) started 2026-11-20T21:41:39.1074819-06:00
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1338 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2 surge=1800 flinch=0.9 germ_resist=10; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  every frame (1200 of them), ms: frame p50 5.55 p95 6.00 max 8.83; step  p50 0.04 p95 0.73 max 3.29; prepare  p50 0.18 p95 0.21 max 2.52; record  p50 0.10 p95 0.14 max 1.46; GPU tail  p50 4.90 p95 5.46 max 6.07
+  frames with a step (300 of them), ms: frame p50 5.86 p95 6.55 max 8.45; step  p50 0.69 p95 0.96 max 3.29; prepare  p50 0.18 p95 0.21 max 0.68; record  p50 0.13 p95 0.15 max 0.28; GPU tail  p50 4.86 p95 5.05 max 5.67
+  t 20 s: mould 23998, soldiers 10, buildings 0, harvested 1541, shots 95, killed 958
+  CPU a step, by part (ms): total, mean a call, longest, calls
+    pump_maps               25.5    0.085    2.470    300
+    mark_bulwark             0.0    0.001    0.017     20
+    time_unit_paths          0.0    0.000    0.007     20
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== machine exit 0 at 2026-11-20T21:41:50.0253969-06:00
+    mass                     0.0    0.000    0.000     20
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1545 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, ProtonVPN.Client.exe, logioptionsplus_agent.exe, LockApp.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+== machine exit 0 at 2026-11-20T21:41:50.0253969-06:00
+--- timing-refused
+GPU busy, no timing run: GPU load % over 5 s: 7, 0, 0, 0, 0
+GPU busy, no timing run: GPU load % over 5 s: 7, 0, 0, 0, 0
+--- twin-a_frail_mould_dies_of_the_germ_on_both_engines
+== twin-a_frail_mould_dies_of_the_germ_on_both_engines (cargo test --release --locked --lib a_frail_mould_dies_of_the_germ_on_both_engines) started 2026-11-20T21:45:31.7580289-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 2.00s
+== twin-a_frail_mould_dies_of_the_germ_on_both_engines exit 0 at 2026-11-20T21:45:34.2453899-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 2.00s
+
+== twin-a_frail_mould_dies_of_the_germ_on_both_engines exit 0 at 2026-11-20T21:45:34.2453899-06:00
+--- twin-crust_burns_on_the_gpu_as_on_the_cpu
+== twin-crust_burns_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib crust_burns_on_the_gpu_as_on_the_cpu) started 2026-11-20T21:45:36.2750683-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 1.66s
+== twin-crust_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T21:45:38.3789626-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 1.66s
+
+== twin-crust_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T21:45:38.3789626-06:00
+--- twin-dry_slime_burns_on_the_gpu_as_on_the_cpu
+== twin-dry_slime_burns_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib dry_slime_burns_on_the_gpu_as_on_the_cpu) started 2026-11-20T21:45:38.3799603-06:00
+test gpu::larder_world::tests::dry_slime_burns_on_the_gpu_as_on_the_cpu ... FAILED
+thread 'gpu::larder_world::tests::dry_slime_burns_on_the_gpu_as_on_the_cpu' (9884) panicked at src\gpu\larder_world.rs:3285:21:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 718 filtered out; finished in 1.63s
+error: test failed, to rerun pass `--lib`
+== twin-dry_slime_burns_on_the_gpu_as_on_the_cpu exit 101 at 2026-11-20T21:45:40.4423706-06:00
+
+error: test failed, to rerun pass `--lib`
+== twin-dry_slime_burns_on_the_gpu_as_on_the_cpu exit 101 at 2026-11-20T21:45:40.4423706-06:00
+--- twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu
+== twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu (cargo test --release --locked --lib gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu) started 2026-11-20T21:41:50.0263952-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 5.38s
+== twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu exit 0 at 2026-11-20T21:45:31.7570304-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 5.38s
+
+== twin-gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu exit 0 at 2026-11-20T21:45:31.7570304-06:00
+--- twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu
+== twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib plants_and_fire_run_on_the_gpu_as_on_the_cpu) started 2026-11-20T21:45:34.2463882-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 1.60s
+== twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T21:45:36.2740699-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 1.60s
+
+== twin-plants_and_fire_run_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T21:45:36.2740699-06:00
+--- twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu
+== twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu (cargo test --release --locked --lib tinder_lays_and_burns_on_the_gpu_as_on_the_cpu) started 2026-11-20T21:45:40.4433686-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 1.44s
+== twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T21:45:42.3093832-06:00
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 718 filtered out; finished in 1.44s
+
+== twin-tinder_lays_and_burns_on_the_gpu_as_on_the_cpu exit 0 at 2026-11-20T21:45:42.3093832-06:00
