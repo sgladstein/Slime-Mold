@@ -55,8 +55,12 @@ bare ground shows (`gv`), which is 0 under the body. Now the crowns and the
 water's thinning are worked out only where `gv` is over 0.001 or the plants
 burn (their flames light the slime over them). The picture is the same:
 filmed on planet 3 at 60 s, zoom 6, before and after, the moss and reeds
-on bare ground unchanged. Its saving on the 1070 waits on Engine's next
-batch; it scales with how much of the screen the slime covers.
+on bare ground unchanged. On the 1070 (Engine, 11-21, main 92a0e43e,
+the same shot, two runs) `base` is 3.431 and 3.457 ms against 3.391 and
+3.449 before: no saving in this shot, where at 60 s by the larder little
+of the slime lies over plants. The plants variant's 1.04 ms was all plant
+work, nearly all of it on bare ground, which the cut keeps. A cheaper
+plant layer on bare ground is where that millisecond is.
 
 Next if more is needed: the slope's two extra B-spline samples and the
 highlight's four `film_h` reads in `shaded`, which every pixel pays.
