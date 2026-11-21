@@ -104,3 +104,53 @@ of a soldier's fall. 25 coin ticks and 1 drop emptied in the film.
 - `6-pickup-z12.jpg`: 0:14.1 (`+23` while draining, 23 at the top), 0:15.9,
   0:16.3 and 0:16.7 (`+40` rising and fading after it paid).
 - `7-pickup-z6.jpg`: 0:14.1 and 0:16.2 at zoom 6.
+
+## Shop money by planet, after the planet pacing (2026-11-21)
+
+The coordinator's question once the pacing (#606) moved mini-bosses to
+planet 2: does planet 1 still earn enough from starfall and raid cores to
+buy something meaningful? Named measure: shop points a planet pays, split
+into the win's `reward` and what the squad took from ore and cores, against
+the shop's prices (cheapest buys 80 to 150: a common card 80, Longer
+barrels, Supply drop, Quick hands 100, Armour, Faster trigger 120, Bigger
+landing 150; Turrets and the Torch-and-Tinder pair 200).
+
+**Planet 1**, six games in the cloud: the strategy bot's branch merged with
+main (#610), `league=1:SEED:600 plan=rush,aim=6,drops=2` (the bot walks to
+ore or a core while at most 2 walkers a soldier are near it), seeds 1 to 6;
+rows in `income/league-rows.txt`, script `income/run1.sh`. Seeds 7 and 8
+were cut: lavapipe played these at a fifth of real time.
+
+| seed | end | falls landed | cores | ore taken | core taken | slime ate |
+|---|---|---|---|---|---|---|
+| 1 | won 3:07, 2 stars | 1 | 1 | 0 | 0 | 44 |
+| 2 | held 10:00 | 3 | 2 | 36 | 0 | 244 |
+| 3 | won 4:58, 2 stars | 1 | 1 | 0 | 0 | 116 |
+| 4 | lost 3:48 | 2 | 0 | 0 | 0 | 80 |
+| 5 | held 10:00 | 3 | 1 | 0 | 0 | 120 |
+| 6 | held 10:00 | 3 | 2 | 0 | 0 | 247 |
+
+The squad took 36 points in 6 games and the slime ate 851. The two wins
+paid only `reward(1, 2)`, 250: two of the cheap buys, so planet 1's shop
+still buys something, but from the win alone. Starfall and cores add
+nothing a player can count on there:
+
+- A fall lands by slime where the grid shows some (`fall_spot`), and walkers
+  eat ore at ore's `eat` 1 a second each; the bot never found one with 2 or
+  fewer walkers a soldier round it.
+- Planet 1's cores are now only fruit and raid cores (no mini-bosses), 1 or
+  2 a game, and a core slides home into thick slime by design.
+- Falls are drawn between 0:50 and 10:00, so a planet won in 3 to 5 minutes
+  sees 1 of its 3 or more.
+
+**Planets 2 and 3**, from the bot league on the owner's PC (its 14-0-c and
+14-0-d jobs, before #606, which changed nothing past planet 1 for drops;
+those bots did not chase drops): planet 2, 55 wins of 132, `reward` 279 on
+average, ore 6.7 and cores 12.6 a win; planet 3, 48 of 130, `reward` 286,
+ore 15.1 and cores 33.0 a win, the slime eating 156 and 225. One cloud
+planet 2 game with chasing (seed 1, won 6:18 with 3 stars): 58 core points
+on 300. **Planet 4** was not measured: the cloud plays it far too slowly
+and the league has no planet 4 rows with drops.
+
+So on every planet the win pays nine tenths or more of the money, and the
+pickups are a small extra the slime mostly eats.
