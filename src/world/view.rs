@@ -2662,6 +2662,75 @@ mod tests {
         assert!(most <= 2, "a lone soldier's head is its own figure's: {most}");
     }
 
+    /// Starfall's and the cores' looks (`Marks::star`, the visual pass,
+    /// 2026-11-21): a hot ore is dark rock with molten cracks brighter than
+    /// any of its rock, a core is a crimson gem (red over green and blue
+    /// in its middle), the dial round them is a ring with the ground
+    /// inside it untouched between ring and drop, and nothing reaches past
+    /// a mark's box. Against the shader before the shape every pixel is
+    /// the ground.
+    #[test]
+    fn ore_is_rock_with_molten_cracks_and_a_core_is_a_crimson_gem() {
+        use crate::world::marks::{STAR_CORE, STAR_DIAL, STAR_ORE};
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [40u8, 44, 40, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let screen = (576, 384);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let (ore, core, r) = ((14.0, 16.0), (34.0, 16.0), 2.5);
+        let mut m = Marks::default();
+        m.star(ore, r * 2.0, STAR_ORE, 1.0, 7, 0.3, 0.0, [255, 170, 60, 220], [255, 236, 180, 255], false);
+        m.star(ore, r + 2.0, STAR_DIAL, 0.25, 7, 0.0, 0.0, [255, 236, 180, 255], [255, 170, 60, 220], false);
+        m.star(core, r * 2.2, STAR_CORE, 1.0, 9, 0.5, 1.0, [235, 60, 85, 220], [255, 210, 220, 255], false);
+        let mut shot = |m: &Marks| {
+            view.set_marks(m);
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let bare = shot(&Marks::default());
+        let pic = shot(&m);
+        let at = |p: (f32, f32)| {
+            let (x, y) = cam.to_screen(p);
+            pic.get_pixel(x as u32, y as u32).0
+        };
+        let luma = |c: [u8; 4]| 0.3 * c[0] as f32 + 0.59 * c[1] as f32 + 0.11 * c[2] as f32;
+        // The ore: its brightest pixel inside (a crack) well over its
+        // median (the rock).
+        let (cx, cy) = cam.to_screen(ore);
+        let rp = r * 12.0 * 0.8;
+        let mut inside: Vec<f32> = Vec::new();
+        for y in (cy - rp) as u32..(cy + rp) as u32 {
+            for x in (cx - rp) as u32..(cx + rp) as u32 {
+                if ((x as f32 - cx).powi(2) + (y as f32 - cy).powi(2)).sqrt() < rp {
+                    inside.push(luma(pic.get_pixel(x, y).0));
+                }
+            }
+        }
+        inside.sort_by(f32::total_cmp);
+        let (mid, top) = (inside[inside.len() / 2], inside[inside.len() - 1]);
+        assert!(top > mid + 80.0 && top > 200.0, "molten cracks in the rock: median {mid}, brightest {top}");
+        // The core's middle is crimson.
+        let c = at(core);
+        assert!(c[0] as i32 > c[1] as i32 + 60 && c[0] as i32 > c[2] as i32 + 40, "a crimson gem: {c:?}");
+        // The dial: its ring at its radius differs from the ground, and
+        // the ground well outside every box is untouched.
+        // (Half a dash clockwise from the top: the top is a gap.)
+        let (rr, a) = (r + 2.0 - 0.18, std::f32::consts::TAU / 48.0);
+        let p = (ore.0 + rr * a.sin(), ore.1 - rr * a.cos());
+        let (px, py) = cam.to_screen(p);
+        let (ring, under) = (at(p), bare.get_pixel(px as u32, py as u32).0);
+        assert!(ring[..3] != under[..3], "the dial's ring is drawn: {ring:?} over {under:?}");
+        let (gx, gy) = cam.to_screen((24.0, 4.0));
+        assert_eq!(pic.get_pixel(gx as u32, gy as u32).0, bare.get_pixel(gx as u32, gy as u32).0, "nothing past the boxes");
+    }
+
     /// The Armour looks (`Marks::dress_since`, owner 2026-11-19 14:41Z):
     /// three soldiers facing east in olive (A, no Armour), slate (B) and
     /// dark camo (C). B's shoulder is bluer than its red where A's is not;
