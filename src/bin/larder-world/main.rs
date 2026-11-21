@@ -64,7 +64,8 @@
 //! `holes=1` also times how long each hit's hole stays open; `bank=N` starts
 //! the round with N food banked (films of rounds); `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
-//! at`), so a run of frames plays as a clip from a still camera.
+//! at`), so a run of frames plays as a clip from a still camera;
+//! `centre=squad,ZOOM` follows the squad at that zoom instead.
 //! `scroll=N` with `menu=PAGE` scrolls the page N wheel notches a frame.
 //! `hover=X,Y[,X2,Y2]` puts the cursor there (screen pixels; with four, it
 //! sweeps from the one to the other over the frames), so the picture shows
@@ -2611,7 +2612,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // The bench also takes `centre=larder[,ZOOM]`: the squad's
                 // base, wherever the map put it (NaN here; only `bench`
                 // reads it, the GTX 1070 batch's zoomed runs, 11-20).
-                let v = v.replacen("larder", "NaN,NaN", 1);
+                // `centre=squad[,ZOOM]`: a film's near view follows the
+                // controlled squad at that zoom, as without `centre=` at
+                // zoom 6 (infinite here; `headless` reads it; the exit
+                // test 2 pass, 11-21, filmed zoom 12 that way).
+                let v = v.replacen("larder", "NaN,NaN", 1).replacen("squad", "inf,inf", 1);
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, zoom @ ..] = w.as_slice() else { return Err("centre=X,Y[,ZOOM]".into()) };
                 centre = Some((*x, *y, zoom.first().copied().unwrap_or(6.0)));

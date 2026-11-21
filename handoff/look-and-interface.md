@@ -314,15 +314,21 @@ while Squad asked to keep it.
    nothing picked the pane shows the planet ahead as a small map
    (`start::Glance`, `menu::glance_of`, kept for the last planet asked).
 0e. Exit test 2 pass (11-21, Direction's ask): planets 1 to 3 filmed
-   with the run bot at zoom 6 and 12 (`centre=NaN,NaN,12` follows the squad
-   with a one-line local change to `headless.rs`, Engine's: offered to
-   them). Ranked list sent to Direction. Fixed: a shot crossing its own
-   squad is dimmed (`IN_SQUAD`, `IN_SQUAD_DIM` in `draw.rs`). Open, in
-   order: A2's view side once #670 (crater cells shut to walkers) merges;
-   hits on slime over a full crystal read as pale puffs; the wanderer
-   mini-boss is a flat red disc; a thick raid body blows out to white-gold;
-   the cut Trunk's ash haze blurs the strikers' fight; the fallen are flat
-   stick figures twice a soldier's size.
+   with the run bot at zoom 6 and 12 (`centre=squad,12` follows the
+   squad at zoom 12). Ranked list sent to Direction. Fixed: a shot crossing
+   its own squad is dimmed (#671, `IN_SQUAD`, `IN_SQUAD_DIM` in `draw.rs`).
+   A2's view side: with #670 (crater cells shut to walkers) a hit leaves a
+   dark charred notch with the engine's embers that closes in about 1 s;
+   no extra drawing. Hits over a full crystal: since #670 little slime
+   stays on a crystal under fire; an ember on the faces from the crater
+   field was tried and dropped (orange or brown discs that read as stamps).
+   A thick raid body: measured, not clipped (under 1.2% of pixels over 235
+   at zoom 6), left. Open: the wanderer mini-boss is a flat red disc
+   (Look B, with Enemy); a tan patch with cell-stepped edges over planet
+   3's strikers (run 1:3, 101 s on c05df943; not seen on main since #670);
+   the fallen are flat stick figures twice a soldier's size. Runs are
+   repeatable only with identical `at=` lists (a different frame list
+   changes the game).
 1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber
