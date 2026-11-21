@@ -27,8 +27,8 @@ the core world at 60 frames a second. A release only if the owner chooses one.
 **Where it stands (11-21 night, [check](handoff/direction.md)).** Nothing
 is closed. Test 1 is behind: planet 1 lost to the strikers' retune (#566,
 bisected) and to a bot harvest stall. His 23:32 ruling paces the threats
-(#606): planet 1 is the base slime plus fruiting; strikers from 2, waves and
-the late lunge from 3, the heart from 4. Built, his to judge: the count-up
+(#606, #644): planet 1 is the base slime; fruiting and strikers from 2,
+waves and the late lunge from 3, the heart from 4. Built, his to judge: the count-up
 clock, starfall by half the par and boss cores, own fire at 10 a second,
 late Mortars and hunters round a big army. Tests 2, 4 and 5: built, his.
 Test 6: one switch off, `crystal_regrow` (one side of D7).
