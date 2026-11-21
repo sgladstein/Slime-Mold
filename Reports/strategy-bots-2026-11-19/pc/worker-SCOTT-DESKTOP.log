@@ -6829,3 +6829,8 @@
 2026-11-20 23:22:30   bot,want=torch.standard|rush,aim=6,cards=0 planet 0 seed 1795038793: ? 1034.0 (0 s)
 2026-11-21 10:16:37 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
 2026-11-21 10:16:38 worker: built the game in 1 s (src 527355bf3e46)
+2026-11-21 10:16:42 worker: the game's code changed (now 4ba6eda2); building
+2026-11-21 10:18:58 worker: built the game in 136 s (src 1c02ff7086ca)
+2026-11-21 10:18:58 worker: league.py changed; restarting
+2026-11-21 10:18:58 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-21 10:18:59 worker: built the game in 1 s (src 1c02ff7086ca)
