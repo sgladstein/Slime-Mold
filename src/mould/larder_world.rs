@@ -85,7 +85,7 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
-pub use doors::WALL_LEVELS;
+pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};

@@ -571,8 +571,15 @@ impl App {
                     self.use_tool(tool);
                 }
                 HudEvent::Line { id: T_CORD, from, to } => self.use_tool(Tool::Cord(from, to)),
-                HudEvent::Line { id: DOOR, from, to } => {
-                    if let Some(g) = self.game.as_mut() {
+                // A door is a click on a wall (owner, 2026-11-21: "doors
+                // should be created with just a click, not dragging"):
+                // `Game::door_from_click` lays it along the wall there.
+                HudEvent::Point { id: DOOR, at } => {
+                    let click = self.game.as_ref().map(|g| g.door_from_click(at));
+                    if click == Some(None) {
+                        self.hud.alert("Click on a wall to put a door in it", None, theme::WARN);
+                    }
+                    if let (Some(g), Some(Some((from, to)))) = (self.game.as_mut(), click) {
                         let (a, b, host) = g.door_line(from, to);
                         let price = g.wall_price(a, b);
                         if !g.apply(Cmd::Door(from, to)) {

@@ -3687,4 +3687,58 @@ mod tests {
         let (dg, dc) = (c1g - c0g, c1c - c0c);
         assert!((dg - dc).abs() < 0.02 * dc.abs().max(100.0), "charge change: GPU {dg:.1}, CPU {dc:.1}");
     }
+
+    /// **A wall holds until it is worn through** (the owner, 2026-11-21:
+    /// "Sometimes slime is able to get through my walls even when they
+    /// have no burrowed a full hole yet"). A walker's step only tested the
+    /// cell it lands in, so a step longer than the wall is thick (a surge,
+    /// a raid, a striker or a heartbeat at 2 to 3 times the pace) jumped
+    /// it, and a step slanting past a corner slipped between two wall cells
+    /// that touch only at it. Now every cell the step crosses must be open.
+    ///
+    /// A closed ring of wall 2 cells thick (scale 1, the game's wall
+    /// width) round an emptied middle, unbreakable, in slime that steps 3
+    /// cells: no walker gets in. Each count is a game second; with the old
+    /// rule (`solid_walls=0`) walkers come in within seconds.
+    #[test]
+    fn slime_does_not_step_over_or_between_wall_cells() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 6_000);
+        let inside_after = |solid: bool| {
+            let s = Settings { step: 3.0, respawn: 0.0, solid_walls: solid, ..race_settings(seed, scale, walkers) };
+            let g = GpuWorld::new(&device, &queue, s, scale);
+            let (w, h) = g.size();
+            let mut game = Game::new(g, Rules::default(), seed);
+            let (cx, cy, r) = (w as f32 * 0.5, h as f32 * 0.5, 14.0f32);
+            // A ring of 24 straight walls whose ends meet: some lie
+            // slanted, so their cells touch at corners.
+            let n = 24;
+            for q in 0..n {
+                let (a0, a1) = (q as f32 / n as f32 * std::f32::consts::TAU, (q + 1) as f32 / n as f32 * std::f32::consts::TAU);
+                game.world.build_wall((cx + r * a0.cos(), cy + r * a0.sin()), (cx + r * a1.cos(), cy + r * a1.sin()), 2.0);
+            }
+            // Empty the middle.
+            let GpuWorld { e, shared, s, .. } = &mut game.world;
+            e.strike(shared, s, cx, cy, r - 1.5, 0.0, 0.0);
+            let count = |g: &GpuWorld| {
+                let e = &g.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+                (0..e.n as usize).filter(|&q| (!e.grows || en[q] >= 0.0) && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) < r - 1.5).count()
+            };
+            let mut seen = vec![count(&game.world)];
+            for secs in 1..=12 {
+                while game.time() < secs as f32 {
+                    game.step();
+                }
+                seen.push(count(&game.world));
+            }
+            seen
+        };
+        let (on, off) = (inside_after(true), inside_after(false));
+        eprintln!("walkers inside the ring each second: solid {on:?}, old rule {off:?}");
+        assert!(on.iter().all(|&c| c == 0), "none gets in: {on:?}");
+        assert!(off.iter().any(|&c| c > 0), "the old rule lets them in (the test's control): {off:?}");
+    }
 }

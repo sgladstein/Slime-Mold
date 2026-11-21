@@ -1551,11 +1551,11 @@ impl App {
                     ..Command::new(WALL, (0, 2), Icon::Wall, "Wall", KeyCode::KeyV)
                 },
                 Command {
-                    target: Target::Line { width: r.wall_width * sc },
+                    target: Target::Point { radius: 0.5 * slime_mould::mould::larder_world::DOOR_WIDTHS * r.wall_width * sc },
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
                     ready: g.bank >= r.wall_cost,
                     why_not: need(r.wall_cost),
-                    about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Draw it along a wall to cut it in (at once, as thick as the wall), or across a gap to build it. Costs as a wall that long.".into(),
+                    about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Click a wall to cut one in, at once and as thick as the wall (a rising wall gets it as it rises). Costs as a wall that long.".into(),
                     ..Command::new(DOOR, (1, 3), Icon::Wall, "Door", KeyCode::KeyG)
                 },
                 place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
@@ -1678,20 +1678,22 @@ impl App {
             }
             Some((WALL, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
             // A door: where it goes (`Game::door_line`), and so its price.
-            Some((DOOR, at, Some(from))) => {
-                let (a, b, host) = g.door_line(from, at);
-                let price = g.wall_price(a, b);
-                if g.bank < price {
-                    (false, Some(format!("{price:.0} food, {:.0} short", price - g.bank)))
-                } else if let Some(why) = g.build_blocked(Kind::Wall { to: b }, a) {
-                    (false, Some(why.into()))
-                } else if host.is_some() {
-                    (true, Some(format!("{price:.0} food, release to cut a door in this wall")))
-                } else {
-                    (true, Some(format!("{price:.0} food, release to build a door")))
+            // A door: a click on a wall (`Game::door_from_click`), and so
+            // its price.
+            Some((DOOR, at, _)) => match g.door_from_click(at) {
+                None => (false, Some("click on a wall".into())),
+                Some((from, to)) => {
+                    let (a, b, _) = g.door_line(from, to);
+                    let price = g.wall_price(a, b);
+                    if g.bank < price {
+                        (false, Some(format!("{price:.0} food, {:.0} short", price - g.bank)))
+                    } else if let Some(why) = g.build_blocked(Kind::Wall { to: b }, a) {
+                        (false, Some(why.into()))
+                    } else {
+                        (true, Some(format!("{price:.0} food, click to cut a door in this wall")))
+                    }
                 }
-            }
-            Some((DOOR, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            },
             // On a crystal with a pump: the pump's upgrade (owner,
             // 2026-11-15: "you should be able to upgrade them").
             Some((PUMP, at, _)) if g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some() => {
