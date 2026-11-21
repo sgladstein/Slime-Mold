@@ -175,7 +175,19 @@ impl<W: World> Game<W> {
             for j in 0..fit {
                 let o = (j as f32 - (fit as f32 - 1.0) / 2.0) * gap;
                 let at = (c.0 + nrm.0 * o, c.1 + nrm.1 * o);
-                let at = if self.standable(at.0, at.1) { at } else { p };
+                // A place only on the trail's side of any wall: the row's
+                // middle moves by (r - l) / 2 along `nrm`, toward the side
+                // with less room, so beside a wall its places could fall
+                // past it, on open ground there. 60 soldiers sent out of a
+                // walled base by a door 4 cells wide: the rows lay back
+                // along the inside of its walls, 53 stood in their places
+                // there for good and the head waited outside for them
+                // (`a_squad_leaves_a_walled_base_by_its_door`; 2026-11-21).
+                // Moving the middle the other way, (l - r) / 2, was tried:
+                // out in 38 s against 26 with this, and a steered squad of 8
+                // spread past `a_steered_squad_moves_together_and_settles_
+                // when_let_go`'s bound.
+                let at = if self.standable(at.0, at.1) && self.walk_line(p, at) { at } else { p };
                 out.push(((at.0 - a.0) / sc, (at.1 - a.1) / sc));
             }
             row += 1;
