@@ -302,6 +302,13 @@ pub(super) struct Viewer {
     panel: Rect,
     cursor: Option<(f32, f32)>,
     drag: Option<(Target, usize, Rect, (f32, f32))>,
+    /// The buttons the panel took when pressed, so it takes only their
+    /// releases. (At first every release over the panel was taken, so a
+    /// shot or a pan begun on the map and let go over the panel never
+    /// ended: the review of #607.)
+    pressed: Vec<Button>,
+    /// Events kept on while one lives (`Game::hold_live_events`).
+    held: [bool; 3],
     /// What the next click on the map places.
     pub armed: Option<Spawn>,
     /// The look's numbers moved since the shader was last compiled, and
@@ -326,7 +333,7 @@ pub(super) struct Viewer {
 }
 
 /// A staged spawn: its game second, what, and where (world units; None
-/// for the slime's middle or the squad).
+/// for the ones not placed: a wave, the heart, a raid, the switches).
 type Staged = (f32, Spawn, Option<(f32, f32)>);
 
 /// A spawn by the name `LARDER_VIEWER_SPAWN` gives it.
@@ -360,11 +367,15 @@ fn staged_of(text: &str) -> Vec<Staged> {
                 }
                 None => (rest, None),
             };
-            Some((t.trim().parse().ok()?, spawn_named(name.trim())?, at))
+            let sp = spawn_named(name.trim())?;
+            // A boss, fruit, ore or core lands where it is put: no `@X,Y`, no spawn.
+            let placed = matches!(sp, Spawn::Boss(_) | Spawn::Fruit | Spawn::Ore | Spawn::Core);
+            (at.is_some() || !placed).then_some(())?;
+            Some((t.trim().parse().ok()?, sp, at))
         })();
         match read {
             Some(x) => out.push(x),
-            None => eprintln!("larder-world: LARDER_VIEWER_SPAWN: skipped {e} (T:NAME[@X,Y])"),
+            None => eprintln!("larder-world: LARDER_VIEWER_SPAWN: skipped {e} (T:NAME[@X,Y]; a boss, fruit, ore or core needs its @X,Y)"),
         }
     }
     out
@@ -390,6 +401,8 @@ impl Viewer {
             panel: Rect::new(0.0, 0.0, 0.0, 0.0),
             cursor: None,
             drag: None,
+            pressed: Vec::new(),
+            held: [false; 3],
             armed: None,
             dirty: false,
             shaded: Instant::now(),
@@ -432,6 +445,20 @@ impl Viewer {
         first != self.flipped.iter().any(|f| f == head)
     }
 
+    /// A bar let go at its end grows to twice as far that way, so a value
+    /// whose range began at 0 to 1 (`raid_every` off) or narrow on one
+    /// planet can still go anywhere (the review of #607).
+    fn grow(&mut self, key: &str, v: f32) {
+        if let Some((_, r)) = self.ranges.iter_mut().find(|(k, _)| k == key) {
+            let span = r.1 - r.0;
+            if v >= r.1 - 0.01 * span {
+                r.1 += span;
+            } else if r.0 < 0.0 && v <= r.0 + 0.01 * span {
+                r.0 -= span;
+            }
+        }
+    }
+
     /// The slider range for `key` starting from `v` (kept once made, so it
     /// does not move under a drag).
     fn range(&mut self, key: &str, v: f32, given: Option<(f32, f32)>) -> (f32, f32) {
@@ -442,6 +469,15 @@ impl Viewer {
         let r = (r.0.min(v), r.1.max(v));
         self.ranges.push((key.to_string(), r));
         r
+    }
+}
+
+/// Where a slider's range is kept (`Viewer::ranges`).
+fn range_key(t: &Target, k: usize) -> String {
+    match t {
+        Target::Look(i) => format!("look:{i}:{k}"),
+        Target::Rule(n) => format!("rule:{n}"),
+        Target::Engine(n) => format!("engine:{n}"),
     }
 }
 
@@ -536,6 +572,11 @@ impl App {
             }
         }
         self.viewer_staged();
+        if let (Some(g), Some(vw)) = (self.game.as_mut(), self.viewer.as_mut()) {
+            if let Some(n) = g.hold_live_events(&mut vw.held) {
+                vw.say(format!("{} stays on until the one under way ends", title(n)));
+            }
+        }
         if self.game.as_ref().is_some_and(|g| g.end.is_some()) {
             if let Err(e) = self.viewer_restart(None, false) {
                 eprintln!("larder-world: viewer restart: {e}");
@@ -583,6 +624,10 @@ impl App {
         if let Some(vw) = self.viewer.as_mut() {
             vw.armed = None;
             vw.strikers_was = None;
+            vw.held = [false; 3];
+            // Another planet's rules start elsewhere: their bars are made
+            // again round its values (the look's stay).
+            vw.ranges.retain(|(k, _)| k.starts_with("look:"));
         }
         self.start()
     }
@@ -622,14 +667,23 @@ impl App {
         let Some(vw) = self.viewer.as_mut() else { return false };
         let at = vw.cursor;
         if !down {
-            if vw.drag.take().is_some() {
-                vw.dirty = true;
-                return true;
+            let took = vw.pressed.iter().position(|&x| x == b).map(|i| vw.pressed.swap_remove(i)).is_some();
+            if b == Button::Left {
+                if let Some((t, k, _, _)) = vw.drag.take() {
+                    vw.dirty = true;
+                    let colour = matches!(t, Target::Look(i) if vw.consts.get(i).is_some_and(|c| c.colour));
+                    if let Some(v) = self.viewer_value(&t).get(k).copied().filter(|_| !colour) {
+                        if let Some(vw) = self.viewer.as_mut() {
+                            vw.grow(&range_key(&t, k), v);
+                        }
+                    }
+                }
             }
-            return at.is_some_and(|p| vw.over(p));
+            return took;
         }
         let Some(p) = at else { return false };
         if vw.over(p) {
+            vw.pressed.push(b);
             let hit = vw.hits.iter().rev().find(|(r, _)| r.contains(p)).map(|(r, h)| (*r, h.clone()));
             match (b, hit) {
                 (Button::Right, Some((_, Hit::Bar(t, _) | Hit::Switch(t)))) => self.viewer_reset(&t),
@@ -644,9 +698,11 @@ impl App {
             if b == Button::Right {
                 vw.armed = None;
                 vw.say("Put down");
+                vw.pressed.push(b);
                 return true;
             }
             if b == Button::Left && !self.hud.over(p) {
+                vw.pressed.push(b);
                 if let Some(w) = self.camera.world_at(p) {
                     self.viewer_spawn(sp, Some(w));
                 }
@@ -679,12 +735,12 @@ impl App {
         true
     }
 
-    /// F1 shows and hides the panel; Esc puts down an armed spawn. True if
+    /// F3 shows and hides the panel (F1 is the game's key card); Esc puts down an armed spawn. True if
     /// the viewer took the key.
     pub(super) fn viewer_key(&mut self, code: KeyCode) -> bool {
         let Some(vw) = self.viewer.as_mut() else { return false };
         match code {
-            KeyCode::F1 => {
+            KeyCode::F3 => {
                 vw.open = !vw.open;
                 true
             }
@@ -756,9 +812,9 @@ impl App {
             Act::Hide => {
                 if let Some(vw) = self.viewer.as_mut() {
                     vw.open = false;
-                    vw.say("F1 shows the panel again");
+                    vw.say("F3 shows the panel again");
                 }
-                self.hud.alert("Slime viewer hidden: F1 shows it again", None, theme::ACCENT);
+                self.hud.alert("Slime viewer hidden: F3 shows it again", None, theme::ACCENT);
             }
             Act::Restart => {
                 if let Err(e) = self.viewer_restart(None, false) {
@@ -842,14 +898,21 @@ impl App {
             _ => false,
         };
         let why = match sp {
-            Spawn::Boss(_) | Spawn::Fruit => "too few walkers there, or every lump is in use (each event holds one; wait for one to end)",
+            Spawn::Boss(_) => "on a marching raid or a ripening fruit, or every lump is in use (each event holds one; wait for one to end)",
+            Spawn::Fruit => "one is ripening, or every lump is in use (each event holds one; wait for one to end)",
             Spawn::Ore | Spawn::Core => "not on open ground",
             Spawn::Wave => "one is under way, or too little slime round the squad to gather: bring the squad near the slime and try again",
             Spawn::Stand => "a heart lives, or no slime holds a crystal",
             Spawn::Raid => "raids are off on this planet",
             _ => "",
         };
-        let line = if done { format!("{}: started", sp.label()) } else { format!("{}: not now ({why})", sp.label()) };
+        let line = if done && matches!(sp, Spawn::Boss(_)) {
+            // A lump forms wherever it is put; on thin slime it gathers too
+            // few walkers and falls apart.
+            format!("{}: started (put it on thick slime, or it falls apart)", sp.label())
+        } else if done {
+            format!("{}: started", sp.label())
+        } else { format!("{}: not now ({why})", sp.label()) };
         if let Some(vw) = self.viewer.as_mut() {
             vw.say(line);
             // A placed spawn stays armed, so several go down in a row.
@@ -879,16 +942,16 @@ impl App {
         let first = self.viewer_first(t);
         let v0 = first.get(k).copied().unwrap_or(0.0);
         let Some(vw) = self.viewer.as_mut() else { return (0.0, 1.0) };
+        let key = range_key(t, k);
         match t {
             Target::Look(i) => {
                 let colour = vw.consts.get(*i).is_some_and(|c| c.colour);
-                let key = format!("look:{i}:{k}");
                 vw.range(&key, v0, colour.then_some((0.0, 255.0)))
             }
-            Target::Rule(n) => vw.range(&format!("rule:{n}"), v0, None),
+            Target::Rule(_) => vw.range(&key, v0, None),
             Target::Engine(n) => {
                 let given = ENGINE_KEYS.iter().find(|e| e.0 == *n).map(|e| e.2);
-                vw.range(&format!("engine:{n}"), v0, given)
+                vw.range(&key, v0, given)
             }
         }
     }
@@ -921,10 +984,12 @@ impl App {
                     return;
                 }
                 let now = g.rules.get(n).unwrap_or(v);
-                if first.first() == Some(&now) {
-                    self.tweaks.rules.retain(|(r, _)| r != n);
-                } else {
-                    self.tweaks.set_rule(n, now);
+                if let Some(t) = tier {
+                    if first.first() == Some(&now) {
+                        self.tweaks.rules.retain(|(tn, r, _)| !(tn == t.name() && r == n));
+                    } else {
+                        self.tweaks.set_rule(t.name(), n, now);
+                    }
                 }
                 if let Some(vw) = self.viewer.as_mut() {
                     vw.unsaved = true;
@@ -1015,9 +1080,13 @@ impl App {
         let rows = self.viewer_rows(tier);
         let (top, bottom) = (self.hud.top, self.hud.bottom);
         let tweaks = self.tweaks.count();
+        // The pause menu's pages are centred and wide: at 200% the panel
+        // covered their right side and took its clicks (the review of
+        // #607), so it steps aside while one is up.
+        let menu = self.hud.menu_open();
         let Some(vw) = self.viewer.as_mut() else { return };
         vw.hits.clear();
-        if !vw.open {
+        if !vw.open || menu {
             vw.panel = Rect::new(0.0, 0.0, 0.0, 0.0);
             return;
         }
@@ -1039,7 +1108,10 @@ impl App {
         // Title.
         let mut yy = y + 24.0 * u;
         c.text(Weight::SemiBold, 17.0 * u, (inner, yy), Align::Left, "Slime viewer", theme::TEXT);
-        let what = tier.map_or(String::new(), |t| format!("{} on planet {}", title(t.name()), LADDER.iter().position(|&l| l == t).map_or(0, |k| k + 1)));
+        // The run's own depth (planet 8 draws one of the last three slimes,
+        // which the ladder alone would name as 5, 6 or 7).
+        let depth = self.args.run.as_ref().map_or(0, |r| r.depth);
+        let what = tier.map_or(String::new(), |t| format!("{} on planet {depth}", title(t.name())));
         c.text_fit(Weight::Medium, 12.0 * u, (x + w - 12.0 * u, yy), Align::Right, &what, iw * 0.55, theme::MUTED);
         // Tabs.
         yy += 12.0 * u;
@@ -1160,7 +1232,7 @@ impl App {
         if help.is_empty() {
             help = match vw.tab {
                 Tab::Look => "Drag a bar to change the picture; right click a row to put it back. Changed rows are yellow.".into(),
-                Tab::Rules => "This slime's walk applies to it only; the rest are the planet's rules. Right click a row to put it back.".into(),
+                Tab::Rules => "Everything here is saved for this slime only, on its planets. Right click a row to put it back.".into(),
                 Tab::Spawn => "Placed ones go where you click the map, again and again; right click puts it down.".into(),
                 Tab::Slime => "Each slime on its own planet, as a run lands there. The squad cannot lose here; B buys soldiers.".into(),
             };
@@ -1178,7 +1250,7 @@ impl App {
         c.text_fit(Weight::SemiBold, 11.5 * u, (inner, fy + 56.0 * u), Align::Left, &line, iw, if vw.unsaved && vw.status_secs <= 0.0 { theme::WARN } else { theme::TEXT });
         let bh = 26.0 * u;
         let by = y + h - bh - 10.0 * u;
-        let buttons: [(&str, Act); 3] = [("Save", Act::Save), ("Reset all", Act::ResetAll), ("Hide (F1)", Act::Hide)];
+        let buttons: [(&str, Act); 3] = [("Save", Act::Save), ("Reset all", Act::ResetAll), ("Hide (F3)", Act::Hide)];
         let bw = (iw - 8.0 * u) / 3.0;
         for (k, (name, a)) in buttons.iter().enumerate() {
             let r = Rect::new(inner + k as f32 * (bw + 4.0 * u), by, bw, bh);
@@ -1379,7 +1451,7 @@ mod tests {
 
     #[test]
     fn staged_spawns_read_their_times_names_and_places() {
-        let s = staged_of("10:mortar@200,150; 12:wave;bad;14:fruit@1,2;3:nothing");
+        let s = staged_of("10:mortar@200,150; 12:wave;bad;14:fruit@1,2;3:nothing;15:ore");
         assert_eq!(s, vec![(10.0, Spawn::Boss(BossKind::Mortar), Some((200.0, 150.0))), (12.0, Spawn::Wave, None), (14.0, Spawn::Fruit, Some((1.0, 2.0)))]);
         for sp in SPAWNS {
             let name = match sp {

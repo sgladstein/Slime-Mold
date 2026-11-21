@@ -6,7 +6,7 @@
 slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
 main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the
 gun range's clock with a panel at the right (`src/bin/larder-world/viewer.rs`;
-F1 hides it). Four tabs: Slime (the planet's slime, its body look, and its
+F3 hides it). Four tabs: Slime (the planet's slime, its body look, and its
 on-off rules), Spawn (every mini-boss kind, fruit, wave, the last-stand
 heart, strikers, heartbeat, ore, core, raid at the click, by
 `larder_world/force.rs`, which calls play's own starts), Look (every plain

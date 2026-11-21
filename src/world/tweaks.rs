@@ -16,8 +16,9 @@
 //!   (a uniform for each would cost the view's every pixel a read).
 //! - **The tweaks file** ([`Tweaks`], `slime-tweaks.txt` at the repo's
 //!   root, gitignored so `play.cmd` still pulls): what the viewer saved,
-//!   one line a value. The game's window reads it at every start (the
-//!   look, the rules, each slime's engine keys and body look), so what the
+//!   one line a value. The game's window reads it when it opens and on
+//!   leaving the viewer (the look, each slime's rules, engine keys and body
+//!   look), so what the
 //!   owner tuned is what he plays, and a thread can read the file he sends
 //!   (`play-logs/`, which `play.cmd` pushes) to make it the default.
 
@@ -141,8 +142,12 @@ pub fn apply(src: &str, values: &[(String, Vec<f32>)]) -> String {
 pub struct Tweaks {
     /// `look NAME = A [B C D]`: a view shader constant.
     pub look: Vec<(String, Vec<f32>)>,
-    /// `rule NAME = V`: a game rule (`Rules::set`).
-    pub rules: Vec<(String, f32)>,
+    /// `rule TIER NAME = V`: a game rule (`Rules::set`) on that slime's
+    /// planets only. (At first `rule NAME = V`, on every round in the
+    /// window: the review of #607 found a rule tuned on one planet then
+    /// overrode the values other planets set by depth, `star_worth` 50 on
+    /// planet 2 making planet 7's ore 60, not 100.)
+    pub rules: Vec<(String, String, f32)>,
     /// `slime TIER KEY = V`: an engine key on that slime only (`gpu::set`).
     pub slime: Vec<(String, String, f32)>,
     /// `body TIER = LOOK`: that slime's body look (`SlimeLook::parse`).
@@ -168,8 +173,8 @@ impl Tweaks {
                         let v: Vec<f32> = rhs.split_whitespace().map(|x| x.parse::<f32>().ok().filter(|v| v.is_finite())).collect::<Option<_>>()?;
                         (1..=4).contains(&v.len()).then(|| t.set_look(name, &v))
                     }
-                    ["rule", name] => {
-                        t.set_rule(name, rhs.parse().ok().filter(|v: &f32| v.is_finite())?);
+                    ["rule", tier, name] => {
+                        t.set_rule(tier, name, rhs.parse().ok().filter(|v: &f32| v.is_finite())?);
                         Some(())
                     }
                     ["slime", tier, key] => {
@@ -193,20 +198,24 @@ impl Tweaks {
     /// The file's text.
     pub fn text(&self) -> String {
         let mut s = String::from(
-            "# Your slime viewer tweaks (viewer.cmd). The game reads this file every time\n\
-             # a round starts, so what you tuned is what you play. Delete it, or press\n\
-             # Reset all in the viewer, to play the game's own looks and rules again.\n\
+            "# Your slime viewer tweaks (viewer.cmd). The game reads this file when it\n\
+             # opens, so what you tuned is what you play. Delete it, or press Reset all\n\
+             # and then Save in the viewer, to play the game's own looks and rules again.\n\
              # look NAME = value(s): a number of the slime's picture (view.wgsl)\n\
-             # rule NAME = value: a game rule (set=NAME=value)\n\
+             # rule SLIME NAME = value: a game rule on that slime's planets only\n\
              # slime SLIME KEY = value: an engine key on that slime only\n\
-             # body SLIME = LOOK: that slime's body look (plain, threads, sheet, cords, swell)\n",
+             # body SLIME = LOOK: that slime's body look (plain, threads, sheet, cords,\n\
+             # swell, crust, scars)\n",
         );
-        let num = |v: f32| format!("{}", (v * 10_000.0).round() / 10_000.0);
+        // Rust's shortest form that reads back to the same f32. (At first
+        // rounded to 4 places, which saved the Sporer's `spore_rate`,
+        // 0.00001, as 0 or 0.0001: no spores, or ten times as many.)
+        let num = |v: f32| format!("{v}");
         for (n, v) in &self.look {
             s += &format!("look {n} = {}\n", v.iter().map(|&x| num(x)).collect::<Vec<_>>().join(" "));
         }
-        for (n, v) in &self.rules {
-            s += &format!("rule {n} = {}\n", num(*v));
+        for (tier, n, v) in &self.rules {
+            s += &format!("rule {tier} {n} = {}\n", num(*v));
         }
         for (tier, k, v) in &self.slime {
             s += &format!("slime {tier} {k} = {}\n", num(*v));
@@ -234,10 +243,10 @@ impl Tweaks {
         }
     }
 
-    pub fn set_rule(&mut self, name: &str, v: f32) {
-        match self.rules.iter_mut().find(|(n, _)| n == name) {
-            Some(e) => e.1 = v,
-            None => self.rules.push((name.to_string(), v)),
+    pub fn set_rule(&mut self, tier: &str, name: &str, v: f32) {
+        match self.rules.iter_mut().find(|(t, n, _)| t == tier && n == name) {
+            Some(e) => e.2 = v,
+            None => self.rules.push((tier.to_string(), name.to_string(), v)),
         }
     }
 
@@ -260,8 +269,8 @@ impl Tweaks {
         self.look.iter().find(|(n, _)| n == name).map(|(_, v)| v.as_slice())
     }
 
-    pub fn rule_of(&self, name: &str) -> Option<f32> {
-        self.rules.iter().find(|(n, _)| n == name).map(|e| e.1)
+    pub fn rule_of(&self, tier: &str, name: &str) -> Option<f32> {
+        self.rules.iter().find(|(t, n, _)| t == tier && n == name).map(|e| e.2)
     }
 
     pub fn slime_of(&self, tier: &str, key: &str) -> Option<f32> {
@@ -330,7 +339,7 @@ mod tests {
     }
 
     #[test]
-    fn the_real_shader_reads_and_compiles_back_the_same() {
+    fn the_real_shader_reads_and_writes_back_the_same() {
         let src = crate::world::view::SHADER;
         let c = shader_consts(src);
         assert!(c.len() > 80, "the view's look numbers: {}", c.len());
@@ -348,15 +357,19 @@ mod tests {
         t.set_look("HUE", &[1.0, 2.5, 3.0]);
         t.set_look("SHEET_VEIL", &[0.4]);
         t.set_look("SHEET_VEIL", &[0.5]);
-        t.set_rule("fruit_hurt", 0.05);
+        t.set_rule("drifter", "fruit_hurt", 0.05);
+        t.set_slime("sporer", "spore_rate", 0.00001);
         t.set_slime("drifter", "keep", 0.9);
         t.set_body("sprawler", "sheet");
-        assert_eq!(t.count(), 5);
+        assert_eq!(t.count(), 6);
         let (back, bad) = Tweaks::parse(&(t.text() + "nonsense line\nlook X = a\n"));
         assert_eq!(back, t);
         assert_eq!(bad, ["nonsense line", "look X = a"]);
         assert_eq!(back.look_of("SHEET_VEIL"), Some(&[0.5][..]));
         assert_eq!(back.slime_of("drifter", "keep"), Some(0.9));
+        assert_eq!(back.slime_of("sporer", "spore_rate"), Some(0.00001), "small numbers keep their figures");
+        assert_eq!(back.rule_of("drifter", "fruit_hurt"), Some(0.05));
+        assert_eq!(back.rule_of("trunk", "fruit_hurt"), None, "a rule is the slime's own");
         assert_eq!(back.body_of("sprawler"), Some("sheet"));
     }
 }
