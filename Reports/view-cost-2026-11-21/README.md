@@ -64,3 +64,35 @@ plant layer on bare ground is where that millisecond is.
 
 Next if more is needed: the slope's two extra B-spline samples and the
 highlight's four `film_h` reads in `shaded`, which every pixel pays.
+
+## The second pass (11-21, Direction: the 1070 needs 60 frames a second on the core world)
+
+Two cuts that leave every pixel as it was (planets 1 to 3 at 3 s and 40 s,
+zoom 12 and the whole map, run 1, `hand=strat:bot`: the world's pixels
+identical to main's; only the alert text's fade differs by its timing):
+
+- **The slope's samples share one read.** `shaded`'s height and its forward
+  slope were three B-splines, 48 reads of `hcell`; `cells_height3` reads the
+  5 x 5 fine cells they share once, 25 reads, and sums them in the same order.
+- **Far crowns skip their clump.** A clumped plant kind (the meadow's
+  grass, the fen's moss, the barrens' scrub) worked out its slow noise and
+  read the moisture field for all nine neighbouring crowns before it knew
+  whether one reached the pixel. A crown that can neither touch the pixel
+  nor shade it is now passed over first (bounds in `crowns`).
+
+On llvmpipe (`centre=larder,6`, planet 3, `bench=10`, three runs a side)
+`base` was 134.5 / 132.1 / 143.7 ms on main and 130.4 / 132.8 / 142.2 with
+both cuts: inside the software GPU's 10% noise. Nor did the plants' own
+parts separate there (`onekind` 153, `nolobe` 143, `noclump` 128 against
+`full` about 135; `crowns`, the crown layer stubbed, 76; `plants` 74;
+`flat` 43): on llvmpipe the crowns cost about 57 of 135 ms, but none of
+their parts alone shows past the noise. The 1070 has to say.
+
+Tried and not kept: the highlight from three height samples instead of
+five (forward differences off the film's height at the pixel, `spec3`):
+it moves each highlight half a sample (up to 4 px at zoom 12), seen on a
+wanderer at zoom 12, for 8 of the pixel's roughly 100 buffer reads.
+
+New variants for the next 1070 batch (`variants.py`): `crowns`, `onekind`,
+`nolobe`, `noclump` (the plants split), `nocull` and `slope3` (this pass's
+two cuts undone, so each is timed against `full`), and `spec3`.
