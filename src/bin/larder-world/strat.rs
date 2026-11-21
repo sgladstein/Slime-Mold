@@ -224,6 +224,21 @@ pub(super) struct Plan {
     /// lie within its range of the drop (a core: of where it slides to).
     /// The risk dial: 0 never; 5 only quiet ones; 60 most of them.
     pub drops: u32,
+    /// **Out of its own fire** (11-20, Direction: on planet 2, 32 of 38
+    /// of the run bot's dead and 25 of 31 on another map burned in its own
+    /// Tinder fires): a member standing in fire (`Soldier::heat`) moves the
+    /// squad toward and past its cool members (back from the slime when
+    /// all are hot), and for this many seconds the hunt takes no stand near
+    /// where it burned. 0: off. Unlike `fire`, it reads the heat itself, so
+    /// it moves before the burn, not after the health is gone.
+    pub cool: f32,
+    /// **Retake when broke** (11-20, Direction: on planet 1 run seed 3 the
+    /// run bot held 16 soldiers and 228 in the bank for four minutes while
+    /// the slime doubled, since it drains only crystals with under 30
+    /// walkers on them until it is out): with less in the bank than a
+    /// soldier and no harvest for this many seconds, it drains crystals
+    /// with under `per` walkers a soldier on them, as when out. 0: off.
+    pub broke: f32,
 }
 
 /// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
@@ -276,6 +291,8 @@ impl Default for Plan {
             tcards: Vec::new(),
             order: Vec::new(),
             drops: 0,
+            cool: 12.0,
+            broke: 20.0,
         }
     }
 }
@@ -304,7 +321,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 43] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops"];
+    pub const DIALS: [&'static str; 45] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -374,6 +391,8 @@ impl Plan {
             "tcards" => self.tcards = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             "order" => self.order = v.split('/').filter(|s| !s.is_empty()).map(String::from).collect(),
             "drops" => self.drops = whole(v)?,
+            "cool" => self.cool = num(v)?.max(0.0),
+            "broke" => self.broke = num(v)?.max(0.0),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -448,6 +467,12 @@ struct Memory {
     /// The drops the squad set out for, by the tick each landed
     /// (`Plan::drops`).
     chased: Vec<u64>,
+    /// Where members stood in fire, and until when the hunt keeps off
+    /// (`Plan::cool`); seconds spent stepping out of it.
+    hot: Vec<((f32, f32), f32)>,
+    pub cooled: u32,
+    /// The harvest at its last rise, and when (`Plan::broke`).
+    harvest_at: (f32, f32),
 }
 
 thread_local! {
@@ -706,6 +731,21 @@ fn drop_to_take(g: &Game<GpuWorld>, p: &Plan, m: (f32, f32), range: f32, sense: 
         }
     });
     Some(at)
+}
+
+/// Seconds the squad stepped out of its own fire this planet (`Plan::cool`).
+pub(super) fn cooled() -> u32 {
+    MEM.with_borrow(|mm| mm.cooled)
+}
+
+/// Whether `at` lies within `r` of where a member burned lately (`Plan::cool`).
+fn hot_near(at: (f32, f32), r: f32, t: f32) -> bool {
+    MEM.with_borrow(|mm| mm.hot.iter().any(|&(h, until)| until > t && dist(h, at) < r))
+}
+
+fn centroid(ps: &[(f32, f32)]) -> (f32, f32) {
+    let n = ps.len().max(1) as f32;
+    (ps.iter().map(|p| p.0).sum::<f32>() / n, ps.iter().map(|p| p.1).sum::<f32>() / n)
 }
 
 pub(super) fn tools_used() -> [u32; 2] {
@@ -1004,6 +1044,12 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
         mm.peak = mm.peak.max(g.alive());
     });
 
+    MEM.with_borrow_mut(|mm| {
+        if g.harvested > mm.harvest_at.0 + 1.0 {
+            mm.harvest_at = (g.harvested, t);
+        }
+    });
+
     // ---- The squad.
     let members = g.members(q);
     let n = members.len().max(1);
@@ -1058,6 +1104,33 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
             g.apply(Cmd::Heal(q as u8));
         }
         return fin(g, 3);
+    }
+    // Out of its own fire (`cool`): toward and past the cool members, or
+    // back from the slime when every member is hot.
+    if p.cool > 0.0 {
+        let (hot, cold): (Vec<usize>, Vec<usize>) = members.iter().partition(|&&k| g.soldiers[k].heat > 0.02);
+        if !hot.is_empty() {
+            let at = |ks: &[usize]| centroid(&ks.iter().map(|&k| (g.soldiers[k].x, g.soldiers[k].y)).collect::<Vec<_>>());
+            let h = at(&hot);
+            MEM.with_borrow_mut(|mm| {
+                mm.hot.retain(|x| x.1 > t);
+                mm.hot.push((h, t + p.cool));
+                mm.cooled += 1;
+            });
+            let to = if cold.is_empty() {
+                let away = near.unwrap_or(home);
+                let d = dist(away, m).max(1.0);
+                (m.0 - (away.0 - m.0) / d * 0.5 * range, m.1 - (away.1 - m.1) / d * 0.5 * range)
+            } else {
+                let c = at(&cold);
+                let d = dist(c, h).max(1.0);
+                (c.0 + (c.0 - h.0) / d * 0.3 * range, c.1 + (c.1 - h.1) / d * 0.3 * range)
+            };
+            if g.ground(to.0, to.1) {
+                g.apply(Cmd::SquadOrder(q as u8, Order::Move(to.0, to.1)));
+                return fin(g, 3);
+            }
+        }
     }
     // A drop on the ground (`drops`): it lasts a minute (a core 15 s), so
     // it comes before raising, guarding and the hunt.
@@ -1261,6 +1334,11 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     let barren = MEM.with_borrow(|b| b.barren.clone());
     let held: Vec<usize> = MEM.with_borrow(|b| b.held.iter().map(|h| h.1).collect());
     let strong = out || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
+    // Broke (`broke`): no soldier to buy and no harvest lately, so a
+    // crystal with some slime on it is worth the fight, up to `per` walkers
+    // a soldier, as `home_ok` judges the home crystal.
+    let broke = p.broke > 0.0 && g.bank < g.rules.soldier_cost && MEM.with_borrow(|mm| t - mm.harvest_at.1 > p.broke);
+    let takeable = |c: usize| (sense.mass_near(cs[c].0, g.world.crystal_r(c) + range) as f32) < p.per * g.alive() as f32;
     // Starving (`starve`): the crystal with the most slime on it.
     if p.starve > 0 && out && !mopping && g.alive() as u32 >= p.starve {
         let feed = (0..cs.len())
@@ -1282,9 +1360,9 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     let pick = drains
         .then(|| {
             (0..cs.len())
-                .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && !held.contains(&c) && (c > 0 || home_ok) && (strong || (c > 0 && quiet(c))) && g.pump_on(c).is_none())
+                .filter(|&c| cs[c].1 > 0.0 && !left.contains(&c) && !held.contains(&c) && (c > 0 || home_ok) && (strong || (c > 0 && quiet(c)) || (broke && c > 0 && takeable(c))) && g.pump_on(c).is_none())
                 .max_by(|&a, &b| {
-                    let walk = if strong { 4.0 * range } else { 0.5 * range };
+                    let walk = if strong || broke { 4.0 * range } else { 0.5 * range };
                     let v = |c: usize| cs[c].1.min(200_000.0) / (1.0 + dist(cs[c].0, m) / walk.max(1.0));
                     v(a).total_cmp(&v(b))
                 })
@@ -1324,11 +1402,13 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     };
     let by_home = |a: (f32, f32)| dist(a, cs[0].0) <= g.world.crystal_r(0) + range;
     let ranked = sense.ranked(m, range);
-    let shot = ranked.iter().map(|&(a, _)| (a, stand_for(a))).filter(|&(a, _)| home_ok || !by_home(a)).find(|&(a, st)| g.ground(st.0, st.1) && sense.clear(g, st, a));
+    // Not back into its own fire (`cool`).
+    let cool_r = if p.cool > 0.0 { 0.35 * range } else { 0.0 };
+    let shot = ranked.iter().map(|&(a, _)| (a, stand_for(a))).filter(|&(a, _)| home_ok || !by_home(a)).find(|&(a, st)| g.ground(st.0, st.1) && sense.clear(g, st, a) && !hot_near(st, cool_r, t));
     let shot = shot.or_else(|| ranked.iter().map(|&(a, _)| (a, stand_for(a))).find(|&(a, _)| home_ok || !by_home(a)));
     let Some((a, stand)) = shot.or_else(|| ranked.first().map(|&(a, _)| (a, stand_for(a)))) else { return };
     let d = dist(a, m).max(1.0);
-    if d > 0.8 * range || !sense.clear(g, m, a) {
+    if (d > 0.8 * range || !sense.clear(g, m, a)) && !hot_near(stand, cool_r, t) {
         g.apply(Cmd::SquadOrder(q as u8, Order::Fight(stand.0, stand.1)));
     }
 }

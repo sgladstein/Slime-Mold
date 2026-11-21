@@ -199,6 +199,12 @@ pub struct Soldier {
     /// put the slime to sleep (`World::clouds`); at `Rules::doze` or over
     /// it dozes (`Game::dozing`).
     pub doze: f32,
+    /// The fire's heat where it stood last frame (0 to 1; it loses
+    /// `Rules::fire_hurt` times this a second). Read back for the strategy
+    /// bot (11-20, Direction: on planet 2 most of the run bot's dead were
+    /// burned in its own Tinder fires; a player sees the fire, the bot
+    /// could not).
+    pub heat: f32,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -901,6 +907,7 @@ impl<W: World> Game<W> {
             vy: 0.0,
             was: (x, y),
             doze: 0.0,
+            heat: 0.0,
         });
     }
 
