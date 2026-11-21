@@ -143,6 +143,54 @@ fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
     Some((area.x + (area.w - used) / 2.0, area.y + 0.4 * (area.h - h), w, h))
 }
 
+/// Draws the planet ahead (`Glance`) in `r`, with a line under it naming
+/// the marks; returns the height used. The ground in its coarse cells, a
+/// crystal as a cyan hexagon its size (at least a few pixels), each start
+/// of the slime as an amber blot with a glow, the landing as a white ring.
+fn glance(c: &mut Canvas, g: &Glance, r: Rect, s: f32) -> f32 {
+    c.shadow(r, 6.0 * s, 10.0 * s, 2.0 * s, [0, 0, 0, 120]);
+    let (cw, ch) = (r.w / g.w as f32, r.h / g.h as f32);
+    for j in 0..g.h {
+        for i in 0..g.w {
+            // A hair over the cell, so no seam shows between cells.
+            c.rrect(Rect::new(r.x + i as f32 * cw, r.y + j as f32 * ch, cw + 0.6, ch + 0.6), 0.0, g.cells[j * g.w + i]);
+        }
+    }
+    c.outline(r, 4.0 * s, 1.0 * s, [255, 255, 255, 40]);
+    let at = |x: f32, y: f32| (r.x + x * r.w, r.y + y * r.h);
+    // The slime starts on its home crystal (the level generator puts a
+    // nest on a rich crystal): that crystal drawn in the slime's amber in
+    // a glow, the rest cyan.
+    for &(x, y, cr) in &g.crystals {
+        let (px, py) = at(x, y);
+        let d = (2.0 * cr * r.w).max(7.0 * s);
+        let home = g.moulds.iter().any(|&(mx, my)| ((mx - x) * r.w).hypot((my - y) * r.h) <= cr * r.w + 1.0);
+        if home {
+            let b = d * 0.9;
+            c.rrect(Rect::new(px - b, py - b, 2.0 * b, 2.0 * b), b, [240, 150, 40, 70]);
+        }
+        c.icon(Icon::Crystal, (px - d / 2.0, py - d / 2.0), d, if home { [246, 176, 66, 255] } else { [92, 214, 240, 255] });
+    }
+    // A nest off every crystal (none on today's planets) as a blot.
+    for &(x, y) in &g.moulds {
+        if g.crystals.iter().any(|&(cx, cy, cr)| ((cx - x) * r.w).hypot((cy - y) * r.h) <= cr * r.w + 1.0) {
+            continue;
+        }
+        let (px, py) = at(x, y);
+        let b = 6.0 * s;
+        c.rrect(Rect::new(px - 2.0 * b, py - 2.0 * b, 4.0 * b, 4.0 * b), 2.0 * b, [240, 150, 40, 60]);
+        c.rrect(Rect::new(px - b, py - b, 2.0 * b, 2.0 * b), b, [244, 170, 60, 235]);
+    }
+    if let Some((x, y)) = g.landing {
+        let (px, py) = at(x, y);
+        let b = 8.0 * s;
+        c.outline(Rect::new(px - b, py - b, 2.0 * b, 2.0 * b), b, 2.0 * s, [240, 244, 248, 240]);
+    }
+    let key = r.bottom() + 18.0 * s;
+    c.text(Weight::Medium, 12.5 * s, (r.x, key), Align::Left, "Crystals cyan, the slime's home amber, you land in the ring", MUTED);
+    r.h + 34.0 * s
+}
+
 /// How `n` boxes at least `w` wide and `h` tall sit in `area`: the boxes a
 /// row, their width (stretched to the area, up to `max_w`), and a page's
 /// worth and the pages, a strip left for the pager when it pages.
@@ -786,6 +834,16 @@ impl StartMenu {
             y += 22.0 * s;
             for l in &shop.lines {
                 y += para(c, Weight::Medium, 14.5 * s, (r.x + p, y), iw, 21.0 * s, l, [201, 210, 219, 255], limit) + 6.0 * s;
+            }
+            // The planet as a small map, where the pane has the room for
+            // it over the two lines of how to buy (Look D, 11-21).
+            if let Some(gl) = shop.glance.as_ref().filter(|g| g.w > 0 && g.h > 0) {
+                let room = limit - y - 70.0 * s;
+                let mw = iw.min(room * gl.w as f32 / gl.h as f32);
+                let mh = mw * gl.h as f32 / gl.w as f32;
+                if mw >= 120.0 * s {
+                    y += glance(c, gl, Rect::new(r.x + p + (iw - mw) / 2.0, y + 6.0 * s, mw, mh), s) + 6.0 * s;
+                }
             }
             let how = if shop.range { "Pick a gun, a bullet or a card to see it here. Drag a card onto a slot of the gun; the squad fires them left to right." } else { "Pick something on the counter or in the gun to see it here and buy it. Drag a card onto a slot of the gun to buy it and put it there." };
             para(c, Weight::Medium, 13.5 * s, (r.x + p, y + 8.0 * s), iw, 19.0 * s, how, MUTED, limit);
