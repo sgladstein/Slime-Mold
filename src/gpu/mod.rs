@@ -546,6 +546,15 @@ pub struct Settings {
     /// 11-17 19:21Z); built walls only, so twins on rock still match.
     /// Params word 929's bit 1 (bit 0 is `deep_wall`).
     pub solid_walls: bool,
+    /// **A hit's hole stays open while it is fresh** (`crater_shut=S`,
+    /// 2026-11-21, the Look lane's A2; 0 off, as here): a crater cell is
+    /// closed to walkers (steps, sensors, jumps, births), as deep water is,
+    /// for the first share S of its countdown, so a hit's gap holds about
+    /// S x 2 s and then closes from the rim in (engine.wgsl's
+    /// `crater_shut`). Params word 929's bits 16-31: the countdown steps
+    /// above which a cell is shut (0xFFFF off). No CPU twin; a run's
+    /// planets set it (`run::enemy_keys`).
+    pub crater_shut: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -813,6 +822,7 @@ impl Settings {
             tether: 0,
             crystal_keep: false,
             ceiling: 0,
+            crater_shut: 0.0,
             deep_wall: true,
             solid_walls: true,
             flinch: t.flinch,
@@ -1146,6 +1156,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // Reports/lab-body-2026-11-18; 2 its pick).
         "tether" => s.tether = int()?.min(8),
         "crystal_keep" => s.crystal_keep = int()? != 0,
+        "crater_shut" => s.crater_shut = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
         "deep_wall" => s.deep_wall = int()? != 0,
@@ -2510,7 +2521,10 @@ impl Engine {
         b.extend(f32_bytes(&[t.deep_step]));
         // Bit 1: built walls are solid to a step (`Settings::solid_walls`,
         // 2026-11-21).
-        b.extend(u32_bytes(&[s.deep_wall as u32 | (s.solid_walls as u32) << 1]));
+        // Bits 16-31: the crater countdown above which a cell is shut
+        // (`Settings::crater_shut`, 2026-11-21; 0xFFFF off).
+        let shut = if s.crater_shut > 0.0 { ((self.crater_steps as f32 * (1.0 - s.crater_shut)).round() as u32).min(0xFFFE) } else { 0xFFFF };
+        b.extend(u32_bytes(&[s.deep_wall as u32 | (s.solid_walls as u32) << 1 | shut << 16]));
         // The last two, the heartbeat's source (2026-11-20).
         let at = self.heart.map_or((0.0, 0.0), |h| h.at);
         b.extend(f32_bytes(&[at.0, at.1]));

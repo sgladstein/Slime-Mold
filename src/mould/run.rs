@@ -369,6 +369,11 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         // Crystals never run out from the slime's eating (the owner,
         // 11-21 06:30Z): only the squad empties one, by draining it.
         ("crystal_keep", "1".to_string()),
+        // A hit's hole holds for the first half of its crater (about
+        // 1 s) before it closes from the rim (`crater_shut`, 11-21, the
+        // Look lane's A2; the owner, 11-12: "a bigger and bigger hole that
+        // doesn't refill while being shot at").
+        ("crater_shut", "0.5".to_string()),
     ]
 }
 
@@ -1937,10 +1942,10 @@ mod tests {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" || k == "tether" || k == "crystal_keep" {
+                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep, "planet {d}: {k}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
