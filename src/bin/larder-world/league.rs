@@ -365,8 +365,13 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let used = if spec.starts_with("util:") { [0, 0] } else { strat::tools_used() };
     let kills = app.game.as_ref().map_or([0; 8], |g| g.kit.killed);
     let tools = format!("{}/{}/{}/{}", used[0], used[1], kills[0], kills[1]);
+    // Starfall and cores (`Plan::drops`): falls landed, cores dropped,
+    // points the squad took from ore and from cores, points the slime ate
+    // back, and drops the squad set out for.
+    let sf = &g.starfall;
+    let drops = format!("{}/{}/{:.0}/{:.0}/{:.0}/{}", sf.landed, sf.cores, sf.ore_taken, sf.core_taken, sf.eaten, if spec.starts_with("util:") { 0 } else { strat::drops_chased() });
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
         r.depth,
         r.seed,
         l.seed,
@@ -394,6 +399,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         switched[0],
         switched[1],
         if spec.starts_with("util:") { 0 } else { strat::burnt() },
+        if spec.starts_with("util:") { 0 } else { strat::cooled() },
         mark(at[0]),
         mark(at[1]),
         mark(at[2]),

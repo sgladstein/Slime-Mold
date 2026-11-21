@@ -403,6 +403,7 @@ impl<W: World> Game<W> {
                     s.touching = u.touching;
                     s.aim = u.target;
                     s.dense = u.dense;
+                    s.heat = u.heat;
                     s.carry += u.took / r.charge;
                     if !r.larder {
                         // Drained straight into the bank: nothing to carry.

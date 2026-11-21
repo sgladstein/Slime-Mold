@@ -81,7 +81,12 @@ wide/rate/blast.needle. A plan may be one a planet (`a|b|c`, the last
 for every planet after), and since 11-20 the worker also searches planet 2
 and plays whole runs; since 11-21 the bot also buys a gun (`gun`, `arm`),
 loads its turrets (`tcards`) and orders its cards (`order`)
-([report](../../Reports/strategy-bots-2026-11-19/README.md)).
+([report](../../Reports/strategy-bots-2026-11-19/README.md)). Before a
+bot result is read as balance, check that the bot did not stall. On
+11-21, CI's planet 1 plan sat with 43 soldiers to the 1,800 s limit
+beside the slime's home crystal, because every other crystal was dry. The
+bot's `siege` dial fixed it, and the same plan then won 9 of 11 maps, not
+6. `STRAT_DBG=1` prints the bot's choices every 10 s.
 
 | Hand | What it does | Where |
 |---|---|---|
