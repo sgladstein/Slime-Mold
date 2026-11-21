@@ -226,11 +226,15 @@ pub(super) struct Plan {
     pub drops: u32,
     /// **Out of its own fire** (11-20, Direction: on planet 2, 32 of 38
     /// of the run bot's dead and 25 of 31 on another map burned in its own
-    /// Tinder fires): a member standing in fire (`Soldier::heat`) moves the
-    /// squad toward and past its cool members (back from the slime when
-    /// all are hot), and for this many seconds the hunt takes no stand near
-    /// where it burned. 0: off. Unlike `fire`, it reads the heat itself, so
-    /// it moves before the burn, not after the health is gone.
+    /// Tinder fires): when a quarter of the squad (at least 2) stands in
+    /// fire hotter than `HOT` (`Soldier::heat`), the squad moves toward and
+    /// past its cool members (back from the slime when all are hot), and
+    /// for this many seconds the hunt takes no stand near where it burned.
+    /// 0: off. Unlike `fire`, it reads the heat itself, so it moves before
+    /// the health is gone. Off by default: stepping out of any heat at all
+    /// (0.02) lost planet 2 map 1 sooner in the cloud (210 s against 348,
+    /// 4 burned against 31 but 389 harvested against 10,407), since the
+    /// Torch and Tinder keep some member in fire about half the time.
     pub cool: f32,
     /// **Retake when broke** (11-20, Direction: on planet 1 run seed 3 the
     /// run bot held 16 soldiers and 228 in the bank for four minutes while
@@ -291,7 +295,7 @@ impl Default for Plan {
             tcards: Vec::new(),
             order: Vec::new(),
             drops: 0,
-            cool: 12.0,
+            cool: 0.0,
             broke: 20.0,
         }
     }
@@ -738,6 +742,11 @@ pub(super) fn cooled() -> u32 {
     MEM.with_borrow(|mm| mm.cooled)
 }
 
+/// Heat over which a member counts as in fire (`Plan::cool`): 2 health a
+/// second at `fire_hurt` 10. On planet 2 with the Torch and Tinder, a
+/// burning member's heat ran 0.2 to 0.8 (cloud, 11-21).
+const HOT: f32 = 0.2;
+
 /// Whether `at` lies within `r` of where a member burned lately (`Plan::cool`).
 fn hot_near(at: (f32, f32), r: f32, t: f32) -> bool {
     MEM.with_borrow(|mm| mm.hot.iter().any(|&(h, until)| until > t && dist(h, at) < r))
@@ -1108,8 +1117,8 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
     // Out of its own fire (`cool`): toward and past the cool members, or
     // back from the slime when every member is hot.
     if p.cool > 0.0 {
-        let (hot, cold): (Vec<usize>, Vec<usize>) = members.iter().partition(|&&k| g.soldiers[k].heat > 0.02);
-        if !hot.is_empty() {
+        let (hot, cold): (Vec<usize>, Vec<usize>) = members.iter().partition(|&&k| g.soldiers[k].heat > HOT);
+        if hot.len() >= (members.len() / 4).max(2) {
             let at = |ks: &[usize]| centroid(&ks.iter().map(|&k| (g.soldiers[k].x, g.soldiers[k].y)).collect::<Vec<_>>());
             let h = at(&hot);
             MEM.with_borrow_mut(|mm| {
