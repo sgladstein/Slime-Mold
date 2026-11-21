@@ -256,7 +256,8 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // gives each crystal its own, else every pile's is `crystal_charge`).
 // `centre`: the pile's centre as a fine cell, x | y << 16 (`BigDish::
 // pile_centre`), where a panicking walker runs. `_b`: what the slime ate
-// here in all, in sixteenths as a u32 (`KEEP`). `covered`: its cells with
+// here in all, in 4096ths as a u32 (`KEEP`; sixteenths rounded a thin
+// pile's bite to 0). `covered`: its cells with
 // charge and a walker on them at the last `pilesum` (the slime's birth
 // ceiling, `CEIL`; Rust's `PILE_WORDS`).
 struct Pile { start: u32, count: u32, cells: u32, centre: u32, sum: f32, left: f32, full: f32, _b: f32, covered: u32, _c: u32, _d: u32, _e: u32 };
@@ -2700,10 +2701,10 @@ fn pilesum(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_inde
         workgroupBarrier();
     }
     if (li == 0u) {
-        // A running total in sixteenths, as a u32 in the pile's last word
+        // A running total in 4096ths, as a u32 in the pile's eighth word
         // (`Engine::pile_eaten` reads it; a world that flows sums twice a
         // tick, which the host halves).
-        if (keep) { piles[p]._b = bitcast<f32>(bitcast<u32>(piles[p]._b) + u32(round(pate[0] * 16.0))); }
+        if (keep) { piles[p]._b = bitcast<f32>(bitcast<u32>(piles[p]._b) + u32(round(pate[0] * 4096.0))); }
         let full = piles[p].full * f32(pcnt[0]);
         piles[p].sum = psum[0];
         piles[p].cells = pcnt[0];

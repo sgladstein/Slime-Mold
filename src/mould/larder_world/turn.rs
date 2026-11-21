@@ -611,7 +611,10 @@ impl<W: World> Game<W> {
         let under = (self.mould as f32) < r.broken * self.peak as f32;
         match (under, self.broken) {
             (true, None) => {
-                let up = self.world.upkeep();
+                // The shape's upkeep, not the ceiling's raise of it
+                // (`time_ceiling`, 11-21), so a broken slime over its
+                // ceiling starves at `broken_starve`, not 3 times that.
+                let up = if self.ceiling.start > 0 { self.ceiling.upkeep } else { self.world.upkeep() };
                 self.world.set_upkeep(up * r.broken_starve);
                 self.broken = Some((self.world.ticks(), up));
             }

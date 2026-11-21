@@ -12,7 +12,8 @@
 //! Once a game second the slime's ceiling is set from the crystal cells it
 //! covers (with charge and a walker on them, the GPU's `pilesum`), smoothed
 //! over `CEILING_SMOOTH` seconds, times its walkers a covered cell: its
-//! density at landing, at least `Rules::ceiling`. So a planet starts with
+//! density at landing, at least `Rules::ceiling` and at most
+//! `CEILING_DENSITY_MOST`. So a planet starts with
 //! the slime at or under its ceiling (its start plays as before), and the
 //! ceiling then rises and falls with the crystal it covers, never over
 //! `Rules::ceiling_roof` times its landing walkers or its slots.
@@ -42,6 +43,12 @@ use super::{Game, World};
 /// Seconds the covered cells are smoothed over: a surge or a shot that
 /// empties a crystal's rim for a moment does not drop the ceiling.
 pub const CEILING_SMOOTH: f64 = 5.0;
+
+/// The most walkers a covered cell the landing density may take: a slime
+/// that lands mostly off its crystal would otherwise get a ceiling at its
+/// roof, and the rule would do nothing there (the review thread, 11-21;
+/// planet 1 landed with 14 to 21).
+pub const CEILING_DENSITY_MOST: f64 = 25.0;
 
 /// How far over its ceiling the slime pays the whole of
 /// `Rules::ceiling_upkeep` (a share; under it, in proportion).
@@ -79,7 +86,7 @@ impl<W: World> Game<W> {
             let c = &mut self.ceiling;
             c.start = mould.max(1);
             c.covered = covered;
-            c.density = (mould as f64 / covered.max(1.0)).max(r.ceiling as f64);
+            c.density = (mould as f64 / covered.max(1.0)).clamp(r.ceiling as f64, CEILING_DENSITY_MOST.max(r.ceiling as f64));
             c.upkeep = self.world.upkeep();
         }
         let c = &mut self.ceiling;

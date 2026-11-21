@@ -138,7 +138,7 @@ struct Read {
     /// Each pile's charge and cells still crystal.
     sums: Vec<(f32, u32)>,
     /// The piles' running sums of what the slime ate (`crystal_keep`), in
-    /// sixteenths, added up (wrapping).
+    /// 4096ths, added up (wrapping).
     ate: u32,
     /// Crystal cells with charge and a walker on them, pile by pile.
     covered: Vec<usize>,
@@ -167,7 +167,7 @@ pub struct GpuWorld {
     living: usize,
     /// What the slime ate without emptying a crystal (`Settings::
     /// crystal_keep`), charge in all, and the piles' running sum (in
-    /// sixteenths) at the last readout.
+    /// 4096ths) at the last readout.
     ate: f64,
     ate_mark: Option<u32>,
     /// Crystal cells with charge and a walker on them at the last readout,
@@ -544,7 +544,7 @@ impl GpuWorld {
             if let Some(m) = self.ate_mark {
                 let moved = r.ate.wrapping_sub(m);
                 if moved < 1 << 31 {
-                    self.ate += moved as f64 / 16.0 / if self.e.flows { 2.0 } else { 1.0 };
+                    self.ate += moved as f64 / 4096.0 / if self.e.flows { 2.0 } else { 1.0 };
                 }
             }
             self.ate_mark = Some(r.ate);
