@@ -7505,3 +7505,16 @@ error: Please commit or stash them.
 2026-11-21 16:20:17   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|lure,g planet 0 seed 7: ? 2283.0 (0 s)
 2026-11-21 16:22:51   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|lure,g planet 0 seed 8: ? 2056.0 (0 s)
 2026-11-21 16:23:48   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 1795038793: ? 2194.0 (0 s)
+2026-11-21 16:24:36 worker: could not take the branch's new commits: error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+
+2026-11-21 16:27:34   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 1795106014: ? 1965.0 (0 s)
+2026-11-21 16:28:18   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 1795119328: ? 2331.0 (0 s)
+2026-11-21 16:31:24   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 1: ? 2152.0 (0 s)
+2026-11-21 16:32:11   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 2: ? 2338.0 (0 s)
+2026-11-21 16:34:46   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 3: ? 2162.0 (0 s)
+2026-11-21 16:34:46   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 4: ? 1608.0 (0 s)
+2026-11-21 16:38:06   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 5: ? 2228.0 (0 s)
+2026-11-21 16:38:23   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 6: ? 2223.0 (0 s)
+2026-11-21 16:40:19   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 7: ? 1879.0 (0 s)
+2026-11-21 16:40:50   rush,aim=6,gun=carbine|rush,aim=6,cards=0,gun=carbine|econ,g planet 0 seed 8: ? 2058.0 (0 s)
