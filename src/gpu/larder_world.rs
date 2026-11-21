@@ -2871,6 +2871,66 @@ mod tests {
         assert!(kept.world.e.alive() > alive + start / 50, "the world without a ceiling grows on: {} against {alive}", kept.world.e.alive());
     }
 
+    /// **A hit's hole stays open while it is fresh** (`crater_shut`,
+    /// 2026-11-21, the Look lane's A2). Engine rule with no CPU twin, so
+    /// the test is what it does on the software GPU: two race worlds
+    /// alike, a kill and a 60-step crater on the home crystal's slime, one
+    /// with the first half of the crater shut. Walkers within the hole's
+    /// inner two thirds: none back in the shut world while the whole hole
+    /// is shut (a quarter of the crater), and fewer than in the open world
+    /// at its half; both refill once it opens.
+    #[test]
+    fn a_hits_hole_stays_open_while_it_is_fresh() {
+        use crate::gpu::floats;
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |shut: &str| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "crater_shut", shut).unwrap();
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 20.0 {
+                g.step();
+            }
+            g
+        };
+        let (mut open, mut shut) = (play("0"), play("0.5"));
+        let home = open.world.crystals()[0].0;
+        let sc = open.world.scale();
+        let at = (home.0 / sc, home.1 / sc);
+        let fine = open.world.fine_steps() as f32;
+        let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+        let hit = squad::Burst { at, r: 6.0, kill: true, crater: 60, crater_r: 6.0, ..Default::default() };
+        // The walkers within 4 of the hit's centre (fine cells).
+        let inside = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let (cx, cy, r) = (at.0 * e.dish.p.scale as f32, at.1 * e.dish.p.scale as f32, 4.0 * e.dish.p.scale as f32);
+            (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count()
+        };
+        let before = inside(&open);
+        let mut counts = Vec::new();
+        for g in [&mut open, &mut shut] {
+            g.world.e.crater_steps = 60;
+            g.world.burst(&hit, &k);
+            let mut c = Vec::new();
+            for quarter in 1..=4 {
+                let until = g.world.ticks() + (15.0 / fine).ceil() as u64;
+                while g.world.ticks() < until {
+                    g.step();
+                }
+                c.push((quarter, inside(g)));
+            }
+            counts.push(c);
+        }
+        eprintln!("hole: {before} walkers before the hit; open {:?}, shut {:?} (quarters of the crater)", counts[0], counts[1]);
+        assert!(before > 30, "the hit lands in the slime: {before}");
+        assert_eq!(counts[1][0].1, 0, "nothing steps into the shut hole");
+        assert!(counts[1][1].1 < counts[0][1].1, "fewer back at the crater's half: {:?} against {:?}", counts[1][1], counts[0][1]);
+        assert!(counts[1][3].1 > 0, "the shut hole refills once it opens");
+    }
+
     /// **A shot stops at set slime** (the owner's planet 3 round,
     /// 2026-11-19 20:46Z: "slime that i couldn't kill they were not moving
     /// but all my soliders would shoot them over and over and nothing hurt

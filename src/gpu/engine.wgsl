@@ -183,7 +183,8 @@ struct Params {
     // The ground row (new ground kinds, 11-14; Params grew from 928 to
     // 944): a walker's step in deep water is x `deep_step` on top of
     // `wet_step` (`BigParams::deep_step`); deep water as a wall to the
-    // slime (`Settings::deep_wall`, 11-20; `shut`). The last two are the
+    // slime (`Settings::deep_wall`, 11-20; `shut`; bit 1 `solid_walls`,
+    // bits 16-31 the crater's shut steps, `crater_shut`). The last two are the
     // heartbeat's source, in fine cells (2026-11-20, `heart_beat`).
     deep_step: f32, deep_wall: u32, heart_x: f32, heart_y: f32,
     // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
@@ -788,6 +789,20 @@ fn soil(i: u32) -> u32 {
 // into a river could never leave and a planet won on its last walker would
 // never end. No CPU twin (the owner's card, 11-17 19:21Z).
 fn deep_shut(j: u32) -> bool { return (P.deep_wall & 1u) != 0u && soil(j) == SOIL_DEEP; }
+// **A hit's hole stays open while it is fresh** (`crater_shut`,
+// 2026-11-21, the Look lane's A2 with Direction; the owner, 11-12:
+// sustained fire carves "a bigger and bigger hole that doesn't refill
+// while being shot at"). Cell j is closed to walkers, as deep water is,
+// while its crater countdown is above the `deep_wall` word's high 16 bits
+// (steps; 0xFFFF off). The countdown starts at `crater` on a hit's cells
+// and fewer toward its rim (the cone), so the rim drops under it first and
+// the hole closes from the rim in. Until then the hole refilled in a
+// median 0.5 to 0.9 s while its ember lasted 2 s
+// (Reports/larder-crater-2s-2026-11-14.md). No CPU twin.
+fn crater_shut(j: u32) -> bool {
+    let t = P.deep_wall >> 16u;
+    return t != 0xFFFFu && crater_at(j) > f32(t);
+}
 // **A wall holds until it is worn through** (`solid_walls`, 2026-11-21,
 // the owner: "Sometimes slime is able to get through my walls even when
 // they have no burrowed a full hole yet"; bit 1 of the `deep_wall` word).
@@ -933,7 +948,7 @@ fn trail_at(i: u32, sp: u32) -> f32 {
 fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
-    if (i == NONE || agar[i] == 0u || deep_shut(i)) { return -1.0e6; }
+    if (i == NONE || agar[i] == 0u || deep_shut(i) || crater_shut(i)) { return -1.0e6; }
     // `sw` is 1, or more for a hungry walker (`hunger_scent`); x 1 is exact.
     var v = trail_at(i, sp) + sw * scent_at(x + c * sso, y + s * sso);
     // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
@@ -1303,7 +1318,7 @@ fn raid_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
 fn panic_at(x: f32, y: f32, a: f32, so: f32, g: vec3<f32>) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
-    if (i == NONE || agar[i] == 0u || deep_shut(i)) { return -1.0e6; }
+    if (i == NONE || agar[i] == 0u || deep_shut(i) || crater_shut(i)) { return -1.0e6; }
     return c * (g.x - x) + s * (g.y - y);
 }
 
@@ -1611,7 +1626,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
+        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && !(crater_shut(there) && !crater_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
@@ -1933,7 +1948,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     // The parent's species' crowd limit (`crowd_for`).
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
-    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j)) { return; }
+    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j) || crater_shut(j)) { return; }
     // Not past a built wall's corner (`solid_walls`).
     let pw = walkers[k];
     if (wall_between(pw.x, pw.y, at.x, at.y) != NONE) { return; }
@@ -2098,7 +2113,7 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = jump_of(k, S.t);
     if (j.w == 0.0) { return; }
     let to = cell(j.x, j.y);
-    if (to == NONE || agar[to] == 0u || deep_shut(to)) { return; }
+    if (to == NONE || agar[to] == 0u || deep_shut(to) || crater_shut(to)) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     let cr = crowd_of(species_of(k));
