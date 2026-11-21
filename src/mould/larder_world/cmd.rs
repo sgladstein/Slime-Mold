@@ -71,8 +71,6 @@ pub enum Cmd {
     Link(u8, u8),
     /// Squad `q` leaves its link.
     Unlink(u8),
-    /// How many of squad `q` stand guard while it works (`Cover`).
-    Cover(u8, Cover),
     /// Squad `q` takes a gun (`Game::arm`; owner 11-14 16:46Z, "The squad
     /// owns the gun"); None gives back the standard rifle.
     Arm(u8, Option<Gun>),
@@ -118,7 +116,6 @@ impl Cmd {
             Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
-            Cmd::Cover(q, c) => format!("cover {q} {}", c.name()),
             Cmd::Heal(q) => format!("heal {q}"),
             Cmd::Arm(q, None) => format!("arm {q} none"),
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
@@ -152,7 +149,6 @@ impl Cmd {
             "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
             "heal" => return Some(Cmd::Heal(w.get(1)?.parse().ok()?)),
-            "cover" => return Some(Cmd::Cover(w.get(1)?.parse().ok()?, Cover::parse(w.get(2)?)?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
             "load" if w.get(2) == Some(&"army") => return Some(Cmd::Load(w.get(1)?.parse().ok()?, None)),
@@ -273,7 +269,7 @@ impl<W: World> Game<W> {
                 }
                 None => false,
             },
-            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Cover(..) | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Heal(..) => self.squad_cmd(c),
             _ => false,
         }
     }

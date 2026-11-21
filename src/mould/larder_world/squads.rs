@@ -84,7 +84,20 @@ pub enum Formation {
     Wedge,
     /// A circle facing out, for holding ground.
     Ring,
+    /// Two abreast, front to back along the way it goes (owner 2026-11-21
+    /// 05:04Z: "a formations button ... with good formation options"):
+    /// for doors, bridges and the gaps between rocks, so a squad files
+    /// through instead of funnelling (`funnel`) from a blob. It faces
+    /// where it walks, the controlled squad too, never the cursor.
+    Column,
+    /// The blob loosened to `SPREAD` times its room: fewer soldiers in one
+    /// bite of a surge or a raid, and its fire spread wider over loose
+    /// walkers, at the cost of a wider squad to steer through gaps.
+    Spread,
 }
+
+/// The `Spread` formation's room against the blob's.
+pub const SPREAD: f32 = 1.9;
 
 /// Soldiers in a row of `Formation::Line`.
 pub const LINE_ROW: usize = 8;
@@ -93,7 +106,7 @@ pub const LINE_ROW: usize = 8;
 const UNCROSS: usize = 4;
 
 impl Formation {
-    pub const ALL: [Formation; 4] = [Formation::Blob, Formation::Line, Formation::Wedge, Formation::Ring];
+    pub const ALL: [Formation; 6] = [Formation::Blob, Formation::Line, Formation::Wedge, Formation::Ring, Formation::Column, Formation::Spread];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -101,6 +114,8 @@ impl Formation {
             Formation::Line => "line",
             Formation::Wedge => "wedge",
             Formation::Ring => "ring",
+            Formation::Column => "column",
+            Formation::Spread => "spread",
         }
     }
 
@@ -125,6 +140,15 @@ impl Formation {
         const GAP: f32 = 1.0;
         match self {
             Formation::Blob => slot(r, GAP),
+            Formation::Spread => slot(r, GAP * SPREAD),
+            Formation::Column => {
+                // Pairs back from the anchor; an odd last one walks alone in
+                // the middle.
+                let row = r / 2;
+                let alone = !n.is_multiple_of(2) && r == n - 1;
+                let side = if alone { 0.0 } else if r.is_multiple_of(2) { -0.5 } else { 0.5 };
+                (-(row as f32) * GAP, side * GAP)
+            }
             Formation::Line => {
                 let row = r / LINE_ROW;
                 let in_row = (n - row * LINE_ROW).min(LINE_ROW);
@@ -186,10 +210,8 @@ pub struct Squad {
     /// cells (None when it is not steered or sent).
     pub anchor: Option<(f32, f32)>,
     /// The crystal or building it works (`Order::Clear` or `Order::Build`),
-    /// while some of it does (`Game::cover_turn`).
+    /// while some of it does (`Game::cover_turn` notices when it is done).
     pub work: Option<Order>,
-    /// How many stand guard while it works.
-    pub cover: Cover,
     /// Orders it does next (Shift + an order, `Cmd::SquadQueue`).
     pub queue: [Order; SQUAD_QUEUE],
     pub queued: u8,
@@ -267,7 +289,6 @@ impl Default for Squad {
             next_volley: 0,
             anchor: None,
             work: None,
-            cover: Cover::Some,
             queue: [Order::Hold; SQUAD_QUEUE],
             queued: 0,
             link: NO_LINK,
@@ -296,7 +317,7 @@ impl Squad {
     /// gun." (From 17:40Z to then the new half took the standard rifle and
     /// the army's round, so a great gun was never copied.)
     fn offshoot(&self) -> Squad {
-        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, loadout: self.loadout, ..Squad::default() }
+        Squad { formation: self.formation, face: self.face, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, loadout: self.loadout, ..Squad::default() }
     }
 }
 
@@ -304,9 +325,19 @@ impl Squad {
 /// same whichever way they face, so they don't turn: turning one only sent
 /// every soldier to a new place (bug sweep, 2026-11-14).
 fn turned(f: Formation, o: (f32, f32), face: (f32, f32)) -> (f32, f32) {
-    match f {
-        Formation::Blob | Formation::Ring => o,
-        Formation::Line | Formation::Wedge => (o.0 * face.0 - o.1 * face.1, o.0 * face.1 + o.1 * face.0),
+    if f.turns() {
+        (o.0 * face.0 - o.1 * face.1, o.0 * face.1 + o.1 * face.0)
+    } else {
+        o
+    }
+}
+
+impl Formation {
+    /// Whether it has a front, and so turns to its facing (a line, a
+    /// wedge, a column); a blob, a spread and a ring look the same every
+    /// way.
+    pub fn turns(self) -> bool {
+        matches!(self, Formation::Line | Formation::Wedge | Formation::Column)
     }
 }
 
@@ -527,8 +558,7 @@ impl<W: World> Game<W> {
         if self.ranked[q] as usize != n || sq.rank_shape != (sq.formation, self.columns[q].on) {
             return true;
         }
-        let turns = matches!(sq.formation, Formation::Line | Formation::Wedge);
-        turns && sq.face.0 * sq.rank_face.0 + sq.face.1 * sq.rank_face.1 < 0.866
+        sq.formation.turns() && sq.face.0 * sq.rank_face.0 + sq.face.1 * sq.rank_face.1 < 0.866
     }
 
     /// Where squad `q` stops when it is let go (WASD released, or another
@@ -917,8 +947,9 @@ impl<W: World> Game<W> {
             self.squads[q].map = map;
             // Facing: the controlled squad faces the cursor (`Cmd::Face`);
             // a steered or sent one faces where it goes unless it is
-            // volleying.
-            if sq.fire.is_none() && Some(q) != self.active {
+            // volleying. A column always faces where it goes: turned to
+            // the cursor it would walk sideways, a wall across its way.
+            if sq.fire.is_none() && (Some(q) != self.active || sq.formation == Formation::Column) {
                 if let Some(f) = unit((a.0 - at.0, a.1 - at.1)) {
                     self.squads[q].face = f;
                 }
@@ -934,12 +965,11 @@ impl<W: World> Game<W> {
                 self.squads[q].rank_at = a;
             }
             let o = if sq.fight && !steering { Order::Fight(a.0, a.1) } else { Order::Move(a.0, a.1) };
-            // Moving as one, nobody works or stands guard.
+            // Moving as one, nobody works.
             self.squads[q].work = None;
             for k in self.members(q) {
                 let s = &mut self.soldiers[k];
                 s.order = o;
-                s.cover = false;
                 // Steering drops what was queued; a squad sent somewhere
                 // keeps it (Shift + a build while it walks: the build comes
                 // once it is there; `Cmd::SquadOrder` drops the old queue).
@@ -1070,7 +1100,7 @@ impl<W: World> Game<W> {
 
     /// Squad `q` takes order `o` (what `Cmd::SquadOrder` does, bar dropping
     /// its queue): a move or fight sends it there in formation; a harvest
-    /// or a build sets it to work (`Game::cover_turn` calls its defenders).
+    /// or a build sets it to work (`Game::cover_turn` notices it done).
     pub(super) fn send_squad(&mut self, q: usize, o: Order) {
         self.squads[q].steer = (0.0, 0.0);
         self.squads[q].work = None;
@@ -1085,7 +1115,6 @@ impl<W: World> Game<W> {
                 self.squads[q].fight = false;
                 for k in self.members(q) {
                     self.soldiers[k].queued = 0;
-                    self.soldiers[k].cover = false;
                 }
             }
             Order::Move(x, y) | Order::Fight(x, y) => {
@@ -1093,7 +1122,6 @@ impl<W: World> Game<W> {
                 self.squads[q].fight = matches!(o, Order::Fight(..));
                 for k in self.members(q) {
                     self.soldiers[k].queued = 0;
-                    self.soldiers[k].cover = false;
                 }
             }
             _ => {
@@ -1103,11 +1131,9 @@ impl<W: World> Game<W> {
                     s.order = o;
                     s.queued = 0;
                     s.homing = false;
-                    s.cover = false;
-                }
+                    }
                 if matches!(o, Order::Clear(..) | Order::Build(_)) {
                     self.squads[q].work = Some(o);
-                    self.cover_squad(q);
                 }
             }
         }
@@ -1184,7 +1210,7 @@ impl<W: World> Game<W> {
                 true
             }
             Cmd::Heal(q) if ok(q) => {
-                // Stop where it stands and heal: no work, no guards, nothing
+                // Stop where it stands and heal: no work, nothing
                 // queued.
                 let q = q as usize;
                 let m = self.members(q);
@@ -1196,16 +1222,8 @@ impl<W: World> Game<W> {
                 for k in m {
                     let s = &mut self.soldiers[k];
                     s.order = Order::Hold;
-                    s.cover = false;
-                    s.queued = 0;
+                        s.queued = 0;
                     s.homing = false;
-                }
-                true
-            }
-            Cmd::Cover(q, c) if ok(q) => {
-                self.squads[q as usize].cover = c;
-                if self.squads[q as usize].work.is_some() {
-                    self.cover_squad(q as usize);
                 }
                 true
             }

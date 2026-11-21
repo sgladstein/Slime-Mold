@@ -237,7 +237,7 @@ impl<W: World> Game<W> {
         // formation (`Game::place_at`), whether its squad walks there as
         // one (the point is the anchor, moving) or stands there.
         let centre = match s.order {
-            Order::Move(x, y) | Order::Fight(x, y) if self.rules.squads && !s.cover => Some((x, y)),
+            Order::Move(x, y) | Order::Fight(x, y) if self.rules.squads => Some((x, y)),
             _ => None,
         };
         if let Some(a) = centre {
@@ -426,7 +426,7 @@ impl<W: World> Game<W> {
                 let s = self.soldiers[k];
                 if let Order::Move(x, y) | Order::Fight(x, y) = s.order {
                     let still = self.squads.get(s.squad as usize).is_some_and(|sq| sq.anchor != Some((x, y)));
-                    if r.squads && !s.cover && still {
+                    if r.squads && still {
                         let o = self.place(k);
                         place[k] = Some((x + o.0 * sc, y + o.1 * sc));
                     }

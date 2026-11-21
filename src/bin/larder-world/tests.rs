@@ -656,20 +656,22 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     app.prepare();
     let m = app.model(None, None);
     let wasd = [KeyCode::KeyW, KeyCode::KeyA, KeyCode::KeyS, KeyCode::KeyD];
-    for page in [(false, false), (true, false), (false, true)] {
-        (app.build_page, app.tools_page) = page;
+    for page in [(false, false, false), (true, false, false), (false, true, false), (false, false, true)] {
+        (app.build_page, app.tools_page, app.form_page) = page;
         let m = app.model(None, None);
         for c in &m.commands {
             assert!(!wasd.contains(&c.key), "{} on {:?} steers instead", c.name, c.key);
         }
     }
-    (app.build_page, app.tools_page) = (false, false);
+    (app.build_page, app.tools_page, app.form_page) = (false, false, false);
     let key_of = |name: &str| m.commands.iter().find(|c| c.name == name).map(|c| c.key);
     assert_eq!(key_of("Drain a crystal"), Some(KeyCode::KeyG));
     assert_eq!(key_of("Attack-move"), Some(KeyCode::KeyR));
-    // Card 2: one fire button; X still picks Defend.
-    let fire = m.commands.iter().find(|c| c.id == FIRE).unwrap();
-    assert!(fire.also.contains(&(KeyCode::KeyX, DEFEND)) && fire.also.contains(&(KeyCode::KeyZ, HOLD_FIRE)) && fire.also.contains(&(KeyCode::KeyC, FREE)));
+    // The fire button (X) and Hold fire (Z) are two buttons (owner
+    // 2026-11-21 05:04Z); Formation (T) opens its page.
+    assert_eq!(key_of("Fire: defend"), Some(KeyCode::KeyX));
+    assert_eq!(key_of("Hold fire"), Some(KeyCode::KeyZ));
+    assert_eq!(key_of("Formation: blob"), Some(KeyCode::KeyT));
     assert!(m.help_base.as_ref().is_some_and(|h| h.iter().any(|r| r.1.starts_with("Split"))), "F1 lists the squad's keys");
     // G is the card's: it aims a drain, and merges nothing.
     assert!(!app.squad_key(KeyCode::KeyG, true, false, false));
@@ -692,6 +694,50 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     app.ctrl = true;
     assert!(app.squad_wheel(1));
     assert_ne!(app.game.as_ref().unwrap().active, active, "Ctrl + wheel switched squads");
+}
+
+/// **Hold fire is its own toggle, and the Formation page picks a
+/// formation** (owner 2026-11-21 05:04Z: "add a formations button to the
+/// hud with good formation options. hold fire should be a seperate button
+/// from defend vs free fire").
+#[test]
+fn hold_fire_toggles_apart_from_the_fire_mode_and_the_formation_page_picks() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.game.as_mut().unwrap().bank = 1e6;
+    for _ in 0..3 {
+        app.game.as_mut().unwrap().apply(Cmd::Buy);
+    }
+    app.squad_frame(1.0 / 60.0);
+    let stances = |app: &App| {
+        let g = app.game.as_ref().unwrap();
+        g.members(g.active.unwrap()).into_iter().map(|k| g.soldiers[k].stance).collect::<Vec<_>>()
+    };
+    let all = |app: &App, st: Stance| stances(app).iter().all(|&s| s == st);
+    assert!(all(&app, Stance::Defend));
+    app.hud_event(HudEvent::Command { id: FIRE }).unwrap();
+    assert!(all(&app, Stance::Free), "the fire button switches to free fire");
+    app.hud_event(HudEvent::Command { id: HOLD_FIRE }).unwrap();
+    assert!(all(&app, Stance::HoldFire), "hold fire holds");
+    assert!(app.model(None, None).commands.iter().any(|c| c.id == HOLD_FIRE && c.on), "and its button shows it on");
+    // Switched while held, they keep holding and fire that way once let go.
+    app.hud_event(HudEvent::Command { id: FIRE }).unwrap();
+    assert!(all(&app, Stance::HoldFire));
+    assert!(app.model(None, None).commands.iter().any(|c| c.id == FIRE && c.name == "Fire: defend"));
+    app.hud_event(HudEvent::Command { id: HOLD_FIRE }).unwrap();
+    assert!(all(&app, Stance::Defend), "let go, back to the mode picked: {:?}", stances(&app));
+    // The Formation page: its buttons, the current one lit, a pick closes it.
+    app.hud_event(HudEvent::Command { id: FORM_PAGE }).unwrap();
+    let m = app.model(None, None);
+    for id in [F_BLOB, F_SPREAD, F_LINE, F_WEDGE, F_COLUMN, F_RING, HEAL_ORDER, F_BACK] {
+        assert!(m.commands.iter().any(|c| c.id == id), "the page has {id}");
+    }
+    assert!(m.commands.iter().any(|c| c.id == F_BLOB && c.on));
+    app.hud_event(HudEvent::Command { id: F_COLUMN }).unwrap();
+    let g = app.game.as_ref().unwrap();
+    assert_eq!(g.squads[g.active.unwrap()].formation, slime_mould::mould::larder_world::Formation::Column);
+    assert!(!app.form_page, "a pick goes back to the main card");
+    assert!(app.model(None, None).commands.iter().any(|c| c.id == FORM_PAGE && c.name == "Formation: column"));
 }
 
 #[test]
