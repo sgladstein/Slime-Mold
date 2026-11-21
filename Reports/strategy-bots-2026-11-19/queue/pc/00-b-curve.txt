@@ -1,5 +1,5 @@
 # Difficulty curve over planets 2 to 5 for the thread pacing threats across planets (11-21 00:50Z), on main with #606 and #612 (strikers from planet 2, waves and the late lunge from planet 3, the last-stand heart from planet 4, run::FIRST_PLANET). Cold landings (league=DEPTH:SEED, the shops before them), maps 1-8 and 1795038793, SECS 1200. Plans: the planet 2 rush, the planet 3 econ deck with fire=0.5, the lure. 108 games. Deciding measure: wins and secs by planet, looking for a planet that jumps against its neighbours.
-# code-bound
+# code-bound Rows of 4180f5ed06c3 count too (finished on it; retired 11-21 04:50Z, so a new build does not play it again).
 rush,aim=6,cards=0 2 1 1200
 econ,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,fire=0.5 2 1 1200
 lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1 2 1 1200
