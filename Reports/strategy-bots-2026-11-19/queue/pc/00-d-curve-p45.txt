@@ -1,5 +1,5 @@
 # Planets 4 and 5 again on main with the heart cap (#633), for the thread pacing threats across planets (11-21 04:53Z), paired by map against job 00-b's rows (src 4180f5ed06c3). siege=0 keeps the bot as it was in 00-b (siege=3 became its default after it), so the difference is the game: main through #636. Maps 1-8 and 1795038793, SECS 1200, 36 games.
-# code-bound
+# code-bound Rows of 1c02ff7086ca count too (finished on it; retired 11-21 17:40Z, so a new build does not play it again).
 rush,aim=6,cards=0,siege=0 4 1 1200
 lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,siege=0 4 1 1200
 rush,aim=6,cards=0,siege=0 4 2 1200

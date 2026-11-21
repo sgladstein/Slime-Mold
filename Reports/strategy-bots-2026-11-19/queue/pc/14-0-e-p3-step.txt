@@ -1,5 +1,5 @@
 # Stepping back under half health on planet 3 (11-20 21:30Z). Job 14-0-a: at fire_hurt 10 (main since #564) the Needle Blast deck plan burns its own soldiers in its blasts' fires, 856 lost over 9 maps; fire=0.5 (step back out of fire under half health) kept 9 of 9 wins and lost 141. The same step-back on the other planet 3 plans: the lure and econ switch plans and econ mop (Tinder). Plain arms: lure in 14-0-c-tools, mop in 14-0-a; econ's plain arm here. 36 games. Deciding measure: wins and soldiers lost against the plain arm, paired by map.
-# code-bound
+# code-bound Rows of 1c02ff7086ca count too (finished on it; retired 11-21 17:40Z, so a new build does not play it again).
 lure,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,fire=0.5 3 1 900 set=fire_hurt=10
 econ,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1 3 1 900 set=fire_hurt=10
 econ,go=4,aim=6,hold=8,grow=1.3,regroup=3,spare=1,fire=0.5 3 1 900 set=fire_hurt=10
