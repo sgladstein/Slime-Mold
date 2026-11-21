@@ -1,4 +1,4 @@
-# What the view's base pass costs, part by part (2026-11-21, open)
+# What the view's base pass costs, part by part (2026-11-21)
 
 Look and interface. The 1070 batch for Milestone 1
 ([pc-batch-1070-m1-2026-11-21](../pc-batch-1070-m1-2026-11-21.md)) timed the
@@ -21,5 +21,42 @@ The run, for each variant (the batch's own view command):
     LARDER_VIEW_WGSL=vc/NAME.wgsl larder-world run=1:3 mode=squads bench=60 \
         hand=strat:rush,aim=6 centre=larder,6 viewpasses=30
 
-Timings go in the next GPU batch (Engine and tools); results and what is
-cut follow here.
+## The timings (GTX 1070, 11-21)
+
+Engine and tools ran the nine variants on Scott's GTX 1070 at main
+c241fd7e (planet 3, `centre=larder,6`, `bench=60`, `viewpasses=30`), each
+twice and interleaved; raw output on branch `runner-out-1070-followup`,
+`runner-out/20261120-221333/view-*.txt`. `base` in ms, run 1 / run 2, and
+what taking the part out saves against `full` (means):
+
+| variant | base (ms) | saves |
+|---|---|---|
+| full | 3.391 / 3.449 | |
+| plants | 2.368 / 2.389 | 1.04 |
+| soil | 2.910 / 2.954 | 0.49 |
+| crust | 3.143 / 3.173 | 0.26 |
+| gems | 3.171 / 3.181 | 0.24 |
+| water | 3.198 / 3.201 | 0.22 |
+| terrain | 3.203 / 3.203 | 0.22 |
+| lights | 3.417 / 3.419 | 0.00 (no lights in the shot) |
+| flat | 0.772 / 0.772 | 2.65 (all of `shaded`'s lighting) |
+
+The view as a whole took 3.93 / 4.00 ms, the frame 4.97 / 5.08 (p50).
+`full-1` began on an idle card (569 MHz) and still matched `full-2` within
+2%. The parts sum to about 2.5 ms; nearly all of `base` is `shaded`, and the
+plants are its dearest single part.
+
+## What was cut
+
+**The plants, under the slime** (11-21). `shaded` worked out every kind's
+crowns (3 x 3 neighbours each, with a slow noise and the moisture field
+for the clumped kinds) at every pixel, and then weighted them by how much
+bare ground shows (`gv`), which is 0 under the body. Now the crowns and the
+water's thinning are worked out only where `gv` is over 0.001 or the plants
+burn (their flames light the slime over them). The picture is the same:
+filmed on planet 3 at 60 s, zoom 6, before and after, the moss and reeds
+on bare ground unchanged. Its saving on the 1070 waits on Engine's next
+batch; it scales with how much of the screen the slime covers.
+
+Next if more is needed: the slope's two extra B-spline samples and the
+highlight's four `film_h` reads in `shaded`, which every pixel pays.
