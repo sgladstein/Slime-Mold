@@ -594,6 +594,19 @@ pub struct SquadPanel {
     pub free_key: Option<String>,
 }
 
+/// One of the commanded squad's settings on the squad panel (controls
+/// review, 2026-11-21: with one to three squads the tiles fill a third of
+/// the panel on a wide screen and the rest sat empty, while the squad's
+/// formation, queue and tools showed nowhere). An icon and a few words
+/// ("line", "2 queued"), and its tooltip. The window lists them most
+/// wanted first; the strip drops from the end what does not fit.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SquadFact {
+    pub icon: Icon,
+    pub text: String,
+    pub about: String,
+}
+
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Model {
@@ -652,6 +665,9 @@ pub struct Model {
     pub loadout: Option<Loadout>,
     /// The squad mode's squads, a panel at the top right.
     pub squads: Option<SquadPanel>,
+    /// The commanded squad's settings, a strip right of its tiles where
+    /// the row leaves room (`SquadFact`).
+    pub squad_facts: Vec<SquadFact>,
     /// The player is steering (WASD in the squad mode): the screen moves
     /// under a still cursor, so the hover card stays away (`HoverCard`).
     pub aiming: bool,
@@ -1861,7 +1877,7 @@ impl Hud {
 
         let inner = r.inset(pad);
         if let Some(p) = &m.squads {
-            self.squad_tiles(p, inner, c, s);
+            self.squad_tiles(p, &m.squad_facts, inner, c, s);
             return;
         }
         if let Some(info) = &m.info {
@@ -1940,7 +1956,7 @@ impl Hud {
     /// end, and a tile a squad the size of a soldier's card (wider, for the
     /// count): its hotkey, soldiers, their health, and a + that brings it
     /// into the squad you command. The one you command is outlined.
-    fn squad_tiles(&mut self, p: &SquadPanel, inner: Rect, c: &mut Canvas, s: f32) {
+    fn squad_tiles(&mut self, p: &SquadPanel, facts: &[SquadFact], inner: Rect, c: &mut Canvas, s: f32) {
         let n = p.rows.len();
         let head = squads_head(n);
         // The header's buttons, from the right end; smaller, then without
@@ -2129,6 +2145,45 @@ impl Hud {
             } else if hot {
                 let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it (key {})", q.name, q.soldiers, q.key) };
                 tip = Some((what, cell));
+            }
+        }
+        // The commanded squad's settings, right of the tiles in the room
+        // a short row leaves: two lines of icon-and-words, flowed in the
+        // window's order, and what does not fit is left off (not cut).
+        if n <= cols && !p.free && !facts.is_empty() {
+            let x0 = inner.x + n as f32 * (cw + cgap) - cgap + 12.0 * s;
+            if inner.right() - x0 >= 120.0 * s {
+                c.rrect(Rect::new(x0, top + 4.0 * s, s.max(1.0), ch - 8.0 * s), 0.0, EDGE);
+                let left = x0 + 12.0 * s;
+                let lh = ch / 2.0;
+                // Placed first, so a strip that fits on one line sits on
+                // the tiles' middle rather than on their top half.
+                let (mut x, mut line) = (left, 0);
+                let mut placed = Vec::new();
+                for f in facts {
+                    let w = 21.0 * s + c.atlas.measure(Weight::Medium, 12.5 * s, &f.text);
+                    if x + w > inner.right() && x > left {
+                        line += 1;
+                        x = left;
+                    }
+                    if line > 1 || x + w > inner.right() {
+                        continue;
+                    }
+                    placed.push((f, x, line, w));
+                    x += w + 16.0 * s;
+                }
+                let one = placed.iter().all(|p| p.2 == 0);
+                for (f, x, line, w) in placed {
+                    let y = top + if one { lh / 2.0 } else { line as f32 * lh };
+                    let hit = Rect::new(x - 3.0 * s, y + 2.0 * s, w + 6.0 * s, lh - 4.0 * s);
+                    let hot = self.hover.is_some_and(|h| hit.contains(h));
+                    c.icon(f.icon, (x, y + lh / 2.0 - 8.0 * s), 16.0 * s, if hot { TEXT } else { MUTED });
+                    c.text(Weight::Medium, 12.5 * s, (x + 21.0 * s, y + lh / 2.0 + 4.5 * s), Align::Left, &f.text, if hot { TEXT } else { MUTED });
+                    self.hits.push((hit, Hit::Panel));
+                    if hot {
+                        tip = Some((f.about.clone(), hit));
+                    }
+                }
             }
         }
         if let Some((t, at)) = tip {
@@ -3396,6 +3451,46 @@ mod tests {
                     for b in &tiles[i + 1..] {
                         let apart = a.right() <= b.x + 0.5 || b.right() <= a.x + 0.5 || a.bottom() <= b.y + 0.5 || b.bottom() <= a.y + 0.5;
                         assert!(apart, "{screen:?}, {n} squads: {a:?} and {b:?} overlap");
+                    }
+                }
+            }
+        }
+    }
+
+    /// The commanded squad's strip (controls review, 11-21): right of the
+    /// tiles, inside the panel, none over another; on a wide screen with
+    /// one squad all five show; with no squad commanded, none.
+    #[test]
+    fn the_squad_strip_sits_right_of_the_tiles() {
+        let row = |k: usize| SquadRow { key: format!("{}", k + 1), name: format!("Squad {}", k + 1), soldiers: 4, hp: 0.8, note: Some("holding".into()), active: k == 0, near: false, linked: false, auto: k != 0, state: String::new() };
+        let fact = |t: &str| SquadFact { icon: Icon::Group, text: t.into(), about: "x".into() };
+        let facts = vec![fact("line formation"), fact("fire: defend"), fact("2 queued"), fact("Loadout 1"), fact("4 tools")];
+        for screen in [(1920, 1080), (1600, 972), (1280, 720)] {
+            for n in [1, 2, 3] {
+                for free in [false, true] {
+                    let mut r = Rig::new(screen);
+                    r.m.squads = Some(SquadPanel { rows: (0..n).map(row).collect(), split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, free, free_key: Some("Esc".into()) });
+                    r.m.squad_facts = facts.clone();
+                    r.m.loadout = Some(loadout());
+                    r.draw();
+                    let tiles: Vec<Rect> = (0..n).filter_map(|i| r.hud.hits.iter().find(|(_, h)| *h == Hit::Squad(i)).map(|(b, _)| *b)).collect();
+                    let end = tiles.iter().map(|t| t.right()).fold(0.0, f32::max);
+                    let (row_top, row_bottom) = (tiles[0].y, tiles[0].bottom());
+                    let shown: Vec<Rect> = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.x > end && b.y >= row_top - 1.0 && b.bottom() <= row_bottom + 1.0 && b.h < 40.0).map(|(b, _)| *b).collect();
+                    if free {
+                        assert!(shown.is_empty(), "{screen:?}, {n} squads, none commanded: {} facts drawn", shown.len());
+                        continue;
+                    }
+                    if screen.0 == 1920 && n == 1 {
+                        assert_eq!(shown.len(), facts.len(), "{screen:?}: one squad leaves room for every fact");
+                    }
+                    let panel = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.contains((tiles[0].x, tiles[0].y))).map(|(b, _)| *b).fold(None, |a: Option<Rect>, b| Some(a.map_or(b, |a| if b.w > a.w { b } else { a }))).unwrap();
+                    for (i, a) in shown.iter().enumerate() {
+                        assert!(a.right() <= panel.right() + 0.5, "{screen:?}, {n} squads: fact {a:?} runs out of the panel {panel:?}");
+                        for b in &shown[i + 1..] {
+                            let apart = a.right() <= b.x + 0.5 || b.right() <= a.x + 0.5 || a.bottom() <= b.y + 0.5 || b.bottom() <= a.y + 0.5;
+                            assert!(apart, "{screen:?}, {n} squads: facts {a:?} and {b:?} overlap");
+                        }
                     }
                 }
             }
