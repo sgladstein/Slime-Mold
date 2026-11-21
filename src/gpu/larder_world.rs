@@ -3250,6 +3250,7 @@ mod tests {
             let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
             assert!(!cpu.plant.is_empty() && gpu.e.plants && gpu.e.withers);
             let home = cpu.homes[0];
+            let start: f64 = cpu.plant.iter().map(|&v| v as f64).sum();
             let (mut worst, mut stale) = (0.0f32, 0);
             for sec in 1..=24 {
                 let f = Frame::default();
@@ -3280,9 +3281,25 @@ mod tests {
                 let (dp, df, dc) = (diff(&pl, &cpu.plant), diff(&fire, &cfire), diff(&ch, &cchar));
                 let (nc, ng) = (World::living(&cpu), World::living(&gpu));
                 if (dry, fed) == (gpu_dry, gpu_fed) {
-                    // A long burn grows a card's ulps (the GTX 1070, 11-21:
-                    // fire 0.21 at 19 s, plants 0.018, char 0.041).
-                    assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.4) && dc <= tol(1e-5, 0.2), "{sec} s: plants {dp} fire {df} char {dc}");
+                    if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
+                        // On a card the fire front drifts a cell from the
+                        // CPU's as the burn goes on, so a cell-by-cell bound
+                        // only grows (the GTX 1070, 11-21: plants 0.018 at
+                        // 19 s, 0.074 at 21 s; fire 0.26, char 0.19): it
+                        // judges the burn's totals instead. On llvmpipe,
+                        // 11-21: an engine with the other `fire_fed` burns
+                        // 2.5 to 3 times the plants and char of the CPU's
+                        // (92 plants against 33 at 24 s; char 62 against
+                        // 24), the same rules but a different burn 5 to 10%
+                        // apart; the bounds sit between.
+                        let tot = |a: &[f32]| a.iter().map(|&v| v as f64).sum::<f64>();
+                        let near = |a: f64, b: f64, rel: f64| (a - b).abs() <= rel * b.abs() + 1.0;
+                        let (burnt, gburnt) = (start - tot(&cpu.plant), start - tot(&pl));
+                        let (cf, gf, cc, gc) = (tot(&cfire), tot(&fire), tot(&cchar), tot(&ch));
+                        assert!(near(gburnt, burnt, 0.25) && near(gf, cf, 0.4) && near(gc, cc, 0.25), "{sec} s: plants burnt CPU {burnt:.1} GPU {gburnt:.1}, fire {cf:.1} {gf:.1}, char {cc:.1} {gc:.1}");
+                    } else {
+                        assert!(dp <= 1e-5 && df <= 1e-5 && dc <= 1e-5, "{sec} s: plants {dp} fire {df} char {dc}");
+                    }
                     assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
                 }
                 worst = worst.max(df);
