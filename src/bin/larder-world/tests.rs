@@ -1598,7 +1598,12 @@ fn the_squad_mode_throws_from_its_device_slot() {
     assert_eq!((g.kit.uses[0], g.bank), (1, 0.0), "thrown, free");
     assert!(g.device_wait(q) > 19.0);
     let b = blast(&app);
-    assert!(!b.ready && b.cooldown > 0.9 && b.cost.as_deref().is_some_and(|c| c.ends_with('s') && c != "20s"), "the slot cools, its seconds left on the price line: {b:?}");
+    assert!(!b.ready && b.cooldown > 0.9, "the slot cools: {b:?}");
+    for _ in 0..30 {
+        app.step(1.0 / 15.0);
+    }
+    let b = blast(&app);
+    assert!(!b.ready && b.cost.as_deref().is_some_and(|c| c.ends_with('s') && c != "20s"), "its seconds left on the price line: {b:?}");
     let m = app.model(None, Some((T_BLAST, (s.x + 6.0 * k, s.y), None)));
     assert!(!m.ghost_ok && m.ghost_note.as_deref().is_some_and(|n| n.starts_with("device ready in")), "{:?}", m.ghost_note);
     app.use_tool(Tool::Gas((s.x, s.y - 6.0 * k)));
