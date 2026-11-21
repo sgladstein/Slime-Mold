@@ -523,7 +523,6 @@ impl<W: World> Game<W> {
             if p.0 < 0.0 || p.1 < 0.0 || p.0 >= w as f32 || p.1 >= h as f32 {
                 continue;
             }
-            let p = (self.starfall.rng.f32() * w as f32, self.starfall.rng.f32() * h as f32);
             if !self.world.open(p.0, p.1) {
                 continue;
             }
