@@ -43,7 +43,17 @@ fn engine_keys() -> Vec<String> {
 }
 
 fn rule_keys() -> Vec<String> {
-    keys_in(include_str!("../../mould/larder_world/rules.rs"), "pub fn set(&mut self, name: &str, v: f32) -> bool")
+    // `set`'s own arms (the switches, counts and specials), then the plain
+    // numbers it hands to `float_mut` (split out 11-20 so the slime
+    // viewer's `Rules::get` reads the same table).
+    let src = include_str!("../../mould/larder_world/rules.rs");
+    let mut keys = keys_in(src, "pub fn set(&mut self, name: &str, v: f32) -> bool");
+    for k in keys_in(src, "fn float_mut(&mut self, name: &str) -> Option<&mut f32>") {
+        if !keys.contains(&k) {
+            keys.push(k);
+        }
+    }
+    keys
 }
 
 fn round_keys() -> Vec<String> {

@@ -331,6 +331,7 @@ impl<W: World> Game<W> {
         self.mortar_killed += out.shots.iter().zip(&by).filter(|(_, b)| b.3.and_then(|k| self.buildings.get(k)).is_some_and(|bd| bd.kind == Kind::Mortar)).map(|(o, _)| o.killed).sum::<u32>();
         let hits: Vec<(Option<(f32, f32)>, u32)> = out.shots.iter().map(|o| (o.hit, o.killed)).collect();
         self.render_pay(&hits);
+        self.raid_hits(&hits);
         // The plants' fire's kills, every frame on both worlds (bug check
         // 11-15: they were counted only on a Scorch trail's frames, so a
         // CPU game without one never counted them, and the GPU's went to

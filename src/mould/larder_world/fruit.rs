@@ -286,9 +286,17 @@ impl<W: World> Game<W> {
     }
 
     fn start_fruit(&mut self) {
+        if let Some(at) = self.fruit_site() {
+            self.start_fruit_at(at);
+        }
+    }
+
+    /// A fruit round `at` (fine cells) on a free lump; false with none
+    /// free. Its site is `fruit_site`'s in play, the click in the slime
+    /// viewer (`Game::force_fruit`).
+    pub(super) fn start_fruit_at(&mut self, at: (f32, f32)) -> bool {
         let r = self.rules.fruit;
-        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return };
-        let Some(at) = self.fruit_site() else { return };
+        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
         let want = (r.size * self.mould as f32).clamp(r.least, r.most.max(r.least));
         let reach = self.fruit_reach(at, want);
         // Grown, not formed: only walkers in no lump join. Formed, it took
@@ -301,6 +309,7 @@ impl<W: World> Game<W> {
         self.world.set_lump(lump, Lump { aim: super::raid_cell(at, size), pull: r.pull, leash: r.leash, armour: r.armour, ..Lump::default() });
         let now = self.world.ticks();
         self.fruits.live = Some(Fruit { lump, at, born: now, first: 0, members: 0, most: 0, centre: at, ripe: 0.0, grown: now });
+        true
     }
 
     /// The fruit there is, once a game second: its count, its growth, and

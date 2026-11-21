@@ -93,6 +93,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if let Some(spec) = hand.strip_prefix("util:") {
         return super::utility::util_hand(g, spec);
     }
+    if let Some(spec) = hand.strip_prefix("steer@") {
+        return steer_hand(g, spec);
+    }
     if hand == "squads" {
         return squads_hand(g);
     }
@@ -1150,4 +1153,34 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     if d > 0.8 * range || !clear(g, m, a) {
         g.apply(Cmd::SquadOrder(q as u8, Order::Fight(stand.0, stand.1)));
     }
+}
+
+/// `steer@X,Y[,N]` (pathfinding thread, 2026-11-20): `N` soldiers (15)
+/// bought at the start into squad 0, steered with eight-way keys, as WASD
+/// gives, at (X, Y), world units as `centre=`; let go once its middle is
+/// within 12 dish cells. Once a game second, as every hand plays; a steer
+/// holds between. The films of a squad steered round rock.
+fn steer_hand(g: &mut Game<GpuWorld>, spec: &str) {
+    let v: Vec<f32> = spec.split(',').filter_map(|x| x.parse().ok()).collect();
+    let (to, n) = match v[..] {
+        [x, y] => ((x, y), 15usize),
+        [x, y, n] => ((x, y), n as usize),
+        _ => return,
+    };
+    while g.time() < 1.0 && g.alive() < n && g.apply(Cmd::Buy) {}
+    if g.time() < 1.0 {
+        for k in 0..g.soldiers.len() {
+            if g.soldiers[k].alive && g.soldiers[k].squad != 0 {
+                g.apply(Cmd::Join(k, 0));
+            }
+        }
+    }
+    let Some(m) = g.middle(0) else { return };
+    let (dx, dy) = (to.0 - m.0, to.1 - m.1);
+    if dx.hypot(dy) < 12.0 * g.world.scale() {
+        g.apply(Cmd::Steer(0, (0.0, 0.0)));
+        return;
+    }
+    let oct = (dy.atan2(dx) / std::f32::consts::FRAC_PI_4).round() * std::f32::consts::FRAC_PI_4;
+    g.apply(Cmd::Steer(0, (oct.cos(), oct.sin())));
 }

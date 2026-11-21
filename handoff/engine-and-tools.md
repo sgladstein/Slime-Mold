@@ -269,6 +269,21 @@ before the command, not after; the range's tools now cost what the run's
 and the menu, since it lives between planets; `league::whole_run` drives
 it for the bots.
 
-**Next:** watch the run bot's curve once the strategy thread sets the
-plan (planet 1 got harder on main after about 21:30Z on 11-20: all three
-seeds lost it); job 7, one GTX 1070 timing batch through Remote Control.
+After #595: #604 counts soldiers a falling star kills (`Game::fell_starfall`)
+and the squad's own blasts' (`blasted_end`) in the league line; the bug
+hunt's grid finding is fixed (a bot's coarser `mould_grid` ask is added up
+from the summed grid and no longer moves the GPU's square, so bots' games
+see play's grid; the league numbers shift from that commit on).
+
+Job 7: `scripts/pc-batch.ps1 -Timing` is Milestone 1's batch (planets 1
+to 3 of run 1 in the squad mode, `hand=strat:rush,aim=6`, each played 300
+game s twice, each pass at 120 s, the view at zoom 6 and 12 on the larder
+via `centre=larder,ZOOM`). It needs the PC to itself: the strategy
+thread pauses its league worker (a PAUSE file in slime-league, or the
+window in its `queue/pc-pause.txt`), and the script refuses while a league
+game runs. Run `-DryRun` first, then `-Timing`; commit the m1-*.txt
+files whole and write the report from them.
+
+**Next:** the 1070 batch's report once it has run; watch the run bot's
+curve once the strategy thread sets the plan (planet 1 got harder on main
+after about 21:30Z on 11-20: all three seeds lost it).

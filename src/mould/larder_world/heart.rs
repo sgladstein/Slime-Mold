@@ -54,15 +54,29 @@ impl<W: World> Game<W> {
             }
             return;
         }
-        let at = self.heart_site();
+        // A beat runs out from one place: the heart moves at most once a
+        // beat. Late in a planet (planet 2 map 1, lavapipe, the strategy
+        // bot) the crystals' slime swung from 214 to 8 in two seconds as
+        // the squad and the surges went over them, so the fullest changed
+        // nearly every second and every walker's beat and lean turned
+        // with it: 33 moves in the last 90 s, and half the slime of the
+        // fullest (`pick_heart`) alone still left 36.
+        let now = self.world.ticks();
+        let beat = (r.period * self.rules.tps as f32) as u64;
+        let at = if self.heart_at.is_some() && now < self.heart_since + beat { self.heart_at } else { self.heart_site() };
+        if at != self.heart_at {
+            self.heart_since = now;
+        }
         let sc = self.world.scale();
         let steps = (r.period * self.rules.tps as f32 * self.world.fine_steps().max(1) as f32).round() as u32;
         self.world.set_heart(at, r.lean, steps.max(2), (r.len * sc).round().max(1.0) as u32);
         self.heart_at = at;
     }
 
-    /// The home crystal while the slime holds it, else the crystal it holds
-    /// with the most walkers (fine cells); None with no slime on any.
+    /// The home crystal while the slime holds it, else the crystal the
+    /// heart beats from now while that still holds half the slime of the
+    /// fullest, else the crystal it holds with the most walkers (fine
+    /// cells); None with no slime on any (`pick_heart`).
     pub fn heart_site(&self) -> Option<(f32, f32)> {
         let sc = self.world.scale();
         let bin = (sc as usize).max(1);
@@ -77,12 +91,51 @@ impl<W: World> Game<W> {
         };
         let crystals = self.world.crystals();
         let counts: Vec<((f32, f32), u32)> = crystals.iter().enumerate().map(|(c, &(at, _))| (at, on(at, self.world.crystal_r(c).max(sc)))).collect();
-        let home = counts.iter().find(|(at, _)| (at.0 - self.core.0).hypot(at.1 - self.core.1) < sc);
-        if let Some(&(at, n)) = home {
-            if n as f32 >= self.rules.heart.held {
-                return Some(at);
-            }
-        }
-        counts.iter().filter(|c| c.1 > 0).max_by_key(|c| c.1).map(|c| c.0)
+        let near = |p: (f32, f32)| counts.iter().position(|(at, _)| (at.0 - p.0).hypot(at.1 - p.1) < sc);
+        let n: Vec<u32> = counts.iter().map(|c| c.1).collect();
+        pick_heart(&n, near(self.core), self.heart_at.and_then(near), self.rules.heart.held).map(|i| counts[i].0)
+    }
+}
+
+/// Which crystal the heart beats from, of crystals holding `n` walkers
+/// each: `home` while it holds `held`; else `was` (the one it beats from
+/// now) while it holds at least half what the fullest does; else the
+/// fullest. None with no slime on any.
+///
+/// Why `was` (the bug check, 2026-11-20): picked afresh each second, the
+/// fullest crystal changed with every surge once the slime lost its home,
+/// and every walker's beat and lean turned to the new centre at once. On
+/// planet 2 map 1 (lavapipe, strikers off, the strategy bot) the heart
+/// stayed home for 3:35, then moved 33 times in the last 90 s, most often
+/// after one or two seconds: a 6 s beat never ran out from one place.
+fn pick_heart(n: &[u32], home: Option<usize>, was: Option<usize>, held: f32) -> Option<usize> {
+    if let Some(h) = home.filter(|&h| n[h] as f32 >= held) {
+        return Some(h);
+    }
+    let best = (0..n.len()).filter(|&i| n[i] > 0).max_by_key(|&i| n[i])?;
+    match was {
+        Some(w) if n[w] > 0 && 2 * n[w] >= n[best] => Some(w),
+        _ => Some(best),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::pick_heart;
+
+    #[test]
+    fn the_heart_stays_where_it_beats_until_another_crystal_holds_twice_the_slime() {
+        // Home while it holds `held` (30), whatever else holds more.
+        assert_eq!(pick_heart(&[30, 500, 0], Some(0), Some(1), 30.0), Some(0));
+        // Home lost: the fullest, then kept while it holds half the fullest.
+        assert_eq!(pick_heart(&[10, 200, 150], Some(0), None, 30.0), Some(1));
+        assert_eq!(pick_heart(&[10, 200, 300], Some(0), Some(1), 30.0), Some(1));
+        assert_eq!(pick_heart(&[10, 200, 400], Some(0), Some(1), 30.0), Some(1));
+        // Under half, or empty: to the fullest.
+        assert_eq!(pick_heart(&[10, 199, 400], Some(0), Some(1), 30.0), Some(2));
+        assert_eq!(pick_heart(&[1, 0, 4], Some(0), Some(1), 30.0), Some(2));
+        // No slime on any crystal: no heart.
+        assert_eq!(pick_heart(&[0, 0], Some(0), Some(1), 30.0), None);
+        assert_eq!(pick_heart(&[], None, None, 30.0), None);
     }
 }

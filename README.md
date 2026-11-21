@@ -21,6 +21,14 @@ game: `play.cmd map=nest mode=squads`. The window's title names the build;
 Options has an Experiments tab with every feature that is built but not on
 yet.
 
+**To look at the slimes and tune them, double-click `viewer.cmd`** (the
+same as `play.cmd viewer=1`, or Slime viewer on the main menu): each slime
+on its own planet with a panel to spawn its events, switch its body look,
+and move every number and colour of its look and rules live. Save writes
+`slime-tweaks.txt` here (gitignored), which the game reads at every start;
+delete it, or Reset all and Save, for the game's own (`src/bin/larder-world/viewer.rs`,
+`src/world/tweaks.rs`).
+
 When the game quits, `play.cmd` sends the session's play logs (`play-logs/`)
 to the repository's `play-logs` branch, or says that it could not and keeps
 them for next time. `play.cmd send-logs` sends them and lets git ask for a

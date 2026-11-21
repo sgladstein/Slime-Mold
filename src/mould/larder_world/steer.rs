@@ -95,10 +95,7 @@ impl<W: World> Game<W> {
     pub(super) fn ahead_on_map(&self, key: usize, from: (f32, f32)) -> Option<(f32, f32)> {
         let (w, h) = self.world.size();
         let map = &self.paths.maps.get(&key)?.0;
-        let mut at = cell(w, h, from);
-        if map[at] == u32::MAX {
-            return None;
-        }
+        let mut at = onto_map(w, h, map, cell(w, h, from))?;
         let mut way = Vec::with_capacity(LOOK);
         for _ in 0..LOOK {
             let n = downhill(w, h, map, at, self.rules.corners);
@@ -201,15 +198,22 @@ impl<W: World> Game<W> {
         if n > 0.0 { d / n } else { 0.0 }
     }
 
-    /// The walking map to where squad `q` goes as one, by the rule its
-    /// anchor goes by (`Game::guide`): a sent squad's goal, or 40 cells
-    /// ahead of a steered one's anchor (any map within `STEER_NEAR` of
-    /// that). None while it is built.
+    /// The walking map to where squad `q` goes as one when its anchor took
+    /// none this step (`Game::guide`): a sent squad's goal, or a steered
+    /// one's anchor (any map within `STEER_NEAR` of either). None while it
+    /// is built.
     fn squad_way(&mut self, q: usize) -> Option<usize> {
         let sq = self.squads[q];
         let sc = self.s();
         let a = sq.anchor?;
-        let (t, near) = if sq.steer != (0.0, 0.0) { ((a.0 + sq.steer.0 * 40.0 * sc, a.1 + sq.steer.1 * 40.0 * sc), STEER_NEAR * sc) } else { (sq.dest?, MAP_NEAR * sc) };
+        // Steered, its members' way is to the anchor itself: asked only
+        // when the anchor walks straight or slides along rock (on a map of
+        // its own it lends that one, `Squad::map`), where the map to where
+        // it heads can lead another way round. Down that one, a member
+        // behind a crystal from its anchor, held at the wall, counted
+        // itself nearer than the anchor and stood 60 s 28 cells off
+        // (pathfinding thread, 2026-11-20: planet 3, run seed 1).
+        let (t, near) = if sq.steer != (0.0, 0.0) { (a, STEER_NEAR * sc) } else { (sq.dest?, MAP_NEAR * sc) };
         let (w, h) = self.world.size();
         self.map_for(cell(w, h, t), t, near)
     }
@@ -349,6 +353,20 @@ impl<W: World> Game<W> {
         let (mine, theirs) = (map[cell(w, h, p)], map[cell(w, h, a)]);
         // Map distances are 5 a side step.
         let behind = if theirs == u32::MAX { f32::MAX } else { (mine as f32 - theirs as f32) / 5.0 };
+        // No nearer the point than its straight distance, unless it is
+        // ahead of a walking squad's anchor. The map's own goal may be any
+        // point within `MAP_NEAR` of the point (standing) or far on along
+        // the way (walking), and the map's difference alone, which is no
+        // more than its walk to the point, can read a soldier far off as
+        // near: one 17 cells from its standing squad's point behind a
+        // crystal read itself 1.3 cells behind, under its place's 8, and
+        // stood 25 s; one 31 cells behind its steered squad's anchor, round
+        // a crystal from it, read 3.7 and stood 77 s (pathfinding thread,
+        // 2026-11-20: planet 3, run seed 1). Ahead of a walking anchor
+        // (along its velocity) the map's reading stands, so a member beside
+        // the way doesn't walk on ahead of its squad.
+        let ahead = (p.0 - a.0) * vel.0 + (p.1 - a.1) * vel.1 > 0.0;
+        let behind = if ahead { behind } else { behind.max(d) };
         let sp = (len(vel) + CATCH * (behind - off)).clamp(0.0, max);
         let e = (t.0 - p.0, t.1 - p.1);
         let l = len(e).max(1e-6);
