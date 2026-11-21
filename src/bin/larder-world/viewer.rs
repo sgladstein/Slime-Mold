@@ -150,6 +150,18 @@ pub(super) enum Hit {
     Tab(Tab),
     /// The slime of the ladder's rung (0 the Drifter).
     Slime(usize),
+    /// One of the owner's own slimes, by name (`custom` in the tweaks).
+    Custom(String),
+    /// A new slime of his own from the one shown.
+    NewSlime,
+    /// Type a new name for the slime of his own shown.
+    Rename,
+    /// Delete the slime of his own shown.
+    DeleteSlime,
+    /// Show the slime on run planet N (its map and depth).
+    ShowOn(u32),
+    /// Run planet N lands on the slime shown (again: back to the ladder's).
+    PlayOn(u32),
     Body(SlimeLook),
     Spawn(Spawn),
     Group(String),
@@ -283,6 +295,8 @@ enum Row {
     Slider { label: String, about: String, target: Target, vals: Vec<f32>, ranges: Vec<(f32, f32)>, colour: bool, changed: bool },
     Switch { label: String, about: String, target: Target, on: bool, changed: bool },
     Text(String),
+    /// A label and a row of small buttons (the planets).
+    Pills { label: String, about: String, pills: Vec<(String, Hit, bool)> },
 }
 
 /// The viewer's state.
@@ -307,6 +321,10 @@ pub(super) struct Viewer {
     /// shot or a pan begun on the map and let go over the panel never
     /// ended: the review of #607.)
     pressed: Vec<Button>,
+    /// One of the owner's own slimes shown (None: the planet's own).
+    pub slime: Option<String>,
+    /// The name being typed for it (Rename), if any.
+    naming: Option<String>,
     /// Events kept on while one lives (`Game::hold_live_events`).
     held: [bool; 3],
     /// What the next click on the map places.
@@ -402,6 +420,9 @@ impl Viewer {
             cursor: None,
             drag: None,
             pressed: Vec::new(),
+            // `LARDER_VIEWER_SLIME=NAME` opens on that slime (the films).
+            slime: std::env::var("LARDER_VIEWER_SLIME").ok().filter(|n| tweaks.base_of(n).is_some()),
+            naming: None,
             held: [false; 3],
             armed: None,
             dirty: false,
@@ -470,6 +491,15 @@ impl Viewer {
         self.ranges.push((key.to_string(), r));
         r
     }
+}
+
+/// The letter or digit a key types, for a slime's name.
+fn key_char(code: KeyCode) -> Option<char> {
+    let name = format!("{code:?}");
+    let c = name.strip_prefix("Key").or_else(|| name.strip_prefix("Digit")).or_else(|| name.strip_prefix("Numpad"))?;
+    let mut it = c.chars();
+    let ch = it.next()?;
+    (it.next().is_none() && ch.is_ascii_alphanumeric()).then(|| ch.to_ascii_lowercase())
 }
 
 /// Where a slider's range is kept (`Viewer::ranges`).
@@ -547,9 +577,30 @@ pub(super) fn tier_of(run: &Run) -> Tier {
 }
 
 impl App {
-    /// The viewer's slime now.
+    /// The viewer's slime now: the ladder tier it plays (a custom's base).
     fn viewer_tier(&self) -> Option<Tier> {
-        self.args.run.as_ref().map(tier_of)
+        match self.viewer.as_ref().and_then(|v| v.slime.as_deref()) {
+            Some(n) => self.tweaks.base_of(n),
+            None => self.args.run.as_ref().map(tier_of),
+        }
+    }
+
+    /// The name the tweaks keep the slime shown by (a rung's or his own).
+    fn viewer_who(&self) -> Option<String> {
+        self.slime.clone().or_else(|| self.viewer_tier().map(|t| t.name().to_string()))
+    }
+
+    /// A slime of his own shown (None: the planet's), on planet `depth`
+    /// (None: the one shown), from its landing.
+    fn viewer_show(&mut self, slime: Option<String>, depth: Option<u32>) {
+        if let Some(vw) = self.viewer.as_mut() {
+            vw.slime = slime;
+            vw.naming = None;
+        }
+        let rung = depth.map(|d| d.saturating_sub(1) as usize);
+        if let Err(e) = self.viewer_restart(rung, false) {
+            eprintln!("larder-world: viewer: {e}");
+        }
     }
 
     /// Once a frame: the shader compiled again when the look moved (at
@@ -739,6 +790,44 @@ impl App {
     /// the viewer took the key.
     pub(super) fn viewer_key(&mut self, code: KeyCode) -> bool {
         let Some(vw) = self.viewer.as_mut() else { return false };
+        // A name being typed takes the keys: letters, digits, `-` (Space
+        // and Minus), Backspace, Enter to keep it, Esc to drop it.
+        if let Some(name) = vw.naming.as_mut() {
+            let ch = match code {
+                KeyCode::Enter | KeyCode::NumpadEnter => {
+                    let (from, to) = (vw.slime.clone().unwrap_or_default(), vw.naming.take().unwrap_or_default());
+                    let done = self.tweaks.rename(&from, &to);
+                    if let Some(vw) = self.viewer.as_mut() {
+                        if done {
+                            vw.slime = Some(to.clone());
+                            vw.unsaved = true;
+                            vw.say(format!("Named {to}"));
+                        } else {
+                            vw.say(format!("{to} is taken or not a name (a-z, 0-9 and -, from a letter)"));
+                        }
+                    }
+                    if done {
+                        self.slime = Some(to);
+                    }
+                    return true;
+                }
+                KeyCode::Escape => {
+                    vw.naming = None;
+                    vw.say("Name left as it was");
+                    return true;
+                }
+                KeyCode::Backspace => {
+                    name.pop();
+                    return true;
+                }
+                KeyCode::Space | KeyCode::Minus | KeyCode::NumpadSubtract => Some('-'),
+                _ => key_char(code),
+            };
+            if let Some(ch) = ch.filter(|_| name.len() < 24) {
+                name.push(ch);
+            }
+            return true;
+        }
         match code {
             KeyCode::F3 => {
                 vw.open = !vw.open;
@@ -761,12 +850,60 @@ impl App {
                 }
             }
             Hit::Slime(k) => {
+                if let Some(vw) = self.viewer.as_mut() {
+                    vw.slime = None;
+                    vw.naming = None;
+                }
                 if let Err(e) = self.viewer_restart(Some(k), false) {
                     eprintln!("larder-world: viewer: {e}");
                 }
                 let name = LADDER.get(k).map_or("", |t| t.name());
                 if let Some(vw) = self.viewer.as_mut() {
                     vw.say(format!("The {} on planet {}", title(name), k + 1));
+                }
+            }
+            Hit::Custom(name) => self.viewer_show(Some(name), None),
+            Hit::NewSlime => {
+                let from = self.slime.clone().or_else(|| self.viewer_tier().map(|t| t.name().to_string()));
+                let Some(name) = from.and_then(|f| self.tweaks.new_custom(&f)) else { return };
+                self.viewer_show(Some(name.clone()), None);
+                if let Some(vw) = self.viewer.as_mut() {
+                    vw.unsaved = true;
+                    vw.naming = Some(String::new());
+                    vw.say(format!("{name}: your own slime, as the one before it. Type a name and press Enter (Esc keeps {name})"));
+                }
+            }
+            Hit::Rename => {
+                let custom = self.tweaks.custom.clone();
+                if let Some(vw) = self.viewer.as_mut() {
+                    if vw.slime.as_ref().is_some_and(|n| custom.iter().any(|(c, _)| c == n)) {
+                        vw.naming = Some(String::new());
+                        vw.say("Type a name and press Enter (Esc keeps the old one)");
+                    }
+                }
+            }
+            Hit::DeleteSlime => {
+                let Some(name) = self.viewer.as_ref().and_then(|v| v.slime.clone()).filter(|n| self.tweaks.custom.iter().any(|(c, _)| c == n)) else { return };
+                self.tweaks.delete_custom(&name);
+                self.viewer_show(None, None);
+                if let Some(vw) = self.viewer.as_mut() {
+                    vw.unsaved = true;
+                    vw.say(format!("{name} deleted (Save to keep it so)"));
+                }
+            }
+            Hit::ShowOn(n) => {
+                // The slime shown goes with it (a rung's by its name).
+                let slime = self.viewer_who();
+                self.viewer_show(slime, Some(n));
+            }
+            Hit::PlayOn(n) => {
+                let Some(who) = self.slime.clone() else { return };
+                let on = self.tweaks.planet(n) == Some(who.as_str());
+                let own = LADDER.get(n as usize - 1).is_some_and(|t| t.name() == who);
+                self.tweaks.set_planet(n, (!on && !own).then_some(who.as_str()));
+                if let Some(vw) = self.viewer.as_mut() {
+                    vw.unsaved = true;
+                    vw.say(if on || own { format!("Planet {n} lands on its own slime again") } else { format!("Runs land on {who} on planet {n} (Save to keep it)") });
                 }
             }
             Hit::Body(look) => self.viewer_body(look),
@@ -840,12 +977,14 @@ impl App {
         if let Some(v) = self.view.as_mut() {
             v.set_slime_look(look, pace * slime_mould::world::view::STREAK_SECS);
         }
-        let tier = self.viewer_tier();
-        if let Some(t) = tier {
-            if SlimeLook::of(Some(t)) == look {
-                self.tweaks.body.retain(|(n, _)| n != t.name());
+        // A rung's own look is no tweak; a custom keeps whatever it is
+        // given, so it does not fall back to a base it may differ from.
+        if let Some(w) = self.viewer_who() {
+            let own = self.tweaks.custom.iter().all(|(n, _)| *n != w) && SlimeLook::of(self.viewer_tier()) == look;
+            if own {
+                self.tweaks.body.retain(|(n, _)| *n != w);
             } else {
-                self.tweaks.set_body(t.name(), look.name());
+                self.tweaks.set_body(&w, look.name());
             }
         }
         if let Some(vw) = self.viewer.as_mut() {
@@ -960,7 +1099,7 @@ impl App {
     /// tweaks (dropped there when it is back at its first value).
     fn viewer_set(&mut self, t: &Target, k: usize, v: f32) {
         let first = self.viewer_first(t);
-        let tier = self.viewer_tier();
+        let who = self.viewer_who();
         match t {
             Target::Look(i) => {
                 let Some(vw) = self.viewer.as_mut() else { return };
@@ -984,11 +1123,11 @@ impl App {
                     return;
                 }
                 let now = g.rules.get(n).unwrap_or(v);
-                if let Some(t) = tier {
+                if let Some(w) = who.as_deref() {
                     if first.first() == Some(&now) {
-                        self.tweaks.rules.retain(|(tn, r, _)| !(tn == t.name() && r == n));
+                        self.tweaks.rules.retain(|(tn, r, _)| !(tn == w && r == n));
                     } else {
-                        self.tweaks.set_rule(t.name(), n, now);
+                        self.tweaks.set_rule(w, n, now);
                     }
                 }
                 if let Some(vw) = self.viewer.as_mut() {
@@ -1002,11 +1141,11 @@ impl App {
                     return;
                 }
                 let now = engine_get(&g.world.s, key).unwrap_or(v);
-                if let Some(t) = tier {
+                if let Some(w) = who.as_deref() {
                     if first.first() == Some(&now) {
-                        self.tweaks.slime.retain(|(n, k, _)| !(n == t.name() && k == key));
+                        self.tweaks.slime.retain(|(n, k, _)| !(n == w && k == key));
                     } else {
-                        self.tweaks.set_slime(t.name(), key, now);
+                        self.tweaks.set_slime(w, key, now);
                     }
                 }
                 if let Some(vw) = self.viewer.as_mut() {
@@ -1044,11 +1183,17 @@ impl App {
                 let _ = slime_mould::gpu::set(&mut g.world.s, k, &format!("{v}"));
             }
         }
-        self.tweaks = Tweaks::default();
-        let look = SlimeLook::of(self.viewer_tier());
-        self.viewer_body(look);
+        // Your own slimes and the planets' picks stay (delete a slime of
+        // your own on its row); the rest goes back to the game's.
+        self.tweaks.reset_but_own();
+        let custom = self.viewer.as_ref().and_then(|v| v.slime.clone());
+        match custom {
+            // Its own tweaks stay, so it lands again with them.
+            Some(name) => self.viewer_show(Some(name), None),
+            None => self.viewer_body(SlimeLook::of(self.viewer_tier())),
+        }
         if let Some(vw) = self.viewer.as_mut() {
-            vw.say("Everything is back to the game's own; Save to keep it so");
+            vw.say("The look and the game's slimes are back to their own (your slimes stay); Save to keep it so");
         }
     }
 
@@ -1111,7 +1256,8 @@ impl App {
         // The run's own depth (planet 8 draws one of the last three slimes,
         // which the ladder alone would name as 5, 6 or 7).
         let depth = self.args.run.as_ref().map_or(0, |r| r.depth);
-        let what = tier.map_or(String::new(), |t| format!("{} on planet {depth}", title(t.name())));
+        let who = self.slime.clone().or_else(|| tier.map(|t| t.name().to_string()));
+        let what = who.map_or(String::new(), |t| format!("{} on planet {depth}", title(&t)));
         c.text_fit(Weight::Medium, 12.0 * u, (x + w - 12.0 * u, yy), Align::Right, &what, iw * 0.55, theme::MUTED);
         // Tabs.
         yy += 12.0 * u;
@@ -1163,6 +1309,23 @@ impl App {
                 }
                 Row::Text(t) => {
                     c.text_fit(Weight::Medium, 11.5 * u, (r.x, r.y + 14.0 * u), Align::Left, t, r.w, theme::FAINT);
+                }
+                Row::Pills { label, about, pills } => {
+                    let lw = r.w * 0.34;
+                    c.text_fit(Weight::Medium, 11.5 * u, (r.x, r.y + 18.0 * u), Align::Left, label, lw - 4.0 * u, theme::TEXT);
+                    let n = pills.len().max(1) as f32;
+                    let pw = (r.w - lw) / n;
+                    for (k, (t, hit, on)) in pills.iter().enumerate() {
+                        let b = Rect::new(r.x + lw + k as f32 * pw, r.y + 3.0 * u, pw - 3.0 * u, rh - 6.0 * u);
+                        let over = vw.cursor.is_some_and(|p| b.contains(p));
+                        let (a, bb) = if *on { ([70, 150, 96, 255], [50, 110, 70, 255]) } else if over { (theme::BUTTON_HOVER_TOP, theme::BUTTON_HOVER_BOTTOM) } else { (theme::BUTTON_TOP, theme::BUTTON_BOTTOM) };
+                        c.panel(b, 4.0 * u, a, bb, 1.0, theme::EDGE);
+                        c.text(Weight::SemiBold, 11.5 * u, (b.x + b.w / 2.0, b.y + 14.5 * u), Align::Centre, t, theme::TEXT);
+                        vw.hits.push((b, hit.clone()));
+                    }
+                    if hover {
+                        help = about.clone();
+                    }
                 }
                 Row::Choice { label, note, hit, on, about } => {
                     let b = Rect::new(r.x, r.y + 1.5 * u, r.w, rh - 3.0 * u);
@@ -1272,6 +1435,7 @@ impl App {
     /// The rows of the tab open now.
     fn viewer_rows(&mut self, tier: Option<Tier>) -> Vec<Row> {
         let Some(tab) = self.viewer.as_ref().map(|v| v.tab) else { return Vec::new() };
+        let (shown, naming) = self.viewer.as_ref().map_or((None, None), |v| (v.slime.clone(), v.naming.clone()));
         let mut rows = Vec::new();
         match tab {
             Tab::Slime => {
@@ -1282,10 +1446,35 @@ impl App {
                         label: title(t.name()),
                         note: format!("planet {}, {}", k + 1, look.name()),
                         hit: Hit::Slime(k),
-                        on: tier == Some(*t),
+                        on: shown.as_deref().map_or(tier == Some(*t), |n| n == t.name()),
                         about: slime_mould::mould::run::does_to_you(*t).says.to_string(),
                     });
                 }
+                // Your own slimes (11-21, his card "Make new slimes").
+                rows.push(Row::Head { text: "Your slimes".into(), group: None, open: true });
+                for (name, base) in &self.tweaks.custom {
+                    let on: Vec<String> = self.tweaks.planets.iter().filter(|(_, s)| s == name).map(|(n, _)| n.to_string()).collect();
+                    let note = if on.is_empty() { format!("from {base}") } else { format!("from {base}, planet {}", on.join(", ")) };
+                    rows.push(Row::Choice { label: name.clone(), note, hit: Hit::Custom(name.clone()), on: shown.as_deref() == Some(name.as_str()), about: format!("Your own slime: the {} with what you tuned on it.", title(base)) });
+                }
+                let who = self.slime.clone().or_else(|| tier.map(|t| t.name().to_string())).unwrap_or_default();
+                rows.push(Row::Choice { label: format!("New slime from {}", title(&who)), note: "+".into(), hit: Hit::NewSlime, on: false, about: "A slime of your own, starting as this one is now: tune it on the Look, Rules and Slime tabs, name it, and put it on any planet. Save keeps it.".into() });
+                if let Some(name) = shown.as_deref().filter(|n| self.tweaks.custom.iter().any(|(c, _)| c == n)) {
+                    let label = match naming.as_deref() {
+                        Some(typed) => format!("Name: {typed}_"),
+                        None => format!("Rename {name}"),
+                    };
+                    rows.push(Row::Choice { label, note: if naming.is_some() { "Enter".into() } else { String::new() }, hit: Hit::Rename, on: naming.is_some(), about: "Type a name (a-z, 0-9 and -) and press Enter; Esc keeps the old one.".into() });
+                    rows.push(Row::Choice { label: format!("Delete {name}"), note: String::new(), hit: Hit::DeleteSlime, on: false, about: "Deletes it and its planets (Save to keep it so).".into() });
+                }
+                let depth = self.args.run.as_ref().map_or(0, |r| r.depth);
+                let planets = 1..=slime_mould::mould::run::PLANETS;
+                rows.push(Row::Pills { label: "Show on planet".into(), about: "Lands it on that planet's map, as a run would.".into(), pills: planets.clone().map(|n| (n.to_string(), Hit::ShowOn(n), n == depth)).collect() });
+                let plays = |n: u32| match self.tweaks.planet(n) {
+                    Some(s) => s == who,
+                    None => LADDER.get(n as usize - 1).is_some_and(|t| t.name() == who),
+                };
+                rows.push(Row::Pills { label: "Runs land it on".into(), about: "A run's planet lands on this slime in place of its own; click again to give the planet its own back. Planet 8 draws one of the last three otherwise.".into(), pills: planets.map(|n| (n.to_string(), Hit::PlayOn(n), plays(n))).collect() });
                 rows.push(Row::Head { text: "Body look on this slime (live)".into(), group: None, open: true });
                 let now = self.view.as_ref().map(|v| v.slime_look());
                 for look in SlimeLook::ALL {

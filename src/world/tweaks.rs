@@ -24,6 +24,14 @@
 
 use std::path::PathBuf;
 
+use crate::mould::tiers::Tier;
+
+/// A custom slime's name: 1 to 24 lower-case letters, digits and `-`,
+/// starting with a letter (one word in the file's lines).
+pub fn ok_name(n: &str) -> bool {
+    (1..=24).contains(&n.len()) && n.starts_with(|c: char| c.is_ascii_lowercase()) && n.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+}
+
 /// The tweaks file's name, at the repo's root (`build::root`).
 pub const FILE: &str = "slime-tweaks.txt";
 
@@ -152,6 +160,14 @@ pub struct Tweaks {
     pub slime: Vec<(String, String, f32)>,
     /// `body TIER = LOOK`: that slime's body look (`SlimeLook::parse`).
     pub body: Vec<(String, String)>,
+    /// `custom NAME = BASE`: a slime of the owner's own (11-21, his card
+    /// "Make new slimes"), the ladder's slime `BASE` with whatever
+    /// `slime`, `rule` and `body` lines name it. Its NAME stands where a
+    /// tier's does in those lines.
+    pub custom: Vec<(String, String)>,
+    /// `planet N = SLIME`: the slime a run's planet N lands on, a custom
+    /// or another rung's, in place of the ladder's.
+    pub planets: Vec<(u32, String)>,
 }
 
 impl Tweaks {
@@ -185,6 +201,18 @@ impl Tweaks {
                         t.set_body(tier, rhs);
                         Some(())
                     }
+                    ["custom", name] => {
+                        let base = Tier::from_name(rhs)?;
+                        (ok_name(name) && Tier::from_name(name).is_none()).then_some(())?;
+                        t.custom.retain(|(n, _)| n != name);
+                        t.custom.push((name.to_string(), base.name().to_string()));
+                        Some(())
+                    }
+                    ["planet", n] => {
+                        let n: u32 = n.parse().ok().filter(|n| (1..=crate::mould::run::PLANETS).contains(n))?;
+                        t.set_planet(n, Some(rhs));
+                        Some(())
+                    }
                     _ => None,
                 }
             })();
@@ -205,8 +233,16 @@ impl Tweaks {
              # rule SLIME NAME = value: a game rule on that slime's planets only\n\
              # slime SLIME KEY = value: an engine key on that slime only\n\
              # body SLIME = LOOK: that slime's body look (plain, threads, sheet, cords,\n\
-             # swell, crust, scars)\n",
+             # swell, crust, scars)\n\
+             # custom NAME = SLIME: a slime of your own, starting from that one\n\
+             # planet N = SLIME: the slime a run's planet N lands on\n",
         );
+        for (n, base) in &self.custom {
+            s += &format!("custom {n} = {base}\n");
+        }
+        for (n, who) in &self.planets {
+            s += &format!("planet {n} = {who}\n");
+        }
         // Rust's shortest form that reads back to the same f32. (At first
         // rounded to 4 places, which saved the Sporer's `spore_rate`,
         // 0.00001, as 0 or 0.0001: no spores, or ten times as many.)
@@ -228,12 +264,110 @@ impl Tweaks {
 
     /// Nothing set.
     pub fn is_empty(&self) -> bool {
-        self.look.is_empty() && self.rules.is_empty() && self.slime.is_empty() && self.body.is_empty()
+        self.count() == 0
     }
 
     /// How many values are set.
     pub fn count(&self) -> usize {
-        self.look.len() + self.rules.len() + self.slime.len() + self.body.len()
+        self.look.len() + self.rules.len() + self.slime.len() + self.body.len() + self.custom.len() + self.planets.len()
+    }
+
+    /// The ladder's slime a slime starts from: a custom's base, else the
+    /// name itself if it is a rung's.
+    pub fn base_of(&self, slime: &str) -> Option<Tier> {
+        match self.custom.iter().find(|(n, _)| n == slime) {
+            Some((_, b)) => Tier::from_name(b),
+            None => Tier::from_name(slime),
+        }
+    }
+
+    /// The slime run planet `depth` lands on, if set.
+    pub fn planet(&self, depth: u32) -> Option<&str> {
+        self.planets.iter().find(|(n, _)| *n == depth).map(|(_, s)| s.as_str())
+    }
+
+    /// Sets (or with None clears) the slime planet `depth` lands on.
+    pub fn set_planet(&mut self, depth: u32, slime: Option<&str>) {
+        self.planets.retain(|(n, _)| *n != depth);
+        if let Some(s) = slime {
+            self.planets.push((depth, s.to_string()));
+            self.planets.sort_by_key(|p| p.0);
+        }
+    }
+
+    /// A new slime of the owner's own from `from` (a rung's or a custom),
+    /// with everything `from` has set, named `from-2`, `from-3`, ...; its
+    /// name.
+    pub fn new_custom(&mut self, from: &str) -> Option<String> {
+        let base = self.base_of(from)?;
+        let stem = from.trim_end_matches(|c: char| c.is_ascii_digit() || c == '-');
+        let stem = if stem.is_empty() { base.name() } else { stem };
+        let name = (2..).map(|k| format!("{stem}-{k}")).find(|n| !self.custom.iter().any(|(c, _)| c == n))?;
+        self.custom.push((name.clone(), base.name().to_string()));
+        self.copy_slime(from, &name);
+        Some(name)
+    }
+
+    /// Everything `from` sets (`slime`, `rule`, `body`), set for `to` too.
+    fn copy_slime(&mut self, from: &str, to: &str) {
+        let slime: Vec<_> = self.slime.iter().filter(|(t, _, _)| t == from).map(|(_, k, v)| (k.clone(), *v)).collect();
+        for (k, v) in slime {
+            self.set_slime(to, &k, v);
+        }
+        let rules: Vec<_> = self.rules.iter().filter(|(t, _, _)| t == from).map(|(_, k, v)| (k.clone(), *v)).collect();
+        for (k, v) in rules {
+            self.set_rule(to, &k, v);
+        }
+        if let Some(l) = self.body_of(from).map(str::to_string) {
+            self.set_body(to, &l);
+        }
+    }
+
+    /// A custom renamed, everywhere it is named; false if `to` is taken or
+    /// not a name (lower-case letters, digits and `-`).
+    pub fn rename(&mut self, from: &str, to: &str) -> bool {
+        if from == to {
+            return true;
+        }
+        if !ok_name(to) || Tier::from_name(to).is_some() || self.custom.iter().any(|(n, _)| n == to) || !self.custom.iter().any(|(n, _)| n == from) {
+            return false;
+        }
+        for (n, _) in self.custom.iter_mut().filter(|(n, _)| n == from) {
+            *n = to.to_string();
+        }
+        for (t, _, _) in self.slime.iter_mut().chain(self.rules.iter_mut()).filter(|(t, _, _)| t == from) {
+            *t = to.to_string();
+        }
+        for (t, _) in self.body.iter_mut().filter(|(t, _)| t == from) {
+            *t = to.to_string();
+        }
+        for (_, s) in self.planets.iter_mut().filter(|(_, s)| s == from) {
+            *s = to.to_string();
+        }
+        true
+    }
+
+    /// A custom deleted, with everything it set and the planets it held.
+    pub fn delete_custom(&mut self, name: &str) {
+        if !self.custom.iter().any(|(n, _)| n == name) {
+            return;
+        }
+        self.custom.retain(|(n, _)| n != name);
+        self.slime.retain(|(t, _, _)| t != name);
+        self.rules.retain(|(t, _, _)| t != name);
+        self.body.retain(|(t, _)| t != name);
+        self.planets.retain(|(_, s)| s != name);
+    }
+
+    /// Everything but the owner's own slimes and the planets' picks
+    /// cleared (the viewer's Reset all: a named slime is not lost to it).
+    pub fn reset_but_own(&mut self) {
+        let own = |t: &String, c: &[(String, String)]| c.iter().any(|(n, _)| n == t);
+        let custom = self.custom.clone();
+        self.look.clear();
+        self.slime.retain(|(t, _, _)| own(t, &custom));
+        self.rules.retain(|(t, _, _)| own(t, &custom));
+        self.body.retain(|(t, _)| own(t, &custom));
     }
 
     pub fn set_look(&mut self, name: &str, v: &[f32]) {
@@ -349,6 +483,39 @@ mod tests {
         // Every value written back as it was parses to the same numbers.
         let same: Vec<(String, Vec<f32>)> = c.iter().map(|k| (k.name.clone(), k.value.clone())).collect();
         assert_eq!(shader_consts(&apply(src, &same)), c);
+    }
+
+    #[test]
+    fn own_slimes_copy_rename_delete_and_survive_reset_all() {
+        let mut t = Tweaks::default();
+        t.set_slime("drifter", "keep", 0.9);
+        t.set_rule("drifter", "fruit_hurt", 0.05);
+        t.set_body("drifter", "threads");
+        t.set_look("SHEET_VEIL", &[0.5]);
+        let a = t.new_custom("drifter").unwrap();
+        assert_eq!(a, "drifter-2");
+        assert_eq!(t.slime_of(&a, "keep"), Some(0.9), "it starts as its base is set");
+        assert_eq!(t.body_of(&a), Some("threads"));
+        assert_eq!(t.new_custom(&a).as_deref(), Some("drifter-3"));
+        assert_eq!(t.base_of("drifter-3"), Some(Tier::Drifter));
+        t.set_planet(4, Some(&a));
+        assert!(t.rename(&a, "fog"));
+        assert!(!t.rename("fog", "trunk"), "a rung's name is taken");
+        assert!(!t.rename("fog", "Has Space"));
+        assert_eq!(t.planet(4), Some("fog"));
+        assert_eq!(t.rule_of("fog", "fruit_hurt"), Some(0.05));
+        let (back, bad) = Tweaks::parse(&t.text());
+        assert!(bad.is_empty(), "{bad:?}");
+        assert_eq!(back, t);
+        t.reset_but_own();
+        assert_eq!(t.slime_of("drifter", "keep"), None);
+        assert!(t.look.is_empty());
+        assert_eq!(t.slime_of("fog", "keep"), Some(0.9), "Reset all keeps your own slimes");
+        assert_eq!(t.planet(4), Some("fog"));
+        t.delete_custom("fog");
+        assert_eq!(t.planet(4), None);
+        assert_eq!(t.slime_of("fog", "keep"), None);
+        assert_eq!(Tweaks::parse("custom trunk = drifter\ncustom x = nothing\nplanet 9 = x\n").1.len(), 3);
     }
 
     #[test]
