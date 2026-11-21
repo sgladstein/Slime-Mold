@@ -2,7 +2,7 @@
 
 The owner asked, on 2026-11-18 at 23:58Z, for bots that explore strategies he has not thought of: "It should review how I play but it shouldn't match that exactly". At 23:59Z he added: "a variety of bots that play with different strategies or a bot that can switch/test different strategies". At 14:09Z on 11-19 he narrowed it: "Can we just focus on beating 3". He has given a standing OK for the search to run on his PC "all day and night" (14:08Z).
 
-The code and the results to 05:44Z on 2026-11-20 merged as PR #529. The PC worker keeps pushing results to `claude/project-thread-8grg6d`; they reach main in a later docs-only pull request. A branch whose tip is in main is deleted by `branches.yml`, so the branch always carries at least one commit main lacks while the worker runs.
+The code and the results to 05:44Z on 2026-11-20 merged as PR #529, and the bot's changes and results to 04:50Z on 2026-11-21 (siege, broke, the dry line, drops, jobs 14-0-a to 00-b) as PR #640. The PC worker keeps pushing results to `claude/project-thread-8grg6d`; they reach main in a later docs-only pull request. A branch whose tip is in main is deleted by `branches.yml`, so the branch always carries at least one commit main lacks while the worker runs.
 
 Page: [Planet 3 Bot League](https://claude.ai/artifact/3pLVvJbt8JxP59oMvWE1Dk). Its source is `page.html`, built by `page.py` from the result files here (`page-template.html` holds the text).
 
