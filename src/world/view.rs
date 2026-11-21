@@ -71,6 +71,11 @@ pub enum SlimeLook {
     /// keeps a faint bruise (`SCAR_FULL`, `SCAR_BRUISE` in `view.wgsl`):
     /// you see where it will not come back to.
     Scarred = 6,
+    /// The Sporer's spores (11-21): each spore in flight (the engine writes
+    /// its flight into the walker's fourth word) is a small round bead with
+    /// a short tail, a seed blown off the body, not a droplet's long
+    /// tracer streak (`SPORE_HEAD`, `SPORE_TAIL` in `view.wgsl`).
+    Spores = 7,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -86,12 +91,13 @@ impl SlimeLook {
             Some(crate::mould::tiers::Tier::Swarmer) => SlimeLook::Swell,
             Some(crate::mould::tiers::Tier::Sleeper) => SlimeLook::Dormant,
             Some(crate::mould::tiers::Tier::Grudge) => SlimeLook::Scarred,
+            Some(crate::mould::tiers::Tier::Sporer) => SlimeLook::Spores,
             _ => SlimeLook::Plain,
         }
     }
 
     /// Every look, in the order the slime viewer lists them.
-    pub const ALL: [SlimeLook; 7] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant, SlimeLook::Scarred];
+    pub const ALL: [SlimeLook; 8] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant, SlimeLook::Scarred, SlimeLook::Spores];
 
     /// Its name, as the tweaks file writes it (`body TIER = NAME`).
     pub fn name(self) -> &'static str {
@@ -103,6 +109,7 @@ impl SlimeLook {
             SlimeLook::Swell => "swell",
             SlimeLook::Dormant => "crust",
             SlimeLook::Scarred => "scars",
+            SlimeLook::Spores => "seeds",
         }
     }
 
