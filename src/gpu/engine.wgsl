@@ -699,9 +699,9 @@ const PIN_TWIST: f32 = 0.08;
 // lands (`fly`).
 const DOOM: u32 = 0x4000u;
 // `SOWN` (bit 15, 2026-11-20, fruiting): a spore a ripe fruit threw
-// (`fling` with `kir` 2, `Engine::sow_pass`). It flies and homes as a
-// fruited spore does (straight while its timer is over `spore_steps` / 2,
-// then by scent, landing over `spore_land`), but it is drawn in the air as
+// (`fling` with `kir` 2, `Engine::sow_pass`). It flies straight out and
+// lands where its throw ends (it homed by scent as a fruited spore does
+// until 11-21, and the scent led it to the squad: `fly`), drawn in the air as
 // a flung walker is (its fourth word its flight, `draw_specks`) so the
 // burst reads, and it lands with no rest. `alight` clears it.
 const SOWN: u32 = 0x8000u;
@@ -3522,7 +3522,14 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     let tt = w >> 16u;
     // A flung spore (`FLUNG`) never homes, and flies at `fling_st`.
     let flung = (w & FLUNG) != 0u;
-    let homing = !flung && tt > 0u && tt <= P.spore_steps / 2u;
+    // A fruit's sown spore (`SOWN`) never homes either, since 2026-11-21
+    // (the bug hunt): the scent it climbed holds the soldiers' smell
+    // (`smell`), a squad's far the strongest, so a burst came down on the
+    // squad and bit at once (CI's run bot, run seed 2, planet 1: 2,533
+    // sown at 5:59, 1,455 down round the squad at 6:02, 21 of 30 soldiers
+    // bitten in 5 s, the planet lost). It flies straight out and lands
+    // where its throw ends, scattering the slime round the fruit.
+    let homing = !flung && (w & SOWN) == 0u && tt > 0u && tt <= P.spore_steps / 2u;
     if (P.spore_reach > 0.0 && homing) {
         let f = spore_sense(wk.x, wk.y, h);
         let fl = spore_sense(wk.x, wk.y, h - P.sa);
