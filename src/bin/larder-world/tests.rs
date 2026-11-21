@@ -672,9 +672,15 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     assert_eq!(key_of("Fire: defend"), Some(KeyCode::KeyX));
     assert_eq!(key_of("Hold fire"), Some(KeyCode::KeyZ));
     assert_eq!(key_of("Formation: blob"), Some(KeyCode::KeyT));
-    // Heal has Pump's slot; Pump is on the Build page.
+    // The sixth column (owner 2026-11-21 06:21Z): Heal, Pump and the wall
+    // all on the main page.
     assert_eq!(key_of("Heal"), Some(KeyCode::KeyL));
-    assert!(m.commands.iter().all(|c| c.id != PUMP));
+    assert_eq!(key_of("Wall"), Some(KeyCode::KeyV));
+    assert!(m.commands.iter().any(|c| c.id == PUMP));
+    let mut slots: Vec<(u8, u8)> = m.commands.iter().map(|c| c.slot).collect();
+    slots.sort_unstable();
+    slots.dedup();
+    assert_eq!(slots.len(), m.commands.len(), "one button a slot");
     assert!(m.help_base.as_ref().is_some_and(|h| h.iter().any(|r| r.1.starts_with("Split"))), "F1 lists the squad's keys");
     // G is the card's: it aims a drain, and merges nothing.
     assert!(!app.squad_key(KeyCode::KeyG, true, false, false));

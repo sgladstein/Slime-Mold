@@ -86,9 +86,9 @@ pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
 pub(super) const CYCLE: KeyCode = KeyCode::Backquote;
 /// The card's Heal (Card 2, 2026-11-15 19:38Z; it was the squad panel's).
 /// Heal: owner 2026-11-15 07:41Z, "Healing should be a specific action".
-/// Since 2026-11-21 it has Pump's slot on the main card (Pump is on the
-/// Build page), and L heals from the other pages too (`App::squad_key`),
-/// bar the build page, where L is the lure's, as
+/// Since 2026-11-21 it is on the main card's sixth column, and L heals
+/// from the other pages too (`App::squad_key`), bar the build page, where
+/// L is the lure's, as
 /// every card key is that page's there. (The card's Lookouts, I, went
 /// 2026-11-21 with the lookouts.)
 pub(super) const HEAL_KEY: KeyCode = KeyCode::KeyL;

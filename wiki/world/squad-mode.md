@@ -117,11 +117,10 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   footprint (`Game::guard_zone`, `Squad::guard`, `Order::Guard`); a ring shows
   the zone. Steering or another order ends it. Defend stays the default fire
   mode ([report](../../Reports/command-card-2026-11-15/README.md)).
-- **The command card** is Card 2 (owner 19:38Z) as changed 2026-11-21: 5 x 2,
-  Attack-move, Guard, Drain, the fire button (X: defend or free fire), Hold
+- **The command card** is Card 2 (owner 19:38Z) as changed 2026-11-21, 6 x 2
+  with the gun strip narrower (06:21Z): Attack-move, Guard, Drain, the fire button (X: defend or free fire), Hold
   fire (Z, a toggle; a held soldier fires the button's mode once let go,
-  `App::unheld` in the window); Buy, Heal, Build, Tools, Formation (Pump is
-  on the Build page). (The RTS
+  `App::unheld` in the window), Heal; Buy, Pump, Wall, Build, Tools, Formation. (The RTS
   round keeps one fire button that cycles hold, defend and free.) The Build page (option 1, 19:53Z):
   turret, pump, wall, lure, siren, then the lures' switch and Back. With no
   squad commanded a click on a building selects it: its health, level and

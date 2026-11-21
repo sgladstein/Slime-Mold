@@ -76,7 +76,10 @@ const CELL: f32 = 42.0;
 /// falls back to the square buttons (`Hud::bar_fit`; until the review's
 /// allocator, where the selection kept under 340 units beside a full gun
 /// strip).
-const CELL_W: f32 = 116.0;
+///
+/// 108 since the card went 6 x 2 (owner 2026-11-21 06:21Z: "Shrink the gun
+/// section to get another column"); 116 at 5 x 2.
+const CELL_W: f32 = 108.0;
 const CELL_GAP: f32 = 5.0;
 const CARD_PAD: f32 = 8.0;
 /// The command card's grid. 4 x 3 until the owner's ask of 11-14 08:33Z
@@ -86,8 +89,12 @@ const CARD_PAD: f32 = 8.0;
 /// to 113 units at 1080 lines (15% to 10% of the screen). 5 x 2 since the
 /// owner's Card 2 (2026-11-15 19:38Z): one fire button that cycles in the
 /// three stances' place, Burn a line gone for Guard, no empty tile; 122
-/// units narrower labelled, which goes to the selection's labels.
-const CARD_COLS: u8 = 5;
+/// units narrower labelled, which goes to the selection's labels. 6 x 2
+/// again since 2026-11-21 (owner 06:21Z: "Shrink the gun section to get
+/// another column. Add walls to the main page."): Hold fire, Formation,
+/// Heal and Wall all on the squad mode's main page; the buttons narrowed
+/// to 108 and the gun strip gives the rest (`GUN_FLOOR`).
+const CARD_COLS: u8 = 6;
 const CARD_ROWS: u8 = 2;
 /// The bottom bar's size against the rest of the HUD. Until the owner's
 /// playtest of 11-14 20:19Z the bar drew at 1 and the minimap kept the
@@ -138,8 +145,11 @@ const GUN_TAB: f32 = 24.0;
 /// the game's 1600 x 972 window).
 const SEL_FLOOR: f32 = 270.0;
 /// The gun strip's width the command card's labels leave room for: the
-/// rifle's four cards and the gun's icon, no Swap (`Hud::bar_fit`).
-const GUN_FLOOR: f32 = 2.0 * 8.0 + 4.0 * LOADOUT_CELL + 3.0 * 5.0 + 10.0 + GUN_TAB;
+/// rifle's four cards and the gun's icon, no Swap (`Hud::bar_fit`), drawn
+/// at 0.7 of their size since the card's sixth column (2026-11-21, owner
+/// 06:21Z: "Shrink the gun section to get another column"); full size
+/// until then.
+const GUN_FLOOR: f32 = 0.7 * (2.0 * 8.0 + 4.0 * LOADOUT_CELL + 3.0 * 5.0 + 10.0 + GUN_TAB);
 
 /// The loadout strip's width: its slots (the widest gun's in play), the
 /// name and state (or the gun's icon), and Swap, as `f` shows them. How
@@ -2220,7 +2230,10 @@ impl Hud {
                 // it wraps), then the cost or the rest of the name; the
                 // key at the bottom right, so the first line has the width.
                 let px = fit_px(c, &label, 13.0 * s, 11.5 * s, room);
-                let one = c.atlas.measure(Weight::SemiBold, px, &label) <= room;
+                // One line only clear of the key (since the card's sixth
+                // column, 11-21, a name that filled the narrower button ran
+                // under its key: "Drain crystal" over its G).
+                let one = c.atlas.measure(Weight::SemiBold, px, &label) <= room - kw;
                 let second = room - kw;
                 // Locked: a lock and "Locked" where the price goes, grey. A
                 // red price read as "can't afford" with the bank full (the
@@ -3161,14 +3174,15 @@ mod tests {
         assert_eq!(r.click(Button::Left, false), (true, vec![]));
     }
 
-    /// Card 2 (owner 2026-11-15 19:38Z): five by two, a slot is its own
-    /// place, and one past the edge stays on the card.
+    /// Card 2 (owner 2026-11-15 19:38Z) and its sixth column (2026-11-21
+    /// 06:21Z): six by two, a slot is its own place, and one past the edge
+    /// stays on the card.
     #[test]
-    fn the_command_card_is_five_by_two() {
-        assert_eq!((CARD_COLS, CARD_ROWS), (5, 2));
-        let places: Vec<(u8, u8)> = (0..2).flat_map(|r| (0..5).map(move |c| card_slot((r, c)))).collect();
-        assert_eq!(places, (0..2).flat_map(|r| (0..5).map(move |c| (r, c))).collect::<Vec<_>>());
-        assert_eq!(card_slot((2, 6)), (1, 4));
+    fn the_command_card_is_six_by_two() {
+        assert_eq!((CARD_COLS, CARD_ROWS), (6, 2));
+        let places: Vec<(u8, u8)> = (0..2).flat_map(|r| (0..6).map(move |c| card_slot((r, c)))).collect();
+        assert_eq!(places, (0..2).flat_map(|r| (0..6).map(move |c| (r, c))).collect::<Vec<_>>());
+        assert_eq!(card_slot((2, 7)), (1, 5));
     }
 
     /// A button's other keys (the fire button's Z, X and C) give their own
@@ -3543,7 +3557,14 @@ mod tests {
         // (11-20) a 6-slot gun's cards shrink inside their panel at 125%
         // on 1600 x 972 and 1280 x 800, where the command card went square
         // for it before.
-        assert!(shrunk.iter().all(|(at, s)| *s >= 1.3 || at.ends_with("6 slots")), "the strip shrank at a small size: {shrunk:?}");
+        //
+        // Since the card's sixth column (owner 2026-11-21 06:21Z: "Shrink
+        // the gun section to get another column") the rifle's strip draws
+        // smaller too wherever the row is tight (125% on 1600 x 972 and
+        // 1280 x 800, 175% and up on 1920 x 1080): the card keeps its
+        // labels and the gun gives the room. At 100% on 1920 x 1080 and
+        // wider the rifle's strip keeps its size.
+        assert!(shrunk.iter().all(|(at, s)| *s >= 0.9 || at.ends_with("6 slots")), "the strip shrank at a small size: {shrunk:?}");
         assert!(labelled > cases / 4, "labels in only {labelled} of {cases} cases");
     }
 

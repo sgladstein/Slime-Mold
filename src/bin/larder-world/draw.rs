@@ -1581,23 +1581,34 @@ impl App {
             // Pump's main-card slot is Heal's in the squad mode (below,
             // 2026-11-21); there Pump is on the Build page only.
             pump((1, 1)),
-            Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, at((1, 3), (1, 2)), Icon::Turret, "Build", KeyCode::KeyQ) },
+            Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, (1, 3), Icon::Turret, "Build", KeyCode::KeyQ) },
             Command {
                 about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
-                ..Command::new(TOOLS_PAGE, at((1, 4), (1, 3)), Icon::Grenade, "Tools", KeyCode::KeyE)
+                ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
             },
         ];
         // The squad mode's Hold fire and Formation (owner 2026-11-21
         // 05:04Z). Hold fire takes Heal's (0, 4), beside the fire button;
-        // Formation takes the Lookouts' (1, 4), which went with the
-        // lookouts, and opens the Formation page.
+        // Formation takes the last slot, (1, 5), and opens the Formation
+        // page.
         if squads {
-            // Heal back on the main card in Pump's (1, 1); Pump stays on the
-            // Build page (Q, then U). A night on the Formation page read as
-            // an odd fit (owner 06:14Z: "heal is in formation?").
-            cmds.retain(|c| c.id != PUMP);
+            // The card's sixth column (owner 06:21Z: "Shrink the gun section
+            // to get another column. Add walls to the main page."): Heal at
+            // (0, 5), the wall at (1, 2) (as on the Build page, V). For a
+            // few minutes Heal sat on the Formation page and then in Pump's
+            // slot (owner 06:14Z: "heal is in formation?").
             let heal_off = g.active.map_or(no_sel(), |a| super::squadmode::heal_off(g, a));
-            cmds.push(Command { ready: heal_off.is_none(), why_not: heal_off, about: "The squad stops where it is and heals, paying food from the bank: fast by a crystal you hold, slow elsewhere. Any order ends it.".into(), ..Command::new(HEAL_ORDER, (1, 1), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
+            cmds.push(Command { ready: heal_off.is_none(), why_not: heal_off, about: "The squad stops where it is and heals, paying food from the bank: fast by a crystal you hold, slow elsewhere. Any order ends it.".into(), ..Command::new(HEAL_ORDER, (0, 5), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
+            cmds.push(Command {
+                target: Target::Line { width: r.wall_width * sc },
+                // The price a cell, bare: "20/cell" ran past the narrower
+                // button's edge.
+                cost: Some(format!("{:.0}", r.wall_cost)),
+                ready: g.bank >= r.wall_cost,
+                why_not: need(r.wall_cost),
+                about: format!("A wall the mould has to wear through, slowly. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_cost),
+                ..Command::new(WALL, (1, 2), Icon::Wall, "Wall", KeyCode::KeyV)
+            });
             cmds.push(Command {
                 ready: any,
                 on: held,
@@ -1610,7 +1621,7 @@ impl App {
                 ready: f.is_some(),
                 why_not: no_sel(),
                 about: format!("How the squad stands and walks: blob, spread, line, wedge, column or ring (now {}). Opens the formation page.", f.map_or("none", |f| f.name())),
-                ..Command::new(FORM_PAGE, (1, 4), f.map_or(Icon::Formation, form_icon), &f.map_or("Formation".to_string(), |f| format!("Formation: {}", f.name())), super::squadmode::FORMATION)
+                ..Command::new(FORM_PAGE, (1, 5), f.map_or(Icon::Formation, form_icon), &f.map_or("Formation".to_string(), |f| format!("Formation: {}", f.name())), super::squadmode::FORMATION)
             });
         }
         // The rally point at (1, 2), or on the build page with the larder's
@@ -1655,8 +1666,8 @@ impl App {
                 form(F_LINE, (0, 2), KeyCode::KeyC, "Shoulder to shoulder across the way it faces (the cursor, for the squad you command), rows of eight: every gun has a clear line forward."),
                 form(F_WEDGE, (0, 3), KeyCode::KeyV, "A V with its point toward the cursor: a narrow front that pushes into the mould with guns down both sides."),
                 form(F_COLUMN, (0, 4), KeyCode::KeyF, "Two abreast, front to back, facing where it walks: files through doors, bridges and gaps between rocks without bunching."),
-                form(F_RING, (1, 0), KeyCode::KeyG, "A circle facing out, for holding ground with mould on every side."),
-                Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 4), Icon::Close, "Back", super::squadmode::FORMATION) },
+                form(F_RING, (0, 5), KeyCode::KeyG, "A circle facing out, for holding ground with mould on every side."),
+                Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 5), Icon::Close, "Back", super::squadmode::FORMATION) },
             ];
         }
         if self.tools_page {
