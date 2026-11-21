@@ -77,8 +77,11 @@ def run_one(binary, job, timeout):
     if DEADLINE and time.time() > DEADLINE:
         return None
     plan, depth, seed, secs, *extra = job
-    whole = depth == "run"
-    cmd = [binary, f"league=run:{seed}:8:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}", *extra]
+    # `run` plays to planet 8; `runN` stops after planet N (11-21:
+    # Milestone 1's exit test is planets 1 to 3).
+    whole = depth.startswith("run")
+    to = int(depth[3:]) if whole and depth[3:] else 8
+    cmd = [binary, f"league=run:{seed}:{to}:{secs}" if whole else f"league={depth}:{seed}:{secs}", f"plan={plan}", *extra]
     d = 0 if whole else int(depth)
     t0 = time.time()
     try:

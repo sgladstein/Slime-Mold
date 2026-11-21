@@ -253,7 +253,10 @@ pub(super) struct Plan {
     /// home holds under this many times `per` walkers a soldier (seed 3's
     /// stall: 1.35 times; one cloud game each, siege on with no limit: seed
     /// 3 won at 366 s against a loss at 678 s, but seed 2 went in at 2.1
-    /// times with 30 soldiers and lost them all in ten seconds). 0: off.
+    /// times with 30 soldiers and lost them all in ten seconds). Job 00-a
+    /// on the PC (11-21, CI's plan on planet 1's 11 maps): 6 wins off, 7 at
+    /// 1.5, 9 at 3 (seeds 3, 5 and 6 gained, none lost), so 3 is the
+    /// default. 0: off.
     pub siege: f32,
 }
 
@@ -309,7 +312,7 @@ impl Default for Plan {
             drops: 0,
             cool: 0.0,
             broke: 20.0,
-            siege: 0.0,
+            siege: 3.0,
         }
     }
 }

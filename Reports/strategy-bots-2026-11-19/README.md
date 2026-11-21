@@ -97,6 +97,16 @@ Two changes on main changed planet 3, so results are kept by the game they were 
   - Planet 1, siege=1.5: 7 wins (seed 3 gained).
   - Planet 1, siege=3: 9 wins of 11. It gained seeds 3, 5 and 6 and lost none. Seed 7 was 8 s slower. That is 3 wins gained and none lost (p 0.25), but the mechanism is the stall the debug lines showed. siege=3 becomes the default once the curve job (00-b) has played on this code.
   - Planet 2, cool: 8, 12 and 20 all took the plan from 2 wins to 1. Cool 12 took rush with the Torch from 6 wins to 1. Cool stays off and has a line in `Reports/dead-ends.md`.
+- **Job 00-b, the planet 2 to 5 curve** (for the thread pacing threats across planets, after #606 and #612: strikers from planet 2, waves and the late lunge from 3, the last-stand heart from 4; cold landings with the shops before them, maps 1-8 and 1795038793, SECS 1200, 108 games, src 4180f5ed06c3). Wins of 9:
+
+  | Planet | rush,aim=6,cards=0 | econ switch plan, fire=0.5 | lure switch plan |
+  |---|---|---|---|
+  | 2 | 9 (mean win 4.5 min) | 5 (5.1) | 6 (6.1) |
+  | 3 | 8 (5.5) | 6 (10.2) | 7 (9.8) |
+  | 4 | 6 (6.2) | 1 (19.5) | 5 (10.3) |
+  | 5 | 2 (11.5) | 0 | 0 |
+
+  The rush is best on every planet. The step is planet 5 (the Sporer's jungle), where the build-first plans win nothing.
 - **The PC worker** now also pauses for windows in `queue/pc-pause.txt` (Engine's GPU timing, 11-21 00:30-03:00Z) and while a `PAUSE` file sits in its clone. It logs the command line that made it wait for the owner's game.
 - **Queued on main through #612**:
   - 00-a: the bot fixes, for Direction.
