@@ -171,7 +171,11 @@ against the 10 ms gate, the simulation 0.9 to 1.5 ms of GPU a step (sense
 and trail the largest), the view's base pass 3.2-3.5 ms of a 5 ms frame.
 Planet 3's step frames reach 10 ms p95 from the game's CPU half of a step.
 Four fire twins (exact on llvmpipe) part by float ulps on the card, none a
-rule ([the batch](../../Reports/pc-batch-1070-m1-2026-11-21.md)).
+rule ([the batch](../../Reports/pc-batch-1070-m1-2026-11-21.md)). Its
+follow-up (c241fd7e) puts planet 3's step frames at 6.8 ms p95 after the
+set-slime mask's two-pass sum (#624). The six card-tolerance twins pass.
+Of the view's base pass, `shaded`'s lighting takes 2.65 ms of 3.4 ms, and
+the plants are the largest single part at 1.0 ms.
 
 ## Sources
 
