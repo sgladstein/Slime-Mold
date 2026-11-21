@@ -209,6 +209,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // The soldiers `cutsquad=` set down, kept there.
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
+    let mut drain_at: Option<f32> = std::env::var("LARDER_DRAIN").ok().and_then(|v| v.parse().ok());
     let mut lit: Vec<usize> = Vec::new();
     let mut lured: Vec<usize> = Vec::new();
     // `trail=`: the lines laid; `cross=`: each slot's side of the line
@@ -384,6 +385,22 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     stand(g, kind, at, renders.contains(&i))?;
                     println!("  {} t {now:.2} s: standing at {},{}", kind.name(), at.0, at.1);
                     late.retain(|&j| j != i);
+                }
+            }
+            // `LARDER_DRAIN=T` (2026-11-21, the slime's ceiling): at game
+            // second T the crystal the slime covers most is emptied at
+            // once, as a squad that drained it, to film the slime
+            // shrinking to what it still holds.
+            if let Some(dt) = drain_at {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= dt {
+                    drain_at = None;
+                    let cs = g.world.crystals();
+                    let cov = g.world.crystal_covered_each();
+                    if let Some(c) = (0..cov.len().min(cs.len())).max_by_key(|&c| cov[c]) {
+                        g.world.empty_crystal(c);
+                        println!("  drain t {:.1} s: crystal {c} at {:.0},{:.0} emptied (charge {:.0}, {} of {} covered cells)", g.time(), cs[c].0 .0, cs[c].0 .1, cs[c].1, cov[c], cov.iter().sum::<usize>());
+                    }
                 }
             }
             // `boom=T,X,Y`: the round set off there once T has come.
@@ -717,6 +734,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 for d in g.starfall.live.iter().filter(|d| d.down) {
                     let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - d.at.0).hypot(s.y - d.at.1)).fold(f32::INFINITY, f32::min);
                     println!("  drop t {:.0} s: {:?} {:?} at {:.0},{:.0}, worth {:.0}, taken {:.1}, eaten {:.1}, {} soldiers and {} walkers on it; nearest soldier {near:.1}", g.time(), d.kind, d.from, d.at.0, d.at.1, d.worth, d.taken, d.eaten, d.takers, d.eaters);
+                }
+                // The slime's birth ceiling (`ceiling.rs`, 11-21): the
+                // crystal cells it covers, smoothed, and the ceiling.
+                if g.rules.ceiling > 0.0 {
+                    println!("  ceiling t {:.0} s: slime {}, covered {:.0} crystal cells x {:.1}, ceiling {} (landed {}), upkeep x{:.2}", g.time(), g.mould, g.ceiling.covered, g.ceiling.density, g.ceiling.now, g.ceiling.start, g.ceiling.factor);
                 }
                 if g.rules.star.on {
                     println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);

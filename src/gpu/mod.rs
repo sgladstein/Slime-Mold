@@ -188,6 +188,13 @@ pub const WORLD_GARDEN: u32 = 32;
 /// The dish has plants (`plant_words`; the shader's `PLANTS`), for the
 /// units' fire reads.
 pub const WORLD_PLANTS: u32 = 64;
+/// The slime eats without emptying a crystal (`Settings::crystal_keep`).
+pub const WORLD_KEEP: u32 = 128;
+/// The slime's births stop at `Settings::ceiling` (the shader's `CEIL`).
+pub const WORLD_CEIL: u32 = 256;
+/// Words a pile takes in the `piles` buffer (engine.wgsl's `Pile`: eight
+/// until 11-21, then `covered` and three spare for the birth ceiling).
+pub const PILE_WORDS: usize = 12;
 /// A cell's `ground` bits (engine.wgsl): its crystal's pile (index + 1) in
 /// the low byte, then wet, wall, a wall that lets scent through, rock, and
 /// the soil kind in bits 12-15 (the map's G byte is bits 8-15, so its high
@@ -496,6 +503,23 @@ pub struct Settings {
     /// run's planets set it (`run::TETHER`). Params word 892, the lone
     /// step row's last.
     pub tether: u32,
+    /// **The slime eats without emptying a crystal** (`crystal_keep=1`,
+    /// 2026-11-21, the owner: "crystals never run out from eating or
+    /// pumping, and only your squad can empty one by draining it. - this
+    /// 100%"). A walker on a crystal cell still takes its share (`eat`),
+    /// but the cell keeps its charge; what the slime took is summed in
+    /// each pile's last word for the surge meter (`Engine::pile_eaten`).
+    /// This engine's own rule with no `BigParams` field (no CPU twin); a
+    /// run's planets set it (`run::enemy_keys`).
+    pub crystal_keep: bool,
+    /// **The slime's birth ceiling** (2026-11-21, the owner's pick "1":
+    /// the slime's size follows the food it holds): no walker is born
+    /// while the slime holds this many or more (0 off, as here). The game
+    /// sets it once a game second from the crystal the slime covers
+    /// (`Game::time_ceiling`) through `World::set_ceiling`; it is species
+    /// 0's birth cap (the shader's `CEIL`), counted as a garden counts its
+    /// sides. Not a key: no CPU twin.
+    pub ceiling: u32,
     /// **Deep water is a wall to the slime** (`deep_wall=0` turns it off;
     /// on, as here, 2026-11-20, the owner: "Deep water shouldn't be
     /// traversable by player or slime"). A walker on dry or shallow ground
@@ -787,6 +811,8 @@ impl Settings {
             far_smell: t.far_smell,
             lure_pull: 0.0,
             tether: 0,
+            crystal_keep: false,
+            ceiling: 0,
             deep_wall: true,
             solid_walls: true,
             flinch: t.flinch,
@@ -1119,6 +1145,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // the body steps only where it touches N others (Lab, one body:
         // Reports/lab-body-2026-11-18; 2 its pick).
         "tether" => s.tether = int()?.min(8),
+        "crystal_keep" => s.crystal_keep = int()? != 0,
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
         "deep_wall" => s.deep_wall = int()? != 0,
@@ -1740,6 +1767,10 @@ pub struct Engine {
     /// every cell. `tends` is this frame's tend entries (`squad::TEND`),
     /// `ntend` how many the params say.
     pub garden: bool,
+    /// The slime's birth ceiling is on (`Settings::ceiling` over 0 outside
+    /// a garden), set with each step's params: it counts the slime before
+    /// births (`capcount`).
+    pub ceiling_on: bool,
     pub tends: Vec<[u32; 8]>,
     pub ntend: u32,
     /// The Larder World (engine.wgsl's bindings 34-41): ground bits, crystal
@@ -2063,6 +2094,7 @@ impl Engine {
             crater_steps: 0,
             scorched: false,
             garden: false,
+            ceiling_on: false,
             tends: Vec::new(),
             ntend: 0,
             ground,
@@ -2259,6 +2291,7 @@ impl Engine {
 
     /// Writes the controls for the next frame of `ticks` ticks.
     pub fn write_params(&mut self, s: &Settings, hand: Hand, ticks: u32) {
+        self.ceiling_on = s.ceiling > 0 && !self.garden && self.grows;
         let seed = s.seed;
         let (w, h) = (self.dish.w as u32, self.dish.h as u32);
         let crowd = (s.crowd && self.crowd_ok) as u32;
@@ -2354,6 +2387,12 @@ impl Engine {
         if self.plants {
             world |= WORLD_PLANTS;
         }
+        if s.crystal_keep {
+            world |= WORLD_KEEP;
+        }
+        if self.ceiling_on {
+            world |= WORLD_CEIL;
+        }
         b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         // Real asserts, not debug ones (2026-11-12, game integration): six
@@ -2385,6 +2424,9 @@ impl Engine {
         // Each species' birth cap borrows its set's spare word (+44, `cap`;
         // the player's own mould thread, 11-14): u32::MAX is none.
         let cap_of = |sp: usize| s.species_cap.get(sp).map_or(u32::MAX, |&c| c.min(u32::MAX as usize - 1) as u32);
+        // Outside a garden the slime's birth ceiling takes species 0's
+        // (`ceiling`, 11-21; the shader's `CEIL`).
+        let cap_of = |sp: usize| if self.ceiling_on && sp == 0 { s.ceiling } else { cap_of(sp) };
         for sp in 0..MAX_SPECIES as usize {
             let Some(t) = sets.get(sp) else {
                 b.extend([0u8; 44]);
@@ -2760,7 +2802,7 @@ impl Engine {
             }
             tick.push((LIFE, n));
             // A garden's birth caps count each side first (`capcount`).
-            if self.garden {
+            if self.garden || self.ceiling_on {
                 tick.extend([(CAPCLEAR, 1), (CAPCOUNT, n)]);
             }
             tick.extend([(BREED, n), (BORN, n)]);
@@ -3515,7 +3557,7 @@ impl Engine {
     pub fn world_counts(&self) -> (Vec<(f32, u32)>, u32, u32) {
         let piles = read_back(&self.device, &self.queue, &self.piles);
         let word = |b: &[u8], i: usize| u32::from_le_bytes(b[4 * i..4 * i + 4].try_into().unwrap());
-        let sums = (0..self.npiles as usize).map(|p| (f32::from_bits(word(&piles, p * 8 + 4)), word(&piles, p * 8 + 2))).collect();
+        let sums = (0..self.npiles as usize).map(|p| (f32::from_bits(word(&piles, p * PILE_WORDS + 4)), word(&piles, p * PILE_WORDS + 2))).collect();
         let st = read_back(&self.device, &self.queue, &self.wstat);
         (sums, word(&st, 0), word(&st, 1))
     }
@@ -3972,9 +4014,9 @@ pub fn world_data(d: &BigDish) -> WorldData {
     let charge = if d.charge.is_empty() { vec![0.0; cells] } else { d.charge.clone() };
     // A wall built with `wall_hp` 0 never breaks: infinite health.
     let health = (0..cells).map(|i| if !on(&d.wall, i) { 0.0 } else if d.wall_health.is_empty() { f32::INFINITY } else { d.wall_health[i] }).collect();
-    let mut piles = vec![0u32; MAX_PILES * 8];
+    let mut piles = vec![0u32; MAX_PILES * PILE_WORDS];
     for p in 0..MAX_PILES {
-        piles[p * 8 + 5] = 1f32.to_bits();
+        piles[p * PILE_WORDS + 5] = 1f32.to_bits();
     }
     let npiles = if d.charge.is_empty() { 0 } else { d.piles.len().min(MAX_PILES) };
     // Each pile's run of the list: the cells still in it bound it (one a
@@ -3989,14 +4031,14 @@ pub fn world_data(d: &BigDish) -> WorldData {
     }
     for p in 0..npiles {
         if start[p] != u32::MAX {
-            piles[p * 8] = start[p];
-            piles[p * 8 + 1] = end[p] - start[p];
+            piles[p * PILE_WORDS] = start[p];
+            piles[p * PILE_WORDS + 1] = end[p] - start[p];
         }
         // The pile's centre, a panicking walker's target (`pile_centre`).
-        piles[p * 8 + 3] = d.pile_centre(p);
-        piles[p * 8 + 4] = d.pile_charge[p].to_bits();
-        piles[p * 8 + 5] = d.crystal_left(p).to_bits();
-        piles[p * 8 + 6] = d.pile_fill[p].to_bits();
+        piles[p * PILE_WORDS + 3] = d.pile_centre(p);
+        piles[p * PILE_WORDS + 4] = d.pile_charge[p].to_bits();
+        piles[p * PILE_WORDS + 5] = d.crystal_left(p).to_bits();
+        piles[p * PILE_WORDS + 6] = d.pile_fill[p].to_bits();
     }
     WorldData { ground, charge, health, pcell: d.pile_cells.clone(), piles, npiles: npiles as u32 }
 }

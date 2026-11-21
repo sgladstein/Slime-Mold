@@ -34,7 +34,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, WSTAT_BYTES};
+use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, PILE_WORDS, WSTAT_BYTES};
 use pixels::wgpu;
 use crate::mould::big::{BigDish, BigParams};
 use crate::mould::larder_world::{race_params, Soldier, World};
@@ -106,7 +106,7 @@ const RO_SHOTS: u64 = RO_UNITS + (UNITS_MAX * squad::U_OUT_W * 4) as u64;
 const RO_KILLS: u64 = RO_SHOTS + (SHOTS_MAX * 16) as u64;
 const RO_PILES: u64 = RO_KILLS + (SHOTS_MAX * 4) as u64;
 // Each lump's sums (`dense_base` header words 4-15, `Engine::lump_sums`).
-const RO_LUMPS: u64 = RO_PILES + (MAX_PILES * 32) as u64;
+const RO_LUMPS: u64 = RO_PILES + (MAX_PILES * PILE_WORDS * 4) as u64;
 const RO_WSTAT: u64 = RO_LUMPS + 48;
 const RO_GRID: u64 = RO_WSTAT + WSTAT_BYTES as u64;
 
@@ -137,6 +137,11 @@ struct Read {
     out: FrameOut,
     /// Each pile's charge and cells still crystal.
     sums: Vec<(f32, u32)>,
+    /// The piles' running sums of what the slime ate (`crystal_keep`), in
+    /// 4096ths, added up (wrapping).
+    ate: u32,
+    /// Crystal cells with charge and a walker on them, pile by pile.
+    covered: Vec<usize>,
     broken: u32,
     living: u32,
     /// The player's own mould's living walkers (a garden's; 0 otherwise).
@@ -160,6 +165,14 @@ pub struct GpuWorld {
     /// The crystals and the living walkers as of the last frame's readout.
     crystals: Vec<((f32, f32), f32)>,
     living: usize,
+    /// What the slime ate without emptying a crystal (`Settings::
+    /// crystal_keep`), charge in all, and the piles' running sum (in
+    /// 4096ths) at the last readout.
+    ate: f64,
+    ate_mark: Option<u32>,
+    /// Crystal cells with charge and a walker on them at the last readout,
+    /// pile by pile (the slime's birth ceiling, `World::crystal_covered`).
+    covered: Vec<usize>,
     /// The gardeners' state (`GpuWorld::garden`), None in the plain game.
     pub garden: Option<GpuGarden>,
     /// The player's own mould's living walkers at the last readout.
@@ -368,7 +381,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -508,11 +521,13 @@ impl GpuWorld {
         let piles = &words[at(RO_PILES)..at(RO_LUMPS)];
         let ls = &words[at(RO_LUMPS)..at(RO_WSTAT)];
         let lumps = std::array::from_fn(|b| (ls[3 * b], ls[3 * b + 1], ls[3 * b + 2]));
-        let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * 8 + 4]), piles[p * 8 + 2])).collect();
+        let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * PILE_WORDS + 4]), piles[p * PILE_WORDS + 2])).collect();
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
+        let ate = (0..self.e.npiles as usize).fold(0u32, |a, p| a.wrapping_add(piles[p * PILE_WORDS + 7]));
+        let covered = (0..self.e.npiles as usize).map(|p| piles[p * PILE_WORDS + 8] as usize).collect();
+        Read { out, sums, ate, covered, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -521,6 +536,19 @@ impl GpuWorld {
         let k = self.e.dish.p.scale as f32;
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
+        self.covered = std::mem::take(&mut r.covered);
+        // The slime's eating with `crystal_keep` (the piles' last words): a
+        // world that flows sums twice a tick (`pilesum` before and after
+        // `flow`). A count that went back (a fresh dish) starts again.
+        if self.s.crystal_keep {
+            if let Some(m) = self.ate_mark {
+                let moved = r.ate.wrapping_sub(m);
+                if moved < 1 << 31 {
+                    self.ate += moved as f64 / 4096.0 / if self.e.flows { 2.0 } else { 1.0 };
+                }
+            }
+            self.ate_mark = Some(r.ate);
+        }
         self.own = r.own as usize;
         self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
@@ -1120,6 +1148,33 @@ impl World for GpuWorld {
         self.s.step * self.s.spore_speed
     }
 
+    fn slime_ate(&self) -> f64 {
+        self.ate
+    }
+
+    fn crystal_covered_each(&self) -> Vec<usize> {
+        self.covered.clone()
+    }
+
+    fn slots(&self) -> usize {
+        self.e.n as usize
+    }
+
+    /// Written to the GPU with the next step's params (species 0's cap).
+    fn set_ceiling(&mut self, n: u32) {
+        self.s.ceiling = n;
+    }
+
+    /// Each of the pile's cells written 0 (the mirror's list of them).
+    fn empty_crystal(&mut self, c: usize) {
+        let d = &self.e.dish;
+        for &i in &d.pile_cells {
+            if d.pile_of.get(i as usize).is_some_and(|&p| p as usize == c + 1) {
+                self.e.queue.write_buffer(&self.e.charge, i as u64 * 4, &0f32.to_le_bytes());
+            }
+        }
+    }
+
     fn can_sow(&self) -> bool {
         true
     }
@@ -1449,6 +1504,21 @@ mod tests {
         }
         fn spore_flight(&self) -> f32 {
             self.g.spore_flight()
+        }
+        fn slime_ate(&self) -> f64 {
+            self.g.slime_ate()
+        }
+        fn crystal_covered_each(&self) -> Vec<usize> {
+            self.g.crystal_covered_each()
+        }
+        fn slots(&self) -> usize {
+            self.g.slots()
+        }
+        fn set_ceiling(&mut self, n: u32) {
+            self.g.set_ceiling(n)
+        }
+        fn empty_crystal(&mut self, c: usize) {
+            self.g.empty_crystal(c)
         }
         fn can_sow(&self) -> bool {
             self.g.can_sow()
@@ -2747,6 +2817,58 @@ mod tests {
         let m = mask(&fort);
         assert!(!fort.world.e.forted && m.iter().all(|&v| v == 0) && fort.fort_held.is_empty(), "the mask is cleared with the rule off");
         assert_eq!(set(&fort, &m).0, 0, "and the walls wake");
+    }
+
+    /// **The slime eats without emptying a crystal, and its size follows
+    /// the crystal it covers** (`crystal_keep`, `Rules::ceiling`; the
+    /// owner, 2026-11-21 06:30Z and 06:34Z). Engine rules with no CPU twin
+    /// (his card, 11-17 19:21Z), so the test is what they do on the
+    /// software GPU, in three race worlds alike for 12 game seconds:
+    ///
+    /// - With the keep the crystals hold every bit of their charge while
+    ///   the slime eats, and the engine counts what it ate (the surge
+    ///   meter's food) within a fifth of what the same world without the
+    ///   keep took out of its crystals.
+    /// - The engine counts covered crystal cells, a few walkers to one.
+    /// - A ceiling of one walker a covered cell (under the landing's
+    ///   density, which it keeps) with its roof at the landing walkers:
+    ///   births stop there, past it by at most a step's births, while the
+    ///   kept world without it grows on.
+    #[test]
+    fn the_slime_eats_without_emptying_a_crystal_and_stops_at_its_ceiling() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let play = |keep: bool, ceiling: f32| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "crystal_keep", if keep { "1" } else { "0" }).unwrap();
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { ceiling, ceiling_roof: 1.0, ceiling_upkeep: 1.0, ..Rules::default() }, seed)
+        };
+        let charge = |g: &Game<GpuWorld>| g.world.crystals().iter().map(|c| c.1 as f64).sum::<f64>();
+        let (mut kept, mut eaten, mut capped) = (play(true, 0.0), play(false, 0.0), play(true, 1.0));
+        // The crystals as the first frame's readout gives them.
+        for g in [&mut kept, &mut eaten, &mut capped] {
+            g.step();
+        }
+        let full = charge(&kept);
+        assert!(full > 0.0 && (charge(&eaten) - full).abs() < 1e-3 * full, "the worlds start alike");
+        while kept.time() < 12.0 {
+            for g in [&mut kept, &mut eaten, &mut capped] {
+                g.step();
+            }
+        }
+        let took = full - charge(&eaten);
+        let ate = kept.world.slime_ate();
+        let covered = kept.world.crystal_covered();
+        let start = capped.ceiling.start;
+        eprintln!("keep: charge {:.1} of {full:.1}, ate {ate:.1}; no keep: took {took:.1}; covered {covered} cells, {} alive; capped at {} (landed {start}), {} alive against {} uncapped", charge(&kept), kept.world.e.alive(), capped.ceiling.now, capped.world.e.alive(), kept.world.e.alive());
+        assert!((charge(&kept) - full).abs() < 1e-4 * full, "the keep holds every crystal's charge");
+        assert!(took > 100.0 && (ate - took).abs() < 0.2 * took, "the keep counts what the slime ate ({ate:.1}) as the crystals lose it without ({took:.1})");
+        assert!(covered > 20 && covered < kept.world.e.alive(), "a few walkers to a covered cell: {covered}");
+        let ceil = capped.ceiling.now as usize;
+        assert!(ceil <= start && ceil + start / 10 >= start, "the landing's density over more covered cells, under a roof at the landing walkers: ceiling {ceil}, landed {start}");
+        let alive = capped.world.e.alive();
+        assert!(alive <= ceil + ceil / 100, "births stop at the ceiling: {alive} alive, ceiling {ceil}");
+        assert!(kept.world.e.alive() > alive + start / 50, "the world without a ceiling grows on: {} against {alive}", kept.world.e.alive());
     }
 
     /// **A shot stops at set slime** (the owner's planet 3 round,

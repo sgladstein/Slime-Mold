@@ -497,6 +497,7 @@ impl<W: World> Game<W> {
             self.costed("cover_turn", |g| g.cover_turn());
             self.costed("count_stuck", |g| g.count_stuck());
             self.costed("check_broken", |g| g.check_broken());
+            self.costed("time_ceiling", |g| g.time_ceiling());
             self.costed("keep_panic_reach", |g| g.keep_panic_reach());
             self.costed("time_raids", |g| g.time_raids());
             self.costed("time_unit_paths", |g| g.time_unit_paths());
@@ -559,8 +560,12 @@ impl<W: World> Game<W> {
     pub(super) fn time_surges(&mut self, took: f64) {
         let r = self.rules;
         let now: f64 = self.world.crystals().iter().map(|c| c.1 as f64).sum();
-        let ate = (self.charge_was - now - took).max(0.0);
-        self.charge_was = now;
+        // With the GPU's `crystal_keep` (2026-11-21, the owner: crystals
+        // never run out from eating) the slime's eating leaves the charge
+        // as it was, so the world counts it (`World::slime_ate`).
+        let kept = self.world.slime_ate();
+        let ate = (self.charge_was - now - took).max(0.0) + (kept - self.ate_was).max(0.0);
+        (self.charge_was, self.ate_was) = (now, kept);
         self.slime_ate += (ate / r.charge.max(1e-6) as f64) as f32;
         let every = self.world.surge_every();
         if r.surge_food <= 0.0 || every == 0 {
@@ -606,7 +611,10 @@ impl<W: World> Game<W> {
         let under = (self.mould as f32) < r.broken * self.peak as f32;
         match (under, self.broken) {
             (true, None) => {
-                let up = self.world.upkeep();
+                // The shape's upkeep, not the ceiling's raise of it
+                // (`time_ceiling`, 11-21), so a broken slime over its
+                // ceiling starves at `broken_starve`, not 3 times that.
+                let up = if self.ceiling.start > 0 { self.ceiling.upkeep } else { self.world.upkeep() };
                 self.world.set_upkeep(up * r.broken_starve);
                 self.broken = Some((self.world.ticks(), up));
             }

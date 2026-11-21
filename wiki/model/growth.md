@@ -14,6 +14,7 @@ sources:
   - Reports/mould-shape-2026-11-11.md
   - Reports/one-body-2026-11-12.md
   - Reports/raid-march-2026-11-18/README.md
+  - Reports/slime-ceiling-2026-11-21/README.md
   - Reports/slime-enemy-review-2026-11-12.md
   - Reports/slime-regrowth-2026-11-21/README.md
   - Reports/specks-2026-11-16/README.md
@@ -48,6 +49,9 @@ code:
 
 ## Now
 
+In the run (11-21) its size follows the crystal it covers
+([ceiling](#the-runs-ceiling-2026-11-21)).
+
 The big dish's walker count can follow its food (Larder World W0;
 `BigParams::upkeep` above 0, default 0, off). Each walker holds energy,
 eats its equal share of what its cell loses (grass, and on Larder's
@@ -61,10 +65,6 @@ its size is nearly linear in the regrowth
 Growth off changes nothing. On the GPU it is three passes that match the
 CPU in a one-tick twin test and add 0.16 ms to a 1.82 ms GTX 1070 frame at
 100,000 walkers ([growth, *On the GPU*](../../Reports/growth-2026-11-11.md)).
-A fix after the merge: the GPU cleared its grass eater counts only when
-grazing steered, so with growth on and grazing's weight 0 it over-ate the
-grass; the twin test now runs the GPU a few ticks first, which catches it
-(grass L1 0.12 before, 0 after).
 On crystals the size stops near 20,000 whatever the charge: the crystals'
 area sets the intake and the charge only how long it lasts; grass under
 the crystals swamps them
@@ -134,6 +134,7 @@ the strength that grows instead, and keep the dense word for their members.
 
 ## Tried and rejected
 
+- A fix after the merge: the GPU cleared its grass eater counts only when grazing steered, so with growth on and grazing's weight 0 it over-ate the grass; the twin test now runs the GPU a few ticks first, which catches it (grass L1 0.12 before, 0 after).
 - Thickening and condensing (shape C's `thicken` 2, the run's `condense`
   300 from planet 2), 11-15 to 11-16: out of play by the owner's word
   above, deleted from the code 11-17
@@ -262,6 +263,41 @@ the strength that grows instead, and keep the dense word for their members.
   first 20 s (pumps hand) and from 257 to 166 from 0:20 to 0:40 (greedy
   hand; 179 at a tether of 3). Raids march as one lump instead
   ([raid march](../../Reports/raid-march-2026-11-18/README.md)).
+
+## The run's ceiling (2026-11-21)
+
+The slime eats without emptying a crystal, and its size follows the
+crystal it covers (2026-11-21, the thread "Make the slime a
+more interesting enemy"; the owner, 06:30Z: "crystals never run out from
+eating or pumping, and only your squad can empty one by draining it ...
+this 100%", and his pick of option 1 at 06:34Z). On the GPU only (no CPU
+twin):
+
+- `crystal_keep` (`run::enemy_keys`): a walker still takes its share but
+  the cell keeps its charge; `pilesum` sums what was eaten into each pile's
+  word 7, so the surge meter keeps its clock (planet 1, run seeds 1-3,
+  greedy: first surge at 41-55 s against 43-58 s before; the slime eats
+  2.4-3.0 food/s against 2.3-2.7).
+- The ceiling (`Rules::ceiling`, `larder_world/ceiling.rs`; `run::CEILING`
+  12 on every planet): once a game second, the crystal cells it covers
+  (charge and a walker on them, `pilesum`'s word 8, smoothed over 5 s)
+  times its walkers a covered cell at landing (planet 1: 14 to 21), never
+  over 3 times its landing walkers or its slots. Over it no walker is born
+  (species 0's birth cap, the engine's `CEIL`) and its upkeep rises to 3
+  times at 20% over.
+- Measured on planet 1, run seeds 1-3, greedy: the sizes at 1:00, 2:00
+  and 3:00 are within 5% of before on 8 of 9 (seed 1 at 2:00 +19%, a
+  fight's swing). Idle squad, seed 1, its most covered crystal (1,195 of
+  2,217 cells) emptied at 2:00 (headless `LARDER_DRAIN=120`): the ceiling
+  fell from its 26,239 slots to 14,365, the slime from 17,107 to 15,805 by
+  2:50, then spread over more crystal and held 16,369 at 4:00 against
+  19,902 before the change; with the ceiling's births stop alone (upkeep
+  x1) 17,419.
+- Rejected: the upkeep raised all the time (x2 cut the slime at 1:00 by
+  29%, x3 by 52%: at landing most of it is off its crystal on its start
+  energy), and the ceiling floored at the landing walkers (a slime holding
+  any crystal at all regrew to its landing size).
+- End cards before and after ([report](../../Reports/slime-ceiling-2026-11-21/README.md)): a 7-minute greedy game matches; with its only crystal emptied at 3:00 the slime is 2.7k at 4:00 against 5.2k before.
 
 ## Sources
 

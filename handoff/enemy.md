@@ -162,6 +162,23 @@ flying spore writes its flight word, so the Sporer's draw as tailed beads.
 New slime events also need a `force_*` in `larder_world/force.rs` and a
 Spawn entry in `viewer.rs` (the slime viewer, #607).
 
+## Crystals never run out; the slime's size follows them (2026-11-21, the same thread)
+
+Scott 06:30Z: "crystals never run out from eating or pumping, and only
+your squad can empty one by draining it ... this 100%"; 06:34Z he picked
+option 1, size follows food. Built together, GPU only:
+`crystal_keep` (`run::enemy_keys`; `eat` takes no charge, `pilesum` sums
+the eating into pile word 7 for the surge meter, `World::slime_ate`) and
+the ceiling (`Rules::ceiling`, `run::CEILING` 12 in `ENEMY_RULES`,
+`larder_world/ceiling.rs`): covered crystal cells (pile word 8; `Pile`
+is now 12 words, `gpu::PILE_WORDS`) times the landing density, roof 3x
+landing or the slots; over it species 0's birth cap stops births
+(`WORLD_CEIL`, `capcount`) and upkeep rises to x3 at 20% over. Numbers
+and rejected variants: `wiki/model/growth.md`, *The run's ceiling*.
+Film tools: headless `LARDER_DRAIN=T`, `film_ends`' `FILM_DRAIN`,
+`FILM_KEYS`. Next if Scott wants a sharper shrink: `CEILING_OVER` 0.1 or
+`ceiling_upkeep` 4 (measure the starts again).
+
 ## Heartbeat (2026-11-20, the same thread)
 
 The third rule, on by default on every run planet (`ENEMY_RULES`' `heart`;

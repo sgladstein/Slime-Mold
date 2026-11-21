@@ -155,7 +155,9 @@ and player walls (`build_wall`) that mould pressing on wears down to slow
 rubble (owner, 15:24Z: walls must not seal a crystal for good). All on the
 big dish, CPU, off by default. Wall health defaults to 400: a whole caged mould breaks out
 in 20-30 s, while a passing tube never breaks a wall. Crystal charge flows
-inside a crystal (`crystal_flow` 0.01), so the mould eats whole crystals.
+inside a crystal (`crystal_flow` 0.01), so the mould eats whole crystals. (In the run
+since 2026-11-21 it no longer empties one: only the squad does,
+`crystal_keep`; [growth](../model/growth.md).)
 With growth (scratch, no player), charge sets how long the mould lasts, not
 how big it gets: charge 512 gives an idle mould about 10-12 minutes of
 food on the 512 × 320 world
