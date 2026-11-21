@@ -24,15 +24,14 @@ Next is Milestone 2, "A whole run": the origin as the way a planet is won, a
 chosen run length, the bot's curve over all eight planets, save and resume,
 the core world at 60 frames a second. A release only if the owner chooses one.
 
-**Where it stands (11-20 evening, [check](handoff/direction.md)).** Nothing
-is closed. Test 1 is behind: one bot now plays the run (the strategy bot's
-plan by planet), and planet 1 is its weak point (no plan wins more than 6 of
-11 maps; rush,aim=6 wins all 11 of planet 2). Built today, his to judge: the
-count-up clock, condensed strikers and the late lunge against a big army,
-starfall and boss cores (base pay 175 + 25 a planet), own fire at 10 health
-a second, late mini-bosses that shell or go round a big army (building).
-Tests 2, 4 and 5: built, his. Test 6: two switches off, `feel` (his D6) and
-`crystal_regrow` (one side of D7, held with the rush).
+**Where it stands (11-21 night, [check](handoff/direction.md)).** Nothing
+is closed. Test 1 is behind: planet 1 lost to the strikers' retune (#566,
+bisected) and to a bot harvest stall. His 23:32 ruling paces the threats
+(#606): planet 1 is the base slime plus fruiting; strikers from 2, waves and
+the late lunge from 3, the heart from 4. Built, his to judge: the count-up
+clock, starfall by half the par and boss cores, own fire at 10 a second,
+late Mortars and hunters round a big army. Tests 2, 4 and 5: built, his.
+Test 6: one switch off, `crystal_regrow` (one side of D7).
 
 ## Each lane's top jobs
 
