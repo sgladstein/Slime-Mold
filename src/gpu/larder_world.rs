@@ -416,6 +416,20 @@ impl GpuWorld {
         out
     }
 
+    /// `grid`, summed in squares of `b` cells, added up in squares of
+    /// `bin` (a whole number of `b`): what `grid_now(bin)` reads, as of the
+    /// same tick.
+    fn coarser(&self, grid: &[u32], b: usize, bin: usize) -> Vec<u32> {
+        let (w, h) = (self.e.dish.w, self.e.dish.h);
+        let (fw, k) = (w.div_ceil(b), bin / b);
+        let gw = w.div_ceil(bin);
+        let mut out = vec![0u32; gw * h.div_ceil(bin)];
+        for (i, &n) in grid.iter().enumerate() {
+            out[(i / fw / k) * gw + (i % fw) / k] += n;
+        }
+        out
+    }
+
     /// Submits `enc` and asks for the readout it fills.
     fn submit(&mut self, enc: wgpu::CommandEncoder) {
         assert!(!self.ro.busy, "a frame's readout is still out (frame_finish first)");
@@ -1160,12 +1174,22 @@ impl World for GpuWorld {
     /// first ask, or a new square, is read back once. The CPU world's grid
     /// is the tick's own, so a goal read off it lands up to a second later
     /// here.
+    ///
+    /// A square a whole number of times the summed one is added up from
+    /// it, and leaves the GPU's square as it was (the bug hunt, 11-21): the
+    /// game's rules ask at `scale` and the bots at 4 x `scale`, and while
+    /// each ask moved the square, every rule's ask after a bot's missed and
+    /// read the cells back fresh, so a bot's game saw a fresher grid than
+    /// play does (one `walkers_in` call more turned a planet 2 loss on run
+    /// seed 1 into a win).
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
-        self.want.set(bin);
         match &self.grid {
-            Some((b, _, g)) if *b == bin => Some(g.clone()),
-            _ => Some(self.grid_now(bin)),
+            Some((b, _, g)) if *b == bin => return Some(g.clone()),
+            Some((b, _, g)) if *b > 0 && bin.is_multiple_of(*b) => return Some(self.coarser(g, *b, bin)),
+            _ => {}
         }
+        self.want.set(bin);
+        Some(self.grid_now(bin))
     }
 
     /// Read back once a game second while a rule wants it (`Game::mark_bulwark`).
@@ -1477,6 +1501,34 @@ mod tests {
             assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
         }
+    }
+
+    /// **A bot's coarser ask leaves the rules' grid alone** (the bug hunt,
+    /// 11-21): asked for squares four times the summed ones, the grid is
+    /// added up from the summed one, equal to the cells' own sum as of its
+    /// tick, and the GPU goes on summing the rules' square, so the rules'
+    /// next ask is still the summed grid and reads nothing back.
+    #[test]
+    fn a_coarser_grid_is_added_up_from_the_summed_one() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { cap: 30.0, ..Rules::default() }, seed);
+        let mut checked = 0;
+        while g.time() < 6.0 && g.end.is_none() {
+            let _ = g.world.mould_grid(1);
+            g.step();
+            let w = &g.world;
+            let Some((b, at, _)) = w.grid.as_ref().map(|(b, at, v)| (*b, *at, v.len())) else { continue };
+            assert_eq!(b, 1, "the rules' square is summed");
+            if at != w.ticks() {
+                continue;
+            }
+            let coarse = w.mould_grid(4).unwrap();
+            assert_eq!(coarse, w.grid_now(4), "at {at}: the coarse grid is the cells' sum");
+            assert_eq!(w.want.get(), 1, "the coarse ask left the square");
+            checked += 1;
+        }
+        assert!(checked >= 3, "{checked} whole seconds checked");
     }
 
     /// **A turret sees and fires over a wall on both engines** (owner,
