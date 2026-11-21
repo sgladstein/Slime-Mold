@@ -2978,7 +2978,10 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // fire below shares.
     let pp = plant_px(x, y);
     var pl: PlantLayer;
+    pl.rgb = vec3<f32>(0.0); pl.cover = 0.0;
     pl.fl = vec3<f32>(0.0); pl.fc = 0.0; pl.fw = 0.0; pl.dark = 1.0;
+    // How much of the bare ground (and so of its plants) shows here.
+    let gv = m.vis * under;
     if (P.plant_at != 0u) {
         // Char: near-black grey with a crisp edge (a narrow rise of the
         // per-pixel char, a few pixels at zoom 24), a little ash grain.
@@ -2991,19 +2994,27 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         // Zoomed out, where the crowns fade to their flat mean cover, that
         // cover is veiled over water too (the shallows read green at zoom
         // 4 with the thinning alone).
+        // The crowns only where they can show: on ground the slime leaves
+        // bare (`gv`), or burning (their flames light the slime over
+        // them too). Under the body they were worked out and then
+        // weighted by a `gv` of 0: on the 1070 the plants were the base
+        // pass's dearest part, 1.04 of its 3.42 ms on planet 3
+        // (`Reports/view-cost-2026-11-21`).
         var dp = pp.d;
         var ws = vec2<f32>(0.0);
-        if (dot(dp, vec4<f32>(1.0)) > 0.003) {
-            ws = water_share(x, y);
-            dp *= (1.0 - WATER_THIN * ws.x) * (1.0 - smoothstep(0.25, 0.6, ws.y));
+        let hot = pp.heat > 0.002;
+        if (gv > 0.001 || hot) {
+            if (dot(dp, vec4<f32>(1.0)) > 0.003) {
+                ws = water_share(x, y);
+                dp *= (1.0 - WATER_THIN * ws.x) * (1.0 - smoothstep(0.25, 0.6, ws.y));
+            }
+            pl = plant_layer(x, y, dp, hot);
         }
-        pl = plant_layer(x, y, dp, pp.heat > 0.002);
         if (ws.x > 0.0) {
             let far = 1.0 - clamp(pl.fw / max(pl.cover, 1e-3), 0.0, 1.0);
             let veil = 1.0 - WATER_VEIL * ws.x * far;
             pl.rgb *= veil; pl.cover *= veil;
         }
-        let gv = m.vis * under;
         let pv = pl.cover * gv;
         m.albedo = m.albedo * (1.0 - pv) * mix(1.0, pl.dark, gv) + pl.rgb * gv;
         m.gloss *= 1.0 - pv;

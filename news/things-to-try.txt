@@ -2,8 +2,8 @@
 # each with a tick the game remembers on that PC. The Direction lane owns
 # this file; other lanes ask Direction for a line. One thing a line, in
 # plain words, the most important first. Lines starting with # are notes.
-The rush on planet 1: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build first instead: pumps, walls and turrets. Raids now come late, usually about four minutes in and only now and then early, and more often as the planet goes on.
-The Lure, on planet 1: build two or three turrets, put a Lure in front of them and watch the calm slime stream into your guns. Does it make building worth it against the rush?
-Camera shake and hit-stop: turn it on in Options, on the Experiments tab, and fight. Keep it, change it or drop it?
-What each of planets 1 to 3 does to you: one sentence a planet after playing them. Planet 3's slime now walls its crystals in amber and sets where you shoot it: bring a Torch.
-The starting rifle: does it feel good, and did one shop visit change how the gun plays? The shop sells two new bullets from planet 2, Provoke and Still.
+Each planet now brings something new: planet 1 is the plain slime with its fruiting, strikers come on planet 2, waves and the late lunge on planet 3, the last-stand heart from planet 4. Is planet 1 fair now, and does each planet feel new?
+Starfall and boss cores: on planet 1 the first ore falls near your squad at about a minute; stand by it to collect. Later falls land by the slime, and cores slide back into it. Are they worth the risk, and is it clear how to take them?
+The rush on planet 1: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build first instead: pumps, walls, turrets and a Lure.
+What each of planets 1 to 3 does to you: one sentence a planet after playing them.
+The starting rifle: does it feel good, and did one shop visit change how the gun plays?
