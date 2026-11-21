@@ -297,10 +297,19 @@ impl<W: World> Game<W> {
         let at = join.and_then(|q| self.middle(q));
         self.add_soldier_at(at.unwrap_or(self.larder), a);
         let gather = join.is_some_and(|q| self.squads[q].steer == (0.0, 0.0) && self.squads[q].dest.is_none());
+        // It fires as the squad it joins does (its first member's stance):
+        // in the squad mode the fire mode and Hold fire are the squad's, and
+        // a newcomer on Defend in a squad told to hold fire shot anyway and
+        // showed the card's fire button as "mixed" (controls review,
+        // 2026-11-21).
+        let stance = join.and_then(|q| self.members(q).first().map(|&k| self.soldiers[k].stance));
         if let Some(s) = self.soldiers.last_mut() {
             match join {
                 Some(q) => s.squad = q as u8,
                 None => s.order = self.rally,
+            }
+            if let Some(st) = stance {
+                s.stance = st;
             }
         }
         if let (true, Some(q)) = (gather, join) {
