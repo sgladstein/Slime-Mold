@@ -469,6 +469,11 @@ pub struct Rules {
     /// by steering (`Game::steer_all`). Off is the walk before it: full
     /// speed straight at the place each step, shoved apart after.
     pub steer: bool,
+    /// A squad on a plain move walks round fire where there is a way round
+    /// (`fireway.rs`, pathfinding thread 2026-11-21, Direction's call); a
+    /// squad standing to fight in fire is left as it is. Off walks straight
+    /// through, as before (`set=fireway=0`).
+    pub fireway: bool,
     /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
     /// rid of the whole larder system"), a crystal is *drained* or
     /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
@@ -705,6 +710,10 @@ impl Rules {
         // the walk before it.
         if name == "steer" {
             self.steer = v > 0.0;
+            return true;
+        }
+        if name == "fireway" {
+            self.fireway = v > 0.0;
             return true;
         }
         if name == "funnel" {
@@ -1096,6 +1105,7 @@ impl Default for Rules {
             spray_share: 1.0,
             lead: super::LeadRules::default(),
             squads: false,
+            fireway: true,
             funnel: true,
             steer: true,
             larder: true,

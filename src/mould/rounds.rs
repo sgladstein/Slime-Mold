@@ -1525,6 +1525,18 @@ impl Rounds {
         let tur = std::mem::take(&mut self.queued_turret);
         let list: Vec<(Burst, BurstRules)> = q.iter().map(|&(b, k, _)| (b, k)).collect();
         let outs = g.world.bursts(&list);
+        // Fire lit (a burn or a light, `squad::burst`): squads on a move
+        // walk round it for a while (`Game::mark_hot`, `fireway.rs`).
+        // Bursts are in dish cells. Not a blast's crater: it lights 12% of
+        // its cells and only where there is fuel, so most mark no fire and
+        // a blast deck would mark the whole front; a fire one does light
+        // is marked by the first soldier who feels it (`turn.rs`).
+        let s = g.world.scale();
+        for (b, _) in &list {
+            if b.burn || b.light > 0.0 {
+                g.mark_hot((b.at.0 * s, b.at.1 * s), b.r * s);
+            }
+        }
         self.batches += 1;
         self.batched += q.len() as u32;
         let sc = g.world.scale();

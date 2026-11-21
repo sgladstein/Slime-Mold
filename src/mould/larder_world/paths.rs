@@ -534,6 +534,7 @@ impl<W: World> Game<W> {
         let mut keys: Vec<usize> = self.paths.maps.keys().copied().collect();
         keys.sort_unstable();
         self.paths.stale = keys;
+        self.paths.coarse = None;
         // A map being built finishes on the ground it started on and goes
         // stale then, walked meanwhile like the rest. Starting it again,
         // as at first, starved it: at 6x a wall going up every 6 steps or

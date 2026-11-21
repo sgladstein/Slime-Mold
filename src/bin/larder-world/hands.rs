@@ -1158,17 +1158,20 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     }
 }
 
-/// `hand=movetour[,N[,clear]]` (pathfinding thread, 2026-11-20): buys N
-/// soldiers (15) into squad 0 and sends it on plain moves (right click)
-/// from crystal to crystal, each time it arrives the next of the further
-/// half of the crystals, by turns (with `clear`, of those with no slime
-/// round them); for measuring what a sent squad walks through.
+/// `hand=movetour[,N[,clear][,fire]]` (pathfinding thread, 2026-11-20):
+/// buys N soldiers (15) into squad 0 and sends it on plain moves (right
+/// click) from crystal to crystal, each time it arrives the next of the
+/// further half of the crystals, by turns (with `clear`, of those with no
+/// slime round them; with `fire`, a burn lit halfway along each way); for
+/// measuring what a sent squad walks through.
 fn move_tour(g: &mut Game<GpuWorld>, spec: &str) {
     use std::sync::atomic::{AtomicUsize, Ordering};
     static SENT: AtomicUsize = AtomicUsize::new(0);
     let mut it = spec.trim_start_matches(',').split(',');
     let n = it.next().and_then(|v| v.parse::<usize>().ok()).unwrap_or(15);
-    let clear = it.next() == Some("clear");
+    let flags: Vec<&str> = it.collect();
+    let clear = flags.contains(&"clear");
+    let fire = flags.contains(&"fire");
     while g.time() < 1.0 && g.alive() < n && g.apply(Cmd::Buy) {}
     if g.time() < 1.0 {
         for k in 0..g.soldiers.len() {
@@ -1197,8 +1200,18 @@ fn move_tour(g: &mut Game<GpuWorld>, spec: &str) {
     let half = by.len().div_ceil(2).max(1);
     let c = by[SENT.fetch_add(1, Ordering::Relaxed) * 7 % half];
     g.apply(Cmd::SquadOrder(0, Order::Move(c.0, c.1)));
+    if fire {
+        // `fire`: a burn 6 dish cells round the middle of its way, as a
+        // Scorch round lights it (`Rounds::flush` marks it hot the same).
+        // Moved onto ground first: halfway often falls in a crystal, where
+        // nothing burns but the mark would still turn the squad.
+        let sc = g.world.scale();
+        let Some(mid) = g.nearest_standable(((m.0 + c.0) / 2.0, (m.1 + c.1) / 2.0), 8.0 * sc) else { return };
+        let b = slime_mould::mould::squad::Burst { at: (mid.0 / sc, mid.1 / sc), r: 6.0, burn: true, ..Default::default() };
+        g.world.burst(&b, &slime_mould::mould::squad::BurstRules::default());
+        g.mark_hot(mid, 6.0 * sc);
+    }
 }
-
 
 /// `steer@X,Y[,N]` (pathfinding thread, 2026-11-20): `N` soldiers (15)
 /// bought at the start into squad 0, steered with eight-way keys, as WASD

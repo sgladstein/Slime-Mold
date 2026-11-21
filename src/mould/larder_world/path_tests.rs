@@ -80,3 +80,50 @@ fn a_cell_off_a_walking_map_finds_the_nearest_on_it() {
     // A cell on the map is its own.
     assert_eq!(onto_map(w, h, &map, 5), Some(5));
 }
+
+/// Squad 0 sent 50 cells east on open ground past fire marked halfway
+/// (radius 6 cells, marked again each second, as soldiers feeling its heat
+/// would), with `Rules::fireway` as given: the nearest any member came to
+/// the fire's middle (dish cells), and the game second it arrived, if it
+/// did within 30 s.
+fn past_fire(fireway: bool) -> (f32, Option<f32>) {
+    let mut g = move_game(&super::narrow_tests::door_map(0.0, 0.0, 0.0), 3, 15);
+    g.rules.fireway = fireway;
+    let sc = g.s();
+    let at = g.middle(0).unwrap();
+    let to = (at.0 + 50.0 * sc, at.1);
+    let fire = (at.0 + 25.0 * sc, at.1);
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    let t0 = g.time();
+    let mut near = f32::MAX;
+    let mut marked = -1.0;
+    while g.time() - t0 < 30.0 {
+        if g.time() - marked >= 1.0 {
+            g.mark_hot(fire, 6.0 * sc);
+            marked = g.time();
+        }
+        g.step();
+        for k in g.members(0) {
+            near = near.min((g.soldiers[k].x - fire.0).hypot(g.soldiers[k].y - fire.1) / sc);
+        }
+        if g.squads[0].dest.is_none() {
+            return (near, Some(g.time() - t0));
+        }
+    }
+    (near, None)
+}
+
+/// **A squad sent past fire walks round it** (`fireway.rs`; Direction,
+/// 2026-11-21: a move order's way avoids burning ground where there is a
+/// way round). Without it the squad walks through the fire's middle; with
+/// it the nearest member passes 4.5 cells from it (its flank may brush the
+/// edge of the 6-cell fire: wider marks made longer ways round for no less
+/// fire on the 24 maps).
+#[test]
+fn a_squad_sent_past_fire_walks_round_it() {
+    let (through, _) = past_fire(false);
+    assert!(through < 3.0, "without fireway it walks through: nearest {through:.1} cells");
+    let (round, t) = past_fire(true);
+    assert!(round > 4.0, "a member walked into the fire: nearest {round:.1} cells");
+    assert!(t.is_some(), "never arrived (nearest {round:.1} cells)");
+}
