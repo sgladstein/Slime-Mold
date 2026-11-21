@@ -59,6 +59,7 @@ mod stand;
 mod strikers;
 mod starfall;
 mod cores;
+mod force;
 mod rules;
 mod paths;
 mod cmd;

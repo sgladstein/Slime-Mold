@@ -140,10 +140,17 @@ impl<W: World> Game<W> {
         if (self.soldiers.iter().filter(|s| s.alive).count() as f32) < r.army {
             return;
         }
-        // A free lump, else wait for one (a mini-boss, a march or a fruit
-        // ends in seconds).
-        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return };
-        let Some(home) = self.heart_site() else { return };
+        self.start_stand();
+    }
+
+    /// The heart gathering now on the heart's crystal; false with no free
+    /// lump (a mini-boss, a march or a fruit ends in seconds, so play
+    /// waits for one) or no slime on a crystal. Called by `time_stand`,
+    /// and by the slime viewer whenever it is asked (`Game::force_stand`).
+    pub(super) fn start_stand(&mut self) -> bool {
+        let r = self.rules.stand;
+        let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
+        let Some(home) = self.heart_site() else { return false };
         self.world.grow_lump(lump, (home, self.whole_map()));
         let size = self.world.size();
         self.world.set_lump(lump, Lump { aim: super::raid_cell(home, size), pull: r.pull, leash: r.leash, armour: r.armour, bite: r.bite, ..Lump::default() });
@@ -151,6 +158,7 @@ impl<W: World> Game<W> {
         let tps = self.rules.tps as f32;
         self.stand.live = Some(Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next: now + (r.every.max(1.0) * tps) as u64, grown: now });
         self.stand.done = true;
+        true
     }
 
     /// A reach (dish cells) round any point that holds the whole map.

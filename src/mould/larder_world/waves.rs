@@ -192,7 +192,16 @@ impl<W: World> Game<W> {
         if self.waves.kills.len() < keep || m1 >= m0 || (k1.saturating_sub(k0) as f32) < r.loss * m1 as f32 {
             return;
         }
-        let Some((centre, points)) = self.wave_points() else { return };
+        self.start_wave();
+    }
+
+    /// A wave gathering now round the squad; false with no points to
+    /// gather at. Called by `time_waves` on the slime's losses, and by the
+    /// slime viewer whenever it is asked (`Game::force_wave`).
+    pub(super) fn start_wave(&mut self) -> bool {
+        let r = self.rules.wave;
+        let now = self.world.ticks();
+        let Some((centre, points)) = self.wave_points() else { return false };
         let sc = self.world.scale();
         let (w, h) = self.world.size();
         let cell = |p: (f32, f32)| (p.0.clamp(0.0, w as f32 - 1.0) as u32) | ((p.1.clamp(0.0, h as f32 - 1.0) as u32) << 16);
@@ -200,6 +209,7 @@ impl<W: World> Game<W> {
         self.waves.way = Some((Way::start_lures(self.slime_ground(), cells, (r.reach.max(0.0) * sc) as u32), r.gather_pull));
         self.waves.sent += 1;
         self.waves.live = Some(Wave { phase: WavePhase::Gather, since: now, centre, points });
+        true
     }
 
     /// A surge on the next step, counted as the meter's are

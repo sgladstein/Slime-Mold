@@ -532,6 +532,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     }
                 }
             }
+            // The slime viewer's staged spawns (`LARDER_VIEWER_SPAWN`).
+            app.viewer_staged();
             let surges = app.game.as_ref().map_or(0, |g| g.surges);
             let raids = app.game.as_ref().map_or(0, |g| g.raids.sent.len());
             let boss_sec = app.game.as_ref().map_or(0, |g| g.time().floor() as u64);

@@ -226,6 +226,7 @@ mod menu;
 mod squadmode;
 mod uisize;
 mod volume;
+mod viewer;
 use uisize::*;
 use volume::*;
 use slime_mould::world::settings::{self, UiSize};
@@ -671,6 +672,9 @@ struct Args {
     /// `dev=1`: the run's shop has the dev rows (jump planets, points,
     /// redraw cards); also the options page's Dev mode.
     dev: bool,
+    /// `viewer=PLANET` (`viewer.cmd`): the slime viewer on that planet's
+    /// slime (`viewer.rs`), with its panel; 0 is off.
+    viewer: bool,
     /// `grow=SECS`: a run level's head start (`run::head_start`) set by
     /// hand, to compare (`grow=0` lands on a fresh slime).
     grow: Option<f32>,
@@ -992,6 +996,11 @@ struct App {
     /// file when a window opens (`main`), never saved by the no-window
     /// films and tests, which must not mark the owner's news as read.
     memory: slime_mould::build::news::Memory,
+    /// The slime viewer (`viewer=`), and the tweaks file it saves, which
+    /// the window reads at every round (`tweaks::Tweaks`; empty in the
+    /// films and tests, which play the game's own).
+    viewer: Option<viewer::Viewer>,
+    tweaks: slime_mould::world::tweaks::Tweaks,
 }
 
 /// The play log header's words for a round's keys: the switches off their
@@ -1005,7 +1014,7 @@ fn log_keys(keys: &[(String, String)]) -> Vec<(&'static str, String)> {
 
 impl App {
     fn new(args: Args) -> Self {
-        App {
+        let mut app = App {
             memory: slime_mould::build::news::Memory::unsaved(),
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
@@ -1098,7 +1107,14 @@ impl App {
             base: None,
             exp_next: Vec::new(),
             result: Ok(()),
+            tweaks: Default::default(),
+            viewer: None,
+        };
+        if app.args.viewer {
+            app.tweaks = slime_mould::world::tweaks::Tweaks::load();
+            app.viewer = Some(viewer::Viewer::new(&app.tweaks));
         }
+        app
     }
 
     fn fail(&mut self, event_loop: &ActiveEventLoop, msg: String) {
@@ -1183,6 +1199,19 @@ impl App {
             slime_mould::gpu::set(&mut s, k, v)?;
             if k == "tier" {
                 core_tier = Tier::from_name(v);
+            }
+        }
+        // The slime viewer's tweaks to this slime's walk (`slime TIER KEY`
+        // in the tweaks file), over everything; the viewer keeps the
+        // values under them for its Reset.
+        if let Some(vw) = self.viewer.as_mut() {
+            vw.engine0 = viewer::ENGINE_KEYS.iter().filter_map(|(k, _, _)| Some((*k, viewer::engine_get(&s, k)?))).collect();
+        }
+        if let Some(t) = core_tier {
+            for (tier, k, v) in self.tweaks.slime.iter().filter(|(tier, _, _)| tier == t.name()) {
+                if let Err(e) = slime_mould::gpu::set(&mut s, k, &format!("{v}")) {
+                    eprintln!("larder-world: the tweaks file's slime {tier} {k}: {e}");
+                }
             }
         }
         let mut walkers = s.walkers;
@@ -1299,6 +1328,22 @@ impl App {
                 return Err(format!("set={k}: no such rule"));
             }
         }
+        // The slime viewer: the gun range's clock and bank, and the squad
+        // can't lose (`viewer.rs`).
+        if self.viewer.is_some() {
+            rules.cap = RANGE_CAP;
+            rules.start_bank = rules.start_bank.max(RANGE_BANK);
+            rules.wipe_ends = 0.0;
+        }
+        // The tweaks file's rules (`rule NAME`), last.
+        if let Some(vw) = self.viewer.as_mut() {
+            vw.rules0 = Some(rules);
+        }
+        for (k, v) in &self.tweaks.rules {
+            if !rules.set(k, *v) {
+                eprintln!("larder-world: the tweaks file's rule {k}: no such rule");
+            }
+        }
         let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
         self.sq = a.squads.then(SquadInput::new);
         if a.squads {
@@ -1343,7 +1388,12 @@ impl App {
                 eprintln!("ammo: {}: {line}", c.title());
             }
         }
-        self.mission = mission.map(|m| Tracker::new(m, &game));
+        // The viewer plays no mission: the round is never won or lost
+        // (its map still names the window).
+        if let Some(m) = mission.as_ref().filter(|_| self.viewer.is_some()) {
+            self.name = m.map.clone();
+        }
+        self.mission = if self.viewer.is_some() { None } else { mission.map(|m| Tracker::new(m, &game)) };
         self.mission_sec = 0;
         let e = &game.world.e;
         let size = (e.dish.w, e.dish.h);
@@ -1393,7 +1443,10 @@ impl App {
             // The slime's own look (Look B, 2026-11-19), by its tier, and a
             // walker's pace in dish cells over the look's streak.
             let pace = game.world.s.step / game.world.scale() * fine_tps;
-            v.set_slime_look(slime_mould::world::view::SlimeLook::of(core_tier), pace * slime_mould::world::view::STREAK_SECS);
+            // The tweaks file's body look for this slime (`body TIER`) over
+            // its own.
+            let body = core_tier.and_then(|t| self.tweaks.body_of(t.name())).and_then(slime_mould::world::view::SlimeLook::parse).unwrap_or(slime_mould::world::view::SlimeLook::of(core_tier));
+            v.set_slime_look(body, pace * slime_mould::world::view::STREAK_SECS);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
@@ -1454,6 +1507,16 @@ impl App {
             // into its readout and never reads one back (cloud plan C7).
             if self.mission.is_some() {
                 l.piece_bin = BIN;
+            }
+        }
+        // The viewer's Reset values for this slime's walk: the world's own
+        // as the round starts (the game sets some on its own, such as the
+        // alarm's), but the value under a tweak for a tweaked key.
+        if let (Some(vw), Some(t)) = (self.viewer.as_mut(), core_tier) {
+            for (k, v) in vw.engine0.iter_mut() {
+                if self.tweaks.slime_of(t.name(), k).is_none() {
+                    *v = viewer::engine_get(&game.world.s, k).unwrap_or(*v);
+                }
             }
         }
         self.game = Some(game);
@@ -1975,6 +2038,7 @@ impl App {
             self.squad_frame(dt);
         }
         self.step(dt);
+        self.viewer_frame(dt);
         // The dish under the menu plays on: a round it ends starts again.
         // (Not the gun range's paused under its armory.)
         // A run planet's dish ends at its mission's verdict (`open_menu`).
@@ -2145,13 +2209,16 @@ impl App {
             }
             return;
         }
-        if let Some(c) = self.canvas.as_mut() {
+        if let Some(mut c) = self.canvas.take() {
             c.clear();
-            self.hud.draw(&model, &self.controls, &self.camera, minimap, c, &mut self.marks);
+            self.hud.draw(&model, &self.controls, &self.camera, minimap, &mut c, &mut self.marks);
             self.camera.set_inset(self.hud.top, c.screen.1 as f32 - self.hud.bottom);
+            // The slime viewer's panel over the HUD.
+            self.viewer_draw(&mut c);
             if let Some(cp) = self.canvas_pass.as_mut() {
-                cp.upload(c);
+                cp.upload(&mut c);
             }
+            self.canvas = Some(c);
         }
         if let Some(v) = self.view.as_mut() {
             v.minimap_box = self.hud.minimap_box;
@@ -2270,6 +2337,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // (`ui=` alone still opens on the menu: it only sizes the UI.)
     let bare = std::env::args().skip(1).all(|a| a.starts_with("ui="));
     let mut ui = None;
+    let mut viewer_at = 0u32;
+    let mut tweaks_window = false;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -2291,6 +2360,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "range" => args.range = Some(Run::range(v.parse()?)),
             "dev" => args.dev = v != "0",
+            // `viewer=PLANET`: the slime viewer on that planet's slime
+            // (`viewer.cmd` gives 1).
+            "viewer" => viewer_at = v.parse::<u32>().map_err(|_| "viewer=PLANET (1 to 8; 0 is off)")?,
             "grow" => args.grow = Some(v.parse()?),
             "mode" => {
                 mode_given = true;
@@ -2609,6 +2681,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !mode_given && look.is_none() && bench_secs.is_none() {
         args.squads = true;
     }
+    // The slime viewer: a run landing on the planet asked for, in squad
+    // mode, with the dev rows (`viewer.rs`).
+    if viewer_at > 0 {
+        args.viewer = true;
+        args.squads = true;
+        args.dev = true;
+        let mut r = args.run.take().unwrap_or_else(|| Run::new(fresh_seed()));
+        r.depth = viewer_at.clamp(1, slime_mould::mould::run::PLANETS);
+        args.run = Some(r);
+    }
     let base = args.clone();
     // A run keeps its tier's mould, as a mission does.
     if let Some(r) = args.run.as_mut() {
@@ -2656,7 +2738,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
+    // The window plays the tweaks the slime viewer saved (`tweaks.rs`).
+    if !args.viewer {
+        tweaks_window = true;
+    }
     let mut app = App::new(args);
+    if tweaks_window {
+        app.tweaks = slime_mould::world::tweaks::Tweaks::load();
+    }
     app.memory = slime_mould::build::news::Memory::load();
     app.spread = spread;
     if menu_flag.as_deref() != Some("0") {

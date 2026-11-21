@@ -452,6 +452,8 @@ pub(super) fn offscreen(args: Args, screen: (u32, u32), device: &wgpu::Device, q
     app.canvas.as_mut().unwrap().ui.user = ui_user();
     app.canvas_pass = Some(CanvasPass::new(device, queue));
     app.gpu = Some((device.clone(), queue.clone()));
+    // The slime viewer's look (`viewer=`); nothing in other films.
+    app.apply_look_tweaks();
     app.start()?;
     Ok(app)
 }

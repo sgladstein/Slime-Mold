@@ -2,6 +2,26 @@
 
 ## State (2026-11-20)
 
+**Slime viewer (branch `claude/project-thread-517zll`, the thread "Build a
+slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
+main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the
+gun range's clock with a panel at the right (`src/bin/larder-world/viewer.rs`;
+F1 hides it). Four tabs: Slime (the planet's slime, its body look, and its
+on-off rules), Spawn (every mini-boss kind, fruit, wave, the last-stand
+heart, strikers, heartbeat, ore, core, raid at the click, by
+`larder_world/force.rs`, which calls play's own starts), Look (every plain
+number or colour `const` at the top of `view.wgsl`, grouped by its comment,
+changed live by text-substituting the shader and rebuilding its pipelines,
+`View::reshade`), Rules (the slime's rule keys, `Rules::get`/`set`, and 20
+engine keys). Save writes `slime-tweaks.txt` at the repo root
+(`world::tweaks`, gitignored; `LARDER_TWEAKS` overrides), which every game
+then plays, with "your slime tweaks (N)" in the corner; a copy goes to
+`play-logs/`. A new look `const` in `view.wgsl` shows up in the Look tab by
+itself if it is a plain number or `vecN<f32>` at the top level; the lump
+colours were lifted into `LUMP_SKIN_*`/`LUMP_CORE_*` for it. Headless
+checks: `LARDER_VIEWER_TAB=look|spawn|rules|slime`,
+`LARDER_VIEWER_SPAWN="T:NAME[@X,Y];.."`.
+
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
 page https://claude.ai/artifact/XqBjSyq4eqiTdzdgE6Wqxg). An alarm shows as
 a warm flush on the slime (`flush_at` in `view.wgsl`), bare ground shows
