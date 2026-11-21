@@ -2,7 +2,7 @@
 
 ## State (2026-11-20)
 
-**Slime viewer (branch `claude/project-thread-517zll`, the thread "Build a
+**Slime viewer (11-21: slimes of his own, `custom NAME = BASE` and `planet N = SLIME` in the tweaks file, keyed like a tier in `slime`/`rule`/`body` lines; old looks `SlimeLook::Paint` 8 and `Foil` 9 branch in `cell_mat_c`, prep's `th_h` and `shaded`'s spec; first built on branch `claude/project-thread-517zll`, the thread "Build a
 slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
 main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the
 gun range's clock with a panel at the right (`src/bin/larder-world/viewer.rs`;
@@ -19,7 +19,7 @@ then plays, with "your slime tweaks (N)" in the corner; a copy goes to
 `play-logs/`. A new look `const` in `view.wgsl` shows up in the Look tab by
 itself if it is a plain number or `vecN<f32>` at the top level; the lump
 colours were lifted into `LUMP_SKIN_*`/`LUMP_CORE_*` for it. Headless
-checks: `LARDER_VIEWER_TAB=look|spawn|rules|slime`,
+checks: `LARDER_VIEWER_TAB=look|spawn|rules|slime`, `LARDER_VIEWER_SLIME=NAME`,
 `LARDER_VIEWER_SPAWN="T:NAME[@X,Y];.."`.
 
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,

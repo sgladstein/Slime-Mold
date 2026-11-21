@@ -1344,6 +1344,23 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     m.vis = 1.0 - smoothstep(0.004, 0.05, th);
     m.glow = vec3<f32>(0.0);
     m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));
+    // Old looks, given back as body looks (the slime viewer, 11-21: the
+    // owner's card "Bring back old looks", from git). 8, paint: the first
+    // game's slime (11-12 to 11-14, before b9b30b9c), the hue at 55% to
+    // 100% by thickness laid over the soil up to 85%, a dim opaque paint
+    // with a flat ochre vein. 9, foil: the slime of 11-14 morning (#241,
+    // before the art director's c5dc432b), the gel and the opaque body at
+    // full saturation, which he read as crumpled gold foil.
+    if (P.slime_look == 8u) {
+        m.albedo = mix(soil, hue * (0.55 + 0.45 * th), clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
+        m.gloss = (0.08 + 0.7 * sqrt(th)) * (1.0 - 0.6 * cut);
+    } else if (P.slime_look == 9u) {
+        let vivid0 = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut));
+        let body0 = vivid0 * (0.95 + 0.3 * smoothstep(0.3, 1.0, th));
+        let gel0 = soil * (0.55 + 0.7 * vivid0 / 255.0);
+        m.albedo = mix(mix(soil, gel0, 1.0 - exp(-14.0 * th)), body0, smoothstep(0.08, 0.55, th) * 0.95);
+        m.gloss = (0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut);
+    }
     m.body = 0.0;
     m.gem = 0.0;
     if (kind == WET) {
@@ -2188,6 +2205,9 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // sheen runs over it as over dense wet metal; only its colour takes the
     // plateau. The first cut fed the plateau to the height too.
     var th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share) * smoothstep(0.3, 0.6, wide);
+    // The old looks (8 paint, 9 foil) as they were: every walker its own
+    // dome, the frontier's "bubble wrap".
+    if (P.slime_look == 8u || P.slime_look == 9u) { th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share); }
     if (P.slime_look == 3u) { th_h = max(th_h, CORD_RISE * trail * trail * off); }
     // A mini-boss's body (2026-11-16): its members' share of the walkers
     // round the cell (a member counts once in `n` and once in `lc`), and the
@@ -3064,6 +3084,13 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let sy = film_h(x, y + so) - film_h(x, y - so);
     let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
     var spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
+    // The old looks' highlights, off the fine slope as they were: paint's
+    // one soft lobe, foil's tight glints (11-21, the slime viewer).
+    if (P.slime_look == 8u) {
+        spec = pow(max(dot(n, half_v), 0.0), 28.0) * m.gloss * 0.7;
+    } else if (P.slime_look == 9u) {
+        spec = pow(max(dot(n, half_v), 0.0), 16.0 + 64.0 * m.gloss) * m.gloss * (0.5 + 0.9 * m.gloss);
+    }
     // The thin film's shaded flank keeps most of its light (rule 2: the
     // film from 80; the planet review 11-15 measured its 10th percentile
     // at 65-80 on slime-coloured pixels, the far flank of the frontier's
