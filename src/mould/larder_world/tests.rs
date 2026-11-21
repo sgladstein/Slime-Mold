@@ -2609,6 +2609,68 @@ fn a_squad_does_its_queued_orders_in_turn() {
     assert_eq!(g.squads[0].queued, 0);
 }
 
+/// A tap of WASD is the squad mode's stop (its card has no Stop), so
+/// steering drops the squad's queue: once let go it settles where it is
+/// and does not walk off to a queued point (controls review, 2026-11-21;
+/// before, only the members' own queues went).
+#[test]
+fn steering_drops_the_squads_queue() {
+    let mut g = squads(7);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    off_the_crystal(&mut g);
+    let a = open_near(&g, 14.0);
+    let b = open_near(&g, 26.0);
+    g.apply(Cmd::SquadOrder(0, Order::Move(a.0, a.1)));
+    g.apply(Cmd::SquadQueue(0, Order::Move(b.0, b.1)));
+    assert_eq!(g.squads[0].queued, 1);
+    g.step();
+    // The tap: a key down, then up.
+    g.apply(Cmd::Steer(0, (0.0, 1.0)));
+    g.step();
+    g.apply(Cmd::Steer(0, (0.0, 0.0)));
+    assert_eq!(g.squads[0].queued, 0, "steering kept the queue");
+    let stop = g.squads[0].dest.expect("let go, it settles where it stands");
+    for _ in 0..8 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let m = g.middle(0).unwrap();
+    assert!((m.0 - b.0).hypot(m.1 - b.1) > 6.0 * g.s(), "the squad walked off to its queued point");
+    assert!((m.0 - stop.0).hypot(m.1 - stop.1) < 4.0 * g.s(), "the squad stands {} cells from where it was let go", (m.0 - stop.0).hypot(m.1 - stop.1) / g.s());
+}
+
+/// The fire mode is the squad's in the squad mode: a bought soldier and a
+/// merged squad's soldiers take the stance of the squad they join
+/// (controls review, 2026-11-21: they kept Defend, so a squad told to
+/// hold fire had shooters in it and its fire button read "mixed").
+#[test]
+fn joining_soldiers_take_the_squads_fire_mode() {
+    let mut g = squads(8);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    for k in g.members(0) {
+        g.apply(Cmd::Stance(k, Stance::HoldFire));
+    }
+    g.bank += g.rules.soldier_cost;
+    assert!(g.apply(Cmd::Buy));
+    let new = g.soldiers.len() - 1;
+    assert_eq!(g.soldiers[new].squad, 0);
+    assert_eq!(g.soldiers[new].stance, Stance::HoldFire, "a bought soldier fires as its squad");
+    // Split, set the new half to free fire, and merge it back.
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, (m.0 + 30.0, m.1))));
+    let b = g.active.unwrap();
+    for k in g.members(b) {
+        g.apply(Cmd::Stance(k, Stance::Free));
+    }
+    assert!(g.apply(Cmd::Merge(0, b as u8)));
+    assert!(g.members(0).iter().all(|&k| g.soldiers[k].stance == Stance::HoldFire), "merged soldiers fire as the squad they join");
+}
+
 #[test]
 fn linked_squads_take_orders_together_and_keep_their_own_settings() {
     let mut g = squads(8);
