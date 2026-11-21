@@ -146,11 +146,20 @@ if ($Timing) {
     # samples a second apart, busy if any is over 5%. The strategy bots'
     # league worker (slime-league) must be stopped first: it plays games
     # on this card all day.
+    # Up to five tries 30 s apart, same 5% bar: the 11-21 follow-up was
+    # refused on one desktop blip (7, 0, 0, 0, 0) with nothing else running.
     $util = @()
+    $busy = $null
     if (-not $DryRun) {
-        foreach ($k in 1..5) { $util += [int](nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | Select-Object -First 1).Trim(); Start-Sleep -Seconds 1 }
+        foreach ($attempt in 1..5) {
+            $util = @()
+            foreach ($k in 1..5) { $util += [int](nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | Select-Object -First 1).Trim(); Start-Sleep -Seconds 1 }
+            $busy = if (($util | Measure-Object -Maximum).Maximum -gt 5) { "GPU load % over 5 s: $($util -join ', ') (try $attempt of 5)" } else { $null }
+            if (-not $busy) { break }
+            "GPU busy on try ${attempt}: $($util -join ', ')"
+            if ($attempt -lt 5) { Start-Sleep -Seconds 30 }
+        }
     }
-    $busy = if (($util | Measure-Object -Maximum).Maximum -gt 5) { "GPU load % over 5 s: $($util -join ', ')" } else { $null }
     # The league worker between its games shows no load: look for its game
     # too (pause it with an empty PAUSE file in slime-league, never by
     # stopping its Python).
