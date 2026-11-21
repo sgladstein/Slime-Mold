@@ -84,7 +84,7 @@ impl SlimeLook {
     }
 
     /// Every look, in the order the slime viewer lists them.
-    pub const ALL: [SlimeLook; 5] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell];
+    pub const ALL: [SlimeLook; 6] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant];
 
     /// Its name, as the tweaks file writes it (`body TIER = NAME`).
     pub fn name(self) -> &'static str {
@@ -94,6 +94,7 @@ impl SlimeLook {
             SlimeLook::Sheet => "sheet",
             SlimeLook::Cords => "cords",
             SlimeLook::Swell => "swell",
+            SlimeLook::Dormant => "crust",
         }
     }
 

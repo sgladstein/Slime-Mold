@@ -1224,6 +1224,7 @@ impl App {
                         SlimeLook::Sheet => "The Drifter's: its own fast-fading trail as a thin gel round and behind it.",
                         SlimeLook::Cords => "The Trunk's: its trail off the body a raised translucent tube.",
                         SlimeLook::Swell => "The Swarmer's: where its alarm is, the body stands up taller and rounder.",
+                        SlimeLook::Dormant => "The Sleeper's: its sleeping walkers a dull dark crust, the waking ones gold.",
                     };
                     rows.push(Row::Choice { label: title(look.name()), note: if own { "its own".into() } else { String::new() }, hit: Hit::Body(look), on: now == Some(look), about: about.into() });
                 }
