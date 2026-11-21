@@ -355,6 +355,7 @@ impl<W: World> Game<W> {
         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
         let mut empty = Vec::new();
         self.last_takes.clear();
+        let sated = self.sated_reach();
         for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
             if let Some(c) = *c {
                 self.taken[c] += u.took;
@@ -426,7 +427,11 @@ impl<W: World> Game<W> {
                             self.first_touch = Some((self.world.ticks() - self.landed) as f32 / r.tps as f32);
                         }
                         // Whole walkers: each bites `drain` at any mass, so walking into a thick body is very deadly (owner 11-12 22:22Z, #174).
-                        s.hp -= r.drain * u.touching as f32 * dt;
+                        // Not where a sated heart lets go (`StandRules::sated`).
+                        let fed = sated.is_some_and(|(c, reach)| (s.x - c.0).hypot(s.y - c.1) <= reach);
+                        let bite = if fed { 0.0 } else { r.drain * u.touching as f32 * dt };
+                        self.bitten_hp += bite.min(s.hp.max(0.0));
+                        s.hp -= bite;
                         if s.hp <= 0.0 {
                             self.fell_bitten += u32::from(s.alive);
                             s.alive = false;
@@ -448,6 +453,7 @@ impl<W: World> Game<W> {
             self.after_dry(k, Some(i));
         }
         self.check_core();
+        self.cap_heart();
         self.time_surges(out.units.iter().map(|u| u.took as f64).sum());
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {

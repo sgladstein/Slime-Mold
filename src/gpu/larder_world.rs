@@ -2406,6 +2406,46 @@ mod tests {
         assert!(back < out, "at rest, it draws back home: {out:.1} -> {back:.1}");
     }
 
+    /// **A lunge's cap** (`StandRules::cap`, 2026-11-20 evening, the
+    /// balance thread): the same race world, soldiers standing still, the
+    /// heart gathering at once and lunging after 4 s for 30 s (it needs
+    /// about 10 s to reach them). Uncapped (`cap` 1, `cap_most` 1000: the
+    /// whole squad, and never sated) its lunge bites more of the squad to
+    /// death than capped at a quarter; capped, the lunge draws back once it
+    /// has taken a quarter of the squad's health (before its 30 s are up),
+    /// sated for 5 s, and at most one soldier more than its cap dies.
+    #[test]
+    fn a_heart_lunge_draws_back_once_it_has_bitten_its_cap() {
+        use crate::mould::larder_world::StandRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 3_000);
+        let play = |cap: f32, most: f32, sated: f32| {
+            let mut rules = Rules { cap: 120.0, ..Rules::default() };
+            rules.stand = StandRules { on: true, at: 2.0, army: 1.0, every: 4.0, lunge: 30.0, cap, cap_most: most, sated, ..StandRules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let squad = g.soldiers.iter().filter(|s| s.alive).count();
+            while g.stand.live.is_none_or(|h| h.lunging.is_none()) && g.time() < 30.0 {
+                g.step();
+            }
+            let (start, bit0) = (g.time(), g.fell_bitten);
+            while g.stand.live.is_some_and(|h| h.lunging.is_some()) && g.time() < start + 31.0 {
+                g.step();
+            }
+            let drew_back = g.time() - start;
+            while g.time() < start + 32.0 {
+                g.step();
+            }
+            (squad, g.fell_bitten - bit0, drew_back)
+        };
+        let (squad, capped, drew_back) = play(0.25, 20.0, 5.0);
+        let (_, uncapped, lunged) = play(1.0, 1000.0, 0.0);
+        let cap = ((0.25 * squad as f32).ceil() as u32).max(1);
+        eprintln!("heart lunge: {squad} soldiers; capped at {cap}: {capped} bitten to death, drew back after {drew_back:.1} s; uncapped: {uncapped}, lunged {lunged:.1} s");
+        assert!(capped <= cap + 1, "capped, it takes about its cap: {capped} against a cap of {cap}");
+        assert!(uncapped > capped, "uncapped, it takes more: {uncapped} against {capped}");
+        assert!(drew_back < 30.0, "it drew back before its lunge was up: {drew_back:.1} s");
+    }
+
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,
     /// 2026-11-20, the owner: "Deep water shouldn't be traversable by
     /// player or slime"). A rule of the GPU engine alone (the owner's card,
