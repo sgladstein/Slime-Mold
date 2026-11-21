@@ -179,6 +179,11 @@ pub trait World {
     /// (`gpu::Engine::sow_pass`). A world that cannot (`can_sow` false: the
     /// CPU engine, which takes no new slime rules) ignores it.
     fn sow(&mut self, _at: (f32, f32), _r: f32, _steps: u16) {}
+    /// How far a sown spore flies a step (fine cells; 0 where `sow` does
+    /// nothing), so a burst can be held short of the squad.
+    fn spore_flight(&self) -> f32 {
+        0.0
+    }
     /// Whether `sow` does anything, so a world that cannot never fruits.
     fn can_sow(&self) -> bool {
         false
