@@ -239,7 +239,15 @@ dull grey-brown matte (`DORMANT_DIM` 0.7, `DORMANT_MATTE` 0.6, no glow);
 walkers awake keep the gold. A 3 x 3 window left square gold pixels, so the
 share is a Gaussian 5 x 5. Sporer: Enemy is making a flying spore set the
 walker's 4th word, which `draw_specks` already draws as a droplet; film
-planet 5 when that lands. Grudge is still Plain: the next slime look.
+planet 5 when that lands. The Grudge's scars (11-20, `SlimeLook::Scarred`,
+planet 7): the view binds the engine's `crater` (binding 28,
+`View::set_scar`; a second line in `main.rs`), whose second block is the
+scar; bare scarred ground darkens by up to `SCAR_BRUISE` 0.3 (in the
+material, since `soil_detail` cancels a change to the ground estimate
+`hg`), slime on it turns paler and glossier scar tissue (`SCAR_TISSUE`
+0.5), `SCAR_FULL` 1.0. Filmed at 80 s on run 1:7: the fight's ground
+reads darker; the tissue is rarely seen, since the Grudge shuns its scars.
+If it should show more, raise `SCAR_TISSUE` or lower `SCAR_FULL`.
 Bullets in a crowd share their light (`dim_crowded` in `draw.rs`): each
 bullet's light over the square root of the bullets within its reach, after
 46 rifles down one lane on planet 4 lit a white column over the slime.

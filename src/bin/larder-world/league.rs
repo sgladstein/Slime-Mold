@@ -352,7 +352,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let kills = app.game.as_ref().map_or([0; 8], |g| g.kit.killed);
     let tools = format!("{}/{}/{}/{}", used[0], used[1], kills[0], kills[1]);
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} late={} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} tools={tools} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} rest={}",
         r.depth,
         r.seed,
         l.seed,
@@ -389,6 +389,8 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         g.soldiers.len() - g.alive(),
         g.fell_bitten,
         g.fell_burned,
+        g.fell_starfall,
+        g.rounds.blast_kills,
         u8::from(g.late),
         // Where the last walkers were, when a game ends with a few left.
         if how != "won" && g.mould <= 50 { strat::remnant(g) } else { "-".to_string() }

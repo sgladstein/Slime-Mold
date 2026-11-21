@@ -1225,6 +1225,7 @@ impl App {
                         SlimeLook::Cords => "The Trunk's: its trail off the body a raised translucent tube.",
                         SlimeLook::Swell => "The Swarmer's: where its alarm is, the body stands up taller and rounder.",
                         SlimeLook::Dormant => "The Sleeper's: its sleeping walkers a dull dark crust, the waking ones gold.",
+                        SlimeLook::Scarred => "The Grudge's: where it was hurt, knotted dark scar tissue and a bruise on bare ground.",
                     };
                     rows.push(Row::Choice { label: title(look.name()), note: if own { "its own".into() } else { String::new() }, hit: Hit::Body(look), on: now == Some(look), about: about.into() });
                 }
