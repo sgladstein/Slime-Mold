@@ -99,6 +99,9 @@ def run_one(binary, job, timeout):
     if p.returncode != 0 or not rows:
         return {"job": key(job), "plan": plan, "depth": d, "seed": int(seed), "error": (p.stderr or "")[-400:], "wall": time.time() - t0, "code": CODE}
     r = rows[-1]
+    if whole:
+        r["wall"] = time.time() - t0
+        r["to"] = to
     if CODE:
         r["code"] = CODE
     r["job"] = key(job)
@@ -428,14 +431,14 @@ def push(d, msg, publish=True):
         return
     for _ in range(4):
         run("git", "fetch", "-q", "origin", br)
-        if run("git", *who, "rebase", "-q", "FETCH_HEAD").returncode != 0:
+        if run("git", *who, "rebase", "-q", "--autostash", "FETCH_HEAD").returncode != 0:
             run("git", "rebase", "--abort")
         p = run("git", "push", "-q", "origin", f"HEAD:refs/heads/{br}")
         if p.returncode == 0:
             return
-        print("league: push failed: " + p.stderr[-300:], file=sys.stderr)
+        log("league: push failed: " + p.stderr[-300:])
         time.sleep(10)
-    print("league: could not push the results; they are in " + d, file=sys.stderr)
+    log("league: could not push the results; they are in " + d)
 
 def cmd_rank(a):
     """Like `table`, but one row a distinct plan (spellings that play the
@@ -499,9 +502,13 @@ def watch_exits():
     import faulthandler, threading, traceback
     sys.excepthook = lambda t, v, b: log("worker: stopped by an error:\n" + "".join(traceback.format_exception(t, v, b)))
     threading.excepthook = lambda a: log(f"worker: error in {a.thread.name if a.thread else 'a thread'}:\n" + "".join(traceback.format_exception(a.exc_type, a.exc_value, a.exc_traceback)))
+    # A hard crash goes to worker-faults.log in the clone's root, which git
+    # does not track. Never the worker log in pc/: on Windows a file held
+    # open cannot be replaced, so the rebase onto the branch's new commits
+    # failed half way, left queue files changed and stopped every push
+    # (11-21 11:55-13:00 local, the first build of this function).
     try:
-        os.makedirs(OUT, exist_ok=True)
-        watch_exits.crash = open(os.path.join(OUT, f"worker-{os.environ.get('COMPUTERNAME', 'local')}.log"), "a")
+        watch_exits.crash = open(os.path.join(ROOT, "worker-faults.log"), "a")
         faulthandler.enable(watch_exits.crash)
     except OSError:
         pass
@@ -583,7 +590,12 @@ def sync(binary, push_results, now=False):
         # and the PC took no new commits from 15:19Z until a push, which
         # passes a name). Same name as push().
         who = [] if git("config", "user.email").stdout.strip() else ["-c", "user.name=Strategy league", "-c", "user.email=strategy-league@localhost.invalid"]
-        r = git(*who, "rebase", "-q", "FETCH_HEAD")
+        # The worker never edits its queue: a change there is a half-done
+        # checkout (11-21: a rebase that failed on a file held open left
+        # three queue files changed, and every rebase after it refused).
+        # Log lines written since the last commit ride along (--autostash).
+        git("checkout", "--", os.path.relpath(os.path.join(HERE, "queue"), ROOT))
+        r = git(*who, "rebase", "-q", "--autostash", "FETCH_HEAD")
         if r.returncode != 0:
             git("rebase", "--abort")
             log("worker: could not take the branch's new commits: " + (r.stderr or r.stdout)[-300:])
@@ -725,7 +737,7 @@ def play(todo, out_path, binary, workers, timeout):
                 continue
             f.write(json.dumps(r) + "\n")
             f.flush()
-            tag = r.get("how", r.get("error", "?")[:200])
+            tag = r.get("how") or (f"run won {r['won']} of {r.get('to', 8)} planets" if "won" in r else r.get("error", "?")[:200])
             log(f"  {r['plan'][:60]} planet {r.get('depth')} seed {r.get('seed')}: {tag} {r.get('secs', '')} ({r.get('wall', 0):.0f} s)")
 
 def read_cfg(path):
