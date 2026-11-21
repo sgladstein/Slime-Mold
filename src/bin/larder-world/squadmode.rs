@@ -173,6 +173,11 @@ impl SquadInput {
         SquadInput { follow: true, ..SquadInput::default() }
     }
 
+    /// The left button is held: the commanded squad is firing.
+    pub(super) fn firing(&self) -> bool {
+        self.firing
+    }
+
     /// A WASD key held: the squad is being steered.
     pub(super) fn steering(&self) -> bool {
         self.keys.iter().any(|&k| k)
@@ -244,7 +249,7 @@ impl App {
 
     /// With none controlled: the live squad nearest the world point, if a
     /// soldier of it is within a few cells (a click on a squad takes it).
-    fn squad_at(&self, at: (f32, f32)) -> Option<u8> {
+    pub(super) fn squad_at(&self, at: (f32, f32)) -> Option<u8> {
         let g = self.game.as_ref()?;
         let near = (3.0 * g.world.scale()).max(14.0 / self.camera.zoom);
         g.soldiers.iter().filter(|s| s.alive).map(|s| (s.squad, (s.x - at.0).hypot(s.y - at.1))).filter(|&(_, d)| d <= near).min_by(|a, b| a.1.total_cmp(&b.1)).map(|x| x.0)

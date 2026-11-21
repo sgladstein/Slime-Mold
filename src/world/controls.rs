@@ -143,6 +143,19 @@ impl Controls {
         self.drag.is_some()
     }
 
+    /// The middle button is dragging the camera.
+    pub fn panning(&self) -> bool {
+        matches!(self.drag, Some(Drag::Pan(_)))
+    }
+
+    /// A left drag on the world has moved far enough to be a box.
+    pub fn boxing(&self) -> bool {
+        match (self.drag, self.cursor) {
+            (Some(Drag::Select(a)), Some(p)) => (p.0 - a.0).hypot(p.1 - a.1) > DRAG_PX,
+            _ => false,
+        }
+    }
+
     /// Drops dead or lost units from the selection and the groups.
     pub fn prune(&mut self, units: &[Unit]) {
         let alive = |k: &usize| units.iter().any(|u| u.id == *k && u.alive);
