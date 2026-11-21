@@ -48,6 +48,14 @@ const SHELF_H: f32 = 74.0;
 /// The tallest a shelf row grows when the counter has room (`shelf`).
 const SHELF_TALL: f32 = 112.0;
 const SHELF_W: f32 = 420.0;
+/// The hand of cards (`hand`): at most this many offers, each card at
+/// least `HAND_LEAST` and at most `HAND_W` wide, `HAND_TALL` times as
+/// tall as wide, and the least height that shows a card whole.
+const HAND_MOST: usize = 6;
+const HAND_LEAST: f32 = 170.0;
+const HAND_W: f32 = 250.0;
+const HAND_TALL: f32 = 1.15;
+const HAND_H: f32 = 230.0;
 
 /// What a shop tab holds, so how its counter is laid out.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -110,6 +118,29 @@ fn shelf(n: usize, area: Rect, g: f32, s: f32) -> Option<(usize, f32, f32)> {
     let used = n.div_ceil(cols) as f32;
     let h = ((area.h - (used - 1.0) * g) / used).clamp(SHELF_H * s, SHELF_TALL * s);
     Some((cols, w, h))
+}
+
+/// A short counter laid out as a hand of cards (Look D, 11-21): up to six
+/// offers, one row of tall cards, when the counter is tall enough for
+/// them. Shelf rows at their tallest left half the counter empty with five
+/// offers (filmed 11-21 at 1600 x 972: Cards, Buildings and Tools each
+/// three rows of rows and the rest dark). Returns the row's left and top
+/// edges, a card's width and height; None where the shelf or tiles take it.
+fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
+    if n == 0 || n > HAND_MOST {
+        return None;
+    }
+    let w = ((area.w - (n - 1) as f32 * g) / n as f32).min(HAND_W * s);
+    let h = (w * HAND_TALL).min(area.h);
+    if w < HAND_LEAST * s || h < HAND_H * s {
+        return None;
+    }
+    let used = n as f32 * w + (n - 1) as f32 * g;
+    // Centred on the counter both ways, a little above its middle: laid
+    // at the top, the row left the counter's lower half dark and read
+    // unfinished; laid in the middle, as a hand on a table, it reads as
+    // the choice.
+    Some((area.x + (area.w - used) / 2.0, area.y + 0.4 * (area.h - h), w, h))
 }
 
 /// How `n` boxes at least `w` wide and `h` tall sit in `area`: the boxes a
@@ -506,6 +537,15 @@ impl StartMenu {
                     let range = page(per, n.div_ceil(per.max(1)).max(1), self);
                     self.gun_table(&shop, &tab.rows[range], area, head, rh, ring, c, s);
                 }
+                TabKind::Tiles if hand(n, area, g, s).is_some() => {
+                    let (x0, y0, w, h) = hand(n, area, g, s).unwrap_or((area.x, area.y, area.w, area.h));
+                    page(n, 1, self);
+                    for (j, &i) in tab.rows.iter().enumerate() {
+                        let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
+                        self.hand_card(&shop.rows[i], r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hits.push((r, Hit::Buy(i)));
+                    }
+                }
                 TabKind::Tiles if shelf(n, area, g, s).is_some() => {
                     let (cols, w, h) = shelf(n, area, g, s).unwrap_or((1, area.w, SHELF_H * s));
                     page(n, 1, self);
@@ -527,6 +567,16 @@ impl StartMenu {
                 }
                 TabKind::Cards => {
                     if self.card_grid(&shop, tab, area, ring, &mut from, c, s) {
+                    } else if let Some((x0, y0, w, h)) = hand(n, area, g, s) {
+                        page(n, 1, self);
+                        for (j, &i) in tab.rows.iter().enumerate() {
+                            let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
+                            self.hand_card(&shop.rows[i], r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.hits.push((r, Hit::Buy(i)));
+                            if drag == Some(i) {
+                                from = Some(r);
+                            }
+                        }
                     } else if let Some((cols, w, h)) = shelf(n, area, g, s) {
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
@@ -874,6 +924,55 @@ impl StartMenu {
     /// page: the row adds what the tile left out; more offers than fit
     /// go back to tiles that page.
     #[allow(clippy::too_many_arguments)]
+    /// An offer as a tall card in the hand (`hand`): its kind's colour as a
+    /// band along the top, its icon large, its name and its price, then
+    /// everything it does, and its pips at the foot. The same face, colours
+    /// and words as its shelf row; only the shape is a card's.
+    fn hand_card(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+        let done = owned(row);
+        self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
+        let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
+        let tint = with_alpha(if done { GOOD } else { row.tint }, dim);
+        c.rrect(Rect::new(r.x + 10.0 * s, r.y + 6.0 * s, r.w - 20.0 * s, 3.0 * s), 1.5 * s, with_alpha(tint, 0.9 * dim));
+        let pad = 14.0 * s;
+        let room = r.w - 2.0 * pad;
+        // The price (or a tick) top right, the badge top left.
+        if done {
+            c.icon(Icon::Check, (r.right() - pad - 16.0 * s, r.y + 16.0 * s), 16.0 * s, GOOD);
+        } else if !row.price.is_empty() {
+            c.text(Weight::SemiBold, 17.0 * s, (r.right() - pad, r.y + 30.0 * s), Align::Right, &row.price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
+        }
+        if let Some(b) = row.badge {
+            c.icon(b, (r.x + pad, r.y + 16.0 * s), 15.0 * s, with_alpha(TEXT, 0.8 * dim.max(0.6)));
+        }
+        let ic = 56.0 * s;
+        c.icon(row.icon, (r.x + (r.w - ic) / 2.0, r.y + 38.0 * s), ic, tint);
+        let ink = with_alpha(TEXT, dim.max(0.6));
+        let px = fit_px(c, &row.name, 17.0 * s, 13.5 * s, room);
+        c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, r.y + 124.0 * s), Align::Centre, &row.name, room, ink);
+        // All it does, as many lines as fit over the pips.
+        let pips = if row.area == ShopArea::Cards { row.cost.min(6) } else if row.level.1 > 1 { row.level.1.min(8) as u32 } else { 0 };
+        let foot = if pips > 0 { 26.0 * s } else { 10.0 * s };
+        let about = row.about.trim();
+        if !about.is_empty() {
+            let lead = 18.0 * s;
+            let lines = c.wrap(Weight::Medium, 13.5 * s, room, about);
+            let fit = (((r.bottom() - foot - (r.y + 150.0 * s)) / lead).floor() as usize + 1).max(1);
+            for (k, l) in lines.iter().take(fit).enumerate() {
+                let cut = k + 1 == fit && lines.len() > fit;
+                let text = if cut { format!("{}…", l.trim_end_matches(['.', ',', ' '])) } else { l.clone() };
+                c.text_fit(Weight::Medium, 13.5 * s, (r.x + r.w / 2.0, r.y + 150.0 * s + k as f32 * lead), Align::Centre, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
+            }
+        }
+        let d = 6.0 * s;
+        let pw = pips as f32 * (d + 3.0 * s) - 3.0 * s;
+        for k in 0..pips {
+            let lit = if row.area == ShopArea::Cards { true } else { k < row.level.0 as u32 };
+            let at = Rect::new(r.x + (r.w - pw) / 2.0 + k as f32 * (d + 3.0 * s), r.bottom() - 16.0 * s, d, d);
+            c.rrect(at, d / 2.0, if lit { with_alpha(if row.area == ShopArea::Cards { ENERGY } else { ACCENT }, 0.85 * dim.max(0.6)) } else { [255, 255, 255, 40] });
+        }
+    }
+
     fn shelf_row(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s0: f32) {
         // A taller row (`shelf`) draws its icon, name and price up to a
         // third larger, and its whole text where one sentence was cut.
