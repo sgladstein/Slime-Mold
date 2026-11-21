@@ -25,8 +25,8 @@ chosen run length, the bot's curve over all eight planets, save and resume,
 the core world at 60 frames a second. A release only if the owner chooses one.
 
 **Where it stands (11-21 morning, [check](handoff/direction.md)).** Nothing
-is closed. Test 1's bot half passes: CI's run bot wins planets 1 to 3 on
-all three seeds (11-21, siege=3), planets 2:48 to 6:37, runs 12 to 17 min. His 23:32 ruling paces the
+is closed. Test 1's bot half passes: on his 11 maps the run bot wins 10
+whole runs (P1 11, P2 10, P3 10), no soft lock, a run 13 to 15 min. His 23:32 ruling paces the
 threats (#606, #644): planet 1 the base slime; fruiting and strikers from
 2, waves and the late lunge from 3, the heart from 4. Test 4 by minute 2
 ([clips](Reports/planet-things-2026-11-21/)): 1 smells your pumps and eats
