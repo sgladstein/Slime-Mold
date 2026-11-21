@@ -47,7 +47,7 @@ pub(super) fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f3
 /// the ground's `look::FAR` bit round them (`refresh_ground`).
 const WALL_TILE: usize = 32;
 /// Seconds a drop's "+N" rises and fades after the squad empties it.
-const CASHED_SECS: f32 = 1.6;
+const CASHED_SECS: f32 = 2.2;
 /// A label drawn after the soldiers (`App::marks`' `over`): where, its
 /// offset in pixels, the text, its scale and colour.
 type OverLabel = ((f32, f32), (f32, f32), String, f32, [u8; 4]);
@@ -877,28 +877,79 @@ impl App {
                 over.push((d.at, (x, -below - 14.0), text, 1.8, if on { GOLD } else { fade(pale, 0.95) }));
             }
             // The moment the points come in (Boss cores thread, 2026-11-21):
-            // a drop the squad emptied leaves its "+N" in gold, rising and
-            // fading over `CASHED_SECS`, as the coin chime rings, with a
-            // burst of gold where it lay. Before, the drop just shrank away
-            // and nothing said it had paid.
+            // a drop the squad emptied leaves its "+N" in gold as the coin
+            // chime rings. Before, the drop just shrank away and nothing
+            // said it had paid. The owner after playing (11-21 05:38Z):
+            // "starfall +xxx animation needs to be bigger and better". Now
+            // it pops: the number punches in from small to 6.4 pixels a
+            // font pixel (the drop's label is 1.8, the old "+N" 2.4) in
+            // white-hot as it leaps up clear of the squad, settles to 5
+            // and turns gold, then rises and
+            // fades over `CASHED_SECS`; it is cut as a bevelled gold
+            // stamp (a dark outline all round, a deep amber edge under the
+            // gold face) so it reads on the slime's own gold. A spray of
+            // coins skids out from the drop and glints, a gold
+            // burst rings out where it lay and the ground there lights up.
             for c in &g.starfall.cashed {
                 let age = (ticks - c.tick as f32) / tps;
                 if age >= CASHED_SECS {
                     continue;
                 }
-                if age < 0.6 {
-                    let k = age.max(0.0) / 0.6;
-                    let seed = (c.at.0 * 5.0 + c.at.1 * 11.0) as u32;
-                    self.marks.star(c.at, star.ore_r * sc * 2.4, STAR_BURST, k, seed, 0.0, 0.0, GOLD, GOLD_HOT, false);
-                    glows.push(Light { at: c.at, reach: 6.0 * sc, lift: 4.0, colour: [255.0, 214.0, 90.0], strength: 2.5 * (1.0 - k) });
+                let seed = (c.at.0 * 5.0 + c.at.1 * 11.0) as u32;
+                if age < 0.7 {
+                    let k = age.max(0.0) / 0.7;
+                    self.marks.star(c.at, star.ore_r * sc * 3.6, STAR_BURST, k, seed, 0.0, 0.0, GOLD, GOLD_HOT, false);
+                    glows.push(Light { at: c.at, reach: 9.0 * sc, lift: 5.0, colour: [255.0, 214.0, 90.0], strength: 3.5 * (1.0 - k).powi(2) });
                 }
-                let k = age.max(0.0) / CASHED_SECS;
+                // The coins: sprayed out all round from the drop, a little
+                // more away from the camera's top, slowing as they skid to
+                // rest on the ground, glinting as they turn, then gone.
+                if age < 1.4 {
+                    let n = (6.0 + c.taken / 6.0).clamp(10.0, 18.0) as u32;
+                    for i in 0..n {
+                        let h = |j: u32| ((seed.wrapping_mul(2654435761).wrapping_add(i * 97 + j * 31)) % 1000) as f32 / 1000.0;
+                        let ang = std::f32::consts::TAU * (i as f32 + 0.6 * h(1)) / n as f32;
+                        let reach = (5.0 + 6.0 * h(2)) * sc;
+                        let t = age - 0.05 * h(3);
+                        if t <= 0.0 {
+                            continue;
+                        }
+                        // Out to `reach` with a drag (most of it in the
+                        // first third of a second).
+                        let d = |t: f32| reach * (1.0 - (-6.0 * t).exp());
+                        let at = |t: f32| (c.at.0 + ang.cos() * d(t), c.at.1 + ang.sin() * d(t) * 0.85 - 2.0 * sc * (1.0 - (-6.0 * t).exp()));
+                        let left = (1.0 - ((t - 0.9) / 0.5).max(0.0)).clamp(0.0, 1.0);
+                        let glint = 0.55 + 0.45 * (age * 14.0 + 6.0 * h(4)).sin().abs();
+                        self.marks.streak(at(t), at((t - 0.035).max(0.0)), 3.2, fade(GOLD, 0.75 * left), fade(GOLD_HOT, left * glint));
+                    }
+                }
+                // The number: punch in, settle, rise and fade.
+                let scale = if age < 0.12 {
+                    2.0 + 4.4 * (age / 0.12)
+                } else if age < 0.3 {
+                    6.4 - 1.4 * ((age - 0.12) / 0.18)
+                } else {
+                    5.0
+                };
+                // Up out of the squad at once (it stood on the drop and hid
+                // a number drawn among it), then on up as it fades.
+                let k = (age - 0.3).max(0.0) / (CASHED_SECS - 0.3);
+                let lift = 1.0 - (-age / 0.12).exp();
+                let y = -30.0 * lift - 40.0 * k.sqrt() - 3.5 * scale - (star.reach + star.ore_r) * sc * zoom * lift;
+                let a = (1.0 - k.powi(3)).clamp(0.0, 1.0);
+                let hot = 1.0 - (age / 0.35).clamp(0.0, 1.0);
+                let mixc = |a: [u8; 4], b: [u8; 4], t: f32| [0, 1, 2, 3].map(|i| (a[i] as f32 + (b[i] as f32 - a[i] as f32) * t) as u8);
+                let face = fade(mixc(GOLD, [255, 252, 235, 255], hot), a);
+                let edge = fade([196, 112, 20, 255], a);
+                let ink = [16, 8, 4, (235.0 * a) as u8];
                 let text = format!("+{}", c.taken.round() as u32);
-                let x = -6.0 * text.len() as f32;
-                let y = -18.0 - 34.0 * k.sqrt();
-                let a = (1.0 - k * k).clamp(0.0, 1.0);
-                over.push((c.at, (x + 2.0, y + 2.0), text.clone(), 2.4, [20, 10, 10, (220.0 * a) as u8]));
-                over.push((c.at, (x, y), text, 2.4, [255, 224, 110, (255.0 * a) as u8]));
+                let x = -3.0 * scale * text.len() as f32;
+                let o = (0.5 * scale).max(1.0);
+                for (dx, dy) in [(-o, -o), (0.0, -o), (o, -o), (-o, 0.0), (o, 0.0), (-o, o), (0.0, o), (o, o), (0.0, 2.0 * o)] {
+                    over.push((c.at, (x + dx, y + dy + o), text.clone(), scale, ink));
+                }
+                over.push((c.at, (x, y + o), text.clone(), scale, edge));
+                over.push((c.at, (x, y), text, scale, face));
             }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
