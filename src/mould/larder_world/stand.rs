@@ -90,10 +90,14 @@ pub struct StandRules {
     /// wipe, not a threat (the owner's 11-18 rule: a strong thing must be
     /// dangerous, not decisive). Direction's bar: about 20 at most, or a
     /// quarter of the squad. Counted from every bite while it lunges
-    /// (`Game::bitten_hp`), so strikers' bites in that time count too.
+    /// (`Game::bitten_hp`), so strikers' bites in that time count too. Its
+    /// forming's first 10 s are capped the same way (it is sated, already
+    /// at home): on the bug check's whole run a heart forming on the
+    /// squad's planet 1 fight bit 22 of 51 to death in its first 10 s
+    /// without a lunge.
     pub cap: f32,
     pub cap_most: f32,
-    /// **Sated** (with the cap): for `sated` seconds after a lunge takes
+    /// **Sated** (with the cap): for `sated` seconds after a bout takes
     /// its cap, no soldier within the heart's reach (its lunge leash times
     /// its radius, plus a touch) is bitten, so it lets go of the soldiers
     /// it lies on as it draws back. Without it the cap held deaths to one
@@ -127,14 +131,18 @@ pub struct Heart {
     pub next: u64,
     grown: u64,
     /// The soldiers bitten to death and the health bitten
-    /// (`Game::fell_bitten`, `Game::bitten_hp`) when this lunge began, the
-    /// health it may take (`StandRules::cap`), and the tick its 10 s window
-    /// closes (the measure counts what dies in it, the draw-back too).
+    /// (`Game::fell_bitten`, `Game::bitten_hp`) when this bout (its forming
+    /// or a lunge) began, the health it may take (`StandRules::cap`), and
+    /// the tick its 10 s window closes (the measure counts what dies in it,
+    /// the draw-back too).
     bit_at: u32,
     hp_at: f32,
     cap: f32,
     window: u64,
-    /// It bites no soldier in its reach until this tick (`StandRules::sated`).
+    /// Whether this bout's cap still holds (its forming's first 10 s, or
+    /// a lunge), and the tick until which it bites no soldier in its reach
+    /// (`StandRules::sated`).
+    armed: bool,
     sated: u64,
 }
 
@@ -149,8 +157,9 @@ pub struct Stand {
     /// The tick it died or broke, and the most it held.
     pub fell: Option<(u64, u32)>,
     /// The second it formed; the soldiers bitten to death in its first
-    /// 10 s, and in the worst 10 s from a lunge's start; and every soldier
-    /// bitten to death while it lived (the league's `stand=`).
+    /// 10 s, and in the worst 10 s from its forming or a lunge's start;
+    /// and every soldier bitten to death while it lived (the league's
+    /// `stand=`).
     pub born_sec: u32,
     pub first: u32,
     pub worst: u32,
@@ -192,7 +201,9 @@ impl<W: World> Game<W> {
         self.world.set_lump(lump, Lump { aim: super::raid_cell(home, size), pull: r.pull, leash: r.leash, armour: r.armour, bite: r.bite, ..Lump::default() });
         let now = self.world.ticks();
         let tps = self.rules.tps as f32;
-        self.stand.live = Some(Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next: now + (r.every.max(1.0) * tps) as u64, grown: now, bit_at: 0, hp_at: 0.0, cap: 0.0, window: 0, sated: 0 });
+        let mut heart = Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next: now + (r.every.max(1.0) * tps) as u64, grown: now, bit_at: 0, hp_at: 0.0, cap: 0.0, window: 0, armed: false, sated: 0 };
+        self.arm_heart(&mut heart);
+        self.stand.live = Some(heart);
         self.stand.done = true;
         self.stand.born_sec = (now / self.rules.tps.max(1) as u64) as u32;
         self.stand.bit_born = self.fell_bitten;
@@ -231,6 +242,12 @@ impl<W: World> Game<W> {
         }
         let size = self.world.size();
         let rest = Lump { aim: super::raid_cell(h.home, size), pull: r.pull, leash: r.leash, armour: r.armour, bite: r.bite, ..Lump::default() };
+        // Home from a capped lunge and sated no more: its resting pace and
+        // bite again (`cap_heart` drew it back at the lunge's pace).
+        if h.lunging.is_none() && h.sated > 0 && now >= h.sated {
+            self.world.set_lump(h.lump, rest);
+            h.sated = 0;
+        }
         match h.lunging {
             Some(until) if now >= until => {
                 self.world.set_lump(h.lump, rest);
@@ -240,11 +257,7 @@ impl<W: World> Game<W> {
             Some(_) => self.aim_heart(&h),
             None if now >= h.next && self.soldiers.iter().any(|s| s.alive) => {
                 h.lunging = Some(now + (r.lunge.max(1.0) * tps) as u64);
-                let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
-                h.bit_at = self.fell_bitten;
-                h.hp_at = self.bitten_hp;
-                h.cap = (r.cap * alive).max(1.0).min(r.cap_most.max(1.0)) * self.rules.hp;
-                h.window = now + (10.0 * tps) as u64;
+                self.arm_heart(&mut h);
                 self.stand.lunges += 1;
                 self.aim_heart(&h);
             }
@@ -264,16 +277,38 @@ impl<W: World> Game<W> {
         if now <= h.window {
             self.stand.worst = self.stand.worst.max(bit);
         }
-        if h.lunging.is_none() || self.bitten_hp - h.hp_at < h.cap {
+        if !h.armed || self.bitten_hp - h.hp_at < h.cap {
+            if h.armed && now > h.window && h.lunging.is_none() {
+                h.armed = false;
+                self.stand.live = Some(h);
+            }
             return;
         }
         let r = self.rules.stand;
-        let size = self.world.size();
-        self.world.set_lump(h.lump, Lump { aim: super::raid_cell(h.home, size), pull: r.pull, leash: r.leash, haste: r.haste, armour: r.armour, ..Lump::default() });
-        h.lunging = None;
-        h.next = now + (r.every.max(1.0) * self.rules.tps as f32) as u64;
-        h.sated = now + (r.sated.max(0.0) * self.rules.tps as f32) as u64;
+        let tps = self.rules.tps as f32;
+        h.armed = false;
+        h.sated = now + (r.sated.max(0.0) * tps) as u64;
+        if h.lunging.is_some() {
+            let size = self.world.size();
+            self.world.set_lump(h.lump, Lump { aim: super::raid_cell(h.home, size), pull: r.pull, leash: r.leash, haste: r.haste, armour: r.armour, ..Lump::default() });
+            h.lunging = None;
+            h.next = now + (r.every.max(1.0) * tps) as u64;
+        }
         self.stand.live = Some(h);
+    }
+
+    /// A bout begins (the heart's forming, or a lunge): what it has bitten
+    /// so far, the health it may take in it (`StandRules::cap`, of the
+    /// squad alive now) and the tick its 10 s window closes.
+    fn arm_heart(&self, h: &mut Heart) {
+        let r = self.rules.stand;
+        let now = self.world.ticks();
+        let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
+        h.bit_at = self.fell_bitten;
+        h.hp_at = self.bitten_hp;
+        h.cap = (r.cap * alive).max(1.0).min(r.cap_most.max(1.0)) * self.rules.hp;
+        h.window = now + (10.0 * self.rules.tps as f32) as u64;
+        h.armed = true;
     }
 
     /// While the heart is sated, its centre and reach (fine cells): a
