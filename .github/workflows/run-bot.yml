@@ -21,7 +21,11 @@
 # no runs), every night, and by hand.
 #
 # It never fails on a lost planet: a loss is a measurement, not a break
-# ("balance never blocks"). It fails only when the game errs or panics.
+# ("balance never blocks"). It fails when the game errs or panics, and
+# (Direction, 11-21) on a soft lock: a planet with no verdict by its clock
+# and a minute, a run that stops with no end line, or a planet over in
+# under a minute (`run_bot_summary.py --check`, which also logs each
+# planet's result, held-on told apart from won, and its length).
 name: Run bot
 
 on:
@@ -78,6 +82,10 @@ jobs:
             echo
             python3 scripts/run_bot_summary.py "$SEED" < bot.txt
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: soft lock check
+        env:
+          SEED: ${{ matrix.seed }}
+        run: python3 scripts/run_bot_summary.py --check "$SEED" < bot.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
