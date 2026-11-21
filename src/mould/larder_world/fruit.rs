@@ -287,6 +287,12 @@ impl<W: World> Game<W> {
     }
 
     fn start_fruit(&mut self) {
+        // A free lump first, as before the split: `fruit_site` reads the
+        // slime's grid, so with every lump taken it would cost a grid a
+        // second for nothing (the review of #607).
+        if !(0..LUMPS).any(|l| !self.lump_taken(l)) {
+            return;
+        }
         if let Some(at) = self.fruit_site() {
             self.start_fruit_at(at);
         }

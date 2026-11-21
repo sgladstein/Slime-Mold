@@ -286,6 +286,14 @@ pub enum AlertKind {
     Fallen,
     /// Larder World: a siren calling (`Game::sirens`), a two-tone wail.
     Siren,
+    /// Larder World: a soldier taking shop points from ore or a core, a
+    /// short bright coin tick (2026-11-21). `weight` is the share of the
+    /// drop taken so far, and the note climbs with it.
+    Coin,
+    /// Larder World: a drop the squad emptied, its points in: a quick high
+    /// arpeggio, to the octave at `weight` 1 (a core), stopping short below
+    /// (ore). Higher and brighter than the planet's end `Bell`.
+    Cashed,
 }
 
 /// What the game thread tells the voice bank. **Textures carry absolute

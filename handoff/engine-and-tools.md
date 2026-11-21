@@ -284,6 +284,13 @@ window in its `queue/pc-pause.txt`), and the script refuses while a league
 game runs. Run `-DryRun` first, then `-Timing`; commit the m1-*.txt
 files whole and write the report from them.
 
-**Next:** the 1070 batch's report once it has run; watch the run bot's
-curve once the strategy thread sets the plan (planet 1 got harder on main
-after about 21:30Z on 11-20: all three seeds lost it).
+Job 7 ran 11-21 00:49-01:16Z on main 71af78c3
+([report](../Reports/pc-batch-1070-m1-2026-11-21.md); raw on branch
+`runner-out-1070-m1`): every frame under 7.2 ms p95 on planets 1 to 3, the
+view's base pass 3.2-3.5 ms of it, planet 3's step frames 10 ms p95 from
+the CPU half of a step; four fire twins need card tolerances (sent to
+Enemy). Gotcha: the script's 2 GB free-RAM check failed at 2.00 GB with
+Chrome open; Scott closed it.
+
+**Next:** what in planet 3's CPU step costs 5 ms at p95; watch the run
+bot's curve once the strategy thread sets the plan.

@@ -258,6 +258,22 @@ impl Drop {
     }
 }
 
+/// A drop the squad emptied (`Starfall::cashed`): the moment its points
+/// came in, for the window's "+N" and the coin chime (Boss cores thread,
+/// 2026-11-21: make the pickup feel good).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Cashed {
+    pub at: (f32, f32),
+    pub kind: DropKind,
+    /// What the squad took from it in all.
+    pub taken: f32,
+    pub tick: u64,
+}
+
+/// Cashed drops kept (`Starfall::cashed`): more than ever empty in a
+/// second or two, which is as long as the window shows one.
+pub const CASHED_KEPT: usize = 8;
+
 /// The game's starfall state.
 #[derive(Debug)]
 pub struct Starfall {
@@ -276,6 +292,10 @@ pub struct Starfall {
     pub eaten: f32,
     pub landed: u32,
     pub cores: u32,
+    /// The latest drops the squad emptied, oldest first (at most
+    /// `CASHED_KEPT`), and how many it has emptied this planet.
+    pub cashed: Vec<Cashed>,
+    pub cashed_n: u32,
     rng: Rng,
     /// Mini-bosses ended already looked at, and the fruit last seen (its
     /// centre) with the last fruit end already looked at.
@@ -286,7 +306,7 @@ pub struct Starfall {
 
 impl Starfall {
     pub fn new(seed: u64) -> Starfall {
-        Starfall { plan: None, falls: 0, live: Vec::new(), points: 0.0, ore_taken: 0.0, core_taken: 0.0, eaten: 0.0, landed: 0, cores: 0, rng: Rng::new(seed ^ 0x57a2_fa11), bosses_seen: 0, fruit_at: None, fruit_seen: None }
+        Starfall { plan: None, falls: 0, live: Vec::new(), points: 0.0, ore_taken: 0.0, core_taken: 0.0, eaten: 0.0, landed: 0, cores: 0, cashed: Vec::new(), cashed_n: 0, rng: Rng::new(seed ^ 0x57a2_fa11), bosses_seen: 0, fruit_at: None, fruit_seen: None }
     }
 
     /// The whole shop points taken this planet.
@@ -523,6 +543,19 @@ impl<W: World> Game<W> {
             d.fed = true;
         }
         let kind = d.kind;
+        // Emptied this frame with soldiers on it: its points are in. The
+        // drop itself stays until the next second's tidy (`time_starfall`),
+        // so the window hides it from here (`left`).
+        let cashed = took > 0.0 && d.left <= 0.01 && d.left + took + ate > 0.01;
+        if cashed {
+            let c = Cashed { at: d.at, kind, taken: d.taken, tick: self.world.ticks() };
+            let fs = &mut self.starfall;
+            fs.cashed.push(c);
+            if fs.cashed.len() > CASHED_KEPT {
+                fs.cashed.remove(0);
+            }
+            fs.cashed_n += 1;
+        }
         self.starfall.points += took;
         self.starfall.eaten += ate;
         match kind {

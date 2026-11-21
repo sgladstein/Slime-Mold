@@ -3976,8 +3976,17 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (w.w != 0.0) {
         let spray = w.w < 0.0;
         let fl = abs(w.w);
-        let rh = max(P.zoom / 3.2, 1.0);
-        let len = max(clamp(0.8 * fl, 0.5, 3.0) * P.zoom, 2.0);
+        var rh = max(P.zoom / 3.2, 1.0);
+        var len = max(clamp(0.8 * fl, 0.5, 3.0) * P.zoom, 2.0);
+        // The Sporer's spores (`SlimeLook::Spores`, 11-21): a spore in
+        // flight is a seed, not a shot, so it is a smaller round bead
+        // with a short tail (`SPORE_HEAD`, `SPORE_TAIL`). At a droplet's
+        // size and tail, the few hundred in flight at 1:00 on planet 5
+        // read as a rain of tracers, the fight's own mark.
+        if (spore_flying(k, w.w)) {
+            rh = max(rh * SPORE_HEAD, 1.0);
+            len = max(min(len, SPORE_TAIL * P.zoom), 1.0);
+        }
         let dir = vec2<f32>(cos(w.z), sin(w.z));
         let tail = s - dir * len;
         let l = normalize(LIGHT);
@@ -4075,6 +4084,18 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
 // The shadow: how far it falls from the droplet in head radii, and how
 // much light it takes from what is under it.
 const DROP_SHADOW: f32 = 0.9;
+// A flying spore's head, a share of a droplet's, and its longest tail in
+// cells (`SlimeLook::Spores`, 11-21).
+const SPORE_HEAD: f32 = 0.8;
+const SPORE_TAIL: f32 = 0.35;
+// Whether walker `k`, its fourth word `fw`, is a spore in flight: with
+// the Sporer's look, flying (`fw` above 0) and neither flung by a blast
+// nor sown (the engine's life word, bits 13 and 15; `FLUNG`, `SOWN` in
+// `engine.wgsl`), which needs the life words bound (`look_spare0`).
+fn spore_flying(k: u32, fw: f32) -> bool {
+    if (P.slime_look != 7u || P.look_spare0 == 0u || fw <= 0.0) { return false; }
+    return (life_words[k] & 0xA000u) == 0u;
+}
 const DROP_SHADE: f32 = 0.5;
 // The bead's shading: the body's curve (`shaded`, 1 + 1.25 (n.l - l.z),
 // floor 0.3) made a bead a few pixels across mostly its dark limb, a

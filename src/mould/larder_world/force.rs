@@ -16,7 +16,8 @@ use super::{BossCause, BossKind, CoreFrom, Drop, Game, World};
 impl<W: World> Game<W> {
     /// A mini-boss of `kind` round `at` (fine cells), as `boss=` stages one
     /// (`BossCause::Staged`), its grade drawn as play draws it; false with
-    /// no free lump or too few walkers there.
+    /// no free lump, or on a marching raid or a ripening fruit. On thin
+    /// slime it forms and then falls apart, as a staged one does.
     pub fn force_boss(&mut self, kind: BossKind, at: (f32, f32)) -> bool {
         let was = self.rules.boss.kind;
         self.rules.boss.kind = (BossKind::ALL.iter().position(|&k| k == kind).unwrap_or(0) + 1) as f32;
@@ -98,5 +99,28 @@ impl<W: World> Game<W> {
         self.starfall.cores += 1;
         self.starfall.live.push(Drop::core(at, r.core_worth, CoreFrom::Boss { kind: BossKind::Hunter, grade: 0.5 }, now, ends, r.core_r * sc));
         true
+    }
+
+    /// Fruiting, waves and the last-stand heart kept on while one lives:
+    /// each one's step returns before moving a live one along when its
+    /// switch is off, so turning it off mid-way (the viewer's Rules tab,
+    /// or its Reset all) froze it on its lump for good (the review of
+    /// #607). `held` marks the ones turned back on here, which go off
+    /// again when theirs ends. Returns the name of one just held.
+    pub fn hold_live_events(&mut self, held: &mut [bool; 3]) -> Option<&'static str> {
+        let live = [self.fruits.live.is_some(), self.waves.live.is_some(), self.stand.live.is_some()];
+        let on = [&mut self.rules.fruit.on, &mut self.rules.wave.on, &mut self.rules.stand.on];
+        let mut said = None;
+        for (k, on) in on.into_iter().enumerate() {
+            if live[k] && !*on {
+                *on = true;
+                held[k] = true;
+                said = Some(["fruiting", "waves", "the last-stand heart"][k]);
+            } else if !live[k] && held[k] {
+                *on = false;
+                held[k] = false;
+            }
+        }
+        said
     }
 }

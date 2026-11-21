@@ -28,7 +28,10 @@ pub const GRAIN_POOL: usize = 96;
 /// past it the oldest of that kind is replaced.
 pub const PER_KIND_CAP: usize = 4;
 const BURSTS: usize = 6;
-const TONES: usize = 8;
+/// 8 until 2026-11-21, when the coin ticks (`AlertKind::Coin`, a few at
+/// once while a squad drains a drop) could take every slot from a
+/// soldier's fall.
+const TONES: usize = 12;
 /// The first-run master level: well below full, so the first launch is
 /// never loud. The Options page's Volume scales it (`master_at`).
 pub const DEFAULT_MASTER: f32 = 0.5;
@@ -1097,26 +1100,30 @@ impl VoiceBank {
         let w = weight.clamp(0.0, 1.0);
         let marimba = [(1.0, 1.0, 0.35), (3.93, 0.25, 0.08), (9.2, 0.08, 0.03), (0.0, 0.0, 0.1), (0.0, 0.0, 0.1)];
         let bell = [(1.0, 1.0, 0.9), (2.0, 0.5, 0.6), (2.76, 0.35, 0.4), (5.4, 0.15, 0.2), (0.5, 0.3, 1.2)];
-        // (frequency, delay seconds, gain, bell?)
-        let mut notes: [(f32, f32, f32, bool); 4] = [(0.0, 0.0, 0.0, false); 4];
+        // A coin: bright, glassy and short (a struck small bar's inharmonic
+        // partials, fast decays), so a run of ticks stays a run and not a
+        // wash (`AlertKind::Coin`, `Cashed`).
+        let coin = [(1.0, 1.0, 0.09), (2.4, 0.45, 0.05), (4.1, 0.3, 0.03), (6.3, 0.12, 0.02), (0.0, 0.0, 0.05)];
+        // (frequency, delay seconds, gain, voice: 0 marimba, 1 bell, 2 coin)
+        let mut notes: [(f32, f32, f32, u8); 4] = [(0.0, 0.0, 0.0, 0); 4];
         // C major pentatonic from C5, climbing with how much food is joined.
         const PENTA: [f32; 6] = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
         match kind {
             AlertKind::Joined => {
                 let k = ((w * (PENTA.len() - 1) as f32).round() as usize).min(PENTA.len() - 1);
-                notes[0] = (PENTA[k], 0.0, 0.10 + 0.08 * w, false);
+                notes[0] = (PENTA[k], 0.0, 0.10 + 0.08 * w, 0);
             }
             AlertKind::Bell => {
                 // The end of a dish: a rising triad if it scored, more notes
                 // for more stars (`weight` = stars / 3).
                 let n = (w * 3.0).round() as usize;
                 for (j, f) in [392.0, 493.88, 587.33].iter().enumerate().take(n.max(1)) {
-                    notes[j] = (*f, 0.18 * j as f32, if n == 0 { 0.08 } else { 0.18 }, true);
+                    notes[j] = (*f, 0.18 * j as f32, if n == 0 { 0.08 } else { 0.18 }, 1);
                 }
                 // A whole win (sound pass two, 2026-11-20) climbs on to
                 // the octave, held: the arpeggio resolves.
                 if n >= 3 {
-                    notes[3] = (783.99, 0.54, 0.22, true);
+                    notes[3] = (783.99, 0.54, 0.22, 1);
                 }
             }
             // A siren: a two-tone wail, high-low-high-low, plain sines
@@ -1124,22 +1131,42 @@ impl VoiceBank {
             // short, so the call reads as a call).
             AlertKind::Siren => {
                 for (j, f) in [740.0, 554.37, 740.0, 554.37].iter().enumerate() {
-                    notes[j] = (*f, 0.28 * j as f32, 0.10, false);
+                    notes[j] = (*f, 0.28 * j as f32, 0.10, 0);
                 }
             }
             AlertKind::Fallen => {
-                notes[0] = (146.8, 0.0, 0.16, true);
-                notes[1] = (110.0, 0.22, 0.16, true);
+                notes[0] = (146.8, 0.0, 0.16, 1);
+                notes[1] = (110.0, 0.22, 0.16, 1);
+            }
+            // C major pentatonic from E5, two octaves up as the drop drains
+            // (the top's highest partial, 6.3 x E7, stays under 17 kHz).
+            AlertKind::Coin => {
+                const UP: [f32; 11] = [659.25, 783.99, 880.0, 1046.5, 1174.7, 1318.5, 1568.0, 1760.0, 2093.0, 2349.3, 2637.0];
+                let k = ((w * (UP.len() - 1) as f32).round() as usize).min(UP.len() - 1);
+                notes[0] = (UP[k], 0.0, 0.07, 2);
+            }
+            // C6 E6 G6, quick, then a held C7 for a core.
+            AlertKind::Cashed => {
+                for (j, f) in [1046.5, 1318.5, 1568.0].iter().enumerate() {
+                    notes[j] = (*f, 0.06 * j as f32, 0.12, 2);
+                }
+                if w >= 0.9 {
+                    notes[3] = (2093.0, 0.18, 0.11, 1);
+                }
             }
             AlertKind::Died => {
-                notes[0] = (196.0, 0.0, 0.25, true);
-                notes[1] = (146.8, 0.5, 0.25, true);
-                notes[2] = (98.0, 1.0, 0.3, true);
+                notes[0] = (196.0, 0.0, 0.25, 1);
+                notes[1] = (146.8, 0.5, 0.25, 1);
+                notes[2] = (98.0, 1.0, 0.3, 1);
             }
         }
         let (gl, gr) = pan_gains(pan * 0.6);
-        for &(f, delay, g, is_bell) in notes.iter().filter(|n| n.2 > 0.0) {
-            let partials = if is_bell { bell } else { marimba };
+        for &(f, delay, g, voice) in notes.iter().filter(|n| n.2 > 0.0) {
+            let partials = match voice {
+                1 => bell,
+                2 => coin,
+                _ => marimba,
+            };
             let longest = partials.iter().map(|p| p.2).fold(0.0f32, f32::max);
             if let Some(slot) = self.tones.iter_mut().find(|t| !t.active) {
                 *slot = Tone {
@@ -1679,7 +1706,7 @@ mod tests {
             assert!(x.iter().all(|v| v.is_finite() && v.abs() <= 1.0), "{kind:?}");
             assert!(rms(&x) > 0.0005, "{kind:?} made no sound");
         }
-        for kind in [AlertKind::Joined, AlertKind::Bell, AlertKind::Died, AlertKind::Fallen, AlertKind::Siren] {
+        for kind in [AlertKind::Joined, AlertKind::Bell, AlertKind::Died, AlertKind::Fallen, AlertKind::Siren, AlertKind::Coin, AlertKind::Cashed] {
             for w in [0.0, 0.5, 1.0] {
                 let mut b = VoiceBank::new(48_000, 12);
                 b.apply(SoundCmd::Alert { kind, weight: w, pan: 0.0 });
