@@ -323,8 +323,15 @@ while Squad asked to keep it.
    stays on a crystal under fire; an ember on the faces from the crater
    field was tried and dropped (orange or brown discs that read as stamps).
    A thick raid body: measured, not clipped (under 1.2% of pixels over 235
-   at zoom 6), left. Open: the wanderer mini-boss is a flat red disc
-   (Look B, with Enemy); a tan patch with cell-stepped edges over planet
+   at zoom 6), left. The wanderer's flat slab (Enemy's #676 is its flinch,
+   the engine side): `cell_height`'s saturating curve flattened every rise
+   past about 1.5, so a packed mini-boss (0.6 to 2 members a cell) was one
+   even slab; `Lump::pack` (`LUMP_PACK` 2.0 over `LUMP_PACK_N` 0.5 to 2.2
+   members a cell, not the fruit) is now added after the curve, as set
+   slime's rise is, and it shows folds. A mini-boss on a crystal is drawn
+   over it (`LUMP_ON_GEM` 0.9, its share in the material's third word,
+   `lump_on`). Open: a held lump's rim steps by the cell on one side at
+   zoom 12 (run 1:3, `boss=85,310,85`, 95 s; old and new alike). Also open: a tan patch with cell-stepped edges over planet
    3's strikers (run 1:3, 101 s on c05df943; not seen on main since #670);
    the fallen: inked and rim-lit as the living are (`soldier`'s dead
    branch; size kept, a body lying down is that long; its tile is still
