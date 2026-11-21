@@ -4,7 +4,8 @@
 //!
 //! - **WASD** steers it; the camera follows it while you do. Pan away
 //!   freely (middle drag, arrows; WASD while paused); **Space** brings the
-//!   camera back.
+//!   camera back, and while it follows looks at the newest alert's place
+//!   (2026-11-21).
 //! - **Hold the left button**: every soldier in it fires at the cursor on
 //!   the same beat. It faces the cursor.
 //! - **Right click** sends it there as a squad; on a crystal it stands by
@@ -24,7 +25,8 @@
 //!   2026-11-21 06:53Z); **Ctrl + click** a squad takes it alone.
 //! - **T** opens the card's Formation page: blob, spread, line, wedge,
 //!   column, ring (a squad key that cycled them until 2026-11-21).
-//! - **Esc** lets go of it (and the panel's Let go button): nothing is
+//! - **Esc** on a card page goes back to the main card; else it lets go
+//!   of the squad (and the panel's Let go button): nothing is
 //!   controlled, every squad keeps its last orders, fires at slime in reach
 //!   and guards on its own ("auto" on its tile and over it), and WASD pans
 //!   the camera. A number, a tile, a click on a squad or Space takes command
@@ -123,8 +125,9 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
     let k = |c: KeyCode| key_name(c).unwrap_or_default();
     [
         ("WASD".to_string(), "Steer your squad; the camera follows it (paused, or no squad controlled: pan the camera)".to_string()),
-        ("Esc".into(), "Let go of the squad: every squad runs on its own and WASD pans; Esc again: the menu".into()),
+        ("Esc".into(), "On a card page: back to the main card; else let go of the squad (every squad runs on its own and WASD pans); Esc again: the menu".into()),
         ("Click a squad, Space".into(), "With none controlled: take command of it, or of the last one".into()),
+        ("Space".into(), "The camera back to your squad; while it follows, to the newest alert's place (a raid, landing ore), and again back".into()),
         ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
@@ -294,8 +297,16 @@ impl App {
         if first {
             let wasd = [KeyCode::KeyW, KeyCode::KeyA, KeyCode::KeyS, KeyCode::KeyD];
             if code == KeyCode::Escape {
-                // Esc lets go of the squad before it opens the menu; a
-                // building being placed is called off first (the HUD's).
+                // Esc closes a card page first (Build, Tools, Formation),
+                // as its Back does; then lets go of the squad; then opens
+                // the menu. A building being placed is called off first
+                // (the HUD's). Until 2026-11-21 Esc on a page let go of the
+                // squad and left the page open (controls review).
+                let page = self.build_page || self.tools_page || self.form_page;
+                if pressed && !repeat && page && self.hud.targeting().is_none() && !self.hud.menu_open() {
+                    (self.build_page, self.tools_page, self.form_page) = (false, false, false);
+                    return true;
+                }
                 if pressed && !repeat && !self.squad_free() && self.active().is_some() && self.hud.targeting().is_none() && !self.hud.menu_open() {
                     self.let_go();
                     return true;
@@ -326,9 +337,21 @@ impl App {
                     return true;
                 }
                 if pressed && !repeat {
+                    // Following the squad, Space looks at the newest alert
+                    // that has a place (a raid, landing ore) while it shows;
+                    // again, or once panned away, it comes back to the squad
+                    // (controls review, 2026-11-21: outside the squad mode
+                    // Space is the alerts' key, here it only came back).
+                    let at = self.hud.newest_place();
                     let sq = self.sq.as_mut().unwrap();
-                    sq.follow = true;
                     sq.put = None;
+                    match at.filter(|_| sq.follow) {
+                        Some(at) => {
+                            sq.follow = false;
+                            self.camera.centre_on(at);
+                        }
+                        None => sq.follow = true,
+                    }
                 }
                 return true;
             }
@@ -464,7 +487,10 @@ impl App {
             // Shift + left drag is the box that splits (the controls take
             // it).
             Button::Left if self.shift && down => {
-                self.sq.as_mut().unwrap().boxing = false;
+                let c = self.controls.cursor;
+                let sq = self.sq.as_mut().unwrap();
+                sq.boxing = false;
+                sq.box_from = c;
                 false
             }
             // On the minimap: the controls move the camera there.
@@ -553,6 +579,13 @@ impl App {
             sq.boxing = false;
             let far = sq.box_far;
             return self.squad_box(picked, far);
+        }
+        // Only a drag splits: a Shift + click (no box) picked the one
+        // soldier under it and split it off alone (controls review,
+        // 2026-11-21), which read as a misclick.
+        let from = self.sq.as_ref().and_then(|sq| sq.box_from);
+        if !matches!((from, self.controls.cursor), (Some(a), Some(b)) if (a.0 - b.0).hypot(a.1 - b.1) > slime_mould::world::controls::DRAG_PX) {
+            return;
         }
         let picked = self.living(picked);
         let Some(g) = self.game.as_mut() else { return };
