@@ -491,6 +491,9 @@ pub struct Game<W: World> {
     /// `Rounds::blast_kills`. The 11-20 late-threat measure counts the
     /// slime's own kills apart from the squad's.
     pub fell_bitten: u32,
+    /// Health the slime's touch has taken from soldiers (`Rules::drain`;
+    /// the last-stand heart's lunge cap, `StandRules::cap`).
+    pub bitten_hp: f32,
     pub fell_burned: u32,
     pub fell_starfall: u32,
     /// Each crystal's charge at the start and the charge the squad took
@@ -720,6 +723,7 @@ impl<W: World> Game<W> {
             broken: None,
             late: false,
             fell_bitten: 0,
+            bitten_hp: 0.0,
             fell_burned: 0,
             fell_starfall: 0,
             start_charge,
