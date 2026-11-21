@@ -2931,6 +2931,74 @@ mod tests {
         assert!(counts[1][3].1 > 0, "the shut hole refills once it opens");
     }
 
+    /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch`,
+    /// 2026-11-21, Direction's job from the Look lane's exit test 2; GPU
+    /// only). Two race worlds alike, a lump of armoured members held in
+    /// place by its pull, and a hit at its centre that hurts them and
+    /// leaves a 60-step crater; one world with members flinching for the
+    /// first half of it, both with its first half shut (`crater_shut`, as
+    /// in a run). A quarter of the crater on, the flinching lump
+    /// holds fewer members within 3 cells of the hit (its hole) than the
+    /// one that stood (llvmpipe 11-21: 51 against 103 of 108), and as many
+    /// members in all (a flinch kills none).
+    #[test]
+    fn a_mini_bosss_walkers_flinch_out_of_a_hit() {
+        use crate::gpu::floats;
+        use crate::mould::big::{Lump, LUMP_BITS, LUMP_SHIFT};
+        use crate::mould::kit::KitRules;
+        use crate::mould::larder_world::{raid_cell, BossRules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |flinch: &str| -> (usize, usize, usize) {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "boss_flinch", flinch).unwrap();
+            crate::gpu::set(&mut s, "crater_shut", "0.5").unwrap();
+            let rules = Rules { boss: BossRules { every: 0.0, first: 0.0, ..BossRules::default() }, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+            while g.time() < 20.0 {
+                g.step();
+            }
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let at = (home.0 / sc, home.1 / sc);
+            let (w, h) = g.world.size();
+            let b = BossRules::default();
+            g.world.form_lump(0, Some((at, 8.0)));
+            g.world.set_lump(0, Lump { aim: raid_cell(at, (w, h)), pull: b.pull, leash: b.leash_at(b.clench, 0.5), armour: 15, ..Lump::default() });
+            for _ in 0..30 {
+                g.step();
+            }
+            // Members in all, and within 3 cells of the hit.
+            let members = |g: &Game<GpuWorld>| {
+                let e = &g.world.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+                let news: Vec<u32> = read_back(&e.device, &e.queue, &e.news).chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+                let base = e.dense_at as usize / 4 + crate::gpu::DENSE_HEAD;
+                let (cx, cy, r) = (at.0 * e.dish.p.scale as f32, at.1 * e.dish.p.scale as f32, 3.0 * e.dish.p.scale as f32);
+                let m: Vec<usize> = (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (news[base + q] & LUMP_BITS) >> LUMP_SHIFT == 1).collect();
+                let near = m.iter().filter(|&&q| (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count();
+                (m.len(), near)
+            };
+            let (_, before) = members(&g);
+            let fine = g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+            g.world.e.crater_steps = 60;
+            g.world.burst(&squad::Burst { at, r: 5.0, kill: true, crater: 60, crater_r: 5.0, ..Default::default() }, &k);
+            let until = g.world.ticks() + (15.0 / fine).ceil() as u64;
+            while g.world.ticks() < until {
+                g.step();
+            }
+            let (all, near) = members(&g);
+            (before, all, near)
+        };
+        let (stood, flinched) = (play("0"), play("0.5"));
+        eprintln!("flinch: (near before, members, near after) stood {stood:?}, flinched {flinched:?}");
+        assert!(stood.0 > 10, "the hit lands in the lump: {stood:?}");
+        assert!(flinched.2 * 3 < stood.2 * 2, "the flinching lump opens a hole: {flinched:?} against {stood:?}");
+        assert!(flinched.1 + flinched.1 / 20 >= stood.1, "a flinch kills none: {flinched:?} against {stood:?}");
+    }
+
     /// **A shot stops at set slime** (the owner's planet 3 round,
     /// 2026-11-19 20:46Z: "slime that i couldn't kill they were not moving
     /// but all my soliders would shoot them over and over and nothing hurt
