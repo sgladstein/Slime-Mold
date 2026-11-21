@@ -6866,3 +6866,6 @@
 2026-11-21 10:29:15   bot,want=torch.standard planet 0 seed 6: ? 1253.0 (0 s)
 2026-11-21 10:29:22   bot,want=torch.standard planet 0 seed 7: ? 364.0 (0 s)
 2026-11-21 10:29:29   bot,want=torch.standard planet 0 seed 8: ? 354.0 (0 s)
+2026-11-21 10:29:33 worker: league.py changed; restarting
+2026-11-21 10:29:33 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once (pid 8232)
+2026-11-21 10:29:34 worker: built the game in 1 s (src 1c02ff7086ca)
