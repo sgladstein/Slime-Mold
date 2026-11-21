@@ -3553,7 +3553,12 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A shot's spray droplet writes it below 0 (the bold spray, 11-15), so
     // the view draws a killed walker's droplet hot and a blast's living
     // throw in the mould's own gold.
-    var fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung || (w & SOWN) != 0u);
+    // Every flying spore writes it since 2026-11-20 night (the look lane's
+    // ask, for the Sporer's own look): until then only a flung or sown one
+    // did, and the Sporer's own spores (`spore_rate`, `spore_burst`, the
+    // only tier that fruits them) flew with 0, so the view could not tell
+    // them from the walkers on the ground and drew them as body.
+    var fw = max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01);
     if (doom) { fw = -fw; }
     var at = vec4<f32>(nx, ny, h, fw);
     if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }

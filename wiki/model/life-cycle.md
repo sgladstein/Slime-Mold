@@ -8,6 +8,7 @@ sources:
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-tiers-2026-11-11.md
   - Reports/mould-tiers-review-2026-11-11.md
+  - Reports/sporer-spores-2026-11-21/README.md
   - research/sources/jones-2015-survey.md
   - research/sources/jones-adamatzky-2012.md
 code:
@@ -71,6 +72,8 @@ test*).
   a world whose crystals ran dry).
 - **Sporer** (`spore_rate` 1e-5): fed walkers fly to new crystals. It won
   8 of 8 on the test dish, but in the world its edge is not significant.
+  Its spores fly as tailed beads since 11-21
+  ([stills](../../Reports/sporer-spores-2026-11-21/README.md)).
 
 The counters (bait, kill zone, starve) are proposals, not yet tested
 against random play. Fleeing the alarm did not split the body. It holds a
