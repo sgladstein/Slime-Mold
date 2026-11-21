@@ -6821,3 +6821,8 @@
 2026-11-20 23:18:40   bot,want=torch.standard planet 1.0 seed 6.0: lost 503.7 (21 s)
 2026-11-20 23:18:50   bot,want=torch.standard planet 1.0 seed 7.0: won 211.0 (9 s)
 2026-11-20 23:18:54   bot,want=torch.standard planet 1.0 seed 8.0: won 311.0 (12 s)
+2026-11-20 23:18:56 worker: the game's code changed (now c19bbbe9); building
+2026-11-20 23:21:23 worker: built the game in 147 s (src 527355bf3e46)
+2026-11-20 23:21:23 worker: league.py changed; restarting
+2026-11-20 23:21:23 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once
+2026-11-20 23:21:24 worker: built the game in 1 s (src 527355bf3e46)
