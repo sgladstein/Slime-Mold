@@ -83,8 +83,11 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   key, count and health rather than some hiding behind "+N" (11-19). Click a
   tile or press its number to take command; ` (Shift + ` back) and Ctrl +
   wheel go round them. **Esc** or *Let go* commands none: every squad shows
-  AUTO, WASD pans, and a click on a squad takes it back
-  ([free camera](../../Reports/free-camera-2026-11-15/README.md)). On a card
+  AUTO, WASD pans, and a click on a squad or its number takes it back
+  ([free camera](../../Reports/free-camera-2026-11-15/README.md); the number
+  did nothing here until 2026-11-21). The cursor is the crosshair while a
+  squad is commanded and the pick arrow while Ctrl is held, since a Ctrl
+  click or drag then picks squads instead of firing (`cursor.rs`). On a card
   page (Build, Tools, Formation) Esc first goes back to the main card
   (2026-11-21). **Space** brings the camera back to the squad; while it
   already follows, Space looks at the newest alert that has a place (a raid,

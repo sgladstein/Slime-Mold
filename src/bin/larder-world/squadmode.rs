@@ -371,7 +371,17 @@ impl App {
             return true;
         }
         let at = self.cursor_world();
-        let Some(q) = self.active() else { return true };
+        let Some(q) = self.active() else {
+            // None commanded: its number takes command, as the let-go
+            // alert says (until 2026-11-21 it did nothing here, so after
+            // Esc only a click or Space took a squad again; found testing
+            // the cursor).
+            let n = digit(code).filter(|&n| self.game.as_ref().is_some_and(|g| !g.members(n).is_empty()));
+            if let Some(n) = n {
+                self.switch_to(n as u8);
+            }
+            return true;
+        };
         let g = self.game.as_mut().unwrap();
         match code {
             SPLIT => {

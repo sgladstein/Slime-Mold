@@ -1751,6 +1751,23 @@ fn a_drag_commands_every_squad_in_its_box_as_one() {
     drag(&mut app, a, b);
     let g = app.game.as_ref().unwrap();
     assert_eq!((g.active, g.banded()), (Some(other), false), "a plain drag with a squad commanded fires");
+    // The cursor says so: the crosshair while one is commanded, the pick's
+    // look over a squad with Ctrl held, the box while a Ctrl drag runs.
+    let s = { let g = app.game.as_ref().unwrap(); g.soldiers[g.members(live[1])[0]] };
+    app.controls.cursor = Some(app.camera.to_screen((s.x, s.y)));
+    assert_eq!(app.cursor_look(), cursor::Look::Aim);
+    app.ctrl = true;
+    assert_eq!(app.cursor_look(), cursor::Look::Select, "Ctrl over a squad: a click takes it");
+    app.controls.cursor = Some(a);
+    world_button(&mut app, Button::Left, true);
+    app.controls.cursor = Some(b);
+    assert_eq!(app.cursor_look(), cursor::Look::Boxing, "a Ctrl drag shows the box");
+    world_button(&mut app, Button::Left, false);
+    app.ctrl = false;
+    app.let_go();
+    assert!(app.squad_key(digit_key(other), true, false, false));
+    assert_eq!(app.game.as_ref().unwrap().active, Some(other), "with none commanded, a number takes command");
+    assert!(!app.squad_free());
     // Ctrl + drag picks them again, led by the one commanded.
     app.ctrl = true;
     drag(&mut app, a, b);

@@ -34,8 +34,9 @@
 //! command's look (wall, door, pump, building, device, attack, guard,
 //! drain, rally, or a plain order mark); in the squad mode a commanded
 //! squad gives the crosshair, tightened and red-hot while the left button
-//! fires; with no squad commanded, or in the RTS round, the arrow, with a
-//! selection badge over a squad or soldier a click would take.
+//! fires; with no squad commanded, with Ctrl held (a click then picks
+//! squads), or in the RTS round, the arrow, with a selection badge over a
+//! squad or soldier a click would take.
 
 use super::*;
 use tiny_skia::{Color, FillRule, GradientStop, LinearGradient, Paint, Path, PathBuilder, Pixmap, Point, Shader, SpreadMode, Stroke, LineCap, LineJoin, Transform};
@@ -178,7 +179,11 @@ impl App {
         }
         let world = self.camera.world_at(p);
         if let Some(sq) = &self.sq {
-            if g.active.is_some() && !sq.free {
+            // Ctrl turns the left button from firing to picking squads
+            // (`squad_button`: a Ctrl click takes the squad under it, a
+            // Ctrl drag boxes several), so the crosshair gives way to the
+            // pick's look while it is held.
+            if g.active.is_some() && !sq.free && !(self.ctrl && !sq.firing()) {
                 return if sq.firing() { Look::Fire } else { Look::Aim };
             }
             return if world.and_then(|w| self.squad_at(w)).is_some() { Look::Select } else { Look::Arrow };

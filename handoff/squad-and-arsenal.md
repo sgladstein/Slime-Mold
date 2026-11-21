@@ -48,6 +48,27 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-21, controls and HUD review (its own thread, the owner's ask
+06:16Z).** Review doc: https://claude.ai/artifact/12jZrjC3MHe7R54S7V7Ktq
+(ranked problems, all done but "keys falling through card pages"). #655:
+a WASD tap no longer drops queued orders, buy/merge keep the stance, the
+run's top bar no longer reads "0%". #660: **drag pick** (owner 06:53Z) is
+a temporary band folded into `Game::linked` (`Squad::band`, `Cmd::Band`,
+`BAND_SPREAD` caps the fan-out offsets), so every link fan-out (orders,
+fire, Hold fire, formation, heal, rings) reaches a box's squads; it ends on
+taking another squad, Esc or a split. **One device slot per squad, on a
+cooldown** (owner's card answer 06:55Z, option A): `Cmd::Device`,
+`Game::device`, `Squad::device_at`/`device_secs`, `KitRules::cooldown`
+(blast 20 s, mine 25, cord 30, gas 35; Tools+ cuts them 20 % a level); free
+per use, the carry rule stays for the RTS round; the strategy bot throws
+through the slot (`strat::tools`); the Tools button hides in a run while
+nothing is owned. The follow-up: Esc closes a card page first, Space jumps
+to the newest alert, only a Shift drag splits, a number takes command with
+none commanded (it did nothing), and Ctrl swaps the crosshair for the pick
+cursor (`cursor.rs`, Look's #658; its box and device looks needed no other
+wiring). Next: step E's rest (device bodies, cards, autocast) in
+`wiki/arsenal/guns.md`.
+
 **2026-11-21, squad controls (its own thread, the owner's ask 05:04Z).**
 Lookouts removed (`cover.rs` keeps only the work's end and heal's end;
 `Cover`, `CoverRules`, `Soldier::cover`, `work_boost`, `Cmd::Cover` and the
