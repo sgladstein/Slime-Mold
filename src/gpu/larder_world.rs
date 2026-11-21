@@ -1116,6 +1116,10 @@ impl World for GpuWorld {
         self.e.sow_pass(&self.shared, &self.s, at.0 / sc, at.1 / sc, r, steps);
     }
 
+    fn spore_flight(&self) -> f32 {
+        self.s.step * self.s.spore_speed
+    }
+
     fn can_sow(&self) -> bool {
         true
     }
@@ -1442,6 +1446,9 @@ mod tests {
         }
         fn sow(&mut self, at: (f32, f32), r: f32, steps: u16) {
             self.g.sow(at, r, steps)
+        }
+        fn spore_flight(&self) -> f32 {
+            self.g.spore_flight()
         }
         fn can_sow(&self) -> bool {
             self.g.can_sow()
@@ -2869,6 +2876,30 @@ mod tests {
         }
         assert_eq!(g.fruits.last.map(|l| l.1), Some(FruitEnd::Broken), "shot down it breaks");
         assert_eq!(g.fruits.sown, 0, "and sows nothing");
+        // A burst lands short of the squad (2026-11-21, `Game::sow_steps`):
+        // the throw stops the disc and its flight short of the guns' reach
+        // and `clear` from the nearest living soldier.
+        let mut g = play();
+        g.step();
+        assert!(!g.soldiers.is_empty(), "the race world lands a squad");
+        let (step, throw) = (g.world.spore_flight(), g.rules.fruit.throw);
+        assert!(step > 0.0, "a world that sows says how far a spore flies a step");
+        let far = (g.gun_range_max() + g.rules.fruit.clear) * g.world.scale();
+        let at = (g.soldiers[0].x, g.soldiers[0].y);
+        for s in g.soldiers.iter_mut().skip(1) {
+            s.alive = false;
+        }
+        let mut steps = |d: f32| {
+            g.soldiers[0].x = at.0 + d;
+            g.sow_steps(at, 4.0)
+        };
+        assert_eq!(steps(0.5 * far), 2, "a squad in reach of the pod gets it back about where it stood");
+        let d = far + 4.0 + 50.5 * step;
+        let n = steps(d);
+        assert!(n == 50 && 4.0 + n as f32 * step <= d - far, "it comes down short of the squad: {n} steps of {step} with the squad {d} off, reach {far}");
+        assert_eq!(steps(1.0e6), throw, "a squad far off sees the whole throw");
+        g.soldiers[0].alive = false;
+        assert_eq!(g.sow_steps(at, 4.0), throw, "and no squad the whole throw");
     }
 
     /// **A pinwheel's arms turn** (2026-11-20, `Lump::spin`, the Pinwheel

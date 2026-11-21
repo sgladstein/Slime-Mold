@@ -260,6 +260,32 @@ impl<W: World> Game<W> {
         best.map(|(_, p)| p)
     }
 
+    /// **A burst lands short of the squad** (2026-11-21): the steps a sown
+    /// spore flies, `FruitRules::throw` at most, held so that none can come
+    /// down within the guns' reach and `clear` of a living soldier. A spore
+    /// starts in the burst's disc (`disc`, fine cells) and flies straight,
+    /// or turns where it meets a wall or the map's edge, so it lands at
+    /// most the disc and its flight from the centre. The full throw (200
+    /// steps at 3 fine cells, 600, more than a planet 1 map is wide) came
+    /// down all over the map: a planet 1 burst in the owner's play on
+    /// 11-21 (main 2ebd441, his log at 8:44) landed round his squad and 21
+    /// of 28 soldiers died in 3 s, and his note: the slime "dispersed
+    /// across the map and surrounded me randomly, halving the squad each
+    /// time". So the nearer the squad stands, the closer round the pod its
+    /// walkers come down; a squad in reach of the pod gets it back as slime
+    /// where it stood, and breaking it is still the counter.
+    pub(crate) fn sow_steps(&self, at: (f32, f32), disc: f32) -> u16 {
+        let r = self.rules.fruit;
+        let step = self.world.spore_flight();
+        if step <= 0.0 {
+            return r.throw;
+        }
+        let far = (self.gun_range_max() + r.clear) * self.s();
+        let near = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - at.0).hypot(s.y - at.1)).fold(f32::INFINITY, f32::min);
+        let room = (near - far - disc).max(0.0);
+        ((room / step).floor() as u16).clamp(2, r.throw.max(2))
+    }
+
     /// The smallest reach round `at` (dish cells) whose squares of the
     /// mould grid hold `want` walkers.
     fn fruit_reach(&self, at: (f32, f32), want: f32) -> f32 {
@@ -352,7 +378,8 @@ impl<W: World> Game<W> {
             Some(how) => {
                 self.world.form_lump(f.lump, None);
                 if how == FruitEnd::Burst {
-                    self.world.sow(f.centre, (radius * r.spread).max(3.0), r.throw);
+                    let disc = (radius * r.spread).max(3.0);
+                    self.world.sow(f.centre, disc, self.sow_steps(f.centre, disc * sc));
                     self.fruits.burst += 1;
                     self.fruits.sown += n as u64;
                 } else {
