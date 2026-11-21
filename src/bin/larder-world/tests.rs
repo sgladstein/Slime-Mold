@@ -1566,9 +1566,131 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
     app.squad_frame(dt);
     let at = app.camera.to_screen(m);
     app.controls.cursor = Some(at);
-    assert!(app.squad_button(Button::Left, true));
-    app.squad_button(Button::Left, false);
+    world_button(&mut app, Button::Left, true);
+    world_button(&mut app, Button::Left, false);
     assert_eq!(app.game.as_ref().unwrap().active, Some(q), "clicked squad taken");
+}
+
+/// A mouse button on the world, routed as the window's events route one
+/// past the HUD: the squad mode first, then the controls (their box).
+fn world_button(app: &mut App, b: Button, down: bool) {
+    if app.squad_button(b, down) {
+        return;
+    }
+    let units = app.units();
+    for c in app.controls.button(b, down, &units, &mut app.camera, None) {
+        if let UiCommand::Select(picked) = c {
+            app.squad_picked(&picked);
+        }
+    }
+}
+
+/// A left drag on the world from `a` to `b`, screen pixels.
+fn drag(app: &mut App, a: (f32, f32), b: (f32, f32)) {
+    app.controls.cursor = Some(a);
+    world_button(app, Button::Left, true);
+    app.controls.cursor = Some(b);
+    world_button(app, Button::Left, false);
+}
+
+/// **A drag picks squads** (owner 2026-11-21 06:53Z: "add click and drag
+/// to select multiple squads"). With none commanded a plain drag, with one
+/// Ctrl + drag, boxes squads; every squad in the box is commanded as one
+/// (`Cmd::Band`): one right click sends them all, their soldiers get the
+/// rings. A number, or Ctrl + a click on one, takes that squad alone; a
+/// plain drag with a squad commanded still fires, and Shift's box still
+/// splits.
+#[test]
+fn a_drag_commands_every_squad_in_its_box_as_one() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.game.as_mut().unwrap().bank = 1e6;
+    for _ in 0..5 {
+        app.game.as_mut().unwrap().apply(Cmd::Buy);
+    }
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    let live = app.game.as_ref().unwrap().live_squads();
+    assert_eq!(live.len(), 3, "{live:?}");
+    // A box round every soldier, on the screen.
+    let frame = |app: &mut App| {
+        let g = app.game.as_ref().unwrap();
+        let ps: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        let (x0, x1) = ps.iter().fold((f32::MAX, f32::MIN), |a, p| (a.0.min(p.0), a.1.max(p.0)));
+        let (y0, y1) = ps.iter().fold((f32::MAX, f32::MIN), |a, p| (a.0.min(p.1), a.1.max(p.1)));
+        app.camera.centre_on(((x0 + x1) / 2.0, (y0 + y1) / 2.0));
+        let pad = 3.0 * g.world.scale();
+        (app.camera.to_screen((x0 - pad, y0 - pad)), app.camera.to_screen((x1 + pad, y1 + pad)))
+    };
+    app.let_go();
+    app.squad_frame(dt);
+    let (a, b) = frame(&mut app);
+    drag(&mut app, a, b);
+    let g = app.game.as_ref().unwrap();
+    let q = g.active.expect("the box took command");
+    assert!(!app.squad_free());
+    assert_eq!(q, live[0], "the lowest leads");
+    assert_eq!(g.linked(q), live, "all three are commanded as one");
+    assert!(live.iter().all(|&r| g.leads(r)), "none runs on its own");
+    app.squad_frame(dt);
+    let all: usize = live.iter().map(|&r| app.game.as_ref().unwrap().members(r).len()).sum();
+    assert_eq!(app.controls.selected.len(), all, "every picked soldier is ringed");
+    // One right click sends them all.
+    let to = {
+        let g = app.game.as_ref().unwrap();
+        let m = g.middle(q).unwrap();
+        (m.0 + 12.0 * g.world.scale(), m.1)
+    };
+    app.controls.cursor = Some(app.camera.to_screen(to));
+    world_button(&mut app, Button::Right, true);
+    world_button(&mut app, Button::Right, false);
+    let g = app.game.as_ref().unwrap();
+    for &r in &live {
+        let d = g.squads[r].dest.expect("each picked squad is sent");
+        assert!((d.0 - to.0).hypot(d.1 - to.1) <= 2.0 * squads_spread() * g.world.scale() + 1.0, "squad {r} sent to {d:?}, the click at {to:?}");
+    }
+    // Its number takes one alone, and the pick ends.
+    let other = live[2];
+    assert!(app.squad_key(digit_key(other), true, false, false));
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.linked(other)), (Some(other), vec![other]), "its number takes it alone");
+    assert!(!g.banded());
+    // Commanding one, a plain drag fires and picks nothing.
+    let (a, b) = frame(&mut app);
+    drag(&mut app, a, b);
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.banded()), (Some(other), false), "a plain drag with a squad commanded fires");
+    // Ctrl + drag picks them again, led by the one commanded.
+    app.ctrl = true;
+    drag(&mut app, a, b);
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.linked(other)), (Some(other), live.clone()), "Ctrl + drag picks with a squad commanded");
+    // Ctrl + a click on one (on a soldier of it: the squads overlap)
+    // takes it alone.
+    let s = g.soldiers[g.members(live[1])[0]];
+    let at = app.camera.to_screen((s.x, s.y));
+    drag(&mut app, at, at);
+    app.ctrl = false;
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.banded()), (Some(live[1]), false), "Ctrl + click takes one squad alone");
+    // Esc lets go and ends any pick.
+    app.ctrl = true;
+    drag(&mut app, a, b);
+    app.ctrl = false;
+    assert!(app.game.as_ref().unwrap().banded());
+    app.let_go();
+    assert!(!app.game.as_ref().unwrap().banded(), "letting go ends the pick");
+}
+
+fn squads_spread() -> f32 {
+    slime_mould::mould::larder_world::BAND_SPREAD
+}
+
+/// The digit key of squad `q` (squad id 0 is 1).
+fn digit_key(q: usize) -> KeyCode {
+    [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9][q]
 }
 
 /// **One click resumes a half-built building** (owner 2026-11-15: "If you

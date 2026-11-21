@@ -84,7 +84,7 @@ pub use raising::*;
 pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
-pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
+pub use squads::{Formation, LeadRules, Squad, BAND_SPREAD, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::HealRules;
 pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};

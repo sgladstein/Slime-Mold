@@ -96,6 +96,17 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
 - **Split, join, link.** Y splits the front half off; J or the tile's + joins
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.
+- **Picking squads with a drag** (owner 2026-11-21 06:53Z: "add click and
+  drag to select multiple squads"). With no squad commanded a plain left drag,
+  with one Ctrl + drag, boxes squads: every squad in the box is commanded as
+  one, as a link is (moves, queues, volleys, facing, heal, formation, fire
+  mode, Hold fire), led by the one you commanded if it was in the box
+  (`Cmd::Band`, `Squad::band`). Sent together, squads picked far apart close
+  up round the click, at most `BAND_SPREAD` (6) cells a squad from the middle.
+  It is a selection, not a link: a click on one squad (Ctrl + click with one
+  commanded), its number, its tile or Esc ends it. A plain drag with a squad
+  commanded still fires, and Shift + drag still splits. The fire button and
+  Hold fire now reach linked squads too (they changed only yours before).
 - **Orders.** Right click sends, Ctrl + right click drains or guards a crystal,
   Shift queues up to six. A tap of WASD is the stop (the card has no Stop)
   and drops the queue (2026-11-21; before, the squad walked off to its next

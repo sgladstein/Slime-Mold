@@ -2640,6 +2640,71 @@ fn steering_drops_the_squads_queue() {
     assert!((m.0 - stop.0).hypot(m.1 - stop.1) < 4.0 * g.s(), "the squad stands {} cells from where it was let go", (m.0 - stop.0).hypot(m.1 - stop.1) / g.s());
 }
 
+/// **A drag's pick** (`Cmd::Band`; owner 2026-11-21 06:53Z: "add click
+/// and drag to select multiple squads"): the picked squads, and the links
+/// they bring, are commanded as one, as a link is, and sent together close
+/// up round the click (`BAND_SPREAD`); commanding a squad outside the pick,
+/// letting go or splitting ends it, and it is not a link: none is left
+/// linked after.
+#[test]
+fn a_pick_commands_squads_as_one_till_another_is_taken() {
+    let mut g = squads(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, m)));
+    let n1 = g.active.unwrap();
+    assert!(g.apply(Cmd::Split(n1 as u8, g.middle(n1).unwrap())));
+    let n2 = g.active.unwrap();
+    let live = g.live_squads();
+    assert_eq!(live.len(), 3, "{live:?}");
+    assert_eq!(Cmd::parse(&Cmd::Band(5).to_line()), Some(Cmd::Band(5)));
+    // One squad alone is no pick.
+    assert!(!g.apply(Cmd::Band(1 << n2)));
+    assert!(g.apply(Cmd::Band(live.iter().fold(0, |m, &q| m | 1 << q))));
+    assert_eq!(g.linked(n2), live, "picked squads are commanded as one");
+    assert!(live.iter().all(|&q| g.leads(q)));
+    assert!(!g.apply(Cmd::Active(live[0] as u8)), "a picked squad is commanded already");
+    // Spread far apart, they close up when sent.
+    let sc = g.s();
+    for (i, &q) in live.iter().enumerate() {
+        for k in g.members(q) {
+            g.soldiers[k].x = m.0 + (i as f32 - 1.0) * 30.0 * sc;
+        }
+    }
+    let to = open_near(&g, 10.0);
+    assert!(g.apply(Cmd::SquadOrder(n2 as u8, Order::Move(to.0, to.1))));
+    for &q in &live {
+        let d = g.squads[q].dest.expect("every picked squad is sent");
+        let off = (d.0 - to.0).hypot(d.1 - to.1) / sc;
+        assert!(off <= BAND_SPREAD * 2.0 + 0.01, "squad {q} sent {off} cells from the click");
+    }
+    // Commanding one outside ends it; no link is left.
+    assert!(g.apply(Cmd::Band(0)));
+    assert!(!g.banded());
+    assert_eq!(g.active, Some(live[2]));
+    assert!(g.apply(Cmd::Band((1 << live[1]) | (1 << live[2]))));
+    assert!(g.apply(Cmd::Active(live[0] as u8)));
+    assert!(!g.banded(), "commanding a squad outside the pick ends it");
+    assert!(live.iter().all(|&q| g.squads[q].link == NO_LINK));
+    // Letting go ends it.
+    assert!(g.apply(Cmd::Band((1 << live[0]) | (1 << live[2]))));
+    assert_eq!(g.linked(live[2]), vec![live[0], live[2]]);
+    g.apply(Cmd::Active(u8::MAX));
+    assert!(!g.banded(), "letting go ends the pick");
+    // A link joins a pick whole, and unlinking one takes it out of both.
+    assert!(g.apply(Cmd::Link(live[0] as u8, live[1] as u8)));
+    assert!(g.apply(Cmd::Active(live[2] as u8)));
+    assert!(g.apply(Cmd::Band((1 << live[0]) | (1 << live[2]))));
+    assert_eq!(g.linked(live[2]), live, "the pick brings squad {}'s link", live[0]);
+    assert!(g.apply(Cmd::Unlink(live[1] as u8)));
+    assert_eq!(g.linked(live[2]), vec![live[0], live[2]]);
+    assert_eq!(g.linked(live[1]), vec![live[1]]);
+}
+
 /// The fire mode is the squad's in the squad mode: a bought soldier and a
 /// merged squad's soldiers take the stance of the squad they join
 /// (controls review, 2026-11-21: they kept Defend, so a squad told to
