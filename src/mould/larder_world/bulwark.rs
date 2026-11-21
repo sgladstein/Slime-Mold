@@ -123,7 +123,7 @@ impl<W: World> Game<W> {
     /// with the rule off or setting off. Once a game second.
     pub(super) fn mark_bulwark(&mut self) {
         let on = self.rules.set_block;
-        let cells = if on > 0.0 { self.world.set_cells() } else { None };
+        let cells = if on > 0.0 { self.costed("set_cells", |g| g.world.set_cells()) } else { None };
         let (w, h) = self.world.size();
         let Some(c) = cells.filter(|c| c.len() == w * h) else {
             self.bulwark.clear();
@@ -131,23 +131,15 @@ impl<W: World> Game<W> {
             return;
         };
         let was = std::mem::take(&mut self.bulwark);
-        let mut b = vec![false; w * h];
-        let mut any = false;
-        for y in 0..h {
-            for x in 0..w {
-                let mut n = 0u32;
-                for yy in y.saturating_sub(1)..(y + 2).min(h) {
-                    for xx in x.saturating_sub(1)..(x + 2).min(w) {
-                        n += c[yy * w + xx];
-                    }
-                }
-                let i = y * w + x;
-                let held = was.get(i).copied().unwrap_or(false);
+        let b: Vec<bool> = box3(&c, w, h)
+            .into_iter()
+            .enumerate()
+            .map(|(i, n)| {
                 let n = n as f32;
-                b[i] = n >= on || (held && n >= 0.5 * on);
-                any |= b[i];
-            }
-        }
+                n >= on || (was.get(i).copied().unwrap_or(false) && n >= 0.5 * on)
+            })
+            .collect();
+        let any = b.iter().any(|&on| on);
         if any {
             self.bulwark = b;
         }
@@ -257,9 +249,62 @@ impl<W: World> Game<W> {
     }
 }
 
+/// Each cell's sum over its 3x3 block, clipped at the dish's edge, as a row
+/// pass then a column pass. It replaced a nine-cell loop that cost about
+/// 2.4 ms of planet 3's once-a-second step at 512x320 cells (the GTX 1070
+/// batch, 11-21, and the bench's `costs` table).
+fn box3(c: &[u32], w: usize, h: usize) -> Vec<u32> {
+    let mut row = vec![0u32; w * h];
+    for (r, o) in c.chunks_exact(w).zip(row.chunks_exact_mut(w)) {
+        for x in 0..w {
+            let mut n = r[x];
+            if x > 0 {
+                n += r[x - 1];
+            }
+            if x + 1 < w {
+                n += r[x + 1];
+            }
+            o[x] = n;
+        }
+    }
+    let mut out = row.clone();
+    for y in 0..h {
+        for x in 0..w {
+            let i = y * w + x;
+            if y > 0 {
+                out[i] += row[i - w];
+            }
+            if y + 1 < h {
+                out[i] += row[i + w];
+            }
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The two-pass sum is the nine-cell sum, edges and all.
+    #[test]
+    fn the_block_sum_matches_the_nine_cell_loop() {
+        for (w, h) in [(1, 1), (1, 5), (5, 1), (7, 4), (13, 9)] {
+            let c: Vec<u32> = (0..w * h).map(|i| ((i * 7919) % 13) as u32).collect();
+            let b = box3(&c, w, h);
+            for y in 0..h {
+                for x in 0..w {
+                    let mut n = 0;
+                    for yy in y.saturating_sub(1)..(y + 2).min(h) {
+                        for xx in x.saturating_sub(1)..(x + 2).min(w) {
+                            n += c[yy * w + xx];
+                        }
+                    }
+                    assert_eq!(b[y * w + x], n, "{w}x{h} at {x},{y}");
+                }
+            }
+        }
+    }
 
     /// The fort's mask is a ring `thick` wide outside each ring's radius,
     /// open at four gates from the angle the ring gives, and two rings

@@ -60,6 +60,22 @@ on headless runs, `hand=steer@X,Y[,N]`, and
 `Reports/pathfinding-2026-11-20/tools/` (faults, sign test, track plots).
 Routing round slime was tried (11-21) and not kept (dead-ends); bots merge
 squads at any distance ([report](../Reports/pathfinding-2026-11-20/README.md)).
+11-21: a squad on a plain move walks round fire (`fireway.rs`,
+`Rules::fireway`, on; Direction's call): fire marks from burn and light
+bursts and from soldiers that feel heat, 15 s each, and a coarse plan
+round them. Fire on the way 413 -> 274 on the 24 maps, trips no slower.
+Test with `hand=movetour,N,clear,fire` or `examples/pathprobe fire=6`.
+11-21: walking maps build in about 60% of the time (`MapBuild::advance`'s
+inner cells skip bounds checks, same distances), and stale maps rebuild at
+a quarter pace when no goal waits: planet 3's `pump_maps` spikes of 5 to
+7 ms are now 4.2 at most (a new order's map), stale steps under 1 ms.
+11-21: a squad answers a new order in 0.07 s median (sent) and 0.2 s
+(steered about-turn) on the 24 maps; nothing to fix. A squad of 60 sent
+out of a walled base by a 4-cell door stood inside for good: the
+column's places fell past the base's walls (`column_places` now keeps
+each on its trail point's side, `a_squad_leaves_a_walled_base_by_its_
+door`; `fort_numbers` is the harness). Turrets and pumps don't block
+soldiers at all (only walls, doors, crystals and the bulwark do).
 
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or

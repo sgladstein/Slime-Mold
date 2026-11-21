@@ -79,7 +79,8 @@ build they were played on. After set-slime shots and One burst per bullet
 cards, 7 with seek+wide+blast.needle (9 before) and 8 with
 wide/rate/blast.needle. A plan may be one a planet (`a|b|c`, the last
 for every planet after), and since 11-20 the worker also searches planet 2
-and plays whole runs
+and plays whole runs; since 11-21 the bot also buys a gun (`gun`, `arm`),
+loads its turrets (`tcards`) and orders its cards (`order`)
 ([report](../../Reports/strategy-bots-2026-11-19/README.md)). Before a
 bot result is read as balance, check that the bot did not stall. On
 11-21, CI's planet 1 plan sat with 43 soldiers to the 1,800 s limit

@@ -2097,7 +2097,11 @@ mod tests {
         // On software Vulkan both agreed to the walker (666 and 479); a
         // planted bug, the GPU sending `sick_upkeep` alone, left the frail
         // GPU mould at 666.
-        assert!(g6.abs_diff(c6) * 50 <= c6 && g1.abs_diff(c1) * 50 <= c1, "the engines agree: GPU {g1} and {g6}, CPU {c1} and {c6}");
+        // On a card a twelfth (the GTX 1070, 11-21: GPU 638 and 493, CPU
+        // 666 and 479, a small dying mould's chaos in the card's order),
+        // which still catches that bug (666 against 479).
+        let part = tol(50, 12);
+        assert!(g6.abs_diff(c6) * part <= c6 && g1.abs_diff(c1) * part <= c1, "the engines agree: GPU {g1} and {g6}, CPU {c1} and {c6}");
     }
 
     /// The engine runs the CPU race world's mould: the same params, bar
@@ -2496,6 +2500,46 @@ mod tests {
         assert!(rest_n as f32 >= 0.8 * mass0 as f32, "it takes in nearly all the slime: {rest_n} of {mass0}");
         assert!(d1 < 0.8 * d0, "lunging, it closes on the soldier: {d0:.1} -> {d1:.1}");
         assert!(back < out, "at rest, it draws back home: {out:.1} -> {back:.1}");
+    }
+
+    /// **A lunge's cap** (`StandRules::cap`, 2026-11-20 evening, the
+    /// balance thread): the same race world, soldiers standing still, the
+    /// heart gathering at once and lunging after 4 s for 30 s (it needs
+    /// about 10 s to reach them). Uncapped (`cap` 1, `cap_most` 1000: the
+    /// whole squad, and never sated) its lunge bites more of the squad to
+    /// death than capped at a quarter; capped, the lunge draws back once it
+    /// has taken a quarter of the squad's health (before its 30 s are up),
+    /// sated for 5 s, and at most one soldier more than its cap dies.
+    #[test]
+    fn a_heart_lunge_draws_back_once_it_has_bitten_its_cap() {
+        use crate::mould::larder_world::StandRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 3_000);
+        let play = |cap: f32, most: f32, sated: f32| {
+            let mut rules = Rules { cap: 120.0, ..Rules::default() };
+            rules.stand = StandRules { on: true, at: 2.0, army: 1.0, every: 4.0, lunge: 30.0, cap, cap_most: most, sated, ..StandRules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let squad = g.soldiers.iter().filter(|s| s.alive).count();
+            while g.stand.live.is_none_or(|h| h.lunging.is_none()) && g.time() < 30.0 {
+                g.step();
+            }
+            let (start, bit0) = (g.time(), g.fell_bitten);
+            while g.stand.live.is_some_and(|h| h.lunging.is_some()) && g.time() < start + 31.0 {
+                g.step();
+            }
+            let drew_back = g.time() - start;
+            while g.time() < start + 32.0 {
+                g.step();
+            }
+            (squad, g.fell_bitten - bit0, drew_back)
+        };
+        let (squad, capped, drew_back) = play(0.25, 20.0, 5.0);
+        let (_, uncapped, lunged) = play(1.0, 1000.0, 0.0);
+        let cap = ((0.25 * squad as f32).ceil() as u32).max(1);
+        eprintln!("heart lunge: {squad} soldiers; capped at {cap}: {capped} bitten to death, drew back after {drew_back:.1} s; uncapped: {uncapped}, lunged {lunged:.1} s");
+        assert!(capped <= cap + 1, "capped, it takes about its cap: {capped} against a cap of {cap}");
+        assert!(uncapped > capped, "uncapped, it takes more: {uncapped} against {capped}");
+        assert!(drew_back < 30.0, "it drew back before its lunge was up: {drew_back:.1} s");
     }
 
     /// **Deep water is a wall to the slime** (`Settings::deep_wall`,
@@ -2946,7 +2990,11 @@ mod tests {
             let at = (burn.at.0 + 5.0, burn.at.1);
             let f = Frame { units: vec![squad::UnitIn { x: at.0, y: at.1, touch: 1.5, ..Default::default() }], ..Frame::default() };
             let outs: Vec<f32> = [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World].into_iter().map(|w| w.frame(&f, 15).units[0].heat).collect();
-            assert_eq!(outs[0].to_bits(), outs[1].to_bits(), "{sec} s: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
+            // Exact on llvmpipe; on a card (`tol`) within 1e-3: on the GTX
+            // 1070 (2026-11-21, Reports/pc-batch-1070-m1-2026-11-21.md) the
+            // heat at 14 s was 0.11107785 against 0.111077845, one ulp of
+            // the card's float order.
+            assert!(outs[0].to_bits() == outs[1].to_bits() || (outs[0] - outs[1]).abs() <= tol(-1.0, 1e-3), "{sec} s: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
             hot = hot.max(outs[0]);
             if sec == 12 {
                 // A burn's own kills: the CPU's in its out, the GPU's
@@ -2956,7 +3004,7 @@ mod tests {
                 // Two ticks on, the soldier stands in the burn's flames (its
                 // cells here hold 0.17 of plants, out within a second).
                 let outs: Vec<f32> = [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World].into_iter().map(|w| w.frame(&f, 2).units[0].heat).collect();
-                assert_eq!(outs[0].to_bits(), outs[1].to_bits(), "after the burn: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
+                assert!(outs[0].to_bits() == outs[1].to_bits() || (outs[0] - outs[1]).abs() <= tol(-1.0, 1e-3), "after the burn: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
                 hot = hot.max(outs[0]);
             }
             killed.0 += World::burned(&mut cpu);
@@ -3121,7 +3169,9 @@ mod tests {
         let dk = kinds.iter().zip(&cpu.plant_kind).filter(|(a, b)| a != b).count();
         eprintln!("tinder: {} discs, {laid} cells laid on the CPU; max diff plants {dp:.2e}, kinds differing {dk}", discs.len());
         assert!(laid > 100, "both lines laid: {laid}");
-        assert!(dp == 0.0 && dk == 0, "laid: plants {dp}, kinds {dk}");
+        // Exact on llvmpipe; a card's float order leaves an ulp (the GTX
+        // 1070, 11-21: 1.9e-9, kinds all the same).
+        assert!(dp <= tol(0.0, 1e-6) && dk == 0, "laid: plants {dp}, kinds {dk}");
         let cast = rounds::casts(&rounds::parse("torch").unwrap())[0];
         let b = rounds::bursts(&cast, out, &r, s, 15.0)[0];
         World::burst(&mut cpu, &b, &k);
@@ -3200,7 +3250,9 @@ mod tests {
             let (nc, ng) = (World::living(&cpu), World::living(&gpu));
             let barren = cchar.iter().filter(|&&c| c >= barren).count();
             eprintln!("crust fire {sec} s: max diff plants {dp:.2e} fire {df:.2e} char {dc:.2e} crust {dk:.2e}; burning {}; {barren} barren cells; walkers CPU {nc} GPU {ng}", cpu.burning);
-            assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2) && dk <= tol(1e-5, 0.05), "{sec} s: plants {dp} fire {df} char {dc} crust {dk}");
+            // On a card the crust parts most (the GTX 1070, 11-21: 0.12 at
+            // 17 s from ulps in plants and fire of 2e-8 and 1e-7).
+            assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2) && dk <= tol(1e-5, 0.25), "{sec} s: plants {dp} fire {df} char {dc} crust {dk}");
             assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
             (burning, barren_cells) = (cpu.burning, barren);
         }
@@ -3238,6 +3290,7 @@ mod tests {
             let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
             assert!(!cpu.plant.is_empty() && gpu.e.plants && gpu.e.withers);
             let home = cpu.homes[0];
+            let start: f64 = cpu.plant.iter().map(|&v| v as f64).sum();
             let (mut worst, mut stale) = (0.0f32, 0);
             for sec in 1..=24 {
                 let f = Frame::default();
@@ -3268,7 +3321,25 @@ mod tests {
                 let (dp, df, dc) = (diff(&pl, &cpu.plant), diff(&fire, &cfire), diff(&ch, &cchar));
                 let (nc, ng) = (World::living(&cpu), World::living(&gpu));
                 if (dry, fed) == (gpu_dry, gpu_fed) {
-                    assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2), "{sec} s: plants {dp} fire {df} char {dc}");
+                    if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
+                        // On a card the fire front drifts a cell from the
+                        // CPU's as the burn goes on, so a cell-by-cell bound
+                        // only grows (the GTX 1070, 11-21: plants 0.018 at
+                        // 19 s, 0.074 at 21 s; fire 0.26, char 0.19): it
+                        // judges the burn's totals instead. On llvmpipe,
+                        // 11-21: an engine with the other `fire_fed` burns
+                        // 2.5 to 3 times the plants and char of the CPU's
+                        // (92 plants against 33 at 24 s; char 62 against
+                        // 24), the same rules but a different burn 5 to 10%
+                        // apart; the bounds sit between.
+                        let tot = |a: &[f32]| a.iter().map(|&v| v as f64).sum::<f64>();
+                        let near = |a: f64, b: f64, rel: f64| (a - b).abs() <= rel * b.abs() + 1.0;
+                        let (burnt, gburnt) = (start - tot(&cpu.plant), start - tot(&pl));
+                        let (cf, gf, cc, gc) = (tot(&cfire), tot(&fire), tot(&cchar), tot(&ch));
+                        assert!(near(gburnt, burnt, 0.25) && near(gf, cf, 0.4) && near(gc, cc, 0.25), "{sec} s: plants burnt CPU {burnt:.1} GPU {gburnt:.1}, fire {cf:.1} {gf:.1}, char {cc:.1} {gc:.1}");
+                    } else {
+                        assert!(dp <= 1e-5 && df <= 1e-5 && dc <= 1e-5, "{sec} s: plants {dp} fire {df} char {dc}");
+                    }
                     assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
                 }
                 worst = worst.max(df);
@@ -3535,13 +3606,14 @@ mod tests {
                 let _ = gpu.frame(&f, 15);
                 let _ = cpu.frame(&f, 15);
                 // Exact on llvmpipe; on a card (`tol`) each side and the whole within
-                // 1% (+2): on the
+                // 2% (+2; 1% until the 11-21 batch's (1001, 1074) against
+                // (988, 1087)): on the
                 // GTX 1070 (11-14, 004b7cb) the sides came out (988, 1068)
                 // against the CPU's (992, 1064), the same 2,056 walkers with
                 // four on the other side, where llvmpipe matched exactly; the
                 // births race on the card's atomics in another order.
                 let (g, c) = (gpu.counts_by_side(), cpu.counts_by_side());
-                let near = |a: usize, b: usize| a.abs_diff(b) <= tol(0, b / 100 + 2);
+                let near = |a: usize, b: usize| a.abs_diff(b) <= tol(0, b / 50 + 2);
                 assert!(near(g.0, c.0) && near(g.1, c.1) && near(g.0 + g.1, c.0 + c.1), "the engines part: {g:?} on the GPU, {c:?} on the CPU");
                 most = most.max(gpu.counts_by_side().1);
             }
@@ -3686,5 +3758,59 @@ mod tests {
         let c1c: f64 = cpu.world.dish.charge.iter().map(|&c| c as f64).sum();
         let (dg, dc) = (c1g - c0g, c1c - c0c);
         assert!((dg - dc).abs() < 0.02 * dc.abs().max(100.0), "charge change: GPU {dg:.1}, CPU {dc:.1}");
+    }
+
+    /// **A wall holds until it is worn through** (the owner, 2026-11-21:
+    /// "Sometimes slime is able to get through my walls even when they
+    /// have no burrowed a full hole yet"). A walker's step only tested the
+    /// cell it lands in, so a step longer than the wall is thick (a surge,
+    /// a raid, a striker or a heartbeat at 2 to 3 times the pace) jumped
+    /// it, and a step slanting past a corner slipped between two wall cells
+    /// that touch only at it. Now every cell the step crosses must be open.
+    ///
+    /// A closed ring of wall 2 cells thick (scale 1, the game's wall
+    /// width) round an emptied middle, unbreakable, in slime that steps 3
+    /// cells: no walker gets in. Each count is a game second; with the old
+    /// rule (`solid_walls=0`) walkers come in within seconds.
+    #[test]
+    fn slime_does_not_step_over_or_between_wall_cells() {
+        use crate::gpu::floats;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 6_000);
+        let inside_after = |solid: bool| {
+            let s = Settings { step: 3.0, respawn: 0.0, solid_walls: solid, ..race_settings(seed, scale, walkers) };
+            let g = GpuWorld::new(&device, &queue, s, scale);
+            let (w, h) = g.size();
+            let mut game = Game::new(g, Rules::default(), seed);
+            let (cx, cy, r) = (w as f32 * 0.5, h as f32 * 0.5, 14.0f32);
+            // A ring of 24 straight walls whose ends meet: some lie
+            // slanted, so their cells touch at corners.
+            let n = 24;
+            for q in 0..n {
+                let (a0, a1) = (q as f32 / n as f32 * std::f32::consts::TAU, (q + 1) as f32 / n as f32 * std::f32::consts::TAU);
+                game.world.build_wall((cx + r * a0.cos(), cy + r * a0.sin()), (cx + r * a1.cos(), cy + r * a1.sin()), 2.0);
+            }
+            // Empty the middle.
+            let GpuWorld { e, shared, s, .. } = &mut game.world;
+            e.strike(shared, s, cx, cy, r - 1.5, 0.0, 0.0);
+            let count = |g: &GpuWorld| {
+                let e = &g.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+                (0..e.n as usize).filter(|&q| (!e.grows || en[q] >= 0.0) && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) < r - 1.5).count()
+            };
+            let mut seen = vec![count(&game.world)];
+            for secs in 1..=12 {
+                while game.time() < secs as f32 {
+                    game.step();
+                }
+                seen.push(count(&game.world));
+            }
+            seen
+        };
+        let (on, off) = (inside_after(true), inside_after(false));
+        eprintln!("walkers inside the ring each second: solid {on:?}, old rule {off:?}");
+        assert!(on.iter().all(|&c| c == 0), "none gets in: {on:?}");
+        assert!(off.iter().any(|&c| c > 0), "the old rule lets them in (the test's control): {off:?}");
     }
 }

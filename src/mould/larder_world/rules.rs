@@ -469,6 +469,11 @@ pub struct Rules {
     /// by steering (`Game::steer_all`). Off is the walk before it: full
     /// speed straight at the place each step, shoved apart after.
     pub steer: bool,
+    /// A squad on a plain move walks round fire where there is a way round
+    /// (`fireway.rs`, pathfinding thread 2026-11-21, Direction's call); a
+    /// squad standing to fight in fire is left as it is. Off walks straight
+    /// through, as before (`set=fireway=0`).
+    pub fireway: bool,
     /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
     /// rid of the whole larder system"), a crystal is *drained* or
     /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
@@ -707,6 +712,10 @@ impl Rules {
             self.steer = v > 0.0;
             return true;
         }
+        if name == "fireway" {
+            self.fireway = v > 0.0;
+            return true;
+        }
         if name == "funnel" {
             self.funnel = v > 0.0;
             return true;
@@ -854,6 +863,8 @@ impl Rules {
             "star_first" => &mut self.star.first,
             "star_last" => &mut self.star.last,
             "star_par" => &mut self.star.par_share,
+            "star_teach" => &mut self.star.teach,
+            "star_teach_far" => &mut self.star.teach_far,
             "star_gap" => &mut self.star.gap,
             "star_warn" => &mut self.star.warn,
             "star_life" => &mut self.star.life,
@@ -913,6 +924,9 @@ impl Rules {
             "stand_grow_every" => &mut self.stand.grow_every,
             "stand_last" => &mut self.stand.last,
             "stand_life" => &mut self.stand.life,
+            "stand_cap" => &mut self.stand.cap,
+            "stand_cap_most" => &mut self.stand.cap_most,
+            "stand_sated" => &mut self.stand.sated,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
@@ -1094,6 +1108,7 @@ impl Default for Rules {
             spray_share: 1.0,
             lead: super::LeadRules::default(),
             squads: false,
+            fireway: true,
             funnel: true,
             steer: true,
             larder: true,

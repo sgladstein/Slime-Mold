@@ -74,6 +74,7 @@ mod steer;
 mod cover;
 mod doors;
 mod bulwark;
+mod fireway;
 mod gear;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
@@ -85,14 +86,14 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
-pub use doors::WALL_LEVELS;
+pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};
 pub use heart::HeartRules;
 pub use stand::{Heart, Stand, StandRules};
 pub use strikers::{StrikerRules, Strikers};
-pub use starfall::{fall_count, CoreFrom, Drop, DropKind, StarRules, Starfall};
+pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
@@ -133,6 +134,12 @@ struct Paths {
     /// Whether the map being built went stale while it was built (a wall
     /// went up): it joins `stale` when done.
     build_stale: bool,
+    /// Which coarse squares a soldier can mostly stand on (`fireway.rs`),
+    /// until the maps go stale.
+    coarse: Option<Vec<bool>>,
+    /// Fire seen lately: where, how far round (fine cells), and the tick
+    /// it cools (`Game::mark_hot`).
+    hot: Vec<((f32, f32), f32, u64)>,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.
@@ -490,6 +497,9 @@ pub struct Game<W: World> {
     /// `Rounds::blast_kills`. The 11-20 late-threat measure counts the
     /// slime's own kills apart from the squad's.
     pub fell_bitten: u32,
+    /// Health the slime's touch has taken from soldiers (`Rules::drain`;
+    /// the last-stand heart's lunge cap, `StandRules::cap`).
+    pub bitten_hp: f32,
     pub fell_burned: u32,
     pub fell_starfall: u32,
     /// Each crystal's charge at the start and the charge the squad took
@@ -598,6 +608,10 @@ pub struct Game<W: World> {
     /// runs a `Rounds` of its own to look between a step and its casts
     /// (the walkers before a shove, the pops a step let out).
     pub gear: bool,
+    /// The CPU time of each part of a step, when on (`Game::costed`): name,
+    /// total ms, the longest ms and the calls. None in play; the bench
+    /// turns it on and prints it.
+    pub costs: Option<Vec<(&'static str, f64, f64, u32)>>,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -715,6 +729,7 @@ impl<W: World> Game<W> {
             broken: None,
             late: false,
             fell_bitten: 0,
+            bitten_hp: 0.0,
             fell_burned: 0,
             fell_starfall: 0,
             start_charge,
@@ -761,6 +776,7 @@ impl<W: World> Game<W> {
             rounds: Rounds::new(Vec::new(), Default::default()),
             carry_full: Vec::new(),
             gear: true,
+            costs: None,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.charge_was = g.crystal_full.iter().map(|&c| c as f64).sum();
@@ -953,7 +969,8 @@ impl<W: World> Game<W> {
             let sq = self.squads[q];
             let (ax, ay) = sq.anchor.unwrap_or((f32::NAN, f32::NAN));
             let (dx, dy) = sq.dest.unwrap_or((f32::NAN, f32::NAN));
-            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8)?;
+            let (vx, vy) = sq.via.unwrap_or((f32::NAN, f32::NAN));
+            writeln!(f, "q,{t},{q},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{},{},{},{:.2},{:.2}", ax / s, ay / s, dx / s, dy / s, sq.steer.0, sq.steer.1, sq.holding as u8, self.columns[q].on as u8, sq.fight as u8, vx / s, vy / s)?;
         }
         Ok(())
     }

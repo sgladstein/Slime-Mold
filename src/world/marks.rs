@@ -68,7 +68,23 @@ pub enum Shape {
     /// `colour` its glow, `colour2` its hot core. Light, as `Streak`
     /// (`view.wgsl`, `flash_at`).
     Flash = 10,
+    /// Starfall's and the boss cores' looks (the visual pass, 2026-11-21;
+    /// `Marks::star`): `extra` bits 0-3 which (`STAR_TARGET` to
+    /// `STAR_BURST`), 4-11 a seed, 12-19 and 20-27 two shares (0-255),
+    /// `fill` a third; `hw` world cells. Painted and lit in the view's
+    /// shader (`view.wgsl`, `star_at`).
+    Star = 11,
 }
+
+/// `Shape::Star`'s kinds: a fall's shadow and warning ring, the ore coming
+/// in, the ore on the ground, a boss core, the ring to stand in to collect
+/// one, and a burst of light (an impact, a core breaking out, a cashing).
+pub const STAR_TARGET: u32 = 0;
+pub const STAR_METEOR: u32 = 1;
+pub const STAR_ORE: u32 = 2;
+pub const STAR_CORE: u32 = 3;
+pub const STAR_DIAL: u32 = 4;
+pub const STAR_BURST: u32 = 5;
 
 /// `hw` and `hh` are world cells (scaled by the zoom, at least 2 pixels)
 /// rather than screen pixels.
@@ -252,6 +268,18 @@ impl Marks {
             }
         }
         self.push(Mark { offset, colour2: (bits as u32).to_le_bytes(), extra: (bits >> 32) as u32, ..Mark::new(Shape::Glyph, at, (scale, scale), colour) });
+    }
+
+    /// A starfall or core look (`Shape::Star`) at `at`, `half` world cells
+    /// round: `kind` one of `STAR_TARGET` to `STAR_BURST`, `fill` and the
+    /// shares `p1`, `p2` (0-1) as `view.wgsl`'s `star_at` reads them for
+    /// that kind; on the minimap too with `minimap`, in `colour`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn star(&mut self, at: (f32, f32), half: f32, kind: u32, fill: f32, seed: u32, p1: f32, p2: f32, colour: Rgba, colour2: Rgba, minimap: bool) {
+        let share = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let extra = (kind & 15) | (seed & 255) << 4 | share(p1) << 12 | share(p2) << 20;
+        let flags = WORLD | if minimap { MINIMAP } else { 0 };
+        self.push(Mark { colour2, fill, flags, extra, ..Mark::new(Shape::Star, at, (half, half), colour) });
     }
 
     /// A streak from `tail` to `head` (world points), its core `core_px`

@@ -2,11 +2,11 @@
 
 ## State (2026-11-20)
 
-**Slime viewer (branch `claude/project-thread-517zll`, the thread "Build a
+**Slime viewer (11-21: slimes of his own, `custom NAME = BASE` and `planet N = SLIME` in the tweaks file, keyed like a tier in `slime`/`rule`/`body` lines; old looks `SlimeLook::Paint` 8 and `Foil` 9 branch in `cell_mat_c`, prep's `th_h` and `shaded`'s spec; first built on branch `claude/project-thread-517zll`, the thread "Build a
 slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
 main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the
 gun range's clock with a panel at the right (`src/bin/larder-world/viewer.rs`;
-F1 hides it). Four tabs: Slime (the planet's slime, its body look, and its
+F3 hides it). Four tabs: Slime (the planet's slime, its body look, and its
 on-off rules), Spawn (every mini-boss kind, fruit, wave, the last-stand
 heart, strikers, heartbeat, ore, core, raid at the click, by
 `larder_world/force.rs`, which calls play's own starts), Look (every plain
@@ -19,7 +19,7 @@ then plays, with "your slime tweaks (N)" in the corner; a copy goes to
 `play-logs/`. A new look `const` in `view.wgsl` shows up in the Look tab by
 itself if it is a plain number or `vecN<f32>` at the top level; the lump
 colours were lifted into `LUMP_SKIN_*`/`LUMP_CORE_*` for it. Headless
-checks: `LARDER_VIEWER_TAB=look|spawn|rules|slime`,
+checks: `LARDER_VIEWER_TAB=look|spawn|rules|slime`, `LARDER_VIEWER_SLIME=NAME`,
 `LARDER_VIEWER_SPAWN="T:NAME[@X,Y];.."`.
 
 **On main:** the flinch's look (#454; `Reports/flinch-look-2026-11-17/`,
@@ -248,6 +248,13 @@ material, since `soil_detail` cancels a change to the ground estimate
 0.5), `SCAR_FULL` 1.0. Filmed at 80 s on run 1:7: the fight's ground
 reads darker; the tissue is rarely seen, since the Grudge shuns its scars.
 If it should show more, raise `SCAR_TISSUE` or lower `SCAR_FULL`.
+The Sporer's spores (11-21, `SlimeLook::Spores`, planet 5): Enemy's #608
+makes every flying spore write its flight into the walker's 4th word, so
+`draw_specks` drew them as droplets, a rain of tracers at 1:00. A spore in
+flight (4th word above 0, life word bits 13 FLUNG and 15 SOWN clear;
+`spore_flying`) is now a smaller round bead with a short tail
+(`SPORE_HEAD` 0.8 of a droplet's head, `SPORE_TAIL` 0.35 cells). Every
+ladder slime now has its own look.
 Bullets in a crowd share their light (`dim_crowded` in `draw.rs`): each
 bullet's light over the square root of the bullets within its reach, after
 46 rifles down one lane on planet 4 lit a white column over the slime.
@@ -285,7 +292,14 @@ while Squad asked to keep it.
 
 **Next, in order.**
 
-1. Look B: the Drifter's is done (#526). The Trunk's look stays its amber
+0. The view's frame cost (11-21): the 1070 batch (#617) timed `base` at
+   3.2 to 3.5 ms of a 5 ms frame. `Reports/view-cost-2026-11-21/variants.py`
+   (#621) writes shaders each with one part out; Engine was asked to time
+   them in its next GPU batch. When the numbers come, cut the dearest part
+   (keeping its look at play zoom) and write the result in that report.
+1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
+   Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
+   #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber
    walls and packed body until a slime rule gives it flow; then the thick body's veins
    and flow; iterate the Sprawler's dashes on what the owner says in play.
    Tried and not kept (`Reports/dead-ends.md`, 11-19): the Trunk's film

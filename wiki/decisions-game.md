@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-20
+updated: 2026-11-21
 sources:
   - CLAUDE.md
   - Reports/bug-check-2026-11-15/README.md
@@ -60,6 +60,8 @@ live only in [NOW.md](../NOW.md), *What waits on the owner* (since
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-21 00:49 | Doors are placed with one click on a wall, not drawn: a door three wall widths long, centred on the click and cut at once (`Game::door_from_click`); a click off every wall places nothing. Drawing a door across a gap went with the drag | "Also doors should be created with just a click, not dragging" | [maps](world/maps.md) |
+| 2026-11-21 00:49 | Slime must not pass a wall it has not worn through: a step, a birth or a spore's flight that would cross any standing wall cell stops there and bites it (`solid_walls`, GPU engine, on by default; the CPU dish keeps the old rule) | "Sometimes slime is able to get through my walls even when they have no burrowed a full hole yet. Review." | [maps](world/maps.md) |
 | 2026-11-20 23:32 | Planet 1 is saved from the late threats and **each planet brings something new**: the strikers wait for planet 2, the waves and the late lunge for planet 3, the last-stand heart for planet 4 (mini-bosses from planet 2, the Pinwheel from 3 and the slime's mortar from 4, as before). Every rule stays on in the game, gated by planet (`run::FIRST_PLANET`); planet 1 keeps fruiting, the heartbeat, starfall and cores. Schedule by the thread "Pace threats across the planets", agreed by Direction | "We don't need all these mini-bosses, strikers, etc. in planet one. We should save some thing for later planets. Also holy fuck did it get harder I just played again and had a really good map and was playing really well and the strikers still fucked my shit up (on planet 1)" | [run](world/run.md) |
 | 2026-11-20 23:17, play | Play notes on planet 1. (1) How to collect a mini-boss's core is unclear, and its circles spread across the whole map (sent to the boss-cores thread; #600 already drops a drained drop's lure). (2) A thread builds a slime viewer so he can try and change the looks himself (its own thread). (3) The late rush where the slime turns "popcorny" is the strikers, and was too strong for planet 1: they leave it by his next note, the row above (#606); #598 also caps how many form a second | "it isn't clear how to collect the miniboss hearts. Why do they have circles that spread across the whole map? ... Can we have a thread build a slime viewer so I can play around with the features/looks that we have build and modify them myself? ... There is an event near the end where all the slime rushed me and turned popcorny. What is that. It was way too strong for planet 1 at least in this run." | [run](world/run.md) |
 | 2026-11-20 22:05, card | Camera shake and hit-stop (D6) go on in the default game and leave the Experiments tab; `shake=0 hitstop=0` turns them off for a film | "Turn them on" | [guns](world/guns.md), [gun feel](../Reports/gun-feel-2026-11-15/README.md) |

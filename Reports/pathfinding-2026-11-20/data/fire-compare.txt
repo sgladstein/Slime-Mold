@@ -1,0 +1,30 @@
+24 maps paired
+measure       before     after  lower higher  same  sign p
+burnt_way      413.2     273.6     24      0     0  0.000
+burnt         1400.0    1211.5     22      2     0  0.000
+secs            10.6      10.6     12     11     1  1.000
+moves           16.3      15.9      9      0    15  0.004
+  p1_1.csv             burnt_way 613->489  burnt 2800->2696  secs 6.5->6.5
+  p1_1795038793.csv    burnt_way 618->482  burnt 2701->2401  secs 6.5->7.1
+  p1_2.csv             burnt_way 713->497  burnt 2163->2442  secs 8.3->8.1
+  p1_3.csv             burnt_way 390->246  burnt 2271->2034  secs 5.5->5.2
+  p1_4.csv             burnt_way 836->738  burnt 2900->2631  secs 11.5->12.1
+  p1_5.csv             burnt_way 883->737  burnt 2973->2849  secs 13.7->13.6
+  p2_1.csv             burnt_way 23->4  burnt 62->37  secs 9.6->8.1
+  p2_1795038793.csv    burnt_way 75->8  burnt 96->24  secs 12.4->10.6
+  p2_2.csv             burnt_way 14->1  burnt 97->85  secs 7.7->8.0
+  p2_3.csv             burnt_way 54->13  burnt 111->50  secs 8.3->8.9
+  p2_4.csv             burnt_way 13->1  burnt 15->6  secs 12.3->10.0
+  p2_5.csv             burnt_way 67->34  burnt 231->222  secs 7.8->6.7
+  p3_1.csv             burnt_way 753->294  burnt 2660->2058  secs 6.7->7.1
+  p3_1795038793.csv    burnt_way 508->361  burnt 1596->1437  secs 11.5->11.3
+  p3_2.csv             burnt_way 300->248  burnt 972->734  secs 15.7->15.1
+  p3_3.csv             burnt_way 319->159  burnt 1168->915  secs 8.9->10.4
+  p3_4.csv             burnt_way 410->319  burnt 1808->1833  secs 11.4->9.9
+  p3_5.csv             burnt_way 867->643  burnt 2024->1802  secs 15.8->17.5
+  p4_1.csv             burnt_way 381->210  burnt 1157->842  secs 11.6->15.9
+  p4_1795038793.csv    burnt_way 31->24  burnt 49->32  secs 14.1->12.1
+  p4_2.csv             burnt_way 414->122  burnt 760->403  secs 9.9->9.5
+  p4_3.csv             burnt_way 273->98  burnt 668->161  secs 14.5->14.5
+  p4_4.csv             burnt_way 870->521  burnt 2973->2210  secs 10.6->12.2
+  p4_5.csv             burnt_way 491->317  burnt 1344->1172  secs 14.0->14.3

@@ -1,7 +1,7 @@
 //! **How squads find their way across a run planet** (pathfinding thread,
 //! 2026-11-20): `cargo run --release --example pathprobe -- [depth=3]
 //! [seed=1795038793] [n=40] [squads=4] [secs=180] [every=20] [out=FILE]
-//! [walkers=8000] [orders=mfc]`.
+//! [walkers=8000] [orders=mfc] [fire=R] [fireway=1]`.
 //!
 //! Plays a run planet (`levelgen::level(seed, depth)`, the map
 //! `run=SEED:DEPTH` lands on) on the CPU big dish in squad mode, buys `n`
@@ -22,6 +22,8 @@ fn main() {
     let (mut depth, mut seed, mut n, mut nsq, mut secs, mut every, mut walkers) = (3u32, 1_795_038_793u64, 40usize, 4usize, 180.0f32, 20.0f32, 8000usize);
     let mut out = String::from("pathprobe.csv");
     let mut orders = String::from("mfc");
+    let mut fire = 0.0f32;
+    let mut fireway = true;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -34,6 +36,8 @@ fn main() {
             "walkers" => walkers = v.parse().unwrap(),
             "out" => out = v.to_string(),
             "orders" => orders = v.to_string(),
+            "fire" => fire = v.parse().unwrap(),
+            "fireway" => fireway = v != "0",
             _ => panic!("no key {k}"),
         }
     }
@@ -41,6 +45,7 @@ fn main() {
     let d = BigDish::with_map(race_params(seed, 2, walkers), &map);
     let mut rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: n, start_bank: 1e9, ..Rules::default() };
     rules.mass = Rules::mass_for(walkers, 2);
+    rules.fireway = fireway;
     let mut g = Game::new(d, rules, seed);
     while g.alive() < n && g.buy() {}
     let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
@@ -109,6 +114,19 @@ fn main() {
                 };
                 sent += 1;
                 g.apply(Cmd::SquadOrder(q as u8, o));
+                // `fire=R`: a fire R dish cells round the middle of its way,
+                // as if a blast lit the ground it must cross.
+                if fire > 0.0 {
+                    if let Some(m) = g.middle(q) {
+                        let mid = ((m.0 + c.0) / 2.0 / s, (m.1 + c.1) / 2.0 / s);
+                        let lit = g.world.ignite(mid.0, mid.1, fire, 1.0);
+                        // As a burn that lights does (`Rounds::flush`).
+                        if lit > 0 {
+                            g.mark_hot((mid.0 * s, mid.1 * s), fire * s);
+                        }
+                        println!("  t {t:.1}: fire lit at {:.0},{:.0} on squad {q}'s way, {lit} cells", mid.0, mid.1);
+                    }
+                }
                 println!("  t {t:.1}: squad {q} ({} soldiers) sent {:?} to {:.0},{:.0}", g.members(q).len(), o, c.0 / s, c.1 / s);
             }
         }

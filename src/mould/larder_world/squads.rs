@@ -242,6 +242,12 @@ pub struct Squad {
     /// the window arms it from that loadout (`Cmd::Arm`, `Cmd::Load`); this
     /// is which one, so the panel can say and a split keeps it.
     pub loadout: u8,
+    /// On a plain move whose way crosses fire, the point its anchor heads
+    /// for on its way round (`Game::fire_via`), the tick it was planned and
+    /// the destination it was planned to.
+    pub via: Option<(f32, f32)>,
+    pub via_at: Option<u64>,
+    pub via_to: Option<(f32, f32)>,
 }
 
 /// Orders a squad holds queued.
@@ -276,6 +282,9 @@ impl Default for Squad {
             holding: false,
             loadout: 0,
             rank_shape: (Formation::Blob, false),
+            via: None,
+            via_at: None,
+            via_to: None,
         }
     }
 }
@@ -832,7 +841,15 @@ impl<W: World> Game<W> {
                 Some(d) => step.min(((d.0 - at.0).hypot(d.1 - at.1) / super::steer::EASE).max(0.3 * self.rules.speed * sc) * dt),
                 None => step,
             };
-            let target = if steering { self.steer_point(at, sq.steer) } else { sq.dest.unwrap_or(at) };
+            // On a plain move, round fire (`fireway.rs`).
+            let via = match sq.dest {
+                Some(d) if !steering && !sq.fight => self.fire_via(q, at, d),
+                _ => {
+                    self.drop_via(q);
+                    None
+                }
+            };
+            let target = if steering { self.steer_point(at, sq.steer) } else { via.or(sq.dest).unwrap_or(at) };
             // A steered squad that took its walking map last step keeps to
             // it until the whole line to where it heads is open (`guide`).
             let whole = !steering || sq.map.is_some();

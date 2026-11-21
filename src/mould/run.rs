@@ -352,10 +352,10 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         ("far_smell", "1".to_string()),
         ("lure_pull", format!("{LURE_PULL}")),
         ("tether", format!("{TETHER}")),
-        // A fruit's spores (`ENEMY_RULES`' `fruit`) home on food 36 fine
-        // cells out and land over a scent of 1, the Sporer's own numbers
-        // (`tiers::SPORE`); no other spore flies on these planets but the
-        // Sporer's, which already has them.
+        // The Sporer's own spore numbers (`tiers::SPORE`) on every
+        // planet: a fruit's spores homed by them until 11-21 (they no
+        // longer home: engine.wgsl's `fly`), and no other spore flies on
+        // these planets but the Sporer's, which already has them.
         ("spore_reach", "36".to_string()),
         ("spore_land", "1".to_string()),
     ]

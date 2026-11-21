@@ -76,11 +76,45 @@ pub struct StandRules {
     /// between it and the squad for 200 s on map 2 until the game's cap.
     pub last: f32,
     pub life: f32,
+    /// **A lunge's cap** (2026-11-20 evening, the balance thread, on
+    /// Direction's ask after the deep bug check): a lunge draws back, at
+    /// its lunge's pace, once the slime's touch has taken `cap` of the
+    /// squad it met in health (`cap` x soldiers x `Rules::hp`, at least one
+    /// soldier's, never more than `cap_most` soldiers'). Health, not deaths:
+    /// a heart lies on many soldiers at once, so when the first dies the
+    /// rest are near death too; a cap on deaths (tried first) let a lunge
+    /// capped at one soldier of four kill three (the GPU test's race
+    /// world). Uncapped, a heart of 2,849 (planet 2 map 5, strikers off,
+    /// lavapipe, the strat bot) took 60 of 80 soldiers in its first lunge,
+    /// in 5 s, and the whole-run bot lost planet 2 to 68 in under 8 s: a
+    /// wipe, not a threat (the owner's 11-18 rule: a strong thing must be
+    /// dangerous, not decisive). Direction's bar: about 20 at most, or a
+    /// quarter of the squad. Counted from every bite while it lunges
+    /// (`Game::bitten_hp`), so strikers' bites in that time count too. Its
+    /// forming's first 10 s are capped the same way (it is sated, already
+    /// at home): on the bug check's whole run a heart forming on the
+    /// squad's planet 1 fight bit 22 of 51 to death in its first 10 s
+    /// without a lunge.
+    pub cap: f32,
+    pub cap_most: f32,
+    /// **Sated** (with the cap): for `sated` seconds after a bout takes
+    /// its cap the slime bites no soldier, so it lets go of the soldiers it
+    /// lies on as it draws back. Without it the cap held deaths to one of
+    /// four only until the cap was hit, and the body still on the rest
+    /// took two more as it went (the GPU test's race world, 8.4 s into a
+    /// lunge): a heart is too thick to leave a squad in a step. Sated only
+    /// within the heart's reach (its lunge leash times its radius, plus a
+    /// touch), tried next, still let a bout run past its cap: a heart's
+    /// members are spread over the map while it gathers, and its strikers
+    /// are not in it (the league on GitHub, strikers on: a forming bout
+    /// capped at 20 took 24 of 80, a lunge capped at 9 took 17 of 35). The
+    /// whole slime pauses, then: at a planet's end it is nearly all heart.
+    pub sated: f32,
 }
 
 impl Default for StandRules {
     fn default() -> Self {
-        StandRules { on: false, at: 0.2, army: 24.0, armour: 4, bite: 1, pull: 40.0, leash: 1.0, lunge_leash: 2.5, every: 20.0, lunge: 10.0, haste: 3.0, grow_every: 3.0, last: 0.15, life: 150.0 }
+        StandRules { on: false, at: 0.2, army: 24.0, armour: 4, bite: 1, pull: 40.0, leash: 1.0, lunge_leash: 2.5, every: 20.0, lunge: 10.0, haste: 3.0, grow_every: 3.0, last: 0.15, life: 150.0, cap: 0.25, cap_most: 20.0, sated: 5.0 }
     }
 }
 
@@ -101,6 +135,20 @@ pub struct Heart {
     pub lunging: Option<u64>,
     pub next: u64,
     grown: u64,
+    /// The soldiers bitten to death and the health bitten
+    /// (`Game::fell_bitten`, `Game::bitten_hp`) when this bout (its forming
+    /// or a lunge) began, the health it may take (`StandRules::cap`), and
+    /// the tick its 10 s window closes (the measure counts what dies in it,
+    /// the draw-back too).
+    bit_at: u32,
+    hp_at: f32,
+    cap: f32,
+    window: u64,
+    /// Whether this bout's cap still holds (its forming's first 10 s, or
+    /// a lunge), and the tick until which it bites no soldier in its reach
+    /// (`StandRules::sated`).
+    armed: bool,
+    sated: u64,
 }
 
 /// The game's last stand.
@@ -113,6 +161,15 @@ pub struct Stand {
     pub lunges: u32,
     /// The tick it died or broke, and the most it held.
     pub fell: Option<(u64, u32)>,
+    /// The second it formed; the soldiers bitten to death in its first
+    /// 10 s, and in the worst 10 s from its forming or a lunge's start;
+    /// and every soldier bitten to death while it lived (the league's
+    /// `stand=`).
+    pub born_sec: u32,
+    pub first: u32,
+    pub worst: u32,
+    pub killed: u32,
+    bit_born: u32,
 }
 
 impl Stand {
@@ -156,8 +213,12 @@ impl<W: World> Game<W> {
         self.world.set_lump(lump, Lump { aim: super::raid_cell(home, size), pull: r.pull, leash: r.leash, armour: r.armour, bite: r.bite, ..Lump::default() });
         let now = self.world.ticks();
         let tps = self.rules.tps as f32;
-        self.stand.live = Some(Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next: now + (r.every.max(1.0) * tps) as u64, grown: now });
+        let mut heart = Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next: now + (r.every.max(1.0) * tps) as u64, grown: now, bit_at: 0, hp_at: 0.0, cap: 0.0, window: 0, armed: false, sated: 0 };
+        self.arm_heart(&mut heart);
+        self.stand.live = Some(heart);
         self.stand.done = true;
+        self.stand.born_sec = (now / self.rules.tps.max(1) as u64) as u32;
+        self.stand.bit_born = self.fell_bitten;
         true
     }
 
@@ -177,6 +238,10 @@ impl<W: World> Game<W> {
         h.most = h.most.max(n);
         // The lump's sums lag a step behind its forming (as the fruit's).
         let gone = if h.most == 0 { now > h.born + (3.0 * tps) as u64 } else { (n as f32) < r.last * h.most as f32 || now > h.born + (r.life.max(1.0) * tps) as u64 };
+        self.stand.killed = self.fell_bitten - self.stand.bit_born;
+        if now <= h.born + (10.0 * tps) as u64 {
+            self.stand.first = self.stand.killed;
+        }
         if gone {
             self.world.form_lump(h.lump, None);
             self.stand.fell = Some((now, h.most));
@@ -190,6 +255,12 @@ impl<W: World> Game<W> {
         }
         let size = self.world.size();
         let rest = Lump { aim: super::raid_cell(h.home, size), pull: r.pull, leash: r.leash, armour: r.armour, bite: r.bite, ..Lump::default() };
+        // Home from a capped lunge and sated no more: its resting pace and
+        // bite again (`cap_heart` drew it back at the lunge's pace).
+        if h.lunging.is_none() && h.sated > 0 && now >= h.sated {
+            self.world.set_lump(h.lump, rest);
+            h.sated = 0;
+        }
         match h.lunging {
             Some(until) if now >= until => {
                 self.world.set_lump(h.lump, rest);
@@ -199,12 +270,64 @@ impl<W: World> Game<W> {
             Some(_) => self.aim_heart(&h),
             None if now >= h.next && self.soldiers.iter().any(|s| s.alive) => {
                 h.lunging = Some(now + (r.lunge.max(1.0) * tps) as u64);
+                self.arm_heart(&mut h);
                 self.stand.lunges += 1;
                 self.aim_heart(&h);
             }
             None => {}
         }
         self.stand.live = Some(h);
+    }
+
+    /// Every step: a lunge that has taken its cap in health draws back to
+    /// its crystal at the lunge's pace, sated, the slime biting no soldier
+    /// for a while (`StandRules::cap`, `StandRules::sated`), so a
+    /// heart takes a bite out of an army rather than the army.
+    pub(super) fn cap_heart(&mut self) {
+        let Some(mut h) = self.stand.live else { return };
+        let now = self.world.ticks();
+        let bit = self.fell_bitten - h.bit_at;
+        if now <= h.window {
+            self.stand.worst = self.stand.worst.max(bit);
+        }
+        if !h.armed || self.bitten_hp - h.hp_at < h.cap {
+            if h.armed && now > h.window && h.lunging.is_none() {
+                h.armed = false;
+                self.stand.live = Some(h);
+            }
+            return;
+        }
+        let r = self.rules.stand;
+        let tps = self.rules.tps as f32;
+        h.armed = false;
+        h.sated = now + (r.sated.max(0.0) * tps) as u64;
+        if h.lunging.is_some() {
+            let size = self.world.size();
+            self.world.set_lump(h.lump, Lump { aim: super::raid_cell(h.home, size), pull: r.pull, leash: r.leash, haste: r.haste, armour: r.armour, ..Lump::default() });
+            h.lunging = None;
+            h.next = now + (r.every.max(1.0) * tps) as u64;
+        }
+        self.stand.live = Some(h);
+    }
+
+    /// A bout begins (the heart's forming, or a lunge): what it has bitten
+    /// so far, the health it may take in it (`StandRules::cap`, of the
+    /// squad alive now) and the tick its 10 s window closes.
+    fn arm_heart(&self, h: &mut Heart) {
+        let r = self.rules.stand;
+        let now = self.world.ticks();
+        let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
+        h.bit_at = self.fell_bitten;
+        h.hp_at = self.bitten_hp;
+        h.cap = (r.cap * alive).max(1.0).min(r.cap_most.max(1.0)) * self.rules.hp;
+        h.window = now + (10.0 * self.rules.tps as f32) as u64;
+        h.armed = true;
+    }
+
+    /// Whether the heart is sated: the slime bites no soldier
+    /// (`StandRules::sated`).
+    pub(super) fn sated(&self) -> bool {
+        self.stand.live.is_some_and(|h| self.world.ticks() < h.sated)
     }
 
     /// The lunge: the heart's aim on the soldier nearest its centre.

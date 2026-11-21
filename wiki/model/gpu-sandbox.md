@@ -2,7 +2,7 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-14
+updated: 2026-11-21
 sources:
   - Reports/creatures-2026-11-11.md
   - Reports/gpu-readout-2026-11-12.md
@@ -11,6 +11,7 @@ sources:
   - Reports/life-gpu-2026-11-11.md
   - Reports/outside-rules-2026-11-11.md
   - Reports/pc-batch-1070-2026-11-14.md
+  - Reports/pc-batch-1070-m1-2026-11-21.md
   - Reports/species-gpu-2026-11-11.md
 code:
   - BigParams::graze_weight
@@ -164,6 +165,18 @@ chaos on a small late mould (the squad twins), none a rule. Their tolerances
 carry the card's numbers. Every game frame was under 2.6 ms p95, the draw
 0.1-0.6 ms ([the batch](../../Reports/pc-batch-1070-2026-11-14.md)).
 
+Milestone 1's batch (2026-11-21, 71af78c3) timed the squad mode's planets
+1 to 3, played by the strategy bot's rush: every frame under 7.2 ms p95
+against the 10 ms gate, the simulation 0.9 to 1.5 ms of GPU a step (sense
+and trail the largest), the view's base pass 3.2-3.5 ms of a 5 ms frame.
+Planet 3's step frames reach 10 ms p95 from the game's CPU half of a step.
+Four fire twins (exact on llvmpipe) part by float ulps on the card, none a
+rule ([the batch](../../Reports/pc-batch-1070-m1-2026-11-21.md)). Its
+follow-up (c241fd7e) puts planet 3's step frames at 6.8 ms p95 after the
+set-slime mask's two-pass sum (#624). The six card-tolerance twins pass.
+Of the view's base pass, `shaded`'s lighting takes 2.65 ms of 3.4 ms, and
+the plants are the largest single part at 1.0 ms.
+
 ## Sources
 
 - [gpu-readout-2026-11-12.md](../../Reports/gpu-readout-2026-11-12.md): *On the GTX 1070*, the game's passes, the twins and the maths on the 1070.
@@ -172,3 +185,4 @@ carry the card's numbers. Every game frame was under 2.6 ms p95, the draw
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species settings on the GPU, their twin test, planted bugs and cost.
 - [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle on the GPU, its twin tests, planted bugs and cost.
 - [pc-batch-1070-2026-11-14.md](../../Reports/pc-batch-1070-2026-11-14.md): the 1070 batch at 004b7cb, twins triaged and every timing.
+- [pc-batch-1070-m1-2026-11-21.md](../../Reports/pc-batch-1070-m1-2026-11-21.md): Milestone 1's 1070 batch, planets 1-3 in the squad mode, each pass and view pass timed, twins triaged.

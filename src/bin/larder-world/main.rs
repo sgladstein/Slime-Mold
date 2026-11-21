@@ -879,6 +879,11 @@ struct App {
     trauma: f32,
     /// The window's real seconds, for the shake's wobble.
     clock: f32,
+    /// Starfall's look (`App::marks`): the game tick last drawn and the
+    /// clock when it began (to carry a fall on between ticks), and the
+    /// falls landed that have shaken the camera.
+    star_tick: (u64, f32),
+    star_felt: u32,
     /// A hit-stop (`hitstop=`; D6): real seconds the game holds still, and
     /// until another may start.
     stop: f32,
@@ -1001,6 +1006,10 @@ struct App {
     /// films and tests, which play the game's own).
     viewer: Option<viewer::Viewer>,
     tweaks: slime_mould::world::tweaks::Tweaks,
+    /// The slime this round plays, by the name the tweaks file gives it:
+    /// a rung's (`drifter`) or one of the owner's own (`custom NAME`), on
+    /// a run planet the tweaks file's `planet N` pick over the ladder's.
+    slime: Option<String>,
 }
 
 /// The play log header's words for a round's keys: the switches off their
@@ -1061,6 +1070,8 @@ impl App {
             beat: None,
             trauma: 0.0,
             clock: 0.0,
+            star_tick: (0, 0.0),
+            star_felt: 0,
             stop: 0.0,
             stop_cool: 0.0,
             felt: 0,
@@ -1108,6 +1119,7 @@ impl App {
             exp_next: Vec::new(),
             result: Ok(()),
             tweaks: Default::default(),
+            slime: None,
             viewer: None,
         };
         if app.args.viewer {
@@ -1171,9 +1183,21 @@ impl App {
         }
         // The food the planet's slime eats to build a surge (`run::surge_food`).
         let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers));
+        // The slime: the mission's tier, unless the tweaks file puts
+        // another on this run planet (`planet N = SLIME`) or the viewer
+        // shows one of the owner's own; a custom plays its base tier with
+        // its own tweaks (`tweaks::Tweaks::custom`, 11-21).
+        let ladder = mission.as_ref().and_then(|m| m.tier.clone());
+        let picked = match (&self.viewer, &level) {
+            (Some(vw), _) => vw.slime.clone(),
+            (None, Some(l)) => self.tweaks.planet(l.depth).map(str::to_string),
+            _ => None,
+        };
+        let slime = picked.filter(|n| self.tweaks.base_of(n).is_some()).or(ladder);
+        let base = slime.as_deref().map(|n| self.tweaks.base_of(n).map_or(n.to_string(), |t| t.name().to_string()));
         // A ladder name not built yet (drifter, sprawler, trunk) plays
         // the plain mould, and says so.
-        if let Some(t) = mission.as_ref().and_then(|m| m.tier.as_deref()) {
+        if let Some(t) = base.as_deref() {
             match Tier::from_name(t) {
                 Some(tier) => {
                     tier.settings(&mut s)?;
@@ -1207,8 +1231,15 @@ impl App {
         if let Some(vw) = self.viewer.as_mut() {
             vw.engine0 = viewer::ENGINE_KEYS.iter().filter_map(|(k, _, _)| Some((*k, viewer::engine_get(&s, k)?))).collect();
         }
-        if let Some(t) = core_tier {
-            for (tier, k, v) in self.tweaks.slime.iter().filter(|(tier, _, _)| tier == t.name()) {
+        // The name the tweaks file keys this slime by: the round's slime,
+        // unless a `tier=` key put another tier in.
+        let who: Option<String> = match core_tier {
+            Some(t) if base.as_deref() == Some(t.name()) => slime.clone(),
+            Some(t) => Some(t.name().to_string()),
+            None => None,
+        };
+        if let Some(w) = who.as_deref() {
+            for (tier, k, v) in self.tweaks.slime.iter().filter(|(tier, _, _)| tier == w) {
                 if let Err(e) = slime_mould::gpu::set(&mut s, k, &format!("{v}")) {
                     eprintln!("larder-world: the tweaks file's slime {tier} {k}: {e}");
                 }
@@ -1335,13 +1366,16 @@ impl App {
             rules.start_bank = rules.start_bank.max(RANGE_BANK);
             rules.wipe_ends = 0.0;
         }
-        // The tweaks file's rules (`rule NAME`), last.
+        // The tweaks file's rules for this slime (`rule TIER NAME`), last;
+        // a round with no slime tier (the sandbox, most missions) takes none.
         if let Some(vw) = self.viewer.as_mut() {
             vw.rules0 = Some(rules);
         }
-        for (k, v) in &self.tweaks.rules {
-            if !rules.set(k, *v) {
-                eprintln!("larder-world: the tweaks file's rule {k}: no such rule");
+        if let Some(w) = who.as_deref() {
+            for (_, k, v) in self.tweaks.rules.iter().filter(|(tier, _, _)| tier == w) {
+                if !rules.set(k, *v) {
+                    eprintln!("larder-world: the tweaks file's rule {w} {k}: no such rule");
+                }
             }
         }
         let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
@@ -1445,7 +1479,7 @@ impl App {
             let pace = game.world.s.step / game.world.scale() * fine_tps;
             // The tweaks file's body look for this slime (`body TIER`) over
             // its own.
-            let body = core_tier.and_then(|t| self.tweaks.body_of(t.name())).and_then(slime_mould::world::view::SlimeLook::parse).unwrap_or(slime_mould::world::view::SlimeLook::of(core_tier));
+            let body = who.as_deref().and_then(|w| self.tweaks.body_of(w)).and_then(slime_mould::world::view::SlimeLook::parse).unwrap_or(slime_mould::world::view::SlimeLook::of(core_tier));
             v.set_slime_look(body, pace * slime_mould::world::view::STREAK_SECS);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
@@ -1512,14 +1546,15 @@ impl App {
         // The viewer's Reset values for this slime's walk: the world's own
         // as the round starts (the game sets some on its own, such as the
         // alarm's), but the value under a tweak for a tweaked key.
-        if let (Some(vw), Some(t)) = (self.viewer.as_mut(), core_tier) {
+        if let (Some(vw), Some(w)) = (self.viewer.as_mut(), who.as_deref()) {
             for (k, v) in vw.engine0.iter_mut() {
-                if self.tweaks.slime_of(t.name(), k).is_none() {
+                if self.tweaks.slime_of(w, k).is_none() {
                     *v = viewer::engine_get(&game.world.s, k).unwrap_or(*v);
                 }
             }
         }
         self.game = Some(game);
+        self.slime = who;
         self.seen = 0;
         // The end's beat (`ending`), in the window only.
         self.beat = self.window.is_some().then(ending::Beat::default);
@@ -1567,7 +1602,10 @@ impl App {
         // The dish behind the start menu is not play: no log of it (until
         // 11-17 it wrote one, which the round picked from the menu then
         // wrote over; with a file a round it would fill the folder).
-        if self.window.is_none() || self.menu.is_some() {
+        // Nor is the slime viewer (review of #607, 11-21): its rounds run on
+        // a big bank with forced events, and each restart would add a log
+        // that reads as a real round in the owner's play record.
+        if self.window.is_none() || self.menu.is_some() || self.viewer.is_some() {
             return;
         }
         use slime_mould::mould::playlog;
@@ -1591,6 +1629,11 @@ impl App {
         extra.extend(self.log_loadout());
         self.log_gun = self.gun_name();
         extra.extend(log_keys(&self.args.keys));
+        // The slime viewer's saved tweaks change rules, engine keys and
+        // looks without a switch, so the log says so.
+        if !self.tweaks.is_empty() {
+            extra.push(("tweaks", self.tweaks.count().to_string()));
+        }
         let head = playlog::Playlog::head(&self.name, self.args.seed, &extra);
         match std::fs::create_dir_all(playlog::DIR).and_then(|()| std::fs::write(&path, head)) {
             Ok(()) => self.log_path = Some(path),
@@ -2683,6 +2726,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     // The slime viewer: a run landing on the planet asked for, in squad
     // mode, with the dev rows (`viewer.rs`).
+    let before_viewer = (args.dev, args.run.clone());
     if viewer_at > 0 {
         args.viewer = true;
         args.squads = true;
@@ -2691,7 +2735,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         r.depth = viewer_at.clamp(1, slime_mould::mould::run::PLANETS);
         args.run = Some(r);
     }
-    let base = args.clone();
+    // What the menu starts from leaves the viewer out: from `viewer.cmd`
+    // its Main menu had Dev mode on, so a Run started there got the dev
+    // shop (the review of #607).
+    let mut base = args.clone();
+    if viewer_at > 0 {
+        base.viewer = false;
+        (base.dev, base.run) = before_viewer;
+    }
     // A run keeps its tier's mould, as a mission does.
     if let Some(r) = args.run.as_mut() {
         r.dev = args.dev;

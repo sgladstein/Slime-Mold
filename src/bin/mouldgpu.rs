@@ -2265,9 +2265,12 @@ mod tests {
     /// quarter of the walkers, so software Vulkan runs them in seconds.
     const SCALE: usize = 2;
 
+    /// A preset at a quarter of its walkers. Built walls are not solid to
+    /// a step (`Settings::solid_walls`, 2026-11-21): a GPU rule with no CPU
+    /// twin, and these are the twin tests.
     fn small(k: usize) -> Settings {
         let s = preset(k);
-        Settings { walkers: s.walkers / 4, ..s }
+        Settings { walkers: s.walkers / 4, solid_walls: false, ..s }
     }
 
     fn run(e: &mut Engine, shared: &Shared, s: &Settings, ticks: u32, hand: Hand) {

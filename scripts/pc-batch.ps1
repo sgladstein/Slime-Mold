@@ -5,6 +5,7 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1            # twins only
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -Timing    # twins, then timing
 #   powershell -ExecutionPolicy Bypass -File scripts\pc-batch.ps1 -DryRun    # first: print every step, run nothing
+#   ... pc-batch.ps1 -Followup -Timing   # M1 follow-up: six twins, nine view variants, planet 3 (about 35 min)
 #
 # Run -DryRun first (seconds, nothing built): nobody can parse-check this
 # file in the cloud, so a syntax slip shows there, not an hour into twins.
@@ -17,7 +18,8 @@
 # Every job writes one output file, and the batch ends with summary.txt: the
 # lines to send back (each test binary's result line, each bench's lines,
 # the shas and the driver). Send summary.txt as it is, and with -Timing
-# commit every m1-*.txt file whole to a runner branch (the per-pass tables
+# commit every m1-*.txt (with -Followup: view-*.txt and f-*.txt) file
+# whole to a runner branch (the per-pass tables
 # are in them, not in the summary). Keep the folder for anyone who asks.
 #
 # Why one commit for the twins: the whole suite at one main covers every
@@ -33,6 +35,12 @@
 param(
     [switch]$Timing,
     [switch]$DryRun,
+    # Milestone 1's follow-up (11-21): the six twins Enemy gave card
+    # tolerances (#620) instead of the whole suite, and with -Timing the
+    # view's nine base-pass variants (Look and interface,
+    # Reports/view-cost-2026-11-21) and planet 3's CPU step after #624,
+    # instead of the M1 block.
+    [switch]$Followup,
     [string]$Commit = "origin/main",
     [string]$Repo = "C:\Users\Scott\Code\Slime Mold",
     [string]$Tree = "C:\Users\Scott\Code\sm-batch",
@@ -105,7 +113,19 @@ Run "machine" "$bins\lw-main.exe bench=20 hand=farm"
 # The whole suite on the card: every GPU test since 11-14 (the Lure, the
 # fort, walls, tether, march, condensing, the heart, fire) ran only on
 # llvmpipe until now. Known on Windows since 11-12: the life-cycle twin.
-Run "twins-all" "cargo test --release --locked --no-fail-fast"
+if ($Followup) {
+    # Each by name: cargo takes one filter a run.
+    foreach ($t in "gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu",
+                   "a_frail_mould_dies_of_the_germ_on_both_engines",
+                   "plants_and_fire_run_on_the_gpu_as_on_the_cpu",
+                   "crust_burns_on_the_gpu_as_on_the_cpu",
+                   "dry_slime_burns_on_the_gpu_as_on_the_cpu",
+                   "tinder_lays_and_burns_on_the_gpu_as_on_the_cpu") {
+        Run "twin-$t" "cargo test --release --locked --lib $t"
+    }
+} else {
+    Run "twins-all" "cargo test --release --locked --no-fail-fast"
+}
 
 # ---- Timing (only with -Timing; the PC to itself, checked) ----
 # Milestone 1's batch (Engine and tools, job 7; 2026-11-20). The 11-14
@@ -126,11 +146,20 @@ if ($Timing) {
     # samples a second apart, busy if any is over 5%. The strategy bots'
     # league worker (slime-league) must be stopped first: it plays games
     # on this card all day.
+    # Up to five tries 30 s apart, same 5% bar: the 11-21 follow-up was
+    # refused on one desktop blip (7, 0, 0, 0, 0) with nothing else running.
     $util = @()
+    $busy = $null
     if (-not $DryRun) {
-        foreach ($k in 1..5) { $util += [int](nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | Select-Object -First 1).Trim(); Start-Sleep -Seconds 1 }
+        foreach ($attempt in 1..5) {
+            $util = @()
+            foreach ($k in 1..5) { $util += [int](nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | Select-Object -First 1).Trim(); Start-Sleep -Seconds 1 }
+            $busy = if (($util | Measure-Object -Maximum).Maximum -gt 5) { "GPU load % over 5 s: $($util -join ', ') (try $attempt of 5)" } else { $null }
+            if (-not $busy) { break }
+            "GPU busy on try ${attempt}: $($util -join ', ')"
+            if ($attempt -lt 5) { Start-Sleep -Seconds 30 }
+        }
     }
-    $busy = if (($util | Measure-Object -Maximum).Maximum -gt 5) { "GPU load % over 5 s: $($util -join ', ')" } else { $null }
     # The league worker between its games shows no load: look for its game
     # too (pause it with an empty PAUSE file in slime-league, never by
     # stopping its Python).
@@ -147,6 +176,28 @@ if ($Timing) {
         if (-not $DryRun) { Start-Sleep -Seconds 90 }
         $lw = "$bins\lw-main.exe"
         $hand = "hand=strat:rush,aim=6"
+        if ($Followup) {
+            # The view's base pass, part by part: each variant swaps one
+            # part out (LARDER_VIEW_WGSL, no rebuild); its drop in `base`
+            # against `full` is that part's cost. Interleaved twice.
+            $vc = Join-Path $dir "vc"
+            Run "view-variants" "python Reports\view-cost-2026-11-21\variants.py $vc"
+            foreach ($i in 1, 2) {
+                foreach ($v in "full", "soil", "plants", "crust", "water", "gems", "terrain", "lights", "flat") {
+                    $env:LARDER_VIEW_WGSL = Join-Path $vc "$v.wgsl"
+                    # The game falls back to its own shader on a missing
+                    # file, which would time `full` under the variant's name.
+                    if (-not $DryRun -and -not (Test-Path $env:LARDER_VIEW_WGSL)) { "no $v.wgsl" | Set-Content (Join-Path $dir "view-$v-$i.txt"); Remove-Item Env:\LARDER_VIEW_WGSL; continue }
+                    Time "view-$v-$i" "$lw run=1:3 mode=squads bench=60 $hand centre=larder,6 viewpasses=30"
+                    Remove-Item Env:\LARDER_VIEW_WGSL
+                }
+            }
+            # Planet 3's step frames after #624 (M1: 10.1 ms p95, the CPU
+            # step 5.2 ms p95), with the CPU step's parts.
+            foreach ($i in 1, 2) {
+                Time "f-planet3-play-$i" "$lw run=1:3 mode=squads bench=300 $hand"
+            }
+        } else {
         # The played game, as the window plays it (steps spread over
         # frames): frame p50/p95 against the W2c gate (10 ms p95). 300 game
         # seconds reach the first raid (mostly 3:00 to 5:00).
@@ -165,18 +216,19 @@ if ($Timing) {
         foreach ($z in 6, 12) {
             Time "m1-planet3-zoom$z" "$lw run=1:3 mode=squads bench=60 $hand centre=larder,$z viewpasses=30"
         }
+        }
     }
 }
 
 # ---- What to send back ----
 Set-Location $Out
 $sum = Join-Path $dir "summary.txt"
-"batch $stamp, timing $Timing, dry run $DryRun" | Set-Content $sum
+"batch $stamp, timing $Timing, follow-up $Followup, dry run $DryRun" | Set-Content $sum
 "shas: " + ($shas -join "; ") | Add-Content $sum
 "driver: " + (nvidia-smi --query-gpu=name,driver_version --format=csv,noheader) | Add-Content $sum
 Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } | Sort-Object Name | ForEach-Object {
     "--- $($_.BaseName)" | Add-Content $sum
-    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s|^  view:|GPU load" | ForEach-Object { $_.Line } | Add-Content $sum
+    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s|^  view|^    base |GPU load|CPU a step|^    (mark_bulwark|set_cells|pump_maps|time_unit_paths) " | ForEach-Object { $_.Line } | Add-Content $sum
     Get-Content $_.FullName -Tail 3 | Add-Content $sum
 }
 # The shared target and the exes stay for a rerun (delete "$Tree-target"

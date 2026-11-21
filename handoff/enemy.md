@@ -127,6 +127,20 @@ and still win; map 2's mid army now loses (haste 2 is the fallback).
 Merged in #566, with a fix: a lump forming over strikers no longer
 deletes what they hold (lumpform skips DENSE_BIT).
 
+**Capped, 11-20 night (#598):** the full share condensed 4,218 walkers into
+1,607 strikers in one second on planet 1 (run seed 1, 43 soldiers dead in
+8 s). Now `condense` counts the band's walkers (`wstat[11]`) and the game
+cuts the next pass's share to about `rate` strikers a second (150, or
+`rate_share` 0.02 of the slime); run.rs `STRIKER_SHARE` scales share and
+rate by planet (0.25, 0.6, 1). Real yield is about a quarter of the cap
+(sparse tries rarely pair in a block). The cap also ended the regrowth
+the bug hunt saw (mass +1,588 the second after an uncapped formation);
+keeping the taken-in slots empty did not (`Reports/dead-ends.md`).
+Scott's ruling the same night: planet 1 gets no strikers; the pacing
+thread gates `ENEMY_RULES` by planet (strikers from 2, waves and lunge
+from 3, heart from 4). The heart's strength (68 soldiers in 8 s on planet
+2) is the balance thread's to tune.
+
 ## Last-stand heart (2026-11-20 evening, the same thread)
 
 D of the brief: `larder_world/stand.rs` (`StandRules`, `Stand`,
@@ -139,6 +153,14 @@ most or at 150 s (keeping it to the end stalled planets). Look
 `Reports/stand-2026-11-20/`. Next: the balance thread can score it on its
 planet 2 jobs (bites in the last quarter); then F (buried knots) if
 Scott wants more.
+
+**11-21 (#608):** a fruit's grow is held to `fruit_reach(centre, cap)`
+(one took 975 to 2,812 past a cap of 1,950), and sown spores never home
+(the scent holds the soldiers' smell: a burst landed 1,455 walkers on a
+squad and bit 21 of 30 in 5 s); they land where the throw ends. Every
+flying spore writes its flight word, so the Sporer's draw as tailed beads.
+New slime events also need a `force_*` in `larder_world/force.rs` and a
+Spawn entry in `viewer.rs` (the slime viewer, #607).
 
 ## Heartbeat (2026-11-20, the same thread)
 

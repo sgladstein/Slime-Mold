@@ -284,6 +284,27 @@ window in its `queue/pc-pause.txt`), and the script refuses while a league
 game runs. Run `-DryRun` first, then `-Timing`; commit the m1-*.txt
 files whole and write the report from them.
 
-**Next:** the 1070 batch's report once it has run; watch the run bot's
-curve once the strategy thread sets the plan (planet 1 got harder on main
-after about 21:30Z on 11-20: all three seeds lost it).
+Job 7 ran 11-21 00:49-01:16Z on main 71af78c3
+([report](../Reports/pc-batch-1070-m1-2026-11-21.md); raw on branch
+`runner-out-1070-m1`): every frame under 7.2 ms p95 on planets 1 to 3, the
+view's base pass 3.2-3.5 ms of it, planet 3's step frames 10 ms p95 from
+the CPU half of a step; four fire twins need card tolerances (sent to
+Enemy). Gotcha: the script's 2 GB free-RAM check failed at 2.00 GB with
+Chrome open; Scott closed it.
+
+Planet 3's CPU step (#624, 11-21): `bench=` now prints the CPU step by
+part (`Game::costs`, filled by `Game::costed` only in the bench). The
+once-a-second set-slime mask (`mark_bulwark`, Enemy's file) was 2.94 ms of
+it on llvmpipe; a two-pass box sum made it 1.19 ms. The next spike is
+`pump_maps` (paths, Squad and arsenal's), 4-6 ms longest, 0.09 ms mean:
+reported to them.
+
+The follow-up batch ran 11-21 04:13Z on c241fd7e (`-Followup -Timing`;
+raw on branch `runner-out-1070-followup`; numbers in the M1 report's
+follow-up section). Planet 3's step frames dropped from 10.1 to 6.8 ms p95,
+all six twins pass on the card, and the view variants went to the Look lane.
+The first try skipped timing on one 7% GPU-load sample, so #631 retries the
+idle check.
+
+**Next:** watch the run bot's curve once the strategy thread sets the
+plan; `pump_maps` spikes (4.4 ms) if Squad and arsenal hand them back.
