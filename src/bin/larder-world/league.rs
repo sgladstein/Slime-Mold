@@ -436,7 +436,7 @@ fn arms(r: &Run) -> String {
 
 /// The plan for planet `depth` of a plan by planet (`a|b|c`): the
 /// `depth`th, or the last for any planet after it.
-fn stage(spec: &str, depth: u32) -> &str {
+pub(super) fn stage(spec: &str, depth: u32) -> &str {
     let parts: Vec<&str> = spec.split('|').collect();
     parts[(depth.max(1) as usize - 1).min(parts.len() - 1)]
 }

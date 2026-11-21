@@ -4,7 +4,10 @@
 # a planet joined by `|`. The first line that is not a comment is the plan.
 # The strategy bot's thread sets it to the run plan it rates best.
 #
-# `bot` is the old run bot's play (drain, buy, hunt). `want=torch.standard`
-# buys the Torch before planet 2, as the old bot's shop did after the
-# balance review (2026-11-20); Tinder lays brush that only a fire kills.
-bot,want=torch.standard
+# Set by the strategy bot's thread (2026-11-21): planet 1 plays `bot`, the
+# old run bot's play (drain, buy, hunt); planet 2 and every planet after
+# play the rush with no cards, which won 9 of 11 maps on planet 2, 8 on
+# planet 3, 6 on planet 4 and 2 on planet 5 (main through #612), against 2
+# of 11 on planet 2 for `bot,want=torch.standard`, whose Torch burned its
+# own squad. Each shop spends by the coming planet's plan.
+bot,want=torch.standard|rush,aim=6,cards=0
