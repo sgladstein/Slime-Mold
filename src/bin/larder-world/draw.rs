@@ -1079,8 +1079,16 @@ impl App {
                 head = (b.at.0 + side.0 * near(out), b.at.1 + side.1 * near(out));
                 let back = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
                 let tail = (back.0 + side.0 * near(out - len), back.1 + side.1 * near(out - len));
-                let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
-                self.marks.streak(head, tail, core, glow, look.core);
+                // A shot still crossing its own squad is dimmed (exit test
+                // 2 pass, 11-21): with 40 soldiers the back ranks' comets
+                // lay between every front-rank soldier at zoom 12, a field
+                // of streaks over the squad that hid the hits at the
+                // slime's edge. It brightens to full as it clears them.
+                let crowd = g.soldiers.iter().filter(|o| o.alive && !std::ptr::eq(*o, s) && (o.x - head.0).hypot(o.y - head.1) < IN_SQUAD * body_r).count();
+                let keep = 1.0 - IN_SQUAD_DIM * ((crowd as f32 - 1.0) / 2.0).clamp(0.0, 1.0);
+                let glow = [look.glow[0], look.glow[1], look.glow[2], ((if quiet { 90.0 } else { 235.0 }) * keep) as u8];
+                let c = look.core;
+                self.marks.streak(head, tail, core, glow, [(c[0] as f32 * keep) as u8, (c[1] as f32 * keep) as u8, (c[2] as f32 * keep) as u8, c[3]]);
             } else {
                 let tail = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
                 let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
@@ -2520,6 +2528,11 @@ fn dim_crowded(lights: &mut [Light]) {
     }
 }
 
+/// A bullet's streak is dimmed by up to `IN_SQUAD_DIM` while two or more
+/// of its own side's soldiers (besides its shooter) stand within
+/// `IN_SQUAD` body radii of its head (exit test 2 pass, 11-21).
+const IN_SQUAD: f32 = 2.5;
+const IN_SQUAD_DIM: f32 = 0.65;
 /// Seconds of a bullet's flight its tracer shows.
 const TRACE_SECS: f32 = 0.08;
 /// A mortar shell's arc: its peak lifts it this share of its flight's
