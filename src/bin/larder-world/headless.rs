@@ -925,7 +925,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // The oldest, live or still fading, so a film stays on a broken
         // one while its look drains rather than jumping to a newer one.
         let boss = g.bosses.live.iter().chain(g.bosses.fading.iter().map(|f| &f.0)).min_by_key(|b| b.born).filter(|_| app.args.follow_boss).map(|b| b.centre);
-        let centre = boss.or(fixed.map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
+        let centre = boss.or(fixed.filter(|f| f.0 != f32::INFINITY).map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
         if let Some(step) = app.args.card.get(fi).cloned() {
             card_step(&mut app, &step)?;
         }
