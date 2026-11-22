@@ -2,10 +2,11 @@
 title: Sound
 kind: look
 status: current
-updated: 2026-11-20
+updated: 2026-11-22
 sources:
   - Reports/larder-sound-2026-11-12.md
   - Reports/mould-sound-2026-11-10.md
+  - Reports/music-bed-2026-11-22/README.md
   - Reports/sound-pass-2026-11-20.md
 code:
   - BANK_GAP
@@ -16,12 +17,15 @@ code:
   - GunVoice
   - LOUDNESS_LAW
   - Listener::hear
+  - MOODS
   - PIECE_MIN
   - PIECE_SHARE
   - PULSE_FLOOR
   - Pieces
+  - SCORE_LEVEL
   - SETTLE
   - SHOTS_VOICED
+  - Score
   - TEXTURE_RATE_CAP
   - TOUCH_FULL
   - VERB_HP_HZ
@@ -66,6 +70,23 @@ voice bank prints a mix meter under every recording (`SynthStats::mix`).
 Since pass two the gun cards' payloads, raids, surges, mini-bosses,
 buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
 `App::click_sound`).
+The music bed and the planet's air: [The score](#the-score).
+
+## The score
+
+(2026-11-22, `Score`, `MOODS`): a music bed and the
+planet's air under all of it, on by default, its level the Options row
+Music and air (saved as `music=`; 0% off). One mood a biome and one for
+the menus: a slow pad in the mood's key and mode (four open chords, one
+every 14-22 s, crossfaded), soft bells from the chord in play, and the air
+(wind, a river, insects, drips, a rumble). It is the one sound that is not
+a count off the game, a bend of the rule above made because the game was
+gunfire and silence; its one input is tension (the pulse's danger, plus a
+little for a slime grown past its start), which opens the pad's filter,
+brings a low drone and a faint high beating pair, and thins the bells.
+`SCORE_LEVEL` puts it 11-13 dB under the mix on planets 1-3
+([page](https://claude.ai/artifact/WnCC7JYYUsqLKQVxk2gxgH)). Hear a mood
+alone with `cargo run --release --example scoreplay -- DIR`.
 
 ## Owner's word
 
@@ -75,6 +96,9 @@ buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
   it didn't impact much"; sound and hit feel approved 04:25Z.
 - 2026-11-20 05:40Z: "I want a high effort opus that to improve the sound
   design of the game, which is really bad right now".
+- 2026-11-22 03:43Z: "We need some like background, music or more ambient
+  sound or something but it sounds weird with just like mostly gunshots"
+  (the score).
 
 ## Tried and rejected
 
@@ -103,6 +127,7 @@ buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
 
 ## Sources
 
+- [music-bed-2026-11-22](../../Reports/music-bed-2026-11-22/README.md); page source and clips in that folder.
 - [sound-pass-2026-11-20.md](../../Reports/sound-pass-2026-11-20.md); page source in `Reports/sound-pass-2026-11-20/page/`.
 - [mould-sound-2026-11-10.md](../../Reports/mould-sound-2026-11-10.md); page source in `Reports/mould-sound-2026-11-10/`.
 - [larder-sound-2026-11-12.md](../../Reports/larder-sound-2026-11-12.md); page source in `Reports/larder-sound-2026-11-12/`.

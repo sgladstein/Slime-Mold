@@ -25,6 +25,18 @@ pub(super) fn set_volume_user(v: f32) {
     VOLUME.store(v.to_bits(), Ordering::Relaxed);
 }
 
+/// The music's level (`sound::score`, 2026-11-22), 1 = 100%, 0 = off:
+/// the Options page's Music row, saved like the volume. Under the volume.
+static MUSIC: AtomicU32 = AtomicU32::new(0x3f80_0000); // 1.0
+
+pub(super) fn music_user() -> f32 {
+    f32::from_bits(MUSIC.load(Ordering::Relaxed))
+}
+
+pub(super) fn set_music_user(v: f32) {
+    MUSIC.store(v.to_bits(), Ordering::Relaxed);
+}
+
 /// The master to send for the sound on or off.
 pub(super) fn master_now(on: bool) -> SoundCmd {
     SoundCmd::Master(if on { master_at(volume_user()) } else { 0.0 })
@@ -49,5 +61,20 @@ impl App {
         }
         settings::save_volume(v);
         self.ui_sound(&[SoundCmd::Grain { kind: GrainKind::Tick, pan: 0.0, gain: 0.45, delay: 0.0 }]);
+    }
+
+    /// Sets the music's level to `v`: the menus' row and the saved file.
+    /// The listener sends it with the score each frame (`App::hear`).
+    pub(super) fn set_music(&mut self, v: f32) {
+        set_music_user(v);
+        let label = settings::percent(v);
+        for m in [self.menu.as_mut(), self.parked.as_mut()].into_iter().flatten() {
+            if let Some(o) = m.options.iter_mut().find(|o| o.key == "music") {
+                if let Some(at) = o.choices.iter().position(|c| *c == label) {
+                    o.at = at;
+                }
+            }
+        }
+        settings::save_music(v);
     }
 }
