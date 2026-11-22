@@ -1,0 +1,80 @@
+# The arms batch (Engine and tools, 2026-11-22): a few paired games of the
+# run bot's plan with game keys changed, for a tuning question Direction
+# names (the first: planets 4 and 5 with the last-stand heart or the
+# strikers off, for `run::FIRST_PLANET`). The games are in
+# scripts/arms-queue.txt, one `ARM DEPTH SEED SECS [GAME ARGS]` a line.
+#
+# WHY A PULL REQUEST THAT CHANGES THE QUEUE: the strategy league runs on
+# its own thread's branch, and a workflow can be dispatched only once it is
+# on main; a pull request runs the workflow from its own branch, so a lane
+# thread starts a batch by changing the queue in a pull request. Eight
+# shards (line i goes to shard i mod 8) and a time budget a shard (BUDGET,
+# real minutes of games; a shard stops starting games when it is spent, so
+# one long game still overruns it) bound a batch's runner time. A DEPTH of
+# `runN` plays a whole run from planet 1 to N (`league=run:SEED:N:SECS`),
+# shopping by the plan between planets. The rows
+# are printed to the log (a cloud session reads job logs, but its proxy
+# refuses the artifact store). It never fails on a lost game.
+name: Arms
+
+on:
+  pull_request:
+    paths: ["scripts/arms-queue.txt", ".github/workflows/arms.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: arms-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  play:
+    name: shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: run-bot
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: cargo build --release --locked --bin larder-world
+      - name: games
+        env:
+          WGPU_BACKEND: vulkan
+          SHARD: ${{ matrix.shard }}
+          BUDGET: "35"
+        run: |
+          PLAN=$(grep -v '^#' scripts/run-bot-plan.txt | grep -m1 .)
+          start=$(date +%s)
+          grep -v '^#' scripts/arms-queue.txt | grep . | awk -v s="$SHARD" '(NR - 1) % 8 == s' > games.txt
+          while read -r arm depth seed secs extra; do
+            if [ $(( $(date +%s) - start )) -ge $(( BUDGET * 60 )) ]; then
+              echo "ARMS skipped $arm $depth $seed: the shard's $BUDGET minutes are spent"
+              continue
+            fi
+            t0=$(date +%s)
+            # $extra unquoted on purpose: one game argument a word.
+            case "$depth" in
+              run*) game="league=run:$seed:${depth#run}:$secs" ;;
+              *) game="league=$depth:$seed:$secs" ;;
+            esac
+            ./target/release/larder-world "$game" "plan=$PLAN" $extra > out.txt 2>> trace.txt < /dev/null \
+              || echo "ARMS failed $arm $depth $seed"
+            wall=$(( $(date +%s) - t0 ))
+            grep '^league ' out.txt | sed "s/^/ARMS arm=$arm wall=$wall /" | tee -a rows.txt || true
+          done < games.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arms-${{ matrix.shard }}
+          path: |
+            rows.txt
+            trace.txt

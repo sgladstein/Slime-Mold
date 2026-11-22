@@ -3,6 +3,32 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
+## Now (2026-11-22 07:15Z, the thread "Make the slime a more interesting enemy")
+
+- **The origin** (Milestone 2's win, the slime's heart on its start
+  crystal): built on branch `claude/project-thread-noq3o4`, draft PR #699.
+  Do not queue it until the owner calls Milestone 1 done (his card 11-22
+  04:16Z, "Build now, land after M1"); keep it merged up with main. Its
+  numbers, rush measures and Engine's siege fix (regrows only after 4 s
+  unhurt) are in that branch's `wiki/world/run.md`, *The origin*, and its
+  `handoff/enemy.md` section. Engine is building the run bot's siege of the
+  origin on a branch off #699; the two land together.
+- **Merged today:** #690 (held-crystals ceiling), #706 (a snagged hunter's
+  regroup takes back its whole body, up to three radii, `reach_under`).
+- **The Sprawler's threads through its body** (Milestone 1 test 4): three
+  rules tried and not kept, all in `Reports/dead-ends.md` (spacing, room,
+  lanes). Planet 2's body packs 97% of its fine cells, and that packing,
+  not the ceiling, holds its size (lanes freed cells and it grew 18,096 to
+  about 27,400). The lanes prototype's patch and a still are in the
+  project's files, `enemy/lanes-prototype-2026-11-22.patch` and
+  `enemy/lanes-prototype-planet2-180s.png`; a flow rule waits for the Lab
+  after Milestone 1.
+- **Seed 8 planet 1** (the run bot's one loss): not a slime bug. The slime
+  takes a big neighbour crystal by 0:31, its ceiling goes to its slots
+  (twice its landing) and the bot never drains it; Engine's hunt.
+- Next: from Direction (the owner's next play log, or Engine's origin-siege
+  table).
+
 ## Mini-boss review (2026-11-20, the thread "Analyse and improve the minibosses")
 
 Not this lane's thread, but the lane's file (`bosses.rs`), so recorded
@@ -161,6 +187,45 @@ squad and bit 21 of 30 in 5 s); they land where the throw ends. Every
 flying spore writes its flight word, so the Sporer's draw as tailed beads.
 New slime events also need a `force_*` in `larder_world/force.rs` and a
 Spawn entry in `viewer.rs` (the slime viewer, #607).
+
+## Crystals never run out; the slime's size follows them (2026-11-21, the same thread)
+
+Scott 06:30Z: "crystals never run out from eating or pumping, and only
+your squad can empty one by draining it ... this 100%"; 06:34Z he picked
+option 1, size follows food. Built together, GPU only:
+`crystal_keep` (`run::enemy_keys`; `eat` takes no charge, `pilesum` sums
+the eating into pile word 7 for the surge meter, `World::slime_ate`) and
+the ceiling (`Rules::ceiling`, `run::CEILING` 12 in `ENEMY_RULES`,
+`larder_world/ceiling.rs`): covered crystal cells (pile word 8; `Pile`
+is now 12 words, `gpu::PILE_WORDS`) times the landing density, roof 3x
+landing or the slots; over it species 0's birth cap stops births
+(`WORLD_CEIL`, `capcount`) and upkeep rises to x3 at 20% over. Numbers
+and rejected variants: `wiki/model/growth.md`, *The run's ceiling*.
+Film tools: headless `LARDER_DRAIN=T`, `film_ends`' `FILM_DRAIN`,
+`FILM_KEYS`.
+
+**11-22, the exit test 4 recheck:** the covered-cells ceiling broke planet
+3 (the Trunk landed over it or spread off its crystal, crashed to a third
+by 0:45 and set off its strikers uncut). Now the ceiling is the charge
+left in the crystals it *holds* (walkers on 10% of a crystal's cells to
+take it, under 5% to let go; `World::crystal_cells_each`, pile word 2)
+times its walkers a unit of held charge at landing, at least 12 a held
+cell; a falling ceiling is set at most 5% under the slime a second
+(`CEILING_FALL`). Headless prints each crystal (`ceiling crystals t`).
+Next if Scott wants a sharper shrink: `CEILING_FALL` 0.1 or
+`ceiling_upkeep` 4 (measure planet 3's start again).
+
+## A hit's hole and a mini-boss's flinch (2026-11-21, the same thread)
+
+Both GPU only, in the `deep_wall` Params word (bit 0 deep wall, bit 1
+solid walls, bits 3-15 the flinch's steps, bits 16-31 the shut steps).
+`crater_shut` 0.5 (#670, the Look lane's A2): a crater cell is closed to
+walkers for the first half of its countdown. `boss_flinch` 0.5 (Direction's
+job from the Look lane's exit test 2): a lump's member on a fresh crater
+runs down its slope (`lump_flinch`), so a hit bites a hole into a
+mini-boss. The wanderer's flat look is the view's (a fringe and a looser
+rooted hold changed nothing; `Reports/boss-flinch-2026-11-21/`). The view
+side of both is the Look lane's.
 
 ## Heartbeat (2026-11-20, the same thread)
 

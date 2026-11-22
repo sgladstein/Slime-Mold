@@ -2,7 +2,7 @@
 title: The census (how a change is judged)
 kind: method
 status: current
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/census-shape-c-2026-11-14/README.md
   - Reports/gpu-plan-2026-11-10.md

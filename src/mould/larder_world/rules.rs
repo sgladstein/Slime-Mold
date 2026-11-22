@@ -133,6 +133,16 @@ pub struct Rules {
     /// `Reports/gun-seek-2026-11-16`) and deleted 11-17 (the technical
     /// lead's off-switch review; `Reports/dead-ends.md`).
     pub seek_catch: f32,
+    /// **A seeking round flies on past the stand-off** (2026-11-22,
+    /// Direction's call on exit test 5): a seek card's bullet flies this
+    /// share of its aimed length further a card, so a shot that misses
+    /// the near slime goes on and its last leg catches (`seek_catch`) a
+    /// walker past where the squad stands off; the squad's range and
+    /// stand-off are the gun's (`Game::gun_range`), unchanged. With the
+    /// catch alone, the rifle on planet 1 already struck slime with 89% of
+    /// its shots (92% with a Seek) and a lone Seek added 9 kills in the gun
+    /// lab's arena; flying on, 94% and +283 (planet 2: +881).
+    pub seek_reach: f32,
     /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
     /// ran the bank dry with soldiers left, who could then neither fight
     /// nor harvest past the mould ("energy required for shooting isn't
@@ -236,6 +246,17 @@ pub struct Rules {
     pub charge: f32,
     /// Defend fires on mould this near, dish cells.
     pub defend: f32,
+    /// A soldier that reads its gun's whole reach (free fire, guarding,
+    /// clearing a crystal) reads this near itself first, dish cells, and
+    /// the whole reach only when no slime is this near (`Game::sight`).
+    /// 0: always the whole reach, the way before 11-22. 12: about the
+    /// screen's half-height round the squad at zoom 12, so free fire goes
+    /// to the slime the player can see before a thicker clump off screen
+    /// (filmed 11-22: at zoom 12 the rifle's 24-cell reach is about 550
+    /// px, and a free squad fired up off the screen at nothing visible
+    /// while walkers stood near it). It follows the 11-18 Defend fix,
+    /// where a defending squad read only 7.5 cells for the same reason.
+    pub near_first: f32,
     /// A Guard order's zone round a plain spot, dish cells (a crystal's or
     /// a building's is its own edge plus `GUARD_RIM`): slime in it is shot
     /// whatever the stance but hold fire (`Game::guard_zone`, owner
@@ -574,6 +595,28 @@ pub struct Rules {
     pub late_at: f32,
     pub late_margin: f32,
     pub late_haste: f32,
+    /// **The slime's size follows the crystal it holds** (2026-11-21, the
+    /// thread "Make the slime a more interesting enemy"; the owner's pick
+    /// "1", 06:34Z, after his 06:30Z ruling that only the squad empties a
+    /// crystal). Once a game second (`Game::time_ceiling`) the slime's
+    /// ceiling is the charge left in the crystals it holds (walkers on a
+    /// tenth of their cells, smoothed) times its walkers a unit of held
+    /// charge at landing, at least `ceiling` walkers a held cell; never
+    /// over `ceiling_roof` times its landing walkers (or its slots). Over it no walker is born and its upkeep rises, to
+    /// `ceiling_upkeep` times 20% over, so a slime that loses a crystal
+    /// shrinks to what the rest holds. 0 is off (`ceiling.rs`).
+    ///
+    /// `ceiling_grow`: the room a slime has over its landing on the
+    /// crystals it landed on (the held-charge ceiling times this), so it
+    /// regrows after the squad's first cuts (2026-11-22, the thread "Set
+    /// difficulty between last two playtests": at 1 it never grew past
+    /// its landing and his planets fell in 4:40 to 8:19; before the
+    /// ceiling it refilled its slots, twice its landing, and planets took
+    /// 11 to 21 minutes; he asked for in between).
+    pub ceiling: f32,
+    pub ceiling_grow: f32,
+    pub ceiling_roof: f32,
+    pub ceiling_upkeep: f32,
     /// **The slime surges when it has eaten** (2026-11-15, the slime-enemy
     /// thread with the game designer, after #343's fixed clock): food (in
     /// the bank's units, `charge` a food) the slime eats from its crystals
@@ -650,6 +693,12 @@ pub struct Rules {
     /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
     pub stand: super::StandRules,
 }
+
+/// `Rules::ceiling_grow`'s default: a slime on the crystals it landed on
+/// may regrow to this times its landing walkers (1 was #690's: no
+/// regrowth; the game before the ceiling refilled to 2). Under
+/// `Rules::ceiling_roof` and its slots, as the rest of the ceiling.
+pub const CEILING_GROW: f32 = 1.5;
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
 pub const SURGE_FOOD: f32 = 150.0;
@@ -992,6 +1041,9 @@ impl Rules {
             "boss_ring" => &mut self.boss.ring,
             "last_stand_at" => &mut self.raid.last_stand_at,
             "seek_catch" => &mut self.seek_catch,
+            "seek_reach" => &mut self.seek_reach,
+            "near_first" => &mut self.near_first,
+            "strike" => &mut self.strike,
             "pump_smell" => &mut self.build.pump_smell,
             "pump_hp" => &mut self.build.pump_hp,
             "lure_smell" => &mut self.build.lure_smell,
@@ -1001,6 +1053,10 @@ impl Rules {
             "hoard" => &mut self.hoard,
             "panic_margin" => &mut self.panic_margin,
             "late_at" => &mut self.late_at,
+            "ceiling" => &mut self.ceiling,
+            "ceiling_grow" => &mut self.ceiling_grow,
+            "ceiling_roof" => &mut self.ceiling_roof,
+            "ceiling_upkeep" => &mut self.ceiling_upkeep,
             "late_margin" => &mut self.late_margin,
             "late_haste" => &mut self.late_haste,
             "surge_food" => &mut self.surge_food,
@@ -1058,6 +1114,7 @@ impl Default for Rules {
             split_r: 0.7,
             pierce_gap: 2.0,
             seek_catch: 2.0,
+            seek_reach: 0.5,
             price: 0.0,
             hp: 100.0,
             drain: 2.0,
@@ -1074,6 +1131,7 @@ impl Default for Rules {
             carry: 300.0,
             charge: 64.0,
             defend: 7.5,
+            near_first: 12.0,
             guard_r: 8.0,
             aim_min: 1,
             fight_hold: 1.0,
@@ -1120,6 +1178,10 @@ impl Default for Rules {
             broken_starve: 50.0,
             panic_margin: 5.0,
             late_at: 0.0,
+            ceiling: 0.0,
+            ceiling_grow: CEILING_GROW,
+            ceiling_roof: 3.0,
+            ceiling_upkeep: 3.0,
             late_margin: 25.0,
             late_haste: 3.0,
             surge_food: SURGE_FOOD,

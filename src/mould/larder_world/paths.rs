@@ -54,6 +54,20 @@ pub(super) const STEER_NEAR: f32 = 10.0;
 /// bank, dish cells (`Rules::crystal_solid`).
 pub(super) const RIM: f32 = 1.0;
 
+/// Dish cells between soldiers' spots round a crystal (`Game::rim_spots`):
+/// a drawn figure's width (`soldier_r`, 1.15 touch radii a side), so each
+/// stands clear of the next at zoom 12.
+pub(super) const SPOT: f32 = 3.5;
+/// Rings of spots past a harvester's reach round a crystal at most (twice
+/// that on half a rim).
+const RIM_RINGS: usize = 4;
+/// Dish cells past a crystal's whole rim within which slime counts as on it
+/// (`Game::rim_spots`).
+const SLIME_NEAR: f32 = 6.0;
+/// Walkers within `SLIME_NEAR` that make a crystal slimed: a squad draining
+/// it takes only its own half of the rim (`Game::rim_spots`).
+const SLIMED: u32 = 40;
+
 /// How far from a goal in rock or a wall `Game::goal` looks for ground,
 /// and how far a soldier shut in a wall looks for a way out
 /// (`Game::walk`), dish cells.
@@ -307,7 +321,11 @@ impl<W: World> Game<W> {
     /// `goal`, and whether it was moved off rock or a wall onto ground.
     pub(super) fn goal_ground(&self, k: usize) -> Option<((f32, f32), bool)> {
         let s = self.soldiers[k];
-        let g = self.rim(self.goal_raw(k)?, (s.x, s.y));
+        let raw = self.goal_raw(k)?;
+        // Round a crystal: its own spot on the rim (`rim_spots`), if it
+        // has one for this crystal.
+        let spot = self.paths.rim_spot.get(k).copied().flatten().filter(|&p| self.solid_at(raw).is_some_and(|(c, r)| (p.0 - c.0).hypot(p.1 - c.1) < r + (RIM + 4.0 * SPOT) * self.s()));
+        let g = spot.unwrap_or_else(|| self.rim(raw, (s.x, s.y)));
         // A goal in rock or a wall (a click on one, or a squad slot past a
         // wall's edge) is the nearest ground a soldier can stand on. Before
         // (2026-11-14), the walking map from a walled-in goal reached no
@@ -599,6 +617,170 @@ impl<W: World> Game<W> {
         if self.paths.building.is_some() {
             self.paths.build_stale = true;
         }
+    }
+
+    /// Each living soldier's own spot round the crystal its goal falls in
+    /// (`Paths::rim_spot`), for `goal`: once a step, before the soldiers
+    /// walk (`squad_turn`).
+    ///
+    /// Without them each goal in a crystal went to the rim on its
+    /// soldier's own side (`rim`), so a squad harvesting, guarding or
+    /// standing round a crystal pressed into one arc of the rim, each
+    /// pulled in until its neighbours' elbow room held it: harvesters
+    /// stood 2.1 dish cells from their nearest (median; planet 1, run seed
+    /// 1, `hand=greedy`), where a drawn figure is 3.45 across, stacked at
+    /// zoom 6 and 12 (Direction, from the Look lane's exit test 2,
+    /// 2026-11-21). Now the soldiers at one crystal take spots on the ring
+    /// just past the rim, `SPOT` apart or closer (down to elbow room) when
+    /// the ring must hold them all, the nearest first to the side they
+    /// stand on; past that, rings `SPOT` x 0.87 further out, every other
+    /// one turned half a spot. They are handed out in the order the
+    /// soldiers stand round the crystal, so none crosses another to its
+    /// spot. A first try put a second ring out before the first went
+    /// round: its soldiers stood out of a harvester's reach, and the
+    /// greedy hand's harvest at 60 s fell from 4,081 to 2,040. Since the
+    /// disc shrinks as it is drained while reach is from its whole radius,
+    /// every ring still in reach fills before any ring past it.
+    pub(super) fn rim_spots(&mut self) {
+        let n = self.soldiers.len();
+        let mut spots = vec![None; n];
+        if !self.rules.squads || self.solid.is_empty() {
+            self.paths.rim_spot = spots;
+            return;
+        }
+        let sc = self.s();
+        let sep = SPOT * sc;
+        // Who stands round which crystal: its goal falls in the disc.
+        let mut at: Vec<Vec<usize>> = vec![Vec::new(); self.solid.len()];
+        for k in 0..n {
+            // Only standing, guarding and draining orders. Not attack-move
+            // or attack: a squad sent to fight at a crystal (the run bot's
+            // rush at the slime's home crystal) spread round the
+            // whole rim, half of it walking round through the slime, and
+            // CI's run bot took 16% longer over planets 1 to 3 (6 of 9
+            // planets longer, seed 3's planet 3 400 -> 647 s; harvest and
+            // losses no worse). Fighters stand on their own side, as before.
+            if !self.soldiers[k].alive || !matches!(self.soldiers[k].order, Order::Move(..) | Order::Guard(..) | Order::Clear(..)) {
+                continue;
+            }
+            let Some(g) = self.goal_raw(k) else { continue };
+            if let Some(i) = self.solid.iter().position(|&(c, r)| (g.0 - c.0).hypot(g.1 - c.1) < r) {
+                at[i].push(k);
+            }
+        }
+        // The slime round each crystal a squad drains, read once a step
+        // only when one does (`World::mould_grid`, a dish cell a square).
+        let bin = (self.world.scale() as usize).max(1);
+        let grid = at.iter().any(|ks| ks.iter().any(|&k| matches!(self.soldiers[k].order, Order::Clear(..)))).then(|| self.world.mould_grid(bin)).flatten();
+        let gw = self.world.size().0.div_ceil(bin);
+        for (i, ks) in at.iter().enumerate() {
+            if ks.is_empty() {
+                continue;
+            }
+            let (c, r) = self.solid[i];
+            let ang = |p: (f32, f32)| (p.1 - c.1).atan2(p.0 - c.0);
+            // The side they stand on: the way to their middle.
+            let (mx, my) = ks.iter().fold((0.0, 0.0), |a, &k| (a.0 + self.soldiers[k].x, a.1 + self.soldiers[k].y));
+            let side = (my / ks.len() as f32 - c.1).atan2(mx / ks.len() as f32 - c.0);
+            let turn = |a: f32| {
+                let d = (a - side).rem_euclid(std::f32::consts::TAU);
+                if d > std::f32::consts::PI { d - std::f32::consts::TAU } else { d }
+            };
+            // Spots, ring by ring, scored by how far round and out. Every
+            // ring inside a harvester's reach (`turn.rs`: the crystal's
+            // whole radius and `RIM` + 1 cells, while the disc shrinks
+            // with the charge) comes before any ring past it, each going
+            // all the way round before the next, `SPOT` apart or as much
+            // closer (down to elbow room) as it takes to hold the squad
+            // inside reach. Rings past reach, `SPOT` apart, hold the rest.
+            let r0 = r + RIM * sc;
+            let tau = std::f32::consts::TAU;
+            let tight = self.rules.elbow * self.rules.touch * sc;
+            let full = self.world.crystals().iter().position(|x| x.0 == c).map_or(r, |j| self.world.crystal_r(j));
+            let reach = (full + (RIM + 1.0) * sc - 0.25 * sc).max(r0);
+            // Draining a crystal the slime is on (`SLIMED` walkers within
+            // `SLIME_NEAR` dish cells of its whole rim): only the squad's
+            // own half of the rim, so spreading out never walks soldiers
+            // round into the slime. With the whole rim, the run bot's
+            // squads draining slimed crystals (its starve and work picks)
+            // fought worse: CI's run bot lost 97 soldiers over seeds 1 to
+            // 3 against 56 before (#677), 51 of them on seed 3's planet 3
+            // (Direction's call, 2026-11-21).
+            let slimed = ks.iter().any(|&k| matches!(self.soldiers[k].order, Order::Clear(..)))
+                && grid.as_ref().is_some_and(|g| {
+                    let b = bin as f32;
+                    let rr = full + SLIME_NEAR * sc;
+                    let (x0, x1) = (((c.0 - rr) / b).floor().max(0.0) as usize, ((c.0 + rr) / b).ceil().max(0.0) as usize);
+                    let (y0, y1) = (((c.1 - rr) / b).floor().max(0.0) as usize, ((c.1 + rr) / b).ceil().max(0.0) as usize);
+                    let mut n = 0u32;
+                    for y in y0..y1 {
+                        for x in x0..x1.min(gw) {
+                            let (px, py) = ((x as f32 + 0.5) * b, (y as f32 + 0.5) * b);
+                            if (px - c.0).hypot(py - c.1) <= rr {
+                                n += g.get(y * gw + x).copied().unwrap_or(0);
+                            }
+                        }
+                    }
+                    n >= SLIMED
+                });
+            let arc = if slimed { 0.5 * std::f32::consts::PI } else { std::f32::consts::PI };
+            let share = arc / std::f32::consts::PI;
+            let rings_in = |gap: f32| {
+                let pitch = 0.87 * gap;
+                (0..).map(move |ring| r0 + ring as f32 * pitch).take_while(move |&rr| rr <= reach)
+            };
+            let room = |gap: f32| rings_in(gap).map(|rr| (share * tau * rr / gap).floor() as usize).sum::<usize>();
+            let mut gap = sep;
+            while gap > tight && room(gap) < ks.len() {
+                gap = (gap * 0.9).max(tight);
+            }
+            let mut cand: Vec<(f32, f32, (f32, f32))> = Vec::new();
+            let add = |rr: f32, gap: f32, ring: usize, past: bool, cand: &mut Vec<(f32, f32, (f32, f32))>| {
+                let m = ((tau * rr / gap).floor() as usize).max(1);
+                let step = tau / m as f32;
+                let half = if ring % 2 == 1 { 0.5 * step } else { 0.0 };
+                for j in 0..m {
+                    let a = side + half + j as f32 * step;
+                    let p = (c.0 + rr * a.cos(), c.1 + rr * a.sin());
+                    if !self.standable(p.0, p.1) {
+                        continue;
+                    }
+                    let t = turn(a);
+                    if t.abs() > arc + 1e-3 {
+                        continue;
+                    }
+                    cand.push((if past { 1e9 } else { 0.0 } + t.abs() * r0 + ring as f32 * tau * rr, t, p));
+                }
+            };
+            let mut last = r0;
+            let mut ring = 0;
+            for rr in rings_in(gap) {
+                add(rr, gap, ring, false, &mut cand);
+                last = rr;
+                ring += 1;
+            }
+            for _ in 0..2 * RIM_RINGS {
+                if cand.len() >= 3 * ks.len() {
+                    break;
+                }
+                last += 0.87 * sep;
+                add(last, sep, ring, true, &mut cand);
+                ring += 1;
+            }
+            cand.sort_by(|a, b| a.0.total_cmp(&b.0));
+            cand.truncate(ks.len());
+            // In order round the crystal, from the side.
+            cand.sort_by(|a, b| a.1.total_cmp(&b.1));
+            let mut order: Vec<usize> = ks.clone();
+            order.sort_by(|&a, &b| {
+                let (pa, pb) = ((self.soldiers[a].x, self.soldiers[a].y), (self.soldiers[b].x, self.soldiers[b].y));
+                turn(ang(pa)).total_cmp(&turn(ang(pb))).then(a.cmp(&b))
+            });
+            for (&k, spot) in order.iter().zip(&cand) {
+                spots[k] = Some(spot.2);
+            }
+        }
+        self.paths.rim_spot = spots;
     }
 
     /// `p`, or if it is on a solid crystal, the point just past that

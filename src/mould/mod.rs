@@ -58,6 +58,7 @@
 
 pub mod big;
 pub mod campaign;
+pub mod dps;
 pub mod fever;
 pub mod bullets;
 pub mod guns;

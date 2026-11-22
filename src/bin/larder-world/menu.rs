@@ -22,7 +22,7 @@ use slime_mould::mould::run::{self as run, Pick};
 use slime_mould::mould::run::{Face, Group};
 use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::build::news::{self, Memory};
-use slime_mould::world::start::{BuildPage, Entry, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
+use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -133,8 +133,16 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // saved, like the UI size; not a round's setting.
     let vols: Vec<String> = settings::VOLUME_STEPS.iter().map(|&v| settings::percent(v)).collect();
     let vols: Vec<&str> = vols.iter().map(String::as_str).collect();
+    // The music under it (2026-11-22, `sound::score`): the planet's music
+    // bed and its air, on at 100%; 0% leaves only the game's own sounds.
+    o.insert(0, Opt::new("music", "Music and air", &vols, "100%", &settings::percent(music_user()), "The planet's music bed and its wind, water and insects, under every other sound; 0% turns them off"));
     o.insert(0, Opt::new("volume", "Volume", &vols, "100%", &settings::percent(volume_user()), "Every sound, over the first-run level; 0% is silent, and O mutes in play"));
     o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
+    // The screen shake under the sound (the owner, 2026-11-22, looked for
+    // it here and found none): taken at once and saved, not a round's.
+    let shakes: Vec<String> = settings::SHAKE_STEPS.iter().map(|&v| settings::percent(v)).collect();
+    let shakes: Vec<&str> = shakes.iter().map(String::as_str).collect();
+    o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
     // tab one screen; the key list is the last tab. Tabs come in the
@@ -311,6 +319,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         .shop()
         .into_iter()
         .map(|row| {
+            let after = dps_after(r, row.pick);
             let (group, area) = match row.group {
                 // The range: its own rows on the left, the shelf by what a
                 // card works on, then the bag.
@@ -328,11 +337,13 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             };
             let mut s = ShopRow::new(&group, area, Icon::Upgrade, &row.name);
             (s.about, s.price, s.state, s.ready, s.on) = (row.about.clone(), row.price, row.state, row.ready, row.on);
+            (s.dps, s.no_room) = (after.map(|a| a.0), after.is_some_and(|a| a.1));
             match row.face {
                 Face::Item(key) => {
                     s.icon = item_icon(key);
                     let max = run::ITEMS.iter().find(|i| i.key == key).map_or(1, |i| i.max);
                     s.level = (r.level_of(key), max);
+                    s.bars = item_bars(key, s.level.0);
                 }
                 Face::Card(c) => {
                     let (icon, kind, words) = draw::card_face(c, &rr, &rules);
@@ -344,8 +355,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     // 02:57Z: the cards' text "should be simplified").
                     s.about = format!("{} Budget {}.", row.about.replacen(c.about(), &draw::card_words(c, kind, &words), 1), c.cost());
                     if let rounds::Card::Ammo(a) = c {
-                        // A rolled bullet: its set as a badge.
+                        // A rolled bullet: its set as a badge, its rolls
+                        // as bars (the owner, 2026-11-22: "more of visual
+                        // representation of damage speed, range").
                         s.badge = Some(draw::ammo_icon(a.set));
+                        s.bars = ammo_bars(&a);
                         // The range's shelf holds one of each shape and
                         // payload: a grid of them, so its tiles need no
                         // names (all three menu researchers, 11-15).
@@ -391,6 +405,161 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             format!("{}  ·  {gun}", r.loadout_name(r.editing))
         },
         field: r.field,
+        glance: (!r.range).then(|| glance_of(r.seed, r.depth)),
+        dps: dps_of(r),
+    }
+}
+
+/// The estimated damage a second of the gun the shop's slots show
+/// (`mould::dps`): its gun as armed (the turrets' rack for a loadout with
+/// none), its cards, the run's rules.
+fn dps_of(r: &Run) -> Option<f32> {
+    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
+    let mut rules = Rules::default();
+    r.rules(&mut rules);
+    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    Some(slime_mould::mould::dps::estimate(&gun, &r.gun(), &rules, &rr))
+}
+
+/// That estimate once `pick` is made, on a copy of the run with the points
+/// to make it (so an offer too dear shows what it would do), and whether
+/// it is only what it would be with room: a card that would go to the bag
+/// (the gun's slots or budget full) is reckoned in the gun anyway, where
+/// the game puts cards (`hypothetical`), so a full gun still shows what a
+/// card is worth. None for a pick that changes no gun, or that the run
+/// refuses.
+fn dps_after(r: &Run, pick: Pick) -> Option<(f32, bool)> {
+    let card = match pick {
+        Pick::Offer(i) => r.offers.get(i).copied(),
+        Pick::Card(i) => r.cards.get(i).filter(|c| !c.1).map(|c| c.0),
+        Pick::Gun(_) | Pick::Carry(_) => None,
+        Pick::Item(i) if matches!(run::ITEMS.get(i).map(|x| x.key), Some("strike" | "rate")) => None,
+        _ => return None,
+    };
+    let mut t = r.clone();
+    t.points = t.points.max(1_000_000);
+    let done = t.pick(pick);
+    match card {
+        // A card meant for the gun that did not go in.
+        Some(c) if !done || t.gun().len() <= r.gun().len() => Some((hypothetical(r, c)?, true)),
+        _ if !done => None,
+        _ => Some((dps_of(&t)?, false)),
+    }
+}
+
+/// The estimate with card `c` in the gun past its slots and budget, where
+/// `Run::put_in` would put it: after the cards of its rank, before the
+/// first of a later one (flight cards, then modifiers and triggers, then
+/// bullets).
+fn hypothetical(r: &Run, c: rounds::Card) -> Option<f32> {
+    use rounds::Kind as K;
+    let rank = |c: rounds::Card| match c.kind() {
+        K::Flight => 0,
+        K::Modifier | K::Trigger => 1,
+        K::Payload => 2,
+    };
+    let mut cards = r.gun();
+    let at = cards.iter().position(|&o| rank(o) > rank(c)).unwrap_or(cards.len());
+    cards.insert(at, c);
+    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
+    let mut rules = Rules::default();
+    r.rules(&mut rules);
+    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    Some(slime_mould::mould::dps::estimate(&gun, &cards, &rules, &rr))
+}
+
+/// A rolled bullet's numbers as bars against a standard bullet's: each on
+/// a log scale from a quarter to four times (`bullets::MULT_MIN`, `MAX`),
+/// a standard bullet's at the middle. Spread reads as Aim, so a longer bar
+/// is better on every row.
+fn ammo_bars(a: &slime_mould::mould::bullets::Ammo) -> Vec<(String, f32, String)> {
+    use slime_mould::mould::bullets::DAMAGE;
+    let bar = |x: f32| (0.5 + x.max(1e-3).ln() / 16f32.ln()).clamp(0.04, 1.0);
+    let times = |x: f32| format!("x{x:.1}");
+    vec![
+        ("Damage".to_string(), bar(a.damage() / DAMAGE), format!("{:.0}", a.damage())),
+        ("Speed".to_string(), bar(a.speed()), times(a.speed())),
+        ("Range".to_string(), bar(a.range()), times(a.range())),
+        ("Aim".to_string(), bar(1.0 / a.spread().max(1e-3)), times(1.0 / a.spread().max(1e-3))),
+    ]
+}
+
+/// The planet ahead drawn small for the shop's pane (`start::Glance`),
+/// from the map the level generator makes for the run's seed and depth.
+/// Kept for the last planet asked, since the shop is rebuilt after every
+/// buy and a map takes a moment to make.
+fn glance_of(seed: u64, depth: u32) -> Glance {
+    thread_local! {
+        static LAST: std::cell::RefCell<Option<((u64, u32), Glance)>> = const { std::cell::RefCell::new(None) };
+    }
+    if let Some(g) = LAST.with(|l| l.borrow().as_ref().filter(|(k, _)| *k == (seed, depth)).map(|(_, g)| g.clone())) {
+        return g;
+    }
+    let m = slime_mould::mould::levelgen::level(seed, depth);
+    let g = glance_from(&m, 64);
+    LAST.with(|l| *l.borrow_mut() = Some(((seed, depth), g.clone())));
+    g
+}
+
+/// `m` as a glance `across` cells wide: each cell the mean colour of the
+/// map cells under it, rock, deep and shallow water and the soils in the
+/// game's own dark values, so the shapes read as the planet will.
+pub(super) fn glance_from(m: &Map, across: usize) -> Glance {
+    use slime_mould::mould::{big, map};
+    let w = across.min(m.w).max(1);
+    let h = ((w * m.h) as f32 / m.w as f32).round().max(1.0) as usize;
+    let colour = |g: u8| -> [f32; 3] {
+        let soil = g >> 4;
+        if g & map::G_ROCK != 0 {
+            [92.0, 88.0, 82.0]
+        } else if soil == big::SOIL_DEEP {
+            [22.0, 40.0, 66.0]
+        } else if soil == big::SOIL_BRIDGE {
+            [104.0, 86.0, 60.0]
+        } else if g & map::G_WET != 0 {
+            [34.0, 58.0, 74.0]
+        } else {
+            match soil {
+                big::SOIL_SAND => [74.0, 68.0, 52.0],
+                big::SOIL_CLAY => [66.0, 54.0, 44.0],
+                big::SOIL_BARREN => [70.0, 68.0, 62.0],
+                _ => [44.0, 52.0, 40.0],
+            }
+        }
+    };
+    let mut cells = Vec::with_capacity(w * h);
+    for j in 0..h {
+        for i in 0..w {
+            let (x0, x1) = (i * m.w / w, ((i + 1) * m.w / w).max(i * m.w / w + 1));
+            let (y0, y1) = (j * m.h / h, ((j + 1) * m.h / h).max(j * m.h / h + 1));
+            let mut sum = [0.0f32; 3];
+            let mut n = 0.0;
+            // Every second map cell each way: the mean is as good, at a
+            // quarter of the reads.
+            for y in (y0..y1.min(m.h)).step_by(2) {
+                for x in (x0..x1.min(m.w)).step_by(2) {
+                    let c = colour(m.ground[y * m.w + x]);
+                    for k in 0..3 {
+                        sum[k] += c[k];
+                    }
+                    n += 1.0;
+                }
+            }
+            let n = f32::max(n, 1.0);
+            // A little under the game's values: the pane is darker than
+            // the world, and the marks on it must stand out.
+            let k = 0.8 / n;
+            cells.push([(sum[0] * k) as u8, (sum[1] * k) as u8, (sum[2] * k) as u8, 255]);
+        }
+    }
+    let (mw, mh) = (m.w as f32, m.h as f32);
+    Glance {
+        w,
+        h,
+        cells,
+        crystals: m.items.crystals.iter().map(|c| (c.x / mw, c.y / mh, c.r / mw)).collect(),
+        moulds: m.items.moulds.iter().map(|&(x, y)| (x / mw, y / mh)).collect(),
+        landing: m.items.landing.map(|(x, y)| (x / mw, y / mh)),
     }
 }
 
@@ -442,6 +611,7 @@ fn item_icon(key: &str) -> Icon {
         "squad" => Icon::Recruit,
         "bank" => Icon::Crystal,
         "harvest" => Icon::Upgrade,
+        "fireproof" => Icon::Shield,
         "walls" => Icon::Wall,
         "turret" => Icon::Turret,
         "mortar" => Icon::Bomb,
@@ -455,6 +625,28 @@ fn item_icon(key: &str) -> Icon {
         "gas" => Icon::Pause,
         "draw" => Icon::Menu,
         _ => Icon::Upgrade,
+    }
+}
+
+/// An upgrade's effect as the shop's bars, now and at its next level
+/// (the owner, 2026-11-22: "more of visual representation"); empty for an
+/// upgrade with none drawn yet.
+fn item_bars(key: &str, level: u8) -> Vec<(String, f32, String)> {
+    match key {
+        "fireproof" => {
+            let bar = |l: u8| {
+                let f = run::fireproof_share(l);
+                (f, if f <= 0.0 { "immune".to_string() } else { format!("{:.0}%", 100.0 * f) })
+            };
+            let (now, now_t) = bar(level);
+            let mut b = vec![("Fire harm now".to_string(), now, now_t)];
+            if level < 3 {
+                let (next, next_t) = bar(level + 1);
+                b.push((format!("At level {}", level + 1), next, next_t));
+            }
+            b
+        }
+        _ => Vec::new(),
     }
 }
 
@@ -613,6 +805,12 @@ impl App {
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("volume")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != volume_user()) {
             self.set_volume(v);
         }
+        if let Some(v) = self.menu.as_ref().and_then(|m| m.option("music")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != music_user()) {
+            self.set_music(v);
+        }
+        if let Some(v) = self.menu.as_ref().and_then(|m| m.option("shake")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != shake_user()) {
+            self.set_shake(v);
+        }
         let Some(m) = self.menu.as_mut() else { return Ok(picks) };
         if picks.is_empty() && dish_key(m) != before {
             self.open_menu()?;
@@ -625,6 +823,7 @@ impl App {
             match self.menu_event(p) {
                 Ok(true) => {
                     self.save_replay();
+                    self.save_run();
                     event_loop.exit();
                 }
                 Ok(false) => {}
@@ -703,6 +902,8 @@ impl App {
                 self.parked = Some(menu);
                 self.start()?;
                 self.paused = false;
+                // As it lands: closed mid-planet, it lands here again.
+                self.save_run();
             }
             StartEvent::Buy(i) => {
                 if let Some(r) = self.shop_run() {
@@ -744,6 +945,7 @@ impl App {
                     m.notice = line;
                     m.show(Page::Main);
                 }
+                self.save_run();
             }
             // A thing to try ticked or unticked: this PC remembers.
             StartEvent::Tried(i, tried) => {
@@ -940,6 +1142,7 @@ impl App {
         let l = chosen.map_or(0, |c| c.1);
         let what = format!("{}: {}", r.loadout_name(l), if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") });
         self.hud.alert(&what, None, theme::ACCENT);
+        self.save_run();
     }
 
     /// The shop page, filled from the run (the menu up, its dish behind).
@@ -956,6 +1159,79 @@ impl App {
                 m.show(Page::Shop);
             }
         }
+        // Each buy, move and pick in the shop comes back through here.
+        self.save_run();
+    }
+
+    /// The run saved when the game last closed, as the run under way (the
+    /// main menu's "Back to the run"). A save that does not read is moved
+    /// aside to `run-unreadable.txt` with a word on the menu, never
+    /// overwritten unseen.
+    pub(super) fn load_run(&mut self) {
+        let Some(p) = self.run_file.clone() else { return };
+        let Ok(text) = std::fs::read_to_string(&p) else { return };
+        let note = match Run::from_save(&text) {
+            Ok(r) if !r.over => {
+                let note = format!("Your run is saved on planet {} ({}): Back to the run carries on", r.depth, r.line());
+                self.run_saved = text;
+                self.run = Some(r);
+                note
+            }
+            Ok(_) => {
+                let _ = std::fs::remove_file(&p);
+                return;
+            }
+            Err(e) => {
+                let aside = p.with_file_name("run-unreadable.txt");
+                let _ = std::fs::rename(&p, &aside);
+                eprintln!("larder-world: the saved run did not load ({e}); moved to {}", aside.display());
+                format!("The saved run could not be read ({e}); it was moved to {}", aside.display())
+            }
+        };
+        if let Some(m) = self.menu.as_mut() {
+            m.run_live = self.run.is_some();
+            m.notice = Some(note);
+        }
+    }
+
+    /// **Saves the run** to its file (`run_file`) if it changed since the
+    /// last write, or deletes the file once there is no run under way (given
+    /// up, lost or won). Called wherever the run changes (landing, each buy
+    /// in the shop, the loadout panel closing, a planet's end) and on
+    /// quitting, and every few seconds as a net (`autosave`). Written to a
+    /// side file and renamed over the save, so a crash mid-write leaves the
+    /// last good save.
+    pub(super) fn save_run(&mut self) {
+        let Some(p) = self.run_file.clone() else { return };
+        // The run in the shop, or as it landed on the planet being played;
+        // the loadout panel's copy is the window's until it closes.
+        let live = self.run.as_ref().filter(|r| !r.over && !r.range && !r.field).or(self.args.run.as_ref().filter(|r| !r.over && self.run.is_some()));
+        let Some(r) = live else {
+            if !self.run_saved.is_empty() || p.exists() {
+                if let Err(e) = std::fs::remove_file(&p).or_else(|e| if e.kind() == std::io::ErrorKind::NotFound { Ok(()) } else { Err(e) }) {
+                    eprintln!("larder-world: the finished run's save was not removed ({}: {e})", p.display());
+                }
+                self.run_saved.clear();
+            }
+            return;
+        };
+        let text = r.save_text();
+        if text == self.run_saved {
+            return;
+        }
+        match write_save(&p, &text) {
+            Ok(()) => self.run_saved = text,
+            Err(e) => eprintln!("larder-world: the run was not saved ({e})"),
+        }
+    }
+
+    /// The save as a net, every few seconds of the window's time.
+    pub(super) fn autosave(&mut self) {
+        if self.run_file.is_none() || self.run_checked.is_some_and(|t| t.elapsed().as_secs_f32() < AUTOSAVE_SECS) {
+            return;
+        }
+        self.run_checked = Some(Instant::now());
+        self.save_run();
     }
 
     /// The end screen's carry-on in a run: the level's verdict goes to the
@@ -994,6 +1270,8 @@ impl App {
         if self.run.is_some() {
             self.show_shop();
         }
+        // Won on to the next planet, or over: the save follows.
+        self.save_run();
         Ok(())
     }
 
@@ -1062,3 +1340,48 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
         }
     }
 }
+
+/// Seconds between the window's checks that the run's save is current
+/// (`App::autosave`): each check costs a few hundred bytes of text, and a
+/// write only when the run changed.
+pub(super) const AUTOSAVE_SECS: f32 = 5.0;
+
+/// Where the run is saved: `run.txt` beside the settings file
+/// (`settings::path`: `%APPDATA%\Larder World` on Windows), or
+/// `LARDER_RUN=PATH`.
+pub(super) fn run_save_path() -> Option<PathBuf> {
+    if let Some(p) = std::env::var_os("LARDER_RUN").filter(|v| !v.is_empty()) {
+        return Some(PathBuf::from(p));
+    }
+    Some(settings::path()?.with_file_name("run.txt"))
+}
+
+/// Writes `text` to a side file and renames it over `p`.
+pub(super) fn write_save(p: &Path, text: &str) -> Result<(), String> {
+    if let Some(d) = p.parent().filter(|d| !d.as_os_str().is_empty()) {
+        std::fs::create_dir_all(d).map_err(|e| format!("{}: {e}", d.display()))?;
+    }
+    let tmp = p.with_extension("txt.new");
+    std::fs::write(&tmp, text).map_err(|e| format!("{}: {e}", tmp.display()))?;
+    std::fs::rename(&tmp, p).map_err(|e| format!("{}: {e}", p.display()))
+}
+
+#[cfg(test)]
+mod glance_tests {
+    /// The shop's planet glance (Look D, 11-21) holds the whole planet:
+    /// every cell coloured, its crystals, a nest and the landing, all on
+    /// the map; and a second ask for the same planet is the same glance.
+    #[test]
+    fn the_glance_holds_the_planet() {
+        for depth in 1..=4 {
+            let g = super::glance_of(7, depth);
+            assert_eq!(g.w, 64, "planet {depth}");
+            assert_eq!(g.cells.len(), g.w * g.h, "planet {depth}");
+            assert!(g.crystals.len() >= 6 && !g.moulds.is_empty() && g.landing.is_some(), "planet {depth}: {} crystals, {} nests", g.crystals.len(), g.moulds.len());
+            let on = |x: f32, y: f32| (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y);
+            assert!(g.crystals.iter().all(|&(x, y, _)| on(x, y)) && g.moulds.iter().all(|&(x, y)| on(x, y)), "planet {depth}: a mark off the map");
+            assert_eq!(super::glance_of(7, depth), g, "planet {depth}: the kept glance differs");
+        }
+    }
+}
+

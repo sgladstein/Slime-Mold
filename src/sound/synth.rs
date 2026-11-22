@@ -18,6 +18,7 @@
 //! draws from the dish's random stream, so sound cannot change a game
 //! (`Dish::state_hash` is the check).
 
+use super::score::Score;
 use super::{AlertKind, GrainKind, GunVoice, SoundCmd, TextureKind};
 
 /// Grains that can sound at once, across every texture, burst and verb.
@@ -790,7 +791,9 @@ pub const MIX_TONES: usize = GrainKind::ALL.len();
 pub const MIX_BODY: usize = MIX_TONES + 1;
 pub const MIX_ROOM: usize = MIX_TONES + 2;
 pub const MIX_VERB: usize = MIX_TONES + 3;
-pub const MIX_SOURCES: usize = MIX_TONES + 4;
+/// The music bed and the planet's air (`super::score`), dry.
+pub const MIX_SCORE: usize = MIX_TONES + 4;
+pub const MIX_SOURCES: usize = MIX_TONES + 5;
 
 /// A name for each mix meter source, for printing.
 pub fn mix_name(i: usize) -> String {
@@ -799,6 +802,7 @@ pub fn mix_name(i: usize) -> String {
         MIX_BODY => "voice".into(),
         MIX_ROOM => "room".into(),
         MIX_VERB => "reverb".into(),
+        MIX_SCORE => "score".into(),
         _ => GrainKind::ALL.get(i).map_or("?".into(), |k| format!("{k:?}").to_lowercase()),
     }
 }
@@ -840,6 +844,8 @@ pub struct VoiceBank {
     master_lp: [f32; 2],
     k_master_hp: f32,
     block: u32,
+    /// The music bed and the planet's air (`SoundCmd::Score`).
+    score: Score,
     pub stats: SynthStats,
 }
 
@@ -867,6 +873,7 @@ fn cmd_finite(cmd: &SoundCmd) -> bool {
         SoundCmd::Lamp { pan, .. } => ok(&[pan]),
         SoundCmd::Hush(_) => true,
         SoundCmd::Master(m) => m.is_finite(),
+        SoundCmd::Score { tension, level, .. } => ok(&[tension, level]),
     }
 }
 
@@ -910,6 +917,7 @@ impl VoiceBank {
             master_lp: [0.0; 2],
             k_master_hp: 1.0 - (-std::f32::consts::TAU * MASTER_HP_HZ / sr).exp(),
             block: 0,
+            score: Score::new(sample_rate, seed),
             stats: SynthStats { limit_min: 1.0, ..SynthStats::default() },
         }
     }
@@ -978,6 +986,7 @@ impl VoiceBank {
                 let m = m.clamp(0.0, 1.0);
                 self.master.target = m * m;
             }
+            SoundCmd::Score { mood, tension, level, hushed } => self.score.set(mood, tension, level, hushed),
         }
     }
 
@@ -1219,6 +1228,7 @@ impl VoiceBank {
         self.reverb = fresh.reverb;
         (self.room_phase, self.room_lp, self.room_am) = (0.0, 0.0, 0.0);
         self.body = fresh.body;
+        self.score.reset();
         (self.verb_lp, self.master_lp) = (0.0, [0.0; 2]);
         let fix = |s: &mut Smoothed, d: Smoothed| {
             if !(s.value.is_finite() && s.target.is_finite()) {
@@ -1240,6 +1250,11 @@ impl VoiceBank {
         if !self.lamp_pan.is_finite() {
             self.lamp_pan = 0.0;
         }
+    }
+
+    /// The score's level now (0 ..= 2), for the drips it asks for.
+    fn score_level(&self) -> f32 {
+        self.score.level()
     }
 
     /// Fill `out` with interleaved samples for `channels` channels (1 or 2
@@ -1416,6 +1431,19 @@ impl VoiceBank {
                     r += y * gr;
                     self.stats.energy[MIX_BODY] += (y * y) as f64;
                 }
+            }
+
+            // The score: the music bed and the planet's air, under all of
+            // it, into the reverb like the rest. A drip it asks for is the
+            // dish's own grain.
+            let sc = self.score.sample();
+            l += sc.l;
+            r += sc.r;
+            send += sc.send;
+            self.stats.energy[MIX_SCORE] += (sc.l * sc.l + sc.r * sc.r) as f64;
+            if let Some(pan) = sc.drip {
+                let g = 0.05 * self.score_level();
+                self.spawn(GrainKind::Drip, pan, g, 0, false, 255);
             }
 
             // Room tone: low air always, and the lamp's 120 Hz hum where the

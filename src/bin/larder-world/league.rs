@@ -288,6 +288,13 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let mut fell: Vec<String> = Vec::new();
     let (mut peak_mould, mut min_alive) = (start_mould, usize::MAX);
     let mut at = [None::<(u32, usize, usize)>; 3];
+    // The longest stall (Direction, 11-22): seconds after the first minute
+    // with no harvest and no new low of the slime. Once crystal_keep made
+    // the home crystal last for ever, a bot that drained every other
+    // crystal could stand by the slime's home for minutes, firing into a
+    // slime that regrew as fast; `run_bot_summary.py --check` fails a
+    // planet that stalls over a minute.
+    let (mut low, mut harvested, mut moved, mut stall) = (start_mould, 0.0f32, 0.0f32, 0.0f32);
     let t0 = std::time::Instant::now();
     let mut next_aim = 0u64;
     loop {
@@ -302,10 +309,16 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         if sec != last_sec {
             last_sec = sec;
             if let Some(tp) = &tool_plan {
-                g.with_kit(|kit, g| strat::tools(g, kit, tp));
+                strat::tools(g, tp);
             }
             hands::plan(g, &hand);
             peak_mould = peak_mould.max(g.mould);
+            if g.harvested > harvested + 0.5 || (g.mould as f32) < 0.99 * low as f32 || since < 60.0 {
+                moved = since;
+            }
+            harvested = harvested.max(g.harvested);
+            low = low.min(g.mould);
+            stall = stall.max(since - moved);
             if since > 5.0 {
                 min_alive = min_alive.min(g.alive());
             }
@@ -371,7 +384,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let sf = &g.starfall;
     let drops = format!("{}/{}/{:.0}/{:.0}/{:.0}/{}", sf.landed, sf.cores, sf.ore_taken, sf.core_taken, sf.eaten, if spec.starts_with("util:") { 0 } else { strat::drops_chased() });
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
         r.depth,
         r.seed,
         l.seed,

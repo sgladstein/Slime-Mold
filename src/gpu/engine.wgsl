@@ -183,8 +183,10 @@ struct Params {
     // The ground row (new ground kinds, 11-14; Params grew from 928 to
     // 944): a walker's step in deep water is x `deep_step` on top of
     // `wet_step` (`BigParams::deep_step`); deep water as a wall to the
-    // slime (`Settings::deep_wall`, 11-20; `shut`). The last two are the
-    // heartbeat's source, in fine cells (2026-11-20, `heart_beat`).
+    // slime (`Settings::deep_wall`, 11-20; `shut`; bit 1 `solid_walls`,
+    // bits 3-15 the flinch's steps, `boss_flinch`; bits 16-31 the
+    // crater's shut steps, `crater_shut`). The last two are the heartbeat's
+    // source, in fine cells (2026-11-20, `heart_beat`).
     deep_step: f32, deep_wall: u32, heart_x: f32, heart_y: f32,
     // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
     // Params grew from 944 to 960): the steps between surges (0 off), the
@@ -255,8 +257,12 @@ struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // `full` is the pile's charge a full cell (`BigDish::pile_fill`: a map
 // gives each crystal its own, else every pile's is `crystal_charge`).
 // `centre`: the pile's centre as a fine cell, x | y << 16 (`BigDish::
-// pile_centre`), where a panicking walker runs.
-struct Pile { start: u32, count: u32, cells: u32, centre: u32, sum: f32, left: f32, full: f32, _b: f32 };
+// pile_centre`), where a panicking walker runs. `_b`: what the slime ate
+// here in all, in 4096ths as a u32 (`KEEP`; sixteenths rounded a thin
+// pile's bite to 0). `covered`: its cells with
+// charge and a walker on them at the last `pilesum` (the slime's birth
+// ceiling, `CEIL`; Rust's `PILE_WORDS`).
+struct Pile { start: u32, count: u32, cells: u32, centre: u32, sum: f32, left: f32, full: f32, _b: f32, covered: u32, _c: u32, _d: u32, _e: u32 };
 // A wall being built (`Engine::build_wall`): the segment and its half
 // width in fine cells, the health it starts with, the box of cells the
 // `build` pass covers, whether it lets scent through, and how far a
@@ -740,6 +746,11 @@ const SOIL: u32 = 16u;
 const GARDEN: u32 = 32u;
 // The dish has plants (`plant_words` in `news`; mod.rs `WORLD_PLANTS`).
 const PLANTS: u32 = 64u;
+// The slime eats without emptying a crystal (mod.rs `WORLD_KEEP`).
+const KEEP: u32 = 128u;
+// The slime's births stop at a ceiling, species 0's `cap` (mod.rs
+// `WORLD_CEIL`), outside a garden too.
+const CEIL: u32 = 256u;
 const OWN_SP: u32 = 3u;
 const PILE_BITS: u32 = 0xFFu;
 const WET: u32 = 0x100u;
@@ -779,6 +790,27 @@ fn soil(i: u32) -> u32 {
 // into a river could never leave and a planet won on its last walker would
 // never end. No CPU twin (the owner's card, 11-17 19:21Z).
 fn deep_shut(j: u32) -> bool { return (P.deep_wall & 1u) != 0u && soil(j) == SOIL_DEEP; }
+// **A hit's hole stays open while it is fresh** (`crater_shut`,
+// 2026-11-21, the Look lane's A2 with Direction; the owner, 11-12:
+// sustained fire carves "a bigger and bigger hole that doesn't refill
+// while being shot at"). Cell j is closed to walkers, as deep water is,
+// while its crater countdown is above the `deep_wall` word's high 16 bits
+// (steps; 0xFFFF off). The countdown starts at `crater` on a hit's cells
+// and fewer toward its rim (the cone), so the rim drops under it first and
+// the hole closes from the rim in. Until then the hole refilled in a
+// median 0.5 to 0.9 s while its ember lasted 2 s
+// (Reports/larder-crater-2s-2026-11-14.md). No CPU twin.
+// A shot's crater only: one whose countdown is still over `crater`, the
+// guns' (2 s), was written by a blast, a mine, det cord or the Blast card
+// (20 s, `kcs`) and is never shut, else det cord stood as a wall to the
+// slime for 19 s and a blast left a no-go disc (the review lane, 11-21).
+// Such a crater still passes through the shut window in its last 2 s and
+// is shut for about 1 s then, as the cells cannot tell who wrote them.
+fn crater_shut(j: u32) -> bool {
+    let t = P.deep_wall >> 16u;
+    let c = crater_at(j);
+    return t != 0xFFFFu && c > f32(t) && c <= P.crater;
+}
 // **A wall holds until it is worn through** (`solid_walls`, 2026-11-21,
 // the owner: "Sometimes slime is able to get through my walls even when
 // they have no burrowed a full hole yet"; bit 1 of the `deep_wall` word).
@@ -924,7 +956,7 @@ fn trail_at(i: u32, sp: u32) -> f32 {
 fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
-    if (i == NONE || agar[i] == 0u || deep_shut(i)) { return -1.0e6; }
+    if (i == NONE || agar[i] == 0u || deep_shut(i) || crater_shut(i)) { return -1.0e6; }
     // `sw` is 1, or more for a hungry walker (`hunger_scent`); x 1 is exact.
     var v = trail_at(i, sp) + sw * scent_at(x + c * sso, y + s * sso);
     // Grazing: fresh grass smells good (the CPU's `graze_weight`, the
@@ -998,7 +1030,11 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
     // A lump's member neither panics, raids, surges nor breaks away: past
     // its leash it runs back to the lump's centre (the CPU's `lump_leash`).
     let lb = lump_of(k);
-    if (lb != 0u) { return lump_leash(lb - 1u, k); }
+    if (lb != 0u) {
+        let f = lump_flinch(here);
+        if (f.z > 0.0) { return f; }
+        return lump_leash(lb - 1u, k);
+    }
     // A still walker (`MIND_STILL`) neither breaks away, raids, panics nor
     // surges.
     if (mind_of(k, S.t) == MIND_STILL) { return vec3<f32>(-1.0, -1.0, 0.0); }
@@ -1076,6 +1112,51 @@ fn lump_centre(b: u32) -> vec3<f32> {
     let n = atomicLoad(&news[at + 2u]);
     if (n == 0u) { return vec3<f32>(-1.0, -1.0, 0.0); }
     return vec3<f32>(f32(atomicLoad(&news[at]) / n) + 0.5, f32(atomicLoad(&news[at + 1u]) / n) + 0.5, f32(n));
+}
+
+// **A mini-boss's walkers flinch out of a hit** (`Settings::boss_flinch`,
+// 2026-11-21, Direction's job from the Look lane's exit test 2: the
+// wanderer showed no hurt but its members' drawn tint). A lump's member on
+// a crater cell (an armoured member a shot hurt and left standing,
+// `armoured`) while its countdown is above the `deep_wall` word's bits
+// 3-15 (steps; 0x1FFF off) runs down the crater's slope: the crater is
+// deepest at the hit and shallower to its rim (`scorch_cone`), so of the 8
+// cells 2 out it heads for the lowest, 4 cells on, at `FLINCH_HASTE` of its
+// pace. A hit bites a hole into the body where it landed, ringed by the
+// members it pushed out, `crater_shut` keeps them out of it while it is
+// fresh, and then the leash and the pull close it. (x, y, haste); (-1, -1,
+// 0) when calm. Nine reads, for a member on a crater cell only. No CPU
+// twin.
+// Tried the same day: the whole crater (2 s) blew a wanderer of 87 into
+// specks that never regrouped and it lived 4 s under fire against 1 s; the
+// first half (the run's) dents it into a C and it lives about 1 s more.
+const FLINCH_HASTE: f32 = 1.5;
+fn lump_flinch(here: u32) -> vec3<f32> {
+    let t = (P.deep_wall >> 3u) & 0x1FFFu;
+    if (t == 0x1FFFu || here == NONE) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let c = crater_at(here);
+    // A shot's crater only, as `crater_shut`: in a blast's 20 s crater a
+    // member flinched for 19 s.
+    if (c <= f32(t) || c > P.crater) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let x = i32(here % P.w);
+    let y = i32(here / P.w);
+    var best = c;
+    var bd = vec2<i32>(0, 0);
+    var ways = array<vec2<i32>, 8>(
+        vec2<i32>(2, 0), vec2<i32>(1, 1), vec2<i32>(0, 2), vec2<i32>(-1, 1),
+        vec2<i32>(-2, 0), vec2<i32>(-1, -1), vec2<i32>(0, -2), vec2<i32>(1, -1));
+    for (var d = 0u; d < 8u; d++) {
+        let o = ways[d];
+        let nx = x + o.x;
+        let ny = y + o.y;
+        if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+        let j = u32(ny) * P.w + u32(nx);
+        if (agar[j] == 0u) { continue; }
+        let v = crater_at(j);
+        if (v < best) { best = v; bd = o; }
+    }
+    if (bd.x == 0 && bd.y == 0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    return vec3<f32>(f32(x + 2 * bd.x) + 0.5, f32(y + 2 * bd.y) + 0.5, FLINCH_HASTE);
 }
 
 // Where lump b's member k runs: its centre, at its own pace, once farther
@@ -1294,7 +1375,7 @@ fn raid_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
 fn panic_at(x: f32, y: f32, a: f32, so: f32, g: vec3<f32>) -> f32 {
     let c = cos(a); let s = sin(a);
     let i = cell(x + c * so, y + s * so);
-    if (i == NONE || agar[i] == 0u || deep_shut(i)) { return -1.0e6; }
+    if (i == NONE || agar[i] == 0u || deep_shut(i) || crater_shut(i)) { return -1.0e6; }
     return c * (g.x - x) + s * (g.y - y);
 }
 
@@ -1602,7 +1683,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
+        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && !(crater_shut(there) && !crater_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
@@ -1914,13 +1995,17 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
         let sp = species_of(k);
         let held = select(atomicLoad(&wstat[6]), atomicLoad(&wstat[7]), sp == OWN_SP);
         if (held >= P.sets[sp].cap) { return; }
+    } else if (world(CEIL) && atomicLoad(&wstat[6]) >= P.sets[0].cap) {
+        // The slime's birth ceiling (`Game::time_ceiling`, 11-21): the
+        // walkers its covered crystal holds, counted as a garden's side.
+        return;
     }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
     // The parent's species' crowd limit (`crowd_for`).
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
-    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j)) { return; }
+    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j) || crater_shut(j)) { return; }
     // Not past a built wall's corner (`solid_walls`).
     let pw = walkers[k];
     if (wall_between(pw.x, pw.y, at.x, at.y) != NONE) { return; }
@@ -2085,7 +2170,7 @@ fn jump(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = jump_of(k, S.t);
     if (j.w == 0.0) { return; }
     let to = cell(j.x, j.y);
-    if (to == NONE || agar[to] == 0u || deep_shut(to)) { return; }
+    if (to == NONE || agar[to] == 0u || deep_shut(to) || crater_shut(to)) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     let cr = crowd_of(species_of(k));
@@ -2628,7 +2713,10 @@ fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (((ground[i] & PILE_BITS) != 0u || garden()) && n > 0u) {
         var c = charge[i];
         t = min(P.eat, c / f32(n));
-        if (t > 0.0) {
+        // With `KEEP` (2026-11-21, the owner: crystals never run out from
+        // eating, only the squad empties one) the cell keeps its charge:
+        // the walkers take their share and `pilesum` counts it.
+        if (t > 0.0 && !world(KEEP)) {
             for (var m = 0u; m < eaters; m++) { c = max(c - t, 0.0); }
             charge[i] = c;
         }
@@ -2642,6 +2730,8 @@ fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
 // share left, for the scent.
 var<workgroup> psum: array<f32, 256>;
 var<workgroup> pcnt: array<u32, 256>;
+var<workgroup> pate: array<f32, 256>;
+var<workgroup> pcov: array<u32, 256>;
 
 @compute @workgroup_size(256)
 fn pilesum(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
@@ -2650,27 +2740,47 @@ fn pilesum(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_inde
     let count = piles[p].count;
     var s = 0.0;
     var c = 0u;
+    var a = 0.0;
+    var v = 0u;
+    let keep = world(KEEP);
     for (var q = li; q < count; q += 256u) {
         let i = pcell[start + q];
         if ((ground[i] & PILE_BITS) == p + 1u) {
             s += charge[i];
             c += 1u;
+            if (charge[i] > 0.0 && atomicLoad(&occ[i]) > 0u) { v += 1u; }
+            // What the slime ate here this tick (`KEEP`): each ordinary
+            // walker's share, as `eat` gave it.
+            if (keep) {
+                var eaters = atomicLoad(&occ[i]);
+                if (cycles()) { eaters = eaters - atomicLoad(&gdep[2u * P.w * P.h + i]); }
+                a += share[i] * f32(eaters);
+            }
         }
     }
     psum[li] = s;
     pcnt[li] = c;
+    pate[li] = a;
+    pcov[li] = v;
     workgroupBarrier();
     for (var k = 128u; k > 0u; k >>= 1u) {
         if (li < k) {
             psum[li] += psum[li + k];
             pcnt[li] += pcnt[li + k];
+            pate[li] += pate[li + k];
+            pcov[li] += pcov[li + k];
         }
         workgroupBarrier();
     }
     if (li == 0u) {
+        // A running total in 4096ths, as a u32 in the pile's eighth word
+        // (`Engine::pile_eaten` reads it; a world that flows sums twice a
+        // tick, which the host halves).
+        if (keep) { piles[p]._b = bitcast<f32>(bitcast<u32>(piles[p]._b) + u32(round(pate[0] * 4096.0))); }
         let full = piles[p].full * f32(pcnt[0]);
         piles[p].sum = psum[0];
         piles[p].cells = pcnt[0];
+        piles[p].covered = pcov[0];
         var left = 1.0;
         if (full > 0.0) { left = max(psum[0] / full, 0.0); }
         piles[p].left = left;

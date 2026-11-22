@@ -2,6 +2,7 @@
 //! of `larder_world.rs` unchanged (C9, 2026-11-14).
 
 use super::*;
+use crate::mould::kit::Tool;
 
 /// Half a read block (`squad::BIN`, engine cells): about how far past a
 /// radius the centre of a block holding a walker inside it can lie, so a
@@ -9,6 +10,11 @@ use super::*;
 /// diagonal (2.8): at scale 1 that took defend's 7.5 cells to 10.3, and
 /// `a_guard_shoots_slime_on_what_it_guards` caught slime 10 cells off.
 const DEFEND_SLACK: f32 = squad::BIN as f32 * 0.5;
+/// Frames a soldier reads its whole reach after a near read found no
+/// slime, before it looks near again (`Game::read_aim`): 4 at 15 frames
+/// a second, so a walker that comes near is seen within about 0.27 s,
+/// and three frames in four aim at the far slime.
+const FAR_FRAMES: u8 = 4;
 
 /// A player's command; `Game::apply` keeps the log. As M3's, with walls and
 /// buildings (`buildings`) in place of M3's turret and bait.
@@ -71,6 +77,15 @@ pub enum Cmd {
     Link(u8, u8),
     /// Squad `q` leaves its link.
     Unlink(u8),
+    /// The squads whose bits are set (bit `q` for squad `q`), and every
+    /// squad linked with one, are picked together, as a drag over them
+    /// picks them (`Squad::band`; owner 2026-11-21 06:53Z): commanded as
+    /// one, as a link is, until the player commands a squad outside them or
+    /// lets go. 0 drops the pick.
+    Band(u16),
+    /// Squad `q` sets tool `t` off from its device slot (`Game::device`,
+    /// `Kit::device`; the squad mode's tools, owner 2026-11-21 06:55Z).
+    Device(u8, Tool),
     /// Squad `q` takes a gun (`Game::arm`; owner 11-14 16:46Z, "The squad
     /// owns the gun"); None gives back the standard rifle.
     Arm(u8, Option<Gun>),
@@ -116,6 +131,18 @@ impl Cmd {
             Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
+            Cmd::Band(m) => format!("band {m}"),
+            Cmd::Device(q, t) => {
+                let name = crate::mould::kit::TOOLS[t.index()];
+                match t {
+                    Tool::Cord(a, b) => format!("device {q} {name} {} {} {} {}", a.0, a.1, b.0, b.1),
+                    Tool::Smell(k, m) => format!("device {q} {name} {k} {m}"),
+                    _ => {
+                        let p = crate::mould::kit::Kit::aim(t);
+                        format!("device {q} {name} {} {}", p.0, p.1)
+                    }
+                }
+            }
             Cmd::Heal(q) => format!("heal {q}"),
             Cmd::Arm(q, None) => format!("arm {q} none"),
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
@@ -148,6 +175,22 @@ impl Cmd {
             "formation" => return Some(Cmd::Formation(w.get(1)?.parse().ok()?, Formation::parse(w.get(2)?)?)),
             "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
+            "band" => return Some(Cmd::Band(w.get(1)?.parse().ok()?)),
+            "device" => {
+                let q = w.get(1)?.parse().ok()?;
+                let p = (f(3)?, f(4)?);
+                let t = match *w.get(2)? {
+                    "blast" => Tool::Blast(p),
+                    "mine" => Tool::Mine(p),
+                    "cord" => Tool::Cord(p, (f(5)?, f(6)?)),
+                    "germ" => Tool::Germ(p),
+                    "gas" => Tool::Gas(p),
+                    "provoke" => Tool::Provoke(p),
+                    "still" => Tool::Still(p),
+                    _ => return None,
+                };
+                return Some(Cmd::Device(q, t));
+            }
             "heal" => return Some(Cmd::Heal(w.get(1)?.parse().ok()?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
@@ -269,7 +312,8 @@ impl<W: World> Game<W> {
                 }
                 None => false,
             },
-            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Band(..) | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Device(q, t) => self.device(q as usize, t),
             _ => false,
         }
     }
@@ -512,17 +556,50 @@ impl<W: World> Game<W> {
     /// eaten, or, touched, fired past them at the clump (2026-11-18). Read
     /// short, each soldier aims at the thickest slime near itself, so a
     /// squad among loose walkers spreads its fire over them.
+    ///
+    /// The rest (free fire, guarding, clearing a crystal) read near
+    /// themselves first (`Rules::near_first`) and the whole reach only
+    /// after a near read found no slime, for `FAR_FRAMES` frames
+    /// (`Game::read_aim`). Read whole every frame, a free squad fired at
+    /// the thickest clump in its 24-cell reach, often off the screen at
+    /// zoom 12, past walkers standing beside it (filmed 11-22).
     pub(super) fn sight(&self, k: usize) -> f32 {
+        self.sight_read(k).0
+    }
+
+    /// `sight`, and whether it is the near read that `read_aim` checks.
+    fn sight_read(&self, k: usize) -> (f32, bool) {
         let s = self.soldiers[k];
         let sc = self.s();
         let full = self.gun_range(s.squad as usize) * sc;
         // On the core the read decides whether it is clear (`check_core`,
         // walkers within twice its radius), so it looks the whole way.
         let on_core = (s.x - self.core.0).hypot(s.y - self.core.1) <= 3.0 * self.rules.core_r * sc;
-        if self.stance_of(k) != Stance::Defend || self.guard_zone(k).is_some() || matches!(s.order, Order::Clear(..)) || on_core {
-            return full;
+        if on_core {
+            return (full, false);
         }
-        (self.rules.defend * sc).min(full)
+        if self.stance_of(k) != Stance::Defend || self.guard_zone(k).is_some() || matches!(s.order, Order::Clear(..)) {
+            let near = self.rules.near_first * sc;
+            return if s.far == 0 && near > 0.0 && near < full { (near, true) } else { (full, false) };
+        }
+        ((self.rules.defend * sc).min(full), false)
+    }
+
+    /// Takes back soldier `k`'s read of the slime this frame (the
+    /// engine's `UnitOut`): walkers on it, its aim and the walkers there.
+    /// A near read (`sight_read`) that found no slime to fire at sends it
+    /// to read the whole reach for the next `FAR_FRAMES` frames; then it
+    /// looks near again, so slime that comes close is its aim within
+    /// about a quarter second. The empty frame aims at nothing, which
+    /// holds a shot at far slime back by at most one frame.
+    pub(super) fn read_aim(&mut self, k: usize, touching: u32, aim: Option<(f32, f32)>, dense: u32) {
+        let (_, probe) = self.sight_read(k);
+        let none = aim.is_none() || dense < self.rules.aim_min;
+        let s = &mut self.soldiers[k];
+        s.touching = touching;
+        s.aim = aim;
+        s.dense = dense;
+        s.far = if probe && none { FAR_FRAMES } else { s.far.saturating_sub(1) };
     }
 
     /// Where soldier `k` fires this frame, if anywhere (fine cells).
@@ -550,7 +627,19 @@ impl<W: World> Game<W> {
         }
         // A mini-boss in reach and in sight first (`Game::boss_aim`,
         // 2026-11-16); its body's radius widens the stance's tests below.
-        let boss = self.boss_aim(k);
+        //
+        // Beyond `Rules::near_first`, only when the soldier's own aim holds
+        // no slime that near (Direction, 11-22, after #708): a boss up to
+        // the gun's whole reach, 24 cells, took every shot past walkers
+        // beside the squad, off the screen at zoom 12, the fault #708 fixed
+        // for the soldier's own read. A near boss still comes first, and a
+        // touched soldier still only takes one within its defend reach
+        // (`boss_aim`). The origin is to come through here too (#699).
+        let near = self.rules.near_first * sc;
+        let slime_near = near > 0.0
+            && s.dense >= self.rules.aim_min
+            && s.aim.is_some_and(|a| (a.0 - s.x).hypot(a.1 - s.y) <= near + DEFEND_SLACK && self.clear_line((s.x, s.y), a));
+        let boss = if slime_near { self.boss_aim_within(k, near) } else { self.boss_aim(k) };
         let (aim, body) = match boss {
             Some(b) => b,
             None => {

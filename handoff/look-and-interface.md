@@ -2,6 +2,30 @@
 
 ## State (2026-11-20)
 
+**11-22, Milestone 1 test 6 (Direction 03:15Z):** the game's pages
+stilled on lavapipe (`menu=news|news-try|options-experiments`). The long
+what-is-new list now turns its pages with the wheel and Left/Right
+(`StartMenu::wheel`), and the Crystals refill row's text says what it
+decides since only the squad empties crystals (Direction's wording). The
+end cards (planet won, held on, run lost, run won) each lead with one
+sentence of what happened and its numbers (`lead`, `star_line` in
+`draw.rs`); `film_ends` films all four (`FILM_CASES=won,held,lost,runwon`).
+Next: the 1070 batch's view costs (Engine), then Look B on Scott's notes.
+**11-22, squad tiles past four (Scott 08:36Z: "when more than 4 squads the
+shrunken tiles need to be improved"):** `Hud::squad_tiles` picks one of
+three sizes in the same panel height: full tiles while each is 86 or wider,
+compact tiles (key, soldier icon and count, a 4-unit bar, a green AUTO dot)
+while 48 or wider, then mini tiles in two rows (key and count, a thin bar).
+A state word is drawn only when its first word fits whole. Films: the new
+headless card step `squadsN` splits the biggest squad until N stand (use it
+mid-game, e.g. `run=1:1 hand=strat:bot at=90,...`). Still:
+`Reports/pr-stills/squad-tiles-2026-11-22.png`.
+Later 11-22: the ranked look list went to Direction (the fight reads; the
+zoom-12 "rounds into nothing" is the reach past the screen, not the look;
+the Sprawler's body apart from the Drifter's is the weak test-4 item). The
+Sprawler's body as strands failed (dead end, 11-22): it waits on an engine
+rule that runs its body walkers along paths.
+
 **Slime viewer (11-21: slimes of his own, `custom NAME = BASE` and `planet N = SLIME` in the tweaks file, keyed like a tier in `slime`/`rule`/`body` lines; old looks `SlimeLook::Paint` 8 and `Foil` 9 branch in `cell_mat_c`, prep's `th_h` and `shaded`'s spec; first built on branch `claude/project-thread-517zll`, the thread "Build a
 slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
 main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the
@@ -296,8 +320,15 @@ while Squad asked to keep it.
    3.2 to 3.5 ms of a 5 ms frame. `Reports/view-cost-2026-11-21/variants.py`
    (#621) writes shaders each with one part out. Timed (11-21): plants 1.04
    ms, soil 0.49, all of `shaded`'s lighting 2.65. Cut: plant crowns only
-   where bare ground shows or they burn. Next if needed: `shaded`'s slope
-   and highlight samples.
+   where bare ground shows or they burn; re-timed 11-21, no saving in the
+   larder shot (little slime over plants). Next if needed: a cheaper plant
+   layer on bare ground, or `shaded`'s slope and highlight samples.
+   Second pass (11-21, PR after #680): the slope's three B-splines share
+   one 5 x 5 read (`cells_height3`) and far crowns skip their clump noise,
+   both pixel for pixel the same; no difference on llvmpipe past its
+   noise. New variants in `variants.py` for the 1070 (the plants split,
+   the two cuts undone, `spec3`); the batch is asked of Engine. Next by its
+   numbers: if `crowns` is still about 1 ms, a cheaper crown layer.
 0b. Crystals under the slime show their charge (11-21, Direction's ask
    from the regrowth review): the film over a crystal thins by
    `GEM_THROUGH` (0.55) of its charge share, so a full one reads as cyan
@@ -307,11 +338,51 @@ while Squad asked to keep it.
    `draw.rs::squad_facts`): formation, fire, queued orders, loadout (a
    run), tools, flowed on two lines and dropped from the end where short.
    Door has its own icon (`Icon::Door`) on the Build page and its panel.
+0d. Look D, shop (11-21): up to six offers on a tall counter are a
+   hand of cards centred on it (`start/shop.rs::hand`, `hand_card`);
+   more offers, or a short window, keep the shelf rows and tiles. With
+   nothing picked the pane shows the planet ahead as a small map
+   (`start::Glance`, `menu::glance_of`, kept for the last planet asked).
+0e. Exit test 2 pass (11-21, Direction's ask): planets 1 to 3 filmed
+   with the run bot at zoom 6 and 12 (`centre=squad,12` follows the
+   squad at zoom 12). Ranked list sent to Direction. Fixed: a shot crossing
+   its own squad is dimmed (#671, `IN_SQUAD`, `IN_SQUAD_DIM` in `draw.rs`).
+   A2's view side: with #670 (crater cells shut to walkers) a hit leaves a
+   dark charred notch with the engine's embers that closes in about 1 s;
+   no extra drawing. Hits over a full crystal: since #670 little slime
+   stays on a crystal under fire; an ember on the faces from the crater
+   field was tried and dropped (orange or brown discs that read as stamps).
+   A thick raid body: measured, not clipped (under 1.2% of pixels over 235
+   at zoom 6), left. The wanderer's flat slab (Enemy's #676 is its flinch,
+   the engine side): `cell_height`'s saturating curve flattened every rise
+   past about 1.5, so a packed mini-boss (0.6 to 2 members a cell) was one
+   even slab; `Lump::pack` (`LUMP_PACK` 2.0 over `LUMP_PACK_N` 0.5 to 2.2
+   members a cell, not the fruit) is now added after the curve, as set
+   slime's rise is, and it shows folds. A mini-boss on a crystal is drawn
+   over it (`LUMP_ON_GEM` 0.9, its share in the material's third word,
+   `lump_on`). A lump's strays in a thin sheet drew a flat skin band
+   stepped by the cell along its rim (run 1:3, `boss=85,310,85`, 95 s): the
+   fruit's fade by its members' cover now holds for every lump. Also open: a tan patch with cell-stepped edges over planet
+   3's strikers (run 1:3, 101 s on c05df943; not seen on main since #670);
+   the fallen: inked and rim-lit as the living are (`soldier`'s dead
+   branch; size kept, a body lying down is that long; its tile is still
+   sprite A's, a gen-AI fallen tile would match the skins). Runs are
+   repeatable only with identical `at=` lists (a different frame list
+   changes the game).
+0f. Look C on planets 1 to 3 (11-21, Direction's next): filmed at the
+   landing and 3:00, zoom 6 and 12, run 1, `hand=strat:bot`. Planets 1
+   (meadow) and 3 (fen) were the same dark slate at play zoom; their soil
+   tints (`biome_tint`) are now an umber loam and an olive mud at the same
+   value. Still to look at: planet 1 at 3:00 is mostly grey sand ripples
+   and blue channels (its soil kinds, not its plain soil).
 1. Look B: every ladder slime has its own look (11-21: Drifter sheet,
    Sprawler threads, Trunk cords #590, Swarmer swell #593, Sporer seeds
    #618, Sleeper crust #597, Grudge scars #605). The Drifter's is done (#526). The Trunk's look stays its amber
    walls and packed body until a slime rule gives it flow; then the thick body's veins
-   and flow; iterate the Sprawler's dashes on what the owner says in play.
+   and flow; iterate the Sprawler's dashes on what the owner says in play
+   (11-21: recoloured to a deeper amber, `THREAD_RGB`, so they no longer
+   read as the shots' gold tracers; shorter, fatter dashes tried first
+   and looked the same, since they were already short at zoom 6).
    Tried and not kept (`Reports/dead-ends.md`, 11-19): the Trunk's film
    along each walker's way, and a smooth droplet for the Drifter (blurry at
    zoom 6). The Trunk's body has no flow or tubes to draw (headings every
@@ -321,7 +392,9 @@ while Squad asked to keep it.
 2. The rest of Look A: film the squad's spacing when Squad lands it; a
    hit's lasting hole would be a slime rule (Enemy's) if the owner wants
    one.
-3. Look C, rest: shadows for buildings if they float; traits for
+3. Look C, rest: buildings cast their own silhouette (11-21,
+   `BUILD_CAST`, `BUILD_SHADOW`; the pump's rig stays flat, a platform);
+   traits for
    planets 4 to 8 after Milestone 1 (parked: more planet polish).
 4. A landing, a win and a loss that happen in the picture: done 11-20
    (the landing, and the end's beat).

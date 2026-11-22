@@ -47,7 +47,9 @@ impl<W: World> Game<W> {
             let pierce = m.pierce.saturating_add(ammo.map_or(0, |a| a.set.shape().pierce));
             // The cast it carries (`Card::Trigger`), if its cast is a carrier.
             let (carry, expire) = if cast > 0 { (m.child[cast as usize - 1], m.expire[cast as usize - 1]) } else { (0, false) };
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, turret, fresh: true, pierce, split: m.split, cast, speed, carry, expire, seek: m.seek, flown: 0.0, aim: aims.get(q).copied().unwrap_or(f32::INFINITY), over: s.over });
+            // A seeking round flies on past its aim (`Rules::seek_reach`).
+            let left = d * (1.0 + r.seek_reach * m.seek as f32);
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left, r: s.r, by: b, turret, fresh: true, pierce, split: m.split, cast, speed, carry, expire, seek: m.seek, flown: 0.0, aim: aims.get(q).copied().unwrap_or(f32::INFINITY), over: s.over });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());

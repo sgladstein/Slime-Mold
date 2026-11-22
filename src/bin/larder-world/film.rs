@@ -144,7 +144,9 @@ fn film_moves() {
 /// --ignored --nocapture`
 ///
 /// `FILM_SIZE` (1280x800), `FILM_UI` (the UI size, 1 for 100%),
-/// `FILM_CASES` (`won,lost,sandbox`).
+/// `FILM_CASES` (`won,lost,sandbox`; also `held`, planet 2 at the
+/// stalemate limit, and `runwon`, the last planet won), `FILM_KEYS` (keys over the run's),
+/// `FILM_DRAIN` (a second to empty the slime's most covered crystal).
 #[test]
 #[ignore]
 fn film_ends() {
@@ -166,13 +168,30 @@ fn film_ends() {
         let args = match case {
             // Planet 1 of run seed 1 (the Drifter), won; planet 3 (the
             // Trunk), lost.
-            "won" | "lost" => {
+            // `held` (2026-11-22): planet 2 at the stalemate's limit;
+            // `runwon`: the last planet won, the run's end.
+            "won" | "lost" | "held" | "runwon" => {
                 let mut r = Run::new(1);
-                r.depth = if case == "won" { 1 } else { 3 };
+                r.depth = match case {
+                    "won" => 1,
+                    "held" => 2,
+                    "lost" => 3,
+                    _ => slime_mould::mould::run::PLANETS,
+                };
+                // The run's earlier planets, won, for the lines that count them.
+                r.stars = (1..r.depth).map(|d| [3, 2, 3, 1][d as usize % 4]).collect();
                 run_args(&base, &start_menu(&base), &r)
             }
             _ => Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() },
         };
+        // `FILM_KEYS` (2026-11-21, a before-and-after of the slime's
+        // graph): engine keys and `set:RULE` keys over the run's, as
+        // `k=v,k=v` (`crystal_keep=0,set:ceiling=0`).
+        let mut args = args;
+        for kv in env("FILM_KEYS").iter().flat_map(|v| v.split(',').map(str::to_string).collect::<Vec<_>>()) {
+            let (k, v) = kv.split_once('=').expect("FILM_KEYS=k=v,k=v");
+            args.keys.push((k.to_string(), v.to_string()));
+        }
         let mut app = offscreen(args, size, &device, &queue).unwrap();
         if let Some(u) = env("FILM_UI") {
             app.canvas.as_mut().unwrap().ui.user = u.parse().unwrap();
@@ -180,12 +199,23 @@ fn film_ends() {
         app.prepare();
         let step = 1.0 / 15.0;
         let mut last = u64::MAX;
+        // `FILM_DRAIN=T` (2026-11-21): at game second T the crystal the
+        // slime covers most is emptied, as headless `LARDER_DRAIN`.
+        let mut drain = env("FILM_DRAIN").map(|v| v.parse::<f32>().unwrap());
         while app.game.as_ref().is_some_and(|g| g.time() < secs && g.end.is_none()) {
             let g = app.game.as_mut().unwrap();
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last {
                 last = sec;
                 hands::plan(g, &hand);
+            }
+            if drain.is_some_and(|t| g.time() >= t) {
+                drain = None;
+                let cov = g.world.crystal_covered_each();
+                if let Some(c) = (0..cov.len()).max_by_key(|&c| cov[c]) {
+                    g.world.empty_crystal(c);
+                    println!("drain t {:.1}: crystal {c}, {} of {} covered cells", g.time(), cov[c], cov.iter().sum::<usize>());
+                }
             }
             app.step(step);
         }
@@ -198,8 +228,9 @@ fn film_ends() {
         }
         if g.end.is_none() {
             g.end = Some(match case {
-                "won" => End::MouldWiped(t),
+                "won" | "runwon" => End::MouldWiped(t),
                 "lost" => End::SquadWiped(t),
+                "held" => End::Cap(0.3),
                 _ => End::Cap(0.62),
             });
         }

@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/boss-cores-2026-11-20/README.md
@@ -19,6 +19,7 @@ sources:
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/miniboss-review-2026-11-20/README.md
   - Reports/origin-design-2026-11-18/README.md
+  - Reports/origin-design-2026-11-22/README.md
   - Reports/planet-curve-2026-11-21/README.md
   - Reports/planet-things-2026-11-18/README.md
   - Reports/planet2-sprawler-2026-11-18/README.md
@@ -60,12 +61,15 @@ code:
   - Run::buy_into
   - Run::carried
   - Run::found
+  - Run::from_save
   - Run::gun
   - Run::level
   - Run::put_in
   - Run::range
   - Run::rules
+  - Run::save_text
   - Run::shop
+  - SAVE_HEAD
   - STUCK_WARN
   - StandRules
   - StarRules::for_depth
@@ -80,6 +84,7 @@ code:
   - bring_shell
   - clock
   - does_to_you
+  - dps_after
   - drift_core
   - enemy_keys
   - fall_count
@@ -208,6 +213,8 @@ On since 2026-11-20 (the owner's pick, 19:06Z: "I like starfall with boss cores.
 ## Mini-bosses since the review of 11-20
 
 The owner (11-20 05:41Z) asked for the mini-bosses to be analysed against his play and improved ([review](../../Reports/miniboss-review-2026-11-20/README.md)). On his own maps to 5:00, 3 of 17 reached the squad, none reached its errand, and 9 stood 10 s or more pressed on rock or wedged in packed slime. Now a boss forms at the crowded knot nearest the player but never inside a soldier's guns (`BossRules::near` 40 dish cells), walks round rock, walls and deep water down a walking field aimed at the farthest point it can see (`Game::boss_steer`), re-forms on its front after 6 s stuck (`Game::boss_stall`), a leech's or sapper's walk has its own 90 s clock (`BossRules::trip`), a wanderer hops to fresh crystals nearer the player, and a raid's march grows its lump from free walkers so it never takes a boss's members. After: 7 of 18 reached the squad and 40 s stood still against 258; errands are still too far to reach in 5:00. So (Direction, 11-20) the kind is drawn first and a crowd's leech or sapper forms at the crowded knot nearest its pump or wall: in the same games one sapper reached its wall, and 2 of 3 leeches met the squad guarding the pumps.
+
+**A hit bites into a mini-boss** (2026-11-21, Direction's job from the Look lane's exit test 2; `boss_flinch` 0.5 in `run::enemy_keys`, GPU only): a member a shot hurts and leaves standing on a fresh crater runs down the crater's slope out of the hole at 1.5 times its pace for the first half of the crater, about 1 s, while `crater_shut` keeps the hole empty; then the leash and the pull close it. Race world: 51 members left in a hit's hole against 103 standing, none lost to it; a wanderer of 87 at point blank lived 2 s against 1 s. Flinching for the whole crater blew it into specks that never regrouped. Only a shot's crater counts: in a blast's 20 s crater members flinched for 19 s until the review lane's catch the same evening. A fringe of longer-leashed members and a looser rooted hold, tried for the wanderer's flat look, changed nothing on screen and were dropped ([report](../../Reports/boss-flinch-2026-11-21/README.md)).
 
 The Mortar (the owner's pick of his doc's two proposals, 11-20 13:21Z, "Mortar first"): a fifth kind, from planet 4 on (`BossRules::for_depth`), moss with an acid core. It forms at the crowded knot nearest a player thing it can see along a clear line, never walks, and every 5 s (`lob_every`) throws the ring at its body's edge at the nearest player thing just past the guns (`lob` 30 dish cells past the longest gun's reach and the panic margin) as one `squad::Burst` pushed one way (`Game::mortar`); the thrown walkers land as ordinary slime and the rest re-form on its spot. Rock, deep water or a wall in the line stops it: walls are the answer. With nothing in reach along a clear line it walks toward your nearest thing on its trip's clock until it has a shot (one formed out of reach sat 90 s without a throw). It throws its own body away, about seven throws for one of 249; on the owner's three planet 4 maps with every boss a mortar, 7 threw 48 times by 5:00. Since the same change a fruit grows its lump instead of forming it, so it no longer swallows a mini-boss beside it (3 of 14 had been). Since 11-20 evening a throw lands as a **shell**: the body's outer part (past the radius that holds 60% of it) flung as its own lump with the mortar's bite, its look and the armour of half its grade, for 8 s (`shell_life`), then ordinary slime; on the three maps 15 shells landed a median 10 units from their target, 14 with soldiers by them. **Late in a planet** (the slime under 60% of its peak, `BossRules::late`), every new mini-boss is drawn from the top grades (`late_grade` 0.8 up), so the last are the strongest; 2 of 24 on the owner's nine maps to 7:00 ([report](../../Reports/miniboss-review-2026-11-20/README.md)). Neither full grade nor a body sized to the army (tried, not kept) holds off 50 or more soldiers: such bosses lived 1 to 3 s after contact; options for meeting a big army other than walking into its guns are in the report. Direction picked two (11-20): late in a planet, a big squad (scaled from 8 soldiers to 24, as the strikers) draws the Mortar far more often, from planet 2; and from 24 soldiers a late hunter or pinwheel goes round the squad to a building or pump its guns do not reach, else to its far side. With every boss late on the owner's maps, soldiers fallen to bosses against 30 or more rose from 6 to 20.
 
@@ -383,6 +390,21 @@ with no germ), and its two guns are two kinds, neither the kind carried
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
 
+## Saving the run
+
+A run is saved to `run.txt` beside the settings file (`%APPDATA%\Larder
+World` on Windows; `LARDER_RUN=PATH` overrides) whenever it changes: on
+landing, at each buy or move in the shop, when the loadout panel closes, at
+a planet's end, on quitting, and checked every five seconds as a net
+(`Run::save_text`, `SAVE_HEAD`, the window's `App::save_run`). The next
+time the game opens, the main menu's "Back to the run" carries on with it,
+and it is deleted when the run is won, lost or given up. A planet's own
+state lives on the GPU and is not saved, so a run closed mid-planet lands
+on the same planet (same seed, same map) fresh, with the shop as it was on
+landing. Owner, 2026-11-22 04:40Z: "a run should always be autosaving and
+saving the run between closing the program"; before that a run lived only
+in the window and was lost on closing it (Milestone 2's "save and resume").
+
 ## The gun range
 
 Gun range on the start menu, or `range=SEED`, uses a run
@@ -397,6 +419,38 @@ empty tools sit on the bottom bar ([report](../../Reports/shop-b-2026-11-15/READ
 (`range_args`), with no time limit and a 100,000 bank; H there opens the
 armory over the paused round and Back re-arms every squad
 ([report](../../Reports/gun-range-2026-11-15.md)).
+
+## The shop's readouts
+
+Since 2026-11-22 (the owner's ask, 04:20Z: "hover over should show what is
+the info, I don't need to select ... more of visual representation of
+damage speed, range ... a calculated/estimated dps of you gun"): the shop's
+pane tells whatever is under the pointer with no click, and keeps the
+picked thing's button for a click. A rolled bullet's damage, speed, range
+and aim are bars (log scale, a standard bullet at the middle), and a gun's
+numbers are bars with a white tick where yours stands. The gun's
+estimated damage a second (`dps::estimate`, `src/mould/dps.rs`) shows over
+the slots; every card, gun and damage upgrade that would change it carries
+a "+N DPS" pill, the gun table has it as a column, and the pane shows
+yours against it as two bars. The unit is the bullets' damage (the rifle's
+plain strike is 10, so the starting rifle is 10 a second); it counts one
+soldier with every shot landing, strikes, kill bursts, pierce, split,
+multicast, carried casts and rate, and leaves out what works over time
+(gas, germ, Mind bullets, fire, trails, shoves), whose cards show "DPS
+same" and say what they do in words.
+
+## Fireproof
+
+Since 2026-11-22 (the owner, 07:40Z: "you should be able to upgrade fire
+resistance", "or even immunity"): the Squad tab sells Fireproof
+(`fireproof`, 100, 200 and 300 points). Each level halves
+`Rules::fire_hurt` (10 health a second at full heat) and the third makes
+soldiers immune, when a squad's move also stops planning round fire and
+walks straight through it (`run::fireproof_share`, `Game::fire_via`). The
+pane's bars show fire's harm now and at the next level
+([still](../../Reports/fireproof-2026-11-22/shop-fireproof.png)). Fire hurts
+only where the squad's own Torch or Tinder lit it, so it does nothing
+alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 
 ## Owner's word
 
@@ -419,7 +473,7 @@ armory over the paused round and Back re-arms every squad
 
 ## Open
 
-- The origin as the win rule (Milestone 2; the owner, 11-16 04:58Z): designed 11-18 as a sitting lump of the slime's walkers on its home crystal whose death wins the planet, with three questions for the owner; not built ([design](../../Reports/origin-design-2026-11-18/README.md)).
+- The origin as the win rule (Milestone 2; the owner, 11-16 04:58Z): designed 11-18 as a sitting lump of the slime's walkers on its home crystal whose death wins the planet ([first design](../../Reports/origin-design-2026-11-18/README.md)); redesigned 11-22 on what was built since: a standing heart on the start crystal from the landing, fed only while that crystal has charge (draining it starves the origin), its death a die-back and the win, the late last stand gathering into it; three questions for the owner; not built ([design](../../Reports/origin-design-2026-11-22/README.md)).
 - The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
 - Mini-boss slimes: hunter, wanderer, sapper, leech, Mortar (planet 4 on) and Pinwheel (planet 3 on) are built and on in the run (Now); each kind's look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 3).
 - A mortar or artillery building; rescue planets; saving a run.

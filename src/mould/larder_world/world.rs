@@ -184,6 +184,36 @@ pub trait World {
     fn spore_flight(&self) -> f32 {
         0.0
     }
+    /// The charge the slime has eaten in all without emptying a crystal
+    /// (the GPU's `crystal_keep`, 2026-11-21); 0 where eating empties
+    /// crystals, as the charge they lose says what was eaten.
+    fn slime_ate(&self) -> f64 {
+        0.0
+    }
+    /// Crystal cells with charge left and a walker on them (the slime's
+    /// birth ceiling, `Game::time_ceiling`); 0 where not counted.
+    fn crystal_covered(&self) -> usize {
+        self.crystal_covered_each().iter().sum()
+    }
+    /// The same, crystal by crystal (empty where not counted).
+    fn crystal_covered_each(&self) -> Vec<usize> {
+        Vec::new()
+    }
+    /// Each crystal's cells, full or not (empty where not counted).
+    fn crystal_cells_each(&self) -> Vec<usize> {
+        Vec::new()
+    }
+    /// The slots the slime can fill (0 unknown).
+    fn slots(&self) -> usize {
+        0
+    }
+    /// No walker is born while the slime holds `n` or more (0 none); a
+    /// world without it ignores it.
+    fn set_ceiling(&mut self, _n: u32) {}
+    /// Empties crystal `c` at once, as a squad that drained it (a film's
+    /// tool, headless `LARDER_DRAIN=T`, 11-21); a world without it does
+    /// nothing.
+    fn empty_crystal(&mut self, _c: usize) {}
     /// Whether `sow` does anything, so a world that cannot never fruits.
     fn can_sow(&self) -> bool {
         false

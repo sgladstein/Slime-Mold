@@ -251,12 +251,19 @@ pub struct ShopRow {
     /// need no names). A tab lays out as the grid only when each of its
     /// cards has its own cell.
     pub cell: Option<((u8, String), (u8, String))>,
+    /// The gun's estimated damage a second once this is picked (a card
+    /// bought or put in, taken out; a gun carried), against `Shop::dps`
+    /// (`mould::dps`; the owner, 2026-11-22); None where it changes no gun.
+    pub dps: Option<f32>,
+    /// The gun has no room for it now (slots or budget), so it would go to
+    /// the bag: `dps` is the gun's with it in all the same.
+    pub no_room: bool,
 }
 
 impl ShopRow {
     /// A row with the plain look; the game sets the rest.
     pub fn new(group: &str, area: ShopArea, icon: Icon, name: &str) -> Self {
-        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None }
+        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None, dps: None, no_room: false }
     }
 }
 
@@ -279,12 +286,34 @@ pub struct Shop {
     /// The gun slots show the turrets' deck (`run::Pick::EditTurrets`):
     /// the bench is named for them, not the carried gun.
     pub turrets: bool,
+    /// The estimated damage a second of the gun the slots show, one
+    /// soldier, every shot landing (`mould::dps`; the owner, 2026-11-22).
+    pub dps: Option<f32>,
     /// The bench's name: the loadout shown and its gun (2026-11-19); empty
     /// names it by the carried gun, as before.
     pub bench: String,
     /// The loadout panel opened on a planet (H): its one button goes back
     /// to the planet, as Esc does, and nothing is for sale.
     pub field: bool,
+    /// The planet ahead as a small map for the pane (`Glance`); None in
+    /// the armory.
+    pub glance: Option<Glance>,
+}
+
+/// The planet ahead drawn small (Look D, 11-21: with nothing picked the
+/// shop's pane held three lines of words and was dark below them): its
+/// ground in coarse cells, `w` across and `h` down, each the colour of
+/// what most covers it (rock, water, the soil), and its crystals, the
+/// slime's starts and the landing on top, as shares of the map (0 to 1).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Glance {
+    pub w: usize,
+    pub h: usize,
+    pub cells: Vec<Rgba>,
+    /// Each crystal's middle and radius, shares of the map's width.
+    pub crystals: Vec<(f32, f32, f32)>,
+    pub moulds: Vec<(f32, f32)>,
+    pub landing: Option<(f32, f32)>,
 }
 
 /// The Options page's last tab, the key list (also F1 or ?).
@@ -584,6 +613,19 @@ impl StartMenu {
     /// The mouse wheel: a page taller than the window scrolls (`notches`
     /// up is positive, as the window gives them).
     pub fn wheel(&mut self, notches: i32) {
+        // A paged list that fits its page (what is new, the options, the
+        // keys) turns a page a notch, toward the end as the wheel rolls
+        // down (Milestone 1 test 6, 11-22: the 169 lines of what is new
+        // took the wheel and did nothing, eight pages behind a small
+        // pager in the corner).
+        if self.scroll_max <= 0.0 && self.sheets > 1 && self.page != Page::Shop {
+            // (Held at the ends, not round them as the pager's buttons go.)
+            let to = (self.sheet as i64 - notches as i64).clamp(0, self.sheets as i64 - 1);
+            if to != self.sheet as i64 {
+                self.flip((to - self.sheet as i64) as isize);
+            }
+            return;
+        }
         let step = 90.0 * self.body.map_or(1.0, |b| (b.h / 600.0).max(0.5));
         self.scroll = (self.scroll - notches as f32 * step).clamp(0.0, self.scroll_max);
     }
@@ -731,7 +773,7 @@ impl StartMenu {
             // Every rule back, the UI size and the volume kept (the
             // player's choices, not rules).
             Hit::ResetAll => {
-                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume")) {
+                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake")) {
                     o.at = o.default;
                 }
             }
@@ -790,6 +832,12 @@ impl StartMenu {
                 self.drag = Some(i);
             }
         }
+    }
+
+    /// The cursor is over something a click works on (a button, a row, a
+    /// card), not only a panel: the window lights its cursor.
+    pub fn over_button(&self) -> bool {
+        self.hover.and_then(|p| self.hit(p)).is_some_and(|h| h != Hit::Panel)
     }
 
     fn hit(&self, p: (f32, f32)) -> Option<Hit> {
@@ -896,7 +944,7 @@ impl StartMenu {
                 self.picked = true;
             }
             KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
-            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys => {
+            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys || (self.page == Page::News && self.news_tab == 0) => {
                 self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
             }
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
@@ -1084,6 +1132,7 @@ impl StartMenu {
             Page::Keys if self.tabbed() => "Tab next tab  ·  Esc or F1 back",
             Page::Keys => "Esc or F1 back",
             Page::Shop => "",
+            Page::News if self.news_tab == 0 && self.sheets > 1 => "Up/Down pick a line  ·  Left/Right or the wheel turn the page  ·  Tab things to try  ·  Esc back",
             Page::News if self.news_tab == 0 => "Up/Down pick a line  ·  Tab things to try  ·  Esc back",
             Page::News => "Up/Down pick  ·  Enter or click ticks it  ·  Tab what is new  ·  Esc back",
         };
@@ -1157,7 +1206,7 @@ impl StartMenu {
     fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // The rules changed, by their labels; the UI size and the volume
         // are not rules ("Free play, with ui 200%", the review 11-15).
-        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume")).map(|o| format!("{} {}", o.label, o.value())).collect();
+        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake")).map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
@@ -2005,6 +2054,13 @@ mod tests {
             }
             r.cost = k as u32 % 4;
             r.on = area == ShopArea::Cards && k < 3 || area == ShopArea::Guns && k == 0;
+            // The DPS readouts (2026-11-22): a pill, a column, the pane's
+            // bars, and a card with no room; bullet cards' bars.
+            r.dps = Some(10.0 + k as f32 * 3.5);
+            r.no_room = area == ShopArea::Cards && k % 3 == 2;
+            if area == ShopArea::Cards && k % 2 == 1 {
+                r.bars = vec![("Damage".into(), 0.6, "12".into()), ("Speed".into(), 0.4, "x0.8".into()), ("Range".into(), 0.7, "x1.6".into()), ("Aim".into(), 0.5, "x1.0".into())];
+            }
             rows.push(r);
         };
         for k in 0..8 {
@@ -2022,7 +2078,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0) }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -2071,7 +2127,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
@@ -2564,6 +2620,44 @@ mod tests {
             .collect();
         let to_try = (0..5).map(|i| TryLine { text: format!("Thing {i}: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build two pumps first instead: the slime now raids them about a minute in."), tried: i == 1 }).collect();
         BuildPage { name: "build 3127".into(), long: "build 3127 (d08583d, 2026-11-18)".into(), last: Some("build 3098, 2026-11-17".into()), news, to_try }
+    }
+
+    /// A long list of what is new (169 lines on 11-21, eight pages) turns
+    /// its pages with the wheel and Left/Right, not only the small pager
+    /// in the corner (Milestone 1 test 6, 11-22): a notch down is the next
+    /// page, the wheel stops at the ends, and the hint says so.
+    #[test]
+    fn a_long_what_is_new_turns_its_pages_with_the_wheel_and_arrows() {
+        let said = |c: &Canvas, t: &str| c.runs.iter().any(|r| r.text == t);
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        m.build = Some(build_page(60, 60));
+        m.show(Page::News);
+        m.draw(&mut c);
+        let pages = m.sheets;
+        assert!(pages >= 3, "60 lines on one page at 1280 x 800?");
+        assert!(said(&c, "Up/Down pick a line  ·  Left/Right or the wheel turn the page  ·  Tab things to try  ·  Esc back"));
+        assert_eq!(m.sheet, 0);
+        m.wheel(-1);
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!(m.sheet, 1, "a notch down is the next page");
+        assert!(said(&c, &format!("2 of {pages}")));
+        m.wheel(1);
+        m.wheel(1);
+        assert_eq!(m.sheet, 0, "the wheel stops at the first page");
+        m.wheel(-99);
+        assert_eq!(m.sheet, pages - 1, "and at the last");
+        m.key(KeyCode::ArrowLeft, true);
+        assert_eq!(m.sheet, pages - 2, "Left is the page before");
+        m.key(KeyCode::ArrowRight, true);
+        assert_eq!(m.sheet, pages - 1);
+        // A short list has one page and the hint leaves the paging out.
+        m.build = Some(build_page(3, 3));
+        m.show(Page::News);
+        c.clear();
+        m.draw(&mut c);
+        assert!(said(&c, "Up/Down pick a line  ·  Tab things to try  ·  Esc back"));
     }
 
     /// What the build holds (the plan of 2026-11-17: the menu shows the

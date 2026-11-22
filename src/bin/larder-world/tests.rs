@@ -1003,7 +1003,10 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
 /// it): planet 1 is Flats with the Drifter and its goal, locked buildings
 /// show locked, a won level carries on to the shop with its points, a
 /// buy and the next planet land on planet 2 with the upgrade in its rules,
-/// and a lost level ends the run on the main menu.
+/// and a lost level ends the run on the main menu. All the way the run's
+/// save file (owner 2026-11-22: "a run should always be autosaving") holds
+/// the run as it stands, a new window carries on from it, and the lost
+/// run's save is gone.
 #[test]
 fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     use slime_mould::mould::campaign::{Cause, Verdict};
@@ -1015,6 +1018,10 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     a.run = Some(Run::new(1));
     let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
     app.base = Some((base.clone(), true));
+    let save = std::env::temp_dir().join(format!("larder-run-save-test-{}.txt", std::process::id()));
+    let _ = std::fs::remove_file(&save);
+    app.run_file = Some(save.clone());
+    let saved = || Run::from_save(&std::fs::read_to_string(&save).expect("a run save")).unwrap();
     // Planet 1 of the run's seed, the level generator's (#277).
     assert_eq!(app.name, "planet:1:1");
     app.prepare();
@@ -1048,10 +1055,12 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(menu.page, Page::Shop);
     assert!(menu.run_live);
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((2, reward(1, 2))));
+    assert_eq!(Some(saved()), app.run.clone(), "the shop's run is saved");
     // Buy armour, then land.
     let hp = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == ITEMS[0].name).unwrap();
     app.menu_event(StartEvent::Buy(hp)).unwrap();
     assert_eq!(app.run.as_ref().unwrap().level_of("hp"), 1);
+    assert_eq!(saved().level_of("hp"), 1, "a buy is saved at once");
     // A card dragged to the front of the gun (owner 20:32Z): the gun fires
     // it first, and the shop is drawn again with it there.
     app.run.as_mut().unwrap().cards = vec![(rounds::Card::Wide, true), (rounds::Card::Blast, true)];
@@ -1080,6 +1089,24 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.game.as_ref().unwrap().turret_deck.map(|d| d.cards()), Some(vec![rounds::Card::Gas]));
     assert_eq!(app.game.as_ref().unwrap().rounds.round, [rounds::Card::Blast, rounds::Card::Wide]);
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
+    assert_eq!(Some(saved()), app.args.run.clone(), "the run as it landed is saved");
+    // The game closed mid-planet and opened again: the menu carries on
+    // with the run as it landed, on the same planet.
+    {
+        let mut again = offscreen(run_base(), (1280, 720), &device, &queue).unwrap();
+        again.base = Some((run_base(), true));
+        again.menu = Some(start_menu(&run_base()));
+        again.run_file = Some(save.clone());
+        again.load_run();
+        assert_eq!(again.run, app.args.run, "the saved run loads");
+        let m = again.menu.as_ref().unwrap();
+        assert!(m.run_live && m.notice.as_deref().is_some_and(|n| n.starts_with("Your run is saved on planet 2")), "{:?}", m.notice);
+        again.menu_event(StartEvent::Run).unwrap();
+        assert_eq!(again.menu.as_ref().unwrap().page, Page::Shop, "Back to the run: the shop");
+        again.menu_event(StartEvent::NextLevel).unwrap();
+        assert_eq!((again.name.as_str(), again.args.run.as_ref().map(|r| r.depth)), ("planet:2:1", Some(2)), "the same planet");
+        again.run_file = None;
+    }
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
     assert_eq!(app.name, "planet:2:1");
     // Loadouts on the planet (owner, 2026-11-19 19:22Z): H opens their
@@ -1104,6 +1131,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
         assert_eq!(g.squads[0].loadout, 1);
         assert_eq!((g.squads[0].gun, g.squads[0].deck.map(|d| d.cards())), (Some(r.squad_gun(1)), Some(vec![rounds::Card::Gas])), "squad 1 fires loadout 2: the rifle, Gas");
         assert_eq!((r.field, r.editing, r.depth), (false, 1, 2), "the planet's run keeps it");
+        assert_eq!(saved(), r, "and so does its save");
         // A turret: its card's Loadout button steps it on, then back.
         let g = app.game.as_mut().unwrap();
         g.bank = 10_000.0;
@@ -1136,6 +1164,45 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let menu = app.menu.as_ref().unwrap();
     assert!(app.run.is_none() && !menu.run_live && menu.page == Page::Main);
     assert!(menu.notice.as_deref().is_some_and(|n| n.starts_with("The run ended on planet 2")), "{:?}", menu.notice);
+    assert!(!save.exists(), "an ended run's save is gone");
+}
+
+/// **A save that does not read is moved aside**, never overwritten unseen,
+/// and the menu says so; with no save there is no run.
+#[test]
+fn an_unreadable_run_save_is_moved_aside() {
+    let dir = std::env::temp_dir().join(format!("larder-run-bad-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let save = dir.join("run.txt");
+    let aside = dir.join("run-unreadable.txt");
+    let _ = std::fs::remove_file(&aside);
+    let fresh = || {
+        let mut app = App::new(run_base());
+        app.menu = Some(start_menu(&run_base()));
+        app.run_file = Some(save.clone());
+        app
+    };
+    let _ = std::fs::remove_file(&save);
+    let mut app = fresh();
+    app.load_run();
+    assert!(app.run.is_none() && app.menu.as_ref().unwrap().notice.is_none());
+    std::fs::write(&save, "garbage").unwrap();
+    let mut app = fresh();
+    app.load_run();
+    assert!(app.run.is_none() && !save.exists() && std::fs::read_to_string(&aside).unwrap() == "garbage");
+    assert!(app.menu.as_ref().unwrap().notice.as_deref().is_some_and(|n| n.contains("could not be read")));
+    // A good one round trips through the window's write, and no run left
+    // deletes it.
+    let mut app = fresh();
+    app.run = Some(Run::new(9));
+    app.save_run();
+    let mut back = fresh();
+    back.load_run();
+    assert_eq!(back.run, Some(Run::new(9)));
+    back.run = None;
+    back.save_run();
+    assert!(!save.exists());
+    let _ = std::fs::remove_dir_all(&dir);
 }
 
 /// **The gun range in the window** (owner, 11-15 02:55Z: "I need a test
@@ -1153,7 +1220,8 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
 /// (`End::MouldWiped`), which a step can reach before the mission looks;
 /// the window's next step must still give the mission its verdict, so the
 /// end screen carries on to the shop. The same for a wiped squad (#488):
-/// the run ends rather than offering "Play again".
+/// the run ends rather than offering "Play again". Either way the play
+/// log writes its `end` line.
 #[test]
 fn a_run_planet_ended_by_the_game_carries_on() {
     use slime_mould::mould::larder::End;
@@ -1167,12 +1235,23 @@ fn a_run_planet_ended_by_the_game_carries_on() {
             app.step(0.1);
         }
         app.settle();
+        // Its play log gets its `end` line too (2026-11-22: a game ended
+        // this way returned before the line was written, so most of the
+        // owner's won planets logged none).
+        let dir = std::env::temp_dir().join(format!("playlog-end-{}-{label}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("log.txt");
+        std::fs::write(&path, "").unwrap();
+        app.log_path = Some(path.to_string_lossy().into_owned());
         app.game.as_mut().unwrap().end = Some(end);
         app.step(0.1);
         let v = app.mission.as_ref().unwrap().verdict;
         assert!(v.is_some(), "{end:?}: the mission gave no verdict");
         assert_eq!(v.unwrap().stars > 0, matches!(end, End::MouldWiped(_)), "{end:?}: {v:?}");
         assert_eq!(app.model(None, None).carry_on.as_deref(), Some(label), "{end:?}");
+        let log = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(log.lines().filter(|l| l.starts_with("end t=")).count(), 1, "{end:?}: {log}");
     }
 }
 
@@ -1566,9 +1645,251 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
     app.squad_frame(dt);
     let at = app.camera.to_screen(m);
     app.controls.cursor = Some(at);
-    assert!(app.squad_button(Button::Left, true));
-    app.squad_button(Button::Left, false);
+    world_button(&mut app, Button::Left, true);
+    world_button(&mut app, Button::Left, false);
     assert_eq!(app.game.as_ref().unwrap().active, Some(q), "clicked squad taken");
+}
+
+/// **The squad's device slot** (owner 2026-11-21 06:55Z: "One device
+/// slot per squad, on a cooldown"): in the squad mode the Tools page
+/// throws from the commanded squad, free, and the slot's wait shows on
+/// every tool and on the Tools button; a throw while it cools is refused.
+/// A run with no tool yet (planet 1) keeps its Tools button, opening the locks.
+#[test]
+fn the_squad_mode_throws_from_its_device_slot() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    let (q, s, k) = {
+        let g = app.game.as_mut().unwrap();
+        g.bank = 0.0;
+        let q = g.active.unwrap();
+        (q, g.soldiers[g.members(q)[0]], g.world.scale())
+    };
+    app.tools_page = true;
+    let blast = |app: &App| app.model(None, None).commands.into_iter().find(|c| c.id == T_BLAST).unwrap();
+    let b = blast(&app);
+    assert!(b.ready, "ready with no food and no tool held: {:?}", b.why_not);
+    assert_eq!(b.cost.as_deref(), Some("20s"));
+    app.use_tool(Tool::Blast((s.x + 6.0 * k, s.y)));
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.kit.uses[0], g.bank), (1, 0.0), "thrown, free");
+    assert!(g.device_wait(q) > 19.0);
+    let b = blast(&app);
+    assert!(!b.ready && b.cooldown > 0.9, "the slot cools: {b:?}");
+    for _ in 0..30 {
+        app.step(1.0 / 15.0);
+    }
+    let b = blast(&app);
+    assert!(!b.ready && b.cost.as_deref().is_some_and(|c| c.ends_with('s') && c != "20s"), "its seconds left on the price line: {b:?}");
+    let m = app.model(None, Some((T_BLAST, (s.x + 6.0 * k, s.y), None)));
+    assert!(!m.ghost_ok && m.ghost_note.as_deref().is_some_and(|n| n.starts_with("device ready in")), "{:?}", m.ghost_note);
+    app.use_tool(Tool::Gas((s.x, s.y - 6.0 * k)));
+    assert_eq!(app.game.as_ref().unwrap().kit.uses[4], 0, "no second device while it cools");
+    app.tools_page = false;
+    let tools = app.model(None, None).commands.into_iter().find(|c| c.id == TOOLS_PAGE).expect("a Tools button");
+    assert!(tools.cost.is_some() && tools.cooldown > 0.0, "the wait shows on the Tools button too: {tools:?}");
+    // A run's planet 1 owns no tool: the Tools button stays and opens the
+    // page of locks (#660 hid it, which read as Tools gone; owner 11-22).
+    let mut a = run_base();
+    a.squads = true;
+    a.run = Some(Run::new(1));
+    let mut app = offscreen(a, (640, 400), &device, &queue).unwrap();
+    let tools = app.model(None, None).commands.into_iter().find(|c| c.id == TOOLS_PAGE).expect("a Tools button with every tool locked");
+    assert!(tools.ready && tools.key == KeyCode::KeyE, "{tools:?}");
+    app.tools_page = true;
+    let blast = app.model(None, None).commands.into_iter().find(|c| c.id == T_BLAST).expect("the page shows the blast");
+    assert!(blast.locked, "locked until the shop sells it");
+}
+
+/// **Esc and Space in the squad mode** (controls review, 2026-11-21).
+/// Esc on a card page goes back to the main card and keeps the squad; the
+/// next Esc lets go. Space, while the camera follows the squad, looks at
+/// the newest alert that has a place; again, it comes back to the squad.
+#[test]
+fn esc_closes_a_card_page_and_space_looks_at_the_newest_alert() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    for page in [(true, false, false), (false, true, false), (false, false, true)] {
+        (app.build_page, app.tools_page, app.form_page) = page;
+        assert!(app.squad_key(KeyCode::Escape, true, false, true));
+        assert_eq!((app.build_page, app.tools_page, app.form_page), (false, false, false), "Esc closed the page {page:?}");
+        assert!(!app.squad_free(), "and kept the squad");
+    }
+    assert!(app.squad_key(KeyCode::Escape, true, false, true));
+    assert!(app.squad_free(), "on the main card Esc lets go");
+    assert!(app.squad_key(KeyCode::Space, true, false, true));
+    assert!(!app.squad_free() && app.sq.as_ref().unwrap().follow, "Space takes the squad back");
+    // An alert with a place, far from the squad.
+    let (m, far) = {
+        let g = app.game.as_ref().unwrap();
+        let m = g.middle(g.active.unwrap()).unwrap();
+        (m, (m.0 + 60.0 * g.world.scale(), m.1))
+    };
+    app.hud.alert("Raid coming", Some(far), theme::WARN);
+    assert!(app.squad_key(KeyCode::Space, true, false, true));
+    let c = app.camera.focus();
+    // (The camera stops at the map's edge, so near it, not on it.)
+    assert!((c.0 - far.0).hypot(c.1 - far.1) < 0.5 * (m.0 - far.0).hypot(m.1 - far.1), "Space looked at the alert: camera {c:?}, alert {far:?}");
+    assert!(!app.sq.as_ref().unwrap().follow);
+    assert!(app.squad_key(KeyCode::Space, true, false, true));
+    assert!(app.sq.as_ref().unwrap().follow, "again: back to the squad");
+    for _ in 0..240 {
+        app.squad_frame(dt);
+    }
+    let c = app.camera.focus();
+    assert!((c.0 - m.0).hypot(c.1 - m.1) < (c.0 - far.0).hypot(c.1 - far.1), "the camera came back to the squad: {c:?}");
+}
+
+/// A mouse button on the world, routed as the window's events route one
+/// past the HUD: the squad mode first, then the controls (their box).
+fn world_button(app: &mut App, b: Button, down: bool) {
+    if app.squad_button(b, down) {
+        return;
+    }
+    let units = app.units();
+    for c in app.controls.button(b, down, &units, &mut app.camera, None) {
+        if let UiCommand::Select(picked) = c {
+            app.squad_picked(&picked);
+        }
+    }
+}
+
+/// A left drag on the world from `a` to `b`, screen pixels.
+fn drag(app: &mut App, a: (f32, f32), b: (f32, f32)) {
+    app.controls.cursor = Some(a);
+    world_button(app, Button::Left, true);
+    app.controls.cursor = Some(b);
+    world_button(app, Button::Left, false);
+}
+
+/// **A drag picks squads** (owner 2026-11-21 06:53Z: "add click and drag
+/// to select multiple squads"). With none commanded a plain drag, with one
+/// Ctrl + drag, boxes squads; every squad in the box is commanded as one
+/// (`Cmd::Band`): one right click sends them all, their soldiers get the
+/// rings. A number, or Ctrl + a click on one, takes that squad alone; a
+/// plain drag with a squad commanded still fires, and Shift's box still
+/// splits.
+#[test]
+fn a_drag_commands_every_squad_in_its_box_as_one() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.game.as_mut().unwrap().bank = 1e6;
+    for _ in 0..5 {
+        app.game.as_mut().unwrap().apply(Cmd::Buy);
+    }
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    app.hud_event(HudEvent::SquadSplit).unwrap();
+    let live = app.game.as_ref().unwrap().live_squads();
+    assert_eq!(live.len(), 3, "{live:?}");
+    // A box round every soldier, on the screen.
+    let frame = |app: &mut App| {
+        let g = app.game.as_ref().unwrap();
+        let ps: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        let (x0, x1) = ps.iter().fold((f32::MAX, f32::MIN), |a, p| (a.0.min(p.0), a.1.max(p.0)));
+        let (y0, y1) = ps.iter().fold((f32::MAX, f32::MIN), |a, p| (a.0.min(p.1), a.1.max(p.1)));
+        app.camera.centre_on(((x0 + x1) / 2.0, (y0 + y1) / 2.0));
+        let pad = 3.0 * g.world.scale();
+        (app.camera.to_screen((x0 - pad, y0 - pad)), app.camera.to_screen((x1 + pad, y1 + pad)))
+    };
+    app.let_go();
+    app.squad_frame(dt);
+    let (a, b) = frame(&mut app);
+    drag(&mut app, a, b);
+    let g = app.game.as_ref().unwrap();
+    let q = g.active.expect("the box took command");
+    assert!(!app.squad_free());
+    assert_eq!(q, live[0], "the lowest leads");
+    assert_eq!(g.linked(q), live, "all three are commanded as one");
+    assert!(live.iter().all(|&r| g.leads(r)), "none runs on its own");
+    app.squad_frame(dt);
+    let all: usize = live.iter().map(|&r| app.game.as_ref().unwrap().members(r).len()).sum();
+    assert_eq!(app.controls.selected.len(), all, "every picked soldier is ringed");
+    // One right click sends them all.
+    let to = {
+        let g = app.game.as_ref().unwrap();
+        let m = g.middle(q).unwrap();
+        (m.0 + 12.0 * g.world.scale(), m.1)
+    };
+    app.controls.cursor = Some(app.camera.to_screen(to));
+    world_button(&mut app, Button::Right, true);
+    world_button(&mut app, Button::Right, false);
+    let g = app.game.as_ref().unwrap();
+    for &r in &live {
+        let d = g.squads[r].dest.expect("each picked squad is sent");
+        assert!((d.0 - to.0).hypot(d.1 - to.1) <= 2.0 * squads_spread() * g.world.scale() + 1.0, "squad {r} sent to {d:?}, the click at {to:?}");
+    }
+    // Its number takes one alone, and the pick ends.
+    let other = live[2];
+    assert!(app.squad_key(digit_key(other), true, false, false));
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.linked(other)), (Some(other), vec![other]), "its number takes it alone");
+    assert!(!g.banded());
+    // Commanding one, a plain drag fires and picks nothing.
+    let (a, b) = frame(&mut app);
+    drag(&mut app, a, b);
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.banded()), (Some(other), false), "a plain drag with a squad commanded fires");
+    // The cursor says so: the crosshair while one is commanded, the pick's
+    // look over a squad with Ctrl held, the box while a Ctrl drag runs.
+    let s = { let g = app.game.as_ref().unwrap(); g.soldiers[g.members(live[1])[0]] };
+    app.controls.cursor = Some(app.camera.to_screen((s.x, s.y)));
+    assert_eq!(app.cursor_look(), cursor::Look::Aim);
+    app.ctrl = true;
+    assert_eq!(app.cursor_look(), cursor::Look::Select, "Ctrl over a squad: a click takes it");
+    app.controls.cursor = Some(a);
+    world_button(&mut app, Button::Left, true);
+    app.controls.cursor = Some(b);
+    assert_eq!(app.cursor_look(), cursor::Look::Boxing, "a Ctrl drag shows the box");
+    world_button(&mut app, Button::Left, false);
+    app.ctrl = false;
+    app.let_go();
+    assert!(app.squad_key(digit_key(other), true, false, false));
+    assert_eq!(app.game.as_ref().unwrap().active, Some(other), "with none commanded, a number takes command");
+    assert!(!app.squad_free());
+    // Ctrl + drag picks them again, led by the one commanded.
+    app.ctrl = true;
+    drag(&mut app, a, b);
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.linked(other)), (Some(other), live.clone()), "Ctrl + drag picks with a squad commanded");
+    // Ctrl + a click on one (on a soldier of it: the squads overlap)
+    // takes it alone.
+    let s = g.soldiers[g.members(live[1])[0]];
+    let at = app.camera.to_screen((s.x, s.y));
+    drag(&mut app, at, at);
+    app.ctrl = false;
+    let g = app.game.as_ref().unwrap();
+    assert_eq!((g.active, g.banded()), (Some(live[1]), false), "Ctrl + click takes one squad alone");
+    // Esc lets go and ends any pick.
+    app.ctrl = true;
+    drag(&mut app, a, b);
+    app.ctrl = false;
+    assert!(app.game.as_ref().unwrap().banded());
+    app.let_go();
+    assert!(!app.game.as_ref().unwrap().banded(), "letting go ends the pick");
+    // Shift + a click on a soldier splits nothing (only Shift's box does).
+    app.squad_key(KeyCode::Space, true, false, true);
+    let n = app.game.as_ref().unwrap().live_squads().len();
+    let s = { let g = app.game.as_ref().unwrap(); g.soldiers[g.members(live[0])[0]] };
+    let at = app.camera.to_screen((s.x, s.y));
+    app.shift = true;
+    drag(&mut app, at, at);
+    app.shift = false;
+    assert_eq!(app.game.as_ref().unwrap().live_squads().len(), n, "a Shift + click split a soldier off");
+}
+
+fn squads_spread() -> f32 {
+    slime_mould::mould::larder_world::BAND_SPREAD
+}
+
+/// The digit key of squad `q` (squad id 0 is 1).
+fn digit_key(q: usize) -> KeyCode {
+    [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9][q]
 }
 
 /// **One click resumes a half-built building** (owner 2026-11-15: "If you

@@ -349,13 +349,37 @@ fn compile(device: &wgpu::Device, bgl: &wgpu::BindGroupLayout, source: &str) -> 
     let scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
     let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(source.into()) });
     let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(bgl)], immediate_size: 0 });
-    let pipe = |entry_point: &str| {
-        device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
-    };
-    let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep"), pipe("drain")];
     if let Some(e) = crate::gpu::block_on(scope.pop()) {
         return Err(e.to_string());
     }
+    // The six pipelines at once, a thread each (GTX 1070, 11-21: one
+    // after another a look change took 3.1 s to show in the viewer). Each
+    // thread keeps its own error scope.
+    let made: Vec<Result<wgpu::ComputePipeline, String>> = std::thread::scope(|sc| {
+        let jobs: Vec<_> = ["base", "draw_marks", "compose", "draw_specks", "prep", "drain"]
+            .into_iter()
+            .map(|entry_point| {
+                let (module, layout) = (&module, &layout);
+                sc.spawn(move || {
+                    let scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
+                    let t = std::time::Instant::now();
+                    let p = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(layout), module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None });
+                    // `LARDER_COMPILE_MS=1`: each pipeline's ms (llvmpipe 11-21: base
+                    // 1166 of 1190; the other five 3 to 202).
+                    if std::env::var_os("LARDER_COMPILE_MS").is_some() {
+                        eprintln!("view compile: {entry_point} {:.0} ms", t.elapsed().as_secs_f64() * 1e3);
+                    }
+                    match crate::gpu::block_on(scope.pop()) {
+                        Some(e) => Err(e.to_string()),
+                        None => Ok(p),
+                    }
+                })
+            })
+            .collect();
+        jobs.into_iter().map(|j| j.join().unwrap_or_else(|_| Err("a view pipeline's compile panicked".into()))).collect()
+    });
+    let pipes: Vec<wgpu::ComputePipeline> = made.into_iter().collect::<Result<_, _>>()?;
+    let pipes: [wgpu::ComputePipeline; 6] = pipes.try_into().map_err(|_| "six view pipelines".to_string())?;
     Ok(Shaded(pipes))
 }
 
@@ -2247,6 +2271,99 @@ mod tests {
         assert!(spread(b) < 25.0 && b[2] > before[2] + 60.0, "bone is a pale grey, not gold: {b:?}");
     }
 
+    /// A mini-boss sitting on a crystal stands over it (exit test 2 pass,
+    /// 2026-11-21): a full crystal under a violet lump's members shows the
+    /// lump's violet, where under the same walkers not a lump's it shows
+    /// its cyan through the slime's film. Before, a lump there was a film
+    /// on the faces like the sheet (`GEM_THROUGH`), and a wanderer rooted
+    /// on its crystal was hidden under the glass: its violet side read
+    /// (141, 182, 255), pale cyan.
+    #[test]
+    fn a_mini_boss_on_a_crystal_is_drawn_over_it() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let (c, r) = ((32.0f32, 20.0f32), 12.0f32);
+        let a = r * 3f32.sqrt() / 2.0;
+        // Gold slime over the whole crystal and round it, 4 walkers a
+        // cell; on the left of x 32 they are lump 0's members.
+        let body = |x: usize, y: usize| (14..50).contains(&x) && (4..36).contains(&y);
+        let px: Vec<u8> = (0..w * h).flat_map(|i| if body(i % w, i / w) { [200u8, 150, 70, 255] } else { [12, 22, 26, 255] }).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let (mut look, mut walk, mut words) = (vec![0u32; w * h], Vec::new(), Vec::new());
+        let mut pile = vec![0u16; w * h];
+        let mut ground = vec![0u32; w * h];
+        let full = 100.0f32;
+        let mut charge = vec![0.0f32; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                let (dx, dy) = ((x as f32 + 0.5 - c.0).abs(), (y as f32 + 0.5 - c.1).abs());
+                if a - dx.max(0.5 * dx + 0.8660254 * dy) >= 0.0 {
+                    pile[y * w + x] = 1;
+                    ground[y * w + x] = 5 | 255 << 8;
+                    charge[y * w + x] = full;
+                }
+                if !body(x, y) {
+                    continue;
+                }
+                look[y * w + x] = 255 | (4 << 8);
+                for k in 0..4 {
+                    walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                    words.push(if x < 32 { 1u32 << 25 } else { 0 });
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let f32s = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &crate::gpu::u32_bytes(&ground));
+        let walk_b = buf("walkers", &f32s(&walk));
+        let charge_b = buf("charge", &f32s(&charge));
+        let mut nw = vec![0u32; 4];
+        nw.extend(&words);
+        let news = buf("news", &crate::gpu::u32_bytes(&nw));
+        let state = buf("state", &crate::gpu::u32_bytes(&[100u32, 0, 0, 0]));
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, (walk.len() / 4) as u32);
+        view.set_dense(Some((&news, &state)), 4, 0);
+        view.set_crystals(&[(c, r)], &pile);
+        view.set_charge(Some((&charge_b, &[full])));
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on(c);
+        view.set_lumps(&[LumpBody { at: (24.0, 20.0), look: LumpLook::Violet, strength: 1.0, remain: 1.0, fill: 0.0, held: 0.0 }]);
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        // Six cells square, half way in from the crystal's middle to its
+        // left and right flat sides.
+        let mean = |cx: f32, cy: f32| {
+            let (x0, y0) = cam.to_screen((cx - 1.5, cy - 1.5));
+            let (x1, y1) = cam.to_screen((cx + 1.5, cy + 1.5));
+            let mut s = [0.0f32; 3];
+            let mut n = 0.0;
+            for y in y0 as u32..y1 as u32 {
+                for x in x0 as u32..x1 as u32 {
+                    let p = pic.get_pixel(x, y).0;
+                    for k in 0..3 {
+                        s[k] += p[k] as f32;
+                    }
+                    n += 1.0;
+                }
+            }
+            s.map(|v| v / n)
+        };
+        let (boss, sheet) = (mean(c.0 - 0.5 * a, c.1), mean(c.0 + 0.5 * a, c.1));
+        assert!(boss[2] > boss[1] + 40.0 && boss[0] > boss[1], "the lump over the crystal is violet: {boss:?}");
+        assert!(sheet[1] > sheet[0] + 30.0 && sheet[2] > sheet[0] + 15.0, "the sheet over the crystal shows its cyan: {sheet:?}");
+    }
+
     /// A held lump (out on its errand, `LumpBody::held`) shows wherever
     /// its own members stand, even spread thin through a thick sheet: one
     /// walker in four is a member (a member a cell, a quarter of the
@@ -2905,9 +3022,12 @@ mod tests {
                 let [pb, pa] = shot(SlimeLook::Plain, c, ps);
                 let [tb, ta] = shot(SlimeLook::Threads, c, ps);
                 // Plain, the key light makes one flank brighter (about 70
-                // apart, either way); as a thread it is about 300 to 370.
-                assert!(tb > ta + 200, "zoom {zoom}: {name} as a thread is lit behind it: behind {tb}, ahead {ta}");
-                assert!(tb > pb + 150, "zoom {zoom}: {name}'s dash is brighter behind it than its plain speck: {pb} -> {tb}");
+                // apart, either way); as a thread it was about 300 to 370
+                // in the pale gold, and about 0.6 of that since the
+                // dashes' light is the deeper amber (`THREAD_RGB`, 11-21:
+                // 168 at zoom 12).
+                assert!(tb > ta + 120, "zoom {zoom}: {name} as a thread is lit behind it: behind {tb}, ahead {ta}");
+                assert!(tb > pb + 90, "zoom {zoom}: {name}'s dash is brighter behind it than its plain speck: {pb} -> {tb}");
                 assert!(ta < pa, "zoom {zoom}: {name}'s film ahead of it thins, as the dash holds one walker: {pa} -> {ta}");
             }
         }
@@ -3183,9 +3303,11 @@ mod tests {
             pic.get_pixel(sx as u32, sy as u32).0
         };
         let ground = at(&fresh, -5.0, 0.0);
-        let then = at(&fresh, -0.3, -0.6);
+        // 0.7 radii out, past the ink line round the body (11-21: at 0.6
+        // the line's edge reads 73 against the ground's 90).
+        let then = at(&fresh, -0.3, -0.7);
         assert!((0..3).all(|c| (then[c] as i32 - ground[c] as i32).abs() <= 4), "the ground beside its chest as it falls: {then:?}, the ground {ground:?}");
-        let beside = at(&spread, -0.3, -0.6);
+        let beside = at(&spread, -0.3, -0.7);
         assert!(beside[0] as i32 > beside[1] as i32 + 60 && beside[0] as i32 > beside[2] as i32 + 60, "blood there once spread: {beside:?}");
         let chest = at(&spread, -0.3, 0.0);
         assert!(chest[1] as i32 > chest[2] as i32 + 20 && chest[1] as i32 + 10 >= chest[0] as i32, "the chest our olive: {chest:?}");

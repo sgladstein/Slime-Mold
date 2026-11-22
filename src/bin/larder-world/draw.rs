@@ -107,11 +107,11 @@ pub(super) fn live_code(g: &Game<GpuWorld>, depth: &[u8], i: usize, old: u32, ch
 /// title, the round's numbers, and the score. `place` is the map.
 pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, t: f32, place: String) -> Ending {
     let (title, won, at) = match end {
-        End::MouldWiped(t) => ("The mould is wiped out", Some(true), t),
+        End::MouldWiped(t) => ("The slime is wiped out", Some(true), t),
         End::SquadWiped(t) => ("The squad is lost", Some(false), t),
-        End::Overrun(t) => ("The mould overran the larder", Some(false), t),
+        End::Overrun(t) => ("The slime overran the larder", Some(false), t),
         End::Cap(s) if s > 0.5 => ("Time: you took more of the crystals", Some(true), t),
-        End::Cap(s) if s < 0.5 => ("Time: the mould took more of the crystals", Some(false), t),
+        End::Cap(s) if s < 0.5 => ("Time: the slime took more of the crystals", Some(false), t),
         End::Cap(_) => ("Time: an even race", None, t),
     };
     let mut lines = Vec::new();
@@ -122,8 +122,10 @@ pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, t: f32, place: String) ->
     Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines, curve: g.curve.clone() }
 }
 
-/// A mission's end: the cause in the title (stars when won), the round's
-/// numbers, and how it ended. A run's planet adds its own (`App::model`).
+/// A mission's end: the cause in the title (stars when won), one sentence
+/// under it saying what happened with the numbers that matter (`lead`),
+/// the round's numbers, and for a starred end what earned each star
+/// (`star_line`). A run's planet adds its own line (`App::model`).
 pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
     let v = tr.verdict.expect("a verdict");
     use slime_mould::mould::campaign::Cause;
@@ -144,7 +146,83 @@ pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
         }
         .to_string()
     };
-    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()], curve: g.curve.clone() }
+    let lines = if v.stars > 0 { vec![star_line(tr, g, v)] } else { Vec::new() };
+    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: lead(g, v), tiles: end_tiles(g, v.at), lines, curve: g.curve.clone() }
+}
+
+/// What happened, one sentence with its numbers (Milestone 1's last look
+/// job, Direction 2026-11-22: "each saying what happened in a sentence
+/// with the numbers that matter"): when, the slime against its peak, and
+/// the soldiers. It took the place of two lines that said less: the
+/// slime tier's landing sentence ("It walls the crystals it holds in
+/// amber...", which the landing alert says) and `Tracker::cause_line`
+/// ("The mould took the larder at 0:39 with the bank empty (best 0% of
+/// the goal)"), which called the slime the mould under a title calling it
+/// the slime, and gave the bar's best but not the slime's size.
+fn lead(g: &Game<GpuWorld>, v: slime_mould::mould::campaign::Verdict) -> String {
+    use slime_mould::mould::campaign::Cause;
+    let at = clock(v.at);
+    let peak = g.peak.max(g.mould);
+    let (left, top) = (walkers(g.mould), walkers(peak));
+    let share = format!("{:.0}%", 100.0 * g.mould as f32 / peak.max(1) as f32);
+    let n = g.soldiers.len();
+    let lost = g.soldiers.iter().filter(|s| !s.alive).count();
+    let with = match lost {
+        0 => format!("with none of your {n} soldiers lost"),
+        k if k == n => format!("with all {n} of your soldiers lost"),
+        k => format!("with {k} of your {n} soldiers lost"),
+    };
+    match v.cause {
+        Cause::Goal if g.mould == 0 => format!("You wiped out the slime in {at}, from a peak of {top} walkers, {with}."),
+        Cause::Goal => format!("You broke the slime in {at}, down to {left} of its {top} walkers, {with}."),
+        Cause::Cap => format!("The clock reached {at} with the slime still {left} walkers strong, {share} of its {top} peak."),
+        Cause::SquadWiped => format!("Your last soldier fell at {at}, with the slime {left} walkers strong, {share} of its {top} peak."),
+        Cause::Overrun => format!("The slime reached the larder at {at} with no food in the bank to fight it off, {left} walkers strong, {share} of its {top} peak."),
+        Cause::Stuck => {
+            let from = clock((v.at - slime_mould::mould::campaign::STUCK_END).max(0.0));
+            format!("From {from} to {at} there was no food to buy a soldier or fire a shot, with the slime {left} walkers strong.")
+        }
+        Cause::MouldWiped => format!("The slime is gone at {at}, but this mission's goal was the squad's, and it fell short at {:.0}%.", 100.0 * v.best),
+    }
+}
+
+/// What earned each star and what the missing ones ask for ("2 stars:
+/// the goal, in under 10:00; 2 or fewer soldiers lost earns the third").
+/// The stars are the goal, the speed (`Rules::par`, else four fifths of
+/// the cap) and the mission's bonus, as `Tracker::update` gives them.
+fn star_line(tr: &Tracker, g: &Game<GpuWorld>, v: slime_mould::mould::campaign::Verdict) -> String {
+    use slime_mould::mould::campaign::{two_stars, Bonus, Cause};
+    let of = |n: u8| format!("{n} star{}", if n == 1 { "" } else { "s" });
+    if v.cause != Cause::Goal {
+        // A held-on or squad-goal end graded by the bar: half the goal.
+        return format!("{}: the goal half met ({:.0}%)", of(v.stars), 100.0 * v.best);
+    }
+    let par = if g.rules.par > 0.0 { g.rules.par } else { two_stars(g.rules.cap) };
+    let quick = v.at < par;
+    let bonus = v.stars as i32 - 1 - i32::from(quick) > 0;
+    let fast = format!("in under {}", clock(par));
+    let extra = match tr.mission.bonus {
+        Some(Bonus::LoseAtMost(k)) => Some(format!("{k} or fewer soldiers lost")),
+        Some(Bonus::StolenAtMost(f)) => Some(format!("{f:.0} or less food stolen")),
+        None => None,
+    };
+    let mut got = vec!["the goal".to_string()];
+    let mut miss = Vec::new();
+    if quick { got.push(fast) } else { miss.push(fast) }
+    if let Some(e) = extra {
+        if bonus { got.push(e) } else { miss.push(e) }
+    }
+    let mut line = format!("{}: {}", of(v.stars), got.join(", "));
+    if !miss.is_empty() {
+        let next = if v.stars == 1 && miss.len() == 2 { "the other two" } else if v.stars == 1 { "the second" } else { "the third" };
+        line += &format!("; {} earn{} {next}", miss.join(" and "), if miss.len() == 1 { "s" } else { "" });
+    }
+    line
+}
+
+/// Game seconds as the HUD's clock ("4:07").
+fn clock(t: f32) -> String {
+    format!("{}:{:02}", t as u32 / 60, t as u32 % 60)
 }
 
 /// The end screen's numbers (Look and interface, 2026-11-18): how long
@@ -167,7 +245,11 @@ fn end_tiles(g: &Game<GpuWorld>, at: f32) -> Vec<(String, String)> {
 /// Walkers as the top bar counts them from 10,000 ("42.3k"), else whole
 /// ("1,558").
 fn walkers(n: usize) -> String {
-    if n >= 10_000 {
+    // From 100,000 whole thousands: the last planet's "153.9k of 180.5k"
+    // ran out of its tile (end screens, 2026-11-22).
+    if n >= 100_000 {
+        format!("{}k", (n as f32 / 1000.0).round())
+    } else if n >= 10_000 {
         thousands(n)
     } else {
         grouped(n)
@@ -280,7 +362,7 @@ pub(super) fn building_colour(k: Kind) -> Option<[u8; 4]> {
 
 pub(super) fn crystal_name(i: usize) -> String {
     if i == 0 {
-        "The mould's home crystal".into()
+        "The slime's home crystal".into()
     } else {
         format!("Crystal {i}")
     }
@@ -1079,8 +1161,16 @@ impl App {
                 head = (b.at.0 + side.0 * near(out), b.at.1 + side.1 * near(out));
                 let back = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
                 let tail = (back.0 + side.0 * near(out - len), back.1 + side.1 * near(out - len));
-                let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
-                self.marks.streak(head, tail, core, glow, look.core);
+                // A shot still crossing its own squad is dimmed (exit test
+                // 2 pass, 11-21): with 40 soldiers the back ranks' comets
+                // lay between every front-rank soldier at zoom 12, a field
+                // of streaks over the squad that hid the hits at the
+                // slime's edge. It brightens to full as it clears them.
+                let crowd = g.soldiers.iter().filter(|o| o.alive && !std::ptr::eq(*o, s) && (o.x - head.0).hypot(o.y - head.1) < IN_SQUAD * body_r).count();
+                let keep = 1.0 - IN_SQUAD_DIM * ((crowd as f32 - 1.0) / 2.0).clamp(0.0, 1.0);
+                let glow = [look.glow[0], look.glow[1], look.glow[2], ((if quiet { 90.0 } else { 235.0 }) * keep) as u8];
+                let c = look.core;
+                self.marks.streak(head, tail, core, glow, [(c[0] as f32 * keep) as u8, (c[1] as f32 * keep) as u8, (c[2] as f32 * keep) as u8, c[3]]);
             } else {
                 let tail = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
                 let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
@@ -1497,7 +1587,7 @@ impl App {
                     ("Gun".into(), g.gun(s.squad as usize).title()),
                     ("Range".into(), format!("{:.0} cells", g.gun_range(s.squad as usize))),
                     ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", g.gun(s.squad as usize).every()) }),
-                    ("Mould on it".into(), format!("{}", s.touching)),
+                    ("Slime on it".into(), format!("{}", s.touching)),
                     ("Tools held".into(), format!("{} / {}", g.kit.held(k), g.kit.rules.carry_max)),
                 ],
                 note: None,
@@ -1549,6 +1639,9 @@ impl App {
         }
         let any = !sel.is_empty();
         let squads = self.sq.is_some();
+        // The commanded squad's device slot (and those commanded with it):
+        // seconds left, the cooldown it was set to (`Game::device_ready_in`).
+        let device_slot = g.active.filter(|_| squads).map(|q| g.device_ready_in(q));
         let stance = sel.first().map(|&k| g.soldiers[k].stance).filter(|&f| sel.iter().all(|&k| g.soldiers[k].stance == f));
         let need = |cost: f32| (g.bank < cost).then(|| format!("Need {:.0} more food", cost - g.bank));
         let no_sel = || Some(if squads { "Take command of a squad first".to_string() } else { "Select soldiers first".to_string() });
@@ -1580,7 +1673,7 @@ impl App {
             None => "Fire",
         };
         let fire_about = format!(
-            "Click to cycle what the soldiers shoot by themselves: hold fire (nothing), defend (only mould within {:.0} cells, on a crystal it works or on what it guards; the default) and free fire (the thickest mould in reach, {:.0} cells{}). Z, X and C pick one.",
+            "Click to cycle what the soldiers shoot by themselves: hold fire (nothing), defend (only slime within {:.0} cells, on a crystal it works or on what it guards; the default) and free fire (the thickest slime in reach, {:.0} cells{}). Z, X and C pick one.",
             r.defend,
             g.gun_range(sel.first().map_or(0, |&k| g.soldiers[k].squad as usize)),
             if r.price > 0.0 { format!("; every shot costs {:.0} food", r.price) } else { String::new() }
@@ -1596,14 +1689,14 @@ impl App {
         let mode = sel.first().map(|&k| mode_of(k)).filter(|&f| sel.iter().all(|&k| mode_of(k) == f));
         let held = any && sel.iter().all(|&k| g.soldiers[k].stance == Stance::HoldFire);
         let mut cmds = vec![
-            Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Walk there, stopping to fire freely at any mould in reach on the way. Click the core to attack it: stand on it with no mould near for {:.0} s and it can grow no more. Shift queues it.", r.core_secs), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack-move", KeyCode::KeyA) },
+            Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Walk there, stopping to fire freely at any slime in reach on the way. Click the core to attack it: stand on it with no slime near for {:.0} s and it can grow no more. Shift queues it.", r.core_secs), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack-move", KeyCode::KeyA) },
             Command { ready: any, why_not: no_sel(), about: "Drop the order and stand still; still fires by its stance.".into(), ..Command::new(STOP, (0, 1), Icon::Stop, "Stop", KeyCode::KeyS) },
             Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Go to a crystal, hold it, and carry its charge to the larder, {:.0} food a load. Right-click on a crystal does the same.", r.carry), ..Command::new(HARVEST, at((0, 2), (0, 2)), Icon::Crystal, "Harvest a crystal", KeyCode::KeyG) },
             Command {
                 target: Target::Point { radius: r.guard_r * sc },
                 ready: any,
                 why_not: no_sel(),
-                about: format!("Click a spot, a building or a crystal: the {} goes there and shoots mould coming onto it ({:.0} cells round a spot, {:.0} past a crystal's or a building's edge), on top of its own defence, till it gets another order. Not on hold fire.", if squads { "squad" } else { "soldier" }, r.guard_r, GUARD_RIM),
+                about: format!("Click a spot, a building or a crystal: the {} goes there and shoots slime coming onto it ({:.0} cells round a spot, {:.0} past a crystal's or a building's edge), on top of its own defence, till it gets another order. Not on hold fire.", if squads { "squad" } else { "soldier" }, r.guard_r, GUARD_RIM),
                 ..Command::new(GUARD, at((0, 3), (0, 1)), Icon::Shield, "Guard", KeyCode::KeyF)
             },
             if squads {
@@ -1611,7 +1704,7 @@ impl App {
                     ready: any,
                     why_not: no_sel(),
                     about: format!(
-                        "Click to switch what the soldiers shoot by themselves: defend (only mould within {:.0} cells, on a crystal it works or on what it guards; the default) or free fire (the thickest mould in reach, {:.0} cells{}). Hold fire is its own button; switched here while held, they fire this way once it is let go.",
+                        "Click to switch what the soldiers shoot by themselves: defend (only slime within {:.0} cells, on a crystal it works or on what it guards; the default) or free fire (the thickest slime in reach, {:.0} cells{}). Hold fire is its own button; switched here while held, they fire this way once it is let go.",
                         r.defend,
                         g.gun_range(sel.first().map_or(0, |&k| g.soldiers[k].squad as usize)),
                         if r.price > 0.0 { format!("; every shot costs {:.0} food", r.price) } else { String::new() }
@@ -1640,16 +1733,29 @@ impl App {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
                 ready: g.bank >= r.soldier_cost && !full,
                 why_not: if full { Some(format!("The squad is at its most, {}", r.max_squad)) } else { need(r.soldier_cost) },
-                about: "A new soldier at the larder.".into(),
+                about: if squads { "A new soldier, at the side of the squad you command (or your first squad), firing as it does.".into() } else { "A new soldier at the larder.".into() },
                 ..Command::new(BUY, (1, 0), Icon::Recruit, "Buy a soldier", KeyCode::KeyB)
             },
             // Pump's main-card slot is Heal's in the squad mode (below,
             // 2026-11-21); there Pump is on the Build page only.
             pump((1, 1)),
             Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, (1, 3), Icon::Turret, "Build", KeyCode::KeyQ) },
-            Command {
-                about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
-                ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
+            match device_slot {
+                // The device slot's wait shows on the button that opens
+                // the page too, so it is seen without opening it.
+                // The seconds left go on the price line (the middle's
+                // "14s" ran over the button's name).
+                Some((wait, total)) => Command {
+                    cooldown: if wait > 0.0 { (wait / total.max(1e-3)).min(1.0) } else { 0.0 },
+                    cost: (wait > 0.0).then(|| format!("{:.0}s", wait.ceil())),
+                    cost_icon: Icon::Clock,
+                    about: "The squad's device slot: blast, det cord, mine, sleep gas, whichever the run has. One at a time, free; after each the slot recharges (the device's own time) before the next.".into(),
+                    ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
+                },
+                None => Command {
+                    about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
+                    ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
+                },
             },
         ];
         // The squad mode's Hold fire and Formation (owner 2026-11-21
@@ -1671,7 +1777,7 @@ impl App {
                 cost: Some(format!("{:.0}", r.wall_cost)),
                 ready: g.bank >= r.wall_cost,
                 why_not: need(r.wall_cost),
-                about: format!("A wall the mould has to wear through, slowly. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_cost),
+                about: format!("A wall the slime has to wear through, slowly. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_cost),
                 ..Command::new(WALL, (1, 2), Icon::Wall, "Wall", KeyCode::KeyV)
             });
             cmds.push(Command {
@@ -1727,11 +1833,11 @@ impl App {
             };
             cmds = vec![
                 form(F_BLOB, (0, 0), KeyCode::KeyZ, "A tight crowd round its middle: the default. Every gun near every other."),
-                form(F_SPREAD, (0, 1), KeyCode::KeyX, "The blob loosened to about twice its room: fewer soldiers in one bite of a surge, and fire spread over more of the mould. Wider through gaps."),
+                form(F_SPREAD, (0, 1), KeyCode::KeyX, "The blob loosened to about twice its room: fewer soldiers in one bite of a surge, and fire spread over more of the slime. Wider through gaps."),
                 form(F_LINE, (0, 2), KeyCode::KeyC, "Shoulder to shoulder across the way it faces (the cursor, for the squad you command), rows of eight: every gun has a clear line forward."),
-                form(F_WEDGE, (0, 3), KeyCode::KeyV, "A V with its point toward the cursor: a narrow front that pushes into the mould with guns down both sides."),
+                form(F_WEDGE, (0, 3), KeyCode::KeyV, "A V with its point toward the cursor: a narrow front that pushes into the slime with guns down both sides."),
                 form(F_COLUMN, (0, 4), KeyCode::KeyF, "Two abreast, front to back, facing where it walks: files through doors, bridges and gaps between rocks without bunching."),
-                form(F_RING, (0, 5), KeyCode::KeyG, "A circle facing out, for holding ground with mould on every side."),
+                form(F_RING, (0, 5), KeyCode::KeyG, "A circle facing out, for holding ground with slime on every side."),
                 Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 5), Icon::Close, "Back", super::squadmode::FORMATION) },
             ];
         }
@@ -1739,25 +1845,54 @@ impl App {
             let k = &g.kit;
             let kr = k.rules;
             let held: u32 = (0..g.soldiers.len()).filter(|&i| g.soldiers[i].alive).map(|i| k.held(i)).sum();
-            let tool = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, target: Target, price: f32, works: bool, about: String| Command {
-                target,
-                cost: Some(format!("{price:.0}")),
-                ready: works && held > 0 && g.bank >= price,
-                why_not: if !works { Some("Not on the GPU world yet".into()) } else if held == 0 { Some("No soldier holds a tool; they take them at the larder".into()) } else { need(price) },
-                about,
-                ..Command::new(id, slot, icon, name, key)
+            let device = device_slot;
+            let tool = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, target: Target, price: f32, works: bool, about: String| match device {
+                // The squad mode's device slot (`Cmd::Device`; owner
+                // 2026-11-21 06:55Z): free, its cooldown beside it, and the
+                // slot's wait on every button, since they share it.
+                Some((wait, total)) => {
+                    let cd = match id {
+                        T_BLAST => kr.blast_cd,
+                        T_CORD => kr.cord_cd,
+                        T_MINE => kr.mine_cd,
+                        T_GERM => kr.germ_cd,
+                        T_GAS => kr.gas_cd,
+                        _ => kr.mind_cd,
+                    };
+                    // Ready: the device's own cooldown on the price line;
+                    // cooling: the slot's seconds left there instead (in
+                    // the button's middle they ran over its name).
+                    Command {
+                        target,
+                        cost: Some(if wait > 0.0 { format!("{:.0}s", wait.ceil()) } else { format!("{cd:.0}s") }),
+                        cost_icon: Icon::Clock,
+                        ready: works && wait <= 0.0,
+                        cooldown: if wait > 0.0 { (wait / total.max(1e-3)).min(1.0) } else { 0.0 },
+                        why_not: if !works { Some("Not on the GPU world yet".into()) } else { (wait > 0.0).then(|| format!("The squad's device slot recharges: ready in {:.0} s", wait.ceil())) },
+                        about: format!("{about} The squad's one device slot: a soldier of the squad within {:.0} cells sets it off, free, then the slot recharges for {cd:.0} s before any device goes again.", kr.reach),
+                        ..Command::new(id, slot, icon, name, key)
+                    }
+                }
+                None => Command {
+                    target,
+                    cost: Some(format!("{price:.0}")),
+                    ready: works && held > 0 && g.bank >= price,
+                    why_not: if !works { Some("Not on the GPU world yet".into()) } else if held == 0 { Some("No soldier holds a tool; they take them at the larder".into()) } else { need(price) },
+                    about,
+                    ..Command::new(id, slot, icon, name, key)
+                },
             };
             cmds = vec![
-                tool(T_BLAST, (0, 0), Icon::Grenade, "Blast", KeyCode::KeyB, Target::Point { radius: kr.blast_r * sc }, kr.blast_price, true, format!("Kills the mould within {:.0} cells and leaves a crater it can't hold trail in for {:.0} s. The blast's alarm wakes and stirs the mould nearby. Thrown by a soldier holding a tool within {:.0} cells.", kr.blast_r, kr.crater_secs, kr.reach)),
-                tool(T_CORD, (0, 1), Icon::Burn, "Det cord", KeyCode::KeyC, Target::Line { width: 2.0 * kr.cord_r * sc }, kr.cord_price, true, format!("A line of small blasts, each with its crater: a cut the mould can't knit for {:.0} s. {:.0} food a cell, at most {:.0} cells.", kr.crater_secs, kr.cord_price, kr.cord_max)),
+                tool(T_BLAST, (0, 0), Icon::Grenade, "Blast", KeyCode::KeyB, Target::Point { radius: kr.blast_r * sc }, kr.blast_price, true, format!("Kills the slime within {:.0} cells and leaves a crater it can't hold trail in for {:.0} s. The blast's alarm wakes and stirs the slime nearby.{}", kr.blast_r, kr.crater_secs, if device.is_some() { String::new() } else { format!(" Thrown by a soldier holding a tool within {:.0} cells.", kr.reach) })),
+                tool(T_CORD, (0, 1), Icon::Burn, "Det cord", KeyCode::KeyC, Target::Line { width: 2.0 * kr.cord_r * sc }, kr.cord_price, true, format!("A line of small blasts, each with its crater: a cut the slime can't knit for {:.0} s.{} At most {:.0} cells.", kr.crater_secs, if device.is_some() { String::new() } else { format!(" {:.0} food a cell.", kr.cord_price) }, kr.cord_max)),
                 tool(T_MINE, (0, 2), Icon::Target, "Mine", KeyCode::KeyD, Target::Point { radius: kr.mine_r * sc }, kr.mine_price, true, format!("Goes off as a blast when {} walkers stand within {:.0} cells of it.", k.mine_trigger(g), kr.mine_r)),
-                tool(T_GERM, (0, 3), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the mould within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
-                tool(T_GAS, (0, 4), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the mould within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
+                tool(T_GERM, (0, 3), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the slime within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
+                tool(T_GAS, (0, 4), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the slime within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
                 // Provoke and Still (the simulation-use plan's B1 and B2,
                 // 2026-11-17): test devices for the Mind statuses the gun
                 // cards will cast; runs leave them out (`run_hidden`).
-                tool(T_PROVOKE, (1, 2), Icon::Alert, "Provoke", KeyCode::KeyX, Target::Point { radius: kr.mind_r * sc }, kr.provoke_price, true, format!("The mould within {:.0} cells hears no news of food for {:.0} s: after 5 s it believes it is cut off, greys and charges the nearest soldier, or runs for a crystal.", kr.mind_r, kr.provoke_secs)),
-                tool(T_STILL, (1, 3), Icon::Hold, "Still", KeyCode::KeyZ, Target::Point { radius: kr.mind_r * sc }, kr.still_price, true, format!("The mould within {:.0} cells stops charging for {:.0} s: no surge, panic or raid. It eats nothing meanwhile, so held long it starves and greys.", kr.mind_r, kr.still_secs)),
+                tool(T_PROVOKE, (1, 2), Icon::Alert, "Provoke", KeyCode::KeyX, Target::Point { radius: kr.mind_r * sc }, kr.provoke_price, true, format!("The slime within {:.0} cells hears no news of food for {:.0} s: after 5 s it believes it is cut off, greys and charges the nearest soldier, or runs for a crystal.", kr.mind_r, kr.provoke_secs)),
+                tool(T_STILL, (1, 3), Icon::Hold, "Still", KeyCode::KeyZ, Target::Point { radius: kr.mind_r * sc }, kr.still_price, true, format!("The slime within {:.0} cells stops charging for {:.0} s: no surge, panic or raid. It eats nothing meanwhile, so held long it starves and greys.", kr.mind_r, kr.still_secs)),
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(T_BACK, (1, 4), Icon::Close, "Back", KeyCode::KeyE) },
             ];
             cmds.extend(road);
@@ -1770,9 +1905,9 @@ impl App {
             // the switch and Back below. Cancel a build left it: click the
             // building instead (`App::building_sel`).
             cmds = vec![
-                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food a walker.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest slime within {:.0} cells every {:.1} s. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food a walker.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
                 pump((0, 1)),
-                place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest mould it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit mould within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
+                place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest slime it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit slime within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
                 Command {
                     target: Target::Line { width: r.wall_width * sc },
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
@@ -1839,6 +1974,15 @@ impl App {
         // dimmed, with where to get it.
         if let Some(run) = &self.args.run {
             cmds.retain(|c| !run_hidden(c.id));
+            // With no tool bought yet (a run's planet 1) the Tools button
+            // stays and opens the page of locks: #660 (11-21) hid it, and
+            // the owner read that as Tools gone from the card in runs
+            // (2026-11-22 04:39Z: "we lost access to tool in the menu").
+            if [T_BLAST, T_CORD, T_MINE, T_GAS].iter().all(|&id| run_lock(id).is_some_and(|k| !run.has(k))) {
+                if let Some(c) = cmds.iter_mut().find(|c| c.id == TOOLS_PAGE) {
+                    c.about = "The squad's devices: blast, mine, det cord, sleep gas. None unlocked yet in this run: the shop between planets sells them.".into();
+                }
+            }
             for c in &mut cmds {
                 // A run has no sirens (`run_hidden`): the switch is the
                 // lures' alone.
@@ -1975,26 +2119,40 @@ impl App {
             if let (Some(r), Some(v)) = (&self.args.run, tr.verdict) {
                 use slime_mould::mould::run;
                 let last = r.depth >= run::PLANETS;
-                // A run's planet: which, its slime and what that slime
-                // does to you (`run::does_to_you`, the line the landing
-                // alert says), so the end names what happened to you.
+                // A run's planet: which, and its slime. The slime's own
+                // sentence (`run::does_to_you`) sat under the title until
+                // 2026-11-22; the landing alert says it, and the card's
+                // sentence is now what happened (`lead`).
                 let tier = r.level().tier;
                 end.place = format!("Planet {} of {} · {} · {}", r.depth, run::PLANETS, r.planet().name, title_case(tier.name()));
-                end.says = run::does_to_you(tier).says.to_string();
                 // A stalemate's limit keeps its own title ("The slime held
                 // on"): the run goes on, but the planet is not freed.
                 if v.stars > 0 && v.cause != slime_mould::mould::campaign::Cause::Cap {
                     end.title = if last { "The home world is free".into() } else { format!("Planet {} freed", r.depth) };
                 }
                 let (label, line) = match (v.stars > 0, last) {
-                    (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
+                    (true, true) => {
+                        // The run's stars: the planets before (`Run::won`
+                        // adds this one after the card) and this one's.
+                        let stars: u32 = r.stars.iter().map(|&s| s as u32).sum::<u32>() + v.stars as u32;
+                        ("The home world is free", format!("The run is won: all {} planets freed, {stars} of {} stars", r.depth, 3 * r.depth))
+                    }
                     (true, false) => {
                         // Starfall and boss cores (`Game::starfall`) on top of the win's.
                         let (won, found) = (run::reward(r.depth, v.stars), g.starfall.earned());
                         let line = if found > 0 { format!("+{won} points for the planet, +{found} from starfall and cores ({} now)", r.points + won + found) } else { format!("+{won} points for the shop ({} now)", r.points + won) };
                         ("On to the shop", line)
                     }
-                    (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
+                    (false, _) => {
+                        let freed = r.depth - 1;
+                        let stars: u32 = r.stars.iter().map(|&s| s as u32).sum();
+                        let line = match freed {
+                            0 => format!("The run ends on planet 1 of {}", run::PLANETS),
+                            1 => format!("The run ends on planet 2 of {}, after 1 planet freed ({stars} of 3 stars)", run::PLANETS),
+                            f => format!("The run ends on planet {} of {}, after {f} planets freed ({stars} of {} stars)", r.depth, run::PLANETS, 3 * f),
+                        };
+                        ("End the run", line)
+                    }
                 };
                 end.lines.push(line);
                 m.carry_on = Some(label.into());
@@ -2053,6 +2211,11 @@ impl App {
         let Some(q) = g.active else { return Vec::new() };
         let Some(sq) = g.squads.get(q) else { return Vec::new() };
         let members = g.members(q);
+        // A squad wiped out stays `active` (the HUD read "0 squads" over a
+        // strip of "fire: mixed, 0 tools" at a loss, 11-21): nothing to say.
+        if members.is_empty() {
+            return Vec::new();
+        }
         let mut out = vec![SquadFact {
             icon: Icon::Group,
             text: format!("{} formation", sq.formation.name()),
@@ -2202,12 +2365,31 @@ impl App {
             (T_CORD, Some(f)) => ((f.0 + at.0) / 2.0, (f.1 + at.1) / 2.0),
             _ => at,
         };
-        let (k, near) = g.kit.thrower(g, land)?;
+        // The squad mode's device slot (`Cmd::Device`, 2026-11-21): the
+        // thrower is the nearest soldier of the squad whose slot goes (the
+        // one you command first, then those commanded with it), free, and
+        // the slot may be recharging.
+        let squad = g.active.filter(|_| g.rules.squads);
+        let (k, near) = match squad {
+            Some(q) => {
+                let mut order = g.linked(q);
+                order.sort_by_key(|&r| r != q);
+                let ready = |r: &usize| g.device_wait(*r) <= 0.0;
+                let r = order.iter().copied().filter(ready).find(|&r| g.kit.squad_thrower(g, r, land).is_some_and(|x| x.1)).or_else(|| order.iter().copied().find(ready)).unwrap_or(q);
+                g.kit.squad_thrower(g, r, land)?
+            }
+            None => g.kit.thrower(g, land)?,
+        };
+        let wait = squad.map_or(0.0, |q| g.device_ready_in(q).0);
+        let price = if squad.is_some() { 0.0 } else { price };
+        let food = |p: f32| if squad.is_some() { String::new() } else { format!("{p:.0} food, ") };
         let s = g.soldiers[k];
         let reach = kr.reach * sc;
         let d = (s.x - land.0).hypot(s.y - land.1);
         let (ok, note) = if !near {
             (false, format!("{:.0} cells out of reach", ((d - reach) / sc).max(1.0)))
+        } else if wait > 0.0 {
+            (false, format!("device ready in {:.0} s", wait.ceil()))
         } else if let (T_CORD, Some(f)) = (id, from) {
             let len = (f.0 - at.0).hypot(f.1 - at.1);
             if len > kr.cord_max * sc {
@@ -2215,16 +2397,16 @@ impl App {
             } else if g.bank < price {
                 (false, format!("{price:.0} food, {:.0} short", price - g.bank))
             } else {
-                (true, format!("{price:.0} food, release to lay"))
+                (true, format!("{}release to lay", food(price)))
             }
         } else if id == T_CORD {
-            (true, format!("{:.0} food a cell, drag to lay", kr.cord_price))
+            (true, if squad.is_some() { "drag to lay".to_string() } else { format!("{:.0} food a cell, drag to lay", kr.cord_price) })
         } else if !g.world.open(land.0, land.1) {
             (false, "not on open ground".to_string())
         } else if g.bank < price {
             (false, format!("{price:.0} food, {:.0} short", price - g.bank))
         } else {
-            (true, format!("{price:.0} food, click to throw"))
+            (true, format!("{}click to throw", food(price)))
         };
         let at = (land != at).then_some(land);
         Some((Throw { from: (s.x, s.y), from_r: 1.3 * soldier_r(g, self.camera.zoom), reach, tint, at, rings }, ok, note))
@@ -2275,14 +2457,14 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         // The owner's notes (11-14 15:06Z): rate of fire, reduce cost, disrupt scent.
         C::Rate => (Icon::Fast, CardKind::Flight, format!("Fires {:.0}x as often.", 1.0 + w.rate_card)),
         C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less budget.", rounds::THRIFT)),
-        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the scent slime follows to food.".into()),
+        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the slime's scent and calm what they hit.".into()),
         // The element family's second card (2026-11-17).
         C::Tinder => (Icon::Tinder, CardKind::Flight, "Bullets lay a line of dry brush that fire runs along.".into()),
         // The carriers (2026-11-16, step B of the gun-system review).
         C::Trigger => (Icon::Carry, CardKind::Trigger, "It carries the one after it, let out where it hits.".into()),
         C::Expire => (Icon::CarryStop, CardKind::Trigger, "It carries the one after it, let out where it stops.".into()),
         C::Multicast => (Icon::Multicast, CardKind::Trigger, "It fires the one after it too, in the same shot.".into()),
-        C::Seek => (Icon::Seek, CardKind::Flight, "Bullets that just miss strike slime beside them.".into()),
+        C::Seek => (Icon::Seek, CardKind::Flight, "Bullets fly on past their aim and strike slime beside them.".into()),
         // The shove cards (owner 2026-11-16 05:11Z: "corral and push the
         // slime onto areas. Into a kill zone").
         // One card since 2026-11-17 (Heave and Corral merged).
@@ -2446,6 +2628,11 @@ fn dim_crowded(lights: &mut [Light]) {
     }
 }
 
+/// A bullet's streak is dimmed by up to `IN_SQUAD_DIM` while two or more
+/// of its own side's soldiers (besides its shooter) stand within
+/// `IN_SQUAD` body radii of its head (exit test 2 pass, 11-21).
+const IN_SQUAD: f32 = 2.5;
+const IN_SQUAD_DIM: f32 = 0.65;
 /// Seconds of a bullet's flight its tracer shows.
 const TRACE_SECS: f32 = 0.08;
 /// A mortar shell's arc: its peak lifts it this share of its flight's

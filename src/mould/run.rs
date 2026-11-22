@@ -280,6 +280,15 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// (`set=strikers=1`, or `FIRST_PLANET` moved back); a 0 here would leave
 /// them on and doing nothing (the bug check's note on #606).
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+/// The slime's room to regrow over its landing, by planet
+/// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
+/// last two playtests"). Every planet at the 1.5 the owner's "in between"
+/// asked for (his 11-21 game regrew to 2, his 11-22 one to 1). A row of
+/// its own so planet 1 can move alone: Squad's #708 (free fire shoots
+/// what is near first) made planet 1 easier in the gun lab (36 soldiers
+/// lived against 22), and Direction's plan is to raise planet 1's alone
+/// (to about 2) if his next planet 1 log still reads easy.
+const CEILING_GROW: [f32; 8] = [1.5; 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -342,6 +351,14 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// breakaway or a cut-off walker making for food steps only where it
 /// touches others (engine.wgsl's `tethered`); a raid goes as one body by
 /// its march (`RaidRules::march`).
+///
+/// **The slime eats without emptying a crystal** (`crystal_keep`,
+/// 2026-11-21, the thread "Make the slime a more interesting enemy"; the
+/// owner, 11-21 06:30Z: "crystals never run out from eating or pumping,
+/// and only your squad can empty one by draining it ... this 100%"). Walkers
+/// still take their bite and the crystal keeps its charge; what they ate is
+/// counted on the GPU (`pilesum`) so the surge clock (`time_surges`) runs
+/// as before.
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
     vec![
@@ -358,6 +375,20 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         // these planets but the Sporer's, which already has them.
         ("spore_reach", "36".to_string()),
         ("spore_land", "1".to_string()),
+        // Crystals never run out from the slime's eating (the owner,
+        // 11-21 06:30Z): only the squad empties one, by draining it.
+        ("crystal_keep", "1".to_string()),
+        // A hit's hole holds for the first half of its crater (about
+        // 1 s) before it closes from the rim (`crater_shut`, 11-21, the
+        // Look lane's A2; the owner, 11-12: "a bigger and bigger hole that
+        // doesn't refill while being shot at").
+        ("crater_shut", "0.5".to_string()),
+        // A mini-boss's walkers flinch out of a fresh hit for the first
+        // half of its crater, as long as the hole is shut (`boss_flinch`,
+        // 11-21, Direction's job from the Look lane's exit test 2; a
+        // quarter dented the wanderer less, and the whole crater blew it
+        // into specks that never regrouped).
+        ("boss_flinch", "0.5".to_string()),
     ]
 }
 
@@ -376,6 +407,12 @@ pub const TETHER: u32 = 2;
 /// (`Reports/lab-steering-2026-11-17`). Those were measured with the far
 /// smell off; here both are on.
 pub const LURE_PULL: f32 = 10.0;
+
+/// **The slime's least walkers a covered crystal cell** (`Rules::ceiling`,
+/// 2026-11-21; `larder_world/ceiling.rs`): its ceiling is the crystal it
+/// covers times its landing density, at least this. On planet 1 (run seeds
+/// 1-3) it landed with 14 to 21 a cell, so this lifts only a thin landing.
+pub const CEILING: f32 = 12.0;
 
 /// **Game rules every planet's slime plays by** (`Rules::set` names), set
 /// in `Run::rules` before the tier's own (`does_to_you`). Today one:
@@ -438,7 +475,7 @@ pub const LURE_PULL: f32 = 10.0;
 /// or more, every walker left gathers into one armoured heart on its heart
 /// crystal, which lunges at the nearest soldier every 20 s, until it is cut
 /// under 15% of the most it held or is 150 s old. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0)];
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING)];
 
 /// **The planet each of `ENEMY_RULES` first plays on** (2026-11-20, the
 /// thread "Pace threats across the planets"; the owner that night, after a
@@ -731,7 +768,7 @@ pub struct Item {
 /// (Lures, 150), which left planet 1 without it, so Direction made it free
 /// from the first planet (11-18 08:38Z). The window never locks it
 /// (`run_lock`), as it never locks the pump.
-pub const ITEMS: [Item; 18] = [
+pub const ITEMS: [Item; 19] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Shots a fifth wider; past the widest, they fire faster", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -739,6 +776,16 @@ pub const ITEMS: [Item; 18] = [
     Item { key: "squad", name: "Bigger landing", group: Group::Squad, about: "Two more soldiers land with you", max: 4, cost: 150, needs: None },
     Item { key: "bank", name: "Supply drop", group: Group::Squad, about: "Land with 500 more food in the bank", max: 4, cost: 100, needs: None },
     Item { key: "harvest", name: "Quick hands", group: Group::Squad, about: "Soldiers take a quarter more from a crystal each second", max: 3, cost: 100, needs: None },
+    // Fire resistance (the owner, 2026-11-22 07:40Z: "you should be able to
+    // upgrade fire resistance ... or even immunity"). Fire hurts only where
+    // the squad's own fire cards lit it (Torch, Tinder:
+    // `Rules::fire_hurt`), so this alone does nothing; it is the half of a
+    // fire deck that makes the deck safe, the owner's Noita rule (11-18: no
+    // single card is strong alone; strong builds are combinations). Halves
+    // fire's harm a level and the third level is immunity, 600 points in
+    // all, two to three planets' pay (`fireproof_share`; an immune squad
+    // also walks straight through fire, `Game::fire_via`).
+    Item { key: "fireproof", name: "Fireproof", group: Group::Squad, about: "Soldiers take half the harm from fire; at level 3, none", max: 3, cost: 100, needs: None },
     Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
     Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
     // The tree's first body (the turrets thread, owner 2026-11-17 00:47Z):
@@ -755,6 +802,16 @@ pub const ITEMS: [Item; 18] = [
     Item { key: "tools+", name: "Cheaper tools", group: Group::Tools, about: "Every tool costs a fifth less", max: 3, cost: 120, needs: None },
     Item { key: "draw", name: "More cards on offer", group: Group::Cards, about: "One more gun card on offer in every shop", max: 2, cost: 100, needs: None },
 ];
+
+/// The share of fire's harm (`Rules::fire_hurt`) a squad with `level`
+/// levels of Fireproof takes: half a level, none at the third (immune).
+pub fn fireproof_share(level: u8) -> f32 {
+    if level >= 3 {
+        0.0
+    } else {
+        0.5f32.powi(i32::from(level))
+    }
+}
 
 /// What the run owns at the start: walls (the plainest defence).
 pub const START: [&str; 1] = ["walls"];
@@ -784,6 +841,12 @@ pub const OFFER: usize = 3;
 /// payload cards (blast, gas, bomb) like any other.
 pub const AMMO_OFFER: usize = 2;
 
+/// The first depth whose shop sells the cards that only alarm the slime
+/// (the Flare bullet) or take the alarm away (Quiet): the first planet
+/// whose slime may answer an alarm (`tiers::params`: the Sleeper, Swarmer
+/// and Grudge walk to it, from planet 4; the planets before ignore it).
+pub const ALARM_FROM: u32 = 4;
+
 /// The shells a shop's bullet may carry at `depth`: plain, blast and gas
 /// from the start, the bomb and the germ from planet 4 (their old cards'
 /// rarity). The germ was never sold until 2026-11-16 ("the GPU world casts
@@ -801,7 +864,13 @@ pub const AMMO_OFFER: usize = 2;
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast];
     if depth >= power_from(2) {
-        v.extend([Shell::Gas, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Provoke, Shell::Still, Shell::Shatter, Shell::Flare, Shell::Torch]);
+        v.extend([Shell::Gas, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Provoke, Shell::Still, Shell::Shatter, Shell::Torch]);
+    }
+    // The flare kills nothing and only alarms, which no slime answers
+    // before `ALARM_FROM` (2026-11-22, exit test 5): sold before it, its
+    // ember burned on planets 1 to 3 and the slime walked on.
+    if depth >= ALARM_FROM {
+        v.push(Shell::Flare);
     }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ, Shell::Detonate]);
@@ -1114,6 +1183,7 @@ impl Run {
             // not the share, binds wherever the band is big (planet 1 run
             // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
+            r.ceiling_grow = CEILING_GROW[depth_index(self.depth)];
             let k = STRIKER_SHARE[depth_index(self.depth)];
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
@@ -1136,6 +1206,7 @@ impl Run {
         r.squad += 2 * self.level_of("squad") as usize;
         r.start_bank += 500.0 * l("bank");
         r.harvest *= 1.0 + 0.25 * l("harvest");
+        r.fire_hurt *= fireproof_share(self.level_of("fireproof"));
         let t = l("turret+");
         let p = l("pump+");
         let b = &mut r.build;
@@ -1158,6 +1229,14 @@ impl Run {
         k.cord_price *= f;
         k.gas_price *= f;
         k.germ_price *= f;
+        // The squad mode's device slot is free a throw (2026-11-21), so
+        // the same upgrade shortens its cooldowns instead.
+        k.blast_cd *= f;
+        k.mine_cd *= f;
+        k.cord_cd *= f;
+        k.gas_cd *= f;
+        k.germ_cd *= f;
+        k.mind_cd *= f;
     }
 
     /// The gun shown in the shop's gun slots (the edited loadout's), else
@@ -1500,6 +1579,14 @@ impl Run {
         // (`rounds::casts`), so they stay in.
         let has_bullet = owned.iter().any(|c| c.kind() == Kind::Payload);
         let pool: Vec<Card> = pool.into_iter().filter(|c| has_bullet || c.kind() != Kind::Trigger || matches!(c, Card::Delay | Card::Thick)).collect();
+        // Cards with nothing to act on yet are not sold (2026-11-22, exit
+        // test 5: in the gun lab's arena on planet 1 each played the very
+        // same game as no card). Thrift lowers the next card's cost, which
+        // counts only once a bullet card fills the budget; Quiet takes a
+        // blast's or flare's alarm away, which no slime answers before
+        // `ALARM_FROM` (the drifter, sprawler and trunk ignore alarm,
+        // `tiers::params`).
+        let pool: Vec<Card> = pool.into_iter().filter(|&c| (c != Card::Thrift || has_bullet) && (c != Card::Quiet || self.depth >= ALARM_FROM)).collect();
         let fresh: Vec<Card> = pool.iter().copied().filter(|c| !owned.contains(c)).collect();
         // The cards owned come back into the draw for the last card slot,
         // so a second loadout can buy its own copy (balance review,
@@ -1845,6 +1932,128 @@ impl Run {
     }
 }
 
+/// **The run's save file** (owner, 2026-11-22 04:40Z: "a run should always
+/// be autosaving and saving the run between closing the program", after a
+/// night's run was lost on closing the window; until then a run lived only
+/// in the window's memory and there was no save at all, Milestone 2's "save
+/// and resume" not yet built).
+///
+/// `key=value` lines, one per field, the cards by their text form
+/// (`Card::word`, as replays carry them) and the guns as
+/// `kind/depth/range/rate/spread/shots/budget/slots/grade` (`gun_word`;
+/// Rust prints an `f32` so it reads back exactly). Upgrades are saved by
+/// their key, not their place in `ITEMS`. A line it does not know is
+/// skipped and a missing one keeps `Run::new`'s value, and a card or an
+/// upgrade a later build renamed or removed is dropped with the rest kept,
+/// so a save outlives the builds `play.cmd` pulls between sittings. Only
+/// the head (`SAVE_HEAD`), the seed and the depth are required.
+///
+/// What it holds is the run in the shop, or as it landed on the planet
+/// being played: a planet's own state (the slime, the squads, the
+/// buildings) lives on the GPU and is not saved, so a run closed mid-planet
+/// lands on the same planet (the same seed, the same map) fresh.
+pub const SAVE_HEAD: &str = "larder-world run save 1";
+
+/// A gun's text form in a save (see `SAVE_HEAD`).
+pub fn gun_word(g: &Gun) -> String {
+    format!("{}/{}/{}/{}/{}/{}/{}/{}/{}", g.kind.key(), g.depth, g.range, g.rate, g.spread, g.shots, g.budget, g.slots, g.grade)
+}
+
+/// A gun from its text form (`gun_word`).
+pub fn gun_from_word(s: &str) -> Option<Gun> {
+    let w: Vec<&str> = s.split('/').collect();
+    if w.len() != 9 {
+        return None;
+    }
+    let f = |i: usize| w[i].parse::<f32>().ok().filter(|v| v.is_finite());
+    Some(Gun { kind: GunKind::parse(w[0])?, depth: w[1].parse().ok()?, range: f(2)?, rate: f(3)?, spread: f(4)?, shots: w[5].parse().ok()?, budget: w[6].parse().ok()?, slots: w[7].parse().ok()?, grade: f(8)? })
+}
+
+impl Run {
+    /// The run as its save file's text (`SAVE_HEAD`). The loadout panel's
+    /// state (`field`, `field_squad`) is the window's while it is open and
+    /// is not saved.
+    pub fn save_text(&self) -> String {
+        let words = |cs: &[Card]| cs.iter().map(|c| c.word()).collect::<Vec<_>>().join(" ");
+        let guns = |gs: &[Gun]| gs.iter().map(gun_word).collect::<Vec<_>>().join(" ");
+        let flag = |b: bool| if b { "1" } else { "0" };
+        let mut s = format!("{SAVE_HEAD}\n");
+        let mut put = |k: &str, v: String| s.push_str(&format!("{k}={v}\n"));
+        put("seed", self.seed.to_string());
+        put("depth", self.depth.to_string());
+        put("points", self.points.to_string());
+        put("owned", ITEMS.iter().zip(self.owned).filter(|(_, l)| *l > 0).map(|(it, l)| format!("{}:{l}", it.key)).collect::<Vec<_>>().join(" "));
+        put("cards", self.cards.iter().map(|(c, on)| format!("{}{}", if *on { "+" } else { "-" }, c.word())).collect::<Vec<_>>().join(" "));
+        put("offers", words(&self.offers));
+        put("guns", guns(&self.guns));
+        put("gun_offers", guns(&self.gun_offers));
+        // A loadout: its gun's index or `-`, then its cards, `,` between.
+        put("loadouts", self.loadouts.iter().map(|l| std::iter::once(l.gun.map_or("-".into(), |g| g.to_string())).chain(l.cards.iter().map(|c| c.word())).collect::<Vec<_>>().join(",")).collect::<Vec<_>>().join(" "));
+        put("editing", self.editing.to_string());
+        put("turret_loadout", self.turret_loadout.to_string());
+        put("stars", self.stars.iter().map(|s| s.to_string()).collect::<Vec<_>>().join(" "));
+        put("over", flag(self.over).into());
+        put("beaten", flag(self.beaten).into());
+        put("dev", flag(self.dev).into());
+        put("rerolls", self.rerolls.to_string());
+        s
+    }
+
+    /// A run from its save file's text (`save_text`), or why not.
+    pub fn from_save(text: &str) -> Result<Run, String> {
+        let mut lines = text.lines();
+        if lines.next().map(str::trim) != Some(SAVE_HEAD) {
+            return Err(format!("not a run save (its first line is not \"{SAVE_HEAD}\")"));
+        }
+        let kv: Vec<(&str, &str)> = lines.filter_map(|l| l.split_once('=')).map(|(k, v)| (k.trim(), v.trim())).collect();
+        let get = |k: &str| kv.iter().rev().find(|(n, _)| *n == k).map(|(_, v)| *v);
+        let seed: u64 = get("seed").and_then(|v| v.parse().ok()).ok_or("no seed")?;
+        let mut r = Run::new(seed);
+        r.depth = get("depth").and_then(|v| v.parse().ok()).filter(|d| (1..=PLANETS).contains(d)).ok_or("no depth, or one past the last planet")?;
+        let num = |k: &str| get(k).and_then(|v| v.parse::<u64>().ok());
+        let flag = |k: &str| get(k).is_some_and(|v| v == "1");
+        let list = |k: &str| get(k).map(|v| v.split_whitespace().collect::<Vec<_>>()).unwrap_or_default();
+        r.points = num("points").map_or(0, |v| v.min(u32::MAX as u64) as u32);
+        if get("owned").is_some() {
+            r.owned = [0; ITEMS.len()];
+            for w in list("owned") {
+                let Some((k, l)) = w.split_once(':') else { continue };
+                if let (Some(i), Ok(l)) = (ITEMS.iter().position(|it| it.key == k), l.parse::<u8>()) {
+                    r.owned[i] = l.min(ITEMS[i].max);
+                }
+            }
+        }
+        r.cards = list("cards").into_iter().filter_map(|w| Some((Card::from_word(w.get(1..)?)?, w.starts_with('+')))).collect();
+        r.offers = list("offers").into_iter().filter_map(Card::from_word).collect();
+        let guns: Vec<Gun> = list("guns").into_iter().filter_map(gun_from_word).collect();
+        if !guns.is_empty() {
+            r.guns = guns;
+        }
+        r.gun_offers = list("gun_offers").into_iter().filter_map(gun_from_word).collect();
+        let loadouts: Vec<Loadout> = list("loadouts")
+            .into_iter()
+            .map(|l| {
+                let mut parts = l.split(',');
+                let gun = parts.next().and_then(|g| g.parse::<usize>().ok()).filter(|&g| g < r.guns.len());
+                Loadout { gun, cards: parts.filter_map(Card::from_word).collect() }
+            })
+            .take(LOADOUTS_MAX)
+            .collect();
+        if !loadouts.is_empty() {
+            r.loadouts = loadouts;
+        }
+        let last = r.loadouts.len() - 1;
+        r.editing = num("editing").map_or(0, |v| (v as usize).min(last));
+        r.turret_loadout = num("turret_loadout").map_or(r.turret_loadout, |v| v as usize).min(last);
+        r.stars = list("stars").into_iter().filter_map(|v| v.parse().ok()).collect();
+        r.over = flag("over");
+        r.beaten = flag("beaten");
+        r.dev = flag("dev");
+        r.rerolls = num("rerolls").unwrap_or(0);
+        Ok(r)
+    }
+}
+
 /// A card's name in the shop: a rolled bullet's own ("Needle gas").
 fn card_title(c: Card) -> String {
     match c {
@@ -1880,6 +2089,12 @@ mod tests {
         };
         // Wherever the strikers can be on, their share and cap are not 0.
         assert!(STRIKER_SHARE.iter().all(|&k| k > 0.0), "a 0 share leaves strikers on and doing nothing");
+        // The slime's room to regrow reaches every planet's rules, at least
+        // its landing (under 1 a slime would start over its ceiling).
+        for d in 1..=8 {
+            assert_eq!(rules(d).ceiling_grow, CEILING_GROW[depth_index(d)], "planet {d}'s ceiling_grow");
+        }
+        assert!(CEILING_GROW.iter().all(|&g| g >= 1.0), "a growth under 1 starves the slime at landing");
         let p1 = rules(1);
         assert!(p1.heart.on && p1.unit_paths, "planet 1 keeps the heartbeat and charges round walls");
         assert!(!p1.fruit.on && !p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
@@ -1912,10 +2127,10 @@ mod tests {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" || k == "tether" {
+                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER, "planet {d}: {k}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
@@ -2004,6 +2219,30 @@ mod tests {
         let l = Run::new(1).level();
         let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\nrule par {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain, limit(0.6), par(1, 0.6));
         assert_eq!(Mission::parse(&text).unwrap(), l.mission);
+    }
+
+    /// Exit test 5 (2026-11-22): a card with nothing to act on is not
+    /// sold. No Quiet or Flare before `ALARM_FROM`, and no Thrift while the
+    /// run owns no bullet card.
+    #[test]
+    fn the_shop_holds_back_cards_with_nothing_to_act_on() {
+        assert!(!shells_at(ALARM_FROM - 1).contains(&Shell::Flare));
+        assert!(shells_at(ALARM_FROM).contains(&Shell::Flare));
+        let mut quiet = 0;
+        for seed in 1..=20 {
+            let mut r = Run::new(seed);
+            for d in 1..=ALARM_FROM + 1 {
+                r.depth = d;
+                for k in 0..5 {
+                    r.rerolls = k;
+                    r.restock();
+                    assert!(!r.offers.contains(&Card::Thrift), "seed {seed} depth {d}: a Thrift with no bullet owned");
+                    assert!(d >= ALARM_FROM || !r.offers.contains(&Card::Quiet), "seed {seed} depth {d}: a Quiet before the alarm");
+                    quiet += usize::from(r.offers.contains(&Card::Quiet));
+                }
+            }
+        }
+        assert!(quiet > 0, "Quiet is sold from ALARM_FROM");
     }
 
     /// Balance review, 2026-11-20: no carrier is sold while the run owns
@@ -2501,10 +2740,84 @@ mod tests {
         assert_eq!((r.turret_rack().slots, r.turret_rack().budget), (4, 8));
     }
 
+    /// **Fireproof** (owner, 2026-11-22 07:40Z: "upgrade fire resistance
+    /// ... or even immunity"): each level halves fire's harm and the third
+    /// is immunity, at 100, 200 and 300 points.
+    #[test]
+    fn fireproof_halves_fire_then_makes_the_squad_immune() {
+        let mut r = Run::new(1);
+        r.points = 10_000;
+        let k = ITEMS.iter().position(|i| i.key == "fireproof").unwrap();
+        let base = Rules::default().fire_hurt;
+        let hurt = |r: &Run| {
+            let mut rules = Rules::default();
+            r.rules(&mut rules);
+            rules.fire_hurt
+        };
+        assert_eq!(hurt(&r), base);
+        for (level, share, price) in [(1, 0.5, 100), (2, 0.25, 200), (3, 0.0, 300)] {
+            let before = r.points;
+            assert!(r.pick(Pick::Item(k)));
+            assert_eq!((r.level_of("fireproof"), before - r.points), (level, price));
+            assert_eq!(hurt(&r), base * share, "level {level}");
+        }
+        assert!(!r.pick(Pick::Item(k)), "three levels at most");
+    }
+
     /// **Loadouts** (owner, 2026-11-19 19:22Z): a gun and its cards; a
     /// gun or a card is in one loadout at a time; a loadout that loses its
     /// gun fits the turrets' rack and gives back what no longer fits; the
     /// field panel sells nothing and gives the panel's squad a loadout.
+    /// **A run saves and loads whole** (owner 2026-11-22 04:40Z, a run
+    /// lost on closing the window): a run that has shopped, won planets
+    /// and built loadouts reads back from its save text as it was, every
+    /// card kind and a rolled bullet and gun with it; a save from an older
+    /// or newer build keeps what it can read.
+    #[test]
+    fn a_run_saves_and_loads_whole() {
+        let mut r = Run::new(1_763_786_000);
+        r.points = 5_000;
+        r.restock();
+        for i in 0..ITEMS.len() {
+            r.pick(Pick::Item(i));
+        }
+        r.pick(Pick::Offer(0));
+        r.pick(Pick::Gun(0));
+        r.cards.extend(Card::ALL.into_iter().map(|c| (c, false)));
+        r.cards.push((Card::Ammo(Ammo::roll(7, 3)), false));
+        r.pick(Pick::NewLoadout);
+        let gas = r.cards.iter().position(|c| c.0 == Card::Gas).unwrap();
+        r.pick(Pick::Card(gas));
+        r.pick(Pick::Edit(0));
+        r.won(3);
+        r.won(1);
+        r.dev = true;
+        r.pick(Pick::DevReroll);
+        r.owned[1] = 2;
+        r.guns.push(Gun::roll(3, 2));
+        r.gun_offers.push(GunKind::Long.average_at(3));
+        r.loadouts.push(Loadout { gun: Some(r.guns.len() - 1), cards: vec![Card::Blast, Card::Ammo(Ammo::roll(9, 2))] });
+        r.offers.push(Card::Pierce);
+        assert!(r.owned.iter().any(|&l| l > 1) && r.guns.len() > 1 && r.loadouts.len() > 2 && !r.offers.is_empty());
+        let text = r.save_text();
+        assert_eq!(Run::from_save(&text), Ok(r.clone()), "{text}");
+        // The loadout panel's state is the window's, not the save's.
+        let mut f = r.clone();
+        (f.field, f.field_squad) = (true, Some((1, 2)));
+        assert_eq!(Run::from_save(&f.save_text()), Ok(r.clone()));
+        // A renamed card and upgrade, a line from a later build and a lost
+        // line: the rest loads.
+        let odd = text.replace("cards=", "cards=+no-such-card ").replace("owned=", "owned=no_such_item:3 ") + "a_later_field=7\n";
+        let odd: String = odd.lines().filter(|l| !l.starts_with("rerolls=")).map(|l| format!("{l}\n")).collect();
+        let back = Run::from_save(&odd).unwrap();
+        assert_eq!((back.cards.clone(), back.owned, back.loadouts.clone(), back.rerolls), (r.cards.clone(), r.owned, r.loadouts.clone(), 0));
+        // Not a save, or no planet to play: an error, never a panic.
+        assert!(Run::from_save("").is_err() && Run::from_save("hello\nseed=1").is_err());
+        assert!(Run::from_save(&format!("{SAVE_HEAD}\nseed=1\ndepth=99\n")).is_err());
+        let bare = Run::from_save(&format!("{SAVE_HEAD}\nseed=4\ndepth=2\n")).unwrap();
+        assert_eq!((bare.seed, bare.depth, bare.guns.clone(), bare.loadouts.len()), (4, 2, vec![first_gun()], 2));
+    }
+
     #[test]
     fn loadouts_hold_their_own_gun_and_cards() {
         let mut r = Run::new(1);

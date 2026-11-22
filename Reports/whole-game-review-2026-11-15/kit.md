@@ -40,7 +40,7 @@ A run's frames all play one round, so several `at=` values form a clip.
 |---|---|
 | `at=T1,T2,..` | Game seconds to save (default `5,30,60`). Fractions are allowed, as in `6,6.1,6.2`. |
 | `screen=WxH` | Picture size (default `1280x800`). Earlier reports used `960x600` and `1600x900`. |
-| `centre=X,Y[,Z]` | Holds the near view at world point X,Y with zoom Z (default 6; 24 is the maximum). Use the same world units as the `squad at` part of the t line. A held camera turns a frame run into a still-camera clip. |
+| `centre=X,Y[,Z]` | Holds the near view at world point X,Y with zoom Z (default 6; 24 is the maximum). Use the same world units as the `squad at` part of the t line. A held camera turns a frame run into a still-camera clip. `centre=squad,Z` (11-21) follows the squad at zoom Z instead. |
 | `seed=N` | Seed for the map and mould (default 1). |
 | `map=` | `fork` (default), `rim`, `flats`, `nest`, `passes`, `noise`, or `planet:DEPTH[:SEED]`, a generated planet without the run. |
 | `hand=` | Who plays (default `rush`). See *Hands* below. |

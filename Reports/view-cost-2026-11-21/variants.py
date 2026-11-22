@@ -53,6 +53,27 @@ VARIANTS = {
     "terrain": lambda s: stub(s, "fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32>", "return c0;"),
     # Every point light (bullets, fire, the bite): no loop over them.
     "lights": lambda s: s.replace("j < P.n_lights; j++", "j < min(P.n_lights, 0u); j++"),
+    # The plants split (11-21, after `plants` saved 1.04 ms): the crowns
+    # alone (their fields' B-spline kept), only the first kind's crowns,
+    # no lobes or thorns, no clump noise.
+    "crowns": lambda s: stub(s, "fn plant_layer(x: f32, y: f32, d: vec4<f32>, hot: bool) -> PlantLayer",
+        "var o: PlantLayer; o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.fl = vec3<f32>(0.0); o.fc = 0.0; o.fw = 0.0; o.dark = 1.0; return o;"),
+    "onekind": lambda s: s.replace("    plant_kind_layer(&o, x, y, 3u, d.w, hot);\n    plant_kind_layer(&o, x, y, 2u, d.z, hot);\n    plant_kind_layer(&o, x, y, 1u, d.y, hot);\n", "", 1),
+    "nolobe": lambda s: s.replace("            } else if (fm.lobe > 0.0) {", "            } else if (false) {", 1),
+    "noclump": lambda s: s.replace("            if (fm.clump > 0.0) {\n                // Patches", "            if (false) {\n                // Patches", 1),
+    # The frame cost pass's two cuts undone, to time them (11-21; both
+    # leave every pixel as it was): the far crowns' cull, and the slope's
+    # shared 5 x 5 read (back to three B-splines).
+    "nocull": lambda s: s.replace("            if (far && unshaded) { continue; }", "", 1),
+    "slope3": lambda s: s.replace("    let dx = h3.y - hc0;\n    let dy = h3.z - hc0;",
+        "    let dx = cells_height(x + e, y) - hc0;\n    let dy = cells_height(x, y + e) - hc0;", 1),
+    # The highlight from three height samples, not five (forward
+    # differences off the film's own height here): its cost. Not kept, it
+    # moves each highlight half a sample (11-21, planet 2 at zoom 12).
+    "spec3": lambda s: s.replace("    let th_here = film_th(x, y);",
+        "    let fh0 = film_h(x, y);\n    let th_here = -log(1.0 - clamp(fh0 * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;", 1).replace(
+        "    let sx = film_h(x + so, y) - film_h(x - so, y);\n    let sy = film_h(x, y + so) - film_h(x, y - so);",
+        "    let sx = 2.0 * (film_h(x + so, y) - fh0);\n    let sy = 2.0 * (film_h(x, y + so) - fh0);", 1),
     # `shaded` down to the material's colour: what all its lighting costs.
     "flat": lambda s: s.replace("fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {\n    var m = mat_at(x, y);",
         "fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {\n    var m = mat_at(x, y);\n    if (P.sw > 0u) { return m.albedo; }", 1),

@@ -53,6 +53,7 @@ mod world;
 mod raids;
 mod bosses;
 mod fruit;
+mod ceiling;
 mod waves;
 mod heart;
 mod stand;
@@ -84,7 +85,7 @@ pub use raising::*;
 pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
-pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
+pub use squads::{Formation, LeadRules, Squad, BAND_SPREAD, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::HealRules;
 pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
@@ -140,6 +141,9 @@ struct Paths {
     /// Fire seen lately: where, how far round (fine cells), and the tick
     /// it cools (`Game::mark_hot`).
     hot: Vec<((f32, f32), f32, u64)>,
+    /// Each soldier's own spot round the crystal its goal is in, fine
+    /// cells, or None (`Game::rim_spots`, once a step).
+    rim_spot: Vec<Option<(f32, f32)>>,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.
@@ -211,6 +215,11 @@ pub struct Soldier {
     /// burned in its own Tinder fires; a player sees the fire, the bot
     /// could not).
     pub heat: f32,
+    /// Frames it still reads its gun's whole reach before it looks near
+    /// itself again (`Game::sight`, `Rules::near_first`): set when a near
+    /// read found no slime, so it then aims at the thickest slime in
+    /// reach, and counted down as it reads far.
+    pub far: u8,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -491,6 +500,8 @@ pub struct Game<W: World> {
     /// When the mould broke (`Rules::broken`), and the upkeep it had then,
     /// given back if it recovers; None while it is whole.
     pub broken: Option<(u64, f32)>,
+    /// The slime's birth ceiling (`Rules::ceiling`, `ceiling.rs`).
+    pub ceiling: ceiling::Ceiling,
     /// The slime has fallen under `Rules::late_at` of its peak: its
     /// charges reach and lunge as a cornered slime's for the rest of the
     /// planet (`Game::keep_panic_reach`).
@@ -569,6 +580,8 @@ pub struct Game<W: World> {
     surge_last: u64,
     surge_timed: bool,
     charge_was: f64,
+    /// `World::slime_ate` at the last frame (`time_surges`).
+    ate_was: f64,
     /// Raids (`Rules::raid`, `raids.rs`): the meter and every raid sent.
     pub raids: Raids,
     /// Lures with no building (`raids::LureMark`; the lure's field,
@@ -732,6 +745,7 @@ impl<W: World> Game<W> {
             peak: mould,
             curve: Vec::new(),
             broken: None,
+            ceiling: Default::default(),
             late: false,
             fell_bitten: 0,
             bitten_hp: 0.0,
@@ -765,6 +779,7 @@ impl<W: World> Game<W> {
             surge_last: 0,
             surge_timed: false,
             charge_was: 0.0,
+            ate_was: 0.0,
             raids: Raids::new(seed),
             lure_marks: Vec::new(),
             bosses: Bosses::new(seed),
@@ -935,6 +950,7 @@ impl<W: World> Game<W> {
             was: (x, y),
             doze: 0.0,
             heat: 0.0,
+            far: 0,
         });
     }
 

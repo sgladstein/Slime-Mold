@@ -34,7 +34,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, WSTAT_BYTES};
+use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, PILE_WORDS, WSTAT_BYTES};
 use pixels::wgpu;
 use crate::mould::big::{BigDish, BigParams};
 use crate::mould::larder_world::{race_params, Soldier, World};
@@ -106,7 +106,7 @@ const RO_SHOTS: u64 = RO_UNITS + (UNITS_MAX * squad::U_OUT_W * 4) as u64;
 const RO_KILLS: u64 = RO_SHOTS + (SHOTS_MAX * 16) as u64;
 const RO_PILES: u64 = RO_KILLS + (SHOTS_MAX * 4) as u64;
 // Each lump's sums (`dense_base` header words 4-15, `Engine::lump_sums`).
-const RO_LUMPS: u64 = RO_PILES + (MAX_PILES * 32) as u64;
+const RO_LUMPS: u64 = RO_PILES + (MAX_PILES * PILE_WORDS * 4) as u64;
 const RO_WSTAT: u64 = RO_LUMPS + 48;
 const RO_GRID: u64 = RO_WSTAT + WSTAT_BYTES as u64;
 
@@ -137,6 +137,11 @@ struct Read {
     out: FrameOut,
     /// Each pile's charge and cells still crystal.
     sums: Vec<(f32, u32)>,
+    /// The piles' running sums of what the slime ate (`crystal_keep`), in
+    /// 4096ths, added up (wrapping).
+    ate: u32,
+    /// Crystal cells with charge and a walker on them, pile by pile.
+    covered: Vec<usize>,
     broken: u32,
     living: u32,
     /// The player's own mould's living walkers (a garden's; 0 otherwise).
@@ -160,6 +165,16 @@ pub struct GpuWorld {
     /// The crystals and the living walkers as of the last frame's readout.
     crystals: Vec<((f32, f32), f32)>,
     living: usize,
+    /// What the slime ate without emptying a crystal (`Settings::
+    /// crystal_keep`), charge in all, and the piles' running sum (in
+    /// 4096ths) at the last readout.
+    ate: f64,
+    ate_mark: Option<u32>,
+    /// Crystal cells with charge and a walker on them at the last readout,
+    /// pile by pile (the slime's birth ceiling, `World::crystal_covered`).
+    covered: Vec<usize>,
+    /// Each pile's cells at the last readout (`World::crystal_cells_each`).
+    cells: Vec<usize>,
     /// The gardeners' state (`GpuWorld::garden`), None in the plain game.
     pub garden: Option<GpuGarden>,
     /// The player's own mould's living walkers at the last readout.
@@ -368,7 +383,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -508,11 +523,13 @@ impl GpuWorld {
         let piles = &words[at(RO_PILES)..at(RO_LUMPS)];
         let ls = &words[at(RO_LUMPS)..at(RO_WSTAT)];
         let lumps = std::array::from_fn(|b| (ls[3 * b], ls[3 * b + 1], ls[3 * b + 2]));
-        let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * 8 + 4]), piles[p * 8 + 2])).collect();
+        let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * PILE_WORDS + 4]), piles[p * PILE_WORDS + 2])).collect();
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
+        let ate = (0..self.e.npiles as usize).fold(0u32, |a, p| a.wrapping_add(piles[p * PILE_WORDS + 7]));
+        let covered = (0..self.e.npiles as usize).map(|p| piles[p * PILE_WORDS + 8] as usize).collect();
+        Read { out, sums, ate, covered, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -521,6 +538,20 @@ impl GpuWorld {
         let k = self.e.dish.p.scale as f32;
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
+        self.covered = std::mem::take(&mut r.covered);
+        self.cells = r.sums.iter().map(|s| s.1 as usize).collect();
+        // The slime's eating with `crystal_keep` (the piles' last words): a
+        // world that flows sums twice a tick (`pilesum` before and after
+        // `flow`). A count that went back (a fresh dish) starts again.
+        if self.s.crystal_keep {
+            if let Some(m) = self.ate_mark {
+                let moved = r.ate.wrapping_sub(m);
+                if moved < 1 << 31 {
+                    self.ate += moved as f64 / 4096.0 / if self.e.flows { 2.0 } else { 1.0 };
+                }
+            }
+            self.ate_mark = Some(r.ate);
+        }
         self.own = r.own as usize;
         self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
@@ -1120,6 +1151,37 @@ impl World for GpuWorld {
         self.s.step * self.s.spore_speed
     }
 
+    fn slime_ate(&self) -> f64 {
+        self.ate
+    }
+
+    fn crystal_covered_each(&self) -> Vec<usize> {
+        self.covered.clone()
+    }
+
+    fn crystal_cells_each(&self) -> Vec<usize> {
+        self.cells.clone()
+    }
+
+    fn slots(&self) -> usize {
+        self.e.n as usize
+    }
+
+    /// Written to the GPU with the next step's params (species 0's cap).
+    fn set_ceiling(&mut self, n: u32) {
+        self.s.ceiling = n;
+    }
+
+    /// Each of the pile's cells written 0 (the mirror's list of them).
+    fn empty_crystal(&mut self, c: usize) {
+        let d = &self.e.dish;
+        for &i in &d.pile_cells {
+            if d.pile_of.get(i as usize).is_some_and(|&p| p as usize == c + 1) {
+                self.e.queue.write_buffer(&self.e.charge, i as u64 * 4, &0f32.to_le_bytes());
+            }
+        }
+    }
+
     fn can_sow(&self) -> bool {
         true
     }
@@ -1449,6 +1511,24 @@ mod tests {
         }
         fn spore_flight(&self) -> f32 {
             self.g.spore_flight()
+        }
+        fn slime_ate(&self) -> f64 {
+            self.g.slime_ate()
+        }
+        fn crystal_covered_each(&self) -> Vec<usize> {
+            self.g.crystal_covered_each()
+        }
+        fn crystal_cells_each(&self) -> Vec<usize> {
+            self.g.crystal_cells_each()
+        }
+        fn slots(&self) -> usize {
+            self.g.slots()
+        }
+        fn set_ceiling(&mut self, n: u32) {
+            self.g.set_ceiling(n)
+        }
+        fn empty_crystal(&mut self, c: usize) {
+            self.g.empty_crystal(c)
         }
         fn can_sow(&self) -> bool {
             self.g.can_sow()
@@ -2747,6 +2827,247 @@ mod tests {
         let m = mask(&fort);
         assert!(!fort.world.e.forted && m.iter().all(|&v| v == 0) && fort.fort_held.is_empty(), "the mask is cleared with the rule off");
         assert_eq!(set(&fort, &m).0, 0, "and the walls wake");
+    }
+
+    /// **The slime eats without emptying a crystal, and its size follows
+    /// the crystal it covers** (`crystal_keep`, `Rules::ceiling`; the
+    /// owner, 2026-11-21 06:30Z and 06:34Z). Engine rules with no CPU twin
+    /// (his card, 11-17 19:21Z), so the test is what they do on the
+    /// software GPU, in three race worlds alike for 12 game seconds:
+    ///
+    /// - With the keep the crystals hold every bit of their charge while
+    ///   the slime eats, and the engine counts what it ate (the surge
+    ///   meter's food) within a fifth of what the same world without the
+    ///   keep took out of its crystals.
+    /// - The engine counts covered crystal cells, a few walkers to one.
+    /// - A ceiling from the crystals it holds (at the landing's walkers a
+    ///   unit of held charge) with its roof at the landing walkers:
+    ///   births stop there, past it by at most a step's births, while the
+    ///   kept world without it grows on.
+    /// - The crystal it covers most emptied (as a squad that drained it):
+    ///   the charge it holds falls by that crystal's, and the ceiling with
+    ///   it (under the roof).
+    #[test]
+    fn the_slime_eats_without_emptying_a_crystal_and_stops_at_its_ceiling() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let play = |keep: bool, ceiling: f32| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "crystal_keep", if keep { "1" } else { "0" }).unwrap();
+            Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { ceiling, ceiling_roof: 1.0, ceiling_upkeep: 1.0, ..Rules::default() }, seed)
+        };
+        let charge = |g: &Game<GpuWorld>| g.world.crystals().iter().map(|c| c.1 as f64).sum::<f64>();
+        let (mut kept, mut eaten, mut capped) = (play(true, 0.0), play(false, 0.0), play(true, 1.0));
+        // The crystals as the first frame's readout gives them.
+        for g in [&mut kept, &mut eaten, &mut capped] {
+            g.step();
+        }
+        let full = charge(&kept);
+        assert!(full > 0.0 && (charge(&eaten) - full).abs() < 1e-3 * full, "the worlds start alike");
+        while kept.time() < 12.0 {
+            for g in [&mut kept, &mut eaten, &mut capped] {
+                g.step();
+            }
+        }
+        let took = full - charge(&eaten);
+        let ate = kept.world.slime_ate();
+        let covered = kept.world.crystal_covered();
+        let start = capped.ceiling.start;
+        eprintln!("keep: charge {:.1} of {full:.1}, ate {ate:.1}; no keep: took {took:.1}; covered {covered} cells, {} alive; capped at {} (landed {start}), {} alive against {} uncapped", charge(&kept), kept.world.e.alive(), capped.ceiling.now, capped.world.e.alive(), kept.world.e.alive());
+        assert!((charge(&kept) - full).abs() < 1e-4 * full, "the keep holds every crystal's charge");
+        assert!(took > 100.0 && (ate - took).abs() < 0.2 * took, "the keep counts what the slime ate ({ate:.1}) as the crystals lose it without ({took:.1})");
+        assert!(covered > 20 && covered < kept.world.e.alive(), "a few walkers to a covered cell: {covered}");
+        let ceil = capped.ceiling.now as usize;
+        assert!(ceil <= start && ceil + start / 10 >= start, "the landing's density over more covered cells, under a roof at the landing walkers: ceiling {ceil}, landed {start}");
+        let alive = capped.world.e.alive();
+        assert!(alive <= ceil + ceil / 100, "births stop at the ceiling: {alive} alive, ceiling {ceil}");
+        assert!(kept.world.e.alive() > alive + start / 50, "the world without a ceiling grows on: {} against {alive}", kept.world.e.alive());
+        let cov = capped.world.crystal_covered_each();
+        let most = (0..cov.len()).max_by_key(|&j| cov[j]).unwrap();
+        let (held, share) = (capped.ceiling.held, capped.world.crystals()[most].1 as f64);
+        // What it could take meanwhile: the crystals it did not hold.
+        let free: f64 = capped.world.crystals().iter().zip(&capped.ceiling.holding).filter(|(_, &h)| !h).map(|(c, _)| c.1 as f64).sum();
+        capped.world.empty_crystal(most);
+        while capped.time() < 15.0 {
+            capped.step();
+        }
+        let c = &capped.ceiling;
+        eprintln!("drained crystal {most} ({share:.0} of {held:.0} held): holds {:.0}, ceiling {ceil} to {}", c.held, c.now);
+        assert!(share > 0.0 && capped.ceiling.holding[most] && capped.world.crystals()[most].1 == 0.0, "it held the drained crystal, now empty");
+        assert!(c.held <= held - share + free + 1.0, "the charge it holds lost the drained crystal's: {held:.0} to {:.0} ({free:.0} it could take)", c.held);
+        let want = (c.held * c.density).min(start as f64).round();
+        // (No lower: a falling ceiling chases the slime down, `CEILING_FALL`.)
+        assert!(c.now as f64 >= want - 1.0 && c.now as usize <= ceil, "the ceiling follows it, under the roof: {} against {want}", c.now);
+    }
+
+    /// **A hit's hole stays open while it is fresh** (`crater_shut`,
+    /// 2026-11-21, the Look lane's A2). Engine rule with no CPU twin, so
+    /// the test is what it does on the software GPU: two race worlds
+    /// alike, a kill and a crater as long as the guns' on the home crystal's slime, one
+    /// with the first half of the crater shut. Walkers within the hole's
+    /// inner two thirds: none back in the shut world while the whole hole
+    /// is shut (a quarter of the crater), and fewer than in the open world
+    /// at its half; both refill once it opens.
+    #[test]
+    fn a_hits_hole_stays_open_while_it_is_fresh() {
+        use crate::gpu::floats;
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |shut: &str| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "crater_shut", shut).unwrap();
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 20.0 {
+                g.step();
+            }
+            g
+        };
+        let (mut open, mut shut) = (play("0"), play("0.5"));
+        let home = open.world.crystals()[0].0;
+        let sc = open.world.scale();
+        let at = (home.0 / sc, home.1 / sc);
+        let fine = open.world.fine_steps() as f32;
+        let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+        // The guns' own crater (fine steps, from the game's frame), as a
+        // shot's crater is shut and a longer one is not.
+        let cs = open.world.e.crater_steps;
+        assert!(cs >= 8, "the game lays craters: {cs}");
+        let hit = squad::Burst { at, r: 6.0, kill: true, crater: cs as _, crater_r: 6.0, ..Default::default() };
+        // The walkers within 4 of the hit's centre (fine cells).
+        let inside = |g: &Game<GpuWorld>| {
+            let e = &g.world.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let (cx, cy, r) = (at.0 * e.dish.p.scale as f32, at.1 * e.dish.p.scale as f32, 4.0 * e.dish.p.scale as f32);
+            (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count()
+        };
+        let before = inside(&open);
+        let mut counts = Vec::new();
+        for g in [&mut open, &mut shut] {
+            g.world.burst(&hit, &k);
+            let mut c = Vec::new();
+            for quarter in 1..=4 {
+                let until = g.world.ticks() + (cs as f32 / 4.0 / fine).ceil() as u64;
+                while g.world.ticks() < until {
+                    g.step();
+                }
+                c.push((quarter, inside(g)));
+            }
+            counts.push(c);
+        }
+        eprintln!("hole: {before} walkers before the hit; open {:?}, shut {:?} (quarters of the crater)", counts[0], counts[1]);
+        assert!(before > 30, "the hit lands in the slime: {before}");
+        assert_eq!(counts[1][0].1, 0, "nothing steps into the shut hole");
+        assert!(counts[1][1].1 < counts[0][1].1, "fewer back at the crater's half: {:?} against {:?}", counts[1][1], counts[0][1]);
+        assert!(counts[1][3].1 > 0, "the shut hole refills once it opens");
+    }
+
+    /// **A blast's long crater is not shut** (the review lane, 11-21: det
+    /// cord stood as a wall for 19 s). Only a crater no longer than the
+    /// guns' (`crater`) is shut: a kill with a crater ten times as long on
+    /// a world with the first half of the guns' crater shut refills in its
+    /// first quarter-second as an open world's hole does.
+    #[test]
+    fn a_blasts_long_crater_is_not_shut() {
+        use crate::gpu::floats;
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        crate::gpu::set(&mut s, "crater_shut", "0.5").unwrap();
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+        while g.time() < 20.0 {
+            g.step();
+        }
+        let home = g.world.crystals()[0].0;
+        let sc = g.world.scale();
+        let at = (home.0 / sc, home.1 / sc);
+        let fine = g.world.fine_steps() as f32;
+        let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+        let cs = g.world.e.crater_steps;
+        g.world.burst(&squad::Burst { at, r: 6.0, kill: true, crater: (10 * cs) as _, crater_r: 6.0, ..Default::default() }, &k);
+        for _ in 0..2 {
+            let until = g.world.ticks() + (cs as f32 / 4.0 / fine).ceil() as u64;
+            while g.world.ticks() < until {
+                g.step();
+            }
+        }
+        let e = &g.world.e;
+        let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+        let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+        let (cx, cy, r) = (at.0 * e.dish.p.scale as f32, at.1 * e.dish.p.scale as f32, 4.0 * e.dish.p.scale as f32);
+        let back = (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count();
+        eprintln!("blast hole: {back} walkers back at half the guns' crater");
+        assert!(back > 0, "a blast's crater stays open to walkers");
+    }
+
+    /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch`,
+    /// 2026-11-21, Direction's job from the Look lane's exit test 2; GPU
+    /// only). Two race worlds alike, a lump of armoured members held in
+    /// place by its pull, and a hit at its centre that hurts them and
+    /// leaves a crater as long as the guns'; one world with members flinching for the
+    /// first half of it, both with its first half shut (`crater_shut`, as
+    /// in a run). A quarter of the crater on, the flinching lump
+    /// holds fewer members within 3 cells of the hit (its hole) than the
+    /// one that stood (llvmpipe 11-21: 51 against 103 of 108), and as many
+    /// members in all (a flinch kills none).
+    #[test]
+    fn a_mini_bosss_walkers_flinch_out_of_a_hit() {
+        use crate::gpu::floats;
+        use crate::mould::big::{Lump, LUMP_BITS, LUMP_SHIFT};
+        use crate::mould::kit::KitRules;
+        use crate::mould::larder_world::{raid_cell, BossRules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |flinch: &str| -> (usize, usize, usize) {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "boss_flinch", flinch).unwrap();
+            crate::gpu::set(&mut s, "crater_shut", "0.5").unwrap();
+            let rules = Rules { boss: BossRules { every: 0.0, first: 0.0, ..BossRules::default() }, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+            while g.time() < 20.0 {
+                g.step();
+            }
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let at = (home.0 / sc, home.1 / sc);
+            let (w, h) = g.world.size();
+            let b = BossRules::default();
+            g.world.form_lump(0, Some((at, 8.0)));
+            g.world.set_lump(0, Lump { aim: raid_cell(at, (w, h)), pull: b.pull, leash: b.leash_at(b.clench, 0.5), armour: 15, ..Lump::default() });
+            for _ in 0..30 {
+                g.step();
+            }
+            // Members in all, and within 3 cells of the hit.
+            let members = |g: &Game<GpuWorld>| {
+                let e = &g.world.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+                let news: Vec<u32> = read_back(&e.device, &e.queue, &e.news).chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+                let base = e.dense_at as usize / 4 + crate::gpu::DENSE_HEAD;
+                let (cx, cy, r) = (at.0 * e.dish.p.scale as f32, at.1 * e.dish.p.scale as f32, 3.0 * e.dish.p.scale as f32);
+                let m: Vec<usize> = (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (news[base + q] & LUMP_BITS) >> LUMP_SHIFT == 1).collect();
+                let near = m.iter().filter(|&&q| (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count();
+                (m.len(), near)
+            };
+            let (_, before) = members(&g);
+            let fine = g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+            let cs = g.world.e.crater_steps;
+            g.world.burst(&squad::Burst { at, r: 5.0, kill: true, crater: cs as _, crater_r: 5.0, ..Default::default() }, &k);
+            let until = g.world.ticks() + (cs as f32 / 4.0 / fine).ceil() as u64;
+            while g.world.ticks() < until {
+                g.step();
+            }
+            let (all, near) = members(&g);
+            (before, all, near)
+        };
+        let (stood, flinched) = (play("0"), play("0.5"));
+        eprintln!("flinch: (near before, members, near after) stood {stood:?}, flinched {flinched:?}");
+        assert!(stood.0 > 10, "the hit lands in the lump: {stood:?}");
+        assert!(flinched.2 * 3 < stood.2 * 2, "the flinching lump opens a hole: {flinched:?} against {stood:?}");
+        assert!(flinched.1 + flinched.1 / 20 >= stood.1, "a flinch kills none: {flinched:?} against {stood:?}");
     }
 
     /// **A shot stops at set slime** (the owner's planet 3 round,

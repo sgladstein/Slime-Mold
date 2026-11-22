@@ -94,6 +94,26 @@ fn a_seekers_catch_rides_its_aim_and_last_leg() {
     assert!(g.catches(&[], dt).is_empty(), "no seeker: no list");
 }
 
+/// A seeking round flies on past its aim (`Rules::seek_reach`, Direction's
+/// call 2026-11-22): its flight is longer by that share a card, the gun's
+/// own range unchanged.
+#[test]
+fn a_seeking_round_flies_on_past_its_aim() {
+    use super::super::rounds::{parse, Deck};
+    let mut g = small(1);
+    let q = g.soldiers[0].squad as usize;
+    let from = g.soldiers[0];
+    let shot = ShotIn { from: (from.x, from.y), to: (from.x + 20.0, from.y), r: 1.0, over: false };
+    let range = g.gun_range(q);
+    g.fly(vec![shot], &[(Some(0), 0, None)], &[], 0.0);
+    let plain = g.bullets[0].left;
+    g.bullets.clear();
+    g.apply(Cmd::Load(q as u8, Some(Deck::new(&parse("seek").unwrap()))));
+    g.fly(vec![shot], &[(Some(0), 0, None)], &[], 0.0);
+    assert!((g.bullets[0].left - plain * (1.0 + g.rules.seek_reach)).abs() < 1e-3, "{} against {plain}", g.bullets[0].left);
+    assert_eq!(g.gun_range(q), range, "the squad's range and stand-off stay the gun's");
+}
+
 #[test]
 fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let mut g = small(1);
@@ -1786,7 +1806,19 @@ fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
     // Free fire: the thickest slime in reach, controlled or not.
     aim(&mut g, far, Stance::Free);
     assert_eq!(g.target(k), Some(far), "the controlled squad on free fire shoots slime in reach");
-    assert_eq!(g.sight(k), reach, "free fire reads the gun's reach");
+    // It reads near itself first (`Rules::near_first`), and the whole
+    // reach once a near read finds nothing, for a few frames.
+    let near = g.rules.near_first * sc;
+    assert!(near < reach, "near first {near} inside the reach {reach}");
+    assert_eq!(g.sight(k), near, "free fire reads near itself first");
+    g.read_aim(k, 0, Some((x, y)), 10);
+    assert_eq!(g.sight(k), near, "slime near: it keeps reading near");
+    g.read_aim(k, 0, None, 0);
+    assert_eq!(g.sight(k), reach, "nothing near: free fire reads the gun's reach");
+    for _ in 0..8 {
+        g.read_aim(k, 0, Some(far), 10);
+    }
+    assert_eq!(g.sight(k), near, "after a few far frames it looks near again");
     // Hold fire holds.
     aim(&mut g, far, Stance::HoldFire);
     assert_eq!(g.target(k), None);
@@ -1800,7 +1832,9 @@ fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
     assert_eq!(g.target(k), Some(edge), "a walker at the edge of defend, read by its block's centre");
     // Clearing a crystal or guarding, defend reads the whole reach again.
     g.squads[0].guard = Some((x + 5.0 * sc, y));
-    assert_eq!(g.sight(k), reach, "guarding reads the reach");
+    assert_eq!(g.sight(k), near, "guarding reads near first");
+    g.read_aim(k, 0, None, 0);
+    assert_eq!(g.sight(k), reach, "guarding reads the reach when nothing is near");
     g.squads[0].guard = None;
     // Attack-move fires freely, the controlled squad too.
     aim(&mut g, far, Stance::Defend);
@@ -2638,6 +2672,124 @@ fn steering_drops_the_squads_queue() {
     let m = g.middle(0).unwrap();
     assert!((m.0 - b.0).hypot(m.1 - b.1) > 6.0 * g.s(), "the squad walked off to its queued point");
     assert!((m.0 - stop.0).hypot(m.1 - stop.1) < 4.0 * g.s(), "the squad stands {} cells from where it was let go", (m.0 - stop.0).hypot(m.1 - stop.1) / g.s());
+}
+
+/// **A drag's pick** (`Cmd::Band`; owner 2026-11-21 06:53Z: "add click
+/// and drag to select multiple squads"): the picked squads, and the links
+/// they bring, are commanded as one, as a link is, and sent together close
+/// up round the click (`BAND_SPREAD`); commanding a squad outside the pick,
+/// letting go or splitting ends it, and it is not a link: none is left
+/// linked after.
+#[test]
+fn a_pick_commands_squads_as_one_till_another_is_taken() {
+    let mut g = squads(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, m)));
+    let n1 = g.active.unwrap();
+    assert!(g.apply(Cmd::Split(n1 as u8, g.middle(n1).unwrap())));
+    let n2 = g.active.unwrap();
+    let live = g.live_squads();
+    assert_eq!(live.len(), 3, "{live:?}");
+    assert_eq!(Cmd::parse(&Cmd::Band(5).to_line()), Some(Cmd::Band(5)));
+    // One squad alone is no pick.
+    assert!(!g.apply(Cmd::Band(1 << n2)));
+    assert!(g.apply(Cmd::Band(live.iter().fold(0, |m, &q| m | 1 << q))));
+    assert_eq!(g.linked(n2), live, "picked squads are commanded as one");
+    assert!(live.iter().all(|&q| g.leads(q)));
+    assert!(!g.apply(Cmd::Active(live[0] as u8)), "a picked squad is commanded already");
+    // Spread far apart, they close up when sent.
+    let sc = g.s();
+    for (i, &q) in live.iter().enumerate() {
+        for k in g.members(q) {
+            g.soldiers[k].x = m.0 + (i as f32 - 1.0) * 30.0 * sc;
+        }
+    }
+    let to = open_near(&g, 10.0);
+    assert!(g.apply(Cmd::SquadOrder(n2 as u8, Order::Move(to.0, to.1))));
+    for &q in &live {
+        let d = g.squads[q].dest.expect("every picked squad is sent");
+        let off = (d.0 - to.0).hypot(d.1 - to.1) / sc;
+        assert!(off <= BAND_SPREAD * 2.0 + 0.01, "squad {q} sent {off} cells from the click");
+    }
+    // Commanding one outside ends it; no link is left.
+    assert!(g.apply(Cmd::Band(0)));
+    assert!(!g.banded());
+    assert_eq!(g.active, Some(live[2]));
+    assert!(g.apply(Cmd::Band((1 << live[1]) | (1 << live[2]))));
+    assert!(g.apply(Cmd::Active(live[0] as u8)));
+    assert!(!g.banded(), "commanding a squad outside the pick ends it");
+    assert!(live.iter().all(|&q| g.squads[q].link == NO_LINK));
+    // Letting go ends it.
+    assert!(g.apply(Cmd::Band((1 << live[0]) | (1 << live[2]))));
+    assert_eq!(g.linked(live[2]), vec![live[0], live[2]]);
+    g.apply(Cmd::Active(u8::MAX));
+    assert!(!g.banded(), "letting go ends the pick");
+    // A link joins a pick whole, and unlinking one takes it out of both.
+    assert!(g.apply(Cmd::Link(live[0] as u8, live[1] as u8)));
+    assert!(g.apply(Cmd::Active(live[2] as u8)));
+    assert!(g.apply(Cmd::Band((1 << live[0]) | (1 << live[2]))));
+    assert_eq!(g.linked(live[2]), live, "the pick brings squad {}'s link", live[0]);
+    assert!(g.apply(Cmd::Unlink(live[1] as u8)));
+    assert_eq!(g.linked(live[2]), vec![live[0], live[2]]);
+    assert_eq!(g.linked(live[1]), vec![live[1]]);
+}
+
+/// **One device slot per squad, on a cooldown** (owner 2026-11-21
+/// 06:55Z; `Cmd::Device`): the squad sets a tool off from a soldier in
+/// reach, free and holding nothing, then its slot waits the tool's own
+/// cooldown before any device goes again; squads commanded together each
+/// throw from their own slot, the one commanded first. It is a command, so
+/// it replays.
+#[test]
+fn a_squads_device_slot_throws_then_cools_down() {
+    use crate::mould::kit::Tool;
+    let mut g = squads(7);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    for k in 0..g.soldiers.len() {
+        if g.kit.held.len() > k {
+            g.kit.held[k] = 0;
+        }
+    }
+    g.bank = 0.0;
+    let near = open_near(&g, 4.0);
+    let t = Tool::Blast(near);
+    assert_eq!(Cmd::parse(&Cmd::Device(2, t).to_line()), Some(Cmd::Device(2, t)));
+    let cord = Tool::Cord(near, (near.0 + 3.0, near.1 - 2.0));
+    assert_eq!(Cmd::parse(&Cmd::Device(0, cord).to_line()), Some(Cmd::Device(0, cord)));
+    assert!(g.apply(Cmd::Device(0, t)), "a squad's device goes off free, with no tool held");
+    assert_eq!((g.kit.uses[0], g.bank), (1, 0.0));
+    let cd = g.kit.rules.cooldown(t);
+    assert!((g.device_wait(0) - cd).abs() < 0.2, "the slot waits the blast's {cd} s: {}", g.device_wait(0));
+    assert!(!g.apply(Cmd::Device(0, Tool::Mine(near))), "one slot: no second device while it cools");
+    let per_sec = g.rules.tps / g.rules.frame_ticks;
+    for _ in 0..(cd as u32 + 1) * per_sec {
+        g.step();
+    }
+    assert_eq!(g.device_wait(0), 0.0);
+    let far = open_near(&g, 3.0 * g.kit.rules.reach);
+    assert!(!g.apply(Cmd::Device(0, Tool::Blast(far))), "out of the squad's reach");
+    assert!(g.apply(Cmd::Device(0, Tool::Mine(near))));
+    assert_eq!(g.kit.mines.len(), 1);
+    assert!((g.device_wait(0) - g.kit.rules.cooldown(Tool::Mine(near))).abs() < 0.2, "the mine's own cooldown");
+    // Two squads commanded together: the second's slot throws next.
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, m)));
+    let b = g.active.unwrap();
+    assert_eq!(g.device_wait(b), 0.0, "a split half starts with its slot ready");
+    assert!(g.apply(Cmd::Link(0, b as u8)));
+    assert!(g.apply(Cmd::Device(0, Tool::Blast(g.middle(b).unwrap()))), "squad 0 cools, so its link throws");
+    assert!(g.device_wait(b) > 0.0);
+    assert!(!g.apply(Cmd::Device(b as u8, Tool::Blast(g.middle(b).unwrap()))), "both slots cool");
+    assert!(g.log.iter().filter(|(_, c)| matches!(c, Cmd::Device(..))).count() >= 3, "devices are in the replay log");
 }
 
 /// The fire mode is the squad's in the squad mode: a bought soldier and a
@@ -3801,6 +3953,27 @@ fn squads_shoot_a_mini_boss_first() {
     let (p, _) = g.boss_aim(0).expect("in the bullet's reach");
     assert!((p.1 - (s0.y + 0.5 * reach)).abs() < 1e-2, "{p:?}");
     g.bullet_mods.casts = 0;
+    // Free fire, a boss beyond near first (`Rules::near_first`): slime near
+    // the soldier is shot first; a boss that near, or nothing near, the boss
+    // (Direction 11-22: a near origin wins, a far one pulls no fire past
+    // the walkers beside the squad).
+    let near = g.rules.near_first * sc;
+    assert!(8.0 * sc < near && near < 20.0 * sc && 20.0 * sc < reach && 8.0 * sc + r < reach, "near {near}, reach {reach}");
+    g.bosses.live[0].centre = at(20.0 * sc + r);
+    set(&mut g, 0);
+    g.soldiers[0].stance = Stance::Free;
+    let slime5 = (s0.x + 5.0 * sc, s0.y);
+    g.soldiers[0].aim = Some(slime5);
+    assert!(g.boss_aim(0).is_some(), "the boss in reach");
+    assert_eq!(g.target(0), Some(slime5), "slime 5 cells off before a boss 20 off");
+    g.bosses.live[0].centre = at(8.0 * sc + r);
+    assert_eq!(g.target(0), Some(at(8.0 * sc + r)), "a boss 8 cells off before the slime");
+    g.bosses.live[0].centre = at(20.0 * sc + r);
+    g.soldiers[0].aim = None;
+    g.soldiers[0].dense = 0;
+    let line = g.boss_aim(0).expect("the boss in reach").0;
+    assert_eq!(g.target(0), Some(line), "nothing near: the boss 20 off, along its line");
+    g.soldiers[0].stance = Stance::Defend;
     g.bosses.live[0].centre = close;
     g.soldiers[0].stance = Stance::HoldFire;
     set(&mut g, 2);
@@ -4670,4 +4843,64 @@ fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
     let (round, to, pump) = errand(true);
     assert!(round && to == Some(pump), "a big squad: round to the pump at {pump:?}, got {to:?}");
     assert!(!errand(false).0, "a small squad: it hunts");
+}
+
+/// Owner 2026-11-22 08:34Z: "if I give a squad a command then split it
+/// [both] squads should follow the previous command until a new command is
+/// given". A squad split on its way keeps going with both halves, each
+/// with the queue after it; a squad split while draining drains on in both
+/// halves. Until then the new half dropped the order and both halves stood
+/// round their own middles.
+#[test]
+fn both_halves_of_a_split_squad_keep_its_orders() {
+    // On the way, with a second order queued.
+    let mut g = squads(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let a = open_near(&g, 24.0);
+    let b = open_near(&g, 10.0);
+    g.apply(Cmd::SquadOrder(0, Order::Fight(a.0, a.1)));
+    g.apply(Cmd::SquadQueue(0, Order::Move(b.0, b.1)));
+    for _ in 0..g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, (m.0 + 30.0, m.1))));
+    let n = g.active.unwrap();
+    for q in [0, n] {
+        let sq = g.squads[q];
+        assert_eq!((sq.dest, sq.fight, sq.queued), (Some(a), true, 1), "half {q} keeps its attack-move and queue");
+        assert_eq!(sq.queue[0], Order::Move(b.0, b.1));
+    }
+    let far = |g: &Game<BigDish>, q: usize| g.middle(q).map(|c| (c.0 - a.0).hypot(c.1 - a.1)).unwrap();
+    let (d0, dn) = (far(&g, 0), far(&g, n));
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    assert!(far(&g, 0) < d0 - g.s() && far(&g, n) < dn - g.s(), "both halves walk on: {d0} -> {}, {dn} -> {}", far(&g, 0), far(&g, n));
+    // Draining: both halves drain on.
+    let mut g = no_larder(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    let (_, c) = near_crystal(&g);
+    let drain = Order::Clear(c.0, c.1);
+    g.apply(Cmd::SquadOrder(0, drain));
+    for _ in 0..g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, m)));
+    let n = g.active.unwrap();
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    for q in [0, n] {
+        assert_eq!(g.squads[q].work, Some(drain), "half {q} still drains");
+        assert!(g.members(q).iter().all(|&k| g.soldiers[k].order == drain), "half {q}'s members still drain");
+    }
 }

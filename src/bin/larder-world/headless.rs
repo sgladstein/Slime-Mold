@@ -209,6 +209,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // The soldiers `cutsquad=` set down, kept there.
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
+    let mut drain_at: Option<f32> = std::env::var("LARDER_DRAIN").ok().and_then(|v| v.parse().ok());
     let mut lit: Vec<usize> = Vec::new();
     let mut lured: Vec<usize> = Vec::new();
     // `trail=`: the lines laid; `cross=`: each slot's side of the line
@@ -384,6 +385,22 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     stand(g, kind, at, renders.contains(&i))?;
                     println!("  {} t {now:.2} s: standing at {},{}", kind.name(), at.0, at.1);
                     late.retain(|&j| j != i);
+                }
+            }
+            // `LARDER_DRAIN=T` (2026-11-21, the slime's ceiling): at game
+            // second T the crystal the slime covers most is emptied at
+            // once, as a squad that drained it, to film the slime
+            // shrinking to what it still holds.
+            if let Some(dt) = drain_at {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= dt {
+                    drain_at = None;
+                    let cs = g.world.crystals();
+                    let cov = g.world.crystal_covered_each();
+                    if let Some(c) = (0..cov.len().min(cs.len())).max_by_key(|&c| cov[c]) {
+                        g.world.empty_crystal(c);
+                        println!("  drain t {:.1} s: crystal {c} at {:.0},{:.0} emptied (charge {:.0}, {} of {} covered cells)", g.time(), cs[c].0 .0, cs[c].0 .1, cs[c].1, cov[c], cov.iter().sum::<usize>());
+                    }
                 }
             }
             // `boom=T,X,Y`: the round set off there once T has come.
@@ -718,6 +735,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - d.at.0).hypot(s.y - d.at.1)).fold(f32::INFINITY, f32::min);
                     println!("  drop t {:.0} s: {:?} {:?} at {:.0},{:.0}, worth {:.0}, taken {:.1}, eaten {:.1}, {} soldiers and {} walkers on it; nearest soldier {near:.1}", g.time(), d.kind, d.from, d.at.0, d.at.1, d.worth, d.taken, d.eaten, d.takers, d.eaters);
                 }
+                // The slime's birth ceiling (`ceiling.rs`, 11-21): the
+                // crystal cells it covers, smoothed, and the ceiling.
+                if g.rules.ceiling > 0.0 {
+                    println!("  ceiling t {:.0} s: slime {}, holds {} crystals, charge {:.0} x {:.2}, ceiling {} (landed {}), upkeep x{:.2}", g.time(), g.mould, g.ceiling.holds, g.ceiling.held, g.ceiling.density, g.ceiling.now, g.ceiling.start, g.ceiling.factor);
+                    // Each crystal: its covered cells (smoothed) of its cells, its charge left, held or not.
+                    let (cells, cs) = (g.world.crystal_cells_each(), g.world.crystals());
+                    let each: Vec<String> = g.ceiling.cover.iter().enumerate().filter(|&(j, &v)| v >= 1.0 || g.ceiling.holding.get(j) == Some(&true)).map(|(j, &v)| format!("{j}{} {v:.0}/{} {:.0}%", if g.ceiling.holding.get(j) == Some(&true) { "*" } else { "" }, cells.get(j).copied().unwrap_or(0), 100.0 * cs.get(j).map_or(0.0, |c| c.1 as f64) / g.ceiling.full.get(j).copied().unwrap_or(1.0).max(1.0))).collect();
+                    println!("  ceiling crystals t {:.0} s: {}", g.time(), each.join(", "));
+                }
                 if g.rules.star.on {
                     println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);
                 }
@@ -903,15 +929,19 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // The oldest, live or still fading, so a film stays on a broken
         // one while its look drains rather than jumping to a newer one.
         let boss = g.bosses.live.iter().chain(g.bosses.fading.iter().map(|f| &f.0)).min_by_key(|b| b.born).filter(|_| app.args.follow_boss).map(|b| b.centre);
-        let centre = boss.or(fixed.map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
-        app.controls.selected = match g.active.filter(|_| g.rules.squads) {
-            Some(q) => g.members(q),
-            None if select => (0..g.soldiers.len()).collect(),
-            None => Vec::new(),
-        };
+        let centre = boss.or(fixed.filter(|f| f.0 != f32::INFINITY).map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
         if let Some(step) = app.args.card.get(fi).cloned() {
             card_step(&mut app, &step)?;
         }
+        // Every squad commanded with it (its link, a drag's pick) is
+        // ringed, as in the window (`squad_frame`); after the card's step,
+        // which may pick them.
+        let g = app.game.as_ref().unwrap();
+        app.controls.selected = match g.active.filter(|_| g.rules.squads) {
+            Some(q) => g.linked(q).into_iter().flat_map(|r| g.members(r)).collect(),
+            None if select => (0..g.soldiers.len()).collect(),
+            None => Vec::new(),
+        };
         if app.sq.as_ref().is_some_and(|q| q.free) {
             app.controls.selected.clear();
         }
@@ -1290,6 +1320,57 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         "fire" => {
             app.hud_event(HudEvent::Command { id: FIRE })?;
         }
+        // The Tools page, and a blast from the squad's device slot 8 cells
+        // ahead of it (2026-11-21), so the frame shows the slot cooling.
+        "throw" => {
+            app.tools_page = true;
+            let Some(g) = app.game.as_mut() else { return Ok(()) };
+            if let Some((q, m)) = g.active.and_then(|q| Some((q, g.middle(q)?))) {
+                let f = g.squads[q].face;
+                let sc = g.world.scale();
+                let at = (m.0 + f.0 * 8.0 * sc, m.1 + f.1 * 8.0 * sc);
+                if !g.apply(Cmd::Device(q as u8, slime_mould::mould::kit::Tool::Blast(at))) {
+                    return Err(format!("card=throw: the squad's device did not go off at {at:?}"));
+                }
+            }
+        }
+        // Three squads picked as one, as a drag over them does, and sent
+        // 15 cells to the right together (2026-11-21).
+        "band" => {
+            app.hud_event(HudEvent::SquadSplit)?;
+            app.hud_event(HudEvent::SquadSplit)?;
+            let Some(g) = app.game.as_mut() else { return Ok(()) };
+            let live = g.live_squads();
+            g.apply(Cmd::Active(live[0] as u8));
+            g.apply(Cmd::Band(live.iter().fold(0u16, |m, &q| m | 1 << q)));
+            if let Some(m) = g.middle(live[0]) {
+                let to = (m.0 + 15.0 * g.world.scale(), m.1);
+                g.apply(Cmd::SquadOrder(live[0] as u8, Order::Move(to.0, to.1)));
+            }
+        }
+        // `squadsN` (2026-11-22, the squad strip past four squads): the
+        // biggest squad split, as the Split button does, until N stand,
+        // then the first commanded.
+        _ if step.starts_with("squads") => {
+            let want: usize = step[6..].parse().map_err(|_| format!("card={step}: squadsN"))?;
+            for _ in 0..want {
+                let Some(g) = app.game.as_mut() else { return Ok(()) };
+                let live = g.live_squads();
+                if live.len() >= want {
+                    break;
+                }
+                let size = |q: usize| g.soldiers.iter().filter(|s| s.alive && s.squad as usize == q).count();
+                let Some(&big) = live.iter().max_by_key(|&&q| size(q)) else { break };
+                g.apply(Cmd::Active(big as u8));
+                app.hud_event(HudEvent::SquadSplit)?;
+            }
+            if let Some(g) = app.game.as_mut() {
+                let live = g.live_squads();
+                if let Some(&q) = live.first() {
+                    g.apply(Cmd::Active(q as u8));
+                }
+            }
+        }
         "upgrade" | "demolish" | "switch" | "cancel" => {
             let id = match step {
                 "upgrade" => UPGRADE,
@@ -1299,7 +1380,7 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
             };
             app.hud_event(HudEvent::Command { id })?;
         }
-        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, upgrade, demolish, switch, cancel, or a formation's name)")),
+        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, or a formation's name)")),
     }
     println!("  card: {step}");
     Ok(())

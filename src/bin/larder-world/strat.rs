@@ -667,24 +667,38 @@ pub(super) fn between(g: &mut Game<GpuWorld>, refire: bool, kite: f32, mop: u32,
 /// the league before the hand's turn (so a tool comes before the next
 /// soldier: at 400 a soldier, a rush never kept a soldier's price and a
 /// mine's 80 spare): the kit is the app's, not the game's, so the hand
-/// cannot reach it. Soldiers take one tool each at the larder
-/// (`kit_between`); a tool is paid from the bank when used, and only one
-/// the run owns is used.
-pub(super) fn tools(g: &mut Game<GpuWorld>, kit: &mut Kit, p: &Plan) {
+/// cannot reach it. In the squad mode the squad sets each off from its
+/// device slot (`Cmd::Device`, free, one at a time on the slot's
+/// cooldown; owner 2026-11-21 06:55Z); elsewhere soldiers take one tool
+/// each at the larder (`kit_between`) and a tool is paid from the bank
+/// when used. Only a tool the run owns is used.
+pub(super) fn tools(g: &mut Game<GpuWorld>, p: &Plan) {
     if p.blast == 0 && p.mines == 0 {
         return;
     }
     let Some(q) = g.active.or_else(|| g.live_squads().first().copied()) else { return };
     let Some(m) = g.middle(q) else { return };
+    let slot = g.rules.squads;
+    if slot && g.device_ready_in(q).0 > 0.0 {
+        return;
+    }
+    let kr = g.kit.rules;
     let sense = Sense::of(g);
     let sc = g.world.scale();
-    let reach = kit.rules.reach * sc;
-    if p.blast > 0 && p.owns("blast") && g.bank >= kit.rules.blast_price {
-        let r = kit.rules.blast_r * sc;
-        let best = sense.ranked(m, reach).into_iter().filter(|&(_, d)| d <= reach).map(|(a, _)| (a, sense.mass_near(a, r))).filter(|&(a, n)| n >= p.blast && kit.in_reach(g, a)).max_by_key(|&(_, n)| n);
+    let reach = kr.reach * sc;
+    let near = |g: &Game<GpuWorld>, a: (f32, f32)| if slot { g.kit.squad_thrower(g, q, a).is_some_and(|(_, n)| n) } else { g.kit.in_reach(g, a) };
+    let paid = |g: &Game<GpuWorld>, price: f32| slot || g.bank >= price;
+    let throw = |g: &mut Game<GpuWorld>, t: Tool| if slot { g.apply(Cmd::Device(q as u8, t)) } else { g.use_tool(t) };
+    if p.blast > 0 && p.owns("blast") && paid(g, kr.blast_price) {
+        let r = kr.blast_r * sc;
+        let best = sense.ranked(m, reach).into_iter().filter(|&(_, d)| d <= reach).map(|(a, _)| (a, sense.mass_near(a, r))).filter(|&(a, n)| n >= p.blast && near(g, a)).max_by_key(|&(_, n)| n);
         if let Some((a, _)) = best {
-            if kit.use_tool(g, Tool::Blast(a)) {
+            if throw(g, Tool::Blast(a)) {
                 MEM.with_borrow_mut(|mm| mm.tools[0] += 1);
+                // One slot: the mine waits for the next second.
+                if slot {
+                    return;
+                }
             }
         }
     }
@@ -696,21 +710,22 @@ pub(super) fn tools(g: &mut Game<GpuWorld>, kit: &mut Kit, p: &Plan) {
     // 2:30: half way to the heaviest slime, and under the squad whenever
     // thick slime was in reach (the rush walked on and the slime never
     // came back there).
-    if p.mines > 0 && p.owns("mine") && (kit.mines.len() as u32) < p.mines && g.bank >= kit.rules.mine_price {
+    if p.mines > 0 && p.owns("mine") && (g.kit.mines.len() as u32) < p.mines && paid(g, kr.mine_price) {
         let home = MEM.with_borrow(|mm| mm.home).unwrap_or(g.larder);
-        let apart = 2.0 * kit.rules.mine_r * sc;
-        let free = |at: (f32, f32)| kit.mines.iter().all(|&x| dist(x, at) > apart);
+        let apart = 2.0 * kr.mine_r * sc;
+        let mines = g.kit.mines.clone();
+        let free = |at: (f32, f32)| mines.iter().all(|&x| dist(x, at) > apart);
         let at = if dist(m, home) < reach {
             let to = sense.middle().unwrap_or(m);
             let face = (to.1 - home.1).atan2(to.0 - home.0);
             let r = 0.6 * reach;
-            [0.0f32, 0.5, -0.5, 1.0, -1.0, 1.5, -1.5].into_iter().map(|k| (home.0 + r * (face + k * 0.5).cos(), home.1 + r * (face + k * 0.5).sin())).find(|&a| free(a) && g.world.open(a.0, a.1) && kit.in_reach(g, a))
+            [0.0f32, 0.5, -0.5, 1.0, -1.0, 1.5, -1.5].into_iter().map(|k| (home.0 + r * (face + k * 0.5).cos(), home.1 + r * (face + k * 0.5).sin())).find(|&a| free(a) && g.world.open(a.0, a.1) && near(g, a))
         } else {
             let bitten = g.members(q).iter().any(|&k| g.soldiers[k].touching > 0);
             (bitten && free(m)).then_some(m)
         };
         if let Some(at) = at {
-            if kit.use_tool(g, Tool::Mine(at)) {
+            if throw(g, Tool::Mine(at)) {
                 MEM.with_borrow_mut(|mm| mm.tools[1] += 1);
             }
         }

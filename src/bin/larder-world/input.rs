@@ -342,7 +342,10 @@ impl App {
     pub(super) fn hud_events(&mut self, events: Vec<HudEvent>, event_loop: &ActiveEventLoop) {
         for ev in events {
             match self.hud_event(ev) {
-                Ok(true) => event_loop.exit(),
+                Ok(true) => {
+                    self.save_run();
+                    event_loop.exit();
+                }
                 Ok(false) => {}
                 Err(e) => return self.fail(event_loop, e),
             }
@@ -630,6 +633,27 @@ impl App {
             self.catch_up();
         }
         let Some(g) = self.game.as_mut() else { return };
+        // The squad mode: the commanded squad's device slot (`Cmd::Device`,
+        // owner 2026-11-21 06:55Z), free, one at a time on its cooldown.
+        if let Some(q) = g.active.filter(|_| g.rules.squads) {
+            if matches!(t, Tool::Smell(..)) || g.apply(Cmd::Device(q as u8, t)) {
+                return;
+            }
+            let (wait, _) = g.device_ready_in(q);
+            let near = g.linked(q).into_iter().any(|r| g.kit.squad_thrower(g, r, slime_mould::mould::kit::Kit::aim(t)).is_some_and(|(_, n)| n));
+            let r = g.kit.rules;
+            let why = if wait > 0.0 {
+                format!("The squad's device slot recharges: ready in {:.0} s", wait.ceil())
+            } else if !near {
+                format!("Too far: a soldier of the squad must be within {:.0} cells", r.reach)
+            } else if matches!(t, Tool::Cord(..)) {
+                format!("A cord is at most {:.0} cells long", r.cord_max)
+            } else {
+                "Not on open ground".to_string()
+            };
+            self.hud.alert(&why, None, theme::WARN);
+            return;
+        }
         let k = &g.kit;
         let at = match t {
             Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => p,

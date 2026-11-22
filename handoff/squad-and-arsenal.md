@@ -48,6 +48,63 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-22, exit test 5: the rifle's feel (Direction's job, same
+thread).** #701 and #705 merged. Filmed the plain rifle on planets 1 to 3
+at zoom 6 and 12: rate, tracer and hits read well; the fault was free
+fire, Guard and Clear aiming at the thickest block in the whole 24-cell
+reach, about 550 px at zoom 12 against about 300 px of screen. Direction
+picked option A (06:15Z): those read `Rules::near_first` (12 cells) first
+and the whole reach only for `cmd::FAR_FRAMES` (4) frames after a near read
+finds nothing (`Game::sight_read`, `Game::read_aim`, `Soldier::far`; the
+read-back moved from `turn.rs` into `read_aim`). Option B (shorter reach)
+is out; C (an edge tick in `draw.rs`, Look's) only if far shots still read
+as fire into nothing after A. The run bot and gun lab fire Free, so their
+baselines shift; tell Engine through Direction when it merges. #708 merged
+07:21Z (three seed-tuned tests keep `near_first` 0). Then, Direction's
+call: a mini-boss beyond `near_first` takes the shot only when the
+soldier's own aim holds no slime that near (`Game::target`,
+`bosses.rs boss_aim_within`), so Enemy's origin (#699) inherits it once
+it goes through `boss_aim`.
+
+**2026-11-22, exit test 5: every shop gun card visible (Direction's job,
+in the pathfinding thread).** The gun lab's arena showed Wide, Scatter,
+Delay, Thick, Quiet and Thrift playing the same game as no card (a plain
+cast made no burst) and a lone Tinder doing nothing. Fixed in one PR: a
+modifier on the plain bullet pops (`rounds::plain_bursts`, sized by the
+shot's strike, `RoundRules::plain_pop`/`plain_wide`; the strike rides on
+`Rounds::strike` and `Pending::strike`); `tinder_spark` 0.01 lights a
+Tinder's own brush; the shop holds Thrift until a bullet card is owned and
+Quiet and the Flare until `run::ALARM_FROM`; plain pops don't shake
+(`main.rs feel`); `set=strike=` is a rule key for the gun lab. Heavier
+shots checked, works. Second PR, Direction's calls: Seek's round flies on
+past its aim (`Rules::seek_reach` 0.5, `shots.rs fly`), and Smother's trail
+discs also calm (`MIND_STILL`; trails now take `RoundRules::burst_rules`,
+since the toolkit's carry no Mind length). Third PR: a calm disc the shot's strike
+across where Smother's line hits (`smother_calm`), so the rose shows. Note for the shop DPS readout (#697, `dps.rs`): it
+reads `rounds::bursts`, and the plain pop is `plain_bursts`
+([report](../Reports/gun-cards-visible-2026-11-22/README.md)).
+
+**2026-11-21, controls and HUD review (its own thread, the owner's ask
+06:16Z).** Review doc: https://claude.ai/artifact/12jZrjC3MHe7R54S7V7Ktq
+(ranked problems, all done but "keys falling through card pages"). #655:
+a WASD tap no longer drops queued orders, buy/merge keep the stance, the
+run's top bar no longer reads "0%". #660: **drag pick** (owner 06:53Z) is
+a temporary band folded into `Game::linked` (`Squad::band`, `Cmd::Band`,
+`BAND_SPREAD` caps the fan-out offsets), so every link fan-out (orders,
+fire, Hold fire, formation, heal, rings) reaches a box's squads; it ends on
+taking another squad, Esc or a split. **One device slot per squad, on a
+cooldown** (owner's card answer 06:55Z, option A): `Cmd::Device`,
+`Game::device`, `Squad::device_at`/`device_secs`, `KitRules::cooldown`
+(blast 20 s, mine 25, cord 30, gas 35; Tools+ cuts them 20 % a level); free
+per use, the carry rule stays for the RTS round; the strategy bot throws
+through the slot (`strat::tools`); the Tools button stays in a run with
+nothing owned and opens the locks (it hid until 11-22; the owner read it as lost). The follow-up: Esc closes a card page first, Space jumps
+to the newest alert, only a Shift drag splits, a number takes command with
+none commanded (it did nothing), and Ctrl swaps the crosshair for the pick
+cursor (`cursor.rs`, Look's #658; its box and device looks needed no other
+wiring). Next: step E's rest (device bodies, cards, autocast) in
+`wiki/arsenal/guns.md`.
+
 **2026-11-21, squad controls (its own thread, the owner's ask 05:04Z).**
 Lookouts removed (`cover.rs` keeps only the work's end and heal's end;
 `Cover`, `CoverRules`, `Soldier::cover`, `work_boost`, `Cmd::Cover` and the
@@ -87,6 +144,15 @@ column's places fell past the base's walls (`column_places` now keeps
 each on its trail point's side, `a_squad_leaves_a_walled_base_by_its_
 door`; `fort_numbers` is the harness). Turrets and pumps don't block
 soldiers at all (only walls, doors, crystals and the bulwark do).
+11-21 (Look's exit test 2 pass): soldiers at a crystal no longer stack.
+`Game::rim_spots` (paths.rs, once a step from `squad_turn`) gives each
+soldier whose goal is in a crystal its own spot round the rim, `SPOT` 3.5
+dish cells apart, ring 0 filled all the way round first (closing down to
+elbow room) since only ring 0 is in harvest reach. Nearest neighbour 2.1
+-> 3.5 cells median on planet 1; harvest at 60 s 4,081 -> 4,199.
+Follow-up: only move, guard and drain orders take spots (the run bot's
+rush, an attack-move onto the slime's home crystal, spread round the rim
+and planets ran 16% longer on CI's run bot); rings inside reach first.
 
 **2026-11-20, batch 7 (the balance review's proposals 4 and 5, through
 the coordinator).** `rounds::casts` gives leftover modifiers (and Delay or

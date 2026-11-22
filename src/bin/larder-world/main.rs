@@ -64,7 +64,8 @@
 //! `holes=1` also times how long each hit's hole stays open; `bank=N` starts
 //! the round with N food banked (films of rounds); `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
-//! at`), so a run of frames plays as a clip from a still camera.
+//! at`), so a run of frames plays as a clip from a still camera;
+//! `centre=squad,ZOOM` follows the squad at that zoom instead.
 //! `scroll=N` with `menu=PAGE` scrolls the page N wheel notches a frame.
 //! `hover=X,Y[,X2,Y2]` puts the cursor there (screen pixels; with four, it
 //! sweeps from the one to the other over the frames), so the picture shows
@@ -144,7 +145,7 @@ use pixels::{wgpu, Pixels, PixelsBuilder, ScalingMode, SurfaceTexture};
 use slime_mould::gpu::larder_world::{garden_settings, race_settings, GpuWorld};
 use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
-use slime_mould::mould::kit::{Kit, Tool};
+use slime_mould::mould::kit::Tool;
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
 use slime_mould::mould::guns::{Gun, GunKind};
 
@@ -210,6 +211,8 @@ fn kind_look(kind: u16) -> LumpLook {
 /// reads as two-thirds cyan, never all of it (that is a crystal's).
 const LEECH_HALF: f32 = 150.0;
 mod args;
+mod blit;
+mod cursor;
 mod experiments;
 mod input;
 mod draw;
@@ -820,6 +823,12 @@ const SHAKE_FALL: f32 = 2.2;
 fn feel(pops: &[slime_mould::mould::rounds::Pop], felt: &mut u64, trauma: &mut f32, stop: &mut f32, stop_cool: &mut f32, (shake, hold): (f32, f32)) {
     let mut big = 0.0f32;
     for p in pops.iter().rev().take_while(|p| p.tick > *felt) {
+        // The plain bullet's pop (a modifier on the rifle, 2026-11-22) is
+        // a shot's hit grown, not a blast: no shake, or a squad of nine
+        // with a lone Wide shook the screen every volley.
+        if p.payload == slime_mould::mould::rounds::Card::Plain {
+            continue;
+        }
         let size = (p.killed as f32 / 150.0 + p.flung as f32 / 400.0).min(1.0);
         *trauma = (*trauma + shake * (0.12 + 0.6 * size)).min(1.0);
         big = big.max(size);
@@ -843,6 +852,8 @@ const TURRET_TURN: f32 = 5.0;
 struct App {
     args: Args,
     window: Option<Arc<Window>>,
+    /// The mouse cursor's looks, made when the window opens (`cursor.rs`).
+    cursors: Option<cursor::Cursors>,
     pixels: Option<Pixels<'static>>,
     /// The window's GPU (pixels'), or the headless run's.
     gpu: Option<(wgpu::Device, wgpu::Queue)>,
@@ -859,6 +870,8 @@ struct App {
     hud: Hud,
     canvas: Option<Canvas>,
     canvas_pass: Option<CanvasPass>,
+    /// The view's buffer drawn straight to the window (`blit`, 11-22).
+    blit: Option<blit::Blit>,
     marks: Marks,
     /// The look's ground field (`look::ground`), refreshed once a game
     /// second and when a wall goes up.
@@ -977,12 +990,25 @@ struct App {
     /// change mid-round (H in free play, the range's armory) writes a
     /// `gun t=..` line.
     log_gun: String,
+    /// **The frame's parts for the play log** (performance thread,
+    /// 2026-11-22): each window frame's ms in the game's steps, the
+    /// sound, preparing the HUD and marks, waiting for the swap chain's
+    /// next image (vsync, or the GPU still busy with earlier frames),
+    /// recording the view, and submitting and presenting. Written as a
+    /// `frames` line beside each second's line, with the window's size and
+    /// zoom, because the owner's logs of 11-22 showed frames of 35 to 50
+    /// ms in play while the bench at 1280 x 800 timed 5, and the log could
+    /// not say which part had grown.
+    log_parts: Vec<[f32; 6]>,
     /// The command card shows the build page (Q).
     build_page: bool,
     round: usize,
     /// The planet's depth this game (`map=planet:DEPTH`, else 1), and the
     /// test guns (Shift+H) and bullet loads (Ctrl+H) rolled so far.
     planet_depth: u32,
+    /// The planet's music and air (`sound::score`): its biome's mood, or
+    /// the meadow's on a map that is not a generated planet.
+    planet_mood: slime_mould::sound::Mood,
     gun_rolls: u32,
     ammo_rolls: u32,
     tools_page: bool,
@@ -1045,6 +1071,15 @@ struct App {
     /// a rung's (`drifter`) or one of the owner's own (`custom NAME`), on
     /// a run planet the tweaks file's `planet N` pick over the ladder's.
     slime: Option<String>,
+    /// The run's save file (`run::SAVE_HEAD`; `run_save_path`), written
+    /// whenever the run changes and on quitting (`App::save_run`): None in
+    /// the no-window films, tests and bots, which must never touch the
+    /// owner's run.
+    run_file: Option<std::path::PathBuf>,
+    /// The text last written there, so an unchanged run is not rewritten.
+    run_saved: String,
+    /// When the run was last checked against the file (`App::autosave`).
+    run_checked: Option<Instant>,
 }
 
 /// The play log header's words for a round's keys: the switches off their
@@ -1063,6 +1098,7 @@ impl App {
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
             planet_depth: 1,
+            planet_mood: slime_mould::sound::Mood::Meadow,
             gun_rolls: 0,
             ammo_rolls: 0,
             run: args.run.clone(),
@@ -1071,6 +1107,7 @@ impl App {
             armory_minimap: false,
             args,
             window: None,
+            cursors: None,
             pixels: None,
             gpu: None,
             game: None,
@@ -1082,6 +1119,7 @@ impl App {
             hud: Hud::new(),
             canvas: None,
             canvas_pass: None,
+            blit: None,
             marks: Marks::default(),
             ground: None,
             ground_at: 0.0,
@@ -1139,6 +1177,7 @@ impl App {
             log_ended: false,
             log_notes: 0,
             log_gun: String::new(),
+            log_parts: Vec::new(),
             build_page: false,
             tools_page: false,
             form_page: false,
@@ -1157,6 +1196,9 @@ impl App {
             result: Ok(()),
             tweaks: Default::default(),
             slime: None,
+            run_file: None,
+            run_saved: String::new(),
+            run_checked: None,
             viewer: None,
         };
         if app.args.viewer {
@@ -1288,6 +1330,7 @@ impl App {
         // The planet's depth (`map=planet:DEPTH`), what a rolled gun
         // (`gun=roll`, Shift+H) is rolled for.
         let mut depth = 1;
+        let mut mood = slime_mould::sound::Mood::Meadow;
         let world = match &map_name {
             _ if made.is_some() => GpuWorld::with_map(device, queue, s, a.scale, made.as_ref().expect("a made map")),
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
@@ -1303,6 +1346,7 @@ impl App {
                     Some(made) => {
                         let (p, m) = made?;
                         depth = p.depth;
+                        mood = slime_mould::sound::Mood::of(p.biome);
                         m
                     }
                     None => Map::load(&dir, &name)?,
@@ -1421,6 +1465,7 @@ impl App {
             game.apply(Cmd::Active(0));
         }
         self.planet_depth = depth;
+        self.planet_mood = mood;
         if let Some(spec) = &a.gun {
             // Every soldier starts in squad 0 (both halves of a split
             // copy its gun, `Squad::offshoot`).
@@ -1718,6 +1763,24 @@ impl App {
     }
 
     /// Appends `text` to the play log (nothing without one).
+    /// The play log's `end` line, once, when the game has ended or its
+    /// mission has a verdict (the verdict's own words, else the end's).
+    fn log_end(&mut self) {
+        if self.log_ended || self.log_path.is_none() {
+            return;
+        }
+        let Some(g) = self.game.as_ref() else { return };
+        let verdict = self.mission.as_ref().and_then(|m| m.verdict.map(|_| m.cause_line()));
+        if g.end.is_none() && verdict.is_none() {
+            return;
+        }
+        self.log_ended = true;
+        let t = g.time();
+        let why = verdict.unwrap_or_else(|| g.end.map(|e| e.band().to_string()).unwrap_or_default());
+        let text = format!("{}end t={t:.0} {why}\n", self.playlog.commands(g));
+        Self::log_write(&self.log_path, &text);
+    }
+
     fn log_write(path: &Option<String>, text: &str) {
         use std::io::Write;
         let Some(path) = path else { return };
@@ -1840,7 +1903,7 @@ impl App {
         // verdict the census steps no more, so neither does this.
         if g.in_flight() && g.step_ready() && !mission_over {
             g.finish_step();
-            feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+            feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake * shake_user(), self.args.hitstop));
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
             turret_fired(g, &mut self.blooks);
@@ -1860,6 +1923,12 @@ impl App {
             // owner's play, 2026-11-18 17:20Z).
             let (paused, ended) = (self.paused, g.end.is_some() || mission_over);
             self.follow_mission();
+            // Its play log's end line too: a game that ended in the step
+            // finished above returns here, so until 2026-11-22 a planet
+            // won this way (most wins: the step finishes on a later frame)
+            // logged no `end` line, and 21 of the owner's 30 play logs
+            // stopped with the slime at 0 to 9 walkers and no verdict.
+            self.log_end();
             // The end plays out in the picture before its card (`ending`).
             if ended && !paused {
                 self.play_on(dt);
@@ -1877,7 +1946,7 @@ impl App {
         while self.owed >= step && g.end.is_none() {
             if g.in_flight() {
                 g.finish_step();
-                feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+                feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake * shake_user(), self.args.hitstop));
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 turret_fired(g, &mut self.blooks);
@@ -1902,13 +1971,14 @@ impl App {
         self.steps += n;
         self.follow_mission();
         let Some(g) = self.game.as_mut() else { return };
-        let t = g.time();
         // The play log's line for each whole game second passed.
         if self.log_path.is_some() {
+            let t = g.time();
             let sec = (g.settled_ticks().saturating_sub(g.landed)) / g.rules.tps as u64;
             if sec > self.log_sec {
                 self.log_sec = sec;
                 let mut line = self.playlog.second(g);
+                line += &frames_line(&mut self.log_parts, self.view.as_ref().map_or((0, 0), |v| v.screen), self.camera.zoom, self.fast);
                 let gun = rounds::name(&g.rounds.round);
                 if gun != self.log_gun {
                     line += &format!("gun t={t:.1} {gun}\n");
@@ -1916,14 +1986,10 @@ impl App {
                 }
                 Self::log_write(&self.log_path, &line);
             }
-            let verdict = self.mission.as_ref().and_then(|m| m.verdict.map(|_| m.cause_line()));
-            if !self.log_ended && (g.end.is_some() || verdict.is_some()) {
-                self.log_ended = true;
-                let why = verdict.unwrap_or_else(|| g.end.map(|e| e.band().to_string()).unwrap_or_default());
-                let text = format!("{}end t={t:.0} {why}\n", self.playlog.commands(g));
-                Self::log_write(&self.log_path, &text);
-            }
         }
+        self.log_end();
+        let Some(g) = self.game.as_mut() else { return };
+        let t = g.time();
         // A soldier the game made inside these steps (`Rules::reserve`'s
         // free recruit) joins the notes too.
         join_looks(g, &mut self.looks);
@@ -2067,7 +2133,7 @@ impl App {
             return;
         }
         self.seen = g.world.ticks();
-        feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+        feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake * shake_user(), self.args.hitstop));
         shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         turret_fired(g, &mut self.blooks);
         step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
@@ -2086,6 +2152,9 @@ impl App {
         l.bangs(&g.kit.bangs);
         // The gun cards' payloads (sound pass two, 2026-11-20).
         l.pops(&g.rounds.pops);
+        // The score: the planet's mood, the menus' own under a menu.
+        l.mood = if self.menu.is_some() { slime_mould::sound::Mood::Menu } else { self.planet_mood };
+        l.music = music_user();
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
@@ -2111,6 +2180,7 @@ impl App {
         let t0 = Instant::now();
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
+        self.update_cursor(event_loop);
         if !self.in_menu() {
             // WASD pans only while paused (`Controls::wasd_pan`): set here
             // too, so a key held through P stops panning as play resumes.
@@ -2119,7 +2189,9 @@ impl App {
             self.controls.update(&mut self.camera, dt);
             self.squad_frame(dt);
         }
+        let t_step = Instant::now();
         self.step(dt);
+        let step_ms = t_step.elapsed().as_secs_f32() * 1e3;
         self.viewer_frame(dt);
         // The dish under the menu plays on: a round it ends starts again.
         // (Not the gun range's paused under its armory.)
@@ -2131,7 +2203,10 @@ impl App {
             }
         }
         let ear = self.ear();
+        let t_hear = Instant::now();
         self.hear(dt, ear);
+        let hear_ms = t_hear.elapsed().as_secs_f32() * 1e3;
+        let t_prep = Instant::now();
         // The shake moves the camera for this frame's picture only: the
         // HUD is drawn on its own layer, and the cursor's aim reads the
         // still camera.
@@ -2139,24 +2214,41 @@ impl App {
         let (sx, sy) = self.shake();
         (self.camera.x, self.camera.y) = (still.x + sx, still.y + sy);
         self.prepare();
+        let prep_ms = t_prep.elapsed().as_secs_f32() * 1e3;
         let camera = self.camera;
         (self.camera.x, self.camera.y) = (still.x, still.y);
         let (Some(p), Some(view)) = (&self.pixels, self.view.as_ref()) else { return };
         let mut canvas_pass = self.canvas_pass.as_mut();
+        let blit = self.blit.as_ref();
+        // `render_with` takes the swap chain's next image before it calls
+        // this and submits and presents after: the times either side.
+        let t_render = Instant::now();
+        let mut rec = (0.0f32, 0.0f32);
         let res = p.render_with(|enc, target, ctx| {
+            let t_rec = Instant::now();
+            rec.0 = (t_rec - t_render).as_secs_f32() * 1e3;
             view.record(enc, &camera, None);
             if let Some(cp) = canvas_pass.as_mut() {
                 cp.record(enc, &view.out, view.stride);
             }
-            view.copy_to(enc, &ctx.texture);
-            ctx.scaling_renderer.render(enc, target);
+            if let Some(b) = blit {
+                b.draw((&ctx.device, &ctx.queue), enc, target, &view.out, view.stride, view.screen);
+            } else {
+                view.copy_to(enc, &ctx.texture);
+                ctx.scaling_renderer.render(enc, target);
+            }
+            rec.1 = t_rec.elapsed().as_secs_f32() * 1e3;
             Ok(())
         });
+        let present_ms = t_render.elapsed().as_secs_f32() * 1e3 - rec.0 - rec.1;
         if let Err(err) = res {
             return self.fail(event_loop, format!("render failed: {err}"));
         }
         self.frame_ms.push(t0.elapsed().as_secs_f32() * 1e3);
         self.playlog.frame(t0.elapsed().as_secs_f32() * 1e3);
+        if self.log_path.is_some() && self.log_parts.len() < 4096 {
+            self.log_parts.push([step_ms, hear_ms, prep_ms, rec.0, rec.1, present_ms]);
+        }
         let since = self.report_at.elapsed().as_secs_f32();
         if since >= 10.0 && !self.frame_ms.is_empty() {
             // The frame's CPU time (the game's steps, their read-backs, the
@@ -2606,7 +2698,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // The bench also takes `centre=larder[,ZOOM]`: the squad's
                 // base, wherever the map put it (NaN here; only `bench`
                 // reads it, the GTX 1070 batch's zoomed runs, 11-20).
-                let v = v.replacen("larder", "NaN,NaN", 1);
+                // `centre=squad[,ZOOM]`: a film's near view follows the
+                // controlled squad at that zoom, as without `centre=` at
+                // zoom 6 (infinite here; `headless` reads it; the exit
+                // test 2 pass, 11-21, filmed zoom 12 that way).
+                let v = v.replacen("larder", "NaN,NaN", 1).replacen("squad", "inf,inf", 1);
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, zoom @ ..] = w.as_slice() else { return Err("centre=X,Y[,ZOOM]".into()) };
                 centre = Some((*x, *y, zoom.first().copied().unwrap_or(6.0)));
@@ -2759,6 +2855,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The saved volume (`volume`); the pictures' recordings stay at 100%.
     if look.is_none() && bench_secs.is_none() {
         set_volume_user(settings::saved_volume());
+        set_music_user(settings::saved_music());
+        set_shake_user(settings::saved_shake());
     }
     if !mode_given && look.is_none() && bench_secs.is_none() {
         args.squads = true;
@@ -2889,6 +2987,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if bare || menu_flag.is_some() {
             app.menu = Some(start_menu(&base));
         }
+        // The run saved when the game last closed (owner, 2026-11-22),
+        // unless the command line gave a run of its own: the menu's "Back
+        // to the run" carries on with it.
+        if app.args.run.is_none() && app.args.range.is_none() && !app.args.viewer {
+            app.run_file = run_save_path();
+            app.load_run();
+        }
         app.base = Some((base, chosen));
     }
     event_loop.run_app(&mut app)?;
@@ -2911,4 +3016,32 @@ fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime
         RaidAim::Lure { from: None, .. } => "A raid on your soldiers turns for the lure".into(),
         RaidAim::Soldiers(_) => "The mould is raiding your soldiers".into(),
     }
+}
+
+/// The play log's `frames` line for the second just passed (performance
+/// thread, 2026-11-22): the window's size in pixels, the zoom, fast
+/// forward, the frames counted, and for each part of a frame (`log_parts`)
+/// its mean and its most in ms:
+///
+/// ```text
+/// frames px=2560x1377 zoom=7.5 fast=0 n=58 step=1.2/9.8 hear=0.1/0.2 prep=0.9/1.4 wait=12.0/30.1 record=0.3/0.5 present=0.2/0.9
+/// ```
+///
+/// `wait` is the swap chain's next image: vsync on a quick frame, the GPU
+/// still drawing earlier frames on a slow one. `step` holds the GPU's
+/// read-backs, so a slow GPU shows there too.
+fn frames_line(parts: &mut Vec<[f32; 6]>, (w, h): (u32, u32), zoom: f32, fast: bool) -> String {
+    if parts.is_empty() {
+        return String::new();
+    }
+    let names = ["step", "hear", "prep", "wait", "record", "present"];
+    let n = parts.len();
+    let mut s = format!("frames px={w}x{h} zoom={zoom:.1} fast={} n={n}", u8::from(fast));
+    for (i, name) in names.iter().enumerate() {
+        let mean = parts.iter().map(|p| p[i]).sum::<f32>() / n as f32;
+        let most = parts.iter().map(|p| p[i]).fold(0.0f32, f32::max);
+        s += &format!(" {name}={mean:.1}/{most:.1}");
+    }
+    parts.clear();
+    s + "\n"
 }

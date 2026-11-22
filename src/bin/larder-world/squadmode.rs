@@ -4,7 +4,8 @@
 //!
 //! - **WASD** steers it; the camera follows it while you do. Pan away
 //!   freely (middle drag, arrows; WASD while paused); **Space** brings the
-//!   camera back.
+//!   camera back, and while it follows looks at the newest alert's place
+//!   (2026-11-21).
 //! - **Hold the left button**: every soldier in it fires at the cursor on
 //!   the same beat. It faces the cursor.
 //! - **Right click** sends it there as a squad; on a crystal it stands by
@@ -19,9 +20,13 @@
 //!   you control that one. **Shift + drag** a box pulls the soldiers in it
 //!   out into a squad of their own. **J** joins the nearest squad within
 //!   reach into it.
+//! - **Drag a box** (with none controlled; **Ctrl + drag** with one): every
+//!   squad in it is commanded as one, as a link is (`Cmd::Band`, owner
+//!   2026-11-21 06:53Z); **Ctrl + click** a squad takes it alone.
 //! - **T** opens the card's Formation page: blob, spread, line, wedge,
 //!   column, ring (a squad key that cycled them until 2026-11-21).
-//! - **Esc** lets go of it (and the panel's Let go button): nothing is
+//! - **Esc** on a card page goes back to the main card; else it lets go
+//!   of the squad (and the panel's Let go button): nothing is
 //!   controlled, every squad keeps its last orders, fires at slime in reach
 //!   and guards on its own ("auto" on its tile and over it), and WASD pans
 //!   the camera. A number, a tile, a click on a squad or Space takes command
@@ -120,8 +125,9 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
     let k = |c: KeyCode| key_name(c).unwrap_or_default();
     [
         ("WASD".to_string(), "Steer your squad; the camera follows it (paused, or no squad controlled: pan the camera)".to_string()),
-        ("Esc".into(), "Let go of the squad: every squad runs on its own and WASD pans; Esc again: the menu".into()),
+        ("Esc".into(), "On a card page: back to the main card; else let go of the squad (every squad runs on its own and WASD pans); Esc again: the menu".into()),
         ("Click a squad, Space".into(), "With none controlled: take command of it, or of the last one".into()),
+        ("Space".into(), "The camera back to your squad; while it follows, to the newest alert's place (a raid, landing ore), and again back".into()),
         ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
@@ -130,6 +136,8 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
         (format!("{0}, Shift + {0}", k(CYCLE)), "The next squad, or the one before".into()),
         (k(SPLIT), "Split: the half nearer the cursor becomes a new squad".into()),
+        ("Drag a box".into(), "Take command of every squad in it, as one (with a squad commanded: Ctrl + drag); click one, or its number, to take it alone".into()),
+        ("Ctrl + click a squad".into(), "Take command of it, with another commanded".into()),
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
         ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
@@ -166,11 +174,23 @@ pub(super) struct SquadInput {
     pub(super) free: bool,
     /// The squad controlled before letting go, for Space.
     last: Option<u8>,
+    /// A left drag or click picking squads is under way (`squad_box`):
+    /// plain with none controlled, Ctrl with one. Shift's box splits.
+    boxing: bool,
+    /// Where on the screen that button went down.
+    box_from: Option<(f32, f32)>,
+    /// The box was dragged past a click when the button came up.
+    box_far: bool,
 }
 
 impl SquadInput {
     pub(super) fn new() -> Self {
         SquadInput { follow: true, ..SquadInput::default() }
+    }
+
+    /// The left button is held: the commanded squad is firing.
+    pub(super) fn firing(&self) -> bool {
+        self.firing
     }
 
     /// A WASD key held: the squad is being steered.
@@ -244,7 +264,7 @@ impl App {
 
     /// With none controlled: the live squad nearest the world point, if a
     /// soldier of it is within a few cells (a click on a squad takes it).
-    fn squad_at(&self, at: (f32, f32)) -> Option<u8> {
+    pub(super) fn squad_at(&self, at: (f32, f32)) -> Option<u8> {
         let g = self.game.as_ref()?;
         let near = (3.0 * g.world.scale()).max(14.0 / self.camera.zoom);
         g.soldiers.iter().filter(|s| s.alive).map(|s| (s.squad, (s.x - at.0).hypot(s.y - at.1))).filter(|&(_, d)| d <= near).min_by(|a, b| a.1.total_cmp(&b.1)).map(|x| x.0)
@@ -277,8 +297,16 @@ impl App {
         if first {
             let wasd = [KeyCode::KeyW, KeyCode::KeyA, KeyCode::KeyS, KeyCode::KeyD];
             if code == KeyCode::Escape {
-                // Esc lets go of the squad before it opens the menu; a
-                // building being placed is called off first (the HUD's).
+                // Esc closes a card page first (Build, Tools, Formation),
+                // as its Back does; then lets go of the squad; then opens
+                // the menu. A building being placed is called off first
+                // (the HUD's). Until 2026-11-21 Esc on a page let go of the
+                // squad and left the page open (controls review).
+                let page = self.build_page || self.tools_page || self.form_page;
+                if pressed && !repeat && page && self.hud.targeting().is_none() && !self.hud.menu_open() {
+                    (self.build_page, self.tools_page, self.form_page) = (false, false, false);
+                    return true;
+                }
                 if pressed && !repeat && !self.squad_free() && self.active().is_some() && self.hud.targeting().is_none() && !self.hud.menu_open() {
                     self.let_go();
                     return true;
@@ -309,9 +337,21 @@ impl App {
                     return true;
                 }
                 if pressed && !repeat {
+                    // Following the squad, Space looks at the newest alert
+                    // that has a place (a raid, landing ore) while it shows;
+                    // again, or once panned away, it comes back to the squad
+                    // (controls review, 2026-11-21: outside the squad mode
+                    // Space is the alerts' key, here it only came back).
+                    let at = self.hud.newest_place();
                     let sq = self.sq.as_mut().unwrap();
-                    sq.follow = true;
                     sq.put = None;
+                    match at.filter(|_| sq.follow) {
+                        Some(at) => {
+                            sq.follow = false;
+                            self.camera.centre_on(at);
+                        }
+                        None => sq.follow = true,
+                    }
                 }
                 return true;
             }
@@ -331,7 +371,17 @@ impl App {
             return true;
         }
         let at = self.cursor_world();
-        let Some(q) = self.active() else { return true };
+        let Some(q) = self.active() else {
+            // None commanded: its number takes command, as the let-go
+            // alert says (until 2026-11-21 it did nothing here, so after
+            // Esc only a click or Space took a squad again; found testing
+            // the cursor).
+            let n = digit(code).filter(|&n| self.game.as_ref().is_some_and(|g| !g.members(n).is_empty()));
+            if let Some(n) = n {
+                self.switch_to(n as u8);
+            }
+            return true;
+        };
         let g = self.game.as_mut().unwrap();
         match code {
             SPLIT => {
@@ -392,6 +442,11 @@ impl App {
     fn switch_to(&mut self, q: u8) {
         self.building_sel = None;
         let Some(g) = self.game.as_mut() else { return };
+        // Taking one squad ends a drag's pick (`Cmd::Band`), as a click
+        // on one unit does a box in an RTS; a squad's own link stays.
+        if g.banded() {
+            g.apply(Cmd::Band(0));
+        }
         if self.sq.as_ref().is_some_and(|sq| sq.free) {
             if g.members(q as usize).is_empty() || !g.apply(Cmd::Active(q)) {
                 return;
@@ -439,25 +494,38 @@ impl App {
             return false;
         }
         match b {
-            // Shift + left drag is the box (the controls take it).
-            Button::Left if self.shift && down => false,
+            // Shift + left drag is the box that splits (the controls take
+            // it).
+            Button::Left if self.shift && down => {
+                let c = self.controls.cursor;
+                let sq = self.sq.as_mut().unwrap();
+                sq.boxing = false;
+                sq.box_from = c;
+                false
+            }
             // On the minimap: the controls move the camera there.
             Button::Left if down && self.cursor_minimap().is_some() => false,
-            Button::Left if self.squad_free() => {
-                // A click on a squad takes command of it; else on a
-                // building, selects it (owner 2026-11-15 19:51Z, option b:
-                // only with no squad commanded, where the left button
-                // doesn't fire), else lets go of one selected.
-                if down {
-                    let at = self.cursor_world();
-                    if let Some(q) = at.and_then(|at| self.squad_at(at)) {
-                        self.switch_to(q);
-                    } else {
-                        self.building_sel = at.and_then(|at| self.game.as_ref()?.building_at(at));
-                    }
-                }
-                !(!down && self.controls_dragging())
+            // The box that picks squads (owner 2026-11-21 06:53Z: "add
+            // click and drag to select multiple squads"): a plain drag with
+            // none controlled, where the left button doesn't fire, and Ctrl
+            // + drag with one. The controls draw the box and hand back who
+            // is in it (`squad_picked`, then `squad_box`); a click is the
+            // squad under it.
+            Button::Left if down && (self.ctrl || self.squad_free()) => {
+                let c = self.controls.cursor;
+                let sq = self.sq.as_mut().unwrap();
+                sq.boxing = true;
+                sq.box_from = c;
+                false
             }
+            Button::Left if !down && self.sq.as_ref().is_some_and(|sq| sq.boxing) => {
+                // Past the controls' own click distance, as their box is.
+                let c = self.controls.cursor;
+                let sq = self.sq.as_mut().unwrap();
+                sq.box_far = matches!((sq.box_from, c), (Some(a), Some(b)) if (a.0 - b.0).hypot(a.1 - b.1) > slime_mould::world::controls::DRAG_PX);
+                false
+            }
+            Button::Left if self.squad_free() => !(!down && self.controls_dragging()),
             Button::Right if self.squad_free() => {
                 if down {
                     self.hud.alert("No squad controlled: click a squad, its tile or its number to give it orders", None, theme::WARN);
@@ -514,8 +582,21 @@ impl App {
     }
 
     /// The box picked soldiers (Shift + drag): they leave for a squad of
-    /// their own, which you then control.
+    /// their own, which you then control. A plain or Ctrl box picks their
+    /// squads instead (`squad_box`).
     pub(super) fn squad_picked(&mut self, picked: &[usize]) {
+        if let Some(sq) = self.sq.as_mut().filter(|sq| sq.boxing) {
+            sq.boxing = false;
+            let far = sq.box_far;
+            return self.squad_box(picked, far);
+        }
+        // Only a drag splits: a Shift + click (no box) picked the one
+        // soldier under it and split it off alone (controls review,
+        // 2026-11-21), which read as a misclick.
+        let from = self.sq.as_ref().and_then(|sq| sq.box_from);
+        if !matches!((from, self.controls.cursor), (Some(a), Some(b)) if (a.0 - b.0).hypot(a.1 - b.1) > slime_mould::world::controls::DRAG_PX) {
+            return;
+        }
         let picked = self.living(picked);
         let Some(g) = self.game.as_mut() else { return };
         if picked.is_empty() {
@@ -538,6 +619,41 @@ impl App {
             g.apply(Cmd::SquadOrder(n as u8, Order::Move(m.0, m.1)));
         }
         self.switch_to(n as u8);
+    }
+
+    /// The squads a box picked (a drag, `far`) or the one under a click:
+    /// one is commanded alone; several are commanded as one
+    /// (`Cmd::Band`), led by the one you command if it is among them, else
+    /// the lowest. A click on no squad selects the building under it, with
+    /// none commanded (owner 2026-11-15 19:51Z, option b), as before.
+    fn squad_box(&mut self, picked: &[usize], far: bool) {
+        let at = self.cursor_world();
+        let Some(g) = self.game.as_ref() else { return };
+        let mut qs: Vec<u8> = if far {
+            self.living(picked).iter().map(|&k| g.soldiers[k].squad).collect()
+        } else {
+            at.and_then(|at| self.squad_at(at)).into_iter().collect()
+        };
+        qs.sort_unstable();
+        qs.dedup();
+        match qs[..] {
+            [] => {
+                if !far && self.squad_free() {
+                    self.building_sel = at.and_then(|at| self.game.as_ref()?.building_at(at));
+                }
+            }
+            [q] => self.switch_to(q),
+            _ => {
+                let lead = g.active.map(|a| a as u8).filter(|a| qs.contains(a)).unwrap_or(qs[0]);
+                let mask = qs.iter().fold(0u16, |m, &q| m | 1 << q);
+                self.switch_to(lead);
+                let Some(g) = self.game.as_mut() else { return };
+                if g.active == Some(lead as usize) && g.apply(Cmd::Band(mask)) {
+                    let names: Vec<String> = qs.iter().map(|q| (q + 1).to_string()).collect();
+                    self.hud.alert(&format!("Squads {}: you command them as one (click one, or its number, to take it alone)", names.join(", ")), None, theme::TEXT);
+                }
+            }
+        }
     }
 
     /// Ctrl + wheel in the squad mode: the next or last squad. (It was the
@@ -627,7 +743,11 @@ impl App {
         if at.is_some() {
             sq.want = at;
         }
-        self.controls.selected = g.members(q);
+        // Every squad commanded with it (its link, a drag's pick): their
+        // soldiers get the rings, and the fire button and Hold fire reach
+        // them all (controls review, 2026-11-21: they changed only the one
+        // you command, while a link took every other order together).
+        self.controls.selected = g.linked(q).into_iter().flat_map(|r| g.members(r)).collect();
         // Follow: eased toward the squad's middle; a pan by the player (the
         // camera not where it was put) lets go until Space or WASD.
         // (`Camera::focus`, the inverse of `centre_on`: eased from the
@@ -721,6 +841,8 @@ impl App {
                 }
                 if sq.link != NO_LINK {
                     note.push("linked".into());
+                } else if sq.band {
+                    note.push("picked".into());
                 }
                 let linked = g.active.is_some_and(|a| a != q && g.linked(a).contains(&q));
                 let near = g.active.is_some_and(|a| a != q && overlap.contains(&q));

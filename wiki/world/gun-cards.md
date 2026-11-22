@@ -2,7 +2,7 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/gun-builds-2026-11-19/README.md
@@ -60,19 +60,19 @@ this thread's judgement.
 | Blast | 1 | Drifter; Trunk, Sleeper | M | the loud plan leads on these three, held on the Drifter | a crater; the slime parts round it |
 | Rate | 1 | Drifter | J | more of the bites that already win | faster fire |
 | Sour | 2 | Drifter | J | it follows food; sour turns it away | the vein frays into fog, then knits back |
-| Scatter | 2 | Sprawler | J | small hits over a thin mesh | three small hits in a ring |
+| Scatter | 2 | Sprawler | J | small hits over a thin mesh | three small hits in a ring; on the plain bullet, three small pops round each hit |
 | Split | 2 | Sprawler | J | pieces over a mesh | the bullet breaks where it lands |
 | Scorch | 2 | Sprawler | J | a line it turns from, as it turns from walls | a burnt line the slime avoids |
-| Seek | 2 | Sprawler | M | near misses on thin slime become hits | near misses strike the slime beside them |
+| Seek | 2 | Sprawler | M | near misses on thin slime become hits | shots fly on past the aim and strike slime beyond the front |
 | Blind | 2 | Sprawler | J | a fast mesh walks straight into walls, water, fire | walkers leave the vein in straight lines |
 | Provoke | 2 | Drifter; any slime sitting on a crystal | M | it fakes the cut: the part it hits believes it is cut off and comes out onto the guns (planet 1: the crystal clear in 13 s, kills 387 against 319); adds nothing to slime already charging | the slime goes grey, lets go of the crystal and runs at the squad |
 | Still | 2 | Swarmer; any raid | M | a raid it hits loses the charge: the squad better off in 4 of 6 paired windows, at about a third fewer kills | the raiders drift past instead of biting |
 | Pierce | 1 | Trunk | J | runs on along a long cord | the bullet carries on past its first hit |
 | Trigger, Expire | 2 | Trunk | J | carry a payload past the cords to a body | a second payload goes off past the first |
-| Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food | the slime loses its line to a crystal |
+| Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food and calms the slime on its line | the slime loses its line to a crystal; a rose calm where its shots hit |
 | Gas | 2 | Swarmer | J | the charge sleeps before it bites | a grey, still patch |
 | Mist | 4 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
-| Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it |
+| Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it; on the plain bullet, the hit pops again when slime crowds it |
 | Spin | 2 | Swarmer | J | rings stop a charge | the vein beads into knots |
 | Heave | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone); with no turret near it pushes the swarm back | the slime shoved as a block, toward a turret if one is near |
 | Shatter | 2 | Swarmer, after gas | J | the gassed charge dies at once | the grey patch is gone and the hole stays |
@@ -81,14 +81,14 @@ this thread's judgement.
 | Detonate | 4 | Sporer, after the germ | M | less slime at the window's end in 13 of 15 paired windows; fire it late, once the wave has spread (cast early it cuts the wave short; its words say "let it spread first") | every sick walker in reach dies at once; the red wave is the germ the sick lay, fading 1-2 s behind them |
 | Bait | 1 | Sporer | J | draws it off its crystals without a hit (its counter: starve it, don't hit it) | a scent line the slime follows |
 | Torch | 2 | Sporer (its jungle), by the ground; measured on the meadow | M | its fire kills thin slime in plants: on planets 1-3 more kills than plain in 9 of 9 windows, on the meadow 350 against 230 (216 by fire), on the barrens and fen barely more; the jungle (planet 5) not measured | the plants round the hit catch fire; thin slime in the flames burns, a damp body stops it |
-| Tinder | 2 | Sprawler (its barrens), with a torch | M | a fire runs along its brush where plants are thin: with the torch, more kills than the torch alone in 9 of 9 windows, on the barrens 159 against 123; nothing added to a scorch trail | a strip of dry brush along each flight, kept 6 cells clear of the squad; a fire runs along it |
-| Flare | 2 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); it wakes the Sleeper for a germ; shape C backs off from it and in play loses kills | a red ember; the slime comes to it or backs away |
-| Quiet | 1 | Sleeper; Swarmer | J | no alarm to wake the crust or draw the swarm; keeps gas asleep for Shatter | nothing: the slime does not stir |
-| Delay | 1 | Grudge | J | goes off when the slime comes back to where it was shot | the hit lodges, then goes off |
+| Tinder | 2 | Sprawler (its barrens), with a torch | M | a fire runs along its brush where plants are thin: with the torch, more kills than the torch alone in 9 of 9 windows, on the barrens 159 against 123; nothing added to a scorch trail. Alone, a few hits spark their own brush (`tinder_spark`, 11-22) | a strip of dry brush along each flight, kept 6 cells clear of the squad; a fire runs along it |
+| Flare | 4 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); it wakes the Sleeper for a germ; shape C backs off from it and in play loses kills | a red ember; the slime comes to it or backs away |
+| Quiet | 4 | Sleeper; Swarmer | J | no alarm to wake the crust or draw the swarm; keeps gas asleep for Shatter | nothing: the slime does not stir |
+| Delay | 1 | Grudge | J | goes off when the slime comes back to where it was shot | the hit lodges, then goes off; on the plain bullet, the hit pops again a moment later |
 | Range | 1 | Grudge | J | fire from new spots, out of a scar's reach | longer shots |
-| Wide | 1 | any | | grows any payload | the payload's disc grows |
+| Wide | 1 | any | | grows any payload | the payload's disc grows; on the plain bullet, a hole a quarter wider |
 | Multicast | 4 | any | | two payloads in one shot | two payloads go off together |
-| Thrift | 2 | none | | a budget tweak | nothing |
+| Thrift | once a bullet card is owned | none | | a budget tweak | nothing |
 | Pull | 2 | none | M | stops short of the squad, but adds no kills where squads fight | the slime dragged to just short of the squad |
 
 **Gaps.** The Sleeper ignores every round
@@ -141,6 +141,9 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   gun cost every plan (rush 7 to 2, lure 4 to 1). No comparison survives a
   correction. For Direction, not retuned
   ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
+  Cards on the turrets (job 14-0-s, 11-22) tripled the lure plan's turret
+  kills but changed no win count beyond noise; the Wide + Rate + Needle
+  Blast deck won 9 of 9 in every firing order.
 - Cards that do nothing on their own in the run shop (the balance review,
   11-20, [report](../../Reports/balance-review-2026-11-20/README.md)):
   Trigger, Expire and Multicast with one bullet card, and Wide, Scatter,
@@ -149,6 +152,21 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   whole Wide + Rate + Needle Blast deck in 0.47%. Owned cards are never
   offered again, so a second loadout can't get its own copy. Proposals to
   Squad and arsenal, not built.
+- **Exit test 5's check (11-22)**: the gun lab's arena (planet 1, 9
+  soldiers, 60 s, seeds 1-4, kills against the plain rifle's 5,753) found
+  Wide, Scatter, Quiet, Delay, Thick and Thrift playing the very same game
+  as no card: the batch-7 plain cast made no burst. Fixed: a modifier on
+  the plain bullet gives it a pop sized by the shot's own strike
+  (`RoundRules::plain_pop`, `plain_wide`): Wide +1,037, Thick +1,001,
+  Scatter +1,519, Delay +1,624 (Rate +716, Pierce +794, Blast +3,884).
+  Thrift is sold once a bullet card is owned; Quiet and the Flare from
+  `run::ALARM_FROM` (planet 4), since no slime before it answers an alarm.
+  Seek and Smother still showed nothing on planet 1; on Direction's call
+  a seeking round now flies half again past its aim (`Rules::seek_reach`:
+  planet 1 +283, planet 2 +881) and Smother's line also calms the walkers
+  it crosses and a strike-sized disc where it hits (planet 1 health lost
+  25.9 to 18.8, planet 2 15.0 to 11.0)
+  ([report](../../Reports/gun-cards-visible-2026-11-22/README.md)).
 - A J row becomes M when a run pits the card against its planet, paired
   windows as for seek and the readers.
 - The germ, retuned per planet on the game designer's call (11-17 05:40Z
@@ -172,6 +190,9 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   walker as the plan with an empty shop (11-20, cloud; the PC job
   14-fire-p2 tests every map,
   [strategy bots](../../Reports/strategy-bots-2026-11-19/README.md)).
+  Fixed 11-22: one hit in a hundred on slime sparks its own brush
+  (`RoundRules::tinder_spark`); alone it killed +1,768 in the gun lab's
+  arena, about the Torch's +1,837, and the pair +5,057 (at 1 in 4, +3,913).
 - With the fire at 10 (#564), the Torch bought with Tinder still costs
   every planet 2 plan its wins: rush,aim=6 went from 11 wins of 11 to 3. It
   is a real choice only at fire 5. Direction kept 10 ("the fire is the

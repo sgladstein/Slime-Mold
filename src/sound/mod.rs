@@ -22,6 +22,9 @@
 //! picture, held for sound too): every texture's rate and level is a count
 //! read off the dish this frame, and every one-shot is a tally that moved.
 //! Nothing is scored or scripted for the ear alone.
+//! The one exception is [`score`] (2026-11-22), the music bed and the
+//! planet's air, asked for by the owner because the game was gunfire over
+//! silence; even it takes its tension from the game.
 //!
 //! **Never one voice per walker.** Two thousand walkers become a handful of
 //! textures whose grain rate follows the count up to a ceiling and whose
@@ -29,6 +32,7 @@
 
 pub mod listen;
 pub mod pieces;
+pub mod score;
 pub mod synth;
 pub mod world;
 
@@ -333,4 +337,52 @@ pub enum SoundCmd {
     Hush(bool),
     /// The master level, 0 ..= 1; the applied gain is its square.
     Master(f32),
+    /// **The score** (`score`, 2026-11-22): the music bed and the planet's
+    /// air. Absolute targets, re-sent every drawn frame: the planet's
+    /// `mood`, `tension` 0 ..= 1 (how near the slime is), `level` the
+    /// Options page's Music (1 = 100%, 0 = off), and `hushed` (paused: it
+    /// plays on, quieter).
+    Score { mood: Mood, tension: f32, level: f32, hushed: bool },
+}
+
+/// **A planet's music and air** (`score::MOODS`): one per biome of the
+/// run's planets (`levelgen::Biome`), and one for the menus.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Mood {
+    Menu = 0,
+    Meadow = 1,
+    Barrens = 2,
+    Fen = 3,
+    Valley = 4,
+    Jungle = 5,
+    Highlands = 6,
+    Caves = 7,
+    Core = 8,
+}
+
+impl Mood {
+    pub const COUNT: usize = 9;
+    pub const ALL: [Mood; 9] = [Mood::Menu, Mood::Meadow, Mood::Barrens, Mood::Fen, Mood::Valley, Mood::Jungle, Mood::Highlands, Mood::Caves, Mood::Core];
+
+    /// A planet's mood by its biome.
+    pub fn of(b: crate::mould::levelgen::Biome) -> Mood {
+        use crate::mould::levelgen::Biome;
+        match b {
+            Biome::Meadow => Mood::Meadow,
+            Biome::Barrens => Mood::Barrens,
+            Biome::Fen => Mood::Fen,
+            Biome::Valley => Mood::Valley,
+            Biome::Jungle => Mood::Jungle,
+            Biome::Highlands => Mood::Highlands,
+            Biome::Caves => Mood::Caves,
+            Biome::Core => Mood::Core,
+        }
+    }
+
+    /// By name, for `mood=` on the command line: `menu` or a biome's name
+    /// (`meadow`, `barrens`, `fen`, `valley`, `jungle`, `highlands`,
+    /// `caves`, `core`).
+    pub fn from_name(s: &str) -> Option<Mood> {
+        Mood::ALL.into_iter().find(|m| format!("{m:?}").eq_ignore_ascii_case(s))
+    }
 }

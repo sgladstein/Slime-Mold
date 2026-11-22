@@ -25,6 +25,7 @@ code:
   - Game::heal
   - Game::mark_hot
   - Game::rank_squad
+  - Game::rim_spots
   - Game::steer_point
   - MAP_NEAR
   - Rules::fireway
@@ -62,7 +63,13 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
 - **Firing on its own** (2026-11-18). Not volleying, the commanded squad
   fires by its fire mode like every squad: *defend*, the default, shoots the
   thickest slime within 7.5 cells of each soldier, so among loose walkers the
-  soldiers spread their fire; *free* shoots the thickest in the gun's reach.
+  soldiers spread their fire; *free* shoots the thickest in the gun's reach,
+  but slime within 12 cells first (`Rules::near_first`, 2026-11-22), and so
+  do a guarding squad and one clearing a crystal: reading the whole 24-cell
+  reach, a free squad at zoom 12 fired off the screen at a thicker clump
+  past the walkers beside it. A mini-boss is shot first only within those
+  12 cells while slime is that near; further off it takes the fire when
+  nothing is near (`Game::boss_aim_within`, 11-22).
   Before, it was held to defend whatever its mode, and defend read the whole
   reach, so a clump 20 cells off hid the walkers on the squad
   (`Game::stance_of`, `Game::sight`;
@@ -83,8 +90,17 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   key, count and health rather than some hiding behind "+N" (11-19). Click a
   tile or press its number to take command; ` (Shift + ` back) and Ctrl +
   wheel go round them. **Esc** or *Let go* commands none: every squad shows
-  AUTO, WASD pans, and a click on a squad takes it back
-  ([free camera](../../Reports/free-camera-2026-11-15/README.md)).
+  AUTO, WASD pans, and a click on a squad or its number takes it back
+  ([free camera](../../Reports/free-camera-2026-11-15/README.md); the number
+  did nothing here until 2026-11-21). The cursor is the crosshair while a
+  squad is commanded and the pick arrow while Ctrl is held, since a Ctrl
+  click or drag then picks squads instead of firing (`cursor.rs`). On a card
+  page (Build, Tools, Formation) Esc first goes back to the main card
+  (2026-11-21). **Space** brings the camera back to the squad; while it
+  already follows, Space looks at the newest alert that has a place (a raid,
+  landing ore) and Space again comes back (2026-11-21; Space is the alerts'
+  key outside the squad mode). Only a Shift + drag splits soldiers off: a
+  Shift + click no longer pulls the one soldier under it into a squad.
 - **Loadouts** (owner, 2026-11-19 19:22Z; `run::Loadout`, `Run::loadouts`).
   A loadout is a gun, or none, plus its cards; each squad (`Squad::loadout`)
   and each turret (`Building::loadout`, `Building::deck`, `Cmd::TurretLoad`)
@@ -93,9 +109,21 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   `Run::turret_loadout`'s cards (the turrets' deck). A loadout with no gun
   fits the turrets' rack. On a planet H opens the panel, paused, with
   nothing for sale; changes apply at once, with no reload.
-- **Split, join, link.** Y splits the front half off; J or the tile's + joins
+- **Split, join, link.** Y splits the front half off, and both halves go on
+  with the squad's order and Shift queue (owner 2026-11-22 08:34Z); J or the tile's + joins
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.
+- **Picking squads with a drag** (owner 2026-11-21 06:53Z: "add click and
+  drag to select multiple squads"). With no squad commanded a plain left drag,
+  with one Ctrl + drag, boxes squads: every squad in the box is commanded as
+  one, as a link is (moves, queues, volleys, facing, heal, formation, fire
+  mode, Hold fire), led by the one you commanded if it was in the box
+  (`Cmd::Band`, `Squad::band`). Sent together, squads picked far apart close
+  up round the click, at most `BAND_SPREAD` (6) cells a squad from the middle.
+  It is a selection, not a link: a click on one squad (Ctrl + click with one
+  commanded), its number, its tile or Esc ends it. A plain drag with a squad
+  commanded still fires, and Shift + drag still splits. The fire button and
+  Hold fire now reach linked squads too (they changed only yours before).
 - **Orders.** Right click sends, Ctrl + right click drains or guards a crystal,
   Shift queues up to six. A tap of WASD is the stop (the card has no Stop)
   and drops the queue (2026-11-21; before, the squad walked off to its next
@@ -129,6 +157,22 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   squad commanded a click on a building selects it: its health, level and
   state, and its card (call off, demolish for half its price back, upgrade a
   pump, switch a lure).
+- **The device slot** (owner 2026-11-21 06:55Z: "One device slot per squad,
+  on a cooldown", his 11-16 gun-system ruling, step E's first part). The
+  Tools page (E) throws from the squad you command: a soldier of it within
+  `reach` (24 cells) sets the tool off, free, with nothing held, and the
+  squad's one slot then waits that device's own cooldown before any device
+  goes again (`Cmd::Device`, `Game::device`, `KitRules::cooldown`: blast
+  20 s, mine 25, det cord 30, sleep gas 35, germ 40, provoke and still 30;
+  first guesses; the shop's cheaper-tools upgrade shortens them). Squads
+  commanded together each have their own slot, the commanded one first.
+  The wait shows on every tool and on the Tools button; with no tool owned
+  yet (a run's planet 1) the Tools button stays and opens the page of
+  locks (#660 hid it; the owner read that as Tools lost, 2026-11-22). Before, the squad mode
+  kept the RTS round's carry rule: a soldier took a tool only within 6 cells
+  of the undrawn landing spot, so each threw one a planet and a bought one
+  none. Devices are commands, so they replay. Still to come from step E:
+  bodies holding gun cards, rolled stats, autocast.
 - **Healing is an order** (#330): tell a squad to heal (Heal on the card, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order
@@ -159,6 +203,25 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   there is a way round; a squad standing to fight in fire stays, the price
   of a fire deck. Health lost to fire on the way 413 -> 274 (24 of 24 maps
   lower), trips no slower on the probe's maps.
+  **Own spots round a crystal** (2026-11-21, `Game::rim_spots`; Look's exit
+  test 2 pass): soldiers draining, guarding or standing at a crystal each
+  take their own spot round its rim, `SPOT` 3.5 dish cells apart (a drawn
+  figure's width), the ring filled all the way round before a second ring
+  starts. Before, each soldier stood at the rim on its own side, so the
+  squad pressed into one arc. Planet 1, seed 1, greedy hand: nearest
+  neighbour 2.1 -> 3.5 cells median, under 2.4 cells 92% -> 0%, harvest
+  at 60 s 4,081 -> 4,199. A first try that put a second ring out before the
+  first was full halved the harvest (the outer ring is out of reach).
+  Since the follow-up (same day) only move, guard and drain orders take
+  spots: on attack-move or attack at a crystal (the run bot's rush at the
+  slime's home crystal) the squad spread round the whole rim, half of it
+  through the slime, and CI's run bot took 16% longer over seeds 1 to 3
+  (6 of 9 planets longer; losses 59 -> 31, harvest no worse). Every ring
+  inside harvest reach (the shrinking disc to the whole radius) fills
+  before any past it.
+  A squad draining a crystal the slime is on (`SLIMED` 40 walkers within
+  6 cells of its rim) takes only its own half of the rim (Direction's
+  call: losses on CI's run bot had gone 56 -> 97 with the whole rim).
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
   column ends once its tail is near the anchor; since 2026-11-21 no
