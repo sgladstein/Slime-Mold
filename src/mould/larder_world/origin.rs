@@ -54,8 +54,8 @@ pub struct OriginRules {
     /// A take from its crystal comes only while it holds under this,
     /// times `size`. 1.5 until 11-22: Engine's siege on planet 1 (seed 2)
     /// met an origin of 1,120 against a size of 700, which it wore down
-    /// only 10 a minute; at 1, with the take's reach held to the disc its
-    /// size fills, it regrows only to about its size.
+    /// only 10 a minute; at 1, with each take's reach cut to its shortfall,
+    /// it regrows only to about its size.
     pub most: f32,
     /// Seconds between takes from its crystal, and how far (dish cells)
     /// the reach widens each time it is short.
@@ -213,20 +213,23 @@ impl<W: World> Game<W> {
                 self.world.grow_lump(h.lump, (h.centre, whole));
             } else if self.origin_fed() && (h.members as f32) < r.most * r.size {
                 let cr = self.crystal_at(self.core).map_or(4.0 * self.world.scale(), |(c, _)| self.world.crystal_r(c)) / self.world.scale().max(1.0);
-                // The reach widens while it is short of its size, never
-                // wider than the disc a body of its size fills (a walker a
-                // fine cell, `crowd` 1), so a take on a crystal the slime
-                // has packed again holds about its size. Engine's siege,
-                // 11-22, planet 1: seed 2 formed at 1,120 against 700 with
-                // `most` 1.5, and seed 3, at `most` 1, went 760 to 1,083 in
-                // one take at 6:30 with the reach at the crystal's rim. With
-                // the disc (5 dish cells at 700), idle seeds 2 and 3 formed
-                // at 797 and 809 and held there to 6:40.
-                if (h.members as f32) < r.size {
-                    let full = (r.size.max(1.0) / std::f32::consts::PI).sqrt() / self.world.scale().max(1.0);
-                    self.origin.reach = (self.origin.reach + r.widen.max(0.1)).min(cr + 2.0).min(full.max(0.5));
+                // The reach widens while it is short of its size; a take
+                // reaches only the share of it the shortfall asks (its
+                // square root, for a disc's area), so a take on a crystal
+                // the slime has packed again stays near its size. A take
+                // gets every free walker in its disc, as many as the packed
+                // slime holds: Engine's siege, 11-22, planet 1, seed 3, at
+                // 6:15, 4 short of 700 at a reach of 5.5, it went from 696
+                // to 1,095 in one take (and seed 2 formed at 1,120 against
+                // 700 with `most` 1.5). A cap on the disc a body of its size
+                // fills (a walker a fine cell) did not bind: the packed
+                // slime there held about 1.6 a fine cell.
+                let short = (r.size - h.members as f32).max(0.0) / r.size.max(1.0);
+                if short > 0.0 {
+                    self.origin.reach = (self.origin.reach + r.widen.max(0.1)).min(cr + 2.0);
                 }
-                self.world.grow_lump(h.lump, (self.core, self.origin.reach));
+                let take = (self.origin.reach * short.sqrt()).max(0.5);
+                self.world.grow_lump(h.lump, (self.core, take));
             }
         }
         // The call home: struck hard enough, with soldiers near it.

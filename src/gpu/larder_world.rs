@@ -2944,6 +2944,11 @@ mod tests {
         assert!(a >= 50, "it gathered round its fed crystal: {a}");
         assert!(a > b + 30, "a drained crystal does not feed it: {a} against {b}");
         // Its floor over its members: it breaks, and the die-back runs.
+        // It must have held a body first (`2 x floor_min`); its takes are
+        // cut to its shortfall (11-22), so it may get there after 14 s.
+        while fed.stand.live.is_some_and(|h| (h.most as f32) < 2.0 * fed.rules.origin.floor_min) && fed.time() < 40.0 {
+            fed.step();
+        }
         fed.rules.origin.floor = 2.0;
         let mass = fed.mould;
         let broke_at = fed.time();
