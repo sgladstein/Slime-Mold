@@ -121,6 +121,12 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // The run's dev mode (owner, 11-14 15:33Z): the shop's rows to jump
     // planets, add points and redraw cards. A run's setting, not a round's.
     o.push(Opt::new("dev", "Dev mode", &["off", "on"], "off", if base.dev { "on" } else { "off" }, "The run's shop gets rows to jump planets, add points and redraw the cards"));
+    // The dev skip (owner, 11-22 21:36Z): a new run starts in the shop
+    // before this planet, each planet before it skipped for its average
+    // pay (`run::skip_pay`). The shop's Dev tab skips one more at a time.
+    let starts: Vec<String> = (1..=run::PLANETS).map(|d| d.to_string()).collect();
+    let starts: Vec<&str> = starts.iter().map(String::as_str).collect();
+    o.push(Opt::new("start", "Start on planet", &starts, "1", "1", "Dev: a new run skips the planets before this one, pays what an average win on each pays, and opens the shop; the shop's Dev tab skips one planet at a time"));
     // The UI's size (owner, 11-14 08:07Z): turned here it takes effect at
     // once and is saved; not a round's setting, so `round_args` skips it.
     let sizes: Vec<String> = settings::STEPS.iter().map(|&v| settings::percent(v)).collect();
@@ -927,6 +933,7 @@ impl App {
             StartEvent::Run if self.run.is_some() => self.show_shop(),
             StartEvent::Run | StartEvent::NextLevel => {
                 let Some((base, _)) = self.base.clone() else { return Ok(false) };
+                let fresh = self.run.is_none();
                 let mut r = self.run.take().unwrap_or_else(|| {
                     // A new run on a new seed each time (the clock), so two
                     // runs differ; `run=SEED` on the command line repeats one.
@@ -935,6 +942,18 @@ impl App {
                 });
                 let Some(menu) = self.menu.take() else { return Ok(false) };
                 r.dev = menu.option("dev").is_some_and(|o| o.value() == "on");
+                // Options' "Start on planet": a new run skips to it and
+                // opens the shop there (`Run::skip`), rather than landing.
+                let start = menu.option("start").and_then(|o| o.value().parse::<u32>().ok()).unwrap_or(1);
+                if fresh && start > 1 {
+                    r.restock();
+                    while r.depth < start && r.skip() {}
+                    self.run = Some(r);
+                    self.menu = Some(menu);
+                    self.show_shop();
+                    self.save_run();
+                    return Ok(false);
+                }
                 self.args = run_args(&base, &menu, &r);
                 self.run = Some(r);
                 self.round = self.args.round;

@@ -1171,6 +1171,37 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
 
 /// **A save that does not read is moved aside**, never overwritten unseen,
 /// and the menu says so; with no save there is no run.
+/// **The dev skip** (owner, 2026-11-22 21:36Z: "skip planets and get
+/// average amount of gold to spend at the shop"): Options' "Start on
+/// planet" 4 starts a new run in planet 4's shop, paid what average wins
+/// on planets 1 to 3 pay, and the shop's Dev tab skips one more.
+#[test]
+fn start_on_planet_skips_to_its_shop_with_the_average_pay() {
+    use slime_mould::mould::run::{skip_pay, Pick};
+    use slime_mould::world::start::{Page, StartEvent};
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(run_base(), (1280, 720), &device, &queue).unwrap();
+    app.base = Some((run_base(), true));
+    let mut menu = start_menu(&run_base());
+    let start = menu.options.iter_mut().find(|o| o.key == "start").expect("the Start on planet option");
+    assert_eq!(start.value(), "1", "a run starts on planet 1 by default");
+    start.at = start.choices.iter().position(|c| c == "4").unwrap();
+    app.menu = Some(menu);
+    app.run = None;
+    app.menu_event(StartEvent::Run).unwrap();
+    assert!(app.in_menu(), "the shop, not a landing");
+    assert_eq!(app.menu.as_ref().unwrap().page, Page::Shop);
+    let paid = skip_pay(1) + skip_pay(2) + skip_pay(3);
+    assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points, r.stars.clone())), Some((4, paid, vec![0, 0, 0])));
+    let skip = app.run.as_ref().unwrap().shop().iter().position(|r| r.pick == Pick::DevSkip).expect("the shop's skip row");
+    app.menu_event(StartEvent::Buy(skip)).unwrap();
+    assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((5, paid + skip_pay(4))));
+    // On to planet 5: it lands.
+    app.menu_event(StartEvent::NextLevel).unwrap();
+    assert!(!app.in_menu());
+    assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(5));
+}
+
 #[test]
 fn an_unreadable_run_save_is_moved_aside() {
     let dir = std::env::temp_dir().join(format!("larder-run-bad-{}", std::process::id()));
