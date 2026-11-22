@@ -1038,8 +1038,14 @@ impl<W: World> Game<W> {
             // As far round as holds no more walkers than it has: forming
             // takes every walker in reach, and in a thick body a first cut
             // at one and a half radii took in the slime round it (a hunter
-            // of 437 on the owner's planet 3 came out at 4,630).
-            let reach = self.reach_holding(lead, (1.5 * body / sc).max(1.0), std::f32::consts::PI * body * body);
+            // of 437 on the owner's planet 3 came out at 4,630). Up to three
+            // radii now (11-22): a hunter of 240 wrapped round a rock ridge
+            // on planet 2 (run 1795106014) spread to three times its radius,
+            // and each regroup capped at one and a half kept only what lay
+            // in that, 240 to 71 to 16, until it fizzled without a fight.
+            // It stops short of its size (`reach_under`), since from three
+            // radii the bin that crossed it grew it each time.
+            let reach = self.reach_under(lead, (3.0 * body / sc).max(1.0), std::f32::consts::PI * body * body);
             let lump = self.bosses.ways[i].lump;
             self.world.form_lump(lump, Some((lead, reach)));
             (self.bosses.ways[i].mark, self.bosses.ways[i].still) = (lead, 0);
@@ -1049,9 +1055,23 @@ impl<W: World> Game<W> {
 
     /// The largest reach round `at` (dish cells), up to `most`, whose
     /// walkers on the mould grid number no more than `want` (at least one
-    /// dish cell); `most` with no grid.
+    /// dish cell); `most` with no grid. It reaches to the grid bin that
+    /// crosses `want`, so it takes that bin's walkers too.
     fn reach_holding(&self, at: (f32, f32), most: f32, want: f32) -> f32 {
-        let Some((g, gw, gh, bin)) = self.boss_grid() else { return most };
+        self.ring_holding(at, most, want).1
+    }
+
+    /// As `reach_holding`, but stopping at the last bin short of `want`, so
+    /// what it reaches never holds more: the regroup's (11-22), which
+    /// reaching past it grew a hunter of 240 to 539 and one of 321 to 873.
+    fn reach_under(&self, at: (f32, f32), most: f32, want: f32) -> f32 {
+        self.ring_holding(at, most, want).0
+    }
+
+    /// The reach short of `want` walkers round `at` and the reach that
+    /// crosses it (dish cells, each at least one and at most `most`).
+    fn ring_holding(&self, at: (f32, f32), most: f32, want: f32) -> (f32, f32) {
+        let Some((g, gw, gh, bin)) = self.boss_grid() else { return (most, most) };
         let sc = self.world.scale();
         let b = bin as f32;
         let mut near: Vec<(f32, u32)> = Vec::new();
@@ -1067,14 +1087,21 @@ impl<W: World> Game<W> {
             }
         }
         near.sort_by(|a, c| a.0.total_cmp(&c.0));
+        // Short of `want` is the last ring nearer than the crossing bin's:
+        // bins come in rings of four or eight at one distance, and stopping
+        // at the bin before it on the same ring reaches as far.
         let mut held = 0.0;
+        let (mut short, mut ring) = (1.0f32, 0.0f32);
         for &(d, n) in &near {
+            if d > ring {
+                (short, ring) = ((ring / sc).clamp(1.0, most), d);
+            }
             held += n as f32;
             if held > want {
-                return (d / sc).clamp(1.0, most);
+                return (short.min(most), (d / sc).clamp(1.0, most));
             }
         }
-        most
+        (most, most)
     }
 
     /// Forms a mini-boss round `at` (fine cells), of the walkers within

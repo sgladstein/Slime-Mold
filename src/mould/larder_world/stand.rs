@@ -355,7 +355,7 @@ impl<W: World> Game<W> {
     /// so far, the health it may take in it (`StandRules::cap`, of the
     /// squad alive now) and the tick its 10 s window closes.
     fn arm_heart(&self, h: &mut Heart) {
-        let r = self.heart_rules(&h);
+        let r = self.heart_rules(h);
         let now = self.world.ticks();
         let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
         h.bit_at = self.fell_bitten;
@@ -373,7 +373,7 @@ impl<W: World> Game<W> {
 
     /// The lunge: the heart's aim on the soldier nearest its centre.
     fn aim_heart(&mut self, h: &Heart) {
-        let r = self.heart_rules(&h);
+        let r = self.heart_rules(h);
         let near = self.soldiers.iter().filter(|s| s.alive).min_by(|a, b| (a.x - h.centre.0).hypot(a.y - h.centre.1).total_cmp(&(b.x - h.centre.0).hypot(b.y - h.centre.1)));
         let Some(s) = near else { return };
         let size = self.world.size();
