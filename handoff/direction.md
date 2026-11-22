@@ -224,6 +224,19 @@ end.
   clock fault. Watch his planet 2 (one win at 21 min) and his loss rate
   (half of recent P1 and P2) in the next logs, several of which predate
   the 11-21 pacing; review before any planet retune (his 11-18 rule).
+- **Planets 4 and 5 arms (11-22 04:13Z, Engine's #688 tool)**: one
+  seed each, 12 game min cap. P4 seed 1: as is won 5:01, 0 lost; heart off
+  4:50; strikers off 4:07 with 16 lost (the heart bit them). P5 seed 1
+  (peak 137,640): no arm finished; slime left 23k to 35k at 12:00, the
+  arms identical to about 9:30. Direction: no FIRST_PLANET row moves;
+  planet 5's size waits for Milestone 2's eight-planet curve. P5 is slow
+  on cloud runners (12 game min = 19 to 24 real min).
+- **The origin (11-22 04:15Z)**: Enemy's design
+  (`Reports/origin-design-2026-11-22/`, #690). Direction settled its
+  three questions: a die-back of about 10 s, draining its crystal stops
+  its regrowth, the last walker still wins as a fallback. Card to Scott:
+  build now on a branch, land when he calls Milestone 1 done
+  (recommended), or land on, or wait. Enemy builds on a branch meanwhile.
 - **Planet 1 regression and the pacing** (11-20 night): the bot lost
   maps 1 and 2 of CI's run seeds that the 17:00Z build won. The bot thread
   bisected it to #566 (strikers retune); #598's rate cap alone won back map
