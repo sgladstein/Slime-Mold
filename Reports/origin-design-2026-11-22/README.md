@@ -1,8 +1,13 @@
 # The origin, again: a design for Direction (2026-11-22)
 
 The Enemy lane's next job in `NOW.md`: the origin, Milestone 2's way a
-planet is won, as a design for Direction before any code. Nothing here is
-built. It replaces the [first design of 11-18](../origin-design-2026-11-18/README.md),
+planet is won, as a design for Direction before any code.
+
+**Built 11-22** on a branch that lands once the owner calls Milestone 1
+done (his card, "Build now, land after M1"). Direction settled the three
+questions below as recommended. What was built and measured, and where it
+differs from this page (no new engine key for the forming; the die-back's
+key is `no_eat`), is in `wiki/world/run.md`, *The origin*. It replaces the [first design of 11-18](../origin-design-2026-11-18/README.md),
 because much of what that one proposed has been built since, in other
 forms, and two of the owner's rulings since change what the origin should
 be.

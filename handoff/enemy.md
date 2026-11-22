@@ -189,6 +189,24 @@ cell; a falling ceiling is set at most 5% under the slime a second
 Next if Scott wants a sharper shrink: `CEILING_FALL` 0.1 or
 `ceiling_upkeep` 4 (measure planet 3's start again).
 
+## The origin (2026-11-22, the same thread; on a branch until Milestone 1)
+
+Branch `claude/project-thread-noq3o4` (draft, do not merge until Scott
+calls Milestone 1 done; keep it merged up with main). `origin.rs`
+(`OriginRules`, `OriginState`, `Game::time_origin`, `keep_origin`,
+`break_origin`), the heart in `stand.rs` with `origin` and `gather`,
+`Settings::no_eat` (word 929 bit 2), `World::set_starve`, `call_home` in
+`raids.rs`, `run::ORIGIN_SIZE`, headless `hand=origin` (all soldiers the
+bank buys, attack-move to the core) and the `origin t` line. GPU test
+`the_origin_forms_on_its_crystal_starves_when_drained_and_its_death_wins`.
+Numbers and the rush in `wiki/world/run.md`, *The origin*. Open: the run
+bot never goes for the slime's home (its `home_ok` rule; also on main since
+`crystal_keep`, flagged to Direction 11-22 05:05Z), the HUD's goal line
+still says "kill every last walker" (Look and interface), the reach's
+overshoot (planet 3 held 2,899 against a size of 900, one wide take).
+Later, low priority (Direction 11-22): a Sprawler rule where body walkers
+run its trail lines, so its threads show through the body.
+
 ## A hit's hole and a mini-boss's flinch (2026-11-21, the same thread)
 
 Both GPU only, in the `deep_wall` Params word (bit 0 deep wall, bit 1
