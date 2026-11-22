@@ -885,7 +885,7 @@ struct App {
     /// The dish's wall cells as the ground last drew them: a wall going
     /// up is the cells that differ.
     wall_mask: Vec<bool>,
-    /// The timed and wall refreshes this game: how many, their summed
+    /// The ground refreshes this game (a read started, a read taken): how many, their summed
     /// and longest ms, and the longest read-back (the bench prints them).
     ground_cost: (u32, f64, f64, f64),
     /// Each crystal cell's depth in its crystal (`look::crystal_depth`),
