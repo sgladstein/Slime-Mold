@@ -299,6 +299,12 @@ while Squad asked to keep it.
    where bare ground shows or they burn; re-timed 11-21, no saving in the
    larder shot (little slime over plants). Next if needed: a cheaper plant
    layer on bare ground, or `shaded`'s slope and highlight samples.
+   Second pass (11-21, PR after #680): the slope's three B-splines share
+   one 5 x 5 read (`cells_height3`) and far crowns skip their clump noise,
+   both pixel for pixel the same; no difference on llvmpipe past its
+   noise. New variants in `variants.py` for the 1070 (the plants split,
+   the two cuts undone, `spec3`); the batch is asked of Engine. Next by its
+   numbers: if `crowns` is still about 1 ms, a cheaper crown layer.
 0b. Crystals under the slime show their charge (11-21, Direction's ask
    from the regrowth review): the film over a crystal thins by
    `GEM_THROUGH` (0.55) of its charge share, so a full one reads as cyan
