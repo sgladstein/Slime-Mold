@@ -78,7 +78,7 @@ cell a second on dry ground (was 5), goes out and smoulders where damp,
 flickers and leaves embers; moisture (`plants::moisture`) comes from the
 map's `moisture BASE SPREAD` line (levelgen, by biome), water within 8
 cells and noise. Fire hurts soldiers (`Rules::fire_hurt` 10 hp/s at full
-heat; 25 until 11-20; the shop's Fireproof halves it a level, none at level 3, 11-22) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
+heat; 25 until 11-20) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
 
 **Laid fuel** (2026-11-17, the Tinder gun card): `BigDish::lay_fuel`
 (GPU: the IGNITE pass in lay mode) plants open, dry ground up to a level,
