@@ -2457,14 +2457,14 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         // The owner's notes (11-14 15:06Z): rate of fire, reduce cost, disrupt scent.
         C::Rate => (Icon::Fast, CardKind::Flight, format!("Fires {:.0}x as often.", 1.0 + w.rate_card)),
         C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less budget.", rounds::THRIFT)),
-        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the scent slime follows to food.".into()),
+        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the slime's scent and calm what they hit.".into()),
         // The element family's second card (2026-11-17).
         C::Tinder => (Icon::Tinder, CardKind::Flight, "Bullets lay a line of dry brush that fire runs along.".into()),
         // The carriers (2026-11-16, step B of the gun-system review).
         C::Trigger => (Icon::Carry, CardKind::Trigger, "It carries the one after it, let out where it hits.".into()),
         C::Expire => (Icon::CarryStop, CardKind::Trigger, "It carries the one after it, let out where it stops.".into()),
         C::Multicast => (Icon::Multicast, CardKind::Trigger, "It fires the one after it too, in the same shot.".into()),
-        C::Seek => (Icon::Seek, CardKind::Flight, "Bullets that just miss strike slime beside them.".into()),
+        C::Seek => (Icon::Seek, CardKind::Flight, "Bullets fly on past their aim and strike slime beside them.".into()),
         // The shove cards (owner 2026-11-16 05:11Z: "corral and push the
         // slime onto areas. Into a kill zone").
         // One card since 2026-11-17 (Heave and Corral merged).

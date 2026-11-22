@@ -58,8 +58,11 @@ shot's strike, `RoundRules::plain_pop`/`plain_wide`; the strike rides on
 Tinder's own brush; the shop holds Thrift until a bullet card is owned and
 Quiet and the Flare until `run::ALARM_FROM`; plain pops don't shake
 (`main.rs feel`); `set=strike=` is a rule key for the gun lab. Heavier
-shots checked, works. Open: Seek and Smother show nothing on planet 1
-(sent to Direction). Note for the shop DPS readout (#697, `dps.rs`): it
+shots checked, works. Second PR, Direction's calls: Seek's round flies on
+past its aim (`Rules::seek_reach` 0.5, `shots.rs fly`), and Smother's trail
+discs also calm (`MIND_STILL`; trails now take `RoundRules::burst_rules`,
+since the toolkit's carry no Mind length). Third PR: a calm disc the shot's strike
+across where Smother's line hits (`smother_calm`), so the rose shows. Note for the shop DPS readout (#697, `dps.rs`): it
 reads `rounds::bursts`, and the plain pop is `plain_bursts`
 ([report](../Reports/gun-cards-visible-2026-11-22/README.md)).
 

@@ -26,7 +26,7 @@ filmed as `CARD+plain`.
 |---|---|---|
 | Wide, Scatter, Delay, Thick (on the rifle's plain bullet) | 0, every count equal | nothing |
 | Quiet, Thrift | 0, every count equal | nothing |
-| Seek | +9 | nothing (the rifle already hits 92% of shots) |
+| Seek | +9 | nothing (the rifle already strikes slime with 89% of shots, 92% with Seek) |
 | Tinder alone | +9 | its brush, but nothing lights it |
 | Smother | -89 | nothing |
 | Flare | -295 | an ember; no planet 1 to 3 slime answers its alarm |
@@ -61,14 +61,53 @@ The controlled squad (`arena=9:focus`), whose strike is at the cap: shots
 up 11% to 27% on every seed (the 11-20 fix fires it faster), kills 10,401
 to 10,503 (3 up, 1 down). It is not dead.
 
-## Not fixed: sent to Direction
+## Seek and Smother (Direction's calls, second change)
 
-Seek and Smother still show nothing on planet 1. Seek turns near misses
-into hits, and the rifle against planet 1's body rarely misses. Smother
-wipes scent the slime there is not following.
+Seek and Smother still showed nothing on planet 1: Seek turns near misses
+into hits, and the rifle against planet 1's body already struck slime with
+89% of its shots (92% with the old Seek); Smother wipes scent the slime there is not following.
+Direction (11-22 05:15Z): Seek reaches further; Smother is checked on
+planet 2 and, if its line turns no thread on screen, calms the walkers on
+it too. Smother is already sold only from the shop before planet 2 (its
+tier).
+
+- **Seek** (`Rules::seek_reach` 0.5): a seeking round flies half again past
+  its aim, the squad's range and stand-off unchanged, and its last leg
+  catches a walker beside it. Planet 1: hits 1,817 of 2,038 shots (89%) to
+  1,922 of 2,038 (94%), kills +283 (3 seeds of 4 up); planet 2 +881 (4 of
+  4). The tracers reach past the slime's edge (`seek-smother-z12.jpg`).
+  Before, a lone Seek: +9 on planet 1.
+- **Smother** (`trail_bursts`: `mind: MIND_STILL` on its discs): on planet
+  2 the scent wipe alone killed 827 fewer and the squad lost less health
+  (15.0 to 12.0 over 4 seeds), but nothing on screen showed it. Now its
+  line also calms the walkers it crosses for the Still's `still_secs`.
+  Planet 1: kills +214, health lost 25.9 to 20.7; planet 2: kills -633,
+  health lost 15.0 to 12.1, all nine alive on every seed. The calm's rose
+  shows only faintly, where the line crosses slime
+  (`smother-calm-crop.jpg`): few walkers stand on a line that ends at its
+  hit. The first build's trail bursts took the toolkit's burst rules, which
+  carry no Mind length, so the calm lasted nothing; they now take the
+  rounds' (`RoundRules::burst_rules`).
+
+**Smother's calm at its hit** (third change, Direction: "every card has to
+show something, and a faint rose won't"; `RoundRules::smother_calm` 1.0):
+where a Smother bullet strikes slime, a calm disc the shot's own strike
+across. The rose on the slime it hits: 1,508 rose pixels over the eleven
+zoom-12 frames against 422 for the line alone and 0 on main
+(`smother-hit-calm-z12.jpg`, rows main, line, line and hit). Planet 1:
+kills -133, health lost 25.9 to 18.8; planet 2: kills -967, health lost
+15.0 to 11.0, all nine alive on every seed (`raw-smother-hit-calm.txt`).
+A card that keeps the squad whole, not one that kills.
+
+`raw-seek-reach.txt` holds Seek on planets 1 and 2 and the plain and
+scent-only Smother on planet 2; `raw-smother-calm.txt` the calming Smother.
 
 ![Before and after at zoom 12](before-after-z12.jpg)
 ![Before and after at zoom 6](before-after-z6.jpg)
+
+![Seek and Smother at zoom 12](seek-smother-z12.jpg)
+![Smother's calm, close](smother-calm-crop.jpg)
+![Smother with its hit calm](smother-hit-calm-z12.jpg)
 
 Rows: each card on main ("old") and on this change ("new"), frames at
 27.0, 27.3, 27.6 and 28.0 s.
