@@ -71,11 +71,25 @@ pub struct OriginRules {
     /// The die-back's length and the upkeep's factor in it.
     pub die_back: f32,
     pub die_upkeep: f32,
+    /// Its members' blows and extra bite (`big::Lump`, 15 at most), and
+    /// its bouts: seconds between lunges, a lunge's length, and the share
+    /// of the squad's health a bout may take (at most `cap_most`
+    /// soldiers'). Tougher than the last stand's (4 and 1, every 20 s,
+    /// a quarter): with those, 44 soldiers walking straight at it won
+    /// planet 1 at 1:23 and planet 2 at 1:12 with none lost (run seed 1,
+    /// lavapipe, 11-22), and Direction asked that a straight rush cost
+    /// real losses and take minutes.
+    pub armour: u32,
+    pub bite: u32,
+    pub every: f32,
+    pub lunge: f32,
+    pub cap: f32,
+    pub cap_most: f32,
 }
 
 impl Default for OriginRules {
     fn default() -> Self {
-        OriginRules { on: false, size: 400.0, most: 2.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0 }
+        OriginRules { on: false, size: 400.0, most: 1.5, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0 }
     }
 }
 
@@ -124,7 +138,8 @@ impl<W: World> Game<W> {
     /// The origin gathering now round the start crystal; false with no
     /// free lump (none is taken at the landing) or no slime there.
     pub(super) fn start_origin(&mut self) -> bool {
-        let r = self.rules.stand;
+        let mut r = self.rules.stand;
+        (r.armour, r.bite, r.every) = (self.rules.origin.armour, self.rules.origin.bite, self.rules.origin.every);
         let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
         let home = self.core;
         let reach = self.rules.origin.widen.max(0.5);

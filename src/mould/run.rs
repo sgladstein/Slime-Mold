@@ -281,9 +281,12 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// them on and doing nothing (the bug check's note on #606).
 /// **The origin's members by planet**, 1 to 8 (`OriginRules::size`,
 /// `origin.rs`, 2026-11-22): the body it gathers at the landing and
-/// regrows to, twice that at most. The design's first numbers (400 on
-/// planet 1, rising with depth), to tune once the rush is measured.
-pub const ORIGIN_SIZE: [f32; 8] = [400.0, 600.0, 900.0, 1200.0, 1500.0, 1800.0, 2100.0, 2400.0];
+/// regrows to, half as much again at most (`OriginRules::most`). The
+/// design's first numbers (400, 600, 900) took about 900, 1,300 and 1,900
+/// at their first wide takes anyway, over the most they could regrow to,
+/// so a struck origin never regrew and 44 soldiers walking straight at it
+/// won planet 1 at 1:35 with none lost (run seed 1, lavapipe, 11-22).
+pub const ORIGIN_SIZE: [f32; 8] = [800.0, 1200.0, 1800.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,

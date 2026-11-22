@@ -245,6 +245,17 @@ impl<W: World> Game<W> {
         true
     }
 
+    /// The heart's numbers: the last stand's, with the origin's own
+    /// armour, bite, lunge and cap when it is the origin (`OriginRules`).
+    pub(super) fn heart_rules(&self, h: &Heart) -> StandRules {
+        let mut r = self.rules.stand;
+        if h.origin {
+            let o = self.rules.origin;
+            (r.armour, r.bite, r.every, r.lunge, r.cap, r.cap_most) = (o.armour, o.bite, o.every, o.lunge, o.cap, o.cap_most);
+        }
+        r
+    }
+
     /// A reach (dish cells) round any point that holds the whole map.
     pub(super) fn whole_map(&self) -> f32 {
         let (w, h) = self.world.size();
@@ -253,7 +264,7 @@ impl<W: World> Game<W> {
 
     fn keep_heart(&mut self) {
         let Some(mut h) = self.stand.live else { return };
-        let r = self.rules.stand;
+        let r = self.heart_rules(&h);
         let tps = self.rules.tps as f32;
         let now = self.world.ticks();
         let (centre, n) = self.world.lumps()[h.lump].map_or((h.centre, 0), |(x, y, n)| ((x, y), n));
@@ -327,7 +338,7 @@ impl<W: World> Game<W> {
             }
             return;
         }
-        let r = self.rules.stand;
+        let r = self.heart_rules(&h);
         let tps = self.rules.tps as f32;
         h.armed = false;
         h.sated = now + (r.sated.max(0.0) * tps) as u64;
@@ -344,7 +355,7 @@ impl<W: World> Game<W> {
     /// so far, the health it may take in it (`StandRules::cap`, of the
     /// squad alive now) and the tick its 10 s window closes.
     fn arm_heart(&self, h: &mut Heart) {
-        let r = self.rules.stand;
+        let r = self.heart_rules(&h);
         let now = self.world.ticks();
         let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
         h.bit_at = self.fell_bitten;
@@ -362,7 +373,7 @@ impl<W: World> Game<W> {
 
     /// The lunge: the heart's aim on the soldier nearest its centre.
     fn aim_heart(&mut self, h: &Heart) {
-        let r = self.rules.stand;
+        let r = self.heart_rules(&h);
         let near = self.soldiers.iter().filter(|s| s.alive).min_by(|a, b| (a.x - h.centre.0).hypot(a.y - h.centre.1).total_cmp(&(b.x - h.centre.0).hypot(b.y - h.centre.1)));
         let Some(s) = near else { return };
         let size = self.world.size();

@@ -789,6 +789,14 @@ impl Rules {
                 self.origin.on = v > 0.0;
                 return true;
             }
+            "origin_armour" => {
+                self.origin.armour = v.clamp(0.0, 15.0) as u32;
+                return true;
+            }
+            "origin_bite" => {
+                self.origin.bite = v.clamp(0.0, 15.0) as u32;
+                return true;
+            }
             "stand_armour" => {
                 self.stand.armour = v.clamp(0.0, 15.0) as u32;
                 return true;
@@ -843,6 +851,8 @@ impl Rules {
             "strikers_most" => self.strikers.most as f32,
             "stand" => on(self.stand.on),
             "origin" => on(self.origin.on),
+            "origin_armour" => self.origin.armour as f32,
+            "origin_bite" => self.origin.bite as f32,
             "stand_armour" => self.stand.armour as f32,
             "stand_bite" => self.stand.bite as f32,
             "wave_sides" => self.wave.sides as f32,
@@ -958,6 +968,10 @@ impl Rules {
             "origin_call_every" => &mut self.origin.call_every,
             "origin_die_back" => &mut self.origin.die_back,
             "origin_die_upkeep" => &mut self.origin.die_upkeep,
+            "origin_every" => &mut self.origin.every,
+            "origin_lunge" => &mut self.origin.lunge,
+            "origin_cap" => &mut self.origin.cap,
+            "origin_cap_most" => &mut self.origin.cap_most,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
