@@ -1,0 +1,60 @@
+<title>Slime Mold Music Bed</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column, a row per clip: name, what you hear, its player. */
+:root {
+  --bg: #f3f5ef; --fg: #1d241b; --muted: #5d6857; --line: #d5dccd; --card: #ffffff; --accent: #4f7a2a;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141912; --fg: #e3e9dc; --muted: #9aa691; --line: #2c3528; --card: #1b2218; --accent: #9ccc65; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #141912; --fg: #e3e9dc; --muted: #9aa691; --line: #2c3528; --card: #1b2218; --accent: #9ccc65; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+main { max-width: 760px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.15rem; }
+p { margin: 0; max-width: 65ch; }
+.lede { color: var(--muted); }
+section { display: grid; gap: 12px; }
+.clips { display: grid; gap: 10px; }
+.clip { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; }
+.clip header { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.clip h3 { margin: 0; font-family: var(--display); font-size: 1rem; }
+.key { font-size: 0.8rem; letter-spacing: 0.04em; color: var(--accent); text-transform: uppercase; }
+.clip p { font-size: 0.9rem; color: var(--muted); }
+audio { width: 100%; }
+code { font-size: 0.85em; }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>The music bed and the planet's air</h1>
+    <p class="lede">Every planet now has a slow, quiet music bed in its own key, soft bell notes now and then, and its own air (wind, a river, insects, drips, a low rumble). It darkens and a low drone rises as the slime closes on the squad. Options has a new row, Music and air, to turn it down or off. Headphones help: most of it sits low.</p>
+  </header>
+
+  <section>
+    <h2>In the game</h2>
+    <p>The first 40 seconds of planets 1 to 3 (run 1, the squads bot), recorded headless with everything on. Mix meter over the full 120 s: the score is 11 to 13 dB under the whole mix, under the shots and splats, about level with the slime's own voice.</p>
+    <div class="clips">
+      <article class="clip"><header><h3>Planet 1, meadow</h3><span class="key">E major</span></header><p>Score -11.1 dB of the mix. Limiter 0.11% of samples, as before.</p><audio controls preload="none" src="planet1.mp3"></audio></article>
+      <article class="clip"><header><h3>Planet 2, barrens</h3><span class="key">A minor</span></header><p>Score -12.9 dB of the mix.</p><audio controls preload="none" src="planet2.mp3"></audio></article>
+      <article class="clip"><header><h3>Planet 3, fen</h3><span class="key">F minor</span></header><p>Score -11.8 dB of the mix.</p><audio controls preload="none" src="planet3.mp3"></audio></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Each mood alone</h2>
+    <p>36 seconds of the score with no game (<code>cargo run --release --example scoreplay -- DIR</code>): calm for 12 s, the slime closing in for 12 s (the drone and a faint high beating come in, the bells thin), then easing off.</p>
+    <div class="clips">
+      <article class="clip"><header><h3>Menus</h3><span class="key">D dorian</span></header><p>No air, a few more bells.</p><audio controls preload="none" src="score-menu.mp3"></audio></article>
+      <article class="clip"><header><h3>Meadow</h3><span class="key">E major</span></header><p>Light wind, a whisper of insects.</p><audio controls preload="none" src="score-meadow.mp3"></audio></article>
+      <article class="clip"><header><h3>Barrens</h3><span class="key">A minor</span></header><p>Dry, hollow wind; sparse.</p><audio controls preload="none" src="score-barrens.mp3"></audio></article>
+      <article class="clip"><header><h3>Fen</h3><span class="key">F minor</span></header><p>Still damp air and drips.</p><audio controls preload="none" src="score-fen.mp3"></audio></article>
+      <article class="clip"><header><h3>River valley</h3><span class="key">G mixolydian</span></header><p>A river's steady rush.</p><audio controls preload="none" src="score-valley.mp3"></audio></article>
+      <article class="clip"><header><h3>Jungle</h3><span class="key">C dorian</span></header><p>Insects in spells.</p><audio controls preload="none" src="score-jungle.mp3"></audio></article>
+      <article class="clip"><header><h3>Highlands</h3><span class="key">B-flat lydian</span></header><p>A high, howling wind.</p><audio controls preload="none" src="score-highlands.mp3"></audio></article>
+      <article class="clip"><header><h3>Caves</h3><span class="key">C-sharp phrygian</span></header><p>Rumble and drips, no wind.</p><audio controls preload="none" src="score-caves.mp3"></audio></article>
+      <article class="clip"><header><h3>Core world</h3><span class="key">B phrygian</span></header><p>Rumble and a low dry wind.</p><audio controls preload="none" src="score-core.mp3"></audio></article>
+    </div>
+  </section>
+</main>

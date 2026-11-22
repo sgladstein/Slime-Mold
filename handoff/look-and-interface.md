@@ -2,6 +2,16 @@
 
 ## State (2026-11-20)
 
+**11-22, Milestone 1 test 6 (Direction 03:15Z):** the game's pages
+stilled on lavapipe (`menu=news|news-try|options-experiments`). The long
+what-is-new list now turns its pages with the wheel and Left/Right
+(`StartMenu::wheel`), and the Crystals refill row's text says what it
+decides since only the squad empties crystals (Direction's wording). The
+end cards (planet won, held on, run lost, run won) each lead with one
+sentence of what happened and its numbers (`lead`, `star_line` in
+`draw.rs`); `film_ends` films all four (`FILM_CASES=won,held,lost,runwon`).
+Next: the 1070 batch's view costs (Engine), then Look B on Scott's notes.
+
 **Slime viewer (11-21: slimes of his own, `custom NAME = BASE` and `planet N = SLIME` in the tweaks file, keyed like a tier in `slime`/`rule`/`body` lines; old looks `SlimeLook::Paint` 8 and `Foil` 9 branch in `cell_mat_c`, prep's `th_h` and `shaded`'s spec; first built on branch `claude/project-thread-517zll`, the thread "Build a
 slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
 main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the
@@ -299,6 +309,12 @@ while Squad asked to keep it.
    where bare ground shows or they burn; re-timed 11-21, no saving in the
    larder shot (little slime over plants). Next if needed: a cheaper plant
    layer on bare ground, or `shaded`'s slope and highlight samples.
+   Second pass (11-21, PR after #680): the slope's three B-splines share
+   one 5 x 5 read (`cells_height3`) and far crowns skip their clump noise,
+   both pixel for pixel the same; no difference on llvmpipe past its
+   noise. New variants in `variants.py` for the 1070 (the plants split,
+   the two cuts undone, `spec3`); the batch is asked of Engine. Next by its
+   numbers: if `crowns` is still about 1 ms, a cheaper crown layer.
 0b. Crystals under the slime show their charge (11-21, Direction's ask
    from the regrowth review): the film over a crystal thins by
    `GEM_THROUGH` (0.55) of its charge share, so a full one reads as cyan

@@ -144,7 +144,8 @@ fn film_moves() {
 /// --ignored --nocapture`
 ///
 /// `FILM_SIZE` (1280x800), `FILM_UI` (the UI size, 1 for 100%),
-/// `FILM_CASES` (`won,lost,sandbox`), `FILM_KEYS` (keys over the run's),
+/// `FILM_CASES` (`won,lost,sandbox`; also `held`, planet 2 at the
+/// stalemate limit, and `runwon`, the last planet won), `FILM_KEYS` (keys over the run's),
 /// `FILM_DRAIN` (a second to empty the slime's most covered crystal).
 #[test]
 #[ignore]
@@ -167,9 +168,18 @@ fn film_ends() {
         let args = match case {
             // Planet 1 of run seed 1 (the Drifter), won; planet 3 (the
             // Trunk), lost.
-            "won" | "lost" => {
+            // `held` (2026-11-22): planet 2 at the stalemate's limit;
+            // `runwon`: the last planet won, the run's end.
+            "won" | "lost" | "held" | "runwon" => {
                 let mut r = Run::new(1);
-                r.depth = if case == "won" { 1 } else { 3 };
+                r.depth = match case {
+                    "won" => 1,
+                    "held" => 2,
+                    "lost" => 3,
+                    _ => slime_mould::mould::run::PLANETS,
+                };
+                // The run's earlier planets, won, for the lines that count them.
+                r.stars = (1..r.depth).map(|d| [3, 2, 3, 1][d as usize % 4]).collect();
                 run_args(&base, &start_menu(&base), &r)
             }
             _ => Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() },
@@ -218,8 +228,9 @@ fn film_ends() {
         }
         if g.end.is_none() {
             g.end = Some(match case {
-                "won" => End::MouldWiped(t),
+                "won" | "runwon" => End::MouldWiped(t),
                 "lost" => End::SquadWiped(t),
+                "held" => End::Cap(0.3),
                 _ => End::Cap(0.62),
             });
         }

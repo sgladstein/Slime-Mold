@@ -492,6 +492,19 @@ fn crowns(x: f32, y: f32, fm: Form, dk: f32, seed: f32) -> Crown {
             let h3 = hash2(c + seed + 41.9);
             let ctr = c + 0.15 + 0.7 * vec2<f32>(h1, h2);
             var r = rr * (0.6 + 0.4 * h3);
+            // A crown too far to touch this point, or to shade it, is
+            // passed over before its clump's noise and moisture reads
+            // (frame cost pass, 11-21: those were most of a clumped kind's
+            // cost, paid for all nine neighbours). Its radius is at most
+            // `r` x (1 + 0.45 clump); a blade's squeeze shortens a
+            // distance at most to 0.45 of itself; the shadow's point lies
+            // `fall` radii toward the light and touches within r + aa / 2.
+            // Only crowns that add nothing are skipped: the same picture.
+            let rmax = r * (1.0 + 0.45 * fm.clump);
+            let d0 = length(q - ctr) * select(1.0, 0.45, fm.shape == 1u);
+            let far = d0 > rmax * select(1.0 + fm.lobe, 2.4, fm.shape == 1u) + aa;
+            let unshaded = fm.fall <= 0.0 || d0 - select(1.0, 0.45, fm.shape == 1u) * fm.fall * rmax > rmax + 0.5 * aa;
+            if (far && unshaded) { continue; }
             if (fm.clump > 0.0) {
                 // Patches: big where a slow noise is high, none where low;
                 // a denser stand fills more of the ground between.
@@ -1188,6 +1201,39 @@ fn cells_height_lin(x: f32, y: f32) -> f32 {
     let ix = i32(floor(f.x)); let iy = i32(floor(f.y));
     let tx = f.x - floor(f.x); let ty = f.y - floor(f.y);
     return mix(mix(hc(ix, iy), hc(ix + 1, iy), tx), mix(hc(ix, iy + 1), hc(ix + 1, iy + 1), tx), ty);
+}
+
+// `cells_height` at (x, y), (x + e, y) and (x, y + e) from one read of the
+// 5 x 5 fine cells they share (`shaded`'s height and its forward slope;
+// frame cost pass, 11-21): the three B-splines read 48 cells, these 25.
+// The same sums in the same order, so the same values. `e` under a fine
+// cell (`shaded` passes 0.75 of one).
+fn cells_height3(x: f32, y: f32, e: f32) -> vec3<f32> {
+    let f = fpos(x, y);
+    let fx = fpos(x + e, y);
+    let fy = fpos(x, y + e);
+    let ix = i32(floor(f.x)); let iy = i32(floor(f.y));
+    let ox = i32(floor(fx.x)) - ix;
+    let oy = i32(floor(fy.y)) - iy;
+    var w: array<f32, 25>;
+    for (var j = 0; j < 5; j++) {
+        for (var i = 0; i < 5; i++) {
+            w[j * 5 + i] = hc(ix - 1 + i, iy - 1 + j);
+        }
+    }
+    let wx = bspline(f.x - floor(f.x)); let wy = bspline(f.y - floor(f.y));
+    let wxe = bspline(fx.x - floor(fx.x)); let wye = bspline(fy.y - floor(fy.y));
+    var h = 0.0;
+    var hx = 0.0;
+    var hy = 0.0;
+    for (var j = 0; j < 4; j++) {
+        let r = j * 5;
+        h += wy[j] * (wx.x * w[r] + wx.y * w[r + 1] + wx.z * w[r + 2] + wx.w * w[r + 3]);
+        hx += wy[j] * (wxe.x * w[r + ox] + wxe.y * w[r + ox + 1] + wxe.z * w[r + ox + 2] + wxe.w * w[r + ox + 3]);
+        let ry = (j + oy) * 5;
+        hy += wye[j] * (wx.x * w[ry] + wx.y * w[ry + 1] + wx.z * w[ry + 2] + wx.w * w[ry + 3]);
+    }
+    return vec3<f32>(h, hx, hy);
 }
 
 fn cells_height(x: f32, y: f32) -> f32 {
@@ -2987,7 +3033,8 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // B-spline's own slope showed the walkers' one-a-cell lattice as a fine
     // plaid in the dense body (2026-11-14); the wider difference smooths it.
     // A crystal's own faces are worked out in its block below.
-    let hc0 = cells_height(x, y);
+    let h3 = cells_height3(x, y, e);
+    let hc0 = h3.x;
     // The soil's own material where the ground is bare (the mould's film,
     // thickness by the inverse of the height curve, covers it).
     let th_here = film_th(x, y);
@@ -3076,8 +3123,8 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     m.albedo = crust_over(m.albedo, x, y, m.vis * under);
     let h = max(hc0, gem_height(x, y));
     // Forward differences: three B-spline samples, not five.
-    let dx = cells_height(x + e, y) - hc0;
-    let dy = cells_height(x, y + e) - hc0;
+    let dx = h3.y - hc0;
+    let dy = h3.z - hc0;
     // The slope capped at 0.7 (2026-11-14, owner: lone walkers looked
     // dim). The sharp count makes a lone walker a bump some 3 cells tall
     // and a cell wide; its flank away from the light shaded to the floor,

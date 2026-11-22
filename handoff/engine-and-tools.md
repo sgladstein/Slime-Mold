@@ -320,6 +320,25 @@ With #640's siege=3 the curve wins planets 1 to 3 on all three seeds
 to 17 minutes, every planet by its goal. Lengths went to Direction (all
 short of 8 to 12; the bot's rush is a floor).
 
+Pace by planet (Direction, 11-22): `run-bot.yml`'s `pace` job runs
+`run_bot_summary.py --pace` over the three seeds (minutes, end, soldiers
+lost, median by planet), and `scripts/play_log_summary.py` writes the
+same from Scott's play logs on the `play-logs` branch. Reading them found
+that a planet won in the step finished on the GPU wrote no `end` line to
+the play log (21 of 30 logs); `log_end` in main.rs fixes it. The 11-22
+table went to Direction: on 3d40c8eb the bot wins planets 1 to 3 in a
+median 5:31, 4:47 and 4:51; Scott on 11-20 and 11-21 builds won planet 1
+in 10:11 and 11:11 (2 lost, 2 quit) and planet 2 in 20:56 (2 lost).
+
+The arms batch (#688, 11-22): `.github/workflows/arms.yml` plays
+`scripts/arms-queue.txt` (`ARM DEPTH SEED SECS [GAME ARGS]`) from a pull
+request that changes the queue, three shards with an 18 minute budget each,
+rows in the job log (`ARMS arm=...`). First batch, planets 4 and 5 with the
+heart or the strikers off: only seed 1 finished (planet 5 took 19 to 24 real
+minutes for 12 game minutes on Mesa; about 90 runner minutes). Direction kept
+the FIRST_PLANET rows; planet 5's size waits for Milestone 2's eight-planet
+curve. Run planet 5 and later on Scott's PC, not here.
+
 **Next:** the next 1070 batch times the
 view's `full` after the Look lane's #638 (plant crowns skipped under the
 slime) and sends them the saving against 3.42 ms; `pump_maps` spikes

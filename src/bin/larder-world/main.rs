@@ -987,6 +987,9 @@ struct App {
     /// The planet's depth this game (`map=planet:DEPTH`, else 1), and the
     /// test guns (Shift+H) and bullet loads (Ctrl+H) rolled so far.
     planet_depth: u32,
+    /// The planet's music and air (`sound::score`): its biome's mood, or
+    /// the meadow's on a map that is not a generated planet.
+    planet_mood: slime_mould::sound::Mood,
     gun_rolls: u32,
     ammo_rolls: u32,
     tools_page: bool,
@@ -1067,6 +1070,7 @@ impl App {
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
             planet_depth: 1,
+            planet_mood: slime_mould::sound::Mood::Meadow,
             gun_rolls: 0,
             ammo_rolls: 0,
             run: args.run.clone(),
@@ -1293,6 +1297,7 @@ impl App {
         // The planet's depth (`map=planet:DEPTH`), what a rolled gun
         // (`gun=roll`, Shift+H) is rolled for.
         let mut depth = 1;
+        let mut mood = slime_mould::sound::Mood::Meadow;
         let world = match &map_name {
             _ if made.is_some() => GpuWorld::with_map(device, queue, s, a.scale, made.as_ref().expect("a made map")),
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
@@ -1308,6 +1313,7 @@ impl App {
                     Some(made) => {
                         let (p, m) = made?;
                         depth = p.depth;
+                        mood = slime_mould::sound::Mood::of(p.biome);
                         m
                     }
                     None => Map::load(&dir, &name)?,
@@ -1426,6 +1432,7 @@ impl App {
             game.apply(Cmd::Active(0));
         }
         self.planet_depth = depth;
+        self.planet_mood = mood;
         if let Some(spec) = &a.gun {
             // Every soldier starts in squad 0 (both halves of a split
             // copy its gun, `Squad::offshoot`).
@@ -1723,6 +1730,24 @@ impl App {
     }
 
     /// Appends `text` to the play log (nothing without one).
+    /// The play log's `end` line, once, when the game has ended or its
+    /// mission has a verdict (the verdict's own words, else the end's).
+    fn log_end(&mut self) {
+        if self.log_ended || self.log_path.is_none() {
+            return;
+        }
+        let Some(g) = self.game.as_ref() else { return };
+        let verdict = self.mission.as_ref().and_then(|m| m.verdict.map(|_| m.cause_line()));
+        if g.end.is_none() && verdict.is_none() {
+            return;
+        }
+        self.log_ended = true;
+        let t = g.time();
+        let why = verdict.unwrap_or_else(|| g.end.map(|e| e.band().to_string()).unwrap_or_default());
+        let text = format!("{}end t={t:.0} {why}\n", self.playlog.commands(g));
+        Self::log_write(&self.log_path, &text);
+    }
+
     fn log_write(path: &Option<String>, text: &str) {
         use std::io::Write;
         let Some(path) = path else { return };
@@ -1865,6 +1890,12 @@ impl App {
             // owner's play, 2026-11-18 17:20Z).
             let (paused, ended) = (self.paused, g.end.is_some() || mission_over);
             self.follow_mission();
+            // Its play log's end line too: a game that ended in the step
+            // finished above returns here, so until 2026-11-22 a planet
+            // won this way (most wins: the step finishes on a later frame)
+            // logged no `end` line, and 21 of the owner's 30 play logs
+            // stopped with the slime at 0 to 9 walkers and no verdict.
+            self.log_end();
             // The end plays out in the picture before its card (`ending`).
             if ended && !paused {
                 self.play_on(dt);
@@ -1907,9 +1938,9 @@ impl App {
         self.steps += n;
         self.follow_mission();
         let Some(g) = self.game.as_mut() else { return };
-        let t = g.time();
         // The play log's line for each whole game second passed.
         if self.log_path.is_some() {
+            let t = g.time();
             let sec = (g.settled_ticks().saturating_sub(g.landed)) / g.rules.tps as u64;
             if sec > self.log_sec {
                 self.log_sec = sec;
@@ -1921,14 +1952,10 @@ impl App {
                 }
                 Self::log_write(&self.log_path, &line);
             }
-            let verdict = self.mission.as_ref().and_then(|m| m.verdict.map(|_| m.cause_line()));
-            if !self.log_ended && (g.end.is_some() || verdict.is_some()) {
-                self.log_ended = true;
-                let why = verdict.unwrap_or_else(|| g.end.map(|e| e.band().to_string()).unwrap_or_default());
-                let text = format!("{}end t={t:.0} {why}\n", self.playlog.commands(g));
-                Self::log_write(&self.log_path, &text);
-            }
         }
+        self.log_end();
+        let Some(g) = self.game.as_mut() else { return };
+        let t = g.time();
         // A soldier the game made inside these steps (`Rules::reserve`'s
         // free recruit) joins the notes too.
         join_looks(g, &mut self.looks);
@@ -2091,6 +2118,9 @@ impl App {
         l.bangs(&g.kit.bangs);
         // The gun cards' payloads (sound pass two, 2026-11-20).
         l.pops(&g.rounds.pops);
+        // The score: the planet's mood, the menus' own under a menu.
+        l.mood = if self.menu.is_some() { slime_mould::sound::Mood::Menu } else { self.planet_mood };
+        l.music = music_user();
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
@@ -2769,6 +2799,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The saved volume (`volume`); the pictures' recordings stay at 100%.
     if look.is_none() && bench_secs.is_none() {
         set_volume_user(settings::saved_volume());
+        set_music_user(settings::saved_music());
     }
     if !mode_given && look.is_none() && bench_secs.is_none() {
         args.squads = true;
