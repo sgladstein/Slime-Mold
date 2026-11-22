@@ -2,7 +2,7 @@
 # 11-20 22:00Z: played on main's game (#573 starfall and cores, #564 fire 10, the striker retune), so the rows of earlier builds no longer count. Three more plans: the planet 3 deck plan stepping back under half health (fire=0.5, job 14-0-a), and two with drops=20 (job 14-0-f) on every planet.
 # 11-21 02:15Z: two more plans with a carbine on every planet (job 14-0-d, the helper thread: the carbine took rush on planet 2 from 7 to 9 of 11 and the lure switch plan on planet 3 from 4 to 8 of 9). gun=carbine sets it on the shelf as if offered, so these are an upper bound, like the deck plan's shelf.
 # 11-21 04:55Z: the plan proposed for CI's run bot goes first: the run bot's own play with siege on planet 1 (job 00-a: 9 of 11), then rush,aim=6,cards=0 on every later planet (job 00-b, cold landings: 9 of 9 on planet 2, 8 of 9 on 3, 6 of 9 on 4, 2 of 9 on 5; best of the three plans on each). siege=3 is the bot's default from this build.
-# code-bound
+# code-bound Rows of 1c02ff7086ca count too (finished on it overnight 11-21/22; retired 11-22 09:10Z, so a new build does not play it again).
 bot,want=torch.standard|rush,aim=6,cards=0 run 1795038793 900 set=fire_hurt=10
 bot,want=torch.standard|rush,aim=6,cards=0 run 1795106014 900 set=fire_hurt=10
 bot,want=torch.standard|rush,aim=6,cards=0 run 1795119328 900 set=fire_hurt=10
