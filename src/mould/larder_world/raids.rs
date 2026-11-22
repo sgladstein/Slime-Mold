@@ -119,6 +119,14 @@ pub struct RaidRules {
     pub march_pull: f32,
     pub march_leash: f32,
     pub march_haste: f32,
+    /// The blows each marching member takes (`Lump::armour`, 0 and 1 are
+    /// one blow, at most 15) until the march meets its target or the squad
+    /// and pours (2026-11-22 evening, the owner: "if the slime never
+    /// reaches my soldiers, increasing the bite doesn't matter. Tougher
+    /// slime has a better chance of getting to my soldiers"). Only the
+    /// march: the rest of the slime still dies to one blow. Set by the
+    /// planet (`run::RAID_ARMOUR`); 0 outside a run.
+    pub march_armour: u32,
     pub march_quorum: f32,
     pub march_time: f32,
     /// A march not ten dish cells nearer its target after `march_stall`
@@ -176,6 +184,7 @@ impl Default for RaidRules {
             march_pull: 100.0,
             march_leash: 1.3,
             march_haste: 2.0,
+            march_armour: 0,
             march_quorum: 0.3,
             march_time: 90.0,
             march_stall: 15.0,
@@ -934,7 +943,7 @@ impl<W: World> Game<W> {
         let r = self.rules.raid;
         let size = self.world.size();
         let aim = down_way(&m.field, size.0.div_ceil(RAID_BLOCK), m.centre, body + 10.0 * self.world.scale()).unwrap_or(m.to);
-        self.world.set_lump(m.lump, Lump { aim: super::raid_cell(aim, size), pull: r.march_pull, leash: r.march_leash, haste: r.march_haste, ..Lump::default() });
+        self.world.set_lump(m.lump, Lump { aim: super::raid_cell(aim, size), pull: r.march_pull, leash: r.march_leash, haste: r.march_haste, armour: r.march_armour, ..Lump::default() });
     }
 
     /// The smallest reach round `to` (dish cells) whose squares of the

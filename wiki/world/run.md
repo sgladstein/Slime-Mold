@@ -496,6 +496,8 @@ alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 
 Harder from planet 2 since 2026-11-22 (the owner won all 8 planets that night losing 0 to 1 soldiers on 7, "Still too easy", then "scale it up. You decide what is best"; planet 1 unchanged): raids at least 35 s apart (45 on planet 1), the strikers' cap grows with an army past 24 to 2.5 times, mini-bosses tougher by the planet (weakest grade's armour 4 to 10, bite up, three at once from planet 6), and the soldier's price climbs 1/40 for each soldier alive over 30 (`Rules::soldier_step`; 2x at 70). All in `run.rs` rows, each its own "what is new" line.
 
+Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1-4 in under 5:02 with 14 to 35 soldiers and met 0 to 3 raids, since the first was drawn at about 4:00): the first raid at about 2:00 and the next about 100 s apart (`RAID_FIRST`, `RAID_EVERY`; 4:00 and 150 s on planet 1), and a touching walker bites 2.5 instead of 2 (`DRAIN`). Mini-bosses then: grade 0.2 to 0.7 on planet 2, pace 1.2 to 1.5 times the slime's, broken under 20% (12% by planet 8) of their first members instead of 30% (`BossRules::for_depth`). A raid's marchers take 2 blows on planets 2-3, 3 on 4-6 and 4 on 7-8 until the march meets the squad or its target (`RAID_ARMOUR`, `RaidRules::march_armour`; the owner: tougher slime has a better chance of reaching the soldiers).
+
 ## Sources
 
 - [balance review](../../Reports/balance-review-2026-11-20/README.md), *Findings*.
