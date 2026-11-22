@@ -584,7 +584,16 @@ pub struct Rules {
     /// over `ceiling_roof` times its landing walkers (or its slots). Over it no walker is born and its upkeep rises, to
     /// `ceiling_upkeep` times 20% over, so a slime that loses a crystal
     /// shrinks to what the rest holds. 0 is off (`ceiling.rs`).
+    ///
+    /// `ceiling_grow`: the room a slime has over its landing on the
+    /// crystals it landed on (the held-charge ceiling times this), so it
+    /// regrows after the squad's first cuts (2026-11-22, the thread "Set
+    /// difficulty between last two playtests": at 1 it never grew past
+    /// its landing and his planets fell in 4:40 to 8:19; before the
+    /// ceiling it refilled its slots, twice its landing, and planets took
+    /// 11 to 21 minutes; he asked for in between).
     pub ceiling: f32,
+    pub ceiling_grow: f32,
     pub ceiling_roof: f32,
     pub ceiling_upkeep: f32,
     /// **The slime surges when it has eaten** (2026-11-15, the slime-enemy
@@ -663,6 +672,12 @@ pub struct Rules {
     /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
     pub stand: super::StandRules,
 }
+
+/// `Rules::ceiling_grow`'s default: a slime on the crystals it landed on
+/// may regrow to this times its landing walkers (1 was #690's: no
+/// regrowth; the game before the ceiling refilled to 2). Under
+/// `Rules::ceiling_roof` and its slots, as the rest of the ceiling.
+pub const CEILING_GROW: f32 = 1.5;
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
 pub const SURGE_FOOD: f32 = 150.0;
@@ -1016,6 +1031,7 @@ impl Rules {
             "panic_margin" => &mut self.panic_margin,
             "late_at" => &mut self.late_at,
             "ceiling" => &mut self.ceiling,
+            "ceiling_grow" => &mut self.ceiling_grow,
             "ceiling_roof" => &mut self.ceiling_roof,
             "ceiling_upkeep" => &mut self.ceiling_upkeep,
             "late_margin" => &mut self.late_margin,
@@ -1138,6 +1154,7 @@ impl Default for Rules {
             panic_margin: 5.0,
             late_at: 0.0,
             ceiling: 0.0,
+            ceiling_grow: CEILING_GROW,
             ceiling_roof: 3.0,
             ceiling_upkeep: 3.0,
             late_margin: 25.0,
