@@ -11,6 +11,11 @@ end cards (planet won, held on, run lost, run won) each lead with one
 sentence of what happened and its numbers (`lead`, `star_line` in
 `draw.rs`); `film_ends` films all four (`FILM_CASES=won,held,lost,runwon`).
 Next: the 1070 batch's view costs (Engine), then Look B on Scott's notes.
+Later 11-22: the ranked look list went to Direction (the fight reads; the
+zoom-12 "rounds into nothing" is the reach past the screen, not the look;
+the Sprawler's body apart from the Drifter's is the weak test-4 item). The
+Sprawler's body as strands failed (dead end, 11-22): it waits on an engine
+rule that runs its body walkers along paths.
 
 **Slime viewer (11-21: slimes of his own, `custom NAME = BASE` and `planet N = SLIME` in the tweaks file, keyed like a tier in `slime`/`rule`/`body` lines; old looks `SlimeLook::Paint` 8 and `Foil` 9 branch in `cell_mat_c`, prep's `th_h` and `shaded`'s spec; first built on branch `claude/project-thread-517zll`, the thread "Build a
 slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
