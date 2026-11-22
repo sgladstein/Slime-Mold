@@ -289,6 +289,25 @@ const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// lived against 22), and Direction's plan is to raise planet 1's alone
 /// (to about 2) if his next planet 1 log still reads easy.
 const CEILING_GROW: [f32; 8] = [1.5; 8];
+/// **Harder from planet 2** (2026-11-22, the thread "Make the run harder
+/// after full-game win"). The owner won all 8 planets on 11-22 losing 0 to
+/// 1 soldiers on 7 of them ("Still too easy"), then: "Don't redo
+/// everything and make it too hard again but scale it up. You decide what
+/// is best". Planet 1 keeps every number (Direction: he lost half his
+/// planet 1 games on 11-20 and 11-21).
+///
+/// - `RAID_GAP_MIN`: raids never closer than this (`RaidRules::gap_min`):
+///   45 s since #652 (his 11-21 planet 1 had raids 26 s apart); 35 from
+///   planet 2, partway back.
+/// - `STRIKER_ARMY`: the strikers' rate cap grows with an army past 24
+///   soldiers, to this many times (`StrikerRules::army_most`): 2.5 times
+///   at 60 or more alive.
+/// - `SOLDIER_STEP`: the soldier's price climbs this share of its base
+///   for each soldier alive over 30 (`Rules::soldier_step`): 2x at 70,
+///   2.5x at 90. Off on planet 1, where armies stay small.
+const RAID_GAP_MIN: [f32; 8] = [45.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0];
+const STRIKER_ARMY: [f32; 8] = [1.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
+const SOLDIER_STEP: [f32; 8] = [0.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -1184,6 +1203,9 @@ impl Run {
             // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
             r.ceiling_grow = CEILING_GROW[depth_index(self.depth)];
+            r.raid.gap_min = RAID_GAP_MIN[depth_index(self.depth)];
+            r.strikers.army_most = STRIKER_ARMY[depth_index(self.depth)];
+            r.soldier_step = SOLDIER_STEP[depth_index(self.depth)];
             let k = STRIKER_SHARE[depth_index(self.depth)];
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
@@ -2095,6 +2117,10 @@ mod tests {
             assert_eq!(rules(d).ceiling_grow, CEILING_GROW[depth_index(d)], "planet {d}'s ceiling_grow");
         }
         assert!(CEILING_GROW.iter().all(|&g| g >= 1.0), "a growth under 1 starves the slime at landing");
+        // Planet 1 keeps its numbers; planets 2 on are harder (11-22).
+        let (one, two) = (rules(1), rules(2));
+        assert!(one.raid.gap_min == 45.0 && one.strikers.army_most == 1.0 && one.soldier_step == 0.0, "planet 1 as before");
+        assert!(two.raid.gap_min < 45.0 && two.strikers.army_most > 1.0 && two.soldier_step > 0.0, "planet 2 on: closer raids, more strikers on a big army, a climbing price");
         let p1 = rules(1);
         assert!(p1.heart.on && p1.unit_paths, "planet 1 keeps the heartbeat and charges round walls");
         assert!(!p1.fruit.on && !p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
