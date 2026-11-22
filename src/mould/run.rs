@@ -734,6 +734,38 @@ pub fn reward(depth: u32, stars: u8) -> u32 {
     175 + 25 * depth + 50 * u32::from(stars.saturating_sub(1))
 }
 
+/// The dev skip (owner, 2026-11-22 21:36Z: "a dev way to play the later
+/// planets of the run ... skip planets and get average amount of gold to
+/// spend at the shop"): what a skipped planet pays, as an average win
+/// there pays. Two parts, so a retune of `reward` carries over:
+///
+/// - `SKIP_STARS_X10`, the average stars of a win, in tenths. Planets 1 to
+///   3: the bots that pick up drops in job 14-0-f (11-21, `drops=` 5, 20
+///   and 60 pooled, 11 maps on planets 1 and 2, 9 on planet 3; 2.24, 2.57,
+///   2.07 stars). Planets 4 on: the bot curve's wins on planets 4 and 5
+///   (1.83 and 1.5 on few games), held at 1.8.
+/// - `SKIP_FOUND`, the average points a win takes from starfall ore and
+///   boss cores (`Run::found`). Planets 1 to 3: the same games (101, 197,
+///   159). Planets 4 on: no bot data, so the same share of the planet's
+///   pot those three took (36% of falls x ore worth + core pot,
+///   `StarRules::for_depth`, about 4.2 falls a planet).
+///
+/// Bots that never chase drops take 20 to 30 a planet instead, about 100
+/// to 170 less than this; a player who picks up drops is the one priced.
+/// The home world (planet `PLANETS`) can't be skipped: winning it ends
+/// the run. Rejected: the dev rows' flat 1,000 points, which is not what
+/// a run would have had to spend.
+pub const SKIP_STARS_X10: [u32; PLANETS as usize - 1] = [22, 26, 21, 18, 18, 18, 18];
+pub const SKIP_FOUND: [u32; PLANETS as usize - 1] = [100, 200, 160, 210, 235, 265, 295];
+
+/// The points skipping planet `depth` pays (`SKIP_STARS_X10`,
+/// `SKIP_FOUND`), rounded to tens; 0 for the home world.
+pub fn skip_pay(depth: u32) -> u32 {
+    let Some(i) = (depth as usize).checked_sub(1).filter(|&i| i < SKIP_FOUND.len()) else { return 0 };
+    let base = reward(depth, 1) + 50 * SKIP_STARS_X10[i].saturating_sub(10) / 10;
+    (base + SKIP_FOUND[i] + 5) / 10 * 10
+}
+
 /// What a shop row is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Group {
@@ -1000,6 +1032,10 @@ pub enum Pick {
     DevDepth(i32),
     /// Dev mode: 1,000 more points.
     DevPoints,
+    /// The dev skip (`skip_pay`): this planet counted as won without
+    /// playing it, its average pay added, and the next planet's shop.
+    /// In every run's shop, dev mode or not, so it can be found.
+    DevSkip,
     /// Dev mode: a fresh draw of cards.
     DevReroll,
     /// The gun range: every card in the gun back to the bag.
@@ -1707,6 +1743,21 @@ impl Run {
         self.restock();
     }
 
+    /// The dev skip (`Pick::DevSkip`): the current planet counted as won
+    /// with no stars (the end card's count shows it was skipped), its
+    /// average pay (`skip_pay`) added and the next planet's shop drawn.
+    /// False on the home world, which can't be skipped.
+    pub fn skip(&mut self) -> bool {
+        if self.over || self.range || self.field || self.depth >= PLANETS {
+            return false;
+        }
+        self.points += skip_pay(self.depth);
+        self.stars.push(0);
+        self.depth += 1;
+        self.restock();
+        true
+    }
+
     /// The run ended on the home world's defeat.
     pub fn victory(&self) -> bool {
         self.over && !self.beaten
@@ -1821,6 +1872,10 @@ impl Run {
             rows.push(row("Empty the gun", "Every card in the gun back to the bag.".into(), Pick::EmptyGun));
             rows.push(row("Empty the bag", "Throw away the cards in the bag.".into(), Pick::EmptyBag));
         }
+        if !self.range && !self.field && !self.over && self.depth < PLANETS {
+            let about = format!("Don't play planet {}: get the {} points an average win there pays, and shop for planet {}", self.depth, skip_pay(self.depth), self.depth + 1);
+            rows.push(Row { group: Group::Dev, face: Face::Dev, on: false, name: format!("Skip planet {}", self.depth), about, price: String::new(), state: "dev".into(), ready: true, pick: Pick::DevSkip });
+        }
         if self.dev && !self.range && !self.field {
             let dev = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: "dev".into(), ready: true, pick };
             rows.push(dev("Next planet deeper", format!("Land on planet {} instead", (self.depth + 1).min(PLANETS)), Pick::DevDepth(1)));
@@ -1881,6 +1936,7 @@ impl Run {
                 self.restock();
                 true
             }
+            Pick::DevSkip => self.skip(),
             Pick::DevPoints if self.dev => {
                 self.points += 1000;
                 true
@@ -2378,7 +2434,7 @@ mod tests {
     fn the_shop_sells_what_the_points_buy_and_no_more() {
         let mut r = Run::new(1);
         assert!(r.has("walls") && !r.has("turret"));
-        assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_) | Pick::Edit(_) | Pick::NewLoadout)), "no points, nothing to buy");
+        assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_) | Pick::Edit(_) | Pick::NewLoadout | Pick::DevSkip)), "no points, nothing to buy");
         r.won(1);
         assert_eq!((r.depth, r.points), (2, reward(1, 1)));
         assert_eq!(r.offers.len(), OFFER + AMMO_OFFER);
@@ -2608,6 +2664,23 @@ mod tests {
         let first = r.offers[0];
         assert!(r.pick(Pick::Offer(0)) && r.cards[0] == (first, true));
         assert!(rounds::parse(&r.gun_text()).is_some(), "a saved gun reads back: {}", r.gun_text());
+    }
+
+    #[test]
+    fn a_skipped_planet_pays_an_average_win_and_the_home_world_cannot_be_skipped() {
+        // The pay rises from planet 2 on and stays near a 2-star win plus drops.
+        let pays: Vec<u32> = (1..=PLANETS).map(skip_pay).collect();
+        assert_eq!(pays, [360, 510, 470, 530, 580, 630, 690, 0]);
+        let mut r = Run::new(3);
+        r.restock();
+        assert!(r.shop().iter().any(|row| row.pick == Pick::DevSkip), "in every run's shop, dev mode or not");
+        let mut paid = 0;
+        while r.pick(Pick::DevSkip) {
+            paid += skip_pay(r.depth - 1);
+        }
+        assert_eq!((r.depth, r.points, r.stars.len(), r.over), (PLANETS, paid, PLANETS as usize - 1, false));
+        assert!(!r.shop().iter().any(|row| row.pick == Pick::DevSkip));
+        assert!(!r.offers.is_empty(), "the home world's shop is drawn");
     }
 
     #[test]
