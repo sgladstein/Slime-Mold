@@ -109,7 +109,8 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   `Run::turret_loadout`'s cards (the turrets' deck). A loadout with no gun
   fits the turrets' rack. On a planet H opens the panel, paused, with
   nothing for sale; changes apply at once, with no reload.
-- **Split, join, link.** Y splits the front half off; J or the tile's + joins
+- **Split, join, link.** Y splits the front half off, and both halves go on
+  with the squad's order and Shift queue (owner 2026-11-22 08:34Z); J or the tile's + joins
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.
 - **Picking squads with a drag** (owner 2026-11-21 06:53Z: "add click and

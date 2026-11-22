@@ -4878,3 +4878,63 @@ fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
     assert!(round && to == Some(pump), "a big squad: round to the pump at {pump:?}, got {to:?}");
     assert!(!errand(false).0, "a small squad: it hunts");
 }
+
+/// Owner 2026-11-22 08:34Z: "if I give a squad a command then split it
+/// [both] squads should follow the previous command until a new command is
+/// given". A squad split on its way keeps going with both halves, each
+/// with the queue after it; a squad split while draining drains on in both
+/// halves. Until then the new half dropped the order and both halves stood
+/// round their own middles.
+#[test]
+fn both_halves_of_a_split_squad_keep_its_orders() {
+    // On the way, with a second order queued.
+    let mut g = squads(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let a = open_near(&g, 24.0);
+    let b = open_near(&g, 10.0);
+    g.apply(Cmd::SquadOrder(0, Order::Fight(a.0, a.1)));
+    g.apply(Cmd::SquadQueue(0, Order::Move(b.0, b.1)));
+    for _ in 0..g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, (m.0 + 30.0, m.1))));
+    let n = g.active.unwrap();
+    for q in [0, n] {
+        let sq = g.squads[q];
+        assert_eq!((sq.dest, sq.fight, sq.queued), (Some(a), true, 1), "half {q} keeps its attack-move and queue");
+        assert_eq!(sq.queue[0], Order::Move(b.0, b.1));
+    }
+    let far = |g: &Game<BigDish>, q: usize| g.middle(q).map(|c| (c.0 - a.0).hypot(c.1 - a.1)).unwrap();
+    let (d0, dn) = (far(&g, 0), far(&g, n));
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    assert!(far(&g, 0) < d0 - g.s() && far(&g, n) < dn - g.s(), "both halves walk on: {d0} -> {}, {dn} -> {}", far(&g, 0), far(&g, n));
+    // Draining: both halves drain on.
+    let mut g = no_larder(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    let (_, c) = near_crystal(&g);
+    let drain = Order::Clear(c.0, c.1);
+    g.apply(Cmd::SquadOrder(0, drain));
+    for _ in 0..g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, m)));
+    let n = g.active.unwrap();
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    for q in [0, n] {
+        assert_eq!(g.squads[q].work, Some(drain), "half {q} still drains");
+        assert!(g.members(q).iter().all(|&k| g.soldiers[k].order == drain), "half {q}'s members still drain");
+    }
+}
