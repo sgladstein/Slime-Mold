@@ -627,7 +627,19 @@ impl<W: World> Game<W> {
         }
         // A mini-boss in reach and in sight first (`Game::boss_aim`,
         // 2026-11-16); its body's radius widens the stance's tests below.
-        let boss = self.boss_aim(k);
+        //
+        // Beyond `Rules::near_first`, only when the soldier's own aim holds
+        // no slime that near (Direction, 11-22, after #708): a boss up to
+        // the gun's whole reach, 24 cells, took every shot past walkers
+        // beside the squad, off the screen at zoom 12, the fault #708 fixed
+        // for the soldier's own read. A near boss still comes first, and a
+        // touched soldier still only takes one within its defend reach
+        // (`boss_aim`). The origin is to come through here too (#699).
+        let near = self.rules.near_first * sc;
+        let slime_near = near > 0.0
+            && s.dense >= self.rules.aim_min
+            && s.aim.is_some_and(|a| (a.0 - s.x).hypot(a.1 - s.y) <= near + DEFEND_SLACK && self.clear_line((s.x, s.y), a));
+        let boss = if slime_near { self.boss_aim_within(k, near) } else { self.boss_aim(k) };
         let (aim, body) = match boss {
             Some(b) => b,
             None => {

@@ -59,7 +59,12 @@ finds nothing (`Game::sight_read`, `Game::read_aim`, `Soldier::far`; the
 read-back moved from `turn.rs` into `read_aim`). Option B (shorter reach)
 is out; C (an edge tick in `draw.rs`, Look's) only if far shots still read
 as fire into nothing after A. The run bot and gun lab fire Free, so their
-baselines shift; tell Engine through Direction when it merges.
+baselines shift; tell Engine through Direction when it merges. #708 merged
+07:21Z (three seed-tuned tests keep `near_first` 0). Then, Direction's
+call: a mini-boss beyond `near_first` takes the shot only when the
+soldier's own aim holds no slime that near (`Game::target`,
+`bosses.rs boss_aim_within`), so Enemy's origin (#699) inherits it once
+it goes through `boss_aim`.
 
 **2026-11-22, exit test 5: every shop gun card visible (Direction's job,
 in the pathfinding thread).** The gun lab's arena showed Wide, Scatter,
