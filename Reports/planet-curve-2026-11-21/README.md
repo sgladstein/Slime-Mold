@@ -30,3 +30,21 @@ The coordinator asked on 11-21 00:49Z, after the owner's pacing ruling of 11-20 
 3. **Planet 5's size**: `tier_size` for the Sporer is 1.0 today. Direction decides it at Milestone 2.
 
 **Next** (Direction, 11-21 04:53Z): after the bot's job 00-c, replay planets 4 and 5 on current main (with #633) with rush and lure on the same 9 maps (`00-d-curve-p45`, 36 games, queued on the bot branch with main through #636; both plans carry `siege=0` so the bot plays as in 00-b), paired against these rows. If planet 4 still drops, do proposal 1. The arms job that would test each lever (`set=stand=0`, `set=strikers=0` on planets 4 and 5) is held.
+
+## Planets 4 and 5 again, then each threat switched off (11-21 and 11-22)
+
+**00-d** (36 games, main fe6b8ad6 with the heart cap #633, paired by map against the rows above): rush won planet 4 on 5 of 9 (was 6) and planet 5 on 3 of 9 (was 2); lure won 4 of 9 (was 5) and 0 of 9 (was 0). Sign test p=1.0 for each. The cap changed little for the bot. Rows: `Reports/strategy-bots-2026-11-19/pc/00-d-curve-p45.jsonl` on the bot branch.
+
+**00-e** (108 games, `00-e-arms-p45.jsonl` here, main through #723 with Enemy's crater fix #681, src 0cdca2f6bfa9; the arm is in `extra`; `arms.py` pairs each arm with the as-is rows by plan, planet and map). Direction asked which threat makes planet 5 the wall before moving any row.
+
+| plan, planet | as is | heart off (`set=stand=0`) | strikers off (`set=strikers=0`) |
+|---|---|---|---|
+| rush, 4 | 9/9 | 9/9 | 9/9 |
+| rush, 5 | 8/9 | 8/9 (+0 -0) | 9/9 (+1 -0) |
+| lure, 4 | 9/9 | 9/9 | 9/9 |
+| lure, 5 | 0/9 | 1/9 (+1 -0) | 0/9 (+0 -0) |
+
+- **No arm comes near significance** (p=1.0 each). Replaying 68 planet 3 games on one build on that PC flipped 5 results, so a change of 1 of 9 is noise.
+- **The build moved more than any arm.** The as-is arm won far more than 00-d did eight hours of merges earlier (rush planet 4 from 5 to 9, planet 5 from 3 to 8; lure planet 4 from 4 to 9). On this build planet 4 does not drop and planet 5 is no wall for the rush.
+- **For the lure plan planet 5 is still a wall**, and the strikers are what kill its squad: as is, 6 of its 9 games end with the squad dead (3 run to the 1,200 s clock); with strikers off, 7 run to the clock and 2 end in a dead squad. It still never wins, because its slime peaks at 96k to 188k.
+- **What this means for the rows:** no row move is shown. Moving the heart to planet 5 changes nothing the bot can see, and the strikers matter only to a plan that is losing anyway. Planet 5's size (the Sporer's `tier_size`) stays the lever for the lure plan, at Milestone 2. #721 (harder from planet 2) landed after this build; the bot thread is replaying the main plans on planets 1 to 5 with it.
