@@ -290,6 +290,15 @@ pub struct Cashed {
 /// second or two, which is as long as the window shows one.
 pub const CASHED_KEPT: usize = 8;
 
+/// Dish cells kept clear round a crystal's rim by a drop (`DropGround`),
+/// on top of the drop's own radius: a gem beside a crystal, never on it.
+pub const CRYSTAL_CLEAR: f32 = 1.5;
+
+/// Dish cells of open ground kept past a drop's rim (`DropGround::fits`):
+/// the first film (planet 1, run 1795106014) put a fall's disc against a
+/// rock ridge, reachable but half its dial on the rock.
+pub const ROCK_CLEAR: f32 = 1.0;
+
 /// The game's starfall state.
 #[derive(Debug)]
 pub struct Starfall {
@@ -344,6 +353,94 @@ pub fn fall_count(r: &StarRules, mut u: impl FnMut() -> f32) -> u32 {
     n
 }
 
+/// Where a drop may lie (2026-11-22, owner's play: Starfall and mini-boss
+/// cores "can both fall or move ... on top of crystals or rock/walls and
+/// become inaccessible"): the cells a soldier can stand on **and walk to
+/// from where the squad is now**, with every crystal's disc and a rim
+/// round it taken out. Built once per fall, core or core's home (a flood
+/// over the walking grid, as a walking map is; never per frame, not yet timed on the GTX 1070).
+///
+/// Before, a fall checked only that its middle cell was `World::open`: a
+/// crystal is open agar to the world (only solid to soldiers), and the
+/// fall aimed for thick slime, which sits on the crystals, so ore came
+/// down on them; its disc could hang over rock, and a pocket of open
+/// ground walled in by rock passed. A core dropped at its boss's centre
+/// (which can be over rock or a crystal the boss wrapped) and slid to the
+/// thickest slime near it, again on a crystal as often as not.
+pub(super) struct DropGround {
+    w: usize,
+    h: usize,
+    /// Standable and reached from a live soldier (every standable cell when
+    /// no soldier lives).
+    ok: Vec<bool>,
+    /// Every crystal's centre and the radius kept clear round it.
+    crystals: Vec<((f32, f32), f32)>,
+    /// Ground kept open past a drop's rim (fine cells, `ROCK_CLEAR`).
+    pad: f32,
+}
+
+impl DropGround {
+    fn cell(&self, p: (f32, f32)) -> Option<usize> {
+        (p.0 >= 0.0 && p.1 >= 0.0 && (p.0 as usize) < self.w && (p.1 as usize) < self.h).then(|| p.1 as usize * self.w + p.0 as usize)
+    }
+
+    /// A soldier can walk to `p`.
+    pub(super) fn walkable(&self, p: (f32, f32)) -> bool {
+        self.cell(p).is_some_and(|i| self.ok[i])
+    }
+
+    /// A drop of radius `r` at `p` lies on open, reachable ground: its
+    /// middle and twelve points a `pad` past its rim reachable, and clear
+    /// of every crystal.
+    pub(super) fn fits(&self, p: (f32, f32), r: f32) -> bool {
+        if !self.walkable(p) || self.crystals.iter().any(|&(c, cr)| (c.0 - p.0).hypot(c.1 - p.1) < cr + r) {
+            return false;
+        }
+        let rim = r + self.pad;
+        (0..12).all(|k| {
+            let a = k as f32 * std::f32::consts::TAU / 12.0;
+            self.walkable((p.0 + rim * a.cos(), p.1 + rim * a.sin()))
+        })
+    }
+
+    /// The straight slide from `a` to `b` stays on fitting ground (sampled
+    /// every `step` fine cells).
+    pub(super) fn clear_line(&self, a: (f32, f32), b: (f32, f32), r: f32, step: f32) -> bool {
+        let n = ((b.0 - a.0).hypot(b.1 - a.1) / step.max(0.5)).ceil() as usize;
+        (1..=n).all(|k| {
+            let t = k as f32 / n as f32;
+            self.fits((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t), r)
+        })
+    }
+
+    /// The nearest point to `p` where a drop of radius `r` fits, searched
+    /// in rings `step` apart out to `reach`; failing that the nearest
+    /// reachable cell; `None` with neither.
+    pub(super) fn snap(&self, p: (f32, f32), r: f32, step: f32, reach: f32) -> Option<(f32, f32)> {
+        if self.fits(p, r) {
+            return Some(p);
+        }
+        let step = step.max(0.5);
+        let mut loose = None;
+        let rings = (reach / step).ceil() as usize;
+        for k in 1..=rings {
+            let d = k as f32 * step;
+            let n = ((std::f32::consts::TAU * d / step).ceil() as usize).max(8);
+            for j in 0..n {
+                let a = std::f32::consts::TAU * j as f32 / n as f32;
+                let q = (p.0 + d * a.cos(), p.1 + d * a.sin());
+                if self.fits(q, r) {
+                    return Some(q);
+                }
+                if loose.is_none() && self.walkable(q) && !self.crystals.iter().any(|&(c, cr)| (c.0 - q.0).hypot(c.1 - q.1) < cr) {
+                    loose = Some(q);
+                }
+            }
+        }
+        loose
+    }
+}
+
 impl<W: World> Game<W> {
     /// Once a game second: draw the planet's falls, bring down the next,
     /// land those due, drop cores for bosses and fruits broken, and clear
@@ -380,7 +477,8 @@ impl<W: World> Game<W> {
             self.starfall.plan.as_mut().map(|p| p.pop());
             let teach = r.teach > 0.0 && self.starfall.begun == 0;
             self.starfall.begun += 1;
-            if let Some(at) = self.fall_spot(teach) {
+            let ground = self.drop_ground();
+            if let Some(at) = self.fall_spot(&ground, teach) {
                 let lands = now + secs(r.warn);
                 self.starfall.live.push(Drop::ore(at, r.worth, now, lands, lands + secs(r.life), r.ore_r * sc));
             }
@@ -438,7 +536,11 @@ impl<W: World> Game<W> {
         }
         self.starfall.fruit_at = self.fruits.live.map(|f| f.centre);
         cores.extend(self.raid_cores().into_iter().map(|(at, worth)| (at, worth, CoreFrom::Raid, true)));
+        // On open ground the squad can walk to (`DropGround`): a boss's
+        // centre can be over rock, or over the crystal it wrapped.
+        let ground = (!cores.is_empty()).then(|| self.drop_ground());
         for (at, worth, from, fresh) in cores {
+            let at = ground.as_ref().and_then(|gr| gr.snap(at, r.core_r * sc, 0.5 * sc, 40.0 * sc)).unwrap_or(at);
             // The planet's pot: fresh cores hold no more than `core_pot` in
             // all, so waiting for more bosses and raids pays nothing more.
             let worth = if fresh { worth.min(r.core_pot - self.cores.pot) } else { worth };
@@ -473,6 +575,62 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// The ground drops may lie on now (`DropGround`).
+    pub(super) fn drop_ground(&self) -> DropGround {
+        let (w, h) = self.world.size();
+        let sc = self.s();
+        let stand = self.standable_cells();
+        // Each live soldier's cell, or the nearest standable one within two
+        // dish cells (a soldier crossing a door's edge).
+        let reach = (2.0 * sc).ceil() as i64;
+        let mut stack: Vec<usize> = Vec::new();
+        for s in self.soldiers.iter().filter(|s| s.alive) {
+            let (cx, cy) = (s.x as i64, s.y as i64);
+            let near = (-reach..=reach)
+                .flat_map(|dy| (-reach..=reach).map(move |dx| (dx, dy)))
+                .filter(|&(dx, dy)| {
+                    let (x, y) = (cx + dx, cy + dy);
+                    x >= 0 && y >= 0 && (x as usize) < w && (y as usize) < h && stand[y as usize * w + x as usize]
+                })
+                .min_by_key(|&(dx, dy)| dx * dx + dy * dy);
+            if let Some((dx, dy)) = near {
+                stack.push((cy + dy) as usize * w + (cx + dx) as usize);
+            }
+        }
+        let ok = if stack.is_empty() {
+            stand
+        } else {
+            let mut ok = vec![false; w * h];
+            for &i in &stack {
+                ok[i] = true;
+            }
+            while let Some(i) = stack.pop() {
+                let (x, y) = (i % w, i / w);
+                let mut go = |j: usize| {
+                    if stand[j] && !ok[j] {
+                        ok[j] = true;
+                        stack.push(j);
+                    }
+                };
+                if x > 0 {
+                    go(i - 1);
+                }
+                if x + 1 < w {
+                    go(i + 1);
+                }
+                if y > 0 {
+                    go(i - w);
+                }
+                if y + 1 < h {
+                    go(i + w);
+                }
+            }
+            ok
+        };
+        let crystals = self.world.crystals().iter().enumerate().map(|(i, c)| (c.0, self.world.crystal_r(i) + CRYSTAL_CLEAR * sc)).collect();
+        DropGround { w, h, ok, crystals, pad: ROCK_CLEAR * sc }
+    }
+
     /// Where the next fall lands (fine cells): open ground at least `near`
     /// from every live soldier and within `far` of one, away from what is
     /// already down, by slime where it can be; None with no open ground.
@@ -480,9 +638,14 @@ impl<W: World> Game<W> {
     /// `teach` (the teaching fall, `StarRules::teach`): within `teach_far`
     /// of the nearest soldier, where the fewest walkers are, instead of
     /// where the most are; today's rule if no such spot is found.
-    fn fall_spot(&mut self, teach: bool) -> Option<(f32, f32)> {
+    ///
+    /// Only where a soldier can walk to and stand, clear of crystals
+    /// (`DropGround::fits`, 2026-11-22): before, only its middle cell had
+    /// to be open, and ore came down on crystals and over rock.
+    fn fall_spot(&mut self, ground: &DropGround, teach: bool) -> Option<(f32, f32)> {
         let r = self.rules.star;
         let sc = self.world.scale();
+        let size = r.ore_r * sc;
         let (w, h) = self.world.size();
         let soldiers: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
         let others: Vec<(f32, f32)> = self.starfall.live.iter().map(|d| d.at).collect();
@@ -511,7 +674,9 @@ impl<W: World> Game<W> {
         let far = if teach { r.teach_far.min(r.far) } else { r.far };
         // Near the squad a random point rarely falls within `teach_far`:
         // the teaching fall also tries points round each soldier.
-        let tries = if teach { 240 } else { 60 };
+        // (Doubled with the stricter ground, 11-22: a planet's crystals and
+        // the ground cut off from the squad turn more tries away.)
+        let tries = if teach { 480 } else { 120 };
         for k in 0..tries {
             let p = if teach && k % 2 == 1 && !soldiers.is_empty() {
                 let q = soldiers[(self.starfall.rng.f32() * soldiers.len() as f32) as usize % soldiers.len()];
@@ -523,7 +688,7 @@ impl<W: World> Game<W> {
             if p.0 < 0.0 || p.1 < 0.0 || p.0 >= w as f32 || p.1 >= h as f32 {
                 continue;
             }
-            if !self.world.open(p.0, p.1) {
+            if !ground.fits(p, size) {
                 continue;
             }
             open.get_or_insert(p);
@@ -545,9 +710,12 @@ impl<W: World> Game<W> {
                 return Some(c.0);
             }
             // Nowhere near the squad: an ordinary fall.
-            return self.fall_spot(false);
+            return self.fall_spot(ground, false);
         }
-        best.map(|b| b.0).or(fair).or(open)
+        // Nothing found by chance (a squad boxed in a small cave): the
+        // nearest fitting ground `near` out from a soldier.
+        let last = || soldiers.first().and_then(|q| ground.snap((q.0 + r.near * sc, q.1), size, 0.5 * sc, far * sc));
+        best.map(|b| b.0).or(fair).or(open).or_else(last)
     }
 
     /// The units the frame sends for what is down: each smells (`smell`)
@@ -630,6 +798,53 @@ mod tests {
 
     fn starry(seed: u64, star: StarRules) -> Game<BigDish> {
         Game::new(race_world(seed, 1, 1_000), Rules { star, ..Rules::default() }, seed)
+    }
+
+    /// The owner (11-22): Starfall "can ... fall ... on top of crystals or
+    /// rock/walls and become inaccessible". Every spot a fall picks is
+    /// ground a soldier can walk to, clear of every crystal's disc.
+    #[test]
+    fn falls_land_on_reachable_ground_clear_of_crystals() {
+        for seed in 1..5 {
+            let mut g = starry(seed, StarRules::for_depth(2));
+            while g.time() < 20.0 && g.end.is_none() {
+                g.step();
+            }
+            let ground = g.drop_ground();
+            let sc = g.world.scale();
+            let size = g.rules.star.ore_r * sc;
+            let crystals: Vec<((f32, f32), f32)> = g.world.crystals().iter().enumerate().map(|(i, c)| (c.0, g.world.crystal_r(i))).collect();
+            for _ in 0..30 {
+                let Some(p) = g.fall_spot(&ground, false) else { continue };
+                assert!(ground.fits(p, size), "seed {seed}: {p:?} is not reachable open ground");
+                for &(c, r) in &crystals {
+                    assert!((c.0 - p.0).hypot(c.1 - p.1) >= r + size, "seed {seed}: {p:?} lies on the crystal at {c:?}");
+                }
+            }
+        }
+    }
+
+    /// A core dropped over a crystal (a boss that wrapped one) is put
+    /// beside it, and the home it slides to is reachable ground too.
+    #[test]
+    fn a_core_over_a_crystal_is_moved_off_it_and_slides_to_open_ground() {
+        let mut g = starry(3, StarRules::for_depth(2));
+        while g.time() < 30.0 && g.end.is_none() {
+            g.step();
+        }
+        let ground = g.drop_ground();
+        let sc = g.world.scale();
+        let size = g.rules.star.core_r * sc;
+        let mut n = 0;
+        for (i, (c, _)) in g.world.crystals().into_iter().enumerate() {
+            let Some(p) = ground.snap(c, size, 0.5 * sc, 40.0 * sc) else { continue };
+            assert!((c.0 - p.0).hypot(c.1 - p.1) >= g.world.crystal_r(i), "crystal {i}: the core stayed on it at {p:?}");
+            assert!(ground.walkable(p), "crystal {i}: {p:?} cannot be walked to");
+            let home = g.core_home(p, size);
+            assert!(home == p || ground.fits(home, size), "crystal {i}: home {home:?} is not reachable open ground");
+            n += 1;
+        }
+        assert!(n > 0, "no crystal had open ground near it");
     }
 
     /// The owner's 19:06Z card: "a minimum but can sometimes happen a lot".

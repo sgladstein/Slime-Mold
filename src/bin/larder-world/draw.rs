@@ -941,6 +941,8 @@ impl App {
         // Their words go on after the soldiers (`over`, below): at zoom 12
         // a squad standing on a drop hid its points and its "+N".
         let mut over: Vec<OverLabel> = Vec::new();
+        #[allow(clippy::type_complexity)]
+        let mut over_bars: Vec<((f32, f32), f32, (f32, f32), f32, [u8; 4], [u8; 4])> = Vec::new();
         {
             use slime_mould::mould::larder_world::DropKind;
             use slime_mould::world::marks::{STAR_BURST, STAR_CORE, STAR_DIAL, STAR_METEOR, STAR_ORE, STAR_TARGET};
@@ -1059,13 +1061,73 @@ impl App {
                         }
                     }
                 }
-                let below = (reach * zoom).max(6.0) + 2.0;
-                // Its points, or what the squad has taken while it drains.
-                let text = if on { format!("+{}", d.taken.floor() as u32) } else { format!("{}", d.left.ceil() as u32) };
-                // A dark shadow under it, so it reads on the slime's gold.
-                let x = -4.5 * text.len() as f32;
-                over.push((d.at, (x + 1.5, -below - 12.5), text.clone(), 1.8, [20, 10, 10, 220]));
-                over.push((d.at, (x, -below - 14.0), text, 1.8, if on { GOLD } else { fade(pale, 0.95) }));
+                // Its words and the pick-up's progress, in the HUD's own
+                // size (`Hud::scale`, 2.5 on a 4K screen at 250%): the owner
+                // (11-22) on the old 1.8-pixel label: "I think there is some
+                // text now, but it is way too small", and asked for "visible
+                // animation showing that you are picking it up with
+                // progress".
+                let ui = self.hud.scale.max(1.0);
+                let ring = (reach * zoom).max(6.0);
+                let above = ring + 6.0 * ui;
+                let shadow = [20, 10, 10, 230];
+                // How long until it is gone, under the dial (owner, 11-22:
+                // "make sure the count down to the gem/starfall disappearing
+                // is also clear"): its seconds as a clock, pale, turning red
+                // in its last 10 s and blinking in its last 5. Before, only
+                // the ore's cracks cooling and the core's quickening beat
+                // said so.
+                {
+                    let left = d.ends.saturating_sub(now) as f32 / tps;
+                    let secs = left.ceil() as u32;
+                    let text = format!("{}:{:02}", secs / 60, secs % 60);
+                    let sc_t = 2.0 * ui;
+                    let x = -0.5 * (6.0 * text.len() as f32 - 1.0) * sc_t;
+                    let y = ring + 4.0 * ui;
+                    let blink = if left < 5.0 { 0.45 + 0.55 * (0.5 + 0.5 * (self.clock * std::f32::consts::TAU * 2.0).cos()) } else { 1.0 };
+                    let colour = if left < 10.0 { fade(WARN, blink) } else { fade(pale, 0.9) };
+                    let o = 0.6 * sc_t;
+                    over.push((d.at, (x + o, y + o), text.clone(), sc_t, fade(shadow, blink)));
+                    over.push((d.at, (x, y), text, sc_t, colour));
+                }
+                if on {
+                    // Collecting: gold rings open from the gem out to the
+                    // dial, one after another, while soldiers drain it
+                    // (screen pixels, so they read at any zoom).
+                    let r0 = (d.r * zoom).max(4.0 * ui);
+                    let r1 = ring.max(r0 + 12.0 * ui);
+                    for m in 0..3 {
+                        let k = (self.clock * 1.5 + m as f32 / 3.0).fract();
+                        let e = 1.0 - (1.0 - k) * (1.0 - k);
+                        self.marks.ring_thin(d.at, r0 + (r1 - r0) * e, (2.5 * (1.0 - k) + 0.8) * ui, fade(GOLD_HOT, 0.85 * (1.0 - k)));
+                    }
+                    // Progress: a gold bar filling with what the squad has
+                    // of what it can still get (it fills as the gem empties
+                    // into them; what the slime eats shortens the way).
+                    let got = (d.taken / (d.taken + d.left).max(1e-3)).clamp(0.0, 1.0);
+                    let half = (30.0 * ui, 4.0 * ui);
+                    // After the soldiers, as the words are: a squad
+                    // standing on the drop hid a bar drawn among it.
+                    over_bars.push((d.at, -above - half.1, (half.0 + 1.5 * ui, half.1 + 1.5 * ui), 0.0, shadow, shadow));
+                    over_bars.push((d.at, -above - half.1, half, got, GOLD, [70, 48, 20, 230]));
+                    // "+N" over the bar, the number climbing as it comes in.
+                    let text = format!("+{}", d.taken.floor() as u32);
+                    let sc_t = 3.2 * ui;
+                    let x = -0.5 * (6.0 * text.len() as f32 - 1.0) * sc_t;
+                    let y = -above - 2.0 * half.1 - 5.0 * ui - 7.0 * sc_t;
+                    let o = 0.6 * sc_t;
+                    over.push((d.at, (x + o, y + o), text.clone(), sc_t, shadow));
+                    over.push((d.at, (x, y), text, sc_t, GOLD_HOT));
+                } else {
+                    // Waiting: what it is worth.
+                    let text = format!("{}", d.left.ceil() as u32);
+                    let sc_t = 2.4 * ui;
+                    let x = -0.5 * (6.0 * text.len() as f32 - 1.0) * sc_t;
+                    let y = -above - 7.0 * sc_t;
+                    let o = 0.6 * sc_t;
+                    over.push((d.at, (x + o, y + o), text.clone(), sc_t, shadow));
+                    over.push((d.at, (x, y), text, sc_t, fade(pale, 0.95)));
+                }
             }
             // The moment the points come in (Boss cores thread, 2026-11-21):
             // a drop the squad emptied leaves its "+N" in gold as the coin
@@ -1533,6 +1595,9 @@ impl App {
                 self.marks.health((s.x, s.y), below, s.hp / g.rules.hp);
 
             }
+        }
+        for (at, below, half, fill, colour, back) in over_bars {
+            self.marks.bar(at, below, half, fill, colour, back);
         }
         for (at, off, text, scale, colour) in over {
             self.marks.label(at, off, &text, scale, colour);
@@ -2133,6 +2198,7 @@ impl App {
             })
             .collect();
         let throw = ghost.and_then(|(id, at, from)| self.throw_ghost(g, id, at, from));
+        m.hint = self.star_hint.show.clone();
         (m.ghost_ok, m.ghost_note) = match ghost {
             _ if throw.is_some() => {
                 let (_, ok, note) = throw.as_ref().unwrap();
