@@ -2855,9 +2855,25 @@ fn build(@builtin(global_invocation_id) gid: vec3<u32>) {
 // ring out to `wb.reach`, in the CPU's order within a ring, and claims it
 // (lowest walker wins); `settle` moves the winners to its centre and
 // `unclaim` clears the claims. `Engine::build_wall` runs rounds until no
-// walker finds a cell, so walkers that lost one try the next; one with
-// nowhere free stays, as on the CPU. The CPU moves them one at a time in walker order, so the
-// cells they land on can differ.
+// walker finds a cell, so walkers that lost one try the next. The CPU
+// moves them one at a time in walker order, so the cells they land on can
+// differ.
+//
+// One with nowhere free near stayed in the wall, as on the CPU, until
+// 2026-11-22 (the owner: "sometimes walkers get stuck in walls/doors when
+// building and it becomes a problem for winning"): in slime packed one a
+// cell wider than the reach it found nothing, and there no gun's shot
+// reached it (`stops`) and a step of a cell could not leave a wall thicker
+// than that (`wall_between`), so the planet's mass never reached 0. Now
+// `build_wall` runs more rounds four times as far, then one with the
+// top bit of `wb.reach` set (`squeeze`): the nearest agar cell, full or
+// not, no claim, so every walker it covers comes out, over the crowd limit
+// for a while if it must (the crowd limit only stops a walker stepping
+// into a full cell; one over it thins as the slime moves).
+fn squeeze() -> bool {
+    return (wb.reach & 0x80000000u) != 0u;
+}
+
 @compute @workgroup_size(256)
 fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -2877,7 +2893,8 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (here == NONE || agar[here] != 0u) { return; }
     let cx = i32(wk.x);
     let cy = i32(wk.y);
-    let reach = i32(wb.reach);
+    let squeezed = squeeze();
+    let reach = i32(wb.reach & 0x7FFFFFFFu);
     for (var d = 1; d <= reach; d++) {
         for (var oy = -d; oy <= d; oy++) {
             let edge = oy == -d || oy == d;
@@ -2888,8 +2905,8 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let ny = cy + oy;
                 if (nx >= 0 && ny >= 0 && nx < i32(P.w) && ny < i32(P.h)) {
                     let j = u32(ny) * P.w + u32(nx);
-                    if (agar[j] != 0u && (P.crowd == 0u || atomicLoad(&occ[j]) < P.crowd)) {
-                        if (P.crowd > 0u) { atomicMin(&claim[j], k); }
+                    if (agar[j] != 0u && (squeezed || P.crowd == 0u || atomicLoad(&occ[j]) < P.crowd)) {
+                        if (P.crowd > 0u && !squeezed) { atomicMin(&claim[j], k); }
                         icell[k] = j;
                         // Walkers that found a cell this round (`build_wall`
                         // runs rounds until none does).
@@ -2909,7 +2926,7 @@ fn settle(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (k >= P.n) { return; }
     let j = icell[k];
     if (j == NONE) { return; }
-    if (P.crowd > 0u && atomicLoad(&claim[j]) != k) { return; }
+    if (P.crowd > 0u && !squeeze() && atomicLoad(&claim[j]) != k) { return; }
     let wk = walkers[k];
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     atomicAdd(&occ[j], 1u);

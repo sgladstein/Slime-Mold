@@ -213,6 +213,12 @@ pub const GROUND_SOIL_SHIFT: u32 = 12;
 /// test's packed home crystal, which the CPU had all moved.)
 pub const EVICT_ROUNDS: usize = 4;
 pub const EVICT_MAX: usize = 64;
+/// How much farther than a wall's first rounds its later ones look
+/// (`Engine::build_wall`), for walkers in slime packed wider than 16 cells.
+pub const EVICT_FAR: u32 = 4;
+/// `WallBuild::reach`'s top bit: `evict`'s last round, which takes the
+/// nearest agar cell full or not (engine.wgsl's `squeeze`).
+const SQUEEZE: u32 = 0x8000_0000;
 
 /// Species the sandbox draws (a colour each, as `style=species`).
 pub const MAX_SPECIES: u8 = 4;
@@ -3103,14 +3109,30 @@ impl Engine {
         };
         submit(&[(BUILD, (bw * bh).div_ceil(256))]);
         let round = [(EVICT, n), (SETTLE, n), (UNCLAIM, cells)];
-        for _ in 0..EVICT_MAX / EVICT_ROUNDS {
-            self.queue.write_buffer(&self.wstat, 8, &[0u8; 4]);
-            submit(&round.repeat(EVICT_ROUNDS));
-            let st = read_back(&self.device, &self.queue, &self.wstat);
-            if u32::from_le_bytes(st[8..12].try_into().unwrap()) == 0 {
-                break;
+        // Rounds out to `reach`, then (2026-11-22, the owner's walkers stuck
+        // in walls: `evict` in engine.wgsl) out to `EVICT_FAR` times that,
+        // then one `squeeze` round there that keeps no crowd limit, so no
+        // living walker is left inside. A walker already out returns at
+        // once, so the later rounds cost a dispatch and a read-back each
+        // when the first got them all.
+        let at = |reach: u32| {
+            let mut wb = wb.clone();
+            wb[44..48].copy_from_slice(&reach.to_le_bytes());
+            wb
+        };
+        for far in [reach, EVICT_FAR * reach] {
+            self.queue.write_buffer(&self.wb, 0, &at(far));
+            for _ in 0..EVICT_MAX / EVICT_ROUNDS {
+                self.queue.write_buffer(&self.wstat, 8, &[0u8; 4]);
+                submit(&round.repeat(EVICT_ROUNDS));
+                let st = read_back(&self.device, &self.queue, &self.wstat);
+                if u32::from_le_bytes(st[8..12].try_into().unwrap()) == 0 {
+                    break;
+                }
             }
         }
+        self.queue.write_buffer(&self.wb, 0, &at((EVICT_FAR * reach) | SQUEEZE));
+        submit(&round);
     }
 
     /// Submits `passes` (pass, workgroups) on the current side, apart from
