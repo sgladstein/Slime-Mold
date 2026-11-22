@@ -101,6 +101,49 @@ pub fn estimate(gun: &Gun, cards: &[Card], rules: &Rules, rr: &RoundRules) -> f3
     rate * gun.shots.max(1) as f32 * per_shot / unit * DAMAGE
 }
 
+/// **The gun's stats as it fires with its cards** (the owner, 2026-11-22
+/// 08:53Z: the shop was "supposed to make visual for speed range, etc",
+/// not only DPS): what each card does to them is the shop's bars, a card
+/// against the gun without it. The bullets' numbers are the mean over the
+/// bullets the gun fires in turn (a card goes into every shot's average).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Profile {
+    /// Damage a shot (all its bullets, pellets, pierces, pieces and kill
+    /// bursts), in `estimate`'s unit: the rifle's plain shot is 10.
+    pub damage: f32,
+    /// Shots a second, a soldier (`Rate` cards and past-the-cap strike in).
+    pub rate: f32,
+    /// How far a shot flies, dish cells (`Range` cards and the bullets').
+    pub range: f32,
+    /// How fast a bullet flies, dish cells a second.
+    pub speed: f32,
+    /// The spread at the target, dish cells (smaller is truer).
+    pub spread: f32,
+    /// `estimate`: damage times rate.
+    pub dps: f32,
+}
+
+/// `Profile` of `gun` with `cards`, as `estimate` reads them.
+pub fn profile(gun: &Gun, cards: &[Card], rules: &Rules, rr: &RoundRules) -> Profile {
+    let dps = estimate(gun, cards, rules, rr);
+    let want = rules.strike * SCALE;
+    let over = (want / R_MAX).max(1.0).powi(2);
+    let n = |k: Card| cards.iter().take(super::rounds::MAX_SLOTS).filter(|&&c| c == k).count() as f32;
+    let rate = gun.rate * (1.0 + rules.rate_card * n(Card::Rate)).max(0.01) * over;
+    // The bullets fired in turn, and those beside them (`volley`).
+    let all = casts(cards);
+    let fired: Vec<usize> = cycle(&all).iter().flat_map(|&id| volley(&all, id as usize - 1)).collect();
+    let mean = |f: &dyn Fn(&Cast) -> f32| if fired.is_empty() { 1.0 } else { fired.iter().map(|&j| f(&all[j])).sum::<f32>() / fired.len() as f32 };
+    Profile {
+        damage: dps / rate,
+        rate,
+        range: gun.range * (1.0 + rules.range_card * n(Card::Range)) * mean(&|c| c.ammo.range()),
+        speed: rules.bullet_speed * mean(&|c| c.ammo.speed()),
+        spread: gun.spread * mean(&|c| c.ammo.spread()),
+        dps,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -143,6 +186,18 @@ mod tests {
         let four = one;
         one.shots = 1;
         assert!((est(&four, &[]) - 4.0 * est(&one, &[])).abs() < 1e-3);
+    }
+
+    #[test]
+    fn a_profile_moves_with_its_cards() {
+        let g = GunKind::Rifle.average();
+        let (r, rr) = (Rules::default(), RoundRules::default());
+        let base = profile(&g, &[], &r, &rr);
+        assert!((base.damage - 10.0).abs() < 1e-3 && (base.rate - 1.0).abs() < 1e-3 && (base.range - 24.0).abs() < 1e-3);
+        assert!((profile(&g, &[Card::Rate], &r, &rr).rate - 2.0).abs() < 1e-3);
+        assert!(profile(&g, &[Card::Range], &r, &rr).range > base.range * 1.5);
+        assert!(profile(&g, &[Card::Blast], &r, &rr).damage > base.damage * 2.0);
+        assert!((profile(&g, &[Card::Rate], &r, &rr).damage - base.damage).abs() < 1e-3, "Rate fires faster, not harder");
     }
 
     #[test]

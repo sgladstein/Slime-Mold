@@ -535,7 +535,7 @@ impl StartMenu {
         let mut dps_w = 0.0;
         if let Some(d) = shop.dps {
             let v = dps_text(d);
-            let vw = c.text(Weight::SemiBold, 19.0 * s, (x + lw, gy + 1.0 * s), Align::Right, &v, ENERGY);
+            let vw = c.text(Weight::SemiBold, 15.0 * s, (x + lw, gy), Align::Right, &v, TEXT);
             let lab = if shop.turrets { "est. DPS a turret" } else { "est. DPS a soldier" };
             let w2 = c.text(Weight::Medium, 12.5 * s, (x + lw - vw - 7.0 * s, gy), Align::Right, lab, MUTED);
             dps_w = vw + 7.0 * s + w2 + 16.0 * s;
@@ -697,7 +697,7 @@ impl StartMenu {
                     page(n, 1, self);
                     for (j, &i) in tab.rows.iter().enumerate() {
                         let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                        self.hand_card(&shop.rows[i], shop.dps, r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, hot(r), ring(Hit::Buy(i)), c, s);
                         self.hits.push((r, Hit::Buy(i)));
                     }
                 }
@@ -726,7 +726,7 @@ impl StartMenu {
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
                             let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                            self.hand_card(&shop.rows[i], shop.dps, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
                             self.hits.push((r, Hit::Buy(i)));
                             if drag == Some(i) {
                                 from = Some(r);
@@ -1023,48 +1023,63 @@ impl StartMenu {
         }
         y += para(c, Weight::Medium, 14.0 * s, (r.x + p, y), iw, 20.0 * s, &kind.join("  ·  "), MUTED, limit) + 6.0 * s;
         y += para(c, Weight::Medium, 15.0 * s, (r.x + p, y), iw, 21.0 * s, words(row), [214, 222, 230, 255], limit) + 8.0 * s;
-        // What it does to the gun's damage a second: yours, then with it,
-        // as two bars on one scale and the change (the owner, 2026-11-22).
-        if let (Some(now), Some(then)) = (shop.dps, row.dps) {
-            if y + 64.0 * s <= limit {
-                y += 4.0 * s;
-                let cw = dps_chip(c, Some(now), Some(then), row.no_room, r.x + p + iw, y + 11.0 * s, 13.0 * s, s, 1.0);
-                let head = if iw - cw - 10.0 * s >= c.atlas.measure(Weight::SemiBold, 12.5 * s, "ESTIMATED DAMAGE A SECOND") { "ESTIMATED DAMAGE A SECOND" } else { "EST. DPS" };
-                c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + p, y + 10.0 * s), Align::Left, head, iw - cw - 10.0 * s, ACCENT);
-                y += 22.0 * s;
-                let top = now.max(then).max(1.0);
-                let (what, with) = match row.area {
-                    ShopArea::Cards if row.on => ("without it", "now"),
-                    ShopArea::Cards if row.no_room => ("with room", "now"),
-                    ShopArea::Guns if !row.on => ("this gun", "yours"),
-                    _ => ("with it", "now"),
-                };
-                let bars = [(with.to_string(), now / top, dps_text(now)), (what.to_string(), then / top, dps_text(then))];
-                y += stat_bars(c, &bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, ENERGY, 1.0, limit, s) + 4.0 * s;
-                let note = if row.no_room { "No room now: it would wait in the bag" } else { "One soldier, every shot hitting slime" };
-                c.text_fit(Weight::Medium, 12.5 * s, (r.x + p, y + 8.0 * s), Align::Left, note, iw, FAINT);
-                y += 22.0 * s;
-            }
+        // Its stats as bars first (the owner, 2026-11-22 08:53Z: "make
+        // visual for speed range, etc"; the first cut led with DPS and he
+        // read the whole shop as DPS). A rolled bullet's own numbers, a
+        // standard bullet's at the middle of each.
+        let head = |c: &mut Canvas, y: f32, t: &str| {
+            c.text(Weight::SemiBold, 12.5 * s, (r.x + p, y + 10.0 * s), Align::Left, t, ACCENT);
+            y + 20.0 * s
+        };
+        if row.area == ShopArea::Cards && !row.bars.is_empty() && y + 40.0 * s <= limit {
+            y = head(c, y, "THIS BULLET");
+            y += stat_bars(c, &row.bars, None, r.x + p, y, iw, 21.0 * s, 13.5 * s, row.tint, 1.0, limit, s) + 8.0 * s;
         }
-        // A rolled bullet's numbers as bars, a standard bullet's at the
-        // middle of each.
-        if row.area == ShopArea::Cards && !row.bars.is_empty() {
-            y += stat_bars(c, &row.bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, row.tint, 1.0, limit, s) + 8.0 * s;
+        // The gun with it (or without it, or this gun against yours):
+        // damage a shot, fire rate, range, speed and aim, with a tick
+        // where the gun stands now, green where it is better, red worse.
+        if !row.stats.is_empty() && !shop.stats.is_empty() && y + 40.0 * s <= limit {
+            let t = match row.area {
+                ShopArea::Cards if row.on => "YOUR GUN WITHOUT IT",
+                ShopArea::Cards if row.no_room => "YOUR GUN WITH IT, IF IT FIT",
+                ShopArea::Guns if row.on => "YOUR GUN",
+                ShopArea::Guns => "THIS GUN, WITH YOUR CARDS",
+                _ => "YOUR GUN WITH IT",
+            };
+            y = head(c, y, t);
+            let mine = (!(row.area == ShopArea::Guns && row.on)).then_some(shop.stats.as_slice());
+            y += stat_bars(c, &row.stats, mine, r.x + p, y, iw, 21.0 * s, 13.5 * s, [150, 162, 176, 255], 1.0, limit, s);
+            if mine.is_some() && y + 18.0 * s <= limit {
+                let note = if row.no_room { "Tick: now  ·  no room now, it would wait in the bag" } else { "Tick: your gun now  ·  green better, red worse" };
+                c.text_fit(Weight::Medium, 12.5 * s, (r.x + p, y + 10.0 * s), Align::Left, note, iw, FAINT);
+                y += 20.0 * s;
+            }
+            y += 6.0 * s;
         }
         // An upgrade's effect now and at its next level (Fireproof's fire
         // harm, 2026-11-22), in the warm colour a worse number reads in.
         if row.area == ShopArea::Upgrades && !row.bars.is_empty() {
             y += stat_bars(c, &row.bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, WORSE, 1.0, limit, s) + 8.0 * s;
         }
-        // A gun's numbers as bars, against the carried gun's (its tick)
-        // when it is another.
+        // A gun's budget and slots, against the carried gun's.
         if row.area == ShopArea::Guns && !row.bars.is_empty() {
             let yours = shop.rows.iter().find(|x| x.area == ShopArea::Guns && x.on).filter(|_| !row.on);
-            if yours.is_some() && y + 16.0 * s <= limit {
-                c.text_fit(Weight::Medium, 12.5 * s, (r.x + p, y + 8.0 * s), Align::Left, "Tick: yours  ·  green better, red worse", iw, FAINT);
-                y += 18.0 * s;
+            let keep: Vec<_> = row.bars.iter().filter(|b| matches!(b.0.as_str(), "Budget" | "Slots" | "Shots")).cloned().collect();
+            y += stat_bars(c, &keep, yours.map(|x| x.bars.as_slice()), r.x + p, y, iw, 21.0 * s, 13.5 * s, ACCENT, 1.0, limit, s) + 6.0 * s;
+        }
+        // Then, second and small, the estimated damage a second: now, with
+        // it, and the change.
+        if let (Some(now), Some(then)) = (shop.dps, row.dps) {
+            if y + 22.0 * s <= limit {
+                let cw = dps_chip(c, Some(now), Some(then), row.no_room, r.x + p + iw, y + 12.0 * s, 12.5 * s, s, 1.0);
+                let with = match row.area {
+                    ShopArea::Cards if row.on => "without it",
+                    ShopArea::Guns if !row.on => "this gun",
+                    _ => "with it",
+                };
+                let t = format!("Est. DPS  {} now  \u{b7}  {} {with}", dps_text(now), dps_text(then));
+                c.text_fit(Weight::Medium, 13.0 * s, (r.x + p, y + 12.0 * s), Align::Left, &t, iw - cw - 10.0 * s, MUTED);
             }
-            stat_bars(c, &row.bars, yours.map(|x| x.bars.as_slice()), r.x + p, y, iw, 22.0 * s, 13.5 * s, ACCENT, 1.0, limit, s);
         }
         // A look under the pointer: the button belongs to the picked
         // thing, so it says how to get this one's.
@@ -1152,7 +1167,7 @@ impl StartMenu {
     /// band along the top, its icon large, its name and its price, then
     /// everything it does, and its pips at the foot. The same face, colours
     /// and words as its shelf row; only the shape is a card's.
-    fn hand_card(&self, row: &ShopRow, now: Option<f32>, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+    fn hand_card(&self, row: &ShopRow, now: Option<f32>, mine: &[(String, f32, String)], r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
         let done = owned(row);
         self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
         let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
@@ -1166,27 +1181,39 @@ impl StartMenu {
         } else if !row.price.is_empty() {
             c.text(Weight::SemiBold, 17.0 * s, (r.right() - pad, r.y + 30.0 * s), Align::Right, &row.price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
         }
+        // The badge top left, and after it, small and second to the
+        // bars, what it does to the gun's estimated damage a second.
+        let mut bx = r.x + pad;
         if let Some(b) = row.badge {
-            c.icon(b, (r.x + pad, r.y + 16.0 * s), 15.0 * s, with_alpha(TEXT, 0.8 * dim.max(0.6)));
+            c.icon(b, (bx, r.y + 16.0 * s), 15.0 * s, with_alpha(TEXT, 0.8 * dim.max(0.6)));
+            bx += 21.0 * s;
         }
-        let ic = 56.0 * s;
+        if let Some((t, ink, _)) = dps_words(now, row.dps, row.no_room) {
+            let room = r.right() - pad - c.atlas.measure(Weight::SemiBold, 17.0 * s, &row.price) - 8.0 * s - bx;
+            c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, &t, room, with_alpha(ink, dim.max(0.6)));
+        }
+        // The icon smaller than the first cut's 56, so the bars fit under
+        // the name.
+        let stats = !row.stats.is_empty() && row.bars.is_empty() && !mine.is_empty();
+        let bars = row.area == ShopArea::Cards && !row.bars.is_empty() || stats;
+        let ic = if bars { 40.0 * s } else { 56.0 * s };
         c.icon(row.icon, (r.x + (r.w - ic) / 2.0, r.y + 38.0 * s), ic, tint);
         let ink = with_alpha(TEXT, dim.max(0.6));
         let px = fit_px(c, &row.name, 17.0 * s, 13.5 * s, room);
-        c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, r.y + 124.0 * s), Align::Centre, &row.name, room, ink);
-        // All it does, as many lines as fit over the pips: first what it
-        // does to the gun's damage a second, and a rolled bullet's numbers
-        // as bars (the owner, 2026-11-22), then its words.
+        let name_y = if bars { r.y + 104.0 * s } else { r.y + 124.0 * s };
+        c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, name_y), Align::Centre, &row.name, room, ink);
+        // Then its stats as bars (the owner, 2026-11-22 08:53Z: "make
+        // visual for speed range, etc"): a rolled bullet's own numbers,
+        // else the gun's damage a shot, fire rate, range, speed and aim
+        // with it, a tick where the gun is now; then its words.
         let pips = if row.area == ShopArea::Cards { row.cost.min(6) } else if row.level.1 > 1 { row.level.1.min(8) as u32 } else { 0 };
         let foot = if pips > 0 { 26.0 * s } else { 10.0 * s };
-        let mut ty = r.y + 150.0 * s;
-        // The pill centred under the name.
-        let cw = dps_words(now, row.dps, row.no_room).map_or(0.0, |(t, _, _)| r.x + (r.w + c.atlas.measure(Weight::SemiBold, 12.5 * s, &t) + 12.0 * s) / 2.0);
-        if dps_chip(c, now, row.dps, row.no_room, cw, r.y + 148.0 * s, 12.5 * s, s, dim.max(0.6)) > 0.0 {
-            ty += 18.0 * s;
-        }
+        let mut ty = name_y + 26.0 * s;
+        let floor = r.bottom() - foot - 4.0 * s;
         if row.area == ShopArea::Cards && !row.bars.is_empty() {
-            ty += stat_bars(c, &row.bars, None, r.x + pad, ty - 12.0 * s, room, 17.0 * s, 12.5 * s, row.tint, dim.max(0.6), r.bottom() - foot - 18.0 * s, s) + 4.0 * s;
+            ty += stat_bars(c, &row.bars, None, r.x + pad, ty - 12.0 * s, room, 16.0 * s, 12.5 * s, row.tint, dim.max(0.6), floor, s) + 4.0 * s;
+        } else if stats {
+            ty += stat_bars(c, &row.stats, Some(mine), r.x + pad, ty - 12.0 * s, room, 16.0 * s, 12.5 * s, [150, 162, 176, 255], dim.max(0.6), floor, s) + 4.0 * s;
         }
         let about = words(row);
         if !about.is_empty() {
