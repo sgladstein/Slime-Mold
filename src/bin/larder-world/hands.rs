@@ -834,6 +834,10 @@ thread_local! {
 /// crystal, and the most it keeps.
 const BOT_ECON: usize = 30;
 const BOT_SQUAD: usize = 80;
+/// The siege's multiple of 200 walkers a soldier: the home crystal is
+/// taken at up to three times the usual 200 a soldier once it is all that is
+/// left (`bot_hand`'s `alone`).
+const BOT_SIEGE: u32 = 3;
 
 /// `bot` (the run bot, the Engine and tools lane's job 4, 2026-11-18): a
 /// plain player that tries to win the planet, so that CI can play planets
@@ -950,8 +954,17 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     // home is no crystal to pick or keep: run seed 2's
     // planet 2 picked it at 3:00 with 30 soldiers and 450 a soldier, held
     // it as its work, hunted, and never drained the crystals still charged.
-    let home_ok = home_mass < 200 * g.alive() as u32;
     let barren = BOT.with_borrow(|b| b.barren.clone());
+    // The siege (2026-11-22, Direction, for the Enemy lane's report): with
+    // `crystal_keep` the home crystal never runs out, so a slime that holds
+    // it regrows as fast as the volley thins it and never falls under 200 a
+    // soldier. Once every other crystal is dry or left, the whole squad
+    // takes the home crystal at up to three times that (600 a soldier), as
+    // the strategy bot's `siege=3` does; run seed 1 on main stood by it from
+    // 3:00 to 11:00 with 34 to 40 soldiers and 9.7k to 13k walkers there.
+    let alone = (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
+    let per = if alone { BOT_SIEGE * 200 } else { 200 };
+    let home_ok = home_mass < per * g.alive() as u32;
     let strong = g.alive() >= BOT_ECON || (1..cs.len()).all(|c| cs[c].1 <= 0.0 || barren.contains(&c));
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = (0..cs.len())

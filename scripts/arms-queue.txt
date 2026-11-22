@@ -1,29 +1,32 @@
 # The arms batch (`.github/workflows/arms.yml`): one game a line,
 # `ARM DEPTH SEED SECS [GAME ARGS...]`, the run bot's plan
 # (scripts/run-bot-plan.txt) on SEED's planet DEPTH (`league=DEPTH:SEED:SECS`,
-# the planets before it taken as won with two stars and shopped by the plan).
-# Shard i of 3 plays lines i, i+3, i+6...: keep one arm a column so each
-# shard plays one arm, seed by seed, and a shard over its time budget stops
-# at the same seed for every arm.
+# the planets before it taken as won with two stars and shopped by the plan),
+# or a whole run from planet 1 to N when DEPTH is `runN`. Line i goes to
+# shard i mod 8.
 #
-# 2026-11-22 (Direction): planets 4 and 5 as is, with the last-stand heart
-# off and with the strikers off, seeds 1 to 3, capped at 12 game minutes
-# (the top of the 8 to 12 band), for the FIRST_PLANET row change.
-as-is 4 1 720
-no-heart 4 1 720 set=stand=0
-no-strikers 4 1 720 set=strikers=0
-as-is 5 1 720
-no-heart 5 1 720 set=stand=0
-no-strikers 5 1 720 set=strikers=0
-as-is 4 2 720
-no-heart 4 2 720 set=stand=0
-no-strikers 4 2 720 set=strikers=0
-as-is 5 2 720
-no-heart 5 2 720 set=stand=0
-no-strikers 5 2 720 set=strikers=0
-as-is 4 3 720
-no-heart 4 3 720 set=stand=0
-no-strikers 4 3 720 set=strikers=0
-as-is 5 3 720
-no-heart 5 3 720 set=stand=0
-no-strikers 5 3 720 set=strikers=0
+# 2026-11-22 (Direction, after the Enemy lane's report of the bot standing
+# by the home crystal): planets 1 to 3 as whole runs on the 11 maps the
+# strategy bot is judged on (seeds 1 to 8 and the owner's runs 1795038793,
+# 1795106014, 1795119328) with the slime's ceiling at 1.5 times (18; the
+# difficulty thread's next step), and as is on the eight maps run-bot.yml
+# does not play. Each planet capped at 12 game minutes (720).
+ceil18 run3 1 720 set=ceiling=18
+ceil18 run3 2 720 set=ceiling=18
+ceil18 run3 3 720 set=ceiling=18
+ceil18 run3 4 720 set=ceiling=18
+ceil18 run3 5 720 set=ceiling=18
+ceil18 run3 6 720 set=ceiling=18
+ceil18 run3 7 720 set=ceiling=18
+ceil18 run3 8 720 set=ceiling=18
+ceil18 run3 1795038793 720 set=ceiling=18
+ceil18 run3 1795106014 720 set=ceiling=18
+ceil18 run3 1795119328 720 set=ceiling=18
+as-is run3 4 720
+as-is run3 5 720
+as-is run3 6 720
+as-is run3 7 720
+as-is run3 8 720
+as-is run3 1795038793 720
+as-is run3 1795106014 720
+as-is run3 1795119328 720

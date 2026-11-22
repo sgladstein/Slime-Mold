@@ -25,8 +25,9 @@ squad cut it to half, else lost), `squad` (the last soldier fell),
 `overrun`, `stuck` (no food to buy or fire with), `cleared` (the slime is
 gone but the goal was not met), `open` (no verdict).
 
-`--check` prints one line a planet (result and length) and fails on a
-soft lock: a planet with no verdict by its clock and a minute (`open`),
+`--check` prints one line a planet (result, length, longest stall) and
+fails on a stall over a minute (`stall=`, 11-22: no harvest and no new
+low of the slime) or a soft lock: a planet with no verdict by its clock and a minute (`open`),
 or no line for a planet the run reached. It also fails a planet that ends
 in under a minute (the lane brief's smoke check). A lost planet never
 fails it: a loss is a measurement ("balance never blocks").
@@ -39,6 +40,7 @@ planet with no verdict when the game stopped (`how=open`) is not a win.
 import sys
 
 TARGET = (8 * 60, 12 * 60)
+STALL = 60
 
 
 def pairs(line):
@@ -165,11 +167,17 @@ def check(seed, planets, runs):
     bad = []
     for p in planets:
         secs = float(p.get("secs", 0))
-        print(f"seed {seed} planet {p.get('depth', '?')} ({p.get('tier', '?')}): {result(p)}, {clock(secs)}")
+        print(f"seed {seed} planet {p.get('depth', '?')} ({p.get('tier', '?')}): {result(p)}, {clock(secs)}, longest stall {clock(float(p.get('stall', 0)))}")
         if p.get("how") == "open":
             bad.append(f"planet {p.get('depth')}: no verdict by its clock and a minute (a soft lock)")
         if secs < 60:
             bad.append(f"planet {p.get('depth')}: ended at {clock(secs)}, under a minute")
+        # A stall (Direction, 11-22): over a minute after the first with no
+        # harvest and no new low of the slime (the league's `stall=`): the
+        # bot standing by a home crystal it cannot take.
+        stall = float(p.get("stall", 0))
+        if stall > STALL:
+            bad.append(f"planet {p.get('depth')}: stalled {clock(stall)} with no harvest and the slime no smaller")
     if not planets or not runs:
         bad.append("the run printed no planet or no end line (the game stopped early)")
     for b in bad:
