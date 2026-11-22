@@ -245,9 +245,25 @@ impl BossRules {
             cut: 0.02 + (0.1 - 0.02) * t,
             most: if depth >= 6 { 3 } else if depth >= 4 { 2 } else { 1 },
             // Weaker on the first planets, all of them stronger by the
-            // last, and a wide spread on each.
-            grade_lo: 0.4 * t,
-            grade_hi: 0.6 + 0.4 * t,
+            // last, and a wide spread on each. Floor raised 2026-11-22
+            // evening (below): grade 0.2 to 0.7 on planet 2 (was 0 to
+            // 0.6), 0.6 to 1 by planet 8 as before.
+            grade_lo: 0.2 + 0.4 * t,
+            grade_hi: 0.7 + 0.3 * t,
+            // **Reach the squad** (2026-11-22 evening, the thread "Make
+            // the run harder after full-game win"; the owner: "yes" to
+            // scaling the mini-bosses). His next run after #721 (build
+            // 0509374, planets 2-5): 7 mini-bosses, all broken, none took
+            // a soldier; the hunters were shot apart 31 to 43 cells out
+            // (under 30% of their first members) and a wanderer never
+            // came nearer than 65. So they come faster (pace 1.2 to 1.5
+            // times the slime's, before the grade's own `faster`) and
+            // break later (under 20% of their first members on planet 2,
+            // 12% by planet 8; 30% before). Not size: one sized to the
+            // army lived 1-3 s against 50 guns either way (dead-ends,
+            // 11-20); his squads were 14 to 35.
+            haste: 1.2 + 0.3 * t,
+            quorum: 0.2 - 0.08 * t,
             // The mortar from planet 4 (the proposal the owner picked).
             kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }, if depth >= 3 { 1.0 } else { 0.0 }],
             // Tougher by the planet (2026-11-22, the thread "Make the run

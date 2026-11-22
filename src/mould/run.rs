@@ -308,6 +308,29 @@ const CEILING_GROW: [f32; 8] = [1.5; 8];
 const RAID_GAP_MIN: [f32; 8] = [45.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0];
 const STRIKER_ARMY: [f32; 8] = [1.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
 const SOLDIER_STEP: [f32; 8] = [0.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0];
+/// **Sooner from planet 2** (2026-11-22 evening, the same thread). His
+/// next run on #721 (build 0509374): planets 1-4 won in 3:51 to 5:02 with
+/// 14 to 35 soldiers, 0 to 3 lost a planet; raids 0, 0, 1, 3 (the first
+/// is drawn at 240 +/- 40 s, so a planet won by 4:00 met none) and the
+/// army-sized rules above barely woke (under 30 alive on all but one).
+///
+/// - `RAID_FIRST`, `RAID_EVERY`: the first raid's mean time and the gap
+///   at the landing (`RaidRules::first`, `every`; spreads kept at the same
+///   share): 2:00 and 100 s from planet 2, so a 5-minute planet meets 2
+///   or 3. Friday's hard planet 1 (11-21 04:49Z) had 14 in 16:33, one a
+///   70 s; still under that.
+/// - `DRAIN`: a touching walker's bite (`Rules::drain`, 2 since 11-12):
+///   2.5 from planet 2, so walking into the slime costs a small squad too.
+const RAID_FIRST: [f32; 8] = [240.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0];
+const RAID_EVERY: [f32; 8] = [150.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0];
+/// - `RAID_ARMOUR`: blows a marching raider takes (`RaidRules::
+///   march_armour`) until the march meets the squad or its target; the
+///   owner, same evening: "if the slime never reaches my soldiers,
+///   increasing the bite doesn't matter. Tougher slime has a better
+///   chance". 2 on planets 2-3, 3 on 4-6, 4 on 7-8 (mini-bosses take 4 to
+///   15). The bite above stays: it is what a raid that arrives does.
+const DRAIN: [f32; 8] = [2.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
+const RAID_ARMOUR: [u32; 8] = [0, 2, 2, 3, 3, 3, 4, 4];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -1206,6 +1229,14 @@ impl Run {
             r.raid.gap_min = RAID_GAP_MIN[depth_index(self.depth)];
             r.strikers.army_most = STRIKER_ARMY[depth_index(self.depth)];
             r.soldier_step = SOLDIER_STEP[depth_index(self.depth)];
+            let i = depth_index(self.depth);
+            let d = crate::mould::larder_world::RaidRules::default();
+            r.raid.first = RAID_FIRST[i];
+            r.raid.first_sd = d.first_sd * RAID_FIRST[i] / d.first;
+            r.raid.every = RAID_EVERY[i];
+            r.raid.every_sd = d.every_sd * RAID_EVERY[i] / d.every;
+            r.drain = DRAIN[i];
+            r.raid.march_armour = RAID_ARMOUR[i];
             let k = STRIKER_SHARE[depth_index(self.depth)];
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
@@ -2121,6 +2152,9 @@ mod tests {
         let (one, two) = (rules(1), rules(2));
         assert!(one.raid.gap_min == 45.0 && one.strikers.army_most == 1.0 && one.soldier_step == 0.0, "planet 1 as before");
         assert!(two.raid.gap_min < 45.0 && two.strikers.army_most > 1.0 && two.soldier_step > 0.0, "planet 2 on: closer raids, more strikers on a big army, a climbing price");
+        assert!((one.raid.first, one.raid.every, one.drain) == (240.0, 150.0, 2.0), "planet 1's raid clock and bite as before");
+        assert!(one.raid.march_armour == 0 && two.raid.march_armour > 1, "planet 2 on: a raid's marchers take more than one blow");
+        assert!(two.raid.first < one.raid.first && two.raid.every < one.raid.every && two.drain > one.drain, "planet 2 on: the first raid sooner, the next ones closer, a harder bite");
         let p1 = rules(1);
         assert!(p1.heart.on && p1.unit_paths, "planet 1 keeps the heartbeat and charges round walls");
         assert!(!p1.fruit.on && !p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");

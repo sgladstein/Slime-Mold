@@ -3879,6 +3879,8 @@ fn mini_boss_chances_rise_with_the_planet() {
         assert!(q.every <= p.every && q.cut >= p.cut && q.grade_lo >= p.grade_lo && q.grade_hi >= p.grade_hi, "planet {d}");
         // Tougher by the planet (11-22): armour and bite never fall.
         assert!(q.armour_at(0.0) >= p.armour_at(0.0) && q.bite_at(1.0) >= p.bite_at(1.0) && q.most >= p.most, "planet {d}'s strength");
+        // Faster and harder to break by the planet (11-22 evening).
+        assert!(q.haste >= p.haste && q.quorum <= p.quorum && p.haste > 1.0 && p.quorum < BossRules::default().quorum, "planet {d}'s reach");
     }
     // Strength by grade (owner 05:23Z): much stronger than ordinary
     // slime's one blow, and a wide spread.
