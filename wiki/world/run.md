@@ -441,7 +441,13 @@ plain strike is 10, so the starting rifle is 10 a second); it counts one
 soldier with every shot landing, strikes, kill bursts, pierce, split,
 multicast, carried casts and rate, and leaves out what works over time
 (gas, germ, Mind bullets, fire, trails, shoves), whose cards show "DPS
-same" and say what they do in words.
+same" and say what they do in words. After the review lane's check
+(2026-11-22): a kill burst on the hit counts only past the strike's own
+disc (so a Bomb, whose kill sits inside the rifle's strike and whose work
+is the throw, reads like the bare rifle), a needle lets its payload out at
+its first hit only (`shots.rs`, `one_burst`), and the rate is snapped to
+whole ticks as the game fires (a Rate card on the rifle is 1.875 shots a
+second, not 2).
 
 ## Fireproof
 
