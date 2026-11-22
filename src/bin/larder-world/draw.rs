@@ -861,10 +861,11 @@ impl App {
             }
             let sub = ((self.clock - self.star_tick.1) * tps).clamp(0.0, 1.0);
             let ticks = now as f32 + sub;
-            // A landing shakes the camera a little (`shake=`, as a blast).
+            // A landing shakes the camera a little (`shake=` times the Options
+            // page's Screen shake, as a blast: at 0% a landing kept shaking).
             if g.starfall.landed != self.star_felt {
                 if g.starfall.landed > self.star_felt {
-                    self.trauma = (self.trauma + 0.35 * self.args.shake).min(1.0);
+                    self.trauma = (self.trauma + 0.35 * self.args.shake * shake_user()).min(1.0);
                 }
                 self.star_felt = g.starfall.landed;
             }

@@ -61,12 +61,11 @@ VARIANTS = {
     "onekind": lambda s: s.replace("    plant_kind_layer(&o, x, y, 3u, d.w, hot);\n    plant_kind_layer(&o, x, y, 2u, d.z, hot);\n    plant_kind_layer(&o, x, y, 1u, d.y, hot);\n", "", 1),
     "nolobe": lambda s: s.replace("            } else if (fm.lobe > 0.0) {", "            } else if (false) {", 1),
     "noclump": lambda s: s.replace("            if (fm.clump > 0.0) {\n                // Patches", "            if (false) {\n                // Patches", 1),
-    # The frame cost pass's two cuts undone, to time them (11-21; both
-    # leave every pixel as it was): the far crowns' cull, and the slope's
-    # shared 5 x 5 read (back to three B-splines).
+    # The frame cost pass's far crowns' cull undone, to time it (11-21;
+    # it leaves every pixel as it was). Its other cut, the slope's shared
+    # 5 x 5 read, timed 1.27 ms slower on the 1070 (`slope3`, 11-22) and
+    # was reverted, so its variant went with it.
     "nocull": lambda s: s.replace("            if (far && unshaded) { continue; }", "", 1),
-    "slope3": lambda s: s.replace("    let dx = h3.y - hc0;\n    let dy = h3.z - hc0;",
-        "    let dx = cells_height(x + e, y) - hc0;\n    let dy = cells_height(x, y + e) - hc0;", 1),
     # The highlight from three height samples, not five (forward
     # differences off the film's own height here): its cost. Not kept, it
     # moves each highlight half a sample (11-21, planet 2 at zoom 12).

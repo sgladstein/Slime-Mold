@@ -74,6 +74,13 @@ pub struct StrikerRules {
     /// seconds you can see and answer.
     pub rate: f32,
     pub rate_share: f32,
+    /// **The rate cap grows with an army past `full`** (2026-11-22, the
+    /// thread "Make the run harder after full-game win": on the owner's
+    /// 11-22 run of all 8 planets his army reached 90 to 100 and met the
+    /// strikers a squad of 24 meets). The cap is times the living soldiers
+    /// over `full`, at least 1 and at most `army_most` (1: the cap as
+    /// before; a run sets it, `run::Run::rules`).
+    pub army_most: f32,
 }
 
 impl Default for StrikerRules {
@@ -89,7 +96,7 @@ impl Default for StrikerRules {
         // blows added little (62, 113, 328). Map 7, four soldiers: lost at
         // 2:33 with the first numbers, 1:14 with these and no squad scale,
         // won at 4:21 (as with no strikers on the GPU) with few 8, full 24.
-        StrikerRules { on: false, below: 0.6, band: 30.0, share: 1.0, haste: 3.0, most: 3, few: 8.0, full: 24.0, rate: 150.0, rate_share: 0.02 }
+        StrikerRules { on: false, below: 0.6, band: 30.0, share: 1.0, haste: 3.0, most: 3, few: 8.0, full: 24.0, rate: 150.0, rate_share: 0.02, army_most: 1.0 }
     }
 }
 
@@ -140,7 +147,8 @@ impl<W: World> Game<W> {
         // up to `most + 1` tries in its block, from the band the last pass
         // counted (none counted yet: this pass only counts).
         if r.rate > 0.0 {
-            let cap = r.rate.min(r.rate_share * self.mould as f32).max(0.0);
+            let big = (alive / r.full.max(1.0)).clamp(1.0, r.army_most.max(1.0));
+            let cap = r.rate.min(r.rate_share * self.mould as f32).max(0.0) * big;
             let tries = cap * (r.most + 1) as f32;
             share = if self.strikers.band == 0 { 0.0 } else { share.min(tries / self.strikers.band as f32) };
         }

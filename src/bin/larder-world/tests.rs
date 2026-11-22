@@ -506,6 +506,8 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     // 11-15; Right on the Game tab's first row would turn and save the UI
     // size).
     assert_eq!(app.menu.as_ref().unwrap().option("map").unwrap().tab, "Planet");
+    // Screen, then Game, then Planet (the Screen tab came first on 11-22).
+    app.menu_input(|m| m.key(KeyCode::Tab, true)).unwrap();
     app.menu_input(|m| m.key(KeyCode::Tab, true)).unwrap();
     // Down to Planet and back: no restart (the round's clock runs on).
     for _ in 0..3 {
@@ -2056,7 +2058,7 @@ fn the_menus_real_lists_fit_one_screen() {
             }
             t
         });
-        assert_eq!(tabs, ["Game", "Planet", "The mould", "Experiments"]);
+        assert_eq!(tabs, ["Screen", "Game", "Planet", "The mould", "Experiments"]);
         for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
             let at = format!("{screen:?} at {user}, squads {squads}");
             let mut m = start_menu(&base);
