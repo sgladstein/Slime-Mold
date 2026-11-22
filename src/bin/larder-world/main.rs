@@ -1979,6 +1979,13 @@ impl App {
                 self.log_sec = sec;
                 let mut line = self.playlog.second(g);
                 line += &frames_line(&mut self.log_parts, self.view.as_ref().map_or((0, 0), |v| v.screen), self.camera.zoom, self.fast);
+                // The speaker's health every 10 s (`sound::Output::health_line`;
+                // 2026-11-22, sound still cutting out in his play).
+                if sec.is_multiple_of(10) {
+                    if let Some(sp) = self.speaker.as_mut() {
+                        line += &sp.health_line();
+                    }
+                }
                 let gun = rounds::name(&g.rounds.round);
                 if gun != self.log_gun {
                     line += &format!("gun t={t:.1} {gun}\n");
