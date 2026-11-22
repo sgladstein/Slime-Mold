@@ -1348,6 +1348,29 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
                 g.apply(Cmd::SquadOrder(live[0] as u8, Order::Move(to.0, to.1)));
             }
         }
+        // `squadsN` (2026-11-22, the squad strip past four squads): the
+        // biggest squad split, as the Split button does, until N stand,
+        // then the first commanded.
+        _ if step.starts_with("squads") => {
+            let want: usize = step[6..].parse().map_err(|_| format!("card={step}: squadsN"))?;
+            for _ in 0..want {
+                let Some(g) = app.game.as_mut() else { return Ok(()) };
+                let live = g.live_squads();
+                if live.len() >= want {
+                    break;
+                }
+                let size = |q: usize| g.soldiers.iter().filter(|s| s.alive && s.squad as usize == q).count();
+                let Some(&big) = live.iter().max_by_key(|&&q| size(q)) else { break };
+                g.apply(Cmd::Active(big as u8));
+                app.hud_event(HudEvent::SquadSplit)?;
+            }
+            if let Some(g) = app.game.as_mut() {
+                let live = g.live_squads();
+                if let Some(&q) = live.first() {
+                    g.apply(Cmd::Active(q as u8));
+                }
+            }
+        }
         "upgrade" | "demolish" | "switch" | "cancel" => {
             let id = match step {
                 "upgrade" => UPGRADE,

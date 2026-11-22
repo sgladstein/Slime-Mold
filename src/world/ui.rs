@@ -2052,27 +2052,48 @@ impl Hud {
         // of them, till every squad has one (owner, 2026-11-19 16:55Z:
         // "when we have too many squads to show in the squad panel of the
         // hud, instead of hiding some, the squad tile should shrink").
-        // Down to 0.4 of full; a shrunk tile keeps its key, count and
-        // health (below). Only past that does the last tile say "+N" as
-        // before.
+        // Only past the smallest tile does the last say "+N" as before.
+        //
+        // Three sizes (owner, 2026-11-22: "when more than 4 squads the
+        // shrunken tiles need to be improved"). Until then the whole tile
+        // scaled down, height and all, to 0.4, and below 0.575 became a
+        // bare "1: 4" in a squat box with a hairline bar: at twelve squads
+        // a strip of tiny boxes along the top with half the panel empty
+        // under it. Now, in the same panel height:
+        // - Full (one row, 86 to 168 wide): as before.
+        // - Compact (one row, full height, down to 48 wide): the key small
+        //   top left, the soldier and the count big in the middle, the
+        //   health bar along the foot, as the full tile has them.
+        // - Mini (two rows of half height, down to 40 wide): the key and
+        //   the count on one line, a thin health bar.
         let top = inner.y + 26.0 * s;
-        let layout = |f: f32| {
-            let cgap = 7.0 * s * f.max(0.5);
-            let cw = ((inner.w + cgap) / n.max(1) as f32 - cgap).clamp(86.0 * s * f, 168.0 * s * f);
-            let ch = 54.0 * s * f;
-            let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
-            let rows = ((inner.bottom() - top + cgap) / (ch + cgap)).floor().max(1.0) as usize;
-            (cw, ch, cgap, cols, rows)
+        let room_h = (inner.bottom() - top).max(20.0 * s);
+        let full_h = (54.0 * s).min(room_h);
+        let fit = |gap: f32, cols: usize| (inner.w + gap) / cols.max(1) as f32 - gap;
+        #[derive(Clone, Copy, PartialEq)]
+        enum Size {
+            Full,
+            Compact,
+            Mini,
+        }
+        let (size, cw, ch, cgap, cols, rows) = if fit(7.0 * s, n) >= 86.0 * s {
+            (Size::Full, fit(7.0 * s, n).min(168.0 * s), full_h, 7.0 * s, n.max(1), 1)
+        } else if fit(5.0 * s, n) >= 48.0 * s {
+            (Size::Compact, fit(5.0 * s, n), full_h, 5.0 * s, n, 1)
+        } else {
+            let g = 4.0 * s;
+            let rows = if room_h >= 2.0 * 20.0 * s + g { 2 } else { 1 };
+            let want = n.div_ceil(rows);
+            let cols = if fit(g, want) >= 40.0 * s { want } else { ((inner.w + g) / (40.0 * s + g)).floor().max(1.0) as usize };
+            (Size::Mini, fit(g, cols), (room_h.min(54.0 * s) - g * (rows - 1) as f32) / rows as f32, g, cols, rows)
         };
-        let f = (0..=12).map(|i| 1.0 - 0.05 * i as f32).find(|&f| {
-            let (_, _, _, cols, rows) = layout(f);
-            cols * rows >= n
-        });
-        let f = f.unwrap_or(0.4);
-        let (cw, ch, cgap, cols, rows) = layout(f);
-        // Sizes inside a tile.
-        let u = s * f;
+        // Sizes inside a full tile.
+        let u = s;
         let room = cols * rows;
+        // A key the squad has ("1" to "9"); past nine squads none.
+        fn key_of(q: &SquadRow) -> Option<&str> {
+            Some(q.key.as_str()).filter(|k| !k.is_empty() && *k != "-")
+        }
         for (k, q) in p.rows.iter().enumerate() {
             if k >= room {
                 break;
@@ -2080,34 +2101,71 @@ impl Hud {
             let (i, j) = (k % cols, k / cols);
             let cell = Rect::new(inner.x + i as f32 * (cw + cgap), top + j as f32 * (ch + cgap), cw, ch);
             if k == room - 1 && n > room {
-                c.rrect(cell, 8.0 * u, [255, 255, 255, 14]);
-                c.text(Weight::SemiBold, 14.0 * u, (cell.x + cw / 2.0, cell.y + ch / 2.0 + 5.0 * u), Align::Centre, &format!("+{}", n - room + 1), MUTED);
+                c.rrect(cell, 6.0 * s, [255, 255, 255, 14]);
+                c.text(Weight::SemiBold, 13.0 * s, (cell.x + cw / 2.0, cell.y + ch / 2.0 + 4.5 * s), Align::Centre, &format!("+{}", n - room + 1), MUTED);
                 break;
             }
             // Top right: the link toggle; left of it, the + while the
             // squad overlaps yours.
             let link = Rect::new(cell.right() - 21.0 * u, cell.y + 4.0 * u, 17.0 * u, 17.0 * u);
             let plus = Rect::new(link.x - 20.0 * u, link.y, 17.0 * u, 17.0 * u);
-            let can_link = !q.active && (q.near || q.linked);
+            let small = size != Size::Full;
+            let can_link = !small && !q.active && (q.near || q.linked);
             let on_link = can_link && self.hover.is_some_and(|h| link.contains(h));
-            let on_plus = !q.active && q.near && self.hover.is_some_and(|h| plus.contains(h));
+            let on_plus = !small && !q.active && q.near && self.hover.is_some_and(|h| plus.contains(h));
             let hot = self.hover.is_some_and(|h| cell.contains(h)) && !on_plus && !on_link;
             let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
             let edge = if q.active { ACCENT } else if q.linked { alpha(ACCENT, 0.55) } else { EDGE };
-            c.panel(cell, 8.0 * u, t, b, if q.active || q.linked { 2.0 * u } else { 1.0 }, edge);
+            let r = if size == Size::Mini { 5.0 * s } else { 8.0 * s };
+            c.panel(cell, r, t, b, if q.active || q.linked { 2.0 * s } else { 1.0 }, edge);
             self.hits.push((cell, Hit::Squad(k)));
-            // A shrunk tile: its key and soldiers in one line, never under
-            // the bar's least text (10.5, which the YOU tag would go under
-            // at once), and its health; the rest in its tooltip (linking and
-            // the + wait for a full tile).
-            if 11.5 * f < 10.5 {
-                let ink = if q.active { ACCENT } else { TEXT };
-                let size = (0.42 * ch).clamp(10.5 * s, 18.0 * s);
-                c.text_fit(Weight::SemiBold, size, (cell.x + cw / 2.0, cell.y + 0.5 * ch + 0.35 * size - 1.5 * s), Align::Centre, &format!("{}: {}", q.key, q.soldiers), cw - 4.0 * s, ink);
-                c.bar(Rect::new(cell.x + 3.0 * s, cell.bottom() - 4.0 * s, cw - 6.0 * s, 2.5 * s), q.hp, health_colour(q.hp), TRACK);
+            let ink = if q.active { ACCENT } else { TEXT };
+            let count = format!("{}", q.soldiers);
+            if size == Size::Compact {
+                // The key top left; the soldier and the count in the middle
+                // (the count alone where the two do not fit); the health
+                // along the foot.
+                if let Some(key) = key_of(q) {
+                    c.text(Weight::SemiBold, 11.5 * s, (cell.x + 6.0 * s, cell.y + 13.0 * s), Align::Left, key, if q.active { ACCENT } else { MUTED });
+                }
+                let px = 19.0 * s;
+                let nw = c.atlas.measure(Weight::SemiBold, px, &count);
+                let icon = 17.0 * s;
+                let with_icon = icon + 4.0 * s + nw <= cw - 10.0 * s;
+                let w = if with_icon { icon + 4.0 * s + nw } else { nw };
+                let x0 = cell.x + (cw - w) / 2.0;
+                let mid = cell.y + 0.56 * ch;
+                if with_icon {
+                    c.icon(Icon::Soldier, (x0, mid - icon / 2.0 - 1.0 * s), icon, ink);
+                }
+                c.text(Weight::SemiBold, px, (x0 + w - nw, mid + 0.36 * px - 1.0 * s), Align::Left, &count, ink);
+                c.bar(Rect::new(cell.x + 5.0 * s, cell.bottom() - 9.0 * s, cw - 10.0 * s, 4.0 * s), q.hp, health_colour(q.hp), TRACK);
+                // A squad on its own: the AUTO tag's green as a dot, top
+                // right (the word does not fit).
+                if q.auto && !q.active {
+                    c.rrect(Rect::new(cell.right() - 10.0 * s, cell.y + 6.0 * s, 5.0 * s, 5.0 * s), 2.5 * s, GOOD);
+                }
+            }
+            if size == Size::Mini {
+                // The key and the count on one line, the health under them.
+                let px = (0.5 * ch).clamp(10.5 * s, 13.0 * s);
+                let y = cell.y + 0.5 * ch + 0.36 * px - 2.0 * s;
+                match key_of(q) {
+                    Some(key) if cw >= 46.0 * s => {
+                        c.text(Weight::SemiBold, 10.5 * s, (cell.x + 6.0 * s, y), Align::Left, key, if q.active { ACCENT } else { MUTED });
+                        c.text(Weight::SemiBold, px, (cell.right() - 6.0 * s, y), Align::Right, &count, ink);
+                    }
+                    _ => {
+                        c.text(Weight::SemiBold, px, (cell.x + cw / 2.0, y), Align::Centre, &count, ink);
+                    }
+                }
+                c.bar(Rect::new(cell.x + 4.0 * s, cell.bottom() - 5.0 * s, cw - 8.0 * s, 2.5 * s), q.hp, health_colour(q.hp), TRACK);
+            }
+            if small {
                 if hot {
                     let state = q.note.as_deref().unwrap_or("");
-                    let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it (key {})", q.name, q.soldiers, q.key) };
+                    let key = key_of(q).map_or(String::new(), |k| format!(" (key {k})"));
+                    let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it{key}", q.name, q.soldiers) };
                     tip = Some((what, cell));
                 }
                 continue;
@@ -2135,9 +2193,13 @@ impl Hud {
                 if end - sx >= 30.0 * u {
                     // "working, 3 on guard" where it fits, else "working":
                     // a whole word reads, a cut one ("working, 3 o...") not.
+                    // Not even the first word whole ("wor...", "holdi..." at
+                    // five squads, 11-22): none, the tooltip has it.
                     let fits = c.atlas.measure(Weight::Medium, 12.5 * u, state) <= end - sx;
                     let state = if fits { state } else { state.split(", ").next().unwrap_or(state) };
-                    c.text_fit(Weight::Medium, 12.5 * u, (sx, cell.y + 36.0 * u), Align::Left, state, end - sx, MUTED);
+                    if c.atlas.measure(Weight::Medium, 12.5 * u, state) <= end - sx {
+                        c.text(Weight::Medium, 12.5 * u, (sx, cell.y + 36.0 * u), Align::Left, state, MUTED);
+                    }
                 }
             }
             if can_link {
