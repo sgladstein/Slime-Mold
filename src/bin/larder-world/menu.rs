@@ -142,6 +142,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // it here and found none): taken at once and saved, not a round's.
     let shakes: Vec<String> = settings::SHAKE_STEPS.iter().map(|&v| settings::percent(v)).collect();
     let shakes: Vec<&str> = shakes.iter().map(String::as_str).collect();
+    // The world's detail under it (performance thread, 2026-11-22): the
+    // owner's 4K screen drew the world at 8 times the pixels the GTX 1070
+    // was timed at. Taken at once and saved, not a round's.
+    o.insert(3, Opt::new("detail", "World detail", &settings::DETAIL_STEPS, "Auto", detail_user(), "How many of the screen's pixels the world is drawn at: Auto draws a 4K window at half each way for a steady frame rate; Full always at every pixel, Half always at half. Text and panels stay sharp"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -150,6 +154,11 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     o.into_iter()
         .map(|opt| {
             let tab = match opt.key.as_str() {
+                // How the game shows on this screen (performance thread,
+                // 11-22): the World detail row did not fit the Game tab
+                // at 1280 x 540 and 200%, so the UI size, the world's
+                // detail and the shake have a tab of their own, first.
+                "ui" | "detail" | "shake" => "Screen",
                 "map" | "planet" | "own" | "plants" => "Planet",
                 "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The mould",
                 k if k.starts_with(slime_mould::build::switches::OPT_KEY) => "Experiments",
@@ -807,6 +816,9 @@ impl App {
         }
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("music")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != music_user()) {
             self.set_music(v);
+        }
+        if let Some(v) = self.menu.as_ref().and_then(|m| m.option("detail")).map(|o| o.value().to_string()).filter(|v| v != detail_user()) {
+            self.set_detail(&v);
         }
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("shake")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != shake_user()) {
             self.set_shake(v);
