@@ -603,6 +603,19 @@ impl StartMenu {
     /// The mouse wheel: a page taller than the window scrolls (`notches`
     /// up is positive, as the window gives them).
     pub fn wheel(&mut self, notches: i32) {
+        // A paged list that fits its page (what is new, the options, the
+        // keys) turns a page a notch, toward the end as the wheel rolls
+        // down (Milestone 1 test 6, 11-22: the 169 lines of what is new
+        // took the wheel and did nothing, eight pages behind a small
+        // pager in the corner).
+        if self.scroll_max <= 0.0 && self.sheets > 1 && self.page != Page::Shop {
+            // (Held at the ends, not round them as the pager's buttons go.)
+            let to = (self.sheet as i64 - notches as i64).clamp(0, self.sheets as i64 - 1);
+            if to != self.sheet as i64 {
+                self.flip((to - self.sheet as i64) as isize);
+            }
+            return;
+        }
         let step = 90.0 * self.body.map_or(1.0, |b| (b.h / 600.0).max(0.5));
         self.scroll = (self.scroll - notches as f32 * step).clamp(0.0, self.scroll_max);
     }
@@ -921,7 +934,7 @@ impl StartMenu {
                 self.picked = true;
             }
             KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
-            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys => {
+            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys || (self.page == Page::News && self.news_tab == 0) => {
                 self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
             }
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
@@ -1109,6 +1122,7 @@ impl StartMenu {
             Page::Keys if self.tabbed() => "Tab next tab  ·  Esc or F1 back",
             Page::Keys => "Esc or F1 back",
             Page::Shop => "",
+            Page::News if self.news_tab == 0 && self.sheets > 1 => "Up/Down pick a line  ·  Left/Right or the wheel turn the page  ·  Tab things to try  ·  Esc back",
             Page::News if self.news_tab == 0 => "Up/Down pick a line  ·  Tab things to try  ·  Esc back",
             Page::News => "Up/Down pick  ·  Enter or click ticks it  ·  Tab what is new  ·  Esc back",
         };
@@ -2589,6 +2603,44 @@ mod tests {
             .collect();
         let to_try = (0..5).map(|i| TryLine { text: format!("Thing {i}: drain crystals and buy soldiers from the first second. Does it still win, and what should stop it? Then build two pumps first instead: the slime now raids them about a minute in."), tried: i == 1 }).collect();
         BuildPage { name: "build 3127".into(), long: "build 3127 (d08583d, 2026-11-18)".into(), last: Some("build 3098, 2026-11-17".into()), news, to_try }
+    }
+
+    /// A long list of what is new (169 lines on 11-21, eight pages) turns
+    /// its pages with the wheel and Left/Right, not only the small pager
+    /// in the corner (Milestone 1 test 6, 11-22): a notch down is the next
+    /// page, the wheel stops at the ends, and the hint says so.
+    #[test]
+    fn a_long_what_is_new_turns_its_pages_with_the_wheel_and_arrows() {
+        let said = |c: &Canvas, t: &str| c.runs.iter().any(|r| r.text == t);
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        m.build = Some(build_page(60, 60));
+        m.show(Page::News);
+        m.draw(&mut c);
+        let pages = m.sheets;
+        assert!(pages >= 3, "60 lines on one page at 1280 x 800?");
+        assert!(said(&c, "Up/Down pick a line  ·  Left/Right or the wheel turn the page  ·  Tab things to try  ·  Esc back"));
+        assert_eq!(m.sheet, 0);
+        m.wheel(-1);
+        c.clear();
+        m.draw(&mut c);
+        assert_eq!(m.sheet, 1, "a notch down is the next page");
+        assert!(said(&c, &format!("2 of {pages}")));
+        m.wheel(1);
+        m.wheel(1);
+        assert_eq!(m.sheet, 0, "the wheel stops at the first page");
+        m.wheel(-99);
+        assert_eq!(m.sheet, pages - 1, "and at the last");
+        m.key(KeyCode::ArrowLeft, true);
+        assert_eq!(m.sheet, pages - 2, "Left is the page before");
+        m.key(KeyCode::ArrowRight, true);
+        assert_eq!(m.sheet, pages - 1);
+        // A short list has one page and the hint leaves the paging out.
+        m.build = Some(build_page(3, 3));
+        m.show(Page::News);
+        c.clear();
+        m.draw(&mut c);
+        assert!(said(&c, "Up/Down pick a line  ·  Tab things to try  ·  Esc back"));
     }
 
     /// What the build holds (the plan of 2026-11-17: the menu shows the

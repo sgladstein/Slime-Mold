@@ -2,6 +2,16 @@
 
 ## State (2026-11-20)
 
+**11-22, Milestone 1 test 6 (Direction 03:15Z):** the game's pages
+stilled on lavapipe (`menu=news|news-try|options-experiments`). The long
+what-is-new list now turns its pages with the wheel and Left/Right
+(`StartMenu::wheel`), and the Crystals refill row's text says what it
+decides since only the squad empties crystals (Direction's wording). The
+end cards (planet won, held on, run lost, run won) each lead with one
+sentence of what happened and its numbers (`lead`, `star_line` in
+`draw.rs`); `film_ends` films all four (`FILM_CASES=won,held,lost,runwon`).
+Next: the 1070 batch's view costs (Engine), then Look B on Scott's notes.
+
 **Slime viewer (11-21: slimes of his own, `custom NAME = BASE` and `planet N = SLIME` in the tweaks file, keyed like a tier in `slime`/`rule`/`body` lines; old looks `SlimeLook::Paint` 8 and `Foil` 9 branch in `cell_mat_c`, prep's `th_h` and `shaded`'s spec; first built on branch `claude/project-thread-517zll`, the thread "Build a
 slime viewer to tune looks"; owner 11-20 23:17Z):** `viewer=PLANET`, the
 main menu's "Slime viewer" row and `viewer.cmd` open a run planet on the

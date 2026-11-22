@@ -122,8 +122,10 @@ pub(super) fn end_screen(end: End, g: &Game<GpuWorld>, t: f32, place: String) ->
     Ending { place, title: title.into(), won, stars: None, says: String::new(), tiles: end_tiles(g, at), lines, curve: g.curve.clone() }
 }
 
-/// A mission's end: the cause in the title (stars when won), the round's
-/// numbers, and how it ended. A run's planet adds its own (`App::model`).
+/// A mission's end: the cause in the title (stars when won), one sentence
+/// under it saying what happened with the numbers that matter (`lead`),
+/// the round's numbers, and for a starred end what earned each star
+/// (`star_line`). A run's planet adds its own line (`App::model`).
 pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
     let v = tr.verdict.expect("a verdict");
     use slime_mould::mould::campaign::Cause;
@@ -144,7 +146,83 @@ pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
         }
         .to_string()
     };
-    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: String::new(), tiles: end_tiles(g, v.at), lines: vec![tr.cause_line()], curve: g.curve.clone() }
+    let lines = if v.stars > 0 { vec![star_line(tr, g, v)] } else { Vec::new() };
+    Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: lead(g, v), tiles: end_tiles(g, v.at), lines, curve: g.curve.clone() }
+}
+
+/// What happened, one sentence with its numbers (Milestone 1's last look
+/// job, Direction 2026-11-22: "each saying what happened in a sentence
+/// with the numbers that matter"): when, the slime against its peak, and
+/// the soldiers. It took the place of two lines that said less: the
+/// slime tier's landing sentence ("It walls the crystals it holds in
+/// amber...", which the landing alert says) and `Tracker::cause_line`
+/// ("The mould took the larder at 0:39 with the bank empty (best 0% of
+/// the goal)"), which called the slime the mould under a title calling it
+/// the slime, and gave the bar's best but not the slime's size.
+fn lead(g: &Game<GpuWorld>, v: slime_mould::mould::campaign::Verdict) -> String {
+    use slime_mould::mould::campaign::Cause;
+    let at = clock(v.at);
+    let peak = g.peak.max(g.mould);
+    let (left, top) = (walkers(g.mould), walkers(peak));
+    let share = format!("{:.0}%", 100.0 * g.mould as f32 / peak.max(1) as f32);
+    let n = g.soldiers.len();
+    let lost = g.soldiers.iter().filter(|s| !s.alive).count();
+    let with = match lost {
+        0 => format!("with none of your {n} soldiers lost"),
+        k if k == n => format!("with all {n} of your soldiers lost"),
+        k => format!("with {k} of your {n} soldiers lost"),
+    };
+    match v.cause {
+        Cause::Goal if g.mould == 0 => format!("You wiped out the slime in {at}, from a peak of {top} walkers, {with}."),
+        Cause::Goal => format!("You broke the slime in {at}, down to {left} of its {top} walkers, {with}."),
+        Cause::Cap => format!("The clock reached {at} with the slime still {left} walkers strong, {share} of its {top} peak."),
+        Cause::SquadWiped => format!("Your last soldier fell at {at}, with the slime {left} walkers strong, {share} of its {top} peak."),
+        Cause::Overrun => format!("The slime reached the larder at {at} with no food in the bank to fight it off, {left} walkers strong, {share} of its {top} peak."),
+        Cause::Stuck => {
+            let from = clock((v.at - slime_mould::mould::campaign::STUCK_END).max(0.0));
+            format!("From {from} to {at} there was no food to buy a soldier or fire a shot, with the slime {left} walkers strong.")
+        }
+        Cause::MouldWiped => format!("The slime is gone at {at}, but this mission's goal was the squad's, and it fell short at {:.0}%.", 100.0 * v.best),
+    }
+}
+
+/// What earned each star and what the missing ones ask for ("2 stars:
+/// the goal, in under 10:00; 2 or fewer soldiers lost earns the third").
+/// The stars are the goal, the speed (`Rules::par`, else four fifths of
+/// the cap) and the mission's bonus, as `Tracker::update` gives them.
+fn star_line(tr: &Tracker, g: &Game<GpuWorld>, v: slime_mould::mould::campaign::Verdict) -> String {
+    use slime_mould::mould::campaign::{two_stars, Bonus, Cause};
+    let of = |n: u8| format!("{n} star{}", if n == 1 { "" } else { "s" });
+    if v.cause != Cause::Goal {
+        // A held-on or squad-goal end graded by the bar: half the goal.
+        return format!("{}: the goal half met ({:.0}%)", of(v.stars), 100.0 * v.best);
+    }
+    let par = if g.rules.par > 0.0 { g.rules.par } else { two_stars(g.rules.cap) };
+    let quick = v.at < par;
+    let bonus = v.stars as i32 - 1 - i32::from(quick) > 0;
+    let fast = format!("in under {}", clock(par));
+    let extra = match tr.mission.bonus {
+        Some(Bonus::LoseAtMost(k)) => Some(format!("{k} or fewer soldiers lost")),
+        Some(Bonus::StolenAtMost(f)) => Some(format!("{f:.0} or less food stolen")),
+        None => None,
+    };
+    let mut got = vec!["the goal".to_string()];
+    let mut miss = Vec::new();
+    if quick { got.push(fast) } else { miss.push(fast) }
+    if let Some(e) = extra {
+        if bonus { got.push(e) } else { miss.push(e) }
+    }
+    let mut line = format!("{}: {}", of(v.stars), got.join(", "));
+    if !miss.is_empty() {
+        let next = if v.stars == 1 && miss.len() == 2 { "the other two" } else if v.stars == 1 { "the second" } else { "the third" };
+        line += &format!("; {} earn{} {next}", miss.join(" and "), if miss.len() == 1 { "s" } else { "" });
+    }
+    line
+}
+
+/// Game seconds as the HUD's clock ("4:07").
+fn clock(t: f32) -> String {
+    format!("{}:{:02}", t as u32 / 60, t as u32 % 60)
 }
 
 /// The end screen's numbers (Look and interface, 2026-11-18): how long
@@ -167,7 +245,11 @@ fn end_tiles(g: &Game<GpuWorld>, at: f32) -> Vec<(String, String)> {
 /// Walkers as the top bar counts them from 10,000 ("42.3k"), else whole
 /// ("1,558").
 fn walkers(n: usize) -> String {
-    if n >= 10_000 {
+    // From 100,000 whole thousands: the last planet's "153.9k of 180.5k"
+    // ran out of its tile (end screens, 2026-11-22).
+    if n >= 100_000 {
+        format!("{}k", (n as f32 / 1000.0).round())
+    } else if n >= 10_000 {
         thousands(n)
     } else {
         grouped(n)
@@ -2033,26 +2115,40 @@ impl App {
             if let (Some(r), Some(v)) = (&self.args.run, tr.verdict) {
                 use slime_mould::mould::run;
                 let last = r.depth >= run::PLANETS;
-                // A run's planet: which, its slime and what that slime
-                // does to you (`run::does_to_you`, the line the landing
-                // alert says), so the end names what happened to you.
+                // A run's planet: which, and its slime. The slime's own
+                // sentence (`run::does_to_you`) sat under the title until
+                // 2026-11-22; the landing alert says it, and the card's
+                // sentence is now what happened (`lead`).
                 let tier = r.level().tier;
                 end.place = format!("Planet {} of {} · {} · {}", r.depth, run::PLANETS, r.planet().name, title_case(tier.name()));
-                end.says = run::does_to_you(tier).says.to_string();
                 // A stalemate's limit keeps its own title ("The slime held
                 // on"): the run goes on, but the planet is not freed.
                 if v.stars > 0 && v.cause != slime_mould::mould::campaign::Cause::Cap {
                     end.title = if last { "The home world is free".into() } else { format!("Planet {} freed", r.depth) };
                 }
                 let (label, line) = match (v.stars > 0, last) {
-                    (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
+                    (true, true) => {
+                        // The run's stars: the planets before (`Run::won`
+                        // adds this one after the card) and this one's.
+                        let stars: u32 = r.stars.iter().map(|&s| s as u32).sum::<u32>() + v.stars as u32;
+                        ("The home world is free", format!("The run is won: all {} planets freed, {stars} of {} stars", r.depth, 3 * r.depth))
+                    }
                     (true, false) => {
                         // Starfall and boss cores (`Game::starfall`) on top of the win's.
                         let (won, found) = (run::reward(r.depth, v.stars), g.starfall.earned());
                         let line = if found > 0 { format!("+{won} points for the planet, +{found} from starfall and cores ({} now)", r.points + won + found) } else { format!("+{won} points for the shop ({} now)", r.points + won) };
                         ("On to the shop", line)
                     }
-                    (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
+                    (false, _) => {
+                        let freed = r.depth - 1;
+                        let stars: u32 = r.stars.iter().map(|&s| s as u32).sum();
+                        let line = match freed {
+                            0 => format!("The run ends on planet 1 of {}", run::PLANETS),
+                            1 => format!("The run ends on planet 2 of {}, after 1 planet freed ({stars} of 3 stars)", run::PLANETS),
+                            f => format!("The run ends on planet {} of {}, after {f} planets freed ({stars} of {} stars)", r.depth, run::PLANETS, 3 * f),
+                        };
+                        ("End the run", line)
+                    }
                 };
                 end.lines.push(line);
                 m.carry_on = Some(label.into());
