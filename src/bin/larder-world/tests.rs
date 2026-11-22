@@ -1153,7 +1153,8 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
 /// (`End::MouldWiped`), which a step can reach before the mission looks;
 /// the window's next step must still give the mission its verdict, so the
 /// end screen carries on to the shop. The same for a wiped squad (#488):
-/// the run ends rather than offering "Play again".
+/// the run ends rather than offering "Play again". Either way the play
+/// log writes its `end` line.
 #[test]
 fn a_run_planet_ended_by_the_game_carries_on() {
     use slime_mould::mould::larder::End;
@@ -1167,12 +1168,23 @@ fn a_run_planet_ended_by_the_game_carries_on() {
             app.step(0.1);
         }
         app.settle();
+        // Its play log gets its `end` line too (2026-11-22: a game ended
+        // this way returned before the line was written, so most of the
+        // owner's won planets logged none).
+        let dir = std::env::temp_dir().join(format!("playlog-end-{}-{label}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("log.txt");
+        std::fs::write(&path, "").unwrap();
+        app.log_path = Some(path.to_string_lossy().into_owned());
         app.game.as_mut().unwrap().end = Some(end);
         app.step(0.1);
         let v = app.mission.as_ref().unwrap().verdict;
         assert!(v.is_some(), "{end:?}: the mission gave no verdict");
         assert_eq!(v.unwrap().stars > 0, matches!(end, End::MouldWiped(_)), "{end:?}: {v:?}");
         assert_eq!(app.model(None, None).carry_on.as_deref(), Some(label), "{end:?}");
+        let log = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(log.lines().filter(|l| l.starts_with("end t=")).count(), 1, "{end:?}: {log}");
     }
 }
 

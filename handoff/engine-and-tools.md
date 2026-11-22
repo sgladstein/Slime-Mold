@@ -320,6 +320,16 @@ With #640's siege=3 the curve wins planets 1 to 3 on all three seeds
 to 17 minutes, every planet by its goal. Lengths went to Direction (all
 short of 8 to 12; the bot's rush is a floor).
 
+Pace by planet (Direction, 11-22): `run-bot.yml`'s `pace` job runs
+`run_bot_summary.py --pace` over the three seeds (minutes, end, soldiers
+lost, median by planet), and `scripts/play_log_summary.py` writes the
+same from Scott's play logs on the `play-logs` branch. Reading them found
+that a planet won in the step finished on the GPU wrote no `end` line to
+the play log (21 of 30 logs); `log_end` in main.rs fixes it. The 11-22
+table went to Direction: on 3d40c8eb the bot wins planets 1 to 3 in a
+median 5:31, 4:47 and 4:51; Scott on 11-20 and 11-21 builds won planet 1
+in 10:11 and 11:11 (2 lost, 2 quit) and planet 2 in 20:56 (2 lost).
+
 **Next:** the next 1070 batch times the
 view's `full` after the Look lane's #638 (plant crowns skipped under the
 slime) and sends them the saving against 3.42 ms; `pump_maps` spikes
