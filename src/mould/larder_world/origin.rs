@@ -51,7 +51,11 @@ pub struct OriginRules {
     pub on: bool,
     /// The members it gathers at the landing and regrows to.
     pub size: f32,
-    /// The most it takes in, times `size`.
+    /// A take from its crystal comes only while it holds under this,
+    /// times `size`. 1.5 until 11-22: Engine's siege on planet 1 (seed 2)
+    /// met an origin of 1,120 against a size of 700, which it wore down
+    /// only 10 a minute; at 1, with the reach narrowing while it is over
+    /// its size, it regrows only to its size.
     pub most: f32,
     /// Seconds between takes from its crystal, and how far (dish cells)
     /// the reach widens each time it is short.
@@ -103,7 +107,7 @@ pub struct OriginRules {
 
 impl Default for OriginRules {
     fn default() -> Self {
-        OriginRules { on: false, size: 400.0, most: 1.5, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02 }
+        OriginRules { on: false, size: 400.0, most: 1.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02 }
     }
 }
 
@@ -209,8 +213,15 @@ impl<W: World> Game<W> {
                 self.world.grow_lump(h.lump, (h.centre, whole));
             } else if self.origin_fed() && (h.members as f32) < r.most * r.size {
                 let cr = self.crystal_at(self.core).map_or(4.0 * self.world.scale(), |(c, _)| self.world.crystal_r(c)) / self.world.scale().max(1.0);
+                // The reach widens while it is short of its size and
+                // narrows while it is over, so a take on a crystal the
+                // slime has packed again does not overshoot (Engine's
+                // siege, 11-22, seed 2 planet 1: it formed at 1,120 against
+                // a size of 700, at `most` 1.5).
                 if (h.members as f32) < r.size {
                     self.origin.reach = (self.origin.reach + r.widen.max(0.1)).min(cr + 2.0);
+                } else if (h.members as f32) > r.size {
+                    self.origin.reach = (self.origin.reach - r.widen.max(0.1)).max(0.5);
                 }
                 self.world.grow_lump(h.lump, (self.core, self.origin.reach));
             }
