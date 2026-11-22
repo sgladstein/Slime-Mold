@@ -1431,7 +1431,7 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     // 636 s). Only the squad empties a crystal (the owner, 11-21), so once
     // the slime is over its landing size the hunt drains the biggest
     // crystal it holds past its start, ahead of any other.
-    let over = g.ceiling.start > 0 && g.mould as usize > g.ceiling.start;
+    let over = g.ceiling.start > 0 && g.mould > g.ceiling.start;
     let took = (drains && over)
         .then(|| {
             (1..cs.len())
