@@ -311,6 +311,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         .shop()
         .into_iter()
         .map(|row| {
+            let after = dps_after(r, row.pick);
             let (group, area) = match row.group {
                 // The range: its own rows on the left, the shelf by what a
                 // card works on, then the bag.
@@ -328,6 +329,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             };
             let mut s = ShopRow::new(&group, area, Icon::Upgrade, &row.name);
             (s.about, s.price, s.state, s.ready, s.on) = (row.about.clone(), row.price, row.state, row.ready, row.on);
+            (s.dps, s.no_room) = (after.map(|a| a.0), after.is_some_and(|a| a.1));
             match row.face {
                 Face::Item(key) => {
                     s.icon = item_icon(key);
@@ -344,8 +346,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     // 02:57Z: the cards' text "should be simplified").
                     s.about = format!("{} Budget {}.", row.about.replacen(c.about(), &draw::card_words(c, kind, &words), 1), c.cost());
                     if let rounds::Card::Ammo(a) = c {
-                        // A rolled bullet: its set as a badge.
+                        // A rolled bullet: its set as a badge, its rolls
+                        // as bars (the owner, 2026-11-22: "more of visual
+                        // representation of damage speed, range").
                         s.badge = Some(draw::ammo_icon(a.set));
+                        s.bars = ammo_bars(&a);
                         // The range's shelf holds one of each shape and
                         // payload: a grid of them, so its tiles need no
                         // names (all three menu researchers, 11-15).
@@ -392,7 +397,82 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         },
         field: r.field,
         glance: (!r.range).then(|| glance_of(r.seed, r.depth)),
+        dps: dps_of(r),
     }
+}
+
+/// The estimated damage a second of the gun the shop's slots show
+/// (`mould::dps`): its gun as armed (the turrets' rack for a loadout with
+/// none), its cards, the run's rules.
+fn dps_of(r: &Run) -> Option<f32> {
+    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
+    let mut rules = Rules::default();
+    r.rules(&mut rules);
+    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    Some(slime_mould::mould::dps::estimate(&gun, &r.gun(), &rules, &rr))
+}
+
+/// That estimate once `pick` is made, on a copy of the run with the points
+/// to make it (so an offer too dear shows what it would do), and whether
+/// it is only what it would be with room: a card that would go to the bag
+/// (the gun's slots or budget full) is reckoned in the gun anyway, where
+/// the game puts cards (`hypothetical`), so a full gun still shows what a
+/// card is worth. None for a pick that changes no gun, or that the run
+/// refuses.
+fn dps_after(r: &Run, pick: Pick) -> Option<(f32, bool)> {
+    let card = match pick {
+        Pick::Offer(i) => r.offers.get(i).copied(),
+        Pick::Card(i) => r.cards.get(i).filter(|c| !c.1).map(|c| c.0),
+        Pick::Gun(_) | Pick::Carry(_) => None,
+        Pick::Item(i) if matches!(run::ITEMS.get(i).map(|x| x.key), Some("strike" | "rate")) => None,
+        _ => return None,
+    };
+    let mut t = r.clone();
+    t.points = t.points.max(1_000_000);
+    let done = t.pick(pick);
+    match card {
+        // A card meant for the gun that did not go in.
+        Some(c) if !done || t.gun().len() <= r.gun().len() => Some((hypothetical(r, c)?, true)),
+        _ if !done => None,
+        _ => Some((dps_of(&t)?, false)),
+    }
+}
+
+/// The estimate with card `c` in the gun past its slots and budget, where
+/// `Run::put_in` would put it: after the cards of its rank, before the
+/// first of a later one (flight cards, then modifiers and triggers, then
+/// bullets).
+fn hypothetical(r: &Run, c: rounds::Card) -> Option<f32> {
+    use rounds::Kind as K;
+    let rank = |c: rounds::Card| match c.kind() {
+        K::Flight => 0,
+        K::Modifier | K::Trigger => 1,
+        K::Payload => 2,
+    };
+    let mut cards = r.gun();
+    let at = cards.iter().position(|&o| rank(o) > rank(c)).unwrap_or(cards.len());
+    cards.insert(at, c);
+    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
+    let mut rules = Rules::default();
+    r.rules(&mut rules);
+    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    Some(slime_mould::mould::dps::estimate(&gun, &cards, &rules, &rr))
+}
+
+/// A rolled bullet's numbers as bars against a standard bullet's: each on
+/// a log scale from a quarter to four times (`bullets::MULT_MIN`, `MAX`),
+/// a standard bullet's at the middle. Spread reads as Aim, so a longer bar
+/// is better on every row.
+fn ammo_bars(a: &slime_mould::mould::bullets::Ammo) -> Vec<(String, f32, String)> {
+    use slime_mould::mould::bullets::DAMAGE;
+    let bar = |x: f32| (0.5 + x.max(1e-3).ln() / 16f32.ln()).clamp(0.04, 1.0);
+    let times = |x: f32| format!("x{x:.1}");
+    vec![
+        ("Damage".to_string(), bar(a.damage() / DAMAGE), format!("{:.0}", a.damage())),
+        ("Speed".to_string(), bar(a.speed()), times(a.speed())),
+        ("Range".to_string(), bar(a.range()), times(a.range())),
+        ("Aim".to_string(), bar(1.0 / a.spread().max(1e-3)), times(1.0 / a.spread().max(1e-3))),
+    ]
 }
 
 /// The planet ahead drawn small for the shop's pane (`start::Glance`),

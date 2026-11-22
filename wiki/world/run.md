@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/boss-cores-2026-11-20/README.md
@@ -80,6 +80,7 @@ code:
   - bring_shell
   - clock
   - does_to_you
+  - dps_after
   - drift_core
   - enemy_keys
   - fall_count
@@ -384,6 +385,25 @@ with no germ), and its two guns are two kinds, neither the kind carried
 (`Run::restock`). Tinder costs 100 and a Torch at most 100 (`TINDER_PRICE`,
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
+
+## The shop's readouts
+
+Since 2026-11-22 (the owner's ask, 04:20Z: "hover over should show what is
+the info, I don't need to select ... more of visual representation of
+damage speed, range ... a calculated/estimated dps of you gun"): the shop's
+pane tells whatever is under the pointer with no click, and keeps the
+picked thing's button for a click. A rolled bullet's damage, speed, range
+and aim are bars (log scale, a standard bullet at the middle), and a gun's
+numbers are bars with a white tick where yours stands. The gun's
+estimated damage a second (`dps::estimate`, `src/mould/dps.rs`) shows over
+the slots; every card, gun and damage upgrade that would change it carries
+a "+N DPS" pill, the gun table has it as a column, and the pane shows
+yours against it as two bars. The unit is the bullets' damage (the rifle's
+plain strike is 10, so the starting rifle is 10 a second); it counts one
+soldier with every shot landing, strikes, kill bursts, pierce, split,
+multicast, carried casts and rate, and leaves out what works over time
+(gas, germ, Mind bullets, fire, trails, shoves), whose cards show "DPS
+same" and say what they do in words.
 
 ## The gun range
 

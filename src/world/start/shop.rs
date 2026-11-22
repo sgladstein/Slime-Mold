@@ -98,6 +98,103 @@ fn para(c: &mut Canvas, weight: Weight, px: f32, at: (f32, f32), max: f32, lead:
     y - at.1
 }
 
+/// Worse than yours, in the gun table's and the pane's red.
+const WORSE: Rgba = [240, 128, 112, 255];
+
+/// An estimated damage a second as the shop writes it: whole numbers, one
+/// decimal under 10 so the rifle's 10 and a 9.6 read apart.
+fn dps_text(v: f32) -> String {
+    if v < 9.95 { format!("{v:.1}") } else { format!("{v:.0}") }
+}
+
+/// The change a pick makes to the gun's estimate, as the shop words it:
+/// "+4 DPS" green, "-2 DPS" red, "DPS same" faint; None with nothing to
+/// say. The bool: no change.
+fn dps_words(now: Option<f32>, after: Option<f32>, no_room: bool) -> Option<(String, Rgba, bool)> {
+    let (a, b) = (now?, after?);
+    let d = b - a;
+    // Under a twentieth of a point, or a twentieth of a percent: the same.
+    let (t, ink, same) = if d.abs() < 0.05_f32.max(0.0005 * a) {
+        ("DPS same".to_string(), FAINT, true)
+    } else if d > 0.0 {
+        (format!("+{} DPS", dps_text(d)), GOOD, false)
+    } else {
+        (format!("-{} DPS", dps_text(-d)), WORSE, false)
+    };
+    // With no room in the gun it goes to the bag: what it would do there,
+    // said as such, in a quieter ink.
+    if no_room {
+        return Some((format!("{t} \u{b7} no room"), if same { FAINT } else { with_alpha(ink, 0.7) }, same));
+    }
+    Some((t, ink, same))
+}
+
+/// `dps_words` as a pill whose right edge is at `right` and whose text
+/// sits on `base`. Returns its width (0: nothing to say).
+#[allow(clippy::too_many_arguments)]
+fn dps_chip(c: &mut Canvas, now: Option<f32>, after: Option<f32>, no_room: bool, right: f32, base: f32, px: f32, s: f32, dim: f32) -> f32 {
+    let Some((text, ink, same)) = dps_words(now, after, no_room) else { return 0.0 };
+    let w = c.atlas.measure(Weight::SemiBold, px, &text) + 12.0 * s;
+    let h = px + 8.0 * s;
+    let r = Rect::new(right - w, base - px * 0.78 - 4.0 * s, w, h);
+    c.rrect(r, h / 2.0, with_alpha(ink, if same { 0.10 } else { 0.16 } * dim));
+    c.text(Weight::SemiBold, px, (r.x + 6.0 * s, base), Align::Left, &text, with_alpha(ink, dim));
+    w
+}
+
+/// A row's words as the shop shows them: a rolled bullet whose numbers are
+/// drawn as bars (`ShopRow::bars`) loses the sentence that lists them
+/// ("Bullet: damage 6.4, speed 1.8x, ..."), which the bars say.
+fn words(row: &ShopRow) -> &str {
+    let a = row.about.trim();
+    if row.area == ShopArea::Cards && !row.bars.is_empty() && a.starts_with("Bullet: damage") {
+        return a.split_once(". ").map_or(a, |x| x.1).trim();
+    }
+    a
+}
+
+/// Stat bars (the owner, 2026-11-22: "more of visual representation of
+/// damage speed, range, ect. instead of a paragraph of numbers"): a row a
+/// stat, its name, a track filled to its 0-1 in `tint`, its value at the
+/// right; with `mine`, the carried gun's place on the same stat as a white
+/// tick, and the fill green where this one is better, red where worse.
+/// Rows `lead` apart from the first's top at `y`; returns the height used,
+/// stopping before `limit`.
+#[allow(clippy::too_many_arguments)]
+fn stat_bars(c: &mut Canvas, bars: &[(String, f32, String)], mine: Option<&[(String, f32, String)]>, x: f32, y: f32, w: f32, lead: f32, px: f32, tint: Rgba, dim: f32, limit: f32, s: f32) -> f32 {
+    let label = bars.iter().map(|b| c.atlas.measure(Weight::Medium, px, &b.0)).fold(0.0f32, f32::max) + 8.0 * s;
+    let value = bars.iter().map(|b| c.atlas.measure(Weight::SemiBold, px, &b.2)).fold(0.0f32, f32::max) + 8.0 * s;
+    let track = (w - label - value).max(20.0 * s);
+    let th = (px * 0.5).max(4.0 * s);
+    let mut at = y;
+    for (l, f, v) in bars {
+        if at + lead > limit + 2.0 * s {
+            break;
+        }
+        let base = at + lead / 2.0 + px * 0.36;
+        c.text(Weight::Medium, px, (x, base), Align::Left, l, with_alpha(MUTED, dim));
+        let t = Rect::new(x + label, at + (lead - th) / 2.0, track, th);
+        c.rrect(t, th / 2.0, [255, 255, 255, 22]);
+        let theirs = mine.and_then(|m| m.iter().find(|b| b.0 == *l)).map(|b| b.1);
+        let ink = match theirs {
+            Some(m) if *f > m + 0.005 => GOOD,
+            Some(m) if *f < m - 0.005 => WORSE,
+            _ => tint,
+        };
+        let fill = f.clamp(0.0, 1.0) * track;
+        if fill > 0.5 {
+            c.rrect(Rect::new(t.x, t.y, fill.max(th), th), th / 2.0, with_alpha(ink, 0.9 * dim));
+        }
+        if let Some(m) = theirs {
+            let mx = t.x + m.clamp(0.0, 1.0) * track;
+            c.rrect(Rect::new(mx - 1.0 * s, t.y - 3.0 * s, 2.0 * s, th + 6.0 * s), 1.0 * s, with_alpha(TEXT, 0.85 * dim));
+        }
+        c.text(Weight::SemiBold, px, (x + w, base), Align::Right, v, with_alpha(if theirs.is_some() { ink } else { TEXT }, dim));
+        at += lead;
+    }
+    at - y
+}
+
 /// The counter as shelves (Look D, 2026-11-20): every offer a row with its
 /// one-sentence text, in as many columns as fit, when all of them fit on
 /// one page; None leaves the tiles, which page.
@@ -433,7 +530,17 @@ impl StartMenu {
         let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
         let on = self.gun_cards();
         let line = format!("budget {} of {}  ·  {} of {} slots  ·  fired left to right", shop.budget.0, shop.budget.1, on.len(), shop.slots);
-        c.text_fit(Weight::Medium, 13.5 * s, (x + nw + 12.0 * s, gy), Align::Left, &line, lw - nw - 12.0 * s, MUTED);
+        // Its estimated damage a second at the line's right end (the
+        // owner, 2026-11-22): the number large, what it is small before it.
+        let mut dps_w = 0.0;
+        if let Some(d) = shop.dps {
+            let v = dps_text(d);
+            let vw = c.text(Weight::SemiBold, 19.0 * s, (x + lw, gy + 1.0 * s), Align::Right, &v, ENERGY);
+            let lab = if shop.turrets { "est. DPS a turret" } else { "est. DPS a soldier" };
+            let w2 = c.text(Weight::Medium, 12.5 * s, (x + lw - vw - 7.0 * s, gy), Align::Right, lab, MUTED);
+            dps_w = vw + 7.0 * s + w2 + 16.0 * s;
+        }
+        c.text_fit(Weight::Medium, 13.5 * s, (x + nw + 12.0 * s, gy), Align::Left, &line, lw - nw - 12.0 * s - dps_w, MUTED);
         let ch = CARD_H * s;
         let (sx, sroom) = (x + LABEL * s, lw - LABEL * s);
         let row_y = top + 42.0 * s;
@@ -590,7 +697,7 @@ impl StartMenu {
                     page(n, 1, self);
                     for (j, &i) in tab.rows.iter().enumerate() {
                         let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                        self.hand_card(&shop.rows[i], r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hand_card(&shop.rows[i], shop.dps, r, hot(r), ring(Hit::Buy(i)), c, s);
                         self.hits.push((r, Hit::Buy(i)));
                     }
                 }
@@ -599,7 +706,7 @@ impl StartMenu {
                     page(n, 1, self);
                     for (j, &i) in tab.rows.iter().enumerate() {
                         let r = Rect::new(area.x + (j % cols) as f32 * (w + g), area.y + (j / cols) as f32 * (h + g), w, h);
-                        self.shelf_row(&shop.rows[i], r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.shelf_row(&shop.rows[i], shop.dps, r, hot(r), ring(Hit::Buy(i)), c, s);
                         self.hits.push((r, Hit::Buy(i)));
                     }
                 }
@@ -619,7 +726,7 @@ impl StartMenu {
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
                             let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                            self.hand_card(&shop.rows[i], r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.hand_card(&shop.rows[i], shop.dps, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
                             self.hits.push((r, Hit::Buy(i)));
                             if drag == Some(i) {
                                 from = Some(r);
@@ -629,7 +736,7 @@ impl StartMenu {
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
                             let r = Rect::new(area.x + (j % cols) as f32 * (w + g), area.y + (j / cols) as f32 * (h + g), w, h);
-                            self.shelf_row(&shop.rows[i], r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.shelf_row(&shop.rows[i], shop.dps, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
                             self.hits.push((r, Hit::Buy(i)));
                             if drag == Some(i) {
                                 from = Some(r);
@@ -657,8 +764,16 @@ impl StartMenu {
             c.text(Weight::Medium, 15.0 * s, (area.x, area.y + 20.0 * s), Align::Left, "Nothing on offer", MUTED);
         }
 
-        // The pane: the picked thing, else the planet ahead.
-        self.pane(&shop, picked, pane, c, s);
+        // The pane: the thing under the pointer (the owner, 2026-11-22:
+        // "hover over should show what is the info, I don't need to
+        // select"), else the picked thing, else the planet ahead. The
+        // hits this frame has laid so far are the gun, the bag, the tabs,
+        // the counter and the bottom bar's tools.
+        let peek = match (drag, hover) {
+            (None, Some(p)) if !pane.contains(p) => self.hits.iter().rev().find(|(r, h)| r.contains(p) && matches!(h, Hit::Buy(_) | Hit::Do(_))).map(|x| x.1),
+            _ => None,
+        };
+        self.pane(&shop, peek.filter(|&h| Some(h) != picked), picked, pane, c, s);
 
         // A card being dragged: a hole where it was, its landing place
         // ringed, the card under the pointer.
@@ -751,6 +866,12 @@ impl StartMenu {
                 }
             }
         }
+        // Each gun's estimated damage a second with your cards (`Shop::dps`,
+        // `ShopRow::dps`; the owner, 2026-11-22) heads its numbers.
+        let dps = shop.dps.is_some();
+        if dps {
+            labels.insert(0, "DPS".into());
+        }
         let name_w = (area.w * 0.34).max(150.0 * s);
         let price_w = 78.0 * s;
         let col_w = ((area.w - name_w - price_w) / labels.len().max(1) as f32).max(1.0);
@@ -776,14 +897,34 @@ impl StartMenu {
             let name = if row.on { format!("{} (yours)", row.name) } else { row.name.clone() };
             c.text_fit(Weight::SemiBold, 14.5 * s, (r.x + 14.0 * s + ic, mid), Align::Left, &name, name_w - 22.0 * s - ic, TEXT);
             for (k, l) in labels.iter().enumerate() {
+                if dps && k == 0 {
+                    let (mine, this) = (shop.dps, if row.on { shop.dps } else { row.dps });
+                    let Some(v) = this else { continue };
+                    let ink = match mine {
+                        Some(m) if !row.on && v > m + 0.05 => GOOD,
+                        Some(m) if !row.on && v < m - 0.05 => WORSE,
+                        _ => ENERGY,
+                    };
+                    c.text_fit(Weight::SemiBold, 14.0 * s, (area.x + name_w + col_w - 8.0 * s, mid), Align::Right, &dps_text(v), col_w - 8.0 * s, ink);
+                    continue;
+                }
                 let Some((_, f, v)) = row.bars.iter().find(|b| b.0 == *l) else { continue };
                 let mine = yours.and_then(|y| y.bars.iter().find(|b| b.0 == *l)).map(|b| b.1);
                 let ink = match mine {
                     Some(m) if !row.on && *f > m + 0.005 => GOOD,
-                    Some(m) if !row.on && *f < m - 0.005 => [240, 128, 112, 255],
+                    Some(m) if !row.on && *f < m - 0.005 => WORSE,
                     _ => TEXT,
                 };
-                c.text_fit(Weight::Medium, 14.0 * s, (area.x + name_w + (k + 1) as f32 * col_w - 8.0 * s, mid), Align::Right, v, col_w - 8.0 * s, ink);
+                // Its number over a thin bar of it, so the column reads at
+                // a glance.
+                let right = area.x + name_w + (k + 1) as f32 * col_w - 8.0 * s;
+                c.text_fit(Weight::Medium, 14.0 * s, (right, mid - 2.0 * s), Align::Right, v, col_w - 8.0 * s, ink);
+                if r.h >= 24.0 * s {
+                    let bw = (col_w - 16.0 * s).min(70.0 * s);
+                    let t = Rect::new(right - bw, r.bottom() - 6.0 * s, bw, 3.0 * s);
+                    c.rrect(t, 1.5 * s, [255, 255, 255, 20]);
+                    c.rrect(Rect::new(t.x, t.y, (f.clamp(0.0, 1.0) * bw).max(3.0 * s), t.h), 1.5 * s, with_alpha(if ink == TEXT { ACCENT } else { ink }, 0.8));
+                }
             }
             let (tag, ink) = if !row.price.is_empty() { (row.price.clone(), if row.ready { ACCENT } else { BAD }) } else { (row.state.clone(), if row.on { GOOD } else { MUTED }) };
             c.text_fit(Weight::SemiBold, 14.0 * s, (area.right() - 8.0 * s, mid), Align::Right, &tag, price_w - 8.0 * s, ink);
@@ -813,12 +954,12 @@ impl StartMenu {
 
     /// The pane: the picked thing in full and its button, else the planet
     /// ahead (or the range's own words).
-    fn pane(&mut self, shop: &Shop, picked: Option<Hit>, r: Rect, c: &mut Canvas, s: f32) {
+    fn pane(&mut self, shop: &Shop, peek: Option<Hit>, picked: Option<Hit>, r: Rect, c: &mut Canvas, s: f32) {
         self.glass(r, c, s);
         let p = 18.0 * s;
         let iw = r.w - 2.0 * p;
         let mut y = r.y + p;
-        let row = match picked {
+        let row = match peek.or(picked) {
             Some(Hit::Buy(i) | Hit::Do(i)) => shop.rows.get(i).map(|x| (i, x)),
             _ => None,
         };
@@ -881,33 +1022,53 @@ impl StartMenu {
             kind.push(format!("{} points", row.price));
         }
         y += para(c, Weight::Medium, 14.0 * s, (r.x + p, y), iw, 20.0 * s, &kind.join("  ·  "), MUTED, limit) + 6.0 * s;
-        y += para(c, Weight::Medium, 15.0 * s, (r.x + p, y), iw, 21.0 * s, &row.about, [214, 222, 230, 255], limit) + 8.0 * s;
-        // A gun's numbers, against the carried gun's when it is another.
+        y += para(c, Weight::Medium, 15.0 * s, (r.x + p, y), iw, 21.0 * s, words(row), [214, 222, 230, 255], limit) + 8.0 * s;
+        // What it does to the gun's damage a second: yours, then with it,
+        // as two bars on one scale and the change (the owner, 2026-11-22).
+        if let (Some(now), Some(then)) = (shop.dps, row.dps) {
+            if y + 64.0 * s <= limit {
+                y += 4.0 * s;
+                let cw = dps_chip(c, Some(now), Some(then), row.no_room, r.x + p + iw, y + 11.0 * s, 13.0 * s, s, 1.0);
+                let head = if iw - cw - 10.0 * s >= c.atlas.measure(Weight::SemiBold, 12.5 * s, "ESTIMATED DAMAGE A SECOND") { "ESTIMATED DAMAGE A SECOND" } else { "EST. DPS" };
+                c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + p, y + 10.0 * s), Align::Left, head, iw - cw - 10.0 * s, ACCENT);
+                y += 22.0 * s;
+                let top = now.max(then).max(1.0);
+                let (what, with) = match row.area {
+                    ShopArea::Cards if row.on => ("without it", "now"),
+                    ShopArea::Cards if row.no_room => ("with room", "now"),
+                    ShopArea::Guns if !row.on => ("this gun", "yours"),
+                    _ => ("with it", "now"),
+                };
+                let bars = [(with.to_string(), now / top, dps_text(now)), (what.to_string(), then / top, dps_text(then))];
+                y += stat_bars(c, &bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, ENERGY, 1.0, limit, s) + 4.0 * s;
+                let note = if row.no_room { "No room now: it would wait in the bag" } else { "One soldier, every shot hitting slime" };
+                c.text_fit(Weight::Medium, 12.5 * s, (r.x + p, y + 8.0 * s), Align::Left, note, iw, FAINT);
+                y += 22.0 * s;
+            }
+        }
+        // A rolled bullet's numbers as bars, a standard bullet's at the
+        // middle of each.
+        if row.area == ShopArea::Cards && !row.bars.is_empty() {
+            y += stat_bars(c, &row.bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, row.tint, 1.0, limit, s) + 8.0 * s;
+        }
+        // A gun's numbers as bars, against the carried gun's (its tick)
+        // when it is another.
         if row.area == ShopArea::Guns && !row.bars.is_empty() {
             let yours = shop.rows.iter().find(|x| x.area == ShopArea::Guns && x.on).filter(|_| !row.on);
-            let (c1, c2) = (r.x + p + iw * 0.62, r.x + p + iw);
             if yours.is_some() && y + 16.0 * s <= limit {
-                c.text(Weight::SemiBold, 13.0 * s, (c1, y + 4.0 * s), Align::Right, "this", MUTED);
-                c.text(Weight::SemiBold, 13.0 * s, (c2, y + 4.0 * s), Align::Right, "yours", MUTED);
-                y += 22.0 * s;
+                c.text_fit(Weight::Medium, 12.5 * s, (r.x + p, y + 8.0 * s), Align::Left, "Tick: yours  ·  green better, red worse", iw, FAINT);
+                y += 18.0 * s;
             }
-            for (l, f, v) in &row.bars {
-                if y + 6.0 * s > limit {
-                    break;
-                }
-                c.text(Weight::Medium, 14.0 * s, (r.x + p, y), Align::Left, l, MUTED);
-                let mine = yours.and_then(|x| x.bars.iter().find(|b| b.0 == *l));
-                let ink = match mine {
-                    Some(m) if *f > m.1 + 0.005 => GOOD,
-                    Some(m) if *f < m.1 - 0.005 => [240, 128, 112, 255],
-                    _ => TEXT,
-                };
-                c.text(Weight::SemiBold, 14.0 * s, (c1, y), Align::Right, v, ink);
-                if let Some(m) = mine {
-                    c.text(Weight::Medium, 14.0 * s, (c2, y), Align::Right, &m.2, MUTED);
-                }
-                y += 22.0 * s;
-            }
+            stat_bars(c, &row.bars, yours.map(|x| x.bars.as_slice()), r.x + p, y, iw, 22.0 * s, 13.5 * s, ACCENT, 1.0, limit, s);
+        }
+        // A look under the pointer: the button belongs to the picked
+        // thing, so it says how to get this one's.
+        if peek.is_some() {
+            c.panel(btn, 10.0 * s, [22, 26, 32, 200], [16, 19, 24, 200], 1.0, [255, 255, 255, 14]);
+            let say = if live { "Click it to pick it, then buy or place" } else { "" };
+            let say = if row.area == ShopArea::Cards && !row.price.is_empty() { "Click to pick  ·  drag into the gun to buy" } else { say };
+            c.text_fit(Weight::Medium, 14.0 * s, (btn.x + btn.w / 2.0, btn.y + btn.h / 2.0 + 5.0 * s), Align::Centre, if say.is_empty() { &label } else { say }, btn.w - 24.0 * s, MUTED);
+            return;
         }
         // The button: the game says if it can't be done (the notice).
         if live {
@@ -986,7 +1147,7 @@ impl StartMenu {
     /// band along the top, its icon large, its name and its price, then
     /// everything it does, and its pips at the foot. The same face, colours
     /// and words as its shelf row; only the shape is a card's.
-    fn hand_card(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+    fn hand_card(&self, row: &ShopRow, now: Option<f32>, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
         let done = owned(row);
         self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
         let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
@@ -1008,18 +1169,32 @@ impl StartMenu {
         let ink = with_alpha(TEXT, dim.max(0.6));
         let px = fit_px(c, &row.name, 17.0 * s, 13.5 * s, room);
         c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, r.y + 124.0 * s), Align::Centre, &row.name, room, ink);
-        // All it does, as many lines as fit over the pips.
+        // All it does, as many lines as fit over the pips: first what it
+        // does to the gun's damage a second, and a rolled bullet's numbers
+        // as bars (the owner, 2026-11-22), then its words.
         let pips = if row.area == ShopArea::Cards { row.cost.min(6) } else if row.level.1 > 1 { row.level.1.min(8) as u32 } else { 0 };
         let foot = if pips > 0 { 26.0 * s } else { 10.0 * s };
-        let about = row.about.trim();
+        let mut ty = r.y + 150.0 * s;
+        // The pill centred under the name.
+        let cw = dps_words(now, row.dps, row.no_room).map_or(0.0, |(t, _, _)| r.x + (r.w + c.atlas.measure(Weight::SemiBold, 12.5 * s, &t) + 12.0 * s) / 2.0);
+        if dps_chip(c, now, row.dps, row.no_room, cw, r.y + 148.0 * s, 12.5 * s, s, dim.max(0.6)) > 0.0 {
+            ty += 18.0 * s;
+        }
+        if row.area == ShopArea::Cards && !row.bars.is_empty() {
+            ty += stat_bars(c, &row.bars, None, r.x + pad, ty - 12.0 * s, room, 17.0 * s, 12.5 * s, row.tint, dim.max(0.6), r.bottom() - foot - 18.0 * s, s) + 4.0 * s;
+        }
+        let about = words(row);
         if !about.is_empty() {
             let lead = 18.0 * s;
             let lines = c.wrap(Weight::Medium, 13.5 * s, room, about);
-            let fit = (((r.bottom() - foot - (r.y + 150.0 * s)) / lead).floor() as usize + 1).max(1);
+            let fit = (((r.bottom() - foot - ty) / lead).floor() as usize + 1).max(1);
             for (k, l) in lines.iter().take(fit).enumerate() {
+                if ty + k as f32 * lead > r.bottom() - foot + 2.0 * s {
+                    break;
+                }
                 let cut = k + 1 == fit && lines.len() > fit;
                 let text = if cut { format!("{}…", l.trim_end_matches(['.', ',', ' '])) } else { l.clone() };
-                c.text_fit(Weight::Medium, 13.5 * s, (r.x + r.w / 2.0, r.y + 150.0 * s + k as f32 * lead), Align::Centre, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
+                c.text_fit(Weight::Medium, 13.5 * s, (r.x + r.w / 2.0, ty + k as f32 * lead), Align::Centre, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
             }
         }
         let d = 6.0 * s;
@@ -1031,7 +1206,8 @@ impl StartMenu {
         }
     }
 
-    fn shelf_row(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s0: f32) {
+    #[allow(clippy::too_many_arguments)]
+    fn shelf_row(&self, row: &ShopRow, now: Option<f32>, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s0: f32) {
         // A taller row (`shelf`) draws its icon, name and price up to a
         // third larger, and its whole text where one sentence was cut.
         let tall = r.h > SHELF_H * s0 * 1.1;
@@ -1061,6 +1237,10 @@ impl StartMenu {
             let at = Rect::new(rx - pips_w + k as f32 * (d + 3.0 * s), r.bottom() - 17.0 * s, d, d);
             c.rrect(at, d / 2.0, if lit { with_alpha(if row.area == ShopArea::Cards { ENERGY } else { ACCENT }, 0.85 * dim.max(0.6)) } else { [255, 255, 255, 40] });
         }
+        // What it does to the gun's damage a second, left of the price.
+        let chip = if price.is_empty() && !done { rx } else { rx - right - 10.0 * s };
+        let cw = dps_chip(c, now, row.dps, row.no_room, chip, r.y + 26.0 * s, 12.5 * s0, s0, dim.max(0.6));
+        let right = if cw > 0.0 { rx - chip + cw } else { right };
         // The name, a badge after it, and the sentence.
         let room = (rx - right - 14.0 * s - tx).max(40.0 * s);
         let ink = with_alpha(TEXT, dim.max(0.6));
@@ -1073,7 +1253,7 @@ impl StartMenu {
         }
         // The text: the first sentence of `about`, two lines at most; in a
         // tall row all of it, as many lines as fit over the pips.
-        let about = if tall { row.about.trim() } else { row.about.split_inclusive(". ").next().unwrap_or("").trim() };
+        let about = if tall { words(row) } else { words(row).split_inclusive(". ").next().unwrap_or("").trim() };
         if !about.is_empty() {
             let lines = c.wrap(Weight::Medium, 13.0 * s, room, about);
             let fit = if tall { (((r.h - 44.0 * s - 10.0 * s0) / (17.0 * s)).floor() as usize + 1).max(2) } else { 2 };

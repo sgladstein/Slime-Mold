@@ -251,12 +251,19 @@ pub struct ShopRow {
     /// need no names). A tab lays out as the grid only when each of its
     /// cards has its own cell.
     pub cell: Option<((u8, String), (u8, String))>,
+    /// The gun's estimated damage a second once this is picked (a card
+    /// bought or put in, taken out; a gun carried), against `Shop::dps`
+    /// (`mould::dps`; the owner, 2026-11-22); None where it changes no gun.
+    pub dps: Option<f32>,
+    /// The gun has no room for it now (slots or budget), so it would go to
+    /// the bag: `dps` is the gun's with it in all the same.
+    pub no_room: bool,
 }
 
 impl ShopRow {
     /// A row with the plain look; the game sets the rest.
     pub fn new(group: &str, area: ShopArea, icon: Icon, name: &str) -> Self {
-        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None }
+        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None, dps: None, no_room: false }
     }
 }
 
@@ -279,6 +286,9 @@ pub struct Shop {
     /// The gun slots show the turrets' deck (`run::Pick::EditTurrets`):
     /// the bench is named for them, not the carried gun.
     pub turrets: bool,
+    /// The estimated damage a second of the gun the slots show, one
+    /// soldier, every shot landing (`mould::dps`; the owner, 2026-11-22).
+    pub dps: Option<f32>,
     /// The bench's name: the loadout shown and its gun (2026-11-19); empty
     /// names it by the carried gun, as before.
     pub bench: String,
@@ -2044,6 +2054,13 @@ mod tests {
             }
             r.cost = k as u32 % 4;
             r.on = area == ShopArea::Cards && k < 3 || area == ShopArea::Guns && k == 0;
+            // The DPS readouts (2026-11-22): a pill, a column, the pane's
+            // bars, and a card with no room; bullet cards' bars.
+            r.dps = Some(10.0 + k as f32 * 3.5);
+            r.no_room = area == ShopArea::Cards && k % 3 == 2;
+            if area == ShopArea::Cards && k % 2 == 1 {
+                r.bars = vec![("Damage".into(), 0.6, "12".into()), ("Speed".into(), 0.4, "x0.8".into()), ("Range".into(), 0.7, "x1.6".into()), ("Aim".into(), 0.5, "x1.0".into())];
+            }
             rows.push(r);
         };
         for k in 0..8 {
@@ -2061,7 +2078,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0) }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -2110,7 +2127,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
