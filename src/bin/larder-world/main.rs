@@ -2284,6 +2284,11 @@ impl App {
     }
 
     fn prepare_now(&mut self) {
+        // The world detail (`settings::detail_scale`, 11-22): the view
+        // draws the world at the screen's pixels over this.
+        if let Some(v) = self.view.as_mut() {
+            v.set_scale(settings::detail_scale(detail_user(), v.screen));
+        }
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
@@ -2567,6 +2572,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "shake" => args.shake = v.parse()?,
+            // `detail=auto|full|half`: the world detail (`settings::DETAIL_STEPS`).
+            "detail" => set_detail_user(v),
             "hitstop" => args.hitstop = v.parse()?,
             "real" => args.real = v != "0",
             "sink" => args.sink = Some(v.parse()?),
@@ -2857,6 +2864,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         set_volume_user(settings::saved_volume());
         set_music_user(settings::saved_music());
         set_shake_user(settings::saved_shake());
+        set_detail_user(&settings::saved_detail());
     }
     if !mode_given && look.is_none() && bench_secs.is_none() {
         args.squads = true;

@@ -51,6 +51,21 @@ pub(super) fn set_shake_user(v: f32) {
     SHAKE.store(v.to_bits(), Ordering::Relaxed);
 }
 
+/// The world detail (performance thread, 2026-11-22; `settings::DETAIL_STEPS`
+/// by index, 0 "Auto"): the Options page's World detail row, saved like
+/// the volume, and `detail=` on the command line.
+static DETAIL: AtomicU32 = AtomicU32::new(0);
+
+pub(super) fn detail_user() -> &'static str {
+    settings::DETAIL_STEPS[(DETAIL.load(Ordering::Relaxed) as usize).min(settings::DETAIL_STEPS.len() - 1)]
+}
+
+pub(super) fn set_detail_user(v: &str) {
+    if let Some(i) = settings::DETAIL_STEPS.iter().position(|&d| d.eq_ignore_ascii_case(v)) {
+        DETAIL.store(i as u32, Ordering::Relaxed);
+    }
+}
+
 /// The master to send for the sound on or off.
 pub(super) fn master_now(on: bool) -> SoundCmd {
     SoundCmd::Master(if on { master_at(volume_user()) } else { 0.0 })
@@ -105,5 +120,20 @@ impl App {
             }
         }
         settings::save_shake(v);
+    }
+
+    /// Sets the world detail to `v`: the menus' row and the saved file.
+    /// The next frame draws at it (`App::prepare_now`).
+    pub(super) fn set_detail(&mut self, v: &str) {
+        set_detail_user(v);
+        let v = detail_user();
+        for m in [self.menu.as_mut(), self.parked.as_mut()].into_iter().flatten() {
+            if let Some(o) = m.options.iter_mut().find(|o| o.key == "detail") {
+                if let Some(at) = o.choices.iter().position(|c| c == v) {
+                    o.at = at;
+                }
+            }
+        }
+        settings::save_detail(v);
     }
 }
