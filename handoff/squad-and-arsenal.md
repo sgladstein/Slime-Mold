@@ -48,6 +48,21 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-22, exit test 5: every shop gun card visible (Direction's job,
+in the pathfinding thread).** The gun lab's arena showed Wide, Scatter,
+Delay, Thick, Quiet and Thrift playing the same game as no card (a plain
+cast made no burst) and a lone Tinder doing nothing. Fixed in one PR: a
+modifier on the plain bullet pops (`rounds::plain_bursts`, sized by the
+shot's strike, `RoundRules::plain_pop`/`plain_wide`; the strike rides on
+`Rounds::strike` and `Pending::strike`); `tinder_spark` 0.01 lights a
+Tinder's own brush; the shop holds Thrift until a bullet card is owned and
+Quiet and the Flare until `run::ALARM_FROM`; plain pops don't shake
+(`main.rs feel`); `set=strike=` is a rule key for the gun lab. Heavier
+shots checked, works. Open: Seek and Smother show nothing on planet 1
+(sent to Direction). Note for the shop DPS readout (#697, `dps.rs`): it
+reads `rounds::bursts`, and the plain pop is `plain_bursts`
+([report](../Reports/gun-cards-visible-2026-11-22/README.md)).
+
 **2026-11-21, controls and HUD review (its own thread, the owner's ask
 06:16Z).** Review doc: https://claude.ai/artifact/12jZrjC3MHe7R54S7V7Ktq
 (ranked problems, all done but "keys falling through card pages"). #655:
