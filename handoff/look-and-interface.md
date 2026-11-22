@@ -25,7 +25,11 @@ third batch): the slope's shared 5 x 5 read was 1.27 ms slower than three
 B-splines and is reverted (same pixels). The crown layer is the next ~2 ms
 (3 x 3 neighbours per kind per pixel). Performance's render scale (#725,
 Options, Screen, World detail) draws the world at half size on 4K, so these
-savings are a quarter as big there in ms.
+savings are a quarter as big there in ms. At a render scale the marks
+(`draw_marks`, `compose`) run after the upscale at the screen's own pixels
+(`View::params_full`, `group_full`; the claims and overlay are
+screen-sized), so the squad stays sharp at Half; the minimap's picture and
+the walkers' specks stay at half (base draws them).
 Later 11-22: the ranked look list went to Direction (the fight reads; the
 zoom-12 "rounds into nothing" is the reach past the screen, not the look;
 the Sprawler's body apart from the Drifter's is the weak test-4 item). The
