@@ -387,6 +387,21 @@ with no germ), and its two guns are two kinds, neither the kind carried
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
 
+## The gun range
+
+Gun range on the start menu, or `range=SEED`, uses a run
+as a free armory (`Run::range`): every gun kind owned at its average with a
+rolled one of each on the rack to swap in, a bullet of every payload and set
+(the standard set exact) and every other card, never sold out, and tiles to
+roll them again, deeper or shallower (from `RANGE_DEPTH`), and to empty the
+gun or the bag. The armory is the shop's frame with the range's tabs: Guns
+as a table whose stats are green or red against the carried gun, Bullets as
+a grid of shape by payload, and the modifiers' two shelves; the roll and
+empty tools sit on the bottom bar ([report](../../Reports/shop-b-2026-11-15/README.md)). Back to the range plays the sandbox's round armed from it
+(`range_args`), with no time limit and a 100,000 bank; H there opens the
+armory over the paused round and Back re-arms every squad
+([report](../../Reports/gun-range-2026-11-15.md)).
+
 ## The shop's readouts
 
 Since 2026-11-22 (the owner's ask, 04:20Z: "hover over should show what is
@@ -405,21 +420,6 @@ soldier with every shot landing, strikes, kill bursts, pierce, split,
 multicast, carried casts and rate, and leaves out what works over time
 (gas, germ, Mind bullets, fire, trails, shoves), whose cards show "DPS
 same" and say what they do in words.
-
-## The gun range
-
-Gun range on the start menu, or `range=SEED`, uses a run
-as a free armory (`Run::range`): every gun kind owned at its average with a
-rolled one of each on the rack to swap in, a bullet of every payload and set
-(the standard set exact) and every other card, never sold out, and tiles to
-roll them again, deeper or shallower (from `RANGE_DEPTH`), and to empty the
-gun or the bag. The armory is the shop's frame with the range's tabs: Guns
-as a table whose stats are green or red against the carried gun, Bullets as
-a grid of shape by payload, and the modifiers' two shelves; the roll and
-empty tools sit on the bottom bar ([report](../../Reports/shop-b-2026-11-15/README.md)). Back to the range plays the sandbox's round armed from it
-(`range_args`), with no time limit and a 100,000 bank; H there opens the
-armory over the paused round and Back re-arms every squad
-([report](../../Reports/gun-range-2026-11-15.md)).
 
 ## Owner's word
 
