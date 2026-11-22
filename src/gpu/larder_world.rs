@@ -132,6 +132,19 @@ struct Readout {
     sub: RefCell<Option<wgpu::SubmissionIndex>>,
 }
 
+/// `GpuWorld::setc`: the staging buffer (sized on first use), whether the
+/// running step fills it, whether it mapped, and the cells taken with the
+/// tick they are of.
+#[derive(Default)]
+struct SetCells {
+    buf: Option<wgpu::Buffer>,
+    due: Cell<bool>,
+    ready: Arc<AtomicBool>,
+    got: RefCell<Option<(u64, Vec<u32>)>>,
+    /// Asks answered from the step's copy.
+    hits: Cell<u32>,
+}
+
 /// What a readout holds, unpacked.
 struct Read {
     out: FrameOut,
@@ -190,6 +203,18 @@ pub struct GpuWorld {
     /// A wall went up since `walls` was made.
     walls_new: bool,
     ro: Readout,
+    /// **The set walkers a fine cell, copied out with a step** (performance
+    /// thread, 2026-11-22): on a step that crosses a game second
+    /// (`GRID_EVERY`) with setting on, the step's own command buffer copies
+    /// `set_cells_of`'s range into this staging buffer, mapped with the
+    /// readout, and `take` keeps it with the tick it is of. `set_cells`
+    /// (`Game::mark_bulwark`, once a game second) then returns it without a
+    /// read-back of its own. That read-back waited for everything queued on
+    /// the GPU, the window's frames drawn since the step too: on the
+    /// owner's 4K screen (GTX 1070, 11-22) it took 3 to 10 ms a call and
+    /// up to 76 ms, once a second, on planet 3. Same data: nothing counts
+    /// the set walkers between a step's last pass and the game's call.
+    setc: SetCells,
     /// The mould grid's square the game last asked for (`World::mould_grid`),
     /// which the GPU then sums once a game second (`GRID_EVERY`), and the
     /// last sum: its square, its game tick and the grid.
@@ -383,7 +408,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -400,6 +425,9 @@ impl GpuWorld {
         enc.copy_buffer_to_buffer(&e.news, e.dense_at + 16, b, RO_LUMPS, RO_WSTAT - RO_LUMPS);
         let (gw, gh) = e.grid_size();
         enc.copy_buffer_to_buffer(&e.wstat, 0, b, RO_WSTAT, (WSTAT_BYTES + 4 * gw * gh) as u64);
+        if let (true, Some(sb)) = (self.setc.due.get(), self.setc.buf.as_ref()) {
+            enc.copy_buffer_to_buffer(&e.news, e.crust_at + 4 * (e.cells + e.n) as u64, sb, 0, 4 * e.cells as u64);
+        }
     }
 
     /// The square the next frame's grid sums, if `due`: the one last asked
@@ -464,6 +492,14 @@ impl GpuWorld {
                     ready.store(true, Ordering::Release);
                 }
             });
+            if let (true, Some(sb)) = (self.setc.due.get(), self.setc.buf.as_ref()) {
+                let ready = Arc::clone(&self.setc.ready);
+                sb.map_async(wgpu::MapMode::Read, .., move |r| {
+                    if r.is_ok() {
+                        ready.store(true, Ordering::Release);
+                    }
+                });
+            }
         }
     }
 
@@ -508,7 +544,21 @@ impl GpuWorld {
         self.ro.buf.unmap();
         self.ro.ready.store(false, Ordering::Release);
         self.ro.busy = false;
-        *self.ro.sub.borrow_mut() = None;
+        let index = self.ro.sub.borrow_mut().take();
+        if self.setc.due.replace(false) {
+            if let Some(sb) = self.setc.buf.as_ref() {
+                // Mapped with the same submission as the readout; its
+                // callback may come a poll later.
+                if !self.setc.ready.load(Ordering::Acquire) {
+                    self.e.device.poll(wgpu::PollType::Wait { submission_index: index, timeout: None }).expect("poll");
+                }
+                if self.setc.ready.swap(false, Ordering::AcqRel) {
+                    let cells: Vec<u32> = sb.get_mapped_range(..).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+                    sb.unmap();
+                    *self.setc.got.borrow_mut() = Some((self.ticks(), cells));
+                }
+            }
+        }
         if let Some(st) = self.stamps.as_mut() {
             st.poll();
         }
@@ -722,6 +772,14 @@ impl World for GpuWorld {
         let (t0, t1) = (self.ticks(), self.ticks() + ticks as u64);
         let fresh = matches!(&self.grid, Some((b, _, _)) if *b == self.want.get());
         self.e.grid = self.grid_square(!fresh || t0 / GRID_EVERY != t1 / GRID_EVERY);
+        // The set walkers with this step, if the game will ask for them
+        // after it (`setc`).
+        let due = self.e.setting && self.e.crust_at != 0 && self.e.cells > 0 && t0 / GRID_EVERY != t1 / GRID_EVERY;
+        if due && self.setc.buf.as_ref().is_none_or(|b| b.size() != 4 * self.e.cells as u64) {
+            self.setc.buf = Some(self.e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("set cells out"), size: 4 * self.e.cells as u64, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false }));
+        }
+        self.setc.due.set(due);
+        *self.setc.got.borrow_mut() = None;
         self.e.write_params(&self.s, Hand::default(), n);
         if n > 0 && self.profile.is_some() {
             let t = self.e.record_timed(&self.shared, n, self.s.curve == Curve::Soft);
@@ -1261,6 +1319,20 @@ impl World for GpuWorld {
     /// Read back once a game second while a rule wants it (`Game::mark_bulwark`).
     fn set_cells(&self) -> Option<Vec<u32>> {
         self.e.setting.then(|| {
+            // The copy the step brought (`setc`), if it is of now.
+            if let Some((t, cells)) = self.setc.got.borrow_mut().take() {
+                if t == self.ticks() && cells.len() == self.e.cells as usize {
+                    self.setc.hits.set(self.setc.hits.get() + 1);
+                    // The tests read it back too: the step's copy must be
+                    // the read-back's cells.
+                    #[cfg(test)]
+                    {
+                        self.flush();
+                        assert_eq!(cells, self.e.set_cells_of(), "the step's copy of the set cells is the read-back's");
+                    }
+                    return cells;
+                }
+            }
             self.flush();
             self.e.set_cells_of()
         })
@@ -2748,6 +2820,36 @@ mod tests {
         to(&mut held, 20.0);
         to(&mut free, 20.0);
         assert_ne!(held.world.hash(), free.world.hash(), "the tether holds breakaways");
+    }
+
+    /// **The set walkers come with the step** (performance thread,
+    /// 2026-11-22, `GpuWorld::setc`): with setting on, each game second's
+    /// `set_cells` is answered from the step's own copy, never a read-back
+    /// that waits for the whole GPU queue, and (`set_cells` checks it in
+    /// the tests) the copy is the read-back's cells.
+    #[test]
+    fn the_set_cells_come_with_the_step() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let mut s = race_settings(seed, scale, walkers);
+        crate::gpu::set(&mut s, "alarm_keep", "0.9").unwrap();
+        crate::gpu::set(&mut s, "setting", "1").unwrap();
+        crate::gpu::set(&mut s, "crust_rise", "0.02").unwrap();
+        crate::gpu::set(&mut s, "crust_trail", "0").unwrap();
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules { set_block: 5.0, ..Rules::default() }, seed);
+        // Until walkers have set for a few seconds, so the copies checked
+        // hold some.
+        let mut set_secs = 0;
+        while set_secs < 5 && g.time() < 90.0 {
+            let sec = g.time() as u32;
+            g.step();
+            if g.time() as u32 != sec && g.world.e.set_cells_of().iter().any(|&n| n > 0) {
+                set_secs += 1;
+            }
+        }
+        let (hits, t) = (g.world.setc.hits.get(), g.time());
+        assert!(set_secs >= 5, "walkers set by {t:.0} s");
+        assert!(hits as f32 >= t - 2.0, "the set cells came with the step {hits} times in {t:.0} game seconds");
     }
 
     /// **The fort** (`Rules::fort`, 2026-11-18, the Enemy lane; the
