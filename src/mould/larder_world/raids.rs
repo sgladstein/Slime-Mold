@@ -769,6 +769,16 @@ impl<W: World> Game<W> {
             .map(|b| b.0)
     }
 
+    /// The origin calls the body home (`origin.rs`): a raid on soldier `k`
+    /// at `to`, unless one is already decided; whether it went.
+    pub(super) fn call_home(&mut self, k: usize, to: (f32, f32), size: f32, share: f32) -> bool {
+        if self.raids.pending.is_some() {
+            return false;
+        }
+        self.send_raid(RaidAim::Soldiers(k), to, size, share, false);
+        true
+    }
+
     /// Decides a raid at `to` (fine cells): `size` of the slime's mass (an
     /// infinite size sends the whole slime), `share` of the walkers in the
     /// reach. It goes at the next game second (`time_raids`).

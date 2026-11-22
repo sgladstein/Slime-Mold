@@ -546,6 +546,14 @@ pub struct Settings {
     /// 11-17 19:21Z); built walls only, so twins on rock still match.
     /// Params word 929's bit 1 (bit 0 is `deep_wall`).
     pub solid_walls: bool,
+    /// **The slime stops eating** (`no_eat=1`, 2026-11-22, the origin's
+    /// die-back, `origin.rs`; off, as here): no walker takes a share of a
+    /// crystal, so with births stopped and its upkeep raised the slime
+    /// starves where it stands, on its crystals too (with `crystal_keep` a
+    /// walker on one otherwise never starves: upkeep x40 to x500 left a
+    /// quarter of a race world alive 12 s on). Set by the game when the
+    /// origin breaks (`World::set_starve`). Params word 929's bit 2.
+    pub no_eat: bool,
     /// **A hit's hole stays open while it is fresh** (`crater_shut=S`,
     /// 2026-11-21, the Look lane's A2; 0 off, as here): a crater cell is
     /// closed to walkers (steps, sensors, jumps, births), as deep water is,
@@ -837,6 +845,7 @@ impl Settings {
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
+            no_eat: false,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1176,6 +1185,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // A step, birth or flight never crosses a built wall cell
         // (`solid_walls=0` off; on by default, 2026-11-21).
         "solid_walls" => s.solid_walls = int()? != 0,
+        "no_eat" => s.no_eat = int()? != 0,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -2541,7 +2551,7 @@ impl Engine {
         // (`Settings::crater_shut`, 2026-11-21; 0xFFFF off).
         let flinch = if s.boss_flinch > 0.0 { ((self.crater_steps as f32 * (1.0 - s.boss_flinch)).round() as u32).min(0x1FFE) } else { 0x1FFF };
         let shut = if s.crater_shut > 0.0 { ((self.crater_steps as f32 * (1.0 - s.crater_shut)).round() as u32).min(0xFFFE) } else { 0xFFFF };
-        b.extend(u32_bytes(&[s.deep_wall as u32 | (s.solid_walls as u32) << 1 | flinch << 3 | shut << 16]));
+        b.extend(u32_bytes(&[s.deep_wall as u32 | (s.solid_walls as u32) << 1 | (s.no_eat as u32) << 2 | flinch << 3 | shut << 16]));
         // The last two, the heartbeat's source (2026-11-20).
         let at = self.heart.map_or((0.0, 0.0), |h| h.at);
         b.extend(f32_bytes(&[at.0, at.1]));

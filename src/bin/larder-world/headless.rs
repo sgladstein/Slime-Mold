@@ -179,7 +179,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // through `larder_world_ai`, as the census does, so a campaign mission's
     // pictures show the hands its numbers were set on.
     let mut ai = match hand {
-        "rush" | "farm" | "stand" | "volley" | "edge" | "squads" => None,
+        "rush" | "farm" | "stand" | "origin" | "volley" | "edge" | "squads" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
     };
     // Each hit: where, its tick, the body there the tick before, and the
@@ -743,6 +743,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let (cells, cs) = (g.world.crystal_cells_each(), g.world.crystals());
                     let each: Vec<String> = g.ceiling.cover.iter().enumerate().filter(|&(j, &v)| v >= 1.0 || g.ceiling.holding.get(j) == Some(&true)).map(|(j, &v)| format!("{j}{} {v:.0}/{} {:.0}%", if g.ceiling.holding.get(j) == Some(&true) { "*" } else { "" }, cells.get(j).copied().unwrap_or(0), 100.0 * cs.get(j).map_or(0.0, |c| c.1 as f64) / g.ceiling.full.get(j).copied().unwrap_or(1.0).max(1.0))).collect();
                     println!("  ceiling crystals t {:.0} s: {}", g.time(), each.join(", "));
+                }
+                // The origin (`origin.rs`, 11-22): its members, the most it
+                // held, its reach, lunges and calls, or the die-back.
+                if g.rules.origin.on {
+                    match g.origin_hud() {
+                        Some((_, _, Some(left))) => println!("  origin t {:.0} s: broken, die-back {left:.0} s left, slime {}", g.time(), g.mould),
+                        Some((n, most, None)) => println!("  origin t {:.0} s: {n} members of {most} most, reach {:.1}, {} lunges, {} calls home, gathering {}", g.time(), g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather)),
+                        None => println!("  origin t {:.0} s: none", g.time()),
+                    }
                 }
                 if g.rules.star.on {
                     println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);

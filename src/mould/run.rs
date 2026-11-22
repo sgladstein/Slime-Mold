@@ -279,6 +279,11 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// planet 1's quarter plays only when they are turned on there
 /// (`set=strikers=1`, or `FIRST_PLANET` moved back); a 0 here would leave
 /// them on and doing nothing (the bug check's note on #606).
+/// **The origin's members by planet**, 1 to 8 (`OriginRules::size`,
+/// `origin.rs`, 2026-11-22): the body it gathers at the landing and
+/// regrows to, twice that at most. The design's first numbers (400 on
+/// planet 1, rising with depth), to tune once the rush is measured.
+pub const ORIGIN_SIZE: [f32; 8] = [400.0, 600.0, 900.0, 1200.0, 1500.0, 1800.0, 2100.0, 2400.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
@@ -466,7 +471,7 @@ pub const CEILING: f32 = 12.0;
 /// or more, every walker left gathers into one armoured heart on its heart
 /// crystal, which lunges at the nearest soldier every 20 s, until it is cut
 /// under 15% of the most it held or is 150 s old. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING)];
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING), ("origin", 1.0)];
 
 /// **The planet each of `ENEMY_RULES` first plays on** (2026-11-20, the
 /// thread "Pace threats across the planets"; the owner that night, after a
@@ -1142,6 +1147,7 @@ impl Run {
             // not the share, binds wherever the band is big (planet 1 run
             // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
+            r.origin.size = ORIGIN_SIZE[depth_index(self.depth)];
             let k = STRIKER_SHARE[depth_index(self.depth)];
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;

@@ -210,6 +210,9 @@ pub trait World {
     /// No walker is born while the slime holds `n` or more (0 none); a
     /// world without it ignores it.
     fn set_ceiling(&mut self, _n: u32) {}
+    /// The slime stops eating (the origin's die-back, `origin.rs`); a
+    /// world without it ignores it.
+    fn set_starve(&mut self, _on: bool) {}
     /// Empties crystal `c` at once, as a squad that drained it (a film's
     /// tool, headless `LARDER_DRAIN=T`, 11-21); a world without it does
     /// nothing.

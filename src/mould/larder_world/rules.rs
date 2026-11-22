@@ -662,6 +662,11 @@ pub struct Rules {
     /// armoured heart on its heart crystal that lunges at the squad. Off
     /// here; a run turns it on (`run::ENEMY_RULES`). GPU only.
     pub stand: super::StandRules,
+    /// **The origin** (2026-11-22; `origin.rs`): the slime's heart on its
+    /// start crystal from the landing, fed from that crystal, which you
+    /// kill to win the planet. Off here; a run turns it on
+    /// (`run::ENEMY_RULES`). GPU only.
+    pub origin: super::OriginRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -780,6 +785,10 @@ impl Rules {
                 self.stand.on = v > 0.0;
                 return true;
             }
+            "origin" => {
+                self.origin.on = v > 0.0;
+                return true;
+            }
             "stand_armour" => {
                 self.stand.armour = v.clamp(0.0, 15.0) as u32;
                 return true;
@@ -833,6 +842,7 @@ impl Rules {
             "strikers" => on(self.strikers.on),
             "strikers_most" => self.strikers.most as f32,
             "stand" => on(self.stand.on),
+            "origin" => on(self.origin.on),
             "stand_armour" => self.stand.armour as f32,
             "stand_bite" => self.stand.bite as f32,
             "wave_sides" => self.wave.sides as f32,
@@ -937,6 +947,17 @@ impl Rules {
             "stand_cap" => &mut self.stand.cap,
             "stand_cap_most" => &mut self.stand.cap_most,
             "stand_sated" => &mut self.stand.sated,
+            "origin_size" => &mut self.origin.size,
+            "origin_most" => &mut self.origin.most,
+            "origin_grow_every" => &mut self.origin.grow_every,
+            "origin_widen" => &mut self.origin.widen,
+            "origin_floor" => &mut self.origin.floor,
+            "origin_floor_min" => &mut self.origin.floor_min,
+            "origin_near" => &mut self.origin.near,
+            "origin_call_loss" => &mut self.origin.call_loss,
+            "origin_call_every" => &mut self.origin.call_every,
+            "origin_die_back" => &mut self.origin.die_back,
+            "origin_die_upkeep" => &mut self.origin.die_upkeep,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
@@ -1153,6 +1174,7 @@ impl Default for Rules {
             strikers: super::StrikerRules::default(),
             star: super::StarRules::default(),
             stand: super::StandRules::default(),
+            origin: super::OriginRules::default(),
         }
     }
 }
