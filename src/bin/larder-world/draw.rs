@@ -2457,7 +2457,7 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         // The owner's notes (11-14 15:06Z): rate of fire, reduce cost, disrupt scent.
         C::Rate => (Icon::Fast, CardKind::Flight, format!("Fires {:.0}x as often.", 1.0 + w.rate_card)),
         C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less budget.", rounds::THRIFT)),
-        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the scent slime follows to food and calm the slime they cross.".into()),
+        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the slime's scent and calm what they hit.".into()),
         // The element family's second card (2026-11-17).
         C::Tinder => (Icon::Tinder, CardKind::Flight, "Bullets lay a line of dry brush that fire runs along.".into()),
         // The carriers (2026-11-16, step B of the gun-system review).

@@ -363,7 +363,7 @@ impl Card {
             Card::Range => "Shoots twice as far.",
             Card::Rate => "Fires twice as often.",
             Card::Thrift => "The next card costs less budget.",
-            Card::Smother => "Bullets wipe the scent slime follows to food and calm the slime they cross.",
+            Card::Smother => "Bullets wipe the slime's scent and calm what they hit.",
             Card::Trigger => "Carries the next bullet and lets it out where it hits. Needs a bullet after it.",
             Card::Expire => "Carries the next bullet and lets it out where it stops. Needs a bullet after it.",
             Card::Multicast => "Fires the next bullet with it, in the same shot. Needs a bullet after it.",
