@@ -63,13 +63,13 @@ this thread's judgement.
 | Scatter | 2 | Sprawler | J | small hits over a thin mesh | three small hits in a ring; on the plain bullet, three small pops round each hit |
 | Split | 2 | Sprawler | J | pieces over a mesh | the bullet breaks where it lands |
 | Scorch | 2 | Sprawler | J | a line it turns from, as it turns from walls | a burnt line the slime avoids |
-| Seek | 2 | Sprawler | M | near misses on thin slime become hits | near misses strike the slime beside them |
+| Seek | 2 | Sprawler | M | near misses on thin slime become hits | shots fly on past the aim and strike slime beyond the front |
 | Blind | 2 | Sprawler | J | a fast mesh walks straight into walls, water, fire | walkers leave the vein in straight lines |
 | Provoke | 2 | Drifter; any slime sitting on a crystal | M | it fakes the cut: the part it hits believes it is cut off and comes out onto the guns (planet 1: the crystal clear in 13 s, kills 387 against 319); adds nothing to slime already charging | the slime goes grey, lets go of the crystal and runs at the squad |
 | Still | 2 | Swarmer; any raid | M | a raid it hits loses the charge: the squad better off in 4 of 6 paired windows, at about a third fewer kills | the raiders drift past instead of biting |
 | Pierce | 1 | Trunk | J | runs on along a long cord | the bullet carries on past its first hit |
 | Trigger, Expire | 2 | Trunk | J | carry a payload past the cords to a body | a second payload goes off past the first |
-| Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food | the slime loses its line to a crystal |
+| Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food and calms the slime on its line | the slime loses its line to a crystal; a rose calm where its shots hit |
 | Gas | 2 | Swarmer | J | the charge sleeps before it bites | a grey, still patch |
 | Mist | 4 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
 | Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it; on the plain bullet, the hit pops again when slime crowds it |
@@ -158,8 +158,11 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   Scatter +1,519, Delay +1,624 (Rate +716, Pierce +794, Blast +3,884).
   Thrift is sold once a bullet card is owned; Quiet and the Flare from
   `run::ALARM_FROM` (planet 4), since no slime before it answers an alarm.
-  Still unseen on planet 1: Seek (the rifle already hits 92%) and Smother
-  (-89); sent to Direction
+  Seek and Smother still showed nothing on planet 1; on Direction's call
+  a seeking round now flies half again past its aim (`Rules::seek_reach`:
+  planet 1 +283, planet 2 +881) and Smother's line also calms the walkers
+  it crosses and a strike-sized disc where it hits (planet 1 health lost
+  25.9 to 18.8, planet 2 15.0 to 11.0)
   ([report](../../Reports/gun-cards-visible-2026-11-22/README.md)).
 - A J row becomes M when a run pits the card against its planet, paired
   windows as for seek and the readers.
