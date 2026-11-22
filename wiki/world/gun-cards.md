@@ -69,7 +69,7 @@ this thread's judgement.
 | Still | 2 | Swarmer; any raid | M | a raid it hits loses the charge: the squad better off in 4 of 6 paired windows, at about a third fewer kills | the raiders drift past instead of biting |
 | Pierce | 1 | Trunk | J | runs on along a long cord | the bullet carries on past its first hit |
 | Trigger, Expire | 2 | Trunk | J | carry a payload past the cords to a body | a second payload goes off past the first |
-| Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food and calms the slime on its line | the slime loses its line to a crystal; a faint rose where the line crosses slime |
+| Smother | 2 | Trunk; Sporer | J | both are starved; it wipes the way to food and calms the slime on its line | the slime loses its line to a crystal; a rose calm where its shots hit |
 | Gas | 2 | Swarmer | J | the charge sleeps before it bites | a grey, still patch |
 | Mist | 4 | Swarmer | J | a sleep line across the charge | a thin grey line along the flight |
 | Thick | 2 | Swarmer | J | waits for the crowd a swarm brings | the hit waits until slime crowds it; on the plain bullet, the hit pops again when slime crowds it |
@@ -161,7 +161,8 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   Seek and Smother still showed nothing on planet 1; on Direction's call
   a seeking round now flies half again past its aim (`Rules::seek_reach`:
   planet 1 +283, planet 2 +881) and Smother's line also calms the walkers
-  it crosses (planet 1 health lost 25.9 to 20.7, planet 2 15.0 to 12.1)
+  it crosses and a strike-sized disc where it hits (planet 1 health lost
+  25.9 to 18.8, planet 2 15.0 to 11.0)
   ([report](../../Reports/gun-cards-visible-2026-11-22/README.md)).
 - A J row becomes M when a run pits the card against its planet, paired
   windows as for seek and the readers.

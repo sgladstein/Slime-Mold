@@ -89,6 +89,16 @@ tier).
   carry no Mind length, so the calm lasted nothing; they now take the
   rounds' (`RoundRules::burst_rules`).
 
+**Smother's calm at its hit** (third change, Direction: "every card has to
+show something, and a faint rose won't"; `RoundRules::smother_calm` 1.0):
+where a Smother bullet strikes slime, a calm disc the shot's own strike
+across. The rose on the slime it hits: 1,508 rose pixels over the eleven
+zoom-12 frames against 422 for the line alone and 0 on main
+(`smother-hit-calm-z12.jpg`, rows main, line, line and hit). Planet 1:
+kills -133, health lost 25.9 to 18.8; planet 2: kills -967, health lost
+15.0 to 11.0, all nine alive on every seed (`raw-smother-hit-calm.txt`).
+A card that keeps the squad whole, not one that kills.
+
 `raw-seek-reach.txt` holds Seek on planets 1 and 2 and the plain and
 scent-only Smother on planet 2; `raw-smother-calm.txt` the calming Smother.
 
@@ -97,6 +107,7 @@ scent-only Smother on planet 2; `raw-smother-calm.txt` the calming Smother.
 
 ![Seek and Smother at zoom 12](seek-smother-z12.jpg)
 ![Smother's calm, close](smother-calm-crop.jpg)
+![Smother with its hit calm](smother-hit-calm-z12.jpg)
 
 Rows: each card on main ("old") and on this change ("new"), frames at
 27.0, 27.3, 27.6 and 28.0 s.

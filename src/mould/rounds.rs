@@ -691,6 +691,14 @@ pub struct RoundRules {
     /// (three seeds of four up), about the Torch's, and the pair still
     /// +5,057. A few sparks a minute: the fire is what you see.
     pub tinder_spark: f32,
+    /// **Smother's calm at its hit** (2026-11-22, Direction: "every card
+    /// has to show something, and a faint rose won't"): where a Smother
+    /// bullet strikes slime, a calm disc (`big::MIND_STILL`, with the
+    /// scent wiped) this share of the shot's own strike across. Its line
+    /// alone calmed the few walkers standing on it, a rose speck or two a
+    /// frame at zoom 12; kept to the strike so the effect is no bigger than
+    /// the card.
+    pub smother_calm: f32,
     /// `Scorch` also burns: kills the walkers within its crater radius
     /// along the flight (owner, 2026-11-14 08:41Z, after "how are scorch
     /// and alarm different. It just makes a virtual wall for the slime?").
@@ -784,6 +792,7 @@ impl Default for RoundRules {
             trail_fuel: 1.0,
             trail_fuel_gap: 6.0,
             tinder_spark: 0.01,
+            smother_calm: 1.0,
             trail_burn: true,
             shove: 2.0,
             shove_secs: 0.25,
@@ -845,6 +854,7 @@ impl RoundRules {
             "plain_pop" => &mut self.plain_pop,
             "plain_wide" => &mut self.plain_wide,
             "tinder_spark" => &mut self.tinder_spark,
+            "smother_calm" => &mut self.smother_calm,
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
             "mind_rest" => &mut self.mind_rest,
@@ -1700,7 +1710,7 @@ impl Rounds {
         let tq = g.squads.len();
         let mut of: Vec<Option<[u8; TRAILS]>> = vec![None; tq + 1];
         let mut any = [0u8; TRAILS];
-        let legs: Vec<(Leg, [u8; TRAILS], bool)> = g
+        let legs: Vec<(Leg, [u8; TRAILS], Option<f32>)> = g
             .last_shots
             .iter()
             .map(|s| (s, s.by.map_or(tq, |k| g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
@@ -1721,7 +1731,7 @@ impl Rounds {
                 for (a, b) in any.iter_mut().zip(n) {
                     *a = (*a).max(b);
                 }
-                ((s.from, s.hit.unwrap_or(s.to)), n, s.hit.is_some())
+                ((s.from, s.hit.unwrap_or(s.to)), n, s.hit.map(|_| s.r))
             })
             .collect();
         if any == [0; TRAILS] {
@@ -1746,11 +1756,16 @@ impl Rounds {
             let mut discs = trail_bursts(legn, from, to, &self.rules, s, fine, smell);
             if legn[4] > 0 {
                 keep_clear(&mut discs, &near, self.rules.trail_fuel_gap);
-                if hit && spark(to, self.rules.tinder_spark) {
+                if hit.is_some() && spark(to, self.rules.tinder_spark) {
                     if let Some(b) = discs.last_mut().filter(|b| b.fuel > 0.0) {
                         b.light = b.light.max(self.rules.torch_light);
                     }
                 }
+            }
+            // Smother calms a disc where its line strikes slime, the
+            // shot's own strike across (`RoundRules::smother_calm`).
+            if let (true, Some(r)) = (legn[3] > 0, hit) {
+                discs.push(Burst { at: (to.0 / s, to.1 / s), r: r / s * self.rules.smother_calm, smother: true, mind: big::MIND_STILL as u8, ..Burst::default() });
             }
             // Mist laid from the muzzle would sleep its own shooter
             // (`Rules::doze`, 2026-11-19): no cloud disc within its radius
