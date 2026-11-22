@@ -1888,7 +1888,7 @@ impl App {
         // verdict the census steps no more, so neither does this.
         if g.in_flight() && g.step_ready() && !mission_over {
             g.finish_step();
-            feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+            feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake * shake_user(), self.args.hitstop));
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
             turret_fired(g, &mut self.blooks);
@@ -1931,7 +1931,7 @@ impl App {
         while self.owed >= step && g.end.is_none() {
             if g.in_flight() {
                 g.finish_step();
-                feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+                feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake * shake_user(), self.args.hitstop));
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 turret_fired(g, &mut self.blooks);
@@ -2117,7 +2117,7 @@ impl App {
             return;
         }
         self.seen = g.world.ticks();
-        feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
+        feel(&g.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake * shake_user(), self.args.hitstop));
         shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         turret_fired(g, &mut self.blooks);
         step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
@@ -2818,6 +2818,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if look.is_none() && bench_secs.is_none() {
         set_volume_user(settings::saved_volume());
         set_music_user(settings::saved_music());
+        set_shake_user(settings::saved_shake());
     }
     if !mode_given && look.is_none() && bench_secs.is_none() {
         args.squads = true;
