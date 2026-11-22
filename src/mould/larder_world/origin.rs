@@ -88,11 +88,22 @@ pub struct OriginRules {
     /// How far its members may run from its centre in a lunge (times its
     /// radius; the last stand's is 2.5).
     pub lunge_leash: f32,
+    /// It regrows only after this many seconds with no loss of `hurt` of
+    /// the most it held in a second (11-22, Engine's siege on #699: on
+    /// planet 2, run seed 1, it sat at 1,900 to 2,200 all game against 52
+    /// rifles, refilling from its charged crystal as fast as they cut it,
+    /// and the planet was lost at 11:29). A sustained fight now wears it
+    /// down; a strike and a pull-back lets it refill. At 10 s and 0.5% a
+    /// 48-soldier rush won at 1:16 with none lost; at 4 s and 2%, at 1:39
+    /// with 10 lost (52: 1:36, 7 lost); with no pause, 44 at 2:05 with 34
+    /// lost and 24 wiped (planet 2, size 700, run seed 1, lavapipe).
+    pub quiet: f32,
+    pub hurt: f32,
 }
 
 impl Default for OriginRules {
     fn default() -> Self {
-        OriginRules { on: false, size: 400.0, most: 1.5, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5 }
+        OriginRules { on: false, size: 400.0, most: 1.5, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02 }
     }
 }
 
@@ -114,6 +125,8 @@ pub struct OriginState {
     pub calls: u32,
     /// Its members a second ago.
     last: u32,
+    /// The tick it last lost members to a fight (`OriginRules::hurt`).
+    pub struck: Option<u64>,
 }
 
 impl<W: World> Game<W> {
@@ -179,10 +192,17 @@ impl<W: World> Game<W> {
             self.break_origin(h.lump);
             return true;
         }
+        // Hurt this second: no regrowth for `quiet` seconds.
+        let lost = self.origin.last.saturating_sub(h.members);
+        if lost > 0 && lost as f32 >= r.hurt * h.most as f32 {
+            self.origin.struck = Some(now);
+        }
+        let calm = self.origin.struck.is_none_or(|t| now >= t + (r.quiet.max(0.0) * tps) as u64);
         // Its regrowth: from its crystal while it has charge, the reach
         // widening while it is short of its size; or, gathering (the late
-        // last stand), every free walker on the map.
-        if now >= self.origin.grown + (r.grow_every.max(0.5) * tps) as u64 {
+        // last stand), every free walker on the map. Neither while it is
+        // being cut down (`OriginRules::quiet`).
+        if calm && now >= self.origin.grown + (r.grow_every.max(0.5) * tps) as u64 {
             self.origin.grown = now;
             if h.gather {
                 let whole = self.whole_map();
@@ -196,7 +216,6 @@ impl<W: World> Game<W> {
             }
         }
         // The call home: struck hard enough, with soldiers near it.
-        let lost = self.origin.last.saturating_sub(h.members);
         self.origin.last = h.members;
         let due = self.origin.called.is_none_or(|t| now >= t + (r.call_every.max(1.0) * tps) as u64);
         if due && h.most > 0 && lost as f32 >= r.call_loss * h.most as f32 && lost > 0 {
