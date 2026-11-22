@@ -176,7 +176,7 @@ Until then the strikers, waves, late lunge and last-stand heart, built for the b
 
 Fruiting moved to planet 2 on 11-21 after his play that night (05:21Z: "I just played planet 1 and their was mini-bosses. There were these events where the slime dispersed across the map and surrounded me randomly, halving the squad each time"). His log, on a build with the fruit fixes: at 8:44 a fruit burst raised the slime's mass from 14,045 to 17,936 in 3 s and 21 of his 28 soldiers died in those 3 s.
 
-The bot's curve on that schedule (11-21, three plans, 9 maps, before the heart cap): planets 2 to 5 won 20, 21, 12 and 2 of 27. Planet 4 drops, and planet 5 is a wall that was already there before the late threats ([report](../../Reports/planet-curve-2026-11-21/README.md)). Moving the heart to planet 5 waits on a rerun with the cap.
+The bot's curve on that schedule (11-21, three plans, 9 maps, before the heart cap): planets 2 to 5 won 20, 21, 12 and 2 of 27. Planet 4 drops, and planet 5 is a wall that was already there before the late threats ([report](../../Reports/planet-curve-2026-11-21/README.md)). The rerun with the cap changed little, and on main through #723 (11-22) the rush plan won planet 4 on 9 of 9 and planet 5 on 8 of 9; switching the heart or the strikers off on planets 4 and 5 moved no result beyond noise, so no row moved. The lure plan still loses planet 5 (0 of 9; with strikers off its squad outlasts the clock instead of dying), and planet 5's size waits for Milestone 2.
 
 ## Fruiting
 
