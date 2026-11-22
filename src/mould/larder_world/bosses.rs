@@ -781,7 +781,13 @@ impl<W: World> Game<W> {
             self.bosses.live[k] = b;
             k += 1;
         }
-        if (r.every <= 0.0 && r.cut <= 0.0) || self.bosses.live.len() >= r.most.min(LUMPS) {
+        // A boss forms only while another lump stays free after it (the
+        // Enemy lane's review of 11-22, with `most` 3 from planet 6): the
+        // world's `LUMPS` (4) also carry raid marches, fruits, mortar
+        // shells (two free, below) and the last-stand heart, and three
+        // bosses would leave them one.
+        let room = |g: &Self| (0..LUMPS).filter(|&l| !g.lump_taken(l)).count() >= 2;
+        if (r.every <= 0.0 && r.cut <= 0.0) || self.bosses.live.len() >= r.most.min(LUMPS) || !room(self) {
             return;
         }
         // A big part cut off from food: each second's chance, once the
@@ -794,7 +800,7 @@ impl<W: World> Game<W> {
             for p in parts.iter().filter(|p| !p.fed && p.walkers >= r.cut_least) {
                 let by = |c: (f32, f32)| (c.0 - p.centre.0).hypot(c.1 - p.centre.1) < p.r + near;
                 let lately = self.bosses.ended.iter().rev().take_while(|e| now < e.2 + rest).any(|e| by(e.0.centre));
-                if self.bosses.live.len() >= r.most.min(LUMPS) || lately || self.bosses.live.iter().any(|b| by(b.centre)) {
+                if self.bosses.live.len() >= r.most.min(LUMPS) || !room(self) || lately || self.bosses.live.iter().any(|b| by(b.centre)) {
                     continue;
                 }
                 if self.bosses.rng.f32() < r.cut {
@@ -816,7 +822,7 @@ impl<W: World> Game<W> {
             }
         };
         // A chance waits for a crowded knot: tried each second once due.
-        if now < next || self.bosses.live.len() >= r.most.min(LUMPS) {
+        if now < next || self.bosses.live.len() >= r.most.min(LUMPS) || !room(self) {
             return;
         }
         if let Some(at) = self.crowded_knot(None) {

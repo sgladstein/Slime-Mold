@@ -366,7 +366,11 @@ impl<W: World> Game<W> {
     /// the base price, and `soldier_step` share more for each soldier alive
     /// over `soldier_from`. Kept in `Rules::soldier_cost`, so the shop
     /// button, the hands and the bots all read the price now. Called after
-    /// a buy and once a step (soldiers fall).
+    /// a buy and once a step (soldiers fall). The base is read from
+    /// `soldier_cost` on the first call and kept in `Game::price_base`, so
+    /// anything that changes the price mid-game (a discount card, a rule
+    /// set mid-planet, a test) must edit `price_base`, not `soldier_cost`,
+    /// which the next call overwrites (Squad's review of #721).
     pub fn reprice(&mut self) {
         if self.price_base <= 0.0 {
             self.price_base = self.rules.soldier_cost;
