@@ -3953,6 +3953,27 @@ fn squads_shoot_a_mini_boss_first() {
     let (p, _) = g.boss_aim(0).expect("in the bullet's reach");
     assert!((p.1 - (s0.y + 0.5 * reach)).abs() < 1e-2, "{p:?}");
     g.bullet_mods.casts = 0;
+    // Free fire, a boss beyond near first (`Rules::near_first`): slime near
+    // the soldier is shot first; a boss that near, or nothing near, the boss
+    // (Direction 11-22: a near origin wins, a far one pulls no fire past
+    // the walkers beside the squad).
+    let near = g.rules.near_first * sc;
+    assert!(8.0 * sc < near && near < 20.0 * sc && 20.0 * sc < reach && 8.0 * sc + r < reach, "near {near}, reach {reach}");
+    g.bosses.live[0].centre = at(20.0 * sc + r);
+    set(&mut g, 0);
+    g.soldiers[0].stance = Stance::Free;
+    let slime5 = (s0.x + 5.0 * sc, s0.y);
+    g.soldiers[0].aim = Some(slime5);
+    assert!(g.boss_aim(0).is_some(), "the boss in reach");
+    assert_eq!(g.target(0), Some(slime5), "slime 5 cells off before a boss 20 off");
+    g.bosses.live[0].centre = at(8.0 * sc + r);
+    assert_eq!(g.target(0), Some(at(8.0 * sc + r)), "a boss 8 cells off before the slime");
+    g.bosses.live[0].centre = at(20.0 * sc + r);
+    g.soldiers[0].aim = None;
+    g.soldiers[0].dense = 0;
+    let line = g.boss_aim(0).expect("the boss in reach").0;
+    assert_eq!(g.target(0), Some(line), "nothing near: the boss 20 off, along its line");
+    g.soldiers[0].stance = Stance::Defend;
     g.bosses.live[0].centre = close;
     g.soldiers[0].stance = Stance::HoldFire;
     set(&mut g, 2);
