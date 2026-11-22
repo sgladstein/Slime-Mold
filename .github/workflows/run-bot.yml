@@ -93,3 +93,23 @@ jobs:
           path: |
             bot.txt
             bot-trace.txt
+
+  # The bot's pace by planet across the seeds (Direction, 11-22): each
+  # planet's minutes, its end and the soldiers lost, a column a seed, with
+  # the median by planet. scripts/play_log_summary.py writes the same from
+  # the owner's play logs.
+  pace:
+    name: pace by planet
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: run-bot-seed-*
+          path: seeds
+      - run: |
+          python3 scripts/run_bot_summary.py --pace \
+            1=seeds/run-bot-seed-1/bot.txt 2=seeds/run-bot-seed-2/bot.txt 3=seeds/run-bot-seed-3/bot.txt \
+            | tee -a "$GITHUB_STEP_SUMMARY"
