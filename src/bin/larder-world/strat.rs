@@ -1504,8 +1504,18 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
         // As the hunt: a new stand only when out of range or blocked, or
         // when the squad was doing something else.
         let fighting = members.iter().all(|&k| matches!(g.soldiers[k].order, Order::Fight(..)));
-        if !fighting || dist(h.centre, m) > 0.8 * range || !sense.clear(g, m, h.centre) {
-            let st = stand_for(h.centre);
+        // Inside the origin's reach (its crystal's rim plus
+        // `OriginRules::near`), where soldiers shoot the origin itself as a
+        // mini-boss (Enemy's f298e590); a stand 0.7 of the gun's range from
+        // its middle sat outside that reach on all three maps and shot only
+        // the body round it (seeds 1 to 3 planet 1, origin 1,800 to 2,300
+        // to 10 min and on).
+        let core = cs[0].0;
+        let reach = g.world.crystal_r(0) + g.rules.origin.near * g.world.scale();
+        let d = dist(core, m).max(1.0);
+        let at = (0.7 * range).min(0.8 * reach);
+        let st = (core.0 + (m.0 - core.0) / d * at, core.1 + (m.1 - core.1) / d * at);
+        if !fighting || d > reach || !sense.clear(g, m, h.centre) {
             g.apply(Cmd::SquadOrder(q as u8, Order::Fight(st.0, st.1)));
         }
         return;
