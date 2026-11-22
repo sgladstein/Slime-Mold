@@ -3,6 +3,32 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
+## Now (2026-11-22 07:15Z, the thread "Make the slime a more interesting enemy")
+
+- **The origin** (Milestone 2's win, the slime's heart on its start
+  crystal): built on branch `claude/project-thread-noq3o4`, draft PR #699.
+  Do not queue it until the owner calls Milestone 1 done (his card 11-22
+  04:16Z, "Build now, land after M1"); keep it merged up with main. Its
+  numbers, rush measures and Engine's siege fix (regrows only after 4 s
+  unhurt) are in that branch's `wiki/world/run.md`, *The origin*, and its
+  `handoff/enemy.md` section. Engine is building the run bot's siege of the
+  origin on a branch off #699; the two land together.
+- **Merged today:** #690 (held-crystals ceiling), #706 (a snagged hunter's
+  regroup takes back its whole body, up to three radii, `reach_under`).
+- **The Sprawler's threads through its body** (Milestone 1 test 4): three
+  rules tried and not kept, all in `Reports/dead-ends.md` (spacing, room,
+  lanes). Planet 2's body packs 97% of its fine cells, and that packing,
+  not the ceiling, holds its size (lanes freed cells and it grew 18,096 to
+  about 27,400). The lanes prototype's patch and a still are in the
+  project's files, `enemy/lanes-prototype-2026-11-22.patch` and
+  `enemy/lanes-prototype-planet2-180s.png`; a flow rule waits for the Lab
+  after Milestone 1.
+- **Seed 8 planet 1** (the run bot's one loss): not a slime bug. The slime
+  takes a big neighbour crystal by 0:31, its ceiling goes to its slots
+  (twice its landing) and the bot never drains it; Engine's hunt.
+- Next: from Direction (the owner's next play log, or Engine's origin-siege
+  table).
+
 ## Mini-boss review (2026-11-20, the thread "Analyse and improve the minibosses")
 
 Not this lane's thread, but the lane's file (`bosses.rs`), so recorded
