@@ -2972,6 +2972,12 @@ mod tests {
         for (card, seed) in [(plain(Set::Slug), 2), (plain(Set::Slug), 3), (Card::Bomb, 2), (Card::Bomb, 3)] {
             let slug = card != Card::Bomb;
             let mut g = attacking(seed);
+            // The whole reach read every frame, as these seeds were set
+            // at: near first (`Rules::near_first`, 11-22) aims the squad at
+            // thin slime beside it, and seed 3's slug then threw 47 of 60
+            // away from the gun, under the 8 in 10. The throw's way is the
+            // card's, not the aim's.
+            g.rules.near_first = 0.0;
             g.apply(Cmd::Load(0, Some(Deck::new(&[card]))));
             // This test runs its own `Rounds` to look between a step and its
             // casts, so the game's own (`Game::gear`, 11-20) stays off.
@@ -3181,6 +3187,9 @@ mod tests {
         // The rounds, and whether a turret stands in the heave's reach.
         for (round, deck, with_turret) in [("heave", "heave+plain", false), ("two heaves", "heave+heave+plain", false), ("heave by a turret", "heave+plain", true), ("pull", "pull+plain", true)] {
             let mut g = attacking(2);
+            // As in `a_slug_shoves_and_a_bomb_throws_away_from_the_gun`: near
+            // first (11-22) left the pull no lone hit that threw on seed 2.
+            g.rules.near_first = 0.0;
             g.apply(Cmd::Load(0, Some(Deck::new(&parse(deck).unwrap()))));
             // This test runs its own `Rounds` to look between a step and its
             // casts, so the game's own (`Game::gear`, 11-20) stays off.

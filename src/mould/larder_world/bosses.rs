@@ -1598,10 +1598,18 @@ impl<W: World> Game<W> {
     /// reach (`OriginRules::near` past its crystal's rim, where it lunges),
     /// so it never draws fire from across the map.
     pub fn boss_aim(&self, k: usize) -> Option<((f32, f32), f32)> {
+        self.boss_aim_within(k, f32::INFINITY)
+    }
+
+    /// `boss_aim`, of the bodies whose edge also comes within `limit` fine
+    /// cells: `Game::target` passes `Rules::near_first` while the soldier
+    /// has slime that near to shoot (11-22), so only a near body takes its
+    /// fire from the walkers beside it.
+    pub fn boss_aim_within(&self, k: usize, limit: f32) -> Option<((f32, f32), f32)> {
         let s = self.soldiers[k];
         let sc = self.world.scale();
         let reach = self.shot_reach(k) * sc;
-        let mine = if s.touching > 0 { self.rules.defend * sc } else { f32::INFINITY };
+        let mine = if s.touching > 0 { self.rules.defend * sc } else { f32::INFINITY }.min(limit);
         let origin = self.stand.live.filter(|h| h.origin && h.members > 0 && self.origin_reaches(k)).map(|h| (h.centre, h.members));
         self.bosses
             .live

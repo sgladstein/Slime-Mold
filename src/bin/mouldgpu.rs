@@ -5648,7 +5648,12 @@ mod tests {
         // 0.5-cell spread is game side, the same on both, but it moved
         // seed 3's chaos past the band (1377 GPU against 1266 CPU walkers
         // at 25 s here; killed 1443 against 1172 with craters).
-        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, spread: 0.0, ..Rules::default() };
+        // Near first off (`Rules::near_first`, 11-22): attack-move reads
+        // 12 cells round each soldier before the whole reach, game side and
+        // the same on both, but which frames read near follows the walkers
+        // there, and seed 3's moulds then parted by 9.7% at 30 s (795 GPU
+        // against 872 CPU walkers), past the 8%.
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, spread: 0.0, near_first: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15), like
         // the game-layer rules above: the same on both engines, but it moves
         // where the mould meets the squad, and seed 3's chaos then parted

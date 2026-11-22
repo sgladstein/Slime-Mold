@@ -48,6 +48,24 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-22, exit test 5: the rifle's feel (Direction's job, same
+thread).** #701 and #705 merged. Filmed the plain rifle on planets 1 to 3
+at zoom 6 and 12: rate, tracer and hits read well; the fault was free
+fire, Guard and Clear aiming at the thickest block in the whole 24-cell
+reach, about 550 px at zoom 12 against about 300 px of screen. Direction
+picked option A (06:15Z): those read `Rules::near_first` (12 cells) first
+and the whole reach only for `cmd::FAR_FRAMES` (4) frames after a near read
+finds nothing (`Game::sight_read`, `Game::read_aim`, `Soldier::far`; the
+read-back moved from `turn.rs` into `read_aim`). Option B (shorter reach)
+is out; C (an edge tick in `draw.rs`, Look's) only if far shots still read
+as fire into nothing after A. The run bot and gun lab fire Free, so their
+baselines shift; tell Engine through Direction when it merges. #708 merged
+07:21Z (three seed-tuned tests keep `near_first` 0). Then, Direction's
+call: a mini-boss beyond `near_first` takes the shot only when the
+soldier's own aim holds no slime that near (`Game::target`,
+`bosses.rs boss_aim_within`), so Enemy's origin (#699) inherits it once
+it goes through `boss_aim`.
+
 **2026-11-22, exit test 5: every shop gun card visible (Direction's job,
 in the pathfinding thread).** The gun lab's arena showed Wide, Scatter,
 Delay, Thick, Quiet and Thrift playing the same game as no card (a plain
