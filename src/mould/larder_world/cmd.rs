@@ -10,6 +10,11 @@ use crate::mould::kit::Tool;
 /// diagonal (2.8): at scale 1 that took defend's 7.5 cells to 10.3, and
 /// `a_guard_shoots_slime_on_what_it_guards` caught slime 10 cells off.
 const DEFEND_SLACK: f32 = squad::BIN as f32 * 0.5;
+/// Frames a soldier reads its whole reach after a near read found no
+/// slime, before it looks near again (`Game::read_aim`): 4 at 15 frames
+/// a second, so a walker that comes near is seen within about 0.27 s,
+/// and three frames in four aim at the far slime.
+const FAR_FRAMES: u8 = 4;
 
 /// A player's command; `Game::apply` keeps the log. As M3's, with walls and
 /// buildings (`buildings`) in place of M3's turret and bait.
@@ -551,17 +556,50 @@ impl<W: World> Game<W> {
     /// eaten, or, touched, fired past them at the clump (2026-11-18). Read
     /// short, each soldier aims at the thickest slime near itself, so a
     /// squad among loose walkers spreads its fire over them.
+    ///
+    /// The rest (free fire, guarding, clearing a crystal) read near
+    /// themselves first (`Rules::near_first`) and the whole reach only
+    /// after a near read found no slime, for `FAR_FRAMES` frames
+    /// (`Game::read_aim`). Read whole every frame, a free squad fired at
+    /// the thickest clump in its 24-cell reach, often off the screen at
+    /// zoom 12, past walkers standing beside it (filmed 11-22).
     pub(super) fn sight(&self, k: usize) -> f32 {
+        self.sight_read(k).0
+    }
+
+    /// `sight`, and whether it is the near read that `read_aim` checks.
+    fn sight_read(&self, k: usize) -> (f32, bool) {
         let s = self.soldiers[k];
         let sc = self.s();
         let full = self.gun_range(s.squad as usize) * sc;
         // On the core the read decides whether it is clear (`check_core`,
         // walkers within twice its radius), so it looks the whole way.
         let on_core = (s.x - self.core.0).hypot(s.y - self.core.1) <= 3.0 * self.rules.core_r * sc;
-        if self.stance_of(k) != Stance::Defend || self.guard_zone(k).is_some() || matches!(s.order, Order::Clear(..)) || on_core {
-            return full;
+        if on_core {
+            return (full, false);
         }
-        (self.rules.defend * sc).min(full)
+        if self.stance_of(k) != Stance::Defend || self.guard_zone(k).is_some() || matches!(s.order, Order::Clear(..)) {
+            let near = self.rules.near_first * sc;
+            return if s.far == 0 && near > 0.0 && near < full { (near, true) } else { (full, false) };
+        }
+        ((self.rules.defend * sc).min(full), false)
+    }
+
+    /// Takes back soldier `k`'s read of the slime this frame (the
+    /// engine's `UnitOut`): walkers on it, its aim and the walkers there.
+    /// A near read (`sight_read`) that found no slime to fire at sends it
+    /// to read the whole reach for the next `FAR_FRAMES` frames; then it
+    /// looks near again, so slime that comes close is its aim within
+    /// about a quarter second. The empty frame aims at nothing, which
+    /// holds a shot at far slime back by at most one frame.
+    pub(super) fn read_aim(&mut self, k: usize, touching: u32, aim: Option<(f32, f32)>, dense: u32) {
+        let (_, probe) = self.sight_read(k);
+        let none = aim.is_none() || dense < self.rules.aim_min;
+        let s = &mut self.soldiers[k];
+        s.touching = touching;
+        s.aim = aim;
+        s.dense = dense;
+        s.far = if probe && none { FAR_FRAMES } else { s.far.saturating_sub(1) };
     }
 
     /// Where soldier `k` fires this frame, if anywhere (fine cells).
