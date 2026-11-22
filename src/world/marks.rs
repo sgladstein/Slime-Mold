@@ -78,13 +78,18 @@ pub enum Shape {
 
 /// `Shape::Star`'s kinds: a fall's shadow and warning ring, the ore coming
 /// in, the ore on the ground, a boss core, the ring to stand in to collect
-/// one, and a burst of light (an impact, a core breaking out, a cashing).
+/// one, a burst of light (an impact, a core breaking out, a cashing), and
+/// a laid mine.
 pub const STAR_TARGET: u32 = 0;
 pub const STAR_METEOR: u32 = 1;
 pub const STAR_ORE: u32 = 2;
 pub const STAR_CORE: u32 = 3;
 pub const STAR_DIAL: u32 = 4;
 pub const STAR_BURST: u32 = 5;
+/// A laid mine (`view.wgsl`'s `star_at`, MINE): the seed is how far
+/// through its lay (0-255), `p1` its lamp's blink phase, `p2` how near
+/// it is to going off, `fill` its casing's radius over `half`.
+pub const STAR_MINE: u32 = 6;
 
 /// `hw` and `hh` are world cells (scaled by the zoom, at least 2 pixels)
 /// rather than screen pixels.
@@ -271,7 +276,7 @@ impl Marks {
     }
 
     /// A starfall or core look (`Shape::Star`) at `at`, `half` world cells
-    /// round: `kind` one of `STAR_TARGET` to `STAR_BURST`, `fill` and the
+    /// round: `kind` one of `STAR_TARGET` to `STAR_MINE`, `fill` and the
     /// shares `p1`, `p2` (0-1) as `view.wgsl`'s `star_at` reads them for
     /// that kind; on the minimap too with `minimap`, in `colour`.
     #[allow(clippy::too_many_arguments)]

@@ -5236,6 +5236,17 @@ fn flash_at(b: u32, p: vec2<f32>) -> vec2<f32> {
 //   with what the slime ate (bits 12-19); brighter and closer dashed
 //   while soldiers stand in it (bit 20). It replaces the bar under the
 //   number, and is drawn over the drop (only its band claims pixels).
+// - MINE (2026-11-22; until then a laid mine was not drawn at all, and
+//   the owner "placed a mine and saw nothing"): a squat olive casing with
+//   a lit bevel, a steel pressure cap and four bolts, its shadow, and an
+//   amber lamp that blinks (bits 12-19 its phase) faster and whiter as
+//   slime gathers in its reach (bits 20-27, walkers there over the
+//   trigger, `Kit::mine_near`), inside a faint dashed ring at the trigger
+//   reach (`mine_r`), the mark's half over 1.3. Laying it (bits 4-11,
+//   the seed's place, 0-255 how far through the 0.6 s lay) the ring
+//   sweeps in from a quarter bigger, bright, the casing drops in and
+//   the lamp burns steady: the cue that it is down. `fill` the casing's
+//   radius over the mark's half.
 // - BURST: a ring of light out to the radius and sparks thrown along it,
 //   gone in under a second (`fill` how far through): the ore's impact (to
 //   the kill radius: never bigger than its damage), a core breaking out of
@@ -5247,6 +5258,15 @@ const STAR_ORE: u32 = 2u;
 const STAR_CORE: u32 = 3u;
 const STAR_DIAL: u32 = 4u;
 const STAR_BURST: u32 = 5u;
+const STAR_MINE: u32 = 6u;
+// A laid mine's casing (your team's olive, art direction rule 3) in
+// shadow and lit, its pressure cap's worn steel, and its lamp's amber
+// (the mine tool's own colour) going white-hot as slime gathers on it.
+const MINE_DARK: vec3<f32> = vec3<f32>(22.0, 25.0, 15.0);
+const MINE_LIT: vec3<f32> = vec3<f32>(156.0, 164.0, 104.0);
+const MINE_CAP: vec3<f32> = vec3<f32>(168.0, 160.0, 128.0);
+const MINE_LAMP: vec3<f32> = vec3<f32>(255.0, 176.0, 48.0);
+const MINE_HOT: vec3<f32> = vec3<f32>(255.0, 246.0, 220.0);
 // The lumps' light, from the upper left as the soldiers' (x, y, up).
 const STAR_SUN: vec3<f32> = vec3<f32>(-0.55, -0.7, 0.75);
 // The ore's rock, in shadow and lit.
@@ -5557,6 +5577,87 @@ fn star_at(b: u32, d: vec2<f32>) -> StarPx {
             let spark = clamp(1.2 - sd, 0.0, 1.0) * left;
             o.add += mix(col2, col, k) * spark * 1.3;
         }
+        return o;
+    }
+    if (kind == STAR_MINE) {
+        let lay = clamp(s / 255.0, 0.0, 1.0);
+        let settle = 1.0 - (1.0 - lay) * (1.0 - lay);
+        let fresh = 1.0 - settle;
+        let near = p2;
+        // The trigger reach: twenty dashes, faint while it waits, bolder
+        // and closer dashed as slime gathers, sweeping in as it is laid.
+        let reach = h / 1.3 * (1.0 + 0.25 * fresh);
+        let wide = 1.4 + 1.6 * fresh + 0.8 * near;
+        let band = clamp(0.5 * wide + 0.5 - abs(r - reach), 0.0, 1.0);
+        let at = fract(atan2(d.x, -d.y) / tau + 1.0 + 0.04 * near);
+        let seg = fract(at * 20.0);
+        let gap = 0.42 - 0.2 * near;
+        let dash = smoothstep(0.0, 0.06, seg - gap * 0.5) * smoothstep(0.0, 0.06, 1.0 - gap * 0.5 - seg);
+        let ink = clamp(0.5 * wide + 1.5 - abs(r - reach), 0.0, 1.0) * dash;
+        let ring = band * dash * (0.42 + 0.45 * near + 0.5 * fresh);
+        o.paint = mix(vec3<f32>(10.0, 8.0, 4.0), col, band);
+        o.a = max(ink * 0.3 * (0.6 + 0.4 * near + fresh), ring);
+        o.add = col2 * band * dash * fresh * 0.9;
+        // The casing, dropping in from a third bigger as it is laid.
+        let rb = max(a0 * h, 4.0) * (1.0 + 0.35 * fresh);
+        let lift = 0.5 * rb * fresh;
+        let e = d + vec2<f32>(0.0, lift);
+        let sh = length(d - vec2<f32>(0.18, 0.26) * rb);
+        let shadow = (1.0 - smoothstep(rb * 0.8, rb * 1.15, sh)) * (0.6 - 0.35 * fresh);
+        let re = length(e);
+        let body = clamp(rb - re + 0.5, 0.0, 1.0);
+        if (shadow > 0.0 && body < 1.0) {
+            let sa = shadow * (1.0 - body);
+            o.paint = mix(o.paint, vec3<f32>(4.0, 4.0, 2.0), sa / max(o.a + sa, 1e-3));
+            o.a = max(o.a, sa);
+        }
+        // The lamp's halo on the ground round it, light (added).
+        let blink = p1;
+        let q = (fract(blink + 0.5) - 0.5) / 0.09;
+        let flash = max(exp(-q * q), fresh);
+        let on = 0.3 + 0.7 * flash;
+        let lamp_c = mix(MINE_LAMP, MINE_HOT, near * near);
+        let lr = max(0.17 * rb, 1.3);
+        let ld = length(e + vec2<f32>(0.0, 0.0));
+        let glow_r = rb * (1.4 + 0.8 * near);
+        o.add += lamp_c * exp(-(ld * ld) / (2.0 * glow_r * glow_r)) * on * (0.22 + 0.25 * near) * (1.0 - body);
+        if (body <= 0.0) { return o; }
+        // Its faces: a bevel round the edge sloping out, a flat top, and a
+        // raised cap in the middle.
+        let rr = re / rb;
+        var n = vec3<f32>(0.0, 0.0, 1.0);
+        let dir = e / max(re, 1e-3);
+        if (rr > 0.74) { n = normalize(vec3<f32>(dir * 1.1, 1.0)); }
+        let capr = 0.42;
+        if (rr < capr && rr > capr - 0.12) { n = normalize(vec3<f32>(dir * 0.7, 1.0)); }
+        let lam = clamp(dot(n, normalize(STAR_SUN)), 0.0, 1.0);
+        var c = mix(MINE_DARK, MINE_LIT, lam);
+        if (rr < capr) { c = mix(MINE_DARK * 1.4, MINE_CAP, lam); }
+        // A dark seam where the bevel meets the top and round the cap.
+        let seam = max(1.0 - smoothstep(0.0, 0.9, abs(re - 0.74 * rb)), 1.0 - smoothstep(0.0, 0.8, abs(re - capr * rb)));
+        c = c * (1.0 - 0.5 * seam);
+        // A cream rim along its lit edge and a dark one along the other, so
+        // the casing stands off any ground (your units high-contrast, art
+        // direction rule 2).
+        let edge = 1.0 - smoothstep(0.0, 1.4, rb - re);
+        let side = dot(dir, normalize(STAR_SUN.xy));
+        c = mix(c, mix(vec3<f32>(8.0, 8.0, 4.0), vec3<f32>(236.0, 224.0, 176.0), smoothstep(-0.2, 0.6, side)), edge * 0.85);
+        // Four bolts on the top, lit from the upper left.
+        for (var i = 0; i < 4; i++) {
+            let ba = tau * (f32(i) + 0.5) / 4.0;
+            let bp = vec2<f32>(cos(ba), sin(ba)) * rb * 0.58;
+            let bd = length(e - bp);
+            let br = max(0.08 * rb, 0.8);
+            let bolt = clamp(br - bd + 0.5, 0.0, 1.0);
+            let blit = clamp(0.5 - dot(e - bp, vec2<f32>(0.6, 0.8)) / max(br, 1e-3) * 0.5, 0.0, 1.0);
+            c = mix(c, mix(MINE_DARK, MINE_CAP, blit), bolt);
+        }
+        // The lamp in the cap's middle, and its glint.
+        let lamp = clamp(lr - ld + 0.5, 0.0, 1.0);
+        c = mix(c, mix(lamp_c * 0.35, lamp_c, on), lamp);
+        o.paint = mix(o.paint, c, body / max(max(o.a, body), 1e-3));
+        o.a = max(o.a, body);
+        o.add += lamp_c * on * (lamp * 0.9 + exp(-(ld * ld) / (2.0 * 2.0 * lr * lr)) * 0.6);
         return o;
     }
     return o;
