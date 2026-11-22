@@ -19,6 +19,7 @@ sources:
   - Reports/mini-boss-2026-11-16/README.md
   - Reports/miniboss-review-2026-11-20/README.md
   - Reports/origin-design-2026-11-18/README.md
+  - Reports/origin-design-2026-11-22/README.md
   - Reports/planet-curve-2026-11-21/README.md
   - Reports/planet-things-2026-11-18/README.md
   - Reports/planet2-sprawler-2026-11-18/README.md
@@ -441,7 +442,7 @@ armory over the paused round and Back re-arms every squad
 
 ## Open
 
-- The origin as the win rule (Milestone 2; the owner, 11-16 04:58Z): designed 11-18 as a sitting lump of the slime's walkers on its home crystal whose death wins the planet, with three questions for the owner; not built ([design](../../Reports/origin-design-2026-11-18/README.md)).
+- The origin as the win rule (Milestone 2; the owner, 11-16 04:58Z): designed 11-18 as a sitting lump of the slime's walkers on its home crystal whose death wins the planet ([first design](../../Reports/origin-design-2026-11-18/README.md)); redesigned 11-22 on what was built since: a standing heart on the start crystal from the landing, fed only while that crystal has charge (draining it starves the origin), its death a die-back and the win, the late last stand gathering into it; three questions for the owner; not built ([design](../../Reports/origin-design-2026-11-22/README.md)).
 - The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
 - Mini-boss slimes: hunter, wanderer, sapper, leech, Mortar (planet 4 on) and Pinwheel (planet 3 on) are built and on in the run (Now); each kind's look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 3).
 - A mortar or artillery building; rescue planets; saving a run.

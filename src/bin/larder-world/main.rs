@@ -987,6 +987,9 @@ struct App {
     /// The planet's depth this game (`map=planet:DEPTH`, else 1), and the
     /// test guns (Shift+H) and bullet loads (Ctrl+H) rolled so far.
     planet_depth: u32,
+    /// The planet's music and air (`sound::score`): its biome's mood, or
+    /// the meadow's on a map that is not a generated planet.
+    planet_mood: slime_mould::sound::Mood,
     gun_rolls: u32,
     ammo_rolls: u32,
     tools_page: bool,
@@ -1067,6 +1070,7 @@ impl App {
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
             planet_depth: 1,
+            planet_mood: slime_mould::sound::Mood::Meadow,
             gun_rolls: 0,
             ammo_rolls: 0,
             run: args.run.clone(),
@@ -1293,6 +1297,7 @@ impl App {
         // The planet's depth (`map=planet:DEPTH`), what a rolled gun
         // (`gun=roll`, Shift+H) is rolled for.
         let mut depth = 1;
+        let mut mood = slime_mould::sound::Mood::Meadow;
         let world = match &map_name {
             _ if made.is_some() => GpuWorld::with_map(device, queue, s, a.scale, made.as_ref().expect("a made map")),
             None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
@@ -1308,6 +1313,7 @@ impl App {
                     Some(made) => {
                         let (p, m) = made?;
                         depth = p.depth;
+                        mood = slime_mould::sound::Mood::of(p.biome);
                         m
                     }
                     None => Map::load(&dir, &name)?,
@@ -1426,6 +1432,7 @@ impl App {
             game.apply(Cmd::Active(0));
         }
         self.planet_depth = depth;
+        self.planet_mood = mood;
         if let Some(spec) = &a.gun {
             // Every soldier starts in squad 0 (both halves of a split
             // copy its gun, `Squad::offshoot`).
@@ -2111,6 +2118,9 @@ impl App {
         l.bangs(&g.kit.bangs);
         // The gun cards' payloads (sound pass two, 2026-11-20).
         l.pops(&g.rounds.pops);
+        // The score: the planet's mood, the menus' own under a menu.
+        l.mood = if self.menu.is_some() { slime_mould::sound::Mood::Menu } else { self.planet_mood };
+        l.music = music_user();
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
@@ -2789,6 +2799,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The saved volume (`volume`); the pictures' recordings stay at 100%.
     if look.is_none() && bench_secs.is_none() {
         set_volume_user(settings::saved_volume());
+        set_music_user(settings::saved_music());
     }
     if !mode_given && look.is_none() && bench_secs.is_none() {
         args.squads = true;

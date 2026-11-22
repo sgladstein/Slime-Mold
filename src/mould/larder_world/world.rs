@@ -199,6 +199,10 @@ pub trait World {
     fn crystal_covered_each(&self) -> Vec<usize> {
         Vec::new()
     }
+    /// Each crystal's cells, full or not (empty where not counted).
+    fn crystal_cells_each(&self) -> Vec<usize> {
+        Vec::new()
+    }
     /// The slots the slime can fill (0 unknown).
     fn slots(&self) -> usize {
         0

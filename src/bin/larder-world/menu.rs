@@ -133,6 +133,9 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // saved, like the UI size; not a round's setting.
     let vols: Vec<String> = settings::VOLUME_STEPS.iter().map(|&v| settings::percent(v)).collect();
     let vols: Vec<&str> = vols.iter().map(String::as_str).collect();
+    // The music under it (2026-11-22, `sound::score`): the planet's music
+    // bed and its air, on at 100%; 0% leaves only the game's own sounds.
+    o.insert(0, Opt::new("music", "Music and air", &vols, "100%", &settings::percent(music_user()), "The planet's music bed and its wind, water and insects, under every other sound; 0% turns them off"));
     o.insert(0, Opt::new("volume", "Volume", &vols, "100%", &settings::percent(volume_user()), "Every sound, over the first-run level; 0% is silent, and O mutes in play"));
     o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
@@ -772,6 +775,9 @@ impl App {
         }
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("volume")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != volume_user()) {
             self.set_volume(v);
+        }
+        if let Some(v) = self.menu.as_ref().and_then(|m| m.option("music")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != music_user()) {
+            self.set_music(v);
         }
         let Some(m) = self.menu.as_mut() else { return Ok(picks) };
         if picks.is_empty() && dish_key(m) != before {

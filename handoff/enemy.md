@@ -176,8 +176,18 @@ landing or the slots; over it species 0's birth cap stops births
 (`WORLD_CEIL`, `capcount`) and upkeep rises to x3 at 20% over. Numbers
 and rejected variants: `wiki/model/growth.md`, *The run's ceiling*.
 Film tools: headless `LARDER_DRAIN=T`, `film_ends`' `FILM_DRAIN`,
-`FILM_KEYS`. Next if Scott wants a sharper shrink: `CEILING_OVER` 0.1 or
-`ceiling_upkeep` 4 (measure the starts again).
+`FILM_KEYS`.
+
+**11-22, the exit test 4 recheck:** the covered-cells ceiling broke planet
+3 (the Trunk landed over it or spread off its crystal, crashed to a third
+by 0:45 and set off its strikers uncut). Now the ceiling is the charge
+left in the crystals it *holds* (walkers on 10% of a crystal's cells to
+take it, under 5% to let go; `World::crystal_cells_each`, pile word 2)
+times its walkers a unit of held charge at landing, at least 12 a held
+cell; a falling ceiling is set at most 5% under the slime a second
+(`CEILING_FALL`). Headless prints each crystal (`ceiling crystals t`).
+Next if Scott wants a sharper shrink: `CEILING_FALL` 0.1 or
+`ceiling_upkeep` 4 (measure planet 3's start again).
 
 ## A hit's hole and a mini-boss's flinch (2026-11-21, the same thread)
 

@@ -254,3 +254,4 @@ if the link ever stops working. Newest last.
 | 11-21 | Planet 1 Slime Review (the owner's 11-21 planet 1: slime and soldiers over the match, crystal charge, the 11 crystals from a replay, and big, median and small crystals for pumps and the slime on planets 1-8) | https://claude.ai/artifact/Vt6C8A69rvXuoBsCfLhKqz | `slime-regrowth-2026-11-21/page/` (open `index.html`) |
 | 11-21 | What Each Slime Does (exit test 4, one clip a planet) | https://claude.ai/artifact/7HaiejeHqdUjhiSjEfrJqK | `planet-things-2026-11-21/` |
 | 11-21 | Slime Follows Its Crystal (planet 1 end cards before and after crystals never run out and the slime's size follows the crystal it covers) | https://claude.ai/artifact/N9YydWDBDBVSFwr7MvrvPQ | `slime-ceiling-2026-11-21/` |
+| 11-22 | Slime Mold Music Bed (the per-planet music bed and air: planets 1-3 in the game, each mood alone) | https://claude.ai/artifact/WnCC7JYYUsqLKQVxk2gxgH | `music-bed-2026-11-22/` |

@@ -176,6 +176,19 @@ pub fn save_volume(v: f32) {
     }
 }
 
+/// The saved music level (`music=` in the file; `sound::score`), 100%
+/// when there is none. The same steps as the volume.
+pub fn saved_music() -> f32 {
+    get("music").as_deref().and_then(parse_volume).unwrap_or(1.0)
+}
+
+/// Saves the music level, with a word on stderr if it could not.
+pub fn save_music(v: f32) {
+    if let Err(e) = set("music", &percent(v)) {
+        eprintln!("larder-world: the music level was not saved ({e})");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

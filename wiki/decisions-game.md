@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - CLAUDE.md
   - Reports/bug-check-2026-11-15/README.md
@@ -60,6 +60,8 @@ live only in [NOW.md](../NOW.md), *What waits on the owner* (since
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-22 04:20-04:39, play | Play notes after a session on main (11-21 night). (1) Difficulty: "so much easier" than 11-20 night; he wants it in between. The ceiling as played (#659) starved the slime 35-40% in 90 s and it never grew past landing (11-20: regrew to 2x). Direction's call: #690's fix plus a held-crystal ceiling of about 1.5x landing (thread "Set difficulty between last two playtests"). (2) The shop: hover shows a card's info without selecting; cards show damage, speed and range as pictures, not a paragraph of numbers; a computed DPS for the gun (its own thread). (3) The Tools page went missing from the menu, and he wants a quicker way to pick blast, mine or det cord (its own thread) | "The game is so much easier compared to last night ... The difficulty should be somewhere in between." "hover over should show what is the info, I don't need to select ... If there is a way to see a calculated/estimated dps of you gun, that would be cool." "we lost access to tool in the menu. Also we should have an easier way to directly access you selected blast vs min vs det" | [run](world/run.md) |
+| 2026-11-22 04:16, card | **The origin is built now on a branch and lands when he calls Milestone 1 done**, so tests 2, 3 and 5 stay on today's game. The design is the Enemy lane's (`Reports/origin-design-2026-11-22/`): a standing heart on the slime's start crystal, killed to win the planet. Direction settled its three small questions: a die-back of about 10 s, draining its crystal stops its regrowth, the last walker still wins as a fallback | his pick "Build now, land after M1" over landing it on at once or waiting for Milestone 1 | [run](world/run.md) |
 | 2026-11-21 06:55, card | Squads get their tools back from **one device slot per squad, on a cooldown** (the 11-16 gun-system ruling, built now): his pick on the controls review's card over a 40 s refill anywhere, a drawn supply point, or leaving one tool per soldier a planet (squad mode drew no larder, so soldiers refilled only within 6 cells of the landing spot and a bought one held none) | ". One device slot per squad, on a cooldown" | [squad mode](world/squad-mode.md), [review](https://claude.ai/artifact/12jZrjC3MHe7R54S7V7Ktq) |
 | 2026-11-21 06:53 | A drag picks several squads: every squad in the box is commanded as one, as a link is, till another squad is taken or Esc (Ctrl + drag with a squad commanded, where a plain drag fires) | "add click and drag to select multiple squads" | [squad mode](world/squad-mode.md) |
 | 2026-11-21 06:30 | **Crystals never run out from eating or pumping**; only the squad empties one, by draining it. Replaces the 11-11 rows' crystals that run out (14:06, 14:54). With it the push against turtling rests on the count-up clock and the late threats. Built by the slime thread after the regrowth review (`Reports/slime-regrowth-2026-11-21/`) | "this 100%", of the line "crystals never run out from eating or pumping, and only your squad can empty one by draining it." | [run](world/run.md) |
