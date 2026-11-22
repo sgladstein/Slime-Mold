@@ -293,6 +293,10 @@ pub struct Kit {
     pub rules: KitRules,
     /// Mines laid and not yet gone off, fine cells.
     pub mines: Vec<(f32, f32)>,
+    /// Walkers within `mine_r` of each mine (`mines`' order) at the last
+    /// step's check (`frame`), so the window can show how near each is to
+    /// going off without counting again.
+    pub mine_near: Vec<u32>,
     pub bangs: Vec<Bang>,
     /// Per tool (`TOOLS` order): uses, bank spent, walkers killed.
     pub uses: [u32; 8],
@@ -462,7 +466,10 @@ impl Kit {
             Tool::Blast(p) => {
                 self.killed[i] += self.bang(g, p, r.blast_r, r.crater_r);
             }
-            Tool::Mine(p) => self.mines.push(p),
+            Tool::Mine(p) => {
+                self.mines.push(p);
+                self.mine_near.push(0);
+            }
             Tool::Cord(a, b) => {
                 let len = (a.0 - b.0).hypot(a.1 - b.1);
                 let n = (len / (r.cord_every * s)).ceil().max(1.0) as usize;
@@ -546,8 +553,10 @@ impl Kit {
         let r = self.rules;
         let rr = r.mine_r * g.world.scale();
         let trigger = self.mine_trigger(g);
-        let fired: Vec<usize> = (0..self.mines.len()).filter(|&m| g.world.walkers_in(self.mines[m], rr) >= trigger).collect();
+        self.mine_near = self.mines.iter().map(|&m| g.world.walkers_in(m, rr)).collect();
+        let fired: Vec<usize> = (0..self.mines.len()).filter(|&m| self.mine_near[m] >= trigger).collect();
         for &m in fired.iter().rev() {
+            self.mine_near.remove(m);
             let p = self.mines.remove(m);
             self.killed[1] += self.bang(g, p, r.blast_r, r.crater_r);
         }

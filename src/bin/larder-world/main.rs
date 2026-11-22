@@ -925,6 +925,11 @@ struct App {
     /// falls landed that have shaken the camera.
     star_tick: (u64, f32),
     star_felt: u32,
+    /// The laid mines' looks (`App::marks`): each mine's place, the clock
+    /// when it was first drawn (its lay cue) and its lamp's blink phase,
+    /// and the clock last drawn.
+    mine_looks: Vec<((f32, f32), f32, f32)>,
+    mine_clock: f32,
     /// A hit-stop (`hitstop=`; D6): real seconds the game holds still, and
     /// until another may start.
     stop: f32,
@@ -1145,6 +1150,8 @@ impl App {
             clock: 0.0,
             star_tick: (0, 0.0),
             star_felt: 0,
+            mine_looks: Vec::new(),
+            mine_clock: 0.0,
             stop: 0.0,
             stop_cool: 0.0,
             felt: 0,

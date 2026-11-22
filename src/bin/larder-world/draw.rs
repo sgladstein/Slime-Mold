@@ -886,6 +886,35 @@ impl App {
                 progress(&mut self.marks, b.at, below + 4.0);
             }
         }
+        // Laid mines (`Kit::mines`; owner 2026-11-22: "When I place a mine,
+        // I don't see anything visible": until then a mine was in the game
+        // and never drawn). One `Marks::star` each, painted in `view.wgsl`
+        // (`star_at`, MINE): a squat olive casing near a soldier's size
+        // with a cream rim, an amber lamp blinking once every 1.4 s, faster
+        // and whiter as slime gathers in its reach (`Kit::mine_near` over the
+        // trigger), and a faint dashed ring at that reach (`mine_r`). As it
+        // is laid (`MINE_LAY`) the ring sweeps in bright and the casing
+        // drops in under a steady lamp: the cue that it is down.
+        {
+            use slime_mould::world::marks::STAR_MINE;
+            const MINE_LAY: f32 = 0.6;
+            let dt = (self.clock - self.mine_clock).clamp(0.0, 0.25);
+            self.mine_clock = self.clock;
+            let kr = g.kit.rules;
+            let trigger = g.kit.mine_trigger(g).max(1) as f32;
+            let reach = kr.mine_r * sc;
+            let half = reach * 1.3;
+            let body = 0.8 * soldier_r(g, zoom);
+            let old = std::mem::take(&mut self.mine_looks);
+            for (i, &at) in g.kit.mines.iter().enumerate() {
+                let (laid, phase) = old.iter().find(|m| m.0 == at).map_or((self.clock, 0.0), |m| (m.1, m.2));
+                let near = (g.kit.mine_near.get(i).copied().unwrap_or(0) as f32 / trigger).clamp(0.0, 1.0);
+                let phase = (phase + dt * (0.7 + 5.0 * near * near)).fract();
+                self.mine_looks.push((at, laid, phase));
+                let lay = ((self.clock - laid) / MINE_LAY).clamp(0.0, 1.0);
+                self.marks.star(at, half, STAR_MINE, body / half, (lay * 255.0).round() as u32, phase, near, [236, 224, 176, 255], [255, 204, 96, 255], true);
+            }
+        }
         // Starfall and boss cores (`Game::starfall`, 2026-11-20), drawn as
         // an artist would (the visual pass, owner 2026-11-21 03:36Z; one
         // mark shape, `Marks::star`, painted and lit in `view.wgsl`'s

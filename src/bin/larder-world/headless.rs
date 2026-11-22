@@ -209,6 +209,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // The soldiers `cutsquad=` set down, kept there.
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
+    // `LARDER_MINES=T,X,Y;T,X,Y..` (world units): a mine laid there once T
+    // has come, free and with no thrower, to film the mine's look (the
+    // laid-mine look, 2026-11-22).
+    let mut mines: Vec<(f32, f32, f32)> = std::env::var("LARDER_MINES")
+        .unwrap_or_default()
+        .split(';')
+        .filter_map(|m| {
+            let v: Vec<f32> = m.split(',').filter_map(|x| x.trim().parse().ok()).collect();
+            (v.len() == 3).then(|| (v[0], v[1], v[2]))
+        })
+        .collect();
     let mut drain_at: Option<f32> = std::env::var("LARDER_DRAIN").ok().and_then(|v| v.parse().ok());
     let mut lit: Vec<usize> = Vec::new();
     let mut lured: Vec<usize> = Vec::new();
@@ -402,6 +413,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                         println!("  drain t {:.1} s: crystal {c} at {:.0},{:.0} emptied (charge {:.0}, {} of {} covered cells)", g.time(), cs[c].0 .0, cs[c].0 .1, cs[c].1, cov[c], cov.iter().sum::<usize>());
                     }
                 }
+            }
+            {
+                let g = app.game.as_mut().unwrap();
+                let t = g.time();
+                for &(_, x, y) in mines.iter().filter(|m| m.0 <= t) {
+                    g.kit.mines.push((x, y));
+                    g.kit.mine_near.push(0);
+                    println!("  mine t {t:.2} s laid at {x},{y}");
+                }
+                mines.retain(|m| m.0 > t);
             }
             // `boom=T,X,Y`: the round set off there once T has come.
             for (j, (bt, bx, by, cards)) in booms.iter().enumerate() {
