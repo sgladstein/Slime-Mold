@@ -9519,3 +9519,4 @@ error: Please commit or stash them.
 2026-11-22 02:55:24   econ,aim=6,cards=2,go=4,guard=1,want=wide/rate/blast.needle planet 3.0 seed 5.0: won 666.0 (52 s)
 2026-11-22 02:55:24   econ,aim=6,cards=1,go=4,guard=1,shop=hp/strike/rate/squad/ha planet 3.0 seed 5.0: lost 85.0 (6 s)
 2026-11-22 02:55:24   econ,aim=6,cards=1,go=4,group=3,grow=1.2,guard=1,kite=0.7,sp planet 3.0 seed 5.0: won 327.0 (24 s)
+2026-11-22 02:55:47 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once (pid 14372)
