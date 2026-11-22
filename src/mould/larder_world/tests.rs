@@ -94,6 +94,26 @@ fn a_seekers_catch_rides_its_aim_and_last_leg() {
     assert!(g.catches(&[], dt).is_empty(), "no seeker: no list");
 }
 
+/// A seeking round flies on past its aim (`Rules::seek_reach`, Direction's
+/// call 2026-11-22): its flight is longer by that share a card, the gun's
+/// own range unchanged.
+#[test]
+fn a_seeking_round_flies_on_past_its_aim() {
+    use super::super::rounds::{parse, Deck};
+    let mut g = small(1);
+    let q = g.soldiers[0].squad as usize;
+    let from = g.soldiers[0];
+    let shot = ShotIn { from: (from.x, from.y), to: (from.x + 20.0, from.y), r: 1.0, over: false };
+    let range = g.gun_range(q);
+    g.fly(vec![shot], &[(Some(0), 0, None)], &[], 0.0);
+    let plain = g.bullets[0].left;
+    g.bullets.clear();
+    g.apply(Cmd::Load(q as u8, Some(Deck::new(&parse("seek").unwrap()))));
+    g.fly(vec![shot], &[(Some(0), 0, None)], &[], 0.0);
+    assert!((g.bullets[0].left - plain * (1.0 + g.rules.seek_reach)).abs() < 1e-3, "{} against {plain}", g.bullets[0].left);
+    assert_eq!(g.gun_range(q), range, "the squad's range and stand-off stay the gun's");
+}
+
 #[test]
 fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let mut g = small(1);

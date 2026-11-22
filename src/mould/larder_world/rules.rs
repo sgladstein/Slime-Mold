@@ -133,6 +133,16 @@ pub struct Rules {
     /// `Reports/gun-seek-2026-11-16`) and deleted 11-17 (the technical
     /// lead's off-switch review; `Reports/dead-ends.md`).
     pub seek_catch: f32,
+    /// **A seeking round flies on past the stand-off** (2026-11-22,
+    /// Direction's call on exit test 5): a seek card's bullet flies this
+    /// share of its aimed length further a card, so a shot that misses
+    /// the near slime goes on and its last leg catches (`seek_catch`) a
+    /// walker past where the squad stands off; the squad's range and
+    /// stand-off are the gun's (`Game::gun_range`), unchanged. With the
+    /// catch alone, the rifle on planet 1 already struck slime with 89% of
+    /// its shots (92% with a Seek) and a lone Seek added 9 kills in the gun
+    /// lab's arena; flying on, 94% and +283 (planet 2: +881).
+    pub seek_reach: f32,
     /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
     /// ran the bank dry with soldiers left, who could then neither fight
     /// nor harvest past the mould ("energy required for shooting isn't
@@ -1020,6 +1030,7 @@ impl Rules {
             "boss_ring" => &mut self.boss.ring,
             "last_stand_at" => &mut self.raid.last_stand_at,
             "seek_catch" => &mut self.seek_catch,
+            "seek_reach" => &mut self.seek_reach,
             "strike" => &mut self.strike,
             "pump_smell" => &mut self.build.pump_smell,
             "pump_hp" => &mut self.build.pump_hp,
@@ -1091,6 +1102,7 @@ impl Default for Rules {
             split_r: 0.7,
             pierce_gap: 2.0,
             seek_catch: 2.0,
+            seek_reach: 0.5,
             price: 0.0,
             hp: 100.0,
             drain: 2.0,
