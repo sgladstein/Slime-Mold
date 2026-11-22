@@ -636,6 +636,11 @@ pub struct Model {
     /// Beside the cursor while placing: the cost of what is drawn so far,
     /// or why it cannot go there.
     pub ghost_note: Option<String>,
+    /// A one-time hint pinned beside a world point (fine cells): its words,
+    /// the point, how far below it to sit (world cells: the thing's own
+    /// reach, so it never covers it) and its opacity. The first Starfall or
+    /// core of a run says how to collect it (owner, 2026-11-22).
+    pub hint: Option<(String, (f32, f32), f32, f32)>,
     /// Where the ghost snaps to instead of the cursor, and its radius in
     /// world cells (a pump onto its crystal's middle, owner 2026-11-15:
     /// "it should automatically center itself on the crystal").
@@ -1617,6 +1622,10 @@ impl Hud {
         if m.end.is_none() {
             self.alerts_draw(c, world, s);
         }
+        if let (Some((text, at, gap, a)), None) = (&m.hint, &m.end) {
+            let p = cam.to_screen(*at);
+            self.world_hint(text, (p.0, p.1 + gap * cam.zoom), *a, c, s);
+        }
         self.ghost(m, cam, c, world, s);
         let key = m.hover.as_ref().filter(|_| self.hover.is_some() && self.targeting.is_none()).map(|h| h.title.as_str());
         let quiet = m.aiming || self.held.iter().any(|&h| h);
@@ -1831,6 +1840,30 @@ impl Hud {
             c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
             c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
         }
+    }
+
+    /// A hint pinned under a world point (`Model::hint`): a gold-edged
+    /// panel hung from a short stem at `at` (screen pixels), kept on the
+    /// screen. Quiet by design (owner: "some not too intrusive text"): the
+    /// alerts' size and panel, no sound, gone once it has been followed.
+    fn world_hint(&mut self, text: &str, at: (f32, f32), a: f32, c: &mut Canvas, s: f32) {
+        const GOLD: Rgba = [255, 214, 90, 255];
+        let size = 15.0 * s;
+        let w = c.atlas.measure(Weight::Medium, size, text) + 30.0 * s;
+        let h = 32.0 * s;
+        let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+        // Long enough to hang clear of the drop's clock under its dial.
+        let stem = 34.0 * s;
+        let x = (at.0 - w / 2.0).clamp(8.0 * s, (sw - w - 8.0 * s).max(8.0 * s));
+        let foot = if self.bottom > 0.0 { self.bottom } else { sh };
+        let y = (at.1 + stem).clamp(self.below + 8.0 * s, (foot - h - 8.0 * s).max(self.below + 8.0 * s));
+        let r = Rect::new(x, y, w, h);
+        if (y - at.1) > 2.0 * s {
+            c.rrect(Rect::new(at.0 - 1.0 * s, at.1, 2.0 * s, y - at.1), 1.0 * s, alpha(GOLD, 0.8 * a));
+        }
+        c.shadow(r, 8.0 * s, 12.0 * s, 3.0 * s, alpha(SHADOW, a));
+        c.panel(r, 8.0 * s, alpha(PANEL_TOP, a), alpha(PANEL_BOTTOM, a), 1.0, alpha(GOLD, 0.7 * a));
+        c.text(Weight::Medium, size, (r.x + 15.0 * s, r.y + 21.5 * s), Align::Left, text, alpha(TEXT, a));
     }
 
     fn tip_small(&mut self, text: &str, at: (f32, f32), c: &mut Canvas, s: f32) {

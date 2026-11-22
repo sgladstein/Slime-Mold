@@ -141,7 +141,15 @@ impl<W: World> Game<W> {
     /// square within `core_drift_r` whose 5 x 5 squares round it hold at
     /// least half as much slime as the fullest; `at` itself with no slime
     /// there or no grid.
-    fn core_home(&self, at: (f32, f32)) -> (f32, f32) {
+    ///
+    /// Only squares the squad can walk to and stand on, clear of crystals,
+    /// whose straight slide from `at` stays on such ground (`DropGround`,
+    /// 2026-11-22). The owner (11-22): cores "move after the boss is killed
+    /// on top of crystals or rock/walls and become inaccessible": the
+    /// thickest slime is on the crystals it eats, and the old test was
+    /// only that the home's middle was open agar, which a crystal is.
+    pub(super) fn core_home(&self, at: (f32, f32), size: f32) -> (f32, f32) {
+        let ground = self.drop_ground();
         let r = self.rules.star;
         let sc = self.world.scale();
         let (w, h) = self.world.size();
@@ -164,13 +172,15 @@ impl<W: World> Game<W> {
                         n += g.get((yy * gw as i64 + xx) as usize).copied().unwrap_or(0);
                     }
                 }
-                if d <= reach && n > 0 && self.world.open(p.0, p.1) {
+                if d <= reach && n > 0 && ground.fits(p, size) {
                     squares.push((p, d, n));
                 }
             }
         }
         let most = squares.iter().map(|s| s.2).max().unwrap_or(0);
-        squares.into_iter().filter(|s| 2 * s.2 >= most).min_by(|a, b| a.1.total_cmp(&b.1)).map_or(at, |s| s.0)
+        let mut near: Vec<_> = squares.into_iter().filter(|s| 2 * s.2 >= most).collect();
+        near.sort_by(|a, b| a.1.total_cmp(&b.1));
+        near.into_iter().find(|s| ground.clear_line(at, s.0, size, 0.5 * sc)).map_or(at, |s| s.0)
     }
 
     /// Core `i` slides `dt` seconds toward its home, stopping at rock.
@@ -185,7 +195,7 @@ impl<W: World> Game<W> {
         let home = match d.home {
             Some(h) => h,
             None => {
-                let h = self.core_home(d.at);
+                let h = self.core_home(d.at, d.r);
                 self.starfall.live[i].home = Some(h);
                 self.lure_marks.push(LureMark { at: h, until: d.ends });
                 self.starfall.live[i].lure = Some(h);

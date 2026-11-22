@@ -953,6 +953,8 @@ struct App {
     core_told: bool,
     /// Starfall's falls landed and cores dropped already told (`starfall.rs`).
     drops_told: (u32, u32),
+    /// The run's one-time Starfall hint (`StarHint`).
+    star_hint: StarHint,
     /// The broken mould (`Rules::broken`) told.
     broken_told: bool,
     /// Raids the HUD has told of (`Game::raids`).
@@ -1158,6 +1160,7 @@ impl App {
             dry: Vec::new(),
             core_told: false,
             drops_told: (0, 0),
+            star_hint: StarHint::default(),
             broken_told: false,
             raids_told: 0,
             robbed_at: None,
@@ -2066,6 +2069,8 @@ impl App {
                 }
             }
         }
+        let run = self.args.run.as_ref().map(|r| r.seed);
+        self.star_hint.update(g, run);
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
             self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
@@ -3059,4 +3064,60 @@ fn frames_line(parts: &mut Vec<[f32; 6]>, (w, h): (u32, u32), zoom: f32, fast: b
     }
     parts.clear();
     s + "\n"
+}
+
+/// The first Starfall or core of a run says how to collect it (owner,
+/// 2026-11-22: "The first time it happens in any run, there should be some
+/// not too intrusive text saying to collect the starfall for" shop points).
+/// A small panel hung under the drop (`Model::hint`), shown from the first
+/// drop that is down until the squad has taken a point from one, or for
+/// `HINT_SECS` of game time if it never does; once a run (a game outside a
+/// run: once a session). The corner alert that a drop landed stays too; on
+/// a 4K screen it sat far from the gem and was missed.
+#[derive(Default)]
+struct StarHint {
+    /// The run it belongs to (its seed; `None` outside a run), and
+    /// whether that run has seen it.
+    run: Option<Option<u64>>,
+    done: bool,
+    /// Game time it first showed.
+    since: Option<f32>,
+    /// What the window shows this frame.
+    show: Option<(String, (f32, f32), f32, f32)>,
+}
+
+/// Game seconds the hint stays if the squad never collects.
+const HINT_SECS: f32 = 30.0;
+
+impl StarHint {
+    fn update(&mut self, g: &Game<GpuWorld>, run: Option<u64>) {
+        use slime_mould::mould::larder_world::{CoreFrom, DropKind};
+        if self.run != Some(run) {
+            *self = StarHint { run: Some(run), ..StarHint::default() };
+        }
+        self.show = None;
+        if self.done {
+            return;
+        }
+        if g.starfall.points >= 1.0 {
+            self.done = true;
+            return;
+        }
+        let Some(d) = g.starfall.live.iter().find(|d| d.down && d.left > 0.01) else { return };
+        let t = g.time();
+        let since = *self.since.get_or_insert(t);
+        let age = t - since;
+        if age >= HINT_SECS {
+            self.done = true;
+            return;
+        }
+        let a = (age / 0.6).min(1.0) * ((HINT_SECS - age) / 2.0).clamp(0.0, 1.0);
+        let text = match (d.kind, d.from) {
+            (DropKind::Ore, _) => "Starfall: stand a squad on it to collect shop points",
+            (_, CoreFrom::Boss { .. }) => "Mini-boss core: stand a squad on it to collect shop points",
+            _ => "Core: stand a squad on it to collect shop points",
+        };
+        let gap = d.r + g.rules.star.reach * g.world.scale();
+        self.show = Some((text.into(), d.at, gap, a));
+    }
 }
