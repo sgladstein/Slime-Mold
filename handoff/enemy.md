@@ -204,8 +204,22 @@ bot never goes for the slime's home (its `home_ok` rule; also on main since
 `crystal_keep`, flagged to Direction 11-22 05:05Z), the HUD's goal line
 still says "kill every last walker" (Look and interface), the reach's
 overshoot (planet 3 held 2,899 against a size of 900, one wide take).
+The real run bot (`runbot=1:3`, seed 1, lavapipe): origin off won planets
+1 to 3 at 3:52, 5:20 and 3:55; origin on won planet 1 at 5:15 (49,814
+killed against 15,265) and lost planet 2 at 7:38, because the bot's siege
+never aims at the origin. Engine's siege must target `Game::core` before
+this lands (Engine said after M1; Direction told 11-22 06:10Z).
 Later, low priority (Direction 11-22): a Sprawler rule where body walkers
 run its trail lines, so its threads show through the body.
+
+## The hunter's regroup (2026-11-22, the same thread)
+
+`boss_stall` re-forms a stalled mini-boss from up to three radii round its
+lead and stops at the last ring short of its size (`reach_under`). With 1.5
+radii a hunter wrapped round a ridge on planet 2 (run 1795106014) shed 240
+to 71 to 16; reaching past its size grew it (240 to 539). Sent to main as a
+patch (`/mnt/project-files/enemy/`) through a helper thread, also on the
+origin branch. It still does not close on a squad that keeps moving.
 
 ## A hit's hole and a mini-boss's flinch (2026-11-21, the same thread)
 
