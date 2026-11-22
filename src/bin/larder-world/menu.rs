@@ -338,6 +338,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     s.icon = item_icon(key);
                     let max = run::ITEMS.iter().find(|i| i.key == key).map_or(1, |i| i.max);
                     s.level = (r.level_of(key), max);
+                    s.bars = item_bars(key, s.level.0);
                 }
                 Face::Card(c) => {
                     let (icon, kind, words) = draw::card_face(c, &rr, &rules);
@@ -605,6 +606,7 @@ fn item_icon(key: &str) -> Icon {
         "squad" => Icon::Recruit,
         "bank" => Icon::Crystal,
         "harvest" => Icon::Upgrade,
+        "fireproof" => Icon::Shield,
         "walls" => Icon::Wall,
         "turret" => Icon::Turret,
         "mortar" => Icon::Bomb,
@@ -618,6 +620,28 @@ fn item_icon(key: &str) -> Icon {
         "gas" => Icon::Pause,
         "draw" => Icon::Menu,
         _ => Icon::Upgrade,
+    }
+}
+
+/// An upgrade's effect as the shop's bars, now and at its next level
+/// (the owner, 2026-11-22: "more of visual representation"); empty for an
+/// upgrade with none drawn yet.
+fn item_bars(key: &str, level: u8) -> Vec<(String, f32, String)> {
+    match key {
+        "fireproof" => {
+            let bar = |l: u8| {
+                let f = run::fireproof_share(l);
+                (f, if f <= 0.0 { "immune".to_string() } else { format!("{:.0}%", 100.0 * f) })
+            };
+            let (now, now_t) = bar(level);
+            let mut b = vec![("Fire harm now".to_string(), now, now_t)];
+            if level < 3 {
+                let (next, next_t) = bar(level + 1);
+                b.push((format!("At level {}", level + 1), next, next_t));
+            }
+            b
+        }
+        _ => Vec::new(),
     }
 }
 

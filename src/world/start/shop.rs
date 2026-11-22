@@ -1051,6 +1051,11 @@ impl StartMenu {
         if row.area == ShopArea::Cards && !row.bars.is_empty() {
             y += stat_bars(c, &row.bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, row.tint, 1.0, limit, s) + 8.0 * s;
         }
+        // An upgrade's effect now and at its next level (Fireproof's fire
+        // harm, 2026-11-22), in the warm colour a worse number reads in.
+        if row.area == ShopArea::Upgrades && !row.bars.is_empty() {
+            y += stat_bars(c, &row.bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, WORSE, 1.0, limit, s) + 8.0 * s;
+        }
         // A gun's numbers as bars, against the carried gun's (its tick)
         // when it is another.
         if row.area == ShopArea::Guns && !row.bars.is_empty() {
