@@ -299,8 +299,13 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// to 70 a minute and never broke it in 12 min (it held 1,929 to 2,118).
 /// Direction's pick (11-22 08:42Z, of a near origin beating that rule or a
 /// smaller one): planet 1 at 700 and planet 3 at 1,000, so the siege wins
-/// planets 1 to 3 in under 10 min.
-pub const ORIGIN_SIZE: [f32; 8] = [700.0, 700.0, 1000.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
+/// planets 1 to 3 in under 10 min. With each take cut to its shortfall
+/// (`origin.rs`), the siege at these: planet 1 won seeds 1-3 at 4:23, 4:42
+/// and 7:57; planet 3 at 4:00, 4:37 and 9:14; planet 2 won seed 1 at 5:59
+/// but was wiped on seeds 2 and 3 (both won at 4:37 and 5:04 with the
+/// origin off, and seed 3 was wiped at 600 too), so planet 2 is 500: won
+/// seeds 1-3 at 5:49, 5:16 and 5:42, losing 0, 8 and 7.
+pub const ORIGIN_SIZE: [f32; 8] = [700.0, 500.0, 1000.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// The slime's room to regrow over its landing, by planet
 /// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
