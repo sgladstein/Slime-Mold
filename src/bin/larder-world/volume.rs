@@ -37,6 +37,20 @@ pub(super) fn set_music_user(v: f32) {
     MUSIC.store(v.to_bits(), Ordering::Relaxed);
 }
 
+/// The screen shake's strength (2026-11-22), 1 = 100%, 0 = off: the
+/// Options page's Screen shake row, saved like the volume. It scales the
+/// command line's `shake=` (1 in the game), so the films' `shake=0` stays
+/// still and the pictures, which never load it, shake as before.
+static SHAKE: AtomicU32 = AtomicU32::new(0x3f80_0000); // 1.0
+
+pub(super) fn shake_user() -> f32 {
+    f32::from_bits(SHAKE.load(Ordering::Relaxed))
+}
+
+pub(super) fn set_shake_user(v: f32) {
+    SHAKE.store(v.to_bits(), Ordering::Relaxed);
+}
+
 /// The master to send for the sound on or off.
 pub(super) fn master_now(on: bool) -> SoundCmd {
     SoundCmd::Master(if on { master_at(volume_user()) } else { 0.0 })
@@ -76,5 +90,20 @@ impl App {
             }
         }
         settings::save_music(v);
+    }
+
+    /// Sets the screen shake to `v`: the menus' row and the saved file. The
+    /// next blast shakes by it (`feel`).
+    pub(super) fn set_shake(&mut self, v: f32) {
+        set_shake_user(v);
+        let label = settings::percent(v);
+        for m in [self.menu.as_mut(), self.parked.as_mut()].into_iter().flatten() {
+            if let Some(o) = m.options.iter_mut().find(|o| o.key == "shake") {
+                if let Some(at) = o.choices.iter().position(|c| *c == label) {
+                    o.at = at;
+                }
+            }
+        }
+        settings::save_shake(v);
     }
 }

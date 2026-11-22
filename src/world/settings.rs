@@ -189,6 +189,24 @@ pub fn save_music(v: f32) {
     }
 }
 
+/// The camera shake's strengths the Options page steps through (the
+/// owner, 2026-11-22: "I thought I could turn off the screen shake but I
+/// dont see the option"): a share of the game's shake, 0% off. Until then
+/// only the command line's `shake=` turned it.
+pub const SHAKE_STEPS: [f32; 5] = [0.0, 0.25, 0.5, 0.75, 1.0];
+
+/// The saved screen shake (`shake=` in the file), 100% when there is none.
+pub fn saved_shake() -> f32 {
+    get("shake").as_deref().and_then(parse_volume).map_or(1.0, |v| v.min(1.0))
+}
+
+/// Saves the screen shake, with a word on stderr if it could not.
+pub fn save_shake(v: f32) {
+    if let Err(e) = set("shake", &percent(v)) {
+        eprintln!("larder-world: the screen shake was not saved ({e})");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
