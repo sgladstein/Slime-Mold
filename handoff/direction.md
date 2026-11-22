@@ -207,12 +207,23 @@ end.
   (`Reports/planet-things-2026-11-21/`). Look's test 2 pass is closed
   (#670, #671, #675, #676, #678, #679; Look C #680). Rulings recorded:
   fruiting to planet 2 (#644), crystals never run out (06:30), raid gap
-  floor 45 s (#652). Open: slime size following food waits on his card
-  in the regrowth thread (the slime thread builds it); planets 4 and 5
+  floor 45 s (#652). Slime size following food is built (`crystal_keep`
+  and the ceiling, `handoff/enemy.md`); planets 4 and 5
   (rush 5 and 3 of 9) wait on the heart/strikers arms job on a build with
   #681 before any row moves. Losses in the smoke table doubled between
   the first and second day's main (59 to 115 on 9 planets, Enemy's #670
   to #681); planets are still won.
+- **Clocks held (11-22 03:30Z, Direction)**: Engine's pace table (#686
+  adds a "pace by planet" job to the run bot; `scripts/play_log_summary.py
+  --since 2026-11-20` reads his logs after `git fetch origin play-logs`).
+  The bot wins each planet in 4 to 6 min (P3 seed 3 9:20), none held on.
+  Scott on builds 2487 to 2978: P1 won 10:11 and 11:11, lost 7:17 and
+  16:34, quit twice; P2 won once at 20:56, lost twice. His planet 1 sits
+  in the 8 to 12 min band and his three planets come to about 30 min, so
+  no clock or par moves: the bot is quicker than him, which is not a
+  clock fault. Watch his planet 2 (one win at 21 min) and his loss rate
+  (half of recent P1 and P2) in the next logs, several of which predate
+  the 11-21 pacing; review before any planet retune (his 11-18 rule).
 - **Planet 1 regression and the pacing** (11-20 night): the bot lost
   maps 1 and 2 of CI's run seeds that the 17:00Z build won. The bot thread
   bisected it to #566 (strikers retune); #598's rate cap alone won back map
