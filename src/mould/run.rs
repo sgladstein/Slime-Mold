@@ -286,7 +286,14 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// at their first wide takes anyway, over the most they could regrow to,
 /// so a struck origin never regrew and 44 soldiers walking straight at it
 /// won planet 1 at 1:35 with none lost (run seed 1, lavapipe, 11-22).
-pub const ORIGIN_SIZE: [f32; 8] = [800.0, 1200.0, 1800.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
+/// Second pass the same morning (44 soldiers, `hand=origin`): planet 2 at
+/// 1,200 wiped them at 1:50, at 800 wiped them too, at 700 they won at
+/// 2:05 with 34 lost (24 were wiped), at 600 won at 1:45 with 10 lost; its
+/// strikers and Mortar fight there too. Planet 1 lost none at any try
+/// (bite 3, armour 15, a lunge reach of 4 or 6 radii, the flinch off): 44
+/// guns cut a lunge down before it touches them. So planet 1 is bigger,
+/// 1,200, for time (won at 2:54 against 2:13 at 800), and planet 2 lower.
+pub const ORIGIN_SIZE: [f32; 8] = [1200.0, 700.0, 1800.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,

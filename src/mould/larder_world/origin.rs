@@ -85,11 +85,14 @@ pub struct OriginRules {
     pub lunge: f32,
     pub cap: f32,
     pub cap_most: f32,
+    /// How far its members may run from its centre in a lunge (times its
+    /// radius; the last stand's is 2.5).
+    pub lunge_leash: f32,
 }
 
 impl Default for OriginRules {
     fn default() -> Self {
-        OriginRules { on: false, size: 400.0, most: 1.5, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0 }
+        OriginRules { on: false, size: 400.0, most: 1.5, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5 }
     }
 }
 

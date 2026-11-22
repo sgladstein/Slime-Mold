@@ -251,7 +251,7 @@ impl<W: World> Game<W> {
         let mut r = self.rules.stand;
         if h.origin {
             let o = self.rules.origin;
-            (r.armour, r.bite, r.every, r.lunge, r.cap, r.cap_most) = (o.armour, o.bite, o.every, o.lunge, o.cap, o.cap_most);
+            (r.armour, r.bite, r.every, r.lunge, r.cap, r.cap_most, r.lunge_leash) = (o.armour, o.bite, o.every, o.lunge, o.cap, o.cap_most, o.lunge_leash);
         }
         r
     }

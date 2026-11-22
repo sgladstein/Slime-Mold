@@ -987,6 +987,7 @@ impl Rules {
             "origin_lunge" => &mut self.origin.lunge,
             "origin_cap" => &mut self.origin.cap,
             "origin_cap_most" => &mut self.origin.cap_most,
+            "origin_lunge_leash" => &mut self.origin.lunge_leash,
             "wave_first" => &mut self.wave.first,
             "wave_window" => &mut self.wave.window,
             "wave_loss" => &mut self.wave.loss,
