@@ -1422,9 +1422,27 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
                 })
         })
         .flatten();
+    // The crystal it took (2026-11-22, Direction; Enemy's trace of run seed
+    // 8 planet 1, the run bot's one loss in the 11-22 arms batch): the slime
+    // held its start crystal and a big one (charge 818,560) it touched at
+    // landing, so its ceiling sat at twice its landing size and it filled to
+    // it (16.5k at 1:30, 28.6k at 11:30) while the squad, its harvest gone
+    // at 1:30, shot the edges with 15 soldiers to the 720 s limit (stall
+    // 636 s). Only the squad empties a crystal (the owner, 11-21), so once
+    // the slime is over its landing size the hunt drains the biggest
+    // crystal it holds past its start, ahead of any other.
+    let over = g.ceiling.start > 0 && g.mould > g.ceiling.start;
+    let took = (drains && over)
+        .then(|| {
+            (1..cs.len())
+                .filter(|&c| g.ceiling.holding.get(c) == Some(&true) && cs[c].1 > DRY && !left.contains(&c) && !held.contains(&c) && g.pump_on(c).is_none())
+                .max_by(|&a, &b| cs[a].1.total_cmp(&cs[b].1))
+        })
+        .flatten();
+    let pick = took.or(pick);
     let work = MEM.with_borrow_mut(|b| {
         match (b.work, pick) {
-            (Some((c, h, since)), _) if drains && cs.get(c).is_some_and(|x| x.1 > DRY) && !b.left.iter().any(|l| l.0 == c) && (c > 0 || home_ok) && g.pump_on(c).is_none() => {
+            (Some((c, h, since)), _) if drains && cs.get(c).is_some_and(|x| x.1 > DRY) && !b.left.iter().any(|l| l.0 == c) && (c > 0 || home_ok) && g.pump_on(c).is_none() && took.is_none_or(|x| x == c) => {
                 if g.harvested > h + 50.0 {
                     b.work = Some((c, g.harvested, t));
                 } else if t - since > 30.0 && c > 0 {
