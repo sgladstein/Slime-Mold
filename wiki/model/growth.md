@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/condense-2026-11-14/README.md
@@ -49,7 +49,8 @@ code:
 
 ## Now
 
-In the run (11-21) its size follows the crystal it covers
+In the run (11-21) its size follows the crystals it holds, with room to
+regrow to 1.5 times its landing on them (11-22, `ceiling_grow`)
 ([ceiling](#the-runs-ceiling-2026-11-21)).
 
 The big dish's walker count can follow its food (Larder World W0;
@@ -283,9 +284,10 @@ twin):
   it **holds** (walkers on at least a tenth of a crystal's cells,
   `pilesum`'s word 8 against word 2, smoothed over 5 s crystal by crystal)
   times its walkers a unit of held charge at landing, at least 12 walkers a
-  held cell; never over 3 times its landing walkers or its slots. So it
-  starts at its landing size, rises as it takes crystals and falls as the
-  squad drains or clears one. Over it no walker is born (species 0's birth
+  held cell, times `Rules::ceiling_grow` (1.5, 11-22); never over 3
+  times its landing walkers or its slots. So it starts under a ceiling
+  half again its landing size, rises as it takes crystals and falls as
+  the squad drains or clears one. Over it no walker is born (species 0's birth
   cap, the engine's `CEIL`) and its upkeep rises to 3 times at 20% over.
   A ceiling that falls under the slime is set at most 5% under its size
   each second, so it shrinks over tens of seconds: with the whole fall at
@@ -300,6 +302,20 @@ twin):
   strikers from 1:27). Planet 1, idle squad, seed 1, its most covered
   crystal (60% of its held charge) emptied at 1:00: the ceiling fell from
   its 26,239 slots, the slime from 15,170 to 13,503 by 1:30 and held there.
+- `ceiling_grow` 1.5 (2026-11-22, the thread "Set difficulty between
+  last two playtests"): the owner found his 11-22 run (#659's ceiling,
+  growth 1) "so much easier" than 11-21's (no ceiling, slots at twice the
+  landing) and asked for in between. His logs: 11-21 the slime regrew to
+  about twice its landing in 3-4 min (planet 1 14k to 28k, planet 2 13k
+  to 26k) and planets took 11-21 min; 11-22 it never passed its landing
+  and planets fell in 4:40-8:19 (planets 2-4 also starved 35-40% in the
+  first 90 s, #659's start, fixed by #690). On his 11-22 maps (run
+  1795319574, greedy, software GPU), planet 1's slime at 8:00: 14,699 at
+  growth 1, 17,532 at 1.5, 17,487 on the 11-21 build (ff87786); planets 2
+  and 3 matched to 2:00 in all three (planet 2's map starves to about
+  5,000 by 1:00 on the 11-21 build too; planet 3 takes 7 crystals and
+  meets its slots either way). At 1.5 it still stops at half again its
+  landing where the 11-21 game went on to twice.
 - The first cut (#659) used the crystal *cells* its walkers covered times
   its walkers a covered cell at landing (at most 25). Planet 3's Trunk
   landed at 32 a cell, or spread off its crystal (1,856 covered cells to
