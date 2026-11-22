@@ -279,12 +279,34 @@ twin):
   greedy: first surge at 41-55 s against 43-58 s before; the slime eats
   2.4-3.0 food/s against 2.3-2.7).
 - The ceiling (`Rules::ceiling`, `larder_world/ceiling.rs`; `run::CEILING`
-  12 on every planet): once a game second, the crystal cells it covers
-  (charge and a walker on them, `pilesum`'s word 8, smoothed over 5 s)
-  times its walkers a covered cell at landing (planet 1: 14 to 21), never
-  over 3 times its landing walkers or its slots. Over it no walker is born
-  (species 0's birth cap, the engine's `CEIL`) and its upkeep rises to 3
-  times at 20% over.
+  12 on every planet): once a game second, the charge left in the crystals
+  it **holds** (walkers on at least a tenth of a crystal's cells,
+  `pilesum`'s word 8 against word 2, smoothed over 5 s crystal by crystal)
+  times its walkers a unit of held charge at landing, at least 12 walkers a
+  held cell; never over 3 times its landing walkers or its slots. So it
+  starts at its landing size, rises as it takes crystals and falls as the
+  squad drains or clears one. Over it no walker is born (species 0's birth
+  cap, the engine's `CEIL`) and its upkeep rises to 3 times at 20% over.
+  A ceiling that falls under the slime is set at most 5% under its size
+  each second, so it shrinks over tens of seconds: with the whole fall at
+  once, upkeep x3 starved its off-crystal body together (planet 3, seed 1,
+  36,683 walkers at 0:40 to 16,224 at 0:50).
+- Measured 11-22 (run seeds, greedy, software GPU): planet 3 seeds 2 and 3
+  hold within 4% of their landing (41,022 and 34,718) to 1:20, where the
+  first cut had them at 12,000-15,000 by 0:45; seed 1's squad takes a
+  crystal that held 45% of the slime's charge at 0:30 and it falls 38,074
+  to 35,370 by 1:00, then to 13,064 by 1:30 as its cut-off body starves,
+  with strikers from 1:08 (the ceiling off: 37,031 at 1:00, 18,130 at 1:30,
+  strikers from 1:27). Planet 1, idle squad, seed 1, its most covered
+  crystal (60% of its held charge) emptied at 1:00: the ceiling fell from
+  its 26,239 slots, the slime from 15,170 to 13,503 by 1:30 and held there.
+- The first cut (#659) used the crystal *cells* its walkers covered times
+  its walkers a covered cell at landing (at most 25). Planet 3's Trunk
+  landed at 32 a cell, or spread off its crystal (1,856 covered cells to
+  1,242 by 0:24), so its ceiling sat under its size from the start and
+  upkeep x3 took it from about 40,000 to 12,000-15,000 by 0:45, which set
+  off its strikers with no cut (11-22, the exit test 4 recheck). Replaced
+  by the held crystals above.
 - Measured on planet 1, run seeds 1-3, greedy: the sizes at 1:00, 2:00
   and 3:00 are within 5% of before on 8 of 9 (seed 1 at 2:00 +19%, a
   fight's swing). Idle squad, seed 1, its most covered crystal (1,195 of
