@@ -363,11 +363,11 @@ impl Card {
             Card::Range => "Shoots twice as far.",
             Card::Rate => "Fires twice as often.",
             Card::Thrift => "The next card costs less budget.",
-            Card::Smother => "Bullets wipe the scent slime follows to food.",
+            Card::Smother => "Bullets wipe the slime's scent and calm what they hit.",
             Card::Trigger => "Carries the next bullet and lets it out where it hits. Needs a bullet after it.",
             Card::Expire => "Carries the next bullet and lets it out where it stops. Needs a bullet after it.",
             Card::Multicast => "Fires the next bullet with it, in the same shot. Needs a bullet after it.",
-            Card::Seek => "Bullets that just miss strike slime beside them.",
+            Card::Seek => "Bullets fly on past their aim and strike slime beside them.",
             Card::Blind => "Blinds slime where it hits: it walks straight on.",
             Card::Sour => "Slime where it hits turns from its own trail.",
             Card::Spin => "Slime where it hits turns in tight rings.",
@@ -691,6 +691,14 @@ pub struct RoundRules {
     /// (three seeds of four up), about the Torch's, and the pair still
     /// +5,057. A few sparks a minute: the fire is what you see.
     pub tinder_spark: f32,
+    /// **Smother's calm at its hit** (2026-11-22, Direction: "every card
+    /// has to show something, and a faint rose won't"): where a Smother
+    /// bullet strikes slime, a calm disc (`big::MIND_STILL`, with the
+    /// scent wiped) this share of the shot's own strike across. Its line
+    /// alone calmed the few walkers standing on it, a rose speck or two a
+    /// frame at zoom 12; kept to the strike so the effect is no bigger than
+    /// the card.
+    pub smother_calm: f32,
     /// `Scorch` also burns: kills the walkers within its crater radius
     /// along the flight (owner, 2026-11-14 08:41Z, after "how are scorch
     /// and alarm different. It just makes a virtual wall for the slime?").
@@ -784,6 +792,7 @@ impl Default for RoundRules {
             trail_fuel: 1.0,
             trail_fuel_gap: 6.0,
             tinder_spark: 0.01,
+            smother_calm: 1.0,
             trail_burn: true,
             shove: 2.0,
             shove_secs: 0.25,
@@ -845,6 +854,7 @@ impl RoundRules {
             "plain_pop" => &mut self.plain_pop,
             "plain_wide" => &mut self.plain_wide,
             "tinder_spark" => &mut self.tinder_spark,
+            "smother_calm" => &mut self.smother_calm,
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
             "mind_rest" => &mut self.mind_rest,
@@ -1091,11 +1101,18 @@ pub fn trail_bursts(n: [u8; TRAILS], from: (f32, f32), to: (f32, f32), r: &Round
     let bait = r.trail_bait * smell * n[1] as f32;
     let cloud = r.trail_cloud * n[2] as f32;
     let fuel = if n[4] > 0 { r.trail_fuel } else { 0.0 };
+    // **Smother calms its line** (2026-11-22, Direction's call on exit
+    // test 5): the walkers on it take the Still status (no charge, no
+    // eating, `big::MIND_STILL`) as well as losing the scent. The scent
+    // wipe alone is not drawn: in the gun lab's arena on planet 1 a lone
+    // Smother killed 89 fewer than no card and on planet 2 827 fewer with
+    // 3 seeds of 4 hurt less, but nothing on screen said why.
+    let mind = if n[3] > 0 { big::MIND_STILL as u8 } else { 0 };
     (1..=discs)
         .map(|j| {
             let t = (j as f32 * gap / len.max(1e-6)).min(1.0);
             let at = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
-            Burst { at, r: rr, burn: n[0] > 0 && r.trail_burn, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, bait, smother: n[3] > 0, cloud, fuel, ..Burst::default() }
+            Burst { at, r: rr, burn: n[0] > 0 && r.trail_burn, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, bait, smother: n[3] > 0, mind, cloud, fuel, ..Burst::default() }
         })
         .collect()
 }
@@ -1693,7 +1710,7 @@ impl Rounds {
         let tq = g.squads.len();
         let mut of: Vec<Option<[u8; TRAILS]>> = vec![None; tq + 1];
         let mut any = [0u8; TRAILS];
-        let legs: Vec<(Leg, [u8; TRAILS], bool)> = g
+        let legs: Vec<(Leg, [u8; TRAILS], Option<f32>)> = g
             .last_shots
             .iter()
             .map(|s| (s, s.by.map_or(tq, |k| g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
@@ -1714,7 +1731,7 @@ impl Rounds {
                 for (a, b) in any.iter_mut().zip(n) {
                     *a = (*a).max(b);
                 }
-                ((s.from, s.hit.unwrap_or(s.to)), n, s.hit.is_some())
+                ((s.from, s.hit.unwrap_or(s.to)), n, s.hit.map(|_| s.r))
             })
             .collect();
         if any == [0; TRAILS] {
@@ -1722,7 +1739,9 @@ impl Rounds {
         }
         let s = g.world.scale();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
-        let k = burst_rules(&self.rules.kit, fine);
+        // The rounds' own burst rules, so Smother's calm lasts the Still's
+        // `still_secs` (the toolkit's alone carry no Mind length).
+        let k = self.rules.burst_rules(fine);
         let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
         let mut burned = 0;
         let n = any;
@@ -1737,11 +1756,16 @@ impl Rounds {
             let mut discs = trail_bursts(legn, from, to, &self.rules, s, fine, smell);
             if legn[4] > 0 {
                 keep_clear(&mut discs, &near, self.rules.trail_fuel_gap);
-                if hit && spark(to, self.rules.tinder_spark) {
+                if hit.is_some() && spark(to, self.rules.tinder_spark) {
                     if let Some(b) = discs.last_mut().filter(|b| b.fuel > 0.0) {
                         b.light = b.light.max(self.rules.torch_light);
                     }
                 }
+            }
+            // Smother calms a disc where its line strikes slime, the
+            // shot's own strike across (`RoundRules::smother_calm`).
+            if let (true, Some(r)) = (legn[3] > 0, hit) {
+                discs.push(Burst { at: (to.0 / s, to.1 / s), r: r / s * self.rules.smother_calm, smother: true, mind: big::MIND_STILL as u8, ..Burst::default() });
             }
             // Mist laid from the muzzle would sleep its own shooter
             // (`Rules::doze`, 2026-11-19): no cloud disc within its radius
@@ -2365,6 +2389,11 @@ mod tests {
         assert!((one.bait - 2.0 * r.trail_bait).abs() < 1e-4 && one.alarm == 0.0 && (one.r - r.trail_r * 2f32.sqrt()).abs() < 1e-5, "two baits: twice the scent, over the wider disc");
         assert!((one.cloud - r.trail_cloud).abs() < 1e-6 && one.crater_r == r.trail_r);
         assert!(trail_bursts([0; TRAILS], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0).is_empty());
+        // Smother wipes the scent and calms its line (2026-11-22); no
+        // other trail calms.
+        let calm = trail_bursts([0, 0, 0, 1, 0], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0);
+        assert!(calm.iter().all(|b| b.smother && b.mind == big::MIND_STILL as u8 && !b.kill));
+        assert_eq!(one.mind, 0);
     }
 
     /// A mist round on the CPU world: the bullets' flight lays a real cloud
