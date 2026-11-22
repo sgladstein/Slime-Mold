@@ -228,8 +228,14 @@ bank buys, attack-move to the core) and the `origin t` line. GPU test
 Numbers and the rush in `wiki/world/run.md`, *The origin*. Open: the run
 bot never goes for the slime's home (its `home_ok` rule; also on main since
 `crystal_keep`, flagged to Direction 11-22 05:05Z), the HUD's goal line
-still says "kill every last walker" (Look and interface), the reach's
-overshoot (planet 3 held 2,899 against a size of 900, one wide take).
+still says "kill every last walker" (Look and interface). The overshoot
+is fixed (11-22 10:20Z): `most` 1 and each take's reach cut to its
+shortfall (a take gets every free walker in its disc, about 1.6 a fine
+cell). The origin is a `boss_aim` target for soldiers within its reach
+(`origin_reaches`), under Squad's near-first rule (#715: slime 5 cells
+off first, an origin 8 off first). Sizes 700, 500, 1,000 on planets 1-3:
+Engine's siege (#707's run bot) wins seeds 1-3 on each in under 10 min.
+The 44-soldier rush on planet 1 wins at 1:34 with none lost (D7, Scott's).
 The real run bot (`runbot=1:3`, seed 1, lavapipe): origin off won planets
 1 to 3 at 3:52, 5:20 and 3:55; origin on won planet 1 at 5:15 (49,814
 killed against 15,265) and lost planet 2 at 7:38, because the bot's siege
