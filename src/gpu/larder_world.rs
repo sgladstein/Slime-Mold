@@ -173,6 +173,8 @@ pub struct GpuWorld {
     /// Crystal cells with charge and a walker on them at the last readout,
     /// pile by pile (the slime's birth ceiling, `World::crystal_covered`).
     covered: Vec<usize>,
+    /// Each pile's cells at the last readout (`World::crystal_cells_each`).
+    cells: Vec<usize>,
     /// The gardeners' state (`GpuWorld::garden`), None in the plain game.
     pub garden: Option<GpuGarden>,
     /// The player's own mould's living walkers at the last readout.
@@ -381,7 +383,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -537,6 +539,7 @@ impl GpuWorld {
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
         self.covered = std::mem::take(&mut r.covered);
+        self.cells = r.sums.iter().map(|s| s.1 as usize).collect();
         // The slime's eating with `crystal_keep` (the piles' last words): a
         // world that flows sums twice a tick (`pilesum` before and after
         // `flow`). A count that went back (a fresh dish) starts again.
@@ -1156,6 +1159,10 @@ impl World for GpuWorld {
         self.covered.clone()
     }
 
+    fn crystal_cells_each(&self) -> Vec<usize> {
+        self.cells.clone()
+    }
+
     fn slots(&self) -> usize {
         self.e.n as usize
     }
@@ -1510,6 +1517,9 @@ mod tests {
         }
         fn crystal_covered_each(&self) -> Vec<usize> {
             self.g.crystal_covered_each()
+        }
+        fn crystal_cells_each(&self) -> Vec<usize> {
+            self.g.crystal_cells_each()
         }
         fn slots(&self) -> usize {
             self.g.slots()
@@ -2830,10 +2840,13 @@ mod tests {
     ///   meter's food) within a fifth of what the same world without the
     ///   keep took out of its crystals.
     /// - The engine counts covered crystal cells, a few walkers to one.
-    /// - A ceiling of one walker a covered cell (under the landing's
-    ///   density, which it keeps) with its roof at the landing walkers:
+    /// - A ceiling from the crystals it holds (at the landing's walkers a
+    ///   unit of held charge) with its roof at the landing walkers:
     ///   births stop there, past it by at most a step's births, while the
     ///   kept world without it grows on.
+    /// - The crystal it covers most emptied (as a squad that drained it):
+    ///   the charge it holds falls by that crystal's, and the ceiling with
+    ///   it (under the roof).
     #[test]
     fn the_slime_eats_without_emptying_a_crystal_and_stops_at_its_ceiling() {
         let Some((device, queue)) = test_gpu() else { return };
@@ -2869,6 +2882,22 @@ mod tests {
         let alive = capped.world.e.alive();
         assert!(alive <= ceil + ceil / 100, "births stop at the ceiling: {alive} alive, ceiling {ceil}");
         assert!(kept.world.e.alive() > alive + start / 50, "the world without a ceiling grows on: {} against {alive}", kept.world.e.alive());
+        let cov = capped.world.crystal_covered_each();
+        let most = (0..cov.len()).max_by_key(|&j| cov[j]).unwrap();
+        let (held, share) = (capped.ceiling.held, capped.world.crystals()[most].1 as f64);
+        // What it could take meanwhile: the crystals it did not hold.
+        let free: f64 = capped.world.crystals().iter().zip(&capped.ceiling.holding).filter(|(_, &h)| !h).map(|(c, _)| c.1 as f64).sum();
+        capped.world.empty_crystal(most);
+        while capped.time() < 15.0 {
+            capped.step();
+        }
+        let c = &capped.ceiling;
+        eprintln!("drained crystal {most} ({share:.0} of {held:.0} held): holds {:.0}, ceiling {ceil} to {}", c.held, c.now);
+        assert!(share > 0.0 && capped.ceiling.holding[most] && capped.world.crystals()[most].1 == 0.0, "it held the drained crystal, now empty");
+        assert!(c.held <= held - share + free + 1.0, "the charge it holds lost the drained crystal's: {held:.0} to {:.0} ({free:.0} it could take)", c.held);
+        let want = (c.held * c.density).min(start as f64).round();
+        // (No lower: a falling ceiling chases the slime down, `CEILING_FALL`.)
+        assert!(c.now as f64 >= want - 1.0 && c.now as usize <= ceil, "the ceiling follows it, under the roof: {} against {want}", c.now);
     }
 
     /// **A hit's hole stays open while it is fresh** (`crater_shut`,

@@ -738,7 +738,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 // The slime's birth ceiling (`ceiling.rs`, 11-21): the
                 // crystal cells it covers, smoothed, and the ceiling.
                 if g.rules.ceiling > 0.0 {
-                    println!("  ceiling t {:.0} s: slime {}, covered {:.0} crystal cells x {:.1}, ceiling {} (landed {}), upkeep x{:.2}", g.time(), g.mould, g.ceiling.covered, g.ceiling.density, g.ceiling.now, g.ceiling.start, g.ceiling.factor);
+                    println!("  ceiling t {:.0} s: slime {}, holds {} crystals, charge {:.0} x {:.2}, ceiling {} (landed {}), upkeep x{:.2}", g.time(), g.mould, g.ceiling.holds, g.ceiling.held, g.ceiling.density, g.ceiling.now, g.ceiling.start, g.ceiling.factor);
+                    // Each crystal: its covered cells (smoothed) of its cells, its charge left, held or not.
+                    let (cells, cs) = (g.world.crystal_cells_each(), g.world.crystals());
+                    let each: Vec<String> = g.ceiling.cover.iter().enumerate().filter(|&(j, &v)| v >= 1.0 || g.ceiling.holding.get(j) == Some(&true)).map(|(j, &v)| format!("{j}{} {v:.0}/{} {:.0}%", if g.ceiling.holding.get(j) == Some(&true) { "*" } else { "" }, cells.get(j).copied().unwrap_or(0), 100.0 * cs.get(j).map_or(0.0, |c| c.1 as f64) / g.ceiling.full.get(j).copied().unwrap_or(1.0).max(1.0))).collect();
+                    println!("  ceiling crystals t {:.0} s: {}", g.time(), each.join(", "));
                 }
                 if g.rules.star.on {
                     println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);

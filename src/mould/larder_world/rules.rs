@@ -578,10 +578,10 @@ pub struct Rules {
     /// thread "Make the slime a more interesting enemy"; the owner's pick
     /// "1", 06:34Z, after his 06:30Z ruling that only the squad empties a
     /// crystal). Once a game second (`Game::time_ceiling`) the slime's
-    /// ceiling is the crystal cells it covers (with charge and a walker on
-    /// them, smoothed) times its walkers a covered cell at landing, at
-    /// least `ceiling`; never over `ceiling_roof` times its landing walkers
-    /// (or its slots). Over it no walker is born and its upkeep rises, to
+    /// ceiling is the charge left in the crystals it holds (walkers on a
+    /// tenth of their cells, smoothed) times its walkers a unit of held
+    /// charge at landing, at least `ceiling` walkers a held cell; never
+    /// over `ceiling_roof` times its landing walkers (or its slots). Over it no walker is born and its upkeep rises, to
     /// `ceiling_upkeep` times 20% over, so a slime that loses a crystal
     /// shrinks to what the rest holds. 0 is off (`ceiling.rs`).
     pub ceiling: f32,
