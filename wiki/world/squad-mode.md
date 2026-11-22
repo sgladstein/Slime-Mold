@@ -160,7 +160,8 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   first guesses; the shop's cheaper-tools upgrade shortens them). Squads
   commanded together each have their own slot, the commanded one first.
   The wait shows on every tool and on the Tools button; with no tool owned
-  yet (a run's planet 1) the Tools button is gone. Before, the squad mode
+  yet (a run's planet 1) the Tools button stays and opens the page of
+  locks (#660 hid it; the owner read that as Tools lost, 2026-11-22). Before, the squad mode
   kept the RTS round's carry rule: a soldier took a tool only within 6 cells
   of the undrawn landing spot, so each threw one a planet and a bought one
   none. Devices are commands, so they replay. Still to come from step E:

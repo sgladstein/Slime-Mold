@@ -61,8 +61,8 @@ cooldown** (owner's card answer 06:55Z, option A): `Cmd::Device`,
 `Game::device`, `Squad::device_at`/`device_secs`, `KitRules::cooldown`
 (blast 20 s, mine 25, cord 30, gas 35; Tools+ cuts them 20 % a level); free
 per use, the carry rule stays for the RTS round; the strategy bot throws
-through the slot (`strat::tools`); the Tools button hides in a run while
-nothing is owned. The follow-up: Esc closes a card page first, Space jumps
+through the slot (`strat::tools`); the Tools button stays in a run with
+nothing owned and opens the locks (it hid until 11-22; the owner read it as lost). The follow-up: Esc closes a card page first, Space jumps
 to the newest alert, only a Shift drag splits, a number takes command with
 none commanded (it did nothing), and Ctrl swaps the crosshair for the pick
 cursor (`cursor.rs`, Look's #658; its box and device looks needed no other
