@@ -1806,7 +1806,19 @@ fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
     // Free fire: the thickest slime in reach, controlled or not.
     aim(&mut g, far, Stance::Free);
     assert_eq!(g.target(k), Some(far), "the controlled squad on free fire shoots slime in reach");
-    assert_eq!(g.sight(k), reach, "free fire reads the gun's reach");
+    // It reads near itself first (`Rules::near_first`), and the whole
+    // reach once a near read finds nothing, for a few frames.
+    let near = g.rules.near_first * sc;
+    assert!(near < reach, "near first {near} inside the reach {reach}");
+    assert_eq!(g.sight(k), near, "free fire reads near itself first");
+    g.read_aim(k, 0, Some((x, y)), 10);
+    assert_eq!(g.sight(k), near, "slime near: it keeps reading near");
+    g.read_aim(k, 0, None, 0);
+    assert_eq!(g.sight(k), reach, "nothing near: free fire reads the gun's reach");
+    for _ in 0..8 {
+        g.read_aim(k, 0, Some(far), 10);
+    }
+    assert_eq!(g.sight(k), near, "after a few far frames it looks near again");
     // Hold fire holds.
     aim(&mut g, far, Stance::HoldFire);
     assert_eq!(g.target(k), None);
@@ -1820,7 +1832,9 @@ fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
     assert_eq!(g.target(k), Some(edge), "a walker at the edge of defend, read by its block's centre");
     // Clearing a crystal or guarding, defend reads the whole reach again.
     g.squads[0].guard = Some((x + 5.0 * sc, y));
-    assert_eq!(g.sight(k), reach, "guarding reads the reach");
+    assert_eq!(g.sight(k), near, "guarding reads near first");
+    g.read_aim(k, 0, None, 0);
+    assert_eq!(g.sight(k), reach, "guarding reads the reach when nothing is near");
     g.squads[0].guard = None;
     // Attack-move fires freely, the controlled squad too.
     aim(&mut g, far, Stance::Defend);
