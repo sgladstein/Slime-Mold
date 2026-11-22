@@ -9520,3 +9520,5 @@ error: Please commit or stash them.
 2026-11-22 02:55:24   econ,aim=6,cards=1,go=4,guard=1,shop=hp/strike/rate/squad/ha planet 3.0 seed 5.0: lost 85.0 (6 s)
 2026-11-22 02:55:24   econ,aim=6,cards=1,go=4,group=3,grow=1.2,guard=1,kite=0.7,sp planet 3.0 seed 5.0: won 327.0 (24 s)
 2026-11-22 02:55:47 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once (pid 14372)
+2026-11-22 02:58:12 worker: started in C:\Users\Scott\Code\slime-league, 2 games at once (pid 18520)
+2026-11-22 02:59:50 worker: built the game in 98 s (src 11f20b6b4a7a)
