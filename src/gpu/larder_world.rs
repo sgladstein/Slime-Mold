@@ -4267,4 +4267,52 @@ mod tests {
         assert!(on.iter().all(|&c| c == 0), "none gets in: {on:?}");
         assert!(off.iter().any(|&c| c > 0), "the old rule lets them in (the test's control): {off:?}");
     }
+
+    /// **A wall built on packed slime leaves no walker inside it** (the
+    /// owner, 2026-11-22: "sometimes walkers get stuck in walls/doors when
+    /// building and it becomes a problem for winning"). A wall moves the
+    /// walkers it covers to the nearest free cell (`evict`), but with one
+    /// walker a cell it looked only 16 cells out and kept the crowd limit,
+    /// so in slime packed wider than that a walker found nowhere and stayed
+    /// in the wall, where no gun's shot reaches it (`stops`) and, with
+    /// `solid_walls`, a step of one cell can't take it out of a wall
+    /// thicker than that: the planet's mass never reached 0.
+    ///
+    /// A disc of slime packed one a cell 40 out, then a wall 4 cells thick
+    /// (a thickened wall at scale 1) through its middle: no living walker
+    /// is left on a wall cell, none is lost, and a game later they are
+    /// still all out.
+    #[test]
+    fn a_wall_built_on_packed_slime_leaves_no_walker_inside() {
+        use crate::gpu::{floats, Start};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale) = (5, 1);
+        let s = Settings { start: Start::Disc, disc: 30.0, haze: 0.0, walkers: 4_500, respawn: 0.0, ..race_settings(seed, scale, 4_500) };
+        let g = GpuWorld::new(&device, &queue, s, scale);
+        let (w, h) = g.size();
+        let mut game = Game::new(g, Rules::default(), seed);
+        // Living walkers, and those on a cell that is not agar.
+        let count = |g: &GpuWorld| {
+            let e = &g.e;
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let agar: Vec<u32> = read_back(&e.device, &e.queue, &e.agar).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+            let live: Vec<usize> = (0..e.n as usize).filter(|&q| !e.grows || en[q] >= 0.0).collect();
+            let inside = live.iter().filter(|&&q| agar[(wk[4 * q + 1] as usize).min(h - 1) * w + (wk[4 * q] as usize).min(w - 1)] == 0).count();
+            (live.len(), inside)
+        };
+        let (cx, cy) = (w as f32 * 0.5, h as f32 * 0.5);
+        let (n0, in0) = count(&game.world);
+        game.world.build_wall((cx - 36.0, cy), (cx + 36.0, cy), 4.0);
+        let (n1, in1) = count(&game.world);
+        for _ in 0..20 {
+            game.step();
+        }
+        let (n2, in2) = count(&game.world);
+        eprintln!("packed slime: {n0} walkers ({in0} on walls) before the wall, {n1} ({in1} inside) after it, {n2} ({in2} inside) 20 steps on");
+        assert_eq!(in0, 0, "none on a wall before");
+        assert_eq!(n1, n0, "no walker lost to the wall");
+        assert_eq!(in1, 0, "{in1} walkers left inside the wall");
+        assert_eq!(in2, 0, "{in2} walkers inside the wall 20 steps on");
+    }
 }
