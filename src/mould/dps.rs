@@ -13,7 +13,9 @@
 //!   (buckshot) and its gun's bullets a shot (the scattergun);
 //! - a strike past the cap fires faster instead (`Game::strike_over`);
 //! - its kill bursts (`rounds::bursts` with `kill`: Blast, Bomb), Wide and
-//!   Scatter included, at each slime hit;
+//!   Scatter included, at each slime hit, and the plain bullet's pop with
+//!   a modifier on it (`rounds::plain_bursts`: Wide, Scatter, Delay,
+//!   Thick), less the part of it the strike already cleared;
 //! - the hits it flies on through (`Card::Pierce`, the needle's), the
 //!   pieces a split leaves (`Card::Split`, `Rules::split_n` at `split_r`),
 //!   the casts fired beside it (`Card::Multicast`) and carried by it
@@ -29,7 +31,7 @@
 use super::bullets::DAMAGE;
 use super::guns::Gun;
 use super::larder_world::Rules;
-use super::rounds::{bursts, casts, cycle, volley, Card, Cast, RoundRules};
+use super::rounds::{bursts, casts, cycle, plain_bursts, volley, Card, Cast, RoundRules};
 use super::squad::R_MAX;
 
 /// The dish scale the game's planets run at (`larder-world`'s `scale=2`):
@@ -65,7 +67,17 @@ pub fn estimate(gun: &Gun, cards: &[Card], rules: &Rules, rr: &RoundRules) -> f3
         let shape = c.ammo.set.shape();
         let r = (strike * c.ammo.reach()).min(R_MAX) * shape.r;
         let hits = 1.0 + pierce + shape.pierce as f32;
-        let kill: f32 = bursts(c, (0.0, 0.0), rr, sc, 30.0).iter().filter(|b| b.kill).map(|b| area(b.r * sc)).sum();
+        let kill: f32 = if c.payload == Card::Plain {
+            // The plain bullet's pop (`rounds::plain_bursts`, 2026-11-22):
+            // on the hit, it is the strike's own disc again, so only what
+            // a Wide pop reaches past the strike counts; scattered, its
+            // bursts sit off the hit; delayed (Delay, Thick), the slime
+            // has flowed back, so all of it counts.
+            let pop: f32 = plain_bursts(c, (0.0, 0.0), r, rr, sc).iter().filter(|b| b.kill).map(|b| area(b.r * sc)).sum();
+            if c.scatter || c.trigger.is_some() { pop } else { (pop - area(r)).max(0.0) }
+        } else {
+            bursts(c, (0.0, 0.0), rr, sc, 30.0).iter().filter(|b| b.kill).map(|b| area(b.r * sc)).sum()
+        };
         // The pieces a split bullet leaves at its last hit, a generation a
         // card, each `split_n` pieces at `split_r` of the radius.
         let mut pieces = 0.0;
@@ -117,6 +129,11 @@ mod tests {
         }
         // Wide works on a kill burst: a wide blast beats a blast.
         assert!(est(&g, &[Card::Wide, Card::Blast]) > est(&g, &[Card::Blast]));
+        // And on the rifle's plain bullet (its pop, 2026-11-22), as do
+        // Scatter, Delay and Thick.
+        for c in [Card::Wide, Card::Scatter, Card::Delay, Card::Thick] {
+            assert!(est(&g, &[c]) > base * 1.05, "{c:?} on the rifle: {}", est(&g, &[c]));
+        }
     }
 
     #[test]
