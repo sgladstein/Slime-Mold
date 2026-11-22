@@ -1881,6 +1881,128 @@ impl Run {
     }
 }
 
+/// **The run's save file** (owner, 2026-11-22 04:40Z: "a run should always
+/// be autosaving and saving the run between closing the program", after a
+/// night's run was lost on closing the window; until then a run lived only
+/// in the window's memory and there was no save at all, Milestone 2's "save
+/// and resume" not yet built).
+///
+/// `key=value` lines, one per field, the cards by their text form
+/// (`Card::word`, as replays carry them) and the guns as
+/// `kind/depth/range/rate/spread/shots/budget/slots/grade` (`gun_word`;
+/// Rust prints an `f32` so it reads back exactly). Upgrades are saved by
+/// their key, not their place in `ITEMS`. A line it does not know is
+/// skipped and a missing one keeps `Run::new`'s value, and a card or an
+/// upgrade a later build renamed or removed is dropped with the rest kept,
+/// so a save outlives the builds `play.cmd` pulls between sittings. Only
+/// the head (`SAVE_HEAD`), the seed and the depth are required.
+///
+/// What it holds is the run in the shop, or as it landed on the planet
+/// being played: a planet's own state (the slime, the squads, the
+/// buildings) lives on the GPU and is not saved, so a run closed mid-planet
+/// lands on the same planet (the same seed, the same map) fresh.
+pub const SAVE_HEAD: &str = "larder-world run save 1";
+
+/// A gun's text form in a save (see `SAVE_HEAD`).
+pub fn gun_word(g: &Gun) -> String {
+    format!("{}/{}/{}/{}/{}/{}/{}/{}/{}", g.kind.key(), g.depth, g.range, g.rate, g.spread, g.shots, g.budget, g.slots, g.grade)
+}
+
+/// A gun from its text form (`gun_word`).
+pub fn gun_from_word(s: &str) -> Option<Gun> {
+    let w: Vec<&str> = s.split('/').collect();
+    if w.len() != 9 {
+        return None;
+    }
+    let f = |i: usize| w[i].parse::<f32>().ok().filter(|v| v.is_finite());
+    Some(Gun { kind: GunKind::parse(w[0])?, depth: w[1].parse().ok()?, range: f(2)?, rate: f(3)?, spread: f(4)?, shots: w[5].parse().ok()?, budget: w[6].parse().ok()?, slots: w[7].parse().ok()?, grade: f(8)? })
+}
+
+impl Run {
+    /// The run as its save file's text (`SAVE_HEAD`). The loadout panel's
+    /// state (`field`, `field_squad`) is the window's while it is open and
+    /// is not saved.
+    pub fn save_text(&self) -> String {
+        let words = |cs: &[Card]| cs.iter().map(|c| c.word()).collect::<Vec<_>>().join(" ");
+        let guns = |gs: &[Gun]| gs.iter().map(gun_word).collect::<Vec<_>>().join(" ");
+        let flag = |b: bool| if b { "1" } else { "0" };
+        let mut s = format!("{SAVE_HEAD}\n");
+        let mut put = |k: &str, v: String| s.push_str(&format!("{k}={v}\n"));
+        put("seed", self.seed.to_string());
+        put("depth", self.depth.to_string());
+        put("points", self.points.to_string());
+        put("owned", ITEMS.iter().zip(self.owned).filter(|(_, l)| *l > 0).map(|(it, l)| format!("{}:{l}", it.key)).collect::<Vec<_>>().join(" "));
+        put("cards", self.cards.iter().map(|(c, on)| format!("{}{}", if *on { "+" } else { "-" }, c.word())).collect::<Vec<_>>().join(" "));
+        put("offers", words(&self.offers));
+        put("guns", guns(&self.guns));
+        put("gun_offers", guns(&self.gun_offers));
+        // A loadout: its gun's index or `-`, then its cards, `,` between.
+        put("loadouts", self.loadouts.iter().map(|l| std::iter::once(l.gun.map_or("-".into(), |g| g.to_string())).chain(l.cards.iter().map(|c| c.word())).collect::<Vec<_>>().join(",")).collect::<Vec<_>>().join(" "));
+        put("editing", self.editing.to_string());
+        put("turret_loadout", self.turret_loadout.to_string());
+        put("stars", self.stars.iter().map(|s| s.to_string()).collect::<Vec<_>>().join(" "));
+        put("over", flag(self.over).into());
+        put("beaten", flag(self.beaten).into());
+        put("dev", flag(self.dev).into());
+        put("rerolls", self.rerolls.to_string());
+        s
+    }
+
+    /// A run from its save file's text (`save_text`), or why not.
+    pub fn from_save(text: &str) -> Result<Run, String> {
+        let mut lines = text.lines();
+        if lines.next().map(str::trim) != Some(SAVE_HEAD) {
+            return Err(format!("not a run save (its first line is not \"{SAVE_HEAD}\")"));
+        }
+        let kv: Vec<(&str, &str)> = lines.filter_map(|l| l.split_once('=')).map(|(k, v)| (k.trim(), v.trim())).collect();
+        let get = |k: &str| kv.iter().rev().find(|(n, _)| *n == k).map(|(_, v)| *v);
+        let seed: u64 = get("seed").and_then(|v| v.parse().ok()).ok_or("no seed")?;
+        let mut r = Run::new(seed);
+        r.depth = get("depth").and_then(|v| v.parse().ok()).filter(|d| (1..=PLANETS).contains(d)).ok_or("no depth, or one past the last planet")?;
+        let num = |k: &str| get(k).and_then(|v| v.parse::<u64>().ok());
+        let flag = |k: &str| get(k).is_some_and(|v| v == "1");
+        let list = |k: &str| get(k).map(|v| v.split_whitespace().collect::<Vec<_>>()).unwrap_or_default();
+        r.points = num("points").map_or(0, |v| v.min(u32::MAX as u64) as u32);
+        if get("owned").is_some() {
+            r.owned = [0; ITEMS.len()];
+            for w in list("owned") {
+                let Some((k, l)) = w.split_once(':') else { continue };
+                if let (Some(i), Ok(l)) = (ITEMS.iter().position(|it| it.key == k), l.parse::<u8>()) {
+                    r.owned[i] = l.min(ITEMS[i].max);
+                }
+            }
+        }
+        r.cards = list("cards").into_iter().filter_map(|w| Some((Card::from_word(w.get(1..)?)?, w.starts_with('+')))).collect();
+        r.offers = list("offers").into_iter().filter_map(Card::from_word).collect();
+        let guns: Vec<Gun> = list("guns").into_iter().filter_map(gun_from_word).collect();
+        if !guns.is_empty() {
+            r.guns = guns;
+        }
+        r.gun_offers = list("gun_offers").into_iter().filter_map(gun_from_word).collect();
+        let loadouts: Vec<Loadout> = list("loadouts")
+            .into_iter()
+            .map(|l| {
+                let mut parts = l.split(',');
+                let gun = parts.next().and_then(|g| g.parse::<usize>().ok()).filter(|&g| g < r.guns.len());
+                Loadout { gun, cards: parts.filter_map(Card::from_word).collect() }
+            })
+            .take(LOADOUTS_MAX)
+            .collect();
+        if !loadouts.is_empty() {
+            r.loadouts = loadouts;
+        }
+        let last = r.loadouts.len() - 1;
+        r.editing = num("editing").map_or(0, |v| (v as usize).min(last));
+        r.turret_loadout = num("turret_loadout").map_or(r.turret_loadout, |v| v as usize).min(last);
+        r.stars = list("stars").into_iter().filter_map(|v| v.parse().ok()).collect();
+        r.over = flag("over");
+        r.beaten = flag("beaten");
+        r.dev = flag("dev");
+        r.rerolls = num("rerolls").unwrap_or(0);
+        Ok(r)
+    }
+}
+
 /// A card's name in the shop: a rolled bullet's own ("Needle gas").
 fn card_title(c: Card) -> String {
     match c {
@@ -2541,6 +2663,56 @@ mod tests {
     /// gun or a card is in one loadout at a time; a loadout that loses its
     /// gun fits the turrets' rack and gives back what no longer fits; the
     /// field panel sells nothing and gives the panel's squad a loadout.
+    /// **A run saves and loads whole** (owner 2026-11-22 04:40Z, a run
+    /// lost on closing the window): a run that has shopped, won planets
+    /// and built loadouts reads back from its save text as it was, every
+    /// card kind and a rolled bullet and gun with it; a save from an older
+    /// or newer build keeps what it can read.
+    #[test]
+    fn a_run_saves_and_loads_whole() {
+        let mut r = Run::new(1_763_786_000);
+        r.points = 5_000;
+        r.restock();
+        for i in 0..ITEMS.len() {
+            r.pick(Pick::Item(i));
+        }
+        r.pick(Pick::Offer(0));
+        r.pick(Pick::Gun(0));
+        r.cards.extend(Card::ALL.into_iter().map(|c| (c, false)));
+        r.cards.push((Card::Ammo(Ammo::roll(7, 3)), false));
+        r.pick(Pick::NewLoadout);
+        let gas = r.cards.iter().position(|c| c.0 == Card::Gas).unwrap();
+        r.pick(Pick::Card(gas));
+        r.pick(Pick::Edit(0));
+        r.won(3);
+        r.won(1);
+        r.dev = true;
+        r.pick(Pick::DevReroll);
+        r.owned[1] = 2;
+        r.guns.push(Gun::roll(3, 2));
+        r.gun_offers.push(GunKind::Long.average_at(3));
+        r.loadouts.push(Loadout { gun: Some(r.guns.len() - 1), cards: vec![Card::Blast, Card::Ammo(Ammo::roll(9, 2))] });
+        r.offers.push(Card::Pierce);
+        assert!(r.owned.iter().any(|&l| l > 1) && r.guns.len() > 1 && r.loadouts.len() > 2 && !r.offers.is_empty());
+        let text = r.save_text();
+        assert_eq!(Run::from_save(&text), Ok(r.clone()), "{text}");
+        // The loadout panel's state is the window's, not the save's.
+        let mut f = r.clone();
+        (f.field, f.field_squad) = (true, Some((1, 2)));
+        assert_eq!(Run::from_save(&f.save_text()), Ok(r.clone()));
+        // A renamed card and upgrade, a line from a later build and a lost
+        // line: the rest loads.
+        let odd = text.replace("cards=", "cards=+no-such-card ").replace("owned=", "owned=no_such_item:3 ") + "a_later_field=7\n";
+        let odd: String = odd.lines().filter(|l| !l.starts_with("rerolls=")).map(|l| format!("{l}\n")).collect();
+        let back = Run::from_save(&odd).unwrap();
+        assert_eq!((back.cards.clone(), back.owned, back.loadouts.clone(), back.rerolls), (r.cards.clone(), r.owned, r.loadouts.clone(), 0));
+        // Not a save, or no planet to play: an error, never a panic.
+        assert!(Run::from_save("").is_err() && Run::from_save("hello\nseed=1").is_err());
+        assert!(Run::from_save(&format!("{SAVE_HEAD}\nseed=1\ndepth=99\n")).is_err());
+        let bare = Run::from_save(&format!("{SAVE_HEAD}\nseed=4\ndepth=2\n")).unwrap();
+        assert_eq!((bare.seed, bare.depth, bare.guns.clone(), bare.loadouts.len()), (4, 2, vec![first_gun()], 2));
+    }
+
     #[test]
     fn loadouts_hold_their_own_gun_and_cards() {
         let mut r = Run::new(1);

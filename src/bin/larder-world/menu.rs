@@ -711,6 +711,7 @@ impl App {
             match self.menu_event(p) {
                 Ok(true) => {
                     self.save_replay();
+                    self.save_run();
                     event_loop.exit();
                 }
                 Ok(false) => {}
@@ -789,6 +790,8 @@ impl App {
                 self.parked = Some(menu);
                 self.start()?;
                 self.paused = false;
+                // As it lands: closed mid-planet, it lands here again.
+                self.save_run();
             }
             StartEvent::Buy(i) => {
                 if let Some(r) = self.shop_run() {
@@ -830,6 +833,7 @@ impl App {
                     m.notice = line;
                     m.show(Page::Main);
                 }
+                self.save_run();
             }
             // A thing to try ticked or unticked: this PC remembers.
             StartEvent::Tried(i, tried) => {
@@ -1026,6 +1030,7 @@ impl App {
         let l = chosen.map_or(0, |c| c.1);
         let what = format!("{}: {}", r.loadout_name(l), if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") });
         self.hud.alert(&what, None, theme::ACCENT);
+        self.save_run();
     }
 
     /// The shop page, filled from the run (the menu up, its dish behind).
@@ -1042,6 +1047,79 @@ impl App {
                 m.show(Page::Shop);
             }
         }
+        // Each buy, move and pick in the shop comes back through here.
+        self.save_run();
+    }
+
+    /// The run saved when the game last closed, as the run under way (the
+    /// main menu's "Back to the run"). A save that does not read is moved
+    /// aside to `run-unreadable.txt` with a word on the menu, never
+    /// overwritten unseen.
+    pub(super) fn load_run(&mut self) {
+        let Some(p) = self.run_file.clone() else { return };
+        let Ok(text) = std::fs::read_to_string(&p) else { return };
+        let note = match Run::from_save(&text) {
+            Ok(r) if !r.over => {
+                let note = format!("Your run is saved on planet {} ({}): Back to the run carries on", r.depth, r.line());
+                self.run_saved = text;
+                self.run = Some(r);
+                note
+            }
+            Ok(_) => {
+                let _ = std::fs::remove_file(&p);
+                return;
+            }
+            Err(e) => {
+                let aside = p.with_file_name("run-unreadable.txt");
+                let _ = std::fs::rename(&p, &aside);
+                eprintln!("larder-world: the saved run did not load ({e}); moved to {}", aside.display());
+                format!("The saved run could not be read ({e}); it was moved to {}", aside.display())
+            }
+        };
+        if let Some(m) = self.menu.as_mut() {
+            m.run_live = self.run.is_some();
+            m.notice = Some(note);
+        }
+    }
+
+    /// **Saves the run** to its file (`run_file`) if it changed since the
+    /// last write, or deletes the file once there is no run under way (given
+    /// up, lost or won). Called wherever the run changes (landing, each buy
+    /// in the shop, the loadout panel closing, a planet's end) and on
+    /// quitting, and every few seconds as a net (`autosave`). Written to a
+    /// side file and renamed over the save, so a crash mid-write leaves the
+    /// last good save.
+    pub(super) fn save_run(&mut self) {
+        let Some(p) = self.run_file.clone() else { return };
+        // The run in the shop, or as it landed on the planet being played;
+        // the loadout panel's copy is the window's until it closes.
+        let live = self.run.as_ref().filter(|r| !r.over && !r.range && !r.field).or(self.args.run.as_ref().filter(|r| !r.over && self.run.is_some()));
+        let Some(r) = live else {
+            if !self.run_saved.is_empty() || p.exists() {
+                if let Err(e) = std::fs::remove_file(&p).or_else(|e| if e.kind() == std::io::ErrorKind::NotFound { Ok(()) } else { Err(e) }) {
+                    eprintln!("larder-world: the finished run's save was not removed ({}: {e})", p.display());
+                }
+                self.run_saved.clear();
+            }
+            return;
+        };
+        let text = r.save_text();
+        if text == self.run_saved {
+            return;
+        }
+        match write_save(&p, &text) {
+            Ok(()) => self.run_saved = text,
+            Err(e) => eprintln!("larder-world: the run was not saved ({e})"),
+        }
+    }
+
+    /// The save as a net, every few seconds of the window's time.
+    pub(super) fn autosave(&mut self) {
+        if self.run_file.is_none() || self.run_checked.is_some_and(|t| t.elapsed().as_secs_f32() < AUTOSAVE_SECS) {
+            return;
+        }
+        self.run_checked = Some(Instant::now());
+        self.save_run();
     }
 
     /// The end screen's carry-on in a run: the level's verdict goes to the
@@ -1080,6 +1158,8 @@ impl App {
         if self.run.is_some() {
             self.show_shop();
         }
+        // Won on to the next planet, or over: the save follows.
+        self.save_run();
         Ok(())
     }
 
@@ -1149,6 +1229,31 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     }
 }
 
+/// Seconds between the window's checks that the run's save is current
+/// (`App::autosave`): each check costs a few hundred bytes of text, and a
+/// write only when the run changed.
+pub(super) const AUTOSAVE_SECS: f32 = 5.0;
+
+/// Where the run is saved: `run.txt` beside the settings file
+/// (`settings::path`: `%APPDATA%\Larder World` on Windows), or
+/// `LARDER_RUN=PATH`.
+pub(super) fn run_save_path() -> Option<PathBuf> {
+    if let Some(p) = std::env::var_os("LARDER_RUN").filter(|v| !v.is_empty()) {
+        return Some(PathBuf::from(p));
+    }
+    Some(settings::path()?.with_file_name("run.txt"))
+}
+
+/// Writes `text` to a side file and renames it over `p`.
+pub(super) fn write_save(p: &Path, text: &str) -> Result<(), String> {
+    if let Some(d) = p.parent().filter(|d| !d.as_os_str().is_empty()) {
+        std::fs::create_dir_all(d).map_err(|e| format!("{}: {e}", d.display()))?;
+    }
+    let tmp = p.with_extension("txt.new");
+    std::fs::write(&tmp, text).map_err(|e| format!("{}: {e}", tmp.display()))?;
+    std::fs::rename(&tmp, p).map_err(|e| format!("{}: {e}", p.display()))
+}
+
 #[cfg(test)]
 mod glance_tests {
     /// The shop's planet glance (Look D, 11-21) holds the whole planet:
@@ -1167,3 +1272,4 @@ mod glance_tests {
         }
     }
 }
+
