@@ -822,6 +822,12 @@ const SHAKE_FALL: f32 = 2.2;
 fn feel(pops: &[slime_mould::mould::rounds::Pop], felt: &mut u64, trauma: &mut f32, stop: &mut f32, stop_cool: &mut f32, (shake, hold): (f32, f32)) {
     let mut big = 0.0f32;
     for p in pops.iter().rev().take_while(|p| p.tick > *felt) {
+        // The plain bullet's pop (a modifier on the rifle, 2026-11-22) is
+        // a shot's hit grown, not a blast: no shake, or a squad of nine
+        // with a lone Wide shook the screen every volley.
+        if p.payload == slime_mould::mould::rounds::Card::Plain {
+            continue;
+        }
         let size = (p.killed as f32 / 150.0 + p.flung as f32 / 400.0).min(1.0);
         *trauma = (*trauma + shake * (0.12 + 0.6 * size)).min(1.0);
         big = big.max(size);

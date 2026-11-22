@@ -812,6 +812,12 @@ pub const OFFER: usize = 3;
 /// payload cards (blast, gas, bomb) like any other.
 pub const AMMO_OFFER: usize = 2;
 
+/// The first depth whose shop sells the cards that only alarm the slime
+/// (the Flare bullet) or take the alarm away (Quiet): the first planet
+/// whose slime may answer an alarm (`tiers::params`: the Sleeper, Swarmer
+/// and Grudge walk to it, from planet 4; the planets before ignore it).
+pub const ALARM_FROM: u32 = 4;
+
 /// The shells a shop's bullet may carry at `depth`: plain, blast and gas
 /// from the start, the bomb and the germ from planet 4 (their old cards'
 /// rarity). The germ was never sold until 2026-11-16 ("the GPU world casts
@@ -829,7 +835,13 @@ pub const AMMO_OFFER: usize = 2;
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast];
     if depth >= power_from(2) {
-        v.extend([Shell::Gas, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Provoke, Shell::Still, Shell::Shatter, Shell::Flare, Shell::Torch]);
+        v.extend([Shell::Gas, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Provoke, Shell::Still, Shell::Shatter, Shell::Torch]);
+    }
+    // The flare kills nothing and only alarms, which no slime answers
+    // before `ALARM_FROM` (2026-11-22, exit test 5): sold before it, its
+    // ember burned on planets 1 to 3 and the slime walked on.
+    if depth >= ALARM_FROM {
+        v.push(Shell::Flare);
     }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ, Shell::Detonate]);
@@ -1536,6 +1548,14 @@ impl Run {
         // (`rounds::casts`), so they stay in.
         let has_bullet = owned.iter().any(|c| c.kind() == Kind::Payload);
         let pool: Vec<Card> = pool.into_iter().filter(|c| has_bullet || c.kind() != Kind::Trigger || matches!(c, Card::Delay | Card::Thick)).collect();
+        // Cards with nothing to act on yet are not sold (2026-11-22, exit
+        // test 5: in the gun lab's arena on planet 1 each played the very
+        // same game as no card). Thrift lowers the next card's cost, which
+        // counts only once a bullet card fills the budget; Quiet takes a
+        // blast's or flare's alarm away, which no slime answers before
+        // `ALARM_FROM` (the drifter, sprawler and trunk ignore alarm,
+        // `tiers::params`).
+        let pool: Vec<Card> = pool.into_iter().filter(|&c| (c != Card::Thrift || has_bullet) && (c != Card::Quiet || self.depth >= ALARM_FROM)).collect();
         let fresh: Vec<Card> = pool.iter().copied().filter(|c| !owned.contains(c)).collect();
         // The cards owned come back into the draw for the last card slot,
         // so a second loadout can buy its own copy (balance review,
@@ -2162,6 +2182,30 @@ mod tests {
         let l = Run::new(1).level();
         let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\nrule par {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain, limit(0.6), par(1, 0.6));
         assert_eq!(Mission::parse(&text).unwrap(), l.mission);
+    }
+
+    /// Exit test 5 (2026-11-22): a card with nothing to act on is not
+    /// sold. No Quiet or Flare before `ALARM_FROM`, and no Thrift while the
+    /// run owns no bullet card.
+    #[test]
+    fn the_shop_holds_back_cards_with_nothing_to_act_on() {
+        assert!(!shells_at(ALARM_FROM - 1).contains(&Shell::Flare));
+        assert!(shells_at(ALARM_FROM).contains(&Shell::Flare));
+        let mut quiet = 0;
+        for seed in 1..=20 {
+            let mut r = Run::new(seed);
+            for d in 1..=ALARM_FROM + 1 {
+                r.depth = d;
+                for k in 0..5 {
+                    r.rerolls = k;
+                    r.restock();
+                    assert!(!r.offers.contains(&Card::Thrift), "seed {seed} depth {d}: a Thrift with no bullet owned");
+                    assert!(d >= ALARM_FROM || !r.offers.contains(&Card::Quiet), "seed {seed} depth {d}: a Quiet before the alarm");
+                    quiet += usize::from(r.offers.contains(&Card::Quiet));
+                }
+            }
+        }
+        assert!(quiet > 0, "Quiet is sold from ALARM_FROM");
     }
 
     /// Balance review, 2026-11-20: no carrier is sold while the run owns

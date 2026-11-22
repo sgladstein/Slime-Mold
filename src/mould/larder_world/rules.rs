@@ -1005,6 +1005,7 @@ impl Rules {
             "boss_ring" => &mut self.boss.ring,
             "last_stand_at" => &mut self.raid.last_stand_at,
             "seek_catch" => &mut self.seek_catch,
+            "strike" => &mut self.strike,
             "pump_smell" => &mut self.build.pump_smell,
             "pump_hp" => &mut self.build.pump_hp,
             "lure_smell" => &mut self.build.lure_smell,
