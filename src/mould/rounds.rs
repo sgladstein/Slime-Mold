@@ -556,6 +556,24 @@ pub fn name(round: &[Card]) -> String {
 pub struct RoundRules {
     /// `Wide`: radius factor.
     pub wide: f32,
+    /// **The plain bullet's pop** (2026-11-22, exit test 5): a plain cast
+    /// with a modifier on it (Wide, Scatter, Delay, Thick) lays a kill at
+    /// its hit (`plain_bursts`) this share of the shot's own strike (the
+    /// hole the bullet cut, `Game::strike_of`), so it follows the squad,
+    /// Heavier shots and the bullet's shape. Before, a plain cast made no
+    /// burst, so these four cards on the rifle's plain bullet played the
+    /// very same game as no card (the gun lab's arena, planet 1, 9
+    /// soldiers, 60 s, seeds 1-4: every count equal), though the balance
+    /// review's batch 7 had given them the plain cast. Delay and Thick
+    /// echo the hit a little smaller; a Scatter's three pops are this x
+    /// `scatter_r`.
+    pub plain_pop: f32,
+    /// A Wide's plain pop, as a share of the shot's strike (each Wide
+    /// multiplies). Not `wide` (1.6): a pop 2.5 dish cells x 1.6 beside a
+    /// 2.5-cell strike gave a lone Wide (cost 1) +3,516 kills over the
+    /// gun lab's four seeds, near the Blast's +3,884 (cost 3), against the
+    /// owner's Noita rule; a hole a quarter wider is the card's own.
+    pub plain_wide: f32,
     /// `Scatter`: bursts, each at radius x `scatter_r`, set round the hit
     /// `scatter_d` radii out.
     pub scatter_n: usize,
@@ -658,6 +676,21 @@ pub struct RoundRules {
     /// gap along the leg (the first try) laid nothing in play. The other
     /// trails start at the muzzle as before.
     pub trail_fuel_gap: f32,
+    /// **Tinder sparks** (2026-11-22, exit test 5): this share of Tinder
+    /// bullets that hit slime light their own brush where they hit (the
+    /// last disc still laid, `spark`), and the fire runs back along the
+    /// line toward the squad, as far as the brush goes (it stops
+    /// `trail_fuel_gap` short). Before, a lone Tinder laid brush nothing
+    /// lit: in the gun lab's arena (planet 1, 9 soldiers, 60 s, seeds 1-4)
+    /// it killed 9 more than no card, all from fires already burning. A
+    /// Torch still lights every hit; this is the card's own weaker fire.
+    /// One spark runs along every strip it touches, so the share matters
+    /// less than it looks: over the same four seeds a lone Tinder killed
+    /// +3,913 at 0.25, +3,727 at 0.1, +2,656 at 0.05 and +2,712 at 0.03,
+    /// past the Torch alone (+1,837, the card that lights); at 0.01, +1,768
+    /// (three seeds of four up), about the Torch's, and the pair still
+    /// +5,057. A few sparks a minute: the fire is what you see.
+    pub tinder_spark: f32,
     /// `Scorch` also burns: kills the walkers within its crater radius
     /// along the flight (owner, 2026-11-14 08:41Z, after "how are scorch
     /// and alarm different. It just makes a virtual wall for the slime?").
@@ -725,6 +758,8 @@ impl Default for RoundRules {
     fn default() -> Self {
         RoundRules {
             wide: 1.6,
+            plain_pop: 0.8,
+            plain_wide: 1.25,
             scatter_n: 3,
             scatter_r: 0.6,
             scatter_d: 1.5,
@@ -748,6 +783,7 @@ impl Default for RoundRules {
             trail_cloud: 0.4,
             trail_fuel: 1.0,
             trail_fuel_gap: 6.0,
+            tinder_spark: 0.01,
             trail_burn: true,
             shove: 2.0,
             shove_secs: 0.25,
@@ -806,6 +842,9 @@ impl RoundRules {
     /// for none: the Mind bullets' and the readers' numbers, to tune by eye.
     pub fn set(&mut self, name: &str, v: f32) -> bool {
         let r = match name {
+            "plain_pop" => &mut self.plain_pop,
+            "plain_wide" => &mut self.plain_wide,
+            "tinder_spark" => &mut self.tinder_spark,
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
             "mind_rest" => &mut self.mind_rest,
@@ -1061,6 +1100,14 @@ pub fn trail_bursts(n: [u8; TRAILS], from: (f32, f32), to: (f32, f32), r: &Round
         .collect()
 }
 
+/// Whether a Tinder bullet that hit slime at `at` (fine cells) sparks
+/// (`RoundRules::tinder_spark`, the share that do): by the hit's place, so
+/// both engines and a replay pick the same bullets.
+pub fn spark(at: (f32, f32), share: f32) -> bool {
+    let h = (at.0.to_bits() ^ at.1.to_bits().rotate_left(16)).wrapping_mul(0x9E37_79B1);
+    ((h >> 16) as f32 / 65_536.0) < share
+}
+
 /// Tinder's brush kept clear of the squad (`RoundRules::trail_fuel_gap`):
 /// a disc within `gap` dish cells of any of `soldiers` (dish cells) lays no
 /// fuel, and a disc left with nothing to do is dropped.
@@ -1073,9 +1120,30 @@ pub fn keep_clear(discs: &mut Vec<Burst>, soldiers: &[(f32, f32)], gap: f32) {
     discs.retain(|b| b.burn || b.crater > 0 || b.bait > 0.0 || b.smother || b.cloud > 0.0 || b.fuel > 0.0);
 }
 
+/// Whether a plain cast pops (`RoundRules::plain_pop`): only with a Wide,
+/// a Scatter, a Delay or a Thick on it.
+fn plain_pops(c: &Cast) -> bool {
+    c.payload == Card::Plain && (c.wide > 0 || c.scatter || c.trigger.is_some())
+}
+
+/// The plain bullet's pop at `at` (fine cells) for a shot that struck
+/// `strike` fine cells (`RoundRules::plain_pop`): a kill and nothing else,
+/// no crater and no alarm past every shot's own. None without a modifier.
+pub fn plain_bursts(c: &Cast, at: (f32, f32), strike: f32, r: &RoundRules, scale: f32) -> Vec<Burst> {
+    if !plain_pops(c) {
+        return Vec::new();
+    }
+    let share = if c.wide > 0 { r.plain_wide.powi(c.wide as i32) } else { r.plain_pop };
+    let at = (at.0 / scale, at.1 / scale);
+    let one = Burst { at, r: strike / scale * share, kill: true, ..Burst::default() };
+    scatter(c, one, at, r)
+}
+
 /// The bursts one cast makes at `at` (fine cells); `scale` fine cells a
 /// dish cell and `fine` fine steps a game second.
 pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -> Vec<Burst> {
+    // The plain bullet's kill is the shot's strike (`turn.rs`); its pop,
+    // with a modifier on it, is `plain_bursts`.
     if c.payload == Card::Plain {
         return Vec::new();
     }
@@ -1109,6 +1177,12 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         Card::Torch => Burst { r: r.torch_r * f, light: r.torch_light, ..none },
         _ => return Vec::new(),
     };
+    scatter(c, one, at, r)
+}
+
+/// One burst as a cast lays it: alone, or a Scatter's ring of smaller ones
+/// round it.
+fn scatter(c: &Cast, one: Burst, at: (f32, f32), r: &RoundRules) -> Vec<Burst> {
     if !c.scatter {
         return vec![one];
     }
@@ -1174,6 +1248,8 @@ struct Pending {
     turret: bool,
     /// Fired on its own (`Rounds::auto`).
     auto: bool,
+    /// The shot's strike, fine cells (a plain pop's size, `plain_bursts`).
+    strike: f32,
 }
 
 /// A burning flare (`Card::Flare`, 2026-11-17): its alarm burst, the tick
@@ -1250,6 +1326,9 @@ pub struct Rounds {
     /// The cast going off now was fired on its own (not a squad's aimed
     /// volley), so `fire` keeps its dangers off the squad.
     auto: bool,
+    /// The strike of the shot whose cast goes off now, fine cells (a
+    /// plain pop's size, `plain_bursts`).
+    strike: f32,
     pub pops: Vec<Pop>,
     /// This step's payload and shove bursts, run as one batch at its end
     /// (`World::bursts`; `Rounds::flush`), with what each counts for.
@@ -1443,6 +1522,7 @@ impl Rounds {
                 None => (g.squads.len(), turret.and_then(|t| g.buildings.get(t)).map(|b| b.at)),
             };
             self.by_turret = by.is_none();
+            self.strike = hit_r;
             // A turret fires on its own; a soldier does unless its squad
             // has a fire order (the player's aimed volley).
             self.auto = by.is_none() || g.squads.get(q).is_none_or(|sq| sq.fire.is_none());
@@ -1463,12 +1543,18 @@ impl Rounds {
             if shape.shove > 0.0 || c.heave > 0 || c.herd.is_some() {
                 self.shove(g, hit, dir, hit_r, shape, &c, gun);
             }
-            // A plain bullet's strike was all it had (`Game::step`).
-            let Some(sl) = slot(c.payload) else { continue };
+            // A plain bullet's strike was all it had (`Game::step`),
+            // unless a modifier gives it a pop (`RoundRules::plain_r`).
+            let sl = slot(c.payload);
+            if sl.is_none() && !plain_pops(&c) {
+                continue;
+            }
             if !castable(&g.world, c.payload) {
                 self.unsupported += 1;
             } else {
-                self.cast[sl] += 1;
+                if let Some(sl) = sl {
+                    self.cast[sl] += 1;
+                }
                 match c.trigger {
                     None => self.fire(g, &c, hit, Some(dir)),
                     Some(tr) => {
@@ -1476,7 +1562,7 @@ impl Rounds {
                             self.dropped += 1;
                         } else {
                             let secs = if tr == Card::Delay { self.rules.delay_secs } else { self.rules.thick_secs };
-                            self.pending.push(Pending { cast: c, at: hit, dir, due: t + (secs * tps as f32).round() as u64, turret: by.is_none(), auto: self.auto });
+                            self.pending.push(Pending { cast: c, at: hit, dir, due: t + (secs * tps as f32).round() as u64, turret: by.is_none(), auto: self.auto, strike: hit_r });
                         }
                     }
                 }
@@ -1505,6 +1591,7 @@ impl Rounds {
         for p in go {
             self.by_turret = p.turret;
             self.auto = p.auto;
+            self.strike = p.strike;
             self.fire(g, &p.cast, p.at, Some(p.dir));
             self.by_turret = false;
             self.auto = false;
@@ -1606,7 +1693,7 @@ impl Rounds {
         let tq = g.squads.len();
         let mut of: Vec<Option<[u8; TRAILS]>> = vec![None; tq + 1];
         let mut any = [0u8; TRAILS];
-        let legs: Vec<(Leg, [u8; TRAILS])> = g
+        let legs: Vec<(Leg, [u8; TRAILS], bool)> = g
             .last_shots
             .iter()
             .map(|s| (s, s.by.map_or(tq, |k| g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
@@ -1627,7 +1714,7 @@ impl Rounds {
                 for (a, b) in any.iter_mut().zip(n) {
                     *a = (*a).max(b);
                 }
-                ((s.from, s.hit.unwrap_or(s.to)), n)
+                ((s.from, s.hit.unwrap_or(s.to)), n, s.hit.is_some())
             })
             .collect();
         if any == [0; TRAILS] {
@@ -1643,13 +1730,18 @@ impl Rounds {
         let doze = g.rules.doze > 0.0;
         let soldiers: Vec<(f32, f32)> = if n[2] > 0 && doze { g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x / s, x.y / s)).collect() } else { Vec::new() };
         let near: Vec<(f32, f32)> = if n[4] > 0 { g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x / s, x.y / s)).collect() } else { Vec::new() };
-        for ((from, to), legn) in legs {
+        for ((from, to), legn, hit) in legs {
             if legn == [0; TRAILS] {
                 continue;
             }
             let mut discs = trail_bursts(legn, from, to, &self.rules, s, fine, smell);
             if legn[4] > 0 {
                 keep_clear(&mut discs, &near, self.rules.trail_fuel_gap);
+                if hit && spark(to, self.rules.tinder_spark) {
+                    if let Some(b) = discs.last_mut().filter(|b| b.fuel > 0.0) {
+                        b.light = b.light.max(self.rules.torch_light);
+                    }
+                }
             }
             // Mist laid from the muzzle would sleep its own shooter
             // (`Rules::doze`, 2026-11-19): no cloud disc within its radius
@@ -1798,7 +1890,7 @@ impl Rounds {
         let t = g.world.ticks();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
         let k = self.rules.burst_rules(fine);
-        let bs = bursts(c, at, &self.rules, s, fine);
+        let bs = if c.payload == Card::Plain { plain_bursts(c, at, self.strike, &self.rules, s) } else { bursts(c, at, &self.rules, s, fine) };
         if self.auto && self.reaches_squad(g, c, &bs) {
             self.held_own += 1;
             return;
@@ -2424,6 +2516,29 @@ mod tests {
         assert_eq!(g.gun_range(0), g.rules.range);
         Rounds::new(parse("range+blast").unwrap(), r).arm(&mut g);
         assert!((g.gun_range(0) - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
+    }
+
+    /// Exit test 5 (2026-11-22): a modifier on the plain bullet gives it
+    /// a pop, a kill sized by the shot's own strike (a quarter wider a
+    /// Wide, a little smaller an echo, split a Scatter), and the bare
+    /// plain bullet still makes none (its kill is the strike).
+    #[test]
+    fn a_modifier_gives_the_plain_bullet_a_pop() {
+        let r = RoundRules::default();
+        let (at, strike, scale) = ((40.0, 20.0), 5.0, 2.0);
+        let pop = |deck: &str| plain_bursts(&casts(&parse(deck).unwrap())[0], at, strike, &r, scale);
+        assert!(plain_bursts(&casts(&[Card::Plain])[0], at, strike, &r, scale).is_empty(), "a bare plain bullet pops nothing");
+        assert!(bursts(&casts(&parse("wide").unwrap())[0], at, &r, scale, 120.0).is_empty(), "the pop is plain_bursts' alone");
+        let w = pop("wide");
+        assert_eq!(w.len(), 1);
+        assert!(w[0].kill && w[0].alarm == 0.0 && w[0].crater == 0 && w[0].light == 0.0 && w[0].at == (20.0, 10.0), "{:?}", w[0]);
+        assert!((w[0].r - strike / scale * r.plain_wide).abs() < 1e-4, "a Wide pop is wider than the strike: {}", w[0].r);
+        assert!(pop("wide+wide")[0].r > w[0].r, "two Wides wider still");
+        assert_eq!(pop("scatter").len(), r.scatter_n, "a Scatter splits it");
+        for deck in ["delay", "thick"] {
+            let b = pop(deck);
+            assert!(b.len() == 1 && b[0].kill && (b[0].r - strike / scale * r.plain_pop).abs() < 1e-4, "{deck}: {b:?}");
+        }
     }
 
     #[test]

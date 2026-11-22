@@ -1003,7 +1003,10 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
 /// it): planet 1 is Flats with the Drifter and its goal, locked buildings
 /// show locked, a won level carries on to the shop with its points, a
 /// buy and the next planet land on planet 2 with the upgrade in its rules,
-/// and a lost level ends the run on the main menu.
+/// and a lost level ends the run on the main menu. All the way the run's
+/// save file (owner 2026-11-22: "a run should always be autosaving") holds
+/// the run as it stands, a new window carries on from it, and the lost
+/// run's save is gone.
 #[test]
 fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     use slime_mould::mould::campaign::{Cause, Verdict};
@@ -1015,6 +1018,10 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     a.run = Some(Run::new(1));
     let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
     app.base = Some((base.clone(), true));
+    let save = std::env::temp_dir().join(format!("larder-run-save-test-{}.txt", std::process::id()));
+    let _ = std::fs::remove_file(&save);
+    app.run_file = Some(save.clone());
+    let saved = || Run::from_save(&std::fs::read_to_string(&save).expect("a run save")).unwrap();
     // Planet 1 of the run's seed, the level generator's (#277).
     assert_eq!(app.name, "planet:1:1");
     app.prepare();
@@ -1048,10 +1055,12 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(menu.page, Page::Shop);
     assert!(menu.run_live);
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((2, reward(1, 2))));
+    assert_eq!(Some(saved()), app.run.clone(), "the shop's run is saved");
     // Buy armour, then land.
     let hp = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == ITEMS[0].name).unwrap();
     app.menu_event(StartEvent::Buy(hp)).unwrap();
     assert_eq!(app.run.as_ref().unwrap().level_of("hp"), 1);
+    assert_eq!(saved().level_of("hp"), 1, "a buy is saved at once");
     // A card dragged to the front of the gun (owner 20:32Z): the gun fires
     // it first, and the shop is drawn again with it there.
     app.run.as_mut().unwrap().cards = vec![(rounds::Card::Wide, true), (rounds::Card::Blast, true)];
@@ -1080,6 +1089,24 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.game.as_ref().unwrap().turret_deck.map(|d| d.cards()), Some(vec![rounds::Card::Gas]));
     assert_eq!(app.game.as_ref().unwrap().rounds.round, [rounds::Card::Blast, rounds::Card::Wide]);
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
+    assert_eq!(Some(saved()), app.args.run.clone(), "the run as it landed is saved");
+    // The game closed mid-planet and opened again: the menu carries on
+    // with the run as it landed, on the same planet.
+    {
+        let mut again = offscreen(run_base(), (1280, 720), &device, &queue).unwrap();
+        again.base = Some((run_base(), true));
+        again.menu = Some(start_menu(&run_base()));
+        again.run_file = Some(save.clone());
+        again.load_run();
+        assert_eq!(again.run, app.args.run, "the saved run loads");
+        let m = again.menu.as_ref().unwrap();
+        assert!(m.run_live && m.notice.as_deref().is_some_and(|n| n.starts_with("Your run is saved on planet 2")), "{:?}", m.notice);
+        again.menu_event(StartEvent::Run).unwrap();
+        assert_eq!(again.menu.as_ref().unwrap().page, Page::Shop, "Back to the run: the shop");
+        again.menu_event(StartEvent::NextLevel).unwrap();
+        assert_eq!((again.name.as_str(), again.args.run.as_ref().map(|r| r.depth)), ("planet:2:1", Some(2)), "the same planet");
+        again.run_file = None;
+    }
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
     assert_eq!(app.name, "planet:2:1");
     // Loadouts on the planet (owner, 2026-11-19 19:22Z): H opens their
@@ -1104,6 +1131,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
         assert_eq!(g.squads[0].loadout, 1);
         assert_eq!((g.squads[0].gun, g.squads[0].deck.map(|d| d.cards())), (Some(r.squad_gun(1)), Some(vec![rounds::Card::Gas])), "squad 1 fires loadout 2: the rifle, Gas");
         assert_eq!((r.field, r.editing, r.depth), (false, 1, 2), "the planet's run keeps it");
+        assert_eq!(saved(), r, "and so does its save");
         // A turret: its card's Loadout button steps it on, then back.
         let g = app.game.as_mut().unwrap();
         g.bank = 10_000.0;
@@ -1136,6 +1164,45 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let menu = app.menu.as_ref().unwrap();
     assert!(app.run.is_none() && !menu.run_live && menu.page == Page::Main);
     assert!(menu.notice.as_deref().is_some_and(|n| n.starts_with("The run ended on planet 2")), "{:?}", menu.notice);
+    assert!(!save.exists(), "an ended run's save is gone");
+}
+
+/// **A save that does not read is moved aside**, never overwritten unseen,
+/// and the menu says so; with no save there is no run.
+#[test]
+fn an_unreadable_run_save_is_moved_aside() {
+    let dir = std::env::temp_dir().join(format!("larder-run-bad-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let save = dir.join("run.txt");
+    let aside = dir.join("run-unreadable.txt");
+    let _ = std::fs::remove_file(&aside);
+    let fresh = || {
+        let mut app = App::new(run_base());
+        app.menu = Some(start_menu(&run_base()));
+        app.run_file = Some(save.clone());
+        app
+    };
+    let _ = std::fs::remove_file(&save);
+    let mut app = fresh();
+    app.load_run();
+    assert!(app.run.is_none() && app.menu.as_ref().unwrap().notice.is_none());
+    std::fs::write(&save, "garbage").unwrap();
+    let mut app = fresh();
+    app.load_run();
+    assert!(app.run.is_none() && !save.exists() && std::fs::read_to_string(&aside).unwrap() == "garbage");
+    assert!(app.menu.as_ref().unwrap().notice.as_deref().is_some_and(|n| n.contains("could not be read")));
+    // A good one round trips through the window's write, and no run left
+    // deletes it.
+    let mut app = fresh();
+    app.run = Some(Run::new(9));
+    app.save_run();
+    let mut back = fresh();
+    back.load_run();
+    assert_eq!(back.run, Some(Run::new(9)));
+    back.run = None;
+    back.save_run();
+    assert!(!save.exists());
+    let _ = std::fs::remove_dir_all(&dir);
 }
 
 /// **The gun range in the window** (owner, 11-15 02:55Z: "I need a test
@@ -1587,7 +1654,7 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
 /// slot per squad, on a cooldown"): in the squad mode the Tools page
 /// throws from the commanded squad, free, and the slot's wait shows on
 /// every tool and on the Tools button; a throw while it cools is refused.
-/// A run with no tool yet (planet 1) has no Tools button.
+/// A run with no tool yet (planet 1) keeps its Tools button, opening the locks.
 #[test]
 fn the_squad_mode_throws_from_its_device_slot() {
     let Some((device, queue)) = gpu() else { return };
@@ -1623,12 +1690,17 @@ fn the_squad_mode_throws_from_its_device_slot() {
     app.tools_page = false;
     let tools = app.model(None, None).commands.into_iter().find(|c| c.id == TOOLS_PAGE).expect("a Tools button");
     assert!(tools.cost.is_some() && tools.cooldown > 0.0, "the wait shows on the Tools button too: {tools:?}");
-    // A run's planet 1 owns no tool: no Tools button.
+    // A run's planet 1 owns no tool: the Tools button stays and opens the
+    // page of locks (#660 hid it, which read as Tools gone; owner 11-22).
     let mut a = run_base();
     a.squads = true;
     a.run = Some(Run::new(1));
-    let app = offscreen(a, (640, 400), &device, &queue).unwrap();
-    assert!(app.model(None, None).commands.iter().all(|c| c.id != TOOLS_PAGE), "no Tools button with every tool locked");
+    let mut app = offscreen(a, (640, 400), &device, &queue).unwrap();
+    let tools = app.model(None, None).commands.into_iter().find(|c| c.id == TOOLS_PAGE).expect("a Tools button with every tool locked");
+    assert!(tools.ready && tools.key == KeyCode::KeyE, "{tools:?}");
+    app.tools_page = true;
+    let blast = app.model(None, None).commands.into_iter().find(|c| c.id == T_BLAST).expect("the page shows the blast");
+    assert!(blast.locked, "locked until the shop sells it");
 }
 
 /// **Esc and Space in the squad mode** (controls review, 2026-11-21).

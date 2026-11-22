@@ -822,6 +822,12 @@ const SHAKE_FALL: f32 = 2.2;
 fn feel(pops: &[slime_mould::mould::rounds::Pop], felt: &mut u64, trauma: &mut f32, stop: &mut f32, stop_cool: &mut f32, (shake, hold): (f32, f32)) {
     let mut big = 0.0f32;
     for p in pops.iter().rev().take_while(|p| p.tick > *felt) {
+        // The plain bullet's pop (a modifier on the rifle, 2026-11-22) is
+        // a shot's hit grown, not a blast: no shake, or a squad of nine
+        // with a lone Wide shook the screen every volley.
+        if p.payload == slime_mould::mould::rounds::Card::Plain {
+            continue;
+        }
         let size = (p.killed as f32 / 150.0 + p.flung as f32 / 400.0).min(1.0);
         *trauma = (*trauma + shake * (0.12 + 0.6 * size)).min(1.0);
         big = big.max(size);
@@ -1052,6 +1058,15 @@ struct App {
     /// a rung's (`drifter`) or one of the owner's own (`custom NAME`), on
     /// a run planet the tweaks file's `planet N` pick over the ladder's.
     slime: Option<String>,
+    /// The run's save file (`run::SAVE_HEAD`; `run_save_path`), written
+    /// whenever the run changes and on quitting (`App::save_run`): None in
+    /// the no-window films, tests and bots, which must never touch the
+    /// owner's run.
+    run_file: Option<std::path::PathBuf>,
+    /// The text last written there, so an unchanged run is not rewritten.
+    run_saved: String,
+    /// When the run was last checked against the file (`App::autosave`).
+    run_checked: Option<Instant>,
 }
 
 /// The play log header's words for a round's keys: the switches off their
@@ -1166,6 +1181,9 @@ impl App {
             result: Ok(()),
             tweaks: Default::default(),
             slime: None,
+            run_file: None,
+            run_saved: String::new(),
+            run_checked: None,
             viewer: None,
         };
         if app.args.viewer {
@@ -2929,6 +2947,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if menu_flag.as_deref() != Some("0") {
         if bare || menu_flag.is_some() {
             app.menu = Some(start_menu(&base));
+        }
+        // The run saved when the game last closed (owner, 2026-11-22),
+        // unless the command line gave a run of its own: the menu's "Back
+        // to the run" carries on with it.
+        if app.args.run.is_none() && app.args.range.is_none() && !app.args.viewer {
+            app.run_file = run_save_path();
+            app.load_run();
         }
         app.base = Some((base, chosen));
     }

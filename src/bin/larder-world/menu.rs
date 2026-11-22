@@ -314,6 +314,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         .shop()
         .into_iter()
         .map(|row| {
+            let after = dps_after(r, row.pick);
             let (group, area) = match row.group {
                 // The range: its own rows on the left, the shelf by what a
                 // card works on, then the bag.
@@ -331,6 +332,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             };
             let mut s = ShopRow::new(&group, area, Icon::Upgrade, &row.name);
             (s.about, s.price, s.state, s.ready, s.on) = (row.about.clone(), row.price, row.state, row.ready, row.on);
+            (s.dps, s.no_room) = (after.map(|a| a.0), after.is_some_and(|a| a.1));
             match row.face {
                 Face::Item(key) => {
                     s.icon = item_icon(key);
@@ -347,8 +349,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     // 02:57Z: the cards' text "should be simplified").
                     s.about = format!("{} Budget {}.", row.about.replacen(c.about(), &draw::card_words(c, kind, &words), 1), c.cost());
                     if let rounds::Card::Ammo(a) = c {
-                        // A rolled bullet: its set as a badge.
+                        // A rolled bullet: its set as a badge, its rolls
+                        // as bars (the owner, 2026-11-22: "more of visual
+                        // representation of damage speed, range").
                         s.badge = Some(draw::ammo_icon(a.set));
+                        s.bars = ammo_bars(&a);
                         // The range's shelf holds one of each shape and
                         // payload: a grid of them, so its tiles need no
                         // names (all three menu researchers, 11-15).
@@ -395,7 +400,82 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         },
         field: r.field,
         glance: (!r.range).then(|| glance_of(r.seed, r.depth)),
+        dps: dps_of(r),
     }
+}
+
+/// The estimated damage a second of the gun the shop's slots show
+/// (`mould::dps`): its gun as armed (the turrets' rack for a loadout with
+/// none), its cards, the run's rules.
+fn dps_of(r: &Run) -> Option<f32> {
+    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
+    let mut rules = Rules::default();
+    r.rules(&mut rules);
+    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    Some(slime_mould::mould::dps::estimate(&gun, &r.gun(), &rules, &rr))
+}
+
+/// That estimate once `pick` is made, on a copy of the run with the points
+/// to make it (so an offer too dear shows what it would do), and whether
+/// it is only what it would be with room: a card that would go to the bag
+/// (the gun's slots or budget full) is reckoned in the gun anyway, where
+/// the game puts cards (`hypothetical`), so a full gun still shows what a
+/// card is worth. None for a pick that changes no gun, or that the run
+/// refuses.
+fn dps_after(r: &Run, pick: Pick) -> Option<(f32, bool)> {
+    let card = match pick {
+        Pick::Offer(i) => r.offers.get(i).copied(),
+        Pick::Card(i) => r.cards.get(i).filter(|c| !c.1).map(|c| c.0),
+        Pick::Gun(_) | Pick::Carry(_) => None,
+        Pick::Item(i) if matches!(run::ITEMS.get(i).map(|x| x.key), Some("strike" | "rate")) => None,
+        _ => return None,
+    };
+    let mut t = r.clone();
+    t.points = t.points.max(1_000_000);
+    let done = t.pick(pick);
+    match card {
+        // A card meant for the gun that did not go in.
+        Some(c) if !done || t.gun().len() <= r.gun().len() => Some((hypothetical(r, c)?, true)),
+        _ if !done => None,
+        _ => Some((dps_of(&t)?, false)),
+    }
+}
+
+/// The estimate with card `c` in the gun past its slots and budget, where
+/// `Run::put_in` would put it: after the cards of its rank, before the
+/// first of a later one (flight cards, then modifiers and triggers, then
+/// bullets).
+fn hypothetical(r: &Run, c: rounds::Card) -> Option<f32> {
+    use rounds::Kind as K;
+    let rank = |c: rounds::Card| match c.kind() {
+        K::Flight => 0,
+        K::Modifier | K::Trigger => 1,
+        K::Payload => 2,
+    };
+    let mut cards = r.gun();
+    let at = cards.iter().position(|&o| rank(o) > rank(c)).unwrap_or(cards.len());
+    cards.insert(at, c);
+    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
+    let mut rules = Rules::default();
+    r.rules(&mut rules);
+    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    Some(slime_mould::mould::dps::estimate(&gun, &cards, &rules, &rr))
+}
+
+/// A rolled bullet's numbers as bars against a standard bullet's: each on
+/// a log scale from a quarter to four times (`bullets::MULT_MIN`, `MAX`),
+/// a standard bullet's at the middle. Spread reads as Aim, so a longer bar
+/// is better on every row.
+fn ammo_bars(a: &slime_mould::mould::bullets::Ammo) -> Vec<(String, f32, String)> {
+    use slime_mould::mould::bullets::DAMAGE;
+    let bar = |x: f32| (0.5 + x.max(1e-3).ln() / 16f32.ln()).clamp(0.04, 1.0);
+    let times = |x: f32| format!("x{x:.1}");
+    vec![
+        ("Damage".to_string(), bar(a.damage() / DAMAGE), format!("{:.0}", a.damage())),
+        ("Speed".to_string(), bar(a.speed()), times(a.speed())),
+        ("Range".to_string(), bar(a.range()), times(a.range())),
+        ("Aim".to_string(), bar(1.0 / a.spread().max(1e-3)), times(1.0 / a.spread().max(1e-3))),
+    ]
 }
 
 /// The planet ahead drawn small for the shop's pane (`start::Glance`),
@@ -711,6 +791,7 @@ impl App {
             match self.menu_event(p) {
                 Ok(true) => {
                     self.save_replay();
+                    self.save_run();
                     event_loop.exit();
                 }
                 Ok(false) => {}
@@ -789,6 +870,8 @@ impl App {
                 self.parked = Some(menu);
                 self.start()?;
                 self.paused = false;
+                // As it lands: closed mid-planet, it lands here again.
+                self.save_run();
             }
             StartEvent::Buy(i) => {
                 if let Some(r) = self.shop_run() {
@@ -830,6 +913,7 @@ impl App {
                     m.notice = line;
                     m.show(Page::Main);
                 }
+                self.save_run();
             }
             // A thing to try ticked or unticked: this PC remembers.
             StartEvent::Tried(i, tried) => {
@@ -1026,6 +1110,7 @@ impl App {
         let l = chosen.map_or(0, |c| c.1);
         let what = format!("{}: {}", r.loadout_name(l), if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") });
         self.hud.alert(&what, None, theme::ACCENT);
+        self.save_run();
     }
 
     /// The shop page, filled from the run (the menu up, its dish behind).
@@ -1042,6 +1127,79 @@ impl App {
                 m.show(Page::Shop);
             }
         }
+        // Each buy, move and pick in the shop comes back through here.
+        self.save_run();
+    }
+
+    /// The run saved when the game last closed, as the run under way (the
+    /// main menu's "Back to the run"). A save that does not read is moved
+    /// aside to `run-unreadable.txt` with a word on the menu, never
+    /// overwritten unseen.
+    pub(super) fn load_run(&mut self) {
+        let Some(p) = self.run_file.clone() else { return };
+        let Ok(text) = std::fs::read_to_string(&p) else { return };
+        let note = match Run::from_save(&text) {
+            Ok(r) if !r.over => {
+                let note = format!("Your run is saved on planet {} ({}): Back to the run carries on", r.depth, r.line());
+                self.run_saved = text;
+                self.run = Some(r);
+                note
+            }
+            Ok(_) => {
+                let _ = std::fs::remove_file(&p);
+                return;
+            }
+            Err(e) => {
+                let aside = p.with_file_name("run-unreadable.txt");
+                let _ = std::fs::rename(&p, &aside);
+                eprintln!("larder-world: the saved run did not load ({e}); moved to {}", aside.display());
+                format!("The saved run could not be read ({e}); it was moved to {}", aside.display())
+            }
+        };
+        if let Some(m) = self.menu.as_mut() {
+            m.run_live = self.run.is_some();
+            m.notice = Some(note);
+        }
+    }
+
+    /// **Saves the run** to its file (`run_file`) if it changed since the
+    /// last write, or deletes the file once there is no run under way (given
+    /// up, lost or won). Called wherever the run changes (landing, each buy
+    /// in the shop, the loadout panel closing, a planet's end) and on
+    /// quitting, and every few seconds as a net (`autosave`). Written to a
+    /// side file and renamed over the save, so a crash mid-write leaves the
+    /// last good save.
+    pub(super) fn save_run(&mut self) {
+        let Some(p) = self.run_file.clone() else { return };
+        // The run in the shop, or as it landed on the planet being played;
+        // the loadout panel's copy is the window's until it closes.
+        let live = self.run.as_ref().filter(|r| !r.over && !r.range && !r.field).or(self.args.run.as_ref().filter(|r| !r.over && self.run.is_some()));
+        let Some(r) = live else {
+            if !self.run_saved.is_empty() || p.exists() {
+                if let Err(e) = std::fs::remove_file(&p).or_else(|e| if e.kind() == std::io::ErrorKind::NotFound { Ok(()) } else { Err(e) }) {
+                    eprintln!("larder-world: the finished run's save was not removed ({}: {e})", p.display());
+                }
+                self.run_saved.clear();
+            }
+            return;
+        };
+        let text = r.save_text();
+        if text == self.run_saved {
+            return;
+        }
+        match write_save(&p, &text) {
+            Ok(()) => self.run_saved = text,
+            Err(e) => eprintln!("larder-world: the run was not saved ({e})"),
+        }
+    }
+
+    /// The save as a net, every few seconds of the window's time.
+    pub(super) fn autosave(&mut self) {
+        if self.run_file.is_none() || self.run_checked.is_some_and(|t| t.elapsed().as_secs_f32() < AUTOSAVE_SECS) {
+            return;
+        }
+        self.run_checked = Some(Instant::now());
+        self.save_run();
     }
 
     /// The end screen's carry-on in a run: the level's verdict goes to the
@@ -1080,6 +1238,8 @@ impl App {
         if self.run.is_some() {
             self.show_shop();
         }
+        // Won on to the next planet, or over: the save follows.
+        self.save_run();
         Ok(())
     }
 
@@ -1149,6 +1309,31 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     }
 }
 
+/// Seconds between the window's checks that the run's save is current
+/// (`App::autosave`): each check costs a few hundred bytes of text, and a
+/// write only when the run changed.
+pub(super) const AUTOSAVE_SECS: f32 = 5.0;
+
+/// Where the run is saved: `run.txt` beside the settings file
+/// (`settings::path`: `%APPDATA%\Larder World` on Windows), or
+/// `LARDER_RUN=PATH`.
+pub(super) fn run_save_path() -> Option<PathBuf> {
+    if let Some(p) = std::env::var_os("LARDER_RUN").filter(|v| !v.is_empty()) {
+        return Some(PathBuf::from(p));
+    }
+    Some(settings::path()?.with_file_name("run.txt"))
+}
+
+/// Writes `text` to a side file and renames it over `p`.
+pub(super) fn write_save(p: &Path, text: &str) -> Result<(), String> {
+    if let Some(d) = p.parent().filter(|d| !d.as_os_str().is_empty()) {
+        std::fs::create_dir_all(d).map_err(|e| format!("{}: {e}", d.display()))?;
+    }
+    let tmp = p.with_extension("txt.new");
+    std::fs::write(&tmp, text).map_err(|e| format!("{}: {e}", tmp.display()))?;
+    std::fs::rename(&tmp, p).map_err(|e| format!("{}: {e}", p.display()))
+}
+
 #[cfg(test)]
 mod glance_tests {
     /// The shop's planet glance (Look D, 11-21) holds the whole planet:
@@ -1167,3 +1352,4 @@ mod glance_tests {
         }
     }
 }
+

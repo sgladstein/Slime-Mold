@@ -161,6 +161,10 @@ impl<W: World> Game<W> {
             c.start = mould.max(1);
             let per_cell = held / held_cells.max(1.0);
             c.density = (mould as f64 / held).max(r.ceiling as f64 / per_cell.max(1e-9));
+            // `ceiling_grow` (11-22): room over the landing to regrow
+            // into, on the density so the ceiling still follows the
+            // charge it holds.
+            c.density *= r.ceiling_grow.max(0.1) as f64;
             c.upkeep = self.world.upkeep();
         }
         let mut ceil = (held * c.density).min(c.start as f64 * r.ceiling_roof.max(1.0) as f64);

@@ -342,7 +342,10 @@ impl App {
     pub(super) fn hud_events(&mut self, events: Vec<HudEvent>, event_loop: &ActiveEventLoop) {
         for ev in events {
             match self.hud_event(ev) {
-                Ok(true) => event_loop.exit(),
+                Ok(true) => {
+                    self.save_run();
+                    event_loop.exit();
+                }
                 Ok(false) => {}
                 Err(e) => return self.fail(event_loop, e),
             }

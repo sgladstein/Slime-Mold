@@ -68,6 +68,7 @@ impl ApplicationHandler for App {
         match event {
             WindowEvent::CloseRequested => {
                 self.save_replay();
+                self.save_run();
                 event_loop.exit();
             }
             WindowEvent::Resized(size) => {
@@ -279,6 +280,7 @@ impl ApplicationHandler for App {
     }
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        self.autosave();
         if let Some(window) = &self.window {
             window.request_redraw();
         }

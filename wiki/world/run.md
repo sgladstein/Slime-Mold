@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/boss-cores-2026-11-20/README.md
@@ -61,12 +61,15 @@ code:
   - Run::buy_into
   - Run::carried
   - Run::found
+  - Run::from_save
   - Run::gun
   - Run::level
   - Run::put_in
   - Run::range
   - Run::rules
+  - Run::save_text
   - Run::shop
+  - SAVE_HEAD
   - STUCK_WARN
   - StandRules
   - StarRules::for_depth
@@ -81,6 +84,7 @@ code:
   - bring_shell
   - clock
   - does_to_you
+  - dps_after
   - drift_core
   - enemy_keys
   - fall_count
@@ -390,6 +394,21 @@ with no germ), and its two guns are two kinds, neither the kind carried
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
 
+## Saving the run
+
+A run is saved to `run.txt` beside the settings file (`%APPDATA%\Larder
+World` on Windows; `LARDER_RUN=PATH` overrides) whenever it changes: on
+landing, at each buy or move in the shop, when the loadout panel closes, at
+a planet's end, on quitting, and checked every five seconds as a net
+(`Run::save_text`, `SAVE_HEAD`, the window's `App::save_run`). The next
+time the game opens, the main menu's "Back to the run" carries on with it,
+and it is deleted when the run is won, lost or given up. A planet's own
+state lives on the GPU and is not saved, so a run closed mid-planet lands
+on the same planet (same seed, same map) fresh, with the shop as it was on
+landing. Owner, 2026-11-22 04:40Z: "a run should always be autosaving and
+saving the run between closing the program"; before that a run lived only
+in the window and was lost on closing it (Milestone 2's "save and resume").
+
 ## The gun range
 
 Gun range on the start menu, or `range=SEED`, uses a run
@@ -404,6 +423,25 @@ empty tools sit on the bottom bar ([report](../../Reports/shop-b-2026-11-15/READ
 (`range_args`), with no time limit and a 100,000 bank; H there opens the
 armory over the paused round and Back re-arms every squad
 ([report](../../Reports/gun-range-2026-11-15.md)).
+
+## The shop's readouts
+
+Since 2026-11-22 (the owner's ask, 04:20Z: "hover over should show what is
+the info, I don't need to select ... more of visual representation of
+damage speed, range ... a calculated/estimated dps of you gun"): the shop's
+pane tells whatever is under the pointer with no click, and keeps the
+picked thing's button for a click. A rolled bullet's damage, speed, range
+and aim are bars (log scale, a standard bullet at the middle), and a gun's
+numbers are bars with a white tick where yours stands. The gun's
+estimated damage a second (`dps::estimate`, `src/mould/dps.rs`) shows over
+the slots; every card, gun and damage upgrade that would change it carries
+a "+N DPS" pill, the gun table has it as a column, and the pane shows
+yours against it as two bars. The unit is the bullets' damage (the rifle's
+plain strike is 10, so the starting rifle is 10 a second); it counts one
+soldier with every shot landing, strikes, kill bursts, pierce, split,
+multicast, carried casts and rate, and leaves out what works over time
+(gas, germ, Mind bullets, fire, trails, shoves), whose cards show "DPS
+same" and say what they do in words.
 
 ## Owner's word
 
