@@ -316,6 +316,11 @@ twin):
   5,000 by 1:00 on the 11-21 build too; planet 3 takes 7 crystals and
   meets its slots either way). At 1.5 it still stops at half again its
   landing where the 11-21 game went on to twice.
+  In the run it is a row by planet (`run::CEILING_GROW`, every planet 1.5
+  since 11-22). Open: Squad's #708 (free fire shoots what is near first)
+  made planet 1 easier in the gun lab; if the owner's next planet 1 log
+  with #708 and 1.5 still reads easy, Direction's plan is planet 1's row
+  alone to about 2.
 - The first cut (#659) used the crystal *cells* its walkers covered times
   its walkers a covered cell at landing (at most 25). Planet 3's Trunk
   landed at 32 a cell, or spread off its crystal (1,856 covered cells to

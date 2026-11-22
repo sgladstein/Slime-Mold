@@ -209,8 +209,12 @@ The real run bot (`runbot=1:3`, seed 1, lavapipe): origin off won planets
 killed against 15,265) and lost planet 2 at 7:38, because the bot's siege
 never aims at the origin. Engine's siege must target `Game::core` before
 this lands (Engine said after M1; Direction told 11-22 06:10Z).
-Later, low priority (Direction 11-22): a Sprawler rule where body walkers
-run its trail lines, so its threads show through the body.
+Engine's siege (11-22): the origin regrows only after `quiet` 4 s with no
+loss of `hurt` 2% a second, so a sustained fight wears it down.
+The Sprawler's threads through its body (Direction's M1 job, 11-22): its
+body packs 97% of fine cells, so nothing runs along lines there. Spacing
+and room rules both tried and reverted (`Reports/dead-ends.md`, both on this
+branch); (b), packed walkers that swap or flow, waits for the Lab after M1.
 
 ## The hunter's regroup (2026-11-22, the same thread)
 

@@ -213,6 +213,23 @@ end.
   #681 before any row moves. Losses in the smoke table doubled between
   the first and second day's main (59 to 115 on 9 planets, Enemy's #670
   to #681); planets are still won.
+- **11-22 night, Direction's calls** (all routed by thread):
+  difficulty between his two nights: #690 plus a 1.5x held-crystal ceiling,
+  now a row per planet (`run::CEILING_GROW`, #709); if his next planet 1
+  log still reads easy, `CEILING_GROW[0] = 2` (`wiki/model/growth.md`).
+  Run bot at 1.5x: 10 of 11 on his maps, seed 8 planet 1 stalls (harvest
+  stops, 136 banked); #700 gates stalls over 60 s and fixes the film bot.
+  Gun cards (#701, #705): every planet 1 shop card shows; Seek flies half
+  again past its aim, Smother is held to planet 2 and calms a strike-sized
+  disc. Free fire, Guard and Clear read 12 cells first (#708): off-screen
+  shots at zoom 12 fall from about 70% to under 10%, planet 1 gets easier
+  (36 alive against 22 in the gun lab). The origin (#699, draft, lands
+  after Milestone 1): planet 1 size 1,200, planet 2 700; an early rush
+  with 9 or 16 soldiers is wiped, 44 or more win fast (D7, his); it
+  refills only after 4 s unhurt; Engine builds the siege's origin target
+  on a branch off it. Sprawler threads through the body: trial of a
+  thinner mesh at today's total walkers (Enemy), else the Lab after
+  Milestone 1. Look B body texture alone failed (dead-ends).
 - **Clocks held (11-22 03:30Z, Direction)**: Engine's pace table (#686
   adds a "pace by planet" job to the run bot; `scripts/play_log_summary.py
   --since 2026-11-20` reads his logs after `git fetch origin play-logs`).
