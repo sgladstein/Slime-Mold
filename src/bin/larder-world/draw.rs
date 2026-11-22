@@ -60,6 +60,10 @@ type OverLabel = ((f32, f32), (f32, f32), String, f32, [u8; 4]);
 pub(super) struct Live {
     pub cells: Vec<u32>,
     pub gather: Option<slime_mould::gpu::Gather>,
+    /// The 32-cell tiles of walls raised since the gather's read began,
+    /// marked again (`look::mark_far_box`) once the read's codes are in:
+    /// the marks read the new wall cells' codes.
+    pub tiles: Vec<(usize, usize)>,
 }
 
 pub(super) fn live_cells(g: &Game<GpuWorld>, old: &Live) -> Live {
@@ -67,7 +71,7 @@ pub(super) fn live_cells(g: &Game<GpuWorld>, old: &Live) -> Live {
     let d = &e.dish;
     let cells: Vec<u32> = (0..d.w * d.h).filter(|&i| d.wall.get(i).copied().unwrap_or(false) || d.pile_of.get(i).copied().unwrap_or(0) > 0).map(|i| i as u32).collect();
     let gather = slime_mould::gpu::Gather::new(&e.device, &e.queue, &cells, old.gather.as_ref());
-    Live { cells, gather }
+    Live { cells, gather, tiles: Vec::new() }
 }
 
 /// A crystal or wall cell's code as `ground_codes` makes it from `charge`
@@ -432,33 +436,46 @@ pub(super) fn thousands(n: usize) -> String {
 impl App {
     /// The look's ground from the world's cells: once a game second (the
     /// crystals drain, the walls wear), and at once when a wall goes up.
+    ///
+    /// The crystal and wall cells' charge and health come from a gather
+    /// started on one frame and taken on a later one, one to a few frames
+    /// on (performance thread, 2026-11-22). The read used to wait for
+    /// the GPU's whole queue, the view of the frame before among it: at 4K
+    /// on the 1070 that was 3-5 ms a refresh and up to 13 ms, the larger
+    /// part of the once-a-second hitch with the step's own read-back.
     pub(super) fn refresh_ground(&mut self) {
-        let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
+        let t0 = Instant::now();
+        let took = self.take_ground();
+        let (Some(g), Some(_)) = (&self.game, &self.ground) else { return };
         let t = g.time();
-        // A step still running would make the read-back below wait for it
-        // (on llvmpipe the split's prepare p95 was 14.9 ms against 1.3 ms
-        // for whole steps, 2026-11-12), so the timed refresh waits for a
-        // frame between steps, up to a second late; a new wall reads at once.
+        // The timed refresh still starts its read on a frame between steps,
+        // up to a second late: on software Vulkan a submit runs behind the
+        // queue's work, and one behind a step in shares took 20-46 ms there
+        // (0.7 ms between steps, 11-22). A new wall starts at once.
         let late = t - self.ground_at;
         if (late < GROUND_EVERY || (g.in_flight() && late < 2.0 * GROUND_EVERY)) && g.walls == self.ground_walls {
+            if took {
+                self.note_ground(t0, 0.0);
+            }
             return;
         }
         let e = &g.world.e;
-        let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
         let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
         let d = &e.dish;
         let any_wall = d.wall.iter().any(|&w| w);
         let cells = d.w * d.h;
         let is_wall = |i: usize| d.wall.get(i).copied().unwrap_or(false);
-        let read;
+        let mut read = 0.0;
         if self.codes.len() != cells || self.wall_mask.len() != cells {
-            // A new world: every cell.
+            // A new world: every cell, read back and waited for (once).
             let charge = floats(read_back(&e.device, &e.queue, &e.charge));
             let health = any_wall.then(|| floats(read_back(&e.device, &e.queue, &e.health)));
             read = ms(t0);
             self.codes = ground_codes(g, &self.depth, Some(&charge), health.as_deref());
-            e.queue.write_buffer(buf, 0, &self.codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
+            if let Some(buf) = &self.ground {
+                e.queue.write_buffer(buf, 0, &self.codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
+            }
             self.live = live_cells(g, &self.live);
             self.wall_mask = (0..cells).map(is_wall).collect();
         } else {
@@ -466,18 +483,22 @@ impl App {
             // cell for it was the 25-32 ms hitch at 6x a planet's area, and
             // the AI and the player both raise walls in play): its cells
             // join the gathered ones, and the 32-cell tiles it touches are
-            // re-marked (`mark_far_box`), each grown by the mark's reach.
-            let mut tiles: Vec<(usize, usize)> = Vec::new();
+            // re-marked (`mark_far_box`) when the gather's codes are in,
+            // each grown by the mark's reach.
             if g.walls != self.ground_walls {
                 let changed: Vec<usize> = (0..cells).filter(|&i| is_wall(i) != self.wall_mask[i]).collect();
                 if !changed.is_empty() {
                     for &i in &changed {
                         self.wall_mask[i] = is_wall(i);
                     }
+                    // A new gather drops the old one's read, so its tiles
+                    // wait for the new one's.
+                    let mut tiles = std::mem::take(&mut self.live.tiles);
                     self.live = live_cells(g, &self.live);
-                    tiles = changed.iter().map(|&i| ((i % d.w) / WALL_TILE, (i / d.w) / WALL_TILE)).collect();
+                    tiles.extend(changed.iter().map(|&i| ((i % d.w) / WALL_TILE, (i / d.w) / WALL_TILE)));
                     tiles.sort_unstable();
                     tiles.dedup();
+                    self.live.tiles = tiles;
                     // A cell that stopped being a wall (the CPU dish's
                     // rubble; the GPU's walls wear to rubble but stay
                     // walls) and holds no crystal: its code from the dish.
@@ -487,53 +508,97 @@ impl App {
                     }
                 }
             }
-            // Once a game second: only the crystal and wall cells, read
-            // back alone, and only the runs where a code changed written
+            // Once a game second: only the crystal and wall cells, gathered
+            // alone, and only the runs where a code changed written
             // (technical lead, 2026-11-14: the whole field read back and
             // rebuilt took 4.6 ms at today's area and 32.9 ms at 6x on
             // the 1070, a dropped frame a second from 4x).
-            let (charge, health) = self.live.gather.as_ref().map_or((Vec::new(), Vec::new()), |q| q.read(&e.device, &e.queue, &e.charge, &e.health));
-            let (charge, health) = (floats(charge), any_wall.then(|| floats(health)));
-            read = ms(t0);
-            let write = |codes: &[u32], a: usize, b: usize| e.queue.write_buffer(buf, a as u64 * 4, &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
-            // Rows of changed cells written as runs: a crystal eaten
-            // changes a few rows of it, not the buffer.
-            let mut run: Option<(usize, usize)> = None;
-            for (k, &i) in self.live.cells.iter().enumerate() {
-                let i = i as usize;
-                let c = live_code(g, &self.depth, i, self.codes[i], charge[k], health.as_ref().map(|h| h[k]));
-                if c == self.codes[i] {
-                    continue;
-                }
-                self.codes[i] = c;
-                run = match run {
-                    Some((a, b)) if b == i => Some((a, i + 1)),
-                    _ => {
-                        if let Some((a, b)) = run {
-                            write(&self.codes, a, b);
-                        }
-                        Some((i, i + 1))
-                    }
-                };
-            }
-            if let Some((a, b)) = run {
-                write(&self.codes, a, b);
-            }
-            // The new wall's tiles, marked again and written row by row.
-            let r = look::FAR_REACH;
-            for &(tx, ty) in &tiles {
-                let xs = ((tx * WALL_TILE).saturating_sub(r), ((tx + 1) * WALL_TILE + r).min(d.w));
-                let ys = ((ty * WALL_TILE).saturating_sub(r), ((ty + 1) * WALL_TILE + r).min(d.h));
-                look::mark_far_box(d.w, &mut self.codes, xs, ys);
-                for y in ys.0..ys.1 {
-                    write(&self.codes, y * d.w + xs.0, y * d.w + xs.1);
+            match &self.live.gather {
+                Some(q) => q.start(&e.device, &e.queue, &e.charge, &e.health),
+                None => {
+                    (self.ground_at, self.ground_walls) = (t, g.walls);
+                    self.apply_ground(Vec::new(), Vec::new());
+                    self.note_ground(t0, read);
+                    return;
                 }
             }
         }
         (self.ground_at, self.ground_walls) = (t, g.walls);
+        self.note_ground(t0, read);
+    }
+
+    /// The gather's read, if it is in: the codes it changes, written.
+    fn take_ground(&mut self) -> bool {
+        let Some(g) = &self.game else { return false };
+        let Some(got) = self.live.gather.as_ref().and_then(|q| q.take(&g.world.e.device)) else { return false };
+        self.apply_ground(got.0, got.1);
+        true
+    }
+
+    /// The crystal and wall cells' codes from their gathered `charge` and
+    /// `health` (bytes, in `live.cells`' order; empty with no live cells),
+    /// then the raised walls' tiles marked again.
+    fn apply_ground(&mut self, charge: Vec<u8>, health: Vec<u8>) {
+        let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
+        let e = &g.world.e;
+        let d = &e.dish;
+        let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
+        let any_wall = d.wall.iter().any(|&w| w);
+        let (charge, health) = (floats(charge), any_wall.then(|| floats(health)));
+        let write = |codes: &[u32], a: usize, b: usize| e.queue.write_buffer(buf, a as u64 * 4, &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
+        // Rows of changed cells written as runs: a crystal eaten
+        // changes a few rows of it, not the buffer.
+        let mut run: Option<(usize, usize)> = None;
+        for (k, &i) in self.live.cells.iter().enumerate() {
+            let i = i as usize;
+            let c = live_code(g, &self.depth, i, self.codes[i], charge[k], health.as_ref().map(|h| h[k]));
+            if c == self.codes[i] {
+                continue;
+            }
+            self.codes[i] = c;
+            run = match run {
+                Some((a, b)) if b == i => Some((a, i + 1)),
+                _ => {
+                    if let Some((a, b)) = run {
+                        write(&self.codes, a, b);
+                    }
+                    Some((i, i + 1))
+                }
+            };
+        }
+        if let Some((a, b)) = run {
+            write(&self.codes, a, b);
+        }
+        // The new walls' tiles, marked again and written row by row.
+        let r = look::FAR_REACH;
+        for (tx, ty) in std::mem::take(&mut self.live.tiles) {
+            let xs = ((tx * WALL_TILE).saturating_sub(r), ((tx + 1) * WALL_TILE + r).min(d.w));
+            let ys = ((ty * WALL_TILE).saturating_sub(r), ((ty + 1) * WALL_TILE + r).min(d.h));
+            look::mark_far_box(d.w, &mut self.codes, xs, ys);
+            for y in ys.0..ys.1 {
+                write(&self.codes, y * d.w + xs.0, y * d.w + xs.1);
+            }
+        }
+    }
+
+    /// A refresh's cost since `t0`, `read` ms of it a read-back waited for
+    /// (the bench prints them).
+    fn note_ground(&mut self, t0: Instant, read: f64) {
         let (n, sum, most, most_read) = self.ground_cost;
-        let all = ms(t0);
+        let all = t0.elapsed().as_secs_f64() * 1e3;
         self.ground_cost = (n + 1, sum + all, most.max(all), most_read.max(read));
+    }
+
+    /// Waits for a started gather and takes it (tests: the codes then
+    /// match the cells as they stood when it began).
+    #[cfg(test)]
+    pub(super) fn settle_ground(&mut self) {
+        if let Some(g) = &self.game {
+            if self.live.gather.as_ref().is_some_and(|q| q.pending()) {
+                g.world.e.device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+                self.take_ground();
+            }
+        }
     }
 
     pub(super) fn marks(&mut self) {
@@ -861,10 +926,11 @@ impl App {
             }
             let sub = ((self.clock - self.star_tick.1) * tps).clamp(0.0, 1.0);
             let ticks = now as f32 + sub;
-            // A landing shakes the camera a little (`shake=`, as a blast).
+            // A landing shakes the camera a little (`shake=` times the Options
+            // page's Screen shake, as a blast: at 0% a landing kept shaking).
             if g.starfall.landed != self.star_felt {
                 if g.starfall.landed > self.star_felt {
-                    self.trauma = (self.trauma + 0.35 * self.args.shake).min(1.0);
+                    self.trauma = (self.trauma + 0.35 * self.args.shake * shake_user()).min(1.0);
                 }
                 self.star_felt = g.starfall.landed;
             }

@@ -1,0 +1,58 @@
+# The owner's frames at 4K (2026-11-22)
+
+Performance thread ("Improve game performance"). Why the game ran at 20 to
+30 frames a second in the owner's play while the GTX 1070 batches said 5 ms,
+and what changed.
+
+## What his play logs said
+
+The `play-logs` branch keeps each second's frame p50 and p95. The median
+second's p50, build 3072 (11-22, planets 1 to 4): 34 to 50 ms; its p95 99 to
+130 ms. On 11-21 (builds 2880 to 2978) the p50 was 7.6 to 31 ms.
+
+## What his PC measured
+
+A Remote Control runner on Scott-Desktop, his play folder's built exe
+(a54867a0), `bench=90 run=1:3 mode=squads hand=strat:rush,aim=6`. His screen
+is **3840 x 2160 at 60 Hz, Windows scale 250%**. The GPU was not idle: his
+own game sat open on the menu (95% GPU) until partway through b, and the
+strategy league ran headless jobs.
+
+| run | screen | frame p50 / p95 ms | GPU tail p50 ms |
+|---|---|---|---|
+| a | 1280 x 800 (his game open) | 14.8 / 68.4 | 13.6 |
+| b | 3840 x 2160 | 41.2 / 66.0 | 40.0 |
+| c | 3840 x 2160, zoom 6, view passes alone | 44.5 / 47.5 | 43.5 |
+| d | planet 4, 3840 x 2160 | 42.8 / 47.8 | 41.7 |
+
+Run c's view, each pass alone (median of 30 frames): base 38.0 ms of 41.8
+(91%), prep 2.5, compose 0.75, marks 0.49. The simulation stays about 1 ms a
+step. So the frame is the view's per-pixel cost times 8.3 million pixels: 8.1
+times the 1280 x 800 the batches timed.
+
+## What changed
+
+- **#720**: the `pixels` crate uploaded a window-sized CPU buffer every frame
+  (14.7 MB at 2560 x 1440, 33 MB at 4K) that the view then overwrote. The
+  bench, off-screen, never paid it. Now `blit.rs` draws the view's buffer
+  straight to the window. Each play-log second also gets a `frames` line:
+  window px, zoom, and ms in step, sound, prep, swap-chain wait, record,
+  present.
+- **World detail** (his card, 08:51Z: "Half resolution on 4K, with a
+  switch"): `View::set_scale` draws the world at half each way and spreads
+  it back over the screen, nearest. The HUD stays at full size. Options,
+  Screen tab: Auto (half above 2560 x 1600), Full, Half. On llvmpipe at
+  3840 x 2160, zoom 12, the view's passes take 1000.9 ms at full and 255.0 at
+  half (base 912.6 to 204.7): 3.9 times less.
+
+Stills (1440 x 900 window under Xvfb, planet 1, a crop): `planet1-full.jpg`
+and `planet1-half.jpg`. The world is a little softer at half. Soldiers,
+rings, the squad's number and the HUD stand the same size.
+
+## Still open
+
+- Planet 3's once-a-second `mark_bulwark` / `set_cells` read-back waits for
+  the GPU's queue: 3 to 10 ms a call, up to 76 ms with a 4K frame queued. It
+  should shrink with the queue. Time it again at 4K after World detail lands.
+- A game left on the menu keeps the card busy (the dish behind the menu
+  runs at full size). At Auto it now draws at half too.

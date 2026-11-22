@@ -4154,6 +4154,11 @@ pub fn read_back_range(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::B
 /// 32.9 ms at 6x on the 1070). A copy per row of cells came first and was
 /// dropped: 2,914 copies at 6x took 17-21 ms on software Vulkan, nearly
 /// all of the refresh, where this one pass and one copy took 1.3-1.4 ms.
+///
+/// The read is started on one frame and taken on a later one (`start`,
+/// `take`; performance thread, 2026-11-22): waiting for it emptied the
+/// GPU's whole queue, the frame before's view among it, which at 4K on the
+/// 1070 made the refresh 3-5 ms on average and up to 13 ms once a second.
 pub struct Gather {
     pipe: wgpu::ComputePipeline,
     bgl: wgpu::BindGroupLayout,
@@ -4161,6 +4166,9 @@ pub struct Gather {
     out: wgpu::Buffer,
     staging: wgpu::Buffer,
     n: u32,
+    /// A read started and not yet taken, and whether its map is done.
+    pending: AtomicBool,
+    ready: Arc<AtomicBool>,
 }
 
 const GATHER: &str = r#"
@@ -4199,7 +4207,7 @@ impl Gather {
         let out = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gathered"), size: 2 * bytes, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
         let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gathered read"), size: 2 * bytes, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         note_bytes(3 * bytes);
-        Some(Gather { pipe, bgl, idx, out, staging, n: cells.len() as u32 })
+        Some(Gather { pipe, bgl, idx, out, staging, n: cells.len() as u32, pending: AtomicBool::new(false), ready: Arc::new(AtomicBool::new(false)) })
     }
 
     fn pipeline(device: &wgpu::Device) -> (wgpu::ComputePipeline, wgpu::BindGroupLayout) {
@@ -4218,6 +4226,23 @@ impl Gather {
 
     /// `a`'s and `b`'s words at the cells, in the cells' order, waited for.
     pub fn read(&self, device: &wgpu::Device, queue: &wgpu::Queue, a: &wgpu::Buffer, b: &wgpu::Buffer) -> (Vec<u8>, Vec<u8>) {
+        self.start(device, queue, a, b);
+        device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+        self.take(device).expect("a waited gather is mapped")
+    }
+
+    /// Whether a read is started and not yet taken.
+    pub fn pending(&self) -> bool {
+        self.pending.load(Ordering::Acquire)
+    }
+
+    /// Starts a read of `a`'s and `b`'s words at the cells as they stand
+    /// after the work already submitted; `take` picks it up. Nothing if
+    /// one is pending.
+    pub fn start(&self, device: &wgpu::Device, queue: &wgpu::Queue, a: &wgpu::Buffer, b: &wgpu::Buffer) {
+        if self.pending() {
+            return;
+        }
         READS.with(|r| r.set(r.get() + 1));
         let group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("gather"),
@@ -4242,12 +4267,31 @@ impl Gather {
         let bytes = self.n as u64 * 4;
         enc.copy_buffer_to_buffer(&self.out, 0, &self.staging, 0, 2 * bytes);
         queue.submit([enc.finish()]);
-        self.staging.map_async(wgpu::MapMode::Read, .., |r| r.expect("map"));
-        device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+        self.ready.store(false, Ordering::Release);
+        let ready = self.ready.clone();
+        // A gather dropped with its read pending (a wall went up, a new
+        // world) ends the map with an error: nothing to take then.
+        self.staging.map_async(wgpu::MapMode::Read, .., move |r| ready.store(r.is_ok(), Ordering::Release));
+        self.pending.store(true, Ordering::Release);
+    }
+
+    /// The started read's words (`a`'s, then `b`'s), once the GPU has
+    /// done it; None while it runs or when none is started. Never waits.
+    pub fn take(&self, device: &wgpu::Device) -> Option<(Vec<u8>, Vec<u8>)> {
+        if !self.pending() {
+            return None;
+        }
+        if !self.ready.load(Ordering::Acquire) {
+            let _ = device.poll(wgpu::PollType::Poll);
+            if !self.ready.load(Ordering::Acquire) {
+                return None;
+            }
+        }
         let all = self.staging.get_mapped_range(..).to_vec();
         self.staging.unmap();
-        let (x, y) = all.split_at(bytes as usize);
-        (x.to_vec(), y.to_vec())
+        self.pending.store(false, Ordering::Release);
+        let (x, y) = all.split_at(self.n as usize * 4);
+        Some((x.to_vec(), y.to_vec()))
     }
 }
 

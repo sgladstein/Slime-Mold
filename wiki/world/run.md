@@ -192,7 +192,7 @@ On since 2026-11-20 (the same thread; `larder_world/heart.rs`, `HeartRules`, `ru
 
 ## Condensed strikers
 
-On since 2026-11-20 (the same thread, the owner's pick on the balance thread's card that day, "Condensed strikers + late lunge"; `larder_world/strikers.rs`, `StrikerRules`, `run::ENEMY_RULES`' `strikers`). His notes that day: once the squad is big enough "the slime cannot touch them", condensing could come back "although the visuals and mechanics of that would need to be much improved", and hardened slime "doesn't attack you. It makes it easier." So under 60% of its peak the slime's edge facing the squad condenses once a game second: each ordinary walker within the guns' reach and 30 dish cells of a soldier, by walking (the units' walking distance), tries with chance 1, scaled by the squad (none against 8 soldiers or fewer, all from 24: `few`, `full`), and in each 2 x 2 block of fine cells the first that tries takes in up to three of the rest (`strikers_most`, 1 to 15; engine.wgsl's `condense` and `condlead`). A condensed walker is one walker on the ground, but the slime's mass (`World::mass`, which the HUD, the goals, fruiting and waves read) counts what it holds too; it takes a blow for each walker it holds and one more to die, bites once more for each, and charges the nearest soldier at 3 times its pace; mass and bite stay the same. It is drawn as a bead in the slime's gold, larger by what it holds, with a slow pulse (view.wgsl's `draw_striker`), not the old bronze. Unlike the old condensing (11-14 to 11-17, [dead ends](../../Reports/dead-ends.md)), only the edge that can reach the squad condenses, and every condensed walker charges ([report](../../Reports/strikers-2026-11-20/README.md)). Retuned the same evening (first numbers 40%, 12 cells, 0.5, 1.5 and every squad): the balance thread's 36 planet 2 games found those bit an 80-soldier army no more than strikers off; on one planet 2 map the retune took the army from 80 to 65 late and its bank from 22,434 to 670, and a four-soldier squad on another won as it did with no strikers. Capped the same night: on planet 1 (CI's run bot, seed 1, 2:27) the full share condensed 4,218 walkers into 1,607 strikers in one second against 43 soldiers, and all 43 died within 8 s. Now at most about 150 strikers form a game second, or 2% of the living slime, whichever is fewer (`rate`, `rate_share`; the share a walker tries with is cut to that from the walkers the last pass counted in the band), and the run scales the share and the cap by planet: a quarter on planet 1 (about 37 strikers a second), 0.6 on planet 2 (90), all of it from planet 3 (`run::STRIKER_SHARE`, Direction's numbers). Planet 1, run seed 1, on lavapipe: uncapped, lost with all 43 soldiers; capped, won with 16 lost; strikers off, won with 11 lost. GPU only.
+On since 2026-11-20 (the same thread, the owner's pick on the balance thread's card that day, "Condensed strikers + late lunge"; `larder_world/strikers.rs`, `StrikerRules`, `run::ENEMY_RULES`' `strikers`). His notes that day: once the squad is big enough "the slime cannot touch them", condensing could come back "although the visuals and mechanics of that would need to be much improved", and hardened slime "doesn't attack you. It makes it easier." So under 60% of its peak the slime's edge facing the squad condenses once a game second: each ordinary walker within the guns' reach and 30 dish cells of a soldier, by walking (the units' walking distance), tries with chance 1, scaled by the squad (none against 8 soldiers or fewer, all from 24: `few`, `full`), and in each 2 x 2 block of fine cells the first that tries takes in up to three of the rest (`strikers_most`, 1 to 15; engine.wgsl's `condense` and `condlead`). A condensed walker is one walker on the ground, but the slime's mass (`World::mass`, which the HUD, the goals, fruiting and waves read) counts what it holds too; it takes a blow for each walker it holds and one more to die, bites once more for each, and charges the nearest soldier at 3 times its pace; mass and bite stay the same. It is drawn as a bead in the slime's gold, larger by what it holds, with a slow pulse (view.wgsl's `draw_striker`), not the old bronze. Unlike the old condensing (11-14 to 11-17, [dead ends](../../Reports/dead-ends.md)), only the edge that can reach the squad condenses, and every condensed walker charges ([report](../../Reports/strikers-2026-11-20/README.md)). Retuned the same evening (first numbers 40%, 12 cells, 0.5, 1.5 and every squad): the balance thread's 36 planet 2 games found those bit an 80-soldier army no more than strikers off; on one planet 2 map the retune took the army from 80 to 65 late and its bank from 22,434 to 670, and a four-soldier squad on another won as it did with no strikers. Capped the same night: on planet 1 (CI's run bot, seed 1, 2:27) the full share condensed 4,218 walkers into 1,607 strikers in one second against 43 soldiers, and all 43 died within 8 s. Now at most about 150 strikers form a game second, or 2% of the living slime, whichever is fewer (`rate`, `rate_share`; the share a walker tries with is cut to that from the walkers the last pass counted in the band), and the run scales the share and the cap by planet: a quarter on planet 1 (about 37 strikers a second), 0.6 on planet 2 (90), all of it from planet 3 (`run::STRIKER_SHARE`, Direction's numbers). Planet 1, run seed 1, on lavapipe: uncapped, lost with all 43 soldiers; capped, won with 16 lost; strikers off, won with 11 lost. GPU only. Since 2026-11-22 (the thread "Make the run harder after full-game win") the cap grows with an army past 24 alive, up to 2.5 times at 60 or more, from planet 2 (`StrikerRules::army_most`, `run::STRIKER_ARMY`).
 
 ## The last-stand heart
 
@@ -428,7 +428,11 @@ damage speed, range ... a calculated/estimated dps of you gun"): the shop's
 pane tells whatever is under the pointer with no click, and keeps the
 picked thing's button for a click. A rolled bullet's damage, speed, range
 and aim are bars (log scale, a standard bullet at the middle), and a gun's
-numbers are bars with a white tick where yours stands. The gun's
+numbers are bars with a white tick where yours stands. Since the owner's
+08:53Z note ("supposed to make visual for speed range, etc but instead ...
+everything is based on dps") every card leads with bars of the gun with
+it, damage a shot, fire rate, range, speed and aim (`dps::profile`), a tick
+where the gun is now, and the DPS below them is one small line. The gun's
 estimated damage a second (`dps::estimate`, `src/mould/dps.rs`) shows over
 the slots; every card, gun and damage upgrade that would change it carries
 a "+N DPS" pill, the gun table has it as a column, and the pane shows
@@ -437,7 +441,13 @@ plain strike is 10, so the starting rifle is 10 a second); it counts one
 soldier with every shot landing, strikes, kill bursts, pierce, split,
 multicast, carried casts and rate, and leaves out what works over time
 (gas, germ, Mind bullets, fire, trails, shoves), whose cards show "DPS
-same" and say what they do in words.
+same" and say what they do in words. After the review lane's check
+(2026-11-22): a kill burst on the hit counts only past the strike's own
+disc (so a Bomb, whose kill sits inside the rifle's strike and whose work
+is the throw, reads like the bare rifle), a needle lets its payload out at
+its first hit only (`shots.rs`, `one_burst`), and the rate is snapped to
+whole ticks as the game fires (a Rate card on the rifle is 1.875 shots a
+second, not 2).
 
 ## Fireproof
 
@@ -481,6 +491,10 @@ alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 - The balance review (11-20, [report](../../Reports/balance-review-2026-11-20/README.md)): in the owner's 14 won planets the slime holds at half its peak or more for a median 75% of the planet, then breaks in about 1.4 minutes, so the army's size decides a planet, rush or not (put to him with D7, nothing built). At the clock a planet cut to half its peak was a 1-star win (`Cause::Cap`), the run bot's only planet 3 win on main; the owner's answer (11-20 14:10Z) is a clock that counts up, built the same day (above). On the army he answered that the slime must not grow with it; the options for a squad the slime cannot touch are the balance thread's next job, with the slime-enemy thread. Planet 2 is now the hardest of the three and is not yet measured on today's game.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
 - The core world with C: 364,924 walkers, frame p95 12-14 ms on the 1070 (planet 1 4.6 ms) and a 12 s head-start pause before landing; kept until play says otherwise.
+
+## Harder from planet 2 (2026-11-22)
+
+Harder from planet 2 since 2026-11-22 (the owner won all 8 planets that night losing 0 to 1 soldiers on 7, "Still too easy", then "scale it up. You decide what is best"; planet 1 unchanged): raids at least 35 s apart (45 on planet 1), the strikers' cap grows with an army past 24 to 2.5 times, mini-bosses tougher by the planet (weakest grade's armour 4 to 10, bite up, three at once from planet 6), and the soldier's price climbs 1/40 for each soldier alive over 30 (`Rules::soldier_step`; 2x at 70). All in `run.rs` rows, each its own "what is new" line.
 
 ## Sources
 

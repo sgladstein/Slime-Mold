@@ -1316,6 +1316,36 @@ fn a_runs_round_ends_when_its_last_soldier_falls() {
     assert!(g.end.is_none(), "{:?}", g.end);
 }
 
+/// **The soldier's price climbs with the living army** (`Rules::soldier_step`,
+/// 2026-11-22): the base price up to `soldier_from` alive, a `soldier_step`
+/// share more for each one over, back down as soldiers fall; off (the
+/// default) the price never moves.
+#[test]
+fn the_soldiers_price_climbs_with_the_army() {
+    let mut g = small(1);
+    let base = g.rules.soldier_cost;
+    g.rules.max_squad = 200;
+    g.bank = 1e9;
+    while g.alive() < 40 {
+        assert!(g.apply(Cmd::Buy));
+    }
+    assert_eq!(g.rules.soldier_cost, base, "off by default");
+    (g.rules.soldier_from, g.rules.soldier_step) = (30.0, 40.0);
+    g.step();
+    assert_eq!(g.rules.soldier_cost, (base * 1.25).round(), "40 alive: 10 over 30, a quarter more");
+    while g.alive() < 70 {
+        assert!(g.apply(Cmd::Buy));
+    }
+    assert_eq!(g.rules.soldier_cost, (base * 2.0).round(), "70 alive: twice");
+    let spent = g.spent;
+    assert!(g.apply(Cmd::Buy) && g.spent - spent == (base * 2.0).round(), "the 71st paid the price shown");
+    for s in g.soldiers.iter_mut().filter(|s| s.alive).take(50) {
+        s.alive = false;
+    }
+    g.step();
+    assert_eq!(g.rules.soldier_cost, base, "fallen soldiers bring the price back down");
+}
+
 /// No upkeep (owner, 2026-11-14: soldiers must not need feeding, 01:49Z;
 /// "There should be no maintenance costs in this game", 04:53Z): a squad
 /// standing idle for 20 s spends nothing and keeps its health, so the
@@ -3847,11 +3877,15 @@ fn mini_boss_chances_rise_with_the_planet() {
     for d in 2..8 {
         let (p, q) = (BossRules::for_depth(d), BossRules::for_depth(d + 1));
         assert!(q.every <= p.every && q.cut >= p.cut && q.grade_lo >= p.grade_lo && q.grade_hi >= p.grade_hi, "planet {d}");
+        // Tougher by the planet (11-22): armour and bite never fall.
+        assert!(q.armour_at(0.0) >= p.armour_at(0.0) && q.bite_at(1.0) >= p.bite_at(1.0) && q.most >= p.most, "planet {d}'s strength");
     }
     // Strength by grade (owner 05:23Z): much stronger than ordinary
     // slime's one blow, and a wide spread.
     let r = BossRules::default();
     assert_eq!((r.armour_at(0.0), r.armour_at(1.0)), (4, 15));
+    let (two, eight) = (BossRules::for_depth(2), BossRules::for_depth(8));
+    assert_eq!((two.armour_at(0.0), eight.armour_at(0.0), eight.armour_at(1.0), eight.most), (4, 10, 15, 3), "planet 2 as before, planet 8 tougher");
     assert_eq!((r.bite_at(0.0), r.bite_at(1.0)), (1, 4));
     assert!(r.reach_at(6.0, 1.0) > 1.5 * r.reach_at(6.0, 0.0) - 1.0 && r.haste_at(1.0) > r.haste_at(0.0));
 }

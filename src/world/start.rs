@@ -258,12 +258,16 @@ pub struct ShopRow {
     /// The gun has no room for it now (slots or budget), so it would go to
     /// the bag: `dps` is the gun's with it in all the same.
     pub no_room: bool,
+    /// The gun's stats once this is picked, as bars on `Shop::stats`'s
+    /// scale (damage a shot, fire rate, range, speed, aim; the owner,
+    /// 2026-11-22 08:53Z); empty where it changes no gun.
+    pub stats: Vec<(String, f32, String)>,
 }
 
 impl ShopRow {
     /// A row with the plain look; the game sets the rest.
     pub fn new(group: &str, area: ShopArea, icon: Icon, name: &str) -> Self {
-        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None, dps: None, no_room: false }
+        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None, dps: None, no_room: false, stats: Vec::new() }
     }
 }
 
@@ -289,6 +293,9 @@ pub struct Shop {
     /// The estimated damage a second of the gun the slots show, one
     /// soldier, every shot landing (`mould::dps`; the owner, 2026-11-22).
     pub dps: Option<f32>,
+    /// The gun the slots show, as `ShopRow::stats` (its tick on a row's
+    /// bars).
+    pub stats: Vec<(String, f32, String)>,
     /// The bench's name: the loadout shown and its gun (2026-11-19); empty
     /// names it by the carried gun, as before.
     pub bench: String,
@@ -773,7 +780,7 @@ impl StartMenu {
             // Every rule back, the UI size and the volume kept (the
             // player's choices, not rules).
             Hit::ResetAll => {
-                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake")) {
+                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail")) {
                     o.at = o.default;
                 }
             }
@@ -1206,7 +1213,7 @@ impl StartMenu {
     fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // The rules changed, by their labels; the UI size and the volume
         // are not rules ("Free play, with ui 200%", the review 11-15).
-        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake")).map(|o| format!("{} {}", o.label, o.value())).collect();
+        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail")).map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
@@ -2044,6 +2051,11 @@ mod tests {
     /// upgrades, seven Buildings, five Tools and three guns. Rows 0-7 are
     /// the Squad's, 8-14 Buildings, 15-19 Tools, 20-22 guns (20 carried),
     /// cards from 23.
+    /// A gun's stat bars as the game gives them (`menu::profile_bars`).
+    fn profile(f: f32) -> Vec<(String, f32, String)> {
+        ["Damage", "Fire rate", "Range", "Speed", "Aim"].iter().map(|l| (l.to_string(), f.min(1.0), "12.5/s".to_string())).collect()
+    }
+
     fn shop(n: usize) -> Shop {
         let mut rows = Vec::new();
         let mut add = |group: &str, area: ShopArea, k: usize| {
@@ -2057,6 +2069,9 @@ mod tests {
             // The DPS readouts (2026-11-22): a pill, a column, the pane's
             // bars, and a card with no room; bullet cards' bars.
             r.dps = Some(10.0 + k as f32 * 3.5);
+            if area != ShopArea::Upgrades || k < 2 {
+                r.stats = profile(0.4 + 0.05 * k as f32);
+            }
             r.no_room = area == ShopArea::Cards && k % 3 == 2;
             if area == ShopArea::Cards && k % 2 == 1 {
                 r.bars = vec![("Damage".into(), 0.6, "12".into()), ("Speed".into(), 0.4, "x0.8".into()), ("Range".into(), 0.7, "x1.6".into()), ("Aim".into(), 0.5, "x1.0".into())];
@@ -2078,7 +2093,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0) }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5) }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -2127,7 +2142,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new() }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the

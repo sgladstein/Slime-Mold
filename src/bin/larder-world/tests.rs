@@ -506,6 +506,8 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     // 11-15; Right on the Game tab's first row would turn and save the UI
     // size).
     assert_eq!(app.menu.as_ref().unwrap().option("map").unwrap().tab, "Planet");
+    // Screen, then Game, then Planet (the Screen tab came first on 11-22).
+    app.menu_input(|m| m.key(KeyCode::Tab, true)).unwrap();
     app.menu_input(|m| m.key(KeyCode::Tab, true)).unwrap();
     // Down to Planet and back: no restart (the round's clock runs on).
     for _ in 0..3 {
@@ -1526,6 +1528,9 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
             doored = true;
         }
         app.prepare();
+        // The refresh's read is taken a frame or more on in play; here it
+        // is waited for, so the codes are the cells as they stood.
+        app.settle_ground();
         if app.ground_at != at {
             at = app.ground_at;
             let g = app.game.as_ref().unwrap();
@@ -1545,6 +1550,24 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
     assert!(raised && wall_cells(&app) > walls_before + 20, "the raised walls drew: {} wall cells, {walls_before} before", wall_cells(&app));
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
     assert!(left < app.charge0.iter().sum::<f32>(), "crystals were eaten, so charges changed: {left}");
+    // In play nothing waits (performance thread, 11-22): a refresh starts
+    // its read, and a later frame takes it once the GPU is done.
+    app.settle();
+    app.ground_at -= GROUND_EVERY;
+    app.prepare();
+    assert!(app.live.gather.as_ref().is_some_and(|q| q.pending()), "the refresh started a read");
+    for _ in 0..200 {
+        if !app.live.gather.as_ref().unwrap().pending() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        app.prepare();
+    }
+    assert!(!app.live.gather.as_ref().unwrap().pending(), "a later frame took the read");
+    let g = app.game.as_ref().unwrap();
+    let e = &g.world.e;
+    let (charge, health) = (floats(read_back(&e.device, &e.queue, &e.charge)), floats(read_back(&e.device, &e.queue, &e.health)));
+    assert_eq!(app.codes, ground_codes(g, &app.depth, Some(&charge), Some(&health)), "the taken read's codes");
 }
 
 /// **The squad's order lines** (owner's playtest, 2026-11-14 20:12Z and
@@ -2056,7 +2079,7 @@ fn the_menus_real_lists_fit_one_screen() {
             }
             t
         });
-        assert_eq!(tabs, ["Game", "Planet", "The mould", "Experiments"]);
+        assert_eq!(tabs, ["Screen", "Game", "Planet", "The mould", "Experiments"]);
         for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
             let at = format!("{screen:?} at {user}, squads {squads}");
             let mut m = start_menu(&base);

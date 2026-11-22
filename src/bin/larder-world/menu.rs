@@ -20,6 +20,8 @@
 use super::*;
 use slime_mould::mould::run::{self as run, Pick};
 use slime_mould::mould::run::{Face, Group};
+use slime_mould::mould::dps::Profile;
+use slime_mould::mould::guns;
 use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::build::news::{self, Memory};
 use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
@@ -142,6 +144,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // it here and found none): taken at once and saved, not a round's.
     let shakes: Vec<String> = settings::SHAKE_STEPS.iter().map(|&v| settings::percent(v)).collect();
     let shakes: Vec<&str> = shakes.iter().map(String::as_str).collect();
+    // The world's detail under it (performance thread, 2026-11-22): the
+    // owner's 4K screen drew the world at 8 times the pixels the GTX 1070
+    // was timed at. Taken at once and saved, not a round's.
+    o.insert(3, Opt::new("detail", "World detail", &settings::DETAIL_STEPS, "Auto", detail_user(), "How many of the screen's pixels the world is drawn at: Auto draws a 4K window at half each way for a steady frame rate; Full always at every pixel, Half always at half. Text and panels stay sharp"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -150,6 +156,11 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     o.into_iter()
         .map(|opt| {
             let tab = match opt.key.as_str() {
+                // How the game shows on this screen (performance thread,
+                // 11-22): the World detail row did not fit the Game tab
+                // at 1280 x 540 and 200%, so the UI size, the world's
+                // detail and the shake have a tab of their own, first.
+                "ui" | "detail" | "shake" => "Screen",
                 "map" | "planet" | "own" | "plants" => "Planet",
                 "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The mould",
                 k if k.starts_with(slime_mould::build::switches::OPT_KEY) => "Experiments",
@@ -337,7 +348,8 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             };
             let mut s = ShopRow::new(&group, area, Icon::Upgrade, &row.name);
             (s.about, s.price, s.state, s.ready, s.on) = (row.about.clone(), row.price, row.state, row.ready, row.on);
-            (s.dps, s.no_room) = (after.map(|a| a.0), after.is_some_and(|a| a.1));
+            (s.dps, s.no_room) = (after.map(|a| a.0.dps), after.is_some_and(|a| a.1));
+            s.stats = after.map_or(Vec::new(), |a| profile_bars(&a.0));
             match row.face {
                 Face::Item(key) => {
                     s.icon = item_icon(key);
@@ -406,19 +418,47 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         },
         field: r.field,
         glance: (!r.range).then(|| glance_of(r.seed, r.depth)),
-        dps: dps_of(r),
+        dps: dps_of(r).map(|p| p.dps),
+        stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
     }
 }
 
 /// The estimated damage a second of the gun the shop's slots show
 /// (`mould::dps`): its gun as armed (the turrets' rack for a loadout with
 /// none), its cards, the run's rules.
-fn dps_of(r: &Run) -> Option<f32> {
+fn dps_of(r: &Run) -> Option<Profile> {
+    profile_with(r, &r.gun())
+}
+
+/// The gun the shop's slots show, as armed, fired with `cards`
+/// (`mould::dps::profile`).
+fn profile_with(r: &Run, cards: &[rounds::Card]) -> Option<Profile> {
     let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
     let mut rules = Rules::default();
     r.rules(&mut rules);
     let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
-    Some(slime_mould::mould::dps::estimate(&gun, &r.gun(), &rules, &rr))
+    Some(slime_mould::mould::dps::profile(&gun, cards, &rules, &rr))
+}
+
+/// A gun's stats as the shop's bars (the owner, 2026-11-22 08:53Z: "make
+/// visual for speed range, etc"): damage a shot, fire rate, range, bullet
+/// speed and aim, each on a log scale from a quarter to four times the
+/// starting rifle's, which sits in the middle (damage to sixteen times), so a card's bar and the
+/// tick of the gun without it share one scale. Aim is the spread turned
+/// over, so a longer bar is better on every row.
+fn profile_bars(p: &Profile) -> Vec<(String, f32, String)> {
+    let bar = |x: f32| (0.5 + x.max(1e-3).ln() / 16f32.ln()).clamp(0.04, 1.0);
+    let rules = Rules::default();
+    vec![
+        // Damage on a longer scale, a quarter to sixteen times the rifle's
+        // (the rifle a third of the way): a scattergun's shot is 58 and a
+        // pierce on it 144, both past four times.
+        ("Damage".to_string(), ((p.damage / 10.0 * 4.0).max(1e-3).ln() / 64f32.ln()).clamp(0.04, 1.0), format!("{:.0}", p.damage)),
+        ("Fire rate".to_string(), bar(p.rate / (1.0 / rules.shot_every.max(1e-3))), format!("{:.1}/s", p.rate)),
+        ("Range".to_string(), bar(p.range / rules.range.max(1e-3)), format!("{:.0}", p.range)),
+        ("Speed".to_string(), bar(p.speed / rules.bullet_speed.max(1e-3)), format!("{:.0}", p.speed)),
+        ("Aim".to_string(), bar(guns::RIFLE_SPREAD / p.spread.max(1e-3)), format!("{:.1}", p.spread)),
+    ]
 }
 
 /// That estimate once `pick` is made, on a copy of the run with the points
@@ -428,7 +468,7 @@ fn dps_of(r: &Run) -> Option<f32> {
 /// the game puts cards (`hypothetical`), so a full gun still shows what a
 /// card is worth. None for a pick that changes no gun, or that the run
 /// refuses.
-fn dps_after(r: &Run, pick: Pick) -> Option<(f32, bool)> {
+fn dps_after(r: &Run, pick: Pick) -> Option<(Profile, bool)> {
     let card = match pick {
         Pick::Offer(i) => r.offers.get(i).copied(),
         Pick::Card(i) => r.cards.get(i).filter(|c| !c.1).map(|c| c.0),
@@ -451,7 +491,7 @@ fn dps_after(r: &Run, pick: Pick) -> Option<(f32, bool)> {
 /// `Run::put_in` would put it: after the cards of its rank, before the
 /// first of a later one (flight cards, then modifiers and triggers, then
 /// bullets).
-fn hypothetical(r: &Run, c: rounds::Card) -> Option<f32> {
+fn hypothetical(r: &Run, c: rounds::Card) -> Option<Profile> {
     use rounds::Kind as K;
     let rank = |c: rounds::Card| match c.kind() {
         K::Flight => 0,
@@ -461,11 +501,7 @@ fn hypothetical(r: &Run, c: rounds::Card) -> Option<f32> {
     let mut cards = r.gun();
     let at = cards.iter().position(|&o| rank(o) > rank(c)).unwrap_or(cards.len());
     cards.insert(at, c);
-    let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
-    let mut rules = Rules::default();
-    r.rules(&mut rules);
-    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
-    Some(slime_mould::mould::dps::estimate(&gun, &cards, &rules, &rr))
+    profile_with(r, &cards)
 }
 
 /// A rolled bullet's numbers as bars against a standard bullet's: each on
@@ -807,6 +843,9 @@ impl App {
         }
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("music")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != music_user()) {
             self.set_music(v);
+        }
+        if let Some(v) = self.menu.as_ref().and_then(|m| m.option("detail")).map(|o| o.value().to_string()).filter(|v| v != detail_user()) {
+            self.set_detail(&v);
         }
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("shake")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != shake_user()) {
             self.set_shake(v);
