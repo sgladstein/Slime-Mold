@@ -1,0 +1,10 @@
+log map=planet:4:1795319574 seed=8818973476886826205 when=2026-11-22T04:34:26Z build=3072:7d77925:2026-11-22 mode=squads mission=Planet_4_of_8,_Azek tier=swarmer planet=4 run=1795319574 gun=pierce+split+seek+ammo/sour/needle/4/55/320/109/34/3 turrets=pierce+split bought=walls1+turret1+mortar1+pump+1 switches=none keys=none
+cmd t=0.0 active 0
+cmd t=0.0 arm 0 rifle 1 24 1 0.5 1 10 4 1
+cmd t=0.0 load 255 pierce+split
+t=1 mould=58252 mass=58252 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=6.1 p95=90.4
+t=2 mould=58252 mass=58252 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=36.8 p95=90.2
+t=3 mould=58250 mass=58250 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=6.2 p95=90.2
+t=4 mould=58249 mass=58249 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=7.5 p95=89.9
+t=5 mould=58247 mass=58247 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=36.9 p95=89.6
+t=6 mould=58245 mass=58245 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=31.1 p95=90.1

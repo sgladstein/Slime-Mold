@@ -1,0 +1,15 @@
+log map=planet:4:1795319574 seed=8818973476886826205 when=2026-11-22T04:33:50Z build=3072:7d77925:2026-11-22 mode=squads mission=Planet_4_of_8,_Azek tier=swarmer planet=4 run=1795319574 gun=pierce+split+seek+ammo/sour/needle/4/55/320/109/34/3 turrets=pierce+split bought=walls1+turret1+mortar1+pump+1 switches=none keys=none
+cmd t=0.0 active 0
+cmd t=0.0 arm 0 rifle 1 24 1 0.5 1 10 4 1
+cmd t=0.0 load 255 pierce+split
+t=1 mould=58252 mass=58252 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=26.5 p95=90.3
+t=2 mould=58252 mass=58252 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=30.9 p95=90.3
+t=3 mould=58250 mass=58250 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=30.5 p95=89.8
+t=4 mould=58249 mass=58249 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=6.6 p95=74.8
+t=5 mould=58247 mass=58247 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=25.6 p95=74.7
+t=6 mould=58245 mass=58245 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=8.3 p95=75.7
+t=7 mould=58244 mass=58244 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=6.5 p95=88.7
+t=8 mould=58240 mass=58240 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=36.7 p95=89.9
+t=9 mould=58232 mass=58232 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=2 killed=7 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=31.2 p95=90.9
+crystals t=10 690560/0 579200/0 219264/0 285312/0 13696/0 20544/0 30912/0 13696/0 20544/0 19008/0 18816/0 20608/0
+t=10 mould=58229 mass=58229 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=2 killed=7 pumps=0 turrets=0 walls=0 other=0 charge=1932160 took=0.500 stuck=0 p50=7.1 p95=75.1
