@@ -357,7 +357,28 @@ impl<W: World> Game<W> {
             let k = self.soldiers.len() - 1;
             self.soldiers[k].order = o;
         }
+        // The next one's price, with this one alive (`Rules::soldier_step`).
+        self.reprice();
         true
+    }
+
+    /// **The soldier's price now** (`Rules::soldier_step`, 2026-11-22):
+    /// the base price, and `soldier_step` share more for each soldier alive
+    /// over `soldier_from`. Kept in `Rules::soldier_cost`, so the shop
+    /// button, the hands and the bots all read the price now. Called after
+    /// a buy and once a step (soldiers fall). The base is read from
+    /// `soldier_cost` on the first call and kept in `Game::price_base`, so
+    /// anything that changes the price mid-game (a discount card, a rule
+    /// set mid-planet, a test) must edit `price_base`, not `soldier_cost`,
+    /// which the next call overwrites (Squad's review of #721).
+    pub fn reprice(&mut self) {
+        if self.price_base <= 0.0 {
+            self.price_base = self.rules.soldier_cost;
+        }
+        let r = &self.rules;
+        let over = (self.alive() as f32 - r.soldier_from).max(0.0);
+        let k = if r.soldier_step > 0.0 { 1.0 + over / r.soldier_step } else { 1.0 };
+        self.rules.soldier_cost = (self.price_base * k).round();
     }
 
     /// Within range of a live soldier.
