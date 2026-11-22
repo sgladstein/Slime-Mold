@@ -428,7 +428,11 @@ damage speed, range ... a calculated/estimated dps of you gun"): the shop's
 pane tells whatever is under the pointer with no click, and keeps the
 picked thing's button for a click. A rolled bullet's damage, speed, range
 and aim are bars (log scale, a standard bullet at the middle), and a gun's
-numbers are bars with a white tick where yours stands. The gun's
+numbers are bars with a white tick where yours stands. Since the owner's
+08:53Z note ("supposed to make visual for speed range, etc but instead ...
+everything is based on dps") every card leads with bars of the gun with
+it, damage a shot, fire rate, range, speed and aim (`dps::profile`), a tick
+where the gun is now, and the DPS below them is one small line. The gun's
 estimated damage a second (`dps::estimate`, `src/mould/dps.rs`) shows over
 the slots; every card, gun and damage upgrade that would change it carries
 a "+N DPS" pill, the gun table has it as a column, and the pane shows
