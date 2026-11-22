@@ -170,8 +170,8 @@ pub const SWITCHES: &[Switch] = &[
         default: "off",
         lane: Lane::Enemy,
         since: "2026-11-11",
-        sees: "A crystal that is not being eaten slowly fills again",
-        why_off: "Crystals that run out suit the race at the start; to be settled by play on a world that is mostly slime",
+        sees: "A crystal your squad drained slowly fills again",
+        why_off: "Since 11-21 only your squad empties a crystal. Off, a drained crystal stays empty, so draining is a lasting win; on decides whether it comes back",
     },
 ];
 
