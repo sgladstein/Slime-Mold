@@ -1203,39 +1203,14 @@ fn cells_height_lin(x: f32, y: f32) -> f32 {
     return mix(mix(hc(ix, iy), hc(ix + 1, iy), tx), mix(hc(ix, iy + 1), hc(ix + 1, iy + 1), tx), ty);
 }
 
-// `cells_height` at (x, y), (x + e, y) and (x, y + e) from one read of the
-// 5 x 5 fine cells they share (`shaded`'s height and its forward slope;
-// frame cost pass, 11-21): the three B-splines read 48 cells, these 25.
-// The same sums in the same order, so the same values. `e` under a fine
-// cell (`shaded` passes 0.75 of one).
-fn cells_height3(x: f32, y: f32, e: f32) -> vec3<f32> {
-    let f = fpos(x, y);
-    let fx = fpos(x + e, y);
-    let fy = fpos(x, y + e);
-    let ix = i32(floor(f.x)); let iy = i32(floor(f.y));
-    let ox = i32(floor(fx.x)) - ix;
-    let oy = i32(floor(fy.y)) - iy;
-    var w: array<f32, 25>;
-    for (var j = 0; j < 5; j++) {
-        for (var i = 0; i < 5; i++) {
-            w[j * 5 + i] = hc(ix - 1 + i, iy - 1 + j);
-        }
-    }
-    let wx = bspline(f.x - floor(f.x)); let wy = bspline(f.y - floor(f.y));
-    let wxe = bspline(fx.x - floor(fx.x)); let wye = bspline(fy.y - floor(fy.y));
-    var h = 0.0;
-    var hx = 0.0;
-    var hy = 0.0;
-    for (var j = 0; j < 4; j++) {
-        let r = j * 5;
-        h += wy[j] * (wx.x * w[r] + wx.y * w[r + 1] + wx.z * w[r + 2] + wx.w * w[r + 3]);
-        hx += wy[j] * (wxe.x * w[r + ox] + wxe.y * w[r + ox + 1] + wxe.z * w[r + ox + 2] + wxe.w * w[r + ox + 3]);
-        let ry = (j + oy) * 5;
-        hy += wye[j] * (wx.x * w[ry] + wx.y * w[ry + 1] + wx.z * w[ry + 2] + wx.w * w[ry + 3]);
-    }
-    return vec3<f32>(h, hx, hy);
-}
-
+// `shaded`'s height and its forward slope are three plain B-splines (48
+// reads of `hc`). Tried and reverted (11-21 to 11-22): `cells_height3`, the
+// three from one read of the 5 x 5 fine cells they share (25 reads). The
+// GTX 1070 timed it 1.27 ms slower in `base` (5.66 against 4.40 ms,
+// planet 3, zoom 6, `slope3` in Reports/view-cost-2026-11-21/): its slope
+// sums indexed the 25-word array by a run-time offset, which most likely puts the
+// array in slow local memory instead of registers. If it comes back, the
+// offsets must go into the weights (select), never the index.
 fn cells_height(x: f32, y: f32) -> f32 {
     let f = fpos(x, y);
     let ix = i32(floor(f.x)); let iy = i32(floor(f.y));
@@ -3033,8 +3008,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // B-spline's own slope showed the walkers' one-a-cell lattice as a fine
     // plaid in the dense body (2026-11-14); the wider difference smooths it.
     // A crystal's own faces are worked out in its block below.
-    let h3 = cells_height3(x, y, e);
-    let hc0 = h3.x;
+    let hc0 = cells_height(x, y);
     // The soil's own material where the ground is bare (the mould's film,
     // thickness by the inverse of the height curve, covers it).
     let th_here = film_th(x, y);
@@ -3123,8 +3097,8 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     m.albedo = crust_over(m.albedo, x, y, m.vis * under);
     let h = max(hc0, gem_height(x, y));
     // Forward differences: three B-spline samples, not five.
-    let dx = h3.y - hc0;
-    let dy = h3.z - hc0;
+    let dx = cells_height(x + e, y) - hc0;
+    let dy = cells_height(x, y + e) - hc0;
     // The slope capped at 0.7 (2026-11-14, owner: lone walkers looked
     // dim). The sharp count makes a lone walker a bump some 3 cells tall
     // and a cell wide; its flank away from the light shaded to the floor,

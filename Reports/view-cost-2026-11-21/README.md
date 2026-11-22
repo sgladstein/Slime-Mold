@@ -96,3 +96,38 @@ wanderer at zoom 12, for 8 of the pixel's roughly 100 buffer reads.
 New variants for the next 1070 batch (`variants.py`): `crowns`, `onekind`,
 `nolobe`, `noclump` (the plants split), `nocull` and `slope3` (this pass's
 two cuts undone, so each is timed against `full`), and `spec3`.
+
+## The third batch (GTX 1070, 11-22)
+
+Engine and tools ran the new variants on Scott's 1070 at main 911a119e,
+each twice (`run=1:3 mode=squads bench=60 hand=strat:rush,aim=6
+centre=larder,6 viewpasses=30`; every run ended in the same state, t 60
+and 34,924 walkers; twins within 0.05 ms). This base is planet 3 at zoom 6
+with 35k slime, so it is not comparable to the 3.4 ms above. Raw files on
+his PC, `C:\Users\Scott\Code\pc-batch-out\20261122-030143\`.
+
+| variant | base (ms) | saves | frame p50 |
+|---|---|---|---|
+| full | 5.638 / 5.687 | | 7.09 / 7.18 |
+| nocull | 5.586 / 5.598 | 0.07 | |
+| slope3 | 4.392 / 4.399 | 1.27 | 5.88 |
+| crowns | 3.696 / 3.697 | 1.97 | 5.24 |
+| onekind | 4.657 / 4.656 | 1.01 | 6.14 |
+| nolobe | 5.586 / 5.591 | 0.07 | |
+| noclump | 5.415 / 5.413 | 0.25 | |
+| spec3 | 5.601 / 5.599 | 0.06 | |
+| plants | 2.906 / 2.908 | 2.76 | 4.47 |
+| flat | 0.990 / 0.990 | 4.67 | 2.59 |
+
+**Reverted: the slope's shared read.** `slope3`, the 11-21 pass's
+`cells_height3` undone (three plain B-splines again), was 1.27 ms *faster*:
+the shared read indexed its 25-word array by a run-time offset, which most
+likely put the array in local memory instead of registers. It is reverted
+(the same pixels on planets 1 to 3 at zoom 12 on llvmpipe, `hand=idle`).
+The far crowns' cull (`nocull` 0.07) and the three-sample highlight
+(`spec3` 0.06) are inside the twins' spread: the cull stays, `spec3` stays
+out.
+
+**Where the rest is.** The crown layer alone is about 2 ms (`crowns`), and
+three of its four kinds about 1 ms (`onekind`): the 3 x 3 neighbours per
+kind per pixel, not their lobes (0.07) or clump noise (0.25).
