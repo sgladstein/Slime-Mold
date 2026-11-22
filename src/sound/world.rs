@@ -37,7 +37,7 @@ use super::pieces::{blobs, Pieces};
 use crate::mould::larder::End;
 
 use super::listen::density;
-use super::{AlertKind, GrainKind, GunVoice, SoundCmd, TextureKind};
+use super::{AlertKind, GrainKind, GunVoice, Mood, SoundCmd, TextureKind};
 use crate::mould::guns::GunKind;
 
 /// Walkers a shot must kill to sound at full weight: the 90th centile of a
@@ -293,6 +293,13 @@ pub struct WorldListener {
     found: f32,
     coin_wait: f32,
     cashed_seen: u32,
+    /// The score (`super::score`, 2026-11-22): the planet's mood (the
+    /// window sets it from the planet's biome, `Mood::Menu` under the
+    /// menus), the Options page's Music (1 = 100%, 0 = off), and the
+    /// slime's size at the start, against which a grown slime is tenser.
+    pub mood: Mood,
+    pub music: f32,
+    mould0: f32,
     pub stats: WorldStats,
 }
 
@@ -327,6 +334,9 @@ impl WorldListener {
             flinch: 0.0,
             inhale_wait: 0.0,
             kills_since: 0,
+            mood: Mood::Meadow,
+            music: 1.0,
+            mould0: (g.mould as f32).max(1.0),
             pieces: Pieces::new(piece_bin(g), g.world.scale()),
             piece_bin: piece_bin(g),
             pieces_bin: piece_bin(g),
@@ -690,6 +700,12 @@ impl WorldListener {
             }
         }
         self.ended = g.end.is_some();
+        // The score: tense as the slime closes on the squad (the pulse's
+        // danger) and, a little, as it outgrows its start; calm once the
+        // planet is over.
+        let grown = ((g.mould as f32 / self.mould0 - 1.0) * 0.25).clamp(0.0, 0.3);
+        let tension = if g.end.is_some() { 0.0 } else { (danger + grown).min(1.0) };
+        out.push(SoundCmd::Score { mood: self.mood, tension, level: self.music, hushed });
         self.body(g, ear, dt, killed, &mut out);
         self.news(g, ear, &mut out);
         self.events(g, ear, &mut out);
