@@ -1587,7 +1587,7 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
 /// slot per squad, on a cooldown"): in the squad mode the Tools page
 /// throws from the commanded squad, free, and the slot's wait shows on
 /// every tool and on the Tools button; a throw while it cools is refused.
-/// A run with no tool yet (planet 1) has no Tools button.
+/// A run with no tool yet (planet 1) keeps its Tools button, opening the locks.
 #[test]
 fn the_squad_mode_throws_from_its_device_slot() {
     let Some((device, queue)) = gpu() else { return };
@@ -1623,12 +1623,17 @@ fn the_squad_mode_throws_from_its_device_slot() {
     app.tools_page = false;
     let tools = app.model(None, None).commands.into_iter().find(|c| c.id == TOOLS_PAGE).expect("a Tools button");
     assert!(tools.cost.is_some() && tools.cooldown > 0.0, "the wait shows on the Tools button too: {tools:?}");
-    // A run's planet 1 owns no tool: no Tools button.
+    // A run's planet 1 owns no tool: the Tools button stays and opens the
+    // page of locks (#660 hid it, which read as Tools gone; owner 11-22).
     let mut a = run_base();
     a.squads = true;
     a.run = Some(Run::new(1));
-    let app = offscreen(a, (640, 400), &device, &queue).unwrap();
-    assert!(app.model(None, None).commands.iter().all(|c| c.id != TOOLS_PAGE), "no Tools button with every tool locked");
+    let mut app = offscreen(a, (640, 400), &device, &queue).unwrap();
+    let tools = app.model(None, None).commands.into_iter().find(|c| c.id == TOOLS_PAGE).expect("a Tools button with every tool locked");
+    assert!(tools.ready && tools.key == KeyCode::KeyE, "{tools:?}");
+    app.tools_page = true;
+    let blast = app.model(None, None).commands.into_iter().find(|c| c.id == T_BLAST).expect("the page shows the blast");
+    assert!(blast.locked, "locked until the shop sells it");
 }
 
 /// **Esc and Space in the squad mode** (controls review, 2026-11-21).

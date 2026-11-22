@@ -1974,10 +1974,14 @@ impl App {
         // dimmed, with where to get it.
         if let Some(run) = &self.args.run {
             cmds.retain(|c| !run_hidden(c.id));
-            // No Tools button while the run has no tool (planet 1): it
-            // opened a page of locks (controls review, 2026-11-21).
+            // With no tool bought yet (a run's planet 1) the Tools button
+            // stays and opens the page of locks: #660 (11-21) hid it, and
+            // the owner read that as Tools gone from the card in runs
+            // (2026-11-22 04:39Z: "we lost access to tool in the menu").
             if [T_BLAST, T_CORD, T_MINE, T_GAS].iter().all(|&id| run_lock(id).is_some_and(|k| !run.has(k))) {
-                cmds.retain(|c| c.id != TOOLS_PAGE);
+                if let Some(c) = cmds.iter_mut().find(|c| c.id == TOOLS_PAGE) {
+                    c.about = "The squad's devices: blast, mine, det cord, sleep gas. None unlocked yet in this run: the shop between planets sells them.".into();
+                }
             }
             for c in &mut cmds {
                 // A run has no sirens (`run_hidden`): the switch is the
