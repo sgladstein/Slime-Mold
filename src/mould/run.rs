@@ -293,7 +293,14 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// (bite 3, armour 15, a lunge reach of 4 or 6 radii, the flinch off): 44
 /// guns cut a lunge down before it touches them. So planet 1 is bigger,
 /// 1,200, for time (won at 2:54 against 2:13 at 800), and planet 2 lower.
-pub const ORIGIN_SIZE: [f32; 8] = [1200.0, 700.0, 1800.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
+/// Then Engine's siege (the run bot round the origin, seeds 1 to 3 on
+/// planet 1, after Squad's near-first rule of #715, which keeps a soldier
+/// on the slime 5 cells off before an origin 20 off) wore it down only 50
+/// to 70 a minute and never broke it in 12 min (it held 1,929 to 2,118).
+/// Direction's pick (11-22 08:42Z, of a near origin beating that rule or a
+/// smaller one): planet 1 at 700 and planet 3 at 1,000, so the siege wins
+/// planets 1 to 3 in under 10 min.
+pub const ORIGIN_SIZE: [f32; 8] = [700.0, 700.0, 1000.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// The slime's room to regrow over its landing, by planet
 /// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
