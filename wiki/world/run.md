@@ -439,6 +439,19 @@ multicast, carried casts and rate, and leaves out what works over time
 (gas, germ, Mind bullets, fire, trails, shoves), whose cards show "DPS
 same" and say what they do in words.
 
+## Fireproof
+
+Since 2026-11-22 (the owner, 07:40Z: "you should be able to upgrade fire
+resistance", "or even immunity"): the Squad tab sells Fireproof
+(`fireproof`, 100, 200 and 300 points). Each level halves
+`Rules::fire_hurt` (10 health a second at full heat) and the third makes
+soldiers immune, when a squad's move also stops planning round fire and
+walks straight through it (`run::fireproof_share`, `Game::fire_via`). The
+pane's bars show fire's harm now and at the next level
+([still](../../Reports/fireproof-2026-11-22/shop-fireproof.png)). Fire hurts
+only where the squad's own Torch or Tinder lit it, so it does nothing
+alone: the other half of a fire deck (the owner's Noita rule, 11-18).
+
 ## Owner's word
 
 - 2026-11-14 15:21Z: "For now separate, but it might become the main game. I don't want to erase the campaign yet"; one level one map with a shop between: "Yes. Unless you have other suggestions. The maps should get bigger too as we progress."

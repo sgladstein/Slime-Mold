@@ -768,7 +768,7 @@ pub struct Item {
 /// (Lures, 150), which left planet 1 without it, so Direction made it free
 /// from the first planet (11-18 08:38Z). The window never locks it
 /// (`run_lock`), as it never locks the pump.
-pub const ITEMS: [Item; 18] = [
+pub const ITEMS: [Item; 19] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Shots a fifth wider; past the widest, they fire faster", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -776,6 +776,16 @@ pub const ITEMS: [Item; 18] = [
     Item { key: "squad", name: "Bigger landing", group: Group::Squad, about: "Two more soldiers land with you", max: 4, cost: 150, needs: None },
     Item { key: "bank", name: "Supply drop", group: Group::Squad, about: "Land with 500 more food in the bank", max: 4, cost: 100, needs: None },
     Item { key: "harvest", name: "Quick hands", group: Group::Squad, about: "Soldiers take a quarter more from a crystal each second", max: 3, cost: 100, needs: None },
+    // Fire resistance (the owner, 2026-11-22 07:40Z: "you should be able to
+    // upgrade fire resistance ... or even immunity"). Fire hurts only where
+    // the squad's own fire cards lit it (Torch, Tinder:
+    // `Rules::fire_hurt`), so this alone does nothing; it is the half of a
+    // fire deck that makes the deck safe, the owner's Noita rule (11-18: no
+    // single card is strong alone; strong builds are combinations). Halves
+    // fire's harm a level and the third level is immunity, 600 points in
+    // all, two to three planets' pay (`fireproof_share`; an immune squad
+    // also walks straight through fire, `Game::fire_via`).
+    Item { key: "fireproof", name: "Fireproof", group: Group::Squad, about: "Soldiers take half the harm from fire; at level 3, none", max: 3, cost: 100, needs: None },
     Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
     Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
     // The tree's first body (the turrets thread, owner 2026-11-17 00:47Z):
@@ -792,6 +802,16 @@ pub const ITEMS: [Item; 18] = [
     Item { key: "tools+", name: "Cheaper tools", group: Group::Tools, about: "Every tool costs a fifth less", max: 3, cost: 120, needs: None },
     Item { key: "draw", name: "More cards on offer", group: Group::Cards, about: "One more gun card on offer in every shop", max: 2, cost: 100, needs: None },
 ];
+
+/// The share of fire's harm (`Rules::fire_hurt`) a squad with `level`
+/// levels of Fireproof takes: half a level, none at the third (immune).
+pub fn fireproof_share(level: u8) -> f32 {
+    if level >= 3 {
+        0.0
+    } else {
+        0.5f32.powi(i32::from(level))
+    }
+}
 
 /// What the run owns at the start: walls (the plainest defence).
 pub const START: [&str; 1] = ["walls"];
@@ -1186,6 +1206,7 @@ impl Run {
         r.squad += 2 * self.level_of("squad") as usize;
         r.start_bank += 500.0 * l("bank");
         r.harvest *= 1.0 + 0.25 * l("harvest");
+        r.fire_hurt *= fireproof_share(self.level_of("fireproof"));
         let t = l("turret+");
         let p = l("pump+");
         let b = &mut r.build;
@@ -2717,6 +2738,30 @@ mod tests {
         // Turret power grows the rack: a slot and 2 budget a level.
         r.owned[ITEMS.iter().position(|i| i.key == "turret+").unwrap()] = 2;
         assert_eq!((r.turret_rack().slots, r.turret_rack().budget), (4, 8));
+    }
+
+    /// **Fireproof** (owner, 2026-11-22 07:40Z: "upgrade fire resistance
+    /// ... or even immunity"): each level halves fire's harm and the third
+    /// is immunity, at 100, 200 and 300 points.
+    #[test]
+    fn fireproof_halves_fire_then_makes_the_squad_immune() {
+        let mut r = Run::new(1);
+        r.points = 10_000;
+        let k = ITEMS.iter().position(|i| i.key == "fireproof").unwrap();
+        let base = Rules::default().fire_hurt;
+        let hurt = |r: &Run| {
+            let mut rules = Rules::default();
+            r.rules(&mut rules);
+            rules.fire_hurt
+        };
+        assert_eq!(hurt(&r), base);
+        for (level, share, price) in [(1, 0.5, 100), (2, 0.25, 200), (3, 0.0, 300)] {
+            let before = r.points;
+            assert!(r.pick(Pick::Item(k)));
+            assert_eq!((r.level_of("fireproof"), before - r.points), (level, price));
+            assert_eq!(hurt(&r), base * share, "level {level}");
+        }
+        assert!(!r.pick(Pick::Item(k)), "three levels at most");
     }
 
     /// **Loadouts** (owner, 2026-11-19 19:22Z): a gun and its cards; a
