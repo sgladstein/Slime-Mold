@@ -1450,7 +1450,8 @@ impl<W: World> Game<W> {
 
     /// Splits squad `q` in two: the half of its members nearer `p` (at least
     /// one, and only if it has two) become a new squad, which is controlled
-    /// next if `q` was. Returns the new squad.
+    /// next if `q` was. Both halves go on with its order and its queue.
+    /// Returns the new squad.
     pub fn split(&mut self, q: usize, p: (f32, f32)) -> Option<usize> {
         let mut m = self.members(q);
         if m.len() < 2 {
@@ -1459,14 +1460,33 @@ impl<W: World> Game<W> {
         let n = self.free_squad()?;
         let d = |s: &Soldier| (s.x - p.0).hypot(s.y - p.1);
         m.sort_by(|&a, &b| d(&self.soldiers[a]).total_cmp(&d(&self.soldiers[b])).then(a.cmp(&b)));
-        self.squads[n] = self.squads[q].offshoot();
+        // Both halves keep the order they had and what was queued after
+        // it (owner 2026-11-22 08:34Z: "if I give a squad a command then
+        // split it [both] squads should follow the previous command until
+        // a new command is given"). Until then the new half took nothing
+        // it was doing, and both halves were sent to their own middles,
+        // so a squad split on its way somewhere, guarding or draining
+        // stopped where it stood and dropped its queue. The members' own
+        // orders (a drain, a build) go with them.
+        let was = self.squads[q];
+        self.squads[n] = Squad {
+            dest: was.dest,
+            fight: was.fight,
+            work: was.work,
+            queue: was.queue,
+            queued: was.queued,
+            guard: was.guard,
+            heal: was.heal,
+            holding: was.holding,
+            ..was.offshoot()
+        };
         self.squads[q].anchor = None;
         for &k in &m[..m.len() / 2] {
             self.soldiers[k].squad = n as u8;
         }
-        // Both halves gather round their own middles.
+        // A half with nothing to do gathers round its own middle.
         for r in [q, n] {
-            if self.squads[r].steer == (0.0, 0.0) {
+            if self.idle(r) {
                 self.squads[r].dest = self.middle(r);
             }
         }
@@ -1476,9 +1496,14 @@ impl<W: World> Game<W> {
                 sq.band = false;
             }
             self.active = Some(n);
-            self.squads[q].steer = (0.0, 0.0);
+            // Your keys and the fire button go with the half you take; the
+            // half left behind, if you were steering it, settles where it
+            // stands, as letting go of the keys does.
+            if self.squads[q].steer != (0.0, 0.0) {
+                self.squads[q].steer = (0.0, 0.0);
+                self.squads[q].dest = self.stop_point(q).or_else(|| self.middle(q));
+            }
             self.squads[q].fire = None;
-            self.squads[q].dest = self.middle(q);
         }
         Some(n)
     }
