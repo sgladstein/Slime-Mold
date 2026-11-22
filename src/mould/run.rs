@@ -280,6 +280,15 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// (`set=strikers=1`, or `FIRST_PLANET` moved back); a 0 here would leave
 /// them on and doing nothing (the bug check's note on #606).
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+/// The slime's room to regrow over its landing, by planet
+/// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
+/// last two playtests"). Every planet at the 1.5 the owner's "in between"
+/// asked for (his 11-21 game regrew to 2, his 11-22 one to 1). A row of
+/// its own so planet 1 can move alone: Squad's #708 (free fire shoots
+/// what is near first) made planet 1 easier in the gun lab (36 soldiers
+/// lived against 22), and Direction's plan is to raise planet 1's alone
+/// (to about 2) if his next planet 1 log still reads easy.
+const CEILING_GROW: [f32; 8] = [1.5; 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -1154,6 +1163,7 @@ impl Run {
             // not the share, binds wherever the band is big (planet 1 run
             // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
+            r.ceiling_grow = CEILING_GROW[depth_index(self.depth)];
             let k = STRIKER_SHARE[depth_index(self.depth)];
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
@@ -2058,6 +2068,12 @@ mod tests {
         };
         // Wherever the strikers can be on, their share and cap are not 0.
         assert!(STRIKER_SHARE.iter().all(|&k| k > 0.0), "a 0 share leaves strikers on and doing nothing");
+        // The slime's room to regrow reaches every planet's rules, at least
+        // its landing (under 1 a slime would start over its ceiling).
+        for d in 1..=8 {
+            assert_eq!(rules(d).ceiling_grow, CEILING_GROW[depth_index(d)], "planet {d}'s ceiling_grow");
+        }
+        assert!(CEILING_GROW.iter().all(|&g| g >= 1.0), "a growth under 1 starves the slime at landing");
         let p1 = rules(1);
         assert!(p1.heart.on && p1.unit_paths, "planet 1 keeps the heartbeat and charges round walls");
         assert!(!p1.fruit.on && !p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
