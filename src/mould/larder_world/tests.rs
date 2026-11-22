@@ -1806,7 +1806,19 @@ fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
     // Free fire: the thickest slime in reach, controlled or not.
     aim(&mut g, far, Stance::Free);
     assert_eq!(g.target(k), Some(far), "the controlled squad on free fire shoots slime in reach");
-    assert_eq!(g.sight(k), reach, "free fire reads the gun's reach");
+    // It reads near itself first (`Rules::near_first`), and the whole
+    // reach once a near read finds nothing, for a few frames.
+    let near = g.rules.near_first * sc;
+    assert!(near < reach, "near first {near} inside the reach {reach}");
+    assert_eq!(g.sight(k), near, "free fire reads near itself first");
+    g.read_aim(k, 0, Some((x, y)), 10);
+    assert_eq!(g.sight(k), near, "slime near: it keeps reading near");
+    g.read_aim(k, 0, None, 0);
+    assert_eq!(g.sight(k), reach, "nothing near: free fire reads the gun's reach");
+    for _ in 0..8 {
+        g.read_aim(k, 0, Some(far), 10);
+    }
+    assert_eq!(g.sight(k), near, "after a few far frames it looks near again");
     // Hold fire holds.
     aim(&mut g, far, Stance::HoldFire);
     assert_eq!(g.target(k), None);
@@ -1820,7 +1832,9 @@ fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
     assert_eq!(g.target(k), Some(edge), "a walker at the edge of defend, read by its block's centre");
     // Clearing a crystal or guarding, defend reads the whole reach again.
     g.squads[0].guard = Some((x + 5.0 * sc, y));
-    assert_eq!(g.sight(k), reach, "guarding reads the reach");
+    assert_eq!(g.sight(k), near, "guarding reads near first");
+    g.read_aim(k, 0, None, 0);
+    assert_eq!(g.sight(k), reach, "guarding reads the reach when nothing is near");
     g.squads[0].guard = None;
     // Attack-move fires freely, the controlled squad too.
     aim(&mut g, far, Stance::Defend);
@@ -3939,6 +3953,27 @@ fn squads_shoot_a_mini_boss_first() {
     let (p, _) = g.boss_aim(0).expect("in the bullet's reach");
     assert!((p.1 - (s0.y + 0.5 * reach)).abs() < 1e-2, "{p:?}");
     g.bullet_mods.casts = 0;
+    // Free fire, a boss beyond near first (`Rules::near_first`): slime near
+    // the soldier is shot first; a boss that near, or nothing near, the boss
+    // (Direction 11-22: a near origin wins, a far one pulls no fire past
+    // the walkers beside the squad).
+    let near = g.rules.near_first * sc;
+    assert!(8.0 * sc < near && near < 20.0 * sc && 20.0 * sc < reach && 8.0 * sc + r < reach, "near {near}, reach {reach}");
+    g.bosses.live[0].centre = at(20.0 * sc + r);
+    set(&mut g, 0);
+    g.soldiers[0].stance = Stance::Free;
+    let slime5 = (s0.x + 5.0 * sc, s0.y);
+    g.soldiers[0].aim = Some(slime5);
+    assert!(g.boss_aim(0).is_some(), "the boss in reach");
+    assert_eq!(g.target(0), Some(slime5), "slime 5 cells off before a boss 20 off");
+    g.bosses.live[0].centre = at(8.0 * sc + r);
+    assert_eq!(g.target(0), Some(at(8.0 * sc + r)), "a boss 8 cells off before the slime");
+    g.bosses.live[0].centre = at(20.0 * sc + r);
+    g.soldiers[0].aim = None;
+    g.soldiers[0].dense = 0;
+    let line = g.boss_aim(0).expect("the boss in reach").0;
+    assert_eq!(g.target(0), Some(line), "nothing near: the boss 20 off, along its line");
+    g.soldiers[0].stance = Stance::Defend;
     g.bosses.live[0].centre = close;
     g.soldiers[0].stance = Stance::HoldFire;
     set(&mut g, 2);

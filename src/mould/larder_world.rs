@@ -217,6 +217,11 @@ pub struct Soldier {
     /// burned in its own Tinder fires; a player sees the fire, the bot
     /// could not).
     pub heat: f32,
+    /// Frames it still reads its gun's whole reach before it looks near
+    /// itself again (`Game::sight`, `Rules::near_first`): set when a near
+    /// read found no slime, so it then aims at the thickest slime in
+    /// reach, and counted down as it reads far.
+    pub far: u8,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -950,6 +955,7 @@ impl<W: World> Game<W> {
             was: (x, y),
             doze: 0.0,
             heat: 0.0,
+            far: 0,
         });
     }
 

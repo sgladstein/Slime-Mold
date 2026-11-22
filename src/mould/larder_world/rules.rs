@@ -246,6 +246,17 @@ pub struct Rules {
     pub charge: f32,
     /// Defend fires on mould this near, dish cells.
     pub defend: f32,
+    /// A soldier that reads its gun's whole reach (free fire, guarding,
+    /// clearing a crystal) reads this near itself first, dish cells, and
+    /// the whole reach only when no slime is this near (`Game::sight`).
+    /// 0: always the whole reach, the way before 11-22. 12: about the
+    /// screen's half-height round the squad at zoom 12, so free fire goes
+    /// to the slime the player can see before a thicker clump off screen
+    /// (filmed 11-22: at zoom 12 the rifle's 24-cell reach is about 550
+    /// px, and a free squad fired up off the screen at nothing visible
+    /// while walkers stood near it). It follows the 11-18 Defend fix,
+    /// where a defending squad read only 7.5 cells for the same reason.
+    pub near_first: f32,
     /// A Guard order's zone round a plain spot, dish cells (a crystal's or
     /// a building's is its own edge plus `GUARD_RIM`): slime in it is shot
     /// whatever the stance but hold fire (`Game::guard_zone`, owner
@@ -1069,6 +1080,7 @@ impl Rules {
             "last_stand_at" => &mut self.raid.last_stand_at,
             "seek_catch" => &mut self.seek_catch,
             "seek_reach" => &mut self.seek_reach,
+            "near_first" => &mut self.near_first,
             "strike" => &mut self.strike,
             "pump_smell" => &mut self.build.pump_smell,
             "pump_hp" => &mut self.build.pump_hp,
@@ -1157,6 +1169,7 @@ impl Default for Rules {
             carry: 300.0,
             charge: 64.0,
             defend: 7.5,
+            near_first: 12.0,
             guard_r: 8.0,
             aim_min: 1,
             fight_hold: 1.0,

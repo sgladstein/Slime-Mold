@@ -63,7 +63,13 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
 - **Firing on its own** (2026-11-18). Not volleying, the commanded squad
   fires by its fire mode like every squad: *defend*, the default, shoots the
   thickest slime within 7.5 cells of each soldier, so among loose walkers the
-  soldiers spread their fire; *free* shoots the thickest in the gun's reach.
+  soldiers spread their fire; *free* shoots the thickest in the gun's reach,
+  but slime within 12 cells first (`Rules::near_first`, 2026-11-22), and so
+  do a guarding squad and one clearing a crystal: reading the whole 24-cell
+  reach, a free squad at zoom 12 fired off the screen at a thicker clump
+  past the walkers beside it. A mini-boss is shot first only within those
+  12 cells while slime is that near; further off it takes the fire when
+  nothing is near (`Game::boss_aim_within`, 11-22).
   Before, it was held to defend whatever its mode, and defend read the whole
   reach, so a clump 20 cells off hid the walkers on the squad
   (`Game::stance_of`, `Game::sight`;

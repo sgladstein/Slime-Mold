@@ -399,10 +399,9 @@ impl<W: World> Game<W> {
                     self.drift_core(i, dt);
                 }
                 Who::Soldier(k) => {
+                    // Its read of the slime, near first (`Game::read_aim`).
+                    self.read_aim(k, u.touching, u.target, u.dense);
                     let s = &mut self.soldiers[k];
-                    s.touching = u.touching;
-                    s.aim = u.target;
-                    s.dense = u.dense;
                     s.heat = u.heat;
                     s.carry += u.took / r.charge;
                     if !r.larder {
