@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/boss-cores-2026-11-20/README.md
@@ -61,12 +61,15 @@ code:
   - Run::buy_into
   - Run::carried
   - Run::found
+  - Run::from_save
   - Run::gun
   - Run::level
   - Run::put_in
   - Run::range
   - Run::rules
+  - Run::save_text
   - Run::shop
+  - SAVE_HEAD
   - STUCK_WARN
   - StandRules
   - StarRules::for_depth
@@ -385,6 +388,21 @@ with no germ), and its two guns are two kinds, neither the kind carried
 (`Run::restock`). Tinder costs 100 and a Torch at most 100 (`TINDER_PRICE`,
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
+
+## Saving the run
+
+A run is saved to `run.txt` beside the settings file (`%APPDATA%\Larder
+World` on Windows; `LARDER_RUN=PATH` overrides) whenever it changes: on
+landing, at each buy or move in the shop, when the loadout panel closes, at
+a planet's end, on quitting, and checked every five seconds as a net
+(`Run::save_text`, `SAVE_HEAD`, the window's `App::save_run`). The next
+time the game opens, the main menu's "Back to the run" carries on with it,
+and it is deleted when the run is won, lost or given up. A planet's own
+state lives on the GPU and is not saved, so a run closed mid-planet lands
+on the same planet (same seed, same map) fresh, with the shop as it was on
+landing. Owner, 2026-11-22 04:40Z: "a run should always be autosaving and
+saving the run between closing the program"; before that a run lived only
+in the window and was lost on closing it (Milestone 2's "save and resume").
 
 ## The gun range
 
