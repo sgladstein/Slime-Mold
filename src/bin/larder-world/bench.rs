@@ -204,7 +204,7 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     // and how much of it was the read-back waiting for the GPU's queue
     // (steps in shares still running wait there too).
     let (n, sum, most, most_read) = app.ground_cost;
-    println!("  ground refresh: {n} of them, ms: mean {:.2} max {most:.2}, of which the read-back at most {most_read:.2}; {} live cells", sum / n.max(1) as f64, app.live.cells.len());
+    println!("  ground refresh: {n} starts and takes, ms: mean {:.2} max {most:.2}, of which the read-back at most {most_read:.2}; {} live cells", sum / n.max(1) as f64, app.live.cells.len());
     if let Some(st) = &g.world.stamps {
         let (sim, draw, _, n) = st.median();
         if n > 0 {

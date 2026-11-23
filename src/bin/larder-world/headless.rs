@@ -209,6 +209,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // The soldiers `cutsquad=` set down, kept there.
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
+    // `LARDER_MINES=T,X,Y;T,X,Y..` (world units): a mine laid there once T
+    // has come, free and with no thrower, to film the mine's look (the
+    // laid-mine look, 2026-11-22).
+    let mut mines: Vec<(f32, f32, f32)> = std::env::var("LARDER_MINES")
+        .unwrap_or_default()
+        .split(';')
+        .filter_map(|m| {
+            let v: Vec<f32> = m.split(',').filter_map(|x| x.trim().parse().ok()).collect();
+            (v.len() == 3).then(|| (v[0], v[1], v[2]))
+        })
+        .collect();
     let mut drain_at: Option<f32> = std::env::var("LARDER_DRAIN").ok().and_then(|v| v.parse().ok());
     let mut lit: Vec<usize> = Vec::new();
     let mut lured: Vec<usize> = Vec::new();
@@ -402,6 +413,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                         println!("  drain t {:.1} s: crystal {c} at {:.0},{:.0} emptied (charge {:.0}, {} of {} covered cells)", g.time(), cs[c].0 .0, cs[c].0 .1, cs[c].1, cov[c], cov.iter().sum::<usize>());
                     }
                 }
+            }
+            {
+                let g = app.game.as_mut().unwrap();
+                let t = g.time();
+                for &(_, x, y) in mines.iter().filter(|m| m.0 <= t) {
+                    g.kit.mines.push((x, y));
+                    g.kit.mine_near.push(0);
+                    println!("  mine t {t:.2} s laid at {x},{y}");
+                }
+                mines.retain(|m| m.0 > t);
             }
             // `boom=T,X,Y`: the round set off there once T has come.
             for (j, (bt, bx, by, cards)) in booms.iter().enumerate() {
@@ -946,6 +967,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // ringed, as in the window (`squad_frame`); after the card's step,
         // which may pick them.
         let g = app.game.as_ref().unwrap();
+        if let Some(q) = g.active.filter(|_| g.rules.squads) {
+            app.controls.ring_link = super::squadmode::ring_link(g, q);
+        }
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
             Some(q) => g.linked(q).into_iter().flat_map(|r| g.members(r)).collect(),
             None if select => (0..g.soldiers.len()).collect(),
@@ -1314,9 +1338,22 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         "hold" => {
             app.hud_event(HudEvent::Command { id: HOLD_FIRE })?;
         }
-        "blob" | "spread" | "line" | "wedge" | "column" | "ring" => {
-            let id = [F_BLOB, F_SPREAD, F_LINE, F_WEDGE, F_COLUMN, F_RING].into_iter().find(|&id| form_of(id).is_some_and(|f| f.name() == step)).unwrap_or(F_BLOB);
-            app.hud_event(HudEvent::Command { id })?;
+        "blob" | "ring" => {
+            app.hud_event(HudEvent::Command { id: if step == "ring" { F_RING } else { F_BLOB } })?;
+        }
+        // `buyN`: N soldiers bought for the squad, as the card's Buy (a
+        // formation film wants a squad bigger than the landing's four).
+        s if s.starts_with("buy") && s[3..].parse::<u32>().is_ok() => {
+            let g = app.game.as_mut().unwrap();
+            for _ in 0..s[3..].parse::<u32>().unwrap_or(0) {
+                g.bank = g.bank.max(1e5);
+                g.apply(Cmd::Buy);
+            }
+        }
+        // A spread step (2026-11-23).
+        "tight" | "close" | "open" | "loose" | "wide" => {
+            let i = slime_mould::mould::larder_world::SPREAD_NAMES.iter().position(|&n| n == step).unwrap_or(0);
+            app.hud_event(HudEvent::Command { id: SPREAD_IDS[i] })?;
         }
         // Esc: no squad commanded, so a click on a building selects it.
         "free" => app.let_go(),
@@ -1357,6 +1394,29 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
                 g.apply(Cmd::SquadOrder(live[0] as u8, Order::Move(to.0, to.1)));
             }
         }
+        // `squadsN` (2026-11-22, the squad strip past four squads): the
+        // biggest squad split, as the Split button does, until N stand,
+        // then the first commanded.
+        _ if step.starts_with("squads") => {
+            let want: usize = step[6..].parse().map_err(|_| format!("card={step}: squadsN"))?;
+            for _ in 0..want {
+                let Some(g) = app.game.as_mut() else { return Ok(()) };
+                let live = g.live_squads();
+                if live.len() >= want {
+                    break;
+                }
+                let size = |q: usize| g.soldiers.iter().filter(|s| s.alive && s.squad as usize == q).count();
+                let Some(&big) = live.iter().max_by_key(|&&q| size(q)) else { break };
+                g.apply(Cmd::Active(big as u8));
+                app.hud_event(HudEvent::SquadSplit)?;
+            }
+            if let Some(g) = app.game.as_mut() {
+                let live = g.live_squads();
+                if let Some(&q) = live.first() {
+                    g.apply(Cmd::Active(q as u8));
+                }
+            }
+        }
         "upgrade" | "demolish" | "switch" | "cancel" => {
             let id = match step {
                 "upgrade" => UPGRADE,
@@ -1366,7 +1426,7 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
             };
             app.hud_event(HudEvent::Command { id })?;
         }
-        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, or a formation's name)")),
+        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, a formation's name, a spread step's, or buyN)")),
     }
     println!("  card: {step}");
     Ok(())

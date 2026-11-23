@@ -302,6 +302,17 @@ pub struct Rules {
     pub start_bank: f32,
     pub squad: usize,
     pub soldier_cost: f32,
+    /// **The soldier's price climbs with the living army** (2026-11-22, the
+    /// thread "Make the run harder after full-game win"; the owner, 08:52Z:
+    /// "scale it up. You decide what is best"; Direction's lever, the 11-20
+    /// balance review's first finding, the army snowball). Over
+    /// `soldier_from` soldiers alive each one costs `soldier_step` share
+    /// more of the base price (`Game::reprice`): with 30 and 40, 400 up to
+    /// 30 alive, 2x at 70, 2.5x at 90. It bites on the army's size at any
+    /// time, not on an early push (not the D7 rush brake). 0 `soldier_step`
+    /// is off (the default; a run sets it from planet 2, `run::Run::rules`).
+    pub soldier_from: f32,
+    pub soldier_step: f32,
     /// The most soldiers alive at once. 200 since 2026-11-16 (owner, after
     /// the soldier-cap thread's measures: "Flat 200, the realistic max",
     /// "I want to test the max"); 40 before, the M2 design number. The
@@ -1106,6 +1117,8 @@ impl Rules {
             "par" => &mut self.par,
             "start_bank" => &mut self.start_bank,
             "soldier_cost" => &mut self.soldier_cost,
+            "soldier_from" => &mut self.soldier_from,
+            "soldier_step" => &mut self.soldier_step,
             // Walls (the walls thread, 11-16): thickness films and tries.
             "wall_width" => &mut self.wall_width,
             "wall_cost" => &mut self.wall_cost,
@@ -1181,6 +1194,8 @@ impl Default for Rules {
             start_bank: 2000.0,
             squad: 4,
             soldier_cost: 400.0,
+            soldier_from: 30.0,
+            soldier_step: 0.0,
             max_squad: 200,
             wall_cost: 20.0,
             wall_width: 2.0,

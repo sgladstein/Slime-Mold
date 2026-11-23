@@ -77,7 +77,10 @@ impl<W: World> Game<W> {
     /// before. Planned once every `FIRE_EVERY` (or when it is nearly at the
     /// last point), kept between.
     pub(super) fn fire_via(&mut self, q: usize, at: (f32, f32), dest: (f32, f32)) -> Option<(f32, f32)> {
-        if !self.rules.fireway {
+        // A fireproof squad (the shop's Fireproof at its third level,
+        // `run::fireproof_share`) takes nothing from fire, so it walks
+        // straight through: the immunity seen as well as felt.
+        if !self.rules.fireway || self.rules.fire_hurt <= 0.0 {
             return None;
         }
         let now = self.world.ticks();

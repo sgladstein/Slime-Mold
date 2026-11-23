@@ -113,6 +113,39 @@ impl Output {
         drop(cmds.into_iter());
     }
 
+    /// **The play log's `sound` line** (2026-11-22, sound still cutting
+    /// out): how the speaker has done so far, so a cut-out in his play can
+    /// be told apart from a quiet stretch.
+    ///
+    /// ```text
+    /// sound prio=proaudio calls=6012 late=0 gap=10.7 render=0.9 soft=0 dropped=0 reopened=0
+    /// ```
+    ///
+    /// `prio` the callback thread's priority (`device::Health::priority`),
+    /// `late` callbacks over 30 ms after the last (each one likely a gap
+    /// heard), `gap` and `render` the most ms since the last line, `soft`
+    /// stream errors played through, `dropped` commands lost to a full
+    /// channel, `reopened` streams replaced. Empty without a device.
+    pub fn health_line(&mut self) -> String {
+        #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
+        {
+            use std::sync::atomic::Ordering::Relaxed;
+            let h = &self.device.health;
+            let (gap, render) = h.take_most();
+            format!(
+                "sound prio={} calls={} late={} gap={gap:.1} render={render:.1} soft={} dropped={} reopened={}\n",
+                h.priority_name(),
+                h.calls.load(Relaxed),
+                h.late.load(Relaxed),
+                h.soft_errors.load(Relaxed),
+                self.device.dropped,
+                self.reopened
+            )
+        }
+        #[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
+        String::new()
+    }
+
     /// Commands dropped because the device fell behind; should stay 0.
     pub fn dropped(&self) -> u64 {
         #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]

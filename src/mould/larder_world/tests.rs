@@ -1316,6 +1316,36 @@ fn a_runs_round_ends_when_its_last_soldier_falls() {
     assert!(g.end.is_none(), "{:?}", g.end);
 }
 
+/// **The soldier's price climbs with the living army** (`Rules::soldier_step`,
+/// 2026-11-22): the base price up to `soldier_from` alive, a `soldier_step`
+/// share more for each one over, back down as soldiers fall; off (the
+/// default) the price never moves.
+#[test]
+fn the_soldiers_price_climbs_with_the_army() {
+    let mut g = small(1);
+    let base = g.rules.soldier_cost;
+    g.rules.max_squad = 200;
+    g.bank = 1e9;
+    while g.alive() < 40 {
+        assert!(g.apply(Cmd::Buy));
+    }
+    assert_eq!(g.rules.soldier_cost, base, "off by default");
+    (g.rules.soldier_from, g.rules.soldier_step) = (30.0, 40.0);
+    g.step();
+    assert_eq!(g.rules.soldier_cost, (base * 1.25).round(), "40 alive: 10 over 30, a quarter more");
+    while g.alive() < 70 {
+        assert!(g.apply(Cmd::Buy));
+    }
+    assert_eq!(g.rules.soldier_cost, (base * 2.0).round(), "70 alive: twice");
+    let spent = g.spent;
+    assert!(g.apply(Cmd::Buy) && g.spent - spent == (base * 2.0).round(), "the 71st paid the price shown");
+    for s in g.soldiers.iter_mut().filter(|s| s.alive).take(50) {
+        s.alive = false;
+    }
+    g.step();
+    assert_eq!(g.rules.soldier_cost, base, "fallen soldiers bring the price back down");
+}
+
 /// No upkeep (owner, 2026-11-14: soldiers must not need feeding, 01:49Z;
 /// "There should be no maintenance costs in this game", 04:53Z): a squad
 /// standing idle for 20 s spends nothing and keeps its health, so the
@@ -1924,7 +1954,7 @@ fn split_join_and_merge_move_soldiers_between_squads() {
 #[test]
 fn formations_place_every_member_apart() {
     for f in Formation::ALL {
-        for n in [1, 2, 5, 12, 30] {
+        for n in [1, 2, 3, 5, 12, 30] {
             let pts: Vec<_> = (0..n).map(|r| f.offset(r, n, 1.6)).collect();
             for i in 0..n {
                 for j in 0..i {
@@ -1949,13 +1979,13 @@ fn squad_commands_round_trip_as_lines() {
         Cmd::Join(12, 4),
         Cmd::Merge(0, 5),
         Cmd::Active(2),
-        Cmd::Formation(1, Formation::Wedge),
+        Cmd::Formation(1, Formation::Ring, 2),
         Cmd::SquadQueue(2, Order::Move(1.5, 2.5)),
         Cmd::SquadQueue(0, Order::Build(3)),
         Cmd::Link(0, 3),
         Cmd::Unlink(3),
-        Cmd::Formation(0, Formation::Column),
-        Cmd::Formation(3, Formation::Spread),
+        Cmd::Formation(0, Formation::Blob, 0),
+        Cmd::Formation(3, Formation::Blob, 4),
         Cmd::Arm(2, None),
         Cmd::Arm(1, Some(Gun::roll(11, 3))),
         Cmd::Arm(0, Some(crate::mould::guns::GunKind::Scatter.average())),
@@ -1963,7 +1993,12 @@ fn squad_commands_round_trip_as_lines() {
     for c in cs {
         assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
     }
+    // Replays from before the spread (2026-11-23): the 11-21 names.
+    assert_eq!(Cmd::parse("formation 2 spread"), Some(Cmd::Formation(2, Formation::Blob, 3)));
+    assert_eq!(Cmd::parse("formation 1 wedge"), Some(Cmd::Formation(1, Formation::Blob, 0)));
+    assert_eq!(Cmd::parse("formation 0 ring"), Some(Cmd::Formation(0, Formation::Ring, 0)));
 }
+
 
 /// The squad mode with no larder: drain or guard.
 fn no_larder(seed: u64) -> Game<BigDish> {
@@ -2197,7 +2232,7 @@ fn a_squad_steered_into_rock_or_the_edge_comes_back_out() {
 /// sent squads took the walking map round walls); now 36 and 22.
 #[test]
 fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
-    for f in [Formation::Blob, Formation::Wedge] {
+    for f in [Formation::Blob, Formation::Ring] {
         let (mut circling, mut death) = (0.0, 0.0);
         for seed in 1..5u64 {
             let mut g = squads(seed);
@@ -2205,7 +2240,7 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
                 g.apply(Cmd::Buy);
             }
             g.apply(Cmd::Active(0));
-            g.apply(Cmd::Formation(0, f));
+            g.apply(Cmd::Formation(0, f, 2));
             off_the_crystal(&mut g);
             assert!(g.squads[0].dest.is_none(), "{f:?} seed {seed}: still walking 8 s after it was sent 25 cells");
             let sc = g.s();
@@ -2224,9 +2259,7 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
                 }
                 w / sc
             };
-            if f == Formation::Blob {
-                circling += walked(&mut g, true);
-            }
+            circling += walked(&mut g, true);
             let k = g.members(0)[0];
             g.soldiers[k].alive = false;
             death += walked(&mut g, false);
@@ -2840,8 +2873,9 @@ fn linked_squads_take_orders_together_and_keep_their_own_settings() {
     assert_eq!(g.linked(0), vec![0, b]);
     assert!(g.leads(0), "linked with the controlled squad: the lead's edge");
     // Settings stay each squad's own.
-    g.apply(Cmd::Formation(0, Formation::Line));
-    assert_eq!((g.squads[0].formation, g.squads[b].formation), (Formation::Line, Formation::Blob));
+    g.apply(Cmd::Formation(0, Formation::Ring, 3));
+    assert_eq!((g.squads[0].formation, g.squads[b].formation), (Formation::Ring, Formation::Blob));
+    assert_eq!((g.squads[0].spread, g.squads[b].spread), (3, 0));
     // One order moves both, each by where it stands in the link.
     let (m0, mb) = (g.middle(0).unwrap(), g.middle(b).unwrap());
     let to = open_near(&g, 20.0);
@@ -3847,11 +3881,17 @@ fn mini_boss_chances_rise_with_the_planet() {
     for d in 2..8 {
         let (p, q) = (BossRules::for_depth(d), BossRules::for_depth(d + 1));
         assert!(q.every <= p.every && q.cut >= p.cut && q.grade_lo >= p.grade_lo && q.grade_hi >= p.grade_hi, "planet {d}");
+        // Tougher by the planet (11-22): armour and bite never fall.
+        assert!(q.armour_at(0.0) >= p.armour_at(0.0) && q.bite_at(1.0) >= p.bite_at(1.0) && q.most >= p.most, "planet {d}'s strength");
+        // Faster and harder to break by the planet (11-22 evening).
+        assert!(q.haste >= p.haste && q.quorum <= p.quorum && p.haste > 1.0 && p.quorum < BossRules::default().quorum, "planet {d}'s reach");
     }
     // Strength by grade (owner 05:23Z): much stronger than ordinary
     // slime's one blow, and a wide spread.
     let r = BossRules::default();
     assert_eq!((r.armour_at(0.0), r.armour_at(1.0)), (4, 15));
+    let (two, eight) = (BossRules::for_depth(2), BossRules::for_depth(8));
+    assert_eq!((two.armour_at(0.0), eight.armour_at(0.0), eight.armour_at(1.0), eight.most), (4, 10, 15, 3), "planet 2 as before, planet 8 tougher");
     assert_eq!((r.bite_at(0.0), r.bite_at(1.0)), (1, 4));
     assert!(r.reach_at(6.0, 1.0) > 1.5 * r.reach_at(6.0, 0.0) - 1.0 && r.haste_at(1.0) > r.haste_at(0.0));
 }
@@ -4897,4 +4937,64 @@ fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
     let (round, to, pump) = errand(true);
     assert!(round && to == Some(pump), "a big squad: round to the pump at {pump:?}, got {to:?}");
     assert!(!errand(false).0, "a small squad: it hunts");
+}
+
+/// Owner 2026-11-22 08:34Z: "if I give a squad a command then split it
+/// [both] squads should follow the previous command until a new command is
+/// given". A squad split on its way keeps going with both halves, each
+/// with the queue after it; a squad split while draining drains on in both
+/// halves. Until then the new half dropped the order and both halves stood
+/// round their own middles.
+#[test]
+fn both_halves_of_a_split_squad_keep_its_orders() {
+    // On the way, with a second order queued.
+    let mut g = squads(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let a = open_near(&g, 24.0);
+    let b = open_near(&g, 10.0);
+    g.apply(Cmd::SquadOrder(0, Order::Fight(a.0, a.1)));
+    g.apply(Cmd::SquadQueue(0, Order::Move(b.0, b.1)));
+    for _ in 0..g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, (m.0 + 30.0, m.1))));
+    let n = g.active.unwrap();
+    for q in [0, n] {
+        let sq = g.squads[q];
+        assert_eq!((sq.dest, sq.fight, sq.queued), (Some(a), true, 1), "half {q} keeps its attack-move and queue");
+        assert_eq!(sq.queue[0], Order::Move(b.0, b.1));
+    }
+    let far = |g: &Game<BigDish>, q: usize| g.middle(q).map(|c| (c.0 - a.0).hypot(c.1 - a.1)).unwrap();
+    let (d0, dn) = (far(&g, 0), far(&g, n));
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    assert!(far(&g, 0) < d0 - g.s() && far(&g, n) < dn - g.s(), "both halves walk on: {d0} -> {}, {dn} -> {}", far(&g, 0), far(&g, n));
+    // Draining: both halves drain on.
+    let mut g = no_larder(7);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    let (_, c) = near_crystal(&g);
+    let drain = Order::Clear(c.0, c.1);
+    g.apply(Cmd::SquadOrder(0, drain));
+    for _ in 0..g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, m)));
+    let n = g.active.unwrap();
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    for q in [0, n] {
+        assert_eq!(g.squads[q].work, Some(drain), "half {q} still drains");
+        assert!(g.members(q).iter().all(|&k| g.soldiers[k].order == drain), "half {q}'s members still drain");
+    }
 }

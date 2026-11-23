@@ -2861,9 +2861,25 @@ fn build(@builtin(global_invocation_id) gid: vec3<u32>) {
 // ring out to `wb.reach`, in the CPU's order within a ring, and claims it
 // (lowest walker wins); `settle` moves the winners to its centre and
 // `unclaim` clears the claims. `Engine::build_wall` runs rounds until no
-// walker finds a cell, so walkers that lost one try the next; one with
-// nowhere free stays, as on the CPU. The CPU moves them one at a time in walker order, so the
-// cells they land on can differ.
+// walker finds a cell, so walkers that lost one try the next. The CPU
+// moves them one at a time in walker order, so the cells they land on can
+// differ.
+//
+// One with nowhere free near stayed in the wall, as on the CPU, until
+// 2026-11-22 (the owner: "sometimes walkers get stuck in walls/doors when
+// building and it becomes a problem for winning"): in slime packed one a
+// cell wider than the reach it found nothing, and there no gun's shot
+// reached it (`stops`) and a step of a cell could not leave a wall thicker
+// than that (`wall_between`), so the planet's mass never reached 0. Now
+// `build_wall` runs more rounds four times as far, then one with the
+// top bit of `wb.reach` set (`squeeze`): the nearest agar cell, full or
+// not, no claim, so every walker it covers comes out, over the crowd limit
+// for a while if it must (the crowd limit only stops a walker stepping
+// into a full cell; one over it thins as the slime moves).
+fn squeeze() -> bool {
+    return (wb.reach & 0x80000000u) != 0u;
+}
+
 @compute @workgroup_size(256)
 fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -2877,13 +2893,23 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
     // and the dead hold no cell (the life cycle).
     if (!lives(k)) { return; }
     let st = (spec[k] >> 9u) & 3u;
-    if (P.cyc != 0u && (st == L_SPORE || st == L_DEAD)) { return; }
+    if (P.cyc != 0u && st == L_DEAD) { return; }
+    // A spore in flight over the new wall is moved too, in the last round
+    // (`squeeze`), to the nearest agar cell, still flying: it holds no
+    // cell, so no count or claim (2026-11-23, the owner's planet 5, the
+    // Sporer: 26 spores stayed over his walls to the end. A spore steps
+    // only onto agar with no wall between, so one inside a wall thicker
+    // than its step never moved again, never landed, and no shot kills a
+    // spore, so the planet could not be won; the CPU leaves them).
+    let spore = P.cyc != 0u && st == L_SPORE;
+    let squeezed = squeeze();
+    if (spore && !squeezed) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     if (here == NONE || agar[here] != 0u) { return; }
     let cx = i32(wk.x);
     let cy = i32(wk.y);
-    let reach = i32(wb.reach);
+    let reach = i32(wb.reach & 0x7FFFFFFFu);
     for (var d = 1; d <= reach; d++) {
         for (var oy = -d; oy <= d; oy++) {
             let edge = oy == -d || oy == d;
@@ -2894,8 +2920,12 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let ny = cy + oy;
                 if (nx >= 0 && ny >= 0 && nx < i32(P.w) && ny < i32(P.h)) {
                     let j = u32(ny) * P.w + u32(nx);
-                    if (agar[j] != 0u && (P.crowd == 0u || atomicLoad(&occ[j]) < P.crowd)) {
-                        if (P.crowd > 0u) { atomicMin(&claim[j], k); }
+                    if (spore && agar[j] != 0u) {
+                        walkers[k] = vec4<f32>(f32(nx) + 0.5, f32(ny) + 0.5, wk.z, wk.w);
+                        return;
+                    }
+                    if (agar[j] != 0u && (squeezed || P.crowd == 0u || atomicLoad(&occ[j]) < P.crowd)) {
+                        if (P.crowd > 0u && !squeezed) { atomicMin(&claim[j], k); }
                         icell[k] = j;
                         // Walkers that found a cell this round (`build_wall`
                         // runs rounds until none does).
@@ -2915,7 +2945,7 @@ fn settle(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (k >= P.n) { return; }
     let j = icell[k];
     if (j == NONE) { return; }
-    if (P.crowd > 0u && atomicLoad(&claim[j]) != k) { return; }
+    if (P.crowd > 0u && !squeeze() && atomicLoad(&claim[j]) != k) { return; }
     let wk = walkers[k];
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     atomicAdd(&occ[j], 1u);
@@ -3779,6 +3809,17 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
         } else {
             spec[k] = (w & 0xFFFFu) | (t2 << 16u);
         }
+        tally(k);
+        return;
+    }
+    // A spore whose flight is over on a cell that is not agar (a wall
+    // built under it before 2026-11-23, or anything else that leaves one
+    // there) can never land: it dies there, as a spray droplet does, so it
+    // can't hold the planet's mass above 0 for good (the owner's planet 5).
+    if (t2 == 0u && agar[i] == 0u) {
+        if (growth()) { energy[k] = -1.0; }
+        spec[k] = (w & 0x1FFu) | (L_DEAD << 9u);
+        walkers[k].w = 0.0;
         tally(k);
         return;
     }

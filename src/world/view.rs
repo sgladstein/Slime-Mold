@@ -530,6 +530,32 @@ pub struct View {
     has_overlay: bool,
     has_vis: bool,
     n_marks: u32,
+    /// **The render scale** (performance thread, 2026-11-22; `set_scale`):
+    /// the passes draw the world at `screen` over `scale` pixels
+    /// (`rscreen`, rows `rstride` apart, into `low`), and an upscale pass
+    /// spreads each of its pixels over `scale` x `scale` of `out`. 1 draws
+    /// at the screen's own size, as before, with no `low` and no upscale.
+    /// The owner plays on a 4K screen (3840 x 2160 at 250%): the base
+    /// pass cost the GTX 1070 about 38 ms a frame there, against 3.3 ms
+    /// at the bench's 1280 x 800. `out`, `stride` and `screen` stay the
+    /// screen's, so the HUD (drawn into `out` after the view) stays sharp
+    /// and nothing outside the view changes.
+    scale: u32,
+    rscreen: (u32, u32),
+    rstride: u32,
+    low: Option<wgpu::Buffer>,
+    up: Upscale,
+    /// The marks' passes at a render scale (Look and interface,
+    /// 2026-11-22): `draw_marks` and `compose` run after the upscale, at
+    /// the screen's own pixels, on these params (the screen's size, zoom
+    /// and minimap; the world's grid words as the small picture's, so
+    /// `film_th` reads the same cells) and this group (`out`, and the
+    /// screen-sized claims and overlay). The squad, its rings, numbers,
+    /// tracers and flashes stay sharp while the world draws at half: the
+    /// fight round the squad is first in the owner's look order, and the
+    /// two passes cost about 1.2 ms at 4K on the 1070 against base's 38.
+    params_full: wgpu::Buffer,
+    group_full: wgpu::BindGroup,
 }
 
 fn storage(dev: &wgpu::Device, label: &str, bytes: u64) -> wgpu::Buffer {
@@ -565,6 +591,7 @@ impl View {
         let marks = storage(device, "marks", (MAX_MARKS * MARK_WORDS * 4) as u64);
         let vis = storage(device, "visibility", 16);
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
+        let up = Upscale::new(device);
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
         let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 12);
         let atlas = Self::atlas(device, queue);
@@ -579,6 +606,8 @@ impl View {
         let (charge, heat, gem_list) = (storage(device, "charge", 16), storage(device, "crystal heat", 16), storage(device, "crystal list", 16));
         let germ = [storage(device, "germ 0", 16), storage(device, "germ 1", 16)];
         let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1], &life, &scar]);
+        let params_full = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view params, marks at full"), size: PARAMS_BYTES as u64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let group_full = Self::bind(device, &bgl, [&params_full, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1], &life, &scar]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -657,6 +686,13 @@ impl View {
             has_overlay: false,
             has_vis: false,
             n_marks: 0,
+            scale: 1,
+            rscreen: screen,
+            rstride: stride,
+            low: None,
+            up,
+            params_full,
+            group_full,
         }
     }
 
@@ -719,7 +755,9 @@ impl View {
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1], &self.life, &self.scar]);
+        let target = self.low.as_ref().unwrap_or(&self.out);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, target, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1], &self.life, &self.scar]);
+        self.group_full = Self::bind(&self.device, &self.bgl, [&self.params_full, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1], &self.life, &self.scar]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -1137,13 +1175,36 @@ impl View {
 
     /// A new screen size: the overlay is cleared.
     pub fn resize(&mut self, screen: (u32, u32)) {
+        let s = self.scale.max(1);
+        let rscreen = (screen.0.div_ceil(s).max(1), screen.1.div_ceil(s).max(1));
+        // The claims and the overlay stay the screen's size: the marks
+        // draw at full (`params_full`).
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
-        (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
-        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 12);
-        (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, screen);
-        self.fgrid = Self::fine_buffer(&self.device, screen);
+        let rstride = rscreen.0.div_ceil(64) * 64;
+        let low = (s > 1).then(|| storage(&self.device, "view low", rstride as u64 * rscreen.1 as u64 * 4));
+        (self.stride, self.out, self.low, self.overlay, self.top, self.screen) = (stride, out, low, overlay, top, screen);
+        (self.rscreen, self.rstride) = (rscreen, rstride);
+        self.specks = storage(&self.device, "specks", rstride as u64 * rscreen.1 as u64 * 12);
+        (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, rscreen);
+        self.fgrid = Self::fine_buffer(&self.device, rscreen);
         self.has_overlay = false;
         self.rebind();
+    }
+
+    /// Draws the world at the screen's pixels over `scale` each way (1
+    /// the screen's own; `scale` field). Remakes the screen-sized buffers
+    /// when it changes.
+    pub fn set_scale(&mut self, scale: u32) {
+        let scale = scale.clamp(1, 4);
+        if scale != self.scale {
+            self.scale = scale;
+            self.resize(self.screen);
+        }
+    }
+
+    /// The render scale (`set_scale`).
+    pub fn scale(&self) -> u32 {
+        self.scale
     }
 
     /// The overlay: premultiplied RGBA, screen-sized (`screen.0 x screen.1 x 4`
@@ -1242,8 +1303,17 @@ impl View {
 
     fn record_with(&self, enc: &mut wgpu::CommandEncoder, cam: &Camera, stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>, each: Option<&wgpu::QuerySet>) -> Vec<usize> {
         let mm = self.minimap_rect(cam).unwrap_or((0, 0, 0, 0));
+        let (mm_full, zoom_full) = (mm, cam.zoom);
+        // At a render scale (`set_scale`) the passes see a smaller screen
+        // and a camera zoomed out by it: the same world in fewer pixels.
+        let s = self.scale.max(1);
+        let mm = (mm.0 / s, mm.1 / s, mm.2.div_ceil(s), mm.3.div_ceil(s));
+        let fs = s as f32;
+        let scaled = Camera { screen: (cam.screen.0 / fs, cam.screen.1 / fs), zoom: cam.zoom / fs, inset: (cam.inset.0 / fs, cam.inset.1 / fs), ..*cam };
+        let cam = &scaled;
+        let (screen, stride) = (self.rscreen, self.rstride);
         let mut b: Vec<u8> = Vec::with_capacity(PARAMS_BYTES);
-        for v in [self.screen.0, self.screen.1, self.stride, self.world.0 as u32, self.world.1 as u32, self.n_marks, self.has_vis as u32, self.has_overlay as u32] {
+        for v in [screen.0, screen.1, stride, self.world.0 as u32, self.world.1 as u32, self.n_marks, self.has_vis as u32, self.has_overlay as u32] {
             b.extend(v.to_le_bytes());
         }
         for v in [cam.x, cam.y, cam.zoom, f32::from_bits(self.n_lights)] {
@@ -1256,7 +1326,7 @@ impl View {
         let (ox, oy) = (cam.x.floor() as i32 - MARGIN as i32, cam.y.floor() as i32 - MARGIN as i32);
         let zoom = cam.zoom.max(1.0);
         let k = Self::fine(zoom);
-        let (rw, rh) = (((self.screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k, ((self.screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k);
+        let (rw, rh) = (((screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k, ((screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k);
         b.extend(ox.to_le_bytes());
         b.extend(oy.to_le_bytes());
         b.extend(rw.to_le_bytes());
@@ -1269,7 +1339,7 @@ impl View {
         for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, self.n_list * (live > 0) as u32, dt.to_bits(), live] {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.dense_at, self.ripe_at, Self::fine_half(self.screen), self.stride * self.screen.1] {
+        for v in [self.dense_at, self.ripe_at, Self::fine_half(screen), stride * screen.1] {
             b.extend(v.to_le_bytes());
         }
         for v in [self.alarm_side, self.alarm_full.to_bits(), self.plant_at, self.flora] {
@@ -1302,7 +1372,24 @@ impl View {
             self.live.set(1);
         }
         self.queue.write_buffer(&self.params, 0, &b);
-        let (gx, gy) = (self.screen.0.div_ceil(16), self.screen.1.div_ceil(16));
+        let s_full = self.low.is_some();
+        if s_full {
+            // The marks' params (`params_full`): the screen's size, stride,
+            // zoom and minimap over the small picture's; every other word,
+            // the world's grid among them, as it is.
+            let put = |b: &mut Vec<u8>, word: usize, v: u32| b[4 * word..4 * word + 4].copy_from_slice(&v.to_le_bytes());
+            let mut f = b.clone();
+            put(&mut f, 0, self.screen.0);
+            put(&mut f, 1, self.screen.1);
+            put(&mut f, 2, self.stride);
+            put(&mut f, 10, zoom_full.to_bits());
+            for (w, v) in [mm_full.0, mm_full.1, mm_full.2, mm_full.3].into_iter().enumerate() {
+                put(&mut f, 12 + w, v);
+            }
+            self.queue.write_buffer(&self.params_full, 0, &f);
+        }
+        let (gx, gy) = (screen.0.div_ceil(16), screen.1.div_ceil(16));
+        let (fx, fy) = (self.screen.0.div_ceil(16), self.screen.1.div_ceil(16));
         let mut passes: Vec<(usize, (u32, u32))> = Vec::new();
         if self.shade && cam.zoom >= 1.0 {
             enc.clear_buffer(&self.fgrid, 0, None);
@@ -1317,12 +1404,15 @@ impl View {
             passes.push((5, (self.n_list.div_ceil(256), 1)));
         }
         passes.push((0, (gx, gy)));
+        // The world's passes end here; at a render scale the upscale
+        // follows, then the marks at the screen's own pixels.
+        let world_passes = passes.len();
         if self.n_marks > 0 {
             // `SPLIT` workgroups a mark (view.wgsl's draw_marks).
             passes.push((1, (self.n_marks, 16)));
         }
         if self.has_overlay || self.n_marks > 0 {
-            passes.push((2, (gx, gy)));
+            passes.push((2, if s_full { (fx, fy) } else { (gx, gy) }));
         }
         let last = passes.len() - 1;
         for (q, &(p, (x, y))) in passes.iter().enumerate() {
@@ -1332,10 +1422,20 @@ impl View {
                     .map(|(qs, begin, end)| wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin.filter(|_| q == 0), end_of_pass_write_index: end.filter(|_| q == last) })
                     .filter(|w| w.beginning_of_pass_write_index.is_some() || w.end_of_pass_write_index.is_some()),
             };
+            if q == world_passes {
+                if let Some(low) = self.low.as_ref() {
+                    self.up.record(&self.device, &self.queue, enc, (low, self.rstride), (&self.out, self.stride), self.screen, s);
+                }
+            }
             let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("view"), timestamp_writes: writes });
             pass.set_pipeline(&self.pipes[p]);
-            pass.set_bind_group(0, &self.group, &[]);
+            pass.set_bind_group(0, if s_full && q >= world_passes { &self.group_full } else { &self.group }, &[]);
             pass.dispatch_workgroups(x, y, 1);
+        }
+        if world_passes == passes.len() {
+            if let Some(low) = self.low.as_ref() {
+                self.up.record(&self.device, &self.queue, enc, (low, self.rstride), (&self.out, self.stride), self.screen, s);
+            }
         }
         passes.into_iter().map(|p| p.0).collect()
     }
@@ -1358,6 +1458,65 @@ impl View {
             img.extend_from_slice(&bytes[y * stride * 4..(y * stride + w) * 4]);
         }
         image::RgbaImage::from_raw(w as u32, h as u32, img).expect("screen size")
+    }
+}
+
+/// The render scale's last pass (`View::set_scale`): each pixel of the
+/// small picture spread over `scale` x `scale` pixels of the screen's,
+/// nearest, so the world's pixels stay crisp.
+struct Upscale {
+    pipe: wgpu::ComputePipeline,
+    bgl: wgpu::BindGroupLayout,
+    params: wgpu::Buffer,
+}
+
+const UPSCALE: &str = r#"
+struct U { sw: u32, sh: u32, stride: u32, lstride: u32, s: u32, lw: u32, lh: u32, pad: u32 }
+@group(0) @binding(0) var<uniform> u: U;
+@group(0) @binding(1) var<storage, read> low: array<u32>;
+@group(0) @binding(2) var<storage, read_write> out: array<u32>;
+@compute @workgroup_size(16, 16)
+fn up(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x >= u.sw || gid.y >= u.sh) { return; }
+    let x = min(gid.x / u.s, u.lw - 1u);
+    let y = min(gid.y / u.s, u.lh - 1u);
+    out[gid.y * u.stride + gid.x] = low[y * u.lstride + x];
+}
+"#;
+
+impl Upscale {
+    fn new(device: &wgpu::Device) -> Self {
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view upscale"), source: wgpu::ShaderSource::Wgsl(UPSCALE.into()) });
+        let entry = |binding, ty| wgpu::BindGroupLayoutEntry { binding, visibility: wgpu::ShaderStages::COMPUTE, ty: wgpu::BindingType::Buffer { ty, has_dynamic_offset: false, min_binding_size: None }, count: None };
+        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("view upscale"),
+            entries: &[entry(0, wgpu::BufferBindingType::Uniform), entry(1, wgpu::BufferBindingType::Storage { read_only: true }), entry(2, wgpu::BufferBindingType::Storage { read_only: false })],
+        });
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view upscale"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
+        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("view upscale"), layout: Some(&layout), module: &module, entry_point: Some("up"), compilation_options: Default::default(), cache: None });
+        let params = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view upscale"), size: 32, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        Upscale { pipe, bgl, params }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn record(&self, device: &wgpu::Device, queue: &wgpu::Queue, enc: &mut wgpu::CommandEncoder, (low, lstride): (&wgpu::Buffer, u32), (out, stride): (&wgpu::Buffer, u32), screen: (u32, u32), s: u32) {
+        let (lw, lh) = (screen.0.div_ceil(s), screen.1.div_ceil(s));
+        let words = [screen.0, screen.1, stride, lstride, s, lw, lh, 0];
+        let bytes: Vec<u8> = words.iter().flat_map(|w| w.to_le_bytes()).collect();
+        queue.write_buffer(&self.params, 0, &bytes);
+        let group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("view upscale"),
+            layout: &self.bgl,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: self.params.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 1, resource: low.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 2, resource: out.as_entire_binding() },
+            ],
+        });
+        let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("view upscale"), timestamp_writes: None });
+        pass.set_pipeline(&self.pipe);
+        pass.set_bind_group(0, &group, &[]);
+        pass.dispatch_workgroups(screen.0.div_ceil(16), screen.1.div_ceil(16), 1);
     }
 }
 
@@ -1438,6 +1597,33 @@ mod tests {
         }
     }
 
+    /// At render scale 2 (`set_scale`) each screen pixel shows the cell
+    /// under the middle of its 2 x 2 block: the same world, half the
+    /// pixels, spread back over the whole screen.
+    #[test]
+    fn at_half_scale_each_screen_pixel_shows_its_blocks_cell() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (200, 120);
+        let world = coded(&dev, &q, w, h);
+        let screen = (101, 61);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_scale(2);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(4.0, (0.0, 0.0));
+        cam.centre_on((130.0, 70.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        assert_eq!(pic.dimensions(), screen);
+        for (sx, sy) in [(0, 0), (37, 21), (100, 60), (50, 30), (51, 31)] {
+            let (bx, by) = ((sx / 2 * 2) as f32 + 1.0, (sy / 2 * 2) as f32 + 1.0);
+            let (wx, wy) = cam.to_world((bx, by));
+            let p = pic.get_pixel(sx, sy).0;
+            assert_eq!((p[0], p[1]), (wx as u8, wy as u8), "screen ({sx}, {sy})");
+        }
+    }
+
     #[test]
     fn zoomed_out_the_minimap_and_marks_show_and_the_overlay_covers_them() {
         let Some((dev, q)) = test_gpu() else { return };
@@ -1472,6 +1658,41 @@ mod tests {
         let c = cam.centre();
         let dot = pic.get_pixel(mx + (c.0 * s) as u32, my + (c.1 * s) as u32).0;
         assert_eq!(dot, [255, 255, 255, 255]);
+    }
+
+    /// At render scale 2 the marks still draw at the screen's own pixels
+    /// (`params_full`): a mark at an odd pixel covers exactly the pixels it
+    /// does at full scale, not doubled ones, and the overlay is the
+    /// screen's size.
+    #[test]
+    fn at_half_scale_the_marks_draw_at_full() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (400, 250);
+        let world = coded(&dev, &q, w, h);
+        let screen = (321, 201);
+        let cam = Camera::new((w, h), screen);
+        let mut marks = Marks::default();
+        marks.push(Mark { flags: 0, ..Mark::new(Shape::Rect, cam.to_world((301.5, 11.5)), (1.5, 2.5), [0, 0, 255, 255]) });
+        marks.disc(cam.to_world((101.0, 151.0)), 1.0, [255, 255, 255, 255], true);
+        let blue_and_white = |scale: u32| {
+            let mut view = View::new(&dev, &q, &world, (w, h), screen);
+            view.set_scale(scale);
+            view.set_marks(&marks);
+            let mut ov = vec![0u8; 321 * 201 * 4];
+            ov[4 * 3..4 * 4].copy_from_slice(&[9, 9, 9, 255]);
+            view.set_overlay(Some(&ov));
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            let pic = view.picture();
+            assert_eq!(pic.get_pixel(3, 0).0, [9, 9, 9, 255], "the overlay's one pixel at scale {scale}");
+            assert_ne!(pic.get_pixel(2, 0).0, [9, 9, 9, 255], "not doubled at scale {scale}");
+            let pick = |c: [u8; 4]| pic.enumerate_pixels().filter(|p| p.2 .0 == c).map(|p| (p.0, p.1)).collect::<Vec<_>>();
+            (pick([0, 0, 255, 255]), pick([255, 255, 255, 255]))
+        };
+        let full = blue_and_white(1);
+        assert!(!full.0.is_empty() && !full.1.is_empty());
+        assert_eq!(blue_and_white(2), full);
     }
 
     /// Plan C8 (2026-11-14): a walker's news of food is on screen. A calm

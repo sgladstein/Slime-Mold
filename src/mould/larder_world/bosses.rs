@@ -243,13 +243,40 @@ impl BossRules {
             every_sd: 30.0 + (10.0 - 30.0) * t,
             first: 90.0 + (40.0 - 90.0) * t,
             cut: 0.02 + (0.1 - 0.02) * t,
-            most: if depth >= 4 { 2 } else { 1 },
+            most: if depth >= 6 { 3 } else if depth >= 4 { 2 } else { 1 },
             // Weaker on the first planets, all of them stronger by the
-            // last, and a wide spread on each.
-            grade_lo: 0.4 * t,
-            grade_hi: 0.6 + 0.4 * t,
+            // last, and a wide spread on each. Floor raised 2026-11-22
+            // evening (below): grade 0.2 to 0.7 on planet 2 (was 0 to
+            // 0.6), 0.6 to 1 by planet 8 as before.
+            grade_lo: 0.2 + 0.4 * t,
+            grade_hi: 0.7 + 0.3 * t,
+            // **Reach the squad** (2026-11-22 evening, the thread "Make
+            // the run harder after full-game win"; the owner: "yes" to
+            // scaling the mini-bosses). His next run after #721 (build
+            // 0509374, planets 2-5): 7 mini-bosses, all broken, none took
+            // a soldier; the hunters were shot apart 31 to 43 cells out
+            // (under 30% of their first members) and a wanderer never
+            // came nearer than 65. So they come faster (pace 1.2 to 1.5
+            // times the slime's, before the grade's own `faster`) and
+            // break later (under 20% of their first members on planet 2,
+            // 12% by planet 8; 30% before). Not size: one sized to the
+            // army lived 1-3 s against 50 guns either way (dead-ends,
+            // 11-20); his squads were 14 to 35.
+            haste: 1.2 + 0.3 * t,
+            quorum: 0.2 - 0.08 * t,
             // The mortar from planet 4 (the proposal the owner picked).
             kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }, if depth >= 3 { 1.0 } else { 0.0 }],
+            // Tougher by the planet (2026-11-22, the thread "Make the run
+            // harder after full-game win": 54 mini-bosses on the owner's
+            // 11-22 run of all 8 planets were all broken, fizzled or spent
+            // without a soldier lost, under 90 guns aimed at them first):
+            // the weakest grade's blows a member 4 on planet 2 to 10 by
+            // planet 8 (the strongest stays at 15, the engine's most,
+            // `engine.wgsl` `armoured`), its bite 1 to 4 walkers' on planet
+            // 2 to 2 to 6 by planet 8, and a third at once from planet 6.
+            armour_lo: 4.0 + 6.0 * t,
+            bite_lo: 1.0 + t,
+            bite_hi: 4.0 + 2.0 * t,
             ..BossRules::default()
         }
     }
@@ -770,7 +797,13 @@ impl<W: World> Game<W> {
             self.bosses.live[k] = b;
             k += 1;
         }
-        if (r.every <= 0.0 && r.cut <= 0.0) || self.bosses.live.len() >= r.most.min(LUMPS) {
+        // A boss forms only while another lump stays free after it (the
+        // Enemy lane's review of 11-22, with `most` 3 from planet 6): the
+        // world's `LUMPS` (4) also carry raid marches, fruits, mortar
+        // shells (two free, below) and the last-stand heart, and three
+        // bosses would leave them one.
+        let room = |g: &Self| (0..LUMPS).filter(|&l| !g.lump_taken(l)).count() >= 2;
+        if (r.every <= 0.0 && r.cut <= 0.0) || self.bosses.live.len() >= r.most.min(LUMPS) || !room(self) {
             return;
         }
         // A big part cut off from food: each second's chance, once the
@@ -783,7 +816,7 @@ impl<W: World> Game<W> {
             for p in parts.iter().filter(|p| !p.fed && p.walkers >= r.cut_least) {
                 let by = |c: (f32, f32)| (c.0 - p.centre.0).hypot(c.1 - p.centre.1) < p.r + near;
                 let lately = self.bosses.ended.iter().rev().take_while(|e| now < e.2 + rest).any(|e| by(e.0.centre));
-                if self.bosses.live.len() >= r.most.min(LUMPS) || lately || self.bosses.live.iter().any(|b| by(b.centre)) {
+                if self.bosses.live.len() >= r.most.min(LUMPS) || !room(self) || lately || self.bosses.live.iter().any(|b| by(b.centre)) {
                     continue;
                 }
                 if self.bosses.rng.f32() < r.cut {
@@ -805,7 +838,7 @@ impl<W: World> Game<W> {
             }
         };
         // A chance waits for a crowded knot: tried each second once due.
-        if now < next || self.bosses.live.len() >= r.most.min(LUMPS) {
+        if now < next || self.bosses.live.len() >= r.most.min(LUMPS) || !room(self) {
             return;
         }
         if let Some(at) = self.crowded_knot(None) {

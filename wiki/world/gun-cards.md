@@ -2,7 +2,7 @@
 title: Gun cards by planet
 kind: design
 status: open
-updated: 2026-11-21
+updated: 2026-11-22
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/gun-builds-2026-11-19/README.md
@@ -141,6 +141,9 @@ Heave and Corral were one shove in two cards (the game designer, 11-17
   gun cost every plan (rush 7 to 2, lure 4 to 1). No comparison survives a
   correction. For Direction, not retuned
   ([report](../../Reports/strategy-bots-2026-11-19/README.md)).
+  Cards on the turrets (job 14-0-s, 11-22) tripled the lure plan's turret
+  kills but changed no win count beyond noise; the Wide + Rate + Needle
+  Blast deck won 9 of 9 in every firing order.
 - Cards that do nothing on their own in the run shop (the balance review,
   11-20, [report](../../Reports/balance-review-2026-11-20/README.md)):
   Trigger, Expire and Multicast with one bullet card, and Wide, Scatter,

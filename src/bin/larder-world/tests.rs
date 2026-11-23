@@ -506,6 +506,8 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     // 11-15; Right on the Game tab's first row would turn and save the UI
     // size).
     assert_eq!(app.menu.as_ref().unwrap().option("map").unwrap().tab, "Planet");
+    // Screen, then Game, then Planet (the Screen tab came first on 11-22).
+    app.menu_input(|m| m.key(KeyCode::Tab, true)).unwrap();
     app.menu_input(|m| m.key(KeyCode::Tab, true)).unwrap();
     // Down to Planet and back: no restart (the round's clock runs on).
     for _ in 0..3 {
@@ -671,7 +673,7 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     // 2026-11-21 05:04Z); Formation (T) opens its page.
     assert_eq!(key_of("Fire: defend"), Some(KeyCode::KeyX));
     assert_eq!(key_of("Hold fire"), Some(KeyCode::KeyZ));
-    assert_eq!(key_of("Formation: blob"), Some(KeyCode::KeyT));
+    assert_eq!(key_of("Blob, tight"), Some(KeyCode::KeyT));
     // The sixth column (owner 2026-11-21 06:21Z): Heal, Pump and the wall
     // all on the main page.
     assert_eq!(key_of("Heal"), Some(KeyCode::KeyL));
@@ -735,18 +737,34 @@ fn hold_fire_toggles_apart_from_the_fire_mode_and_the_formation_page_picks() {
     assert!(app.model(None, None).commands.iter().any(|c| c.id == FIRE && c.name == "Fire: defend"));
     app.hud_event(HudEvent::Command { id: HOLD_FIRE }).unwrap();
     assert!(all(&app, Stance::Defend), "let go, back to the mode picked: {:?}", stances(&app));
-    // The Formation page: its buttons, the current one lit, a pick closes it.
+    // The Formation page (owner's review, 2026-11-23): two shapes, five
+    // spread steps, the current ones lit; a pick keeps the page open.
     app.hud_event(HudEvent::Command { id: FORM_PAGE }).unwrap();
     let m = app.model(None, None);
-    for id in [F_BLOB, F_SPREAD, F_LINE, F_WEDGE, F_COLUMN, F_RING, F_BACK] {
+    for id in [F_BLOB, F_RING, F_TIGHT, F_CLOSE, F_OPEN, F_LOOSE, F_WIDE, F_BACK] {
         assert!(m.commands.iter().any(|c| c.id == id), "the page has {id}");
     }
     assert!(m.commands.iter().any(|c| c.id == F_BLOB && c.on));
-    app.hud_event(HudEvent::Command { id: F_COLUMN }).unwrap();
-    let g = app.game.as_ref().unwrap();
-    assert_eq!(g.squads[g.active.unwrap()].formation, slime_mould::mould::larder_world::Formation::Column);
-    assert!(!app.form_page, "a pick goes back to the main card");
-    assert!(app.model(None, None).commands.iter().any(|c| c.id == FORM_PAGE && c.name == "Formation: column"));
+    assert!(m.commands.iter().any(|c| c.id == F_TIGHT && c.on));
+    app.hud_event(HudEvent::Command { id: F_RING }).unwrap();
+    app.hud_event(HudEvent::Command { id: F_LOOSE }).unwrap();
+    let sq = |app: &App| {
+        let g = app.game.as_ref().unwrap();
+        let s = g.squads[g.active.unwrap()];
+        (s.formation, s.spread)
+    };
+    use slime_mould::mould::larder_world::Formation;
+    assert_eq!(sq(&app), (Formation::Ring, 3), "the shape and the spread are set apart");
+    assert!(app.form_page, "a pick keeps the page open");
+    // The brackets step the spread from the main card, within the steps.
+    app.hud_event(HudEvent::Command { id: F_BACK }).unwrap();
+    assert!(app.model(None, None).commands.iter().any(|c| c.id == FORM_PAGE && c.name == "Ring, loose"));
+    for _ in 0..3 {
+        app.squad_key(KeyCode::BracketRight, true, false, false);
+    }
+    assert_eq!(sq(&app), (Formation::Ring, 4), "] stops at wide");
+    app.squad_key(KeyCode::BracketLeft, true, false, false);
+    assert_eq!(sq(&app), (Formation::Ring, 3));
 }
 
 #[test]
@@ -1169,6 +1187,37 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
 
 /// **A save that does not read is moved aside**, never overwritten unseen,
 /// and the menu says so; with no save there is no run.
+/// **The dev skip** (owner, 2026-11-22 21:36Z: "skip planets and get
+/// average amount of gold to spend at the shop"): Options' "Start on
+/// planet" 4 starts a new run in planet 4's shop, paid what average wins
+/// on planets 1 to 3 pay, and the shop's Dev tab skips one more.
+#[test]
+fn start_on_planet_skips_to_its_shop_with_the_average_pay() {
+    use slime_mould::mould::run::{skip_pay, Pick};
+    use slime_mould::world::start::{Page, StartEvent};
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(run_base(), (1280, 720), &device, &queue).unwrap();
+    app.base = Some((run_base(), true));
+    let mut menu = start_menu(&run_base());
+    let start = menu.options.iter_mut().find(|o| o.key == "start").expect("the Start on planet option");
+    assert_eq!(start.value(), "1", "a run starts on planet 1 by default");
+    start.at = start.choices.iter().position(|c| c == "4").unwrap();
+    app.menu = Some(menu);
+    app.run = None;
+    app.menu_event(StartEvent::Run).unwrap();
+    assert!(app.in_menu(), "the shop, not a landing");
+    assert_eq!(app.menu.as_ref().unwrap().page, Page::Shop);
+    let paid = skip_pay(1) + skip_pay(2) + skip_pay(3);
+    assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points, r.stars.clone())), Some((4, paid, vec![0, 0, 0])));
+    let skip = app.run.as_ref().unwrap().shop().iter().position(|r| r.pick == Pick::DevSkip).expect("the shop's skip row");
+    app.menu_event(StartEvent::Buy(skip)).unwrap();
+    assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((5, paid + skip_pay(4))));
+    // On to planet 5: it lands.
+    app.menu_event(StartEvent::NextLevel).unwrap();
+    assert!(!app.in_menu());
+    assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(5));
+}
+
 #[test]
 fn an_unreadable_run_save_is_moved_aside() {
     let dir = std::env::temp_dir().join(format!("larder-run-bad-{}", std::process::id()));
@@ -1526,6 +1575,9 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
             doored = true;
         }
         app.prepare();
+        // The refresh's read is taken a frame or more on in play; here it
+        // is waited for, so the codes are the cells as they stood.
+        app.settle_ground();
         if app.ground_at != at {
             at = app.ground_at;
             let g = app.game.as_ref().unwrap();
@@ -1545,6 +1597,24 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
     assert!(raised && wall_cells(&app) > walls_before + 20, "the raised walls drew: {} wall cells, {walls_before} before", wall_cells(&app));
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
     assert!(left < app.charge0.iter().sum::<f32>(), "crystals were eaten, so charges changed: {left}");
+    // In play nothing waits (performance thread, 11-22): a refresh starts
+    // its read, and a later frame takes it once the GPU is done.
+    app.settle();
+    app.ground_at -= GROUND_EVERY;
+    app.prepare();
+    assert!(app.live.gather.as_ref().is_some_and(|q| q.pending()), "the refresh started a read");
+    for _ in 0..200 {
+        if !app.live.gather.as_ref().unwrap().pending() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        app.prepare();
+    }
+    assert!(!app.live.gather.as_ref().unwrap().pending(), "a later frame took the read");
+    let g = app.game.as_ref().unwrap();
+    let e = &g.world.e;
+    let (charge, health) = (floats(read_back(&e.device, &e.queue, &e.charge)), floats(read_back(&e.device, &e.queue, &e.health)));
+    assert_eq!(app.codes, ground_codes(g, &app.depth, Some(&charge), Some(&health)), "the taken read's codes");
 }
 
 /// **The squad's order lines** (owner's playtest, 2026-11-14 20:12Z and
@@ -2056,7 +2126,7 @@ fn the_menus_real_lists_fit_one_screen() {
             }
             t
         });
-        assert_eq!(tabs, ["Game", "Planet", "The mould", "Experiments"]);
+        assert_eq!(tabs, ["Screen", "Game", "Planet", "The mould", "Experiments"]);
         for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
             let at = format!("{screen:?} at {user}, squads {squads}");
             let mut m = start_menu(&base);

@@ -81,6 +81,11 @@ enum Drag {
 pub struct Controls {
     pub team: u8,
     pub selected: Vec<usize>,
+    /// How far apart, in selection rings, two selected units still share
+    /// one ring (`ring_groups`): `RING_LINK`, or more for a squad stood
+    /// wider (the squad mode's spread, 2026-11-23: a wide blob broke into a
+    /// ring a soldier, a field of bubbles).
+    pub ring_link: f32,
     pub groups: [Vec<usize>; 9],
     /// The cursor, in screen pixels (`None` off the window).
     pub cursor: Option<(f32, f32)>,
@@ -118,7 +123,7 @@ pub fn wasd_index(code: KeyCode) -> Option<usize> {
 
 impl Controls {
     pub fn new(team: u8) -> Self {
-        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, burn_lines: true, arrows_pan: true, edge: true, wasd_pan: false, arrows: [false; 4], wasd: [false; 4], drag: None, last_group: None, last_pick: None }
+        Controls { team, selected: Vec::new(), ring_link: RING_LINK, groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, burn_lines: true, arrows_pan: true, edge: true, wasd_pan: false, arrows: [false; 4], wasd: [false; 4], drag: None, last_group: None, last_pick: None }
     }
 
     fn mine<'a>(&self, units: &'a [Unit]) -> impl Iterator<Item = &'a Unit> + 'a {
@@ -348,7 +353,7 @@ impl Controls {
         // thin, so the soldier inside stays the thing you see.
         let ring = (r * cam.zoom * 0.95).max(2.0) + 2.0;
         let at: Vec<(f32, f32)> = units.iter().filter(|u| u.alive && self.selected.contains(&u.id)).map(|u| (u.x, u.y)).collect();
-        for (c, px) in ring_groups(&at, ring / cam.zoom.max(1e-6)) {
+        for (c, px) in ring_groups(&at, ring / cam.zoom.max(1e-6), self.ring_link) {
             out.selected(c, px * cam.zoom);
         }
         if let (Some(Drag::Select(from)), Some(c)) = (self.drag, self.cursor) {
@@ -376,7 +381,7 @@ impl Controls {
 /// kept its own ring, a field of bubbles over the fight.
 pub const RING_LINK: f32 = 3.5;
 
-pub fn ring_groups(at: &[(f32, f32)], ring: f32) -> Vec<((f32, f32), f32)> {
+pub fn ring_groups(at: &[(f32, f32)], ring: f32, link: f32) -> Vec<((f32, f32), f32)> {
     let n = at.len();
     let mut parent: Vec<usize> = (0..n).collect();
     fn root(p: &mut [usize], mut i: usize) -> usize {
@@ -388,7 +393,7 @@ pub fn ring_groups(at: &[(f32, f32)], ring: f32) -> Vec<((f32, f32), f32)> {
     }
     for i in 0..n {
         for j in i + 1..n {
-            if (at[i].0 - at[j].0).hypot(at[i].1 - at[j].1) < RING_LINK * ring {
+            if (at[i].0 - at[j].0).hypot(at[i].1 - at[j].1) < link * ring {
                 let (a, b) = (root(&mut parent, i), root(&mut parent, j));
                 parent[a.max(b)] = a.min(b);
             }
@@ -431,14 +436,14 @@ mod tests {
         // Two units far apart, three in a knot: a ring each for the two,
         // one round the knot.
         let at = [(0.0, 0.0), (20.0, 0.0), (40.0, 40.0), (41.0, 40.0), (40.0, 41.5)];
-        let g = ring_groups(&at, 2.0);
+        let g = ring_groups(&at, 2.0, RING_LINK);
         assert_eq!(g.len(), 3, "{g:?}");
         let knot = g.iter().find(|(c, _)| c.0 > 30.0).unwrap();
         for p in &at[2..] {
             assert!((p.0 - knot.0 .0).hypot(p.1 - knot.0 .1) + 2.0 <= knot.1 + 1e-4, "the group ring holds every member's ring");
         }
         assert!(g.iter().any(|&(c, r)| c == (0.0, 0.0) && r == 2.0), "a lone unit keeps its own ring");
-        assert!(ring_groups(&[], 2.0).is_empty());
+        assert!(ring_groups(&[], 2.0, RING_LINK).is_empty());
     }
 
     #[test]
@@ -446,7 +451,7 @@ mod tests {
         // Fifty soldiers 2.3 rings apart (a big squad at zoom 6): one
         // ring round them all, not fifty.
         let at: Vec<(f32, f32)> = (0..50).map(|k| ((k % 10) as f32 * 4.6, (k / 10) as f32 * 4.6)).collect();
-        assert_eq!(ring_groups(&at, 2.0).len(), 1);
+        assert_eq!(ring_groups(&at, 2.0, RING_LINK).len(), 1);
     }
 
     fn squad() -> Vec<Unit> {

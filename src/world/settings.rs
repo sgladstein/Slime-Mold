@@ -189,6 +189,59 @@ pub fn save_music(v: f32) {
     }
 }
 
+/// The camera shake's strengths the Options page steps through (the
+/// owner, 2026-11-22: "I thought I could turn off the screen shake but I
+/// dont see the option"): a share of the game's shake, 0% off. Until then
+/// only the command line's `shake=` turned it.
+pub const SHAKE_STEPS: [f32; 5] = [0.0, 0.25, 0.5, 0.75, 1.0];
+
+/// The saved screen shake (`shake=` in the file), 100% when there is none.
+pub fn saved_shake() -> f32 {
+    get("shake").as_deref().and_then(parse_volume).map_or(1.0, |v| v.min(1.0))
+}
+
+/// Saves the screen shake, with a word on stderr if it could not.
+pub fn save_shake(v: f32) {
+    if let Err(e) = set("shake", &percent(v)) {
+        eprintln!("larder-world: the screen shake was not saved ({e})");
+    }
+}
+
+/// **World detail** (performance thread, 2026-11-22): how many of the
+/// screen's pixels the world is drawn at (`View::set_scale`). "Auto" draws
+/// at half on a screen past about 4.2 million pixels (a 4K window: the
+/// owner's 3840 x 2160 cost the GTX 1070 about 38 ms a frame for the world
+/// alone), "Full" always at the screen's own pixels, "Half" always at half
+/// each way. The HUD and text are always drawn at full size.
+pub const DETAIL_STEPS: [&str; 3] = ["Auto", "Full", "Half"];
+
+/// The saved world detail (`detail=` in the file), "Auto" when none.
+pub fn saved_detail() -> String {
+    get("detail").filter(|v| DETAIL_STEPS.contains(&v.as_str())).unwrap_or_else(|| "Auto".into())
+}
+
+/// Saves the world detail, with a word on stderr if it could not.
+pub fn save_detail(v: &str) {
+    if let Err(e) = set("detail", v) {
+        eprintln!("larder-world: the world detail was not saved ({e})");
+    }
+}
+
+/// The render scale (`View::set_scale`) for world detail `detail` on a
+/// `screen`-sized window: 2 for "Half", and for "Auto" past `AUTO_HALF`
+/// pixels; else 1.
+pub fn detail_scale(detail: &str, screen: (u32, u32)) -> u32 {
+    match detail {
+        "Half" => 2,
+        "Full" => 1,
+        _ => u32::from(screen.0 as u64 * screen.1 as u64 > AUTO_HALF) + 1,
+    }
+}
+
+/// "Auto"'s line: above 2560 x 1600 (4.1 million pixels), so a 1440p
+/// window draws at full and a 4K one at half.
+pub const AUTO_HALF: u64 = 2560 * 1600;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -248,5 +301,15 @@ mod tests {
         assert_eq!(get_in(&p, "ui").as_deref().and_then(parse_size), Some(1.5));
         assert_eq!(get_in(&p, "missing"), None);
         let _ = std::fs::remove_dir_all(p.parent().unwrap());
+    }
+
+    #[test]
+    fn auto_detail_halves_a_4k_window_only() {
+        assert_eq!(detail_scale("Auto", (3840, 2160)), 2);
+        assert_eq!(detail_scale("Auto", (3840, 2060)), 2);
+        assert_eq!(detail_scale("Auto", (2560, 1440)), 1);
+        assert_eq!(detail_scale("Auto", (1920, 1080)), 1);
+        assert_eq!(detail_scale("Full", (3840, 2160)), 1);
+        assert_eq!(detail_scale("Half", (1280, 800)), 2);
     }
 }
