@@ -2,7 +2,7 @@
 title: Squad mode
 kind: design
 status: open
-updated: 2026-11-21
+updated: 2026-11-23
 sources:
   - Reports/auto-fire-2026-11-18/README.md
   - Reports/bug-sweep-2026-11-14.md
@@ -17,7 +17,7 @@ sources:
   - Reports/squad-mode-2026-11-14/README.md
   - Reports/squad-movement-2026-11-16/README.md
 code:
-  - Formation::Column
+  - Formation::Ring
   - Game::demolish
   - Game::drawn_between
   - Game::fight_turn
@@ -34,7 +34,7 @@ code:
   - Rules::max_squad
   - Rules::squads
   - Rules::steer
-  - SPREAD
+  - SPREADS
   - squad::UNITS_MAX
 ---
 
@@ -130,11 +130,18 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   queued order once let go). A bought soldier and a squad combined into
   yours take your squad's fire mode.
 - **Formations** (the card's Formation button, T, opens its page; owner
-  2026-11-21 05:04Z): blob (default), spread (the blob at 1.9 times its room,
-  `SPREAD`), line, wedge, column (two abreast, facing where it walks; moving, it
-  always walks as the funnel's column two abreast, so it files through doors
-  and round rock) and
-  ring (`Formation`, `Game::rank_squad`).
+  2026-11-21 05:04Z, cut down by his review of 2026-11-23 03:33Z): two
+  shapes, blob (default) and ring (a circle with its middle empty), and a
+  separate spread of five steps, tight (default), close, open, loose and
+  wide, 1.0 to 2.4 times the tight room (`Formation`, `SPREADS`,
+  `Squad::spread`, `Game::rank_squad`). The page's top row picks the shape,
+  its bottom row the spread, each tile drawn as the squad will stand; a
+  pick keeps the page open. `[` and `]` step the spread from any page. A
+  squad standing still forms up where it stands on a pick. Line, wedge and
+  column went (11-21 to 11-23): the funnel files any shape through a door,
+  and a wide blob or ring still funnels (24 soldiers through the long
+  6-cell door and the 8-cell bridge 2 to 6 s after the tight blob,
+  `a_wide_squad_funnels_through_a_door_and_a_bridge`).
 - **No lookouts** (owner 2026-11-21 05:04Z: "remove the feature that some
   soldiers guard while harvesting"). From 2026-11-14 to 11-21 a squad
   draining or building with slime near posted a share of itself as lookouts
@@ -249,6 +256,7 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 - 2026-11-15 19:38Z: "Card 2"; 19:51Z: "Remove burn line. Use options c for guard/defend. (b) Click a building to select it when no squad is selected."; 19:53Z: "Build option 1"; 21:37Z: "Demolishing a building giving half back is good. Canceling a partial build should give all of it back".
 - 2026-11-15 18:00Z, on guards while working: "It doesn't seem to work well. Either improve it or remove it." (Improved: posts at the work's edge.)
 - 2026-11-21 05:04Z: "remove the feature that some solider guard while harvesting. add a formations button to the hud with good formation options. hold fire should be a seperate button from defend vs free fire." (Built: lookouts removed, the Formation page, Hold fire its own toggle.)
+- 2026-11-23 03:33Z: "Really only blob and spread out blob and maybe circle are useful and work well. I would like more control over the spread/tightness. Lets just have blob and circle base shapes (or a 3rd if you think you can create a good one). Then seperate control of the spread/tightness. Make sure all the tiles look polished/professional." (Built: blob and ring, five spread steps.)
 - 2026-11-16 05:17Z, of squad movement and pathfinding: "It is still clunky overall" (start over rather than patch).
 - 2026-11-18 17:01Z: "When I am surrounded by a bunch of individual walkers ... it isn't ideal to have all the soliders shooting at the same point anymore. So I typically stop manually shooting and let them shoot automatically, but the soliders seem to shoot much slower or not all of them are shooting" (fixed the same day: the commanded squad keeps its fire mode and defend reads what is near).
 - 2026-11-15 02:58Z: a way to deselect, move with WASD and see each squad run on its own (built as Esc and AUTO).

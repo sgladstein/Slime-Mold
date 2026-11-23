@@ -67,7 +67,8 @@ pub enum Cmd {
     Merge(u8, u8),
     /// The player controls squad `q` (`u8::MAX`: none).
     Active(u8),
-    Formation(u8, Formation),
+    /// Squad `q` takes a formation and a spread step (`squads::SPREADS`).
+    Formation(u8, Formation, u8),
     /// Shift + a squad order: squad `q` does it after what it is doing
     /// (`Squad::queue`); an idle squad starts it at once.
     SquadQueue(u8, Order),
@@ -127,7 +128,7 @@ impl Cmd {
             Cmd::Join(k, q) => format!("join {k} {q}"),
             Cmd::Merge(a, b) => format!("merge {a} {b}"),
             Cmd::Active(q) => format!("active {q}"),
-            Cmd::Formation(q, f) => format!("formation {q} {}", f.name()),
+            Cmd::Formation(q, f, s) => format!("formation {q} {} {s}", f.name()),
             Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
@@ -172,7 +173,13 @@ impl Cmd {
             "join" => return Some(Cmd::Join(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "merge" => return Some(Cmd::Merge(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "active" => return Some(Cmd::Active(w.get(1)?.parse().ok()?)),
-            "formation" => return Some(Cmd::Formation(w.get(1)?.parse().ok()?, Formation::parse(w.get(2)?)?)),
+            "formation" => {
+                // Two words before 2026-11-23 (no spread); a name of the
+                // 11-21 set maps to its blob (`Formation::parse`).
+                let (f, was) = Formation::parse(w.get(2)?)?;
+                let s = w.get(3).and_then(|s| s.parse().ok()).or(was).unwrap_or(0);
+                return Some(Cmd::Formation(w.get(1)?.parse().ok()?, f, s));
+            }
             "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
             "band" => return Some(Cmd::Band(w.get(1)?.parse().ok()?)),

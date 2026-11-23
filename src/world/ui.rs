@@ -3574,7 +3574,7 @@ mod tests {
     fn the_squad_strip_sits_right_of_the_tiles() {
         let row = |k: usize| SquadRow { key: format!("{}", k + 1), name: format!("Squad {}", k + 1), soldiers: 4, hp: 0.8, note: Some("holding".into()), active: k == 0, near: false, linked: false, auto: k != 0, state: String::new() };
         let fact = |t: &str| SquadFact { icon: Icon::Group, text: t.into(), about: "x".into() };
-        let facts = vec![fact("line formation"), fact("fire: defend"), fact("2 queued"), fact("Loadout 1"), fact("4 tools")];
+        let facts = vec![fact("ring, loose"), fact("fire: defend"), fact("2 queued"), fact("Loadout 1"), fact("4 tools")];
         for screen in [(1920, 1080), (1600, 972), (1280, 720)] {
             for n in [1, 2, 3] {
                 for free in [false, true] {

@@ -217,34 +217,91 @@ fn a_big_squad_funnels_through_a_door_and_forms_up_after() {
     }
 }
 
-/// **A column files through** (the Formation page, owner 2026-11-21
-/// 05:04Z: "good formation options"). The same 24 soldiers through the long
-/// 6-cell door and over the 8-cell bridge in `Formation::Column`: two
-/// abreast all the way, so they are all through about as soon as the blob
-/// that funnels, with no worse a knot, and stand as a column past it.
+/// **A wide squad funnels through** (owner's review of the formations,
+/// 2026-11-23: the spread is its own setting; the column formation that
+/// filed through doors went with it). The same 24 soldiers through the
+/// long 6-cell door and over the 8-cell bridge tight, wide and in a wide
+/// ring: the funnel takes each through two-or-so abreast, so the wide ones
+/// are all over not much after the tight blob, with no worse a knot.
 #[test]
-fn a_column_files_through_a_door_and_a_bridge() {
+fn a_wide_squad_funnels_through_a_door_and_a_bridge() {
+    let shapes = [(Formation::Blob, 0), (Formation::Blob, 4), (Formation::Ring, 4)];
     for name in ["door6long", "bridge8"] {
         for seed in 1..=2 {
-            let mut over = [None; 2];
-            let mut worst = [0usize; 2];
-            for (i, f) in [Formation::Blob, Formation::Column].into_iter().enumerate() {
+            let mut over = [None; 3];
+            let mut worst = [0usize; 3];
+            for (i, (f, s)) in shapes.into_iter().enumerate() {
                 let (_, m, goal) = gaps().into_iter().find(|g| g.0 == name).unwrap();
                 let mut g = gap_game(&m, seed, 24);
-                g.apply(Cmd::Formation(0, f));
+                g.apply(Cmd::Formation(0, f, s));
                 let sc = g.s();
                 let tr = cross(&mut g, (goal.0 * sc, goal.1 * sc), 24.0);
                 worst[i] = crowd(&tr, g.gap() * sc);
-                // Past dish x 136 (the bridge's end, the long door's middle):
-                // a column at rest stands 30 cells long back from its goal,
-                // so its tail is not past the door's far end.
                 over[i] = tr.iter().find(|(_, p)| p.iter().all(|q| q.0 > 136.0 * sc)).map(|t| t.0);
             }
-            println!("{name} seed {seed}: all through at {over:?} s, worst knot {worst:?} (blob, column)");
-            assert!(over[1].is_some_and(|t| over[0].is_none_or(|u| t <= u + 2.0)), "{name} seed {seed}: through at {over:?} (blob, column)");
-            assert!(worst[1] <= worst[0].max(4), "{name} seed {seed}: worst knot {worst:?} (blob, column)");
+            println!("{name} seed {seed}: all through at {over:?} s, worst knot {worst:?} (tight, wide, wide ring)");
+            for i in 1..3 {
+                assert!(over[i].is_some_and(|t| over[0].is_none_or(|u| t <= u + 8.0)), "{name} seed {seed}: through at {over:?} (tight, wide, wide ring)");
+                assert!(worst[i] <= worst[0].max(4) + 3, "{name} seed {seed}: worst knot {worst:?} (tight, wide, wide ring)");
+            }
         }
     }
+}
+
+/// **The spread** (owner's review, 2026-11-23 03:33Z: "more control over
+/// the spread/tightness"): on open ground each step stands a squad of 24
+/// wider than the one before, in a blob and in a ring, near the room its
+/// places ask, and its middle holds still.
+#[test]
+fn each_spread_step_stands_the_squad_wider() {
+    for f in Formation::ALL {
+        let mut last = 0.0;
+        for step in 0..crate::mould::larder_world::SPREADS.len() as u8 {
+            let mut g = gap_game(&door_map(0.0, 0.0, 0.0), 1, 24);
+            g.apply(Cmd::Formation(0, f, step));
+            let sc = g.s();
+            let m = g.middle(0).unwrap();
+            let m = (m.0 - 30.0 * sc, m.1);
+            cross(&mut g, m, 12.0);
+            let m2 = g.middle(0).unwrap();
+            let n = g.members(0).len();
+            let wide = g.members(0).iter().map(|&k| (g.soldiers[k].x - m2.0).hypot(g.soldiers[k].y - m2.1)).sum::<f32>() / n as f32 / sc;
+            let asked = (0..n).map(|r| { let o = f.offset(r, n, g.form_gap(0)); o.0.hypot(o.1) }).sum::<f32>() / n as f32;
+            println!("{f:?} step {step}: {n} soldiers stand {wide:.1} cells from the middle on average, their places {asked:.1}");
+            assert!(wide > last + 0.5, "{f:?} step {step}: {wide} cells, the step before {last}");
+            assert!((wide - asked).abs() < 0.2 * asked + 1.0, "{f:?} step {step}: stands {wide} cells out, its places {asked}");
+            assert!((m2.0 - m.0).hypot(m2.1 - m.1) < 6.0 * sc, "{f:?} step {step}: the middle walked off");
+            last = wide;
+        }
+    }
+}
+
+/// **A pick shows at once** (2026-11-23): a squad standing still takes a
+/// new spread or shape where it stands, without being sent anywhere.
+#[test]
+fn a_standing_squad_forms_up_on_a_pick() {
+    let mut g = gap_game(&door_map(0.0, 0.0, 0.0), 2, 12);
+    let sc = g.s();
+    let m = g.middle(0).unwrap();
+    cross(&mut g, (m.0 - 20.0 * sc, m.1), 10.0);
+    // As a squad never sent anywhere stands: its members on Hold.
+    for k in g.members(0) {
+        g.soldiers[k].order = Order::Hold;
+    }
+    let out = |g: &Game<BigDish>| {
+        let m = g.middle(0).unwrap();
+        g.members(0).iter().map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1)).sum::<f32>() / g.members(0).len() as f32 / g.s()
+    };
+    let (before, at) = (out(&g), g.middle(0).unwrap());
+    g.apply(Cmd::Formation(0, Formation::Ring, 4));
+    for _ in 0..(6 * g.rules.tps / g.rules.frame_ticks) {
+        g.step();
+    }
+    let after = out(&g);
+    let m = g.middle(0).unwrap();
+    println!("standing squad of 12: {before:.1} cells out tight, {after:.1} as a wide ring; middle moved {:.1}", (m.0 - at.0).hypot(m.1 - at.1) / sc);
+    assert!(after > 1.8 * before, "the squad stood {before} cells out, then {after}");
+    assert!((m.0 - at.0).hypot(m.1 - at.1) < 3.0 * sc, "it stayed where it stood");
 }
 
 /// A squad steered (WASD) at a bridge from off to one side crosses it

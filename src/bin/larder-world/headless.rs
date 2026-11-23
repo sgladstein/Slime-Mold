@@ -958,6 +958,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // ringed, as in the window (`squad_frame`); after the card's step,
         // which may pick them.
         let g = app.game.as_ref().unwrap();
+        if let Some(q) = g.active.filter(|_| g.rules.squads) {
+            app.controls.ring_link = super::squadmode::ring_link(g, q);
+        }
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
             Some(q) => g.linked(q).into_iter().flat_map(|r| g.members(r)).collect(),
             None if select => (0..g.soldiers.len()).collect(),
@@ -1326,9 +1329,22 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         "hold" => {
             app.hud_event(HudEvent::Command { id: HOLD_FIRE })?;
         }
-        "blob" | "spread" | "line" | "wedge" | "column" | "ring" => {
-            let id = [F_BLOB, F_SPREAD, F_LINE, F_WEDGE, F_COLUMN, F_RING].into_iter().find(|&id| form_of(id).is_some_and(|f| f.name() == step)).unwrap_or(F_BLOB);
-            app.hud_event(HudEvent::Command { id })?;
+        "blob" | "ring" => {
+            app.hud_event(HudEvent::Command { id: if step == "ring" { F_RING } else { F_BLOB } })?;
+        }
+        // `buyN`: N soldiers bought for the squad, as the card's Buy (a
+        // formation film wants a squad bigger than the landing's four).
+        s if s.starts_with("buy") && s[3..].parse::<u32>().is_ok() => {
+            let g = app.game.as_mut().unwrap();
+            for _ in 0..s[3..].parse::<u32>().unwrap_or(0) {
+                g.bank = g.bank.max(1e5);
+                g.apply(Cmd::Buy);
+            }
+        }
+        // A spread step (2026-11-23).
+        "tight" | "close" | "open" | "loose" | "wide" => {
+            let i = slime_mould::mould::larder_world::SPREAD_NAMES.iter().position(|&n| n == step).unwrap_or(0);
+            app.hud_event(HudEvent::Command { id: SPREAD_IDS[i] })?;
         }
         // Esc: no squad commanded, so a click on a building selects it.
         "free" => app.let_go(),
@@ -1401,7 +1417,7 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
             };
             app.hud_event(HudEvent::Command { id })?;
         }
-        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, or a formation's name)")),
+        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, a formation's name, a spread step's, or buyN)")),
     }
     println!("  card: {step}");
     Ok(())

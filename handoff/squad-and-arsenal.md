@@ -48,6 +48,19 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-23, formations (own thread, "Rework squad formations with spread
+control").** Scott's review cut the six formations to two shapes, blob and
+ring, plus a spread of five steps (`SPREADS`, `Squad::spread`,
+`Cmd::Formation(q, shape, step)`; old replay lines still parse). Line, wedge
+and column are gone, and with them the facing turns and the column's
+always-funnel. `[`/`]` step the spread; the Formation page shows shapes on
+top, steps below, each tile drawn at the squad's spread. A standing squad
+forms up on a pick (members on Hold get a Move round the middle); `stray`
+and the selection ring's link grow with the spread. The bot never sets a
+formation. Offsets are still worked at a gap of 1 then scaled: changing that
+rounding sent planet 8's squad of 40 on another walk
+(`a_squad_crosses_planet_8_and_settles`).
+
 **2026-11-22, exit test 5: the rifle's feel (Direction's job, same
 thread).** #701 and #705 merged. Filmed the plain rifle on planets 1 to 3
 at zoom 6 and 12: rate, tracer and hits read well; the fault was free

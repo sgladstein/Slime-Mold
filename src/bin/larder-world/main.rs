@@ -331,14 +331,17 @@ commands! {
     TURRET_LOADOUT = 40,
     // The Formation page (owner 2026-11-21 05:04Z: "a formations button
     // to the hud with good formation options"): one button a formation,
-    // and back.
+    // and back. Since the owner's review (2026-11-23 03:33Z) two shapes
+    // and five spread steps (`larder_world::SPREADS`); the ids of line,
+    // wedge, ring, column and spread went to them.
     F_BLOB = 41,
-    F_LINE = 42,
-    F_WEDGE = 43,
-    F_RING = 44,
-    F_COLUMN = 45,
-    F_SPREAD = 46,
-    F_BACK = 47,
+    F_RING = 42,
+    F_TIGHT = 43,
+    F_CLOSE = 44,
+    F_OPEN = 45,
+    F_LOOSE = 46,
+    F_WIDE = 47,
+    F_BACK = 48,
 }
 
 /// The formation a Formation page button picks.
@@ -346,13 +349,17 @@ fn form_of(id: u32) -> Option<slime_mould::mould::larder_world::Formation> {
     use slime_mould::mould::larder_world::Formation;
     Some(match id {
         F_BLOB => Formation::Blob,
-        F_LINE => Formation::Line,
-        F_WEDGE => Formation::Wedge,
         F_RING => Formation::Ring,
-        F_COLUMN => Formation::Column,
-        F_SPREAD => Formation::Spread,
         _ => return None,
     })
+}
+
+/// The Formation page's spread steps, tightest first (`larder_world::SPREADS`).
+const SPREAD_IDS: [u32; 5] = [F_TIGHT, F_CLOSE, F_OPEN, F_LOOSE, F_WIDE];
+
+/// The spread step a Formation page button picks.
+fn spread_of(id: u32) -> Option<u8> {
+    SPREAD_IDS.iter().position(|&i| i == id).map(|i| i as u8)
 }
 
 /// The building a build-page command places.
