@@ -2887,13 +2887,22 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
     // and the dead hold no cell (the life cycle).
     if (!lives(k)) { return; }
     let st = (spec[k] >> 9u) & 3u;
-    if (P.cyc != 0u && (st == L_SPORE || st == L_DEAD)) { return; }
+    if (P.cyc != 0u && st == L_DEAD) { return; }
+    // A spore in flight over the new wall is moved too, in the last round
+    // (`squeeze`), to the nearest agar cell, still flying: it holds no
+    // cell, so no count or claim (2026-11-23, the owner's planet 5, the
+    // Sporer: 26 spores stayed over his walls to the end. A spore steps
+    // only onto agar with no wall between, so one inside a wall thicker
+    // than its step never moved again, never landed, and no shot kills a
+    // spore, so the planet could not be won; the CPU leaves them).
+    let spore = P.cyc != 0u && st == L_SPORE;
+    let squeezed = squeeze();
+    if (spore && !squeezed) { return; }
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     if (here == NONE || agar[here] != 0u) { return; }
     let cx = i32(wk.x);
     let cy = i32(wk.y);
-    let squeezed = squeeze();
     let reach = i32(wb.reach & 0x7FFFFFFFu);
     for (var d = 1; d <= reach; d++) {
         for (var oy = -d; oy <= d; oy++) {
@@ -2905,6 +2914,10 @@ fn evict(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let ny = cy + oy;
                 if (nx >= 0 && ny >= 0 && nx < i32(P.w) && ny < i32(P.h)) {
                     let j = u32(ny) * P.w + u32(nx);
+                    if (spore && agar[j] != 0u) {
+                        walkers[k] = vec4<f32>(f32(nx) + 0.5, f32(ny) + 0.5, wk.z, wk.w);
+                        return;
+                    }
                     if (agar[j] != 0u && (squeezed || P.crowd == 0u || atomicLoad(&occ[j]) < P.crowd)) {
                         if (P.crowd > 0u && !squeezed) { atomicMin(&claim[j], k); }
                         icell[k] = j;
@@ -3790,6 +3803,17 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
         } else {
             spec[k] = (w & 0xFFFFu) | (t2 << 16u);
         }
+        tally(k);
+        return;
+    }
+    // A spore whose flight is over on a cell that is not agar (a wall
+    // built under it before 2026-11-23, or anything else that leaves one
+    // there) can never land: it dies there, as a spray droplet does, so it
+    // can't hold the planet's mass above 0 for good (the owner's planet 5).
+    if (t2 == 0u && agar[i] == 0u) {
+        if (growth()) { energy[k] = -1.0; }
+        spec[k] = (w & 0x1FFu) | (L_DEAD << 9u);
+        walkers[k].w = 0.0;
         tally(k);
         return;
     }

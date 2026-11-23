@@ -5486,7 +5486,12 @@ mod tests {
             let (gpu_inside, cpu_inside) = (inside(&gpu, &agar), inside(&cpu.walkers, &cpu.agar));
             let moved = |ws: &[(f32, f32, f32)]| ws.iter().zip(&e.dish.walkers).zip(&living).filter(|&((a, b), &l)| l && a != b).count();
             let (moved_gpu, moved_cpu) = (moved(&gpu), moved(&cpu.walkers));
-            let stale_moved = gpu.iter().zip(&cpu.walkers).zip(&living).filter(|&((a, b), &l)| !l && a != b).count();
+            // Spores in flight under the wall move on the GPU alone, still
+            // flying (`evict`, 2026-11-23: one left in a wall never landed).
+            let spore = |k: usize| cpu.life.get(k) == Some(&LIFE_SPORE);
+            let stale_moved = (0..gpu.len()).filter(|&k| !living[k] && !spore(k) && gpu[k] != cpu.walkers[k]).count();
+            let spores_in = (0..gpu.len()).filter(|&k| cpu.lives(k) && spore(k) && !agar[gpu[k].1 as usize * cpu.w + gpu[k].0 as usize]).count();
+            assert_eq!(spores_in, 0, "{name}: {spores_in} spores left over the wall on the GPU");
             let occ = u32s(&e.occ);
             let mut want = vec![0u32; occ.len()];
             for (&(x, y, _), &l) in gpu.iter().zip(&living) {

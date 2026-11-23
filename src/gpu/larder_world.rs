@@ -307,6 +307,39 @@ pub fn garden_settings_on(s: Settings, side: usize) -> Settings {
 }
 
 impl GpuWorld {
+    /// Every living walker as a line (a trace for a replay, `LARDER_STUCK`;
+    /// 2026-11-23, the owner's walkers stuck in walls): its fine-cell
+    /// place, its `spec` word, its cell's agar, ground word and count, and
+    /// how many of the 8 cells round it are agar. Reads four buffers back;
+    /// not for play.
+    pub fn walker_dump(&self) -> Vec<String> {
+        let e = &self.e;
+        let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&e.device, &e.queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+        let wk = super::floats(&read_back(&e.device, &e.queue, &e.walkers));
+        let en = super::floats(&read_back(&e.device, &e.queue, &e.energy));
+        let (spec, agar, ground, occ) = (u32s(&e.spec), u32s(&e.agar), u32s(&e.ground), u32s(&e.occ));
+        let (w, h) = (e.dish.w, e.dish.h);
+        let k = e.dish.p.scale as f32;
+        let mut out = Vec::new();
+        for q in 0..e.n as usize {
+            if e.grows && en[q] < 0.0 {
+                continue;
+            }
+            let st = (spec.get(q).copied().unwrap_or(0) >> 9) & 3;
+            if st == 3 {
+                continue;
+            }
+            let (x, y) = (wk[4 * q], wk[4 * q + 1]);
+            let (cx, cy) = ((x.max(0.0) as usize).min(w - 1), (y.max(0.0) as usize).min(h - 1));
+            let i = cy * w + cx;
+            let open = (-1i32..=1).flat_map(|dy| (-1i32..=1).map(move |dx| (dx, dy))).filter(|&(dx, dy)| (dx, dy) != (0, 0)).filter(|&(dx, dy)| {
+                let (nx, ny) = (cx as i32 + dx, cy as i32 + dy);
+                nx >= 0 && ny >= 0 && (nx as usize) < w && (ny as usize) < h && agar[ny as usize * w + nx as usize] != 0
+            }).count();
+            out.push(format!("walker {q} at={:.1},{:.1} game={:.1},{:.1} spec={:#x} agar={} ground={:#x} occ={} open8={open}", x, y, x / k, y / k, spec.get(q).copied().unwrap_or(0), agar[i], ground[i], occ[i]));
+        }
+        out
+    }
     /// **The gardeners' world on the GPU**: `own_mould::garden_world`'s
     /// start (the same map and walkers), with the squad's passes seeing
     /// the enemy alone and the soldiers' tasks as tend entries. `s` is
@@ -4314,5 +4347,62 @@ mod tests {
         assert_eq!(n1, n0, "no walker lost to the wall");
         assert_eq!(in1, 0, "{in1} walkers left inside the wall");
         assert_eq!(in2, 0, "{in2} walkers inside the wall 20 steps on");
+    }
+
+    /// **A wall built under spores in flight leaves none over it** (the
+    /// owner's planet 5, the Sporer, 2026-11-23: the slime stayed at 26
+    /// for the last 2:40 of a cleared planet). A spore steps only onto
+    /// agar with no wall between, so one a new wall covered never moved,
+    /// never landed and was never shot (shots miss spores), and the mass
+    /// held. Now the wall's last round moves spores off it too, and a spore
+    /// whose flight ends on a wall dies there.
+    ///
+    /// The race world with spores every 100 ticks a walker and flights of
+    /// 40 ticks; a thick wall across the middle when the air is full of
+    /// them. Right after it and every step for 4 s on: no living spore on a
+    /// wall cell.
+    #[test]
+    fn a_wall_built_under_flying_spores_leaves_none_over_it() {
+        use crate::gpu::{floats, set};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale) = (5, 1);
+        let mut s = Settings { respawn: 0.0, ..race_settings(seed, scale, 6_000) };
+        for (k, v) in [("spore_rate", "0.01"), ("spore_scent", "-1"), ("spore_steps", "40"), ("spore_reach", "8"), ("spore_land", "1"), ("spore_rest", "10")] {
+            set(&mut s, k, v).unwrap();
+        }
+        let g = GpuWorld::new(&device, &queue, s, scale);
+        let (w, h) = g.size();
+        let mut game = Game::new(g, Rules::default(), seed);
+        // Living spores, and those over a cell that is not agar.
+        let spores = |g: &GpuWorld| {
+            let e = &g.e;
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&e.device, &e.queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+            let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+            let (spec, agar) = (u32s(&e.spec), u32s(&e.agar));
+            let flying: Vec<usize> = (0..e.n as usize).filter(|&q| (!e.grows || en[q] >= 0.0) && (spec[q] >> 9) & 3 == 1).collect();
+            let over = flying.iter().filter(|&&q| agar[(wk[4 * q + 1] as usize).min(h - 1) * w + (wk[4 * q] as usize).min(w - 1)] == 0).count();
+            (flying.len(), over)
+        };
+        for _ in 0..10 {
+            game.step();
+        }
+        let (n0, _) = spores(&game.world);
+        // Through the home blob, where they fly from.
+        let p = game.world.e.dish.homes[0];
+        let (cx, cy) = (p.0 * scale as f32, p.1 * scale as f32);
+        for dy in [-3.0, 0.0, 3.0] {
+            game.world.build_wall((cx - 40.0, cy + dy), (cx + 40.0, cy + dy), 4.0);
+        }
+        let (n1, over1) = spores(&game.world);
+        let mut worst = 0;
+        while game.time() < 4.0 {
+            game.step();
+            worst = worst.max(spores(&game.world).1);
+        }
+        eprintln!("spores in flight {n0} before the wall, {n1} after ({over1} over it); at most {worst} over a wall in the 4 s after");
+        assert!(n0 > 100, "spores in the air: {n0}");
+        assert_eq!(over1, 0, "{over1} spores left over the wall");
+        assert_eq!(worst, 0, "{worst} spores over a wall later");
     }
 }
