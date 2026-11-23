@@ -110,15 +110,19 @@ pub enum Icon {
     // one earned, open for one missed.
     Star,
     StarOpen,
-    // The squad's formations (the Formation page, 2026-11-21): each its
-    // soldiers as dots, the front (where it faces) to the right; and Hold
-    // fire, a crosshair struck through.
-    FormBlob,
-    FormSpread,
-    FormLine,
-    FormWedge,
-    FormRing,
-    FormColumn,
+    // The squad's formations (the Formation page, 2026-11-21; two shapes
+    // at five spreads since 2026-11-23): each its soldiers as dots; and
+    // Hold fire, a crosshair struck through.
+    FormBlob1,
+    FormBlob2,
+    FormBlob3,
+    FormBlob4,
+    FormBlob5,
+    FormRing1,
+    FormRing2,
+    FormRing3,
+    FormRing4,
+    FormRing5,
     HoldFire,
     Formation,
     // A door in the Build page (controls review, 11-21: Wall and Door
@@ -127,6 +131,14 @@ pub enum Icon {
 }
 
 impl Icon {
+    /// The formation tile for a blob (or a ring) at spread step `step`
+    /// (0 the tightest).
+    pub fn form(ring: bool, step: u8) -> Icon {
+        const BLOB: [Icon; 5] = [Icon::FormBlob1, Icon::FormBlob2, Icon::FormBlob3, Icon::FormBlob4, Icon::FormBlob5];
+        const RING: [Icon; 5] = [Icon::FormRing1, Icon::FormRing2, Icon::FormRing3, Icon::FormRing4, Icon::FormRing5];
+        (if ring { RING } else { BLOB })[(step as usize).min(4)]
+    }
+
     fn paths(self) -> &'static [&'static str] {
         match self {
             Icon::Move => &["M5 19 L19 5", "M10 5 L19 5 L19 14"],
@@ -221,12 +233,21 @@ impl Icon {
             Icon::Still => &["M3 7.5 C5.8 4.5 8.2 10.5 12 7.5 C15.8 4.5 18.2 10.5 21 7.5", "M3 13 L21 13", "M3 18 L21 18"],
             Icon::Star => &["FM12.0 2.8 L14.5 9.4 L21.5 9.7 L16.0 14.1 L17.9 20.9 L12.0 17.0 L6.1 20.9 L8.0 14.1 L2.5 9.7 L9.5 9.4 Z"],
             Icon::StarOpen => &["M12.0 2.8 L14.5 9.4 L21.5 9.7 L16.0 14.1 L17.9 20.9 L12.0 17.0 L6.1 20.9 L8.0 14.1 L2.5 9.7 L9.5 9.4 Z"],
-            Icon::FormBlob => &["FO12.0 12.0 1.7", "FO8.0 9.0 1.7", "FO16.0 9.0 1.7", "FO8.0 15.0 1.7", "FO16.0 15.0 1.7", "FO12.0 6.5 1.7", "FO12.0 17.5 1.7", "FO5.0 12.0 1.7", "FO19.0 12.0 1.7"],
-            Icon::FormSpread => &["FO12.0 12.0 1.5", "FO5.0 5.0 1.5", "FO19.0 5.0 1.5", "FO5.0 19.0 1.5", "FO19.0 19.0 1.5", "FO12.0 4.0 1.5", "FO12.0 20.0 1.5", "FO4.0 12.0 1.5", "FO20.0 12.0 1.5"],
-            Icon::FormLine => &["FO14.0 3.0 1.7", "FO14.0 7.5 1.7", "FO14.0 12.0 1.7", "FO14.0 16.5 1.7", "FO14.0 21.0 1.7", "FO8.0 5.2 1.7", "FO8.0 9.8 1.7", "FO8.0 14.2 1.7", "FO8.0 18.8 1.7"],
-            Icon::FormWedge => &["FO19.0 12.0 1.7", "FO14.5 8.5 1.7", "FO14.5 15.5 1.7", "FO10.0 5.5 1.7", "FO10.0 18.5 1.7", "FO5.0 2.5 1.7", "FO5.0 21.5 1.7"],
-            Icon::FormRing => &["FO20.0 12.0 1.7", "FO17.7 17.7 1.7", "FO12.0 20.0 1.7", "FO6.3 17.7 1.7", "FO4.0 12.0 1.7", "FO6.3 6.3 1.7", "FO12.0 4.0 1.7", "FO17.7 6.3 1.7"],
-            Icon::FormColumn => &["FO3.5 9.0 1.7", "FO3.5 15.0 1.7", "FO9.2 9.0 1.7", "FO9.2 15.0 1.7", "FO14.8 9.0 1.7", "FO14.8 15.0 1.7", "FO20.5 9.0 1.7", "FO20.5 15.0 1.7"],
+            // The formation tiles (owner's review, 2026-11-23): each shape
+            // at each spread step, the dots further apart a step as
+            // `larder_world::SPREADS` are, eased so the tight ones stay
+            // apart and the wide ones in the box; a blob as seven in a hex
+            // (its sunflower read as noise at this size), a ring as eight.
+            Icon::FormBlob1 => &["FO12.00 12.00 2.0", "FO15.72 14.15 2.0", "FO12.00 16.30 2.0", "FO8.28 14.15 2.0", "FO8.28 9.85 2.0", "FO12.00 7.70 2.0", "FO15.72 9.85 2.0"],
+            Icon::FormBlob2 => &["FO12.00 12.00 2.0", "FO16.68 14.70 2.0", "FO12.00 17.40 2.0", "FO7.32 14.70 2.0", "FO7.32 9.30 2.0", "FO12.00 6.60 2.0", "FO16.68 9.30 2.0"],
+            Icon::FormBlob3 => &["FO12.00 12.00 2.0", "FO17.63 15.25 2.0", "FO12.00 18.50 2.0", "FO6.37 15.25 2.0", "FO6.37 8.75 2.0", "FO12.00 5.50 2.0", "FO17.63 8.75 2.0"],
+            Icon::FormBlob4 => &["FO12.00 12.00 2.0", "FO18.58 15.80 2.0", "FO12.00 19.60 2.0", "FO5.42 15.80 2.0", "FO5.42 8.20 2.0", "FO12.00 4.40 2.0", "FO18.58 8.20 2.0"],
+            Icon::FormBlob5 => &["FO12.00 12.00 2.0", "FO19.71 16.45 2.0", "FO12.00 20.90 2.0", "FO4.29 16.45 2.0", "FO4.29 7.55 2.0", "FO12.00 3.10 2.0", "FO19.71 7.55 2.0"],
+            Icon::FormRing1 => &["FO12.00 6.40 1.7", "FO15.96 8.04 1.7", "FO17.60 12.00 1.7", "FO15.96 15.96 1.7", "FO12.00 17.60 1.7", "FO8.04 15.96 1.7", "FO6.40 12.00 1.7", "FO8.04 8.04 1.7"],
+            Icon::FormRing2 => &["FO12.00 5.40 1.7", "FO16.67 7.33 1.7", "FO18.60 12.00 1.7", "FO16.67 16.67 1.7", "FO12.00 18.60 1.7", "FO7.33 16.67 1.7", "FO5.40 12.00 1.7", "FO7.33 7.33 1.7"],
+            Icon::FormRing3 => &["FO12.00 4.40 1.7", "FO17.37 6.63 1.7", "FO19.60 12.00 1.7", "FO17.37 17.37 1.7", "FO12.00 19.60 1.7", "FO6.63 17.37 1.7", "FO4.40 12.00 1.7", "FO6.63 6.63 1.7"],
+            Icon::FormRing4 => &["FO12.00 3.40 1.7", "FO18.08 5.92 1.7", "FO20.60 12.00 1.7", "FO18.08 18.08 1.7", "FO12.00 20.60 1.7", "FO5.92 18.08 1.7", "FO3.40 12.00 1.7", "FO5.92 5.92 1.7"],
+            Icon::FormRing5 => &["FO12.00 2.20 1.7", "FO18.93 5.07 1.7", "FO21.80 12.00 1.7", "FO18.93 18.93 1.7", "FO12.00 21.80 1.7", "FO5.07 18.93 1.7", "FO2.20 12.00 1.7", "FO5.07 5.07 1.7"],
             Icon::HoldFire => &["O12 12 7", "M12 2 L12 6", "M12 18 L12 22", "M2 12 L6 12", "M18 12 L22 12", "M4.5 19.5 L19.5 4.5"],
             // The Formation button: a small wedge and a line behind it.
             Icon::Formation => &["FO19.0 12.0 1.7", "FO14.0 8.0 1.7", "FO14.0 16.0 1.7", "FO9.0 4.5 1.7", "FO9.0 19.5 1.7", "M4 4 L4 20"],

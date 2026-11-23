@@ -1954,7 +1954,7 @@ fn split_join_and_merge_move_soldiers_between_squads() {
 #[test]
 fn formations_place_every_member_apart() {
     for f in Formation::ALL {
-        for n in [1, 2, 5, 12, 30] {
+        for n in [1, 2, 3, 5, 12, 30] {
             let pts: Vec<_> = (0..n).map(|r| f.offset(r, n, 1.6)).collect();
             for i in 0..n {
                 for j in 0..i {
@@ -1979,13 +1979,13 @@ fn squad_commands_round_trip_as_lines() {
         Cmd::Join(12, 4),
         Cmd::Merge(0, 5),
         Cmd::Active(2),
-        Cmd::Formation(1, Formation::Wedge),
+        Cmd::Formation(1, Formation::Ring, 2),
         Cmd::SquadQueue(2, Order::Move(1.5, 2.5)),
         Cmd::SquadQueue(0, Order::Build(3)),
         Cmd::Link(0, 3),
         Cmd::Unlink(3),
-        Cmd::Formation(0, Formation::Column),
-        Cmd::Formation(3, Formation::Spread),
+        Cmd::Formation(0, Formation::Blob, 0),
+        Cmd::Formation(3, Formation::Blob, 4),
         Cmd::Arm(2, None),
         Cmd::Arm(1, Some(Gun::roll(11, 3))),
         Cmd::Arm(0, Some(crate::mould::guns::GunKind::Scatter.average())),
@@ -1993,7 +1993,12 @@ fn squad_commands_round_trip_as_lines() {
     for c in cs {
         assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
     }
+    // Replays from before the spread (2026-11-23): the 11-21 names.
+    assert_eq!(Cmd::parse("formation 2 spread"), Some(Cmd::Formation(2, Formation::Blob, 3)));
+    assert_eq!(Cmd::parse("formation 1 wedge"), Some(Cmd::Formation(1, Formation::Blob, 0)));
+    assert_eq!(Cmd::parse("formation 0 ring"), Some(Cmd::Formation(0, Formation::Ring, 0)));
 }
+
 
 /// The squad mode with no larder: drain or guard.
 fn no_larder(seed: u64) -> Game<BigDish> {
@@ -2227,7 +2232,7 @@ fn a_squad_steered_into_rock_or_the_edge_comes_back_out() {
 /// sent squads took the walking map round walls); now 36 and 22.
 #[test]
 fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
-    for f in [Formation::Blob, Formation::Wedge] {
+    for f in [Formation::Blob, Formation::Ring] {
         let (mut circling, mut death) = (0.0, 0.0);
         for seed in 1..5u64 {
             let mut g = squads(seed);
@@ -2235,7 +2240,7 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
                 g.apply(Cmd::Buy);
             }
             g.apply(Cmd::Active(0));
-            g.apply(Cmd::Formation(0, f));
+            g.apply(Cmd::Formation(0, f, 2));
             off_the_crystal(&mut g);
             assert!(g.squads[0].dest.is_none(), "{f:?} seed {seed}: still walking 8 s after it was sent 25 cells");
             let sc = g.s();
@@ -2254,9 +2259,7 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
                 }
                 w / sc
             };
-            if f == Formation::Blob {
-                circling += walked(&mut g, true);
-            }
+            circling += walked(&mut g, true);
             let k = g.members(0)[0];
             g.soldiers[k].alive = false;
             death += walked(&mut g, false);
@@ -2870,8 +2873,9 @@ fn linked_squads_take_orders_together_and_keep_their_own_settings() {
     assert_eq!(g.linked(0), vec![0, b]);
     assert!(g.leads(0), "linked with the controlled squad: the lead's edge");
     // Settings stay each squad's own.
-    g.apply(Cmd::Formation(0, Formation::Line));
-    assert_eq!((g.squads[0].formation, g.squads[b].formation), (Formation::Line, Formation::Blob));
+    g.apply(Cmd::Formation(0, Formation::Ring, 3));
+    assert_eq!((g.squads[0].formation, g.squads[b].formation), (Formation::Ring, Formation::Blob));
+    assert_eq!((g.squads[0].spread, g.squads[b].spread), (3, 0));
     // One order moves both, each by where it stands in the link.
     let (m0, mb) = (g.middle(0).unwrap(), g.middle(b).unwrap());
     let to = open_near(&g, 20.0);
