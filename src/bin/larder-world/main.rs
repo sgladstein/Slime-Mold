@@ -2966,14 +2966,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("crystal {i} at={:.0},{:.0} r={:.1} charge={:.0}", c.0 .0, c.0 .1, g.world.crystal_r(i), c.1);
         }
         let mut lines = text.lines();
-        let head: Vec<&str> = lines.next().unwrap_or("").split_whitespace().collect();
-        let end: u64 = head.get(5).and_then(|v| v.parse().ok()).ok_or("bad replay head")?;
-        let mut cmds = Vec::new();
-        for l in lines {
-            let (t, rest) = l.split_once(' ').ok_or("bad line")?;
-            cmds.push((t.parse::<u64>()?, Cmd::parse(rest).ok_or_else(|| format!("bad cmd {rest}"))?));
-        }
+        let first = lines.next().unwrap_or("");
+        let head: Vec<&str> = first.split_whitespace().collect();
         let tps = g.rules.tps as u64;
+        let mut cmds = Vec::new();
+        // A play log (`mould::playlog`, its `cmd t=SECS ...` lines) in place
+        // of a replay (2026-11-23): its commands at their game second from
+        // landing, to a tenth, so it drifts sooner; for a round whose
+        // replay was written over or is on another machine.
+        let end: u64 = if head.first() == Some(&"log") {
+            let mut last = 0.0f32;
+            for l in lines {
+                let Some(rest) = l.strip_prefix("cmd t=") else {
+                    if let Some(t) = l.strip_prefix("t=").and_then(|r| r.split_whitespace().next()).and_then(|v| v.parse::<f32>().ok()) {
+                        last = last.max(t);
+                    }
+                    continue;
+                };
+                let (t, c) = rest.split_once(' ').ok_or("bad line")?;
+                let t: f32 = t.parse()?;
+                cmds.push((g.landed + (t * tps as f32).round() as u64, Cmd::parse(c).ok_or_else(|| format!("bad cmd {c}"))?));
+            }
+            g.landed + (last * tps as f32) as u64
+        } else {
+            for l in lines {
+                let (t, rest) = l.split_once(' ').ok_or("bad line")?;
+                cmds.push((t.parse::<u64>()?, Cmd::parse(rest).ok_or_else(|| format!("bad cmd {rest}"))?));
+            }
+            head.get(5).and_then(|v| v.parse().ok()).ok_or("bad replay head")?
+        };
         let mut next = 0;
         while g.world.ticks() < end && g.end.is_none() {
             while next < cmds.len() && cmds[next].0 <= g.world.ticks() {
@@ -2989,6 +3010,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     s += &format!(" {i}:{:.0}:{:.0}", c.1, taken.get(i).copied().unwrap_or(0.0));
                 }
                 println!("{s}");
+                // `LARDER_STUCK=N` (2026-11-23): every living walker, each
+                // 10 s once the slime is down to N or fewer, then the walls.
+                let sec = g.world.ticks() / tps;
+                if let Some(n) = std::env::var("LARDER_STUCK").ok().and_then(|v| v.parse::<usize>().ok()) {
+                    if g.mould <= n && sec.is_multiple_of(10) {
+                        for l in g.world.walker_dump() {
+                            println!("t={sec} {l}");
+                        }
+                    }
+                }
+            }
+        }
+        if std::env::var("LARDER_STUCK").is_ok() {
+            for (k, b) in g.buildings.iter().enumerate() {
+                if let slime_mould::mould::larder_world::Kind::Wall { to } = b.kind {
+                    println!("wall {k} at={:.1},{:.1} to={:.1},{:.1} alive={} built={:.2} level={} door={} home={:.2},{:.2}", b.at.0, b.at.1, to.0, to.1, b.alive, b.built, b.level, b.door, b.home.0, b.home.1);
+                }
+            }
+            for l in g.world.walker_dump() {
+                println!("final {l}");
+            }
+            // Sealed pockets: each 4-connected run of agar cells under
+            // 2,000 cells that touches a built wall, with its walkers.
+            let d = &g.world.e.dish;
+            let (w, h) = (d.w, d.h);
+            let occ = slime_mould::gpu::read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.occ);
+            let occ: Vec<u32> = occ.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            let mut seen = vec![false; w * h];
+            for i0 in 0..w * h {
+                if seen[i0] || !d.agar[i0] {
+                    continue;
+                }
+                let (mut stack, mut cells, mut walled, mut walkers) = (vec![i0], 0usize, false, 0u32);
+                seen[i0] = true;
+                while let Some(i) = stack.pop() {
+                    cells += 1;
+                    walkers += occ[i];
+                    let (x, y) = (i % w, i / w);
+                    for (nx, ny) in [(x.wrapping_sub(1), y), (x + 1, y), (x, y.wrapping_sub(1)), (x, y + 1)] {
+                        if nx >= w || ny >= h {
+                            continue;
+                        }
+                        let j = ny * w + nx;
+                        if d.wall[j] {
+                            walled = true;
+                        }
+                        if d.agar[j] && !seen[j] {
+                            seen[j] = true;
+                            stack.push(j);
+                        }
+                    }
+                }
+                if walled && cells < 2_000 {
+                    println!("pocket at={},{} cells={cells} walkers={walkers}", i0 % w, i0 / w);
+                }
             }
         }
         println!("end {:?} t={}", g.end, g.world.ticks() / tps);
