@@ -3,43 +3,36 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## Now (2026-11-24 12:00Z)
+## Now (2026-11-24 19:30Z)
 
-- **Merged 11-24:** #749 (run-length dials), #756 (P4-8 origins at half,
-  last-stand gather cap), #763/#769 (`time_bosses` buckets, origin
-  `gather_disc`), #775 (sense cuts, bit-identical; on the 1070 sense 3.29
-  -> 3.24 ms, so its cost is memory scatter, which Engine's walker sort
-  #789 cuts), #784 (planet 2 threads at size 0.45, planet 7 scar tissue,
-  planet 6 dreaming; page `Reports/sprawler-threads-2026-11-24/`), #788
-  (planet 8's Dozer, the last stand wakes sleepers via `World::rouse`,
-  `GpuWorld::asleep()`/`scarred()` for Look's HUD, five tier cards from
-  Look's drafts).
-- **Planet 7 retune** (Direction 09:54Z: until the siege wins at least 2 of
-  3 maps in under 12 minutes; levers in order origin size, start size,
-  scar P; Direction 11:29Z adds the gather cap). The killer on map C
-  (1795119328, scar on, cloud bot): the last stand at 2:06 left 21k slime,
-  the bot stalled 144 s, then the origin gathered to 4,311 (cap 4,200) and
-  bit all 53 soldiers in the last minute; lost at 6:42 after landing (main:
-  8:25). Map B (1795106014) is no longer an early wipe: 25 soldiers and
-  46,756 killed at 8:00 when the cloud game was cut off. Engine runs 12
-  games on Scott's PC on main after #784: three maps (also 1795038793) by
-  four arms (as is, `origin_size` 1400 and 1050, `origin_gather_most`
-  1.25); pick the lever from those, put the numbers in the what-is-new
-  line, and change `ORIGIN_SIZE[6]` or `OriginRules::gather_most`.
-- **Then:** raise planets 5, 6 and 8 from half size toward a curve so a
-  planet 8 win costs more than a planet 2 win (Direction; median bot wins
-  P1 4:40, P2 5:57, P3 5:36, P4 ~4:50, P5 4:15, P6 5:31, P8 5:24), by
-  paired seeds on the PC. The Lab found the Dozer pairing easier than the
-  Swarmer alone, so planet 8 likely wants more size.
-- **Planet 4:** change nothing (Direction): smaller raids lost 0 of 3 against
-  2 of 3; raids are Scott's call in play.
-- **Watch on the walker sort (#789):** births pair slot k with k ^ m, one m a
-  tick; with the living packed first they come in pulses. Engine checks
-  slime size sorted against unsorted on the PC; if it drifts, draw each
-  parent's partner on its own (`child_of`, engine.wgsl).
-- **Parked by Direction:** the Death gas relic (needs an engine rule) until
-  planet 7, the curve and the Dozer are done. Fever (`sick_trail` 2) needs
-  nothing from this lane.
+- **Merged 11-24 (afternoon):** #803 (origin 1.5x on planets 5, 6, 8:
+  2,250, 2,700, 3,600), #824 (a lump's member never dozes: the Dozer's and
+  Sleeper's hearts dropped dozing members out of `lumpsum` and planet 8's
+  broke unattacked), #830 (planet twists: wind all planet or a cold snap
+  0:20-1:20, rolled on about one planet in three from planet 2, never two
+  in a row, `twist.rs`, `run::PlanetTwist`, Params row `WIND_AT`; and a
+  lump's member never fruits: the Sporer's heart burst into spores when
+  shot). Earlier: #749, #756, #763/#769, #775, #784, #788 (the Dozer).
+- **D7, the owner's card "Tougher heart by planet" (14:52Z):** measure is
+  the smallest squad that breaks the heart (Engine's `hand=origin2`, banks
+  1,600/4,800/11,200 for squads of about 8/16/32). Armour 12 everywhere:
+  P2 16, P3 32, P4 16, P6 32, P7 32, P8 32 once in three. So the work was
+  planets 4 and 5. `run::ORIGIN_ARMOUR` (new) sets planet 4 at 15: snipe
+  only at 32 (y1), the siege still won 5 of 6 (z4). Planet 5 waits on
+  Engine's y3 (snipe and siege, as is and armour 15, after #830). Land it
+  with a what's-new line naming D7.
+- **Planet 8 start size:** 1.4x rejected (Engine's rerun of batch v after
+  #824: 1 win and 2 losses against 2 wins and none at 1.0, storm off).
+- **Planet 7:** gather cap 1.25 rejected (0 of 6 against 3 of 6); recheck
+  after Engine's map B harvest fix.
+- **Lap two (waits on the owner's run length):** the Lab's strikers settle
+  patch (`strikers_settle`, Reports/lab-lap-two-2026-11-24/raw/
+  strikers-settle.patch); run.rs `SKIP_STARS_X10`/`SKIP_FOUND` are sized
+  PLANETS-1; past planet 8 the origin starts nearly empty.
+- **Look's hooks:** twist card and HUD tell (`Run::twist`,
+  `PlanetTwist::card`, `Game::twist_now`) sent to Look HUD.
+- **Parked by Direction:** the Death gas relic. Night (a twist) stays on
+  the Lab's branch.
 
 ## Mini-boss review (2026-11-20, the thread "Analyse and improve the minibosses")
 

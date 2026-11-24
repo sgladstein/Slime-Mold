@@ -339,6 +339,27 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// hardest planet, and a gather cap of 1.25 sizes instead of 2 made it
 /// harder still (0 of 6), so the cap stays 2.
 pub const ORIGIN_SIZE: [f32; 8] = [700.0, 500.0, 1000.0, 1200.0, 2250.0, 2700.0, 2100.0, 3600.0];
+/// **The heart's armour by planet** (`OriginRules::armour`, the blows a
+/// member takes, 15 at most; D7, the owner's card of 11-24 14:52Z,
+/// "Tougher heart by planet": a snipe works early and costs more later,
+/// and the siege still wins under 12 minutes). The measure: the smallest
+/// squad that breaks the heart (Engine's `hand=origin2`, which closes in
+/// as the siege does, banks of 1,600, 4,800 and 11,200 for squads of
+/// about 8, 16 and 32, run seeds 1-3, GTX 1070). As it was (armour 12
+/// everywhere; batches u2 and y2, after #824 and #830 kept the Dozer's
+/// and the Sporer's hearts from dozing or bursting out of their count):
+/// planet 2 broke to 16 (0, 2, 3 of 3), 3 to 32 (0, 0, 2), 4 to 16 (0, 2,
+/// 3), 6 to 32 (0, 0, 2; at 11,200 all three hearts fell under 300), 7 to
+/// 32 (0, 0, 2), 8 to 32 once in three (0, 0, 1). So planets 6 to 8
+/// already ask twice planet 2's squad, and planet 4 was the dip: at 15
+/// it breaks only to 32 (0, 0, 3; batch y1), and Engine's siege (storm
+/// 0.5 and from 8:00, six maps, 720 s, batch z4) won 5 of 6 against 4 of
+/// 6 as it was, the heart falling 50 to 77 s later on three of the four
+/// maps both won, with 9 to 24 more soldiers lost there. Planet 5 stays
+/// at 12: once its heart stopped bursting into spores (#830) no squad of
+/// 32 broke it (batch y3: 0 of 9, the deepest at 1,457 of 2,086), and the
+/// siege won 2 of 6 as it is against 1 of 6 at 15.
+pub const ORIGIN_ARMOUR: [u32; 8] = [12, 12, 12, 15, 12, 12, 12, 12];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// The slime's room to regrow over its landing, by planet
 /// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
@@ -1631,6 +1652,7 @@ impl Run {
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
             let at = |t: &[f32; 8]| on_curve(t, self.depth);
             r.origin.size = at(&ORIGIN_SIZE);
+            r.origin.armour = on_curve_u(&ORIGIN_ARMOUR, self.depth);
             // The planet's twist (`twist`), the rest of its numbers the
             // twist's own.
             if let Some(t) = self.twist() {
@@ -3088,7 +3110,7 @@ mod tests {
     fn the_length_dials_change_nothing_at_eight_planets() {
         assert_eq!((PLANETS, STRETCH), (8, 1.0), "the dials as tuned");
         let f32s: [&[f32; 8]; 11] = [&SURGE_FOOD_SHARE, &ORIGIN_SIZE, &STRIKER_SHARE, &CEILING_GROW, &RAID_GAP_MIN, &STRIKER_ARMY, &SOLDIER_STEP, &RAID_FIRST, &RAID_EVERY, &DRAIN, &ROAM_SHARE];
-        let u32s: [&[u32; 8]; 4] = [&LONGEST_WAIT, &RAID_ARMOUR, &SURGE_DASH, &ROAM];
+        let u32s: [&[u32; 8]; 5] = [&LONGEST_WAIT, &RAID_ARMOUR, &SURGE_DASH, &ROAM, &ORIGIN_ARMOUR];
         for d in 1..=PLANETS {
             assert_eq!(curve_depth(d), d as f32);
             for t in f32s {
