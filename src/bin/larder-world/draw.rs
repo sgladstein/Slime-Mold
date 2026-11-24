@@ -1470,12 +1470,29 @@ impl App {
                 let (dx, dy) = (to.0 - sp.from.0, to.1 - sp.from.1);
                 let d = dx.hypot(dy).max(1e-3);
                 let mouth = (sp.from.0 + dx / d * half * 1.1, sp.from.1 + dy / d * half * 1.1);
-                // The newest spot's jet is solid; the ones swept past thin out.
-                let lead = 1.0 - ((sweep - at) * 3.0).clamp(0.0, 0.7);
-                let a = (210.0 * fade * lead) as u8;
-                let core = (0.18 * sc * zoom).clamp(1.2, 3.5);
-                self.marks.streak(to, mouth, core, [look.glow[0], look.glow[1], look.glow[2], a], look.core);
-                self.marks.disc(to, (0.7 + 0.5 * fade) * sc, [look.glow[0], look.glow[1], look.glow[2], (150.0 * fade) as u8], false);
+                // A burst of droplets, not a beam (Look's review of #796:
+                // full-length lines read as lasers): five short dashes
+                // flying out from the mouth to the spot as the sweep
+                // passes, each fainter and thinner than the one ahead,
+                // gone as they land.
+                let u = ((age * 2.2 - at) * 4.0).clamp(0.0, 1.6);
+                let core = (0.12 * sc * zoom).clamp(1.0, 2.5);
+                for k in 0..5 {
+                    let head = u - 0.14 * k as f32;
+                    if !(0.0..=1.0).contains(&head) {
+                        continue;
+                    }
+                    let tail = (head - 0.07).max(0.0);
+                    let p = |f: f32| (mouth.0 + (to.0 - mouth.0) * f, mouth.1 + (to.1 - mouth.1) * f);
+                    // Thins out with the distance flown, as a spray does.
+                    let a = (200.0 * fade * (1.0 - 0.18 * k as f32) * (1.0 - 0.5 * head)) as u8;
+                    let w = core * (1.0 - 0.15 * k as f32);
+                    self.marks.streak(p(head), p(tail), w, [look.glow[0], look.glow[1], look.glow[2], a], look.core);
+                }
+                // Where it landed, a splash while it fades.
+                if u >= 1.0 {
+                    self.marks.disc(to, (0.6 + 0.5 * fade) * sc, [look.glow[0], look.glow[1], look.glow[2], (120.0 * fade) as u8], false);
+                }
             }
         }
         // Turrets over the bullets, so a shot leaving the barrel tip
