@@ -161,4 +161,16 @@ A second slime species that fights the first; the player's own mould
   `LAB_DUMP_LIFE`, hand `wake@T,X,Y`). A sleeping walker buds a sleeping
   child off the scent; recommendation: build it as the Sleeper's thing at
   P 0.003.
+- 2026-11-24: **a lap-two pairing for planet 8, the Swarmer that naps**
+  (brief from Direction 06:31Z; Enemy: planet 8 is weakest, it only
+  replays 5 to 7). Report
+  [`Reports/lab-pairing-2026-11-24/`](../Reports/lab-pairing-2026-11-24/README.md),
+  page "Napping Swarmer". Engine keys only (`raw/nap.txt` on `run=1:4`).
+  It sleeps until shot, charges, sleeps it off; the report lists the trait
+  keys that fight. Recommendation: planet 8 as this pairing, Enemy tunes.
+- 2026-11-24: **lap two's seven pairings, planets 9 to 15** (brief from
+  Direction 06:53Z, for the run-length card). Report
+  [`Reports/lab-lap-two-2026-11-24/`](../Reports/lab-lap-two-2026-11-24/README.md),
+  page "Lap Two Pairings". Keys only (`raw/pairs.txt`); each smoke-tested
+  2:00 alone and paired; the seven are a first draft for Enemy.
 - Next step: none. Wait for Direction's next brief.

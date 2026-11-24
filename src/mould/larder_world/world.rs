@@ -178,6 +178,12 @@ pub trait World {
     /// Lump `b` takes in the slime round (`c`, `r`) in no lump, its own
     /// members kept as they are (`big::BigDish::grow_lump`).
     fn grow_lump(&mut self, _b: usize, _at: ((f32, f32), f32)) {}
+    /// `grow_lump`, taking in at most `room` walkers (which ones, where
+    /// more than that stand in reach, is the engine's order). GPU only:
+    /// a world without it grows as `grow_lump` does.
+    fn grow_lump_most(&mut self, b: usize, at: ((f32, f32), f32), _room: u32) {
+        self.grow_lump(b, at)
+    }
     /// Lump `b`'s steering (`big::Lump`) from the next step.
     fn set_lump(&mut self, _b: usize, _l: crate::mould::big::Lump) {}
     /// Each lump's centre (fine cells) and members as the last step began

@@ -1109,6 +1109,11 @@ struct App {
     run_file: Option<std::path::PathBuf>,
     /// The text last written there, so an unchanged run is not rewritten.
     run_saved: String,
+    /// Whether the run's planet is saved mid-game, for the run as it
+    /// was when last asked (its seed, depth and the save's text): the main
+    /// menu's Run row says "under way" (Look D, 11-24). Kept so the menu
+    /// does not read the planet's save every frame.
+    run_mid: Option<((u64, u32, usize), bool)>,
     /// When the run was last checked against the file (`App::autosave`).
     run_checked: Option<Instant>,
 }
@@ -1234,6 +1239,7 @@ impl App {
             slime: None,
             run_file: None,
             run_saved: String::new(),
+            run_mid: None,
             run_checked: None,
             viewer: None,
         };
@@ -1693,7 +1699,10 @@ impl App {
         self.open_log();
         match &self.mission {
             Some(tr) => {
-                self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT);
+                // The planet's name only: its goal is the top line's
+                // (`objective`), and said in a toast too it was there three
+                // times at landing (polish review finding 10, 11-24).
+                self.hud.alert(&tr.mission.name, None, theme::ACCENT);
                 // What the run's tier does to you (`run::does_to_you`).
                 if let Some(r) = self.args.run.as_ref().filter(|r| !r.range) {
                     let does = slime_mould::mould::run::does_to_you(r.level().tier).says;
@@ -1920,6 +1929,7 @@ impl App {
 
     fn step(&mut self, dt: f32) {
         self.clock += dt;
+        self.count_played(dt);
         self.trauma = (self.trauma - SHAKE_FALL * dt).max(0.0);
         self.stop_cool = (self.stop_cool - dt).max(0.0);
         // A hit-stop holds the game and its notes still (the flash, the
@@ -2084,7 +2094,9 @@ impl App {
         for (i, (c, charge)) in g.world.crystals().into_iter().enumerate() {
             if !self.dry[i] && charge <= 0.0 && self.charge0[i] > 0.0 {
                 self.dry[i] = true;
-                self.hud.alert(&format!("{} has run dry", crystal_name(i)), Some(c), theme::WARN);
+                // Only your squad empties a crystal (the owner's ruling,
+                // 11-21), so it is drained, not run dry.
+                self.hud.alert(&format!("{} is drained dry", crystal_name(i)), Some(c), theme::WARN);
             }
         }
         // Ore landed and cores dropped (owner's play, 11-20 23:17Z: "it
@@ -2122,7 +2134,9 @@ impl App {
             let gather = g.stand.live.is_some_and(|h| h.origin && h.gather);
             let dead = g.origin.fell.is_some();
             if !self.origin_told.0 {
-                self.hud.alert("Here is the slime's heart: kill it to win the planet", Some(at), theme::ACCENT);
+                // Where it is, not the goal again: the top line says that
+                // (polish review finding 10's "objective three times").
+                self.hud.alert("The slime's heart is here: Space to look", Some(at), theme::ACCENT);
             }
             if gather && !self.origin_told.1 {
                 self.hud.alert("The slime is gathering into its heart for a last stand", Some(at), theme::BAD);
@@ -2461,9 +2475,22 @@ impl App {
                 self.marks.ring(at, g.rules.build.reach * g.world.scale(), [235, 220, 180, 110]);
             }
         }
+        // (The Run row's "under way": asked again only when the run moved
+        // on or was saved again, `run_mid`.)
+        if self.menu.is_some() {
+            let key = self.run.as_ref().map(|r| (r.seed, r.depth, self.run_saved.len()));
+            if key.is_some() && self.run_mid.map(|m| m.0) != key {
+                self.run_mid = key.map(|k| (k, self.planet_saved().is_some()));
+            }
+        }
         let model = self.model(hover, ghost);
         if let (Some(c), Some(menu)) = (self.canvas.as_mut(), self.menu.as_mut()) {
-            // The start menu instead of the HUD, over the whole map.
+            // The start menu instead of the HUD, over the whole map. The
+            // run as its Run row tells it (Look D, 11-24).
+            menu.run_now = self.run.as_ref().filter(|r| !r.range).map(menu::run_view);
+            if let (Some(v), Some((_, mid))) = (menu.run_now.as_mut(), self.run_mid) {
+                v.mid = mid;
+            }
             c.clear();
             menu.draw(c);
             if let Some(cp) = self.canvas_pass.as_mut() {

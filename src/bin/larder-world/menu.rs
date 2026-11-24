@@ -466,7 +466,26 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         glance: (!r.range).then(|| glance_of(r.seed, r.depth)),
         dps: dps_of(r).map(|p| p.dps),
         stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
+        run: (!r.range).then(|| run_view(r)),
     }
+}
+
+/// The run as the menu's caption, the shop's strip and the end of a run
+/// show it (`start::RunView`, Look D, 11-24): each planet's name and
+/// slime, the stars won, where it stands.
+pub(super) fn run_view(r: &Run) -> slime_mould::world::start::RunView {
+    use slime_mould::mould::run;
+    use slime_mould::world::start::{RunStop, RunView};
+    let n = run::PLANETS.max(r.depth);
+    let stops = (1..=n)
+        .map(|d| {
+            let mut at = r.clone();
+            at.depth = d;
+            let stars = r.stars.get(d as usize - 1).copied();
+            RunStop { name: at.planet().name, slime: title_case(at.level().tier.name()), stars, here: d == r.depth && stars.is_none(), lost: r.over && !r.victory() && d == r.depth }
+        })
+        .collect();
+    RunView { stops, depth: r.depth, points: r.points, played: (r.played > 0.0).then_some(r.played), over: r.over, won: r.victory(), mid: false }
 }
 
 /// The estimated damage a second of the gun the shop's slots show
@@ -756,7 +775,9 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
     // (`shop-mid@TAB@NAME`: a tab and a pick, `headless`.)
     let name = name.split('@').next().unwrap_or(name);
     Some(match name {
-        "1" | "main" => Page::Main,
+        // (`main-run`, `main-won`, `main-lost`: the Run row with a run
+        // three planets in, a won run, a run lost on planet 4, `headless`.)
+        "1" | "main" | "main-run" | "main-won" | "main-lost" => Page::Main,
         "campaign" | "missions" => Page::Missions,
         "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
@@ -1375,10 +1396,15 @@ impl App {
             return self.start();
         }
         let over = r.over.then(|| if r.victory() { format!("The home world is free: the run is won. {}", r.line()) } else { format!("The run ended on planet {}: {}", r.depth, r.line()) });
+        let end = r.over.then(|| run_view(&r));
         self.run = if r.over { None } else { Some(r) };
         self.back_to_menu()?;
         if let Some(m) = self.menu.as_mut() {
             m.run_live = self.run.is_some();
+            // The run's end is the Run row's summary (`StartMenu::run_end`,
+            // Look D, 11-24); the notice line keeps the words for a film
+            // or a screen too small for the summary.
+            m.run_end = end;
             m.notice = over;
         }
         if self.run.is_some() {

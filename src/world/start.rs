@@ -305,6 +305,201 @@ pub struct Shop {
     /// The planet ahead as a small map for the pane (`Glance`); None in
     /// the armory.
     pub glance: Option<Glance>,
+    /// The run so far, as the top bar's strip (Look D, 11-24); None in the
+    /// armory.
+    pub run: Option<RunView>,
+}
+
+/// One planet of a run as the run's strip draws it (Look D, 11-24): its
+/// name and its slime, which the strip names on hover (Direction 11-24:
+/// so planets past the eighth read as new pairings if the run grows).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct RunStop {
+    /// "Dreskor".
+    pub name: String,
+    /// "The Drifter".
+    pub slime: String,
+    /// Stars won on it; None until it is freed.
+    pub stars: Option<u8>,
+    /// The planet next or being played, or where the run ended.
+    pub here: bool,
+    /// The run was lost here.
+    pub lost: bool,
+}
+
+/// A run as the menu and the shop show it (Look D, 11-24): its planets,
+/// its points, and its play time where the run keeps one.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct RunView {
+    pub stops: Vec<RunStop>,
+    /// The planet next or being played, from 1.
+    pub depth: u32,
+    pub points: u32,
+    /// Seconds played (Milestone 2's test 2: his run at two hours or
+    /// more), paused time out.
+    pub played: Option<f32>,
+    /// The run is over; won when the last planet was freed.
+    pub over: bool,
+    pub won: bool,
+    /// Saved mid-planet: Back to the run lands in it again.
+    pub mid: bool,
+}
+
+impl RunView {
+    pub fn freed(&self) -> usize {
+        self.stops.iter().filter(|p| p.stars.is_some()).count()
+    }
+
+    pub fn stars(&self) -> u32 {
+        self.stops.iter().filter_map(|p| p.stars).map(u32::from).sum()
+    }
+
+    /// "1:12:30", "42:05".
+    pub fn clock(secs: f32) -> String {
+        let t = secs.max(0.0) as u32;
+        let (h, m, s) = (t / 3600, t / 60 % 60, t % 60);
+        if h > 0 { format!("{h}:{m:02}:{s:02}") } else { format!("{m}:{s:02}") }
+    }
+
+    /// One line: "Planet 4 of 8 next: 3 freed, 7 stars, 565 points, played 1:12:30".
+    pub fn line(&self) -> String {
+        let n = self.stops.len();
+        let (f, st) = (self.freed(), self.stars());
+        let mut l = if self.over && self.won {
+            format!("All {n} planets freed, {st} of {} stars", 3 * n)
+        } else if self.over {
+            // (The summary's title names the planet it ended on.)
+            format!("{f} of {n} planets freed, {st} star{}", if st == 1 { "" } else { "s" })
+        } else {
+            let at = if self.mid { "under way" } else { "next" };
+            format!("Planet {} of {n} {at}: {f} freed, {st} star{}, {} points", self.depth, if st == 1 { "" } else { "s" }, self.points)
+        };
+        if let Some(p) = self.played {
+            l += &format!(", played {}", Self::clock(p));
+        }
+        l
+    }
+}
+
+/// The run's planets as a row of beads (Look D, 11-24), one a planet, in
+/// `r`: freed ones gold with their stars under them, the one ahead ringed
+/// in the accent, a lost one red, the rest faint; joined by a line, gold
+/// as far as the run has come. Returns the bead under `hover` and what it
+/// says ("Planet 3, Drevix: the Trunk. 2 stars").
+pub(crate) fn run_strip(c: &mut Canvas, stops: &[RunStop], r: Rect, hover: Option<(f32, f32)>, s: f32) -> Option<(Rect, String)> {
+    let n = stops.len();
+    if n == 0 {
+        return None;
+    }
+    let step = r.w / n as f32;
+    let rad = (step * 0.34).min(11.0 * s).min(r.h * 0.32).max(3.0 * s);
+    let stars = step >= 15.0 * s && r.h >= 2.0 * rad + 9.0 * s;
+    let cy = if stars { r.y + rad + 1.0 * s } else { r.y + r.h / 2.0 };
+    let x = |k: usize| r.x + step * (k as f32 + 0.5);
+    let gold: Rgba = [255, 196, 72, 255];
+    let reached = stops.iter().rposition(|p| p.stars.is_some() || p.here).unwrap_or(0);
+    let lw = (1.5 * s).max(1.0);
+    c.rrect(Rect::new(x(0), cy - lw / 2.0, x(n - 1) - x(0), lw), 0.0, [255, 255, 255, 30]);
+    if reached > 0 {
+        c.rrect(Rect::new(x(0), cy - lw / 2.0, x(reached) - x(0), lw), 0.0, with_alpha(gold, 0.7));
+    }
+    let mut tip = None;
+    for (k, p) in stops.iter().enumerate() {
+        let b = Rect::new(x(k) - rad, cy - rad, 2.0 * rad, 2.0 * rad);
+        let (fill, ink) = if p.lost {
+            (BAD, [20, 12, 12, 255])
+        } else if p.stars.is_some() {
+            (gold, [40, 26, 6, 255])
+        } else {
+            ([24, 30, 38, 255], if p.here { TEXT } else { MUTED })
+        };
+        c.rrect(b, rad, fill);
+        if p.here && !p.lost {
+            c.outline(b.inset(-2.0 * s), rad + 2.0 * s, 1.5 * s, ACCENT);
+        } else if p.stars.is_none() && !p.lost {
+            c.outline(b, rad, 1.0, [255, 255, 255, 40]);
+        }
+        if rad >= 7.0 * s {
+            c.text(Weight::SemiBold, (rad * 1.05).min(12.0 * s), (x(k), cy + rad * 0.38), Align::Centre, &(k + 1).to_string(), ink);
+        }
+        if stars {
+            if let Some(won) = p.stars {
+                star_dots(c, (x(k), cy + rad + 4.0 * s), won, s);
+            }
+        }
+        let hit = Rect::new(x(k) - step / 2.0, r.y, step, r.h);
+        if hover.is_some_and(|h| hit.contains(h)) {
+            let what = match (p.stars, p.lost) {
+                (Some(w), _) => format!("freed, {w} star{}", if w == 1 { "" } else { "s" }),
+                (None, true) => "the run ended here".into(),
+                (None, false) if p.here => "next".into(),
+                _ => "ahead".into(),
+            };
+            tip = Some((b, format!("Planet {}, {}: {}. {}", k + 1, p.name, p.slime, upper_first(&what))));
+        }
+    }
+    tip
+}
+
+/// A freed planet's stars as three dots, centred on `at.0` with their tops
+/// at `at.1`: gold for each won.
+fn star_dots(c: &mut Canvas, at: (f32, f32), won: u8, s: f32) {
+    let d = (3.2 * s).max(2.0);
+    for j in 0..3u8 {
+        let b = Rect::new(at.0 + (f32::from(j) - 1.0) * (d + 2.4 * s) - d / 2.0, at.1, d, d);
+        c.rrect(b, d / 2.0, if j < won { [255, 196, 72, 255] } else { [255, 255, 255, 40] });
+    }
+}
+
+/// An ended run's planets one a row (Look D, 11-24: the end of a run is a
+/// summary, not a line): its number, name and slime, and its stars; in two
+/// columns past six planets so sixteen still fit. Returns its height.
+fn run_rows(c: &mut Canvas, stops: &[RunStop], r: Rect, s: f32) -> f32 {
+    let cols = if stops.len() > 6 { 2 } else { 1 };
+    let per = stops.len().div_ceil(cols);
+    let (row, gap) = (21.0 * s, 18.0 * s);
+    let cw = (r.w - gap * (cols - 1) as f32) / cols as f32;
+    for (k, p) in stops.iter().enumerate() {
+        let (col, i) = (k / per, k % per);
+        let x = r.x + col as f32 * (cw + gap);
+        let y = r.y + i as f32 * row;
+        let ink = if p.stars.is_some() { TEXT } else if p.lost { BAD } else { MUTED };
+        c.text(Weight::SemiBold, 13.0 * s, (x, y + 14.5 * s), Align::Left, &(k + 1).to_string(), MUTED);
+        let name = format!("{}  {}", p.name, p.slime);
+        let room = cw - 22.0 * s - 34.0 * s;
+        let px = fit_px(c, &name, 13.5 * s, 10.0 * s, room);
+        c.text(Weight::Medium, px, (x + 22.0 * s, y + 14.5 * s), Align::Left, &p.name, ink);
+        let nw = c.atlas.measure(Weight::Medium, px, &format!("{}  ", p.name));
+        c.text(Weight::Medium, px, (x + 22.0 * s + nw, y + 14.5 * s), Align::Left, &p.slime, MUTED);
+        match (p.stars, p.lost) {
+            (Some(w), _) => star_dots(c, (x + cw - 12.0 * s, y + 8.0 * s), w, s),
+            (None, true) => {
+                c.text(Weight::Medium, 12.0 * s, (x + cw, y + 14.5 * s), Align::Right, "lost", BAD);
+            }
+            _ => {}
+        }
+    }
+    per as f32 * row
+}
+
+/// A strip's hover line in a small box under (or over) the bead `at`.
+pub(crate) fn strip_tip(c: &mut Canvas, at: Rect, text: &str, s: f32) {
+    let px = 13.5 * s;
+    let w = c.atlas.measure(Weight::Medium, px, text) + 20.0 * s;
+    let h = 26.0 * s;
+    let sw = c.screen.0 as f32;
+    let x = (at.x + at.w / 2.0 - w / 2.0).clamp(4.0 * s, sw - w - 4.0 * s);
+    let below = at.bottom() + 10.0 * s + h < c.screen.1 as f32;
+    let y = if below { at.bottom() + 10.0 * s } else { at.y - 10.0 * s - h };
+    let b = Rect::new(x, y, w, h);
+    c.shadow(b, 6.0 * s, 10.0 * s, 2.0 * s, SHADOW);
+    c.panel(b, 6.0 * s, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE);
+    c.text(Weight::Medium, px, (x + 10.0 * s, y + 17.5 * s), Align::Left, text, TEXT);
+}
+
+fn upper_first(t: &str) -> String {
+    let mut c = t.chars();
+    c.next().map_or(String::new(), |f| f.to_uppercase().chain(c).collect())
 }
 
 /// The planet ahead drawn small (Look D, 11-21: with nothing picked the
@@ -476,6 +671,12 @@ pub struct StartMenu {
     pub most_off: usize,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
+    /// That run as the Run row's caption tells it (Look D, 11-24); the
+    /// window sets it each frame.
+    pub run_now: Option<RunView>,
+    /// The run just ended: the Run row's caption is its summary until a
+    /// new run starts.
+    pub run_end: Option<RunView>,
     /// The shop's tab showing, whether the player has picked something
     /// on it (the pane tells the focused row; until then, the planet
     /// ahead), and the bag's page.
@@ -536,7 +737,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
     }
 
     /// The option named `key`.
@@ -747,7 +948,11 @@ impl StartMenu {
     fn act(&mut self, h: Hit) -> Option<StartEvent> {
         match h {
             Hit::Sandbox => return Some(StartEvent::Sandbox),
-            Hit::Run => return Some(StartEvent::Run),
+            Hit::Run => {
+                // A new run (or back to this one): the last one's summary goes.
+                self.run_end = None;
+                return Some(StartEvent::Run);
+            }
             Hit::Range => return Some(StartEvent::Range),
             Hit::Viewer => return Some(StartEvent::Viewer),
             // (A new try: the game says again if it can't be done.)
@@ -1220,7 +1425,17 @@ impl StartMenu {
         // the run is the game; Sandbox led and was lit before). A gap
         // before Options and before Quit.
         let mut items: Vec<(&str, String, Hit, bool, bool)> = vec![
-            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, true, false),
+            (
+                if self.run_live { "Back to the run" } else if self.run_end.is_some() { "New run" } else { "Run" },
+                match (&self.run_now, &self.run_end) {
+                    (Some(r), _) if self.run_live => r.line(),
+                    _ if self.run_live => "The shop, then the next planet".into(),
+                    _ => "Planet after planet toward the slime's home world; upgrades between".into(),
+                },
+                Hit::Run,
+                true,
+                false,
+            ),
             ("Sandbox", sandbox, Hit::Sandbox, false, false),
             ("Campaign", campaign, Hit::Campaign, false, false),
         ];
@@ -1282,12 +1497,23 @@ impl StartMenu {
         // (A notice, such as why the map editor did not start, takes the
         // hint's line: `draw`.)
         // The caption box beside the row it tells, with a notch toward it.
+        // The Run row tells the run (Look D, 11-24): the one under way, or
+        // the one just ended as its summary, with its planets as a strip.
+        let run = told.as_ref().filter(|t| t.1 == "Back to the run" || t.1 == "New run").and_then(|_| if self.run_live { self.run_now.clone() } else { self.run_end.clone() });
+        let mut strip_tip_at = None;
         if let Some((r, name, sub)) = told {
+            let (name, sub) = match &run {
+                Some(v) if v.over => (if v.won { "The home world is free".to_string() } else { format!("The run ended on planet {}", v.depth) }, format!("{}. New run starts again from planet 1.", v.line())),
+                _ => (name, sub),
+            };
             let bx = r.right() + 18.0 * s;
-            let bw = (380.0 * s).min(c.screen.0 as f32 - x - bx);
+            let bw = (if run.is_some() { 460.0 } else { 380.0 } * s).min(c.screen.0 as f32 - x - bx);
             let tw = bw - 32.0 * s;
             let lines = Self::count(c, Weight::Medium, 15.0 * s, tw, &sub);
-            let bh = 48.0 * s + lines * 22.0 * s;
+            let strip_h = if run.is_some() { 44.0 * s } else { 0.0 };
+            // An ended run's summary lists its planets under the strip.
+            let rows_h = run.as_ref().filter(|v| v.over).map_or(0.0, |v| v.stops.len().div_ceil(if v.stops.len() > 6 { 2 } else { 1 }) as f32 * 21.0 * s + 10.0 * s);
+            let bh = 48.0 * s + lines * 22.0 * s + strip_h + rows_h;
             let by = r.y.min(c.screen.1 as f32 - FOOT * s - 12.0 * s - bh);
             let b = Rect::new(bx, by, bw, bh);
             c.shadow(b, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
@@ -1299,6 +1525,16 @@ impl StartMenu {
             }
             c.text(Weight::SemiBold, 18.0 * s, (bx + 16.0 * s, by + 30.0 * s), Align::Left, &name, TEXT);
             self.lines(c, Weight::Medium, 15.0 * s, (bx + 16.0 * s, by + 54.0 * s), tw, 22.0 * s, &sub, [201, 210, 219, 255]);
+            if let Some(v) = &run {
+                let sr = Rect::new(bx + 16.0 * s, b.bottom() - 14.0 * s - 30.0 * s - rows_h, tw, 30.0 * s);
+                strip_tip_at = run_strip(c, &v.stops, sr, self.hover, s);
+                if v.over {
+                    run_rows(c, &v.stops, Rect::new(bx + 16.0 * s, sr.bottom() + 12.0 * s, tw, rows_h), s);
+                }
+            }
+        }
+        if let Some((at, t)) = strip_tip_at {
+            strip_tip(c, at, &t, s);
         }
         y
     }
@@ -1994,6 +2230,25 @@ fn wordmark(c: &mut Canvas, name: &str, at: (f32, f32), px: f32, s: f32) {
 mod tests {
     use super::*;
 
+    /// The run's line (Look D, 11-24): under way, won, lost, with its
+    /// play time.
+    #[test]
+    fn run_view_line() {
+        let stop = |stars: Option<u8>, here: bool, lost: bool| RunStop { name: "Dreskor".into(), slime: "The Drifter".into(), stars, here, lost };
+        let mut v = RunView { stops: vec![stop(Some(2), false, false), stop(Some(3), false, false), stop(None, true, false), stop(None, false, false)], depth: 3, points: 565, played: Some(4350.0), ..RunView::default() };
+        assert_eq!(v.line(), "Planet 3 of 4 next: 2 freed, 5 stars, 565 points, played 1:12:30");
+        v.mid = true;
+        assert!(v.line().starts_with("Planet 3 of 4 under way"));
+        v.over = true;
+        v.stops[2].lost = true;
+        v.played = Some(65.0);
+        assert_eq!(v.line(), "2 of 4 planets freed, 5 stars, played 1:05");
+        v.won = true;
+        v.stops = vec![stop(Some(1), false, false)];
+        v.played = None;
+        assert_eq!(v.line(), "All 1 planets freed, 1 of 3 stars");
+    }
+
     fn menu() -> StartMenu {
         let missions = (1..=3).map(|i| Entry { stem: format!("{i}-m"), name: format!("M{i}"), says: "Do it".into(), detail: "Fork".into() }).collect();
         let options = vec![
@@ -2138,7 +2393,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5) }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -2187,7 +2442,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new() }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the

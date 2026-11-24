@@ -1249,6 +1249,12 @@ pub struct Run {
     beaten: bool,
     /// The gun range (`Run::range`): a free armory, not a run.
     pub range: bool,
+    /// Real seconds spent playing the run's planets (Milestone 2 test 2,
+    /// 11-24: the run's play time on the end page and "Back to the run"):
+    /// unpaused, no menu or shop or loadout panel, fast forward counted as
+    /// the real time it took. The window adds it up (`App::count_played`);
+    /// saved in `run.txt`, so a quit mid-planet keeps it.
+    pub played: f32,
 }
 
 /// The depth the gun range rolls its guns and bullets for at first.
@@ -1275,7 +1281,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false, played: 0.0 }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -2395,6 +2401,7 @@ impl Run {
         put("beaten", flag(self.beaten).into());
         put("dev", flag(self.dev).into());
         put("rerolls", self.rerolls.to_string());
+        put("played", format!("{:.1}", self.played));
         s
     }
 
@@ -2468,6 +2475,8 @@ impl Run {
         r.beaten = flag("beaten");
         r.dev = flag("dev");
         r.rerolls = num("rerolls").unwrap_or(0);
+        // A save from before 11-24 has none: its time so far is unknown.
+        r.played = get("played").and_then(|v| v.parse::<f32>().ok()).filter(|v| v.is_finite() && *v >= 0.0).unwrap_or(0.0);
         Ok(r)
     }
 }
@@ -3277,6 +3286,7 @@ mod tests {
         r.loadouts.push(Loadout { gun: None, body: r.body_of(BodyKind::Canister), cards: vec![Card::Torch] });
         r.body_offers.push(Body::roll(BodyKind::Line, 6, 2));
         r.offers.push(Card::Pierce);
+        r.played = 1234.5;
         assert!(r.owned.iter().any(|&l| l > 1) && r.guns.len() > 1 && r.loadouts.len() > 2 && !r.offers.is_empty());
         let text = r.save_text();
         assert_eq!(Run::from_save(&text), Ok(r.clone()), "{text}");

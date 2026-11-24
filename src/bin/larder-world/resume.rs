@@ -70,6 +70,23 @@ impl App {
         }
     }
 
+    /// The run's play time (`Run::played`, Milestone 2 test 2): a frame's
+    /// real seconds while a run's planet plays (`planet_open`, unpaused,
+    /// no menu, shop or loadout panel over it), added to both copies of
+    /// the run (the window's and the planet's, `args.run`), since the
+    /// loadout panel and the end screen each carry one over the other. A
+    /// frame is counted at most a quarter second, so a stall (a save, a
+    /// window dragged) adds no more than that.
+    pub(super) fn count_played(&mut self, dt: f32) {
+        if self.paused || self.in_menu() || !self.planet_open() {
+            return;
+        }
+        let dt = dt.clamp(0.0, 0.25);
+        for r in [self.run.as_mut(), self.args.run.as_mut()].into_iter().flatten() {
+            r.played += dt;
+        }
+    }
+
     /// Removes `planet.sav`, if there is one.
     pub(super) fn drop_planet(&self) {
         if let Some(p) = self.planet_file() {

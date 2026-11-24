@@ -1230,7 +1230,14 @@ impl World for GpuWorld {
         self.flush();
         let d = &self.e.dish;
         let at = crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h));
-        self.e.grow_lump(&self.shared, b, at);
+        self.e.grow_lump(&self.shared, b, at, None);
+    }
+
+    fn grow_lump_most(&mut self, b: usize, (c, r): ((f32, f32), f32), room: u32) {
+        self.flush();
+        let d = &self.e.dish;
+        let at = crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h));
+        self.e.grow_lump(&self.shared, b, at, Some(room));
     }
 
     /// Written with the next step's params, and kept on the mirror dish.
@@ -1629,6 +1636,9 @@ mod tests {
         }
         fn grow_lump(&mut self, b: usize, at: ((f32, f32), f32)) {
             self.g.grow_lump(b, at)
+        }
+        fn grow_lump_most(&mut self, b: usize, at: ((f32, f32), f32), room: u32) {
+            self.g.grow_lump_most(b, at, room)
         }
         fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
             self.g.set_lump(b, l)
@@ -3155,8 +3165,10 @@ mod tests {
     /// origin at 79,940 members against a size of 4,200, the late last
     /// stand having taken every free walker on the map at once. Here an
     /// origin of 150 in a race world of 4,000 walkers, set gathering once
-    /// it holds its size, holds more than its size and no more than a
-    /// little over twice it 20 s later.
+    /// it holds its size, holds more than its size and no more than twice
+    /// it (and 5%) 20 s later: a disc sized to the slime it held still
+    /// took 446 and 570 here, so the engine caps the joiners
+    /// (`grow_lump_most`).
     #[test]
     fn the_last_stand_gathers_the_origin_only_to_twice_its_size() {
         let Some((device, queue)) = test_gpu() else { return };
@@ -3182,7 +3194,7 @@ mod tests {
         eprintln!("gather: {before} members at {gathered_at:.1} s, {after} 20 s later (most {most}), slime {}", g.mould);
         assert!(g.mould > 2_000, "the slime is far bigger than the cap: {}", g.mould);
         assert!(after as f32 > 1.3 * g.rules.origin.size, "it gathered more than its size: {after}");
-        assert!(most as f32 <= 2.3 * g.rules.origin.size, "but not the body: {most}");
+        assert!(most as f32 <= 2.05 * g.rules.origin.size, "but not the body: {most}");
     }
 
     /// **A hit's hole stays open while it is fresh** (`crater_shut`,

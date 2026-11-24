@@ -1595,21 +1595,31 @@ impl<W: World> Game<W> {
         let mine = self.player_things();
         let fight = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * sc;
         let at = |i: usize| (((i % gw) as f32 + 0.5) * bin as f32, ((i / gw) as f32 + 0.5) * bin as f32);
-        // The soldiers and the player's things bucketed (`Near`), so each
-        // square asks only those near it: a scan of every soldier and thing
-        // for every crowded square took up to 60 ms in one call on planet
-        // 8 (the 4K thread's split on the GTX 1070, 11-24), a stutter every
-        // new mini-boss. The answers are the scan's, exactly.
+        // The soldiers and the player's things by squared distance (`Near`):
+        // a scan by `hypot` of every soldier and thing for every crowded
+        // square, and a Mortar's line to every thing from every square,
+        // took up to 60 ms in one call on planet 8 (the 4K thread's split
+        // on the GTX 1070, 11-24), a stutter every new mini-boss.
         let guns: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
-        let side = fight.max(8.0 * sc);
-        let (near_guns, near_mine) = (Near::new(&guns, side), Near::new(&mine, side));
+        let (near_guns, near_mine) = (Near::new(&guns), Near::new(&mine));
+        // In blocks of 16 x 16 squares, each asking only the points that
+        // can answer for it (`Near::for_box`).
+        const BLOCK: usize = 16;
+        let bw = gw.div_ceil(BLOCK);
+        let mut blocks: std::collections::HashMap<usize, (Near, Near)> = std::collections::HashMap::new();
         let weights: Vec<f64> = sums
             .iter()
             .map(|&(i, b)| {
-                if near_guns.any_within(at(i), fight) {
+                let (bx, by) = ((i % gw) / BLOCK, (i / gw) / BLOCK);
+                let (mine_here, guns_here) = blocks.entry(by * bw + bx).or_insert_with(|| {
+                    let lo = (((bx * BLOCK) as f32 + 0.5) * bin as f32, ((by * BLOCK) as f32 + 0.5) * bin as f32);
+                    let hi = (lo.0 + ((BLOCK - 1) * bin) as f32, lo.1 + ((BLOCK - 1) * bin) as f32);
+                    (near_mine.for_box(lo, hi, 0.0).0, near_guns.for_box(lo, hi, fight).1)
+                });
+                if guns_here.any_within(at(i), fight) {
                     return 0.0;
                 }
-                let d = near_mine.nearest(at(i)) / sc;
+                let d = mine_here.nearest(at(i)) / sc;
                 let w = if r.near > 0.0 && d.is_finite() { 1.0 / (1.0 + (d / r.near).powi(2)) } else { 1.0 };
                 b as f64 * w as f64
             })
@@ -1856,77 +1866,64 @@ fn way_points(field: &[u32], bw: usize, from: (f32, f32), look: f32) -> Vec<(f32
 
 /// Whether the straight line from `from` to `to` (fine cells) crosses only
 /// open cells of `ground` (`w` x `h`), up to `short` fine cells before `to`.
-/// **Points bucketed in squares of `side`** (`crowded_knot`, 11-24), for
-/// the two questions it asks of the soldiers and the player's things: is
-/// one closer than `r`, and how far the nearest is. Both answer exactly as
-/// a scan of every point does (the same distances, the same strict `<`).
+/// **Points for `crowded_knot`'s two questions** (11-24): is one closer
+/// than `r`, and how far is the nearest. A scan of squared distances, the
+/// root (`hypot`, as the scan it replaced took for every point) only of
+/// the nearest: `hypot` for every square and point was most of the cost
+/// (planet 8, 18,456 squares: 21 ms against 150 points, cloud CPU). A
+/// grid of buckets was tried first and was slower for the squad's usual
+/// counts (18 points: 4.8 ms against the scan's 2.4), the squares lying
+/// far from the squad. The answers are the scan's but where two points
+/// tie to the last bit of rounding.
 struct Near {
-    side: f32,
-    lo: (f32, f32),
-    w: i64,
-    h: i64,
-    cells: Vec<Vec<(f32, f32)>>,
+    xs: Vec<f32>,
+    ys: Vec<f32>,
 }
 
 impl Near {
-    fn new(pts: &[(f32, f32)], side: f32) -> Near {
-        let side = side.max(1.0);
-        let lo = pts.iter().fold((f32::INFINITY, f32::INFINITY), |a, p| (a.0.min(p.0), a.1.min(p.1)));
-        let hi = pts.iter().fold((f32::NEG_INFINITY, f32::NEG_INFINITY), |a, p| (a.0.max(p.0), a.1.max(p.1)));
-        if pts.is_empty() {
-            return Near { side, lo: (0.0, 0.0), w: 0, h: 0, cells: Vec::new() };
-        }
-        let (w, h) = (((hi.0 - lo.0) / side).floor() as i64 + 1, ((hi.1 - lo.1) / side).floor() as i64 + 1);
-        let mut n = Near { side, lo, w, h, cells: vec![Vec::new(); (w * h) as usize] };
-        for &p in pts {
-            let (x, y) = n.cell_of(p);
-            n.cells[(y.clamp(0, h - 1) * w + x.clamp(0, w - 1)) as usize].push(p);
-        }
-        n
-    }
-
-    fn cell_of(&self, p: (f32, f32)) -> (i64, i64) {
-        (((p.0 - self.lo.0) / self.side).floor() as i64, ((p.1 - self.lo.1) / self.side).floor() as i64)
-    }
-
-    /// The points in the cells from (x0, y0) to (x1, y1), within the grid.
-    fn block(&self, (x0, y0): (i64, i64), (x1, y1): (i64, i64)) -> impl Iterator<Item = &(f32, f32)> {
-        let (x0, x1, y0, y1) = (x0.max(0), x1.min(self.w - 1), y0.max(0), y1.min(self.h - 1));
-        (y0..=y1).flat_map(move |y| (x0..=x1).flat_map(move |x| self.cells[(y * self.w + x) as usize].iter()))
+    fn new(pts: &[(f32, f32)]) -> Near {
+        Near { xs: pts.iter().map(|p| p.0).collect(), ys: pts.iter().map(|p| p.1).collect() }
     }
 
     /// Whether a point lies closer than `r` to `p`.
     fn any_within(&self, p: (f32, f32), r: f32) -> bool {
-        if self.cells.is_empty() {
-            return false;
-        }
-        let (a, b) = (self.cell_of((p.0 - r, p.1 - r)), self.cell_of((p.0 + r, p.1 + r)));
-        self.block(a, b).any(|q| (q.0 - p.0).hypot(q.1 - p.1) < r)
+        let r2 = r * r;
+        self.xs.iter().zip(&self.ys).any(|(x, y)| {
+            let (dx, dy) = (x - p.0, y - p.1);
+            dx * dx + dy * dy < r2 && dx.hypot(dy) < r
+        })
     }
 
-    /// The distance to the nearest point (infinite with none): ring by
-    /// ring of cells round `p`'s, until the rings left lie farther.
+    /// The points that can answer for any place in the box from `lo` to
+    /// `hi`: of `nearest`, those whose nearest corner of it is no farther
+    /// than the nearest any point's farthest corner is (the rest are
+    /// farther for every place in it); of `any_within(.., r)`, those
+    /// nearer it than `r`. A block of squares then asks only these.
+    fn for_box(&self, lo: (f32, f32), hi: (f32, f32), r: f32) -> (Near, Near) {
+        let gap = |x: f32, y: f32| ((lo.0 - x).max(x - hi.0).max(0.0), (lo.1 - y).max(y - hi.1).max(0.0));
+        let span = |x: f32, y: f32| ((x - lo.0).abs().max((x - hi.0).abs()), (y - lo.1).abs().max((y - hi.1).abs()));
+        let pts = || self.xs.iter().zip(&self.ys).map(|(&x, &y)| (x, y));
+        let near2 = |(dx, dy): (f32, f32)| dx * dx + dy * dy;
+        let cap = pts().map(|(x, y)| near2(span(x, y))).fold(f32::INFINITY, f32::min);
+        let keep: Vec<(f32, f32)> = pts().filter(|&(x, y)| near2(gap(x, y)) <= cap * 1.0001 + 1e-3).collect();
+        let close: Vec<(f32, f32)> = pts().filter(|&(x, y)| near2(gap(x, y)) < r * r * 1.0001 + 1e-3).collect();
+        (Near::new(&keep), Near::new(&close))
+    }
+
+    /// The distance to the nearest point (infinite with none).
     fn nearest(&self, p: (f32, f32)) -> f32 {
-        if self.cells.is_empty() {
+        let mut best = (f32::INFINITY, usize::MAX);
+        for (i, (x, y)) in self.xs.iter().zip(&self.ys).enumerate() {
+            let (dx, dy) = (x - p.0, y - p.1);
+            let d2 = dx * dx + dy * dy;
+            if d2 < best.0 {
+                best = (d2, i);
+            }
+        }
+        if best.1 == usize::MAX {
             return f32::INFINITY;
         }
-        let (cx, cy) = self.cell_of(p);
-        let far = [cx, self.w - 1 - cx, cy, self.h - 1 - cy].iter().map(|v| v.abs()).max().unwrap_or(0);
-        let mut best = f32::INFINITY;
-        for k in 0..=far {
-            let ring = |x: i64, y: i64| (x - cx).abs().max((y - cy).abs()) == k;
-            for q in self.block((cx - k, cy - k), (cx + k, cy + k)).filter(|q| {
-                let (x, y) = self.cell_of(**q);
-                ring(x.clamp(0, self.w - 1), y.clamp(0, self.h - 1))
-            }) {
-                best = best.min((q.0 - p.0).hypot(q.1 - p.1));
-            }
-            // A point in a ring past k is at least k cells off.
-            if best <= k as f32 * self.side {
-                break;
-            }
-        }
-        best
+        (self.xs[best.1] - p.0).hypot(self.ys[best.1] - p.1)
     }
 }
 
@@ -2000,6 +1997,41 @@ mod near_tests {
     use super::{line_clear, nearest_seen, Near};
     use crate::mould::Rng;
 
+    /// Its cost against the scan, as `crowded_knot` asks on planet 8
+    /// (18,456 squares over a 1,256 x 784 map): `cargo test --release
+    /// near_cost -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn near_cost() {
+        let mut rng = Rng::new(3);
+        let squares: Vec<(f32, f32)> = (0..18_456).map(|_| (1256.0 * rng.f32(), 784.0 * rng.f32())).collect();
+        for n in [18usize, 60, 150] {
+            let pts: Vec<(f32, f32)> = (0..n).map(|_| (300.0 + 200.0 * rng.f32(), 200.0 + 200.0 * rng.f32())).collect();
+            let t = std::time::Instant::now();
+            let scan: f32 = squares.iter().map(|p| pts.iter().map(|q| (q.0 - p.0).hypot(q.1 - p.1)).fold(f32::INFINITY, f32::min) + if pts.iter().any(|q| (q.0 - p.0).hypot(q.1 - p.1) < 70.0) { 1.0 } else { 0.0 }).sum();
+            let ts = t.elapsed().as_secs_f64() * 1e3;
+            let t = std::time::Instant::now();
+            let near = Near::new(&pts);
+            let mut blocks: std::collections::HashMap<(i64, i64), (Near, Near)> = std::collections::HashMap::new();
+            let fast: f32 = squares
+                .iter()
+                .map(|&p| {
+                    let key = ((p.0 / 32.0).floor() as i64, (p.1 / 32.0).floor() as i64);
+                    let (m, g) = blocks.entry(key).or_insert_with(|| {
+                        let lo = (key.0 as f32 * 32.0, key.1 as f32 * 32.0);
+                        let (m, _) = near.for_box(lo, (lo.0 + 32.0, lo.1 + 32.0), 0.0);
+                        let (_, g) = near.for_box(lo, (lo.0 + 32.0, lo.1 + 32.0), 70.0);
+                        (m, g)
+                    });
+                    m.nearest(p) + if g.any_within(p, 70.0) { 1.0 } else { 0.0 }
+                })
+                .sum();
+            let tf = t.elapsed().as_secs_f64() * 1e3;
+            eprintln!("{n} points: scan {ts:.2} ms, near {tf:.2} ms");
+            assert_eq!(scan.to_bits(), fast.to_bits());
+        }
+    }
+
     /// **`Near` answers as the scan it replaced** (11-24): on random
     /// points, clustered and spread, the nearest distance is the scan's to
     /// the bit and `any_within` agrees at every radius; and the mortar's
@@ -2011,8 +2043,7 @@ mod near_tests {
             let n = rng.below(60) as usize;
             let spread = if round % 2 == 0 { 2000.0 } else { 60.0 };
             let pts: Vec<(f32, f32)> = (0..n).map(|_| (500.0 + spread * rng.f32(), 300.0 + spread * rng.f32())).collect();
-            let side = 8.0 + 120.0 * rng.f32();
-            let near = Near::new(&pts, side);
+            let near = Near::new(&pts);
             for _ in 0..200 {
                 let p = (3000.0 * rng.f32() - 200.0, 3000.0 * rng.f32() - 200.0);
                 let scan = pts.iter().map(|q| (q.0 - p.0).hypot(q.1 - p.1)).fold(f32::INFINITY, f32::min);
@@ -2039,7 +2070,7 @@ mod near_tests {
             let squares: Vec<(f32, f32)> = (0..rng.below(80) as usize).map(|_| (w as f32 * rng.f32(), h as f32 * rng.f32())).collect();
             let clear = |p: (f32, f32), q: (f32, f32)| line_clear(&ground, w, h, p, q, 4.0);
             let scan = squares.iter().enumerate().map(|(o, &p)| (o, mine.iter().filter(|q| clear(p, **q)).map(|q| (q.0 - p.0).hypot(q.1 - p.1)).fold(f32::INFINITY, f32::min))).filter(|s| s.1.is_finite()).min_by(|a, c| a.1.total_cmp(&c.1)).map(|s| s.0);
-            assert_eq!(nearest_seen(&squares, &mine, &Near::new(&mine, 30.0), clear), scan, "the mortar's square");
+            assert_eq!(nearest_seen(&squares, &mine, &Near::new(&mine), clear), scan, "the mortar's square");
         }
     }
 }

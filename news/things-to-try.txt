@@ -2,8 +2,8 @@
 # each with a tick the game remembers on that PC. The Direction lane owns
 # this file; other lanes ask Direction for a line. One thing a line, in
 # plain words, the most important first. Lines starting with # are notes.
-The origin: each planet's slime now has a heart on its start crystal. Kill it to win the planet, or drain its crystal to stop it regrowing. Is it clear from the start what to go for?
+The heart: each planet's slime now has a heart on its home crystal. Kill it to win the planet, or drain its crystal to stop it regrowing. Is it clear from the start what to go for?
 Planets 2 to 8 are harder: raids come sooner and tougher, mini-bosses reach you, strikers grow with a big army. Too hard, too easy, or about right?
 Past 30 soldiers each one costs more. Does a big army still feel worth building?
-Formations (T): pick blob or ring, then a spread from tight to wide. Do your squads hold the shape you chose?
+Quit in the middle of a planet, then pick Back to the run: it carries on where you left it. Does it come back as you left it?
 Starfall ore and boss cores land on open ground and show a pickup bar. Are they worth the walk?

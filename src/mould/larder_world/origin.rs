@@ -105,20 +105,23 @@ pub struct OriginRules {
     pub quiet: f32,
     pub hurt: f32,
     /// The late last stand (`StandRules`, from planet 4) gathers free
-    /// walkers into it only until it holds this times its size, from a
-    /// disc round its centre that widens by `gather_widen` a take. Until
-    /// 11-24 it took every free walker on the map at once: Engine's siege
-    /// on Scott's maps (GTX 1070, 720 s) met planet 7's origin at 79,940
-    /// and 66,426 members against a size of 4,200, the whole body, which no
-    /// squad wore down to its floor (one open at 12:00, one lost), and
-    /// planet 8's at 3,285 against 2,400.
+    /// walkers into it only until it holds this times its size: each take
+    /// is the widest disc round its centre holding no more slime than that
+    /// (`gather_disc`). Until 11-24 it took every free walker on the map at
+    /// once: Engine's siege on Scott's maps (GTX 1070, 720 s) met planet
+    /// 7's origin at 79,940 and 66,426 members against a size of 4,200, the
+    /// whole body, which no squad wore down to its floor (one open at
+    /// 12:00, one lost), and planet 8's at 3,285 against 2,400. A first cap
+    /// the same day (#756), a disc widening 3 dish cells a take cut to the
+    /// square root of its shortfall, still overshot: on planet 7 map C it
+    /// held 13,699 against 2,100 (the disc kept widening over ground the
+    /// slime had left until it reached a packed body, and took it whole).
     pub gather_most: f32,
-    pub gather_widen: f32,
 }
 
 impl Default for OriginRules {
     fn default() -> Self {
-        OriginRules { on: false, size: 400.0, most: 1.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02, gather_most: 2.0, gather_widen: 3.0 }
+        OriginRules { on: false, size: 400.0, most: 1.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02, gather_most: 2.0 }
     }
 }
 
@@ -165,6 +168,35 @@ impl<W: World> Game<W> {
         if !self.origin.formed && self.mould > 0 {
             self.start_origin();
         }
+    }
+
+    /// The radius (dish cells) of the smallest disc round `at` (fine cells)
+    /// whose slime, members and free walkers both, comes to more than
+    /// `most` (the whole slime's, if it holds less), from the mould grid's
+    /// squares a dish cell wide, ring by ring; 0 with no grid. One pass over
+    /// the grid, every `grow_every` while gathering.
+    fn gather_disc(&self, at: (f32, f32), most: f32) -> f32 {
+        let bin = (self.world.scale() as usize).max(1);
+        let Some(g) = self.world.mould_grid(bin) else { return 0.0 };
+        let gw = self.world.size().0.div_ceil(bin);
+        let b = bin as f32;
+        let mut rings: Vec<u64> = Vec::new();
+        for (i, &n) in g.iter().enumerate().filter(|(_, &n)| n > 0) {
+            let d = (((i % gw) as f32 + 0.5) * b - at.0).hypot(((i / gw) as f32 + 0.5) * b - at.1) / b;
+            let k = d as usize;
+            if rings.len() <= k {
+                rings.resize(k + 1, 0);
+            }
+            rings[k] += n as u64;
+        }
+        let mut held = 0u64;
+        for (k, &n) in rings.iter().enumerate() {
+            held += n;
+            if held as f32 > most {
+                return (k + 1) as f32;
+            }
+        }
+        rings.len() as f32
     }
 
     /// The origin gathering now round the start crystal; false with no
@@ -221,15 +253,22 @@ impl<W: World> Game<W> {
         if calm && now >= self.origin.grown + (r.grow_every.max(0.5) * tps) as u64 {
             self.origin.grown = now;
             if h.gather {
-                // Its shortfall to `gather_most` sizes cuts each take's
-                // disc as the crystal's takes below do, so it stops near
-                // that and does not swallow the body.
+                // Only up to `gather_most` sizes, so it never swallows the
+                // body.
                 let most = r.gather_most.max(1.0) * r.size.max(1.0);
-                let short = (most - h.members as f32).max(0.0) / most;
-                if short > 0.0 {
-                    self.origin.reach = (self.origin.reach + r.gather_widen.max(0.1)).min(self.whole_map());
-                    let take = (self.origin.reach * short.sqrt()).max(0.5);
-                    self.world.grow_lump(h.lump, (h.centre, take));
+                if (h.members as f32) < most {
+                    // The walkers round its crystal: the smallest disc
+                    // there holding as much slime as `most` (members
+                    // and free alike), and of those in it no more than its
+                    // shortfall join (`grow_lump_most`). A disc counted to
+                    // hold just the shortfall still overshot (the test: 446
+                    // and 570 against 300), as the members do not stand in
+                    // one disc: the lump's centre wandered 36 cells from the
+                    // crystal in 2 s and they spread round it.
+                    let take = self.gather_disc(self.core, most).max(0.5);
+                    self.origin.reach = take;
+                    let room = (most - h.members as f32).max(0.0) as u32;
+                    self.world.grow_lump_most(h.lump, (self.core, take), room);
                 }
             } else if self.origin_fed() && (h.members as f32) < r.most * r.size {
                 let cr = self.crystal_at(self.core).map_or(4.0 * self.world.scale(), |(c, _)| self.world.crystal_r(c)) / self.world.scale().max(1.0);
