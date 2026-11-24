@@ -1235,10 +1235,13 @@ impl App {
             StartEvent::Run | StartEvent::NextLevel => {
                 let Some((base, _)) = self.base.clone() else { return Ok(false) };
                 let fresh = self.run.is_none();
+                // The seed typed on the Run row, or Past runs' "Play this
+                // run again" (Direction 11-24); taken once.
+                let typed = self.menu.as_mut().and_then(|m| std::mem::take(&mut m.run_seed).parse::<u64>().ok());
                 let mut r = self.run.take().unwrap_or_else(|| {
                     // A new run on a new seed each time (the clock), so two
                     // runs differ; `run=SEED` on the command line repeats one.
-                    let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs());
+                    let seed = typed.unwrap_or_else(|| std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs()));
                     Run::new(seed)
                 });
                 let Some(menu) = self.menu.take() else { return Ok(false) };
@@ -1318,6 +1321,17 @@ impl App {
                 if let Some(t) = news::to_try().get(i) {
                     self.memory.set_tried(t, tried);
                 }
+            }
+            // A past run again, on its seed: a new run as the Run row
+            // starts one (never over a run under way: the page says so).
+            StartEvent::Replay(seed) => {
+                if self.run.is_some() {
+                    return Ok(false);
+                }
+                if let Some(m) = self.menu.as_mut() {
+                    m.run_seed = seed.to_string();
+                }
+                return self.menu_event(StartEvent::Run);
             }
             // Change keys (`world::keys`): the two keys swap, saved beside
             // the settings, and the key card names the new ones.
