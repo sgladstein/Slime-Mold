@@ -129,7 +129,7 @@ impl SlimeLook {
     }
 }
 
-const PARAMS_BYTES: usize = 320;
+const PARAMS_BYTES: usize = 336;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
@@ -1179,6 +1179,7 @@ impl View {
     /// A new screen size: the overlay is cleared.
     pub fn resize(&mut self, screen: (u32, u32)) {
         let rscreen = Self::reduced(screen, self.pct);
+        let grid = Self::grid(screen, rscreen);
         // The claims and the overlay stay the screen's size: the marks
         // draw at full (`params_full`).
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
@@ -1187,8 +1188,8 @@ impl View {
         (self.stride, self.out, self.low, self.overlay, self.top, self.screen) = (stride, out, low, overlay, top, screen);
         (self.rscreen, self.rstride) = (rscreen, rstride);
         self.specks = storage(&self.device, "specks", rstride as u64 * rscreen.1 as u64 * 12);
-        (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, rscreen);
-        self.fgrid = Self::fine_buffer(&self.device, rscreen);
+        (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, grid);
+        self.fgrid = Self::fine_buffer(&self.device, grid);
         self.has_overlay = false;
         self.rebind();
     }
@@ -1208,6 +1209,19 @@ impl View {
     /// The render scale in percent each way (`set_percent`).
     pub fn percent(&self) -> u32 {
         self.pct
+    }
+
+    /// What `prep`'s grids are sized for (`cell_buffers`, `fine_buffer`,
+    /// `fine_half`): the small picture, or, below 100%, at least the
+    /// cells a full-size screen shows at the zoom `fine` first gives 2
+    /// fine cells (6), with its margin. `prep` takes `fine` from the
+    /// screen's own zoom (`record_with`), so at 40% its grid is more fine
+    /// cells than the small picture has pixels.
+    fn grid(screen: (u32, u32), rscreen: (u32, u32)) -> (u32, u32) {
+        // At zoom 6, 2 fine cells a cell: the screen over 3, and the
+        // margin twice over (`fine_half` adds it once), with a cell's slop.
+        let need = |s: u32| s.div_ceil(3) + 2 * MARGIN + 4;
+        (rscreen.0.max(need(screen.0)), rscreen.1.max(need(screen.1)))
     }
 
     /// The small picture's size for `screen` at `pct` percent each way
@@ -1335,7 +1349,12 @@ impl View {
         // The shown cells and a margin: what `prep` works out.
         let (ox, oy) = (cam.x.floor() as i32 - MARGIN as i32, cam.y.floor() as i32 - MARGIN as i32);
         let zoom = cam.zoom.max(1.0);
-        let k = Self::fine(zoom);
+        // The fine cells a cell from the screen's own zoom, not the small
+        // picture's (4K thread, 11-24): at 50% and zoom 8, `fine` of 4
+        // gave 1, and the slime's body drew in square blobs where 100%
+        // drew it smooth (`fine`'s note). Costs `prep` up to 4 times its
+        // cells below 100%, as it costs at 100%.
+        let k = Self::fine(zoom_full.max(1.0));
         let (rw, rh) = (((screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k, ((screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k);
         b.extend(ox.to_le_bytes());
         b.extend(oy.to_le_bytes());
@@ -1349,7 +1368,7 @@ impl View {
         for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, self.n_list * (live > 0) as u32, dt.to_bits(), live] {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.dense_at, self.ripe_at, Self::fine_half(screen), stride * screen.1] {
+        for v in [self.dense_at, self.ripe_at, Self::fine_half(Self::grid(self.screen, screen)), stride * screen.1] {
             b.extend(v.to_le_bytes());
         }
         for v in [self.alarm_side, self.alarm_full.to_bits(), self.plant_at, self.flora] {
@@ -1375,6 +1394,11 @@ impl View {
         }
         let streak = if self.slime_look == SlimeLook::Threads { self.streak } else { 0.0 };
         for v in [self.slime_look as u32, streak.to_bits(), self.life_on as u32, self.scar_on as u32] {
+            b.extend(v.to_le_bytes());
+        }
+        // `look_zoom`: the screen's own pixels a cell, for the detail
+        // fades (view.wgsl's note on it).
+        for v in [zoom_full.to_bits(), 0, 0, 0] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
@@ -1553,6 +1577,28 @@ impl Upscale {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Below 100% `prep` takes its fine cells a cell from the screen's own
+    /// zoom (4K thread, 11-24), so its grids must hold the fine cells a
+    /// full-size screen shows at every zoom `fine` gives 2 from (6 up),
+    /// at every step down to 25%: more than the small picture's pixels.
+    #[test]
+    fn the_prep_grids_hold_the_full_zooms_fine_cells_at_every_step() {
+        for screen in [(3840, 2004), (101, 61), (1280, 800)] {
+            for pct in [100, 85, 75, 67, 60, 50, 40, 25] {
+                let r = View::reduced(screen, pct);
+                let g = View::grid(screen, r);
+                for zoom in [6.0f32, 7.5, 12.0, 24.0] {
+                    let k = View::fine(zoom);
+                    // As `record_with`: the small picture over its zoom.
+                    let zs = zoom * pct as f32 / 100.0;
+                    let rw = ((r.0 as f32 / zs).ceil() as u32 + 2 * MARGIN + 2) * k;
+                    let rh = ((r.1 as f32 / zs).ceil() as u32 + 2 * MARGIN + 2) * k;
+                    assert!(rw * rh <= View::fine_half(g), "{screen:?} at {pct}% zoom {zoom}: {rw} x {rh} fine cells, room for {}", View::fine_half(g));
+                }
+            }
+        }
+    }
 
     /// Off-screen lights are dropped, and past the cap the brightest are
     /// kept in their order: a muzzle light pushed last still lands when

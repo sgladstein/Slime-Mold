@@ -56,3 +56,23 @@ rings, the squad's number and the HUD stand the same size.
   should shrink with the queue. Time it again at 4K after World detail lands.
 - A game left on the menu keeps the card busy (the dish behind the menu
   runs at full size). At Auto it now draws at half too.
+
+## Quality steps and the detail they kept (2026-11-24)
+
+The owner approved a quality slider (03:15Z). World detail became Auto,
+100%, 85%, 75%, 67%, 60%, 50%, 40% (#747; bilinear between whole ratios,
+Auto under 2.4 million pixels, so 50% at 4K). His play logs from #725 on
+(11-22 20:50Z to 11-23 17:33Z, planets 1 to 6, about 3,700 s at 50%) ran
+60 frames in 99 to 100% of seconds.
+
+Filming the steps at his 3840 x 2004 window (planet 2, zoom 7) showed that
+below 100% the ground's plates and cracks faded and the slime's body went
+to square blobs: the view's detail fades and `prep`'s fine cells read the
+small picture's zoom (3.5 at 50%), as if zoomed out. They now read the
+screen's own zoom (`look_zoom`, `View::grid`). 100% is byte-identical.
+`detail-steps-2026-11-24.jpg`: 100%, then 50% and 67% before and after.
+
+Cost on lavapipe at 3840 x 2004, 50%, zoom 8 (view passes, median of 5
+frames): 198 to 224 ms; `prep` 10.3 to 43.6 (four times the fine cells,
+as at 100%), base unchanged. On the 1070, `prep` at full 4K was 2.5 ms
+(11-22), so expect about 2 ms more a frame; to be timed there.

@@ -83,6 +83,14 @@ struct V {
     // 0 plain, 1 the Sprawler's threads (`LOOK_THREADS`); and how far
     // behind a walker its streak runs, cells (0 none). Two spare words.
     slime_look: u32, streak: f32, look_spare0: u32, look_spare1: u32,
+    // The zoom the world's detail fades read (`View::set_percent`, 4K
+    // thread, 2026-11-24): the screen's own pixels a cell, which `zoom`
+    // is only at 100%. At a lower World detail `zoom` is the small
+    // picture's pixels a cell (half at 50%), and a fade on it took the
+    // ground's plates, cracks, grain and the plants' crowns away at zooms
+    // where full detail shows them. Pixel sizes (a line's width, an edge's
+    // blend, a speck) stay on `zoom`. Three spare words.
+    look_zoom: f32, view_spare0: u32, view_spare1: u32, view_spare2: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -668,7 +676,7 @@ struct PlantLayer { rgb: vec3<f32>, cover: f32, fl: vec3<f32>, fc: f32, fw: f32,
 fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f32, hot: bool) {
     if (dk <= 0.003) { return; }
     let fm = flora_form(P.flora, k);
-    let f = smoothstep(1.6, 3.2, fm.s * P.zoom);
+    let f = smoothstep(1.6, 3.2, fm.s * P.look_zoom);
     var a = plant_cover(dk);
     var col = fm.col;
     var fa = 0.0;
@@ -2679,7 +2687,7 @@ fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
         // neighbour's.
         let plate = HARDPAN_PLATE * (hash2(c1 * 5.3 + 2.1) - 0.5) * 2.0;
         let w = (d2 - d1) * 2.0;
-        let rim = (1.0 - smoothstep(0.05, HARDPAN_RIM, w)) * (1.0 - seam) * smoothstep(3.0, 6.0, P.zoom);
+        let rim = (1.0 - smoothstep(0.05, HARDPAN_RIM, w)) * (1.0 - seam) * smoothstep(3.0, 6.0, P.look_zoom);
         // The rim rises toward the seam, so it faces back toward the
         // plate's middle: lit on the plate's far side from the light (a
         // dish; the other sign drew pillows, which read as paving).
@@ -2771,7 +2779,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     let w = so.w;
     if (dot(w, vec4<f32>(1.0)) + so.bridge <= 0.001) {
         // Plain soil alone (most of most maps): its biome's look only.
-        let wp = bare * smoothstep(3.0, 8.0, P.zoom);
+        let wp = bare * smoothstep(3.0, 8.0, P.look_zoom);
         if (wp > 0.001) { return vec4<f32>(1.0 + wp * PLAIN_AMP * plain_look(P.flora, vec2<f32>(x, y)), 0.0, 0.0, 0.0); }
         return vec4<f32>(1.0, 0.0, 0.0, 0.0);
     }
@@ -2818,7 +2826,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         // and the ripples on them, bent by the same noise and one finer
         // octave (two vnoise a pixel; sums of sines cost the same on
         // llvmpipe and looked like wood grain).
-        let fade = smoothstep(2.5, 4.0, P.zoom);
+        let fade = smoothstep(2.5, 4.0, P.look_zoom);
         if (fade > 0.0) {
             let bend = 4.0 * big + 1.2 * vnoise(p / 4.0 + 17.0);
             k += 0.14 * fade * sin(6.2831853 * ((x * 0.82 + y * 0.42) / 1.6 + bend));
@@ -2828,7 +2836,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // Clay: dried into plates about 3 cells across, dark cracks between,
     // a pixel or so wide (the second-nearest minus nearest jittered point).
     // (Its cracks and plates are flat below zoom 1: skipped there.)
-    if (ws.y > 0.001 && P.zoom > 1.0) {
+    if (ws.y > 0.001 && P.look_zoom > 1.0) {
         let p = vec2<f32>(x, y) / 3.0;
         let pi = floor(p);
         var d1 = 9.0; var d2 = 9.0;
@@ -2842,18 +2850,18 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
             }
         }
         let gap = (d2 - d1) * 3.0 * P.zoom;
-        let crack = (1.0 - smoothstep(0.6, 1.6, gap)) * smoothstep(3.0, 8.0, 3.0 * P.zoom);
+        let crack = (1.0 - smoothstep(0.6, 1.6, gap)) * smoothstep(3.0, 8.0, 3.0 * P.look_zoom);
         // Each plate its own shade. (It was hashed on squares a seventh
         // of a plate across, a mottle of squares that read as pixels at
         // zoom 24; owner, 11-14 20:21Z.)
         let plate = 0.92 + 0.16 * hash2(c1 * 3.7 + 1.3);
-        mul *= mix(1.0, (1.0 - 0.6 * crack) * mix(1.0, plate, smoothstep(3.0, 8.0, P.zoom)), ws.y * bare);
+        mul *= mix(1.0, (1.0 - 0.6 * crack) * mix(1.0, plate, smoothstep(3.0, 8.0, P.look_zoom)), ws.y * bare);
     }
     // Barren: dry ash, its grains soft and about a cell across, in clumps
     // a few cells wide with bare ash between (art lead, 11-14: a hashed
     // speckle half a cell across read as TV static at zoom 6).
     // (Its grains are flat below zoom 2: skipped there.)
-    if (ws.z > 0.001 && P.zoom > 2.0) {
+    if (ws.z > 0.001 && P.look_zoom > 2.0) {
         let p = vec2<f32>(x, y);
         // Two octaves on turned grids, so a grain is round: one value
         // noise thresholded made squares on the cells' axes, which read as
@@ -2863,7 +2871,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         let n = 0.5 + 1.4 * (0.5 * (vnoise(q1 * 1.3 + 5.0) + vnoise(q2 * 1.5 + 21.0)) - 0.5);
         let clump = smoothstep(0.4, 0.7, vnoise(p / 3.5 + 11.0));
         var sp = (0.2 * smoothstep(0.6, 0.85, n) - 0.15 * smoothstep(0.6, 0.85, 1.0 - n)) * clump;
-        let fade = smoothstep(2.0, 4.0, P.zoom);
+        let fade = smoothstep(2.0, 4.0, P.look_zoom);
         if (P.flora == 1u) {
             // The salt pan's crust: a net of raised ridges about
             // `SALT_NET` cells across, pale along their crests and their
@@ -2888,7 +2896,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
             let w = 0.5 * (d2 - d1) * SALT_NET;
             let crest = (1.0 - smoothstep(0.0, SALT_RIDGE, w)) * smoothstep(0.2, 0.75, vnoise(p * 0.6 + 29.0));
             let face = dot(normalize(o1 - o2), normalize(LIGHT.xy));
-            sp = 0.35 * sp + crest * (SALT_CREST + SALT_FLANK * face) * smoothstep(3.0, 6.0, P.zoom);
+            sp = 0.35 * sp + crest * (SALT_CREST + SALT_FLANK * face) * smoothstep(3.0, 6.0, P.look_zoom);
         }
         mul *= 1.0 + sp * ws.z * fade * bare;
     }
@@ -2899,7 +2907,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // signed change of at most about an eighth, so the ground keeps its
     // value band (20-45 in grey); it comes in from zoom 3 to 8, below
     // which it would alias, and lies under the slime by `bare`.
-    let wl = ls.w * (1.0 - cw) * bare * smoothstep(3.0, 8.0, P.zoom);
+    let wl = ls.w * (1.0 - cw) * bare * smoothstep(3.0, 8.0, P.look_zoom);
     if (wl > 0.001) {
         mul *= 1.0 + wl * PLAIN_AMP * plain_look(P.flora, vec2<f32>(x, y));
     }
@@ -2971,7 +2979,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
             let plank = floor(u / pw);
             let tint = 0.82 + 0.3 * hash2(vec2<f32>(plank, 3.0));
             let grain = 1.0 + 0.07 * sin(v * 5.0 + 9.0 * hash2(vec2<f32>(plank, 7.0)));
-            var wood = WOOD_RGB * tint * grain * (1.0 - 0.6 * seam * smoothstep(3.0, 6.0, P.zoom));
+            var wood = WOOD_RGB * tint * grain * (1.0 - 0.6 * seam * smoothstep(3.0, 6.0, P.look_zoom));
             // The rails: a beam about 0.5 cell wide along each edge, a post
             // every 3 cells standing lighter.
             let rail = 1.0 - smoothstep(0.45, 0.45 + px, d);
@@ -3104,11 +3112,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let k = smoothstep(DUST_TRAIL.x, DUST_TRAIL.y, tr) * under * m.vis;
             if (P.flora == 1u) {
                 let flat = m.albedo / max(sd.x, 0.5);
-                let grain = 1.0 + 0.06 * (vnoise(vec2<f32>(x, y) * 2.9 + 31.0) - 0.5) * 2.0 * smoothstep(5.0, 9.0, P.zoom);
+                let grain = 1.0 + 0.06 * (vnoise(vec2<f32>(x, y) * 2.9 + 31.0) - 0.5) * 2.0 * smoothstep(5.0, 9.0, P.look_zoom);
                 m.albedo = mix(m.albedo, flat * DUST_LIFT * grain, DUST * k);
             } else {
                 let q = vec2<f32>(0.8 * x - 0.6 * y, 0.6 * x + 0.8 * y);
-                let glint = smoothstep(0.86, 0.96, vnoise(q * 3.7 + 51.0)) * smoothstep(4.0, 8.0, P.zoom);
+                let glint = smoothstep(0.86, 0.96, vnoise(q * 3.7 + 51.0)) * smoothstep(4.0, 8.0, P.look_zoom);
                 m.albedo = m.albedo * (1.0 - SLICK_DARK * k) + (SLICK_SHEEN + SLICK_GLINT * glint) * k;
             }
         }
@@ -3283,7 +3291,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         // smooth heat alone read as a soft orange blob). Zoomed out (a crown
         // or grain under about 3 pixels) the smooth heat's flame stands in.
         let hf = pp.heat;
-        let ez = smoothstep(2.5, 5.0, 0.6 * P.zoom);
+        let ez = smoothstep(2.5, 5.0, 0.6 * P.look_zoom);
         var fl = pl.fl;
         var fc = pl.fc;
         let rest = 1.0 - pl.fw;
@@ -3485,7 +3493,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v) + pow(max(dot(gn, half_v), 0.0), 6.0) * 0.1 * spent;
             // Milky toward its middle, each shard its own tone, a fine
             // frost from zoom 8 (under that it is under 2 px and shimmers).
-            let frost = 1.0 + 0.1 * (vnoise(rel * 2.6 + 5.0) - 0.5) * 2.0 * smoothstep(7.0, 11.0, P.zoom);
+            let frost = 1.0 + 0.1 * (vnoise(rel * 2.6 + 5.0) - 0.5) * 2.0 * smoothstep(7.0, 11.0, P.look_zoom);
             let worn = (0.82 + 0.22 * depth) * (0.9 + 0.2 * hash2(c1 * 9.1 + 2.7) * craze) * frost * (1.0 - 0.6 * crack);
             // Charged faces from about 110 in grey (rule 2: above rock, soft
             // rock and the thin film; the review 11-15 measured 93-126).
@@ -3797,7 +3805,7 @@ fn terrain_top(ta: TerAt) -> vec3<f32> {
         let q1 = vec2<f32>(0.8 * p.x - 0.6 * p.y, 0.6 * p.x + 0.8 * p.y);
         let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
         let mott = vnoise(q1 / ROCK_MOTTLE + 5.0) * 0.7 + vnoise(q2 / (0.45 * ROCK_MOTTLE) + 9.0) * 0.3;
-        let grit = (vnoise(q2 * 3.1 + 2.0) - 0.5) * smoothstep(5.0, 10.0, P.zoom);
+        let grit = (vnoise(q2 * 3.1 + 2.0) - 0.5) * smoothstep(5.0, 10.0, P.look_zoom);
         let cn = vnoise(q1 * 0.3 + 17.0) * 0.8 + vnoise(q2 * 1.3 + 23.0) * 0.2;
         // Only in patches (a fifth of the rock or so), or the half-way
         // line of value noise nets the whole face like crazed glaze (the
@@ -3814,7 +3822,7 @@ fn terrain_top(ta: TerAt) -> vec3<f32> {
             let u = (0.34 * p.x + 0.94 * p.y) / STRATA + 1.8 * vnoise(p / 7.0 + 3.0);
             let band = 0.5 + 0.5 * sin(6.2831853 * u);
             let bed = hash2(vec2<f32>(floor(u), 7.0));
-            stone *= 1.0 + (STRATA_AMP * (band - 0.5) + 0.14 * (bed - 0.5)) * smoothstep(3.0, 6.0, P.zoom);
+            stone *= 1.0 + (STRATA_AMP * (band - 0.5) + 0.14 * (bed - 0.5)) * smoothstep(3.0, 6.0, P.look_zoom);
         }
         alb *= mix(stone, 1.0, t.wall);
         if (P.flora == 2u) {
