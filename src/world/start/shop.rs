@@ -478,7 +478,20 @@ impl StartMenu {
         c.rrect(Rect::new(0.0, 0.0, sw, top), 0.0, [8, 11, 14, 236]);
         c.rrect(Rect::new(0.0, top - s.max(1.0), sw, s.max(1.0)), 0.0, EDGE);
         let purse_w = c.text(Weight::SemiBold, 20.0 * s, (sw - x, 30.0 * s), Align::Right, &shop.purse, ACCENT);
-        c.text_fit(Weight::SemiBold, 18.0 * s, (x, 30.0 * s), Align::Left, &shop.heading, sw - 2.0 * x - purse_w - 24.0 * s, TEXT);
+        // The run's planets as a strip before the points (Look D, 11-24),
+        // where the heading keeps its whole width beside it.
+        let mut room = sw - 2.0 * x - purse_w - 24.0 * s;
+        let mut tip = None;
+        if let Some(run) = shop.run.as_ref().filter(|r| !r.stops.is_empty()) {
+            let sw_ = (run.stops.len() as f32 * 26.0 * s).min(420.0 * s);
+            let head = c.atlas.measure(Weight::SemiBold, 18.0 * s, &shop.heading);
+            if head <= room - sw_ - 28.0 * s {
+                let r = Rect::new(sw - x - purse_w - 28.0 * s - sw_, 6.0 * s, sw_, top - 10.0 * s);
+                tip = super::run_strip(c, &run.stops, r, hover, s);
+                room -= sw_ + 28.0 * s;
+            }
+        }
+        c.text_fit(Weight::SemiBold, 18.0 * s, (x, 30.0 * s), Align::Left, &shop.heading, room, TEXT);
 
         // The bottom bar: on (Land; the range's round), out (Give up; leave
         // the range), the range's tools, and the hint or a notice.
@@ -825,6 +838,10 @@ impl StartMenu {
             let r = Rect::new(p.0 - CARD_W * s / 2.0, p.1 - ch * 0.4, CARD_W * s, ch);
             c.rrect(Rect::new(r.x + 4.0 * s, r.y + 6.0 * s, r.w, r.h), 9.0 * s, [0, 0, 0, 110]);
             self.card_tile(&shop.rows[i], r, true, false, None, true, c, s);
+        }
+        // The strip's bead under the pointer, named, over everything.
+        if let Some((at, t)) = tip.filter(|_| drag.is_none()) {
+            super::strip_tip(c, at, &t, s);
         }
     }
 

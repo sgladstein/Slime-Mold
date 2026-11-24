@@ -1109,6 +1109,11 @@ struct App {
     run_file: Option<std::path::PathBuf>,
     /// The text last written there, so an unchanged run is not rewritten.
     run_saved: String,
+    /// Whether the run's planet is saved mid-game, for the run as it
+    /// was when last asked (its seed, depth and the save's text): the main
+    /// menu's Run row says "under way" (Look D, 11-24). Kept so the menu
+    /// does not read the planet's save every frame.
+    run_mid: Option<((u64, u32, usize), bool)>,
     /// When the run was last checked against the file (`App::autosave`).
     run_checked: Option<Instant>,
 }
@@ -1234,6 +1239,7 @@ impl App {
             slime: None,
             run_file: None,
             run_saved: String::new(),
+            run_mid: None,
             run_checked: None,
             viewer: None,
         };
@@ -2465,9 +2471,22 @@ impl App {
                 self.marks.ring(at, g.rules.build.reach * g.world.scale(), [235, 220, 180, 110]);
             }
         }
+        // (The Run row's "under way": asked again only when the run moved
+        // on or was saved again, `run_mid`.)
+        if self.menu.is_some() {
+            let key = self.run.as_ref().map(|r| (r.seed, r.depth, self.run_saved.len()));
+            if key.is_some() && self.run_mid.map(|m| m.0) != key {
+                self.run_mid = key.map(|k| (k, self.planet_saved().is_some()));
+            }
+        }
         let model = self.model(hover, ghost);
         if let (Some(c), Some(menu)) = (self.canvas.as_mut(), self.menu.as_mut()) {
-            // The start menu instead of the HUD, over the whole map.
+            // The start menu instead of the HUD, over the whole map. The
+            // run as its Run row tells it (Look D, 11-24).
+            menu.run_now = self.run.as_ref().filter(|r| !r.range).map(menu::run_view);
+            if let (Some(v), Some((_, mid))) = (menu.run_now.as_mut(), self.run_mid) {
+                v.mid = mid;
+            }
             c.clear();
             menu.draw(c);
             if let Some(cp) = self.canvas_pass.as_mut() {
