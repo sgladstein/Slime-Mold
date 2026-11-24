@@ -16,6 +16,7 @@ sources:
   - Reports/lab-bait-trade-2026-11-24/README.md
   - Reports/lab-crystal-bait-2026-11-24/README.md
   - Reports/lab-march-counter-2026-11-24/README.md
+  - Reports/lab-rescue-2026-11-24/README.md
   - Reports/lab-steering-2026-11-17/README.md
   - Reports/lab-twists-2026-11-24/README.md
   - Reports/late-threat-2026-11-20/README.md
@@ -540,12 +541,15 @@ The Lab tried a counter to planet 4's armoured march from the slime's own food r
 
 For run variety (Milestone 2's test 2), the Lab built three planet twists a run could roll, each a minute's change to the slime's own numbers (11-24, its branch only): a cold snap (its step at 0.3: streams break into beads and stall), night (sensors reach 2.5 times as far: thick roads to food and the squad) and wind (each step pushed downwind: the body leans one way). Each shows within 30 s on planet 1 and changes no outcome there; it recommends wind and the cold snap, each with a card line ([planet twists](../../Reports/lab-twists-2026-11-24/README.md)).
 
+For a planet goal other than the heart, the Lab built a rescue (11-24, its branch only): three soldiers hidden deep in the slime behind a ring of doors it gnaws, found when reached, then walked home at a wounded pace their squad keeps to, while the strikers turn on the march. On planet 1 an early rescue won in 1:19 to 2:30, a late one lost all three on the march, and greedy and idle lost when the ring gave way or the hiding ran out. It recommends an occasional rescue planet from planet 3, timed on the GTX 1070 first ([rescue planet](../../Reports/lab-rescue-2026-11-24/README.md)).
+
 ## Sources
 
 - [balance review](../../Reports/balance-review-2026-11-20/README.md), *Findings*.
 - [balance review, 11-24](../../Reports/balance-review-2026-11-24/README.md), *Ranked findings*.
 - [march counter](../../Reports/lab-march-counter-2026-11-24/README.md), *Results*.
 - [planet twists](../../Reports/lab-twists-2026-11-24/README.md), *Recommendation*.
+- [rescue planet](../../Reports/lab-rescue-2026-11-24/README.md), *Recommendation*.
 - [crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md), *Results*.
 - [bait or drain](../../Reports/lab-bait-trade-2026-11-24/README.md), *Results*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
