@@ -179,8 +179,8 @@ pub struct Rules {
     pub fire_hurt: f32,
     /// **Trodden ground** (`Game::trample`, Direction's option A, 11-24):
     /// once a game second, the plants within `trample_r` dish cells of a
-    /// soldier who has held still for `trample_after` seconds (moved under
-    /// `trample_speed` dish cells a second) are trodden down to this, their
+    /// soldier who holds its ground (stands within `trample_speed` dish
+    /// cells of where it stood a second before) are trodden down to this, their
     /// kind kept: short plants, still on screen, that fire hardly catches
     /// in and burns cool on (its catch goes with the plants, its heat tops
     /// out at plants over `fire_full` 0.8, so 0.1 caps it at an eighth).
@@ -192,7 +192,6 @@ pub struct Rules {
     /// in 15 s). 0 is off.
     pub trample_to: f32,
     pub trample_r: f32,
-    pub trample_after: f32,
     pub trample_speed: f32,
     /// **Your own sleep gas** (2026-11-18, the owner's Noita rule: "Any
     /// single spell that is incredibly powerful is also really
@@ -1152,7 +1151,6 @@ impl Rules {
             "fire_hurt" => &mut self.fire_hurt,
             "trample_to" => &mut self.trample_to,
             "trample_r" => &mut self.trample_r,
-            "trample_after" => &mut self.trample_after,
             "trample_speed" => &mut self.trample_speed,
             _ => return None,
         })
@@ -1194,8 +1192,7 @@ impl Default for Rules {
             fire_hurt: 10.0,
             trample_to: 0.1,
             trample_r: 1.5,
-            trample_after: 1.0,
-            trample_speed: 1.0,
+            trample_speed: 2.0,
             doze: 1.0,
             touch: 1.5,
             elbow: 1.6,

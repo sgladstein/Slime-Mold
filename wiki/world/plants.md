@@ -112,12 +112,12 @@ so it stayed ([tinder](../../Reports/gun-tinder-2026-11-17/README.md);
 
 **Trodden ground** (2026-11-24, Direction's option A for planet 3's fire;
 `Rules::trample_to` 0.1, GPU only): once a game second, the plants within
-`trample_r` (1.5 dish cells) of a soldier who has held still for a second
+`trample_r` (1.5 dish cells) of a soldier holding its ground (within `trample_speed`, 2 dish cells, of where it stood a second before)
 are trodden down to 0.1, their kind kept (the IGNITE pass's mode 2,
 `Engine::trample`). The ground a squad holds shows as short, thin crowns,
 and fire hardly crosses it: catching goes with the plants on a cell, and a
 fire's heat tops out at the plants over `fire_full` (0.8). Ground already
-burning is not trodden out, and a moving soldier treads nothing, so walking
+burning is not trodden out, and a walking soldier treads nothing, so walking
 into fire burns as before (`trample.rs`; the GPU tests
 `trodden_ground_is_short_plants_and_fire_is_not_trodden_out` and
 `a_squad_walking_into_fire_still_burns_and_one_holding_still_is_spared`).

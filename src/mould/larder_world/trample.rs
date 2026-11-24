@@ -1,9 +1,10 @@
 //! **Trodden ground, a squad's firebreak** (squad thread, 2026-11-24;
 //! Direction's option A, `Rules::trample_to`).
 //!
-//! A soldier who has held still for `trample_after` seconds treads the
-//! plants within `trample_r` dish cells of it down to `trample_to`, once a
-//! game second, the kind kept. The ground a squad holds turns to short
+//! A soldier holding its ground (within `trample_speed`, 2 dish cells, of
+//! where it stood a second before) treads the plants within `trample_r`
+//! dish cells of it down to `trample_to`, once a game second, the kind
+//! kept. The ground a squad holds turns to short
 //! plants, which the picture shows as smaller, thinner crowns (the plants'
 //! cover goes with their density, `view.wgsl` `plant_cover`), and fire
 //! hardly crosses it: a fire's catch goes with the plants on the cell, and
@@ -30,35 +31,36 @@
 use super::*;
 
 impl<W: World> Game<W> {
-    /// Each frame: who has held still, and once a game second the discs of
-    /// ground they tread (`World::trample`). Cost: nothing on a frame, and
-    /// once a second one IGNITE pass over the dish for every three still
-    /// soldiers who don't stand within a dish cell of another's disc.
+    /// Once a game second: each living soldier within `trample_speed` dish
+    /// cells of where it stood a second ago treads the ground round it
+    /// (`World::trample`). The test is the second's net move, not the
+    /// frame's speed: a squad holding a crystal under attack shuffles 1 to
+    /// 3 cells a second as it shoots and makes room, and the run bot's
+    /// squads on planet 3 never stood a whole second under 1 cell a second
+    /// while they fought (first build, 11-24: discs only while they waited
+    /// for the landing, none in the burning from 60 s on). Cost: one IGNITE
+    /// pass over the dish a second for every three treading soldiers who
+    /// don't stand within a dish cell of another's disc.
     pub(super) fn trample(&mut self, dt: f32) {
         let r = self.rules;
         if r.trample_to <= 0.0 || !r.squads {
             return;
-        }
-        let sc = self.s();
-        self.still.resize(self.soldiers.len(), 0.0);
-        for (s, held) in self.soldiers.iter().zip(self.still.iter_mut()) {
-            let moved = (s.x - s.was.0).hypot(s.y - s.was.1) / sc;
-            *held = if s.alive && moved <= r.trample_speed * dt { *held + dt } else { 0.0 };
         }
         self.trample_clock += dt;
         if self.trample_clock < 1.0 {
             return;
         }
         self.trample_clock -= 1.0;
+        let sc = self.s();
+        self.still.resize(self.soldiers.len(), (f32::NAN, f32::NAN));
         let mut discs: Vec<(f32, f32, f32, f32)> = Vec::new();
-        for (s, &held) in self.soldiers.iter().zip(&self.still) {
-            if held < r.trample_after {
-                continue;
-            }
+        for (s, was) in self.soldiers.iter().zip(self.still.iter_mut()) {
             let (x, y) = (s.x / sc, s.y / sc);
+            let held = s.alive && (x - was.0).hypot(y - was.1) <= r.trample_speed;
+            *was = if s.alive { (x, y) } else { (f32::NAN, f32::NAN) };
             // A blob of soldiers a cell apart treads one disc, not one
             // each: the discs overlap by more than half anyway.
-            if discs.iter().any(|d| (d.0 - x).hypot(d.1 - y) < 1.0) {
+            if !held || discs.iter().any(|d| (d.0 - x).hypot(d.1 - y) < 1.0) {
                 continue;
             }
             discs.push((x, y, r.trample_r, r.trample_to));
