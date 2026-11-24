@@ -258,6 +258,19 @@ pub(super) struct Plan {
     /// 1.5, 9 at 3 (seeds 3, 5 and 6 gained, none lost), so 3 is the
     /// default. 0: off.
     pub siege: f32,
+    /// **Brace for a raid** (11-24, Direction and Enemy: every planet 4
+    /// loss of the run bot was a bite in the 6 to 34 s after a big armoured
+    /// raid set out, where the owner loses 0 to 3 a planet): a march of at
+    /// least this many members coming for the squad (`Raids::marching`, its
+    /// target within 2 ranges or its body within 1.5, and its body within
+    /// 4) is kited. Inside 2 ranges the squad walks a range straight away
+    /// from it, shooting as it goes (`Order::Move`); farther out it stands
+    /// and shoots. 0: off. Off by default until the PC's paired planet 4
+    /// games say: on software Vulkan one pair at 1,500 kiting from 1.2
+    /// ranges lost planet 4 map 1795038793 alike (68 and 69 fallen), and
+    /// a rerun of the same game lost 34 (lavapipe games vary run to run),
+    /// so one pair says nothing.
+    pub brace: u32,
 }
 
 /// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
@@ -313,6 +326,7 @@ impl Default for Plan {
             cool: 0.0,
             broke: 20.0,
             siege: 3.0,
+            brace: 0,
         }
     }
 }
@@ -341,7 +355,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 46] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege"];
+    pub const DIALS: [&'static str; 47] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -414,6 +428,7 @@ impl Plan {
             "cool" => self.cool = num(v)?.max(0.0),
             "broke" => self.broke = num(v)?.max(0.0),
             "siege" => self.siege = num(v)?.max(0.0),
+            "brace" => self.brace = whole(v)?,
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -492,6 +507,8 @@ struct Memory {
     /// (`Plan::cool`); seconds spent stepping out of it.
     hot: Vec<((f32, f32), f32)>,
     pub cooled: u32,
+    /// Turns the squad spent braced for a raid (`Plan::brace`).
+    pub braced: u32,
     /// The harvest at its last rise, and when (`Plan::broke`).
     harvest_at: (f32, f32),
     /// The siege's closing in (`hunt`): the origin's fewest members, when
@@ -1155,6 +1172,43 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
             g.apply(Cmd::Heal(q as u8));
         }
         return fin(g, 3);
+    }
+    // Braced for a raid (`brace`): kite the march coming for the squad.
+    if log && std::env::var_os("STRAT_DBG").is_some() {
+        for r in &g.raids.marching {
+            eprintln!("RAID t {t:.0} march members {} first {} centre {:.0} to {:.0} (range {range:.0})", r.members, r.first, dist(r.centre, m), dist(r.to, m));
+        }
+        if let Some(r) = g.raids.sent.last() {
+            eprintln!("RAID t {t:.0} last sent tick {} held {} share {:.2} to {:.0} aim {:?}", r.tick, r.held, r.share, dist(r.to, m), r.aim);
+        }
+    }
+    if p.brace > 0 {
+        let threat = g
+            .raids
+            .marching
+            .iter()
+            .filter(|r| r.members >= p.brace && r.first > 0 && (dist(r.to, m) < 2.0 * range || dist(r.centre, m) < 1.5 * range) && dist(r.centre, m) < 4.0 * range)
+            .min_by(|a, b| dist(a.centre, m).total_cmp(&dist(b.centre, m)));
+        if let Some(r) = threat {
+            let c = r.centre;
+            let dc = dist(c, m).max(1.0);
+            let o = if dc < 2.0 * range {
+                let away = (m.0 + (m.0 - c.0) / dc * range, m.1 + (m.1 - c.1) / dc * range);
+                let dh = dist(home, m).max(1.0);
+                let homeward = (m.0 + (home.0 - m.0) / dh * range, m.1 + (home.1 - m.1) / dh * range);
+                let to = if g.ground(away.0, away.1) { away } else { homeward };
+                Order::Move(to.0, to.1)
+            } else {
+                Order::Fight(m.0, m.1)
+            };
+            let same = members.iter().all(|&k| std::mem::discriminant(&g.soldiers[k].order) == std::mem::discriminant(&o));
+            // A walk away is renewed each turn; a stand only when new.
+            if !same || matches!(o, Order::Move(..)) && fresh_order(g, o) {
+                g.apply(Cmd::SquadOrder(q as u8, o));
+            }
+            MEM.with_borrow_mut(|mm| mm.braced += 1);
+            return fin(g, 3);
+        }
     }
     // Out of its own fire (`cool`): toward and past the cool members, or
     // back from the slime when every member is hot.
