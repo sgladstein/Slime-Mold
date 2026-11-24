@@ -13,7 +13,6 @@ sources:
   - Reports/fruiting-2026-11-20/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
-  - Reports/lab-march-counter-2026-11-24/README.md
   - Reports/lab-steering-2026-11-17/README.md
   - Reports/late-threat-2026-11-20/README.md
   - Reports/lure-field-2026-11-18/README.md
@@ -533,13 +532,10 @@ Harder from planet 2 since 2026-11-22 (the owner won all 8 planets that night lo
 
 Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1-4 in under 5:02 with 14 to 35 soldiers and met 0 to 3 raids, since the first was drawn at about 4:00): the first raid at about 2:00 and the next about 100 s apart (`RAID_FIRST`, `RAID_EVERY`; 4:00 and 150 s on planet 1), and a touching walker bites 2.5 instead of 2 (`DRAIN`). Mini-bosses then: grade 0.2 to 0.7 on planet 2, pace 1.2 to 1.5 times the slime's, broken under 20% (12% by planet 8) of their first members instead of 30% (`BossRules::for_depth`). A raid's marchers take 2 blows on planets 2-3, 3 on 4-6 and 4 on 7-8 until the march meets the squad or its target (`RAID_ARMOUR`, `RaidRules::march_armour`; the owner: tougher slime has a better chance of reaching the soldiers).
 
-The Lab tried a counter to planet 4's armoured march from the slime's own food rule (11-24, its branch only): a hungry marcher on a charged crystal leaves its march and eats. A still squad of 8 lost no one to planet 4's marches on three seeds with mini-bosses off, so the rig had no march wall to counter; feeding did starve a wanderer heading for a crystal on one seed ([march counter](../../Reports/lab-march-counter-2026-11-24/README.md)).
-
 ## Sources
 
 - [balance review](../../Reports/balance-review-2026-11-20/README.md), *Findings*.
 - [balance review, 11-24](../../Reports/balance-review-2026-11-24/README.md), *Ranked findings*.
-- [march counter](../../Reports/lab-march-counter-2026-11-24/README.md), *Results*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
 - [arranging the gun](../../Reports/gun-order-2026-11-14.md), *What was built*.
 - [the gun range](../../Reports/gun-range-2026-11-15.md), *What was built*.
