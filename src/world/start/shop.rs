@@ -1249,7 +1249,8 @@ impl StartMenu {
         // 72 → 144", the tick where the gun is now). Every row of the gun
         // on every card read the same on most of them (polish review
         // finding 8, 11-24: Delay and Tinder showed five identical rows).
-        let own = row.area == ShopArea::Cards && !row.bars.is_empty();
+        // (A device body's rolls too, on the Tools tab, 11-24.)
+        let own = (row.area == ShopArea::Cards || row.group == "Tools") && !row.bars.is_empty();
         let changed: Vec<(String, f32, String)> = if !own && row.bars.is_empty() && !mine.is_empty() {
             row.stats
                 .iter()
