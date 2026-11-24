@@ -3304,6 +3304,10 @@ pub fn key_name(k: KeyCode) -> Option<String> {
         KeyZ => "Z",
         Tab => "Tab",
         Backquote => "`",
+        // The squad's spread keys (2026-11-23); without them the key card
+        // read ", " for "[, ]" (polish review, 2026-11-24).
+        BracketLeft => "[",
+        BracketRight => "]",
         Space => "Space",
         Delete => "Del",
         _ => return None,
