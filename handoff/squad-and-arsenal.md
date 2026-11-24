@@ -48,6 +48,15 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, gun steps E4 and F, the dart (pathfinding thread).** #778
+merged (E4 autocast, `autocast.rs`; the Dart, `Card::Dart`). #781 queued: F
+part 1, the shop's luck levers (`Run::luck`, `family`, `Pick::Hold`,
+`Pick::Reroll`, `since_rare`; Trigger and Expire tier 3). F part 2 next PR:
+`Ammo::lasts` (Blast, Bomb, Flare, Dart, Mind; not Gas or Mist, Direction
+09:51Z) and the first relic, Carrion (`run::Relic`, `RoundRules::carrion_*`,
+shops after planets 3, 5, 7). Next: more relics (the two slime-rule ones go
+to Enemy through Direction), then whatever Direction sends.
+
 **2026-11-24, gun steps E2 and E3 (pathfinding thread).** #764 (trodden
 ground, unlit stars) merged. Branch `claude/project-thread-4xnivn`, one PR:
 `trample_r` 2.5; E2, devices carry a loadout's cards (`Run::device_loadout`,

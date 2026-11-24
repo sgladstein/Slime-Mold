@@ -425,6 +425,17 @@ first guesses, `Run::luck`):
   a row with none (`since_rare`) gives the next one a one-in-three-more
   chance of one, so the fourth surely shows one.
 - Trigger and Expire are tier 3 beside Multicast, the plan's rule cards.
+- **Lasts** (threshold rolls, Direction 09:51Z): a rolled Blast, Bomb,
+  Flare, Dart or Mind bullet rolls how long its crater, burn, lure or
+  status holds, a plain normal draw (`Ammo::lasts`, sigma 0.55 of its
+  log): about one in twenty reaches `LASTING` 2.5x, shown on the card's
+  Lasts bar. Gas and Mist never roll it: a sleep cloud outlasting a
+  walker's waking is what sleep wearing off (11-18) stopped.
+- **Relics**: one for sale, 300, on a Relics tab in the shops after planets
+  3, 5 and 7 (`Relic`, `RELIC_DEPTHS`). The first, **Carrion**: a soldier's
+  shot that kills 3 walkers or more leaves a lure mark there for 3 s, at
+  most 6 (`RoundRules::carrion_secs`), so slime streams to its dead, into a
+  held line's guns or onto an overrun squad.
 
 ## Saving the run
 

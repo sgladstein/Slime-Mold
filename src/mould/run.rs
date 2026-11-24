@@ -41,7 +41,7 @@ use super::kit::KitRules;
 use super::larder_world::Rules;
 use super::levelgen::{self, Planet};
 use super::map::{Map, G_ROCK, MAP_H, MAP_W};
-use super::rounds::{self, Ammo, Card, Kind, Set, Shell};
+use super::rounds::{self, Ammo, Card, Kind, RoundRules, Set, Shell};
 use super::tiers::Tier;
 
 /// Where a level's ground comes from.
@@ -920,6 +920,8 @@ pub enum Group {
     Squad,
     Build,
     Tools,
+    /// Rare run-wide rules (gun step F), after planets 3, 5 and 7.
+    Relics,
     /// Guns owned and for sale.
     Guns,
     /// Gun cards: in the gun, in the bag, for sale, and more on offer.
@@ -933,6 +935,7 @@ impl Group {
             Group::Squad => "Squad",
             Group::Build => "Buildings",
             Group::Tools => "Tools",
+            Group::Relics => "Relics",
             Group::Guns => "Guns",
             Group::Cards => "Cards",
             Group::Dev => "Dev mode",
@@ -1023,6 +1026,52 @@ pub fn first_gun() -> Gun {
 
 /// Guns for sale in each shop.
 pub const GUN_OFFER: usize = 2;
+/// **Relics** (gun step F, Direction 11-24 08:54Z and 09:51Z; the
+/// gun-system plan's "rare run-wide rules"): one is for sale in the shops
+/// of `RELIC_DEPTHS`, after planets 3, 5 and 7, at `Relic::price`; owned,
+/// it holds for the rest of the run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Relic {
+    /// Slime the squad kills draws calm slime to where it died
+    /// (`RoundRules::carrion_secs`).
+    Carrion,
+}
+
+impl Relic {
+    pub const ALL: [Relic; 1] = [Relic::Carrion];
+
+    pub fn key(self) -> &'static str {
+        match self {
+            Relic::Carrion => "carrion",
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Relic::Carrion => "Carrion",
+        }
+    }
+
+    pub fn about(self) -> &'static str {
+        match self {
+            Relic::Carrion => "For the rest of the run, where a soldier's shot kills slime, calm slime streams to the spot for 3 s: into your guns when you hold a line, onto you when you are overrun.",
+        }
+    }
+
+    pub fn price(self) -> u32 {
+        match self {
+            Relic::Carrion => 300,
+        }
+    }
+
+    pub fn of_key(k: &str) -> Option<Relic> {
+        Relic::ALL.into_iter().find(|r| r.key() == k)
+    }
+}
+
+/// The shops that offer a relic: after planets 3, 5 and 7.
+pub const RELIC_DEPTHS: [u32; 3] = [4, 6, 8];
+
 /// The first paid reroll's price (`Run::reroll_price`, gun step F; the
 /// gun-system plan's "rerolls that cost more each time"; a tier-1 card is
 /// 80): it doubles each time in one shop. A first guess.
@@ -1232,6 +1281,8 @@ pub enum Pick {
     Body(usize),
     /// Owned body `i` into the loadout shown, which gives up its gun.
     CarryBody(usize),
+    /// The relic on offer bought (gun step F).
+    Relic,
     /// The card offers redrawn for `reroll_price` (gun step F): the guns
     /// and bodies on offer stay, the held card too.
     Reroll,
@@ -1322,6 +1373,9 @@ pub struct Run {
     pub held: Option<Card>,
     pub paid_rerolls: u32,
     pub since_rare: u32,
+    /// Relics owned, and the one this shop sells (`RELIC_DEPTHS`).
+    pub relics: Vec<Relic>,
+    pub relic_offer: Option<Relic>,
     /// The run ended on a lost level.
     beaten: bool,
     /// The gun range (`Run::range`): a free armory, not a run.
@@ -1358,7 +1412,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, beaten: false, range: false, played: 0.0 }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0 }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -1733,6 +1787,14 @@ impl Run {
     /// The bodies on autocast, as `Cmd::Auto`'s bits (`kit::TOOLS` order).
     pub fn autocast(&self) -> u8 {
         self.bodies.iter().filter(|b| b.auto).fold(0, |m, b| m | (1 << b.kind.tool()))
+    }
+
+    /// What the run's relics do to the gun cards' rules (gun step F):
+    /// Carrion's marks (`RoundRules::carrion_secs`, 3 s).
+    pub fn round_rules(&self, rr: &mut RoundRules) {
+        if self.relics.contains(&Relic::Carrion) {
+            rr.carrion_secs = 3.0;
+        }
     }
 
     /// The body of `kind` owned, if any (its index in `bodies`).
@@ -2177,6 +2239,7 @@ impl Run {
     fn next_shop(&mut self) {
         self.paid_rerolls = 0;
         self.restock();
+        self.relic_offer = RELIC_DEPTHS.contains(&self.depth).then(|| Relic::ALL.into_iter().find(|r| !self.relics.contains(r))).flatten();
         let rare = self.offers.iter().any(|&c| c.kind() != Kind::Payload && c.tier() >= 3);
         self.since_rare = if rare || self.depth < power_from(3) { 0 } else { self.since_rare + 1 };
     }
@@ -2256,6 +2319,13 @@ impl Run {
             let (now, then) = if b.auto { ("on", "off") } else { ("off", "on") };
             let about = format!("{} on autocast goes off on its own whenever the squad's device slot is ready and thick slime is in reach, at least {:.0} cells from every soldier of the squad. Click to turn it {then}.", b.kind.name(), KitRules::default().auto_gap);
             rows.push(Row { group: Group::Tools, face: Face::Item(b.kind.key()), on: b.auto, name: format!("{} autocast: {now}", b.kind.name()), about, price: String::new(), state: format!("autocast {now}"), ready: true, pick: Pick::BodyAuto(i) });
+        }
+        // Relics (gun step F): those owned, and this shop's for sale.
+        for rl in self.relics.iter() {
+            rows.push(Row { group: Group::Relics, face: Face::Item(rl.key()), on: true, name: rl.name().into(), about: rl.about().into(), price: String::new(), state: "owned".into(), ready: false, pick: Pick::Relic });
+        }
+        if let Some(rl) = self.relic_offer.filter(|_| !self.field && !self.range) {
+            rows.push(Row { group: Group::Relics, face: Face::Item(rl.key()), on: false, name: rl.name().into(), about: format!("A relic, rare: {}", rl.about()), price: rl.price().to_string(), state: "for sale".into(), ready: rl.price() <= self.points, pick: Pick::Relic });
         }
         for (i, b) in self.body_offers.iter().enumerate().filter(|_| !self.field) {
             let p = b.price();
@@ -2466,6 +2536,16 @@ impl Run {
                 true
             }
             Pick::DevSkip => self.skip(),
+            Pick::Relic => {
+                let Some(rl) = self.relic_offer.filter(|_| !self.field && !self.range) else { return false };
+                if rl.price() > self.points {
+                    return false;
+                }
+                self.points -= rl.price();
+                self.relics.push(rl);
+                self.relic_offer = None;
+                true
+            }
             Pick::Reroll => {
                 let price = self.reroll_price();
                 if self.range || self.field || price > self.points {
@@ -2646,6 +2726,8 @@ impl Run {
         put("held", self.held.map_or(String::new(), |c| c.word()));
         put("paid_rerolls", self.paid_rerolls.to_string());
         put("since_rare", self.since_rare.to_string());
+        put("relics", self.relics.iter().map(|r| r.key()).collect::<Vec<_>>().join(" "));
+        put("relic_offer", self.relic_offer.map_or("", |r| r.key()).to_string());
         put("played", format!("{:.1}", self.played));
         s
     }
@@ -2723,6 +2805,8 @@ impl Run {
         r.held = get("held").and_then(Card::from_word);
         r.paid_rerolls = num("paid_rerolls").map_or(0, |v| v as u32);
         r.since_rare = num("since_rare").map_or(0, |v| v as u32);
+        r.relics = list("relics").into_iter().filter_map(Relic::of_key).collect();
+        r.relic_offer = get("relic_offer").and_then(Relic::of_key);
         // A save from before 11-24 has none: its time so far is unknown.
         r.played = get("played").and_then(|v| v.parse::<f32>().ok()).filter(|v| v.is_finite() && *v >= 0.0).unwrap_or(0.0);
         Ok(r)
@@ -3713,6 +3797,41 @@ mod tests {
             rare += usize::from(r.offers.iter().any(|c| c.kind() != Kind::Payload && c.tier() == 3));
         }
         eprintln!("planet 5's first shop shows a tier-3 card in {rare} of 40 seeds without pity");
+    }
+
+    /// **Relics** (gun step F): Carrion is for sale after planets 3, 5
+    /// and 7 only, once; bought, it is owned for the run, sets
+    /// `carrion_secs` and stays in the save.
+    #[test]
+    fn carrion_is_a_relic_sold_after_planets_3_5_and_7() {
+        let mut r = Run::new(1);
+        let mut sold = Vec::new();
+        for _ in 0..7 {
+            r.won(3);
+            if r.relic_offer.is_some() {
+                sold.push(r.depth);
+            }
+        }
+        assert_eq!(sold, vec![4, 6, 8], "after planets 3, 5 and 7");
+        let mut r = Run::new(1);
+        for _ in 0..3 {
+            r.won(3);
+        }
+        let row = r.shop().into_iter().find(|w| w.pick == Pick::Relic).expect("a relic row");
+        assert_eq!((row.group, row.name.as_str(), row.price.as_str()), (Group::Relics, "Carrion", "300"));
+        r.points = 299;
+        assert!(!r.pick(Pick::Relic));
+        let mut rr = RoundRules::default();
+        r.round_rules(&mut rr);
+        assert_eq!(rr.carrion_secs, 0.0);
+        r.points = 300;
+        assert!(r.pick(Pick::Relic) && r.relics == vec![Relic::Carrion] && r.points == 0 && r.relic_offer.is_none());
+        r.round_rules(&mut rr);
+        assert_eq!(rr.carrion_secs, 3.0);
+        assert_eq!(Run::from_save(&r.save_text()).map(|f| f.relics), Ok(vec![Relic::Carrion]));
+        r.won(3);
+        r.won(3);
+        assert_eq!((r.depth, r.relic_offer), (6, None), "one relic so far, owned: none more for sale");
     }
 
     /// **Bodies** (gun step E3, Direction 11-24): planet 1's shop sells
