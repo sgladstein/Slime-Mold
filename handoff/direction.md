@@ -213,6 +213,13 @@ end.
   #681 before any row moves. Losses in the smoke table doubled between
   the first and second day's main (59 to 115 on 9 planets, Enemy's #670
   to #681); planets are still won.
+- **11-24 03:09Z, Milestone 1 done** (his words in the slime thread).
+  NOW.md rewritten for Milestone 2 with six exit tests (origin wins every
+  planet, a run length he picks, the eight-planet curve, save and resume,
+  60 fps at his 4K screen on the 1070, everything on). Asked him the run
+  length on a card (today about 75 min). D8, the CPU engine, is asked
+  after it, once Engine lists what stands on that engine. Things to try
+  now lead with the origin.
 - **11-22 morning (Chicago night)**: he won all eight planets ("Still
   too easy"); #721 raised planets 2 to 8 partway (row in
   `wiki/decisions-game.md`). Next: Engine's run bot on his 11 maps and the
