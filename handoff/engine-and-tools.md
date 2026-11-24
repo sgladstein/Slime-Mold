@@ -388,6 +388,15 @@ to Enemy, then batch v; after Squad's #810 lands, add the builder arm
 to every curve pass, CI's plan unchanged. The next 1070 timing batch also
 times the HUD canvas at 4K, ui=125% (Look's ask).
 
+**2026-11-24 evening.** #829 merged (`clock=480` default). Sent to
+Enemy: y2 (planet 8 size stays 1.0; snipe breaks P6 0/0/2, P8 0/0/1), z4
+(planet 4 siege at armour 15: 5 of 6 against 4, so P4 goes to 15 in
+Enemy's D7). Sent to Squad: batch x (builder arm 17 of 24). This change
+fixes the bot calling off far ghosts (stuck squad on P7 map B). On the
+PC: y3 (P5 snipe and siege, as-is vs armour 15, main 0e01b47). Next: the
+fifth curve pass once Enemy's D7 PR lands (main arm and builder arm, six
+maps); the HUD canvas and landing-card timings in the next 1070 batch.
+
 **2026-11-24 late.** Merged: #811 (curve batch t, dials `army=`,
 `clock=`), #816 (`hand=origin2`: the D7 heart baseline's hand closes in
 on the origin; the origin line prints `deepest N of M`), #826 (the origin

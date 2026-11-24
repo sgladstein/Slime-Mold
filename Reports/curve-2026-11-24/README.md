@@ -221,3 +221,41 @@ walker dropped out of its lump's count, so on the Dozer and the Sleeper
 the heart's members dozed off and it read as cut down (the Enemy lane,
 #824). Batch v is void; it reruns after #824, with planets 6 and 8 of
 batch u2.
+
+## Batch v rerun (y2 part B) and the planet 6 and 8 heart snipe (y2 part A)
+
+On main 16b449c (#824 in), 1070. Planet 8 at size 1.0 against 1.4,
+`storm=0`, six maps, 720 s: size 1.0 won 2, 4 open, 0 lost; size 1.4 won
+1, 3 open (map C's heart fell at 714 s), 2 lost (seeds 2 and 3). Within
+the spread on six maps, but the only losses came at 1.4, so the Enemy
+lane keeps planet 8's size. The `hand=origin2` snipe on default hearts
+(armour 12) broke planet 6's heart at banks 1600/4800/11200 on 0/0/2 of
+three seeds and planet 8's on 0/0/1 (before #824: 0/0/2 and 0/0/0); at
+1600 and 4800 every squad died by 77 s after one or two lunges.
+
+## Batch z4: the planet 4 siege at origin armour 15
+
+Main 2d7b6ba (clock=480 the default), CI plan, six maps, 720 s, as is
+against `set=origin_armour=15` (1070, 12 games). As is won 4, armour 15
+won 5; map B lost in both, and seed 2 lost as is and won at 15 (the arms
+share their marks to 300-330 s and split once the siege starts, the
+1070's spread). Where both won, the heart fell 53, 77 and 50 s later at
+armour 15 on maps A, C and 3, and 144 s earlier on seed 1. The Enemy
+lane puts planet 4 at armour 15 in its D7 change.
+
+## Batch x: the builder arm on the owner's maps
+
+Plan `bot,want=torch.standard|rush,aim=6,cards=0,pumps=1,guard=1,hunters=1,body=grenade,blast=40`
+(#810's dials) on maps A, B, C, planets 1 to 8, main 5cb2f5f (1070, 24
+games): 17 won. Against batch t's main arm on the same maps (21, an
+older build): 7 games the main arm won and the builder lost, 3 the
+other way (p 0.34). Pumps raised income 17% on the mean (planet 8:
+12,600 to 24,000 pumped of 26,000 to 66,000); the grenade body killed 1
+to 4% of the walkers, the Hunter turret 0 to 2%. Planet 7 map B
+starved (peak 8 soldiers, income 2,911 in 600 s): the bot placed its
+pump 464 cells off across the maze, the squad stood stuck 405 off, and
+the bot later picked the same crystal again. Fixed in `strat.rs` in the
+same change (a ghost the squad stops nearing is called off after 20 s,
+and an unreached pump refuses its crystal); on software Vulkan the
+first 330 s went from 139 s building and two ghosts called off at 41
+and 83 s to 70 s building with the second pump up by 35 s.

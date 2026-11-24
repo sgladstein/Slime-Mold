@@ -556,9 +556,20 @@ struct Memory {
     refused: Vec<usize>,
     /// Crystals whose pump was eaten, until when they wait.
     eaten: Vec<(usize, f32)>,
-    /// The ghost the squad is raising and since when: one not up in 40 s
-    /// is called off (its price comes back).
-    raising: Option<(usize, f32)>,
+    /// The ghost the squad is raising: which, since when, when a builder
+    /// first reached it, and the squad's nearest approach and its time.
+    /// It is called off (its price comes back) 40 s after a builder
+    /// reached it, or, while none has, once the squad has come no nearer
+    /// for 20 s; a pump called off unreached refuses its crystal for good.
+    /// Until 11-24 a flat 40 s ran from the order. On batch x's planet 7
+    /// map B the squad walked 50 cells toward a pump 464 away and stood
+    /// at 405 for good, so the flat 40 s called it off, then picked the
+    /// same crystal again later (two pumps and a hunter called off, 139
+    /// of the first 330 s building, 6 to 8 soldiers, income 4,122 in
+    /// 330 s on software Vulkan; 2,911 in 600 s on the 1070). Counting
+    /// the 40 s only from arrival, alone, was worse: the squad stood for
+    /// 120 s at each ghost (331 of 330 s building).
+    raising: Option<Raising>,
     /// Soldiers ever bought and the most alive, for the league's row.
     pub bought: u32,
     pub peak: usize,
@@ -1008,6 +1019,9 @@ fn defences(g: &Game<GpuWorld>, p: &Plan, c: usize, to: (f32, f32)) -> Vec<Site>
     out
 }
 
+/// `Mem::raising`: (ghost, since, reached, (nearest, when)).
+type Raising = (usize, f32, Option<f32>, (f32, f32));
+
 /// What the bank goes to next.
 #[derive(Clone, Copy, Debug)]
 enum Want {
@@ -1179,6 +1193,9 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
                 let cost = price(g, w) + keep;
                 if g.bank >= cost {
                     MEM.with_borrow_mut(|mm| mm.saving = None);
+                    if std::env::var_os("STRAT_DBG").is_some() {
+                        eprintln!("DBG t {t:.0} place {w:?} cost {cost:.0} bank {:.0} alive {}", g.bank, g.alive());
+                    }
                     if !place(g, &p, w, &sense) {
                         // Refused: count it as tried so another is wanted.
                         MEM.with_borrow_mut(|mm| match w {
@@ -1358,14 +1375,40 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
         .filter(|&b| sense.mass_near(g.buildings[b].at, range * 0.5) < 40 * n as u32)
         .min_by(|&a, &b| dist(g.buildings[a].at, m).total_cmp(&dist(g.buildings[b].at, m)));
     if let Some(b) = ghost {
-        let since = MEM.with_borrow_mut(|mm| match mm.raising {
-            Some((x, at)) if x == b => at,
+        let at_site = g.raising(b).0 > 0;
+        let d = dist(g.buildings[b].at, m);
+        let (reached, nearest) = MEM.with_borrow_mut(|mm| match &mut mm.raising {
+            Some((x, _, reached, nearest)) if *x == b => {
+                if at_site && reached.is_none() {
+                    *reached = Some(t);
+                }
+                // Nearer by a cell or more: still closing in.
+                if d < nearest.0 - g.world.scale() {
+                    *nearest = (d, t);
+                }
+                (*reached, *nearest)
+            }
             _ => {
-                mm.raising = Some((b, t));
-                t
+                let reached = at_site.then_some(t);
+                mm.raising = Some((b, t, reached, (d, t)));
+                (reached, (d, t))
             }
         });
-        if t - since > 40.0 {
+        if std::env::var_os("STRAT_DBG").is_some() && (t - t.round()).abs() < 0.02 && (t.round() as u64).is_multiple_of(5) {
+            let bd = &g.buildings[b];
+            eprintln!("DBG t {t:.0} ghost {b} {:?} built {:.2} raising {:?} d {:.1} range {range:.1} mass {} order {:?}", bd.kind, bd.built, g.raising(b), dist(bd.at, m), sense.mass_near(bd.at, range * 0.5), members.first().map(|&k| g.soldiers[k].order));
+        }
+        if reached.map_or(t - nearest.1 > 20.0, |r| t - r > 40.0) {
+            if std::env::var_os("STRAT_DBG").is_some() {
+                eprintln!("DBG t {t:.0} unbuild {b} {:?} reached {reached:?} nearest {nearest:?}, bank {:.0} alive {}", g.buildings[b].kind, g.bank, g.alive());
+            }
+            if reached.is_none() && g.buildings[b].kind == Kind::Pump {
+                let at = g.buildings[b].at;
+                let cs = g.world.crystals();
+                if let Some(c) = (1..cs.len()).min_by(|&x, &y| dist(cs[x].0, at).total_cmp(&dist(cs[y].0, at))) {
+                    MEM.with_borrow_mut(|mm| mm.refused.push(c));
+                }
+            }
             g.apply(Cmd::Unbuild(b));
             MEM.with_borrow_mut(|mm| mm.raising = None);
             return fin(g, 2);
