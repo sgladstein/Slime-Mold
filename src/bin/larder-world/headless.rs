@@ -135,6 +135,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 app.run = Some(r);
             }
         }
+        // `menu=runs` and `main-runs` (Direction 11-24): the Past runs
+        // page, and the main page with its row, over three made-up ended
+        // runs on `run=`'s seed.
+        if flag == "runs" || flag == "main-runs" {
+            if let Some(r) = app.run.clone().or_else(|| app.args.run.clone()) {
+                m.runs = runs::film_runs(&r);
+            }
+        }
         m.show(p);
         match flag {
             "shop-build" => {

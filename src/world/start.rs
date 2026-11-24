@@ -422,6 +422,87 @@ impl RunView {
     }
 }
 
+/// A run that ended, as the Runs page lists it (Direction 11-24: "the
+/// date, planets won, time played, how the run ended (the planet and what
+/// killed the squad), and the deck and bodies held"). The game keeps them
+/// in `runs.txt` beside the run's save (the window's `runs.rs`).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct PastRun {
+    /// When it ended, "2026-11-24 14:05" (UTC).
+    pub date: String,
+    pub seed: u64,
+    /// "won", "lost" or "given up".
+    pub end: String,
+    /// The planet it ended on, from 1.
+    pub depth: u32,
+    /// Real seconds played (`Run::played`).
+    pub played: f32,
+    /// Each planet of the run: its name, slime and stars (None: not
+    /// freed), and the seconds played on it where they are known.
+    pub planets: Vec<PastPlanet>,
+    /// What ended it, a sentence: "The squad was lost at 6:12: 5 to the
+    /// slime's touch, 1 to fire."
+    pub why: String,
+    /// What the squad held at the end: the guns, the cards, the device
+    /// bodies and the relics, each by name.
+    pub guns: Vec<String>,
+    pub cards: Vec<String>,
+    pub bodies: Vec<String>,
+    pub relics: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct PastPlanet {
+    pub name: String,
+    pub slime: String,
+    pub stars: Option<u8>,
+    pub secs: Option<f32>,
+}
+
+impl PastRun {
+    /// Planets freed (a dev skip counts, as `Run::line` counts it).
+    pub fn freed(&self) -> usize {
+        self.planets.iter().filter(|p| p.stars.is_some()).count()
+    }
+
+    /// Its planets as the run's strip draws them.
+    pub fn stops(&self) -> Vec<RunStop> {
+        self.planets
+            .iter()
+            .enumerate()
+            .map(|(k, p)| RunStop { name: p.name.clone(), slime: p.slime.clone(), stars: p.stars, here: k + 1 == self.depth as usize && p.stars.is_none(), lost: self.end == "lost" && k + 1 == self.depth as usize })
+            .collect()
+    }
+
+    /// The headline: "The home world is free", "Lost on planet 4, Mire",
+    /// "Given up on planet 3, Mire".
+    pub fn title(&self) -> String {
+        let name = self.planets.get((self.depth as usize).saturating_sub(1)).map_or(String::new(), |p| format!(", {}", p.name));
+        match self.end.as_str() {
+            "won" => "The home world is free".into(),
+            "lost" => format!("Lost on planet {}{name}", self.depth),
+            _ => format!("Given up on planet {}{name}", self.depth),
+        }
+    }
+}
+
+/// The fastest win of each planet, from 1, over `runs` (Direction 11-24:
+/// "his best time per planet"): a planet won with a star or more whose
+/// time is known; a dev skip (no stars) is not a time.
+pub fn best_times(runs: &[PastRun], planets: usize) -> Vec<Option<f32>> {
+    let mut best = vec![None; planets];
+    for r in runs {
+        for (k, p) in r.planets.iter().enumerate().take(planets) {
+            if let (Some(st), Some(t)) = (p.stars, p.secs) {
+                if st > 0 && best[k].is_none_or(|b: f32| t < b) {
+                    best[k] = Some(t);
+                }
+            }
+        }
+    }
+    best
+}
+
 /// The run's planets as a row of beads (Look D, 11-24), one a planet, in
 /// `r`: freed ones gold with their stars under them, the one ahead ringed
 /// in the accent, a lost one red, the rest faint; joined by a line, gold
@@ -634,6 +715,9 @@ pub enum Page {
     Shop,
     /// What the build holds: what is new, and the things to try.
     News,
+    /// The runs that ended, and the best time on each planet (Direction
+    /// 11-24).
+    Runs,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -686,6 +770,11 @@ enum Hit {
     Try(usize),
     /// The build page's tab `k`: what is new, the things to try.
     NewsTab(usize),
+    /// The main page's "Past runs" row.
+    Runs,
+    /// Past run `i` (newest first): a click or the keyboard's row tells
+    /// it in full beside the list.
+    PastRun(usize),
 }
 
 pub struct StartMenu {
@@ -715,6 +804,9 @@ pub struct StartMenu {
     /// How many declared switches the plan allows at once (`MOST_OFF`),
     /// for the Experiments tab's count.
     pub most_off: usize,
+    /// The runs that ended, newest first (`runs.txt`); empty hides the
+    /// main page's "Past runs" row.
+    pub runs: Vec<PastRun>,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
     /// That run as the Run row's caption tells it (Look D, 11-24); the
@@ -783,7 +875,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, runs: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
     }
 
     /// The option named `key`.
@@ -954,7 +1046,7 @@ impl StartMenu {
         match self.page {
             // (No Keys row since 11-15: the key list is Options' last tab,
             // and F1 or ? opens it from anywhere.)
-            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Viewer]).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Viewer]).chain((!self.runs.is_empty()).then_some(Hit::Runs)).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -964,6 +1056,7 @@ impl StartMenu {
                 let n = b.map_or(0, |b| if self.news_tab == 0 { b.news.len() } else { b.to_try.len() });
                 (0..n).map(|i| if self.news_tab == 0 { Hit::Line(i) } else { Hit::Try(i) }).chain([Hit::Back]).collect()
             }
+            Page::Runs => (0..self.runs.len()).map(Hit::PastRun).chain([Hit::Back]).collect(),
         }
     }
 
@@ -984,6 +1077,7 @@ impl StartMenu {
                 Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => Hit::Range,
                 Page::Shop => Hit::Run,
                 Page::News => Hit::Build,
+                Page::Runs => Hit::Runs,
                 Page::Main => Hit::Run,
             };
             self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
@@ -1045,6 +1139,9 @@ impl StartMenu {
             Hit::Tab(k) => self.open_tab(k),
             Hit::Flip(by) => self.flip(by),
             Hit::Build => self.show(Page::News),
+            Hit::Runs => self.show(Page::Runs),
+            // (A run's row only takes the focus: `button`.)
+            Hit::PastRun(_) => {}
             Hit::NewsTab(k) => self.open_news_tab(k),
             // (A line's row only takes the focus: `button`.)
             Hit::Line(_) => {}
@@ -1068,7 +1165,7 @@ impl StartMenu {
     fn flip(&mut self, by: isize) {
         let n = self.sheets.max(1) as isize;
         self.sheet = (self.sheet as isize + by).rem_euclid(n) as usize;
-        if matches!(self.page, Page::Options | Page::Missions | Page::Shop) || (self.page == Page::News && self.news_tab == 0) {
+        if matches!(self.page, Page::Options | Page::Missions | Page::Shop | Page::Runs) || (self.page == Page::News && self.news_tab == 0) {
             self.focus = self.sheet * self.per.max(1);
         } else if self.page == Page::News {
             self.focus = self.try_first.get(self.sheet).copied().unwrap_or(0);
@@ -1202,7 +1299,7 @@ impl StartMenu {
                 self.picked = true;
             }
             KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
-            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys || (self.page == Page::News && self.news_tab == 0) => {
+            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if matches!(self.page, Page::Keys | Page::Runs) || (self.page == Page::News && self.news_tab == 0) => {
                 self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
             }
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
@@ -1276,7 +1373,7 @@ impl StartMenu {
         // 17:31Z) found the title and its line repeated on every page took
         // 130 to 220 of the 565 units a 1080-line screen has at 200%
         // (`Reports/menu-layout-research-2026-11-15/`).
-        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::News);
+        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs);
         // A shade down the left, fading out, so the panel reads over the
         // dish; the shop and the inner pages span the screen, so they dim
         // all of it.
@@ -1349,6 +1446,7 @@ impl StartMenu {
             Page::Keys => self.keys_page(c, x, at, w, s),
             Page::News if self.news_tab == 0 => self.news_page(c, x, at, s, focus),
             Page::News => self.try_page(c, x, at, s, focus),
+            Page::Runs => self.runs_page(c, x, at, s, focus),
             // (Its own frame, above.)
             Page::Shop => at,
         };
@@ -1401,6 +1499,8 @@ impl StartMenu {
             Page::News if self.news_tab == 0 && self.sheets > 1 => "Up/Down pick a line  ·  Left/Right or the wheel turn the page  ·  Tab things to try  ·  Esc back",
             Page::News if self.news_tab == 0 => "Up/Down pick a line  ·  Tab things to try  ·  Esc back",
             Page::News => "Up/Down pick  ·  Enter or click ticks it  ·  Tab what is new  ·  Esc back",
+            Page::Runs if self.sheets > 1 => "Up/Down pick a run  ·  Left/Right or the wheel turn the page  ·  Esc back",
+            Page::Runs => "Up/Down pick a run  ·  Esc back",
         };
         let mut pager_w = if paged { 170.0 * s } else { 0.0 };
         // The main page's corner: which build this is, and left of it, in
@@ -1499,13 +1599,21 @@ impl StartMenu {
         }
         items.push(("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false, false));
         items.push(("Slime viewer", "Each slime and its events on demand; tune its looks and rules, and save them".into(), Hit::Viewer, false, false));
-        // What the build holds, first of the rows that are not a way to
-        // play: how much is new since the last build played here, and
-        // what is left to try.
+        // The runs that ended (Direction 11-24), first of the rows that
+        // are not a way to play, once there is one.
+        if !self.runs.is_empty() {
+            let n = self.runs.len();
+            let most = self.runs.iter().map(PastRun::freed).max().unwrap_or(0);
+            let won = self.runs.iter().filter(|r| r.end == "won").count();
+            let sub = format!("{n} run{} ended{}; the best time on each planet", if n == 1 { "" } else { "s" }, if won > 0 { format!(", {won} won") } else { format!(", {most} planets freed at most") });
+            items.push(("Past runs", sub, Hit::Runs, false, true));
+        }
+        // What the build holds: how much is new since the last build
+        // played here, and what is left to try.
         let fresh = self.build.as_ref().map_or(0, BuildPage::fresh);
         if let Some(b) = &self.build {
             let sub: Vec<String> = [b.since(), b.left()].into_iter().filter(|t| !t.is_empty()).collect();
-            items.push(("What is new", sub.join(". "), Hit::Build, false, true));
+            items.push(("What is new", sub.join(". "), Hit::Build, false, self.runs.is_empty()));
         }
         items.push(("Options", "The UI size, the game and the planet, the slime's rules, and the keys".into(), Hit::Options, false, self.build.is_none()));
         if self.edit_maps {
@@ -1604,6 +1712,7 @@ impl StartMenu {
         let build = self.build.as_ref().filter(|_| self.page == Page::News);
         let name = match self.page {
             Page::Missions => "Campaign".to_string(),
+            Page::Runs => "Past runs".to_string(),
             Page::News => build.map_or(String::new(), |b| {
                 let mut n = b.name.clone();
                 if let Some(f) = n.get_mut(0..1) {
@@ -2059,6 +2168,160 @@ impl StartMenu {
         panel.bottom().max(r.bottom())
     }
 
+    /// The Runs page (Direction 11-24): the best time on each planet over
+    /// the runs kept, then the runs that ended, newest first, one a row (a
+    /// page of them if they outgrow the screen), and beside them the one
+    /// under the cursor (else the keyboard's) in full: how it ended, its
+    /// planets with their times, and what the squad held.
+    fn runs_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let runs = std::mem::take(&mut self.runs);
+        let bottom = self.runs_drawn(c, &runs, x, top, s, focus);
+        self.runs = runs;
+        bottom
+    }
+
+    fn runs_drawn(&mut self, c: &mut Canvas, runs: &[PastRun], x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let n = runs.len();
+        let (lw, nw) = self.split(c, x, s);
+        let room = self.room(c, top, s);
+        // The best times: a cell a planet, four a row.
+        let best = best_times(runs, crate::mould::run::PLANETS as usize);
+        let cols = 4;
+        let cell_h = 50.0 * s;
+        let bp = Rect::new(x, top, lw, 42.0 * s + best.len().div_ceil(cols) as f32 * cell_h + 6.0 * s);
+        self.glass(bp, c, s);
+        c.text(Weight::SemiBold, 15.0 * s, (bp.x + 20.0 * s, bp.y + 28.0 * s), Align::Left, "Best time on each planet", ACCENT);
+        let cw = (bp.w - 24.0 * s) / cols as f32;
+        for (k, b) in best.iter().enumerate() {
+            let cell = Rect::new(bp.x + 12.0 * s + (k % cols) as f32 * cw + 4.0 * s, bp.y + 42.0 * s + (k / cols) as f32 * cell_h, cw - 8.0 * s, cell_h - 8.0 * s);
+            c.rrect(cell, 8.0 * s, [255, 255, 255, if b.is_some() { 14 } else { 6 }]);
+            c.text(Weight::Medium, 12.5 * s, (cell.x + 10.0 * s, cell.y + 16.0 * s), Align::Left, &format!("Planet {}", k + 1), MUTED);
+            let (t, ink) = b.map_or(("not won yet".to_string(), [110, 120, 132, 255]), |t| (RunView::clock(t), TEXT));
+            let px = if b.is_some() { 17.0 * s } else { 13.0 * s };
+            c.text_fit(Weight::SemiBold, px, (cell.x + 10.0 * s, cell.y + 35.0 * s), Align::Left, &t, cell.w - 16.0 * s, ink);
+        }
+        // The runs, a row each: when, how it ended, planets freed, time.
+        let lt = bp.bottom() + 14.0 * s;
+        let (rh, cap) = (40.0 * s, 40.0 * s);
+        let per = ((room - (lt - top) - cap - 12.0 * s) / rh).floor().max(1.0) as usize;
+        if let Some(Hit::PastRun(i)) = focus {
+            self.sheet = i / per;
+        }
+        let (shown, pages) = sheet_of(n, per, self.sheet);
+        (self.sheets, self.per) = (pages, per);
+        self.sheet = self.sheet.min(pages - 1);
+        let first = shown.start;
+        let panel = Rect::new(x, lt, lw, cap + shown.len().max(1) as f32 * rh + 12.0 * s);
+        self.glass(panel, c, s);
+        c.text_fit(Weight::SemiBold, 15.0 * s, (panel.x + 20.0 * s, panel.y + 28.0 * s), Align::Left, &format!("{n} run{} ended, newest first", if n == 1 { "" } else { "s" }), panel.w - 40.0 * s, MUTED);
+        let date_w = c.atlas.measure(Weight::Medium, 13.5 * s, "00-00 00:00") + 14.0 * s;
+        let chip_w = c.atlas.measure(Weight::SemiBold, 12.5 * s, "GIVEN UP") + 16.0 * s;
+        let time_w = c.atlas.measure(Weight::SemiBold, 15.0 * s, "0:00:00") + 4.0 * s;
+        let mut told = None;
+        let mut y = panel.y + cap + 4.0 * s;
+        for i in shown {
+            let r = &runs[i];
+            let row = Rect::new(panel.x + 8.0 * s, y, panel.w - 16.0 * s, rh - 4.0 * s);
+            let focused = focus == Some(Hit::PastRun(i));
+            let hot = self.hover.is_some_and(|p| row.contains(p));
+            if focused || hot {
+                c.rrect(row, 9.0 * s, [255, 255, 255, if focused { 22 } else { 12 }]);
+            }
+            if focused {
+                c.outline(row, 9.0 * s, 1.5 * s, ACCENT);
+            }
+            if hot || (focused && told.is_none()) {
+                told = Some(i);
+            }
+            let base = row.y + row.h / 2.0 + 5.5 * s;
+            let mut tx = row.x + 10.0 * s;
+            c.text(Weight::Medium, 13.5 * s, (tx, base), Align::Left, r.date.get(5..16).unwrap_or(&r.date), MUTED);
+            tx += date_w;
+            let (word, ink) = match r.end.as_str() {
+                "won" => ("WON", [255, 196, 72, 255]),
+                "lost" => ("LOST", BAD),
+                _ => ("GIVEN UP", MUTED),
+            };
+            let chip = Rect::new(tx, row.y + (row.h - 20.0 * s) / 2.0, chip_w, 20.0 * s);
+            c.rrect(chip, 10.0 * s, with_alpha(ink, 0.16));
+            c.text(Weight::SemiBold, 12.5 * s, (chip.x + chip.w / 2.0, chip.y + 14.5 * s), Align::Centre, word, ink);
+            tx += chip_w + 12.0 * s;
+            c.text(Weight::SemiBold, 15.0 * s, (row.right() - 10.0 * s, base), Align::Right, &RunView::clock(r.played), TEXT);
+            let what = format!("{} of {} planets freed", r.freed(), r.planets.len());
+            c.text_fit(Weight::Medium, 15.0 * s, (tx, base), Align::Left, &what, row.right() - 20.0 * s - time_w - tx, [201, 210, 219, 255]);
+            self.hits.push((row, Hit::PastRun(i)));
+            y += rh;
+        }
+        // The run told in full.
+        let Some(r) = told.or((n > 0).then_some(first)).map(|i| &runs[i]) else { return panel.bottom() };
+        let tw = nw - 36.0 * s;
+        let stops = r.stops();
+        let held: Vec<(&str, String)> = [("Guns", &r.guns), ("Cards", &r.cards), ("Devices", &r.bodies), ("Relics", &r.relics)]
+            .into_iter()
+            .map(|(k, v)| (k, if v.is_empty() { "none".to_string() } else { v.join(", ") }))
+            .collect();
+        let held_h: f32 = held.iter().map(|(_, v)| Self::count(c, Weight::Medium, 14.0 * s, tw - 70.0 * s, v).max(1.0) * 20.0 * s + 4.0 * s).sum();
+        let why_h = Self::count(c, Weight::Medium, 15.0 * s, tw, &r.why) * 22.0 * s;
+        let row_h = 21.0 * s;
+        let need = 34.0 * s + 26.0 * s + why_h + 30.0 * s + 44.0 * s + stops.len() as f32 * row_h + 30.0 * s + 26.0 * s + held_h + 4.0 * s;
+        let pane = Rect::new(x + lw + 20.0 * s, top, nw, need.max(bp.h + 14.0 * s + panel.h).min(room.max(need)));
+        self.glass(pane, c, s);
+        let px = pane.x + 18.0 * s;
+        let mut y = pane.y + 34.0 * s;
+        let ink = match r.end.as_str() {
+            "won" => [255, 196, 72, 255],
+            "lost" => BAD,
+            _ => TEXT,
+        };
+        c.text_fit(Weight::SemiBold, 18.0 * s, (px, y), Align::Left, &r.title(), tw, ink);
+        y += 26.0 * s;
+        y += self.lines(c, Weight::Medium, 15.0 * s, (px, y), tw, 22.0 * s, &r.why, TEXT);
+        y += 4.0 * s;
+        c.text_fit(Weight::Medium, 13.5 * s, (px, y), Align::Left, &format!("{}  ·  played {}  ·  seed {}", r.date, RunView::clock(r.played), r.seed), tw, MUTED);
+        y += 14.0 * s;
+        let strip = Rect::new(px, y, tw, 30.0 * s);
+        let tip = run_strip(c, &stops, strip, self.hover, s);
+        y = strip.bottom() + 14.0 * s;
+        // Each planet: its number, name and slime, its time, its stars.
+        // (Room at the right for the stars, a gap from the time.)
+        let sw_ = 3.0 * (3.2 * s + 2.4 * s) + 16.0 * s;
+        for (k, (p, st)) in r.planets.iter().zip(&stops).enumerate() {
+            let base = y + 14.5 * s;
+            let ink = if p.stars.is_some() { TEXT } else if st.lost { BAD } else { MUTED };
+            c.text(Weight::SemiBold, 13.0 * s, (px, base), Align::Left, &(k + 1).to_string(), MUTED);
+            let when = match (p.secs, p.stars, st.lost) {
+                (Some(t), _, _) => RunView::clock(t),
+                (None, Some(_), _) => "?".into(),
+                (None, None, true) => "lost".into(),
+                _ => String::new(),
+            };
+            let right = px + tw - sw_;
+            c.text(Weight::Medium, 13.5 * s, (right, base), Align::Right, &when, ink);
+            let name_room = right - 60.0 * s - (px + 22.0 * s);
+            let name = format!("{}  {}", p.name, p.slime);
+            let npx = fit_px(c, &name, 13.5 * s, 10.0 * s, name_room);
+            c.text(Weight::Medium, npx, (px + 22.0 * s, base), Align::Left, &p.name, ink);
+            let nw2 = c.atlas.measure(Weight::Medium, npx, &format!("{}  ", p.name));
+            c.text_fit(Weight::Medium, npx, (px + 22.0 * s + nw2, base), Align::Left, &p.slime, name_room - nw2, MUTED);
+            if let Some(w) = p.stars {
+                star_dots(c, (px + tw - 9.0 * s, y + 8.0 * s), w, s);
+            }
+            y += row_h;
+        }
+        y += 30.0 * s;
+        c.text(Weight::SemiBold, 13.5 * s, (px, y), Align::Left, "What the squad held", MUTED);
+        y += 26.0 * s;
+        for (k, v) in &held {
+            c.text(Weight::SemiBold, 14.0 * s, (px, y), Align::Left, k, [201, 210, 219, 255]);
+            let h = self.lines(c, Weight::Medium, 14.0 * s, (px + 70.0 * s, y), tw - 70.0 * s, 20.0 * s, v, if v == "none" { MUTED } else { TEXT });
+            y += h.max(20.0 * s) + 4.0 * s;
+        }
+        if let Some((at, t)) = tip {
+            strip_tip(c, at, &t, s);
+        }
+        panel.bottom().max(pane.bottom())
+    }
+
     /// Wrapped text of at most `most` lines from a first baseline at `at`,
     /// the last ending in an ellipsis when it was cut; the height it took.
     #[allow(clippy::too_many_arguments)]
@@ -2221,7 +2484,7 @@ impl StartMenu {
     /// The pages the last drawn list took: an Options tab, the key list or
     /// the campaign (1 elsewhere). The fit tests'.
     pub fn sheets(&self) -> usize {
-        if matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::Shop | Page::News) {
+        if matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::Shop | Page::News | Page::Runs) {
             self.sheets
         } else {
             1
@@ -2944,10 +3207,11 @@ mod tests {
     #[test]
     fn every_page_follows_the_ui_size() {
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
-            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop, Page::News] {
+            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop, Page::News, Page::Runs] {
                 let size = |user: f32| {
                     let mut m = menu();
                     m.build = Some(build_page(12, 4));
+                    m.runs = past_runs(30);
                     m.keys = (0..40).map(|k| (format!("K{k}"), "Does a thing".to_string())).collect();
                     m.shop = Some(if page == Page::Shop { armory(9) } else { shop(14) });
                     m.show(page);
@@ -2968,7 +3232,7 @@ mod tests {
                         let b = m.body.unwrap_or(Rect::new(0.0, 0.0, screen.0 as f32, screen.1 as f32));
                         // The shop's two buttons and the inner pages'
                         // header are fixed, over and under the body.
-                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News) && h == Hit::Back);
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs) && h == Hit::Back);
                         assert!(r.y >= 0.0 && r.bottom() <= screen.1 as f32, "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen");
                         assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
                     }
@@ -2979,6 +3243,7 @@ mod tests {
                         Page::Options => Hit::Reset(0),
                         Page::Missions => Hit::Mission(0),
                         Page::News => Hit::Line(0),
+                        Page::Runs => Hit::PastRun(0),
                         Page::Keys | Page::Main => Hit::Back,
                     };
                     let probe = if page == Page::Main { Hit::Sandbox } else { probe };
@@ -2994,6 +3259,32 @@ mod tests {
             }
         }
     }
+    /// `n` ended runs, each lost a planet further in (to the eighth).
+    fn past_runs(n: usize) -> Vec<PastRun> {
+        (0..n)
+            .map(|k| {
+                let depth = (k % 8 + 1) as u32;
+                let planets = (1..=8u32)
+                    .map(|d| PastPlanet { name: format!("Planet{d}"), slime: "The Trunk".into(), stars: (d < depth).then_some(2), secs: (d <= depth).then_some(600.0 + k as f32) })
+                    .collect();
+                PastRun { date: format!("2026-11-{:02} 10:00", k % 28 + 1), seed: k as u64, end: "lost".into(), depth, played: 600.0 * depth as f32, planets, why: "The Trunk wiped out the squad at 6:50: 5 to the slime's touch, 1 to fire.".into(), guns: vec!["rifle".into()], cards: vec!["Pierce".into(); 12], bodies: vec!["Grenade".into()], relics: Vec::new() }
+            })
+            .collect()
+    }
+
+    /// The best time on each planet is the fastest won with a star; a
+    /// lost planet's and a skipped one's are not times.
+    #[test]
+    fn best_times_are_wins() {
+        let mut runs = past_runs(3);
+        runs[0].planets[0].secs = Some(100.0);
+        runs[1].planets[0] = PastPlanet { stars: Some(0), secs: Some(5.0), ..runs[1].planets[0].clone() };
+        let best = best_times(&runs, 8);
+        // Run 0 lost on planet 1 (no stars there): its 100 s is no win.
+        assert_eq!(best[0], Some(602.0));
+        assert_eq!((best[1], best[2]), (Some(602.0), None));
+    }
+
     /// A build page like the game's: `n` lines of what is new, the first
     /// `fresh` new to this PC, every third as long as the game's longest
     /// (on 11-18 one ran to 310 characters with 150 on how to try it),
