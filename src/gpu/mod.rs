@@ -3712,6 +3712,7 @@ impl Engine {
         let wk = floats(&read_back(&self.device, &self.queue, &self.walkers));
         let en = floats(&read_back(&self.device, &self.queue, &self.energy));
         let tx = w.div_ceil(8);
+        let pack = std::env::var("LAB_SORT_PACK").is_ok_and(|v| v == "1");
         let key = |k: usize| -> u64 {
             if self.grows && en.get(k).is_none_or(|&e| e < 0.0) {
                 return u64::MAX;
@@ -3719,6 +3720,11 @@ impl Engine {
             let (x, y) = (wk[4 * k].max(0.0) as usize, wk[4 * k + 1].max(0.0) as usize);
             if x >= w || y >= h {
                 return u64::MAX - 1;
+            }
+            // `LAB_SORT_PACK=1`: only pack the living first, in their
+            // old order (the ablation: how much is packing, how much place).
+            if pack {
+                return 0;
             }
             (((y / 8) * tx + x / 8) * 64 + (y % 8) * 8 + x % 8) as u64
         };
