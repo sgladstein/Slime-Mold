@@ -130,7 +130,12 @@ the run's, every squad's slot shares them, Squad 13:32Z), the Germ is
 autocast rows are switches, held cards say HELD (`hand_card`), relic
 lines lead with what they do. `run=SEED:DEPTH:grenade+mine` buys plain
 bodies for films. Experiments and What is new match main (one off:
-Crystals refill). Next: the 4K HUD draw counts for Engine.
+Crystals refill). 4K HUD counts (job 3) sent to Engine 11-24: the
+canvas bins, uploads and dispatches over every 16-px tile each frame
+(32,400 at 4K); the main page's shade is laid side by side
+(`shade_steps`) and the shop's planet map is gradient columns
+(`draw_glance`), 8x and 2.6x fewer tile entries. Next: whatever
+Direction sends.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

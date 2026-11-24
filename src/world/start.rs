@@ -333,6 +333,20 @@ pub struct RunStop {
     pub lost: bool,
 }
 
+/// A shade of `n` steps laid side by side: step `k` is what layers 0 to
+/// `k` (each `alpha(k / n)`, all of one colour) stacked over it come to,
+/// `1 - (1 - a0)(1 - a1)...`, so the picture is the stacked shade's with
+/// one shape over each pixel in place of up to `n`.
+fn shade_steps(n: usize, alpha: impl Fn(f32) -> u8) -> Vec<u8> {
+    let mut clear = 1.0f32;
+    (0..n)
+        .map(|k| {
+            clear *= 1.0 - alpha(k as f32 / n as f32) as f32 / 255.0;
+            (255.0 * (1.0 - clear)).round() as u8
+        })
+        .collect()
+}
+
 /// A run as the menu and the shop show it (Look D, 11-24): its planets,
 /// its points, and its play time where the run keeps one.
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -1249,20 +1263,25 @@ impl StartMenu {
         }
         let shade_w = (720.0 * s).min(sw);
         // (Forty thin steps: twelve showed as bands on the 1600-wide shot.)
-        for k in 0..40 {
-            let f = k as f32 / 40.0;
-            c.rrect(Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh), 0.0, [4, 6, 8, (9.0 * (1.0 - f)) as u8 + 2]);
+        // Side by side, each the alpha of the forty stacked layers that
+        // once covered it (`shade_steps`): stacked, every layer spanned
+        // the screen's height and the canvas walked ~430,000 tile entries
+        // a frame on this page at 4K (Look, 11-24, counted for Engine).
+        let steps = shade_steps(40, |f| (9.0 * (1.0 - f)) as u8 + 2);
+        for (k, &a) in steps.iter().enumerate() {
+            let (x0, x1) = (shade_w * (1.0 - (k + 1) as f32 / 40.0), shade_w * (1.0 - k as f32 / 40.0));
+            c.rrect(Rect::new(x0, 0.0, x1 - x0 + 0.5, sh), 0.0, [4, 6, 8, a]);
         }
         // The main page's title and its foot hint over a dish that fills the
         // window (`menu_camera`, 11-20): a shade down from the top and up
         // from the foot, so a crystal under the title does not wash it out.
         if self.page == Page::Main {
             let (top_h, foot_h) = (130.0 * s, 60.0 * s);
-            for k in 0..24 {
-                let f = k as f32 / 24.0;
-                let a = (7.0 * (1.0 - f)) as u8 + 1;
-                c.rrect(Rect::new(0.0, 0.0, sw, top_h * (1.0 - f)), 0.0, [4, 6, 8, a]);
-                c.rrect(Rect::new(0.0, sh - foot_h * (1.0 - f), sw, foot_h * (1.0 - f)), 0.0, [4, 6, 8, a]);
+            // Side by side as the left shade (`shade_steps`).
+            for (k, &a) in shade_steps(24, |f| (7.0 * (1.0 - f)) as u8 + 1).iter().enumerate() {
+                let (near, far) = ((1.0 - (k + 1) as f32 / 24.0), (1.0 - k as f32 / 24.0));
+                c.rrect(Rect::new(0.0, top_h * near, sw, top_h * (far - near) + 0.5), 0.0, [4, 6, 8, a]);
+                c.rrect(Rect::new(0.0, sh - foot_h * far, sw, foot_h * (far - near) + 0.5), 0.0, [4, 6, 8, a]);
             }
         }
         // The shop and the gun range's armory: one screen of their own
@@ -2246,6 +2265,18 @@ fn wordmark(c: &mut Canvas, name: &str, at: (f32, f32), px: f32, s: f32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The menu's shade laid side by side reads as the forty layers
+    /// stacked did: darkest at the edge, as dark there as all of them
+    /// over one another, lightening step by step.
+    #[test]
+    fn a_side_by_side_shade_is_the_stacked_one() {
+        let a = |f: f32| (9.0 * (1.0 - f)) as u8 + 2;
+        let steps = shade_steps(40, a);
+        let stacked = (0..40).fold(0.0f32, |d, k| d + (1.0 - d) * a(k as f32 / 40.0) as f32 / 255.0);
+        assert!((steps[39] as f32 - 255.0 * stacked).abs() <= 1.0, "{} vs {}", steps[39], 255.0 * stacked);
+        assert!(steps.windows(2).all(|w| w[0] <= w[1]) && steps[0] == a(0.0));
+    }
 
     /// The run's line (Look D, 11-24): under way, won, lost, with its
     /// play time.

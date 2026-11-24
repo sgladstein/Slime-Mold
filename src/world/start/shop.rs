@@ -259,27 +259,40 @@ fn glance(c: &mut Canvas, g: &Glance, r: Rect, s: f32) -> f32 {
 /// `glance` for the other pages (the campaign's note, 11-24).
 pub(super) fn draw_glance(c: &mut Canvas, g: &Glance, r: Rect, s: f32) -> f32 {
     c.shadow(r, 6.0 * s, 10.0 * s, 2.0 * s, [0, 0, 0, 120]);
-    // Each cell as 2 x 2 quarters, each the blend of the cells round its
-    // centre (bilinear): the 64-cell mosaic read as blocks (polish review
-    // finding 8, 11-24). A hair over each quarter, so no seam shows.
-    let (cw, ch) = (r.w / g.w as f32 / 2.0, r.h / g.h as f32 / 2.0);
+    // Bilinear between the cells' centres (polish review finding 8,
+    // 11-24: the 64-cell mosaic read as blocks): columns a quarter cell
+    // wide (at least 1.5 UI pixels), each sampled at its middle, and down
+    // each column one box a span between two rows of centres, whose
+    // vertical gradient is the blend down it. Until 11-24 it was 2 x 2
+    // flat quarters a cell, 23,000 shapes a frame on a 96-cell map and
+    // tile lists ~170 deep under it (Look, the 4K count for Engine); now
+    // half the shapes, and smooth down each column where quarters
+    // stepped. (Columns a cell wide read as vertical stripes.) A hair
+    // over each box, so no seam shows.
+    let cols = ((r.w / (1.5 * s)).round() as usize).clamp(8, 2 * g.w.max(1));
+    let cw = r.w / cols as f32;
     let cell = |i: isize, j: isize| g.cells[(j.clamp(0, g.h as isize - 1) as usize) * g.w + i.clamp(0, g.w as isize - 1) as usize];
-    for j in 0..2 * g.h {
-        for i in 0..2 * g.w {
-            // The quarter's centre in cells, less a half: the four cells
-            // it lies between and its place among them.
-            let (fx, fy) = ((i as f32 + 0.5) / 2.0 - 0.5, (j as f32 + 0.5) / 2.0 - 0.5);
-            let (x0, y0) = (fx.floor(), fy.floor());
-            let (tx, ty) = (fx - x0, fy - y0);
-            let (x0, y0) = (x0 as isize, y0 as isize);
-            let (a, b, d, e) = (cell(x0, y0), cell(x0 + 1, y0), cell(x0, y0 + 1), cell(x0 + 1, y0 + 1));
-            let mut q = [0u8, 0, 0, 255];
-            for k in 0..3 {
-                let top = a[k] as f32 * (1.0 - tx) + b[k] as f32 * tx;
-                let low = d[k] as f32 * (1.0 - tx) + e[k] as f32 * tx;
-                q[k] = (top * (1.0 - ty) + low * ty).round() as u8;
-            }
-            c.rrect(Rect::new(r.x + i as f32 * cw, r.y + j as f32 * ch, cw + 0.6, ch + 0.6), 0.0, q);
+    // The map's colour at (x, row of centres j): bilinear along x only.
+    let at_row = |fx: f32, j: isize| {
+        let x0 = fx.floor();
+        let t = fx - x0;
+        let (a, b) = (cell(x0 as isize, j), cell(x0 as isize + 1, j));
+        let mut q = [0u8, 0, 0, 255];
+        for k in 0..3 {
+            q[k] = (a[k] as f32 * (1.0 - t) + b[k] as f32 * t).round() as u8;
+        }
+        q
+    };
+    let ch = r.h / g.h as f32;
+    for i in 0..cols {
+        let fx = (i as f32 + 0.5) * g.w as f32 / cols as f32 - 0.5;
+        let x = r.x + i as f32 * cw;
+        // Spans: the half-cell above the first centre, h - 1 between
+        // centres, the half-cell below the last.
+        for j in -1..g.h as isize {
+            let y0 = r.y + ((j as f32 + 0.5) * ch).max(0.0);
+            let y1 = r.y + ((j as f32 + 1.5) * ch).min(r.h);
+            c.panel(Rect::new(x, y0, cw + 0.6, y1 - y0 + 0.6), 0.0, at_row(fx, j), at_row(fx, j + 1), 0.0, [0, 0, 0, 0]);
         }
     }
     c.outline(r, 4.0 * s, 1.0 * s, [255, 255, 255, 40]);
