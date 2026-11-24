@@ -4458,7 +4458,7 @@ fn lumpsum(@builtin(global_invocation_id) gid: vec3<u32>) {
 // "Remove the bronze", 2026-11-16) within the reach (header
 // word 3, squared whole cells) of the centre (word 2, a fine cell; all
 // ones for none, to release) joins lump word 1 - 1, leaving any breakaway
-// or other lump; its old members elsewhere leave.
+// (but not another lump, since 11-24); its old members elsewhere leave.
 @compute @workgroup_size(256)
 fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -4494,7 +4494,14 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         return;
     }
-    if (within) {
+    // A lump never takes another lump's members (11-24, planet 7 map C):
+    // a mini-boss forms on the crowd's top, which is the packed heart, and
+    // took 954 of its 1,575 members on software Vulkan (and enough on the
+    // GTX 1070 to break it at 59 s, no shot fired). The CPU twin's
+    // `form_lump` still takes them; no twin test forms one lump on
+    // another.
+    let other = (wd & LUMP_BITS) != 0u && (wd & LUMP_BITS) != mine;
+    if (within && !other) {
         set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
     } else if ((wd & LUMP_BITS) == mine) {
         set_dense(k, wd & ~(LUMP_BITS | HURT_BITS));

@@ -3647,6 +3647,40 @@ mod tests {
         assert!(g.origin.fell.is_none(), "the heart did not break");
     }
 
+    /// **A lump never takes another's members** (11-24, planet 7 map C: a
+    /// mini-boss formed on the crowd's top, the packed heart, and took 954
+    /// of its 1,575 members, breaking it on the GTX 1070 at 59 s with no
+    /// shot fired). Here lump 0 forms on the home crystal's slime, then lump
+    /// 1 forms over the same place twice as wide: lump 0 keeps its members
+    /// and lump 1 takes only the walkers round them.
+    #[test]
+    fn a_lump_never_takes_anothers_members() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let s = race_settings(seed, scale, walkers);
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+        while g.time() < 20.0 {
+            g.step();
+        }
+        let home = g.world.crystals()[0].0;
+        let members = |g: &mut Game<GpuWorld>, b: usize| {
+            // The sums lag a step behind a forming.
+            g.step();
+            g.step();
+            g.world.lumps()[b].map_or(0, |l| l.2)
+        };
+        g.world.form_lump(0, Some((home, 4.0)));
+        g.world.set_lump(0, crate::mould::big::Lump { armour: 2, ..crate::mould::big::Lump::default() });
+        let first = members(&mut g, 0);
+        g.world.form_lump(1, Some((home, 8.0)));
+        g.world.set_lump(1, crate::mould::big::Lump { armour: 2, ..crate::mould::big::Lump::default() });
+        let (kept, second) = (members(&mut g, 0), g.world.lumps()[1].map_or(0, |l| l.2));
+        eprintln!("lump 0: {first} members, {kept} after lump 1 formed over it with {second}");
+        assert!(first > 20, "lump 0 forms: {first}");
+        assert!(kept as f32 >= 0.9 * first as f32, "lump 0 keeps its members: {kept} of {first}");
+        assert!(second > 0, "lump 1 takes the walkers round it: {second}");
+    }
+
     /// **A heart's members never fruit** (11-24, planet 5's Sporer): a
     /// spore is not counted in its lump's sums, so a shot's alarm burst
     /// planet 5's heart into spores that read as cut down, and 8 soldiers
