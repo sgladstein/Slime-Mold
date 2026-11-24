@@ -307,6 +307,19 @@ pub(super) struct Plan {
     /// won as often as batch q's arm. Same-build pairs where the arms
     /// differ: 3 better, 1 worse.
     pub storm: f32,
+    /// **Storm with a big squad** (11-24, Direction: "look at run seeds 1
+    /// to 3"): the siege also starts once the squad holds `army` soldiers,
+    /// whatever the slime's size. In batch t (1070, 7d7857e) planet 6 run
+    /// seed 2 ran out the clock with 101 soldiers beside an origin of
+    /// 1,768 of 1,778, because the slime never fell to half its landing
+    /// size (0.52 at 12:00), and on planet 7 run seed 1 the grudge grew
+    /// from 123k to 183k while the squad held 64 and the origin stood
+    /// untouched. 0: off.
+    pub army: usize,
+    /// **Storm on the clock**: the siege also starts `clock` seconds after
+    /// the landing once the squad holds `STORM_ARMY`, whatever the slime's
+    /// size (the same games: a slime that grows never storms). 0: off.
+    pub clock: f32,
 }
 
 /// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
@@ -368,6 +381,8 @@ impl Default for Plan {
             siege: 3.0,
             brace: 0,
             storm: 0.5,
+            army: 0,
+            clock: 0.0,
         }
     }
 }
@@ -396,7 +411,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 52] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace", "storm", "mortars", "sprayers", "hunters", "body"];
+    pub const DIALS: [&'static str; 54] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace", "storm", "mortars", "sprayers", "hunters", "body", "army", "clock"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -481,6 +496,8 @@ impl Plan {
             "siege" => self.siege = num(v)?.max(0.0),
             "brace" => self.brace = whole(v)?,
             "storm" => self.storm = num(v)?.max(0.0),
+            "army" => self.army = whole(v)? as usize,
+            "clock" => self.clock = num(v)?.max(0.0),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -1648,7 +1665,9 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     // lavapipe), so it drains only at `per` a soldier, as `home_ok`.
     let origin = g.stand.live.filter(|h| h.origin && g.origin.fell.is_none());
     let rest_dry = (1..cs.len()).all(|c| cs[c].1 <= DRY || barren.contains(&c));
-    let storming = p.storm > 0.0 && g.alive() >= STORM_ARMY && g.mould as f32 <= p.storm * MEM.with_borrow(|mm| mm.start);
+    let storming = (p.storm > 0.0 && g.alive() >= STORM_ARMY && g.mould as f32 <= p.storm * MEM.with_borrow(|mm| mm.start))
+        || (p.army > 0 && g.alive() >= p.army)
+        || (p.clock > 0.0 && t >= p.clock && g.alive() >= STORM_ARMY);
     if let Some(h) = origin.filter(|_| p.siege > 0.0 && (rest_dry || storming) && !mopping) {
         if cs[0].1 > DRY && home_ok {
             let o = Order::Clear(cs[0].0 .0, cs[0].0 .1);

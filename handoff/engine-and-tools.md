@@ -374,8 +374,19 @@ clock waits while the squad closes in, and one the squad stalls short of
 is left for ten minutes. On lavapipe, map B went from a loss at 4:45 to a
 win at 5:09 (income 4,425). `size=F` (window argument: `league=`, `run=`,
 the gun lab) multiplies a run level's start walkers, slots and surge food
-(Enemy's planet 8 lever). Next: the fourth curve pass on all eight
-planets (test 3) on the 1070.
+(Enemy's planet 8 lever). #805 merged.
+
+**2026-11-24 evening.** Batch t (the fourth curve pass, six maps, 54
+games) is in `Reports/curve-2026-11-24`: 36 of 48 won, 21 of 24 on the
+owner's maps. The new pick's cost isn't measured (p 0.55), so it stays.
+Planet 8 at size 1.4 reads easier only because the storm scales with the
+start size. Batch v (main 9d3f19aac, planet 8, size 1.0 against 1.4 with
+`storm=0`, six maps) is queued on the PC after batch u (Enemy's heart-snipe
+baseline, 63 games on c1180812d) and the Lab's fix2. Next: report batch u
+to Enemy, then batch v; after Squad's #810 lands, add the builder arm
+(`plan=bot ... ` then rush with `pumps=1,guard=1,hunters=1,body=grenade,blast=40`)
+to every curve pass, CI's plan unchanged. The next 1070 timing batch also
+times the HUD canvas at 4K, ui=125% (Look's ask).
 
 **Next (11-22):** the next 1070 batch times the
 view's `full` after the Look lane's #638 (plant crowns skipped under the
