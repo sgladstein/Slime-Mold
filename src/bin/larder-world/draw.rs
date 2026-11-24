@@ -2408,7 +2408,7 @@ impl App {
         // stands; step C's line said it relanded fresh. Only where the run
         // is saved (the window's run.txt).
         m.pause_note = if self.planet_open() && self.run_file.is_some() {
-            vec!["Quit mid-planet: Back to the run".into(), "carries on from here.".into()]
+            vec!["Quit any time: this planet and".into(), "your run are saved.".into()]
         } else {
             Vec::new()
         };
