@@ -14,7 +14,7 @@ the food he can't spend, and what makes planet 5 long.
   [`curves.py`](curves.py) prints the slime's peak, the time at half or more,
   the fall from half to 5%, the army, the losses, and the food at half and at
   the end ([output](curves-output.txt)).
-- **An Arms batch on main with the origin** (PR #743, Arms run 45318989043,
+- **An Arms batch on main with the origin** (PR #743, Arms run 45318989043, queue in [`arms-queue.txt`](arms-queue.txt),
   on #699's head, which is what landed as fd3fe28). There were three plans on
   the same maps, whole runs through planets 1 to 4, each planet capped at
   12 game minutes:
