@@ -334,7 +334,9 @@ card text) and 08:30 (the guns a draw of the game).
   Six looks mocked ([page](../../Reports/card-links-2026-11-24/README.md)):
   brackets, fused shots, sockets on bullets (a rules change), hover trace,
   a "fires" line, shot colours. Squad and arsenal recommends fused shots
-  with the hover trace; the owner's pick is pending through Direction.
+  with the hover trace. The owner picked fused shots (11-24 15:51Z: "B is
+  best"): built in `start/shop.rs` from `rounds::shots`; every-shot cards
+  stay in their slot, framed where they sit. No hover trace, no wrapping.
 - **The gun-system review** (owner 11-16 02:34Z: "five different categories
   of bullets and two of them are just two different sized explosions"): the
   run's bullets hold three real effects and the four sets only lean numbers;

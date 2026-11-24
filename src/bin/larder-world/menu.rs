@@ -24,7 +24,7 @@ use slime_mould::mould::dps::Profile;
 use slime_mould::mould::guns;
 use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::build::news::{self, Memory};
-use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
+use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, ShotTag, StartEvent, StartMenu, TryLine, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -376,8 +376,12 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     // The slots and budget of what the gun slots show: the squad's gun,
     // or the turrets' rack (`Run::rack`).
     let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
-    let rows = r
-        .shop()
+    let raw = r.shop();
+    // The gun's cards in slot order, as the shop's gun row lists them (the
+    // rows it marks in the gun), for the fused shots (owner, 11-24).
+    let in_gun: Vec<rounds::Card> = raw.iter().filter(|row| row.on).filter_map(|row| if let Face::Card(c) = row.face { Some(c) } else { None }).collect();
+    let (shots, plain_shot) = rounds::shots(&in_gun);
+    let rows = raw
         .into_iter()
         .map(|row| {
             let after = dps_after(r, row.pick);
@@ -503,6 +507,15 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
         run: (!r.range).then(|| run_view(r)),
         slime: (!r.range && !does.is_empty()).then(|| (title_case(l.tier.name()), does.to_string())),
+        shots: shots
+            .into_iter()
+            .map(|t| match t {
+                rounds::Shot::Fired(n) => ShotTag::Fired(n),
+                rounds::Shot::Every => ShotTag::Every,
+                rounds::Shot::Idle => ShotTag::Idle,
+            })
+            .collect(),
+        plain_shot,
     }
 }
 

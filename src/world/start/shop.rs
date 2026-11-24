@@ -27,6 +27,10 @@ const TOP: f32 = 46.0;
 const BOTTOM: f32 = 62.0;
 /// The bench's column of row names (Gun, Bag).
 const LABEL: f32 = 46.0;
+/// The fused shots' frames, shot by shot (cycled), and the every-shot
+/// cards' (the owner's pick B, 2026-11-24).
+const SHOT_INKS: [Rgba; 4] = [[96, 190, 255, 255], [255, 126, 182, 255], [182, 156, 255, 255], [150, 214, 120, 255]];
+const EVERY_INK: Rgba = [63, 208, 191, 255];
 /// The space between tiles.
 const GAP: f32 = 8.0;
 /// An upgrade tile: a little wider than tall, so a two-word name fits at
@@ -613,7 +617,9 @@ impl StartMenu {
         } else {
             shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on).map_or("Your gun", |r| r.name.as_str())
         };
-        let gy = top + 30.0 * s;
+        // (Four units higher since the fused shots, 11-24, so the shots'
+        // names fit under it.)
+        let gy = top + 26.0 * s;
         let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
         let on = self.gun_cards();
         let line = format!("budget {} of {}  ·  {} of {} slots  ·  fired left to right", shop.budget.0, shop.budget.1, on.len(), shop.slots);
@@ -630,12 +636,91 @@ impl StartMenu {
         c.text_fit(Weight::Medium, 13.5 * s, (x + nw + 12.0 * s, gy), Align::Left, &line, lw - nw - 12.0 * s - dps_w, MUTED);
         let ch = CARD_H * s;
         let (sx, sroom) = (x + LABEL * s, lw - LABEL * s);
-        let row_y = top + 42.0 * s;
+        // Room above the row for the shots' names when there are any: six
+        // units (a twelve-unit drop put the armory's bullets on two pages
+        // at 200% on 540 lines; an empty gun keeps the old place).
+        let fused = !on.is_empty() && shop.shots.len() == on.len();
+        let row_y = top + if fused { 48.0 } else { 42.0 } * s;
         c.text(Weight::SemiBold, 13.5 * s, (x, row_y + ch / 2.0 + 5.0 * s), Align::Left, if shop.turrets { "Turrets" } else { "Gun" }, MUTED);
         let n = (shop.slots as usize).max(on.len()).max(1);
-        let cw = ((sroom - (n - 1) as f32 * g) / n as f32).min(CARD_W * s);
-        let slots: Vec<(Rect, Option<usize>)> = (0..n).map(|k| (Rect::new(sx + k as f32 * (cw + g), row_y, cw, ch), on.get(k).copied())).collect();
+        // Fused shots (the owner's pick, 2026-11-24 15:51Z: "B is best";
+        // the six options are `Reports/card-links-2026-11-24/`): the cards
+        // of one shot touch inside one frame and shots stand apart, so you
+        // see which bullet a Wide or a Trigger works on. The gun's own
+        // plain bullet that leftover cards go on, which no card stands
+        // for, is a ghost card after them. The slots keep their order (the
+        // mock-up moved the every-shot cards to the end; here they stay
+        // put, framed where they sit, so a drag lands where it looks).
+        let tag = |k: usize| if fused { shop.shots.get(k).copied() } else { None };
+        let ghost_shot = shop.plain_shot.filter(|_| fused);
+        let ghost_after = ghost_shot.and_then(|p| (0..on.len()).rev().find(|&k| tag(k) == Some(ShotTag::Fired(p))));
+        // The row's places: Some(slot), or None for the ghost.
+        let mut places: Vec<Option<usize>> = Vec::with_capacity(n + 1);
+        for k in 0..n {
+            places.push(Some(k));
+            if ghost_after == Some(k) {
+                places.push(None);
+            }
+        }
+        let group = |p: Option<usize>| match p {
+            Some(k) => tag(k).filter(|_| k < on.len()),
+            None => ghost_shot.map(ShotTag::Fired),
+        };
+        let (tight, apart) = (2.0 * s, 14.0 * s);
+        let gap_at = |i: usize| -> f32 {
+            match (group(places[i - 1]), group(places[i])) {
+                (Some(a), Some(b)) if a == b => tight,
+                (Some(_), _) | (_, Some(_)) if fused => apart,
+                _ => g,
+            }
+        };
+        let gaps: f32 = (1..places.len()).map(gap_at).sum();
+        let cw = ((sroom - gaps) / places.len() as f32).min(CARD_W * s);
+        let mut px = sx;
+        let mut place_rects = Vec::with_capacity(places.len());
+        for i in 0..places.len() {
+            if i > 0 {
+                px += gap_at(i);
+            }
+            place_rects.push(Rect::new(px, row_y, cw, ch));
+            px += cw;
+        }
+        let slots: Vec<(Rect, Option<usize>)> = places.iter().zip(&place_rects).filter_map(|(p, &r)| p.map(|k| (r, on.get(k).copied()))).collect();
         self.slot_rects = slots.iter().map(|x| x.0).collect();
+        // Each run of places in one shot: a frame round them, its name
+        // over it.
+        if fused {
+            let mut i = 0;
+            while i < places.len() {
+                let Some(t) = group(places[i]) else {
+                    i += 1;
+                    continue;
+                };
+                let mut j = i;
+                while j + 1 < places.len() && group(places[j + 1]) == Some(t) {
+                    j += 1;
+                }
+                let (a, b) = (place_rects[i], place_rects[j]);
+                let f = Rect::new(a.x - 3.0 * s, a.y - 3.0 * s, b.right() - a.x + 6.0 * s, ch + 6.0 * s);
+                let (ink, name) = match t {
+                    ShotTag::Fired(k) => (SHOT_INKS[k as usize % SHOT_INKS.len()], format!("Shot {}", k + 1)),
+                    ShotTag::Every => (EVERY_INK, "Every shot".to_string()),
+                    ShotTag::Idle => (FAINT, "Does nothing".to_string()),
+                };
+                c.rrect(f, 10.0 * s, with_alpha(ink, 0.08));
+                c.outline(f, 10.0 * s, 1.5 * s, with_alpha(ink, 0.8));
+                c.text_fit(Weight::SemiBold, 11.5 * s, (f.x + 6.0 * s, f.y - 3.0 * s), Align::Left, &name, f.w - 6.0 * s, ink);
+                i = j + 1;
+            }
+            // The ghost: the gun's plain bullet, which the leftovers ride.
+            if let Some((r, p)) = places.iter().zip(&place_rects).find(|(p, _)| p.is_none()).map(|(_, &r)| r).zip(ghost_shot) {
+                let ink = SHOT_INKS[p as usize % SHOT_INKS.len()];
+                c.rrect(r, 8.0 * s, [255, 255, 255, 5]);
+                c.outline(r, 8.0 * s, 1.0, with_alpha(ink, 0.45));
+                c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 - 1.0 * s), Align::Centre, "Plain bullet", r.w - 10.0 * s, MUTED);
+                c.text_fit(Weight::Medium, 11.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 13.0 * s), Align::Centre, "the gun's own", r.w - 10.0 * s, FAINT);
+            }
+        }
         let mut from = None;
         for (k, &(r, i)) in slots.iter().enumerate() {
             match i {

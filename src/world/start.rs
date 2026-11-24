@@ -314,6 +314,24 @@ pub struct Shop {
     /// The run so far, as the top bar's strip (Look D, 11-24); None in the
     /// armory.
     pub run: Option<RunView>,
+    /// Each card in the gun's slots, in order: the shot it joins
+    /// (`mould::rounds::shots`), for the fused shots (the owner's pick,
+    /// 2026-11-24 15:51Z). Empty: the slots are drawn one by one.
+    pub shots: Vec<ShotTag>,
+    /// The shot of the gun's own plain bullet that leftover cards go on,
+    /// drawn as a ghost card after them; None when there is none.
+    pub plain_shot: Option<u8>,
+}
+
+/// Which shot a card in the gun's slots joins (`mould::rounds::Shot`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShotTag {
+    /// Shot `n` of the gun's turn, from 0.
+    Fired(u8),
+    /// A card that rides on every bullet.
+    Every,
+    /// A card with nothing to act on: it does nothing.
+    Idle,
 }
 
 /// One planet of a run as the run's strip draws it (Look D, 11-24): its
@@ -2738,7 +2756,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, shots: Vec::new(), plain_shot: None }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -2787,7 +2805,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, shots: Vec::new(), plain_shot: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
