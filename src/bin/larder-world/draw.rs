@@ -2412,6 +2412,17 @@ impl App {
         } else {
             Vec::new()
         };
+        // The run on the pause menu (second polish pass, 11-24): only
+        // while the menu is open, as `run_view` clones the run a planet.
+        m.pause_run = if self.hud.menu_open() && self.planet_open() {
+            self.run.as_ref().filter(|r| !r.range).map(|r| {
+                let mut v = menu::run_view(r);
+                v.mid = true;
+                v
+            })
+        } else {
+            None
+        };
         m.loadout = Some(self.loadout(g, &sel));
         // A building selected takes the panel for its own state (option
         // b); a click on open ground, a tile's number or Space gives the

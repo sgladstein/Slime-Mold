@@ -1386,6 +1386,11 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         }
         // Esc: no squad commanded, so a click on a building selects it.
         "free" => app.let_go(),
+        // The pause menu as Esc opens it in play (the second polish pass,
+        // 11-24): a run's says what is saved.
+        "pause" => {
+            let _ = app.hud.key(KeyCode::Escape, true, false, &mut app.camera);
+        }
         // A click on the newest building (as the squad mode's click does
         // with no squad commanded).
         "pick" => {
@@ -1455,7 +1460,7 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
             };
             app.hud_event(HudEvent::Command { id })?;
         }
-        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, a formation's name, a spread step's, or buyN)")),
+        _ => return Err(format!("card=: no step {step} (main, build, tools, form, free, pause, pick, fire, hold, band, throw, upgrade, demolish, switch, cancel, a formation's name, a spread step's, or buyN)")),
     }
     println!("  card: {step}");
     Ok(())

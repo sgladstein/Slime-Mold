@@ -80,6 +80,11 @@ main page's Run row draw it, an ended run's row lists each planet
 (`run_rows`), and `App::run_mid` caches whether the planet is saved
 mid-game ("under way"). Play time is Engine's `Run::played` (#768).
 Films: `menu=main-run|main-won|main-lost`. Next: whatever Direction sends.
+Second polish pass (coordinator 08:41Z): the pause menu in a run shows
+the planet, its slime, the strip and the tally (`Model::pause_run`, set in
+draw.rs only while the menu is open); `card=pause` films it. Planets 4,
+6 and 8's HUD read clean on a bare start. Next: the shop's Tools tab once
+Squad's device bodies (#772) land, then the rest of Look D.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
