@@ -84,6 +84,13 @@ pub enum SlimeLook {
     /// saturation and tight glints, which the art director called crumpled
     /// gold foil (`view.wgsl`, look 9).
     Foil = 9,
+    /// The Dozer's nap (planet 8, 11-24): the Swarmer that sleeps off every
+    /// charge. Its sleeping walkers are a pale straw crust, as a Fuligo dries
+    /// to a rind (`NAP_RGB` in `view.wgsl`), and the ones awake
+    /// are the Swarmer's lemon, standing up where its alarm is (the swell).
+    /// It took the Sleeper's grey crust and gold first, so planet 8 read
+    /// as planet 6, and the grey read as gravel on the core's ground.
+    Doze = 10,
 }
 
 /// The game seconds of a walker's way that `SlimeLook::Threads` draws.
@@ -98,9 +105,10 @@ impl SlimeLook {
             Some(crate::mould::tiers::Tier::Trunk) => SlimeLook::Cords,
             Some(crate::mould::tiers::Tier::Swarmer) => SlimeLook::Swell,
             Some(crate::mould::tiers::Tier::Sleeper) => SlimeLook::Dormant,
-            // The Dozer (planet 8, 11-24) sleeps off its charges: the
-            // Sleeper's look shows which of it is asleep (Look's call).
-            Some(crate::mould::tiers::Tier::Dozer) => SlimeLook::Dormant,
+            // The Dozer (planet 8, 11-24) sleeps off its charges: a crust
+            // shows which of it is asleep, as the Sleeper's does, but its
+            // own (tan asleep, the Swarmer's lemon and swell awake).
+            Some(crate::mould::tiers::Tier::Dozer) => SlimeLook::Doze,
             Some(crate::mould::tiers::Tier::Grudge) => SlimeLook::Scarred,
             Some(crate::mould::tiers::Tier::Sporer) => SlimeLook::Spores,
             _ => SlimeLook::Plain,
@@ -108,7 +116,7 @@ impl SlimeLook {
     }
 
     /// Every look, in the order the slime viewer lists them.
-    pub const ALL: [SlimeLook; 10] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant, SlimeLook::Scarred, SlimeLook::Spores, SlimeLook::Paint, SlimeLook::Foil];
+    pub const ALL: [SlimeLook; 11] = [SlimeLook::Plain, SlimeLook::Threads, SlimeLook::Sheet, SlimeLook::Cords, SlimeLook::Swell, SlimeLook::Dormant, SlimeLook::Doze, SlimeLook::Scarred, SlimeLook::Spores, SlimeLook::Paint, SlimeLook::Foil];
 
     /// Its name, as the tweaks file writes it (`body TIER = NAME`).
     pub fn name(self) -> &'static str {
@@ -119,6 +127,7 @@ impl SlimeLook {
             SlimeLook::Cords => "cords",
             SlimeLook::Swell => "swell",
             SlimeLook::Dormant => "crust",
+            SlimeLook::Doze => "doze",
             SlimeLook::Scarred => "scars",
             SlimeLook::Spores => "seeds",
             SlimeLook::Paint => "paint",

@@ -1,0 +1,78 @@
+<title>The Dozer's Nap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root {
+  --bg: #f3efe6; --panel: #fffaf0; --fg: #23201a; --muted: #6b6457;
+  --line: #d9cfbd; --accent: #c86a08; --tag: #efe2c9;
+  --lemon: #f6d44a; --straw: #e8dcc0; --grey: #6f6a62; --gold: #f0a63f;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 Inter, system-ui, sans-serif; }
+.wrap { max-width: 1520px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2 { font-family: "Space Grotesk", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.15rem; margin: 32px 0 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lead { max-width: 70ch; color: var(--muted); margin: 8px 0 0; }
+.chip { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); flex: none; }
+figure { margin: 0 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
+figure video, figure img { display: block; width: 100%; height: auto; background: #000; }
+figcaption { padding: 10px 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.tag { font: 600 0.72rem/1 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tag); color: var(--accent); padding: 5px 8px; border-radius: 4px; }
+.note { color: var(--muted); font-size: 0.9rem; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 640px), 1fr)); gap: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; margin-top: 8px; }
+.cols > div { min-width: 0; }
+ul { padding-left: 1.2em; margin: 6px 0; } li { margin: 4px 0; max-width: 70ch; }
+code { font: 0.85em "JetBrains Mono", ui-monospace, monospace; background: var(--tag); padding: 1px 5px; border-radius: 3px; }
+.tbl { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; }
+td.num { font-variant-numeric: tabular-nums; }
+.meta { margin-top: 36px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+
+<div class="wrap">
+  <h1>Planet 8: the Dozer gets its own nap</h1>
+  <p class="lead">Planet 8's slime, the Dozer, is the Swarmer that sleeps off every charge. It had been given the Sleeper's look from planet 6: a dark grey crust where it sleeps and gold where it wakes. So planet 8 read as planet 6, and on the core world's dark ground the grey looked like gravel. Now its sleeping walkers are a pale straw crust that keeps a little wet gloss, like a Fuligo drying to its rind, and the ones awake are the Swarmer's lemon and stand up into beads round its alarm. Every clip shows the same game on both sides, before on the left and after on the right. Only the view shader differs.</p>
+
+  <h2><span class="chip" style="background:var(--straw)"></span>At rest, zoom 6: the heart and the crust round it</h2>
+  <figure><video src="z6.mp4" autoplay loop muted playsinline aria-label="Planet 8 at zoom 6 at rest, grey crust and gold before, straw crust and lemon after"></video><figcaption><span class="tag">Zoom 6, 1:00</span><span class="note">The awake ring round the heart's crystal is lemon, the sleeping slime round it straw. 44% of the slime is asleep.</span></figcaption></figure>
+
+  <h2><span class="chip" style="background:var(--lemon)"></span>Under fire, zoom 6: the greedy hand at its first crystal</h2>
+  <figure><video src="fight.mp4" autoplay loop muted playsinline aria-label="Planet 8 under fire at zoom 6, before and after"></video><figcaption><span class="tag">Zoom 6, 0:38</span><span class="note">Shots wake it. The awake body is lemon with the alarm's orange flush at the squad, and the straw patches are walkers still asleep.</span></figcaption></figure>
+
+  <h2>Zoom 12, close up</h2>
+  <figure><video src="z12.mp4" autoplay loop muted playsinline aria-label="Planet 8 at zoom 12, before and after"></video><figcaption><span class="tag">Zoom 12, 1:00</span></figcaption></figure>
+
+  <div class="cols">
+    <div>
+      <h2>What changed</h2>
+      <ul>
+        <li>A new body look, <code>SlimeLook::Doze</code>. It uses the Sleeper's crust (the engine's life words, <code>dormant_share</code>) with its own rind: <code>NAP_RGB</code> (255, 240, 200) at <code>NAP_DIM</code> 0.95 of the body's brightness, losing only <code>NAP_MATTE</code> 0.2 of its gloss. The Sleeper's crust is 0.7 and matte 0.6.</li>
+        <li>Awake it takes the Swarmer's lemon (<code>species_hue</code>) and its swell, because the Dozer runs the Swarmer's lunge and last stand.</li>
+        <li>It shows in the slime viewer's body list as "doze", so it can be swapped there.</li>
+        <li>No cost: the same crust pass, with a colour picked by look.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Tried and dropped</h2>
+      <ul>
+        <li>A dark tan crust (255, 199, 128 at 0.75, matte 0.6). At rest the whole map is crust, and the tan read as bare dirt.</li>
+        <li>Two straws between the two. Neither read better at rest, and the darker one sat close to the ground.</li>
+        <li>Still open: at rest, any crust covering the whole view reads more as ground than as slime. The Sleeper has the same problem. The lemon waking through it is what makes the crust read as slime.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="meta">Filmed on software Vulkan, run 1 planet 8. At rest: the idle hand, centred on the heart at 434,120, 20 frames a quarter second apart from 1:00. Under fire: the greedy hand, following the squad, from 0:38. Frames are 1280 by 800, cropped to 720 by 400. Look lane, 2026-11-24, for Milestone 2's job: planets 4 to 8 each read differently at zoom 6.</p>
+</div>

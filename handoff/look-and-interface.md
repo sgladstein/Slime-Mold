@@ -2,6 +2,13 @@
 
 ## State (2026-11-20)
 
+**11-24, Look B, the Dozer's nap (planet 8):** `SlimeLook::Doze` (10):
+the Sleeper's crust machinery (`crust_look()`, `dormant_share`) with a pale
+straw rind (`NAP_RGB`, `NAP_DIM`, `NAP_MATTE`), and awake the Swarmer's
+lemon (`species_hue`) and swell. It had the Sleeper's grey look, so P8 read
+as P6. A tan crust (255,199,128 x 0.75, matte 0.6) read as dirt at rest.
+Page in `Reports/dozer-nap-2026-11-24/`.
+
 **11-24, Look C, planets 4 to 8's traits:** each biome shows the trail on
 its bare land (`shaded`, after the dust and slick): valley river scum
 (`SCUM*`), jungle wilt in the plants (`WILT*`), highland gravel gaps filled
