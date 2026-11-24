@@ -657,6 +657,14 @@ pub struct RoundRules {
     /// instead of a wider margin did not help (1 standing on run 1).
     pub blast_margin: f32,
     pub gas_margin: f32,
+    /// **A sprayer's fire holds off its own squad** (Direction 11-24
+    /// 12:33Z): a sprayer's spot whose light (`Card::Torch`) would reach
+    /// within this many dish cells of a living soldier is not lit, as gas
+    /// holds by `gas_margin`. Fire that spreads to them later is fair (they
+    /// see it coming, and trodden ground breaks it); a fresh light at their
+    /// feet was planet 3's Tinder complaint again. Soldiers' and turrets'
+    /// own Torch bullets are not held. `set=` key.
+    pub spray_fire_margin: f32,
     pub bomb_ring: f32,
     pub bomb_secs: f32,
     pub fling_speed: f32,
@@ -838,6 +846,7 @@ impl Default for RoundRules {
             blast_gap: 2.0,
             blast_margin: 1.0,
             gas_margin: 8.0,
+            spray_fire_margin: 3.0,
             bomb_ring: 4.0,
             bomb_secs: 0.7,
             fling_speed: 1.5,
@@ -940,6 +949,7 @@ impl RoundRules {
             "blast_gap" => &mut self.blast_gap,
             "blast_margin" => &mut self.blast_margin,
             "gas_margin" => &mut self.gas_margin,
+            "spray_fire_margin" => &mut self.spray_fire_margin,
             "spin_curl" => &mut self.spin_curl,
             "provoke_secs" => &mut self.kit.provoke_secs,
             "still_secs" => &mut self.kit.still_secs,
@@ -1460,6 +1470,9 @@ pub struct Rounds {
     pub backdrafts: u32,
     /// Spots sprayers' sweeps laid (`spray`).
     pub sprayed: u32,
+    /// Casting a sprayer's sweep now (`spray`): its fire holds off its own
+    /// squad (`RoundRules::spray_fire_margin`).
+    spraying: bool,
     /// Batches run (`flush`) and the bursts in them.
     pub batches: u32,
     pub batched: u32,
@@ -1870,6 +1883,7 @@ impl Rounds {
         let (was_turret, was_auto, was_strike) = (self.by_turret, self.auto, self.strike);
         self.by_turret = true;
         self.auto = true;
+        self.spraying = true;
         self.strike = plain_r * sc;
         for sp in todo {
             let c = (sp.cast as usize).checked_sub(1).and_then(|i| turret_casts_of(g, Some(sp.sprayer)).get(i).copied());
@@ -1889,6 +1903,7 @@ impl Rounds {
             }
         }
         self.flush(g);
+        self.spraying = false;
         (self.by_turret, self.auto, self.strike) = (was_turret, was_auto, was_strike);
     }
 
@@ -2127,6 +2142,8 @@ impl Rounds {
                 b.r + self.rules.blast_margin
             } else if gas && (b.gas > 0 || b.cloud > 0.0) {
                 b.r + self.rules.gas_margin
+            } else if self.spraying && b.light > 0.0 {
+                b.r + self.rules.spray_fire_margin
             } else {
                 return false;
             };
@@ -2459,6 +2476,24 @@ mod tests {
         g.lure_marks.clear();
         rd.cast_cards_at(&mut g, (20.0, 20.0), &[Card::Ammo(Ammo { lasts: 250, ..Ammo::standard(Shell::Dart) })]);
         assert_eq!(g.lure_marks[0].until - g.world.ticks(), (r.dart_secs * 2.5 * g.rules.tps as f32) as u64, "a dart's lure 2.5x");
+    }
+
+    /// **A sprayer's fire holds off its own squad** (Direction 11-24
+    /// 12:33Z): of two Torch spots, the one whose fire would reach within
+    /// `spray_fire_margin` of a soldier is held, the far one lit.
+    #[test]
+    fn a_sprayers_fire_holds_off_its_squad() {
+        use crate::mould::larder_world::{race_world, Spray};
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+        g.step();
+        let me = g.soldiers.iter().find(|s| s.alive).map(|s| (s.x, s.y)).expect("a soldier");
+        let sc = g.world.scale();
+        let far = (me.0 + 40.0 * sc, me.1);
+        g.load(crate::mould::larder_world::TURRET_DECK as usize, Some(Deck::new(&[Card::Torch])));
+        g.sprays.push(Spray { from: me, spots: vec![me, far], fired: g.world.ticks(), cast: 1, sprayer: 0, laid: false });
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        rd.spray(&mut g);
+        assert_eq!((rd.sprayed, rd.held_own), (2, 1), "the spot at the squad's feet held, the far one lit");
     }
 
     /// **Backdraft** (a relic, 11-24): off by default. On, a device's Torch
