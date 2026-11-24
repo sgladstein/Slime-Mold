@@ -1274,6 +1274,8 @@ impl Run {
         // planet 1 by 30 s, and would be a corner of a 6x core world).
         let area = area_of(&planet);
         let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed) * tier_size(tier);
+        // LAB: `LAB_LAP2_SIZE=F` scales lap two's slime (planets 9 to 15).
+        let walkers = if lap2 { walkers * std::env::var("LAB_LAP2_SIZE").ok().and_then(|v| v.parse::<f32>().ok()).unwrap_or(1.0) } else { walkers };
         Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers, mission, grow: head_start(area) }
     }
 
