@@ -1,0 +1,18 @@
+# pc-lap2-fix.ps1 on the GTX 1070 (Engine, 2026-11-24 15:01Z), at 6ba5fe62: Engine's summary as sent;
+# the raw log.txt per game stays in C:\Users\Scott\Code\pc-batch-out\lab-lap2-fix-20261124 on Scott's PC.
+Engine: lap-two fix batch is done. 18/18 games ran at 6ba5fe621 (the build was a no-op), exit 0 with an empty stderr, 7.7 min wall. Each C15 life.txt was copied up and its dump folder deleted. Folder: C:\Users\Scott\Code\pc-batch-out\lab-lap2-fix-20261124.
+
+A, what wipes the greedy squad: the strikers, on both planets. Each row is the end, mould at the end, killed, and harvested.
+- 12: as-is wiped at 49 s. noboss wiped at 51. notrait wiped at 55 (bossfell 3). slowsurge wiped at 54. **nostrike** lives to 2:00 with the squad at 24, mould 70,500, harvested 6,711. Every wipe shows about 1,140 to 1,200 strikers taken in all. A crowd mortar forms at 48 s in each.
+- 15: as-is wiped at 39 s. noboss wiped at 43. notrait wiped at 38. slowsurge wiped at 41. **nostrike** lives with the squad at 24 and mould 13,961 by 2:00. Strikers taken: 930 to 1,680. Two cut wanderers form at 3 s in every arm.
+- Lap one for scale: 4 reaches squad 29 and mould 31,120 at 2:00. 7 reaches squad 29 and mould 116,959. Neither wipes.
+
+B, a pump at the slime's edge with the squad idle (4 soldiers, bank 3,000):
+- 10 base: the pump is worn down by 60 s, harvest stops at 185, and mould grows 62,842 → 111,135.
+- 10 pair: the same. Worn down by 60 s, harvest 172, mould → 116,419. Two cut wanderers at 16 and 21 s, a pinwheel at 2:00.
+- 14 base: the pump stands to 90 s (hp 111 at 2:00 in the 4th snapshot) and harvests 582. Mould 284,177 → 250,615. A leech at 51 s, a pinwheel at 86.
+- 14 pair: the pump is worn down by 90 s and harvests 232. Mould → 247,757. A mortar at 51, a pinwheel at 86.
+
+C, planet 15 life rows (sec, walker, spore, dormant, dead):
+- base: 1 232,883 0 0 0 | 30 119,255 1,430 0 0. The squad was wiped at 39 s.
+- pair: 1 242,393 0 0 0 | 30 105,913 399 0 0 | 60 16,333 0 0 0 | 90 16,299 0 0 0 | 119 15,944 0 0 0. The squad lived, 27 at 2:00. The slime fell to 16k by 1:00 and stayed there, with no spores after 30 s.
