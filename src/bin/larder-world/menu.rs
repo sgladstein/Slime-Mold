@@ -389,7 +389,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 // The gun slots' switch to the turrets' deck: a bottom-bar
                 // button (`Pick::EditTurrets`).
                 // The loadouts' buttons too (2026-11-19).
-                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::DevicesUse | Pick::SquadUses) => (String::new(), ShopArea::Upgrades),
+                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::DevicesUse | Pick::SquadUses | Pick::Reroll | Pick::Hold) => (String::new(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 // Each a tab of the shop's counter (Shop B, 11-15).
