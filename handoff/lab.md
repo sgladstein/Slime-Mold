@@ -138,4 +138,13 @@ A second slime species that fights the first; the player's own mould
   block after the plants', not the dense region's fourth quarter, which
   is the fort's mask). No veins from walker motion: the body is packed.
   Recommendation: draw the shared food's flow instead (untested).
+- 2026-11-24: **the Sprawler's body as threads is delivered** (brief from
+  Direction 03:14Z, Milestone 2's first lab job). Report
+  [`Reports/lab-threads-2026-11-24/`](../Reports/lab-threads-2026-11-24/README.md),
+  page "Sprawler Threads" (in `Reports/pages.md`). The lab's branch is now
+  `claude/project-thread-2o4cic` (from main 11-24; code `283617eb`, keys
+  `LAB_LANES`, `LAB_SHUTTLE`, `LAB_CAPS`, `LAB_HOLD`, `LAB_DUMP`). Lanes and
+  a shuttle together turn planet 2's packed disc into spokes at the same
+  walker count; recommendation: build it for the Sprawler, changed. Enemy
+  builds it on Direction's say.
 - Next step: none. Wait for Direction's next brief.
