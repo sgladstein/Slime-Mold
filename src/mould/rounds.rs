@@ -788,6 +788,19 @@ pub struct RoundRules {
     pub carrion_secs: f32,
     pub carrion_kills: u32,
     pub carrion_max: u32,
+    /// **Backdraft**, a relic (`run::Relic::Backdraft`, Direction 11-24
+    /// 11:28Z): when a device's fire lights (`cast_device_at`, a Torch in
+    /// its cards), the ground the squads trod in the last `backdraft_secs`
+    /// (`Game::trodden`) that is at least `backdraft_gap` dish cells from
+    /// every living soldier catches too: brush (`device_brush`) and a
+    /// light in a disc of `backdraft_r`, the newest `backdraft_max` spots.
+    /// It walls off the ground a squad left, which is where the slime
+    /// follows it in, and burns a squad that falls back onto it. 0 gap:
+    /// off, the default; the relic sets it. First guesses. `set=` keys.
+    pub backdraft_gap: f32,
+    pub backdraft_r: f32,
+    pub backdraft_secs: f32,
+    pub backdraft_max: u32,
     /// **A device's fire brings its own brush** (gun step E3, Direction
     /// 11-24 07:01Z: a Torch Grenade at the squad's own feet should burn
     /// it as a Tinder brush does, the owner's Noita rule): a fire a body's
@@ -862,6 +875,10 @@ impl Default for RoundRules {
             carrion_secs: 0.0,
             carrion_kills: 3,
             carrion_max: 6,
+            backdraft_gap: 0.0,
+            backdraft_r: 4.0,
+            backdraft_secs: 90.0,
+            backdraft_max: 6,
             budget: 10,
             // The germ round's sick pay a sixth of the toolkit's upkeep
             // (10 against 60; 2026-11-17, the game designer's call, 05:40Z:
@@ -905,6 +922,7 @@ impl RoundRules {
             "dart_max" => Some(&mut self.dart_max),
             "carrion_kills" => Some(&mut self.carrion_kills),
             "carrion_max" => Some(&mut self.carrion_max),
+            "backdraft_max" => Some(&mut self.backdraft_max),
             _ => None,
         } {
             *n = v.max(1.0) as u32;
@@ -938,6 +956,9 @@ impl RoundRules {
             "device_brush" => &mut self.device_brush,
             "dart_secs" => &mut self.dart_secs,
             "carrion_secs" => &mut self.carrion_secs,
+            "backdraft_gap" => &mut self.backdraft_gap,
+            "backdraft_r" => &mut self.backdraft_r,
+            "backdraft_secs" => &mut self.backdraft_secs,
             "trail_fuel" => &mut self.trail_fuel,
             "trail_fuel_gap" => &mut self.trail_fuel_gap,
             // The germ round's own contagion (2026-11-17), in its kit so
@@ -1435,6 +1456,8 @@ pub struct Rounds {
     /// Carrion's live marks (as `darts`) and the marks it has laid.
     carrion: Vec<((f32, f32), u64)>,
     pub carrioned: u32,
+    /// Trodden spots Backdraft lit (`backdraft`).
+    pub backdrafts: u32,
     /// Batches run (`flush`) and the bursts in them.
     pub batches: u32,
     pub batched: u32,
@@ -1817,8 +1840,46 @@ impl Rounds {
     /// Tinder line does (`RoundRules::device_brush`).
     pub fn cast_device_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32), cards: &[Card]) {
         self.brush = self.rules.device_brush;
-        self.cast_all(g, &casts(cards), at);
+        let cs = casts(cards);
+        self.cast_all(g, &cs, at);
         self.brush = 0.0;
+        if cs.iter().any(|c| c.payload == Card::Torch) {
+            self.backdraft(g);
+        }
+    }
+
+    /// Backdraft (`RoundRules::backdraft_gap`): a device's fire lights the
+    /// ground the squads left (`Game::trodden`), newest first, none within
+    /// `backdraft_gap` of a living soldier. Counts in `backdrafts`.
+    fn backdraft<W: World>(&mut self, g: &mut Game<W>) {
+        let r = self.rules;
+        if r.backdraft_gap <= 0.0 {
+            return;
+        }
+        let sc = g.world.scale();
+        let now = g.world.ticks();
+        let since = now.saturating_sub((r.backdraft_secs * g.rules.tps as f32).round() as u64);
+        let men: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x / sc, s.y / sc)).collect();
+        let spots: Vec<(f32, f32)> = g
+            .trodden
+            .iter()
+            .rev()
+            .filter(|t| t.2 >= since)
+            .filter(|t| men.iter().all(|m| (m.0 - t.0).hypot(m.1 - t.1) >= r.backdraft_gap))
+            .take(r.backdraft_max as usize)
+            .map(|t| (t.0, t.1))
+            .collect();
+        if spots.is_empty() {
+            return;
+        }
+        let k = r.burst_rules(g.rules.tps as f32 * g.world.fine_steps() as f32);
+        for at in spots {
+            let b = Burst { at, r: r.backdraft_r, light: r.torch_light, fuel: r.device_brush.max(0.5), ..Burst::default() };
+            self.queued.push((b, k, Due::Burn));
+            self.queued_turret.push(false);
+            self.backdrafts += 1;
+        }
+        self.flush(g);
     }
 
     fn cast_all<W: World>(&mut self, g: &mut Game<W>, cs: &[Cast], at: (f32, f32)) {
@@ -2354,6 +2415,32 @@ mod tests {
         g.lure_marks.clear();
         rd.cast_cards_at(&mut g, (20.0, 20.0), &[Card::Ammo(Ammo { lasts: 250, ..Ammo::standard(Shell::Dart) })]);
         assert_eq!(g.lure_marks[0].until - g.world.ticks(), (r.dart_secs * 2.5 * g.rules.tps as f32) as u64, "a dart's lure 2.5x");
+    }
+
+    /// **Backdraft** (a relic, 11-24): off by default. On, a device's Torch
+    /// lights the trodden spots (`Game::trodden`) at least `backdraft_gap`
+    /// from every living soldier, newest first, at most `backdraft_max`,
+    /// none older than `backdraft_secs`; a device with no Torch lights
+    /// none.
+    #[test]
+    fn backdraft_lights_the_ground_the_squads_left() {
+        use crate::mould::larder_world::race_world;
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+        g.step();
+        let now = g.world.ticks();
+        let sc = g.world.scale();
+        let me = g.soldiers.iter().find(|s| s.alive).map(|s| (s.x / sc, s.y / sc)).expect("a soldier");
+        let old = now.saturating_sub(200 * g.rules.tps as u64);
+        g.trodden = vec![(me.0 + 30.0, me.1, old), (me.0 + 3.0, me.1, now), (me.0 + 20.0, me.1, now), (me.0, me.1 + 20.0, now), (me.0 - 20.0, me.1, now)];
+        let at = (me.0 * sc, me.1 * sc);
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        rd.cast_device_at(&mut g, at, &[Card::Torch]);
+        assert_eq!(rd.backdrafts, 0, "off without the relic");
+        let mut rd = Rounds::new(Vec::new(), RoundRules { backdraft_gap: 8.0, backdraft_max: 2, ..RoundRules::default() });
+        rd.cast_device_at(&mut g, at, &[Card::Blast]);
+        assert_eq!(rd.backdrafts, 0, "no fire, no backdraft");
+        rd.cast_device_at(&mut g, at, &[Card::Torch]);
+        assert_eq!(rd.backdrafts, 2, "the newest two far enough and recent enough");
     }
 
     /// **The element family** (2026-11-17, step D): a torch is a payload

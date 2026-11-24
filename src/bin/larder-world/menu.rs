@@ -740,6 +740,8 @@ fn item_icon(key: &str) -> Icon {
         "hp" => Icon::Heart,
         // Carrion, the first relic (gun step F): a lure where slime died.
         "carrion" => Icon::Lure,
+        "fever" => Icon::Germ,
+        "backdraft" => Icon::Flamer,
         "strike" => Icon::Attack,
         "rate" => Icon::Fast,
         "range" => Icon::Eye,

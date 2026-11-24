@@ -48,6 +48,15 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, relics (pathfinding thread).** #781 and #786 merged (gun step
+F: shop levers, Lasts, Carrion). Next PR: Fever (`sick_trail` 2 through
+`Run::engine_keys`, Direction's OK 11:28Z; Enemy told by Direction) and
+Backdraft (`RoundRules::backdraft_*`, `Game::trodden`); the shop now offers
+one unowned relic drawn by the seed. Death gas (marked walkers puff gas
+when they die) is parked with Enemy until after their planet 7, curve and
+Dozer work. Then: two or three candidate turret bodies to Direction before
+building (each must deliver a shot unlike the mortar and the turret).
+
 **2026-11-24, gun steps E4 and F, the dart (pathfinding thread).** #778
 merged (E4 autocast, `autocast.rs`; the Dart, `Card::Dart`). #781 queued: F
 part 1, the shop's luck levers (`Run::luck`, `family`, `Pick::Hold`,

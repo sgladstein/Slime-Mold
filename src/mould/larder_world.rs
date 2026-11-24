@@ -556,6 +556,10 @@ pub struct Game<W: World> {
     /// since (`trample.rs`).
     still: Vec<(f32, f32)>,
     trample_clock: f32,
+    /// The ground trodden lately (`trample.rs`): each disc's centre in dish
+    /// cells and the tick it was last trodden, newest last, at most
+    /// `TRODDEN_KEPT`. The Backdraft relic lights it (`Rounds::backdraft`).
+    pub trodden: Vec<(f32, f32, u64)>,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -802,6 +806,7 @@ impl<W: World> Game<W> {
             fell_burned: 0,
             still: Vec::new(),
             trample_clock: 0.0,
+            trodden: Vec::new(),
             fell_starfall: 0,
             start_charge,
             taken,

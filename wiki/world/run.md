@@ -431,11 +431,21 @@ first guesses, `Run::luck`):
   log): about one in twenty reaches `LASTING` 2.5x, shown on the card's
   Lasts bar. Gas and Mist never roll it: a sleep cloud outlasting a
   walker's waking is what sleep wearing off (11-18) stopped.
-- **Relics**: one for sale, 300, on a Relics tab in the shops after planets
-  3, 5 and 7 (`Relic`, `RELIC_DEPTHS`). The first, **Carrion**: a soldier's
-  shot that kills 3 walkers or more leaves a lure mark there for 3 s, at
-  most 6 (`RoundRules::carrion_secs`), so slime streams to its dead, into a
-  held line's guns or onto an overrun squad.
+- **Relics**: one unowned relic for sale, drawn by the run's seed, on a
+  Relics tab in the shops after planets 3, 5 and 7 (`Relic`,
+  `RELIC_DEPTHS`); three exist, so a run that buys each sees all three.
+  - **Carrion** (300): a soldier's shot that kills 3 walkers or more
+    leaves a lure mark there for 3 s, at most 6
+    (`RoundRules::carrion_secs`), so slime streams to its dead, into a held
+    line's guns or onto an overrun squad.
+  - **Fever** (250): sick slime lays twice the trail (the engine's
+    `sick_trail` 2, `Run::engine_keys`), so a germ's sickness runs farther
+    down the tubes it thickens. Useless without the germ (planet 4 on).
+  - **Backdraft** (300): a device's Torch also lights the ground the
+    squads trod in the last 90 s (`Game::trodden`) that is 8 or more dish
+    cells from every living soldier, the newest 6 spots
+    (`RoundRules::backdraft_gap`): fire on the ground the slime follows a
+    squad in by, and on the ground it falls back to.
 
 ## Saving the run
 
