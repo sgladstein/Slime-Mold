@@ -332,6 +332,27 @@ pub struct RunStop {
     /// The run was lost here.
     pub lost: bool,
 }
+/// The landing card over the shop (`StartMenu::landing`): the shop
+/// dimmed, and in its middle the planet ahead as the planet's own landing
+/// card will name it.
+fn landing_card(c: &mut Canvas, kicker: &str, title: &str, line: &str, s: f32) {
+    let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+    c.rrect(Rect::new(0.0, 0.0, sw, sh), 0.0, [4, 6, 8, 190]);
+    let w = (520.0 * s).min(sw - 32.0 * s);
+    let tw = w - 48.0 * s;
+    let h = if line.is_empty() { 104.0 * s } else { 132.0 * s };
+    let r = Rect::new((sw - w) / 2.0, (sh - h) / 2.0, w, h);
+    c.shadow(r, 14.0 * s, 24.0 * s, 6.0 * s, SHADOW);
+    c.panel(r, 14.0 * s, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE);
+    c.rrect(Rect::new(r.x + 24.0 * s, r.y, w - 48.0 * s, 3.0 * s), 1.5 * s, WARN);
+    let cx = r.x + w / 2.0;
+    c.text_fit(Weight::Medium, 13.5 * s, (cx, r.y + 34.0 * s), Align::Centre, kicker, tw, MUTED);
+    c.text_fit(Weight::SemiBold, 26.0 * s, (cx, r.y + 70.0 * s), Align::Centre, title, tw, WARN);
+    if !line.is_empty() {
+        c.text_fit(Weight::Medium, 15.5 * s, (cx, r.y + 104.0 * s), Align::Centre, line, tw, TEXT);
+    }
+}
+
 
 /// A shade of `n` steps laid side by side: step `k` is what layers 0 to
 /// `k` (each `alpha(k / n)`, all of one colour) stacked over it come to,
@@ -683,6 +704,11 @@ pub struct StartMenu {
     pub notice: Option<String>,
     /// The run's shop (the Shop page draws it).
     pub shop: Option<Shop>,
+    /// Landing on the next planet (Direction 11-24, the time between
+    /// planets): the planet's place, name and head start, drawn over the
+    /// shop for the frames before the planet is built (its head start ran
+    /// with the shop frozen under the pressed button).
+    pub landing: Option<(String, String, String)>,
     /// What the build holds (the main page's row and corner, the News
     /// page); None draws neither.
     pub build: Option<BuildPage>,
@@ -757,7 +783,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
     }
 
     /// The option named `key`.
@@ -1292,6 +1318,9 @@ impl StartMenu {
             (self.scroll, self.scroll_max, self.body) = (0.0, 0.0, None);
             self.shop_page(c, s, focus);
             self.drawn = self.hits.clone();
+            if let Some((kicker, title, line)) = &self.landing {
+                landing_card(c, kicker, title, line, s);
+            }
             return;
         }
         let x = if inner { 40.0 * s } else { 48.0 * s };

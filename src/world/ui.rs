@@ -1105,6 +1105,9 @@ pub struct Hud {
     world: (f32, f32),
     /// The end-of-round screen is up (its buttons take every click).
     end: bool,
+    /// Its first button carries a run on (`Model::carry_on`), as last
+    /// drawn: Enter presses it (`key`).
+    end_carry: bool,
     /// Which buttons (left, right, middle) the UI took on their press: a
     /// release is the UI's only when its press was, so a drag-box or a pan
     /// that ends over a panel still ends in the controls.
@@ -1202,7 +1205,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, end_carry: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
     }
 
     /// The menu is open (the game should pause).
@@ -1469,8 +1472,14 @@ impl Hud {
         if !pressed {
             return (false, out);
         }
-        // The end screen takes every key (only its buttons act).
+        // The end screen takes every key; Enter presses its first button
+        // (Direction 11-24, the time between planets: the card's one way
+        // on was a click on it). Space stays dead there: it is the
+        // alerts' key in play, and held through the card it would skip it.
         if self.end {
+            if matches!(code, KeyCode::Enter | KeyCode::NumpadEnter) {
+                out.push(HudEvent::Menu(if self.end_carry { MenuItem::Continue } else { MenuItem::Restart }));
+            }
             return (true, out);
         }
         // F1 or ? (the Slash key) is the key card from play or the menu
@@ -1674,6 +1683,7 @@ impl Hud {
             self.hover_card(h, p, a, c, s);
         }
         self.end = m.end.is_some();
+        self.end_carry = m.carry_on.is_some();
         if let Some(e) = &m.end {
             self.end_screen(e, m.main_menu, m.carry_on.as_deref(), c, s);
         } else if let Some(page) = self.menu {
@@ -4237,6 +4247,13 @@ mod tests {
         // A click off its buttons does nothing either.
         r.at(WORLD_SPOT);
         assert_eq!(r.click(Button::Left, true), (true, vec![]));
+        // Enter presses its first button (the time between planets, 11-24):
+        // Play again, or a run's carry-on; Space stays the alerts' key.
+        assert_eq!(r.key(KeyCode::Enter), (true, vec![HudEvent::Menu(MenuItem::Restart)]));
+        assert_eq!(r.key(KeyCode::Space), (true, vec![]));
+        r.m.carry_on = Some("On to the shop".into());
+        r.draw();
+        assert_eq!(r.key(KeyCode::NumpadEnter), (true, vec![HudEvent::Menu(MenuItem::Continue)]));
     }
 
     #[test]

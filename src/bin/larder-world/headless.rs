@@ -31,6 +31,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // `menu=PAGE`: the start menu's page drawn over the round, as the
     // window shows it (the menu's pictures).
     let mut shop_run = None;
+    let mut landing_run = None;
     if let Some((p, flag)) = menu_page {
         // `menu=shop-mid@TAB@NAME`: the shop on its tab TAB with the row
         // NAME picked (its pane), as a click picks it (Shop B, 11-15).
@@ -96,6 +97,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             }
             m.shop = Some(shop_of(&r));
             m.run_live = true;
+            if flag == "shop-landing" {
+                landing_run = Some(r.clone());
+            }
             // The run the shop shows is the app's, so a drag (`drag=`)
             // changes it as the window's would.
             if !drags.is_empty() {
@@ -138,6 +142,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             }
             "shop-tools" => {
                 m.open_shop_tab_named("Tools");
+            }
+            // The landing card over the shop (the time between planets,
+            // 11-24), for the run's planet as `run=` landed it.
+            "shop-landing" => {
+                let saved = (app.menu.take(), app.run.clone());
+                app.run = landing_run.take().or_else(|| app.args.run.clone());
+                app.menu = Some(start_menu(&app.args));
+                app.show_landing();
+                m.landing = app.menu.take().and_then(|x| x.landing);
+                (app.menu, app.run) = saved;
             }
             // The build page's second tab, the things to try (11-18, the
             // Look and interface lane's).

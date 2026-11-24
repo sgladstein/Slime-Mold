@@ -877,7 +877,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "keys" => Page::Keys,
         // (`news-try`: its second tab, the things to try.)
         "news" | "news-try" => Page::News,
-        "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" => Page::Shop,
+        "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" | "shop-landing" => Page::Shop,
         _ => return None,
     })
 }
@@ -1022,7 +1022,21 @@ impl App {
     }
 
     pub(super) fn menu_events(&mut self, picks: Vec<StartEvent>, event_loop: &ActiveEventLoop) {
+        // Landing: the menu waits for it (`landing_frame`).
+        if self.landing_due.is_some() {
+            return;
+        }
         for p in picks {
+            // A run's next planet lands a frame later, under its landing
+            // card (Direction 11-24, the time between planets: the planet
+            // and its head start were built with the shop frozen under the
+            // pressed button, up to an estimated 3 s on the 1070 for
+            // planet 8's 87 s head start).
+            if p == StartEvent::NextLevel && self.run.is_some() && !self.fielding() && !self.ranging() {
+                self.show_landing();
+                self.landing_due = Some(2);
+                return;
+            }
             match self.menu_event(p) {
                 Ok(true) => {
                     self.save_replay();
@@ -1031,6 +1045,38 @@ impl App {
                 }
                 Ok(false) => {}
                 Err(e) => return self.fail(event_loop, e),
+            }
+        }
+    }
+
+    /// The shop's landing card for the run's next planet.
+    pub(super) fn show_landing(&mut self) {
+        let Some(r) = self.run.as_ref() else { return };
+        let level = r.level();
+        let slime = draw::title_case(level.tier.name());
+        let line = if level.grow > 0.0 { format!("{slime} has had {:.0} s to spread", level.grow) } else { slime };
+        let card = (format!("Landing on planet {} of {}", r.depth, slime_mould::mould::run::PLANETS), r.planet().name, line);
+        if let Some(m) = self.menu.as_mut() {
+            m.landing = Some(card);
+        }
+    }
+
+    /// Counts down a landing (`App::landing_due`) and lands at 0: the
+    /// landing card has been on screen a frame by then.
+    pub(super) fn landing_frame(&mut self, event_loop: &ActiveEventLoop) {
+        match self.landing_due {
+            None => {}
+            Some(n) if n > 0 => self.landing_due = Some(n - 1),
+            Some(_) => {
+                self.landing_due = None;
+                if let Some(m) = self.menu.as_mut() {
+                    m.landing = None;
+                }
+                match self.menu_event(StartEvent::NextLevel) {
+                    Ok(true) => event_loop.exit(),
+                    Ok(false) => {}
+                    Err(e) => self.fail(event_loop, e),
+                }
             }
         }
     }
