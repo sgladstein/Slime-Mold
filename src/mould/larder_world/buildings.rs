@@ -76,6 +76,16 @@ pub enum Kind {
     /// turrets' deck's next cast. It can't hit slime within `mortar_min`
     /// of itself: that is what turrets and soldiers are for.
     Mortar,
+    /// **The sprayer**, the second turret body (Direction 11-24 11:42Z,
+    /// from the owner's 11-16 card: "mortar over walls, sprayer, fan").
+    /// It aims at nothing: every `sprayer_every` seconds it sweeps a cone
+    /// of `sprayer_arc` at the slime it sees within `sprayer_range` and
+    /// lays the turrets' deck's next cast at `sprayer_spots` points along
+    /// the arc at the slime's distance (`Game::sprays`, laid by
+    /// `Rounds::spray`), on the ground whether slime is there or not. A
+    /// gas, brush, fire or crater card makes a strip the slime must
+    /// cross; Plain lays only a thin kill (`sprayer_plain`), a weak buy.
+    Sprayer,
 }
 
 impl Kind {
@@ -88,6 +98,7 @@ impl Kind {
             Kind::Siren => "siren",
             Kind::Wall { .. } => "wall",
             Kind::Mortar => "mortar",
+            Kind::Sprayer => "sprayer",
         }
     }
 }
@@ -165,6 +176,26 @@ pub struct Shell {
     pub mortar: usize,
 }
 
+/// A sprayer's sweep (`Kind::Sprayer`, `Game::sprays`): fired from `from`
+/// (fine cells) at tick `fired`, cast `cast` (0 plain) of the sprayer's
+/// cards at each of `spots` (fine cells, left to right along the arc).
+/// `laid` once the rounds have cast it (`Rounds::spray`); the window draws
+/// the jet from these numbers for `SPRAY_SHOW` seconds.
+#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Spray {
+    pub from: (f32, f32),
+    pub spots: Vec<(f32, f32)>,
+    pub fired: u64,
+    pub cast: u8,
+    /// The sprayer that fired it (`Game::buildings`).
+    pub sprayer: usize,
+    pub laid: bool,
+}
+
+/// How long a sweep is kept for the window to draw its jet (seconds).
+pub const SPRAY_SHOW: f32 = 0.5;
+
 impl Building {
     /// Whole and standing.
     pub fn up(&self) -> bool {
@@ -240,6 +271,18 @@ pub struct BuildRules {
     /// `mortar_speed` dish cells a second.
     pub mortar_flight: f32,
     pub mortar_speed: f32,
+    /// The sprayer (`Kind::Sprayer`): its price and health, its reach and
+    /// blind ring (dish cells), seconds between sweeps, the cone's width
+    /// (radians), the points laid along it, and Plain's kill radius at
+    /// each (dish cells; a turret's strike is 2.5). First guesses.
+    pub sprayer_cost: f32,
+    pub sprayer_hp: f32,
+    pub sprayer_range: f32,
+    pub sprayer_min: f32,
+    pub sprayer_every: f32,
+    pub sprayer_arc: f32,
+    pub sprayer_spots: u32,
+    pub sprayer_plain: f32,
     pub lure_cost: f32,
     pub lure_hp: f32,
     /// The lure's scent, as a multiple of a soldier's (`Rules::smell`, a
@@ -364,6 +407,14 @@ impl Default for BuildRules {
             mortar_blast: 3.0,
             mortar_flight: 0.6,
             mortar_speed: 35.0,
+            sprayer_cost: 450.0,
+            sprayer_hp: 200.0,
+            sprayer_range: 24.0,
+            sprayer_min: 4.0,
+            sprayer_every: 1.5,
+            sprayer_arc: 1.05,
+            sprayer_spots: 6,
+            sprayer_plain: 1.0,
             lure_cost: 300.0,
             lure_hp: 150.0,
             lure_smell: 8.0,
@@ -417,6 +468,7 @@ impl<W: World> Game<W> {
         match kind {
             Kind::Turret => b.turret_cost,
             Kind::Mortar => b.mortar_cost,
+            Kind::Sprayer => b.sprayer_cost,
             Kind::Lure => b.lure_cost,
             Kind::Pump => b.pump_cost,
             Kind::Outpost => b.outpost_cost,
@@ -596,6 +648,7 @@ impl<W: World> Game<W> {
         let hp = match kind {
             Kind::Turret => b.turret_hp,
             Kind::Mortar => b.mortar_hp,
+            Kind::Sprayer => b.sprayer_hp,
             Kind::Lure => b.lure_hp,
             Kind::Pump => b.pump_hp,
             Kind::Outpost => b.outpost_hp,
@@ -761,6 +814,9 @@ impl<W: World> Game<W> {
             shooters.push((None, sh.cast, Some(sh.mortar)));
             self.shells_landed += 1;
         }
+        // Sweeps the window has drawn and the rounds have laid go.
+        let shown = self.secs(SPRAY_SHOW).max(1);
+        self.sprays.retain(|s| !s.laid || s.fired + shown > t);
         for k in 0..self.buildings.len() {
             let bd = self.buildings[k];
             // A pump's `working` is decided after the frame
@@ -907,6 +963,48 @@ impl<W: World> Game<W> {
                                     }
                                 }
                                 let every = b.mortar_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
+                                self.buildings[k].ready = t + self.secs(every).max(1);
+                                self.buildings[k].working = true;
+                                self.bank -= r.price;
+                                self.spent += r.price;
+                            }
+                        }
+                    }
+                }
+                Kind::Sprayer => {
+                    // As a mortar sees: the frame before it may fire, the
+                    // thickest slime in its reach (Range cards stretch it).
+                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
+                    let reach = b.sprayer_range * sc * (1.0 + r.range_card * m.reach as f32);
+                    u.sight = if bd.ready <= t + 2 * u64::from(r.frame_ticks) { reach } else { 0.0 };
+                    u.over = b.turret_over;
+                    if bd.ready <= t && self.bank >= r.price && bd.dense >= r.aim_min {
+                        if let Some(aim) = bd.aim {
+                            let (dx, dy) = (aim.0 - bd.at.0, aim.1 - bd.at.1);
+                            let d = dx.hypot(dy).max(0.1);
+                            if d <= reach + 4.0 {
+                                // The arc at the slime's distance, never
+                                // nearer than the blind ring: a strip
+                                // across the way it comes.
+                                let d = d.max(b.sprayer_min * sc);
+                                let n = m.casts;
+                                let cast = if n > 0 {
+                                    let c = bd.next % n;
+                                    self.buildings[k].next = (c + 1) % n;
+                                    m.cycle[c as usize]
+                                } else {
+                                    0
+                                };
+                                let a0 = dy.atan2(dx);
+                                let spots = b.sprayer_spots.max(1);
+                                let at = |i: u32| {
+                                    let f = if spots > 1 { i as f32 / (spots - 1) as f32 - 0.5 } else { 0.0 };
+                                    let a = a0 + f * b.sprayer_arc;
+                                    (bd.at.0 + a.cos() * d, bd.at.1 + a.sin() * d)
+                                };
+                                self.sprays.push(Spray { from: bd.at, spots: (0..spots).map(at).collect(), fired: t, cast, sprayer: k, laid: false });
+                                self.sprays_fired += 1;
+                                let every = b.sprayer_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
                                 self.buildings[k].ready = t + self.secs(every).max(1);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -1293,6 +1391,53 @@ mod tests {
         let (fired, ..) = run(1e4);
         assert_eq!(fired, 0, "nothing outside its blind ring, nothing fired");
         let c = Cmd::Build(Kind::Mortar, (10.5, 20.25));
+        assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+    }
+
+    /// **A sprayer lays its cast in a strip** (the second turret body,
+    /// Direction 11-24 11:42Z): every sweep lays `sprayer_spots` casts on
+    /// an arc at the slime's distance, ground or slime, its kills the
+    /// turrets'. With Plain it lays only a thin kill, fewer kills than a
+    /// plain turret in the same place; with Gas it gasses the slime.
+    #[test]
+    fn a_sprayer_lays_its_cast_in_a_strip() {
+        use crate::mould::rounds::{Card, Deck};
+        let run = |kind: Kind, deck: Option<Card>| {
+            let mut g = small(3);
+            let at = open_near(&g, (g.core.0 + 22.0, g.core.1));
+            for k in 0..g.soldiers.len() {
+                g.soldiers[k].stance = Stance::HoldFire;
+            }
+            g.load(TURRET_DECK as usize, deck.map(|c| Deck::new(&[c])));
+            assert!(g.apply(Cmd::Build(kind, at)));
+            let sc = g.s();
+            let mut arcs = Vec::new();
+            for _ in 0..(g.rules.tps * 12) {
+                g.step();
+                if arcs.is_empty() {
+                    if let Some(sp) = g.sprays.first() {
+                        let d: Vec<f32> = sp.spots.iter().map(|p| (p.0 - sp.from.0).hypot(p.1 - sp.from.1) / sc).collect();
+                        arcs.push((sp.spots.len(), d));
+                    }
+                }
+            }
+            (g.sprays_fired, g.rounds.sprayed, g.turret_killed, g.rounds.gassed, arcs)
+        };
+        let (fired, sprayed, plain_kills, _, arcs) = run(Kind::Sprayer, None);
+        let b = BuildRules::default();
+        eprintln!("sprayer, plain: {fired} sweeps, {sprayed} spots, {plain_kills} killed");
+        assert!(fired >= 4, "{fired} sweeps in 12 s");
+        assert_eq!(sprayed, fired * b.sprayer_spots, "every spot laid, slime there or not");
+        let (n, d) = &arcs[0];
+        assert_eq!(*n, b.sprayer_spots as usize);
+        assert!(d.iter().all(|&x| (x - d[0]).abs() < 0.01 && x >= b.sprayer_min - 0.01 && x <= b.sprayer_range + 3.0), "one arc at one distance: {d:?}");
+        let (.., turret_kills, _, _) = run(Kind::Turret, None);
+        eprintln!("turret, plain: {turret_kills} killed");
+        assert!(plain_kills < turret_kills, "Plain is a weak buy in a sprayer: {plain_kills} against a turret's {turret_kills}");
+        let (gf, _, _, gassed, _) = run(Kind::Sprayer, Some(Card::Gas));
+        eprintln!("sprayer, gas: {gf} sweeps, {gassed} gassed");
+        assert!(gassed > 0, "a gas strip");
+        let c = Cmd::Build(Kind::Sprayer, (10.5, 20.25));
         assert_eq!(Cmd::parse(&c.to_line()), Some(c));
     }
 

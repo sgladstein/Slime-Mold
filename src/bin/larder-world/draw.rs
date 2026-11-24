@@ -351,6 +351,8 @@ fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook
     }
     if b.kind == Kind::Mortar {
         marks.mortar(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
+    } else if b.kind == Kind::Sprayer {
+        marks.sprayer(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
     } else {
         marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
     }
@@ -365,6 +367,7 @@ pub(super) fn building_colour(k: Kind) -> Option<[u8; 4]> {
     match k {
         Kind::Turret => Some([150, 200, 255, 255]),
         Kind::Mortar => Some([190, 175, 255, 255]),
+        Kind::Sprayer => Some([150, 235, 200, 255]),
         Kind::Lure => Some([255, 196, 90, 255]),
         Kind::Pump => Some([90, 220, 230, 255]),
         Kind::Outpost => Some([214, 196, 150, 255]),
@@ -753,11 +756,12 @@ impl App {
         let bld = g.rules.build;
         let rings = |k: Kind| match k {
             Kind::Mortar => vec![bld.mortar_range, bld.mortar_min],
+            Kind::Sprayer => vec![bld.sprayer_range],
             _ => vec![bld.turret_range],
         };
-        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k));
+        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k));
         let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
-            g.buildings.iter().find(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| (b.at, b.kind))
+            g.buildings.iter().find(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| (b.at, b.kind))
         });
         for (at, reach) in placing.into_iter().chain(over).flat_map(|(at, k)| rings(k).into_iter().map(move |r| (at, r))) {
             let reach = reach * sc;
@@ -819,7 +823,7 @@ impl App {
             // A lure switched off is not working.
             let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
             let built = if b.up() { 1.0 } else { b.built };
-            if matches!(b.kind, Kind::Turret | Kind::Mortar) {
+            if matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer) {
                 // A gun that reads at zoom 6 as clearly as a soldier (owner's
                 // playtest 11-14 08:15Z: "turrets need to look better"; it
                 // was drawn 0.7 touch radii, smaller than a soldier's 1.15):
@@ -1440,6 +1444,40 @@ impl App {
             let core = (0.3 * sc * zoom).clamp(2.0, 6.0);
             self.marks.streak(head, tail, core, [plain.glow[0], plain.glow[1], plain.glow[2], 235], plain.core);
         }
+        // Sprayers' sweeps (`Game::sprays`): the jet fans from the nozzle
+        // across the arc, left to right over the first half of
+        // `SPRAY_SHOW`, in the colour of the card it lays (`card_look`),
+        // each spot a splash where the cast went down. What stays after is
+        // the cast's own work in the world (gas, fire, a crater): the jet
+        // only says whose it is, as a tracer does for a shot.
+        let show = (slime_mould::mould::larder_world::SPRAY_SHOW * g.rules.tps as f32).max(1.0);
+        for sp in &g.sprays {
+            let age = (now - sp.fired as f32) / show;
+            if !(0.0..1.0).contains(&age) {
+                continue;
+            }
+            let payload = (sp.cast as usize).checked_sub(1).and_then(|i| rounds::turret_casts_of(g, Some(sp.sprayer)).get(i).map(|c| c.payload));
+            let look = card_look(payload);
+            let n = sp.spots.len().max(1);
+            let sweep = (age * 2.2).min(1.0);
+            let fade = 1.0 - ((age - 0.45) / 0.55).clamp(0.0, 1.0);
+            let half = g.rules.build.touch * sc;
+            for (i, &to) in sp.spots.iter().enumerate() {
+                let at = if n > 1 { i as f32 / (n - 1) as f32 } else { 0.5 };
+                if at > sweep {
+                    break;
+                }
+                let (dx, dy) = (to.0 - sp.from.0, to.1 - sp.from.1);
+                let d = dx.hypot(dy).max(1e-3);
+                let mouth = (sp.from.0 + dx / d * half * 1.6, sp.from.1 + dy / d * half * 1.6);
+                // The newest spot's jet is solid; the ones swept past thin out.
+                let lead = 1.0 - ((sweep - at) * 3.0).clamp(0.0, 0.7);
+                let a = (210.0 * fade * lead) as u8;
+                let core = (0.18 * sc * zoom).clamp(1.2, 3.5);
+                self.marks.streak(to, mouth, core, [look.glow[0], look.glow[1], look.glow[2], a], look.core);
+                self.marks.disc(to, (0.7 + 0.5 * fade) * sc, [look.glow[0], look.glow[1], look.glow[2], (150.0 * fade) as u8], false);
+            }
+        }
         // Turrets over the bullets, so a shot leaving the barrel tip
         // (`TURRET_MUZZLE`; mould at its foot is shot from nearer) comes
         // out of the barrels rather than lying over them (turret look,
@@ -1749,6 +1787,7 @@ impl App {
                     Some(bd) => match bd.kind {
                         Kind::Turret => "building a turret",
                         Kind::Mortar => "building a mortar",
+                        Kind::Sprayer => "building a sprayer",
                         Kind::Lure => "building a lure",
                         Kind::Pump => "building a pump",
                         Kind::Outpost => "building an outpost",
@@ -2131,6 +2170,7 @@ impl App {
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest slime within {:.0} cells every {:.1} s. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food for each slime it kills.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
                 pump((0, 1)),
                 place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest slime it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit slime within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
+                place(SPRAYER, (1, 4), Icon::Gas, "Sprayer", KeyCode::KeyN, b.sprayer_cost, format!("Sweeps a cone every {:.1} s at the slime within {:.0} cells and lays the turrets' next card in a strip of {} spots across the way it comes, on bare ground too. Wants field cards (gas, Tinder, Torch, Blast's craters); with Plain it lays only a thin kill.", b.sprayer_every, b.sprayer_range, b.sprayer_spots)),
                 Command {
                     target: Target::Line { width: r.wall_width * sc },
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
@@ -3052,6 +3092,7 @@ pub(super) fn run_lock(id: u32) -> Option<&'static str> {
         WALL | DOOR => "walls",
         TURRET => "turret",
         MORTAR => "mortar",
+        SPRAYER => "sprayer",
         // The lure is free from the first planet (Direction, 2026-11-18
         // 08:38Z, on the owner's "Lure now, in the three planets"): for an
         // hour it was a shop unlock, which left planet 1 without it.
@@ -3075,6 +3116,7 @@ fn building_icon(k: Kind) -> Icon {
     match k {
         Kind::Turret => Icon::Turret,
         Kind::Mortar => Icon::Bomb,
+        Kind::Sprayer => Icon::Gas,
         Kind::Lure => Icon::Lure,
         Kind::Pump => Icon::Crystal,
         Kind::Outpost => Icon::Hold,
@@ -3128,6 +3170,12 @@ impl App {
                     let up = g.shells.iter().filter(|s| s.mortar == bk).count();
                     stats.push(("Shells in the air".into(), format!("{up}")));
                     if up > 0 { "shelling".into() } else { "watching".into() }
+                }
+                Kind::Sprayer => {
+                    let b = &g.rules.build;
+                    stats.push(("Range".into(), format!("{:.0} to {:.0} cells", b.sprayer_min, b.sprayer_range)));
+                    stats.push(("Sweep".into(), format!("{} spots every {:.1} s", b.sprayer_spots, b.sprayer_every)));
+                    if bd.working || g.sprays.iter().any(|s| s.sprayer == bk) { "spraying".into() } else { "watching".into() }
                 }
                 Kind::Lure | Kind::Siren => {
                     if bd.on { "on".into() } else { "off".into() }
@@ -3213,7 +3261,7 @@ impl App {
         // Its loadout in a run (owner 2026-11-19 19:22Z: "a default loadout
         // for turrets and then it can be changed one by one in the game"):
         // each press the next; H edits what they hold.
-        if let (Some(r), true) = (self.args.run.as_ref(), matches!(bd.kind, Kind::Turret | Kind::Mortar)) {
+        if let (Some(r), true) = (self.args.run.as_ref(), matches!(bd.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer)) {
             let now = bd.loadout.map_or(r.turret_loadout, usize::from);
             let cards: Vec<String> = r.turret_deck_of(now).iter().map(|c| c.title()).collect();
             let cards = if cards.is_empty() { "no cards".to_string() } else { cards.join(", ") };

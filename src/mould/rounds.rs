@@ -1458,6 +1458,8 @@ pub struct Rounds {
     pub carrioned: u32,
     /// Trodden spots Backdraft lit (`backdraft`).
     pub backdrafts: u32,
+    /// Spots sprayers' sweeps laid (`spray`).
+    pub sprayed: u32,
     /// Batches run (`flush`) and the bursts in them.
     pub batches: u32,
     pub batched: u32,
@@ -1614,6 +1616,7 @@ impl Rounds {
         self.arm(g);
         self.lay_trails(g);
         self.carrion(g);
+        self.spray(g);
         let t = g.world.ticks();
         let tps = g.rules.tps;
         // Each squad casts its own cards (`casts_of`): the army's round, or
@@ -1846,6 +1849,47 @@ impl Rounds {
         if cs.iter().any(|c| c.payload == Card::Torch) {
             self.backdraft(g);
         }
+    }
+
+    /// Sprayers' sweeps (`Game::sprays`, `Kind::Sprayer`): each lays its
+    /// cast of the sprayer's cards (its own, else the turrets' deck) at
+    /// every spot on its arc, on the ground whether slime is there or not,
+    /// as a turret's (its kills the turrets'). A Plain cast, or no cards,
+    /// lays only a thin kill (`BuildRules::sprayer_plain`): the sprayer
+    /// wants field cards. Counts in `sprayed`.
+    fn spray<W: World>(&mut self, g: &mut Game<W>) {
+        if g.sprays.iter().all(|s| s.laid) {
+            return;
+        }
+        let sc = g.world.scale();
+        let plain_r = g.rules.build.sprayer_plain;
+        let todo: Vec<crate::mould::larder_world::Spray> = g.sprays.iter_mut().filter(|s| !s.laid).map(|s| {
+            s.laid = true;
+            s.clone()
+        }).collect();
+        let (was_turret, was_auto, was_strike) = (self.by_turret, self.auto, self.strike);
+        self.by_turret = true;
+        self.auto = true;
+        self.strike = plain_r * sc;
+        for sp in todo {
+            let c = (sp.cast as usize).checked_sub(1).and_then(|i| turret_casts_of(g, Some(sp.sprayer)).get(i).copied());
+            for &at in &sp.spots {
+                match c {
+                    Some(c) if c.payload != Card::Plain || plain_pops(&c) => self.fire(g, &c, at, None),
+                    _ => {
+                        let b = Burst { at: (at.0 / sc, at.1 / sc), r: plain_r, kill: true, ..Burst::default() };
+                        let k = self.rules.burst_rules(g.rules.tps as f32 * g.world.fine_steps() as f32);
+                        let i = self.pops.len();
+                        self.queued.push((b, k, Due::Pop(i)));
+                        self.queued_turret.push(true);
+                        self.pops.push(Pop { burst: b, throw: None, payload: Card::Plain, tick: g.world.ticks(), killed: 0, flung: 0 });
+                    }
+                }
+                self.sprayed += 1;
+            }
+        }
+        self.flush(g);
+        (self.by_turret, self.auto, self.strike) = (was_turret, was_auto, was_strike);
     }
 
     /// Backdraft (`RoundRules::backdraft_gap`): a device's fire lights the
