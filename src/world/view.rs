@@ -530,17 +530,20 @@ pub struct View {
     has_overlay: bool,
     has_vis: bool,
     n_marks: u32,
-    /// **The render scale** (performance thread, 2026-11-22; `set_scale`):
-    /// the passes draw the world at `screen` over `scale` pixels
+    /// **The render scale** (performance thread, 2026-11-22; `set_percent`):
+    /// the passes draw the world at `pct` percent of `screen` each way
     /// (`rscreen`, rows `rstride` apart, into `low`), and an upscale pass
-    /// spreads each of its pixels over `scale` x `scale` of `out`. 1 draws
-    /// at the screen's own size, as before, with no `low` and no upscale.
+    /// spreads it back over `out`: nearest where the screen is a whole
+    /// number of times the small picture (50%: each pixel over 2 x 2),
+    /// bilinear between (the quality steps of 2026-11-24, `Upscale`). 100
+    /// draws at the screen's own size, as before, with no `low` and no
+    /// upscale.
     /// The owner plays on a 4K screen (3840 x 2160 at 250%): the base
     /// pass cost the GTX 1070 about 38 ms a frame there, against 3.3 ms
     /// at the bench's 1280 x 800. `out`, `stride` and `screen` stay the
     /// screen's, so the HUD (drawn into `out` after the view) stays sharp
     /// and nothing outside the view changes.
-    scale: u32,
+    pct: u32,
     rscreen: (u32, u32),
     rstride: u32,
     low: Option<wgpu::Buffer>,
@@ -686,7 +689,7 @@ impl View {
             has_overlay: false,
             has_vis: false,
             n_marks: 0,
-            scale: 1,
+            pct: 100,
             rscreen: screen,
             rstride: stride,
             low: None,
@@ -1175,13 +1178,12 @@ impl View {
 
     /// A new screen size: the overlay is cleared.
     pub fn resize(&mut self, screen: (u32, u32)) {
-        let s = self.scale.max(1);
-        let rscreen = (screen.0.div_ceil(s).max(1), screen.1.div_ceil(s).max(1));
+        let rscreen = Self::reduced(screen, self.pct);
         // The claims and the overlay stay the screen's size: the marks
         // draw at full (`params_full`).
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         let rstride = rscreen.0.div_ceil(64) * 64;
-        let low = (s > 1).then(|| storage(&self.device, "view low", rstride as u64 * rscreen.1 as u64 * 4));
+        let low = (self.pct < 100).then(|| storage(&self.device, "view low", rstride as u64 * rscreen.1 as u64 * 4));
         (self.stride, self.out, self.low, self.overlay, self.top, self.screen) = (stride, out, low, overlay, top, screen);
         (self.rscreen, self.rstride) = (rscreen, rstride);
         self.specks = storage(&self.device, "specks", rstride as u64 * rscreen.1 as u64 * 12);
@@ -1191,20 +1193,27 @@ impl View {
         self.rebind();
     }
 
-    /// Draws the world at the screen's pixels over `scale` each way (1
-    /// the screen's own; `scale` field). Remakes the screen-sized buffers
-    /// when it changes.
-    pub fn set_scale(&mut self, scale: u32) {
-        let scale = scale.clamp(1, 4);
-        if scale != self.scale {
-            self.scale = scale;
+    /// Draws the world at `pct` percent of the screen's pixels each way
+    /// (100 the screen's own, at least 25; `pct` field). Remakes the
+    /// screen-sized buffers when it changes, so set it once a frame, not
+    /// back and forth.
+    pub fn set_percent(&mut self, pct: u32) {
+        let pct = pct.clamp(25, 100);
+        if pct != self.pct {
+            self.pct = pct;
             self.resize(self.screen);
         }
     }
 
-    /// The render scale (`set_scale`).
-    pub fn scale(&self) -> u32 {
-        self.scale
+    /// The render scale in percent each way (`set_percent`).
+    pub fn percent(&self) -> u32 {
+        self.pct
+    }
+
+    /// The small picture's size for `screen` at `pct` percent each way
+    /// (rounded up: every screen pixel has one under it).
+    pub fn reduced(screen: (u32, u32), pct: u32) -> (u32, u32) {
+        ((screen.0 * pct).div_ceil(100).max(1), (screen.1 * pct).div_ceil(100).max(1))
     }
 
     /// The overlay: premultiplied RGBA, screen-sized (`screen.0 x screen.1 x 4`
@@ -1304,12 +1313,13 @@ impl View {
     fn record_with(&self, enc: &mut wgpu::CommandEncoder, cam: &Camera, stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>, each: Option<&wgpu::QuerySet>) -> Vec<usize> {
         let mm = self.minimap_rect(cam).unwrap_or((0, 0, 0, 0));
         let (mm_full, zoom_full) = (mm, cam.zoom);
-        // At a render scale (`set_scale`) the passes see a smaller screen
-        // and a camera zoomed out by it: the same world in fewer pixels.
-        let s = self.scale.max(1);
-        let mm = (mm.0 / s, mm.1 / s, mm.2.div_ceil(s), mm.3.div_ceil(s));
-        let fs = s as f32;
-        let scaled = Camera { screen: (cam.screen.0 / fs, cam.screen.1 / fs), zoom: cam.zoom / fs, inset: (cam.inset.0 / fs, cam.inset.1 / fs), ..*cam };
+        // At a render scale (`set_percent`) the passes see a smaller
+        // screen and a camera zoomed out by it: the same world in fewer
+        // pixels. A small pixel's centre is where its screen pixels'
+        // centres average (`Upscale`): small x + 0.5 = (x + 0.5) f.
+        let f = self.pct as f32 / 100.0;
+        let mm = ((mm.0 as f32 * f) as u32, (mm.1 as f32 * f) as u32, (mm.2 as f32 * f).ceil() as u32, (mm.3 as f32 * f).ceil() as u32);
+        let scaled = Camera { screen: (cam.screen.0 * f, cam.screen.1 * f), zoom: cam.zoom * f, inset: (cam.inset.0 * f, cam.inset.1 * f), ..*cam };
         let cam = &scaled;
         let (screen, stride) = (self.rscreen, self.rstride);
         let mut b: Vec<u8> = Vec::with_capacity(PARAMS_BYTES);
@@ -1424,7 +1434,7 @@ impl View {
             };
             if q == world_passes {
                 if let Some(low) = self.low.as_ref() {
-                    self.up.record(&self.device, &self.queue, enc, (low, self.rstride), (&self.out, self.stride), self.screen, s);
+                    self.up.record(&self.device, &self.queue, enc, (low, self.rstride), (&self.out, self.stride), self.screen, self.pct);
                 }
             }
             let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("view"), timestamp_writes: writes });
@@ -1434,7 +1444,7 @@ impl View {
         }
         if world_passes == passes.len() {
             if let Some(low) = self.low.as_ref() {
-                self.up.record(&self.device, &self.queue, enc, (low, self.rstride), (&self.out, self.stride), self.screen, s);
+                self.up.record(&self.device, &self.queue, enc, (low, self.rstride), (&self.out, self.stride), self.screen, self.pct);
             }
         }
         passes.into_iter().map(|p| p.0).collect()
@@ -1461,9 +1471,14 @@ impl View {
     }
 }
 
-/// The render scale's last pass (`View::set_scale`): each pixel of the
-/// small picture spread over `scale` x `scale` pixels of the screen's,
-/// nearest, so the world's pixels stay crisp.
+/// The render scale's last pass (`View::set_percent`): the small picture
+/// spread over the screen's pixels. Where the screen is a whole number of
+/// times it (50%: 2), each small pixel covers that many each way, nearest,
+/// so the world's pixels stay crisp and today's Half reads as before.
+/// Between (85%, 75%, 67%, 60%, 40%: the quality steps, 2026-11-24),
+/// nearest would make rows of one and two screen pixels alternate, a
+/// visible ripple on the slime's lit edges; so bilinear, each screen
+/// pixel's centre mapped into the small picture (`f` its share each way).
 struct Upscale {
     pipe: wgpu::ComputePipeline,
     bgl: wgpu::BindGroupLayout,
@@ -1471,16 +1486,29 @@ struct Upscale {
 }
 
 const UPSCALE: &str = r#"
-struct U { sw: u32, sh: u32, stride: u32, lstride: u32, s: u32, lw: u32, lh: u32, pad: u32 }
+struct U { sw: u32, sh: u32, stride: u32, lstride: u32, f: f32, lw: u32, lh: u32, blend: u32 }
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var<storage, read> low: array<u32>;
 @group(0) @binding(2) var<storage, read_write> out: array<u32>;
+fn at(x: u32, y: u32) -> vec4<f32> { return unpack4x8unorm(low[y * u.lstride + x]); }
 @compute @workgroup_size(16, 16)
 fn up(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gid.x >= u.sw || gid.y >= u.sh) { return; }
-    let x = min(gid.x / u.s, u.lw - 1u);
-    let y = min(gid.y / u.s, u.lh - 1u);
-    out[gid.y * u.stride + gid.x] = low[y * u.lstride + x];
+    let p = (vec2<f32>(gid.xy) + 0.5) * u.f;
+    if (u.blend == 0u) {
+        let x = min(u32(p.x), u.lw - 1u);
+        let y = min(u32(p.y), u.lh - 1u);
+        out[gid.y * u.stride + gid.x] = low[y * u.lstride + x];
+        return;
+    }
+    let q = max(p - 0.5, vec2<f32>(0.0));
+    let x0 = min(u32(q.x), u.lw - 1u);
+    let y0 = min(u32(q.y), u.lh - 1u);
+    let x1 = min(x0 + 1u, u.lw - 1u);
+    let y1 = min(y0 + 1u, u.lh - 1u);
+    let t = fract(q);
+    let c = mix(mix(at(x0, y0), at(x1, y0), t.x), mix(at(x0, y1), at(x1, y1), t.x), t.y);
+    out[gid.y * u.stride + gid.x] = pack4x8unorm(c);
 }
 "#;
 
@@ -1499,9 +1527,11 @@ impl Upscale {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn record(&self, device: &wgpu::Device, queue: &wgpu::Queue, enc: &mut wgpu::CommandEncoder, (low, lstride): (&wgpu::Buffer, u32), (out, stride): (&wgpu::Buffer, u32), screen: (u32, u32), s: u32) {
-        let (lw, lh) = (screen.0.div_ceil(s), screen.1.div_ceil(s));
-        let words = [screen.0, screen.1, stride, lstride, s, lw, lh, 0];
+    fn record(&self, device: &wgpu::Device, queue: &wgpu::Queue, enc: &mut wgpu::CommandEncoder, (low, lstride): (&wgpu::Buffer, u32), (out, stride): (&wgpu::Buffer, u32), screen: (u32, u32), pct: u32) {
+        let (lw, lh) = View::reduced(screen, pct);
+        // Nearest at a whole ratio (100 / pct a whole number), else bilinear.
+        let smooth = u32::from(100 % pct != 0);
+        let words = [screen.0, screen.1, stride, lstride, (pct as f32 / 100.0).to_bits(), lw, lh, smooth];
         let bytes: Vec<u8> = words.iter().flat_map(|w| w.to_le_bytes()).collect();
         queue.write_buffer(&self.params, 0, &bytes);
         let group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -1597,7 +1627,7 @@ mod tests {
         }
     }
 
-    /// At render scale 2 (`set_scale`) each screen pixel shows the cell
+    /// At 50% (`set_percent`) each screen pixel shows the cell
     /// under the middle of its 2 x 2 block: the same world, half the
     /// pixels, spread back over the whole screen.
     #[test]
@@ -1607,7 +1637,7 @@ mod tests {
         let world = coded(&dev, &q, w, h);
         let screen = (101, 61);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
-        view.set_scale(2);
+        view.set_percent(50);
         let mut cam = Camera::new((w, h), screen);
         cam.zoom_to(4.0, (0.0, 0.0));
         cam.centre_on((130.0, 70.0));
@@ -1621,6 +1651,43 @@ mod tests {
             let (wx, wy) = cam.to_world((bx, by));
             let p = pic.get_pixel(sx, sy).0;
             assert_eq!((p[0], p[1]), (wx as u8, wy as u8), "screen ({sx}, {sy})");
+        }
+    }
+
+    /// Between the whole ratios (75% and 60%, the quality steps of
+    /// 2026-11-24) the small picture is spread bilinear: each screen pixel
+    /// shows the world under its own centre to within a cell (the cells'
+    /// codes step by one, and the blend of two steps sits between them),
+    /// with no pixel off by a block, and the picture still fills the
+    /// screen to its last row and column.
+    #[test]
+    fn between_whole_ratios_each_screen_pixel_shows_its_own_cell_blended() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (200, 120);
+        let world = coded(&dev, &q, w, h);
+        let screen = (101, 61);
+        for pct in [75, 60] {
+            let mut view = View::new(&dev, &q, &world, (w, h), screen);
+            view.set_percent(pct);
+            assert_eq!(view.percent(), pct);
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(4.0, (0.0, 0.0));
+            cam.centre_on((130.0, 70.0));
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            let pic = view.picture();
+            assert_eq!(pic.dimensions(), screen);
+            let mut worst = 0.0f32;
+            for sy in 0..screen.1 {
+                for sx in 0..screen.0 {
+                    let (wx, wy) = cam.to_world((sx as f32 + 0.5, sy as f32 + 0.5));
+                    let p = pic.get_pixel(sx, sy).0;
+                    worst = worst.max((p[0] as f32 - wx).abs()).max((p[1] as f32 - wy).abs());
+                    assert_eq!(p[2], 7, "the world's own blue at {pct}% ({sx}, {sy})");
+                }
+            }
+            assert!(worst < 1.6, "{pct}%: a pixel {worst} cells off its own");
         }
     }
 
@@ -1660,7 +1727,7 @@ mod tests {
         assert_eq!(dot, [255, 255, 255, 255]);
     }
 
-    /// At render scale 2 the marks still draw at the screen's own pixels
+    /// At 50% and 67% the marks still draw at the screen's own pixels
     /// (`params_full`): a mark at an odd pixel covers exactly the pixels it
     /// does at full scale, not doubled ones, and the overlay is the
     /// screen's size.
@@ -1674,9 +1741,9 @@ mod tests {
         let mut marks = Marks::default();
         marks.push(Mark { flags: 0, ..Mark::new(Shape::Rect, cam.to_world((301.5, 11.5)), (1.5, 2.5), [0, 0, 255, 255]) });
         marks.disc(cam.to_world((101.0, 151.0)), 1.0, [255, 255, 255, 255], true);
-        let blue_and_white = |scale: u32| {
+        let blue_and_white = |pct: u32| {
             let mut view = View::new(&dev, &q, &world, (w, h), screen);
-            view.set_scale(scale);
+            view.set_percent(pct);
             view.set_marks(&marks);
             let mut ov = vec![0u8; 321 * 201 * 4];
             ov[4 * 3..4 * 4].copy_from_slice(&[9, 9, 9, 255]);
@@ -1685,14 +1752,15 @@ mod tests {
             view.record(&mut enc, &cam, None);
             q.submit([enc.finish()]);
             let pic = view.picture();
-            assert_eq!(pic.get_pixel(3, 0).0, [9, 9, 9, 255], "the overlay's one pixel at scale {scale}");
-            assert_ne!(pic.get_pixel(2, 0).0, [9, 9, 9, 255], "not doubled at scale {scale}");
+            assert_eq!(pic.get_pixel(3, 0).0, [9, 9, 9, 255], "the overlay's one pixel at {pct}%");
+            assert_ne!(pic.get_pixel(2, 0).0, [9, 9, 9, 255], "not doubled at {pct}%");
             let pick = |c: [u8; 4]| pic.enumerate_pixels().filter(|p| p.2 .0 == c).map(|p| (p.0, p.1)).collect::<Vec<_>>();
             (pick([0, 0, 255, 255]), pick([255, 255, 255, 255]))
         };
-        let full = blue_and_white(1);
+        let full = blue_and_white(100);
         assert!(!full.0.is_empty() && !full.1.is_empty());
-        assert_eq!(blue_and_white(2), full);
+        assert_eq!(blue_and_white(50), full);
+        assert_eq!(blue_and_white(67), full);
     }
 
     /// Plan C8 (2026-11-14): a walker's news of food is on screen. A calm
