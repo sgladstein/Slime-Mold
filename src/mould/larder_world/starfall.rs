@@ -80,6 +80,14 @@ pub struct StarRules {
     /// (`Reports/boss-cores-2026-11-20/`), since a fall lands by slime.
     pub teach: f32,
     pub teach_far: f32,
+    /// ... and no more than this many dish cells above or below the
+    /// soldier nearest it (11-24, the polish review's finding 13: planet
+    /// 1's teaching fall landed under the bottom bar, the screen's
+    /// shortest side). Beside the squad, not below it: about 120 pixels
+    /// at zoom 6 and 240 at zoom 12, clear of the bars with the camera on
+    /// the squad, without the game reading the view. Where nothing fits,
+    /// the band is dropped before the fall goes ordinary.
+    pub teach_dy: f32,
     pub gap: f32,
     /// Seconds its shadow shows before it lands.
     pub warn: f32,
@@ -154,6 +162,7 @@ impl Default for StarRules {
             par_share: 0.5,
             teach: 0.0,
             teach_far: 30.0,
+            teach_dy: 10.0,
             gap: 25.0,
             warn: 10.0,
             kill_r: 4.0,
@@ -671,6 +680,9 @@ impl<W: World> Game<W> {
         let mut fair = None;
         let mut best: Option<((f32, f32), u32)> = None;
         let mut calm: Option<((f32, f32), u32)> = None;
+        // The teaching fall's spot outside `teach_dy`: used only when none
+        // inside fits.
+        let mut tall: Option<((f32, f32), u32)> = None;
         let far = if teach { r.teach_far.min(r.far) } else { r.far };
         // Near the squad a random point rarely falls within `teach_far`:
         // the teaching fall also tries points round each soldier.
@@ -701,12 +713,14 @@ impl<W: World> Game<W> {
             if n > 0 && best.is_none_or(|b| n > b.1) {
                 best = Some((p, n));
             }
-            if calm.is_none_or(|c| n < c.1) {
-                calm = Some((p, n));
+            let beside = !teach || soldiers.iter().min_by(|a, b| (a.0 - p.0).hypot(a.1 - p.1).total_cmp(&(b.0 - p.0).hypot(b.1 - p.1))).is_none_or(|q| (q.1 - p.1).abs() <= r.teach_dy * sc);
+            let slot = if beside { &mut calm } else { &mut tall };
+            if slot.is_none_or(|c| n < c.1) {
+                *slot = Some((p, n));
             }
         }
         if teach {
-            if let Some(c) = calm {
+            if let Some(c) = calm.or(tall) {
                 return Some(c.0);
             }
             // Nowhere near the squad: an ordinary fall.
@@ -920,10 +934,22 @@ mod tests {
             let nearest = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - d.at.0).hypot(s.y - d.at.1)).fold(f32::INFINITY, f32::min) / sc;
             (g.time(), nearest)
         };
+        let beside = |teach: f32| {
+            let mut g = starry(5, StarRules { teach, ..StarRules::for_depth(1) });
+            while g.starfall.live.is_empty() && g.time() < 300.0 && g.end.is_none() {
+                g.step();
+            }
+            let d = g.starfall.live[0];
+            let sc = g.world.scale();
+            let q = g.soldiers.iter().filter(|s| s.alive).min_by(|a, b| (a.x - d.at.0).hypot(a.y - d.at.1).total_cmp(&(b.x - d.at.0).hypot(b.y - d.at.1))).unwrap();
+            (g.time(), (q.y - d.at.1).abs() / sc)
+        };
         let (t, near) = first(50.0);
         let r = StarRules::for_depth(1);
         assert!((t - 50.0).abs() < 0.5, "its shadow shows at 0:50, to land at 1:00, not {t}");
         assert!(near >= r.near - 0.5 && near <= r.teach_far + 0.5, "{near} dish cells from the squad");
+        let (_, dy) = beside(50.0);
+        assert!(dy <= r.teach_dy + 0.5, "beside the squad, not under the bottom bar: {dy} dish cells up or down");
         let (t0, near0) = first(0.0);
         assert!(t0 >= r.first - 0.5, "off, the window as before: {t0}");
         assert!(near0 >= r.near - 0.5, "off, still clear of the squad: {near0}");
