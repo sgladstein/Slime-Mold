@@ -91,3 +91,49 @@ software Vulkan: map A won at 4:23 (stall 48 s, 9 fallen), map B 4:42
   different zeros; sent to the Enemy lane.
 - The bot buys no buildings or tools (`turrets=0 walls=0`, `tools=0/0/0/0`)
   and plays the rifle: these are the plan's numbers, not a player's.
+
+## Rerun on #769 with a raid-response arm and a raid-size arm
+
+Planets 1 to 8 of the three maps on the GTX 1070 again (42 games,
+[games-c.csv](games-c.csv)), on main after #765 (the planet 1 stand closes
+in) and #769. Two extra arms on the later planets, paired by map:
+`brace` (the bot's raid response, #774: a squad near a march toward it
+steps back a range and fights it, `brace=1`) on planets 4 to 8, and
+`raid` (`set=raid_march_size=1.0`, the Enemy lane's ask) on planet 4.
+
+**A clock bug in the league, found here.** `Game::time()` already counts
+from the landing (since 11-15), and the league (11-19) took the head start
+off again, so its `secs`, the 720 s cap, the stall's grace and the
+`at150/300/600` samples all ran short by the head start: about 11 s on
+planet 4, 25 s on 5, 40 s on 6 and 87 s on 8 (0 on 1 to 3). `fell@` was
+right. The times below add it back; the league is fixed in the same
+change, so later batches need no correction.
+
+Main arm (time to win corrected):
+
+| Planet | Won / lost / open | Time to win (median) | Soldiers (peak) | Lost (all bites) |
+|---|---|---|---|---|
+| 1 | 3 / 0 / 0 | 4:40 | 32-39 | 3-9 |
+| 2 | 3 / 0 / 0 | 5:57 | 44-60 | 2-4 |
+| 3 | 3 / 0 / 0 | 5:36 | 35-55 | 21-47 |
+| 4 | 2 / 1 / 0 | 4:50 (5:26, 4:13) | 54-62 | 0-58 |
+| 5 | 3 / 0 / 0 | 4:15 | 55-95 | 0-23 |
+| 6 | 3 / 0 / 0 | 5:31 | 73-78 | 3-23 |
+| 7 | 0 / 2 / 1 | - | 14-77 | 17-68 |
+| 8 | 1 / 1 / 1 | 5:24 | 64-84 | 0-103 |
+
+18 of 24 won, against 13 of 24 on #756. Planet 1 won on all three maps
+(the stall is gone on the 1070 too: longest stall 57 s), planet 4 won on
+two. Planet 7 is the wall: origins of 2,674, 1,963 and 4,360 at most, and
+no map won. Planet 8 map B ran out the clock with the origin at 2,409 of
+2,699.
+
+**`brace` (15 pairs, planets 4 to 8):** 12 pairs ended the same way; main
+alone won planet 4 map A and planet 5 map A, `brace` alone won planet 8
+map C. Sign test 2 against 1, p = 1.0: no gain, so it stays off (dial
+`brace=0`).
+
+**`raid_march_size=1.0` on planet 4:** 0 of 3 won, against main's 2 of 3.
+On map C main saw no march and won at 4:13 with none lost; the raid arm
+saw 6 marches and lost with 65 bitten. Three pairs give no p worth
+quoting, but every pair went the same way.

@@ -318,7 +318,13 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         app.follow_mission();
         let verdict = app.mission.as_ref().and_then(|m| m.verdict);
         let g = app.game.as_mut().unwrap();
-        let since = g.time() - g.landed as f32 / g.rules.tps as f32;
+        // Since the landing: `Game::time` counts from it already (since
+        // 11-15). Until 11-24 the head start was taken off again here, so
+        // on planets with one (about 11 s on planet 4, 25 to 87 s on 5 to
+        // 8) every league time (`secs`, the cap, `stall`'s first minute,
+        // `at150`...) ran short by it: `fell@`, counted right, read later
+        // than the win (planet 8: won at 237, fell@314).
+        let since = g.time();
         if verdict.is_some() || g.end.is_some() || since > limit {
             break;
         }
@@ -374,9 +380,8 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     }
     let g = app.game.as_ref().unwrap();
     let verdict = app.mission.as_ref().and_then(|m| m.verdict);
-    let landed = g.landed as f32 / g.rules.tps as f32;
     let stars = verdict.map_or(0, |v| v.stars);
-    let end = verdict.map_or(g.time(), |v| v.at) - landed;
+    let end = verdict.map_or(g.time(), |v| v.at);
     let how = match (verdict, g.end) {
         (Some(v), _) if v.stars > 0 => "won",
         (Some(_), _) | (None, Some(_)) => "lost",
