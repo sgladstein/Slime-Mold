@@ -18,8 +18,16 @@ the name (`world::GAME_NAME` "Plasmodia", the main page's `wordmark` in
 `start.rs`; binaries, `play.cmd` and the settings folder keep the old
 name); the end card's graph as an area and a step line (finding 15,
 `end_curve`); the words on screen to `news/words.txt` (finding 10).
-Next: the command card (finding 7: Back always at (1, 5), new icons for
-Mine, Sleep gas and the Lure), the shop (8), Options and Keys (11).
+Then (finding 7): Back at (1, 5) on the Tools and Build pages as on
+Formation; new icons `Mine`, `Sleep`, `Lure` (also the Lure building, its
+switch and Lures on/off) and `Tag` (the shop's Cheaper tools; Turret
+power keeps the chevron); a card's cost shrinks to 10.5 px before it is
+cut, a "20/cell" that still won't fit keeps its number. Locked tools stay
+on the page (the review asked to hide them behind one tile; Scott wanted
+Tools reachable on 11-22). Key letters that mean different things by
+page are Squad's (`squadmode.rs`). #747 (World detail slider) looked
+over after it merged: nothing for this side. Next: the shop (8), Options
+and Keys (11).
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
