@@ -1034,8 +1034,13 @@ impl App {
                     // and sparks along it (no bigger than its damage).
                     if age < 0.8 {
                         let k = age.max(0.0) / 0.8;
-                        self.marks.star(d.at, hit, STAR_BURST, k, seed, 0.0, 0.0, ORE_GLOW, [255, 250, 235, 255], false);
-                        glows.push(Light { at: d.at, reach: hit * 2.0, lift: 6.0, colour: [255.0, 210.0, 140.0], strength: 2.2 * (1.0 - k).powi(2) });
+                        // Gold, not white, and its light no wider than the
+                        // ring (11-24, the polish review's finding 13: the
+                        // landing read as a white bloom about 120 px across,
+                        // the brightest thing on screen; the light reached
+                        // twice the kill radius at 2.2).
+                        self.marks.star(d.at, hit, STAR_BURST, k, seed, 0.0, 0.0, ORE_GLOW, [255, 196, 70, 255], false);
+                        glows.push(Light { at: d.at, reach: hit, lift: 6.0, colour: [255.0, 180.0, 50.0], strength: 0.9 * (1.0 - k).powi(2) });
                     }
                 }
                 // Where to stand to collect it (owner's play, 11-20 23:17Z:
@@ -1149,10 +1154,16 @@ impl App {
                     continue;
                 }
                 let seed = (c.at.0 * 5.0 + c.at.1 * 11.0) as u32;
+                // Half the size it was and gold, not white (11-24, the
+                // polish review's finding 13: a white flash about 120 px
+                // across, the brightest thing on screen, for 40 points; an
+                // effect is never bigger than what it does). Its flash's
+                // colour is deep gold rather than `GOLD_HOT`, and the light
+                // under it a third as strong, so neither blows out white.
                 if age < 0.7 {
                     let k = age.max(0.0) / 0.7;
-                    self.marks.star(c.at, star.ore_r * sc * 3.6, STAR_BURST, k, seed, 0.0, 0.0, GOLD, GOLD_HOT, false);
-                    glows.push(Light { at: c.at, reach: 9.0 * sc, lift: 5.0, colour: [255.0, 214.0, 90.0], strength: 3.5 * (1.0 - k).powi(2) });
+                    self.marks.star(c.at, star.ore_r * sc * 1.8, STAR_BURST, k, seed, 0.0, 0.0, GOLD, [255, 196, 70, 255], false);
+                    glows.push(Light { at: c.at, reach: 4.5 * sc, lift: 5.0, colour: [255.0, 180.0, 50.0], strength: 1.2 * (1.0 - k).powi(2) });
                 }
                 // The coins: sprayed out all round from the drop, a little
                 // more away from the camera's top, slowing as they skid to
@@ -1192,7 +1203,7 @@ impl App {
                 let a = (1.0 - k.powi(3)).clamp(0.0, 1.0);
                 let hot = 1.0 - (age / 0.35).clamp(0.0, 1.0);
                 let mixc = |a: [u8; 4], b: [u8; 4], t: f32| [0, 1, 2, 3].map(|i| (a[i] as f32 + (b[i] as f32 - a[i] as f32) * t) as u8);
-                let face = fade(mixc(GOLD, [255, 252, 235, 255], hot), a);
+                let face = fade(mixc(GOLD, [255, 236, 160, 255], hot), a);
                 let edge = fade([196, 112, 20, 255], a);
                 let ink = [16, 8, 4, (235.0 * a) as u8];
                 let text = format!("+{}", c.taken.round() as u32);

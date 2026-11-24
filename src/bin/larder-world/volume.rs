@@ -61,7 +61,7 @@ pub(super) fn detail_user() -> &'static str {
 }
 
 pub(super) fn set_detail_user(v: &str) {
-    if let Some(i) = settings::DETAIL_STEPS.iter().position(|&d| d.eq_ignore_ascii_case(v)) {
+    if let Some(i) = settings::parse_detail(v).and_then(|v| settings::DETAIL_STEPS.iter().position(|&d| d == v)) {
         DETAIL.store(i as u32, Ordering::Relaxed);
     }
 }

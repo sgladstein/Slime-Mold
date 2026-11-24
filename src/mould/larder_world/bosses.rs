@@ -235,16 +235,24 @@ impl BossRules {
     /// it moved up a planet unchanged, so planet 2 has what planet 1 had
     /// and planet 8 still has every 45 s and 10%.
     pub fn for_depth(depth: u32) -> BossRules {
-        if depth <= 1 {
+        BossRules::for_curve(depth as f32)
+    }
+
+    /// `for_depth` at a place `e` on the eight-planet curve (1 to 8), which
+    /// a run of another length spreads its planets over
+    /// (`run::curve_depth`, 2026-11-24): the same numbers at whole `e`.
+    pub fn for_curve(e: f32) -> BossRules {
+        if e < 2.0 {
             return BossRules::default();
         }
-        let t = (depth.min(8) - 2) as f32 / 6.0;
+        let depth = e.min(8.0);
+        let t = (depth - 2.0) / 6.0;
         BossRules {
             every: 150.0 + (45.0 - 150.0) * t,
             every_sd: 30.0 + (10.0 - 30.0) * t,
             first: 90.0 + (40.0 - 90.0) * t,
             cut: 0.02 + (0.1 - 0.02) * t,
-            most: if depth >= 6 { 3 } else if depth >= 4 { 2 } else { 1 },
+            most: if depth >= 6.0 { 3 } else if depth >= 4.0 { 2 } else { 1 },
             // Weaker on the first planets, all of them stronger by the
             // last, and a wide spread on each. Floor raised 2026-11-22
             // evening (below): grade 0.2 to 0.7 on planet 2 (was 0 to
@@ -266,7 +274,7 @@ impl BossRules {
             haste: 1.2 + 0.3 * t,
             quorum: 0.2 - 0.08 * t,
             // The mortar from planet 4 (the proposal the owner picked).
-            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4 { 1.0 } else { 0.0 }, if depth >= 3 { 1.0 } else { 0.0 }],
+            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4.0 { 1.0 } else { 0.0 }, if depth >= 3.0 { 1.0 } else { 0.0 }],
             // Tougher by the planet (2026-11-22, the thread "Make the run
             // harder after full-game win": 54 mini-bosses on the owner's
             // 11-22 run of all 8 planets were all broken, fizzled or spent

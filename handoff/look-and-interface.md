@@ -2,6 +2,20 @@
 
 ## State (2026-11-20)
 
+**11-24, Look C, polish findings 3 and 4:** crystals are cut gems
+(`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
+spent husk is low, rock-dark and crumbled (`gem_crumb`, also in the cast
+shadow); page and clips in `Reports/crystal-cut-2026-11-24/`.
+**11-24, Look B (the slime itself), polish finding 1:** the Drifter's
+trail sheet (planet 1) has an edge and a low lit relief (`SHEET_EDGE`,
+`SHEET_RISE` in `prep`); page and clips in
+`Reports/drifter-sheet-2026-11-24/`. Next for Look B: planets 4 to 8 each
+read differently at zoom 6 (asked Enemy which slimes they are), then
+crystals (findings 3, 4), shore stairs (2), squad marks (5), dashes over
+crystals (14), camera edge (12, with Engine). The second look thread has
+the HUD, shop, menus and end screens; tell it before touching `draw.rs`'s
+HUD, it tells us before `view.wgsl`.
+
 **11-24, Milestone 2 (Direction 03:13Z), job 1, the origin:** its heart
 look (`LumpLook::Heart`, also the last stand) is a near-black oxblood crust
 (`LUMP_SKIN_HEART` 44, 12, 8) with a hot orange core lit from 0.45 members

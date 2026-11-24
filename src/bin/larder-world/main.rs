@@ -1996,7 +1996,7 @@ impl App {
             if sec > self.log_sec {
                 self.log_sec = sec;
                 let mut line = self.playlog.second(g);
-                line += &frames_line(&mut self.log_parts, self.view.as_ref().map_or((0, 0), |v| v.screen), self.camera.zoom, self.fast);
+                line += &frames_line(&mut self.log_parts, self.view.as_ref().map_or((0, 0, 100), |v| (v.screen.0, v.screen.1, v.percent())), self.camera.zoom, self.fast);
                 // The speaker's health every 10 s (`sound::Output::health_line`;
                 // 2026-11-22, sound still cutting out in his play).
                 if sec.is_multiple_of(10) {
@@ -2311,10 +2311,11 @@ impl App {
     }
 
     fn prepare_now(&mut self) {
-        // The world detail (`settings::detail_scale`, 11-22): the view
-        // draws the world at the screen's pixels over this.
+        // The world detail (`settings::detail_percent`, 11-22; steps
+        // 11-24): the view draws the world at this percent of the
+        // screen's pixels each way.
         if let Some(v) = self.view.as_mut() {
-            v.set_scale(settings::detail_scale(detail_user(), v.screen));
+            v.set_percent(settings::detail_percent(detail_user(), v.screen));
         }
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
@@ -2599,7 +2600,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "shake" => args.shake = v.parse()?,
-            // `detail=auto|full|half`: the world detail (`settings::DETAIL_STEPS`).
+            // `detail=auto|100|85|75|67|60|50|40` (or full, half): the
+            // world detail (`settings::DETAIL_STEPS`).
             "detail" => set_detail_user(v),
             "hitstop" => args.hitstop = v.parse()?,
             "real" => args.real = v != "0",
@@ -3130,24 +3132,25 @@ fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime
 }
 
 /// The play log's `frames` line for the second just passed (performance
-/// thread, 2026-11-22): the window's size in pixels, the zoom, fast
+/// thread, 2026-11-22): the window's size in pixels, the world's detail in
+/// percent each way (`View::percent`, 11-24), the zoom, fast
 /// forward, the frames counted, and for each part of a frame (`log_parts`)
 /// its mean and its most in ms:
 ///
 /// ```text
-/// frames px=2560x1377 zoom=7.5 fast=0 n=58 step=1.2/9.8 hear=0.1/0.2 prep=0.9/1.4 wait=12.0/30.1 record=0.3/0.5 present=0.2/0.9
+/// frames px=2560x1377 detail=75 zoom=7.5 fast=0 n=58 step=1.2/9.8 hear=0.1/0.2 prep=0.9/1.4 wait=12.0/30.1 record=0.3/0.5 present=0.2/0.9
 /// ```
 ///
 /// `wait` is the swap chain's next image: vsync on a quick frame, the GPU
 /// still drawing earlier frames on a slow one. `step` holds the GPU's
 /// read-backs, so a slow GPU shows there too.
-fn frames_line(parts: &mut Vec<[f32; 6]>, (w, h): (u32, u32), zoom: f32, fast: bool) -> String {
+fn frames_line(parts: &mut Vec<[f32; 6]>, (w, h, detail): (u32, u32, u32), zoom: f32, fast: bool) -> String {
     if parts.is_empty() {
         return String::new();
     }
     let names = ["step", "hear", "prep", "wait", "record", "present"];
     let n = parts.len();
-    let mut s = format!("frames px={w}x{h} zoom={zoom:.1} fast={} n={n}", u8::from(fast));
+    let mut s = format!("frames px={w}x{h} detail={detail} zoom={zoom:.1} fast={} n={n}", u8::from(fast));
     for (i, name) in names.iter().enumerate() {
         let mean = parts.iter().map(|p| p[i]).sum::<f32>() / n as f32;
         let most = parts.iter().map(|p| p[i]).fold(0.0f32, f32::max);

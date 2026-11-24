@@ -1,0 +1,41 @@
+# The arms batch (`.github/workflows/arms.yml`): one game a line,
+# `ARM DEPTH SEED SECS [GAME ARGS...]`, the run bot's plan
+# (scripts/run-bot-plan.txt) on SEED's planet DEPTH (`league=DEPTH:SEED:SECS`,
+# the planets before it taken as won with two stars and shopped by the plan),
+# or a whole run from planet 1 to N when DEPTH is `runN`. Line i goes to
+# shard i mod 8. A later `plan=` overrides the run bot's plan.
+#
+# 2026-11-24, the balance review on today's build (Scott's OK, 03:15Z), with
+# the origin (#699) on: no tuning changes, three plans on the same maps.
+# - as-is: the run bot's plan (bot on planet 1, then the rush with no cards).
+# - cards: the same rush, buying Wide, Rate and Needle Blast when offered.
+# - econ: the strategy league's best planet 3 plan (pumps first, 6 turrets,
+#   the same cards), from pc/p3c gen30.
+# Deciding measures, per planet: won, game time, soldiers lost (fell_end),
+# peak army (peak_alive), food left (bank); paired by seed. Planet 5 as is on
+# three maps, for Direction's question on its length.
+# Each planet capped at 12 game minutes (720).
+as-is run4 1 720
+as-is run4 2 720
+as-is run4 3 720
+as-is run4 4 720
+as-is run4 5 720
+as-is run4 1795038793 720
+as-is run4 1795106014 720
+as-is run4 1795119328 720
+cards run4 1 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+cards run4 2 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+cards run4 3 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+cards run4 4 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+cards run4 5 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+cards run4 1795038793 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+cards run4 1795106014 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+cards run4 1795119328 720 plan=bot,want=torch.standard|rush,aim=6,want=wide/rate/blast.needle
+econ run4 1 720 plan=bot,want=torch.standard|econ,aim=6,back=0.5,cap=40,cards=1,defend=0,first=pumps,go=4,group=3,grow=1.5,guard=2,hold=8,kite=0.3,lure=1,mop=3000,more=0,per=100,pumps=1,regroup=2,shop=strike/rate/hp/harvest/turret/range/bank,spare=2,split=2,take=1,turrets=6,up=1,walk=2,walls=0,want=wide/rate/blast.needle
+econ run4 2 720 plan=bot,want=torch.standard|econ,aim=6,back=0.5,cap=40,cards=1,defend=0,first=pumps,go=4,group=3,grow=1.5,guard=2,hold=8,kite=0.3,lure=1,mop=3000,more=0,per=100,pumps=1,regroup=2,shop=strike/rate/hp/harvest/turret/range/bank,spare=2,split=2,take=1,turrets=6,up=1,walk=2,walls=0,want=wide/rate/blast.needle
+econ run4 3 720 plan=bot,want=torch.standard|econ,aim=6,back=0.5,cap=40,cards=1,defend=0,first=pumps,go=4,group=3,grow=1.5,guard=2,hold=8,kite=0.3,lure=1,mop=3000,more=0,per=100,pumps=1,regroup=2,shop=strike/rate/hp/harvest/turret/range/bank,spare=2,split=2,take=1,turrets=6,up=1,walk=2,walls=0,want=wide/rate/blast.needle
+econ run4 4 720 plan=bot,want=torch.standard|econ,aim=6,back=0.5,cap=40,cards=1,defend=0,first=pumps,go=4,group=3,grow=1.5,guard=2,hold=8,kite=0.3,lure=1,mop=3000,more=0,per=100,pumps=1,regroup=2,shop=strike/rate/hp/harvest/turret/range/bank,spare=2,split=2,take=1,turrets=6,up=1,walk=2,walls=0,want=wide/rate/blast.needle
+econ run4 5 720 plan=bot,want=torch.standard|econ,aim=6,back=0.5,cap=40,cards=1,defend=0,first=pumps,go=4,group=3,grow=1.5,guard=2,hold=8,kite=0.3,lure=1,mop=3000,more=0,per=100,pumps=1,regroup=2,shop=strike/rate/hp/harvest/turret/range/bank,spare=2,split=2,take=1,turrets=6,up=1,walk=2,walls=0,want=wide/rate/blast.needle
+p5 5 1 720
+p5 5 2 720
+p5 5 3 720
