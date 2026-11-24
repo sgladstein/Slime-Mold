@@ -42,11 +42,11 @@ release, only if he chooses one.
 | Lane | Test | Top jobs, in order |
 |---|---|---|
 | Direction | all | This page and the rulings. His two-hour-run card, then D8. Sort each play session within the hour. The curve page when test 3 holds. |
-| Enemy | 1, 3 | The heart tougher by planet (D7, his card 14:52Z). Planet 7 beatable with the storm dial, then P5, P6, P8 sized so later planets cost more. Lap two (Lab's pairings) if he picks 12 or 16 planets. Wanderer feeding after the Lab's P7 check. |
-| Squad and arsenal | 1, 3 | Fever and Backdraft, then the Sprayer turret body, then the Hunter. |
-| Look and interface | 1, 5 | HUD: run screens that follow `run::PLANETS`, then Squad's new tools readable in fight and shop, the HUD's draw cost at 4K, the Experiments list (test 6). Main: Look B, C, D from his notes. |
-| Engine and tools | 1, 3, 5 | The storm dial picked on P7, the GPU walker sort timed on P5 and P8, then the fourth curve pass. |
-| Lab | none | Bait against drain on planet 7 (#793's open trade), then lap two's planet 9 as a rig. |
+| Enemy | 1, 3 | The heart tougher by planet (D7, his card 14:52Z). Then the Lab's planet twists, Wind and Cold snap, on about one planet in three. P5, P6, P8 sized so later planets cost more. Lap two (Lab's sizes, rigs and `strikers_settle` patch) if he picks 12 or 16 planets. |
+| Squad and arsenal | 1, 3 | The gun row's card look B, fused shots (his 15:51Z pick), with Look HUD. Whatever the curve's builder arm shows broken in the kit. |
+| Look and interface | 1, 5 | HUD: first-sight hints for each threat and trait, then what the twists need on screen. Main: Look B, C from his notes. |
+| Engine and tools | 1, 3 | The storm dials (army, clock), then the fifth curve pass with the builder arm once D7 lands; the curve page follows. |
+| Lab | none | A rescue planet: a goal other than the heart, from the model. Night stays on its branch. |
 
 **Unparked now:** gun steps E and F, the next turret body, twists and rescue
 planets, more planet polish. Still parked: the player's own mould (D12), and
