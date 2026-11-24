@@ -37,7 +37,7 @@
 //! second with more late frames than that is not 60 a second.
 //!
 //! A try at the step above waits, past `hold`, until this step has room
-//! for it: its `PCT` frame plus the step above's cost, under `FAST_MS`.
+//! for it: its `PCT` frame plus the step above's cost, under `ROOM_MS`.
 //! The cost is learnt at the step down, the median frame before (at the
 //! step above) less the median after: on planet 8 at its peak, 50% to 40%
 //! saved 2.4 ms of median frame, and 40%'s frames with a game step ran
@@ -73,6 +73,13 @@ pub(super) const HOLD_MAX: f32 = 240.0;
 /// so the hold never doubled and Auto spent a third of the planet's
 /// first 150 s retrying 50% (p95 17.0 over every frame).
 pub(super) const PROBE_SECS: f32 = 20.0;
+/// A try at the step above needs this step's `PCT` frame plus the step
+/// above's cost under this (ms): `FAST_MS` less a millisecond, as the
+/// cost is learnt from medians and a frame's slow tail grows more than its
+/// median. On the 1070 planet 8 at 40% ran p95 14.4 and cost 2.4 a step:
+/// 16.8 was under `FAST_MS`, and every retry of 50% ran slow (p95 16.9
+/// over the run, with 7 changes in 150 s).
+pub(super) const ROOM_MS: f32 = 16.0;
 /// The most a step's cost is taken to be (ms of median frame): a whole
 /// second run slow by a burst of play is not the picture's cost.
 pub(super) const COST_MAX: f32 = 6.0;
@@ -182,7 +189,7 @@ impl AutoDetail {
             // what the step above was seen to cost.
             // A cost learnt wrong (the load fell just after the step
             // down) keeps the step above out for `HOLD_MAX` at most.
-            let room = late + self.cost.unwrap_or(0.0) < FAST_MS || self.fast_for >= HOLD_MAX;
+            let room = late + self.cost.unwrap_or(0.0) < ROOM_MS || self.fast_for >= HOLD_MAX;
             if self.fast_for >= self.hold && self.pct < self.top && room {
                 self.fast_for = 0.0;
                 self.since_up = Some(0.0);
@@ -266,15 +273,15 @@ mod tests {
         a.percent(UHD);
         run(&mut a, 19.0, 1.05);
         assert_eq!(a.pct, 40);
-        // Quick at 40%, with room for the step's cost (19 less 10, taken
+        // Quick at 40%, with room for the step's cost (19 less 9.5, taken
         // as `COST_MAX`): up after HOLD_MIN seconds.
-        assert_eq!(run(&mut a, 10.0, HOLD_MIN + 0.5), vec![50]);
+        assert_eq!(run(&mut a, 9.5, HOLD_MIN + 0.5), vec![50]);
         // 50% is still slow: back down at its first whole slow second (the
         // first may hold the quick frames before it), and the hold doubles.
         assert_eq!(run(&mut a, 19.0, 2.1), vec![40]);
         assert_eq!(a.hold, 2.0 * HOLD_MIN);
-        assert!(run(&mut a, 10.0, HOLD_MIN + 0.5).is_empty(), "not after the old hold");
-        assert_eq!(run(&mut a, 10.0, HOLD_MIN + 0.5), vec![50], "after the doubled one");
+        assert!(run(&mut a, 9.5, HOLD_MIN + 0.5).is_empty(), "not after the old hold");
+        assert_eq!(run(&mut a, 9.5, HOLD_MIN + 0.5), vec![50], "after the doubled one");
         // This time it fits: it stays, and never goes past the top.
         assert!(run(&mut a, 16.67, HOLD_MAX + 10.0).is_empty());
         assert_eq!(a.pct, 50);
@@ -290,7 +297,7 @@ mod tests {
         let mut a = AutoDetail::default();
         a.percent(UHD);
         run(&mut a, 19.0, 1.05);
-        assert_eq!(run(&mut a, 10.0, HOLD_MIN + 0.5), vec![50]);
+        assert_eq!(run(&mut a, 9.5, HOLD_MIN + 0.5), vec![50]);
         assert!(run(&mut a, 16.0, 8.0).is_empty());
         assert_eq!(run(&mut a, 19.0, 2.1), vec![40]);
         assert_eq!(a.hold, 2.0 * HOLD_MIN);
@@ -299,7 +306,7 @@ mod tests {
         let mut b = AutoDetail::default();
         b.percent(UHD);
         run(&mut b, 19.0, 1.05);
-        assert_eq!(run(&mut b, 10.0, HOLD_MIN + 0.5), vec![50]);
+        assert_eq!(run(&mut b, 9.5, HOLD_MIN + 0.5), vec![50]);
         assert!(run(&mut b, 16.0, PROBE_SECS + 2.0).is_empty());
         assert_eq!(run(&mut b, 19.0, 2.1), vec![40]);
         assert_eq!(b.hold, HOLD_MIN);
