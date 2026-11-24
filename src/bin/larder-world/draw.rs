@@ -1469,7 +1469,7 @@ impl App {
                 }
                 let (dx, dy) = (to.0 - sp.from.0, to.1 - sp.from.1);
                 let d = dx.hypot(dy).max(1e-3);
-                let mouth = (sp.from.0 + dx / d * half * 1.6, sp.from.1 + dy / d * half * 1.6);
+                let mouth = (sp.from.0 + dx / d * half * 1.1, sp.from.1 + dy / d * half * 1.1);
                 // The newest spot's jet is solid; the ones swept past thin out.
                 let lead = 1.0 - ((sweep - at) * 3.0).clamp(0.0, 0.7);
                 let a = (210.0 * fade * lead) as u8;

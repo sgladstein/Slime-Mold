@@ -408,7 +408,8 @@ Plain is a weak buy: in 12 s on the race world a plain sprayer killed 93
 to a plain turret's 206 in the same place, and a gas sprayer put
 walkers to sleep 12,676 times, counted each cast (`a_sprayer_lays_its_cast_in_a_strip`). The window
 draws each sweep's jet fanning across the arc in the card's colour for
-half a second (`SPRAY_SHOW`); what stays is the cast's own work. Its head
+half a second (`SPRAY_SHOW`); what stays is the cast's own work
+([clips](../../Reports/sprayer-2026-11-24/README.md)). Its head
 is the turret's base under a flat fan nozzle (building kind 8 in the
 view's shader). The hunter (picky targeting: slime on a crystal first) is
 the next candidate body.
