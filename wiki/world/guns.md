@@ -129,6 +129,28 @@ bomb carrying a gas burst 13.6 times a second against 7.5 for the two in turn;
 a buckshot trigger with a blast is strong
 ([trigger cards](../../Reports/gun-triggers-2026-11-16/README.md)).
 
+**Cards that did nothing alone** (Direction 11-24 13:42Z, the 11-20
+balance review's list checked on today's main). The modifiers on the plain
+bullet, Quiet, Thrift, Tinder, Smother and Heavier shots were already fixed
+or held back (11-20 to 11-22). What was still dead, and the fix:
+- Trigger, Expire and Multicast with one bullet card have no second cast
+  to carry or fire beside it. The shop now holds them until the run owns
+  two bullet cards (`Run::restock`). The rejected fix, a plain bullet as
+  the missing cast, casts nothing.
+- A device holding only modifiers or trail cards cast nothing, since
+  `cast_all` casts only bullet cards. A Wide, Scatter, Delay or Thick
+  with no bullet after it now pops the plain bullet where the device goes
+  off. Scorch, Bait, Mist, Smother and Tinder lay their trail's disc there
+  (`Rounds::cast_device_at`, `lay_spot_trails`).
+- A device carried the bullet's flight cards (Pierce, Split, Range, Rate,
+  Seek) in its slots, to no effect. `Run::body_cards` now leaves them on
+  the gun (`run::gun_only`).
+- A sprayer's trail cards laid nothing, though its shop line asks for
+  Tinder. Each sweep now lays them at every spot, so a Tinder sprayer lays
+  a strip of brush.
+
+Test: `a_devices_and_a_sprayers_lone_cards_show`.
+
 **Shove cards** (2026-11-16, the owner's 05:11Z ask: "corral and push the
 slime onto areas. Into a kill zone"): `Heave` makes a bullet's hit shove the
 slime round it toward your nearest turret within `corral_reach` (40 dish

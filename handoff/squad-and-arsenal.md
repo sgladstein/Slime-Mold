@@ -48,6 +48,15 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, dead cards and the bot's kit (pathfinding thread).** #802
+merged (the hunter). Direction 13:42Z: no more turret bodies for this
+milestone. Next PR: the cards dead alone (carriers held to two bullets
+owned, device and sprayer trail cards and lone plain pops, gun-only cards
+off devices; `wiki/world/guns.md`). Then a small PR for Engine: strategy
+bot dials `mortars`, `sprayers`, `hunters` (placed round guarded pumps,
+unlocks bought first) and `body=grenade|mine`, and a `bodies=` league
+field, so the curve can use the new kit (CI's plan bot|rush buys none).
+
 **2026-11-24, the hunter (pathfinding thread).** #796 merged (the
 sprayer) and #799 (its Torch holds off its squad, droplet jets) merged. Next
 PR: the third turret body, the hunter (`Kind::Hunter`,
