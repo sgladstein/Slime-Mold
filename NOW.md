@@ -27,12 +27,12 @@ finish and replay. It is done when all six hold:
 5. **60 frames a second on his PC**: frame p95 under 16.7 ms on the GTX 1070 at his own screen (3840 x 2160, World detail as shipped) through planets 1 to 8, the Sporer's big slimes included.
 6. **Everything built is on**, and the game's pages list what is new and the few experiments that are off (kept from Milestone 1).
 
-The rush (D7) stays his: **add no rush brake unasked.** Milestone 3, a
+The rush (D7): he picked a heart that gets tougher by planet (11-24 14:52Z); no other rush brake unasked. Milestone 3, a
 release, only if he chooses one.
 
 **Where it stands (11-24, 12:30Z).** The origin is on main (#699), at 700, 500 and 1,000 on planets 1 to 3 and half size on 4 to 8 (#756), its gather capped at twice its size (#769).
 - **Curve (test 3).** Third pass (#782): 18 of 24 won, P7 on no map (the wall), medians flat at 4:40 to 5:24. Planet 7's stall is the bot's: its siege waits for every crystal but the home to run dry, and P7 has about 30. Engine's `storm=F` dial (siege once the slime is down to F of its landing size with 20 soldiers) is on the PC at 0.35 and 0.5; Enemy's P5, P6, P8 curve follows.
-- **Rush (D7).** A heart snipe of 8 to 15 soldiers wins P2 to P4 in 1:10 to 2:32. On his card.
+- **Rush (D7).** A heart snipe of 8 to 15 soldiers won P2 to P4 in 1:10 to 2:32; his card (14:52Z): a heart tougher by planet, Enemy building it.
 - **4K (test 5).** At Auto on the 1070: P3 p95 12.5 ms, P5 15.5, P8 17.1 at 40% (#787). Engine's GPU walker sort is the next lever (Lab's prototype: step 9.46 to 5.27 ms).
 - **Save and resume (test 4): passes** (#757; 1070 check 07:07Z, 7.7 MB in about 50 ms).
 - **What each planet does** is on screen: P2 Sprawler threads, P6 Sleeper, P7 Grudge scar, P8 the Dozer (#784, #788), each with its landing card and HUD tell (#785, #792).
@@ -42,7 +42,7 @@ release, only if he chooses one.
 | Lane | Test | Top jobs, in order |
 |---|---|---|
 | Direction | all | This page and the rulings. His two-hour-run card, then D8. Sort each play session within the hour. The curve page when test 3 holds. |
-| Enemy | 1, 3 | Planet 7 beatable with the storm dial, then P5, P6, P8 sized so later planets cost more. Lap two (Lab's pairings) if he picks 12 or 16 planets. Wanderer feeding after the Lab's P7 check. |
+| Enemy | 1, 3 | The heart tougher by planet (D7, his card 14:52Z). Planet 7 beatable with the storm dial, then P5, P6, P8 sized so later planets cost more. Lap two (Lab's pairings) if he picks 12 or 16 planets. Wanderer feeding after the Lab's P7 check. |
 | Squad and arsenal | 1, 3 | Fever and Backdraft, then the Sprayer turret body, then the Hunter. |
 | Look and interface | 1, 5 | HUD: run screens that follow `run::PLANETS`, then Squad's new tools readable in fight and shop, the HUD's draw cost at 4K, the Experiments list (test 6). Main: Look B, C, D from his notes. |
 | Engine and tools | 1, 3, 5 | The storm dial picked on P7, the GPU walker sort timed on P5 and P8, then the fourth curve pass. |
@@ -61,7 +61,6 @@ asks at most once a session with a recommendation.
 |---|---|
 | Longer planets or more of them | His 11-24 answer: at least two hours, by either; "we don't need to decide exactly now". The dials are on main (#749: `run::PLANETS`, `run::STRETCH`). Costed and asked 05:10Z: both roads, starting at 12 planets at 1.3x (recommended, about 2.5 days), 16 planets (2 days), 8 at 1.8x (1 day), or not yet. |
 | Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked next. |
-| D7 the rush brake | His, in play. The origin's rush numbers are in `Reports/origin-design-2026-11-22/`. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (asked 11-17 19:14Z). |
 
 ## Things to try at the next play
