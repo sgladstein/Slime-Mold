@@ -1277,9 +1277,9 @@ impl StartMenu {
         self.sheet = (self.sheet as isize + by).rem_euclid(n) as usize;
         if matches!(self.page, Page::Options | Page::Missions | Page::Shop | Page::Runs) {
             self.focus = self.sheet * self.per.max(1);
-        } else if self.page == Page::News {
-            // (Both tabs page by height: each page's first row, kept by
-            // the page as it draws.)
+        } else if matches!(self.page, Page::News | Page::Met) {
+            // (Both tabs page by height, and the slimes met by rows of
+            // tiles: each page's first row, kept by the page as it draws.)
             self.focus = self.try_first.get(self.sheet).copied().unwrap_or(0);
         }
     }
@@ -1413,7 +1413,7 @@ impl StartMenu {
                 self.picked = true;
             }
             KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
-            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if matches!(self.page, Page::Keys | Page::Runs) || (self.page == Page::News && self.news_tab == 0) => {
+            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if matches!(self.page, Page::Keys | Page::Runs) || (self.page == Page::Met && self.sheets > 1) || (self.page == Page::News && self.news_tab == 0) => {
                 self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
             }
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
@@ -1620,6 +1620,7 @@ impl StartMenu {
             Page::Runs if self.sheets > 1 => "Up/Down pick a run  ·  Left/Right or the wheel turn the page  ·  Esc back",
             Page::Runs if !self.met.is_empty() => "Up/Down pick a run  ·  Tab the slimes met  ·  Esc back",
             Page::Runs => "Up/Down pick a run  ·  Esc back",
+            Page::Met if self.sheets > 1 => "Up/Down pick one  ·  Left/Right or the wheel turn the page  ·  Esc back",
             Page::Met if !self.runs.is_empty() => "Up/Down pick one  ·  Tab the past runs  ·  Esc back",
             Page::Met => "Up/Down pick one  ·  Esc back",
         };
@@ -1756,13 +1757,15 @@ impl StartMenu {
         // under the hint: with the "What is new" row the page has nine,
         // and at 200% on 1080 lines nine rows of 40 scrolled (11-18). Down
         // to 30 since the slime viewer's row made ten (11-20: at 200% on a
-        // 1280x540 window ten rows of 34 ran 28 units under the hint).
+        // 1280x540 window ten rows of 34 ran 28 units under the hint). Down
+        // to 27 since Past runs' row made eleven (11-24: that window ran 22
+        // units under, found when the fit test took the record pages).
         let (gap, apart_by) = (4.0 * s, 12.0 * s);
         let aparts = items.iter().filter(|it| it.4).count() as f32;
         // (Half a pixel under the room: filled to the last bit, the sum
         // of the rows came out 0.00003 over and the page scrolled.)
         let room = c.screen.1 as f32 - (FOOT + 12.0) * s - (top + self.scroll + 8.0 * s) - 0.5;
-        let rh = ((room - aparts * apart_by) / items.len() as f32 - gap).clamp(30.0 * s, 40.0 * s);
+        let rh = ((room - aparts * apart_by) / items.len() as f32 - gap).clamp(27.0 * s, 40.0 * s);
         let mut y = top + 8.0 * s;
         let mut placed = Vec::new();
         for (label, sub, hit, primary, apart) in items {
@@ -2494,8 +2497,17 @@ impl StartMenu {
         let held_h: f32 = held.iter().map(|(_, v)| Self::count(c, Weight::Medium, 14.0 * s, tw - 70.0 * s, v).max(1.0) * 20.0 * s + 4.0 * s).sum();
         let why_h = Self::count(c, Weight::Medium, 15.0 * s, tw, &r.why) * 22.0 * s;
         let row_h = 21.0 * s;
-        let need = 34.0 * s + 26.0 * s + why_h + 30.0 * s + 44.0 * s + stops.len() as f32 * row_h + 30.0 * s + 26.0 * s + held_h + 4.0 * s;
-        let pane = Rect::new(x + lw + 20.0 * s, top, nw, need.max(bp.h + 14.0 * s + panel.h).min(room.max(need)));
+        let need = |rows: usize| 34.0 * s + 26.0 * s + why_h + 30.0 * s + 44.0 * s + rows as f32 * row_h + 30.0 * s + 26.0 * s + held_h + 4.0 * s;
+        // The planets in two columns where one would run the pane under
+        // the hint (at 250% on 2160 lines the pane scrolled to reach what
+        // the squad held: the 4K films, 11-24).
+        // Where two still run over (a small window at 200%), the strip
+        // alone tells the planets, and what the squad held is cut to the
+        // pane.
+        let cols = if need(stops.len()) <= room { 1 } else { 2 };
+        let per_col = if cols == 1 || need(stops.len().div_ceil(2)) <= room { stops.len().div_ceil(cols) } else { 0 };
+        let need = need(per_col) - if per_col == 0 { 30.0 * s } else { 0.0 };
+        let pane = Rect::new(x + lw + 20.0 * s, top, nw, need.max(bp.h + 14.0 * s + panel.h).min(room - 0.5));
         self.glass(pane, c, s);
         let px = pane.x + 18.0 * s;
         let mut y = pane.y + 34.0 * s;
@@ -2516,7 +2528,11 @@ impl StartMenu {
         // Each planet: its number, name and slime, its time, its stars.
         // (Room at the right for the stars, a gap from the time.)
         let sw_ = 3.0 * (3.2 * s + 2.4 * s) + 16.0 * s;
-        for (k, (p, st)) in r.planets.iter().zip(&stops).enumerate() {
+        let top_y = y;
+        let col_w = (tw - 20.0 * s * (cols - 1) as f32) / cols as f32;
+        for (k, (p, st)) in r.planets.iter().zip(&stops).enumerate().take(if per_col > 0 { usize::MAX } else { 0 }) {
+            let (px, tw) = (px + (k / per_col) as f32 * (col_w + 20.0 * s), col_w);
+            let y = top_y + (k % per_col) as f32 * row_h;
             let base = y + 14.5 * s;
             let ink = if p.stars.is_some() { TEXT } else if st.lost { BAD } else { MUTED };
             c.text(Weight::SemiBold, 13.0 * s, (px, base), Align::Left, &(k + 1).to_string(), MUTED);
@@ -2530,21 +2546,30 @@ impl StartMenu {
             c.text(Weight::Medium, 13.5 * s, (right, base), Align::Right, &when, ink);
             let name_room = right - 60.0 * s - (px + 22.0 * s);
             let name = format!("{}  {}", p.name, p.slime);
-            let npx = fit_px(c, &name, 13.5 * s, 10.0 * s, name_room);
-            c.text(Weight::Medium, npx, (px + 22.0 * s, base), Align::Left, &p.name, ink);
+            // (Down to 12.5, then the slime's name is cut, then the
+            // planet's: two columns at 250% on 2160 lines.)
+            let npx = fit_px(c, &name, 13.5 * s, 12.5 * s, name_room);
+            c.text_fit(Weight::Medium, npx, (px + 22.0 * s, base), Align::Left, &p.name, name_room, ink);
             let nw2 = c.atlas.measure(Weight::Medium, npx, &format!("{}  ", p.name));
-            c.text_fit(Weight::Medium, npx, (px + 22.0 * s + nw2, base), Align::Left, &p.slime, name_room - nw2, MUTED);
+            if name_room - nw2 > 24.0 * s {
+                c.text_fit(Weight::Medium, npx, (px + 22.0 * s + nw2, base), Align::Left, &p.slime, name_room - nw2, MUTED);
+            }
             if let Some(w) = p.stars {
                 star_dots(c, (px + tw - 9.0 * s, y + 8.0 * s), w, s);
             }
-            y += row_h;
         }
-        y += 30.0 * s;
-        c.text(Weight::SemiBold, 13.5 * s, (px, y), Align::Left, "What the squad held", MUTED);
+        y = top_y + per_col as f32 * row_h + if per_col > 0 { 30.0 * s } else { 0.0 };
+        if y + 26.0 * s + 20.0 * s <= pane.bottom() {
+            c.text(Weight::SemiBold, 13.5 * s, (px, y), Align::Left, "What the squad held", MUTED);
+        }
         y += 26.0 * s;
         for (k, v) in &held {
+            if y + 6.0 * s > pane.bottom() - 8.0 * s {
+                break;
+            }
             c.text(Weight::SemiBold, 14.0 * s, (px, y), Align::Left, k, [201, 210, 219, 255]);
-            let h = self.lines(c, Weight::Medium, 14.0 * s, (px + 70.0 * s, y), tw - 70.0 * s, 20.0 * s, v, if v == "none" { MUTED } else { TEXT });
+            let most = ((pane.bottom() - 8.0 * s - y) / (20.0 * s)).floor().max(1.0) as usize;
+            let h = self.lines_most(c, 14.0 * s, (px + 70.0 * s, y), tw - 70.0 * s, 20.0 * s, v, if v == "none" { MUTED } else { TEXT }, most);
             y += h.max(20.0 * s) + 4.0 * s;
         }
         if let Some((at, t)) = tip {
@@ -2567,27 +2592,66 @@ impl StartMenu {
         let (lw, nw) = self.split(c, x, s);
         let n = met.len();
         let k = met.iter().filter(|m| m.met).count();
-        // Tiles at least 150 units wide, three to six a row.
+        // Tiles at least 150 units wide, three to six a row. (Tried: more
+        // a row where that put the grid on one page; the tiles then shrank
+        // as the UI size grew, against what the UI size is for.)
         let inner = lw - 32.0 * s;
         let gap = 10.0 * s;
+        let ratio = crate::world::canvas::STILL_H as f32 / crate::world::canvas::STILL_W as f32;
+        let sections: Vec<(&str, Vec<usize>)> = [(0u8, "Slimes"), (1, "Threats"), (2, "Mini-bosses")].into_iter().map(|(g, name)| (name, (0..n).filter(|&i| met[i].group == g).collect::<Vec<_>>())).filter(|(_, v)| !v.is_empty()).collect();
         let cols = (((inner + gap) / (150.0 * s + gap)).floor() as usize).clamp(3, 6);
         let tw = (inner - gap * (cols - 1) as f32) / cols as f32;
-        let ph = (tw - 8.0 * s) * crate::world::canvas::STILL_H as f32 / crate::world::canvas::STILL_W as f32;
+        let ph = (tw - 8.0 * s) * ratio;
         let th = ph + 4.0 * s + 44.0 * s;
-        let sections: Vec<(&str, Vec<usize>)> = [(0u8, "Slimes"), (1, "Threats"), (2, "Mini-bosses")].into_iter().map(|(g, name)| (name, (0..n).filter(|&i| met[i].group == g).collect::<Vec<_>>())).filter(|(_, v)| !v.is_empty()).collect();
-        let body_h: f32 = sections.iter().map(|(_, v)| 30.0 * s + v.len().div_ceil(cols) as f32 * (th + gap)).sum();
+        // The grid as lines, a section's heading or a row of its tiles,
+        // a page of them where they outgrow the screen (at 250% on 2160
+        // lines the page scrolled with the third row of slimes cut: the
+        // 4K films, 11-24). A heading never ends a page, and a page that
+        // starts inside a section says its heading again.
+        let room = self.room(c, top, s);
+        let (head_h, row_h) = (30.0 * s, th + gap);
+        let lines: Vec<(usize, Option<usize>)> = sections.iter().enumerate().flat_map(|(si, (_, v))| std::iter::once((si, None)).chain((0..v.len().div_ceil(cols)).map(move |r| (si, Some(r))))).collect();
+        let h_of = |l: &(usize, Option<usize>)| if l.1.is_none() { head_h } else { row_h };
+        let col = (room - 50.0 * s).max(2.0 * head_h + row_h);
+        let mut first = vec![0usize];
+        let mut used = 0.0f32;
+        for (k, l) in lines.iter().enumerate() {
+            if used + h_of(l) > col && used > 0.0 {
+                let at = if k > 0 && lines[k - 1].1.is_none() && first.last() != Some(&(k - 1)) { k - 1 } else { k };
+                first.push(at);
+                used = lines[at..k].iter().map(h_of).sum::<f32>() + if lines[at].1.is_some() { head_h } else { 0.0 };
+            }
+            used += h_of(l);
+        }
+        if let Some(Hit::Seen(i)) = focus {
+            let at = sections.iter().enumerate().find_map(|(si, (_, v))| v.iter().position(|&e| e == i).map(|j| (si, j / cols)));
+            let line = at.and_then(|(si, r)| lines.iter().position(|l| *l == (si, Some(r)))).unwrap_or(0);
+            self.sheet = first.iter().rposition(|&f| f <= line).unwrap_or(0);
+        }
+        self.sheets = first.len();
+        self.sheet = self.sheet.min(self.sheets - 1);
+        let (from, to) = (first[self.sheet], first.get(self.sheet + 1).copied().unwrap_or(lines.len()));
+        // Where a page turn puts the keyboard: each page's first tile.
+        self.try_first = first.iter().map(|&f| lines[f..].iter().find_map(|&(si, r)| r.map(|r| sections[si].1[r * cols])).unwrap_or(0)).collect();
+        let again = lines.get(from).filter(|l| l.1.is_some()).map(|l| (l.0, None));
+        let shown: Vec<(usize, Option<usize>)> = again.into_iter().chain(lines[from..to].iter().copied()).collect();
+        let body_h: f32 = shown.iter().map(h_of).sum();
         let panel = Rect::new(x, top, lw, 44.0 * s + body_h + 6.0 * s);
         self.glass(panel, c, s);
         c.text_fit(Weight::SemiBold, 15.0 * s, (panel.x + 20.0 * s, panel.y + 28.0 * s), Align::Left, &format!("{k} of {n} met on this PC; the grey ones are still ahead"), panel.w - 40.0 * s, MUTED);
         let mut told = None;
         let mut y = panel.y + 44.0 * s;
-        for (name, idx) in &sections {
-            let seen = idx.iter().filter(|&&i| met[i].met).count();
-            c.text(Weight::SemiBold, 13.5 * s, (panel.x + 16.0 * s, y + 18.0 * s), Align::Left, &format!("{name}  ·  {seen} of {}", idx.len()), [201, 210, 219, 255]);
-            y += 30.0 * s;
-            for (j, &i) in idx.iter().enumerate() {
+        for &(si, r) in &shown {
+            let (name, idx) = &sections[si];
+            let Some(r) = r else {
+                let seen = idx.iter().filter(|&&i| met[i].met).count();
+                c.text(Weight::SemiBold, 13.5 * s, (panel.x + 16.0 * s, y + 18.0 * s), Align::Left, &format!("{name}  ·  {seen} of {}", idx.len()), [201, 210, 219, 255]);
+                y += head_h;
+                continue;
+            };
+            for (j, &i) in idx.iter().enumerate().skip(r * cols).take(cols) {
                 let m = &met[i];
-                let tile = Rect::new(panel.x + 16.0 * s + (j % cols) as f32 * (tw + gap), y + (j / cols) as f32 * (th + gap), tw, th);
+                let tile = Rect::new(panel.x + 16.0 * s + (j % cols) as f32 * (tw + gap), y, tw, th);
                 let focused = focus == Some(Hit::Seen(i));
                 let hot = self.hover.is_some_and(|p| tile.contains(p));
                 c.rrect(tile, 10.0 * s, [255, 255, 255, if focused { 22 } else if hot { 14 } else { 7 }]);
@@ -2614,19 +2678,23 @@ impl StartMenu {
                 c.text_fit(Weight::Medium, 12.5 * s, (tile.x + 10.0 * s, pic.bottom() + 37.0 * s), Align::Left, &how, tile.w - 20.0 * s, MUTED);
                 self.hits.push((tile, Hit::Seen(i)));
             }
-            y += idx.len().div_ceil(cols) as f32 * (th + gap);
+            y += row_h;
         }
         // The one told in full: its still large, what it is, its words, and
         // how it went.
         let Some(m) = told.or((n > 0).then_some(0)).map(|i| &met[i]) else { return panel.bottom() };
         let tw2 = nw - 36.0 * s;
-        let big = tw2 * crate::world::canvas::STILL_H as f32 / crate::world::canvas::STILL_W as f32;
         let words_h = Self::count(c, Weight::Medium, 15.0 * s, tw2, &m.words) * 22.0 * s;
-        let need = 18.0 * s + big + 40.0 * s + 22.0 * s + 34.0 * s + words_h + 34.0 * s + 2.0 * 22.0 * s + 12.0 * s;
+        let rest = 18.0 * s + 40.0 * s + 22.0 * s + 34.0 * s + words_h + 34.0 * s + 2.0 * 22.0 * s + 12.0 * s;
+        // The still as wide as the pane, lower where the pane would run
+        // under the hint (the 4K films, 11-24), its shape kept.
+        let ratio = crate::world::canvas::STILL_H as f32 / crate::world::canvas::STILL_W as f32;
+        let big = (tw2 * ratio).min(room - 0.5 - rest).max(60.0 * s);
+        let need = rest + big;
         let pane = Rect::new(x + lw + 20.0 * s, top, nw, need);
         self.glass(pane, c, s);
         let px = pane.x + 18.0 * s;
-        let pic = Rect::new(px, pane.y + 18.0 * s, tw2, big);
+        let pic = Rect::new(px, pane.y + 18.0 * s, big / ratio, big);
         match m.still {
             Some(cell) => c.still(pic, 10.0 * s, cell, if m.met { 0.0 } else { 0.85 }, if m.met { 255 } else { 150 }),
             None => c.rrect(pic, 10.0 * s, [18, 21, 25, 255]),
@@ -3849,7 +3917,7 @@ mod tests {
     /// at any of them. The shop joins with its new layout.
     #[test]
     fn the_menu_pages_fit_one_screen() {
-        let sizes = [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1920, 1080), 1.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((640, 400), 1.0), ((2560, 1440), 3.0)];
+        let sizes = [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1920, 1080), 1.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((640, 400), 1.0), ((2560, 1440), 3.0), ((3840, 2160), 2.5)];
         for (screen, user) in sizes {
             let (sw, sh) = (screen.0 as f32, screen.1 as f32);
             let mut m = full_menu();
@@ -3865,7 +3933,10 @@ mod tests {
                 let runs: Vec<_> = c.runs.iter().filter(|t| t.ink.0 < t.ink.2).collect();
                 for (k, t) in runs.iter().enumerate() {
                     assert!(t.ink.0 >= 0.0 && t.ink.1 >= 0.0 && t.ink.2 <= sw && t.ink.3 <= sh, "{at}: {:?} {:?} off the screen", t.text, t.ink);
-                    assert!(t.px >= 12.5 * s - 0.01, "{at}: {:?} at {} px, under 12.5 x {s}", t.text, t.px);
+                    // (A run strip's planet numbers sit in their dots, as
+                    // small as the dots: `run_strip`.)
+                    let dot = t.text.len() <= 2 && t.text.bytes().all(|b| b.is_ascii_digit());
+                    assert!(dot || t.px >= 12.5 * s - 0.01, "{at}: {:?} at {} px, under 12.5 x {s}", t.text, t.px);
                     for u in &runs[k + 1..] {
                         let apart = t.ink.2 <= u.ink.0 || u.ink.2 <= t.ink.0 || t.ink.3 <= u.ink.1 || u.ink.3 <= t.ink.1;
                         assert!(apart, "{at}: {:?} {:?} and {:?} {:?} overlap", t.text, t.ink, u.text, u.ink);
@@ -3925,6 +3996,23 @@ mod tests {
                     draw(&mut m, &mut c);
                     let h = m.rows()[row];
                     let at = format!("{screen:?} at {user}, build page tab {tab}, {h:?}");
+                    check(&m, &c, &at);
+                    assert!(m.rect_of(h).is_some(), "{at}: not drawn when focused");
+                }
+            }
+            // The record: the past runs and the slimes met, each row or
+            // tile focused in turn (its page follows, the pane tells it).
+            // Not here until the 4K films (11-24): both scrolled at 250%
+            // on 2160 lines.
+            m.runs = past_runs(30);
+            m.met = met_list();
+            for page in [Page::Runs, Page::Met] {
+                m.show(page);
+                for row in 0..m.rows().len() {
+                    m.focus = row;
+                    draw(&mut m, &mut c);
+                    let h = m.rows()[row];
+                    let at = format!("{screen:?} at {user}, {page:?}, {h:?}");
                     check(&m, &c, &at);
                     assert!(m.rect_of(h).is_some(), "{at}: not drawn when focused");
                 }
