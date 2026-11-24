@@ -103,7 +103,7 @@ pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
-pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
+pub use buildings::{BuildRules, Building, Kind, Shell, Spray, PUMP_LEVELS, SPRAY_SHOW, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -482,6 +482,10 @@ pub struct Game<W: World> {
     pub bullets: Vec<Bullet>,
     /// Mortar shells in the air (`buildings::Shell`), oldest first.
     pub shells: Vec<Shell>,
+    /// Sprayers' sweeps this half second (`buildings::Spray`), oldest
+    /// first, and the sweeps fired.
+    pub sprays: Vec<Spray>,
+    pub sprays_fired: u32,
     /// Shells fired, and those that have come down.
     pub shells_fired: u32,
     pub shells_landed: u32,
@@ -783,6 +787,8 @@ impl<W: World> Game<W> {
             last_takes: Vec::new(),
             bullets: Vec::new(),
             shells: Vec::new(),
+            sprays: Vec::new(),
+            sprays_fired: 0,
             shells_fired: 0,
             shells_landed: 0,
             mortar_killed: 0,

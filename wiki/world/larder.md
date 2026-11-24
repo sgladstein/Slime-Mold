@@ -395,6 +395,24 @@ its arc over its shadow) and comes down as a strike 3 cells wide carrying
 the turrets' deck's next cast; it can't hit slime within 8 cells of
 itself. On the Fork, 60 cells behind the squad, its 5 shells in 20 s
 killed 390 walkers ([report](../../Reports/turret-growth-2026-11-16/README.md)).
+The second body is the **sprayer** (Direction 11-24 11:42Z, from the
+owner's 11-16 list), unlocked in the run shop after Mortars (250 points;
+450 food, build page slot (1, 4), key N). It aims at nothing: every 1.5 s
+it sweeps a 60-degree cone at the slime it sees within 24 dish cells and
+lays the turrets' deck's next cast at 6 spots along the arc at the
+slime's distance (no nearer than 4 cells), on bare ground as on slime
+(`Game::sprays`, `Rounds::spray`). Gas, Tinder, Torch or Blast cards make
+a strip of gas, brush, fire or craters across the slime's way; with Plain,
+or no cards, each spot is only a kill 1 cell wide (`sprayer_plain`), so
+Plain is a weak buy: in 12 s on the race world a plain sprayer killed 93
+to a plain turret's 206 in the same place, and a gas sprayer put
+walkers to sleep 12,676 times, counted each cast (`a_sprayer_lays_its_cast_in_a_strip`). The window
+draws each sweep's jet fanning across the arc in the card's colour for
+half a second (`SPRAY_SHOW`); what stays is the cast's own work
+([clips](../../Reports/sprayer-2026-11-24/README.md)). Its head
+is the turret's base under a flat fan nozzle (building kind 8 in the
+view's shader). The hunter (picky targeting: slime on a crystal first) is
+the next candidate body.
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,

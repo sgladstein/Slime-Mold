@@ -959,6 +959,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let next = g.shells.last().map_or(String::new(), |s| format!(", the newest coming down at {:.0},{:.0}", s.to.0, s.to.1));
             println!("  mortar t {:>4.0} s: {} shells fired, {} landed, {} in the air, {} walkers killed by their strikes{next}", g.time(), g.shells_fired, g.shells_landed, g.shells.len(), g.mortar_killed);
         }
+        for (k, b) in g.buildings.iter().enumerate().filter(|(_, b)| b.alive && b.kind == Kind::Sprayer) {
+            let last = g.sprays.iter().rev().find(|s| s.sprayer == k).map_or(String::new(), |s| format!(", the last at {:.0},{:.0} to {:.0},{:.0}", s.spots[0].0, s.spots[0].1, s.spots[s.spots.len() - 1].0, s.spots[s.spots.len() - 1].1));
+            println!("  sprayer t {:>4.0} s: {} sweeps by all sprayers, {} spots laid; this one aims {:?}, {} dense{last}", g.time(), g.sprays_fired, rd.sprayed, b.aim.map(|a| (a.0.round(), a.1.round())), b.dense);
+        }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
         // plays as a clip from a still camera (the crater looks in motion,
@@ -1301,7 +1305,7 @@ pub(super) fn turn_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>, 
     join_turrets(g, turrets);
     for (t, b) in turrets.iter_mut().zip(&g.buildings) {
         t.shot = (t.shot - dt).max(0.0);
-        if let (Kind::Turret | Kind::Mortar, Some(aim)) = (b.kind, b.aim) {
+        if let (Kind::Turret | Kind::Mortar | Kind::Sprayer, Some(aim)) = (b.kind, b.aim) {
             let want = (aim.1 - b.at.1).atan2(aim.0 - b.at.0);
             let mut d = want - t.facing;
             d = (d + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;

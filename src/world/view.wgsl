@@ -4883,14 +4883,45 @@ fn mortar_head(h: vec2<f32>, recoil: f32) -> vec4<f32> {
     return out;
 }
 
+// A sprayer's head (kind 8, the second turret body, 11-24): a squat tank
+// behind, and in front a flat nozzle that flares wide toward its aim, its
+// mouth a slot with three jets. It reads beside the turret's barrels and
+// the mortar's round tube as a fan: wide and short.
+fn sprayer_head(h: vec2<f32>, recoil: f32) -> vec4<f32> {
+    let aa = 0.05;
+    let cc = cover(length(h + vec2<f32>(0.08, 0.0)) - 0.4, aa);
+    var out = vec4<f32>(STEEL_DARK * cc, cc);
+    // The nozzle: a trapezoid from 0.16 wide at the tank to 0.5 at its
+    // mouth, 0.8 long.
+    let x0 = 0.05 - recoil;
+    let x1 = 0.85 - recoil;
+    let f = clamp((h.x - x0) / (x1 - x0), 0.0, 1.0);
+    let half = mix(0.14, 0.5, f);
+    let dn = max(max(x0 - h.x, h.x - x1), abs(h.y) - half);
+    let cn = cover(dn, aa);
+    let shade = mix(STEEL, STEEL_DARK, clamp(abs(h.y) / max(half, 0.01), 0.0, 1.0) * 0.6);
+    out = pm_over(out, vec4<f32>(shade * cn, cn));
+    // The mouth's slot and its three jets.
+    let slot = max(abs(h.x - (x1 - 0.05)) - 0.045, abs(h.y) - 0.42);
+    let cs = cover(slot, aa);
+    out = pm_over(out, vec4<f32>(vec3<f32>(14.0, 13.0, 12.0) * cs, cs));
+    for (var i = 0; i < 3; i++) {
+        let j = length(h - vec2<f32>(x1 - 0.05, 0.28 * f32(i - 1))) - 0.06;
+        let cj = cover(j, aa);
+        out = pm_over(out, vec4<f32>(STEEL * 1.15 * cj, cj));
+    }
+    return out;
+}
+
 // The building's own texels at `q` (radii): its tile, and a turret's head
 // over its base (a mortar's tube over the turret's base).
-fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool, mortar: bool) -> vec4<f32> {
+fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool, head_kind: u32) -> vec4<f32> {
     // A pump (tile 8) turns whole, its hose into its crystal (11-14).
     var body = sprite(k, select(q, turret_frame(q, ca, sa, 0.0), k == 8u), small);
     if (turret) {
         var head = sprite(16u, turret_frame(q, ca, sa, recoil), small);
-        if (mortar) { head = mortar_head(turret_frame(q, ca, sa, 0.0), recoil); }
+        if (head_kind == 1u) { head = mortar_head(turret_frame(q, ca, sa, 0.0), recoil); }
+        if (head_kind == 2u) { head = sprayer_head(turret_frame(q, ca, sa, 0.0), recoil); }
         if (dry) {
             let g = dot(head.xyz, vec3<f32>(0.3, 0.59, 0.11));
             head = vec4<f32>(mix(head.xyz, vec3<f32>(g), 0.75) * 0.8, head.w);
@@ -5024,12 +5055,15 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     let p = d / r;
     let small = r < 12.0;
     let mortar = kind == 7u;
-    let k = select(4u + 2u * min(kind, 5u), 4u, mortar);
-    let turret = kind == 0u || mortar;
+    // The sprayer (kind 8, 11-24): the turret's base under a fan nozzle.
+    let sprayer = kind == 8u;
+    let head_kind = select(select(0u, 1u, mortar), 2u, sprayer);
+    let k = select(4u + 2u * min(kind, 5u), 4u, mortar || sprayer);
+    let turret = kind == 0u || mortar || sprayer;
     let ca = cos(facing); let sa = sin(facing);
     let recoil = select(0.0, pulse * 0.22, turret);
     let dry = turret && state == 2u && built >= 1.0;
-    var body = building_body(k, p, small, turret, ca, sa, recoil, dry, mortar);
+    var body = building_body(k, p, small, turret, ca, sa, recoil, dry, head_kind);
     // The silhouette's edge, OUTLINE pixels out (eight taps): a dark
     // outline round a standing building, as round a soldier, so it parts
     // from the slime (art review 2026-11-14), and the cream line of a
@@ -5038,7 +5072,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     var grown = 0.0;
     for (var i = 0u; i < 8u; i++) {
         let a = f32(i) * 0.785398;
-        grown = max(grown, building_body(k, p + vec2<f32>(cos(a), sin(a)) * o, small, turret, ca, sa, recoil, false, mortar).w);
+        grown = max(grown, building_body(k, p + vec2<f32>(cos(a), sin(a)) * o, small, turret, ca, sa, recoil, false, head_kind).w);
     }
     let edge = clamp(grown - body.w, 0.0, 1.0);
     // Built from the foot (screen down) up (owner's playtest 2026-11-12:
@@ -5070,8 +5104,8 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     // shadow at its foot. One more sprite read a tap, in building boxes
     // only.
     let lo = vec2<f32>(l.x, l.y);
-    let thrown = 0.5 * (building_body(k, p + lo * BUILD_CAST, small, turret, ca, sa, recoil, false, mortar).w
-        + building_body(k, p + lo * (BUILD_CAST * 1.6), small, turret, ca, sa, recoil, false, mortar).w);
+    let thrown = 0.5 * (building_body(k, p + lo * BUILD_CAST, small, turret, ca, sa, recoil, false, head_kind).w
+        + building_body(k, p + lo * (BUILD_CAST * 1.6), small, turret, ca, sa, recoil, false, head_kind).w);
     let sh = sd_ellipse(p, vec2<f32>(-l.x, -l.y) * 0.3, vec2<f32>(1.0, 1.0));
     let foot = 0.18 * cover(sh, aa * 2.5);
     var out = vec4<f32>(0.0, 0.0, 0.0, max(BUILD_SHADOW * thrown, foot) * max(built, 0.3));
@@ -5087,7 +5121,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
         // The rim: inside the silhouette, where a pixel toward the light
         // is outside it (the soldier's, #227).
         let lp = vec2<f32>(l.x, l.y) / r * 1.2;
-        let rim = clamp(body.w - building_body(k, p + lp, small, turret, ca, sa, recoil, false, mortar).w, 0.0, 1.0) * 0.6;
+        let rim = clamp(body.w - building_body(k, p + lp, small, turret, ca, sa, recoil, false, head_kind).w, 0.0, 1.0) * 0.6;
         out = vec4<f32>(mix(out.xyz, RIM * out.w, rim), out.w);
     }
     if (built < 1.0) {

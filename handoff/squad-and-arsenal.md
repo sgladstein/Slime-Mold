@@ -48,6 +48,12 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, the sprayer (pathfinding thread).** #790 merged (Fever,
+Backdraft). Next PR: the second turret body, the sprayer (`Kind::Sprayer`,
+`Game::sprays`, `Rounds::spray`, `BuildRules::sprayer_*`, view kind 8,
+shop item "sprayer" after "mortar"). Next candidate body: the hunter
+(picky targeting, slime on a crystal first); Direction wants it after.
+
 **2026-11-24, relics (pathfinding thread).** #781 and #786 merged (gun step
 F: shop levers, Lasts, Carrion). Next PR: Fever (`sick_trail` 2 through
 `Run::engine_keys`, Direction's OK 11:28Z; Enemy told by Direction) and

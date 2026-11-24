@@ -473,6 +473,13 @@ impl Marks {
         self.gun_building(at, r, 7.0, built, health, facing, shot, state);
     }
 
+    /// A sprayer (`Kind::Sprayer`): the turret's base under a fan nozzle
+    /// (building kind 8 in the view's shader), turned to its last sweep.
+    #[allow(clippy::too_many_arguments)]
+    pub fn sprayer(&mut self, at: (f32, f32), r: f32, built: f32, health: f32, facing: f32, shot: f32, state: u32) {
+        self.gun_building(at, r, 8.0, built, health, facing, shot, state);
+    }
+
     /// The words the view pass reads, `MARK_WORDS` a mark.
     pub fn words(&self) -> Vec<u32> {
         let mut w = Vec::with_capacity(self.list.len() * MARK_WORDS);

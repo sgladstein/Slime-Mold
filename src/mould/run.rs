@@ -979,7 +979,7 @@ pub struct Item {
 /// (Lures, 150), which left planet 1 without it, so Direction made it free
 /// from the first planet (11-18 08:38Z). The window never locks it
 /// (`run_lock`), as it never locks the pump.
-pub const ITEMS: [Item; 19] = [
+pub const ITEMS: [Item; 20] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Shots a fifth wider; past the widest, they fire faster", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -1002,7 +1002,10 @@ pub const ITEMS: [Item; 19] = [
     // The tree's first body (the turrets thread, owner 2026-11-17 00:47Z):
     // after turrets, as each next body will be after the one before.
     Item { key: "mortar", name: "Mortars", group: Group::Build, about: "Unlocks the mortar: the longest reach there is, lobbed over walls", max: 1, cost: 250, needs: Some("turret") },
-    Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets and mortars: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
+    // The second body (Direction 11-24 11:42Z): a field layer, wants
+    // field cards in the turrets' deck.
+    Item { key: "sprayer", name: "Sprayers", group: Group::Build, about: "Unlocks the sprayer: lays the turrets' cards in a strip across the slime's way; wants gas, fire or crater cards, weak with Plain", max: 1, cost: 250, needs: Some("mortar") },
+    Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets, mortars and sprayers: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.
     Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
