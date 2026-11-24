@@ -3641,8 +3641,15 @@ fn keycap_w(c: &Canvas, k: &str, px: f32, s: f32) -> f32 {
     (c.atlas.measure(Weight::SemiBold, px, k) + 8.0 * s).max(px + 5.0 * s)
 }
 
-/// A key's short name for the button's corner.
+/// A key's short name for the button's corner: the key now pressed for
+/// `k` (`keys`: a rebound key shows its new letter wherever the game
+/// names it).
 pub fn key_name(k: KeyCode) -> Option<String> {
+    raw_key_name(super::keys::pressed(k))
+}
+
+/// The key's own name, rebinding aside.
+pub fn raw_key_name(k: KeyCode) -> Option<String> {
     use KeyCode::*;
     let s = match k {
         KeyA => "A",

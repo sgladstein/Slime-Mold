@@ -2241,6 +2241,11 @@ fn the_menus_real_lists_fit_one_screen() {
             // at 200% on 720 (11-15; its text stays 15 units, the owner's
             // "the text seems too small").
             assert!(m.sheets() <= 3 && !m.scrolls(), "{at}: the key list takes {} pages", m.sheets());
+            // Change keys (11-24): every squad key, two pages at most.
+            m.show(Page::Bind);
+            draw(&mut m);
+            assert!(m.sheets() <= 2 && !m.scrolls(), "{at}: Change keys takes {} pages", m.sheets());
+            m.show(Page::Keys);
             m.key(KeyCode::Tab, true);
             assert_eq!(m.page, Page::Options, "{at}: Tab on the keys goes round to the first tab");
             m.show(Page::Missions);
@@ -2477,4 +2482,14 @@ fn a_given_up_run_is_kept_for_past_runs() {
     back.load_run();
     assert_eq!(back.menu.as_ref().unwrap().runs, app.menu.as_ref().unwrap().runs);
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// Change keys lists every squad key once, each one that can move.
+#[test]
+fn change_keys_lists_each_squad_key_once() {
+    let rows = bind_rows();
+    for (i, (k, w)) in rows.iter().enumerate() {
+        assert!(slime_mould::world::keys::FREE.contains(k), "{w}: {k:?} cannot move");
+        assert!(rows[..i].iter().all(|r| r.0 != *k), "{w}: {k:?} listed twice");
+    }
 }
