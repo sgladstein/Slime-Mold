@@ -709,7 +709,7 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         Tier::Trunk => DoesToYou { says: "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch", rules: TRUNK_RULES, keys: TRUNK_KEYS },
         Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
-        Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
+        Tier::Sleeper => DoesToYou { says: "It grows while it sleeps. Every minute you farm, there is more to wake", rules: &[], keys: SLEEPER_KEYS },
         Tier::Grudge => DoesToYou { says: "Where you hurt it, it grows back tough. Don't fight on old ground", rules: &[], keys: GRUDGE_KEYS },
     }
 }
@@ -746,6 +746,8 @@ const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50"), ("keep", "0.92"),
 pub const THREAD_KEYS: [&str; 4] = ["thread_lanes", "thread_trail", "thread_shuttle", "thread_fed"];
 /// The Grudge's scar tissue keys, the GPU engine's alone (no CPU twin).
 pub const TOUGH_KEYS: [&str; 3] = ["scar_tough", "scar_tough_full", "scar_burn"];
+/// The Sleeper's dreaming key, the GPU engine's alone (no CPU twin).
+pub const DREAM_KEYS: [&str; 1] = ["dream"];
 // **The Trunk sets** (2026-11-17, the Enemy lane; planet 3). The
 // simulation-use plan's E1 and E2 were built on 11-17 behind four switches
 // (the crust and its pull, setting, set slime blocking or trapping, fed
@@ -807,7 +809,14 @@ const SPORER_KEYS: &[(&str, &str)] = &[("spore_burst", "0.2"), ("spore_alarm", "
 // Sleeper, planet 6, attack-move: wakes at an alarm of 0.3, not 1: one
 // soldier at 14 health -> the squad gone by 1:30. Tried and backfired:
 // wake_alarm 3 (a higher bar is a deeper sleep: 4 soldiers at 99).
-const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3")];
+//
+// **It grows while it sleeps** (2026-11-24, Direction's pick for planet 6's
+// nameable thing; the Lab's prototype, `Reports/lab-sleeper-2026-11-24/`):
+// a sleeping walker buds a sleeping child at 0.003 a step, under the birth
+// ceiling and off the crystals' scent (`gpu::Settings::dream`), so the time
+// you farm before it wakes is time it grows. 0.003 is the Lab's pick (one
+// seed); its growth is bounded by the ceiling and its free edge.
+const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3"), ("dream", "0.003")];
 // Grudge, planet 7 (joined 2026-11-17, when the GPU took its scar): its
 // memory of where it was hit pulls it back at twice the campaign tier's
 // weight (scar_weight 1, not 0.5), so a firing line it was hurt from draws
@@ -3157,7 +3166,7 @@ mod tests {
             let mut p = crate::mould::larder_world::race_params(1, 2, 5000);
             for &(k, v) in does.keys {
                 let set = crate::mould::tiers::set_key(&mut p, k, v);
-                assert!(set.is_ok() || *t == Tier::Trunk || THREAD_KEYS.contains(&k) || TOUGH_KEYS.contains(&k), "{} key {k}: {set:?}", t.name());
+                assert!(set.is_ok() || *t == Tier::Trunk || THREAD_KEYS.contains(&k) || TOUGH_KEYS.contains(&k) || DREAM_KEYS.contains(&k), "{} key {k}: {set:?}", t.name());
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());

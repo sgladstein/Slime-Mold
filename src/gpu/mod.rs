@@ -153,7 +153,8 @@ pub const SET_AT: usize = 1216;
 /// The scar tissue row (the Grudge's, 2026-11-24; Params grew from 1232 to
 /// 1248, after the setting row): `scar_tough` (0 off, and 0 without the
 /// scar), `scar_tough_full`, whether fire burns the scar off (`scar_burn`)
-/// and a spare word.
+/// and the Sleeper's dreaming (`dream`; the row's spare word, 0 without the
+/// birth ceiling).
 pub const TOUGH_AT: usize = 1232;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
@@ -607,6 +608,15 @@ pub struct Settings {
     pub scar_tough: f32,
     pub scar_tough_full: f32,
     pub scar_burn: bool,
+    /// **It grows while it sleeps** (2026-11-24, the Sleeper's trait on
+    /// planet 6; the Lab's prototype, `Reports/lab-sleeper-2026-11-24/`; GPU
+    /// only, no CPU twin): a dormant walker buds a dormant child with this
+    /// chance a step, at no cost to itself, under the birth ceiling and on
+    /// ground under half `wake_scent` (a bud on the crystals' scent woke at
+    /// once, and its alarm woke the body round it: waves of 100,000 with no
+    /// shot fired). 0 off; only while the game sets a ceiling
+    /// (`set_ceiling`), so the landing is as before.
+    pub dream: f32,
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
     /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
@@ -893,6 +903,7 @@ impl Settings {
             scar_tough: 0.0,
             scar_tough_full: 2000.0,
             scar_burn: false,
+            dream: 0.0,
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
@@ -1237,6 +1248,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scar_tough" => s.scar_tough = f()?.clamp(0.0, 1.0),
         "scar_tough_full" => s.scar_tough_full = f()?.max(1.0),
         "scar_burn" => s.scar_burn = int()? != 0,
+        "dream" => s.dream = f()?.clamp(0.0, 1.0),
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
@@ -2660,7 +2672,9 @@ impl Engine {
         assert_eq!(b.len(), TOUGH_AT, "Params rows before the scar tissue row moved");
         // Scar tissue needs the scar (`scars`, as the CPU makes it).
         b.extend(f32_bytes(&[if scars { s.scar_tough } else { 0.0 }, s.scar_tough_full.max(1.0)]));
-        b.extend(u32_bytes(&[(scars && s.scar_burn) as u32, 0]));
+        // Dreaming only under a ceiling, which bounds it (`dream`).
+        let dream = if s.ceiling > 0 && self.cycles { s.dream } else { 0.0 };
+        b.extend(u32_bytes(&[(scars && s.scar_burn) as u32, dream.to_bits()]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food

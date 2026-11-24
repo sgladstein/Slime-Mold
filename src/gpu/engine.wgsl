@@ -256,7 +256,10 @@ struct Params {
     // Scar tissue (`TOUGH_AT`, the Grudge's, 2026-11-24): a blow on scar s
     // is shrugged off with chance `tough` x min(s / `tough_full`, 1) (0
     // off, and 0 without the scar); fire burns the scar off (`scar_burn`).
-    tough: f32, tough_full: f32, scar_burn: u32, _tough: u32,
+    // Then the Sleeper's dreaming (`dream`, 2026-11-24): a dormant walker
+    // buds a dormant child with this chance a step (0 off, and 0 without
+    // the birth ceiling or the life states).
+    tough: f32, tough_full: f32, scar_burn: u32, dream: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -2069,7 +2072,12 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     icell[k] = NONE;
     let t = S.t;
     let b = child_of(k, t);
-    if (!ordinary(k) || is_set(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
+    // **It grows while it sleeps** (`Settings::dream`, the Sleeper's on
+    // planet 6, 2026-11-24; the Lab's prototype): a dormant walker buds a
+    // dormant child with chance `dream` a step, at no energy cost, under
+    // the same ceiling and into the same free cells.
+    let dream = P.dream > 0.0 && lives(k) && state(k) == L_DORMANT && b < P.n && !lives(b) && unit(keyed(P.s_birth, t, k ^ 0x3C3C3C3Cu)) < P.dream;
+    if (!dream && (!ordinary(k) || is_set(k) || energy[k] < P.birth_at || b >= P.n || lives(b))) { return; }
     // A garden's birth caps (`species_cap`): a parent divides only while
     // its side held fewer than its cap as the pass began (`capcount`), as
     // the CPU's `held`; the enemy in word 6, the player's mould in 7.
@@ -2092,6 +2100,10 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j) || crater_shut(j)) { return; }
+    // A dreamt bud only on ground the sleepers lie on: one on the crystals'
+    // scent woke at once, and its waking's alarm woke the body round it
+    // (the Lab's first try: waves of 100,000 waking with no shot fired).
+    if (dream && scent_at(at.x, at.y) > P.wake_scent * 0.5) { return; }
     // Not past a built wall's corner (`solid_walls`).
     let pw = walkers[k];
     if (wall_between(pw.x, pw.y, at.x, at.y) != NONE) { return; }
@@ -2107,9 +2119,16 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     let t = S.t;
     if (j == NONE || (crowd_of(species_of(k)) > 0u && atomicLoad(&claim[j]) != keyed(P.s_bclaim, t, k))) { return; }
     let b = child_of(k, t);
+    // A dreamt child (`dream`) costs its sleeping parent nothing: it takes
+    // the parent's energy as it is, and sleeps as it does (below).
+    let dreamt = P.dream > 0.0 && state(k) == L_DORMANT;
     let half = max((energy[k] - P.birth_cost) * 0.5, 0.0);
-    energy[k] = half;
-    energy[b] = half;
+    if (dreamt) {
+        energy[b] = max(energy[k], 0.0);
+    } else {
+        energy[k] = half;
+        energy[b] = half;
+    }
     atomicAdd(&occ[j], 1u);
     let at = birth_spot(k, t);
     walkers[b] = vec4<f32>(at, unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU, 0.0);
@@ -2122,6 +2141,8 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     // The child is its parent's species and kind, and an ordinary walker
     // with its timer at 0.
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
+    // A dreamt child sleeps as its parent, its rest timer full.
+    if (dreamt) { spec[b] = (spec[k] & 0x1FFu) | (L_DORMANT << 9u) | (min(P.sleep_rest, 65535u) << 16u); }
     // A child knows what its parent heard (`wither`).
     if (P.wither > 0.0 || P.panic > 0.0) { atomicStore(&news[b], atomicLoad(&news[k])); }
     // A child is an ordinary walker, not a speck (`roam`), and in no lump

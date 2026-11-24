@@ -3348,6 +3348,40 @@ mod tests {
         assert!((0.3..0.7).contains(&kept), "scar tissue keeps about half: {on:?}");
     }
 
+    /// **The Sleeper grows while it sleeps** (`dream`, 2026-11-24; GPU
+    /// only). Two race worlds alike with the Sleeper's life cycle and a
+    /// birth ceiling of twice the walkers, one dreaming at 0.003 a step:
+    /// at 40 s the dreaming one has more walkers asleep, and never more
+    /// than its ceiling (a step's births over it at most).
+    #[test]
+    fn the_sleeper_grows_while_it_sleeps() {
+        use crate::mould::tiers::Tier;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |dream: &str| -> (usize, usize) {
+            let mut s = race_settings(seed, scale, walkers);
+            for (k, v) in Tier::Sleeper.keys() {
+                crate::gpu::set(&mut s, k, v).unwrap();
+            }
+            crate::gpu::set(&mut s, "dream", dream).unwrap();
+            s.ceiling = 2 * walkers as u32;
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 40.0 {
+                g.step();
+            }
+            let (st, _) = g.world.e.life_of();
+            let en = crate::gpu::floats(&read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.energy));
+            let alive: Vec<u8> = st.iter().zip(&en).filter(|(_, &e)| e >= 0.0).map(|(&s, _)| s).collect();
+            (alive.len(), alive.iter().filter(|&&s| s == 2).count())
+        };
+        let off = play("0");
+        let on = play("0.003");
+        eprintln!("dreaming: off {} alive, {} asleep; on {} alive, {} asleep", off.0, off.1, on.0, on.1);
+        assert!(off.1 > 100, "the Sleeper sleeps: {off:?}");
+        assert!(on.1 > off.1 + off.1 / 5, "dreaming grows the sleeping body: {on:?} against {off:?}");
+        assert!(on.0 <= 2 * walkers + walkers / 4, "under its ceiling: {on:?}");
+    }
+
     /// **A blast's long crater is not shut** (the review lane, 11-21: det
     /// cord stood as a wall for 19 s). Only a crater no longer than the
     /// guns' (`crater`) is shut: a kill with a crater ten times as long on
