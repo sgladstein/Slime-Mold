@@ -21,7 +21,7 @@ foreach ($s in 1..3) {
     if ($arm -eq "p8") {
       & .\target\release\larder-world.exe "look=$dir" "run=$($s):8" mode=squads hand=bot bank=3000 $at *> (Join-Path $dir "log.txt")
     } else {
-      $env:LAB_LAP2 = "1"; $env:LAB_LAP2_SIZE = $arm.Substring(4)
+      $env:LAB_LAP2 = "1"; $env:LAB_LAP2_SIZE = $arm.Substring(3)
       & .\target\release\larder-world.exe "look=$dir" "run=$($s):9" mode=squads hand=bot bank=3000 $at @spores *> (Join-Path $dir "log.txt")
     }
     $log = Get-Content (Join-Path $dir "log.txt")
