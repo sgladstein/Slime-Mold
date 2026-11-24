@@ -3346,6 +3346,10 @@ impl Hud {
             Some(label) => self.wide_button(Rect::new(r.x + pad, y, inner, bh), label, Hit::Menu(MenuItem::Continue), true, c, s),
             None => self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s),
         }
+        // Its key at the right, as the menus' Back shows Esc (Look D,
+        // 11-24: Enter presses it since the time between planets, #812,
+        // and nothing on the card said so).
+        c.text(Weight::Medium, 13.0 * s, (r.x + pad + inner - 16.0 * s, y + bh / 2.0 + 5.0 * s), Align::Right, "Enter", [220, 236, 250, 200]);
         let mut y = y + bh + 10.0 * s;
         if main_menu {
             self.wide_button(Rect::new(r.x + pad, y, inner, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
