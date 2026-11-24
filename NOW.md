@@ -31,14 +31,14 @@ The rush (D7) stays his: **add no rush brake unasked.** Milestone 3, a
 release, only if he chooses one.
 
 **Where it stands (11-24).** The origin is on main (#699, 11-24 03:29Z);
-Engine's siege #707 follows: sizes 700, 500 and 1,000 on planets 1 to 3; the
+Engine's siege #707 is queued: sizes 700, 500 and 1,000 on planets 1 to 3; the
 siege wins those on seeds 1 to 3 in under 10 min; a 44-soldier rush still
 wins planet 1 at 1:34 and planet 2 at 1:47 (for D7). Planets 4 to 8 have no
 origin sizes yet. His 4K frames were 40 ms (the view's per-pixel cost,
 `Reports/perf-4k-2026-11-22/`); World detail Half and #720 cut it, not yet
 timed on the 1070. Save and resume works between planets (#696); quitting
-mid-planet relands the planet fresh. Engine says so in the menu first, then
-builds a true mid-planet snapshot after the siege curve.
+mid-planet relands the planet fresh, and the pause menu says so (#748).
+A true mid-planet snapshot follows the siege curve.
 
 ## Each lane's top jobs
 
