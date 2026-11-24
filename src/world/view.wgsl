@@ -4461,7 +4461,16 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             if (P.body_density > 0.0) { n0 = BODY_N * max(P.body_density / BODY_DENSITY, 0.05); }
             let dens = -log(max(1.0 - under_body, 0.004)) * n0 / 25.0;
             let per = 0.95 / (1.0 + (dens / 0.35) * (dens / 0.35));
-            let lit = 1.0 - pow(1.0 - per, f32(n & 1023u));
+            var lit = 1.0 - pow(1.0 - per, f32(n & 1023u));
+            // Not on a crystal's faces unless the slime films it there
+            // (polish review 11-23, finding 14: the Sprawler's dashes ran
+            // over the crystals like scratches). The crystal stands above
+            // the ground the walkers cross; where their film lies on it,
+            // `shaded` already draws the slime over the faces.
+            if (lit > 0.0) {
+                let gk = gem_near(fx, fy);
+                if (gk > 0u && gem_in(gk - 1u, fx, fy).x > 0.0) { lit *= smoothstep(0.005, 0.03, film_th(fx, fy)); }
+            }
             c = mix(c, select(vec3<f32>(255.0, 222.0, 130.0), THREAD_RGB, P.slime_look == 1u && P.streak > 0.0), lit * 0.92);
             // An absorbed walker's streak (`draw_absorbed`) takes its
             // warm-white outright, as the phases below do.

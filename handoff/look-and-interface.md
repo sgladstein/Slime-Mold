@@ -2,6 +2,10 @@
 
 ## State (2026-11-20)
 
+**11-24, dashes over crystals, polish finding 14:** a walker's speck or
+dash on a crystal's faces is lit only where the slime's film lies there
+(`film_th`), in `base` after the specks' light. Still:
+`Reports/pr-stills/dashes-off-crystals-2026-11-24.png`.
 **11-24, squad marks, polish finding 5:** soldiers' bars only under
 `BAR_HP` 0.7 or for `HURT_BAR` 2 s after any hurt (`Look::hit`, set in
 `headless.rs`'s note step: Engine's files, told through the coordinator),
