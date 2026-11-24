@@ -1007,6 +1007,8 @@ impl Rules {
             "stand_sated" => &mut self.stand.sated,
             "origin_size" => &mut self.origin.size,
             "origin_most" => &mut self.origin.most,
+            "origin_gather_most" => &mut self.origin.gather_most,
+            "origin_gather_widen" => &mut self.origin.gather_widen,
             "origin_grow_every" => &mut self.origin.grow_every,
             "origin_widen" => &mut self.origin.widen,
             "origin_floor" => &mut self.origin.floor,
