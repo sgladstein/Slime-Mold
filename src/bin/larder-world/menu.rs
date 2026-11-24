@@ -244,27 +244,27 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         let at = |rows: &[(String, String)], head: &str| rows.iter().position(|r| r.0 == head && r.1.is_empty()).map_or(rows.len(), |i| i + 1);
         let fight = at(&squad, "Fighting");
         squad.insert(fight + 2, (format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(GUARD, KeyCode::KeyF)), "On the card: attack-move, drain a crystal, guard".into()));
-        let more: Vec<(String, String)> = [
-            ("Building and tools", ""),
-            ("Q", "Build page: turret, pump, wall (V, drag), door, lure, siren"),
-            ("E", "Tools page: blast, det cord, mine, germ, sleep gas"),
-            ("H", "Swap to the next loadout"),
-            ("The game", ""),
-            ("P", "Pause"),
-            ("Tab", "Four times faster, or back"),
-            ("M", "Minimap"),
-            ("O / K", "Sound; the slime's voice"),
-            ("F9", "Drop a note in the play log: marks this moment and place"),
-            ("Esc", "Cancel placing, or the menu"),
-            ("F1 or ?", "The key card"),
-            ("Ctrl + / Ctrl -", "Bigger or smaller UI and text (saved)"),
-        ]
-        .iter()
-        .map(|&(a, b)| (a.to_string(), b.to_string()))
-        .collect();
+        // Each key by the name it is pressed by now (`world::keys`: moved
+        // in Options' Change keys, the card names the new one).
+        let n = |key: KeyCode| slime_mould::world::ui::key_name(key).unwrap_or_default();
+        let more: Vec<(String, String)> = vec![
+            ("Building and tools".into(), String::new()),
+            (n(KeyCode::KeyQ), format!("Build page: turret, pump, wall ({}, drag), door, lure, siren", n(KeyCode::KeyV))),
+            (n(KeyCode::KeyE), "Tools page: blast, det cord, mine, germ, sleep gas".into()),
+            (n(KeyCode::KeyH), "Swap to the next loadout".into()),
+            ("The game".into(), String::new()),
+            (n(KeyCode::KeyP), "Pause".into()),
+            ("Tab".into(), "Four times faster, or back".into()),
+            (n(KeyCode::KeyM), "Minimap".into()),
+            (format!("{} / {}", n(KeyCode::KeyO), n(KeyCode::KeyK)), "Sound; the slime's voice".into()),
+            ("F9".into(), "Drop a note in the play log: marks this moment and place".into()),
+            ("Esc".into(), "Cancel placing, or the menu".into()),
+            ("F1 or ?".into(), "The key card".into()),
+            ("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text (saved)".into()),
+        ];
         let tools = at(&more, "Building and tools");
         let mut more = more;
-        more.insert(tools + 2, (format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
+        more.insert(tools + 2, (format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), format!("Mine, sleep gas ({}, {} and {} steer)", n(KeyCode::KeyA), n(KeyCode::KeyS), n(KeyCode::KeyD))));
         squad.extend(more);
         squad
     } else {
@@ -274,6 +274,49 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
         rts.into_iter().chain(squad).collect()
     }
+}
+
+/// **The keys Change keys can move** (Direction 11-24: "every squad
+/// key"), as the game reads them, with what each does in the squad game.
+/// The page shows the key pressed for each now (`world::keys`); a key the
+/// squad game does not use is not listed, and moving a listed key onto one
+/// leaves the old key doing nothing.
+pub(super) fn bind_rows() -> Vec<(KeyCode, String)> {
+    use super::squadmode::{CYCLE, FORMATION, HEAL_KEY, LOOSER, MERGE, SPLIT, TIGHTER};
+    use KeyCode as K;
+    let card = |id: u32, key: KeyCode| squad_card_key(id, key).unwrap_or(key);
+    [
+        (K::KeyW, "Steer up"),
+        (K::KeyA, "Steer left"),
+        (K::KeyS, "Steer down"),
+        (K::KeyD, "Steer right"),
+        (card(ATTACK, K::KeyA), "Attack-move (tools page: mine)"),
+        (K::KeyG, "Drain a crystal (build page: door)"),
+        (K::KeyF, "Guard (tools page: sleep gas)"),
+        (K::KeyX, "Fire: defend or free fire"),
+        (K::KeyZ, "Hold fire"),
+        (HEAL_KEY, "Heal"),
+        (K::KeyB, "Buy a soldier (tools page: blast)"),
+        (K::KeyV, "Wall"),
+        (K::KeyC, "Det cord (tools page)"),
+        (K::KeyU, "Pump (build page)"),
+        (K::KeyQ, "Build page"),
+        (K::KeyE, "Tools page"),
+        (FORMATION, "Formation page"),
+        (TIGHTER, "Stand tighter"),
+        (LOOSER, "Stand looser"),
+        (CYCLE, "Next squad"),
+        (SPLIT, "Split the squad"),
+        (MERGE, "Combine squads"),
+        (K::KeyH, "Next loadout"),
+        (K::KeyP, "Pause"),
+        (K::KeyM, "Minimap"),
+        (K::KeyO, "Sound"),
+        (K::KeyK, "The slime's voice"),
+    ]
+    .into_iter()
+    .map(|(k, w)| (k, w.to_string()))
+    .collect()
 }
 
 /// The menu for the command line's `base`.
@@ -290,6 +333,7 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
     let mut menu = StartMenu::new(slime_mould::world::GAME_NAME, entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu.planets = true;
+    menu.binds = bind_rows();
     menu.most_off = slime_mould::build::switches::MOST_OFF;
     // What the build holds, as a PC that has not played sees it (every
     // line new, nothing ticked): the window puts its own memory over it
@@ -897,6 +941,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "campaign" | "missions" => Page::Missions,
         "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
+        "change-keys" => Page::Bind,
         // (`news-try`: its second tab, the things to try.)
         "news" | "news-try" => Page::News,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" | "shop-landing" => Page::Shop,
@@ -1256,6 +1301,16 @@ impl App {
                     self.memory.set_tried(t, tried);
                 }
             }
+            // Change keys (`world::keys`): the two keys swap, saved beside
+            // the settings, and the key card names the new ones.
+            StartEvent::Bind(meant, key) => {
+                slime_mould::world::keys::bind(meant, key, true);
+                self.keys_changed();
+            }
+            StartEvent::ResetKeys => {
+                slime_mould::world::keys::reset(true);
+                self.keys_changed();
+            }
             StartEvent::EditMaps => {
                 let note = match launch_editor() {
                     Ok(()) => "The map editor opened in its own window".to_string(),
@@ -1280,6 +1335,14 @@ impl App {
             }
         }
         Ok(false)
+    }
+
+    /// The key card again, after a key moved.
+    fn keys_changed(&mut self) {
+        let squads = self.base.as_ref().is_some_and(|(b, _)| b.squads);
+        if let Some(m) = self.menu.as_mut() {
+            m.keys = key_card(squads);
+        }
     }
 
     /// The armory up over the range's round, or not. The view draws a

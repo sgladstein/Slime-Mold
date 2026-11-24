@@ -137,6 +137,10 @@ impl ApplicationHandler for App {
                     }
                     return;
                 }
+                // In play a key stands for the one it was bound to in
+                // Options (`world::keys`, Direction 11-24); the menus above
+                // read the keys as pressed, so Options can bind them.
+                let code = slime_mould::world::keys::means(code);
                 // Paused, WASD pans the camera as the arrows do (owner's
                 // playtest, 2026-11-14 20:12Z); unpaused it steers the squad
                 // and is the card's letters, as before. A key let go while

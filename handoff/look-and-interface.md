@@ -190,8 +190,20 @@ the heart; the scar is subtle, about 1% "on old scar" at 90 s). Direction's
 next list (20:47Z): 1 What is new caught up by day (`news_rows`,
 `day_name`, things to try beside the list over the note, a heading again
 on a page inside a day; done), 2 the pause card shows the planet's slime
-line, twist and goal (done: `Model::pause_planet`, a panel beside the card, or in it where only tall), 3 own pick from the 4K menu films. The rescue
-planet's screens come to this lane first.
+line, twist and goal (done: `Model::pause_planet`, a panel beside the card, or in it where only tall), 3 own pick from the 4K menu films
+(Past runs and Slimes met page by height, #843). The rescue
+planet's screens come to this lane first. Direction's list of 22:28Z:
+1 a colour check under simulated protan, deutan and tritan (#844: a dark
+notch before a bar's hurt chip, a dark band under hint rings; shot
+frames, twist and tell pills already carry words or icons); 2 key
+rebinding (`world::keys`: a swap of two keys, the game reads its old
+keys and `keys::means` turns the key pressed into the one it stands for,
+in `events.rs` after the menu branch; `ui::key_name` names the key
+pressed now, so every label follows; saved as `keys=` in settings;
+Options > Keys > Change keys is `Page::Bind`, its rows `menu::bind_rows`;
+`menu=change-keys` films it); 3 Squad's counter lines on the landing
+card and the shop's planet-ahead block (sent 22:58Z, PR #845); 4 the
+rescue planet's screens when the Lab hands it over.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

@@ -126,9 +126,12 @@ pub(super) fn squad_card_key(id: u32, key: KeyCode) -> Option<KeyCode> {
 /// the groups are your squad, fighting, several squads, and the camera.
 pub(super) fn squad_help() -> Vec<(String, String)> {
     let k = |c: KeyCode| key_name(c).unwrap_or_default();
+    // The steering keys by the names they are pressed by now ("WASD"
+    // unless moved in Options' Change keys, `world::keys`).
+    let wasd = [KeyCode::KeyW, KeyCode::KeyA, KeyCode::KeyS, KeyCode::KeyD].map(k).concat();
     [
         ("Your squad".to_string(), String::new()),
-        ("WASD".to_string(), "Steer your squad; the camera follows it (paused, or no squad controlled: pan the camera)".to_string()),
+        (wasd.clone(), "Steer your squad; the camera follows it (paused, or no squad controlled: pan the camera)".to_string()),
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
         ("Ctrl + right click".into(), "On a crystal: drain it (fast, then it is gone)".into()),
@@ -136,10 +139,10 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         (k(FORMATION), "Formation page: blob or ring, and how far apart, tight to wide (on the card)".into()),
         (format!("{}, {}", k(TIGHTER), k(LOOSER)), "The squad stands tighter, or looser (five steps)".into()),
         (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
-        ("Esc".into(), "On a card page: back to the main card; else let go of the squad (every squad runs on its own and WASD pans); Esc again: the menu".into()),
+        ("Esc".into(), format!("On a card page: back to the main card; else let go of the squad (every squad runs on its own and {wasd} pans); Esc again: the menu")),
         ("Fighting".to_string(), String::new()),
         ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
-        ("Z".into(), "Hold fire: on and off; the fire button (X) picks defend or free fire".into()),
+        (k(KeyCode::KeyZ), format!("Hold fire: on and off; the fire button ({}) picks defend or free fire", k(KeyCode::KeyX))),
         ("Several squads".to_string(), String::new()),
         ("Click a squad, Space".into(), "With none controlled: take command of it, or of the last one".into()),
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
