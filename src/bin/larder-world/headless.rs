@@ -225,11 +225,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut voice_at = u64::MAX;
     let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
     let mut last_sec = u64::MAX;
+    // The origin's deepest fall while it stands (once a second, from the
+    // `origin t` line): its members and the most it had held by then, at
+    // the second it was furthest below that most, so a lost snipe shows
+    // how close it came (the Enemy lane, 11-24). Its plain lowest would be
+    // its birth, a handful of members.
+    let mut origin_low = (0u32, 0u32);
     // `hand=` a player AI style (boom, claim, late, fort, strike) plays
     // through `larder_world_ai`, as the census does, so a campaign mission's
     // pictures show the hands its numbers were set on.
     let mut ai = match hand {
-        "rush" | "farm" | "stand" | "origin" | "volley" | "edge" | "squads" => None,
+        "rush" | "farm" | "stand" | "origin" | "origin2" | "volley" | "edge" | "squads" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
     };
     // Each hit: where, its tick, the body there the tick before, and the
@@ -820,7 +826,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 if g.rules.origin.on {
                     match g.origin_hud() {
                         Some((_, _, Some(left))) => println!("  origin t {:.0} s: broken, die-back {left:.0} s left, slime {}", g.time(), g.mould),
-                        Some((n, most, None)) => println!("  origin t {:.0} s: {n} members of {most} most, reach {:.1}, {} lunges, {} calls home, gathering {}", g.time(), g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather)),
+                        Some((n, most, None)) => {
+                            if most - n.min(most) >= origin_low.1 - origin_low.0.min(origin_low.1) {
+                                origin_low = (n, most);
+                            }
+                            println!("  origin t {:.0} s: {n} members of {most} most, deepest {} of {}, reach {:.1}, {} lunges, {} calls home, gathering {}", g.time(), origin_low.0, origin_low.1, g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather))
+                        }
                         None => println!("  origin t {:.0} s: none", g.time()),
                     }
                 }

@@ -93,6 +93,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if let Some(spec) = hand.strip_prefix("util:") {
         return super::utility::util_hand(g, spec);
     }
+    if hand == "origin2" {
+        return origin2_hand(g);
+    }
     if let Some(spec) = hand.strip_prefix("movetour") {
         return move_tour(g, spec);
     }
@@ -396,6 +399,66 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             _ => {}
         }
     }
+}
+
+/// `origin2`'s memory: the origin's lowest members, the second of that
+/// low, the steps the stand has closed in, and the stand last ordered.
+type Origin2 = (u32, f32, u32, Option<(f32, f32)>);
+
+thread_local! {
+    static ORIGIN2: std::cell::Cell<Origin2> = const { std::cell::Cell::new((u32::MAX, 0.0, 0, None)) };
+}
+
+/// `origin2` (11-24, the Enemy lane's D7 heart baseline): `origin`'s army,
+/// every soldier the bank buys, but it closes in. In batch u (1070,
+/// c1180812d) `origin`'s attack-move on the core stopped at the first
+/// slime in reach, so on planets 3, 6, 7 and 8 the squad stood in the body
+/// at the same spot whatever the bank and never touched the origin
+/// (members = most at 6:00): a measure of the hand, not the heart. Here,
+/// as the run bot's siege (`strat::hunt`): a stand at 0.7 of range from
+/// the origin's middle, and each 30 s with no new low of its members the
+/// stand steps 0.15 of range closer, down to 2 cells, by a plain move (an
+/// attack-move would stop in the body again); a new low holds the step.
+fn origin2_hand(g: &mut Game<GpuWorld>) {
+    while g.bank >= g.rules.soldier_cost && g.apply(Cmd::Buy) {}
+    let t = g.time();
+    let range = g.gun_range(0) * g.world.scale();
+    let Some(h) = g.stand.live.filter(|h| h.origin && g.origin.fell.is_none()) else {
+        let c = g.core;
+        for k in 0..g.soldiers.len() {
+            if g.soldiers[k].alive && g.soldiers[k].order == Order::Hold {
+                g.apply(Cmd::Order(k, Order::Fight(c.0, c.1)));
+            }
+        }
+        return;
+    };
+    let (mut low, mut at, mut steps, last) = ORIGIN2.get();
+    if h.members < low {
+        (low, at) = (h.members, t);
+    } else if t - at >= 30.0 {
+        (at, steps) = (t, steps + 1);
+    }
+    let reach = ((0.7 - 0.15 * steps as f32) * range).max(2.0);
+    // The squad's middle: the live soldiers' mean.
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    let n = live.len().max(1) as f32;
+    let m = live.iter().fold((0.0, 0.0), |a, &k| (a.0 + g.soldiers[k].x / n, a.1 + g.soldiers[k].y / n));
+    let d = (h.centre.0 - m.0).hypot(h.centre.1 - m.1).max(1.0);
+    let st = (h.centre.0 - (h.centre.0 - m.0) / d * reach, h.centre.1 - (h.centre.1 - m.1) / d * reach);
+    let far = d > reach + 0.1 * range;
+    let o = if steps > 0 && far { Order::Move(st.0, st.1) } else { Order::Fight(st.0, st.1) };
+    // A new order only when the stand moved a tenth of range, the order's
+    // kind changed, or a soldier is new (on Hold).
+    let moved = last.is_none_or(|l| (l.0 - st.0).hypot(l.1 - st.1) > 0.1 * range);
+    let mut given = last;
+    for &k in &live {
+        let kind = std::mem::discriminant(&g.soldiers[k].order) != std::mem::discriminant(&o);
+        if moved || kind || g.soldiers[k].order == Order::Hold {
+            g.apply(Cmd::Order(k, o));
+            given = Some(st);
+        }
+    }
+    ORIGIN2.set((low, at, steps, given));
 }
 
 /// The look mode's `squads` hand (`mode=squads`, the squad mode's film),
