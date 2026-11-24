@@ -74,7 +74,7 @@ start (this build is before #757).
 
 **The planet 1 stalls** (map A here and before, map B here: a squad of
 26 or 36 with a flat bank beside the origin) are the siege's attack-move
-standing in the body slime round the origin. With the fix (#760: the stand
+standing in the body slime round the origin. With the fix (#765: the stand
 closes in by plain moves when the origin stops falling), planet 1 on
 software Vulkan: map A won at 4:23 (stall 48 s, 9 fallen), map B 4:42
 (27 s, 6), map C 3:59 (22 s, 5).
