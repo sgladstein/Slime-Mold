@@ -174,7 +174,19 @@ second, `scarred`. `HINTS_LOG=1` prints each as it starts.
 what is under it: no see-through backs), own blast shoves (`KNOCK`), the
 fallen alert names the killer. `LARDER_FORCE=stand@T;wave@T;lunge@T` in
 films. Then planet twists (Enemy's #830): `Intro::twist`, `Shop::twist`,
-`Model::twist` pill (`draw::twist_tell`), colour `ui::TWIST`.
+`Model::twist` pill (`draw::twist_tell`), colour `ui::TWIST`. #835 has
+the twists and `Hurt::Star` (a star that lands in fire reads as the star;
+`LARDER_FORCE=star@T`). Slimes met (Direction 18:41Z): `Page::Met`, a
+second tab of Past runs (Tab switches; the main row is Slimes met only
+until a run has ended, so the main page keeps its row count), filled by
+`met.rs` (slimes from `runs.txt` and the live run; threats from
+`hints_seen` and `met_tally`, which `Hints::ended` writes in `carry_on`).
+Stills: one sheet `assets/met-stills.png` (240x150 cells, `Canvas::still`,
+the canvas's `PICTURE` kind, binding 6), cut by `assets/met-stills.py`
+(its header has every film's command; `LARDER_FORCE` gained fruit, core,
+boss-KIND; `LARDER_HINTS=off` films without hint words). Weak stills to
+refilm when there is time: lunge, wake, scar (none shows its thing
+plainly).
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

@@ -138,9 +138,20 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // `menu=runs` and `main-runs` (Direction 11-24): the Past runs
         // page, and the main page with its row, over three made-up ended
         // runs on `run=`'s seed.
-        if flag == "runs" || flag == "main-runs" {
+        if flag == "runs" || flag == "main-runs" || flag == "met" {
             if let Some(r) = app.run.clone().or_else(|| app.args.run.clone()) {
                 m.runs = runs::film_runs(&r);
+            }
+        }
+        // `menu=met` (Direction 11-24): the Slimes met page over those
+        // runs, and the threats of planets 1 to 3 met with made-up counts
+        // (a film's PC has seen no hint).
+        if flag == "met" || flag == "main-runs" {
+            m.met = super::met::entries(&m.runs, None);
+            for (k, e) in m.met.iter_mut().enumerate().filter(|(_, e)| e.group > 0) {
+                if ["Strikers", "Fruiting", "Cores", "Waves", "Hunter", "Wanderer", "Pinwheel"].contains(&e.name.as_str()) {
+                    (e.met, e.beaten, e.won) = (true, 2 + k as u32 % 3, u32::from(k % 4 == 0));
+                }
             }
         }
         m.show(p);
@@ -291,7 +302,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // `lunge` (the cornered slime, `Game::late`), or `star` (ore falling
     // on the active squad's middle after the planet's warning,
     // `Game::force_ore`: the falling star's colour on film, and its blast
-    // on the bars).
+    // on the bars), `fruit` (a fruit on the slime's home crystal,
+    // `force_fruit`), `boss-KIND` (a mini-boss of that kind there,
+    // `force_boss`) or `core` (a mini-boss core on the squad's middle,
+    // `force_core`): the Slimes met page's stills.
     let mut forces: Vec<(String, f32)> = std::env::var("LARDER_FORCE")
         .unwrap_or_default()
         .split(';')
@@ -489,7 +503,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                             true
                         }
                         "star" => g.active.and_then(|q| g.middle(q)).is_some_and(|m| g.force_ore(m)),
-                        _ => false,
+                        "fruit" => g.force_fruit(g.core),
+                        "core" => g.active.and_then(|q| g.middle(q)).is_some_and(|m| g.force_core(m)),
+                        k => match slime_mould::mould::larder_world::BossKind::ALL.into_iter().find(|b| k.strip_prefix("boss-") == Some(b.name())) {
+                            Some(kind) => g.force_boss(kind, g.core),
+                            None => false,
+                        },
                     };
                     println!("  force {what} t {now:.1} s: {}", if ok { "done" } else { "refused" });
                 }
