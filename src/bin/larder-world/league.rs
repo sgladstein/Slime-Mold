@@ -293,8 +293,12 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     // the home crystal last for ever, a bot that drained every other
     // crystal could stand by the slime's home for minutes, firing into a
     // slime that regrew as fast; `run_bot_summary.py --check` fails a
-    // planet that stalls over a minute.
+    // planet that stalls over a minute. A new 1% low of the origin's
+    // members counts too (`origin.rs`): a siege wears the origin down while
+    // the body round it regrows, so on 11-22 won sieges read 160 s of
+    // stall by the slime's size alone.
     let (mut low, mut harvested, mut moved, mut stall) = (start_mould, 0.0f32, 0.0f32, 0.0f32);
+    let mut origin_low = u32::MAX;
     let t0 = std::time::Instant::now();
     let mut next_aim = 0u64;
     loop {
@@ -313,8 +317,13 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
             }
             hands::plan(g, &hand);
             peak_mould = peak_mould.max(g.mould);
-            if g.harvested > harvested + 0.5 || (g.mould as f32) < 0.99 * low as f32 || since < 60.0 {
+            let members = g.stand.live.filter(|h| h.origin).map(|h| h.members);
+            let worn = members.is_some_and(|n| (n as f32) < 0.99 * origin_low as f32);
+            if g.harvested > harvested + 0.5 || (g.mould as f32) < 0.99 * low as f32 || worn || since < 60.0 {
                 moved = since;
+            }
+            if let Some(n) = members {
+                origin_low = origin_low.min(n);
             }
             harvested = harvested.max(g.harvested);
             low = low.min(g.mould);
