@@ -195,6 +195,12 @@ pub struct GpuWorld {
     cells: Vec<usize>,
     /// The gardeners' state (`GpuWorld::garden`), None in the plain game.
     pub garden: Option<GpuGarden>,
+    /// **The slots sorted by place** each game second (`sort.rs`, 11-24,
+    /// test 5): from `Settings::sort` (`sort=off|pack|tile`, tile by
+    /// default), `None` off (the twin tests, which compare the CPU's slots
+    /// with the GPU's one for one). Never in a garden, whose sides the CPU
+    /// splits by slot.
+    pub sort: Option<super::sort::Order>,
     /// The player's own mould's living walkers at the last readout.
     own: usize,
     /// The walkers asleep and those on full scar at the last readout
@@ -466,7 +472,8 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, own: 0, asleep: 0, scarred: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let sort = s.sort;
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, sort, own: 0, asleep: 0, scarred: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -848,6 +855,13 @@ impl World for GpuWorld {
         }
         self.setc.due.set(due);
         *self.setc.got.borrow_mut() = None;
+        // The slots sorted by place once a game second, before the step
+        // (`sort.rs`): nothing comes back to the CPU.
+        if let Some(order) = self.sort.filter(|_| n > 0 && self.garden.is_none() && !self.e.garden && t0 / GRID_EVERY != t1 / GRID_EVERY) {
+            let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("sort") });
+            self.e.sort_slots(&mut enc, order);
+            self.e.queue.submit([enc.finish()]);
+        }
         self.e.write_params(&self.s, Hand::default(), n);
         if n > 0 && self.profile.is_some() {
             let t = self.e.record_timed(&self.shared, n, self.s.curve == Curve::Soft);
@@ -1799,6 +1813,117 @@ mod tests {
         assert!(a == b, "played on, the two games save the same bytes: {} differ", a.iter().zip(&b).filter(|(x, y)| x != y).count());
     }
 
+    /// A race world's settings with the slots kept in their own order
+    /// (`Settings::sort` off), for the tests that pin one seed's game: the
+    /// twins, which compare the CPU's slots with the GPU's one for one, and
+    /// the GPU-only tests whose bars were set on that seed's game. A sorted
+    /// world draws its randoms by new slot numbers, so it plays another
+    /// game of the same rules (11-24: with the sort on, the set walkers of
+    /// `the_set_cells_come_with_the_step` came after 90 s, not 45).
+    fn twin_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
+        Settings { sort: None, ..race_settings(seed, scale, walkers) }
+    }
+
+    /// **The slots sorted by place** (`sort.rs`, 11-24): after the GPU's
+    /// sort every per-slot word sits where the CPU's stable order by key
+    /// puts its slot (the living by 8x8 tile, the out-of-place, the empty
+    /// last), every word moved with its slot; packing keeps the living in
+    /// their old order. Then the game plays on.
+    #[test]
+    fn the_slots_sorted_by_place_move_every_word_with_their_slot() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        // With the crust and setting, so the set words are there to move.
+        let settings = || {
+            let mut s = race_settings(seed, scale, walkers);
+            for (k, v) in [("alarm_keep", "0.9"), ("setting", "1"), ("crust_rise", "0.02"), ("crust_trail", "0")] {
+                crate::gpu::set(&mut s, k, v).unwrap();
+            }
+            s
+        };
+        let mut w = GpuWorld::new(&device, &queue, settings(), scale);
+        w.sort = None;
+        let mut g = Game::new(w, Rules { cap: 30.0, ..Rules::default() }, seed);
+        while g.time() < 4.0 && g.end.is_none() {
+            g.step();
+        }
+        g.finish_step();
+        let u32s = |b: &[u8]| b.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect::<Vec<u32>>();
+        {
+            // Each slot's news words marked with their region and slot, so
+            // a word that stays behind or lands in the wrong place shows
+            // (most are 0 four seconds in). This world is not played on.
+            let e = &g.world.e;
+            let (n, cells) = (e.n as usize, e.cells as usize);
+            assert!(e.crust_at > 0, "the crust is on");
+            let gas = n + 3 * cells + crate::gpu::GAS_SLOTS;
+            let regions = [0, gas, gas + n, (e.dense_at / 4) as usize + crate::gpu::DENSE_HEAD, (e.crust_at / 4) as usize + cells];
+            for (r, &at) in regions.iter().enumerate() {
+                let marks: Vec<u32> = (0..n as u32).map(|k| ((r as u32 + 1) << 24) | k).collect();
+                e.queue.write_buffer(&e.news, 4 * at as u64, &crate::gpu::u32_bytes(&marks));
+            }
+        }
+        for order in [crate::gpu::sort::Order::Pack, crate::gpu::sort::Order::Tile] {
+            let e = &mut g.world.e;
+            let (n, wd, ht) = (e.n as usize, e.dish.w, e.dish.h);
+            let take = |e: &Engine| {
+                let r = |b: &wgpu::Buffer| u32s(&crate::gpu::read_back(&e.device, &e.queue, b));
+                (r(&e.walkers), r(&e.energy), r(&e.spec), r(&e.sick), r(&e.age), r(&e.news))
+            };
+            let before = take(e);
+            let tx = wd.div_ceil(8);
+            let tiles = tx * ht.div_ceil(8);
+            let key = |k: usize| -> usize {
+                let alive = !e.grows || f32::from_bits(before.1[k]) >= 0.0;
+                let (x, y) = (f32::from_bits(before.0[4 * k]).max(0.0) as usize, f32::from_bits(before.0[4 * k + 1]).max(0.0) as usize);
+                let inside = x < wd && y < ht;
+                match order {
+                    crate::gpu::sort::Order::Pack => usize::from(!(alive && inside)),
+                    crate::gpu::sort::Order::Tile if !alive => tiles + 1,
+                    crate::gpu::sort::Order::Tile if !inside => tiles,
+                    crate::gpu::sort::Order::Tile => (y / 8) * tx + x / 8,
+                }
+            };
+            let mut perm: Vec<usize> = (0..n).collect();
+            perm.sort_by_key(|&k| key(k));
+            // (Packing may find the living first already.)
+            assert!(order == crate::gpu::sort::Order::Pack || perm.iter().enumerate().any(|(i, &k)| i != k), "{order:?}: the world was not in order already");
+            let mut enc = e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            e.sort_slots(&mut enc, order);
+            e.queue.submit([enc.finish()]);
+            let after = take(e);
+            let cells = e.cells as usize;
+            let gas = n + 3 * cells + crate::gpu::GAS_SLOTS;
+            let dense = (e.dense_at / 4) as usize + crate::gpu::DENSE_HEAD;
+            let news_at = [0, gas, gas + n, dense, (e.crust_at / 4) as usize + cells];
+            for (i, &k) in perm.iter().enumerate() {
+                assert_eq!(after.0[4 * i..4 * i + 4], before.0[4 * k..4 * k + 4], "{order:?}: slot {i}'s walker is slot {k}'s");
+                for (name, a, b) in [("energy", &after.1, &before.1), ("spec", &after.2, &before.2), ("sick", &after.3, &before.3), ("age", &after.4, &before.4)] {
+                    assert_eq!(a[i], b[k], "{order:?}: slot {i}'s {name} is slot {k}'s");
+                }
+                for &at in &news_at {
+                    assert_eq!(after.5[at + i], before.5[at + k], "{order:?}: slot {i}'s news word at {at} is slot {k}'s");
+                }
+            }
+            // Nothing else in `news` moved.
+            let mut rest_a = after.5.clone();
+            let mut rest_b = before.5.clone();
+            for &at in &news_at {
+                rest_a[at..at + n].fill(0);
+                rest_b[at..at + n].fill(0);
+            }
+            assert!(rest_a == rest_b, "{order:?}: only the slots' words moved in news");
+        }
+        // A sorted world plays on (a fresh one: the marks are not words a
+        // walker could have).
+        let mut g = Game::new(GpuWorld::new(&device, &queue, settings(), scale), Rules { cap: 30.0, ..Rules::default() }, seed);
+        assert_eq!(g.world.sort, Some(crate::gpu::sort::Order::Tile), "the default sorts by tile");
+        while g.time() < 8.0 && g.end.is_none() {
+            g.step();
+        }
+        assert!(g.mould > 0, "the slime lives on: {}", g.mould);
+    }
+
     /// **A bot's coarser ask leaves the rules' grid alone** (the bug hunt,
     /// 11-21): asked for squares four times the summed ones, the grid is
     /// added up from the summed one, equal to the cells' own sum as of its
@@ -2294,7 +2419,7 @@ mod tests {
         let (seed, scale, walkers) = (2, 1, 8_000);
         let (_, m) = crate::mould::levelgen::spec("planet:1:2", seed).unwrap().unwrap();
         let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
-        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, twin_settings(seed, scale, walkers), scale, &m);
         assert!(cpu.w != cpu.h, "a planet that is not square: {} x {}", cpu.w, cpu.h);
         let f = Frame::default();
         let second = |cpu: &mut BigDish, gpu: &mut GpuWorld| {
@@ -2368,7 +2493,7 @@ mod tests {
         let kit = KitRules { carry_max: 0, reach: 1_000.0, sick_upkeep: 10.0, ..KitRules::default() };
         let mut living = Vec::new();
         for frail in [1.0, 6.0] {
-            let mut gpu = Game::new(GpuWorld::new(&device, &queue, Settings { germ_upkeep: frail, ..race_settings(seed, scale, walkers) }, scale), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, Settings { germ_upkeep: frail, ..twin_settings(seed, scale, walkers) }, scale), rules, seed);
             let mut dish = race_world(seed, scale, walkers);
             dish.p.germ_upkeep = frail;
             let mut cpu = Game::new(dish, rules, seed);
@@ -2816,15 +2941,19 @@ mod tests {
             rules.stand = StandRules { on: true, at: 2.0, army: 1.0, every: 4.0, lunge: 30.0, cap, cap_most: most, sated, ..StandRules::default() };
             let mut g = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
             let squad = g.soldiers.iter().filter(|s| s.alive).count();
-            while g.stand.live.is_none_or(|h| h.lunging.is_none()) && g.time() < 30.0 {
+            // A game that ends (the squad bitten out) steps no more, so
+            // each wait also stops at the end (11-24: with the slots sorted
+            // by place the uncapped lunge took the whole squad, and the
+            // last wait spun for an hour).
+            while g.stand.live.is_none_or(|h| h.lunging.is_none()) && g.time() < 30.0 && g.end.is_none() {
                 g.step();
             }
             let (start, bit0) = (g.time(), g.fell_bitten);
-            while g.stand.live.is_some_and(|h| h.lunging.is_some()) && g.time() < start + 31.0 {
+            while g.stand.live.is_some_and(|h| h.lunging.is_some()) && g.time() < start + 31.0 && g.end.is_none() {
                 g.step();
             }
             let drew_back = g.time() - start;
-            while g.time() < start + 32.0 {
+            while g.time() < start + 32.0 && g.end.is_none() {
                 g.step();
             }
             (squad, g.fell_bitten - bit0, drew_back)
@@ -2968,7 +3097,7 @@ mod tests {
     fn the_set_cells_come_with_the_step() {
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 2_000);
-        let mut s = race_settings(seed, scale, walkers);
+        let mut s = twin_settings(seed, scale, walkers);
         crate::gpu::set(&mut s, "alarm_keep", "0.9").unwrap();
         crate::gpu::set(&mut s, "setting", "1").unwrap();
         crate::gpu::set(&mut s, "crust_rise", "0.02").unwrap();
@@ -3500,7 +3629,7 @@ mod tests {
     /// first half of it, both with its first half shut (`crater_shut`, as
     /// in a run). A quarter of the crater on, the flinching lump
     /// holds fewer members within 3 cells of the hit (its hole) than the
-    /// one that stood (llvmpipe 11-21: 51 against 103 of 108), and as many
+    /// one that stood (llvmpipe 11-21: 51 against 103 of 108; sorted by place, 11-24: 65 against 96 of 109), and as many
     /// members in all (a flinch kills none).
     #[test]
     fn a_mini_bosss_walkers_flinch_out_of_a_hit() {
@@ -3556,7 +3685,9 @@ mod tests {
         let (stood, flinched) = (play("0"), play("0.5"));
         eprintln!("flinch: (near before, members, near after) stood {stood:?}, flinched {flinched:?}");
         assert!(stood.0 > 10, "the hit lands in the lump: {stood:?}");
-        assert!(flinched.2 * 3 < stood.2 * 2, "the flinching lump opens a hole: {flinched:?} against {stood:?}");
+        // Under three quarters (11-24, the Enemy lane: two thirds until the
+        // slots were sorted by place; sorted, the hole held 65 of 96).
+        assert!(flinched.2 * 4 < stood.2 * 3, "the flinching lump opens a hole: {flinched:?} against {stood:?}");
         assert!(flinched.1 + flinched.1 / 20 >= stood.1, "a flinch kills none: {flinched:?} against {stood:?}");
     }
 
@@ -4076,7 +4207,7 @@ mod tests {
         let mut m = Map::load(&dir, "flats").unwrap();
         m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
         let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
-        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, twin_settings(seed, scale, walkers), scale, &m);
         let k = squad::BurstRules::default();
         let f = Frame::default();
         for _ in 0..10 {
@@ -4163,7 +4294,7 @@ mod tests {
             }
         }
         let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
-        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, twin_settings(seed, scale, walkers), scale, &m);
         let k = squad::BurstRules::default();
         let f = Frame::default();
         for _ in 0..10 {
@@ -4250,7 +4381,7 @@ mod tests {
         m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 0.04)).collect();
         let (rise, keep, weight, fast, fuel, barren) = (0.02, 0.999, 0.5, 0.5, 1.0, 0.3);
         let p = BigParams { crust_rise: rise, crust_keep: keep, crust_trail: 1.0, crust_weight: weight, crust_fast: fast, crust_fuel: fuel, char_barren: barren, ..race_params(seed, scale, walkers) };
-        let s = Settings { crust_rise: rise, crust_keep: keep, crust_trail: 1.0, crust_weight: weight, crust_fast: fast, crust_fuel: fuel, char_barren: barren, ..race_settings(seed, scale, walkers) };
+        let s = Settings { crust_rise: rise, crust_keep: keep, crust_trail: 1.0, crust_weight: weight, crust_fast: fast, crust_fuel: fuel, char_barren: barren, ..twin_settings(seed, scale, walkers) };
         let mut cpu = BigDish::with_map(p, &m);
         let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
         assert!(!cpu.plant.is_empty() && gpu.e.plants && !cpu.crust.is_empty() && gpu.e.crust_at > 0);
@@ -4316,7 +4447,7 @@ mod tests {
         // Each engine's (fire_dry, fire_fed).
         let play = |(dry, fed): (bool, bool), (gpu_dry, gpu_fed): (bool, bool)| -> (f32, u64, usize) {
             let p = BigParams { wither, wither_lag: lag, fire_dry: dry, fire_fed: fed, ..race_params(seed, scale, walkers) };
-            let s = Settings { wither, wither_lag: lag, fire_dry: gpu_dry, fire_fed: gpu_fed, ..race_settings(seed, scale, walkers) };
+            let s = Settings { wither, wither_lag: lag, fire_dry: gpu_dry, fire_fed: gpu_fed, ..twin_settings(seed, scale, walkers) };
             let mut cpu = BigDish::with_map(p, &m);
             let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
             assert!(!cpu.plant.is_empty() && gpu.e.plants && gpu.e.withers);
@@ -4413,7 +4544,7 @@ mod tests {
         // (largest alarm L1 over the run, the CPU's alarm summed 1 s after the light)
         let play = |fa: f32, gpu_fa: f32| -> (f64, f64) {
             let p = BigParams { flinch: 0.9, fire_alarm: fa, ..race_params(seed, scale, walkers) };
-            let s = Settings { flinch: 0.9, fire_alarm: gpu_fa, ..race_settings(seed, scale, walkers) };
+            let s = Settings { flinch: 0.9, fire_alarm: gpu_fa, ..twin_settings(seed, scale, walkers) };
             let mut cpu = BigDish::with_map(p, &m);
             let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
             assert!(!cpu.plant.is_empty() && gpu.e.plants && !cpu.alarm.is_empty());
@@ -4486,7 +4617,7 @@ mod tests {
         let play = |gb: f32, gpu: Option<(&wgpu::Device, &wgpu::Queue, f32)>| -> (u64, f64, f64, f32, f64, usize) {
             let p = BigParams { gas_burn: gb, ..race_params(seed, scale, walkers) };
             let mut cpu = BigDish::with_map(p, &m);
-            let mut gw = gpu.map(|(d, q, ggb)| GpuWorld::with_map(d, q, Settings { gas_burn: ggb, ..race_settings(seed, scale, walkers) }, scale, &m));
+            let mut gw = gpu.map(|(d, q, ggb)| GpuWorld::with_map(d, q, Settings { gas_burn: ggb, ..twin_settings(seed, scale, walkers) }, scale, &m));
             let home = cpu.homes[0];
             let rules = burst_rules(&kit, 15.0 * World::fine_steps(&cpu) as f32);
             let gas = squad::Burst { at: home, r: kit.gas_r, gas: (kit.gas_secs * 15.0 * World::fine_steps(&cpu) as f32) as u16, ..squad::Burst::default() };

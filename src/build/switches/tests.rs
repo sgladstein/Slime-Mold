@@ -76,7 +76,7 @@ fn the_scan_finds_the_setters() {
     // (a value, not a key) would show here.
     let mut s = race_settings(1, 2, 5000);
     for k in &e {
-        let took = ["0", "1", "amber", "trail", "game", "spread", "drifter"].iter().any(|v| crate::gpu::set(&mut s, k, v).is_ok());
+        let took = ["0", "1", "amber", "trail", "game", "spread", "drifter", "off"].iter().any(|v| crate::gpu::set(&mut s, k, v).is_ok());
         assert!(took, "`{k}` was read as an engine key but gpu::set takes no value for it");
     }
     for k in &r {

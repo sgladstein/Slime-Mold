@@ -28,6 +28,7 @@ use crate::mould::STEPS_PER_SECOND;
 use pixels::wgpu;
 
 pub mod larder_world;
+pub mod sort;
 
 /// The engine's shader (it was the sandbox's `SHADER` constant).
 pub const SHADER: &str = include_str!("engine.wgsl");
@@ -760,6 +761,11 @@ pub struct Settings {
     /// levelgen writes each biome's, the game grows the stand-in on any
     /// designed map or planet without plants of its own (`plants=0` off).
     pub plants: bool,
+    /// The slots sorted by place once a game second (`sort.rs`, 11-24):
+    /// by 8x8 tile (the default), the living first only (`sort=pack`), or
+    /// not at all (`sort=off`, for the paired checks against the old order
+    /// and the tests that follow a slot by its number).
+    pub sort: Option<sort::Order>,
     pub seed: u64,
 }
 
@@ -968,6 +974,7 @@ impl Settings {
             scorch_full: t.scorch_full,
             scorch_cone: t.scorch_cone,
             plants: true,
+            sort: Some(sort::Order::Tile),
             seed: 1,
         }
     }
@@ -1083,6 +1090,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
     match key {
         "walkers" => s.walkers = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         "crowd" => s.crowd = b()?,
+        "sort" => s.sort = [None, Some(sort::Order::Pack), Some(sort::Order::Tile)][pick(&["off", "pack", "tile"])?],
         "sensor_angle" => s.sensor_angle = f()?,
         "turn" | "rotate_angle" => s.turn = f()?,
         "reach" | "sensor_offset" => s.reach = f()?,
@@ -1954,6 +1962,9 @@ pub struct Engine {
     pub dish: BigDish,
     /// Food dropped with F, in fine cells.
     pub dropped: Vec<(f32, f32)>,
+    /// The slots' sort by place (`sort.rs`, `Engine::sort_slots`), made at
+    /// its first use.
+    pub sorter: Option<sort::Sorter>,
     pub n: u32,
     pub cells: u32,
     /// Ticks run.
@@ -2193,6 +2204,7 @@ impl Engine {
             dense_at: 4 * (news_len + gas_len) as u64,
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
             crust_at: if d.crust.is_empty() { 0 } else { 4 * (news_len + gas_len + dense_len + plant_len) as u64 },
+            sorter: None,
             plants: !d.plant.is_empty(),
             fire_on: !d.fire.is_empty(),
             setting: false,
@@ -2398,6 +2410,18 @@ impl Engine {
     }
 
     /// Writes the controls for the next frame of `ticks` ticks.
+    /// **The slots sorted by place** (`sort.rs`): recorded into `enc`,
+    /// between frames. The sorter is made at the first call (its scratch
+    /// is about 32 bytes a slot) and again if the order asked changes.
+    pub fn sort_slots(&mut self, enc: &mut wgpu::CommandEncoder, order: sort::Order) {
+        if self.sorter.as_ref().is_none_or(|s| s.order != order) {
+            self.sorter = Some(sort::Sorter::new(self, order));
+        }
+        if let Some(s) = self.sorter.as_ref() {
+            s.record(enc);
+        }
+    }
+
     pub fn write_params(&mut self, s: &Settings, hand: Hand, ticks: u32) {
         self.ceiling_on = s.ceiling > 0 && !self.garden && self.grows;
         let seed = s.seed;
