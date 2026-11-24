@@ -1,0 +1,8 @@
+  lab rescue t 1 s: 3 soldiers stranded at 40,150 in squad 1
+  lab rescue t 186 s: found (reached), 3 alive
+  lab rescue t 186 s: reached, 3 of 3 alive, into squad 0
+  lab rescue t 193 s: 2 of 3 alive; dead at 72,144 (55 from help)
+  lab rescue t 198 s: 1 of 3 alive; dead at 72,144 (108 from help), 84,145 (99 from help)
+  lab rescue t 200 s: 0 of 3 alive; dead at 72,144 (136 from help), 84,145 (127 from help), 85,144 (126 from help)
+  lab rescue t 200 s: lost, every stranded soldier died on the way home
+  t 200 s: mould 8258, soldiers 44, bank 392, harvested 14396, rendered 0, shots 3820, killed 11872, took 100%, crystals left 0.355, ended: squad wiped; squad at 218.1,57.0

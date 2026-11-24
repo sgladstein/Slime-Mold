@@ -220,5 +220,11 @@ A second slime species that fights the first; the player's own mould
   [`Reports/lab-twists-2026-11-24/`](../Reports/lab-twists-2026-11-24/README.md),
   page "Planet Twists". `LAB_TWIST` (code `4f4f3856`): cold, night, wind.
   Wind and the cold snap recommended, with card lines.
+- 2026-11-24: **the rescue planet** (Direction 17:24Z, a goal other than
+  the heart). Report
+  [`Reports/lab-rescue-2026-11-24/`](../Reports/lab-rescue-2026-11-24/README.md),
+  page "Rescue Planet". `LAB_RESCUE` and the bot hand `rescue@X,Y[,T]`
+  (code `a7c788e2`). Winnable and loses visibly on planet 1, but too short
+  there; timing on planets 3 to 5 needs the GTX 1070.
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.
