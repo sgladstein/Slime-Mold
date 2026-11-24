@@ -490,8 +490,13 @@ fn lab_tough(k: u32) -> bool {
     let p = P.lab_p * min(scar_at(i) / s0, 1.0);
     return unit(keyed(P.s_starve, S.t, k ^ 0x71237123u)) < p;
 }
+// LAB: a hungry march (`LAB_HUNGER=F`, the planet 4 counter; never merges):
+// a lump's member under F of the birth energy has no armour left, so a
+// march that walks far from its food arrives soft.
+fn lab_hunger() -> bool { return P.lab_th == 0x84000000u; }
 fn armoured(k: u32) -> bool {
     let lb = lump_of(k);
+    if (lb != 0u && lab_hunger() && growth() && energy[k] < P.lab_p * P.birth_at) { return false; }
     // A condensed striker takes a blow for each walker it took in that is
     // left, losing one with each (`condense`).
     if (lb == 0u && condensed(k)) {
@@ -1405,6 +1410,14 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     var h = wk.z;
     let here = cell(wk.x, wk.y);
+    // LAB: a hungry march stops to eat (`LAB_FEED=F`, the planet 4 counter;
+    // never merges): a lump's member under F of the birth energy standing on
+    // a crystal cell with charge leaves its lump, and its held blows with it,
+    // and is an ordinary walker that eats there. Any lump: a mini-boss on a
+    // crystal is fed, the heart sits fed on its own.
+    if (P.lab_th == 0x82000000u && here != NONE && lump_of(k) != 0u && growth() && energy[k] < P.lab_p * P.birth_at && (ground[here] & 0xFFu) != 0u && charge[here] > 0.0) {
+        set_dense(k, dense_word(k) & ~(LUMP_BITS | HURT_BITS));
+    }
     // Infect reaches every living walker, as the CPU's `infect` before the
     // tick, whatever its life state.
     if (P.sick_steps > 0u && P.infect != 0u) {

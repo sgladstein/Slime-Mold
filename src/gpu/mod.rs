@@ -147,6 +147,12 @@ pub fn lab_threads() -> (u32, f32) {
     // `LAB_DREAM=P` (the Sleeper's growth asleep): bits 31 and 27, P a step.
     // Off until the game's first second (`LAB_GO`, set by `set_ceiling`),
     // so the planet's landing is the off arm's.
+    if let Some(v) = get("LAB_FEED") {
+        return (0x8200_0000, v.parse().unwrap_or(0.0));
+    }
+    if let Some(v) = get("LAB_HUNGER") {
+        return (0x8400_0000, v.parse().unwrap_or(0.0));
+    }
     if let Some(v) = get("LAB_DREAM") {
         let go = LAB_GO.load(std::sync::atomic::Ordering::Relaxed);
         return (1u32 << 31 | 1 << 27, if go { v.parse().unwrap_or(0.0) } else { 0.0 });
@@ -3774,6 +3780,23 @@ impl Engine {
         }
         self.queue.submit([]);
         moved
+    }
+
+    /// LAB: each lump's members, their mean energy and the share under
+    /// `f` x `birth` (the hungry march's measure), read back.
+    pub fn lab_march(&self, birth: f32, f: f32) -> Vec<(usize, f32, f32, f32)> {
+        let n = self.n as usize;
+        let c = self.dish.w * self.dish.h;
+        let en = floats(&read_back(&self.device, &self.queue, &self.energy));
+        let dense_at = (n + 3 * c + GAS_SLOTS + 2 * n + DENSE_HEAD) as u64;
+        let dw: Vec<u32> = read_back_range(&self.device, &self.queue, &self.news, dense_at * 4, (n * 4) as u64).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        (1..=4u32)
+            .map(|lb| {
+                let e: Vec<f32> = (0..n).filter(|&k| (dw[k] & 0xE00_0000) >> 25 == lb && en[k] >= 0.0).map(|k| en[k]).collect();
+                let m = e.len().max(1) as f32;
+                (e.len(), e.iter().sum::<f32>() / m / birth, e.iter().filter(|&&v| v < f * birth).count() as f32 / m, e.iter().filter(|&&v| v < 0.5 * birth).count() as f32 / m)
+            })
+            .collect()
     }
 
     pub fn lab_occ(&self) -> Vec<u8> {

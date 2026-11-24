@@ -1270,6 +1270,19 @@ impl World for GpuWorld {
         // arm's walkers, from its dump), held as the ceiling second by second.
         let sec = LAB_SEC.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         super::LAB_GO.store(true, std::sync::atomic::Ordering::Relaxed);
+        // LAB: the marches' hunger each second (`LAB_MARCH_LOG=F`).
+        if let Some(f) = std::env::var("LAB_MARCH_LOG").ok().and_then(|v| v.parse::<f32>().ok()) {
+            if sec == 0 {
+                for (i, c) in self.crystals.iter().enumerate() {
+                    eprintln!("  lab crystal {i}: at {:.0},{:.0}, charge {:.0}", c.0 .0, c.0 .1, c.1);
+                }
+            }
+            for (b, (m, mean, under, half)) in self.e.lab_march(self.s.birth_energy, f).into_iter().enumerate() {
+                if m > 0 {
+                    eprintln!("  lab lump t {sec} s: lump {b}, {m} members, energy {mean:.2} of birth, {:.0}% under {f}, {:.0}% under 0.5", under * 100.0, half * 100.0);
+                }
+            }
+        }
         // LAB: sort the walkers by place every `LAB_SORT` game seconds.
         if let Some(every) = std::env::var("LAB_SORT").ok().and_then(|v| v.parse::<u32>().ok()).filter(|&e| e > 0) {
             if sec % every == 0 {
