@@ -131,7 +131,9 @@ impl<W: World> Game<W> {
         let mut kit = KitRules::default();
         r.kit(&mut kit);
         self.kit = Kit::new(kit);
-        self.rounds = Rounds::new(r.squad_cards(), RoundRules { budget: r.budget(), ..rr });
+        let mut rr = RoundRules { budget: r.budget(), ..rr };
+        r.round_rules(&mut rr);
+        self.rounds = Rounds::new(r.squad_cards(), rr);
         let t = r.turret_cards();
         if !t.is_empty() {
             self.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&t))));
