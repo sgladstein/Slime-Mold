@@ -96,6 +96,31 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 shop_run = Some(r);
             }
         }
+        // `menu=main-run|main-won|main-lost` (Look D, 11-24): the main
+        // page's Run row and its strip with the run three planets in, won
+        // (every planet freed) or lost on planet 4.
+        if let (slime_mould::world::start::Page::Main, Some(r), true) = (p, app.run.as_ref(), flag.starts_with("main-")) {
+            let mut r = r.clone();
+            let n = if flag == "main-won" { slime_mould::mould::run::PLANETS } else { 3 };
+            for k in 0..n {
+                if !r.over {
+                    r.won([2, 3, 1][k as usize % 3]);
+                }
+            }
+            if flag == "main-lost" {
+                r.lost();
+            }
+            // About 18 minutes a planet, so the line shows a play time.
+            r.played = 1075.0 * r.depth as f32;
+            if r.over {
+                m.run_end = Some(menu::run_view(&r));
+                m.run_live = false;
+                app.run = None;
+            } else {
+                m.run_live = true;
+                app.run = Some(r);
+            }
+        }
         m.show(p);
         match flag {
             "shop-build" => {
