@@ -112,7 +112,7 @@ so it stayed ([tinder](../../Reports/gun-tinder-2026-11-17/README.md);
 
 **Trodden ground** (2026-11-24, Direction's option A for planet 3's fire;
 `Rules::trample_to` 0.1, GPU only): once a game second, the plants within
-`trample_r` (1.5 dish cells) of a soldier holding its ground (within `trample_speed`, 2 dish cells, of where it stood a second before)
+`trample_r` (2.5 dish cells; 1.5 until Direction widened it the same day so the patch reads round a held squad) of a soldier holding its ground (within `trample_speed`, 2 dish cells, of where it stood a second before)
 are trodden down to 0.1, their kind kept (the IGNITE pass's mode 2,
 `Engine::trample`). The ground a squad holds shows as short, thin crowns,
 and fire hardly crosses it: catching goes with the plants on a cell, and a

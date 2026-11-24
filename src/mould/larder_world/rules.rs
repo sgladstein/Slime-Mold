@@ -194,6 +194,8 @@ pub struct Rules {
     /// crystal, and the squad burned (Tinder rush, map 3: 26 soldiers to 7
     /// in 15 s). 0 is off.
     pub trample_to: f32,
+    /// 2.5 (Direction, 11-24): at 1.5, the first build's, the trodden
+    /// disc sat mostly under the soldier's own sprite and hardly showed.
     pub trample_r: f32,
     pub trample_speed: f32,
     /// **Your own sleep gas** (2026-11-18, the owner's Noita rule: "Any
@@ -1196,7 +1198,7 @@ impl Default for Rules {
             drain: 2.0,
             fire_hurt: 10.0,
             trample_to: 0.1,
-            trample_r: 1.5,
+            trample_r: 2.5,
             trample_speed: 2.0,
             doze: 1.0,
             touch: 1.5,
