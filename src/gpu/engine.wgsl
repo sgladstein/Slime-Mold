@@ -1471,7 +1471,14 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 icell[k] = NONE;
                 return;
             }
-            if (P.sleep_rate > 0.0 && sc < P.wake_scent && al < P.wake_alarm && unit(keyed(P.s_sleep, t, k)) < P.sleep_rate) {
+            // A lump's member never dozes (11-24, planet 8's Dozer): a
+            // dormant walker is not `ordinary`, so `lumpsum` stopped
+            // counting it and a heart whose members fell asleep read as cut
+            // down. Engine's batch v (the Dozer at 1.4 times its size, the
+            // squad standing off) had the origin break on its own at 140 to
+            // 216 s with no walker killed, four maps of six. The heart
+            // stays awake; the body round it still sleeps.
+            if (P.sleep_rate > 0.0 && lump_of(k) == 0u && sc < P.wake_scent && al < P.wake_alarm && unit(keyed(P.s_sleep, t, k)) < P.sleep_rate) {
                 spec[k] = w | DOZE;
                 icell[k] = NONE;
                 return;

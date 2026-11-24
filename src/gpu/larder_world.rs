@@ -3582,6 +3582,57 @@ mod tests {
         assert_eq!(after, 0, "the rouse wakes them all");
     }
 
+    /// **A heart's members never doze** (11-24, planet 8's Dozer): a
+    /// dormant walker is not counted in its lump's sums, so a heart whose
+    /// members fell asleep read as cut down, and Engine's batch v had
+    /// planet 8's origin break on its own with no walker killed. Here an
+    /// origin of 150 in a Dozer race world where no scent keeps a walker
+    /// awake, no squad: 30 s after it forms, with thousands of the body
+    /// asleep, none of its members is dormant, it held more than 50 and it
+    /// has not broken. Before the fix: most 7, 9 members dozing; with it,
+    /// most 113, none.
+    #[test]
+    fn the_dozers_heart_stays_awake() {
+        use crate::mould::tiers::Tier;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        for (k, v) in Tier::Dozer.keys() {
+            crate::gpu::set(&mut s, k, v).unwrap();
+        }
+        // No scent keeps a walker awake (the home crystal's would keep the
+        // heart's members up anyway, and the test would pass with them
+        // dozing): only alarm wakes one.
+        crate::gpu::set(&mut s, "wake_scent", "1000").unwrap();
+        let mut rules = Rules::default();
+        rules.origin.on = true;
+        rules.origin.size = 150.0;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
+        while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
+            g.step();
+        }
+        let formed = g.time();
+        let mut least = u32::MAX;
+        while g.time() < formed + 30.0 {
+            g.step();
+            least = least.min(members(&g));
+        }
+        let most = g.origin_hud().map_or(0, |o| o.1);
+        // Members asleep: a dormant slot (`spec` bits 9-10 at 2) whose
+        // dense word holds a lump (bits 25-27).
+        let e = &g.world.e;
+        let (st, _) = e.life_of();
+        let news = read_back(&e.device, &e.queue, &e.news);
+        let at = e.dense_at as usize + 4 * crate::gpu::DENSE_HEAD;
+        let dozing = st.iter().enumerate().filter(|&(k, &s)| s == 2 && u32::from_le_bytes(news[at + 4 * k..at + 4 * k + 4].try_into().unwrap()) & 0xE000000 != 0).count();
+        eprintln!("the Dozer's heart: formed at {formed:.1} s, least {least} of most {most}, {dozing} members dozing, {} asleep", g.world.asleep());
+        assert_eq!(dozing, 0, "no member dozes");
+        assert!(most > 50, "the heart forms round the sleeping body: most {most}");
+        assert!(g.world.asleep() > 100, "the body sleeps: {}", g.world.asleep());
+        assert!(g.origin.fell.is_none(), "the heart did not break");
+    }
+
     /// **A blast's long crater is not shut** (the review lane, 11-21: det
     /// cord stood as a wall for 19 s). Only a crater no longer than the
     /// guns' (`crater`) is shut: a kill with a crater ten times as long on
