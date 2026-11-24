@@ -701,6 +701,47 @@ fn sheet_of(n: usize, per: usize, sheet: usize) -> (std::ops::Range<usize>, usiz
     (p * per..((p + 1) * per).min(n), pages)
 }
 
+/// A row of the "what is new" list: a day's heading (its words, and
+/// whether it heads new lines), or line `i`.
+#[derive(Clone, Debug, PartialEq)]
+enum NewsRow {
+    Day(String, bool),
+    Line(usize),
+}
+
+/// The list's rows: each run of lines of one day and one kind (new, or
+/// on a build played here) under its heading.
+fn news_rows(news: &[NewsLine]) -> Vec<NewsRow> {
+    let mut rows = Vec::new();
+    let mut i = 0;
+    while i < news.len() {
+        let (new, date) = (news[i].new, &news[i].date);
+        let k = news[i..].iter().take_while(|l| l.new == new && l.date == *date).count();
+        let said = if new { format!("{k} new") } else { format!("{k} played before") };
+        rows.push(NewsRow::Day(format!("{}  ·  {said}", day_name(date)), new));
+        rows.extend((i..i + k).map(NewsRow::Line));
+        i += k;
+    }
+    rows
+}
+
+/// "2026-11-24" as "Tuesday 24 November"; the text itself if it is not a
+/// date.
+fn day_name(date: &str) -> String {
+    let d: Vec<i32> = date.split('-').filter_map(|x| x.parse().ok()).collect();
+    let [y, m, day] = d[..] else { return date.to_string() };
+    if !(1..=12).contains(&m) {
+        return date.to_string();
+    }
+    // Sakamoto's weekday, 0 Sunday.
+    const T: [i32; 12] = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+    let yy = if m < 3 { y - 1 } else { y };
+    let w = (yy + yy / 4 - yy / 100 + yy / 400 + T[(m - 1) as usize] + day).rem_euclid(7) as usize;
+    const DAYS: [&str; 7] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const MONTHS: [&str; 12] = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    format!("{} {day} {}", DAYS[w], MONTHS[(m - 1) as usize])
+}
+
 /// The size `text` fits `max` pixels at: `px`, smaller down to `least`
 /// (a tile's name shrinks before it is cut).
 fn fit_px(c: &Canvas, text: &str, px: f32, least: f32, max: f32) -> f32 {
@@ -907,8 +948,9 @@ pub struct StartMenu {
     /// Rows a page of it, as last drawn.
     per: usize,
     /// The build page's tab showing (0 what is new, 1 the things to try),
-    /// and the first thing to try on each page of that list as last drawn
-    /// (its rows are as tall as their text, so a page has no fixed count).
+    /// and the first row on each page of that tab as last drawn (a thing
+    /// to try is as tall as its text, and what is new has its days'
+    /// headings, so neither page has a fixed count).
     news_tab: usize,
     try_first: Vec<usize>,
 }
@@ -1233,9 +1275,11 @@ impl StartMenu {
     fn flip(&mut self, by: isize) {
         let n = self.sheets.max(1) as isize;
         self.sheet = (self.sheet as isize + by).rem_euclid(n) as usize;
-        if matches!(self.page, Page::Options | Page::Missions | Page::Shop | Page::Runs) || (self.page == Page::News && self.news_tab == 0) {
+        if matches!(self.page, Page::Options | Page::Missions | Page::Shop | Page::Runs) {
             self.focus = self.sheet * self.per.max(1);
         } else if self.page == Page::News {
+            // (Both tabs page by height: each page's first row, kept by
+            // the page as it draws.)
             self.focus = self.try_first.get(self.sheet).copied().unwrap_or(0);
         }
     }
@@ -2176,9 +2220,13 @@ impl StartMenu {
     }
 
     /// **What is new** (the build page's first tab): the list's lines as
-    /// one-line rows, the ones new to this PC first and marked, a page of
-    /// them if they outgrow the screen, and beside them the line under the
-    /// cursor (else the keyboard's, else the first) in full: what the
+    /// one-line rows, the ones new to this PC first and marked, each run
+    /// of one day under that day's heading ("Tuesday 24 November · 11
+    /// new", then the days already played on; Direction 11-24: the list
+    /// was 300 lines), a page of them if they outgrow the screen. Beside
+    /// them, the things to try as one-line rows with their ticks (they sat
+    /// a tab away), and under those the line under the cursor (else the
+    /// keyboard's, else the first) in full: what the
     /// player will see, how to try it, who wrote it and when. The same
     /// list-and-note shape as Options and the campaign, since a line is
     /// two or three sentences and a row has room for half of one.
@@ -2186,25 +2234,96 @@ impl StartMenu {
         let Some(b) = self.build.clone() else { return top };
         let n = b.news.len();
         let (lw, nw) = self.split(c, x, s);
-        let (rh, cap) = (40.0 * s, 40.0 * s);
         let room = self.room(c, top, s);
-        let per = ((room - cap - 12.0 * s) / rh).floor().max(1.0) as usize;
-        if let Some(Hit::Line(i)) = focus {
-            self.sheet = i / per;
+        // The things to try, a row each, over the note: a click ticks one
+        // (as on their own tab, which tells them in full), and the note
+        // tells the one under the cursor. (Over the list until the 4K
+        // film: at 250% on 2160 lines it left three lines a page.)
+        let mut hot_try = None;
+        let nx = x + lw + 20.0 * s;
+        let mut nt = top;
+        if !b.to_try.is_empty() {
+            let (th, tcap) = (30.0 * s, 38.0 * s);
+            let tp = Rect::new(nx, top, nw, tcap + b.to_try.len() as f32 * th + 8.0 * s);
+            self.glass(tp, c, s);
+            let left = b.untried();
+            let head = if left == 0 { format!("Things to try: all {} ticked", b.to_try.len()) } else { format!("Things to try: {left} of {} not ticked yet", b.to_try.len()) };
+            c.text_fit(Weight::SemiBold, 15.0 * s, (tp.x + 20.0 * s, tp.y + 27.0 * s), Align::Left, &head, tp.w - 40.0 * s, if left > 0 { ACCENT } else { MUTED });
+            let mut y = tp.y + tcap;
+            for (i, t) in b.to_try.iter().enumerate() {
+                let row = Rect::new(tp.x + 8.0 * s, y, tp.w - 16.0 * s, th - 2.0 * s);
+                let hot = self.hover.is_some_and(|p| row.contains(p));
+                if hot {
+                    c.rrect(row, 8.0 * s, [255, 255, 255, 12]);
+                    hot_try = Some(i);
+                }
+                let tick = Rect::new(row.x + 12.0 * s, row.y + (row.h - 18.0 * s) / 2.0, 18.0 * s, 18.0 * s);
+                if t.tried {
+                    c.rrect(tick, 5.0 * s, with_alpha(GOOD, 0.22));
+                    c.outline(tick, 5.0 * s, 1.5 * s, GOOD);
+                    c.icon(Icon::Check, (tick.x + 2.0 * s, tick.y + 2.0 * s), 14.0 * s, GOOD);
+                } else {
+                    c.outline(tick, 5.0 * s, 1.5 * s, if hot { TEXT } else { MUTED });
+                }
+                let tx = tick.right() + 12.0 * s;
+                c.text_fit(Weight::Medium, 14.5 * s, (tx, row.y + row.h / 2.0 + 5.0 * s), Align::Left, &t.text, row.right() - 10.0 * s - tx, if t.tried { MUTED } else { TEXT });
+                self.hits.push((row, Hit::Try(i)));
+                y += th;
+            }
+            nt = tp.bottom() + 14.0 * s;
         }
-        let (shown, pages) = sheet_of(n, per, self.sheet);
-        (self.sheets, self.per) = (pages, per);
-        self.sheet = self.sheet.min(pages - 1);
-        let panel = Rect::new(x, top, lw, cap + shown.len().max(1) as f32 * rh + 12.0 * s);
+        let lt = top;
+        // The rows: each day's heading, then its lines. The list comes
+        // new first, then by day, so a day may head both parts.
+        let rows = news_rows(&b.news);
+        let (rh, dh, cap) = (40.0 * s, 30.0 * s, 40.0 * s);
+        let h_of = |r: &NewsRow| if matches!(r, NewsRow::Day(..)) { dh } else { rh };
+        // Pages by height; a heading never ends a page, and a page that
+        // starts inside a day says its heading again.
+        let col = (room - (lt - top) - cap - 12.0 * s).max(2.0 * dh + rh);
+        let mut first = vec![0usize];
+        let mut used = 0.0f32;
+        for (k, r) in rows.iter().enumerate() {
+            if used + h_of(r) > col && used > 0.0 {
+                let at = if k > 0 && matches!(rows[k - 1], NewsRow::Day(..)) && first.last() != Some(&(k - 1)) { k - 1 } else { k };
+                first.push(at);
+                used = rows[at..k].iter().map(h_of).sum::<f32>() + if matches!(rows[at], NewsRow::Line(_)) { dh } else { 0.0 };
+            }
+            used += h_of(r);
+        }
+        if let Some(Hit::Line(i)) = focus {
+            let at = rows.iter().position(|r| *r == NewsRow::Line(i)).unwrap_or(0);
+            self.sheet = first.iter().rposition(|&f| f <= at).unwrap_or(0);
+        }
+        self.sheets = first.len();
+        self.sheet = self.sheet.min(self.sheets - 1);
+        let (from, to) = (first[self.sheet], first.get(self.sheet + 1).copied().unwrap_or(rows.len()));
+        // Where a page turn puts the keyboard: each page's first line.
+        self.try_first = first.iter().map(|&f| rows[f..].iter().find_map(|r| if let NewsRow::Line(i) = r { Some(*i) } else { None }).unwrap_or(0)).collect();
+        // The heading a page inside a day says again.
+        let again = matches!(rows.get(from), Some(NewsRow::Line(_))).then(|| rows[..from].iter().rev().find(|r| matches!(r, NewsRow::Day(..))).cloned()).flatten();
+        let used: f32 = again.iter().chain(&rows[from..to]).map(h_of).sum();
+        let panel = Rect::new(x, lt, lw, cap + used.max(rh) + 12.0 * s);
         self.glass(panel, c, s);
         // How much is new, and since which build.
         c.text_fit(Weight::SemiBold, 15.0 * s, (panel.x + 20.0 * s, panel.y + 28.0 * s), Align::Left, &b.since(), panel.w - 40.0 * s, if b.fresh() > 0 { ACCENT } else { MUTED });
         let chip_w = c.atlas.measure(Weight::SemiBold, 12.5 * s, "NEW") + 14.0 * s;
-        let date_w = c.atlas.measure(Weight::Medium, 13.5 * s, "00-00") + 12.0 * s;
-        let first = shown.start;
+        let first_line = rows[from..to].iter().find_map(|r| if let NewsRow::Line(i) = r { Some(*i) } else { None });
         let mut told = None;
         let mut y = panel.y + cap + 4.0 * s;
-        for i in shown {
+        for r in again.iter().chain(&rows[from..to]) {
+            let i = match r {
+                NewsRow::Day(t, new) => {
+                    // (A hairline over each heading but the page's first.)
+                    if y > panel.y + cap + 5.0 * s {
+                        c.rrect(Rect::new(panel.x + 18.0 * s, y + 2.0 * s, panel.w - 36.0 * s, 1.0 * s), 0.0, [255, 255, 255, 18]);
+                    }
+                    c.text_fit(Weight::SemiBold, 13.5 * s, (panel.x + 20.0 * s, y + dh - 8.0 * s), Align::Left, t, panel.w - 40.0 * s, if *new { ACCENT } else { MUTED });
+                    y += dh;
+                    continue;
+                }
+                NewsRow::Line(i) => *i,
+            };
             let l = &b.news[i];
             let row = Rect::new(panel.x + 8.0 * s, y, panel.w - 16.0 * s, rh - 4.0 * s);
             let focused = focus == Some(Hit::Line(i));
@@ -2225,10 +2344,9 @@ impl StartMenu {
                 c.rrect(chip, 10.0 * s, with_alpha(ACCENT, 0.18));
                 c.text(Weight::SemiBold, 12.5 * s, (chip.x + chip.w / 2.0, chip.y + 14.5 * s), Align::Centre, "NEW", ACCENT);
             }
-            // (The seen lines keep the column, so the dates line up.)
-            tx += chip_w + 8.0 * s;
-            c.text(Weight::Medium, 13.5 * s, (tx, base), Align::Left, l.date.get(5..).unwrap_or(&l.date), MUTED);
-            tx += date_w;
+            // (The seen lines keep the chip's column, so the words line
+            // up. The day is the heading's since 11-24, not a column.)
+            tx += chip_w + 10.0 * s;
             let (weight, ink) = if l.new { (Weight::SemiBold, TEXT) } else { (Weight::Medium, [201, 210, 219, 255]) };
             c.text_fit(weight, 15.5 * s, (tx, base), Align::Left, &l.sees, row.right() - 12.0 * s - tx, ink);
             self.hits.push((row, Hit::Line(i)));
@@ -2237,14 +2355,31 @@ impl StartMenu {
         if n == 0 {
             c.text(Weight::Medium, 15.5 * s, (panel.x + 20.0 * s, panel.y + cap + 28.0 * s), Align::Left, "The list is empty", MUTED);
         }
-        // The note. Its text shrinks a step or two before it is cut: the
-        // longest lines at 200% on 1080 lines need it.
-        let Some(l) = told.or((n > 0).then_some(first)).map(|i| &b.news[i]) else { return panel.bottom() };
+        let bottom = panel.bottom();
+        // The note: the thing to try under the cursor, else the line. Its
+        // text shrinks a step or two before it is cut: the longest lines
+        // at 200% on 1080 lines need it.
         let tw = nw - 36.0 * s;
+        // (Half a pixel under: filled to the last bit, the sum came out
+        // 0.00003 over at 640 x 400 and the page scrolled.)
+        let room = room - (nt - top) - 0.5;
+        let r0 = |need: f32| Rect::new(nx, nt, nw, (bottom - nt).max(260.0 * s).max(need).min(room));
+        if let Some(t) = hot_try.and_then(|i| b.to_try.get(i)) {
+            let need = (34.0 + 30.0 + 46.0) * s + Self::count(c, Weight::Medium, 16.0 * s, tw, &t.text) * 23.0 * s;
+            let r = r0(need);
+            self.glass(r, c, s);
+            let px = r.x + 18.0 * s;
+            let (tag, ink) = if t.tried { ("A thing to try, ticked", MUTED) } else { ("A thing to try", ACCENT) };
+            c.text(Weight::SemiBold, 13.5 * s, (px, r.y + 34.0 * s), Align::Left, tag, ink);
+            self.lines(c, Weight::Medium, 16.0 * s, (px, r.y + 64.0 * s), tw, 23.0 * s, &t.text, TEXT);
+            c.text_fit(Weight::Medium, 13.0 * s, (px, r.bottom() - 18.0 * s), Align::Left, "A click ticks it: the game remembers it on this PC", tw, MUTED);
+            return bottom.max(r.bottom());
+        }
+        let Some(l) = told.or(first_line).map(|i| &b.news[i]) else { return bottom.max(nt) };
         let fixed = (34.0 + 30.0 + 10.0 + 46.0) * s + if l.try_it.is_empty() { 0.0 } else { 30.0 * s };
         let need = |c: &Canvas, k: f32| fixed + Self::count(c, Weight::Medium, 16.0 * k * s, tw, &l.sees) * 23.0 * k * s + Self::count(c, Weight::Medium, 15.0 * k * s, tw, &l.try_it) * 22.0 * k * s;
         let k = [1.0, 0.92, 0.84].into_iter().find(|&k| need(c, k) <= room).unwrap_or(0.84);
-        let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(260.0 * s).max(need(c, k)).min(room));
+        let r = r0(need(c, k));
         self.glass(r, c, s);
         let px = r.x + 18.0 * s;
         let mut y = r.y + 34.0 * s;
@@ -2261,7 +2396,7 @@ impl StartMenu {
             self.lines_most(c, 15.0 * k * s, (px, y), tw, 22.0 * k * s, &l.try_it, [201, 210, 219, 255], most(y, 22.0 * k * s));
         }
         c.text_fit(Weight::Medium, 13.0 * s, (px, r.bottom() - 18.0 * s), Align::Left, &format!("{}  ·  {}", l.lane, l.date), tw, MUTED);
-        panel.bottom().max(r.bottom())
+        bottom.max(r.bottom())
     }
 
     /// The Runs page (Direction 11-24): the best time on each planet over
@@ -3523,6 +3658,40 @@ mod tests {
     /// its pages with the wheel and Left/Right, not only the small pager
     /// in the corner (Milestone 1 test 6, 11-22): a notch down is the next
     /// page, the wheel stops at the ends, and the hint says so.
+    /// What is new (Direction 11-24): the things to try over the list,
+    /// each day's lines under its heading, new before played, and no
+    /// page ending on a heading; the keyboard's line keeps its page.
+    #[test]
+    fn what_is_new_groups_its_lines_by_day_under_the_things_to_try() {
+        assert_eq!(day_name("2026-11-24"), "Tuesday 24 November");
+        assert_eq!(day_name("2027-01-01"), "Friday 1 January");
+        assert_eq!(day_name("soon"), "soon");
+        let said = |c: &Canvas, t: &str| c.runs.iter().any(|r| r.text == t);
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        // 40 lines: 0-19 of the 18th, 20-39 of the 17th; 0-24 new.
+        m.build = Some(build_page(40, 25));
+        let rows = news_rows(&m.build.as_ref().unwrap().news);
+        let heads: Vec<&str> = rows.iter().filter_map(|r| if let NewsRow::Day(t, _) = r { Some(t.as_str()) } else { None }).collect();
+        assert_eq!(heads, ["Wednesday 18 November  ·  20 new", "Tuesday 17 November  ·  5 new", "Tuesday 17 November  ·  15 played before"]);
+        m.show(Page::News);
+        m.draw(&mut c);
+        assert!(said(&c, "Things to try: 4 of 5 not ticked yet") && said(&c, "Wednesday 18 November  ·  20 new"));
+        assert!(m.sheets >= 2);
+        // Each page starts on a line or a heading followed by a line, and
+        // the keyboard's line keeps its page.
+        for p in 0..m.sheets {
+            let line = m.try_first[p];
+            m.focus = line;
+            c.clear();
+            m.draw(&mut c);
+            assert_eq!(m.sheet, p, "line {line} is on page {p}");
+        }
+        // A thing to try clicked on this tab ticks it.
+        let ev = click(&mut m, &mut c, Hit::Try(0));
+        assert_eq!(ev, vec![StartEvent::Tried(0, true)]);
+    }
+
     #[test]
     fn a_long_what_is_new_turns_its_pages_with_the_wheel_and_arrows() {
         let said = |c: &Canvas, t: &str| c.runs.iter().any(|r| r.text == t);
