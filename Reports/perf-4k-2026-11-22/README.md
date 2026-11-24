@@ -112,3 +112,36 @@ What followed (Direction's picks): Auto now steps down toward 40% while
 frames run long (#759, `autodetail.rs`), and the Enemy lane makes `sense`
 cheaper and the boss turns shorter. A smaller planet 8 map is the fallback.
 Planet 8 is timed again once both are in.
+
+### Planet 8 again, 11-24 afternoon: a slower view found, and the walker sort
+
+Same bench (planet 8, seed 1, `hand=idle`, 150 s, 3840 x 2004, the GTX
+1070 otherwise idle; a lock file now keeps timing runs on his PC from
+overlapping). Frame p50 / p95 ms, every frame and frames with a game step:
+
+| build | detail | every frame | step frames | view base | GPU a step |
+|---|---|---|---|---|---|
+| main d30f7bdd | 50% | 19.4 / 21.2 | 20.3 / 21.3 | 10.46 | 12.37 |
+| main d30f7bdd | 40% | 16.2 / 18.2 | 17.2 / 18.3 | 7.43 | |
+| + #787 | 50% | 17.6 / 19.6 | 18.6 / 19.7 | 8.99 | |
+| + #787 | 40% | 15.2 / 17.1 | 16.0 / 17.2 | 6.48 | |
+| + #787 + sort (#789), `sort=off` | 40% | 15.2 / 17.1 | 16.1 / 17.2 | 6.41 | 12.29 |
+| + #787 + sort (#789) | 40% | 13.6 / 14.1 | 13.9 / 16.4 | 6.43 | 5.60 |
+| + #787 + sort (#789) | 50% | 16.1 / 16.6 | 16.4 / 18.9 | 8.95 | |
+| + #787 + sort, Auto (median rule) | 50% to 126 s, then 40% | 16.1 / 20.6 | 16.5 / 20.4 | | |
+| planet 5 (220 s), + #787 + sort, Auto | 50% | 14.5 / 15.4 | 15.1 / 15.6 | | |
+
+- The Enemy lane's cheaper `sense` (#775) measured 4.75 to 4.69 ms: about
+  nothing.
+- The view's base pass had grown 1.5 ms on main. A bisect named the merge
+  of the walkers' dashes off crystals (3acd82b, the Look lane) with #753:
+  each alone was quick (8.6 and 8.9 ms), together 10.5, so an extra crystal
+  read in `base`'s hot path. #787 decides it in `shaded` instead and wins
+  it all back (planet 2 draws bit-identical).
+- The GPU walker sort by tile (#789, the Engine lane) cuts the
+  simulation's step from 12.3 to 5.6 ms (`sense` 4.63 to 0.92, `egain`
+  1.46 to 0.28).
+- Auto judged each second by its median frame, 16.1 ms at 50%, while the
+  quarter of frames with a step ran 18.9 at their p95: it kept 50% with
+  every fourth frame late. It now judges by each second's 90th percentile
+  (`autodetail::P90`), which still ignores a hitch in ten frames.
