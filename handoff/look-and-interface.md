@@ -91,6 +91,11 @@ the planet, its slime, the strip and the tally (`Model::pause_run`, set in
 draw.rs only while the menu is open); `card=pause` films it. Planets 4,
 6 and 8's HUD read clean on a bare start. Next: the shop's Tools tab once
 Squad's device bodies (#772) land, then the rest of Look D.
+#777 merged. Then the Tools tab: a device body's card is named for its
+kind and shows its rolls as bars (`menu::body_bars`; `hand_card` draws a
+Tools row's own bars). The Campaign page's note draws the mission's map
+(`Entry::glance`, `shop::draw_glance`); mission 8 is "Two slimes".
+Next: whatever Direction sends.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

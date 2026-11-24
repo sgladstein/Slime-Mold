@@ -9,8 +9,8 @@
 # (bait+boom) 3/4 at 5:33-10:35, farming and shooting alone (boom) 3/4 at 5:18-6:36; idle 0/4;
 # random 2/4 (1:36 and 5:06), because a random Feed task stays on and spends the 2,000 start bank
 # on your mould in the first 30 s: feeding early is the strongest opener (a tuning note).
-name Two moulds
-says Grow your mould to 60% of all the slime and hold it for a minute
+name Two slimes
+says Grow your own slime to 60% of all the slime and hold it for a minute
 map passes
 tier swarmer
 own

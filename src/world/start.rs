@@ -113,8 +113,11 @@ pub struct Entry {
     pub name: String,
     /// The goal sentence.
     pub says: String,
-    /// A muted line under it (the map and the mould).
+    /// A muted line under it (the map and the slime).
     pub detail: String,
+    /// Its map drawn small in the note (second polish pass, 11-24: the
+    /// note stood two thirds empty); None where the map did not load.
+    pub glance: Option<Glance>,
 }
 
 /// One line of the game's "what is new" list, as the game hands it over.
@@ -1701,13 +1704,24 @@ impl StartMenu {
             let tw = nw - 36.0 * s;
             let lines = Self::count(c, Weight::SemiBold, 21.0 * s, tw, &format!("{}. {}", i + 1, e.name)) * 28.0 + Self::count(c, Weight::Medium, 15.5 * s, tw, &e.says) * 23.0 + Self::count(c, Weight::Medium, 14.0 * s, tw, &e.detail) * 21.0;
             let need = (36.0 + 10.0 + 48.0) * s + lines * s;
-            let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(220.0 * s).max(need).min(room));
+            let tall = if e.glance.is_some() { need + 320.0 * s } else { 0.0 };
+            let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(220.0 * s).max(need).max(tall).min(room));
             self.glass(r, c, s);
             let px = r.x + 18.0 * s;
             let mut y = r.y + 36.0 * s;
             y += self.lines(c, Weight::SemiBold, 21.0 * s, (px, y), tw, 28.0 * s, &format!("{}. {}", i + 1, e.name), TEXT) + 6.0 * s;
             y += self.lines(c, Weight::Medium, 15.5 * s, (px, y), tw, 23.0 * s, &e.says, TEXT) + 4.0 * s;
-            self.lines(c, Weight::Medium, 14.0 * s, (px, y), tw, 21.0 * s, &e.detail, MUTED);
+            y += self.lines(c, Weight::Medium, 14.0 * s, (px, y), tw, 21.0 * s, &e.detail, MUTED);
+            // Its map, as the shop shows the planet ahead, in what the
+            // note has left above its foot line.
+            if let Some(g) = &e.glance {
+                let (gw, gh) = (tw, r.bottom() - 66.0 * s - y);
+                let ar = g.w as f32 / g.h.max(1) as f32;
+                let (w, h) = if gw / ar <= gh { (gw, gw / ar) } else { (gh * ar, gh) };
+                if h >= 60.0 * s {
+                    shop::draw_glance(c, g, Rect::new(px, y - 4.0 * s, w, h), s);
+                }
+            }
             c.text(Weight::Medium, 13.5 * s, (px, r.bottom() - 18.0 * s), Align::Left, &format!("Click or {} starts it", i + 1), MUTED);
         }
         panel.bottom()
@@ -2250,7 +2264,7 @@ mod tests {
     }
 
     fn menu() -> StartMenu {
-        let missions = (1..=3).map(|i| Entry { stem: format!("{i}-m"), name: format!("M{i}"), says: "Do it".into(), detail: "Fork".into() }).collect();
+        let missions = (1..=3).map(|i| Entry { stem: format!("{i}-m"), name: format!("M{i}"), says: "Do it".into(), detail: "Fork".into(), glance: None }).collect();
         let options = vec![
             Opt::new("own", "Own mould", &["off", "on"], "off", "off", "A second mould of yours"),
             Opt::new("panic", "Panic", &["0", "1", "2", "4"], "2", "2", "A cut-off part panics"),
@@ -3069,9 +3083,9 @@ mod tests {
         for k in ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge", "flinch"] {
             options.push(Opt::new(k, "Shared food", &["0", "0.025", "0.05", "0.1"], "0.05", "0", long).in_tab("The slime"));
         }
-        let missions = ["Landfall", "First contact", "The gaps", "Cut the cord", "Kill zone", "The nest", "Spore season", "Two moulds"]
+        let missions = ["Landfall", "First contact", "The gaps", "Cut the cord", "Kill zone", "The nest", "Spore season", "Two slimes"]
             .iter()
-            .map(|n| Entry { stem: n.to_lowercase(), name: n.to_string(), says: "Grow your squad to 12 and harvest 3 crystals at once, then hold them while the slime surges".into(), detail: "The Passes, The Swarmer".into() })
+            .map(|n| Entry { stem: n.to_lowercase(), name: n.to_string(), says: "Grow your squad to 12 and harvest 3 crystals at once, then hold them while the slime surges".into(), detail: "The Passes, The Swarmer".into(), glance: None })
             .collect();
         let keys = (0..46)
             .map(|k| match k % 5 {
@@ -3224,7 +3238,7 @@ mod tests {
     #[test]
     fn a_long_list_pages_instead_of_scrolling() {
         let mut m = full_menu();
-        m.missions = (0..30).map(|i| Entry { stem: format!("{i}"), name: format!("Mission {i}"), says: "Do it".into(), detail: "The Fork".into() }).collect();
+        m.missions = (0..30).map(|i| Entry { stem: format!("{i}"), name: format!("Mission {i}"), says: "Do it".into(), detail: "The Fork".into(), glance: None }).collect();
         for k in 0..30 {
             m.options.push(Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does").in_tab("The slime"));
         }
