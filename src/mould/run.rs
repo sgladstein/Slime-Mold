@@ -1171,6 +1171,9 @@ pub enum Pick {
     Body(usize),
     /// Owned body `i` into the loadout shown, which gives up its gun.
     CarryBody(usize),
+    /// Owned body `i`'s autocast switch flips (gun step E4,
+    /// `Body::auto`); in the field too.
+    BodyAuto(usize),
     /// In the field (`Run::field`), the squad the panel was opened for uses
     /// the loadout shown (`Run::field_squad`).
     SquadUses,
@@ -1653,6 +1656,11 @@ impl Run {
         true
     }
 
+    /// The bodies on autocast, as `Cmd::Auto`'s bits (`kit::TOOLS` order).
+    pub fn autocast(&self) -> u8 {
+        self.bodies.iter().filter(|b| b.auto).fold(0, |m, b| m | (1 << b.kind.tool()))
+    }
+
     /// The body of `kind` owned, if any (its index in `bodies`).
     pub fn body_of(&self, kind: BodyKind) -> Option<usize> {
         self.bodies.iter().position(|b| b.kind == kind)
@@ -1681,7 +1689,8 @@ impl Run {
     fn own_body(&mut self, body: Body) {
         let i = match self.body_of(body.kind) {
             Some(i) => {
-                self.bodies[i] = body;
+                // The new body keeps the old one's autocast switch.
+                self.bodies[i] = Body { auto: self.bodies[i].auto, ..body };
                 i
             }
             None => {
@@ -2065,6 +2074,10 @@ impl Run {
                 None => (format!("{}; click to put it in {shown}, which gives up its gun, to carry its cards.", b.kind.about()), "owned".to_string()),
             };
             rows.push(Row { group: Group::Tools, face: Face::Item(b.kind.key()), on, name: title(&b.title()), about, price: String::new(), state, ready: !on && self.editing != 0, pick: Pick::CarryBody(i) });
+            // Its autocast switch (gun step E4), free, in the field too.
+            let (now, then) = if b.auto { ("on", "off") } else { ("off", "on") };
+            let about = format!("{} on autocast goes off on its own whenever the squad's device slot is ready and thick slime is in reach, at least {:.0} cells from every soldier of the squad. Click to turn it {then}.", b.kind.name(), KitRules::default().auto_gap);
+            rows.push(Row { group: Group::Tools, face: Face::Item(b.kind.key()), on: b.auto, name: format!("{} autocast: {now}", b.kind.name()), about, price: String::new(), state: format!("autocast {now}"), ready: true, pick: Pick::BodyAuto(i) });
         }
         for (i, b) in self.body_offers.iter().enumerate().filter(|_| !self.field) {
             let p = b.price();
@@ -2210,6 +2223,13 @@ impl Run {
                 true
             }
             Pick::CarryBody(i) => self.take_body(i),
+            Pick::BodyAuto(i) => match self.bodies.get_mut(i) {
+                Some(b) => {
+                    b.auto = !b.auto;
+                    true
+                }
+                None => false,
+            },
             Pick::Offer(i) => self.buy(i).is_some(),
             Pick::Gun(i) => {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
@@ -3425,6 +3445,17 @@ mod tests {
         let d = r.body_cards(BodyKind::Grenade);
         assert!(!d.is_empty() && rounds::fit_gun(d.clone(), &big.rack()).is_ok(), "{d:?}");
         assert_eq!(r.rack_of(1).budget, 6, "the shown loadout's rack is the body's");
+        // Autocast (gun step E4): off as bought, a free switch, kept
+        // through a buy of the same kind and the save.
+        assert_eq!(r.autocast(), 0);
+        let sw = r.shop().iter().position(|w| w.pick == Pick::BodyAuto(0)).expect("an autocast switch");
+        assert!(r.shop()[sw].name.ends_with("off") && r.pick(Pick::BodyAuto(0)) && r.autocast() == 1);
+        r.body_offers = vec![Body::roll(BodyKind::Grenade, 4, 2)];
+        assert!(r.pick(Pick::Body(0)) && r.autocast() == 1, "a new Grenade keeps the switch");
+        assert_eq!(Run::from_save(&r.save_text()).map(|f| f.autocast()), Ok(1));
+        r.field = true;
+        assert!(r.pick(Pick::BodyAuto(0)) && r.autocast() == 0, "the field panel switches it too");
+        r.field = false;
         // An old save: the Blasts and Sleep gas unlocks, no bodies.
         let mut old = Run::new(2);
         for k in ["blast", "gas"] {
@@ -3438,7 +3469,7 @@ mod tests {
         assert_eq!((k.reach_of(crate::mould::kit::Tool::Blast((0.0, 0.0))), k.blast_cd), (24.0, KitRules::default().blast_cd), "the plain body plays as the old tool");
         let mut k = KitRules::default();
         r.kit(&mut k);
-        assert_eq!((k.reach_of(crate::mould::kit::Tool::Blast((0.0, 0.0))), k.blast_cd), (big.reach, KitRules::default().blast_cd * big.cool), "a rolled body's reach and cooldown");
+        assert_eq!((k.reach_of(crate::mould::kit::Tool::Blast((0.0, 0.0))), k.blast_cd), (r.bodies[0].reach, KitRules::default().blast_cd * r.bodies[0].cool), "a rolled body's reach and cooldown");
     }
 
 }

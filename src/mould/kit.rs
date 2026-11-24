@@ -166,6 +166,13 @@ pub struct KitRules {
     /// casts its cards once a game second for this long (4 casts in all,
     /// the first with the gas).
     pub canister_secs: f32,
+    /// **Autocast** (gun step E4, `larder_world/autocast.rs`): a body on
+    /// autocast goes off at slime at least this many dish cells from every
+    /// soldier of its squad (a Torch Grenade burned none of a held squad
+    /// from 12, 20 health at 8; the Torch test in `gpu/larder_world.rs`),
+    /// and a Line on it is laid this long across the slime's way in.
+    pub auto_gap: f32,
+    pub auto_line: f32,
 }
 
 impl KitRules {
@@ -265,6 +272,8 @@ impl Default for KitRules {
             mind_cd: 30.0,
             reaches: [0.0; 8],
             canister_secs: 4.0,
+            auto_gap: 12.0,
+            auto_line: 16.0,
         }
     }
 }

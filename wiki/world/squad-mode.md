@@ -202,8 +202,15 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   alone, fitted to the body's rack (`Run::body_cards`, loaded as
   `DEVICE_DECKS` + the tool); a body no loadout holds carries the default
   loadout's. A saved run that owned an unlock loads with its plain body.
-  Prices and rolls are first guesses, Direction's to retune. Still to come
-  from step E: autocast.
+  Prices and rolls are first guesses, Direction's to retune. **Autocast**
+  (step E4): each owned body has a free switch in the shop's Tools tab
+  (`Body::auto`, off as bought, in the field panel too; `Cmd::Auto`). With
+  it on, once a game second a squad whose slot is ready sets that body off
+  at the thickest slime within its reach that is at least
+  `KitRules::auto_gap` (12) cells from every soldier of the squad, when a
+  mine's trigger crowd stands within a blast's radius there
+  (`autocast.rs`; Grenade, Canister, Mine, then Line, laid across the way
+  in). The device button says "auto" beside its cooldown.
 - **Healing is an order** (#330): tell a squad to heal (Heal on the card, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order

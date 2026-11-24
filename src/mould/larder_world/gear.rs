@@ -46,6 +46,7 @@ impl<W: World> Game<W> {
             }
             kit.frame(g);
         });
+        self.autocast_turn();
         self.carry_full = full;
         self.with_rounds(|rd, g| rd.after_step(g));
     }
@@ -122,7 +123,8 @@ impl<W: World> Game<W> {
     /// tool prices (`Run::kit`), the army's round of the cards it bought
     /// with its budget (`Run::squad_cards`, `Run::budget`; the rest of
     /// `rr` as given, for `set=` keys) and its turret deck
-    /// (`Run::turret_cards`) and each body's cards (`Run::body_cards`). The gun itself is the caller's to arm
+    /// (`Run::turret_cards`), each body's cards (`Run::body_cards`) and
+    /// which go off on their own (`Run::autocast`). The gun itself is the caller's to arm
     /// (`Cmd::Arm`): a run lands with `Run::armed`, the range with
     /// `Run::carried`, and a `gun=` key overrides both.
     pub fn kit_out(&mut self, r: &Run, rr: RoundRules) {
@@ -140,6 +142,7 @@ impl<W: World> Game<W> {
                 self.apply(Cmd::Load(DEVICE_DECKS + kind.tool() as u8, Some(Deck::new(&d))));
             }
         }
+        self.apply(Cmd::Auto(r.autocast()));
     }
 }
 

@@ -2072,15 +2072,27 @@ impl App {
                     };
                     // Ready: the device's own cooldown on the price line;
                     // cooling: the slot's seconds left there instead (in
-                    // the button's middle they ran over its name).
+                    // the button's middle they ran over its name). A body
+                    // on autocast (gun step E4, `Game::autocast`) says
+                    // "auto" there too.
+                    let tool = match id {
+                        T_BLAST => 0,
+                        T_MINE => 1,
+                        T_CORD => 2,
+                        T_GAS => 4,
+                        _ => 8,
+                    };
+                    let auto = tool < 8 && g.autocast & (1 << tool) != 0;
+                    let tag = if auto { " auto" } else { "" };
+                    let auto_about = if auto { format!(" On autocast: it goes off on its own when the slot is ready and thick slime is in reach, at least {:.0} cells from the squad (the shop's Tools tab switches it).", kr.auto_gap) } else { String::new() };
                     Command {
                         target,
-                        cost: Some(if wait > 0.0 { format!("{:.0}s", wait.ceil()) } else { format!("{cd:.0}s") }),
+                        cost: Some(if wait > 0.0 { format!("{:.0}s{tag}", wait.ceil()) } else { format!("{cd:.0}s{tag}") }),
                         cost_icon: Icon::Clock,
                         ready: works && wait <= 0.0,
                         cooldown: if wait > 0.0 { (wait / total.max(1e-3)).min(1.0) } else { 0.0 },
                         why_not: if !works { Some("Not on the GPU world yet".into()) } else { (wait > 0.0).then(|| format!("The squad's device slot recharges: ready in {:.0} s", wait.ceil())) },
-                        about: format!("{about} The squad's one device slot: a soldier of the squad within {:.0} cells sets it off, free, then the slot recharges for {cd:.0} s before any device goes again.", kr.reach),
+                        about: format!("{about} The squad's one device slot: a soldier of the squad within {:.0} cells sets it off, free, then the slot recharges for {cd:.0} s before any device goes again.{auto_about}", if tool < 8 && kr.reaches[tool] > 0.0 { kr.reaches[tool] } else { kr.reach }),
                         ..Command::new(id, slot, icon, name, key)
                     }
                 }

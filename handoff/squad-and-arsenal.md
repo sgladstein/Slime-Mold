@@ -59,9 +59,10 @@ plain bodies; the Canister puffs every second for 4 s). A device's fire
 brings its own brush (`RoundRules::device_brush` 1), so a Torch Grenade at a
 held squad's feet costs it 78 health of 800 (7 before, trodden), none from
 12 cells. Bodies sit in the shop's Tools tab, not on the gun rack (the rack
-draws gun stats); two guns still on offer. Next: E4 autocast per body (off,
-its state on the device button), then step F (luck; shop parts to Direction
-first), then the dart.
+draws gun stats); two guns still on offer. E4 autocast follows in its own
+PR (`autocast.rs`, `Cmd::Auto`, `Body::auto`, `Pick::BodyAuto`; rule:
+thickest slime in reach, 12 cells clear of the squad). Next: step F (luck;
+shop parts to Direction first), then the dart.
 
 **2026-11-24, planet 3 fire (Direction's jobs, pathfinding thread).**
 #750 merged (starfall gold landing, first star beside the squad). Branch

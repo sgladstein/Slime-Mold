@@ -121,6 +121,9 @@ pub struct Body {
     pub depth: u32,
     /// Whether it rolled (false: `plain`, priced as the old unlock).
     pub rolled: bool,
+    /// Whether it goes off on its own (gun step E4, `Game::autocast`);
+    /// off as bought.
+    pub auto: bool,
 }
 
 /// The rolls' ranges.
@@ -133,7 +136,7 @@ impl Body {
     /// Today's tool as a body: reach 24, its own cooldown, 2 slots and a
     /// budget of 4 (E2's device rack).
     pub fn plain(kind: BodyKind) -> Body {
-        Body { kind, reach: 24.0, cool: 1.0, slots: 2, budget: 4, depth: 1, rolled: false }
+        Body { kind, reach: 24.0, cool: 1.0, slots: 2, budget: 4, depth: 1, rolled: false, auto: false }
     }
 
     /// A body of `kind` rolled from `z` for planet `depth`: each stat drawn
@@ -148,7 +151,7 @@ impl Body {
         let cool = ((COOL.0 + (COOL.1 - COOL.0) * u()) * 20.0).round() / 20.0;
         let slots = SLOTS.0 + ((SLOTS.1 - SLOTS.0 + 1) as f32 * u()).min((SLOTS.1 - SLOTS.0) as f32) as u32;
         let budget = BUDGET.0 + ((BUDGET.1 - BUDGET.0 + 1) as f32 * u()).min((BUDGET.1 - BUDGET.0) as f32) as u32;
-        Body { kind, reach, cool, slots, budget, depth, rolled: true }
+        Body { kind, reach, cool, slots, budget, depth, rolled: true, auto: false }
     }
 
     /// How good its rolls are, 0 (the worst of each) to 1 (the best).
@@ -179,19 +182,20 @@ impl Body {
         format!("{}: {:.0} reach, {:.0}% cooldown, {} slot{}, budget {}", self.kind.name(), self.reach, self.cool * 100.0, self.slots, if self.slots == 1 { "" } else { "s" }, self.budget)
     }
 
-    /// The run save's word: `grenade/24/1.00/2/4/1/0`.
+    /// The run save's word: `grenade/24/1.00/2/4/1/0/0` (the last,
+    /// autocast, since E4; a word of 7 reads as off).
     pub fn word(&self) -> String {
-        format!("{}/{}/{:.2}/{}/{}/{}/{}", self.kind.word(), self.reach, self.cool, self.slots, self.budget, self.depth, u8::from(self.rolled))
+        format!("{}/{}/{:.2}/{}/{}/{}/{}/{}", self.kind.word(), self.reach, self.cool, self.slots, self.budget, self.depth, u8::from(self.rolled), u8::from(self.auto))
     }
 
     pub fn from_word(s: &str) -> Option<Body> {
         let w: Vec<&str> = s.split('/').collect();
-        if w.len() != 7 {
+        if !(7..=8).contains(&w.len()) {
             return None;
         }
         let kind = BodyKind::ALL.into_iter().find(|k| k.word() == w[0])?;
         let f = |i: usize| w[i].parse::<f32>().ok().filter(|v| v.is_finite());
-        Some(Body { kind, reach: f(1)?, cool: f(2)?, slots: w[3].parse().ok()?, budget: w[4].parse().ok()?, depth: w[5].parse().ok()?, rolled: w[6] == "1" })
+        Some(Body { kind, reach: f(1)?, cool: f(2)?, slots: w[3].parse().ok()?, budget: w[4].parse().ok()?, depth: w[5].parse().ok()?, rolled: w[6] == "1", auto: w.get(7) == Some(&"1") })
     }
 }
 
@@ -226,5 +230,8 @@ mod tests {
         assert_eq!((best.price(), worst.price()), (260, 120));
         assert_eq!(BodyKind::ALL.map(|k| Body::plain(k).price()), [150, 150, 200, 200]);
         assert_eq!(Body::from_word(&Body::plain(BodyKind::Line).word()), Some(Body::plain(BodyKind::Line)));
+        let auto = Body { auto: true, ..Body::plain(BodyKind::Mine) };
+        assert_eq!(Body::from_word(&auto.word()), Some(auto));
+        assert_eq!(Body::from_word("mine/24/1.00/2/4/1/0"), Some(Body::plain(BodyKind::Mine)), "a word from before autocast");
     }
 }

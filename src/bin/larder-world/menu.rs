@@ -1478,6 +1478,8 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
         let d = r.body_cards(kind);
         g.apply(Cmd::Load(slime_mould::mould::larder_world::DEVICE_DECKS + kind.tool() as u8, (!d.is_empty()).then(|| rounds::Deck::new(&d))));
     }
+    // Which bodies go off on their own (gun step E4).
+    g.apply(Cmd::Auto(r.autocast()));
     // Turrets on a loadout of their own (`Building::loadout`) take its
     // cards as they now stand.
     for b in 0..g.buildings.len() {
