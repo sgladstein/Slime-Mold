@@ -745,9 +745,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
                 // The condensed strikers (`strikers.rs`, 2026-11-20): how
                 // many live, what they hold, and the walkers taken in.
-                if g.strikers.on {
+                // Lab: with `strikers_settle` on, also once it has settled.
+                if g.strikers.on || g.strikers.settled > 0.0 {
                     let mid = g.active.and_then(|q| g.middle(q)).unwrap_or((0.0, 0.0));
-                    println!("  strikers t {:.0} s: {} condensed holding {}, {} taken in all, slime {} of peak {}, squad at {:.0},{:.0}", g.time(), g.strikers.live, g.strikers.held, g.strikers.took, g.mould, g.peak, mid.0, mid.1);
+                    println!("  strikers t {:.0} s: {} condensed holding {}, {} taken in all, slime {} of peak {}, squad at {:.0},{:.0}{}", g.time(), g.strikers.live, g.strikers.held, g.strikers.took, g.mould, g.peak, mid.0, mid.1, if g.strikers.settled > 0.0 { format!(", settled at {:.0} s, settled peak {}", g.strikers.settled, g.strikers.peak) } else { String::new() });
                 }
                 // Starfall's ore and the cores (`starfall.rs`, `cores.rs`):
                 // each on the ground, what it is worth, what the squad took

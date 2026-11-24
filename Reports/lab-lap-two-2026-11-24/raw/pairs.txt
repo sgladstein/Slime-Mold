@@ -1,6 +1,7 @@
 # planet|base planet|hand|the second trait's keys (run2.sh; run3.sh for the retests)
 9|1|greedy|alarm_keep=0.98 spore_rate=0.00001 spore_burst=0.2 spore_alarm=0.3
-10|2|pumps|set=pump_smell=20 set=lure_r=15
+10|2|greedy|alarm_keep=0.98 spore_rate=0.00001 spore_burst=0.2 spore_alarm=0.3
+# 10 was: pumps hand, set=pump_smell=20 set=lure_r=15 (dropped 11-24, Direction 15:39Z)
 # 10: pump smell shows nothing on the Sprawler (its threads take a pump at 275,340 or 214,680 by 30 to 60 s either way); needs another second trait
 11|3|greedy|sleep_rate=0.01 sleep_deposit=0.3 wake_scent=1 wake_alarm=0.3 alarm_relay=20 sleep_rest=600 sleep_death=0.0001
 12|4|greedy|scar_keep=0.9999 scar_gain=0.01 scar_weight=1

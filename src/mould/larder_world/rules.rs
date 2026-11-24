@@ -990,6 +990,7 @@ impl Rules {
             "strikers_full" => &mut self.strikers.full,
             "strikers_rate" => &mut self.strikers.rate,
             "strikers_rate_share" => &mut self.strikers.rate_share,
+            "strikers_settle" => &mut self.strikers.settle,
             "stand_at" => &mut self.stand.at,
             "stand_army" => &mut self.stand.army,
             "stand_pull" => &mut self.stand.pull,
