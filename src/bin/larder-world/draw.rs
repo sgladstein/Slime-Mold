@@ -154,6 +154,13 @@ pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> Ending {
     Ending { place: tr.mission.name.clone(), title, won: Some(v.stars > 0), stars: Some(v.stars), says: lead(g, v), tiles: end_tiles(g, v.at), lines, curve: g.curve.clone() }
 }
 
+/// A fact's first letter in capitals, as the HUD's other labels (the
+/// polish review, 11-24: "blob, tight · fire: defend" read as a debug line).
+fn upper_first(t: &str) -> String {
+    let mut c = t.chars();
+    c.next().map_or_else(String::new, |f| f.to_uppercase().chain(c).collect())
+}
+
 /// What happened, one sentence with its numbers (Milestone 1's last look
 /// job, Direction 2026-11-22: "each saying what happened in a sentence
 /// with the numbers that matter"): when, the slime against its peak, and
@@ -2404,19 +2411,19 @@ impl App {
         }
         let mut out = vec![SquadFact {
             icon: form_icon(sq.formation, sq.spread),
-            text: super::squadmode::form_name(sq.formation, sq.spread),
+            text: upper_first(&super::squadmode::form_name(sq.formation, sq.spread)),
             about: format!("How the squad stands as it moves and holds: a blob or a ring, tight to wide ({} opens the formation page; [ and ] step the spread)", slime_mould::world::ui::key_name(super::squadmode::FORMATION).unwrap_or_default()),
         }];
         let stance = members.first().map(|&k| g.soldiers[k].stance).filter(|&st| members.iter().all(|&k| g.soldiers[k].stance == st));
         out.push(SquadFact {
             icon: Icon::Target,
-            text: match stance { Some(st) => format!("fire: {}", stance_name(st)), None => "fire: mixed".into() },
+            text: match stance { Some(st) => format!("Fire: {}", stance_name(st)), None => "Fire: mixed".into() },
             about: "What its soldiers shoot by themselves, the card's Fire button: hold fire, defend or free fire".into(),
         });
         let queued: Vec<&str> = sq.queue.iter().take(sq.queued as usize).map(|&o| order_word(o)).collect();
         out.push(SquadFact {
             icon: Icon::Move,
-            text: if queued.is_empty() { "no orders queued".into() } else { format!("{} queued", queued.len()) },
+            text: if queued.is_empty() { "No orders queued".into() } else { format!("{} queued", queued.len()) },
             about: if queued.is_empty() { "Shift with an order queues it after the one it is on".into() } else { format!("Next: {}. Shift with an order adds one", queued.join(", then ")) },
         });
         if let Some(r) = self.args.run.as_ref() {

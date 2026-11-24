@@ -10,7 +10,7 @@ impl ApplicationHandler for App {
         }
         let room = event_loop.primary_monitor().map_or((1600, 900), |m| (m.size().width * 9 / 10, m.size().height * 9 / 10));
         let first = PhysicalSize::new(room.0.clamp(640, 1600), room.1.clamp(480, 1000));
-        let attributes = Window::default_attributes().with_title("Larder World").with_inner_size(first);
+        let attributes = Window::default_attributes().with_title(slime_mould::world::GAME_NAME).with_inner_size(first);
         let window = match event_loop.create_window(attributes) {
             Ok(w) => Arc::new(w),
             Err(err) => return self.fail(event_loop, format!("window creation failed: {err}")),

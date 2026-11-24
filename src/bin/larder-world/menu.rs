@@ -238,7 +238,7 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
         .into_iter()
         .map(|(stem, m)| Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says })
         .collect();
-    let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
+    let mut menu = StartMenu::new(slime_mould::world::GAME_NAME, entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu.planets = true;
     menu.most_off = slime_mould::build::switches::MOST_OFF;

@@ -1670,7 +1670,7 @@ impl App {
         if let Some(w) = &self.window {
             // The build at the end (11-17: "the build tells Scott what
             // it holds"), so a screenshot or a note names the code played.
-            w.set_title(&format!("Larder World: {} (seed {}) - {}", map_title(&self.name, self.args.seed), self.args.seed, slime_mould::build::build().short()));
+            w.set_title(&format!("{}: {} (seed {}) - {}", slime_mould::world::GAME_NAME, map_title(&self.name, self.args.seed), self.args.seed, slime_mould::build::build().short()));
         }
         self.open_log();
         match &self.mission {

@@ -1070,8 +1070,8 @@ impl StartMenu {
             // The title on the main page only, and smaller (44 at 96 until
             // 11-15, with the rows from 160: the list ran under the hint at
             // 200%; the owner picked menu A, names with one caption box).
-            c.text(Weight::SemiBold, 36.0 * s, (x, 64.0 * s), Align::Left, &self.title, TEXT);
-            c.text(Weight::Medium, 15.0 * s, (x, 90.0 * s), Align::Left, "A mould that grows, feeds and fights back", MUTED);
+            wordmark(c, &self.title, (x, 64.0 * s), 40.0 * s, s);
+            c.text(Weight::Medium, 15.0 * s, (x + 2.0 * s, 90.0 * s), Align::Left, "A slime that grows, feeds and fights back", MUTED);
         }
         let top = if inner { HEAD * s + 16.0 * s } else { 100.0 * s };
         let rows = self.rows();
@@ -1943,6 +1943,38 @@ fn digit(code: KeyCode) -> Option<usize> {
     use KeyCode as K;
     let ds = [K::Digit0, K::Digit1, K::Digit2, K::Digit3, K::Digit4, K::Digit5, K::Digit6, K::Digit7, K::Digit8, K::Digit9];
     ds.iter().position(|&d| d == code)
+}
+
+/// **The title as a wordmark** (the polish review, 2026-11-24, finding 9:
+/// "Larder World" in the UI's own 26-36 px text read as a placeholder;
+/// the name became Plasmodia the same night). Capitals tracked wide in the
+/// slime's gold over a soft amber glow, the slime's own light on the dark
+/// ground (art direction rule 1), with a thin dark edge so it holds over a
+/// bright crystal in the menu's dish. `at` is the baseline's left end.
+/// A title the slime itself fills, in the dish, is the bigger next step.
+fn wordmark(c: &mut Canvas, name: &str, at: (f32, f32), px: f32, s: f32) {
+    const GOLD: Rgba = [255, 196, 72, 255];
+    const EDGE: Rgba = [20, 12, 4, 200];
+    let word = name.to_uppercase();
+    let track = 0.16 * px;
+    let glyphs: Vec<(String, f32)> = word.chars().map(|ch| {
+        let g = ch.to_string();
+        let w = c.atlas.measure(Weight::SemiBold, px, &g);
+        (g, w)
+    }).collect();
+    let width = glyphs.iter().map(|g| g.1).sum::<f32>() + track * glyphs.len().saturating_sub(1) as f32;
+    // The glow: a soft amber shadow behind the letters' band.
+    let cap = 0.73 * px;
+    let band = Rect::new(at.0 - 6.0 * s, at.1 - cap - 4.0 * s, width + 12.0 * s, cap + 8.0 * s);
+    c.shadow(band, 8.0 * s, 26.0 * s, 0.0, [255, 150, 30, 70]);
+    let mut x = at.0;
+    for (g, w) in &glyphs {
+        for (dx, dy) in [(-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.5)] {
+            c.text(Weight::SemiBold, px, (x + dx * s, at.1 + dy * s), Align::Left, g, EDGE);
+        }
+        c.text(Weight::SemiBold, px, (x, at.1), Align::Left, g, GOLD);
+        x += w + track;
+    }
 }
 
 #[cfg(test)]
