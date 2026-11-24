@@ -2,7 +2,7 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-22
+updated: 2026-11-24
 sources:
   - Reports/creatures-2026-11-11.md
   - Reports/gpu-readout-2026-11-12.md
@@ -188,7 +188,7 @@ card pick; [the report](../../Reports/perf-4k-2026-11-22/README.md)): since
 bilinear between whole ratios). Auto keeps the world under 2.4 million
 pixels: 50% at 4K, which held 60 frames a second in every second of his
 play logs since 11-22. Time the game at `screen=3840x2004 detail=N` to
-match his play (his window, maximised).
+match his play (his window, maximised). Below 100% the ground's detail fades and `prep`'s fine cells read the screen's own zoom (`look_zoom`), so 50% keeps 100%'s ground and smooth body; `prep` then costs what it does at 100%.
 
 ## Sources
 
