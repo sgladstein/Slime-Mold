@@ -108,53 +108,63 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "pumps" {
         return pumps_hand(g);
     }
-    // LAB (the rescue planet, never merges): `rescue@X,Y[,T]` plays the
-    // greedy hand until game second T (0), then walks every soldier on free
-    // fire to the squad stranded at (X, Y) (`LAB_RESCUE`), and once it is
-    // reached walks everyone home to the larder.
-    if let Some(v) = hand.strip_prefix("rescue@").map(|p| p.split(',').filter_map(|v| v.parse::<f32>().ok()).collect::<Vec<f32>>()) {
-        if v.len() >= 2 {
-            let go = v.get(2).copied().unwrap_or(0.0).max(1.0);
-            if g.time() < go {
-                if v.len() > 2 {
-                    greedy_hand(g);
-                } else {
-                    while g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
-                        if !g.apply(Cmd::Buy) {
-                            break;
-                        }
+    // LAB (the rescue planet, never merges): `rescue`, `rescue@T` (or the
+    // first version's `rescue@X,Y[,T]`) plays the greedy hand until game
+    // second T (0: buys up to 8 and goes), then walks everyone on free fire
+    // to the first dug-out not yet reached (`LAB_RESCUE`, `LAB_RESCUE_MORE`),
+    // and once every one is reached, home to the larder. After the first
+    // is reached it moves as squads, so each keeps to its wounded's pace
+    // (`Game::pace`); one by one the fit ran ahead and left them.
+    if hand == "rescue" || hand.starts_with("rescue@") {
+        let v: Vec<f32> = hand.strip_prefix("rescue@").map(|p| p.split(',').filter_map(|v| v.parse::<f32>().ok()).collect()).unwrap_or_default();
+        let go = match v.len() {
+            1 => Some(v[0]),
+            3.. => Some(v[2]),
+            _ => None,
+        };
+        if g.time() < go.unwrap_or(0.0).max(1.0) {
+            if go.is_some() {
+                greedy_hand(g);
+            } else {
+                while g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
+                    if !g.apply(Cmd::Buy) {
+                        break;
                     }
                 }
-                return;
             }
-            let reached = g.lab_rescue.as_ref().is_some_and(|r| r.reached.is_some());
-            // Home as squads, so each keeps to its wounded's pace
-            // (`Game::pace`); one by one the fit ran ahead and left them.
-            if reached {
-                let l = g.larder;
-                let qs: Vec<usize> = (0..g.squads.len()).filter(|&q| g.soldiers.iter().any(|s| s.alive && s.squad as usize == q)).collect();
-                for q in qs {
-                    let going = g.squads[q].dest.is_some_and(|d| (d.0 - l.0).abs() < 0.5 && (d.1 - l.1).abs() < 0.5);
-                    if !going {
-                        g.apply(Cmd::SquadOrder(q as u8, Order::Move(l.0, l.1)));
-                    }
-                }
-                return;
+            return;
+        }
+        while g.alive() < g.rules.max_squad && g.bank >= g.rules.soldier_cost {
+            if !g.apply(Cmd::Buy) {
+                break;
             }
-            let stranded: Vec<usize> = g.lab_rescue.as_ref().map(|r| r.members.clone()).unwrap_or_default();
-            let goal = if reached { g.larder } else { (v[0], v[1]) };
-            for k in 0..g.soldiers.len() {
-                if !g.soldiers[k].alive || (!reached && stranded.contains(&k)) {
-                    continue;
+        }
+        let Some(r) = g.lab_rescue.clone() else { return };
+        let goal = r.next().unwrap_or(g.larder);
+        let any_reached = r.sites.iter().any(|s| s.reached.is_some());
+        for k in 0..g.soldiers.len() {
+            if g.soldiers[k].alive && !r.pinned(k) && g.soldiers[k].stance != Stance::Free {
+                g.apply(Cmd::Stance(k, Stance::Free));
+            }
+        }
+        if any_reached {
+            let qs: Vec<usize> = (0..g.squads.len()).filter(|&q| g.soldiers.iter().any(|s| s.alive && s.squad as usize == q) && !g.soldiers.iter().enumerate().any(|(k, s)| s.alive && s.squad as usize == q && r.pinned(k))).collect();
+            for q in qs {
+                let going = g.squads[q].dest.is_some_and(|d| (d.0 - goal.0).abs() < 0.5 && (d.1 - goal.1).abs() < 0.5);
+                if !going {
+                    g.apply(Cmd::SquadOrder(q as u8, Order::Move(goal.0, goal.1)));
                 }
-                if g.soldiers[k].stance != Stance::Free {
-                    g.apply(Cmd::Stance(k, Stance::Free));
-                }
-                let far = (g.soldiers[k].x - goal.0).hypot(g.soldiers[k].y - goal.1) > 3.0 * g.world.scale();
-                let going = matches!(g.soldiers[k].order, Order::Move(x, y) if (x - goal.0).abs() < 0.5 && (y - goal.1).abs() < 0.5);
-                if far && !going {
-                    g.apply(Cmd::Order(k, Order::Move(goal.0, goal.1)));
-                }
+            }
+            return;
+        }
+        for k in 0..g.soldiers.len() {
+            if !g.soldiers[k].alive || r.pinned(k) {
+                continue;
+            }
+            let far = (g.soldiers[k].x - goal.0).hypot(g.soldiers[k].y - goal.1) > 3.0 * g.world.scale();
+            let going = matches!(g.soldiers[k].order, Order::Move(x, y) if (x - goal.0).abs() < 0.5 && (y - goal.1).abs() < 0.5);
+            if far && !going {
+                g.apply(Cmd::Order(k, Order::Move(goal.0, goal.1)));
             }
         }
         return;

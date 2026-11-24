@@ -192,7 +192,10 @@ impl<W: World> Game<W> {
         // The lump's sums lag a step behind its forming (as the fruit's):
         // no floor until it has held a body.
         let floor = (r.floor * h.most as f32).max(r.floor_min);
-        if h.most as f32 >= 2.0 * r.floor_min && (h.members as f32) < floor {
+        // LAB (the rescue planet, Direction 19:37Z): the heart's win is
+        // dropped there; the origin stands and bites, and only the rescue
+        // wins.
+        if h.most as f32 >= 2.0 * r.floor_min && (h.members as f32) < floor && !self.lab_rescue_planet() {
             self.break_origin(h.lump);
             return true;
         }
