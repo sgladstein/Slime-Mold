@@ -220,6 +220,7 @@ mod draw;
 mod ending;
 mod events;
 mod headless;
+mod hints;
 mod bench;
 mod hands;
 mod runbot;
@@ -1013,6 +1014,8 @@ struct App {
     drops_told: (u32, u32),
     /// The run's one-time Starfall hint (`StarHint`).
     star_hint: StarHint,
+    /// First-sight hints for the slime's later threats (`hints.rs`).
+    hints: hints::Hints,
     /// The broken mould (`Rules::broken`) told.
     broken_told: bool,
     /// Raids the HUD has told of (`Game::raids`).
@@ -1236,6 +1239,7 @@ impl App {
             origin_told: (false, false, false),
             drops_told: (0, 0),
             star_hint: StarHint::default(),
+            hints: hints::Hints::default(),
             broken_told: false,
             raids_told: 0,
             robbed_at: None,
@@ -2177,6 +2181,12 @@ impl App {
         }
         let run = self.args.run.as_ref().map(|r| r.seed);
         self.star_hint.update(g, run);
+        // First-sight hints (`hints.rs`); Options' Hints row turns them and
+        // the Starfall one off.
+        self.hints.update(g, self.window.is_some(), self.star_hint.show.is_some());
+        if !self.hints.on {
+            self.star_hint.show = None;
+        }
         // The first minute's coaching (`draw::Coach`): a run's first
         // planet, not yet freed; in the window once until finished.
         let want = self.args.run.as_ref().is_some_and(|r| !r.range && r.depth == 1 && r.stars.is_empty()) && (self.window.is_none() || settings::get("coached").as_deref() != Some("1"));

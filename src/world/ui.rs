@@ -654,6 +654,10 @@ pub struct Model {
     /// reach, so it never covers it) and its opacity. The first Starfall or
     /// core of a run says how to collect it (owner, 2026-11-22).
     pub hint: Option<(String, (f32, f32), f32, f32)>,
+    /// The ring round a first-sight hint's thing (fine cells, 0 for none):
+    /// the simulation's own size for it, a body's radius or a reach
+    /// (`hints.rs` in the window).
+    pub hint_ring: f32,
     /// The planet's introduction at landing (Direction 11-24: each planet
     /// does one nameable thing to you, and nothing on screen named it): a
     /// card under the goal line naming the slime and its one line, fading.
@@ -1677,7 +1681,19 @@ impl Hud {
         }
         if let (Some((text, at, gap, a)), None) = (&m.hint, &m.end) {
             let p = cam.to_screen(*at);
-            self.world_hint(text, (p.0, p.1 + gap * cam.zoom), *a, c, s);
+            let r = m.hint_ring * cam.zoom;
+            // A reach wider than the screen reads as a stray arc across
+            // it (the strikers' band at play zoom, 11-24 film): only a
+            // ring that fits is drawn.
+            if r > 4.0 * s && r < 0.42 * (c.screen.0.min(c.screen.1) as f32) {
+                // Thin, and gold as the panel's edge: a ring at the thing's
+                // own size, not a pulse (it never grows or flashes).
+                let w = 2.0 * s;
+                c.ring(Rect::new(p.0 - r, p.1 - r, 2.0 * r, 2.0 * r), r, w, 1.0, alpha([255, 214, 90, 255], 0.75 * a));
+            }
+            // A reach ring can be wider than the screen: the panel hangs
+            // near the thing, never more than 90 px (at 100%) below it.
+            self.world_hint(text, (p.0, p.1 + (gap * cam.zoom).min(90.0 * s)), *a, c, s);
         }
         self.ghost(m, cam, c, world, s);
         let key = m.hover.as_ref().filter(|_| self.hover.is_some() && self.targeting.is_none()).map(|h| h.title.as_str());
