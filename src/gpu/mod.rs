@@ -69,7 +69,7 @@ pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (308 words).
-pub const PARAMS_BYTES: usize = 1232;
+pub const PARAMS_BYTES: usize = 1248;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then the far smell,
 /// `far_smell`, S2, in the word that held `fed_full` and then
@@ -150,6 +150,11 @@ pub const CRUST_FX_AT: usize = 1200;
 /// scar), `set_wake`, `set_crust` and `set_armour`. Each slot's set word is
 /// a block of `news` right after the crust's (`Engine::set_of`).
 pub const SET_AT: usize = 1216;
+/// The scar tissue row (the Grudge's, 2026-11-24; Params grew from 1232 to
+/// 1248, after the setting row): `scar_tough` (0 off, and 0 without the
+/// scar), `scar_tough_full`, whether fire burns the scar off (`scar_burn`)
+/// and a spare word.
+pub const TOUGH_AT: usize = 1232;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -592,6 +597,16 @@ pub struct Settings {
     pub thread_trail: f32,
     pub thread_shuttle: f32,
     pub thread_fed: f32,
+    /// **Scar tissue** (2026-11-24, the Grudge's trait on planet 7; the
+    /// Lab's prototype of that day, `Reports/lab-scar-tissue-2026-11-24/`;
+    /// GPU only, no CPU twin): a blow on a walker standing on scar s is
+    /// shrugged off with chance `scar_tough` x min(s / `scar_tough_full`,
+    /// 1), so where the squad has fought, the slime grows back tough. Fire
+    /// burns the scar off where it burns (`scar_burn`), the counter the
+    /// card names. 0 off; needs the scar (`scar_keep`).
+    pub scar_tough: f32,
+    pub scar_tough_full: f32,
+    pub scar_burn: bool,
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
     /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
@@ -875,6 +890,9 @@ impl Settings {
             thread_trail: 1.0,
             thread_shuttle: 0.0,
             thread_fed: 0.9,
+            scar_tough: 0.0,
+            scar_tough_full: 2000.0,
+            scar_burn: false,
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
@@ -1216,6 +1234,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "thread_trail" => s.thread_trail = f()?.clamp(0.0, 6.3),
         "thread_shuttle" => s.thread_shuttle = f()?.max(0.0),
         "thread_fed" => s.thread_fed = f()?.clamp(0.0, 1.5),
+        "scar_tough" => s.scar_tough = f()?.clamp(0.0, 1.0),
+        "scar_tough_full" => s.scar_tough_full = f()?.max(1.0),
+        "scar_burn" => s.scar_burn = int()? != 0,
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
@@ -2636,6 +2657,10 @@ impl Engine {
         // Setting needs the crust and the scar, as the CPU's `sets`.
         b.extend(f32_bytes(&[if crusts && scars { s.set_scar } else { 0.0 }, s.set_wake, s.set_crust]));
         b.extend(u32_bytes(&[s.set_armour]));
+        assert_eq!(b.len(), TOUGH_AT, "Params rows before the scar tissue row moved");
+        // Scar tissue needs the scar (`scars`, as the CPU makes it).
+        b.extend(f32_bytes(&[if scars { s.scar_tough } else { 0.0 }, s.scar_tough_full.max(1.0)]));
+        b.extend(u32_bytes(&[(scars && s.scar_burn) as u32, 0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food

@@ -253,6 +253,10 @@ struct Params {
     // crust sets at (0 off, and 0 without the crust or the scar), the scar
     // it wakes under, the crust it needs, and its armour in blows.
     set_scar: f32, set_wake: f32, set_crust: f32, set_armour: u32,
+    // Scar tissue (`TOUGH_AT`, the Grudge's, 2026-11-24): a blow on scar s
+    // is shrugged off with chance `tough` x min(s / `tough_full`, 1) (0
+    // off, and 0 without the scar); fire burns the scar off (`scar_burn`).
+    tough: f32, tough_full: f32, scar_burn: u32, _tough: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -494,6 +498,20 @@ fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | H
 // A blow that would kill walker k only hurts it while it is a member of a
 // lump whose `armour` is above its hits + 1 (`BigDish::armoured`); true if
 // it took the blow so. One thread a walker writes its word.
+// **Scar tissue** (`Settings::scar_tough`, the Grudge's on planet 7,
+// 2026-11-24; the Lab's prototype, `Reports/lab-scar-tissue-2026-11-24/`):
+// a blow on a walker standing on scar s misses with chance `tough` x
+// min(s / `tough_full`, 1), each walker and step its own draw. A lump's
+// member keeps its lump's armour instead. One scar read and one hash a
+// blow; nothing a step.
+fn scar_tough(k: u32) -> bool {
+    if (P.tough <= 0.0) { return false; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    if (i == NONE) { return false; }
+    let p = P.tough * min(scar_at(i) / P.tough_full, 1.0);
+    return unit(keyed(P.s_starve, S.t, k ^ 0x71237123u)) < p;
+}
 fn armoured(k: u32) -> bool {
     let lb = lump_of(k);
     // A condensed striker takes a blow for each walker it took in that is
@@ -513,7 +531,7 @@ fn armoured(k: u32) -> bool {
         set_put(k, w + 1u);
         return true;
     }
-    if (lb == 0u) { return false; }
+    if (lb == 0u) { return scar_tough(k); }
     let wd = dense_word(k);
     let hurt = wd >> HURT_SHIFT;
     if (hurt + 1u >= min(P.lumps[lb - 1u].armour, 15u)) { return false; }
@@ -4736,6 +4754,10 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Fire lays alarm where it burns (`fire_alarm`, C4; the CPU's
     // `fire_tick`), on this tick's alarm (the trail pass wrote `germ_out`).
     if (to > 0.0 && agar[i] != 0u && alarms() && pf(44u) > 0.0) { germ_out[P.w * P.h + i] += pf(44u) * to; }
+    // Fire burns the scar off (`scar_burn`, the Grudge's scar tissue,
+    // 2026-11-24): the counter its card names. The alarm it lays above
+    // scars the cell again only at the scar's slow gain.
+    if (to > 0.0 && P.scar_burn != 0u) { atomicStore(&crater[P.w * P.h + i], 0u); }
 }
 
 // The key on the fire step that rolls a gas flash's catch (the CPU's

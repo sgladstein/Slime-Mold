@@ -3295,6 +3295,59 @@ mod tests {
         assert!(on.1 > off.1 + 0.05, "threads stack more walkers a cell: {on:?} against {off:?}");
     }
 
+    /// **Scar tissue shrugs off blows** (`scar_tough`, the Grudge's,
+    /// 2026-11-24; GPU only). Two race worlds alike with the scar on, one
+    /// with scar tissue at 0.5; the scar set to twice `scar_tough_full`
+    /// everywhere, then one killing burst on the home crystal. With scar
+    /// tissue about half the walkers it hit live; without, none.
+    #[test]
+    fn scar_tissue_shrugs_off_half_the_blows() {
+        use crate::gpu::{f32_bytes, floats};
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |tough: &str| -> (usize, usize) {
+            let mut s = race_settings(seed, scale, walkers);
+            for (k, v) in [("alarm_keep", "0.95"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_tough", tough), ("scar_tough_full", "2000")] {
+                crate::gpu::set(&mut s, k, v).unwrap();
+            }
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 10.0 {
+                g.step();
+            }
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let at = (home.0 / sc, home.1 / sc);
+            let (cx, cy, r) = {
+                let e = &g.world.e;
+                let ds = e.dish.p.scale as f32;
+                (at.0 * ds, at.1 * ds, 5.0 * ds)
+            };
+            let near = |g: &Game<GpuWorld>| {
+                let e = &g.world.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+                (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count()
+            };
+            {
+                let e = &g.world.e;
+                e.queue.write_buffer(&e.crater, e.cells as u64 * 4, &f32_bytes(&vec![4_000.0; e.cells as usize]));
+            }
+            let before = near(&g);
+            let fine = g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+            g.world.burst(&squad::Burst { at, r: 6.0, kill: true, ..Default::default() }, &k);
+            (before, near(&g))
+        };
+        let off = play("0");
+        let on = play("0.5");
+        eprintln!("scar tissue: off {} -> {}, on {} -> {}", off.0, off.1, on.0, on.1);
+        assert!(off.0 > 50 && on.0 > 50, "slime on the crystal: {off:?} {on:?}");
+        assert!(off.1 * 10 < off.0, "without scar tissue the burst kills nearly all: {off:?}");
+        let kept = on.1 as f32 / on.0 as f32;
+        assert!((0.3..0.7).contains(&kept), "scar tissue keeps about half: {on:?}");
+    }
+
     /// **A blast's long crater is not shut** (the review lane, 11-21: det
     /// cord stood as a wall for 19 s). Only a crater no longer than the
     /// guns' (`crater`) is shut: a kill with a crater ten times as long on

@@ -306,7 +306,7 @@ charge); the Sporer bursts into spores at an alarm of 0.3; the
 Sleeper wakes at an alarm of 0.3; the Grudge (planet 7 since 11-17, when
 its scar reached the GPU; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md))
 reads the scar where it was hit at twice the campaign tier's weight
-(`scar_weight` 1, a first number; one film, seed 1 with four soldiers standing: gone at 0:40 against 0:48 with it off, a small effect). Run seed 1 at 2:00, each ends or wears the
+(`scar_weight` 1, a first number; one film, seed 1 with four soldiers standing: gone at 0:40 against 0:48 with it off, a small effect). Since 11-24 its nameable thing is scar tissue (Direction's pick from the Lab's prototype, [report](../../Reports/lab-scar-tissue-2026-11-24/README.md); GPU only, `gpu::Settings::scar_tough`): a blow on a walker standing on scar misses with chance 0.5 x min(scar / 2,000, 1), so ground the squad has fought over for about a minute grows slime that shrugs off half its hits, and fire burns the scar off where it burns (`scar_burn`). The card reads "Where you hurt it, it grows back tough. Don't fight on old ground". The view's scar tissue is now that toughness: `SCAR_FULL` 2,000, linear, where 1.0 read any scar at all as full (Look's number). The GPU test: one killing burst on scar twice the full mark leaves 39 of 76 walkers alive at 0.5, none with it off. Run seed 1 at 2:00, each ends or wears the
 four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost or siren (D10; `run_hidden` hides

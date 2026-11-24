@@ -710,7 +710,7 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
         Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
-        Tier::Grudge => DoesToYou { says: "It remembers where you hurt it, and comes back there", rules: &[], keys: GRUDGE_KEYS },
+        Tier::Grudge => DoesToYou { says: "Where you hurt it, it grows back tough. Don't fight on old ground", rules: &[], keys: GRUDGE_KEYS },
     }
 }
 
@@ -744,6 +744,8 @@ const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50"), ("keep", "0.92"),
 
 /// The Sprawler's thread keys, the GPU engine's alone (no CPU twin).
 pub const THREAD_KEYS: [&str; 4] = ["thread_lanes", "thread_trail", "thread_shuttle", "thread_fed"];
+/// The Grudge's scar tissue keys, the GPU engine's alone (no CPU twin).
+pub const TOUGH_KEYS: [&str; 3] = ["scar_tough", "scar_tough_full", "scar_burn"];
 // **The Trunk sets** (2026-11-17, the Enemy lane; planet 3). The
 // simulation-use plan's E1 and E2 were built on 11-17 behind four switches
 // (the crust and its pull, setting, set slime blocking or trapping, fed
@@ -811,7 +813,16 @@ const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3")];
 // weight (scar_weight 1, not 0.5), so a firing line it was hurt from draws
 // it back after the alarm has faded. A first number, not yet filmed on a
 // planet (`Reports/sim-use-2026-11-17/step0-scar-on-gpu.md`).
-const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1")];
+//
+// **Scar tissue** (2026-11-24, Direction's pick for planet 7's nameable
+// thing; the Lab's prototype, `Reports/lab-scar-tissue-2026-11-24/`): a blow
+// on a walker standing on scar misses with chance 0.5 x min(scar / 2,000,
+// 1), so the ground the squad has fought over grows tough slime, and the
+// pull above brings the slime back to it. Fire burns the scar off. 2,000 is
+// about a minute of fire on one place (the Lab's median scar near a holding
+// squad: 513 at 1:00, 3,500 at 1:30); P 0.75 took the run bot from 30
+// soldiers to 4 by 2:00 against 21 at 0.5 and 30 off (one seed), so 0.5.
+const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1"), ("scar_tough", "0.5"), ("scar_tough_full", "2000"), ("scar_burn", "1")];
 
 /// The card a tier's planet asks you to bring, if any: the card that
 /// answers its trait (the game designer, 2026-11-17 15:26Z, with the guns
@@ -3146,7 +3157,7 @@ mod tests {
             let mut p = crate::mould::larder_world::race_params(1, 2, 5000);
             for &(k, v) in does.keys {
                 let set = crate::mould::tiers::set_key(&mut p, k, v);
-                assert!(set.is_ok() || *t == Tier::Trunk || THREAD_KEYS.contains(&k), "{} key {k}: {set:?}", t.name());
+                assert!(set.is_ok() || *t == Tier::Trunk || THREAD_KEYS.contains(&k) || TOUGH_KEYS.contains(&k), "{} key {k}: {set:?}", t.name());
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());
