@@ -215,6 +215,48 @@ cell; a falling ceiling is set at most 5% under the slime a second
 Next if Scott wants a sharper shrink: `CEILING_FALL` 0.1 or
 `ceiling_upkeep` 4 (measure planet 3's start again).
 
+## The origin (2026-11-22, the same thread; on a branch until Milestone 1)
+
+Branch `claude/project-thread-noq3o4` (draft, do not merge until Scott
+calls Milestone 1 done; keep it merged up with main). `origin.rs`
+(`OriginRules`, `OriginState`, `Game::time_origin`, `keep_origin`,
+`break_origin`), the heart in `stand.rs` with `origin` and `gather`,
+`Settings::no_eat` (word 929 bit 2), `World::set_starve`, `call_home` in
+`raids.rs`, `run::ORIGIN_SIZE`, headless `hand=origin` (all soldiers the
+bank buys, attack-move to the core) and the `origin t` line. GPU test
+`the_origin_forms_on_its_crystal_starves_when_drained_and_its_death_wins`.
+Numbers and the rush in `wiki/world/run.md`, *The origin*. Open: the run
+bot never goes for the slime's home (its `home_ok` rule; also on main since
+`crystal_keep`, flagged to Direction 11-22 05:05Z), the HUD's goal line
+still says "kill every last walker" (Look and interface). The overshoot
+is fixed (11-22 10:20Z): `most` 1 and each take's reach cut to its
+shortfall (a take gets every free walker in its disc, about 1.6 a fine
+cell). The origin is a `boss_aim` target for soldiers within its reach
+(`origin_reaches`), under Squad's near-first rule (#715: slime 5 cells
+off first, an origin 8 off first). Sizes 700, 500, 1,000 on planets 1-3:
+Engine's siege (#707's run bot) wins seeds 1-3 on each in under 10 min.
+The 44-soldier rush on planet 1 wins at 1:34 with none lost (D7, Scott's).
+The real run bot (`runbot=1:3`, seed 1, lavapipe): origin off won planets
+1 to 3 at 3:52, 5:20 and 3:55; origin on won planet 1 at 5:15 (49,814
+killed against 15,265) and lost planet 2 at 7:38, because the bot's siege
+never aims at the origin. Engine's siege must target `Game::core` before
+this lands (Engine said after M1; Direction told 11-22 06:10Z).
+Engine's siege (11-22): the origin regrows only after `quiet` 4 s with no
+loss of `hurt` 2% a second, so a sustained fight wears it down.
+The Sprawler's threads through its body (Direction's M1 job, 11-22): its
+body packs 97% of fine cells, so nothing runs along lines there. Spacing
+and room rules both tried and reverted (`Reports/dead-ends.md`, both on this
+branch); (b), packed walkers that swap or flow, waits for the Lab after M1.
+
+## The hunter's regroup (2026-11-22, the same thread)
+
+`boss_stall` re-forms a stalled mini-boss from up to three radii round its
+lead and stops at the last ring short of its size (`reach_under`). With 1.5
+radii a hunter wrapped round a ridge on planet 2 (run 1795106014) shed 240
+to 71 to 16; reaching past its size grew it (240 to 539). Sent to main as a
+patch (`/mnt/project-files/enemy/`) through a helper thread, also on the
+origin branch. It still does not close on a squad that keeps moving.
+
 ## A hit's hole and a mini-boss's flinch (2026-11-21, the same thread)
 
 Both GPU only, in the `deep_wall` Params word (bit 0 deep wall, bit 1

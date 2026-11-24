@@ -183,7 +183,8 @@ struct Params {
     // The ground row (new ground kinds, 11-14; Params grew from 928 to
     // 944): a walker's step in deep water is x `deep_step` on top of
     // `wet_step` (`BigParams::deep_step`); deep water as a wall to the
-    // slime (`Settings::deep_wall`, 11-20; `shut`; bit 1 `solid_walls`,
+    // slime (`Settings::deep_wall`, 11-20; `shut`; bit 1 `solid_walls`, bit 2
+    // `no_eat`,
     // bits 3-15 the flinch's steps, `boss_flinch`; bits 16-31 the
     // crater's shut steps, `crater_shut`). The last two are the heartbeat's
     // source, in fine cells (2026-11-20, `heart_beat`).
@@ -2758,6 +2759,11 @@ fn eat(@builtin(global_invocation_id) gid: vec3<u32>) {
         i = pcell[q];
     }
     var t = 0.0;
+    // The origin's die-back (`Settings::no_eat`, bit 2): nobody eats.
+    if ((P.deep_wall & 4u) != 0u) {
+        share[i] = 0.0;
+        return;
+    }
     let n = atomicLoad(&occ[i]);
     // With the life cycle a dormant walker counts in n, as on the CPU, but
     // takes nothing (only ordinary walkers eat).

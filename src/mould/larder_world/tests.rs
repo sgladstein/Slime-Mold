@@ -4020,6 +4020,60 @@ fn squads_shoot_a_mini_boss_first() {
     assert_eq!(g.target(0), None, "not on hold fire");
 }
 
+/// **The origin draws fire as a mini-boss does** (11-22, Engine's siege
+/// table on #699): a soldier within its reach shoots its members first;
+/// one outside its reach does not, so it never pulls fire across the map;
+/// the last stand's heart (not the origin) is not a target.
+#[test]
+fn soldiers_in_its_reach_shoot_the_origin() {
+    let mut g = small(1);
+    let sc = g.s();
+    let s0 = g.soldiers[0];
+    g.soldiers[0].aim = Some((s0.x + 3.0 * sc, s0.y));
+    g.soldiers[0].dense = 50;
+    g.soldiers[0].touching = 0;
+    let reach = g.shot_reach(0) * sc;
+    let at = (s0.x, s0.y + 0.5 * reach);
+    assert!(g.clear_line((s0.x, s0.y), at), "open ground by the larder");
+    let mut h = super::stand::Heart::origin(0, at, 0, 1);
+    h.members = 300;
+    h.centre = at;
+    g.stand.live = Some(h);
+    g.core = at;
+    let r = (300.0f32 / std::f32::consts::PI).sqrt();
+    assert!(g.origin_reaches(0));
+    assert_eq!(g.boss_aim(0), Some((at, r)), "in its reach: its members first");
+    // Its crystal far off: the soldier is outside its reach.
+    g.core = (s0.x, s0.y + 3.0 * g.rules.origin.near * sc);
+    assert!(!g.origin_reaches(0));
+    assert_eq!(g.boss_aim(0), None, "outside its reach: not a target");
+    // The last stand's heart is not the origin.
+    g.core = at;
+    g.stand.live.as_mut().unwrap().origin = false;
+    assert_eq!(g.boss_aim(0), None, "the last stand's heart is not a target");
+    // Free fire (Direction 11-22, through `Game::target`'s near first): slime
+    // 5 cells off is shot before an origin 20 off; an origin 8 off is shot
+    // before the slime.
+    g.stand.live.as_mut().unwrap().origin = true;
+    g.stand.live.as_mut().unwrap().members = 50;
+    let r = (50.0f32 / std::f32::consts::PI).sqrt();
+    let near = g.rules.near_first * sc;
+    assert!(8.0 * sc < near && near < 20.0 * sc && 20.0 * sc + r < reach, "near {near}, reach {reach}");
+    let far = (s0.x, s0.y + 20.0 * sc + r);
+    assert!(g.clear_line((s0.x, s0.y), far), "open ground to the far origin");
+    g.stand.live.as_mut().unwrap().centre = far;
+    g.core = far;
+    g.soldiers[0].stance = Stance::Free;
+    let slime5 = (s0.x + 5.0 * sc, s0.y);
+    g.soldiers[0].aim = Some(slime5);
+    assert!(g.origin_reaches(0) && g.boss_aim(0).is_some(), "the origin in reach");
+    assert_eq!(g.target(0), Some(slime5), "slime 5 cells off before an origin 20 off");
+    let close = (s0.x, s0.y + 8.0 * sc + r);
+    g.stand.live.as_mut().unwrap().centre = close;
+    g.core = close;
+    assert_eq!(g.target(0), Some(close), "an origin 8 cells off before the slime");
+}
+
 /// **How a mini-boss ends** (review of the mini-boss PR): one with too few
 /// at its knot fizzles, one under its quorum breaks, one that hunted its
 /// `life` is spent; each goes unsteered and unarmoured at once (its lump's
