@@ -770,6 +770,9 @@ struct Look {
     hurt: f32,
     flinch: f32,
     bite: f32,
+    /// Seconds left of its health bar after its last hurt (`HURT_BAR`
+    /// long; Look, 11-24): a soldier under `BAR_HP` always shows its bar.
+    hit: f32,
     /// Seconds left of its gun's kick from its last shot (`KICK` long),
     /// the cast that shot carried (`Shot::cast`: its flash takes the
     /// payload's colour) and the shots it has fired, which vary each
@@ -784,7 +787,7 @@ struct Look {
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW } }
+        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, hit: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW } }
     }
 }
 
@@ -810,6 +813,12 @@ const SIREN_CALL: f32 = 0.7;
 const FLINCH_HP: f32 = 3.0;
 /// How long a flinch lasts, seconds.
 const FLINCH: f32 = 0.2;
+/// How long a soldier's health bar shows after it is hurt, seconds, and
+/// the share of its health under which the bar always shows (polish review
+/// 11-23, finding 5: from under 95%, a big squad wore a bar on every
+/// soldier most of the fight; the squad's health is on its tile).
+const HURT_BAR: f32 = 2.0;
+const BAR_HP: f32 = 0.7;
 /// How long a fallen soldier's pool of blood takes to spread, seconds
 /// (`Marks::fallen`; the owner's playtest 2026-11-18 16:12Z).
 const POOL_GROW: f32 = 2.5;
@@ -1868,6 +1877,7 @@ impl App {
             l.kick = (l.kick - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
             l.flinch = (l.flinch - dt).max(0.0);
+            l.hit = (l.hit - dt).max(0.0);
         }
         for b in &mut self.blooks {
             b.call = (b.call - dt).max(0.0);

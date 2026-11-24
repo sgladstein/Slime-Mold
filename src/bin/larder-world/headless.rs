@@ -1311,6 +1311,9 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
                 None => *banked = BANKED,
             }
         }
+        if s.alive && s.hp < l.hp - 1e-3 {
+            l.hit = HURT_BAR;
+        }
         if s.alive && s.touching > 0 && s.hp < l.hp {
             l.hurt += l.hp - s.hp;
             if l.hurt >= FLINCH_HP {

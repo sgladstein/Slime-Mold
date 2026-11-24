@@ -261,6 +261,16 @@ impl Marks {
         }
     }
 
+    /// A plate behind `label`'s text (the same `offset`, `text` and
+    /// `scale`): a filled rectangle two font pixels larger all round.
+    pub fn plate(&mut self, at: (f32, f32), offset: (f32, f32), text: &str, scale: f32, colour: Rgba) {
+        let n = text.chars().count().max(1) as f32;
+        let (w, h) = ((6.0 * n - 1.0) * scale, 7.0 * scale);
+        let pad = 2.0 * scale;
+        let off = (offset.0 + 0.5 * w, offset.1 + 0.5 * h);
+        self.push(Mark { offset: off, colour2: colour, fill: 0.0, ..Mark::new(Shape::Bar, at, (0.5 * w + pad, 0.5 * h + pad), colour) });
+    }
+
     /// One 5x7 picture (rows top down, bit 4 the left column), drawn as a
     /// glyph: a small sign beside a building, such as `WALKING`.
     pub fn icon(&mut self, at: (f32, f32), offset: (f32, f32), rows: [u8; 7], scale: f32, colour: Rgba) {

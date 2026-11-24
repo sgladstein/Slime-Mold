@@ -2,6 +2,26 @@
 
 ## State (2026-11-20)
 
+**11-24, camera at the map's top, polish finding 12:** `Camera::clamp`
+stops the view at the world's top row (the top bar floats over it); only
+the bottom panels let the world's last row come out from under them. The
+top 70 px of off-map at zoom 6 became the map's own rock rim (about 35
+px). Finding 2 (shore stairs) was not seen at two banks on planet 1 after
+the sheet change; reopen if it shows. Still:
+`Reports/pr-stills/camera-top-2026-11-24.png`.
+
+**11-24, dashes over crystals, polish finding 14:** a walker's speck or
+dash on a crystal's faces is lit only where the slime's film lies there
+(`film_th`), in `base` after the specks' light. Still:
+`Reports/pr-stills/dashes-off-crystals-2026-11-24.png`.
+
+**11-24, squad marks, polish finding 5:** soldiers' bars only under
+`BAR_HP` 0.7 or for `HURT_BAR` 2 s after any hurt (`Look::hit`, set in
+`headless.rs`'s note step: Engine's files, told through the coordinator),
+crossing group rings merged (`ring_groups`' last pass, `enclose`), the
+squad number on `Marks::plate`. Still:
+`Reports/pr-stills/squad-marks-2026-11-24.png`.
+
 **11-24, the second Look thread (Milestone 2; HUD side).** Split with the
 first Look thread (11-24 03:36Z): this thread takes the HUD, shop, menus,
 end screens and wording (`ui.rs`, `start.rs`, `start/`, `menu.rs`, the
@@ -33,6 +53,7 @@ and Keys (11).
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
 spent husk is low, rock-dark and crumbled (`gem_crumb`, also in the cast
 shadow); page and clips in `Reports/crystal-cut-2026-11-24/`.
+
 **11-24, Look B (the slime itself), polish finding 1:** the Drifter's
 trail sheet (planet 1) has an edge and a low lit relief (`SHEET_EDGE`,
 `SHEET_RISE` in `prep`); page and clips in
