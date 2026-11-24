@@ -4732,6 +4732,27 @@ fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         return;
     }
+    // Mode 2, trodden ground (`Engine::trample`, the squad thread's
+    // firebreak, 11-24): the plants within each disc are cut to its fourth
+    // word, their kind kept, so they stay on screen as short plants that
+    // fire barely catches in (catching goes with the plants, and a fire's
+    // heat tops out at plants over `fire_full`). Burning cells are left
+    // alone: treading on fire doesn't put it out, and a soldier who walks
+    // or stands in it still burns. GPU only (11-17 rule): the CPU world
+    // has no trodden ground.
+    if ((pw(49u) >> 8u) == 2u) {
+        if (pwet(i) || (ground[i] & PILE_BITS) != 0u || pget(PB_FA, i) > 0.0) { return; }
+        let lx = i32(i % P.w); let ly = i32(i / P.w);
+        var cap = pget(PB_A, i);
+        let had = cap;
+        for (var q = 0u; q < min(pw(49u) & 0xFFu, 3u); q++) {
+            let cx = pf(50u + 4u * q); let cy = pf(51u + 4u * q); let r = pf(52u + 4u * q);
+            let dx = f32(lx - i32(floor(cx))); let dy = f32(ly - i32(floor(cy)));
+            if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r) { cap = min(cap, pf(53u + 4u * q)); }
+        }
+        if (cap < had) { pset(PB_A, i, cap); }
+        return;
+    }
     var fuel = pget(PB_A, i);
     if (P.crust_fuel > 0.0) { fuel = fuel + P.crust_fuel * crust_of(i); }
     // Gas over `gas_burn` is fuel enough, wet or not, and lights whatever

@@ -714,7 +714,7 @@ impl GpuWorld {
         if b.burn {
             lights.push((b.at.0, b.at.1, b.r, p.fire_light_burn));
         }
-        if b.crater > 0 {
+        if b.crater > 0 && !b.unlit {
             lights.push((b.at.0, b.at.1, b.crater_r + 1.0, p.fire_light_blast));
         }
         // A torch (`rounds::Card::Torch`, 11-17), after the blast's as on
@@ -874,6 +874,15 @@ impl World for GpuWorld {
         let mut r = self.take();
         self.keep(&mut r);
         r.out
+    }
+
+    /// Trodden ground (`Engine::trample`), between steps as a burst is.
+    fn trample(&mut self, discs: &[(f32, f32, f32, f32)]) {
+        if discs.is_empty() {
+            return;
+        }
+        self.flush();
+        self.e.trample(&self.shared, discs);
     }
 
     /// Fire's kills since the last call: the plants' `firekill` and the
@@ -3571,6 +3580,142 @@ mod tests {
         assert!(fired > 0, "the burn lit the plants");
         assert!(hot > 0.0, "the soldier at the burn stood in fire");
         assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
+    }
+
+    /// **Still soldiers tread a firebreak** (`Game::trample`, 11-24; GPU
+    /// only, so no CPU twin): the IGNITE pass's mode 2 cuts the plants in
+    /// the disc to its cap and keeps their kind, leaves the plants outside
+    /// it and any under it already short, and doesn't tread out a fire.
+    #[test]
+    fn trodden_ground_is_short_plants_and_fire_is_not_trodden_out() {
+        use crate::mould::plants::pack;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 500);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        // Grass at full, but a short strip at 0.05 through the disc (the
+        // map is four times the dish a side).
+        m.plants = (0..m.ground.len()).map(|i| pack(1, if i / m.w / 4 == 30 { 0.05 } else { 1.0 })).collect();
+        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+        let w = World::size(&gpu).0;
+        let (a0, k0, _, _) = gpu.e.plants_of();
+        // Taller than the cap (the soil caps some grass short of 1).
+        let open = |i: usize| a0[i] > 0.1;
+        // Fire lit at (120, 30) first, then two discs trodden: one over
+        // open grass and the strip, one over the fire.
+        gpu.e.ignite(&gpu.shared, &[(120.0, 30.0, 2.0, 1.0)]);
+        let (_, _, fire0, _) = gpu.e.plants_of();
+        World::trample(&mut gpu, &[(60.0, 30.0, 4.0, 0.1), (120.0, 30.0, 4.0, 0.1)]);
+        let (a, k, fire, _) = gpu.e.plants_of();
+        let (mut trod, mut kept, mut burning) = (0, 0, 0);
+        for y in 20..40 {
+            for x in 50..130 {
+                let i = y * w + x;
+                let near = |cx: f32| (x as f32 - cx).hypot(y as f32 - 30.0) <= 4.0;
+                if near(60.0) && open(i) {
+                    assert!((a[i] - 0.1).abs() < 1e-6, "trodden to 0.1 at ({x}, {y}): {}", a[i]);
+                    assert_eq!(k[i], k0[i], "the kind kept");
+                    trod += 1;
+                } else if fire0[i] > 0.0 {
+                    assert_eq!(a[i], a0[i], "a burning cell isn't trodden out ({x}, {y})");
+                    assert!(fire[i] > 0.0);
+                    burning += 1;
+                } else if !near(60.0) && !near(120.0) || !open(i) {
+                    assert_eq!(a[i], a0[i], "untouched at ({x}, {y})");
+                    kept += 1;
+                }
+            }
+        }
+        eprintln!("trodden {trod}, burning left {burning}, untouched {kept}");
+        assert!(trod > 30 && burning > 5 && kept > 1000);
+        assert_eq!(World::size(&gpu), (m.w / 4, m.h / 4), "the dish a quarter of the map a side");
+    }
+
+    /// **A falling star's crater lights no plants** (`Burst::unlit`,
+    /// 11-24): on grass a crater lights the plants round it, the same
+    /// crater marked unlit none, on both worlds.
+    #[test]
+    fn an_unlit_crater_lights_no_plants() {
+        use crate::mould::big::BigDish;
+        use crate::mould::plants::pack;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 500);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = vec![pack(1, 1.0); m.ground.len()];
+        let k = squad::BurstRules::default();
+        for unlit in [false, true] {
+            let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+            let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
+            let b = squad::Burst { at: (60.0, 30.0), r: 3.0, kill: true, crater: 300, crater_r: 6.0, unlit, ..squad::Burst::default() };
+            World::burst(&mut gpu, &b, &k);
+            let lit0 = cpu.burning;
+            World::burst(&mut cpu, &b, &k);
+            let (_, _, fire, _) = gpu.e.plants_of();
+            let lit = (cpu.burning - lit0, fire.iter().filter(|&&v| v > 0.0).count());
+            eprintln!("unlit {unlit}: lit {} on the CPU, {} on the GPU", lit.0, lit.1);
+            if unlit {
+                assert_eq!(lit, (0, 0), "an unlit crater lit plants");
+            } else {
+                assert!(lit.0 > 0 && lit.1 > 0, "a crater lights the grass: {lit:?}");
+            }
+        }
+    }
+
+    /// **A squad walking into fire still burns; one holding still is
+    /// spared most of it** (`Game::trample`, 11-24, Direction's check): on
+    /// grass, eight soldiers stand 3 s, then either walk east through a
+    /// fire lit across their way (`fireway` off, so straight in) or hold
+    /// while four fires are lit 7 cells round them, to 18 s. Trodden ground
+    /// changes nothing for the walkers (fire's harm within a fifth either
+    /// way; 14 and 14 health on llvmpipe), and the held squad loses under
+    /// half the health it does without it (3 against 20).
+    #[test]
+    fn a_squad_walking_into_fire_still_burns_and_one_holding_still_is_spared() {
+        use crate::mould::plants::pack;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 200);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = vec![pack(1, 1.0); m.ground.len()];
+        let play = |to: f32, walk: bool| -> f32 {
+            let w = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+            let mut rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: 8, start_bank: 1e9, fireway: false, trample_to: to, ..Rules::default() };
+            rules.mass = Rules::mass_for(walkers, scale);
+            let mut g = Game::new(w, rules, seed);
+            while g.alive() < 8 && g.buy() {}
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Join(k, 0));
+            }
+            while g.time() < 3.0 {
+                g.step();
+            }
+            let s = g.world.scale();
+            let (x, y) = g.middle(0).unwrap();
+            let (x, y) = (x / s, y / s);
+            if walk {
+                g.world.e.ignite(&g.world.shared, &[(x + 12.0, y, 4.0, 1.0)]);
+                g.apply(Cmd::SquadOrder(0, Order::Move((x + 30.0) * s, y * s)));
+            } else {
+                let ring: Vec<_> = [(7.0, 0.0), (-7.0, 0.0), (0.0, 7.0), (0.0, -7.0)].iter().map(|d| (x + d.0, y + d.1, 3.0, 1.0)).collect();
+                g.world.e.ignite(&g.world.shared, &ring);
+            }
+            let (hp0, bit0) = (g.soldiers.iter().map(|q| q.hp.max(0.0)).sum::<f32>(), g.bitten_hp);
+            while g.time() < 18.0 && g.end.is_none() {
+                g.step();
+            }
+            let hp1 = g.soldiers.iter().map(|q| q.hp.max(0.0)).sum::<f32>();
+            hp0 - hp1 - (g.bitten_hp - bit0)
+        };
+        let (walk_off, walk_on, hold_off, hold_on) = (play(0.0, true), play(0.1, true), play(0.0, false), play(0.1, false));
+        eprintln!("fire's harm: walking {walk_off:.0} untrodden, {walk_on:.0} trodden; holding {hold_off:.0} untrodden, {hold_on:.0} trodden");
+        assert!(walk_off > 5.0, "the walk crossed the fire: {walk_off}");
+        assert!((walk_on - walk_off).abs() <= 0.2 * walk_off, "walking into fire still burns: {walk_on} against {walk_off}");
+        assert!(hold_off > 10.0, "the fire reached the held squad: {hold_off}");
+        assert!(hold_on < 0.5 * hold_off, "the trodden ground spared the held squad: {hold_on} against {hold_off}");
     }
 
     /// **A torch lights the plants on the GPU as on the CPU** (the gun

@@ -2944,9 +2944,22 @@ impl Engine {
         self.discs(shared, discs, 1);
     }
 
+    /// Treads the plants within `r` dish cells of (`x`, `y`) (dish cells)
+    /// down to `to`, each `(x, y, r, to)`, keeping their kind: the ground
+    /// still soldiers hold (`Game::trample`, 11-24), a firebreak of short
+    /// plants. Burning cells are left as they are. GPU only: the CPU world
+    /// has no trodden ground (the 11-17 rule). Runs on its own, between
+    /// ticks: the IGNITE pass with word 49's mode byte 2.
+    pub fn trample(&mut self, shared: &Shared, discs: &[(f32, f32, f32, f32)]) {
+        if !self.plants || discs.is_empty() {
+            return;
+        }
+        self.discs(shared, discs, 2);
+    }
+
     /// The IGNITE pass over `discs`, three a run: word 49 the count, with
-    /// `mode` in its second byte (0 light, 1 lay fuel), then x, y, r and the
-    /// fourth word from 50.
+    /// `mode` in its second byte (0 light, 1 lay fuel, 2 tread down), then
+    /// x, y, r and the fourth word from 50.
     fn discs(&mut self, shared: &Shared, discs: &[(f32, f32, f32, f32)], mode: u32) {
         let k = self.dish.p.scale as f32;
         for chunk in discs.chunks(3) {

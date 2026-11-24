@@ -321,6 +321,11 @@ pub trait World {
     fn burned(&mut self) -> u32 {
         0
     }
+    /// Treads the plants in each `(x, y, r, to)` disc (dish cells) down to
+    /// `to`, keeping their kind: the firebreak still soldiers make
+    /// (`Game::trample`, 11-24). A world without it (the CPU's: new slime
+    /// and plant rules are GPU only, 11-17) does nothing.
+    fn trample(&mut self, _discs: &[(f32, f32, f32, f32)]) {}
     /// Whether `burst`'s gas and germ parts work on this world.
     fn has_gas(&self) -> bool {
         false

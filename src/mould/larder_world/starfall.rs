@@ -493,7 +493,9 @@ impl<W: World> Game<W> {
             }
         }
         // Landing: the blast under it, a hurt to soldiers there, and its
-        // lure for the rest of its life.
+        // lure for the rest of its life. Its crater lights no plants
+        // (`Burst::unlit`, 11-24): on planet 3 that fire burned squads
+        // that bought no fire card.
         for i in 0..self.starfall.live.len() {
             let d = self.starfall.live[i];
             if d.down || now < d.lands {
@@ -503,7 +505,7 @@ impl<W: World> Game<W> {
             self.starfall.landed += 1;
             let fine = tps * self.world.fine_steps().max(1) as f32;
             let crater = (r.crater_secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
-            let b = Burst { at: (d.at.0 / sc, d.at.1 / sc), r: r.kill_r, kill: true, crater, crater_r: r.crater_r, ..Burst::default() };
+            let b = Burst { at: (d.at.0 / sc, d.at.1 / sc), r: r.kill_r, kill: true, crater, crater_r: r.crater_r, unlit: true, ..Burst::default() };
             self.killed += self.world.burst(&b, &BurstRules::default()).killed;
             let hit = r.kill_r * sc;
             for s in self.soldiers.iter_mut().filter(|s| s.alive && (s.x - d.at.0).hypot(s.y - d.at.1) <= hit) {

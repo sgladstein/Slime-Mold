@@ -226,6 +226,14 @@ pub struct Burst {
     /// crater (7) is wider than its kill (6).
     pub crater: u16,
     pub crater_r: f32,
+    /// **A crater that lights no plants** (11-24, Direction after the
+    /// balance review's planet 3 replay): a falling star's. Every other
+    /// crater lights the plants out to a cell past it at
+    /// `BigParams::fire_light_blast`; a star's did too, and on planet 3's
+    /// jungle that fire was what burned squads with no fire card (54 of 56
+    /// and 31 of 31 soldiers in two of its games): a reward shouldn't burn
+    /// the squad that goes to pick it up. The crater's other effects stay.
+    pub unlit: bool,
     /// Fine steps of sleep gas within `r` (0: none).
     pub gas: u16,
     /// Infects the walkers within `r`.
@@ -397,7 +405,7 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     if b.burn {
         d.ignite(b.at.0, b.at.1, b.r, d.p.fire_light_burn);
     }
-    if b.crater > 0 {
+    if b.crater > 0 && !b.unlit {
         d.ignite(b.at.0, b.at.1, b.crater_r + 1.0, d.p.fire_light_blast);
     }
     if b.light > 0.0 {

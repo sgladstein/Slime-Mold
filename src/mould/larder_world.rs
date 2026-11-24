@@ -77,6 +77,7 @@ mod cover;
 mod doors;
 mod bulwark;
 mod fireway;
+mod trample;
 mod gear;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
@@ -522,6 +523,10 @@ pub struct Game<W: World> {
     pub bitten_hp: f32,
     pub fell_burned: u32,
     pub fell_starfall: u32,
+    /// Seconds each soldier (by index) has held still, and the game seconds
+    /// since the ground was last trodden (`trample.rs`).
+    still: Vec<f32>,
+    trample_clock: f32,
     /// Each crystal's charge at the start and the charge the squad took
     /// from it, so the cap's share can tell the mould's eating from ours.
     start_charge: Vec<f32>,
@@ -758,6 +763,8 @@ impl<W: World> Game<W> {
             fell_bitten: 0,
             bitten_hp: 0.0,
             fell_burned: 0,
+            still: Vec::new(),
+            trample_clock: 0.0,
             fell_starfall: 0,
             start_charge,
             taken,
