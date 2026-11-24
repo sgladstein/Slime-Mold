@@ -430,14 +430,14 @@ fn demo(dir: &Path, name: &str, size: (u32, u32), ui: f32) -> Result<(), String>
     for w in belt.windows(2) {
         ed.begin();
         ed.stroke(Brush::Sand, w[0], w[1]);
-        shot(&ed, "2 sand: a belt the mould spreads over", Some(w[1]))?;
+        shot(&ed, "2 sand: a belt the slime spreads over", Some(w[1]))?;
     }
     // Clay pockets by each start, rock ridges, a wet hollow.
     ed.tool = Tool::Paint(Brush::Clay);
     ed.radius = 50.0;
     ed.begin();
     ed.stamp(Brush::Clay, (160.0, 110.0));
-    shot(&ed, "3 clay: holds the mould near its start", Some((160.0, 110.0)))?;
+    shot(&ed, "3 clay: holds the slime near its start", Some((160.0, 110.0)))?;
     ed.tool = Tool::Paint(Brush::Rock);
     ed.radius = 14.0;
     ed.begin();
@@ -464,7 +464,7 @@ fn demo(dir: &Path, name: &str, size: (u32, u32), ui: f32) -> Result<(), String>
     ed.tool = Tool::Mould;
     ed.begin();
     ed.click((175.0, 140.0));
-    shot(&ed, "M mould start: two, mirrored", Some((175.0, 140.0)))?;
+    shot(&ed, "M slime start: two, mirrored", Some((175.0, 140.0)))?;
     ed.tool = Tool::Landing;
     ed.begin();
     ed.click((512.0, 320.0));
