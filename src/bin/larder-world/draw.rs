@@ -2375,6 +2375,14 @@ impl App {
             ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
         ] };
         m.main_menu = self.base.is_some();
+        // Save and resume C (2026-11-24, Direction): the run is saved as it
+        // landed and a planet relands fresh, so the pause menu says what a
+        // quit keeps. Only where the run is saved (the window's run.txt).
+        m.pause_note = if self.args.run.is_some() && self.run_file.is_some() {
+            vec!["Quit mid-planet: you restart this planet".into(), "with your run intact.".into()]
+        } else {
+            Vec::new()
+        };
         m.loadout = Some(self.loadout(g, &sel));
         // A building selected takes the panel for its own state (option
         // b); a click on open ground, a tile's number or Space gives the
