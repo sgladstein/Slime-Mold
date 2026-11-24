@@ -168,6 +168,13 @@ from existing state (no Enemy hook): `strikers.live`, `waves.live`,
 `late`, `stand.live` (gather or not the origin), `bosses.live` by kind,
 `fruits.live`, a core drop, `GpuWorld::asleep` falling a fifth in a game
 second, `scarred`. `HINTS_LOG=1` prints each as it starts.
+#831 Look A (HUD side): what hurt a soldier, told in `step_notes`
+(`Hurt`: own Blast in `Rounds::pops`, `heat`, `touching`, other), shows
+1.2 s on its bar in `hurt_colour` as its own short bar (a mark replaces
+what is under it: no see-through backs), own blast shoves (`KNOCK`), the
+fallen alert names the killer. `LARDER_FORCE=stand@T;wave@T;lunge@T` in
+films. Then planet twists (Enemy's #830): `Intro::twist`, `Shop::twist`,
+`Model::twist` pill (`draw::twist_tell`), colour `ui::TWIST`.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
