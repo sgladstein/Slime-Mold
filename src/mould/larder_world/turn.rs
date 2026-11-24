@@ -491,6 +491,8 @@ impl<W: World> Game<W> {
         self.check_core();
         self.cap_heart();
         self.time_surges(out.units.iter().map(|u| u.took as f64).sum());
+        // Still soldiers tread a firebreak (`trample.rs`, 11-24).
+        self.costed("trample", |g| g.trample(dt));
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
             // The mass: the living walkers and what condensed strikers

@@ -1175,7 +1175,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0, light: 0.0, fuel: 0.0 };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, unlit: false, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0, light: 0.0, fuel: 0.0 };
     let mind = |m: u32| Burst { r: r.mind_r * f, mind: m as u8, ..none };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
