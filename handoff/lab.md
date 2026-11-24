@@ -168,4 +168,9 @@ A second slime species that fights the first; the player's own mould
   page "Napping Swarmer". Engine keys only (`raw/nap.txt` on `run=1:4`).
   It sleeps until shot, charges, sleeps it off; the report lists the trait
   keys that fight. Recommendation: planet 8 as this pairing, Enemy tunes.
+- 2026-11-24: **lap two's seven pairings, planets 9 to 15** (brief from
+  Direction 06:53Z, for the run-length card). Report
+  [`Reports/lab-lap-two-2026-11-24/`](../Reports/lab-lap-two-2026-11-24/README.md),
+  page "Lap Two Pairings". Keys only (`raw/pairs.txt`); each smoke-tested
+  2:00 alone and paired; the seven are a first draft for Enemy.
 - Next step: none. Wait for Direction's next brief.

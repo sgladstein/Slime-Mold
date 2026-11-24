@@ -6,6 +6,7 @@ updated: 2026-11-24
 sources:
   - Reports/first-reach-2026-11-11.md
   - Reports/gun-route-2026-11-17/README.md
+  - Reports/lab-lap-two-2026-11-24/README.md
   - Reports/lab-pairing-2026-11-24/README.md
   - Reports/lab-scar-tissue-2026-11-24/README.md
   - Reports/lab-sleeper-2026-11-24/README.md
@@ -110,6 +111,7 @@ nothing, and only a wipe ends it.
 - The Grudge's scar tissue (lab, 11-24, its branch only): a hit on a walker standing on its scar shrugs off with chance up to 0.5 to 0.75, full at a scar of 2,000, so where it was hurt it grows back tough; on planet 7 seed 1 a holding squad killed 2,600 against 8,837 by 0:58 and the run bot kept 21 or 4 soldiers at 2:00 against 30. Recommended as the Grudge's thing; Direction places it ([scar tissue](../../Reports/lab-scar-tissue-2026-11-24/README.md)).
 - The Sleeper grows in its sleep (lab, 11-24, its branch only): a sleeping walker buds a sleeping child with chance P a step, off the crystals' scent and under the ceiling, so farming before it wakes is no longer free; on planet 6 seed 1 the sleeping slime at 2:00 was 162,813 walkers at P 0.003 against 115,022 off, and 16 soldiers woken into it then were wiped within a minute while off's stood. Recommended as the Sleeper's thing; Direction places it ([it grows in its sleep](../../Reports/lab-sleeper-2026-11-24/README.md)).
 - A pairing for planet 8 (lab, 11-24, engine keys only): the Swarmer with the Sleeper's life cycle sleeps until shot, charges, and sleeps it off in waves; a pair is both tiers' settings, and the trait keys that fight are listed in the report (sleepers don't move in surges or the last stand; one alarm field, one life-cycle timer, one scar, one walk). Recommended as planet 8's thing; Direction places it ([the Swarmer that naps](../../Reports/lab-pairing-2026-11-24/README.md)).
+- Lap two's draft (lab, 11-24, keys only): planets 9 to 15 each pair their tier with a second trait that does not fight it (Drifter + spore bursts, Sprawler + pump smell, Trunk + naps, Swarmer + scar, Sporer + the Swarmer's charge, Sleeper + pump smell, Grudge + the Trunk's setting), each smoke-tested 2:00 alone and paired ([lap two](../../Reports/lab-lap-two-2026-11-24/README.md)).
 - The Trunk's veins (lab, 11-19): its body is packed a walker a cell, so rules on walker motion (deposit by flow, aligning to it) drew no veins inside it and only made the cords bolder; the flow that moves inside a packed body is the shared food, not yet drawn ([Trunk veins](../../Reports/lab-veins-2026-11-19/README.md)).
 
 ## Sources
@@ -125,4 +127,5 @@ nothing, and only a wipe ends it.
 - [Grudge scar tissue](../../Reports/lab-scar-tissue-2026-11-24/README.md): scarred slime that shrugs off hits, planet 7.
 - [Sleeper dreams](../../Reports/lab-sleeper-2026-11-24/README.md): a sleeping slime that grows while you farm, planet 6.
 - [Napping Swarmer](../../Reports/lab-pairing-2026-11-24/README.md): a lap-two pairing for planet 8 and the trait keys that fight.
+- [Lap two pairings](../../Reports/lab-lap-two-2026-11-24/README.md): seven pairings for planets 9 to 15, smoke-tested.
 - [Sprawler threads](../../Reports/lab-threads-2026-11-24/README.md): lanes and a shuttle open the Sprawler's packed body into spokes, at the same walker count.
