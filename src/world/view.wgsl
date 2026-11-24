@@ -1831,7 +1831,7 @@ const LUMP_SKIN_BONE: vec3<f32> = vec3<f32>(140.0, 134.0, 152.0);
 const LUMP_SKIN_FRUIT: vec3<f32> = vec3<f32>(62.0, 34.0, 16.0);
 const LUMP_SKIN_MORTAR: vec3<f32> = vec3<f32>(34.0, 58.0, 18.0);
 const LUMP_SKIN_PINWHEEL: vec3<f32> = vec3<f32>(26.0, 44.0, 120.0);
-const LUMP_SKIN_HEART: vec3<f32> = vec3<f32>(110.0, 48.0, 4.0);
+const LUMP_SKIN_HEART: vec3<f32> = vec3<f32>(44.0, 12.0, 8.0);
 const LUMP_CORE_EMBER: vec3<f32> = vec3<f32>(255.0, 120.0, 60.0);
 const LUMP_CORE_VIOLET: vec3<f32> = vec3<f32>(220.0, 150.0, 255.0);
 const LUMP_CORE_INK: vec3<f32> = vec3<f32>(200.0, 180.0, 255.0);
@@ -1839,7 +1839,7 @@ const LUMP_CORE_BONE: vec3<f32> = vec3<f32>(120.0, 90.0, 74.0);
 const LUMP_CORE_FRUIT: vec3<f32> = vec3<f32>(255.0, 220.0, 150.0);
 const LUMP_CORE_MORTAR: vec3<f32> = vec3<f32>(196.0, 245.0, 70.0);
 const LUMP_CORE_PINWHEEL: vec3<f32> = vec3<f32>(150.0, 205.0, 255.0);
-const LUMP_CORE_HEART: vec3<f32> = vec3<f32>(255.0, 196.0, 80.0);
+const LUMP_CORE_HEART: vec3<f32> = vec3<f32>(255.0, 120.0, 30.0);
 
 // Each look's skin (the body's albedo), core light (emissive, where its
 // members are thickest) and hit colour (a member's dot as it takes hits).
@@ -1872,9 +1872,15 @@ fn lump_skin(k: u32) -> vec3<f32> {
         // The pinwheel (2026-11-20, the Enemy lane): cobalt, the one blue
         // on the slime, so its turning arms read against the gold.
         case 7u: { return LUMP_SKIN_PINWHEEL; }
-        // The last-stand heart (2026-11-20, the Enemy lane, `stand.rs`):
-        // the slime's own gold run dark, so it reads as the slime's heart,
-        // not a mini-boss (none of their skins is gold).
+        // The heart (the origin, and the last stand): a near-black
+        // oxblood crust (Look and interface, 11-24; it was (110, 48, 4),
+        // the slime's gold run dark, until the origin made it the thing to
+        // kill on every planet: thin on its crystal it read as a brown
+        // smear, mud or a burn). Its hot orange core shows through where
+        // its members pack (`HEART_HOT`). Tried the same day: a lighter
+        // crust (64, 20, 6) lit from 0.15 members a cell, a flat salmon
+        // wash over the gold; a gold core, a pale straw disc like the
+        // fruit's cream.
         case 8u: { return LUMP_SKIN_HEART; }
         default: { return MOULD_HUE; }
     }
@@ -1894,7 +1900,7 @@ fn lump_core(k: u32) -> vec3<f32> {
         case 6u: { return LUMP_CORE_MORTAR; }
         // The pinwheel's ice-blue core.
         case 7u: { return LUMP_CORE_PINWHEEL; }
-        // The heart's hot amber core.
+        // The heart's hot orange core (255, 196, 80 to 11-24).
         case 8u: { return LUMP_CORE_HEART; }
         default: { return vec3<f32>(0.0); }
     }
@@ -1945,6 +1951,16 @@ const LUMP_OWN: vec2<f32> = vec2<f32>(0.2, 0.8);
 // 1.3) in round 1, for a loose 0.5-a-cell body; raised with the clench,
 // so a held body glows where it packs and a lunge's clench lights it).
 const LUMP_HOT: vec2<f32> = vec2<f32>(0.65, 1.5);
+// The heart's (`LumpLook::Heart`: the origin, and the last stand) core
+// lights at its own looser packing, and burns brighter (`HEART_LIGHT`, over
+// `LUMP_CORE`'s 0.4). Look and interface, 2026-11-24 (Milestone 2, the
+// origin): an origin of 700 holds its crystal at about 0.3 to 0.9 members
+// a cell, under `LUMP_HOT`, so it showed no light at all, only its skin.
+// Now its crust lights from inside where its members pack, a hot disc on
+// its crystal while it is whole and embers through the crust as it
+// spreads or is cut down (`strength`, its members over the most it held).
+const HEART_HOT: vec2<f32> = vec2<f32>(0.45, 1.6);
+const HEART_LIGHT: f32 = 0.7;
 // A member's energy at which its dot burns full, and how much of its core
 // colour the dot lays over the body at full energy.
 const LUMP_FULL: f32 = 1.5;
@@ -2006,7 +2022,8 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     // rig and on the crystal, and only a glow round them showed it there.
     // So a full one reads as worth breaking (its take goes back to the
     // bank).
-    l.core = l.share * (smoothstep(LUMP_HOT.x, LUMP_HOT.y, wide) * (0.6 + 0.4 * l.strength) + LUMP_DRINK * l.fill) * rem;
+    let hot = select(LUMP_HOT, HEART_HOT, l.look == 8u);
+    l.core = l.share * (smoothstep(hot.x, hot.y, wide) * (0.6 + 0.4 * l.strength) + LUMP_DRINK * l.fill) * rem;
     l.rise = LUMP_RISE * l.share * l.cover * l.cover * (0.7 + 0.3 * l.strength);
     // A fruit (2026-11-20) packs three and four members a cell over a
     // span of 30 cells and more: at the full rise its edge was a cliff
@@ -2047,6 +2064,7 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
         sk *= mix(1.35, 0.8, smoothstep(0.6, 3.2, l.dens));
         core *= 0.2;
     }
+    if (l.look == 8u) { core = HEART_LIGHT; }
     let skin = sk * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
     m.albedo = mix(m.albedo, skin, s);
     m.gloss = mix(m.gloss, min(LUMP_GLOSS + 0.1 * rim, 1.0), s);

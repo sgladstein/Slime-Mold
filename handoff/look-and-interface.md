@@ -9,9 +9,28 @@ model and HUD parts of `draw.rs`) and the review of the 4K render-scale
 slider PR; the first takes the world (`view.wgsl`'s world passes, the
 marks). Polish review (https://claude.ai/artifact/7STCLzcjcjSz95TkKJYLfu):
 this thread owns findings 6 to 11 and 15; 13 (Starfall's bloom) is
-Squad's. Done: the heart's alerts in `main.rs` (`origin_told`: formed,
-gathering, broken, each pinging its place) and the end card's lead when
-the heart broke (`lead`).
+Squad's. Done (#746): the heart's alerts in `main.rs` (`origin_told`:
+formed, gathering, broken, each pinging its place); the end card's lead
+when the heart broke (`lead`); the bottom bar (finding 6: `keycap`, the
+empty gun's well, the Loadout button `LOADOUT_SWAP`, "N idle", hyphenated
+names cut without the dash, capitalised squad facts via `upper_first`);
+the name (`world::GAME_NAME` "Plasmodia", the main page's `wordmark` in
+`start.rs`; binaries, `play.cmd` and the settings folder keep the old
+name); the end card's graph as an area and a step line (finding 15,
+`end_curve`); the words on screen to `news/words.txt` (finding 10).
+Next: the command card (finding 7: Back always at (1, 5), new icons for
+Mine, Sleep gas and the Lure), the shop (8), Options and Keys (11).
+
+**11-24, Milestone 2 (Direction 03:13Z), job 1, the origin:** its heart
+look (`LumpLook::Heart`, also the last stand) is a near-black oxblood crust
+(`LUMP_SKIN_HEART` 44, 12, 8) with a hot orange core lit from 0.45 members
+a cell (`HEART_HOT`, `HEART_LIGHT` 0.7); before, at 700 members on its
+crystal it showed no light and read as a brown smear. The goal line in
+squad mode is `origin_line` in `draw.rs` (members of the most, the floor,
+then the die-back's seconds); the mission's sentence says the heart. Still:
+`Reports/pr-stills/origin-look-2026-11-24.png`. Job 2 (test 5, 4K) belongs
+to the "Hit 60 fps on the 4K screen" thread: review its PR. Then Look B to
+D from his play notes.
 
 **11-22, Milestone 1 test 6 (Direction 03:15Z):** the game's pages
 stilled on lavapipe (`menu=news|news-try|options-experiments`). The long

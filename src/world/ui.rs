@@ -665,6 +665,11 @@ pub struct Model {
     /// The game has a start menu: the menu and the end screen offer "Main
     /// menu" (`MenuItem::MainMenu`).
     pub main_menu: bool,
+    /// Lines the pause menu shows under "Esc to resume": in a roguelike
+    /// run, what quitting mid-planet keeps (Milestone 2's save and resume,
+    /// step C, 2026-11-24: the run is saved as it landed, the planet is
+    /// not, so it relands fresh).
+    pub pause_note: Vec<String>,
     /// The end screen's first button carries on (`MenuItem::Continue`)
     /// under this label, instead of "Play again" (a roguelike run: the
     /// shop, or the run's end).
@@ -2930,11 +2935,15 @@ impl Hud {
                     items.push(("Main menu".into(), Hit::Menu(MenuItem::MainMenu), false));
                 }
                 items.push(("Quit".into(), Hit::Menu(MenuItem::Quit), false));
-                let h = 84.0 * s + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
+                let note = m.pause_note.len() as f32 * 18.0 * s;
+                let h = 84.0 * s + note + if note > 0.0 { 8.0 * s } else { 0.0 } + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
                 let r = self.modal(w, h, c, s);
                 c.text(Weight::SemiBold, 22.0 * s, (r.x + w / 2.0, r.y + 44.0 * s), Align::Centre, "Paused", TEXT);
                 c.text(Weight::Medium, 14.0 * s, (r.x + w / 2.0, r.y + 65.0 * s), Align::Centre, "Esc to resume", MUTED);
-                let mut y = r.y + 84.0 * s;
+                for (k, l) in m.pause_note.iter().enumerate() {
+                    c.text_fit(Weight::Medium, 13.0 * s, (r.x + w / 2.0, r.y + 86.0 * s + k as f32 * 18.0 * s), Align::Centre, l, w - 32.0 * s, MUTED);
+                }
+                let mut y = r.y + 84.0 * s + note + if note > 0.0 { 8.0 * s } else { 0.0 };
                 for (label, hit, primary) in items {
                     let b = Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh);
                     self.wide_button(b, &label, hit, primary, c, s);
@@ -3373,6 +3382,10 @@ pub fn key_name(k: KeyCode) -> Option<String> {
         KeyZ => "Z",
         Tab => "Tab",
         Backquote => "`",
+        // The squad's spread keys (2026-11-23); without them the key card
+        // read ", " for "[, ]" (polish review, 2026-11-24).
+        BracketLeft => "[",
+        BracketRight => "]",
         Space => "Space",
         Delete => "Del",
         _ => return None,
@@ -4148,6 +4161,24 @@ mod tests {
                 assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::MainMenu)]);
             }
         }
+    }
+
+    #[test]
+    fn the_pause_note_sits_above_the_buttons() {
+        // Save and resume C (2026-11-24): the run's pause menu says what a
+        // quit keeps; the note pushes the buttons down, never under them.
+        let resume_top = |note: Vec<String>| {
+            let mut r = Rig::new((1280, 720));
+            r.m.pause_note = note;
+            r.key(KeyCode::Escape);
+            r.draw();
+            r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::Resume)).map(|(b, _)| b.y).unwrap()
+        };
+        let plain = resume_top(Vec::new());
+        let noted = resume_top(vec!["Quit mid-planet: you restart this planet".into(), "with your run intact.".into()]);
+        // The modal stays centred, so the buttons move down by half the
+        // note's two lines and gap (22 points at this scale's 0.7).
+        assert!(noted >= plain + 15.0, "{plain} then {noted}");
     }
 
     fn two_experiments() -> Vec<Experiment> {
