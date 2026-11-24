@@ -3468,7 +3468,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let seam_g = 1.0 - smoothstep(0.0, 1.0, abs(dpx - GEM_GIRDLE * a * P.zoom));
             let seam_t = 1.0 - smoothstep(0.0, 1.0, abs(dpx - GEM_TABLE * a * P.zoom));
             let seam_s = (1.0 - smoothstep(0.0, 1.0, abs(along) * P.zoom)) * (1.0 - w_bevel) * (1.0 - w_table);
-            let seam = max(max(seam_g, seam_t), seam_s) * smoothstep(3.5, 5.0, P.zoom);
+            let seam = max(max(seam_g, seam_t), seam_s) * smoothstep(3.5, 5.0, P.look_zoom);
             // Fracture planes inside the glass (`GEM_VEINS`), seen through
             // the table and the crown as hairlines of light, by the charge.
             // Each a short plane seen edge on: a segment from a point in the
