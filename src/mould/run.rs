@@ -429,12 +429,11 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// counted on the GPU (`pilesum`) so the surge clock (`time_surges`) runs
 /// as before.
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
-    let i = depth_index(depth);
     vec![
-        ("surge", LONGEST_WAIT[i].to_string()),
-        ("surge_dash", SURGE_DASH[i].to_string()),
-        ("roam", ROAM[i].to_string()),
-        ("roam_share", format!("{}", ROAM_SHARE[i])),
+        ("surge", ((on_curve_u(&LONGEST_WAIT, depth) as f32 * STRETCH).round() as u32).to_string()),
+        ("surge_dash", on_curve_u(&SURGE_DASH, depth).to_string()),
+        ("roam", on_curve_u(&ROAM, depth).to_string()),
+        ("roam_share", format!("{}", on_curve(&ROAM_SHARE, depth))),
         ("far_smell", "1".to_string()),
         ("lure_pull", format!("{LURE_PULL}")),
         ("tether", format!("{TETHER}")),
@@ -586,11 +585,56 @@ pub fn first_planet(rule: &str) -> u32 {
 /// `ENEMY_RULES` on planet `depth`: each at its value from its planet
 /// (`FIRST_PLANET`), 0 (off) before it.
 pub fn enemy_rules(depth: u32) -> impl Iterator<Item = (&'static str, f32)> {
-    ENEMY_RULES.iter().map(move |&(k, v)| (k, if depth.max(1) >= first_planet(k) { v } else { 0.0 }))
+    ENEMY_RULES.iter().map(move |&(k, v)| (k, if curve_depth(depth) >= first_planet(k) as f32 { v } else { 0.0 }))
 }
 
-fn depth_index(depth: u32) -> usize {
-    (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
+/// **The run's two length dials** (2026-11-24, Direction's ask after the
+/// owner's answer that day, 03:14Z: "It should be longer, at least 2
+/// hours, but we can also double the number of planets. We also don't
+/// need to decide exactly now"). `PLANETS` is how many planets a run has;
+/// the per-planet tables below hold eight values, tuned on eight planets,
+/// and a run of another length spreads its planets over the same curve
+/// (`curve_depth`, `on_curve`), so planet 1 and the last keep the first
+/// and last values. `STRETCH` makes each planet longer: the clocks the
+/// slime's threats keep from the landing (raids, surges, mini-bosses)
+/// and the planet's star and far limit (`par`, `limit`) all run that many
+/// times as long. At 8 planets and a stretch of 1 every number is as it
+/// was (the test `the_length_dials_change_nothing_at_eight_planets`).
+pub const STRETCH: f32 = 1.0;
+
+/// Planet `depth` as a place on the eight-planet curve the tables were
+/// tuned on: 1 to 8 at `PLANETS` 8, the same span for any other count.
+pub fn curve_depth(depth: u32) -> f32 {
+    curve_depth_of(depth, PLANETS)
+}
+
+fn curve_depth_of(depth: u32, planets: u32) -> f32 {
+    if planets <= 1 {
+        return 1.0;
+    }
+    let d = depth.clamp(1, planets);
+    1.0 + (d - 1) as f32 * 7.0 / (planets - 1) as f32
+}
+
+/// A table's value at planet `depth`, read off its eight values between
+/// the two nearest (exactly the value at a whole place on the curve).
+fn on_curve(table: &[f32; 8], depth: u32) -> f32 {
+    curve_at(table, curve_depth(depth))
+}
+
+fn curve_at(table: &[f32; 8], e: f32) -> f32 {
+    let x = (e - 1.0).clamp(0.0, 7.0);
+    let i = x.floor() as usize;
+    let f = x - i as f32;
+    if f == 0.0 {
+        table[i]
+    } else {
+        table[i] + (table[i + 1] - table[i]) * f
+    }
+}
+
+fn on_curve_u(table: &[u32; 8], depth: u32) -> u32 {
+    on_curve(&table.map(|v| v as f32), depth).round() as u32
 }
 
 /// The food a planet's slime eats to build a surge (`Rules::surge_food`):
@@ -598,13 +642,13 @@ fn depth_index(depth: u32) -> usize {
 /// as the slime's slots are), since a bigger slime on a bigger planet
 /// eats more and would otherwise surge at the floor all game.
 pub fn surge_food(depth: u32, walkers: f32) -> f32 {
-    SURGE_FOOD_SHARE[depth_index(depth)] * crate::mould::larder_world::SURGE_FOOD * walkers.max(0.1)
+    on_curve(&SURGE_FOOD_SHARE, depth) * crate::mould::larder_world::SURGE_FOOD * walkers.max(0.1)
 }
 
 /// A planet's longest wait between surges in game seconds (`enemy_keys`),
 /// for the shop.
 pub fn surge_secs(depth: u32) -> f32 {
-    LONGEST_WAIT[depth_index(depth)] as f32 / 30.0
+    on_curve_u(&LONGEST_WAIT, depth) as f32 * STRETCH / 30.0
 }
 
 /// What a tier does to you: one thing each rung of `LADDER` does to the
@@ -1259,7 +1303,7 @@ impl Run {
             // the slime is very deadly (owner, 11-12).
             // The clock counts up to the speed star (`par`); only a
             // stalemate meets the far limit (`limit`).
-            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), limit(area_of(&planet))), ("par".into(), par(d, area_of(&planet)))],
+            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), limit(area_of(&planet)) * STRETCH), ("par".into(), par(d, area_of(&planet)) * STRETCH)],
             own: false,
         };
         // Walkers scale with the planet's area too (the level-gen thread,
@@ -1278,7 +1322,10 @@ impl Run {
             // Mini-bosses (2026-11-16, `larder_world/bosses.rs`): their
             // chance rises with the planet (owner, 04:58Z: "Chance increases
             // with progression into the run"); a tier's own rules after.
-            r.boss = crate::mould::larder_world::BossRules::for_depth(self.depth);
+            r.boss = crate::mould::larder_world::BossRules::for_curve(curve_depth(self.depth));
+            r.boss.every *= STRETCH;
+            r.boss.every_sd *= STRETCH;
+            r.boss.first *= STRETCH;
             // What every planet's slime does from its planet on
             // (`ENEMY_RULES`, `FIRST_PLANET`).
             for (k, v) in enemy_rules(self.depth) {
@@ -1288,20 +1335,21 @@ impl Run {
             // not the share, binds wherever the band is big (planet 1 run
             // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
-            r.origin.size = ORIGIN_SIZE[depth_index(self.depth)];
-            r.ceiling_grow = CEILING_GROW[depth_index(self.depth)];
-            r.raid.gap_min = RAID_GAP_MIN[depth_index(self.depth)];
-            r.strikers.army_most = STRIKER_ARMY[depth_index(self.depth)];
-            r.soldier_step = SOLDIER_STEP[depth_index(self.depth)];
-            let i = depth_index(self.depth);
+            let at = |t: &[f32; 8]| on_curve(t, self.depth);
+            r.origin.size = at(&ORIGIN_SIZE);
+            r.ceiling_grow = at(&CEILING_GROW);
+            r.raid.gap_min = at(&RAID_GAP_MIN) * STRETCH;
+            r.strikers.army_most = at(&STRIKER_ARMY);
+            r.soldier_step = at(&SOLDIER_STEP);
             let d = crate::mould::larder_world::RaidRules::default();
-            r.raid.first = RAID_FIRST[i];
-            r.raid.first_sd = d.first_sd * RAID_FIRST[i] / d.first;
-            r.raid.every = RAID_EVERY[i];
-            r.raid.every_sd = d.every_sd * RAID_EVERY[i] / d.every;
-            r.drain = DRAIN[i];
-            r.raid.march_armour = RAID_ARMOUR[i];
-            let k = STRIKER_SHARE[depth_index(self.depth)];
+            let (first, every) = (at(&RAID_FIRST) * STRETCH, at(&RAID_EVERY) * STRETCH);
+            r.raid.first = first;
+            r.raid.first_sd = d.first_sd * first / d.first;
+            r.raid.every = every;
+            r.raid.every_sd = d.every_sd * every / d.every;
+            r.drain = at(&DRAIN);
+            r.raid.march_armour = on_curve_u(&RAID_ARMOUR, self.depth);
+            let k = at(&STRIKER_SHARE);
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
             for &(k, v) in does_to_you(self.level().tier).rules {
@@ -2213,6 +2261,38 @@ mod tests {
     /// strikers, waves, late lunge or last-stand heart; each joins on its
     /// planet and stays on deeper; every scheduled rule is one of
     /// `ENEMY_RULES` and every rule plays by planet 4.
+    /// **The length dials change nothing at eight planets** (2026-11-24,
+    /// Direction's ask): with `PLANETS` 8 and `STRETCH` 1 every table reads
+    /// its own value on its own planet, the mini-bosses are `for_depth`'s,
+    /// and each late threat starts on its `FIRST_PLANET`. With sixteen
+    /// planets the same curve spreads: planet 1 and 16 read the first and
+    /// last values, and the places between rise in order.
+    #[test]
+    fn the_length_dials_change_nothing_at_eight_planets() {
+        assert_eq!((PLANETS, STRETCH), (8, 1.0), "the dials as tuned");
+        let f32s: [&[f32; 8]; 11] = [&SURGE_FOOD_SHARE, &ORIGIN_SIZE, &STRIKER_SHARE, &CEILING_GROW, &RAID_GAP_MIN, &STRIKER_ARMY, &SOLDIER_STEP, &RAID_FIRST, &RAID_EVERY, &DRAIN, &ROAM_SHARE];
+        let u32s: [&[u32; 8]; 4] = [&LONGEST_WAIT, &RAID_ARMOUR, &SURGE_DASH, &ROAM];
+        for d in 1..=PLANETS {
+            assert_eq!(curve_depth(d), d as f32);
+            for t in f32s {
+                assert_eq!(on_curve(t, d).to_bits(), t[d as usize - 1].to_bits(), "planet {d}: {t:?}");
+            }
+            for t in u32s {
+                assert_eq!(on_curve_u(t, d), t[d as usize - 1], "planet {d}: {t:?}");
+            }
+            assert_eq!(crate::mould::larder_world::BossRules::for_curve(curve_depth(d)), crate::mould::larder_world::BossRules::for_depth(d));
+            for (k, v) in enemy_rules(d) {
+                assert_eq!(v != 0.0, d >= first_planet(k) && ENEMY_RULES.iter().any(|&(n, w)| n == k && w != 0.0), "{k} on planet {d}");
+            }
+        }
+        // Sixteen planets: the same span, in order.
+        let e: Vec<f32> = (1..=16).map(|d| curve_depth_of(d, 16)).collect();
+        assert_eq!((e[0], e[15]), (1.0, 8.0));
+        assert!(e.windows(2).all(|w| w[1] > w[0]), "{e:?}");
+        let mid = curve_at(&ORIGIN_SIZE, e[9]);
+        assert!(ORIGIN_SIZE[4] < mid && mid < ORIGIN_SIZE[5], "planet 10 of 16 between planets 5 and 6 of 8: {mid}");
+    }
+
     #[test]
     fn late_threats_wait_for_their_planet() {
         for &(k, d) in FIRST_PLANET {
@@ -2229,7 +2309,7 @@ mod tests {
         // The slime's room to regrow reaches every planet's rules, at least
         // its landing (under 1 a slime would start over its ceiling).
         for d in 1..=8 {
-            assert_eq!(rules(d).ceiling_grow, CEILING_GROW[depth_index(d)], "planet {d}'s ceiling_grow");
+            assert_eq!(rules(d).ceiling_grow, CEILING_GROW[d as usize - 1], "planet {d}'s ceiling_grow");
         }
         assert!(CEILING_GROW.iter().all(|&g| g >= 1.0), "a growth under 1 starves the slime at landing");
         // Planet 1 keeps its numbers; planets 2 on are harder (11-22).

@@ -163,6 +163,10 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
 
+## The run's length: two dials
+
+Built 2026-11-24 (Direction's ask, after the owner's answer that day, 03:14Z: "It should be longer, at least 2 hours, but we can also double the number of planets. We also don't need to decide exactly now"). `run::PLANETS` is how many planets a run has; the per-planet tables in `run.rs` keep their eight values, tuned on eight planets, and a run of another length spreads its planets over the same curve (`run::curve_depth`, `on_curve`: planet 1 and the last read the first and last values, the ones between are read between the two nearest; `BossRules::for_curve` and `FIRST_PLANET` take the same place). `run::STRETCH` makes each planet longer: the raids' first time, gap and floor, the surges' longest wait, the mini-bosses' timing, and the planet's star (`par`) and far limit (`limit`) all run that many times as long. Both stand at 8 and 1, where every number is as before (`the_length_dials_change_nothing_at_eight_planets`). Past the seventh planet the ladder already picks one of the last three tiers at random. Not built: tiers that repeat stronger each lap, and longer planets' slime sizes.
+
 ## Which planet brings which threat
 
 Since 2026-11-20 night (the owner, 23:32Z, after a planet 1 on a good map: "We don't need all these mini-bosses, strikers, etc. in planet one. We should save some thing for later planets", and the strikers "still fucked my shit up (on planet 1)"; `run::FIRST_PLANET`, `run::enemy_rules`). Every rule of `ENEMY_RULES` stays on in the game but waits for its planet, so each planet brings something new:
