@@ -48,6 +48,15 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, unreachable build sites (pathfinding thread).** #832 (build
+variety) and #839 merged. #839: `build_blocked` refuses a site no soldier
+can walk to, "no way to walk there" (`Game::walled_off`, a flood capped at
+`POCKET` 8,000 dish cells). Engine's planet 7 repro: the bot's pump crystal
+sat in a pocket sealed by rock; off its walking map a soldier heads
+straight on (`steer::want`), so the squad stood against the rock. Open: a
+soldier off the map of a reachable goal still heads straight on; #834's
+bot call-off covers the bot. Next: whatever Direction sends.
+
 **2026-11-24, build variety (pathfinding thread).** #819 (fused shots)
 merged. Direction 18:37Z (test 2, replay variety): combos that should be
 strong together but no rule linked. Built three, no card stronger alone:
