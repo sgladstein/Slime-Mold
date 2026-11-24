@@ -63,6 +63,14 @@ Then finding 10's tail: the landing toast is the planet's name only
 drained crystal reads "drained dry". The HUD side of the polish review
 is done; next is whatever Direction sends (the Enemy lane offered a
 surge uniform for the Swarmer's look: that is the world thread's).
+Then Look D, the run's screens (Direction 06:54Z: build the strip, the
+end summary, the resumed run's line; play time on both; name each
+planet's slime on hover): `start::RunView`/`RunStop` and `run_strip`,
+built by `menu::run_view` from the `Run`; the shop's top bar and the
+main page's Run row draw it, an ended run's row lists each planet
+(`run_rows`), and `App::run_mid` caches whether the planet is saved
+mid-game ("under way"). Play time is Engine's `Run::played` (#768).
+Films: `menu=main-run|main-won|main-lost`. Next: whatever Direction sends.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
