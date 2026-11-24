@@ -1448,11 +1448,49 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
         let carry: f32 = members.iter().map(|&k| g.soldiers[k].carry).sum();
         let homing = members.iter().filter(|&&k| g.soldiers[k].homing).count();
         let dry = members.iter().filter(|&&k| g.soldiers[k].dry).count();
-        eprintln!("DBG t {t:.0} m ({:.0},{:.0}) pick {pick:?} work {work:?} left {left:?} barren {barren:?} held {held:?} broke {broke} siege {siege} strong {strong} home_ok {home_ok} home_mass {home_mass} order {:?} carry {carry:.1} homing {homing} dry {dry}", m.0, m.1, k0.map(|k| g.soldiers[k].order));
+        eprintln!("DBG t {t:.0} m ({:.0},{:.0}) pick {pick:?} work {work:?} left {left:?} barren {barren:?} held {held:?} broke {broke} siege {siege} strong {strong} home_ok {home_ok} home_mass {home_mass} order {:?} carry {carry:.1} homing {homing} dry {dry} origin {:?}", m.0, m.1, k0.map(|k| g.soldiers[k].order), g.stand.live.filter(|h| h.origin).map(|h| (h.members, h.most)));
         for (c, &(at, val)) in cs.iter().enumerate() {
             let r = g.world.crystal_r(c) + range;
             eprintln!("DBG   c{c} at ({:.0},{:.0}) val {val:.0} mass {} walkers {} pump {:?} d {:.0}", at.0, at.1, sense.mass_near(at, r), g.world.walkers_in(at, r), g.pump_on(c), dist(at, m));
         }
+    }
+    let stand_for = |a: (f32, f32)| {
+        let d = dist(a, m).max(1.0);
+        (a.0 - (a.0 - m.0) / d * 0.7 * range, a.1 - (a.1 - m.1) / d * 0.7 * range)
+    };
+    // The origin's siege (2026-11-22, Direction: "When the origin exists,
+    // siege goes for it, and drains its crystal when it can reach it"):
+    // with the origin on (`origin.rs`, the slime's heart on the home
+    // crystal, whose break wins the planet), a run bot that clears every
+    // other crystal and then shoots only the thin slime away from home
+    // never wins, since the origin regrows from its crystal (run seed 1,
+    // lavapipe, 11-22: planet 2 lost at 7:38). So once every crystal but
+    // the home is dry or barren it goes for the origin, whatever the bank
+    // and the harvest: it drains the home crystal while the home holds
+    // under `per` walkers a soldier (draining stops the
+    // origin's regrowth), else it takes a stand within range of the
+    // origin's middle and shoots into it. First try: draining at `siege`
+    // times (3) walked 52 soldiers into a home of 12,700 walkers round an
+    // origin of 2,200 and lost them all in 35 s (run seed 1 planet 2,
+    // lavapipe), so it drains only at `per` a soldier, as `home_ok`.
+    let origin = g.stand.live.filter(|h| h.origin && g.origin.fell.is_none());
+    let rest_dry = (1..cs.len()).all(|c| cs[c].1 <= DRY || barren.contains(&c));
+    if let Some(h) = origin.filter(|_| p.siege > 0.0 && rest_dry && !mopping) {
+        if cs[0].1 > DRY && home_ok {
+            let o = Order::Clear(cs[0].0 .0, cs[0].0 .1);
+            if fresh(g, o) {
+                g.apply(Cmd::SquadOrder(q as u8, o));
+            }
+            return;
+        }
+        // As the hunt: a new stand only when out of range or blocked, or
+        // when the squad was doing something else.
+        let fighting = members.iter().all(|&k| matches!(g.soldiers[k].order, Order::Fight(..)));
+        if !fighting || dist(h.centre, m) > 0.8 * range || !sense.clear(g, m, h.centre) {
+            let st = stand_for(h.centre);
+            g.apply(Cmd::SquadOrder(q as u8, Order::Fight(st.0, st.1)));
+        }
+        return;
     }
     if let Some(c) = work.filter(|&c| c > 0 || home_ok) {
         let at = cs[c].0;
@@ -1464,10 +1502,6 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     }
     // Hunt: from a stand with a clear line to one of the heaviest squares;
     // the home's slime only once it is thin enough to walk into.
-    let stand_for = |a: (f32, f32)| {
-        let d = dist(a, m).max(1.0);
-        (a.0 - (a.0 - m.0) / d * 0.7 * range, a.1 - (a.1 - m.1) / d * 0.7 * range)
-    };
     let by_home = |a: (f32, f32)| dist(a, cs[0].0) <= g.world.crystal_r(0) + range;
     let ranked = sense.ranked(m, range);
     // Not back into its own fire (`cool`).
