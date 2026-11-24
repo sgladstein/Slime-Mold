@@ -539,7 +539,8 @@ fn glance_of(seed: u64, depth: u32) -> Glance {
         return g;
     }
     let m = slime_mould::mould::levelgen::level(seed, depth);
-    let g = glance_from(&m, 64);
+    // 96 across (64 until 11-24; the pane blends between cells too).
+    let g = glance_from(&m, 96);
     LAST.with(|l| *l.borrow_mut() = Some(((seed, depth), g.clone())));
     g
 }
