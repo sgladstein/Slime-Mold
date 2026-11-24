@@ -417,6 +417,19 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                         Pick::CarryBody(i) => r.bodies.get(i).map(|b| (b, None)),
                         _ => None,
                     };
+                    // A body's autocast switch reads as a switch, lit when
+                    // on: as its tool's unlock (level 1 of 1) it wore the
+                    // owned tick beside "autocast: off" (Look, 11-24).
+                    // A relic's line opened "A relic, rare: For the rest of
+                    // the run" (Look, 11-24): the tab says Relics, the card
+                    // says what it does, rare last.
+                    if row.group == Group::Relics {
+                        s.about = format!("{} Rare: one relic a shop.", draw::capital(s.about.trim_start_matches("A relic, rare: ")));
+                    }
+                    if matches!(row.pick, Pick::BodyAuto(_)) {
+                        s.level = (0, 0);
+                        s.bars = Vec::new();
+                    }
                     if let Some((b, mine)) = body {
                         s.name = b.kind.name().to_string();
                         s.level = (0, 0);
@@ -797,13 +810,28 @@ fn item_bars(key: &str, level: u8) -> Vec<(String, f32, String)> {
 /// cooldown (shorter fills more), card slots and budget, each filled across
 /// its roll's range (`bodies::REACH` and the rest); with `mine`, the body
 /// of that kind the run owns, each value reads as its then this one's.
+/// A body's tool's own cooldown, seconds (`KitRules`), before its roll.
+fn tool_cd(kind: slime_mould::mould::bodies::BodyKind) -> f32 {
+    use slime_mould::mould::bodies::BodyKind;
+    let k = slime_mould::mould::kit::KitRules::default();
+    match kind {
+        BodyKind::Grenade => k.blast_cd,
+        BodyKind::Mine => k.mine_cd,
+        BodyKind::Line => k.cord_cd,
+        BodyKind::Canister => k.gas_cd,
+    }
+}
+
 fn body_bars(b: &slime_mould::mould::bodies::Body, mine: Option<&slime_mould::mould::bodies::Body>) -> Vec<(String, f32, String)> {
     use slime_mould::mould::bodies::{Body, BUDGET, COOL, REACH, SLOTS};
     let span = |v: f32, lo: f32, hi: f32| (0.15 + 0.85 * (v - lo) / (hi - lo)).clamp(0.0, 1.0);
     let rows = |b: &Body| {
         [
             ("Reach", span(b.reach, REACH.0, REACH.1), format!("{:.0}", b.reach)),
-            ("Cooldown", span(COOL.1 - b.cool, 0.0, COOL.1 - COOL.0), format!("{:.0}%", 100.0 * b.cool)),
+            // Seconds, the tool's own cooldown times the roll (the
+            // percentage read as nothing in the shop, Direction 12:18Z),
+            // before the run's Cheaper tools.
+            ("Cooldown", span(COOL.1 - b.cool, 0.0, COOL.1 - COOL.0), format!("{:.0} s", tool_cd(b.kind) * b.cool)),
             ("Card slots", span(b.slots as f32, SLOTS.0 as f32, SLOTS.1 as f32), b.slots.to_string()),
             ("Budget", span(b.budget as f32, BUDGET.0 as f32, BUDGET.1 as f32), b.budget.to_string()),
         ]
@@ -1620,7 +1648,7 @@ mod body_bar_tests {
         let better = Body { reach: 31.0, cool: 0.9, ..plain };
         let b = body_bars(&better, Some(&plain));
         assert_eq!(b[0].2, "24 \u{2192} 31");
-        assert_eq!(b[1].2, "100% \u{2192} 90%");
+        assert_eq!(b[1].2, "20 s \u{2192} 18 s", "the Grenade's 20 s blast cooldown times the roll");
         assert_eq!(b[2].2, "2");
         assert!(b[1].1 > body_bars(&plain, None)[1].1, "a shorter cooldown fills more");
     }

@@ -1250,6 +1250,12 @@ impl StartMenu {
         } else if !row.price.is_empty() {
             c.text(Weight::SemiBold, 17.0 * s, (r.right() - pad, r.y + 30.0 * s), Align::Right, &row.price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
         }
+        // A card held for the next shops (`Pick::Hold`, gun step F) says
+        // so under its price (Look, Direction 12:18Z: Hold read only on
+        // the bottom bar's button).
+        if row.state == "held" {
+            c.text(Weight::SemiBold, 11.5 * s, (r.right() - pad, r.y + 46.0 * s), Align::Right, "HELD", with_alpha(ACCENT, 0.95));
+        }
         // The badge top left, and after it, small and second to the
         // bars, what it does to the gun's estimated damage a second.
         let mut bx = r.x + pad;
@@ -1380,14 +1386,30 @@ impl StartMenu {
         }
         // The text: the first sentence of `about`, two lines at most; in a
         // tall row all of it, as many lines as fit over the pips.
+        // A device body's rolls (`menu::body_bars`) on a line of their own
+        // before the sentence: on a shelf its bars had no room, and with
+        // seven Tools rows the owned bodies read as words only (Look,
+        // Direction 12:18Z: reach, cooldown and slots on its card).
+        let stats = (row.group == "Tools" && !row.bars.is_empty()).then(|| row.bars.iter().map(|(l, _, v)| match l.as_str() {
+            "Cooldown" => v.clone(),
+            "Card slots" => format!("{v} slots"),
+            _ => format!("{} {v}", l.to_lowercase()),
+        }).collect::<Vec<_>>().join(" \u{b7} "));
+        let top = if let Some(st) = &stats {
+            c.text_fit(Weight::Medium, 13.0 * s, (tx, r.y + 44.0 * s), Align::Left, st, room, with_alpha(ACCENT, dim.max(0.6)));
+            17.0 * s
+        } else {
+            0.0
+        };
         let about = if tall { words(row) } else { words(row).split_inclusive(". ").next().unwrap_or("").trim() };
         if !about.is_empty() {
             let lines = c.wrap(Weight::Medium, 13.0 * s, room, about);
-            let fit = if tall { (((r.h - 44.0 * s - 10.0 * s0) / (17.0 * s)).floor() as usize + 1).max(2) } else { 2 };
+            let fit = if tall { (((r.h - 44.0 * s - top - 10.0 * s0) / (17.0 * s)).floor() as usize + 1).max(2) } else { 2 };
+            let fit = if stats.is_some() && !tall { 1 } else { fit };
             for (k, l) in lines.iter().take(fit).enumerate() {
                 let cut = k + 1 == fit && lines.len() > fit;
                 let text = if cut { format!("{}…", l.trim_end_matches(['.', ',', ' '])) } else { l.clone() };
-                c.text_fit(Weight::Medium, 13.0 * s, (tx, r.y + 44.0 * s + k as f32 * 17.0 * s), Align::Left, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
+                c.text_fit(Weight::Medium, 13.0 * s, (tx, r.y + 44.0 * s + top + k as f32 * 17.0 * s), Align::Left, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
             }
         }
     }
