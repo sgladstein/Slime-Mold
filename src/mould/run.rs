@@ -327,7 +327,18 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// planet 6 won all three both ways. Planet 7's origin swallowed the whole
 /// body on two maps at either size (the last stand's gather, now capped:
 /// `OriginRules::gather_most`), so its size is not yet measured.
-pub const ORIGIN_SIZE: [f32; 8] = [700.0, 500.0, 1000.0, 1200.0, 1500.0, 1800.0, 2100.0, 2400.0];
+/// Planets 5, 6 and 8 raised half as much again (Direction 11-24: a late
+/// planet's win should cost more than an early one's; the numbers are this
+/// lane's): Engine's batch s (GTX 1070, run bot with `storm` 0.5, the owner's
+/// three maps and run seeds 1-3, 720 s) as is against 1.5x. Planet 5 at
+/// 2,250 won 3 of 6 against 4 (one win became open, another open became a
+/// win); planet 6 at 2,700 won 5 of 6 both ways but slower (map A 5:53 to
+/// 8:00, B 6:10 to 7:11, seed 3 4:24 to 9:50); planet 8 (the Dozer) won 6 of
+/// 6 both ways in 5:07 to 7:05, the origin's size making no visible
+/// difference there. Planet 7 stays 2,100: the siege won 3 of 6 there, the
+/// hardest planet, and a gather cap of 1.25 sizes instead of 2 made it
+/// harder still (0 of 6), so the cap stays 2.
+pub const ORIGIN_SIZE: [f32; 8] = [700.0, 500.0, 1000.0, 1200.0, 2250.0, 2700.0, 2100.0, 3600.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// The slime's room to regrow over its landing, by planet
 /// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
