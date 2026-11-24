@@ -24,7 +24,7 @@ use slime_mould::mould::dps::Profile;
 use slime_mould::mould::guns;
 use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::build::news::{self, Memory};
-use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, TryLine, BAG};
+use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, ShotTag, StartEvent, StartMenu, TryLine, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -376,8 +376,12 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     // The slots and budget of what the gun slots show: the squad's gun,
     // or the turrets' rack (`Run::rack`).
     let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
-    let rows = r
-        .shop()
+    let raw = r.shop();
+    // The gun's cards in slot order, as the shop's gun row lists them (the
+    // rows it marks in the gun), for the fused shots (owner, 11-24).
+    let in_gun: Vec<rounds::Card> = raw.iter().filter(|row| row.on).filter_map(|row| if let Face::Card(c) = row.face { Some(c) } else { None }).collect();
+    let (shots, plain_shot) = rounds::shots(&in_gun);
+    let rows = raw
         .into_iter()
         .map(|row| {
             let after = dps_after(r, row.pick);
@@ -503,6 +507,15 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
         run: (!r.range).then(|| run_view(r)),
         slime: (!r.range && !does.is_empty()).then(|| (title_case(l.tier.name()), does.to_string())),
+        shots: shots
+            .into_iter()
+            .map(|t| match t {
+                rounds::Shot::Fired(n) => ShotTag::Fired(n),
+                rounds::Shot::Every => ShotTag::Every,
+                rounds::Shot::Idle => ShotTag::Idle,
+            })
+            .collect(),
+        plain_shot,
     }
 }
 
@@ -871,7 +884,9 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
     Some(match name {
         // (`main-run`, `main-won`, `main-lost`: the Run row with a run
         // three planets in, a won run, a run lost on planet 4, `headless`.)
-        "1" | "main" | "main-run" | "main-won" | "main-lost" => Page::Main,
+        "1" | "main" | "main-run" | "main-won" | "main-lost" | "main-runs" => Page::Main,
+        // (The Past runs page over three made-up runs, `headless`.)
+        "runs" => Page::Runs,
         "campaign" | "missions" => Page::Missions,
         "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
@@ -1208,7 +1223,12 @@ impl App {
                 self.show_shop();
             }
             StartEvent::EndRun => {
-                let line = self.run.take().map(|r| format!("Run given up on planet {}: {}", r.depth, r.line()));
+                let gone = self.run.take();
+                if let Some(r) = gone.as_ref().filter(|r| !r.range) {
+                    let why = format!("Given up in the shop before planet {}, with {}.", r.depth, r.line());
+                    self.keep_run(r, "given up", why);
+                }
+                let line = gone.map(|r| format!("Run given up on planet {}: {}", r.depth, r.line()));
                 if let Some(m) = self.menu.as_mut() {
                     m.run_live = false;
                     m.shop = None;
@@ -1440,6 +1460,8 @@ impl App {
     /// aside to `run-unreadable.txt` with a word on the menu, never
     /// overwritten unseen.
     pub(super) fn load_run(&mut self) {
+        // The runs that ended, for the Past runs page.
+        self.load_runs();
         let Some(p) = self.run_file.clone() else { return };
         let Ok(text) = std::fs::read_to_string(&p) else { return };
         let note = match Run::from_save(&text) {
@@ -1520,10 +1542,20 @@ impl App {
         let Some(mut r) = self.args.run.clone() else { return Ok(()) };
         // What the squad took from starfall and boss cores (`Game::starfall`).
         r.found(self.game.as_ref().map_or(0, |g| g.starfall.earned()));
+        // The slime that ended a lost planet, for the Past runs page.
+        let slime = title_case(r.level().tier.name());
         if v.stars > 0 {
             r.won(v.stars);
         } else {
             r.lost();
+        }
+        if r.over {
+            let why = match (r.victory(), self.game.as_ref()) {
+                (true, _) => format!("All {} planets freed, {} of {} stars.", r.stars.len(), r.stars.iter().map(|&s| u32::from(s)).sum::<u32>(), 3 * r.stars.len()),
+                (false, Some(g)) => runs::why_lost(v, g, &slime),
+                (false, None) => format!("{slime} won planet {}.", r.depth),
+            };
+            self.keep_run(&r, if r.victory() { "won" } else { "lost" }, why);
         }
         if self.base.is_none() {
             if r.over {

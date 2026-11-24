@@ -1125,6 +1125,86 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
     out
 }
 
+/// Which shot a card of the gun's row joins, for the shop's fused shots
+/// (the owner's pick, 2026-11-24 15:51Z: "B is best"; options page
+/// `Reports/card-links-2026-11-24/`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Shot {
+    /// Shot `n` of the gun's turn, counted from 0: a bullet, the cards
+    /// before it that change it, and the casts it carries or fires beside
+    /// it (`Cast::child`, `Cast::with`).
+    Fired(u8),
+    /// A flight card: it rides on every bullet (`flight`).
+    Every,
+    /// A carrier, multicast or thrift with no bullet after it, or a card
+    /// past the gun's last slot: it does nothing.
+    Idle,
+}
+
+/// Each card's shot (`Shot`) as `casts` groups `round`, and the shot of
+/// the gun's own plain bullet when leftover cards put one on the end
+/// (a lone Wide's), which no card in the row stands for.
+pub fn shots(round: &[Card]) -> (Vec<Shot>, Option<u8>) {
+    let cs = casts(round);
+    // Each cast's first cast: a carried or fired-beside cast joins its
+    // carrier's shot (links only point later, `casts`).
+    let mut root: Vec<usize> = (0..cs.len()).collect();
+    for i in 0..cs.len() {
+        for j in [cs[i].child, cs[i].with].into_iter().flatten().map(usize::from) {
+            if j > i && j < cs.len() {
+                root[j] = root[i];
+            }
+        }
+    }
+    let mut number = vec![0u8; cs.len()];
+    let mut n = 0u8;
+    for i in 0..cs.len() {
+        if root[i] == i {
+            number[i] = n;
+            n = n.saturating_add(1);
+        } else {
+            number[i] = number[root[i]];
+        }
+    }
+    // The cards to casts, as `casts` walks them.
+    let mut out = vec![Shot::Idle; round.len()];
+    let mut waiting: Vec<usize> = Vec::new();
+    let mut k = 0usize;
+    for (i, &c) in round.iter().enumerate().take(MAX_SLOTS) {
+        match c.kind() {
+            Kind::Flight => out[i] = Shot::Every,
+            Kind::Payload => {
+                for &w in waiting.iter().chain([&i]) {
+                    out[w] = number.get(k).map_or(Shot::Idle, |&x| Shot::Fired(x));
+                    // A carrier or multicast whose bullet has nothing to
+                    // carry or fire beside it does nothing (`casts`).
+                    let linked = cs.get(k).is_some_and(|c| match round[w] {
+                        Card::Trigger | Card::Expire => c.child.is_some(),
+                        Card::Multicast => c.with.is_some(),
+                        _ => true,
+                    });
+                    if !linked {
+                        out[w] = Shot::Idle;
+                    }
+                }
+                waiting.clear();
+                k += 1;
+            }
+            Kind::Modifier | Kind::Trigger => waiting.push(i),
+        }
+    }
+    // Leftovers: those that change a bullet go on the plain one when
+    // `casts` added it; carriers, multicasts and thrifts do nothing.
+    let plain = (k < cs.len()).then(|| number[k]);
+    for w in waiting {
+        let takes = !matches!(round[w], Card::Trigger | Card::Expire | Card::Multicast | Card::Thrift);
+        if let (true, Some(p)) = (takes, plain) {
+            out[w] = Shot::Fired(p);
+        }
+    }
+    (out, plain)
+}
+
 /// The casts one shot of cast `i` fires (indices in `casts`): `i` and the
 /// casts beside it (`Cast::with`), in order.
 pub fn volley(casts: &[Cast], i: usize) -> Vec<usize> {
@@ -2566,6 +2646,28 @@ mod tests {
     /// plain bullet where it goes off and kills, one holding only Tinder
     /// or Scorch lays its trail's disc there, and a sprayer with Tinder
     /// lays a disc at every spot. Before, each did nothing.
+    #[test]
+    fn shots_group_each_bullet_with_its_cards() {
+        use Shot::*;
+        // Wide changes the blast; Trigger makes the plain bullet carry the
+        // gas; the Delay left over goes on the gun's own plain bullet.
+        let (s, plain) = shots(&parse("wide+blast+trigger+plain+gas+delay").unwrap());
+        assert_eq!(s, vec![Fired(0), Fired(0), Fired(1), Fired(1), Fired(1), Fired(2)]);
+        assert_eq!(plain, Some(2));
+        // Pierce rides on every bullet, wherever it sits.
+        let (s, plain) = shots(&parse("pierce+blast+wide").unwrap());
+        assert_eq!((s, plain), (vec![Every, Fired(0), Fired(1)], Some(1)));
+        // A carrier with nothing after it does nothing, and adds no plain.
+        let (s, plain) = shots(&parse("blast+trigger").unwrap());
+        assert_eq!((s, plain), (vec![Fired(0), Idle], None));
+        // So does one before the last bullet, with nothing left to carry.
+        let (s, _) = shots(&parse("blast+multicast+bomb").unwrap());
+        assert_eq!(s, vec![Fired(0), Idle, Fired(1)]);
+        // A carrier before the last bullet carries the plain one.
+        let (s, plain) = shots(&parse("trigger+blast+wide").unwrap());
+        assert_eq!((s, plain), (vec![Fired(0), Fired(0), Fired(0)], Some(0)));
+    }
+
     #[test]
     fn a_devices_and_a_sprayers_lone_cards_show() {
         use crate::mould::larder_world::{race_world, Spray};

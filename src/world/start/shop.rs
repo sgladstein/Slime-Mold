@@ -27,6 +27,10 @@ const TOP: f32 = 46.0;
 const BOTTOM: f32 = 62.0;
 /// The bench's column of row names (Gun, Bag).
 const LABEL: f32 = 46.0;
+/// The fused shots' frames, shot by shot (cycled), and the every-shot
+/// cards' (the owner's pick B, 2026-11-24).
+const SHOT_INKS: [Rgba; 4] = [[96, 190, 255, 255], [255, 126, 182, 255], [182, 156, 255, 255], [150, 214, 120, 255]];
+const EVERY_INK: Rgba = [63, 208, 191, 255];
 /// The space between tiles.
 const GAP: f32 = 8.0;
 /// An upgrade tile: a little wider than tall, so a two-word name fits at
@@ -157,6 +161,25 @@ fn words(row: &ShopRow) -> &str {
     a
 }
 
+/// A hand card's bars (`hand_card`): its own rolls (a bullet card, a
+/// device body) as `true`, else only the gun's numbers it changes, each as
+/// before and after ("Damage 72 → 144").
+fn card_bars(row: &ShopRow, mine: &[(String, f32, String)]) -> (bool, Vec<(String, f32, String)>) {
+    let own = (row.area == ShopArea::Cards || row.group == "Tools") && !row.bars.is_empty();
+    let changed = if !own && row.bars.is_empty() && !mine.is_empty() {
+        row.stats
+            .iter()
+            .filter_map(|(l, f, v)| {
+                let m = mine.iter().find(|b| b.0 == *l)?;
+                (m.2 != *v || (m.1 - f).abs() > 0.005).then(|| (l.clone(), *f, format!("{} \u{2192} {v}", m.2)))
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    (own, changed)
+}
+
 /// Stat bars (the owner, 2026-11-22: "more of visual representation of
 /// damage speed, range, ect. instead of a paragraph of numbers"): a row a
 /// stat, its name, a track filled to its 0-1 in `tint`, its value at the
@@ -227,7 +250,13 @@ fn shelf(n: usize, area: Rect, g: f32, s: f32) -> Option<(usize, f32, f32)> {
 /// offers (filmed 11-21 at 1600 x 972: Cards, Buildings and Tools each
 /// three rows of rows and the rest dark). Returns the row's left and top
 /// edges, a card's width and height; None where the shelf or tiles take it.
-fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
+///
+/// `need` is the height the hand's fullest card needs at width `w` to show
+/// all it says (`Menu::card_need`): the cards grow to it where the counter
+/// has the room, with room for the face to grow a seventh as it does on a
+/// tall card (Look D, 11-24: at 4K a bullet card's sentence was cut
+/// after four words with a third of the counter empty under the row).
+fn hand(n: usize, area: Rect, g: f32, s: f32, need: impl Fn(f32) -> f32) -> Option<(f32, f32, f32, f32)> {
     if n == 0 || n > HAND_MOST {
         return None;
     }
@@ -236,7 +265,7 @@ fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
     // 11-24: five cards at 1.15 left about 45% of the counter blank above
     // and below them), up to `HAND_STRETCH` times as tall as wide and
     // `HAND_FILL` of the counter; `hand_card` spreads its face over it.
-    let h = (w * HAND_TALL).max((area.h * HAND_FILL).min(w * HAND_STRETCH)).min(area.h);
+    let h = (w * HAND_TALL).max((area.h * HAND_FILL).min(w * HAND_STRETCH)).max((need(w) * 1.15).min(area.h * 0.94)).min(area.h);
     if w < HAND_LEAST * s || h < HAND_H * s {
         return None;
     }
@@ -588,7 +617,9 @@ impl StartMenu {
         } else {
             shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on).map_or("Your gun", |r| r.name.as_str())
         };
-        let gy = top + 30.0 * s;
+        // (Four units higher since the fused shots, 11-24, so the shots'
+        // names fit under it.)
+        let gy = top + 26.0 * s;
         let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
         let on = self.gun_cards();
         let line = format!("budget {} of {}  ·  {} of {} slots  ·  fired left to right", shop.budget.0, shop.budget.1, on.len(), shop.slots);
@@ -605,12 +636,91 @@ impl StartMenu {
         c.text_fit(Weight::Medium, 13.5 * s, (x + nw + 12.0 * s, gy), Align::Left, &line, lw - nw - 12.0 * s - dps_w, MUTED);
         let ch = CARD_H * s;
         let (sx, sroom) = (x + LABEL * s, lw - LABEL * s);
-        let row_y = top + 42.0 * s;
+        // Room above the row for the shots' names when there are any: six
+        // units (a twelve-unit drop put the armory's bullets on two pages
+        // at 200% on 540 lines; an empty gun keeps the old place).
+        let fused = !on.is_empty() && shop.shots.len() == on.len();
+        let row_y = top + if fused { 48.0 } else { 42.0 } * s;
         c.text(Weight::SemiBold, 13.5 * s, (x, row_y + ch / 2.0 + 5.0 * s), Align::Left, if shop.turrets { "Turrets" } else { "Gun" }, MUTED);
         let n = (shop.slots as usize).max(on.len()).max(1);
-        let cw = ((sroom - (n - 1) as f32 * g) / n as f32).min(CARD_W * s);
-        let slots: Vec<(Rect, Option<usize>)> = (0..n).map(|k| (Rect::new(sx + k as f32 * (cw + g), row_y, cw, ch), on.get(k).copied())).collect();
+        // Fused shots (the owner's pick, 2026-11-24 15:51Z: "B is best";
+        // the six options are `Reports/card-links-2026-11-24/`): the cards
+        // of one shot touch inside one frame and shots stand apart, so you
+        // see which bullet a Wide or a Trigger works on. The gun's own
+        // plain bullet that leftover cards go on, which no card stands
+        // for, is a ghost card after them. The slots keep their order (the
+        // mock-up moved the every-shot cards to the end; here they stay
+        // put, framed where they sit, so a drag lands where it looks).
+        let tag = |k: usize| if fused { shop.shots.get(k).copied() } else { None };
+        let ghost_shot = shop.plain_shot.filter(|_| fused);
+        let ghost_after = ghost_shot.and_then(|p| (0..on.len()).rev().find(|&k| tag(k) == Some(ShotTag::Fired(p))));
+        // The row's places: Some(slot), or None for the ghost.
+        let mut places: Vec<Option<usize>> = Vec::with_capacity(n + 1);
+        for k in 0..n {
+            places.push(Some(k));
+            if ghost_after == Some(k) {
+                places.push(None);
+            }
+        }
+        let group = |p: Option<usize>| match p {
+            Some(k) => tag(k).filter(|_| k < on.len()),
+            None => ghost_shot.map(ShotTag::Fired),
+        };
+        let (tight, apart) = (2.0 * s, 14.0 * s);
+        let gap_at = |i: usize| -> f32 {
+            match (group(places[i - 1]), group(places[i])) {
+                (Some(a), Some(b)) if a == b => tight,
+                (Some(_), _) | (_, Some(_)) if fused => apart,
+                _ => g,
+            }
+        };
+        let gaps: f32 = (1..places.len()).map(gap_at).sum();
+        let cw = ((sroom - gaps) / places.len() as f32).min(CARD_W * s);
+        let mut px = sx;
+        let mut place_rects = Vec::with_capacity(places.len());
+        for i in 0..places.len() {
+            if i > 0 {
+                px += gap_at(i);
+            }
+            place_rects.push(Rect::new(px, row_y, cw, ch));
+            px += cw;
+        }
+        let slots: Vec<(Rect, Option<usize>)> = places.iter().zip(&place_rects).filter_map(|(p, &r)| p.map(|k| (r, on.get(k).copied()))).collect();
         self.slot_rects = slots.iter().map(|x| x.0).collect();
+        // Each run of places in one shot: a frame round them, its name
+        // over it.
+        if fused {
+            let mut i = 0;
+            while i < places.len() {
+                let Some(t) = group(places[i]) else {
+                    i += 1;
+                    continue;
+                };
+                let mut j = i;
+                while j + 1 < places.len() && group(places[j + 1]) == Some(t) {
+                    j += 1;
+                }
+                let (a, b) = (place_rects[i], place_rects[j]);
+                let f = Rect::new(a.x - 3.0 * s, a.y - 3.0 * s, b.right() - a.x + 6.0 * s, ch + 6.0 * s);
+                let (ink, name) = match t {
+                    ShotTag::Fired(k) => (SHOT_INKS[k as usize % SHOT_INKS.len()], format!("Shot {}", k + 1)),
+                    ShotTag::Every => (EVERY_INK, "Every shot".to_string()),
+                    ShotTag::Idle => (FAINT, "Does nothing".to_string()),
+                };
+                c.rrect(f, 10.0 * s, with_alpha(ink, 0.08));
+                c.outline(f, 10.0 * s, 1.5 * s, with_alpha(ink, 0.8));
+                c.text_fit(Weight::SemiBold, 11.5 * s, (f.x + 6.0 * s, f.y - 3.0 * s), Align::Left, &name, f.w - 6.0 * s, ink);
+                i = j + 1;
+            }
+            // The ghost: the gun's plain bullet, which the leftovers ride.
+            if let Some((r, p)) = places.iter().zip(&place_rects).find(|(p, _)| p.is_none()).map(|(_, &r)| r).zip(ghost_shot) {
+                let ink = SHOT_INKS[p as usize % SHOT_INKS.len()];
+                c.rrect(r, 8.0 * s, [255, 255, 255, 5]);
+                c.outline(r, 8.0 * s, 1.0, with_alpha(ink, 0.45));
+                c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 - 1.0 * s), Align::Centre, "Plain bullet", r.w - 10.0 * s, MUTED);
+                c.text_fit(Weight::Medium, 11.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 13.0 * s), Align::Centre, "the gun's own", r.w - 10.0 * s, FAINT);
+            }
+        }
         let mut from = None;
         for (k, &(r, i)) in slots.iter().enumerate() {
             match i {
@@ -754,12 +864,13 @@ impl StartMenu {
                     let range = page(per, n.div_ceil(per.max(1)).max(1), self);
                     self.gun_table(&shop, &tab.rows[range], area, head, rh, ring, c, s);
                 }
-                TabKind::Tiles if hand(n, area, g, s).is_some() => {
-                    let (x0, y0, w, h) = hand(n, area, g, s).unwrap_or((area.x, area.y, area.w, area.h));
+                TabKind::Tiles if hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)).is_some() => {
+                    let (x0, y0, w, h) = hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)).unwrap_or((area.x, area.y, area.w, area.h));
+                    let fit = self.hand_need(&shop, &tab.rows, w, c, s);
                     page(n, 1, self);
                     for (j, &i) in tab.rows.iter().enumerate() {
                         let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                        self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, fit, hot(r), ring(Hit::Buy(i)), c, s);
                         self.hits.push((r, Hit::Buy(i)));
                     }
                 }
@@ -784,11 +895,12 @@ impl StartMenu {
                 }
                 TabKind::Cards => {
                     if self.card_grid(&shop, tab, area, ring, &mut from, c, s) {
-                    } else if let Some((x0, y0, w, h)) = hand(n, area, g, s) {
+                    } else if let Some((x0, y0, w, h)) = hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)) {
+                        let fit = self.hand_need(&shop, &tab.rows, w, c, s);
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
                             let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                            self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, fit, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
                             self.hits.push((r, Hit::Buy(i)));
                             if drag == Some(i) {
                                 from = Some(r);
@@ -1246,10 +1358,36 @@ impl StartMenu {
     /// band along the top, its icon large, its name and its price, then
     /// everything it does, and its pips at the foot. The same face, colours
     /// and words as its shelf row; only the shape is a card's.
-    fn hand_card(&self, row: &ShopRow, now: Option<f32>, mine: &[(String, f32, String)], r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+    /// The height the fullest of the hand's cards (`rows`) needs at width
+    /// `w` to show its face whole at the plain size: what `hand_card` lays
+    /// out from the top (icon, name, bars), its sentence wrapped, and the
+    /// pips at the foot.
+    fn hand_need(&self, shop: &Shop, rows: &[usize], w: f32, c: &Canvas, s: f32) -> f32 {
+        let room = w - 28.0 * s;
+        rows.iter()
+            .filter_map(|&i| shop.rows.get(i))
+            .map(|row| {
+                let (own, changed) = card_bars(row, &shop.stats);
+                let n = if own { row.bars.len() } else { changed.len() };
+                let bars = if n > 0 { n as f32 * 16.0 * s + 4.0 * s } else { 0.0 };
+                let about = words(row);
+                let lines = if about.is_empty() { 0 } else { c.wrap(Weight::Medium, 13.5 * s, room, about).len() };
+                let pips = row.area == ShopArea::Cards && row.cost > 0 || row.level.1 > 1;
+                // Icon box and name (38 + 56 + 30), the gap to the bars
+                // (26), the lines, the foot.
+                (38.0 + 56.0 + 30.0 + 26.0) * s + bars + lines as f32 * 18.0 * s + if pips { 26.0 * s } else { 10.0 * s } + 4.0 * s
+            })
+            .fold(0.0, f32::max)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn hand_card(&self, row: &ShopRow, now: Option<f32>, mine: &[(String, f32, String)], r: Rect, fit: f32, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
         // A card taller than `HAND_TALL` (`hand`, 11-24) draws its face up
-        // to a seventh larger, and centres it in the height.
-        let s = s * (r.h / (r.w * HAND_TALL)).clamp(1.0, 1.15);
+        // to a seventh larger, and centres it in the height; never so much
+        // larger that the hand's fullest card (`fit`, its height at the
+        // plain size) no longer shows all it says.
+        let grow = (r.h / (r.w * HAND_TALL)).clamp(1.0, 1.15).min((r.h / fit.max(1.0)).max(1.0));
+        let s = s * grow;
         let done = owned(row);
         self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
         let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
@@ -1278,7 +1416,17 @@ impl StartMenu {
         }
         if let Some((t, ink, _)) = dps_words(now, row.dps, row.no_room) {
             let room = r.right() - pad - c.atlas.measure(Weight::SemiBold, 17.0 * s, &row.price) - 8.0 * s - bx;
-            c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, &t, room, with_alpha(ink, dim.max(0.6)));
+            // "· no room" on a line of its own where the line has no room
+            // for it (Look D, 11-24: "-2.2 DPS · no ro…" at 4K).
+            let tail = " \u{b7} no room";
+            if t.ends_with(tail) && c.atlas.measure(Weight::SemiBold, 12.5 * s, &t) > room {
+                c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, t.trim_end_matches(tail), room, with_alpha(ink, dim.max(0.6)));
+                if row.state != "held" {
+                    c.text(Weight::SemiBold, 11.5 * s, (r.right() - pad, r.y + 46.0 * s), Align::Right, "NO ROOM", with_alpha(ink, 0.8 * dim.max(0.6)));
+                }
+            } else {
+                c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, &t, room, with_alpha(ink, dim.max(0.6)));
+            }
         }
         // Its stats as bars (the owner, 2026-11-22 08:53Z: "make visual
         // for speed range, etc"): a rolled bullet's own numbers; else only
@@ -1287,18 +1435,7 @@ impl StartMenu {
         // on every card read the same on most of them (polish review
         // finding 8, 11-24: Delay and Tinder showed five identical rows).
         // (A device body's rolls too, on the Tools tab, 11-24.)
-        let own = (row.area == ShopArea::Cards || row.group == "Tools") && !row.bars.is_empty();
-        let changed: Vec<(String, f32, String)> = if !own && row.bars.is_empty() && !mine.is_empty() {
-            row.stats
-                .iter()
-                .filter_map(|(l, f, v)| {
-                    let m = mine.iter().find(|b| b.0 == *l)?;
-                    (m.2 != *v || (m.1 - f).abs() > 0.005).then(|| (l.clone(), *f, format!("{} \u{2192} {v}", m.2)))
-                })
-                .collect()
-        } else {
-            Vec::new()
-        };
+        let (own, changed) = card_bars(row, mine);
         let bars: &[(String, f32, String)] = if own { &row.bars } else { &changed };
         let lead_b = 16.0 * s;
         // The icon smaller than the first cut's 56, so the bars fit under
@@ -1318,7 +1455,9 @@ impl StartMenu {
         let grown = (r.h - r.w * HAND_TALL).max(0.0);
         let ic_box = if grown >= 16.0 * s { 56.0 * s } else { ic };
         let name_dy = ic_box + 30.0 * s;
-        let top = r.y + 38.0 * s + 0.3 * (grown - 16.0 * s).max(0.0);
+        // (Never lowered past the room the fullest card leaves: `fit` at
+        // this face's size.)
+        let top = r.y + 38.0 * s + (0.3 * (grown - 16.0 * s).max(0.0)).min((r.h - fit * grow).max(0.0));
         c.icon(row.icon, (r.x + (r.w - ic) / 2.0, top + ic_box - ic), ic, tint);
         let ink = with_alpha(TEXT, dim.max(0.6));
         let px = fit_px(c, &row.name, 17.0 * s, 13.5 * s, room);

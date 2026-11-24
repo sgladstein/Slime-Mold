@@ -228,6 +228,7 @@ mod utility;
 mod league;
 mod menu;
 mod resume;
+mod runs;
 mod squadmode;
 mod uisize;
 mod volume;
