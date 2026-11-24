@@ -8,8 +8,10 @@ sources:
   - Reports/biome-ground-2026-11-15/README.md
   - Reports/bug-check-2026-11-15/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
+  - Reports/crystal-cut-2026-11-24/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/dark-ground-2026-11-14/README.md
+  - Reports/drifter-sheet-2026-11-24/README.md
   - Reports/droplets-2026-11-18/README.md
   - Reports/fallen-soldier-2026-11-18/README.md
   - Reports/flinch-look-2026-11-17/README.md
@@ -88,10 +90,16 @@ The 11-24 polish review ranks fifteen spots that still look unfinished, worst fi
    off, soft over at most two pixels at zoom 6 and closer; no blur wider
    than that anywhere in the world view. Rock, walls and rubble meet it
    ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md); crystals show live charge and glow where taken, [crystal harvest](../../Reports/crystal-harvest-2026-11-14/README.md)).
+   A crystal is a cut gem (a bevelled rim, a twelve-facet crown, a darker
+   table); a spent one lies low and rock-dark, its rim crumbled
+   ([crystal cut](../../Reports/crystal-cut-2026-11-24/README.md)).
 5. **The slime looks alive.** Thick parts raised and glossy (one key light,
    top left, a specular highlight), thin film translucent over the ground,
    grain only where walkers really are sparse (the frontier), and motion
    you can see in a two-second clip.
+   A slime's thin film ends at its own trail's contour, about a cell wide,
+   and takes the light, never a halo fading over many pixels
+   ([Drifter sheet](../../Reports/drifter-sheet-2026-11-24/README.md)).
    The states play hangs on read at zoom 6 within a second, all from the
    data: a cut-off piece withering loses light and cools as its energy
    drops while the fed body stays brightest; a panic lean shows as a
