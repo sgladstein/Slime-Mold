@@ -1074,6 +1074,12 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert!(menu.run_live);
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((2, reward(1, 2))));
     assert_eq!(Some(saved()), app.run.clone(), "the shop's run is saved");
+    // Landing shows its card over the shop first (the time between
+    // planets, 11-24; the window lands a frame later, `landing_frame`).
+    app.show_landing();
+    let card = app.menu.as_ref().and_then(|m| m.landing.clone()).expect("the landing card");
+    assert_eq!(card.0, format!("Landing on planet 2 of {}", slime_mould::mould::run::PLANETS));
+    assert_eq!(card.1, app.run.as_ref().unwrap().planet().name);
     // Buy armour, then land.
     let hp = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == ITEMS[0].name).unwrap();
     app.menu_event(StartEvent::Buy(hp)).unwrap();

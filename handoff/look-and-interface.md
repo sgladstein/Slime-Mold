@@ -134,8 +134,12 @@ Crystals refill). 4K HUD counts (job 3) sent to Engine 11-24: the
 canvas bins, uploads and dispatches over every 16-px tile each frame
 (32,400 at 4K); the main page's shade is laid side by side
 (`shade_steps`) and the shop's planet map is gradient columns
-(`draw_glance`), 8x and 2.6x fewer tile entries. Next: whatever
-Direction sends.
+(`draw_glance`), 8x and 2.6x fewer tile entries.
+#808 merged. Between planets (Direction 14:44Z): Enter on the end card
+(`Hud::end_carry`), `END_BEAT_SEEN` 0.8 s after a die-back, and the
+shop's landing card (`StartMenu::landing`, `App::landing_due`, drawn a
+frame before `menu_event(NextLevel)` builds the planet; film
+`menu=shop-landing`). Next: the Runs page, then Look D screens.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

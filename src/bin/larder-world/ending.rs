@@ -28,6 +28,10 @@ use slime_mould::mould::squad::{self, Frame};
 /// Real seconds the picture plays on before the end card comes up.
 /// Longer read as the game hanging; shorter, the slime barely moves.
 pub(super) const END_BEAT: f32 = 2.4;
+/// The beat after a heart's die-back (`origin.rs`): the slime has already
+/// died back on screen for its seconds, so the moment has been seen and
+/// the card comes sooner (Direction 11-24, the time between planets).
+pub(super) const END_BEAT_SEEN: f32 = 0.8;
 /// How far the camera draws back over the beat, as a share of its zoom.
 const DRAW_BACK: f32 = 0.18;
 
@@ -60,7 +64,8 @@ impl App {
             b.at = Some(g.time());
             b.zoom = self.camera.zoom;
         }
-        if b.played >= END_BEAT {
+        let len = beat_len(g);
+        if b.played >= len {
             return;
         }
         b.played += dt;
@@ -81,7 +86,7 @@ impl App {
             b.owed = 0.0;
         }
         // The draw-back, eased out, about the screen's middle.
-        let u = (b.played / END_BEAT).min(1.0);
+        let u = (b.played / len).min(1.0);
         let z = b.zoom * (1.0 - DRAW_BACK * (1.0 - (1.0 - u) * (1.0 - u)));
         let mid = (self.camera.screen.0 / 2.0, self.camera.screen.1 / 2.0);
         self.camera.zoom_to(z, mid);
@@ -90,11 +95,21 @@ impl App {
     /// Whether the end card is up: at once without a beat, else once the
     /// beat has played.
     pub(super) fn end_shown(&self) -> bool {
-        self.beat.is_none_or(|b| b.played >= END_BEAT)
+        let len = self.game.as_ref().map_or(END_BEAT, beat_len);
+        self.beat.is_none_or(|b| b.played >= len)
     }
 
     /// The game clock, held at the end through the beat (`Beat::at`).
     pub(super) fn clock_now(&self, g: &Game<GpuWorld>) -> f32 {
         self.beat.and_then(|b| b.at).unwrap_or_else(|| g.time())
+    }
+}
+
+/// The beat's length for how `g` ended: short after a heart's die-back.
+fn beat_len(g: &Game<GpuWorld>) -> f32 {
+    if g.origin.fell.is_some() {
+        END_BEAT_SEEN
+    } else {
+        END_BEAT
     }
 }

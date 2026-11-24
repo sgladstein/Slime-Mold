@@ -1140,6 +1140,9 @@ struct App {
     /// The planet's landing card (`ui::Intro`) and the game time it first
     /// showed (`INTRO_SECS`, `draw`).
     intro: Option<(slime_mould::world::ui::Intro, f32)>,
+    /// Frames left before a run lands on its next planet (`menu::landing_frame`):
+    /// the shop's landing card is drawn first, so the click shows at once.
+    landing_due: Option<u8>,
     /// The first minute's coaching (`draw::Coach`).
     coach: draw::Coach,
     /// Whether the run's planet is saved mid-game, for the run as it
@@ -1273,6 +1276,7 @@ impl App {
             run_file: None,
             run_saved: String::new(),
             intro: None,
+            landing_due: None,
             coach: draw::Coach::default(),
             run_mid: None,
             run_checked: None,
@@ -2319,6 +2323,7 @@ impl App {
     }
 
     fn frame(&mut self, event_loop: &ActiveEventLoop) {
+        self.landing_frame(event_loop);
         let t0 = Instant::now();
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
