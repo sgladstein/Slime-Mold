@@ -62,6 +62,8 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     // the game stepped in it.
     type Row = ([f64; 5], bool);
     let mut rows: Vec<Row> = Vec::new();
+    // (game time, percent) at each World detail change (`autodetail`).
+    let mut details: Vec<(f32, u32)> = Vec::new();
     let (reads0, steps0) = (slime_mould::gpu::reads(), app.steps);
     let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
     let over = |app: &App| app.game.as_ref().is_none_or(|g| g.end.is_some()) || app.mission.as_ref().is_some_and(|m| m.verdict.is_some());
@@ -88,6 +90,9 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
         // A GPU that never finishes the frame is an error, not a hang (as
         // `STALL`): two minutes, against a few milliseconds a frame.
         device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: Some(std::time::Duration::from_secs(120)) }).map_err(|e| format!("poll: {e}"))?;
+        // Auto's World detail steps by the frame's own time here (no
+        // vsync: `autodetail`), as the window's by its interval.
+        app.auto_frame(ms(t0) as f32);
         Ok([ms(t0), step, prep, rec, ms(t3)])
     };
     // A bench that stops gaining game time ends in an error, not a hang
@@ -139,6 +144,11 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
         }
         let step = ms(t0);
         rows.push((frame(&mut app, t0, step)?, app.steps > before));
+        // World detail's steps over the run (Auto's follow the frames).
+        let pct = app.view.as_ref().map_or(100, |v| v.percent());
+        if details.last().is_none_or(|d| d.1 != pct) {
+            details.push((app.game.as_ref().map_or(0.0, |g| g.time()), pct));
+        }
     }
     // The last step's results, so the counts below are the whole game's.
     app.settle();
@@ -200,6 +210,8 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     worst.sort_by(|&a, &b| rows[b].0[0].total_cmp(&rows[a].0[0]));
     let worst: Vec<String> = worst.iter().take(3).map(|&i| { let r = rows[i].0; format!("{:.2} s: {:.2} (step {:.2}, prepare {:.2}, record {:.2}, tail {:.2}{})", i as f64 / fps as f64, r[0], r[1], r[2], r[3], r[4], if rows[i].1 { ", stepped" } else { "" }) }).collect();
     println!("  longest frames, at game time: {}", worst.join("; "));
+    let steps: Vec<String> = details.iter().map(|(t, p)| format!("{p}% from {t:.1} s")).collect();
+    println!("  world detail ({}): {}", detail_user(), steps.join(", "));
     // The ground refresh inside prepare (`refresh_ground`): its own time,
     // and how much of it was the read-back waiting for the GPU's queue
     // (steps in shares still running wait there too).

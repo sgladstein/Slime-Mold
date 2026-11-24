@@ -217,7 +217,9 @@ pub fn save_shake(v: f32) {
 /// after 11-22 (planets 1 to 6, about 3,700 seconds), where full detail
 /// cost the GTX 1070 about 38 ms a frame for the world alone. 40% is the
 /// floor: on his 3840 x 2160 at 250% that is one world pixel to each of
-/// the screen's own points.
+/// the screen's own points. In the window and the bench Auto's step is
+/// only its top: it steps down toward 40% while frames run long (the
+/// window's `autodetail`, 2026-11-24; planet 8's peak on the 1070).
 pub const DETAIL_STEPS: [&str; 8] = ["Auto", "100%", "85%", "75%", "67%", "60%", "50%", "40%"];
 
 /// A world detail as `DETAIL_STEPS` spells it, from the Options page, the
