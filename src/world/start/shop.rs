@@ -56,6 +56,10 @@ const HAND_LEAST: f32 = 170.0;
 const HAND_W: f32 = 250.0;
 const HAND_TALL: f32 = 1.15;
 const HAND_H: f32 = 230.0;
+/// How tall a card grows with room (`hand`): at most this many times its
+/// width, and this share of the counter's height.
+const HAND_STRETCH: f32 = 1.7;
+const HAND_FILL: f32 = 0.74;
 
 /// What a shop tab holds, so how its counter is laid out.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -228,7 +232,11 @@ fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
         return None;
     }
     let w = ((area.w - (n - 1) as f32 * g) / n as f32).min(HAND_W * s);
-    let h = (w * HAND_TALL).min(area.h);
+    // Taller where the counter has the room (polish review finding 8,
+    // 11-24: five cards at 1.15 left about 45% of the counter blank above
+    // and below them), up to `HAND_STRETCH` times as tall as wide and
+    // `HAND_FILL` of the counter; `hand_card` spreads its face over it.
+    let h = (w * HAND_TALL).max((area.h * HAND_FILL).min(w * HAND_STRETCH)).min(area.h);
     if w < HAND_LEAST * s || h < HAND_H * s {
         return None;
     }
@@ -246,11 +254,27 @@ fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
 /// of the slime as an amber blot with a glow, the landing as a white ring.
 fn glance(c: &mut Canvas, g: &Glance, r: Rect, s: f32) -> f32 {
     c.shadow(r, 6.0 * s, 10.0 * s, 2.0 * s, [0, 0, 0, 120]);
-    let (cw, ch) = (r.w / g.w as f32, r.h / g.h as f32);
-    for j in 0..g.h {
-        for i in 0..g.w {
-            // A hair over the cell, so no seam shows between cells.
-            c.rrect(Rect::new(r.x + i as f32 * cw, r.y + j as f32 * ch, cw + 0.6, ch + 0.6), 0.0, g.cells[j * g.w + i]);
+    // Each cell as 2 x 2 quarters, each the blend of the cells round its
+    // centre (bilinear): the 64-cell mosaic read as blocks (polish review
+    // finding 8, 11-24). A hair over each quarter, so no seam shows.
+    let (cw, ch) = (r.w / g.w as f32 / 2.0, r.h / g.h as f32 / 2.0);
+    let cell = |i: isize, j: isize| g.cells[(j.clamp(0, g.h as isize - 1) as usize) * g.w + i.clamp(0, g.w as isize - 1) as usize];
+    for j in 0..2 * g.h {
+        for i in 0..2 * g.w {
+            // The quarter's centre in cells, less a half: the four cells
+            // it lies between and its place among them.
+            let (fx, fy) = ((i as f32 + 0.5) / 2.0 - 0.5, (j as f32 + 0.5) / 2.0 - 0.5);
+            let (x0, y0) = (fx.floor(), fy.floor());
+            let (tx, ty) = (fx - x0, fy - y0);
+            let (x0, y0) = (x0 as isize, y0 as isize);
+            let (a, b, d, e) = (cell(x0, y0), cell(x0 + 1, y0), cell(x0, y0 + 1), cell(x0 + 1, y0 + 1));
+            let mut q = [0u8, 0, 0, 255];
+            for k in 0..3 {
+                let top = a[k] as f32 * (1.0 - tx) + b[k] as f32 * tx;
+                let low = d[k] as f32 * (1.0 - tx) + e[k] as f32 * tx;
+                q[k] = (top * (1.0 - ty) + low * ty).round() as u8;
+            }
+            c.rrect(Rect::new(r.x + i as f32 * cw, r.y + j as f32 * ch, cw + 0.6, ch + 0.6), 0.0, q);
         }
     }
     c.outline(r, 4.0 * s, 1.0 * s, [255, 255, 255, 40]);
@@ -442,6 +466,13 @@ impl StartMenu {
         let hot = |r: Rect| hover.is_some_and(|p| r.contains(p));
         let drag = self.drag.filter(|&i| i < shop.rows.len());
 
+        // An opaque floor under the whole shop (polish review finding 8,
+        // 11-24: the planet under the menu showed through, a crystal's
+        // hexagon behind the bag row). Mid-planet the loadout panel keeps
+        // the planet faintly behind it.
+        if !shop.field {
+            c.rrect(Rect::new(0.0, 0.0, sw, sh), 0.0, [11, 14, 18, 255]);
+        }
         // The top bar: where the run is going, and the points.
         let top = TOP * s;
         c.rrect(Rect::new(0.0, 0.0, sw, top), 0.0, [8, 11, 14, 236]);
@@ -1168,6 +1199,9 @@ impl StartMenu {
     /// everything it does, and its pips at the foot. The same face, colours
     /// and words as its shelf row; only the shape is a card's.
     fn hand_card(&self, row: &ShopRow, now: Option<f32>, mine: &[(String, f32, String)], r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+        // A card taller than `HAND_TALL` (`hand`, 11-24) draws its face up
+        // to a seventh larger, and centres it in the height.
+        let s = s * (r.h / (r.w * HAND_TALL)).clamp(1.0, 1.15);
         let done = owned(row);
         self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
         let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
@@ -1192,41 +1226,66 @@ impl StartMenu {
             let room = r.right() - pad - c.atlas.measure(Weight::SemiBold, 17.0 * s, &row.price) - 8.0 * s - bx;
             c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, &t, room, with_alpha(ink, dim.max(0.6)));
         }
+        // Its stats as bars (the owner, 2026-11-22 08:53Z: "make visual
+        // for speed range, etc"): a rolled bullet's own numbers; else only
+        // the gun's numbers it changes, each as before and after ("Damage
+        // 72 → 144", the tick where the gun is now). Every row of the gun
+        // on every card read the same on most of them (polish review
+        // finding 8, 11-24: Delay and Tinder showed five identical rows).
+        let own = row.area == ShopArea::Cards && !row.bars.is_empty();
+        let changed: Vec<(String, f32, String)> = if !own && row.bars.is_empty() && !mine.is_empty() {
+            row.stats
+                .iter()
+                .filter_map(|(l, f, v)| {
+                    let m = mine.iter().find(|b| b.0 == *l)?;
+                    (m.2 != *v || (m.1 - f).abs() > 0.005).then(|| (l.clone(), *f, format!("{} \u{2192} {v}", m.2)))
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
+        let bars: &[(String, f32, String)] = if own { &row.bars } else { &changed };
+        let lead_b = 16.0 * s;
         // The icon smaller than the first cut's 56, so the bars fit under
         // the name.
-        let stats = !row.stats.is_empty() && row.bars.is_empty() && !mine.is_empty();
-        let bars = row.area == ShopArea::Cards && !row.bars.is_empty() || stats;
-        let ic = if bars { 40.0 * s } else { 56.0 * s };
-        c.icon(row.icon, (r.x + (r.w - ic) / 2.0, r.y + 38.0 * s), ic, tint);
-        let ink = with_alpha(TEXT, dim.max(0.6));
-        let px = fit_px(c, &row.name, 17.0 * s, 13.5 * s, room);
-        let name_y = if bars { r.y + 104.0 * s } else { r.y + 124.0 * s };
-        c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, name_y), Align::Centre, &row.name, room, ink);
-        // Then its stats as bars (the owner, 2026-11-22 08:53Z: "make
-        // visual for speed range, etc"): a rolled bullet's own numbers,
-        // else the gun's damage a shot, fire rate, range, speed and aim
-        // with it, a tick where the gun is now; then its words.
+        let ic = if bars.is_empty() { 56.0 * s } else { 40.0 * s };
         let pips = if row.area == ShopArea::Cards { row.cost.min(6) } else if row.level.1 > 1 { row.level.1.min(8) as u32 } else { 0 };
         let foot = if pips > 0 { 26.0 * s } else { 10.0 * s };
+        let about = words(row);
+        let (lead, apx) = (18.0 * s, 13.5 * s);
+        let lines = if about.is_empty() { Vec::new() } else { c.wrap(Weight::Medium, apx, room, about) };
+        // The face from the icon down, lowered by a share of what the card
+        // grew past `HAND_TALL`: the same for every card in the hand, so
+        // their icons and names stand in one line (centring each face on
+        // its own height set them at different heights).
+        // On a grown card a bars card's smaller icon sits at the foot of
+        // the large one's box, so every name in the hand is on one line.
+        let grown = (r.h - r.w * HAND_TALL).max(0.0);
+        let ic_box = if grown >= 16.0 * s { 56.0 * s } else { ic };
+        let name_dy = ic_box + 30.0 * s;
+        let top = r.y + 38.0 * s + 0.3 * (grown - 16.0 * s).max(0.0);
+        c.icon(row.icon, (r.x + (r.w - ic) / 2.0, top + ic_box - ic), ic, tint);
+        let ink = with_alpha(TEXT, dim.max(0.6));
+        let px = fit_px(c, &row.name, 17.0 * s, 13.5 * s, room);
+        let name_y = top + name_dy;
+        c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, name_y), Align::Centre, &row.name, room, ink);
         let mut ty = name_y + 26.0 * s;
         let floor = r.bottom() - foot - 4.0 * s;
-        if row.area == ShopArea::Cards && !row.bars.is_empty() {
-            ty += stat_bars(c, &row.bars, None, r.x + pad, ty - 12.0 * s, room, 16.0 * s, 12.5 * s, row.tint, dim.max(0.6), floor, s) + 4.0 * s;
-        } else if stats {
-            ty += stat_bars(c, &row.stats, Some(mine), r.x + pad, ty - 12.0 * s, room, 16.0 * s, 12.5 * s, [150, 162, 176, 255], dim.max(0.6), floor, s) + 4.0 * s;
+        if own {
+            ty += stat_bars(c, bars, None, r.x + pad, ty - 12.0 * s, room, lead_b, 12.5 * s, row.tint, dim.max(0.6), floor, s) + 4.0 * s;
+        } else if !bars.is_empty() {
+            let theirs: Vec<(String, f32, String)> = mine.iter().filter(|m| bars.iter().any(|b| b.0 == m.0)).cloned().collect();
+            ty += stat_bars(c, bars, Some(&theirs), r.x + pad, ty - 12.0 * s, room, lead_b, 12.5 * s, [150, 162, 176, 255], dim.max(0.6), floor, s) + 4.0 * s;
         }
-        let about = words(row);
-        if !about.is_empty() {
-            let lead = 18.0 * s;
-            let lines = c.wrap(Weight::Medium, 13.5 * s, room, about);
+        if !lines.is_empty() {
             let fit = (((r.bottom() - foot - ty) / lead).floor() as usize + 1).max(1);
             for (k, l) in lines.iter().take(fit).enumerate() {
                 if ty + k as f32 * lead > r.bottom() - foot + 2.0 * s {
                     break;
                 }
                 let cut = k + 1 == fit && lines.len() > fit;
-                let text = if cut { format!("{}…", l.trim_end_matches(['.', ',', ' '])) } else { l.clone() };
-                c.text_fit(Weight::Medium, 13.5 * s, (r.x + r.w / 2.0, ty + k as f32 * lead), Align::Centre, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
+                let text = if cut { format!("{}\u{2026}", l.trim_end_matches(['.', ',', ' '])) } else { l.clone() };
+                c.text_fit(Weight::Medium, apx, (r.x + r.w / 2.0, ty + k as f32 * lead), Align::Centre, &text, room, with_alpha([196, 205, 214, 255], dim.max(0.6)));
             }
         }
         let d = 6.0 * s;

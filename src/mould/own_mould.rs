@@ -53,7 +53,7 @@ pub const SPECIES: u8 = OWN + 1;
 const NONE: u32 = u32::MAX;
 
 /// What a soldier does to the player's mould.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Task {
     #[default]
     None,
@@ -64,6 +64,7 @@ pub enum Task {
 
 /// The gardeners' numbers.
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Tend {
     /// The disc a task covers, dish cells.
     pub r: f32,

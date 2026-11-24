@@ -55,6 +55,7 @@ pub const COST_LUCK: f32 = 0.15;
 /// What a bullet does where it hits: nothing more than its strike (plain),
 /// or one of the toolkit's payloads.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Shell {
     Plain,
     Blast,
@@ -135,6 +136,7 @@ impl Shell {
 /// A bullet set: which way its rolls lean (owner: "base bullet sets that
 /// are more likely to have certain multipliers").
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Set {
     /// Every number round 1.
     Standard,
@@ -241,6 +243,7 @@ pub const SLUG_SHOVE_SECS: f32 = 0.25;
 /// One bullet card: its payload, set and rolled numbers, all whole so a
 /// card stays `Copy + Eq + Hash` and its text form exact.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Ammo {
     pub shell: Shell,
     pub set: Set,

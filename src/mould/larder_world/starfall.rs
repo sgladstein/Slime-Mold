@@ -47,6 +47,7 @@ use crate::mould::squad::{Burst, BurstRules};
 /// Starfall's and the cores' numbers: times in game seconds, distances in
 /// dish cells, worth in shop points. First numbers; Direction tunes them.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct StarRules {
     pub on: bool,
     /// Falls a planet: at least `least`, then each more with chance
@@ -206,6 +207,7 @@ impl StarRules {
 
 /// What lies on the ground.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum DropKind {
     /// Ore from the sky.
     Ore,
@@ -215,6 +217,7 @@ pub enum DropKind {
 
 /// What dropped a core (`cores.rs`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum CoreFrom {
     /// Ore from the sky.
     Sky,
@@ -227,6 +230,7 @@ pub enum CoreFrom {
 
 /// One fall or core.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Drop {
     pub kind: DropKind,
     pub from: CoreFrom,
@@ -287,6 +291,7 @@ impl Drop {
 /// came in, for the window's "+N" and the coin chime (Boss cores thread,
 /// 2026-11-21: make the pickup feel good).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Cashed {
     pub at: (f32, f32),
     pub kind: DropKind,
@@ -310,6 +315,7 @@ pub const ROCK_CLEAR: f32 = 1.0;
 
 /// The game's starfall state.
 #[derive(Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Starfall {
     /// The planet's falls not yet begun (ticks their shadows show), soonest
     /// last; None until drawn at the first second.

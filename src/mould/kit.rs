@@ -55,6 +55,7 @@ use super::larder_world::{Game, World};
 use super::squad::{Burst, BurstRules};
 
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct KitRules {
     /// Dish cells from a living soldier a tool can be used at.
     pub reach: f32,
@@ -250,6 +251,7 @@ pub const MINE_DENSITY: f32 = 0.035;
 
 /// A tool use; points in fine cells, as soldiers' are.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Tool {
     Blast((f32, f32)),
     Mine((f32, f32)),
@@ -281,6 +283,7 @@ impl Tool {
 
 /// One blast to draw: where, its radius (fine cells), the tick it went off.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Bang {
     pub at: (f32, f32),
     pub r: f32,
@@ -289,6 +292,7 @@ pub struct Bang {
 }
 
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Kit {
     pub rules: KitRules,
     /// Mines laid and not yet gone off, fine cells.

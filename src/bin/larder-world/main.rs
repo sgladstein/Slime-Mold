@@ -211,6 +211,7 @@ fn kind_look(kind: u16) -> LumpLook {
 /// reads as two-thirds cyan, never all of it (that is a crystal's).
 const LEECH_HALF: f32 = 150.0;
 mod args;
+mod autodetail;
 mod blit;
 mod cursor;
 mod experiments;
@@ -226,6 +227,7 @@ mod strat;
 mod utility;
 mod league;
 mod menu;
+mod resume;
 mod squadmode;
 mod uisize;
 mod volume;
@@ -769,6 +771,9 @@ struct Look {
     hurt: f32,
     flinch: f32,
     bite: f32,
+    /// Seconds left of its health bar after its last hurt (`HURT_BAR`
+    /// long; Look, 11-24): a soldier under `BAR_HP` always shows its bar.
+    hit: f32,
     /// Seconds left of its gun's kick from its last shot (`KICK` long),
     /// the cast that shot carried (`Shot::cast`: its flash takes the
     /// payload's colour) and the shots it has fired, which vary each
@@ -783,7 +788,7 @@ struct Look {
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW } }
+        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, hit: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW } }
     }
 }
 
@@ -809,6 +814,12 @@ const SIREN_CALL: f32 = 0.7;
 const FLINCH_HP: f32 = 3.0;
 /// How long a flinch lasts, seconds.
 const FLINCH: f32 = 0.2;
+/// How long a soldier's health bar shows after it is hurt, seconds, and
+/// the share of its health under which the bar always shows (polish review
+/// 11-23, finding 5: from under 95%, a big squad wore a bar on every
+/// soldier most of the fight; the squad's health is on its tile).
+const HURT_BAR: f32 = 2.0;
+const BAR_HP: f32 = 0.7;
 /// How long a fallen soldier's pool of blood takes to spread, seconds
 /// (`Marks::fallen`; the owner's playtest 2026-11-18 16:12Z).
 const POOL_GROW: f32 = 2.5;
@@ -947,6 +958,9 @@ struct App {
     /// draws whole steps; `between`), or None in the window.
     sub: Option<f32>,
     last_frame: Instant,
+    /// Auto's World detail, stepping down while frames run long
+    /// (`autodetail`, 2026-11-24).
+    auto_detail: autodetail::AutoDetail,
     shift: bool,
     /// The soldier the last build with nobody selected sent (`builders`):
     /// Shift + another build queues on it.
@@ -1169,6 +1183,7 @@ impl App {
             felt: 0,
             sub: None,
             last_frame: Instant::now(),
+            auto_detail: Default::default(),
             shift: false,
             last_sent: None,
             ctrl: false,
@@ -1658,6 +1673,9 @@ impl App {
             }
         }
         self.game = Some(game);
+        // A new game's slime starts small or large: Auto tries the top
+        // step again (`autodetail`).
+        self.auto_detail.restart();
         self.slime = who;
         self.seen = 0;
         self.unheld.clear();
@@ -1867,6 +1885,7 @@ impl App {
             l.kick = (l.kick - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
             l.flinch = (l.flinch - dt).max(0.0);
+            l.hit = (l.hit - dt).max(0.0);
         }
         for b in &mut self.blooks {
             b.call = (b.call - dt).max(0.0);
@@ -2230,6 +2249,9 @@ impl App {
         let t0 = Instant::now();
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
+        // The interval since the last frame, vsync's 16.7 ms when the GPU
+        // keeps up: Auto's World detail steps by it (`autodetail`).
+        self.auto_frame(dt * 1e3);
         self.update_cursor(event_loop);
         if !self.in_menu() {
             // WASD pans only while paused (`Controls::wasd_pan`): set here
@@ -2333,12 +2355,23 @@ impl App {
         }
     }
 
+    /// One frame's time (ms) for Auto's World detail (`autodetail`): the
+    /// interval between frames in the window, the frame's own time in the
+    /// bench. Nothing when the player chose a step.
+    fn auto_frame(&mut self, ms: f32) {
+        if detail_user() == "Auto" {
+            self.auto_detail.frame(ms);
+        }
+    }
+
     fn prepare_now(&mut self) {
         // The world detail (`settings::detail_percent`, 11-22; steps
         // 11-24): the view draws the world at this percent of the
-        // screen's pixels each way.
+        // screen's pixels each way. Auto's follows the frame rate
+        // (`autodetail`).
         if let Some(v) = self.view.as_mut() {
-            v.set_percent(settings::detail_percent(detail_user(), v.screen));
+            let pct = if detail_user() == "Auto" { self.auto_detail.percent(v.screen) } else { settings::detail_percent(detail_user(), v.screen) };
+            v.set_percent(pct);
         }
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {

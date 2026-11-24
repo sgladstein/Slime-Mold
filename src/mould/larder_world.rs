@@ -79,6 +79,7 @@ mod bulwark;
 mod fireway;
 mod trample;
 mod gear;
+pub mod snap;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -118,6 +119,7 @@ pub use super::larder::{End, Order, Stance};
 /// soldier first needs one (`Game::map_for`) and built a slice a step
 /// (`Game::pump_maps`).
 #[derive(Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct Paths {
     maps: std::collections::HashMap<usize, (Vec<u32>, u64)>,
     /// The tick of the last `PATHS_EVERY` rebuild, and its step.
@@ -157,6 +159,7 @@ pub const QUEUE: usize = 8;
 pub const GUARD_RIM: f32 = 3.0;
 
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Soldier {
     /// Fine cells.
     pub x: f32,
@@ -228,6 +231,7 @@ pub struct Soldier {
 /// One shot as the window draws it: from, where it stopped (None: a wall or
 /// rock stopped it, or it flew its range), and walkers killed.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Shot {
     pub from: (f32, f32),
     pub to: (f32, f32),
@@ -254,6 +258,7 @@ pub struct Shot {
 /// charge. The soldier's working pulse and the crystal's working spot
 /// both read this one list, so they light together.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Take {
     pub by: Option<usize>,
     pub crystal: usize,
@@ -277,6 +282,7 @@ pub(super) type Firer = (Option<usize>, u8, Option<usize>);
 /// fine cells of its range left, its strike radius, who fired it and the
 /// cast it carries.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Bullet {
     pub at: (f32, f32),
     pub dir: (f32, f32),
@@ -328,6 +334,7 @@ pub struct Bullet {
 /// What every soldier's bullet carries when fired: the rounds' flight
 /// cards (`rounds::Rounds::arm`). Turret shots carry none.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct BulletMods {
     pub pierce: u8,
     pub split: u8,
@@ -362,7 +369,12 @@ pub struct BulletMods {
     pub seek: u8,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(bound(serialize = "", deserialize = "W: 'static"))]
 pub struct Game<W: World> {
+    /// Not in the save's serde tree: `Game::from_save` reads it on its own
+    /// (`snap.rs`).
+    #[serde(skip, default = "snap::parked")]
     pub world: W,
     pub rules: Rules,
     pub soldiers: Vec<Soldier>,
@@ -641,14 +653,18 @@ pub struct Game<W: World> {
     /// The CPU time of each part of a step, when on (`Game::costed`): name,
     /// total ms, the longest ms and the calls. None in play; the bench
     /// turns it on and prints it.
+    #[serde(skip)]
     pub costs: Option<Vec<(&'static str, f64, f64, u32)>>,
     /// The step handed to the world and not yet finished (`begin_step`).
+    /// A save is taken between steps, never with one in flight.
+    #[serde(skip)]
     flight: Option<Flight>,
 }
 
 /// A step between `Game::begin_step` and `Game::finish_step`: the tick it
 /// began on, its frame, which soldier (None the larder) and crystal each
 /// unit stands for, and the results if the world gave them at once.
+#[derive(serde::Serialize, serde::Deserialize)]
 struct Flight {
     t: u64,
     f: Frame,

@@ -43,6 +43,7 @@ use super::{Game, World};
 /// The strikers' numbers. Off by default (the campaign and the sandbox are
 /// frozen); a run turns it on from its planet (`run::ENEMY_RULES`, `run::FIRST_PLANET`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct StrikerRules {
     pub on: bool,
     /// The slime condenses while its mass is under this share of its peak.
@@ -102,6 +103,7 @@ impl Default for StrikerRules {
 
 /// What the strikers have done.
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Strikers {
     /// The engine's rule is on (from the first second the slime is under
     /// `below` of its peak; it stays on, so condensed walkers keep charging

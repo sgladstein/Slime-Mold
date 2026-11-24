@@ -73,6 +73,7 @@ impl ApplicationHandler for App {
         match event {
             WindowEvent::CloseRequested => {
                 self.save_replay();
+                self.save_planet();
                 self.save_run();
                 event_loop.exit();
             }

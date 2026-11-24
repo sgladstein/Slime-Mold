@@ -154,7 +154,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // owner's 4K screen drew the world at 8 times the pixels the GTX 1070
     // was timed at. Taken at once and saved, not a round's. Steps from
     // 100% to 40% since 11-24 (the owner approved a quality slider).
-    o.insert(3, Opt::new("detail", "World detail", &settings::DETAIL_STEPS, "Auto", detail_user(), "How many of the screen's pixels the world is drawn at, each way. Auto keeps 60 frames a second (half on a 4K screen); 100% draws every pixel, lower steps are softer and faster. Text, panels and soldiers stay sharp"));
+    o.insert(3, Opt::new("detail", "World detail", &settings::DETAIL_STEPS, "Auto", detail_user(), "How many of the screen's pixels the world is drawn at, each way. Auto starts at the screen's own step (half on a 4K screen) and steps down toward 40% only while frames run slower than 60 a second; 100% draws every pixel, lower steps are softer and faster. Text, panels and soldiers stay sharp"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -539,7 +539,8 @@ fn glance_of(seed: u64, depth: u32) -> Glance {
         return g;
     }
     let m = slime_mould::mould::levelgen::level(seed, depth);
-    let g = glance_from(&m, 64);
+    // 96 across (64 until 11-24; the pane blends between cells too).
+    let g = glance_from(&m, 96);
     LAST.with(|l| *l.borrow_mut() = Some(((seed, depth), g.clone())));
     g
 }
@@ -657,15 +658,17 @@ fn item_icon(key: &str) -> Icon {
         "fireproof" => Icon::Shield,
         "walls" => Icon::Wall,
         "turret" => Icon::Turret,
+        "turret+" => Icon::Upgrade,
+        "tools+" => Icon::Tag,
         "mortar" => Icon::Bomb,
-        "lure" => Icon::Bait,
+        "lure" => Icon::Lure,
         "pump+" => Icon::Crystal,
         "outpost" => Icon::Hold,
         "siren" => Icon::Alert,
         "blast" => Icon::Grenade,
-        "mine" => Icon::Target,
+        "mine" => Icon::Mine,
         "cord" => Icon::Burn,
-        "gas" => Icon::Pause,
+        "gas" => Icon::Sleep,
         "draw" => Icon::Menu,
         _ => Icon::Upgrade,
     }
@@ -931,7 +934,13 @@ impl App {
                     m.show(Page::Main);
                 }
             }
-            StartEvent::Run if self.run.is_some() => self.show_shop(),
+            // A planet left mid-game carries on (save and resume A,
+            // `resume.rs`); else the shop, then the next planet.
+            StartEvent::Run if self.run.is_some() => {
+                if !self.resume_planet()? {
+                    self.show_shop();
+                }
+            }
             StartEvent::Run | StartEvent::NextLevel => {
                 let Some((base, _)) = self.base.clone() else { return Ok(false) };
                 let fresh = self.run.is_none();
@@ -959,6 +968,8 @@ impl App {
                 self.run = Some(r);
                 self.round = self.args.round;
                 self.parked = Some(menu);
+                // A planet landing fresh: any planet saved before is old.
+                self.drop_planet();
                 self.start()?;
                 self.paused = false;
                 // As it lands: closed mid-planet, it lands here again.
@@ -1231,10 +1242,14 @@ impl App {
         let Ok(text) = std::fs::read_to_string(&p) else { return };
         let note = match Run::from_save(&text) {
             Ok(r) if !r.over => {
-                let note = format!("Your run is saved on planet {} ({}): Back to the run carries on", r.depth, r.line());
+                let (depth, line) = (r.depth, r.line());
                 self.run_saved = text;
                 self.run = Some(r);
-                note
+                if self.planet_saved().is_some() {
+                    format!("Your run is saved mid-planet {depth} ({line}): Back to the run carries on where you left")
+                } else {
+                    format!("Your run is saved on planet {depth} ({line}): Back to the run carries on")
+                }
             }
             Ok(_) => {
                 let _ = std::fs::remove_file(&p);
@@ -1266,6 +1281,7 @@ impl App {
         // the loadout panel's copy is the window's until it closes.
         let live = self.run.as_ref().filter(|r| !r.over && !r.range && !r.field).or(self.args.run.as_ref().filter(|r| !r.over && self.run.is_some()));
         let Some(r) = live else {
+            self.drop_planet();
             if !self.run_saved.is_empty() || p.exists() {
                 if let Err(e) = std::fs::remove_file(&p).or_else(|e| if e.kind() == std::io::ErrorKind::NotFound { Ok(()) } else { Err(e) }) {
                     eprintln!("larder-world: the finished run's save was not removed ({}: {e})", p.display());
@@ -1434,7 +1450,7 @@ mod glance_tests {
     fn the_glance_holds_the_planet() {
         for depth in 1..=4 {
             let g = super::glance_of(7, depth);
-            assert_eq!(g.w, 64, "planet {depth}");
+            assert_eq!(g.w, 96, "planet {depth}");
             assert_eq!(g.cells.len(), g.w * g.h, "planet {depth}");
             assert!(g.crystals.len() >= 6 && !g.moulds.is_empty() && g.landing.is_some(), "planet {depth}: {} crystals, {} nests", g.crystals.len(), g.moulds.len());
             let on = |x: f32, y: f32| (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y);

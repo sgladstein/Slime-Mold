@@ -25,6 +25,7 @@ use super::{Game, World};
 /// The heartbeat's numbers. Off by default (the campaign and the sandbox
 /// are frozen); a run turns it on for every planet (`run::ENEMY_RULES`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct HeartRules {
     pub on: bool,
     /// A calm walker's lean outward on the beat (and home between), in the

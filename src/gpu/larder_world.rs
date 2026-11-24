@@ -28,6 +28,8 @@
 //! and `frame_finish` split a frame so the window draws while the GPU runs
 //! it (`Game::begin_step`, `finish_step`).
 
+mod snap;
+
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -269,6 +271,7 @@ pub struct GpuWorld {
 /// The gardeners on the GPU world (`own_mould`'s `Garden`, 2026-11-12):
 /// the soldiers' tasks and what they did.
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct GpuGarden {
     pub tasks: Vec<Task>,
     pub tend: Tend,
@@ -779,6 +782,14 @@ impl GpuWorld {
 }
 
 impl World for GpuWorld {
+    fn save_state(&mut self) -> Result<Vec<u8>, String> {
+        self.save_bytes()
+    }
+
+    fn load_state(&mut self, bytes: &[u8]) -> Result<(), String> {
+        self.load_bytes(bytes)
+    }
+
     fn size(&self) -> (usize, usize) {
         (self.e.dish.w, self.e.dish.h)
     }
@@ -1710,6 +1721,40 @@ mod tests {
             assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
         }
+    }
+
+    /// **A planet saved mid-game loads as it was** (save and resume A,
+    /// Milestone 2, 2026-11-24): five seconds in, the game is saved, read
+    /// onto a world built fresh, and saved again: the two saves are the
+    /// same bytes (every engine buffer read back, every CPU field, the
+    /// game's whole state). A save for another planet is refused. Then
+    /// both play on two seconds and still save the same bytes (the engine
+    /// is deterministic on one device), so nothing a step reads was left
+    /// out.
+    #[test]
+    fn a_planet_saved_mid_game_loads_as_it_was() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let fresh = || GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        let rules = || Rules { cap: 30.0, ..Rules::default() };
+        let mut g = Game::new(fresh(), rules(), seed);
+        while g.time() < 5.0 && g.end.is_none() {
+            g.step();
+        }
+        let saved = g.save("race 5").unwrap();
+        let mut back = Game::from_save(&saved, "race 5", fresh()).unwrap();
+        assert_eq!((back.time(), back.mould, back.killed), (g.time(), g.mould, g.killed));
+        let again = back.save("race 5").unwrap();
+        assert_eq!(again.len(), saved.len());
+        assert!(again == saved, "the loaded game saves the same bytes");
+        assert!(Game::from_save(&saved, "race 6", fresh()).is_err(), "another planet's save");
+        for _ in 0..60 {
+            g.step();
+            back.step();
+        }
+        assert_eq!((g.world.ticks(), g.mould), (back.world.ticks(), back.mould));
+        let (a, b) = (g.save("race 5").unwrap(), back.save("race 5").unwrap());
+        assert!(a == b, "played on, the two games save the same bytes: {} differ", a.iter().zip(&b).filter(|(x, y)| x != y).count());
     }
 
     /// **A bot's coarser ask leaves the rules' grid alone** (the bug hunt,
@@ -3103,6 +3148,41 @@ mod tests {
         assert!(fed.origin.fell.is_some() && fed.stand.live.is_none(), "it broke under its floor");
         assert!(matches!(fed.end, Some(End::MouldWiped(_))), "the planet is won: {:?}", fed.end);
         assert!(fed.time() <= broke_at + fed.rules.origin.die_back + 2.0, "within the die-back: {:.1} s", fed.time() - broke_at);
+    }
+
+    /// **The last stand gathers only up to twice the origin's size**
+    /// (`OriginRules::gather_most`, 11-24): Engine's siege met planet 7's
+    /// origin at 79,940 members against a size of 4,200, the late last
+    /// stand having taken every free walker on the map at once. Here an
+    /// origin of 150 in a race world of 4,000 walkers, set gathering once
+    /// it holds its size, holds more than its size and no more than a
+    /// little over twice it 20 s later.
+    #[test]
+    fn the_last_stand_gathers_the_origin_only_to_twice_its_size() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 4_000);
+        let s = race_settings(seed, scale, walkers);
+        let mut rules = Rules::default();
+        rules.origin.on = true;
+        rules.origin.size = 150.0;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
+        while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
+            g.step();
+        }
+        let before = members(&g);
+        let gathered_at = g.time();
+        g.stand.live.as_mut().expect("the origin formed").gather = true;
+        let mut most = 0;
+        while g.time() < gathered_at + 20.0 {
+            g.step();
+            most = most.max(members(&g));
+        }
+        let after = members(&g);
+        eprintln!("gather: {before} members at {gathered_at:.1} s, {after} 20 s later (most {most}), slime {}", g.mould);
+        assert!(g.mould > 2_000, "the slime is far bigger than the cap: {}", g.mould);
+        assert!(after as f32 > 1.3 * g.rules.origin.size, "it gathered more than its size: {after}");
+        assert!(most as f32 <= 2.3 * g.rules.origin.size, "but not the body: {most}");
     }
 
     /// **A hit's hole stays open while it is fresh** (`crater_shut`,

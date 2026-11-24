@@ -631,7 +631,7 @@ pub type Segment = ((f32, f32), (f32, f32));
 
 /// splitmix64. Own, so the module stays self-contained and a seed means the
 /// same dish in every build.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Rng(u64);
 
 impl Rng {

@@ -413,7 +413,39 @@ pub fn ring_groups(at: &[(f32, f32)], ring: f32, link: f32) -> Vec<((f32, f32), 
         let far = members.iter().map(|p| (p.0 - c.0).hypot(p.1 - c.1)).fold(0.0f32, f32::max);
         out.push((c, far + ring));
     }
+    // Group rings that still overlap become one ring round both (polish
+    // review 11-23, finding 5: a spread squad drew two or more rings
+    // crossing each other), until none do.
+    let mut merged = true;
+    while merged {
+        merged = false;
+        'pairs: for i in 0..out.len() {
+            for j in i + 1..out.len() {
+                let ((a, ra), (b, rb)) = (out[i], out[j]);
+                let d = (b.0 - a.0).hypot(b.1 - a.1);
+                if d < ra + rb {
+                    out[i] = enclose((a, ra), (b, rb), d);
+                    out.swap_remove(j);
+                    merged = true;
+                    break 'pairs;
+                }
+            }
+        }
+    }
     out
+}
+
+/// The smallest circle round two circles `d` apart.
+fn enclose((a, ra): ((f32, f32), f32), (b, rb): ((f32, f32), f32), d: f32) -> ((f32, f32), f32) {
+    if d + rb <= ra {
+        return (a, ra);
+    }
+    if d + ra <= rb {
+        return (b, rb);
+    }
+    let r = 0.5 * (d + ra + rb);
+    let t = (r - ra) / d.max(1e-6);
+    ((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t), r)
 }
 
 /// A unit's usual marks: a disc in its team's colour (`r` world cells, on
@@ -444,6 +476,21 @@ mod tests {
         }
         assert!(g.iter().any(|&(c, r)| c == (0.0, 0.0) && r == 2.0), "a lone unit keeps its own ring");
         assert!(ring_groups(&[], 2.0, RING_LINK).is_empty());
+    }
+
+    #[test]
+    fn rings_that_overlap_become_one() {
+        // Two knots just out of link reach whose group rings still cross:
+        // one ring round both, holding every member's ring.
+        let at = [(0.0, 0.0), (1.0, 0.0), (4.5, 0.0), (5.5, 0.0)];
+        let g = ring_groups(&at, 2.0, 1.5);
+        assert_eq!(g.len(), 1, "{g:?}");
+        let (c, r) = g[0];
+        for p in at {
+            assert!((p.0 - c.0).hypot(p.1 - c.1) + 2.0 <= r + 1e-3);
+        }
+        // Far apart, two rings.
+        assert_eq!(ring_groups(&[(0.0, 0.0), (20.0, 0.0)], 2.0, 1.5).len(), 2);
     }
 
     #[test]

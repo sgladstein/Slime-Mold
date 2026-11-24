@@ -104,9 +104,16 @@ impl Camera {
         self.x = if w >= self.world.0 || 0.0 >= self.world.0 - w { (self.world.0 - w) / 2.0 } else { self.x.clamp(0.0, self.world.0 - w) };
         // Vertically, the band between the UI's insets is what must stay on
         // the world (with no insets, the whole screen).
+        // The top bar is floating pills over the world, not a panel: the
+        // view stops at the world's top edge, and only the bottom panels
+        // let the world's last row come out from under them. (To 11-24 the
+        // top inset did too, so at play zoom the top 70 px of the screen
+        // showed the off-map band and its dark line behind the pills: the
+        // polish review's finding 12.)
         let (top, bottom) = (self.inset.0 / self.zoom, self.inset.1 / self.zoom);
         let band = h - top - bottom;
-        self.y = if band >= self.world.1 || -top >= self.world.1 - h + bottom { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(-top, self.world.1 - h + bottom) };
+        let hi = self.world.1 - h + bottom;
+        self.y = if band >= self.world.1 || -top >= hi { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(0.0f32.min(hi), hi) };
     }
 
     /// The UI's insets changed (its panels' heights): keep the view legal.
@@ -295,16 +302,18 @@ mod tests {
     }
 
     #[test]
-    fn an_inset_lets_the_world_bottom_come_out_from_under_the_panels() {
+    fn the_world_bottom_comes_out_from_under_the_panels_and_its_top_stays_at_the_top() {
         let mut c = Camera::new((2048, 1280), (1280, 800));
         c.set_inset(50.0, 200.0);
         c.centre_on((1024.0, 1280.0));
         // The world's last row sits just above the bottom panel.
         let (_, y) = c.to_screen((0.0, 1280.0));
         assert!((y - 600.0).abs() < 0.5, "{y}");
+        // The top bar floats over the world: its first row is at the
+        // screen's top, with no off-map band behind the bar.
         c.centre_on((1024.0, 0.0));
         let (_, y) = c.to_screen((0.0, 0.0));
-        assert!((y - 50.0).abs() < 0.5, "{y}");
+        assert!(y.abs() < 0.5, "{y}");
     }
 
     #[test]

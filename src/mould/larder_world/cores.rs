@@ -48,6 +48,7 @@ use crate::mould::big::Lump;
 
 /// The cores' state (`Game::cores`).
 #[derive(Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Cores {
     /// Fresh core worth dropped this planet (`StarRules::core_pot`).
     pub pot: f32,

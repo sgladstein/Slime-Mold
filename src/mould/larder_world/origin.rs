@@ -47,6 +47,7 @@ use crate::mould::big::{Lump, LUMPS};
 /// (`run::ORIGIN_SIZE`). Armour, bite, steering and the lunge are the
 /// last-stand heart's (`StandRules`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct OriginRules {
     pub on: bool,
     /// The members it gathers at the landing and regrows to.
@@ -103,16 +104,27 @@ pub struct OriginRules {
     /// lost and 24 wiped (planet 2, size 700, run seed 1, lavapipe).
     pub quiet: f32,
     pub hurt: f32,
+    /// The late last stand (`StandRules`, from planet 4) gathers free
+    /// walkers into it only until it holds this times its size, from a
+    /// disc round its centre that widens by `gather_widen` a take. Until
+    /// 11-24 it took every free walker on the map at once: Engine's siege
+    /// on Scott's maps (GTX 1070, 720 s) met planet 7's origin at 79,940
+    /// and 66,426 members against a size of 4,200, the whole body, which no
+    /// squad wore down to its floor (one open at 12:00, one lost), and
+    /// planet 8's at 3,285 against 2,400.
+    pub gather_most: f32,
+    pub gather_widen: f32,
 }
 
 impl Default for OriginRules {
     fn default() -> Self {
-        OriginRules { on: false, size: 400.0, most: 1.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02 }
+        OriginRules { on: false, size: 400.0, most: 1.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02, gather_most: 2.0, gather_widen: 3.0 }
     }
 }
 
 /// The origin's state beside the heart it is (`Stand::live` with `origin`).
 #[derive(Clone, Copy, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct OriginState {
     /// It formed this planet.
     pub formed: bool,
@@ -209,8 +221,16 @@ impl<W: World> Game<W> {
         if calm && now >= self.origin.grown + (r.grow_every.max(0.5) * tps) as u64 {
             self.origin.grown = now;
             if h.gather {
-                let whole = self.whole_map();
-                self.world.grow_lump(h.lump, (h.centre, whole));
+                // Its shortfall to `gather_most` sizes cuts each take's
+                // disc as the crystal's takes below do, so it stops near
+                // that and does not swallow the body.
+                let most = r.gather_most.max(1.0) * r.size.max(1.0);
+                let short = (most - h.members as f32).max(0.0) / most;
+                if short > 0.0 {
+                    self.origin.reach = (self.origin.reach + r.gather_widen.max(0.1)).min(self.whole_map());
+                    let take = (self.origin.reach * short.sqrt()).max(0.5);
+                    self.world.grow_lump(h.lump, (h.centre, take));
+                }
             } else if self.origin_fed() && (h.members as f32) < r.most * r.size {
                 let cr = self.crystal_at(self.core).map_or(4.0 * self.world.scale(), |(c, _)| self.world.crystal_r(c)) / self.world.scale().max(1.0);
                 // The reach widens while it is short of its size; a take

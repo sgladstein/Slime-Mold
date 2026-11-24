@@ -43,6 +43,7 @@ use crate::mould::big::{Lump, LUMPS};
 /// Off by default (the campaign and the sandbox are frozen); a run turns
 /// it on from its planet (`run::ENEMY_RULES`, `run::FIRST_PLANET`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct FruitRules {
     pub on: bool,
     /// No fruit until this long after the landing: the planet's first
@@ -123,6 +124,7 @@ impl Default for FruitRules {
 
 /// How a fruit ended.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum FruitEnd {
     /// Ripe: it sowed its walkers.
     Burst,
@@ -132,6 +134,7 @@ pub enum FruitEnd {
 
 /// One fruit.
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Fruit {
     /// The lump it is (`World::form_lump`).
     pub lump: usize,
@@ -152,6 +155,7 @@ pub struct Fruit {
 
 /// The game's fruiting state.
 #[derive(Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Fruits {
     /// The fruit ripening now, if any (one at a time).
     pub live: Option<Fruit>,

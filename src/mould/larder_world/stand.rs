@@ -41,6 +41,7 @@ use crate::mould::big::{Lump, LUMPS};
 /// Off by default (the campaign and the sandbox are frozen); a run turns it
 /// on from its planet (`run::ENEMY_RULES`, `run::FIRST_PLANET`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct StandRules {
     pub on: bool,
     /// The slime gathers once its mass is under this share of its peak.
@@ -120,6 +121,7 @@ impl Default for StandRules {
 
 /// The heart.
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Heart {
     /// The lump it is (`World::grow_lump`).
     pub lump: usize,
@@ -167,6 +169,7 @@ impl Heart {
 
 /// The game's last stand.
 #[derive(Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Stand {
     /// The heart, while it lives.
     pub live: Option<Heart>,

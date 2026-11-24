@@ -87,6 +87,7 @@ pub const CEILING_FALL: f64 = 0.05;
 pub const CEILING_OVER: f64 = 0.2;
 
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Ceiling {
     /// The walkers the slime landed with, once read (0 before).
     pub start: usize,

@@ -3468,7 +3468,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let seam_g = 1.0 - smoothstep(0.0, 1.0, abs(dpx - GEM_GIRDLE * a * P.zoom));
             let seam_t = 1.0 - smoothstep(0.0, 1.0, abs(dpx - GEM_TABLE * a * P.zoom));
             let seam_s = (1.0 - smoothstep(0.0, 1.0, abs(along) * P.zoom)) * (1.0 - w_bevel) * (1.0 - w_table);
-            let seam = max(max(seam_g, seam_t), seam_s) * smoothstep(3.5, 5.0, P.zoom);
+            let seam = max(max(seam_g, seam_t), seam_s) * smoothstep(3.5, 5.0, P.look_zoom);
             // Fracture planes inside the glass (`GEM_VEINS`), seen through
             // the table and the crown as hairlines of light, by the charge.
             // Each a short plane seen edge on: a segment from a point in the
@@ -4469,7 +4469,16 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             if (P.body_density > 0.0) { n0 = BODY_N * max(P.body_density / BODY_DENSITY, 0.05); }
             let dens = -log(max(1.0 - under_body, 0.004)) * n0 / 25.0;
             let per = 0.95 / (1.0 + (dens / 0.35) * (dens / 0.35));
-            let lit = 1.0 - pow(1.0 - per, f32(n & 1023u));
+            var lit = 1.0 - pow(1.0 - per, f32(n & 1023u));
+            // Not on a crystal's faces unless the slime films it there
+            // (polish review 11-23, finding 14: the Sprawler's dashes ran
+            // over the crystals like scratches). The crystal stands above
+            // the ground the walkers cross; where their film lies on it,
+            // `shaded` already draws the slime over the faces.
+            if (lit > 0.0) {
+                let gk = gem_near(fx, fy);
+                if (gk > 0u && gem_in(gk - 1u, fx, fy).x > 0.0) { lit *= smoothstep(0.005, 0.03, film_th(fx, fy)); }
+            }
             c = mix(c, select(vec3<f32>(255.0, 222.0, 130.0), THREAD_RGB, P.slime_look == 1u && P.streak > 0.0), lit * 0.92);
             // An absorbed walker's streak (`draw_absorbed`) takes its
             // warm-white outright, as the phases below do.
