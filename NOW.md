@@ -21,7 +21,7 @@ The roguelike run in squad mode, all eight planets, as a run he wants to
 finish and replay. It is done when all six hold:
 
 1. **The origin wins a planet.** On every planet the slime's heart sits on its start crystal from the landing, and killing it wins (the last walker still wins as a fallback). The run bot wins planets 1 to 8 that way with no soft lock, and draining the heart's crystal is a second way in.
-2. **A run of the length he chose.** He picks how long a whole run should be (asked once, below); the planets' clocks and sizes are set so his own run lands near it.
+2. **A run of at least two hours** (his answer, 11-24 03:14Z): longer planets or twice as many planets, the exact length not settled yet. The run is built so either can be dialled, and his own run lands at two hours or more.
 3. **The curve.** The run bot plays all eight planets on his maps, and one page shows time to win, soldiers, income and losses by planet. No planet is a wall for every main plan, and later planets cost more than earlier ones.
 4. **Save and resume.** He can quit between planets, or mid-planet, and pick the same run up on the next start.
 5. **60 frames a second on his PC**: frame p95 under 16.7 ms on the GTX 1070 at his own screen (3840 x 2160, World detail as shipped) through planets 1 to 8, the Sporer's big slimes included.
@@ -42,7 +42,7 @@ timed on the 1070. Save and resume does not exist.
 
 | Lane | Test | Top jobs, in order |
 |---|---|---|
-| Direction | all | This page and the rulings. Ask him the run length once; set the clocks and sizes to it with Enemy. Sort each play session into lane jobs within the hour. Post the curve page when Engine's table lands. |
+| Direction | all | This page and the rulings. Cost the two roads to a two-hour run (longer planets, or 16) with Enemy and Engine. Sort each play session into lane jobs within the hour. Post the curve page when Engine's table lands. |
 | Enemy | 1, 3 | Land the origin (#699) on, then give planets 4 to 8 their origin sizes, so the siege wins each under 12 min. Planet 5's size (`tier_size`), which waited for this milestone. Each of planets 4 to 8 does one nameable thing to the player. |
 | Squad and arsenal | 1, 3 | The Tinder brush that burns its own squad on planet 3 (rounds.rs). Gun steps E and F, now unparked. The dart (the Lure's second form). Hold fire and formations follow his play notes. |
 | Look and interface | 1, 5 | The origin's look and the HUD's goal line, so he knows from the first minute what to kill. The view's cost at 4K with Engine (test 5). Then Look B, C, D from his notes. |
@@ -60,8 +60,8 @@ asks at most once a session with a recommendation.
 
 | What | State |
 |---|---|
-| How long a whole run should be | Asked 11-24 on a card. Today a run is about 75 min for him. |
-| Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked after the run length. |
+| Longer planets or more of them | His 11-24 answer: a run of at least two hours, by either; "we don't need to decide exactly now". Direction brings both, costed, once the origin plays. |
+| Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked next. |
 | D7 the rush brake | His, in play. The origin's rush numbers are in `Reports/origin-design-2026-11-22/`. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (asked 11-17 19:14Z). |
 

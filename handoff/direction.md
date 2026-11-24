@@ -217,8 +217,10 @@ end.
   NOW.md rewritten for Milestone 2 with six exit tests (origin wins every
   planet, a run length he picks, the eight-planet curve, save and resume,
   60 fps at his 4K screen on the 1070, everything on). Asked him the run
-  length on a card (today about 75 min). D8, the CPU engine, is asked
-  after it, once Engine lists what stands on that engine. Things to try
+  length on a card (today about 75 min); he answered 03:14Z: at least
+  two hours, longer planets or twice as many, not decided exactly. Next:
+  cost both roads with Enemy and Engine. D8, the CPU engine, is asked
+  next, once Engine lists what stands on that engine. Things to try
   now lead with the origin.
 - **11-22 morning (Chicago night)**: he won all eight planets ("Still
   too easy"); #721 raised planets 2 to 8 partway (row in
