@@ -302,7 +302,7 @@ impl ApplicationHandler for App {
             return;
         }
         let first = PhysicalSize::new(self.size.0, self.size.1);
-        let attributes = Window::default_attributes().with_title(format!("Larder World map editor: {}", self.name)).with_inner_size(first);
+        let attributes = Window::default_attributes().with_title(format!("{} map editor: {}", slime_mould::world::GAME_NAME, self.name)).with_inner_size(first);
         let window = match event_loop.create_window(attributes) {
             Ok(w) => Arc::new(w),
             Err(e) => {
@@ -393,7 +393,7 @@ impl ApplicationHandler for App {
             _ => return,
         }
         if let Some(w) = &self.window {
-            w.set_title(&format!("Larder World map editor: {}{}", self.name, if self.ed.dirty { " *" } else { "" }));
+            w.set_title(&format!("{} map editor: {}{}", slime_mould::world::GAME_NAME, self.name, if self.ed.dirty { " *" } else { "" }));
             w.request_redraw();
         }
     }

@@ -159,7 +159,7 @@ fn loadout_w(l: &Loadout, f: GunFit, s: f32) -> f32 {
     let slots = l.slots.max(l.widest).max(l.cards.len()).max(1);
     let cards = slots as f32 * LOADOUT_CELL + (slots - 1) as f32 * 5.0;
     let info = if f.name { LOADOUT_INFO } else { GUN_TAB };
-    (2.0 * 8.0 + cards + 10.0 + info + if f.swap && l.cycle.is_some() { 36.0 } else { 0.0 }) * s
+    (2.0 * 8.0 + cards + 10.0 + info + if f.swap && l.cycle.is_some() { LOADOUT_SWAP + 6.0 } else { 0.0 }) * s
 }
 
 /// The squad header's buttons, from the right: each label and the key it
@@ -224,6 +224,9 @@ fn lock_glyph(c: &mut Canvas, p: (f32, f32), h: f32, col: Rgba) {
 /// with the gun's name at 12 pixels.
 const LOADOUT_CELL: f32 = 46.0;
 const LOADOUT_INFO: f32 = 124.0;
+/// The loadout button's width (30 to 11-24, a square with only its key;
+/// now wide enough for its word under the key, the polish review).
+const LOADOUT_SWAP: f32 = 54.0;
 
 /// A command's place on the card: its `slot` (row, column), kept on the
 /// grid. (Until Card 2, 2026-11-15, slots were the old 4 x 3 card's, read
@@ -1894,7 +1897,8 @@ impl Hud {
         let mut x = r.x;
         let y = r.y - chip_h - 6.0 * s;
         if m.idle > 0 {
-            let label = format!("{}", m.idle);
+            // "11 idle", not a bare "11" (the polish review, 11-24).
+            let label = format!("{} idle", m.idle);
             let w = 34.0 * s + c.atlas.measure(Weight::SemiBold, 13.0 * s, &label);
             let chip = Rect::new(x, y, w, chip_h);
             self.chip(chip, Hit::Idle, false, c, s);
@@ -2394,10 +2398,10 @@ impl Hud {
                 c.icon(cmd.icon, (b.x + 8.0 * s, b.y + (cell - ic) / 2.0), ic, ink);
                 let tx = b.x + 8.0 * s + ic + 7.0 * s;
                 let key = key_name(cmd.key);
-                let kw = key.as_ref().map_or(0.0, |k| c.atlas.measure(Weight::SemiBold, 11.5 * s, k) + 9.0 * s);
+                let kw = key.as_ref().map_or(0.0, |k| keycap_w(c, k, 11.0 * s, s) + 6.0 * s);
                 let room = b.right() - tx - 6.0 * s;
                 if let Some(k) = &key {
-                    c.text(Weight::SemiBold, 11.5 * s, (b.right() - 6.0 * s, b.bottom() - 6.0 * s), Align::Right, k, alpha(MUTED, dim.max(0.6)));
+                    keycap(c, k, (b.right() - 4.0 * s, b.bottom() - 4.0 * s), 11.0 * s, dim.max(0.6), s);
                 }
                 let label = short_label(&cmd.name);
                 let words = alpha(TEXT, dim.max(0.55));
@@ -2435,7 +2439,8 @@ impl Hud {
                 c.icon(cmd.icon, (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s), ic, ink);
                 // The hotkey, top left.
                 if let Some(k) = key_name(cmd.key) {
-                    c.text(Weight::SemiBold, 11.0 * s, (b.x + 4.5 * s, b.y + 12.0 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
+                    let kw = keycap_w(c, &k, 10.5 * s, s);
+                    keycap(c, &k, (b.x + 3.0 * s + kw, b.y + 3.0 * s + 15.5 * s), 10.5 * s, dim.max(0.6), s);
                 }
                 if cmd.locked {
                     lock_glyph(c, (b.right() - 13.0 * s, b.bottom() - 14.0 * s), 10.5 * s, alpha(MUTED, 0.95));
@@ -2482,7 +2487,7 @@ impl Hud {
         let gap = 5.0 * s;
         let slots = l.slots.max(l.cards.len()).max(1);
         let info_w = LOADOUT_INFO * s;
-        let swap = 30.0 * s;
+        let swap = LOADOUT_SWAP * s;
         let w = loadout_w(l, fit, b);
         let h = 2.0 * pad + cell + 5.0 * s;
         // Its own panel at the bar's far left (11-14 08:46Z), the strip
@@ -2507,7 +2512,27 @@ impl Hud {
         let mut tip = None;
         let y = r.y + pad;
         let mut x = r.x + pad;
+        // No cards yet: one well over the empty slots saying so (the polish
+        // review, 11-24, finding 6: four blank boxes beside the gun's name
+        // said nothing).
+        if l.cards.is_empty() {
+            let well = Rect::new(x, y, slots as f32 * cell + (slots - 1) as f32 * gap, cell);
+            c.rrect(well, (7.0 * s).min(well.h / 2.0), [255, 255, 255, 7]);
+            c.outline(well, (7.0 * s).min(well.h / 2.0), 1.0, [255, 255, 255, 16]);
+            let room = well.w - 14.0 * s;
+            let (one, two) = ("No gun cards yet", "the shop sells them");
+            if room >= c.atlas.measure(Weight::Medium, 12.0 * s, two) && slots > 1 {
+                c.text(Weight::SemiBold, 12.5 * s, (well.x + well.w / 2.0, well.y + well.h / 2.0 - 2.0 * s), Align::Centre, one, alpha(MUTED, 0.95));
+                c.text(Weight::Medium, 12.0 * s, (well.x + well.w / 2.0, well.y + well.h / 2.0 + 13.0 * s), Align::Centre, two, alpha(MUTED, 0.7));
+            } else {
+                c.text_fit(Weight::Medium, 11.5 * s, (well.x + well.w / 2.0, well.y + well.h / 2.0 + 4.0 * s), Align::Centre, "No cards", room, alpha(MUTED, 0.85));
+            }
+            x = well.right() + gap;
+        }
         for i in 0..slots {
+            if l.cards.is_empty() {
+                break;
+            }
             let Some(k) = l.cards.get(i) else {
                 // An empty slot (only the shop or H fills it).
                 let b = Rect::new(x, y, cell, cell);
@@ -2564,12 +2589,17 @@ impl Hud {
             tip = self.loadout_words(l, tx, y, r, info_w, tip, c, s);
         }
         if let (Some((_, key)), true) = (l.cycle, fit.swap) {
-            let b = Rect::new(r.right() - pad - swap, y + (cell - swap) / 2.0, swap, swap);
+            // As tall as a card, its key on a keycap over the word for
+            // what it does (the polish review, 11-24, finding 6: a lone
+            // "H" box was unexplained).
+            let b = Rect::new(r.right() - pad - swap, y, swap, cell);
             let hot = self.hover.is_some_and(|p| b.contains(p));
             let (t, bt) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
             c.panel(b, 6.0 * s, t, bt, 1.0, [255, 255, 255, 30]);
             let k = key_name(key).unwrap_or_else(|| "~".into());
-            c.text(Weight::SemiBold, 13.0 * s, (b.x + b.w / 2.0, b.y + b.h / 2.0 + 4.5 * s), Align::Centre, &k, TEXT);
+            let kw = keycap_w(c, &k, 11.0 * s, s);
+            keycap(c, &k, (b.x + (b.w + kw) / 2.0, b.y + 22.0 * s), 11.0 * s, 1.0, s);
+            c.text_fit(Weight::SemiBold, 10.5 * s, (b.x + b.w / 2.0, b.bottom() - 7.0 * s), Align::Centre, "Loadout", b.w - 6.0 * s, alpha(MUTED, 0.95));
             self.hits.push((b, Hit::Cycle));
             if hot {
                 tip = Some((usize::MAX - 1, b));
@@ -2931,7 +2961,7 @@ impl Hud {
                     base.clone()
                 } else { vec![
                     ("Left click / drag".into(), "Select soldiers".into()),
-                    ("Right click".into(), "Move, or work the crystal or mould clicked".into()),
+                    ("Right click".into(), "Move, or work the crystal or slime clicked".into()),
                     ("Shift".into(), "Add to the selection, or keep placing".into()),
                     ("Ctrl + 1-9".into(), "Make a group; 1-9 selects it, twice to look".into()),
                     ("Wheel, middle drag".into(), "Zoom, pan; the screen's edge scrolls".into()),
@@ -3195,15 +3225,17 @@ impl Hud {
 const CURVE_H: f32 = 112.0;
 /// The slime's colour on the end screen's graph: the amber the slime is
 /// drawn in on the planet, so the bars read as the slime.
-const CURVE_SLIME: Rgba = [236, 150, 52, 210];
+const CURVE_SLIME: Rgba = [255, 178, 64, 255];
+/// The area under the slime's curve: its amber, dim.
+const CURVE_FILL: Rgba = [236, 150, 52, 90];
 
 /// **The match's curve on the end screen** (2026-11-21, the owner: "I
 /// would be curious to see slime population overtime after each match"):
-/// the slime's walkers as amber columns, one per few seconds (the most in
-/// each, so a peak is never averaged away), and the soldiers standing as
-/// cyan dots on their own scale, with the slime's peak and the clock at
-/// both ends. Plain rectangles, as the rest of the card: the canvas draws
-/// no lines.
+/// the slime's size as an amber area with a bright edge, one column per
+/// few seconds (the most in each, so a peak is never averaged away), and
+/// the soldiers standing as a cyan step line on their own scale, with the
+/// slime's peak and the clock at both ends. Plain rectangles, as the rest
+/// of the card: the canvas draws no lines (gapped bars and dots to 11-24).
 fn end_curve(curve: &[(u32, u32)], r: Rect, c: &mut Canvas, s: f32) {
     c.panel(r, 10.0 * s, [255, 255, 255, 12], [255, 255, 255, 6], 1.0, EDGE);
     let (padx, top, bottom) = (12.0 * s, 26.0 * s, 20.0 * s);
@@ -3215,29 +3247,45 @@ fn end_curve(curve: &[(u32, u32)], r: Rect, c: &mut Canvas, s: f32) {
     c.rrect(Rect::new(r.x + padx, ky - 5.0 * s, 9.0 * s, 9.0 * s), 2.0 * s, CURVE_SLIME);
     let w = c.text(Weight::Medium, 12.5 * s, (r.x + padx + 14.0 * s, ky + 4.0 * s), Align::Left, "Slime", MUTED);
     let kx = r.x + padx + 14.0 * s + w + 14.0 * s;
-    c.rrect(Rect::new(kx, ky - 3.0 * s, 6.0 * s, 6.0 * s), 3.0 * s, ACCENT);
-    c.text(Weight::Medium, 12.5 * s, (kx + 11.0 * s, ky + 4.0 * s), Align::Left, &format!("Soldiers (most {})", most as u32), MUTED);
+    c.rrect(Rect::new(kx, ky - 1.0 * s, 10.0 * s, 2.0 * s), 0.0, ACCENT);
+    c.text(Weight::Medium, 12.5 * s, (kx + 15.0 * s, ky + 4.0 * s), Align::Left, &format!("Soldiers (most {})", most as u32), MUTED);
     let peak_label = if peak >= 10_000.0 { format!("peak {:.1}k", peak / 1000.0) } else { format!("peak {}", peak as u32) };
     c.text(Weight::Medium, 12.5 * s, (r.right() - padx, ky + 4.0 * s), Align::Right, &peak_label, MUTED);
     // The floor.
     c.rrect(Rect::new(plot.x, plot.bottom(), plot.w, 1.0 * s), 0.0, TRACK);
-    // A column every 3 units or more, each the most of its seconds.
-    let n = curve.len().min((plot.w / (3.0 * s)).floor().max(1.0) as usize);
+    // A faint line at half the peak, so the area's height reads.
+    c.rrect(Rect::new(plot.x, plot.y + plot.h / 2.0, plot.w, 1.0 * s), 0.0, [255, 255, 255, 10]);
+    // The slime as a filled area (the polish review, 11-24, finding 15: a
+    // row of gapped amber bars all alike read as a placeholder): a column
+    // every 2 units or more with no gap, each the most of its seconds, its
+    // body a dim amber and a bright cap along the top, so the columns'
+    // tops join into the curve's edge. The soldiers as a cyan step line
+    // over it, each column's level joined to the next by an upright.
+    let n = curve.len().min((plot.w / (2.0 * s)).floor().max(1.0) as usize);
     let cw = plot.w / n as f32;
-    let gap = if cw > 2.5 * s { 1.0 * s } else { 0.0 };
+    let cap = 2.0 * s;
+    let lw = 2.0 * s;
+    let mut prev: Option<f32> = None;
     for k in 0..n {
         let (a, b) = (k * curve.len() / n, ((k + 1) * curve.len() / n).max(k * curve.len() / n + 1));
         let part = &curve[a..b.min(curve.len())];
         let v = part.iter().map(|p| p.0).max().unwrap_or(0) as f32;
-        let x = plot.x + k as f32 * cw;
+        // Whole pixels, edge to edge: an overlap doubled the dim fill
+        // into seams, a gap into stripes.
+        let x = (plot.x + k as f32 * cw).round();
+        let w = (plot.x + (k + 1) as f32 * cw).round() - x;
         if v > 0.0 {
-            let h = (v / peak * plot.h).max(1.0 * s);
-            c.rrect(Rect::new(x, plot.bottom() - h, cw - gap, h), 0.0, CURVE_SLIME);
+            let h = (v / peak * plot.h).max(cap);
+            c.rrect(Rect::new(x, plot.bottom() - h, w, h), 0.0, CURVE_FILL);
+            c.rrect(Rect::new(x, plot.bottom() - h, w, cap), 0.0, CURVE_SLIME);
         }
         let men = part.last().map_or(0, |p| p.1) as f32;
-        let d = 3.0 * s;
-        let my = plot.bottom() - men / most * (plot.h - d) - d;
-        c.rrect(Rect::new(x + (cw - gap - d) / 2.0, my, d, d), d / 2.0, ACCENT);
+        let my = plot.bottom() - men / most * (plot.h - lw) - lw;
+        c.rrect(Rect::new(x, my, w, lw), 0.0, ACCENT);
+        if let Some(py) = prev.filter(|py| (py - my).abs() > 0.5) {
+            c.rrect(Rect::new(x, py.min(my), lw, (py - my).abs() + lw), 0.0, ACCENT);
+        }
+        prev = Some(my);
     }
     // The clock under it, from the landing to the end.
     let secs = curve.len() as u32;
@@ -3259,7 +3307,9 @@ pub fn short_label(name: &str) -> String {
 fn split_label(c: &Canvas, label: &str, px: f32, room: f32) -> (String, String) {
     let cuts: Vec<usize> = label.char_indices().filter(|&(_, ch)| ch == ' ' || ch == '-').map(|(i, _)| i).collect();
     for &i in cuts.iter().rev() {
-        let keep = if label[i..].starts_with('-') { i + 1 } else { i };
+        // A hyphen is cut without its dash ("Attack" over "move": the
+        // polish review, 11-24, read "Attack-" over "move" as a broken word).
+        let keep = i;
         let first = &label[..keep];
         if c.atlas.measure(Weight::SemiBold, px, first) <= room {
             return (first.to_string(), label[i + 1..].trim().to_string());
@@ -3279,6 +3329,25 @@ fn fit_px(c: &Canvas, text: &str, px: f32, least: f32, max: f32) -> f32 {
     } else {
         (px * max / w).max(least)
     }
+}
+
+/// **A key's name on a small keycap** (the polish review, 2026-11-24,
+/// finding 6: bare 11 px letters in the buttons' corners read as debug
+/// text, not as keys). A dark plate with a faint rim and the name centred
+/// on it, its bottom-right corner at `at`. Returns its width.
+fn keycap(c: &mut Canvas, k: &str, at: (f32, f32), px: f32, a: f32, s: f32) -> f32 {
+    let h = px + 5.0 * s;
+    let w = (c.atlas.measure(Weight::SemiBold, px, k) + 8.0 * s).max(h);
+    let r = Rect::new(at.0 - w, at.1 - h, w, h);
+    c.rrect(r, 3.5 * s, [8, 11, 15, (150.0 * a) as u8]);
+    c.outline(r, 3.5 * s, 1.0, [255, 255, 255, (46.0 * a) as u8]);
+    c.text(Weight::SemiBold, px, (r.x + w / 2.0, r.y + h / 2.0 + 0.36 * px), Align::Centre, k, alpha(TEXT, 0.82 * a));
+    w
+}
+
+/// The keycap's width, as `keycap` draws it.
+fn keycap_w(c: &Canvas, k: &str, px: f32, s: f32) -> f32 {
+    (c.atlas.measure(Weight::SemiBold, px, k) + 8.0 * s).max(px + 5.0 * s)
 }
 
 /// A key's short name for the button's corner.
@@ -4205,7 +4274,7 @@ mod tests {
     #[test]
     fn the_end_screen_shows_the_planets_numbers_and_fits() {
         let says = "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch";
-        let tiles: Vec<(String, String)> = [("9:41", "played"), ("12,604", "walkers killed"), ("1,520", "shots, 8.3 kills each"), ("0", "soldiers standing, 9 lost"), ("5,700", "food harvested"), ("42.3k of 43.4k", "slime left, of its peak")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
+        let tiles: Vec<(String, String)> = [("9:41", "played"), ("12,604", "slime killed"), ("1,520", "shots, 8.3 kills each"), ("0", "soldiers standing, 9 lost"), ("5,700", "food harvested"), ("42.3k of 43.4k", "slime left, of its peak")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
         let end = Ending { place: "Planet 3 of 8 · Drevix · The Trunk".into(), title: "The squad is lost".into(), won: Some(false), stars: Some(0), says: says.into(), tiles, lines: vec!["Your last soldier fell at 9:41 (best 40% of the goal)".into(), "The run ends on planet 3".into()], curve: (0..581u32).map(|t| (20_000 + (t * 37 % 9_000), 30 - t / 20)).collect() };
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
             for user in crate::world::settings::STEPS {
@@ -4217,7 +4286,7 @@ mod tests {
                 r.draw();
                 let quit = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::Quit)).map(|(b, _)| *b).unwrap();
                 assert!(quit.bottom() <= screen.1 as f32 && quit.y > 0.0 && quit.x >= 0.0 && quit.right() <= screen.0 as f32, "{screen:?} at {user}: Quit {quit:?} off screen");
-                for t in ["12,604", "walkers killed", "42.3k of 43.4k", "THE TRUNK", "Slime", "peak ", "9:41"] {
+                for t in ["12,604", "slime killed", "42.3k of 43.4k", "THE TRUNK", "Slime", "peak ", "9:41"] {
                     assert!(r.c.runs.iter().any(|x| x.text.contains(t)), "{screen:?} at {user}: no {t}");
                 }
                 assert!(r.c.runs.iter().any(|x| x.text.starts_with("It walls the crystals")), "{screen:?} at {user}: the slime's sentence");
@@ -4238,7 +4307,7 @@ mod tests {
             r.c.ui.user = user;
             r.m.clock = "1:00 / 18:00".into();
             r.m.speed = Some("Paused".into());
-            r.m.objective = Some("Wipe out the slime: cut it to 1% of its peak (counting from 1:00; 43,957 walkers now)".into());
+            r.m.objective = Some("Wipe out the slime: cut it to 1% of its peak (counting from 1:00; slime count 43,957)".into());
             r.draw();
             let said = |r: &Rig, t: &str| r.c.runs.iter().find(|x| x.text == t).map(|x| x.ink);
             assert!(said(&r, "EXPERIMENT ON").is_none() && !r.c.runs.iter().any(|x| x.text.contains("EXPERIMENTS ON")), "at {user}: a mark in the default game");
@@ -4272,7 +4341,7 @@ mod tests {
     /// the resources' fourth number).
     #[test]
     fn the_goal_keeps_off_the_top_bars_numbers() {
-        let goal = "Wipe out the slime: kill every last walker (counting from 1:00; 40,451 walkers now)";
+        let goal = "Wipe out the slime: kill every last walker (counting from 1:00; slime count 40,451)";
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
             for user in crate::world::settings::STEPS {
                 let mut r = Rig::new(screen);

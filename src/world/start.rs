@@ -1070,8 +1070,8 @@ impl StartMenu {
             // The title on the main page only, and smaller (44 at 96 until
             // 11-15, with the rows from 160: the list ran under the hint at
             // 200%; the owner picked menu A, names with one caption box).
-            c.text(Weight::SemiBold, 36.0 * s, (x, 64.0 * s), Align::Left, &self.title, TEXT);
-            c.text(Weight::Medium, 15.0 * s, (x, 90.0 * s), Align::Left, "A mould that grows, feeds and fights back", MUTED);
+            wordmark(c, &self.title, (x, 64.0 * s), 40.0 * s, s);
+            c.text(Weight::Medium, 15.0 * s, (x + 2.0 * s, 90.0 * s), Align::Left, "A slime that grows, feeds and fights back", MUTED);
         }
         let top = if inner { HEAD * s + 16.0 * s } else { 100.0 * s };
         let rows = self.rows();
@@ -1238,7 +1238,7 @@ impl StartMenu {
             let sub: Vec<String> = [b.since(), b.left()].into_iter().filter(|t| !t.is_empty()).collect();
             items.push(("What is new", sub.join(". "), Hit::Build, false, true));
         }
-        items.push(("Options", "The UI size, the game and the planet, the mould's rules, and the keys".into(), Hit::Options, false, self.build.is_none()));
+        items.push(("Options", "The UI size, the game and the planet, the slime's rules, and the keys".into(), Hit::Options, false, self.build.is_none()));
         if self.edit_maps {
             items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false, false));
         }
@@ -1943,6 +1943,36 @@ fn digit(code: KeyCode) -> Option<usize> {
     use KeyCode as K;
     let ds = [K::Digit0, K::Digit1, K::Digit2, K::Digit3, K::Digit4, K::Digit5, K::Digit6, K::Digit7, K::Digit8, K::Digit9];
     ds.iter().position(|&d| d == code)
+}
+
+/// **The title as a wordmark** (the polish review, 2026-11-24, finding 9:
+/// "Larder World" in the UI's own 26-36 px text read as a placeholder;
+/// the name became Plasmodia the same night). Capitals tracked wide in the
+/// slime's gold over a soft amber glow, the slime's own light on the dark
+/// ground (art direction rule 1); the main page's shade from the top keeps
+/// it off a bright crystal in the menu's dish (a dark edge drawn as four
+/// offset copies tripped the pages' no-overlapping-text test, and at 100%
+/// was not seen). `at` is the baseline's left end.
+/// A title the slime itself fills, in the dish, is the bigger next step.
+fn wordmark(c: &mut Canvas, name: &str, at: (f32, f32), px: f32, s: f32) {
+    const GOLD: Rgba = [255, 196, 72, 255];
+    let word = name.to_uppercase();
+    let track = 0.16 * px;
+    let glyphs: Vec<(String, f32)> = word.chars().map(|ch| {
+        let g = ch.to_string();
+        let w = c.atlas.measure(Weight::SemiBold, px, &g);
+        (g, w)
+    }).collect();
+    let width = glyphs.iter().map(|g| g.1).sum::<f32>() + track * glyphs.len().saturating_sub(1) as f32;
+    // The glow: a soft amber shadow behind the letters' band.
+    let cap = 0.73 * px;
+    let band = Rect::new(at.0 - 6.0 * s, at.1 - cap - 4.0 * s, width + 12.0 * s, cap + 8.0 * s);
+    c.shadow(band, 8.0 * s, 26.0 * s, 0.0, [255, 150, 30, 70]);
+    let mut x = at.0;
+    for (g, w) in &glyphs {
+        c.text(Weight::SemiBold, px, (x, at.1), Align::Left, g, GOLD);
+        x += w + track;
+    }
 }
 
 #[cfg(test)]
@@ -2761,13 +2791,13 @@ mod tests {
         let long = "When the slime has eaten enough from its crystals, the slime near your soldiers and buildings creeps toward them, then lunges; the longest wait between surges in steps (1800 is 60 s); 0 is off";
         let mut options = vec![Opt::new("ui", "UI and text size", &["75%", "100%", "200%"], "100%", "200%", "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere")];
         for (k, tab) in [("map", "Planet"), ("planet", "Planet"), ("own", "Planet"), ("plants", "Planet")] {
-            options.push(Opt::new(k, "Your own mould", &["off", "on"], "off", "on", "A green mould the squad sows and feeds; sandbox on the race world").in_tab(tab));
+            options.push(Opt::new(k, "Your own slime", &["off", "on"], "off", "on", "A green slime the squad sows and feeds; sandbox on the race world").in_tab(tab));
         }
         for k in ["mode", "rounds", "bullet", "dev"] {
             options.push(Opt::new(k, "Bullet speed", &["0", "30", "45", "60", "90"], "45", "0", "Dish cells a game second a shot flies; 0 is the instant ray"));
         }
         for k in ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge", "flinch"] {
-            options.push(Opt::new(k, "Shared food", &["0", "0.025", "0.05", "0.1"], "0.05", "0", long).in_tab("The mould"));
+            options.push(Opt::new(k, "Shared food", &["0", "0.025", "0.05", "0.1"], "0.05", "0", long).in_tab("The slime"));
         }
         let missions = ["Landfall", "First contact", "The gaps", "Cut the cord", "Kill zone", "The nest", "Spore season", "Two moulds"]
             .iter()
@@ -2926,7 +2956,7 @@ mod tests {
         let mut m = full_menu();
         m.missions = (0..30).map(|i| Entry { stem: format!("{i}"), name: format!("Mission {i}"), says: "Do it".into(), detail: "The Fork".into() }).collect();
         for k in 0..30 {
-            m.options.push(Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does").in_tab("The mould"));
+            m.options.push(Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does").in_tab("The slime"));
         }
         let mut c = Canvas::new((1920, 1080));
         c.ui.user = 2.0;

@@ -301,7 +301,7 @@ impl App {
                         self.hud.alert(&format!("Wall thickened to {cells:.0} cells"), Some(bd.at), theme::GOOD);
                     } else if bd.kind == Kind::Turret {
                         let f = g.rules.build.render_food;
-                        self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food a walker"), Some(bd.at), theme::GOOD);
+                        self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food for each bit"), Some(bd.at), theme::GOOD);
                     } else {
                         let rate = g.pump_draw(b) * g.pump_yield(b);
                         self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(bd.at), theme::GOOD);
@@ -478,7 +478,7 @@ impl App {
                         if let Some(g) = self.game.as_mut() {
                             if g.apply(Cmd::Buy) {
                                 let s = *g.soldiers.last().unwrap();
-                                let what = if g.rules.squads { "A soldier has joined your squad" } else { "A soldier has joined at the larder" };
+                                let what = if g.rules.squads { "A soldier has joined your squad" } else { "A soldier has joined at your base" };
                                 self.hud.alert(what, Some((s.x, s.y)), theme::GOOD);
                             }
                         }
@@ -559,7 +559,7 @@ impl App {
                         let price = g.upgrade_price(b);
                         if g.apply(Cmd::Upgrade(b)) {
                             let f = g.rules.build.render_food;
-                            self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food a walker"), Some(g.buildings[b].at), theme::GOOD);
+                            self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food for each bit"), Some(g.buildings[b].at), theme::GOOD);
                         } else {
                             let why = match price {
                                 Some(p) => format!("Rendering costs {p:.0} food"),
@@ -670,7 +670,7 @@ impl App {
         let r = k.rules;
         if !g.use_tool(t) {
             let why = if !held {
-                "No soldier holds a tool: soldiers take them at the larder".to_string()
+                "No soldier holds a tool: soldiers take them at your base".to_string()
             } else if !near {
                 format!("Too far: a soldier holding a tool must be within {:.0} cells", r.reach)
             } else if matches!(t, Tool::Cord(..)) {
@@ -734,7 +734,7 @@ impl App {
             KeyCode::KeyK => {
                 if let Some(l) = self.listener.as_mut() {
                     l.voice = !l.voice;
-                    let what = if l.voice { "The mould's voice on" } else { "The mould's voice off" };
+                    let what = if l.voice { "The slime's voice on" } else { "The slime's voice off" };
                     self.hud.alert(what, None, theme::ACCENT);
                 }
             }
