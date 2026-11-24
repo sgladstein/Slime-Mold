@@ -2560,7 +2560,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // DEPTH, to film a deep planet's level).
                 let (seed, depth) = v.split_once(':').unwrap_or((v, "1"));
                 let mut r = Run::new(seed.parse()?);
-                r.depth = depth.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
+                // LAB (lap two's rig, never merges): `LAB_LAP2=1` lets
+                // `run=SEED:9` to `:15` through, lap two's planets.
+                let last = if std::env::var("LAB_LAP2").is_ok() { 15 } else { slime_mould::mould::run::PLANETS };
+                r.depth = depth.parse::<u32>()?.clamp(1, last);
                 args.run = Some(r);
             }
             "range" => args.range = Some(Run::range(v.parse()?)),

@@ -1242,7 +1242,14 @@ impl Run {
         // the window's title and alert read its name.
         let planet = self.planet();
         let map = format!("planet:{d}:{}", self.seed);
+        // LAB (lap two's rig, never merges): with `LAB_LAP2=1`, planets 9
+        // to 15 take the ladder's tiers again in order (the Drifter on 9),
+        // their second trait's keys given on the command line
+        // (`Reports/lab-lap-two-2026-11-24/raw/pairs.txt`); every row by
+        // the planet is planet 8's (`depth_index` clamps).
+        let lap2 = d > PLANETS && std::env::var("LAB_LAP2").is_ok();
         let tier = match LADDER.get(d as usize - 1) {
+            _ if lap2 => LADDER[(d - PLANETS - 1) as usize % LADDER.len()],
             Some(&t) => t,
             None => LADDER[LADDER.len() - 3 + (mix(seed) % 3) as usize],
         };
