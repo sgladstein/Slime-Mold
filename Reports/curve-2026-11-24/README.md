@@ -180,3 +180,44 @@ backwards and is the bot, not the slime: its storm fires when the slime
 falls to `storm` times *its own* start size, so a bigger slime is stormed
 sooner, at a lower share of it. Batch v reruns the pair with the storm
 off (`storm=0`) on main after #806.
+
+## Batch w: when the bot storms the origin (`army=`, `clock=`)
+
+Batch t's run seeds held 9 of its 12 games not won, and in two the slime
+never fell to half its landing size, so the storm (`storm=0.5`) never
+fired: planet 6 seed 2 ran out the clock with 101 soldiers beside an
+untouched origin. Two dials (#811): `army=80` storms once the squad holds
+80; `clock=480` storms from 8:00 with 40. On the GTX 1070 at 72a8f01,
+planets 2 and 4 to 7 on the six maps, the three arms side by side (90
+games, 51 minutes).
+
+| Planet | As it was | `army=80` | `clock=480` |
+|---|---|---|---|
+| 2 | 4 / 6 | 4 / 6 | 4 / 6 |
+| 4 | 5 / 6 | 4 / 6 | 5 / 6 |
+| 5 | 0 / 6 | 2 / 6 | 4 / 6 |
+| 6 | 5 / 6 | 5 / 6 | 6 / 6 |
+| 7 | 0 / 6 | 1 / 6 | 5 / 6 |
+| All | 14 / 30 | 16 / 30 | 24 / 30 |
+
+`clock=480` won 10 games the bot as it was did not, and lost none it won
+(sign test p 0.002). Four of the ten ended before 8:00, where the arms run
+the same code: those are the 1070's run-to-run spread, which on planet 7
+map C turned a loss at 6:51 into a win at 6:34 from the same start.
+Counting only the six decided after 8:00 it is 6 against 0 (p 0.03).
+`clock=480` is the default from this change; `army=80` stays off.
+
+**Read with care:** games on the 1070 are not repeatable to the frame.
+Same-code arms ran identically for 5 to 6 minutes and then split, so a
+paired difference of one or two games is inside the spread.
+
+## Batch v: planet 8 at size 1.4 with the storm off
+
+Planet 8 on the six maps at size 1.0 and 1.4, `storm=0`, main 9d3f19a
+(1070, 12 games). Size 1.4 won 4 of 6 against 2 of 6, but in all four
+the origin broke with the squad having killed almost nothing (0 walkers
+by 2:30 on map C and seed 3). That was a bug, not the size: a dormant
+walker dropped out of its lump's count, so on the Dozer and the Sleeper
+the heart's members dozed off and it read as cut down (the Enemy lane,
+#824). Batch v is void; it reruns after #824, with planets 6 and 8 of
+batch u2.

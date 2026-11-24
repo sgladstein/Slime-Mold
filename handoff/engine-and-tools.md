@@ -388,6 +388,16 @@ to Enemy, then batch v; after Squad's #810 lands, add the builder arm
 to every curve pass, CI's plan unchanged. The next 1070 timing batch also
 times the HUD canvas at 4K, ui=125% (Look's ask).
 
+**2026-11-24 late.** Merged: #811 (curve batch t, dials `army=`,
+`clock=`), #816 (`hand=origin2`: the D7 heart baseline's hand closes in
+on the origin; the origin line prints `deepest N of M`), #826 (the origin
+line prints its armour and size). Batch w: `clock=480` is the bot's
+default (24 of 30 against 14). Batches u and u2 (Enemy's D7 baseline) are
+sent; y1 (D7 arms on planets 4 and 5) and x (Squad's builder arm) are on
+the PC; y2 (planets 6 and 8 on origin2, and batch v again) waits for
+Enemy's #824. Bot batches on the PC wait while `gpu-timing.lock` exists.
+1070 games are not repeatable: same-code arms split after 5 to 6 minutes.
+
 **Next (11-22):** the next 1070 batch times the
 view's `full` after the Look lane's #638 (plant crowns skipped under the
 slime) and sends them the saving against 3.42 ms; `pump_maps` spikes
