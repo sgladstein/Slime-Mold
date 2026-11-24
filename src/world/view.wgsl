@@ -1813,7 +1813,13 @@ fn dormant_mat(m0: Mat, d: f32) -> Mat {
 // tissue: paler and glossier than its gold, the way a healed wound is, by
 // up to `SCAR_TISSUE`; bare scarred ground darkens by up to `SCAR_BRUISE`,
 // so the places it shuns stay marked after it has left them.
-const SCAR_FULL: f32 = 1.0;
+// Since 2026-11-24 (Look's number, carried in the Enemy lane's scar tissue
+// PR) the paleness is the toughness: `SCAR_FULL` is the engine's
+// `scar_tough_full` (2,000), read linearly, so slime that shrugs off half
+// its blows reads fully pale. At 1.0 any scar at all read full (the scar
+// runs to the hundreds within a minute of fire), so the tissue said
+// nothing.
+const SCAR_FULL: f32 = 2000.0;
 const SCAR_TISSUE: f32 = 0.5;
 const SCAR_BRUISE: f32 = 0.3;
 fn scar_cell(ix: i32, iy: i32) -> f32 {
@@ -1831,7 +1837,7 @@ fn scar_share(x: f32, y: f32) -> f32 {
     let s = w.x + w.y + w.z + w.w;
     if (s <= 0.0) { return 0.0; }
     let a = vec4<f32>(scar_cell(ix, iy), scar_cell(ix + 1, iy), scar_cell(ix, iy + 1), scar_cell(ix + 1, iy + 1));
-    return 1.0 - exp(-max(dot(w, a) / s, 0.0) / SCAR_FULL);
+    return clamp(dot(w, a) / s / SCAR_FULL, 0.0, 1.0);
 }
 // `tm` the slime's thickness here: the tissue only where there is slime
 // (its gloss over bare ground drew pale glossy streaks in the first cut),
@@ -2374,7 +2380,13 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // spray of separate glowing dashes, the owner's "a bunch of individual
     // walkers instead of a single slime unit" (11-18 15:56Z). A third of
     // the Drifter's sheet, so the dashes still show through as threads.
-    if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail); }
+    // Only where walkers are near (Look, 11-24, carried in the Enemy lane's
+    // threads PR): with the threads built in, the trail fills the holes
+    // between the spokes, and the veil there painted them orange; a cell
+    // with no walker in its 3x3 (`wide` under 0.02, the Lab's hole) now
+    // shows bare ground, and the frontier dashes keep their joining film.
+    // A gate of 0.2 to 0.55 looked the same.
+    if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail * smoothstep(0.02, 0.12, wide)); }
     // The Trunk's cords (`SlimeLook::Cords`): off the body only (`off`).
     let off = 1.0 - smoothstep(0.25, 0.55, wide);
     let cord = trail * smoothstep(CORD_EDGE.x, CORD_EDGE.y, trail) * off;

@@ -3260,6 +3260,128 @@ mod tests {
         assert!(counts[1][3].1 > 0, "the shut hole refills once it opens");
     }
 
+    /// **The Sprawler's threads stack its walkers into lanes** (the Lab's
+    /// prototype, 11-24). With `thread_lanes` a calm walker may step into
+    /// a full cell whose trail beats its own, and with `thread_shuttle` a
+    /// fed walker reads the scent backwards, so the body packs into
+    /// threads with holes between: more of its walkers share a cell than
+    /// without, on the same seed.
+    #[test]
+    fn the_sprawlers_threads_stack_walkers_into_lanes() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 5_000);
+        let play = |keys: &[(&str, &str)]| {
+            let mut s = race_settings(seed, scale, walkers);
+            for &(k, v) in [("keep", "0.92"), ("sensor_offset", "6")].iter().chain(keys) {
+                crate::gpu::set(&mut s, k, v).unwrap();
+            }
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 30.0 {
+                g.step();
+            }
+            let e = &g.world.e;
+            let occ: Vec<u32> = read_back(&e.device, &e.queue, &e.occ).chunks_exact(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+            let all: u32 = occ.iter().sum();
+            let stacked: u32 = occ.iter().filter(|&&c| c >= 2).sum();
+            // The crystal cells under the slime, which set its ceiling
+            // (`ceiling.rs`): the Lab feared fed shuttles leave a crystal's
+            // middle bare.
+            (all, stacked as f32 / all.max(1) as f32, g.world.crystal_covered())
+        };
+        let off = play(&[]);
+        let on = play(&[("thread_lanes", "3"), ("thread_trail", "1.0"), ("thread_shuttle", "3"), ("thread_fed", "0.9")]);
+        eprintln!("threads: off {} walkers, {:.3} stacked, {} crystal cells covered; on {} walkers, {:.3} stacked, {} covered", off.0, off.1, off.2, on.0, on.1, on.2);
+        assert!(off.0 > 1_000 && on.0 > 1_000, "both slimes live: {off:?} {on:?}");
+        assert!(on.1 > off.1 + 0.05, "threads stack more walkers a cell: {on:?} against {off:?}");
+    }
+
+    /// **Scar tissue shrugs off blows** (`scar_tough`, the Grudge's,
+    /// 2026-11-24; GPU only). Two race worlds alike with the scar on, one
+    /// with scar tissue at 0.5; the scar set to twice `scar_tough_full`
+    /// everywhere, then one killing burst on the home crystal. With scar
+    /// tissue about half the walkers it hit live; without, none.
+    #[test]
+    fn scar_tissue_shrugs_off_half_the_blows() {
+        use crate::gpu::{f32_bytes, floats};
+        use crate::mould::kit::KitRules;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |tough: &str| -> (usize, usize) {
+            let mut s = race_settings(seed, scale, walkers);
+            for (k, v) in [("alarm_keep", "0.95"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_tough", tough), ("scar_tough_full", "2000")] {
+                crate::gpu::set(&mut s, k, v).unwrap();
+            }
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 10.0 {
+                g.step();
+            }
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let at = (home.0 / sc, home.1 / sc);
+            let (cx, cy, r) = {
+                let e = &g.world.e;
+                let ds = e.dish.p.scale as f32;
+                (at.0 * ds, at.1 * ds, 5.0 * ds)
+            };
+            let near = |g: &Game<GpuWorld>| {
+                let e = &g.world.e;
+                let wk = floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = floats(&read_back(&e.device, &e.queue, &e.energy));
+                (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (wk[4 * q] - cx).hypot(wk[4 * q + 1] - cy) <= r).count()
+            };
+            {
+                let e = &g.world.e;
+                e.queue.write_buffer(&e.crater, e.cells as u64 * 4, &f32_bytes(&vec![4_000.0; e.cells as usize]));
+            }
+            let before = near(&g);
+            let fine = g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+            g.world.burst(&squad::Burst { at, r: 6.0, kill: true, ..Default::default() }, &k);
+            (before, near(&g))
+        };
+        let off = play("0");
+        let on = play("0.5");
+        eprintln!("scar tissue: off {} -> {}, on {} -> {}", off.0, off.1, on.0, on.1);
+        assert!(off.0 > 50 && on.0 > 50, "slime on the crystal: {off:?} {on:?}");
+        assert!(off.1 * 10 < off.0, "without scar tissue the burst kills nearly all: {off:?}");
+        let kept = on.1 as f32 / on.0 as f32;
+        assert!((0.3..0.7).contains(&kept), "scar tissue keeps about half: {on:?}");
+    }
+
+    /// **The Sleeper grows while it sleeps** (`dream`, 2026-11-24; GPU
+    /// only). Two race worlds alike with the Sleeper's life cycle and a
+    /// birth ceiling of twice the walkers, one dreaming at 0.003 a step:
+    /// at 40 s the dreaming one has more walkers asleep, and never more
+    /// than its ceiling (a step's births over it at most).
+    #[test]
+    fn the_sleeper_grows_while_it_sleeps() {
+        use crate::mould::tiers::Tier;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |dream: &str| -> (usize, usize) {
+            let mut s = race_settings(seed, scale, walkers);
+            for (k, v) in Tier::Sleeper.keys() {
+                crate::gpu::set(&mut s, k, v).unwrap();
+            }
+            crate::gpu::set(&mut s, "dream", dream).unwrap();
+            s.ceiling = 2 * walkers as u32;
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 40.0 {
+                g.step();
+            }
+            let (st, _) = g.world.e.life_of();
+            let en = crate::gpu::floats(&read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.energy));
+            let alive: Vec<u8> = st.iter().zip(&en).filter(|(_, &e)| e >= 0.0).map(|(&s, _)| s).collect();
+            (alive.len(), alive.iter().filter(|&&s| s == 2).count())
+        };
+        let off = play("0");
+        let on = play("0.003");
+        eprintln!("dreaming: off {} alive, {} asleep; on {} alive, {} asleep", off.0, off.1, on.0, on.1);
+        assert!(off.1 > 100, "the Sleeper sleeps: {off:?}");
+        assert!(on.1 > off.1 + off.1 / 5, "dreaming grows the sleeping body: {on:?} against {off:?}");
+        assert!(on.0 <= 2 * walkers + walkers / 4, "under its ceiling: {on:?}");
+    }
+
     /// **A blast's long crater is not shut** (the review lane, 11-21: det
     /// cord stood as a wall for 19 s). Only a crater no longer than the
     /// guns' (`crater`) is shut: a kill with a crater ten times as long on

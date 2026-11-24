@@ -3390,7 +3390,10 @@ mod tests {
         let mut crater = vec![0f32; 2 * w * h];
         for y in 0..h {
             for x in 0..w / 2 {
-                crater[w * h + y * w + x] = 5.0;
+                // Full scar (`SCAR_FULL` 2,000 since scar tissue, 11-24,
+                // read linearly; until then any scar over 1 read full and
+                // this test used 5).
+                crater[w * h + y * w + x] = 2000.0;
             }
         }
         let crater_b = buf("crater", &crater.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());

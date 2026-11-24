@@ -150,9 +150,16 @@ pub fn size_roll(seed: u64) -> f32 {
 /// the depth rule's "more later on" is kept apart from this factor
 /// (`levels_get_harder_and_the_same_seed_gives_the_same_run`). Retune from
 /// the owner's play.
+///
+/// 0.45 since its threads (2026-11-24, Direction: land them, retune planet
+/// 2's size if harder): lanes let up to 3 more walkers share a cell, so the
+/// threaded body filled its birth ceiling where the packed one was held by
+/// room. Run seed 1, idle squad at 2:00: 14,317 walkers off, 26,725 with
+/// threads at 0.6, 15,593 at 0.45 (landing 13,845 and 10,384); 4, 3 and 4
+/// soldiers left. The spokes read the same at 0.45.
 pub fn tier_size(tier: Tier) -> f32 {
     match tier {
-        Tier::Sprawler => 0.6,
+        Tier::Sprawler => 0.45,
         _ => 1.0,
     }
 }
@@ -702,8 +709,8 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         Tier::Trunk => DoesToYou { says: "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch", rules: TRUNK_RULES, keys: TRUNK_KEYS },
         Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
-        Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
-        Tier::Grudge => DoesToYou { says: "It remembers where you hurt it, and comes back there", rules: &[], keys: GRUDGE_KEYS },
+        Tier::Sleeper => DoesToYou { says: "It grows while it sleeps. Every minute you farm, there is more to wake", rules: &[], keys: SLEEPER_KEYS },
+        Tier::Grudge => DoesToYou { says: "Where you hurt it, it grows back tough. Don't fight on old ground", rules: &[], keys: GRUDGE_KEYS },
     }
 }
 
@@ -722,7 +729,25 @@ const SPRAWLER_RULES: &[(&str, f32)] = &[("smell", 4.0), ("smell_r", 4.0)];
 // Run seed 1's planet 2 has nothing a plain light burns; the designer
 // (15:26Z) keeps it here for that: Tinder, which brings its own fuel, is the
 // answer, so the card says to bring it.
-const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50")];
+//
+// **Its body as threads** (2026-11-24; the Lab's prototype of that day,
+// `Reports/lab-threads-2026-11-24/`, built in at Direction's word): lanes
+// (3 more walkers on a cell holding as much trail as the walker's own) and
+// the shuttle (a walker past 0.9 of its birth energy walks down the
+// crystals' scent at 3, back up it when hungry), with the trail kept 0.92
+// (its walk's 0.8) and sensors 6 fine cells out (its 18), GPU only
+// (`gpu::Settings::thread_lanes`). Planet 2, seeds 1-3, at the off arm's
+// walkers: the disc round each crystal opens into four to seven spokes,
+// holes 25-29% of the body's outline against 0-8%. Neither rule alone
+// does it; with its own walk (0.8, 18) both made only a rough cross.
+const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50"), ("keep", "0.92"), ("sensor_offset", "6"), ("thread_lanes", "3"), ("thread_trail", "1.0"), ("thread_shuttle", "3"), ("thread_fed", "0.9")];
+
+/// The Sprawler's thread keys, the GPU engine's alone (no CPU twin).
+pub const THREAD_KEYS: [&str; 4] = ["thread_lanes", "thread_trail", "thread_shuttle", "thread_fed"];
+/// The Grudge's scar tissue keys, the GPU engine's alone (no CPU twin).
+pub const TOUGH_KEYS: [&str; 3] = ["scar_tough", "scar_tough_full", "scar_burn"];
+/// The Sleeper's dreaming key, the GPU engine's alone (no CPU twin).
+pub const DREAM_KEYS: [&str; 1] = ["dream"];
 // **The Trunk sets** (2026-11-17, the Enemy lane; planet 3). The
 // simulation-use plan's E1 and E2 were built on 11-17 behind four switches
 // (the crust and its pull, setting, set slime blocking or trapping, fed
@@ -784,13 +809,29 @@ const SPORER_KEYS: &[(&str, &str)] = &[("spore_burst", "0.2"), ("spore_alarm", "
 // Sleeper, planet 6, attack-move: wakes at an alarm of 0.3, not 1: one
 // soldier at 14 health -> the squad gone by 1:30. Tried and backfired:
 // wake_alarm 3 (a higher bar is a deeper sleep: 4 soldiers at 99).
-const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3")];
+//
+// **It grows while it sleeps** (2026-11-24, Direction's pick for planet 6's
+// nameable thing; the Lab's prototype, `Reports/lab-sleeper-2026-11-24/`):
+// a sleeping walker buds a sleeping child at 0.003 a step, under the birth
+// ceiling and off the crystals' scent (`gpu::Settings::dream`), so the time
+// you farm before it wakes is time it grows. 0.003 is the Lab's pick (one
+// seed); its growth is bounded by the ceiling and its free edge.
+const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3"), ("dream", "0.003")];
 // Grudge, planet 7 (joined 2026-11-17, when the GPU took its scar): its
 // memory of where it was hit pulls it back at twice the campaign tier's
 // weight (scar_weight 1, not 0.5), so a firing line it was hurt from draws
 // it back after the alarm has faded. A first number, not yet filmed on a
 // planet (`Reports/sim-use-2026-11-17/step0-scar-on-gpu.md`).
-const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1")];
+//
+// **Scar tissue** (2026-11-24, Direction's pick for planet 7's nameable
+// thing; the Lab's prototype, `Reports/lab-scar-tissue-2026-11-24/`): a blow
+// on a walker standing on scar misses with chance 0.5 x min(scar / 2,000,
+// 1), so the ground the squad has fought over grows tough slime, and the
+// pull above brings the slime back to it. Fire burns the scar off. 2,000 is
+// about a minute of fire on one place (the Lab's median scar near a holding
+// squad: 513 at 1:00, 3,500 at 1:30); P 0.75 took the run bot from 30
+// soldiers to 4 by 2:00 against 21 at 0.5 and 30 off (one seed), so 0.5.
+const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1"), ("scar_tough", "0.5"), ("scar_tough_full", "2000"), ("scar_burn", "1")];
 
 /// The card a tier's planet asks you to bring, if any: the card that
 /// answers its trait (the game designer, 2026-11-17 15:26Z, with the guns
@@ -2832,7 +2873,7 @@ mod tests {
             let l = r.level();
             // A cell's walkers grow deeper, so a smaller planet (a breather)
             // can have fewer in all; the tier's own factor (`tier_size`, the
-            // Sprawler's 0.6) is a tuning number kept apart from that rule.
+            // Sprawler's 0.45) is a tuning number kept apart from that rule.
             let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed) / tier_size(l.tier);
             assert!((0.8..=1.25).contains(&size_roll(l.seed)));
             assert!(dense > walkers, "more walkers a cell deeper");
@@ -2844,11 +2885,12 @@ mod tests {
         }
         r.depth = 1;
         assert_eq!(r.level().tier, Tier::Drifter);
-        // Planet 2's Sprawler at 0.6 of its size (the planet 2 look, 11-18).
+        // Planet 2's Sprawler at 0.45 of its size (the planet 2 look, 11-18;
+        // 0.45 with its threads, 11-24).
         r.depth = 2;
         let (l, area) = (r.level(), area_of(&r.planet()));
         assert_eq!(l.tier, Tier::Sprawler);
-        assert!((l.walkers - 0.6 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
+        assert!((l.walkers - 0.45 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
         // The level generator's core world is the run's last planet.
         assert_eq!(levelgen::CORE_DEPTH, PLANETS);
     }
@@ -3331,7 +3373,7 @@ mod tests {
             let mut p = crate::mould::larder_world::race_params(1, 2, 5000);
             for &(k, v) in does.keys {
                 let set = crate::mould::tiers::set_key(&mut p, k, v);
-                assert!(set.is_ok() || *t == Tier::Trunk, "{} key {k}: {set:?}", t.name());
+                assert!(set.is_ok() || *t == Tier::Trunk || THREAD_KEYS.contains(&k) || TOUGH_KEYS.contains(&k) || DREAM_KEYS.contains(&k), "{} key {k}: {set:?}", t.name());
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());
