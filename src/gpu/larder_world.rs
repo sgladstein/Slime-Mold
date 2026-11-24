@@ -3647,6 +3647,54 @@ mod tests {
         assert!(g.origin.fell.is_none(), "the heart did not break");
     }
 
+    /// **A heart's members never fruit** (11-24, planet 5's Sporer): a
+    /// spore is not counted in its lump's sums, so a shot's alarm burst
+    /// planet 5's heart into spores that read as cut down, and 8 soldiers
+    /// broke it in about 40 s at any armour or size (Engine's batch y1).
+    /// Here an origin of 150 in a race world where every walker on scent
+    /// tries to fruit (`spore_rate` 0.05, `spore_scent` 0): 20 s after it
+    /// forms none of its members is a spore, it holds more than 100 and
+    /// has not broken, while the body round it has thrown spores. Before
+    /// the fix: the heart burst to 0 members and broke; with it, at least
+    /// 133, none a spore, with 3,626 of the body's spores in flight.
+    #[test]
+    fn a_hearts_members_never_fruit() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        let mut rules = Rules::default();
+        rules.origin.on = true;
+        rules.origin.size = 150.0;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s.clone(), scale), rules, seed);
+        let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
+        while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
+            g.step();
+        }
+        let formed = g.time();
+        // Now every walker on scent tries to fruit.
+        crate::gpu::set(&mut s, "spore_rate", "0.05").unwrap();
+        crate::gpu::set(&mut s, "spore_scent", "0").unwrap();
+        (g.world.s.spore_rate, g.world.s.spore_scent) = (s.spore_rate, s.spore_scent);
+        let mut least = u32::MAX;
+        let mut spores = 0;
+        // A broken heart ends the game (its die-back), and the clock with it.
+        while g.time() < formed + 20.0 && g.end.is_none() {
+            g.step();
+            least = least.min(members(&g));
+            spores = spores.max(g.world.e.life_of().0.iter().filter(|&&s| s == 1).count());
+        }
+        let e = &g.world.e;
+        let (st, _) = e.life_of();
+        let news = read_back(&e.device, &e.queue, &e.news);
+        let at = e.dense_at as usize + 4 * crate::gpu::DENSE_HEAD;
+        let fruiting = st.iter().enumerate().filter(|&(k, &s)| s == 1 && u32::from_le_bytes(news[at + 4 * k..at + 4 * k + 4].try_into().unwrap()) & 0xE000000 != 0).count();
+        eprintln!("the heart under spores: formed at {formed:.1} s, least {least}, {fruiting} members spores, the body's spores at most {spores}");
+        assert!(spores > 100, "the body fruits: {spores}");
+        assert_eq!(fruiting, 0, "no member fruits");
+        assert!(least > 100, "the heart holds: least {least}");
+        assert!(g.origin.fell.is_none(), "the heart did not break");
+    }
+
     /// **The planet twists** (`twist.rs`, 2026-11-24; the Lab's prototype,
     /// `Reports/lab-twists-2026-11-24/`). Engine rule with no CPU twin, so
     /// the test is what it does on the software GPU: three race worlds

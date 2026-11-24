@@ -1469,6 +1469,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
             var ch = 0.0;
             if (sc > P.spore_scent) { ch = P.spore_rate; }
             if (P.spore_burst > 0.0 && al > P.spore_alarm) { ch += P.spore_burst; }
+            // A lump's member never fruits (11-24, planet 5's Sporer): a
+            // spore is not `ordinary`, so `lumpsum` stopped counting it, and
+            // a shot's alarm burst a heart into spores that read as cut
+            // down. Engine's snipe batches (y1, GTX 1070): 8 soldiers broke
+            // planet 5's heart in about 40 s whatever its armour (12 or 15)
+            // or size (2,250 or 3,000). The heart holds; the body bursts.
+            if (lump_of(k) != 0u) { ch = 0.0; }
             if (ch > 0.0 && unit(keyed(P.s_fruit, t, k)) < ch) {
                 spec[k] = w | FRUIT;
                 icell[k] = NONE;
