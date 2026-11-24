@@ -2553,6 +2553,9 @@ impl App {
         } else {
             None
         };
+        // The planet's landing card again on the pause menu (Direction
+        // 11-24): the slime's line and the twist, under the goal.
+        m.pause_planet = (self.hud.menu_open() && self.planet_open()).then(|| self.intro.as_ref().map(|(i, _)| i.clone())).flatten();
         m.loadout = Some(self.loadout(g, &sel));
         // A building selected takes the panel for its own state (option
         // b); a click on open ground, a tile's number or Space gives the
