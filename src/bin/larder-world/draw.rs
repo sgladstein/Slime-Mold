@@ -1998,10 +1998,12 @@ impl App {
                 // the page too, so it is seen without opening it.
                 // The seconds left go on the price line (the middle's
                 // "14s" ran over the button's name).
+                // Ready, it says so with a tick (Direction 12:18Z: a sign
+                // when the slot is ready or charging, without opening it).
                 Some((wait, total)) => Command {
                     cooldown: if wait > 0.0 { (wait / total.max(1e-3)).min(1.0) } else { 0.0 },
-                    cost: (wait > 0.0).then(|| format!("{:.0}s", wait.ceil())),
-                    cost_icon: Icon::Clock,
+                    cost: Some(if wait > 0.0 { format!("{:.0}s", wait.ceil()) } else { "ready".into() }),
+                    cost_icon: if wait > 0.0 { Icon::Clock } else { Icon::Check },
                     about: "The squad's device slot: blast, det cord, mine, sleep gas, whichever the run has. One at a time, free; after each the slot recharges (the device's own time) before the next.".into(),
                     ..Command::new(TOOLS_PAGE, (1, 4), Icon::Grenade, "Tools", KeyCode::KeyE)
                 },
@@ -2270,6 +2272,7 @@ impl App {
             // (2026-11-22 04:39Z: "we lost access to tool in the menu").
             if [T_BLAST, T_CORD, T_MINE, T_GAS].iter().all(|&id| run_lock(id).is_some_and(|k| !run.has(k))) {
                 if let Some(c) = cmds.iter_mut().find(|c| c.id == TOOLS_PAGE) {
+                    c.cost = None;
                     c.about = "The squad's devices: blast, mine, det cord, sleep gas. None unlocked yet in this run: the shop between planets sells them.".into();
                 }
             }
@@ -2280,6 +2283,15 @@ impl App {
                     c.name = "Lures on/off".into();
                     c.about = "Switch every lure on, or every one off if all are on.".into();
                     c.why_not = Some("No lures".into());
+                }
+                // An owned device body (gun step E3; Look, Direction 12:18Z):
+                // its button takes the body's name, as the shop sells it,
+                // and says what it carries. Bodies are the run's, every
+                // squad's slot sets off the same one (Squad, 13:32Z).
+                if let Some(kind) = body_of_button(c.id).filter(|&k| run.body_of(k).is_some()) {
+                    c.name = kind.name().into();
+                    let cards = run.body_cards(kind);
+                    c.about = format!("{} {}", c.about, if cards.is_empty() { "It carries no cards: give it a loadout in the shop (or one marked \"Devices use this\").".to_string() } else { format!("It carries {}.", slime_mould::mould::rounds::name(&cards)) });
                 }
                 if run_lock(c.id).is_some_and(|k| !run.has(k)) {
                     c.ready = false;
@@ -2559,6 +2571,27 @@ impl App {
                 text: r.loadout_name(sq.loadout as usize),
                 about: format!("It fires {} with {}'s cards. H edits the loadouts", g.gun(q).title(), r.loadout_name(sq.loadout as usize)),
             });
+        }
+        // The squad mode's device slot (Direction 12:18Z, Squad's tools
+        // read in the fight): ready or its seconds, and the run's bodies,
+        // in place of the tools carried, which the slot does not use.
+        if self.sq.is_some() {
+            if let Some(r) = self.args.run.as_ref() {
+                let owned: Vec<&str> = slime_mould::mould::bodies::BodyKind::ALL.into_iter().filter(|&k| r.body_of(k).is_some()).map(|k| k.name()).collect();
+                let (wait, _) = g.device_ready_in(q);
+                out.push(if owned.is_empty() {
+                    SquadFact { icon: Icon::Grenade, text: "No devices".into(), about: "The squad's device slot is empty: the shop's Tools tab sells a Grenade, a Mine, a Line and a Canister".into() }
+                } else {
+                    let auto = r.bodies.iter().filter(|b| b.auto).map(|b| b.kind.name()).collect::<Vec<_>>();
+                    let about = format!("The device slot sets off one of {} at a time (E opens them), then recharges{}", owned.join(", "), if auto.is_empty() { String::new() } else { format!("; on autocast: {}", auto.join(", ")) });
+                    if wait > 0.0 {
+                        SquadFact { icon: Icon::Clock, text: format!("Device in {:.0}s", wait.ceil()), about }
+                    } else {
+                        SquadFact { icon: Icon::Check, text: "Device ready".into(), about }
+                    }
+                });
+                return out;
+            }
         }
         let tools: u32 = members.iter().map(|&k| g.kit.held(k)).sum();
         out.push(SquadFact {
@@ -3112,7 +3145,22 @@ fn form_icon(f: slime_mould::mould::larder_world::Formation, step: u8) -> Icon {
 
 pub(super) fn run_hidden(id: u32) -> bool {
     // Provoke and Still are test devices until the gun thread's cards.
-    matches!(id, SIREN | OUTPOST | T_PROVOKE | T_STILL)
+    // The Germ tool is never sold (`run_lock`): its locked button said
+    // "the shop sells it" and no shop did (Look, 11-24); sickness comes
+    // from the Germ gun card.
+    matches!(id, SIREN | OUTPOST | T_PROVOKE | T_STILL | T_GERM)
+}
+
+/// The device body that is tool button `id` (`bodies::BodyKind`).
+fn body_of_button(id: u32) -> Option<slime_mould::mould::bodies::BodyKind> {
+    use slime_mould::mould::bodies::BodyKind;
+    Some(match id {
+        T_BLAST => BodyKind::Grenade,
+        T_MINE => BodyKind::Mine,
+        T_CORD => BodyKind::Line,
+        T_GAS => BodyKind::Canister,
+        _ => return None,
+    })
 }
 
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {

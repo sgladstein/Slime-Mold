@@ -2691,9 +2691,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "run" => {
                 // `run=SEED` or `run=SEED:DEPTH` (a run landing on planet
                 // DEPTH, to film a deep planet's level).
+                // `run=SEED:DEPTH:BODIES` also owns plain device bodies
+                // ("grenade+mine", `BodyKind` words), to film the device
+                // slot's HUD (Look, 11-24).
                 let (seed, depth) = v.split_once(':').unwrap_or((v, "1"));
+                let (depth, bodies) = depth.split_once(':').unwrap_or((depth, ""));
                 let mut r = Run::new(seed.parse()?);
                 r.depth = depth.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
+                for w in bodies.split('+').filter(|w| !w.is_empty()) {
+                    let kind = slime_mould::mould::bodies::BodyKind::ALL.into_iter().find(|k| k.name().eq_ignore_ascii_case(w)).ok_or("run=SEED:DEPTH:BODIES: grenade, mine, line or canister, joined by +")?;
+                    // Bought as the shop buys it (`Pick::Body`), which
+                    // also unlocks its tool.
+                    let b = slime_mould::mould::bodies::Body::plain(kind);
+                    r.points += b.price();
+                    r.body_offers.push(b);
+                    r.pick(slime_mould::mould::run::Pick::Body(r.body_offers.len() - 1));
+                }
                 args.run = Some(r);
             }
             "range" => args.range = Some(Run::range(v.parse()?)),

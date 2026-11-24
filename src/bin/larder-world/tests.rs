@@ -2403,3 +2403,36 @@ fn a_squad_sent_then_shift_built_raises_it_once_there() {
     let g = app.game.as_ref().unwrap();
     assert!(built(&app) >= 1.0, "the queued build rose: {:.0}% built, squad work {:?}", built(&app) * 100.0, g.squads[q].work);
 }
+
+/// **A run's device bodies read in the fight** (Look, Direction 11-24
+/// 12:18Z): with a Grenade bought, the Tools page names it Grenade (not
+/// Blast) and says what it carries, the Germ that no shop sells is off
+/// the page, and the squad's strip says the device slot is ready, as the
+/// main card's Tools button does.
+#[test]
+fn a_runs_bodies_read_in_the_fight() {
+    use slime_mould::mould::bodies::{Body, BodyKind};
+    use slime_mould::mould::run::Pick;
+    let Some((device, queue)) = gpu() else { return };
+    let mut r = Run::new(1);
+    let b = Body::plain(BodyKind::Grenade);
+    r.points += b.price();
+    r.body_offers.push(b);
+    assert!(r.pick(Pick::Body(r.body_offers.len() - 1)), "the Grenade bought");
+    let a = Args { squads: true, run: Some(r), ..run_base() };
+    let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+    app.prepare();
+    for _ in 0..4 {
+        app.step(1.0 / 15.0);
+    }
+    let m = app.model(None, None);
+    let tools = m.commands.iter().find(|c| c.id == TOOLS_PAGE).expect("the Tools button");
+    assert_eq!((tools.cost.as_deref(), tools.cost_icon), (Some("ready"), Icon::Check));
+    assert!(m.squad_facts.iter().any(|f| f.text == "Device ready"), "{:?}", m.squad_facts.iter().map(|f| &f.text).collect::<Vec<_>>());
+    app.tools_page = true;
+    let m = app.model(None, None);
+    let names: Vec<&str> = m.commands.iter().map(|c| c.name.as_str()).collect();
+    assert!(names.contains(&"Grenade") && !names.contains(&"Blast") && !names.contains(&"Germ"), "{names:?}");
+    let g = m.commands.iter().find(|c| c.name == "Grenade").unwrap();
+    assert!(g.ready && g.about.contains("carries"), "{}", g.about);
+}

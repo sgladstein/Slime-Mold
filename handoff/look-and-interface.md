@@ -121,8 +121,16 @@ the mission name, Options' Start on planet) and the clocks read
 scratch build (`PLANETS` and the two `SKIP_*` tables in `run.rs`, which
 are sized `PLANETS - 1`): all fit (16 beads in the shop's bar, an ended
 run's list in two columns of 8). The goal line says no counts until the
-heart has members. Next: Squad's new tools in the fight and the shop,
-the 4K HUD draw counts, the Experiments and What is new check.
+heart has members. #801 merged. Squad's tools (job 2): the squad strip's
+last fact is the device slot in squad mode (`squad_facts`), the Tools
+button says "ready" with a tick, an owned body's button takes its name
+and cards (`body_of_button`, from `Run::body_of`/`body_cards`; bodies are
+the run's, every squad's slot shares them, Squad 13:32Z), the Germ is
+`run_hidden`, a shelf row draws a body's rolls as a line (`shelf_row`),
+autocast rows are switches, held cards say HELD (`hand_card`), relic
+lines lead with what they do. `run=SEED:DEPTH:grenade+mine` buys plain
+bodies for films. Experiments and What is new match main (one off:
+Crystals refill). Next: the 4K HUD draw counts for Engine.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
