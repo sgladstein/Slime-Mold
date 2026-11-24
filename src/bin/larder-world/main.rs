@@ -1693,7 +1693,10 @@ impl App {
         self.open_log();
         match &self.mission {
             Some(tr) => {
-                self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT);
+                // The planet's name only: its goal is the top line's
+                // (`objective`), and said in a toast too it was there three
+                // times at landing (polish review finding 10, 11-24).
+                self.hud.alert(&tr.mission.name, None, theme::ACCENT);
                 // What the run's tier does to you (`run::does_to_you`).
                 if let Some(r) = self.args.run.as_ref().filter(|r| !r.range) {
                     let does = slime_mould::mould::run::does_to_you(r.level().tier).says;
@@ -2080,7 +2083,9 @@ impl App {
         for (i, (c, charge)) in g.world.crystals().into_iter().enumerate() {
             if !self.dry[i] && charge <= 0.0 && self.charge0[i] > 0.0 {
                 self.dry[i] = true;
-                self.hud.alert(&format!("{} has run dry", crystal_name(i)), Some(c), theme::WARN);
+                // Only your squad empties a crystal (the owner's ruling,
+                // 11-21), so it is drained, not run dry.
+                self.hud.alert(&format!("{} is drained dry", crystal_name(i)), Some(c), theme::WARN);
             }
         }
         // Ore landed and cores dropped (owner's play, 11-20 23:17Z: "it
@@ -2118,7 +2123,9 @@ impl App {
             let gather = g.stand.live.is_some_and(|h| h.origin && h.gather);
             let dead = g.origin.fell.is_some();
             if !self.origin_told.0 {
-                self.hud.alert("Here is the slime's heart: kill it to win the planet", Some(at), theme::ACCENT);
+                // Where it is, not the goal again: the top line says that
+                // (polish review finding 10's "objective three times").
+                self.hud.alert("The slime's heart is here: Space to look", Some(at), theme::ACCENT);
             }
             if gather && !self.origin_told.1 {
                 self.hud.alert("The slime is gathering into its heart for a last stand", Some(at), theme::BAD);

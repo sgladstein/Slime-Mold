@@ -57,9 +57,12 @@ its keys only, in groups (a row with no words is a heading, drawn by
 round keeps its own rows. The slime's tuning tab is "Slime tuning",
 last before Keys (`menu::TUNING_TAB`). Engine's note: the shop's Dev
 mode tab showed in every run only for "Skip planet", now behind Dev
-mode (`run.rs`, Enemy's file; Start on planet still skips). Next: the
-remaining HUD polish (toasts, the objective said three times at
-landing, finding 10's tail) and whatever Direction sends.
+mode (`run.rs`, Enemy's file; Start on planet still skips). #761 merged.
+Then finding 10's tail: the landing toast is the planet's name only
+(the goal is the top line's), the heart's toast says where it is, a
+drained crystal reads "drained dry". The HUD side of the polish review
+is done; next is whatever Direction sends (the Enemy lane offered a
+surge uniform for the Swarmer's look: that is the world thread's).
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
