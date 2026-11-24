@@ -918,6 +918,34 @@ const MOULD_HUE: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2);
 // The gold the engine paints, which MOULD_HUE is measured against (a worked
 // value, so the viewer leaves it out).
 const MOULD_GOLD: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2) * 1.0;
+// Each species its own hue (art direction rule 3; Look and interface,
+// 11-24, for Direction's "planets 4 to 8 each read differently at zoom
+// 6"). Filmed at rest on planets 4 to 8 (seed 1, idle hand, zoom 6), the
+// Swarmer, the Sporer and the Grudge were the same bumpy gold: their own
+// looks (swell, spores, scars) wake only once they are struck, so a
+// planet opened on a slime you could not tell from the last. Each now
+// takes a slime mould's own colour, all kept warm and in the slime's value
+// band: the Swarmer a pale lemon (Fuligo), so the alarm's orange flush
+// reads on it at once; the Sporer coral (Lycogala), its gold spores
+// flying off it; the Grudge copper (Stemonitis), so its pale scar tissue
+// stands out. Tried for the Grudge: a brighter rust (220, 112, 46) came
+// out as the alarm's own orange once the saturation push below took it;
+// a darker copper (168, 92, 58) sank the body's median a quarter in grey
+// (124 to 93). This one is 107 (seed 1, idle, 60 s). The Sleeper keeps
+// the gold (its crust is its own), and so do the first three. The
+// engine's colour still carries its tints (germ, species) over these, as
+// it did over the gold. A mini-boss of the plain kind takes it too.
+const SWARM_HUE: vec3<f32> = vec3<f32>(246.0, 212.0, 74.0);
+const SPORE_HUE: vec3<f32> = vec3<f32>(238.0, 132.0, 108.0);
+const GRUDGE_HUE: vec3<f32> = vec3<f32>(196.0, 118.0, 74.0);
+fn species_hue() -> vec3<f32> {
+    switch P.slime_look {
+        case 4u: { return SWARM_HUE; }
+        case 6u: { return GRUDGE_HUE; }
+        case 7u: { return SPORE_HUE; }
+        default: { return MOULD_HUE; }
+    }
+}
 
 // The mould's thickness as drawn: the trail's brightness (the look's byte
 // 0) times how many living walkers are near (byte 1 summed over the 5 x 5
@@ -1349,7 +1377,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // walkers stay (`look_trail` 0, `tm` from the walkers alone). There the
     // hue is the mould's own gold (the engine's `draw` gold over agar),
     // taking the engine's hue as its colour carries mould.
-    hue = mix(MOULD_GOLD, hue, smoothstep(6.0, 40.0, tmax)) * (MOULD_HUE / MOULD_GOLD);
+    hue = mix(MOULD_GOLD, hue, smoothstep(6.0, 40.0, tmax)) * (species_hue() / MOULD_GOLD);
     // A piece cut off from food (C8, 2026-11-14) goes ashen and dull as its
     // walkers' news goes stale, before they wither: the share of stale
     // walkers is the fade, so a piece greys as it starves, not on a timer.
@@ -1938,7 +1966,7 @@ fn lump_skin(k: u32) -> vec3<f32> {
         // wash over the gold; a gold core, a pale straw disc like the
         // fruit's cream.
         case 8u: { return LUMP_SKIN_HEART; }
-        default: { return MOULD_HUE; }
+        default: { return species_hue(); }
     }
 }
 fn lump_core(k: u32) -> vec3<f32> {

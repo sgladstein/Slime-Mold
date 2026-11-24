@@ -1,0 +1,92 @@
+<title>Slime Species Hues</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root {
+  --bg: #f3efe6; --panel: #fffaf0; --fg: #23201a; --muted: #6b6457;
+  --line: #d9cfbd; --accent: #c86a08; --tag: #efe2c9;
+  --lemon: #f6d44a; --coral: #ee846c; --copper: #c4764a; --gold: #f0a63f;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 Inter, system-ui, sans-serif; }
+.wrap { max-width: 1520px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2 { font-family: "Space Grotesk", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.15rem; margin: 32px 0 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lead { max-width: 70ch; color: var(--muted); margin: 8px 0 0; }
+.chip { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); flex: none; }
+figure { margin: 0 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
+figure video, figure img { display: block; width: 100%; height: auto; background: #000; }
+figcaption { padding: 10px 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.tag { font: 600 0.72rem/1 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tag); color: var(--accent); padding: 5px 8px; border-radius: 4px; }
+.note { color: var(--muted); font-size: 0.9rem; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 640px), 1fr)); gap: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; margin-top: 8px; }
+.cols > div { min-width: 0; }
+ul { padding-left: 1.2em; margin: 6px 0; } li { margin: 4px 0; max-width: 70ch; }
+code { font: 0.85em "JetBrains Mono", ui-monospace, monospace; background: var(--tag); padding: 1px 5px; border-radius: 3px; }
+.tbl { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; }
+td.num { font-variant-numeric: tabular-nums; }
+.meta { margin-top: 36px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+
+<div class="wrap">
+  <h1>Planets 4, 5 and 7: each slime its own colour</h1>
+  <p class="lead">Filmed at rest at zoom 6, the Swarmer (planet 4), the Sporer (planet 5) and the Grudge (planet 7) were the same bumpy gold. Their own looks (the swell, the spores, the scars) only wake once you shoot them, so a new planet opened on a slime you could not tell from the last. Each now takes a real slime mould's colour, kept warm and in the slime's value band. Every clip is the same game on both sides, before on the left and after on the right; only the view shader differs.</p>
+
+  <h2><span class="chip" style="background:var(--lemon)"></span>Planet 4, the Swarmer: pale lemon</h2>
+  <figure><video src="z6-p4.mp4" autoplay loop muted playsinline aria-label="Planet 4 at zoom 6, gold before and lemon after"></video><figcaption><span class="tag">Zoom 6</span><span class="note">Like Fuligo. Body median 126 to 137 in grey.</span></figcaption></figure>
+  <figure><img src="p4-alarm.jpg" alt="Planet 4 under fire: the alarm's orange flush round the squad, on gold before and on lemon after"><figcaption><span class="tag">Under fire, 0:30</span><span class="note">The alarm's orange flush round the squad was gold on gold; on the lemon it reads at once.</span></figcaption></figure>
+
+  <h2><span class="chip" style="background:var(--coral)"></span>Planet 5, the Sporer: coral</h2>
+  <figure><video src="z6-p5.mp4" autoplay loop muted playsinline aria-label="Planet 5 at zoom 6, gold before and coral after"></video><figcaption><span class="tag">Zoom 6</span><span class="note">Like Lycogala. Its gold spores fly off a coral body. Median 102 to 100.</span></figcaption></figure>
+
+  <h2><span class="chip" style="background:var(--copper)"></span>Planet 7, the Grudge: copper</h2>
+  <figure><video src="z6-p7.mp4" autoplay loop muted playsinline aria-label="Planet 7 at zoom 6, gold before and copper after"></video><figcaption><span class="tag">Zoom 6</span><span class="note">Like Stemonitis. Its pale scar tissue stands out on the copper. Median 124 to 107.</span></figcaption></figure>
+
+  <h2>Zoom 12, close up</h2>
+  <div class="pair">
+    <figure><video src="z12-p4.mp4" autoplay loop muted playsinline aria-label="Planet 4 at zoom 12"></video><figcaption><span class="tag">Planet 4</span></figcaption></figure>
+    <figure><video src="z12-p5.mp4" autoplay loop muted playsinline aria-label="Planet 5 at zoom 12"></video><figcaption><span class="tag">Planet 5</span></figcaption></figure>
+    <figure><video src="z12-p7.mp4" autoplay loop muted playsinline aria-label="Planet 7 at zoom 12"></video><figcaption><span class="tag">Planet 7</span></figcaption></figure>
+  </div>
+
+  <div class="cols">
+    <div>
+      <h2>Planets 1 to 8 at rest</h2>
+      <div class="tbl"><table>
+        <tr><th>Planet</th><th>Slime</th><th>At rest, zoom 6</th></tr>
+        <tr><td>1</td><td>Drifter</td><td>gold, a lit sheet round it</td></tr>
+        <tr><td>2</td><td>Sprawler</td><td>gold, amber threads</td></tr>
+        <tr><td>3</td><td>Trunk</td><td>gold, raised cords</td></tr>
+        <tr><td>4</td><td>Swarmer</td><td><b>lemon</b> (was gold)</td></tr>
+        <tr><td>5</td><td>Sporer</td><td><b>coral</b> (was gold)</td></tr>
+        <tr><td>6</td><td>Sleeper</td><td>grey crust, gold where awake</td></tr>
+        <tr><td>7</td><td>Grudge</td><td><b>copper</b> (was gold)</td></tr>
+        <tr><td>8</td><td>home world</td><td>the hardest three take turns</td></tr>
+      </table></div>
+    </div>
+    <div>
+      <h2>What changed, and what was dropped</h2>
+      <ul>
+        <li>One colour per species in the view shader (<code>SWARM_HUE</code>, <code>SPORE_HUE</code>, <code>GRUDGE_HUE</code>). The engine's tints (germ, species) still lie over it, starving still greys it, the alarm still flushes it orange. Art direction rule 3 already asked for each species its own hue.</li>
+        <li>Each colour shows in the slime viewer's colour list, so it can be changed there.</li>
+        <li>Dropped for the Grudge: a brighter rust, which the shader's saturation push turned into the alarm's own orange, and a darker copper, which sank the body a quarter in grey (median 124 to 93).</li>
+        <li>No cost: one switch a cell in place of a constant.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="meta">Filmed on software Vulkan, run seed 1, idle hand (the alarm still: the greedy hand, 0:30), centred on the slime's heart, 1280 by 800 frames cropped to 720 by 400, 20 frames a quarter second apart from 1:00. Look lane, 2026-11-24, for Direction's Milestone 2 job: planets 4 to 8 each read differently at zoom 6.</p>
+</div>

@@ -1555,10 +1555,10 @@ impl App {
                         SlimeLook::Threads => "The Sprawler's: each walker a dash along the way it came, joining into threads.",
                         SlimeLook::Sheet => "The Drifter's: its own fast-fading trail as a thin gel round and behind it.",
                         SlimeLook::Cords => "The Trunk's: its trail off the body a raised translucent tube.",
-                        SlimeLook::Swell => "The Swarmer's: where its alarm is, the body stands up taller and rounder.",
+                        SlimeLook::Swell => "The Swarmer's: a pale lemon slime; where its alarm is, the body stands up taller and rounder.",
                         SlimeLook::Dormant => "The Sleeper's: its sleeping walkers a dull dark crust, the waking ones gold.",
-                        SlimeLook::Scarred => "The Grudge's: where it was hurt, pale glossy scar tissue and a bruise on bare ground.",
-                        SlimeLook::Spores => "The Sporer's: its spores in flight small gold seeds with short tails.",
+                        SlimeLook::Scarred => "The Grudge's: a copper slime; where it was hurt, pale glossy scar tissue and a bruise on bare ground.",
+                        SlimeLook::Spores => "The Sporer's: a coral slime; its spores in flight small gold seeds with short tails.",
                         SlimeLook::Paint => "Old look, Nov 12-14: the first game's slime, a dim opaque paint with flat ochre veins, every walker a dome.",
                         SlimeLook::Foil => "Old look, Nov 14 morning: full saturation and tight glints (the art director's \"crumpled gold foil\"), the frontier as bubble wrap.",
                     };
