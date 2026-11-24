@@ -239,11 +239,12 @@ const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking 
 /// the eviction's moves, the struck, the living walkers, the own mould's,
 /// the cap's two counts, then the condensed strikers' counts (words 8-10,
 /// `Engine::condense`, 2026-11-20; word 8 held the old condensing's
-/// walkers 11-15 to 11-17) and the walkers in their band (word 11). The
+/// walkers 11-15 to 11-17) and the walkers in their band (word 11), then
+/// the walkers asleep (12) and on full scar (13, both `count`). The
 /// mould grid follows (`Engine::record_count`), room for squares down to a
 /// game cell or `GRID_MIN` dish cells, whichever is smaller
 /// (`Engine::grid_max`).
-pub const WSTAT_BYTES: usize = 48;
+pub const WSTAT_BYTES: usize = 56;
 
 /// The smallest mould grid square the wall counters have room for, in
 /// dish cells, where the scale is bigger: the campaign's and the player
@@ -3619,6 +3620,8 @@ impl Engine {
         assert!(gw * gh <= self.grid_max(), "a mould grid square under a dish cell");
         // Words 4 (the living) and 5 (the player's own mould's, in a garden).
         enc.clear_buffer(&self.wstat, 16, Some(8));
+        // Words 12 (asleep) and 13 (on full scar).
+        enc.clear_buffer(&self.wstat, 48, Some(8));
         if gw * gh > 0 {
             enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
         }
