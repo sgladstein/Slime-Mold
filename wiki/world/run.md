@@ -2,9 +2,10 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-22
+updated: 2026-11-24
 sources:
   - Reports/balance-review-2026-11-20/README.md
+  - Reports/balance-review-2026-11-24/README.md
   - Reports/boss-cores-2026-11-20/README.md
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/enemy-switches-2026-11-17/README.md
@@ -503,6 +504,7 @@ alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - The balance review (11-20, [report](../../Reports/balance-review-2026-11-20/README.md)): in the owner's 14 won planets the slime holds at half its peak or more for a median 75% of the planet, then breaks in about 1.4 minutes, so the army's size decides a planet, rush or not (put to him with D7, nothing built). At the clock a planet cut to half its peak was a 1-star win (`Cause::Cap`), the run bot's only planet 3 win on main; the owner's answer (11-20 14:10Z) is a clock that counts up, built the same day (above). On the army he answered that the slime must not grow with it; the options for a squad the slime cannot touch are the balance thread's next job, with the slime-enemy thread. Planet 2 is now the hardest of the three and is not yet measured on today's game.
+- The balance review on the build with the origin (11-24, [report](../../Reports/balance-review-2026-11-24/README.md); nothing changed, the proposals went to Direction for the owner): his planets 1 to 4 take 4 to 6 minutes with 0 to 3 soldiers lost even with small squads, so the slime can't reach a squad he steers; a small squad sent at the origin wins planets 2 to 4 in 1 to 2.5 minutes on one map and fails on two (D7); fire on planet 3's plants burned most of the squad in 3 of 7 bot games, once without fire cards; planet 5 is long for its size alone.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
 - The core world with C: 364,924 walkers, frame p95 12-14 ms on the 1070 (planet 1 4.6 ms) and a 12 s head-start pause before landing; kept until play says otherwise.
 
@@ -515,6 +517,7 @@ Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1
 ## Sources
 
 - [balance review](../../Reports/balance-review-2026-11-20/README.md), *Findings*.
+- [balance review, 11-24](../../Reports/balance-review-2026-11-24/README.md), *Ranked findings*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
 - [arranging the gun](../../Reports/gun-order-2026-11-14.md), *What was built*.
 - [the gun range](../../Reports/gun-range-2026-11-15.md), *What was built*.
