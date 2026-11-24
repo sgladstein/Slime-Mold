@@ -260,6 +260,9 @@ struct Params {
     // buds a dormant child with this chance a step (0 off, and 0 without
     // the birth ceiling or the life states).
     tough: f32, tough_full: f32, scar_burn: u32, dream: f32,
+    // The wind (`WIND_AT`, a planet twist, 2026-11-24): the push on every
+    // step a walker takes, in fine cells (0 none), and two spare words.
+    wind_x: f32, wind_y: f32, _wind_a: u32, _wind_b: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -1719,8 +1722,12 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     // A spinning walker curls after its turn, every step (the CPU's).
     if (mk == MIND_SPIN) { h += P.spin_curl; }
-    let nx = wk.x + cos(h) * st;
-    let ny = wk.y + sin(h) * st;
+    // **The wind** (a planet twist, 2026-11-24, the Lab's prototype in
+    // `Reports/lab-twists-2026-11-24/`): every step is pushed downwind too,
+    // so the body leans and creeps with it and its trail is laid downwind.
+    // Its heading is its own, so it still turns to food and soldiers.
+    let nx = wk.x + cos(h) * st + P.wind_x;
+    let ny = wk.y + sin(h) * st + P.wind_y;
     let there = cell(nx, ny);
     // **The tether** (`tether`, 2026-11-18, the Enemy lane, from the Lab's
     // one-body prototype, Reports/lab-body-2026-11-18; the owner's play

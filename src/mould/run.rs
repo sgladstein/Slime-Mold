@@ -38,7 +38,7 @@ use super::campaign::{Bonus, Goal, Mission};
 use super::bodies::{Body, BodyKind};
 use super::guns::{Gun, GunKind};
 use super::kit::KitRules;
-use super::larder_world::Rules;
+use super::larder_world::{Rules, Twist};
 use super::levelgen::{self, Planet};
 use super::map::{Map, G_ROCK, MAP_H, MAP_W};
 use super::rounds::{self, Ammo, Card, Kind, RoundRules, Set, Shell};
@@ -1448,6 +1448,66 @@ fn level_of(owned: &[u8; ITEMS.len()], key: &str) -> u8 {
     ITEMS.iter().position(|i| i.key == key).map_or(0, |k| owned[k])
 }
 
+/// **A planet's twist** (2026-11-24, Direction; `larder_world::twist`):
+/// the cold snap or the wind, rolled from the run's seed and the planet
+/// (`Run::twist`), so a saved run keeps its rolls. From planet
+/// `TWIST_FROM`, never on two planets in a row; after a planet without
+/// one, one in `TWIST_ODDS`, which comes to about one planet in three.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PlanetTwist {
+    pub kind: Twist,
+    /// The wind's way, degrees (0 east, 90 south): one of the eight
+    /// compass points.
+    pub angle: f32,
+}
+
+pub const TWIST_FROM: u32 = 2;
+const TWIST_ODDS: u64 = 2;
+
+/// A compass point's name for an angle (0 east, 90 south, as the map
+/// draws it).
+fn compass(deg: f32) -> &'static str {
+    const NAMES: [&str; 8] = ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"];
+    NAMES[((deg.rem_euclid(360.0) / 45.0).round() as usize) % 8]
+}
+
+impl PlanetTwist {
+    /// Its name on the planet's card and the HUD.
+    pub fn name(&self) -> &'static str {
+        match self.kind {
+            Twist::Cold => "Cold snap",
+            Twist::Wind => "Wind",
+            Twist::None => "",
+        }
+    }
+
+    /// Its line on the planet's card (Direction's words, 11-24 17:24Z).
+    pub fn card(&self) -> String {
+        match self.kind {
+            Twist::Cold => {
+                let d = crate::mould::larder_world::TwistRules::default();
+                let at = d.start as u32;
+                format!("Cold snap at {}:{:02}: for a minute the slime crawls in beads. Push now.", at / 60, at % 60)
+            }
+            Twist::Wind => format!("Wind from the {}: the slime leans and creeps {} all planet. Stand upwind, or let it blow onto your guns.", compass(self.angle + 180.0), compass(self.angle)),
+            Twist::None => String::new(),
+        }
+    }
+}
+
+/// The twist a run of `seed` rolls on planet `depth`.
+fn twist_at(seed: u64, depth: u32) -> Option<PlanetTwist> {
+    if depth < TWIST_FROM || twist_at(seed, depth - 1).is_some() {
+        return None;
+    }
+    let z = mix(seed ^ 0x5457_4953_5400_0000 ^ u64::from(depth).wrapping_mul(0x2545_F491_4F6C_DD1D));
+    if !z.is_multiple_of(TWIST_ODDS) {
+        return None;
+    }
+    let kind = if (z >> 8).is_multiple_of(2) { Twist::Cold } else { Twist::Wind };
+    Some(PlanetTwist { kind, angle: ((z >> 16) % 8) as f32 * 45.0 })
+}
+
 /// A small seeded generator (splitmix64): the shop's draw must be the same
 /// on every machine, so no floats.
 fn mix(mut z: u64) -> u64 {
@@ -1495,6 +1555,14 @@ impl Run {
     /// The unlock `key` is owned (the window's lock on the command card).
     pub fn has(&self, key: &str) -> bool {
         self.level_of(key) > 0
+    }
+
+    /// The current planet's twist (`PlanetTwist`), None on most.
+    pub fn twist(&self) -> Option<PlanetTwist> {
+        if self.range {
+            return None;
+        }
+        twist_at(self.seed, self.depth)
     }
 
     /// The planet card for the current depth (name, biome, size), with no
@@ -1563,6 +1631,12 @@ impl Run {
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
             let at = |t: &[f32; 8]| on_curve(t, self.depth);
             r.origin.size = at(&ORIGIN_SIZE);
+            // The planet's twist (`twist`), the rest of its numbers the
+            // twist's own.
+            if let Some(t) = self.twist() {
+                r.twist.kind = t.kind;
+                r.twist.wind_angle = t.angle;
+            }
             r.ceiling_grow = at(&CEILING_GROW);
             r.raid.gap_min = at(&RAID_GAP_MIN) * STRETCH;
             r.strikers.army_most = at(&STRIKER_ARMY);
@@ -2942,6 +3016,62 @@ fn title(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// **Planet twists** (`PlanetTwist`): none on planet 1, never two
+    /// planets in a row, about one in three from planet 2 (over 2,000
+    /// runs), both kinds and every wind direction rolled, the same seed the
+    /// same rolls, and the run's rules carry them.
+    #[test]
+    fn a_run_rolls_a_twist_on_about_one_planet_in_three() {
+        let (mut rolled, mut planets, mut cold, mut wind) = (0, 0, 0, 0);
+        let mut ways = std::collections::HashSet::new();
+        for seed in 0..2_000u64 {
+            let mut last = None;
+            for d in 1..=PLANETS {
+                let t = twist_at(seed, d);
+                assert_eq!(t, twist_at(seed, d), "the same seed rolls the same");
+                if d == 1 {
+                    assert!(t.is_none(), "none on planet 1");
+                    continue;
+                }
+                assert!(!(t.is_some() && last.is_some()), "seed {seed}: twists on planets {} and {d}", d - 1);
+                planets += 1;
+                if let Some(t) = t {
+                    rolled += 1;
+                    match t.kind {
+                        Twist::Cold => cold += 1,
+                        Twist::Wind => {
+                            wind += 1;
+                            ways.insert(t.angle as u32);
+                        }
+                        Twist::None => panic!("a rolled twist is one"),
+                    }
+                }
+                last = t;
+            }
+        }
+        let share = rolled as f32 / planets as f32;
+        eprintln!("twists: {rolled} of {planets} planets ({share:.3}), {cold} cold, {wind} wind, {} ways", ways.len());
+        assert!((0.28..0.38).contains(&share), "about one in three: {share}");
+        assert!(cold > rolled / 3 && wind > rolled / 3, "both kinds: {cold} cold, {wind} wind");
+        assert_eq!(ways.len(), 8, "every wind way");
+        // The run's rules carry the roll; the shop's range rolls none.
+        let mut run = Run::new(0);
+        let seed = (0..200).find(|&s| twist_at(s, 2).is_some_and(|t| t.kind == Twist::Wind)).unwrap();
+        run.seed = seed;
+        run.depth = 2;
+        let mut r = Rules::default();
+        run.rules(&mut r);
+        assert_eq!(r.twist.kind, Twist::Wind);
+        assert_eq!(r.twist.wind_angle, twist_at(seed, 2).unwrap().angle);
+        let t = run.twist().unwrap();
+        assert!(t.card().starts_with("Wind from the ") && t.card().contains("all planet"), "{}", t.card());
+        assert!(Run::range(seed).twist().is_none());
+        let cold = PlanetTwist { kind: Twist::Cold, angle: 0.0 };
+        assert_eq!(cold.card(), "Cold snap at 0:20: for a minute the slime crawls in beads. Push now.");
+        let west = PlanetTwist { kind: Twist::Wind, angle: 0.0 };
+        assert_eq!(west.card(), "Wind from the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns.");
+    }
 
     /// Each late threat waits for its planet (`FIRST_PLANET`, the owner
     /// 11-20 23:32Z): planet 1 has fruiting and the heartbeat but no

@@ -69,8 +69,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (308 words).
-pub const PARAMS_BYTES: usize = 1248;
+/// Bytes in `Params` (312 words).
+pub const PARAMS_BYTES: usize = 1264;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then the far smell,
 /// `far_smell`, S2, in the word that held `fed_full` and then
@@ -157,6 +157,10 @@ pub const SET_AT: usize = 1216;
 /// and the Sleeper's dreaming (`dream`; the row's spare word, 0 without the
 /// birth ceiling).
 pub const TOUGH_AT: usize = 1232;
+/// The wind row (a planet twist, 2026-11-24; Params grew from 1248 to
+/// 1264, after the scar tissue row): the push on every step a walker
+/// takes, x and y in fine cells (`Settings::wind`), and two spare words.
+pub const WIND_AT: usize = 1248;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -619,6 +623,12 @@ pub struct Settings {
     /// shot fired). 0 off; only while the game sets a ceiling
     /// (`set_ceiling`), so the landing is as before.
     pub dream: f32,
+    /// **The wind** (a planet twist, 2026-11-24, from the Lab's prototype,
+    /// `Reports/lab-twists-2026-11-24/`; GPU only, no CPU twin): every
+    /// step a walker takes is also pushed this far (fine cells, x and y),
+    /// so the body leans and creeps downwind and lays its trail there.
+    /// The game sets it (`World::set_twist`); 0 none.
+    pub wind: [f32; 2],
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
     /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
@@ -911,6 +921,7 @@ impl Settings {
             scar_tough_full: 2000.0,
             scar_burn: false,
             dream: 0.0,
+            wind: [0.0, 0.0],
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
@@ -1258,6 +1269,8 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scar_tough_full" => s.scar_tough_full = f()?.max(1.0),
         "scar_burn" => s.scar_burn = int()? != 0,
         "dream" => s.dream = f()?.clamp(0.0, 1.0),
+        "wind_x" => s.wind[0] = f()?,
+        "wind_y" => s.wind[1] = f()?,
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
@@ -2702,6 +2715,8 @@ impl Engine {
         // Dreaming only under a ceiling, which bounds it (`dream`).
         let dream = if s.ceiling > 0 && self.cycles { s.dream } else { 0.0 };
         b.extend(u32_bytes(&[(scars && s.scar_burn) as u32, dream.to_bits()]));
+        assert_eq!(b.len(), WIND_AT, "Params rows before the wind row moved");
+        b.extend(f32_bytes(&[s.wind[0], s.wind[1], 0.0, 0.0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food

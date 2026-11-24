@@ -729,6 +729,9 @@ pub struct Rules {
     /// kill to win the planet. Off here; a run turns it on
     /// (`run::ENEMY_RULES`). GPU only.
     pub origin: super::OriginRules,
+    /// **A planet twist** (2026-11-24; `twist.rs`): the cold snap or the
+    /// wind, rolled by the run (`run::Run::twist`). None here. GPU only.
+    pub twist: super::TwistRules,
 }
 
 /// `Rules::ceiling_grow`'s default: a slime on the crystals it landed on
@@ -861,6 +864,15 @@ impl Rules {
                 self.origin.armour = v.clamp(0.0, 15.0) as u32;
                 return true;
             }
+            // 0 none, 1 the cold snap, 2 the wind (`twist.rs`).
+            "twist" => {
+                self.twist.kind = match v as u32 {
+                    1 => super::Twist::Cold,
+                    2 => super::Twist::Wind,
+                    _ => super::Twist::None,
+                };
+                return true;
+            }
             "origin_bite" => {
                 self.origin.bite = v.clamp(0.0, 15.0) as u32;
                 return true;
@@ -920,6 +932,7 @@ impl Rules {
             "stand" => on(self.stand.on),
             "origin" => on(self.origin.on),
             "origin_armour" => self.origin.armour as f32,
+            "twist" => self.twist.kind as u32 as f32,
             "origin_bite" => self.origin.bite as f32,
             "stand_armour" => self.stand.armour as f32,
             "stand_bite" => self.stand.bite as f32,
@@ -1027,6 +1040,11 @@ impl Rules {
             "stand_cap_most" => &mut self.stand.cap_most,
             "stand_sated" => &mut self.stand.sated,
             "origin_size" => &mut self.origin.size,
+            "twist_start" => &mut self.twist.start,
+            "twist_len" => &mut self.twist.len,
+            "twist_cold" => &mut self.twist.cold_step,
+            "twist_wind" => &mut self.twist.wind,
+            "twist_angle" => &mut self.twist.wind_angle,
             "origin_most" => &mut self.origin.most,
             "origin_gather_most" => &mut self.origin.gather_most,
             "origin_grow_every" => &mut self.origin.grow_every,
@@ -1279,6 +1297,7 @@ impl Default for Rules {
             star: super::StarRules::default(),
             stand: super::StandRules::default(),
             origin: super::OriginRules::default(),
+            twist: super::TwistRules::default(),
         }
     }
 }

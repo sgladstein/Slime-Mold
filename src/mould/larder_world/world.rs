@@ -237,6 +237,10 @@ pub trait World {
     /// The slime stops eating (the origin's die-back, `origin.rs`); a
     /// world without it ignores it.
     fn set_starve(&mut self, _on: bool) {}
+    /// A planet twist (`twist.rs`): the slime's step times `step`, and
+    /// every step pushed `wind` (x, y) times its own step. GPU only: a
+    /// world without it ignores it.
+    fn set_twist(&mut self, _step: f32, _wind: (f32, f32)) {}
     /// Empties crystal `c` at once, as a squad that drained it (a film's
     /// tool, headless `LARDER_DRAIN=T`, 11-21); a world without it does
     /// nothing.
