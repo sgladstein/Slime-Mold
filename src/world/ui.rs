@@ -617,8 +617,16 @@ pub struct Intro {
     pub kicker: String,
     pub title: String,
     pub line: String,
+    /// The planet's twist, if it rolled one (`run::PlanetTwist`, Enemy's
+    /// #830): its name and its line, under the slime's in the twist's
+    /// ice blue.
+    pub twist: Option<(String, String)>,
     pub alpha: f32,
 }
+
+/// A planet twist's colour on the HUD: an ice blue, apart from the slime's
+/// amber and the accent's cyan (the cold snap and the wind alike).
+pub const TWIST: Rgba = [156, 208, 255, 255];
 
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -667,6 +675,10 @@ pub struct Model {
     /// the short words ("62% asleep") and the hover line, in a small pill
     /// under the goal line.
     pub tell: Option<(Icon, String, String)>,
+    /// The planet's twist now (`Game::twist_now`): its icon, short words
+    /// ("Cold snap in 0:12", "Wind from the west") and hover, a pill in
+    /// `TWIST` beside the tell's.
+    pub twist: Option<(Icon, String, String)>,
     /// The first minute's coaching (the window's `Coach`): the step's
     /// words, "1 of 3" and its opacity, in a panel over the command bar.
     pub coach: Option<(String, String, f32)>,
@@ -1912,13 +1924,19 @@ impl Hud {
             // The slime's trait as its number (`Model::tell`), a small
             // amber pill hung under the goal's middle; its hover says
             // what the number is.
-            if let Some((icon, words, tip)) = &m.tell {
-                let ts = 13.0 * s;
-                let tw = c.atlas.measure(Weight::SemiBold, ts, words) + 42.0 * s;
-                let t = Rect::new(r.x + (r.w - tw) / 2.0, r.bottom() + 5.0 * s, tw, 24.0 * s);
+            // The planet's twist (`Model::twist`) beside it in ice blue, the
+            // two centred together under the goal.
+            let ts = 13.0 * s;
+            let pills: Vec<(&(Icon, String, String), Rgba)> = m.tell.iter().map(|t| (t, WARN)).chain(m.twist.iter().map(|t| (t, TWIST))).collect();
+            let widths: Vec<f32> = pills.iter().map(|((_, words, _), _)| c.atlas.measure(Weight::SemiBold, ts, words) + 42.0 * s).collect();
+            let gap = 8.0 * s;
+            let mut x = r.x + (r.w - widths.iter().sum::<f32>() - gap * widths.len().saturating_sub(1) as f32) / 2.0;
+            for (((icon, words, tip), colour), tw) in pills.into_iter().zip(widths) {
+                let t = Rect::new(x, r.bottom() + 5.0 * s, tw, 24.0 * s);
+                x += tw + gap;
                 self.glass(t, t.h / 2.0, c, s);
-                c.icon(*icon, (t.x + 11.0 * s, t.y + 5.0 * s), 14.0 * s, WARN);
-                c.text(Weight::SemiBold, ts, (t.x + 31.0 * s, t.y + 16.5 * s), Align::Left, words, WARN);
+                c.icon(*icon, (t.x + 11.0 * s, t.y + 5.0 * s), 14.0 * s, colour);
+                c.text(Weight::SemiBold, ts, (t.x + 31.0 * s, t.y + 16.5 * s), Align::Left, words, colour);
                 self.below = self.below.max(t.bottom());
                 if self.hover.is_some_and(|p| t.contains(p)) {
                     self.tip_small(tip, (t.x, t.bottom() + 6.0 * s), c, s);
@@ -1940,7 +1958,10 @@ impl Hud {
         let w = (560.0 * s).min(sw - 32.0 * s);
         let tw = w - 48.0 * s;
         let lines = c.wrap(Weight::Medium, 17.0 * s, tw, &i.line);
-        let h = 96.0 * s + lines.len() as f32 * 24.0 * s;
+        // The twist under the slime's line: its name, then its own line.
+        let twist = i.twist.as_ref().map(|(name, line)| (name, c.wrap(Weight::Medium, 16.0 * s, tw, line)));
+        let more = twist.as_ref().map_or(0.0, |(_, l)| 46.0 * s + l.len() as f32 * 22.0 * s);
+        let h = 96.0 * s + lines.len() as f32 * 24.0 * s + more;
         let r = Rect::new((sw - w) / 2.0, self.below + 18.0 * s, w, h);
         c.shadow(r, 14.0 * s, 24.0 * s, 6.0 * s, alpha(SHADOW, a));
         c.panel(r, 14.0 * s, alpha(PANEL_TOP, a), alpha(PANEL_BOTTOM, a), 1.0, alpha(EDGE, a));
@@ -1950,6 +1971,14 @@ impl Hud {
         c.text_fit(Weight::SemiBold, 26.0 * s, (cx, r.y + 66.0 * s), Align::Centre, &i.title, tw, alpha(WARN, a));
         for (k, l) in lines.iter().enumerate() {
             c.text(Weight::Medium, 17.0 * s, (cx, r.y + 96.0 * s + k as f32 * 24.0 * s), Align::Centre, l, alpha(TEXT, a));
+        }
+        if let Some((name, tl)) = &twist {
+            let y = r.y + 96.0 * s + lines.len() as f32 * 24.0 * s;
+            c.rrect(Rect::new(cx - 40.0 * s, y - 4.0 * s, 80.0 * s, 1.0 * s), 0.5 * s, alpha(EDGE, a));
+            c.text_fit(Weight::SemiBold, 15.0 * s, (cx, y + 20.0 * s), Align::Centre, &name.to_uppercase(), tw, alpha(TWIST, a));
+            for (k, l) in tl.iter().enumerate() {
+                c.text(Weight::Medium, 16.0 * s, (cx, y + 44.0 * s + k as f32 * 22.0 * s), Align::Centre, l, alpha(TEXT, a));
+            }
         }
     }
 

@@ -2372,6 +2372,7 @@ impl App {
         };
         m.coach = self.coach.show.clone();
         m.tell = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| slime_tell(g, r.level().tier));
+        m.twist = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
         // The landing card: whole for `INTRO_SECS` of game time (it holds
         // while paused), then fading over `INTRO_FADE`.
         m.intro = self.intro.as_ref().and_then(|(i, at)| {
@@ -3110,14 +3111,14 @@ pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, 
 
 /// A hurt's colour on the health bar (`Hurt`): the slime's bite its
 /// crimson (`Light::bite`), fire an ember orange, the squad's own blast a
-/// white-hot gold, anything else (a falling star) a cold violet. None is
-/// the bar's green, amber or red.
+/// white-hot gold, a falling star (and anything else) a cold violet. None
+/// is the bar's green, amber or red.
 pub(super) fn hurt_colour(h: Hurt) -> [u8; 4] {
     match h {
         Hurt::Bite => [215, 30, 70, 255],
         Hurt::Fire => [255, 120, 25, 255],
         Hurt::Blast => [255, 244, 205, 255],
-        Hurt::Other => [175, 150, 255, 255],
+        Hurt::Star | Hurt::Other => [175, 150, 255, 255],
     }
 }
 
@@ -3480,6 +3481,31 @@ fn slime_tell(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> Opti
         }
         _ => None,
     }
+}
+
+/// The planet's twist as a pill beside the tell (Enemy's #830, `twist.rs`):
+/// the cold snap counts down to its start and then its end, and goes when
+/// it is over; the wind says where it blows from all planet. The hover is
+/// the planet card's line (`PlanetTwist::card`).
+fn twist_tell(g: &Game<GpuWorld>, t: &slime_mould::mould::run::PlanetTwist) -> Option<(Icon, String, String)> {
+    use slime_mould::mould::larder_world::TwistNow;
+    let mmss = |secs: f32| {
+        let n = secs.max(0.0).ceil() as u32;
+        format!("{}:{:02}", n / 60, n % 60)
+    };
+    match g.twist_now()? {
+        TwistNow::ColdIn(s) => Some((Icon::Clock, format!("Cold snap in {}", mmss(s)), t.card())),
+        TwistNow::Cold(s) => Some((Icon::Still, format!("Cold snap: {} left", mmss(s)), "The slime crawls at a third of its pace until the cold lifts. Push now.".into())),
+        TwistNow::ColdOver => None,
+        TwistNow::Wind(a) => Some((Icon::Fast, format!("Wind from the {}", compass(a + 180.0)), t.card())),
+    }
+}
+
+/// A compass point's name for an angle (0 east, 90 south), as the twist's
+/// card names it (`run::PlanetTwist::card`).
+fn compass(deg: f32) -> &'static str {
+    const NAMES: [&str; 8] = ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"];
+    NAMES[((deg.rem_euclid(360.0) / 45.0).round() as usize) % 8]
 }
 
 /// Game seconds the landing card (`ui::Intro`) stays whole, and fades.
