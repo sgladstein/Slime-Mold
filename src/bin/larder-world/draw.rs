@@ -1680,7 +1680,7 @@ impl App {
             experiments: experiments::rows(&self.args.keys, &self.exp_next),
             most_off: slime_mould::build::switches::MOST_OFF,
             objective: Some(if let Some(tr) = &self.mission {
-                tr.progress_line()
+                origin_line(g, tr.progress_line())
             } else if self.args.range.is_some() {
                 "Gun range: H opens the armory, B buys soldiers, N a new map".into()
             } else if g.core_rule.kind == CoreKind::Headless {
@@ -3189,4 +3189,23 @@ impl App {
         }
         cmds
     }
+}
+
+/// The goal line while a planet has its origin (Milestone 2, `origin.rs`;
+/// Look and interface, 2026-11-24): what to kill and how much is left of
+/// it, then the die-back's seconds once it breaks, in place of the
+/// mission's walker count (which a heart's planet is not won by). A
+/// "nothing is happening" warning in front (`progress_line`) is kept.
+fn origin_line(g: &Game<GpuWorld>, line: String) -> String {
+    let Some((members, most, fell)) = g.origin_hud() else { return line };
+    let warn = line.split_once(" s. ").filter(|_| line.starts_with("Nothing is happening")).map(|(a, _)| format!("{a} s. ")).unwrap_or_default();
+    let goal = match fell {
+        Some(left) => format!("The slime's heart is broken: the slime is dying back ({:.0} s)", left.ceil()),
+        None => {
+            let r = g.rules.origin;
+            let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;
+            format!("Kill the slime's heart on its home crystal: {} of {} left, breaks under {}", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))
+        }
+    };
+    format!("{warn}{goal}")
 }
