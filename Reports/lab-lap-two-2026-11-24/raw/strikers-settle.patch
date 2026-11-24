@@ -1,0 +1,139 @@
+diff --git a/src/mould/larder_world/rules.rs b/src/mould/larder_world/rules.rs
+index d8ba9e4b..65e5fc8e 100644
+--- a/src/mould/larder_world/rules.rs
++++ b/src/mould/larder_world/rules.rs
+@@ -1012,6 +1012,7 @@ impl Rules {
+             "strikers_full" => &mut self.strikers.full,
+             "strikers_rate" => &mut self.strikers.rate,
+             "strikers_rate_share" => &mut self.strikers.rate_share,
++            "strikers_settle" => &mut self.strikers.settle,
+             "stand_at" => &mut self.stand.at,
+             "stand_army" => &mut self.stand.army,
+             "stand_pull" => &mut self.stand.pull,
+diff --git a/src/mould/larder_world/strikers.rs b/src/mould/larder_world/strikers.rs
+index 141e9df3..d848c2c1 100644
+--- a/src/mould/larder_world/strikers.rs
++++ b/src/mould/larder_world/strikers.rs
+@@ -82,6 +82,21 @@ pub struct StrikerRules {
+     /// over `full`, at least 1 and at most `army_most` (1: the cap as
+     /// before; a run sets it, `run::Run::rules`).
+     pub army_most: f32,
++    /// **A settled peak** (Lab, 2026-11-24, Direction's brief of 15:39Z):
++    /// 0 reads the game's peak (`Game::peak`, from the landing) as before.
++    /// Above 0, the strikers count their own peak only once the slime has
++    /// settled: from the first second its mass is 1% over its lowest so
++    /// far, or from `settle` game seconds at the latest, with no strikers
++    /// before. The walkers killed by then count back in (never past the
++    /// game's peak), so only what the slime shed by itself is left out.
++    /// Why: a lap-two slime (planets 9 to 15, the lab's `LAB_LAP2`) lands
++    /// bigger than its crystals hold and sheds about half in its first
++    /// 30 s (planet 12, 126k to 69k; 15, 234k to 124k), so under a peak
++    /// taken at the landing it is "late" within seconds, and strikers wiped
++    /// a greedy squad inside a minute on 12 and 15 (strikers off: both
++    /// lived to 2:00 with 24 soldiers). A lap-one slime sheds little by
++    /// itself, so its settled peak is the game's.
++    pub settle: f32,
+ }
+ 
+ impl Default for StrikerRules {
+@@ -97,7 +112,7 @@ impl Default for StrikerRules {
+         // blows added little (62, 113, 328). Map 7, four soldiers: lost at
+         // 2:33 with the first numbers, 1:14 with these and no squad scale,
+         // won at 4:21 (as with no strikers on the GPU) with few 8, full 24.
+-        StrikerRules { on: false, below: 0.6, band: 30.0, share: 1.0, haste: 3.0, most: 3, few: 8.0, full: 24.0, rate: 150.0, rate_share: 0.02, army_most: 1.0 }
++        StrikerRules { on: false, below: 0.6, band: 30.0, share: 1.0, haste: 3.0, most: 3, few: 8.0, full: 24.0, rate: 150.0, rate_share: 0.02, army_most: 1.0, settle: 0.0 }
+     }
+ }
+ 
+@@ -117,6 +132,12 @@ pub struct Strikers {
+     pub took: u64,
+     /// The walkers in the band at the last pass (`StrikerRules::rate`).
+     pub band: u32,
++    /// The settled peak (`StrikerRules::settle`): the slime's lowest mass
++    /// so far until it settles, then its peak from there; and the game
++    /// second it settled (0: not yet).
++    pub low: usize,
++    pub peak: usize,
++    pub settled: f32,
+ }
+ 
+ impl<W: World> Game<W> {
+@@ -130,7 +151,8 @@ impl<W: World> Game<W> {
+             }
+             return;
+         }
+-        let low = self.peak > 0 && (self.mould as f32) < r.below * self.peak as f32;
++        let peak = if r.settle > 0.0 { self.settled_peak(r.settle) } else { self.peak };
++        let low = peak > 0 && (self.mould as f32) < r.below * peak as f32;
+         if !low && !self.strikers.on {
+             return;
+         }
+@@ -160,4 +182,27 @@ impl<W: World> Game<W> {
+             self.strikers.took += took as u64;
+         }
+     }
++
++    /// The strikers' peak with `settle` on (`StrikerRules::settle`): 0
++    /// until the slime settles, then its peak from there.
++    pub(super) fn settled_peak(&mut self, settle: f32) -> usize {
++        let (t, mould, killed, landing) = (self.time(), self.mould, self.killed as usize, self.peak);
++        let st = &mut self.strikers;
++        if st.settled > 0.0 {
++            st.peak = st.peak.max(mould);
++            return st.peak;
++        }
++        st.low = if st.low == 0 { mould } else { st.low.min(mould) };
++        if (mould as f32) > 1.01 * st.low as f32 || t >= settle {
++            // What the squad (and fire) killed before it settled counts
++            // back in, so only what the slime shed by itself lowers the
++            // peak: a lap-one slime falls from its landing under the guns
++            // too (planet 4, run seed 1: 53,505 to 35,410 by 60 s with
++            // 19,623 killed), and a peak taken at 35,410 kept strikers off
++            // for 3:00 where main formed 3,334 (the 1070, 11-24).
++            (st.settled, st.peak) = (t.max(0.001), (mould + killed).min(landing.max(mould)));
++            return st.peak;
++        }
++        0
++    }
+ }
+diff --git a/src/mould/larder_world/tests.rs b/src/mould/larder_world/tests.rs
+index e3d09309..e7909dc4 100644
+--- a/src/mould/larder_world/tests.rs
++++ b/src/mould/larder_world/tests.rs
+@@ -492,6 +492,36 @@ fn a_tier_without_a_core_keeps_the_rules_core() {
+     assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
+ }
+ 
++/// The strikers' settled peak (`StrikerRules::settle`): none while the
++/// slime falls from its landing, then its peak from the second it is 1%
++/// over its lowest; it holds as the slime falls again, and `settle` game
++/// seconds end the wait whatever the slime does.
++#[test]
++fn the_strikers_peak_waits_for_the_slime_to_settle() {
++    let mut g = small(1);
++    let m = g.mould.max(1_000);
++    g.mould = m;
++    assert_eq!(g.settled_peak(60.0), 0);
++    g.mould = m / 2;
++    assert_eq!(g.settled_peak(60.0), 0, "falling from the landing: not settled");
++    g.mould = m / 2 + m / 50;
++    let p = g.settled_peak(60.0);
++    assert_eq!(p, g.mould, "settled at its first rise, nothing killed");
++    g.mould = m / 4;
++    assert_eq!(g.settled_peak(60.0), p, "the peak holds as it falls again");
++    let mut late = small(1);
++    late.mould = m;
++    assert_eq!(late.settled_peak(late.time()), m, "settle seconds end the wait");
++    // What was killed before it settled counts back in, up to the
++    // game's peak: a slime that fell only under the guns keeps its peak.
++    let mut shot = small(1);
++    (shot.peak, shot.mould, shot.killed) = (m, m / 2, (m / 2) as u32);
++    assert_eq!(shot.settled_peak(shot.time()), m);
++    let mut over = small(1);
++    (over.peak, over.mould, over.killed) = (m, m / 2, m as u32);
++    assert_eq!(over.settled_peak(over.time()), m, "never past the game's peak");
++}
++
+ /// The broken mould (`Rules::broken`): under 3% of its peak, its upkeep
+ /// is 50 times, and it gets its upkeep back once it is over the line.
+ #[test]

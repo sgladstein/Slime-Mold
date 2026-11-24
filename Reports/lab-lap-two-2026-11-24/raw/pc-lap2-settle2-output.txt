@@ -1,0 +1,120 @@
+# pc-lap2-settle2.ps1 on the GTX 1070 (Engine, 2026-11-24 16:54Z), at e7b72d88 (settled peak v2), verbatim.
+Engine → Lab: settle2 on the 1070, verbatim. 11 of 11 games finished with exit 0 and an empty stderr. SHA e7b72d8, rebuilt -j 4 in 2.8 min. Wall time 6.2 min, plus 405 s waiting on the 4K thread's timing lock before the start. The output file on the PC is C:\Users\Scott\Code\pc-batch-out\lab-settle2-output.txt.
+
+== F12_s1_settle (43 s wall)
+    t 1 s: mould 125643, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 69144, soldiers 11, bank 200, harvested 0, shots 24, killed 44, crystals left 1.000
+    t 45 s: mould 64669, soldiers 11, bank 226, harvested 426, shots 263, killed 9451, crystals left 0.990
+    t 60 s: mould 62716, soldiers 12, bank 446, harvested 1446, shots 520, killed 14471, crystals left 0.965
+    t 90 s: mould 67278, soldiers 19, bank 362, harvested 4161, shots 664, killed 14655, crystals left 0.898
+    t 120 s: mould 70500, soldiers 24, bank 112, harvested 6711, shots 1306, killed 15312, crystals left 0.835
+    bossfell 0; formed: boss t 48.0 s: Crowd mortar formed on lump 1 at 131,145 (crowd top 1.0 | boss t 82.0 s: Crowd mortar formed on lump 2 at 423,449 (crowd top 1.0
+    first strikers: 
+    last strikers:   strikers t 120 s: 0 condensed holding 0, 0 taken in all, slime 70500 of peak 145664, squad at 455,354, settled at 30 s, settled peak 70500
+== F15_s1_settle (36 s wall)
+    t 1 s: mould 233684, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 124416, soldiers 10, bank 200, harvested 0, shots 80, killed 11486, crystals left 1.000
+    t 45 s: mould 70850, soldiers 8, bank 291, harvested 491, shots 292, killed 30474, crystals left 0.985
+    t 60 s: mould 27263, soldiers 10, bank 313, harvested 1313, shots 465, killed 34740, crystals left 0.959
+    t 90 s: mould 9796, soldiers 16, bank 156, harvested 3556, shots 533, killed 34762, crystals left 0.890
+    t 120 s: mould 13964, soldiers 24, bank 524, harvested 7123, shots 533, killed 34762, crystals left 0.779
+    bossfell 0; formed: boss t 3.0 s: Cut wanderer formed on lump 1 at 372,113 (crowd top 0.00 | boss t 3.0 s: Cut wanderer formed on lump 2 at 928,410 (crowd top 0.00 | boss t 102.0 s: Crowd mortar formed on lump 1 at 477,169 (crowd top 24 | boss t 105.0 s: Cut hunter formed on lump 1 at 56,432 (crowd top 24.28 | boss t 110.0 s: Cut hunter formed on lump 1 at 372,113 (crowd top 24.2 | boss t 118.0 s: Cut hunter formed on lump 1 at 928,410 (crowd top 24.2
+    first strikers:   strikers t 68 s: 0 condensed holding 0, 2 taken in all, slime 15125 of peak 234865, squad at 539,152, settled at 60 s, settled peak 62003
+    last strikers:   strikers t 120 s: 0 condensed holding 0, 2 taken in all, slime 13964 of peak 234865, squad at 540,154, settled at 60 s, settled peak 62003
+== F12_s2_settle (51 s wall)
+    t 1 s: mould 143587, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 80926, soldiers 11, bank 200, harvested 0, shots 287, killed 4703, crystals left 1.000
+    t 45 s: mould 77300, soldiers 8, bank 347, harvested 547, shots 524, killed 15395, crystals left 0.988
+    t 60 s: mould 75615, soldiers 3, bank 36, harvested 1036, shots 671, killed 19753, crystals left 0.978
+    t 90 s: mould 79763, soldiers 4, bank 230, harvested 1630, shots 750, killed 20045, crystals left 0.965
+    t 120 s: mould 85562, soldiers 6, bank 336, harvested 2536, shots 840, killed 20324, crystals left 0.945
+    bossfell 0; formed: boss t 44.0 s: Crowd wanderer formed on lump 1 at 687,661 (crowd top 1 | boss t 93.0 s: Crowd mortar formed on lump 2 at 363,255 (crowd top 1.0
+    first strikers: 
+    last strikers:   strikers t 120 s: 0 condensed holding 0, 0 taken in all, slime 85562 of peak 166113, squad at 507,318, settled at 26 s, settled peak 85562
+== F15_s2_settle (44 s wall)
+    t 1 s: mould 151536, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 113488, soldiers 13, bank 376, harvested 976, shots 55, killed 28, crystals left 0.981
+    t 45 s: mould 115502, soldiers 17, bank 120, harvested 2320, shots 74, killed 43, crystals left 0.954
+    t 60 s: mould 117032, soldiers 21, bank 200, harvested 3999, shots 100, killed 64, crystals left 0.920
+    t 90 s: mould 120589, soldiers 32, bank 164, harvested 8373, shots 181, killed 133, crystals left 0.833
+    t 112 s: mould 126079, soldiers 0, bank 166, harvested 8375, shots 594, killed 2241, crystals left 0.833, ended: squad wiped
+    bossfell 20; formed: boss t 41.0 s: Crowd mortar formed on lump 1 at 577,611 (crowd top 1.0 | boss t 90.0 s: Crowd mortar formed on lump 2 at 597,621 (crowd top 1.0
+    first strikers: 
+    last strikers:   strikers t 111 s: 0 condensed holding 0, 0 taken in all, slime 126079 of peak 163362, squad at 735,562, settled at 40 s, settled peak 126079
+== G2_settle (15 s wall)
+    t 1 s: mould 13845, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 13182, soldiers 13, bank 206, harvested 806, shots 369, killed 1160, crystals left 0.969
+    t 60 s: mould 13722, soldiers 20, bank 274, harvested 3674, shots 369, killed 1160, crystals left 0.857
+    t 90 s: mould 13880, soldiers 25, bank 134, harvested 5534, shots 851, killed 2039, crystals left 0.784
+    t 120 s: mould 16022, soldiers 32, bank 362, harvested 8571, shots 1214, killed 2667, crystals left 0.665
+    t 150 s: mould 16629, soldiers 39, bank 69, harvested 11431, shots 2105, killed 3822, crystals left 0.554
+    t 180 s: mould 16110, soldiers 43, bank 311, harvested 13695, shots 3216, killed 6594, crystals left 0.465
+    bossfell 0; formed: boss t 85.0 s: Crowd wanderer formed on lump 1 at 331,127 (crowd top 1
+    first strikers: 
+    last strikers:   strikers t 180 s: 0 condensed holding 0, 0 taken in all, slime 16110 of peak 16663, squad at 173,154, settled at 38 s, settled peak 16663
+== G3_settle (14 s wall)
+    t 1 s: mould 43304, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 38463, soldiers 14, bank 118, harvested 1118, shots 295, killed 5615, crystals left 0.928
+    t 60 s: mould 35746, soldiers 21, bank 160, harvested 3960, shots 535, killed 7999, crystals left 0.744
+    t 90 s: mould 14658, soldiers 25, bank 304, harvested 5703, shots 982, killed 9056, crystals left 0.631
+    t 120 s: mould 13969, soldiers 30, bank 390, harvested 7786, shots 1194, killed 9164, crystals left 0.496
+    t 150 s: mould 14442, soldiers 33, bank 112, harvested 8738, shots 1386, killed 9213, crystals left 0.434
+    t 180 s: mould 14384, soldiers 34, bank 50, harvested 9107, shots 1856, killed 9908, crystals left 0.411
+    bossfell 0; formed: boss t 97.0 s: Crowd mortar formed on lump 1 at 287,109 (crowd top 1.0
+    first strikers:   strikers t 79 s: 0 condensed holding 0, 236 taken in all, slime 21868 of peak 43361, squad at 276,65, settled at 60 s, settled peak 43361
+    last strikers:   strikers t 180 s: 33 condensed holding 31, 1135 taken in all, slime 14384 of peak 43361, squad at 393,126, settled at 60 s, settled peak 43361
+== G4_settle (17 s wall)
+    t 1 s: mould 53505, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 41395, soldiers 11, bank 312, harvested 912, shots 442, killed 13124, crystals left 0.971
+    t 60 s: mould 35410, soldiers 13, bank 300, harvested 2900, shots 826, killed 19623, crystals left 0.908
+    t 90 s: mould 27009, soldiers 20, bank 482, harvested 5882, shots 1017, killed 20190, crystals left 0.812
+    t 120 s: mould 31107, soldiers 29, bank 272, harvested 9272, shots 1499, killed 20255, crystals left 0.704
+    t 150 s: mould 24876, soldiers 20, bank 389, harvested 10590, shots 2501, killed 33211, crystals left 0.662
+    t 180 s: mould 33136, soldiers 28, bank 340, harvested 14144, shots 3255, killed 33533, crystals left 0.549
+    bossfell 0; formed: boss t 69.0 s: Crowd mortar formed on lump 1 at 359,249 (crowd top 1.0 | boss t 173.0 s: Crowd mortar formed on lump 1 at 151,41 (crowd top 1.0
+    first strikers:   strikers t 76 s: 0 condensed holding 0, 6 taken in all, slime 29755 of peak 53513, squad at 245,273, settled at 60 s, settled peak 53513
+    last strikers:   strikers t 180 s: 0 condensed holding 0, 3392 taken in all, slime 33136 of peak 53513, squad at 315,31, settled at 60 s, settled peak 53513
+== G5_settle (28 s wall)
+    t 1 s: mould 86782, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 89779, soldiers 13, bank 277, harvested 877, shots 298, killed 2924, crystals left 0.982
+    t 60 s: mould 88631, soldiers 19, bank 449, harvested 3449, shots 1015, killed 6777, crystals left 0.927
+    t 90 s: mould 72452, soldiers 27, bank 240, harvested 6439, shots 1828, killed 7846, crystals left 0.864
+    t 120 s: mould 84465, soldiers 34, bank 452, harvested 9512, shots 2918, killed 13198, crystals left 0.800
+    t 150 s: mould 89103, soldiers 41, bank 372, harvested 12725, shots 4203, killed 18755, crystals left 0.732
+    t 180 s: mould 95707, soldiers 45, bank 185, harvested 14640, shots 5928, killed 29380, crystals left 0.692
+    bossfell 0; formed: boss t 51.0 s: Crowd pinwheel formed on lump 1 at 523,263 (crowd top 1 | boss t 137.0 s: Crowd mortar formed on lump 1 at 423,339 (crowd top 1.
+    first strikers: 
+    last strikers:   strikers t 180 s: 0 condensed holding 0, 0 taken in all, slime 95707 of peak 95707, squad at 532,132, settled at 11 s, settled peak 95707
+== G6_settle (11 s wall)
+    t 1 s: mould 138014, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 124105, soldiers 7, bank 315, harvested 115, shots 301, killed 11403, crystals left 0.998
+    t 43 s: mould 121932, soldiers 0, bank 245, harvested 445, shots 400, killed 15373, crystals left 0.991, ended: squad wiped
+    t 43 s: mould 121932, soldiers 0, bank 245, harvested 445, shots 400, killed 15373, crystals left 0.991, ended: squad wiped
+    t 43 s: mould 121932, soldiers 0, bank 245, harvested 445, shots 400, killed 15373, crystals left 0.991, ended: squad wiped
+    t 43 s: mould 121932, soldiers 0, bank 245, harvested 445, shots 400, killed 15373, crystals left 0.991, ended: squad wiped
+    t 43 s: mould 121932, soldiers 0, bank 245, harvested 445, shots 400, killed 15373, crystals left 0.991, ended: squad wiped
+    bossfell 0; formed: boss t 18.0 s: Cut hunter formed on lump 1 at 481,507 (crowd top 0.00)
+    first strikers: 
+    last strikers: 
+== G7_settle (35 s wall)
+    t 1 s: mould 124053, soldiers 11, bank 200, harvested 0, shots 7, killed 4, crystals left 1.000
+    t 30 s: mould 90089, soldiers 14, bank 111, harvested 1111, shots 211, killed 829, crystals left 0.984
+    t 60 s: mould 88621, soldiers 21, bank 229, harvested 4028, shots 448, killed 1248, crystals left 0.942
+    t 90 s: mould 100581, soldiers 29, bank 240, harvested 7239, shots 750, killed 1584, crystals left 0.895
+    t 120 s: mould 116959, soldiers 29, bank 272, harvested 7271, shots 1113, killed 6984, crystals left 0.894
+    t 150 s: mould 127616, soldiers 36, bank 209, harvested 10160, shots 1593, killed 13406, crystals left 0.853
+    t 180 s: mould 142768, soldiers 42, bank 206, harvested 13069, shots 1709, killed 14185, crystals left 0.810
+    bossfell 0; formed: boss t 49.0 s: Crowd mortar formed on lump 1 at 521,269 (crowd top 1.0 | boss t 127.0 s: Crowd hunter formed on lump 1 at 505,385 (crowd top 1.
+    first strikers: 
+    last strikers:   strikers t 180 s: 0 condensed holding 0, 0 taken in all, slime 142768 of peak 142768, squad at 830,485, settled at 4 s, settled peak 142768
+== G8_settle (75 s wall)
+    t 1 s: mould 173241, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 146932, soldiers 11, bank 200, harvested 0, shots 188, killed 306, crystals left 1.000
+    t 60 s: mould 153886, soldiers 15, bank 297, harvested 2097, shots 828, killed 7998, crystals left 0.977
+    t 90 s: mould 158853, soldiers 23, bank 487, harvested 5486, shots 1625, killed 9739, crystals left 0.940
+    t 120 s: mould 168186, soldiers 33, bank 264, harvested 9294, shots 2703, killed 10774, crystals left 0.898
+    t 150 s: mould 193025, soldiers 33, bank 264, harvested 9294, shots 3908, killed 15252, crystals left 0.898
+    t 180 s: mould 205168, soldiers 37, bank 487, harvested 11298, shots 4635, killed 18966, crystals left 0.877
+    bossfell 0; formed: boss t 45.0 s: Crowd pinwheel formed on lump 1 at 381,403 (crowd top 1 | boss t 88.0 s: Crowd wanderer formed on lump 1 at 395,487 (crowd top 1 | boss t 138.0 s: Crowd mortar formed on lump 1 at 603,355 (crowd top 1. | boss t 165.0 s: Crowd pinwheel formed on lump 2 at 603,337 (crowd top 
+    first strikers: 
+    last strikers:   strikers t 180 s: 0 condensed holding 0, 0 taken in all, slime 205168 of peak 205168, squad at 1204,336, settled at 31 s, settled peak 205168
