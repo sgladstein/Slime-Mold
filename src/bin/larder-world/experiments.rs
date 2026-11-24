@@ -220,8 +220,11 @@ mod tests {
         // `tail=`: one deck on a run planet, printing one line).
         const LAB_TOOLS: &str = "gunlab deck arena tail";
         // The strategy league's keys (`league=` with `plan=`: one plan on a
-        // run planet, printing one line; `league.rs`).
-        const BOT_TOOLS: &str = "league plan";
+        // run planet, printing one line; `league.rs`), and `size=F` (a run
+        // level's slime F times its size, 11-24: Enemy's lever for a
+        // planet's size, measured before it lands as a number in `run.rs`,
+        // as `set=` measures a rule).
+        const BOT_TOOLS: &str = "league plan size";
         // The slime viewer's key (`viewer=PLANET`: a planet set up for
         // spawning and tuning, `viewer.rs`; the default game never reads it).
         const VIEWER_TOOLS: &str = "viewer";
