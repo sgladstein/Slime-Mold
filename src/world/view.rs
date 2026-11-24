@@ -98,6 +98,9 @@ impl SlimeLook {
             Some(crate::mould::tiers::Tier::Trunk) => SlimeLook::Cords,
             Some(crate::mould::tiers::Tier::Swarmer) => SlimeLook::Swell,
             Some(crate::mould::tiers::Tier::Sleeper) => SlimeLook::Dormant,
+            // The Dozer (planet 8, 11-24) sleeps off its charges: the
+            // Sleeper's look shows which of it is asleep (Look's call).
+            Some(crate::mould::tiers::Tier::Dozer) => SlimeLook::Dormant,
             Some(crate::mould::tiers::Tier::Grudge) => SlimeLook::Scarred,
             Some(crate::mould::tiers::Tier::Sporer) => SlimeLook::Spores,
             _ => SlimeLook::Plain,

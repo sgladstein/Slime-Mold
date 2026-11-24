@@ -1670,9 +1670,11 @@ pub const SETCOUNT: usize = 70;
 /// the squad condenses, then each block's leader takes what it took in.
 pub const CONDENSE: usize = 71;
 pub const CONDLEAD: usize = 72;
+/// The last stand wakes the sleepers (2026-11-24, `Engine::rouse`).
+pub const ROUSE: usize = 73;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 73] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount", "condense", "condlead",
+pub const PASSES: [&str; 74] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount", "condense", "condlead", "rouse",
 ];
 
 impl Shared {
@@ -3961,6 +3963,15 @@ impl Engine {
         let (c, r2) = at.unwrap_or((u32::MAX, 0));
         self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[b as u32 + 1, c, r2]));
         self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
+    }
+
+    /// Wakes every living dormant walker but the gassed (the last
+    /// stand's, 2026-11-24: `World::rouse`), between ticks; nothing with
+    /// the life cycle off.
+    pub fn rouse(&self, shared: &Shared) {
+        if self.cycles {
+            self.run(shared, &[(ROUSE, self.n.div_ceil(256))]);
+        }
     }
 
     /// Lump `b` takes in the ordinary walkers within `at` in no lump, its

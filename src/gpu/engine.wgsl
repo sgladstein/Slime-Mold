@@ -4565,6 +4565,22 @@ fn condense(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
+// **The last stand wakes the sleepers** (`Engine::rouse`, 2026-11-24, the
+// Dozer: "cut it to a quarter and all of it comes", and a dormant walker
+// neither senses nor moves, so a last stand on a sleeping body sent only
+// its waking part). Between ticks, once: every living dormant walker
+// wakes as an alarm wakes it in `fate` (its timer to `wake_steps`), bar a
+// gassed one, which the squad put to sleep. The cell counts are laid
+// afresh each tick, so only the state changes here.
+@compute @workgroup_size(256)
+fn rouse(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let w = spec[k];
+    if (((w >> 9u) & 3u) != L_DORMANT || gassed_at(k, S.t)) { return; }
+    spec[k] = (w & 0x1FFu) | (L_WALKER << 9u) | (min(P.wake_steps, 65535u) << 16u);
+}
+
 @compute @workgroup_size(256)
 fn condlead(@builtin(global_invocation_id) gid: vec3<u32>) {
     let nb = ((P.w + RAID_BLOCK - 1u) / RAID_BLOCK) * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);

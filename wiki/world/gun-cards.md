@@ -49,7 +49,7 @@ Trunk; Pull and Thrift answer no planet.
 ## Cards
 
 The planets are `run::LADDER`: 1 Drifter, 2 Sprawler, 3 Trunk, 4 Swarmer, 5
-Sporer, 6 Sleeper, 7 Grudge. A card is sold from the planet its tier opens
+Sporer, 6 Sleeper, 7 Grudge, 8 Dozer (since 11-24). A card is sold from the planet its tier opens
 (`Card::tier`, `power_from`); payloads come as rolled bullets
 (`shells_at`). **M** marks a measured row (its report in Sources), **J**
 this thread's judgement.

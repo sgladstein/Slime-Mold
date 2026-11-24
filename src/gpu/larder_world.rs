@@ -1257,6 +1257,11 @@ impl World for GpuWorld {
         self.e.grow_lump(&self.shared, b, at, None);
     }
 
+    fn rouse(&mut self) {
+        self.flush();
+        self.e.rouse(&self.shared);
+    }
+
     fn grow_lump_most(&mut self, b: usize, (c, r): ((f32, f32), f32), room: u32) {
         self.flush();
         let d = &self.e.dish;
@@ -1663,6 +1668,9 @@ mod tests {
         }
         fn grow_lump_most(&mut self, b: usize, at: ((f32, f32), f32), room: u32) {
             self.g.grow_lump_most(b, at, room)
+        }
+        fn rouse(&mut self) {
+            self.g.rouse()
         }
         fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
             self.g.set_lump(b, l)
@@ -3413,6 +3421,36 @@ mod tests {
         assert!(off.1 > 100, "the Sleeper sleeps: {off:?}");
         assert!(on.1 > off.1 + off.1 / 5, "dreaming grows the sleeping body: {on:?} against {off:?}");
         assert!(on.0 <= 2 * walkers + walkers / 4, "under its ceiling: {on:?}");
+    }
+
+    /// **The last stand wakes the Dozer** (`World::rouse`, 2026-11-24; GPU
+    /// only). A race world with the Dozer's keys sleeps away from its
+    /// crystals by 40 s; `rouse` wakes every sleeper at once, so its last
+    /// stand sends all of it.
+    #[test]
+    fn the_last_stand_wakes_the_dozer() {
+        use crate::mould::tiers::Tier;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        for (k, v) in Tier::Dozer.keys() {
+            crate::gpu::set(&mut s, k, v).unwrap();
+        }
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+        while g.time() < 40.0 {
+            g.step();
+        }
+        let asleep = |g: &Game<GpuWorld>| {
+            let (st, _) = g.world.e.life_of();
+            let en = crate::gpu::floats(&read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.energy));
+            st.iter().zip(&en).filter(|(&s, &e)| e >= 0.0 && s == 2).count()
+        };
+        let before = asleep(&g);
+        g.world.rouse();
+        let after = asleep(&g);
+        eprintln!("the Dozer: {before} asleep, {after} after the rouse");
+        assert!(before > 100, "the Dozer sleeps: {before}");
+        assert_eq!(after, 0, "the rouse wakes them all");
     }
 
     /// **A blast's long crater is not shut** (the review lane, 11-21: det

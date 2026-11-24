@@ -74,8 +74,10 @@ impl Ground {
 /// 2026-11-17, once the GPU engine took its scar keys (the simulation-use
 /// plan's step 0, `Reports/sim-use-2026-11-17/plan.md`), so planet 8 mixes
 /// the Sporer, Sleeper and Grudge; the test below keeps every rung
-/// playable.
-pub const LADDER: [Tier; 7] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Swarmer, Tier::Sporer, Tier::Sleeper, Tier::Grudge];
+/// playable. Since 2026-11-24 planet 8 has its own, the Dozer (Direction:
+/// "P8 = the Swarmer that naps"), and past it the Sleeper, Grudge and
+/// Dozer take turns.
+pub const LADDER: [Tier; 8] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Swarmer, Tier::Sporer, Tier::Sleeper, Tier::Grudge, Tier::Dozer];
 
 /// One level: what the window needs to start it.
 #[derive(Clone, Debug, PartialEq)]
@@ -711,6 +713,7 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that grow new slime. Kill it fast, or fight its seedlings", rules: &[], keys: SPORER_KEYS },
         Tier::Sleeper => DoesToYou { says: "It grows while it sleeps. Every minute you farm, there is more to wake", rules: &[], keys: SLEEPER_KEYS },
         Tier::Grudge => DoesToYou { says: "Where you hurt it, it grows back tough. Don't fight on old ground", rules: &[], keys: GRUDGE_KEYS },
+        Tier::Dozer => DoesToYou { says: "It sleeps off every charge. Each shot wakes it, and awake it charges", rules: SWARMER_RULES, keys: DOZER_KEYS },
     }
 }
 
@@ -817,6 +820,12 @@ const SPORER_KEYS: &[(&str, &str)] = &[("spore_burst", "0.2"), ("spore_alarm", "
 // you farm before it wakes is time it grows. 0.003 is the Lab's pick (one
 // seed); its growth is bounded by the ceiling and its free edge.
 const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3"), ("dream", "0.003")];
+// The Dozer, planet 8 (2026-11-24, Direction's card: "It sleeps off every
+// charge. Each shot wakes it, and awake it charges"): the Swarmer's lunge
+// and last stand (`SWARMER_RULES`) on a body that sleeps away from its
+// crystals, woken at the Sleeper's planet 6 bar (wake_alarm 0.3). No
+// dreaming: that is planet 6's.
+const DOZER_KEYS: &[(&str, &str)] = &[("surge_haste", "3"), ("wake_alarm", "0.3")];
 // Grudge, planet 7 (joined 2026-11-17, when the GPU took its scar): its
 // memory of where it was hit pulls it back at twice the campaign tier's
 // weight (scar_weight 1, not 0.5), so a firing line it was hurt from draws
@@ -3466,7 +3475,7 @@ mod tests {
             // stand; no other rung does either.
             let trunk = *t == Tier::Trunk;
             assert_eq!((s.set_scar > 0.0, s.crust_rise > 0.0, s.fire_fed, r.set_block > 0.0, r.fort > 0.0), (trunk, trunk, trunk, trunk, trunk), "{}", t.name());
-            assert_eq!(r.raid.last_stand, *t == Tier::Swarmer, "{}", t.name());
+            assert_eq!(r.raid.last_stand, matches!(*t, Tier::Swarmer | Tier::Dozer), "{}", t.name());
             // Every planet: the far smell, and charges that go round walls.
             assert!(r.unit_paths, "{}", t.name());
             assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
