@@ -143,5 +143,8 @@ overlapping). Frame p50 / p95 ms, every frame and frames with a game step:
   1.46 to 0.28).
 - Auto judged each second by its median frame, 16.1 ms at 50%, while the
   quarter of frames with a step ran 18.9 at their p95: it kept 50% with
-  every fourth frame late. It now judges by each second's 90th percentile
-  (`autodetail::P90`), which still ignores a hitch in ten frames.
+  every fourth frame late. It then judged by each second's 90th
+  percentile (#795), timed again with the sort: planet 8 at Auto p50 14.1,
+  p95 16.7 over every frame and 18.8 over frames with a step, still at 50%
+  for the first 90 s (about a frame in twenty late). It now judges by the
+  95th (`autodetail::PCT`), which ignores up to three hitches a second.
