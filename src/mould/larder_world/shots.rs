@@ -194,7 +194,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, turret: b.turret, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: 0.0, aim: f32::INFINITY, over: b.over });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, turret: b.turret, fresh: false, pierce: 0, split: b.split - 1, cast: if b.cast > 0 { b.cast | crate::mould::rounds::PIECE } else { 0 }, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: 0.0, aim: f32::INFINITY, over: b.over });
                     }
                 }
                 return false;

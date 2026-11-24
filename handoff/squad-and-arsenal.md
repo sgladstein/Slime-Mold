@@ -48,6 +48,15 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, build variety (pathfinding thread).** #819 (fused shots)
+merged. Direction 18:37Z (test 2, replay variety): combos that should be
+strong together but no rule linked. Built three, no card stronger alone:
+Heave herds into any kill zone (sprayer, mortar or hunter, not only a
+turret); Split pieces carry a gas, germ or Mind hit (`rounds::spreads`,
+`PIECE` bit on the piece's cast); a Flare's token light (`flare_light`)
+sets gas alight. Stills in `Reports/build-variety-2026-11-24/`. The Hunter
+stays as it is (Direction). Card words changed in `draw.rs` (Look's file).
+
 **2026-11-24, fused shots (pathfinding thread).** #810 (bot dials) and
 #813 (the card-look options page) merged. The owner picked fused shots
 (B, 15:51Z): `rounds::shots` groups the gun's cards by shot, `Shop::shots`

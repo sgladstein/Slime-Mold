@@ -2829,7 +2829,7 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Delay => (Icon::Delay, CardKind::Trigger, format!("It goes off {:.0} s after landing.", r.delay_secs)),
         C::Thick => (Icon::Thick, CardKind::Trigger, format!("It waits until slime crowds round it (up to {:.0} s).", r.thick_secs)),
         C::Pierce => (Icon::Pierce, CardKind::Flight, "Bullets go through one slime hit.".into()),
-        C::Split => (Icon::Split, CardKind::Flight, format!("Bullets split in {split_n} where they land.")),
+        C::Split => (Icon::Split, CardKind::Flight, format!("Splits in {split_n} on landing; pieces carry gas, germ or Mind.")),
         // Trails (2026-11-14): each reuses the glyph of the field it lays.
         C::Scorch => (Icon::Burn, CardKind::Flight, format!("Bullets burn a line the slime avoids for {:.0} s.", r.trail_crater_secs)),
         C::Bait => (Icon::Bait, CardKind::Flight, "Bullets leave a scent line the slime follows.".into()),
@@ -2850,7 +2850,7 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         // The shove cards (owner 2026-11-16 05:11Z: "corral and push the
         // slime onto areas. Into a kill zone").
         // One card since 2026-11-17 (Heave and Corral merged).
-        C::Heave => (Icon::Heave, CardKind::Modifier, format!("Shoves slime onto your nearest turret or back, {:.1}x a card.", r.heave)),
+        C::Heave => (Icon::Heave, CardKind::Modifier, format!("Shoves slime to your nearest kill zone or back, {:.1}x a card.", r.heave)),
         C::Pull => (Icon::Pull, CardKind::Modifier, "Its hit drags slime toward the gun.".into()),
         // The Mind bullets (2026-11-16, step D): a status, no kill.
         C::Blind => (Icon::Blind, CardKind::Payload, format!("Slime within {:.0} cells is blind for {:.0} s: it walks straight on.", r.mind_r, r.mind_secs)),
@@ -2864,7 +2864,7 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Shatter => (Icon::Shatter, CardKind::Payload, format!("Kills the slime gas put to sleep within {:.0} cells.", r.read_r)),
         C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells; let it spread first.", r.detonate_r)),
         // The route family (2026-11-17, step D): moves the slime, kills none.
-        C::Flare => (Icon::Flare, CardKind::Payload, format!("Burns {:.0} s, alarming slime within {:.0} cells; kills none.", r.flare_secs, r.flare_r)),
+        C::Flare => (Icon::Flare, CardKind::Payload, format!("Burns {:.0} s, alarms slime in {:.0} cells, lights gas, kills none.", r.flare_secs, r.flare_r)),
         // The dart (2026-11-24): the Lure's second form, a lure mark.
         C::Dart => (Icon::Lure, CardKind::Payload, format!("Draws calm slime to where it hits for {:.0} s.", r.dart_secs)),
         // The element family (2026-11-17, step D): the fire kills, not the hit.

@@ -367,7 +367,7 @@ impl Card {
             Card::Delay => "It goes off a few seconds after landing.",
             Card::Thick => "It waits until slime crowds round it.",
             Card::Pierce => "Bullets go through one slime hit.",
-            Card::Split => "Bullets split where they land.",
+            Card::Split => "Bullets split where they land; the pieces carry a gas, germ or Mind bullet's hit.",
             Card::Scorch => "Bullets burn a line the slime avoids.",
             Card::Bait => "Bullets leave a scent line the slime follows.",
             Card::Mist => "Bullets leave a thin sleeping gas.",
@@ -390,11 +390,11 @@ impl Card {
             // after the germ it cut the wave short: the body 19,590 at 40 s
             // against 17,628, `Reports/gun-readers-2026-11-17/`).
             Card::Detonate => "Kills sick slime where it hits; let it spread first.",
-            Card::Flare => "Burns where it hits, alarming slime; kills none.",
+            Card::Flare => "Burns where it hits, alarming slime and lighting gas; kills none.",
             Card::Dart => "Calm slime streams to where it hits for a while; kills none.",
             Card::Torch => "Sets the plants where it hits on fire.",
             Card::Tinder => "Bullets lay a line of dry brush that fire runs along.",
-            Card::Heave => "Its hit shoves the slime onto your nearest turret, or back.",
+            Card::Heave => "Its hit shoves the slime into your nearest turret's fire, or back.",
             Card::Pull => "Its hit drags the slime toward the gun.",
         }
     }
@@ -772,6 +772,15 @@ pub struct RoundRules {
     pub flare_r: f32,
     pub flare_secs: f32,
     pub flare_every: f32,
+    /// **A flare sets gas alight** (Direction 11-24, build variety: Flare
+    /// "burns where it hits" and Gas is fuel, `BigParams::gas_burn`, yet
+    /// the two did nothing together). A flare's first lay lights this
+    /// share of the plants within `torch_r` (x the bullet's area): so few
+    /// that no plant catches, but a gas cloud over `gas_burn` lights
+    /// whatever the share (`BigDish::ignite`, the GPU's `ignite`) and the
+    /// fire runs through it. Alone a flare lights nothing, as before. 0:
+    /// off. `set=` key.
+    pub flare_light: f32,
     /// **The element family** (`Card::Torch`, 2026-11-17): a torch lights
     /// this share (`torch_light`, 1: all) of the cells with fuel within
     /// `torch_r` dish cells (x the bullet's area): a blast's crater (7)
@@ -876,6 +885,7 @@ impl Default for RoundRules {
             flare_r: 16.0,
             flare_secs: 3.0,
             flare_every: 0.2,
+            flare_light: 1e-6,
             torch_r: 6.0,
             torch_light: 1.0,
             device_brush: 1.0,
@@ -961,6 +971,7 @@ impl RoundRules {
             "flare_r" => &mut self.flare_r,
             "flare_secs" => &mut self.flare_secs,
             "flare_every" => &mut self.flare_every,
+            "flare_light" => &mut self.flare_light,
             "torch_r" => &mut self.torch_r,
             "torch_light" => &mut self.torch_light,
             "device_brush" => &mut self.device_brush,
@@ -1020,6 +1031,21 @@ pub struct Cast {
 /// third carrier's cast is fired in turn instead (the technical lead's caps
 /// in the plan: depth 2).
 pub const CARRY_DEPTH: usize = 2;
+
+/// A split piece's cast (`Bullet::cast`, `Shot::cast`): its parent's,
+/// with this bit set. A piece casts only a status its parent's payload
+/// lays (`spreads`), its burst `split_r` times as wide; every other
+/// payload it leaves behind, as all of them did until 2026-11-24.
+pub const PIECE: u8 = 0x80;
+
+/// The payloads a split piece carries on (`PIECE`): the ones that leave a
+/// state in the slime, sleep, sickness or a Mind (Direction 11-24, build
+/// variety: Split and a status bullet did nothing together, the pieces
+/// were plain). Kills, throws and fire stay with the bullet that split,
+/// so Split and Blast is no stronger than before.
+pub fn spreads(payload: Card) -> bool {
+    matches!(payload, Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still)
+}
 
 /// The angle between the bullets a multicast shot fires side by side
 /// (`Card::Multicast`), radians: about a cell apart at 12 cells, so each
@@ -1365,7 +1391,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         Card::Shatter => Burst { r: r.read_r * f, read: big::READ_SLEEP, ..none },
         Card::Detonate => Burst { r: r.detonate_r * f, read: big::READ_SICK, ..none },
         // No kill (`r` 0): the alarm alone, unless Quiet took it.
-        Card::Flare => Burst { alarm: if c.quiet { 0.0 } else { r.flare_alarm }, alarm_r: r.flare_r * f, ..none },
+        Card::Flare => Burst { alarm: if c.quiet { 0.0 } else { r.flare_alarm }, alarm_r: r.flare_r * f, r: if r.flare_light > 0.0 { r.torch_r * f } else { 0.0 }, light: r.flare_light, ..none },
         // No kill and no alarm: the fire alone.
         Card::Torch => Burst { r: r.torch_r * f, light: r.torch_light, ..none },
         _ => return Vec::new(),
@@ -1538,6 +1564,11 @@ pub struct Rounds {
     /// The casts going off now are a device's (`cast_device_at`): each
     /// fire they light brings this much brush (`RoundRules::device_brush`).
     brush: f32,
+    /// The cast going off now is a split piece's (`PIECE`): its bursts
+    /// this many times as wide (`Rules::split_r`).
+    piece: Option<f32>,
+    /// Statuses split pieces carried on (`PIECE`, `spreads`).
+    pub pieces: u32,
     /// The live darts' lure marks (`Card::Dart`), oldest first: where
     /// (fine cells) and the tick each ends.
     darts: Vec<((f32, f32), u64)>,
@@ -1679,7 +1710,7 @@ impl Rounds {
     /// `Bullet::cast`; 0 plain): its `cast - 1`th, None if plain or past
     /// the end (its cards changed in flight).
     pub fn cast_of<W: World>(&self, g: &Game<W>, q: usize, cast: u8) -> Option<Cast> {
-        let i = (cast as usize).checked_sub(1)?;
+        let i = ((cast & !PIECE) as usize).checked_sub(1)?;
         match g.squads.get(q).and_then(|s| s.deck) {
             Some(d) => casts(&d.cards()).get(i).copied(),
             None => self.casts.get(i).copied(),
@@ -1703,8 +1734,8 @@ impl Rounds {
 
     /// After each `Game::step`: each soldier's bullet that hit slime this
     /// step casts the cast it carries (`Shot::cast`, its squad's cards),
-    /// and lodged casts that are due go off. Turret shots and split pieces
-    /// carry none.
+    /// and lodged casts that are due go off. A split piece casts only
+    /// its parent's status, smaller (`PIECE`).
     pub fn after_step<W: World>(&mut self, g: &mut Game<W>) {
         self.arm(g);
         self.lay_trails(g);
@@ -1729,6 +1760,8 @@ impl Rounds {
         // (`Game::turret_deck`, 2026-11-16), in the slot past the squads'.
         by_squad.push(None);
         for (by, hit, cast, dir, hit_r, turret) in hits {
+            // A split piece (`PIECE`) casts its parent's status, smaller.
+            let (piece, cast) = (cast & PIECE != 0, cast & !PIECE);
             // A bullet flies on when its soldier falls: it still casts. Its
             // gun is where a Pull drags toward: the soldier, or the turret
             // that fired it (`Shot::turret`).
@@ -1755,6 +1788,15 @@ impl Rounds {
                 by_squad[q].get_or_insert_with(|| if by.is_none() { turret_casts(g) } else { self.casts_of(g, q) }).get(cast as usize - 1).copied()
             };
             let Some(c) = c else { continue };
+            if piece {
+                if spreads(c.payload) && castable(&g.world, c.payload) {
+                    self.piece = Some(g.rules.split_r);
+                    self.fire(g, &Cast { trigger: None, ..c }, hit, Some(dir));
+                    self.piece = None;
+                    self.pieces += 1;
+                }
+                continue;
+            }
             // A slug shoves where it hits, whatever it carries, and so does
             // any bullet with a shove card.
             let shape = c.ammo.set.shape();
@@ -1838,7 +1880,8 @@ impl Rounds {
         // is marked by the first soldier who feels it (`turn.rs`).
         let s = g.world.scale();
         for (b, _) in &list {
-            if b.burn || b.light > 0.0 {
+            // (A flare's token light, `flare_light`, lights only gas.)
+            if b.burn || b.light > self.rules.flare_light {
                 g.mark_hot((b.at.0 * s, b.at.1 * s), b.r * s);
             }
         }
@@ -2217,11 +2260,36 @@ impl Rounds {
         let reach = (1.0 + shove * h) * r;
         let toward = match c.herd {
             Some(Card::Pull) => gun,
-            // A heave herds (the old Corral): toward the nearest turret in
-            // reach of the hit, if there is one.
+            // A heave herds (the old Corral): toward the nearest kill zone
+            // in reach of the hit, if there is one. A turret's or a
+            // sprayer's is the building itself; a mortar's or a hunter's
+            // is twice its least range out from it on the hit's side, as
+            // neither can shell slime at its foot. (Until 2026-11-24 only
+            // plain turrets herded: Heave and the turret bodies built that
+            // day did nothing together, Direction's build-variety ask.)
             None if c.heave > 0 => {
                 let far = rr.corral_reach * s;
-                g.buildings.iter().filter(|b| b.up() && b.kind == super::larder_world::Kind::Turret).map(|b| b.at).filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) <= far).min_by(|a, b| (a.0 - hit.0).hypot(a.1 - hit.1).total_cmp(&(b.0 - hit.0).hypot(b.1 - hit.1)))
+                let br = g.rules.build;
+                g.buildings
+                    .iter()
+                    .filter(|b| b.up())
+                    .filter_map(|b| {
+                        use super::larder_world::Kind;
+                        let out = |min: f32| {
+                            let (dx, dy) = (hit.0 - b.at.0, hit.1 - b.at.1);
+                            let d = dx.hypot(dy).max(1e-3);
+                            let o = (2.0 * min * s).min(d);
+                            (b.at.0 + dx / d * o, b.at.1 + dy / d * o)
+                        };
+                        match b.kind {
+                            Kind::Turret | Kind::Sprayer => Some(b.at),
+                            Kind::Mortar => Some(out(br.mortar_min)),
+                            Kind::Hunter => Some(out(br.hunter_min)),
+                            _ => None,
+                        }
+                    })
+                    .filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) <= far)
+                    .min_by(|a, b| (a.0 - hit.0).hypot(a.1 - hit.1).total_cmp(&(b.0 - hit.0).hypot(b.1 - hit.1)))
             }
             _ => None,
         };
@@ -2287,7 +2355,7 @@ impl Rounds {
                 b.r + self.rules.blast_margin
             } else if gas && (b.gas > 0 || b.cloud > 0.0) {
                 b.r + self.rules.gas_margin
-            } else if self.spraying && b.light > 0.0 {
+            } else if self.spraying && b.light > self.rules.flare_light {
                 b.r + self.rules.spray_fire_margin
             } else {
                 return false;
@@ -2319,12 +2387,19 @@ impl Rounds {
             (k.mind_steps, k.deaf_steps, k.still_steps) = (stretch(k.mind_steps), stretch(k.deaf_steps), stretch(k.still_steps));
         }
         let mut bs = if c.payload == Card::Plain { plain_bursts(c, at, self.strike, &self.rules, s) } else { bursts(c, at, &self.rules, s, fine) };
+        // A split piece's status, as wide as the piece is (`PIECE`).
+        if let Some(k) = self.piece {
+            for b in &mut bs {
+                b.r *= k;
+                b.alarm_r *= k;
+            }
+        }
         if c.payload == Card::Dart {
             self.dart(g, at, lasts);
             return;
         }
         if self.brush > 0.0 {
-            for b in bs.iter_mut().filter(|b| b.light > 0.0) {
+            for b in bs.iter_mut().filter(|b| b.light > self.rules.flare_light) {
                 b.fuel = b.fuel.max(self.brush);
             }
         }
@@ -2376,7 +2451,8 @@ impl Rounds {
                 } else {
                     let every = ((self.rules.flare_every * g.rules.tps as f32).round() as u64).max(1);
                     let out = t + (self.rules.flare_secs * lasts * g.rules.tps as f32).round() as u64;
-                    self.burning.push(Burn { burst, next: t + every, out });
+                    // (Its later lays alarm only: its first lit any gas.)
+                    self.burning.push(Burn { burst: Burst { r: 0.0, light: 0.0, ..burst }, next: t + every, out });
                 }
             }
         }
@@ -2522,7 +2598,8 @@ mod tests {
         assert_eq!((c.kind(), c.word(), slot(c), c.cost(), c.tier()), (Kind::Payload, "flare".to_string(), Some(6), 2, 2));
         let b = bursts(&casts(&parse("wide+flare").unwrap())[0], (40.0, 20.0), &r, 2.0, 120.0);
         assert_eq!(b.len(), 1);
-        assert_eq!((b[0].kill, b[0].r, b[0].alarm, b[0].crater, b[0].at), (false, 0.0, r.flare_alarm, 0, (20.0, 10.0)));
+        assert_eq!((b[0].kill, b[0].alarm, b[0].crater, b[0].light, b[0].at), (false, r.flare_alarm, 0, r.flare_light, (20.0, 10.0)));
+        assert!((b[0].r - r.torch_r * r.wide).abs() < 1e-4, "its token light over a torch's disc: {}", b[0].r);
         assert!((b[0].alarm_r - r.flare_r * r.wide).abs() < 1e-4, "{} wide", b[0].alarm_r);
         let hush = bursts(&casts(&parse("quiet+flare").unwrap())[0], (40.0, 20.0), &r, 2.0, 120.0);
         assert_eq!(hush[0].alarm, 0.0, "a quiet flare alarms nothing");
@@ -2550,6 +2627,57 @@ mod tests {
         eprintln!("a flare over {secs} ticks, every {every}: {lays} lays again");
         assert_eq!(lays, secs / every - 1 + u32::from(secs % every != 0), "it lays again every {every} ticks until it goes out");
         assert_eq!((rd.burning(g.world.ticks()).count(), rd.killed), (0, 0), "out, and it killed nothing");
+    }
+
+    /// **A flare sets gas alight** (Direction 11-24, build variety): its
+    /// token light (`flare_light`) is far too small to catch plants, but
+    /// gas over `gas_burn` is fuel enough (`BigDish::ignite`, C5). On the
+    /// flats map planted as in the torch test, a flare alone on the
+    /// slime's edge lights nothing; the same flare a second after a gas
+    /// shell there lights the cloud, and its fire kills.
+    #[test]
+    fn a_flare_lights_a_gas_cloud_and_alone_lights_nothing() {
+        use crate::mould::larder_world::race_params;
+        use crate::mould::map::Map;
+        use crate::mould::plants::pack;
+        let r = RoundRules::default();
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let play = |gas: bool| {
+            let mut m = Map::load(&dir, "flats").unwrap();
+            m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
+            let mut g = Game::new(BigDish::with_map(race_params(3, 1, 2_000), &m), Rules::default(), 3);
+            for _ in 0..10 * g.rules.tps {
+                g.step();
+            }
+            let home = g.world.homes[0];
+            let s = g.world.scale();
+            let w = &g.world;
+            let at = (0..w.walkers.len())
+                .filter(|&k| w.lives(k))
+                .map(|k| (w.walkers[k].0, w.walkers[k].1))
+                .min_by(|a, b| ((a.0 / s - home.0).hypot(a.1 / s - home.1) - 30.0).abs().total_cmp(&((b.0 / s - home.0).hypot(b.1 / s - home.1) - 30.0).abs()))
+                .unwrap();
+            if gas {
+                let mut rd = Rounds::new(parse("gas").unwrap(), r);
+                rd.cast_at(&mut g, at);
+                for _ in 0..g.rules.tps {
+                    g.step();
+                }
+            }
+            let mut rd = Rounds::new(parse("flare").unwrap(), r);
+            let (lit0, fire0) = (g.world.burning, g.world.fire_killed);
+            rd.cast_at(&mut g, at);
+            let lit = g.world.burning - lit0;
+            for _ in 0..3 * g.rules.tps {
+                g.step();
+            }
+            (lit, g.world.fire_killed - fire0)
+        };
+        let (lit, burned) = play(false);
+        assert_eq!((lit, burned), (0, 0), "a flare alone lights nothing");
+        let (lit, burned) = play(true);
+        eprintln!("a flare in a gas cloud: {lit} cells lit, {burned} burned in 3 s");
+        assert!(lit > 0 && burned > 0, "the cloud caught and its fire killed: {lit} lit, {burned} burned");
     }
 
     /// **The dart** (2026-11-24): a route payload with no burst, a lure
@@ -2998,6 +3126,34 @@ mod tests {
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
         assert_eq!(rd.cast, [0; 8], "a trail casts nothing");
+    }
+
+    /// **Split pieces carry a status shell's hit** (Direction 11-24, build
+    /// variety): a split gas, germ or Mind bullet's pieces each cast that
+    /// payload where they land, over `split_r` of its disc
+    /// (`Rounds::pieces`), so Split spreads a status over a bigger patch;
+    /// a split blast's pieces cast nothing (a kill stays one per bullet),
+    /// and so does a split plain round.
+    #[test]
+    fn split_pieces_carry_a_status_shell_and_not_a_blast() {
+        use crate::mould::larder_world::{race_world, Cmd, Order};
+        assert!(spreads(Card::Gas) && spreads(Card::Germ) && spreads(Card::Still) && !spreads(Card::Blast) && !spreads(Card::Plain) && !spreads(Card::Flare));
+        let run = |round: &str| {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            for k in 0..g.soldiers.len() {
+                assert!(g.apply(Cmd::Order(k, Order::Attack)));
+            }
+            let mut rd = Rounds::new(parse(round).unwrap(), RoundRules::default());
+            while g.time() < 30.0 && rd.pieces == 0 {
+                g.step();
+                rd.after_step(&mut g);
+            }
+            rd.pieces
+        };
+        let gas = run("split+gas");
+        eprintln!("split gas: {gas} pieces cast by 30 s");
+        assert!(gas > 0, "the pieces cast gas");
+        assert_eq!((run("split+blast"), run("split")), (0, 0), "a blast's or a plain round's pieces cast nothing");
     }
 
     /// **A blast hurts your own** (2026-11-18, `RoundRules::blast_hurt`):
@@ -3769,7 +3925,10 @@ mod tests {
         use crate::mould::larder_world::Kind as Building;
         let mut thrown_far = Vec::new();
         // The rounds, and whether a turret stands in the heave's reach.
-        for (round, deck, with_turret) in [("heave", "heave+plain", false), ("two heaves", "heave+heave+plain", false), ("heave by a turret", "heave+plain", true), ("pull", "pull+plain", true)] {
+        // A sprayer is a kill zone too (11-24, build variety): a heave by one
+        // throws onto it as onto a turret.
+        for (round, deck, with_turret) in [("heave", "heave+plain", false), ("two heaves", "heave+heave+plain", false), ("heave by a turret", "heave+plain", true), ("heave by a sprayer", "heave+plain", true), ("pull", "pull+plain", true)] {
+            let kind = if round == "heave by a sprayer" { Building::Sprayer } else { Building::Turret };
             let mut g = attacking(2);
             // As in `a_slug_shoves_and_a_bomb_throws_away_from_the_gun`: near
             // first (11-22) left the pull no lone hit that threw on seed 2.
@@ -3801,9 +3960,9 @@ mod tests {
                             let (off, f) = ((12.0 + (i / 2) as f32) * sc, if i % 2 == 0 { 1.0 } else { -1.0 });
                             (s.from.0 + side.0 * off * f, s.from.1 + side.1 * off * f)
                         })
-                        .find(|&q| g.build_blocked(Building::Turret, q).is_none())
+                        .find(|&q| g.build_blocked(kind, q).is_none())
                         .expect("room for a turret");
-                    assert!(g.build(Building::Turret, spot));
+                    assert!(g.build(kind, spot));
                     let t = g.buildings.len() - 1;
                     g.buildings[t].built = 1.0;
                     turret = Some(g.buildings[t].at);
@@ -3825,7 +3984,7 @@ mod tests {
                 let h = s.hit.unwrap();
                 let d = (s.to.0 - s.from.0).hypot(s.to.1 - s.from.1);
                 let way = match round {
-                    "heave by a turret" => {
+                    "heave by a turret" | "heave by a sprayer" => {
                         let n = (turret.0 - h.0).hypot(turret.1 - h.1);
                         ((turret.0 - h.0) / n, (turret.1 - h.1) / n)
                     }
@@ -3834,7 +3993,7 @@ mod tests {
                 };
                 // A heave's hit past `corral_reach` of the turret pushes
                 // straight on: wait for one in reach.
-                if round == "heave by a turret" && (turret.0 - h.0).hypot(turret.1 - h.1) / sc > rd.rules.corral_reach {
+                if round.starts_with("heave by") && (turret.0 - h.0).hypot(turret.1 - h.1) / sc > rd.rules.corral_reach {
                     continue;
                 }
                 let pushed = rd.pushes > pushes;
