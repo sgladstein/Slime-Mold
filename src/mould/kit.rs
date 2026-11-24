@@ -71,6 +71,11 @@ pub struct KitRules {
     /// Det cord: blasts of `cord_r` every `cord_every` dish cells.
     pub cord_r: f32,
     pub cord_every: f32,
+    /// **Det cord's cards** (gun step E, 2026-11-24): a cord sets the
+    /// devices' cards (`Game::device_deck`) off at both ends and every
+    /// this many dish cells between, not at each of its blasts: at every
+    /// 2-cell blast a 48-cell cord would cast 25 times.
+    pub cord_cards: f32,
     /// Price a dish cell of cord.
     pub cord_price: f32,
     pub cord_max: f32,
@@ -154,11 +159,27 @@ pub struct KitRules {
     pub gas_cd: f32,
     /// Provoke's and Still's.
     pub mind_cd: f32,
+    /// **A body's own reach** (gun step E3, `bodies::Body::reach`), by
+    /// tool (`TOOLS` order); 0 is `reach`'s. Set by `Run::kit`.
+    pub reaches: [f32; 8],
+    /// **The Canister** (gun step E3): after its sleep gas, the gas device
+    /// casts its cards once a game second for this long (4 casts in all,
+    /// the first with the gas).
+    pub canister_secs: f32,
 }
 
 impl KitRules {
     /// How long a squad's device slot waits after tool `t` (`blast_cd`
     /// and on); 0 for the smell, which is no device.
+    /// Dish cells from its nearest soldier tool `t` goes off at: its
+    /// body's reach, else `reach`.
+    pub fn reach_of(&self, t: Tool) -> f32 {
+        match self.reaches[t.index()] {
+            r if r > 0.0 => r,
+            _ => self.reach,
+        }
+    }
+
     pub fn cooldown(&self, t: Tool) -> f32 {
         match t {
             Tool::Blast(_) => self.blast_cd,
@@ -193,6 +214,7 @@ impl Default for KitRules {
             mine_price: 80.0,
             cord_r: 2.5,
             cord_every: 2.0,
+            cord_cards: 8.0,
             cord_price: 3.0,
             cord_max: 48.0,
             germ_r: 5.0,
@@ -241,6 +263,8 @@ impl Default for KitRules {
             germ_cd: 40.0,
             gas_cd: 35.0,
             mind_cd: 30.0,
+            reaches: [0.0; 8],
+            canister_secs: 4.0,
         }
     }
 }
@@ -309,6 +333,9 @@ pub struct Kit {
     pub gassed: usize,
     /// Tools each soldier holds (the carry rule), by soldier index.
     pub held: Vec<u32>,
+    /// Canisters letting out their cards (gun step E3): where, the tick
+    /// of the next cast and the casts left.
+    pub canisters: Vec<((f32, f32), u64, u32)>,
 }
 
 impl Kit {
@@ -442,7 +469,13 @@ impl Kit {
     /// within `reach`: who throws squad `q`'s device there (`Kit::device`),
     /// for the aiming ghost too.
     pub fn squad_thrower<W: World>(&self, g: &Game<W>, q: usize, p: (f32, f32)) -> Option<(usize, bool)> {
-        let r = self.rules.reach * g.world.scale();
+        self.squad_thrower_within(g, q, p, self.rules.reach)
+    }
+
+    /// `squad_thrower` within `reach` dish cells (a body's,
+    /// `KitRules::reach_of`).
+    pub fn squad_thrower_within<W: World>(&self, g: &Game<W>, q: usize, p: (f32, f32), reach: f32) -> Option<(usize, bool)> {
+        let r = reach * g.world.scale();
         let d = |k: usize| (g.soldiers[k].x - p.0).hypot(g.soldiers[k].y - p.1);
         g.members(q).into_iter().min_by(|&a, &b| d(a).total_cmp(&d(b))).map(|k| (k, d(k) <= r))
     }
@@ -452,7 +485,7 @@ impl Kit {
     /// throws it, free, with no tool held (the carry rule is the RTS
     /// round's). Returns whether it went off.
     pub fn device<W: World>(&mut self, g: &mut Game<W>, q: usize, t: Tool) -> bool {
-        if !self.aimable(g, t) || !self.squad_thrower(g, q, Self::aim(t)).is_some_and(|(_, near)| near) {
+        if !self.aimable(g, t) || !self.squad_thrower_within(g, q, Self::aim(t), self.rules.reach_of(t)).is_some_and(|(_, near)| near) {
             return false;
         }
         self.cast(g, t);
@@ -469,6 +502,7 @@ impl Kit {
         match t {
             Tool::Blast(p) => {
                 self.killed[i] += self.bang(g, p, r.blast_r, r.crater_r);
+                Self::carry(g, 0, p);
             }
             Tool::Mine(p) => {
                 self.mines.push(p);
@@ -482,20 +516,51 @@ impl Kit {
                     let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
                     self.killed[i] += self.bang(g, p, r.cord_r, r.cord_r);
                 }
+                let m = (len / (r.cord_cards * s)).ceil().max(1.0) as usize;
+                for j in 0..=m {
+                    let f = j as f32 / m as f32;
+                    Self::carry(g, i, (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f));
+                }
             }
             Tool::Germ(p) => {
                 g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.germ_r, germ: true, ..Burst::default() }, &br);
+                Self::carry(g, i, p);
             }
             Tool::Gas(p) => {
                 let steps = (r.gas_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
                 self.gassed += g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.gas_r, gas: steps, ..Burst::default() }, &br).gassed as usize;
+                Self::carry(g, i, p);
+                // The Canister (gun step E3): its cards again once a game
+                // second after (`Kit::frame`), with cards to cast.
+                let puffs = (r.canister_secs.round() as u32).saturating_sub(1);
+                if puffs > 0 && g.device_decks[i].is_some_and(|d| !d.is_empty()) {
+                    self.canisters.push((p, g.world.ticks() + u64::from(g.rules.tps), puffs));
+                }
             }
             Tool::Smell(k, m) => g.soldiers[k].smell = m,
             Tool::Provoke(p) | Tool::Still(p) => {
                 let (kind, secs) = if matches!(t, Tool::Provoke(_)) { (super::big::MIND_DEAF, r.provoke_secs) } else { (super::big::MIND_STILL, r.still_secs) };
                 let mind_steps = (secs * self.fine_tps(g)).round().clamp(1.0, u16::MAX as f32) as u16;
                 g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.mind_r, mind: kind as u8, ..Burst::default() }, &BurstRules { mind_steps, ..br });
+                Self::carry(g, i, p);
             }
+        }
+    }
+
+    /// **A device carries gun cards** (gun step E, 2026-11-24; the owner's
+    /// 11-16 ruling, "a body holding one to three cards in the gun's
+    /// language"): where tool `t` (`Tool::index`) goes off (`p`, fine
+    /// cells) every cast of its body's cards (`Game::device_decks`, E3;
+    /// the one devices' loadout until then) goes off too, as a hit
+    /// there would cast it (`Rounds::cast_cards_at`), with the same harm to
+    /// the squad: a Torch on a blast lights the ground it lands on, and
+    /// burns soldiers who stand in it as a Tinder brush does. A mine
+    /// carries them to where the slime sets it off.
+    fn carry<W: World>(g: &mut Game<W>, t: usize, p: (f32, f32)) {
+        let Some(d) = g.device_decks.get(t).copied().flatten() else { return };
+        let cards = d.cards();
+        if !cards.is_empty() {
+            g.with_rounds(|rd, g| rd.cast_device_at(g, p, &cards));
         }
     }
 
@@ -551,6 +616,25 @@ impl Kit {
     /// Before each game step: mines with `mine_trigger` walkers within
     /// `mine_r` go off. Returns the mines that went off.
     pub fn frame<W: World>(&mut self, g: &mut Game<W>) -> usize {
+        // Canisters due cast their cards again (gun step E3).
+        if !self.canisters.is_empty() {
+            let now = g.world.ticks();
+            let tps = u64::from(g.rules.tps);
+            let gas = Tool::Gas((0.0, 0.0)).index();
+            let mut due = Vec::new();
+            self.canisters.retain_mut(|c| {
+                if c.1 > now {
+                    return true;
+                }
+                due.push(c.0);
+                c.1 = now + tps;
+                c.2 -= 1;
+                c.2 > 0
+            });
+            for p in due {
+                Self::carry(g, gas, p);
+            }
+        }
         if self.mines.is_empty() {
             return 0;
         }
@@ -563,6 +647,7 @@ impl Kit {
             self.mine_near.remove(m);
             let p = self.mines.remove(m);
             self.killed[1] += self.bang(g, p, r.blast_r, r.crater_r);
+            Self::carry(g, 1, p);
         }
         fired.len()
     }

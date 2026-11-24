@@ -35,6 +35,7 @@
 //! rows into the start menu's shop page and a pick back into `Run::pick`.
 
 use super::campaign::{Bonus, Goal, Mission};
+use super::bodies::{Body, BodyKind};
 use super::guns::{Gun, GunKind};
 use super::kit::KitRules;
 use super::larder_world::Rules;
@@ -98,6 +99,10 @@ pub struct Level {
 /// the level generator's biggest map). Told to the level-gen thread
 /// 2026-11-14: the owner's guess is 20 minutes to over an hour a run.
 pub const PLANETS: u32 = 8;
+
+/// The Tools group's unlocks that are devices (`Run::has_device`): the
+/// squad mode's device slot sets them off (`Game::device`).
+pub const DEVICES: [&str; 4] = ["blast", "mine", "cord", "gas"];
 
 /// Walkers grow this much a planet (a fifth more each), times the
 /// planet's area over today's map (`MAP_W` x `MAP_H`).
@@ -977,6 +982,8 @@ pub fn first_gun() -> Gun {
 
 /// Guns for sale in each shop.
 pub const GUN_OFFER: usize = 2;
+/// Device bodies for sale in each shop from planet 2 (`Run::body_rolls`).
+pub const BODY_OFFER: usize = 2;
 
 /// A gun's price: dearer the deeper it was found and the better it rolled
 /// (`Gun::grade`, 1 average, squared so a lucky roll costs what it gives),
@@ -1156,6 +1163,14 @@ pub enum Pick {
     NewLoadout,
     /// New turrets use the loadout shown (`Run::turret_loadout`).
     TurretsUse,
+    /// The devices carry the loadout shown's cards (`Run::device_loadout`,
+    /// gun step E): the default for a body with no loadout of its own.
+    DevicesUse,
+    /// Body on offer `i` (gun step E3): bought, in place of the body of its
+    /// kind owned.
+    Body(usize),
+    /// Owned body `i` into the loadout shown, which gives up its gun.
+    CarryBody(usize),
     /// In the field (`Run::field`), the squad the panel was opened for uses
     /// the loadout shown (`Run::field_squad`).
     SquadUses,
@@ -1171,6 +1186,10 @@ pub struct Loadout {
     /// turrets' rack (`Run::turret_rack`), and a squad given it fires the
     /// standard rifle.
     pub gun: Option<usize>,
+    /// Its device body, an index into `Run::bodies` (gun step E3): a
+    /// loadout holds a gun or a body, and a body's carries its cards
+    /// (`Run::body_cards`) fitted to the body's rack.
+    pub body: Option<usize>,
     /// Its cards in firing order, while another loadout is shown in the
     /// gun slots (the one shown keeps them in `Run::cards`).
     cards: Vec<Card>,
@@ -1201,6 +1220,10 @@ pub struct Run {
     /// The loadout new turrets use (owner 11-19: "a default loadout for
     /// turrets", then each turret changed one by one in the game).
     pub turret_loadout: usize,
+    /// The loadout whose cards the devices carry (gun step E, 2026-11-24):
+    /// the default for a body with no loadout of its own (`body_cards`).
+    /// None, none, until the shop's "Devices use this" picks one.
+    pub device_loadout: Option<usize>,
     /// The shop is the loadout panel opened on a planet (H): only the guns
     /// and cards owned, nothing for sale, the game paused under it.
     pub field: bool,
@@ -1209,6 +1232,11 @@ pub struct Run {
     pub field_squad: Option<(u8, usize)>,
     /// This shop's guns for sale.
     pub gun_offers: Vec<Gun>,
+    /// Device bodies owned (gun step E3, `bodies.rs`): at most one of each
+    /// kind, each the tool its kind is.
+    pub bodies: Vec<Body>,
+    /// This shop's bodies for sale.
+    pub body_offers: Vec<Body>,
     /// Stars won on each level so far.
     pub stars: Vec<u8>,
     /// The run is over (a level was lost) at this depth.
@@ -1253,7 +1281,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, field: false, field_squad: None, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false, played: 0.0 }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false, played: 0.0 }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -1416,6 +1444,17 @@ impl Run {
         k.gas_cd *= f;
         k.germ_cd *= f;
         k.mind_cd *= f;
+        // Each owned body's rolls (gun step E3): its reach, and its
+        // cooldown as a share of its tool's.
+        for b in &self.bodies {
+            k.reaches[b.kind.tool()] = b.reach;
+            match b.kind {
+                BodyKind::Grenade => k.blast_cd *= b.cool,
+                BodyKind::Mine => k.mine_cd *= b.cool,
+                BodyKind::Line => k.cord_cd *= b.cool,
+                BodyKind::Canister => k.gas_cd *= b.cool,
+            }
+        }
     }
 
     /// The gun shown in the shop's gun slots (the edited loadout's), else
@@ -1495,6 +1534,9 @@ impl Run {
     /// What loadout `i`'s cards fit against: its gun, else the turrets'
     /// rack.
     pub fn rack_of(&self, i: usize) -> Gun {
+        if let Some(b) = self.loadouts.get(i).and_then(|l| l.body).and_then(|b| self.bodies.get(b)) {
+            return b.rack();
+        }
         self.gun_of(i).unwrap_or_else(|| self.turret_rack())
     }
 
@@ -1530,6 +1572,11 @@ impl Run {
             return Vec::new();
         }
         self.turret_deck_of(self.turret_loadout)
+    }
+
+    /// Whether the run owns a device (the Tools group's unlocks).
+    pub fn has_device(&self) -> bool {
+        !self.bodies.is_empty() || DEVICES.iter().any(|k| self.has(k))
     }
 
     /// Every card owned: in the bag, shown, and in the other loadouts.
@@ -1581,7 +1628,77 @@ impl Run {
             }
         }
         self.loadouts[self.editing].gun = Some(g);
+        // A loadout holds a gun or a body (gun step E3).
+        self.loadouts[self.editing].body = None;
         self.refit();
+    }
+
+    /// Body `b` into the loadout shown, out of any other, and the shown
+    /// one's gun back to the armory (a loadout holds a gun or a body); its
+    /// cards refit to the body's rack. Not the squads' first loadout,
+    /// which they land with. True if it changed.
+    fn take_body(&mut self, b: usize) -> bool {
+        if b >= self.bodies.len() || self.editing == 0 || self.loadouts[self.editing].body == Some(b) {
+            return false;
+        }
+        for j in 0..self.loadouts.len() {
+            if j != self.editing && self.loadouts[j].body == Some(b) {
+                self.loadouts[j].body = None;
+                self.refit_stored(j);
+            }
+        }
+        self.loadouts[self.editing].gun = None;
+        self.loadouts[self.editing].body = Some(b);
+        self.refit();
+        true
+    }
+
+    /// The body of `kind` owned, if any (its index in `bodies`).
+    pub fn body_of(&self, kind: BodyKind) -> Option<usize> {
+        self.bodies.iter().position(|b| b.kind == kind)
+    }
+
+    /// The cards the body of `kind` carries (gun step E3): those of the
+    /// loadout holding it, else of the devices' default loadout
+    /// (`device_loadout`, E2), as many as its rack takes; none without
+    /// the body.
+    pub fn body_cards(&self, kind: BodyKind) -> Vec<Card> {
+        let Some(b) = self.body_of(kind) else { return Vec::new() };
+        let l = self.loadouts.iter().position(|l| l.body == Some(b)).or(self.device_loadout);
+        let Some(l) = l else { return Vec::new() };
+        let rack = self.bodies[b].rack();
+        let mut cards = self.cards_of(l);
+        while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
+            cards.pop();
+        }
+        cards
+    }
+
+    /// A body bought: in place of the one of its kind owned (keeping its
+    /// index, so the loadout holding it holds the new one, its cards
+    /// refitted), and its unlock owned, which the bots and the kit read
+    /// (`has`).
+    fn own_body(&mut self, body: Body) {
+        let i = match self.body_of(body.kind) {
+            Some(i) => {
+                self.bodies[i] = body;
+                i
+            }
+            None => {
+                self.bodies.push(body);
+                self.bodies.len() - 1
+            }
+        };
+        if let Some(k) = ITEMS.iter().position(|it| it.key == body.kind.key()) {
+            self.owned[k] = self.owned[k].max(1);
+        }
+        if let Some(j) = self.loadouts.iter().position(|l| l.body == Some(i)) {
+            if j == self.editing {
+                self.refit();
+            } else {
+                self.refit_stored(j);
+            }
+        }
     }
 
     /// A loadout not shown fits its gun: its last cards back to the bag
@@ -1746,6 +1863,7 @@ impl Run {
             }
             self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
             self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.depth)).collect();
+            self.body_offers = BodyKind::ALL.iter().enumerate().map(|(k, &kind)| Body::roll(kind, mix(z ^ (0xB0D1_0000 + k as u64)), self.depth)).collect();
             return;
         }
         let n = OFFER + self.level_of("draw") as usize;
@@ -1842,6 +1960,24 @@ impl Run {
             })
             .filter(|g| !self.guns.contains(g))
             .collect();
+        self.body_offers = self.body_rolls(z);
+    }
+
+    /// This shop's bodies (gun step E3, Direction 11-24, first guesses):
+    /// on planet 1 a plain Grenade, the old Blasts unlock at its price,
+    /// unless one is owned; from planet 2 two rolled bodies of two kinds,
+    /// beside the guns (the guns on offer are as many as before).
+    fn body_rolls(&self, z: u64) -> Vec<Body> {
+        if self.depth <= 1 {
+            return if self.body_of(BodyKind::Grenade).is_some() { Vec::new() } else { vec![Body::plain(BodyKind::Grenade)] };
+        }
+        let mut kinds = BodyKind::ALL.to_vec();
+        (0..BODY_OFFER as u64)
+            .map(|k| {
+                let s = mix(z ^ (0xB0D1_0000 + k));
+                Body::roll(kinds.remove((s % kinds.len() as u64) as usize), s, self.depth)
+            })
+            .collect()
     }
 
     /// Shop points the squad took on the planet (`Game::starfall`: ore
@@ -1901,7 +2037,9 @@ impl Run {
     pub fn shop(&self) -> Vec<Row> {
         let mut rows = Vec::new();
         // The loadout panel on a planet (`field`) sells nothing.
-        for (i, it) in ITEMS.iter().enumerate().filter(|_| !self.range && !self.field) {
+        // The device unlocks are sold as bodies since gun step E3
+        // (`body_offers`, below).
+        for (i, it) in ITEMS.iter().enumerate().filter(|(_, it)| !self.range && !self.field && BodyKind::of_key(it.key).is_none()) {
             let l = self.owned[i];
             let price = self.price(i);
             let needs = it.needs.is_some_and(|k| !self.has(k));
@@ -1914,6 +2052,26 @@ impl Run {
             rows.push(Row { group: it.group, face: Face::Item(it.key), on: false, name: it.name.into(), about, price: price.map_or(String::new(), |p| p.to_string()), state, ready: !needs && price.is_some_and(|p| p <= self.points), pick: Pick::Item(i) });
         }
         let shown = self.loadout_name(self.editing);
+        // Device bodies (gun step E3): those owned, each a click into the
+        // loadout shown (not the squads' first), then those for sale, in
+        // the Tools tab where the unlocks they replace were.
+        for (i, b) in self.bodies.iter().enumerate() {
+            let on = self.loadouts.get(self.editing).is_some_and(|l| l.body == Some(i));
+            let holder = self.loadouts.iter().position(|l| l.body == Some(i));
+            let (about, state) = match holder {
+                _ if on => (format!("{}; in {shown}, which carries its cards.", b.kind.about()), "carried".to_string()),
+                _ if self.editing == 0 => (format!("{}; show another loadout to give it cards (squads land with {shown}).", b.kind.about()), holder.map_or("owned".to_string(), |j| self.loadout_name(j))),
+                Some(j) => (format!("{}; in {}: click to move it to {shown}, which gives up its gun.", b.kind.about(), self.loadout_name(j)), self.loadout_name(j)),
+                None => (format!("{}; click to put it in {shown}, which gives up its gun, to carry its cards.", b.kind.about()), "owned".to_string()),
+            };
+            rows.push(Row { group: Group::Tools, face: Face::Item(b.kind.key()), on, name: title(&b.title()), about, price: String::new(), state, ready: !on && self.editing != 0, pick: Pick::CarryBody(i) });
+        }
+        for (i, b) in self.body_offers.iter().enumerate().filter(|_| !self.field) {
+            let p = b.price();
+            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
+            let swap = if self.body_of(b.kind).is_some() { format!(" Replaces your {}.", b.kind.name()) } else { String::new() };
+            rows.push(Row { group: Group::Tools, face: Face::Item(b.kind.key()), on: false, name: title(&b.title()), about: format!("{}.{swap}", b.kind.about()), price, state, ready: self.range || p <= self.points, pick: Pick::Body(i) });
+        }
         for (i, g) in self.guns.iter().enumerate() {
             let on = self.carry() == Some(i);
             let other = self.loadouts.iter().position(|l| l.gun == Some(i)).filter(|_| !on);
@@ -1967,6 +2125,9 @@ impl Run {
                 if i == self.turret_loadout && self.has("turret") {
                     users.push("new turrets use it".to_string());
                 }
+                if self.device_loadout == Some(i) && self.has_device() {
+                    users.push("devices carry its cards".to_string());
+                }
                 if let Some((q, _)) = self.field_squad.filter(|f| f.1 == i) {
                     users.push(format!("Squad {} uses it", q + 1));
                 }
@@ -1980,6 +2141,9 @@ impl Run {
             }
             if self.has("turret") && self.turret_loadout != self.editing {
                 rows.push(bar("Turrets use this".into(), format!("New turrets use {shown}; each turret can be changed in the game."), false, true, Pick::TurretsUse));
+            }
+            if self.has_device() && self.device_loadout != Some(self.editing) {
+                rows.push(bar("Devices use this".into(), format!("Every device with no loadout of its own also casts {shown}'s cards (as many as its body holds) where it goes off, as a hit there would."), false, true, Pick::DevicesUse));
             }
             if let Some((q, l)) = self.field_squad.filter(|f| f.1 != self.editing) {
                 rows.push(bar(format!("Squad {} uses this", q + 1), format!("Squad {} fires {shown} (now {}).", q + 1, self.loadout_name(l)), false, true, Pick::SquadUses));
@@ -2020,10 +2184,32 @@ impl Run {
                 if ITEMS[i].needs.is_some_and(|k| !self.has(k)) {
                     return false;
                 }
+                // A device unlock (gone from the shop since gun step E3;
+                // the bots still buy by key) is the plain body of it.
+                if let Some(kind) = BodyKind::of_key(ITEMS[i].key) {
+                    if self.body_of(kind).is_some() {
+                        return false;
+                    }
+                    self.points -= price;
+                    self.own_body(Body::plain(kind));
+                    return true;
+                }
                 self.points -= price;
                 self.owned[i] += 1;
                 true
             }
+            Pick::Body(i) => {
+                let Some(&b) = self.body_offers.get(i) else { return false };
+                let price = if self.range { 0 } else { b.price() };
+                if price > self.points || self.field {
+                    return false;
+                }
+                self.points -= price;
+                self.body_offers.remove(i);
+                self.own_body(b);
+                true
+            }
+            Pick::CarryBody(i) => self.take_body(i),
             Pick::Offer(i) => self.buy(i).is_some(),
             Pick::Gun(i) => {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
@@ -2118,6 +2304,13 @@ impl Run {
                 }
                 done
             }
+            Pick::DevicesUse => {
+                let done = self.has_device() && self.device_loadout != Some(self.editing);
+                if done {
+                    self.device_loadout = Some(self.editing);
+                }
+                done
+            }
             Pick::SquadUses => match self.field_squad {
                 Some((q, l)) if l != self.editing => {
                     self.field_squad = Some((q, self.editing));
@@ -2190,10 +2383,19 @@ impl Run {
         put("offers", words(&self.offers));
         put("guns", guns(&self.guns));
         put("gun_offers", guns(&self.gun_offers));
-        // A loadout: its gun's index or `-`, then its cards, `,` between.
-        put("loadouts", self.loadouts.iter().map(|l| std::iter::once(l.gun.map_or("-".into(), |g| g.to_string())).chain(l.cards.iter().map(|c| c.word())).collect::<Vec<_>>().join(",")).collect::<Vec<_>>().join(" "));
+        put("bodies", self.bodies.iter().map(Body::word).collect::<Vec<_>>().join(" "));
+        put("body_offers", self.body_offers.iter().map(Body::word).collect::<Vec<_>>().join(" "));
+        // A loadout: its gun's index or `-` (`-/B` for body B's, gun step
+        // E3; an older build reads that as no gun), then its cards, `,`
+        // between.
+        let head = |l: &Loadout| match l.body {
+            Some(b) => format!("-/{b}"),
+            None => l.gun.map_or("-".into(), |g| g.to_string()),
+        };
+        put("loadouts", self.loadouts.iter().map(|l| std::iter::once(head(l)).chain(l.cards.iter().map(|c| c.word())).collect::<Vec<_>>().join(",")).collect::<Vec<_>>().join(" "));
         put("editing", self.editing.to_string());
         put("turret_loadout", self.turret_loadout.to_string());
+        put("device_loadout", self.device_loadout.map_or("-".into(), |i| i.to_string()));
         put("stars", self.stars.iter().map(|s| s.to_string()).collect::<Vec<_>>().join(" "));
         put("over", flag(self.over).into());
         put("beaten", flag(self.beaten).into());
@@ -2234,12 +2436,30 @@ impl Run {
             r.guns = guns;
         }
         r.gun_offers = list("gun_offers").into_iter().filter_map(gun_from_word).collect();
+        for b in list("bodies").into_iter().filter_map(Body::from_word) {
+            if r.body_of(b.kind).is_none() {
+                r.bodies.push(b);
+            }
+        }
+        r.body_offers = list("body_offers").into_iter().filter_map(Body::from_word).collect();
+        // A save from before bodies (gun step E3, Direction 11-24) that
+        // owned a tool's unlock gets that tool's plain body, so the run
+        // keeps its tools.
+        for kind in BodyKind::ALL {
+            if r.body_of(kind).is_none() && r.has(kind.key()) {
+                r.bodies.push(Body::plain(kind));
+            }
+        }
+        let bodies = r.bodies.len();
         let loadouts: Vec<Loadout> = list("loadouts")
             .into_iter()
             .map(|l| {
                 let mut parts = l.split(',');
-                let gun = parts.next().and_then(|g| g.parse::<usize>().ok()).filter(|&g| g < r.guns.len());
-                Loadout { gun, cards: parts.filter_map(Card::from_word).collect() }
+                let head = parts.next().unwrap_or("-");
+                let (g, b) = head.split_once('/').unwrap_or((head, ""));
+                let gun = g.parse::<usize>().ok().filter(|&g| g < r.guns.len());
+                let body = b.parse::<usize>().ok().filter(|&b| b < bodies);
+                Loadout { gun: if body.is_some() { None } else { gun }, body, cards: parts.filter_map(Card::from_word).collect() }
             })
             .take(LOADOUTS_MAX)
             .collect();
@@ -2249,6 +2469,7 @@ impl Run {
         let last = r.loadouts.len() - 1;
         r.editing = num("editing").map_or(0, |v| (v as usize).min(last));
         r.turret_loadout = num("turret_loadout").map_or(r.turret_loadout, |v| v as usize).min(last);
+        r.device_loadout = num("device_loadout").map(|v| (v as usize).min(last));
         r.stars = list("stars").into_iter().filter_map(|v| v.parse().ok()).collect();
         r.over = flag("over");
         r.beaten = flag("beaten");
@@ -3060,7 +3281,10 @@ mod tests {
         r.owned[1] = 2;
         r.guns.push(Gun::roll(3, 2));
         r.gun_offers.push(GunKind::Long.average_at(3));
-        r.loadouts.push(Loadout { gun: Some(r.guns.len() - 1), cards: vec![Card::Blast, Card::Ammo(Ammo::roll(9, 2))] });
+        r.loadouts.push(Loadout { gun: Some(r.guns.len() - 1), body: None, cards: vec![Card::Blast, Card::Ammo(Ammo::roll(9, 2))] });
+        r.own_body(Body::roll(BodyKind::Canister, 5, 2));
+        r.loadouts.push(Loadout { gun: None, body: r.body_of(BodyKind::Canister), cards: vec![Card::Torch] });
+        r.body_offers.push(Body::roll(BodyKind::Line, 6, 2));
         r.offers.push(Card::Pierce);
         r.played = 1234.5;
         assert!(r.owned.iter().any(|&l| l > 1) && r.guns.len() > 1 && r.loadouts.len() > 2 && !r.offers.is_empty());
@@ -3140,4 +3364,81 @@ mod tests {
         assert!(t.len() < 4 && rounds::fit_gun(t.clone(), &r.turret_rack()).is_ok(), "{t:?} on a rack of {}", r.turret_rack().slots);
         assert_eq!(r.squad_gun(1).kind, first_gun().kind, "loadout 2 has no gun: the rifle");
     }
+
+    /// **Devices carry a loadout's cards** (gun step E, 2026-11-24): no
+    /// "Devices use this" before a body is owned; once one is, the pick
+    /// gives the bodies the shown loadout's cards, as many as each body's
+    /// rack takes (the plain Grenade's 2 slots and budget of 4), and the
+    /// run's save keeps it.
+    #[test]
+    fn devices_carry_the_loadout_they_use() {
+        let mut r = Run::new(1);
+        assert!(r.edit(1));
+        r.cards = vec![(Card::Torch, true), (Card::Wide, true), (Card::Gas, true)];
+        assert!(!r.shop().iter().any(|w| w.pick == Pick::DevicesUse) && !r.pick(Pick::DevicesUse), "no device owned");
+        assert!(r.body_cards(BodyKind::Grenade).is_empty());
+        r.own_body(Body::plain(BodyKind::Grenade));
+        assert!(r.shop().iter().any(|w| w.pick == Pick::DevicesUse));
+        assert!(r.pick(Pick::DevicesUse) && r.device_loadout == Some(1));
+        assert!(!r.shop().iter().any(|w| w.pick == Pick::DevicesUse), "loadout 2 is already the devices'");
+        let d = r.body_cards(BodyKind::Grenade);
+        assert!(!d.is_empty() && d.len() <= 2 && rounds::fit_gun(d.clone(), &Body::plain(BodyKind::Grenade).rack()).is_ok(), "{d:?}");
+        assert_eq!(d[0], Card::Torch);
+        assert!(r.body_cards(BodyKind::Mine).is_empty(), "no mine owned");
+        assert!(r.shop().iter().any(|w| w.pick == Pick::Edit(1) && w.about.contains("devices carry its cards")));
+        assert_eq!(Run::from_save(&r.save_text()).map(|f| (f.device_loadout, f.body_cards(BodyKind::Grenade))), Ok((Some(1), d)));
+    }
+
+    /// **Bodies** (gun step E3, Direction 11-24): planet 1's shop sells
+    /// a plain Grenade at the old Blasts price and no Tools unlocks; planet
+    /// 2's sells two rolled bodies of two kinds and as many guns as before;
+    /// a body bought replaces the one of its kind, in the loadout holding
+    /// it; a loadout holding a body carries its cards on that body alone,
+    /// fitted to its rack; and a save that owned an old unlock loads with
+    /// its plain body.
+    #[test]
+    fn bodies_are_bought_carried_and_loaded_from_old_saves() {
+        let mut r = Run::new(1);
+        r.restock();
+        let rows = r.shop();
+        assert!(!rows.iter().any(|w| matches!(w.pick, Pick::Item(i) if DEVICES.contains(&ITEMS[i].key))), "the old unlocks are gone");
+        let g = rows.iter().find(|w| w.pick == Pick::Body(0)).expect("a Grenade on sale");
+        assert!(g.name.contains("Grenade") && g.price == "150", "{} {}", g.name, g.price);
+        r.points = 10_000;
+        assert!(r.pick(Pick::Body(0)) && r.has("blast") && r.bodies == vec![Body::plain(BodyKind::Grenade)]);
+        assert!(r.body_offers.is_empty() && !r.shop().iter().any(|w| matches!(w.pick, Pick::Body(_))));
+        r.won(3);
+        assert_eq!(r.gun_offers.len(), GUN_OFFER, "the guns on offer are as many as before");
+        assert_eq!(r.body_offers.len(), BODY_OFFER);
+        assert_ne!(r.body_offers[0].kind, r.body_offers[1].kind);
+        assert!(r.body_offers.iter().all(|b| b.rolled && b.depth == 2));
+        // A rolled Grenade in place of the plain one, held by loadout 2.
+        r.pick(Pick::NewLoadout);
+        assert!(r.edit(1));
+        assert!(r.pick(Pick::CarryBody(0)) && r.loadouts[1].body == Some(0) && r.loadouts[1].gun.is_none());
+        assert!(!r.edit(0) || !r.pick(Pick::CarryBody(0)), "loadout 1 holds no body");
+        assert!(r.edit(1));
+        let big = Body { slots: 3, budget: 6, ..Body::roll(BodyKind::Grenade, 3, 2) };
+        r.body_offers = vec![big];
+        assert!(r.pick(Pick::Body(0)) && r.bodies == vec![big] && r.loadouts[1].body == Some(0));
+        r.cards = vec![(Card::Torch, true), (Card::Wide, true), (Card::Gas, true), (Card::Bomb, true)];
+        let d = r.body_cards(BodyKind::Grenade);
+        assert!(!d.is_empty() && rounds::fit_gun(d.clone(), &big.rack()).is_ok(), "{d:?}");
+        assert_eq!(r.rack_of(1).budget, 6, "the shown loadout's rack is the body's");
+        // An old save: the Blasts and Sleep gas unlocks, no bodies.
+        let mut old = Run::new(2);
+        for k in ["blast", "gas"] {
+            old.owned[ITEMS.iter().position(|i| i.key == k).unwrap()] = 1;
+        }
+        let text: String = old.save_text().lines().filter(|l| !l.starts_with("bodies") && !l.starts_with("body_offers")).map(|l| format!("{l}\n")).collect();
+        let f = Run::from_save(&text).unwrap();
+        assert_eq!(f.bodies, vec![Body::plain(BodyKind::Grenade), Body::plain(BodyKind::Canister)]);
+        let mut k = KitRules::default();
+        f.kit(&mut k);
+        assert_eq!((k.reach_of(crate::mould::kit::Tool::Blast((0.0, 0.0))), k.blast_cd), (24.0, KitRules::default().blast_cd), "the plain body plays as the old tool");
+        let mut k = KitRules::default();
+        r.kit(&mut k);
+        assert_eq!((k.reach_of(crate::mould::kit::Tool::Blast((0.0, 0.0))), k.blast_cd), (big.reach, KitRules::default().blast_cd * big.cool), "a rolled body's reach and cooldown");
+    }
+
 }

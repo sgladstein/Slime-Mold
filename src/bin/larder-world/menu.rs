@@ -384,7 +384,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 // The gun slots' switch to the turrets' deck: a bottom-bar
                 // button (`Pick::EditTurrets`).
                 // The loadouts' buttons too (2026-11-19).
-                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::SquadUses) => (String::new(), ShopArea::Upgrades),
+                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::DevicesUse | Pick::SquadUses) => (String::new(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 // Each a tab of the shop's counter (Shop B, 11-15).
@@ -1461,7 +1461,8 @@ fn launch_editor() -> Result<(), String> {
 
 /// Every live squad armed from the run's loadout it uses (`Squad::loadout`,
 /// `Cmd::Arm` and `Cmd::Load`, so a replay keeps it), and the turrets from
-/// theirs (`Run::turret_cards`). A loadout past the run's (an old replay)
+/// theirs (`Run::turret_cards`), and the devices from theirs
+/// (`Run::body_cards`). A loadout past the run's (an old replay)
 /// is the first.
 pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     for q in g.live_squads() {
@@ -1471,6 +1472,12 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     }
     let t = r.turret_cards();
     g.apply(Cmd::Load(slime_mould::mould::larder_world::TURRET_DECK, (!t.is_empty()).then(|| rounds::Deck::new(&t))));
+    // Each body's cards (gun step E, `Run::body_cards`) as they now
+    // stand.
+    for kind in slime_mould::mould::bodies::BodyKind::ALL {
+        let d = r.body_cards(kind);
+        g.apply(Cmd::Load(slime_mould::mould::larder_world::DEVICE_DECKS + kind.tool() as u8, (!d.is_empty()).then(|| rounds::Deck::new(&d))));
+    }
     // Turrets on a loadout of their own (`Building::loadout`) take its
     // cards as they now stand.
     for b in 0..g.buildings.len() {

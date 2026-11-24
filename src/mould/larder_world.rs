@@ -90,6 +90,7 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, BAND_SPREAD, NO_LINK, SPREADS, SPREAD_NAMES, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::HealRules;
+pub use gear::{DEVICE_DECK, DEVICE_DECKS};
 pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
 pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
@@ -501,6 +502,12 @@ pub struct Game<W: World> {
     /// no clicking round twenty turrets), and a turret shot carrying a cast
     /// is told from a soldier's by `by` None (`turret_mods`).
     pub turret_deck: Option<Deck>,
+    /// **The devices' cards** (gun step E, 2026-11-24), by tool
+    /// (`kit::TOOLS` order): every cast in a tool's goes off where it does,
+    /// on top of its own effect (`Kit::carry`). `Cmd::Load(DEVICE_DECKS +
+    /// t, ..)` loads tool `t`'s (its body's, `Run::body_cards`) and
+    /// `Cmd::Load(DEVICE_DECK, ..)` all of them. None: as before.
+    pub device_decks: [Option<Deck>; 8],
     pub bullets_dropped: u32,
     /// Carried casts let out (`Bullet::carry`), each one release, however
     /// many bullets its set fires.
@@ -769,6 +776,7 @@ impl<W: World> Game<W> {
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
             turret_deck: None,
+            device_decks: [None; 8],
             bullets_dropped: 0,
             releases: 0,
             mould,
@@ -904,10 +912,19 @@ impl<W: World> Game<W> {
     }
 
     /// Squad `q` takes its own cards (`Cmd::Load`), None the army's;
-    /// `TURRET_DECK` loads every turret (None: plain strikes).
+    /// `TURRET_DECK` loads every turret (None: plain strikes), and
+    /// `DEVICE_DECK` the devices (None: no cards).
     pub fn load(&mut self, q: usize, deck: Option<Deck>) -> bool {
         if q == TURRET_DECK as usize {
             self.turret_deck = deck;
+            return true;
+        }
+        if q == gear::DEVICE_DECK as usize {
+            self.device_decks = [deck; 8];
+            return true;
+        }
+        if (gear::DEVICE_DECKS as usize..gear::DEVICE_DECKS as usize + 8).contains(&q) {
+            self.device_decks[q - gear::DEVICE_DECKS as usize] = deck;
             return true;
         }
         match self.squads.get_mut(q) {

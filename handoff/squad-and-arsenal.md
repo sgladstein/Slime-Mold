@@ -48,6 +48,21 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, gun steps E2 and E3 (pathfinding thread).** #764 (trodden
+ground, unlit stars) merged. Branch `claude/project-thread-4xnivn`, one PR:
+`trample_r` 2.5; E2, devices carry a loadout's cards (`Run::device_loadout`,
+`Kit::carry`, `KitRules::cord_cards`); E3, the four bodies (`bodies.rs`:
+Grenade, Mine, Line, Canister; rolled reach, cooldown share, 1-3 slots,
+budget 2-6; `Run::bodies`, `body_offers`, `Pick::Body`, `Pick::CarryBody`,
+`body_cards`, a deck a body at `DEVICE_DECKS` + tool; old unlocks load as
+plain bodies; the Canister puffs every second for 4 s). A device's fire
+brings its own brush (`RoundRules::device_brush` 1), so a Torch Grenade at a
+held squad's feet costs it 78 health of 800 (7 before, trodden), none from
+12 cells. Bodies sit in the shop's Tools tab, not on the gun rack (the rack
+draws gun stats); two guns still on offer. Next: E4 autocast per body (off,
+its state on the device button), then step F (luck; shop parts to Direction
+first), then the dart.
+
 **2026-11-24, planet 3 fire (Direction's jobs, pathfinding thread).**
 #750 merged (starfall gold landing, first star beside the squad). Branch
 `claude/project-thread-4xnivn`, PR "IGNITE pass in engine.wgsl": trodden
