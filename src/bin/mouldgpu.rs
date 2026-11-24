@@ -3485,7 +3485,7 @@ mod tests {
                     let r2 = (12.0 * k * 12.0 * k) as u32;
                     let hurt_before = (0..n).filter(|&j| cpu.lump_of(j) == Some(0) && cpu.dense[j] >> hurt_shift > 0).count();
                     let joined = cpu.grow_lump(0, (c, r2));
-                    e.grow_lump(&shared, 0, (c, r2));
+                    e.grow_lump(&shared, 0, (c, r2), None);
                     let gd = e.dense_of();
                     let words_off = (0..n).filter(|&j| gd[j] & kept != cpu.dense[j] & kept).count();
                     let hurt_after = (0..n).filter(|&j| cpu.lump_of(j) == Some(0) && cpu.dense[j] >> hurt_shift > 0).count();

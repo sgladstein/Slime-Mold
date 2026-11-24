@@ -3892,10 +3892,13 @@ impl Engine {
 
     /// Lump `b` takes in the ordinary walkers within `at` in no lump, its
     /// members kept (the CPU's `grow_lump`): `lumpform` with bit 8 of the
-    /// lump word set.
-    pub fn grow_lump(&self, shared: &Shared, b: usize, at: (u32, u32)) {
+    /// lump word set. With `room`, at most that many join (the origin's
+    /// gather, 11-24): bit 9 set, the room in the dense header's free word
+    /// 0, each joiner taking one of it.
+    pub fn grow_lump(&self, shared: &Shared, b: usize, at: (u32, u32), room: Option<u32>) {
         assert!(b < crate::mould::big::LUMPS, "lump {b}");
-        self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[(b as u32 + 1) | 1 << 8, at.0, at.1]));
+        let capped = if room.is_some() { 1 << 9 } else { 0 };
+        self.queue.write_buffer(&self.news, self.dense_at, &u32_bytes(&[room.unwrap_or(0), (b as u32 + 1) | 1 << 8 | capped, at.0, at.1]));
         self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
     }
 
