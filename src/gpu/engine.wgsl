@@ -1678,8 +1678,17 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     // A spinning walker curls after its turn, every step (the CPU's).
     if (mk == MIND_SPIN) { h += P.spin_curl; }
-    let nx = wk.x + cos(h) * st;
-    let ny = wk.y + sin(h) * st;
+    // LAB: planet twists, the wind (`lab_th` 0x4 in its top nibble, the
+    // angle in degrees in bits 0-8, `lab_p` dish cells a step): every step
+    // a moving walker takes is pushed downwind too, so the body leans and
+    // creeps with it and its trail is laid downwind.
+    var drift = vec2<f32>(0.0, 0.0);
+    if ((P.lab_th >> 28u) == 4u) {
+        let wa = f32(P.lab_th & 0x1FFu) * TAU / 360.0;
+        drift = vec2<f32>(cos(wa), sin(wa)) * P.lab_p;
+    }
+    let nx = wk.x + cos(h) * st + drift.x;
+    let ny = wk.y + sin(h) * st + drift.y;
     let there = cell(nx, ny);
     // **The tether** (`tether`, 2026-11-18, the Enemy lane, from the Lab's
     // one-body prototype, Reports/lab-body-2026-11-18; the owner's play

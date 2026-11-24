@@ -309,7 +309,62 @@ pub fn garden_settings_on(s: Settings, side: usize) -> Settings {
     Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, species_cap, ..s }
 }
 
+/// LAB: planet twists, the base values a twist scaled (`GpuWorld::lab_twist`).
+static LAB_TWIST_BASE: std::sync::Mutex<Vec<(&'static str, f32)>> = std::sync::Mutex::new(Vec::new());
+static LAB_TWIST_ON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 impl GpuWorld {
+    /// LAB: a planet twist (Direction's brief, 2026-11-24 17:00Z: one
+    /// condition a run can roll on a planet). `LAB_TWIST=NAME:START:LEN:F[:A]`
+    /// holds it from game second START for LEN seconds (defaults 20 and
+    /// 60), then gives the slime back its own numbers:
+    /// - `cold`: a cold snap, the slime's step times F (0.3): it crawls.
+    /// - `night`: it senses F (2.5) times as far, on sensors at 0.6 of
+    ///   their angle, so it finds food and soldiers from farther off.
+    /// - `wind`: every step is pushed F (0.25) dish cells towards angle A
+    ///   degrees (0, east; 90, south): the body leans and creeps downwind.
+    /// Called once a game second from `set_ceiling`.
+    fn lab_twist(&mut self, sec: u32) {
+        let Ok(v) = std::env::var("LAB_TWIST") else { return };
+        let f: Vec<&str> = v.split(':').collect();
+        let num = |i: usize, d: f32| f.get(i).and_then(|x| x.parse::<f32>().ok()).unwrap_or(d);
+        let (start, len) = (num(1, 20.0), num(2, 60.0));
+        let on = (sec as f32) >= start && (sec as f32) < start + len;
+        if on == LAB_TWIST_ON.swap(on, std::sync::atomic::Ordering::Relaxed) {
+            return;
+        }
+        eprintln!("  lab twist t {sec} s: {} {}", f[0], if on { "begins" } else { "ends" });
+        let mut base = LAB_TWIST_BASE.lock().unwrap();
+        let mut scale = |s: &mut super::Settings, key: &'static str, by: f32| {
+            let field = match key {
+                "step" => &mut s.step,
+                "reach" => &mut s.reach,
+                _ => &mut s.sensor_angle,
+            };
+            let b = match base.iter().find(|(k, _)| *k == key) {
+                Some((_, b)) => *b,
+                None => {
+                    base.push((key, *field));
+                    *field
+                }
+            };
+            *field = b * if on { by } else { 1.0 };
+        };
+        match f[0] {
+            "cold" => scale(&mut self.s, "step", num(3, 0.3)),
+            "night" => {
+                scale(&mut self.s, "reach", num(3, 2.5));
+                scale(&mut self.s, "sensor_angle", 0.6);
+            }
+            "wind" => {
+                let a = (num(4, 0.0).rem_euclid(360.0)) as u32;
+                super::LAB_WIND_F.store(num(3, 0.25).to_bits(), std::sync::atomic::Ordering::Relaxed);
+                super::LAB_WIND.store(if on { 1 << 31 | a } else { 0 }, std::sync::atomic::Ordering::Relaxed);
+            }
+            _ => {}
+        }
+    }
+
     /// Every living walker as a line (a trace for a replay, `LARDER_STUCK`;
     /// 2026-11-23, the owner's walkers stuck in walls): its fine-cell
     /// place, its `spec` word, its cell's agar, ground word and count, and
@@ -1294,6 +1349,7 @@ impl World for GpuWorld {
                 }
             }
         }
+        self.lab_twist(sec);
         let mut cap = std::env::var("LAB_CAP").ok().and_then(|v| v.parse::<u32>().ok()).unwrap_or(u32::MAX);
         if let Ok(f) = std::env::var("LAB_CAPS") {
             if let Some(c) = std::fs::read_to_string(f).ok().and_then(|t| t.lines().nth(sec as usize + 1).and_then(|l| l.trim().parse::<u32>().ok())) {

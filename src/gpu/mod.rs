@@ -137,8 +137,20 @@ thread_local! {
 
 /// LAB: the game has begun (the first `set_ceiling`).
 pub static LAB_GO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// LAB: planet twists, the wind (`LAB_TWIST=wind:...`, set once a game
+/// second by `GpuWorld::lab_twist`): the angle in degrees with bit 31 on
+/// while it blows, and its strength (f32 bits, dish cells a step).
+pub static LAB_WIND: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+pub static LAB_WIND_F: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
 pub fn lab_threads() -> (u32, f32) {
+    // LAB: the wind, while it blows (engine.wgsl's `sense`: `lab_th` 0x4
+    // in its top nibble, the angle in degrees in bits 0-8, `lab_p` cells a
+    // step). It takes the words alone.
+    let wind = LAB_WIND.load(std::sync::atomic::Ordering::Relaxed);
+    if wind >> 31 != 0 {
+        return (0x4000_0000 | (wind & 0x1FF), f32::from_bits(LAB_WIND_F.load(std::sync::atomic::Ordering::Relaxed)));
+    }
     let get = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
     let (sh, gr) = (get("LAB_LANES"), get("LAB_GROW"));
     let ahead = get("LAB_AHEAD").is_some_and(|v| v != "0");
