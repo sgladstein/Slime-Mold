@@ -670,6 +670,10 @@ pub struct Model {
     /// step C, 2026-11-24: the run is saved as it landed, the planet is
     /// not, so it relands fresh).
     pub pause_note: Vec<String>,
+    /// In a run, the run as the pause menu shows it (the second polish
+    /// pass, 11-24: the pause menu said nothing of where you were): the
+    /// planet, the run's strip and its tally (`start::run_strip`).
+    pub pause_run: Option<super::start::RunView>,
     /// The end screen's first button carries on (`MenuItem::Continue`)
     /// under this label, instead of "Play again" (a roguelike run: the
     /// shop, or the run's end).
@@ -2941,6 +2945,8 @@ impl Hud {
                     n => format!("Experiments  ·  {n} on"),
                 };
                 let restart = match waiting {
+                    // In a run Restart lands this planet again, fresh.
+                    0 if m.pause_run.is_some() => "Restart planet".to_string(),
                     0 => "Restart".to_string(),
                     1 => "Restart with the new pick".to_string(),
                     _ => "Restart with the new picks".to_string(),
@@ -2954,13 +2960,34 @@ impl Hud {
                     items.push(("Main menu".into(), Hit::Menu(MenuItem::MainMenu), false));
                 }
                 items.push(("Quit".into(), Hit::Menu(MenuItem::Quit), false));
-                let note = m.pause_note.len() as f32 * 18.0 * s;
+                let w = if m.pause_run.is_some() { 400.0 * s } else { w };
+                // The run: the planet's line, its strip and the tally.
+                let run_h = if m.pause_run.is_some() { 92.0 * s } else { 0.0 };
+                let note = m.pause_note.len() as f32 * 18.0 * s + run_h;
                 let h = 84.0 * s + note + if note > 0.0 { 8.0 * s } else { 0.0 } + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
                 let r = self.modal(w, h, c, s);
+                let mut tip = None;
+                if let Some(v) = &m.pause_run {
+                    let n = v.stops.len();
+                    let here = v.stops.get(v.depth.saturating_sub(1) as usize);
+                    let title = match here {
+                        Some(p) => format!("Planet {} of {n}, {}: {}", v.depth, p.name, p.slime),
+                        None => format!("Planet {} of {n}", v.depth),
+                    };
+                    c.text_fit(Weight::SemiBold, 14.5 * s, (r.x + w / 2.0, r.y + 96.0 * s), Align::Centre, &title, w - 40.0 * s, TEXT);
+                    let sr = Rect::new(r.x + 24.0 * s, r.y + 106.0 * s, w - 48.0 * s, 30.0 * s);
+                    tip = super::start::run_strip(c, &v.stops, sr, self.hover, s);
+                    let st = v.stars();
+                    let mut tally = format!("{} freed, {st} star{}, {} points", v.freed(), if st == 1 { "" } else { "s" }, v.points);
+                    if let Some(t) = v.played {
+                        tally += &format!(", played {}", super::start::RunView::clock(t));
+                    }
+                    c.text_fit(Weight::Medium, 13.0 * s, (r.x + w / 2.0, r.y + 158.0 * s), Align::Centre, &tally, w - 40.0 * s, MUTED);
+                }
                 c.text(Weight::SemiBold, 22.0 * s, (r.x + w / 2.0, r.y + 44.0 * s), Align::Centre, "Paused", TEXT);
                 c.text(Weight::Medium, 14.0 * s, (r.x + w / 2.0, r.y + 65.0 * s), Align::Centre, "Esc to resume", MUTED);
                 for (k, l) in m.pause_note.iter().enumerate() {
-                    c.text_fit(Weight::Medium, 13.0 * s, (r.x + w / 2.0, r.y + 86.0 * s + k as f32 * 18.0 * s), Align::Centre, l, w - 32.0 * s, MUTED);
+                    c.text_fit(Weight::Medium, 13.0 * s, (r.x + w / 2.0, r.y + 86.0 * s + run_h + k as f32 * 18.0 * s), Align::Centre, l, w - 32.0 * s, MUTED);
                 }
                 let mut y = r.y + 84.0 * s + note + if note > 0.0 { 8.0 * s } else { 0.0 };
                 for (label, hit, primary) in items {
@@ -2972,6 +2999,9 @@ impl Hud {
                         c.rrect(Rect::new(b.x + 16.0 * s, b.y + b.h / 2.0 - 4.0 * s, 8.0 * s, 8.0 * s), 4.0 * s, WARN);
                     }
                     y += bh + 10.0 * s;
+                }
+                if let Some((at, t)) = tip {
+                    super::start::strip_tip(c, at, &t, s);
                 }
             }
             MenuPage::Experiments => self.experiments_draw(m, c, s),
