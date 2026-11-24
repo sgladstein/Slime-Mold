@@ -1,0 +1,26 @@
+diff --git a/src/mould/larder_world/origin.rs b/src/mould/larder_world/origin.rs
+index 6e1fad82..66bf1ac5 100644
+--- a/src/mould/larder_world/origin.rs
++++ b/src/mould/larder_world/origin.rs
+@@ -314,7 +314,7 @@ impl<W: World> Game<W> {
+         let home = self.core;
+         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
+         let reach = cr + self.rules.origin.near * sc;
+-        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).map(|k| (k, (self.soldiers[k].x - home.0).hypot(self.soldiers[k].y - home.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(k, _)| k)
++        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive && self.soldiers[k].smell > 0.0).map(|k| (k, (self.soldiers[k].x - home.0).hypot(self.soldiers[k].y - home.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(k, _)| k)
+     }
+ 
+     /// Whether soldier `k` stands within the origin's reach (`origin_near`'s
+@@ -324,7 +324,11 @@ impl<W: World> Game<W> {
+         let home = self.core;
+         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
+         let s = self.soldiers[k];
+-        s.alive && (s.x - home.0).hypot(s.y - home.1) <= cr + self.rules.origin.near * sc
++        // A soldier the slime cannot smell (smell 0: the toolkit's mask,
++        // the rescue planet's hidden squad) is not one the origin lunges
++        // at (Lab, rescue planet 11-24: it hunted a hidden squad down from
++        // 50 cells in 2:20).
++        s.alive && s.smell > 0.0 && (s.x - home.0).hypot(s.y - home.1) <= cr + self.rules.origin.near * sc
+     }
+ 
+     /// The origin breaks: its lump lets go, births stop and the slime's
