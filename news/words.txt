@@ -1,0 +1,19 @@
+# Words on screen (Direction, 2026-11-24)
+#
+# The words the game shows the player. Code and reports may keep their own
+# names; text the player reads uses these. Ask Direction to change a line.
+
+the slime        the enemy, always. Never "mould", "mold" or "the larder".
+                 Its walkers are "slime" on screen too: "every last bit of
+                 slime", not "every last walker".
+the heart        the slime's standing heart (the code's "origin"). It sits
+                 on the slime's "home crystal".
+crystal          what the slime grows from and the squad drains. Not "food
+                 source" or "larder".
+squad, soldiers  the player's people. A "squad" is a group you command.
+planet, run      a planet is one map; a run is all of them, start to end.
+shop             between planets. Card and gun names stay as the shop shows
+                 them (Lure, Tinder, Seek, ...).
+
+Not on screen: larder, dish, walker, origin, tier, census, mould.
+The game's own name waits on the owner (asked 2026-11-24).
