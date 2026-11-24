@@ -110,6 +110,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if flag == "main-lost" {
                 r.lost();
             }
+            // About 18 minutes a planet, so the line shows a play time.
+            r.played = 1075.0 * r.depth as f32;
             if r.over {
                 m.run_end = Some(menu::run_view(&r));
                 m.run_live = false;

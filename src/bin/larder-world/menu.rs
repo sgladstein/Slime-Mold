@@ -485,7 +485,7 @@ pub(super) fn run_view(r: &Run) -> slime_mould::world::start::RunView {
             RunStop { name: at.planet().name, slime: title_case(at.level().tier.name()), stars, here: d == r.depth && stars.is_none(), lost: r.over && !r.victory() && d == r.depth }
         })
         .collect();
-    RunView { stops, depth: r.depth, points: r.points, played: None, over: r.over, won: r.victory(), mid: false }
+    RunView { stops, depth: r.depth, points: r.points, played: (r.played > 0.0).then_some(r.played), over: r.over, won: r.victory(), mid: false }
 }
 
 /// The estimated damage a second of the gun the shop's slots show
