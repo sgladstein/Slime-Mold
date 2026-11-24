@@ -940,7 +940,7 @@ const SPORE_HUE: vec3<f32> = vec3<f32>(238.0, 132.0, 108.0);
 const GRUDGE_HUE: vec3<f32> = vec3<f32>(196.0, 118.0, 74.0);
 fn species_hue() -> vec3<f32> {
     switch P.slime_look {
-        case 4u: { return SWARM_HUE; }
+        case 4u, 10u: { return SWARM_HUE; }
         case 6u: { return GRUDGE_HUE; }
         case 7u: { return SPORE_HUE; }
         default: { return MOULD_HUE; }
@@ -1775,13 +1775,28 @@ const SWELL_RISE: f32 = 0.25;
 // sleeping crust is a dark matte rind and the walkers awake keep the gold.
 const DORMANT_DIM: f32 = 0.7;
 const DORMANT_MATTE: f32 = 0.6;
+// The Dozer's nap (`SlimeLook::Doze`, planet 8, 11-24): the same crust, but
+// a pale straw rind (`NAP_RGB` / 255 x `NAP_DIM` of its brightness) that
+// keeps most of its wet gloss (`NAP_MATTE`), under the Swarmer's lemon
+// awake: a dried Fuligo, not a stone. The Sleeper's grey on the core's dark
+// ground read as gravel and made planet 8 read as planet 6; a darker tan
+// (255, 199, 128 x 0.75, matte 0.6), tried first, read as bare dirt over
+// the whole map at rest.
+const NAP_RGB: vec3<f32> = vec3<f32>(255.0, 240.0, 200.0);
+const NAP_DIM: f32 = 0.95;
+const NAP_MATTE: f32 = 0.2;
+// Either crust: the Sleeper's (5) or the Dozer's (10), with the walkers'
+// life words bound.
+fn crust_look() -> bool {
+    return (P.slime_look == 5u || P.slime_look == 10u) && P.look_spare0 != 0u;
+}
 // The share of the walkers dormant round fine cell (gx, gy): over the 5 x 5
 // fine cells round it, Gaussian-weighted, the dormant count (the fine grid's
 // third part, low 16 bits) over dormant and awake (high 16), both from
 // `draw_specks`. A plain 3 x 3 window, tried first, left each waking walker
 // a square gold pixel in the crust at zoom 6.
 fn dormant_share(gx: u32, gy: u32) -> f32 {
-    if (P.slime_look != 5u || P.look_spare0 == 0u) { return 0.0; }
+    if (!crust_look()) { return 0.0; }
     var d = 0.0;
     var a = 0.0;
     for (var dy = -2; dy <= 2; dy++) {
@@ -1800,9 +1815,10 @@ fn dormant_mat(m0: Mat, d: f32) -> Mat {
     if (d <= 0.0) { return m0; }
     var m = m0;
     let grey = dot(m.albedo, vec3<f32>(0.3, 0.5, 0.2));
-    let dull = grey * vec3<f32>(0.86, 0.84, 0.8) * DORMANT_DIM;
+    let tint = select(vec3<f32>(0.86, 0.84, 0.8) * DORMANT_DIM, NAP_RGB / 255.0 * NAP_DIM, P.slime_look == 10u);
+    let dull = grey * tint;
     m.albedo = mix(m.albedo, dull, d);
-    m.gloss *= 1.0 - DORMANT_MATTE * d;
+    m.gloss *= 1.0 - select(DORMANT_MATTE, NAP_MATTE, P.slime_look == 10u) * d;
     m.glow *= 1.0 - d;
     return m;
 }
@@ -2458,7 +2474,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The alarm on the slime here (`flush_at`), under a mini-boss's skin
     // and the set slime's, which keep their own colours.
     let hot = flush_at(wx, wy, tm);
-    if (P.slime_look == 4u) { th_h = th_h * (1.0 + SWELL_GAIN * hot) + SWELL_RISE * hot * smoothstep(0.1, 0.4, near); }
+    if (P.slime_look == 4u || P.slime_look == 10u) { th_h = th_h * (1.0 + SWELL_GAIN * hot) + SWELL_RISE * hot * smoothstep(0.1, 0.4, near); }
     let ss = set_share(wx, wy);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
@@ -4304,7 +4320,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (!streak) { atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt); }
         // The Sleeper's crust: this walker dormant (low 16 bits) or awake
         // (high), for `dormant_share`.
-        if (P.slime_look == 5u && P.look_spare0 != 0u && !member) {
+        if (crust_look() && !member) {
             let dorm = ((life_words[k] >> 9u) & 3u) == 2u;
             atomicAdd(&fgrid[2u * P.fhalf + u32(gy) * P.rw + u32(gx)], select(1u << 16u, 1u, dorm));
         }

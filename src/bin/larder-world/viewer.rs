@@ -1557,6 +1557,7 @@ impl App {
                         SlimeLook::Cords => "The Trunk's: its trail off the body a raised translucent tube.",
                         SlimeLook::Swell => "The Swarmer's: a pale lemon slime; where its alarm is, the body stands up taller and rounder.",
                         SlimeLook::Dormant => "The Sleeper's: its sleeping walkers a dull dark crust, the waking ones gold.",
+                        SlimeLook::Doze => "The Dozer's: its sleeping walkers a pale straw crust, the waking ones the Swarmer's lemon, standing up where its alarm is.",
                         SlimeLook::Scarred => "The Grudge's: a copper slime; where it was hurt, pale glossy scar tissue and a bruise on bare ground.",
                         SlimeLook::Spores => "The Sporer's: a coral slime; its spores in flight small gold seeds with short tails.",
                         SlimeLook::Paint => "Old look, Nov 12-14: the first game's slime, a dim opaque paint with flat ochre veins, every walker a dome.",
