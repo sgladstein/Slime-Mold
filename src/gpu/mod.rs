@@ -70,7 +70,7 @@ pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (308 words).
-pub const PARAMS_BYTES: usize = 1232;
+pub const PARAMS_BYTES: usize = 1248;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then the far smell,
 /// `far_smell`, S2, in the word that held `fed_full` and then
@@ -126,7 +126,8 @@ pub const LUMP_AT: usize = 1008;
 /// The Mind row (the gun cards' Mind family, 2026-11-16; Params grew from
 /// 1152 to 1168, after the lump rows): whether any walker has had a Mind
 /// status (`Engine::minds`; `sense` reads none before), a spinning
-/// walker's curl a step (`BigParams::spin_curl`), and two spare words.
+/// walker's curl a step (`BigParams::spin_curl`), and the threads' two
+/// words (`Settings::thread_lanes`, 2026-11-24; spare until then).
 pub const MIND_AT: usize = 1152;
 /// The scar row (the Grudge's habituation on the GPU, 2026-11-17, the
 /// simulation-use plan's step 0; Params grew from 1168 to 1184, after the
@@ -150,6 +151,12 @@ pub const CRUST_FX_AT: usize = 1200;
 /// scar), `set_wake`, `set_crust` and `set_armour`. Each slot's set word is
 /// a block of `news` right after the crust's (`Engine::set_of`).
 pub const SET_AT: usize = 1216;
+/// The scar tissue row (the Grudge's, 2026-11-24; Params grew from 1232 to
+/// 1248, after the setting row): `scar_tough` (0 off, and 0 without the
+/// scar), `scar_tough_full`, whether fire burns the scar off (`scar_burn`)
+/// and the Sleeper's dreaming (`dream`; the row's spare word, 0 without the
+/// birth ceiling).
+pub const TOUGH_AT: usize = 1232;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -233,11 +240,12 @@ const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking 
 /// the eviction's moves, the struck, the living walkers, the own mould's,
 /// the cap's two counts, then the condensed strikers' counts (words 8-10,
 /// `Engine::condense`, 2026-11-20; word 8 held the old condensing's
-/// walkers 11-15 to 11-17) and the walkers in their band (word 11). The
+/// walkers 11-15 to 11-17) and the walkers in their band (word 11), then
+/// the walkers asleep (12) and on full scar (13, both `count`). The
 /// mould grid follows (`Engine::record_count`), room for squares down to a
 /// game cell or `GRID_MIN` dish cells, whichever is smaller
 /// (`Engine::grid_max`).
-pub const WSTAT_BYTES: usize = 48;
+pub const WSTAT_BYTES: usize = 56;
 
 /// The smallest mould grid square the wall counters have room for, in
 /// dish cells, where the scale is bigger: the campaign's and the player
@@ -573,6 +581,44 @@ pub struct Settings {
     /// above which a cell is shut (0xFFFF off). No CPU twin; a run's
     /// planets set it (`run::enemy_keys`).
     pub crater_shut: f32,
+    /// **The Sprawler's threads** (2026-11-24, the Lab's prototype of that
+    /// day built into the Sprawler; GPU only, no CPU twin; its planets set
+    /// them, `run::does_to_you`). Two rules that open a packed body into
+    /// spokes, which neither does alone (`Reports/lab-threads-2026-11-24/`):
+    /// - lanes (`thread_lanes=N`, `thread_trail=R`): a calm walker blocked by
+    ///   a full cell may still step in, up to N more walkers there, when
+    ///   that cell holds R times its own cell's trail, so walkers gather on
+    ///   the trail's ridges and the cells they leave stay bare;
+    /// - the shuttle (`thread_shuttle=W`, `thread_fed=F`): a calm walker fed
+    ///   past F of its birth energy reads the crystals' scent times -W, so
+    ///   it walks out along the trail from its crystal and back up the
+    ///   scent once hungry, two-way traffic that lays the ridges.
+    ///
+    /// The Mind row's two spare words (`MIND_AT`): N in bits 0-3, R x 10 in
+    /// bits 4-9, F x 10 in bits 10-13, then W. 0 and 0 off.
+    pub thread_lanes: u32,
+    pub thread_trail: f32,
+    pub thread_shuttle: f32,
+    pub thread_fed: f32,
+    /// **Scar tissue** (2026-11-24, the Grudge's trait on planet 7; the
+    /// Lab's prototype of that day, `Reports/lab-scar-tissue-2026-11-24/`;
+    /// GPU only, no CPU twin): a blow on a walker standing on scar s is
+    /// shrugged off with chance `scar_tough` x min(s / `scar_tough_full`,
+    /// 1), so where the squad has fought, the slime grows back tough. Fire
+    /// burns the scar off where it burns (`scar_burn`), the counter the
+    /// card names. 0 off; needs the scar (`scar_keep`).
+    pub scar_tough: f32,
+    pub scar_tough_full: f32,
+    pub scar_burn: bool,
+    /// **It grows while it sleeps** (2026-11-24, the Sleeper's trait on
+    /// planet 6; the Lab's prototype, `Reports/lab-sleeper-2026-11-24/`; GPU
+    /// only, no CPU twin): a dormant walker buds a dormant child with this
+    /// chance a step, at no cost to itself, under the birth ceiling and on
+    /// ground under half `wake_scent` (a bud on the crystals' scent woke at
+    /// once, and its alarm woke the body round it: waves of 100,000 with no
+    /// shot fired). 0 off; only while the game sets a ceiling
+    /// (`set_ceiling`), so the landing is as before.
+    pub dream: f32,
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
     /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
@@ -857,6 +903,14 @@ impl Settings {
             crystal_keep: false,
             ceiling: 0,
             crater_shut: 0.0,
+            thread_lanes: 0,
+            thread_trail: 1.0,
+            thread_shuttle: 0.0,
+            thread_fed: 0.9,
+            scar_tough: 0.0,
+            scar_tough_full: 2000.0,
+            scar_burn: false,
+            dream: 0.0,
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
@@ -1196,6 +1250,14 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "tether" => s.tether = int()?.min(8),
         "crystal_keep" => s.crystal_keep = int()? != 0,
         "crater_shut" => s.crater_shut = f()?.clamp(0.0, 1.0),
+        "thread_lanes" => s.thread_lanes = int()?.min(15),
+        "thread_trail" => s.thread_trail = f()?.clamp(0.0, 6.3),
+        "thread_shuttle" => s.thread_shuttle = f()?.max(0.0),
+        "thread_fed" => s.thread_fed = f()?.clamp(0.0, 1.5),
+        "scar_tough" => s.scar_tough = f()?.clamp(0.0, 1.0),
+        "scar_tough_full" => s.scar_tough_full = f()?.max(1.0),
+        "scar_burn" => s.scar_burn = int()? != 0,
+        "dream" => s.dream = f()?.clamp(0.0, 1.0),
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
@@ -1616,9 +1678,11 @@ pub const SETCOUNT: usize = 70;
 /// the squad condenses, then each block's leader takes what it took in.
 pub const CONDENSE: usize = 71;
 pub const CONDLEAD: usize = 72;
+/// The last stand wakes the sleepers (2026-11-24, `Engine::rouse`).
+pub const ROUSE: usize = 73;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 73] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount", "condense", "condlead",
+pub const PASSES: [&str; 74] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount", "condense", "condlead", "rouse",
 ];
 
 impl Shared {
@@ -2606,7 +2670,10 @@ impl Engine {
             b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), l.spin.to_bits()]));
         }
         assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
-        b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), 0, 0]));
+        // The Sprawler's threads (`Settings::thread_lanes`): lanes N, the
+        // trail ratio R x 10, the shuttle's fed share F x 10 and its weight.
+        let lanes = s.thread_lanes.min(15) | ((s.thread_trail * 10.0).round() as u32).min(63) << 4 | ((s.thread_fed * 10.0).round() as u32).min(15) << 10;
+        b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), lanes, s.thread_shuttle.to_bits()]));
         assert_eq!(b.len(), SCAR_AT, "Params rows before the scar row moved");
         // The CPU makes the scar only with the alarm field (`BigDish::new`).
         let scars = s.alarm_keep > 0.0 && s.scar_keep > 0.0;
@@ -2629,6 +2696,12 @@ impl Engine {
         // Setting needs the crust and the scar, as the CPU's `sets`.
         b.extend(f32_bytes(&[if crusts && scars { s.set_scar } else { 0.0 }, s.set_wake, s.set_crust]));
         b.extend(u32_bytes(&[s.set_armour]));
+        assert_eq!(b.len(), TOUGH_AT, "Params rows before the scar tissue row moved");
+        // Scar tissue needs the scar (`scars`, as the CPU makes it).
+        b.extend(f32_bytes(&[if scars { s.scar_tough } else { 0.0 }, s.scar_tough_full.max(1.0)]));
+        // Dreaming only under a ceiling, which bounds it (`dream`).
+        let dream = if s.ceiling > 0 && self.cycles { s.dream } else { 0.0 };
+        b.extend(u32_bytes(&[(scars && s.scar_burn) as u32, dream.to_bits()]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food
@@ -3573,6 +3646,8 @@ impl Engine {
         assert!(gw * gh <= self.grid_max(), "a mould grid square under a dish cell");
         // Words 4 (the living) and 5 (the player's own mould's, in a garden).
         enc.clear_buffer(&self.wstat, 16, Some(8));
+        // Words 12 (asleep) and 13 (on full scar).
+        enc.clear_buffer(&self.wstat, 48, Some(8));
         if gw * gh > 0 {
             enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
         }
@@ -3912,6 +3987,15 @@ impl Engine {
         let (c, r2) = at.unwrap_or((u32::MAX, 0));
         self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[b as u32 + 1, c, r2]));
         self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
+    }
+
+    /// Wakes every living dormant walker but the gassed (the last
+    /// stand's, 2026-11-24: `World::rouse`), between ticks; nothing with
+    /// the life cycle off.
+    pub fn rouse(&self, shared: &Shared) {
+        if self.cycles {
+            self.run(shared, &[(ROUSE, self.n.div_ceil(256))]);
+        }
     }
 
     /// Lump `b` takes in the ordinary walkers within `at` in no lump, its

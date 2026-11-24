@@ -41,7 +41,7 @@ use super::kit::KitRules;
 use super::larder_world::Rules;
 use super::levelgen::{self, Planet};
 use super::map::{Map, G_ROCK, MAP_H, MAP_W};
-use super::rounds::{self, Ammo, Card, Kind, Set, Shell};
+use super::rounds::{self, Ammo, Card, Kind, RoundRules, Set, Shell};
 use super::tiers::Tier;
 
 /// Where a level's ground comes from.
@@ -74,8 +74,10 @@ impl Ground {
 /// 2026-11-17, once the GPU engine took its scar keys (the simulation-use
 /// plan's step 0, `Reports/sim-use-2026-11-17/plan.md`), so planet 8 mixes
 /// the Sporer, Sleeper and Grudge; the test below keeps every rung
-/// playable.
-pub const LADDER: [Tier; 7] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Swarmer, Tier::Sporer, Tier::Sleeper, Tier::Grudge];
+/// playable. Since 2026-11-24 planet 8 has its own, the Dozer (Direction:
+/// "P8 = the Swarmer that naps"), and past it the Sleeper, Grudge and
+/// Dozer take turns.
+pub const LADDER: [Tier; 8] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Swarmer, Tier::Sporer, Tier::Sleeper, Tier::Grudge, Tier::Dozer];
 
 /// One level: what the window needs to start it.
 #[derive(Clone, Debug, PartialEq)]
@@ -150,9 +152,16 @@ pub fn size_roll(seed: u64) -> f32 {
 /// the depth rule's "more later on" is kept apart from this factor
 /// (`levels_get_harder_and_the_same_seed_gives_the_same_run`). Retune from
 /// the owner's play.
+///
+/// 0.45 since its threads (2026-11-24, Direction: land them, retune planet
+/// 2's size if harder): lanes let up to 3 more walkers share a cell, so the
+/// threaded body filled its birth ceiling where the packed one was held by
+/// room. Run seed 1, idle squad at 2:00: 14,317 walkers off, 26,725 with
+/// threads at 0.6, 15,593 at 0.45 (landing 13,845 and 10,384); 4, 3 and 4
+/// soldiers left. The spokes read the same at 0.45.
 pub fn tier_size(tier: Tier) -> f32 {
     match tier {
-        Tier::Sprawler => 0.6,
+        Tier::Sprawler => 0.45,
         _ => 1.0,
     }
 }
@@ -691,19 +700,20 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // pump stood at 197 of 200 hp at 2:00 with no smell, and was worn
         // to 23 at 2:00 and down by 2:21 with it; pump_smell 2 to 8 was too
         // weak to see.
-        Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder and a Torch, and keep your soldiers out of the flames: fire burns them too", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
+        Tier::Drifter => DoesToYou { says: "It smells your pumps. Every pump you build calls it to come and eat", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
+        Tier::Sprawler => DoesToYou { says: "It reaches out in threads that find your soldiers. It fears fire: bring Tinder and a Torch", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
         // Until 2026-11-17 the Trunk had the Drifter's row (the same pump
         // smell: the first two pumps at 185 and 167 hp at 2:30 without it,
         // 160 and 160 with it; modest, as its cords are slow to turn), so
         // planets 1 and 3 did the same thing to you. Now it sets
         // (`TRUNK_KEYS`), and since 11-18 it walls the crystals it holds
         // (`fort` in `TRUNK_RULES`).
-        Tier::Trunk => DoesToYou { says: "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch", rules: TRUNK_RULES, keys: TRUNK_KEYS },
-        Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast. Cut down to a quarter, all of it rushes you", rules: SWARMER_RULES, keys: SWARMER_KEYS },
-        Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
-        Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
-        Tier::Grudge => DoesToYou { says: "It remembers where you hurt it, and comes back there", rules: &[], keys: GRUDGE_KEYS },
+        Tier::Trunk => DoesToYou { says: "It walls its crystals in amber and sets hard where you shoot it. Burn the walls", rules: TRUNK_RULES, keys: TRUNK_KEYS },
+        Tier::Swarmer => DoesToYou { says: "Its surges charge you from far off. Cut it to a quarter and all of it comes", rules: SWARMER_RULES, keys: SWARMER_KEYS },
+        Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that grow new slime. Kill it fast, or fight its seedlings", rules: &[], keys: SPORER_KEYS },
+        Tier::Sleeper => DoesToYou { says: "It grows while it sleeps. Every minute you farm, there is more to wake", rules: &[], keys: SLEEPER_KEYS },
+        Tier::Grudge => DoesToYou { says: "Where you hurt it, it grows back tough. Don't fight on old ground", rules: &[], keys: GRUDGE_KEYS },
+        Tier::Dozer => DoesToYou { says: "It sleeps off every charge. Each shot wakes it, and awake it charges", rules: SWARMER_RULES, keys: DOZER_KEYS },
     }
 }
 
@@ -722,7 +732,25 @@ const SPRAWLER_RULES: &[(&str, f32)] = &[("smell", 4.0), ("smell_r", 4.0)];
 // Run seed 1's planet 2 has nothing a plain light burns; the designer
 // (15:26Z) keeps it here for that: Tinder, which brings its own fuel, is the
 // answer, so the card says to bring it.
-const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50")];
+//
+// **Its body as threads** (2026-11-24; the Lab's prototype of that day,
+// `Reports/lab-threads-2026-11-24/`, built in at Direction's word): lanes
+// (3 more walkers on a cell holding as much trail as the walker's own) and
+// the shuttle (a walker past 0.9 of its birth energy walks down the
+// crystals' scent at 3, back up it when hungry), with the trail kept 0.92
+// (its walk's 0.8) and sensors 6 fine cells out (its 18), GPU only
+// (`gpu::Settings::thread_lanes`). Planet 2, seeds 1-3, at the off arm's
+// walkers: the disc round each crystal opens into four to seven spokes,
+// holes 25-29% of the body's outline against 0-8%. Neither rule alone
+// does it; with its own walk (0.8, 18) both made only a rough cross.
+const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50"), ("keep", "0.92"), ("sensor_offset", "6"), ("thread_lanes", "3"), ("thread_trail", "1.0"), ("thread_shuttle", "3"), ("thread_fed", "0.9")];
+
+/// The Sprawler's thread keys, the GPU engine's alone (no CPU twin).
+pub const THREAD_KEYS: [&str; 4] = ["thread_lanes", "thread_trail", "thread_shuttle", "thread_fed"];
+/// The Grudge's scar tissue keys, the GPU engine's alone (no CPU twin).
+pub const TOUGH_KEYS: [&str; 3] = ["scar_tough", "scar_tough_full", "scar_burn"];
+/// The Sleeper's dreaming key, the GPU engine's alone (no CPU twin).
+pub const DREAM_KEYS: [&str; 1] = ["dream"];
 // **The Trunk sets** (2026-11-17, the Enemy lane; planet 3). The
 // simulation-use plan's E1 and E2 were built on 11-17 behind four switches
 // (the crust and its pull, setting, set slime blocking or trapping, fed
@@ -784,13 +812,35 @@ const SPORER_KEYS: &[(&str, &str)] = &[("spore_burst", "0.2"), ("spore_alarm", "
 // Sleeper, planet 6, attack-move: wakes at an alarm of 0.3, not 1: one
 // soldier at 14 health -> the squad gone by 1:30. Tried and backfired:
 // wake_alarm 3 (a higher bar is a deeper sleep: 4 soldiers at 99).
-const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3")];
+//
+// **It grows while it sleeps** (2026-11-24, Direction's pick for planet 6's
+// nameable thing; the Lab's prototype, `Reports/lab-sleeper-2026-11-24/`):
+// a sleeping walker buds a sleeping child at 0.003 a step, under the birth
+// ceiling and off the crystals' scent (`gpu::Settings::dream`), so the time
+// you farm before it wakes is time it grows. 0.003 is the Lab's pick (one
+// seed); its growth is bounded by the ceiling and its free edge.
+const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3"), ("dream", "0.003")];
+// The Dozer, planet 8 (2026-11-24, Direction's card: "It sleeps off every
+// charge. Each shot wakes it, and awake it charges"): the Swarmer's lunge
+// and last stand (`SWARMER_RULES`) on a body that sleeps away from its
+// crystals, woken at the Sleeper's planet 6 bar (wake_alarm 0.3). No
+// dreaming: that is planet 6's.
+const DOZER_KEYS: &[(&str, &str)] = &[("surge_haste", "3"), ("wake_alarm", "0.3")];
 // Grudge, planet 7 (joined 2026-11-17, when the GPU took its scar): its
 // memory of where it was hit pulls it back at twice the campaign tier's
 // weight (scar_weight 1, not 0.5), so a firing line it was hurt from draws
 // it back after the alarm has faded. A first number, not yet filmed on a
 // planet (`Reports/sim-use-2026-11-17/step0-scar-on-gpu.md`).
-const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1")];
+//
+// **Scar tissue** (2026-11-24, Direction's pick for planet 7's nameable
+// thing; the Lab's prototype, `Reports/lab-scar-tissue-2026-11-24/`): a blow
+// on a walker standing on scar misses with chance 0.5 x min(scar / 2,000,
+// 1), so the ground the squad has fought over grows tough slime, and the
+// pull above brings the slime back to it. Fire burns the scar off. 2,000 is
+// about a minute of fire on one place (the Lab's median scar near a holding
+// squad: 513 at 1:00, 3,500 at 1:30); P 0.75 took the run bot from 30
+// soldiers to 4 by 2:00 against 21 at 0.5 and 30 off (one seed), so 0.5.
+const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1"), ("scar_tough", "0.5"), ("scar_tough_full", "2000"), ("scar_burn", "1")];
 
 /// The card a tier's planet asks you to bring, if any: the card that
 /// answers its trait (the game designer, 2026-11-17 15:26Z, with the guns
@@ -879,6 +929,8 @@ pub enum Group {
     Squad,
     Build,
     Tools,
+    /// Rare run-wide rules (gun step F), after planets 3, 5 and 7.
+    Relics,
     /// Guns owned and for sale.
     Guns,
     /// Gun cards: in the gun, in the bag, for sale, and more on offer.
@@ -892,6 +944,7 @@ impl Group {
             Group::Squad => "Squad",
             Group::Build => "Buildings",
             Group::Tools => "Tools",
+            Group::Relics => "Relics",
             Group::Guns => "Guns",
             Group::Cards => "Cards",
             Group::Dev => "Dev mode",
@@ -982,6 +1035,68 @@ pub fn first_gun() -> Gun {
 
 /// Guns for sale in each shop.
 pub const GUN_OFFER: usize = 2;
+/// **Relics** (gun step F, Direction 11-24 08:54Z and 09:51Z; the
+/// gun-system plan's "rare run-wide rules"): one is for sale in the shops
+/// of `RELIC_DEPTHS`, after planets 3, 5 and 7, at `Relic::price`; owned,
+/// it holds for the rest of the run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Relic {
+    /// Slime the squad kills draws calm slime to where it died
+    /// (`RoundRules::carrion_secs`).
+    Carrion,
+    /// Sick slime lays double trail (the engine's `sick_trail`, 1 to 2;
+    /// `Run::engine_keys`), so the germ's sickness runs farther down the
+    /// tubes it thickens (Direction 11-24 11:28Z: built here, no shader
+    /// change).
+    Fever,
+    /// A device's fire also lights the ground the squads left
+    /// (`RoundRules::backdraft_gap`).
+    Backdraft,
+}
+
+impl Relic {
+    pub const ALL: [Relic; 3] = [Relic::Carrion, Relic::Fever, Relic::Backdraft];
+
+    pub fn key(self) -> &'static str {
+        match self {
+            Relic::Carrion => "carrion",
+            Relic::Fever => "fever",
+            Relic::Backdraft => "backdraft",
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Relic::Carrion => "Carrion",
+            Relic::Fever => "Fever",
+            Relic::Backdraft => "Backdraft",
+        }
+    }
+
+    pub fn about(self) -> &'static str {
+        match self {
+            Relic::Carrion => "For the rest of the run, where a soldier's shot kills slime, calm slime streams to the spot for 3 s: into your guns when you hold a line, onto you when you are overrun.",
+            Relic::Fever => "For the rest of the run, sick slime lays twice the trail, so a germ's sickness runs much farther down the slime's tubes, and those tubes grow thicker.",
+            Relic::Backdraft => "For the rest of the run, a device's fire also lights the ground your squads held and left: a wall of fire behind you, and a trap if you fall back onto it.",
+        }
+    }
+
+    pub fn price(self) -> u32 {
+        match self {
+            Relic::Carrion => 300,
+            Relic::Fever => 250,
+            Relic::Backdraft => 300,
+        }
+    }
+
+    pub fn of_key(k: &str) -> Option<Relic> {
+        Relic::ALL.into_iter().find(|r| r.key() == k)
+    }
+}
+
+/// The shops that offer a relic: after planets 3, 5 and 7.
+pub const RELIC_DEPTHS: [u32; 3] = [4, 6, 8];
+
 /// The first paid reroll's price (`Run::reroll_price`, gun step F; the
 /// gun-system plan's "rerolls that cost more each time"; a tier-1 card is
 /// 80): it doubles each time in one shop. A first guess.
@@ -1191,6 +1306,8 @@ pub enum Pick {
     Body(usize),
     /// Owned body `i` into the loadout shown, which gives up its gun.
     CarryBody(usize),
+    /// The relic on offer bought (gun step F).
+    Relic,
     /// The card offers redrawn for `reroll_price` (gun step F): the guns
     /// and bodies on offer stay, the held card too.
     Reroll,
@@ -1281,6 +1398,9 @@ pub struct Run {
     pub held: Option<Card>,
     pub paid_rerolls: u32,
     pub since_rare: u32,
+    /// Relics owned, and the one this shop sells (`RELIC_DEPTHS`).
+    pub relics: Vec<Relic>,
+    pub relic_offer: Option<Relic>,
     /// The run ended on a lost level.
     beaten: bool,
     /// The gun range (`Run::range`): a free armory, not a run.
@@ -1317,7 +1437,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, beaten: false, range: false, played: 0.0 }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0 }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -1692,6 +1812,28 @@ impl Run {
     /// The bodies on autocast, as `Cmd::Auto`'s bits (`kit::TOOLS` order).
     pub fn autocast(&self) -> u8 {
         self.bodies.iter().filter(|b| b.auto).fold(0, |m, b| m | (1 << b.kind.tool()))
+    }
+
+    /// What the run's relics do to the gun cards' rules (gun step F):
+    /// Carrion's marks (`RoundRules::carrion_secs`, 3 s) and Backdraft's
+    /// fire on left ground (`backdraft_gap`, 8 dish cells).
+    pub fn round_rules(&self, rr: &mut RoundRules) {
+        if self.relics.contains(&Relic::Carrion) {
+            rr.carrion_secs = 3.0;
+        }
+        if self.relics.contains(&Relic::Backdraft) {
+            rr.backdraft_gap = 8.0;
+        }
+    }
+
+    /// What the run's relics do to the slime's engine keys, set over the
+    /// planet's and the tier's (the window's `start`): Fever's trail.
+    pub fn engine_keys(&self) -> Vec<(&'static str, &'static str)> {
+        let mut keys = Vec::new();
+        if self.relics.contains(&Relic::Fever) {
+            keys.push(("sick_trail", "2"));
+        }
+        keys
     }
 
     /// The body of `kind` owned, if any (its index in `bodies`).
@@ -2136,6 +2278,10 @@ impl Run {
     fn next_shop(&mut self) {
         self.paid_rerolls = 0;
         self.restock();
+        // One unowned relic, drawn by the run's seed and the planet.
+        let left: Vec<Relic> = Relic::ALL.into_iter().filter(|r| !self.relics.contains(r)).collect();
+        let draw = mix(self.seed ^ u64::from(self.depth).wrapping_mul(0x9E37_79B9_7F4A_7C15)) as usize;
+        self.relic_offer = (RELIC_DEPTHS.contains(&self.depth) && !left.is_empty()).then(|| left[draw % left.len()]);
         let rare = self.offers.iter().any(|&c| c.kind() != Kind::Payload && c.tier() >= 3);
         self.since_rare = if rare || self.depth < power_from(3) { 0 } else { self.since_rare + 1 };
     }
@@ -2215,6 +2361,13 @@ impl Run {
             let (now, then) = if b.auto { ("on", "off") } else { ("off", "on") };
             let about = format!("{} on autocast goes off on its own whenever the squad's device slot is ready and thick slime is in reach, at least {:.0} cells from every soldier of the squad. Click to turn it {then}.", b.kind.name(), KitRules::default().auto_gap);
             rows.push(Row { group: Group::Tools, face: Face::Item(b.kind.key()), on: b.auto, name: format!("{} autocast: {now}", b.kind.name()), about, price: String::new(), state: format!("autocast {now}"), ready: true, pick: Pick::BodyAuto(i) });
+        }
+        // Relics (gun step F): those owned, and this shop's for sale.
+        for rl in self.relics.iter() {
+            rows.push(Row { group: Group::Relics, face: Face::Item(rl.key()), on: true, name: rl.name().into(), about: rl.about().into(), price: String::new(), state: "owned".into(), ready: false, pick: Pick::Relic });
+        }
+        if let Some(rl) = self.relic_offer.filter(|_| !self.field && !self.range) {
+            rows.push(Row { group: Group::Relics, face: Face::Item(rl.key()), on: false, name: rl.name().into(), about: format!("A relic, rare: {}", rl.about()), price: rl.price().to_string(), state: "for sale".into(), ready: rl.price() <= self.points, pick: Pick::Relic });
         }
         for (i, b) in self.body_offers.iter().enumerate().filter(|_| !self.field) {
             let p = b.price();
@@ -2425,6 +2578,16 @@ impl Run {
                 true
             }
             Pick::DevSkip => self.skip(),
+            Pick::Relic => {
+                let Some(rl) = self.relic_offer.filter(|_| !self.field && !self.range) else { return false };
+                if rl.price() > self.points {
+                    return false;
+                }
+                self.points -= rl.price();
+                self.relics.push(rl);
+                self.relic_offer = None;
+                true
+            }
             Pick::Reroll => {
                 let price = self.reroll_price();
                 if self.range || self.field || price > self.points {
@@ -2605,6 +2768,8 @@ impl Run {
         put("held", self.held.map_or(String::new(), |c| c.word()));
         put("paid_rerolls", self.paid_rerolls.to_string());
         put("since_rare", self.since_rare.to_string());
+        put("relics", self.relics.iter().map(|r| r.key()).collect::<Vec<_>>().join(" "));
+        put("relic_offer", self.relic_offer.map_or("", |r| r.key()).to_string());
         put("played", format!("{:.1}", self.played));
         s
     }
@@ -2682,6 +2847,8 @@ impl Run {
         r.held = get("held").and_then(Card::from_word);
         r.paid_rerolls = num("paid_rerolls").map_or(0, |v| v as u32);
         r.since_rare = num("since_rare").map_or(0, |v| v as u32);
+        r.relics = list("relics").into_iter().filter_map(Relic::of_key).collect();
+        r.relic_offer = get("relic_offer").and_then(Relic::of_key);
         // A save from before 11-24 has none: its time so far is unknown.
         r.played = get("played").and_then(|v| v.parse::<f32>().ok()).filter(|v| v.is_finite() && *v >= 0.0).unwrap_or(0.0);
         Ok(r)
@@ -2832,7 +2999,7 @@ mod tests {
             let l = r.level();
             // A cell's walkers grow deeper, so a smaller planet (a breather)
             // can have fewer in all; the tier's own factor (`tier_size`, the
-            // Sprawler's 0.6) is a tuning number kept apart from that rule.
+            // Sprawler's 0.45) is a tuning number kept apart from that rule.
             let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed) / tier_size(l.tier);
             assert!((0.8..=1.25).contains(&size_roll(l.seed)));
             assert!(dense > walkers, "more walkers a cell deeper");
@@ -2844,11 +3011,12 @@ mod tests {
         }
         r.depth = 1;
         assert_eq!(r.level().tier, Tier::Drifter);
-        // Planet 2's Sprawler at 0.6 of its size (the planet 2 look, 11-18).
+        // Planet 2's Sprawler at 0.45 of its size (the planet 2 look, 11-18;
+        // 0.45 with its threads, 11-24).
         r.depth = 2;
         let (l, area) = (r.level(), area_of(&r.planet()));
         assert_eq!(l.tier, Tier::Sprawler);
-        assert!((l.walkers - 0.6 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
+        assert!((l.walkers - 0.45 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
         // The level generator's core world is the run's last planet.
         assert_eq!(levelgen::CORE_DEPTH, PLANETS);
     }
@@ -3331,7 +3499,7 @@ mod tests {
             let mut p = crate::mould::larder_world::race_params(1, 2, 5000);
             for &(k, v) in does.keys {
                 let set = crate::mould::tiers::set_key(&mut p, k, v);
-                assert!(set.is_ok() || *t == Tier::Trunk, "{} key {k}: {set:?}", t.name());
+                assert!(set.is_ok() || *t == Tier::Trunk || THREAD_KEYS.contains(&k) || TOUGH_KEYS.contains(&k) || DREAM_KEYS.contains(&k), "{} key {k}: {set:?}", t.name());
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());
@@ -3340,7 +3508,7 @@ mod tests {
             // stand; no other rung does either.
             let trunk = *t == Tier::Trunk;
             assert_eq!((s.set_scar > 0.0, s.crust_rise > 0.0, s.fire_fed, r.set_block > 0.0, r.fort > 0.0), (trunk, trunk, trunk, trunk, trunk), "{}", t.name());
-            assert_eq!(r.raid.last_stand, *t == Tier::Swarmer, "{}", t.name());
+            assert_eq!(r.raid.last_stand, matches!(*t, Tier::Swarmer | Tier::Dozer), "{}", t.name());
             // Every planet: the far smell, and charges that go round walls.
             assert!(r.unit_paths, "{}", t.name());
             assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
@@ -3671,6 +3839,74 @@ mod tests {
             rare += usize::from(r.offers.iter().any(|c| c.kind() != Kind::Payload && c.tier() == 3));
         }
         eprintln!("planet 5's first shop shows a tier-3 card in {rare} of 40 seeds without pity");
+    }
+
+    /// **Relics** (gun step F): Carrion is for sale after planets 3, 5
+    /// and 7 only, once; bought, it is owned for the run, sets
+    /// `carrion_secs` and stays in the save.
+    #[test]
+    fn carrion_is_a_relic_sold_after_planets_3_5_and_7() {
+        let mut r = Run::new(1);
+        let mut sold = Vec::new();
+        for _ in 0..7 {
+            r.won(3);
+            if r.relic_offer.is_some() {
+                sold.push(r.depth);
+            }
+        }
+        assert_eq!(sold, vec![4, 6, 8], "after planets 3, 5 and 7");
+        let mut r = Run::new(1);
+        for _ in 0..3 {
+            r.won(3);
+        }
+        r.relic_offer = Some(Relic::Carrion);
+        let row = r.shop().into_iter().find(|w| w.pick == Pick::Relic).expect("a relic row");
+        assert_eq!((row.group, row.name.as_str(), row.price.as_str()), (Group::Relics, "Carrion", "300"));
+        r.points = 299;
+        assert!(!r.pick(Pick::Relic));
+        let mut rr = RoundRules::default();
+        r.round_rules(&mut rr);
+        assert_eq!(rr.carrion_secs, 0.0);
+        r.points = 300;
+        assert!(r.pick(Pick::Relic) && r.relics == vec![Relic::Carrion] && r.points == 0 && r.relic_offer.is_none());
+        r.round_rules(&mut rr);
+        assert_eq!(rr.carrion_secs, 3.0);
+        assert_eq!(Run::from_save(&r.save_text()).map(|f| f.relics), Ok(vec![Relic::Carrion]));
+        // The three shops each offer an unowned relic, drawn by the seed:
+        // across seeds every relic comes first somewhere, and one bought
+        // is never offered again.
+        let mut first = std::collections::HashSet::new();
+        for seed in 0..30 {
+            let mut r = Run::new(seed);
+            let mut seen = Vec::new();
+            for _ in 0..7 {
+                r.won(3);
+                if let Some(o) = r.relic_offer {
+                    assert!(!r.relics.contains(&o));
+                    seen.push(o);
+                    r.relics.push(o);
+                }
+            }
+            first.insert(seen[0]);
+            assert_eq!(seen.len(), 3);
+        }
+        assert_eq!(first.len(), 3, "each relic is some seed's first");
+        // Fever sets the slime's sick trail; Backdraft the left ground's fire.
+        let mut r = Run::new(1);
+        assert!(r.engine_keys().is_empty());
+        r.relics = vec![Relic::Fever, Relic::Backdraft];
+        assert_eq!(r.engine_keys(), vec![("sick_trail", "2")]);
+        let mut rr = RoundRules::default();
+        r.round_rules(&mut rr);
+        assert_eq!((rr.backdraft_gap, rr.carrion_secs), (8.0, 0.0));
+        // All three owned: the shop after planet 5 sells none.
+        r.relics.push(Relic::Carrion);
+        r.won(3);
+        r.won(3);
+        r.won(3);
+        r.won(3);
+        r.won(3);
+        assert_eq!((r.depth, r.relic_offer), (6, None), "every relic owned: none more for sale");
     }
 
     /// **Bodies** (gun step E3, Direction 11-24): planet 1's shop sells

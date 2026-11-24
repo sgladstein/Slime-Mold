@@ -1113,6 +1113,11 @@ struct App {
     run_file: Option<std::path::PathBuf>,
     /// The text last written there, so an unchanged run is not rewritten.
     run_saved: String,
+    /// The planet's landing card (`ui::Intro`) and the game time it first
+    /// showed (`INTRO_SECS`, `draw`).
+    intro: Option<(slime_mould::world::ui::Intro, f32)>,
+    /// The first minute's coaching (`draw::Coach`).
+    coach: draw::Coach,
     /// Whether the run's planet is saved mid-game, for the run as it
     /// was when last asked (its seed, depth and the save's text): the main
     /// menu's Run row says "under way" (Look D, 11-24). Kept so the menu
@@ -1243,6 +1248,8 @@ impl App {
             slime: None,
             run_file: None,
             run_saved: String::new(),
+            intro: None,
+            coach: draw::Coach::default(),
             run_mid: None,
             run_checked: None,
             viewer: None,
@@ -1336,6 +1343,13 @@ impl App {
                     core_tier = Some(tier);
                 }
                 None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
+            }
+        }
+        // The run's relics' engine keys (`Run::engine_keys`: Fever's
+        // trail), over the planet's and the tier's.
+        if let Some(r) = a.run.as_ref() {
+            for (k, v) in r.engine_keys() {
+                slime_mould::gpu::set(&mut s, k, v)?;
             }
         }
         let made = match level.map(|l| l.ground) {
@@ -1706,13 +1720,18 @@ impl App {
                 // The planet's name only: its goal is the top line's
                 // (`objective`), and said in a toast too it was there three
                 // times at landing (polish review finding 10, 11-24).
-                self.hud.alert(&tr.mission.name, None, theme::ACCENT);
-                // What the run's tier does to you (`run::does_to_you`).
-                if let Some(r) = self.args.run.as_ref().filter(|r| !r.range) {
-                    let does = slime_mould::mould::run::does_to_you(r.level().tier).says;
-                    if !does.is_empty() {
-                        self.hud.alert(&format!("{}: {does}", title_case(r.level().tier.name())), None, theme::WARN);
-                    }
+                // In a run, the planet's introduction (Direction 11-24): a
+                // card naming its slime and what it does to you, read from
+                // the tier (`run::does_to_you`), so a lap-two planet has
+                // its own. It took the place of two toasts, the planet's
+                // name and "Tier: what it does".
+                let intro = self.args.run.as_ref().filter(|r| !r.range).map(|r| {
+                    let tier = r.level().tier;
+                    slime_mould::world::ui::Intro { kicker: tr.mission.name.clone(), title: title_case(tier.name()), line: slime_mould::mould::run::does_to_you(tier).says.to_string(), alpha: 1.0 }
+                });
+                match intro {
+                    Some(i) => self.intro = Some((i, self.game.as_ref().map_or(0.0, |g| g.time()))),
+                    None => self.hud.alert(&tr.mission.name, None, theme::ACCENT),
                 }
             }
             None => self.hud.alert(&format!("{}: take the slime's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
@@ -2129,6 +2148,14 @@ impl App {
         }
         let run = self.args.run.as_ref().map(|r| r.seed);
         self.star_hint.update(g, run);
+        // The first minute's coaching (`draw::Coach`): a run's first
+        // planet, not yet freed; in the window once until finished.
+        let want = self.args.run.as_ref().is_some_and(|r| !r.range && r.depth == 1 && r.stars.is_empty()) && (self.window.is_none() || settings::get("coached").as_deref() != Some("1"));
+        let was = self.coach.done;
+        self.coach.update(g, run, want);
+        if self.coach.done && !was && self.window.is_some() {
+            let _ = settings::set("coached", "1");
+        }
         // The origin (`origin.rs`, Milestone 2's win): where it is when it
         // forms, when the last stand gathers into it, and its death, each
         // a ping on the minimap at its centre (Space jumps there). The

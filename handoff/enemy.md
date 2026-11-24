@@ -3,31 +3,43 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## Now (2026-11-22 07:15Z, the thread "Make the slime a more interesting enemy")
+## Now (2026-11-24 12:00Z)
 
-- **The origin** (Milestone 2's win, the slime's heart on its start
-  crystal): built on branch `claude/project-thread-noq3o4`, draft PR #699.
-  Do not queue it until the owner calls Milestone 1 done (his card 11-22
-  04:16Z, "Build now, land after M1"); keep it merged up with main. Its
-  numbers, rush measures and Engine's siege fix (regrows only after 4 s
-  unhurt) are in that branch's `wiki/world/run.md`, *The origin*, and its
-  `handoff/enemy.md` section. Engine is building the run bot's siege of the
-  origin on a branch off #699; the two land together.
-- **Merged today:** #690 (held-crystals ceiling), #706 (a snagged hunter's
-  regroup takes back its whole body, up to three radii, `reach_under`).
-- **The Sprawler's threads through its body** (Milestone 1 test 4): three
-  rules tried and not kept, all in `Reports/dead-ends.md` (spacing, room,
-  lanes). Planet 2's body packs 97% of its fine cells, and that packing,
-  not the ceiling, holds its size (lanes freed cells and it grew 18,096 to
-  about 27,400). The lanes prototype's patch and a still are in the
-  project's files, `enemy/lanes-prototype-2026-11-22.patch` and
-  `enemy/lanes-prototype-planet2-180s.png`; a flow rule waits for the Lab
-  after Milestone 1.
-- **Seed 8 planet 1** (the run bot's one loss): not a slime bug. The slime
-  takes a big neighbour crystal by 0:31, its ceiling goes to its slots
-  (twice its landing) and the bot never drains it; Engine's hunt.
-- Next: from Direction (the owner's next play log, or Engine's origin-siege
-  table).
+- **Merged 11-24:** #749 (run-length dials), #756 (P4-8 origins at half,
+  last-stand gather cap), #763/#769 (`time_bosses` buckets, origin
+  `gather_disc`), #775 (sense cuts, bit-identical; on the 1070 sense 3.29
+  -> 3.24 ms, so its cost is memory scatter, which Engine's walker sort
+  #789 cuts), #784 (planet 2 threads at size 0.45, planet 7 scar tissue,
+  planet 6 dreaming; page `Reports/sprawler-threads-2026-11-24/`), #788
+  (planet 8's Dozer, the last stand wakes sleepers via `World::rouse`,
+  `GpuWorld::asleep()`/`scarred()` for Look's HUD, five tier cards from
+  Look's drafts).
+- **Planet 7 retune** (Direction 09:54Z: until the siege wins at least 2 of
+  3 maps in under 12 minutes; levers in order origin size, start size,
+  scar P; Direction 11:29Z adds the gather cap). The killer on map C
+  (1795119328, scar on, cloud bot): the last stand at 2:06 left 21k slime,
+  the bot stalled 144 s, then the origin gathered to 4,311 (cap 4,200) and
+  bit all 53 soldiers in the last minute; lost at 6:42 after landing (main:
+  8:25). Map B (1795106014) is no longer an early wipe: 25 soldiers and
+  46,756 killed at 8:00 when the cloud game was cut off. Engine runs 12
+  games on Scott's PC on main after #784: three maps (also 1795038793) by
+  four arms (as is, `origin_size` 1400 and 1050, `origin_gather_most`
+  1.25); pick the lever from those, put the numbers in the what-is-new
+  line, and change `ORIGIN_SIZE[6]` or `OriginRules::gather_most`.
+- **Then:** raise planets 5, 6 and 8 from half size toward a curve so a
+  planet 8 win costs more than a planet 2 win (Direction; median bot wins
+  P1 4:40, P2 5:57, P3 5:36, P4 ~4:50, P5 4:15, P6 5:31, P8 5:24), by
+  paired seeds on the PC. The Lab found the Dozer pairing easier than the
+  Swarmer alone, so planet 8 likely wants more size.
+- **Planet 4:** change nothing (Direction): smaller raids lost 0 of 3 against
+  2 of 3; raids are Scott's call in play.
+- **Watch on the walker sort (#789):** births pair slot k with k ^ m, one m a
+  tick; with the living packed first they come in pulses. Engine checks
+  slime size sorted against unsorted on the PC; if it drifts, draw each
+  parent's partner on its own (`child_of`, engine.wgsl).
+- **Parked by Direction:** the Death gas relic (needs an engine rule) until
+  planet 7, the curve and the Dozer are done. Fever (`sick_trail` 2) needs
+  nothing from this lane.
 
 ## Mini-boss review (2026-11-20, the thread "Analyse and improve the minibosses")
 

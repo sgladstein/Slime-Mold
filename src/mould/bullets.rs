@@ -48,6 +48,18 @@ const SIGMA_MULT: f32 = 0.25;
 /// Damage a planet deeper (and the cap), as the guns' stats.
 pub const DEPTH_DAMAGE: f32 = 0.04;
 pub const DEPTH_DAMAGE_MAX: f32 = 1.4;
+/// **Lasts** (gun step F's threshold rolls, Direction 11-24 08:54Z and
+/// 09:51Z): how long a lasting payload's effect holds against its rule's
+/// (`Shell::lasting`: a crater, a flare's burn, a dart's lure, a Mind
+/// status), a plain normal draw of its log (the owner, 11-14: "this should
+/// just come out of the normal distribution ... Nothing needs to be
+/// labeled lucky"), wide enough that about one roll in twenty reaches
+/// `LASTING`: a crater held 50 s or more is a gap the slime cannot knit for
+/// most of a fight, a flare burns 7 s, a status holds 15 s. Gas and Mist
+/// are left out: a sleep cloud that outlasts a walker's waking is what
+/// sleep wearing off (11-18) was made to stop.
+const SIGMA_LASTS: f32 = 0.55;
+pub const LASTING: f32 = 2.5;
 /// How the cost follows the grade, and its own luck (sigma of its log).
 pub const COST_POWER: f32 = 1.5;
 pub const COST_LUCK: f32 = 0.15;
@@ -118,6 +130,13 @@ impl Shell {
     /// reader's, a flare's alarm, a torch's fire), not its set's numbers:
     /// the gun range's armory has these in the standard set only, on a tab
     /// of their own (`Run::restock`).
+    /// A payload whose effect has a time that its bullet's `lasts` roll
+    /// stretches (gun step F): the blast's and the bomb's craters, the
+    /// flare's burn, the dart's lure, the Mind statuses.
+    pub fn lasting(self) -> bool {
+        self.mind() || matches!(self, Shell::Blast | Shell::Bomb | Shell::Flare | Shell::Dart)
+    }
+
     pub fn special(self) -> bool {
         self.mind() || self.reader() || matches!(self, Shell::Flare | Shell::Dart | Shell::Torch)
     }
@@ -260,6 +279,9 @@ pub struct Ammo {
     pub spread: u16,
     /// Budget points (`Card::cost`).
     pub cost: u8,
+    /// How long its effect lasts, times its rule's, in hundredths (100
+    /// for a payload that does not last, `Shell::lasting`).
+    pub lasts: u16,
 }
 
 impl Default for Ammo {
@@ -273,7 +295,7 @@ impl Ammo {
     /// A payload's standard bullet: damage `DAMAGE`, every multiplier 1,
     /// its fixed card's cost. What `Card::Blast` and the rest fire.
     pub fn standard(shell: Shell) -> Ammo {
-        Ammo { shell, set: Set::Standard, depth: 1, damage: (DAMAGE * 10.0) as u16, speed: 100, range: 100, spread: 100, cost: shell.base() as u8 }
+        Ammo { shell, set: Set::Standard, depth: 1, damage: (DAMAGE * 10.0) as u16, speed: 100, range: 100, spread: 100, cost: shell.base() as u8, lasts: 100 }
     }
 
     /// A bullet of any payload and set, rolled for the planet at `depth`
@@ -313,11 +335,15 @@ impl Ammo {
         self.spread as f32 / 100.0
     }
 
+    pub fn lasts(&self) -> f32 {
+        self.lasts as f32 / 100.0
+    }
+
     /// The roll against a standard bullet: the geometric mean of damage,
     /// speed (half weight), range and tightness (half weight); 1 is a
     /// standard bullet. Its cost follows it.
     pub fn grade(&self) -> f32 {
-        let l = [(self.damage() / DAMAGE).ln(), 0.5 * self.speed().ln(), self.range().ln(), -0.5 * self.spread().ln()];
+        let l = [(self.damage() / DAMAGE).ln(), 0.5 * self.speed().ln(), self.range().ln(), -0.5 * self.spread().ln(), 0.5 * self.lasts().ln()];
         (l.iter().sum::<f32>() / 3.0).exp()
     }
 
@@ -338,12 +364,13 @@ impl Ammo {
     /// The text form inside a round (`rounds::parse`, `Cmd::Load`):
     /// `ammo/SHELL/SET/DEPTH/DAMAGE/SPEED/RANGE/SPREAD/COST`, whole numbers.
     pub fn word(&self) -> String {
-        format!("ammo/{}/{}/{}/{}/{}/{}/{}/{}", self.shell.key(), self.set.key(), self.depth, self.damage, self.speed, self.range, self.spread, self.cost)
+        format!("ammo/{}/{}/{}/{}/{}/{}/{}/{}/{}", self.shell.key(), self.set.key(), self.depth, self.damage, self.speed, self.range, self.spread, self.cost, self.lasts)
     }
 
     pub fn from_word(s: &str) -> Option<Ammo> {
         let w: Vec<&str> = s.split('/').collect();
-        if w.len() != 9 || w[0] != "ammo" {
+        // Nine words before Lasts (2026-11-24): it lasts as its rule.
+        if !(9..=10).contains(&w.len()) || w[0] != "ammo" {
             return None;
         }
         let n = |i: usize| w[i].parse::<u16>().ok();
@@ -357,6 +384,10 @@ impl Ammo {
             range: m(6)?,
             spread: m(7)?,
             cost: w[8].parse().ok()?,
+            lasts: match w.get(9) {
+                Some(v) => v.parse::<u16>().ok()?.clamp(MULT_MIN, MULT_MAX),
+                None => 100,
+            },
         })
     }
 }
@@ -387,7 +418,14 @@ fn roll_with(shell: Shell, set: Set, depth: u32, r: &mut Rng) -> Ammo {
         range: mult(lean.range, zr),
         spread: mult(lean.spread, zp),
         cost: 0,
+        lasts: 100,
     };
+    // Drawn after the cost's luck, so every other number of a seed's roll
+    // is what it was before Lasts.
+    let (zc, zl) = (zc, z());
+    if shell.lasting() {
+        a.lasts = mult(1.0, zl * SIGMA_LASTS / SIGMA_MULT);
+    }
     let cost = shell.base() as f32 * a.grade().powf(COST_POWER) * (COST_LUCK * zc).exp();
     a.cost = cost.round().clamp(1.0, u8::MAX as f32) as u8;
     a
@@ -410,6 +448,35 @@ mod tests {
             assert!((a.grade() - 1.0).abs() < 1e-6);
             assert_eq!(Shell::of(s.card()), Some(s));
         }
+    }
+
+    /// **Lasts** (gun step F's threshold roll): only a lasting payload
+    /// rolls it; about one roll in twenty of those (3 to 8%, Direction's
+    /// aim) crosses `LASTING`, about as many fall under 0.4; the others
+    /// last as their rule; a nine-word save reads as 1.
+    #[test]
+    fn a_lasting_payload_rolls_how_long_it_lasts() {
+        let mut n = 0;
+        let mut long = 0;
+        let mut short = 0;
+        for s in Shell::ALL {
+            for seed in 0..2000 {
+                let a = Ammo::roll_of(s, Set::Standard, seed, 2);
+                if !s.lasting() {
+                    assert_eq!(a.lasts, 100, "{s:?}");
+                    continue;
+                }
+                n += 1;
+                long += usize::from(a.lasts() >= LASTING);
+                short += usize::from(a.lasts() <= 0.4);
+            }
+        }
+        let share = long as f32 / n as f32;
+        eprintln!("lasting rolls: {long} of {n} at {LASTING}x or more ({:.1}%), {short} at 0.4x or less", 100.0 * share);
+        assert!((0.03..=0.08).contains(&share), "{share}");
+        assert!(!Shell::Gas.lasting() && Shell::Blast.lasting() && Shell::Dart.lasting() && Shell::Still.lasting());
+        let old = "ammo/blast/slug/1/193/36/91/70/3";
+        assert_eq!(Ammo::from_word(old).map(|a| a.lasts), Some(100));
     }
 
     #[test]

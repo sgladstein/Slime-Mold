@@ -778,6 +778,29 @@ pub struct RoundRules {
     /// guesses. `set=` keys.
     pub dart_secs: f32,
     pub dart_max: u32,
+    /// **Carrion**, the first relic (gun step F, Direction 11-24 09:51Z;
+    /// `run::Relic::Carrion`): a soldier's shot that kills
+    /// `carrion_kills` walkers or more leaves a lure mark where it hit for
+    /// `carrion_secs` (0: off, the default; the relic sets it), at most
+    /// `carrion_max` live, the oldest replaced. Slime streams to where its
+    /// own died: into the guns of a squad holding a line, onto one being
+    /// overrun. First guesses. `set=` keys.
+    pub carrion_secs: f32,
+    pub carrion_kills: u32,
+    pub carrion_max: u32,
+    /// **Backdraft**, a relic (`run::Relic::Backdraft`, Direction 11-24
+    /// 11:28Z): when a device's fire lights (`cast_device_at`, a Torch in
+    /// its cards), the ground the squads trod in the last `backdraft_secs`
+    /// (`Game::trodden`) that is at least `backdraft_gap` dish cells from
+    /// every living soldier catches too: brush (`device_brush`) and a
+    /// light in a disc of `backdraft_r`, the newest `backdraft_max` spots.
+    /// It walls off the ground a squad left, which is where the slime
+    /// follows it in, and burns a squad that falls back onto it. 0 gap:
+    /// off, the default; the relic sets it. First guesses. `set=` keys.
+    pub backdraft_gap: f32,
+    pub backdraft_r: f32,
+    pub backdraft_secs: f32,
+    pub backdraft_max: u32,
     /// **A device's fire brings its own brush** (gun step E3, Direction
     /// 11-24 07:01Z: a Torch Grenade at the squad's own feet should burn
     /// it as a Tinder brush does, the owner's Noita rule): a fire a body's
@@ -849,6 +872,13 @@ impl Default for RoundRules {
             device_brush: 1.0,
             dart_secs: 12.0,
             dart_max: 4,
+            carrion_secs: 0.0,
+            carrion_kills: 3,
+            carrion_max: 6,
+            backdraft_gap: 0.0,
+            backdraft_r: 4.0,
+            backdraft_secs: 90.0,
+            backdraft_max: 6,
             budget: 10,
             // The germ round's sick pay a sixth of the toolkit's upkeep
             // (10 against 60; 2026-11-17, the game designer's call, 05:40Z:
@@ -888,8 +918,14 @@ impl RoundRules {
     /// A rule by name (`larder-world set=NAME=V`, as `Rules::set`), false
     /// for none: the Mind bullets' and the readers' numbers, to tune by eye.
     pub fn set(&mut self, name: &str, v: f32) -> bool {
-        if name == "dart_max" {
-            self.dart_max = v.max(1.0) as u32;
+        if let Some(n) = match name {
+            "dart_max" => Some(&mut self.dart_max),
+            "carrion_kills" => Some(&mut self.carrion_kills),
+            "carrion_max" => Some(&mut self.carrion_max),
+            "backdraft_max" => Some(&mut self.backdraft_max),
+            _ => None,
+        } {
+            *n = v.max(1.0) as u32;
             return true;
         }
         let r = match name {
@@ -919,6 +955,10 @@ impl RoundRules {
             "torch_light" => &mut self.torch_light,
             "device_brush" => &mut self.device_brush,
             "dart_secs" => &mut self.dart_secs,
+            "carrion_secs" => &mut self.carrion_secs,
+            "backdraft_gap" => &mut self.backdraft_gap,
+            "backdraft_r" => &mut self.backdraft_r,
+            "backdraft_secs" => &mut self.backdraft_secs,
             "trail_fuel" => &mut self.trail_fuel,
             "trail_fuel_gap" => &mut self.trail_fuel_gap,
             // The germ round's own contagion (2026-11-17), in its kit so
@@ -1219,10 +1259,11 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, unlit: false, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0, light: 0.0, fuel: 0.0 };
     let mind = |m: u32| Burst { r: r.mind_r * f, mind: m as u8, ..none };
     let one = match c.payload {
-        Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
+        // A crater lasts as the bullet's roll (`Ammo::lasts`, gun step F).
+        Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs * c.ammo.lasts()), crater_r: k.crater_r * f, ..none },
         Card::Bomb => {
             let br = r.bomb_r * f;
-            Burst { r: br, kill: true, alarm, alarm_r: 2.0 * br, crater: steps(r.bomb_crater_secs), crater_r: r.bomb_crater_r * f, fling: br * r.bomb_ring, fling_steps: steps(r.bomb_secs).max(1), ..none }
+            Burst { r: br, kill: true, alarm, alarm_r: 2.0 * br, crater: steps(r.bomb_crater_secs * c.ammo.lasts()), crater_r: r.bomb_crater_r * f, fling: br * r.bomb_ring, fling_steps: steps(r.bomb_secs).max(1), ..none }
         }
         Card::Gas => Burst { r: k.gas_r * f, gas: steps(k.gas_secs), ..none },
         Card::Germ => Burst { r: k.germ_r * f, germ: true, ..none },
@@ -1412,6 +1453,11 @@ pub struct Rounds {
     darts: Vec<((f32, f32), u64)>,
     /// Darts thrown (each also in `cast`'s route slot).
     pub darted: u32,
+    /// Carrion's live marks (as `darts`) and the marks it has laid.
+    carrion: Vec<((f32, f32), u64)>,
+    pub carrioned: u32,
+    /// Trodden spots Backdraft lit (`backdraft`).
+    pub backdrafts: u32,
     /// Batches run (`flush`) and the bursts in them.
     pub batches: u32,
     pub batched: u32,
@@ -1567,6 +1613,7 @@ impl Rounds {
     pub fn after_step<W: World>(&mut self, g: &mut Game<W>) {
         self.arm(g);
         self.lay_trails(g);
+        self.carrion(g);
         let t = g.world.ticks();
         let tps = g.rules.tps;
         // Each squad casts its own cards (`casts_of`): the army's round, or
@@ -1751,17 +1798,41 @@ impl Rounds {
     /// A dart's hit at `at` (fine cells): a lure mark there for
     /// `dart_secs`, the oldest live dart's taken off first once
     /// `dart_max` are live.
-    fn dart<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32)) {
+    fn dart<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32), lasts: f32) {
         let now = g.world.ticks();
         self.darts.retain(|d| d.1 > now);
         while self.darts.len() >= self.rules.dart_max.max(1) as usize {
             let old = self.darts.remove(0);
             g.lure_marks.retain(|m| (m.at, m.until) != old);
         }
-        let until = now + (self.rules.dart_secs * g.rules.tps as f32).round().max(1.0) as u64;
+        let until = now + (self.rules.dart_secs * lasts * g.rules.tps as f32).round().max(1.0) as u64;
         g.lure_marks.push(LureMark { at, until });
         self.darts.push((at, until));
         self.darted += 1;
+    }
+
+    /// Carrion (`RoundRules::carrion_secs`): this step's soldier shots
+    /// that killed `carrion_kills` or more each leave a lure mark where
+    /// they hit.
+    fn carrion<W: World>(&mut self, g: &mut Game<W>) {
+        let r = &self.rules;
+        if r.carrion_secs <= 0.0 {
+            return;
+        }
+        let now = g.world.ticks();
+        let until = now + (r.carrion_secs * g.rules.tps as f32).round().max(1.0) as u64;
+        let at: Vec<(f32, f32)> = g.last_shots.iter().filter(|s| s.by.is_some() && s.killed >= r.carrion_kills).filter_map(|s| s.hit).collect();
+        let most = r.carrion_max.max(1) as usize;
+        self.carrion.retain(|d| d.1 > now);
+        for p in at {
+            while self.carrion.len() >= most {
+                let old = self.carrion.remove(0);
+                g.lure_marks.retain(|m| (m.at, m.until) != old);
+            }
+            g.lure_marks.push(LureMark { at: p, until });
+            self.carrion.push((p, until));
+            self.carrioned += 1;
+        }
     }
 
     /// A device's cards going off at `at` (`Kit::carry`): as
@@ -1769,8 +1840,46 @@ impl Rounds {
     /// Tinder line does (`RoundRules::device_brush`).
     pub fn cast_device_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32), cards: &[Card]) {
         self.brush = self.rules.device_brush;
-        self.cast_all(g, &casts(cards), at);
+        let cs = casts(cards);
+        self.cast_all(g, &cs, at);
         self.brush = 0.0;
+        if cs.iter().any(|c| c.payload == Card::Torch) {
+            self.backdraft(g);
+        }
+    }
+
+    /// Backdraft (`RoundRules::backdraft_gap`): a device's fire lights the
+    /// ground the squads left (`Game::trodden`), newest first, none within
+    /// `backdraft_gap` of a living soldier. Counts in `backdrafts`.
+    fn backdraft<W: World>(&mut self, g: &mut Game<W>) {
+        let r = self.rules;
+        if r.backdraft_gap <= 0.0 {
+            return;
+        }
+        let sc = g.world.scale();
+        let now = g.world.ticks();
+        let since = now.saturating_sub((r.backdraft_secs * g.rules.tps as f32).round() as u64);
+        let men: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x / sc, s.y / sc)).collect();
+        let spots: Vec<(f32, f32)> = g
+            .trodden
+            .iter()
+            .rev()
+            .filter(|t| t.2 >= since)
+            .filter(|t| men.iter().all(|m| (m.0 - t.0).hypot(m.1 - t.1) >= r.backdraft_gap))
+            .take(r.backdraft_max as usize)
+            .map(|t| (t.0, t.1))
+            .collect();
+        if spots.is_empty() {
+            return;
+        }
+        let k = r.burst_rules(g.rules.tps as f32 * g.world.fine_steps() as f32);
+        for at in spots {
+            let b = Burst { at, r: r.backdraft_r, light: r.torch_light, fuel: r.device_brush.max(0.5), ..Burst::default() };
+            self.queued.push((b, k, Due::Burn));
+            self.queued_turret.push(false);
+            self.backdrafts += 1;
+        }
+        self.flush(g);
     }
 
     fn cast_all<W: World>(&mut self, g: &mut Game<W>, cs: &[Cast], at: (f32, f32)) {
@@ -1996,10 +2105,16 @@ impl Rounds {
         let s = g.world.scale();
         let t = g.world.ticks();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
-        let k = self.rules.burst_rules(fine);
+        let mut k = self.rules.burst_rules(fine);
+        // A Mind status lasts as the bullet's roll (`Ammo::lasts`).
+        let lasts = c.ammo.lasts();
+        if lasts != 1.0 {
+            let stretch = |n: u16| ((n as f32 * lasts).round().clamp(1.0, u16::MAX as f32)) as u16;
+            (k.mind_steps, k.deaf_steps, k.still_steps) = (stretch(k.mind_steps), stretch(k.deaf_steps), stretch(k.still_steps));
+        }
         let mut bs = if c.payload == Card::Plain { plain_bursts(c, at, self.strike, &self.rules, s) } else { bursts(c, at, &self.rules, s, fine) };
         if c.payload == Card::Dart {
-            self.dart(g, at);
+            self.dart(g, at, lasts);
             return;
         }
         if self.brush > 0.0 {
@@ -2054,7 +2169,7 @@ impl Rounds {
                     self.dropped += 1;
                 } else {
                     let every = ((self.rules.flare_every * g.rules.tps as f32).round() as u64).max(1);
-                    let out = t + (self.rules.flare_secs * g.rules.tps as f32).round() as u64;
+                    let out = t + (self.rules.flare_secs * lasts * g.rules.tps as f32).round() as u64;
                     self.burning.push(Burn { burst, next: t + every, out });
                 }
             }
@@ -2266,6 +2381,66 @@ mod tests {
         rd.cast_at(&mut g, (30.0, 10.0));
         assert!(g.lure_marks.iter().any(|m| m.at == (1.0, 1.0)), "a Lure's own mark is never taken off");
         assert_eq!(g.lure_marks.iter().filter(|m| m.until > g.world.ticks() && m.at.1 == 10.0).count(), 2);
+    }
+
+    /// **Carrion** (gun step F's first relic): off by default; on, a
+    /// soldier's shot that killed `carrion_kills` leaves a lure mark where
+    /// it hit, a turret's or a thinner kill none, at most `carrion_max`.
+    /// And **Lasts**: a blast bullet's crater, a dart's lure and a flare's
+    /// burn hold for the roll's times their rule's.
+    #[test]
+    fn carrion_draws_slime_to_kills_and_lasts_stretches_craters() {
+        use crate::mould::larder_world::{race_world, Shot};
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+        g.step();
+        let shot = |at: (f32, f32), killed: u32, by: Option<usize>| Shot { from: (0.0, 0.0), to: at, hit: Some(at), killed, by, turret: None, fired: true, cast: 0, r: 1.0 };
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        g.last_shots = vec![shot((50.0, 50.0), 10, Some(0))];
+        g.lure_marks.clear();
+        rd.after_step(&mut g);
+        assert!(g.lure_marks.is_empty() && rd.carrioned == 0, "off without the relic");
+        let mut rd = Rounds::new(Vec::new(), RoundRules { carrion_secs: 3.0, carrion_max: 2, ..RoundRules::default() });
+        g.last_shots = vec![shot((50.0, 50.0), 10, Some(0)), shot((60.0, 50.0), 2, Some(0)), shot((70.0, 50.0), 10, None), shot((80.0, 50.0), 3, Some(1)), shot((90.0, 50.0), 5, Some(1))];
+        rd.after_step(&mut g);
+        let at: Vec<f32> = g.lure_marks.iter().map(|m| m.at.0).collect();
+        assert_eq!((rd.carrioned, at), (3, vec![80.0, 90.0]), "soldiers' kills of 3 or more, the newest two");
+        assert_eq!(g.lure_marks[0].until - g.world.ticks(), 3 * g.rules.tps as u64);
+        // Lasts.
+        let r = RoundRules::default();
+        let c = casts(&[Card::Ammo(Ammo { lasts: 300, ..Ammo::standard(Shell::Blast) })])[0];
+        let plain = casts(&[Card::Blast])[0];
+        let crater = |c: &Cast| bursts(c, (10.0, 10.0), &r, 2.0, 30.0)[0].crater;
+        assert_eq!(crater(&c), 3 * crater(&plain), "a crater lasting 3x");
+        let mut rd = Rounds::new(Vec::new(), r);
+        g.lure_marks.clear();
+        rd.cast_cards_at(&mut g, (20.0, 20.0), &[Card::Ammo(Ammo { lasts: 250, ..Ammo::standard(Shell::Dart) })]);
+        assert_eq!(g.lure_marks[0].until - g.world.ticks(), (r.dart_secs * 2.5 * g.rules.tps as f32) as u64, "a dart's lure 2.5x");
+    }
+
+    /// **Backdraft** (a relic, 11-24): off by default. On, a device's Torch
+    /// lights the trodden spots (`Game::trodden`) at least `backdraft_gap`
+    /// from every living soldier, newest first, at most `backdraft_max`,
+    /// none older than `backdraft_secs`; a device with no Torch lights
+    /// none.
+    #[test]
+    fn backdraft_lights_the_ground_the_squads_left() {
+        use crate::mould::larder_world::race_world;
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+        g.step();
+        let now = g.world.ticks();
+        let sc = g.world.scale();
+        let me = g.soldiers.iter().find(|s| s.alive).map(|s| (s.x / sc, s.y / sc)).expect("a soldier");
+        let old = now.saturating_sub(200 * g.rules.tps as u64);
+        g.trodden = vec![(me.0 + 30.0, me.1, old), (me.0 + 3.0, me.1, now), (me.0 + 20.0, me.1, now), (me.0, me.1 + 20.0, now), (me.0 - 20.0, me.1, now)];
+        let at = (me.0 * sc, me.1 * sc);
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        rd.cast_device_at(&mut g, at, &[Card::Torch]);
+        assert_eq!(rd.backdrafts, 0, "off without the relic");
+        let mut rd = Rounds::new(Vec::new(), RoundRules { backdraft_gap: 8.0, backdraft_max: 2, ..RoundRules::default() });
+        rd.cast_device_at(&mut g, at, &[Card::Blast]);
+        assert_eq!(rd.backdrafts, 0, "no fire, no backdraft");
+        rd.cast_device_at(&mut g, at, &[Card::Torch]);
+        assert_eq!(rd.backdrafts, 2, "the newest two far enough and recent enough");
     }
 
     /// **The element family** (2026-11-17, step D): a torch is a payload
@@ -2920,8 +3095,8 @@ mod tests {
     /// it writes and reads back as text in a round.
     #[test]
     fn a_bullet_cards_numbers_ride_its_shots() {
-        let slug = Ammo { shell: Shell::Plain, set: Set::Slug, depth: 1, damage: 200, speed: 50, range: 50, spread: 100, cost: 2 };
-        let fast = Ammo { shell: Shell::Blast, set: Set::Needle, depth: 1, damage: 400, speed: 200, range: 150, spread: 50, cost: 5 };
+        let slug = Ammo { shell: Shell::Plain, set: Set::Slug, depth: 1, damage: 200, speed: 50, range: 50, spread: 100, cost: 2, lasts: 100 };
+        let fast = Ammo { shell: Shell::Blast, set: Set::Needle, depth: 1, damage: 400, speed: 200, range: 150, spread: 50, cost: 5, lasts: 100 };
         let round = vec![Card::Ammo(slug), Card::Wide, Card::Ammo(fast)];
         assert_eq!(parse(&name(&round)), Some(round.clone()), "{}", name(&round));
         assert_eq!(cost(&round), 2 + 2 + 5);

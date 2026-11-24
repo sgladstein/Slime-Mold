@@ -71,6 +71,12 @@ pub enum Tier {
     /// Walks toward the alarm a strike lays (`alarm_weight` +3), so it
     /// floods the place it was hit. Counter: a kill zone.
     Swarmer,
+    /// The Dozer (2026-11-24, Direction's planet 8 and its name): the
+    /// Swarmer's charge with the Sleeper's sleep. Away from its crystals'
+    /// scent its walkers doze off, so every charge ends in a sleeping
+    /// field where it stopped; a shot's alarm wakes the walkers round it,
+    /// and awake they charge again. Counter: pick the fights you wake.
+    Dozer,
 }
 
 /// The shared keys of the spore flight: spores follow the food scent,
@@ -78,7 +84,7 @@ pub enum Tier {
 const SPORE: [(&str, &str); 4] = [("spore_scent", "1"), ("spore_reach", "36"), ("spore_land", "1"), ("spore_deposit", "0.2")];
 
 impl Tier {
-    pub const ALL: [Tier; 7] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge];
+    pub const ALL: [Tier; 8] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge, Tier::Dozer];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -89,6 +95,7 @@ impl Tier {
             Tier::Sporer => "sporer",
             Tier::Sleeper => "sleeper",
             Tier::Swarmer => "swarmer",
+            Tier::Dozer => "dozer",
         }
     }
 
@@ -192,6 +199,22 @@ impl Tier {
             // (`Reports/mould-tiers-campaign-2026-11-12.md`, *Habituation*).
             // Germ resistance 15, as the Swarmer's.
             Tier::Grudge => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "0.5"), ("germ_resist", "15")],
+            // The Sleeper's sleep (its rate, rest, deposit, wake bars,
+            // relay and death in sleep) on the Swarmer's alarm, with the
+            // Swarmer's germ resistance: the germ is weak on a charger, and
+            // a dormant walker neither catches nor lays it anyway.
+            Tier::Dozer => vec![
+                ("sleep_rate", "0.01"),
+                ("sleep_deposit", "0.3"),
+                ("wake_scent", "1"),
+                ("wake_alarm", "1"),
+                ("alarm_keep", "0.98"),
+                ("alarm_relay", "20"),
+                ("alarm_weight", "3"),
+                ("sleep_rest", "600"),
+                ("sleep_death", "0.0001"),
+                ("germ_resist", "15"),
+            ],
         }
     }
 
@@ -366,6 +389,7 @@ mod tests {
         assert!(on(Tier::Sporer).spore_rate > 0.0 && on(Tier::Sporer).spore_burst > 0.0);
         assert!(on(Tier::Sleeper).sleep_rate > 0.0 && on(Tier::Sleeper).sleep_rest > 0);
         assert!(on(Tier::Swarmer).alarm_weight > 0.0 && on(Tier::Swarmer).sleep_rate == 0.0);
+        assert!(on(Tier::Dozer).alarm_weight > 0.0 && on(Tier::Dozer).sleep_rate > 0.0 && on(Tier::Dozer).sleep_rest > 0);
         assert!((on(Tier::Drifter).sensor_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-6, "degrees become radians");
         assert!(on(Tier::Sprawler).explore_steps > 0 && on(Tier::Sprawler).explore_spread > 0.0);
         {
@@ -379,7 +403,7 @@ mod tests {
         assert!(on(Tier::Trunk).sensor_angle < BigParams::today().sensor_angle && on(Tier::Trunk).keep > BigParams::today().keep);
         // Every tier with an alarm rule keeps its alarm (a field that decays
         // in one step does nothing).
-        for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge] {
+        for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge, Tier::Dozer] {
             let p = on(t);
             assert!(p.alarm_keep > 0.5, "{}", t.name());
         }

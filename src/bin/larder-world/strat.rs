@@ -280,7 +280,10 @@ pub(super) struct Plan {
     /// stood two to three minutes with the slime at a fifth, harvesting
     /// nothing, while the origin gathered. With `storm` over 0 the siege
     /// also starts once the slime is down to `storm` times what it was when
-    /// the bot landed and the squad holds `STORM_ARMY` soldiers. 0: off.
+    /// the bot landed and the squad holds `STORM_ARMY` soldiers. First
+    /// games (batch q, 1070, army 20): map A won at 4:59 (0.35) and 4:24
+    /// (0.5) where the bot without it held the origin untouched for 12
+    /// minutes; map C lost both early (see `STORM_ARMY`). 0: off.
     pub storm: f32,
 }
 
@@ -1440,8 +1443,11 @@ fn hold(g: &mut Game<GpuWorld>, p: &Plan, q: usize) {
 
 /// The squad `Plan::storm` needs before it storms the origin: on planet 7
 /// map B (11-24) the bot never held more than 13, and 13 walked into an
-/// origin of 1,854 would only feed it.
-const STORM_ARMY: usize = 20;
+/// origin of 1,854 would only feed it. 20 was too few: on map C the slime
+/// shrinks to a quarter by 2:00 with few walkers killed, so at 20 the
+/// squad stormed at 2:00 and lost all 20 (storm 0.35 and 0.5 alike, where
+/// the bot without the storm won at 7:19).
+const STORM_ARMY: usize = 40;
 
 /// The siege's closest stand to the origin's middle (`hunt`).
 const SIEGE_MIN: f32 = 2.0;

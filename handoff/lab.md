@@ -179,5 +179,18 @@ A second slime species that fights the first; the player's own mould
   page "Walker Sort". Code `247b6730` (`LAB_SORT`, `LAB_SORT_LOG`),
   `a99924b4` (`LAB_SORT_PACK`). 1070: step 9.46 to 5.27 ms; seven pairs
   play the same. Open: Engine's pack-only 1070 run, to add to the report.
+- 2026-11-24: **feeding the march, planet 4's late raids** (brief from
+  Direction 09:14Z). Report
+  [`Reports/lab-march-counter-2026-11-24/`](../Reports/lab-march-counter-2026-11-24/README.md),
+  page "March Counter". Code `14ba8f8f` (`LAB_FEED`, `LAB_HUNGER`,
+  `LAB_MARCH_LOG`). No march wall in the rig (a still squad of 8 lost no
+  one to a march, mini-bosses off); feeding starved a wanderer on seed 2.
+  Open: a rig where the march is the wall, from Direction.
+- 2026-11-24: **a charged crystal as bait for a mini-boss** (brief from
+  Direction 10:34Z). Report
+  [`Reports/lab-crystal-bait-2026-11-24/`](../Reports/lab-crystal-bait-2026-11-24/README.md),
+  page "Crystal Bait". Code `8573ff93` (the `drain@X,Y` hand), with
+  `LAB_FEED` and `set=boss_kind=2`. Wiped 2 of 6 off, 0 of 6 bait; the
+  wanderer broke in 3 of 6 bait. Open: the trade itself (stage the boss).
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.

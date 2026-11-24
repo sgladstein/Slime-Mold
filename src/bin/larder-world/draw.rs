@@ -2262,6 +2262,15 @@ impl App {
             .collect();
         let throw = ghost.and_then(|(id, at, from)| self.throw_ghost(g, id, at, from));
         m.hint = self.star_hint.show.clone();
+        m.coach = self.coach.show.clone();
+        m.tell = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| slime_tell(g, r.level().tier));
+        // The landing card: whole for `INTRO_SECS` of game time (it holds
+        // while paused), then fading over `INTRO_FADE`.
+        m.intro = self.intro.as_ref().and_then(|(i, at)| {
+            let since = g.time() - at;
+            let a = ((INTRO_SECS + INTRO_FADE - since) / INTRO_FADE).clamp(0.0, 1.0);
+            (a > 0.0).then(|| slime_mould::world::ui::Intro { alpha: a, ..i.clone() })
+        });
         (m.ghost_ok, m.ghost_note) = match ghost {
             _ if throw.is_some() => {
                 let (_, ok, note) = throw.as_ref().unwrap();
@@ -3258,6 +3267,48 @@ impl App {
     }
 }
 
+/// The planet's slime's trait as a number the simulation already keeps
+/// (Direction 11-24, the planet's introduction, job 2): no invented meter,
+/// and none where the simulation has no cheap number. The Sleeper and the
+/// Dozer: the share of the slime asleep (`GpuWorld::asleep`, the engine's
+/// per-frame count); the Grudge: the share standing on full scar, where
+/// it grew back tough (`GpuWorld::scarred`); the Swarmer: how near its
+/// last stand is (the slime against its peak, `RaidRules::last_stand_at`).
+fn slime_tell(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> Option<(Icon, String, String)> {
+    use slime_mould::mould::tiers::Tier;
+    let alive = g.mould.max(1) as f32;
+    let pct = |n: usize| (100.0 * n as f32 / alive).round().min(100.0) as u32;
+    match tier {
+        Tier::Sleeper | Tier::Dozer => {
+            let n = g.world.asleep();
+            Some((Icon::Sleep, format!("{}% asleep", pct(n)), format!("{} of the slime's {} are asleep; shots and noise wake them", grouped(n), grouped(g.mould))))
+        }
+        Tier::Grudge => {
+            let n = g.world.scarred();
+            Some((Icon::Shield, format!("{}% on old scar", pct(n)), format!("{} of the slime's {} stand where you hurt it before, and grew back tough there", grouped(n), grouped(g.mould))))
+        }
+        Tier::Swarmer => {
+            let r = &g.rules.raid;
+            if !r.last_stand || g.peak == 0 {
+                return None;
+            }
+            // (Past the line the stand has fired: `Raids` keeps that to
+            // itself, and the slime does not climb back over its peak's
+            // quarter fast.)
+            if (g.mould as f32) < r.last_stand_at * g.peak as f32 {
+                return Some((Icon::Alert, "All of it is coming".into(), "Cut below a quarter of its peak, the slime has rushed you with everything it has".into()));
+            }
+            let now = (100.0 * g.mould as f32 / g.peak as f32).round() as u32;
+            Some((Icon::Alert, format!("{now}% of its peak, all rush at {:.0}%", 100.0 * r.last_stand_at), "The slime against the most it has been; below the second number all of it charges you at once".into()))
+        }
+        _ => None,
+    }
+}
+
+/// Game seconds the landing card (`ui::Intro`) stays whole, and fades.
+const INTRO_SECS: f32 = 9.0;
+const INTRO_FADE: f32 = 1.5;
+
 /// The goal line while a planet has its origin (Milestone 2, `origin.rs`;
 /// Look and interface, 2026-11-24): what to kill and how much is left of
 /// it, then the die-back's seconds once it breaks, in place of the
@@ -3275,4 +3326,65 @@ fn origin_line(g: &Game<GpuWorld>, line: String) -> String {
         }
     };
     format!("{warn}{goal}")
+}
+
+/// **The first minute** (Direction 11-24, the planet's introduction, job
+/// 3): on a run's first planet, before it has been freed, three short
+/// steps in a panel over the command bar, each until it is done or its
+/// time is up: how to move, how to fight, what to kill. In the window it
+/// shows until a run finishes it once (`settings` key `coached`); the
+/// films and tests show it on every first planet and never write.
+#[derive(Default)]
+pub(super) struct Coach {
+    /// The planet it is watching (run seed, game time at landing) and
+    /// where the squad stood then.
+    at: Option<(u64, f32)>,
+    from: Option<(f32, f32)>,
+    step: usize,
+    /// Game time the step began.
+    since: f32,
+    pub(super) done: bool,
+    /// What the HUD shows: the step's words, "1 of 3", its opacity.
+    pub(super) show: Option<(String, String, f32)>,
+}
+
+/// The steps' words, and the most game seconds each stays.
+const COACH: [(&str, f32); 3] = [
+    ("Right click the ground to send your squad there, or steer it with W, A, S and D", 25.0),
+    ("Your soldiers shoot slime in reach by themselves. Hold the left button and all of them fire where you point", 14.0),
+    ("Find the slime's heart on its home crystal (Space looks at it) and kill it, or every last bit of slime, to free the planet", 16.0),
+];
+
+/// Game seconds after landing before the first step, so the landing card
+/// is read first.
+const COACH_AFTER: f32 = 4.0;
+
+impl Coach {
+    /// `want`: this planet is one to coach (a run's planet 1, not freed).
+    pub(super) fn update(&mut self, g: &Game<GpuWorld>, run: Option<u64>, want: bool) {
+        self.show = None;
+        let (Some(seed), true, false) = (run, want, self.done) else { return };
+        let t = g.time();
+        let mid = g.active.and_then(|q| g.middle(q));
+        if self.at.map(|a| a.0) != Some(seed) || self.at.is_some_and(|a| t < a.1) {
+            *self = Coach { at: Some((seed, t)), from: mid, since: t + COACH_AFTER, ..Coach::default() };
+        }
+        if t < self.since {
+            return;
+        }
+        // Step 1 is done once the squad has gone 6 dish cells.
+        let moved = matches!((self.from, mid), (Some(a), Some(b)) if ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt() > 6.0 * g.world.scale());
+        let age = t - self.since;
+        let (words, most) = COACH[self.step];
+        if age >= most || (self.step == 0 && moved && age > 2.0) {
+            self.step += 1;
+            self.since = t + 1.0;
+            if self.step == COACH.len() {
+                self.done = true;
+            }
+            return;
+        }
+        let a = (age / 0.5).min(1.0) * ((most - age) / 1.0).clamp(0.0, 1.0);
+        self.show = Some((words.to_string(), format!("{} of {}", self.step + 1, COACH.len()), a));
+    }
 }

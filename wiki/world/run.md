@@ -13,6 +13,8 @@ sources:
   - Reports/fruiting-2026-11-20/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/lab-crystal-bait-2026-11-24/README.md
+  - Reports/lab-march-counter-2026-11-24/README.md
   - Reports/lab-steering-2026-11-17/README.md
   - Reports/late-threat-2026-11-20/README.md
   - Reports/lure-field-2026-11-18/README.md
@@ -282,7 +284,7 @@ soldiers at 2:30. A bot that backs off farther, or the Sprawler's smell
 turned down to the plain slime's, gains a little on 2 of 3 seeds; the
 slime at 0.6 of its size builds 18 to 24 soldiers on all three, at 0.8
 only seed 1 holds. Seed 2 lands by a free crystal of 365,000 and builds 30
-soldiers at today's size. The size is Direction's to set.
+soldiers at today's size. The size is Direction's to set. Since 11-24 its body is threads (Direction's pick from the Lab's prototype, [report](../../Reports/lab-threads-2026-11-24/README.md); GPU only, `gpu::Settings::thread_lanes`, `thread_shuttle`, with its trail kept 0.92 and sensors at 6): lanes let a calm walker step into a full cell holding as much trail as its own, up to 3 more there, and a fed walker walks out down the crystals' scent and back when hungry, so the disc round each crystal opens into thick spokes with bare ground between. The view's veil now paints only where walkers stand (Look's gate, `smoothstep(0.02, 0.12, wide)`), so the gaps show bare ground. Threaded, the body packs more walkers into the same ground and filled its birth ceiling, where the packed one was held by room: run seed 1 with an idle squad, 26,725 walkers at 2:00 against 14,317. So planet 2's size went from 0.6 to 0.45 (`tier_size`): 15,593 at 2:00, landing 10,384 against 13,845, the spokes the same ([page](../../Reports/sprawler-threads-2026-11-24/README.md)).
 
 Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 [report](../../Reports/run-progression-2026-11-15/does-to-you.md)), each
@@ -306,7 +308,7 @@ charge); the Sporer bursts into spores at an alarm of 0.3; the
 Sleeper wakes at an alarm of 0.3; the Grudge (planet 7 since 11-17, when
 its scar reached the GPU; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md))
 reads the scar where it was hit at twice the campaign tier's weight
-(`scar_weight` 1, a first number; one film, seed 1 with four soldiers standing: gone at 0:40 against 0:48 with it off, a small effect). Run seed 1 at 2:00, each ends or wears the
+(`scar_weight` 1, a first number; one film, seed 1 with four soldiers standing: gone at 0:40 against 0:48 with it off, a small effect). The Sleeper's nameable thing since 11-24 is that it grows while it sleeps (Direction's pick from the Lab's prototype, [report](../../Reports/lab-sleeper-2026-11-24/README.md); GPU only, `gpu::Settings::dream`): a sleeping walker buds a sleeping child at 0.003 a step, at no cost, under the birth ceiling and only on ground under half `wake_scent` (buds on the crystals' scent woke at once and woke the body round them in waves of 100,000 with no shot fired). Its card reads "It grows while it sleeps. Every minute you farm, there is more to wake". The Lab's planet 6, seed 1: 162,813 sleeping at 2:00 against 115,022 off; the GPU test, a race world with a ceiling of twice its walkers: 1,650 asleep at 40 s against 1,351. The Grudge's, since 11-24, is scar tissue (Direction's pick from the Lab's prototype, [report](../../Reports/lab-scar-tissue-2026-11-24/README.md); GPU only, `gpu::Settings::scar_tough`): a blow on a walker standing on scar misses with chance 0.5 x min(scar / 2,000, 1), so ground the squad has fought over for about a minute grows slime that shrugs off half its hits, and fire burns the scar off where it burns (`scar_burn`). The card reads "Where you hurt it, it grows back tough. Don't fight on old ground". The view's scar tissue is now that toughness: `SCAR_FULL` 2,000, linear, where 1.0 read any scar at all as full (Look's number). The GPU test: one killing burst on scar twice the full mark leaves 39 of 76 walkers alive at 0.5, none with it off. Planet 8 has its own slime since 11-24, the Dozer (Direction: "P8 = the Swarmer that naps"; the Lab's pairing, [report](../../Reports/lab-pairing-2026-11-24/README.md)): the Sleeper's sleep on the Swarmer's charge, so its walkers doze off away from their crystals' scent and a shot's alarm (0.3) wakes the ground round it into a charge; it keeps the Swarmer's lunge and last stand, and the last stand now wakes every sleeper first (`World::rouse`), where before a dormant walker neither sensed nor moved and a half-asleep body sent half. Its card reads "It sleeps off every charge. Each shot wakes it, and awake it charges"; past planet 8 the Sleeper, Grudge and Dozer take turns (`LADDER`), where planet 8 rolled one of the Sporer, Sleeper and Grudge. A bare planet 8 start (run seed 1, greedy hand, 9 soldiers, no upgrades) landed asleep and woke where the squad fired; the squad fell at 0:48, as bare late starts do. Its size waits for the planets 5-8 curve. Run seed 1 at 2:00, each ends or wears the
 four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost or siren (D10; `run_hidden` hides
@@ -424,6 +426,27 @@ first guesses, `Run::luck`):
   a row with none (`since_rare`) gives the next one a one-in-three-more
   chance of one, so the fourth surely shows one.
 - Trigger and Expire are tier 3 beside Multicast, the plan's rule cards.
+- **Lasts** (threshold rolls, Direction 09:51Z): a rolled Blast, Bomb,
+  Flare, Dart or Mind bullet rolls how long its crater, burn, lure or
+  status holds, a plain normal draw (`Ammo::lasts`, sigma 0.55 of its
+  log): about one in twenty reaches `LASTING` 2.5x, shown on the card's
+  Lasts bar. Gas and Mist never roll it: a sleep cloud outlasting a
+  walker's waking is what sleep wearing off (11-18) stopped.
+- **Relics**: one unowned relic for sale, drawn by the run's seed, on a
+  Relics tab in the shops after planets 3, 5 and 7 (`Relic`,
+  `RELIC_DEPTHS`); three exist, so a run that buys each sees all three.
+  - **Carrion** (300): a soldier's shot that kills 3 walkers or more
+    leaves a lure mark there for 3 s, at most 6
+    (`RoundRules::carrion_secs`), so slime streams to its dead, into a held
+    line's guns or onto an overrun squad.
+  - **Fever** (250): sick slime lays twice the trail (the engine's
+    `sick_trail` 2, `Run::engine_keys`), so a germ's sickness runs farther
+    down the tubes it thickens. Useless without the germ (planet 4 on).
+  - **Backdraft** (300): a device's Torch also lights the ground the
+    squads trod in the last 90 s (`Game::trodden`) that is 8 or more dish
+    cells from every living soldier, the newest 6 spots
+    (`RoundRules::backdraft_gap`): fire on the ground the slime follows a
+    squad in by, and on the ground it falls back to.
 
 ## Saving the run
 
@@ -550,10 +573,14 @@ Harder from planet 2 since 2026-11-22 (the owner won all 8 planets that night lo
 
 Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1-4 in under 5:02 with 14 to 35 soldiers and met 0 to 3 raids, since the first was drawn at about 4:00): the first raid at about 2:00 and the next about 100 s apart (`RAID_FIRST`, `RAID_EVERY`; 4:00 and 150 s on planet 1), and a touching walker bites 2.5 instead of 2 (`DRAIN`). Mini-bosses then: grade 0.2 to 0.7 on planet 2, pace 1.2 to 1.5 times the slime's, broken under 20% (12% by planet 8) of their first members instead of 30% (`BossRules::for_depth`). A raid's marchers take 2 blows on planets 2-3, 3 on 4-6 and 4 on 7-8 until the march meets the squad or its target (`RAID_ARMOUR`, `RaidRules::march_armour`; the owner: tougher slime has a better chance of reaching the soldiers).
 
+The Lab tried a counter to planet 4's armoured march from the slime's own food rule (11-24, its branch only): a hungry marcher on a charged crystal leaves its march and eats. A still squad of 8 lost no one to planet 4's marches on three seeds with mini-bosses off, so the rig had no march wall to counter; feeding did starve a wanderer heading for a crystal on one seed ([march counter](../../Reports/lab-march-counter-2026-11-24/README.md)). Tried as a wanderer counter on planets 4 and 7 (every mini-boss a wanderer), no bait squad was wiped against 2 of 6 off, and the wanderer broke on a charged crystal in 3 of 6 ([crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md)).
+
 ## Sources
 
 - [balance review](../../Reports/balance-review-2026-11-20/README.md), *Findings*.
 - [balance review, 11-24](../../Reports/balance-review-2026-11-24/README.md), *Ranked findings*.
+- [march counter](../../Reports/lab-march-counter-2026-11-24/README.md), *Results*.
+- [crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md), *Results*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
 - [arranging the gun](../../Reports/gun-order-2026-11-14.md), *What was built*.
 - [the gun range](../../Reports/gun-range-2026-11-15.md), *What was built*.
