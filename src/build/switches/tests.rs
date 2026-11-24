@@ -217,6 +217,9 @@ const NOT_SWITCHES: &[(&str, &str)] = &[
     ("gas_death", CAST),
     ("gas_keep", CAST),
     ("spin_curl", CAST),
+    // The origin's die-back (`World::set_starve`, 11-22): the game turns it
+    // on when the origin breaks, never a key.
+    ("no_eat", CAST),
     // The crater's cut for the look A/B of a shot's hole (11-15).
     ("scorch_keep", FILM),
     // `set=boss_kind=N` forces a mini-boss's kind for its film; 0 draws

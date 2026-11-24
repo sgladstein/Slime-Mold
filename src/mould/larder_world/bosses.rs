@@ -1622,6 +1622,14 @@ impl<W: World> Game<W> {
     /// never ignored for a body further off (review of the mini-boss PR).
     /// One function on top of the default aim so the gun thread's aim
     /// cards can put their own rule over it.
+    ///
+    /// The origin too (`origin.rs`, 11-22, Engine's siege table on #699):
+    /// soldiers beside it on Fight shot the densest slime in reach, the
+    /// body round it, not its members, so it seldom lost the 2% a second
+    /// that stops its regrowth (run seed 2's planet 1: in range from 2:50
+    /// to 12:00, it held 2,188 of 2,314). Only for a soldier within its
+    /// reach (`OriginRules::near` past its crystal's rim, where it lunges),
+    /// so it never draws fire from across the map.
     pub fn boss_aim(&self, k: usize) -> Option<((f32, f32), f32)> {
         self.boss_aim_within(k, f32::INFINITY)
     }
@@ -1635,14 +1643,17 @@ impl<W: World> Game<W> {
         let sc = self.world.scale();
         let reach = self.shot_reach(k) * sc;
         let mine = if s.touching > 0 { self.rules.defend * sc } else { f32::INFINITY }.min(limit);
+        let origin = self.stand.live.filter(|h| h.origin && h.members > 0 && self.origin_reaches(k)).map(|h| (h.centre, h.members));
         self.bosses
             .live
             .iter()
             .filter(|b| b.members > 0)
-            .map(|b| {
-                let r = (b.members as f32 / std::f32::consts::PI).sqrt();
-                let (dx, dy) = (b.centre.0 - s.x, b.centre.1 - s.y);
-                (b.centre, r, dx.hypot(dy), (dx, dy))
+            .map(|b| (b.centre, b.members))
+            .chain(origin)
+            .map(|(centre, members)| {
+                let r = (members as f32 / std::f32::consts::PI).sqrt();
+                let (dx, dy) = (centre.0 - s.x, centre.1 - s.y);
+                (centre, r, dx.hypot(dy), (dx, dy))
             })
             .filter(|&(c, r, d, _)| d - r <= reach.min(mine) && self.clear_line((s.x, s.y), c))
             .min_by(|a, b| a.2.total_cmp(&b.2))

@@ -279,6 +279,33 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// planet 1's quarter plays only when they are turned on there
 /// (`set=strikers=1`, or `FIRST_PLANET` moved back); a 0 here would leave
 /// them on and doing nothing (the bug check's note on #606).
+/// **The origin's members by planet**, 1 to 8 (`OriginRules::size`,
+/// `origin.rs`, 2026-11-22): the body it gathers at the landing and
+/// regrows to, half as much again at most (`OriginRules::most`). The
+/// design's first numbers (400, 600, 900) took about 900, 1,300 and 1,900
+/// at their first wide takes anyway, over the most they could regrow to,
+/// so a struck origin never regrew and 44 soldiers walking straight at it
+/// won planet 1 at 1:35 with none lost (run seed 1, lavapipe, 11-22).
+/// Second pass the same morning (44 soldiers, `hand=origin`): planet 2 at
+/// 1,200 wiped them at 1:50, at 800 wiped them too, at 700 they won at
+/// 2:05 with 34 lost (24 were wiped), at 600 won at 1:45 with 10 lost; its
+/// strikers and Mortar fight there too. Planet 1 lost none at any try
+/// (bite 3, armour 15, a lunge reach of 4 or 6 radii, the flinch off): 44
+/// guns cut a lunge down before it touches them. So planet 1 is bigger,
+/// 1,200, for time (won at 2:54 against 2:13 at 800), and planet 2 lower.
+/// Then Engine's siege (the run bot round the origin, seeds 1 to 3 on
+/// planet 1, after Squad's near-first rule of #715, which keeps a soldier
+/// on the slime 5 cells off before an origin 20 off) wore it down only 50
+/// to 70 a minute and never broke it in 12 min (it held 1,929 to 2,118).
+/// Direction's pick (11-22 08:42Z, of a near origin beating that rule or a
+/// smaller one): planet 1 at 700 and planet 3 at 1,000, so the siege wins
+/// planets 1 to 3 in under 10 min. With each take cut to its shortfall
+/// (`origin.rs`), the siege at these: planet 1 won seeds 1-3 at 4:23, 4:42
+/// and 7:57; planet 3 at 4:00, 4:37 and 9:14; planet 2 won seed 1 at 5:59
+/// but was wiped on seeds 2 and 3 (both won at 4:37 and 5:04 with the
+/// origin off, and seed 3 was wiped at 600 too), so planet 2 is 500: won
+/// seeds 1-3 at 5:49, 5:16 and 5:42, losing 0, 8 and 7.
+pub const ORIGIN_SIZE: [f32; 8] = [700.0, 500.0, 1000.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// The slime's room to regrow over its landing, by planet
 /// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
@@ -517,7 +544,7 @@ pub const CEILING: f32 = 12.0;
 /// or more, every walker left gathers into one armoured heart on its heart
 /// crystal, which lunges at the nearest soldier every 20 s, until it is cut
 /// under 15% of the most it held or is 150 s old. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING)];
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING), ("origin", 1.0)];
 
 /// **The planet each of `ENEMY_RULES` first plays on** (2026-11-20, the
 /// thread "Pace threats across the planets"; the owner that night, after a
@@ -1261,6 +1288,7 @@ impl Run {
             // not the share, binds wherever the band is big (planet 1 run
             // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
+            r.origin.size = ORIGIN_SIZE[depth_index(self.depth)];
             r.ceiling_grow = CEILING_GROW[depth_index(self.depth)];
             r.raid.gap_min = RAID_GAP_MIN[depth_index(self.depth)];
             r.strikers.army_most = STRIKER_ARMY[depth_index(self.depth)];

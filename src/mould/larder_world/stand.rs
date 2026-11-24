@@ -149,6 +149,20 @@ pub struct Heart {
     /// (`StandRules::sated`).
     armed: bool,
     sated: u64,
+    /// The heart is the origin (`origin.rs`): formed at the landing on the
+    /// start crystal, fed from it, its death the planet's win.
+    pub origin: bool,
+    /// The late last stand gathers into it: it takes in every free walker
+    /// on the map (`time_stand`).
+    pub gather: bool,
+}
+
+impl Heart {
+    /// The origin's heart on lump `lump` round `home`, formed at `now`,
+    /// its first lunge no sooner than `next`.
+    pub(super) fn origin(lump: usize, home: (f32, f32), now: u64, next: u64) -> Heart {
+        Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next, grown: now, bit_at: 0, hp_at: 0.0, cap: 0.0, window: 0, armed: false, sated: 0, origin: true, gather: false }
+    }
 }
 
 /// The game's last stand.
@@ -184,17 +198,26 @@ impl<W: World> Game<W> {
     /// army, and keep it, lunging, until it dies.
     pub(super) fn time_stand(&mut self) {
         let r = self.rules.stand;
-        if !r.on || !self.world.can_sow() {
+        // The origin is kept here on every planet it plays (`origin.rs`),
+        // the late stand only from its own.
+        if !self.world.can_sow() || !(r.on || self.stand.live.is_some_and(|h| h.origin)) {
             return;
         }
-        if self.stand.live.is_some() {
+        let late = r.on && !self.stand.done && self.peak > 0 && self.mould > 0 && (self.mould as f32) < r.at * self.peak as f32 && (self.soldiers.iter().filter(|s| s.alive).count() as f32) >= r.army;
+        if let Some(h) = self.stand.live.as_mut() {
+            // The late last stand gathers into the origin (`origin.rs`):
+            // one fight at one place, not a second heart.
+            if late && h.origin && !h.gather {
+                h.gather = true;
+                self.stand.done = true;
+                self.stand.born_sec = (self.world.ticks() / self.rules.tps.max(1) as u64) as u32;
+                self.stand.bit_born = self.fell_bitten;
+            }
             self.keep_heart();
             return;
         }
-        if self.stand.done || self.peak == 0 || self.mould == 0 || (self.mould as f32) >= r.at * self.peak as f32 {
-            return;
-        }
-        if (self.soldiers.iter().filter(|s| s.alive).count() as f32) < r.army {
+        // No second heart once the origin formed: its death is the win.
+        if !late || self.origin.formed {
             return;
         }
         self.start_stand();
@@ -213,7 +236,7 @@ impl<W: World> Game<W> {
         self.world.set_lump(lump, Lump { aim: super::raid_cell(home, size), pull: r.pull, leash: r.leash, armour: r.armour, bite: r.bite, ..Lump::default() });
         let now = self.world.ticks();
         let tps = self.rules.tps as f32;
-        let mut heart = Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next: now + (r.every.max(1.0) * tps) as u64, grown: now, bit_at: 0, hp_at: 0.0, cap: 0.0, window: 0, armed: false, sated: 0 };
+        let mut heart = Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next: now + (r.every.max(1.0) * tps) as u64, grown: now, bit_at: 0, hp_at: 0.0, cap: 0.0, window: 0, armed: false, sated: 0, origin: false, gather: false };
         self.arm_heart(&mut heart);
         self.stand.live = Some(heart);
         self.stand.done = true;
@@ -222,22 +245,38 @@ impl<W: World> Game<W> {
         true
     }
 
+    /// The heart's numbers: the last stand's, with the origin's own
+    /// armour, bite, lunge and cap when it is the origin (`OriginRules`).
+    pub(super) fn heart_rules(&self, h: &Heart) -> StandRules {
+        let mut r = self.rules.stand;
+        if h.origin {
+            let o = self.rules.origin;
+            (r.armour, r.bite, r.every, r.lunge, r.cap, r.cap_most, r.lunge_leash) = (o.armour, o.bite, o.every, o.lunge, o.cap, o.cap_most, o.lunge_leash);
+        }
+        r
+    }
+
     /// A reach (dish cells) round any point that holds the whole map.
-    fn whole_map(&self) -> f32 {
+    pub(super) fn whole_map(&self) -> f32 {
         let (w, h) = self.world.size();
         (w.max(h) as f32 * 1.5) / self.world.scale().max(1.0)
     }
 
     fn keep_heart(&mut self) {
         let Some(mut h) = self.stand.live else { return };
-        let r = self.rules.stand;
+        let r = self.heart_rules(&h);
         let tps = self.rules.tps as f32;
         let now = self.world.ticks();
         let (centre, n) = self.world.lumps()[h.lump].map_or((h.centre, 0), |(x, y, n)| ((x, y), n));
         (h.centre, h.members) = (centre, n);
         h.most = h.most.max(n);
         // The lump's sums lag a step behind its forming (as the fruit's).
-        let gone = if h.most == 0 { now > h.born + (3.0 * tps) as u64 } else { (n as f32) < r.last * h.most as f32 || now > h.born + (r.life.max(1.0) * tps) as u64 };
+        // The origin breaks only under its floor, to the win
+        // (`Game::keep_origin`), never for its age.
+        if h.origin && self.keep_origin(&mut h) {
+            return;
+        }
+        let gone = !h.origin && if h.most == 0 { now > h.born + (3.0 * tps) as u64 } else { (n as f32) < r.last * h.most as f32 || now > h.born + (r.life.max(1.0) * tps) as u64 };
         self.stand.killed = self.fell_bitten - self.stand.bit_born;
         if now <= h.born + (10.0 * tps) as u64 {
             self.stand.first = self.stand.killed;
@@ -248,8 +287,9 @@ impl<W: World> Game<W> {
             self.stand.live = None;
             return;
         }
-        // It takes in the slime grown since (from crystals still eating).
-        if now >= h.grown + (r.grow_every.max(0.5) * tps) as u64 {
+        // It takes in the slime grown since (from crystals still eating);
+        // the origin takes from its own crystal (`keep_origin`).
+        if !h.origin && now >= h.grown + (r.grow_every.max(0.5) * tps) as u64 {
             self.world.grow_lump(h.lump, (h.centre, self.whole_map()));
             h.grown = now;
         }
@@ -268,7 +308,8 @@ impl<W: World> Game<W> {
                 h.next = now + (r.every.max(1.0) * tps) as u64;
             }
             Some(_) => self.aim_heart(&h),
-            None if now >= h.next && self.soldiers.iter().any(|s| s.alive) => {
+            // The origin lunges only at soldiers near its crystal.
+            None if now >= h.next && self.soldiers.iter().any(|s| s.alive) && (!h.origin || h.gather || self.origin_near().is_some()) => {
                 h.lunging = Some(now + (r.lunge.max(1.0) * tps) as u64);
                 self.arm_heart(&mut h);
                 self.stand.lunges += 1;
@@ -297,7 +338,7 @@ impl<W: World> Game<W> {
             }
             return;
         }
-        let r = self.rules.stand;
+        let r = self.heart_rules(&h);
         let tps = self.rules.tps as f32;
         h.armed = false;
         h.sated = now + (r.sated.max(0.0) * tps) as u64;
@@ -314,7 +355,7 @@ impl<W: World> Game<W> {
     /// so far, the health it may take in it (`StandRules::cap`, of the
     /// squad alive now) and the tick its 10 s window closes.
     fn arm_heart(&self, h: &mut Heart) {
-        let r = self.rules.stand;
+        let r = self.heart_rules(h);
         let now = self.world.ticks();
         let alive = self.soldiers.iter().filter(|s| s.alive).count() as f32;
         h.bit_at = self.fell_bitten;
@@ -332,7 +373,7 @@ impl<W: World> Game<W> {
 
     /// The lunge: the heart's aim on the soldier nearest its centre.
     fn aim_heart(&mut self, h: &Heart) {
-        let r = self.rules.stand;
+        let r = self.heart_rules(h);
         let near = self.soldiers.iter().filter(|s| s.alive).min_by(|a, b| (a.x - h.centre.0).hypot(a.y - h.centre.1).total_cmp(&(b.x - h.centre.0).hypot(b.y - h.centre.1)));
         let Some(s) = near else { return };
         let size = self.world.size();

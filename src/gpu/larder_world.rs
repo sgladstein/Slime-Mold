@@ -1263,6 +1263,11 @@ impl World for GpuWorld {
         self.s.ceiling = n;
     }
 
+    /// Written to the GPU with the next step's params (`Settings::no_eat`).
+    fn set_starve(&mut self, on: bool) {
+        self.s.no_eat = on;
+    }
+
     /// Each of the pile's cells written 0 (the mirror's list of them).
     fn empty_crystal(&mut self, c: usize) {
         let d = &self.e.dish;
@@ -1396,7 +1401,7 @@ pub fn engine_params(s: &Settings, scale: usize) -> BigParams {
 mod tests {
     use super::*;
     use crate::gpu::{block_on, reads};
-    use crate::mould::larder_world::{Cmd, Game, Order, Rules};
+    use crate::mould::larder_world::{Cmd, End, Game, Order, Rules};
     use crate::mould::tiers::Tier;
 
     /// Whether the tests run on a real card, not software Vulkan (llvmpipe in
@@ -1631,6 +1636,9 @@ mod tests {
         }
         fn set_ceiling(&mut self, n: u32) {
             self.g.set_ceiling(n)
+        }
+        fn set_starve(&mut self, on: bool) {
+            self.g.set_starve(on)
         }
         fn empty_crystal(&mut self, c: usize) {
             self.g.empty_crystal(c)
@@ -3033,6 +3041,59 @@ mod tests {
         let want = (c.held * c.density).min(start as f64).round();
         // (No lower: a falling ceiling chases the slime down, `CEILING_FALL`.)
         assert!(c.now as f64 >= want - 1.0 && c.now as usize <= ceil, "the ceiling follows it, under the roof: {} against {want}", c.now);
+    }
+
+    /// **The origin** (`origin.rs`, 2026-11-22, Milestone 2's win; the
+    /// owner's idea of 11-16, Direction's go 11-22). Engine-side it is the
+    /// lumps the mini-bosses use, so the test is what it does on the
+    /// software GPU, in two race worlds alike: it forms at the landing on
+    /// the start crystal; with that crystal drained at once (as a squad
+    /// that drained it) it does not regrow, and in the fed world it holds
+    /// more; cut under its floor it breaks, births stop, and after the
+    /// die-back the planet is won while slime still lived when it broke.
+    #[test]
+    fn the_origin_forms_on_its_crystal_starves_when_drained_and_its_death_wins() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 4_000);
+        let play = || {
+            let s = race_settings(seed, scale, walkers);
+            let mut rules = Rules::default();
+            rules.origin.on = true;
+            rules.origin.size = 150.0;
+            rules.origin.die_upkeep = std::env::var("DU").ok().and_then(|v| v.parse().ok()).unwrap_or(rules.origin.die_upkeep);
+            Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed)
+        };
+        let (mut fed, mut dry) = (play(), play());
+        let home = fed.core;
+        let c = fed.crystal_at(home).map(|(c, _)| c).expect("the slime's start crystal");
+        dry.world.empty_crystal(c);
+        while fed.time() < 14.0 {
+            for g in [&mut fed, &mut dry] {
+                g.step();
+            }
+        }
+        let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
+        let (a, b) = (members(&fed), members(&dry));
+        eprintln!("origin: fed {a} members (reach {:.1}), drained {b} (reach {:.1})", fed.origin.reach, dry.origin.reach);
+        assert!(fed.origin.formed && fed.stand.live.is_some_and(|h| h.origin), "it formed at the landing");
+        assert!(a >= 50, "it gathered round its fed crystal: {a}");
+        assert!(a > b + 30, "a drained crystal does not feed it: {a} against {b}");
+        // Its floor over its members: it breaks, and the die-back runs.
+        // It must have held a body first (`2 x floor_min`); its takes are
+        // cut to its shortfall (11-22), so it may get there after 14 s.
+        while fed.stand.live.is_some_and(|h| (h.most as f32) < 2.0 * fed.rules.origin.floor_min) && fed.time() < 40.0 {
+            fed.step();
+        }
+        fed.rules.origin.floor = 2.0;
+        let mass = fed.mould;
+        let broke_at = fed.time();
+        while fed.end.is_none() && fed.time() < broke_at + 20.0 {
+            fed.step();
+        }
+        eprintln!("broke at {broke_at:.1} s with {mass} walkers; ended {:?} with {} left", fed.end, fed.mould);
+        assert!(fed.origin.fell.is_some() && fed.stand.live.is_none(), "it broke under its floor");
+        assert!(matches!(fed.end, Some(End::MouldWiped(_))), "the planet is won: {:?}", fed.end);
+        assert!(fed.time() <= broke_at + fed.rules.origin.die_back + 2.0, "within the die-back: {:.1} s", fed.time() - broke_at);
     }
 
     /// **A hit's hole stays open while it is fresh** (`crater_shut`,
