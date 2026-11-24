@@ -17,7 +17,10 @@ modifiers socket onto a bullet and Always cards onto a gun strip (a rules
 change: slots become bullets); D a hover trace with arcs and a line of
 words (live on the page); E a "fires" line like Noita's spell summary;
 F shot colours. Squad and arsenal's pick: B with D. Wrapping is a separate
-yes or no. Direction put B+D, C and E on a card for the owner.
+yes or no. Direction put B+D, C and E on a card for the owner, who
+picked B alone (15:51Z: "B is best"), built the same day:
+`fused-100.png` (100% UI), `fused-150.png` (150% UI at 1920 x 1080),
+`fused-turrets.png` (the turrets' rack).
 
 Files: `index.html` (the page), `opt-A.png` to `opt-F.png` (each option),
 `today.png` (the run shop on main, `run=1 menu=shop-mid at=1`).

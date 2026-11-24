@@ -48,6 +48,13 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, fused shots (pathfinding thread).** #810 (bot dials) and
+#813 (the card-look options page) merged. The owner picked fused shots
+(B, 15:51Z): `rounds::shots` groups the gun's cards by shot, `Shop::shots`
+and `plain_shot` carry it, `start/shop.rs` frames each shot (Look's file;
+the HUD thread knew first). Next: Engine's builder curve arm on the 1070
+(batch x, about 2 h from 15:23Z), then fix what it shows broken in the kit.
+
 **2026-11-24, dead cards and the bot's kit (pathfinding thread).** #802
 merged (the hunter). Direction 13:42Z: no more turret bodies for this
 milestone. Next PR: the cards dead alone (carriers held to two bullets
