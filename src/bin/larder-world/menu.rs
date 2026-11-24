@@ -160,7 +160,8 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // the game's own settings, the planet's, and the mould's rules, each
     // tab one screen; the key list is the last tab. Tabs come in the
     // order their first setting does.
-    o.into_iter()
+    let mut o = o
+        .into_iter()
         .map(|opt| {
             let tab = match opt.key.as_str() {
                 // How the game shows on this screen (performance thread,
@@ -169,19 +170,29 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
                 // detail and the shake have a tab of their own, first.
                 "ui" | "detail" | "shake" => "Screen",
                 "map" | "planet" | "own" | "plants" => "Planet",
-                "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The slime",
+                // The slime's rules as raw numbers (Panic 2, Wither 0.01):
+                // a tuning tab, last before Keys and named for what it is
+                // (polish review finding 11, 11-24: "The mould" third read
+                // as the developer's console among the player's settings).
+                "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => TUNING_TAB,
                 k if k.starts_with(slime_mould::build::switches::OPT_KEY) => "Experiments",
                 _ => "Game",
             };
             opt.in_tab(tab)
         })
-        .collect()
+        .collect::<Vec<_>>();
+    // Tabs come in the order of their first row: the tuning rows last.
+    o.sort_by_key(|opt| opt.tab == TUNING_TAB);
+    o
 }
 
+/// The Options tab of the slime's tuning numbers.
+pub(super) const TUNING_TAB: &str = "Slime tuning";
+
 /// The key card's rows (the start menu's Keys page; in play F1 shows the
-/// HUD's own, built from the command card): the RTS round's, then the squad
-/// mode's (`squadmode::squad_help`), whose card letters move off WASD; the
-/// squad mode's first when the command line chose it.
+/// HUD's own, built from the command card). In the squad game, its keys
+/// only, under headings (a row with no words, `squadmode::squad_help`);
+/// in the RTS round its own rows, then the squad mode's.
 pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
     let rts: Vec<(String, String)> = [
         ("Left click / drag", "Select soldiers"),
@@ -219,16 +230,44 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
     .iter()
     .map(|&(k, v)| (k.to_string(), v.to_string()))
     .collect();
-    let mut squad = vec![("Squad mode".to_string(), "Options: Control, squads (or mode=squads)".to_string())];
-    squad.extend(squad_help());
-    // The card's letters as `squad_card_key` moves them.
     let k = |id: u32, key: KeyCode| squad_card_key(id, key).and_then(slime_mould::world::ui::key_name).unwrap_or_default();
-    squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(GUARD, KeyCode::KeyF)), "The card for the squad: attack-move, drain, guard".into()));
-    squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
     if squads {
-        squad.push(("RTS round".into(), "Options: Control, rts".into()));
-        squad.into_iter().chain(rts).collect()
+        // The squad game's keys only, in groups (polish review finding
+        // 11, 11-24): the RTS round's rows, its test guns, the next map
+        // and the scent view are gone from the card it plays by; they
+        // stay on the RTS round's own card below.
+        let mut squad = squad_help();
+        let at = |rows: &[(String, String)], head: &str| rows.iter().position(|r| r.0 == head && r.1.is_empty()).map_or(rows.len(), |i| i + 1);
+        let fight = at(&squad, "Fighting");
+        squad.insert(fight + 2, (format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(GUARD, KeyCode::KeyF)), "On the card: attack-move, drain a crystal, guard".into()));
+        let more: Vec<(String, String)> = [
+            ("Building and tools", ""),
+            ("Q", "Build page: turret, pump, wall (V, drag), door, lure, siren"),
+            ("E", "Tools page: blast, det cord, mine, germ, sleep gas"),
+            ("H", "Swap to the next loadout"),
+            ("The game", ""),
+            ("P", "Pause"),
+            ("Tab", "Four times faster, or back"),
+            ("M", "Minimap"),
+            ("O / K", "Sound; the slime's voice"),
+            ("F9", "Drop a note in the play log: marks this moment and place"),
+            ("Esc", "Cancel placing, or the menu"),
+            ("F1 or ?", "The key card"),
+            ("Ctrl + / Ctrl -", "Bigger or smaller UI and text (saved)"),
+        ]
+        .iter()
+        .map(|&(a, b)| (a.to_string(), b.to_string()))
+        .collect();
+        let tools = at(&more, "Building and tools");
+        let mut more = more;
+        more.insert(tools + 2, (format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
+        squad.extend(more);
+        squad
     } else {
+        let mut squad = vec![("Squad mode".to_string(), "Options: Control, squads (or mode=squads)".to_string())];
+        squad.extend(squad_help().into_iter().filter(|r| !r.1.is_empty()));
+        squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(GUARD, KeyCode::KeyF)), "The card for the squad: attack-move, drain, guard".into()));
+        squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
         rts.into_iter().chain(squad).collect()
     }
 }

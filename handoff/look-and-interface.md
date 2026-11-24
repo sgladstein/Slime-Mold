@@ -46,8 +46,20 @@ cut, a "20/cell" that still won't fit keeps its number. Locked tools stay
 on the page (the review asked to hide them behind one tile; Scott wanted
 Tools reachable on 11-22). Key letters that mean different things by
 page are Squad's (`squadmode.rs`). #747 (World detail slider) looked
-over after it merged: nothing for this side. Next: the shop (8), Options
-and Keys (11).
+over after it merged: nothing for this side. #758 has 7 and the shop
+(finding 8: an opaque floor under the run shop, `HAND_STRETCH` and
+`HAND_FILL` cards with the face up to 1.15x and names on one line, a
+gun card's changed stats only as "72 → 144", the planet map 96 across
+in bilinear quarters). Then finding 11: the squad game's Keys page is
+its keys only, in groups (a row with no words is a heading, drawn by
+`keys_page` and the in-play F1 card; the groups are in
+`squadmode::squad_help`, Squad's file, and `menu::key_card`); the RTS
+round keeps its own rows. The slime's tuning tab is "Slime tuning",
+last before Keys (`menu::TUNING_TAB`). Engine's note: the shop's Dev
+mode tab showed in every run only for "Skip planet", now behind Dev
+mode (`run.rs`, Enemy's file; Start on planet still skips). Next: the
+remaining HUD polish (toasts, the objective said three times at
+landing, finding 10's tail) and whatever Direction sends.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

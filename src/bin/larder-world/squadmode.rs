@@ -121,19 +121,27 @@ pub(super) fn squad_card_key(id: u32, key: KeyCode) -> Option<KeyCode> {
 }
 
 /// The squad mode's rows on the key card (F1 in play, the start menu's
-/// Keys page), first.
+/// Keys page), first. A row with no words is a heading (polish review
+/// finding 11, 11-24: some sixty rows in one run read as a console);
+/// the groups are your squad, fighting, several squads, and the camera.
 pub(super) fn squad_help() -> Vec<(String, String)> {
     let k = |c: KeyCode| key_name(c).unwrap_or_default();
     [
+        ("Your squad".to_string(), String::new()),
         ("WASD".to_string(), "Steer your squad; the camera follows it (paused, or no squad controlled: pan the camera)".to_string()),
-        ("Esc".into(), "On a card page: back to the main card; else let go of the squad (every squad runs on its own and WASD pans); Esc again: the menu".into()),
-        ("Click a squad, Space".into(), "With none controlled: take command of it, or of the last one".into()),
-        ("Space".into(), "The camera back to your squad; while it follows, to the newest alert's place (a raid, landing ore), and again back".into()),
-        ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
         ("Ctrl + right click".into(), "On a crystal: drain it (fast, then it is gone)".into()),
         ("Right click a half-built building".into(), "Back to building it (nothing paid again)".into()),
+        (k(FORMATION), "Formation page: blob or ring, and how far apart, tight to wide (on the card)".into()),
+        (format!("{}, {}", k(TIGHTER), k(LOOSER)), "The squad stands tighter, or looser (five steps)".into()),
+        (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
+        ("Esc".into(), "On a card page: back to the main card; else let go of the squad (every squad runs on its own and WASD pans); Esc again: the menu".into()),
+        ("Fighting".to_string(), String::new()),
+        ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
+        ("Z".into(), "Hold fire: on and off; the fire button (X) picks defend or free fire".into()),
+        ("Several squads".to_string(), String::new()),
+        ("Click a squad, Space".into(), "With none controlled: take command of it, or of the last one".into()),
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
         (format!("{0}, Shift + {0}", k(CYCLE)), "The next squad, or the one before".into()),
         (k(SPLIT), "Split: the half nearer the cursor becomes a new squad".into()),
@@ -142,12 +150,10 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
         ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
-        (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
-        ("Z".into(), "Hold fire: on and off; the fire button (X) picks defend or free fire".into()),
-        ("Click a building".into(), "With no squad commanded: select it (its health and state; cancel, demolish, upgrade, switch)".into()),
-        (k(FORMATION), "Formation page: blob or ring, and how far apart, tight to wide (on the card)".into()),
-        (format!("{}, {}", k(TIGHTER), k(LOOSER)), "The squad stands tighter, or looser (five steps)".into()),
+        ("Camera".to_string(), String::new()),
         ("Wheel, middle drag".into(), "Zoom, pan; Space brings the camera back".into()),
+        ("Space".into(), "The camera back to your squad; while it follows, to the newest alert's place (a raid, landing ore), and again back".into()),
+        ("Click a building".into(), "With no squad commanded: select it (its health and state; cancel, demolish, upgrade, switch)".into()),
     ]
     .into_iter()
     .collect()
