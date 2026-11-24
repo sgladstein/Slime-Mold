@@ -272,7 +272,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let l = r.level();
     let mut args = base.clone();
     args.seed = l.seed;
-    args.walkers = run_walkers(l.walkers);
+    args.walkers = run_walkers(l.walkers * base.size());
     args.run = Some(r.clone());
     args.squads = true;
     args.map = None;
@@ -519,7 +519,8 @@ pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, spec: &str, d
         bought.extend(shop(&mut r, &p));
     }
     let out = play(&base, &r, stage(spec, depth), secs, device, queue)?;
-    println!("league plan={spec} {} shop={} gun={} arms={}", out.line, bought.join("/"), r.gun_text(), arms(&r));
+    let size = base.size.map_or(String::new(), |f| format!("size={f} "));
+    println!("league plan={spec} {size}{} shop={} gun={} arms={}", out.line, bought.join("/"), r.gun_text(), arms(&r));
     Ok(())
 }
 
