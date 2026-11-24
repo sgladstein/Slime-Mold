@@ -71,6 +71,8 @@ pub enum Shell {
     Detonate,
     /// The route family's payload (2026-11-17, `Card::Flare`).
     Flare,
+    /// The Lure's second form (2026-11-24, `Card::Dart`).
+    Dart,
     /// The element family's (2026-11-17, `Card::Torch`).
     Torch,
     /// The Mind family's last two (2026-11-17, `Card::Provoke`, `Still`).
@@ -79,7 +81,7 @@ pub enum Shell {
 }
 
 impl Shell {
-    pub const ALL: [Shell; 14] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Detonate, Shell::Flare, Shell::Torch, Shell::Provoke, Shell::Still];
+    pub const ALL: [Shell; 15] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Detonate, Shell::Flare, Shell::Dart, Shell::Torch, Shell::Provoke, Shell::Still];
 
     /// The fixed card that is this payload's standard bullet.
     pub fn card(self) -> Card {
@@ -95,6 +97,7 @@ impl Shell {
             Shell::Shatter => Card::Shatter,
             Shell::Detonate => Card::Detonate,
             Shell::Flare => Card::Flare,
+            Shell::Dart => Card::Dart,
             Shell::Torch => Card::Torch,
             Shell::Provoke => Card::Provoke,
             Shell::Still => Card::Still,
@@ -116,7 +119,7 @@ impl Shell {
     /// the gun range's armory has these in the standard set only, on a tab
     /// of their own (`Run::restock`).
     pub fn special(self) -> bool {
-        self.mind() || self.reader() || matches!(self, Shell::Flare | Shell::Torch)
+        self.mind() || self.reader() || matches!(self, Shell::Flare | Shell::Dart | Shell::Torch)
     }
 
     pub fn of(c: Card) -> Option<Shell> {

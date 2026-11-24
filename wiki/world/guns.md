@@ -2,7 +2,7 @@
 title: Guns, bullets and gun cards
 kind: design
 status: open
-updated: 2026-11-18
+updated: 2026-11-24
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/droplets-2026-11-18/README.md
@@ -237,7 +237,14 @@ play it costs kills (fewer in 13 of 15 paired windows): it is the Swarmer's
 and Sleeper's decoy. Sold from planet 2 on the Special bullets tab. The Road
 (bullets lay trail) stopped the squad's own shots and was dropped. With it
 the germ was retuned per planet (Open)
-([route](../../Reports/gun-route-2026-11-17/README.md)).
+([route](../../Reports/gun-route-2026-11-17/README.md)). The **Dart** (2026-11-24, the
+Lure's second form, `Card::Dart`) kills nothing and leaves a lure mark
+where it hits for `RoundRules::dart_secs` (12 s), at most `dart_max` (4)
+live, the oldest replaced; calm slime walks to it round rock and walls,
+onto the squad too if it stands there. The lab's darts took a crystal off a
+colony in 30 to 45 s for fewer kills
+([lab](../../Reports/lab-steering-2026-11-17/README.md)). Sold from planet
+1, on the range's Trails and shoves tab.
 
 **Element** (2026-11-17, step D's fourth family): the Torch kills nothing
 itself and lights every plant within 6 dish cells; the fire kills thin

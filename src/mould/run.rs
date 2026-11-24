@@ -1022,7 +1022,9 @@ pub const ALARM_FROM: u32 = 4;
 /// Gas from planet 2 since 2026-11-18 (Direction: its card is uncommon now,
 /// `Card::tier`); it was sold from the start.
 pub fn shells_at(depth: u32) -> Vec<Shell> {
-    let mut v = vec![Shell::Plain, Shell::Blast];
+    // The dart (2026-11-24) from the start, as the Lure it is a form of:
+    // every planet's slime answers a lure (`run::LURE_PULL`).
+    let mut v = vec![Shell::Plain, Shell::Blast, Shell::Dart];
     if depth >= power_from(2) {
         v.extend([Shell::Gas, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Provoke, Shell::Still, Shell::Shatter, Shell::Torch]);
     }

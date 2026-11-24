@@ -673,6 +673,9 @@ fn range_shelf(row: &run::Row) -> &'static str {
         // next bullet's, that tab took two pages at 200% on 1080 lines.
         // With the trails since 11-17 (below).
         (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Pull)) => "Trails and shoves",
+        // The dart (2026-11-24) moves the slime too: on the special
+        // bullets' tab it took two pages at 200% on 1080 lines.
+        (Pick::Offer(_), Face::Card(rounds::Card::Ammo(a))) if a.shell == rounds::Shell::Dart => "Trails and shoves",
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
         // The readers (Shatter, Detonate) share it: their own tab would
