@@ -2,12 +2,13 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-22
+updated: 2026-11-24
 sources:
   - Reports/creatures-2026-11-11.md
   - Reports/gpu-readout-2026-11-12.md
   - Reports/gpu-sandbox-2026-11-11.md
   - Reports/jenson-looks-2026-11-11.md
+  - Reports/lab-walker-sort-2026-11-24/README.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/outside-rules-2026-11-11.md
   - Reports/pc-batch-1070-2026-11-14.md
@@ -44,6 +45,12 @@ a frame of two ticks and the drawing takes 1.45 ms at 100,000 walkers and
 GPU, so they compile out when off. Detail below; tables in
 [the report](../../Reports/gpu-sandbox-2026-11-11.md). The engine itself
 lives in [the mould at scale](scale.md).
+
+Sorting the walkers' slots by place (lab, 11-24, its branch only) cut the
+step's GPU time on planet 8 on the 1070 from 9.46 to 5.27 ms (`sense` 3.33
+to 0.84 ms) and played the same on seven paired seeds; the prototype sorts
+on the CPU with a 90 ms hitch, so the real one is a GPU sort
+([walker sort](../../Reports/lab-walker-sort-2026-11-24/README.md)).
 
 ## Detail
 
@@ -193,6 +200,7 @@ world at half resolution with the HUD sharp (World detail, his card pick;
 - [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the sandbox, its controls and presets, the twin tests and timings.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species settings on the GPU, their twin test, planted bugs and cost.
 - [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle on the GPU, its twin tests, planted bugs and cost.
+- [lab-walker-sort-2026-11-24/](../../Reports/lab-walker-sort-2026-11-24/README.md): sorting the walkers by place, the 1070's passes before and after, seven paired seeds.
 - [pc-batch-1070-2026-11-14.md](../../Reports/pc-batch-1070-2026-11-14.md): the 1070 batch at 004b7cb, twins triaged and every timing.
 - [pc-batch-1070-m1-2026-11-21.md](../../Reports/pc-batch-1070-m1-2026-11-21.md): Milestone 1's 1070 batch, planets 1-3 in the squad mode, each pass and view pass timed, twins triaged.
 - [perf-4k-2026-11-22/](../../Reports/perf-4k-2026-11-22/README.md): the owner's 4K frames, the wasted upload and World detail.
