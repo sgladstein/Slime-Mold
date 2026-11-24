@@ -129,6 +129,12 @@ pub trait World {
     /// `field` is its walking distance (`big::raid_field_for` on
     /// `raid_ground`), empty to steer straight.
     fn set_raid(&mut self, _at: u32, _to: (f32, f32), _r: f32, _share: f32, _field: Vec<u32>) {}
+    /// Every sleeping walker wakes (the last stand's, 2026-11-24: a
+    /// dormant walker neither senses nor moves, so a last stand on the
+    /// Dozer's sleeping body sent only its waking part), bar any the
+    /// squad's gas holds. GPU only (new slime rules are built on the GPU
+    /// engine alone); a world without it leaves its sleepers asleep.
+    fn rouse(&mut self) {}
     /// The units' walking distance (`big::BigDish::units_field`, S1;
     /// `big::units_field_for` on `raid_ground`), which charging walkers
     /// descend from the next step; empty to steer straight. A world with

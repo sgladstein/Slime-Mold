@@ -161,6 +161,9 @@ struct Read {
     living: u32,
     /// The player's own mould's living walkers (a garden's; 0 otherwise).
     own: u32,
+    /// The walkers asleep (`wstat[12]`) and on full scar (`wstat[13]`).
+    asleep: u32,
+    scarred: u32,
     /// The mould grid, if the frame summed one.
     grid: Option<Vec<u32>>,
     /// The engine's kill counter at the frame's end (`Engine::struck`,
@@ -194,6 +197,10 @@ pub struct GpuWorld {
     pub garden: Option<GpuGarden>,
     /// The player's own mould's living walkers at the last readout.
     own: usize,
+    /// The walkers asleep and those on full scar at the last readout
+    /// (`GpuWorld::asleep`, `GpuWorld::scarred`).
+    asleep: usize,
+    scarred: usize,
     /// Each lump's sums at the last readout (`World::lumps`).
     lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
@@ -407,6 +414,21 @@ impl GpuWorld {
         (self.own, self.living - self.own)
     }
 
+    /// The walkers asleep (dormant: the Sleeper's body, and any slime's
+    /// with the life cycle on) at the last frame's end, from the engine's
+    /// per-frame count (no read-back of its own). For the interface's
+    /// counters (Look's ask, 2026-11-24).
+    pub fn asleep(&self) -> usize {
+        self.asleep
+    }
+
+    /// The walkers standing on full scar (the Grudge's scar tissue at its
+    /// strongest: a blow there misses with chance `scar_tough`) at the last
+    /// frame's end; 0 with scar tissue off. Same count as `asleep`.
+    pub fn scarred(&self) -> usize {
+        self.scarred
+    }
+
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize) -> Self {
         // The flinch folds into the alarm here, as `BigDish` folds its
         // params when made, so the keys may come in any order.
@@ -444,7 +466,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, own: 0, asleep: 0, scarred: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -615,7 +637,7 @@ impl GpuWorld {
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
         let ate = (0..self.e.npiles as usize).fold(0u32, |a, p| a.wrapping_add(piles[p * PILE_WORDS + 7]));
         let covered = (0..self.e.npiles as usize).map(|p| piles[p * PILE_WORDS + 8] as usize).collect();
-        Read { out, sums, ate, covered, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
+        Read { out, sums, ate, covered, broken: st[1], living: st[4], own: st[5], asleep: st[12], scarred: st[13], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -639,6 +661,8 @@ impl GpuWorld {
             self.ate_mark = Some(r.ate);
         }
         self.own = r.own as usize;
+        self.asleep = r.asleep as usize;
+        self.scarred = r.scarred as usize;
         self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
         // counter is fire's. A counter behind ours (a fresh dish, an
@@ -1233,6 +1257,11 @@ impl World for GpuWorld {
         self.e.grow_lump(&self.shared, b, at, None);
     }
 
+    fn rouse(&mut self) {
+        self.flush();
+        self.e.rouse(&self.shared);
+    }
+
     fn grow_lump_most(&mut self, b: usize, (c, r): ((f32, f32), f32), room: u32) {
         self.flush();
         let d = &self.e.dish;
@@ -1639,6 +1668,9 @@ mod tests {
         }
         fn grow_lump_most(&mut self, b: usize, at: ((f32, f32), f32), room: u32) {
             self.g.grow_lump_most(b, at, room)
+        }
+        fn rouse(&mut self) {
+            self.g.rouse()
         }
         fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
             self.g.set_lump(b, l)
@@ -3306,7 +3338,7 @@ mod tests {
         use crate::mould::kit::KitRules;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 4_000);
-        let play = |tough: &str| -> (usize, usize) {
+        let play = |tough: &str| -> (usize, usize, usize) {
             let mut s = race_settings(seed, scale, walkers);
             for (k, v) in [("alarm_keep", "0.95"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_tough", tough), ("scar_tough_full", "2000")] {
                 crate::gpu::set(&mut s, k, v).unwrap();
@@ -3337,11 +3369,17 @@ mod tests {
             let fine = g.world.fine_steps() as f32;
             let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
             g.world.burst(&squad::Burst { at, r: 6.0, kill: true, ..Default::default() }, &k);
-            (before, near(&g))
+            let after = near(&g);
+            // The interface's count of walkers on full scar (every cell's
+            // scar is over full here): all of the living with scar tissue
+            // on, none with it off.
+            g.step();
+            (before, after, g.world.scarred())
         };
         let off = play("0");
         let on = play("0.5");
-        eprintln!("scar tissue: off {} -> {}, on {} -> {}", off.0, off.1, on.0, on.1);
+        eprintln!("scar tissue: off {} -> {}, on {} -> {} ({} on full scar)", off.0, off.1, on.0, on.1, on.2);
+        assert!(off.2 == 0 && on.2 > walkers / 2, "the walkers on full scar counted: {off:?} {on:?}");
         assert!(off.0 > 50 && on.0 > 50, "slime on the crystal: {off:?} {on:?}");
         assert!(off.1 * 10 < off.0, "without scar tissue the burst kills nearly all: {off:?}");
         let kept = on.1 as f32 / on.0 as f32;
@@ -3372,7 +3410,10 @@ mod tests {
             let (st, _) = g.world.e.life_of();
             let en = crate::gpu::floats(&read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.energy));
             let alive: Vec<u8> = st.iter().zip(&en).filter(|(_, &e)| e >= 0.0).map(|(&s, _)| s).collect();
-            (alive.len(), alive.iter().filter(|&&s| s == 2).count())
+            let asleep = alive.iter().filter(|&&s| s == 2).count();
+            // The interface's per-frame count of them agrees.
+            assert_eq!(g.world.asleep(), asleep, "the asleep counter");
+            (alive.len(), asleep)
         };
         let off = play("0");
         let on = play("0.003");
@@ -3380,6 +3421,36 @@ mod tests {
         assert!(off.1 > 100, "the Sleeper sleeps: {off:?}");
         assert!(on.1 > off.1 + off.1 / 5, "dreaming grows the sleeping body: {on:?} against {off:?}");
         assert!(on.0 <= 2 * walkers + walkers / 4, "under its ceiling: {on:?}");
+    }
+
+    /// **The last stand wakes the Dozer** (`World::rouse`, 2026-11-24; GPU
+    /// only). A race world with the Dozer's keys sleeps away from its
+    /// crystals by 40 s; `rouse` wakes every sleeper at once, so its last
+    /// stand sends all of it.
+    #[test]
+    fn the_last_stand_wakes_the_dozer() {
+        use crate::mould::tiers::Tier;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        for (k, v) in Tier::Dozer.keys() {
+            crate::gpu::set(&mut s, k, v).unwrap();
+        }
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+        while g.time() < 40.0 {
+            g.step();
+        }
+        let asleep = |g: &Game<GpuWorld>| {
+            let (st, _) = g.world.e.life_of();
+            let en = crate::gpu::floats(&read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.energy));
+            st.iter().zip(&en).filter(|(&s, &e)| e >= 0.0 && s == 2).count()
+        };
+        let before = asleep(&g);
+        g.world.rouse();
+        let after = asleep(&g);
+        eprintln!("the Dozer: {before} asleep, {after} after the rouse");
+        assert!(before > 100, "the Dozer sleeps: {before}");
+        assert_eq!(after, 0, "the rouse wakes them all");
     }
 
     /// **A blast's long crater is not shut** (the review lane, 11-21: det

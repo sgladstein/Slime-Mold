@@ -4030,7 +4030,7 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
 // The living walkers (the CPU's `living`: a slot alive, with growth, and
 // not dead) into `wstat[4]`, and with `grid` the mould grid (the CPU's
 // `mould_grid`: each `grid`-cell square's walkers holding a cell, its
-// `occ`) into `wstat[12..]`, row by row; `Engine::record_count` clears both
+// `occ`) into `wstat[14..]`, row by row; `Engine::record_count` clears both
 // first and dispatches a thread for each slot and each cell. The game's
 // packed readout copies them, so neither costs a read-back of its own (the
 // count read the energy and `spec` back, 8 MB at 1M slots, until
@@ -4046,13 +4046,23 @@ fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
         // The player's own mould's share of them, in a garden.
         let own = garden() && species_of(k) == OWN_SP;
         if (own) { atomicAdd(&wstat[5], 1u); }
+        // The walkers asleep (`wstat[12]`) and those standing on full scar
+        // (`wstat[13]`, the Grudge's scar tissue at its strongest), for the
+        // interface's per-second counts (Look's ask, 2026-11-24): one state
+        // read, and one scar read with scar tissue on.
+        if (((spec[k] >> 9u) & 3u) == L_DORMANT) { atomicAdd(&wstat[12], 1u); }
+        if (P.tough > 0.0) {
+            let wk = walkers[k];
+            let i = cell(wk.x, wk.y);
+            if (i != NONE && scar_at(i) >= P.tough_full) { atomicAdd(&wstat[13], 1u); }
+        }
     }
     let g = P.grid;
     if (g > 0u && k < P.w * P.h) {
         let o = atomicLoad(&occ[k]);
         if (o > 0u) {
             let gw = (P.w + g - 1u) / g;
-            atomicAdd(&wstat[12u + (k / P.w / g) * gw + (k % P.w) / g], o);
+            atomicAdd(&wstat[14u + (k / P.w / g) * gw + (k % P.w) / g], o);
         }
     }
 }
@@ -4553,6 +4563,22 @@ fn condense(@builtin(global_invocation_id) gid: vec3<u32>) {
         spec[k] = (spec[k] & 0xFFFF01FFu) | (L_DEAD << 9u);
         if (P.upkeep > 0.0) { energy[k] = -1.0; }
     }
+}
+
+// **The last stand wakes the sleepers** (`Engine::rouse`, 2026-11-24, the
+// Dozer: "cut it to a quarter and all of it comes", and a dormant walker
+// neither senses nor moves, so a last stand on a sleeping body sent only
+// its waking part). Between ticks, once: every living dormant walker
+// wakes as an alarm wakes it in `fate` (its timer to `wake_steps`), bar a
+// gassed one, which the squad put to sleep. The cell counts are laid
+// afresh each tick, so only the state changes here.
+@compute @workgroup_size(256)
+fn rouse(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let w = spec[k];
+    if (((w >> 9u) & 3u) != L_DORMANT || gassed_at(k, S.t)) { return; }
+    spec[k] = (w & 0x1FFu) | (L_WALKER << 9u) | (min(P.wake_steps, 65535u) << 16u);
 }
 
 @compute @workgroup_size(256)

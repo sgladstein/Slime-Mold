@@ -239,11 +239,12 @@ const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking 
 /// the eviction's moves, the struck, the living walkers, the own mould's,
 /// the cap's two counts, then the condensed strikers' counts (words 8-10,
 /// `Engine::condense`, 2026-11-20; word 8 held the old condensing's
-/// walkers 11-15 to 11-17) and the walkers in their band (word 11). The
+/// walkers 11-15 to 11-17) and the walkers in their band (word 11), then
+/// the walkers asleep (12) and on full scar (13, both `count`). The
 /// mould grid follows (`Engine::record_count`), room for squares down to a
 /// game cell or `GRID_MIN` dish cells, whichever is smaller
 /// (`Engine::grid_max`).
-pub const WSTAT_BYTES: usize = 48;
+pub const WSTAT_BYTES: usize = 56;
 
 /// The smallest mould grid square the wall counters have room for, in
 /// dish cells, where the scale is bigger: the campaign's and the player
@@ -1669,9 +1670,11 @@ pub const SETCOUNT: usize = 70;
 /// the squad condenses, then each block's leader takes what it took in.
 pub const CONDENSE: usize = 71;
 pub const CONDLEAD: usize = 72;
+/// The last stand wakes the sleepers (2026-11-24, `Engine::rouse`).
+pub const ROUSE: usize = 73;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 73] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount", "condense", "condlead",
+pub const PASSES: [&str; 74] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount", "condense", "condlead", "rouse",
 ];
 
 impl Shared {
@@ -3619,6 +3622,8 @@ impl Engine {
         assert!(gw * gh <= self.grid_max(), "a mould grid square under a dish cell");
         // Words 4 (the living) and 5 (the player's own mould's, in a garden).
         enc.clear_buffer(&self.wstat, 16, Some(8));
+        // Words 12 (asleep) and 13 (on full scar).
+        enc.clear_buffer(&self.wstat, 48, Some(8));
         if gw * gh > 0 {
             enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
         }
@@ -3958,6 +3963,15 @@ impl Engine {
         let (c, r2) = at.unwrap_or((u32::MAX, 0));
         self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[b as u32 + 1, c, r2]));
         self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
+    }
+
+    /// Wakes every living dormant walker but the gassed (the last
+    /// stand's, 2026-11-24: `World::rouse`), between ticks; nothing with
+    /// the life cycle off.
+    pub fn rouse(&self, shared: &Shared) {
+        if self.cycles {
+            self.run(shared, &[(ROUSE, self.n.div_ceil(256))]);
+        }
     }
 
     /// Lump `b` takes in the ordinary walkers within `at` in no lump, its

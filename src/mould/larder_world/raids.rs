@@ -729,6 +729,8 @@ impl<W: World> Game<W> {
         if r.last_stand && !self.raids.last_stand_done && self.peak > 0 && (self.mould as f32) < r.last_stand_at * self.peak as f32 && self.mould > 0 {
             if let Some(k) = self.thickest_knot() {
                 self.raids.last_stand_done = true;
+                // All of it comes, the sleeping too (the Dozer's).
+                self.world.rouse();
                 let to = (self.soldiers[k].x, self.soldiers[k].y);
                 self.send_raid(RaidAim::Soldiers(k), to, f32::INFINITY, 1.0, true);
                 return;
