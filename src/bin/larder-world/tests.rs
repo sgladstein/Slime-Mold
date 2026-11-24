@@ -1190,7 +1190,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
 /// **The dev skip** (owner, 2026-11-22 21:36Z: "skip planets and get
 /// average amount of gold to spend at the shop"): Options' "Start on
 /// planet" 4 starts a new run in planet 4's shop, paid what average wins
-/// on planets 1 to 3 pay, and the shop's Dev tab skips one more.
+/// on planets 1 to 3 pay, and the shop's Dev tab (in Dev mode) skips one more.
 #[test]
 fn start_on_planet_skips_to_its_shop_with_the_average_pay() {
     use slime_mould::mould::run::{skip_pay, Pick};
@@ -1209,6 +1209,8 @@ fn start_on_planet_skips_to_its_shop_with_the_average_pay() {
     assert_eq!(app.menu.as_ref().unwrap().page, Page::Shop);
     let paid = skip_pay(1) + skip_pay(2) + skip_pay(3);
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points, r.stars.clone())), Some((4, paid, vec![0, 0, 0])));
+    // The skip row is Dev mode's since 11-24.
+    app.run.as_mut().unwrap().dev = true;
     let skip = app.run.as_ref().unwrap().shop().iter().position(|r| r.pick == Pick::DevSkip).expect("the shop's skip row");
     app.menu_event(StartEvent::Buy(skip)).unwrap();
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((5, paid + skip_pay(4))));
@@ -2193,7 +2195,7 @@ fn the_menus_real_lists_fit_one_screen() {
             }
             t
         });
-        assert_eq!(tabs, ["Screen", "Game", "Planet", "The slime", "Experiments"]);
+        assert_eq!(tabs, ["Screen", "Game", "Planet", "Experiments", "Slime tuning"]);
         for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
             let at = format!("{screen:?} at {user}, squads {squads}");
             let mut m = start_menu(&base);

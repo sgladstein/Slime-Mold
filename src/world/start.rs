@@ -1861,10 +1861,16 @@ impl StartMenu {
         // at 200% on 1080 lines, two now).
         let kw = (col_w * 0.3).min(180.0 * s);
         let (px, lead) = (15.0 * s, 21.0 * s);
-        // Each row's height: its longer side, wrapped.
+        // Each row's height: its longer side, wrapped. A row with no words
+        // is a group's heading (polish review finding 11, 11-24): a gap
+        // above it and its name, small.
+        let head_h = lead + 12.0 * s;
         let heights: Vec<f32> = rows
             .iter()
             .map(|(k, w)| {
+                if w.is_empty() {
+                    return head_h;
+                }
                 let a = c.wrap(Weight::SemiBold, px, kw - 12.0 * s, k).len();
                 let b = c.wrap(Weight::Medium, px, col_w - kw - 24.0 * s, w).len();
                 a.max(b) as f32 * lead + 5.0 * s
@@ -1875,7 +1881,9 @@ impl StartMenu {
         let mut sheets: Vec<Vec<(usize, usize, f32)>> = vec![Vec::new()];
         let (mut col, mut y) = (0usize, 0.0f32);
         for (i, h) in heights.iter().enumerate() {
-            if y + h > col_h && y > 0.0 {
+            // A heading goes with the row under it, never last in a column.
+            let with = if rows[i].1.is_empty() { heights.get(i + 1).copied().unwrap_or(0.0) } else { 0.0 };
+            if y + h + with > col_h && y > 0.0 {
                 col += 1;
                 y = 0.0;
                 if col == cols {
@@ -1896,6 +1904,13 @@ impl StartMenu {
             let (k, w) = &rows[i];
             let cx = panel.x + 20.0 * s + col as f32 * (col_w + gap);
             let by = panel.y + 28.0 * s + y;
+            if w.is_empty() {
+                // At a column's top no gap above it.
+                let hy = if y > 0.0 { by + 12.0 * s } else { by };
+                c.text(Weight::SemiBold, 12.5 * s, (cx, hy), Align::Left, &k.to_uppercase(), MUTED);
+                c.rrect(Rect::new(cx, hy + 6.0 * s, col_w - 24.0 * s, s.max(1.0)), 0.0, [255, 255, 255, 22]);
+                continue;
+            }
             c.paragraph(Weight::SemiBold, px, (cx, by), kw - 12.0 * s, lead, k, ACCENT);
             c.paragraph(Weight::Medium, px, (cx + kw, by), col_w - kw - 24.0 * s, lead, w, TEXT);
         }

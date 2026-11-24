@@ -1987,7 +1987,11 @@ impl Run {
             rows.push(row("Empty the gun", "Every card in the gun back to the bag.".into(), Pick::EmptyGun));
             rows.push(row("Empty the bag", "Throw away the cards in the bag.".into(), Pick::EmptyBag));
         }
-        if !self.range && !self.field && !self.over && self.depth < PLANETS {
+        // Behind Dev mode since 11-24 (polish review finding 8: a "Dev
+        // mode" tab in every run's shop); Options' "Start on planet" still
+        // skips with the same pay without it. Scott asked for "a dev way"
+        // (11-22 21:36Z).
+        if self.dev && !self.range && !self.field && !self.over && self.depth < PLANETS {
             let about = format!("Don't play planet {}: get the {} points an average win there pays, and shop for planet {}", self.depth, skip_pay(self.depth), self.depth + 1);
             rows.push(Row { group: Group::Dev, face: Face::Dev, on: false, name: format!("Skip planet {}", self.depth), about, price: String::new(), state: "dev".into(), ready: true, pick: Pick::DevSkip });
         }
@@ -2823,7 +2827,9 @@ mod tests {
         assert_eq!(pays, [360, 510, 470, 530, 580, 630, 690, 0]);
         let mut r = Run::new(3);
         r.restock();
-        assert!(r.shop().iter().any(|row| row.pick == Pick::DevSkip), "in every run's shop, dev mode or not");
+        assert!(!r.shop().iter().any(|row| row.pick == Pick::DevSkip), "not without dev mode (11-24)");
+        r.dev = true;
+        assert!(r.shop().iter().any(|row| row.pick == Pick::DevSkip), "in a dev run's shop");
         let mut paid = 0;
         while r.pick(Pick::DevSkip) {
             paid += skip_pay(r.depth - 1);

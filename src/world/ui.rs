@@ -2988,9 +2988,15 @@ impl Hud {
                     ("Space".into(), "Look at the newest alert".into()),
                 ] };
                 // Every game's card ends the same.
+                if rows.iter().any(|r| r.1.is_empty()) {
+                    rows.push(("The game".into(), String::new()));
+                }
                 rows.push(("Esc".into(), "Cancel placing, or this menu".into()));
                 rows.push(("F1 or ?".into(), "This key card".into()));
                 rows.push(("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()));
+                if rows.iter().any(|r| r.1.is_empty()) && m.commands.iter().any(|cmd| key_name(cmd.key).is_some()) {
+                    rows.push(("The card now".into(), String::new()));
+                }
                 for cmd in &m.commands {
                     if let Some(k) = key_name(cmd.key) {
                         rows.push((k, cmd.name.clone()));
@@ -3022,6 +3028,13 @@ impl Hud {
                     let (col, row) = (i / per, i % per);
                     let x = r.x + 28.0 * s + col as f32 * col_w;
                     let y = r.y + 76.0 * s + row as f32 * lh;
+                    if what.is_empty() {
+                        // A group's heading (`squad_help`; polish review
+                        // finding 11, 11-24).
+                        c.text(Weight::SemiBold, 12.5 * s, (x, y), Align::Left, &k.to_uppercase(), MUTED);
+                        c.rrect(Rect::new(x, y + 6.0 * s, col_w - 40.0 * s, s.max(1.0)), 0.0, [255, 255, 255, 22]);
+                        continue;
+                    }
                     c.text_fit(Weight::SemiBold, 14.5 * s, (x, y), Align::Left, k, 174.0 * s, ACCENT);
                     c.text_fit(Weight::Medium, 14.5 * s, (x + 182.0 * s, y), Align::Left, what, col_w - 210.0 * s, TEXT);
                 }
