@@ -1706,6 +1706,10 @@ impl Hud {
                 // Thin, and gold as the panel's edge: a ring at the thing's
                 // own size, not a pulse (it never grows or flashes).
                 let w = 2.0 * s;
+                // On a dark band a pixel wider (the colour check, 11-24:
+                // under protanopia and deuteranopia the gold ring vanished
+                // into yellow slime; the dark edge holds by brightness).
+                c.ring(Rect::new(p.0 - r, p.1 - r, 2.0 * r, 2.0 * r), r, w + 2.0 * s, 1.0, alpha([14, 13, 10, 255], 0.55 * a));
                 c.ring(Rect::new(p.0 - r, p.1 - r, 2.0 * r, 2.0 * r), r, w, 1.0, alpha([255, 214, 90, 255], 0.75 * a));
             }
             // A reach ring can be wider than the screen: the panel hangs

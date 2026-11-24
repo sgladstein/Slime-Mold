@@ -1702,7 +1702,14 @@ impl App {
                     // pixels wide (`Marks::health`), and a bar's anchor is a
                     // world point (a mark's colours replace what is under
                     // them, so a see-through back would cut a hole).
-                    let (left, right) = (-9.0 + 18.0 * hp, -9.0 + 18.0 * top);
+                    // A one-pixel dark notch at its left where the health
+                    // left meets it (the colour check, 11-24: a bite's
+                    // crimson on a red bar, and fire's orange on an amber
+                    // one under protanopia and deuteranopia, read as more
+                    // of the bar). The notch is cut from the chip, so it
+                    // grows nothing.
+                    let notch = if hp > 0.0 { 1.0 } else { 0.0 };
+                    let (left, right) = (-9.0 + 18.0 * hp + notch, -9.0 + 18.0 * top);
                     if right - left > 0.4 {
                         let mid = (left + right) / 2.0 / zoom.max(1e-3);
                         self.marks.bar((s.x + mid, s.y), below, ((right - left) / 2.0, 1.5), 1.0, lit, lit);
