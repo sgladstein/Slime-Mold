@@ -339,7 +339,19 @@ minutes for 12 game minutes on Mesa; about 90 runner minutes). Direction kept
 the FIRST_PLANET rows; planet 5's size waits for Milestone 2's eight-planet
 curve. Run planet 5 and later on Scott's PC, not here.
 
-**Next:** the next 1070 batch times the
+**2026-11-24, Milestone 2.** Save and resume A merged (#757:
+`larder_world/snap.rs`, `gpu/larder_world/snap.rs` `snap_fields!`, the
+window's `resume.rs`; `planet.sav` beside `run.txt`; checked on the 1070,
+7.7 MB in about 50 ms). #765: the run bot's planet 1 stall (the siege's
+attack-move stood in the body slime; it now closes in by plain moves),
+Fireproof for fire decks, Direction's pause line, notices for bincode.
+The curve by planet is `Reports/curve-2026-11-24` (two passes, 12 and 13
+of 24 won); the third pass waits for Enemy's planet 4 and 7 changes
+(Direction 06:48Z). `Run::played` (real seconds playing, saved in
+run.txt, `App::count_played`) is for Look's run-time screens (test 2).
+Open: Enemy's sense-pass timing on the 1070 when their branch comes.
+
+**Next (11-22):** the next 1070 batch times the
 view's `full` after the Look lane's #638 (plant crowns skipped under the
 slime) and sends them the saving against 3.42 ms; `pump_maps` spikes
 (4.4 ms) if Squad and arsenal hand them back.
