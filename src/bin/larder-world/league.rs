@@ -400,10 +400,13 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     let sf = &g.starfall;
     let drops = format!("{}/{}/{:.0}/{:.0}/{:.0}/{}", sf.landed, sf.cores, sf.ore_taken, sf.core_taken, sf.eaten, if spec.starts_with("util:") { 0 } else { strat::drops_chased() });
     // The origin (`origin.rs`): when it broke, or its members against the
-    // most it held while it stands; `-` where none formed.
+    // most it held while it stands; `-` where none formed. `fell@` is on
+    // `secs`' clock, from the landing: the origin counts its tick from the
+    // slime's head start, which ran 40 to 164 s ahead on planets 5 to 8
+    // (the Enemy lane, 11-24).
     let origin = match (g.origin.formed, g.origin.fell, g.stand.live.filter(|h| h.origin)) {
         (false, ..) => "-".to_string(),
-        (_, Some(f), _) => format!("fell@{:.0}", f as f32 / g.rules.tps.max(1) as f32),
+        (_, Some(f), _) => format!("fell@{:.0}", f.saturating_sub(g.landed) as f32 / g.rules.tps.max(1) as f32),
         (_, None, Some(h)) => format!("{}/{}", h.members, h.most),
         _ => "gone".to_string(),
     };

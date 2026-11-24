@@ -86,7 +86,12 @@ bot result is read as balance, check that the bot did not stall. On
 11-21, CI's planet 1 plan sat with 43 soldiers to the 1,800 s limit
 beside the slime's home crystal, because every other crystal was dry. The
 bot's `siege` dial fixed it, and the same plan then won 9 of 11 maps, not
-6. `STRAT_DBG=1` prints the bot's choices every 10 s.
+6. `STRAT_DBG=1` prints the bot's choices every 10 s. Since #707 (11-24)
+the bot besieges the slime's origin once the other crystals are dry, and
+the league's stall gate counts the origin's lost members as progress. Its
+first curve by planet on the owner's three maps (Milestone 2 test 3) won
+12 of 24 planets with today's origin
+([report](../../Reports/curve-2026-11-24/README.md)).
 
 | Hand | What it does | Where |
 |---|---|---|
