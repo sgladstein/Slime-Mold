@@ -7,6 +7,7 @@ sources:
   - Reports/first-reach-2026-11-11.md
   - Reports/gun-route-2026-11-17/README.md
   - Reports/lab-scar-tissue-2026-11-24/README.md
+  - Reports/lab-sleeper-2026-11-24/README.md
   - Reports/lab-threads-2026-11-24/README.md
   - Reports/lab-veins-2026-11-19/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
@@ -106,6 +107,7 @@ nothing, and only a wipe ends it.
 - Each tier's counter tested with the player AI ([player AI](player-ai.md)) once Larder runs in the world.
 - The Sprawler's body as threads (lab, 11-24, its branch only): two rules together turn planet 2's packed disc round a crystal into four to seven spokes with bare ground between, at the same walker count: lanes (a calm walker may step into a full cell holding as much trail as its own, up to 3 more there) and a shuttle (a walker near its birth energy walks down the crystals' scent, back up it when hungry), with the trail kept 0.92 and sensors at 6. Holes 25-29% of the body's outline against 0-8% off on seeds 1 to 3. Recommended for the Sprawler, changed; Direction places it ([Sprawler threads](../../Reports/lab-threads-2026-11-24/README.md)).
 - The Grudge's scar tissue (lab, 11-24, its branch only): a hit on a walker standing on its scar shrugs off with chance up to 0.5 to 0.75, full at a scar of 2,000, so where it was hurt it grows back tough; on planet 7 seed 1 a holding squad killed 2,600 against 8,837 by 0:58 and the run bot kept 21 or 4 soldiers at 2:00 against 30. Recommended as the Grudge's thing; Direction places it ([scar tissue](../../Reports/lab-scar-tissue-2026-11-24/README.md)).
+- The Sleeper grows in its sleep (lab, 11-24, its branch only): a sleeping walker buds a sleeping child with chance P a step, off the crystals' scent and under the ceiling, so farming before it wakes is no longer free; on planet 6 seed 1 the sleeping slime at 2:00 was 162,813 walkers at P 0.003 against 115,022 off, and 16 soldiers woken into it then were wiped within a minute while off's stood. Recommended as the Sleeper's thing; Direction places it ([it grows in its sleep](../../Reports/lab-sleeper-2026-11-24/README.md)).
 - The Trunk's veins (lab, 11-19): its body is packed a walker a cell, so rules on walker motion (deposit by flow, aligning to it) drew no veins inside it and only made the cords bolder; the flow that moves inside a packed body is the shared food, not yet drawn ([Trunk veins](../../Reports/lab-veins-2026-11-19/README.md)).
 
 ## Sources
@@ -119,4 +121,5 @@ nothing, and only a wipe ends it.
 - [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle on the GPU engine.
 - [Trunk veins](../../Reports/lab-veins-2026-11-19/README.md): walker-motion rules for veins inside the Trunk, and the food flow.
 - [Grudge scar tissue](../../Reports/lab-scar-tissue-2026-11-24/README.md): scarred slime that shrugs off hits, planet 7.
+- [Sleeper dreams](../../Reports/lab-sleeper-2026-11-24/README.md): a sleeping slime that grows while you farm, planet 6.
 - [Sprawler threads](../../Reports/lab-threads-2026-11-24/README.md): lanes and a shuttle open the Sprawler's packed body into spokes, at the same walker count.
