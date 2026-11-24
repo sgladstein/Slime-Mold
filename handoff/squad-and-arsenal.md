@@ -51,9 +51,10 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 **2026-11-24, a counter for every slime (pathfinding thread).** Direction
 20:49Z. Paired films found an answer on every planet but the Grudge
 (`Reports/slime-counters-2026-11-24/`); `bring_shell` now asks for Bomb
-(Swarmer, Dozer), Germ (Sporer), Flare (Sleeper). Open: the Grudge's
-answer (a film of over a minute on one spot), card lines to Look HUD, and
-the Lab's "wounded soldiers slow their squad" patch when it comes.
+(Swarmer, Dozer), Germ (Sporer), Flare (Sleeper). #845 merged.
+The Grudge's 3-minute hold film: its trait barely shows (1% on old scar),
+so no answer reads; sent to Direction (Enemy's keys). Open: the Lab's
+"wounded soldiers slow their squad" patch when it comes.
 
 **2026-11-24, unreachable build sites (pathfinding thread).** #832 (build
 variety) and #839 merged. #839: `build_blocked` refuses a site no soldier

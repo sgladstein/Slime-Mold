@@ -18,7 +18,7 @@ upgrades), so a wipe there says only that the pair differs.
 | 4 | Swarmer (surges charge you) | a Bomb (or turrets by the squad) | wiped at 0:44 (seed 2: 11 soldiers at 1:30) | 25 soldiers at 1:30 (seed 2: 21); two turrets 18 | [p4](p4-swarmer-bomb.jpg) |
 | 5 | Sporer (struck, it scatters spores) | a Germ | slime 91,854 at 0:40 (seed 2) | 18,714; seeds 1 and 3 alike (27,335 against 89,973 at 0:30; 26,178 against 110,905 at 0:40) | [p5](p5-sporer-germ.jpg) |
 | 6 | Sleeper (grows while it sleeps) | a Flare, then a Germ | wiped at 0:38 | 10 soldiers at 1:00, slime 80,903 against 137,363 | [p6](p6-sleeper-flare-germ.jpg) |
-| 7 | Grudge (tough where it was hurt) | none shown | | | |
+| 7 | Grudge (tough where it was hurt) | none reads: the trait itself barely shows in 3 minutes (below) | 3 soldiers at 3:00, 1% of the slime on old scar | Torch: 7 soldiers, 0% on old scar, 17 burned | [p7](p7-grudge-hold.jpg) |
 | 8 | Dozer (each shot wakes it, awake it charges) | a Bomb | wiped at 0:48 | 13 soldiers at 1:00 | [p8](p8-dozer-bomb.jpg) |
 
 What did not answer: a Blast on planet 4 (wiped at 0:40) and a sprayer by
@@ -32,6 +32,33 @@ burns the scar off (`scar_burn`). In a minute's film no squad built the
 scar: a farming squad fired 198 shots by 1:00; a standing squad 98 by 1:30;
 four soldiers rushing were eaten by 0:53 with or without a Torch. Its
 answer needs a longer film on one spot.
+
+The longer film (Direction, 22:58Z): eight soldiers holding one spot by
+the slime's eastern body (`hand=hold@760,436`), 3:00, no twist and no
+mini-boss (`set=twist=0 set=boss_first=9999`; with them on, a mini-boss
+took the squad at 0:59 and 1:50). The HUD's old-scar readout (the share of
+the slime standing where it was hurt) was 0% at 1:00 and 2:00 and 1% at
+3:00 with plain shots; 0% throughout with a Torch or a Germ. The slime
+grew from 85,000 to 167,000 meanwhile, so the ground the squad fights over
+is a sliver of it.
+
+| 3:00 | soldiers | killed | burned | on old scar |
+|---|---|---|---|---|
+| plain | 3 | 19,768 | 0 | 1% |
+| Torch | 7 | 21,925 | 17 | 0% |
+| Germ | 5 | 19,709 | 0 | 0% |
+
+The Torch squad kept more soldiers, but with 17 burned (planet 7 is a
+cave, with little plant on the floor for fire) the fire cannot be what
+did it, and 3 against 7 on one seed is within what a seed moves. So fire
+does not read as the answer, because the trait it answers does not read
+either. What would: make the scar show first. At `scar_tough_full` 2,000
+(about a minute of fire on one cell) a holding squad's ground stays under
+1% of the body; a lower full mark, or scar laid wider round each blow,
+would make the readout climb inside two minutes. Then Tinder and a Torch
+(the fuel the cave floor lacks) are the answer to film. Both are the
+Enemy lane's keys (`GRUDGE_KEYS`), so this goes to Direction rather than
+into a number here.
 
 **The twists** are answered by play, not kit, and their cards say so: the
 cold snap is the minute to push; the wind blows the slime onto guns set
