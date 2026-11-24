@@ -516,6 +516,12 @@ impl Default for BuildRules {
 /// A ghost's health, as a share of the whole building's.
 const GHOST_HP: f32 = 0.1;
 
+/// Dish cells a flood out from a building site covers before
+/// `Game::walled_off` counts it open: past every rock-sealed pocket seen
+/// (planet 7's held a crystal in 3,988 fine cells), and a bounded cost a
+/// click (about 32,000 fine cells at the window's scale 2).
+const POCKET: f32 = 8000.0;
+
 /// Who a unit in the frame is.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -580,6 +586,9 @@ impl<W: World> Game<W> {
         if kind != Kind::Pump && !self.world.open(at.0, at.1) {
             return Some("not open ground");
         }
+        if self.walled_off(kind, at) {
+            return Some("no way to walk there");
+        }
         if self.standing() >= self.rules.build.max {
             return Some("too many buildings");
         }
@@ -588,6 +597,70 @@ impl<W: World> Game<W> {
             return Some("too close to another building");
         }
         None
+    }
+
+    /// Whether no living soldier can walk to a building placed at `at`
+    /// (a pump's crystal middle): the ground by it lies in a pocket that
+    /// rock or walls close all round (Engine 11-24, the run bot on planet
+    /// 7, seed 1795106014: it put its first pump on a crystal in a sealed
+    /// pocket of 3,988 fine cells across the rock maze, and the squad
+    /// sent to raise it walked 50 cells, then stood 405 off against the
+    /// rock for 110 s: off the walking map, `want` heads straight on).
+    /// A flood out from the ground by the site over open ground and doors
+    /// (side steps, as `distance_map` walks round a corner), until it
+    /// meets a soldier's cell or covers `POCKET` dish cells, so a big
+    /// region costs a bounded walk and only a small closed one refuses.
+    /// The slime's bulwark and solid crystals don't count as closing it:
+    /// both pass.
+    pub(super) fn walled_off(&self, kind: Kind, at: (f32, f32)) -> bool {
+        use super::paths::{cell, GOAL_SEARCH, RIM};
+        let sc = self.s();
+        let (w, h) = self.world.size();
+        let open = |i: usize| {
+            let (x, y) = ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5);
+            self.world.open(x, y) || self.door_at(x, y)
+        };
+        // The ground a builder would stand on: the site, or for a pump
+        // (or a site on a crystal) the nearest open cell past its rim.
+        let from = match self.solid_at(at) {
+            None if open(cell(w, h, at)) => Some(cell(w, h, at)),
+            solid => {
+                let r = solid.map_or(0.0, |(_, r)| r) + (RIM + GOAL_SEARCH) * sc;
+                let (cx, cy, n) = (at.0.floor() as i64, at.1.floor() as i64, r.ceil() as i64);
+                let mut best: Option<(f32, usize)> = None;
+                for y in (cy - n).max(0)..=(cy + n).min(h as i64 - 1) {
+                    for x in (cx - n).max(0)..=(cx + n).min(w as i64 - 1) {
+                        let i = y as usize * w + x as usize;
+                        let d = (x as f32 + 0.5 - at.0).hypot(y as f32 + 0.5 - at.1);
+                        let ground = open(i) && self.solid_at((x as f32 + 0.5, y as f32 + 0.5)).is_none();
+                        if d <= r && ground && best.is_none_or(|b| d < b.0) {
+                            best = Some((d, i));
+                        }
+                    }
+                }
+                best.map(|b| b.1)
+            }
+        };
+        let Some(from) = from else { return kind == Kind::Pump };
+        let mine: std::collections::HashSet<usize> = self.soldiers.iter().filter(|s| s.alive).map(|s| cell(w, h, (s.x, s.y))).collect();
+        if mine.is_empty() {
+            return false;
+        }
+        let cap = (POCKET * sc * sc) as usize;
+        let mut seen = std::collections::HashSet::from([from]);
+        let mut todo = vec![from];
+        while let Some(i) = todo.pop() {
+            if mine.contains(&i) || seen.len() >= cap {
+                return false;
+            }
+            let (x, y) = (i % w, i / w);
+            for j in [(x > 0).then(|| i - 1), (x + 1 < w).then(|| i + 1), (y > 0).then(|| i - w), (y + 1 < h).then(|| i + w)].into_iter().flatten() {
+                if open(j) && seen.insert(j) {
+                    todo.push(j);
+                }
+            }
+        }
+        true
     }
 
     /// The crystal a pump placed at `at` goes on: the nearest whose disc,
@@ -1384,6 +1457,37 @@ mod tests {
         assert_eq!(g.build_blocked(Kind::Pump, off), Some("a pump goes on a crystal"));
         g.bank = 10.0;
         assert_eq!(g.build_blocked(Kind::Lure, open_near(&g, (g.larder.0 - 8.0, g.larder.1))), Some("not enough food"));
+    }
+
+    /// A site no soldier can walk to is refused (Engine 11-24: the run
+    /// bot's pump in a pocket sealed by planet 7's rock, its squad stood
+    /// against the rock): a square of wall round open ground away from
+    /// the squad closes it, and a site inside is "no way to walk there",
+    /// while the same site with one side left open, or the squad itself
+    /// inside, is not.
+    #[test]
+    fn a_site_sealed_off_from_every_soldier_is_refused() {
+        let ring = |open_side: bool, squad_inside: bool| {
+            let mut g = small(1);
+            let s = g.s();
+            let c = open_near(&g, (g.larder.0 - 30.0 * s, g.larder.1));
+            let h = 6.0 * s;
+            let (a, b, cc, d) = ((c.0 - h, c.1 - h), (c.0 + h, c.1 - h), (c.0 + h, c.1 + h), (c.0 - h, c.1 + h));
+            g.wall_cells(a, b);
+            g.wall_cells(b, cc);
+            g.wall_cells(cc, d);
+            if !open_side {
+                g.wall_cells(d, a);
+            }
+            if squad_inside {
+                g.soldiers[0].x = c.0 + 2.0 * s;
+                g.soldiers[0].y = c.1;
+            }
+            (g.walled_off(Kind::Turret, c), g.build_blocked(Kind::Turret, c))
+        };
+        assert_eq!(ring(false, false), (true, Some("no way to walk there")), "closed all round");
+        assert!(!ring(true, false).0, "one side open");
+        assert!(!ring(false, true).0, "a soldier inside walks to it");
     }
 
     #[test]

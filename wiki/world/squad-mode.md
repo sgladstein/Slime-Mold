@@ -273,7 +273,10 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   2026-11-20 Shift + a build, harvest, guard or attack-move goes on the
   squad's own queue (`Cmd::SquadQueue`), so move then Shift + build raises
   it once the squad gets there; before, Shift skipped the squad and the
-  build was never raised (owner's report, 2026-11-20).
+  build was never raised (owner's report, 2026-11-20). Since 2026-11-24 a
+  site no soldier can walk to (a pocket rock or walls close all round) is
+  refused, "no way to walk there" (`Game::walled_off`): planet 7's run bot
+  put a pump in one and its squad stood 110 s against the rock.
 
 Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 
