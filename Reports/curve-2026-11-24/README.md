@@ -137,3 +137,46 @@ map C. Sign test 2 against 1, p = 1.0: no gain, so it stays off (dial
 On map C main saw no march and won at 4:13 with none lost; the raid arm
 saw 6 marches and lost with 65 bitten. Three pairs give no p worth
 quoting, but every pair went the same way.
+
+## Fourth pass, batch t: six maps, the new crystal pick, planet 8 at size 1.4
+
+Planets 1 to 8 on six maps (the owner's three plus run seeds 1, 2 and 3)
+on the GTX 1070 at 7d7857e (#805: storm 0.5 by default, the takeable-first
+crystal pick for planet 7 map B, `size=F`), two games at once, 54 games.
+Origins are those before #806 (planets 5, 6, 8 at 1,500, 1,800, 2,400).
+Every game's fields: [games-t.csv](games-t.csv).
+
+| Planet | Slime | Won / lost / open | Time to win (median) | Soldiers (peak) | Lost | Income | Longest stall |
+|---|---|---|---|---|---|---|---|
+| 1 | drifter | 6 / 0 / 0 | 4:36 | 38 | 9 | 13,013 | 81 s |
+| 2 | sprawler | 4 / 2 / 0 | 3:18 | 40 | 9 | 13,411 | 97 s |
+| 3 | trunk | 6 / 0 / 0 | 6:04 | 39 | 10 | 16,053 | 93 s |
+| 4 | swarmer | 3 / 3 / 0 | 5:42 | 51 | 55 | 26,529 | 87 s |
+| 5 | sporer | 4 / 1 / 1 | 4:30 | 53 | 12 | 21,502 | 110 s |
+| 6 | sleeper | 4 / 0 / 2 | 6:44 | 65 | 15 | 28,898 | 225 s |
+| 7 | grudge | 3 / 1 / 2 | 8:39 | 40 | 27 | 16,143 | 104 s |
+| 8 | dozer | 6 / 0 / 0 | 7:18 | 64 | 19 | 31,633 | 42 s |
+
+36 of 48 won. On the owner's three maps that is 21 of 24 (the #769 pass
+had 18 of 24): planet 7 is won on all three for the first time (A 11:09,
+B 8:39, C 6:41), and map B, lost in every earlier arm with a squad of 13,
+is won with 40. The run seeds are harder: they hold 9 of the 12 games not
+won, among them planet 2 seeds 2 and 3, planet 7 seed 2 (lost at 3:00
+with a squad of 21) and planet 6 seed 2 (open with 101 soldiers).
+
+**Did the new pick cost anything?** Against the old pick's batches r and s
+on the same planets and maps, 11 games ended differently: 4 better with
+the new pick, 7 worse (planet 4 maps A and B among them). Sign test p =
+0.55: not a measured harm. A software-Vulkan replay of planet 4 map A
+with each pick ran identically to 1:40 and had 14,127 (old) and 13,299
+(new) harvested by 2:30, where the 1070's game with the new pick had 731,
+so that loss is a game going another way, not the pick. By 4:00 the old
+pick was ahead there (income 24,377 against 18,435, 59 soldiers against
+41), one replay. The pick stays; planet 4 is the place to watch it.
+
+**Planet 8 at size 1.4 (Enemy's ask, `size=1.4`):** 6 of 6 won, at a
+median 3:40 against 7:18 at size 1.0, with 1 lost against 19. That reads
+backwards and is the bot, not the slime: its storm fires when the slime
+falls to `storm` times *its own* start size, so a bigger slime is stormed
+sooner, at a lower share of it. Batch v reruns the pair with the storm
+off (`storm=0`) on main after #806.
