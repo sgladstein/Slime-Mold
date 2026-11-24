@@ -1437,7 +1437,7 @@ mod glance_tests {
     fn the_glance_holds_the_planet() {
         for depth in 1..=4 {
             let g = super::glance_of(7, depth);
-            assert_eq!(g.w, 64, "planet {depth}");
+            assert_eq!(g.w, 96, "planet {depth}");
             assert_eq!(g.cells.len(), g.w * g.h, "planet {depth}");
             assert!(g.crystals.len() >= 6 && !g.moulds.is_empty() && g.landing.is_some(), "planet {depth}: {} crystals, {} nests", g.crystals.len(), g.moulds.len());
             let on = |x: f32, y: f32| (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y);
