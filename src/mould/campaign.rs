@@ -680,18 +680,18 @@ impl Tracker {
         match (self.bar, &self.mission.goal, self.outside) {
             (Some(b), Goal::Contain { body, .. }, _) if *body > 0 => match self.thick {
                 Some(0) | None => format!("{says} ({:.0}%)", 100.0 * b),
-                Some(n) => format!("{says} ({:.0}%; thick mould outside in {n} places)", 100.0 * b),
+                Some(n) => format!("{says} ({:.0}%; thick slime outside in {n} places)", 100.0 * b),
             },
             (Some(b), Goal::Contain { leak, .. }, Some(o)) => format!("{says} ({:.0}%; {:.1}% outside, {:.0}% allowed)", 100.0 * b, 100.0 * o, 100.0 * leak),
             // The walkers now and the count to reach, beside the bar (the
             // whole-game review, 11-15: "(0%)" alone said nothing for the
             // first minute, and never how far there was to go).
             (Some(_), Goal::Shrink(_), _) if self.peak == 0 => match self.walkers {
-                Some(n) => format!("{says} (counting from {}:{:02}; {} walkers now)", SHRINK_FROM as u32 / 60, SHRINK_FROM as u32 % 60, grouped(n)),
+                Some(n) => format!("{says} (counting from {}:{:02}; slime count {})", SHRINK_FROM as u32 / 60, SHRINK_FROM as u32 % 60, grouped(n)),
                 None => says.clone(),
             },
             (Some(b), Goal::Shrink(f), _) => match self.walkers {
-                Some(n) => format!("{says} ({:.0}%: {} walkers now \u{2192} {})", 100.0 * b, grouped(n), grouped((self.peak as f32 * f).floor() as usize)),
+                Some(n) => format!("{says} ({:.0}%: slime count {} \u{2192} {})", 100.0 * b, grouped(n), grouped((self.peak as f32 * f).floor() as usize)),
                 None => format!("{says} ({:.0}%)", 100.0 * b),
             },
             (Some(b), _, _) => format!("{says} ({:.0}%)", 100.0 * b),
@@ -713,12 +713,12 @@ impl Tracker {
             // the old "Time: held on" read as "Mission won").
             Cause::Cap => format!("The slime held on until {at}: {} ({best})", if v.stars > 0 { "you cut it to half, 1 star" } else { "lost" }),
             Cause::SquadWiped => format!("Your last soldier fell at {at} ({best})"),
-            Cause::Overrun => format!("The mould took the larder at {at} with the bank empty ({best})"),
+            Cause::Overrun => format!("The slime took your base at {at} with the bank empty ({best})"),
             Cause::Stuck => format!("No food to buy or fire with since {} ({best})", {
                 let s = (v.at - STUCK_END).max(0.0) as u32;
                 format!("{}:{:02}", s / 60, s % 60)
             }),
-            Cause::MouldWiped => format!("The mould is gone at {at}, but the goal was not met ({best})"),
+            Cause::MouldWiped => format!("The slime is gone at {at}, but the goal was not met ({best})"),
         }
     }
 }
@@ -1027,7 +1027,7 @@ mod tests {
         let mut tr = Tracker::new(mission("goal contain 0 0 8 8 10 1 16"), &g);
         assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
         assert!(tr.thick.unwrap() > 0, "thick bins outside: {:?}", tr.thick);
-        assert!(tr.progress_line().contains("thick mould outside in"), "{}", tr.progress_line());
+        assert!(tr.progress_line().contains("thick slime outside in"), "{}", tr.progress_line());
     }
 
     /// An idle squad takes no charge: `take` stays at 0 (its bar starts from
@@ -1047,10 +1047,10 @@ mod tests {
         // Before the peak counts, the line says when it will, and the
         // walkers now; after, the walkers now and the count to reach.
         let line = tr.progress_line();
-        assert!(line.contains("counting from 1:00;") && line.contains(&format!("{} walkers now", grouped(g.world.mass()))), "{line}");
+        assert!(line.contains("counting from 1:00;") && line.contains(&format!("slime count {}", grouped(g.world.mass()))), "{line}");
         assert!(follow(&mut g, &mut tr, 65.0, |_| {}).is_none());
         let line = tr.progress_line();
-        assert!(line.contains(&format!("{} walkers now \u{2192} {}", grouped(g.world.mass()), grouped(tr.peak / 2))), "{line}");
+        assert!(line.contains(&format!("slime count {} \u{2192} {}", grouped(g.world.mass()), grouped(tr.peak / 2))), "{line}");
         assert_eq!((grouped(7), grouped(1234), grouped(12630), grouped(1_000_000)), ("7".into(), "1,234".into(), "12,630".into(), "1,000,000".into()));
     }
 

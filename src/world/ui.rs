@@ -2952,7 +2952,7 @@ impl Hud {
                     base.clone()
                 } else { vec![
                     ("Left click / drag".into(), "Select soldiers".into()),
-                    ("Right click".into(), "Move, or work the crystal or mould clicked".into()),
+                    ("Right click".into(), "Move, or work the crystal or slime clicked".into()),
                     ("Shift".into(), "Add to the selection, or keep placing".into()),
                     ("Ctrl + 1-9".into(), "Make a group; 1-9 selects it, twice to look".into()),
                     ("Wheel, middle drag".into(), "Zoom, pan; the screen's edge scrolls".into()),
@@ -4243,7 +4243,7 @@ mod tests {
     #[test]
     fn the_end_screen_shows_the_planets_numbers_and_fits() {
         let says = "It walls the crystals it holds in amber, and sets where you shoot it. The walls take three hits and stop your soldiers. Fire burns them: bring a Torch";
-        let tiles: Vec<(String, String)> = [("9:41", "played"), ("12,604", "walkers killed"), ("1,520", "shots, 8.3 kills each"), ("0", "soldiers standing, 9 lost"), ("5,700", "food harvested"), ("42.3k of 43.4k", "slime left, of its peak")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
+        let tiles: Vec<(String, String)> = [("9:41", "played"), ("12,604", "slime killed"), ("1,520", "shots, 8.3 kills each"), ("0", "soldiers standing, 9 lost"), ("5,700", "food harvested"), ("42.3k of 43.4k", "slime left, of its peak")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
         let end = Ending { place: "Planet 3 of 8 · Drevix · The Trunk".into(), title: "The squad is lost".into(), won: Some(false), stars: Some(0), says: says.into(), tiles, lines: vec!["Your last soldier fell at 9:41 (best 40% of the goal)".into(), "The run ends on planet 3".into()], curve: (0..581u32).map(|t| (20_000 + (t * 37 % 9_000), 30 - t / 20)).collect() };
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
             for user in crate::world::settings::STEPS {
@@ -4255,7 +4255,7 @@ mod tests {
                 r.draw();
                 let quit = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::Quit)).map(|(b, _)| *b).unwrap();
                 assert!(quit.bottom() <= screen.1 as f32 && quit.y > 0.0 && quit.x >= 0.0 && quit.right() <= screen.0 as f32, "{screen:?} at {user}: Quit {quit:?} off screen");
-                for t in ["12,604", "walkers killed", "42.3k of 43.4k", "THE TRUNK", "Slime", "peak ", "9:41"] {
+                for t in ["12,604", "slime killed", "42.3k of 43.4k", "THE TRUNK", "Slime", "peak ", "9:41"] {
                     assert!(r.c.runs.iter().any(|x| x.text.contains(t)), "{screen:?} at {user}: no {t}");
                 }
                 assert!(r.c.runs.iter().any(|x| x.text.starts_with("It walls the crystals")), "{screen:?} at {user}: the slime's sentence");
@@ -4276,7 +4276,7 @@ mod tests {
             r.c.ui.user = user;
             r.m.clock = "1:00 / 18:00".into();
             r.m.speed = Some("Paused".into());
-            r.m.objective = Some("Wipe out the slime: cut it to 1% of its peak (counting from 1:00; 43,957 walkers now)".into());
+            r.m.objective = Some("Wipe out the slime: cut it to 1% of its peak (counting from 1:00; slime count 43,957)".into());
             r.draw();
             let said = |r: &Rig, t: &str| r.c.runs.iter().find(|x| x.text == t).map(|x| x.ink);
             assert!(said(&r, "EXPERIMENT ON").is_none() && !r.c.runs.iter().any(|x| x.text.contains("EXPERIMENTS ON")), "at {user}: a mark in the default game");
@@ -4310,7 +4310,7 @@ mod tests {
     /// the resources' fourth number).
     #[test]
     fn the_goal_keeps_off_the_top_bars_numbers() {
-        let goal = "Wipe out the slime: kill every last walker (counting from 1:00; 40,451 walkers now)";
+        let goal = "Wipe out the slime: kill every last walker (counting from 1:00; slime count 40,451)";
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
             for user in crate::world::settings::STEPS {
                 let mut r = Rig::new(screen);

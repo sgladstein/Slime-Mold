@@ -1684,7 +1684,7 @@ impl App {
                     }
                 }
             }
-            None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
+            None => self.hud.alert(&format!("{}: take the slime's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
         }
         Ok(())
     }
@@ -2111,14 +2111,14 @@ impl App {
         }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
-            self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
+            self.hud.alert("The core is taken: the slime can no longer grow", Some(g.core), theme::GOOD);
         }
         if g.broken.is_some() != self.broken_told {
             self.broken_told = g.broken.is_some();
             if self.broken_told {
-                self.hud.alert("The mould is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
+                self.hud.alert("The slime is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
             } else {
-                self.hud.alert("The mould is growing back from a crystal", None, theme::BAD);
+                self.hud.alert("The slime is growing back from a crystal", None, theme::BAD);
             }
         }
         // A raid the slime sends (`Rules::raid`, 11-15): told once, where
@@ -2131,7 +2131,7 @@ impl App {
         }
         if g.stolen > self.stolen {
             if self.robbed_at.is_none_or(|r| t - r > 30.0) {
-                self.hud.alert("The mould is at the larder, eating the bank", Some(g.larder), theme::BAD);
+                self.hud.alert("The slime is at your base, eating the bank", Some(g.larder), theme::BAD);
                 self.robbed_at = Some(t);
             }
             self.stolen = g.stolen;
@@ -3144,11 +3144,11 @@ fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime
     use slime_mould::mould::larder_world::RaidAim;
     let name = |k: usize| g.buildings.get(k).map_or("building", |b| b.kind.name());
     match d.aim {
-        _ if d.last_stand => "Last stand: the whole mould rushes your soldiers".into(),
-        RaidAim::Building(k) => format!("The mould is raiding your {}", name(k)),
+        _ if d.last_stand => "Last stand: all of the slime rushes your soldiers".into(),
+        RaidAim::Building(k) => format!("The slime is raiding your {}", name(k)),
         RaidAim::Lure { from: Some(k), .. } => format!("A raid on your {} turns for the lure", name(k)),
         RaidAim::Lure { from: None, .. } => "A raid on your soldiers turns for the lure".into(),
-        RaidAim::Soldiers(_) => "The mould is raiding your soldiers".into(),
+        RaidAim::Soldiers(_) => "The slime is raiding your soldiers".into(),
     }
 }
 
