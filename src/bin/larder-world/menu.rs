@@ -341,12 +341,11 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
-    let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's slime", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
+    let mut lines = vec![format!("{}. Next: {}, a {} planet; its slime is {:.1} times the first planet's", r.line(), p.name, p.biome.name(), l.walkers)];
     // What this tier does to you (`run::does_to_you`).
+    // What this tier does to you (`run::does_to_you`) is the pane's own
+    // block above these lines since the planet's introduction (11-24).
     let does = run::does_to_you(l.tier).says;
-    if !does.is_empty() {
-        lines[0] += &format!(". {does}");
-    }
     // The level's speed star and head start (`run::par`, `run::head_start`);
     // the clock counts up (owner, 2026-11-20), so there is no time limit to
     // tell, only the star's.
@@ -490,6 +489,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         dps: dps_of(r).map(|p| p.dps),
         stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
         run: (!r.range).then(|| run_view(r)),
+        slime: (!r.range && !does.is_empty()).then(|| (title_case(l.tier.name()), does.to_string())),
     }
 }
 
