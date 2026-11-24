@@ -16,4 +16,5 @@ shop             between planets. Card and gun names stay as the shop shows
                  them (Lure, Tinder, Seek, ...).
 
 Not on screen: larder, dish, walker, origin, tier, census, mould.
-The game's own name waits on the owner (asked 2026-11-24).
+The game is called Plasmodia (the owner, 2026-11-24 03:47Z: "Go with plasmodia").
+Not "Larder World".
