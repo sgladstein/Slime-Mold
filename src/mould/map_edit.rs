@@ -127,7 +127,7 @@ impl Tool {
         match self {
             Tool::Paint(b) => b.name(),
             Tool::Crystal => "crystal",
-            Tool::Mould => "mould start",
+            Tool::Mould => "slime start",
             Tool::Landing => "landing",
             Tool::Wall => "wall",
             Tool::Erase => "erase item",
@@ -344,7 +344,7 @@ impl Editor {
             }
             1 => {
                 it.moulds.remove(i);
-                "mould start"
+                "slime start"
             }
             2 => {
                 it.landing = None;
@@ -376,7 +376,7 @@ impl Editor {
             out.push("no crystal (C)".to_string());
         }
         if it.moulds.is_empty() {
-            out.push("no mould start (M)".to_string());
+            out.push("no slime start (M)".to_string());
         }
         if it.landing.is_none() {
             out.push("no landing (L)".to_string());
@@ -385,7 +385,7 @@ impl Editor {
         let deep = |p: (f32, f32)| self.ground_at(p).is_some_and(|g| g >> 4 == 4);
         for (i, &m) in it.moulds.iter().enumerate() {
             if rock(m) {
-                out.push(format!("mould start {} is on rock", i + 1));
+                out.push(format!("slime start {} is on rock", i + 1));
             }
         }
         if it.landing.is_some_and(rock) {
@@ -674,7 +674,7 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
     let it = &ed.map.items;
     text(frame, (8, y), &format!("{} crystals", it.crystals.len()), dim);
     y += 11;
-    text(frame, (8, y), &format!("{} mould starts", it.moulds.len()), dim);
+    text(frame, (8, y), &format!("{} slime starts", it.moulds.len()), dim);
     y += 11;
     text(frame, (8, y), &format!("{} walls", it.walls.len()), dim);
     y += 14;
@@ -811,7 +811,7 @@ mod tests {
         let p = ed.problems();
         assert!(
             p.iter().any(|s| s.contains("crystal 1 can't be walked to"))
-                && p.iter().any(|s| s.contains("mould start 1") || s.contains("mould 1")),
+                && p.iter().any(|s| s.contains("slime start 1 can't be walked to")),
             "{p:?}"
         );
         assert!(Editor::new(crate::mould::map::river(true, false)).problems().is_empty());
@@ -867,7 +867,7 @@ mod tests {
         assert_eq!(ed.erase((700.0, 300.0)), None);
         // 10 cells from the crystal's edge, 50 from the start: the crystal.
         assert_eq!(ed.erase((340.0, 300.0)), Some("crystal"));
-        assert_eq!(ed.erase((360.0, 300.0)), Some("mould start"));
+        assert_eq!(ed.erase((360.0, 300.0)), Some("slime start"));
         assert_eq!(ed.erase((510.0, 250.0)), Some("wall"));
         assert_eq!(ed.map.items, crate::mould::map::Items::default());
     }
@@ -949,7 +949,7 @@ mod tests {
     #[test]
     fn the_panel_uses_only_glyphs_the_font_has() {
         let mut texts: Vec<String> = Tool::ALL.iter().map(|(t, k)| format!("{k}  {}", t.name())).collect();
-        texts.extend(["MAP EDITOR", "CTRL+S save", "ENTER save + play", "RIGHT drag pan", "ready to play", "no crystal (C)", "mould start 1 is on rock", "the landing is on rock", "crystal r 30 [ ]", "mirror left-right (X)", "mirror half turn (X)", "SQUAD", "plain wet"].map(String::from));
+        texts.extend(["MAP EDITOR", "CTRL+S save", "ENTER save + play", "RIGHT drag pan", "ready to play", "no crystal (C)", "slime start 1 is on rock", "the landing is on rock", "crystal r 30 [ ]", "mirror left-right (X)", "mirror half turn (X)", "SQUAD", "plain wet"].map(String::from));
         for t in texts {
             assert!(t.chars().all(crate::hud::has_crisp_glyph), "{t:?}");
         }

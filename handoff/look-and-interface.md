@@ -151,8 +151,14 @@ ended run goes to `runs.txt` beside `run.txt` (`runs.rs`: `record`,
 `why_lost`, `App::keep_run`, `load_runs`), each planet's time from
 `Run::splits`; the main menu's Past runs row and `Page::Runs`
 (`runs_page`: best times, the list, the run told in full); films
-`menu=runs|main-runs`. Next: Look D screens (ask the world Look thread
-which it holds first).
+`menu=runs|main-runs`, #817 merged. Look D (the world thread holds no
+menu screen; Squad owns the shop's gun row, fused shots #819): every menu,
+the shop and the pause card filmed at 3840x2160 ui=125%. #822: hand cards
+grow to show all they say (`hand_need`, `fit` caps the face's growth),
+NO ROOM on its own line, the pause card hides the intro and coaching,
+inner pages wider (`split` 600/760) and dimmer (185). Then the end card's
+primary button shows "Enter" (`film_ends` with `FILM_SIZE`/`FILM_UI`
+films the end cards). Key list keycaps rejected (reads clearly at 4K).
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

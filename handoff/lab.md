@@ -210,5 +210,15 @@ A second slime species that fights the first; the player's own mould
   start trips their 60% trigger); first number `strikers_below` 0.45 on
   lap two. Pump smell 40 takes 14's edge pump in 45 s; it is redundant on
   10. Set walkers are counted; paired 15's first size is 0.5.
+- 2026-11-24: **planet 10's trait and the strikers' settled peak**
+  (Direction 15:39Z), a section in the lap-two report. Planet 10 takes the
+  Drifter's spore bursts (10 to 40 times the spores in flight). The rule key
+  `strikers_settle` (code `e7b72d88`) lets 12 and 15 live past 1:00 with no
+  `strikers_below` patch, and planets 2 to 8 play as on main. Enemy's patch
+  is `raw/strikers-settle.patch`.
+- 2026-11-24: **planet twists** (Direction 17:00Z, run variety). Report
+  [`Reports/lab-twists-2026-11-24/`](../Reports/lab-twists-2026-11-24/README.md),
+  page "Planet Twists". `LAB_TWIST` (code `4f4f3856`): cold, night, wind.
+  Wind and the cold snap recommended, with card lines.
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.

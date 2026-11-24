@@ -1024,7 +1024,7 @@ pub const ITEMS: [Item; 21] = [
     Item { key: "sprayer", name: "Sprayers", group: Group::Build, about: "Unlocks the sprayer: lays the turrets' cards in a strip across the slime's way; wants gas, fire or crater cards, weak with Plain", max: 1, cost: 250, needs: Some("mortar") },
     // The third body (Direction 11-24 12:33Z): picky aim, slime on a
     // crystal first.
-    Item { key: "hunter", name: "Hunters", group: Group::Build, about: "Unlocks the hunter: one fast flat shot at what matters most, the slime on a crystal first, then fruit, mini-bosses, raids and the origin", max: 1, cost: 250, needs: Some("sprayer") },
+    Item { key: "hunter", name: "Hunters", group: Group::Build, about: "Unlocks the hunter: one fast flat shot at what matters most, the slime on a crystal first, then fruit, mini-bosses, raids and the heart", max: 1, cost: 250, needs: Some("sprayer") },
     Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets, mortars, sprayers and hunters: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.

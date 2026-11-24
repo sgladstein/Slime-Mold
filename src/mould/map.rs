@@ -230,7 +230,7 @@ impl Map {
     /// standable cell within its radius + `NEAR` that connects to the
     /// landing by standable cells (4-neighbour, so a ford one diagonal
     /// wide doesn't count), and each mould start with none within `NEAR`.
-    /// Empty with no landing. `("crystal", i)` or `("mould", i)`.
+    /// Empty with no landing. `("crystal", i)` or `("slime start", i)`.
     pub fn cut_off(&self) -> Vec<(&'static str, usize)> {
         const NEAR: f32 = 8.0;
         let Some(l) = self.items.landing else { return Vec::new() };
@@ -276,7 +276,7 @@ impl Map {
         }
         for (i, &m) in self.items.moulds.iter().enumerate() {
             if !near(m, NEAR) {
-                out.push(("mould", i));
+                out.push(("slime start", i));
             }
         }
         out
@@ -388,7 +388,7 @@ mod tests {
     /// bridge joins the banks (`Map::cut_off`, the editor's warning).
     #[test]
     fn deep_water_cuts_off_until_a_ford_or_bridge() {
-        assert_eq!(river(false, false).cut_off(), vec![("crystal", 0), ("mould", 0)]);
+        assert_eq!(river(false, false).cut_off(), vec![("crystal", 0), ("slime start", 0)]);
         assert!(river(true, false).cut_off().is_empty());
         assert!(river(false, true).cut_off().is_empty());
         // Deep water loads wet (older builds' reading of the byte), with

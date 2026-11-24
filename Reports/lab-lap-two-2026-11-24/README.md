@@ -207,8 +207,75 @@ size 0.5 the paired slime holds about 37 to 41k through 1:30 and the
 squad lives, so **0.5 is 15's first size** where it is paired. Not run:
 15 alone at size 0.5 with `strikers_below` 0.45 together.
 
+## Planet 10's trait and the strikers' settled peak (added 11-24, Direction 15:39Z)
+
+Greedy squad of 11, bank 3,000, on the GTX 1070 (Engine; 35 games in
+`raw/pc-lap2-settle.ps1` and `raw/pc-lap2-settle2.ps1`, outputs beside
+them).
+
+**Planet 10's second trait: the Drifter's spore bursts** (the same keys as
+planet 9's pair, `raw/pairs.txt`). The Sprawler's threads already reach
+the squad and the pumps from far off, so pump smell added nothing. Bursts
+add something threads don't do: a thread the squad shoots scatters spores
+that start new slime away from the body. Life rows (`LAB_DUMP_LIFE`,
+spores in flight), 2:00 at 0.7 of the size rule:
+
+| Run seed | Spores in flight, 0:15 / 0:30 / 0:45 | 1:00 | End |
+|---|---|---|---|
+| 1, alone | 31 / 17 / 71 | 14 soldiers, slime 74k | wiped 1:29 (a crowd hunter) |
+| 1, **paired** | 381 / 731 / 1,687 | 14 soldiers, slime 85k | wiped 1:17 |
+| 2, alone | 31 / 35 / 40 | 15 soldiers, slime 100k | 35 soldiers at 2:00 |
+| 2, **paired** | 708 / 1,619 / 1,020 | 15 soldiers, slime 108k | 35 soldiers at 2:00 |
+
+Seen within a minute: 10 to 40 times the spores in flight, and the slime
+about 10% bigger by 1:00. The squad lasts past 1:00 on both seeds; seed 1
+dies 12 s sooner paired, so the trait costs something and is no free win.
+**First number: planet 9's spore keys as they are.**
+
+**The strikers' settled peak** (rule key `set=strikers_settle=S`, code
+`8e94466e` and `e7b72d88`; 0 is main's rule). The strikers count their
+own peak only once the slime has settled: from the first second its mass
+is 1% over its lowest so far, or at `S` game seconds at the latest, with
+no strikers before. What was killed by then counts back in, up to the
+game's peak, so only what the slime shed by itself is left out. The first
+version left the kills out, and planet 4 then lost its strikers. Planet 4
+falls under the guns from 53,505 to 35,410 walkers by 1:00, with 19,623
+killed, and a peak taken at 35,410 kept the strikers off for 3:00 (main:
+3,334 taken). The second version keeps that peak at the game's.
+
+With `S` 60 and no `strikers_below` patch, lap two at 0.7, 2:00:
+
+| Planet, run seed | As it is | Settled peak (settled at, its peak) |
+|---|---|---|
+| 12, 1 | wiped 0:49 | **lives**: 24 soldiers at 2:00, no strikers formed (0:30, 69k) |
+| 15, 1 | wiped 0:39 | **lives**: 24 soldiers at 2:00, 2 walkers taken (1:00, 62k) |
+| 12, 2 | wiped 0:42 | **lives**: 3 soldiers at 1:00, 6 at 2:00 (0:26, 81k) |
+| 15, 2 | wiped 1:52 by two mortars, no strikers | the same (0:40) |
+
+Lap one, run seed 1, 3:00, main against the settled peak:
+
+| Planet | Settled at | Against main |
+|---|---|---|
+| 2, 5, 6, 7, 8 | 0:04 to 0:40 (6 wiped at 0:43 by a hunter in both arms) | the same game, number for number |
+| 3 | 1:00 (peak 43,361, main's) | strikers from 1:19 in both, 236 taken; at 3:00 1,135 against 1,137 taken, 34 soldiers both |
+| 4 | 1:00 (peak 53,513, main's) | strikers from 1:16 in both; at 3:00 3,392 against 3,334 taken, 28 against 31 soldiers |
+
+On 3 and 4 the peak the strikers read is main's own, so the gap after
+the first strikers is run-to-run noise in their condensing; every other
+planet plays the same game as on main. **The settled peak replaces round
+two's `strikers_below` 0.45**, and lap one keeps its strikers.
+
+**For Enemy**: `raw/strikers-settle.patch` applies to main as of 11-24
+16:50Z (`git apply`). It changes `strikers.rs` (the rule, the settled
+peak, with the why in comments), `rules.rs` (the `strikers_settle` key)
+and `tests.rs` (`the_strikers_peak_waits_for_the_slime_to_settle`, which
+passes). The default stays 0. Lap two would turn it on at 60, or every
+planet could, since lap one plays the same with it. The lab branch's
+headless strikers line also prints the settle second and peak (Engine's
+`headless.rs`, not in the patch).
+
 ## Raw
 
 `raw/pairs.txt` (planet, base, hand, keys), `raw/run2.sh` (the fourteen),
 `raw/run3.sh` (the retests), `raw/m2.py` (the counts from logs and dumps),
-`raw/nap.txt` (the Sleeper's keys), `raw/rig9.sh` (planet 9's rig), `raw/rig.sh` (any of 9 to 15), `raw/pc-size9.ps1`, `raw/pc-lap2-smoke.ps1`, `raw/pc-lap2-fix.ps1` and `raw/pc-lap2-fix2.ps1` (the PC batches) with their outputs (the fix batch's is Engine's summary; its logs stay on Scott's PC).
+`raw/nap.txt` (the Sleeper's keys), `raw/rig9.sh` (planet 9's rig), `raw/rig.sh` (any of 9 to 15), `raw/pc-size9.ps1`, `raw/pc-lap2-smoke.ps1`, `raw/pc-lap2-fix.ps1`, `raw/pc-lap2-fix2.ps1`, `raw/pc-lap2-settle.ps1` and `raw/pc-lap2-settle2.ps1` (the PC batches) with their outputs (the fix batch's is Engine's summary; its logs stay on Scott's PC), and `raw/strikers-settle.patch` (Enemy's patch).

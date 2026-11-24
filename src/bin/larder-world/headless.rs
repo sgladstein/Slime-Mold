@@ -838,7 +838,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                             if most - n.min(most) >= origin_low.1 - origin_low.0.min(origin_low.1) {
                                 origin_low = (n, most);
                             }
-                            println!("  origin t {:.0} s: {n} members of {most} most, deepest {} of {}, reach {:.1}, {} lunges, {} calls home, gathering {}", g.time(), origin_low.0, origin_low.1, g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather))
+                            println!("  origin t {:.0} s: {n} members of {most} most, deepest {} of {}, armour {}, size {:.0}, reach {:.1}, {} lunges, {} calls home, gathering {}", g.time(), origin_low.0, origin_low.1, g.rules.origin.armour, g.rules.origin.size, g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather))
                         }
                         None => println!("  origin t {:.0} s: none", g.time()),
                     }

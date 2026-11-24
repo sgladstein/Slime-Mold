@@ -2198,7 +2198,7 @@ impl App {
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest slime within {:.0} cells every {:.1} s. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food for each slime it kills.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
                 pump((0, 1)),
                 place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest slime it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit slime within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
-                place(HUNTER, (0, 5), Icon::Target, "Hunter", KeyCode::KeyX, b.hunter_cost, format!("Every {:.0} s one fast flat shot within {:.0} cells, at what matters most: the slime on the nearest crystal it holds, then a ripening fruit, a mini-boss, a marching raid, the origin's heart, and only then the thickest slime. Rock and walls stop its shot. Fires the turrets' cards.", b.hunter_every, b.hunter_range)),
+                place(HUNTER, (0, 5), Icon::Target, "Hunter", KeyCode::KeyX, b.hunter_cost, format!("Every {:.0} s one fast flat shot within {:.0} cells, at what matters most: the slime on the nearest crystal it holds, then a ripening fruit, a mini-boss, a marching raid, the slime's heart, and only then the thickest slime. Rock and walls stop its shot. Fires the turrets' cards.", b.hunter_every, b.hunter_range)),
                 place(SPRAYER, (1, 4), Icon::Gas, "Sprayer", KeyCode::KeyN, b.sprayer_cost, format!("Sweeps a cone every {:.1} s at the slime within {:.0} cells and lays the turrets' next card in a strip of {} spots across the way it comes, on bare ground too. Wants field cards (gas, Tinder, Torch, Blast's craters); with Plain it lays only a thin kill.", b.sprayer_every, b.sprayer_range, b.sprayer_spots)),
                 Command {
                     target: Target::Line { width: r.wall_width * sc },
@@ -3258,7 +3258,7 @@ impl App {
                 Kind::Hunter => {
                     let b = &g.rules.build;
                     stats.push(("Range".into(), format!("{:.0} to {:.0} cells", b.hunter_min, b.hunter_range)));
-                    stats.push(("Picks".into(), "slime on a crystal, then fruit, mini-bosses, raids, the origin".into()));
+                    stats.push(("Picks".into(), "slime on a crystal, then fruit, mini-bosses, raids, the heart".into()));
                     if g.shells.iter().any(|s| s.mortar == bk) { "firing".into() } else { "watching".into() }
                 }
                 Kind::Lure | Kind::Siren => {

@@ -17,6 +17,7 @@ sources:
   - Reports/lab-crystal-bait-2026-11-24/README.md
   - Reports/lab-march-counter-2026-11-24/README.md
   - Reports/lab-steering-2026-11-17/README.md
+  - Reports/lab-twists-2026-11-24/README.md
   - Reports/late-threat-2026-11-20/README.md
   - Reports/lure-field-2026-11-18/README.md
   - Reports/menu-fixes-2026-11-15/README.md
@@ -590,11 +591,14 @@ Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1
 
 The Lab tried a counter to planet 4's armoured march from the slime's own food rule (11-24, its branch only): a hungry marcher on a charged crystal leaves its march and eats. A still squad of 8 lost no one to planet 4's marches on three seeds with mini-bosses off, so the rig had no march wall to counter; feeding did starve a wanderer heading for a crystal on one seed ([march counter](../../Reports/lab-march-counter-2026-11-24/README.md)). Tried as a wanderer counter on planets 4 and 7 (every mini-boss a wanderer), no bait squad was wiped against 2 of 6 off, and the wanderer broke on a charged crystal in 3 of 6 ([crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md)). Settled on planet 7 with a placed wanderer on six seeds, draining the squad's own crystal beat leaving it as bait (65 soldiers at the boss's end against 48, one wipe against none, that one by another road), since a wanderer starves on the crystals on its way, not the squad's ([bait or drain](../../Reports/lab-bait-trade-2026-11-24/README.md)).
 
+For run variety (Milestone 2's test 2), the Lab built three planet twists a run could roll, each a minute's change to the slime's own numbers (11-24, its branch only): a cold snap (its step at 0.3: streams break into beads and stall), night (sensors reach 2.5 times as far: thick roads to food and the squad) and wind (each step pushed downwind: the body leans one way). Each shows within 30 s on planet 1 and changes no outcome there; it recommends wind and the cold snap, each with a card line ([planet twists](../../Reports/lab-twists-2026-11-24/README.md)).
+
 ## Sources
 
 - [balance review](../../Reports/balance-review-2026-11-20/README.md), *Findings*.
 - [balance review, 11-24](../../Reports/balance-review-2026-11-24/README.md), *Ranked findings*.
 - [march counter](../../Reports/lab-march-counter-2026-11-24/README.md), *Results*.
+- [planet twists](../../Reports/lab-twists-2026-11-24/README.md), *Recommendation*.
 - [crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md), *Results*.
 - [bait or drain](../../Reports/lab-bait-trade-2026-11-24/README.md), *Results*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.

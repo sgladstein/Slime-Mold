@@ -6,6 +6,8 @@
 the slime        the enemy, always. Never "mould", "mold" or "the larder".
                  Its walkers are "slime" on screen too: "every last bit of
                  slime", not "every last walker".
+                 Where a count needs one unit of it, a "speck" of slime
+                 ("3,600 specks"), never a "walker".
 the heart        the slime's standing heart (the code's "origin"). It sits
                  on the slime's "home crystal".
 crystal          what the slime grows from and the squad drains. Not "food
