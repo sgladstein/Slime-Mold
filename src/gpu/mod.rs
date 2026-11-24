@@ -627,7 +627,8 @@ pub struct Settings {
     /// `Reports/lab-twists-2026-11-24/`; GPU only, no CPU twin): every
     /// step a walker takes is also pushed this far (fine cells, x and y),
     /// so the body leans and creeps downwind and lays its trail there.
-    /// The game sets it (`World::set_twist`); 0 none.
+    /// The game sets it (`World::set_twist`), so it has no key of its own
+    /// (a planet twist, rolled on, not a switch); 0 none.
     pub wind: [f32; 2],
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
@@ -1269,8 +1270,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scar_tough_full" => s.scar_tough_full = f()?.max(1.0),
         "scar_burn" => s.scar_burn = int()? != 0,
         "dream" => s.dream = f()?.clamp(0.0, 1.0),
-        "wind_x" => s.wind[0] = f()?,
-        "wind_y" => s.wind[1] = f()?,
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
