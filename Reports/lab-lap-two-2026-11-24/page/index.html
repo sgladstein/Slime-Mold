@@ -1,0 +1,82 @@
+<title>Lap Two Pairings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; each picture full width with its counts beside it in a small table. */
+:root {
+  --bg: #f6f3ec; --fg: #23211c; --muted: #6b665a; --line: #ddd6c6; --slime: #b86a00; --panel: #fffdf8;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #17150f; --fg: #ece6d8; --muted: #a59d8b; --line: #3a352a; --slime: #f0a326; --panel: #1f1c15; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #17150f; --fg: #ece6d8; --muted: #a59d8b; --line: #3a352a; --slime: #f0a326; --panel: #1f1c15; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+main { max-width: 1320px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 34px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.25rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.eyebrow { font: 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--slime); }
+section { display: grid; gap: 12px; }
+figure { margin: 0; display: grid; gap: 8px; }
+figure img, figure video { width: 100%; max-width: 100%; height: auto; border-radius: 6px; background: #000; }
+.pair-labels { display: grid; grid-template-columns: 1fr 1fr; font: 12px var(--mono); color: var(--muted); }
+figcaption { color: var(--muted); font-size: 13px; max-width: 90ch; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+th, td { text-align: right; padding: 4px 12px; border-bottom: 1px solid var(--line); white-space: normal; vertical-align: top; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3), td:nth-child(5), td:nth-child(6) { text-align: left; }
+th { font-weight: 600; color: var(--muted); }
+tr.on td { color: var(--slime); }
+.rec { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 8px; }
+code { font: 13px var(--mono); }
+ul { margin: 0; padding-left: 20px; max-width: 80ch; }
+</style>
+
+
+<main>
+  <div class="lede">
+    <div class="eyebrow">Lab draft · planets 9 to 15 · not in the game</div>
+    <h1>Lap two: each tier with a second trait</h1>
+    <p>If the run is 12 or 16 planets, lap two pairs each tier with a second trait that doesn't fight it. Each pair was smoke-tested for two minutes on its base tier's own map, run seed 1, alone and paired: does it run, does it do the named thing, and is it not a free win. One seed each; Enemy sets the numbers by play. Planet 8 is already the Swarmer that naps.</p>
+  </div>
+
+  <section>
+    <div class="tablewrap">
+      <table style="min-width: 900px">
+        <thead><tr><th>Planet</th><th>Pair</th><th>What it does</th><th>Ran</th><th>Named thing: alone → paired</th><th>Free win?</th></tr></thead>
+        <tbody>
+          <tr><td>9</td><td>Drifter + Sporer's bursts</td><td>It comes for your pumps, and struck it scatters spores that start new slime</td><td>yes</td><td>spores in flight at once: 45 → 970</td><td>no: 45 soldiers both</td></tr>
+          <tr><td>10</td><td>Sprawler + Drifter's pump smell</td><td>It smells your soldiers and your pumps from far off, and eats the pumps</td><td>yes</td><td>pumps standing at 2:00: 2 of 4 → 0 of 4; food 1,833 → 454</td><td>no: harder</td></tr>
+          <tr><td>11</td><td>Trunk + Sleeper's naps</td><td>It sleeps behind its walls until you shoot, then all of it sets against you</td><td>yes</td><td>awake at landing 100% → 13%; 89% by 0:30 after the first shots</td><td>no: 30 soldiers both</td></tr>
+          <tr><td>12</td><td>Swarmer + Grudge's scar</td><td>Its surges come back where you hurt it</td><td>yes</td><td>scar peak 0 → 4,319; walkers on deep scar 0 → 215</td><td>no: 30 → 28 soldiers</td></tr>
+          <tr><td>13</td><td>Sporer + Swarmer's charge</td><td>Struck it scatters spores, and swarms at the wound</td><td>yes</td><td>killed 11,748 → 15,635; spores 7,398 → 8,468; last stand not reached in 2:00</td><td>no: 34 → 30 soldiers</td></tr>
+          <tr><td>14</td><td>Sleeper + Drifter's pump smell</td><td>It wakes to the smell of your pumps</td><td>yes</td><td>a pump at its edge: awake at 0:10–0:20, 12% → 51–56%, asleep again once the pump fell</td><td>no: pump worn down in both</td></tr>
+          <tr><td>15</td><td>Grudge + Trunk's setting and walls</td><td>Where you hurt it, it sets in amber and comes back to set again</td><td>yes</td><td>killed 7,123 → 3,865; walkers on deep scar 432 → 854</td><td>no: half the kills</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Dropped for no visible change in two minutes: the Trunk with the soldier smell, the pump smell or the scar (it sets, and its cords are slow, so pulls barely move it), and the Swarmer with the soldier smell.</p>
+  </section>
+
+  <section>
+    <h2>What fights, and how the pairs avoid it</h2>
+    <ul>
+      <li><b>Sleepers don't move</b> in surges or the last stand: no sleeper takes the Swarmer's charge (planet 8 does, by Enemy's choice).</li>
+      <li><b>One alarm field:</b> no sleeper takes the Sporer's burst or the Sprawler's fire. Planet 13 adds the alarm pull to the Sporer on purpose.</li>
+      <li><b>One life-cycle timer:</b> no Sporer naps.</li>
+      <li><b>One scar:</b> only 12 and 15 use it.</li>
+      <li><b>One walk per slime:</b> no pair takes the Sprawler's walk.</li>
+      <li><b>The same trigger twice:</b> the Trunk's setting and the Sporer's burst both answer a shot; not paired.</li>
+      <li>Planet 14's pump smell lands in the scent the Sleeper wakes on. That is the named thing, not a fight.</li>
+    </ul>
+  </section>
+
+  <section class="rec">
+    <div class="eyebrow">Recommendation</div>
+    <p><b>Use these seven as lap two's first draft.</b> Each runs, does its thing in two minutes, and is no free win on one seed. Weakest in a pair: 13's last stand (not reached in 2:00) and 11's naps (it wakes at the first shot and stays up). Enemy sets the numbers on lap two's sizes.</p>
+    <p>Report: <code>Reports/lab-lap-two-2026-11-24/README.md</code>. Keys only, in <code>raw/pairs.txt</code>.</p>
+  </section>
+</main>
