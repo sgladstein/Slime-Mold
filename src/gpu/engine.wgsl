@@ -468,8 +468,23 @@ fn condensed(k: u32) -> bool { return P.cond > 0.0 && (dense_word(k) & DENSE_BIT
 fn specks_on() -> bool { return growth() && P.roam > 0u; }
 // After the gas's words, a slot's Mind word each (`mind_of`, 2026-11-16).
 fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + 2u * P.n; }
-fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
-fn set_dense(k: u32, v: u32) { atomicStore(&news[dense_base() + DENSE_HEAD + k], v); }
+// `sense` reads walker k's word once and keeps it here (`held_k`, NONE
+// elsewhere): its lump, striker, breakaway and raid checks read it up to six
+// times a walker, each an atomic load, which the compiler cannot merge
+// (Direction's 4K job, 11-24: sense was 38% of planet 8's step on the
+// GTX 1070). Only the walker's own thread writes its word, and `set_dense`
+// keeps the copy, so the copy is the word.
+var<private> held_k: u32 = 0xFFFFFFFFu;
+var<private> held_word: u32;
+fn dense_word(k: u32) -> u32 {
+    if (k == held_k) { return held_word; }
+    return atomicLoad(&news[dense_base() + DENSE_HEAD + k]);
+}
+fn hold_dense(k: u32) { held_word = atomicLoad(&news[dense_base() + DENSE_HEAD + k]); held_k = k; }
+fn set_dense(k: u32, v: u32) {
+    atomicStore(&news[dense_base() + DENSE_HEAD + k], v);
+    if (k == held_k) { held_word = v; }
+}
 // Sets walker k's word to v, keeping its lump and hits (`big::KEPT`): a
 // member stays one as it ripens, condenses or breaks (the CPU's the same).
 fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | HURT_BITS)) | v); }
@@ -536,9 +551,19 @@ const MIND_DEAF: u32 = 4u;
 const MIND_STILL: u32 = 5u;
 const MIND_T: u32 = 0x1FFFFFFFu;
 fn mind_at() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
+// `sense` reads walker k's Mind word once (`held_mk`, as `held_k`): it and
+// `panic_to` both ask. Written only by the game's own pass, never in `sense`.
+var<private> held_mk: u32 = 0xFFFFFFFFu;
+var<private> held_mind: u32;
+fn hold_mind(k: u32) {
+    if (P.mind_on == 0u) { return; }
+    held_mind = atomicLoad(&news[mind_at() + k]);
+    held_mk = k;
+}
 fn mind_of(k: u32, t: u32) -> u32 {
     if (P.mind_on == 0u) { return 0u; }
-    let w = atomicLoad(&news[mind_at() + k]);
+    var w = held_mind;
+    if (k != held_mk) { w = atomicLoad(&news[mind_at() + k]); }
     if ((t & MIND_T) < (w & MIND_T)) { return w >> 29u; }
     return 0u;
 }
@@ -810,8 +835,10 @@ fn deep_shut(j: u32) -> bool { return (P.deep_wall & 1u) != 0u && soil(j) == SOI
 // is shut for about 1 s then, as the cells cannot tell who wrote them.
 fn crater_shut(j: u32) -> bool {
     let t = P.deep_wall >> 16u;
+    // Off: no read of the crater (an atomic load, three a walker in `sense`).
+    if (t == 0xFFFFu) { return false; }
     let c = crater_at(j);
-    return t != 0xFFFFu && c > f32(t) && c <= P.crater;
+    return c > f32(t) && c <= P.crater;
 }
 // **A wall holds until it is worn through** (`solid_walls`, 2026-11-21,
 // the owner: "Sometimes slime is able to get through my walls even when
@@ -1386,6 +1413,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n || !lives(k)) { return; }
     let t = S.t;
+    if (P.lump_on != 0u || P.cond > 0.0 || specks_on()) { hold_dense(k); }
+    hold_mind(k);
     let wk = walkers[k];
     var h = wk.z;
     let here = cell(wk.x, wk.y);
