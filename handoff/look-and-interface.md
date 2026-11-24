@@ -190,7 +190,7 @@ the heart; the scar is subtle, about 1% "on old scar" at 90 s). Direction's
 next list (20:47Z): 1 What is new caught up by day (`news_rows`,
 `day_name`, things to try beside the list over the note, a heading again
 on a page inside a day; done), 2 the pause card shows the planet's slime
-line, twist and goal, 3 own pick from the 4K menu films. The rescue
+line, twist and goal (done: `Model::pause_planet`, a panel beside the card, or in it where only tall), 3 own pick from the 4K menu films. The rescue
 planet's screens come to this lane first.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems

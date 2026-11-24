@@ -712,6 +712,11 @@ pub struct Model {
     /// pass, 11-24: the pause menu said nothing of where you were): the
     /// planet, the run's strip and its tally (`start::run_strip`).
     pub pause_run: Option<super::start::RunView>,
+    /// The planet's landing card as the pause menu repeats it (Direction
+    /// 11-24: "so he can check them mid-planet without leaving"): the
+    /// slime's name and line, and the twist's, under the goal
+    /// (`objective`). The card's `alpha` is not read here.
+    pub pause_planet: Option<Intro>,
     /// The end screen's first button carries on (`MenuItem::Continue`)
     /// under this label, instead of "Play again" (a roguelike run: the
     /// shop, or the run's end).
@@ -3060,8 +3065,13 @@ impl Hud {
 
     fn modal(&mut self, w: f32, h: f32, c: &mut Canvas, s: f32) -> Rect {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+        self.modal_at(Rect::new((sw - w) / 2.0, (sh - h) / 2.0, w, h), c, s)
+    }
+
+    /// `modal` at `r`, for a card with a panel beside it.
+    fn modal_at(&mut self, r: Rect, c: &mut Canvas, s: f32) -> Rect {
+        let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
         c.rrect(Rect::new(0.0, 0.0, sw, sh), 0.0, [4, 6, 8, 150]);
-        let r = Rect::new((sw - w) / 2.0, (sh - h) / 2.0, w, h);
         c.shadow(r, 16.0 * s, 30.0 * s, 8.0 * s, [0, 0, 0, 160]);
         c.panel(r, 16.0 * s, [30, 36, 44, 250], [18, 22, 27, 252], 1.0, EDGE);
         self.hits.push((Rect::new(0.0, 0.0, sw, sh), Hit::Panel));
@@ -3114,9 +3124,48 @@ impl Hud {
                 let w = if m.pause_run.is_some() { 400.0 * s } else { w };
                 // The run: the planet's line, its strip and the tally.
                 let run_h = if m.pause_run.is_some() { 92.0 * s } else { 0.0 };
+                // The planet (Direction 11-24): its goal, its slime's line
+                // and its twist, each a small heading over its words, so
+                // they can be read again mid-planet without leaving it. A
+                // panel beside the card where the screen is wide enough,
+                // else in the card under the run where it is tall enough
+                // (a card of both was 700 units, over a 1080-line screen
+                // at 200%), else left out.
+                let pw = 380.0 * s;
+                let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+                let side = sw >= w + 16.0 * s + pw + 32.0 * s;
+                let tw = if side { pw } else { w } - 48.0 * s;
+                let (px, lead) = (13.5 * s, 18.0 * s);
+                let mut parts: Vec<(String, Rgba, Vec<String>)> = Vec::new();
+                if let Some(g) = m.objective.as_ref().filter(|_| m.pause_planet.is_some()) {
+                    parts.push(("THE GOAL".into(), MUTED, c.wrap(Weight::Medium, px, tw, g)));
+                }
+                if let Some(i) = &m.pause_planet {
+                    parts.push((i.title.to_uppercase(), WARN, c.wrap(Weight::Medium, px, tw, &i.line)));
+                    if let Some((name, line)) = &i.twist {
+                        parts.push((name.to_uppercase(), TWIST, c.wrap(Weight::Medium, px, tw, line)));
+                    }
+                }
+                let part_h = |p: &(String, Rgba, Vec<String>)| 24.0 * s + p.2.len() as f32 * lead + 8.0 * s;
+                let plan_h = if parts.is_empty() { 0.0 } else { 14.0 * s + parts.iter().map(part_h).sum::<f32>() };
+                let card_h = |run_h: f32| {
+                    let note = m.pause_note.len() as f32 * 18.0 * s + run_h;
+                    84.0 * s + note + if note > 0.0 { 8.0 * s } else { 0.0 } + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s
+                };
+                let inside = !side && card_h(run_h + plan_h) <= sh - 32.0 * s;
+                if !side && !inside {
+                    parts.clear();
+                }
+                let (plan_h, side_h) = if inside { (plan_h, 0.0) } else { (0.0, plan_h) };
+                let run_h = run_h + plan_h;
                 let note = m.pause_note.len() as f32 * 18.0 * s + run_h;
-                let h = 84.0 * s + note + if note > 0.0 { 8.0 * s } else { 0.0 } + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
-                let r = self.modal(w, h, c, s);
+                let h = card_h(run_h);
+                let r = if side && !parts.is_empty() {
+                    let all = w + 16.0 * s + pw;
+                    self.modal_at(Rect::new((sw - all) / 2.0, (sh - h) / 2.0, w, h), c, s)
+                } else {
+                    self.modal(w, h, c, s)
+                };
                 let mut tip = None;
                 if let Some(v) = &m.pause_run {
                     let n = v.stops.len();
@@ -3134,6 +3183,27 @@ impl Hud {
                         tally += &format!(", played {}", super::start::RunView::clock(t));
                     }
                     c.text_fit(Weight::Medium, 13.0 * s, (r.x + w / 2.0, r.y + 158.0 * s), Align::Centre, &tally, w - 40.0 * s, MUTED);
+                }
+                if !parts.is_empty() {
+                    // Beside: its own panel, level with the card's top.
+                    let (cx, mut y) = if inside {
+                        let y = r.y + 84.0 * s + run_h - plan_h;
+                        c.rrect(Rect::new(r.x + w / 2.0 - 40.0 * s, y + 6.0 * s, 80.0 * s, 1.0 * s), 0.5 * s, EDGE);
+                        (r.x + w / 2.0, y + 14.0 * s)
+                    } else {
+                        let pr = Rect::new(r.right() + 16.0 * s, r.y, pw, 6.0 * s + side_h);
+                        c.shadow(pr, 16.0 * s, 30.0 * s, 8.0 * s, [0, 0, 0, 160]);
+                        c.panel(pr, 16.0 * s, [30, 36, 44, 250], [18, 22, 27, 252], 1.0, EDGE);
+                        c.rrect(Rect::new(pr.x + 24.0 * s, pr.y, pw - 48.0 * s, 3.0 * s), 1.5 * s, alpha(WARN, 0.9));
+                        (pr.x + pw / 2.0, pr.y + 10.0 * s)
+                    };
+                    for p in &parts {
+                        c.text_fit(Weight::SemiBold, 12.5 * s, (cx, y + 16.0 * s), Align::Centre, &p.0, tw, p.1);
+                        for (k, l) in p.2.iter().enumerate() {
+                            c.text(Weight::Medium, px, (cx, y + 36.0 * s + k as f32 * lead), Align::Centre, l, TEXT);
+                        }
+                        y += part_h(p);
+                    }
                 }
                 c.text(Weight::SemiBold, 22.0 * s, (r.x + w / 2.0, r.y + 44.0 * s), Align::Centre, "Paused", TEXT);
                 c.text(Weight::Medium, 14.0 * s, (r.x + w / 2.0, r.y + 65.0 * s), Align::Centre, "Esc to resume", MUTED);
@@ -4403,6 +4473,33 @@ mod tests {
         // The modal stays centred, so the buttons move down by half the
         // note's two lines and gap (22 points at this scale's 0.7).
         assert!(noted >= plain + 15.0, "{plain} then {noted}");
+    }
+
+    /// The planet on the pause menu (Direction 11-24): the goal, the
+    /// slime's line and the twist, beside the card where the screen is
+    /// wide, in it where it is only tall, and left out where neither fits;
+    /// the card and its buttons stay on the screen at every size.
+    #[test]
+    fn the_pause_menu_tells_the_planet() {
+        let line = "Where you hurt it, it grows back tough. Don't fight on old ground";
+        for (screen, user, told) in [((1920, 1080), 1.0, true), ((3840, 2160), 2.5, true), ((1280, 720), 1.0, true), ((1920, 1080), 2.0, true), ((1280, 540), 2.0, true), ((800, 800), 1.0, true)] {
+            let mut r = Rig::new(screen);
+            r.c.ui.user = user;
+            r.m.objective = Some("Kill the slime's heart on its home crystal: 1,660 of 1,660 left, breaks under 166".into());
+            r.m.pause_note = vec!["Quit any time: this planet and".into(), "your run are saved.".into()];
+            r.m.pause_planet = Some(Intro { kicker: "Planet 7 of 8 · Ossary".into(), title: "The Grudge".into(), line: line.into(), twist: Some(("Cold snap".into(), "Every two minutes the cold slows the slime and your squads for 20 seconds".into())), alpha: 1.0 });
+            r.key(KeyCode::Escape);
+            r.draw();
+            let said = |t: &str| r.c.runs.iter().any(|x| x.text == t);
+            assert_eq!(said("THE GRUDGE") && said("COLD SNAP") && said("THE GOAL"), told, "{screen:?} at {user}");
+            let (sw, sh) = (screen.0 as f32, screen.1 as f32);
+            for (b, h) in &r.hud.hits {
+                assert!(b.x >= -0.5 && b.y >= -0.5 && b.right() <= sw + 0.5 && b.bottom() <= sh + 0.5, "{screen:?} at {user}: {h:?} {b:?} off the screen");
+            }
+            for x in &r.c.runs {
+                assert!(x.ink.0 >= -0.5 && x.ink.2 <= sw + 0.5 && x.ink.1 >= -0.5 && x.ink.3 <= sh + 0.5, "{screen:?} at {user}: {:?} off the screen", x.text);
+            }
+        }
     }
 
     fn two_experiments() -> Vec<Experiment> {
