@@ -351,6 +351,32 @@ of 24 won); the third pass waits for Enemy's planet 4 and 7 changes
 run.txt, `App::count_played`) is for Look's run-time screens (test 2).
 Open: Enemy's sense-pass timing on the 1070 when their branch comes.
 
+**2026-11-24 afternoon.** The walker sort merged (#789, Milestone 2
+test 5). `src/gpu/sort.wgsl` and `sort.rs` run a stable GPU counting sort
+by 8x8 tile once a game second, in `GpuWorld::frame_start`. The key is
+`sort=off|pack|tile` (`Settings::sort`), default tile. On the 1070 at 4K
+on planet 8 peak, the GPU step went from 12.29 to 5.60 ms and the 50%
+detail frame runs at 16.1/16.6 ms, against 19.7 ms. Tests that compare
+slot by slot play with sort off: `twin_settings` in
+`gpu/larder_world.rs` and the bomb twin in `mouldgpu`. A new per-slot
+word in `engine.wgsl` must join `Sorter::new`'s list. #782 fixed the
+league's clock (`Game::time()` already counts from the landing). Batch c
+is in `Reports/curve-2026-11-24`: brace gave no gain.
+
+The run bot's `storm` dial (default 0.5 from 11-24) lets the siege start
+once the slime is at half its landing size and the squad holds 40.
+Batch r numbers are in the field's doc. Planet 7 map B (squad stuck at
+13, income about 2,100 in every arm) was the bot's crystal pick, not the
+map: out of home it went for the biggest crystal even under the slime's
+whole body, and gave a far crystal up on the road after 30 s. The pick
+now takes crystals under `per` walkers a soldier first. A crystal's 30 s
+clock waits while the squad closes in, and one the squad stalls short of
+is left for ten minutes. On lavapipe, map B went from a loss at 4:45 to a
+win at 5:09 (income 4,425). `size=F` (window argument: `league=`, `run=`,
+the gun lab) multiplies a run level's start walkers, slots and surge food
+(Enemy's planet 8 lever). Next: the fourth curve pass on all eight
+planets (test 3) on the 1070.
+
 **Next (11-22):** the next 1070 batch times the
 view's `full` after the Look lane's #638 (plant crowns skipped under the
 slime) and sends them the saving against 3.42 ms; `pump_maps` spikes

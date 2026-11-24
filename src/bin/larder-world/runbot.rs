@@ -121,7 +121,7 @@ pub(super) fn gun_lab(base: Args, (depth, seed, secs, arena): (u32, u64, f32, us
     let l = r.level();
     let mut args = base;
     args.seed = l.seed;
-    args.walkers = run_walkers(l.walkers);
+    args.walkers = run_walkers(l.walkers * args.size());
     args.run = Some(r.clone());
     args.squads = true;
     args.map = None;

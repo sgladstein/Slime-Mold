@@ -284,6 +284,14 @@ pub(super) struct Plan {
     /// games (batch q, 1070, army 20): map A won at 4:59 (0.35) and 4:24
     /// (0.5) where the bot without it held the origin untouched for 12
     /// minutes; map C lost both early (see `STORM_ARMY`). 0: off.
+    /// On by default at 0.5 since batch r (1070, 2042594c, army 40, the
+    /// owner's three maps plus run seeds 1 to 3). Planet 7: main, 0.35
+    /// and 0.5 each won 3 of 6. 0.5 won map A (main lost at 2:58, origin
+    /// untouched) and won soonest (seed 2 at 3:01 against 5:51), but timed
+    /// out on map C, which main won at 6:54. Planet 4: 0.5 won all three
+    /// maps, where main lost A and B at 10:27 and 11:31. Planets 5, 6 and 8
+    /// won as often as batch q's arm. Same-build pairs where the arms
+    /// differ: 3 better, 1 worse.
     pub storm: f32,
 }
 
@@ -341,7 +349,7 @@ impl Default for Plan {
             broke: 20.0,
             siege: 3.0,
             brace: 0,
-            storm: 0.0,
+            storm: 0.5,
         }
     }
 }
@@ -483,8 +491,10 @@ struct Memory {
     /// When the bank started saving for the next building.
     saving: Option<f32>,
     /// The run bot's crystal memory: the crystal worked, its harvest when
-    /// picked and when; crystals left until when; crystals ever left.
-    work: Option<(usize, f32, f32)>,
+    /// its clock started, when the clock started (it waits while the squad
+    /// closes in) and the squad's nearest approach to it yet; crystals left
+    /// until when; crystals ever left.
+    work: Option<(usize, f32, f32, f32)>,
     left: Vec<(usize, f32)>,
     barren: Vec<usize>,
     /// Crystals a pump was refused on.
@@ -1497,8 +1507,18 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     let quiet = |c: usize| g.world.walkers_in(cs[c].0, g.world.crystal_r(c) + range) < 30;
     let pick = drains
         .then(|| {
-            (0..cs.len())
+            let open: Vec<usize> = (0..cs.len())
                 .filter(|&c| cs[c].1 > DRY && !left.contains(&c) && !held.contains(&c) && (c > 0 || home_ok) && (strong || (c > 0 && quiet(c)) || (broke && c > 0 && takeable(c))) && g.pump_on(c).is_none())
+                .collect();
+            // A crystal the squad can take (under `per` walkers a soldier)
+            // before one it cannot (11-24). Out, the squad counted every
+            // crystal as its own and went for the biggest: on planet 7 map B
+            // (1795106014) 13 soldiers walked from free crystals by the
+            // landing to the slime's 741,760 crystal under 15,000 walkers,
+            // 640 away, and lost (1070: income 2,100 all game).
+            let easy: Vec<usize> = open.iter().copied().filter(|&c| takeable(c)).collect();
+            if easy.is_empty() { open } else { easy }
+                .into_iter()
                 .max_by(|&a, &b| {
                     let walk = if strong || broke { 4.0 * range } else { 0.5 * range };
                     let v = |c: usize| cs[c].1.min(200_000.0) / (1.0 + dist(cs[c].0, m) / walk.max(1.0));
@@ -1508,18 +1528,37 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
         .flatten();
     let work = MEM.with_borrow_mut(|b| {
         match (b.work, pick) {
-            (Some((c, h, since)), _) if drains && cs.get(c).is_some_and(|x| x.1 > DRY) && !b.left.iter().any(|l| l.0 == c) && (c > 0 || home_ok) && g.pump_on(c).is_none() => {
+            (Some((c, h, since, best)), _) if drains && cs.get(c).is_some_and(|x| x.1 > DRY) && !b.left.iter().any(|l| l.0 == c) && (c > 0 || home_ok) && g.pump_on(c).is_none() => {
+                // The 30 s without harvest that make a crystal barren wait
+                // while the squad closes in on it (a tenth of its range
+                // nearer than ever), and run while it stands or strays.
+                // Counted from the pick (until 11-24), a crystal over 30 s'
+                // walk away was barren before the squad reached it: on
+                // planet 7 map B (1795106014) the squad left the 741,760
+                // slime crystal 639 away on the road. Counted only once
+                // the squad was there (first try), a crystal it cannot
+                // reach held it: that map's 240,000 crystal, which the slime
+                // barely reaches either, kept the squad standing at its
+                // landing for 50 s and later 140 units off it.
+                let d = dist(cs[c].0, m);
                 if g.harvested > h + 50.0 {
-                    b.work = Some((c, g.harvested, t));
+                    b.work = Some((c, g.harvested, t, d.min(best)));
+                } else if d < best - 0.1 * range {
+                    b.work = Some((c, g.harvested, t, d));
                 } else if t - since > 30.0 && c > 0 {
-                    b.left.push((c, t + 60.0));
+                    // Left for a minute, or ten when the squad stalled short
+                    // of it: map B's 240,000 crystal, which the squad never
+                    // got within 100 of, came back each minute and held it
+                    // standing 30 s at a time (lavapipe, 11-24).
+                    let short = d > g.world.crystal_r(c) + 2.0 * range;
+                    b.left.push((c, t + if short { 600.0 } else { 60.0 }));
                     if !b.barren.contains(&c) {
                         b.barren.push(c);
                     }
-                    b.work = pick.filter(|&x| x != c).map(|x| (x, g.harvested, t));
+                    b.work = pick.filter(|&x| x != c).map(|x| (x, g.harvested, t, dist(cs[x].0, m)));
                 }
             }
-            (_, Some(x)) => b.work = Some((x, g.harvested, t)),
+            (_, Some(x)) => b.work = Some((x, g.harvested, t, dist(cs[x].0, m))),
             _ => b.work = None,
         }
         b.work.map(|w| w.0)

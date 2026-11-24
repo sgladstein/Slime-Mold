@@ -565,6 +565,10 @@ use slime_mould::build::switches::{RULE_KEY, WINDOW_KEY};
 struct Args {
     /// `mode=squads`: the squad mode (`squadmode`, `Rules::squads`).
     squads: bool,
+    /// `size=F` (11-24, Enemy: planet 8's slime size): a run level's
+    /// start walkers and slots times F (`run::Level::walkers`), for `run=`,
+    /// `league=` and the run bot. None: 1.
+    size: Option<f32>,
     /// `load=T,NAME` (look= only, 2026-11-16, the bullet-shape films):
     /// at game second T every squad loads the loadout NAME (`Cmd::Load`),
     /// so films of several loadouts play one game up to T and differ only
@@ -735,6 +739,13 @@ struct Args {
     /// range's armory (H opens it over the fight), with no time limit and a
     /// bank that does not run dry. `range=1` (or `range=SEED`) starts one.
     range: Option<Run>,
+}
+
+impl Args {
+    /// `size=`'s factor on a run level's slime, 1 when not given.
+    fn size(&self) -> f32 {
+        self.size.unwrap_or(1.0)
+    }
 }
 
 /// The gun range's clock (game seconds): ten hours, so it never ends on
@@ -1318,10 +1329,10 @@ impl App {
         // mould; that slime shed nine tenths of its walkers in its first
         // minute on every planet (the slime-enemy thread found why).
         if let Some(l) = &level {
-            run_shape(&mut s, l.walkers, l.depth)?;
+            run_shape(&mut s, l.walkers * a.size(), l.depth)?;
         }
         // The food the planet's slime eats to build a surge (`run::surge_food`).
-        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers));
+        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers * a.size()));
         // The slime: the mission's tier, unless the tweaks file puts
         // another on this run planet (`planet N = SLIME`) or the viewer
         // shows one of the owner's own; a custom plays its base tier with
@@ -2843,6 +2854,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // `bank=N`: the no-window round starts with N food in the bank
             // (films of rounds, whose casts are paid from it).
             "bank" => bank = Some(v.parse::<f32>()?),
+            // `size=F`: a run level's slime starts F times its size (`Args::size`).
+            "size" => args.size = Some(v.parse::<f32>().ok().filter(|f| *f > 0.0).ok_or("size=F, a factor over 0")?),
             // `set=NAME=V`: one of the game's rules by name
             // (`Rules::set`, such as `set=pump_smell=2`), kept
             // with the engine keys under `set:` so a menu round keeps it.
@@ -3050,7 +3063,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // (`run_args`), so `run=SEED:DEPTH` films the level a run plays.
         let l = r.level();
         args.seed = l.seed;
-        args.walkers = run_walkers(l.walkers);
+        args.walkers = run_walkers(l.walkers * args.size());
     }
     if !chosen && args.mission.is_none() && !args.own && args.run.is_none() {
         default_shape(&mut args);
