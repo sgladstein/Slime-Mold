@@ -1,0 +1,1 @@
+sleep_rate=0.01 sleep_deposit=0.3 wake_scent=1 wake_alarm=0.3 alarm_relay=20 sleep_rest=600 sleep_death=0.0001
