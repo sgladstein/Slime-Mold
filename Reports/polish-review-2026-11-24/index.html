@@ -1,0 +1,276 @@
+<title>Larder World Polish Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one column of ranked findings; each a picture beside its fix, stacking on a phone. Dark, like the game: living light on dark ground. */
+:root {
+  --ground: #11151a;
+  --panel: #191f26;
+  --line: #2a323c;
+  --ink: #e6e9ec;
+  --mute: #9aa4ae;
+  --gold: #f0a93a;
+  --cyan: #4fd0e6;
+  --red: #e5675c;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--ground); color: var(--ink); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font: 700 2.1rem/1.15 var(--display); margin: 0 0 8px; text-wrap: balance; }
+h1 span { color: var(--gold); }
+h2 { font: 600 1.15rem/1.3 var(--display); margin: 0; text-wrap: balance; }
+.lede { color: var(--mute); max-width: 68ch; margin: 0; }
+.lede b { color: var(--ink); font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 18px 0 28px; font-size: 13px; color: var(--mute); }
+.meta b { color: var(--ink); font-weight: 500; }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 36px; }
+.tally div { border-top: 2px solid var(--line); padding-top: 8px; font-size: 13px; color: var(--mute); }
+.tally strong { display: block; font: 700 1.5rem var(--display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.find { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; padding: 26px 0; border-top: 1px solid var(--line); }
+.find figure { margin: 0; display: grid; gap: 8px; align-content: start; }
+.find img { display: block; width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--line); background: #000; }
+.find figcaption { font-size: 12px; color: var(--mute); }
+.head { display: flex; gap: 12px; align-items: baseline; margin-bottom: 8px; }
+.rank { font: 700 1.6rem/1 var(--display); color: var(--gold); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.tag { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--mute); }
+.tag.look { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 45%, transparent); }
+.tag.dir { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.tag.sq { color: #9fd27a; border-color: #4c6a39; }
+.tag.eng { color: #c7a6ff; border-color: #5a4a7c; }
+.tag.big { color: var(--red); border-color: color-mix(in srgb, var(--red) 50%, transparent); }
+.find p { margin: 0 0 10px; }
+.fix { border-left: 2px solid var(--gold); padding-left: 12px; color: var(--ink); }
+.fix b { color: var(--gold); font-weight: 600; }
+.text { min-width: 0; }
+.good, .skip, .done { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; margin-bottom: 14px; }
+.good h2, .skip h2, .done h2 { margin-bottom: 6px; font-size: 1rem; }
+.good p, .skip p, .done p { margin: 0; color: var(--mute); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 30px; }
+code { font: 12.5px ui-monospace, "SF Mono", Consolas, monospace; color: var(--ink); background: #0b0e12; padding: 1px 5px; border-radius: 3px; }
+@media (max-width: 760px) { .find { grid-template-columns: 1fr; } h1 { font-size: 1.7rem; } }
+</style>
+
+<div class="wrap">
+  <h1>What still looks <span>unfinished</span></h1>
+  <p class="lede">A polish review of the whole game as it stands on main (build 406c2c9, 11-23). Fifteen findings, worst first, each with a fix and the lane that owns it. <b>The two that matter most are the slime and the crystals at the zoom you play at:</b> from far out the slime is glossy and alive, but at zoom 6 it turns into a soft orange wash, and the crystals read as flat clip-art cubes. Nothing here is built yet, except one key-name bug.</p>
+  <div class="meta">
+    <span><b>Screen</b> 1536 × 864, UI 100%, the same layout as your 4K screen at 250%</span>
+    <span><b>Zoom</b> 6 near view, plus a zoom 12 strip (your 11-23 logs: zoom 3 to 8 in 90% of seconds)</span>
+    <span><b>Played by</b> the run bot, planets 1, 2, 3 to 4:00, planets 5 and 7 to 1:30</span>
+  </div>
+  <div class="tally">
+    <div><strong>6</strong>The world: slime, crystals, marks, camera</div>
+    <div><strong>5</strong>HUD, command card, shop, menus</div>
+    <div><strong>2</strong>Words and naming</div>
+    <div><strong>2</strong>Effects and end cards</div>
+  </div>
+
+  <div class="cols">
+    <div class="good"><h2>Already looks finished</h2><p>Soldiers at zoom 12, the ground's materials (barrens hardpan, fen moss, rock with a lit rim), the slime seen from far out, shot tracers, the top bar, tooltips, the cursors, the end cards' layout.</p></div>
+    <div class="skip"><h2>Not covered</h2><p>Sound (no ears in a cloud session), the pause menu, a full game's end card, the map editor, the slime viewer, planets 4, 6 and 8. Stills only: motion was not judged except the zoom 12 strip.</p></div>
+    <div class="done"><h2>Fixed in this pull request</h2><p>The key card showed <code>,</code> for the spread keys because the game had no name for <code>[</code> and <code>]</code>. It now reads <code>[, ]</code>.</p></div>
+  </div>
+
+  <section class="find">
+    <figure>
+      <img src="img/slime-drifter.jpg" alt="Planet 1 slime at zoom 6: a flat orange wash with soft edges and round grey discs" loading="lazy">
+      <img src="img/slime-far.jpg" alt="Planet 2 slime from far out: glossy, ridged, lit" loading="lazy">
+      <figcaption>Top: planet 1 at zoom 6, 3:00. Bottom: planet 2 seen from far out, 1:00. Same renderer, very different finish.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">1</span><h2>The slime is soft and smeared at the zoom you play at</h2></div>
+      <div class="tags"><span class="tag big">Big look</span><span class="tag look">Look and interface</span></div>
+      <p>From far out the slime is glossy and ridged. At zoom 6, planet 1's Drifter is a flat orange wash with a wide glowing edge and perfectly round blurred grey discs in it, and planet 3's Trunk trail is a flat translucent yellow sheet (next picture). It is the star of the game and the least crisp thing on screen, against art direction rules 4 and 5.</p>
+      <p class="fix"><b>Fix.</b> Carry the thick body's lighting (slope from walker density, one key light, a highlight) into the thin film from zoom 4 up. Cap the soft edge at 2 screen pixels. Break the round discs into the walkers' own sparse grain or ragged holes. Give the Trunk's trail a lit edge and a darker core. Show it on a before and after page.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/slime-trunk.jpg" alt="Planet 3 Trunk slime: a flat translucent yellow sheet with scattered cream beads" loading="lazy">
+      <figcaption>Planet 3, 3:00, zoom 6. The Trunk's trail is a flat yellow sheet; the beads and the red alarm flush read well.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">2</span><h2>Cell stairs where slime meets water</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span></div>
+      <p>In the planet 1 picture above, where the Drifter fills a river bank its edge steps cell by cell down the bank. Rule 4 says no cell stair at any zoom. The slime probably stops at the water cell by cell while the shore is drawn from the smooth soil spline.</p>
+      <p class="fix"><b>Fix.</b> Clip the slime's shading with the same spline the shore uses.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/crystal-live.jpg" alt="A large crystal drawn as a flat-shaded isometric cube" loading="lazy">
+      <figcaption>Planet 1, 0:02, zoom 6. About 230 px across.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">3</span><h2>Crystals look like clip-art cubes</h2></div>
+      <div class="tags"><span class="tag big">Big look</span><span class="tag look">Look and interface</span></div>
+      <p>Three flat-shaded faces, the shape of an isometric cube icon, the same on every planet. Often the largest and brightest shape on screen, with nothing where it meets the ground.</p>
+      <p class="fix"><b>Fix.</b> Keep the hexagon you ruled. Add a bevelled rim, a darker inner table, a few inner fracture lines, cyan light pooled on the ground by its charge, and an occasional glint. Consider a smaller drawn size, or a cluster of shards on the same footprint.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/crystal-spent.jpg" alt="A spent crystal drawn as a grey spoked hexagon like an umbrella" loading="lazy">
+      <figcaption>Planet 2, 0:59, zoom 12. Left: a spent crystal. Right: the squad draining a live one.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">4</span><h2>A spent crystal reads as a grey umbrella</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span></div>
+      <p>Twenty-four flat grey trapezoids in a spoked hexagon, as large and as tall as a live crystal. It pulls the eye as much as a crystal that matters.</p>
+      <p class="fix"><b>Fix.</b> Lower and darker: a few broken shards and dust at ground level, thinner spokes.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/rings-bars.jpg" alt="A 45-soldier squad in a ring around a crystal, each with a green health bar" loading="lazy">
+      <img src="img/rings-overlap.jpg" alt="One squad drawn with two overlapping selection rings" loading="lazy">
+      <figcaption>Top: planet 1, 3:00, 45 soldiers, 45 bars. Bottom: planet 5, one squad, two overlapping rings.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">5</span><h2>Squad marks clutter the fight</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span></div>
+      <p>Health bars show from 95% health, so a big squad wears a bar on every soldier most of the time. A spread squad draws two or more overlapping rings. The "1" label and the formation mark sit on the ring's line.</p>
+      <p class="fix"><b>Fix.</b> Bars only under 70% or for 2 s after a bite, with the squad's health on its tile. Merge overlapping rings into one outline. Put the label on a small dark plate inside the ring.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/hud-bar.jpg" alt="The bottom HUD bar" loading="lazy">
+      <figcaption>Planet 3, 0:20. The whole bottom bar.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">6</span><h2>The bottom HUD reads as a developer's panel</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span><span class="tag sq">Squad and arsenal</span></div>
+      <p>Four empty unlabelled boxes beside "Rifle" and an unexplained H button. A lowercase status line ("blob, tight · fire: defend · no orders queued · Loadout 1 · 13 tools"). Labels broken over two lines with a hyphen ("Attack- / move", "Fire: / defend"). Key letters about 8 px in the corners. A small minimap jammed in the corner, and a lone "11" pill floating over the squad tile.</p>
+      <p class="fix"><b>Fix.</b> One HUD pass: empty gun slots collapse to one line saying where cards come from, H labelled Loadout, the status line as icon chips, one-word command names, key letters in a keycap, a framed minimap half again as big.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/card-pages.jpg" alt="The Build, Tools and Formation pages of the command card" loading="lazy">
+      <figcaption>Planet 1: the Build, Tools and Formation pages.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">7</span><h2>The command card's pages and icons</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span><span class="tag sq">Squad and arsenal</span></div>
+      <p>Holes in the grid. Back sits in column 5 on two pages and column 6 on the third. One letter means different things by page (B is Buy soldier, Mortar, Blast or Open; G is Drain, Door or Germ). On planet 1 the Tools page is five locks. Icons: Sleep gas is a pause sign; Blob and Tight use the crystal and currency mark; Turret power and Cheaper tools share a chevron; the Lure is a water drop; the Mine is the same target ring as Fire: defend.</p>
+      <p class="fix"><b>Fix.</b> A fixed grid with Back always bottom right. Locked tools hidden behind one "more tools in the shop" tile. One small icon set drawn for this game at one stroke weight.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/shop.jpg" alt="The run shop on planet 4 with five cards in a band across the middle" loading="lazy">
+      <img src="img/shop-tools.jpg" alt="The shop's Tools tab: tall cards with one line of text" loading="lazy">
+      <figcaption>The shop before planet 4: the Cards tab, then the Tools tab.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">8</span><h2>The shop's counter and cards</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span><span class="tag eng">Engine and tools</span><span class="tag dir">Direction</span></div>
+      <p>Five cards fill a band across the middle; about 45% of the counter is blank, and the planet underneath shows through behind the bag row. The cards show different rows: payload cards show multipliers (Speed x1.8), gun modifier cards repeat the whole gun's stats, identical on every one (Damage 72, Fire rate 0.8/s, Range 20, Speed 36, Aim 7.0), plus "no room" once the gun is full. Building and tool cards are one line on a tall card. A Dev mode tab is in every run's shop. The planet-ahead map is a blocky mosaic.</p>
+      <p class="fix"><b>Fix.</b> Larger cards, or the next planet's story under them. An opaque counter. A card shows only what it changes, as before and after ("Damage 10 → 16"), with the gun's own stats once in the loadout strip. Dev mode behind an Options switch. A smoothed map.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/main-menu.jpg" alt="The main menu: plain text title over a live map" loading="lazy">
+      <figcaption>The main menu, drawn over a run's planet 1.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">9</span><h2>No title or identity</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span><span class="tag dir">Direction</span></div>
+      <p>"Larder World" in the UI's own font at 26 px, no logo, over a live map, with a "218 new" badge. The subtitle says "mould", and the larder the name refers to is gone from the squad game.</p>
+      <p class="fix"><b>Fix.</b> A title drawn from the simulation, for example the name as a mask the slime fills in the menu's dish. Direction asks you once about the name.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/toasts.jpg" alt="The top of the screen at landing: objective pill and two toasts" loading="lazy">
+      <figcaption>Planet 1 at 0:02: the objective in the top pill and again in a toast.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">10</span><h2>Words</h2></div>
+      <div class="tags"><span class="tag dir">Direction</span><span class="tag look">Look and interface</span></div>
+      <p>Both "mould" and "slime" for the enemy. The simulation's own word on screen ("kill every last walker", "13,119 walkers now", "0.5 times the first planet's walkers"). Larder-era lines ("The slime took the larder", "on the core, attack it", "the larder's rally point"). A double colon ("Planet 1 of 8, Dreskor: Wipe out the slime: kill every last walker"). The objective shown three times at landing. "Crystal 2 has run dry".</p>
+      <p class="fix"><b>Fix.</b> A short word list (slime, crystal, squad, slime count), one objective line, toasts only for news.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/options-mould.jpg" alt="Options, The mould tab: raw simulation numbers" loading="lazy">
+      <img src="img/keys.jpg" alt="The Keys page: a long list mixing squad and RTS keys" loading="lazy">
+      <figcaption>Options' "The mould" tab, and the left half of the Keys page.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">11</span><h2>Options and Keys are the developer's console</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span><span class="tag sq">Squad and arsenal</span></div>
+      <p>"The mould" tab is raw numbers (Panic 2, Wither 0.01, Shared food 0.05, Surge 1800, Flinch 0.9). Keys is about 60 rows that mix squad mode with the old RTS round and features that are gone (siren, outpost, larder, scent view, next map, test guns).</p>
+      <p class="fix"><b>Fix.</b> Tuning tabs move to the Slime viewer or a Dev page. Keys shows squad mode only, grouped as move, fight, build, camera.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/map-edge.jpg" alt="The top of the play view showing the off-map band and a hard black line" loading="lazy">
+      <figcaption>Planet 1, 3:00, zoom 6: the band above the black line is off the map.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">12</span><h2>The camera shows past the map's edge</h2></div>
+      <div class="tags"><span class="tag eng">Engine and tools</span><span class="tag look">Look and interface</span></div>
+      <p>On planet 1 at zoom 6 the top 70 px of the screen is the off-map band with a hard black line, and the right edge too, from the landing on.</p>
+      <p class="fix"><b>Fix.</b> Keep the near view inside the map, or fade the edge into dark rock.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/starfall-bloom.jpg" alt="A white bloom with pink sparks around the number 40" loading="lazy">
+      <figcaption>Planet 1, 1:00: a Starfall pickup at the HUD's edge.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">13</span><h2>The Starfall pickup's bloom</h2></div>
+      <div class="tags"><span class="tag sq">Squad and arsenal</span></div>
+      <p>A white flash about 120 px across with pink sparks round "40", the brightest thing on screen, against your 11-14 rule that an effect is never bigger than its damage. This one fell under the HUD's edge.</p>
+      <p class="fix"><b>Fix.</b> Half the size, gold rather than white. No falls where the HUD covers.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/sprawler-over-gem.jpg" alt="Orange slime dashes drawn across a crystal's faces" loading="lazy">
+      <figcaption>Planet 2, 1:00, zoom 6.</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">14</span><h2>Sprawler threads drawn over crystals</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span></div>
+      <p>The planet 2 slime's dashes cross the crystals' faces like scratches.</p>
+      <p class="fix"><b>Fix.</b> Draw the dashes under the crystal unless the slime really covers it; a covered crystal already shows a film over it.</p>
+    </div>
+  </section>
+
+  <section class="find">
+    <figure>
+      <img src="img/end-cards.jpg" alt="Four end cards with bar graphs of identical orange bars" loading="lazy">
+      <figcaption>The four end cards from the 11-22 still (40-second films).</figcaption>
+    </figure>
+    <div class="text">
+      <div class="head"><span class="rank">15</span><h2>The end card's graph</h2></div>
+      <div class="tags"><span class="tag look">Look and interface</span></div>
+      <p>A row of identical orange bars with a dotted line. The lost-run card still says "The slime took the larder". Judged from 40-second films only.</p>
+      <p class="fix"><b>Fix.</b> The slime as a filled area and the soldiers as a line over it.</p>
+    </div>
+  </section>
+</div>

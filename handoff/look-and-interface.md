@@ -2,6 +2,17 @@
 
 ## State (2026-11-20)
 
+**11-24, Milestone 2 (Direction 03:13Z), job 1, the origin:** its heart
+look (`LumpLook::Heart`, also the last stand) is a near-black oxblood crust
+(`LUMP_SKIN_HEART` 44, 12, 8) with a hot orange core lit from 0.45 members
+a cell (`HEART_HOT`, `HEART_LIGHT` 0.7); before, at 700 members on its
+crystal it showed no light and read as a brown smear. The goal line in
+squad mode is `origin_line` in `draw.rs` (members of the most, the floor,
+then the die-back's seconds); the mission's sentence says the heart. Still:
+`Reports/pr-stills/origin-look-2026-11-24.png`. Job 2 (test 5, 4K) belongs
+to the "Hit 60 fps on the 4K screen" thread: review its PR. Then Look B to
+D from his play notes.
+
 **11-22, Milestone 1 test 6 (Direction 03:15Z):** the game's pages
 stilled on lavapipe (`menu=news|news-try|options-experiments`). The long
 what-is-new list now turns its pages with the wheel and Left/Right

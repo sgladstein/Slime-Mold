@@ -27,7 +27,7 @@ gone but the goal was not met), `open` (no verdict).
 
 `--check` prints one line a planet (result, length, longest stall) and
 fails on a stall over a minute (`stall=`, 11-22: no harvest and no new
-low of the slime) or a soft lock: a planet with no verdict by its clock and a minute (`open`),
+low of the slime or of the origin's members) or a soft lock: a planet with no verdict by its clock and a minute (`open`),
 or no line for a planet the run reached. It also fails a planet that ends
 in under a minute (the lane brief's smoke check). A lost planet never
 fails it: a loss is a measurement ("balance never blocks").
@@ -177,7 +177,7 @@ def check(seed, planets, runs):
         # bot standing by a home crystal it cannot take.
         stall = float(p.get("stall", 0))
         if stall > STALL:
-            bad.append(f"planet {p.get('depth')}: stalled {clock(stall)} with no harvest and the slime no smaller")
+            bad.append(f"planet {p.get('depth')}: stalled {clock(stall)} with no harvest and the slime and its origin no smaller")
     if not planets or not runs:
         bad.append("the run printed no planet or no end line (the game stopped early)")
     for b in bad:

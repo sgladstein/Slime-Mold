@@ -293,8 +293,16 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     // the home crystal last for ever, a bot that drained every other
     // crystal could stand by the slime's home for minutes, firing into a
     // slime that regrew as fast; `run_bot_summary.py --check` fails a
-    // planet that stalls over a minute.
+    // planet that stalls over a minute. A new low of the origin's members
+    // counts too (`origin.rs`): a siege wears the origin down while the
+    // body round it regrows, so on 11-22 won sieges read 160 s of stall by
+    // the slime's size alone. Any new low of the members (a few a 10 s on
+    // run seed 2 planet 1's 804). The slime's 1% is counted from the last
+    // 1% low, not from the last second's: a slime worn down 50 cells a
+    // second, under 1% each second, read as a stall (seed 2 planet 1 on
+    // 11-24: 109 s from 1:00 while the bot cut 16,452 to 13,468).
     let (mut low, mut harvested, mut moved, mut stall) = (start_mould, 0.0f32, 0.0f32, 0.0f32);
+    let mut origin_low = u32::MAX;
     let t0 = std::time::Instant::now();
     let mut next_aim = 0u64;
     loop {
@@ -313,11 +321,19 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
             }
             hands::plan(g, &hand);
             peak_mould = peak_mould.max(g.mould);
-            if g.harvested > harvested + 0.5 || (g.mould as f32) < 0.99 * low as f32 || since < 60.0 {
+            let members = g.stand.live.filter(|h| h.origin).map(|h| h.members);
+            let worn = members.is_some_and(|n| n < origin_low);
+            let lower = (g.mould as f32) < 0.99 * low as f32;
+            if lower {
+                low = g.mould;
+            }
+            if g.harvested > harvested + 0.5 || lower || worn || since < 60.0 {
                 moved = since;
             }
+            if let Some(n) = members {
+                origin_low = origin_low.min(n);
+            }
             harvested = harvested.max(g.harvested);
-            low = low.min(g.mould);
             stall = stall.max(since - moved);
             if since > 5.0 {
                 min_alive = min_alive.min(g.alive());
@@ -383,8 +399,16 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     // back, and drops the squad set out for.
     let sf = &g.starfall;
     let drops = format!("{}/{}/{:.0}/{:.0}/{:.0}/{}", sf.landed, sf.cores, sf.ore_taken, sf.core_taken, sf.eaten, if spec.starts_with("util:") { 0 } else { strat::drops_chased() });
+    // The origin (`origin.rs`): when it broke, or its members against the
+    // most it held while it stands; `-` where none formed.
+    let origin = match (g.origin.formed, g.origin.fell, g.stand.live.filter(|h| h.origin)) {
+        (false, ..) => "-".to_string(),
+        (_, Some(f), _) => format!("fell@{:.0}", f as f32 / g.rules.tps.max(1) as f32),
+        (_, None, Some(h)) => format!("{}/{}", h.members, h.most),
+        _ => "gone".to_string(),
+    };
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} origin={origin} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
         r.depth,
         r.seed,
         l.seed,
