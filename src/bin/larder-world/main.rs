@@ -963,6 +963,9 @@ struct App {
     /// robbed (game second), out of food.
     dry: Vec<bool>,
     core_told: bool,
+    /// The origin's turns told (`origin.rs`): formed, gathering the last
+    /// stand, dead.
+    origin_told: (bool, bool, bool),
     /// Starfall's falls landed and cores dropped already told (`starfall.rs`).
     drops_told: (u32, u32),
     /// The run's one-time Starfall hint (`StarHint`).
@@ -1173,6 +1176,7 @@ impl App {
             building_sel: None,
             dry: Vec::new(),
             core_told: false,
+            origin_told: (false, false, false),
             drops_told: (0, 0),
             star_hint: StarHint::default(),
             broken_told: false,
@@ -1627,6 +1631,7 @@ impl App {
         self.controls.groups = Default::default();
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
+        self.origin_told = (false, false, false);
         self.broken_told = false;
         self.raids_told = 0;
         self.bank_log.clear();
@@ -2085,6 +2090,25 @@ impl App {
         }
         let run = self.args.run.as_ref().map(|r| r.seed);
         self.star_hint.update(g, run);
+        // The origin (`origin.rs`, Milestone 2's win): where it is when it
+        // forms, when the last stand gathers into it, and its death, each
+        // a ping on the minimap at its centre (Space jumps there). The
+        // goal line carries its count (`draw::origin_line`).
+        if g.rules.origin.on && g.origin.formed {
+            let at = g.stand.live.filter(|h| h.origin).map_or(g.core, |h| h.centre);
+            let gather = g.stand.live.is_some_and(|h| h.origin && h.gather);
+            let dead = g.origin.fell.is_some();
+            if !self.origin_told.0 {
+                self.hud.alert("Here is the slime's heart: kill it to win the planet", Some(at), theme::ACCENT);
+            }
+            if gather && !self.origin_told.1 {
+                self.hud.alert("The slime is gathering into its heart for a last stand", Some(at), theme::BAD);
+            }
+            if dead && !self.origin_told.2 {
+                self.hud.alert("The slime's heart is broken: the slime is dying back", Some(at), theme::GOOD);
+            }
+            self.origin_told = (true, self.origin_told.1 || gather, self.origin_told.2 || dead);
+        }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
             self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);

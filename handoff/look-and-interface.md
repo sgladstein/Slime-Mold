@@ -2,6 +2,17 @@
 
 ## State (2026-11-20)
 
+**11-24, the second Look thread (Milestone 2; HUD side).** Split with the
+first Look thread (11-24 03:36Z): this thread takes the HUD, shop, menus,
+end screens and wording (`ui.rs`, `start.rs`, `start/`, `menu.rs`, the
+model and HUD parts of `draw.rs`) and the review of the 4K render-scale
+slider PR; the first takes the world (`view.wgsl`'s world passes, the
+marks). Polish review (https://claude.ai/artifact/7STCLzcjcjSz95TkKJYLfu):
+this thread owns findings 6 to 11 and 15; 13 (Starfall's bloom) is
+Squad's. Done: the heart's alerts in `main.rs` (`origin_told`: formed,
+gathering, broken, each pinging its place) and the end card's lead when
+the heart broke (`lead`).
+
 **11-22, Milestone 1 test 6 (Direction 03:15Z):** the game's pages
 stilled on lavapipe (`menu=news|news-try|options-experiments`). The long
 what-is-new list now turns its pages with the wheel and Left/Right

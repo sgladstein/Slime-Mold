@@ -177,6 +177,8 @@ fn lead(g: &Game<GpuWorld>, v: slime_mould::mould::campaign::Verdict) -> String 
         k => format!("with {k} of your {n} soldiers lost"),
     };
     match v.cause {
+        Cause::Goal if g.origin.fell.is_some() && g.mould > 0 => format!("You broke the slime's heart in {at}, and the slime died back to {left} of its {top} walkers, {with}."),
+        Cause::Goal if g.origin.fell.is_some() => format!("You broke the slime's heart in {at}, and the slime died back from a peak of {top} walkers, {with}."),
         Cause::Goal if g.mould == 0 => format!("You wiped out the slime in {at}, from a peak of {top} walkers, {with}."),
         Cause::Goal => format!("You broke the slime in {at}, down to {left} of its {top} walkers, {with}."),
         Cause::Cap => format!("The clock reached {at} with the slime still {left} walkers strong, {share} of its {top} peak."),
