@@ -1682,7 +1682,10 @@ impl Hud {
         if let (Some((text, at, gap, a)), None) = (&m.hint, &m.end) {
             let p = cam.to_screen(*at);
             let r = m.hint_ring * cam.zoom;
-            if r > 4.0 * s {
+            // A reach wider than the screen reads as a stray arc across
+            // it (the strikers' band at play zoom, 11-24 film): only a
+            // ring that fits is drawn.
+            if r > 4.0 * s && r < 0.42 * (c.screen.0.min(c.screen.1) as f32) {
                 // Thin, and gold as the panel's edge: a ring at the thing's
                 // own size, not a pulse (it never grows or flashes).
                 let w = 2.0 * s;
