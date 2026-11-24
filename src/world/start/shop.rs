@@ -592,7 +592,9 @@ impl StartMenu {
         } else {
             shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on).map_or("Your gun", |r| r.name.as_str())
         };
-        let gy = top + 30.0 * s;
+        // (Four units higher since the fused shots, 11-24, so the shots'
+        // names fit under it.)
+        let gy = top + 26.0 * s;
         let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
         let on = self.gun_cards();
         let line = format!("budget {} of {}  ·  {} of {} slots  ·  fired left to right", shop.budget.0, shop.budget.1, on.len(), shop.slots);
@@ -609,8 +611,11 @@ impl StartMenu {
         c.text_fit(Weight::Medium, 13.5 * s, (x + nw + 12.0 * s, gy), Align::Left, &line, lw - nw - 12.0 * s - dps_w, MUTED);
         let ch = CARD_H * s;
         let (sx, sroom) = (x + LABEL * s, lw - LABEL * s);
-        // (Room above the row for the shots' names.)
-        let row_y = top + 54.0 * s;
+        // Room above the row for the shots' names when there are any: six
+        // units (a twelve-unit drop put the armory's bullets on two pages
+        // at 200% on 540 lines; an empty gun keeps the old place).
+        let fused = !on.is_empty() && shop.shots.len() == on.len();
+        let row_y = top + if fused { 48.0 } else { 42.0 } * s;
         c.text(Weight::SemiBold, 13.5 * s, (x, row_y + ch / 2.0 + 5.0 * s), Align::Left, if shop.turrets { "Turrets" } else { "Gun" }, MUTED);
         let n = (shop.slots as usize).max(on.len()).max(1);
         // Fused shots (the owner's pick, 2026-11-24 15:51Z: "B is best";
@@ -621,7 +626,6 @@ impl StartMenu {
         // for, is a ghost card after them. The slots keep their order (the
         // mock-up moved the every-shot cards to the end; here they stay
         // put, framed where they sit, so a drag lands where it looks).
-        let fused = !on.is_empty() && shop.shots.len() == on.len();
         let tag = |k: usize| if fused { shop.shots.get(k).copied() } else { None };
         let ghost_shot = shop.plain_shot.filter(|_| fused);
         let ghost_after = ghost_shot.and_then(|p| (0..on.len()).rev().find(|&k| tag(k) == Some(ShotTag::Fired(p))));
@@ -680,7 +684,7 @@ impl StartMenu {
                 };
                 c.rrect(f, 10.0 * s, with_alpha(ink, 0.08));
                 c.outline(f, 10.0 * s, 1.5 * s, with_alpha(ink, 0.8));
-                c.text_fit(Weight::SemiBold, 11.5 * s, (f.x + 6.0 * s, f.y - 4.0 * s), Align::Left, &name, f.w - 6.0 * s, ink);
+                c.text_fit(Weight::SemiBold, 11.5 * s, (f.x + 6.0 * s, f.y - 3.0 * s), Align::Left, &name, f.w - 6.0 * s, ink);
                 i = j + 1;
             }
             // The ghost: the gun's plain bullet, which the leftovers ride.
