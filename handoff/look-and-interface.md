@@ -139,7 +139,13 @@ canvas bins, uploads and dispatches over every 16-px tile each frame
 (`Hud::end_carry`), `END_BEAT_SEEN` 0.8 s after a die-back, and the
 shop's landing card (`StartMenu::landing`, `App::landing_due`, drawn a
 frame before `menu_event(NextLevel)` builds the planet; film
-`menu=shop-landing`). Next: the Runs page, then Look D screens.
+`menu=shop-landing`), PR #812. Past runs (Direction 14:44Z, job 2): each
+ended run goes to `runs.txt` beside `run.txt` (`runs.rs`: `record`,
+`why_lost`, `App::keep_run`, `load_runs`), each planet's time from
+`Run::splits`; the main menu's Past runs row and `Page::Runs`
+(`runs_page`: best times, the list, the run told in full); films
+`menu=runs|main-runs`. Next: Look D screens (ask the world Look thread
+which it holds first).
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
