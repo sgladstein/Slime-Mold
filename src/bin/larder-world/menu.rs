@@ -276,7 +276,12 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
 pub(super) fn start_menu(base: &Args) -> StartMenu {
     let entries = missions()
         .into_iter()
-        .map(|(stem, m)| Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says })
+        .map(|(stem, m)| {
+            // Its map small in the note (second polish pass, 11-24).
+            let dir = slime_mould::build::root().join("Reports/larder-maps-2026-11-11/maps");
+            let glance = slime_mould::mould::map::Map::load(&dir, &m.map).ok().map(|mp| glance_from(&mp, 96));
+            Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says, glance }
+        })
         .collect();
     let mut menu = StartMenu::new(slime_mould::world::GAME_NAME, entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
