@@ -154,7 +154,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // owner's 4K screen drew the world at 8 times the pixels the GTX 1070
     // was timed at. Taken at once and saved, not a round's. Steps from
     // 100% to 40% since 11-24 (the owner approved a quality slider).
-    o.insert(3, Opt::new("detail", "World detail", &settings::DETAIL_STEPS, "Auto", detail_user(), "How many of the screen's pixels the world is drawn at, each way. Auto keeps 60 frames a second (half on a 4K screen); 100% draws every pixel, lower steps are softer and faster. Text, panels and soldiers stay sharp"));
+    o.insert(3, Opt::new("detail", "World detail", &settings::DETAIL_STEPS, "Auto", detail_user(), "How many of the screen's pixels the world is drawn at, each way. Auto starts at the screen's own step (half on a 4K screen) and steps down toward 40% only while frames run slower than 60 a second; 100% draws every pixel, lower steps are softer and faster. Text, panels and soldiers stay sharp"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each

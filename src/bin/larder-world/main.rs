@@ -211,6 +211,7 @@ fn kind_look(kind: u16) -> LumpLook {
 /// reads as two-thirds cyan, never all of it (that is a crystal's).
 const LEECH_HALF: f32 = 150.0;
 mod args;
+mod autodetail;
 mod blit;
 mod cursor;
 mod experiments;
@@ -957,6 +958,9 @@ struct App {
     /// draws whole steps; `between`), or None in the window.
     sub: Option<f32>,
     last_frame: Instant,
+    /// Auto's World detail, stepping down while frames run long
+    /// (`autodetail`, 2026-11-24).
+    auto_detail: autodetail::AutoDetail,
     shift: bool,
     /// The soldier the last build with nobody selected sent (`builders`):
     /// Shift + another build queues on it.
@@ -1179,6 +1183,7 @@ impl App {
             felt: 0,
             sub: None,
             last_frame: Instant::now(),
+            auto_detail: Default::default(),
             shift: false,
             last_sent: None,
             ctrl: false,
@@ -1668,6 +1673,9 @@ impl App {
             }
         }
         self.game = Some(game);
+        // A new game's slime starts small or large: Auto tries the top
+        // step again (`autodetail`).
+        self.auto_detail.restart();
         self.slime = who;
         self.seen = 0;
         self.unheld.clear();
@@ -2241,6 +2249,9 @@ impl App {
         let t0 = Instant::now();
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
+        // The interval since the last frame, vsync's 16.7 ms when the GPU
+        // keeps up: Auto's World detail steps by it (`autodetail`).
+        self.auto_frame(dt * 1e3);
         self.update_cursor(event_loop);
         if !self.in_menu() {
             // WASD pans only while paused (`Controls::wasd_pan`): set here
@@ -2344,12 +2355,23 @@ impl App {
         }
     }
 
+    /// One frame's time (ms) for Auto's World detail (`autodetail`): the
+    /// interval between frames in the window, the frame's own time in the
+    /// bench. Nothing when the player chose a step.
+    fn auto_frame(&mut self, ms: f32) {
+        if detail_user() == "Auto" {
+            self.auto_detail.frame(ms);
+        }
+    }
+
     fn prepare_now(&mut self) {
         // The world detail (`settings::detail_percent`, 11-22; steps
         // 11-24): the view draws the world at this percent of the
-        // screen's pixels each way.
+        // screen's pixels each way. Auto's follows the frame rate
+        // (`autodetail`).
         if let Some(v) = self.view.as_mut() {
-            v.set_percent(settings::detail_percent(detail_user(), v.screen));
+            let pct = if detail_user() == "Auto" { self.auto_detail.percent(v.screen) } else { settings::detail_percent(detail_user(), v.screen) };
+            v.set_percent(pct);
         }
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
