@@ -30,9 +30,9 @@ finish and replay. It is done when all six hold:
 The rush (D7): he picked a heart that gets tougher by planet (11-24 14:52Z); no other rush brake unasked. Milestone 3, a
 release, only if he chooses one.
 
-**Where it stands (11-24, 16:50Z).** The origin is on main (#699), at 700, 500 and 1,000 on planets 1 to 3 and half size on 4 to 8 (#756), its gather capped at twice its size (#769).
-- **Curve (test 3).** Third pass (#782): 18 of 24 won, P7 on no map (the wall), medians flat at 4:40 to 5:24. Planet 7's stall is the bot's: its siege waits for every crystal but the home to run dry, and P7 has about 30. Engine's `storm=F` dial (siege once the slime is down to F of its landing size with 20 soldiers) is on the PC at 0.35 and 0.5; Enemy's P5, P6, P8 curve follows.
-- **Rush (D7).** A heart snipe of 8 to 15 soldiers won P2 to P4 in 1:10 to 2:32; his card (14:52Z): a heart tougher by planet, Enemy building it.
+**Where it stands (11-24, 20:10Z).** The origin is on main (#699), at 700, 500 and 1,000 on planets 1 to 3 and half size on 4 to 8 (#756), its gather capped at twice its size (#769).
+- **Curve (test 3).** Fourth pass (bot with storm and crystal-pick fixes): 36 of 48 on six maps, 21 of 24 on his three, P7 won on all three of his maps. Medians P1 4:36, P2 3:18, P3 6:04, P4 5:42, P5 4:30, P6 6:44, P7 8:39, P8 7:18. The fifth pass (main and builder arms, with D7) runs next; planet 5 is the one to watch.
+- **Rush (D7).** His card (14:52Z): the heart gets tougher by planet. Enemy's #836: a snipe needs 16 soldiers on P2 and 32 from P3 on, and the siege still wins.
 - **4K (test 5): passes** with #820 (Auto retries 50% only with room for it). On the 1070 at his 3840-wide window, Auto detail, frame p95: P3 12.7 ms, P5 15.2, P8 at its peak 16.4 and 16.3 in two runs (it steps to 40% once and stays). Left over: the landing frame's step (about 440 ms) and one 38 ms CPU step at 2:14 on P8.
 - **Save and resume (test 4): passes** (#757; 1070 check 07:07Z, 7.7 MB in about 50 ms).
 - **What each planet does** is on screen: P2 Sprawler threads, P6 Sleeper, P7 Grudge scar, P8 the Dozer (#784, #788), each with its landing card and HUD tell (#785, #792).

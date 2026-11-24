@@ -6,6 +6,17 @@ the game's "what is new" and "things to try" lists, the record of his play
 sessions and the tuning numbers. The brief it was started from is at the
 end.
 
+## State (2026-11-24 20:10Z), read this first
+
+- **Milestone 2 tests:** 4 (save and resume) and 5 (60 fps at his 4K on the 1070, P8 p95 16.4 with #820) pass. Test 3 (curve): fourth pass won 21 of 24 on his maps, P7 on all three; the fifth pass (main and builder arms, 96 games, plus P8 size 1.4) runs on the PC once #836 lands, then Direction builds the curve page. Test 1 rides on it. Test 2 (two hours) waits on his run-length card. Test 6 holds (one experiment off, Crystals refill).
+- **His answers today:** D7 "Tougher heart by planet" (card 14:52Z; Enemy's #836: a snipe needs 16 on P2, 32 from P3, P4's heart 15 blows a member). Card look **B, fused shots** (15:51Z "B is best"; Squad builds it, D's hover trace waits, no Noita wrap). Both in `wiki/decisions-game.md`.
+- **Still open with him:** the run length card (both roads, 12 planets at 1.3x recommended). D8 (CPU engine), not yet asked. The auto-delete-branches switch.
+- **Planet 5:** Enemy retunes it (Sporer's burst first) only if both fifth-pass arms win 2 of 6 or fewer.
+- **Built today on main or queued:** planet twists Wind and Cold snap (#830, about one planet in three from 2), first-sight hints (#828), hurt colours on soldier bars (#831), Past runs page (#817), faster between-planet flow (#812), words pass (#825; what-is-new history reworded, `speck` added to words.txt), dead shop cards fixed (#806), Sprayer and Hunter, bot dials for turret bodies, the bot's storm (0.5 size, clock 8:00) and crystal pick fixes.
+- **Lab:** wanderer feeding is a dead end (drain beats bait); lap two has sizes (0.7 of the rule), rigs, smoke checks and the `strikers_settle` patch for Enemy, ready if he picks 12 or 16 planets. Night twist kept on its branch. Rescue planet (#833) approved as an occasional goal from planet 3 with the heart win dropped there; the Lab now stretches it to 4 to 8 minutes on planets 3 to 5 before anyone builds it.
+- **Lane jobs:** NOW.md's table. Every lane has a next job; check list_threads for idle ones.
+- **Gotcha:** never reset this branch while one of its PRs is still queued (11-24: #823's head was overwritten and had to be rebuilt).
+
 ## State (2026-11-24 04:35Z), read this first
 
 - **Milestone 2 front page is on main** (#742): six tests in `NOW.md`. The origin is on main (#699), the siege bot #707 is queued, and the pause menu's "Quit mid-planet" line is merged (#748).
