@@ -154,4 +154,11 @@ A second slime species that fights the first; the player's own mould
   page "Grudge Scar Tissue". Code `4c76a347` (`LAB_TOUGH=P:S0`). A hit on
   scarred slime shrugs off; recommendation: build it as the Grudge's thing
   at P 0.5.
+- 2026-11-24: **it grows in its sleep, for the Sleeper, planet 6** (brief
+  from Direction 05:16Z: Enemy's runner-up, free to farm before it wakes).
+  Report [`Reports/lab-sleeper-2026-11-24/`](../Reports/lab-sleeper-2026-11-24/README.md),
+  page "Sleeper Dreams". Code `8cbe4757` and `3508d9d4` (`LAB_DREAM=P`,
+  `LAB_DUMP_LIFE`, hand `wake@T,X,Y`). A sleeping walker buds a sleeping
+  child off the scent; recommendation: build it as the Sleeper's thing at
+  P 0.003.
 - Next step: none. Wait for Direction's next brief.
