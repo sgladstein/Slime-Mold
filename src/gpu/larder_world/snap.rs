@@ -81,7 +81,7 @@ snap_fields!(Engine {
         health, bites, pcell, piles, wstat, wb, sq, kills, hits, look,
     ],
     pairs: [trail, scent, germ, species],
-    skip: [device, queue, groups],
+    skip: [device, queue, groups, sorter],
     values: [
         grows, energy_flows, gas_at, gas_until, gas_immune, mind_rest, clouds, minds, mind_until, lured, waved, wave_w, heart, strikers, striker_held,
         forted, clouded, cloud_until, cloud_top, cloud_at, withers, reach, specks, lumps_on, plant_no_clear, dense_at, plant_at, crust_at, plants,
@@ -103,7 +103,7 @@ snap_fields!(GpuWorld {
     // game's.
     skip: [e, shared, ro, setc, walls, walls_new, stamps, profile, later, snaps, waits, wait_ms],
     values: [
-        s, sub, crystals, living, ate, ate_mark, covered, cells, garden, own, lumps, broken, want, grid, spread, struck,
+        s, sub, crystals, living, ate, ate_mark, covered, cells, garden, sort, own, lumps, broken, want, grid, spread, struck,
         fire_new, burn_dirty,
     ],
 });
