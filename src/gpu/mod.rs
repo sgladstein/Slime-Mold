@@ -134,6 +134,14 @@ pub fn lab_threads() -> (u32, f32) {
     let get = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
     let (sh, gr) = (get("LAB_LANES"), get("LAB_GROW"));
     let ahead = get("LAB_AHEAD").is_some_and(|v| v != "0");
+    // `LAB_TOUGH=P:S0` (the Grudge's scar tissue) takes the word alone:
+    // bits 30 and 31 set, S0 x 1000 in bits 0-13, P in the float.
+    if let Some(v) = get("LAB_TOUGH") {
+        let f: Vec<&str> = v.split(':').collect();
+        let p: f32 = f[0].parse().unwrap_or(0.0);
+        let s0: f32 = f.get(1).and_then(|x| x.parse().ok()).unwrap_or(1.0);
+        return (3u32 << 30 | ((s0 * 1000.0).round() as u32).min(0x3FFF), p);
+    }
     let sv = get("LAB_SHUTTLE");
     let shuttle: Option<f32> = sv.as_ref().and_then(|v| v.split(':').next()?.parse().ok());
     let fed: f32 = sv.as_ref().and_then(|v| v.split(':').nth(1)?.parse().ok()).unwrap_or(0.5);
@@ -3651,6 +3659,12 @@ impl Engine {
     /// The Larder World read back: each pile's charge and cells still
     /// crystal (from the last tick's sum), and walls' bites and cells
     /// broken so far.
+    /// LAB: the scar a fine cell (f32), read back (`LAB_DUMP`).
+    pub fn lab_scar(&self) -> Vec<u8> {
+        let c = (self.dish.w * self.dish.h) as u64 * 4;
+        read_back_range(&self.device, &self.queue, &self.crater, c, c)
+    }
+
     /// LAB: the walkers a fine cell, read back (`LAB_DUMP`).
     pub fn lab_occ(&self) -> Vec<u8> {
         read_back(&self.device, &self.queue, &self.occ)

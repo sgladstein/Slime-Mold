@@ -1287,6 +1287,9 @@ impl World for GpuWorld {
             let occ = self.e.lab_occ();
             let v: Vec<u8> = occ.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap()).min(255) as u8).collect();
             let _ = std::fs::write(format!("{dir}/occ-{sec:04}.bin"), v);
+            if std::env::var("LAB_DUMP_SCAR").is_ok() {
+                let _ = std::fs::write(format!("{dir}/scar-{sec:04}.bin"), self.e.lab_scar());
+            }
         }
     }
 

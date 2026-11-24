@@ -475,6 +475,20 @@ fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | H
 // A blow that would kill walker k only hurts it while it is a member of a
 // lump whose `armour` is above its hits + 1 (`BigDish::armoured`); true if
 // it took the blow so. One thread a walker writes its word.
+// **LAB: scar tissue** (2026-11-24, the Lab's Grudge prototype; never
+// merges). `lab_th` bit 30 (`LAB_TOUGH=P:S0`): a hit on a walker standing
+// on scar s shrugs off with chance P x min(s / S0, 1), so where the slime
+// was hurt it grows back tough. S0 x 1000 in bits 0-13, P in `lab_p`.
+fn lab_tough_on() -> bool { return (P.lab_th >> 30u) == 3u; }
+fn lab_tough(k: u32) -> bool {
+    if (!lab_tough_on() || !scars()) { return false; }
+    let wk = walkers[k];
+    let i = cell(wk.x, wk.y);
+    if (i == NONE) { return false; }
+    let s0 = max(f32(P.lab_th & 0x3FFFu) / 1000.0, 1.0e-3);
+    let p = P.lab_p * min(scar_at(i) / s0, 1.0);
+    return unit(keyed(P.s_starve, S.t, k ^ 0x71237123u)) < p;
+}
 fn armoured(k: u32) -> bool {
     let lb = lump_of(k);
     // A condensed striker takes a blow for each walker it took in that is
@@ -494,6 +508,8 @@ fn armoured(k: u32) -> bool {
         set_put(k, w + 1u);
         return true;
     }
+    // LAB: scar tissue (`lab_tough`, the Grudge prototype; never merges).
+    if (lb == 0u && lab_tough(k)) { return true; }
     if (lb == 0u) { return false; }
     let wd = dense_word(k);
     let hurt = wd >> HURT_SHIFT;
@@ -1809,7 +1825,7 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn lab_on() -> bool { return (P.lab_th >> 31u) != 0u; }
 fn lab_lanes(calm: bool, there: u32, here: u32) -> u32 {
     let n = P.lab_th & 15u;
-    if (!lab_on() || n == 0u || !calm) { return 0u; }
+    if (!lab_on() || lab_tough_on() || n == 0u || !calm) { return 0u; }
     let r = f32((P.lab_th >> 4u) & 63u) / 10.0;
     return select(0u, n, trail_in[there] > r * trail_in[here]);
 }
@@ -2056,7 +2072,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     // No child lands on barren ground (WM3) or in deep water.
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j) || crater_shut(j)) { return; }
     // LAB: threads, the growth cap (`lab_th` G and rg).
-    if (lab_on()) {
+    if (lab_on() && !lab_tough_on()) {
         let gm = (P.lab_th >> 14u) & 0x3FFu;
         if (gm > 0u && box_occ(j, (P.lab_th >> 24u) & 15u) > gm) { return; }
     }
