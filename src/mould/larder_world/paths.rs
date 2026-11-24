@@ -97,6 +97,7 @@ pub fn distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> boo
 /// same distances a binary heap gives (`heap_distance_map` in the tests),
 /// in about a third of the time on a 6x planet's world (11-14), where a
 /// soldier's new map was a step's 210 ms max on the 1070.
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct MapBuild {
     pub(super) goal: usize,
     ok: Vec<bool>,

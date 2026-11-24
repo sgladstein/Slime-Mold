@@ -74,6 +74,7 @@ pub const DEPTH_SLOTS: f32 = 0.1;
 pub const DEPTH_SLOTS_MAX: f32 = 0.6;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum GunKind {
     Rifle,
     Carbine,
@@ -145,6 +146,7 @@ impl GunKind {
 
 /// A squad's gun: the numbers every member fires by.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Gun {
     pub kind: GunKind,
     /// The planet it was found on (from 1).

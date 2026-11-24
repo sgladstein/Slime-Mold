@@ -33,6 +33,7 @@ use super::{Game, World};
 /// Off by default (the campaign and the sandbox are frozen); a run turns
 /// it on from its planet (`run::ENEMY_RULES`, `run::FIRST_PLANET`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct WaveRules {
     pub on: bool,
     /// None until this long after the landing.
@@ -90,6 +91,7 @@ type WaveSite = ((f32, f32), Vec<(f32, f32)>);
 
 /// What a wave is doing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum WavePhase {
     /// Pulling back to its points and massing there.
     Gather,
@@ -99,6 +101,7 @@ pub enum WavePhase {
 
 /// One wave.
 #[derive(Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Wave {
     pub phase: WavePhase,
     /// The tick its phase began.
@@ -110,6 +113,7 @@ pub struct Wave {
 
 /// The game's waves.
 #[derive(Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Waves {
     pub live: Option<Wave>,
     /// Waves sent, and the tick the last one ended.

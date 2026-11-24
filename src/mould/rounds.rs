@@ -83,6 +83,7 @@ pub const SLOTS: usize = 4;
 pub const MAX_SLOTS: usize = super::guns::SLOTS_MAX as usize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Card {
     /// The standard plain bullet: its strike and nothing more (a payload,
     /// since the payloads are bullets, owner 18:05Z).
@@ -462,6 +463,7 @@ type Hit = (Option<usize>, (f32, f32), u8, (f32, f32), f32, Option<usize>);
 /// and a replay line (`Cmd::Load`) carry it. A squad with none fires the
 /// army's round (`Rounds::round`, the H loadout).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Deck {
     cards: [Option<Card>; MAX_SLOTS],
 }
@@ -553,6 +555,7 @@ pub fn name(round: &[Card]) -> String {
 }
 
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct RoundRules {
     /// `Wide`: radius factor.
     pub wide: f32,
@@ -892,6 +895,7 @@ impl RoundRules {
 
 /// A payload with what its modifiers and trigger made of it.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Cast {
     /// What it casts where it hits: `Card::Plain` (nothing), `Blast`,
     /// `Bomb`, `Gas` or `Germ`, a rolled bullet's by its shell.
@@ -1253,6 +1257,7 @@ fn castable<W: World>(w: &W, p: Card) -> bool {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct Pending {
     cast: Cast,
     at: (f32, f32),
@@ -1272,6 +1277,7 @@ struct Pending {
 /// A burning flare (`Card::Flare`, 2026-11-17): its alarm burst, the tick
 /// it lays it again and the tick it goes out.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct Burn {
     burst: Burst,
     next: u64,
@@ -1280,6 +1286,7 @@ struct Burn {
 
 /// One burst as the window or a page draws it.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Pop {
     pub burst: Burst,
     /// A bomb's throw as its own burst, centred back toward the gun
@@ -1297,6 +1304,7 @@ pub struct Pop {
 /// missions, not per soldier mid-fight), and what was cast. Which cast a
 /// shot carries is game state (`Soldier::next`, `Bullet::cast`).
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Rounds {
     pub rules: RoundRules,
     pub round: Vec<Card>,
@@ -1363,6 +1371,7 @@ pub struct Rounds {
 /// What a queued burst's counts go to: its pop (`Rounds::pops`), or a
 /// shove.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 enum Due {
     Pop(usize),
     Shove,

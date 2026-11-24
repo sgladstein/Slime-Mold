@@ -28,6 +28,8 @@
 //! and `frame_finish` split a frame so the window draws while the GPU runs
 //! it (`Game::begin_step`, `finish_step`).
 
+mod snap;
+
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -269,6 +271,7 @@ pub struct GpuWorld {
 /// The gardeners on the GPU world (`own_mould`'s `Garden`, 2026-11-12):
 /// the soldiers' tasks and what they did.
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct GpuGarden {
     pub tasks: Vec<Task>,
     pub tend: Tend,
@@ -779,6 +782,14 @@ impl GpuWorld {
 }
 
 impl World for GpuWorld {
+    fn save_state(&mut self) -> Result<Vec<u8>, String> {
+        self.save_bytes()
+    }
+
+    fn load_state(&mut self, bytes: &[u8]) -> Result<(), String> {
+        self.load_bytes(bytes)
+    }
+
     fn size(&self) -> (usize, usize) {
         (self.e.dish.w, self.e.dish.h)
     }
@@ -1701,6 +1712,40 @@ mod tests {
             assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
         }
+    }
+
+    /// **A planet saved mid-game loads as it was** (save and resume A,
+    /// Milestone 2, 2026-11-24): five seconds in, the game is saved, read
+    /// onto a world built fresh, and saved again: the two saves are the
+    /// same bytes (every engine buffer read back, every CPU field, the
+    /// game's whole state). A save for another planet is refused. Then
+    /// both play on two seconds and still save the same bytes (the engine
+    /// is deterministic on one device), so nothing a step reads was left
+    /// out.
+    #[test]
+    fn a_planet_saved_mid_game_loads_as_it_was() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let fresh = || GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        let rules = || Rules { cap: 30.0, ..Rules::default() };
+        let mut g = Game::new(fresh(), rules(), seed);
+        while g.time() < 5.0 && g.end.is_none() {
+            g.step();
+        }
+        let saved = g.save("race 5").unwrap();
+        let mut back = Game::from_save(&saved, "race 5", fresh()).unwrap();
+        assert_eq!((back.time(), back.mould, back.killed), (g.time(), g.mould, g.killed));
+        let again = back.save("race 5").unwrap();
+        assert_eq!(again.len(), saved.len());
+        assert!(again == saved, "the loaded game saves the same bytes");
+        assert!(Game::from_save(&saved, "race 6", fresh()).is_err(), "another planet's save");
+        for _ in 0..60 {
+            g.step();
+            back.step();
+        }
+        assert_eq!((g.world.ticks(), g.mould), (back.world.ticks(), back.mould));
+        let (a, b) = (g.save("race 5").unwrap(), back.save("race 5").unwrap());
+        assert!(a == b, "played on, the two games save the same bytes: {} differ", a.iter().zip(&b).filter(|(x, y)| x != y).count());
     }
 
     /// **A bot's coarser ask leaves the rules' grid alone** (the bug hunt,

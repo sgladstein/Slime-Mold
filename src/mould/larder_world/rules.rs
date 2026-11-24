@@ -37,6 +37,7 @@ use super::*;
 /// 45 of 64 (17 lower); and a rush that fails to take it loses its squad
 /// on 8 of the 10 failures on 201-232.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Core {
     pub kind: CoreKind,
     /// Game seconds a squad must hold the core with no walker touching it
@@ -52,6 +53,7 @@ pub struct Core {
 
 /// How a core falls (`Core`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum CoreKind {
     /// Held clear for `Core::secs`, it falls for good: births stop.
     Fixed,
@@ -81,6 +83,7 @@ impl Core {
 /// Every number in the game layer: M3's (`larder::Rules`) where the rule
 /// carried over, so a census can be read against M3's.
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Rules {
     /// Ticks a game second (M3: 15, an eighth of the dish's 120).
     pub tps: u32,

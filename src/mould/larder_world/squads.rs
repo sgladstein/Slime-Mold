@@ -74,6 +74,7 @@ pub const PACE: f32 = 0.75;
 pub const STOOD: f32 = 0.12;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Formation {
     /// A sunflower round the anchor (the default).
     #[default]
@@ -164,6 +165,7 @@ impl Formation {
 
 /// The controlled squad's edge (`Rules::lead`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct LeadRules {
     /// Shots as often as the others, times this (2: twice the rate).
     pub rate: f32,
@@ -178,6 +180,7 @@ impl Default for LeadRules {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Squad {
     /// Steering (WASD), a unit vector or zero.
     pub steer: (f32, f32),

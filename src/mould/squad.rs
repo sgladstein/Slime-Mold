@@ -83,6 +83,7 @@ pub fn slime_trail(knee: f32) -> f32 {
 /// One unit for a frame, in fine cells. A radius of 0 is its own cell
 /// only; `take` 0 harvests nothing and `smell` 0 lays nothing.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct UnitIn {
     pub x: f32,
     pub y: f32,
@@ -102,6 +103,7 @@ pub struct UnitIn {
 /// One shot: its line and the radius it strikes at the first slime (at
 /// most `R_MAX`).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct ShotIn {
     pub from: (f32, f32),
     pub to: (f32, f32),
@@ -126,6 +128,7 @@ pub fn over_wall(wall: &[bool], agar: &[bool], i: usize) -> bool {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Frame {
     pub units: Vec<UnitIn>,
     pub shots: Vec<ShotIn>,
@@ -208,6 +211,7 @@ impl Default for Frame {
 /// (`World::burst`), on the CPU (`burst` below) and on the GPU (the
 /// engine's strike, which lays the crater too since this change).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Burst {
     pub at: (f32, f32),
     /// The kill and clear radius (0 with `kill`: a shock only).
@@ -300,6 +304,7 @@ impl Burst {
 /// keep (turned on by the first alarm), gas's death chance, and contagion's
 /// settings (turned on by the first germ), times in fine steps.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct BurstRules {
     pub alarm_keep: f32,
     pub gas_death: f32,
@@ -444,6 +449,7 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct UnitOut {
     /// Walkers on the cells within `touch`.
     pub touching: u32,
@@ -476,6 +482,7 @@ pub fn heats(d: &BigDish, units: &[UnitIn]) -> Vec<f32> {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct ShotOut {
     /// The centre of the slime cell it hit (none: it hit a wall or rock,
     /// left the world, or found no slime on its line).
@@ -484,6 +491,7 @@ pub struct ShotOut {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct FrameOut {
     pub units: Vec<UnitOut>,
     pub shots: Vec<ShotOut>,

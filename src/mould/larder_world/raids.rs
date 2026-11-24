@@ -60,6 +60,7 @@ use crate::mould::big::{Lump, RAID_BLOCK};
 /// the landing (`Game::landed`), so a planet whose slime grows alone first
 /// does not raid the squad as it lands.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct RaidRules {
     /// The time till the next raid is drawn from a normal distribution
     /// with this mean and `every_sd` (0: raids off), never under `min`, at
@@ -207,6 +208,7 @@ impl RaidRules {
 
 /// What a raid went for.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum RaidAim {
     /// Building `k` (a pump, or any standing building).
     Building(usize),
@@ -219,6 +221,7 @@ pub enum RaidAim {
 
 /// One raid the game sent.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Raid {
     /// Tick it began.
     pub tick: u64,
@@ -238,6 +241,7 @@ pub struct Raid {
 
 /// A raid walking as one body (`RaidRules::march`).
 #[derive(Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct March {
     /// The lump it walks as (`World::form_lump`).
     pub lump: usize,
@@ -262,6 +266,7 @@ pub struct March {
 
 /// The game's raid state.
 #[derive(Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Raids {
     /// Every raid sent, oldest first.
     pub sent: Vec<Raid>,
@@ -298,6 +303,7 @@ pub struct Raids {
 
 /// How a march ended (`Raids::ends`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum MarchHow {
     /// Under `march_quorum` of its first members on the way: shot apart.
     Broken,
@@ -307,6 +313,7 @@ pub enum MarchHow {
 
 /// One march's end (`Raids::ends`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct MarchEnd {
     pub how: MarchHow,
     /// Its centre then (fine cells), its members at its first look and
@@ -320,6 +327,15 @@ pub struct MarchEnd {
     /// How far round `at` the fight with it reaches (fine cells): its body
     /// and the squad's reach that met it, so the guns' kills there are its.
     pub reach: f32,
+}
+
+impl Raids {
+    /// Every way still building waited for (`Game::save`).
+    pub(super) fn settle_ways(&mut self) {
+        for w in [&mut self.unit_way, &mut self.food_way, &mut self.lure_way].into_iter().flatten() {
+            w.settle();
+        }
+    }
 }
 
 impl Raids {
@@ -356,6 +372,7 @@ impl Default for Raids {
 /// field drops it when it has run out. It draws no scent and takes no
 /// raid: it is the field's source and nothing else.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct LureMark {
     /// Where: world units (fine cells), as a building's place.
     pub at: (f32, f32),
@@ -380,9 +397,13 @@ fn way_delay() {
 }
 
 #[derive(Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub(super) enum Way {
     Ready(Vec<u32>),
+    // A save (`Game::save`) settles every way first (`Way::settle`), so a
+    // way still building is never written.
     #[cfg(not(target_arch = "wasm32"))]
+    #[serde(skip)]
     Building(std::thread::JoinHandle<Vec<u32>>),
 }
 
@@ -439,6 +460,13 @@ impl Way {
         {
             Way::Ready(build())
         }
+    }
+
+    /// Waits for a way still building (`Game::save`: a thread can't be
+    /// written to a save).
+    pub(super) fn settle(&mut self) {
+        let w = std::mem::replace(self, Way::Ready(Vec::new()));
+        *self = Way::Ready(w.finish());
     }
 
     pub(super) fn finish(self) -> Vec<u32> {

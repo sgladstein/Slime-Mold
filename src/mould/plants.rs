@@ -63,6 +63,7 @@ pub const SOIL_CAP: [f32; SOIL_KINDS] = [
 /// Each plant kind's numbers: capacity, pace, and the share of capacity
 /// it keeps off wet ground.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Kind {
     pub cap: f32,
     pub pace: f32,

@@ -12,6 +12,18 @@ pub trait World {
     fn scale(&self) -> f32;
     /// Ticks run.
     fn ticks(&self) -> u64;
+    /// The world's whole state, between steps (save and resume A,
+    /// `Game::save`). A world that can't be saved says so, and the window
+    /// relands the planet instead.
+    fn save_state(&mut self) -> Result<Vec<u8>, String> {
+        Err("this world has no save".into())
+    }
+    /// Reads `save_state`'s bytes into this world, built for the same
+    /// planet (`Game::from_save`).
+    fn load_state(&mut self, bytes: &[u8]) -> Result<(), String> {
+        let _ = bytes;
+        Err("this world has no save".into())
+    }
     /// One squad frame around `ticks` ticks (`squad::frame`).
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut;
     /// Starts frame `f` as `frame` does, without waiting for its results
@@ -347,6 +359,15 @@ pub trait World {
 }
 
 impl World for BigDish {
+    fn save_state(&mut self) -> Result<Vec<u8>, String> {
+        bincode::serialize(self).map_err(|e| format!("save: {e}"))
+    }
+
+    fn load_state(&mut self, bytes: &[u8]) -> Result<(), String> {
+        *self = bincode::deserialize(bytes).map_err(|e| format!("load: {e}"))?;
+        Ok(())
+    }
+
     fn size(&self) -> (usize, usize) {
         (self.w, self.h)
     }

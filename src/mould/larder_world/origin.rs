@@ -47,6 +47,7 @@ use crate::mould::big::{Lump, LUMPS};
 /// (`run::ORIGIN_SIZE`). Armour, bite, steering and the lunge are the
 /// last-stand heart's (`StandRules`).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct OriginRules {
     pub on: bool,
     /// The members it gathers at the landing and regrows to.
@@ -113,6 +114,7 @@ impl Default for OriginRules {
 
 /// The origin's state beside the heart it is (`Stand::live` with `origin`).
 #[derive(Clone, Copy, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct OriginState {
     /// It formed this planet.
     pub formed: bool,

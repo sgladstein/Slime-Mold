@@ -20,6 +20,7 @@ const FAR_FRAMES: u8 = 4;
 /// buildings (`buildings`) in place of M3's turret and bait.
 /// `Order::Clear` names a crystal by a point inside it.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Cmd {
     Order(usize, Order),
     Stance(usize, Stance),

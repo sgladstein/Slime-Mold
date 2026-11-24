@@ -127,6 +127,7 @@ pub const LUMP_CROWD: u8 = 3;
 /// soldier's pace). Tether, lone step, blocked_keep, short sensors and
 /// grazing were tried first and did not hold it (aspect 8-17).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Lump {
     /// The fine cell it heads for, x | y << 16 (as `raid_to`).
     pub aim: u32,
@@ -322,6 +323,7 @@ pub fn mind_reads(kind: u32, v: [&mut f32; 3]) {
 /// what the `BigParams` field of the same name means, for that species'
 /// walkers (`keep` for its own trail field).
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct SpeciesSet {
     pub sensor_angle: f32,
     pub sensor_offset: f32,
@@ -389,6 +391,7 @@ impl BigDish {
 }
 
 #[derive(Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct BigParams {
     /// Fine cells per dish cell, each way: 1 is today's grid, 4 is 1024 x 640.
     pub scale: usize,
@@ -1772,7 +1775,7 @@ pub struct BigMeasure {
     pub energy: f32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct BigDish {
     pub p: BigParams,
     pub w: usize,

@@ -251,18 +251,20 @@ pub const GRID_MIN: usize = 4;
 pub const PULL: f32 = 0.002;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Colour {
     Amber,
     Grey,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Field {
     Trail,
     Walkers,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Curve {
     Game,
     Soft,
@@ -272,6 +274,7 @@ pub enum Curve {
 /// inoculum), or a disc in the middle (`BigParams::blob_r`, the looks
 /// report's trunk start).
 #[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Start {
     Spread,
     Home,
@@ -279,7 +282,7 @@ pub enum Start {
 }
 
 /// Every control. Angles in degrees, distances in fine cells.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Settings {
     pub walkers: usize,
     /// One walker a cell (crowd 1); dropped when there are more walkers than
@@ -945,6 +948,7 @@ impl Settings {
 /// field). Angles in degrees and `laid` per 100,000 walkers, as the
 /// globals.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct SpeciesKnobs {
     pub sensor_angle: Option<f32>,
     pub turn: Option<f32>,
@@ -3739,7 +3743,7 @@ fn block_words(field: &[u32], w: usize, h: usize) -> Vec<u32> {
 }
 
 /// **The heartbeat** (2026-11-20; `Engine::heart`).
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Heart {
     /// Where it beats from, fine cells.
     pub at: (f32, f32),
