@@ -57,8 +57,13 @@ pub(super) const PCT: f32 = 0.95;
 /// most it doubles to.
 pub(super) const HOLD_MIN: f32 = 15.0;
 pub(super) const HOLD_MAX: f32 = 240.0;
-/// A step up that runs slow within this many seconds goes back down.
-pub(super) const PROBE_SECS: f32 = 3.0;
+/// A step up that runs slow within this many seconds did not fit: back
+/// down, and the next try waits twice as long. 3 s to 11-24; timed on the
+/// 1070 (main with the walker sort, planet 8 at its peak, Auto) each step
+/// up to 50% ran slow 6.5, 8.6, 15 and 12.7 s later, never within 3 s,
+/// so the hold never doubled and Auto spent a third of the planet's
+/// first 150 s retrying 50% (p95 17.0 over every frame).
+pub(super) const PROBE_SECS: f32 = 20.0;
 
 #[derive(Clone, Debug)]
 pub(super) struct AutoDetail {
@@ -235,6 +240,27 @@ mod tests {
         run(&mut a, 19.0, 1.05);
         a.restart();
         assert_eq!((a.percent(UHD), a.hold), (50, HOLD_MIN));
+    }
+
+    #[test]
+    fn a_step_up_that_runs_slow_a_few_seconds_later_did_not_fit() {
+        // Planet 8 on the 1070 (11-24): 50% held 6 to 15 s, then ran slow.
+        let mut a = AutoDetail::default();
+        a.percent(UHD);
+        run(&mut a, 19.0, 1.05);
+        assert_eq!(run(&mut a, 15.0, HOLD_MIN + 0.5), vec![50]);
+        assert!(run(&mut a, 16.0, 8.0).is_empty());
+        assert_eq!(run(&mut a, 19.0, 2.1), vec![40]);
+        assert_eq!(a.hold, 2.0 * HOLD_MIN);
+        // A step that held past `PROBE_SECS` and then ran slow (a fight
+        // began) keeps the hold.
+        let mut b = AutoDetail::default();
+        b.percent(UHD);
+        run(&mut b, 19.0, 1.05);
+        assert_eq!(run(&mut b, 15.0, HOLD_MIN + 0.5), vec![50]);
+        assert!(run(&mut b, 16.0, PROBE_SECS + 2.0).is_empty());
+        assert_eq!(run(&mut b, 19.0, 2.1), vec![40]);
+        assert_eq!(b.hold, HOLD_MIN);
     }
 
     #[test]
