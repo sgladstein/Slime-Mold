@@ -539,7 +539,8 @@ fn glance_of(seed: u64, depth: u32) -> Glance {
         return g;
     }
     let m = slime_mould::mould::levelgen::level(seed, depth);
-    let g = glance_from(&m, 64);
+    // 96 across (64 until 11-24; the pane blends between cells too).
+    let g = glance_from(&m, 96);
     LAST.with(|l| *l.borrow_mut() = Some(((seed, depth), g.clone())));
     g
 }
@@ -657,15 +658,17 @@ fn item_icon(key: &str) -> Icon {
         "fireproof" => Icon::Shield,
         "walls" => Icon::Wall,
         "turret" => Icon::Turret,
+        "turret+" => Icon::Upgrade,
+        "tools+" => Icon::Tag,
         "mortar" => Icon::Bomb,
-        "lure" => Icon::Bait,
+        "lure" => Icon::Lure,
         "pump+" => Icon::Crystal,
         "outpost" => Icon::Hold,
         "siren" => Icon::Alert,
         "blast" => Icon::Grenade,
-        "mine" => Icon::Target,
+        "mine" => Icon::Mine,
         "cord" => Icon::Burn,
-        "gas" => Icon::Pause,
+        "gas" => Icon::Sleep,
         "draw" => Icon::Menu,
         _ => Icon::Upgrade,
     }
@@ -1447,7 +1450,7 @@ mod glance_tests {
     fn the_glance_holds_the_planet() {
         for depth in 1..=4 {
             let g = super::glance_of(7, depth);
-            assert_eq!(g.w, 64, "planet {depth}");
+            assert_eq!(g.w, 96, "planet {depth}");
             assert_eq!(g.cells.len(), g.w * g.h, "planet {depth}");
             assert!(g.crystals.len() >= 6 && !g.moulds.is_empty() && g.landing.is_some(), "planet {depth}: {} crystals, {} nests", g.crystals.len(), g.moulds.len());
             let on = |x: f32, y: f32| (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y);

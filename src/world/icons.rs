@@ -128,6 +128,18 @@ pub enum Icon {
     // A door in the Build page (controls review, 11-21: Wall and Door
     // shared the brick glyph): a frame, its slab swung half open, a knob.
     Door,
+    // The Tools page (polish review finding 7, 11-24: Mine wore the
+    // crosshair, Sleep gas the pause bars, the Lure the bait drop).
+    // Mine: a charge buried in the ground, its fuse up. Sleep: a cloud
+    // with a z under it. Lure: three streams drawn in to one bait, which
+    // is what the Lure does to the slime (four arrows in to a dot read as
+    // the pan cross).
+    Mine,
+    Sleep,
+    Lure,
+    // Cheaper tools in the shop (finding 7: it shared Turret power's
+    // chevron): a price tag.
+    Tag,
 }
 
 impl Icon {
@@ -147,6 +159,10 @@ impl Icon {
             Icon::Attack => &["O12 12 7", "M12 2 L12 7", "M12 17 L12 22", "M2 12 L7 12", "M17 12 L22 12"],
             Icon::Burn => &["M12 21 C8 21 5.5 18.5 5.5 15 C5.5 11 9 9.5 9 5 C12 7 14 9 13.5 12 C15 11.5 16 10 16 8.5 C18 10.5 18.5 13 18.5 15 C18.5 18.5 16 21 12 21 Z"],
             Icon::Door => &["M5 21 L5 3 L19 3 L19 21", "M2.5 21 L21.5 21", "M5 3 L13 5.5 L13 21", "FO11 13 1.2"],
+            Icon::Mine => &["M2.5 17.5 L21.5 17.5", "M5 17.5 C5 13 8 10.5 12 10.5 C16 10.5 19 13 19 17.5", "M12 10.5 L12 6.5", "FO12 5.2 1.8"],
+            Icon::Sleep => &["M5.5 13 C2.5 13 2 8.5 5.5 8 C5.5 4 10.5 3 12 6 C13.5 3.5 18.5 4.5 18 8.5 C21 9 20.5 13 17.5 13 Z", "M9 16.5 L14.5 16.5 L9 21.5 L14.5 21.5"],
+            Icon::Tag => &["M3.5 12.5 L11.5 4.5 L19.5 4.5 L19.5 12.5 L11.5 20.5 Z", "FO15.5 8.5 1.6"],
+            Icon::Lure => &["FO17.5 12 3.2", "M2.5 5 C8 5 9.5 12 13 12", "M2.5 12 L13 12", "M2.5 19 C8 19 9.5 12 13 12"],
             Icon::Wall => &["M3 6 L21 6 L21 18 L3 18 Z", "M3 12 L21 12", "M9 6 L9 12", "M15 6 L15 12", "M6 12 L6 18", "M12 12 L12 18", "M18 12 L18 18"],
             Icon::Turret => &["M7 21 L17 21", "M8.5 21 L9.5 11 L14.5 11 L15.5 21", "M12 11 L12 7", "M12 7 L20 4"],
             Icon::Bait => &["M12 3 C12 3 6 10 6 14.5 C6 18 8.7 21 12 21 C15.3 21 18 18 18 14.5 C18 10 12 3 12 3 Z"],
@@ -362,7 +378,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Pull, Multicast, Seek, Flare, Torch, Tinder, Provoke, Still, Door] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Pull, Multicast, Seek, Flare, Torch, Tinder, Provoke, Still, Door, Mine, Sleep, Lure, Tag] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

@@ -2000,7 +2000,7 @@ impl App {
         let mut sow: Option<Command> = None;
         if let Some(gd) = &g.world.garden {
             let all = |t: Task| any && sel.iter().all(|&k| gd.tasks.get(k) == Some(&t));
-            let s = Command { ready: any, on: all(Task::Feed), why_not: no_sel(), about: format!("Sow your own slime (green): while on, the soldier spends {:.0} food a second from the bank, spread as charge where it walks, which your mould eats and grows on. Walk it where you want the mould to go. Press again to stop.", gd.tend.feed), ..Command::new(SOW, if squads { (1, 1) } else { (1, 2) }, Icon::Crystal, "Sow your mould", KeyCode::KeyW) };
+            let s = Command { ready: any, on: all(Task::Feed), why_not: no_sel(), about: format!("Sow your own slime (green): while on, the soldier spends {:.0} food a second from the bank, spread as charge where it walks, which your slime eats and grows on. Walk it where you want your slime to go. Press again to stop.", gd.tend.feed), ..Command::new(SOW, if squads { (1, 1) } else { (1, 2) }, Icon::Crystal, "Sow your slime", KeyCode::KeyW) };
             if squads {
                 sow = Some(s);
             } else {
@@ -2088,15 +2088,15 @@ impl App {
             cmds = vec![
                 tool(T_BLAST, (0, 0), Icon::Grenade, "Blast", KeyCode::KeyB, Target::Point { radius: kr.blast_r * sc }, kr.blast_price, true, format!("Kills the slime within {:.0} cells and leaves a crater it can't hold trail in for {:.0} s. The blast's alarm wakes and stirs the slime nearby.{}", kr.blast_r, kr.crater_secs, if device.is_some() { String::new() } else { format!(" Thrown by a soldier holding a tool within {:.0} cells.", kr.reach) })),
                 tool(T_CORD, (0, 1), Icon::Burn, "Det cord", KeyCode::KeyC, Target::Line { width: 2.0 * kr.cord_r * sc }, kr.cord_price, true, format!("A line of small blasts, each with its crater: a cut the slime can't knit for {:.0} s.{} At most {:.0} cells.", kr.crater_secs, if device.is_some() { String::new() } else { format!(" {:.0} food a cell.", kr.cord_price) }, kr.cord_max)),
-                tool(T_MINE, (0, 2), Icon::Target, "Mine", KeyCode::KeyD, Target::Point { radius: kr.mine_r * sc }, kr.mine_price, true, format!("Goes off as a blast when slime {} strong stands within {:.0} cells of it.", k.mine_trigger(g), kr.mine_r)),
+                tool(T_MINE, (0, 2), Icon::Mine, "Mine", KeyCode::KeyD, Target::Point { radius: kr.mine_r * sc }, kr.mine_price, true, format!("Goes off as a blast when slime {} strong stands within {:.0} cells of it.", k.mine_trigger(g), kr.mine_r)),
                 tool(T_GERM, (0, 3), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the slime within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
-                tool(T_GAS, (0, 4), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the slime within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
+                tool(T_GAS, (0, 4), Icon::Sleep, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the slime within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
                 // Provoke and Still (the simulation-use plan's B1 and B2,
                 // 2026-11-17): test devices for the Mind statuses the gun
                 // cards will cast; runs leave them out (`run_hidden`).
                 tool(T_PROVOKE, (1, 2), Icon::Alert, "Provoke", KeyCode::KeyX, Target::Point { radius: kr.mind_r * sc }, kr.provoke_price, true, format!("The slime within {:.0} cells hears no news of food for {:.0} s: after 5 s it believes it is cut off, greys and charges the nearest soldier, or runs for a crystal.", kr.mind_r, kr.provoke_secs)),
                 tool(T_STILL, (1, 3), Icon::Hold, "Still", KeyCode::KeyZ, Target::Point { radius: kr.mind_r * sc }, kr.still_price, true, format!("The slime within {:.0} cells stops charging for {:.0} s: no surge, panic or raid. It eats nothing meanwhile, so held long it starves and greys.", kr.mind_r, kr.still_secs)),
-                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(T_BACK, (1, 4), Icon::Close, "Back", KeyCode::KeyE) },
+                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(T_BACK, (1, 5), Icon::Close, "Back", KeyCode::KeyE) },
             ];
             cmds.extend(road);
             cmds.extend(sow);
@@ -2108,7 +2108,7 @@ impl App {
             // the switch and Back below. Cancel a build left it: click the
             // building instead (`App::building_sel`).
             cmds = vec![
-                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest slime within {:.0} cells every {:.1} s. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food a walker.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest slime within {:.0} cells every {:.1} s. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food for each slime it kills.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
                 pump((0, 1)),
                 place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest slime it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit slime within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
                 Command {
@@ -2116,7 +2116,7 @@ impl App {
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
                     ready: g.bank >= r.wall_cost,
                     why_not: need(r.wall_cost),
-                    about: "A wall the slime has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
+                    about: format!("A wall the slime has to wear through, slowly. Both ends within a soldier's range; costs {:.0} food a cell of its length.", r.wall_cost),
                     ..Command::new(WALL, (0, 2), Icon::Wall, "Wall", KeyCode::KeyV)
                 },
                 Command {
@@ -2127,11 +2127,11 @@ impl App {
                     about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Click a wall to cut one in, at once and as thick as the wall (a rising wall gets it as it rises). Costs as a wall that long.".into(),
                     ..Command::new(DOOR, (1, 3), Icon::Door, "Door", KeyCode::KeyG)
                 },
-                place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
-                place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the slime's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
-                Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
+                place(LURE, (0, 3), Icon::Lure, "Lure", KeyCode::KeyL, b.lure_cost, "Calm slime streams to it, round rock and walls, and eats it: draw it into your guns or off a crystal. Charging slime ignores it. Free to keep on.".to_string()),
+                place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the slime's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. Plain slime ignores it.", b.siren_every)),
+                Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Lure, "Lures, sirens on/off", KeyCode::KeyJ) },
                 place(OUTPOST, (1, 1), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and slime touching it eats from the bank.".into()),
-                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (1, 4), Icon::Close, "Back", KeyCode::KeyQ) },
+                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (1, 5), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
             // No Outpost without the larder (the squad mode): with nothing
             // carried home its only effects were smelling of the bank and
@@ -3029,7 +3029,7 @@ fn building_icon(k: Kind) -> Icon {
     match k {
         Kind::Turret => Icon::Turret,
         Kind::Mortar => Icon::Bomb,
-        Kind::Lure => Icon::Bait,
+        Kind::Lure => Icon::Lure,
         Kind::Pump => Icon::Crystal,
         Kind::Outpost => Icon::Hold,
         Kind::Siren => Icon::Alert,
@@ -3208,7 +3208,7 @@ impl App {
         if matches!(bd.kind, Kind::Lure | Kind::Siren) {
             cmds.push(Command {
                 about: if bd.on { "Switch it off: no scent, no calls, till you switch it on.".into() } else { "Switch it on again.".into() },
-                ..Command::new(SWITCH, (0, 1), Icon::Bait, if bd.on { "Switch off" } else { "Switch on" }, KeyCode::KeyJ)
+                ..Command::new(SWITCH, (0, 1), building_icon(bd.kind), if bd.on { "Switch off" } else { "Switch on" }, KeyCode::KeyJ)
             });
         }
         for c in &mut cmds {
