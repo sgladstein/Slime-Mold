@@ -3216,15 +3216,17 @@ impl Hud {
 const CURVE_H: f32 = 112.0;
 /// The slime's colour on the end screen's graph: the amber the slime is
 /// drawn in on the planet, so the bars read as the slime.
-const CURVE_SLIME: Rgba = [236, 150, 52, 210];
+const CURVE_SLIME: Rgba = [255, 178, 64, 255];
+/// The area under the slime's curve: its amber, dim.
+const CURVE_FILL: Rgba = [236, 150, 52, 90];
 
 /// **The match's curve on the end screen** (2026-11-21, the owner: "I
 /// would be curious to see slime population overtime after each match"):
-/// the slime's walkers as amber columns, one per few seconds (the most in
-/// each, so a peak is never averaged away), and the soldiers standing as
-/// cyan dots on their own scale, with the slime's peak and the clock at
-/// both ends. Plain rectangles, as the rest of the card: the canvas draws
-/// no lines.
+/// the slime's size as an amber area with a bright edge, one column per
+/// few seconds (the most in each, so a peak is never averaged away), and
+/// the soldiers standing as a cyan step line on their own scale, with the
+/// slime's peak and the clock at both ends. Plain rectangles, as the rest
+/// of the card: the canvas draws no lines (gapped bars and dots to 11-24).
 fn end_curve(curve: &[(u32, u32)], r: Rect, c: &mut Canvas, s: f32) {
     c.panel(r, 10.0 * s, [255, 255, 255, 12], [255, 255, 255, 6], 1.0, EDGE);
     let (padx, top, bottom) = (12.0 * s, 26.0 * s, 20.0 * s);
@@ -3236,29 +3238,45 @@ fn end_curve(curve: &[(u32, u32)], r: Rect, c: &mut Canvas, s: f32) {
     c.rrect(Rect::new(r.x + padx, ky - 5.0 * s, 9.0 * s, 9.0 * s), 2.0 * s, CURVE_SLIME);
     let w = c.text(Weight::Medium, 12.5 * s, (r.x + padx + 14.0 * s, ky + 4.0 * s), Align::Left, "Slime", MUTED);
     let kx = r.x + padx + 14.0 * s + w + 14.0 * s;
-    c.rrect(Rect::new(kx, ky - 3.0 * s, 6.0 * s, 6.0 * s), 3.0 * s, ACCENT);
-    c.text(Weight::Medium, 12.5 * s, (kx + 11.0 * s, ky + 4.0 * s), Align::Left, &format!("Soldiers (most {})", most as u32), MUTED);
+    c.rrect(Rect::new(kx, ky - 1.0 * s, 10.0 * s, 2.0 * s), 0.0, ACCENT);
+    c.text(Weight::Medium, 12.5 * s, (kx + 15.0 * s, ky + 4.0 * s), Align::Left, &format!("Soldiers (most {})", most as u32), MUTED);
     let peak_label = if peak >= 10_000.0 { format!("peak {:.1}k", peak / 1000.0) } else { format!("peak {}", peak as u32) };
     c.text(Weight::Medium, 12.5 * s, (r.right() - padx, ky + 4.0 * s), Align::Right, &peak_label, MUTED);
     // The floor.
     c.rrect(Rect::new(plot.x, plot.bottom(), plot.w, 1.0 * s), 0.0, TRACK);
-    // A column every 3 units or more, each the most of its seconds.
-    let n = curve.len().min((plot.w / (3.0 * s)).floor().max(1.0) as usize);
+    // A faint line at half the peak, so the area's height reads.
+    c.rrect(Rect::new(plot.x, plot.y + plot.h / 2.0, plot.w, 1.0 * s), 0.0, [255, 255, 255, 10]);
+    // The slime as a filled area (the polish review, 11-24, finding 15: a
+    // row of gapped amber bars all alike read as a placeholder): a column
+    // every 2 units or more with no gap, each the most of its seconds, its
+    // body a dim amber and a bright cap along the top, so the columns'
+    // tops join into the curve's edge. The soldiers as a cyan step line
+    // over it, each column's level joined to the next by an upright.
+    let n = curve.len().min((plot.w / (2.0 * s)).floor().max(1.0) as usize);
     let cw = plot.w / n as f32;
-    let gap = if cw > 2.5 * s { 1.0 * s } else { 0.0 };
+    let cap = 2.0 * s;
+    let lw = 2.0 * s;
+    let mut prev: Option<f32> = None;
     for k in 0..n {
         let (a, b) = (k * curve.len() / n, ((k + 1) * curve.len() / n).max(k * curve.len() / n + 1));
         let part = &curve[a..b.min(curve.len())];
         let v = part.iter().map(|p| p.0).max().unwrap_or(0) as f32;
-        let x = plot.x + k as f32 * cw;
+        // Whole pixels, edge to edge: an overlap doubled the dim fill
+        // into seams, a gap into stripes.
+        let x = (plot.x + k as f32 * cw).round();
+        let w = (plot.x + (k + 1) as f32 * cw).round() - x;
         if v > 0.0 {
-            let h = (v / peak * plot.h).max(1.0 * s);
-            c.rrect(Rect::new(x, plot.bottom() - h, cw - gap, h), 0.0, CURVE_SLIME);
+            let h = (v / peak * plot.h).max(cap);
+            c.rrect(Rect::new(x, plot.bottom() - h, w, h), 0.0, CURVE_FILL);
+            c.rrect(Rect::new(x, plot.bottom() - h, w, cap), 0.0, CURVE_SLIME);
         }
         let men = part.last().map_or(0, |p| p.1) as f32;
-        let d = 3.0 * s;
-        let my = plot.bottom() - men / most * (plot.h - d) - d;
-        c.rrect(Rect::new(x + (cw - gap - d) / 2.0, my, d, d), d / 2.0, ACCENT);
+        let my = plot.bottom() - men / most * (plot.h - lw) - lw;
+        c.rrect(Rect::new(x, my, w, lw), 0.0, ACCENT);
+        if let Some(py) = prev.filter(|py| (py - my).abs() > 0.5) {
+            c.rrect(Rect::new(x, py.min(my), lw, (py - my).abs() + lw), 0.0, ACCENT);
+        }
+        prev = Some(my);
     }
     // The clock under it, from the landing to the end.
     let secs = curve.len() as u32;
