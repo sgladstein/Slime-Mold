@@ -56,6 +56,10 @@ off devices; `wiki/world/guns.md`). Then a small PR for Engine: strategy
 bot dials `mortars`, `sprayers`, `hunters` (placed round guarded pumps,
 unlocks bought first) and `body=grenade|mine`, and a `bodies=` league
 field, so the curve can use the new kit (CI's plan bot|rush buys none).
+#806 merged (the dead cards). The dials PR is open on this lane's branch;
+Direction asks Engine to add a "builder" arm to the curve with
+`pumps=1,guard=1,hunters=1,body=grenade,blast=40`. Next: whatever that
+arm shows broken or useless in the kit.
 
 **2026-11-24, the hunter (pathfinding thread).** #796 merged (the
 sprayer) and #799 (its Torch holds off its squad, droplet jets) merged. Next
