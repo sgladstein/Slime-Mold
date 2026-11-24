@@ -65,7 +65,7 @@ asks at most once a session with a recommendation.
 | Longer planets or more of them | His 11-24 answer: a run of at least two hours, by either; "we don't need to decide exactly now". Direction brings both, costed, once the origin plays. |
 | Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked next. |
 | D7 the rush brake | His, in play. The origin's rush numbers are in `Reports/origin-design-2026-11-22/`. |
-| The game's name | "Larder World" names a larder the game no longer has; title art waits on it. Asked 11-24 03:41Z; he asked for five names (03:42Z), sent 03:45Z: Heartcrystal (recommended), Slimefall, Eight Hearts, Plasmodium, Slime Mold. |
+| The game's name | "Larder World" names a larder the game no longer has. 11-24 03:45Z: "Plasmodium is best at far, but none are correct"; a second round sent 03:47Z (Plasmodia recommended). Title art uses "Plasmodium" until he picks. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (asked 11-17 19:14Z). |
 
 ## Things to try at the next play
