@@ -3260,6 +3260,41 @@ mod tests {
         assert!(counts[1][3].1 > 0, "the shut hole refills once it opens");
     }
 
+    /// **The Sprawler's threads stack its walkers into lanes** (the Lab's
+    /// prototype, 11-24). With `thread_lanes` a calm walker may step into
+    /// a full cell whose trail beats its own, and with `thread_shuttle` a
+    /// fed walker reads the scent backwards, so the body packs into
+    /// threads with holes between: more of its walkers share a cell than
+    /// without, on the same seed.
+    #[test]
+    fn the_sprawlers_threads_stack_walkers_into_lanes() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 5_000);
+        let play = |keys: &[(&str, &str)]| {
+            let mut s = race_settings(seed, scale, walkers);
+            for &(k, v) in [("keep", "0.92"), ("sensor_offset", "6")].iter().chain(keys) {
+                crate::gpu::set(&mut s, k, v).unwrap();
+            }
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 30.0 {
+                g.step();
+            }
+            let e = &g.world.e;
+            let occ: Vec<u32> = read_back(&e.device, &e.queue, &e.occ).chunks_exact(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+            let all: u32 = occ.iter().sum();
+            let stacked: u32 = occ.iter().filter(|&&c| c >= 2).sum();
+            // The crystal cells under the slime, which set its ceiling
+            // (`ceiling.rs`): the Lab feared fed shuttles leave a crystal's
+            // middle bare.
+            (all, stacked as f32 / all.max(1) as f32, g.world.crystal_covered())
+        };
+        let off = play(&[]);
+        let on = play(&[("thread_lanes", "3"), ("thread_trail", "1.0"), ("thread_shuttle", "3"), ("thread_fed", "0.9")]);
+        eprintln!("threads: off {} walkers, {:.3} stacked, {} crystal cells covered; on {} walkers, {:.3} stacked, {} covered", off.0, off.1, off.2, on.0, on.1, on.2);
+        assert!(off.0 > 1_000 && on.0 > 1_000, "both slimes live: {off:?} {on:?}");
+        assert!(on.1 > off.1 + 0.05, "threads stack more walkers a cell: {on:?} against {off:?}");
+    }
+
     /// **A blast's long crater is not shut** (the review lane, 11-21: det
     /// cord stood as a wall for 19 s). Only a crater no longer than the
     /// guns' (`crater`) is shut: a kill with a crater ten times as long on

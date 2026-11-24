@@ -2366,7 +2366,13 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // spray of separate glowing dashes, the owner's "a bunch of individual
     // walkers instead of a single slime unit" (11-18 15:56Z). A third of
     // the Drifter's sheet, so the dashes still show through as threads.
-    if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail); }
+    // Only where walkers are near (Look, 11-24, carried in the Enemy lane's
+    // threads PR): with the threads built in, the trail fills the holes
+    // between the spokes, and the veil there painted them orange; a cell
+    // with no walker in its 3x3 (`wide` under 0.02, the Lab's hole) now
+    // shows bare ground, and the frontier dashes keep their joining film.
+    // A gate of 0.2 to 0.55 looked the same.
+    if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail * smoothstep(0.02, 0.12, wide)); }
     // The Trunk's cords (`SlimeLook::Cords`): off the body only (`off`).
     let off = 1.0 - smoothstep(0.25, 0.55, wide);
     if (P.slime_look == 3u) { th0 = max(th0, CORD_VEIL * trail * off); }

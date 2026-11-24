@@ -125,7 +125,8 @@ pub const LUMP_AT: usize = 1008;
 /// The Mind row (the gun cards' Mind family, 2026-11-16; Params grew from
 /// 1152 to 1168, after the lump rows): whether any walker has had a Mind
 /// status (`Engine::minds`; `sense` reads none before), a spinning
-/// walker's curl a step (`BigParams::spin_curl`), and two spare words.
+/// walker's curl a step (`BigParams::spin_curl`), and the threads' two
+/// words (`Settings::thread_lanes`, 2026-11-24; spare until then).
 pub const MIND_AT: usize = 1152;
 /// The scar row (the Grudge's habituation on the GPU, 2026-11-17, the
 /// simulation-use plan's step 0; Params grew from 1168 to 1184, after the
@@ -572,6 +573,25 @@ pub struct Settings {
     /// above which a cell is shut (0xFFFF off). No CPU twin; a run's
     /// planets set it (`run::enemy_keys`).
     pub crater_shut: f32,
+    /// **The Sprawler's threads** (2026-11-24, the Lab's prototype of that
+    /// day built into the Sprawler; GPU only, no CPU twin; its planets set
+    /// them, `run::does_to_you`). Two rules that open a packed body into
+    /// spokes, which neither does alone (`Reports/lab-threads-2026-11-24/`):
+    /// - lanes (`thread_lanes=N`, `thread_trail=R`): a calm walker blocked by
+    ///   a full cell may still step in, up to N more walkers there, when
+    ///   that cell holds R times its own cell's trail, so walkers gather on
+    ///   the trail's ridges and the cells they leave stay bare;
+    /// - the shuttle (`thread_shuttle=W`, `thread_fed=F`): a calm walker fed
+    ///   past F of its birth energy reads the crystals' scent times -W, so
+    ///   it walks out along the trail from its crystal and back up the
+    ///   scent once hungry, two-way traffic that lays the ridges.
+    ///
+    /// The Mind row's two spare words (`MIND_AT`): N in bits 0-3, R x 10 in
+    /// bits 4-9, F x 10 in bits 10-13, then W. 0 and 0 off.
+    pub thread_lanes: u32,
+    pub thread_trail: f32,
+    pub thread_shuttle: f32,
+    pub thread_fed: f32,
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
     /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
@@ -851,6 +871,10 @@ impl Settings {
             crystal_keep: false,
             ceiling: 0,
             crater_shut: 0.0,
+            thread_lanes: 0,
+            thread_trail: 1.0,
+            thread_shuttle: 0.0,
+            thread_fed: 0.9,
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
@@ -1188,6 +1212,10 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "tether" => s.tether = int()?.min(8),
         "crystal_keep" => s.crystal_keep = int()? != 0,
         "crater_shut" => s.crater_shut = f()?.clamp(0.0, 1.0),
+        "thread_lanes" => s.thread_lanes = int()?.min(15),
+        "thread_trail" => s.thread_trail = f()?.clamp(0.0, 6.3),
+        "thread_shuttle" => s.thread_shuttle = f()?.max(0.0),
+        "thread_fed" => s.thread_fed = f()?.clamp(0.0, 1.5),
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
@@ -2582,7 +2610,10 @@ impl Engine {
             b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), l.spin.to_bits()]));
         }
         assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
-        b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), 0, 0]));
+        // The Sprawler's threads (`Settings::thread_lanes`): lanes N, the
+        // trail ratio R x 10, the shuttle's fed share F x 10 and its weight.
+        let lanes = s.thread_lanes.min(15) | ((s.thread_trail * 10.0).round() as u32).min(63) << 4 | ((s.thread_fed * 10.0).round() as u32).min(15) << 10;
+        b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), lanes, s.thread_shuttle.to_bits()]));
         assert_eq!(b.len(), SCAR_AT, "Params rows before the scar row moved");
         // The CPU makes the scar only with the alarm field (`BigDish::new`).
         let scars = s.alarm_keep > 0.0 && s.scar_keep > 0.0;

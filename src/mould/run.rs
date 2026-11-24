@@ -150,9 +150,16 @@ pub fn size_roll(seed: u64) -> f32 {
 /// the depth rule's "more later on" is kept apart from this factor
 /// (`levels_get_harder_and_the_same_seed_gives_the_same_run`). Retune from
 /// the owner's play.
+///
+/// 0.45 since its threads (2026-11-24, Direction: land them, retune planet
+/// 2's size if harder): lanes let up to 3 more walkers share a cell, so the
+/// threaded body filled its birth ceiling where the packed one was held by
+/// room. Run seed 1, idle squad at 2:00: 14,317 walkers off, 26,725 with
+/// threads at 0.6, 15,593 at 0.45 (landing 13,845 and 10,384); 4, 3 and 4
+/// soldiers left. The spokes read the same at 0.45.
 pub fn tier_size(tier: Tier) -> f32 {
     match tier {
-        Tier::Sprawler => 0.6,
+        Tier::Sprawler => 0.45,
         _ => 1.0,
     }
 }
@@ -722,7 +729,21 @@ const SPRAWLER_RULES: &[(&str, f32)] = &[("smell", 4.0), ("smell_r", 4.0)];
 // Run seed 1's planet 2 has nothing a plain light burns; the designer
 // (15:26Z) keeps it here for that: Tinder, which brings its own fuel, is the
 // answer, so the card says to bring it.
-const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50")];
+//
+// **Its body as threads** (2026-11-24; the Lab's prototype of that day,
+// `Reports/lab-threads-2026-11-24/`, built in at Direction's word): lanes
+// (3 more walkers on a cell holding as much trail as the walker's own) and
+// the shuttle (a walker past 0.9 of its birth energy walks down the
+// crystals' scent at 3, back up it when hungry), with the trail kept 0.92
+// (its walk's 0.8) and sensors 6 fine cells out (its 18), GPU only
+// (`gpu::Settings::thread_lanes`). Planet 2, seeds 1-3, at the off arm's
+// walkers: the disc round each crystal opens into four to seven spokes,
+// holes 25-29% of the body's outline against 0-8%. Neither rule alone
+// does it; with its own walk (0.8, 18) both made only a rough cross.
+const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50"), ("keep", "0.92"), ("sensor_offset", "6"), ("thread_lanes", "3"), ("thread_trail", "1.0"), ("thread_shuttle", "3"), ("thread_fed", "0.9")];
+
+/// The Sprawler's thread keys, the GPU engine's alone (no CPU twin).
+pub const THREAD_KEYS: [&str; 4] = ["thread_lanes", "thread_trail", "thread_shuttle", "thread_fed"];
 // **The Trunk sets** (2026-11-17, the Enemy lane; planet 3). The
 // simulation-use plan's E1 and E2 were built on 11-17 behind four switches
 // (the crust and its pull, setting, set slime blocking or trapping, fed
@@ -2625,7 +2646,7 @@ mod tests {
             let l = r.level();
             // A cell's walkers grow deeper, so a smaller planet (a breather)
             // can have fewer in all; the tier's own factor (`tier_size`, the
-            // Sprawler's 0.6) is a tuning number kept apart from that rule.
+            // Sprawler's 0.45) is a tuning number kept apart from that rule.
             let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed) / tier_size(l.tier);
             assert!((0.8..=1.25).contains(&size_roll(l.seed)));
             assert!(dense > walkers, "more walkers a cell deeper");
@@ -2637,11 +2658,12 @@ mod tests {
         }
         r.depth = 1;
         assert_eq!(r.level().tier, Tier::Drifter);
-        // Planet 2's Sprawler at 0.6 of its size (the planet 2 look, 11-18).
+        // Planet 2's Sprawler at 0.45 of its size (the planet 2 look, 11-18;
+        // 0.45 with its threads, 11-24).
         r.depth = 2;
         let (l, area) = (r.level(), area_of(&r.planet()));
         assert_eq!(l.tier, Tier::Sprawler);
-        assert!((l.walkers - 0.6 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
+        assert!((l.walkers - 0.45 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
         // The level generator's core world is the run's last planet.
         assert_eq!(levelgen::CORE_DEPTH, PLANETS);
     }
@@ -3124,7 +3146,7 @@ mod tests {
             let mut p = crate::mould::larder_world::race_params(1, 2, 5000);
             for &(k, v) in does.keys {
                 let set = crate::mould::tiers::set_key(&mut p, k, v);
-                assert!(set.is_ok() || *t == Tier::Trunk, "{} key {k}: {set:?}", t.name());
+                assert!(set.is_ok() || *t == Tier::Trunk || THREAD_KEYS.contains(&k), "{} key {k}: {set:?}", t.name());
             }
             let shy = if *t == Tier::Sprawler { 50.0 } else { 0.0 };
             assert_eq!((s.fire_alarm, p.fire_alarm), (shy, shy), "{}", t.name());

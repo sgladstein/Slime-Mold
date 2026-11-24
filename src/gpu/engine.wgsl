@@ -230,7 +230,10 @@ struct Params {
     // from 1152 to 1168, after the lump rows; mod.rs's `MIND_AT`): whether
     // any walker has had a Mind status (`Engine::minds`), a spinning
     // walker's curl a step (radians), and two spare words.
-    mind_on: u32, spin_curl: f32, _m1: u32, _m2: u32,
+    // The Sprawler's threads (2026-11-24, mod.rs's `Settings::thread_lanes`):
+    // lanes N bits 0-3, trail ratio R x 10 bits 4-9, the shuttle's fed
+    // share F x 10 bits 10-13; then the shuttle's weight W (0 off).
+    mind_on: u32, spin_curl: f32, thread_lanes: u32, thread_shuttle: f32,
     // The scar row (the Grudge's habituation, 2026-11-17, the
     // simulation-use plan's step 0; Params grew from 1168 to 1184; mod.rs's
     // `SCAR_AT`): its keep a fine step (0 off), its gain on the alarm, its
@@ -1504,6 +1507,22 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // floored at 0, from the energy as the tick began.
     var sw = 1.0;
     if (growth() && P.hscent > 0.0 && P.hat > 0.0) { sw = 1.0 + P.hscent * max(1.0 - energy[k] / P.hat, 0.0); }
+    // The Sprawler's threads, the shuttle (`thread_shuttle` W, fed share F
+    // in `thread_lanes` bits 10-13): a walker fed past F of its birth
+    // energy reads the crystals' scent x -W, so it walks out from its
+    // crystal along the trail and back up the scent once hungry, two-way
+    // traffic that lays the ridges the lanes gather on (the Lab, 11-24: the
+    // shuttle alone left the body packed, lanes alone made one lump).
+    // The Lab feared fed walkers leave a crystal's middle bare and cut the
+    // slime's ceiling (`ceiling.rs`, its covered crystal cells): the
+    // shuttle alone changes the cover by under 3% (test world, seeds 5-6,
+    // 10-60 s); it is the lanes that cut it, by packing walkers into fewer
+    // cells. Tried and reverted (11-24): no shuttle on a crystal cell (no
+    // change), and no lane step into or out of one (cover fell further,
+    // 471 to 332 cells, as the walkers stacked off the crystal instead).
+    // On planet 2 the slime holds as many crystals and its ceiling is the
+    // same with the threads on (27,691 both ways to 150 s, run seed 1).
+    if (P.thread_shuttle > 0.0 && growth() && energy[k] >= f32((P.thread_lanes >> 10u) & 15u) / 10.0 * P.birth_at) { sw = -P.thread_shuttle; }
     // A cut-off walker panics: its sensors read only the way to its
     // target, and its step is `panic` times as long (the CPU's order:
     // after the sick walker's changes).
@@ -1714,7 +1733,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && !(crater_shut(there) && !crater_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
+        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && !(crater_shut(there) && !crater_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp) + thread_room(lb == 0u && !scared, there, here))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
@@ -1808,6 +1827,24 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     // Ages count up after the deposit, before any jump, in the CPU's u16.
     if (explore() > 0u) { age[k] = min(age[k] + 1u, 65535u); }
+}
+
+// **The Sprawler's threads, lanes** (2026-11-24, the Lab's prototype built
+// into the Sprawler; mod.rs's `Settings::thread_lanes`; GPU only). A calm
+// walker blocked by a full cell may still step in, up to N more walkers
+// there, when that cell holds R times its own cell's trail: walkers gather
+// on the trail's ridges and the cells they leave stay bare, so the packed
+// body opens into spokes (with the shuttle; planet 2, seeds 1-3: holes 25
+// to 29% of the body's outline against 0 to 8%, the walkers within 5%).
+// Tried first and not kept (`Reports/dead-ends.md`): Jones's shrink, a
+// walker in a full 5x5 dying, which took the slime from 19,825 to 4,073.
+fn thread_room(calm: bool, there: u32, here: u32) -> u32 {
+    let n = P.thread_lanes & 15u;
+    // Crystal cells too: keeping them to one walker a cell cut the covered
+    // crystal cells further (see `sense`, the shuttle).
+    if (n == 0u || !calm) { return 0u; }
+    let r = f32((P.thread_lanes >> 4u) & 63u) / 10.0;
+    return select(0u, n, trail_in[there] > r * trail_in[here]);
 }
 
 // Growth (Larder World W0), after the move, three passes, as the CPU's
