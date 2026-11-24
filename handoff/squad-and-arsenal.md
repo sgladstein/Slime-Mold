@@ -48,6 +48,16 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, the hunter (pathfinding thread).** #796 merged (the
+sprayer) and #799 (its Torch holds off its squad, droplet jets) merged. Next
+PR: the third turret body, the hunter (`Kind::Hunter`,
+`Game::hunter_mark`, `HunterMark`, `Game::hunter_marks`/`hunter_killed`,
+`BuildRules::hunter_*`, view kind 9 `hunter_head`, build page (0,5) key
+X, shop item "hunter" after "sprayer"). Its shells are mortar shells
+(`fire_shells`, shared with the mortar) with a near-instant flight and no
+arc. The same PR gives sprayers and hunters the Turret power upgrade
+(the sprayer was left out in #796). Next: whatever Direction picks.
+
 **2026-11-24, the sprayer (pathfinding thread).** #790 merged (Fever,
 Backdraft). Next PR: the second turret body, the sprayer (`Kind::Sprayer`,
 `Game::sprays`, `Rounds::spray`, `BuildRules::sprayer_*`, view kind 8,

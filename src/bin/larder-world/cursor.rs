@@ -645,7 +645,7 @@ mod tests {
         assert_eq!(target_look(WALL, Target::Line { width: 1.0 }), Look::Wall);
         assert_eq!(target_look(DOOR, p), Look::Door);
         assert_eq!(target_look(PUMP, p), Look::Pump);
-        for id in [TURRET, MORTAR, SPRAYER, LURE, SIREN, OUTPOST] {
+        for id in [TURRET, MORTAR, SPRAYER, HUNTER, LURE, SIREN, OUTPOST] {
             assert_eq!(target_look(id, p), Look::Build);
         }
         for id in [T_BLAST, T_CORD, T_MINE, T_GERM, T_GAS, T_PROVOKE, T_STILL] {

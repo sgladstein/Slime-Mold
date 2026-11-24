@@ -234,6 +234,7 @@ impl Cmd {
                     "turret" => Kind::Turret,
                     "mortar" => Kind::Mortar,
                     "sprayer" => Kind::Sprayer,
+                    "hunter" => Kind::Hunter,
                     "lure" => Kind::Lure,
                     "pump" => Kind::Pump,
                     "outpost" => Kind::Outpost,
@@ -317,7 +318,7 @@ impl<W: World> Game<W> {
             }
             Cmd::Arm(q, g) => self.arm(q as usize, g),
             Cmd::Load(q, d) => self.load(q as usize, d),
-            Cmd::TurretLoad(b, l, d) => match self.buildings.get_mut(b as usize).filter(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer)) {
+            Cmd::TurretLoad(b, l, d) => match self.buildings.get_mut(b as usize).filter(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter)) {
                 Some(bd) => {
                     bd.deck = d;
                     bd.loadout = l;

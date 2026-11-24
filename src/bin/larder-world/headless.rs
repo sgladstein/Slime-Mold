@@ -963,6 +963,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let last = g.sprays.iter().rev().find(|s| s.sprayer == k).map_or(String::new(), |s| format!(", the last at {:.0},{:.0} to {:.0},{:.0}", s.spots[0].0, s.spots[0].1, s.spots[s.spots.len() - 1].0, s.spots[s.spots.len() - 1].1));
             println!("  sprayer t {:>4.0} s: {} sweeps by all sprayers, {} spots laid; this one aims {:?}, {} dense{last}", g.time(), g.sprays_fired, rd.sprayed, b.aim.map(|a| (a.0.round(), a.1.round())), b.dense);
         }
+        if g.buildings.iter().any(|b| b.alive && b.kind == Kind::Hunter) {
+            let marks: Vec<String> = slime_mould::mould::larder_world::HunterMark::ALL.iter().zip(g.hunter_marks).filter(|(_, n)| *n > 0).map(|(m, n)| format!("{n} at {}", m.name())).collect();
+            println!("  hunter t {:>4.0} s: shells {}, {} walkers killed by their strikes", g.time(), if marks.is_empty() { "none yet".to_string() } else { marks.join(", ") }, g.hunter_killed);
+            let (sc, bd) = (g.world.scale(), g.rules.build);
+            for b in g.buildings.iter().filter(|b| b.alive && b.kind == Kind::Hunter) {
+                let mark = g.hunter_mark(b.at, bd.hunter_range * sc, bd.hunter_min * sc, b.aim.filter(|_| b.dense >= g.rules.aim_min));
+                println!("    the hunter at {:.0},{:.0} would mark {}", b.at.0, b.at.1, mark.map_or("nothing".to_string(), |(p, m)| format!("the {} at {:.0},{:.0}", m.name(), p.0, p.1)));
+            }
+        }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
         // plays as a clip from a still camera (the crater looks in motion,
@@ -1289,10 +1298,13 @@ pub(super) fn turret_fired(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>) 
             (turrets[k].facing, turrets[k].shot) = ((s.to.1 - s.from.1).atan2(s.to.0 - s.from.0), TURRET_SHOT);
         }
     }
-    // A mortar that fired this step faces its newest shell's landing
-    // point and sinks back (`Game::shells`, fired on the step's tick).
+    // A mortar or hunter that fired this step faces its newest shell's
+    // landing point and kicks (`Game::shells`, fired on the step's first
+    // tick, before the frame's ticks ran: `>`, not `>=`, missed every one,
+    // so a mortar only ever turned to its aim and never kicked, and a
+    // hunter, which keeps no aim, never turned; 11-24).
     let t = g.settled_ticks();
-    for sh in g.shells.iter().filter(|sh| sh.fired + u64::from(g.rules.frame_ticks) > t) {
+    for sh in g.shells.iter().filter(|sh| sh.fired + u64::from(g.rules.frame_ticks) >= t) {
         if let Some(l) = turrets.get_mut(sh.mortar) {
             (l.facing, l.shot) = ((sh.to.1 - sh.from.1).atan2(sh.to.0 - sh.from.0), TURRET_SHOT);
         }
