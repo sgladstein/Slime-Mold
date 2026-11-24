@@ -1854,10 +1854,26 @@ impl Rounds {
     /// A device's cards going off at `at` (`Kit::carry`): as
     /// `cast_cards_at`, but a fire they light brings its own brush, as a
     /// Tinder line does (`RoundRules::device_brush`).
+    ///
+    /// **A device's cards all show** (dead cards, Direction 11-24 13:42Z):
+    /// a Wide, Scatter, Delay or Thick with no bullet after it pops the
+    /// plain bullet where the device goes off, as on a gun
+    /// (`plain_bursts`, the squad's strike), and its trail cards (Scorch,
+    /// Bait, Mist, Smother, Tinder) lay their disc there (`lay_spot_trails`).
+    /// Before, `cast_all` cast only bullet cards, so a device holding only
+    /// modifiers or trail cards did nothing at all.
     pub fn cast_device_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32), cards: &[Card]) {
         self.brush = self.rules.device_brush;
         let cs = casts(cards);
         self.cast_all(g, &cs, at);
+        let was = self.strike;
+        self.strike = (g.rules.strike * g.world.scale()).min(crate::mould::squad::R_MAX);
+        for c in cs.iter().filter(|c| plain_pops(c)) {
+            self.fire(g, c, at, None);
+        }
+        self.strike = was;
+        self.flush(g);
+        self.lay_spot_trails(g, trails(cards), &[at]);
         self.brush = 0.0;
         if cs.iter().any(|c| c.payload == Card::Torch) {
             self.backdraft(g);
@@ -1886,6 +1902,12 @@ impl Rounds {
         self.spraying = true;
         self.strike = plain_r * sc;
         for sp in todo {
+            // Its trail cards lay their disc at every spot too: a Tinder
+            // sprayer a strip of brush, a Scorch one a burnt strip (dead
+            // cards, 11-24: the sprayer's shop line asked for Tinder, and
+            // trail cards fire no bullet here, so they laid nothing).
+            let n = trails(&g.turret_cards(Some(sp.sprayer)).map(|d| d.cards()).unwrap_or_default());
+            self.lay_spot_trails(g, n, &sp.spots);
             let c = (sp.cast as usize).checked_sub(1).and_then(|i| turret_casts_of(g, Some(sp.sprayer)).get(i).copied());
             for &at in &sp.spots {
                 match c {
@@ -1949,6 +1971,49 @@ impl Rounds {
             }
         }
         self.flush(g);
+    }
+
+    /// Trail cards `n` (`trails`) laid as one disc at each of `spots`
+    /// (fine cells), as a bullet's leg lays them (`trail_bursts`), for
+    /// what fires no bullet: a device going off (`cast_device_at`) and a
+    /// sprayer's sweep (`spray`). Tinder's brush and Mist's cloud keep
+    /// off the soldiers as on a leg (`trail_fuel_gap`, `gas_margin`).
+    fn lay_spot_trails<W: World>(&mut self, g: &mut Game<W>, mut n: [u8; TRAILS], spots: &[(f32, f32)]) {
+        if !g.world.has_gas() {
+            n[2] = 0;
+        }
+        if n == [0; TRAILS] {
+            return;
+        }
+        let s = g.world.scale();
+        let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
+        let k = self.rules.burst_rules(fine);
+        let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
+        let near: Vec<(f32, f32)> = g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x / s, x.y / s)).collect();
+        let doze = g.rules.doze > 0.0;
+        let mut burned = 0;
+        for &at in spots {
+            let mut discs = trail_bursts(n, at, at, &self.rules, s, fine, smell);
+            keep_clear(&mut discs, &near, self.rules.trail_fuel_gap);
+            if doze {
+                for b in discs.iter_mut() {
+                    if b.cloud > 0.0 && near.iter().any(|&(x, y)| (x - b.at.0).hypot(y - b.at.1) <= b.r + self.rules.gas_margin) {
+                        b.cloud = 0.0;
+                    }
+                }
+                discs.retain(|b| b.burn || b.crater > 0 || b.bait > 0.0 || b.smother || b.cloud > 0.0 || b.fuel > 0.0);
+            }
+            for b in discs {
+                burned += g.world.burst(&b, &k).killed as usize;
+                self.trailed += 1;
+            }
+        }
+        if n[0] > 0 && self.rules.trail_burn {
+            burned += g.world.burned() as usize;
+        }
+        self.killed += burned;
+        self.burned += burned;
+        g.killed += burned as u32;
     }
 
     /// Every soldier bullet's leg this step lays the round's trails
@@ -2494,6 +2559,40 @@ mod tests {
         let mut rd = Rounds::new(Vec::new(), RoundRules::default());
         rd.spray(&mut g);
         assert_eq!((rd.sprayed, rd.held_own), (2, 1), "the spot at the squad's feet held, the far one lit");
+    }
+
+    /// **A device's and a sprayer's cards all show** (dead cards,
+    /// Direction 11-24 13:42Z): a device holding only a Wide pops the
+    /// plain bullet where it goes off and kills, one holding only Tinder
+    /// or Scorch lays its trail's disc there, and a sprayer with Tinder
+    /// lays a disc at every spot. Before, each did nothing.
+    #[test]
+    fn a_devices_and_a_sprayers_lone_cards_show() {
+        use crate::mould::larder_world::{race_world, Spray};
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+        for _ in 0..(g.rules.tps * 3) {
+            g.step();
+        }
+        let at = g.core;
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        rd.cast_device_at(&mut g, at, &[Card::Wide]);
+        let wide: usize = rd.pops.iter().filter(|p| p.payload == Card::Plain).map(|p| p.killed).sum();
+        assert!(wide > 0, "a lone Wide pops on the slime: {wide} killed");
+        for c in [Card::Tinder, Card::Scorch] {
+            let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+            rd.cast_device_at(&mut g, at, &[c]);
+            assert_eq!(rd.trailed, 1, "{c:?}: one disc where the device went off");
+        }
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        rd.cast_device_at(&mut g, at, &[Card::Range]);
+        assert!(rd.trailed == 0 && rd.pops.is_empty(), "a gun-only card does nothing on a device (`run::gun_only` keeps it off)");
+        let sc = g.world.scale();
+        g.load(crate::mould::larder_world::TURRET_DECK as usize, Some(Deck::new(&[Card::Tinder])));
+        let spots: Vec<(f32, f32)> = (0..4).map(|i| (at.0 + (i as f32 * 3.0 - 4.5) * sc, at.1)).collect();
+        g.sprays.push(Spray { from: (at.0, at.1 + 20.0 * sc), spots, fired: g.world.ticks(), cast: 0, sprayer: 0, laid: false });
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        rd.spray(&mut g);
+        assert_eq!((rd.sprayed, rd.trailed), (4, 4), "a Tinder sprayer lays brush at every spot");
     }
 
     /// **Backdraft** (a relic, 11-24): off by default. On, a device's Torch

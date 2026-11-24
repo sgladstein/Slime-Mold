@@ -867,6 +867,12 @@ pub fn bring(tier: Tier) -> Option<Card> {
     }
 }
 
+/// A card only a gun's bullet uses (`Run::body_cards` leaves it off a
+/// device): its flight, not what it casts.
+pub fn gun_only(c: Card) -> bool {
+    matches!(c, Card::Pierce | Card::Split | Card::Range | Card::Rate | Card::Seek)
+}
+
 /// The bullet a tier's planet asks you to bring, if any (2026-11-18, the
 /// Squad and arsenal lane: the shops before planets 2 and 3 should make
 /// those planets play differently). When you own no bullet of that shell
@@ -1875,7 +1881,12 @@ impl Run {
         let l = self.loadouts.iter().position(|l| l.body == Some(b)).or(self.device_loadout);
         let Some(l) = l else { return Vec::new() };
         let rack = self.bodies[b].rack();
-        let mut cards = self.cards_of(l);
+        // The bullet's flight cards are left on the gun: a device fires no
+        // bullet, so Pierce, Split, Range, Rate and Seek on it did nothing
+        // and took a slot and budget from a card that would (dead cards,
+        // Direction 11-24 13:42Z). Trail cards stay: a device lays them
+        // where it goes off (`Rounds::cast_device_at`).
+        let mut cards: Vec<Card> = self.cards_of(l).into_iter().filter(|&c| !gun_only(c)).collect();
         while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
             cards.pop();
         }
@@ -2086,8 +2097,15 @@ impl Run {
         // review, 2026-11-20; restock already held back Shatter and
         // Detonate this way). Modifiers work on the plain bullet
         // (`rounds::casts`), so they stay in.
-        let has_bullet = owned.iter().any(|c| c.kind() == Kind::Payload);
-        let pool: Vec<Card> = pool.into_iter().filter(|c| has_bullet || c.kind() != Kind::Trigger || matches!(c, Card::Delay | Card::Thick)).collect();
+        //
+        // And none while it owns only one (dead cards, Direction 11-24
+        // 13:42Z): each needs a second cast after the one it sits on, and
+        // a gun of one bullet card has none, so a Multicast fired nothing
+        // beside it and a Trigger carried nothing. A plain bullet as the
+        // missing cast was rejected: a bare plain cast casts nothing.
+        let bullets = owned.iter().filter(|c| c.kind() == Kind::Payload).count();
+        let has_bullet = bullets > 0;
+        let pool: Vec<Card> = pool.into_iter().filter(|c| bullets >= 2 || c.kind() != Kind::Trigger || matches!(c, Card::Delay | Card::Thick)).collect();
         // Cards with nothing to act on yet are not sold (2026-11-22, exit
         // test 5: in the gun lab's arena on planet 1 each played the very
         // same game as no card). Thrift lowers the next card's cost, which
@@ -3112,7 +3130,9 @@ mod tests {
     }
 
     /// Balance review, 2026-11-20: no carrier is sold while the run owns
-    /// no bullet card, and an owned card can come back in the last slot.
+    /// fewer than two bullet cards (one since 11-24: with one, a Multicast
+    /// or Trigger has no second cast to fire), and an owned card can come
+    /// back in the last slot.
     #[test]
     fn the_shop_holds_back_carriers_and_sells_owned_cards_again() {
         let carrier = |c: &Card| matches!(c, Card::Trigger | Card::Expire | Card::Multicast);
@@ -3133,13 +3153,36 @@ mod tests {
                 for k in 0..5 {
                     r.rerolls = k;
                     r.restock();
+                    assert!(!r.offers.iter().any(carrier), "seed {seed} depth {d}: a carrier with one bullet owned: {:?}", r.offers);
+                }
+            }
+            r.cards = vec![(Card::Blast, true), (Card::Gas, false), (Card::Wide, false), (Card::Pierce, false)];
+            for d in 1..=4 {
+                r.depth = d;
+                for k in 0..5 {
+                    r.rerolls = k;
+                    r.restock();
                     carriers += r.offers.iter().filter(|c| carrier(c)).count();
                     again += r.offers.iter().filter(|c| matches!(c, Card::Wide | Card::Pierce)).count();
                 }
             }
         }
-        assert!(carriers > 0, "carriers sold once a bullet is owned");
+        assert!(carriers > 0, "carriers sold once two bullets are owned");
         assert!(again > 0, "owned cards come back into the draw");
+    }
+
+    /// Dead cards, 11-24: a device carries no card only a bullet uses
+    /// (`gun_only`), so its slots go to cards it casts.
+    #[test]
+    fn a_device_leaves_the_bullets_flight_cards_on_the_gun() {
+        let mut r = Run::new(1);
+        // A rack of 2 slots and budget 4: Range and Pierce (2 each) filled
+        // it before, and the Blast (3) after them was popped off.
+        r.bodies.push(Body { slots: 2, budget: 4, ..Body::roll(BodyKind::Grenade, 7, 3) });
+        r.cards = vec![(Card::Range, true), (Card::Pierce, true), (Card::Blast, true)];
+        r.device_loadout = Some(0);
+        let d = r.body_cards(BodyKind::Grenade);
+        assert!(d.contains(&Card::Blast) && !d.iter().any(|&c| gun_only(c)), "{d:?} from {:?}, rack {:?}", r.cards_of(0), r.bodies[0].rack());
     }
 
     #[test]
