@@ -755,6 +755,7 @@ fn item_icon(key: &str) -> Icon {
         "tools+" => Icon::Tag,
         "mortar" => Icon::Bomb,
         "sprayer" => Icon::Gas,
+        "hunter" => Icon::Target,
         "lure" => Icon::Lure,
         "pump+" => Icon::Crystal,
         "outpost" => Icon::Hold,

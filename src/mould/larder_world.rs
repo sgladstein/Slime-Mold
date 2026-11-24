@@ -103,7 +103,7 @@ pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
-pub use buildings::{BuildRules, Building, Kind, Shell, Spray, PUMP_LEVELS, SPRAY_SHOW, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
+pub use buildings::{BuildRules, Building, HunterMark, Kind, Shell, Spray, PUMP_LEVELS, SPRAY_SHOW, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -492,6 +492,10 @@ pub struct Game<W: World> {
     /// Walkers mortar shells' strikes killed (in `turret_killed` too; a
     /// shell's cast's kills go only there, as a turret's do).
     pub mortar_killed: u32,
+    /// Hunters' shells by what they were fired at (`HunterMark` order),
+    /// and the walkers their strikes killed (in `turret_killed` too).
+    pub hunter_marks: [u32; 6],
+    pub hunter_killed: u32,
     /// The bullets as they flew the last step's legs, one each in the order
     /// of `last_shots` (empty while shots are rays): what the window draws
     /// gliding along each leg between steps (gun look, 2026-11-15). No
@@ -792,6 +796,8 @@ impl<W: World> Game<W> {
             shells_fired: 0,
             shells_landed: 0,
             mortar_killed: 0,
+            hunter_marks: [0; 6],
+            hunter_killed: 0,
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
             turret_deck: None,

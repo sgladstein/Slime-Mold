@@ -359,6 +359,7 @@ impl<W: World> Game<W> {
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         self.turret_killed += out.shots.iter().zip(&by).filter(|(_, b)| b.0.is_none()).map(|(o, _)| o.killed).sum::<u32>();
         self.mortar_killed += out.shots.iter().zip(&by).filter(|(_, b)| b.3.and_then(|k| self.buildings.get(k)).is_some_and(|bd| bd.kind == Kind::Mortar)).map(|(o, _)| o.killed).sum::<u32>();
+        self.hunter_killed += out.shots.iter().zip(&by).filter(|(_, b)| b.3.and_then(|k| self.buildings.get(k)).is_some_and(|bd| bd.kind == Kind::Hunter)).map(|(o, _)| o.killed).sum::<u32>();
         let hits: Vec<(Option<(f32, f32)>, u32)> = out.shots.iter().map(|o| (o.hit, o.killed)).collect();
         self.render_pay(&hits);
         self.raid_hits(&hits);

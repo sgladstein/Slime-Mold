@@ -480,6 +480,14 @@ impl Marks {
         self.gun_building(at, r, 8.0, built, health, facing, shot, state);
     }
 
+    /// A hunter (`Kind::Hunter`): the turret's base under one long barrel
+    /// and its scope (building kind 9 in the view's shader), turned to its
+    /// last mark, kicking back by `shot`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn hunter(&mut self, at: (f32, f32), r: f32, built: f32, health: f32, facing: f32, shot: f32, state: u32) {
+        self.gun_building(at, r, 9.0, built, health, facing, shot, state);
+    }
+
     /// The words the view pass reads, `MARK_WORDS` a mark.
     pub fn words(&self) -> Vec<u32> {
         let mut w = Vec::with_capacity(self.list.len() * MARK_WORDS);

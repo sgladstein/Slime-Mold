@@ -86,6 +86,18 @@ pub enum Kind {
     /// gas, brush, fire or crater card makes a strip the slime must
     /// cross; Plain lays only a thin kill (`sprayer_plain`), a weak buy.
     Sprayer,
+    /// **The hunter**, the third turret body (Direction 11-24 12:33Z, from
+    /// the candidates sent 11:35Z: "picky targeting, slime on a crystal
+    /// first"). Every `hunter_every` seconds it fires one fast flat shell
+    /// (`Game::shells`, in the air `hunter_flight` + distance over
+    /// `hunter_speed`) at the slime that matters most within
+    /// `hunter_range` and a clear line, in this order (`Game::hunter_mark`):
+    /// the slime on the nearest crystal it covers (the slime's size follows
+    /// the crystals it holds, owner 11-21), a ripening fruit, a mini-boss,
+    /// a marching raid, the origin's heart, and only then the thickest
+    /// slime it sees. Its strike is a mortar's, carrying the next cast. A
+    /// flat shot: rock and walls stop it, where a mortar's lob goes over.
+    Hunter,
 }
 
 impl Kind {
@@ -99,6 +111,7 @@ impl Kind {
             Kind::Wall { .. } => "wall",
             Kind::Mortar => "mortar",
             Kind::Sprayer => "sprayer",
+            Kind::Hunter => "hunter",
         }
     }
 }
@@ -196,6 +209,32 @@ pub struct Spray {
 /// How long a sweep is kept for the window to draw its jet (seconds).
 pub const SPRAY_SHOW: f32 = 0.5;
 
+/// What a hunter's shell was fired at (`Game::hunter_mark`), in its order
+/// of choice; `Game::hunter_marks` counts each.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HunterMark {
+    Crystal,
+    Fruit,
+    Boss,
+    Raid,
+    Origin,
+    Slime,
+}
+
+impl HunterMark {
+    pub const ALL: [HunterMark; 6] = [HunterMark::Crystal, HunterMark::Fruit, HunterMark::Boss, HunterMark::Raid, HunterMark::Origin, HunterMark::Slime];
+    pub fn name(self) -> &'static str {
+        match self {
+            HunterMark::Crystal => "crystal",
+            HunterMark::Fruit => "fruit",
+            HunterMark::Boss => "boss",
+            HunterMark::Raid => "raid",
+            HunterMark::Origin => "origin",
+            HunterMark::Slime => "slime",
+        }
+    }
+}
+
 impl Building {
     /// Whole and standing.
     pub fn up(&self) -> bool {
@@ -283,6 +322,24 @@ pub struct BuildRules {
     pub sprayer_arc: f32,
     pub sprayer_spots: u32,
     pub sprayer_plain: f32,
+    /// The hunter (`Kind::Hunter`): its price and health, its reach and
+    /// blind ring (dish cells), seconds between shells, its strike radius
+    /// (dish cells, as `mortar_blast`), and a shell's flight (seconds plus
+    /// distance over dish cells a second: a flat shot, about 0.6 s over 40
+    /// cells to a mortar's 1.7; at 150 cells a second it landed within the
+    /// step it was fired and was never drawn). First guesses.
+    pub hunter_cost: f32,
+    pub hunter_hp: f32,
+    pub hunter_range: f32,
+    pub hunter_min: f32,
+    pub hunter_every: f32,
+    pub hunter_blast: f32,
+    pub hunter_flight: f32,
+    pub hunter_speed: f32,
+    /// The least slime on a crystal (walkers, or covered cells on the GPU
+    /// world) for the hunter to call it held: a few strays crossing one
+    /// drew every shell in the first film (11-24).
+    pub hunter_hold: f32,
     pub lure_cost: f32,
     pub lure_hp: f32,
     /// The lure's scent, as a multiple of a soldier's (`Rules::smell`, a
@@ -415,6 +472,15 @@ impl Default for BuildRules {
             sprayer_arc: 1.05,
             sprayer_spots: 6,
             sprayer_plain: 1.0,
+            hunter_cost: 550.0,
+            hunter_hp: 160.0,
+            hunter_range: 60.0,
+            hunter_min: 6.0,
+            hunter_every: 5.0,
+            hunter_blast: 3.0,
+            hunter_flight: 0.1,
+            hunter_speed: 80.0,
+            hunter_hold: 12.0,
             lure_cost: 300.0,
             lure_hp: 150.0,
             lure_smell: 8.0,
@@ -469,6 +535,7 @@ impl<W: World> Game<W> {
             Kind::Turret => b.turret_cost,
             Kind::Mortar => b.mortar_cost,
             Kind::Sprayer => b.sprayer_cost,
+            Kind::Hunter => b.hunter_cost,
             Kind::Lure => b.lure_cost,
             Kind::Pump => b.pump_cost,
             Kind::Outpost => b.outpost_cost,
@@ -649,6 +716,7 @@ impl<W: World> Game<W> {
             Kind::Turret => b.turret_hp,
             Kind::Mortar => b.mortar_hp,
             Kind::Sprayer => b.sprayer_hp,
+            Kind::Hunter => b.hunter_hp,
             Kind::Lure => b.lure_hp,
             Kind::Pump => b.pump_hp,
             Kind::Outpost => b.outpost_hp,
@@ -782,6 +850,125 @@ impl<W: World> Game<W> {
     pub fn lob_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
         let (w, h) = self.world.size();
         crate::mould::squad::path(w, h, a, b).into_iter().all(|i| self.world.wall_cell(i as usize) || self.world.clear((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
+    }
+
+    /// Shells at `to` from building `k` with cards `m` (`Kind::Mortar`,
+    /// `Kind::Hunter`): the next cast in the cards' turn, a multicast's
+    /// volley fanned round the aim and pellets fanned within each, every
+    /// one `blast` dish cells times its ammo's reach wide (capped at
+    /// `squad::R_MAX` fine cells), in the air `flight` seconds plus its
+    /// distance over `speed` dish cells a second (`Game::shells`).
+    fn fire_shells(&mut self, k: usize, m: &super::BulletMods, to: (f32, f32), blast: f32, flight: f32, speed: f32) {
+        let sc = self.s();
+        let t = self.world.ticks();
+        let at = self.buildings[k].at;
+        let (dx, dy) = (to.0 - at.0, to.1 - at.1);
+        let d = dx.hypot(dy).max(0.1);
+        let n = m.casts;
+        let cast = if n > 0 {
+            let c = self.buildings[k].next % n;
+            self.buildings[k].next = (c + 1) % n;
+            m.cycle[c as usize]
+        } else {
+            0
+        };
+        let mut volley = vec![cast];
+        while let Some(&w) = volley.last().filter(|&&c| c > 0).map(|&c| &m.with[c as usize - 1]).filter(|&&w| w > 0 && !volley.contains(&w)) {
+            volley.push(w);
+        }
+        self.multicast += volley.len() as u32 - 1;
+        let nv = volley.len();
+        let a0 = dy.atan2(dx);
+        for (v, &cast) in volley.iter().enumerate() {
+            let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
+            let shape = ammo.set.shape();
+            let r = (blast * sc * ammo.reach()).min(crate::mould::squad::R_MAX) * shape.r;
+            let side = if nv > 1 { (v as f32 / (nv - 1) as f32 * 2.0 - 1.0) * crate::mould::rounds::VOLLEY_FAN } else { 0.0 };
+            let pellets = shape.pellets.max(1);
+            for p in 0..pellets {
+                let a = a0 + side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
+                let to = (at.0 + a.cos() * d, at.1 + a.sin() * d);
+                let lands = t + self.secs(flight + d / sc / speed.max(0.1)).max(1);
+                self.shells_fired += 1;
+                self.shells.push(Shell { from: at, to, fired: t, lands, r, cast, mortar: k });
+            }
+        }
+    }
+
+    /// The middle of the thickest 3 x 3 dish cells of slime within `r` fine
+    /// cells of `at` (the mould grid a dish cell a square, as
+    /// `walkers_in`); None with no grid or no slime there. A hunter aims
+    /// here on a crystal it marks: its middle was often bare, the slime
+    /// eating round its rim (first film, 11-24: 7 killed in 4 shells).
+    fn thickest_near(&self, at: (f32, f32), r: f32) -> Option<(f32, f32)> {
+        let (w, h) = self.world.size();
+        let bin = (self.world.scale() as usize).max(1);
+        let g = self.world.mould_grid(bin)?;
+        let (gw, gh) = (w.div_ceil(bin) as i64, h.div_ceil(bin) as i64);
+        let b = bin as f32;
+        let span = (r / b).ceil() as i64;
+        let (cx, cy) = ((at.0 / b) as i64, (at.1 / b) as i64);
+        let mut best: Option<(u32, (f32, f32))> = None;
+        for y in (cy - span).max(0)..(cy + span + 1).min(gh) {
+            for x in (cx - span).max(0)..(cx + span + 1).min(gw) {
+                let p = ((x as f32 + 0.5) * b, (y as f32 + 0.5) * b);
+                if (p.0 - at.0).hypot(p.1 - at.1) > r {
+                    continue;
+                }
+                let mut n = 0;
+                for yy in (y - 1).max(0)..(y + 2).min(gh) {
+                    for xx in (x - 1).max(0)..(x + 2).min(gw) {
+                        n += g.get((yy * gw + xx) as usize).copied().unwrap_or(0);
+                    }
+                }
+                if n > 0 && best.is_none_or(|(m, _)| n > m) {
+                    best = Some((n, p));
+                }
+            }
+        }
+        best.map(|(_, p)| p)
+    }
+
+    /// **A hunter's mark** (`Kind::Hunter`) from `at`: the first in this
+    /// order within `reach` fine cells, no nearer than `min`, on a clear
+    /// line (`clear_line`: rock and walls stop a flat shot). The middle of
+    /// the nearest crystal with `hunter_hold` slime on it (`World::crystal_covered_each`
+    /// on the GPU world, the walkers on its disc elsewhere): the slime's
+    /// size follows the crystals it holds (owner, 11-21), so this is the
+    /// slime the player most wants gone, and the nearest, not the most
+    /// held, lets the player choose the crystal by where they build (the
+    /// most held is the slime's own start crystal, all game), at its
+    /// thickest slime (`thickest_near`). Then a ripening fruit, the
+    /// nearest mini-boss, the nearest marching raid, the origin's heart,
+    /// and last `aim`, the thickest slime it sees.
+    pub fn hunter_mark(&self, at: (f32, f32), reach: f32, min: f32, aim: Option<(f32, f32)>) -> Option<((f32, f32), HunterMark)> {
+        let ok = |p: (f32, f32)| {
+            let d = (p.0 - at.0).hypot(p.1 - at.1);
+            d >= min && d <= reach && self.clear_line(at, p)
+        };
+        let near = |p: &(f32, f32)| (p.0 - at.0).hypot(p.1 - at.1);
+        let crystals = self.world.crystals();
+        let covered = self.world.crystal_covered_each();
+        let on = |c: usize| if covered.is_empty() { self.world.walkers_in(crystals[c].0, self.world.crystal_r(c)) as usize } else { covered.get(c).copied().unwrap_or(0) };
+        let hold = self.rules.build.hunter_hold.max(1.0) as usize;
+        let crystal = (0..crystals.len())
+            .map(|c| crystals[c].0)
+            .enumerate()
+            .filter(|&(c, p)| ok(p) && on(c) >= hold)
+            .min_by(|a, b| near(&a.1).total_cmp(&near(&b.1)))
+            .map(|(c, p)| self.thickest_near(p, self.world.crystal_r(c) + 2.0 * self.world.scale()).filter(|&q| ok(q)).unwrap_or(p));
+        let nearest = |v: Vec<(f32, f32)>| v.into_iter().filter(|&p| ok(p)).min_by(|a, b| near(a).total_cmp(&near(b)));
+        let fruit = self.fruits.live.filter(|f| f.members > 0).map(|f| f.centre).filter(|&p| ok(p));
+        let boss = || nearest(self.bosses.live.iter().filter(|b| b.members > 0).map(|b| b.centre).collect());
+        let raid = || nearest(self.raids.marching.iter().filter(|m| m.members > 0).map(|m| m.centre).collect());
+        let origin = || self.stand.live.filter(|h| h.origin && h.members > 0).map(|h| h.centre).filter(|&p| ok(p));
+        crystal
+            .map(|p| (p, HunterMark::Crystal))
+            .or(fruit.map(|p| (p, HunterMark::Fruit)))
+            .or_else(|| boss().map(|p| (p, HunterMark::Boss)))
+            .or_else(|| raid().map(|p| (p, HunterMark::Raid)))
+            .or_else(|| origin().map(|p| (p, HunterMark::Origin)))
+            .or_else(|| aim.filter(|&p| ok(p)).map(|p| (p, HunterMark::Slime)))
     }
 
     /// The buildings' turn before the frame: their units (and a turret's
@@ -933,35 +1120,7 @@ impl<W: World> Game<W> {
                             let (dx, dy) = (aim.0 - bd.at.0, aim.1 - bd.at.1);
                             let d = dx.hypot(dy).max(0.1);
                             if d >= b.mortar_min * sc && d <= reach + 4.0 && self.lob_line(bd.at, aim) {
-                                let n = m.casts;
-                                let cast = if n > 0 {
-                                    let c = bd.next % n;
-                                    self.buildings[k].next = (c + 1) % n;
-                                    m.cycle[c as usize]
-                                } else {
-                                    0
-                                };
-                                let mut volley = vec![cast];
-                                while let Some(&w) = volley.last().filter(|&&c| c > 0).map(|&c| &m.with[c as usize - 1]).filter(|&&w| w > 0 && !volley.contains(&w)) {
-                                    volley.push(w);
-                                }
-                                self.multicast += volley.len() as u32 - 1;
-                                let nv = volley.len();
-                                let a0 = dy.atan2(dx);
-                                for (v, &cast) in volley.iter().enumerate() {
-                                    let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
-                                    let shape = ammo.set.shape();
-                                    let blast = (b.mortar_blast * sc * ammo.reach()).min(crate::mould::squad::R_MAX) * shape.r;
-                                    let side = if nv > 1 { (v as f32 / (nv - 1) as f32 * 2.0 - 1.0) * crate::mould::rounds::VOLLEY_FAN } else { 0.0 };
-                                    let pellets = shape.pellets.max(1);
-                                    for p in 0..pellets {
-                                        let a = a0 + side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
-                                        let to = (bd.at.0 + a.cos() * d, bd.at.1 + a.sin() * d);
-                                        let flight = b.mortar_flight + d / sc / b.mortar_speed.max(0.1);
-                                        self.shells_fired += 1;
-                                        self.shells.push(Shell { from: bd.at, to, fired: t, lands: t + self.secs(flight).max(1), r: blast, cast, mortar: k });
-                                    }
-                                }
+                                self.fire_shells(k, &m, aim, b.mortar_blast, b.mortar_flight, b.mortar_speed);
                                 let every = b.mortar_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
                                 self.buildings[k].ready = t + self.secs(every).max(1);
                                 self.buildings[k].working = true;
@@ -1010,6 +1169,27 @@ impl<W: World> Game<W> {
                                 self.bank -= r.price;
                                 self.spent += r.price;
                             }
+                        }
+                    }
+                }
+                Kind::Hunter => {
+                    // It sees as a mortar does, the frame before it may
+                    // fire, but picks its own mark (`hunter_mark`): the
+                    // thickest slime is its last choice, not its first.
+                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
+                    let reach = b.hunter_range * sc * (1.0 + r.range_card * m.reach as f32);
+                    u.sight = if bd.ready <= t + 2 * u64::from(r.frame_ticks) { reach } else { 0.0 };
+                    u.over = false;
+                    if bd.ready <= t && self.bank >= r.price {
+                        let aim = bd.aim.filter(|_| bd.dense >= r.aim_min);
+                        if let Some((to, what)) = self.hunter_mark(bd.at, reach, b.hunter_min * sc, aim) {
+                            self.fire_shells(k, &m, to, b.hunter_blast, b.hunter_flight, b.hunter_speed);
+                            self.hunter_marks[what as usize] += 1;
+                            let every = b.hunter_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
+                            self.buildings[k].ready = t + self.secs(every).max(1);
+                            self.buildings[k].working = true;
+                            self.bank -= r.price;
+                            self.spent += r.price;
                         }
                     }
                 }
@@ -1438,6 +1618,53 @@ mod tests {
         eprintln!("sprayer, gas: {gf} sweeps, {gassed} gassed");
         assert!(gassed > 0, "a gas strip");
         let c = Cmd::Build(Kind::Sprayer, (10.5, 20.25));
+        assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+    }
+
+    /// **A hunter picks its mark** (the third turret body, Direction 11-24
+    /// 12:33Z): the slime on a crystal before the thickest slime it sees,
+    /// on a flat line, its fast shells striking there and killing as a
+    /// mortar's do.
+    #[test]
+    fn a_hunter_shoots_the_slime_on_a_crystal_first() {
+        let mut g = small(3);
+        for k in 0..g.soldiers.len() {
+            g.soldiers[k].stance = Stance::HoldFire;
+        }
+        // Let the slime reach its crystals first.
+        for _ in 0..(g.rules.tps * 6) {
+            g.step();
+        }
+        let sc = g.s();
+        let cs = g.world.crystals();
+        let hold = BuildRules::default().hunter_hold as u32;
+        let held: Vec<(usize, u32)> = (0..cs.len()).map(|c| (c, g.world.walkers_in(cs[c].0, g.world.crystal_r(c)))).filter(|&(_, n)| n >= hold).collect();
+        eprintln!("crystals held: {held:?} of {}", cs.len());
+        let &(c, _) = held.first().expect("the slime on a crystal by 6 s");
+        let at = open_near(&g, (cs[c].0 .0 + 20.0 * sc, cs[c].0 .1));
+        let reach = BuildRules::default().hunter_range * sc;
+        let thick = (at.0 - 8.0 * sc, at.1);
+        let mark = g.hunter_mark(at, reach, 0.0, Some(thick));
+        eprintln!("from {at:?}: {mark:?}");
+        assert_eq!(mark.map(|m| m.1), Some(HunterMark::Crystal), "a held crystal in reach comes first");
+        // With every crystal out of reach it takes the thickest slime.
+        let near = g.hunter_mark(at, 9.0 * sc, 0.0, Some(thick));
+        assert!(near.is_none() || near.map(|m| m.1) == Some(HunterMark::Slime) || held.iter().any(|&(c, _)| (cs[c].0 .0 - at.0).hypot(cs[c].0 .1 - at.1) <= 9.0 * sc), "{near:?}");
+        assert!(g.apply(Cmd::Build(Kind::Hunter, at)));
+        let mut flight = u64::MAX;
+        for _ in 0..(g.rules.tps * 16) {
+            g.step();
+            for sh in &g.shells {
+                flight = flight.min(sh.lands - sh.fired);
+            }
+        }
+        let fired: u32 = g.hunter_marks.iter().sum();
+        eprintln!("hunter: marks {:?} (crystal, fruit, boss, raid, origin, slime), {} shells, flight {flight} ticks, {} killed by them", g.hunter_marks, g.shells_fired, g.hunter_killed);
+        assert!(fired >= 2, "{fired} shots in 16 s");
+        assert!(g.hunter_marks[HunterMark::Crystal as usize] > 0, "it shot the slime on a crystal");
+        assert!(flight <= g.secs(1.0), "a flat fast shell: {flight} ticks");
+        assert!(g.hunter_killed > 0, "its strikes kill");
+        let c = Cmd::Build(Kind::Hunter, (10.5, 20.25));
         assert_eq!(Cmd::parse(&c.to_line()), Some(c));
     }
 

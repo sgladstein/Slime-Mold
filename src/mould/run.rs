@@ -979,7 +979,7 @@ pub struct Item {
 /// (Lures, 150), which left planet 1 without it, so Direction made it free
 /// from the first planet (11-18 08:38Z). The window never locks it
 /// (`run_lock`), as it never locks the pump.
-pub const ITEMS: [Item; 20] = [
+pub const ITEMS: [Item; 21] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Shots a fifth wider; past the widest, they fire faster", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -1005,7 +1005,10 @@ pub const ITEMS: [Item; 20] = [
     // The second body (Direction 11-24 11:42Z): a field layer, wants
     // field cards in the turrets' deck.
     Item { key: "sprayer", name: "Sprayers", group: Group::Build, about: "Unlocks the sprayer: lays the turrets' cards in a strip across the slime's way; wants gas, fire or crater cards, weak with Plain", max: 1, cost: 250, needs: Some("mortar") },
-    Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets, mortars and sprayers: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
+    // The third body (Direction 11-24 12:33Z): picky aim, slime on a
+    // crystal first.
+    Item { key: "hunter", name: "Hunters", group: Group::Build, about: "Unlocks the hunter: one fast flat shot at what matters most, the slime on a crystal first, then fruit, mini-bosses, raids and the origin", max: 1, cost: 250, needs: Some("sprayer") },
+    Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets, mortars, sprayers and hunters: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.
     Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
@@ -1585,6 +1588,14 @@ impl Run {
         b.mortar_hp *= 1.0 + 0.3 * t;
         b.mortar_range += 3.0 * t;
         b.mortar_every *= 0.85f32.powf(t);
+        // And so are sprayers and hunters (the shop's line said sprayers
+        // since #796, but they were left out until the hunter came).
+        b.sprayer_hp *= 1.0 + 0.3 * t;
+        b.sprayer_range += 3.0 * t;
+        b.sprayer_every *= 0.85f32.powf(t);
+        b.hunter_hp *= 1.0 + 0.3 * t;
+        b.hunter_range += 3.0 * t;
+        b.hunter_every *= 0.85f32.powf(t);
     }
 
     /// The tools' prices with `tools+`.

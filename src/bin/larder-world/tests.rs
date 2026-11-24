@@ -136,8 +136,8 @@ fn the_window_plays_the_real_game() {
     // 11-16) and Back below. (Cancel a build left it: click the building.)
     app.build_page = true;
     let m = app.model(None, None);
-    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Pump", "Mortar", "Sprayer", "Wall", "Door", "Lure", "Siren", "Lures, sirens on/off", "Outpost", "Back"]);
-    assert!(!m.commands[8].ready, "no lures to switch");
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Pump", "Mortar", "Hunter", "Sprayer", "Wall", "Door", "Lure", "Siren", "Lures, sirens on/off", "Outpost", "Back"]);
+    assert!(!m.commands[9].ready, "no lures to switch");
 }
 
 /// **The tools page works in the window** (2026-11-12): soldiers take

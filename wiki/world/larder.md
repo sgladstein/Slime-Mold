@@ -411,8 +411,27 @@ draws each sweep's jet fanning across the arc in the card's colour for
 half a second (`SPRAY_SHOW`); what stays is the cast's own work
 ([clips](../../Reports/sprayer-2026-11-24/README.md)). Its head
 is the turret's base under a flat fan nozzle (building kind 8 in the
-view's shader). The hunter (picky targeting: slime on a crystal first) is
-the next candidate body.
+view's shader).
+The third body is the **hunter** (Direction 11-24 12:33Z, `Kind::Hunter`),
+which is picky about what it shoots. Every 5 s (`hunter_every`) it fires
+one fast flat shell, a mortar's shell flying at 80 dish cells a second
+with no arc, at the first of these within 60 cells on a clear line
+(`Game::hunter_mark`):
+1. The slime on the nearest crystal it has taken, at least `hunter_hold`
+   12 there, aimed at the thickest of it (the slime's size follows the
+   crystals it holds).
+2. A ripening fruit.
+3. A mini-boss.
+4. A marching raid.
+5. The origin's heart.
+6. Last, the thickest slime it sees.
+
+Rock and walls stop its shot, where a mortar's lob goes over. Its strike
+is a mortar's, carrying the turrets' next cast. `Game::hunter_marks`
+counts its shells by mark. Its head is one long barrel with a scope
+(building kind 9). The run shop sells it after the sprayer, and Turret
+power upgrades sprayers and hunters too
+([clips](../../Reports/hunter-2026-11-24/README.md)).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,

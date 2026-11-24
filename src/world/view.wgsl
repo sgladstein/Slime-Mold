@@ -4913,6 +4913,36 @@ fn sprayer_head(h: vec2<f32>, recoil: f32) -> vec4<f32> {
     return out;
 }
 
+// A hunter's head (kind 9, the third turret body, 11-24): a round breech
+// and one long thin barrel to the base's rim with a muzzle brake at its
+// end, a scope along its left. It reads beside the turret's two barrels,
+// the mortar's round tube and the sprayer's fan as a rifle: one long
+// line. `recoil` slides the whole gun back.
+fn hunter_head(h: vec2<f32>, recoil: f32) -> vec4<f32> {
+    let aa = 0.05;
+    let q = h + vec2<f32>(recoil, 0.0);
+    let cc = cover(length(q + vec2<f32>(0.05, 0.0)) - 0.34, aa);
+    let breech = mix(STEEL, STEEL_DARK, clamp(length(q) / 0.34, 0.0, 1.0) * 0.6);
+    var out = vec4<f32>(breech * cc, cc);
+    // The barrel: 0.11 wide from the breech to 0.92 radii out (the
+    // building's quad ends at 1).
+    let db = max(abs(q.x - 0.52) - 0.4, abs(q.y) - 0.055);
+    let cb = cover(db, aa);
+    out = pm_over(out, vec4<f32>(mix(STEEL * 1.1, STEEL_DARK, clamp(abs(q.y) / 0.06, 0.0, 1.0) * 0.5) * cb, cb));
+    // Its muzzle brake, a short wider block at the end.
+    let dm = max(abs(q.x - 0.88) - 0.07, abs(q.y) - 0.1);
+    let cm = cover(dm, aa);
+    out = pm_over(out, vec4<f32>(STEEL_DARK * cm, cm));
+    // The scope: a slim tube on the barrel's left with a dark lens.
+    let ds = max(abs(q.x - 0.18) - 0.24, abs(q.y - 0.17) - 0.06);
+    let cs = cover(ds, aa);
+    out = pm_over(out, vec4<f32>(STEEL_DARK * 1.2 * cs, cs));
+    let dl = length(q - vec2<f32>(0.42, 0.17)) - 0.045;
+    let cl = cover(dl, aa);
+    out = pm_over(out, vec4<f32>(vec3<f32>(30.0, 60.0, 70.0) * cl, cl));
+    return out;
+}
+
 // The building's own texels at `q` (radii): its tile, and a turret's head
 // over its base (a mortar's tube over the turret's base).
 fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool, head_kind: u32) -> vec4<f32> {
@@ -4922,6 +4952,7 @@ fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f
         var head = sprite(16u, turret_frame(q, ca, sa, recoil), small);
         if (head_kind == 1u) { head = mortar_head(turret_frame(q, ca, sa, 0.0), recoil); }
         if (head_kind == 2u) { head = sprayer_head(turret_frame(q, ca, sa, 0.0), recoil); }
+        if (head_kind == 3u) { head = hunter_head(turret_frame(q, ca, sa, 0.0), recoil); }
         if (dry) {
             let g = dot(head.xyz, vec3<f32>(0.3, 0.59, 0.11));
             head = vec4<f32>(mix(head.xyz, vec3<f32>(g), 0.75) * 0.8, head.w);
@@ -5057,9 +5088,11 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     let mortar = kind == 7u;
     // The sprayer (kind 8, 11-24): the turret's base under a fan nozzle.
     let sprayer = kind == 8u;
-    let head_kind = select(select(0u, 1u, mortar), 2u, sprayer);
-    let k = select(4u + 2u * min(kind, 5u), 4u, mortar || sprayer);
-    let turret = kind == 0u || mortar || sprayer;
+    // The hunter (kind 9, 11-24): the turret's base under a long barrel.
+    let hunter = kind == 9u;
+    let head_kind = select(select(select(0u, 1u, mortar), 2u, sprayer), 3u, hunter);
+    let k = select(4u + 2u * min(kind, 5u), 4u, mortar || sprayer || hunter);
+    let turret = kind == 0u || mortar || sprayer || hunter;
     let ca = cos(facing); let sa = sin(facing);
     let recoil = select(0.0, pulse * 0.22, turret);
     let dry = turret && state == 2u && built >= 1.0;
