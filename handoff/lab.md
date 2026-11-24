@@ -173,4 +173,11 @@ A second slime species that fights the first; the player's own mould
   [`Reports/lab-lap-two-2026-11-24/`](../Reports/lab-lap-two-2026-11-24/README.md),
   page "Lap Two Pairings". Keys only (`raw/pairs.txt`); each smoke-tested
   2:00 alone and paired; the seven are a first draft for Enemy.
-- Next step: none. Wait for Direction's next brief.
+- 2026-11-24: **sorting the walkers by place** (brief from Direction
+  08:07Z, test 5). Report
+  [`Reports/lab-walker-sort-2026-11-24/`](../Reports/lab-walker-sort-2026-11-24/README.md),
+  page "Walker Sort". Code `247b6730` (`LAB_SORT`, `LAB_SORT_LOG`),
+  `a99924b4` (`LAB_SORT_PACK`). 1070: step 9.46 to 5.27 ms; seven pairs
+  play the same. Open: Engine's pack-only 1070 run, to add to the report.
+- Next step: add Engine's pack-only run when it comes; then wait for
+  Direction's next brief.
