@@ -36,6 +36,15 @@
 //! second at 60. So the 95th: it ignores three hitches a second, and a
 //! second with more late frames than that is not 60 a second.
 //!
+//! A try at the step above waits, past `hold`, until this step has room
+//! for it: its `PCT` frame plus the step above's cost, under `FAST_MS`.
+//! The cost is learnt at the step down, the median frame before (at the
+//! step above) less the median after: on planet 8 at its peak, 50% to 40%
+//! saved 2.4 ms of median frame, and 40%'s frames with a game step ran
+//! 16.4 at their p95, so 50% would run them at about 18.8 and is not
+//! tried until the slime thins (Direction, 11-24: test 5 is judged at
+//! Auto, where retries put planet 8 at p95 16.8 against 14.1 held at 40%).
+//!
 //! Rejected: GPU timestamps a frame to see the headroom before stepping
 //! up (a query set and a read-back each frame in the window, for a probe
 //! that costs at most a second or two of long frames, rarer each time).
@@ -64,6 +73,9 @@ pub(super) const HOLD_MAX: f32 = 240.0;
 /// so the hold never doubled and Auto spent a third of the planet's
 /// first 150 s retrying 50% (p95 17.0 over every frame).
 pub(super) const PROBE_SECS: f32 = 20.0;
+/// The most a step's cost is taken to be (ms of median frame): a whole
+/// second run slow by a burst of play is not the picture's cost.
+pub(super) const COST_MAX: f32 = 6.0;
 
 #[derive(Clone, Debug)]
 pub(super) struct AutoDetail {
@@ -79,11 +91,19 @@ pub(super) struct AutoDetail {
     /// Seconds since the last step up (a probe while under `PROBE_SECS`).
     since_up: Option<f32>,
     hold: f32,
+    /// The median frame of the last whole second at this step (none since
+    /// the step changed), and of the slow second that stepped down.
+    med_here: Option<f32>,
+    med_slow: Option<f32>,
+    /// What the step above costs, ms of median frame: the step down's
+    /// medians, before (the step above) less after (this one). A try at
+    /// it waits until this step's `PCT` frame has room for it.
+    cost: Option<f32>,
 }
 
 impl Default for AutoDetail {
     fn default() -> Self {
-        AutoDetail { pct: 0, top: 0, frames: Vec::with_capacity(128), sum: 0.0, fast_for: 0.0, since_up: None, hold: HOLD_MIN }
+        AutoDetail { pct: 0, top: 0, frames: Vec::with_capacity(128), sum: 0.0, fast_for: 0.0, since_up: None, hold: HOLD_MIN, med_here: None, med_slow: None, cost: None }
     }
 }
 
@@ -122,30 +142,51 @@ impl AutoDetail {
         let mut f = std::mem::take(&mut self.frames);
         f.sort_by(f32::total_cmp);
         let late = f[((f.len() as f32 * PCT) as usize).min(f.len() - 1)];
+        let med = f[f.len() / 2];
         let secs = self.sum / 1000.0;
         (self.frames, self.sum) = (f, 0.0);
         self.frames.clear();
-        self.second(late, secs)
+        self.second(late, med, secs)
     }
 
-    fn second(&mut self, late: f32, secs: f32) -> bool {
+    fn second(&mut self, late: f32, med: f32, secs: f32) -> bool {
         if let Some(t) = self.since_up.as_mut() {
             *t += secs;
         }
+        // The first whole second after a step down prices the step above.
+        if let Some(before) = self.med_slow.take() {
+            self.cost = Some((before - med).clamp(0.0, COST_MAX));
+        }
+        let before = self.med_here.replace(med);
         if late > SLOW_MS {
+            // The step's own cost is seen at its usual load: the second
+            // before the slow one if there was one at this step, so a
+            // burst of play (a whole slow second) is not taken for it.
+            self.med_slow = Some(before.map_or(med, |b| b.min(med)));
+            self.med_here = None;
             self.fast_for = 0.0;
             // A step up that did not fit: the next try waits twice as long.
             if self.since_up.is_some_and(|t| t <= PROBE_SECS) {
                 self.hold = (self.hold * 2.0).min(HOLD_MAX);
             }
             self.since_up = None;
-            return self.step(false);
+            let changed = self.step(false);
+            if !changed {
+                self.med_slow = None;
+            }
+            return changed;
         }
         if late < FAST_MS {
             self.fast_for += secs;
-            if self.fast_for >= self.hold && self.pct < self.top {
+            // Room for the step above: this second's `PCT` frame plus
+            // what the step above was seen to cost.
+            // A cost learnt wrong (the load fell just after the step
+            // down) keeps the step above out for `HOLD_MAX` at most.
+            let room = late + self.cost.unwrap_or(0.0) < FAST_MS || self.fast_for >= HOLD_MAX;
+            if self.fast_for >= self.hold && self.pct < self.top && room {
                 self.fast_for = 0.0;
                 self.since_up = Some(0.0);
+                (self.cost, self.med_here) = (None, None);
                 return self.step(true);
             }
         } else {
@@ -225,14 +266,15 @@ mod tests {
         a.percent(UHD);
         run(&mut a, 19.0, 1.05);
         assert_eq!(a.pct, 40);
-        // Quick at 40%: up after HOLD_MIN seconds.
-        assert_eq!(run(&mut a, 15.0, HOLD_MIN + 0.5), vec![50]);
+        // Quick at 40%, with room for the step's cost (19 less 10, taken
+        // as `COST_MAX`): up after HOLD_MIN seconds.
+        assert_eq!(run(&mut a, 10.0, HOLD_MIN + 0.5), vec![50]);
         // 50% is still slow: back down at its first whole slow second (the
         // first may hold the quick frames before it), and the hold doubles.
         assert_eq!(run(&mut a, 19.0, 2.1), vec![40]);
         assert_eq!(a.hold, 2.0 * HOLD_MIN);
-        assert!(run(&mut a, 15.0, HOLD_MIN + 0.5).is_empty(), "not after the old hold");
-        assert_eq!(run(&mut a, 15.0, HOLD_MIN + 0.5), vec![50], "after the doubled one");
+        assert!(run(&mut a, 10.0, HOLD_MIN + 0.5).is_empty(), "not after the old hold");
+        assert_eq!(run(&mut a, 10.0, HOLD_MIN + 0.5), vec![50], "after the doubled one");
         // This time it fits: it stays, and never goes past the top.
         assert!(run(&mut a, 16.67, HOLD_MAX + 10.0).is_empty());
         assert_eq!(a.pct, 50);
@@ -248,7 +290,7 @@ mod tests {
         let mut a = AutoDetail::default();
         a.percent(UHD);
         run(&mut a, 19.0, 1.05);
-        assert_eq!(run(&mut a, 15.0, HOLD_MIN + 0.5), vec![50]);
+        assert_eq!(run(&mut a, 10.0, HOLD_MIN + 0.5), vec![50]);
         assert!(run(&mut a, 16.0, 8.0).is_empty());
         assert_eq!(run(&mut a, 19.0, 2.1), vec![40]);
         assert_eq!(a.hold, 2.0 * HOLD_MIN);
@@ -257,10 +299,57 @@ mod tests {
         let mut b = AutoDetail::default();
         b.percent(UHD);
         run(&mut b, 19.0, 1.05);
-        assert_eq!(run(&mut b, 15.0, HOLD_MIN + 0.5), vec![50]);
+        assert_eq!(run(&mut b, 10.0, HOLD_MIN + 0.5), vec![50]);
         assert!(run(&mut b, 16.0, PROBE_SECS + 2.0).is_empty());
         assert_eq!(run(&mut b, 19.0, 2.1), vec![40]);
         assert_eq!(b.hold, HOLD_MIN);
+    }
+
+    /// Planet 8 at its peak on the 1070 (11-24, main with the walker
+    /// sort): one frame in four takes a game step. At 50% the frames run
+    /// 16.0 and 18.9 ms, at 40% 13.6 and 16.4; `thin` takes `by` ms off
+    /// both, as the slime thins.
+    fn planet_8(a: &mut AutoDetail, secs: f32, thin: f32) -> Vec<u32> {
+        let mut seen = Vec::new();
+        let (mut t, mut i) = (0.0, 0u32);
+        while t < secs * 1000.0 {
+            let (quick, step) = if a.pct >= 50 { (16.0, 18.9) } else { (13.6, 16.4) };
+            let ms = if i % 4 == 0 { step } else { quick } - thin;
+            if a.frame(ms) {
+                seen.push(a.pct);
+            }
+            (t, i) = (t + ms, i + 1);
+        }
+        seen
+    }
+
+    #[test]
+    fn a_step_up_waits_for_room_for_what_it_was_seen_to_cost() {
+        let mut a = AutoDetail::default();
+        a.percent(UHD);
+        // Down at once, and 50% is not retried while the slime is big
+        // (for `HOLD_MAX` at most).
+        assert_eq!(planet_8(&mut a, 200.0, 0.0), vec![40]);
+        let cost = a.cost.unwrap();
+        assert!((cost - 2.4).abs() < 0.01, "{cost}");
+        // Once the frames have room for the cost, it tries 50% and keeps it.
+        assert_eq!(planet_8(&mut a, 60.0, 3.0), vec![50]);
+        assert!(planet_8(&mut a, 300.0, 3.0).is_empty());
+    }
+
+    #[test]
+    fn a_whole_slow_second_is_not_taken_for_the_steps_cost() {
+        // Planet 3 at 50% (11 ms frames, 9.5 at 40%): one second of play
+        // runs every frame at 30 ms. The cost is the usual second's, not
+        // the slow one's, so 50% comes back after the hold.
+        let mut a = AutoDetail::default();
+        a.percent(UHD);
+        run(&mut a, 11.0, 5.0);
+        assert_eq!(run(&mut a, 30.0, 1.1), vec![40]);
+        run(&mut a, 9.5, 1.5);
+        let cost = a.cost.unwrap();
+        assert!((cost - 1.5).abs() < 0.01, "{cost}");
+        assert_eq!(run(&mut a, 9.5, HOLD_MIN + 1.0), vec![50]);
     }
 
     #[test]
