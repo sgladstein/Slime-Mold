@@ -103,7 +103,7 @@ snap_fields!(GpuWorld {
     // game's.
     skip: [e, shared, ro, setc, walls, walls_new, stamps, profile, later, snaps, waits, wait_ms],
     values: [
-        s, sub, crystals, living, ate, ate_mark, covered, cells, garden, sort, own, asleep, scarred, lumps, broken, want, grid, spread, struck,
+        s, sub, crystals, living, ate, ate_mark, covered, cells, garden, sort, own, asleep, step_base, scarred, lumps, broken, want, grid, spread, struck,
         fire_new, burn_dirty,
     ],
 });

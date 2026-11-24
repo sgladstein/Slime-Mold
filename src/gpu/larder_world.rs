@@ -206,6 +206,9 @@ pub struct GpuWorld {
     /// The walkers asleep and those on full scar at the last readout
     /// (`GpuWorld::asleep`, `GpuWorld::scarred`).
     asleep: usize,
+    /// The slime's own step before a planet twist scaled it
+    /// (`World::set_twist`); None until the first twist.
+    step_base: Option<f32>,
     scarred: usize,
     /// Each lump's sums at the last readout (`World::lumps`).
     lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
@@ -473,7 +476,7 @@ impl GpuWorld {
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
         let sort = s.sort;
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, sort, own: 0, asleep: 0, scarred: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, sort, own: 0, asleep: 0, step_base: None, scarred: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -1338,6 +1341,14 @@ impl World for GpuWorld {
         self.s.no_eat = on;
     }
 
+    /// The slime's own step times `step`, and the wind's push (x, y) times
+    /// that own step (`Settings::wind`), from the next step's params.
+    fn set_twist(&mut self, step: f32, wind: (f32, f32)) {
+        let base = *self.step_base.get_or_insert(self.s.step);
+        self.s.step = base * step;
+        self.s.wind = [wind.0 * base, wind.1 * base];
+    }
+
     /// Each of the pile's cells written 0 (the mirror's list of them).
     fn empty_crystal(&mut self, c: usize) {
         let d = &self.e.dish;
@@ -1715,6 +1726,9 @@ mod tests {
         }
         fn set_starve(&mut self, on: bool) {
             self.g.set_starve(on)
+        }
+        fn set_twist(&mut self, step: f32, wind: (f32, f32)) {
+            self.g.set_twist(step, wind)
         }
         fn empty_crystal(&mut self, c: usize) {
             self.g.empty_crystal(c)
@@ -3631,6 +3645,127 @@ mod tests {
         assert!(most > 50, "the heart forms round the sleeping body: most {most}");
         assert!(g.world.asleep() > 100, "the body sleeps: {}", g.world.asleep());
         assert!(g.origin.fell.is_none(), "the heart did not break");
+    }
+
+    /// **A heart's members never fruit** (11-24, planet 5's Sporer): a
+    /// spore is not counted in its lump's sums, so a shot's alarm burst
+    /// planet 5's heart into spores that read as cut down, and 8 soldiers
+    /// broke it in about 40 s at any armour or size (Engine's batch y1).
+    /// Here an origin of 150 in a race world where every walker on scent
+    /// tries to fruit (`spore_rate` 0.05, `spore_scent` 0): 20 s after it
+    /// forms none of its members is a spore, it holds more than 100 and
+    /// has not broken, while the body round it has thrown spores. Before
+    /// the fix: the heart burst to 0 members and broke; with it, at least
+    /// 133, none a spore, with 3,626 of the body's spores in flight.
+    #[test]
+    fn a_hearts_members_never_fruit() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        let mut rules = Rules::default();
+        rules.origin.on = true;
+        rules.origin.size = 150.0;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s.clone(), scale), rules, seed);
+        let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
+        while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
+            g.step();
+        }
+        let formed = g.time();
+        // Now every walker on scent tries to fruit.
+        crate::gpu::set(&mut s, "spore_rate", "0.05").unwrap();
+        crate::gpu::set(&mut s, "spore_scent", "0").unwrap();
+        (g.world.s.spore_rate, g.world.s.spore_scent) = (s.spore_rate, s.spore_scent);
+        let mut least = u32::MAX;
+        let mut spores = 0;
+        // A broken heart ends the game (its die-back), and the clock with it.
+        while g.time() < formed + 20.0 && g.end.is_none() {
+            g.step();
+            least = least.min(members(&g));
+            spores = spores.max(g.world.e.life_of().0.iter().filter(|&&s| s == 1).count());
+        }
+        let e = &g.world.e;
+        let (st, _) = e.life_of();
+        let news = read_back(&e.device, &e.queue, &e.news);
+        let at = e.dense_at as usize + 4 * crate::gpu::DENSE_HEAD;
+        let fruiting = st.iter().enumerate().filter(|&(k, &s)| s == 1 && u32::from_le_bytes(news[at + 4 * k..at + 4 * k + 4].try_into().unwrap()) & 0xE000000 != 0).count();
+        eprintln!("the heart under spores: formed at {formed:.1} s, least {least}, {fruiting} members spores, the body's spores at most {spores}");
+        assert!(spores > 100, "the body fruits: {spores}");
+        assert_eq!(fruiting, 0, "no member fruits");
+        assert!(least > 100, "the heart holds: least {least}");
+        assert!(g.origin.fell.is_none(), "the heart did not break");
+    }
+
+    /// **The planet twists** (`twist.rs`, 2026-11-24; the Lab's prototype,
+    /// `Reports/lab-twists-2026-11-24/`). Engine rule with no CPU twin, so
+    /// the test is what it does on the software GPU: three race worlds
+    /// alike for 20 s, then 20 s more as they are, in a wind east (the
+    /// Lab's 0.25 of a step) and in a cold snap (the step at 0.3). The
+    /// wind moves the body's middle east, more than the plain world's
+    /// drifts either way; in the cold snap the walkers that go farthest in a
+    /// second go about half as far as in the plain world (the step at 0.3;
+    /// a walker turns as before, so it goes farther than 0.3 of its way).
+    /// Here: wind 13.2 cells east against 3.3; cold 2.51 a second against
+    /// 4.92.
+    #[test]
+    fn the_wind_leans_the_slime_and_the_cold_slows_it() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        // The body's middle (fine cells) and its mean distance from it.
+        let body = |g: &Game<GpuWorld>| {
+            let bin = 4usize;
+            let grid = g.world.mould_grid(bin).unwrap();
+            let gw = g.world.size().0.div_ceil(bin);
+            let (mut n, mut sx, mut sy) = (0f64, 0f64, 0f64);
+            for (i, &c) in grid.iter().enumerate() {
+                let (x, y) = (((i % gw) * bin) as f64, ((i / gw) * bin) as f64);
+                n += c as f64;
+                sx += c as f64 * x;
+                sy += c as f64 * y;
+            }
+            let (mx, my) = (sx / n.max(1.0), sy / n.max(1.0));
+            let spread = grid.iter().enumerate().map(|(i, &c)| c as f64 * (((i % gw) * bin) as f64 - mx).hypot(((i / gw) * bin) as f64 - my)).sum::<f64>() / n.max(1.0);
+            (mx, my, spread)
+        };
+        // Each slot's place (fine cells).
+        let places = |g: &Game<GpuWorld>| crate::gpu::floats(&read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.walkers)).chunks_exact(4).map(|w| (w[0], w[1])).collect::<Vec<_>>();
+        let play = |twist: Option<(f32, (f32, f32))>| {
+            let mut s = race_settings(seed, scale, walkers);
+            // A slot stays its walker (the sort moves them once a second).
+            crate::gpu::set(&mut s, "sort", "off").unwrap();
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 20.0 {
+                g.step();
+            }
+            let before = body(&g);
+            if let Some((step, wind)) = twist {
+                g.world.set_twist(step, wind);
+            }
+            // How far a walker goes in the twist's first second: the tenth
+            // farthest of the slots that moved at all, under 20 cells (no
+            // slot that died and was born again elsewhere); most of a
+            // packed body stands, its steps blocked.
+            let at = places(&g);
+            while g.time() < 21.0 {
+                g.step();
+            }
+            let mut moved: Vec<f32> = at.iter().zip(places(&g)).map(|(a, b)| (b.0 - a.0).hypot(b.1 - a.1)).filter(|&d| d > 0.0 && d < 20.0).collect();
+            moved.sort_by(f32::total_cmp);
+            let went = moved.get(moved.len() * 9 / 10).copied().unwrap_or(0.0);
+            while g.time() < 40.0 {
+                g.step();
+            }
+            (before, body(&g), went)
+        };
+        let (b0, a0, w0) = play(None);
+        let (bw, aw, ww) = play(Some((1.0, (0.25, 0.0))));
+        let (bc, ac, wc) = play(Some((0.3, (0.0, 0.0))));
+        eprintln!("plain: middle x {:.1} -> {:.1}, spread {:.1} -> {:.1}, a walker went {w0:.2} in a second", b0.0, a0.0, b0.2, a0.2);
+        eprintln!("wind east: middle x {:.1} -> {:.1}, spread {:.1} -> {:.1}, went {ww:.2}", bw.0, aw.0, bw.2, aw.2);
+        eprintln!("cold: middle x {:.1} -> {:.1}, spread {:.1} -> {:.1}, went {wc:.2}", bc.0, ac.0, bc.2, ac.2);
+        assert_eq!((b0.0, b0.2), (bw.0, bw.2), "the worlds are alike before the twist");
+        let (plain, windy) = (a0.0 - b0.0, aw.0 - bw.0);
+        assert!(windy > plain.abs() + 2.0, "the wind moves the body east: {windy:.1} against {plain:.1}");
+        assert!(wc < 0.6 * w0, "a cold walker goes about half as far: {wc:.2} against {w0:.2}");
     }
 
     /// **A blast's long crater is not shut** (the review lane, 11-21: det

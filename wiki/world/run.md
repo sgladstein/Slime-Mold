@@ -411,6 +411,15 @@ with no germ), and its two guns are two kinds, neither the kind carried
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
 
+## Planet twists
+
+Since 2026-11-24 (Direction's job for Milestone 2's test 2, a run he wants to replay; the Lab's prototype, `Reports/lab-twists-2026-11-24/`, landing with Direction's docs), a run rolls a twist on about one planet in three from planet 2, never on two planets in a row (`run::PlanetTwist`, rolled from the run's seed and the planet, so a saved run keeps its rolls; 34.6% of planets 2 to 8 over 2,000 seeds, half each kind, every wind way). A twist is a change to the slime's own walk (`larder_world/twist.rs`, GPU only, `World::set_twist`):
+
+- **Wind**: all planet, every step a walker takes is also pushed a quarter of its step one way (one of eight compass points; `Settings::wind`, a new Params row in `engine.wgsl`'s `sense`, two adds a step). The body leans and creeps downwind and lays its trail there. Card: "Wind from the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns."
+- **Cold snap**: from 0:20 for a minute the slime's step is 0.3 of its own: its streams break into beads. Card: "Cold snap at 0:20: for a minute the slime crawls in beads. Push now."
+
+The GPU test (race world, 20 s of twist): the wind moved the body's middle 13.2 cells east against 3.3; in the cold the walkers that go farthest went 2.5 cells a second against 4.9. Smoke games (planet 2, run seed 1, greedy hand, 3:00, `set=twist=N`): none ended or soft-locked; slime at 1:00 15,229 as it is, 13,357 cold, 14,671 wind east; walkers killed by 3:00 4,383, 2,950 and 3,393; soldiers 41, 41 and 36. The landing card's line and the HUD's tell (`Run::twist`, `Game::twist_now`) are Look's. Night (sensors 2.5 times as far) stays on the Lab's branch: it only makes the slime better at what it does. Keys: `twist` (0 none, 1 cold, 2 wind), `twist_start`, `twist_len`, `twist_cold`, `twist_wind`, `twist_angle` (0 east, 90 south).
+
 ## Luck in the shop
 
 Gun step F's shop levers (Direction, 11-24 08:54Z; the gun-system plan's,
