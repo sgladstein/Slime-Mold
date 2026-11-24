@@ -86,13 +86,15 @@ pub struct StrikerRules {
     /// Above 0, the strikers count their own peak only once the slime has
     /// settled: from the first second its mass is 1% over its lowest so
     /// far, or from `settle` game seconds at the latest, with no strikers
-    /// before. Why: a lap-two slime (lab key `LAB_LAP2`) lands bigger than
-    /// its crystals hold and sheds about half in its first 30 s (planet 12,
-    /// 126k to 69k; 15, 234k to 124k), so under a peak taken at the
-    /// landing it is "late" within seconds and strikers wiped a greedy
-    /// squad inside a minute on 12 and 15 (strikers off: both lived to
-    /// 2:00 with 24 soldiers). A lap-one slime grows from its landing, so
-    /// it settles within seconds and its peak is the game's.
+    /// before. The walkers killed by then count back in (never past the
+    /// game's peak), so only what the slime shed by itself is left out.
+    /// Why: a lap-two slime (planets 9 to 15, the lab's `LAB_LAP2`) lands
+    /// bigger than its crystals hold and sheds about half in its first
+    /// 30 s (planet 12, 126k to 69k; 15, 234k to 124k), so under a peak
+    /// taken at the landing it is "late" within seconds, and strikers wiped
+    /// a greedy squad inside a minute on 12 and 15 (strikers off: both
+    /// lived to 2:00 with 24 soldiers). A lap-one slime sheds little by
+    /// itself, so its settled peak is the game's.
     pub settle: f32,
 }
 
@@ -182,7 +184,7 @@ impl<W: World> Game<W> {
     /// The strikers' peak with `settle` on (`StrikerRules::settle`): 0
     /// until the slime settles, then its peak from there.
     fn settled_peak(&mut self, settle: f32) -> usize {
-        let (t, mould) = (self.time(), self.mould);
+        let (t, mould, killed, landing) = (self.time(), self.mould, self.killed as usize, self.peak);
         let st = &mut self.strikers;
         if st.settled > 0.0 {
             st.peak = st.peak.max(mould);
@@ -190,7 +192,13 @@ impl<W: World> Game<W> {
         }
         st.low = if st.low == 0 { mould } else { st.low.min(mould) };
         if (mould as f32) > 1.01 * st.low as f32 || t >= settle {
-            (st.settled, st.peak) = (t.max(0.001), mould);
+            // What the squad (and fire) killed before it settled counts
+            // back in, so only what the slime shed by itself lowers the
+            // peak: a lap-one slime falls from its landing under the guns
+            // too (planet 4, run seed 1: 53,505 to 35,410 by 60 s with
+            // 19,623 killed), and a peak taken at 35,410 kept strikers off
+            // for 3:00 where main formed 3,334 (the 1070, 11-24).
+            (st.settled, st.peak) = (t.max(0.001), (mould + killed).min(landing.max(mould)));
             return st.peak;
         }
         0
