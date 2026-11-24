@@ -30,15 +30,11 @@ finish and replay. It is done when all six hold:
 The rush (D7) stays his: **add no rush brake unasked.** Milestone 3, a
 release, only if he chooses one.
 
-**Where it stands (11-24).** The origin is on main (#699, 11-24 03:29Z);
-Engine's siege #707 is queued: sizes 700, 500 and 1,000 on planets 1 to 3; the
-siege wins those on seeds 1 to 3 in under 10 min; a 44-soldier rush still
-wins planet 1 at 1:34 and planet 2 at 1:47 (for D7). Planets 4 to 8 have no
-origin sizes yet. His 4K frames were 40 ms (the view's per-pixel cost,
-`Reports/perf-4k-2026-11-22/`); World detail Half and #720 cut it, not yet
-timed on the 1070. Save and resume works between planets (#696); quitting
-mid-planet relands the planet fresh, and the pause menu says so (#748).
-A true mid-planet snapshot follows the siege curve.
+**Where it stands (11-24, 05:30Z).** The origin is on main (#699). Sizes on planets 1 to 3 are 700, 500 and 1,000, and planets 4 to 8 take half size next.
+- **Curve (test 3).** The siege bot (#707) on his three maps won 12 of 24 on his PC. P4 lost 0 of 3 and P7 lost 0 of 2, a wall each, both with Enemy. P3 lost 35 soldiers, mostly to fire: starfall impacts lit the jungle, and a trodden firebreak is coming from Squad. A full curve takes about 20 minutes of PC time.
+- **Rush (D7).** A heart snipe of 8 to 15 soldiers wins P2 to P4 in 1:10 to 2:32. It is on his card.
+- **4K (test 5).** At Auto (50%) on the 1070, his 3840-wide window runs at p95 12.5 ms on P3 (#747, #753). P5 and P8 are next.
+- **Save and resume.** It works between planets. Mid-planet it relands the planet and says so (#748); a true snapshot is in build.
 
 ## Each lane's top jobs
 
@@ -62,7 +58,7 @@ asks at most once a session with a recommendation.
 
 | What | State |
 |---|---|
-| Longer planets or more of them | His 11-24 answer: a run of at least two hours, by either; "we don't need to decide exactly now". Direction brings both, costed, once the origin plays. |
+| Longer planets or more of them | His 11-24 answer: at least two hours, by either; "we don't need to decide exactly now". The dials are on main (#749: `run::PLANETS`, `run::STRETCH`). Costed and asked 05:10Z: both roads, starting at 12 planets at 1.3x (recommended, about 2.5 days), 16 planets (2 days), 8 at 1.8x (1 day), or not yet. |
 | Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked next. |
 | D7 the rush brake | His, in play. The origin's rush numbers are in `Reports/origin-design-2026-11-22/`. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (asked 11-17 19:14Z). |
