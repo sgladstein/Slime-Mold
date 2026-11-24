@@ -1892,6 +1892,20 @@ const DUST_LIFT: f32 = 1.3;
 const SLICK_DARK: f32 = 0.3;
 const SLICK_SHEEN: vec3<f32> = vec3<f32>(14.0, 20.0, 24.0);
 const SLICK_GLINT: vec3<f32> = vec3<f32>(100.0, 110.0, 105.0);
+// Planets 4 to 8's trail traits (`shaded`, Look C, 11-24): the valley's
+// river scum and how much of the way to it a full trail goes; the
+// jungle's wilt, the plants' grey times this, and its share; the
+// highlands' gaps between stones filled with the slime's dried residue,
+// and how far; the caves' phosphor pins; the core
+// world's flora lit along the trail.
+const SCUM_RGB: vec3<f32> = vec3<f32>(150.0, 122.0, 52.0);
+const SCUM: f32 = 0.55;
+const WILT_RGB: vec3<f32> = vec3<f32>(2.0, 1.55, 0.55);
+const WILT: f32 = 0.85;
+const GRAVEL_FILL: vec3<f32> = vec3<f32>(112.0, 76.0, 30.0);
+const GRAVEL_FILL_K: f32 = 0.7;
+const CAVE_GLOW: vec3<f32> = vec3<f32>(60.0, 82.0, 26.0);
+const CORE_FLORA_GLOW: vec3<f32> = vec3<f32>(36.0, 8.0, 44.0);
 
 // ---- Mini-boss bodies (2026-11-16) ----
 //
@@ -2711,6 +2725,25 @@ const SALT_NET: f32 = 2.8;
 const SALT_RIDGE: f32 = 0.22;
 const SALT_CREST: f32 = 0.22;
 const SALT_FLANK: f32 = 0.18;
+// The highlands' gravel (`plain_look`) at `q1`: the stone's own shade
+// (0-1) and how much of a dark gap between stones the pixel is (1 in the
+// gap, about a pixel and a half wide at any zoom). The trail's trait in
+// `shaded` fills the gaps.
+fn gravel(q1: vec2<f32>) -> vec2<f32> {
+    let g = q1 / 0.7;
+    let gi = floor(g);
+    var d1 = 9.0; var d2 = 9.0; var c1 = gi;
+    for (var j = -1; j <= 1; j++) {
+        for (var i = -1; i <= 1; i++) {
+            let c = gi + vec2<f32>(f32(i), f32(j));
+            let o = c + vec2<f32>(hash2(c * 1.3 + 5.1), hash2(c * 2.9 + 1.7)) * 0.8 + 0.1;
+            let d = length(g - o);
+            if (d < d1) { d2 = d1; d1 = d; c1 = c; } else if (d < d2) { d2 = d; }
+        }
+    }
+    let gap = (d2 - d1) * 0.7 * P.zoom;
+    return vec2<f32>(hash2(c1 * 4.1 + 2.3), 1.0 - smoothstep(0.6, 2.0, gap));
+}
 fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
     let q1 = vec2<f32>(0.8 * p.x - 0.6 * p.y, 0.6 * p.x + 0.8 * p.y);
     let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
@@ -2773,19 +2806,8 @@ fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
     if (fl == 5u) {
         // Highlands: gravel, stones about two thirds of a cell, each its
         // own shade, dark gaps between.
-        let g = q1 / 0.7;
-        let gi = floor(g);
-        var d1 = 9.0; var d2 = 9.0; var c1 = gi;
-        for (var j = -1; j <= 1; j++) {
-            for (var i = -1; i <= 1; i++) {
-                let c = gi + vec2<f32>(f32(i), f32(j));
-                let o = c + vec2<f32>(hash2(c * 1.3 + 5.1), hash2(c * 2.9 + 1.7)) * 0.8 + 0.1;
-                let d = length(g - o);
-                if (d < d1) { d2 = d1; d1 = d; c1 = c; } else if (d < d2) { d2 = d; }
-            }
-        }
-        let gap = (d2 - d1) * 0.7 * P.zoom;
-        return 0.16 * (hash2(c1 * 4.1 + 2.3) - 0.5) - 0.22 * (1.0 - smoothstep(0.6, 2.0, gap));
+        let gr = gravel(q1);
+        return 0.16 * (gr.x - 0.5) - 0.22 * gr.y;
     }
     if (fl == 6u) {
         // Caves: stone dust, a faint fine grain over broad pale and dark
@@ -3179,6 +3201,42 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             }
         }
     }
+    // Planets 4 to 8's traits (Look C, 11-24): each biome shows the slime's
+    // trail on its bare land in its own way, as the barrens' dust and the
+    // fen's slick do, all from `trail_lin` and fading as the trail does.
+    // The valley's rivers carry a scum of it in floating flecks; the
+    // jungle's undergrowth wilts yellow along it (in the plants, below);
+    // the highlands' gravel has the gaps between its stones filled with the
+    // slime's dried residue, so the stones stand outlined in amber; the
+    // caves' floor holds a phosphor in pin points where it lies; the core
+    // world's purple plants light up along it (below), the slime's home
+    // feeding its flora. Tried the same day: the gravel polished (a lift of
+    // 0.12 and pin glints of the key light), unseen at zoom 6; the caves'
+    // phosphor as a wash under the pins, which ringed the body in a green
+    // halo, the kind the sheets and cords had just lost.
+    var trk = 0.0;
+    if (P.flora >= 3u && under * m.vis > 0.01) {
+        let tr = trail_lin(x, y);
+        if (tr > DUST_TRAIL.x) {
+            // The water's share, bilinear (a per-cell test stepped the
+            // scum's edge at the deep pool's cells), so a trait fades out
+            // over a cell at the waterline rather than stopping on a stair.
+            let w = water_share(x, y).x;
+            trk = smoothstep(DUST_TRAIL.x, DUST_TRAIL.y, tr) * under * m.vis;
+            let zf = smoothstep(4.0, 8.0, P.look_zoom);
+            if (P.flora == 3u) {
+                let fl = smoothstep(0.55, 0.75, vnoise(vec2<f32>(x, y) * 1.7 + 7.0));
+                m.albedo = mix(m.albedo, SCUM_RGB, SCUM * trk * w * mix(0.5, fl, zf));
+            } else if (P.flora == 5u) {
+                let gm = gravel(vec2<f32>(0.8 * x - 0.6 * y, 0.6 * x + 0.8 * y)).y * smoothstep(3.0, 5.0, P.look_zoom);
+                m.albedo = mix(m.albedo, GRAVEL_FILL, GRAVEL_FILL_K * trk * gm * (1.0 - w));
+            } else if (P.flora == 6u) {
+                let pin = smoothstep(0.82, 0.92, vnoise(vec2<f32>(x, y) * 2.9 + 17.0));
+                m.glow += CAVE_GLOW * trk * pin * (1.0 - w);
+            }
+            if (P.flora != 3u) { trk *= 1.0 - w; }
+        }
+    }
     // Burnt ground, then the plants, at this pixel and under the slime
     // (`vis`): one B-spline of the plant fields (`plant_px`), which the
     // fire below shares.
@@ -3216,6 +3274,8 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             }
             pl = plant_layer(x, y, dp, hot);
         }
+        if (P.flora == 4u && trk > 0.0) { pl.rgb = mix(pl.rgb, vec3<f32>(dot(pl.rgb, vec3<f32>(0.3, 0.55, 0.15))) * WILT_RGB, WILT * trk); }
+        if (P.flora == 7u && trk > 0.0) { m.glow += CORE_FLORA_GLOW * pl.cover * gv * trk; }
         if (ws.x > 0.0) {
             let far = 1.0 - clamp(pl.fw / max(pl.cover, 1e-3), 0.0, 1.0);
             let veil = 1.0 - WATER_VEIL * ws.x * far;

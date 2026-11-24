@@ -1,0 +1,84 @@
+<title>Planet Trail Traits</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root {
+  --bg: #f3efe6; --panel: #fffaf0; --fg: #23201a; --muted: #6b6457;
+  --line: #d9cfbd; --accent: #c86a08; --tag: #efe2c9;
+  --lemon: #f6d44a; --coral: #ee846c; --copper: #c4764a; --gold: #f0a63f;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 Inter, system-ui, sans-serif; }
+.wrap { max-width: 1520px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2 { font-family: "Space Grotesk", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.15rem; margin: 32px 0 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lead { max-width: 70ch; color: var(--muted); margin: 8px 0 0; }
+.chip { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); flex: none; }
+figure { margin: 0 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
+figure video, figure img { display: block; width: 100%; height: auto; background: #000; }
+figcaption { padding: 10px 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.tag { font: 600 0.72rem/1 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tag); color: var(--accent); padding: 5px 8px; border-radius: 4px; }
+.note { color: var(--muted); font-size: 0.9rem; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 640px), 1fr)); gap: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; margin-top: 8px; }
+.cols > div { min-width: 0; }
+ul { padding-left: 1.2em; margin: 6px 0; } li { margin: 4px 0; max-width: 70ch; }
+code { font: 0.85em "JetBrains Mono", ui-monospace, monospace; background: var(--tag); padding: 1px 5px; border-radius: 3px; }
+.tbl { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; }
+td.num { font-variant-numeric: tabular-nums; }
+.meta { margin-top: 36px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+
+<div class="wrap">
+  <h1>Planets 4 to 8: where the slime has been</h1>
+  <p class="lead">Planets 1 to 3 each had one look only they have: the meadow's patches, the barrens' worn dust tracks, the fen's wet slick, the last two drawn from the slime's trail on bare ground. Planets 4 to 8 had none. Now each biome shows that same trail its own way, fading as the trail does, so you can read where the slime has been from the ground. Before is on the left and after on the right. It is the same game on both sides, and only the view shader differs.</p>
+
+  <h2>Planet 4, the river valley: scum on the river</h2>
+  <figure><video src="p4.mp4" autoplay loop muted playsinline aria-label="Planet 4, the river valley: scum on the river, before and after at zoom 6"></video><figcaption><span class="tag">Zoom 6</span><span class="note">Where the slime crosses the river, its trail floats on the water as flecks of yellow scum.</span></figcaption></figure>
+
+  <h2>Planet 5, the jungle: the undergrowth wilts</h2>
+  <figure><video src="p5.mp4" autoplay loop muted playsinline aria-label="Planet 5, the jungle: the undergrowth wilts, before and after at zoom 6"></video><figcaption><span class="tag">Zoom 6</span><span class="note">Plants the trail runs under turn a dry olive-yellow, so its paths through the jungle stay on the map.</span></figcaption></figure>
+
+  <h2>Planet 6, the highlands: residue between the stones</h2>
+  <figure><video src="p6.mp4" autoplay loop muted playsinline aria-label="Planet 6, the highlands: residue between the stones, before and after at zoom 6"></video><figcaption><span class="tag">Zoom 6</span><span class="note">The dried trail fills the dark gaps between the gravel, so the stones stand outlined in amber.</span></figcaption></figure>
+
+  <h2>Planet 7, the caves: phosphor specks</h2>
+  <figure><video src="p7.mp4" autoplay loop muted playsinline aria-label="Planet 7, the caves: phosphor specks, before and after at zoom 6"></video><figcaption><span class="tag">Zoom 6</span><span class="note">Its trail on the cave floor glints with faint pale-green pin points of light, not a wash.</span></figcaption></figure>
+
+  <h2>Planet 8, the core world: its flora lit</h2>
+  <figure><video src="p8.mp4" autoplay loop muted playsinline aria-label="Planet 8, the core world: its flora lit, before and after at zoom 6"></video><figcaption><span class="tag">Zoom 6</span><span class="note">The purple plants glow a little along the slime's trail, its home world feeding on it.</span></figcaption></figure>
+
+  <div class="cols">
+    <div>
+      <h2>How it works</h2>
+      <ul>
+        <li>All five read the slime's trail (<code>trail_lin</code>) on bare ground, after the barrens' and fen's own, in <code>shaded</code>: <code>SCUM*</code>, <code>WILT*</code>, <code>GRAVEL_FILL*</code>, <code>CAVE_GLOW</code>, <code>CORE_FLORA_GLOW</code>.</li>
+        <li>The water mask is <code>water_share</code>, not a per-cell test: the first cut stepped the scum's edge on the cells of a deep pool.</li>
+        <li>Under the slime's film nothing changes: the slime covers the ground as before.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Tried and dropped</h2>
+      <ul>
+        <li>The highlands' gravel polished (a lift and pin glints): unseen at zoom 6.</li>
+        <li>The caves' phosphor as a wash under the pins: it ringed the body in a green halo, the kind the sheets and cords had just lost.</li>
+        <li>The jungle's wilt as the plants' colour scaled toward yellow: dark greens only went brighter green.</li>
+        <li>The core's flora glow at nearly twice today's: a magenta halo round the body.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="meta">Filmed on software Vulkan: run seed 1, idle hand, 1280 by 800 frames cropped to 720 by 400 where the change is largest, 20 frames a quarter second apart from 1:50 (planet 4 from 0:55, before its idle squad falls). Look lane, 2026-11-24, art direction's Look C: one visual trait a planet that only it has.</p>
+</div>
