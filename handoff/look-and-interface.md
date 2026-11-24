@@ -102,8 +102,16 @@ and the first minute's coaching (`draw::Coach`, settings key `coached`).
 #785 merged. The tells (`draw::slime_tell`, `Model::tell`, a pill under
 the goal line): Sleeper and Dozer asleep share (`GpuWorld::asleep`),
 Grudge share on full scar (`scarred`), Swarmer against its last stand
-(`Game::peak`, `last_stand_at`); others show none. Next: whatever
-Direction sends.
+(`Game::peak`, `last_stand_at`); others show none. #792 merged.
+Run length (Direction 12:18Z, job 1): every run screen reads
+`run::PLANETS` (the strip takes `PLANETS.max(depth)`, the end screen,
+the mission name, Options' Start on planet) and the clocks read
+`STRETCH` through the mission's rules; filmed at 12 and 16 with a
+scratch build (`PLANETS` and the two `SKIP_*` tables in `run.rs`, which
+are sized `PLANETS - 1`): all fit (16 beads in the shop's bar, an ended
+run's list in two columns of 8). The goal line says no counts until the
+heart has members. Next: Squad's new tools in the fight and the shop,
+the 4K HUD draw counts, the Experiments and What is new check.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
