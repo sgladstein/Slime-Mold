@@ -192,5 +192,9 @@ A second slime species that fights the first; the player's own mould
   page "Crystal Bait". Code `8573ff93` (the `drain@X,Y` hand), with
   `LAB_FEED` and `set=boss_kind=2`. Wiped 2 of 6 off, 0 of 6 bait; the
   wanderer broke in 3 of 6 bait. Open: the trade itself (stage the boss).
+- 2026-11-24: **planet 9's rig** (Direction 12:08Z): `LAB_LAP2=1`
+  lets `run=SEED:9` to `:15` through (code `9115723b`);
+  `Reports/lab-lap-two-2026-11-24/raw/rig9.sh` runs the Drifter with the
+  Sporer's bursts. Lap two's sizes wait on Direction.
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.
