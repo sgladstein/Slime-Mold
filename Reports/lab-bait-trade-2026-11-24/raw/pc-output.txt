@@ -1,0 +1,21 @@
+# The 18 games on the GTX 1070 (Engine's runner, 2026-11-24 12:50Z, lab branch eaf9f35b,
+# pc-trade.ps1 with ErrorActionPreference Continue; 7.6 min wall). As relayed by Engine:
+# each game's t 150 line, shortened, and its mini-boss end line.
+p7s1_off: soldiers 1, killed 6214, harvested 0 | bossfell 1; t 117 wanderer ended Spent (1777 members of 475)
+p7s1_bait: soldiers 8, killed 2886, harvested 0 | bossfell 0; t 117 Spent (137 of 137)
+p7s1_drain: soldiers 13, killed 3046, harvested 939 | bossfell 0; t 117 Spent (48 of 48)
+p7s2_off: soldiers 8, killed 1772, harvested 0 | bossfell 0; t 117 Spent (327 of 327)
+p7s2_bait: soldiers 8, killed 1744, harvested 0 | bossfell 0; t 117 Spent (343 of 343)
+p7s2_drain: t 92 soldiers 0, killed 1081, harvested 771, ended: squad wiped | bossfell 8 (boss t 90: 449 members, 604 hurt, near 16.6, 6 alive)
+p7s3_off: soldiers 8, killed 44 | bossfell 0; t 117 Spent (638 of 638)
+p7s3_bait: soldiers 8, killed 79 | bossfell 0; t 117 Spent (642 of 642)
+p7s3_drain: soldiers 13, killed 67, harvested 939 | bossfell 0; t 117 Spent (642 of 642)
+p7s4_off: soldiers 8, killed 87 | bossfell 0; t 117 Spent (1097 of 534)
+p7s4_bait: soldiers 8, killed 617 | bossfell 0; t 69 Broken (52 of 521)
+p7s4_drain: soldiers 13, killed 324, harvested 615 | bossfell 0; t 72 Broken (61 of 524)
+p7s5_off: soldiers 8, shots 0 | bossfell 0; t 117 Spent (115 of 115)
+p7s5_bait: soldiers 8, shots 0 | bossfell 0; t 117 Spent (67 of 77)
+p7s5_drain: soldiers 13, shots 0, harvested 717 | bossfell 0; t 117 Spent (67 of 77)
+p7s6_off: soldiers 8, killed 1389 | bossfell 0; t 117 Spent (847 of 132)
+p7s6_bait: soldiers 8, killed 12 | bossfell 0; t 50 Broken (10 of 132)
+p7s6_drain: soldiers 13, killed 18, harvested 885 | bossfell 0; t 50 Broken (10 of 132)

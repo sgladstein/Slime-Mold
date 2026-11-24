@@ -63,8 +63,28 @@ play on lap two's sizes. The traits that read weakest in a pair: 13's last
 stand (not reached in 2:00) and 11's naps (it wakes at the first shot and
 stays up).
 
+## The rig for planet 9 (added 11-24, Direction 12:08Z)
+
+Ready in case the run goes to 12 or 16 planets. On the lab branch,
+`LAB_LAP2=1` lets `run=SEED:9` (to `:15`) through: planet 9 is levelgen's
+own map for depth 9, at planet 8's size (the map sizes stop at 8), with
+the Drifter as its tier and every per-planet row (raids, mini-bosses,
+surges, origin) planet 8's, since the run's tables clamp at 8. Planets 10
+to 15 take the next tiers in the same order; their second trait's keys
+come from `raw/pairs.txt`. `raw/rig9.sh OUT SEED [HAND] [pair|base] [keys]`
+runs it with the Sporer's bursts added (`pair`) or not (`base`); lap two's
+own numbers go on the end as keys (`set=raid_first=...`, `capacity=...`).
+
+Smoke test, run seed 1, `hand=greedy`, 1:00 (one seed): it runs; the
+slime starts at 333,000 to 348,000 walkers. The Drifter alone: 5 of 11
+soldiers left, 13,958 killed. With the bursts: 10 left, 6,808 killed,
+the slime 273,808 against 240,556 (likely because a struck
+walker bursts into spores that start new slime; not checked, and one
+seed). Lap two's sizes are Direction's to set; planet 9 at planet
+8's size is a big slime for a first lap-two planet.
+
 ## Raw
 
 `raw/pairs.txt` (planet, base, hand, keys), `raw/run2.sh` (the fourteen),
 `raw/run3.sh` (the retests), `raw/m2.py` (the counts from logs and dumps),
-`raw/nap.txt` (the Sleeper's keys).
+`raw/nap.txt` (the Sleeper's keys), `raw/rig9.sh` (planet 9's rig).
