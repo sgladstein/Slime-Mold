@@ -271,6 +271,17 @@ pub(super) struct Plan {
     /// a rerun of the same game lost 34 (lavapipe games vary run to run),
     /// so one pair says nothing.
     pub brace: u32,
+    /// **Storm the origin** (11-24, Direction and Enemy: the planet 7
+    /// stalls). The origin's siege waited until every crystal but the home
+    /// was dry or barren, and planet 7 has 30 crystals the squad cannot
+    /// drain in 12 minutes: on the 1070 (batch p7, main 65ac7f9b) map A's
+    /// origin stood at 2,594 of 2,594 members all game while 73,000 walkers
+    /// were killed and the slime fell to a third, and on map C the squad
+    /// stood two to three minutes with the slime at a fifth, harvesting
+    /// nothing, while the origin gathered. With `storm` over 0 the siege
+    /// also starts once the slime is down to `storm` times what it was when
+    /// the bot landed and the squad holds `STORM_ARMY` soldiers. 0: off.
+    pub storm: f32,
 }
 
 /// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
@@ -327,6 +338,7 @@ impl Default for Plan {
             broke: 20.0,
             siege: 3.0,
             brace: 0,
+            storm: 0.0,
         }
     }
 }
@@ -355,7 +367,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 47] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace"];
+    pub const DIALS: [&'static str; 48] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace", "storm"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -429,6 +441,7 @@ impl Plan {
             "broke" => self.broke = num(v)?.max(0.0),
             "siege" => self.siege = num(v)?.max(0.0),
             "brace" => self.brace = whole(v)?,
+            "storm" => self.storm = num(v)?.max(0.0),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -1425,6 +1438,11 @@ fn hold(g: &mut Game<GpuWorld>, p: &Plan, q: usize) {
     MEM.with_borrow_mut(|mm| mm.held = held);
 }
 
+/// The squad `Plan::storm` needs before it storms the origin: on planet 7
+/// map B (11-24) the bot never held more than 13, and 13 walked into an
+/// origin of 1,854 would only feed it.
+const STORM_ARMY: usize = 20;
+
 /// The siege's closest stand to the origin's middle (`hunt`).
 const SIEGE_MIN: f32 = 2.0;
 
@@ -1535,7 +1553,8 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     // lavapipe), so it drains only at `per` a soldier, as `home_ok`.
     let origin = g.stand.live.filter(|h| h.origin && g.origin.fell.is_none());
     let rest_dry = (1..cs.len()).all(|c| cs[c].1 <= DRY || barren.contains(&c));
-    if let Some(h) = origin.filter(|_| p.siege > 0.0 && rest_dry && !mopping) {
+    let storming = p.storm > 0.0 && g.alive() >= STORM_ARMY && g.mould as f32 <= p.storm * MEM.with_borrow(|mm| mm.start);
+    if let Some(h) = origin.filter(|_| p.siege > 0.0 && (rest_dry || storming) && !mopping) {
         if cs[0].1 > DRY && home_ok {
             let o = Order::Clear(cs[0].0 .0, cs[0].0 .1);
             if fresh(g, o) {
