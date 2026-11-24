@@ -1,0 +1,75 @@
+<title>Trunk Cord Edge</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root {
+  --bg: #f3efe6; --panel: #fffaf0; --fg: #23201a; --muted: #6b6457;
+  --line: #d9cfbd; --accent: #c86a08; --tag: #efe2c9;
+  --lemon: #f6d44a; --coral: #ee846c; --copper: #c4764a; --gold: #f0a63f;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 Inter, system-ui, sans-serif; }
+.wrap { max-width: 1520px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2 { font-family: "Space Grotesk", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.15rem; margin: 32px 0 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lead { max-width: 70ch; color: var(--muted); margin: 8px 0 0; }
+.chip { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); flex: none; }
+figure { margin: 0 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
+figure video, figure img { display: block; width: 100%; height: auto; background: #000; }
+figcaption { padding: 10px 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.tag { font: 600 0.72rem/1 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tag); color: var(--accent); padding: 5px 8px; border-radius: 4px; }
+.note { color: var(--muted); font-size: 0.9rem; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 640px), 1fr)); gap: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; margin-top: 8px; }
+.cols > div { min-width: 0; }
+ul { padding-left: 1.2em; margin: 6px 0; } li { margin: 4px 0; max-width: 70ch; }
+code { font: 0.85em "JetBrains Mono", ui-monospace, monospace; background: var(--tag); padding: 1px 5px; border-radius: 3px; }
+.tbl { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; }
+td.num { font-variant-numeric: tabular-nums; }
+.meta { margin-top: 36px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+
+<div class="wrap">
+  <h1>Planet 3, the Trunk: cords with an edge</h1>
+  <p class="lead">The Trunk keeps its trail longest of any slime, so off its body the trail fanned out as wide blurred plumes and every cord wore a glowing halo about 20 px wide at zoom 6. The polish review called it "a flat translucent yellow sheet". Now a cord is its trail only where the trail stands thick enough, so the cord's rim is the trail's own contour, about a cell wide, and still rises and takes the light. The faint tail past it shows on the fen's mud as the slick track the trail already leaves there. Before is on the left and after on the right. It is the same game on both sides, and only the view shader differs.</p>
+
+  <h2>A cord between bodies, zoom 6</h2>
+  <figure><video src="a6.mp4" autoplay loop muted playsinline aria-label="Planet 3 cord at zoom 6, before with a wide halo, after with a defined lit edge"></video><figcaption><span class="tag">Zoom 6</span><span class="note">The halo along the cord goes; the cord keeps its height and gloss.</span></figcaption></figure>
+
+  <h2>The trail fanning off the body, zoom 6</h2>
+  <figure><video src="b6.mp4" autoplay loop muted playsinline aria-label="Planet 3 trail plumes at zoom 6, before blurred yellow fans, after a few small lit blobs and the slick track"></video><figcaption><span class="tag">Zoom 6</span><span class="note">Blurred yellow fans before; after, only trail that stands thick is slime, the rest the mud's wet track.</span></figcaption></figure>
+
+  <h2>Zoom 12, close up</h2>
+  <figure><video src="a12.mp4" autoplay loop muted playsinline aria-label="Planet 3 cord at zoom 12"></video><figcaption><span class="tag">Zoom 12</span><span class="note">About a 40 px blur before, a few pixels after.</span></figcaption></figure>
+
+  <div class="cols">
+    <div>
+      <h2>What changed</h2>
+      <ul>
+        <li>A cord is the trail times a smooth step from 0.15 to 0.3 (<code>CORD_EDGE</code>), the same step the Drifter's sheet took this morning. Its colour (<code>CORD_VEIL</code>) and its height (<code>CORD_RISE</code>) both take it.</li>
+        <li>Only the Trunk (planet 3's slime look) changes. Cost: one smooth step a fine cell in <code>prep</code>.</li>
+        <li>It bends the "no thresholded edge" ruling a little: the edge is a smooth step about a cell wide, on the simulation's own trail.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Not done</h2>
+      <ul>
+        <li>The review also asked for a darker core. The lit rim and the cord's own rise read as a tube already, so I left the core as it is.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="meta">Filmed on software Vulkan: planet 3, run seed 1, idle hand, 1280 by 800 frames cropped to 720 by 400, 20 frames a quarter second apart from 1:00. Look lane, 2026-11-24, polish review finding 1 (its Trunk half).</p>
+</div>

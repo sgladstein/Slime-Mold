@@ -1755,6 +1755,14 @@ const THREAD_RGB: vec3<f32> = vec3<f32>(226.0, 112.0, 40.0);
 // over the whole body, the first cut smoothed it into a glossy sheet.
 const CORD_VEIL: f32 = 0.3;
 const CORD_RISE: f32 = 0.5;
+// Since 11-24 (polish review finding 1: "planet 3's Trunk trail is a flat
+// translucent yellow sheet"), a cord is the trail where it stands over a
+// smooth step from 0.15 to 0.3, the Drifter's `SHEET_EDGE`: kept 0.95, the
+// Trunk's trail fanned off the body as wide blurred plumes and every cord
+// wore a halo about 20 px wide at zoom 6. Now the cord's rim is its trail's
+// contour, about a cell wide, and the faint tail past it shows on the
+// ground as the trail does (the fen's slick track, `SLICK_*`).
+const CORD_EDGE: vec2<f32> = vec2<f32>(0.15, 0.3);
 // The Swarmer's swell (`SlimeLook::Swell`, 11-20): by the alarm's flush
 // (`flush_at`, 0-1) its height grows by up to `SWELL_GAIN` times, and its
 // walkers there stand up by `SWELL_RISE` more, so an alarmed loose edge is
@@ -2369,7 +2377,8 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (P.slime_look == 1u) { th0 = max(th0, THREAD_VEIL * trail); }
     // The Trunk's cords (`SlimeLook::Cords`): off the body only (`off`).
     let off = 1.0 - smoothstep(0.25, 0.55, wide);
-    if (P.slime_look == 3u) { th0 = max(th0, CORD_VEIL * trail * off); }
+    let cord = trail * smoothstep(CORD_EDGE.x, CORD_EDGE.y, trail) * off;
+    if (P.slime_look == 3u) { th0 = max(th0, CORD_VEIL * cord); }
     // Condensed mould keeps tight, raised edges (art director, 11-14: it
     // should read tougher at a glance): where it has condensed the
     // thickness is pushed through a steep curve, so the body is a full,
@@ -2391,7 +2400,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The old looks (8 paint, 9 foil) as they were: every walker its own
     // dome, the frontier's "bubble wrap".
     if (P.slime_look == 8u || P.slime_look == 9u) { th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share); }
-    if (P.slime_look == 3u) { th_h = max(th_h, CORD_RISE * trail * trail * off); }
+    if (P.slime_look == 3u) { th_h = max(th_h, CORD_RISE * trail * cord); }
     if (P.slime_look == 2u) { th_h = th_h + SHEET_RISE * sheet * sheet; }
     // A mini-boss's body (2026-11-16): its members' share of the walkers
     // round the cell (a member counts once in `n` and once in `lc`), and the

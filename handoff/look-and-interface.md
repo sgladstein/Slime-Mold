@@ -2,6 +2,12 @@
 
 ## State (2026-11-20)
 
+**11-24, Look B, the Trunk's cords, polish finding 1's tail:** a cord is
+the trail over `CORD_EDGE` (0.15-0.3), so planet 3's blurred plumes and
+20 px halo are gone. Page in `Reports/trunk-cord-edge-2026-11-24/`.
+Finding 1's "round blurred grey discs" in planet 1's body not looked at
+yet.
+
 **11-24, Look B, planets 4 to 8 read apart at zoom 6:** filmed at rest
 (seed 1, idle, heart at 1:00 and 2:00), planets 4, 5 and 7 were one gold.
 `species_hue` in `view.wgsl` gives the Swarmer lemon, the Sporer coral and
