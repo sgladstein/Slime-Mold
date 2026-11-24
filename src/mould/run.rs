@@ -99,6 +99,10 @@ pub struct Level {
 /// 2026-11-14: the owner's guess is 20 minutes to over an hour a run.
 pub const PLANETS: u32 = 8;
 
+/// The Tools group's unlocks that are devices (`Run::has_device`): the
+/// squad mode's device slot sets them off (`Game::device`).
+pub const DEVICES: [&str; 4] = ["blast", "mine", "cord", "gas"];
+
 /// Walkers grow this much a planet (a fifth more each), times the
 /// planet's area over today's map (`MAP_W` x `MAP_H`).
 pub const WALKERS_PER_DEPTH: f32 = 0.2;
@@ -1156,6 +1160,9 @@ pub enum Pick {
     NewLoadout,
     /// New turrets use the loadout shown (`Run::turret_loadout`).
     TurretsUse,
+    /// The devices carry the loadout shown's cards (`Run::device_loadout`,
+    /// gun step E).
+    DevicesUse,
     /// In the field (`Run::field`), the squad the panel was opened for uses
     /// the loadout shown (`Run::field_squad`).
     SquadUses,
@@ -1201,6 +1208,10 @@ pub struct Run {
     /// The loadout new turrets use (owner 11-19: "a default loadout for
     /// turrets", then each turret changed one by one in the game).
     pub turret_loadout: usize,
+    /// The loadout whose cards the devices carry (gun step E, 2026-11-24;
+    /// `Run::device_cards`): None, none, until the shop's "Devices use
+    /// this" picks one.
+    pub device_loadout: Option<usize>,
     /// The shop is the loadout panel opened on a planet (H): only the guns
     /// and cards owned, nothing for sale, the game paused under it.
     pub field: bool,
@@ -1247,7 +1258,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, field: false, field_squad: None, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -1524,6 +1535,31 @@ impl Run {
             return Vec::new();
         }
         self.turret_deck_of(self.turret_loadout)
+    }
+
+    /// Whether the run owns a device (the Tools group's unlocks).
+    pub fn has_device(&self) -> bool {
+        DEVICES.iter().any(|k| self.has(k))
+    }
+
+    /// The devices' rack (gun step E, 2026-11-24): what their loadout's
+    /// cards fit against, 2 slots and a budget of 4, as a turret's with no
+    /// Turret power. First guesses; E3's rolled bodies replace it.
+    pub fn device_rack(&self) -> Gun {
+        Gun { slots: 2, budget: 4, ..first_gun() }
+    }
+
+    /// The devices' cards (`Game::device_deck`), in firing order: the
+    /// device loadout's, as many as fit the device rack; empty with no
+    /// device owned or no loadout picked.
+    pub fn device_cards(&self) -> Vec<Card> {
+        let Some(i) = self.device_loadout.filter(|_| self.has_device()) else { return Vec::new() };
+        let rack = self.device_rack();
+        let mut cards = self.cards_of(i);
+        while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
+            cards.pop();
+        }
+        cards
     }
 
     /// Every card owned: in the bag, shown, and in the other loadouts.
@@ -1961,6 +1997,9 @@ impl Run {
                 if i == self.turret_loadout && self.has("turret") {
                     users.push("new turrets use it".to_string());
                 }
+                if self.device_loadout == Some(i) && self.has_device() {
+                    users.push("devices carry its cards".to_string());
+                }
                 if let Some((q, _)) = self.field_squad.filter(|f| f.1 == i) {
                     users.push(format!("Squad {} uses it", q + 1));
                 }
@@ -1974,6 +2013,9 @@ impl Run {
             }
             if self.has("turret") && self.turret_loadout != self.editing {
                 rows.push(bar("Turrets use this".into(), format!("New turrets use {shown}; each turret can be changed in the game."), false, true, Pick::TurretsUse));
+            }
+            if self.has_device() && self.device_loadout != Some(self.editing) {
+                rows.push(bar("Devices use this".into(), format!("Every device you set off also casts the first {} of {shown}'s cards where it goes off, as a hit there would.", self.device_rack().slots), false, true, Pick::DevicesUse));
             }
             if let Some((q, l)) = self.field_squad.filter(|f| f.1 != self.editing) {
                 rows.push(bar(format!("Squad {} uses this", q + 1), format!("Squad {} fires {shown} (now {}).", q + 1, self.loadout_name(l)), false, true, Pick::SquadUses));
@@ -2112,6 +2154,13 @@ impl Run {
                 }
                 done
             }
+            Pick::DevicesUse => {
+                let done = self.has_device() && self.device_loadout != Some(self.editing);
+                if done {
+                    self.device_loadout = Some(self.editing);
+                }
+                done
+            }
             Pick::SquadUses => match self.field_squad {
                 Some((q, l)) if l != self.editing => {
                     self.field_squad = Some((q, self.editing));
@@ -2188,6 +2237,7 @@ impl Run {
         put("loadouts", self.loadouts.iter().map(|l| std::iter::once(l.gun.map_or("-".into(), |g| g.to_string())).chain(l.cards.iter().map(|c| c.word())).collect::<Vec<_>>().join(",")).collect::<Vec<_>>().join(" "));
         put("editing", self.editing.to_string());
         put("turret_loadout", self.turret_loadout.to_string());
+        put("device_loadout", self.device_loadout.map_or("-".into(), |i| i.to_string()));
         put("stars", self.stars.iter().map(|s| s.to_string()).collect::<Vec<_>>().join(" "));
         put("over", flag(self.over).into());
         put("beaten", flag(self.beaten).into());
@@ -2242,6 +2292,7 @@ impl Run {
         let last = r.loadouts.len() - 1;
         r.editing = num("editing").map_or(0, |v| (v as usize).min(last));
         r.turret_loadout = num("turret_loadout").map_or(r.turret_loadout, |v| v as usize).min(last);
+        r.device_loadout = num("device_loadout").map(|v| (v as usize).min(last));
         r.stars = list("stars").into_iter().filter_map(|v| v.parse().ok()).collect();
         r.over = flag("over");
         r.beaten = flag("beaten");
@@ -3129,5 +3180,27 @@ mod tests {
         let t = r.turret_cards();
         assert!(t.len() < 4 && rounds::fit_gun(t.clone(), &r.turret_rack()).is_ok(), "{t:?} on a rack of {}", r.turret_rack().slots);
         assert_eq!(r.squad_gun(1).kind, first_gun().kind, "loadout 2 has no gun: the rifle");
+    }
+
+    /// **Devices carry a loadout's cards** (gun step E, 2026-11-24): no
+    /// "Devices use this" before a device is owned; once one is, the pick
+    /// gives the devices the shown loadout's cards, as many as the device
+    /// rack's 2 slots and budget of 4 take, and the run's save keeps it.
+    #[test]
+    fn devices_carry_the_loadout_they_use() {
+        let mut r = Run::new(1);
+        assert!(r.edit(1));
+        r.cards = vec![(Card::Torch, true), (Card::Wide, true), (Card::Gas, true)];
+        assert!(!r.shop().iter().any(|w| w.pick == Pick::DevicesUse) && !r.pick(Pick::DevicesUse), "no device owned");
+        assert!(r.device_cards().is_empty());
+        r.owned[ITEMS.iter().position(|i| i.key == "blast").unwrap()] = 1;
+        assert!(r.shop().iter().any(|w| w.pick == Pick::DevicesUse));
+        assert!(r.pick(Pick::DevicesUse) && r.device_loadout == Some(1));
+        assert!(!r.shop().iter().any(|w| w.pick == Pick::DevicesUse), "loadout 2 is already the devices'");
+        let d = r.device_cards();
+        assert!(!d.is_empty() && d.len() <= 2 && rounds::fit_gun(d.clone(), &r.device_rack()).is_ok(), "{d:?}");
+        assert_eq!(d[0], Card::Torch);
+        assert!(r.shop().iter().any(|w| w.pick == Pick::Edit(1) && w.about.contains("devices carry its cards")));
+        assert_eq!(Run::from_save(&r.save_text()).map(|f| (f.device_loadout, f.device_cards())), Ok((Some(1), d)));
     }
 }

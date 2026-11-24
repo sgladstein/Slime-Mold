@@ -71,6 +71,11 @@ pub struct KitRules {
     /// Det cord: blasts of `cord_r` every `cord_every` dish cells.
     pub cord_r: f32,
     pub cord_every: f32,
+    /// **Det cord's cards** (gun step E, 2026-11-24): a cord sets the
+    /// devices' cards (`Game::device_deck`) off at both ends and every
+    /// this many dish cells between, not at each of its blasts: at every
+    /// 2-cell blast a 48-cell cord would cast 25 times.
+    pub cord_cards: f32,
     /// Price a dish cell of cord.
     pub cord_price: f32,
     pub cord_max: f32,
@@ -193,6 +198,7 @@ impl Default for KitRules {
             mine_price: 80.0,
             cord_r: 2.5,
             cord_every: 2.0,
+            cord_cards: 8.0,
             cord_price: 3.0,
             cord_max: 48.0,
             germ_r: 5.0,
@@ -469,6 +475,7 @@ impl Kit {
         match t {
             Tool::Blast(p) => {
                 self.killed[i] += self.bang(g, p, r.blast_r, r.crater_r);
+                Self::carry(g, p);
             }
             Tool::Mine(p) => {
                 self.mines.push(p);
@@ -482,20 +489,44 @@ impl Kit {
                     let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
                     self.killed[i] += self.bang(g, p, r.cord_r, r.cord_r);
                 }
+                let m = (len / (r.cord_cards * s)).ceil().max(1.0) as usize;
+                for j in 0..=m {
+                    let f = j as f32 / m as f32;
+                    Self::carry(g, (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f));
+                }
             }
             Tool::Germ(p) => {
                 g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.germ_r, germ: true, ..Burst::default() }, &br);
+                Self::carry(g, p);
             }
             Tool::Gas(p) => {
                 let steps = (r.gas_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
                 self.gassed += g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.gas_r, gas: steps, ..Burst::default() }, &br).gassed as usize;
+                Self::carry(g, p);
             }
             Tool::Smell(k, m) => g.soldiers[k].smell = m,
             Tool::Provoke(p) | Tool::Still(p) => {
                 let (kind, secs) = if matches!(t, Tool::Provoke(_)) { (super::big::MIND_DEAF, r.provoke_secs) } else { (super::big::MIND_STILL, r.still_secs) };
                 let mind_steps = (secs * self.fine_tps(g)).round().clamp(1.0, u16::MAX as f32) as u16;
                 g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.mind_r, mind: kind as u8, ..Burst::default() }, &BurstRules { mind_steps, ..br });
+                Self::carry(g, p);
             }
+        }
+    }
+
+    /// **A device carries gun cards** (gun step E, 2026-11-24; the owner's
+    /// 11-16 ruling, "a body holding one to three cards in the gun's
+    /// language"): where a device goes off (`p`, fine cells) every cast of
+    /// the devices' cards (`Game::device_deck`) goes off too, as a hit
+    /// there would cast it (`Rounds::cast_cards_at`), with the same harm to
+    /// the squad: a Torch on a blast lights the ground it lands on, and
+    /// burns soldiers who stand in it as a Tinder brush does. A mine
+    /// carries them to where the slime sets it off.
+    fn carry<W: World>(g: &mut Game<W>, p: (f32, f32)) {
+        let Some(d) = g.device_deck else { return };
+        let cards = d.cards();
+        if !cards.is_empty() {
+            g.with_rounds(|rd, g| rd.cast_cards_at(g, p, &cards));
         }
     }
 
@@ -563,6 +594,7 @@ impl Kit {
             self.mine_near.remove(m);
             let p = self.mines.remove(m);
             self.killed[1] += self.bang(g, p, r.blast_r, r.crater_r);
+            Self::carry(g, p);
         }
         fired.len()
     }

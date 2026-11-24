@@ -18,6 +18,12 @@ use crate::mould::kit::{KitRules, Tool};
 use crate::mould::rounds::RoundRules;
 use crate::mould::run::Run;
 
+/// The squad id `Cmd::Load` loads the devices' cards with
+/// (`Game::device_deck`, gun step E, 2026-11-24; `load 254 army` takes them
+/// off). Squads are numbered under `SQUADS_MAX` (16) and the turrets are
+/// `TURRET_DECK` (255).
+pub const DEVICE_DECK: u8 = 254;
+
 impl<W: World> Game<W> {
     /// After each finished step: the kit restocks every living soldier at
     /// the larder (`carry_full` to `carry_max`, the rest to `carry_each`)
@@ -113,7 +119,7 @@ impl<W: World> Game<W> {
     /// tool prices (`Run::kit`), the army's round of the cards it bought
     /// with its budget (`Run::squad_cards`, `Run::budget`; the rest of
     /// `rr` as given, for `set=` keys) and its turret deck
-    /// (`Run::turret_cards`). The gun itself is the caller's to arm
+    /// (`Run::turret_cards`) and devices' cards (`Run::device_cards`). The gun itself is the caller's to arm
     /// (`Cmd::Arm`): a run lands with `Run::armed`, the range with
     /// `Run::carried`, and a `gun=` key overrides both.
     pub fn kit_out(&mut self, r: &Run, rr: RoundRules) {
@@ -125,6 +131,10 @@ impl<W: World> Game<W> {
         if !t.is_empty() {
             self.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&t))));
         }
+        let d = r.device_cards();
+        if !d.is_empty() {
+            self.apply(Cmd::Load(DEVICE_DECK, Some(Deck::new(&d))));
+        }
     }
 }
 
@@ -132,6 +142,48 @@ impl<W: World> Game<W> {
 mod tests {
     use super::*;
     use crate::mould::rounds::parse;
+
+    /// **Devices carry the devices' cards** (gun step E, 2026-11-24): on
+    /// jungle, a squad's thrown blast with a Torch loaded on the devices
+    /// (`Cmd::Load(DEVICE_DECK, ..)`) casts the Torch where it lands and
+    /// lights more of the ground than the bare blast's crater does; a det
+    /// cord 24 dish cells long casts it at both ends and every 8 cells
+    /// (`KitRules::cord_cards`), 4 times; with no deck, nothing is cast.
+    #[test]
+    fn a_device_casts_the_devices_cards_where_it_goes_off() {
+        use crate::mould::big::BigDish;
+        use crate::mould::kit::Tool;
+        use crate::mould::map::Map;
+        use crate::mould::plants::pack;
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = vec![pack(3, 1.0); m.ground.len()];
+        let play = |deck: Option<&str>, cord: bool| {
+            let mut rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: 8, start_bank: 1e9, ..Rules::default() };
+            rules.mass = Rules::mass_for(500, 1);
+            let mut g = Game::new(BigDish::with_map(race_params(3, 1, 500), &m), rules, 3);
+            while g.alive() < 6 && g.buy() {}
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Join(k, 0));
+            }
+            g.step();
+            if let Some(d) = deck {
+                assert!(g.apply(Cmd::Load(DEVICE_DECK, Some(Deck::new(&parse(d).unwrap())))));
+            }
+            let s = g.world.scale();
+            let (x, y) = g.middle(0).unwrap();
+            let t = if cord { Tool::Cord((x + 4.0 * s, y), (x + 28.0 * s, y)) } else { Tool::Blast((x + 12.0 * s, y)) };
+            let lit0 = g.world.burning;
+            assert!(g.device(0, t), "the device went off");
+            (g.rounds.cast.iter().sum::<u32>(), g.world.burning - lit0)
+        };
+        let (bare, torch, cord) = (play(None, false), play(Some("torch"), false), play(Some("torch"), true));
+        eprintln!("cast and lit: bare blast {bare:?}, torch blast {torch:?}, torch cord {cord:?}");
+        assert_eq!(bare.0, 0, "no deck, no cast");
+        assert_eq!(torch.0, 1, "the blast cast the torch once");
+        assert!(torch.1 > bare.1, "the torch lit more than the crater alone: {} against {}", torch.1, bare.1);
+        assert_eq!(cord.0, 4, "a 24-cell cord casts at both ends and every 8 cells");
+    }
 
     /// A game with no window around it restocks its soldiers' tools and
     /// casts its gun's cards on its hits (job 6, 11-20: before, only the

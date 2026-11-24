@@ -2,7 +2,7 @@
 title: Squad mode
 kind: design
 status: open
-updated: 2026-11-23
+updated: 2026-11-24
 sources:
   - Reports/auto-fire-2026-11-18/README.md
   - Reports/bug-sweep-2026-11-14.md
@@ -178,8 +178,16 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   locks (#660 hid it; the owner read that as Tools lost, 2026-11-22). Before, the squad mode
   kept the RTS round's carry rule: a soldier took a tool only within 6 cells
   of the undrawn landing spot, so each threw one a planet and a bought one
-  none. Devices are commands, so they replay. Still to come from step E:
-  bodies holding gun cards, rolled stats, autocast.
+  none. Devices are commands, so they replay. **Devices carry cards**
+  (step E2, 2026-11-24): the shop's "Devices use this" gives the devices a
+  loadout (`Run::device_loadout`); its first cards that fit the device rack
+  (2 slots, budget 4, `Run::device_rack`) load as `Game::device_deck`
+  (`Cmd::Load(DEVICE_DECK, ..)`), and every blast, mine, sleep gas, germ,
+  provoke and still then casts them where it goes off (`Kit::carry`,
+  `Rounds::cast_cards_at`), det cord at both ends and every
+  `KitRules::cord_cards` (8) cells. They harm the squad as a hit there
+  would (Direction, 11-24: a Torch blast near the squad burns it). Still to
+  come from step E: rolled bodies sold in the shop, autocast.
 - **Healing is an order** (#330): tell a squad to heal (Heal on the card, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order

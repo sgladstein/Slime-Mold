@@ -1785,6 +1785,9 @@ impl App {
             v.push(("turrets", rounds::name(&r.turret_cards())));
             let owned: Vec<String> = slime_mould::mould::run::ITEMS.iter().zip(r.owned).filter(|(_, n)| *n > 0).map(|(i, n)| format!("{}{n}", i.key)).collect();
             v.push(("bought", if owned.is_empty() { "none".to_string() } else { owned.join("+") }));
+            // After `bought`, so readers that take the first three keys
+            // by place still do (gun step E, 2026-11-24).
+            v.push(("devices", rounds::name(&r.device_cards())));
         }
         v
     }
