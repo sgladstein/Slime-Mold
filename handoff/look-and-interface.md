@@ -95,7 +95,13 @@ Squad's device bodies (#772) land, then the rest of Look D.
 kind and shows its rolls as bars (`menu::body_bars`; `hand_card` draws a
 Tools row's own bars). The Campaign page's note draws the mission's map
 (`Entry::glance`, `shop::draw_glance`); mission 8 is "Two slimes".
-Next: whatever Direction sends.
+The planet's introduction (Direction 09:57Z): the landing card
+(`ui::Intro`, `INTRO_SECS` in draw.rs; read from `run::does_to_you(tier)`,
+whose lines Enemy writes), the shop pane's slime block (`Shop::slime`),
+and the first minute's coaching (`draw::Coach`, settings key `coached`).
+Next: one HUD tell per trait beside the goal line, once Enemy's
+`GpuWorld::asleep()` and `scarred()` land; the Dozer (planet 8) gets its
+line from its tier.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

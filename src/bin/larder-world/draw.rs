@@ -2262,6 +2262,14 @@ impl App {
             .collect();
         let throw = ghost.and_then(|(id, at, from)| self.throw_ghost(g, id, at, from));
         m.hint = self.star_hint.show.clone();
+        m.coach = self.coach.show.clone();
+        // The landing card: whole for `INTRO_SECS` of game time (it holds
+        // while paused), then fading over `INTRO_FADE`.
+        m.intro = self.intro.as_ref().and_then(|(i, at)| {
+            let since = g.time() - at;
+            let a = ((INTRO_SECS + INTRO_FADE - since) / INTRO_FADE).clamp(0.0, 1.0);
+            (a > 0.0).then(|| slime_mould::world::ui::Intro { alpha: a, ..i.clone() })
+        });
         (m.ghost_ok, m.ghost_note) = match ghost {
             _ if throw.is_some() => {
                 let (_, ok, note) = throw.as_ref().unwrap();
@@ -3258,6 +3266,10 @@ impl App {
     }
 }
 
+/// Game seconds the landing card (`ui::Intro`) stays whole, and fades.
+const INTRO_SECS: f32 = 9.0;
+const INTRO_FADE: f32 = 1.5;
+
 /// The goal line while a planet has its origin (Milestone 2, `origin.rs`;
 /// Look and interface, 2026-11-24): what to kill and how much is left of
 /// it, then the die-back's seconds once it breaks, in place of the
@@ -3275,4 +3287,65 @@ fn origin_line(g: &Game<GpuWorld>, line: String) -> String {
         }
     };
     format!("{warn}{goal}")
+}
+
+/// **The first minute** (Direction 11-24, the planet's introduction, job
+/// 3): on a run's first planet, before it has been freed, three short
+/// steps in a panel over the command bar, each until it is done or its
+/// time is up: how to move, how to fight, what to kill. In the window it
+/// shows until a run finishes it once (`settings` key `coached`); the
+/// films and tests show it on every first planet and never write.
+#[derive(Default)]
+pub(super) struct Coach {
+    /// The planet it is watching (run seed, game time at landing) and
+    /// where the squad stood then.
+    at: Option<(u64, f32)>,
+    from: Option<(f32, f32)>,
+    step: usize,
+    /// Game time the step began.
+    since: f32,
+    pub(super) done: bool,
+    /// What the HUD shows: the step's words, "1 of 3", its opacity.
+    pub(super) show: Option<(String, String, f32)>,
+}
+
+/// The steps' words, and the most game seconds each stays.
+const COACH: [(&str, f32); 3] = [
+    ("Right click the ground to send your squad there, or steer it with W, A, S and D", 25.0),
+    ("Your soldiers shoot slime in reach by themselves. Hold the left button and all of them fire where you point", 14.0),
+    ("Find the slime's heart on its home crystal (Space looks at it) and kill it, or every last bit of slime, to free the planet", 16.0),
+];
+
+/// Game seconds after landing before the first step, so the landing card
+/// is read first.
+const COACH_AFTER: f32 = 4.0;
+
+impl Coach {
+    /// `want`: this planet is one to coach (a run's planet 1, not freed).
+    pub(super) fn update(&mut self, g: &Game<GpuWorld>, run: Option<u64>, want: bool) {
+        self.show = None;
+        let (Some(seed), true, false) = (run, want, self.done) else { return };
+        let t = g.time();
+        let mid = g.active.and_then(|q| g.middle(q));
+        if self.at.map(|a| a.0) != Some(seed) || self.at.is_some_and(|a| t < a.1) {
+            *self = Coach { at: Some((seed, t)), from: mid, since: t + COACH_AFTER, ..Coach::default() };
+        }
+        if t < self.since {
+            return;
+        }
+        // Step 1 is done once the squad has gone 6 dish cells.
+        let moved = matches!((self.from, mid), (Some(a), Some(b)) if ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt() > 6.0 * g.world.scale());
+        let age = t - self.since;
+        let (words, most) = COACH[self.step];
+        if age >= most || (self.step == 0 && moved && age > 2.0) {
+            self.step += 1;
+            self.since = t + 1.0;
+            if self.step == COACH.len() {
+                self.done = true;
+            }
+            return;
+        }
+        let a = (age / 0.5).min(1.0) * ((most - age) / 1.0).clamp(0.0, 1.0);
+        self.show = Some((words.to_string(), format!("{} of {}", self.step + 1, COACH.len()), a));
+    }
 }

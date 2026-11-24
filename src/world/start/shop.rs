@@ -1026,6 +1026,19 @@ impl StartMenu {
             let label = if shop.range { "THE RANGE" } else { "THE PLANET AHEAD" };
             c.text(Weight::SemiBold, 12.5 * s, (r.x + p, y), Align::Left, label, ACCENT);
             y += 22.0 * s;
+            // The planet's slime and its one line, as its landing card
+            // will say them (Direction 11-24, the planet's introduction).
+            if let Some((name, line)) = &shop.slime {
+                let b = Rect::new(r.x + p, y - 6.0 * s, iw, 0.0);
+                let lines = c.wrap(Weight::Medium, 14.5 * s, iw - 26.0 * s, line).len() as f32;
+                let h = 40.0 * s + lines * 20.0 * s;
+                let b = Rect::new(b.x, b.y, b.w, h);
+                c.rrect(b, 8.0 * s, [255, 196, 72, 18]);
+                c.rrect(Rect::new(b.x, b.y + 6.0 * s, 3.0 * s, h - 12.0 * s), 1.5 * s, WARN);
+                c.text_fit(Weight::SemiBold, 17.0 * s, (b.x + 14.0 * s, b.y + 24.0 * s), Align::Left, name, iw - 26.0 * s, WARN);
+                para(c, Weight::Medium, 14.5 * s, (b.x + 14.0 * s, b.y + 46.0 * s), iw - 26.0 * s, 20.0 * s, line, TEXT, limit);
+                y += h + 10.0 * s;
+            }
             for l in &shop.lines {
                 y += para(c, Weight::Medium, 14.5 * s, (r.x + p, y), iw, 21.0 * s, l, [201, 210, 219, 255], limit) + 6.0 * s;
             }

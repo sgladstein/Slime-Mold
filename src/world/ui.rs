@@ -610,6 +610,16 @@ pub struct SquadFact {
     pub about: String,
 }
 
+/// The landing card (`Model::intro`): "Planet 4 of 8, Nezanus" over the
+/// slime's name and its one line, at `alpha`.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Intro {
+    pub kicker: String,
+    pub title: String,
+    pub line: String,
+    pub alpha: f32,
+}
+
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Model {
@@ -644,6 +654,13 @@ pub struct Model {
     /// reach, so it never covers it) and its opacity. The first Starfall or
     /// core of a run says how to collect it (owner, 2026-11-22).
     pub hint: Option<(String, (f32, f32), f32, f32)>,
+    /// The planet's introduction at landing (Direction 11-24: each planet
+    /// does one nameable thing to you, and nothing on screen named it): a
+    /// card under the goal line naming the slime and its one line, fading.
+    pub intro: Option<Intro>,
+    /// The first minute's coaching (the window's `Coach`): the step's
+    /// words, "1 of 3" and its opacity, in a panel over the command bar.
+    pub coach: Option<(String, String, f32)>,
     /// Where the ghost snaps to instead of the cursor, and its radius in
     /// world cells (a pump onto its crystal's middle, owner 2026-11-15:
     /// "it should automatically center itself on the crystal").
@@ -1634,6 +1651,12 @@ impl Hud {
         if m.end.is_none() {
             self.alerts_draw(c, world, s);
         }
+        if let (Some(i), None) = (&m.intro, &m.end) {
+            self.intro_card(i, c, s);
+        }
+        if let (Some((words, step, a)), None) = (&m.coach, &m.end) {
+            self.coach_panel(words, step, *a, c, s);
+        }
         if let (Some((text, at, gap, a)), None) = (&m.hint, &m.end) {
             let p = cam.to_screen(*at);
             self.world_hint(text, (p.0, p.1 + gap * cam.zoom), *a, c, s);
@@ -1851,6 +1874,55 @@ impl Hud {
             self.glass(r, r.h / 2.0, c, s);
             c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
             c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
+        }
+    }
+
+    /// The planet's introduction (`Model::intro`): a card centred under
+    /// the goal line, the planet small and muted, the slime's name large in
+    /// the warning's amber, its line under it; the whole at `i.alpha`.
+    /// Clicks go through it to the map (it is never in the way to play).
+    fn intro_card(&mut self, i: &Intro, c: &mut Canvas, s: f32) {
+        let a = i.alpha.clamp(0.0, 1.0);
+        if a <= 0.0 {
+            return;
+        }
+        let sw = c.screen.0 as f32;
+        let w = (560.0 * s).min(sw - 32.0 * s);
+        let tw = w - 48.0 * s;
+        let lines = c.wrap(Weight::Medium, 17.0 * s, tw, &i.line);
+        let h = 96.0 * s + lines.len() as f32 * 24.0 * s;
+        let r = Rect::new((sw - w) / 2.0, self.below + 18.0 * s, w, h);
+        c.shadow(r, 14.0 * s, 24.0 * s, 6.0 * s, alpha(SHADOW, a));
+        c.panel(r, 14.0 * s, alpha(PANEL_TOP, a), alpha(PANEL_BOTTOM, a), 1.0, alpha(EDGE, a));
+        c.rrect(Rect::new(r.x + 24.0 * s, r.y, w - 48.0 * s, 3.0 * s), 1.5 * s, alpha(WARN, 0.9 * a));
+        let cx = r.x + w / 2.0;
+        c.text_fit(Weight::Medium, 13.5 * s, (cx, r.y + 32.0 * s), Align::Centre, &i.kicker, tw, alpha(MUTED, a));
+        c.text_fit(Weight::SemiBold, 26.0 * s, (cx, r.y + 66.0 * s), Align::Centre, &i.title, tw, alpha(WARN, a));
+        for (k, l) in lines.iter().enumerate() {
+            c.text(Weight::Medium, 17.0 * s, (cx, r.y + 96.0 * s + k as f32 * 24.0 * s), Align::Centre, l, alpha(TEXT, a));
+        }
+    }
+
+    /// The first minute's step (`Model::coach`): a panel centred over the
+    /// command bar, the step's count in the accent at its left.
+    fn coach_panel(&mut self, words: &str, step: &str, a: f32, c: &mut Canvas, s: f32) {
+        let a = a.clamp(0.0, 1.0);
+        if a <= 0.0 {
+            return;
+        }
+        let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+        let foot = if self.bottom > 0.0 { self.bottom } else { sh };
+        let px = 16.0 * s;
+        let lead = c.atlas.measure(Weight::SemiBold, 13.0 * s, step) + 34.0 * s;
+        let w = (c.atlas.measure(Weight::Medium, px, words) + lead + 22.0 * s).min(sw - 32.0 * s);
+        let lines = c.wrap(Weight::Medium, px, w - lead - 22.0 * s, words);
+        let h = 22.0 * s + lines.len() as f32 * 22.0 * s;
+        let r = Rect::new((sw - w) / 2.0, foot - h - 16.0 * s, w, h);
+        c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, alpha(SHADOW, a));
+        c.panel(r, 10.0 * s, alpha(PANEL_TOP, a), alpha(PANEL_BOTTOM, a), 1.0, alpha(ACCENT, 0.6 * a));
+        c.text(Weight::SemiBold, 13.0 * s, (r.x + 16.0 * s, r.y + 26.0 * s), Align::Left, step, alpha(ACCENT, a));
+        for (k, l) in lines.iter().enumerate() {
+            c.text(Weight::Medium, px, (r.x + lead, r.y + 27.0 * s + k as f32 * 22.0 * s), Align::Left, l, alpha(TEXT, a));
         }
     }
 
