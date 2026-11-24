@@ -906,9 +906,26 @@ pub fn gun_only(c: Card) -> bool {
 /// - The Trunk: a Torch. Shot, it sets into amber walls that take three
 ///   hits each and that fire burns (the Enemy lane, 11-17: two torch shots
 ///   cut a 1,212-cell wall to 679 in 2 s).
+///
+/// A counter for every slime (Direction 11-24, Milestone 2; run seed 1,
+/// greedy squad, paired films, `Reports/slime-counters-2026-11-24/`):
+/// - The Swarmer and the Dozer: a Bomb. Its ring throws the charge back:
+///   planet 4, 25 soldiers at 1:30 where plain shots were wiped at 0:44
+///   (seed 2: 21 against 11); planet 8, 13 at 1:00 against wiped at 0:48.
+///   A blast was wiped too (0:40).
+/// - The Sporer: a Germ (frail 6, no resistance): its slime at 0:40 was
+///   18,714 against 91,854 with plain shots, three seeds alike.
+/// - The Sleeper: a Flare. The germ does nothing to its sleeping crust
+///   (`tiers.rs`); a flare wakes it and a germ then takes it: 10 soldiers
+///   at 1:00 against wiped at 0:38. The germ comes first, on planet 5.
+/// - Not the Grudge: fire burns its scar off, but the scar takes over a
+///   minute to grow, and no film yet shows the Torch answer it.
 pub fn bring_shell(tier: Tier) -> Option<Shell> {
     match tier {
         Tier::Sprawler | Tier::Trunk => Some(Shell::Torch),
+        Tier::Swarmer | Tier::Dozer => Some(Shell::Bomb),
+        Tier::Sporer => Some(Shell::Germ),
+        Tier::Sleeper => Some(Shell::Flare),
         _ => None,
     }
 }
@@ -3433,8 +3450,15 @@ mod tests {
             shatter += usize::from(shells.contains(&Shell::Shatter));
         }
         assert!(torch_first < 12 && shatter > 0, "torch first in {torch_first} of 40, shatter in {shatter}");
-        // The other rungs ask for no bullet yet.
-        assert!(LADDER.iter().all(|&t| matches!(t, Tier::Sprawler | Tier::Trunk) || bring_shell(t).is_none()));
+        // Later planets ask for their counter (11-24), each a shell their
+        // shop sells; the Drifter (no shop before it) and the Grudge ask
+        // for none.
+        for (depth, tier) in (1..).zip(LADDER) {
+            match bring_shell(tier) {
+                Some(s) => assert!(depth > 1 && shells_at(depth).contains(&s), "{tier:?}: {s:?} not sold at planet {depth}"),
+                None => assert!(matches!(tier, Tier::Drifter | Tier::Grudge), "{tier:?}"),
+            }
+        }
     }
 
     #[test]

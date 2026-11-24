@@ -414,6 +414,23 @@ with no germ), and its two guns are two kinds, neither the kind carried
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
 
+**A counter for every slime** (Direction 11-24, Milestone 2; paired
+films, run seed 1, greedy squad,
+[counters](../../Reports/slime-counters-2026-11-24/README.md)). Each
+planet's trait has a kit answer that shows within a minute: the Drifter, a
+turret beside the pump (191 of 200 at 1:30 against worn away); the
+Sprawler, Tinder and a Torch (no thread on a standing squad); the Trunk, a
+Torch (10,588 burned by 1:00); the Swarmer and the Dozer, a Bomb (25
+soldiers at 1:30 against wiped at 0:44; 13 at 1:00 against wiped at 0:48);
+the Sporer, a Germ (slime 18,714 at 0:40 against 91,854); the Sleeper, a
+Flare then a Germ (10 at 1:00 against wiped at 0:38). Since then the
+Swarmer and the Dozer ask for a Bomb, the Sporer a Germ and the Sleeper a
+Flare (`bring_shell`), so their shop puts it first until you own one, and
+the run bot buys it. The Grudge asks for none: fire burns its scar, but the
+scar takes over a minute to grow and no film yet shows the answer. Gas
+answers no slime that wakes on alarm (planets 4 to 8): a shot's alarm
+wakes it at once.
+
 ## Planet twists
 
 Since 2026-11-24 (Direction's job for Milestone 2's test 2, a run he wants to replay; the Lab's prototype, `Reports/lab-twists-2026-11-24/`, landing with Direction's docs), a run rolls a twist on about one planet in three from planet 2, never on two planets in a row (`run::PlanetTwist`, rolled from the run's seed and the planet, so a saved run keeps its rolls; 34.6% of planets 2 to 8 over 2,000 seeds, half each kind, every wind way). A twist is a change to the slime's own walk (`larder_world/twist.rs`, GPU only, `World::set_twist`):
