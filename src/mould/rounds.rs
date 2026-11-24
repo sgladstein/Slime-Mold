@@ -757,6 +757,17 @@ pub struct RoundRules {
     /// `set=` keys.
     pub torch_r: f32,
     pub torch_light: f32,
+    /// **A device's fire brings its own brush** (gun step E3, Direction
+    /// 11-24 07:01Z: a Torch Grenade at the squad's own feet should burn
+    /// it as a Tinder brush does, the owner's Noita rule): a fire a body's
+    /// cards light (`Rounds::cast_device_at`) first plants its disc to
+    /// this, as `trail_fuel` does, with no `trail_fuel_gap` round the
+    /// squad. Why: the trodden firebreak (`Rules::trample_to`) had cut
+    /// the grass round a held squad to 0.1, so a Torch Grenade on its own
+    /// middle cost 8 soldiers 7 health in 15 s, against 28 untrodden
+    /// (llvmpipe, flats, one seed). 0: a device's Torch lights only what
+    /// grows. `set=` key.
+    pub device_brush: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -814,6 +825,7 @@ impl Default for RoundRules {
             flare_every: 0.2,
             torch_r: 6.0,
             torch_light: 1.0,
+            device_brush: 1.0,
             budget: 10,
             // The germ round's sick pay a sixth of the toolkit's upkeep
             // (10 against 60; 2026-11-17, the game designer's call, 05:40Z:
@@ -878,6 +890,7 @@ impl RoundRules {
             "flare_every" => &mut self.flare_every,
             "torch_r" => &mut self.torch_r,
             "torch_light" => &mut self.torch_light,
+            "device_brush" => &mut self.device_brush,
             "trail_fuel" => &mut self.trail_fuel,
             "trail_fuel_gap" => &mut self.trail_fuel_gap,
             // The germ round's own contagion (2026-11-17), in its kit so
@@ -1363,6 +1376,9 @@ pub struct Rounds {
     /// The casts going off now are a turret's (`after_step`), so `fire`
     /// marks their bursts in `queued_turret`.
     by_turret: bool,
+    /// The casts going off now are a device's (`cast_device_at`): each
+    /// fire they light brings this much brush (`RoundRules::device_brush`).
+    brush: f32,
     /// Batches run (`flush`) and the bursts in them.
     pub batches: u32,
     pub batched: u32,
@@ -1699,6 +1715,15 @@ impl Rounds {
         self.cast_all(g, &casts(cards), at);
     }
 
+    /// A device's cards going off at `at` (`Kit::carry`): as
+    /// `cast_cards_at`, but a fire they light brings its own brush, as a
+    /// Tinder line does (`RoundRules::device_brush`).
+    pub fn cast_device_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32), cards: &[Card]) {
+        self.brush = self.rules.device_brush;
+        self.cast_all(g, &casts(cards), at);
+        self.brush = 0.0;
+    }
+
     fn cast_all<W: World>(&mut self, g: &mut Game<W>, cs: &[Cast], at: (f32, f32)) {
         for c in cs {
             if let Some(sl) = slot(c.payload) {
@@ -1923,7 +1948,12 @@ impl Rounds {
         let t = g.world.ticks();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
         let k = self.rules.burst_rules(fine);
-        let bs = if c.payload == Card::Plain { plain_bursts(c, at, self.strike, &self.rules, s) } else { bursts(c, at, &self.rules, s, fine) };
+        let mut bs = if c.payload == Card::Plain { plain_bursts(c, at, self.strike, &self.rules, s) } else { bursts(c, at, &self.rules, s, fine) };
+        if self.brush > 0.0 {
+            for b in bs.iter_mut().filter(|b| b.light > 0.0) {
+                b.fuel = b.fuel.max(self.brush);
+            }
+        }
         if self.auto && self.reaches_squad(g, c, &bs) {
             self.held_own += 1;
             return;

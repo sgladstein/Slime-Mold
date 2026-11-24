@@ -3798,6 +3798,59 @@ mod tests {
         assert!(hold_on < 0.5 * hold_off, "the trodden ground spared the held squad: {hold_on} against {hold_off}");
     }
 
+    /// **A Torch Grenade burns the squad that throws it at its own feet**
+    /// (gun step E3; Direction 11-24 07:01Z, the owner's Noita rule: a
+    /// very strong card is also dangerous): on grass, a held squad with
+    /// the trodden firebreak on, a Grenade carrying a Torch thrown on its
+    /// own middle costs it health to fire, one thrown 16 cells off costs
+    /// it little, and Fireproof's first level halves the harm at its feet
+    /// (llvmpipe: 78 of 800 health at its feet, 20 at 8 cells, none from
+    /// 12; 39 with Fireproof; trodden or not the same, as the Torch brings
+    /// its brush, `RoundRules::device_brush`; before it, 7 trodden and 28
+    /// untrodden at its feet).
+    #[test]
+    fn a_torch_grenade_at_the_squads_feet_burns_it_and_one_thrown_off_does_not() {
+        use crate::mould::kit::Tool;
+        use crate::mould::larder_world::DEVICE_DECKS;
+        use crate::mould::plants::pack;
+        use crate::mould::rounds::{parse, Deck};
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 200);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = vec![pack(1, 1.0); m.ground.len()];
+        let play = |off: f32, share: f32| -> f32 {
+            let w = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+            let mut rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: 8, start_bank: 1e9, fireway: false, ..Rules::default() };
+            rules.mass = Rules::mass_for(walkers, scale);
+            rules.fire_hurt *= share;
+            let mut g = Game::new(w, rules, seed);
+            while g.alive() < 8 && g.buy() {}
+            for k in 0..g.soldiers.len() {
+                g.apply(Cmd::Join(k, 0));
+            }
+            assert!(g.apply(Cmd::Load(DEVICE_DECKS, Some(Deck::new(&parse("torch").unwrap())))));
+            while g.time() < 3.0 {
+                g.step();
+            }
+            let s = g.world.scale();
+            let (x, y) = g.middle(0).unwrap();
+            assert!(g.device(0, Tool::Blast((x + off * s, y))), "the grenade went off");
+            let (hp0, bit0) = (g.soldiers.iter().map(|q| q.hp.max(0.0)).sum::<f32>(), g.bitten_hp);
+            while g.time() < 18.0 && g.end.is_none() {
+                g.step();
+            }
+            let hp1 = g.soldiers.iter().map(|q| q.hp.max(0.0)).sum::<f32>();
+            hp0 - hp1 - (g.bitten_hp - bit0)
+        };
+        let (feet, off, proof) = (play(0.0, 1.0), play(16.0, 1.0), play(0.0, crate::mould::run::fireproof_share(1)));
+        eprintln!("a torch grenade's fire harm: at the squad's feet {feet:.0}, 16 cells off {off:.0}, at its feet with Fireproof 1 {proof:.0}");
+        assert!(feet > 40.0, "a torch at its own feet burned the squad: {feet}");
+        assert!(off < 0.25 * feet, "a torch thrown off spared it: {off} against {feet}");
+        assert!(proof < 0.75 * feet, "Fireproof cut the harm: {proof} against {feet}");
+    }
+
     /// **A torch lights the plants on the GPU as on the CPU** (the gun
     /// cards' element family, `rounds::Card::Torch`, 2026-11-17): the
     /// plant twin's map, the torch's burst from its card at 10 s on the

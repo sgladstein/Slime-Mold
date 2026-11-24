@@ -1787,7 +1787,8 @@ impl App {
             v.push(("bought", if owned.is_empty() { "none".to_string() } else { owned.join("+") }));
             // After `bought`, so readers that take the first three keys
             // by place still do (gun step E, 2026-11-24).
-            v.push(("devices", rounds::name(&r.device_cards())));
+            let bodies: Vec<String> = r.bodies.iter().map(|b| format!("{}:{}", b.kind.name().to_lowercase(), rounds::name(&r.body_cards(b.kind)))).collect();
+            v.push(("devices", if bodies.is_empty() { "none".to_string() } else { bodies.join(" ") }));
         }
         v
     }

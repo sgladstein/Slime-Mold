@@ -326,8 +326,8 @@ card text) and 08:30 (the guns a draw of the game).
   thinnest-vein aim waits on the same shapes. Step E's first part, one
   device slot a squad on a cooldown, is built (owner 2026-11-21 06:55Z;
   today's tools, free, each with its own cooldown, `Cmd::Device`, see
-  [squad mode](squad-mode.md)); its bodies holding cards, rolled stats and
-  autocast are next. Douse (water) is held: the view's wet ground is
+  [squad mode](squad-mode.md)); its bodies holding cards with rolled stats
+  (Grenade, Mine, Line, Canister, 11-24) are built, autocast is next. Douse (water) is held: the view's wet ground is
   refreshed only with walls and crystals.
 - Readers: multicast gas and shatter in one shot is a kill as wide as the
   gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own

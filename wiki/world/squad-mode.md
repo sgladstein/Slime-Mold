@@ -180,14 +180,30 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   of the undrawn landing spot, so each threw one a planet and a bought one
   none. Devices are commands, so they replay. **Devices carry cards**
   (step E2, 2026-11-24): the shop's "Devices use this" gives the devices a
-  loadout (`Run::device_loadout`); its first cards that fit the device rack
-  (2 slots, budget 4, `Run::device_rack`) load as `Game::device_deck`
-  (`Cmd::Load(DEVICE_DECK, ..)`), and every blast, mine, sleep gas, germ,
-  provoke and still then casts them where it goes off (`Kit::carry`,
-  `Rounds::cast_cards_at`), det cord at both ends and every
-  `KitRules::cord_cards` (8) cells. They harm the squad as a hit there
-  would (Direction, 11-24: a Torch blast near the squad burns it). Still to
-  come from step E: rolled bodies sold in the shop, autocast.
+  default loadout (`Run::device_loadout`), and every device then casts its
+  body's cards where it goes off (`Kit::carry`, `Rounds::cast_device_at`),
+  det cord at both ends and every `KitRules::cord_cards` (8) cells. They
+  harm the squad as a hit there would, and a fire they light brings its
+  own brush (`RoundRules::device_brush`), so the trodden ground round a
+  held squad does not spare it from its own Torch (Direction, 11-24).
+  **Bodies** (step E3, Direction 11-24 07:01Z, option A; the owner's 11-19
+  loadout ruling, one loadout per gun or body with a default): the Tools
+  unlocks (Blasts, Mines, Det cord, Sleep gas) are gone, sold instead as
+  four bodies (`bodies.rs`): Grenade (blast), Mine, Line (det cord) and
+  Canister (sleep gas, then its cards every second for
+  `KitRules::canister_secs`, 4). Each rolls its reach (16 to 32 cells), its
+  cooldown as a share of its tool's (0.7 to 1.4), and a card rack of 1 to 3
+  slots and a budget of 2 to 6, priced 120 to 260 by its rolls; planet 1's
+  shop sells a plain Grenade (reach 24, the tool's cooldown, 2 slots and
+  budget 4, the old unlock's 150), and from planet 2 two rolled bodies of
+  two kinds sit beside the guns (`Run::body_offers`, `BODY_OFFER`). A run
+  owns one body of each kind; a bought one replaces it. A loadout (not the
+  first) can hold a body in place of a gun, and its cards go on that body
+  alone, fitted to the body's rack (`Run::body_cards`, loaded as
+  `DEVICE_DECKS` + the tool); a body no loadout holds carries the default
+  loadout's. A saved run that owned an unlock loads with its plain body.
+  Prices and rolls are first guesses, Direction's to retune. Still to come
+  from step E: autocast.
 - **Healing is an order** (#330): tell a squad to heal (Heal on the card, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order

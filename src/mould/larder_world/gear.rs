@@ -18,11 +18,14 @@ use crate::mould::kit::{KitRules, Tool};
 use crate::mould::rounds::RoundRules;
 use crate::mould::run::Run;
 
-/// The squad id `Cmd::Load` loads the devices' cards with
-/// (`Game::device_deck`, gun step E, 2026-11-24; `load 254 army` takes them
-/// off). Squads are numbered under `SQUADS_MAX` (16) and the turrets are
-/// `TURRET_DECK` (255).
+/// The squad id `Cmd::Load` loads every device's cards with
+/// (`Game::device_decks`, gun step E, 2026-11-24; `load 254 army` takes
+/// them off). Squads are numbered under `SQUADS_MAX` (16) and the turrets
+/// are `TURRET_DECK` (255).
 pub const DEVICE_DECK: u8 = 254;
+/// The squad id of tool 0's cards (`kit::TOOLS` order): tool `t`'s are
+/// `DEVICE_DECKS + t`, 246 to 253 (gun step E3, one deck a body).
+pub const DEVICE_DECKS: u8 = 246;
 
 impl<W: World> Game<W> {
     /// After each finished step: the kit restocks every living soldier at
@@ -119,7 +122,7 @@ impl<W: World> Game<W> {
     /// tool prices (`Run::kit`), the army's round of the cards it bought
     /// with its budget (`Run::squad_cards`, `Run::budget`; the rest of
     /// `rr` as given, for `set=` keys) and its turret deck
-    /// (`Run::turret_cards`) and devices' cards (`Run::device_cards`). The gun itself is the caller's to arm
+    /// (`Run::turret_cards`) and each body's cards (`Run::body_cards`). The gun itself is the caller's to arm
     /// (`Cmd::Arm`): a run lands with `Run::armed`, the range with
     /// `Run::carried`, and a `gun=` key overrides both.
     pub fn kit_out(&mut self, r: &Run, rr: RoundRules) {
@@ -131,9 +134,11 @@ impl<W: World> Game<W> {
         if !t.is_empty() {
             self.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&t))));
         }
-        let d = r.device_cards();
-        if !d.is_empty() {
-            self.apply(Cmd::Load(DEVICE_DECK, Some(Deck::new(&d))));
+        for kind in crate::mould::bodies::BodyKind::ALL {
+            let d = r.body_cards(kind);
+            if !d.is_empty() {
+                self.apply(Cmd::Load(DEVICE_DECKS + kind.tool() as u8, Some(Deck::new(&d))));
+            }
         }
     }
 }
@@ -183,6 +188,36 @@ mod tests {
         assert_eq!(torch.0, 1, "the blast cast the torch once");
         assert!(torch.1 > bare.1, "the torch lit more than the crater alone: {} against {}", torch.1, bare.1);
         assert_eq!(cord.0, 4, "a 24-cell cord casts at both ends and every 8 cells");
+    }
+
+    /// **A Canister puffs its cards for `canister_secs`** (gun step E3):
+    /// sleep gas set off with a Torch on the Canister's own deck
+    /// (`DEVICE_DECKS + 4`) casts it at once and every second after, 4
+    /// times in all, and nothing after; the Grenade's deck stays bare.
+    #[test]
+    fn a_canister_casts_its_cards_every_second_for_its_time() {
+        use crate::mould::big::BigDish;
+        use crate::mould::kit::Tool;
+        let rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: 8, start_bank: 1e9, ..Rules::default() };
+        let mut g = Game::new(BigDish::new(race_params(3, 1, 500)), rules, 3);
+        while g.alive() < 6 && g.buy() {}
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Join(k, 0));
+        }
+        g.step();
+        assert!(g.apply(Cmd::Load(DEVICE_DECKS + 4, Some(Deck::new(&parse("torch").unwrap())))));
+        let (x, y) = g.middle(0).unwrap();
+        assert!(!g.device(0, Tool::Blast((x, y))) || g.rounds.cast.iter().sum::<u32>() == 0, "the Grenade carries no cards");
+        let t0 = g.time();
+        let s = g.world.scale();
+        g.squads.iter_mut().for_each(|q| q.device_at = 0);
+        assert!(g.device(0, Tool::Gas((x + 8.0 * s, y))), "the canister went off");
+        let cast = |g: &Game<BigDish>| g.rounds.cast.iter().sum::<u32>();
+        assert_eq!(cast(&g), 1, "it casts at once");
+        while g.time() < t0 + 6.0 {
+            g.step();
+        }
+        assert_eq!(cast(&g), 4, "and every second for 4 s");
     }
 
     /// A game with no window around it restocks its soldiers' tools and

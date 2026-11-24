@@ -57,6 +57,7 @@
 //! picker; a dish opens on a star from the one before.
 
 pub mod big;
+pub mod bodies;
 pub mod campaign;
 pub mod dps;
 pub mod fever;
