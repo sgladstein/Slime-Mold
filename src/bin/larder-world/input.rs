@@ -383,16 +383,23 @@ impl App {
                 }
                 HudEvent::Menu(MenuItem::Resume) => self.paused = self.menu_paused,
                 HudEvent::Menu(MenuItem::Restart) => {
+                    self.drop_planet();
                     self.start()?;
                     self.paused = false;
                 }
-                HudEvent::Menu(MenuItem::MainMenu) => self.back_to_menu()?,
+                HudEvent::Menu(MenuItem::MainMenu) => {
+                    // Mid-planet in a run: the planet as it stands, for
+                    // "Back to the run" (save and resume A, `resume.rs`).
+                    self.save_planet();
+                    self.back_to_menu()?
+                }
                 HudEvent::Menu(MenuItem::Continue) => self.carry_on()?,
                 // The pause menu's Experiments page (Look and interface,
                 // 2026-11-19; `experiments.rs`).
                 HudEvent::Experiment { row, choice } => self.pick_experiment(row, choice)?,
                 HudEvent::Menu(MenuItem::Quit) => {
                     self.save_replay();
+                    self.save_planet();
                     return Ok(true);
                 }
                 HudEvent::Command { id } => match id {

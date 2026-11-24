@@ -34,6 +34,7 @@ pub const BIN: usize = 4;
 
 /// What fills the bar.
 #[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Goal {
     /// Soldiers alive reach `n` while soldiers harvest at least `crystals`
     /// different crystals (mission 1: harvest and hire). The crystals were
@@ -95,6 +96,7 @@ pub enum Goal {
 /// A bonus that earns the third star (never a time: the design review,
 /// 04:42Z, so the climax stays open).
 #[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Bonus {
     /// Soldiers lost over the mission at most this many.
     LoseAtMost(usize),
@@ -103,6 +105,7 @@ pub enum Bonus {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Mission {
     pub name: String,
     /// The goal sentence on screen.
@@ -293,6 +296,7 @@ pub const PHASES: [f32; 3] = [120.0, 360.0, 660.0];
 
 /// Why a mission ended.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Cause {
     /// The bar filled.
     Goal,
@@ -311,6 +315,7 @@ pub enum Cause {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Verdict {
     pub cause: Cause,
     /// Game seconds.
@@ -336,6 +341,7 @@ pub enum Dead {
 
 /// Follows one mission over one game.
 #[derive(Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Tracker {
     pub mission: Mission,
     /// The bar this second (None: the world can't show it yet).
@@ -381,6 +387,7 @@ pub struct Tracker {
 }
 
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct Snapshot {
     harvested: f32,
     killed: u32,

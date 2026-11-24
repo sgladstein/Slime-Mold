@@ -930,7 +930,13 @@ impl App {
                     m.show(Page::Main);
                 }
             }
-            StartEvent::Run if self.run.is_some() => self.show_shop(),
+            // A planet left mid-game carries on (save and resume A,
+            // `resume.rs`); else the shop, then the next planet.
+            StartEvent::Run if self.run.is_some() => {
+                if !self.resume_planet()? {
+                    self.show_shop();
+                }
+            }
             StartEvent::Run | StartEvent::NextLevel => {
                 let Some((base, _)) = self.base.clone() else { return Ok(false) };
                 let fresh = self.run.is_none();
@@ -958,6 +964,8 @@ impl App {
                 self.run = Some(r);
                 self.round = self.args.round;
                 self.parked = Some(menu);
+                // A planet landing fresh: any planet saved before is old.
+                self.drop_planet();
                 self.start()?;
                 self.paused = false;
                 // As it lands: closed mid-planet, it lands here again.
@@ -1230,10 +1238,14 @@ impl App {
         let Ok(text) = std::fs::read_to_string(&p) else { return };
         let note = match Run::from_save(&text) {
             Ok(r) if !r.over => {
-                let note = format!("Your run is saved on planet {} ({}): Back to the run carries on", r.depth, r.line());
+                let (depth, line) = (r.depth, r.line());
                 self.run_saved = text;
                 self.run = Some(r);
-                note
+                if self.planet_saved().is_some() {
+                    format!("Your run is saved mid-planet {depth} ({line}): Back to the run carries on where you left")
+                } else {
+                    format!("Your run is saved on planet {depth} ({line}): Back to the run carries on")
+                }
             }
             Ok(_) => {
                 let _ = std::fs::remove_file(&p);
@@ -1265,6 +1277,7 @@ impl App {
         // the loadout panel's copy is the window's until it closes.
         let live = self.run.as_ref().filter(|r| !r.over && !r.range && !r.field).or(self.args.run.as_ref().filter(|r| !r.over && self.run.is_some()));
         let Some(r) = live else {
+            self.drop_planet();
             if !self.run_saved.is_empty() || p.exists() {
                 if let Err(e) = std::fs::remove_file(&p).or_else(|e| if e.kind() == std::io::ErrorKind::NotFound { Ok(()) } else { Err(e) }) {
                     eprintln!("larder-world: the finished run's save was not removed ({}: {e})", p.display());

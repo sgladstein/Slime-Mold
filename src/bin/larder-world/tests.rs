@@ -1218,6 +1218,73 @@ fn start_on_planet_skips_to_its_shop_with_the_average_pay() {
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(5));
 }
 
+/// **A planet left mid-game carries on** (save and resume A, Milestone 2,
+/// Direction 2026-11-24; needs a GPU, the cloud's software Vulkan runs
+/// it): ten seconds into planet 1 of a run, the pause menu's Main menu
+/// writes `planet.sav`; a new window's "Back to the run" lands the planet
+/// and reads it, paused, at the same game time with the same soldiers,
+/// slime and bank, saving the same bytes again, and the save file is
+/// gone. A save of another planet is dropped and the shop opens.
+#[test]
+fn a_planet_left_mid_game_carries_on() {
+    use slime_mould::world::start::StartEvent;
+    let Some((device, queue)) = gpu() else { return };
+    let dir = std::env::temp_dir().join(format!("larder-planet-save-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let base = run_base();
+    let window = |run: Option<Run>| {
+        let mut a = base.clone();
+        a.run = run;
+        let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
+        app.base = Some((base.clone(), true));
+        app.run_file = Some(dir.join("run.txt"));
+        app
+    };
+    let mut app = window(Some(Run::new(1)));
+    app.run = app.args.run.clone();
+    app.parked = Some(start_menu(&base));
+    while app.game.as_ref().unwrap().time() < 10.0 {
+        app.step(1.0 / 15.0);
+    }
+    assert!(app.planet_open());
+    app.save_run();
+    // The game as it was left (the main menu then plays its own
+    // backdrop), and its save to compare with later.
+    let tag = app.planet_tag().unwrap();
+    // The save finishes a step still running first; so does this.
+    app.game.as_mut().unwrap().finish_step();
+    let was = app.game.as_ref().unwrap();
+    let (t, mould, alive, bank) = (was.time(), was.mould, was.alive(), was.bank);
+    app.hud_event(HudEvent::Menu(MenuItem::MainMenu)).unwrap();
+    let planet = dir.join("planet.sav");
+    assert!(planet.exists(), "Main menu mid-planet saves the planet");
+    let left = bincode::deserialize::<(String, Vec<u8>, Option<Tracker>, u64)>(&std::fs::read(&planet).unwrap()).unwrap().1;
+    // A new window: the run's note says the planet carries on.
+    let mut back = window(None);
+    back.menu = Some(start_menu(&base));
+    back.load_run();
+    assert!(back.menu.as_ref().unwrap().notice.as_deref().is_some_and(|n| n.starts_with("Your run is saved mid-planet 1")), "{:?}", back.menu.as_ref().unwrap().notice);
+    back.menu_event(StartEvent::Run).unwrap();
+    assert!(!back.in_menu() && back.paused, "Back to the run lands the planet, paused");
+    let g = back.game.as_ref().unwrap();
+    assert_eq!((g.time(), g.mould, g.alive(), g.bank), (t, mould, alive, bank));
+    assert!(!planet.exists(), "a save is read once");
+    // The loaded game saves the bytes it was read from.
+    assert!(back.game.as_mut().unwrap().save(&tag).unwrap() == left, "the resumed game saves the same bytes");
+    // Another planet's save (planet 2 of the run) relands fresh: no
+    // resume, the shop opens as before.
+    back.save_planet();
+    assert!(planet.exists());
+    let mut other = window(None);
+    other.menu = Some(start_menu(&base));
+    other.load_run();
+    other.run.as_mut().unwrap().depth = 2;
+    other.menu_event(StartEvent::Run).unwrap();
+    assert!(other.in_menu() && !planet.exists(), "a save of another planet is dropped");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn an_unreadable_run_save_is_moved_aside() {
     let dir = std::env::temp_dir().join(format!("larder-run-bad-{}", std::process::id()));

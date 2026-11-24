@@ -41,13 +41,23 @@ fn get<T: serde::de::DeserializeOwned>(r: &mut &[u8]) -> Result<T, String> {
     bincode::deserialize_from(r).map_err(|e| format!("load: {e}"))
 }
 
+/// A save's build and tag, read without building a world (the window
+/// checks a save before landing its planet).
+pub fn peek(bytes: &[u8]) -> Result<(String, String), String> {
+    let mut r = bytes;
+    let head: String = get(&mut r)?;
+    if head != HEAD {
+        return Err(format!("load: not a planet save ({head:?})"));
+    }
+    Ok((get(&mut r)?, get(&mut r)?))
+}
+
 impl<W: World + 'static> Game<W> {
-    /// The whole game, between steps: `tag` names the planet (the window's
+    /// The whole game (a step still running is finished): `tag` names the planet (the window's
     /// planet and run), checked by `from_save`.
     pub fn save(&mut self, tag: &str) -> Result<Vec<u8>, String> {
-        if self.flight.is_some() {
-            return Err("save: a step is still running".into());
-        }
+        // A step the world is still running is finished first.
+        self.finish_step();
         // A walking field still building on its thread is waited for: a
         // thread can't be written.
         self.raids.settle_ways();

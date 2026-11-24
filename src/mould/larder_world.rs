@@ -78,7 +78,7 @@ mod doors;
 mod bulwark;
 mod fireway;
 mod gear;
-mod snap;
+pub mod snap;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;

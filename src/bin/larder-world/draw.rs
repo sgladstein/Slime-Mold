@@ -2375,11 +2375,12 @@ impl App {
             ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
         ] };
         m.main_menu = self.base.is_some();
-        // Save and resume C (2026-11-24, Direction): the run is saved as it
-        // landed and a planet relands fresh, so the pause menu says what a
-        // quit keeps. Only where the run is saved (the window's run.txt).
-        m.pause_note = if self.args.run.is_some() && self.run_file.is_some() {
-            vec!["Quit mid-planet: you restart this planet".into(), "with your run intact.".into()]
+        // Save and resume (2026-11-24, Direction): the pause menu says what
+        // a quit keeps. Since A (`resume.rs`) the planet is saved as it
+        // stands; step C's line said it relanded fresh. Only where the run
+        // is saved (the window's run.txt).
+        m.pause_note = if self.planet_open() && self.run_file.is_some() {
+            vec!["Quit mid-planet: Back to the run".into(), "carries on from here.".into()]
         } else {
             Vec::new()
         };
