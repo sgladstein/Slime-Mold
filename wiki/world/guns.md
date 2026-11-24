@@ -328,6 +328,13 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Open
 
+- **Which bullet a card changes** (owner 11-24 14:59Z: show what a modifier
+  works on; maybe apply modifiers onto a bullet instead of a slot; does it
+  wrap like Noita?). It does not wrap: leftovers go on the plain bullet.
+  Six looks mocked ([page](../../Reports/card-links-2026-11-24/README.md)):
+  brackets, fused shots, sockets on bullets (a rules change), hover trace,
+  a "fires" line, shot colours. Squad and arsenal recommends fused shots
+  with the hover trace; the owner's pick is pending through Direction.
 - **The gun-system review** (owner 11-16 02:34Z: "five different categories
   of bullets and two of them are just two different sized explosions"): the
   run's bullets hold three real effects and the four sets only lean numbers;

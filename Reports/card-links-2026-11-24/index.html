@@ -1,0 +1,370 @@
+<title>Which Bullet a Card Changes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one column of option panels; each panel is a slice of the game's
+   loadout screen at its own colours, with the one change it proposes. */
+:root {
+  --floor: #0b0e12;
+  --panel: #12171d;
+  --face-a: #262d36;
+  --face-b: #1d232b;
+  --edge: rgba(255,255,255,.12);
+  --text: #e6ebf0;
+  --muted: #8b96a3;
+  --faint: #56606c;
+  --accent: #5fb3ff;
+  --energy: #7dd3fc;
+  --mod: #b69cff;
+  --carry: #f2c14e;
+  --blast: #f28a3a;
+  --needle: #f2c14e;
+  --gas: #9bd04a;
+  --always: #3fd0bf;
+  --shot1: #5fb3ff;
+  --shot2: #ff7eb6;
+  --shot3: #a9b4c0;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--floor); color: var(--text); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1060px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: 30px; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lead { color: var(--muted); }
+.answer { background: var(--panel); border: 1px solid var(--edge); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; }
+.answer b { color: var(--text); }
+.tag { justify-self: start; width: fit-content; display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--edge); color: var(--muted); }
+.tag.rule { color: var(--carry); border-color: color-mix(in srgb, var(--carry) 50%, transparent); }
+.tag.look { color: var(--always); border-color: color-mix(in srgb, var(--always) 50%, transparent); }
+.tag.pick { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+.opt { display: grid; gap: 12px; }
+.opt-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.opt-head .letter { font-family: var(--display); font-weight: 600; color: var(--accent); font-size: 20px; }
+.stage { background: var(--panel); border: 1px solid var(--edge); border-radius: 12px; padding: 18px 18px 16px; overflow-x: auto; }
+.inner { min-width: 900px; position: relative; }
+.rowline { display: flex; align-items: flex-start; gap: 8px; }
+.label { width: 40px; flex: none; font-weight: 600; font-size: 13px; color: var(--muted); padding-top: 16px; }
+.note { font-size: 13.5px; color: var(--muted); }
+.pros { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; font-size: 14px; }
+.pros div { min-width: 0; }
+.pros b { font-weight: 600; }
+@media (max-width: 640px) { .pros { grid-template-columns: 1fr; } }
+
+/* A card as the game draws it in the gun row. */
+.card { width: 112px; height: 50px; flex: none; border-radius: 8px; background: linear-gradient(var(--face-a), var(--face-b)); border: 1px solid var(--edge); position: relative; box-sizing: border-box; transition: opacity .15s, box-shadow .15s; }
+.card::before { content: ""; position: absolute; left: 5px; right: 5px; top: 3px; height: 3px; border-radius: 2px; background: var(--t); opacity: .9; }
+.card .n { position: absolute; left: 7px; top: 8px; font-size: 11.5px; font-weight: 600; color: rgba(230,235,240,.55); }
+.card .nm { position: absolute; left: 22px; top: 8px; right: 6px; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .pips { position: absolute; left: 22px; bottom: 7px; display: flex; gap: 2.5px; }
+.card .pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--energy); opacity: .85; }
+.card .ic { position: absolute; left: 6px; bottom: 6px; width: 12px; height: 12px; border-radius: 3px; background: var(--t); opacity: .9; }
+.card.empty { background: rgba(255,255,255,.025); border-color: rgba(255,255,255,.12); }
+.card.empty::before { display: none; }
+.card.empty .nm { color: var(--faint); font-weight: 500; text-align: center; left: 0; right: 0; top: 17px; }
+.card.ghost { background: transparent; border: 1px dashed rgba(255,255,255,.22); }
+.card.ghost .nm { color: var(--muted); }
+.card.small { width: 78px; }
+
+/* A: brackets under the row */
+.brk { position: relative; height: 62px; margin-left: 48px; }
+.brk .b { position: absolute; top: 6px; height: 10px; border: 2px solid var(--c); border-top: none; border-radius: 0 0 6px 6px; }
+.brk .b span { position: absolute; top: 12px; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 600; color: var(--c); white-space: nowrap; }
+.brk .all { position: absolute; top: 50px; left: 0; height: 0; border-top: 2px dashed var(--always); }
+.brk .all span { position: absolute; right: 0; top: -9px; background: var(--panel); padding-left: 8px; font-size: 12px; font-weight: 600; color: var(--always); }
+
+/* B: fused shots */
+.shot { display: flex; gap: 0; border-radius: 10px; padding: 3px; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 8%, transparent); position: relative; }
+.shot > .card { border-radius: 0; border-left-color: transparent; }
+.shot > .card:first-child { border-radius: 7px 0 0 7px; border-left-color: var(--edge); }
+.shot > .card:last-child { border-radius: 0 7px 7px 0; }
+.shot > .card:only-child { border-radius: 7px; }
+.shot .cap { position: absolute; top: -10px; left: 10px; background: var(--panel); padding: 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--c); }
+.shots { display: flex; gap: 18px; align-items: flex-start; padding-top: 10px; }
+.link { align-self: center; font-size: 12px; color: var(--carry); font-weight: 600; margin: 0 -10px; z-index: 1; }
+
+/* C: bullets with modifiers on them */
+.bullet { width: 168px; height: 74px; }
+.bullet .nm { top: 10px; }
+.bullet .chips { position: absolute; left: 22px; right: 6px; bottom: 8px; display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); white-space: nowrap; }
+.sock { font-size: 11px; padding: 1px 7px; border-radius: 99px; color: var(--faint); border: 1px dashed rgba(255,255,255,.2); }
+.bullet .pips { left: auto; right: 8px; top: 13px; bottom: auto; }
+.carryline { align-self: center; color: var(--carry); font-size: 12px; font-weight: 600; text-align: center; width: 58px; flex: none; line-height: 1.2; }
+.gunstrip { display: flex; gap: 8px; align-items: center; margin: 12px 0 0 48px; padding: 8px 10px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--always) 40%, transparent); background: color-mix(in srgb, var(--always) 6%, transparent); width: fit-content; }
+.gunstrip .k { font-size: 12px; font-weight: 600; color: var(--always); margin-right: 4px; }
+
+/* D: hover */
+.hover .card.dim { opacity: .28; }
+.hover .card.lit { box-shadow: 0 0 0 2px var(--accent); }
+.hover .card.src { box-shadow: 0 0 0 2px #fff; }
+.hover svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.say { margin: 44px 0 0 48px; font-size: 13.5px; min-height: 21px; }
+.say b { color: var(--accent); }
+
+/* E: what it fires */
+.fires { margin: 14px 0 0 48px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.fires .k { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.fshot { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--edge); font-size: 13px; font-weight: 600; }
+.dot { width: 14px; height: 14px; border-radius: 4px; background: var(--t); flex: none; }
+.fshot .arr { color: var(--carry); }
+.fshot .num { color: var(--faint); font-size: 12px; }
+
+/* F: shot colours */
+.band .card::after { content: ""; position: absolute; left: -1px; right: -1px; bottom: -7px; height: 4px; border-radius: 2px; background: var(--c); }
+.band .card.allc::after { background: repeating-linear-gradient(90deg, var(--always) 0 6px, transparent 6px 10px); }
+
+.recs { background: var(--panel); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; }
+footer { color: var(--faint); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="tag">Squad and arsenal · card look · 2026-11-24</span>
+    <h1>Which bullet does each card change?</h1>
+    <p class="lead">Six ways to show it on the gun row, from a light touch to Scott's idea of putting modifiers on a bullet instead of in its own slot. Every panel uses the same gun with the same seven cards, so you can compare them side by side.</p>
+  </header>
+
+  <section class="answer">
+    <h2>Does it wrap like Noita? No.</h2>
+    <p>Each modifier and each "next bullet" card changes <b>the next bullet to its right</b>, and nothing reaches back round to the start. Here is what happens to the leftovers:</p>
+    <p>• A modifier, a Delay or a Thick with no bullet after it goes onto <b>the gun's plain bullet</b>, which is fired as an extra shot (balance review, 11-20). That way, a lone Wide still changes something.<br>
+    • A Trigger, an Expire or a Multicast with no bullet after it does nothing. Since #806, the shop holds those cards back until you own two bullets.<br>
+    • "Always" cards (Pierce, Split, Seek, Scorch, Tinder and the rest) ride on every bullet, wherever they sit in the row.</p>
+    <p class="note">Wrapping could be added as a rule: leftovers would reach the first bullet instead of the plain one. That changes what the cards do as well as how they look, so it is a separate choice from these looks. It is listed at the end.</p>
+  </section>
+
+  <section class="answer">
+    <h2>The sample gun</h2>
+    <p class="note">The slots read: Wide, Standard blast, Trigger, Needle bullet, Gas, Pierce, Delay. In one turn this gun fires:<br>
+    <b style="color:var(--shot1)">Shot 1</b> a Standard blast made wider.
+    <b style="color:var(--shot2)">Shot 2</b> a Needle bullet that carries the Gas and lets it out where it hits.
+    <b style="color:var(--shot3)">Shot 3</b> the gun's plain bullet, with the leftover Delay.
+    <b style="color:var(--always)">Pierce</b> goes on all of them. Today the row shows none of this: it is seven tiles, and "Shot 3" is not drawn anywhere.</p>
+    <div class="stage"><div class="inner">
+      <div class="rowline"><div class="label">Gun</div>
+        <div class="card" style="--t:var(--mod)"><span class="n">1</span><span class="nm">Wide</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--blast)"><span class="n">2</span><span class="nm">Standard blast</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry)"><span class="n">3</span><span class="nm">Trigger</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--needle)"><span class="n">4</span><span class="nm">Needle bullet</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--gas)"><span class="n">5</span><span class="nm">Gas</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--always)"><span class="n">6</span><span class="nm">Pierce</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry)"><span class="n">7</span><span class="nm">Delay</span><i class="ic"></i><span class="pips"><i></i></span></div>
+      </div>
+    </div></div>
+    <p class="note">This is today's row, redrawn here from the game's loadout screen. The real screen is in <code>today.png</code> beside this page.</p>
+  </section>
+
+  <!-- A -->
+  <section class="opt">
+    <div class="opt-head"><span class="letter">A</span><h2>Shot brackets under the row</h2><span class="tag look">look only</span></div>
+    <div class="stage"><div class="inner">
+      <div class="rowline"><div class="label">Gun</div>
+        <div class="card" style="--t:var(--mod)"><span class="n">1</span><span class="nm">Wide</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--blast)"><span class="n">2</span><span class="nm">Standard blast</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry)"><span class="n">3</span><span class="nm">Trigger</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--needle)"><span class="n">4</span><span class="nm">Needle bullet</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--gas)"><span class="n">5</span><span class="nm">Gas</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--always)"><span class="n">6</span><span class="nm">Pierce</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry)"><span class="n">7</span><span class="nm">Delay</span><i class="ic"></i><span class="pips"><i></i></span></div>
+      </div>
+      <div class="brk">
+        <div class="b" style="--c:var(--shot1);left:0;width:232px"><span>Shot 1 · wide blast</span></div>
+        <div class="b" style="--c:var(--shot2);left:240px;width:352px"><span>Shot 2 · needle carries gas</span></div>
+        <div class="b" style="--c:var(--shot3);left:720px;width:112px"><span>Shot 3 · plain</span></div>
+        <div class="all" style="width:832px"><span>Pierce: every shot</span></div>
+      </div>
+    </div></div>
+    <div class="pros"><div><b>For:</b> the row stays exactly as it is, and you read the grouping at a glance. It is the cheapest to build.</div><div><b>Against:</b> it adds a line of text under the row, and the leftover Delay's plain bullet is a bracket with no card of its own above it.</div></div>
+  </section>
+
+  <!-- B -->
+  <section class="opt">
+    <div class="opt-head"><span class="letter">B</span><h2>Fused shots</h2><span class="tag look">look only</span></div>
+    <div class="stage"><div class="inner">
+      <div class="rowline"><div class="label">Gun</div>
+        <div class="shots">
+          <div class="shot" style="--c:var(--shot1)"><span class="cap">Shot 1</span>
+            <div class="card small" style="--t:var(--mod)"><span class="n">1</span><span class="nm">Wide</span><i class="ic"></i><span class="pips"><i></i></span></div>
+            <div class="card" style="--t:var(--blast)"><span class="n">2</span><span class="nm">Standard blast</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+          </div>
+          <div class="shot" style="--c:var(--shot2)"><span class="cap">Shot 2</span>
+            <div class="card small" style="--t:var(--carry)"><span class="n">3</span><span class="nm">Trigger</span><i class="ic"></i><span class="pips"><i></i></span></div>
+            <div class="card" style="--t:var(--needle)"><span class="n">4</span><span class="nm">Needle bullet</span><i class="ic"></i><span class="pips"><i></i></span></div>
+            <div class="card" style="--t:var(--gas);border-left:2px solid var(--carry)"><span class="n">5</span><span class="nm">Gas</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+          </div>
+          <div class="shot" style="--c:var(--shot3)"><span class="cap">Shot 3</span>
+            <div class="card small" style="--t:var(--carry)"><span class="n">7</span><span class="nm">Delay</span><i class="ic"></i><span class="pips"><i></i></span></div>
+            <div class="card ghost" style="--t:var(--shot3)"><span class="nm">plain bullet</span></div>
+          </div>
+          <div class="shot" style="--c:var(--always)"><span class="cap">Every shot</span>
+            <div class="card" style="--t:var(--always)"><span class="n">6</span><span class="nm">Pierce</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="pros"><div><b>For:</b> each shot reads as one object. The plain bullet shows as a ghost card, so the leftover rule can be seen, and dragging a card shows the new grouping as it lands. The order of the cards still matters, as it does now.</div><div><b>Against:</b> the row's width changes as shots form. The Always cards move to the end, so the slot numbers no longer run in order on screen.</div></div>
+  </section>
+
+  <!-- C -->
+  <section class="opt">
+    <div class="opt-head"><span class="letter">C</span><h2>Modifiers go on a bullet (Scott's idea)</h2><span class="tag rule">changes the rules</span></div>
+    <div class="stage"><div class="inner">
+      <div class="rowline"><div class="label">Gun</div>
+        <div class="card bullet" style="--t:var(--blast)"><span class="n">1</span><span class="nm">Standard blast</span><i class="ic"></i><span class="pips"><i></i><i></i><i></i></span>
+          <span class="chips"><span class="chip" style="--c:var(--mod)">Wide</span><span class="sock">+ card</span></span></div>
+        <div class="card bullet" style="--t:var(--needle)"><span class="n">2</span><span class="nm">Needle bullet</span><i class="ic"></i><span class="pips"><i></i><i></i></span>
+          <span class="chips"><span class="chip" style="--c:var(--carry)">Trigger</span><span class="sock">+ card</span></span></div>
+        <div class="carryline">carries<br>→</div>
+        <div class="card bullet" style="--t:var(--gas);margin-left:-8px"><span class="n">3</span><span class="nm">Gas</span><i class="ic"></i><span class="pips"><i></i><i></i></span>
+          <span class="chips"><span class="sock">+ card</span><span class="sock">+ card</span></span></div>
+        <div class="card bullet ghost"><span class="nm">empty bullet slot</span></div>
+      </div>
+      <div class="gunstrip"><span class="k">On the gun, every bullet:</span>
+        <span class="chip" style="--c:var(--always)">Pierce</span><span class="chip" style="--c:var(--carry)">Delay</span><span class="sock">+ card</span></div>
+    </div></div>
+    <p class="note">How it would work: slots hold bullets only, and the gun's slot count becomes a bullet count. Each bullet has two sockets for a modifier, a "next bullet" card, or a Trigger, which links it to the bullet on its right. A gun strip holds the Always cards. A leftover modifier has nowhere to go, because every modifier sits on a bullet, so the plain-bullet rule and wrapping both stop mattering. Here the Delay has gone onto the gun strip, which would make it apply to every bullet. That is a different card from today's.</p>
+    <div class="pros"><div><b>For:</b> it is the clearest of the six: what a card changes is the card it sits on. Dropping a modifier onto a bullet is easy, and there are no wasted slots.</div><div><b>Against:</b> it changes the game. Slots, prices and the guns' slot counts all need retuning. The Noita-like puzzle of ordering a row goes away, and Delay and Thick need new homes. Engine, Look and Direction would all share the work.</div></div>
+  </section>
+
+  <!-- D -->
+  <section class="opt">
+    <div class="opt-head"><span class="letter">D</span><h2>Point at a card to trace it</h2><span class="tag look">look only</span><span class="tag">try it: hover or tap a card</span></div>
+    <div class="stage"><div class="inner hover" id="hov">
+      <div class="rowline"><div class="label">Gun</div>
+        <div class="card" data-k="1" style="--t:var(--mod)"><span class="n">1</span><span class="nm">Wide</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" data-k="2" style="--t:var(--blast)"><span class="n">2</span><span class="nm">Standard blast</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" data-k="3" style="--t:var(--carry)"><span class="n">3</span><span class="nm">Trigger</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" data-k="4" style="--t:var(--needle)"><span class="n">4</span><span class="nm">Needle bullet</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" data-k="5" style="--t:var(--gas)"><span class="n">5</span><span class="nm">Gas</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" data-k="6" style="--t:var(--always)"><span class="n">6</span><span class="nm">Pierce</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" data-k="7" style="--t:var(--carry)"><span class="n">7</span><span class="nm">Delay</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card empty" data-k="8"><span class="nm">plain bullet</span></div>
+      </div>
+      <svg id="arcs" width="900" height="80"></svg>
+      <div class="say" id="say">Hover or tap a card.</div>
+    </div></div>
+    <div class="pros"><div><b>For:</b> nothing changes at rest. On hover, the card you point at lights up what it changes, the rest dim, and an arc and one line of words say how. It works with A, B or E, and on the in-play card bar too.</div><div><b>Against:</b> you only see it when you look for it, so a new player may never find out the order matters.</div></div>
+  </section>
+
+  <!-- E -->
+  <section class="opt">
+    <div class="opt-head"><span class="letter">E</span><h2>A "fires" line under the row</h2><span class="tag look">look only</span></div>
+    <div class="stage"><div class="inner">
+      <div class="rowline"><div class="label">Gun</div>
+        <div class="card" style="--t:var(--mod)"><span class="n">1</span><span class="nm">Wide</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--blast)"><span class="n">2</span><span class="nm">Standard blast</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry)"><span class="n">3</span><span class="nm">Trigger</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--needle)"><span class="n">4</span><span class="nm">Needle bullet</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--gas)"><span class="n">5</span><span class="nm">Gas</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--always)"><span class="n">6</span><span class="nm">Pierce</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry)"><span class="n">7</span><span class="nm">Delay</span><i class="ic"></i><span class="pips"><i></i></span></div>
+      </div>
+      <div class="fires"><span class="k">Each turn fires</span>
+        <span class="fshot"><span class="num">1</span><span class="dot" style="--t:var(--blast)"></span>Blast <span class="chip" style="--c:var(--mod)">wide</span></span>
+        <span class="fshot"><span class="num">2</span><span class="dot" style="--t:var(--needle)"></span>Needle <span class="arr">→ on hit</span><span class="dot" style="--t:var(--gas)"></span>Gas</span>
+        <span class="fshot"><span class="num">3</span><span class="dot" style="--t:var(--shot3)"></span>Plain <span class="chip" style="--c:var(--carry)">delay</span></span>
+        <span class="k">all</span><span class="chip" style="--c:var(--always)">pierce</span>
+      </div>
+    </div></div>
+    <div class="pros"><div><b>For:</b> it reads like Noita's spell summary. It is honest about the hidden plain shot, and it updates as you drag. The row itself is left alone.</div><div><b>Against:</b> it is a second picture of the same thing, so you look away from the cards to read it. It needs room on the screen, which is tight at 150% UI.</div></div>
+  </section>
+
+  <!-- F -->
+  <section class="opt">
+    <div class="opt-head"><span class="letter">F</span><h2>Shot colours</h2><span class="tag look">look only</span></div>
+    <div class="stage"><div class="inner band">
+      <div class="rowline" style="padding-bottom:8px"><div class="label">Gun</div>
+        <div class="card" style="--t:var(--mod);--c:var(--shot1)"><span class="n">1</span><span class="nm">Wide</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--blast);--c:var(--shot1)"><span class="n">2</span><span class="nm">Standard blast</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry);--c:var(--shot2)"><span class="n">3</span><span class="nm">Trigger</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--needle);--c:var(--shot2)"><span class="n">4</span><span class="nm">Needle bullet</span><i class="ic"></i><span class="pips"><i></i></span></div>
+        <div class="card" style="--t:var(--gas);--c:var(--shot2)"><span class="n">5</span><span class="nm">Gas</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card allc" style="--t:var(--always)"><span class="n">6</span><span class="nm">Pierce</span><i class="ic"></i><span class="pips"><i></i><i></i></span></div>
+        <div class="card" style="--t:var(--carry);--c:var(--shot3)"><span class="n">7</span><span class="nm">Delay</span><i class="ic"></i><span class="pips"><i></i></span></div>
+      </div>
+    </div></div>
+    <div class="pros"><div><b>For:</b> it is the smallest change: one coloured bar under each card, and cards of one shot share a colour. The dashed bar means "every shot".</div><div><b>Against:</b> colour alone is easy to misread. It does not say what a card does to its bullet, and it hides the carry.</div></div>
+  </section>
+
+  <section class="recs">
+    <span class="tag pick">Squad and arsenal's pick</span>
+    <h2>B with D on top; C as a bigger, later choice</h2>
+    <p>Fused shots (B) make the grouping visible at rest and show the hidden plain bullet. They keep the row as an ordered puzzle, so no card's rules or price change. Adding the hover trace (D) explains carries and Always cards in words, and the same code can drive the in-play card bar. Both are look-only, so they can land without retuning.</p>
+    <p>Putting modifiers on a bullet (C) is clearer still, but it is a rules change. Slots become bullets, Delay and Thick need homes, and prices and guns need retuning. If Scott likes it, it should be a Milestone 2 card of its own, built after B or instead of it.</p>
+    <p class="note"><b>Separate choice, wrapping:</b> (1) keep today's rule, where leftovers go on the plain bullet, or (2) wrap like Noita, where leftovers reach round to the first bullet. Option 1 makes a lone Wide always do something. Option 2 makes ordering a deeper puzzle. With C, neither applies.</p>
+  </section>
+
+  <footer>Mock-ups drawn in the game's own colours and card shape; nothing here is built yet. Source: Reports/card-links-2026-11-24/.</footer>
+</div>
+
+<script>
+(() => {
+  // What each card in D changes: [targets, words].
+  const map = {
+    1: [[2], "<b>Wide</b> makes the next bullet, the Standard blast, hit wider."],
+    2: [[1, 6], "<b>Standard blast</b> is shot 1: Wide changes it and Pierce rides on it."],
+    3: [[4, 5], "<b>Trigger</b> makes the Needle bullet carry the Gas and let it out where it hits."],
+    4: [[3, 5, 6], "<b>Needle bullet</b> is shot 2: it carries the Gas, and Pierce rides on it."],
+    5: [[4], "<b>Gas</b> is not fired on its own: the Needle bullet carries it."],
+    6: [[2, 4, 5, 8], "<b>Pierce</b> rides on every bullet, wherever it sits."],
+    7: [[8], "<b>Delay</b> has no bullet after it, so it goes on the gun's plain bullet, an extra shot 3."],
+    8: [[7, 6], "The gun's <b>plain bullet</b> fires as shot 3 because the Delay is left over."]
+  };
+  const box = document.getElementById("hov");
+  const svg = document.getElementById("arcs");
+  const say = document.getElementById("say");
+  const cards = [...box.querySelectorAll(".card")];
+  const ns = "http://www.w3.org/2000/svg";
+  function clear() {
+    cards.forEach(c => c.classList.remove("dim", "lit", "src"));
+    svg.innerHTML = "";
+    say.textContent = "Hover or tap a card.";
+  }
+  function show(k) {
+    const [to, words] = map[k];
+    const base = box.getBoundingClientRect();
+    const src = cards.find(c => c.dataset.k == k);
+    cards.forEach(c => {
+      const kk = +c.dataset.k;
+      c.classList.toggle("src", kk === k);
+      c.classList.toggle("lit", to.includes(kk));
+      c.classList.toggle("dim", kk !== k && !to.includes(kk));
+    });
+    svg.innerHTML = "";
+    const sr = src.getBoundingClientRect();
+    const sx = sr.left + sr.width / 2 - base.left, y = sr.bottom - base.top + 2;
+    svg.setAttribute("height", y + 40);
+    svg.style.top = "0";
+    for (const t of to) {
+      const tr = cards.find(c => +c.dataset.k === t).getBoundingClientRect();
+      const tx = tr.left + tr.width / 2 - base.left;
+      const p = document.createElementNS(ns, "path");
+      const dip = 14 + Math.min(26, Math.abs(tx - sx) / 14);
+      p.setAttribute("d", `M${sx},${y} C${sx},${y + dip} ${tx},${y + dip} ${tx},${y + 3}`);
+      p.setAttribute("fill", "none");
+      p.setAttribute("stroke", "#5fb3ff");
+      p.setAttribute("stroke-width", "2");
+      svg.appendChild(p);
+      const h = document.createElementNS(ns, "path");
+      h.setAttribute("d", `M${tx - 4},${y + 9} L${tx},${y + 2} L${tx + 4},${y + 9}`);
+      h.setAttribute("fill", "none");
+      h.setAttribute("stroke", "#5fb3ff");
+      h.setAttribute("stroke-width", "2");
+      svg.appendChild(h);
+    }
+    say.innerHTML = words;
+  }
+  cards.forEach(c => {
+    c.tabIndex = 0;
+    c.addEventListener("mouseenter", () => show(+c.dataset.k));
+    c.addEventListener("focus", () => show(+c.dataset.k));
+    c.addEventListener("click", () => show(+c.dataset.k));
+  });
+  box.addEventListener("mouseleave", clear);
+  show(1);
+})();
+</script>
