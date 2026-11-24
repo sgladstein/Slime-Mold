@@ -3111,14 +3111,14 @@ pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, 
 
 /// A hurt's colour on the health bar (`Hurt`): the slime's bite its
 /// crimson (`Light::bite`), fire an ember orange, the squad's own blast a
-/// white-hot gold, anything else (a falling star) a cold violet. None is
-/// the bar's green, amber or red.
+/// white-hot gold, a falling star (and anything else) a cold violet. None
+/// is the bar's green, amber or red.
 pub(super) fn hurt_colour(h: Hurt) -> [u8; 4] {
     match h {
         Hurt::Bite => [215, 30, 70, 255],
         Hurt::Fire => [255, 120, 25, 255],
         Hurt::Blast => [255, 244, 205, 255],
-        Hurt::Other => [175, 150, 255, 255],
+        Hurt::Star | Hurt::Other => [175, 150, 255, 255],
     }
 }
 

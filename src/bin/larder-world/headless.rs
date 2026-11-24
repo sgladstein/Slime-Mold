@@ -288,7 +288,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // `LARDER_FORCE=WHAT@T;..` (Look and interface, 2026-11-24, to film
     // the first-sight hints, `hints.rs`): at game second T, `stand` (the
     // last-stand heart, `Game::force_stand`), `wave` (`force_wave`) or
-    // `lunge` (the cornered slime, `Game::late`).
+    // `lunge` (the cornered slime, `Game::late`), or `star` (ore falling
+    // on the active squad's middle after the planet's warning,
+    // `Game::force_ore`: the falling star's colour on film, and its blast
+    // on the bars).
     let mut forces: Vec<(String, f32)> = std::env::var("LARDER_FORCE")
         .unwrap_or_default()
         .split(';')
@@ -485,6 +488,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                             g.late = true;
                             true
                         }
+                        "star" => g.active.and_then(|q| g.middle(q)).is_some_and(|m| g.force_ore(m)),
                         _ => false,
                     };
                     println!("  force {what} t {now:.1} s: {}", if ok { "done" } else { "refused" });
@@ -1419,6 +1423,10 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
     let (now, sc) = (g.world.ticks(), g.world.scale());
     let recent = (g.rules.tps as f32 * 0.5) as u64;
     let blasts: Vec<((f32, f32), f32)> = g.rounds.pops.iter().rev().take_while(|p| p.tick + recent >= now).filter(|p| p.payload == slime_mould::mould::rounds::Card::Blast && p.burst.kill).map(|p| ((p.burst.at.0 * sc, p.burst.at.1 * sc), p.burst.r * sc)).collect();
+    // Falling stars that landed this half second: their blast discs (fine
+    // cells, `StarRules::kill_r`), which hurt the soldiers in them.
+    let star_r = g.rules.star.kill_r * sc;
+    let stars: Vec<((f32, f32), f32)> = g.starfall.live.iter().filter(|d| d.down && d.kind == slime_mould::mould::larder_world::DropKind::Ore && d.lands <= now && d.lands + recent >= now).map(|d| (d.at, star_r)).collect();
     for (l, s) in looks.iter_mut().zip(&g.soldiers) {
         if s.alive && l.carry > 0.0 && s.carry < l.carry * 0.5 {
             let d = |p: &(f32, f32)| (p.0 - s.x).hypot(p.1 - s.y);
@@ -1428,22 +1436,26 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
                 None => *banked = BANKED,
             }
         }
-        // What took the health (`Hurt`): its own blast first (one blow,
-        // which may land beside fire or slime), then fire, then the slime.
+        // What took the health (`Hurt`): a blow first, its own blast or a
+        // falling star (one blow, which may land beside fire or slime: on
+        // planet 3 a star on a squad in its own fire took 60 health and
+        // read as fire), then fire, then the slime.
         if s.alive && s.hp < l.hp - 1e-3 {
             l.hit = HURT_BAR;
-            let blast = blasts.iter().find(|b| (s.x - b.0 .0).hypot(s.y - b.0 .1) <= b.1);
-            let cause = match blast {
-                Some(_) => Hurt::Blast,
-                None if s.heat > 0.0 => Hurt::Fire,
-                None if s.touching > 0 => Hurt::Bite,
-                None => Hurt::Other,
+            let within = |b: &&((f32, f32), f32)| (s.x - b.0 .0).hypot(s.y - b.0 .1) <= b.1;
+            let (blast, star) = (blasts.iter().find(within), stars.iter().find(within));
+            let cause = match (blast, star) {
+                (Some(_), _) => Hurt::Blast,
+                (None, Some(_)) => Hurt::Star,
+                _ if s.heat > 0.0 => Hurt::Fire,
+                _ if s.touching > 0 => Hurt::Bite,
+                _ => Hurt::Other,
             };
             if cause != l.cause || l.chip_left <= 0.0 {
                 l.chip = 0.0;
             }
             (l.cause, l.chip, l.chip_left) = (cause, l.chip + (l.hp - s.hp), CHIP);
-            if let Some(b) = blast {
+            if let Some(b) = blast.or(star) {
                 // Thrown away from the blast's middle, as far as the blow
                 // was hard (`drawn_at`).
                 (l.knock, l.knock_dir) = (KNOCK, (s.y - b.0 .1).atan2(s.x - b.0 .0));

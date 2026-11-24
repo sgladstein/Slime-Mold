@@ -830,14 +830,15 @@ struct Look {
 /// of hurt readable on the soldier as it lands"), told apart from what the
 /// game already keeps: the slime touching it (`Soldier::touching`), the
 /// fire's heat where it stands (`Soldier::heat`), a Blast of the squad's
-/// own whose kill disc holds it (`Rounds::pops`), else something else (a
-/// falling star's blast, `StarRules::hurt`).
+/// own whose kill disc holds it (`Rounds::pops`), a falling star that
+/// landed on it (`StarRules::hurt`), else something else.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 enum Hurt {
     #[default]
     Bite,
     Fire,
     Blast,
+    Star,
     Other,
 }
 
@@ -2180,6 +2181,7 @@ impl App {
                     Hurt::Bite => "A soldier was killed by the slime",
                     Hurt::Fire => "A soldier burned to death",
                     Hurt::Blast => "Your own blast killed a soldier",
+                    Hurt::Star => "A falling star killed a soldier",
                     Hurt::Other => "A soldier has fallen",
                 };
                 self.hud.alert(how, Some((s.x, s.y)), theme::BAD);
