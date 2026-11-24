@@ -1249,7 +1249,7 @@ impl Run {
         let shrink = shrink_goal(d);
         let mission = Mission {
             name: format!("Planet {d} of {PLANETS}, {}", planet.name),
-            says: if shrink > 0.0 { format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink) } else { "Kill the slime's heart on its home crystal, or every last walker".to_string() },
+            says: if shrink > 0.0 { format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink) } else { "Kill the slime's heart on its home crystal, or every last bit of slime".to_string() },
             map: map.clone(),
             tier: Some(tier.name().to_string()),
             goal: Goal::Shrink(shrink),
