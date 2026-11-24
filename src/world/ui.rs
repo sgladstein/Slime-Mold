@@ -617,12 +617,19 @@ pub struct Intro {
     pub kicker: String,
     pub title: String,
     pub line: String,
+    /// What beats this slime (`menu::beat_it`, Direction 11-24), under its
+    /// line after "Beat it:" in the accent; None where the line says it.
+    pub counter: Option<String>,
     /// The planet's twist, if it rolled one (`run::PlanetTwist`, Enemy's
     /// #830): its name and its line, under the slime's in the twist's
     /// ice blue.
     pub twist: Option<(String, String)>,
     pub alpha: f32,
 }
+
+/// The words before what beats a slime (`Intro::counter`, the shop's
+/// `Shop::beat`).
+pub const BEAT_IT: &str = "Beat it:";
 
 /// A planet twist's colour on the HUD: an ice blue, apart from the slime's
 /// amber and the accent's cyan (the cold snap and the wind alike).
@@ -1966,7 +1973,12 @@ impl Hud {
         let sw = c.screen.0 as f32;
         let w = (560.0 * s).min(sw - 32.0 * s);
         let tw = w - 48.0 * s;
-        let lines = c.wrap(Weight::Medium, 17.0 * s, tw, &i.line);
+        let mut lines = c.wrap(Weight::Medium, 17.0 * s, tw, &i.line);
+        // What beats it, its own lines under the slime's, "Beat it:" first
+        // so it reads by its words as well as its colour.
+        let beat = i.counter.as_ref().map_or(Vec::new(), |b| c.wrap(Weight::Medium, 17.0 * s, tw, &format!("{BEAT_IT} {b}.")));
+        let first_beat = lines.len();
+        lines.extend(beat);
         // The twist under the slime's line: its name, then its own line.
         let twist = i.twist.as_ref().map(|(name, line)| (name, c.wrap(Weight::Medium, 16.0 * s, tw, line)));
         let more = twist.as_ref().map_or(0.0, |(_, l)| 46.0 * s + l.len() as f32 * 22.0 * s);
@@ -1979,7 +1991,8 @@ impl Hud {
         c.text_fit(Weight::Medium, 13.5 * s, (cx, r.y + 32.0 * s), Align::Centre, &i.kicker, tw, alpha(MUTED, a));
         c.text_fit(Weight::SemiBold, 26.0 * s, (cx, r.y + 66.0 * s), Align::Centre, &i.title, tw, alpha(WARN, a));
         for (k, l) in lines.iter().enumerate() {
-            c.text(Weight::Medium, 17.0 * s, (cx, r.y + 96.0 * s + k as f32 * 24.0 * s), Align::Centre, l, alpha(TEXT, a));
+            let ink = if k >= first_beat { ACCENT } else { TEXT };
+            c.text(Weight::Medium, 17.0 * s, (cx, r.y + 96.0 * s + k as f32 * 24.0 * s), Align::Centre, l, alpha(ink, a));
         }
         if let Some((name, tl)) = &twist {
             let y = r.y + 96.0 * s + lines.len() as f32 * 24.0 * s;
@@ -3146,6 +3159,9 @@ impl Hud {
                 }
                 if let Some(i) = &m.pause_planet {
                     parts.push((i.title.to_uppercase(), WARN, c.wrap(Weight::Medium, px, tw, &i.line)));
+                    if let Some(b) = &i.counter {
+                        parts.push((BEAT_IT.trim_end_matches(':').to_uppercase(), ACCENT, c.wrap(Weight::Medium, px, tw, &format!("{b}."))));
+                    }
                     if let Some((name, line)) = &i.twist {
                         parts.push((name.to_uppercase(), TWIST, c.wrap(Weight::Medium, px, tw, line)));
                     }
@@ -4498,7 +4514,7 @@ mod tests {
             r.c.ui.user = user;
             r.m.objective = Some("Kill the slime's heart on its home crystal: 1,660 of 1,660 left, breaks under 166".into());
             r.m.pause_note = vec!["Quit any time: this planet and".into(), "your run are saved.".into()];
-            r.m.pause_planet = Some(Intro { kicker: "Planet 7 of 8 · Ossary".into(), title: "The Grudge".into(), line: line.into(), twist: Some(("Cold snap".into(), "Every two minutes the cold slows the slime and your squads for 20 seconds".into())), alpha: 1.0 });
+            r.m.pause_planet = Some(Intro { kicker: "Planet 7 of 8 · Ossary".into(), title: "The Grudge".into(), line: line.into(), counter: Some("Germ bullets rot it from within".into()), twist: Some(("Cold snap".into(), "Every two minutes the cold slows the slime and your squads for 20 seconds".into())), alpha: 1.0 });
             r.key(KeyCode::Escape);
             r.draw();
             let said = |t: &str| r.c.runs.iter().any(|x| x.text == t);

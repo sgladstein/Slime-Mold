@@ -1156,12 +1156,18 @@ impl StartMenu {
             if let Some((name, line)) = &shop.slime {
                 let b = Rect::new(r.x + p, y - 6.0 * s, iw, 0.0);
                 let lines = c.wrap(Weight::Medium, 14.5 * s, iw - 26.0 * s, line).len() as f32;
-                let h = 40.0 * s + lines * 20.0 * s;
+                // What beats it, under its line (Direction 11-24).
+                let beat = shop.beat.as_ref().map(|b| format!("{} {b}.", crate::world::ui::BEAT_IT));
+                let beat_n = beat.as_ref().map_or(0.0, |b| c.wrap(Weight::Medium, 14.5 * s, iw - 26.0 * s, b).len() as f32);
+                let h = 40.0 * s + lines * 20.0 * s + if beat_n > 0.0 { 6.0 * s + beat_n * 20.0 * s } else { 0.0 };
                 let b = Rect::new(b.x, b.y, b.w, h);
                 c.rrect(b, 8.0 * s, [255, 196, 72, 18]);
                 c.rrect(Rect::new(b.x, b.y + 6.0 * s, 3.0 * s, h - 12.0 * s), 1.5 * s, WARN);
                 c.text_fit(Weight::SemiBold, 17.0 * s, (b.x + 14.0 * s, b.y + 24.0 * s), Align::Left, name, iw - 26.0 * s, WARN);
                 para(c, Weight::Medium, 14.5 * s, (b.x + 14.0 * s, b.y + 46.0 * s), iw - 26.0 * s, 20.0 * s, line, TEXT, limit);
+                if let Some(t) = &beat {
+                    para(c, Weight::Medium, 14.5 * s, (b.x + 14.0 * s, b.y + 52.0 * s + lines * 20.0 * s), iw - 26.0 * s, 20.0 * s, t, ACCENT, limit);
+                }
                 y += h + 10.0 * s;
             }
             // Its twist (Enemy's #830), the same block in the twist's blue.

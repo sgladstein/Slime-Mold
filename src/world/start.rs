@@ -311,6 +311,9 @@ pub struct Shop {
     /// The planet ahead's slime and its one line (`run::does_to_you`),
     /// in the pane above the briefing (the planet's introduction, 11-24).
     pub slime: Option<(String, String)>,
+    /// What beats that slime (`menu::beat_it`), a line at the foot of its
+    /// block in the accent after "Beat it:".
+    pub beat: Option<String>,
     /// The planet ahead's twist, if it rolled one (`run::PlanetTwist`):
     /// its name and line, a block under the slime's in ice blue.
     pub twist: Option<(String, String)>,
@@ -3281,7 +3284,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, twist: None, shots: Vec::new(), plain_shot: None }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -3330,7 +3333,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, twist: None, shots: Vec::new(), plain_shot: None }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
