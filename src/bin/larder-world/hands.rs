@@ -108,6 +108,38 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "pumps" {
         return pumps_hand(g);
     }
+    // LAB (the crystal-bait prototype, never merges): `drain@X,Y` is
+    // `hold@X,Y` that also drains the crystal at (X, Y) and spends the
+    // income on soldiers, the other side of leaving it charged as bait.
+    if let Some(v) = hand.strip_prefix("drain@").map(|p| p.split(',').filter_map(|v| v.parse::<f32>().ok()).collect::<Vec<f32>>()) {
+        if v.len() == 2 {
+            while g.alive() < g.rules.max_squad && g.bank >= g.rules.soldier_cost {
+                if !g.apply(Cmd::Buy) {
+                    break;
+                }
+            }
+            let cs = g.world.crystals();
+            let bait = g.crystal_at((v[0], v[1])).filter(|&(i, _)| cs[i].1 > 0.0).map(|(i, _)| cs[i].0);
+            for k in 0..g.soldiers.len() {
+                if !g.soldiers[k].alive {
+                    continue;
+                }
+                if g.soldiers[k].stance != Stance::Free {
+                    g.apply(Cmd::Stance(k, Stance::Free));
+                }
+                match (bait, g.soldiers[k].order) {
+                    (Some(c), o) if !matches!(o, Order::Clear(..)) => {
+                        g.apply(Cmd::Order(k, Order::Clear(c.0, c.1)));
+                    }
+                    (None, Order::Hold) if g.time() >= 1.0 && (g.soldiers[k].x - v[0]).hypot(g.soldiers[k].y - v[1]) > 6.0 * g.world.scale() => {
+                        g.apply(Cmd::Order(k, Order::Move(v[0], v[1])));
+                    }
+                    _ => {}
+                }
+            }
+            return;
+        }
+    }
     // LAB (the Sleeper prototype, never merges): `wake@T,X,Y` pumps until
     // game second T, then spends the bank on soldiers (up to 16) and the
     // squad walks to (X, Y) on free fire, waking the slime there.
