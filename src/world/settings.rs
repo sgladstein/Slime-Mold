@@ -207,17 +207,36 @@ pub fn save_shake(v: f32) {
     }
 }
 
-/// **World detail** (performance thread, 2026-11-22): how many of the
-/// screen's pixels the world is drawn at (`View::set_scale`). "Auto" draws
-/// at half on a screen past about 4.2 million pixels (a 4K window: the
-/// owner's 3840 x 2160 cost the GTX 1070 about 38 ms a frame for the world
-/// alone), "Full" always at the screen's own pixels, "Half" always at half
-/// each way. The HUD and text are always drawn at full size.
-pub const DETAIL_STEPS: [&str; 3] = ["Auto", "Full", "Half"];
+/// **World detail** (performance thread, 2026-11-22; quality steps
+/// 2026-11-24, the owner's "approved" for a render scale with a quality
+/// slider): how many of the screen's pixels the world is drawn at, each
+/// way (`View::set_percent`). The HUD, text, soldiers and their marks are
+/// always drawn at full size. "Auto" picks the most detail whose picture
+/// stays within `AUTO_PIXELS` (`auto_percent`): half on the owner's 4K
+/// screen, which held 60 frames a second in every second of his play logs
+/// after 11-22 (planets 1 to 6, about 3,700 seconds), where full detail
+/// cost the GTX 1070 about 38 ms a frame for the world alone. 40% is the
+/// floor: on his 3840 x 2160 at 250% that is one world pixel to each of
+/// the screen's own points.
+pub const DETAIL_STEPS: [&str; 8] = ["Auto", "100%", "85%", "75%", "67%", "60%", "50%", "40%"];
+
+/// A world detail as `DETAIL_STEPS` spells it, from the Options page, the
+/// file or `detail=`: a step itself, any case (`auto`, `75%`, `75`), or
+/// the names before the steps (`Full` 100%, `Half` 50%), which a
+/// settings file saved on 11-22 or 11-23 holds.
+pub fn parse_detail(v: &str) -> Option<&'static str> {
+    let v = v.trim();
+    let v = match v.to_ascii_lowercase().as_str() {
+        "full" => "100%",
+        "half" => "50%",
+        _ => v,
+    };
+    DETAIL_STEPS.iter().copied().find(|d| d.eq_ignore_ascii_case(v) || d.strip_suffix('%') == Some(v))
+}
 
 /// The saved world detail (`detail=` in the file), "Auto" when none.
 pub fn saved_detail() -> String {
-    get("detail").filter(|v| DETAIL_STEPS.contains(&v.as_str())).unwrap_or_else(|| "Auto".into())
+    get("detail").as_deref().and_then(parse_detail).unwrap_or("Auto").into()
 }
 
 /// Saves the world detail, with a word on stderr if it could not.
@@ -227,20 +246,31 @@ pub fn save_detail(v: &str) {
     }
 }
 
-/// The render scale (`View::set_scale`) for world detail `detail` on a
-/// `screen`-sized window: 2 for "Half", and for "Auto" past `AUTO_HALF`
-/// pixels; else 1.
-pub fn detail_scale(detail: &str, screen: (u32, u32)) -> u32 {
-    match detail {
-        "Half" => 2,
-        "Full" => 1,
-        _ => u32::from(screen.0 as u64 * screen.1 as u64 > AUTO_HALF) + 1,
+/// The render scale in percent each way (`View::set_percent`) for world
+/// detail `detail` on a `screen`-sized window: the step's own, or for
+/// "Auto" (and anything else) `auto_percent`.
+pub fn detail_percent(detail: &str, screen: (u32, u32)) -> u32 {
+    match parse_detail(detail).and_then(|d| d.strip_suffix('%')).and_then(|p| p.parse().ok()) {
+        Some(p) => p,
+        None => auto_percent(screen),
     }
 }
 
-/// "Auto"'s line: above 2560 x 1600 (4.1 million pixels), so a 1440p
-/// window draws at full and a 4K one at half.
-pub const AUTO_HALF: u64 = 2560 * 1600;
+/// "Auto"'s step: the largest of `DETAIL_STEPS` whose picture
+/// (`View::reduced`) has at most `AUTO_PIXELS` pixels, else the last.
+pub fn auto_percent(screen: (u32, u32)) -> u32 {
+    let steps = DETAIL_STEPS.iter().filter_map(|d| d.strip_suffix('%')?.parse::<u32>().ok());
+    let px = |p: u32| (screen.0 * p).div_ceil(100) as u64 * (screen.1 * p).div_ceil(100) as u64;
+    let last = steps.clone().last().unwrap_or(100);
+    steps.into_iter().find(|&p| px(p) <= AUTO_PIXELS).unwrap_or(last)
+}
+
+/// "Auto"'s budget, pixels the world is drawn at: 2.4 million, so 1920 x
+/// 1200 and smaller draw at full, 2560 x 1440 at 75% (1920 x 1080) and a
+/// 4K window at 50% (1920 x 1080; 60% would be 2.8 million). Before the
+/// quality steps (11-22), Auto was half above 2560 x 1600 and full below;
+/// half at 4K is unchanged.
+pub const AUTO_PIXELS: u64 = 2_400_000;
 
 #[cfg(test)]
 mod tests {
@@ -304,12 +334,28 @@ mod tests {
     }
 
     #[test]
-    fn auto_detail_halves_a_4k_window_only() {
-        assert_eq!(detail_scale("Auto", (3840, 2160)), 2);
-        assert_eq!(detail_scale("Auto", (3840, 2060)), 2);
-        assert_eq!(detail_scale("Auto", (2560, 1440)), 1);
-        assert_eq!(detail_scale("Auto", (1920, 1080)), 1);
-        assert_eq!(detail_scale("Full", (3840, 2160)), 1);
-        assert_eq!(detail_scale("Half", (1280, 800)), 2);
+    fn auto_detail_keeps_half_at_4k_and_full_on_small_screens() {
+        assert_eq!(detail_percent("Auto", (3840, 2160)), 50);
+        assert_eq!(detail_percent("Auto", (3840, 2004)), 50, "the owner's window, maximised");
+        assert_eq!(detail_percent("Auto", (2560, 1440)), 75);
+        assert_eq!(detail_percent("Auto", (1920, 1200)), 100);
+        assert_eq!(detail_percent("Auto", (1280, 800)), 100);
+        assert_eq!(detail_percent("Auto", (7680, 4320)), 40, "the floor");
+        assert_eq!(detail_percent("100%", (3840, 2160)), 100);
+        assert_eq!(detail_percent("67%", (3840, 2160)), 67);
+        assert_eq!(detail_percent("Half", (1280, 800)), 50);
+    }
+
+    #[test]
+    fn a_world_detail_reads_in_every_spelling_and_the_old_names() {
+        for d in DETAIL_STEPS {
+            assert_eq!(parse_detail(d), Some(d));
+            assert_eq!(parse_detail(&d.to_lowercase()), Some(d));
+        }
+        assert_eq!(parse_detail("Full"), Some("100%"));
+        assert_eq!(parse_detail("half"), Some("50%"));
+        assert_eq!(parse_detail("75"), Some("75%"));
+        assert_eq!(parse_detail("70%"), None);
+        assert_eq!(parse_detail(""), None);
     }
 }
