@@ -158,3 +158,7 @@ overlapping). Frame p50 / p95 ms, every frame and frames with a game step:
   learns what the step above costs (the median frame before the step
   down less the one after, at most 6 ms) and tries it only when this
   step's 95th-percentile frame has room for it, or after `HOLD_MAX`.
+  Timed (#818): planet 8 at a fixed 40% p95 14.4 (view 10.4, GPU step
+  4.8); on Auto p95 16.9 and 19.7 in two runs of the same game, still
+  retrying 50%, as 40%'s 14.4 plus the 2.4 cost was under 17. The room
+  check now leaves a millisecond (`ROOM_MS` 16).
