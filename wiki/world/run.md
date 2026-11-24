@@ -407,6 +407,24 @@ with no germ), and its two guns are two kinds, neither the kind carried
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
 
+## Luck in the shop
+
+Gun step F's shop levers (Direction, 11-24 08:54Z; the gun-system plan's,
+first guesses, `Run::luck`):
+
+- **Hold**: the bottom bar's Hold steps along the cards on offer; the held
+  card comes back in every shop, free, until it is bought (`Pick::Hold`).
+- **Reroll**: new cards on offer for `REROLL_PRICE` (25) points, doubling
+  with each reroll in one shop, back to 25 in the next; the guns and bodies
+  on offer stay (`Pick::Reroll`).
+- **Mix**: about a third of the cards on offer (one of three) are of a
+  family the run owns a card of (`family`: flight, trail, shape, force,
+  rule) and at least one of a family it owns none of.
+- **Pity**: from planet 4, where tier-3 cards are first sold, each shop in
+  a row with none (`since_rare`) gives the next one a one-in-three-more
+  chance of one, so the fourth surely shows one.
+- Trigger and Expire are tier 3 beside Multicast, the plan's rule cards.
+
 ## Saving the run
 
 A run is saved to `run.txt` beside the settings file (`%APPDATA%\Larder

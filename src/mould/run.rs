@@ -982,6 +982,11 @@ pub fn first_gun() -> Gun {
 
 /// Guns for sale in each shop.
 pub const GUN_OFFER: usize = 2;
+/// The first paid reroll's price (`Run::reroll_price`, gun step F; the
+/// gun-system plan's "rerolls that cost more each time"; a tier-1 card is
+/// 80): it doubles each time in one shop. A first guess.
+pub const REROLL_PRICE: u32 = 25;
+
 /// Device bodies for sale in each shop from planet 2 (`Run::body_rolls`).
 pub const BODY_OFFER: usize = 2;
 
@@ -1076,6 +1081,19 @@ pub fn card_price(c: Card) -> u32 {
 /// never sold: the germ, until 2026-11-16 (`shells_at`).
 pub fn card_power(c: Card) -> Option<u8> {
     Some(c.tier())
+}
+
+/// A card's family for the shop's mix (gun step F, `Run::luck`): what
+/// it works on. Bullets (payloads) are not drawn among the cards.
+pub fn family(c: Card) -> &'static str {
+    match c {
+        Card::Pierce | Card::Split | Card::Range | Card::Rate | Card::Seek => "flight",
+        Card::Scorch | Card::Bait | Card::Mist | Card::Smother | Card::Tinder => "trail",
+        Card::Wide | Card::Scatter | Card::Thick | Card::Delay | Card::Quiet | Card::Thrift => "shape",
+        Card::Heave | Card::Pull => "force",
+        Card::Trigger | Card::Expire | Card::Multicast => "rule",
+        _ => "bullet",
+    }
 }
 
 /// The first depth whose shop offers a card of this power.
@@ -1173,6 +1191,12 @@ pub enum Pick {
     Body(usize),
     /// Owned body `i` into the loadout shown, which gives up its gun.
     CarryBody(usize),
+    /// The card offers redrawn for `reroll_price` (gun step F): the guns
+    /// and bodies on offer stay, the held card too.
+    Reroll,
+    /// The hold moves to the next card on offer, or off after the last
+    /// (gun step F): a held card comes back in every shop until bought.
+    Hold,
     /// Owned body `i`'s autocast switch flips (gun step E4,
     /// `Body::auto`); in the field too.
     BodyAuto(usize),
@@ -1248,8 +1272,15 @@ pub struct Run {
     pub over: bool,
     /// Dev mode: the shop has rows to jump planets, add points and redraw.
     pub dev: bool,
-    /// Redraws so far (dev mode), so each draws anew.
+    /// Redraws so far (dev mode and `Pick::Reroll`), so each draws anew.
     rerolls: u64,
+    /// **Luck's shop levers** (gun step F, Direction 11-24 08:54Z, first
+    /// guesses): the card offer held for the next shops (`Pick::Hold`),
+    /// paid rerolls in this shop (`Pick::Reroll`, `reroll_price`), and
+    /// shops in a row with no tier-3 card on offer (`pity`).
+    pub held: Option<Card>,
+    pub paid_rerolls: u32,
+    pub since_rare: u32,
     /// The run ended on a lost level.
     beaten: bool,
     /// The gun range (`Run::range`): a free armory, not a run.
@@ -1286,7 +1317,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false, played: 0.0 }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, beaten: false, range: false, played: 0.0 }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -1808,6 +1839,9 @@ impl Run {
             }
             self.points -= price;
             self.offers.remove(k);
+            if self.held == Some(c) {
+                self.held = None;
+            }
         }
         let room = self.fits(c);
         self.cards.push((c, false));
@@ -1957,6 +1991,7 @@ impl Run {
             z = mix(z);
             self.offers.push(again.remove((z % again.len() as u64) as usize));
         }
+        z = self.luck(&pool, &owned, bullets, wanted, z);
         // Guns for the planet ahead, each its own seed: two kinds, and
         // neither the kind in hand (2026-11-18: a gun of another kind is
         // the buy that most changes how the squad plays, and of seeds
@@ -1972,6 +2007,90 @@ impl Run {
             .filter(|g| !self.guns.contains(g))
             .collect();
         self.body_offers = self.body_rolls(z);
+    }
+
+    /// **Luck's levers on the card offers** (gun step F, Direction 11-24
+    /// 08:54Z; the gun-system plan's shop levers, first guesses): the cards
+    /// on offer from `bullets` on, drawn from `pool`, change so that
+    ///
+    /// - **mix**: about a third (`n / 3`, at least one) are of a family the
+    ///   run owns a card of (`family`), and at least one of a family it
+    ///   owns none of, where the pool has them;
+    /// - **pity**: once tier-3 cards are sold (`power_from(3)`), a shop
+    ///   after `since_rare` shops with none shows one with chance
+    ///   `since_rare` in 3, so surely by the fourth;
+    /// - **hold**: the held card (`Pick::Hold`), if not on offer, takes the
+    ///   last card's place.
+    ///
+    /// The card the planet asks for (`wanted`) keeps its slot. Returns the
+    /// draw's seed moved on.
+    fn luck(&mut self, pool: &[Card], owned: &[Card], bullets: usize, wanted: Option<Card>, mut z: u64) -> u64 {
+        let fams: Vec<&str> = owned.iter().filter(|c| c.kind() != Kind::Payload).map(|&c| family(c)).collect();
+        let ours = |c: &Card| fams.contains(&family(*c));
+        // A card that may be swapped out: drawn, not the planet's.
+        let free = |offers: &[Card], i: usize| i >= bullets && Some(offers[i]) != wanted;
+        let n = self.offers.len().saturating_sub(bullets);
+        // Swaps slot `at` for a card of `pool` that `fit` takes, new to
+        // the offer and unowned if any is; false if none.
+        let swap = |offers: &mut Vec<Card>, at: usize, fit: &dyn Fn(&Card) -> bool, z: &mut u64| {
+            let mut c: Vec<Card> = pool.iter().copied().filter(|c| fit(c) && !offers.contains(c) && !owned.contains(c)).collect();
+            if c.is_empty() {
+                c = pool.iter().copied().filter(|c| fit(c) && !offers.contains(c)).collect();
+            }
+            if c.is_empty() {
+                return false;
+            }
+            *z = mix(*z);
+            offers[at] = c[(*z % c.len() as u64) as usize];
+            true
+        };
+        let mut offers = std::mem::take(&mut self.offers);
+        if !fams.is_empty() && n > 0 {
+            let want_ours = (n / 3).max(1);
+            // One of a family the run owns none of.
+            if !offers[bullets..].iter().any(|c| !ours(c)) {
+                if let Some(at) = (bullets..offers.len()).rev().find(|&i| free(&offers, i)) {
+                    swap(&mut offers, at, &|c| !ours(c), &mut z);
+                }
+            }
+            // About a third of the run's own families.
+            while offers[bullets..].iter().filter(|c| ours(c)).count() < want_ours {
+                let theirs = offers[bullets..].iter().filter(|c| !ours(c)).count();
+                let Some(at) = (bullets..offers.len()).rev().find(|&i| free(&offers, i) && !ours(&offers[i]) && theirs > 1) else { break };
+                if !swap(&mut offers, at, &|c| ours(c), &mut z) {
+                    break;
+                }
+            }
+        }
+        // Pity: a tier-3 card after shops without one.
+        if self.depth >= power_from(3) && self.since_rare > 0 && !offers[bullets..].iter().any(|c| c.tier() >= 3) {
+            z = mix(z);
+            if (z >> 8) % 3 < u64::from(self.since_rare) {
+                // In place of a card of the same side of the mix, so the
+                // mix holds where it can.
+                let side = |c: &Card| ours(c);
+                let tier3 = |c: &Card| c.tier() >= 3;
+                let slots: Vec<usize> = (bullets..offers.len()).rev().filter(|&i| free(&offers, i)).collect();
+                let done = slots.iter().any(|&at| {
+                    let was = side(&offers[at]);
+                    swap(&mut offers, at, &|c| tier3(c) && side(c) == was, &mut z)
+                });
+                if !done {
+                    if let Some(&at) = slots.first() {
+                        swap(&mut offers, at, &tier3, &mut z);
+                    }
+                }
+            }
+        }
+        // The held card back, in the last card's place.
+        if let Some(h) = self.held.filter(|h| !offers.contains(h)) {
+            match (bullets..offers.len()).rev().find(|&i| free(&offers, i)) {
+                Some(at) => offers[at] = h,
+                None => offers.push(h),
+            }
+        }
+        self.offers = offers;
+        z
     }
 
     /// This shop's bodies (gun step E3, Direction 11-24, first guesses):
@@ -2008,7 +2127,23 @@ impl Run {
             return;
         }
         self.depth += 1;
+        self.next_shop();
+    }
+
+    /// A new planet's shop (`won`, `skip`): its draw, the paid rerolls
+    /// back to the first price, and the pity count (`since_rare`) on by
+    /// one when this shop shows no tier-3 card (gun step F).
+    fn next_shop(&mut self) {
+        self.paid_rerolls = 0;
         self.restock();
+        let rare = self.offers.iter().any(|&c| c.kind() != Kind::Payload && c.tier() >= 3);
+        self.since_rare = if rare || self.depth < power_from(3) { 0 } else { self.since_rare + 1 };
+    }
+
+    /// What `Pick::Reroll` costs now: `REROLL_PRICE`, doubling each time
+    /// in one shop.
+    pub fn reroll_price(&self) -> u32 {
+        REROLL_PRICE << self.paid_rerolls.min(8)
     }
 
     /// The dev skip (`Pick::DevSkip`): the current planet counted as won
@@ -2022,7 +2157,7 @@ impl Run {
         self.points += skip_pay(self.depth);
         self.stars.push(0);
         self.depth += 1;
-        self.restock();
+        self.next_shop();
         true
     }
 
@@ -2104,8 +2239,10 @@ impl Run {
         }
         for (i, &c) in self.offers.iter().enumerate().filter(|_| !self.field) {
             let p = card_price(c);
-            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
-            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: c.about().into(), price, state, ready: self.range || p <= self.points, pick: Pick::Offer(i) });
+            let held = self.held == Some(c) && !self.range;
+            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), if held { "held".into() } else { "for sale".into() }) };
+            let about = if held { format!("{} Held: it comes back in every shop until you buy it.", c.about()) } else { c.about().into() };
+            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about, price, state, ready: self.range || p <= self.points, pick: Pick::Offer(i) });
         }
         let mut slot = 0;
         for (i, &(c, on)) in self.cards.iter().enumerate() {
@@ -2150,6 +2287,24 @@ impl Run {
                 let n = self.cards_of(i).len();
                 let about = format!("{gun}, {n} card{}{users}. Click to show it in the gun slots.", if n == 1 { "" } else { "s" });
                 rows.push(bar(format!("{}: {gun}", i + 1), about, i == self.editing, i != self.editing, Pick::Edit(i)));
+            }
+            // Luck's shop levers (gun step F): a paid reroll of the card
+            // offers, and the hold, which steps along the cards on offer.
+            if !self.field && !self.offers.is_empty() {
+                let price = self.reroll_price();
+                let again = if self.paid_rerolls > 0 { " again" } else { "" };
+                rows.push(Row { price: price.to_string(), ..bar(format!("Reroll cards{again} ({price})"), format!("New cards on offer for {price} points (the guns and bodies stay); the price doubles with each reroll in this shop."), false, price <= self.points, Pick::Reroll) });
+                let at = self.held.and_then(|h| self.offers.iter().position(|&c| c == h));
+                let next = at.map_or(self.offers.first(), |i| self.offers.get(i + 1));
+                let name = match self.held {
+                    Some(h) => format!("Hold: {}", card_title(h)),
+                    None => "Hold a card".to_string(),
+                };
+                let about = match next {
+                    Some(&c) => format!("Keep a card on offer for the next shops, free, until you buy it. Click to hold {} instead.", card_title(c)),
+                    None => "Keep a card on offer for the next shops, free, until you buy it. Click to hold none.".to_string(),
+                };
+                rows.push(bar(name, about, self.held.is_some(), true, Pick::Hold));
             }
             if self.loadouts.len() < LOADOUTS_MAX {
                 rows.push(bar("New loadout".into(), "An empty loadout with no gun: put a gun and cards in it, then give it to a squad or turrets.".into(), false, true, Pick::NewLoadout));
@@ -2270,6 +2425,30 @@ impl Run {
                 true
             }
             Pick::DevSkip => self.skip(),
+            Pick::Reroll => {
+                let price = self.reroll_price();
+                if self.range || self.field || price > self.points {
+                    return false;
+                }
+                self.points -= price;
+                self.paid_rerolls += 1;
+                self.rerolls += 1;
+                let (guns, bodies) = (std::mem::take(&mut self.gun_offers), std::mem::take(&mut self.body_offers));
+                self.restock();
+                (self.gun_offers, self.body_offers) = (guns, bodies);
+                true
+            }
+            Pick::Hold => {
+                if self.range || self.field || self.offers.is_empty() {
+                    return false;
+                }
+                let at = self.held.and_then(|h| self.offers.iter().position(|&c| c == h));
+                self.held = match at {
+                    None => self.offers.first().copied(),
+                    Some(i) => self.offers.get(i + 1).copied(),
+                };
+                true
+            }
             Pick::DevPoints if self.dev => {
                 self.points += 1000;
                 true
@@ -2423,6 +2602,9 @@ impl Run {
         put("beaten", flag(self.beaten).into());
         put("dev", flag(self.dev).into());
         put("rerolls", self.rerolls.to_string());
+        put("held", self.held.map_or(String::new(), |c| c.word()));
+        put("paid_rerolls", self.paid_rerolls.to_string());
+        put("since_rare", self.since_rare.to_string());
         put("played", format!("{:.1}", self.played));
         s
     }
@@ -2497,6 +2679,9 @@ impl Run {
         r.beaten = flag("beaten");
         r.dev = flag("dev");
         r.rerolls = num("rerolls").unwrap_or(0);
+        r.held = get("held").and_then(Card::from_word);
+        r.paid_rerolls = num("paid_rerolls").map_or(0, |v| v as u32);
+        r.since_rare = num("since_rare").map_or(0, |v| v as u32);
         // A save from before 11-24 has none: its time so far is unknown.
         r.played = get("played").and_then(|v| v.parse::<f32>().ok()).filter(|v| v.is_finite() && *v >= 0.0).unwrap_or(0.0);
         Ok(r)
@@ -3309,6 +3494,7 @@ mod tests {
         r.body_offers.push(Body::roll(BodyKind::Line, 6, 2));
         r.offers.push(Card::Pierce);
         r.played = 1234.5;
+        (r.held, r.paid_rerolls, r.since_rare) = (Some(Card::Pierce), 2, 1);
         assert!(r.owned.iter().any(|&l| l > 1) && r.guns.len() > 1 && r.loadouts.len() > 2 && !r.offers.is_empty());
         let text = r.save_text();
         assert_eq!(Run::from_save(&text), Ok(r.clone()), "{text}");
@@ -3409,6 +3595,82 @@ mod tests {
         assert!(r.body_cards(BodyKind::Mine).is_empty(), "no mine owned");
         assert!(r.shop().iter().any(|w| w.pick == Pick::Edit(1) && w.about.contains("devices carry its cards")));
         assert_eq!(Run::from_save(&r.save_text()).map(|f| (f.device_loadout, f.body_cards(BodyKind::Grenade))), Ok((Some(1), d)));
+    }
+
+    /// **Luck's shop levers** (gun step F, Direction 11-24 08:54Z): the
+    /// hold keeps a card on offer shop after shop until it is bought; a
+    /// reroll redraws the cards for 25, then 50, keeping the guns and
+    /// bodies, and costs 25 again in the next shop; every shop's cards mix
+    /// the run's own families and one it owns none of; after shops with no
+    /// tier-3 card one is on offer by the fourth; Trigger and Expire are
+    /// tier 3.
+    #[test]
+    fn the_shops_luck_levers_hold_reroll_mix_and_pity() {
+        assert_eq!((Card::Trigger.tier(), Card::Expire.tier(), Card::Multicast.tier()), (3, 3, 3));
+        // Hold.
+        let mut r = Run::new(1);
+        r.restock();
+        assert!(r.shop().iter().any(|w| w.pick == Pick::Hold && w.name == "Hold a card"));
+        assert!(r.pick(Pick::Hold) && r.held == Some(r.offers[0]));
+        let h = r.held.unwrap();
+        assert!(r.pick(Pick::Hold) && r.held == Some(r.offers[1]), "the hold steps along");
+        r.held = Some(h);
+        assert!(r.shop().iter().any(|w| w.pick == Pick::Offer(0) && w.state == "held"));
+        for _ in 0..3 {
+            r.won(3);
+            assert!(r.offers.contains(&h), "held into planet {}'s shop: {:?}", r.depth, r.offers);
+        }
+        r.points = 10_000;
+        let at = r.offers.iter().position(|&c| c == h).unwrap();
+        assert!(r.pick(Pick::Offer(at)) && r.held.is_none(), "bought, the hold is off");
+        // Reroll.
+        let (guns, bodies, offers, pts) = (r.gun_offers.clone(), r.body_offers.clone(), r.offers.clone(), r.points);
+        assert_eq!(r.reroll_price(), REROLL_PRICE);
+        assert!(r.pick(Pick::Reroll) && r.points == pts - 25 && r.reroll_price() == 50);
+        assert!(r.pick(Pick::Reroll) && r.points == pts - 75 && r.reroll_price() == 100);
+        assert_eq!((r.gun_offers.clone(), r.body_offers.clone()), (guns, bodies), "the guns and bodies stay");
+        assert_ne!(r.offers, offers, "new cards");
+        r.won(3);
+        assert_eq!(r.reroll_price(), 25, "each shop starts at the first price");
+        r.points = 10;
+        assert!(!r.pick(Pick::Reroll), "too dear");
+        // Mix: with Wide owned (shape), planets 2 and 3's cards hold one
+        // shape card and one of another family, over 40 seeds and rerolls.
+        let (mut ours, mut theirs, mut shops) = (0, 0, 0);
+        for seed in 1..=40 {
+            let mut r = Run::new(seed);
+            r.cards = vec![(Card::Wide, true), (Card::Blast, true)];
+            for d in 2..=3 {
+                r.depth = d;
+                for k in 0..3 {
+                    r.rerolls = k;
+                    r.restock();
+                    let cards: Vec<Card> = r.offers.iter().copied().filter(|c| c.kind() != Kind::Payload).collect();
+                    shops += 1;
+                    ours += usize::from(cards.iter().any(|&c| family(c) == "shape"));
+                    theirs += usize::from(cards.iter().any(|&c| family(c) != "shape"));
+                }
+            }
+        }
+        assert_eq!((ours, theirs), (shops, shops), "every shop mixes the run's family and another");
+        // Pity: three shops with no tier-3 card, the fourth shows one.
+        for seed in 1..=40 {
+            let mut r = Run::new(seed);
+            r.cards = vec![(Card::Blast, true)];
+            r.depth = 5;
+            r.since_rare = 3;
+            r.restock();
+            assert!(r.offers.iter().any(|c| c.kind() != Kind::Payload && c.tier() == 3), "seed {seed}: {:?}", r.offers);
+        }
+        let mut rare = 0;
+        for seed in 1..=40 {
+            let mut r = Run::new(seed);
+            r.cards = vec![(Card::Blast, true)];
+            r.depth = 5;
+            r.restock();
+            rare += usize::from(r.offers.iter().any(|c| c.kind() != Kind::Payload && c.tier() == 3));
+        }
+        eprintln!("planet 5's first shop shows a tier-3 card in {rare} of 40 seeds without pity");
     }
 
     /// **Bodies** (gun step E3, Direction 11-24): planet 1's shop sells
