@@ -261,7 +261,7 @@ pub fn detail_percent(detail: &str, screen: (u32, u32)) -> u32 {
 pub fn auto_percent(screen: (u32, u32)) -> u32 {
     let steps = DETAIL_STEPS.iter().filter_map(|d| d.strip_suffix('%')?.parse::<u32>().ok());
     let px = |p: u32| (screen.0 * p).div_ceil(100) as u64 * (screen.1 * p).div_ceil(100) as u64;
-    let last = steps.clone().last().unwrap_or(100);
+    let last = steps.clone().next_back().unwrap_or(100);
     steps.into_iter().find(|&p| px(p) <= AUTO_PIXELS).unwrap_or(last)
 }
 
