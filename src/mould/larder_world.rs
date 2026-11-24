@@ -77,6 +77,7 @@ mod cover;
 mod doors;
 mod bulwark;
 mod fireway;
+mod autocast;
 mod trample;
 mod gear;
 pub mod snap;
@@ -508,6 +509,14 @@ pub struct Game<W: World> {
     /// t, ..)` loads tool `t`'s (its body's, `Run::body_cards`) and
     /// `Cmd::Load(DEVICE_DECK, ..)` all of them. None: as before.
     pub device_decks: [Option<Deck>; 8],
+    /// **Autocast** (gun step E4): bit `t` set, tool `t`'s body goes off
+    /// on its own (`autocast.rs`, `Cmd::Auto`). 0: every device waits for
+    /// an order, as before.
+    pub autocast: u8,
+    /// Game seconds until the next autocast look (`autocast_turn`).
+    autocast_clock: f32,
+    /// Devices autocast set off this game.
+    pub autocasts: u32,
     pub bullets_dropped: u32,
     /// Carried casts let out (`Bullet::carry`), each one release, however
     /// many bullets its set fires.
@@ -777,6 +786,9 @@ impl<W: World> Game<W> {
             bullet_mods: BulletMods::default(),
             turret_deck: None,
             device_decks: [None; 8],
+            autocast: 0,
+            autocast_clock: 0.0,
+            autocasts: 0,
             bullets_dropped: 0,
             releases: 0,
             mould,

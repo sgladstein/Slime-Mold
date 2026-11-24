@@ -88,6 +88,9 @@ pub enum Cmd {
     /// Squad `q` sets tool `t` off from its device slot (`Game::device`,
     /// `Kit::device`; the squad mode's tools, owner 2026-11-21 06:55Z).
     Device(u8, Tool),
+    /// The bodies whose bits are set (bit `t` for tool `t`, `kit::TOOLS`
+    /// order) go off on their own (`Game::autocast`, gun step E4).
+    Auto(u8),
     /// Squad `q` takes a gun (`Game::arm`; owner 11-14 16:46Z, "The squad
     /// owns the gun"); None gives back the standard rifle.
     Arm(u8, Option<Gun>),
@@ -145,6 +148,7 @@ impl Cmd {
                     }
                 }
             }
+            Cmd::Auto(m) => format!("auto {m}"),
             Cmd::Heal(q) => format!("heal {q}"),
             Cmd::Arm(q, None) => format!("arm {q} none"),
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
@@ -199,6 +203,7 @@ impl Cmd {
                 };
                 return Some(Cmd::Device(q, t));
             }
+            "auto" => return Some(Cmd::Auto(w.get(1)?.parse().ok()?)),
             "heal" => return Some(Cmd::Heal(w.get(1)?.parse().ok()?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
@@ -322,6 +327,10 @@ impl<W: World> Game<W> {
             },
             Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Band(..) | Cmd::Heal(..) => self.squad_cmd(c),
             Cmd::Device(q, t) => self.device(q as usize, t),
+            Cmd::Auto(m) => {
+                self.autocast = m;
+                true
+            }
             _ => false,
         }
     }

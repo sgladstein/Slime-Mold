@@ -673,6 +673,9 @@ fn range_shelf(row: &run::Row) -> &'static str {
         // next bullet's, that tab took two pages at 200% on 1080 lines.
         // With the trails since 11-17 (below).
         (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Pull)) => "Trails and shoves",
+        // The dart (2026-11-24) moves the slime too: on the special
+        // bullets' tab it took two pages at 200% on 1080 lines.
+        (Pick::Offer(_), Face::Card(rounds::Card::Ammo(a))) if a.shell == rounds::Shell::Dart => "Trails and shoves",
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
         // The readers (Shatter, Detonate) share it: their own tab would
@@ -1478,6 +1481,8 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
         let d = r.body_cards(kind);
         g.apply(Cmd::Load(slime_mould::mould::larder_world::DEVICE_DECKS + kind.tool() as u8, (!d.is_empty()).then(|| rounds::Deck::new(&d))));
     }
+    // Which bodies go off on their own (gun step E4).
+    g.apply(Cmd::Auto(r.autocast()));
     // Turrets on a loadout of their own (`Building::loadout`) take its
     // cards as they now stand.
     for b in 0..g.buildings.len() {

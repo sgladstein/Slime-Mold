@@ -70,7 +70,7 @@
 pub use super::bullets::{Ammo, Set, Shell};
 use super::big;
 use super::kit::KitRules;
-use super::larder_world::{BulletMods, Game, World};
+use super::larder_world::{BulletMods, Game, LureMark, World};
 pub use super::squad::Burst;
 use super::squad::BurstRules;
 
@@ -195,6 +195,15 @@ pub enum Card {
     /// alarm on a flinching mould is gone in a few fine steps, hence the
     /// burn.
     Flare,
+    /// **The dart** (2026-11-24, the Lure's second form; the lab's
+    /// steering prototype, `Reports/lab-steering-2026-11-17/`: a dart that
+    /// sets a lure where the squad aims took a crystal off a colony in 30
+    /// to 45 s at pull 10, for fewer kills). A route payload that kills
+    /// nothing and leaves a lure mark (`LureMark`, the GPU world's lure
+    /// field) where it hits for `RoundRules::dart_secs`, at most
+    /// `dart_max` live, the oldest replaced: calm slime streams to it
+    /// round rock and walls, onto whatever stands there, the squad too.
+    Dart,
     /// **The element family** (2026-11-17, step D of the gun-system
     /// review, its fourth: "fire, water, plants; the ground the slime
     /// stands on"). `Torch` is a payload that kills nothing itself and
@@ -249,11 +258,11 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 35] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare, Card::Torch, Card::Tinder, Card::Provoke, Card::Still];
+    pub const ALL: [Card; 36] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare, Card::Dart, Card::Torch, Card::Tinder, Card::Provoke, Card::Still];
 
     pub fn kind(self) -> Kind {
         match self {
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => Kind::Payload,
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Detonate | Card::Flare | Card::Dart | Card::Torch => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek | Card::Tinder => Kind::Flight,
@@ -299,6 +308,7 @@ impl Card {
             Card::Shatter => "shatter",
             Card::Detonate => "detonate",
             Card::Flare => "flare",
+            Card::Dart => "dart",
             Card::Torch => "torch",
             Card::Tinder => "tinder",
         }
@@ -381,6 +391,7 @@ impl Card {
             // against 17,628, `Reports/gun-readers-2026-11-17/`).
             Card::Detonate => "Kills sick slime where it hits; let it spread first.",
             Card::Flare => "Burns where it hits, alarming slime; kills none.",
+            Card::Dart => "Calm slime streams to where it hits for a while; kills none.",
             Card::Torch => "Sets the plants where it hits on fire.",
             Card::Tinder => "Bullets lay a line of dry brush that fire runs along.",
             Card::Heave => "Its hit shoves the slime onto your nearest turret, or back.",
@@ -405,7 +416,7 @@ impl Card {
             // Kills only what another card set up, which paid for it.
             Card::Shatter | Card::Detonate => 2,
             // Kills nothing; moves the slime, as the Mind bullets do.
-            Card::Flare => 2,
+            Card::Flare | Card::Dart => 2,
             // Kills only by the fire, which needs plants and spares a damp
             // body: below the blast (3), with the flare.
             Card::Torch => 2,
@@ -431,7 +442,7 @@ impl Card {
             Card::Bomb | Card::Germ | Card::Multicast | Card::Mist => 3,
             Card::Gas => 2,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Pull | Card::Seek => 2,
-            Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Flare | Card::Torch | Card::Tinder => 2,
+            Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Flare | Card::Dart | Card::Torch | Card::Tinder => 2,
             Card::Detonate => 3,
             _ => 1,
         }
@@ -757,6 +768,13 @@ pub struct RoundRules {
     /// `set=` keys.
     pub torch_r: f32,
     pub torch_light: f32,
+    /// **The dart** (`Card::Dart`, 2026-11-24): its lure mark's seconds
+    /// (the lab's darts held a lure 12 s) and how many darts' marks live
+    /// at once in a game, the oldest replaced (a lure field is rebuilt
+    /// once a game second over every mark, `time_lure_paths`). First
+    /// guesses. `set=` keys.
+    pub dart_secs: f32,
+    pub dart_max: u32,
     /// **A device's fire brings its own brush** (gun step E3, Direction
     /// 11-24 07:01Z: a Torch Grenade at the squad's own feet should burn
     /// it as a Tinder brush does, the owner's Noita rule): a fire a body's
@@ -826,6 +844,8 @@ impl Default for RoundRules {
             torch_r: 6.0,
             torch_light: 1.0,
             device_brush: 1.0,
+            dart_secs: 12.0,
+            dart_max: 4,
             budget: 10,
             // The germ round's sick pay a sixth of the toolkit's upkeep
             // (10 against 60; 2026-11-17, the game designer's call, 05:40Z:
@@ -865,6 +885,10 @@ impl RoundRules {
     /// A rule by name (`larder-world set=NAME=V`, as `Rules::set`), false
     /// for none: the Mind bullets' and the readers' numbers, to tune by eye.
     pub fn set(&mut self, name: &str, v: f32) -> bool {
+        if name == "dart_max" {
+            self.dart_max = v.max(1.0) as u32;
+            return true;
+        }
         let r = match name {
             "plain_pop" => &mut self.plain_pop,
             "plain_wide" => &mut self.plain_wide,
@@ -891,6 +915,7 @@ impl RoundRules {
             "torch_r" => &mut self.torch_r,
             "torch_light" => &mut self.torch_light,
             "device_brush" => &mut self.device_brush,
+            "dart_secs" => &mut self.dart_secs,
             "trail_fuel" => &mut self.trail_fuel,
             "trail_fuel_gap" => &mut self.trail_fuel_gap,
             // The germ round's own contagion (2026-11-17), in its kit so
@@ -990,7 +1015,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek | Card::Tinder => {}
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => {
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Detonate | Card::Flare | Card::Dart | Card::Torch => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
                 multis.push(multi);
@@ -1379,6 +1404,11 @@ pub struct Rounds {
     /// The casts going off now are a device's (`cast_device_at`): each
     /// fire they light brings this much brush (`RoundRules::device_brush`).
     brush: f32,
+    /// The live darts' lure marks (`Card::Dart`), oldest first: where
+    /// (fine cells) and the tick each ends.
+    darts: Vec<((f32, f32), u64)>,
+    /// Darts thrown (each also in `cast`'s route slot).
+    pub darted: u32,
     /// Batches run (`flush`) and the bursts in them.
     pub batches: u32,
     pub batched: u32,
@@ -1404,7 +1434,7 @@ fn slot(p: Card) -> Option<usize> {
         Card::Bomb => Some(3),
         Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still => Some(4),
         Card::Shatter | Card::Detonate => Some(5),
-        Card::Flare => Some(6),
+        Card::Flare | Card::Dart => Some(6),
         Card::Torch => Some(7),
         _ => None,
     }
@@ -1715,6 +1745,22 @@ impl Rounds {
         self.cast_all(g, &casts(cards), at);
     }
 
+    /// A dart's hit at `at` (fine cells): a lure mark there for
+    /// `dart_secs`, the oldest live dart's taken off first once
+    /// `dart_max` are live.
+    fn dart<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32)) {
+        let now = g.world.ticks();
+        self.darts.retain(|d| d.1 > now);
+        while self.darts.len() >= self.rules.dart_max.max(1) as usize {
+            let old = self.darts.remove(0);
+            g.lure_marks.retain(|m| (m.at, m.until) != old);
+        }
+        let until = now + (self.rules.dart_secs * g.rules.tps as f32).round().max(1.0) as u64;
+        g.lure_marks.push(LureMark { at, until });
+        self.darts.push((at, until));
+        self.darted += 1;
+    }
+
     /// A device's cards going off at `at` (`Kit::carry`): as
     /// `cast_cards_at`, but a fire they light brings its own brush, as a
     /// Tinder line does (`RoundRules::device_brush`).
@@ -1949,6 +1995,10 @@ impl Rounds {
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
         let k = self.rules.burst_rules(fine);
         let mut bs = if c.payload == Card::Plain { plain_bursts(c, at, self.strike, &self.rules, s) } else { bursts(c, at, &self.rules, s, fine) };
+        if c.payload == Card::Dart {
+            self.dart(g, at);
+            return;
+        }
         if self.brush > 0.0 {
             for b in bs.iter_mut().filter(|b| b.light > 0.0) {
                 b.fuel = b.fuel.max(self.brush);
@@ -2176,6 +2226,43 @@ mod tests {
         eprintln!("a flare over {secs} ticks, every {every}: {lays} lays again");
         assert_eq!(lays, secs / every - 1 + u32::from(secs % every != 0), "it lays again every {every} ticks until it goes out");
         assert_eq!((rd.burning(g.world.ticks()).count(), rd.killed), (0, 0), "out, and it killed nothing");
+    }
+
+    /// **The dart** (2026-11-24): a route payload with no burst, a lure
+    /// mark where it hits for `dart_secs`, counted with the flare; a fifth
+    /// dart takes the oldest live one's mark off, and a mark run out is
+    /// no longer counted against `dart_max`.
+    #[test]
+    fn a_dart_leaves_a_lure_mark_and_at_most_dart_max_live() {
+        use crate::mould::larder_world::race_world;
+        let c = Card::Dart;
+        assert_eq!((c.kind(), c.word(), slot(c), c.cost(), c.tier()), (Kind::Payload, "dart".to_string(), Some(6), 2, 2));
+        let r = RoundRules::default();
+        let mut tuned = r;
+        assert!(tuned.set("dart_secs", 3.0) && tuned.set("dart_max", 2.0) && (tuned.dart_secs, tuned.dart_max) == (3.0, 2));
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+        g.step();
+        let mut rd = Rounds::new(parse("dart").unwrap(), r);
+        for k in 0..6 {
+            rd.cast_at(&mut g, (100.0 + 10.0 * k as f32, 100.0));
+        }
+        assert_eq!((rd.cast[6], rd.darted, rd.killed, rd.batched), (6, 6, 0, 0), "no burst, nothing killed");
+        let at: Vec<_> = g.lure_marks.iter().map(|m| m.at.0).collect();
+        assert_eq!(at, vec![120.0, 130.0, 140.0, 150.0], "the four newest marks");
+        let end = g.lure_marks[0].until;
+        assert_eq!(end - g.world.ticks(), (r.dart_secs * g.rules.tps as f32) as u64);
+        // Run out, they no longer count: a new dart keeps the other marks.
+        let mut rd = Rounds::new(parse("dart").unwrap(), tuned);
+        g.lure_marks.clear();
+        rd.cast_at(&mut g, (10.0, 10.0));
+        while g.world.ticks() < g.lure_marks[0].until {
+            g.step();
+        }
+        g.lure_marks.push(LureMark { at: (1.0, 1.0), until: u64::MAX });
+        rd.cast_at(&mut g, (20.0, 10.0));
+        rd.cast_at(&mut g, (30.0, 10.0));
+        assert!(g.lure_marks.iter().any(|m| m.at == (1.0, 1.0)), "a Lure's own mark is never taken off");
+        assert_eq!(g.lure_marks.iter().filter(|m| m.until > g.world.ticks() && m.at.1 == 10.0).count(), 2);
     }
 
     /// **The element family** (2026-11-17, step D): a torch is a payload

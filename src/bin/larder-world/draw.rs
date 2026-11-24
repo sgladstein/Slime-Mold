@@ -2072,15 +2072,27 @@ impl App {
                     };
                     // Ready: the device's own cooldown on the price line;
                     // cooling: the slot's seconds left there instead (in
-                    // the button's middle they ran over its name).
+                    // the button's middle they ran over its name). A body
+                    // on autocast (gun step E4, `Game::autocast`) says
+                    // "auto" there too.
+                    let tool = match id {
+                        T_BLAST => 0,
+                        T_MINE => 1,
+                        T_CORD => 2,
+                        T_GAS => 4,
+                        _ => 8,
+                    };
+                    let auto = tool < 8 && g.autocast & (1 << tool) != 0;
+                    let tag = if auto { " auto" } else { "" };
+                    let auto_about = if auto { format!(" On autocast: it goes off on its own when the slot is ready and thick slime is in reach, at least {:.0} cells from the squad (the shop's Tools tab switches it).", kr.auto_gap) } else { String::new() };
                     Command {
                         target,
-                        cost: Some(if wait > 0.0 { format!("{:.0}s", wait.ceil()) } else { format!("{cd:.0}s") }),
+                        cost: Some(if wait > 0.0 { format!("{:.0}s{tag}", wait.ceil()) } else { format!("{cd:.0}s{tag}") }),
                         cost_icon: Icon::Clock,
                         ready: works && wait <= 0.0,
                         cooldown: if wait > 0.0 { (wait / total.max(1e-3)).min(1.0) } else { 0.0 },
                         why_not: if !works { Some("Not on the GPU world yet".into()) } else { (wait > 0.0).then(|| format!("The squad's device slot recharges: ready in {:.0} s", wait.ceil())) },
-                        about: format!("{about} The squad's one device slot: a soldier of the squad within {:.0} cells sets it off, free, then the slot recharges for {cd:.0} s before any device goes again.", kr.reach),
+                        about: format!("{about} The squad's one device slot: a soldier of the squad within {:.0} cells sets it off, free, then the slot recharges for {cd:.0} s before any device goes again.{auto_about}", if tool < 8 && kr.reaches[tool] > 0.0 { kr.reaches[tool] } else { kr.reach }),
                         ..Command::new(id, slot, icon, name, key)
                     }
                 }
@@ -2715,6 +2727,8 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells; let it spread first.", r.detonate_r)),
         // The route family (2026-11-17, step D): moves the slime, kills none.
         C::Flare => (Icon::Flare, CardKind::Payload, format!("Burns {:.0} s, alarming slime within {:.0} cells; kills none.", r.flare_secs, r.flare_r)),
+        // The dart (2026-11-24): the Lure's second form, a lure mark.
+        C::Dart => (Icon::Lure, CardKind::Payload, format!("Draws calm slime to where it hits for {:.0} s.", r.dart_secs)),
         // The element family (2026-11-17, step D): the fire kills, not the hit.
         C::Torch => (Icon::Torch, CardKind::Payload, format!("Sets plants within {:.0} cells on fire; the fire kills slime.", r.torch_r)),
     }
@@ -2989,6 +3003,8 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         // The flare (2026-11-17): a signal flare's hot red, apart from
         // the blast's orange.
         Some(rounds::Card::Flare) => ([255, 60, 70], [255, 226, 220], [255.0, 90.0, 90.0]),
+        // The dart (2026-11-24): the Lure building's amber.
+        Some(rounds::Card::Dart) => ([255, 196, 90], [255, 240, 214], [255.0, 205.0, 120.0]),
         // The torch (2026-11-17): a flame's yellow, more saturated than a
         // plain shot's pale gold and apart from the blast's orange.
         Some(rounds::Card::Torch) => ([255, 225, 0], [255, 252, 210], [255.0, 235.0, 70.0]),
