@@ -76,3 +76,39 @@ Cost on lavapipe at 3840 x 2004, 50%, zoom 8 (view passes, median of 5
 frames): 198 to 224 ms; `prep` 10.3 to 43.6 (four times the fine cells,
 as at 100%), base unchanged. On the 1070, `prep` at full 4K was 2.5 ms
 (11-22), so expect about 2 ms more a frame; to be timed there.
+
+## On the GTX 1070 at his window (2026-11-24)
+
+A Remote Control runner on Scott-Desktop, the build bbebde5 (#747 and
+#753), `bench=60 run=1:3 mode=squads hand=strat:rush,aim=6
+screen=3840x2004 detail=D centre=larder,6 viewpasses=30`. The league was
+paused, no game was open, and the GPU was otherwise idle. Frame p50 / p95, ms:
+
+| detail | 100% | 75% | 67% | 60% | 50% | 40% |
+|---|---|---|---|---|---|---|
+| planet 3 | 26.6 / 27.8 | 18.2 / 19.3 | 15.7 / 16.8 | 13.9 / 15.0 | 11.4 / 12.5 | 9.4 / 10.4 |
+| view, ms | 25.4 | 16.7 | 14.3 | 12.5 | 10.1 | 8.0 |
+
+`prep` is 2.38 ms at every step, the cost #753 brought below 100%.
+
+At the slime's peak, at 50% with `hand=idle` (his own peaks were planet 5
+at 136k and planet 8 at 209k at landing, 11-22 and 11-23):
+
+| planet | mould | frame p50 / p95 ms |
+|---|---|---|
+| 5 (219 s) | 132k | 14.5 / 15.5 |
+| 8 (150 s) | 221k | 17.7 / 19.5 |
+| 8 at 40% | 221k | 15.2 / 17.0 |
+| 8, 1280 x 800 at 100% | 221k | 9.0 / 10.9 |
+
+Planet 8 per frame: view 12.2 ms (base 8.8, prep 2.5, compose 0.7), and
+the simulation 12.4 ms of GPU a step (sense 4.75, egain 1.44, trail
+1.17, life 0.84, scent 0.82), 3.1 ms a frame at 15 steps a second. The
+simulation's time is the same at 1280 x 800. The CPU step's
+`time_bosses` takes up to 60 ms in a single call, about every 45 s: a
+hitch the p95 misses.
+
+What followed (Direction's picks): Auto now steps down toward 40% while
+frames run long (#759, `autodetail.rs`), and the Enemy lane makes `sense`
+cheaper and the boss turns shorter. A smaller planet 8 map is the fallback.
+Planet 8 is timed again once both are in.

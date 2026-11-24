@@ -188,7 +188,7 @@ card pick; [the report](../../Reports/perf-4k-2026-11-22/README.md)): since
 bilinear between whole ratios). Auto keeps the world under 2.4 million
 pixels: 50% at 4K, which held 60 frames a second in every second of his
 play logs since 11-22. Time the game at `screen=3840x2004 detail=N` to
-match his play (his window, maximised). Below 100% the ground's detail fades and `prep`'s fine cells read the screen's own zoom (`look_zoom`), so 50% keeps 100%'s ground and smooth body; `prep` then costs what it does at 100%. On the 1070 at 3840 x 2004, 50% holds 60 frames on planet 3 (p95 12.5 ms) and planet 5's peak (15.5), not planet 8's (19.5: a 12.2 ms view and 12.4 ms of simulation a step), so Auto now steps down toward 40% while frames run long (`autodetail`).
+match his play (his window, maximised). Below 100% the ground's detail fades and `prep`'s fine cells read the screen's own zoom (`look_zoom`), so 50% keeps 100%'s ground and smooth body; `prep` then costs what it does at 100%. On the 1070 at 3840 x 2004, 50% holds 60 frames on planet 3 (p95 12.5 ms) and planet 5's peak (15.5), not planet 8's (19.5: a 12.2 ms view and 12.4 ms of simulation a step), so Auto now steps down toward 40% while frames run long (`autodetail`). Every step's 1070 numbers, and planet 8 pass by pass, are in the report's *On the GTX 1070 at his window*.
 
 ## Sources
 
