@@ -6,7 +6,7 @@
 # game second 20 on the slime about 280 units away (boss=20,X,Y), no other mini-boss
 # (boss_first=9999, boss_kind=2). Arms: off (hold, no feeding), bait (hold, LAB_FEED=1.0),
 # drain (drain@ the crystal and buy soldiers, LAB_FEED=1.0). 2:30 a game.
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"  # "Stop" turns the game's stderr into an error under PowerShell 5.1 (Engine, 11-24)
 $out = "C:\Users\Scott\Code\pc-batch-out\lab-trade-20261124"
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 $seeds = @(
