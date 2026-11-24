@@ -507,6 +507,29 @@ impl PastRun {
     }
 }
 
+/// One slime or threat on the Slimes met page (Direction 11-24: "each
+/// slime and threat this PC has met: its name, its card line, a small still
+/// from the game, how many times it was beaten and how many times it won,
+/// and which hint it shows. Grey out the ones not yet met"). The window
+/// fills them (`met.rs`).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Met {
+    pub name: String,
+    /// What it is: "The slime of planet 3", "A threat from planet 2".
+    pub kind: String,
+    /// 0 a slime, 1 a threat, 2 a mini-boss: its section of the page.
+    pub group: u8,
+    /// Its words in play, and where they show ("On its landing card").
+    pub words: String,
+    pub said: String,
+    /// Its cell in the stills' sheet (`Canvas::still`).
+    pub still: Option<u32>,
+    pub met: bool,
+    /// Planets won with it there, and planets it won.
+    pub beaten: u32,
+    pub won: u32,
+}
+
 /// The fastest win of each planet, from 1, over `runs` (Direction 11-24:
 /// "his best time per planet"): a planet won with a star or more whose
 /// time is known; a dev skip (no stars) is not a time.
@@ -739,6 +762,8 @@ pub enum Page {
     /// The runs that ended, and the best time on each planet (Direction
     /// 11-24).
     Runs,
+    /// Each slime and threat met on this PC (Direction 11-24).
+    Met,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -796,6 +821,10 @@ enum Hit {
     /// Past run `i` (newest first): a click or the keyboard's row tells
     /// it in full beside the list.
     PastRun(usize),
+    /// The main page's "Slimes met" row.
+    Met,
+    /// Slime or threat `i` on the Slimes met page: the pane tells it.
+    Seen(usize),
 }
 
 pub struct StartMenu {
@@ -828,6 +857,9 @@ pub struct StartMenu {
     /// The runs that ended, newest first (`runs.txt`); empty hides the
     /// main page's "Past runs" row.
     pub runs: Vec<PastRun>,
+    /// Each slime and threat, met or not (`Met`); empty hides the main
+    /// page's "Slimes met" row.
+    pub met: Vec<Met>,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
     /// That run as the Run row's caption tells it (Look D, 11-24); the
@@ -896,7 +928,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, runs: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, runs: Vec::new(), met: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
     }
 
     /// The option named `key`.
@@ -954,6 +986,17 @@ impl StartMenu {
     /// Whether the page shows the Options tabs: Options, and the key list
     /// unless the shop or the campaign opened it (F1 there), whose Back
     /// goes back there.
+    /// The main page's one row to the runs that ended and the slimes met
+    /// (two tabs of one place, so the main page keeps its row count): Past
+    /// runs once a run has ended, else Slimes met once there is a list.
+    fn record_row(&self) -> Option<Hit> {
+        if !self.runs.is_empty() {
+            Some(Hit::Runs)
+        } else {
+            (!self.met.is_empty()).then_some(Hit::Met)
+        }
+    }
+
     fn tabbed(&self) -> bool {
         self.page == Page::Options || (self.page == Page::Keys && matches!(self.keys_from, Page::Main | Page::Options))
     }
@@ -1067,7 +1110,7 @@ impl StartMenu {
         match self.page {
             // (No Keys row since 11-15: the key list is Options' last tab,
             // and F1 or ? opens it from anywhere.)
-            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Viewer]).chain((!self.runs.is_empty()).then_some(Hit::Runs)).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Viewer]).chain(self.record_row()).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -1078,6 +1121,7 @@ impl StartMenu {
                 (0..n).map(|i| if self.news_tab == 0 { Hit::Line(i) } else { Hit::Try(i) }).chain([Hit::Back]).collect()
             }
             Page::Runs => (0..self.runs.len()).map(Hit::PastRun).chain([Hit::Back]).collect(),
+            Page::Met => (0..self.met.len()).map(Hit::Seen).chain([Hit::Back]).collect(),
         }
     }
 
@@ -1099,6 +1143,7 @@ impl StartMenu {
                 Page::Shop => Hit::Run,
                 Page::News => Hit::Build,
                 Page::Runs => Hit::Runs,
+                Page::Met => self.record_row().unwrap_or(Hit::Met),
                 Page::Main => Hit::Run,
             };
             self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
@@ -1163,6 +1208,8 @@ impl StartMenu {
             Hit::Runs => self.show(Page::Runs),
             // (A run's row only takes the focus: `button`.)
             Hit::PastRun(_) => {}
+            Hit::Met => self.show(Page::Met),
+            Hit::Seen(_) => {}
             Hit::NewsTab(k) => self.open_news_tab(k),
             // (A line's row only takes the focus: `button`.)
             Hit::Line(_) => {}
@@ -1306,6 +1353,8 @@ impl StartMenu {
                 self.open_tab(at + 1);
             }
             KeyCode::Tab if self.page == Page::News => self.open_news_tab(self.news_tab + 1),
+            KeyCode::Tab if self.page == Page::Runs && !self.met.is_empty() => self.show(Page::Met),
+            KeyCode::Tab if self.page == Page::Met && !self.runs.is_empty() => self.show(Page::Runs),
             // The shop's tabs: Tab goes round, 1 to 9 pick one.
             KeyCode::Tab if self.page == Page::Shop => self.open_shop_tab(self.shop_tab + 1),
             _ if self.page == Page::Shop && digit(code).is_some_and(|n| n >= 1 && n <= self.shop_tabs().len()) => {
@@ -1394,7 +1443,7 @@ impl StartMenu {
         // 17:31Z) found the title and its line repeated on every page took
         // 130 to 220 of the 565 units a 1080-line screen has at 200%
         // (`Reports/menu-layout-research-2026-11-15/`).
-        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs);
+        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met);
         // A shade down the left, fading out, so the panel reads over the
         // dish; the shop and the inner pages span the screen, so they dim
         // all of it.
@@ -1471,6 +1520,7 @@ impl StartMenu {
             Page::News if self.news_tab == 0 => self.news_page(c, x, at, s, focus),
             Page::News => self.try_page(c, x, at, s, focus),
             Page::Runs => self.runs_page(c, x, at, s, focus),
+            Page::Met => self.met_page(c, x, at, s, focus),
             // (Its own frame, above.)
             Page::Shop => at,
         };
@@ -1524,7 +1574,10 @@ impl StartMenu {
             Page::News if self.news_tab == 0 => "Up/Down pick a line  ·  Tab things to try  ·  Esc back",
             Page::News => "Up/Down pick  ·  Enter or click ticks it  ·  Tab what is new  ·  Esc back",
             Page::Runs if self.sheets > 1 => "Up/Down pick a run  ·  Left/Right or the wheel turn the page  ·  Esc back",
+            Page::Runs if !self.met.is_empty() => "Up/Down pick a run  ·  Tab the slimes met  ·  Esc back",
             Page::Runs => "Up/Down pick a run  ·  Esc back",
+            Page::Met if !self.runs.is_empty() => "Up/Down pick one  ·  Tab the past runs  ·  Esc back",
+            Page::Met => "Up/Down pick one  ·  Esc back",
         };
         let mut pager_w = if paged { 170.0 * s } else { 0.0 };
         // The main page's corner: which build this is, and left of it, in
@@ -1629,15 +1682,23 @@ impl StartMenu {
             let n = self.runs.len();
             let most = self.runs.iter().map(PastRun::freed).max().unwrap_or(0);
             let won = self.runs.iter().filter(|r| r.end == "won").count();
-            let sub = format!("{n} run{} ended{}; the best time on each planet", if n == 1 { "" } else { "s" }, if won > 0 { format!(", {won} won") } else { format!(", {most} planets freed at most") });
+            let met = self.met.iter().filter(|m| m.met).count();
+            let met = if self.met.is_empty() { String::new() } else { format!("; {met} of {} slimes and threats met", self.met.len()) };
+            let sub = format!("{n} run{} ended{}; the best time on each planet{met}", if n == 1 { "" } else { "s" }, if won > 0 { format!(", {won} won") } else { format!(", {most} planets freed at most") });
             items.push(("Past runs", sub, Hit::Runs, false, true));
+        } else if !self.met.is_empty() {
+            // Each slime and threat, the ones met and the ones ahead (the
+            // Past runs page's second tab once a run has ended).
+            let k = self.met.iter().filter(|m| m.met).count();
+            let sub = format!("{k} of {} slimes and threats met: what each does, and how often you beat it", self.met.len());
+            items.push(("Slimes met", sub, Hit::Met, false, true));
         }
         // What the build holds: how much is new since the last build
         // played here, and what is left to try.
         let fresh = self.build.as_ref().map_or(0, BuildPage::fresh);
         if let Some(b) = &self.build {
             let sub: Vec<String> = [b.since(), b.left()].into_iter().filter(|t| !t.is_empty()).collect();
-            items.push(("What is new", sub.join(". "), Hit::Build, false, self.runs.is_empty()));
+            items.push(("What is new", sub.join(". "), Hit::Build, false, self.record_row().is_none()));
         }
         items.push(("Options", "The UI size, the game and the planet, the slime's rules, and the keys".into(), Hit::Options, false, self.build.is_none()));
         if self.edit_maps {
@@ -1736,7 +1797,9 @@ impl StartMenu {
         let build = self.build.as_ref().filter(|_| self.page == Page::News);
         let name = match self.page {
             Page::Missions => "Campaign".to_string(),
+            Page::Runs | Page::Met if !self.runs.is_empty() && !self.met.is_empty() => "Record".to_string(),
             Page::Runs => "Past runs".to_string(),
+            Page::Met => "Slimes met".to_string(),
             Page::News => build.map_or(String::new(), |b| {
                 let mut n = b.name.clone();
                 if let Some(f) = n.get_mut(0..1) {
@@ -1753,6 +1816,11 @@ impl StartMenu {
         let tabs: Vec<(String, Hit)> = match build {
             Some(b) => vec![(counted("What is new", b.fresh()), Hit::NewsTab(0)), (counted("Things to try", b.untried()), Hit::NewsTab(1))],
             None if self.tabbed() => self.tabs().into_iter().enumerate().map(|(k, t)| (t, Hit::Tab(k))).collect(),
+            // The runs that ended and the slimes met, two tabs of one place.
+            None if matches!(self.page, Page::Runs | Page::Met) && !self.runs.is_empty() && !self.met.is_empty() => {
+                let k = self.met.iter().filter(|m| m.met).count();
+                vec![("Past runs".to_string(), Hit::Runs), (format!("Slimes met ({k} of {})", self.met.len()), Hit::Met)]
+            }
             None => Vec::new(),
         };
         let tx = x + c.text(Weight::SemiBold, 22.0 * s, (x, 36.0 * s), Align::Left, &name, TEXT) + 24.0 * s;
@@ -1761,6 +1829,8 @@ impl StartMenu {
             let lit = match self.page {
                 Page::News => self.news_tab,
                 Page::Keys => tabs.len() - 1,
+                Page::Runs => 0,
+                Page::Met => 1,
                 _ => self.opt_tab,
             };
             let mut tx = tx;
@@ -2344,6 +2414,104 @@ impl StartMenu {
         }
         if let Some((at, t)) = tip {
             strip_tip(c, at, &t, s);
+        }
+        panel.bottom().max(pane.bottom())
+    }
+
+    fn met_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let met = std::mem::take(&mut self.met);
+        let bottom = self.met_drawn(c, &met, x, top, s, focus);
+        self.met = met;
+        bottom
+    }
+
+    /// The Slimes met page: each slime and threat as a tile (its still, its
+    /// name, how it went), in three sections, the ones not met greyed; the
+    /// one under the cursor (else the keyboard's) told in full beside them.
+    fn met_drawn(&mut self, c: &mut Canvas, met: &[Met], x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let (lw, nw) = self.split(c, x, s);
+        let n = met.len();
+        let k = met.iter().filter(|m| m.met).count();
+        // Tiles at least 150 units wide, three to six a row.
+        let inner = lw - 32.0 * s;
+        let gap = 10.0 * s;
+        let cols = (((inner + gap) / (150.0 * s + gap)).floor() as usize).clamp(3, 6);
+        let tw = (inner - gap * (cols - 1) as f32) / cols as f32;
+        let ph = (tw - 8.0 * s) * crate::world::canvas::STILL_H as f32 / crate::world::canvas::STILL_W as f32;
+        let th = ph + 4.0 * s + 44.0 * s;
+        let sections: Vec<(&str, Vec<usize>)> = [(0u8, "Slimes"), (1, "Threats"), (2, "Mini-bosses")].into_iter().map(|(g, name)| (name, (0..n).filter(|&i| met[i].group == g).collect::<Vec<_>>())).filter(|(_, v)| !v.is_empty()).collect();
+        let body_h: f32 = sections.iter().map(|(_, v)| 30.0 * s + v.len().div_ceil(cols) as f32 * (th + gap)).sum();
+        let panel = Rect::new(x, top, lw, 44.0 * s + body_h + 6.0 * s);
+        self.glass(panel, c, s);
+        c.text_fit(Weight::SemiBold, 15.0 * s, (panel.x + 20.0 * s, panel.y + 28.0 * s), Align::Left, &format!("{k} of {n} met on this PC; the grey ones are still ahead"), panel.w - 40.0 * s, MUTED);
+        let mut told = None;
+        let mut y = panel.y + 44.0 * s;
+        for (name, idx) in &sections {
+            let seen = idx.iter().filter(|&&i| met[i].met).count();
+            c.text(Weight::SemiBold, 13.5 * s, (panel.x + 16.0 * s, y + 18.0 * s), Align::Left, &format!("{name}  ·  {seen} of {}", idx.len()), [201, 210, 219, 255]);
+            y += 30.0 * s;
+            for (j, &i) in idx.iter().enumerate() {
+                let m = &met[i];
+                let tile = Rect::new(panel.x + 16.0 * s + (j % cols) as f32 * (tw + gap), y + (j / cols) as f32 * (th + gap), tw, th);
+                let focused = focus == Some(Hit::Seen(i));
+                let hot = self.hover.is_some_and(|p| tile.contains(p));
+                c.rrect(tile, 10.0 * s, [255, 255, 255, if focused { 22 } else if hot { 14 } else { 7 }]);
+                if focused {
+                    c.outline(tile, 10.0 * s, 1.5 * s, ACCENT);
+                }
+                if hot || (focused && told.is_none()) {
+                    told = Some(i);
+                }
+                let pic = Rect::new(tile.x + 4.0 * s, tile.y + 4.0 * s, tile.w - 8.0 * s, ph);
+                match m.still {
+                    Some(cell) => c.still(pic, 7.0 * s, cell, if m.met { 0.0 } else { 0.85 }, if m.met { 255 } else { 150 }),
+                    None => c.rrect(pic, 7.0 * s, [18, 21, 25, 255]),
+                }
+                let ink = if m.met { TEXT } else { [120, 128, 138, 255] };
+                c.text_fit(Weight::SemiBold, 14.0 * s, (tile.x + 10.0 * s, pic.bottom() + 20.0 * s), Align::Left, &m.name, tile.w - 20.0 * s, ink);
+                let how = if !m.met {
+                    "not met yet".to_string()
+                } else if m.beaten + m.won == 0 {
+                    "met".to_string()
+                } else {
+                    format!("beaten {}  ·  it won {}", m.beaten, m.won)
+                };
+                c.text_fit(Weight::Medium, 12.5 * s, (tile.x + 10.0 * s, pic.bottom() + 37.0 * s), Align::Left, &how, tile.w - 20.0 * s, MUTED);
+                self.hits.push((tile, Hit::Seen(i)));
+            }
+            y += idx.len().div_ceil(cols) as f32 * (th + gap);
+        }
+        // The one told in full: its still large, what it is, its words, and
+        // how it went.
+        let Some(m) = told.or((n > 0).then_some(0)).map(|i| &met[i]) else { return panel.bottom() };
+        let tw2 = nw - 36.0 * s;
+        let big = tw2 * crate::world::canvas::STILL_H as f32 / crate::world::canvas::STILL_W as f32;
+        let words_h = Self::count(c, Weight::Medium, 15.0 * s, tw2, &m.words) * 22.0 * s;
+        let need = 18.0 * s + big + 40.0 * s + 22.0 * s + 34.0 * s + words_h + 34.0 * s + 2.0 * 22.0 * s + 12.0 * s;
+        let pane = Rect::new(x + lw + 20.0 * s, top, nw, need);
+        self.glass(pane, c, s);
+        let px = pane.x + 18.0 * s;
+        let pic = Rect::new(px, pane.y + 18.0 * s, tw2, big);
+        match m.still {
+            Some(cell) => c.still(pic, 10.0 * s, cell, if m.met { 0.0 } else { 0.85 }, if m.met { 255 } else { 150 }),
+            None => c.rrect(pic, 10.0 * s, [18, 21, 25, 255]),
+        }
+        let mut y = pic.bottom() + 34.0 * s;
+        c.text_fit(Weight::SemiBold, 19.0 * s, (px, y), Align::Left, &m.name, tw2, if m.met { TEXT } else { [150, 158, 168, 255] });
+        y += 22.0 * s;
+        c.text_fit(Weight::Medium, 13.5 * s, (px, y), Align::Left, &m.kind, tw2, MUTED);
+        y += 34.0 * s;
+        c.text(Weight::SemiBold, 13.5 * s, (px, y), Align::Left, &m.said, ACCENT);
+        y += 24.0 * s;
+        y += self.lines(c, Weight::Medium, 15.0 * s, (px, y), tw2, 22.0 * s, &m.words, TEXT);
+        y += 12.0 * s;
+        if m.met {
+            let line = |n: u32, one: &str, many: &str| format!("{n} {}", if n == 1 { one } else { many });
+            c.text_fit(Weight::Medium, 14.0 * s, (px, y), Align::Left, &format!("Beaten: {} with it there", line(m.beaten, "planet", "planets")), tw2, TEXT);
+            y += 22.0 * s;
+            c.text_fit(Weight::Medium, 14.0 * s, (px, y), Align::Left, &format!("Won: {} it took from you", line(m.won, "planet", "planets")), tw2, if m.won > 0 { BAD } else { TEXT });
+        } else {
+            c.text_fit(Weight::Medium, 14.0 * s, (px, y), Align::Left, "Not met yet on this PC", tw2, MUTED);
         }
         panel.bottom().max(pane.bottom())
     }
@@ -3233,11 +3401,12 @@ mod tests {
     #[test]
     fn every_page_follows_the_ui_size() {
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
-            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop, Page::News, Page::Runs] {
+            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop, Page::News, Page::Runs, Page::Met] {
                 let size = |user: f32| {
                     let mut m = menu();
                     m.build = Some(build_page(12, 4));
                     m.runs = past_runs(30);
+                    m.met = met_list();
                     m.keys = (0..40).map(|k| (format!("K{k}"), "Does a thing".to_string())).collect();
                     m.shop = Some(if page == Page::Shop { armory(9) } else { shop(14) });
                     m.show(page);
@@ -3258,7 +3427,7 @@ mod tests {
                         let b = m.body.unwrap_or(Rect::new(0.0, 0.0, screen.0 as f32, screen.1 as f32));
                         // The shop's two buttons and the inner pages'
                         // header are fixed, over and under the body.
-                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs) && h == Hit::Back);
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met) && h == Hit::Back);
                         assert!(r.y >= 0.0 && r.bottom() <= screen.1 as f32, "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen");
                         assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
                     }
@@ -3270,6 +3439,7 @@ mod tests {
                         Page::Missions => Hit::Mission(0),
                         Page::News => Hit::Line(0),
                         Page::Runs => Hit::PastRun(0),
+                        Page::Met => Hit::Seen(0),
                         Page::Keys | Page::Main => Hit::Back,
                     };
                     let probe = if page == Page::Main { Hit::Sandbox } else { probe };
@@ -3285,6 +3455,24 @@ mod tests {
             }
         }
     }
+    /// The Slimes met page's 22 (8 slimes, 8 threats, 6 mini-bosses),
+    /// every third not met.
+    fn met_list() -> Vec<Met> {
+        (0..22)
+            .map(|i| Met {
+                name: format!("The Slime {i}"),
+                kind: "The slime of planet 3".into(),
+                group: if i < 8 { 0 } else if i < 16 { 1 } else { 2 },
+                words: "It walls its crystals in amber and sets hard where you shoot it. Burn the walls".into(),
+                said: "On its landing card".into(),
+                still: Some(i as u32),
+                met: i % 3 != 2,
+                beaten: i as u32,
+                won: 1,
+            })
+            .collect()
+    }
+
     /// `n` ended runs, each lost a planet further in (to the eighth).
     fn past_runs(n: usize) -> Vec<PastRun> {
         (0..n)

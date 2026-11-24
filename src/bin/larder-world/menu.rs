@@ -892,6 +892,8 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "1" | "main" | "main-run" | "main-won" | "main-lost" | "main-runs" => Page::Main,
         // (The Past runs page over three made-up runs, `headless`.)
         "runs" => Page::Runs,
+        // (The Slimes met page over those runs, `headless`.)
+        "met" => Page::Met,
         "campaign" | "missions" => Page::Missions,
         "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
@@ -979,6 +981,8 @@ impl App {
         // memory is never this PC's.
         if self.window.is_some() {
             menu.build = Some(build_page(&self.memory));
+            // Each slime and threat, as this PC has met them (`met.rs`).
+            menu.met = super::met::entries(&menu.runs, self.run.as_ref());
         }
         self.args = round_args(&base, chosen, &menu, &StartEvent::Sandbox);
         // A run's planet behind the menu (Look D, 11-20): one of planets 1
@@ -1558,6 +1562,9 @@ impl App {
         } else {
             r.lost();
         }
+        // Each threat that showed on the planet counts it, beaten or lost
+        // (the Slimes met page, `hints::Hints::ended`).
+        self.hints.ended(v.stars > 0, self.window.is_some());
         if r.over {
             let why = match (r.victory(), self.game.as_ref()) {
                 (true, _) => format!("All {} planets freed, {} of {} stars.", r.stars.len(), r.stars.iter().map(|&s| u32::from(s)).sum::<u32>(), 3 * r.stars.len()),

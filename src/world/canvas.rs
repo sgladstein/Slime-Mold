@@ -48,6 +48,16 @@ const SHADOW: u32 = 1;
 const MASK: u32 = 2;
 const BAR: u32 = 3;
 const RING: u32 = 4;
+const PICTURE: u32 = 5;
+
+/// **Stills from the game** (Direction 11-24, the Slimes met page: "a small
+/// still from the game" of each slime and threat): one sheet of cells
+/// `STILL_W` x `STILL_H`, `STILL_COLS` a row, filmed headless and cut by
+/// `assets/met-stills.py`, uploaded once. Cell `i` is `Canvas::still`'s.
+static STILLS: &[u8] = include_bytes!("../../assets/met-stills.png");
+pub const STILL_W: u32 = 240;
+pub const STILL_H: u32 = 150;
+pub const STILL_COLS: u32 = 6;
 
 pub type Rgba = [u8; 4];
 
@@ -415,6 +425,15 @@ impl Canvas {
         self.push(Prim { radius: r.h / 2.0, colour2: back, fill: fill.clamp(0.0, 1.0), ..Prim::new(BAR, (r.x, r.y), (r.right(), r.bottom()), colour) });
     }
 
+    /// Still `cell` of the sheet (`STILLS`) filling `r`, its corners
+    /// rounded; `grey` 0-1 drains its colour and darkens it (a slime not yet
+    /// met), `alpha` its opacity.
+    pub fn still(&mut self, r: Rect, radius: f32, cell: u32, grey: f32, alpha: u8) {
+        let (x0, y0) = ((cell % STILL_COLS) * STILL_W, (cell / STILL_COLS) * STILL_H);
+        let uv = (x0 | (y0 << 16), STILL_W | (STILL_H << 16));
+        self.push(Prim { radius, uv, fill: grey.clamp(0.0, 1.0), ..Prim::new(PICTURE, (r.x, r.y), (r.right(), r.bottom()), [255, 255, 255, alpha]) });
+    }
+
     /// A ring `width` wide on `r`'s rounded edge, swept clockwise from the
     /// top to `fill` (1 a full ring).
     pub fn ring(&mut self, r: Rect, radius: f32, width: f32, fill: f32, colour: Rgba) {
@@ -576,6 +595,9 @@ pub struct CanvasPass {
     offsets: wgpu::Buffer,
     items: wgpu::Buffer,
     atlas: wgpu::Buffer,
+    /// The stills' sheet, RGBA a word, and its width (0: none read).
+    stills: wgpu::Buffer,
+    stills_w: u32,
     group: Option<(wgpu::BindGroup, wgpu::Buffer)>,
     tiles: (u32, u32),
     screen: (u32, u32),
@@ -593,11 +615,25 @@ impl CanvasPass {
             count: None,
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, ro), entry(5, wgpu::BufferBindingType::Storage { read_only: false })];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, ro), entry(5, wgpu::BufferBindingType::Storage { read_only: false }), entry(6, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("canvas"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("canvas"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("canvas"), layout: Some(&layout), module: &module, entry_point: Some("draw"), compilation_options: Default::default(), cache: None });
         let params = device.create_buffer(&wgpu::BufferDescriptor { label: Some("canvas params"), size: 32, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        // The stills, once: a sheet that does not decode draws its cells
+        // as dark boxes (width 0), and the game goes on.
+        let (stills, stills_w) = match image::load_from_memory(STILLS) {
+            Ok(img) => {
+                let img = img.to_rgba8();
+                let b = storage(device, "canvas stills", (img.width() * img.height() * 4) as u64);
+                queue.write_buffer(&b, 0, img.as_raw());
+                (b, img.width())
+            }
+            Err(e) => {
+                eprintln!("larder-world: the stills did not load ({e})");
+                (storage(device, "canvas stills", 16), 0)
+            }
+        };
         CanvasPass {
             device: device.clone(),
             queue: queue.clone(),
@@ -608,6 +644,8 @@ impl CanvasPass {
             offsets: storage(device, "canvas offsets", 16),
             items: storage(device, "canvas items", (FIRST_ITEMS * 4) as u64),
             atlas: storage(device, "canvas atlas", (ATLAS * ATLAS) as u64),
+            stills,
+            stills_w,
             group: None,
             tiles: (0, 0),
             screen: (0, 0),
@@ -666,13 +704,13 @@ impl CanvasPass {
         }
         let stale = self.group.as_ref().is_none_or(|(_, o)| o != out);
         if stale || self.stride != stride {
-            let bufs = [&self.params, &self.prims, &self.offsets, &self.items, &self.atlas, out];
+            let bufs = [&self.params, &self.prims, &self.offsets, &self.items, &self.atlas, out, &self.stills];
             let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
             let g = self.device.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("canvas"), layout: &self.bgl, entries: &entries });
             self.group = Some((g, out.clone()));
         }
         self.stride = stride;
-        let p = [self.screen.0, self.screen.1, stride, self.tiles.0, self.tiles.1, self.n, ATLAS, 0];
+        let p = [self.screen.0, self.screen.1, stride, self.tiles.0, self.tiles.1, self.n, ATLAS, self.stills_w];
         self.queue.write_buffer(&self.params, 0, &u32s(&p));
         let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("canvas"), timestamp_writes: tw });
         pass.set_pipeline(&self.pipe);

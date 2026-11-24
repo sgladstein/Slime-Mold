@@ -221,6 +221,7 @@ mod ending;
 mod events;
 mod headless;
 mod hints;
+mod met;
 mod bench;
 mod hands;
 mod runbot;

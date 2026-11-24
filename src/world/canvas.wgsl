@@ -10,7 +10,7 @@
 
 struct P {
     sw: u32, sh: u32, stride: u32, tiles_x: u32,
-    tiles_y: u32, n: u32, aw: u32, _p: u32,
+    tiles_y: u32, n: u32, aw: u32, still_w: u32,
 };
 
 @group(0) @binding(0) var<uniform> U: P;
@@ -22,12 +22,15 @@ struct P {
 // The atlas: coverage 0-255, four texels a word, `aw` texels a row.
 @group(0) @binding(4) var<storage, read> atlas: array<u32>;
 @group(0) @binding(5) var<storage, read_write> out: array<u32>;
+// The stills' sheet (canvas.rs `STILLS`): RGBA a word, `still_w` a row.
+@group(0) @binding(6) var<storage, read> stills: array<u32>;
 
 const RRECT: u32 = 0u;
 const SHADOW: u32 = 1u;
 const MASK: u32 = 2u;
 const BAR: u32 = 3u;
 const RING: u32 = 4u;
+const PICTURE: u32 = 5u;
 
 fn unpack(c: u32) -> vec4<f32> {
     return vec4<f32>(f32(c & 255u), f32((c >> 8u) & 255u), f32((c >> 16u) & 255u), f32(c >> 24u)) / 255.0;
@@ -51,6 +54,10 @@ fn sd_rrect(p: vec2<f32>, c: vec2<f32>, h: vec2<f32>, r: f32) -> f32 {
 fn texel(x: u32, y: u32) -> f32 {
     let i = y * U.aw + x;
     return f32((atlas[i >> 2u] >> ((i & 3u) * 8u)) & 255u) / 255.0;
+}
+
+fn still_texel(x: u32, y: u32) -> vec3<f32> {
+    return unpack(stills[y * U.still_w + x]).rgb;
 }
 
 fn over(dst: vec3<f32>, src: vec3<f32>, a: f32) -> vec3<f32> {
@@ -134,6 +141,32 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(workgroup_id) wg
             let ang = fract(atan2(q.x, -q.y) / 6.2831853 + 1.0);
             if (ang > f(b, 13u)) { continue; }
             c = over(c, col.rgb, col.a * cover);
+        } else if (kind == PICTURE) {
+            // A still from the sheet, scaled to the box with a bilinear
+            // read kept inside its cell, the box's corners rounded. Fill
+            // (word 13) greys it: the colour drained toward its own
+            // brightness and dimmed (a slime not yet met).
+            let d = sd_rrect(p, ctr, hs, r);
+            let cover = clamp(0.5 - d, 0.0, 1.0);
+            if (cover <= 0.0) { continue; }
+            var fill = vec3<f32>(0.08, 0.09, 0.1);
+            if (U.still_w > 0u) {
+                let o = vec2<u32>(prims[b + 10u] & 65535u, prims[b + 10u] >> 16u);
+                let sz = vec2<u32>(prims[b + 11u] & 65535u, prims[b + 11u] >> 16u);
+                let st = (p - lo) / max(hi - lo, vec2<f32>(1.0)) * vec2<f32>(sz) - vec2<f32>(0.5);
+                let top = vec2<f32>(sz) - vec2<f32>(1.0);
+                let s0 = clamp(st, vec2<f32>(0.0), top);
+                let i0 = vec2<u32>(floor(s0));
+                let i1 = min(i0 + vec2<u32>(1u), vec2<u32>(top));
+                let fr = s0 - floor(s0);
+                let a = mix(still_texel(o.x + i0.x, o.y + i0.y), still_texel(o.x + i1.x, o.y + i0.y), fr.x);
+                let bb = mix(still_texel(o.x + i0.x, o.y + i1.y), still_texel(o.x + i1.x, o.y + i1.y), fr.x);
+                fill = mix(a, bb, fr.y);
+            }
+            let g = f(b, 13u);
+            let luma = dot(fill, vec3<f32>(0.299, 0.587, 0.114));
+            fill = mix(fill, vec3<f32>(luma * 0.55), g);
+            c = over(c, fill, col.a * cover);
         } else if (kind == MASK) {
             // Atlas coverage at whole pixels (glyphs and icons are placed on
             // the pixel grid), tinted.

@@ -54,6 +54,30 @@ pub(super) struct Hints {
     hit: Option<(f32, f32)>,
     /// What the window shows this frame: words, centre, ring, opacity.
     pub(super) show: Option<(String, (f32, f32), f32, f32)>,
+    /// Every hint's thing that showed on this planet, hinted or not: the
+    /// Slimes met page counts the planets each was on (`tally`).
+    planet: Vec<String>,
+}
+
+/// The settings key of the Slimes met page's counts: `KEY:BEATEN:WON`,
+/// comma separated, a planet won or lost while the thing showed.
+const TALLY: &str = "met_tally";
+
+/// Each hint's planets beaten and lost with it on (`TALLY`), as saved.
+pub(super) fn tally() -> Vec<(String, u32, u32)> {
+    let text = settings::get(TALLY).unwrap_or_default();
+    text.split(',')
+        .filter_map(|e| {
+            let mut p = e.split(':');
+            let (k, b, w) = (p.next()?, p.next()?.parse().ok()?, p.next()?.parse().ok()?);
+            (!k.is_empty()).then(|| (k.to_string(), b, w))
+        })
+        .collect()
+}
+
+/// What this PC has seen (`hints_seen`), even with hints off.
+pub(super) fn seen() -> Vec<String> {
+    settings::get("hints_seen").map(|s| s.split(',').filter(|k| !k.is_empty()).map(String::from).collect()).unwrap_or_default()
 }
 
 /// Whether hints are on in the settings file (on unless `hints=off`).
@@ -68,9 +92,11 @@ impl Hints {
     pub(super) fn update(&mut self, g: &Game<GpuWorld>, window: bool, busy: bool) {
         if !self.loaded {
             self.loaded = true;
-            self.on = !window || saved_on();
+            // `LARDER_HINTS=off`: a film with none (the Slimes met page's
+            // stills, which show the thing without its words).
+            self.on = (!window || saved_on()) && std::env::var("LARDER_HINTS").as_deref() != Ok("off");
             if window {
-                self.seen = settings::get("hints_seen").map(|s| s.split(',').filter(|k| !k.is_empty()).map(String::from).collect()).unwrap_or_default();
+                self.seen = seen();
             }
         }
         self.show = None;
@@ -78,6 +104,7 @@ impl Hints {
         if t + 0.5 < self.last_t {
             // A new planet: its clock started again.
             (self.live, self.asleep, self.hit) = (None, None, None);
+            self.planet.clear();
         }
         self.last_t = t;
         let hits: Vec<(f32, f32)> = g.last_shots.iter().filter_map(|s| s.hit).collect();
@@ -86,6 +113,13 @@ impl Hints {
             self.hit = Some((hits.iter().map(|h| h.0).sum::<f32>() / n, hits.iter().map(|h| h.1).sum::<f32>() / n));
         }
         let woke = self.woke(g, t);
+        // What is on this planet, for the Slimes met page's counts, with
+        // hints on or off.
+        for key in all_keys() {
+            if !self.planet.contains(&key) && sight(g, &key, self.hit, woke).is_some() {
+                self.planet.push(key);
+            }
+        }
         if !self.on {
             self.live = None;
             return;
@@ -107,7 +141,7 @@ impl Hints {
         if busy {
             return;
         }
-        for key in KEYS.iter().map(|k| k.to_string()).chain(BossKind::ALL.iter().map(|b| format!("boss-{}", b.name()))) {
+        for key in all_keys() {
             if self.seen.contains(&key) {
                 continue;
             }
@@ -123,6 +157,29 @@ impl Hints {
             self.show = Some((self.live.as_ref().unwrap().text.clone(), at, ring, 0.0));
             return;
         }
+    }
+
+    /// The planet ended, `beaten` or lost: each thing that showed on it
+    /// counts it (`TALLY`, in the window only; films and tests keep
+    /// nothing), and the next planet starts a new list.
+    pub(super) fn ended(&mut self, beaten: bool, window: bool) {
+        if window && !self.planet.is_empty() {
+            let mut all = tally();
+            for key in &self.planet {
+                let i = all.iter().position(|e| &e.0 == key).unwrap_or_else(|| {
+                    all.push((key.clone(), 0, 0));
+                    all.len() - 1
+                });
+                if beaten {
+                    all[i].1 += 1;
+                } else {
+                    all[i].2 += 1;
+                }
+            }
+            let text: Vec<String> = all.iter().map(|(k, b, w)| format!("{k}:{b}:{w}")).collect();
+            let _ = settings::set(TALLY, &text.join(","));
+        }
+        self.planet.clear();
     }
 
     /// Whether the sleeping slime woke this game second: a fifth or more of
@@ -158,53 +215,70 @@ fn body(members: u32) -> f32 {
     (members as f32 / std::f32::consts::PI).sqrt()
 }
 
+/// Hint `key`'s words (`core-boss`: a mini-boss's core), as it shows in
+/// play and on the Slimes met page; None for no such hint.
+pub(super) fn words(key: &str) -> Option<&'static str> {
+    Some(match key {
+        "strikers" => "Strikers: near your squad the slime packs into hard knots that charge it",
+        "wave" => "A wave: the slime pulls back all round your squad, then strikes from every side",
+        "lunge" => "Cornered, what is left of the slime charges farther and faster: keep your distance",
+        "stand" => "Last stand: the slime packs into its heart, which lunges at soldiers in reach",
+        "fruit" => "Fruiting: kill this knot before it ripens and bursts into new slime",
+        "core" => "Core: stand a squad on it to collect shop points",
+        "core-boss" => "Mini-boss core: stand a squad on it to collect shop points",
+        "wake" => "Sleeping slime wakes where your shots land, and charges",
+        "scar" => "Slime you keep hitting in one place grows back tough there: fight from fresh ground",
+        "boss-hunter" => "Mini-boss, a hunter: it chases your nearest soldier. Break it for a core",
+        "boss-wanderer" => "Mini-boss, a wanderer: it roots on a far crystal and grows there",
+        "boss-sapper" => "Mini-boss, a sapper: it eats through your nearest wall or building",
+        "boss-leech" => "Mini-boss, a leech: it sits on a pump and takes its food until broken",
+        "boss-mortar" => "Mini-boss, a mortar: it sits still and lobs slime at what is in reach",
+        "boss-pinwheel" => "Mini-boss, a pinwheel: a hunter whose arms sweep through your squad",
+        _ => return None,
+    })
+}
+
+/// Every hint's key: the threats, then each mini-boss kind.
+pub(super) fn all_keys() -> Vec<String> {
+    KEYS.iter().map(|k| k.to_string()).chain(BossKind::ALL.iter().map(|b| format!("boss-{}", b.name()))).collect()
+}
+
 /// Hint `key` if its thing is on the planet now: its words, centre and
 /// ring (fine cells).
 fn sight(g: &Game<GpuWorld>, key: &str, hit: Option<(f32, f32)>, woke: bool) -> Option<(String, (f32, f32), f32)> {
     let sc = g.world.scale();
     let reach = g.gun_range_max() * sc;
-    let (text, at, ring) = match key {
-        "strikers" if g.strikers.live > 0 => ("Strikers: near your squad the slime packs into hard knots that charge it", squad_at(g)?, reach + g.rules.strikers.band * sc),
+    let (at, ring) = match key {
+        "strikers" if g.strikers.live > 0 => (squad_at(g)?, reach + g.rules.strikers.band * sc),
         "wave" => {
             let w = g.waves.live.as_ref()?;
             let n = w.points.len().max(1) as f32;
             let r = w.points.iter().map(|p| (p.0 - w.centre.0).hypot(p.1 - w.centre.1)).sum::<f32>() / n;
-            ("A wave: the slime pulls back all round your squad, then strikes from every side", w.centre, r)
+            (w.centre, r)
         }
-        "lunge" if g.late => ("Cornered, what is left of the slime charges farther and faster: keep your distance", squad_at(g)?, reach + g.rules.late_margin.max(0.0) * sc),
+        "lunge" if g.late => (squad_at(g)?, reach + g.rules.late_margin.max(0.0) * sc),
         "stand" => {
             let h = g.stand.live.as_ref().filter(|h| (!h.origin || h.gather) && h.members > 0)?;
-            ("Last stand: the slime packs into its heart, which lunges at soldiers in reach", h.centre, body(h.members))
+            (h.centre, body(h.members))
         }
         "fruit" => {
             let f = g.fruits.live.as_ref().filter(|f| f.members > 0)?;
-            ("Fruiting: kill this knot before it ripens and bursts into new slime", f.centre, body(f.members))
+            (f.centre, body(f.members))
         }
         "core" => {
             let d = g.starfall.live.iter().find(|d| d.down && d.left > 0.01 && d.kind != DropKind::Ore)?;
-            let text = match d.from {
-                CoreFrom::Boss { .. } => "Mini-boss core: stand a squad on it to collect shop points",
-                _ => "Core: stand a squad on it to collect shop points",
-            };
-            (text, d.at, d.r + g.rules.star.reach * sc)
+            let key = if matches!(d.from, CoreFrom::Boss { .. }) { "core-boss" } else { "core" };
+            return Some((words(key)?.to_string(), d.at, d.r + g.rules.star.reach * sc));
         }
-        "wake" if woke => ("Sleeping slime wakes where your shots land, and charges", hit.or_else(|| squad_at(g))?, 0.0),
-        "scar" if g.world.scarred() >= 50.max(g.mould / 50) => ("Slime you keep hitting in one place grows back tough there: fight from fresh ground", hit.or_else(|| squad_at(g))?, 0.0),
+        "wake" if woke => (hit.or_else(|| squad_at(g))?, 0.0),
+        "scar" if g.world.scarred() >= 50.max(g.mould / 50) => (hit.or_else(|| squad_at(g))?, 0.0),
         k => {
             let kind = BossKind::ALL.into_iter().find(|b| k.strip_prefix("boss-") == Some(b.name()))?;
             let b = g.bosses.live.iter().find(|b| b.kind == kind && b.members > 0)?;
-            let text = match kind {
-                BossKind::Hunter => "Mini-boss, a hunter: it chases your nearest soldier. Break it for a core",
-                BossKind::Wanderer => "Mini-boss, a wanderer: it roots on a far crystal and grows there",
-                BossKind::Sapper => "Mini-boss, a sapper: it eats through your nearest wall or building",
-                BossKind::Leech => "Mini-boss, a leech: it sits on a pump and takes its food until broken",
-                BossKind::Mortar => "Mini-boss, a mortar: it sits still and lobs slime at what is in reach",
-                BossKind::Pinwheel => "Mini-boss, a pinwheel: a hunter whose arms sweep through your squad",
-            };
-            (text, b.centre, body(b.members))
+            (b.centre, body(b.members))
         }
     };
-    Some((text.to_string(), at, ring))
+    Some((words(key)?.to_string(), at, ring))
 }
 
 #[cfg(test)]
