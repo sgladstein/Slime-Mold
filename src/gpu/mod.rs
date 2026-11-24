@@ -136,6 +136,10 @@ pub fn lab_threads() -> (u32, f32) {
     let ahead = get("LAB_AHEAD").is_some_and(|v| v != "0");
     // `LAB_TOUGH=P:S0` (the Grudge's scar tissue) takes the word alone:
     // bits 30 and 31 set, S0 x 1000 in bits 0-13, P in the float.
+    // `LAB_DREAM=P` (the Sleeper's growth asleep): bits 31 and 27, P a step.
+    if let Some(v) = get("LAB_DREAM") {
+        return (1u32 << 31 | 1 << 27, v.parse().unwrap_or(0.0));
+    }
     if let Some(v) = get("LAB_TOUGH") {
         let f: Vec<&str> = v.split(':').collect();
         let p: f32 = f[0].parse().unwrap_or(0.0);

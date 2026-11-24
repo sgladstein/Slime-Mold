@@ -479,6 +479,7 @@ fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | H
 // merges). `lab_th` bit 30 (`LAB_TOUGH=P:S0`): a hit on a walker standing
 // on scar s shrugs off with chance P x min(s / S0, 1), so where the slime
 // was hurt it grows back tough. S0 x 1000 in bits 0-13, P in `lab_p`.
+fn lab_dream() -> bool { return (P.lab_th >> 31u) != 0u && ((P.lab_th >> 27u) & 1u) != 0u && ((P.lab_th >> 30u) & 1u) == 0u; }
 fn lab_tough_on() -> bool { return (P.lab_th >> 30u) == 3u; }
 fn lab_tough(k: u32) -> bool {
     if (!lab_tough_on() || !scars()) { return false; }
@@ -2048,7 +2049,11 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     icell[k] = NONE;
     let t = S.t;
     let b = child_of(k, t);
-    if (!ordinary(k) || is_set(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
+    // LAB: dreaming (`lab_dream`, the Sleeper prototype; never merges): a
+    // dormant walker buds a dormant child with chance `lab_p` a step, at no
+    // energy cost, under the same ceiling and into the same free cells.
+    let dream = lab_dream() && cycles() && lives(k) && state(k) == L_DORMANT && b < P.n && !lives(b) && unit(keyed(P.s_birth, t, k ^ 0x3C3C3C3Cu)) < P.lab_p;
+    if (!dream && (!ordinary(k) || is_set(k) || energy[k] < P.birth_at || b >= P.n || lives(b))) { return; }
     // A garden's birth caps (`species_cap`): a parent divides only while
     // its side held fewer than its cap as the pass began (`capcount`), as
     // the CPU's `held`; the enemy in word 6, the player's mould in 7.
@@ -2091,9 +2096,14 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     let t = S.t;
     if (j == NONE || (crowd_of(species_of(k)) > 0u && atomicLoad(&claim[j]) != keyed(P.s_bclaim, t, k))) { return; }
     let b = child_of(k, t);
+    let dreamt = lab_dream() && cycles() && state(k) == L_DORMANT;
     let half = max((energy[k] - P.birth_cost) * 0.5, 0.0);
-    energy[k] = half;
-    energy[b] = half;
+    if (dreamt) {
+        energy[b] = max(energy[k], 0.0);
+    } else {
+        energy[k] = half;
+        energy[b] = half;
+    }
     atomicAdd(&occ[j], 1u);
     let at = birth_spot(k, t);
     walkers[b] = vec4<f32>(at, unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU, 0.0);
@@ -2106,6 +2116,8 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     // The child is its parent's species and kind, and an ordinary walker
     // with its timer at 0.
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
+    // LAB: a dreamt child sleeps as its parent, its rest timer full.
+    if (dreamt) { spec[b] = (spec[k] & 0x1FFu) | (L_DORMANT << 9u) | (min(P.sleep_rest, 65535u) << 16u); }
     // A child knows what its parent heard (`wither`).
     if (P.wither > 0.0 || P.panic > 0.0) { atomicStore(&news[b], atomicLoad(&news[k])); }
     // A child is an ordinary walker, not a speck (`roam`), and in no lump
