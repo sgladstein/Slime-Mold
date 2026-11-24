@@ -31,7 +31,7 @@ The rush (D7) stays his: **add no rush brake unasked.** Milestone 3, a
 release, only if he chooses one.
 
 **Where it stands (11-24, 05:30Z).** The origin is on main (#699). Sizes on planets 1 to 3 are 700, 500 and 1,000, and planets 4 to 8 take half size next.
-- **Curve (test 3).** The siege bot (#707) on his three maps won 12 of 24 on his PC. P4 lost 0 of 3 and P7 lost 0 of 2, a wall each, both with Enemy. P3 lost 35 soldiers, mostly to fire: starfall impacts lit the jungle, and a trodden firebreak is coming from Squad. A full curve takes about 20 minutes of PC time.
+- **Curve (test 3).** Third pass on his PC (#782), 18 of 24 won. P1 to P3, P5 and P6 won on every map; P4 on two, P8 on one, P7 on none (the wall, with Enemy). Median wins are flat at 4:15 to 5:57, so later planets don't cost more yet; Enemy raises P5, P6 and P8 once P7 is beatable. Starfall no longer lights plants, and held squads trample a firebreak (#764).
 - **Rush (D7).** A heart snipe of 8 to 15 soldiers wins P2 to P4 in 1:10 to 2:32. It is on his card.
 - **4K (test 5).** At Auto (50%) on the 1070, his 3840-wide window runs at p95 12.5 ms on P3 (#747, #753) and 15.5 on P5; P8 (twice P5's world) is at 19.7, being split by pass.
 - **Save and resume (test 4): passes.** Quitting mid-planet keeps the planet, and Back to the run resumes it paused (#757). Checked on his 1070 11-24 07:07Z: same clock, slime, soldiers and bank; 7.7 MB in about 50 ms.
