@@ -57,6 +57,7 @@ mod ceiling;
 mod waves;
 mod heart;
 mod stand;
+mod origin;
 mod strikers;
 mod starfall;
 mod cores;
@@ -93,6 +94,7 @@ pub use fruit::{Fruit, FruitEnd, FruitRules, Fruits};
 pub use waves::{Wave, WavePhase, WaveRules, Waves};
 pub use heart::HeartRules;
 pub use stand::{Heart, Stand, StandRules};
+pub use origin::{OriginRules, OriginState};
 pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
@@ -609,6 +611,8 @@ pub struct Game<W: World> {
     pub cores: Cores,
     /// The last-stand heart (`stand.rs`).
     pub stand: Stand,
+    /// The origin (`origin.rs`), the heart that is the planet's win.
+    pub origin: OriginState,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
     /// The squad's tools (`mould::kit`) and the army's gun cards
@@ -795,6 +799,7 @@ impl<W: World> Game<W> {
             starfall: Starfall::new(seed),
             cores: Cores::default(),
             stand: Stand::default(),
+            origin: OriginState::default(),
             rendered: 0.0,
             kit: Kit::new(Default::default()),
             rounds: Rounds::new(Vec::new(), Default::default()),

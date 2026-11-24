@@ -356,6 +356,13 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         "build" | "siren" | "far" | "sow" => "farm",
         h => h,
     };
+    // `origin` (2026-11-22, the Enemy lane's rush measure): every soldier
+    // the bank buys, all on attack-move to the slime's start crystal,
+    // where the origin sits (`origin.rs`). With `set=start_bank=N` it is
+    // the army that walks straight for the origin.
+    if hand == "origin" {
+        while g.bank >= g.rules.soldier_cost && g.apply(Cmd::Buy) {}
+    }
     if g.time() > 0.5 && hand == "farm" && g.bank >= 1200.0 {
         g.apply(Cmd::Buy);
     }
@@ -379,7 +386,7 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             // 14:41Z, on the rush's clips: "I was more expecting soldiers
             // standing shooting into slime. Not running through slime
             // leaving craters under their feet").
-            ("stand", _) => {
+            ("stand" | "origin", _) => {
                 let c = g.core;
                 g.apply(Cmd::Order(k, Order::Fight(c.0, c.1)));
             }

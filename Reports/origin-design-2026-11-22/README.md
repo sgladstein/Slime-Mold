@@ -1,8 +1,13 @@
 # The origin, again: a design for Direction (2026-11-22)
 
 The Enemy lane's next job in `NOW.md`: the origin, Milestone 2's way a
-planet is won, as a design for Direction before any code. Nothing here is
-built. It replaces the [first design of 11-18](../origin-design-2026-11-18/README.md),
+planet is won, as a design for Direction before any code.
+
+**Built 11-22** on a branch that lands once the owner calls Milestone 1
+done (his card, "Build now, land after M1"). Direction settled the three
+questions below as recommended. What was built and measured, and where it
+differs from this page (no new engine key for the forming; the die-back's
+key is `no_eat`), is in `wiki/world/run.md`, *The origin*. It replaces the [first design of 11-18](../origin-design-2026-11-18/README.md),
 because much of what that one proposed has been built since, in other
 forms, and two of the owner's rulings since change what the origin should
 be.
@@ -115,6 +120,21 @@ only at the last walker. Its armour, its lunge, the call home and the fort
 push against that, but the brake is D7, which the owner holds. The first
 build measures the rush (time from landing to win for a squad that goes
 straight for it) before any number is tuned, and reports it to Direction.
+
+**Measured (11-22, run seed 1, lavapipe, headless `hand=origin`: every
+soldier the bank buys on attack-move to the core; 44, 16 and 9 soldiers
+from `set=start_bank=` 16000, 4800 and 2000), at the sizes Engine's
+siege tuned (700, 500, 1,000 on planets 1-3; that siege wins seeds 1-3 on
+each in under 10 min):**
+
+| Planet (origin) | 44 soldiers | 16 soldiers | 9 soldiers |
+|---|---|---|---|
+| 1 (700) | won 1:34, none lost | wiped 4:43 | not run at 700 (at 1,200: wiped 4:35) |
+| 2 (500) | won 1:47, 15 lost | wiped 1:32 | wiped 1:05 |
+
+On planet 2 the 44 cut it from 686 (a take overshoots its 500 when its
+crystal is packed) to 134 by 1:30 and it broke at about 1:37. The decision
+on the rush, D7, is the owner's.
 
 ## Questions for the owner (Direction to ask, at most once, with these recommendations)
 

@@ -515,6 +515,7 @@ impl<W: World> Game<W> {
             self.costed("time_strikers", |g| g.time_strikers());
             self.costed("time_cores", |g| g.time_cores());
             self.costed("time_starfall", |g| g.time_starfall());
+            self.costed("time_origin", |g| g.time_origin());
             self.costed("time_stand", |g| g.time_stand());
         }
         self.campaign_rules(now - t);
