@@ -157,6 +157,25 @@ fn words(row: &ShopRow) -> &str {
     a
 }
 
+/// A hand card's bars (`hand_card`): its own rolls (a bullet card, a
+/// device body) as `true`, else only the gun's numbers it changes, each as
+/// before and after ("Damage 72 → 144").
+fn card_bars(row: &ShopRow, mine: &[(String, f32, String)]) -> (bool, Vec<(String, f32, String)>) {
+    let own = (row.area == ShopArea::Cards || row.group == "Tools") && !row.bars.is_empty();
+    let changed = if !own && row.bars.is_empty() && !mine.is_empty() {
+        row.stats
+            .iter()
+            .filter_map(|(l, f, v)| {
+                let m = mine.iter().find(|b| b.0 == *l)?;
+                (m.2 != *v || (m.1 - f).abs() > 0.005).then(|| (l.clone(), *f, format!("{} \u{2192} {v}", m.2)))
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    (own, changed)
+}
+
 /// Stat bars (the owner, 2026-11-22: "more of visual representation of
 /// damage speed, range, ect. instead of a paragraph of numbers"): a row a
 /// stat, its name, a track filled to its 0-1 in `tint`, its value at the
@@ -227,7 +246,13 @@ fn shelf(n: usize, area: Rect, g: f32, s: f32) -> Option<(usize, f32, f32)> {
 /// offers (filmed 11-21 at 1600 x 972: Cards, Buildings and Tools each
 /// three rows of rows and the rest dark). Returns the row's left and top
 /// edges, a card's width and height; None where the shelf or tiles take it.
-fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
+///
+/// `need` is the height the hand's fullest card needs at width `w` to show
+/// all it says (`Menu::card_need`): the cards grow to it where the counter
+/// has the room, with room for the face to grow a seventh as it does on a
+/// tall card (Look D, 11-24: at 4K a bullet card's sentence was cut
+/// after four words with a third of the counter empty under the row).
+fn hand(n: usize, area: Rect, g: f32, s: f32, need: impl Fn(f32) -> f32) -> Option<(f32, f32, f32, f32)> {
     if n == 0 || n > HAND_MOST {
         return None;
     }
@@ -236,7 +261,7 @@ fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
     // 11-24: five cards at 1.15 left about 45% of the counter blank above
     // and below them), up to `HAND_STRETCH` times as tall as wide and
     // `HAND_FILL` of the counter; `hand_card` spreads its face over it.
-    let h = (w * HAND_TALL).max((area.h * HAND_FILL).min(w * HAND_STRETCH)).min(area.h);
+    let h = (w * HAND_TALL).max((area.h * HAND_FILL).min(w * HAND_STRETCH)).max((need(w) * 1.15).min(area.h * 0.94)).min(area.h);
     if w < HAND_LEAST * s || h < HAND_H * s {
         return None;
     }
@@ -754,12 +779,13 @@ impl StartMenu {
                     let range = page(per, n.div_ceil(per.max(1)).max(1), self);
                     self.gun_table(&shop, &tab.rows[range], area, head, rh, ring, c, s);
                 }
-                TabKind::Tiles if hand(n, area, g, s).is_some() => {
-                    let (x0, y0, w, h) = hand(n, area, g, s).unwrap_or((area.x, area.y, area.w, area.h));
+                TabKind::Tiles if hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)).is_some() => {
+                    let (x0, y0, w, h) = hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)).unwrap_or((area.x, area.y, area.w, area.h));
+                    let fit = self.hand_need(&shop, &tab.rows, w, c, s);
                     page(n, 1, self);
                     for (j, &i) in tab.rows.iter().enumerate() {
                         let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                        self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, fit, hot(r), ring(Hit::Buy(i)), c, s);
                         self.hits.push((r, Hit::Buy(i)));
                     }
                 }
@@ -784,11 +810,12 @@ impl StartMenu {
                 }
                 TabKind::Cards => {
                     if self.card_grid(&shop, tab, area, ring, &mut from, c, s) {
-                    } else if let Some((x0, y0, w, h)) = hand(n, area, g, s) {
+                    } else if let Some((x0, y0, w, h)) = hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)) {
+                        let fit = self.hand_need(&shop, &tab.rows, w, c, s);
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
                             let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                            self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, fit, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
                             self.hits.push((r, Hit::Buy(i)));
                             if drag == Some(i) {
                                 from = Some(r);
@@ -1246,10 +1273,36 @@ impl StartMenu {
     /// band along the top, its icon large, its name and its price, then
     /// everything it does, and its pips at the foot. The same face, colours
     /// and words as its shelf row; only the shape is a card's.
-    fn hand_card(&self, row: &ShopRow, now: Option<f32>, mine: &[(String, f32, String)], r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+    /// The height the fullest of the hand's cards (`rows`) needs at width
+    /// `w` to show its face whole at the plain size: what `hand_card` lays
+    /// out from the top (icon, name, bars), its sentence wrapped, and the
+    /// pips at the foot.
+    fn hand_need(&self, shop: &Shop, rows: &[usize], w: f32, c: &Canvas, s: f32) -> f32 {
+        let room = w - 28.0 * s;
+        rows.iter()
+            .filter_map(|&i| shop.rows.get(i))
+            .map(|row| {
+                let (own, changed) = card_bars(row, &shop.stats);
+                let n = if own { row.bars.len() } else { changed.len() };
+                let bars = if n > 0 { n as f32 * 16.0 * s + 4.0 * s } else { 0.0 };
+                let about = words(row);
+                let lines = if about.is_empty() { 0 } else { c.wrap(Weight::Medium, 13.5 * s, room, about).len() };
+                let pips = row.area == ShopArea::Cards && row.cost > 0 || row.level.1 > 1;
+                // Icon box and name (38 + 56 + 30), the gap to the bars
+                // (26), the lines, the foot.
+                (38.0 + 56.0 + 30.0 + 26.0) * s + bars + lines as f32 * 18.0 * s + if pips { 26.0 * s } else { 10.0 * s } + 4.0 * s
+            })
+            .fold(0.0, f32::max)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn hand_card(&self, row: &ShopRow, now: Option<f32>, mine: &[(String, f32, String)], r: Rect, fit: f32, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
         // A card taller than `HAND_TALL` (`hand`, 11-24) draws its face up
-        // to a seventh larger, and centres it in the height.
-        let s = s * (r.h / (r.w * HAND_TALL)).clamp(1.0, 1.15);
+        // to a seventh larger, and centres it in the height; never so much
+        // larger that the hand's fullest card (`fit`, its height at the
+        // plain size) no longer shows all it says.
+        let grow = (r.h / (r.w * HAND_TALL)).clamp(1.0, 1.15).min((r.h / fit.max(1.0)).max(1.0));
+        let s = s * grow;
         let done = owned(row);
         self.face(r, row.ready || row.on || done, row.on, hot, focused, c, s);
         let dim: f32 = if row.ready || row.on || done { 1.0 } else { 0.5 };
@@ -1278,7 +1331,17 @@ impl StartMenu {
         }
         if let Some((t, ink, _)) = dps_words(now, row.dps, row.no_room) {
             let room = r.right() - pad - c.atlas.measure(Weight::SemiBold, 17.0 * s, &row.price) - 8.0 * s - bx;
-            c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, &t, room, with_alpha(ink, dim.max(0.6)));
+            // "· no room" on a line of its own where the line has no room
+            // for it (Look D, 11-24: "-2.2 DPS · no ro…" at 4K).
+            let tail = " \u{b7} no room";
+            if t.ends_with(tail) && c.atlas.measure(Weight::SemiBold, 12.5 * s, &t) > room {
+                c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, t.trim_end_matches(tail), room, with_alpha(ink, dim.max(0.6)));
+                if row.state != "held" {
+                    c.text(Weight::SemiBold, 11.5 * s, (r.right() - pad, r.y + 46.0 * s), Align::Right, "NO ROOM", with_alpha(ink, 0.8 * dim.max(0.6)));
+                }
+            } else {
+                c.text_fit(Weight::SemiBold, 12.5 * s, (bx, r.y + 28.0 * s), Align::Left, &t, room, with_alpha(ink, dim.max(0.6)));
+            }
         }
         // Its stats as bars (the owner, 2026-11-22 08:53Z: "make visual
         // for speed range, etc"): a rolled bullet's own numbers; else only
@@ -1287,18 +1350,7 @@ impl StartMenu {
         // on every card read the same on most of them (polish review
         // finding 8, 11-24: Delay and Tinder showed five identical rows).
         // (A device body's rolls too, on the Tools tab, 11-24.)
-        let own = (row.area == ShopArea::Cards || row.group == "Tools") && !row.bars.is_empty();
-        let changed: Vec<(String, f32, String)> = if !own && row.bars.is_empty() && !mine.is_empty() {
-            row.stats
-                .iter()
-                .filter_map(|(l, f, v)| {
-                    let m = mine.iter().find(|b| b.0 == *l)?;
-                    (m.2 != *v || (m.1 - f).abs() > 0.005).then(|| (l.clone(), *f, format!("{} \u{2192} {v}", m.2)))
-                })
-                .collect()
-        } else {
-            Vec::new()
-        };
+        let (own, changed) = card_bars(row, mine);
         let bars: &[(String, f32, String)] = if own { &row.bars } else { &changed };
         let lead_b = 16.0 * s;
         // The icon smaller than the first cut's 56, so the bars fit under
@@ -1318,7 +1370,9 @@ impl StartMenu {
         let grown = (r.h - r.w * HAND_TALL).max(0.0);
         let ic_box = if grown >= 16.0 * s { 56.0 * s } else { ic };
         let name_dy = ic_box + 30.0 * s;
-        let top = r.y + 38.0 * s + 0.3 * (grown - 16.0 * s).max(0.0);
+        // (Never lowered past the room the fullest card leaves: `fit` at
+        // this face's size.)
+        let top = r.y + 38.0 * s + (0.3 * (grown - 16.0 * s).max(0.0)).min((r.h - fit * grow).max(0.0));
         c.icon(row.icon, (r.x + (r.w - ic) / 2.0, top + ic_box - ic), ic, tint);
         let ink = with_alpha(TEXT, dim.max(0.6));
         let px = fit_px(c, &row.name, 17.0 * s, 13.5 * s, room);

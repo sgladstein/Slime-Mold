@@ -1665,10 +1665,14 @@ impl Hud {
         if m.end.is_none() {
             self.alerts_draw(c, world, s);
         }
-        if let (Some(i), None) = (&m.intro, &m.end) {
+        // Nor under the pause card (Look D, 11-24): the planet's
+        // introduction stood half over it at 4K, a second panel of words
+        // behind the one being read; it shows again on Resume.
+        let open = self.menu.is_some();
+        if let (Some(i), None, false) = (&m.intro, &m.end, open) {
             self.intro_card(i, c, s);
         }
-        if let (Some((words, step, a)), None) = (&m.coach, &m.end) {
+        if let (Some((words, step, a)), None, false) = (&m.coach, &m.end, open) {
             self.coach_panel(words, step, *a, c, s);
         }
         if let (Some((text, at, gap, a)), None) = (&m.hint, &m.end) {

@@ -1381,7 +1381,10 @@ impl StartMenu {
             // The shop darker (Look D, 11-20): its gun and bag rows sit on
             // the dimmed planet with no panel, and at 150 a crystal behind
             // them read brighter than an empty slot's text.
-            let a = if self.page == Page::Shop { 215 } else { 150 };
+            // The inner pages at 185 (150 until Look D, 11-24): at 4K
+            // their panels end a fifth short of the right edge, and a fed
+            // slime's gold there outshone the text beside it.
+            let a = if self.page == Page::Shop { 215 } else { 185 };
             c.rrect(Rect::new(0.0, 0.0, sw, sh), 0.0, [4, 6, 8, a]);
         }
         let shade_w = (720.0 * s).min(sw);
@@ -1802,8 +1805,10 @@ impl StartMenu {
     /// on an inner page `x` from each side.
     fn split(&self, c: &Canvas, x: f32, s: f32) -> (f32, f32) {
         let avail = c.screen.0 as f32 - 2.0 * x;
-        let note = (avail * 0.42).clamp(300.0 * s, 480.0 * s).min(avail * 0.5);
-        let list = (avail - note - 20.0 * s).min(680.0 * s);
+        // (To 600 from 480, and the list to 760 from 680, Look D 11-24: at
+        // 4K the pages stopped 690 pixels short of the right edge.)
+        let note = (avail * 0.42).clamp(300.0 * s, 600.0 * s).min(avail * 0.5);
+        let list = (avail - note - 20.0 * s).min(760.0 * s);
         (list, note)
     }
 
