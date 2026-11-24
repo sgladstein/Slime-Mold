@@ -183,12 +183,12 @@ const RULE_GROUPS: &[(&str, &[(&str, &str)])] = &[
             ("boss_first", "Seconds from landing to the first chance."),
             ("boss_grade_lo", "Weakest grade drawn, 0 to 1 (armour, bite, pace)."),
             ("boss_grade_hi", "Strongest grade drawn, 0 to 1."),
-            ("boss_reach", "How far round its centre a mini-boss takes walkers (dish cells)."),
-            ("boss_haste", "Pace of a mini-boss on the move, times a walker's."),
+            ("boss_reach", "How far round its centre a mini-boss takes in slime (cells)."),
+            ("boss_haste", "Pace of a mini-boss on the move, times a speck of slime's."),
             ("boss_lunge", "Seconds a hunter's lunge lasts."),
             ("boss_lunge_every", "Seconds between a hunter's lunges."),
             ("boss_spin", "How hard a pinwheel's arms turn."),
-            ("boss_lob", "How far a mortar throws (dish cells)."),
+            ("boss_lob", "How far a mortar throws (cells)."),
             ("boss_lob_every", "Seconds between a mortar's throws."),
             ("boss_life", "Seconds a mini-boss lives."),
         ],
@@ -215,7 +215,7 @@ const RULE_GROUPS: &[(&str, &[(&str, &str)])] = &[
             ("wave_sides", "Points it gathers at round the squad (whole number)."),
         ],
     ),
-    ("Heartbeat", &[("heart", "On or off."), ("heart_lean", "How hard a beat pushes the body out."), ("heart_period", "Seconds a beat."), ("heart_len", "A beat's wavelength (dish cells).")]),
+    ("Heartbeat", &[("heart", "On or off."), ("heart_lean", "How hard a beat pushes the body out."), ("heart_period", "Seconds a beat."), ("heart_len", "A beat's wavelength (cells).")]),
     (
         "Condensed strikers",
         &[
@@ -223,7 +223,7 @@ const RULE_GROUPS: &[(&str, &[(&str, &str)])] = &[
             ("strikers_below", "The slime condenses while under this share of its peak mass."),
             ("strikers_haste", "A striker's pace as it charges, times its own."),
             ("strikers_band", "How far past the guns' reach the condensing edge runs."),
-            ("strikers_most", "Walkers one striker takes in (1 to 15)."),
+            ("strikers_most", "Specks of slime one striker takes in (1 to 15)."),
             ("strikers_few", "A squad this small meets no strikers."),
             ("strikers_full", "A squad this big meets them all."),
         ],
@@ -254,25 +254,25 @@ const WHOLE: [&str; 4] = ["fruit_armour", "wave_sides", "strikers_most", "stand_
 
 /// This slime's engine keys the Rules tab shows: (key, help, range).
 pub(super) const ENGINE_KEYS: &[(&str, &str, (f32, f32))] = &[
-    ("sensor_angle", "Degrees between a walker's sensors: wide makes blobs and sheets, narrow long cords.", (5.0, 135.0)),
-    ("turn", "Degrees a walker turns a step.", (5.0, 135.0)),
-    ("reach", "How far ahead a walker smells (cells).", (1.0, 40.0)),
-    ("step", "How far a walker moves a step (cells).", (0.2, 4.0)),
+    ("sensor_angle", "Degrees between a speck's sensors: wide makes blobs and sheets, narrow long cords.", (5.0, 135.0)),
+    ("turn", "Degrees a speck turns a step.", (5.0, 135.0)),
+    ("reach", "How far ahead a speck smells (cells).", (1.0, 40.0)),
+    ("step", "How far a speck moves a step (cells).", (0.2, 4.0)),
     ("keep", "Share of the trail kept each step: higher, longer-lasting trails.", (0.5, 0.999)),
-    ("laid", "Trail a walker lays a step.", (0.0, 20.0)),
-    ("explore", "Steps a newborn walker walks away from trail first (the Sprawler's).", (0.0, 1000.0)),
-    ("blocked_lay", "Trail a packed walker lays where it stands (the Drifter's droplets).", (0.0, 5.0)),
-    ("hunger_scent", "How hard a hungry walker follows food scent.", (0.0, 40.0)),
+    ("laid", "Trail a speck lays a step.", (0.0, 20.0)),
+    ("explore", "Steps a newborn speck walks away from trail first (the Sprawler's).", (0.0, 1000.0)),
+    ("blocked_lay", "Trail a packed speck lays where it stands (the Drifter's droplets).", (0.0, 5.0)),
+    ("hunger_scent", "How hard a hungry speck follows food scent.", (0.0, 40.0)),
     ("energy_flow", "How fast the body shares its food.", (0.0, 0.2)),
     ("wither", "How fast a part cut off from food thins.", (0.0, 0.05)),
-    ("alarm_weight", "How a walker reads a strike's alarm: below 0 flees it, above 0 swarms to it.", (-5.0, 10.0)),
+    ("alarm_weight", "How a speck reads a strike's alarm: below 0 flees it, above 0 swarms to it.", (-5.0, 10.0)),
     ("alarm_keep", "Share of the alarm kept each step.", (0.8, 1.0)),
     ("flinch", "How hard the body flinches from gunfire.", (0.0, 4.0)),
-    ("spore_rate", "Chance a fed walker fruits into a spore each step (the Sporer's).", (0.0, 0.0001)),
-    ("spore_burst", "Share of the struck fed walkers that fruit at once (the Sporer's).", (0.0, 0.3)),
-    ("sleep_rate", "Chance a walker falls dormant each step (the Sleeper's crust).", (0.0, 0.05)),
-    ("sleep_deposit", "Trail a dormant walker lays.", (0.0, 2.0)),
-    ("scar_weight", "How a walker reads old scars: the Grudge comes back to where it was shot.", (-2.0, 2.0)),
+    ("spore_rate", "Chance a fed speck fruits into a spore each step (the Sporer's).", (0.0, 0.0001)),
+    ("spore_burst", "Share of the struck fed specks that fruit at once (the Sporer's).", (0.0, 0.3)),
+    ("sleep_rate", "Chance a speck falls dormant each step (the Sleeper's crust).", (0.0, 0.05)),
+    ("sleep_deposit", "Trail a dormant speck lays.", (0.0, 2.0)),
+    ("scar_weight", "How a speck reads old scars: the Grudge comes back to where it was shot.", (-2.0, 2.0)),
     ("germ_resist", "How well it resists the germ.", (0.0, 30.0)),
 ];
 
@@ -1571,7 +1571,7 @@ impl App {
                 rows.push(Row::Choice { label: "Pause".into(), note: "P".into(), hit: Hit::Act(Act::Pause), on: self.paused, about: "P pauses too.".into() });
                 rows.push(Row::Choice { label: "Four times faster".into(), note: "Tab".into(), hit: Hit::Act(Act::Fast), on: self.fast, about: "Tab does it too.".into() });
                 if let Some(g) = self.game.as_ref() {
-                    rows.push(Row::Text(format!("{} walkers, {} mini-bosses, {} soldiers, {:.0} food", g.mould, g.bosses.live.len(), g.alive(), g.bank)));
+                    rows.push(Row::Text(format!("{} slime, {} mini-bosses, {} soldiers, {:.0} food", g.mould, g.bosses.live.len(), g.alive(), g.bank)));
                 }
             }
             Tab::Spawn => {
