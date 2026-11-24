@@ -130,6 +130,11 @@ pub const MIND_AT: usize = 1152;
 
 /// LAB: threads, the shrink and growth words from the environment
 /// (`LAB_SHRINK=S:rs:p`, `LAB_GROW=G:rg`); (0, 0) when neither is set.
+thread_local! {
+    /// LAB: distinct 8x8 tiles a warp of 32 slots, before and after the last sort.
+    pub static LAB_LOCAL: std::cell::Cell<(f64, f64)> = const { std::cell::Cell::new((0.0, 0.0)) };
+}
+
 /// LAB: the game has begun (the first `set_ceiling`).
 pub static LAB_GO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -3687,6 +3692,82 @@ impl Engine {
             }
         }
         c
+    }
+
+    /// LAB: **sort the walkers by place** (`LAB_SORT`, the Lab's
+    /// prototype for test 5): every slot's state is moved so the living
+    /// sit in the order of their 8x8-cell tile (then the cell in it), and
+    /// the empty slots after them, so neighbours read neighbouring memory
+    /// in `sense`. Stable, decided on the CPU from a read-back (so a run
+    /// stays deterministic), every per-slot word moved: `walkers`,
+    /// `energy`, `spec`, `sick`, `age`, and in `news` each slot's news
+    /// word, gas word, mind word, dense word and set word. `intent` and
+    /// `icell` live within a step and are not kept. A slot's random draws
+    /// (`keyed(.., k)`) follow its number, so a sorted run is a different
+    /// run of the same rules, not the same run. Returns the slots moved.
+    pub fn lab_sort(&self) -> usize {
+        let n = self.n as usize;
+        let (w, h) = (self.dish.w, self.dish.h);
+        let c = w * h;
+        let wk = floats(&read_back(&self.device, &self.queue, &self.walkers));
+        let en = floats(&read_back(&self.device, &self.queue, &self.energy));
+        let tx = w.div_ceil(8);
+        let key = |k: usize| -> u64 {
+            if self.grows && en.get(k).is_none_or(|&e| e < 0.0) {
+                return u64::MAX;
+            }
+            let (x, y) = (wk[4 * k].max(0.0) as usize, wk[4 * k + 1].max(0.0) as usize);
+            if x >= w || y >= h {
+                return u64::MAX - 1;
+            }
+            (((y / 8) * tx + x / 8) * 64 + (y % 8) * 8 + x % 8) as u64
+        };
+        let keys: Vec<u64> = (0..n).map(key).collect();
+        let mut perm: Vec<usize> = (0..n).collect();
+        perm.sort_by_key(|&k| keys[k]);
+        let moved = perm.iter().enumerate().filter(|(i, &k)| *i != k).count();
+        // How local the slots were before: of each 32 slots in a row (a
+        // GPU's warp), the living ones' distinct 8x8 tiles, on average.
+        let tiles_per_warp = |order: &dyn Fn(usize) -> usize| -> f64 {
+            let (mut sum, mut warps) = (0usize, 0usize);
+            for w0 in (0..n).step_by(32) {
+                let mut t: Vec<u64> = (w0..(w0 + 32).min(n)).map(|i| keys[order(i)]).filter(|&k| k < u64::MAX - 1).map(|k| k / 64).collect();
+                if t.is_empty() {
+                    continue;
+                }
+                t.sort_unstable();
+                t.dedup();
+                sum += t.len();
+                warps += 1;
+            }
+            sum as f64 / warps.max(1) as f64
+        };
+        LAB_LOCAL.with(|l| l.set((tiles_per_warp(&|i| i), tiles_per_warp(&|i| perm[i]))));
+        let gather = |buf: &wgpu::Buffer, at: u64, words: usize| {
+            let b = read_back_range(&self.device, &self.queue, buf, at * 4, (n * words * 4) as u64);
+            let mut out = vec![0u8; b.len()];
+            let sz = words * 4;
+            for (i, &k) in perm.iter().enumerate() {
+                out[i * sz..(i + 1) * sz].copy_from_slice(&b[k * sz..(k + 1) * sz]);
+            }
+            self.queue.write_buffer(buf, at * 4, &out);
+        };
+        gather(&self.walkers, 0, 4);
+        gather(&self.energy, 0, 1);
+        gather(&self.spec, 0, 1);
+        gather(&self.sick, 0, 1);
+        gather(&self.age, 0, 1);
+        let gas_base = (n + 3 * c) as u64;
+        gather(&self.news, 0, 1);
+        gather(&self.news, gas_base + GAS_SLOTS as u64, 1);
+        gather(&self.news, gas_base + (GAS_SLOTS + n) as u64, 1);
+        let dense_base = gas_base + (GAS_SLOTS + 2 * n) as u64;
+        gather(&self.news, dense_base + DENSE_HEAD as u64, 1);
+        if self.crust_at > 0 {
+            gather(&self.news, self.crust_at / 4 + c as u64, 1);
+        }
+        self.queue.submit([]);
+        moved
     }
 
     pub fn lab_occ(&self) -> Vec<u8> {

@@ -1270,6 +1270,17 @@ impl World for GpuWorld {
         // arm's walkers, from its dump), held as the ceiling second by second.
         let sec = LAB_SEC.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         super::LAB_GO.store(true, std::sync::atomic::Ordering::Relaxed);
+        // LAB: sort the walkers by place every `LAB_SORT` game seconds.
+        if let Some(every) = std::env::var("LAB_SORT").ok().and_then(|v| v.parse::<u32>().ok()).filter(|&e| e > 0) {
+            if sec % every == 0 {
+                let t0 = std::time::Instant::now();
+                let moved = self.e.lab_sort();
+                if std::env::var("LAB_SORT_LOG").is_ok() {
+                    let (a, b) = super::LAB_LOCAL.with(|l| l.get());
+                    eprintln!("  lab sort t {sec} s: {moved} slots moved in {:.1} ms; tiles a warp {a:.1} -> {b:.1}", t0.elapsed().as_secs_f64() * 1000.0);
+                }
+            }
+        }
         let mut cap = std::env::var("LAB_CAP").ok().and_then(|v| v.parse::<u32>().ok()).unwrap_or(u32::MAX);
         if let Ok(f) = std::env::var("LAB_CAPS") {
             if let Some(c) = std::fs::read_to_string(f).ok().and_then(|t| t.lines().nth(sec as usize + 1).and_then(|l| l.trim().parse::<u32>().ok())) {
