@@ -196,5 +196,9 @@ A second slime species that fights the first; the player's own mould
   lets `run=SEED:9` to `:15` through (code `9115723b`);
   `Reports/lab-lap-two-2026-11-24/raw/rig9.sh` runs the Drifter with the
   Sporer's bursts. Lap two's sizes wait on Direction.
+- 2026-11-24: **bait or drain on planet 7** (Direction 12:08Z). Report
+  [`Reports/lab-bait-trade-2026-11-24/`](../Reports/lab-bait-trade-2026-11-24/README.md),
+  no page. 18 games on the 1070 (`raw/pc-trade.ps1`). Drain beats bait as
+  a player choice; feeding keeps wanderers small.
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.
