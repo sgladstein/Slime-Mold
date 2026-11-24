@@ -1,0 +1,94 @@
+<title>Rescue Planet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; each moment of the planet is a clip with its numbers beside it. */
+:root {
+  --bg: #f3f2ec; --panel: #fbfaf6; --fg: #23231f; --muted: #67665c; --line: #d9d6c9;
+  --slime: #d98a16; --card: #fff3d9; --card-fg: #4a3305;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15160f; --panel: #1d1e17; --fg: #ebe9dc; --muted: #a6a491; --line: #34352b;
+  --slime: #f0a634; --card: #33270f; --card-fg: #f7dfae; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #15160f; --panel: #1d1e17; --fg: #ebe9dc; --muted: #a6a491; --line: #34352b;
+  --slime: #f0a634; --card: #33270f; --card-fg: #f7dfae; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.35rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--slime); }
+video, img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--line); display: block; background: #000; }
+section { display: grid; gap: 12px; }
+.twist { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start; padding-top: 20px; border-top: 1px solid var(--line); }
+@media (max-width: 720px) { .twist { grid-template-columns: 1fr; } }
+.twist > div { display: grid; gap: 10px; min-width: 0; }
+.pick { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--slime); color: var(--slime); justify-self: start; }
+.cardline { background: var(--card); color: var(--card-fg); padding: 10px 14px; border-radius: 6px; font-style: italic; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; min-width: 560px; width: 100%; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { font-weight: 600; color: var(--muted); }
+code { font-family: var(--mono); font-size: 13px; }
+.small { font-size: 13px; color: var(--muted); }
+</style>
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="eyebrow">Lab, 2026-11-24 · lab branch only, not in the game</span>
+    <h1>Rescue planet</h1>
+    <p class="lede">A planet whose goal is not the heart. Three of your soldiers are dug in deep in the slime behind a ring of doors the slime gnaws. Reach them, then walk them home at their wounded pace while the slime turns on you. Planet 1, run seed 1, stranded at 40,150, about 300 cells from the landing; zoom 6, a frame a second.</p>
+  </header>
+
+  <article class="twist">
+    <video src="rescue-win.mp4" poster="reached-100s.jpg" controls muted loop playsinline preload="metadata"></video>
+    <div>
+      <span class="pick">Won</span>
+      <h2>Reached at 1:40, home at 2:30</h2>
+      <p>The bot farms until 1:30, then walks everyone in over the heart's crystal. The three in the ring join the squad, and the squad slows to their pace for the 50 s walk home.</p>
+      <p class="small">All three home. Sent at once with 5 soldiers it wins at 1:19.</p>
+    </div>
+  </article>
+
+  <article class="twist">
+    <video src="greedy-loss.mp4" poster="breach-276s.jpg" controls muted loop playsinline preload="metadata"></video>
+    <div>
+      <span class="pick" style="border-color:var(--muted);color:var(--muted)">Lost</span>
+      <h2>Never sent: the ring gives way</h2>
+      <p>The slime gnaws the doors to rubble from 4:00 and pours in. The last of the three dies at 4:40 while 45 soldiers farm elsewhere.</p>
+      <p class="small">Idle: found when their hiding runs out at 5:00, dead from 5:58, lost at 6:13.</p>
+    </div>
+  </article>
+
+  <article class="twist">
+    <video src="late-loss.mp4" controls muted loop playsinline preload="metadata"></video>
+    <div>
+      <span class="pick" style="border-color:var(--muted);color:var(--muted)">Lost</span>
+      <h2>Sent at 3:00: left behind</h2>
+      <p>Reached at 3:06, but the 48-strong mob walks on, and two wounded fall behind at the slime's edge. In the smoke game all three died there by 3:20 with 44 soldiers alive. In this filmed game they were still walking at 4:10.</p>
+    </div>
+  </article>
+
+  <section>
+    <h2>Smoke tests</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Hand</th><th>Outcome</th><th>Reached</th><th>Ended</th><th>Home</th></tr></thead>
+      <tbody>
+        <tr><td>rescue at once</td><td>won</td><td>0:17</td><td>1:19</td><td>3 of 3</td></tr>
+        <tr><td>rescue from 1:30</td><td>won</td><td>1:40</td><td>2:30</td><td>3 of 3</td></tr>
+        <tr><td>rescue from 3:00</td><td>lost on the march</td><td>3:06</td><td>3:20</td><td>0 of 3</td></tr>
+        <tr><td>greedy</td><td>lost, ring breached</td><td>never</td><td>4:40</td><td>0 of 3</td></tr>
+        <tr><td>idle</td><td>lost, found at 5:00</td><td>never</td><td>6:13</td><td>0 of 3</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cardline">"Distress call: three of yours are dug in deep in the slime. Reach them and walk them home at a wounded pace. The slime wakes when you find them, and if you leave it too late it breaks in."</p>
+    <p>It works as an occasional planet goal from planet 3. On planet 1 it is too short, because an early rescue wins in 1:19. The length should come from a deeper body and a longer walk on later planets, timed on the GTX 1070.</p>
+    <p class="small">Lab key <code>LAB_RESCUE=X,Y[,N,HIDE,OUT,ALARM,RING,WOUND,THICK]</code>, bot hand <code>rescue@X,Y[,T]</code>, code <code>a7c788e2</code> on <code>claude/project-thread-2o4cic</code>; report <code>Reports/lab-rescue-2026-11-24/</code>.</p>
+  </section>
+</div>
