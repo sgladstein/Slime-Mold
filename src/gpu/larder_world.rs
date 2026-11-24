@@ -1269,6 +1269,7 @@ impl World for GpuWorld {
         // `LAB_CAPS=FILE`: a count a line, one a game second (the off
         // arm's walkers, from its dump), held as the ceiling second by second.
         let sec = LAB_SEC.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        super::LAB_GO.store(true, std::sync::atomic::Ordering::Relaxed);
         let mut cap = std::env::var("LAB_CAP").ok().and_then(|v| v.parse::<u32>().ok()).unwrap_or(u32::MAX);
         if let Ok(f) = std::env::var("LAB_CAPS") {
             if let Some(c) = std::fs::read_to_string(f).ok().and_then(|t| t.lines().nth(sec as usize + 1).and_then(|l| l.trim().parse::<u32>().ok())) {
@@ -1287,6 +1288,13 @@ impl World for GpuWorld {
             let occ = self.e.lab_occ();
             let v: Vec<u8> = occ.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap()).min(255) as u8).collect();
             let _ = std::fs::write(format!("{dir}/occ-{sec:04}.bin"), v);
+            if std::env::var("LAB_DUMP_LIFE").is_ok() {
+                let c = self.e.lab_life();
+                use std::io::Write;
+                if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(format!("{dir}/life.txt")) {
+                    let _ = writeln!(f, "{sec} {} {} {} {}", c[0], c[1], c[2], c[3]);
+                }
+            }
             if std::env::var("LAB_DUMP_SCAR").is_ok() {
                 let _ = std::fs::write(format!("{dir}/scar-{sec:04}.bin"), self.e.lab_scar());
             }

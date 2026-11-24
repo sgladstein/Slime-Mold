@@ -108,6 +108,39 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "pumps" {
         return pumps_hand(g);
     }
+    // LAB (the Sleeper prototype, never merges): `wake@T,X,Y` pumps until
+    // game second T, then spends the bank on soldiers (up to 16) and the
+    // squad walks to (X, Y) on free fire, waking the slime there.
+    if let Some(v) = hand.strip_prefix("wake@").map(|p| p.split(',').filter_map(|v| v.parse::<f32>().ok()).collect::<Vec<f32>>()) {
+        if v.len() == 3 {
+            if g.time() < v[0] {
+                // Fire held while it farms, so no shot wakes it.
+                for k in 0..g.soldiers.len() {
+                    if g.soldiers[k].alive && g.soldiers[k].stance != Stance::HoldFire {
+                        g.apply(Cmd::Stance(k, Stance::HoldFire));
+                    }
+                }
+                // Pumps only crystals 40 units or more west of the post,
+                // so the farm stays off the sleeping body's edge.
+                return pumps_hand_west(g, v[1] - 40.0);
+            }
+            while g.soldiers.len() < 16 && g.bank >= g.rules.soldier_cost {
+                g.apply(Cmd::Buy);
+            }
+            for k in 0..g.soldiers.len() {
+                if !g.soldiers[k].alive {
+                    continue;
+                }
+                if g.soldiers[k].stance != Stance::Free {
+                    g.apply(Cmd::Stance(k, Stance::Free));
+                }
+                if g.soldiers[k].order != Order::Move(v[1], v[2]) && (g.soldiers[k].order == Order::Hold || g.time() < v[0] + 0.5) {
+                    g.apply(Cmd::Order(k, Order::Move(v[1], v[2])));
+                }
+            }
+            return;
+        }
+    }
     if hand == "greedy" {
         return greedy_hand(g);
     }
@@ -562,6 +595,10 @@ pub(super) fn squadwork_hand(g: &mut Game<GpuWorld>) {
 /// together; once a pump stands and the bank allows it is upgraded, up to
 /// its top level, before the next is placed. No draining by hand.
 fn pumps_hand(g: &mut Game<GpuWorld>) {
+    pumps_hand_west(g, f32::MAX)
+}
+
+fn pumps_hand_west(g: &mut Game<GpuWorld>, west: f32) {
     if g.time() < 1.0 {
         return;
     }
@@ -584,7 +621,7 @@ fn pumps_hand(g: &mut Game<GpuWorld>) {
     // The next crystal with charge and no pump, nearest the squad.
     let s = g.soldiers[k0];
     let cs = g.world.crystals();
-    let next = (1..cs.len()).filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none()).min_by(|&a, &b| {
+    let next = (1..cs.len()).filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none() && cs[c].0 .0 < west).min_by(|&a, &b| {
         let d = |c: usize| (cs[c].0 .0 - s.x).hypot(cs[c].0 .1 - s.y);
         d(a).total_cmp(&d(b))
     });

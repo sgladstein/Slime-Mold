@@ -2081,6 +2081,10 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
         let gm = (P.lab_th >> 14u) & 0x3FFu;
         if (gm > 0u && box_occ(j, (P.lab_th >> 24u) & 15u) > gm) { return; }
     }
+    // LAB: dreaming. A bud on the crystals' scent wakes at once and its
+    // wake's alarm wakes the body round it (waves of 100,000 waking with no
+    // shot fired, first try): buds only on ground the sleepers lie on.
+    if (dream && scent_at(at.x, at.y) > P.wake_scent * 0.5) { return; }
     // Not past a built wall's corner (`solid_walls`).
     let pw = walkers[k];
     if (wall_between(pw.x, pw.y, at.x, at.y) != NONE) { return; }

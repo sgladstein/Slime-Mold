@@ -130,6 +130,9 @@ pub const MIND_AT: usize = 1152;
 
 /// LAB: threads, the shrink and growth words from the environment
 /// (`LAB_SHRINK=S:rs:p`, `LAB_GROW=G:rg`); (0, 0) when neither is set.
+/// LAB: the game has begun (the first `set_ceiling`).
+pub static LAB_GO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 pub fn lab_threads() -> (u32, f32) {
     let get = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
     let (sh, gr) = (get("LAB_LANES"), get("LAB_GROW"));
@@ -137,8 +140,11 @@ pub fn lab_threads() -> (u32, f32) {
     // `LAB_TOUGH=P:S0` (the Grudge's scar tissue) takes the word alone:
     // bits 30 and 31 set, S0 x 1000 in bits 0-13, P in the float.
     // `LAB_DREAM=P` (the Sleeper's growth asleep): bits 31 and 27, P a step.
+    // Off until the game's first second (`LAB_GO`, set by `set_ceiling`),
+    // so the planet's landing is the off arm's.
     if let Some(v) = get("LAB_DREAM") {
-        return (1u32 << 31 | 1 << 27, v.parse().unwrap_or(0.0));
+        let go = LAB_GO.load(std::sync::atomic::Ordering::Relaxed);
+        return (1u32 << 31 | 1 << 27, if go { v.parse().unwrap_or(0.0) } else { 0.0 });
     }
     if let Some(v) = get("LAB_TOUGH") {
         let f: Vec<&str> = v.split(':').collect();
@@ -3670,6 +3676,19 @@ impl Engine {
     }
 
     /// LAB: the walkers a fine cell, read back (`LAB_DUMP`).
+    /// LAB: the living walkers by life state (walker, spore, dormant, other).
+    pub fn lab_life(&self) -> [usize; 4] {
+        let e = floats(&read_back(&self.device, &self.queue, &self.energy));
+        let (st, _) = self.life_of();
+        let mut c = [0usize; 4];
+        for (k, &s) in st.iter().enumerate() {
+            if e.get(k).is_some_and(|&v| v >= 0.0) {
+                c[(s as usize).min(3)] += 1;
+            }
+        }
+        c
+    }
+
     pub fn lab_occ(&self) -> Vec<u8> {
         read_back(&self.device, &self.queue, &self.occ)
     }
