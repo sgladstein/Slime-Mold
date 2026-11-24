@@ -1,0 +1,74 @@
+<title>Drifter Sheet Close Up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root {
+  --bg: #f3efe6; --panel: #fffaf0; --fg: #23201a; --muted: #6b6457;
+  --line: #d9cfbd; --accent: #c86a08; --tag: #efe2c9;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14120e; --panel: #1d1a15; --fg: #ece5d6; --muted: #a59c8a;
+  --line: #34302a; --accent: #f3a43a; --tag: #2a251d; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 Inter, system-ui, sans-serif; }
+.wrap { max-width: 1520px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2 { font-family: "Space Grotesk", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.15rem; margin: 32px 0 12px; }
+.lead { max-width: 68ch; color: var(--muted); margin: 8px 0 0; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
+figure video { display: block; width: 100%; height: auto; background: #000; }
+figcaption { padding: 10px 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.tag { font: 600 0.72rem/1 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--tag); color: var(--accent); padding: 5px 8px; border-radius: 4px; }
+.note { color: var(--muted); font-size: 0.9rem; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; margin-top: 8px; }
+.cols > div { min-width: 0; }
+ul { padding-left: 1.2em; margin: 6px 0; } li { margin: 4px 0; max-width: 68ch; }
+code { font: 0.85em "JetBrains Mono", ui-monospace, monospace; background: var(--tag); padding: 1px 5px; border-radius: 3px; }
+.meta { margin-top: 36px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+
+<div class="wrap">
+  <h1>The Drifter's sheet, before and after</h1>
+  <p class="lead">Planet 1's slime (the Drifter) drags a thin gel of its own trail. Before, that gel faded over three or four cells and lay flat, so at zoom 6 the slime read as an orange wash with a wide glowing halo. Now the gel has an edge where the trail stands thick enough, and it rises a little, so the light runs over it and rims it. The picture is still the trail's own data: the edge is the trail's contour, about a cell wide, not a painted line.</p>
+
+  <h2>Zoom 6, the play zoom</h2>
+  <div class="pair">
+    <figure><video src="z6-before.mp4" autoplay loop muted playsinline aria-label="Zoom 6 before: orange slime with a wide soft glowing halo"></video><figcaption><span class="tag">Before</span><span class="note">Halo fades about 20 px past the body; the sheet takes no light.</span></figcaption></figure>
+    <figure><video src="z6-after.mp4" autoplay loop muted playsinline aria-label="Zoom 6 after: orange slime with a defined, lit edge"></video><figcaption><span class="tag">After</span><span class="note">Edge follows the trail contour; swells catch the key light.</span></figcaption></figure>
+  </div>
+
+  <h2>Zoom 12, close up</h2>
+  <div class="pair">
+    <figure><video src="z12-before.mp4" autoplay loop muted playsinline aria-label="Zoom 12 before"></video><figcaption><span class="tag">Before</span><span class="note">About a 40 px blur round the body.</span></figcaption></figure>
+    <figure><video src="z12-after.mp4" autoplay loop muted playsinline aria-label="Zoom 12 after"></video><figcaption><span class="tag">After</span><span class="note">A low lit relief with a rim, the droplets still show.</span></figcaption></figure>
+  </div>
+
+  <div class="cols">
+    <div>
+      <h2>What changed</h2>
+      <ul>
+        <li>The sheet is the trail where it stands over 0.15 to 0.3 (<code>SHEET_EDGE</code>, a smooth step), so its rim is a soft contour rather than a long fade.</li>
+        <li>It rises <code>SHEET_RISE</code> = 0.2 times its square, so the key light shades its swells.</li>
+        <li>Only the Drifter (planet 1's slime look) changes. Cost: two extra multiplies per cell in <code>prep</code>.</li>
+        <li>It bends the "no thresholded edge" ruling a little: the edge is a smooth step about a cell wide, on the simulation's own trail.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Tried and dropped</h2>
+      <ul>
+        <li>A raised floor of 0.25 or 0.6 under the body: one glossy slab that buried the body's ridges.</li>
+        <li>A rise alone (0.1, 0.2) with no edge: lit, but still a 40 px blur at zoom 12.</li>
+        <li>A colour cut on the slime's thickness: a speckled, ragged rim, because the thickness's tail is single walkers.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="meta">Filmed on software Vulkan: planet 1, run seed 1, idle hand, 1280-wide frames cropped to 720 by 300, 20 frames at 120 ms. Same game in both halves; only the view shader differs. Look lane, 2026-11-24. Polish review finding 1.</p>
+</div>

@@ -256,3 +256,5 @@ if the link ever stops working. Newest last.
 | 11-21 | Slime Follows Its Crystal (planet 1 end cards before and after crystals never run out and the slime's size follows the crystal it covers) | https://claude.ai/artifact/N9YydWDBDBVSFwr7MvrvPQ | `slime-ceiling-2026-11-21/` |
 | 11-22 | Slime Mold Music Bed (the per-planet music bed and air: planets 1-3 in the game, each mood alone) | https://claude.ai/artifact/WnCC7JYYUsqLKQVxk2gxgH | `music-bed-2026-11-22/` |
 | 11-24 | Larder World Polish Review (fifteen ranked unfinished spots, stills, a fix and a lane each) | https://claude.ai/artifact/7STCLzcjcjSz95TkKJYLfu | `polish-review-2026-11-24/` |
+| 11-24 | Drifter Sheet Close Up (planet 1's slime at zoom 6 and 12, before and after its trail sheet gets an edge and a lit relief) | https://claude.ai/artifact/DvALBJUXZsbaAYvndsmvra | `drifter-sheet-2026-11-24/` |
+| 11-24 | Crystals Cut As Gems (crystals at zoom 6 and 12 before and after: cut with a bevel, twelve crown facets and a table; a spent husk low, dark and crumbled) | https://claude.ai/artifact/8U9XRkm4Wo9MjSq9TBEDSw | `crystal-cut-2026-11-24/` |
