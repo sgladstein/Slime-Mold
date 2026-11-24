@@ -511,6 +511,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
         run: (!r.range).then(|| run_view(r)),
         slime: (!r.range && !does.is_empty()).then(|| (title_case(l.tier.name()), does.to_string())),
+        twist: r.twist().map(|t| (t.name().to_string(), t.card())),
         shots: shots
             .into_iter()
             .map(|t| match t {

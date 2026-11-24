@@ -1790,7 +1790,7 @@ impl App {
                 // name and "Tier: what it does".
                 let intro = self.args.run.as_ref().filter(|r| !r.range).map(|r| {
                     let tier = r.level().tier;
-                    slime_mould::world::ui::Intro { kicker: tr.mission.name.clone(), title: title_case(tier.name()), line: slime_mould::mould::run::does_to_you(tier).says.to_string(), alpha: 1.0 }
+                    slime_mould::world::ui::Intro { kicker: tr.mission.name.clone(), title: title_case(tier.name()), line: slime_mould::mould::run::does_to_you(tier).says.to_string(), twist: r.twist().map(|t| (t.name().to_string(), t.card())), alpha: 1.0 }
                 });
                 match intro {
                     Some(i) => self.intro = Some((i, self.game.as_ref().map_or(0.0, |g| g.time()))),
