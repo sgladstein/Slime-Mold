@@ -68,8 +68,8 @@ asks at most once a session with a recommendation.
 
 At most five, most important first; offers, not requests. The game shows them
 beside "What is new": [`news/things-to-try.txt`](news/things-to-try.txt).
-Today: the heart, the harder planets from 2, the soldier price past 30,
-quitting mid-planet, and starfall's pickup.
+Today: the heart, the harder planets from 2, each slime's landing card and
+number, quitting mid-planet, and the Sprayer and Hunter.
 What each build holds is in
 [`news/whats-new.txt`](news/whats-new.txt).
 
