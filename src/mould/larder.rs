@@ -184,6 +184,7 @@ impl Default for Rules {
 
 /// What a soldier fires at by itself.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Stance {
     HoldFire,
     /// Only mould near the soldier, or on the pile it is clearing: the
@@ -195,6 +196,7 @@ pub enum Stance {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Order {
     Hold,
     Move(f32, f32),
@@ -317,6 +319,7 @@ pub struct Soldier {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum End {
     /// Every soldier dead, at game second `t`.
     SquadWiped(f32),

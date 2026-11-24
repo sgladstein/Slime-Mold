@@ -30,6 +30,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct HealRules {
     /// Health a second while resting by a held crystal (a soldier has
     /// `Rules::hp`, 100: 10 a second is a full heal in 10 s); 0: off.

@@ -44,6 +44,7 @@ use crate::mould::squad::{Burst, BurstRules};
 /// The mini-bosses' numbers. Times in game seconds, distances in dish
 /// cells.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct BossRules {
     /// The time till the next chance, drawn from a normal distribution
     /// with this mean and `every_sd` (0: off), never under `min`; the
@@ -393,6 +394,7 @@ impl Default for BossRules {
 
 /// What a mini-boss is doing.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum BossPhase {
     /// Clenching where it formed.
     Gather,
@@ -409,6 +411,7 @@ pub enum BossPhase {
 /// **What a mini-boss is** (`BossRules::kinds`), the view's kind number
 /// (`Game::lump_looks` bits 0-2).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum BossKind {
     /// Comes for the squads: hunts the nearest soldier, lunging.
     Hunter = 1,
@@ -445,6 +448,7 @@ impl BossKind {
 
 /// One mini-boss.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Boss {
     /// Its lump (`big::LUMPS`).
     pub lump: usize,
@@ -472,6 +476,7 @@ pub struct Boss {
 
 /// What made a mini-boss.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum BossCause {
     /// A crowded knot.
     Crowd,
@@ -486,6 +491,7 @@ pub enum BossCause {
 
 /// How a mini-boss ended.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum BossEnd {
     /// Too few walkers at the knot (`BossRules::least`).
     Fizzled,
@@ -510,6 +516,7 @@ pub struct Part {
 
 /// The game's mini-boss state.
 #[derive(Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Bosses {
     pub live: Vec<Boss>,
     /// Every one that ended, with how and the tick.
@@ -544,6 +551,7 @@ pub struct Bosses {
 /// shell_life`): its lump, where it was thrown, its mortar's look word
 /// (`Game::lump_looks`) and the tick it is let go.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Shell {
     pub lump: usize,
     pub target: (f32, f32),
@@ -561,6 +569,7 @@ pub struct Shell {
 /// fort's ring, one 64 s; a march walks down its way (`raids::down_way`)
 /// and the mini-bosses now do too.
 #[derive(Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct BossWay {
     lump: usize,
     /// The goal the field leads to (fine cells; None: the nearest live
@@ -601,6 +610,17 @@ const MORTAR_FLING: f32 = 1.5;
 /// The share of a mortar's walkers it keeps when it throws: the rest of
 /// its body, and `BossRules::shell` past it, is the throw.
 const SHELL_CORE: f32 = 0.6;
+
+impl Bosses {
+    /// Every way still building waited for (`Game::save`).
+    pub(super) fn settle_ways(&mut self) {
+        for w in &mut self.ways {
+            if let Some((way, _)) = &mut w.building {
+                way.settle();
+            }
+        }
+    }
+}
 
 impl Bosses {
     pub fn new(seed: u64) -> Bosses {

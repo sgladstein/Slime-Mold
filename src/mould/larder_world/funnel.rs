@@ -26,6 +26,7 @@ use super::*;
 
 /// One squad's column.
 #[derive(Clone, Debug, Default)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Column {
     /// Funnelling now.
     pub on: bool,

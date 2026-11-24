@@ -415,12 +415,28 @@ landing, at each buy or move in the shop, when the loadout panel closes, at
 a planet's end, on quitting, and checked every five seconds as a net
 (`Run::save_text`, `SAVE_HEAD`, the window's `App::save_run`). The next
 time the game opens, the main menu's "Back to the run" carries on with it,
-and it is deleted when the run is won, lost or given up. A planet's own
-state lives on the GPU and is not saved, so a run closed mid-planet lands
-on the same planet (same seed, same map) fresh, with the shop as it was on
-landing. Owner, 2026-11-22 04:40Z: "a run should always be autosaving and
-saving the run between closing the program"; before that a run lived only
-in the window and was lost on closing it (Milestone 2's "save and resume").
+and it is deleted when the run is won, lost or given up. Owner, 2026-11-22
+04:40Z: "a run should always be autosaving and saving the run between
+closing the program"; before that a run lived only in the window and was
+lost on closing it (Milestone 2's "save and resume").
+
+**The planet mid-game** (save and resume A, 2026-11-24): closing the game,
+or the pause menu's Quit or Main menu, in the middle of a run's planet
+writes the planet as it stands to `planet.sav` beside `run.txt`
+(`Game::save`: a header with the build's commit, every GPU buffer read
+back, and the whole `Game` and mission tracker through serde and bincode;
+about 8 MB on planet 1, tens of milliseconds). "Back to the run" then lands
+that planet and reads the save onto it, paused, instead of opening the
+shop; the file is deleted once read. A save from another build or of
+another planet, or one that won't read, is dropped and the planet relands
+fresh with the run intact (step C, #748, whose pause-menu line said so).
+It is written only on quitting, not every few seconds, since a save reads
+the GPU world back; after a crash the planet relands fresh. On the GPU
+world, `gpu/larder_world/snap.rs` lists every field of `Engine` and
+`GpuWorld` as a buffer, a handle or a value, and a new field doesn't
+compile until it is listed. Tests: `a_planet_saved_mid_game_loads_as_it_was`
+(the same bytes after a load, and after both play on) and
+`a_planet_left_mid_game_carries_on` (the window's round trip).
 
 ## The gun range
 

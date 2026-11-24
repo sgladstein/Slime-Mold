@@ -226,6 +226,7 @@ mod strat;
 mod utility;
 mod league;
 mod menu;
+mod resume;
 mod squadmode;
 mod uisize;
 mod volume;

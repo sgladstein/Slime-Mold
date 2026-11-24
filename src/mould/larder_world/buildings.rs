@@ -48,6 +48,7 @@ use crate::mould::squad::{Burst, BurstRules, ShotIn, UnitIn, UnitOut};
 /// What a building is. A wall carries its far end (fine cells); its near
 /// end is the building's `at`.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub enum Kind {
     Turret,
     Lure,
@@ -92,6 +93,7 @@ impl Kind {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Building {
     pub kind: Kind,
     /// Fine cells.
@@ -151,6 +153,7 @@ pub struct Building {
 /// strike `r` fine cells wide carrying cast `cast` (0 plain) of the
 /// turrets' deck. The window draws it along its arc from these numbers.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Shell {
     pub from: (f32, f32),
     pub to: (f32, f32),
@@ -194,6 +197,7 @@ pub const TURRET_MUZZLE: f32 = 1.7;
 /// sixth of a soldier's harvest rate but never walks; a lure smells twice
 /// a soldier.
 #[derive(Clone, Copy, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct BuildRules {
     /// Buildings standing at once, walls not counted (the squad frame's
     /// 96 units, less 40 soldiers and the larder, leave 55).
@@ -397,6 +401,7 @@ const GHOST_HP: f32 = 0.1;
 
 /// Who a unit in the frame is.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub(super) enum Who {
     Soldier(usize),
     Larder,
