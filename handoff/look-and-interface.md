@@ -2,6 +2,13 @@
 
 ## State (2026-11-20)
 
+**11-24, camera at the map's top, polish finding 12:** `Camera::clamp`
+stops the view at the world's top row (the top bar floats over it); only
+the bottom panels let the world's last row come out from under them. The
+top 70 px of off-map at zoom 6 became the map's own rock rim (about 35
+px). Finding 2 (shore stairs) was not seen at two banks on planet 1 after
+the sheet change; reopen if it shows. Still:
+`Reports/pr-stills/camera-top-2026-11-24.png`.
 **11-24, dashes over crystals, polish finding 14:** a walker's speck or
 dash on a crystal's faces is lit only where the slime's film lies there
 (`film_th`), in `base` after the specks' light. Still:
