@@ -3367,6 +3367,9 @@ fn origin_line(g: &Game<GpuWorld>, line: String) -> String {
     let warn = line.split_once(" s. ").filter(|_| line.starts_with("Nothing is happening")).map(|(a, _)| format!("{a} s. ")).unwrap_or_default();
     let goal = match fell {
         Some(left) => format!("The slime's heart is broken: the slime is dying back ({:.0} s)", left.ceil()),
+        // No members yet (or a heart that never filled, as on a planet past
+        // the tuned ladder): the goal without its counts, not "0 of 0".
+        None if most == 0 => "Kill the slime's heart on its home crystal".to_string(),
         None => {
             let r = g.rules.origin;
             let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;

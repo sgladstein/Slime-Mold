@@ -49,6 +49,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // won with two stars, so the picture has points to spend.
         if let (slime_mould::world::start::Page::Shop, Some(r), false) = (p, app.run.as_ref(), app.armory) {
             let mut r = r.clone();
+            // Landed deep (`run=SEED:DEPTH`): the planets before count as
+            // skipped, as `Run::skip` scores them, so the strip's stars sit
+            // on their own planets.
+            while r.stars.len() + 1 < r.depth as usize {
+                r.stars.push(0);
+            }
             if r.points == 0 {
                 r.won(2);
             }
@@ -100,7 +106,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // page's Run row and its strip with the run three planets in, won
         // (every planet freed) or lost on planet 4.
         if let (slime_mould::world::start::Page::Main, Some(r), true) = (p, app.run.as_ref(), flag.starts_with("main-")) {
+            // From planet 1, whatever planet `run=` landed on: the strip
+            // reads stars by planet, and a real run reaches planet N only
+            // through planets 1 to N-1 (`Run::skip` scores a 0).
             let mut r = r.clone();
+            r.depth = 1;
             let n = if flag == "main-won" { slime_mould::mould::run::PLANETS } else { 3 };
             for k in 0..n {
                 if !r.over {
