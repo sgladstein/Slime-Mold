@@ -147,4 +147,11 @@ A second slime species that fights the first; the player's own mould
   a shuttle together turn planet 2's packed disc into spokes at the same
   walker count; recommendation: build it for the Sprawler, changed. Enemy
   builds it on Direction's say.
+- 2026-11-24: **scar tissue for the Grudge, planet 7** (brief from
+  Direction 04:37Z: the weakest of planets 4 to 8's nameable things; Enemy
+  named planet 7). Report
+  [`Reports/lab-scar-tissue-2026-11-24/`](../Reports/lab-scar-tissue-2026-11-24/README.md),
+  page "Grudge Scar Tissue". Code `4c76a347` (`LAB_TOUGH=P:S0`). A hit on
+  scarred slime shrugs off; recommendation: build it as the Grudge's thing
+  at P 0.5.
 - Next step: none. Wait for Direction's next brief.
