@@ -1,0 +1,15 @@
+# Planet 9's size against planet 8, the run bot (hand=bot, bank 3000), GTX 1070, lab
+# branch a0627e81, pc-size9.ps1 (Engine's runner, 2026-11-24, 26.6 min wall). As Engine
+# relayed it: game: start mould -> end, how it ended, peak soldiers (minute lines), killed.
+s1_p8: 173,241 -> 287,558, squad wiped at 422 s, peak 49 (at 240 s, then 1 by 300 s), 34,805 killed
+s1_p9x0.55: 186,810 -> 299,192, wiped at 333, peak 44, 22,919
+s1_p9x0.65: 216,942 -> 371,918, wiped at 363, peak 37, 49,520
+s1_p9x0.8: 277,999 -> 448,571, wiped at 333, peak 43, 38,550
+s2_p8: 169,288 -> 192,902, wiped at 351, peak 61, 16,763
+s2_p9x0.55: 195,270 -> 335,350, wiped at 231, peak 26, 15,801
+s2_p9x0.65: 230,579 -> 320,003, wiped at 441, peak 41, 41,072
+s2_p9x0.8: 281,407 -> 414,640, wiped at 268, peak 28, 22,504
+s3_p8: 207,748 -> 224,393, wiped at 174, peak 28, 5,408
+s3_p9x0.55: 171,869 -> 87,248, the only win (mould wiped at 269 s with 12 soldiers left), peak 33, 28,246
+s3_p9x0.65: 196,833 -> 213,655, wiped at 226, peak 43, 31,155
+s3_p9x0.8: 237,607 -> 198,355, wiped at 121, peak 18, 8,360

@@ -83,8 +83,67 @@ walker bursts into spores that start new slime; not checked, and one
 seed). Lap two's sizes are Direction's to set; planet 9 at planet
 8's size is a big slime for a first lap-two planet.
 
+## Lap two's first sizes and rigs (added 11-24, Direction 13:09Z)
+
+**The rig.** `raw/rig.sh OUT PLANET SEED [HAND] [pair|base] [keys]` plays
+any of planets 9 to 15 on the lab branch (`LAB_LAP2=1`, code `9115723b`):
+levelgen's own map for the depth at planet 8's size, the ladder's tier
+again in order (9 Drifter, 10 Sprawler, 11 Trunk, 12 Swarmer, 13 Sporer,
+14 Sleeper, 15 Grudge), the second trait's keys from `raw/pairs.txt`, and
+every per-planet row (raids, mini-bosses, surges, origin) planet 8's. The
+slime's size is the game's own rule (a fifth more a planet, times the
+area, the seed's roll and the tier's factor) times `LAB_LAP2_SIZE`
+(code `bd836d45`).
+
+**Planet 9's size: 0.7 of the rule.** At 1.0 planet 9 starts at twice
+planet 8 (330,000 walkers against 173,000 on seed 1), because the rule's
+depth factor runs on planet 8's area. The run bot (`hand=bot`, bank
+3,000) on run seeds 1 to 3, planet 8 against planet 9 at three sizes,
+on the GTX 1070 (Engine; `raw/pc-size9.ps1`, `raw/pc-size9-output.txt`):
+
+| Seed | Planet 8 | 9 at 0.55 | 9 at 0.65 | 9 at 0.8 |
+|---|---|---|---|---|
+| 1 | 173k, wiped 7:02 | 187k, wiped 5:33 | 217k, wiped 6:03 | 278k, wiped 5:33 |
+| 2 | 169k, wiped 5:51 | 195k, wiped 3:51 | 231k, wiped 7:21 | 281k, wiped 4:28 |
+| 3 | 208k, wiped 2:54 | 172k, **won 4:29** | 197k, wiped 3:46 | 238k, wiped 2:01 |
+
+(start walkers, and how the game ended.) The bot loses planet 8 itself
+on all three, so the measure is how long the squad lasts: planet 8 5:16
+on average, planet 9 at 0.65 5:43, at 0.8 4:01. 0.65 costs about what
+planet 8 does and 0.8 clearly more, so **0.7** is the first number: a bit
+more than planet 8, not a jump. Caveats: three seeds; `hand=bot` is a
+harsh yardstick (the league's bot, with the shop, won planet 8 on 6 of 6
+that day); Engine found a run-bot pick bug that day (it went for the
+biggest crystal under the whole body) that may touch these games.
+
+**The same rule for 10 to 15, a first guess with no census:** 0.7 on
+every lap-two planet, so each is a fifth of planet 1's more than the one
+before, as on lap one. Smoke tests at 0.7, run seed 1, 1:00, alone and
+paired (pumps hand on 10 and 14, else greedy; GTX 1070,
+`raw/pc-lap2-smoke.ps1`, `raw/pc-lap2-smoke-output.txt`):
+
+| Planet | Starts (alone) | Ran | 1:00, alone against paired | Flag |
+|---|---|---|---|---|
+| 9 Drifter + spores | 226k | yes | 5 against 11 soldiers, slime 170k against 205k | |
+| 10 Sprawler + pump smell | 63k | yes | the same (4 soldiers both) | pair not seen |
+| 11 Trunk + naps | 141k | yes | 11 against 5 soldiers, slime 68k against 205k | |
+| 12 Swarmer + scar | 126k | yes | wiped 0:52 against 0:48 | ends under 1:00 |
+| 13 Sporer + charge | 279k | yes | 13 against 11 soldiers, 10,577 against 12,076 killed | |
+| 14 Sleeper + pump smell | 284k | yes | identical (no shot fired) | pair not seen |
+| 15 Grudge + setting | 234k | yes | wiped 0:39 against 9 alive, slime 14k | ends under 1:00 alone |
+
+All seven run. Flags for Enemy before building: 12 (both arms) and 15
+alone wipe the greedy squad of 11 in under a minute at planet 8's rows;
+greedy walks into the body, so a planet that ends that fast for it may
+still be fair for a player's army, but it breaks the smoke rule. 10 and
+14 showed nothing in 1:00: the pumps never stood at the slime's edge (14
+fired no shot), so it is untested here, not failed (the planet 2 and 6
+smoke tests above did show them). On 15 the mould count falls to 14k by
+1:00 with the Trunk's setting, likely because set walkers are not
+counted, not a free win; checked by eye only.
+
 ## Raw
 
 `raw/pairs.txt` (planet, base, hand, keys), `raw/run2.sh` (the fourteen),
 `raw/run3.sh` (the retests), `raw/m2.py` (the counts from logs and dumps),
-`raw/nap.txt` (the Sleeper's keys), `raw/rig9.sh` (planet 9's rig).
+`raw/nap.txt` (the Sleeper's keys), `raw/rig9.sh` (planet 9's rig), `raw/rig.sh` (any of 9 to 15), `raw/pc-size9.ps1` and `raw/pc-lap2-smoke.ps1` (the PC batches) with their outputs.
