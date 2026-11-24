@@ -33,7 +33,7 @@ release, only if he chooses one.
 **Where it stands (11-24, 12:30Z).** The origin is on main (#699), at 700, 500 and 1,000 on planets 1 to 3 and half size on 4 to 8 (#756), its gather capped at twice its size (#769).
 - **Curve (test 3).** Third pass (#782): 18 of 24 won, P7 on no map (the wall), medians flat at 4:40 to 5:24. Planet 7's stall is the bot's: its siege waits for every crystal but the home to run dry, and P7 has about 30. Engine's `storm=F` dial (siege once the slime is down to F of its landing size with 20 soldiers) is on the PC at 0.35 and 0.5; Enemy's P5, P6, P8 curve follows.
 - **Rush (D7).** A heart snipe of 8 to 15 soldiers won P2 to P4 in 1:10 to 2:32; his card (14:52Z): a heart tougher by planet, Enemy building it.
-- **4K (test 5).** At Auto on the 1070: P3 p95 12.5 ms, P5 15.5, P8 17.1 at 40% (#787). Engine's GPU walker sort is the next lever (Lab's prototype: step 9.46 to 5.27 ms).
+- **4K (test 5).** On the 1070 at his 3840-wide window, Auto detail, with the walker sort (#789): p95 12.7 ms on P3, 15.1 on P5, planets 1 to 7 pass with room. P8 at its peak is 14.1 at 40% but 16.8 on Auto, its 50% retries over the line; Engine makes Auto retry only with headroom, then test 5 is marked.
 - **Save and resume (test 4): passes** (#757; 1070 check 07:07Z, 7.7 MB in about 50 ms).
 - **What each planet does** is on screen: P2 Sprawler threads, P6 Sleeper, P7 Grudge scar, P8 the Dozer (#784, #788), each with its landing card and HUD tell (#785, #792).
 
