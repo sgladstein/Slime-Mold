@@ -2303,6 +2303,7 @@ impl App {
         let throw = ghost.and_then(|(id, at, from)| self.throw_ghost(g, id, at, from));
         m.hint = self.star_hint.show.clone();
         m.coach = self.coach.show.clone();
+        m.tell = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| slime_tell(g, r.level().tier));
         // The landing card: whole for `INTRO_SECS` of game time (it holds
         // while paused), then fading over `INTRO_FADE`.
         m.intro = self.intro.as_ref().and_then(|(i, at)| {
@@ -3311,6 +3312,44 @@ impl App {
             }
         }
         cmds
+    }
+}
+
+/// The planet's slime's trait as a number the simulation already keeps
+/// (Direction 11-24, the planet's introduction, job 2): no invented meter,
+/// and none where the simulation has no cheap number. The Sleeper and the
+/// Dozer: the share of the slime asleep (`GpuWorld::asleep`, the engine's
+/// per-frame count); the Grudge: the share standing on full scar, where
+/// it grew back tough (`GpuWorld::scarred`); the Swarmer: how near its
+/// last stand is (the slime against its peak, `RaidRules::last_stand_at`).
+fn slime_tell(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> Option<(Icon, String, String)> {
+    use slime_mould::mould::tiers::Tier;
+    let alive = g.mould.max(1) as f32;
+    let pct = |n: usize| (100.0 * n as f32 / alive).round().min(100.0) as u32;
+    match tier {
+        Tier::Sleeper | Tier::Dozer => {
+            let n = g.world.asleep();
+            Some((Icon::Sleep, format!("{}% asleep", pct(n)), format!("{} of the slime's {} are asleep; shots and noise wake them", grouped(n), grouped(g.mould))))
+        }
+        Tier::Grudge => {
+            let n = g.world.scarred();
+            Some((Icon::Shield, format!("{}% on old scar", pct(n)), format!("{} of the slime's {} stand where you hurt it before, and grew back tough there", grouped(n), grouped(g.mould))))
+        }
+        Tier::Swarmer => {
+            let r = &g.rules.raid;
+            if !r.last_stand || g.peak == 0 {
+                return None;
+            }
+            // (Past the line the stand has fired: `Raids` keeps that to
+            // itself, and the slime does not climb back over its peak's
+            // quarter fast.)
+            if (g.mould as f32) < r.last_stand_at * g.peak as f32 {
+                return Some((Icon::Alert, "All of it is coming".into(), "Cut below a quarter of its peak, the slime has rushed you with everything it has".into()));
+            }
+            let now = (100.0 * g.mould as f32 / g.peak as f32).round() as u32;
+            Some((Icon::Alert, format!("{now}% of its peak, all rush at {:.0}%", 100.0 * r.last_stand_at), "The slime against the most it has been; below the second number all of it charges you at once".into()))
+        }
+        _ => None,
     }
 }
 

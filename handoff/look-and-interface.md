@@ -99,9 +99,11 @@ The planet's introduction (Direction 09:57Z): the landing card
 (`ui::Intro`, `INTRO_SECS` in draw.rs; read from `run::does_to_you(tier)`,
 whose lines Enemy writes), the shop pane's slime block (`Shop::slime`),
 and the first minute's coaching (`draw::Coach`, settings key `coached`).
-Next: one HUD tell per trait beside the goal line, once Enemy's
-`GpuWorld::asleep()` and `scarred()` land; the Dozer (planet 8) gets its
-line from its tier.
+#785 merged. The tells (`draw::slime_tell`, `Model::tell`, a pill under
+the goal line): Sleeper and Dozer asleep share (`GpuWorld::asleep`),
+Grudge share on full scar (`scarred`), Swarmer against its last stand
+(`Game::peak`, `last_stand_at`); others show none. Next: whatever
+Direction sends.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
