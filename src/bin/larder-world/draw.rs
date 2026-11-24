@@ -1685,6 +1685,29 @@ impl App {
                 // `HURT_BAR`, `BAR_HP`).
                 let below = (r * zoom * 0.9).max(2.0) + 5.0;
                 self.marks.health((s.x, s.y), below, hp);
+                // The health just lost, in the colour of what took it
+                // (Look A, 11-24: `Hurt`): exactly as long as the damage
+                // on the bar, fading over `CHIP`. Drawn whatever the health,
+                // so a nick from its own blast shows too.
+                if let Some(l) = self.looks.get(k).filter(|l| l.chip_left > 0.0 && l.chip > 0.0) {
+                    let top = (hp + l.chip / g.rules.hp).min(1.0);
+                    let a = (l.chip_left / CHIP).min(1.0).sqrt();
+                    let c = hurt_colour(l.cause);
+                    // Fading toward the bar's dark, not see-through (a
+                    // mark's colour replaces what is under it).
+                    let mix = |i: usize| (c[i] as f32 * a + slime_mould::world::marks::HEALTH_GONE[i] as f32 * (1.0 - a)) as u8;
+                    let lit = [mix(0), mix(1), mix(2), 255];
+                    // Its own short bar over the dark part only, from the
+                    // health left to where it was: the inner bar is 18
+                    // pixels wide (`Marks::health`), and a bar's anchor is a
+                    // world point (a mark's colours replace what is under
+                    // them, so a see-through back would cut a hole).
+                    let (left, right) = (-9.0 + 18.0 * hp, -9.0 + 18.0 * top);
+                    if right - left > 0.4 {
+                        let mid = (left + right) / 2.0 / zoom.max(1e-3);
+                        self.marks.bar((s.x + mid, s.y), below, ((right - left) / 2.0, 1.5), 1.0, lit, lit);
+                    }
+                }
             }
         }
         for (at, below, half, fill, colour, back) in over_bars {
@@ -3078,7 +3101,24 @@ pub(super) fn landing(k: usize, since: f32, r: f32) -> (f32, f32, f32) {
 pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, r: f32) -> (f32, f32) {
     let jerk = (l.flinch / FLINCH).powi(2) * 0.2 * r;
     let kick = (l.kick / KICK).powi(2) * 0.2 * r;
-    (s.x - l.bite.cos() * jerk - l.facing.cos() * kick, s.y - l.bite.sin() * jerk - l.facing.sin() * kick)
+    // Its own squad's blast throws it a third of its size away from the
+    // blast's middle, easing back (Look A, 11-24: a blow you can see land,
+    // no bigger than the soldier).
+    let knock = (l.knock / KNOCK).powi(2) * 0.35 * r;
+    (s.x - l.bite.cos() * jerk - l.facing.cos() * kick + l.knock_dir.cos() * knock, s.y - l.bite.sin() * jerk - l.facing.sin() * kick + l.knock_dir.sin() * knock)
+}
+
+/// A hurt's colour on the health bar (`Hurt`): the slime's bite its
+/// crimson (`Light::bite`), fire an ember orange, the squad's own blast a
+/// white-hot gold, anything else (a falling star) a cold violet. None is
+/// the bar's green, amber or red.
+pub(super) fn hurt_colour(h: Hurt) -> [u8; 4] {
+    match h {
+        Hurt::Bite => [215, 30, 70, 255],
+        Hurt::Fire => [255, 120, 25, 255],
+        Hurt::Blast => [255, 244, 205, 255],
+        Hurt::Other => [175, 150, 255, 255],
+    }
 }
 
 /// The mouth of the barrel of a soldier drawn at `at`, facing `facing`,

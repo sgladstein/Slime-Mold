@@ -285,6 +285,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         })
         .collect();
     let mut drain_at: Option<f32> = std::env::var("LARDER_DRAIN").ok().and_then(|v| v.parse().ok());
+    // `LARDER_FORCE=WHAT@T;..` (Look and interface, 2026-11-24, to film
+    // the first-sight hints, `hints.rs`): at game second T, `stand` (the
+    // last-stand heart, `Game::force_stand`), `wave` (`force_wave`) or
+    // `lunge` (the cornered slime, `Game::late`).
+    let mut forces: Vec<(String, f32)> = std::env::var("LARDER_FORCE")
+        .unwrap_or_default()
+        .split(';')
+        .filter_map(|f| f.split_once('@').and_then(|(w, t)| Some((w.trim().to_string(), t.trim().parse().ok()?))))
+        .collect();
     let mut lit: Vec<usize> = Vec::new();
     let mut lured: Vec<usize> = Vec::new();
     // `trail=`: the lines laid; `cross=`: each slot's side of the line
@@ -466,6 +475,22 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // second T the crystal the slime covers most is emptied at
             // once, as a squad that drained it, to film the slime
             // shrinking to what it still holds.
+            if let Some(g) = app.game.as_mut() {
+                let now = g.time();
+                for (what, _) in forces.iter().filter(|f| now >= f.1) {
+                    let ok = match what.as_str() {
+                        "stand" => g.force_stand(),
+                        "wave" => g.force_wave(),
+                        "lunge" => {
+                            g.late = true;
+                            true
+                        }
+                        _ => false,
+                    };
+                    println!("  force {what} t {now:.1} s: {}", if ok { "done" } else { "refused" });
+                }
+                forces.retain(|f| now < f.1);
+            }
             if let Some(dt) = drain_at {
                 let g = app.game.as_mut().unwrap();
                 if g.time() >= dt {
@@ -1387,6 +1412,13 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
     // Only banking empties a living soldier's pack, at the drop-off
     // nearest it (`Game::drop_offs`, as the game's own `drop_off`).
     let drops = g.drop_offs();
+    // The squad's own Blasts that went off this half second: their kill
+    // discs (fine cells), which hurt the soldiers in them
+    // (`RoundRules::blast_hurt`, `Rounds::fire`). Pops are kept in the
+    // order they went off, so only the newest are read.
+    let (now, sc) = (g.world.ticks(), g.world.scale());
+    let recent = (g.rules.tps as f32 * 0.5) as u64;
+    let blasts: Vec<((f32, f32), f32)> = g.rounds.pops.iter().rev().take_while(|p| p.tick + recent >= now).filter(|p| p.payload == slime_mould::mould::rounds::Card::Blast && p.burst.kill).map(|p| ((p.burst.at.0 * sc, p.burst.at.1 * sc), p.burst.r * sc)).collect();
     for (l, s) in looks.iter_mut().zip(&g.soldiers) {
         if s.alive && l.carry > 0.0 && s.carry < l.carry * 0.5 {
             let d = |p: &(f32, f32)| (p.0 - s.x).hypot(p.1 - s.y);
@@ -1396,8 +1428,26 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
                 None => *banked = BANKED,
             }
         }
+        // What took the health (`Hurt`): its own blast first (one blow,
+        // which may land beside fire or slime), then fire, then the slime.
         if s.alive && s.hp < l.hp - 1e-3 {
             l.hit = HURT_BAR;
+            let blast = blasts.iter().find(|b| (s.x - b.0 .0).hypot(s.y - b.0 .1) <= b.1);
+            let cause = match blast {
+                Some(_) => Hurt::Blast,
+                None if s.heat > 0.0 => Hurt::Fire,
+                None if s.touching > 0 => Hurt::Bite,
+                None => Hurt::Other,
+            };
+            if cause != l.cause || l.chip_left <= 0.0 {
+                l.chip = 0.0;
+            }
+            (l.cause, l.chip, l.chip_left) = (cause, l.chip + (l.hp - s.hp), CHIP);
+            if let Some(b) = blast {
+                // Thrown away from the blast's middle, as far as the blow
+                // was hard (`drawn_at`).
+                (l.knock, l.knock_dir) = (KNOCK, (s.y - b.0 .1).atan2(s.x - b.0 .0));
+            }
         }
         if s.alive && s.touching > 0 && s.hp < l.hp {
             l.hurt += l.hp - s.hp;

@@ -814,11 +814,41 @@ struct Look {
     /// Seconds since it fell (counting while it lies dead), which spreads
     /// its pool of blood over `POOL_GROW` (`Marks::fallen`).
     fallen: f32,
+    /// What hurt it last (`Hurt`, Look A on the HUD side, 2026-11-24), the
+    /// health that run of hurt took (hp; its bar shows it in the cause's
+    /// colour, `hurt_colour`) and the seconds left of that (`CHIP`).
+    cause: Hurt,
+    chip: f32,
+    chip_left: f32,
+    /// Seconds left of the shove from its own squad's blast (`KNOCK`), and
+    /// the way it was thrown (radians, away from the blast's middle).
+    knock: f32,
+    knock_dir: f32,
 }
+
+/// What took a soldier's health (Direction 11-24, Look A: "make each kind
+/// of hurt readable on the soldier as it lands"), told apart from what the
+/// game already keeps: the slime touching it (`Soldier::touching`), the
+/// fire's heat where it stands (`Soldier::heat`), a Blast of the squad's
+/// own whose kill disc holds it (`Rounds::pops`), else something else (a
+/// falling star's blast, `StarRules::hurt`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+enum Hurt {
+    #[default]
+    Bite,
+    Fire,
+    Blast,
+    Other,
+}
+
+/// How long the hurt's part of a health bar keeps its colour, seconds, and
+/// how long a blast's shove lasts.
+const CHIP: f32 = 1.2;
+const KNOCK: f32 = 0.3;
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, hit: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW } }
+        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, hit: 0.0, kick: 0.0, cast: 0, shots: 0, fallen: if s.alive { 0.0 } else { POOL_GROW }, cause: Hurt::Bite, chip: 0.0, chip_left: 0.0, knock: 0.0, knock_dir: 0.0 }
     }
 }
 
@@ -1955,6 +1985,8 @@ impl App {
             l.take = (l.take - dt).max(0.0);
             l.flinch = (l.flinch - dt).max(0.0);
             l.hit = (l.hit - dt).max(0.0);
+            l.chip_left = (l.chip_left - dt).max(0.0);
+            l.knock = (l.knock - dt).max(0.0);
         }
         for b in &mut self.blooks {
             b.call = (b.call - dt).max(0.0);
@@ -2142,7 +2174,15 @@ impl App {
                 l.at = (s.x, s.y);
             }
             if l.alive && !s.alive {
-                self.hud.alert("A soldier has fallen", Some((s.x, s.y)), theme::BAD);
+                // What killed it, as the Past runs page counts it
+                // (`runs::why_lost`): the alert says so as it happens.
+                let how = match l.cause {
+                    Hurt::Bite => "A soldier was killed by the slime",
+                    Hurt::Fire => "A soldier burned to death",
+                    Hurt::Blast => "Your own blast killed a soldier",
+                    Hurt::Other => "A soldier has fallen",
+                };
+                self.hud.alert(how, Some((s.x, s.y)), theme::BAD);
                 l.fallen = 0.0;
             }
             l.alive = s.alive;
