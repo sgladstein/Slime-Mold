@@ -922,6 +922,7 @@ impl Rules {
             "star_par" => &mut self.star.par_share,
             "star_teach" => &mut self.star.teach,
             "star_teach_far" => &mut self.star.teach_far,
+            "star_teach_dy" => &mut self.star.teach_dy,
             "star_gap" => &mut self.star.gap,
             "star_warn" => &mut self.star.warn,
             "star_life" => &mut self.star.life,
