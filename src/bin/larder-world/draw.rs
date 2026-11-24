@@ -60,6 +60,10 @@ type OverLabel = ((f32, f32), (f32, f32), String, f32, [u8; 4]);
 pub(super) struct Live {
     pub cells: Vec<u32>,
     pub gather: Option<slime_mould::gpu::Gather>,
+    /// The 32-cell tiles of walls raised since the gather's read began,
+    /// marked again (`look::mark_far_box`) once the read's codes are in:
+    /// the marks read the new wall cells' codes.
+    pub tiles: Vec<(usize, usize)>,
 }
 
 pub(super) fn live_cells(g: &Game<GpuWorld>, old: &Live) -> Live {
@@ -67,7 +71,7 @@ pub(super) fn live_cells(g: &Game<GpuWorld>, old: &Live) -> Live {
     let d = &e.dish;
     let cells: Vec<u32> = (0..d.w * d.h).filter(|&i| d.wall.get(i).copied().unwrap_or(false) || d.pile_of.get(i).copied().unwrap_or(0) > 0).map(|i| i as u32).collect();
     let gather = slime_mould::gpu::Gather::new(&e.device, &e.queue, &cells, old.gather.as_ref());
-    Live { cells, gather }
+    Live { cells, gather, tiles: Vec::new() }
 }
 
 /// A crystal or wall cell's code as `ground_codes` makes it from `charge`
@@ -432,33 +436,46 @@ pub(super) fn thousands(n: usize) -> String {
 impl App {
     /// The look's ground from the world's cells: once a game second (the
     /// crystals drain, the walls wear), and at once when a wall goes up.
+    ///
+    /// The crystal and wall cells' charge and health come from a gather
+    /// started on one frame and taken on a later one, one to a few frames
+    /// on (performance thread, 2026-11-22). The read used to wait for
+    /// the GPU's whole queue, the view of the frame before among it: at 4K
+    /// on the 1070 that was 3-5 ms a refresh and up to 13 ms, the larger
+    /// part of the once-a-second hitch with the step's own read-back.
     pub(super) fn refresh_ground(&mut self) {
-        let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
+        let t0 = Instant::now();
+        let took = self.take_ground();
+        let (Some(g), Some(_)) = (&self.game, &self.ground) else { return };
         let t = g.time();
-        // A step still running would make the read-back below wait for it
-        // (on llvmpipe the split's prepare p95 was 14.9 ms against 1.3 ms
-        // for whole steps, 2026-11-12), so the timed refresh waits for a
-        // frame between steps, up to a second late; a new wall reads at once.
+        // The timed refresh still starts its read on a frame between steps,
+        // up to a second late: on software Vulkan a submit runs behind the
+        // queue's work, and one behind a step in shares took 20-46 ms there
+        // (0.7 ms between steps, 11-22). A new wall starts at once.
         let late = t - self.ground_at;
         if (late < GROUND_EVERY || (g.in_flight() && late < 2.0 * GROUND_EVERY)) && g.walls == self.ground_walls {
+            if took {
+                self.note_ground(t0, 0.0);
+            }
             return;
         }
         let e = &g.world.e;
-        let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
         let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
         let d = &e.dish;
         let any_wall = d.wall.iter().any(|&w| w);
         let cells = d.w * d.h;
         let is_wall = |i: usize| d.wall.get(i).copied().unwrap_or(false);
-        let read;
+        let mut read = 0.0;
         if self.codes.len() != cells || self.wall_mask.len() != cells {
-            // A new world: every cell.
+            // A new world: every cell, read back and waited for (once).
             let charge = floats(read_back(&e.device, &e.queue, &e.charge));
             let health = any_wall.then(|| floats(read_back(&e.device, &e.queue, &e.health)));
             read = ms(t0);
             self.codes = ground_codes(g, &self.depth, Some(&charge), health.as_deref());
-            e.queue.write_buffer(buf, 0, &self.codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
+            if let Some(buf) = &self.ground {
+                e.queue.write_buffer(buf, 0, &self.codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
+            }
             self.live = live_cells(g, &self.live);
             self.wall_mask = (0..cells).map(is_wall).collect();
         } else {
@@ -466,18 +483,22 @@ impl App {
             // cell for it was the 25-32 ms hitch at 6x a planet's area, and
             // the AI and the player both raise walls in play): its cells
             // join the gathered ones, and the 32-cell tiles it touches are
-            // re-marked (`mark_far_box`), each grown by the mark's reach.
-            let mut tiles: Vec<(usize, usize)> = Vec::new();
+            // re-marked (`mark_far_box`) when the gather's codes are in,
+            // each grown by the mark's reach.
             if g.walls != self.ground_walls {
                 let changed: Vec<usize> = (0..cells).filter(|&i| is_wall(i) != self.wall_mask[i]).collect();
                 if !changed.is_empty() {
                     for &i in &changed {
                         self.wall_mask[i] = is_wall(i);
                     }
+                    // A new gather drops the old one's read, so its tiles
+                    // wait for the new one's.
+                    let mut tiles = std::mem::take(&mut self.live.tiles);
                     self.live = live_cells(g, &self.live);
-                    tiles = changed.iter().map(|&i| ((i % d.w) / WALL_TILE, (i / d.w) / WALL_TILE)).collect();
+                    tiles.extend(changed.iter().map(|&i| ((i % d.w) / WALL_TILE, (i / d.w) / WALL_TILE)));
                     tiles.sort_unstable();
                     tiles.dedup();
+                    self.live.tiles = tiles;
                     // A cell that stopped being a wall (the CPU dish's
                     // rubble; the GPU's walls wear to rubble but stay
                     // walls) and holds no crystal: its code from the dish.
@@ -487,53 +508,97 @@ impl App {
                     }
                 }
             }
-            // Once a game second: only the crystal and wall cells, read
-            // back alone, and only the runs where a code changed written
+            // Once a game second: only the crystal and wall cells, gathered
+            // alone, and only the runs where a code changed written
             // (technical lead, 2026-11-14: the whole field read back and
             // rebuilt took 4.6 ms at today's area and 32.9 ms at 6x on
             // the 1070, a dropped frame a second from 4x).
-            let (charge, health) = self.live.gather.as_ref().map_or((Vec::new(), Vec::new()), |q| q.read(&e.device, &e.queue, &e.charge, &e.health));
-            let (charge, health) = (floats(charge), any_wall.then(|| floats(health)));
-            read = ms(t0);
-            let write = |codes: &[u32], a: usize, b: usize| e.queue.write_buffer(buf, a as u64 * 4, &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
-            // Rows of changed cells written as runs: a crystal eaten
-            // changes a few rows of it, not the buffer.
-            let mut run: Option<(usize, usize)> = None;
-            for (k, &i) in self.live.cells.iter().enumerate() {
-                let i = i as usize;
-                let c = live_code(g, &self.depth, i, self.codes[i], charge[k], health.as_ref().map(|h| h[k]));
-                if c == self.codes[i] {
-                    continue;
-                }
-                self.codes[i] = c;
-                run = match run {
-                    Some((a, b)) if b == i => Some((a, i + 1)),
-                    _ => {
-                        if let Some((a, b)) = run {
-                            write(&self.codes, a, b);
-                        }
-                        Some((i, i + 1))
-                    }
-                };
-            }
-            if let Some((a, b)) = run {
-                write(&self.codes, a, b);
-            }
-            // The new wall's tiles, marked again and written row by row.
-            let r = look::FAR_REACH;
-            for &(tx, ty) in &tiles {
-                let xs = ((tx * WALL_TILE).saturating_sub(r), ((tx + 1) * WALL_TILE + r).min(d.w));
-                let ys = ((ty * WALL_TILE).saturating_sub(r), ((ty + 1) * WALL_TILE + r).min(d.h));
-                look::mark_far_box(d.w, &mut self.codes, xs, ys);
-                for y in ys.0..ys.1 {
-                    write(&self.codes, y * d.w + xs.0, y * d.w + xs.1);
+            match &self.live.gather {
+                Some(q) => q.start(&e.device, &e.queue, &e.charge, &e.health),
+                None => {
+                    (self.ground_at, self.ground_walls) = (t, g.walls);
+                    self.apply_ground(Vec::new(), Vec::new());
+                    self.note_ground(t0, read);
+                    return;
                 }
             }
         }
         (self.ground_at, self.ground_walls) = (t, g.walls);
+        self.note_ground(t0, read);
+    }
+
+    /// The gather's read, if it is in: the codes it changes, written.
+    fn take_ground(&mut self) -> bool {
+        let Some(g) = &self.game else { return false };
+        let Some(got) = self.live.gather.as_ref().and_then(|q| q.take(&g.world.e.device)) else { return false };
+        self.apply_ground(got.0, got.1);
+        true
+    }
+
+    /// The crystal and wall cells' codes from their gathered `charge` and
+    /// `health` (bytes, in `live.cells`' order; empty with no live cells),
+    /// then the raised walls' tiles marked again.
+    fn apply_ground(&mut self, charge: Vec<u8>, health: Vec<u8>) {
+        let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
+        let e = &g.world.e;
+        let d = &e.dish;
+        let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
+        let any_wall = d.wall.iter().any(|&w| w);
+        let (charge, health) = (floats(charge), any_wall.then(|| floats(health)));
+        let write = |codes: &[u32], a: usize, b: usize| e.queue.write_buffer(buf, a as u64 * 4, &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
+        // Rows of changed cells written as runs: a crystal eaten
+        // changes a few rows of it, not the buffer.
+        let mut run: Option<(usize, usize)> = None;
+        for (k, &i) in self.live.cells.iter().enumerate() {
+            let i = i as usize;
+            let c = live_code(g, &self.depth, i, self.codes[i], charge[k], health.as_ref().map(|h| h[k]));
+            if c == self.codes[i] {
+                continue;
+            }
+            self.codes[i] = c;
+            run = match run {
+                Some((a, b)) if b == i => Some((a, i + 1)),
+                _ => {
+                    if let Some((a, b)) = run {
+                        write(&self.codes, a, b);
+                    }
+                    Some((i, i + 1))
+                }
+            };
+        }
+        if let Some((a, b)) = run {
+            write(&self.codes, a, b);
+        }
+        // The new walls' tiles, marked again and written row by row.
+        let r = look::FAR_REACH;
+        for (tx, ty) in std::mem::take(&mut self.live.tiles) {
+            let xs = ((tx * WALL_TILE).saturating_sub(r), ((tx + 1) * WALL_TILE + r).min(d.w));
+            let ys = ((ty * WALL_TILE).saturating_sub(r), ((ty + 1) * WALL_TILE + r).min(d.h));
+            look::mark_far_box(d.w, &mut self.codes, xs, ys);
+            for y in ys.0..ys.1 {
+                write(&self.codes, y * d.w + xs.0, y * d.w + xs.1);
+            }
+        }
+    }
+
+    /// A refresh's cost since `t0`, `read` ms of it a read-back waited for
+    /// (the bench prints them).
+    fn note_ground(&mut self, t0: Instant, read: f64) {
         let (n, sum, most, most_read) = self.ground_cost;
-        let all = ms(t0);
+        let all = t0.elapsed().as_secs_f64() * 1e3;
         self.ground_cost = (n + 1, sum + all, most.max(all), most_read.max(read));
+    }
+
+    /// Waits for a started gather and takes it (tests: the codes then
+    /// match the cells as they stood when it began).
+    #[cfg(test)]
+    pub(super) fn settle_ground(&mut self) {
+        if let Some(g) = &self.game {
+            if self.live.gather.as_ref().is_some_and(|q| q.pending()) {
+                g.world.e.device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+                self.take_ground();
+            }
+        }
     }
 
     pub(super) fn marks(&mut self) {
@@ -821,6 +886,35 @@ impl App {
                 progress(&mut self.marks, b.at, below + 4.0);
             }
         }
+        // Laid mines (`Kit::mines`; owner 2026-11-22: "When I place a mine,
+        // I don't see anything visible": until then a mine was in the game
+        // and never drawn). One `Marks::star` each, painted in `view.wgsl`
+        // (`star_at`, MINE): a squat olive casing near a soldier's size
+        // with a cream rim, an amber lamp blinking once every 1.4 s, faster
+        // and whiter as slime gathers in its reach (`Kit::mine_near` over the
+        // trigger), and a faint dashed ring at that reach (`mine_r`). As it
+        // is laid (`MINE_LAY`) the ring sweeps in bright and the casing
+        // drops in under a steady lamp: the cue that it is down.
+        {
+            use slime_mould::world::marks::STAR_MINE;
+            const MINE_LAY: f32 = 0.6;
+            let dt = (self.clock - self.mine_clock).clamp(0.0, 0.25);
+            self.mine_clock = self.clock;
+            let kr = g.kit.rules;
+            let trigger = g.kit.mine_trigger(g).max(1) as f32;
+            let reach = kr.mine_r * sc;
+            let half = reach * 1.3;
+            let body = 0.8 * soldier_r(g, zoom);
+            let old = std::mem::take(&mut self.mine_looks);
+            for (i, &at) in g.kit.mines.iter().enumerate() {
+                let (laid, phase) = old.iter().find(|m| m.0 == at).map_or((self.clock, 0.0), |m| (m.1, m.2));
+                let near = (g.kit.mine_near.get(i).copied().unwrap_or(0) as f32 / trigger).clamp(0.0, 1.0);
+                let phase = (phase + dt * (0.7 + 5.0 * near * near)).fract();
+                self.mine_looks.push((at, laid, phase));
+                let lay = ((self.clock - laid) / MINE_LAY).clamp(0.0, 1.0);
+                self.marks.star(at, half, STAR_MINE, body / half, (lay * 255.0).round() as u32, phase, near, [236, 224, 176, 255], [255, 204, 96, 255], true);
+            }
+        }
         // Starfall and boss cores (`Game::starfall`, 2026-11-20), drawn as
         // an artist would (the visual pass, owner 2026-11-21 03:36Z; one
         // mark shape, `Marks::star`, painted and lit in `view.wgsl`'s
@@ -847,6 +941,8 @@ impl App {
         // Their words go on after the soldiers (`over`, below): at zoom 12
         // a squad standing on a drop hid its points and its "+N".
         let mut over: Vec<OverLabel> = Vec::new();
+        #[allow(clippy::type_complexity)]
+        let mut over_bars: Vec<((f32, f32), f32, (f32, f32), f32, [u8; 4], [u8; 4])> = Vec::new();
         {
             use slime_mould::mould::larder_world::DropKind;
             use slime_mould::world::marks::{STAR_BURST, STAR_CORE, STAR_DIAL, STAR_METEOR, STAR_ORE, STAR_TARGET};
@@ -861,10 +957,11 @@ impl App {
             }
             let sub = ((self.clock - self.star_tick.1) * tps).clamp(0.0, 1.0);
             let ticks = now as f32 + sub;
-            // A landing shakes the camera a little (`shake=`, as a blast).
+            // A landing shakes the camera a little (`shake=` times the Options
+            // page's Screen shake, as a blast: at 0% a landing kept shaking).
             if g.starfall.landed != self.star_felt {
                 if g.starfall.landed > self.star_felt {
-                    self.trauma = (self.trauma + 0.35 * self.args.shake).min(1.0);
+                    self.trauma = (self.trauma + 0.35 * self.args.shake * shake_user()).min(1.0);
                 }
                 self.star_felt = g.starfall.landed;
             }
@@ -964,13 +1061,73 @@ impl App {
                         }
                     }
                 }
-                let below = (reach * zoom).max(6.0) + 2.0;
-                // Its points, or what the squad has taken while it drains.
-                let text = if on { format!("+{}", d.taken.floor() as u32) } else { format!("{}", d.left.ceil() as u32) };
-                // A dark shadow under it, so it reads on the slime's gold.
-                let x = -4.5 * text.len() as f32;
-                over.push((d.at, (x + 1.5, -below - 12.5), text.clone(), 1.8, [20, 10, 10, 220]));
-                over.push((d.at, (x, -below - 14.0), text, 1.8, if on { GOLD } else { fade(pale, 0.95) }));
+                // Its words and the pick-up's progress, in the HUD's own
+                // size (`Hud::scale`, 2.5 on a 4K screen at 250%): the owner
+                // (11-22) on the old 1.8-pixel label: "I think there is some
+                // text now, but it is way too small", and asked for "visible
+                // animation showing that you are picking it up with
+                // progress".
+                let ui = self.hud.scale.max(1.0);
+                let ring = (reach * zoom).max(6.0);
+                let above = ring + 6.0 * ui;
+                let shadow = [20, 10, 10, 230];
+                // How long until it is gone, under the dial (owner, 11-22:
+                // "make sure the count down to the gem/starfall disappearing
+                // is also clear"): its seconds as a clock, pale, turning red
+                // in its last 10 s and blinking in its last 5. Before, only
+                // the ore's cracks cooling and the core's quickening beat
+                // said so.
+                {
+                    let left = d.ends.saturating_sub(now) as f32 / tps;
+                    let secs = left.ceil() as u32;
+                    let text = format!("{}:{:02}", secs / 60, secs % 60);
+                    let sc_t = 2.0 * ui;
+                    let x = -0.5 * (6.0 * text.len() as f32 - 1.0) * sc_t;
+                    let y = ring + 4.0 * ui;
+                    let blink = if left < 5.0 { 0.45 + 0.55 * (0.5 + 0.5 * (self.clock * std::f32::consts::TAU * 2.0).cos()) } else { 1.0 };
+                    let colour = if left < 10.0 { fade(WARN, blink) } else { fade(pale, 0.9) };
+                    let o = 0.6 * sc_t;
+                    over.push((d.at, (x + o, y + o), text.clone(), sc_t, fade(shadow, blink)));
+                    over.push((d.at, (x, y), text, sc_t, colour));
+                }
+                if on {
+                    // Collecting: gold rings open from the gem out to the
+                    // dial, one after another, while soldiers drain it
+                    // (screen pixels, so they read at any zoom).
+                    let r0 = (d.r * zoom).max(4.0 * ui);
+                    let r1 = ring.max(r0 + 12.0 * ui);
+                    for m in 0..3 {
+                        let k = (self.clock * 1.5 + m as f32 / 3.0).fract();
+                        let e = 1.0 - (1.0 - k) * (1.0 - k);
+                        self.marks.ring_thin(d.at, r0 + (r1 - r0) * e, (2.5 * (1.0 - k) + 0.8) * ui, fade(GOLD_HOT, 0.85 * (1.0 - k)));
+                    }
+                    // Progress: a gold bar filling with what the squad has
+                    // of what it can still get (it fills as the gem empties
+                    // into them; what the slime eats shortens the way).
+                    let got = (d.taken / (d.taken + d.left).max(1e-3)).clamp(0.0, 1.0);
+                    let half = (30.0 * ui, 4.0 * ui);
+                    // After the soldiers, as the words are: a squad
+                    // standing on the drop hid a bar drawn among it.
+                    over_bars.push((d.at, -above - half.1, (half.0 + 1.5 * ui, half.1 + 1.5 * ui), 0.0, shadow, shadow));
+                    over_bars.push((d.at, -above - half.1, half, got, GOLD, [70, 48, 20, 230]));
+                    // "+N" over the bar, the number climbing as it comes in.
+                    let text = format!("+{}", d.taken.floor() as u32);
+                    let sc_t = 3.2 * ui;
+                    let x = -0.5 * (6.0 * text.len() as f32 - 1.0) * sc_t;
+                    let y = -above - 2.0 * half.1 - 5.0 * ui - 7.0 * sc_t;
+                    let o = 0.6 * sc_t;
+                    over.push((d.at, (x + o, y + o), text.clone(), sc_t, shadow));
+                    over.push((d.at, (x, y), text, sc_t, GOLD_HOT));
+                } else {
+                    // Waiting: what it is worth.
+                    let text = format!("{}", d.left.ceil() as u32);
+                    let sc_t = 2.4 * ui;
+                    let x = -0.5 * (6.0 * text.len() as f32 - 1.0) * sc_t;
+                    let y = -above - 7.0 * sc_t;
+                    let o = 0.6 * sc_t;
+                    over.push((d.at, (x + o, y + o), text.clone(), sc_t, shadow));
+                    over.push((d.at, (x, y), text, sc_t, fade(pale, 0.95)));
+                }
             }
             // The moment the points come in (Boss cores thread, 2026-11-21):
             // a drop the squad emptied leaves its "+N" in gold as the coin
@@ -1439,6 +1596,9 @@ impl App {
 
             }
         }
+        for (at, below, half, fill, colour, back) in over_bars {
+            self.marks.bar(at, below, half, fill, colour, back);
+        }
         for (at, off, text, scale, colour) in over {
             self.marks.label(at, off, &text, scale, colour);
         }
@@ -1787,12 +1947,17 @@ impl App {
                 about: "Click to stop the squad shooting by itself, and again to let it fire as the fire button says. Holding the left button still fires its volley at the cursor.".into(),
                 ..Command::new(HOLD_FIRE, (0, 4), Icon::HoldFire, if held { "Hold fire: on" } else { "Hold fire" }, KeyCode::KeyZ)
             });
-            let f = g.active.map(|a| g.squads[a].formation);
+            let f = g.active.map(|a| (g.squads[a].formation, g.squads[a].spread));
+            let named = f.map(|(f, s)| {
+                let mut n = super::squadmode::form_name(f, s);
+                n[..1].make_ascii_uppercase();
+                n
+            });
             cmds.push(Command {
                 ready: f.is_some(),
                 why_not: no_sel(),
-                about: format!("How the squad stands and walks: blob, spread, line, wedge, column or ring (now {}). Opens the formation page.", f.map_or("none", |f| f.name())),
-                ..Command::new(FORM_PAGE, (1, 5), f.map_or(Icon::Formation, form_icon), &f.map_or("Formation".to_string(), |f| format!("Formation: {}", f.name())), super::squadmode::FORMATION)
+                about: format!("How the squad stands: a blob or a ring, and how far apart, tight to wide (now {}). Opens the formation page; [ and ] step the spread from anywhere.", named.as_deref().unwrap_or("none")),
+                ..Command::new(FORM_PAGE, (1, 5), f.map_or(Icon::Formation, |(f, s)| form_icon(f, s)), named.as_deref().unwrap_or("Formation"), super::squadmode::FORMATION)
             });
         }
         // The rally point at (1, 2), or on the build page with the larder's
@@ -1824,22 +1989,40 @@ impl App {
             road = Some(Command { ready: any, on: all(Task::Road), why_not: no_sel(), about: "Lay a road of your mould's trail where the soldier walks, free: your mould follows it. Lead it to food or into the enemy, where it converts the enemy's slime it outweighs. Press again to stop.".into(), ..Command::new(ROAD, (1, 0), Icon::Move, "Lay a road", KeyCode::KeyY) });
         }
         if self.form_page && squads {
-            let now = g.active.map(|a| g.squads[a].formation);
+            // The Formation page (owner's review, 2026-11-23 03:33Z: "just
+            // have blob and circle base shapes ... Then separate control of
+            // the spread/tightness"): the two shapes on the top row, each
+            // drawn at the squad's spread, and the five spread steps below,
+            // each drawn in the squad's shape, so the page shows what a
+            // pick will look like. A pick keeps the page open, so shape and
+            // spread can both be set; T, Esc or Back close it.
+            use slime_mould::mould::larder_world::{SPREADS, SPREAD_NAMES};
+            let now = g.active.map(|a| (g.squads[a].formation, g.squads[a].spread));
+            let (shape, step) = now.unwrap_or_default();
             let form = |id: u32, slot: (u8, u8), key: KeyCode, about: &str| {
                 let f = super::form_of(id).unwrap_or_default();
                 let mut name = f.name().to_string();
                 name[..1].make_ascii_uppercase();
-                Command { ready: now.is_some(), on: now == Some(f), why_not: no_sel(), about: about.into(), ..Command::new(id, slot, form_icon(f), &name, key) }
+                Command { ready: now.is_some(), on: now.map(|n| n.0) == Some(f), why_not: no_sel(), about: about.into(), ..Command::new(id, slot, form_icon(f, step), &name, key) }
             };
+            let keys = [KeyCode::KeyC, KeyCode::KeyV, KeyCode::KeyB, KeyCode::KeyN, KeyCode::KeyM];
+            let steps = (0..SPREADS.len()).map(|i| {
+                let s = i as u8;
+                let mut name = SPREAD_NAMES[i].to_string();
+                name[..1].make_ascii_uppercase();
+                let about = match i {
+                    0 => "Shoulder to shoulder: every gun near every other, the narrowest squad to steer through gaps. The default.".to_string(),
+                    4 => format!("{:.1} times the tight room: few soldiers in one bite of a surge or a raid and fire spread over the most slime, but the widest squad, slow to gather through a gap.", SPREADS[i]),
+                    _ => format!("{:.1} times the tight room: fewer soldiers in one bite of a surge, fire spread over more of the slime, a wider squad through gaps.", SPREADS[i]),
+                };
+                Command { ready: now.is_some(), on: now.map(|n| n.1) == Some(s), why_not: no_sel(), about: format!("{about} [ and ] step it from anywhere."), ..Command::new(super::SPREAD_IDS[i], (1, i as u8), form_icon(shape, s), &name, keys[i]) }
+            });
             cmds = vec![
-                form(F_BLOB, (0, 0), KeyCode::KeyZ, "A tight crowd round its middle: the default. Every gun near every other."),
-                form(F_SPREAD, (0, 1), KeyCode::KeyX, "The blob loosened to about twice its room: fewer soldiers in one bite of a surge, and fire spread over more of the slime. Wider through gaps."),
-                form(F_LINE, (0, 2), KeyCode::KeyC, "Shoulder to shoulder across the way it faces (the cursor, for the squad you command), rows of eight: every gun has a clear line forward."),
-                form(F_WEDGE, (0, 3), KeyCode::KeyV, "A V with its point toward the cursor: a narrow front that pushes into the slime with guns down both sides."),
-                form(F_COLUMN, (0, 4), KeyCode::KeyF, "Two abreast, front to back, facing where it walks: files through doors, bridges and gaps between rocks without bunching."),
-                form(F_RING, (0, 5), KeyCode::KeyG, "A circle facing out, for holding ground with slime on every side."),
-                Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 5), Icon::Close, "Back", super::squadmode::FORMATION) },
+                form(F_BLOB, (0, 0), KeyCode::KeyZ, "A crowd round its middle: every gun near the others, the way to walk and fight. The default."),
+                form(F_RING, (0, 1), KeyCode::KeyX, "A circle with its middle empty, facing out: for holding ground round a crystal, a pump or a turret with slime on every side."),
             ];
+            cmds.extend(steps);
+            cmds.push(Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 5), Icon::Close, "Back", super::squadmode::FORMATION) });
         }
         if self.tools_page {
             let k = &g.kit;
@@ -2038,6 +2221,7 @@ impl App {
             })
             .collect();
         let throw = ghost.and_then(|(id, at, from)| self.throw_ghost(g, id, at, from));
+        m.hint = self.star_hint.show.clone();
         (m.ghost_ok, m.ghost_note) = match ghost {
             _ if throw.is_some() => {
                 let (_, ok, note) = throw.as_ref().unwrap();
@@ -2217,9 +2401,9 @@ impl App {
             return Vec::new();
         }
         let mut out = vec![SquadFact {
-            icon: Icon::Group,
-            text: format!("{} formation", sq.formation.name()),
-            about: format!("How the squad stands as it moves and holds: blob, line, wedge or ring ({} cycles it)", slime_mould::world::ui::key_name(super::squadmode::FORMATION).unwrap_or_default()),
+            icon: form_icon(sq.formation, sq.spread),
+            text: super::squadmode::form_name(sq.formation, sq.spread),
+            about: format!("How the squad stands as it moves and holds: a blob or a ring, tight to wide ({} opens the formation page; [ and ] step the spread)", slime_mould::world::ui::key_name(super::squadmode::FORMATION).unwrap_or_default()),
         }];
         let stance = members.first().map(|&k| g.soldiers[k].stance).filter(|&st| members.iter().all(|&k| g.soldiers[k].stance == st));
         out.push(SquadFact {
@@ -2777,17 +2961,10 @@ pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
 /// lures' switch were hidden with them until 2026-11-18 (owner's card,
 /// 03:03Z: "Lure now, in the three planets"); it needs no unlock
 /// (`run_lock`).
-/// A formation's icon on the card: its soldiers as dots.
-fn form_icon(f: slime_mould::mould::larder_world::Formation) -> Icon {
-    use slime_mould::mould::larder_world::Formation;
-    match f {
-        Formation::Blob => Icon::FormBlob,
-        Formation::Line => Icon::FormLine,
-        Formation::Wedge => Icon::FormWedge,
-        Formation::Ring => Icon::FormRing,
-        Formation::Column => Icon::FormColumn,
-        Formation::Spread => Icon::FormSpread,
-    }
+/// A formation's icon on the card at spread step `step`: its soldiers as
+/// dots.
+fn form_icon(f: slime_mould::mould::larder_world::Formation, step: u8) -> Icon {
+    Icon::form(f == slime_mould::mould::larder_world::Formation::Ring, step)
 }
 
 pub(super) fn run_hidden(id: u32) -> bool {

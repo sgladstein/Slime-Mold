@@ -213,6 +213,17 @@ end.
   #681 before any row moves. Losses in the smoke table doubled between
   the first and second day's main (59 to 115 on 9 planets, Enemy's #670
   to #681); planets are still won.
+- **11-22 morning (Chicago night)**: he won all eight planets ("Still
+  too easy"); #721 raised planets 2 to 8 partway (row in
+  `wiki/decisions-game.md`). Next: Engine's run bot on his 11 maps and the
+  bot thread's league on planets 1 to 5 on that build; if his next log
+  overshoots, lower the soldier price climb and the striker scaling
+  first. The origin (#699 draft, Engine's #707 siege) is ready for when
+  he calls Milestone 1 done: sizes 700, 500, 1,000; the siege wins
+  planets 1 to 3 on seeds 1 to 3 under 10 min; a 44-soldier rush still
+  wins planet 1 at 1:34 (D7, his). #714 (seed 8 drain) closed: #708
+  fixed seed 8. Ore and core worth stay (drops pay about 5x chance for
+  half a minute a planet, job 14-0-f).
 - **11-22 night, Direction's calls** (all routed by thread):
   difficulty between his two nights: #690 plus a 1.5x held-crystal ceiling,
   now a row per planet (`run::CEILING_GROW`, #709); if his next planet 1

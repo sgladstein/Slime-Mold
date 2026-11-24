@@ -299,8 +299,13 @@ const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 /// to 70 a minute and never broke it in 12 min (it held 1,929 to 2,118).
 /// Direction's pick (11-22 08:42Z, of a near origin beating that rule or a
 /// smaller one): planet 1 at 700 and planet 3 at 1,000, so the siege wins
-/// planets 1 to 3 in under 10 min.
-pub const ORIGIN_SIZE: [f32; 8] = [700.0, 700.0, 1000.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
+/// planets 1 to 3 in under 10 min. With each take cut to its shortfall
+/// (`origin.rs`), the siege at these: planet 1 won seeds 1-3 at 4:23, 4:42
+/// and 7:57; planet 3 at 4:00, 4:37 and 9:14; planet 2 won seed 1 at 5:59
+/// but was wiped on seeds 2 and 3 (both won at 4:37 and 5:04 with the
+/// origin off, and seed 3 was wiped at 600 too), so planet 2 is 500: won
+/// seeds 1-3 at 5:49, 5:16 and 5:42, losing 0, 8 and 7.
+pub const ORIGIN_SIZE: [f32; 8] = [700.0, 500.0, 1000.0, 2400.0, 3000.0, 3600.0, 4200.0, 4800.0];
 const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// The slime's room to regrow over its landing, by planet
 /// (`Rules::ceiling_grow`; 2026-11-22, the thread "Set difficulty between
@@ -311,6 +316,48 @@ const STRIKER_SHARE: [f32; 8] = [0.25, 0.6, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 /// lived against 22), and Direction's plan is to raise planet 1's alone
 /// (to about 2) if his next planet 1 log still reads easy.
 const CEILING_GROW: [f32; 8] = [1.5; 8];
+/// **Harder from planet 2** (2026-11-22, the thread "Make the run harder
+/// after full-game win"). The owner won all 8 planets on 11-22 losing 0 to
+/// 1 soldiers on 7 of them ("Still too easy"), then: "Don't redo
+/// everything and make it too hard again but scale it up. You decide what
+/// is best". Planet 1 keeps every number (Direction: he lost half his
+/// planet 1 games on 11-20 and 11-21).
+///
+/// - `RAID_GAP_MIN`: raids never closer than this (`RaidRules::gap_min`):
+///   45 s since #652 (his 11-21 planet 1 had raids 26 s apart); 35 from
+///   planet 2, partway back.
+/// - `STRIKER_ARMY`: the strikers' rate cap grows with an army past 24
+///   soldiers, to this many times (`StrikerRules::army_most`): 2.5 times
+///   at 60 or more alive.
+/// - `SOLDIER_STEP`: the soldier's price climbs this share of its base
+///   for each soldier alive over 30 (`Rules::soldier_step`): 2x at 70,
+///   2.5x at 90. Off on planet 1, where armies stay small.
+const RAID_GAP_MIN: [f32; 8] = [45.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0];
+const STRIKER_ARMY: [f32; 8] = [1.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
+const SOLDIER_STEP: [f32; 8] = [0.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0];
+/// **Sooner from planet 2** (2026-11-22 evening, the same thread). His
+/// next run on #721 (build 0509374): planets 1-4 won in 3:51 to 5:02 with
+/// 14 to 35 soldiers, 0 to 3 lost a planet; raids 0, 0, 1, 3 (the first
+/// is drawn at 240 +/- 40 s, so a planet won by 4:00 met none) and the
+/// army-sized rules above barely woke (under 30 alive on all but one).
+///
+/// - `RAID_FIRST`, `RAID_EVERY`: the first raid's mean time and the gap
+///   at the landing (`RaidRules::first`, `every`; spreads kept at the same
+///   share): 2:00 and 100 s from planet 2, so a 5-minute planet meets 2
+///   or 3. Friday's hard planet 1 (11-21 04:49Z) had 14 in 16:33, one a
+///   70 s; still under that.
+/// - `DRAIN`: a touching walker's bite (`Rules::drain`, 2 since 11-12):
+///   2.5 from planet 2, so walking into the slime costs a small squad too.
+const RAID_FIRST: [f32; 8] = [240.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0];
+const RAID_EVERY: [f32; 8] = [150.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0];
+/// - `RAID_ARMOUR`: blows a marching raider takes (`RaidRules::
+///   march_armour`) until the march meets the squad or its target; the
+///   owner, same evening: "if the slime never reaches my soldiers,
+///   increasing the bite doesn't matter. Tougher slime has a better
+///   chance". 2 on planets 2-3, 3 on 4-6, 4 on 7-8 (mini-bosses take 4 to
+///   15). The bite above stays: it is what a raid that arrives does.
+const DRAIN: [f32; 8] = [2.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
+const RAID_ARMOUR: [u32; 8] = [0, 2, 2, 3, 3, 3, 4, 4];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -737,6 +784,38 @@ pub fn reward(depth: u32, stars: u8) -> u32 {
     175 + 25 * depth + 50 * u32::from(stars.saturating_sub(1))
 }
 
+/// The dev skip (owner, 2026-11-22 21:36Z: "a dev way to play the later
+/// planets of the run ... skip planets and get average amount of gold to
+/// spend at the shop"): what a skipped planet pays, as an average win
+/// there pays. Two parts, so a retune of `reward` carries over:
+///
+/// - `SKIP_STARS_X10`, the average stars of a win, in tenths. Planets 1 to
+///   3: the bots that pick up drops in job 14-0-f (11-21, `drops=` 5, 20
+///   and 60 pooled, 11 maps on planets 1 and 2, 9 on planet 3; 2.24, 2.57,
+///   2.07 stars). Planets 4 on: the bot curve's wins on planets 4 and 5
+///   (1.83 and 1.5 on few games), held at 1.8.
+/// - `SKIP_FOUND`, the average points a win takes from starfall ore and
+///   boss cores (`Run::found`). Planets 1 to 3: the same games (101, 197,
+///   159). Planets 4 on: no bot data, so the same share of the planet's
+///   pot those three took (36% of falls x ore worth + core pot,
+///   `StarRules::for_depth`, about 4.2 falls a planet).
+///
+/// Bots that never chase drops take 20 to 30 a planet instead, about 100
+/// to 170 less than this; a player who picks up drops is the one priced.
+/// The home world (planet `PLANETS`) can't be skipped: winning it ends
+/// the run. Rejected: the dev rows' flat 1,000 points, which is not what
+/// a run would have had to spend.
+pub const SKIP_STARS_X10: [u32; PLANETS as usize - 1] = [22, 26, 21, 18, 18, 18, 18];
+pub const SKIP_FOUND: [u32; PLANETS as usize - 1] = [100, 200, 160, 210, 235, 265, 295];
+
+/// The points skipping planet `depth` pays (`SKIP_STARS_X10`,
+/// `SKIP_FOUND`), rounded to tens; 0 for the home world.
+pub fn skip_pay(depth: u32) -> u32 {
+    let Some(i) = (depth as usize).checked_sub(1).filter(|&i| i < SKIP_FOUND.len()) else { return 0 };
+    let base = reward(depth, 1) + 50 * SKIP_STARS_X10[i].saturating_sub(10) / 10;
+    (base + SKIP_FOUND[i] + 5) / 10 * 10
+}
+
 /// What a shop row is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Group {
@@ -790,7 +869,7 @@ pub struct Item {
 /// (Lures, 150), which left planet 1 without it, so Direction made it free
 /// from the first planet (11-18 08:38Z). The window never locks it
 /// (`run_lock`), as it never locks the pump.
-pub const ITEMS: [Item; 18] = [
+pub const ITEMS: [Item; 19] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Shots a fifth wider; past the widest, they fire faster", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -798,6 +877,16 @@ pub const ITEMS: [Item; 18] = [
     Item { key: "squad", name: "Bigger landing", group: Group::Squad, about: "Two more soldiers land with you", max: 4, cost: 150, needs: None },
     Item { key: "bank", name: "Supply drop", group: Group::Squad, about: "Land with 500 more food in the bank", max: 4, cost: 100, needs: None },
     Item { key: "harvest", name: "Quick hands", group: Group::Squad, about: "Soldiers take a quarter more from a crystal each second", max: 3, cost: 100, needs: None },
+    // Fire resistance (the owner, 2026-11-22 07:40Z: "you should be able to
+    // upgrade fire resistance ... or even immunity"). Fire hurts only where
+    // the squad's own fire cards lit it (Torch, Tinder:
+    // `Rules::fire_hurt`), so this alone does nothing; it is the half of a
+    // fire deck that makes the deck safe, the owner's Noita rule (11-18: no
+    // single card is strong alone; strong builds are combinations). Halves
+    // fire's harm a level and the third level is immunity, 600 points in
+    // all, two to three planets' pay (`fireproof_share`; an immune squad
+    // also walks straight through fire, `Game::fire_via`).
+    Item { key: "fireproof", name: "Fireproof", group: Group::Squad, about: "Soldiers take half the harm from fire; at level 3, none", max: 3, cost: 100, needs: None },
     Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
     Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
     // The tree's first body (the turrets thread, owner 2026-11-17 00:47Z):
@@ -814,6 +903,16 @@ pub const ITEMS: [Item; 18] = [
     Item { key: "tools+", name: "Cheaper tools", group: Group::Tools, about: "Every tool costs a fifth less", max: 3, cost: 120, needs: None },
     Item { key: "draw", name: "More cards on offer", group: Group::Cards, about: "One more gun card on offer in every shop", max: 2, cost: 100, needs: None },
 ];
+
+/// The share of fire's harm (`Rules::fire_hurt`) a squad with `level`
+/// levels of Fireproof takes: half a level, none at the third (immune).
+pub fn fireproof_share(level: u8) -> f32 {
+    if level >= 3 {
+        0.0
+    } else {
+        0.5f32.powi(i32::from(level))
+    }
+}
 
 /// What the run owns at the start: walls (the plainest defence).
 pub const START: [&str; 1] = ["walls"];
@@ -983,6 +1082,10 @@ pub enum Pick {
     DevDepth(i32),
     /// Dev mode: 1,000 more points.
     DevPoints,
+    /// The dev skip (`skip_pay`): this planet counted as won without
+    /// playing it, its average pay added, and the next planet's shop.
+    /// In every run's shop, dev mode or not, so it can be found.
+    DevSkip,
     /// Dev mode: a fresh draw of cards.
     DevReroll,
     /// The gun range: every card in the gun back to the bag.
@@ -1187,6 +1290,17 @@ impl Run {
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
             r.origin.size = ORIGIN_SIZE[depth_index(self.depth)];
             r.ceiling_grow = CEILING_GROW[depth_index(self.depth)];
+            r.raid.gap_min = RAID_GAP_MIN[depth_index(self.depth)];
+            r.strikers.army_most = STRIKER_ARMY[depth_index(self.depth)];
+            r.soldier_step = SOLDIER_STEP[depth_index(self.depth)];
+            let i = depth_index(self.depth);
+            let d = crate::mould::larder_world::RaidRules::default();
+            r.raid.first = RAID_FIRST[i];
+            r.raid.first_sd = d.first_sd * RAID_FIRST[i] / d.first;
+            r.raid.every = RAID_EVERY[i];
+            r.raid.every_sd = d.every_sd * RAID_EVERY[i] / d.every;
+            r.drain = DRAIN[i];
+            r.raid.march_armour = RAID_ARMOUR[i];
             let k = STRIKER_SHARE[depth_index(self.depth)];
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
@@ -1209,6 +1323,7 @@ impl Run {
         r.squad += 2 * self.level_of("squad") as usize;
         r.start_bank += 500.0 * l("bank");
         r.harvest *= 1.0 + 0.25 * l("harvest");
+        r.fire_hurt *= fireproof_share(self.level_of("fireproof"));
         let t = l("turret+");
         let p = l("pump+");
         let b = &mut r.build;
@@ -1687,6 +1802,21 @@ impl Run {
         self.restock();
     }
 
+    /// The dev skip (`Pick::DevSkip`): the current planet counted as won
+    /// with no stars (the end card's count shows it was skipped), its
+    /// average pay (`skip_pay`) added and the next planet's shop drawn.
+    /// False on the home world, which can't be skipped.
+    pub fn skip(&mut self) -> bool {
+        if self.over || self.range || self.field || self.depth >= PLANETS {
+            return false;
+        }
+        self.points += skip_pay(self.depth);
+        self.stars.push(0);
+        self.depth += 1;
+        self.restock();
+        true
+    }
+
     /// The run ended on the home world's defeat.
     pub fn victory(&self) -> bool {
         self.over && !self.beaten
@@ -1801,6 +1931,10 @@ impl Run {
             rows.push(row("Empty the gun", "Every card in the gun back to the bag.".into(), Pick::EmptyGun));
             rows.push(row("Empty the bag", "Throw away the cards in the bag.".into(), Pick::EmptyBag));
         }
+        if !self.range && !self.field && !self.over && self.depth < PLANETS {
+            let about = format!("Don't play planet {}: get the {} points an average win there pays, and shop for planet {}", self.depth, skip_pay(self.depth), self.depth + 1);
+            rows.push(Row { group: Group::Dev, face: Face::Dev, on: false, name: format!("Skip planet {}", self.depth), about, price: String::new(), state: "dev".into(), ready: true, pick: Pick::DevSkip });
+        }
         if self.dev && !self.range && !self.field {
             let dev = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: "dev".into(), ready: true, pick };
             rows.push(dev("Next planet deeper", format!("Land on planet {} instead", (self.depth + 1).min(PLANETS)), Pick::DevDepth(1)));
@@ -1861,6 +1995,7 @@ impl Run {
                 self.restock();
                 true
             }
+            Pick::DevSkip => self.skip(),
             Pick::DevPoints if self.dev => {
                 self.points += 1000;
                 true
@@ -2097,6 +2232,13 @@ mod tests {
             assert_eq!(rules(d).ceiling_grow, CEILING_GROW[depth_index(d)], "planet {d}'s ceiling_grow");
         }
         assert!(CEILING_GROW.iter().all(|&g| g >= 1.0), "a growth under 1 starves the slime at landing");
+        // Planet 1 keeps its numbers; planets 2 on are harder (11-22).
+        let (one, two) = (rules(1), rules(2));
+        assert!(one.raid.gap_min == 45.0 && one.strikers.army_most == 1.0 && one.soldier_step == 0.0, "planet 1 as before");
+        assert!(two.raid.gap_min < 45.0 && two.strikers.army_most > 1.0 && two.soldier_step > 0.0, "planet 2 on: closer raids, more strikers on a big army, a climbing price");
+        assert!((one.raid.first, one.raid.every, one.drain) == (240.0, 150.0, 2.0), "planet 1's raid clock and bite as before");
+        assert!(one.raid.march_armour == 0 && two.raid.march_armour > 1, "planet 2 on: a raid's marchers take more than one blow");
+        assert!(two.raid.first < one.raid.first && two.raid.every < one.raid.every && two.drain > one.drain, "planet 2 on: the first raid sooner, the next ones closer, a harder bite");
         let p1 = rules(1);
         assert!(p1.heart.on && p1.unit_paths, "planet 1 keeps the heartbeat and charges round walls");
         assert!(!p1.fruit.on && !p1.strikers.on && !p1.wave.on && p1.late_at == 0.0 && !p1.stand.on, "planet 1 has none of the late threats");
@@ -2354,7 +2496,7 @@ mod tests {
     fn the_shop_sells_what_the_points_buy_and_no_more() {
         let mut r = Run::new(1);
         assert!(r.has("walls") && !r.has("turret"));
-        assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_) | Pick::Edit(_) | Pick::NewLoadout)), "no points, nothing to buy");
+        assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_) | Pick::Edit(_) | Pick::NewLoadout | Pick::DevSkip)), "no points, nothing to buy");
         r.won(1);
         assert_eq!((r.depth, r.points), (2, reward(1, 1)));
         assert_eq!(r.offers.len(), OFFER + AMMO_OFFER);
@@ -2587,6 +2729,23 @@ mod tests {
     }
 
     #[test]
+    fn a_skipped_planet_pays_an_average_win_and_the_home_world_cannot_be_skipped() {
+        // The pay rises from planet 2 on and stays near a 2-star win plus drops.
+        let pays: Vec<u32> = (1..=PLANETS).map(skip_pay).collect();
+        assert_eq!(pays, [360, 510, 470, 530, 580, 630, 690, 0]);
+        let mut r = Run::new(3);
+        r.restock();
+        assert!(r.shop().iter().any(|row| row.pick == Pick::DevSkip), "in every run's shop, dev mode or not");
+        let mut paid = 0;
+        while r.pick(Pick::DevSkip) {
+            paid += skip_pay(r.depth - 1);
+        }
+        assert_eq!((r.depth, r.points, r.stars.len(), r.over), (PLANETS, paid, PLANETS as usize - 1, false));
+        assert!(!r.shop().iter().any(|row| row.pick == Pick::DevSkip));
+        assert!(!r.offers.is_empty(), "the home world's shop is drawn");
+    }
+
+    #[test]
     fn dev_mode_jumps_planets_and_the_home_world_ends_the_run() {
         let mut r = Run::new(2);
         assert!(!r.pick(Pick::DevPoints), "not without dev mode");
@@ -2740,6 +2899,30 @@ mod tests {
         // Turret power grows the rack: a slot and 2 budget a level.
         r.owned[ITEMS.iter().position(|i| i.key == "turret+").unwrap()] = 2;
         assert_eq!((r.turret_rack().slots, r.turret_rack().budget), (4, 8));
+    }
+
+    /// **Fireproof** (owner, 2026-11-22 07:40Z: "upgrade fire resistance
+    /// ... or even immunity"): each level halves fire's harm and the third
+    /// is immunity, at 100, 200 and 300 points.
+    #[test]
+    fn fireproof_halves_fire_then_makes_the_squad_immune() {
+        let mut r = Run::new(1);
+        r.points = 10_000;
+        let k = ITEMS.iter().position(|i| i.key == "fireproof").unwrap();
+        let base = Rules::default().fire_hurt;
+        let hurt = |r: &Run| {
+            let mut rules = Rules::default();
+            r.rules(&mut rules);
+            rules.fire_hurt
+        };
+        assert_eq!(hurt(&r), base);
+        for (level, share, price) in [(1, 0.5, 100), (2, 0.25, 200), (3, 0.0, 300)] {
+            let before = r.points;
+            assert!(r.pick(Pick::Item(k)));
+            assert_eq!((r.level_of("fireproof"), before - r.points), (level, price));
+            assert_eq!(hurt(&r), base * share, "level {level}");
+        }
+        assert!(!r.pick(Pick::Item(k)), "three levels at most");
     }
 
     /// **Loadouts** (owner, 2026-11-19 19:22Z): a gun and its cards; a

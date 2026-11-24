@@ -169,7 +169,7 @@ impl<W: World> Game<W> {
     pub(super) fn steer_rest(&self, q: usize, at: (f32, f32)) -> (f32, f32) {
         let m = self.members(q);
         let Some(mid) = self.middle(q) else { return (0.0, 0.0) };
-        let stray = super::squads::STRAY * self.s();
+        let stray = self.stray(q);
         let near: Vec<usize> = m.iter().copied().filter(|&k| (self.soldiers[k].x - mid.0).hypot(self.soldiers[k].y - mid.1) <= stray).collect();
         let near = if near.is_empty() { m } else { near };
         let (x, y) = near.iter().map(|&k| self.aim_round(k, at)).fold((0.0, 0.0), |s, p| (s.0 + p.0 - at.0, s.1 + p.1 - at.1));
@@ -185,7 +185,7 @@ impl<W: World> Game<W> {
     pub(super) fn steer_short(&self, q: usize, at: (f32, f32)) -> f32 {
         let m = self.members(q);
         let Some(mid) = self.middle(q) else { return 0.0 };
-        let stray = super::squads::STRAY * self.s();
+        let stray = self.stray(q);
         let (mut d, mut n) = (0.0, 0.0);
         for &k in &m {
             let s = self.soldiers[k];
@@ -628,7 +628,7 @@ impl<W: World> Game<W> {
             (x / ps.len() as f32, y / ps.len() as f32)
         };
         let all = mean(&m);
-        let stray = super::squads::STRAY * self.s();
+        let stray = self.stray(q);
         let near: Vec<(f32, f32)> = m.iter().copied().filter(|p| (p.0 - all.0).hypot(p.1 - all.1) <= stray).collect();
         Some(if near.is_empty() { all } else { mean(&near) })
     }

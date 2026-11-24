@@ -86,7 +86,7 @@ pub use raising::*;
 pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
-pub use squads::{Formation, LeadRules, Squad, BAND_SPREAD, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
+pub use squads::{Formation, LeadRules, Squad, BAND_SPREAD, NO_LINK, SPREADS, SPREAD_NAMES, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::HealRules;
 pub use doors::{DOOR_WIDTHS, WALL_LEVELS};
 pub use raids::{LureMark, March, MarchEnd, MarchHow, Raid, RaidAim, RaidRules, Raids};
@@ -367,6 +367,9 @@ pub struct Game<W: World> {
     pub soldiers: Vec<Soldier>,
     pub bank: f32,
     pub spent: f32,
+    /// The soldier's base price, read at the first `Game::reprice` (0
+    /// before): `Rules::soldier_cost` is the price now.
+    pub price_base: f32,
     pub harvested: f32,
     pub stolen: f32,
     /// Shots fired (with bullets, once a bullet, not once a leg).
@@ -697,6 +700,7 @@ impl<W: World> Game<W> {
             soldiers: Vec::new(),
             bank: rules.start_bank,
             spent: 0.0,
+            price_base: 0.0,
             harvested: 0.0,
             stolen: 0.0,
             shots: 0,

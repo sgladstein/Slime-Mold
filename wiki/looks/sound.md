@@ -15,6 +15,7 @@ code:
   - FAR_LP_HZ
   - FULL_KILL
   - GunVoice
+  - Health
   - LOUDNESS_LAW
   - Listener::hear
   - MOODS
@@ -41,6 +42,7 @@ code:
   - gun_voice
   - kill_weight
   - master_at
+  - raise_priority
 ---
 
 # Sound
@@ -71,6 +73,8 @@ Since pass two the gun cards' payloads, raids, surges, mini-bosses,
 buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
 `App::click_sound`).
 The music bed and the planet's air: [The score](#the-score).
+
+Keeping it playing: [below](#keeping-it-playing).
 
 ## The score
 
@@ -131,3 +135,17 @@ alone with `cargo run --release --example scoreplay -- DIR`.
 - [sound-pass-2026-11-20.md](../../Reports/sound-pass-2026-11-20.md); page source in `Reports/sound-pass-2026-11-20/page/`.
 - [mould-sound-2026-11-10.md](../../Reports/mould-sound-2026-11-10.md); page source in `Reports/mould-sound-2026-11-10/`.
 - [larder-sound-2026-11-12.md](../../Reports/larder-sound-2026-11-12.md); page source in `Reports/larder-sound-2026-11-12/`.
+
+## Keeping it playing
+
+Sound that cut out for good (11-20) was a NaN that
+stuck in the reverb and a dead stream: `VoiceBank` refuses non-finite
+commands and clears itself on a bad sample, and `Output` reopens a stream
+that errors or stops calling. Sound that kept dropping out (11-22, "still
+an issue") was most likely the Windows callback thread at normal priority, starved
+behind a 4K frame and the strategy league on every core: it now raises
+itself to the "Pro Audio" class on its first call (`raise_priority`; cpal's
+own `realtime` feature is MPL-2.0, which the licence gate rejects). The
+callback keeps a `Health` count, and the play log prints a `sound` line
+every 10 s (`prio`, `late` callbacks over 30 ms, the longest gap and
+render, errors played through, dropped commands, reopens).

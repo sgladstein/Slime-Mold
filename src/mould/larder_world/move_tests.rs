@@ -244,12 +244,12 @@ pub(super) fn moves(seed: u64) -> Vec<Move> {
     // WASD: east, then north (a quarter turn), then west (about turn),
     // then let go.
     v.push(("steer", open.clone(), Box::new(|_| vec![(0.0, Cmd::Steer(0, (1.0, 0.0))), (4.0, Cmd::Steer(0, (0.0, -1.0))), (7.0, Cmd::Steer(0, (-1.0, 0.0))), (10.0, Cmd::Steer(0, (0.0, 0.0)))]), 15.0));
-    // A right click 50 cells off on open ground, as a blob and in the
-    // other formations.
-    for (name, shape) in [("send", Formation::Blob), ("line", Formation::Line), ("wedge", Formation::Wedge), ("ring", Formation::Ring)] {
+    // A right click 50 cells off on open ground, as a blob, a wide blob
+    // and a ring (line and wedge went 2026-11-23).
+    for (name, shape, spread) in [("send", Formation::Blob, 0), ("wide", Formation::Blob, 4), ("ring", Formation::Ring, 0)] {
         v.push((name, open.clone(), Box::new(move |g| {
             let (sc, at) = (g.s(), g.middle(0).unwrap());
-            vec![(-2.0, Cmd::Formation(0, shape)), (0.0, Cmd::SquadOrder(0, Order::Move(at.0 + 50.0 * sc, at.1 + 10.0 * sc)))]
+            vec![(-2.0, Cmd::Formation(0, shape, spread)), (0.0, Cmd::SquadOrder(0, Order::Move(at.0 + 50.0 * sc, at.1 + 10.0 * sc)))]
         }), 15.0));
     }
     // Sent 50 cells east, then after 3 s back where it began.

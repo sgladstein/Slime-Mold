@@ -75,52 +75,54 @@ pub const STOOD: f32 = 0.12;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Formation {
-    /// A tight sunflower round the anchor (the default).
+    /// A sunflower round the anchor (the default).
     #[default]
     Blob,
-    /// Shoulder to shoulder across the facing, rows of `LINE_ROW`.
-    Line,
-    /// A V with its point toward the facing.
-    Wedge,
-    /// A circle facing out, for holding ground.
+    /// A circle round the anchor, its middle empty, for holding ground
+    /// round a crystal, a pump or a turret with slime on every side.
     Ring,
-    /// Two abreast, front to back along the way it goes (owner 2026-11-21
-    /// 05:04Z: "a formations button ... with good formation options"):
-    /// for doors, bridges and the gaps between rocks, so a squad files
-    /// through instead of funnelling (`funnel`) from a blob. It faces
-    /// where it walks, the controlled squad too, never the cursor.
-    Column,
-    /// The blob loosened to `SPREAD` times its room: fewer soldiers in one
-    /// bite of a surge or a raid, and its fire spread wider over loose
-    /// walkers, at the cost of a wider squad to steer through gaps.
-    Spread,
 }
 
-/// The `Spread` formation's room against the blob's.
-pub const SPREAD: f32 = 1.9;
+/// How far apart a squad stands, against the blob's tightest: one step
+/// a `Squad::spread`, 0 the tightest (the default). The owner's review of
+/// the formations (2026-11-23 03:33Z: "only blob and spread out blob and
+/// maybe circle are useful ... I would like more control over the
+/// spread/tightness") cut the six shapes of 2026-11-21 to two and made
+/// the room a separate setting for either. The old `Spread` formation was
+/// a blob at 1.9, step 3 here. Line, wedge and column went: a line and a
+/// wedge turned with the cursor and reshuffled the squad, and the column's
+/// one job, filing through doors, the funnel (`funnel`) already does for
+/// any shape.
+pub const SPREADS: [f32; 5] = [1.0, 1.3, 1.6, 1.9, 2.4];
+/// Each step's name, tightest first.
+pub const SPREAD_NAMES: [&str; 5] = ["tight", "close", "open", "loose", "wide"];
 
-/// Soldiers in a row of `Formation::Line`.
-pub const LINE_ROW: usize = 8;
 /// Passes of trading places that uncross members' walks (`rank_squad`),
 /// at most: each pass is every pair once (200 soldiers, 19,900 pairs).
 const UNCROSS: usize = 4;
 
 impl Formation {
-    pub const ALL: [Formation; 6] = [Formation::Blob, Formation::Line, Formation::Wedge, Formation::Ring, Formation::Column, Formation::Spread];
+    pub const ALL: [Formation; 2] = [Formation::Blob, Formation::Ring];
 
     pub fn name(self) -> &'static str {
         match self {
             Formation::Blob => "blob",
-            Formation::Line => "line",
-            Formation::Wedge => "wedge",
             Formation::Ring => "ring",
-            Formation::Column => "column",
-            Formation::Spread => "spread",
         }
     }
 
-    pub fn parse(s: &str) -> Option<Formation> {
-        Formation::ALL.into_iter().find(|f| f.name() == s)
+    /// A formation by name, and the spread step a name of the 11-21 set
+    /// stood for (old replays): spread is a loose blob, and line, wedge
+    /// and column, which are gone, play as a blob.
+    pub fn parse(s: &str) -> Option<(Formation, Option<u8>)> {
+        if let Some(f) = Formation::ALL.into_iter().find(|f| f.name() == s) {
+            return Some((f, None));
+        }
+        match s {
+            "spread" => Some((Formation::Blob, Some(3))),
+            "line" | "wedge" | "column" => Some((Formation::Blob, None)),
+            _ => None,
+        }
     }
 
     pub fn next(self) -> Formation {
@@ -128,48 +130,32 @@ impl Formation {
         Formation::ALL[(i + 1) % Formation::ALL.len()]
     }
 
-    /// Place `r` of `n`, dish cells, with the facing along +x, `gap`
-    /// between neighbours.
+    /// Place `r` of `n`, dish cells, `gap` between neighbours (a squad's
+    /// spread already in it, `Game::form_gap`).
     pub fn offset(self, r: usize, n: usize, gap: f32) -> (f32, f32) {
+        // Worked at a gap of 1, then scaled: the blob's places came out so
+        // before 2026-11-23, and the same sum in another order rounds
+        // differently, which sent planet 8's squad of 40 (`move_tests`)
+        // on another walk.
         let (x, y) = self.unit_offset(r, n);
         (x * gap, y * gap)
     }
 
-    /// `offset` with a gap of 1 (the local `GAP` shadows the module's).
     fn unit_offset(self, r: usize, n: usize) -> (f32, f32) {
-        const GAP: f32 = 1.0;
+        let gap = 1.0;
         match self {
-            Formation::Blob => slot(r, GAP),
-            Formation::Spread => slot(r, GAP * SPREAD),
-            Formation::Column => {
-                // Pairs back from the anchor; an odd last one walks alone in
-                // the middle.
-                let row = r / 2;
-                let alone = !n.is_multiple_of(2) && r == n - 1;
-                let side = if alone { 0.0 } else if r.is_multiple_of(2) { -0.5 } else { 0.5 };
-                (-(row as f32) * GAP, side * GAP)
-            }
-            Formation::Line => {
-                let row = r / LINE_ROW;
-                let in_row = (n - row * LINE_ROW).min(LINE_ROW);
-                let c = (r % LINE_ROW) as f32 - (in_row as f32 - 1.0) / 2.0;
-                (-(row as f32) * GAP, c * GAP)
-            }
-            Formation::Wedge => {
-                if r == 0 {
-                    return (0.0, 0.0);
-                }
-                let back = r.div_ceil(2) as f32;
-                let side = if r % 2 == 1 { 1.0 } else { -1.0 };
-                (-back * GAP * 0.8, side * back * GAP * 0.8)
-            }
+            Formation::Blob => slot(r, gap),
             Formation::Ring => {
                 if n <= 1 {
                     return (0.0, 0.0);
                 }
-                // Round enough that neighbours stand a gap apart.
-                let rad = (n as f32 * GAP / std::f32::consts::TAU).max(GAP);
-                let a = r as f32 / n as f32 * std::f32::consts::TAU;
+                // Round enough that neighbours stand a gap apart, and never
+                // tighter than a ring of six (three or four soldiers in a
+                // ring a gap across stood as a blob).
+                let rad = (n.max(6) as f32 * gap / std::f32::consts::TAU).max(gap);
+                // A quarter turn back so a ring of four is a diamond's
+                // corners on the screen's axes, not a square tipped over.
+                let a = r as f32 / n as f32 * std::f32::consts::TAU - std::f32::consts::FRAC_PI_2;
                 (rad * a.cos(), rad * a.sin())
             }
         }
@@ -202,6 +188,8 @@ pub struct Squad {
     /// Which way its formation faces, a unit vector.
     pub face: (f32, f32),
     pub formation: Formation,
+    /// How far apart it stands: a step of `SPREADS`, 0 the tightest.
+    pub spread: u8,
     /// The volley's point, while the player holds fire (`Cmd::Fire`).
     pub fire: Option<(f32, f32)>,
     /// Tick of its next volley.
@@ -267,7 +255,7 @@ pub struct Squad {
     /// matched again (review, 2026-11-16: out of a door the blob formed up
     /// with its members still matched in column order, so the queue fanned
     /// out across the squad).
-    pub rank_shape: (Formation, bool),
+    pub rank_shape: (Formation, u8, bool),
     /// On an attack-move, it stands to fight (`Game::fight_turn`): enough
     /// slime is in reach that walking on would leave it behind. Members
     /// in contact stand and fire, the anchor stops and the rest close up.
@@ -303,6 +291,7 @@ impl Default for Squad {
             fight: false,
             face: (1.0, 0.0),
             formation: Formation::Blob,
+            spread: 0,
             fire: None,
             next_volley: 0,
             anchor: None,
@@ -323,7 +312,7 @@ impl Default for Squad {
             rank_face: (1.0, 0.0),
             holding: false,
             loadout: 0,
-            rank_shape: (Formation::Blob, false),
+            rank_shape: (Formation::Blob, 0, false),
             via: None,
             via_at: None,
             via_to: None,
@@ -338,27 +327,7 @@ impl Squad {
     /// gun." (From 17:40Z to then the new half took the standard rifle and
     /// the army's round, so a great gun was never copied.)
     fn offshoot(&self) -> Squad {
-        Squad { formation: self.formation, face: self.face, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, loadout: self.loadout, ..Squad::default() }
-    }
-}
-
-/// A formation's place `o` turned to `face`. A blob and a ring look the
-/// same whichever way they face, so they don't turn: turning one only sent
-/// every soldier to a new place (bug sweep, 2026-11-14).
-fn turned(f: Formation, o: (f32, f32), face: (f32, f32)) -> (f32, f32) {
-    if f.turns() {
-        (o.0 * face.0 - o.1 * face.1, o.0 * face.1 + o.1 * face.0)
-    } else {
-        o
-    }
-}
-
-impl Formation {
-    /// Whether it has a front, and so turns to its facing (a line, a
-    /// wedge, a column); a blob, a spread and a ring look the same every
-    /// way.
-    pub fn turns(self) -> bool {
-        matches!(self, Formation::Line | Formation::Wedge | Formation::Column)
+        Squad { formation: self.formation, spread: self.spread, face: self.face, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, loadout: self.loadout, ..Squad::default() }
     }
 }
 
@@ -373,6 +342,19 @@ impl<W: World> Game<W> {
     /// room never pushes a squad at rest off its places), at least `GAP`.
     pub(super) fn gap(&self) -> f32 {
         (self.rules.elbow * self.rules.touch * 1.05).max(GAP)
+    }
+
+    /// The room between neighbours in squad `q`'s formation, dish cells:
+    /// `gap` times its spread (`SPREADS`).
+    pub(super) fn form_gap(&self, q: usize) -> f32 {
+        self.gap() * SPREADS[(self.squads[q].spread as usize).min(SPREADS.len() - 1)]
+    }
+
+    /// How far from squad `q`'s middle a member may stand and still count
+    /// toward it, fine cells: `STRAY`, or more for a squad spread wider
+    /// (a wide blob of 25 stands over 20 cells out).
+    pub(super) fn stray(&self, q: usize) -> f32 {
+        STRAY * SPREADS[(self.squads[q].spread as usize).min(SPREADS.len() - 1)] * self.s()
     }
 
     /// Live members of squad `q`, by soldier index.
@@ -463,7 +445,7 @@ impl<W: World> Game<W> {
             (x / n, y / n)
         };
         let all = mean(&m);
-        let stray = STRAY * self.s();
+        let stray = self.stray(q);
         let near: Vec<usize> = m.iter().copied().filter(|&k| (self.soldiers[k].x - all.0).hypot(self.soldiers[k].y - all.1) <= stray).collect();
         Some(if near.is_empty() { all } else { mean(&near) })
     }
@@ -497,7 +479,7 @@ impl<W: World> Game<W> {
             return o;
         }
         let sq = self.squads[q];
-        turned(sq.formation, sq.formation.offset(r, n, self.gap()), sq.face)
+        sq.formation.offset(r, n, self.form_gap(q))
     }
 
     /// Matches squad `q`'s members to its formation's places round
@@ -521,7 +503,7 @@ impl<W: World> Game<W> {
             self.ranks.resize(self.soldiers.len(), 0);
         }
         let sc = self.s();
-        let gap = self.gap();
+        let gap = self.form_gap(q);
         let sq = self.squads[q];
         let col = &self.columns[q];
         let places: Vec<(f32, f32)> = if col.on && col.places.len() == n {
@@ -529,7 +511,7 @@ impl<W: World> Game<W> {
         } else {
             (0..n)
             .map(|r| {
-                let o = turned(sq.formation, sq.formation.offset(r, n, gap), sq.face);
+                let o = sq.formation.offset(r, n, gap);
                 (centre.0 + o.0 * sc, centre.1 + o.1 * sc)
             })
             .collect()
@@ -586,7 +568,7 @@ impl<W: World> Game<W> {
         self.ranked[q] = n as u16;
         self.squads[q].rank_at = centre;
         self.squads[q].rank_face = sq.face;
-        self.squads[q].rank_shape = (sq.formation, self.columns[q].on);
+        self.squads[q].rank_shape = (sq.formation, sq.spread, self.columns[q].on);
     }
 
     /// Whether squad `q`'s members need matching to their places again
@@ -596,10 +578,7 @@ impl<W: World> Game<W> {
     fn rerank(&self, q: usize) -> bool {
         let sq = self.squads[q];
         let n = self.soldiers.iter().filter(|j| j.alive && j.squad as usize == q).count();
-        if self.ranked[q] as usize != n || sq.rank_shape != (sq.formation, self.columns[q].on) {
-            return true;
-        }
-        sq.formation.turns() && sq.face.0 * sq.rank_face.0 + sq.face.1 * sq.rank_face.1 < 0.866
+        self.ranked[q] as usize != n || sq.rank_shape != (sq.formation, sq.spread, self.columns[q].on)
     }
 
     /// Where squad `q` stops when it is let go (WASD released, or another
@@ -989,9 +968,8 @@ impl<W: World> Game<W> {
             self.squads[q].map = map;
             // Facing: the controlled squad faces the cursor (`Cmd::Face`);
             // a steered or sent one faces where it goes unless it is
-            // volleying. A column always faces where it goes: turned to
-            // the cursor it would walk sideways, a wall across its way.
-            if sq.fire.is_none() && (Some(q) != self.active || sq.formation == Formation::Column) {
+            // volleying.
+            if sq.fire.is_none() && Some(q) != self.active {
                 if let Some(f) = unit((a.0 - at.0, a.1 - at.1)) {
                     self.squads[q].face = f;
                 }
@@ -1042,7 +1020,7 @@ impl<W: World> Game<W> {
     /// wade (`Game::wade`), not counting those left past `STRAY`.
     pub(super) fn pace(&self, q: usize) -> f32 {
         let Some(mid) = self.middle(q) else { return 1.0 };
-        let stray = STRAY * self.s();
+        let stray = self.stray(q);
         self.members(q).into_iter().filter(|&j| (self.soldiers[j].x - mid.0).hypot(self.soldiers[j].y - mid.1) <= stray).map(|j| self.wade(j)).fold(1.0, f32::min)
     }
 
@@ -1432,8 +1410,37 @@ impl<W: World> Game<W> {
                 self.active = Some(q as usize);
                 true
             }
-            Cmd::Formation(q, f) if ok(q) => {
-                self.squads[q as usize].formation = f;
+            Cmd::Formation(q, f, spread) if ok(q) => {
+                let q = q as usize;
+                let spread = spread.min(SPREADS.len() as u8 - 1);
+                let was = (self.squads[q].formation, self.squads[q].spread);
+                self.squads[q].formation = f;
+                self.squads[q].spread = spread;
+                // A squad standing still forms up where it stands, so a
+                // pick shows at once (the owner's review, 2026-11-23: until
+                // then a squad that had not been sent anywhere, its members
+                // on Hold, kept its places till it next moved, and a pick
+                // seemed to do nothing). Members on Hold are sent to their
+                // places round the squad's middle; members already sent
+                // round a point (a move, a guard) keep it and are matched
+                // to the new places round it. A squad healing, working or
+                // on the move takes the new shape as it goes.
+                if was != (f, spread) && self.idle(q) && !self.squads[q].heal {
+                    let m = self.members(q);
+                    let point = |o: Order| match o {
+                        Order::Move(x, y) | Order::Fight(x, y) | Order::Guard(x, y) => Some((x, y)),
+                        _ => None,
+                    };
+                    let shared = m.first().and_then(|&k| point(self.soldiers[k].order)).filter(|_| m.iter().all(|&k| self.soldiers[k].order == self.soldiers[m[0]].order));
+                    if let Some(p) = shared.or_else(|| self.middle(q)) {
+                        for &k in &m {
+                            if self.soldiers[k].order == Order::Hold {
+                                self.soldiers[k].order = Order::Move(p.0, p.1);
+                            }
+                        }
+                        self.rank_squad(q, p);
+                    }
+                }
                 true
             }
             _ => false,
@@ -1450,7 +1457,8 @@ impl<W: World> Game<W> {
 
     /// Splits squad `q` in two: the half of its members nearer `p` (at least
     /// one, and only if it has two) become a new squad, which is controlled
-    /// next if `q` was. Returns the new squad.
+    /// next if `q` was. Both halves go on with its order and its queue.
+    /// Returns the new squad.
     pub fn split(&mut self, q: usize, p: (f32, f32)) -> Option<usize> {
         let mut m = self.members(q);
         if m.len() < 2 {
@@ -1459,14 +1467,33 @@ impl<W: World> Game<W> {
         let n = self.free_squad()?;
         let d = |s: &Soldier| (s.x - p.0).hypot(s.y - p.1);
         m.sort_by(|&a, &b| d(&self.soldiers[a]).total_cmp(&d(&self.soldiers[b])).then(a.cmp(&b)));
-        self.squads[n] = self.squads[q].offshoot();
+        // Both halves keep the order they had and what was queued after
+        // it (owner 2026-11-22 08:34Z: "if I give a squad a command then
+        // split it [both] squads should follow the previous command until
+        // a new command is given"). Until then the new half took nothing
+        // it was doing, and both halves were sent to their own middles,
+        // so a squad split on its way somewhere, guarding or draining
+        // stopped where it stood and dropped its queue. The members' own
+        // orders (a drain, a build) go with them.
+        let was = self.squads[q];
+        self.squads[n] = Squad {
+            dest: was.dest,
+            fight: was.fight,
+            work: was.work,
+            queue: was.queue,
+            queued: was.queued,
+            guard: was.guard,
+            heal: was.heal,
+            holding: was.holding,
+            ..was.offshoot()
+        };
         self.squads[q].anchor = None;
         for &k in &m[..m.len() / 2] {
             self.soldiers[k].squad = n as u8;
         }
-        // Both halves gather round their own middles.
+        // A half with nothing to do gathers round its own middle.
         for r in [q, n] {
-            if self.squads[r].steer == (0.0, 0.0) {
+            if self.idle(r) {
                 self.squads[r].dest = self.middle(r);
             }
         }
@@ -1476,9 +1503,14 @@ impl<W: World> Game<W> {
                 sq.band = false;
             }
             self.active = Some(n);
-            self.squads[q].steer = (0.0, 0.0);
+            // Your keys and the fire button go with the half you take; the
+            // half left behind, if you were steering it, settles where it
+            // stands, as letting go of the keys does.
+            if self.squads[q].steer != (0.0, 0.0) {
+                self.squads[q].steer = (0.0, 0.0);
+                self.squads[q].dest = self.stop_point(q).or_else(|| self.middle(q));
+            }
             self.squads[q].fire = None;
-            self.squads[q].dest = self.middle(q);
         }
         Some(n)
     }

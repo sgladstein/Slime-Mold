@@ -49,7 +49,7 @@
 //! Every action is a `Cmd`, so a squad round replays like any other.
 
 use super::*;
-use slime_mould::mould::larder_world::{Formation, NO_LINK, SQUADS_MAX};
+use slime_mould::mould::larder_world::{Formation, NO_LINK, SPREADS, SPREAD_NAMES, SQUADS_MAX};
 use slime_mould::world::ui::{SquadPanel, SquadRow};
 use slime_mould::world::ui::key_name;
 
@@ -84,6 +84,11 @@ pub(super) const MERGE: KeyCode = KeyCode::KeyJ;
 /// The card's Formation button and the Formation page's Back (2026-11-21;
 /// until then T cycled blob, line, wedge, ring as a squad key).
 pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
+/// Tighter and looser by one spread step, from any card page (owner
+/// 2026-11-23 03:33Z: "more control over the spread/tightness"): the
+/// brackets, as a brush's size in paint programs and in `larder-edit`.
+pub(super) const TIGHTER: KeyCode = KeyCode::BracketLeft;
+pub(super) const LOOSER: KeyCode = KeyCode::BracketRight;
 /// One key to go through the squads in turn, Shift for back (owner,
 /// 2026-11-19 16:55Z: "there should be a single button to cycle through
 /// squads"). The key left of 1, by the squads' own number keys: Tab was
@@ -97,10 +102,6 @@ pub(super) const CYCLE: KeyCode = KeyCode::Backquote;
 /// every card key is that page's there. (The card's Lookouts, I, went
 /// 2026-11-21 with the lookouts.)
 pub(super) const HEAL_KEY: KeyCode = KeyCode::KeyL;
-
-/// The bearing (radians) the cursor must swing round the controlled
-/// squad's middle before a line or wedge turns to it again (`aim`).
-const FACE_TURN: f32 = 0.17;
 
 /// The card's letter in the squad mode, or None to leave the command off
 /// the card: WASD steer, so what the RTS card has there moves (Attack-move
@@ -144,7 +145,8 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
         ("Z".into(), "Hold fire: on and off; the fire button (X) picks defend or free fire".into()),
         ("Click a building".into(), "With no squad commanded: select it (its health and state; cancel, demolish, upgrade, switch)".into()),
-        (k(FORMATION), "Formation page: blob, spread, line, wedge, column, ring (on the card)".into()),
+        (k(FORMATION), "Formation page: blob or ring, and how far apart, tight to wide (on the card)".into()),
+        (format!("{}, {}", k(TIGHTER), k(LOOSER)), "The squad stands tighter, or looser (five steps)".into()),
         ("Wheel, middle drag".into(), "Zoom, pan; Space brings the camera back".into()),
     ]
     .into_iter()
@@ -159,7 +161,6 @@ pub(super) struct SquadInput {
     /// The left button held (firing), and the point last sent.
     firing: bool,
     fire_at: Option<(f32, f32)>,
-    face_at: Option<(f32, f32)>,
     /// The camera follows the controlled squad.
     pub(super) follow: bool,
     /// Where the camera was put last frame, to tell a pan by the player.
@@ -200,8 +201,8 @@ impl SquadInput {
 
     /// Between two steps (`App::step`, before `Game::begin_step`): the
     /// controlled squad's volley point follows the cursor while the button
-    /// is held, and a line or wedge turns to it once it has swung
-    /// `FACE_TURN` round the squad. Before the bug sweep (2026-11-14) both
+    /// is held. (A line or wedge also turned to it, 11-14 to 11-23, while
+    /// those formations lasted.) Before the bug sweep (2026-11-14) both
     /// were sent from the frame whenever the cursor moved 0.75 cells, and
     /// each command finished the step running on the GPU early: the
     /// window then lost that step's shots (`App::catch_up`), and every
@@ -209,25 +210,9 @@ impl SquadInput {
     pub(super) fn aim(&mut self, g: &mut Game<GpuWorld>) {
         let (Some(q), Some(at)) = (g.active, self.want) else { return };
         let sc = g.world.scale();
-        if self.firing {
-            if self.fire_at.is_none_or(|f| (f.0 - at.0).hypot(f.1 - at.1) > 0.75 * sc) {
-                self.fire_at = Some(at);
-                g.apply(Cmd::Fire(q as u8, Some(at)));
-            }
-            return;
-        }
-        if !matches!(g.squads[q].formation, Formation::Line | Formation::Wedge) {
-            return;
-        }
-        let Some(m) = g.middle(q) else { return };
-        let bearing = |p: (f32, f32)| (p.1 - m.1).atan2(p.0 - m.0);
-        let swung = self.face_at.is_none_or(|f| {
-            let d = (bearing(at) - bearing(f)).rem_euclid(std::f32::consts::TAU);
-            d.min(std::f32::consts::TAU - d) > FACE_TURN
-        });
-        if swung && (at.0 - m.0).hypot(at.1 - m.1) > sc {
-            self.face_at = Some(at);
-            g.apply(Cmd::Face(q as u8, at));
+        if self.firing && self.fire_at.is_none_or(|f| (f.0 - at.0).hypot(f.1 - at.1) > 0.75 * sc) {
+            self.fire_at = Some(at);
+            g.apply(Cmd::Fire(q as u8, Some(at)));
         }
     }
 }
@@ -256,7 +241,6 @@ impl App {
             sq.follow = false;
             sq.put = None;
             sq.steer = (0.0, 0.0);
-            sq.face_at = None;
         }
         self.controls.selected.clear();
         self.hud.alert("No squad controlled: each runs on its own orders. WASD pans; click a squad, its number or Space to take command", None, theme::TEXT);
@@ -357,12 +341,20 @@ impl App {
             }
             return false;
         }
-        let ours = matches!(code, SPLIT | MERGE | HEAL_KEY | CYCLE) || digit(code).is_some();
+        let ours = matches!(code, SPLIT | MERGE | HEAL_KEY | CYCLE | TIGHTER | LOOSER) || digit(code).is_some();
         if !pressed || repeat || !ours {
             return ours;
         }
         if code == CYCLE {
             self.cycle_squad(if self.shift { -1 } else { 1 });
+            return true;
+        }
+        if matches!(code, TIGHTER | LOOSER) {
+            let now = self.active().and_then(|q| self.game.as_ref().map(|g| g.squads[q as usize].spread as i32));
+            if let Some(now) = now {
+                let to = (now + if code == LOOSER { 1 } else { -1 }).clamp(0, SPREADS.len() as i32 - 1);
+                self.squad_formation(None, Some(to as u8));
+            }
             return true;
         }
         // Heal from wherever the card is (it sits on the Formation page).
@@ -434,7 +426,6 @@ impl App {
         if let Some(sq) = self.sq.as_mut() {
             sq.steer = (0.0, 0.0);
             sq.fire_at = None;
-            sq.face_at = None;
         }
         self.send_steer();
     }
@@ -748,6 +739,7 @@ impl App {
         // them all (controls review, 2026-11-21: they changed only the one
         // you command, while a link took every other order together).
         self.controls.selected = g.linked(q).into_iter().flat_map(|r| g.members(r)).collect();
+        self.controls.ring_link = ring_link(g, q);
         // Follow: eased toward the squad's middle; a pan by the player (the
         // camera not where it was put) lets go until Space or WASD.
         // (`Camera::focus`, the inverse of `centre_on`: eased from the
@@ -818,8 +810,8 @@ impl App {
             .map(|&q| {
                 let sq = &g.squads[q];
                 let mut note = Vec::new();
-                if sq.formation != Formation::Blob {
-                    note.push(sq.formation.name().to_string());
+                if (sq.formation, sq.spread) != (Formation::Blob, 0) {
+                    note.push(form_name(sq.formation, sq.spread));
                 }
                 if g.active != Some(q) && !g.leads(q) {
                     note.push("on its own".into());
@@ -882,18 +874,16 @@ impl App {
         }
     }
 
-    /// The Formation page's pick: the controlled squad and its link take
-    /// formation `f`.
-    pub(super) fn squad_formation(&mut self, f: Formation) {
+    /// The Formation page's pick, or a bracket key: the controlled squad
+    /// and its link take shape `f` and spread step `spread`, each kept as
+    /// it is where None.
+    pub(super) fn squad_formation(&mut self, f: Option<Formation>, spread: Option<u8>) {
         let (Some(q), Some(g)) = (self.active(), self.game.as_mut()) else { return };
+        let now = (f.unwrap_or(g.squads[q as usize].formation), spread.unwrap_or(g.squads[q as usize].spread));
         for r in g.linked(q as usize) {
-            g.apply(Cmd::Formation(r as u8, f));
+            g.apply(Cmd::Formation(r as u8, now.0, now.1));
         }
-        self.hud.alert(&format!("Formation: {}", f.name()), None, theme::TEXT);
-        if let Some(sq) = self.sq.as_mut() {
-            // A line or wedge turns to the cursor at once.
-            sq.face_at = None;
-        }
+        self.hud.alert(&format!("Formation: {}", form_name(now.0, now.1)), None, theme::TEXT);
     }
 
     /// The fire button in the squad mode: defend and free in turn, by
@@ -992,4 +982,18 @@ impl App {
             _ => {}
         }
     }
+}
+
+/// A shape and spread step as the card and the squad panel say them:
+/// "blob, tight", "ring, wide".
+pub(super) fn form_name(f: Formation, spread: u8) -> String {
+    format!("{}, {}", f.name(), SPREAD_NAMES[(spread as usize).min(SPREAD_NAMES.len() - 1)])
+}
+
+/// How far apart the commanded squads' soldiers may stand and share one
+/// selection ring (`Controls::ring_link`): the usual reach times the
+/// widest spread among them, so a loose or wide squad keeps one ring.
+pub(super) fn ring_link(g: &Game<GpuWorld>, q: usize) -> f32 {
+    let widest = g.linked(q).into_iter().map(|r| SPREADS[(g.squads[r].spread as usize).min(SPREADS.len() - 1)]).fold(1.0, f32::max);
+    slime_mould::world::controls::RING_LINK * widest
 }

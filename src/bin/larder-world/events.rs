@@ -23,7 +23,11 @@ impl ApplicationHandler for App {
         let size = window.inner_size();
         let (w, h) = (size.width.max(1), size.height.max(1));
         let desc = wgpu::DeviceDescriptor { label: Some("larder-world"), required_limits: adapter.limits(), ..Default::default() };
-        let mut pixels = match PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window))).request_adapter_options(options).device_descriptor(desc).build() {
+        // The crate's own pixel buffer is one pixel: it uploads that buffer
+        // every frame, and the view's picture goes to the window through
+        // `blit` instead (performance thread, 11-22: at the window's size it
+        // was 14.7 MB a frame at 2560 x 1440, never shown).
+        let mut pixels = match PixelsBuilder::new(1, 1, SurfaceTexture::new(size.width, size.height, Arc::clone(&window))).request_adapter_options(options).device_descriptor(desc).build() {
             Ok(p) => p,
             Err(err) => return self.fail(event_loop, format!("pixels init failed: {err}")),
         };
@@ -44,6 +48,7 @@ impl ApplicationHandler for App {
         canvas.ui = UiSize { user: ui_user(), dpi: window.scale_factor() as f32 };
         self.canvas = Some(canvas);
         self.canvas_pass = Some(CanvasPass::new(pixels.device(), pixels.queue()));
+        self.blit = Some(blit::Blit::new(pixels.device(), pixels.render_texture_format()));
         self.gpu = Some((pixels.device().clone(), pixels.queue().clone()));
         self.pixels = Some(pixels);
         self.window = Some(window);
@@ -74,7 +79,9 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(size) => {
                 if size.width > 0 && size.height > 0 {
                     if let Some(p) = self.pixels.as_mut() {
-                        let res = p.resize_buffer(size.width, size.height).map_err(|e| e.to_string()).and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
+                        // Only the window's surface: the crate's buffer stays
+                        // one pixel (`blit`).
+                        let res = p.resize_surface(size.width, size.height).map_err(|e| e.to_string());
                         if let Err(err) = res {
                             return self.fail(event_loop, format!("resize failed: {err}"));
                         }

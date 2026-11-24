@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-17
+updated: 2026-11-22
 sources:
   - Reports/burning-trails-2026-11-14.md
   - Reports/card-text-2026-11-15.md
@@ -14,6 +14,7 @@ sources:
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/mine-look-2026-11-22/README.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/noita-spell-look-2026-11-14.md
   - Reports/rolled-bullets-2026-11-14.md
@@ -86,7 +87,7 @@ run on the GPU world too (the engine's strike lays the crater), and since
 11-14 the sleep gas ([report](../../Reports/sleep-gas-gpu-2026-11-14.md))
 and the germ (the strike's `kill` pass infects; the `life` pass charges the
 sick `sick_upkeep`: on race seed 5, 77 made sick and 449 of 2,123 left after
-20 s on both engines). Since 11-17 gas over `gas_burn` (0.2, on) burns: a fire or blast that reaches the cloud flashes across it and kills the sleepers, damp body or not (58-66% of them on 7 of 8 seeds, [C5](../../Reports/sim-use-2026-11-17/c5-gas-ignites.md)). A mine's trigger scales with `Game::density`. In
+20 s on both engines). Since 11-17 gas over `gas_burn` (0.2, on) burns: a fire or blast that reaches the cloud flashes across it and kills the sleepers, damp body or not (58-66% of them on 7 of 8 seeds, [C5](../../Reports/sim-use-2026-11-17/c5-gas-ignites.md)). A mine's trigger scales with `Game::density`. Since 11-22 a laid mine is drawn, with a lamp that blinks faster as slime nears it ([look](../../Reports/mine-look-2026-11-22/README.md)). In
 the window (`larder-world`) E opens the tools page: blast, det cord and
 mine, germ and sleep gas work; every soldier at the larder takes one tool, a selected one up
 to five. Since 2026-11-16 aiming a tool shows who throws (`Kit::thrower`),
@@ -99,9 +100,7 @@ waits on the device slot, parked): Provoke (X) makes the mould within
 `KitRules::mind_r` deaf to food news, so it panics and charges, and Still
 (Z) stops its charges and its eating (`Tool::Provoke`, `Tool::Still`;
 [report](../../Reports/sim-use-2026-11-17/b-provoke-still.md)). The crater a blast, cord
-or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
-`scorch_keep` and `scorch_full`: 0 and 150 in the race world since PR 3b's
-cone, were 0.1 and 30, which earlier `kitplans` tables used) is the one
+or shot leaves (`BigDish::scorch_disc`, `scorch_keep` and `scorch_full`) is the one
 scorch in the game. Each tool
 shows in the mould; mines are weak and the det cord starves nothing until
 food flows ([report](../../Reports/squad-toolkit-2026-11-12.md)). Tools take

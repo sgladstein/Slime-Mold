@@ -67,6 +67,11 @@ impl<W: World> Game<W> {
         if self.end.is_some() {
             return;
         }
+        // The soldier's price follows the living army (`Rules::soldier_step`,
+        // 2026-11-22): soldiers that fell make the next one cheaper.
+        if self.rules.soldier_step > 0.0 {
+            self.reprice();
+        }
         self.costed("solid", |g| g.solid = g.solid_now());
         self.costed("pump_maps", Self::pump_maps);
         let r = self.rules;

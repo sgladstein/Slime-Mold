@@ -401,11 +401,16 @@ impl App {
                     HEAL_ORDER => self.squad_heal(),
                     FORM_PAGE => (self.form_page, self.build_page, self.tools_page) = (true, false, false),
                     F_BACK => self.form_page = false,
-                    F_BLOB..=F_SPREAD => {
+                    F_BLOB..=F_WIDE => {
+                        // A shape or a spread step: the page stays open, so
+                        // both can be set, and each tried in turn (T, Esc or
+                        // Back close it).
                         if let Some(f) = form_of(id) {
-                            self.squad_formation(f);
+                            self.squad_formation(Some(f), None);
                         }
-                        self.form_page = false;
+                        if let Some(s) = spread_of(id) {
+                            self.squad_formation(None, Some(s));
+                        }
                     }
                     // The squad mode's fire button: defend and free; Hold
                     // fire is its own toggle (owner 2026-11-21 05:04Z). A

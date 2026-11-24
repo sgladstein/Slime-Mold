@@ -67,7 +67,8 @@ pub enum Cmd {
     Merge(u8, u8),
     /// The player controls squad `q` (`u8::MAX`: none).
     Active(u8),
-    Formation(u8, Formation),
+    /// Squad `q` takes a formation and a spread step (`squads::SPREADS`).
+    Formation(u8, Formation, u8),
     /// Shift + a squad order: squad `q` does it after what it is doing
     /// (`Squad::queue`); an idle squad starts it at once.
     SquadQueue(u8, Order),
@@ -127,7 +128,7 @@ impl Cmd {
             Cmd::Join(k, q) => format!("join {k} {q}"),
             Cmd::Merge(a, b) => format!("merge {a} {b}"),
             Cmd::Active(q) => format!("active {q}"),
-            Cmd::Formation(q, f) => format!("formation {q} {}", f.name()),
+            Cmd::Formation(q, f, s) => format!("formation {q} {} {s}", f.name()),
             Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
@@ -172,7 +173,13 @@ impl Cmd {
             "join" => return Some(Cmd::Join(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "merge" => return Some(Cmd::Merge(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "active" => return Some(Cmd::Active(w.get(1)?.parse().ok()?)),
-            "formation" => return Some(Cmd::Formation(w.get(1)?.parse().ok()?, Formation::parse(w.get(2)?)?)),
+            "formation" => {
+                // Two words before 2026-11-23 (no spread); a name of the
+                // 11-21 set maps to its blob (`Formation::parse`).
+                let (f, was) = Formation::parse(w.get(2)?)?;
+                let s = w.get(3).and_then(|s| s.parse().ok()).or(was).unwrap_or(0);
+                return Some(Cmd::Formation(w.get(1)?.parse().ok()?, f, s));
+            }
             "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
             "band" => return Some(Cmd::Band(w.get(1)?.parse().ok()?)),
@@ -357,7 +364,28 @@ impl<W: World> Game<W> {
             let k = self.soldiers.len() - 1;
             self.soldiers[k].order = o;
         }
+        // The next one's price, with this one alive (`Rules::soldier_step`).
+        self.reprice();
         true
+    }
+
+    /// **The soldier's price now** (`Rules::soldier_step`, 2026-11-22):
+    /// the base price, and `soldier_step` share more for each soldier alive
+    /// over `soldier_from`. Kept in `Rules::soldier_cost`, so the shop
+    /// button, the hands and the bots all read the price now. Called after
+    /// a buy and once a step (soldiers fall). The base is read from
+    /// `soldier_cost` on the first call and kept in `Game::price_base`, so
+    /// anything that changes the price mid-game (a discount card, a rule
+    /// set mid-planet, a test) must edit `price_base`, not `soldier_cost`,
+    /// which the next call overwrites (Squad's review of #721).
+    pub fn reprice(&mut self) {
+        if self.price_base <= 0.0 {
+            self.price_base = self.rules.soldier_cost;
+        }
+        let r = &self.rules;
+        let over = (self.alive() as f32 - r.soldier_from).max(0.0);
+        let k = if r.soldier_step > 0.0 { 1.0 + over / r.soldier_step } else { 1.0 };
+        self.rules.soldier_cost = (self.price_base * k).round();
     }
 
     /// Within range of a live soldier.

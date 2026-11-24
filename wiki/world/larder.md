@@ -367,7 +367,7 @@ other round them) averaged 404 a frame while it was out against the
 stream's 635; it took the pump by the squad at 0:50 where the stream took
 the far one at 0:34, and the squad stood at 75 at 0:56 against 59
 ([raid march](../../Reports/raid-march-2026-11-18/README.md)); specks are
-tethered the same day ([growth](../model/growth.md)).
+tethered the same day ([growth](../model/growth.md)). From 11-22 a run sets it by planet (`run::RAID_GAP_MIN`): 45 on planet 1, 35 from planet 2.
 
 **Turrets grow both ways** (owner's card, 2026-11-16 21:36Z: "Both: tree
 bodies, card barrels"; the tree lives in the run shop only, 21:41Z "I lean

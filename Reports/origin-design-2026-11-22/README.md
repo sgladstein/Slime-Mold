@@ -121,6 +121,21 @@ push against that, but the brake is D7, which the owner holds. The first
 build measures the rush (time from landing to win for a squad that goes
 straight for it) before any number is tuned, and reports it to Direction.
 
+**Measured (11-22, run seed 1, lavapipe, headless `hand=origin`: every
+soldier the bank buys on attack-move to the core; 44, 16 and 9 soldiers
+from `set=start_bank=` 16000, 4800 and 2000), at the sizes Engine's
+siege tuned (700, 500, 1,000 on planets 1-3; that siege wins seeds 1-3 on
+each in under 10 min):**
+
+| Planet (origin) | 44 soldiers | 16 soldiers | 9 soldiers |
+|---|---|---|---|
+| 1 (700) | won 1:34, none lost | wiped 4:43 | not run at 700 (at 1,200: wiped 4:35) |
+| 2 (500) | won 1:47, 15 lost | wiped 1:32 | wiped 1:05 |
+
+On planet 2 the 44 cut it from 686 (a take overshoots its 500 when its
+crystal is packed) to 134 by 1:30 and it broke at about 1:37. The decision
+on the rush, D7, is the owner's.
+
 ## Questions for the owner (Direction to ask, at most once, with these recommendations)
 
 1. **Killing the origin: does the planet end at once, or does the rest of
