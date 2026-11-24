@@ -35,7 +35,7 @@ use slime_mould::mould::rounds::Card;
 use slime_mould::mould::run::{self, Pick, ITEMS};
 
 /// The unlocks a plan may build with, as `Run::has` keys.
-const UNLOCKS: [&str; 7] = ["walls", "turret", "mortar", "blast", "mine", "cord", "gas"];
+const UNLOCKS: [&str; 9] = ["walls", "turret", "mortar", "sprayer", "hunter", "blast", "mine", "cord", "gas"];
 
 /// Spends the run's points by the plan: the cards it wants (`want`), the
 /// card the planet ahead asks for (`cards` 1 or 2), then the plan's items,
@@ -84,6 +84,19 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     if fire && !keys.iter().any(|k| k == "fireproof") {
         keys.insert(keys.len().min(1), "fireproof".to_string());
     }
+    // The turret bodies the plan places (`Plan::mortars`, `sprayers`,
+    // `hunters`), first, with each unlock before it (11-24): a hunter
+    // needs a sprayer's unlock, a sprayer a mortar's, a mortar a turret's.
+    let chain = [("turret", p.mortars + p.sprayers + p.hunters), ("mortar", p.mortars + p.sprayers + p.hunters), ("sprayer", p.sprayers + p.hunters), ("hunter", p.hunters)];
+    let mut at = 0;
+    for (key, n) in chain {
+        if n > 0 {
+            keys.retain(|k| k != key);
+            keys.insert(at, key.to_string());
+            at += 1;
+        }
+    }
+    buy_body(r, p, &mut bought);
     loop {
         let mut any = false;
         for key in &keys {
@@ -110,6 +123,27 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     }
     reorder(r, &p.order);
     bought
+}
+
+/// A device body (`Plan::body`): the best-rolled of its kind on offer,
+/// once, when the points allow; then the devices carry the squads' cards
+/// if they carried none (`Pick::DevicesUse` on loadout 1), so the body's
+/// cards are the gun's.
+fn buy_body(r: &mut Run, p: &Plan, bought: &mut Vec<String>) {
+    let Some(want) = p.body.as_deref() else { return };
+    let Some(kind) = slime_mould::mould::bodies::BodyKind::ALL.into_iter().find(|k| k.name().eq_ignore_ascii_case(want)) else { return };
+    if r.body_of(kind).is_some() {
+        return;
+    }
+    let Some(i) = (0..r.body_offers.len()).filter(|&i| r.body_offers[i].kind == kind && r.body_offers[i].price() <= r.points).max_by(|&a, &b| r.body_offers[a].grade().total_cmp(&r.body_offers[b].grade())) else { return };
+    let b = r.body_offers[i];
+    if r.pick(Pick::Body(i)) {
+        bought.push(format!("body.{}@{:.2}", want, b.grade()));
+        if r.device_loadout.is_none() {
+            r.edit(0);
+            r.pick(Pick::DevicesUse);
+        }
+    }
 }
 
 /// The squads' gun's cards in the order named (`Plan::order`): each named
@@ -424,8 +458,11 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         (_, None, Some(h)) => format!("{}/{}", h.members, h.most),
         _ => "gone".to_string(),
     };
+    // The turret bodies standing (`Plan::mortars`, `sprayers`, `hunters`),
+    // and the walkers the hunters' shells killed.
+    let bodies = format!("{}/{}/{}/{}", count(|k| *k == Kind::Mortar), count(|k| *k == Kind::Sprayer), count(|k| *k == Kind::Hunter), g.hunter_killed);
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} origin={origin} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
+        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} origin={origin} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} bodies={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
         r.depth,
         r.seed,
         l.seed,
@@ -446,6 +483,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         count(|k| *k == Kind::Turret),
         count(|k| matches!(k, Kind::Wall { .. })),
         count(|k| *k == Kind::Lure),
+        bodies,
         secs_in[0],
         secs_in[1],
         secs_in[2],

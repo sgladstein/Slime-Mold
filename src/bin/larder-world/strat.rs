@@ -57,6 +57,14 @@ pub(super) struct Plan {
     pub guard: u32,
     /// Turrets round each guarded pump, on the slime's side.
     pub turrets: u32,
+    /// The turret bodies round each guarded pump (11-24, Direction: no bot
+    /// placed one, so the run's curve never had them): mortars behind the
+    /// crystal, sprayers in front of the turrets, hunters at its sides.
+    /// Each needs its unlock (`own`), which the league's shop buys first
+    /// when the plan asks for the body (`league::shop`).
+    pub mortars: u32,
+    pub sprayers: u32,
+    pub hunters: u32,
     /// A wall in front of each guarded pump: 0 none, 1 an arc, 2 a wider
     /// arc (two thirds round).
     pub walls: u32,
@@ -198,6 +206,12 @@ pub(super) struct Plan {
     /// on offer; None: never). With `shelf` a kind not on offer is rolled
     /// for the shop as if it were, as wanted cards are.
     pub gun: Option<String>,
+    /// A device body (11-24, Direction: no bot bought one) the league's
+    /// shop buys when one of the kind is on offer and the points allow,
+    /// and the devices then carry the squads' cards (`Pick::DevicesUse`)
+    /// if they carried none: `grenade` (thrown by `blast`) or `mine`
+    /// (laid by `mines`). None: never.
+    pub body: Option<String>,
     /// Who fires the bought gun: 0 the main squad (it goes in loadout 1,
     /// whose cards move to it, and the rifle stays in the armory), 1 the
     /// holding groups (`split`), from a loadout of their own (`GROUPS`)
@@ -300,6 +314,9 @@ impl Default for Plan {
             up: 0,
             guard: 0,
             turrets: 0,
+            mortars: 0,
+            sprayers: 0,
+            hunters: 0,
             walls: 0,
             lure: false,
             guard_first: true,
@@ -332,6 +349,7 @@ impl Default for Plan {
             mines: 0,
             blast: 0,
             gun: None,
+            body: None,
             arm: 0,
             want2: Vec::new(),
             tcards: Vec::new(),
@@ -370,7 +388,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 48] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace", "storm"];
+    pub const DIALS: [&'static str; 52] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace", "storm", "mortars", "sprayers", "hunters", "body"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -397,6 +415,16 @@ impl Plan {
             "up" => self.up = whole(v)?.min(2),
             "guard" => self.guard = whole(v)?,
             "turrets" => self.turrets = whole(v)?.min(8),
+            "mortars" => self.mortars = whole(v)?.min(4),
+            "sprayers" => self.sprayers = whole(v)?.min(4),
+            "hunters" => self.hunters = whole(v)?.min(4),
+            "body" => {
+                self.body = match v {
+                    "none" => None,
+                    "grenade" | "mine" => Some(v.to_string()),
+                    k => return Err(format!("strat: body={k}: grenade, mine or none")),
+                }
+            }
             "walls" => self.walls = whole(v)?.min(2),
             "lure" => self.lure = num(v)? > 0.0,
             "first" => self.guard_first = v == "guard",
@@ -903,6 +931,28 @@ fn defences(g: &Game<GpuWorld>, p: &Plan, c: usize, to: (f32, f32)) -> Vec<Site>
         for i in 0..p.turrets {
             let a = face + (i as f32 - (n - 1.0) / 2.0) * step;
             out.push(Site { kind: Kind::Turret, at: on(r + 4.0 * sc, a), b: None, tries: 0 });
+        }
+    }
+    // The turret bodies (11-24): mortars behind the crystal, where their
+    // blind ring is past the turrets; sprayers in front of the turrets,
+    // where their strip lies across the slime's way in; hunters at the
+    // crystal's sides, in sight of it and of the crystals beyond.
+    let mut ring = |kind: Kind, n: u32, rad: f32, a0: f32, step: f32| {
+        for i in 0..n {
+            let a = a0 + (i as f32 - (n as f32 - 1.0) / 2.0) * step;
+            out.push(Site { kind, at: on(rad, a), b: None, tries: 0 });
+        }
+    };
+    if p.owns("mortar") {
+        ring(Kind::Mortar, p.mortars, r + 4.0 * sc, face + std::f32::consts::PI, 0.6);
+    }
+    if p.owns("sprayer") {
+        ring(Kind::Sprayer, p.sprayers, r + 6.5 * sc, face, 0.5);
+    }
+    if p.owns("hunter") {
+        for i in 0..p.hunters {
+            let side = if i % 2 == 0 { 1.0 } else { -1.0 };
+            ring(Kind::Hunter, 1, r + 4.0 * sc, face + side * std::f32::consts::FRAC_PI_2 * (1.0 + 0.3 * (i / 2) as f32), 0.0);
         }
     }
     if p.lure {
@@ -1648,6 +1698,10 @@ mod tests {
         assert_eq!(p.turrets, 3);
         assert!(p.owns("turret") && !p.owns("mortar"));
         assert!(Plan::parse("nonsense").is_err());
+        let p = Plan::parse("rush,pumps=1,guard=1,hunters=1,mortars=9,body=grenade").unwrap();
+        assert_eq!((p.hunters, p.mortars, p.sprayers), (1, 4, 0));
+        assert_eq!(p.body.as_deref(), Some("grenade"));
+        assert!(Plan::parse("rush,body=x").is_err());
         assert!(Plan::parse("pumps=x").is_err());
         assert_eq!(Plan::parse("").unwrap(), Plan::default());
     }
