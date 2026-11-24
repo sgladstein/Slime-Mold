@@ -250,6 +250,27 @@ slime in 13 of 15 (p = 0.002). Fire it late, once the wave has spread
 wave on screen follows the sick count, r = 0.91, 1-2 s behind at its end
 ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
 
+**Combos a rule now links** (Direction 11-24, build variety for replay:
+strong builds come from combinations, no card stronger alone;
+[stills](../../Reports/build-variety-2026-11-24/README.md)). On planet 1
+with the greedy hand from 5 s:
+- **Heave + any kill zone.** A heave herds toward the nearest turret,
+  sprayer, mortar (to twice its `mortar_min` out, outside its dead zone)
+  or hunter (likewise) within `corral_reach`; it found turrets only.
+  With a sprayer beside the squad: 96 killed by 25 s against 78 with plain
+  shots (114 against 93 by 40 s), the slime herded onto the squad.
+- **Split + a status shell.** A split bullet's pieces each cast its gas,
+  germ or Mind payload where they land, over `split_r` (0.7) of its disc
+  (`rounds::spreads`; a blast's or plain round's pieces cast nothing, so a
+  kill stays one per bullet). 183 slime gassed by 20 s against 21 with gas
+  alone. Test `split_pieces_carry_a_status_shell_and_not_a_blast`.
+- **Flare + gas.** A flare's first lay carries a token light
+  (`flare_light`, 1e-6) over a torch's disc: too small to catch plants, but
+  gas over `gas_burn` is fuel enough (C5). 62 slime burned by 26 s and 158
+  by 60 s, against none with a flare alone. Test
+  `a_flare_lights_a_gas_cloud_and_alone_lights_nothing` (113 cells lit, 96
+  burned in 3 s).
+
 **Route** (2026-11-17, step D's third family): the Flare kills nothing and
 burns an alarm (100 over 16 dish cells, again every 0.2 s for 3 s); the
 slime's own rule decides the rest. Shape C (planets 1-3) flinches, so it
@@ -384,8 +405,8 @@ card text) and 08:30 (the guns a draw of the game).
   (the game designer's note, 11-17). The gaps are the Sleeper, the Grudge
   and the Trunk; Pull and Thrift answer no planet.
 - Pull stops short but adds no kills where squads on their own fight (the
-  slime they shoot is already near). A heave finds turrets only, not a
-  marked spot or other buildings.
+  slime they shoot is already near). A heave finds any kill zone (turret,
+  sprayer, mortar or hunter, 11-24) but not a marked spot.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
 - Balance of budgets, prices and rolls waits for the owner's playtest.
 

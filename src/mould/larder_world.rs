@@ -300,10 +300,12 @@ pub struct Bullet {
     /// Times it splits where it finally lands (`Rules::split_n`); its
     /// pieces split one fewer time and do not pierce.
     pub split: u8,
-    /// The cast it carries: 0 plain (a turret's, a split piece), else 1 +
+    /// The cast it carries: 0 plain (a turret's with no deck), else 1 +
     /// the index of the cast in its soldier's squad's cards when it was
     /// fired (`Soldier::next`). Every slime hit casts it (`rounds`), so a
-    /// piercing bullet casts at each strike.
+    /// piercing bullet casts at each strike. A split piece carries its
+    /// parent's with `rounds::PIECE` set, and casts only a status
+    /// (`rounds::spreads`; plain until 2026-11-24).
     pub cast: u8,
     /// Its speed, times `Rules::bullet_speed` (its bullet card's,
     /// `bullets::Ammo::speed`; 1 for a turret's).
