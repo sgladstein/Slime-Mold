@@ -3567,7 +3567,10 @@ mod tests {
         let (seed, scale, walkers) = (3, 2, 5_000);
         let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        // A twin compares slot for slot, so the walkers keep the CPU's
+        // order: the GPU sort (gpu/sort.rs, 11-24) would renumber them.
+        let twin = slime_mould::gpu::Settings { sort: None, ..race_settings(seed, scale, walkers) };
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, twin, scale), rules, seed);
         cpu.bank = 1.0e9;
         for k in 0..cpu.soldiers.len() {
             assert!(cpu.apply(Cmd::Order(k, Order::Attack)));
