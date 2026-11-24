@@ -494,6 +494,9 @@ struct Memory {
     pub cooled: u32,
     /// The harvest at its last rise, and when (`Plan::broke`).
     harvest_at: (f32, f32),
+    /// The siege's closing in (`hunt`): the origin's fewest members, when
+    /// they last fell or the stand last stepped in, and the steps taken.
+    siege_low: Option<(u32, f32, u32)>,
 }
 
 thread_local! {
@@ -1368,6 +1371,9 @@ fn hold(g: &mut Game<GpuWorld>, p: &Plan, q: usize) {
     MEM.with_borrow_mut(|mm| mm.held = held);
 }
 
+/// The siege's closest stand to the origin's middle (`hunt`).
+const SIEGE_MIN: f32 = 2.0;
+
 #[allow(clippy::too_many_arguments)]
 fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, sense: &Sense, members: &[usize], out: bool, mopping: bool) {
     let t = g.time();
@@ -1483,12 +1489,46 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
             }
             return;
         }
+        // Closing in (11-24, Direction: "fix the P1 map A stall"): from
+        // 0.7 of range the squad's fire goes into the body round the
+        // origin (slime within 5 cells beats an origin within 20,
+        // `boss_aim_within`), and on planet 1 of the owner's map
+        // 1795038793 the body regrew as fast: 26 soldiers stood 9 minutes
+        // wearing the origin from 770 to 756 members, losing none (stall
+        // 537 s). So each 45 s with no new low of its members the stand
+        // steps 0.15 of range closer, down to `SIEGE_MIN` from its middle
+        // (an origin within 8 is aimed first); a new low holds the step.
+        // A stand inside the lunge reach from the start was worse (11-22),
+        // so it starts where it did. The three maps' planet 1 with this:
+        // won at 4:23, 4:42 and 3:59 (stall 48, 27, 22 s; 9, 6, 5
+        // soldiers fallen), against 1 won and 2 open at 12:00 before.
+        let steps = MEM.with_borrow_mut(|mm| {
+            let (mut n, mut at, mut steps) = match mm.siege_low {
+                Some(v) if v.1 <= t => v,
+                _ => (h.members, t, 0),
+            };
+            if h.members < n {
+                (n, at) = (h.members, t);
+            } else if t - at >= 45.0 {
+                (at, steps) = (t, steps + 1);
+            }
+            mm.siege_low = Some((n, at, steps));
+            steps
+        });
+        let reach = ((0.7 - 0.15 * steps as f32) * range).max(SIEGE_MIN);
+        let d = dist(h.centre, m).max(1.0);
+        let st = (h.centre.0 - (h.centre.0 - m.0) / d * reach, h.centre.1 - (h.centre.1 - m.1) / d * reach);
         // As the hunt: a new stand only when out of range or blocked, or
-        // when the squad was doing something else.
-        let fighting = members.iter().all(|&k| matches!(g.soldiers[k].order, Order::Fight(..)));
-        if !fighting || dist(h.centre, m) > 0.8 * range || !sense.clear(g, m, h.centre) {
-            let st = stand_for(h.centre);
-            g.apply(Cmd::SquadOrder(q as u8, Order::Fight(st.0, st.1)));
+        // when the squad was doing something else, or the stand closed in.
+        // Closing in is a plain move: an attack-move stands to fight the
+        // first slime in reach (`Game::engaged`), so on map 1795038793 the
+        // squad's Fight stood 80 cells off the origin, in the body, for
+        // 9 minutes whatever the stand.
+        let far = dist(h.centre, m) > reach + 0.1 * range;
+        let o = if steps > 0 && far { Order::Move(st.0, st.1) } else { Order::Fight(st.0, st.1) };
+        let given = members.iter().all(|&k| std::mem::discriminant(&g.soldiers[k].order) == std::mem::discriminant(&o));
+        if !given || far || !sense.clear(g, m, h.centre) {
+            g.apply(Cmd::SquadOrder(q as u8, o));
         }
         return;
     }

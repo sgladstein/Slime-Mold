@@ -47,6 +47,38 @@ no verdict by 12:00).
 maps (paired: 5 games won only at half, 1 only at today's size, planet 5
 map A; two-sided sign test p = 0.22, so three maps don't settle it).
 
+## Rerun on #756 (Enemy's origin sizes), planets 1 to 8
+
+The same 24 games on main 70e4811 (#756 caps the origin's gather), on the
+owner's GTX 1070, 25 minutes; every game's fields in [games-b.csv](games-b.csv).
+Losses by cause are `bitten`, `burned`, `starfall`, `blasted` at the end.
+
+| Planet | Slime | Won / lost / open | Time to win | Soldiers (peak) | Lost | Of which bitten | Income | Longest stall |
+|---|---|---|---|---|---|---|---|---|
+| 1 | drifter | 2 / 0 / 1 | 6:07 | 36 | 3 | all | 11,660 | 163 s |
+| 2 | sprawler | 3 / 0 / 0 | 5:35 | 51 | 7 | all but 1 (starfall) | 19,691 | 32 s |
+| 3 | trunk | 2 / 0 / 1 | 6:14 | 38 | 21 | all but 3 (burned) | 12,361 | 22 s |
+| 4 | swarmer | 0 / 3 / 0 | - | 61 | 64 | all | 28,273 | 51 s |
+| 5 | sporer | 2 / 0 / 1 | 3:43 | 69 | 20 | all | 31,672 | 17 s |
+| 6 | sleeper | 3 / 0 / 0 | 4:46 | 74 | 3 | all | 37,203 | 9 s |
+| 7 | grudge | 0 / 2 / 1 | - | 50 | 35 | all but 3 (burned) | 19,391 | 60 s |
+| 8 | sporer (A), grudge (B, C) | 1 / 0 / 2 | 3:57 | 76 | 53 | all | 38,705 | 33 s |
+
+13 of 24 won, against 12 of 24 before. Planet 7's origin now reads 2,668
+and 2,494 members on maps A and B but still 13,699 on map C. On planet 8,
+maps B and C, the origin was never touched (3,465/3,465, 2,416/2,416). On
+planet 4 every loss is a bite and they come in bursts late in the game:
+map A 28 soldiers in the 30 s after 5:00, map B 32 in the 30 s after 9:30,
+map C 31 between 8:00 and 9:00. `fell@` here still counts from the head
+start (this build is before #757).
+
+**The planet 1 stalls** (map A here and before, map B here: a squad of
+26 or 36 with a flat bank beside the origin) are the siege's attack-move
+standing in the body slime round the origin. With the fix (#765: the stand
+closes in by plain moves when the origin stops falling), planet 1 on
+software Vulkan: map A won at 4:23 (stall 48 s, 9 fallen), map B 4:42
+(27 s, 6), map C 3:59 (22 s, 5).
+
 ## Read with care
 
 - **Planet 1, map A is a bot stall**: 26 soldiers and a bank flat at 259

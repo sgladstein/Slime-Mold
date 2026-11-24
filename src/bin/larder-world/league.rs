@@ -75,9 +75,18 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
             }
         }
     }
+    // A deck with fire in it (Torch or Tinder) buys Fireproof among the
+    // plan's items, after its first (11-24, Direction, from Squad: the
+    // default list never bought it, so the fire plans in the curve burned
+    // their own squads as no player would).
+    let fire = r.cards.iter().any(|&(c, _)| matches!(c, Card::Torch | Card::Tinder) || matches!(c, Card::Ammo(a) if a.shell == Shell::Torch));
+    let mut keys = p.shop.clone();
+    if fire && !keys.iter().any(|k| k == "fireproof") {
+        keys.insert(keys.len().min(1), "fireproof".to_string());
+    }
     loop {
         let mut any = false;
-        for key in &p.shop {
+        for key in &keys {
             let Some(i) = ITEMS.iter().position(|it| it.key == key) else { continue };
             if r.pick(Pick::Item(i)) {
                 bought.push(ITEMS[i].key.to_string());
@@ -642,6 +651,29 @@ mod tests {
         let p = Plan::parse("order=rate/wide,cards=0,shop=").unwrap();
         shop(&mut r, &p);
         assert_eq!(r.squad_cards(), vec![Card::Rate, Card::Wide]);
+    }
+
+    /// A deck with a fire card buys Fireproof after the plan's first item
+    /// (Direction, 11-24); a deck without one does not.
+    #[test]
+    fn a_fire_deck_buys_fireproof() {
+        let fp = ITEMS.iter().position(|it| it.key == "fireproof").unwrap();
+        for seed in 1..=3 {
+            let mut r = Run::new(seed);
+            r.restock();
+            r.won(2);
+            r.points += 2_000;
+            let p = Plan::parse("want=torch,cards=0").unwrap();
+            let bought = shop(&mut r, &p);
+            assert!(bought.first().is_some_and(|b| b.to_lowercase().starts_with("torch")), "seed {seed}: {bought:?}");
+            assert!(r.owned[fp] > 0, "seed {seed}: {bought:?}");
+            let mut r = Run::new(seed);
+            r.restock();
+            r.won(2);
+            r.points += 2_000;
+            let bought = shop(&mut r, &Plan::parse("cards=0").unwrap());
+            assert_eq!(r.owned[fp], 0, "seed {seed}: {bought:?}");
+        }
     }
 
     #[test]
