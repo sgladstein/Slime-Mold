@@ -1919,6 +1919,7 @@ impl App {
 
     fn step(&mut self, dt: f32) {
         self.clock += dt;
+        self.count_played(dt);
         self.trauma = (self.trauma - SHAKE_FALL * dt).max(0.0);
         self.stop_cool = (self.stop_cool - dt).max(0.0);
         // A hit-stop holds the game and its notes still (the flash, the

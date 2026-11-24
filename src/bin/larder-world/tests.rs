@@ -1250,6 +1250,10 @@ fn a_planet_left_mid_game_carries_on() {
         app.step(1.0 / 15.0);
     }
     assert!(app.planet_open());
+    // The run's play time (`Run::played`) is the frames' time, on both
+    // copies of the run.
+    let played = app.run.as_ref().unwrap().played;
+    assert!(played > 1.0 && app.args.run.as_ref().unwrap().played == played, "{played}");
     app.save_run();
     // The game as it was left (the main menu then plays its own
     // backdrop), and its save to compare with later.
@@ -1274,6 +1278,11 @@ fn a_planet_left_mid_game_carries_on() {
     assert!(!planet.exists(), "a save is read once");
     // The loaded game saves the bytes it was read from.
     assert!(back.game.as_mut().unwrap().save(&tag).unwrap() == left, "the resumed game saves the same bytes");
+    // The play time came back with the run, and a paused planet adds none.
+    back.step(0.1);
+    for r in [back.run.as_ref(), back.args.run.as_ref()] {
+        assert!((r.unwrap().played - played).abs() < 0.06, "{} against {played}", r.unwrap().played);
+    }
     // Another planet's save (planet 2 of the run) relands fresh: no
     // resume, the shop opens as before.
     back.save_planet();
