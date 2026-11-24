@@ -3096,6 +3096,41 @@ mod tests {
         assert!(fed.time() <= broke_at + fed.rules.origin.die_back + 2.0, "within the die-back: {:.1} s", fed.time() - broke_at);
     }
 
+    /// **The last stand gathers only up to twice the origin's size**
+    /// (`OriginRules::gather_most`, 11-24): Engine's siege met planet 7's
+    /// origin at 79,940 members against a size of 4,200, the late last
+    /// stand having taken every free walker on the map at once. Here an
+    /// origin of 150 in a race world of 4,000 walkers, set gathering once
+    /// it holds its size, holds more than its size and no more than a
+    /// little over twice it 20 s later.
+    #[test]
+    fn the_last_stand_gathers_the_origin_only_to_twice_its_size() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 4_000);
+        let s = race_settings(seed, scale, walkers);
+        let mut rules = Rules::default();
+        rules.origin.on = true;
+        rules.origin.size = 150.0;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
+        while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
+            g.step();
+        }
+        let before = members(&g);
+        let gathered_at = g.time();
+        g.stand.live.as_mut().expect("the origin formed").gather = true;
+        let mut most = 0;
+        while g.time() < gathered_at + 20.0 {
+            g.step();
+            most = most.max(members(&g));
+        }
+        let after = members(&g);
+        eprintln!("gather: {before} members at {gathered_at:.1} s, {after} 20 s later (most {most}), slime {}", g.mould);
+        assert!(g.mould > 2_000, "the slime is far bigger than the cap: {}", g.mould);
+        assert!(after as f32 > 1.3 * g.rules.origin.size, "it gathered more than its size: {after}");
+        assert!(most as f32 <= 2.3 * g.rules.origin.size, "but not the body: {most}");
+    }
+
     /// **A hit's hole stays open while it is fresh** (`crater_shut`,
     /// 2026-11-21, the Look lane's A2). Engine rule with no CPU twin, so
     /// the test is what it does on the software GPU: two race worlds
