@@ -184,9 +184,14 @@ until a run has ended, so the main page keeps its row count), filled by
 Stills: one sheet `assets/met-stills.png` (240x150 cells, `Canvas::still`,
 the canvas's `PICTURE` kind, binding 6), cut by `assets/met-stills.py`
 (its header has every film's command; `LARDER_FORCE` gained fruit, core,
-boss-KIND; `LARDER_HINTS=off` films without hint words). Weak stills to
-refilm when there is time: lunge, wake, scar (none shows its thing
-plainly).
+boss-KIND; `LARDER_HINTS=off` films without hint words). #838 merged it;
+the lunge, wake and scar stills were refilmed after (squad holding beside
+the heart; the scar is subtle, about 1% "on old scar" at 90 s). Direction's
+next list (20:47Z): 1 What is new caught up by day (`news_rows`,
+`day_name`, things to try beside the list over the note, a heading again
+on a page inside a day; done), 2 the pause card shows the planet's slime
+line, twist and goal, 3 own pick from the 4K menu films. The rescue
+planet's screens come to this lane first.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

@@ -23,11 +23,14 @@ words are in the picture):
 - stand: `run=1:4 hand=idle set=origin=0 LARDER_FORCE=stand@5
   centre=98,126,6 at=20`.
 - strikers: `run=1:2 hand=greedy centre=squad,5 at=100`.
-- lunge: `run=1:2 hand=greedy LARDER_FORCE=lunge@50 centre=squad,5 at=78`.
-- wake: `run=1:6 hand=idle boom=20,736,229,blast boom=21,740,232,blast
-  centre=736,229,6 at=25`.
-- scar: `run=1:7 hand=idle`, six `boom=T,120,520,blast` 5 s apart from 5 s,
-  `centre=120,520,6 at=40`.
+- lunge: `run=1:2 hand=hold@320,149 LARDER_FORCE=lunge@8
+  centre=340,149,5 at=34`: the heart's dark body reaching off its crystal
+  into the squad that holds beside it.
+- wake: `run=1:6 hand=hold@700,229 centre=736,229,6 at=35`: the squad
+  holding beside the heart wakes it, orange among the grey sleeping slime.
+- scar: `run=1:7 hand=hold@200,520 bank=3000 centre=150,520,6 at=90`: the
+  squad fights from the heart's edge for a minute and a half, and the arm
+  the slime sends at it runs pale and glossy where it grew back tough.
 """
 
 import os
@@ -52,10 +55,10 @@ CUTS = [
     ("fruit", "t-fruit/planet-3-1-idle-016s-near.png", None),
     ("core", "t-core/planet-2-1-idle-005s-near.png", None),
     ("wave", "t-wave/planet-3-1-greedy-070s-near.png", (320, 45, 960, 445)),
-    ("lunge", "t-lunge/planet-2-1-greedy-078s-near.png", None),
+    ("lunge", "r-lunge2/planet-2-1-hold@320,149-034s-near.png", (440, 180, 1000, 530)),
     ("stand", "t-stand/planet-4-1-idle-020s-near.png", (280, 160, 920, 560)),
-    ("wake", "t-wake/planet-6-1-idle-025s-near.png", None),
-    ("scar", "t-scar/planet-7-1-idle-040s-near.png", None),
+    ("wake", "r-wake1/planet-6-1-hold@700,229-035s-near.png", (150, 130, 950, 630)),
+    ("scar", "r-scar2/planet-7-1-hold@200,520-090s-near.png", (560, 180, 1200, 580)),
     ("boss-hunter", "b2-hunter/planet-3-1-idle-018s-near.png", None),
     ("boss-wanderer", "b2-wanderer/planet-3-1-idle-026s-near.png", None),
     ("boss-sapper", "b2-sapper/planet-3-1-idle-018s-near.png", None),
