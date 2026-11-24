@@ -2515,6 +2515,14 @@ fn mat_at(x: f32, y: f32) -> Mat {
 
 // The wide walker count under the last `shaded` point, for the specks' light.
 var<private> under_body: f32;
+// How much of a walker's speck light shows at the pixel `shaded` last
+// worked out: on a crystal's faces only where the slime's film lies there
+// (polish review 11-23, finding 14), else 1. Set in `shaded`'s crystal
+// block from what it already reads, so `base` reads no crystal itself: a
+// `gem_near` + `gem_in` + `film_th` in `base`'s speck light cost 1.5 ms a
+// frame on the 1070 at 4K (planet 8, the 4K thread, 11-24), the hot
+// path's registers, not the work.
+var<private> speck_gem: f32;
 
 // The shaded colour at world point (x, y); `e` is the slope's sample step.
 // ---- Soil materials (art lead, 11-14, review issue 7 on the planets) ----
@@ -3124,6 +3132,7 @@ fn bite_share(x: f32, y: f32) -> f32 {
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     var m = mat_at(x, y);
     under_body = m.body;
+    speck_gem = 1.0;
     // No wound is drawn (owner, 2026-11-12 04:38Z, on a blind A/B of the
     // old ember burn and a char where walkers died: "Neither. Both of
     // those look like stamps. Placed on the slime that fade"). A hit shows
@@ -3427,6 +3436,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let k = k1 - 1u;
         let gi = gem_in(k, x, y);
         let st = gem_state(k, x, y);
+        if (gi.x > 0.0) { speck_gem = smoothstep(0.005, 0.03, th_here); }
         let v = st.x;
         // Antialiased to a pixel: `zoom` pixels a cell. A spent husk's rim
         // crumbles in by noise (`GEM_CRUMBLE`), so it is a ring of broken
@@ -4488,6 +4498,7 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             let ta = terrain_at(fx, fy);
             let n = atomicExchange(&specks[y * P.stride + x], 0u);
             if (ta.cov >= 1.0) {
+                speck_gem = 1.0;
                 c = terrain_top(ta);
                 // The specks' light needs the body count only where a
                 // walker is.
@@ -4523,11 +4534,8 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             // (polish review 11-23, finding 14: the Sprawler's dashes ran
             // over the crystals like scratches). The crystal stands above
             // the ground the walkers cross; where their film lies on it,
-            // `shaded` already draws the slime over the faces.
-            if (lit > 0.0) {
-                let gk = gem_near(fx, fy);
-                if (gk > 0u && gem_in(gk - 1u, fx, fy).x > 0.0) { lit *= smoothstep(0.005, 0.03, film_th(fx, fy)); }
-            }
+            // `shaded` already draws the slime over the faces (`speck_gem`).
+            lit *= speck_gem;
             c = mix(c, select(vec3<f32>(255.0, 222.0, 130.0), THREAD_RGB, P.slime_look == 1u && P.streak > 0.0), lit * 0.92);
             // An absorbed walker's streak (`draw_absorbed`) takes its
             // warm-white outright, as the phases below do.
