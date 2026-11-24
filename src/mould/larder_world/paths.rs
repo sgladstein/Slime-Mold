@@ -1041,6 +1041,13 @@ impl<W: World> Game<W> {
     /// The share of full speed soldier `k` walks at: thick slime holds a
     /// soldier back (`Rules::wade`).
     pub fn wade(&self, k: usize) -> f32 {
+        // LAB (the rescue planet): the stranded, once found, are wounded
+        // and walk at their own pace, and a squad keeps to its slowest
+        // (`pace`), so bringing them home is a slow march.
+        self.lab_wound(k) * self.wade_slime(k)
+    }
+
+    fn wade_slime(&self, k: usize) -> f32 {
         if self.rules.wade > 0.0 {
             // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
             let x = self.soldiers[k].touching as f32 / self.rules.wade;

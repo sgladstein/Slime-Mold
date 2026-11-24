@@ -108,6 +108,57 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "pumps" {
         return pumps_hand(g);
     }
+    // LAB (the rescue planet, never merges): `rescue@X,Y[,T]` plays the
+    // greedy hand until game second T (0), then walks every soldier on free
+    // fire to the squad stranded at (X, Y) (`LAB_RESCUE`), and once it is
+    // reached walks everyone home to the larder.
+    if let Some(v) = hand.strip_prefix("rescue@").map(|p| p.split(',').filter_map(|v| v.parse::<f32>().ok()).collect::<Vec<f32>>()) {
+        if v.len() >= 2 {
+            let go = v.get(2).copied().unwrap_or(0.0).max(1.0);
+            if g.time() < go {
+                if v.len() > 2 {
+                    greedy_hand(g);
+                } else {
+                    while g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
+                        if !g.apply(Cmd::Buy) {
+                            break;
+                        }
+                    }
+                }
+                return;
+            }
+            let reached = g.lab_rescue.as_ref().is_some_and(|r| r.reached.is_some());
+            // Home as squads, so each keeps to its wounded's pace
+            // (`Game::pace`); one by one the fit ran ahead and left them.
+            if reached {
+                let l = g.larder;
+                let qs: Vec<usize> = (0..g.squads.len()).filter(|&q| g.soldiers.iter().any(|s| s.alive && s.squad as usize == q)).collect();
+                for q in qs {
+                    let going = g.squads[q].dest.is_some_and(|d| (d.0 - l.0).abs() < 0.5 && (d.1 - l.1).abs() < 0.5);
+                    if !going {
+                        g.apply(Cmd::SquadOrder(q as u8, Order::Move(l.0, l.1)));
+                    }
+                }
+                return;
+            }
+            let stranded: Vec<usize> = g.lab_rescue.as_ref().map(|r| r.members.clone()).unwrap_or_default();
+            let goal = if reached { g.larder } else { (v[0], v[1]) };
+            for k in 0..g.soldiers.len() {
+                if !g.soldiers[k].alive || (!reached && stranded.contains(&k)) {
+                    continue;
+                }
+                if g.soldiers[k].stance != Stance::Free {
+                    g.apply(Cmd::Stance(k, Stance::Free));
+                }
+                let far = (g.soldiers[k].x - goal.0).hypot(g.soldiers[k].y - goal.1) > 3.0 * g.world.scale();
+                let going = matches!(g.soldiers[k].order, Order::Move(x, y) if (x - goal.0).abs() < 0.5 && (y - goal.1).abs() < 0.5);
+                if far && !going {
+                    g.apply(Cmd::Order(k, Order::Move(goal.0, goal.1)));
+                }
+            }
+        }
+        return;
+    }
     // LAB (the crystal-bait prototype, never merges): `drain@X,Y` is
     // `hold@X,Y` that also drains the crystal at (X, Y) and spends the
     // income on soldiers, the other side of leaving it charged as bait.

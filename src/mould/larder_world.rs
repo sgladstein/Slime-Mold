@@ -78,6 +78,8 @@ mod doors;
 mod bulwark;
 mod fireway;
 mod gear;
+mod rescue;
+pub use rescue::LabRescue;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -496,6 +498,8 @@ pub struct Game<W: World> {
     pub mould: usize,
     /// The most walkers the mould has had at a count (`Rules::broken`).
     pub peak: usize,
+    /// LAB: the rescue planet (`LAB_RESCUE`, `rescue.rs`); never merges.
+    pub lab_rescue: Option<LabRescue>,
     /// **The match's curve** (2026-11-21, the owner after a planet 1 he
     /// beat down several times: "I would be curious to see slime
     /// population overtime after each match"): the walkers and the
@@ -751,6 +755,7 @@ impl<W: World> Game<W> {
             releases: 0,
             mould,
             peak: mould,
+            lab_rescue: None,
             curve: Vec::new(),
             broken: None,
             ceiling: Default::default(),

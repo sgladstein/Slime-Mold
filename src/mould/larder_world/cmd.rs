@@ -267,6 +267,9 @@ impl<W: World> Game<W> {
         self.finish_step();
         self.log.push((self.world.ticks(), c));
         match c {
+            // LAB (the rescue planet): the stranded squad is pinned down
+            // and takes no orders until a soldier of yours reaches it.
+            Cmd::Order(k, _) | Cmd::Queue(k, _) if self.lab_rescue.as_ref().is_some_and(|r| r.reached.is_none() && r.members.contains(&k)) => false,
             Cmd::Order(k, o) if k < self.soldiers.len() => {
                 self.soldiers[k].order = o;
                 self.soldiers[k].homing = false;

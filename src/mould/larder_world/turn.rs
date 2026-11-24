@@ -513,6 +513,7 @@ impl<W: World> Game<W> {
             self.costed("time_waves", |g| g.time_waves());
             self.costed("time_heart", |g| g.time_heart());
             self.costed("time_strikers", |g| g.time_strikers());
+            self.costed("lab_rescue", |g| g.time_lab_rescue());
             self.costed("time_cores", |g| g.time_cores());
             self.costed("time_starfall", |g| g.time_starfall());
             self.costed("time_origin", |g| g.time_origin());

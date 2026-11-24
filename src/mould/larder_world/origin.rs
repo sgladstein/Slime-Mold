@@ -249,13 +249,14 @@ impl<W: World> Game<W> {
     }
 
     /// The live soldier nearest the origin's crystal within its reach
-    /// (`OriginRules::near` past the crystal's rim).
+    /// (`OriginRules::near` past the crystal's rim) that the slime can
+    /// smell (LAB: not the hidden stranded squad).
     pub(super) fn origin_near(&self) -> Option<usize> {
         let sc = self.world.scale();
         let home = self.core;
         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
         let reach = cr + self.rules.origin.near * sc;
-        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).map(|k| (k, (self.soldiers[k].x - home.0).hypot(self.soldiers[k].y - home.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(k, _)| k)
+        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive && self.soldiers[k].smell > 0.0).map(|k| (k, (self.soldiers[k].x - home.0).hypot(self.soldiers[k].y - home.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(k, _)| k)
     }
 
     /// Whether soldier `k` stands within the origin's reach (`origin_near`'s
@@ -265,7 +266,10 @@ impl<W: World> Game<W> {
         let home = self.core;
         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
         let s = self.soldiers[k];
-        s.alive && (s.x - home.0).hypot(s.y - home.1) <= cr + self.rules.origin.near * sc
+        // LAB (the rescue planet): a soldier the slime cannot smell
+        // (smell 0, the hidden stranded squad) is not one it lunges at;
+        // without this the origin hunted them down in 2:20 from 50 cells.
+        s.alive && s.smell > 0.0 && (s.x - home.0).hypot(s.y - home.1) <= cr + self.rules.origin.near * sc
     }
 
     /// The origin breaks: its lump lets go, births stop and the slime's
