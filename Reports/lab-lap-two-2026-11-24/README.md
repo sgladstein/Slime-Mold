@@ -140,10 +140,75 @@ still be fair for a player's army, but it breaks the smoke rule. 10 and
 fired no shot), so it is untested here, not failed (the planet 2 and 6
 smoke tests above did show them). On 15 the mould count falls to 14k by
 1:00 with the Trunk's setting, likely because set walkers are not
-counted, not a free win; checked by eye only.
+counted, not a free win; checked by eye only. (Round two, below: they are
+counted, and the fall is real.)
+
+## Smoke checks, round two (added 11-24, Direction 14:26Z)
+
+Run seed 1, greedy squad of 11 unless named, 2:00, on the GTX 1070
+(Engine; `raw/pc-lap2-fix.ps1` and `raw/pc-lap2-fix2.ps1`, outputs beside
+them).
+
+**1. What wipes 12 and 15 alone: the strikers.** Each planet was played
+as it is and with one thing off: no mini-bosses (`set=boss_first=9999`),
+no tier trait, slow surges (`surge=2400`), no strikers (`set=strikers=0`).
+Every arm wipes inside a minute (12 at 49 to 55 s, 15 at 38 to 43 s)
+except no strikers, which lives to 2:00 with the squad grown to 24 on
+both. Lap one's planets 4 and 7 on the same hand never wipe (29 soldiers
+at 2:00). Why: a lap-two slime starts bigger than its crystals hold and
+sheds about half in its first 30 s (12: 126k to 69k; 15: 234k to 124k),
+which puts it under the strikers' trigger (60% of its peak, the peak
+taken at the start) within seconds, so they condense on the squad from
+the first contact. Lap one's slimes don't start oversized.
+
+| Planet, arm | 1:00 | 1:30 | End |
+|---|---|---|---|
+| 12, `strikers_below` 0.5 | | | wiped 0:51 |
+| 12, size 0.5 | | | wiped 0:50 |
+| 12, **`strikers_below` 0.45** | 8 soldiers | 13 soldiers, slime 67k | lives, 425 strikers taken |
+| 15, `strikers_below` 0.5 | | | wiped 0:41 |
+| 15, size 0.5 | | | wiped 0:58 |
+| 15, **`strikers_below` 0.45** | 5 soldiers | 8 soldiers, slime 10k | lives, 50 strikers taken |
+| 15 paired, size 0.5 | 10 soldiers, slime 41k | 6 soldiers, slime 37k | lives |
+
+**First number: `set=strikers_below=0.45` on lap two** (the default is
+0.6). Both planets then pass the smoke rule; 0.5 does not, nor does a
+smaller slime alone. The cleaner fix is for Enemy's: take the strikers'
+peak once the slime has settled (say from 30 s) rather than at the start,
+which would leave lap one alone and need no lap-two number. On 15 alone
+the slime still starves to 10k by 1:30 even so, as it does with strikers
+off (14k at 2:00): 15's crystals hold far less than 0.7 of the size rule.
+
+**2. Pump smell seen within a minute: on 14, at 40.** The pump placed at
+the Sleeper's edge (645,234), squad idle:
+
+| Planet 14 | Pump | Harvested |
+|---|---|---|
+| base | still standing at 1:30 | 582 |
+| `pump_smell` 20 | worn down by 1:30 | 232 |
+| **`pump_smell` 40** | hp 74 of 200 at 0:30, 0 at 0:45, worn down by 1:00 | 232 |
+
+At 40 the sleeping slime gets up and takes the pump inside 45 s, where
+without it the pump works on to 1:30. `raw/pairs.txt` now has 14 at 40
+with the pump there. **Planet 10 shows nothing either way**: the
+Sprawler's threads take a pump inside the threads (275,340) by 1:00 and
+one outside them (214,680) by 0:30, with and without pump smell, the
+same harvest each time. Pump smell is redundant on the Sprawler; 10
+needs a different second trait.
+
+**3. Planet 15's count is honest.** Set walkers stay in the count: the
+engine's `count` pass (`engine.wgsl`) counts every slot with energy and a
+life state other than dead, and setting is a mark on the cell, not a life
+state. The life rows agree (`LAB_DUMP_LIFE`, paired, sec / walker /
+spore / dormant / dead): 1 242,393 0 0 0; 30 105,913 399 0 0; 60 16,333 0
+0 0; 119 15,944 0 0 0. The slime really starves to 16k, so the goal line's
+count needs no change; at 0.7 the paired 15 is close to a free win. At
+size 0.5 the paired slime holds about 37 to 41k through 1:30 and the
+squad lives, so **0.5 is 15's first size** where it is paired. Not run:
+15 alone at size 0.5 with `strikers_below` 0.45 together.
 
 ## Raw
 
 `raw/pairs.txt` (planet, base, hand, keys), `raw/run2.sh` (the fourteen),
 `raw/run3.sh` (the retests), `raw/m2.py` (the counts from logs and dumps),
-`raw/nap.txt` (the Sleeper's keys), `raw/rig9.sh` (planet 9's rig), `raw/rig.sh` (any of 9 to 15), `raw/pc-size9.ps1` and `raw/pc-lap2-smoke.ps1` (the PC batches) with their outputs.
+`raw/nap.txt` (the Sleeper's keys), `raw/rig9.sh` (planet 9's rig), `raw/rig.sh` (any of 9 to 15), `raw/pc-size9.ps1`, `raw/pc-lap2-smoke.ps1`, `raw/pc-lap2-fix.ps1` and `raw/pc-lap2-fix2.ps1` (the PC batches) with their outputs (the fix batch's is Engine's summary; its logs stay on Scott's PC).

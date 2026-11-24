@@ -1,0 +1,93 @@
+# pc-lap2-fix2.ps1 on the GTX 1070 (Engine, 2026-11-24 15:33Z), at 030d6ab, verbatim.
+Engine → Lab: fix2 is done on Scott's PC. 10 of 10 games ran one after another, all with exit 0 and an empty stderr. The clone was at 030d6ab with no rebuild (the exe was reused, since only the script changed since 6ba5fe62). Wall time was 5.0 min. The files are in C:\Users\Scott\Code\pc-batch-out\lab-lap2-fix2-20261124: one folder per game, each with log.txt and 12 PNGs, and no dumps. The printed output follows verbatim (checked against the file: 0 differences).
+
+== D12_below45 (39 s wall)
+    t 1 s: mould 125643, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 69144, soldiers 11, bank 200, harvested 0, shots 24, killed 44, crystals left 1.000
+    t 45 s: mould 64669, soldiers 11, bank 226, harvested 426, shots 263, killed 9451, crystals left 0.990
+    t 60 s: mould 62662, soldiers 8, bank 281, harvested 1281, shots 515, killed 14101, crystals left 0.969
+    t 90 s: mould 67306, soldiers 13, bank 129, harvested 3129, shots 634, killed 14198, crystals left 0.923
+    bossfell 0; formed: boss t 48.0 s: Crowd mortar formed on lump 1 at 131,145 (crowd top 1.0 | boss t 82.0 s: Crowd mortar formed on lump 2 at 415,451 (crowd top 1.0
+    last strikers:   strikers t 120 s: 0 condensed holding 0, 425 taken in all, slime 70781 of peak 145664, squad at 522,377
+    pumps: 
+== D12_below50 (25 s wall)
+    t 1 s: mould 125643, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 69083, soldiers 11, bank 200, harvested 0, shots 65, killed 82, crystals left 1.000
+    t 45 s: mould 64270, soldiers 9, bank 155, harvested 355, shots 332, killed 9049, crystals left 0.991
+    t 51 s: mould 63367, soldiers 0, bank 348, harvested 548, shots 392, killed 11006, crystals left 0.987, ended: squad wiped
+    t 51 s: mould 63367, soldiers 0, bank 348, harvested 548, shots 392, killed 11006, crystals left 0.987, ended: squad wiped
+    bossfell 0; formed: boss t 48.0 s: Crowd mortar formed on lump 1 at 159,145 (crowd top 1.0
+    last strikers:   strikers t 51 s: 129 condensed holding 92, 1168 taken in all, slime 63367 of peak 145664, squad at 512,405
+    pumps: 
+== D12_size50 (20 s wall)
+    t 1 s: mould 99306, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 61226, soldiers 11, bank 200, harvested 0, shots 32, killed 34, crystals left 1.000
+    t 45 s: mould 56630, soldiers 8, bank 163, harvested 363, shots 295, killed 9170, crystals left 0.991
+    t 50 s: mould 56468, soldiers 0, bank 270, harvested 470, shots 328, killed 10306, crystals left 0.988, ended: squad wiped
+    t 50 s: mould 56468, soldiers 0, bank 270, harvested 470, shots 328, killed 10306, crystals left 0.988, ended: squad wiped
+    bossfell 0; formed: boss t 48.0 s: Crowd mortar formed on lump 1 at 665,141 (crowd top 1.0
+    last strikers:   strikers t 50 s: 193 condensed holding 177, 987 taken in all, slime 56468 of peak 112765, squad at 540,384
+    pumps: 
+== D15_below45 (31 s wall)
+    t 1 s: mould 233684, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 124416, soldiers 10, bank 200, harvested 0, shots 80, killed 11486, crystals left 1.000
+    t 45 s: mould 71449, soldiers 5, bank 179, harvested 379, shots 264, killed 29701, crystals left 0.988
+    t 60 s: mould 27354, soldiers 5, bank 199, harvested 799, shots 386, killed 35404, crystals left 0.975
+    t 90 s: mould 10381, soldiers 8, bank 121, harvested 1921, shots 416, killed 35422, crystals left 0.940
+    bossfell 0; formed: boss t 3.0 s: Cut wanderer formed on lump 1 at 372,113 (crowd top 0.00 | boss t 3.0 s: Cut wanderer formed on lump 2 at 928,410 (crowd top 0.00 | boss t 102.0 s: Crowd mortar formed on lump 1 at 491,171 (crowd top 24 | boss t 105.0 s: Cut hunter formed on lump 1 at 56,432 (crowd top 24.28 | boss t 110.0 s: Cut hunter formed on lump 1 at 372,113 (crowd top 24.2 | boss t 118.0 s: Cut hunter formed on lump 1 at 928,410 (crowd top 24.2
+    last strikers:   strikers t 120 s: 0 condensed holding 0, 50 taken in all, slime 18603 of peak 234865, squad at 545,142
+    pumps: 
+== D15_below50 (20 s wall)
+    t 1 s: mould 233684, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 124416, soldiers 10, bank 200, harvested 0, shots 80, killed 11486, crystals left 1.000
+    t 41 s: mould 86334, soldiers 0, bank 405, harvested 205, shots 209, killed 27692, crystals left 0.994, ended: squad wiped
+    t 41 s: mould 86334, soldiers 0, bank 405, harvested 205, shots 209, killed 27692, crystals left 0.994, ended: squad wiped
+    t 41 s: mould 86334, soldiers 0, bank 405, harvested 205, shots 209, killed 27692, crystals left 0.994, ended: squad wiped
+    bossfell 0; formed: boss t 3.0 s: Cut wanderer formed on lump 1 at 372,113 (crowd top 0.00 | boss t 3.0 s: Cut wanderer formed on lump 2 at 928,410 (crowd top 0.00
+    last strikers:   strikers t 40 s: 42 condensed holding 24, 457 taken in all, slime 86334 of peak 234865, squad at 567,142
+    pumps: 
+== D15_size50 (19 s wall)
+    t 1 s: mould 77450, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 41157, soldiers 11, bank 200, harvested 0, shots 40, killed 96, crystals left 1.000
+    t 45 s: mould 36285, soldiers 7, bank 328, harvested 528, shots 294, killed 8668, crystals left 0.984
+    t 58 s: mould 34108, soldiers 0, bank 255, harvested 855, shots 395, killed 11661, crystals left 0.973, ended: squad wiped
+    t 58 s: mould 34108, soldiers 0, bank 255, harvested 855, shots 395, killed 11661, crystals left 0.973, ended: squad wiped
+    bossfell 0; formed: boss t 44.0 s: Crowd hunter formed on lump 1 at 687,575 (crowd top 1.0
+    last strikers:   strikers t 58 s: 142 condensed holding 114, 1006 taken in all, slime 34108 of peak 89364, squad at 542,170
+    pumps: 
+== D15_pair_size50 (46 s wall)
+    t 1 s: mould 78373, soldiers 11, bank 200, harvested 0, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 41983, soldiers 11, bank 200, harvested 0, shots 58, killed 132, crystals left 1.000
+    t 45 s: mould 41465, soldiers 10, bank 200, harvested 0, shots 120, killed 1212, crystals left 1.000
+    t 60 s: mould 40969, soldiers 10, bank 200, harvested 0, shots 199, killed 2362, crystals left 1.000
+    t 90 s: mould 37234, soldiers 6, bank 145, harvested 745, shots 461, killed 9353, crystals left 0.977
+    bossfell 0; formed: boss t 44.0 s: Crowd hunter formed on lump 1 at 143,489 (crowd top 1.0 | boss t 83.0 s: Crowd hunter formed on lump 2 at 643,405 (crowd top 1.0
+    last strikers:   strikers t 120 s: 181 condensed holding 163, 1004 taken in all, slime 37901 of peak 90359, squad at 562,144
+    pumps: 
+== E10_base (34 s wall)
+    t 1 s: mould 62842, soldiers 4, bank 3022, harvested 22, shots 8, killed 10, crystals left 1.000
+    t 30 s: mould 72313, soldiers 4, bank 3249, harvested 249, shots 147, killed 117, crystals left 1.000
+    t 45 s: mould 77231, soldiers 4, bank 3249, harvested 249, shots 232, killed 209, crystals left 1.000
+    t 60 s: mould 81206, soldiers 4, bank 3249, harvested 249, shots 332, killed 286, crystals left 1.000
+    t 90 s: mould 92634, soldiers 4, bank 3249, harvested 249, shots 542, killed 760, crystals left 1.000
+    bossfell 0; formed: boss t 17.0 s: Cut wanderer formed on lump 1 at 864,106 (crowd top 0.0 | boss t 24.0 s: Cut wanderer formed on lump 2 at 1135,683 (crowd top 0. | boss t 120.0 s: Cut pinwheel formed on lump 1 at 793,450 (crowd top 0.
+    last strikers: 
+    pumps: pump at (214, 680): hp 182 / 200, built 1.0, standing, working | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down
+== E10_pair (33 s wall)
+    t 1 s: mould 62833, soldiers 4, bank 3022, harvested 22, shots 8, killed 10, crystals left 1.000
+    t 30 s: mould 70991, soldiers 4, bank 3249, harvested 249, shots 152, killed 114, crystals left 1.000
+    t 45 s: mould 76603, soldiers 4, bank 3249, harvested 249, shots 235, killed 213, crystals left 1.000
+    t 60 s: mould 81780, soldiers 4, bank 3249, harvested 249, shots 321, killed 295, crystals left 1.000
+    t 90 s: mould 91206, soldiers 4, bank 3249, harvested 249, shots 469, killed 611, crystals left 1.000
+    bossfell 0; formed: boss t 18.0 s: Cut wanderer formed on lump 1 at 793,449 (crowd top 0.0 | boss t 25.0 s: Cut wanderer formed on lump 2 at 335,477 (crowd top 0.0 | boss t 40.0 s: Cut pinwheel formed on lump 2 at 333,468 (crowd top 0.0 | boss t 43.0 s: Cut hunter formed on lump 2 at 1149,600 (crowd top 0.00 | boss t 120.0 s: Cut wanderer formed on lump 1 at 1149,600 (crowd top 0
+    last strikers: 
+    pumps: pump at (214, 680): hp 182 / 200, built 1.0, standing, working | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down | pump at (214, 680): hp 0 / 200, built 1.0, worn down
+== E14_pair40 (34 s wall)
+    t 1 s: mould 284208, soldiers 4, bank 3005, harvested 5, shots 0, killed 0, crystals left 1.000
+    t 30 s: mould 281011, soldiers 4, bank 3154, harvested 154, shots 0, killed 0, crystals left 1.000
+    t 45 s: mould 273318, soldiers 4, bank 3231, harvested 231, shots 0, killed 0, crystals left 1.000
+    t 60 s: mould 266026, soldiers 4, bank 3232, harvested 232, shots 0, killed 0, crystals left 1.000
+    t 90 s: mould 258472, soldiers 4, bank 3232, harvested 232, shots 0, killed 0, crystals left 1.000
+    bossfell 0; formed: boss t 51.0 s: Crowd mortar formed on lump 1 at 627,681 (crowd top 2.7 | boss t 86.0 s: Crowd pinwheel formed on lump 1 at 575,183 (crowd top 2
+    last strikers: 
+    pumps: pump at (645, 234): hp 200 / 200, built 1.0, standing, working | pump at (645, 234): hp 74 / 200, built 1.0, standing, working | pump at (645, 234): hp 0 / 200, built 1.0, standing, working | pump at (645, 234): hp 0 / 200, built 1.0, worn down | pump at (645, 234): hp 0 / 200, built 1.0, worn down | pump at (645, 234): hp 0 / 200, built 1.0, worn down
