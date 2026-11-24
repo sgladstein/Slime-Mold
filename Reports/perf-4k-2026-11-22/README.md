@@ -148,3 +148,13 @@ overlapping). Frame p50 / p95 ms, every frame and frames with a game step:
   p95 16.7 over every frame and 18.8 over frames with a step, still at 50%
   for the first 90 s (about a frame in twenty late). It now judges by the
   95th (`autodetail::PCT`), which ignores up to three hitches a second.
+- Main with all of it (68402e8b), Auto: planet 8 p50 14.0, p95 17.0
+  (step frames 17.6); planet 3 (`strat:rush`) 11.5 / 12.7. On planet 8
+  Auto retried 50% every 19 s and each try ran slow 6 to 15 s later, past
+  the 3 s that counted as a failed try, so the wait never doubled. A try
+  now counts as failed for 20 s (`PROBE_SECS`). With it (#814): p95 16.8,
+  step frames 16.9, six changes in 150 s; planet 5 holds 50% at 14.2 /
+  15.1. Direction (11-24): test 5 is judged at Auto, so Auto now also
+  learns what the step above costs (the median frame before the step
+  down less the one after, at most 6 ms) and tries it only when this
+  step's 95th-percentile frame has room for it, or after `HOLD_MAX`.

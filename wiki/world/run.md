@@ -480,6 +480,20 @@ compile until it is listed. Tests: `a_planet_saved_mid_game_loads_as_it_was`
 (the same bytes after a load, and after both play on) and
 `a_planet_left_mid_game_carries_on` (the window's round trip).
 
+**Past runs** (Direction, 2026-11-24): each run that ends (won, lost, or
+given up from the shop) is added to `runs.txt` beside `run.txt`, a block of
+`key=value` lines a run, oldest first (the window's `runs.rs`). It keeps the
+date (UTC), the seed, how it ended and on which planet, the play time, each
+planet's name, slime, stars and time, a sentence on what ended it (for a
+wiped squad, what its soldiers fell to: the slime's touch, fire, a falling
+star, their own blasts), and the guns, cards, device bodies and relics held.
+Each planet's time comes from `Run::splits`, `played` as each planet ended,
+saved in `run.txt`. The main menu's **Past runs** row (shown once a run has
+ended) opens the list, newest first, with the best time on each planet
+(the fastest win with a star; a dev skip is not a time). Films:
+`menu=runs`, `menu=main-runs`. Tests: `a_run_keeps_each_planets_time`,
+`ended_runs_read_back`, `a_given_up_run_is_kept_for_past_runs`.
+
 ## The gun range
 
 Gun range on the start menu, or `range=SEED`, uses a run

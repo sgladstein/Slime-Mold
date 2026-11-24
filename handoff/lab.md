@@ -205,5 +205,10 @@ A second slime species that fights the first; the player's own mould
   9 at 0.7 of the size rule (run bot on the 1070 against planet 8),
   `raw/rig.sh` for 9 to 15, smoke tests (12 and 15 end under 1:00 for
   greedy; 10 and 14's pump smell unseen).
+- 2026-11-24: **lap two's smoke checks, round two** (Direction 14:26Z),
+  a section in the lap-two report. Strikers wipe 12 and 15 (the oversized
+  start trips their 60% trigger); first number `strikers_below` 0.45 on
+  lap two. Pump smell 40 takes 14's edge pump in 45 s; it is redundant on
+  10. Set walkers are counted; paired 15's first size is 0.5.
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.

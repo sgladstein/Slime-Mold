@@ -1434,6 +1434,11 @@ pub struct Run {
     /// the real time it took. The window adds it up (`App::count_played`);
     /// saved in `run.txt`, so a quit mid-planet keeps it.
     pub played: f32,
+    /// `played` as each planet ended (won, lost or skipped), from planet 1;
+    /// below zero where it is unknown (a save from before these, 11-24).
+    /// The Runs page's time on each planet (`planet_secs`) and best
+    /// times per planet (Direction 11-24).
+    pub splits: Vec<f32>,
 }
 
 /// The depth the gun range rolls its guns and bullets for at first.
@@ -1460,7 +1465,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0 }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0, splits: Vec::new() }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -2305,6 +2310,7 @@ impl Run {
     /// The current level was won with `stars` (1-3): its points, the next
     /// depth, and a fresh shop. Winning the last planet wins the run.
     pub fn won(&mut self, stars: u8) {
+        self.split();
         self.points += reward(self.depth, stars);
         self.stars.push(stars);
         if self.depth >= PLANETS {
@@ -2343,11 +2349,29 @@ impl Run {
         if self.over || self.range || self.field || self.depth >= PLANETS {
             return false;
         }
+        self.split();
         self.points += skip_pay(self.depth);
         self.stars.push(0);
         self.depth += 1;
         self.next_shop();
         true
+    }
+
+    /// The current planet's end in `splits`: those before it it lacks
+    /// marked unknown, then the play time now.
+    fn split(&mut self) {
+        let at = self.depth.saturating_sub(1) as usize;
+        self.splits.resize(at, -1.0);
+        self.splits.push(self.played);
+    }
+
+    /// Real seconds played on planet `depth` (from 1), when both its end
+    /// and the one before are known (`splits`).
+    pub fn planet_secs(&self, depth: u32) -> Option<f32> {
+        let i = (depth as usize).checked_sub(1)?;
+        let end = *self.splits.get(i).filter(|t| **t >= 0.0)?;
+        let start = if i == 0 { 0.0 } else { *self.splits.get(i - 1).filter(|t| **t >= 0.0)? };
+        Some((end - start).max(0.0))
     }
 
     /// The run ended on the home world's defeat.
@@ -2357,6 +2381,7 @@ impl Run {
 
     /// The current level was lost: the run is over.
     pub fn lost(&mut self) {
+        self.split();
         self.over = true;
         self.beaten = true;
     }
@@ -2814,6 +2839,7 @@ impl Run {
         put("relics", self.relics.iter().map(|r| r.key()).collect::<Vec<_>>().join(" "));
         put("relic_offer", self.relic_offer.map_or("", |r| r.key()).to_string());
         put("played", format!("{:.1}", self.played));
+        put("splits", self.splits.iter().map(|t| format!("{t:.1}")).collect::<Vec<_>>().join(" "));
         s
     }
 
@@ -2894,6 +2920,8 @@ impl Run {
         r.relic_offer = get("relic_offer").and_then(Relic::of_key);
         // A save from before 11-24 has none: its time so far is unknown.
         r.played = get("played").and_then(|v| v.parse::<f32>().ok()).filter(|v| v.is_finite() && *v >= 0.0).unwrap_or(0.0);
+        // (One unreadable reads as unknown, so the rest keep their planets.)
+        r.splits = list("splits").into_iter().map(|v| v.parse::<f32>().ok().filter(|t| t.is_finite()).unwrap_or(-1.0)).collect();
         Ok(r)
     }
 }
@@ -3749,6 +3777,29 @@ mod tests {
         assert!(Run::from_save(&format!("{SAVE_HEAD}\nseed=1\ndepth=99\n")).is_err());
         let bare = Run::from_save(&format!("{SAVE_HEAD}\nseed=4\ndepth=2\n")).unwrap();
         assert_eq!((bare.seed, bare.depth, bare.guns.clone(), bare.loadouts.len()), (4, 2, vec![first_gun()], 2));
+    }
+
+    /// Each planet's time (the Runs page, 11-24): won, skipped and lost
+    /// planets each end a split; a save without them reads as unknown, and
+    /// a planet after an unknown one is unknown too.
+    #[test]
+    fn a_run_keeps_each_planets_time() {
+        let mut r = Run::new(3);
+        r.played = 300.0;
+        r.won(2);
+        r.played = 300.0;
+        assert!(r.skip());
+        r.played = 750.5;
+        r.lost();
+        assert_eq!(r.splits, vec![300.0, 300.0, 750.5]);
+        assert_eq!((r.planet_secs(1), r.planet_secs(2), r.planet_secs(3), r.planet_secs(4)), (Some(300.0), Some(0.0), Some(450.5), None));
+        let back = Run::from_save(&r.save_text()).unwrap();
+        assert_eq!(back.splits, r.splits);
+        // From an older save on planet 3: its first two unknown.
+        let mut old = Run::from_save(&format!("{SAVE_HEAD}\nseed=4\ndepth=3\nplayed=900\n")).unwrap();
+        old.won(1);
+        assert_eq!(old.splits, vec![-1.0, -1.0, 900.0]);
+        assert_eq!((old.planet_secs(2), old.planet_secs(3)), (None, None));
     }
 
     #[test]

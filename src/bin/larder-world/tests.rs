@@ -2442,3 +2442,39 @@ fn a_runs_bodies_read_in_the_fight() {
     let g = m.commands.iter().find(|c| c.name == "Grenade").unwrap();
     assert!(g.ready && g.about.contains("carries"), "{}", g.about);
 }
+
+/// A run given up from the shop is kept in `runs.txt` beside the run's
+/// save (the Past runs page, Direction 11-24), at the top of the menu's
+/// list, and a new window reads it back.
+#[test]
+fn a_given_up_run_is_kept_for_past_runs() {
+    use slime_mould::world::start::{Page, StartEvent};
+    let Some((device, queue)) = gpu() else { return };
+    let dir = std::env::temp_dir().join(format!("larder-past-runs-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let base = run_base();
+    let window = || {
+        let mut app = offscreen(base.clone(), (1280, 720), &device, &queue).unwrap();
+        app.base = Some((base.clone(), true));
+        app.run_file = Some(dir.join("run.txt"));
+        app.menu = Some(start_menu(&base));
+        app
+    };
+    let mut app = window();
+    let mut r = Run::new(5);
+    r.played = 600.0;
+    r.won(2);
+    r.played = 650.0;
+    app.run = Some(r);
+    app.menu.as_mut().unwrap().show(Page::Shop);
+    app.menu_event(StartEvent::EndRun).unwrap();
+    let kept = &app.menu.as_ref().unwrap().runs;
+    assert_eq!(kept.len(), 1);
+    let k = &kept[0];
+    assert_eq!((k.end.as_str(), k.depth, k.played, k.freed(), k.planets[0].secs, k.planets[1].secs), ("given up", 2, 650.0, 1, Some(600.0), None));
+    let mut back = window();
+    back.load_run();
+    assert_eq!(back.menu.as_ref().unwrap().runs, app.menu.as_ref().unwrap().runs);
+    let _ = std::fs::remove_dir_all(&dir);
+}
