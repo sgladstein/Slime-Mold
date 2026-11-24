@@ -2,6 +2,12 @@
 
 ## State (2026-11-20)
 
+**11-24, squad marks, polish finding 5:** soldiers' bars only under
+`BAR_HP` 0.7 or for `HURT_BAR` 2 s after any hurt (`Look::hit`, set in
+`headless.rs`'s note step: Engine's files, told through the coordinator),
+crossing group rings merged (`ring_groups`' last pass, `enclose`), the
+squad number on `Marks::plate`. Still:
+`Reports/pr-stills/squad-marks-2026-11-24.png`.
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
 spent husk is low, rock-dark and crumbled (`gem_crumb`, also in the cast

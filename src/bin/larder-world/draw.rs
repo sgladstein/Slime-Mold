@@ -681,7 +681,13 @@ impl App {
                         }
                         (x, top)
                     });
-                    self.marks.label((x, top), (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
+                    // On a small dark plate (polish review 11-23, finding
+                    // 5: bare, the number sat on the selection ring's line
+                    // and read as part of it).
+                    let scale = if lit { 2.0 } else { 1.5 };
+                    let off = (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0));
+                    self.marks.plate((x, top), off, &label, scale, LABEL_PLATE);
+                    self.marks.label((x, top), off, &label, scale, colour);
                 }
             }
         }
@@ -1599,12 +1605,14 @@ impl App {
             self.marks.doze_since(n, doze_tint(s.doze, g.rules.doze), g.dozing(k));
         }
         // The bars after every figure, so a neighbour never hides one.
-        for s in &g.soldiers {
-            if s.alive {
-                // Health only when hurt (art direction rule 6).
+        for (k, s) in g.soldiers.iter().enumerate() {
+            let hp = s.hp / g.rules.hp;
+            let hit = self.looks.get(k).is_some_and(|l| l.hit > 0.0);
+            if s.alive && (hp < BAR_HP || hit) {
+                // Health only when low or just hurt (art direction rule 6;
+                // `HURT_BAR`, `BAR_HP`).
                 let below = (r * zoom * 0.9).max(2.0) + 5.0;
-                self.marks.health((s.x, s.y), below, s.hp / g.rules.hp);
-
+                self.marks.health((s.x, s.y), below, hp);
             }
         }
         for (at, below, half, fill, colour, back) in over_bars {
@@ -2904,6 +2912,9 @@ const LABEL_LINK: f32 = 4.0;
 /// Half the width of the column over that soldier whose soldiers the
 /// number clears, in dish cells.
 const LABEL_COLUMN: f32 = 1.5;
+/// The plate under a squad's number (`Marks::plate`): near-black, a
+/// little of the world through it.
+const LABEL_PLATE: [u8; 4] = [14, 18, 24, 190];
 
 /// Soldier `k`'s landing `since` game seconds after the landing, `r` its
 /// body radius: how far up it is drawn (world cells), its size's factor,
