@@ -319,6 +319,16 @@ pub(super) struct Plan {
     /// **Storm on the clock**: the siege also starts `clock` seconds after
     /// the landing once the squad holds `STORM_ARMY`, whatever the slime's
     /// size (the same games: a slime that grows never storms). 0: off.
+    /// On by default at 480 since batch w (1070, 72a8f01, planets 2 and 4
+    /// to 7 on the owner's three maps and run seeds 1 to 3, 30 games an
+    /// arm): wins 14 (as it was), 16 (`army=80`), 24 (`clock=480`).
+    /// Against as it was, `clock=480` won 10 games it did not and lost
+    /// none it won (sign test p 0.002); 6 of the 10 were decided after
+    /// 8:00 (planet 7 map A and seed 1, planet 6 seed 2, planet 5 map A
+    /// and seeds 1 and 3), the other 4 before it, where the arms play the
+    /// same code, so they are the 1070's run-to-run spread (6 against 0,
+    /// p 0.03). `army=80` stays off: its 2 extra wins and 1 loss are
+    /// mostly games that never held 80.
     pub clock: f32,
 }
 
@@ -382,7 +392,7 @@ impl Default for Plan {
             brace: 0,
             storm: 0.5,
             army: 0,
-            clock: 0.0,
+            clock: 480.0,
         }
     }
 }
