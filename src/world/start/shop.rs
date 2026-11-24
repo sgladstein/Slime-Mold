@@ -253,6 +253,11 @@ fn hand(n: usize, area: Rect, g: f32, s: f32) -> Option<(f32, f32, f32, f32)> {
 /// crystal as a cyan hexagon its size (at least a few pixels), each start
 /// of the slime as an amber blot with a glow, the landing as a white ring.
 fn glance(c: &mut Canvas, g: &Glance, r: Rect, s: f32) -> f32 {
+    draw_glance(c, g, r, s)
+}
+
+/// `glance` for the other pages (the campaign's note, 11-24).
+pub(super) fn draw_glance(c: &mut Canvas, g: &Glance, r: Rect, s: f32) -> f32 {
     c.shadow(r, 6.0 * s, 10.0 * s, 2.0 * s, [0, 0, 0, 120]);
     // Each cell as 2 x 2 quarters, each the blend of the cells round its
     // centre (bilinear): the 64-cell mosaic read as blocks (polish review
@@ -1249,7 +1254,8 @@ impl StartMenu {
         // 72 → 144", the tick where the gun is now). Every row of the gun
         // on every card read the same on most of them (polish review
         // finding 8, 11-24: Delay and Tinder showed five identical rows).
-        let own = row.area == ShopArea::Cards && !row.bars.is_empty();
+        // (A device body's rolls too, on the Tools tab, 11-24.)
+        let own = (row.area == ShopArea::Cards || row.group == "Tools") && !row.bars.is_empty();
         let changed: Vec<(String, f32, String)> = if !own && row.bars.is_empty() && !mine.is_empty() {
             row.stats
                 .iter()

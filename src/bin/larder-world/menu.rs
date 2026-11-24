@@ -276,7 +276,12 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
 pub(super) fn start_menu(base: &Args) -> StartMenu {
     let entries = missions()
         .into_iter()
-        .map(|(stem, m)| Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says })
+        .map(|(stem, m)| {
+            // Its map small in the note (second polish pass, 11-24).
+            let dir = slime_mould::build::root().join("Reports/larder-maps-2026-11-11/maps");
+            let glance = slime_mould::mould::map::Map::load(&dir, &m.map).ok().map(|mp| glance_from(&mp, 96));
+            Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says, glance }
+        })
         .collect();
     let mut menu = StartMenu::new(slime_mould::world::GAME_NAME, entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
@@ -402,6 +407,24 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     let max = run::ITEMS.iter().find(|i| i.key == key).map_or(1, |i| i.max);
                     s.level = (r.level_of(key), max);
                     s.bars = item_bars(key, s.level.0);
+                    // A device body (gun step E3, 11-24): its kind as the
+                    // name and its four rolls as bars, as a gun's are
+                    // (second polish pass, Direction 08:41Z: the rolls
+                    // were packed into a title the card cut off). An
+                    // offer of a kind the run owns shows each roll as the
+                    // owned one's and then its own.
+                    let body = match row.pick {
+                        Pick::Body(i) => r.body_offers.get(i).map(|b| (b, r.body_of(b.kind).and_then(|j| r.bodies.get(j)))),
+                        Pick::CarryBody(i) => r.bodies.get(i).map(|b| (b, None)),
+                        _ => None,
+                    };
+                    if let Some((b, mine)) = body {
+                        s.name = b.kind.name().to_string();
+                        s.level = (0, 0);
+                        s.bars = body_bars(b, mine);
+                        // ("laid along a drag; ..." followed the title.)
+                        s.about = draw::capital(&s.about);
+                    }
                 }
                 Face::Card(c) => {
                     let (icon, kind, words) = draw::card_face(c, &rr, &rules);
@@ -759,6 +782,35 @@ fn item_bars(key: &str, level: u8) -> Vec<(String, f32, String)> {
 
 /// A gun's numbers as the shop's bars, each against about the best a run
 /// finds.
+/// A device body's rolls as bars (second polish pass, 11-24): reach,
+/// cooldown (shorter fills more), card slots and budget, each filled across
+/// its roll's range (`bodies::REACH` and the rest); with `mine`, the body
+/// of that kind the run owns, each value reads as its then this one's.
+fn body_bars(b: &slime_mould::mould::bodies::Body, mine: Option<&slime_mould::mould::bodies::Body>) -> Vec<(String, f32, String)> {
+    use slime_mould::mould::bodies::{Body, BUDGET, COOL, REACH, SLOTS};
+    let span = |v: f32, lo: f32, hi: f32| (0.15 + 0.85 * (v - lo) / (hi - lo)).clamp(0.0, 1.0);
+    let rows = |b: &Body| {
+        [
+            ("Reach", span(b.reach, REACH.0, REACH.1), format!("{:.0}", b.reach)),
+            ("Cooldown", span(COOL.1 - b.cool, 0.0, COOL.1 - COOL.0), format!("{:.0}%", 100.0 * b.cool)),
+            ("Card slots", span(b.slots as f32, SLOTS.0 as f32, SLOTS.1 as f32), b.slots.to_string()),
+            ("Budget", span(b.budget as f32, BUDGET.0 as f32, BUDGET.1 as f32), b.budget.to_string()),
+        ]
+    };
+    let was = mine.map(rows);
+    rows(b)
+        .into_iter()
+        .enumerate()
+        .map(|(k, (l, f, v))| {
+            let v = match &was {
+                Some(w) if w[k].2 != v => format!("{} \u{2192} {v}", w[k].2),
+                _ => v,
+            };
+            (l.to_string(), f, v)
+        })
+        .collect()
+}
+
 fn gun_bars(g: &slime_mould::mould::guns::Gun) -> Vec<(String, f32, String)> {
     let mut b = vec![
         ("Range".to_string(), g.range / 48.0, format!("{:.0}", g.range)),
@@ -1537,3 +1589,26 @@ mod glance_tests {
     }
 }
 
+
+#[cfg(test)]
+mod body_bar_tests {
+    use super::body_bars;
+    use slime_mould::mould::bodies::{Body, BodyKind};
+
+    /// A device body's rolls read as four bars, an offer of an owned kind
+    /// as the owned one's value then its own (second polish pass, 11-24).
+    #[test]
+    fn a_body_reads_as_four_bars() {
+        let plain = Body::plain(BodyKind::Grenade);
+        let b = body_bars(&plain, None);
+        assert_eq!(b.iter().map(|x| x.0.as_str()).collect::<Vec<_>>(), ["Reach", "Cooldown", "Card slots", "Budget"]);
+        assert_eq!(b[0].2, "24");
+        assert!(b.iter().all(|x| (0.0..=1.0).contains(&x.1)));
+        let better = Body { reach: 31.0, cool: 0.9, ..plain };
+        let b = body_bars(&better, Some(&plain));
+        assert_eq!(b[0].2, "24 \u{2192} 31");
+        assert_eq!(b[1].2, "100% \u{2192} 90%");
+        assert_eq!(b[2].2, "2");
+        assert!(b[1].1 > body_bars(&plain, None)[1].1, "a shorter cooldown fills more");
+    }
+}
