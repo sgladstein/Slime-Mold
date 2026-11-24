@@ -2,7 +2,7 @@
 title: Art direction for Larder World (the style guide)
 kind: look
 status: open
-updated: 2026-11-22
+updated: 2026-11-24
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/biome-ground-2026-11-15/README.md
@@ -18,6 +18,7 @@ sources:
   - Reports/lure-rings-2026-11-18/README.md
   - Reports/mini-boss-look-2026-11-16/README.md
   - Reports/planet-ground-2026-11-20/README.md
+  - Reports/polish-review-2026-11-24/README.md
   - Reports/raised-walls-2026-11-18/README.md
   - Reports/river-look-2026-11-14/README.md
   - Reports/sim-use-2026-11-17/e2b-look.md
@@ -43,6 +44,7 @@ crystals) are crisp; your units are high-contrast and countable; light
 did. The first review (11-14) found the slime out of focus, cell stairs on hard shapes, an uncountable squad and a HUD over the fight; by 68870d0 those are fixed and the ground dark (#247); open: the tint discs, a pebbly frontier, flat grey spent crystals and the map editor ([review](../../Reports/art-review-2026-11-14/README.md), *After*).
 Since 2026-11-17 the Look and interface lane holds this guide and its
 ranked look jobs, in the owner's order.
+The 11-24 polish review ranks fifteen spots that still look unfinished, worst first: the slime soft and smeared at zoom 6 though crisp from far out, cell stairs where it meets water, crystals drawn as flat cubes, spent crystals as grey umbrellas, marks crowding a big squad, and a HUD that reads as a developer panel ([polish review](../../Reports/polish-review-2026-11-24/README.md)).
 
 ## The rules
 
