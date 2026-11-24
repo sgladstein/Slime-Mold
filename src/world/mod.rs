@@ -18,6 +18,14 @@
 //!
 //! Not built for wasm32 (the view is wgpu).
 
+/// **The game's name** (the owner, 2026-11-24 03:47Z: "Go with
+/// plasmodia"; Larder World until then, which named a larder the squad
+/// game no longer has). Everything the game calls itself reads this, so a
+/// rename is this one line. The binaries, `play.cmd` and the settings
+/// folder (`settings.rs`, `%APPDATA%\Larder World`) keep the old name, so
+/// his saved settings and `play.ps1` still find them.
+pub const GAME_NAME: &str = "Plasmodia";
+
 pub mod camera;
 pub mod canvas;
 pub mod controls;

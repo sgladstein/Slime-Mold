@@ -963,6 +963,9 @@ struct App {
     /// robbed (game second), out of food.
     dry: Vec<bool>,
     core_told: bool,
+    /// The origin's turns told (`origin.rs`): formed, gathering the last
+    /// stand, dead.
+    origin_told: (bool, bool, bool),
     /// Starfall's falls landed and cores dropped already told (`starfall.rs`).
     drops_told: (u32, u32),
     /// The run's one-time Starfall hint (`StarHint`).
@@ -1173,6 +1176,7 @@ impl App {
             building_sel: None,
             dry: Vec::new(),
             core_told: false,
+            origin_told: (false, false, false),
             drops_told: (0, 0),
             star_hint: StarHint::default(),
             broken_told: false,
@@ -1627,6 +1631,7 @@ impl App {
         self.controls.groups = Default::default();
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
+        self.origin_told = (false, false, false);
         self.broken_told = false;
         self.raids_told = 0;
         self.bank_log.clear();
@@ -1665,7 +1670,7 @@ impl App {
         if let Some(w) = &self.window {
             // The build at the end (11-17: "the build tells Scott what
             // it holds"), so a screenshot or a note names the code played.
-            w.set_title(&format!("Larder World: {} (seed {}) - {}", map_title(&self.name, self.args.seed), self.args.seed, slime_mould::build::build().short()));
+            w.set_title(&format!("{}: {} (seed {}) - {}", slime_mould::world::GAME_NAME, map_title(&self.name, self.args.seed), self.args.seed, slime_mould::build::build().short()));
         }
         self.open_log();
         match &self.mission {
@@ -1679,7 +1684,7 @@ impl App {
                     }
                 }
             }
-            None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
+            None => self.hud.alert(&format!("{}: take the slime's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
         }
         Ok(())
     }
@@ -2085,16 +2090,35 @@ impl App {
         }
         let run = self.args.run.as_ref().map(|r| r.seed);
         self.star_hint.update(g, run);
+        // The origin (`origin.rs`, Milestone 2's win): where it is when it
+        // forms, when the last stand gathers into it, and its death, each
+        // a ping on the minimap at its centre (Space jumps there). The
+        // goal line carries its count (`draw::origin_line`).
+        if g.rules.origin.on && g.origin.formed {
+            let at = g.stand.live.filter(|h| h.origin).map_or(g.core, |h| h.centre);
+            let gather = g.stand.live.is_some_and(|h| h.origin && h.gather);
+            let dead = g.origin.fell.is_some();
+            if !self.origin_told.0 {
+                self.hud.alert("Here is the slime's heart: kill it to win the planet", Some(at), theme::ACCENT);
+            }
+            if gather && !self.origin_told.1 {
+                self.hud.alert("The slime is gathering into its heart for a last stand", Some(at), theme::BAD);
+            }
+            if dead && !self.origin_told.2 {
+                self.hud.alert("The slime's heart is broken: the slime is dying back", Some(at), theme::GOOD);
+            }
+            self.origin_told = (true, self.origin_told.1 || gather, self.origin_told.2 || dead);
+        }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
-            self.hud.alert("The core is taken: the mould can no longer grow", Some(g.core), theme::GOOD);
+            self.hud.alert("The core is taken: the slime can no longer grow", Some(g.core), theme::GOOD);
         }
         if g.broken.is_some() != self.broken_told {
             self.broken_told = g.broken.is_some();
             if self.broken_told {
-                self.hud.alert("The mould is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
+                self.hud.alert("The slime is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
             } else {
-                self.hud.alert("The mould is growing back from a crystal", None, theme::BAD);
+                self.hud.alert("The slime is growing back from a crystal", None, theme::BAD);
             }
         }
         // A raid the slime sends (`Rules::raid`, 11-15): told once, where
@@ -2107,7 +2131,7 @@ impl App {
         }
         if g.stolen > self.stolen {
             if self.robbed_at.is_none_or(|r| t - r > 30.0) {
-                self.hud.alert("The mould is at the larder, eating the bank", Some(g.larder), theme::BAD);
+                self.hud.alert("The slime is at your base, eating the bank", Some(g.larder), theme::BAD);
                 self.robbed_at = Some(t);
             }
             self.stolen = g.stolen;
@@ -3122,11 +3146,11 @@ fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime
     use slime_mould::mould::larder_world::RaidAim;
     let name = |k: usize| g.buildings.get(k).map_or("building", |b| b.kind.name());
     match d.aim {
-        _ if d.last_stand => "Last stand: the whole mould rushes your soldiers".into(),
-        RaidAim::Building(k) => format!("The mould is raiding your {}", name(k)),
+        _ if d.last_stand => "Last stand: all of the slime rushes your soldiers".into(),
+        RaidAim::Building(k) => format!("The slime is raiding your {}", name(k)),
         RaidAim::Lure { from: Some(k), .. } => format!("A raid on your {} turns for the lure", name(k)),
         RaidAim::Lure { from: None, .. } => "A raid on your soldiers turns for the lure".into(),
-        RaidAim::Soldiers(_) => "The mould is raiding your soldiers".into(),
+        RaidAim::Soldiers(_) => "The slime is raiding your soldiers".into(),
     }
 }
 

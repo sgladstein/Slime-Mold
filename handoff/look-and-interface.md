@@ -2,6 +2,25 @@
 
 ## State (2026-11-20)
 
+**11-24, the second Look thread (Milestone 2; HUD side).** Split with the
+first Look thread (11-24 03:36Z): this thread takes the HUD, shop, menus,
+end screens and wording (`ui.rs`, `start.rs`, `start/`, `menu.rs`, the
+model and HUD parts of `draw.rs`) and the review of the 4K render-scale
+slider PR; the first takes the world (`view.wgsl`'s world passes, the
+marks). Polish review (https://claude.ai/artifact/7STCLzcjcjSz95TkKJYLfu):
+this thread owns findings 6 to 11 and 15; 13 (Starfall's bloom) is
+Squad's. Done (#746): the heart's alerts in `main.rs` (`origin_told`:
+formed, gathering, broken, each pinging its place); the end card's lead
+when the heart broke (`lead`); the bottom bar (finding 6: `keycap`, the
+empty gun's well, the Loadout button `LOADOUT_SWAP`, "N idle", hyphenated
+names cut without the dash, capitalised squad facts via `upper_first`);
+the name (`world::GAME_NAME` "Plasmodia", the main page's `wordmark` in
+`start.rs`; binaries, `play.cmd` and the settings folder keep the old
+name); the end card's graph as an area and a step line (finding 15,
+`end_curve`); the words on screen to `news/words.txt` (finding 10).
+Next: the command card (finding 7: Back always at (1, 5), new icons for
+Mine, Sleep gas and the Lure), the shop (8), Options and Keys (11).
+
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a
 spent husk is low, rock-dark and crumbled (`gem_crumb`, also in the cast

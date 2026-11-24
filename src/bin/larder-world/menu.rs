@@ -82,7 +82,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     let mut o = vec![
         Opt::new("map", "Sandbox map", &maps, "fork", &map_now, "The sandbox's map (noise: the censuses' race world)"),
         Opt::new("planet", "Planet", &["1", "2", "3", "4", "5", "6", "7", "8"], "1", &planet_now(base), "Which planet of a run Random planet lands on: its biome and nests (8 is the core world)"),
-        Opt::new("own", "Your own mould", &["off", "on"], "off", if base.own { "on" } else { "off" }, "A green mould the squad sows and feeds; sandbox on the race world"),
+        Opt::new("own", "Your own slime", &["off", "on"], "off", if base.own { "on" } else { "off" }, "A green slime the squad sows and feeds; sandbox on the race world"),
         Opt::new("mode", "Control", &["squads", "rts"], "squads", if base.squads { "squads" } else { "rts" }, "Squads: steer one squad with WASD, fire at the cursor, split and merge; no larder (guard or drain crystals)"),
         Opt::new("rounds", "Rounds", &loadouts, LOADOUTS[0].0, LOADOUTS[base.round].0, "The squad's loadout at the start (H cycles it in play)"),
         Opt::new("bullet", "Bullet speed", &["0", "30", "45", "60", "90"], &num(bullet), &base.bullet.map_or(num(bullet), num), "Dish cells a game second a shot flies; 0 is the instant ray"),
@@ -169,7 +169,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
                 // detail and the shake have a tab of their own, first.
                 "ui" | "detail" | "shake" => "Screen",
                 "map" | "planet" | "own" | "plants" => "Planet",
-                "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The mould",
+                "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The slime",
                 k if k.starts_with(slime_mould::build::switches::OPT_KEY) => "Experiments",
                 _ => "Game",
             };
@@ -194,9 +194,9 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("G", "Harvest"),
         ("F, click", "Guard a spot, building or crystal: keep slime off it"),
         ("Z / X / C", "Hold fire, defend, free fire (the fire button cycles them)"),
-        ("B", "Buy a soldier (or select the larder)"),
+        ("B", "Buy a soldier (or select your base)"),
         ("U, click", "Place a pump on a crystal (again on one: upgrade it)"),
-        ("R", "The larder's rally point"),
+        ("R", "Your base's rally point"),
         ("Q", "Build page: turret, pump, wall (V, drag), lure, siren, outpost"),
         ("Click a building", "With no soldier selected: select it (cancel, demolish, upgrade, switch)"),
         ("E", "Tools page: blast, det cord, mine"),
@@ -208,9 +208,9 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Tab", "Four times faster, or back"),
         ("N", "Next map"),
         ("M", "Minimap"),
-        ("F2", "Scent view: what the mould smells"),
+        ("F2", "Scent view: what the slime smells"),
         ("F9", "Drop a note in the play log: marks this moment and place"),
-        ("O / K", "Sound; the mould's voice"),
+        ("O / K", "Sound; the slime's voice"),
         ("Space", "Look at the newest alert"),
         ("Esc", "Cancel placing, or the menu"),
         ("F1 or ?", "The key card"),
@@ -239,7 +239,7 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
         .into_iter()
         .map(|(stem, m)| Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says })
         .collect();
-    let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
+    let mut menu = StartMenu::new(slime_mould::world::GAME_NAME, entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu.planets = true;
     menu.most_off = slime_mould::build::switches::MOST_OFF;
@@ -297,7 +297,7 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
-    let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
+    let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's slime", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
     // What this tier does to you (`run::does_to_you`).
     let does = run::does_to_you(l.tier).says;
     if !does.is_empty() {
