@@ -6,6 +6,18 @@ the game's "what is new" and "things to try" lists, the record of his play
 sessions and the tuning numbers. The brief it was started from is at the
 end.
 
+## State (2026-11-24 04:35Z), read this first
+
+- **Milestone 2 front page is on main** (#742): six tests in `NOW.md`. The origin is on main (#699), the siege bot #707 is queued, and the pause menu's "Quit mid-planet" line is merged (#748).
+- **Decided today:**
+  - The game is called **Plasmodia** (03:47Z). The HUD thread has it for the title art, and the binaries keep their names. The words the player reads are in `news/words.txt`.
+  - Save and resume: C now (#748), then A, a true snapshot, after the siege curve. B, replay, is dropped because it drifts.
+  - Planet 3 fire: Squad builds A, the trodden firebreak (a GPU-only IGNITE "clear" mode). Enemy is told and will review it.
+  - P4 to P8 origin sizes: Enemy runs P4 in the cloud and P5 to P8 on his PC, or on Arms if the PC is unreachable. The target is a siege win under 12 minutes, each planet costing more than the one before.
+- **Open with him:** a card on the heart snipe (D7, balance review finding 1), recommending a tougher heart by planet. The balance review is [doc](https://claude.ai/artifact/NpSbWkL8M5AAedn38pC49R) and #743.
+- **Planned after his next planets 2 to 4:** if he loses 0 to 3 soldiers a planet, RAID_ARMOUR goes up one step a planet and STRIKER_ARMY is full at 40 (balance review finding 3).
+- **Still to ask:** D8, the CPU engine, with the middle path recommended. Then the two roads to a two-hour run, once Enemy's curve refactor lands.
+
 ## State (2026-11-18)
 
 - **Done:** `NOW.md` and the lane rules in `CLAUDE.md` (#447); the 11-17
