@@ -1,0 +1,10 @@
+n1_off 1 528,132 - boss
+n1_f10 1 528,132 LAB_FEED=1.0 boss
+n2_off 2 506,272 - boss
+n2_f10 2 506,272 LAB_FEED=1.0 boss
+n3_off 3 502,324 - boss
+n3_f10 3 502,324 LAB_FEED=1.0 boss
+c2_off 2 506,272 - x
+c2_f10 2 506,272 LAB_FEED=1.0 x
+c3_off 3 502,324 - x
+c3_f10 3 502,324 LAB_FEED=1.0 x
