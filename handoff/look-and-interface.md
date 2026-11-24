@@ -2,6 +2,17 @@
 
 ## State (2026-11-20)
 
+**11-24, Look C, planets 4 to 8's traits:** each biome shows the trail on
+its bare land (`shaded`, after the dust and slick): valley river scum
+(`SCUM*`), jungle wilt in the plants (`WILT*`), highland gravel gaps filled
+(`GRAVEL_FILL*`, `gravel()` shared with `plain_look`), cave phosphor pins
+(`CAVE_GLOW`), core flora lit (`CORE_FLORA_GLOW`). Masks use
+`water_share`, not a per-cell test (that stepped at the shore). Page in
+`Reports/planet-trail-traits-2026-11-24/`. Also 11-24: #787 moved the
+specks-on-crystal dimming into `shaded` (`speck_gem`), 1.5 ms back at 4K;
+keep crystal reads out of `base`. Finding 1's grey discs not seen on
+today's planet 1; veins in the body wait on the simulation.
+
 **11-24, Look B, the Trunk's cords, polish finding 1's tail:** a cord is
 the trail over `CORD_EDGE` (0.15-0.3), so planet 3's blurred plumes and
 20 px halo are gone. Page in `Reports/trunk-cord-edge-2026-11-24/`.
