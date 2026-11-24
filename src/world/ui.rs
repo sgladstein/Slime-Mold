@@ -2426,7 +2426,26 @@ impl Hud {
                         c.icon(cmd.cost_icon, (tx, b.y + 24.5 * s), 11.0 * s, alpha(ENERGY, dim.max(0.6)));
                     }
                     let col = if cmd.locked { MUTED } else if cmd.ready { ENERGY } else { BAD };
-                    c.text_fit(Weight::SemiBold, 12.0 * s, (tx + 14.0 * s, b.y + 34.0 * s), Align::Left, cost, second - 14.0 * s, alpha(col, 0.95));
+                    // Shrunk to 10.5 before it is cut: at 1536 wide the
+                    // sixth column left "Loc..." and "20/..." (polish
+                    // review finding 7, 11-24). A lock that still doesn't
+                    // fit its word keeps the lock alone.
+                    let cr = second - 14.0 * s;
+                    // "20/cell" that won't fit keeps its number: the tip
+                    // says it costs by the cell.
+                    let cost = match cost.split_once('/') {
+                        Some((n, _)) if c.atlas.measure(Weight::SemiBold, 10.5 * s, cost) > cr => n,
+                        _ => cost,
+                    };
+                    // The atlas measures by whole-pixel sizes, so a scaled
+                    // size can still overrun by a hair: then the least.
+                    let mut cpx = fit_px(c, cost, 12.0 * s, 10.5 * s, cr);
+                    if c.atlas.measure(Weight::SemiBold, cpx, cost) > cr {
+                        cpx = 10.5 * s;
+                    }
+                    if !(cmd.locked && c.atlas.measure(Weight::SemiBold, cpx, cost) > cr) {
+                        c.text_fit(Weight::SemiBold, cpx, (tx + 14.0 * s, b.y + 34.0 * s), Align::Left, cost, cr, alpha(col, 0.95));
+                    }
                 } else if one {
                     c.text(Weight::SemiBold, px, (tx, b.y + cell / 2.0 + 4.5 * s), Align::Left, &label, words);
                 } else {
