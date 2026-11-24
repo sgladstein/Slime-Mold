@@ -658,6 +658,11 @@ pub struct Model {
     /// does one nameable thing to you, and nothing on screen named it): a
     /// card under the goal line naming the slime and its one line, fading.
     pub intro: Option<Intro>,
+    /// The planet's slime's trait as a number the simulation keeps
+    /// (Direction 11-24: one tell per trait, no invented meters): its icon,
+    /// the short words ("62% asleep") and the hover line, in a small pill
+    /// under the goal line.
+    pub tell: Option<(Icon, String, String)>,
     /// The first minute's coaching (the window's `Coach`): the step's
     /// words, "1 of 3" and its opacity, in a panel over the command bar.
     pub coach: Option<(String, String, f32)>,
@@ -1874,6 +1879,21 @@ impl Hud {
             self.glass(r, r.h / 2.0, c, s);
             c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
             c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
+            // The slime's trait as its number (`Model::tell`), a small
+            // amber pill hung under the goal's middle; its hover says
+            // what the number is.
+            if let Some((icon, words, tip)) = &m.tell {
+                let ts = 13.0 * s;
+                let tw = c.atlas.measure(Weight::SemiBold, ts, words) + 42.0 * s;
+                let t = Rect::new(r.x + (r.w - tw) / 2.0, r.bottom() + 5.0 * s, tw, 24.0 * s);
+                self.glass(t, t.h / 2.0, c, s);
+                c.icon(*icon, (t.x + 11.0 * s, t.y + 5.0 * s), 14.0 * s, WARN);
+                c.text(Weight::SemiBold, ts, (t.x + 31.0 * s, t.y + 16.5 * s), Align::Left, words, WARN);
+                self.below = self.below.max(t.bottom());
+                if self.hover.is_some_and(|p| t.contains(p)) {
+                    self.tip_small(tip, (t.x, t.bottom() + 6.0 * s), c, s);
+                }
+            }
         }
     }
 
