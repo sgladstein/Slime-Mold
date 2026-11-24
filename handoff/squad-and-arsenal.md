@@ -48,6 +48,18 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24, planet 3 fire (Direction's jobs, pathfinding thread).**
+#750 merged (starfall gold landing, first star beside the squad). Branch
+`claude/project-thread-4xnivn`, PR "IGNITE pass in engine.wgsl": trodden
+ground (`trample.rs`, `Rules::trample_to` 0.1, `trample_r` 1.5,
+`trample_speed` 2; GPU only, IGNITE mode 2) and `Burst::unlit` for star
+craters. Bot games: unlit stars took no-card planet 3 map 3 from 37 burned
+to 0; the firebreak barely moves the rush bot's Tinder burns (127 to 124
+over maps 3-6), because its squads walk while they fight (net 1-9 cells a
+second); a held squad in the GPU test loses 3 health against 20. The run
+bot's plans never buy Fireproof (not in `Plan::shop`'s default list).
+Next: gun steps E (device bodies) and F (luck), then the dart.
+
 **2026-11-23, formations (own thread, "Rework squad formations with spread
 control").** Scott's review cut the six formations to two shapes, blob and
 ring, plus a spread of five steps (`SPREADS`, `Squad::spread`,
