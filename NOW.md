@@ -34,7 +34,7 @@ release, only if he chooses one.
 - **Curve (test 3).** The siege bot (#707) on his three maps won 12 of 24 on his PC. P4 lost 0 of 3 and P7 lost 0 of 2, a wall each, both with Enemy. P3 lost 35 soldiers, mostly to fire: starfall impacts lit the jungle, and a trodden firebreak is coming from Squad. A full curve takes about 20 minutes of PC time.
 - **Rush (D7).** A heart snipe of 8 to 15 soldiers wins P2 to P4 in 1:10 to 2:32. It is on his card.
 - **4K (test 5).** At Auto (50%) on the 1070, his 3840-wide window runs at p95 12.5 ms on P3 (#747, #753) and 15.5 on P5; P8 (twice P5's world) is at 19.7, being split by pass.
-- **Save and resume (test 4).** Quitting mid-planet now keeps the planet, and Back to the run resumes it paused (#757; byte for byte on lavapipe). One save and load on the 1070 is left.
+- **Save and resume (test 4): passes.** Quitting mid-planet keeps the planet, and Back to the run resumes it paused (#757). Checked on his 1070 11-24 07:07Z: same clock, slime, soldiers and bank; 7.7 MB in about 50 ms.
 
 ## Each lane's top jobs
 
@@ -67,8 +67,8 @@ asks at most once a session with a recommendation.
 
 At most five, most important first; offers, not requests. The game shows them
 beside "What is new": [`news/things-to-try.txt`](news/things-to-try.txt).
-Today: the origin, the harder planets from 2, the soldier price past 30,
-formations as blob and ring with a spread, and starfall's pickup.
+Today: the heart, the harder planets from 2, the soldier price past 30,
+quitting mid-planet, and starfall's pickup.
 What each build holds is in
 [`news/whats-new.txt`](news/whats-new.txt).
 
