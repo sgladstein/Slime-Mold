@@ -424,7 +424,8 @@ fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
 // CPU's `BigDish::dense`), then a block of cells (free since 11-17: the
 // condensed walkers on each cell), the raid's field and the lumps' bite
 // cells. A dead slot's word is stale until `born` clears it. Header word 0
-// is free (the mass `masscount` kept until 11-17); words 1-3 hold a lump's
+// is the room of a capped grow (`lumpform`, 11-24; free from 11-17, the
+// mass `masscount` kept until then); words 1-3 hold a lump's
 // forming (`lumpform`: the lump + 1, its centre cell, its reach squared)
 // and 4-15 each lump's sums (`lumpsum`: x, y, members; 2026-11-16, the
 // header grew from 4 words). Bits 16 and 17 of a slot's word (condensing's
@@ -4345,6 +4346,14 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let within = ordinary(k) && (wd & DENSE_BIT) == 0u && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
     if ((word & 256u) != 0u) {
         if (within && (wd & LUMP_BITS) == 0u) {
+            // Bit 9: a capped grow (`Engine::grow_lump`'s room, the origin's
+            // gather, 11-24), each joiner taking one of the room in header
+            // word 0; once it is spent the rest stay out. The count only
+            // falls, and a walker that finds it at 0 restores it.
+            if ((word & 512u) != 0u) {
+                let left = atomicSub(&news[dense_base()], 1u);
+                if (left == 0u || left > 0x7FFFFFFFu) { atomicAdd(&news[dense_base()], 1u); return; }
+            }
             set_dense(k, (wd & ~(HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
         }
         return;
