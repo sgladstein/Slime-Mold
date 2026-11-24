@@ -2,6 +2,15 @@
 
 ## State (2026-11-20)
 
+**11-24, Look B, planets 4 to 8 read apart at zoom 6:** filmed at rest
+(seed 1, idle, heart at 1:00 and 2:00), planets 4, 5 and 7 were one gold.
+`species_hue` in `view.wgsl` gives the Swarmer lemon, the Sporer coral and
+the Grudge copper; the Sleeper's crust already read apart, planet 8 takes
+turns. Page and clips in `Reports/slime-species-hues-2026-11-24/`. Next
+for Look B: veins and flow in the thick body; check Enemy's Sprawler
+threads and Grudge PRs at zoom 6 and 12 (the veil gate and `SCAR_FULL`
+2,000 sent to them).
+
 **11-24, camera at the map's top, polish finding 12:** `Camera::clamp`
 stops the view at the world's top row (the top bar floats over it); only
 the bottom panels let the world's last row come out from under them. The
