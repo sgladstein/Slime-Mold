@@ -1,0 +1,65 @@
+runs 4000
+Needle Blast offered by planet 3: 8.8%
+Needle Blast plus Wide, Rate or Seek offered by planet 3: 5.4%
+Wide, Rate and Needle Blast all offered by planet 3: 0.62%
+shop 2 offers a card that needs a bullet after it, or a payload: 50.8%
+Needle Blast price 100 to 310, median 160
+shop 2 bullet set Buckshot: 54.2% of shops
+shop 2 bullet set Needle: 50.1% of shops
+shop 2 bullet set Slug: 50.0% of shops
+shop 2 bullet set Standard: 45.8% of shops
+shop 2 bullet shell Blast: 13.7% of shops
+shop 2 bullet shell Blind: 12.1% of shops
+shop 2 bullet shell Gas: 12.1% of shops
+shop 2 bullet shell Plain: 12.3% of shops
+shop 2 bullet shell Provoke: 12.8% of shops
+shop 2 bullet shell Sour: 11.7% of shops
+shop 2 bullet shell Spin: 12.4% of shops
+shop 2 bullet shell Still: 12.9% of shops
+shop 2 bullet shell Torch: 100.0% of shops
+shop 2 card bait: 14.7% of shops
+shop 2 card delay: 14.8% of shops
+shop 2 card heave: 13.4% of shops
+shop 2 card pierce: 14.6% of shops
+shop 2 card pull: 13.9% of shops
+shop 2 card range: 13.8% of shops
+shop 2 card rate: 15.5% of shops
+shop 2 card scatter: 14.5% of shops
+shop 2 card scorch: 14.4% of shops
+shop 2 card seek: 13.6% of shops
+shop 2 card smother: 13.9% of shops
+shop 2 card split: 14.1% of shops
+shop 2 card thick: 14.6% of shops
+shop 2 card tinder: 100.0% of shops
+shop 2 card wide: 14.2% of shops
+shop 3 bullet set Buckshot: 50.7% of shops
+shop 3 bullet set Needle: 54.0% of shops
+shop 3 bullet set Slug: 52.5% of shops
+shop 3 bullet set Standard: 42.9% of shops
+shop 3 bullet shell Blast: 22.0% of shops
+shop 3 bullet shell Blind: 22.1% of shops
+shop 3 bullet shell Gas: 22.0% of shops
+shop 3 bullet shell Plain: 23.1% of shops
+shop 3 bullet shell Provoke: 21.4% of shops
+shop 3 bullet shell Sour: 22.8% of shops
+shop 3 bullet shell Spin: 22.4% of shops
+shop 3 bullet shell Still: 22.6% of shops
+shop 3 bullet shell Torch: 21.5% of shops
+shop 3 card bait: 17.1% of shops
+shop 3 card delay: 16.8% of shops
+shop 3 card expire: 16.8% of shops
+shop 3 card heave: 16.3% of shops
+shop 3 card pierce: 17.0% of shops
+shop 3 card pull: 17.2% of shops
+shop 3 card range: 16.1% of shops
+shop 3 card rate: 16.9% of shops
+shop 3 card scatter: 16.6% of shops
+shop 3 card scorch: 18.0% of shops
+shop 3 card seek: 15.9% of shops
+shop 3 card smother: 14.9% of shops
+shop 3 card split: 17.0% of shops
+shop 3 card thick: 17.0% of shops
+shop 3 card thrift: 16.8% of shops
+shop 3 card tinder: 16.8% of shops
+shop 3 card trigger: 16.6% of shops
+shop 3 card wide: 15.9% of shops

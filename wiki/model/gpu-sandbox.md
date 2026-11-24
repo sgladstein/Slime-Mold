@@ -181,10 +181,14 @@ the plants are the largest single part at 1.0 ms.
 Those batches drew 1280 x 800; the owner plays on 3840 x 2160 (250%),
 where the view's base pass took 38 ms of a 42 ms frame and his play logs
 showed 35 to 50 ms frames (11-22). The window now draws the view's buffer
-straight to the screen (#720), and on a window past 2560 x 1600 draws the
-world at half resolution with the HUD sharp (World detail, his card pick;
-[the report](../../Reports/perf-4k-2026-11-22/README.md)). Time the game at
-`screen=3840x2160` to match his play.
+straight to the screen (#720), and draws the world at a share of the
+screen's pixels with the HUD, soldiers and marks sharp (World detail, his
+card pick; [the report](../../Reports/perf-4k-2026-11-22/README.md)): since
+11-24 a slider of Auto and 100% to 40% each way (`View::set_percent`,
+bilinear between whole ratios). Auto keeps the world under 2.4 million
+pixels: 50% at 4K, which held 60 frames a second in every second of his
+play logs since 11-22. Time the game at `screen=3840x2004 detail=N` to
+match his play (his window, maximised).
 
 ## Sources
 
