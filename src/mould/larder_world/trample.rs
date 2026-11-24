@@ -30,6 +30,11 @@
 //! the CPU world's `World::trample` does nothing.
 use super::*;
 
+/// Trodden discs remembered for the Backdraft relic (`Game::trodden`): a
+/// squad of six holding still for a minute treads one or two, so 64 is
+/// every squad's last few minutes of held ground.
+pub const TRODDEN_KEPT: usize = 64;
+
 impl<W: World> Game<W> {
     /// Once a game second: each living soldier within `trample_speed` dish
     /// cells of where it stood a second ago treads the ground round it
@@ -66,5 +71,14 @@ impl<W: World> Game<W> {
             discs.push((x, y, r.trample_r, r.trample_to));
         }
         self.world.trample(&discs);
+        // Remembered for Backdraft: a disc within a tread's reach of one
+        // kept moves it to now, so a squad holding one spot keeps one entry.
+        let now = self.world.ticks();
+        for &(x, y, rr, _) in &discs {
+            self.trodden.retain(|t| (t.0 - x).hypot(t.1 - y) >= rr);
+            self.trodden.push((x, y, now));
+        }
+        let extra = self.trodden.len().saturating_sub(TRODDEN_KEPT);
+        self.trodden.drain(..extra);
     }
 }

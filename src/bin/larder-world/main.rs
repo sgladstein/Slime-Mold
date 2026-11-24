@@ -1345,6 +1345,13 @@ impl App {
                 None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
             }
         }
+        // The run's relics' engine keys (`Run::engine_keys`: Fever's
+        // trail), over the planet's and the tier's.
+        if let Some(r) = a.run.as_ref() {
+            for (k, v) in r.engine_keys() {
+                slime_mould::gpu::set(&mut s, k, v)?;
+            }
+        }
         let made = match level.map(|l| l.ground) {
             Some(RunGround::Made(m)) => Some(m),
             _ => None,

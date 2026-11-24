@@ -238,6 +238,8 @@ const NOT_SWITCHES: &[(&str, &str)] = &[
     // Carrion, the first relic (11-24): 0 until the player buys it after
     // planet 3, 5 or 7; `Run::round_rules` sets its seconds.
     ("set:carrion_secs", RELIC),
+    // Backdraft (11-24): 0 until the player buys it.
+    ("set:backdraft_gap", RELIC),
 ];
 
 /// **The test the plan asks for** (job 1: "A test fails on a switch that

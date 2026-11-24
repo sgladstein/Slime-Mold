@@ -1044,32 +1044,48 @@ pub enum Relic {
     /// Slime the squad kills draws calm slime to where it died
     /// (`RoundRules::carrion_secs`).
     Carrion,
+    /// Sick slime lays double trail (the engine's `sick_trail`, 1 to 2;
+    /// `Run::engine_keys`), so the germ's sickness runs farther down the
+    /// tubes it thickens (Direction 11-24 11:28Z: built here, no shader
+    /// change).
+    Fever,
+    /// A device's fire also lights the ground the squads left
+    /// (`RoundRules::backdraft_gap`).
+    Backdraft,
 }
 
 impl Relic {
-    pub const ALL: [Relic; 1] = [Relic::Carrion];
+    pub const ALL: [Relic; 3] = [Relic::Carrion, Relic::Fever, Relic::Backdraft];
 
     pub fn key(self) -> &'static str {
         match self {
             Relic::Carrion => "carrion",
+            Relic::Fever => "fever",
+            Relic::Backdraft => "backdraft",
         }
     }
 
     pub fn name(self) -> &'static str {
         match self {
             Relic::Carrion => "Carrion",
+            Relic::Fever => "Fever",
+            Relic::Backdraft => "Backdraft",
         }
     }
 
     pub fn about(self) -> &'static str {
         match self {
             Relic::Carrion => "For the rest of the run, where a soldier's shot kills slime, calm slime streams to the spot for 3 s: into your guns when you hold a line, onto you when you are overrun.",
+            Relic::Fever => "For the rest of the run, sick slime lays twice the trail, so a germ's sickness runs much farther down the slime's tubes, and those tubes grow thicker.",
+            Relic::Backdraft => "For the rest of the run, a device's fire also lights the ground your squads held and left: a wall of fire behind you, and a trap if you fall back onto it.",
         }
     }
 
     pub fn price(self) -> u32 {
         match self {
             Relic::Carrion => 300,
+            Relic::Fever => 250,
+            Relic::Backdraft => 300,
         }
     }
 
@@ -1799,11 +1815,25 @@ impl Run {
     }
 
     /// What the run's relics do to the gun cards' rules (gun step F):
-    /// Carrion's marks (`RoundRules::carrion_secs`, 3 s).
+    /// Carrion's marks (`RoundRules::carrion_secs`, 3 s) and Backdraft's
+    /// fire on left ground (`backdraft_gap`, 8 dish cells).
     pub fn round_rules(&self, rr: &mut RoundRules) {
         if self.relics.contains(&Relic::Carrion) {
             rr.carrion_secs = 3.0;
         }
+        if self.relics.contains(&Relic::Backdraft) {
+            rr.backdraft_gap = 8.0;
+        }
+    }
+
+    /// What the run's relics do to the slime's engine keys, set over the
+    /// planet's and the tier's (the window's `start`): Fever's trail.
+    pub fn engine_keys(&self) -> Vec<(&'static str, &'static str)> {
+        let mut keys = Vec::new();
+        if self.relics.contains(&Relic::Fever) {
+            keys.push(("sick_trail", "2"));
+        }
+        keys
     }
 
     /// The body of `kind` owned, if any (its index in `bodies`).
@@ -2248,7 +2278,10 @@ impl Run {
     fn next_shop(&mut self) {
         self.paid_rerolls = 0;
         self.restock();
-        self.relic_offer = RELIC_DEPTHS.contains(&self.depth).then(|| Relic::ALL.into_iter().find(|r| !self.relics.contains(r))).flatten();
+        // One unowned relic, drawn by the run's seed and the planet.
+        let left: Vec<Relic> = Relic::ALL.into_iter().filter(|r| !self.relics.contains(r)).collect();
+        let draw = mix(self.seed ^ u64::from(self.depth).wrapping_mul(0x9E37_79B9_7F4A_7C15)) as usize;
+        self.relic_offer = (RELIC_DEPTHS.contains(&self.depth) && !left.is_empty()).then(|| left[draw % left.len()]);
         let rare = self.offers.iter().any(|&c| c.kind() != Kind::Payload && c.tier() >= 3);
         self.since_rare = if rare || self.depth < power_from(3) { 0 } else { self.since_rare + 1 };
     }
@@ -3826,6 +3859,7 @@ mod tests {
         for _ in 0..3 {
             r.won(3);
         }
+        r.relic_offer = Some(Relic::Carrion);
         let row = r.shop().into_iter().find(|w| w.pick == Pick::Relic).expect("a relic row");
         assert_eq!((row.group, row.name.as_str(), row.price.as_str()), (Group::Relics, "Carrion", "300"));
         r.points = 299;
@@ -3838,9 +3872,41 @@ mod tests {
         r.round_rules(&mut rr);
         assert_eq!(rr.carrion_secs, 3.0);
         assert_eq!(Run::from_save(&r.save_text()).map(|f| f.relics), Ok(vec![Relic::Carrion]));
+        // The three shops each offer an unowned relic, drawn by the seed:
+        // across seeds every relic comes first somewhere, and one bought
+        // is never offered again.
+        let mut first = std::collections::HashSet::new();
+        for seed in 0..30 {
+            let mut r = Run::new(seed);
+            let mut seen = Vec::new();
+            for _ in 0..7 {
+                r.won(3);
+                if let Some(o) = r.relic_offer {
+                    assert!(!r.relics.contains(&o));
+                    seen.push(o);
+                    r.relics.push(o);
+                }
+            }
+            first.insert(seen[0]);
+            assert_eq!(seen.len(), 3);
+        }
+        assert_eq!(first.len(), 3, "each relic is some seed's first");
+        // Fever sets the slime's sick trail; Backdraft the left ground's fire.
+        let mut r = Run::new(1);
+        assert!(r.engine_keys().is_empty());
+        r.relics = vec![Relic::Fever, Relic::Backdraft];
+        assert_eq!(r.engine_keys(), vec![("sick_trail", "2")]);
+        let mut rr = RoundRules::default();
+        r.round_rules(&mut rr);
+        assert_eq!((rr.backdraft_gap, rr.carrion_secs), (8.0, 0.0));
+        // All three owned: the shop after planet 5 sells none.
+        r.relics.push(Relic::Carrion);
         r.won(3);
         r.won(3);
-        assert_eq!((r.depth, r.relic_offer), (6, None), "one relic so far, owned: none more for sale");
+        r.won(3);
+        r.won(3);
+        r.won(3);
+        assert_eq!((r.depth, r.relic_offer), (6, None), "every relic owned: none more for sale");
     }
 
     /// **Bodies** (gun step E3, Direction 11-24): planet 1's shop sells
