@@ -127,6 +127,36 @@ pub const LUMP_AT: usize = 1008;
 /// status (`Engine::minds`; `sense` reads none before), a spinning
 /// walker's curl a step (`BigParams::spin_curl`), and two spare words.
 pub const MIND_AT: usize = 1152;
+
+/// LAB: threads, the shrink and growth words from the environment
+/// (`LAB_SHRINK=S:rs:p`, `LAB_GROW=G:rg`); (0, 0) when neither is set.
+pub fn lab_threads() -> (u32, f32) {
+    let get = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+    let (sh, gr) = (get("LAB_LANES"), get("LAB_GROW"));
+    let ahead = get("LAB_AHEAD").is_some_and(|v| v != "0");
+    let sv = get("LAB_SHUTTLE");
+    let shuttle: Option<f32> = sv.as_ref().and_then(|v| v.split(':').next()?.parse().ok());
+    let fed: f32 = sv.as_ref().and_then(|v| v.split(':').nth(1)?.parse().ok()).unwrap_or(0.5);
+    if sh.is_none() && gr.is_none() && !ahead && shuttle.is_none() {
+        return (0, 0.0);
+    }
+    let mut w = 1u32 << 31 | (ahead as u32) << 28 | (shuttle.is_some() as u32) << 29 | (((fed * 10.0).round() as u32).min(15) << 10);
+    let p = shuttle.unwrap_or(0.0);
+    if let Some(v) = sh {
+        // `LAB_LANES=N:R` (in the shrink's old variable).
+        let f: Vec<&str> = v.split(':').collect();
+        let n: u32 = f[0].parse().unwrap_or(0);
+        let r: f32 = f.get(1).and_then(|x| x.parse().ok()).unwrap_or(1.3);
+        w |= n.min(15) | (((r * 10.0).round() as u32).min(63) << 4);
+    }
+    if let Some(v) = gr {
+        let f: Vec<&str> = v.split(':').collect();
+        let g: u32 = f[0].parse().unwrap_or(0);
+        let r: u32 = f.get(1).and_then(|x| x.parse().ok()).unwrap_or(4);
+        w |= (g.min(0x3FF) << 14) | (r.min(15) << 24);
+    }
+    (w, p)
+}
 /// The scar row (the Grudge's habituation on the GPU, 2026-11-17, the
 /// simulation-use plan's step 0; Params grew from 1168 to 1184, after the
 /// Mind row): `scar_keep` (0 with the scar off: no alarm field, or the key
@@ -2568,7 +2598,11 @@ impl Engine {
             b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), l.spin.to_bits()]));
         }
         assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
-        b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), 0, 0]));
+        // LAB: threads (2026-11-24, the Lab's prototype; never merges): the
+        // Mind row's two spare words from `LAB_SHRINK=S:rs:p` and
+        // `LAB_GROW=G:rg` (engine.wgsl's `lab_th`).
+        let (lab_th, lab_p) = lab_threads();
+        b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), lab_th, lab_p.to_bits()]));
         assert_eq!(b.len(), SCAR_AT, "Params rows before the scar row moved");
         // The CPU makes the scar only with the alarm field (`BigDish::new`).
         let scars = s.alarm_keep > 0.0 && s.scar_keep > 0.0;
@@ -3607,6 +3641,11 @@ impl Engine {
     /// The Larder World read back: each pile's charge and cells still
     /// crystal (from the last tick's sum), and walls' bites and cells
     /// broken so far.
+    /// LAB: the walkers a fine cell, read back (`LAB_DUMP`).
+    pub fn lab_occ(&self) -> Vec<u8> {
+        read_back(&self.device, &self.queue, &self.occ)
+    }
+
     pub fn world_counts(&self) -> (Vec<(f32, u32)>, u32, u32) {
         let piles = read_back(&self.device, &self.queue, &self.piles);
         let word = |b: &[u8], i: usize| u32::from_le_bytes(b[4 * i..4 * i + 4].try_into().unwrap());

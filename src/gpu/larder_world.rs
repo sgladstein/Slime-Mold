@@ -169,6 +169,9 @@ struct Read {
 }
 
 /// The engine as a Larder world.
+/// LAB: the game seconds `set_ceiling` has seen (`LAB_DUMP`).
+static LAB_SEC: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
 pub struct GpuWorld {
     pub e: Engine,
     pub shared: Shared,
@@ -1260,7 +1263,31 @@ impl World for GpuWorld {
 
     /// Written to the GPU with the next step's params (species 0's cap).
     fn set_ceiling(&mut self, n: u32) {
-        self.s.ceiling = n;
+        // LAB: threads. `LAB_CAP=N` holds the ceiling at N (the off arm's
+        // walkers), and `LAB_DUMP=DIR` writes each game second's walkers a
+        // fine cell (u8 each; first `agar.bin`) for the body's measure.
+        // `LAB_CAPS=FILE`: a count a line, one a game second (the off
+        // arm's walkers, from its dump), held as the ceiling second by second.
+        let sec = LAB_SEC.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let mut cap = std::env::var("LAB_CAP").ok().and_then(|v| v.parse::<u32>().ok()).unwrap_or(u32::MAX);
+        if let Ok(f) = std::env::var("LAB_CAPS") {
+            if let Some(c) = std::fs::read_to_string(f).ok().and_then(|t| t.lines().nth(sec as usize + 1).and_then(|l| l.trim().parse::<u32>().ok())) {
+                cap = cap.min(c);
+            }
+        }
+        self.s.ceiling = n.min(cap);
+        if let Ok(dir) = std::env::var("LAB_DUMP") {
+            let d = &self.e.dish;
+            if sec == 0 {
+                let _ = std::fs::create_dir_all(&dir);
+                let mut a = format!("{} {}\n", d.w, d.h).into_bytes();
+                a.extend(d.agar.iter().map(|&b| b as u8));
+                let _ = std::fs::write(format!("{dir}/agar.bin"), a);
+            }
+            let occ = self.e.lab_occ();
+            let v: Vec<u8> = occ.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap()).min(255) as u8).collect();
+            let _ = std::fs::write(format!("{dir}/occ-{sec:04}.bin"), v);
+        }
     }
 
     /// Each of the pile's cells written 0 (the mirror's list of them).

@@ -229,7 +229,7 @@ struct Params {
     // from 1152 to 1168, after the lump rows; mod.rs's `MIND_AT`): whether
     // any walker has had a Mind status (`Engine::minds`), a spinning
     // walker's curl a step (radians), and two spare words.
-    mind_on: u32, spin_curl: f32, _m1: u32, _m2: u32,
+    mind_on: u32, spin_curl: f32, lab_th: u32, lab_p: f32,
     // The scar row (the Grudge's habituation, 2026-11-17, the
     // simulation-use plan's step 0; Params grew from 1168 to 1184; mod.rs's
     // `SCAR_AT`): its keep a fine step (0 off), its gain on the alarm, its
@@ -1473,6 +1473,12 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // floored at 0, from the energy as the tick began.
     var sw = 1.0;
     if (growth() && P.hscent > 0.0 && P.hat > 0.0) { sw = 1.0 + P.hscent * max(1.0 - energy[k] / P.hat, 0.0); }
+    // LAB: threads, the shuttle (`lab_th` bit 29, `LAB_SHUTTLE=W`, W in
+    // `lab_p`): a calm walker fed past F tenths of its birth energy (`lab_th`
+    // bits 10-13; `LAB_SHUTTLE=W:F`, F 0.5 by default) reads the
+    // crystals' scent x -W, so it walks out from its crystal along the
+    // trail and comes back when hungry: two-way traffic through the body.
+    if (((P.lab_th >> 29u) & 1u) != 0u && growth() && energy[k] >= f32((P.lab_th >> 10u) & 15u) / 10.0 * P.birth_at) { sw = -P.lab_p; }
     // A cut-off walker panics: its sensors read only the way to its
     // target, and its step is `panic` times as long (the CPU's order:
     // after the sick walker's changes).
@@ -1683,7 +1689,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (there != NONE) {
         if (there == here) {
             aim = there;
-        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && !(crater_shut(there) && !crater_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp))) {
+        } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && !(crater_shut(there) && !crater_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp) + lab_lanes(lb == 0u && !scared, there, here))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
         }
@@ -1786,6 +1792,40 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
 // chance `starve`, leaving its cell (and clearing the cell's claim, so a
 // birth can claim it this tick as on the CPU, which clears move claims
 // before births). Only dispatched with growth on.
+
+// **LAB: threads** (2026-11-24, the Lab's prototype for the Sprawler's
+// body as threads; never merges). Jones's growth and shrink (2010): a
+// calm walker in a crowd thinning out by dying (chance a step where its
+// 5x5 was full) was tried first and collapsed the slime, 19,825 walkers
+// to 4,073 at 3:00 (its crystals uncovered, so its ceiling fell). Now:
+// lanes (Enemy's prototype of 11-22): a calm walker blocked by a full
+// cell may still step in, up to N more there, when that cell holds R
+// times its own cell's trail; the walkers' number is held to the off
+// arm's by `LAB_CAPS` in the game, so the cells it frees stay holes. A
+// child lands only where the box of radius rg round its cell holds G or
+// fewer (`LAB_GROW`). `lab_th`: lanes N bits 0-3, R x 10 bits 4-9, G
+// 14-23, rg 24-27, births ahead bit 28, the shuttle bit 29, bit 31 on.
+fn lab_on() -> bool { return (P.lab_th >> 31u) != 0u; }
+fn lab_lanes(calm: bool, there: u32, here: u32) -> u32 {
+    let n = P.lab_th & 15u;
+    if (!lab_on() || n == 0u || !calm) { return 0u; }
+    let r = f32((P.lab_th >> 4u) & 63u) / 10.0;
+    return select(0u, n, trail_in[there] > r * trail_in[here]);
+}
+fn box_occ(i: u32, r: u32) -> u32 {
+    let x = i32(i % P.w); let y = i32(i / P.w); let ri = i32(r);
+    var n = 0u;
+    for (var dy = -ri; dy <= ri; dy++) {
+        let yy = y + dy;
+        if (yy < 0 || yy >= i32(P.h)) { continue; }
+        for (var dx = -ri; dx <= ri; dx++) {
+            let xx = x + dx;
+            if (xx < 0 || xx >= i32(P.w)) { continue; }
+            n += atomicLoad(&occ[u32(yy) * P.w + u32(xx)]);
+        }
+    }
+    return n;
+}
 @compute @workgroup_size(256)
 fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -1966,7 +2006,15 @@ fn child_of(k: u32, t: u32) -> u32 {
 
 // Where parent k's child lands: one of the eight cells beside it.
 fn birth_spot(k: u32, t: u32) -> vec2<f32> {
-    let d = keyed(P.s_birth, t, k) % 8u;
+    var d = keyed(P.s_birth, t, k) % 8u;
+    // LAB: threads, births ahead (`lab_th` bit 28): the child lands in the
+    // cell the parent heads for, or one of the two beside it, so a strand
+    // grows at its tip instead of swelling sideways.
+    if (((P.lab_th >> 28u) & 1u) != 0u) {
+        let hd = walkers[k].z;
+        let a = i32(round(hd / (TAU / 8.0))) + i32(d % 3u) - 1;
+        d = u32(((a % 8) + 8) % 8);
+    }
     var dx = array<f32, 8>(1.0, 1.0, 0.0, -1.0, -1.0, -1.0, 0.0, 1.0);
     var dy = array<f32, 8>(0.0, 1.0, 1.0, 1.0, 0.0, -1.0, -1.0, -1.0);
     let wk = walkers[k];
@@ -2006,6 +2054,11 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j) || crater_shut(j)) { return; }
+    // LAB: threads, the growth cap (`lab_th` G and rg).
+    if (lab_on()) {
+        let gm = (P.lab_th >> 14u) & 0x3FFu;
+        if (gm > 0u && box_occ(j, (P.lab_th >> 24u) & 15u) > gm) { return; }
+    }
     // Not past a built wall's corner (`solid_walls`).
     let pw = walkers[k];
     if (wall_between(pw.x, pw.y, at.x, at.y) != NONE) { return; }

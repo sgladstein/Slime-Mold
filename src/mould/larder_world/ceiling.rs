@@ -183,6 +183,28 @@ impl<W: World> Game<W> {
         }
         let over = ((mould as f64 / ceil.max(1.0) - 1.0) / CEILING_OVER).clamp(0.0, 1.0);
         c.factor = 1.0 + (r.ceiling_upkeep - 1.0).max(0.0) * over as f32;
-        self.world.set_upkeep(c.upkeep * c.factor);
+        // LAB: threads (2026-11-24; never merges). `LAB_HOLD=1` with
+        // `LAB_CAPS`: the upkeep eases while the slime is under the off
+        // arm's walkers that second (x 0.85 a second, at most x 0.1) and
+        // comes back while it is at or over them, so a rule that costs the
+        // slime walkers is judged by its look at the same count.
+        let mut lab = 1.0f32;
+        if std::env::var("LAB_HOLD").is_ok_and(|v| v != "0") {
+            let sec = LAB_HOLD_SEC.fetch_add(1, std::sync::atomic::Ordering::Relaxed) as usize;
+            let want = std::env::var("LAB_CAPS").ok().and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| t.lines().nth(sec + 1).and_then(|l| l.trim().parse::<f64>().ok()));
+            let mut k = f32::from_bits(LAB_HOLD_K.load(std::sync::atomic::Ordering::Relaxed));
+            if let Some(w) = want {
+                k = if (mould as f64) < 0.97 * w { k * 0.85 } else if (mould as f64) >= w { k / 0.85 } else { k };
+            }
+            k = k.clamp(0.1, 1.0);
+            LAB_HOLD_K.store(k.to_bits(), std::sync::atomic::Ordering::Relaxed);
+            lab = k;
+            eprintln!("lab hold t {sec}: slime {mould}, want {}, upkeep x{k:.3}", want.unwrap_or(0.0));
+        }
+        self.world.set_upkeep(c.upkeep * c.factor * lab);
     }
 }
+
+/// LAB: the seconds `LAB_HOLD` has seen and its upkeep factor (f32 bits).
+static LAB_HOLD_SEC: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+static LAB_HOLD_K: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0x3F80_0000);
