@@ -200,5 +200,10 @@ A second slime species that fights the first; the player's own mould
   [`Reports/lab-bait-trade-2026-11-24/`](../Reports/lab-bait-trade-2026-11-24/README.md),
   no page. 18 games on the 1070 (`raw/pc-trade.ps1`). Drain beats bait as
   a player choice; feeding keeps wanderers small.
+- 2026-11-24: **lap two's first sizes and rigs** (Direction 13:09Z), a
+  section in the lap-two report: `LAB_LAP2_SIZE` (code `bd836d45`), planet
+  9 at 0.7 of the size rule (run bot on the 1070 against planet 8),
+  `raw/rig.sh` for 9 to 15, smoke tests (12 and 15 end under 1:00 for
+  greedy; 10 and 14's pump smell unseen).
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.

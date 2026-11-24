@@ -1,0 +1,18 @@
+# Lap two's 1:00 smoke tests, run seed 1, LAB_LAP2_SIZE 0.7, bank 3000; pumps hand on 10
+# and 14, else greedy. GTX 1070, lab branch 54690be2, pc-lap2-smoke.ps1 (Engine's runner,
+# 2026-11-24, 7.2 min wall). As Engine relayed it: mould at t1 / t30 / t60, soldiers and
+# killed at t60, the end if any. No mini-boss formed in any game by 1:00.
+p9 base: 226,359 / 169,443 / 170,216, 5 soldiers, 12,548 killed
+p9 pair: 238,582 / 190,069 / 204,876, 11, 6,418
+p10 base: 62,842 / 71,955 / 78,512, 4, 1,711, harvested 3,523 (pumps hand)
+p10 pair: 62,842 / 71,883 / 78,407, 4, 2,209. Almost identical to base.
+p11 base: 141,236 / 69,264 / 68,058, 11, 2,798, harvested 0
+p11 pair: 243,649 / 224,688 / 204,599, 5, 3,048, harvested 0
+p12 base: 125,643 / 69,084, then squad wiped at 52 s (10,979 killed)
+p12 pair: 125,643 / 69,087, then squad wiped at 48 s (9,427 killed)
+p13 base: 279,128 / 223,899 / 242,194, 13, 10,577
+p13 pair: 279,128 / 223,774 / 240,468, 11, 12,076
+p14 base: 284,177 / 272,313 / 257,750, 4, 0 shots and 0 killed, harvested 5,057 (pumps hand)
+p14 pair: identical to base, line for line
+p15 base: 233,684 / 124,503, then squad wiped at 39 s (25,182 killed)
+p15 pair: 243,147 / 111,520 / 13,786, 9 soldiers, 21,630 killed (the slime nearly gone by 1:00)
