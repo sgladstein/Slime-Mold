@@ -2340,7 +2340,13 @@ impl App {
             })
             .collect();
         let throw = ghost.and_then(|(id, at, from)| self.throw_ghost(g, id, at, from));
-        m.hint = self.star_hint.show.clone();
+        // The Starfall hint hangs below its drop's own dial; a first-sight
+        // hint (`hints.rs`) rings its thing at the simulation's own size.
+        (m.hint, m.hint_ring) = match (&self.star_hint.show, &self.hints.show) {
+            (Some(h), _) => (Some(h.clone()), 0.0),
+            (None, Some((text, at, ring, a))) => (Some((text.clone(), *at, *ring, *a)), *ring),
+            (None, None) => (None, 0.0),
+        };
         m.coach = self.coach.show.clone();
         m.tell = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| slime_tell(g, r.level().tier));
         // The landing card: whole for `INTRO_SECS` of game time (it holds

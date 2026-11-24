@@ -159,6 +159,15 @@ NO ROOM on its own line, the pause card hides the intro and coaching,
 inner pages wider (`split` 600/760) and dimmer (185). Then the end card's
 primary button shows "Enter" (`film_ends` with `FILM_SIZE`/`FILM_UI`
 films the end cards). Key list keycaps rejected (reads clearly at 4K).
+#825: the words pass (news/words.txt) and the Enter label. First-sight
+hints (Direction 17:05Z, `hints.rs`): once a PC (`hints_seen` in the
+settings file), a line hung under each later threat with a gold ring at
+its simulation size (`Model::hint_ring`); Options' Hints row
+(`hints=off`) turns them and the Starfall hint off. All triggers are read
+from existing state (no Enemy hook): `strikers.live`, `waves.live`,
+`late`, `stand.live` (gather or not the origin), `bosses.live` by kind,
+`fruits.live`, a core drop, `GpuWorld::asleep` falling a fifth in a game
+second, `scarred`. `HINTS_LOG=1` prints each as it starts.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

@@ -155,6 +155,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // was timed at. Taken at once and saved, not a round's. Steps from
     // 100% to 40% since 11-24 (the owner approved a quality slider).
     o.insert(3, Opt::new("detail", "World detail", &settings::DETAIL_STEPS, "Auto", detail_user(), "How many of the screen's pixels the world is drawn at, each way. Auto starts at the screen's own step (half on a 4K screen) and steps down toward 40% only while frames run slower than 60 a second; 100% draws every pixel, lower steps are softer and faster. Text, panels and soldiers stay sharp"));
+    // First-sight hints (`hints.rs`, Direction 11-24): one line under each
+    // of the slime's later threats the first time it shows on this PC.
+    // Taken at once and saved, not a round's.
+    o.push(Opt::new("hints", "Hints", &["on", "off"], "on", if super::hints::saved_on() { "on" } else { "off" }, "A line under each new threat the first time you meet it (strikers, waves, mini-bosses, fruiting and more), and how to collect a Starfall"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -1028,6 +1032,10 @@ impl App {
         }
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("shake")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != shake_user()) {
             self.set_shake(v);
+        }
+        if let Some(on) = self.menu.as_ref().and_then(|m| m.option("hints")).map(|o| o.value() == "on").filter(|&on| on != super::hints::saved_on()) {
+            let _ = settings::set("hints", if on { "on" } else { "off" });
+            self.hints.on = on;
         }
         let Some(m) = self.menu.as_mut() else { return Ok(picks) };
         if picks.is_empty() && dish_key(m) != before {
