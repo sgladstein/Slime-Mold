@@ -11,17 +11,17 @@
 //! there. His own planet 8 (11-22) peaked at landing (209k mould) and was
 //! half that by 3:00, so only its first minutes need the lower step.
 //!
-//! How: each second's frames give a 90th-percentile frame time, `P90`
+//! How: each second's frames give a 95th-percentile frame time, `PCT`
 //! (the interval between frames in the window, where vsync holds a quick
 //! frame to 16.7 ms; the frame's own time in the bench, which has no
-//! vsync). A second whose `P90` is past `SLOW_MS` steps down one step at
-//! once. After `hold` seconds with every `P90` under `FAST_MS` it steps up
+//! vsync). A second whose `PCT` frame is past `SLOW_MS` steps down one
+//! step at once. After `hold` seconds with every one under `FAST_MS` it steps up
 //! one; if
 //! that step's first `PROBE_SECS` seconds hold a slow one, it steps back
 //! down and `hold` doubles (to `HOLD_MAX`), so a step that does not fit is
 //! tried less and less often. A new game starts again from the top. Not
 //! the mean or the worst frame, so a few hitches a second (a boss's CPU
-//! turn, a ground refresh: up to a tenth of its frames) do not cost the
+//! turn, a ground refresh: up to a twentieth of its frames) do not cost the
 //! picture its detail.
 //!
 //! The median first (#759), then the 90th percentile (11-24, timed on the
@@ -29,8 +29,12 @@
 //! frame of 16.1 ms, under `SLOW_MS`, while its frames with a game step,
 //! one in four, ran 18.9 at their p95, so Auto held 50% for 126 s with
 //! every fourth frame late (a judder in a vsync'd window), p95 20.6. At
-//! 40% the same frames are p95 16.4. A median cannot see a slow quarter;
-//! a 90th percentile can, and still ignores one hitch in ten.
+//! 40% the same frames are p95 16.4. A median cannot see a slow quarter.
+//! The 90th percentile (#795) did, but timed again on the 1070 it held 50%
+//! for planet 8's first 90 s at p95 16.7 over all frames and 18.8 over
+//! those with a step: about one frame in twenty late, three dropped a
+//! second at 60. So the 95th: it ignores three hitches a second, and a
+//! second with more late frames than that is not 60 a second.
 //!
 //! Rejected: GPU timestamps a frame to see the headroom before stepping
 //! up (a query set and a read-back each frame in the window, for a probe
@@ -38,17 +42,17 @@
 
 use slime_mould::world::settings;
 
-/// A second whose `P90` frame is past this is slow (ms): a frame over
+/// A second whose `PCT` frame is past this is slow (ms): a frame over
 /// 60 a second's 16.67 by more than vsync's jitter.
 pub(super) const SLOW_MS: f32 = 17.5;
-/// Every second's `P90` under this for `hold` seconds: try a step up.
+/// Every second's `PCT` frame under this for `hold` seconds: try a step up.
 pub(super) const FAST_MS: f32 = 17.0;
 /// The lowest step Auto goes to (one world pixel to each of the owner's
 /// screen points at 250%).
 pub(super) const FLOOR: u32 = 40;
 /// The share of a second's frames at or under the frame time it is judged
-/// by: its 90th percentile.
-pub(super) const P90: f32 = 0.9;
+/// by: its 95th percentile (the 90th, #795, let a frame in twenty run late).
+pub(super) const PCT: f32 = 0.95;
 /// Seconds of fast frames before the first try at a step up, and the
 /// most it doubles to.
 pub(super) const HOLD_MIN: f32 = 15.0;
@@ -65,7 +69,7 @@ pub(super) struct AutoDetail {
     /// This second's frame times (ms) and the time they add up to.
     frames: Vec<f32>,
     sum: f32,
-    /// Seconds in a row with a fast `P90` since the last change.
+    /// Seconds in a row with a fast `PCT` frame since the last change.
     fast_for: f32,
     /// Seconds since the last step up (a probe while under `PROBE_SECS`).
     since_up: Option<f32>,
@@ -112,18 +116,18 @@ impl AutoDetail {
         }
         let mut f = std::mem::take(&mut self.frames);
         f.sort_by(f32::total_cmp);
-        let p90 = f[((f.len() as f32 * P90) as usize).min(f.len() - 1)];
+        let late = f[((f.len() as f32 * PCT) as usize).min(f.len() - 1)];
         let secs = self.sum / 1000.0;
         (self.frames, self.sum) = (f, 0.0);
         self.frames.clear();
-        self.second(p90, secs)
+        self.second(late, secs)
     }
 
-    fn second(&mut self, p90: f32, secs: f32) -> bool {
+    fn second(&mut self, late: f32, secs: f32) -> bool {
         if let Some(t) = self.since_up.as_mut() {
             *t += secs;
         }
-        if p90 > SLOW_MS {
+        if late > SLOW_MS {
             self.fast_for = 0.0;
             // A step up that did not fit: the next try waits twice as long.
             if self.since_up.is_some_and(|t| t <= PROBE_SECS) {
@@ -132,7 +136,7 @@ impl AutoDetail {
             self.since_up = None;
             return self.step(false);
         }
-        if p90 < FAST_MS {
+        if late < FAST_MS {
             self.fast_for += secs;
             if self.fast_for >= self.hold && self.pct < self.top {
                 self.fast_for = 0.0;
@@ -246,12 +250,22 @@ mod tests {
             }
         }
         assert_eq!(seen, vec![40]);
-        // Five hitches in sixty quick frames is under a tenth.
+        // One frame in twelve late (planet 8's first 90 s on #795): down.
+        let mut c = AutoDetail::default();
+        c.percent(UHD);
+        let mut seen = Vec::new();
+        for i in 0..200 {
+            if c.frame(if i % 12 == 0 { 19.0 } else { 15.0 }) {
+                seen.push(c.pct);
+            }
+        }
+        assert_eq!(seen, vec![40]);
+        // Two hitches in sixty quick frames is under a twentieth.
         let mut b = AutoDetail::default();
         b.percent(UHD);
         for _ in 0..20 {
             for i in 0..60 {
-                assert!(!b.frame(if i % 12 == 0 { 40.0 } else { 15.0 }));
+                assert!(!b.frame(if i % 30 == 0 { 40.0 } else { 15.0 }));
             }
         }
         assert_eq!(b.pct, 50);
