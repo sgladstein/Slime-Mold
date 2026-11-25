@@ -124,7 +124,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // crystal nearest the larder if one is within FARM cells, default 0)
     // until game second T (default 60), then every rescuer squad is merged
     // into one blob and walks to the dug-out by one squad order on hold
-    // fire (FIRE 1: Defend instead, the paired control). Once a dug-out is
+    // fire (FIRE 1: Defend, 2: free fire, the paired controls; on planet 1
+    // the hold-fire blob of 9 walked into the body's edge and died to the
+    // last at about 2:00 without reaching the dug-out). Once a dug-out is
     // reached its stranded join the blob, so it keeps to their pace
     // (`Game::pace`), and the blob fights its way on free fire to the next
     // dug-out and home.
@@ -133,7 +135,11 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         let go = v.first().copied().unwrap_or(60.0).max(1.0);
         let sc = g.world.scale();
         let farm = v.get(1).copied().unwrap_or(0.0) * sc;
-        let march = if v.get(2).copied().unwrap_or(0.0) >= 1.0 { Stance::Defend } else { Stance::HoldFire };
+        let march = match v.get(2).copied().unwrap_or(0.0) as u32 {
+            0 => Stance::HoldFire,
+            1 => Stance::Defend,
+            _ => Stance::Free,
+        };
         while g.alive() < g.rules.max_squad && g.bank >= g.rules.soldier_cost {
             if !g.apply(Cmd::Buy) {
                 break;

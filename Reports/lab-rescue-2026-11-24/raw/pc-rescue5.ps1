@@ -5,10 +5,12 @@
 # New: the careful hand rescuetight@T[,FARM[,FIRE]]: stands at the landing on
 # Defend (or drains the crystal nearest the larder within FARM cells) until
 # game second T, then all rescuers walk as one merged blob by one squad order
-# on hold fire (FIRE 1: Defend, the control) to the dug-out; free fire after
+# on hold fire (FIRE 1: Defend, 2: free fire) to the dug-out; free fire after
 # the first dug-out is reached. Planet 4 keeps round two's dug-outs; planet 5's
 # move to the body's west edge (403,312 and 420,150; rings build 8 of 8 on
 # lavapipe) with the alarm kept on. Every arm: rings 3 thick, wound 0.5.
+# Planet 1 on lavapipe (40,150, go at 0:30): hold fire died to the last at the
+# body's edge, Defend reached it and brought 1 of 3 home, free fire won 1:57.
 # 32 games, each stopped by 10:00. -Planets 4 (or 5) runs one planet.
 param([int[]]$Planets = @(4, 5))
 $ErrorActionPreference = "Continue"
@@ -19,7 +21,7 @@ $arms = @{
   4 = @(@{n="one"; a="209,290,3,300,3,1,7,0.5,3"; b=$null}, @{n="two"; a="209,290,3,300,3,1,7,0.5,3"; b="60,185"});
   5 = @(@{n="edge1"; a="403,312,3,300,3,1,7,0.5,3"; b=$null}, @{n="edge2"; a="403,312,3,300,3,1,7,0.5,3"; b="420,150"})
 }
-$hands = @("idle", "greedy", "rescue@60", "rescuetight@60", "rescuetight@60,0,1", "rescuetight@60,40", "rescuetight@120", "rescuetight@180")
+$hands = @("idle", "greedy", "rescue@60", "rescuetight@60", "rescuetight@60,0,1", "rescuetight@60,0,2", "rescuetight@60,40,2", "rescuetight@120,0,2")
 foreach ($p in $Planets) {
   foreach ($arm in $arms[$p]) {
     foreach ($h in $hands) {
