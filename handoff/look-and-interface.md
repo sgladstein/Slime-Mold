@@ -211,8 +211,12 @@ rescue planet's screens when the Lab hands it over. Direction's list of
 the main page's Run row type `StartMenu::run_seed`, which `menu.rs` takes
 for a fresh run; the seed covers planets, maps, twists, the level seeds
 and the first shop, and later shops follow what was bought and
-rerolled), 2 an optional frame readout (p95 over 10 s and World detail;
-ask Engine where the play log has them), 3 the rescue planet.
+rerolled), 2 the frame readout (Options > Screen, `frames=on`; `Hud::frame` keeps
+ten seconds of the window's frame intervals, fed from `App::auto_frame`,
+the same times Auto's World detail judges; `Model::readout` names the
+detail; drawn under the clock left of the experiments' mark; headless
+films feed no frame times, so it never shows in a film), 3 the rescue
+planet.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

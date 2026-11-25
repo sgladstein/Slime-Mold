@@ -2491,6 +2491,8 @@ impl App {
     /// interval between frames in the window, the frame's own time in the
     /// bench. Nothing when the player chose a step.
     fn auto_frame(&mut self, ms: f32) {
+        // (The frame readout, Options > Screen, keeps the same times.)
+        self.hud.frame(ms);
         if detail_user() == "Auto" {
             self.auto_detail.frame(ms);
         }

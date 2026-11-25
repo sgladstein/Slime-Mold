@@ -159,6 +159,8 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // of the slime's later threats the first time it shows on this PC.
     // Taken at once and saved, not a round's.
     o.push(Opt::new("hints", "Hints", &["on", "off"], "on", if super::hints::saved_on() { "on" } else { "off" }, "A line under each new threat the first time you meet it (strikers, waves, mini-bosses, fruiting and more), and how to collect a Starfall"));
+    // The frame readout (Direction 11-24), off by default: under the clock.
+    o.insert(4, Opt::new("frames", "Frame readout", &["off", "on"], "off", if super::draw::readout_on() { "on" } else { "off" }, "Under the clock: the last ten seconds' slowest frames (the 95th percentile, in ms; amber past 17.5, slower than 60 a second), frames a second, and the World detail the world is drawn at now"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -172,7 +174,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
                 // 11-22): the World detail row did not fit the Game tab
                 // at 1280 x 540 and 200%, so the UI size, the world's
                 // detail and the shake have a tab of their own, first.
-                "ui" | "detail" | "shake" => "Screen",
+                "ui" | "detail" | "shake" | "frames" => "Screen",
                 "map" | "planet" | "own" | "plants" => "Planet",
                 // The slime's rules as raw numbers (Panic 2, Wither 0.01):
                 // a tuning tab, last before Keys and named for what it is
@@ -1100,6 +1102,9 @@ impl App {
         }
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("shake")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != shake_user()) {
             self.set_shake(v);
+        }
+        if let Some(on) = self.menu.as_ref().and_then(|m| m.option("frames")).map(|o| o.value() == "on").filter(|&on| on != super::draw::readout_on()) {
+            super::draw::set_readout(on);
         }
         if let Some(on) = self.menu.as_ref().and_then(|m| m.option("hints")).map(|o| o.value() == "on").filter(|&on| on != super::hints::saved_on()) {
             let _ = settings::set("hints", if on { "on" } else { "off" });
