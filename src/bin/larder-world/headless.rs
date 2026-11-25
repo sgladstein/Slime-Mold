@@ -979,6 +979,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                         }
                     }
                 }
+                // The Grudge's scar tissue (11-24): the walkers on full
+                // scar, and the readout's share of the last 10 s of hits
+                // that scar shrugged off (`GpuWorld::shrugged`, 11-25).
+                if g.world.scarred() > 0 {
+                    let (off, killed) = g.world.shrugged(10 * g.rules.tps as u64);
+                    println!("  scar t {:.0} s: {} of the slime's {} on full scar; shrugged off {off} of {} hits in 10 s ({:.0}%)", g.time(), g.world.scarred(), g.mould, off + killed, 100.0 * off as f64 / (off + killed).max(1) as f64);
+                }
                 if g.rules.star.on {
                     println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);
                 }

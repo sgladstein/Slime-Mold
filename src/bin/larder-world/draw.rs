@@ -3539,8 +3539,8 @@ impl App {
 /// (Direction 11-24, the planet's introduction, job 2): no invented meter,
 /// and none where the simulation has no cheap number. The Sleeper and the
 /// Dozer: the share of the slime asleep (`GpuWorld::asleep`, the engine's
-/// per-frame count); the Grudge: the share standing on full scar, where
-/// it grew back tough (`GpuWorld::scarred`); the Swarmer: how near its
+/// per-frame count); the Grudge: the share of the squad's hits scar
+/// tissue shrugged off over the last 10 s (`GpuWorld::shrugged`); the Swarmer: how near its
 /// last stand is (the slime against its peak, `RaidRules::last_stand_at`).
 fn slime_tell(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> Option<(Icon, String, String)> {
     use slime_mould::mould::tiers::Tier;
@@ -3551,9 +3551,16 @@ fn slime_tell(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> Opti
             let n = g.world.asleep();
             Some((Icon::Sleep, format!("{}% asleep", pct(n)), format!("{} of the slime's {} are asleep; shots and noise wake them", grouped(n), grouped(g.mould))))
         }
+        // The Grudge reads where its trait acts (Direction, 11-25): the
+        // share of the squad's hits over the last 10 s that scar tissue
+        // shrugged off (`GpuWorld::shrugged`). The share of the body on
+        // full scar stayed at 1% of planet 7's slime after 3:00 on one
+        // spot, because the scar is the kill zone.
         Tier::Grudge => {
-            let n = g.world.scarred();
-            Some((Icon::Shield, format!("{}% on old scar", pct(n)), format!("{} of the slime's {} stand where you hurt it before, and grew back tough there", grouped(n), grouped(g.mould))))
+            let (off, killed) = g.world.shrugged(10 * g.rules.tps as u64);
+            let hits = off + killed;
+            let share = if hits == 0 { 0 } else { (100.0 * off as f64 / hits as f64).round() as u32 };
+            Some((Icon::Shield, format!("{share}% of hits shrugged off by scar"), format!("In the last 10 s, scar tissue shrugged off {} of your {} hits: where you hurt it, it grows back tough. Move, or burn the scar", grouped(off as usize), grouped(hits as usize))))
         }
         Tier::Swarmer => {
             let r = &g.rules.raid;
