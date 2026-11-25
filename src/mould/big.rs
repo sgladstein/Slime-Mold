@@ -3104,7 +3104,12 @@ impl BigDish {
                     let (dx, dy) = (x.floor() as i64 - (c & 0xFFFF) as i64, y.floor() as i64 - (c >> 16) as i64);
                     dx * dx + dy * dy <= r2 as i64
                 });
-            if near {
+            // Never another lump's member (11-24, the GPU's `lumpform`): a
+            // mini-boss formed on planet 7's packed heart took 954 of its
+            // 1,575 members and broke it with no shot fired. Mirrored here
+            // so the one-tick twin test still compares like with like.
+            let other = w & LUMP_BITS != 0 && w & LUMP_BITS != mine;
+            if near && !other {
                 self.dense[k] = (w & !(KEPT | ROAM | (63 << ROAM_SHIFT))) | mine;
                 n += 1;
             } else if w & LUMP_BITS == mine {

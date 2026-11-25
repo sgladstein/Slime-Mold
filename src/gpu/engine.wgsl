@@ -4498,8 +4498,8 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     // a mini-boss forms on the crowd's top, which is the packed heart, and
     // took 954 of its 1,575 members on software Vulkan (and enough on the
     // GTX 1070 to break it at 59 s, no shot fired). The CPU twin's
-    // `form_lump` still takes them; no twin test forms one lump on
-    // another.
+    // `form_lump` has the same guard, for the one-tick twin test, which
+    // forms lump 2 round lump 0's centre.
     let other = (wd & LUMP_BITS) != 0u && (wd & LUMP_BITS) != mine;
     if (within && !other) {
         set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | DENSE_BIT | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);

@@ -4454,7 +4454,8 @@ mod tests {
             }
             // The lumps: the same sums as the tick began, and forming and
             // releasing on the GPU as on the CPU (a lump 2 round lump 0's
-            // centre takes its members; lump 1 released).
+            // centre takes the free walkers there and none of lump 0's,
+            // since 11-24; lump 1 released).
             if lumped {
                 assert!(e.lumps_on, "{name}: the lump passes run");
                 let gs = e.lump_sums();
@@ -4471,7 +4472,7 @@ mod tests {
                 assert!(members_off <= tol(0, 2), "{name}: {members_off} lump members off");
                 let (cx, cy, _) = cpu.lump_centre(0).unwrap();
                 let c = (cx as u32, cy as u32);
-                let at = Some((c.0 | c.1 << 16, 20 * 20));
+                let at = Some((c.0 | c.1 << 16, 40 * 40));
                 e.form_lump(&shared, 2, at);
                 let n2 = cpu.form_lump(2, at);
                 e.form_lump(&shared, 1, None);
@@ -4479,8 +4480,9 @@ mod tests {
                 let gd = e.dense_of();
                 let off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
                 let ones = (0..n).filter(|&k| cpu.lives(k) && cpu.lump_of(k) == Some(1)).count();
-                eprintln!("{name}: lump 2 formed of {n2}, lump 1 released ({ones} left); {off} words off");
-                assert!(n2 > 3 && ones == 0 && off == 0, "{name}: forming and releasing match");
+                let zeros = (0..n).filter(|&k| cpu.lives(k) && cpu.lump_of(k) == Some(0)).count();
+                eprintln!("{name}: lump 2 formed of {n2}, lump 0 kept {zeros}, lump 1 released ({ones} left); {off} words off");
+                assert!(n2 > 3 && zeros > 0 && ones == 0 && off == 0, "{name}: forming and releasing match");
             }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
