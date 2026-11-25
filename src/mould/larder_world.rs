@@ -162,6 +162,11 @@ pub const QUEUE: usize = 8;
 /// guarded is coming onto it.
 pub const GUARD_RIM: f32 = 3.0;
 
+/// A soldier's pace when a record has none (`Soldier::pace`): whole.
+fn whole_pace() -> f32 {
+    1.0
+}
+
 #[derive(Clone, Copy, Debug)]
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Soldier {
@@ -194,6 +199,12 @@ pub struct Soldier {
     /// mould can't smell it, to sneak to a crystal) and reek (over 1: a
     /// decoy that pulls the mould off the harvesters), `mould::kit`.
     pub smell: f32,
+    /// Its own walking pace, 0..1 (1 whole): a wounded soldier walks
+    /// slower, and a squad keeps to its slowest (`Game::pace`) (Lab,
+    /// rescue planet 11-24: the found walk home at 0.3). A record from
+    /// before it reads whole (`whole_pace`), not 0, which would root it.
+    #[serde(default = "whole_pace")]
+    pub pace: f32,
     /// Carry taken up by tools it holds (`mould::kit`'s carry rule): a
     /// soldier carrying blasts brings home less food. 0 by default.
     pub load: f32,
@@ -1024,6 +1035,7 @@ impl<W: World> Game<W> {
             aim: None,
             dense: 0,
             smell: 1.0,
+            pace: 1.0,
             load: 0.0,
             squad: 0,
             rest: 0.0,

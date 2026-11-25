@@ -1042,12 +1042,15 @@ impl<W: World> Game<W> {
     /// The share of full speed soldier `k` walks at: thick slime holds a
     /// soldier back (`Rules::wade`).
     pub fn wade(&self, k: usize) -> f32 {
+        // Its own pace (`Soldier::pace`, a wounded soldier's) times the
+        // slime on its legs.
+        let own = self.soldiers[k].pace.clamp(0.0, 1.0);
         if self.rules.wade > 0.0 {
             // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
             let x = self.soldiers[k].touching as f32 / self.rules.wade;
-            1.0 / (1.0 + x * x)
+            own / (1.0 + x * x)
         } else {
-            1.0
+            own
         }
     }
 
