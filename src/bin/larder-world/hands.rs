@@ -180,7 +180,7 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             }
             return;
         }
-        let goal = r.next().unwrap_or(g.larder);
+        let goal = r.next().or(r.home).unwrap_or(g.larder);
         let going = g.squads[q].dest.is_some_and(|d| (d.0 - goal.0).abs() < 0.5 && (d.1 - goal.1).abs() < 0.5);
         if !going {
             println!("  lab rescuetight t {:.0} s: {} in one blob on {stance:?} to {:.0},{:.0}", g.time(), g.members(q).len(), goal.0, goal.1);
@@ -213,7 +213,7 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             }
         }
         let Some(r) = g.lab_rescue.clone() else { return };
-        let goal = r.next().unwrap_or(g.larder);
+        let goal = r.next().or(r.home).unwrap_or(g.larder);
         let any_reached = r.sites.iter().any(|s| s.reached.is_some());
         for k in 0..g.soldiers.len() {
             if g.soldiers[k].alive && !r.pinned(k) && g.soldiers[k].stance != Stance::Free {

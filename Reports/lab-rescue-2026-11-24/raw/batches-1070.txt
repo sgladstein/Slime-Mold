@@ -25,3 +25,13 @@ pc-rescue4.ps1 (527dd126): planet 4 with no rescue; planet 5 two dug-outs, rings
   P4 greedy, no rescue: squad wiped 0:43
   P5 N (reek 3):     greedy lost 6:38 | rescue@60 won 2:27 (2 and 2 of 3) | rescue@150 lost 3:59 | rescue@240 lost 5:06, both on the march
   P5 Q (reek 1):     greedy lost 5:26 | rescue@60 won 2:28 (1 and 2 of 3) | rescue@150 lost 4:03 | rescue@240 lost 4:51, both on the march
+
+pc-rescue5.ps1 (bef84f7c; Engine 2026-11-25 00:32Z, 13.7 min wall): the careful hand; planet 5 dug-outs on the body's west edge; alarm on for good, rings 3, wound 0.5.
+  Planet 4 larder at 562,210 (350 from dug-out 209,290); one stranded dies at 3-4 s in every P4 game.
+P4 one: idle lost 4:31 | greedy = rescue@60 army wiped 6:27 (found by hiding at 5:00, never reached) | tight hold@60 army wiped 5:05, never reached | tight defend@60 reached 1:26, lost 1:32 on the march (all 3 dead 8-11 cells from help), army wiped too | tight free@60 reached 1:26, lost 1:31 | tight farm40 free@60 (11 bought) reached 1:24, lost 1:30 | tight free@120 never reached, army wiped 5:34
+P4 two (+60,185): idle lost 4:30 | greedy = rescue@60 lost 3:23 | tight hold@60 lost 3:53, never reached | tight defend@60 reached 1:25, lost 1:39 on the march | tight free@60 reached 1:26, lost 1:39 | tight farm40 free@60 reached 1:23, lost 1:39 | tight free@120 reached 2:26, lost 2:35
+(Every reach on P4: wounded die 3-12 cells from help within 6-13 s of the reach: the alarm's strikers. Blob 9-13 lived.)
+P5 edge1 (403,312; larder 50,132): idle army wiped 7:18 (found at 5:00, 1 of 3 left) | greedy lost 6:23 (53 soldiers, never went) | rescue@60 reached 1:14, lost 1:32, army wiped | tight hold@60 reached 1:28, army wiped 1:45 (1 of 3 left) | defend reached 1:25 lost 1:43 | free reached 1:25 lost 1:45 | farm40 free reached 1:25 lost 1:41 | free@120 reached 2:28, army wiped 2:50
+(P5 edge: no early deaths now; every march home dies 15-20 s after the reach, 290-350 x, still ~250 from home.)
+P5 edge2 (+420,150): idle lost 4:46 | greedy reached B by chance 2:51, lost 3:01 | rescue@60 reached both 1:14/1:25, lost 1:32 | tight hold@60 never reached, lost 7:51 | defend reached 1:25/1:45, lost 1:49 | free reached 1:25/1:44, lost 1:49 | farm40 free 1:25/1:43, lost 1:52 | free@120 reached 2:25/2:46, lost 2:48
+(Hold fire: reached on P5 edge1 only, never on P4 or P5 edge2, died at the body edge on P1. Every reach: lost within 3-20 s on the march, wounded 2-16 cells from help.)

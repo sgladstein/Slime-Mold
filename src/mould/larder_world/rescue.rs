@@ -20,7 +20,9 @@
 //!   toolkit's reek) and fire freely. Reached, they join that soldier's
 //!   squad, and with ALARM (1) the slime's strikers turn on against the
 //!   march home whatever its size (`StrikerRules`, as the viewer forces
-//!   them). They are wounded: WOUND (0.3) of a soldier's pace, and a squad
+//!   them); ALARM above 1 forces them for that many seconds, then the
+//!   planet's own come back. `LAB_RESCUE_HOME=X,Y` takes them out there
+//!   instead of at the larder. They are wounded: WOUND (0.3) of a soldier's pace, and a squad
 //!   keeps to its slowest (`Game::pace`).
 //! - **Won** when one from every dug-out has stood within 14 cells of the
 //!   larder; **lost** when every soldier of any one dug-out is dead. The
@@ -60,7 +62,16 @@ pub struct Site {
 pub struct LabRescue {
     pub sites: Vec<Site>,
     pub hide: f32,
-    pub alarm: bool,
+    /// ALARM: 0 off, 1 the strikers forced on for good once one is
+    /// reached, more than 1 forced on for that many seconds and then back
+    /// to the planet's own (round three: forced for good, every march home
+    /// on planets 4 and 5 died 6 to 20 s after the reach).
+    pub alarm: f32,
+    /// The planet's strikers and the second they come back (a timed alarm).
+    pub calm: Option<(f32, super::StrikerRules)>,
+    /// `LAB_RESCUE_HOME=X,Y`: where the found are taken out (a shorter way
+    /// home than the larder); the larder when unset.
+    pub home: Option<(f32, f32)>,
     pub out: f32,
     /// The found stranded's walking pace (`Game::wade`), 0..1.
     pub wound: f32,
@@ -194,7 +205,7 @@ impl<W: World> Game<W> {
                 return;
             }
             let n = f.get(2).map_or(3, |&n| n.max(1.0) as usize);
-            let (hide, out, alarm) = (f.get(3).copied().unwrap_or(300.0), f.get(4).copied().unwrap_or(3.0), f.get(5).copied().unwrap_or(1.0) > 0.0);
+            let (hide, out, alarm) = (f.get(3).copied().unwrap_or(300.0), f.get(4).copied().unwrap_or(3.0), f.get(5).copied().unwrap_or(1.0).max(0.0));
             let ring_cells = f.get(6).copied().unwrap_or(7.0);
             let thick = (f.get(8).copied().unwrap_or(1.0) as u8).clamp(1, super::doors::WALL_LEVELS);
             let mut spots = vec![(f[0], f[1])];
@@ -210,7 +221,14 @@ impl<W: World> Game<W> {
             if sites.is_empty() {
                 return;
             }
-            self.lab_rescue = Some(LabRescue { sites, hide, alarm, out, wound: f.get(7).copied().unwrap_or(0.3).clamp(0.05, 1.0), ring: ring_cells.max(0.0), since: t });
+            let home = std::env::var("LAB_RESCUE_HOME").ok().and_then(|h| {
+                let p: Vec<f32> = h.split(',').filter_map(|x| x.parse().ok()).collect();
+                (p.len() >= 2).then(|| (p[0], p[1]))
+            });
+            if let Some(h) = home {
+                eprintln!("  lab rescue: taken out at {:.0},{:.0}, not the larder", h.0, h.1);
+            }
+            self.lab_rescue = Some(LabRescue { sites, hide, alarm, calm: None, home, out, wound: f.get(7).copied().unwrap_or(0.3).clamp(0.05, 1.0), ring: ring_cells.max(0.0), since: t });
             return;
         };
         let sc = self.world.scale();
@@ -286,12 +304,12 @@ impl<W: World> Game<W> {
                         self.soldiers[m].squad = q;
                     }
                     find(self, &mut s, "reached");
-                    alarm_now |= r.alarm;
+                    alarm_now |= r.alarm > 0.0;
                     s.reached = Some(t);
                     eprintln!("  lab rescue t {t:.0} s: dug-out {i} reached, {} of {} alive, into squad {q}", alive.len(), s.members.len());
                 }
             } else {
-                let l = self.larder;
+                let l = r.home.unwrap_or(self.larder);
                 if alive.iter().any(|&m| (self.soldiers[m].x - l.0).hypot(self.soldiers[m].y - l.1) <= 14.0 * sc) {
                     s.home = Some(t);
                     eprintln!("  lab rescue t {t:.0} s: dug-out {i} home, {} of {} alive", alive.len(), s.members.len());
@@ -300,8 +318,19 @@ impl<W: World> Game<W> {
             r.sites[i] = s;
         }
         if alarm_now {
-            let was = self.rules.strikers;
+            let was = r.calm.map_or(self.rules.strikers, |c| c.1);
+            if r.alarm > 1.0 {
+                r.calm = Some((t + r.alarm, was));
+                eprintln!("  lab rescue t {t:.0} s: the alarm, strikers forced for {:.0} s", r.alarm);
+            }
             self.rules.strikers = super::StrikerRules { on: true, below: 2.0, few: -1.0, full: 0.0, ..was };
+        }
+        if let Some((end, was)) = r.calm {
+            if t >= end {
+                self.rules.strikers = was;
+                r.calm = None;
+                eprintln!("  lab rescue t {t:.0} s: the alarm is over, the planet's own strikers");
+            }
         }
         if r.sites.iter().all(|s| s.home.is_some()) {
             eprintln!("  lab rescue t {t:.0} s: won, every dug-out brought home");
