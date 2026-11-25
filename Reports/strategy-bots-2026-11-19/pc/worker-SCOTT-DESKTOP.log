@@ -42647,3 +42647,53 @@ fatal: the remote end hung up unexpectedly
 2026-11-25 07:12:30   econ,aim=10,back=0.7,cap=120,cards=0,defend=0,first=pumps,go planet 3.0 seed 1795038793.0: won 150.0 (10 s)
 2026-11-25 07:12:43   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 1795038793.0: won 303.0 (20 s)
 2026-11-25 07:12:43   econ,aim=6,back=0.5,cap=80,cards=0,defend=1,first=pumps,go=4 planet 3.0 seed 1795038793.0: won 118.0 (9 s)
+2026-11-25 07:12:44 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 07:12:54 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 07:13:04 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 07:13:14 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 07:13:24 league: could not push the results; they are in C:\Users\Scott\Code\slime-league\Reports\strategy-bots-2026-11-19\pc
+2026-11-25 07:13:26 worker: search p2c generation 50: 27 plans, 342 new games
+2026-11-25 07:13:35   rush,aim=3,back=0.3,cap=80,cards=0,defend=1,first=pumps,go=1 planet 2.0 seed 1.0: won 183.0 (8 s)
+2026-11-25 07:13:38   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 237.0 (10 s)
+2026-11-25 07:13:44   rush,aim=3,back=0.3,cards=0,defend=1,first=pumps,go=10,group planet 2.0 seed 1.0: won 181.0 (8 s)
+2026-11-25 07:13:48   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 209.0 (9 s)
+2026-11-25 07:13:54   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 184.0 (8 s)
+2026-11-25 07:14:01   rush,aim=3,back=0.3,cap=80,cards=2,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 217.0 (12 s)
+2026-11-25 07:14:03   rush,aim=3,back=0.3,cap=80,cards=0,first=guard,go=10,group=8 planet 2.0 seed 1.0: won 175.0 (8 s)
+2026-11-25 07:14:10   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 170.0 (7 s)
+2026-11-25 07:14:12   rush,aim=3,back=0.3,cards=0,first=pumps,go=10,group=8,grow=1 planet 2.0 seed 1.0: won 178.0 (8 s)
+2026-11-25 07:14:19   rush,aim=3,back=0.3,cap=200,cards=0,first=guard,go=10,group= planet 2.0 seed 1.0: won 178.0 (8 s)
+2026-11-25 07:14:21   rush,aim=1,back=0.3,cap=80,cards=0,first=guard,go=10,group=8 planet 2.0 seed 1.0: won 179.0 (8 s)
+2026-11-25 07:14:28   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 185.0 (8 s)
+2026-11-25 07:14:31   rush,aim=3,back=0.3,cards=0,first=pumps,go=10,group=3,grow=1 planet 2.0 seed 1.0: won 196.0 (8 s)
+2026-11-25 07:14:37   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 179.0 (8 s)
+2026-11-25 07:14:40   rush,aim=3,back=0.3,cards=0,first=pumps,go=10,group=8,grow=1 planet 2.0 seed 1.0: won 179.0 (8 s)
+2026-11-25 07:14:47   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 193.0 (8 s)
+2026-11-25 07:14:53   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1.0: won 252.0 (12 s)
+2026-11-25 07:14:59   rush,aim=3,back=0.3,cap=80,cards=2,first=guard,go=10,group=8 planet 2.0 seed 1.0: won 214.0 (11 s)
+2026-11-25 07:15:03   rush,aim=3,back=0.3,cap=80,cards=0,defend=1,first=pumps,go=1 planet 2.0 seed 2.0: won 190.0 (8 s)
+2026-11-25 07:15:10   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 216.0 (9 s)
+2026-11-25 07:15:11   rush,aim=3,back=0.3,cards=0,defend=1,first=pumps,go=10,group planet 2.0 seed 2.0: won 180.0 (8 s)
+2026-11-25 07:15:19   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 190.0 (8 s)
+2026-11-25 07:15:20   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 181.0 (8 s)
+2026-11-25 07:15:29   rush,aim=3,back=0.3,cap=80,cards=2,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 179.0 (8 s)
+2026-11-25 07:15:30   rush,aim=3,back=0.3,cap=80,cards=0,first=guard,go=10,group=8 planet 2.0 seed 2.0: won 176.0 (8 s)
+2026-11-25 07:15:38   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 189.0 (8 s)
+2026-11-25 07:15:39   rush,aim=3,back=0.3,cards=0,first=pumps,go=10,group=8,grow=1 planet 2.0 seed 2.0: won 190.0 (8 s)
+2026-11-25 07:15:47   rush,aim=3,back=0.3,cap=200,cards=0,first=guard,go=10,group= planet 2.0 seed 2.0: won 200.0 (8 s)
+2026-11-25 07:15:48   rush,aim=1,back=0.3,cap=80,cards=0,first=guard,go=10,group=8 planet 2.0 seed 2.0: won 176.0 (7 s)
+2026-11-25 07:15:56   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 183.0 (8 s)
+2026-11-25 07:15:56   rush,aim=3,back=0.3,cards=0,first=pumps,go=10,group=3,grow=1 planet 2.0 seed 2.0: won 183.0 (8 s)
+2026-11-25 07:16:05   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 183.0 (8 s)
+2026-11-25 07:16:06   rush,aim=3,back=0.3,cards=0,first=pumps,go=10,group=8,grow=1 planet 2.0 seed 2.0: won 185.0 (8 s)
+2026-11-25 07:16:12   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 144.0 (6 s)
+2026-11-25 07:16:15   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 2.0: won 192.0 (8 s)
+2026-11-25 07:16:23   rush,aim=3,back=0.3,cap=80,cards=2,first=guard,go=10,group=8 planet 2.0 seed 2.0: won 192.0 (9 s)
+2026-11-25 07:16:25   rush,aim=3,back=0.3,cap=80,cards=0,defend=1,first=pumps,go=1 planet 2.0 seed 3.0: won 188.0 (8 s)
+2026-11-25 07:16:32   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 3.0: won 198.0 (8 s)
+2026-11-25 07:16:34   rush,aim=3,back=0.3,cards=0,defend=1,first=pumps,go=10,group planet 2.0 seed 3.0: won 188.0 (8 s)
+2026-11-25 07:16:42   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 3.0: won 219.0 (8 s)
