@@ -226,5 +226,10 @@ A second slime species that fights the first; the player's own mould
   page "Rescue Planet". `LAB_RESCUE` and the bot hand `rescue@X,Y[,T]`
   (code `a7c788e2`). Winnable and loses visibly on planet 1, but too short
   there; timing on planets 3 to 5 needs the GTX 1070.
+- 2026-11-24: **rescue planet round two** (Direction 19:37Z): no heart
+  win, `LAB_RESCUE_MORE` for more dug-outs, the hand `rescue[@T]` (code
+  `a7b9204e`); 64 games on the 1070 (`raw/batches-1070.txt`). Planet 3
+  with two dug-outs plays 4 to 6.5 minutes; planets 4 and 5 not yet.
+  Enemy's and Squad's patches in `raw/`.
 - Next step: add Engine's pack-only run when it comes; then wait for
   Direction's next brief.

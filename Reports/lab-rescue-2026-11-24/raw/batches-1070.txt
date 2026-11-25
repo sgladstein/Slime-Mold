@@ -1,0 +1,27 @@
+The rescue planet, round two, on Scott's GTX 1070 (Engine lane, 2026-11-24
+20:15Z to 23:51Z), run seed 1, every game stopped by 10:00. One line a game,
+from the raw console blocks (the full logs are in
+C:\Users\Scott\Code\pc-batch-out\lab-rescue{2,3,4}-20261124). "won" means
+one of every dug-out reached the larder; "lost" means a dug-out was wiped;
+"army wiped" means the hand's own soldiers all died while a dug-out lived on.
+Times are game time.
+
+pc-rescue2.ps1 (233b0f8a): alarm on, reek 3, ring 1 level, wound 0.3
+  P3 one (154,102):  idle lost 5:05 | greedy lost 5:09 | rescue@60 won 2:20 (2 of 3) | rescue@150 lost 5:10, never reached | rescue@240 won 5:28 (3 of 3)
+  P3 two (+250,70):  idle lost 4:20 | greedy lost 5:05 (B reached by chance at 0:13) | rescue@60 won 2:32 | rescue@150 won 3:57 | rescue@240 won 6:02
+  P4 one (209,290):  idle lost 1:59 | greedy, rescue@60/150/240 identical: army wiped, ended 3:27
+  P4 two (+60,185):  idle lost 2:34 | greedy, rescue@150/240 identical: lost 1:56 | rescue@60 lost 1:28 on the march
+  P5 one (536,278):  idle ended 6:26 | greedy, rescue@150/240 identical: lost 2:20, ring breached | rescue@60 army wiped 1:40
+  P5 two (+463,151): idle lost 5:42 | greedy lost 4:07 on the march | rescue@60 lost 1:48 | rescue@150 lost 3:26 | rescue@240 lost 4:04, all on the march
+
+pc-rescue3.ps1 (a7b9204e): planet 3 B moved to 42,139; planets 4 and 5 rings 3 levels, wound 0.5
+  P3 two (+42,139):  idle lost 5:06 | greedy lost 5:25 | rescue@60 won 3:57 (2 and 3 of 3) | rescue@150 lost 5:21, never reached | rescue@240 won 6:23 (1 and 3 of 3)
+  P4 one:            idle lost 4:31 | greedy, rescue@60/150/240 identical: army wiped, ended 6:27
+  P4 two:            idle lost 4:30 | greedy, rescue@60/150/240 identical: lost 3:23
+  P5 one:            idle ended 5:34 | greedy lost 7:41 | rescue@60 lost 1:35 | rescue@150 lost 3:07, both on the march | rescue@240 army wiped 4:52
+  P5 two:            idle lost 9:43 | greedy lost 4:03 | rescue@60 lost 1:32 | rescue@150 lost 3:07 | rescue@240 lost 4:26, all on the march
+
+pc-rescue4.ps1 (527dd126): planet 4 with no rescue; planet 5 two dug-outs, rings 3, wound 0.5, alarm off
+  P4 greedy, no rescue: squad wiped 0:43
+  P5 N (reek 3):     greedy lost 6:38 | rescue@60 won 2:27 (2 and 2 of 3) | rescue@150 lost 3:59 | rescue@240 lost 5:06, both on the march
+  P5 Q (reek 1):     greedy lost 5:26 | rescue@60 won 2:28 (1 and 2 of 3) | rescue@150 lost 4:03 | rescue@240 lost 4:51, both on the march
