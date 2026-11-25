@@ -2350,6 +2350,7 @@ impl App {
         let t0 = Instant::now();
         // The kit's blasts (mines, thrown charges), heard where they went off.
         l.bangs(&g.kit.bangs);
+        l.puffs(&g.kit.puffs);
         // The gun cards' payloads (sound pass two, 2026-11-20).
         l.pops(&g.rounds.pops);
         // The score: the planet's mood, the menus' own under a menu.

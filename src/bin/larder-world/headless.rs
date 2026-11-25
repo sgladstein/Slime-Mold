@@ -295,6 +295,28 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             (v.len() == 3).then(|| (v[0], v[1], v[2]))
         })
         .collect();
+    // `LARDER_DEVICES=T,KIND,X,Y[,X2,Y2];..` (world units; KIND blast,
+    // mine, cord or gas; the kit sounds, 2026-11-24): squad 0 uses that
+    // device there once T has come (`Cmd::Device`, its slot made ready
+    // first, so the film need not wait out a cooldown), if a soldier is in
+    // reach; a cord runs from (X, Y) to (X2, Y2).
+    let mut devices: Vec<(f32, Tool)> = std::env::var("LARDER_DEVICES")
+        .unwrap_or_default()
+        .split(';')
+        .filter_map(|d| {
+            let w: Vec<&str> = d.split(',').map(|x| x.trim()).collect();
+            let n: Vec<f32> = w.iter().skip(2).filter_map(|x| x.parse().ok()).collect();
+            let t: f32 = w.first()?.parse().ok()?;
+            let tool = match (*w.get(1)?, n.as_slice()) {
+                ("blast", [x, y]) => Tool::Blast((*x, *y)),
+                ("mine", [x, y]) => Tool::Mine((*x, *y)),
+                ("gas", [x, y]) => Tool::Gas((*x, *y)),
+                ("cord", [x, y, x2, y2]) => Tool::Cord((*x, *y), (*x2, *y2)),
+                _ => return None,
+            };
+            Some((t, tool))
+        })
+        .collect();
     let mut drain_at: Option<f32> = std::env::var("LARDER_DRAIN").ok().and_then(|v| v.parse().ok());
     // `LARDER_FORCE=WHAT@T;..` (Look and interface, 2026-11-24, to film
     // the first-sight hints, `hints.rs`): at game second T, `stand` (the
@@ -535,6 +557,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     println!("  mine t {t:.2} s laid at {x},{y}");
                 }
                 mines.retain(|m| m.0 > t);
+                for &(_, tool) in devices.iter().filter(|d| d.0 <= t) {
+                    if let Some(q) = g.squads.first_mut() {
+                        q.device_at = 0;
+                    }
+                    let ok = g.apply(Cmd::Device(0, tool));
+                    println!("  device t {t:.2} s: {tool:?} {}", if ok { "used" } else { "refused (no soldier in reach, or not open ground)" });
+                }
+                devices.retain(|d| d.0 > t);
             }
             // `boom=T,X,Y`: the round set off there once T has come.
             for (j, (bt, bx, by, cards)) in booms.iter().enumerate() {
@@ -1295,6 +1325,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             s.zips, s.sirens, s.blasts, s.torn, s.rejoined, s.withered, s.tells, s.charges, s.pieces, s.withering
         );
         println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}; coin ticks {}, drops emptied {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost, s.coins, s.cashed);
+        println!("  heard (kit): shells sent {}, landed {}, sprayer sweeps {}, line ripples {}, canister puffs {}, darts {}", s.launches, s.landings, s.sweeps, s.ripples, s.puffs, s.darts);
         println!("  hits by kills (0, 1, 2, 3-4, 5-8, 9-16, 17-32, 33+): {:?}; full weight at {:.0} kills", s.kill_hist, s.full);
         let b = bank.stats;
         println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);
