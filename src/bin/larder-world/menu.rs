@@ -384,6 +384,23 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
     a
 }
 
+/// **What beats each slime** (Direction 11-24, "a counter for every
+/// slime"; Squad checked each in paired one-minute films, PR #845,
+/// `Reports/slime-counters-2026-11-24/`), for the landing card, the shop's
+/// planet ahead and the pause card. The Sprawler's and the Trunk's own
+/// lines already name theirs ("bring Tinder and a Torch", "Burn the
+/// walls"); the Grudge has none yet. With #845 the shop before planets 4,
+/// 5, 6 and 8 puts that bullet first, so the advice can be taken.
+pub(super) fn beat_it(tier: Tier) -> Option<&'static str> {
+    match tier {
+        Tier::Drifter => Some("Guard each pump with a turret"),
+        Tier::Swarmer | Tier::Dozer => Some("Bomb bullets throw its charge back"),
+        Tier::Sporer => Some("Germ bullets rot it from within"),
+        Tier::Sleeper => Some("Flare it awake, then Germ it"),
+        Tier::Sprawler | Tier::Trunk | Tier::Grudge => None,
+    }
+}
+
 /// The shop page's contents for run `r` (the gun range's armory when
 /// `r` is the range's).
 pub(super) fn shop_of(r: &Run) -> Shop {
@@ -555,6 +572,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
         run: (!r.range).then(|| run_view(r)),
         slime: (!r.range && !does.is_empty()).then(|| (title_case(l.tier.name()), does.to_string())),
+        beat: beat_it(l.tier).filter(|_| !r.range).map(str::to_string),
         twist: r.twist().map(|t| (t.name().to_string(), t.card())),
         shots: shots
             .into_iter()

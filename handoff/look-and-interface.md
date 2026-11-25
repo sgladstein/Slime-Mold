@@ -201,8 +201,10 @@ keys and `keys::means` turns the key pressed into the one it stands for,
 in `events.rs` after the menu branch; `ui::key_name` names the key
 pressed now, so every label follows; saved as `keys=` in settings;
 Options > Keys > Change keys is `Page::Bind`, its rows `menu::bind_rows`;
-`menu=change-keys` films it); 3 Squad's counter lines on the landing
-card and the shop's planet-ahead block (sent 22:58Z, PR #845); 4 the
+`menu=change-keys` films it); 3 Squad's counter lines (sent 22:58Z, PR #845): `menu::beat_it(tier)`,
+`Intro::counter` and `Shop::beat`, drawn after "Beat it:" in the accent
+on the landing card, the shop's planet ahead and the pause card (the
+Sprawler's and Trunk's lines name theirs; the Grudge has none yet); 4 the
 rescue planet's screens when the Lab hands it over.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
