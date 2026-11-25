@@ -25,3 +25,10 @@ the nightly green, and a lighter handoff and what's-new.
   the same "squad is winning" signal; the body's own reach is about 5 cells.
 - [Lab brief: a body that reaches a moving squad](lab-brief-slime-reach.md),
   from the model, with its deciding measure named.
+
+## Step C
+
+- [Five ways to choose a route](route-choice.html)
+  (https://claude.ai/artifact/85hVGbUEAL2pBYA4xovKts), with a
+  [draft build brief](route-choice-brief.md) for the recommended star map
+  with contracts, pending the owner's pick.
