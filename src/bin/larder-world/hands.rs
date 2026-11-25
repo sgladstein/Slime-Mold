@@ -115,6 +115,73 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // and once every one is reached, home to the larder. After the first
     // is reached it moves as squads, so each keeps to its wounded's pace
     // (`Game::pace`); one by one the fit ran ahead and left them.
+    // LAB: `rescuetight[@T[,FARM[,FIRE]]]`, the careful rescue (Direction
+    // 2026-11-24 23:57Z: "enough sense to survive the Swarmer: move with
+    // the squad tight and hold fire until it reaches the dug-out"). On
+    // planet 4 greedy ran to the big crystal by the Swarmer and was wiped
+    // at 0:43 with or without a rescue; idle at the landing lived. So: buy
+    // what the bank allows, stand at the landing on Defend (or drain the
+    // crystal nearest the larder if one is within FARM cells, default 0)
+    // until game second T (default 60), then every rescuer squad is merged
+    // into one blob and walks to the dug-out by one squad order on hold
+    // fire (FIRE 1: Defend instead, the paired control). Once a dug-out is
+    // reached its stranded join the blob, so it keeps to their pace
+    // (`Game::pace`), and the blob fights its way on free fire to the next
+    // dug-out and home.
+    if hand == "rescuetight" || hand.starts_with("rescuetight@") {
+        let v: Vec<f32> = hand.strip_prefix("rescuetight@").map(|p| p.split(',').filter_map(|v| v.parse::<f32>().ok()).collect()).unwrap_or_default();
+        let go = v.first().copied().unwrap_or(60.0).max(1.0);
+        let sc = g.world.scale();
+        let farm = v.get(1).copied().unwrap_or(0.0) * sc;
+        let march = if v.get(2).copied().unwrap_or(0.0) >= 1.0 { Stance::Defend } else { Stance::HoldFire };
+        while g.alive() < g.rules.max_squad && g.bank >= g.rules.soldier_cost {
+            if !g.apply(Cmd::Buy) {
+                break;
+            }
+        }
+        let Some(r) = g.lab_rescue.clone() else { return };
+        let ours = |g: &Game<GpuWorld>| -> Vec<usize> { g.live_squads().into_iter().filter(|&q| !g.members(q).iter().any(|&k| r.pinned(k))).collect() };
+        let qs = ours(g);
+        if let Some((&a, rest)) = qs.split_first() {
+            for &b in rest {
+                g.apply(Cmd::Merge(a as u8, b as u8));
+            }
+        }
+        let Some(&q) = ours(g).first() else { return };
+        let any_reached = r.sites.iter().any(|s| s.reached.is_some());
+        let stance = if g.time() < go {
+            Stance::Defend
+        } else if any_reached {
+            Stance::Free
+        } else {
+            march
+        };
+        for k in g.members(q) {
+            if g.soldiers[k].stance != stance {
+                g.apply(Cmd::Stance(k, stance));
+            }
+        }
+        if g.time() < go {
+            let cs = g.world.crystals();
+            let l = g.larder;
+            let d = |c: (f32, f32)| (c.0 - l.0).hypot(c.1 - l.1);
+            let Some(c) = (1..cs.len()).filter(|&c| cs[c].1 > 0.0 && d(cs[c].0) < farm).min_by(|&a, &b| d(cs[a].0).total_cmp(&d(cs[b].0))).map(|c| cs[c].0) else { return };
+            for k in g.members(q) {
+                let on = matches!(g.soldiers[k].order, Order::Clear(x, y) if (x - c.0).abs() < 0.5 && (y - c.1).abs() < 0.5);
+                if !on {
+                    g.apply(Cmd::Order(k, Order::Clear(c.0, c.1)));
+                }
+            }
+            return;
+        }
+        let goal = r.next().unwrap_or(g.larder);
+        let going = g.squads[q].dest.is_some_and(|d| (d.0 - goal.0).abs() < 0.5 && (d.1 - goal.1).abs() < 0.5);
+        if !going {
+            println!("  lab rescuetight t {:.0} s: {} in one blob on {stance:?} to {:.0},{:.0}", g.time(), g.members(q).len(), goal.0, goal.1);
+            g.apply(Cmd::SquadOrder(q as u8, Order::Move(goal.0, goal.1)));
+        }
+        return;
+    }
     if hand == "rescue" || hand.starts_with("rescue@") {
         let v: Vec<f32> = hand.strip_prefix("rescue@").map(|p| p.split(',').filter_map(|v| v.parse::<f32>().ok()).collect()).unwrap_or_default();
         let go = match v.len() {
