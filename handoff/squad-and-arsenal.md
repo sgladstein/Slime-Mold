@@ -48,6 +48,16 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-24/25, the kit's sounds and the wounded pace (pathfinding
+thread).** Direction 23:33Z: the Mortar, Hunter, Sprayer, Mine, Line,
+Canister and Dart each voiced, weighed against the Grenade by radius
+(`sound::world::blow`); new `GunVoice` Mortar/Hunter/Sprayer, `Bang::tool`,
+`Kit::puffs`, the Dart heard through `Rounds::darted`; film key
+`LARDER_DEVICES` (`Reports/kit-sounds-2026-11-24/`). The Lab's
+wounded-pace patch landed alone as #851 (`Soldier::pace` times
+`Game::wade`) for Enemy's planet 3 rescue. Open: re-film the Grudge with
+Tinder and a Torch once Enemy's scar retune lands (readout 10-20% by 2:00).
+
 **2026-11-24, a counter for every slime (pathfinding thread).** Direction
 20:49Z. Paired films found an answer on every planet but the Grudge
 (`Reports/slime-counters-2026-11-24/`); `bring_shell` now asks for Bomb

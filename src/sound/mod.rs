@@ -301,10 +301,20 @@ pub enum GunVoice {
     Scatter,
     /// A turret: a metallic, ringing, quieter shot, set under the squad's.
     Turret,
+    /// A mortar's launch (2026-11-24): a hollow low thump from the tube,
+    /// no crack, a breath of a report. Its shell lands as a crump of its
+    /// own (`world::WorldListener`), scaled to the strike.
+    Mortar,
+    /// A hunter's shot: a hard, ringing crack with a deep punch and a bolt
+    /// after, a heavy rifle on a stand; it fires once in five seconds.
+    Hunter,
+    /// A sprayer's sweep: a wet hiss with no punch, the quietest of the
+    /// guns, since its sweep is a trickle (six small strikes).
+    Sprayer,
 }
 
 impl GunVoice {
-    pub const ALL: [GunVoice; 5] = [GunVoice::Rifle, GunVoice::Carbine, GunVoice::Long, GunVoice::Scatter, GunVoice::Turret];
+    pub const ALL: [GunVoice; 8] = [GunVoice::Rifle, GunVoice::Carbine, GunVoice::Long, GunVoice::Scatter, GunVoice::Turret, GunVoice::Mortar, GunVoice::Hunter, GunVoice::Sprayer];
 }
 
 /// The moments that matter, as tuned tones.
