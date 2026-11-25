@@ -41902,3 +41902,52 @@ fatal: the remote end hung up unexpectedly
 2026-11-25 06:04:19   rush,aim=3,back=0.3,cap=200,cards=0,first=pumps,go=10,group= planet 2.0 seed 1795119328.0: won 201.0 (10 s)
 2026-11-25 06:04:27   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1795119328.0: won 230.0 (11 s)
 2026-11-25 06:04:30   rush,aim=3,back=0.3,cap=40,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1795119328.0: won 224.0 (10 s)
+2026-11-25 06:04:31 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 06:04:41 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 06:04:51 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 06:05:01 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 06:05:11 league: could not push the results; they are in C:\Users\Scott\Code\slime-league\Reports\strategy-bots-2026-11-19\pc
+2026-11-25 06:05:21   econ,aim=6,back=0.5,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 14.0: won 107.0 (7 s)
+2026-11-25 06:05:23   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 14.0: won 151.0 (9 s)
+2026-11-25 06:05:33   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 14.0: won 157.0 (10 s)
+2026-11-25 06:05:34   econ,aim=6,back=0.7,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 14.0: won 146.0 (9 s)
+2026-11-25 06:05:43   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 14.0: won 145.0 (9 s)
+2026-11-25 06:05:43   econ,aim=10,back=0.5,cap=120,cards=2,defend=1,first=pumps,go planet 3.0 seed 14.0: won 113.0 (8 s)
+2026-11-25 06:05:52   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 14.0: won 107.0 (7 s)
+2026-11-25 06:05:53   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 14.0: won 137.0 (8 s)
+2026-11-25 06:06:02   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 14.0: won 141.0 (8 s)
+2026-11-25 06:06:02   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 14.0: won 107.0 (7 s)
+2026-11-25 06:06:37   econ,aim=6,back=0.5,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 14.0: won 476.0 (33 s)
+2026-11-25 06:06:37   econ,aim=10,back=0.7,cap=120,cards=0,defend=0,first=pumps,go planet 3.0 seed 14.0: won 221.0 (17 s)
+2026-11-25 06:06:42   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 15.0: won 288.0 (19 s)
+2026-11-25 06:06:44   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 15.0: won 92.0 (5 s)
+2026-11-25 06:06:48   econ,aim=6,back=0.5,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 15.0: won 90.0 (5 s)
+2026-11-25 06:06:54   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=guard,go planet 3.0 seed 15.0: won 151.0 (9 s)
+2026-11-25 06:07:07   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 15.0: won 283.0 (18 s)
+2026-11-25 06:07:07   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 15.0: won 96.0 (6 s)
+2026-11-25 06:07:08   econ,aim=6,back=0.5,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 15.0: won 97.0 (6 s)
+2026-11-25 06:07:18   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 15.0: won 157.0 (9 s)
+2026-11-25 06:07:18   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 15.0: won 91.0 (5 s)
+2026-11-25 06:07:22   econ,aim=6,back=0.7,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 15.0: won 96.0 (5 s)
+2026-11-25 06:07:24   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 15.0: won 94.0 (5 s)
+2026-11-25 06:07:34   econ,aim=10,back=0.5,cap=120,cards=2,defend=1,first=pumps,go planet 3.0 seed 15.0: won 178.0 (11 s)
+2026-11-25 06:07:34   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 15.0: won 92.0 (6 s)
+2026-11-25 06:07:38   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 15.0: won 91.0 (5 s)
+2026-11-25 06:07:41   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 15.0: won 92.0 (5 s)
+2026-11-25 06:07:45   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 15.0: won 91.0 (5 s)
+2026-11-25 06:08:37   econ,aim=6,back=0.5,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 15.0: open 900.1 (55 s)
+2026-11-25 06:08:37   econ,aim=10,back=0.7,cap=120,cards=0,defend=0,first=pumps,go planet 3.0 seed 15.0: won 304.0 (22 s)
+2026-11-25 06:08:37   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 16.0: won 180.0 (11 s)
+2026-11-25 06:08:37   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 16.0: won 97.0 (6 s)
+2026-11-25 06:08:37   econ,aim=6,back=0.5,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 16.0: won 98.0 (6 s)
+2026-11-25 06:08:44   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=guard,go planet 3.0 seed 16.0: won 91.0 (6 s)
+2026-11-25 06:08:52   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 16.0: won 217.0 (13 s)
+2026-11-25 06:08:52   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 16.0: won 97.0 (6 s)
+2026-11-25 06:08:59   econ,aim=6,back=0.5,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 16.0: won 97.0 (6 s)
+2026-11-25 06:09:00   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 16.0: won 116.0 (7 s)
+2026-11-25 06:09:06   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 16.0: won 104.0 (6 s)
+2026-11-25 06:09:07   econ,aim=6,back=0.7,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 16.0: won 97.0 (6 s)
