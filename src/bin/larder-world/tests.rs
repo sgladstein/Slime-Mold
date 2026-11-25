@@ -2493,3 +2493,18 @@ fn change_keys_lists_each_squad_key_once() {
         assert!(rows[..i].iter().all(|r| r.0 != *k), "{w}: {k:?} listed twice");
     }
 }
+
+/// A run played again on its seed (Direction 11-24) gets the same planets,
+/// maps, twists and first shop; what the player buys and rerolls changes
+/// the later shops from there, as it did the first time.
+#[test]
+fn a_seed_gives_the_same_planets_and_first_shop() {
+    let (mut a, mut b) = (Run::new(1_732_456_789), Run::new(1_732_456_789));
+    a.restock();
+    b.restock();
+    assert_eq!((a.offers.clone(), a.gun_offers.clone()), (b.offers.clone(), b.gun_offers.clone()));
+    for d in 1..=slime_mould::mould::run::PLANETS {
+        (a.depth, b.depth) = (d, d);
+        assert_eq!((a.planet().name, a.twist(), a.level().seed), (b.planet().name, b.twist(), b.level().seed), "planet {d}");
+    }
+}

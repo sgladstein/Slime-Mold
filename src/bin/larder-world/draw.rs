@@ -2563,6 +2563,13 @@ impl App {
         // The planet's landing card again on the pause menu (Direction
         // 11-24): the slime's line and the twist, under the goal.
         m.pause_planet = (self.hud.menu_open() && self.planet_open()).then(|| self.intro.as_ref().map(|(i, _)| i.clone())).flatten();
+        // The frame readout (Options > Screen, Direction 11-24): the World
+        // detail the view draws at, and whether Auto picked it.
+        m.readout = readout_on().then(|| {
+            let pct = self.view.as_ref().map_or(100, |v| v.percent());
+            let auto = super::volume::detail_user() == "Auto";
+            format!("World detail {pct}%{}", if auto { ", Auto" } else { "" })
+        });
         m.loadout = Some(self.loadout(g, &sel));
         // A building selected takes the panel for its own state (option
         // b); a click on open ground, a tile's number or Space gives the
@@ -3602,5 +3609,32 @@ impl Coach {
         }
         let a = (age / 0.5).min(1.0) * ((most - age) / 1.0).clamp(0.0, 1.0);
         self.show = Some((words.to_string(), format!("{} of {}", self.step + 1, COACH.len()), a));
+    }
+}
+
+/// **The frame readout** (Direction 11-24: "an optional frame readout in
+/// Options, off by default: the last 10 seconds' p95 frame time and the
+/// current World detail, in a corner", so Milestone 2's test 5, 60 frames
+/// a second at 4K, can be read on the owner's own screen). Saved as
+/// `frames=on` beside the settings; read once, then kept here.
+static READOUT: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
+pub(super) fn readout_on() -> bool {
+    use std::sync::atomic::Ordering;
+    match READOUT.load(Ordering::Relaxed) {
+        0 => {
+            let on = slime_mould::world::settings::get("frames").as_deref() == Some("on");
+            READOUT.store(if on { 2 } else { 1 }, Ordering::Relaxed);
+            on
+        }
+        k => k == 2,
+    }
+}
+
+/// The readout on or off, saved.
+pub(super) fn set_readout(on: bool) {
+    READOUT.store(if on { 2 } else { 1 }, std::sync::atomic::Ordering::Relaxed);
+    if let Err(e) = slime_mould::world::settings::set("frames", if on { "on" } else { "off" }) {
+        eprintln!("larder-world: the frame readout was not saved ({e})");
     }
 }

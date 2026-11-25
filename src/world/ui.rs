@@ -631,6 +631,9 @@ pub struct Intro {
 /// `Shop::beat`).
 pub const BEAT_IT: &str = "Beat it:";
 
+/// The frame readout's window (ms): ten seconds (Direction 11-24).
+const READOUT_MS: f32 = 10_000.0;
+
 /// A planet twist's colour on the HUD: an ice blue, apart from the slime's
 /// amber and the accent's cyan (the cold snap and the wind alike).
 pub const TWIST: Rgba = [156, 208, 255, 255];
@@ -724,6 +727,11 @@ pub struct Model {
     /// slime's name and line, and the twist's, under the goal
     /// (`objective`). The card's `alpha` is not read here.
     pub pause_planet: Option<Intro>,
+    /// **The frame readout** (Direction 11-24, Options > Screen > Frame
+    /// readout, off by default): the World detail as the readout names
+    /// it ("World detail 50%, Auto"); Some draws the last ten seconds'
+    /// p95 frame time and frames a second beside it, under the clock.
+    pub readout: Option<String>,
     /// The end screen's first button carries on (`MenuItem::Continue`)
     /// under this label, instead of "Play again" (a roguelike run: the
     /// shop, or the run's end).
@@ -1146,6 +1154,10 @@ pub struct Hud {
     /// The loadout's swap command, as last drawn.
     cycle: Option<u32>,
     started: Instant,
+    /// The last ten seconds' frame times (ms) and their sum, for the
+    /// frame readout (`Model::readout`).
+    frames: std::collections::VecDeque<f32>,
+    frames_ms: f32,
     /// The hover card's timing (`HoverCard`).
     card: HoverCard,
     /// The mouse buttons held (left, right, middle): no hover card then.
@@ -1233,7 +1245,33 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, end_carry: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, end_carry: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), frames: std::collections::VecDeque::new(), frames_ms: 0.0, card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
+    }
+
+    /// One frame's time (ms), the interval between frames in the window
+    /// (as Auto's World detail judges them, `autodetail`): the readout
+    /// keeps the last ten seconds.
+    pub fn frame(&mut self, ms: f32) {
+        if !ms.is_finite() || ms <= 0.0 {
+            return;
+        }
+        self.frames.push_back(ms);
+        self.frames_ms += ms;
+        while self.frames_ms > READOUT_MS && self.frames.len() > 1 {
+            self.frames_ms -= self.frames.pop_front().unwrap_or(0.0);
+        }
+    }
+
+    /// The last ten seconds' 95th-percentile frame (ms) and frames a
+    /// second, once there are any.
+    pub fn frame_stats(&self) -> Option<(f32, f32)> {
+        if self.frames.is_empty() || self.frames_ms <= 0.0 {
+            return None;
+        }
+        let mut v: Vec<f32> = self.frames.iter().copied().collect();
+        v.sort_by(f32::total_cmp);
+        let k = ((v.len() as f32 * 0.95).ceil() as usize).clamp(1, v.len()) - 1;
+        Some((v[k], v.len() as f32 * 1000.0 / self.frames_ms))
     }
 
     /// The menu is open (the game should pause).
@@ -1908,6 +1946,22 @@ impl Hud {
                 let tw = c.atlas.measure(Weight::Medium, 13.5 * s, &tip) + 18.0 * s;
                 self.tip_small(&tip, ((r.right() - tw).max(8.0 * s), r.bottom() + 6.0 * s), c, s);
             }
+        }
+        // The frame readout (Options > Screen, off by default): the last
+        // ten seconds' p95 frame and frames a second, and the World
+        // detail, under the clock left of the experiments' mark. Amber
+        // and marked "slow" past Auto's own line for a slow second
+        // (`autodetail::SLOW_MS`, 17.5 ms), so 60 a second reads at once.
+        if let (Some(detail), Some((p95, fps))) = (&m.readout, self.frame_stats()) {
+            let slow = p95 > 17.5;
+            let t = format!("p95 {p95:.1} ms{}  ·  {fps:.0} a second  ·  {detail}", if slow { " (slow)" } else { "" });
+            let w = c.atlas.measure(Weight::Medium, small, &t) + 22.0 * s;
+            let right = if mark < sw { mark - 8.0 * s } else { menu.right() };
+            let r = Rect::new((right - w).max(8.0 * s), y + h + 6.0 * s, w, 22.0 * s);
+            c.shadow(r, r.h / 2.0, 10.0 * s, 2.0 * s, SHADOW);
+            c.panel(r, r.h / 2.0, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE);
+            c.text_fit(Weight::Medium, small, (r.x + 11.0 * s, r.y + 15.5 * s), Align::Left, &t, r.w - 16.0 * s, if slow { WARN } else { MUTED });
+            mark = r.x;
         }
         // The objective, centred between the resources' pill and the
         // clock's, smaller if it must be; and if it still does not fit,
@@ -4506,6 +4560,27 @@ mod tests {
     /// slime's line and the twist, beside the card where the screen is
     /// wide, in it where it is only tall, and left out where neither fits;
     /// the card and its buttons stay on the screen at every size.
+    /// The frame readout keeps ten seconds of frames: its p95 is the
+    /// slow tail (a frame in twenty), and older frames drop out.
+    #[test]
+    fn the_frame_readout_keeps_ten_seconds() {
+        let mut h = Hud::new();
+        assert!(h.frame_stats().is_none());
+        for k in 0..600 {
+            h.frame(if k % 10 == 0 { 25.0 } else { 16.0 });
+        }
+        let (p95, fps) = h.frame_stats().unwrap();
+        assert_eq!(p95, 25.0, "a tenth of the frames slow: the p95 sees them");
+        assert!((58.0..61.0).contains(&fps), "{fps}");
+        for _ in 0..700 {
+            h.frame(16.0);
+        }
+        let (p95, fps) = h.frame_stats().unwrap();
+        assert_eq!(p95, 16.0, "the slow ones aged out");
+        assert!((fps - 62.5).abs() < 0.2, "{fps}");
+        assert!(h.frames_ms <= READOUT_MS);
+    }
+
     #[test]
     fn the_pause_menu_tells_the_planet() {
         let line = "Where you hurt it, it grows back tough. Don't fight on old ground";

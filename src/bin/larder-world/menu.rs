@@ -159,6 +159,8 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // of the slime's later threats the first time it shows on this PC.
     // Taken at once and saved, not a round's.
     o.push(Opt::new("hints", "Hints", &["on", "off"], "on", if super::hints::saved_on() { "on" } else { "off" }, "A line under each new threat the first time you meet it (strikers, waves, mini-bosses, fruiting and more), and how to collect a Starfall"));
+    // The frame readout (Direction 11-24), off by default: under the clock.
+    o.insert(4, Opt::new("frames", "Frame readout", &["off", "on"], "off", if super::draw::readout_on() { "on" } else { "off" }, "Under the clock: the last ten seconds' slowest frames (the 95th percentile, in ms; amber past 17.5, slower than 60 a second), frames a second, and the World detail the world is drawn at now"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -172,7 +174,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
                 // 11-22): the World detail row did not fit the Game tab
                 // at 1280 x 540 and 200%, so the UI size, the world's
                 // detail and the shake have a tab of their own, first.
-                "ui" | "detail" | "shake" => "Screen",
+                "ui" | "detail" | "shake" | "frames" => "Screen",
                 "map" | "planet" | "own" | "plants" => "Planet",
                 // The slime's rules as raw numbers (Panic 2, Wither 0.01):
                 // a tuning tab, last before Keys and named for what it is
@@ -1101,6 +1103,9 @@ impl App {
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("shake")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != shake_user()) {
             self.set_shake(v);
         }
+        if let Some(on) = self.menu.as_ref().and_then(|m| m.option("frames")).map(|o| o.value() == "on").filter(|&on| on != super::draw::readout_on()) {
+            super::draw::set_readout(on);
+        }
         if let Some(on) = self.menu.as_ref().and_then(|m| m.option("hints")).map(|o| o.value() == "on").filter(|&on| on != super::hints::saved_on()) {
             let _ = settings::set("hints", if on { "on" } else { "off" });
             self.hints.on = on;
@@ -1235,10 +1240,13 @@ impl App {
             StartEvent::Run | StartEvent::NextLevel => {
                 let Some((base, _)) = self.base.clone() else { return Ok(false) };
                 let fresh = self.run.is_none();
+                // The seed typed on the Run row, or Past runs' "Play this
+                // run again" (Direction 11-24); taken once.
+                let typed = self.menu.as_mut().and_then(|m| std::mem::take(&mut m.run_seed).parse::<u64>().ok());
                 let mut r = self.run.take().unwrap_or_else(|| {
                     // A new run on a new seed each time (the clock), so two
                     // runs differ; `run=SEED` on the command line repeats one.
-                    let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs());
+                    let seed = typed.unwrap_or_else(|| std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs()));
                     Run::new(seed)
                 });
                 let Some(menu) = self.menu.take() else { return Ok(false) };
@@ -1318,6 +1326,17 @@ impl App {
                 if let Some(t) = news::to_try().get(i) {
                     self.memory.set_tried(t, tried);
                 }
+            }
+            // A past run again, on its seed: a new run as the Run row
+            // starts one (never over a run under way: the page says so).
+            StartEvent::Replay(seed) => {
+                if self.run.is_some() {
+                    return Ok(false);
+                }
+                if let Some(m) = self.menu.as_mut() {
+                    m.run_seed = seed.to_string();
+                }
+                return self.menu_event(StartEvent::Run);
             }
             // Change keys (`world::keys`): the two keys swap, saved beside
             // the settings, and the key card names the new ones.

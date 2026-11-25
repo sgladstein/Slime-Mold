@@ -205,7 +205,18 @@ Options > Keys > Change keys is `Page::Bind`, its rows `menu::bind_rows`;
 `Intro::counter` and `Shop::beat`, drawn after "Beat it:" in the accent
 on the landing card, the shop's planet ahead and the pause card (the
 Sprawler's and Trunk's lines name theirs; the Grudge has none yet); 4 the
-rescue planet's screens when the Lab hands it over.
+rescue planet's screens when the Lab hands it over. Direction's list of
+23:38Z: 1 replay a run (Past runs' header "Play this run again",
+`Hit::Replay` plays `run_pick`'s seed, `StartEvent::Replay`; digits on
+the main page's Run row type `StartMenu::run_seed`, which `menu.rs` takes
+for a fresh run; the seed covers planets, maps, twists, the level seeds
+and the first shop, and later shops follow what was bought and
+rerolled), 2 the frame readout (Options > Screen, `frames=on`; `Hud::frame` keeps
+ten seconds of the window's frame intervals, fed from `App::auto_frame`,
+the same times Auto's World detail judges; `Model::readout` names the
+detail; drawn under the clock left of the experiments' mark; headless
+films feed no frame times, so it never shows in a film), 3 the rescue
+planet.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

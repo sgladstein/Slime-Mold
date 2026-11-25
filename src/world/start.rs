@@ -795,6 +795,9 @@ pub enum StartEvent {
     Bind(KeyCode, KeyCode),
     /// Every key back to its default.
     ResetKeys,
+    /// A new run on this seed (Past runs' "Play this run again", Direction
+    /// 11-24: the same planets, maps and shop rolls).
+    Replay(u64),
     Quit,
 }
 
@@ -884,6 +887,8 @@ enum Hit {
     Bind(usize),
     /// Every key back to its default.
     ResetKeys,
+    /// Past runs' "Play this run again": the run picked, anew on its seed.
+    Replay,
 }
 
 pub struct StartMenu {
@@ -925,7 +930,14 @@ pub struct StartMenu {
     /// The row waiting for its new key, and why the last key pressed
     /// could not take it.
     binding: Option<usize>,
-    bind_note: Option<String>,
+    /// A line for the hint's place on an inner page: why a key could not
+    /// move, why a run cannot be played again now.
+    note: Option<String>,
+    /// The seed typed on the main page's Run row (digits; empty for a
+    /// random run), which a new run takes (Direction 11-24).
+    pub run_seed: String,
+    /// The past run last picked (the one "Play this run again" plays).
+    run_pick: usize,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
     /// That run as the Run row's caption tells it (Look D, 11-24); the
@@ -995,7 +1007,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, runs: Vec::new(), met: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new(), binds: Vec::new(), binding: None, bind_note: None }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, runs: Vec::new(), met: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new(), binds: Vec::new(), binding: None, note: None, run_seed: String::new(), run_pick: 0 }
     }
 
     /// The option named `key`.
@@ -1013,7 +1025,7 @@ impl StartMenu {
         if page == Page::Keys && !matches!(self.page, Page::Keys | Page::Bind) {
             self.keys_from = self.page;
         }
-        (self.binding, self.bind_note) = (None, None);
+        (self.binding, self.note) = (None, None);
         self.page = page;
         self.focus = 0;
         (self.shop_tab, self.picked, self.bag_sheet) = (0, false, 0);
@@ -1191,7 +1203,7 @@ impl StartMenu {
                 let n = b.map_or(0, |b| if self.news_tab == 0 { b.news.len() } else { b.to_try.len() });
                 (0..n).map(|i| if self.news_tab == 0 { Hit::Line(i) } else { Hit::Try(i) }).chain([Hit::Back]).collect()
             }
-            Page::Runs => (0..self.runs.len()).map(Hit::PastRun).chain([Hit::Back]).collect(),
+            Page::Runs => (0..self.runs.len()).map(Hit::PastRun).chain([Hit::Replay, Hit::Back]).collect(),
             Page::Met => (0..self.met.len()).map(Hit::Seen).chain([Hit::Back]).collect(),
         }
     }
@@ -1269,7 +1281,7 @@ impl StartMenu {
             // Every rule back, the UI size and the volume kept (the
             // player's choices, not rules).
             Hit::ResetAll => {
-                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail")) {
+                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail" | "frames")) {
                     o.at = o.default;
                 }
             }
@@ -1285,7 +1297,15 @@ impl StartMenu {
             Hit::Build => self.show(Page::News),
             Hit::Runs => self.show(Page::Runs),
             // (A run's row only takes the focus: `button`.)
-            Hit::PastRun(_) => {}
+            Hit::PastRun(i) => self.run_pick = i,
+            Hit::Replay => {
+                let r = self.runs.get(self.run_pick)?;
+                if self.run_live {
+                    self.note = Some("A run is under way: finish it or give it up first, then play this one again".into());
+                    return None;
+                }
+                return Some(StartEvent::Replay(r.seed));
+            }
             Hit::Met => self.show(Page::Met),
             Hit::Seen(_) => {}
             Hit::NewsTab(k) => self.open_news_tab(k),
@@ -1302,13 +1322,13 @@ impl StartMenu {
             }
             Hit::Rebind => self.show(Page::Bind),
             Hit::Bind(i) => {
-                (self.binding, self.bind_note) = (Some(i), None);
+                (self.binding, self.note) = (Some(i), None);
                 if let Some(k) = self.rows().iter().position(|&r| r == Hit::Bind(i)) {
                     self.focus = k;
                 }
             }
             Hit::ResetKeys => {
-                (self.binding, self.bind_note) = (None, None);
+                (self.binding, self.note) = (None, None);
                 return Some(StartEvent::ResetKeys);
             }
             Hit::Panel => {}
@@ -1430,6 +1450,22 @@ impl StartMenu {
         self.focus = self.focus.min(rows.len().saturating_sub(1));
         let row = rows.get(self.focus).copied();
         self.follow = true;
+        // On the main page's Run row, before a run is under way, digits
+        // type the new run's seed and Backspace takes one back (Direction
+        // 11-24: blank is a random run).
+        if self.page == Page::Main && row == Some(Hit::Run) && !self.run_live {
+            if let Some(d) = digit(code) {
+                let more = format!("{}{d}", self.run_seed);
+                if more.parse::<u64>().is_ok() {
+                    self.run_seed = more;
+                }
+                return Vec::new();
+            }
+            if code == KeyCode::Backspace {
+                self.run_seed.pop();
+                return Vec::new();
+            }
+        }
         // Waiting for a new key: Esc lets the row go, a key that can move
         // takes it, any other says why not.
         if let (Page::Bind, Some(i)) = (self.page, self.binding) {
@@ -1446,7 +1482,7 @@ impl StartMenu {
                 return vec![StartEvent::Bind(meant, code)];
             }
             let name = super::ui::raw_key_name(code).unwrap_or_else(|| format!("{code:?}").trim_start_matches("Digit").to_string());
-            self.bind_note = Some(format!("{name} stays as it is: a key can move to a letter, [, ] or `"));
+            self.note = Some(format!("{name} stays as it is: a key can move to a letter, [, ] or `"));
             return Vec::new();
         }
         match code {
@@ -1694,6 +1730,19 @@ impl StartMenu {
             Page::Met if !self.runs.is_empty() => "Up/Down pick one  ·  Tab the past runs  ·  Esc back",
             Page::Met => "Up/Down pick one  ·  Esc back",
         };
+        // On the Run row: the seed typed, or how to type one.
+        let on_run = self.page == Page::Main && focus == Some(Hit::Run) && !self.run_live;
+        let seed_hint;
+        let hint = if on_run {
+            seed_hint = if self.run_seed.is_empty() {
+                "Enter starts a random run  ·  type a number first to play a seed (a past run's: Past runs)".to_string()
+            } else {
+                format!("Seed {}: Enter starts it, with that run's planets, maps and shop  ·  Backspace takes a digit back", self.run_seed)
+            };
+            seed_hint.as_str()
+        } else {
+            hint
+        };
         let mut pager_w = if paged { 170.0 * s } else { 0.0 };
         // The main page's corner: which build this is, and left of it, in
         // amber, any experiment that is on, so a game that is not the
@@ -1715,9 +1764,9 @@ impl StartMenu {
         }
         // On the main page a notice from the game (why the map editor did
         // not start) takes the hint's place, in full view.
-        let (hint, ink) = match (&self.notice, &self.bind_note) {
+        let (hint, ink) = match (&self.notice, &self.note) {
             (Some(n), _) if self.page == Page::Main => (n.as_str(), WARN),
-            (_, Some(n)) if self.page == Page::Bind => (n.as_str(), WARN),
+            (_, Some(n)) if matches!(self.page, Page::Bind | Page::Runs) => (n.as_str(), WARN),
             _ => (hint, MUTED),
         };
         c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, ink);
@@ -1765,7 +1814,7 @@ impl StartMenu {
     fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // The rules changed, by their labels; the UI size and the volume
         // are not rules ("Free play, with ui 200%", the review 11-15).
-        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail")).map(|o| format!("{} {}", o.label, o.value())).collect();
+        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail" | "frames")).map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
@@ -1777,6 +1826,7 @@ impl StartMenu {
                 match (&self.run_now, &self.run_end) {
                     (Some(r), _) if self.run_live => r.line(),
                     _ if self.run_live => "The shop, then the next planet".into(),
+                    _ if !self.run_seed.is_empty() => format!("A run on seed {}: the planets, maps and shop of any run on that seed", self.run_seed),
                     _ => "Planet after planet toward the slime's home world; upgrades between".into(),
                 },
                 Hit::Run,
@@ -1949,6 +1999,7 @@ impl StartMenu {
         let extra = match self.page {
             Page::Keys if !self.binds.is_empty() => Some(("Change keys", Hit::Rebind)),
             Page::Bind => Some(("Reset keys", Hit::ResetKeys)),
+            Page::Runs if !self.runs.is_empty() => Some(("Play this run again", Hit::Replay)),
             _ => None,
         };
         let back_x = match extra {
@@ -2528,6 +2579,7 @@ impl StartMenu {
         let per = ((room - (lt - top) - cap - 12.0 * s) / rh).floor().max(1.0) as usize;
         if let Some(Hit::PastRun(i)) = focus {
             self.sheet = i / per;
+            self.run_pick = i;
         }
         let (shown, pages) = sheet_of(n, per, self.sheet);
         (self.sheets, self.per) = (pages, per);
@@ -2575,7 +2627,9 @@ impl StartMenu {
             y += rh;
         }
         // The run told in full.
-        let Some(r) = told.or((n > 0).then_some(first)).map(|i| &runs[i]) else { return panel.bottom() };
+        // (With the focus on "Play this run again", the run it plays.)
+        let picked = (focus == Some(Hit::Replay) && self.run_pick < n).then_some(self.run_pick);
+        let Some(r) = told.or(picked).or((n > 0).then_some(first)).map(|i| &runs[i]) else { return panel.bottom() };
         let tw = nw - 36.0 * s;
         let stops = r.stops();
         let held: Vec<(&str, String)> = [("Guns", &r.guns), ("Cards", &r.cards), ("Devices", &r.bodies), ("Relics", &r.relics)]
@@ -3785,7 +3839,7 @@ mod tests {
                         let b = m.body.unwrap_or(Rect::new(0.0, 0.0, screen.0 as f32, screen.1 as f32));
                         // The shop's two buttons and the inner pages'
                         // header are fixed, over and under the body.
-                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met | Page::Bind) && matches!(h, Hit::Back | Hit::Rebind | Hit::ResetKeys));
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met | Page::Bind) && matches!(h, Hit::Back | Hit::Rebind | Hit::ResetKeys | Hit::Replay));
                         assert!(r.y >= 0.0 && r.bottom() <= screen.1 as f32, "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen");
                         assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
                     }
@@ -4070,6 +4124,40 @@ mod tests {
         super::super::keys::FREE.iter().take(27).enumerate().map(|(i, &k)| (k, if i % 3 == 0 { "Drain a crystal (build page: door)".to_string() } else { format!("Thing {i}") })).collect()
     }
 
+    /// Replay a run (Direction 11-24): digits on the Run row type a seed
+    /// (Backspace takes one back, too many to be a seed are refused); Past
+    /// runs' "Play this run again" plays the run picked on its seed, but
+    /// not over a run under way.
+    #[test]
+    fn a_run_can_be_played_again_on_its_seed() {
+        let mut m = menu();
+        m.runs = past_runs(5);
+        m.show(Page::Main);
+        assert_eq!(m.rows()[m.focus], Hit::Run);
+        for d in [KeyCode::Digit4, KeyCode::Digit2, KeyCode::Digit7] {
+            assert!(m.key(d, true).is_empty());
+        }
+        m.key(KeyCode::Backspace, true);
+        assert_eq!(m.run_seed, "42");
+        for _ in 0..30 {
+            m.key(KeyCode::Digit9, true);
+        }
+        assert!(m.run_seed.parse::<u64>().is_ok(), "{}", m.run_seed);
+        m.run_seed.clear();
+        m.show(Page::Runs);
+        assert!(m.rows().contains(&Hit::Replay));
+        m.key(KeyCode::ArrowDown, true);
+        m.key(KeyCode::ArrowDown, true);
+        let mut c = Canvas::new((1920, 1080));
+        m.draw(&mut c);
+        let at = m.rows().iter().position(|&h| h == Hit::Replay).unwrap();
+        m.focus = at;
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Replay(m.runs[2].seed)]);
+        m.run_live = true;
+        assert!(m.key(KeyCode::Enter, true).is_empty());
+        assert!(m.note.is_some(), "says why not");
+    }
+
     /// Change keys (Direction 11-24): the key list's button opens it; a
     /// row waits for a key, which comes back as a bind of the row's key;
     /// a key that cannot move says so and keeps waiting; Esc lets the row
@@ -4087,7 +4175,7 @@ mod tests {
         assert!(m.key(KeyCode::Enter, true).is_empty());
         assert_eq!(m.binding, Some(1));
         assert!(m.key(KeyCode::Digit3, true).is_empty());
-        assert!(m.bind_note.as_deref().is_some_and(|n| n.starts_with("3 stays")), "{:?}", m.bind_note);
+        assert!(m.note.as_deref().is_some_and(|n| n.starts_with("3 stays")), "{:?}", m.note);
         assert_eq!(m.binding, Some(1), "still waiting");
         assert_eq!(m.key(KeyCode::KeyQ, true), vec![StartEvent::Bind(m.binds[1].0, KeyCode::KeyQ)]);
         assert_eq!(m.binding, None);
