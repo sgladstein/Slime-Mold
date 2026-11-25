@@ -43321,3 +43321,53 @@ fatal: the remote end hung up unexpectedly
 2026-11-25 08:11:21   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1795119328.0: lost 288.2 (13 s)
 2026-11-25 08:11:24   rush,aim=3,back=0.3,cap=80,cards=0,first=pumps,go=10,group=8 planet 2.0 seed 1795119328.0: won 231.0 (11 s)
 2026-11-25 08:11:34   rush,aim=3,back=0.3,cap=80,cards=2,first=guard,go=10,group=8 planet 2.0 seed 1795119328.0: won 224.0 (11 s)
+2026-11-25 08:11:34 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 08:11:45 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 08:11:55 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 08:12:05 league: push failed: fatal: unable to access 'https://github.com/sgladstein/Slime-Mold.git/': Could not resolve host: github.com
+
+2026-11-25 08:12:15 league: could not push the results; they are in C:\Users\Scott\Code\slime-league\Reports\strategy-bots-2026-11-19\pc
+2026-11-25 08:12:16 worker: search p3c generation 57: 27 plans, 306 new games
+2026-11-25 08:12:28   econ,aim=6,back=0.5,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 164.0 (9 s)
+2026-11-25 08:12:28   econ,aim=6,back=0.3,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 165.0 (10 s)
+2026-11-25 08:12:39   econ,aim=6,back=0.7,cap=120,cards=2,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 159.0 (10 s)
+2026-11-25 08:12:39   econ,aim=10,back=0.5,cap=120,cards=0,defend=1,first=pumps,go planet 3.0 seed 1.0: won 154.0 (10 s)
+2026-11-25 08:12:48   econ,aim=6,back=0.7,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 118.0 (7 s)
+2026-11-25 08:12:49   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 127.0 (8 s)
+2026-11-25 08:13:02   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 1.0: won 201.0 (12 s)
+2026-11-25 08:13:02   econ,aim=6,back=0.5,cap=120,cards=0,defend=1,first=pumps,go= planet 3.0 seed 1.0: won 142.0 (9 s)
+2026-11-25 08:13:08   econ,aim=3,back=0.5,cap=120,cards=0,defend=1,first=pumps,go= planet 3.0 seed 1.0: won 120.0 (7 s)
+2026-11-25 08:13:11   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 126.0 (7 s)
+2026-11-25 08:13:19   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 1.0: won 164.0 (9 s)
+2026-11-25 08:13:21   econ,aim=6,back=0.3,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 164.0 (9 s)
+2026-11-25 08:14:19   econ,aim=10,back=0.5,cap=80,cards=1,defend=1,first=pumps,go= planet 3.0 seed 1.0: open 900.1 (58 s)
+2026-11-25 08:14:19   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 164.0 (10 s)
+2026-11-25 08:14:19   econ,aim=6,back=0.5,cap=120,cards=0,defend=1,first=pumps,go= planet 3.0 seed 1.0: won 151.0 (9 s)
+2026-11-25 08:14:45   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 1.0: open 900.1 (58 s)
+2026-11-25 08:14:45   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 1.0: won 164.0 (10 s)
+2026-11-25 08:14:45   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 1.0: won 116.0 (8 s)
+2026-11-25 08:14:48   econ,aim=6,back=0.5,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 108.0 (7 s)
+2026-11-25 08:14:52   econ,aim=6,back=0.3,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 108.0 (6 s)
+2026-11-25 08:14:59   econ,aim=6,back=0.7,cap=120,cards=2,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 155.0 (9 s)
+2026-11-25 08:15:06   econ,aim=10,back=0.5,cap=120,cards=0,defend=1,first=pumps,go planet 3.0 seed 2.0: won 186.0 (12 s)
+2026-11-25 08:15:06   econ,aim=6,back=0.7,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 100.0 (6 s)
+2026-11-25 08:15:18   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 188.0 (11 s)
+2026-11-25 08:15:19   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 2.0: won 182.0 (12 s)
+2026-11-25 08:15:28   econ,aim=6,back=0.5,cap=120,cards=0,defend=1,first=pumps,go= planet 3.0 seed 2.0: won 123.0 (8 s)
+2026-11-25 08:15:28   econ,aim=3,back=0.5,cap=120,cards=0,defend=1,first=pumps,go= planet 3.0 seed 2.0: won 110.0 (7 s)
+2026-11-25 08:15:37   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 132.0 (8 s)
+2026-11-25 08:15:37   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 2.0: won 100.0 (6 s)
+2026-11-25 08:15:44   econ,aim=6,back=0.3,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 102.0 (6 s)
+2026-11-25 08:15:58   econ,aim=10,back=0.5,cap=80,cards=1,defend=1,first=pumps,go= planet 3.0 seed 2.0: won 300.0 (19 s)
+2026-11-25 08:15:58   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 186.0 (11 s)
+2026-11-25 08:16:06   econ,aim=6,back=0.5,cap=120,cards=0,defend=1,first=pumps,go= planet 3.0 seed 2.0: won 110.0 (7 s)
+2026-11-25 08:16:58   econ,aim=10,back=0.5,cap=120,cards=1,defend=1,first=pumps,go planet 3.0 seed 2.0: open 900.1 (59 s)
+2026-11-25 08:16:58   econ,aim=6,back=0.7,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 2.0: won 185.0 (12 s)
+2026-11-25 08:16:58   econ,aim=6,back=0.5,cap=120,cards=1,defend=1,first=pumps,go= planet 3.0 seed 2.0: won 195.0 (13 s)
+2026-11-25 08:16:58   econ,aim=6,back=0.5,cap=120,cards=1,defend=0,first=pumps,go= planet 3.0 seed 3.0: won 110.0 (7 s)
+2026-11-25 08:16:58   econ,aim=6,back=0.3,cap=120,cards=0,defend=0,first=pumps,go= planet 3.0 seed 3.0: won 135.0 (9 s)
+2026-11-25 08:17:06   econ,aim=6,back=0.7,cap=120,cards=2,defend=0,first=pumps,go= planet 3.0 seed 3.0: won 190.0 (12 s)
+2026-11-25 08:17:09   econ,aim=10,back=0.5,cap=120,cards=0,defend=1,first=pumps,go planet 3.0 seed 3.0: won 174.0 (10 s)
