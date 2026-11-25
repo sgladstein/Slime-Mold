@@ -1,0 +1,81 @@
+<title>Plasmodia route choice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Mono&display=swap">
+<style>
+/* Layout: one column; each direction a block with a small diagram, what it is, what it costs */
+:root{--bg:#f6f5f0;--panel:#ecebe3;--fg:#1f2320;--mute:#5d625c;--line:#cfccc0;--accent:#b8730a;--node:#e9dfc8;--slime:#d99a2b;--ok:#2f6f4a;
+--display:"Fraunces",Georgia,serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161816;--panel:#1f221f;--fg:#e6e6df;--mute:#a1a59c;--line:#3a3e36;--accent:#e6a23c;--node:#2c2a22;--slime:#e6a23c;--ok:#7cc59a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161816;--panel:#1f221f;--fg:#e6e6df;--mute:#a1a59c;--line:#3a3e36;--accent:#e6a23c;--node:#2c2a22;--slime:#e6a23c;--ok:#7cc59a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--body)}
+main{max-width:46rem;margin:0 auto;padding-block:2.5rem 4rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:2rem}
+h1{font:600 2.1rem/1.15 var(--display);margin:0;text-wrap:balance}
+h2{font:600 1.35rem/1.2 var(--display);margin:0 0 .4rem;text-wrap:balance}
+p{margin:0 0 .6rem}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.d{border-top:1px solid var(--line);padding-top:1.2rem;display:grid;grid-template-columns:9rem 1fr;gap:1.2rem;align-items:start}
+.d>div{min-width:0}
+@media (max-width:560px){.d{grid-template-columns:1fr}}
+svg{width:100%;max-width:9rem;height:auto;display:block}
+svg .e{stroke:var(--line);stroke-width:2;fill:none}
+svg .n{fill:var(--node);stroke:var(--mute);stroke-width:1.2}
+svg .s{fill:var(--slime)}
+svg .h{fill:var(--accent)}
+svg text{fill:var(--mute);font:9px var(--mono)}
+.meta{display:flex;flex-wrap:wrap;gap:.4rem .9rem;font:.8rem var(--mono);color:var(--mute);margin-top:.3rem}
+.meta b{color:var(--fg);font-weight:500}
+.rec{background:var(--panel);border-radius:6px;padding:1rem 1.1rem}
+.mute{color:var(--mute);font-size:.92rem}
+ul{margin:0;padding-left:1.1rem}
+</style>
+<main>
+<header>
+<div class="eyebrow">Step C · run length and route choice · 11-25</div>
+<h1>Five ways to choose a route</h1>
+</header>
+<section>
+<p>Today a run is a fixed line of eight planets. The slime species is set by depth (Drifter, then Sprawler, Trunk, Swarmer, Sporer, Sleeper, Grudge, Dozer), with a shop between planets. Twists and the rescue goal turn up by chance. Planets take 4 to 9 minutes, so a run is about an hour. Each direction below would add choice and reach about two hours. They can be mixed. Costs are my estimates in thread-days.</p>
+<p class="mute">The pieces already exist: generated planets for any seed and depth, eight biomes, eight slime species, two twists, the rescue goal, starfall rewards, save and resume, and the Past runs page.</p>
+</section>
+
+<section class="d">
+<svg viewBox="0 0 120 130" role="img" aria-label="Branching map of planets"><path class="e" d="M60 120L30 90M60 120L90 90M30 90L20 60M30 90L60 60M90 90L60 60M90 90L100 60M20 60L40 30M60 60L40 30M60 60L80 30M100 60L80 30M40 30L60 8M80 30L60 8"/><circle class="n" cx="60" cy="120" r="6"/><circle class="n" cx="30" cy="90" r="6"/><circle class="n" cx="90" cy="90" r="6"/><circle class="n" cx="20" cy="60" r="6"/><circle class="n" cx="60" cy="60" r="6"/><circle class="n" cx="100" cy="60" r="6"/><circle class="n" cx="40" cy="30" r="6"/><circle class="n" cx="80" cy="30" r="6"/><circle class="h" cx="60" cy="8" r="7"/></svg>
+<div><h2>1. A star map with forks</h2>
+<p>The classic roguelike map: 12 to 14 steps, two or three planets to pick from at each step, all converging on a home world. Each planet shows its slime, biome, twist, goal (the heart, a rescue, something new) and reward before you land. You plan a route around your guns. If your build has no fire, you steer away from the Trunk.</p>
+<div class="meta"><span><b>Length</b> picks the number of steps</span><span><b>Replay</b> high</span><span><b>Cost</b> about 2 days: a map screen, the run's graph, save format</span></div></div>
+</section>
+
+<section class="d">
+<svg viewBox="0 0 120 130" role="img" aria-label="Planets joined by slime tubes"><path class="e" d="M20 110L60 70L100 100M60 70L40 30M60 70L95 40M40 30L95 40"/><path d="M20 110L60 70L40 30" stroke="var(--slime)" stroke-width="4" fill="none" stroke-linecap="round"/><circle class="s" cx="20" cy="110" r="8"/><circle class="s" cx="60" cy="70" r="9"/><circle class="n" cx="100" cy="100" r="7"/><circle class="s" cx="40" cy="30" r="7"/><circle class="n" cx="95" cy="40" r="7"/><text x="66" y="66">grows</text></svg>
+<div><h2>2. The slime spreads between planets</h2>
+<p>The star map itself runs a slime simulation at a large scale. Between your landings the mould sends tubes along the shortest routes between planets, the network-finding real Physarum is known for. Planets on a thick tube get bigger and better fed. Freeing a planet cuts its tubes, so whatever you skip keeps growing. The run ends at the home world, which is as strong as the network still feeding it. Your route becomes a cut through a living network. This is the most "the mould is the game" option.</p>
+<div class="meta"><span><b>Length</b> as many planets as you choose to free</span><span><b>Replay</b> very high</span><span><b>Cost</b> about 3 to 4 days, on top of direction 1's map</span></div></div>
+</section>
+
+<section class="d">
+<svg viewBox="0 0 120 130" role="img" aria-label="Two species to pick from at each depth"><circle class="s" cx="35" cy="30" r="12"/><circle class="n" cx="85" cy="30" r="12"/><circle class="n" cx="35" cy="75" r="12"/><circle class="s" cx="85" cy="75" r="12"/><circle class="s" cx="60" cy="115" r="10"/><path class="e" d="M35 42L85 63M85 87L60 105"/><text x="22" y="10">pick 1 of 2</text></svg>
+<div><h2>3. Draft the slime you face</h2>
+<p>There is no map. At each depth you pick one of two slimes, from a pool for that band of the run. Each comes with its landing card, its counter and its reward. A run becomes a draft against your own build: take the Sporer now while you have Germ, or face the Swarmer for double points. It's the smallest change and it teaches the counters.</p>
+<div class="meta"><span><b>Length</b> 12 picks</span><span><b>Replay</b> medium</span><span><b>Cost</b> about 1 day: a pick screen and species pools</span></div></div>
+</section>
+
+<section class="d">
+<svg viewBox="0 0 120 130" role="img" aria-label="A planet with optional contracts"><circle class="n" cx="60" cy="65" r="30"/><circle class="s" cx="60" cy="65" r="12"/><rect x="8" y="10" width="40" height="14" rx="3" class="n"/><rect x="72" y="10" width="40" height="14" rx="3" class="n"/><rect x="40" y="108" width="40" height="14" rx="3" class="n"/><text x="13" y="20">+heat</text><text x="76" y="20">rescue</text><text x="46" y="118">bounty</text></svg>
+<div><h2>4. Contracts and heat on each planet</h2>
+<p>Each planet offers optional contracts for extra points or a rare card: rescue the dug-in squad, take a crystal without losing one, break the mini-boss. You can also turn on heat (a twist, a bigger heart, faster raids) for a bigger reward. You choose how hard each planet is. This adds length and decisions without new planets, and it fits inside any of the other directions.</p>
+<div class="meta"><span><b>Length</b> longer planets by choice</span><span><b>Replay</b> medium</span><span><b>Cost</b> about 1 day</span></div></div>
+</section>
+
+<section class="d">
+<svg viewBox="0 0 120 130" role="img" aria-label="Back to a planet left earlier"><circle class="n" cx="30" cy="100" r="9"/><circle class="s" cx="90" cy="100" r="9"/><circle class="n" cx="60" cy="40" r="9"/><path class="e" d="M30 100L60 40L90 100"/><path d="M90 100Q110 60 60 40" stroke="var(--slime)" stroke-width="2.5" fill="none" stroke-dasharray="4 3"/><text x="86" y="122">left</text><text x="40" y="20">it returns</text></svg>
+<div><h2>5. Planets remember you</h2>
+<p>When you leave a planet after reaching a goal short of a full clear (a rescue, a drained heart crystal), it stays on the map with its slime regrowing from what you left. Later you can go back for a bigger reward, or it sends raids to the home world. This uses save and resume to carry a planet's state forward. A planet becomes a place with a history, not just a level.</p>
+<div class="meta"><span><b>Length</b> revisits add planets</span><span><b>Replay</b> high</span><span><b>Cost</b> about 2 to 3 days. Needs direction 1's map</span></div></div>
+</section>
+
+<section class="rec">
+<h2>My recommendation</h2>
+<p>Build direction 1's star map as the frame, with direction 4's contracts as what each planet offers, at about 12 steps. That gives a two-hour run you choose, in about 3 days. Then grow direction 2, the spreading slime, on the same map. It's the most original idea and the one where the mould is the game at the run's scale too, but it rests on the map existing first. Direction 3 is the fallback if you want something quick.</p>
+<p class="mute">After your pick, I'll write the build brief with screens, save changes and the length check. Step B, the strategy test, follows.</p>
+</section>
+</main>
