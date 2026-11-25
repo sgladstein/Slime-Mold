@@ -4998,3 +4998,20 @@ fn both_halves_of_a_split_squad_keep_its_orders() {
         assert!(g.members(q).iter().all(|&k| g.soldiers[k].order == drain), "half {q}'s members still drain");
     }
 }
+
+/// **A wounded soldier walks at its own pace** (`Soldier::pace`, the Lab's
+/// rescue planet, 11-24): its share of full speed is its pace times the
+/// slime on its legs, and a whole soldier's is unchanged.
+#[test]
+fn a_wounded_soldier_walks_at_its_pace() {
+    let mut g = small(1);
+    let k = 0;
+    g.soldiers[k].touching = 0;
+    assert_eq!(g.wade(k), 1.0, "whole and clear of slime: full speed");
+    g.soldiers[k].pace = 0.3;
+    assert!((g.wade(k) - 0.3).abs() < 1e-6);
+    g.soldiers[k].touching = 3;
+    let slowed = g.wade(k);
+    g.soldiers[k].pace = 1.0;
+    assert!((slowed - 0.3 * g.wade(k)).abs() < 1e-6, "pace times the wade");
+}
