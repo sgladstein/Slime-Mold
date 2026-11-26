@@ -425,12 +425,17 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     // How often it surges here (`run::enemy_keys`; on the clock's line so the
     // heading keeps two lines, the run thread's ask).
     clock += &format!("; it surges as it feeds, at least every {:.0} s", run::surge_secs(l.curve));
-    // How tough it is here (`run::blows`, 2026-11-26): the blows a walker
-    // takes, so the card says why the guns that cleared the last planet
-    // take longer on this one.
+    // How tough it is here (`run::blows`, 2026-11-26): the blows orange
+    // slime takes and the highest level its crystals reach
+    // (`run::level_max`), so the card says why the guns that cleared the
+    // last planet take longer on this one.
     let b = run::blows(l.curve);
-    if b > 1.0 {
-        clock += &format!("; each bit of slime takes {} hits", if b.fract() < 0.05 { format!("{b:.0}") } else { format!("{:.0}-{:.0}", b.floor(), b.ceil()) });
+    let hits = if b.fract() < 0.05 { format!("{b:.0}") } else { format!("{:.0}-{:.0}", b.floor(), b.ceil()) };
+    let top = run::level_max(l.curve);
+    if top > 0 {
+        clock += &format!("; orange slime takes {hits} hits, and its crystals reach level {top}: the darker the slime, the more hits it takes and the faster and harder it bites");
+    } else if b > 1.0 {
+        clock += &format!("; each bit of slime takes {hits} hits");
     }
     if r.depth == run::PLANETS {
         clock = format!("The slime's home world: beat it and the run is won. {clock}");

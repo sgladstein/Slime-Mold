@@ -264,7 +264,10 @@ struct Params {
     // step a walker takes, in fine cells (0 none); then the blows an
     // ordinary walker takes (`blows`, 2026-11-26, the slime's toughness by
     // planet: 1 or less is one blow, as before) and a spare word.
-    wind_x: f32, wind_y: f32, blows: f32, _wind_b: u32,
+    // Then the slime's levels (`grades`, 2026-11-26): the blows a level
+    // adds in sixteenths (bits 0-7), its pace in 256ths (8-15) and its bite
+    // in sixteenths (16-23); 0 off. A level is a crystal's (`Pile::_c`).
+    wind_x: f32, wind_y: f32, blows: f32, grades: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -446,7 +449,20 @@ fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
 // header grew from 4 words). Bits 16 and 17 of a slot's word (condensing's
 // `DENSE_BIT` and `ABSORB_BIT`) are free.
 const DENSE_HEAD: u32 = 16u;
-const RIPE_BITS: u32 = 0xFFFFu;
+// A breakaway's steps on its way (`SPECK_TRIP`, 600, fits in 12 bits).
+// Until 2026-11-26 the low 16 bits; bits 12-14 are now its level.
+const RIPE_BITS: u32 = 0xFFFu;
+// **The slime's levels** (2026-11-26, the owner's "change slime color so
+// there are 3-8 levels of slime ... one area on a later planet is the
+// easier to kill orange slime and this other crystal is full of stronger
+// more dangerous slime"): a walker's level, 0 to 7, in bits 12-14. A child
+// born on a crystal with a level (`Pile::_c`, its level + 1) takes that
+// crystal's; elsewhere its parent's. Each level takes more blows
+// (`tough_walker`), steps faster (`sense`) and bites harder (`dcount`), by
+// `P.grades`; the view colours the slime by it (view.wgsl's `level_rgb`).
+const GRADE_SHIFT: u32 = 12u;
+const GRADE_BITS: u32 = 0x7000u;
+fn grade_of(k: u32) -> u32 { return (dense_word(k) & GRADE_BITS) >> GRADE_SHIFT; }
 // A breakaway's mark and the crystal (pile) it runs for, bits 19-24 (the
 // CPU's `ROAM`, `ROAM_SHIFT`); it goes for crystals with `ROAM_FRESH` left.
 const ROAM_BIT: u32 = 0x40000u;
@@ -530,8 +546,11 @@ fn scar_tough(k: u32) -> bool {
 // a share of walkers taking one blow more, fixed by the slot, so 2.5 is
 // half the slime at 2 and half at 3. One word read a blow; nothing a step.
 fn tough_walker(k: u32) -> bool {
-    if (P.blows <= 1.0) { return false; }
-    let b = min(P.blows, 15.0);
+    let gb = f32(P.grades & 255u) / 16.0;
+    var b = P.blows;
+    if (gb > 0.0) { b += gb * f32(grade_of(k)); }
+    if (b <= 1.0) { return false; }
+    b = min(b, 15.0);
     var need = u32(floor(b));
     if (unit(lowbias32(k ^ 0xB10B5u)) < b - floor(b)) { need += 1u; }
     let wd = dense_word(k);
@@ -1593,6 +1612,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     // 1 above).
     let lb = lump_of(k);
     if (lb != 0u && P.lumps[lb - 1u].haste > 0.0) { st *= P.lumps[lb - 1u].haste; }
+    // A level's pace (`GRADE_BITS`, `P.grades` bits 8-15).
+    if (lb == 0u && ((P.grades >> 8u) & 255u) != 0u) { st *= 1.0 + f32((P.grades >> 8u) & 255u) / 256.0 * f32(grade_of(k)); }
     // **The heartbeat** (`heart_beat`): a calm walker's pace swells as the
     // beat passes outward through it.
     var beat = vec3<f32>(0.0, 0.0, 0.0);
@@ -2191,7 +2212,12 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A child is an ordinary walker, not a speck (`roam`), and in no lump
     // (the word is cleared whatever is on: a lump's member may have held
     // the slot; the CPU clears it whenever it keeps the words).
-    set_dense(b, 0u);
+    // Its level (`GRADE_BITS`): the crystal's it is born on, if that has
+    // one, else its parent's.
+    var lv = grade_of(k);
+    let pg = ground[j] & PILE_BITS;
+    if (pg != 0u && pg <= P.npiles && piles[pg - 1u]._c != 0u) { lv = min(piles[pg - 1u]._c - 1u, 7u); }
+    set_dense(b, lv << GRADE_SHIFT);
     // Nor set (`set_scar`): the word is there whenever the crust is.
     if (P.crust_at > 0u) { set_put(b, 0u); }
 }
@@ -4408,7 +4434,7 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
         let fd = food_dist(cell(wk.x, wk.y));
         let fresh = P.far > 0.0 && fd != 0xFFFFFFFFu && i32(min(fd, 0x7FFFFFFFu)) <= land;
         let done = dx * dx + dy * dy <= land * land || fresh || piles[j].left <= PANIC_LEFT || trip >= SPECK_TRIP;
-        set_dense(k, select((wd & ~RIPE_BITS) | trip, 0u, done));
+        set_dense(k, select((wd & ~RIPE_BITS) | trip, wd & GRADE_BITS, done));
         return;
     }
     // Specks take their chance on their slot's step, one in `roam`, crowded
@@ -4417,7 +4443,7 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (lump_of(k) != 0u || (S.t + k) % P.roam != 0u || !world(CRYSTALS) || !ripe_at(cell(wk.x, wk.y))) { return; }
     let bj = roam_pick(cx, cy);
     if (bj < 64u && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
-        set_dense(k, ROAM_BIT | (bj << ROAM_SHIFT));
+        set_dense(k, ROAM_BIT | (bj << ROAM_SHIFT) | (wd & GRADE_BITS));
     }
 }
 
@@ -4442,7 +4468,10 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A condensed striker bites once more for each walker it took in that
     // is left (`condense`).
     var bite = 0u;
-    if (lb != 0u) { bite = P.lumps[lb - 1u].bite; } else if (condensed(k)) { bite = dense_word(k) >> HURT_SHIFT; }
+    if (lb != 0u) { bite = P.lumps[lb - 1u].bite; } else if (condensed(k)) { bite = dense_word(k) >> HURT_SHIFT; } else if (((P.grades >> 16u) & 255u) != 0u) {
+        // A level's bite (`P.grades` bits 16-23, sixteenths a level).
+        bite = u32(round(f32((P.grades >> 16u) & 255u) / 16.0 * f32(grade_of(k))));
+    }
     if (bite == 0u) { return; }
     let st = state(k);
     if (st == L_SPORE || st == L_DEAD) { return; }

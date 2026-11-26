@@ -1349,6 +1349,10 @@ impl World for GpuWorld {
         self.s.wind = [wind.0 * base, wind.1 * base];
     }
 
+    fn set_levels(&mut self, levels: &[u32]) {
+        self.e.set_pile_levels(levels);
+    }
+
     /// Each of the pile's cells written 0 (the mirror's list of them).
     fn empty_crystal(&mut self, c: usize) {
         let d = &self.e.dish;
@@ -3989,6 +3993,57 @@ mod tests {
         assert!(one[0] > 0 && three[0] == 0, "the first shot: {} at 1 blow, {} at 3", one[0], three[0]);
         assert!(hurt > 0, "3 blows: no walker left hurt");
         assert!(a > 20 && 3 * b < 2 * a, "kills in 3 s: {a} at 1 blow, {b} at 3");
+    }
+
+    /// **The slime's levels** (2026-11-26, `larder_world/levels.rs`): with
+    /// every crystal at level 3, slime born on them is level 3 and its
+    /// children keep it, so a race world's body turns level 3 as it
+    /// breeds; and level 3 slime at `level_blows` 1 shrugs off the shots
+    /// that kill level 0 (the same world, shot at its thickest cell).
+    #[test]
+    fn slime_born_on_a_crystal_takes_its_level() {
+        use crate::mould::squad::{slime_trail, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |levels: bool| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "level_blows", "1").unwrap();
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            if levels {
+                let n = g.world.crystals().len();
+                g.world.set_levels(&vec![3; n]);
+            }
+            while g.time() < 12.0 {
+                g.step();
+            }
+            let e = &g.world.e;
+            let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+            let dw = e.dense_of();
+            let live: Vec<usize> = (0..e.n as usize).filter(|&q| en[q] >= 0.0).collect();
+            let at3 = live.iter().filter(|&&q| (dw[q] >> 12) & 7 == 3).count();
+            assert!(live.iter().all(|&q| (dw[q] >> 12) & 7 == 0 || (dw[q] >> 12) & 7 == 3), "only levels 0 and 3");
+            let mut kills = 0;
+            for _ in 0..30 {
+                let e = &g.world.e;
+                let w = e.dish.w;
+                let wk = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+                let mut on = vec![0u32; w * e.dish.h];
+                for q in (0..e.n as usize).filter(|&q| en[q] >= 0.0) {
+                    on[wk[4 * q + 1] as usize * w + wk[4 * q] as usize] += 1;
+                }
+                let c = (0..on.len()).max_by_key(|&i| on[i]).unwrap();
+                let at = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+                let shot = Frame { shots: vec![ShotIn { from: at, to: at, r: 2.0, over: false }], slime: slime_trail(6.0), ..Frame::default() };
+                kills += g.world.frame(&shot, 1).shots[0].killed;
+            }
+            (at3, live.len(), kills)
+        };
+        let (none3, _, k0) = play(false);
+        let (at3, live, k3) = play(true);
+        assert_eq!(none3, 0, "no levels: all level 0");
+        assert!(10 * at3 >= 9 * live, "level 3 walkers: {at3} of {live}");
+        assert!(k3 < k0, "kills in 1 s: {k0} at level 0, {k3} with level 3 crystals");
     }
 
     /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,

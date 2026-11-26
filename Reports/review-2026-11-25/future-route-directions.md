@@ -31,3 +31,7 @@ home world. Save and resume carries the planet's state forward.
 - Needs: the star map, a saved per-planet state (save and resume's format,
   #757), a return path on the map, and a rule for regrowth while away.
 - Estimate: 2 to 3 thread-days on top of the map.
+
+## Later: Hard forks pay in kind, and spare energy is worth something
+
+Kept for later by the owner, 2026-11-26 08:24Z ("record the idea as future direction to explore but not now"), from the thread "Make the slime's progression much stronger". Today a Hard fork pays shop points (x1.5, `Run::pay`), which buy more gun cards and feed the stacking that made his 11-26 run too easy; energy buys only soldiers, buildings and walls and piles up unspent (thousands at the end of his planets). The idea: a Hard fork pays in a new tool rather than a bigger number (a turret body, an extra card slot, a relic), and energy left at a planet's end buys something lasting (turret levels in the field, veteran soldiers who land with the squad). Not interest on banked energy, which rewards hoarding. First measure when built: energy unspent at a planet's end, his median under one soldier's price.

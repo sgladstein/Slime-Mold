@@ -241,6 +241,9 @@ pub trait World {
     /// every step pushed `wind` (x, y) times its own step. GPU only: a
     /// world without it ignores it.
     fn set_twist(&mut self, _step: f32, _wind: (f32, f32)) {}
+    /// The slime's levels (`levels.rs`): crystal c's level `levels[c]`.
+    /// GPU only: a world without them ignores it.
+    fn set_levels(&mut self, _levels: &[u32]) {}
     /// Empties crystal `c` at once, as a squad that drained it (a film's
     /// tool, headless `LARDER_DRAIN=T`, 11-21); a world without it does
     /// nothing.

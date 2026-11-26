@@ -732,6 +732,10 @@ pub struct Rules {
     /// **A planet twist** (2026-11-24; `twist.rs`): the cold snap or the
     /// wind, rolled by the run (`run::Run::twist`). None here. GPU only.
     pub twist: super::TwistRules,
+    /// **The slime's levels** (2026-11-26; `levels.rs`): each crystal's
+    /// level, rolled by the run (`run::LEVEL_MAX`). Off here. GPU only.
+    #[serde(default)]
+    pub levels: super::LevelRules,
 }
 
 /// `Rules::ceiling_grow`'s default: a slime on the crystals it landed on
@@ -864,6 +868,11 @@ impl Rules {
                 self.origin.armour = v.clamp(0.0, 15.0) as u32;
                 return true;
             }
+            // The slime's highest level (`levels.rs`; 0 all orange).
+            "level_max" => {
+                self.levels.max = v.clamp(0.0, 7.0) as u32;
+                return true;
+            }
             // 0 none, 1 the cold snap, 2 the wind (`twist.rs`).
             "twist" => {
                 self.twist.kind = match v as u32 {
@@ -932,6 +941,7 @@ impl Rules {
             "stand" => on(self.stand.on),
             "origin" => on(self.origin.on),
             "origin_armour" => self.origin.armour as f32,
+            "level_max" => self.levels.max as f32,
             "twist" => self.twist.kind as u32 as f32,
             "origin_bite" => self.origin.bite as f32,
             "stand_armour" => self.stand.armour as f32,
@@ -1298,6 +1308,7 @@ impl Default for Rules {
             stand: super::StandRules::default(),
             origin: super::OriginRules::default(),
             twist: super::TwistRules::default(),
+            levels: super::LevelRules::default(),
         }
     }
 }
