@@ -18,7 +18,7 @@ the planets before taken as won and shopped by the plan
 so a planet is won by wiping the slime out; #858 (crystal hearts as a
 mini-boss) landed after this batch, so these games have no hearts at all.
 41 of 45 games played; four planet 6 games were skipped by the shard
-budget. Raw rows: [arms-rows.txt](arms-rows.txt).
+budget. Raw rows: [arms-rows.txt](arms-rows.txt); the queue that ran: [arms-queue.txt](arms-queue.txt).
 
 | Plan | What it does | P2 (A, B, C) | P4 (A, B, C) | P6 (A, B, C) | Won |
 |---|---|---|---|---|---|
