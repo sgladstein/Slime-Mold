@@ -20,15 +20,17 @@ in [`handoff/direction.md`](handoff/direction.md) and
 The roguelike run in squad mode, all eight planets, as a run he wants to
 finish and replay. It is done when all six hold:
 
-1. **The origin wins a planet.** On every planet the slime's heart sits on its start crystal from the landing, and killing it wins (the last walker still wins as a fallback). The run bot wins planets 1 to 8 that way with no soft lock, and draining the heart's crystal is a second way in.
-2. **A run of at least two hours** (his answer, 11-24 03:14Z): longer planets or twice as many planets, the exact length not settled yet. The run is built so either can be dialled, and his own run lands at two hours or more.
+1. **Every planet ends with the slime wiped out** (his ruling, 11-26 00:08Z: hearts stay, "but they are not the win condition"). A heart forms on any charged crystal the slime keeps packed for 2 minutes, as a mini-boss to break before the crystal is yours (#858). The run bot wins planets 1 to 8 by wiping the slime out, with no soft lock, and its time to win is measured again on that rule.
+2. **A run of at least two hours** (his answer, 11-24 03:14Z), reached by about 12 planets picked on a star map with forks and contracts (his pick, 11-25 23:45Z), the harder forks paying more. His own run lands at two hours or more.
 3. **The curve.** The run bot plays all eight planets on his maps, and one page shows time to win, soldiers, income and losses by planet. No planet is a wall for every main plan, and later planets cost more than earlier ones.
 4. **Save and resume.** He can quit between planets, or mid-planet, and pick the same run up on the next start.
 5. **60 frames a second on his PC**: frame p95 under 16.7 ms on the GTX 1070 at his own screen (3840 x 2160, World detail as shipped) through planets 1 to 8, the Sporer's big slimes included.
 6. **Everything built is on**, and the game's pages list what is new and the few experiments that are off (kept from Milestone 1).
 
-The rush (D7): he picked a heart that gets tougher by planet (11-24 14:52Z); no other rush brake unasked. Milestone 3, a
+The rush (D7): a heart tougher by planet (11-24 14:52Z) answered the heart snipe, which no longer wins a planet since 11-26; no other rush brake unasked. Milestone 3, a
 release, only if he chooses one.
+
+**Since 11-26.** Hearts are no longer the win (#858); the step-B strategy batch (five plans, planets 2, 4 and 6, hearts off) and the star map with forks and contracts (his pick, 11-25 23:45Z, [brief](Reports/review-2026-11-25/route-choice-brief.md)) are under way.
 
 **Where it stands (11-24, 20:10Z).** The origin is on main (#699), at 700, 500 and 1,000 on planets 1 to 3 and half size on 4 to 8 (#756), its gather capped at twice its size (#769).
 - **Curve (test 3).** Fourth pass (bot with storm and crystal-pick fixes): 36 of 48 on six maps, 21 of 24 on his three, P7 won on all three of his maps. Medians P1 4:36, P2 3:18, P3 6:04, P4 5:42, P5 4:30, P6 6:44, P7 8:39, P8 7:18. The fifth pass (main and builder arms, with D7) runs next; planet 5 is the one to watch.
@@ -59,7 +61,7 @@ asks at most once a session with a recommendation.
 
 | What | State |
 |---|---|
-| Longer planets or more of them | His 11-24 answer: at least two hours, by either; "we don't need to decide exactly now". The dials are on main (#749: `run::PLANETS`, `run::STRETCH`). Costed and asked 05:10Z: both roads, starting at 12 planets at 1.3x (recommended, about 2.5 days), 16 planets (2 days), 8 at 1.8x (1 day), or not yet. |
+| Longer planets or more of them | Answered 11-25 23:45Z by his pick of a star map with forks and contracts (about 12 steps, harder forks pay more; [brief](Reports/review-2026-11-25/route-choice-brief.md)), so the run reaches two hours by more planets, chosen. `run::STRETCH` stays 1 until he plays it. |
 | Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked next. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (asked 11-17 19:14Z). |
 

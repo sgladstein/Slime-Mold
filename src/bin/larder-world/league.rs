@@ -452,11 +452,14 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     // `secs`' clock, from the landing: the origin counts its tick from the
     // slime's head start, which ran 40 to 164 s ahead on planets 5 to 8
     // (the Enemy lane, 11-24).
+    // Crystal hearts since 11-26 (several a planet, none the win): the
+    // live one's members against its most, then `formed:broken`, then the
+    // last break.
     let origin = match (g.origin.formed, g.origin.fell, g.stand.live.filter(|h| h.origin)) {
-        (false, ..) => "-".to_string(),
-        (_, Some(f), _) => format!("fell@{:.0}", f.saturating_sub(g.landed) as f32 / g.rules.tps.max(1) as f32),
-        (_, None, Some(h)) => format!("{}/{}", h.members, h.most),
-        _ => "gone".to_string(),
+        (0, ..) => "-".to_string(),
+        (n, _, Some(h)) => format!("{}/{}:{n}:{}", h.members, h.most, g.origin.broken),
+        (n, Some(f), None) => format!("{n}:{}:fell@{:.0}", g.origin.broken, f.saturating_sub(g.landed) as f32 / g.rules.tps.max(1) as f32),
+        (n, None, None) => format!("{n}:{}", g.origin.broken),
     };
     // The turret bodies standing (`Plan::mortars`, `sprayers`, `hunters`),
     // and the walkers the hunters' shells killed.

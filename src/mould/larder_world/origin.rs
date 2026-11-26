@@ -1,55 +1,72 @@
-//! **The origin: the slime's heart on its start crystal, which you kill to
-//! win the planet** (2026-11-22, Milestone 2's win; the owner's idea of
-//! 11-16 04:58Z, "every planet there is a more boss like entity at the
-//! slime start crystal that you need to kill to win. The origin of the
-//! slime of the planet"; the design in
-//! `Reports/origin-design-2026-11-22/README.md`, which Direction approved
-//! that morning with its three questions settled: a die-back of about ten
-//! seconds, draining its crystal stops its regrowth, and the last walker
-//! still wins as a fallback).
+//! **Crystal hearts: a mini-boss that grows on a crystal the slime holds
+//! thick** (2026-11-26, the owner's ruling of 11-26 00:08Z: "slime hearts
+//! stay, but they are not the win condition. Basically anytime a slime
+//! maintains a density of slime on a crystal for a 2 minutes a heart form.
+//! It is basically just another mini-boss/way to make it harder to capture
+//! core slime crystals.").
 //!
-//! The origin is the last-stand heart (`stand.rs`) from the landing: a lump
-//! of the slime's own armoured walkers held round its start crystal
-//! (`Game::core`), drawn with the heart's look. It is a win condition, not
-//! a king (the owner's 11-12 "headless" ruling stands): the rest of the
-//! slime does not need it to make walkers.
+//! Until then this was **the origin** (2026-11-22, Milestone 2's win; the
+//! design in `Reports/origin-design-2026-11-22/README.md`): one heart
+//! formed at the landing on the start crystal (`Game::core`), and breaking
+//! it stopped births, starved the slime and won the planet after a
+//! ten-second die-back. The owner, 11-25 23:57Z: "the Slime heart makes
+//! the game even easier" (a snipe ended a planet in a minute or two); the
+//! planet is won again at its last walker (`check_end`, `run::WIN_SHARE`).
 //!
-//! - **It grows from its crystal.** Every `OriginRules::grow_every` seconds
-//!   it takes in the free walkers round its crystal (a reach that widens
-//!   from the crystal's middle until it holds its planet's `size`), up to
-//!   `most` times that, but only while its crystal has charge. Only the
-//!   squad empties a crystal (the owner, 11-21 06:30Z), so draining or
-//!   pumping its crystal stops it regrowing.
+//! A heart is a lump of the slime's own armoured walkers (`stand.rs`'s
+//! `Heart`, the last stand's machinery, drawn with its look):
+//!
+//! - **It forms where the slime holds a crystal thick.** Once a second each
+//!   charged crystal's slime (walkers within its rim) is weighed against
+//!   its disc: at `dense` walkers a fine cell or more (and at least
+//!   `2 x floor_min` walkers) its clock runs, under it the clock falls
+//!   back three seconds a second, so a surge's flicker does not reset it
+//!   but thinning it out with fire does. At `after` seconds the heart
+//!   forms on that crystal. One lives at a time (the four lumps are shared
+//!   with mini-bosses, fruit and marches); another crystal's clock waits
+//!   full and forms its heart when the first one breaks.
+//! - **It grows from its crystal.** Every `grow_every` seconds it takes in
+//!   the free walkers round its crystal (a reach that widens from the
+//!   crystal's middle until it holds its planet's `size`), up to `most`
+//!   times that, but only while its crystal has charge, so draining or
+//!   pumping the crystal stops it regrowing.
 //! - **It fights back.** It lunges at a soldier within `near` of its
 //!   crystal (the heart's bout, with its cap on the health one bout may
 //!   take), and when it loses members to shots it calls the body home: a
 //!   raid on the soldiers striking it, at most every `call_every` seconds.
-//! - **Its death wins the planet.** Cut under `floor` of the most it held
-//!   (or `floor_min` members), it breaks: births stop, the slime stops
-//!   eating (the engine's `starve`) and its upkeep goes up `die_upkeep`
-//!   times, so the rest of it starves where it stands;
-//!   after `die_back` seconds the planet is won (`End::MouldWiped`, which
-//!   the run counts as the goal), or sooner at the last walker.
-//! - **The late last stand gathers into it** (`time_stand`): late in a
-//!   planet against an army, every free walker on the map streams to the
-//!   origin instead of forming a second heart, so a planet ends in one
-//!   fight at one place.
+//! - **It breaks**, cut under `floor` of the most it held (or `floor_min`
+//!   members): its lump lets go and what is left is ordinary slime again,
+//!   and its crystal's clock starts from nothing. Nothing else happens: the
+//!   planet is not won and the slime does not starve, so a crystal is
+//!   taken by breaking its heart and then thinning or draining it before
+//!   two more minutes are up.
+//! - **The late last stand gathers into a live heart** (`time_stand`):
+//!   late in a planet against an army, free walkers stream to it instead
+//!   of forming a second heart.
 //!
 //! GPU only (the owner's 11-17 card): a world that cannot sow never forms
-//! one, and the planet is won at the last walker as before.
+//! one.
 
-use super::{End, Game, World};
+use super::{Game, World};
 use crate::mould::big::{Lump, LUMPS};
 
-/// The origin's numbers. Times in game seconds, distances in dish cells.
+/// The crystal heart's numbers (the key prefix `origin_` is kept from the
+/// origin). Times in game seconds, distances in dish cells.
 /// Off by default (the campaign and the sandbox are frozen); a run turns
 /// it on (`run::ENEMY_RULES`) and sets its size by planet
-/// (`run::ORIGIN_SIZE`). Armour, bite, steering and the lunge are the
-/// last-stand heart's (`StandRules`).
+/// (`run::ORIGIN_SIZE`). Steering is the last-stand heart's (`StandRules`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct OriginRules {
     pub on: bool,
+    /// A heart forms on a charged crystal whose slime has held `dense`
+    /// walkers a fine cell of its disc for `after` seconds (the owner's
+    /// "a 2 minutes"). Free walkers stand about one a fine cell at most
+    /// (the crowd limit): the start crystal reads 0.95 to 0.98 from the
+    /// landing on (planet 1, run seed 1, lavapipe), so 0.85 is a crystal
+    /// the slime has packed, and fire that holes it stops the clock.
+    pub dense: f32,
+    pub after: f32,
     /// The members it gathers at the landing and regrows to.
     pub size: f32,
     /// A take from its crystal comes only while it holds under this,
@@ -73,9 +90,6 @@ pub struct OriginRules {
     /// most it held), and the least time between calls.
     pub call_loss: f32,
     pub call_every: f32,
-    /// The die-back's length and the upkeep's factor in it.
-    pub die_back: f32,
-    pub die_upkeep: f32,
     /// Its members' blows and extra bite (`big::Lump`, 15 at most), and
     /// its bouts: seconds between lunges, a lunge's length, and the share
     /// of the squad's health a bout may take (at most `cap_most`
@@ -121,21 +135,26 @@ pub struct OriginRules {
 
 impl Default for OriginRules {
     fn default() -> Self {
-        OriginRules { on: false, size: 400.0, most: 1.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, die_back: 10.0, die_upkeep: 40.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02, gather_most: 2.0 }
+        OriginRules { on: false, dense: 0.85, after: 120.0, size: 400.0, most: 1.0, grow_every: 2.0, widen: 0.5, floor: 0.1, floor_min: 50.0, near: 30.0, call_loss: 0.02, call_every: 20.0, armour: 12, bite: 2, every: 12.0, lunge: 8.0, cap: 0.4, cap_most: 20.0, lunge_leash: 2.5, quiet: 4.0, hurt: 0.02, gather_most: 2.0 }
     }
 }
 
-/// The origin's state beside the heart it is (`Stand::live` with `origin`).
-#[derive(Clone, Copy, Debug, Default)]
+/// The crystal hearts' state: the live one's (`Stand::live` with
+/// `origin`), and each crystal's clock.
+#[derive(Clone, Debug, Default)]
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct OriginState {
-    /// It formed this planet.
-    pub formed: bool,
-    /// The tick it formed, and when it broke (the die-back's start).
+    /// Hearts formed and broken this planet.
+    pub formed: u32,
+    pub broken: u32,
+    /// The live heart's crystal (fine cells) and the tick it formed; the
+    /// tick the last one broke.
+    pub home: (f32, f32),
     pub born: Option<u64>,
     pub fell: Option<u64>,
-    /// The upkeep the die-back holds.
-    up: f32,
+    /// Each charged crystal's seconds held thick (`OriginRules::dense`),
+    /// by its middle (fine cells).
+    pub thick: Vec<((f32, f32), f32)>,
     /// How far it reaches round its crystal's middle now (dish cells).
     pub reach: f32,
     /// The tick of its last take and its last call home; its calls.
@@ -149,24 +168,41 @@ pub struct OriginState {
 }
 
 impl<W: World> Game<W> {
-    /// Once a game second, before the last stand: the origin forms at the
-    /// landing, and once it has broken the die-back runs to the win.
+    /// Once a game second, before the last stand: each charged crystal's
+    /// clock runs while the slime holds it thick, and a heart forms on the
+    /// crystal whose clock is full first, when no heart lives.
     pub(super) fn time_origin(&mut self) {
         let r = self.rules.origin;
         if !r.on || !self.world.can_sow() {
             return;
         }
-        let now = self.world.ticks();
-        let tps = self.rules.tps as f32;
-        if let Some(fell) = self.origin.fell {
-            self.world.set_upkeep(self.origin.up);
-            if now >= fell + (r.die_back.max(0.0) * tps) as u64 && self.end.is_none() {
-                self.end = Some(End::MouldWiped(self.time()));
+        let Some(counts) = self.crystal_walkers() else { return };
+        let charged: Vec<f32> = self.world.crystals().iter().map(|c| c.1).collect();
+        let sc = self.world.scale();
+        let live = self.stand.live.is_some_and(|h| h.origin).then_some(self.origin.home);
+        let was = std::mem::take(&mut self.origin.thick);
+        let full = r.after.max(1.0);
+        for (c, &(at, n, rim)) in counts.iter().enumerate() {
+            let held = was.iter().find(|w| (w.0 .0 - at.0).hypot(w.0 .1 - at.1) < sc).map_or(0.0, |w| w.1);
+            // The live heart's own crystal holds no clock: it has its heart.
+            let thick = charged.get(c).is_some_and(|&q| q > 0.0) && n as f32 >= 2.0 * r.floor_min && n as f32 >= r.dense * std::f32::consts::PI * rim * rim && live.is_none_or(|h| (h.0 - at.0).hypot(h.1 - at.1) >= sc);
+            // Thinned, the clock falls back three seconds a second, so a
+            // surge's flicker does not reset it but fire that keeps it
+            // thin does.
+            let t = if thick { (held + 1.0).min(full) } else { (held - 3.0).max(0.0) };
+            if t > 0.0 {
+                self.origin.thick.push((at, t));
             }
+        }
+        // Any other heart (the late last stand's) holds the slot too.
+        if self.stand.live.is_some() || self.mould == 0 {
             return;
         }
-        if !self.origin.formed && self.mould > 0 {
-            self.start_origin();
+        // Of full clocks, the crystal holding the most slime.
+        let walkers = |at: (f32, f32)| counts.iter().find(|c| (c.0 .0 - at.0).hypot(c.0 .1 - at.1) < sc).map_or(0, |c| c.1);
+        let ready = self.origin.thick.iter().filter(|w| w.1 >= full).map(|w| w.0).max_by_key(|&at| walkers(at));
+        if let Some(home) = ready {
+            self.start_origin(home);
         }
     }
 
@@ -199,13 +235,13 @@ impl<W: World> Game<W> {
         rings.len() as f32
     }
 
-    /// The origin gathering now round the start crystal; false with no
-    /// free lump (none is taken at the landing) or no slime there.
-    pub(super) fn start_origin(&mut self) -> bool {
+    /// A heart gathering now round the crystal at `home`; false with no
+    /// free lump (a mini-boss, a march or a fruit ends in seconds, so its
+    /// clock waits full for one).
+    pub(super) fn start_origin(&mut self, home: (f32, f32)) -> bool {
         let mut r = self.rules.stand;
         (r.armour, r.bite, r.every) = (self.rules.origin.armour, self.rules.origin.bite, self.rules.origin.every);
         let Some(lump) = (0..LUMPS).find(|&l| !self.lump_taken(l)) else { return false };
-        let home = self.core;
         let reach = self.rules.origin.widen.max(0.5);
         self.world.grow_lump(lump, (home, reach));
         let size = self.world.size();
@@ -214,20 +250,22 @@ impl<W: World> Game<W> {
         let tps = self.rules.tps as f32;
         let heart = super::Heart::origin(lump, home, now, now + (r.every.max(1.0) * tps) as u64);
         self.stand.live = Some(heart);
-        self.origin = OriginState { formed: true, born: Some(now), reach, grown: now, ..OriginState::default() };
+        let sc = self.world.scale();
+        let thick = std::mem::take(&mut self.origin.thick).into_iter().filter(|w| (w.0 .0 - home.0).hypot(w.0 .1 - home.1) >= sc).collect();
+        self.origin = OriginState { formed: self.origin.formed + 1, broken: self.origin.broken, home, born: Some(now), fell: self.origin.fell, thick, reach, grown: now, ..OriginState::default() };
         true
     }
 
-    /// Whether the origin's crystal still has charge (only the squad
+    /// Whether the heart's crystal still has charge (only the squad
     /// empties one).
     fn origin_fed(&self) -> bool {
-        let home = self.core;
+        let home = self.origin.home;
         let sc = self.world.scale();
         self.world.crystals().iter().filter(|c| (c.0 .0 - home.0).hypot(c.0 .1 - home.1) < sc).any(|c| c.1 > 0.0)
     }
 
-    /// Once a second from `keep_heart` while the heart is the origin: its
-    /// regrowth from its crystal and its call home. Returns whether it
+    /// Once a second from `keep_heart` while the heart is a crystal heart:
+    /// its regrowth from its crystal and its call home. Returns whether it
     /// broke (the heart's own keeping then stops).
     pub(super) fn keep_origin(&mut self, h: &mut super::Heart) -> bool {
         let r = self.rules.origin;
@@ -265,13 +303,13 @@ impl<W: World> Game<W> {
                     // and 570 against 300), as the members do not stand in
                     // one disc: the lump's centre wandered 36 cells from the
                     // crystal in 2 s and they spread round it.
-                    let take = self.gather_disc(self.core, most).max(0.5);
+                    let take = self.gather_disc(self.origin.home, most).max(0.5);
                     self.origin.reach = take;
                     let room = (most - h.members as f32).max(0.0) as u32;
-                    self.world.grow_lump_most(h.lump, (self.core, take), room);
+                    self.world.grow_lump_most(h.lump, (self.origin.home, take), room);
                 }
             } else if self.origin_fed() && (h.members as f32) < r.most * r.size {
-                let cr = self.crystal_at(self.core).map_or(4.0 * self.world.scale(), |(c, _)| self.world.crystal_r(c)) / self.world.scale().max(1.0);
+                let cr = self.crystal_at(self.origin.home).map_or(4.0 * self.world.scale(), |(c, _)| self.world.crystal_r(c)) / self.world.scale().max(1.0);
                 // The reach widens while it is short of its size; a take
                 // reaches only the share of it the shortfall asks (its
                 // square root, for a disc's area), so a take on a crystal
@@ -288,7 +326,7 @@ impl<W: World> Game<W> {
                     self.origin.reach = (self.origin.reach + r.widen.max(0.1)).min(cr + 2.0);
                 }
                 let take = (self.origin.reach * short.sqrt()).max(0.5);
-                self.world.grow_lump(h.lump, (self.core, take));
+                self.world.grow_lump(h.lump, (self.origin.home, take));
             }
         }
         // The call home: struck hard enough, with soldiers near it.
@@ -307,11 +345,11 @@ impl<W: World> Game<W> {
         false
     }
 
-    /// The live soldier nearest the origin's crystal within its reach
+    /// The live soldier nearest the heart's crystal within its reach
     /// (`OriginRules::near` past the crystal's rim).
     pub(super) fn origin_near(&self) -> Option<usize> {
         let sc = self.world.scale();
-        let home = self.core;
+        let home = self.origin.home;
         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
         let reach = cr + self.rules.origin.near * sc;
         (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).map(|k| (k, (self.soldiers[k].x - home.0).hypot(self.soldiers[k].y - home.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(k, _)| k)
@@ -321,37 +359,26 @@ impl<W: World> Game<W> {
     /// test for one soldier).
     pub(super) fn origin_reaches(&self, k: usize) -> bool {
         let sc = self.world.scale();
-        let home = self.core;
+        let home = self.origin.home;
         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
         let s = self.soldiers[k];
         s.alive && (s.x - home.0).hypot(s.y - home.1) <= cr + self.rules.origin.near * sc
     }
 
-    /// The origin breaks: its lump lets go, births stop and the slime's
-    /// upkeep goes up (`OriginRules::die_upkeep`), so the rest of it dies
-    /// back over `die_back` seconds to the win.
+    /// The heart breaks: its lump lets go and what is left of it is
+    /// ordinary slime again; its crystal's clock starts from nothing
+    /// (`time_origin` keeps no clock on a live heart's crystal).
     fn break_origin(&mut self, lump: usize) {
-        let r = self.rules.origin;
         self.world.form_lump(lump, None);
-        self.world.stop_births();
-        self.world.set_starve(true);
-        let base = if self.ceiling.start > 0 { self.ceiling.upkeep } else if let Some((_, up)) = self.broken { up } else { self.world.upkeep() };
-        self.origin.up = base * r.die_upkeep.max(1.0);
-        self.world.set_upkeep(self.origin.up);
         self.origin.fell = Some(self.world.ticks());
+        self.origin.broken += 1;
+        self.origin.born = None;
         self.stand.live = None;
     }
 
-    /// What the HUD shows of the origin: its members against the most it
-    /// held, and the die-back's seconds left once it has broken.
-    pub fn origin_hud(&self) -> Option<(u32, u32, Option<f32>)> {
-        if !self.origin.formed {
-            return None;
-        }
-        if let Some(fell) = self.origin.fell {
-            let left = self.rules.origin.die_back - (self.world.ticks().saturating_sub(fell)) as f32 / self.rules.tps.max(1) as f32;
-            return Some((0, 0, Some(left.max(0.0))));
-        }
-        self.stand.live.filter(|h| h.origin).map(|h| (h.members, h.most, None))
+    /// What the HUD shows of the live crystal heart: its members against
+    /// the most it held.
+    pub fn origin_hud(&self) -> Option<(u32, u32)> {
+        self.stand.live.filter(|h| h.origin).map(|h| (h.members, h.most))
     }
 }

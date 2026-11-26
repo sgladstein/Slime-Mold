@@ -184,8 +184,6 @@ fn lead(g: &Game<GpuWorld>, v: slime_mould::mould::campaign::Verdict) -> String 
         k => format!("with {k} of your {n} soldiers lost"),
     };
     match v.cause {
-        Cause::Goal if g.origin.fell.is_some() && g.mould > 0 => format!("You broke the slime's heart in {at}, and the slime died back to {left}, from a peak of {top}, {with}."),
-        Cause::Goal if g.origin.fell.is_some() => format!("You broke the slime's heart in {at}, and the slime died back from a peak of {top}, {with}."),
         Cause::Goal if g.mould == 0 => format!("You wiped out the slime in {at}, from a peak of {top}, {with}."),
         Cause::Goal => format!("You broke the slime in {at}, down to {left} of its {top} peak, {with}."),
         Cause::Cap => format!("The clock reached {at} with the slime still {left} strong, {share} of its {top} peak."),
@@ -3529,26 +3527,20 @@ fn compass(deg: f32) -> &'static str {
 const INTRO_SECS: f32 = 9.0;
 const INTRO_FADE: f32 = 1.5;
 
-/// The goal line while a planet has its origin (Milestone 2, `origin.rs`;
-/// Look and interface, 2026-11-24): what to kill and how much is left of
-/// it, then the die-back's seconds once it breaks, in place of the
-/// mission's walker count (which a heart's planet is not won by). A
-/// "nothing is happening" warning in front (`progress_line`) is kept.
+/// The goal line with a crystal heart alive (`origin.rs`; the origin's
+/// line, Look and interface 2026-11-24, until the owner's 11-26 ruling
+/// that a heart is a mini-boss, not the win): the mission's own line, and
+/// how much is left of the heart after it.
 fn origin_line(g: &Game<GpuWorld>, line: String) -> String {
-    let Some((members, most, fell)) = g.origin_hud() else { return line };
-    let warn = line.split_once(" s. ").filter(|_| line.starts_with("Nothing is happening")).map(|(a, _)| format!("{a} s. ")).unwrap_or_default();
-    let goal = match fell {
-        Some(left) => format!("The slime's heart is broken: the slime is dying back ({:.0} s)", left.ceil()),
-        // No members yet (or a heart that never filled, as on a planet past
-        // the tuned ladder): the goal without its counts, not "0 of 0".
-        None if most == 0 => "Kill the slime's heart on its home crystal".to_string(),
-        None => {
+    match g.origin_hud() {
+        Some((members, most)) if most > 0 => {
             let r = g.rules.origin;
             let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;
-            format!("Kill the slime's heart on its home crystal: {} of {} left, breaks under {}", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))
+            format!("{line}; a heart guards a crystal: {} of {} left, breaks under {}", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))
         }
-    };
-    format!("{warn}{goal}")
+        Some(_) => format!("{line}; a heart is forming on a crystal"),
+        None => line,
+    }
 }
 
 /// **The first minute** (Direction 11-24, the planet's introduction, job
@@ -3575,7 +3567,7 @@ pub(super) struct Coach {
 const COACH: [(&str, f32); 3] = [
     ("Right click the ground to send your squad there, or steer it with W, A, S and D", 25.0),
     ("Your soldiers shoot slime in reach by themselves. Hold the left button and all of them fire where you point", 14.0),
-    ("Find the slime's heart on its home crystal (Space looks at it) and kill it, or every last bit of slime, to free the planet", 16.0),
+    ("Kill every last bit of slime to free the planet. Slime that holds a crystal thick for two minutes grows a heart there", 16.0),
 ];
 
 /// Game seconds after landing before the first step, so the landing card
