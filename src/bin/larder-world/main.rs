@@ -1376,10 +1376,10 @@ impl App {
         // mould; that slime shed nine tenths of its walkers in its first
         // minute on every planet (the slime-enemy thread found why).
         if let Some(l) = &level {
-            run_shape(&mut s, l.walkers * a.size(), l.depth)?;
+            run_shape(&mut s, l.walkers * a.size(), l.curve)?;
         }
         // The food the planet's slime eats to build a surge (`run::surge_food`).
-        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers * a.size()));
+        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.curve, l.walkers * a.size()));
         // The slime: the mission's tier, unless the tweaks file puts
         // another on this run planet (`planet N = SLIME`) or the viewer
         // shows one of the owner's own; a custom plays its base tier with
@@ -3159,7 +3159,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(job) = league_job {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         match job {
-            league::Job::Planet { depth, seed, secs } => league::planet(base, depth, seed, secs, &league_plan, &device, &queue)?,
+            league::Job::Planet { depth, seed, secs, pip } => league::planet(base, depth, seed, secs, pip, &league_plan, &device, &queue)?,
             league::Job::Run { seed, to, secs } => league::whole_run(base, seed, to, secs, &league_plan, &device, &queue)?,
         }
         return Ok(());

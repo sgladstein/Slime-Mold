@@ -424,11 +424,20 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     }
     // How often it surges here (`run::enemy_keys`; on the clock's line so the
     // heading keeps two lines, the run thread's ask).
-    clock += &format!("; it surges as it feeds, at least every {:.0} s", run::surge_secs(l.depth));
+    clock += &format!("; it surges as it feeds, at least every {:.0} s", run::surge_secs(l.curve));
     if r.depth == run::PLANETS {
         clock = format!("The slime's home world: beat it and the run is won. {clock}");
     }
     lines.push(clock);
+    // Its pip, pay and contracts (the star map, 2026-11-26).
+    if !r.range {
+        let n = r.node();
+        let mut deal = format!("{}{}: a win pays {} points at two stars", n.pip.name(), if r.leg().heat { " with heat" } else { "" }, r.pay(2));
+        if !n.contracts.is_empty() {
+            deal += &format!("; contracts: {}", n.contracts.iter().map(|c| format!("{} (+{})", c.name(), c.pay(r.curve()))).collect::<Vec<_>>().join(", "));
+        }
+        lines.push(deal);
+    }
     if r.range {
         lines = vec![
             "Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(),
@@ -586,6 +595,61 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             .collect(),
         plain_shot,
     }
+}
+
+/// **The run's star map as the Stars page draws it** (2026-11-26,
+/// `mould::route`): every planet of every step, its pips and lanes, and
+/// for each one the route can reach next, what the pane tells.
+pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
+    use slime_mould::mould::run::{self, Leg};
+    use slime_mould::world::start::{StarNode, StarView};
+    let map = r.star_map();
+    let open: Vec<u8> = if r.choosing() { r.choices().iter().map(|n| n.k).collect() } else { Vec::new() };
+    let steps = map
+        .steps
+        .iter()
+        .enumerate()
+        .map(|(i, step)| {
+            let d = i as u32 + 1;
+            step.iter()
+                .map(|n| {
+                    let taken = r.route.get(i).is_some_and(|l| l.k == n.k);
+                    let here = d == r.depth && open.contains(&n.k);
+                    // The planet as the run would land on it: the route so
+                    // far, then this node.
+                    let mut at = r.clone();
+                    at.depth = d;
+                    at.route.resize(i, Leg::default());
+                    at.route.push(Leg { k: n.k, heat: false });
+                    let (l, p) = (at.level(), at.planet());
+                    let mut hot = at.clone();
+                    hot.route[i].heat = true;
+                    let e = at.curve();
+                    StarNode {
+                        k: n.k,
+                        lane: n.lane,
+                        pips: n.pip.count(),
+                        to: n.to.clone(),
+                        name: p.name,
+                        slime: title_case(l.tier.name()),
+                        biome: p.biome.name().to_string(),
+                        twist: at.twist().map(|t| (t.name().to_string(), t.card())),
+                        size: l.walkers,
+                        pay: at.pay(2),
+                        heat_pay: hot.pay(2),
+                        about: n.pip.about().to_string(),
+                        contracts: n.contracts.iter().map(|c| (c.name(), c.pay(e))).collect(),
+                        taken: taken && (d < r.depth || !r.choosing()),
+                        open: here,
+                        stars: if taken { r.stars.get(i).copied() } else { None },
+                    }
+                })
+                .collect()
+        })
+        .collect();
+    let heading = format!("Planet {} of {}: pick the next planet. {}", r.depth, run::PLANETS, r.line());
+    let heat_says = format!("A slime {:.0}% bigger and sooner raids, for {}% of the pay", (run::HEAT_WALKERS - 1.0) * 100.0, run::HEAT_PAY_X10 * 10);
+    StarView { steps, at: r.depth, heading, purse: format!("{} points", r.points), heat_says }
 }
 
 /// The run as the menu's caption, the shop's strip and the end of a run
@@ -965,6 +1029,9 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         // (`news-try`: its second tab, the things to try.)
         "news" | "news-try" => Page::News,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" | "shop-landing" => Page::Shop,
+        // (`stars@STEP`: the star map with the route picked up to STEP,
+        // `headless`.)
+        "stars" => Page::Stars,
         _ => return None,
     })
 }
@@ -1274,6 +1341,16 @@ impl App {
                 // As it lands: closed mid-planet, it lands here again.
                 self.save_run();
             }
+            // The star map's pick: the route on, then its shop.
+            StartEvent::Route(k, heat) => {
+                if let Some(r) = self.run.as_mut() {
+                    let done = r.choose(k, heat);
+                    if let Some(m) = self.menu.as_mut() {
+                        m.notice = (!done).then(|| "That planet is not a way on from here".into());
+                    }
+                }
+                self.show_shop();
+            }
             StartEvent::Buy(i) => {
                 if let Some(r) = self.shop_run() {
                     if let Some(row) = r.shop().get(i) {
@@ -1556,7 +1633,21 @@ impl App {
             return self.show_armory();
         }
         let Some(r) = self.run.as_mut() else { return };
+        // A fork ahead: the star map first (2026-11-26), its shop after.
+        if r.choosing() && !r.field {
+            if let Some(m) = self.menu.as_mut() {
+                m.stars = Some(star_view(r));
+                m.shop = None;
+                m.run_live = true;
+                if m.page != Page::Stars {
+                    m.show(Page::Stars);
+                }
+            }
+            self.save_run();
+            return;
+        }
         if let Some(m) = self.menu.as_mut() {
+            m.stars = None;
             r.dev = m.option("dev").is_some_and(|o| o.value() == "on");
             m.shop = Some(shop_of(r));
             m.run_live = true;
@@ -1657,6 +1748,17 @@ impl App {
         r.found(self.game.as_ref().map_or(0, |g| g.starfall.earned()));
         // The slime that ended a lost planet, for the Past runs page.
         let slime = title_case(r.level().tier.name());
+        // The planet's contracts (star map, 2026-11-26): each kept one
+        // pays before the win's own points.
+        let mut kept_line = None;
+        if let (Some(g), Some(tr)) = (self.game.as_ref(), self.mission.as_ref()) {
+            let broken = g.bosses.ended.iter().filter(|(_, e, _)| *e == slime_mould::mould::larder_world::BossEnd::Broken).count() as u32;
+            let o = slime_mould::mould::route::Outcome { won: v.stars > 0, at: v.at, par: g.rules.par, lost: tr.lost() as u32, broken, pumped: g.pumped, found: g.starfall.earned() };
+            let kept: Vec<String> = r.settle(&o).into_iter().filter(|c| c.1).map(|(c, _, p)| format!("{} +{p}", c.name())).collect();
+            if !kept.is_empty() {
+                kept_line = Some(format!("Contract kept: {}", kept.join(", ")));
+            }
+        }
         if v.stars > 0 {
             r.won(v.stars);
         } else {
@@ -1695,7 +1797,7 @@ impl App {
             // Look D, 11-24); the notice line keeps the words for a film
             // or a screen too small for the summary.
             m.run_end = end;
-            m.notice = over;
+            m.notice = over.or(kept_line);
         }
         if self.run.is_some() {
             self.show_shop();

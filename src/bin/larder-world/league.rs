@@ -32,6 +32,7 @@ use slime_mould::mould::bullets::Shell;
 use slime_mould::mould::campaign::Cause;
 use slime_mould::mould::guns::{Gun, GunKind};
 use slime_mould::mould::rounds::Card;
+use slime_mould::mould::route::Pip;
 use slime_mould::mould::run::{self, Pick, ITEMS};
 
 /// The unlocks a plan may build with, as `Run::has` keys.
@@ -539,8 +540,11 @@ pub(super) fn stage(spec: &str, depth: u32) -> &str {
     parts[(depth.max(1) as usize - 1).min(parts.len() - 1)]
 }
 
-/// `league=DEPTH:SEED[:SECS]` (see the module's docs).
-pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
+/// `league=DEPTH:SEED[:SECS[:PIP]]` (see the module's docs). PIP (`safe`,
+/// `fair` or `hard`, the star map's, 2026-11-26) lands on that planet of
+/// the step's fork, the route before it Fair: the bot check that a fork's
+/// planets are clearly ordered in difficulty.
+pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, pip: Option<Pip>, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
     let mut r = Run::new(seed);
     r.restock();
     // `Plan::points`: added before the first shop, which on planet 1 is a
@@ -553,12 +557,24 @@ pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, spec: &str, d
     }
     while r.depth < depth {
         r.won(2);
+        if r.depth == depth {
+            if let Some(want) = pip {
+                let map = r.star_map();
+                let k = map.steps[depth as usize - 1].iter().find(|n| n.pip == want).map(|n| n.k).ok_or_else(|| format!("league: step {depth} of run {seed} has no {} planet", want.name()))?;
+                // The route Fair to here, then this planet, reachable or
+                // not: the check compares planets, not routes.
+                r.route.resize(depth as usize - 1, run::Leg::default());
+                r.route.push(run::Leg { k, heat: false });
+                r.restock();
+            }
+        }
         let p = shop_plan(stage(spec, r.depth))?;
         bought.extend(shop(&mut r, &p));
     }
     let out = play(&base, &r, stage(spec, depth), secs, device, queue)?;
     let size = base.size.map_or(String::new(), |f| format!("size={f} "));
-    println!("league plan={spec} {size}{} shop={} gun={} arms={}", out.line, bought.join("/"), r.gun_text(), arms(&r));
+    let pip = pip.map_or(String::new(), |p| format!("pip={} curve={:.2} tier={} walkers={:.2} ", p.name().to_lowercase(), r.curve(), r.level().tier.name(), r.level().walkers));
+    println!("league plan={spec} {size}{pip}{} shop={} gun={} arms={}", out.line, bought.join("/"), r.gun_text(), arms(&r));
     Ok(())
 }
 
@@ -595,7 +611,7 @@ pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, d
 
 /// Parses `league=`'s value: `DEPTH:SEED[:SECS]` or `run:SEED[:TO[:SECS]]`.
 pub(super) enum Job {
-    Planet { depth: u32, seed: u64, secs: f32 },
+    Planet { depth: u32, seed: u64, secs: f32, pip: Option<Pip> },
     Run { seed: u64, to: u32, secs: f32 },
 }
 
@@ -613,6 +629,13 @@ pub(super) fn parse(v: &str) -> Result<Job, String> {
             depth: (num(d)? as u32).clamp(1, run::PLANETS),
             seed: seed(s)?,
             secs: rest.first().map_or(Ok(0.0), |x| num(x))?,
+            pip: match rest.get(1).copied() {
+                None => None,
+                Some("safe") => Some(Pip::Safe),
+                Some("fair") => Some(Pip::Fair),
+                Some("hard") => Some(Pip::Hard),
+                Some(o) => return Err(format!("league={v}: PIP is safe, fair or hard, not {o}")),
+            },
         }),
         _ => Err(format!("league={v}: DEPTH:SEED[:SECS] or run:SEED[:TO[:SECS]]")),
     }

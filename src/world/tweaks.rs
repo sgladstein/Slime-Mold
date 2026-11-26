@@ -515,7 +515,7 @@ mod tests {
         t.delete_custom("fog");
         assert_eq!(t.planet(4), None);
         assert_eq!(t.slime_of("fog", "keep"), None);
-        assert_eq!(Tweaks::parse("custom trunk = drifter\ncustom x = nothing\nplanet 9 = x\n").1.len(), 3);
+        assert_eq!(Tweaks::parse("custom trunk = drifter\ncustom x = nothing\nplanet 13 = x\n").1.len(), 3);
     }
 
     #[test]

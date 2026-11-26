@@ -106,6 +106,26 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 shop_run = Some(r);
             }
         }
+        // `menu=stars@STEP` (the star map, 2026-11-26): the run won up to
+        // step STEP (2 by default), a fork picked at each step by turns,
+        // so the route bends across the map.
+        if let (slime_mould::world::start::Page::Stars, Some(r)) = (p, app.run.as_ref()) {
+            let mut r = r.clone();
+            let to: u32 = extra.parse().unwrap_or(2).clamp(2, slime_mould::mould::run::PLANETS);
+            r.depth = 1;
+            r.route.truncate(1);
+            while r.depth < to && !r.over {
+                if r.choosing() {
+                    let c = r.choices();
+                    let k = c[(r.depth as usize * 7 + 1) % c.len()].k;
+                    r.choose(k, false);
+                }
+                r.won([2, 3, 1][r.depth as usize % 3]);
+            }
+            m.stars = Some(menu::star_view(&r));
+            m.run_live = true;
+            app.run = Some(r);
+        }
         // `menu=main-run|main-won|main-lost` (Look D, 11-24): the main
         // page's Run row and its strip with the run three planets in, won
         // (every planet freed) or lost on planet 4.

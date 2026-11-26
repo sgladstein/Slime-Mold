@@ -183,7 +183,7 @@ fn main() {
                     _ => tiers::set_key(&mut p, k, v).unwrap_or_else(|e| panic!("{e}")),
                 }
             }
-            for (k, v) in run::enemy_keys(depth) {
+            for (k, v) in run::enemy_keys(run::curve_depth(depth)) {
                 tiers::set_key(&mut p, k, &v).unwrap_or_else(|e| panic!("{e}"));
             }
             let d0 = BigDish::with_map(p, &m);

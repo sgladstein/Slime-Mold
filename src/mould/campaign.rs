@@ -421,6 +421,11 @@ fn walkers_where(grid: &[u32], size: (usize, usize), f: impl Fn(f32, f32) -> boo
 }
 
 impl Tracker {
+    /// Soldiers lost so far (the star map's contracts, `route::Outcome`).
+    pub fn lost(&self) -> usize {
+        self.lost
+    }
+
     pub fn new<W: World>(mission: Mission, g: &Game<W>) -> Tracker {
         Tracker {
             mission,

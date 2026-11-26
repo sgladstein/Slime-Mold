@@ -6190,7 +6190,7 @@ mod tests {
             for (k, v) in c {
                 slime_mould::gpu::set(&mut s, k, v).unwrap();
             }
-            for (k, v) in slime_mould::mould::run::enemy_keys(1) {
+            for (k, v) in slime_mould::mould::run::enemy_keys(1.0) {
                 slime_mould::gpu::set(&mut s, k, &v).unwrap();
             }
             let mut rules = Rules::default();

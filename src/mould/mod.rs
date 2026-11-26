@@ -83,6 +83,7 @@ pub mod play;
 pub mod playlog;
 pub mod render;
 pub mod rounds;
+pub mod route;
 pub mod run;
 pub mod skirmish;
 pub mod squad;
