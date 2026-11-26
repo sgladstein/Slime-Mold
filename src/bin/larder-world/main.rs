@@ -1376,10 +1376,10 @@ impl App {
         // mould; that slime shed nine tenths of its walkers in its first
         // minute on every planet (the slime-enemy thread found why).
         if let Some(l) = &level {
-            run_shape(&mut s, l.walkers * a.size(), l.depth)?;
+            run_shape(&mut s, l.walkers * a.size(), l.curve)?;
         }
         // The food the planet's slime eats to build a surge (`run::surge_food`).
-        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers * a.size()));
+        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.curve, l.walkers * a.size()));
         // The slime: the mission's tier, unless the tweaks file puts
         // another on this run planet (`planet N = SLIME`) or the viewer
         // shows one of the owner's own; a custom plays its base tier with
@@ -2767,8 +2767,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // slot's HUD (Look, 11-24).
                 let (seed, depth) = v.split_once(':').unwrap_or((v, "1"));
                 let (depth, bodies) = depth.split_once(':').unwrap_or((depth, ""));
+                // `run=SEED:6h` (the star map, 2026-11-26): lands on step
+                // 6's Safe, Fair or Hard planet (s, f, h), the route Fair
+                // before it, to film one pip beside another.
+                let (depth, pip) = match depth.strip_suffix(['s', 'f', 'h']) {
+                    Some(d) => (d, depth.chars().last()),
+                    None => (depth, None),
+                };
                 let mut r = Run::new(seed.parse()?);
                 r.depth = depth.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
+                if let Some(c) = pip {
+                    use slime_mould::mould::route::Pip;
+                    let want = match c {
+                        's' => Pip::Safe,
+                        'f' => Pip::Fair,
+                        _ => Pip::Hard,
+                    };
+                    let k = r.star_map().steps[r.depth as usize - 1].iter().find(|n| n.pip == want).map(|n| n.k).ok_or("run=SEED:STEPs|f|h: that step has no planet of that pip")?;
+                    r.route.resize(r.depth as usize - 1, slime_mould::mould::run::Leg::default());
+                    r.route.push(slime_mould::mould::run::Leg { k, heat: false });
+                }
                 for w in bodies.split('+').filter(|w| !w.is_empty()) {
                     let kind = slime_mould::mould::bodies::BodyKind::ALL.into_iter().find(|k| k.name().eq_ignore_ascii_case(w)).ok_or("run=SEED:DEPTH:BODIES: grenade, mine, line or canister, joined by +")?;
                     // Bought as the shop buys it (`Pick::Body`), which
@@ -3157,7 +3175,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(job) = league_job {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         match job {
-            league::Job::Planet { depth, seed, secs } => league::planet(base, depth, seed, secs, &league_plan, &device, &queue)?,
+            league::Job::Planet { depth, seed, secs, pip } => league::planet(base, depth, seed, secs, pip, &league_plan, &device, &queue)?,
             league::Job::Run { seed, to, secs } => league::whole_run(base, seed, to, secs, &league_plan, &device, &queue)?,
         }
         return Ok(());

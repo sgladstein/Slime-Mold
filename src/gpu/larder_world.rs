@@ -3064,7 +3064,7 @@ mod tests {
             for (key, v) in shape_keys("c").unwrap().1 {
                 crate::gpu::set(&mut s, key, v).unwrap();
             }
-            for (key, v) in crate::mould::run::enemy_keys(1) {
+            for (key, v) in crate::mould::run::enemy_keys(1.0) {
                 crate::gpu::set(&mut s, key, &v).unwrap();
             }
             s.tether = tether;

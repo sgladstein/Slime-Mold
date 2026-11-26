@@ -100,7 +100,7 @@ fn default_engines() -> Vec<Settings> {
     for depth in 1..=PLANETS {
         for tier in Tier::ALL {
             let mut s = base.clone();
-            for (k, v) in enemy_keys(depth) {
+            for (k, v) in enemy_keys(crate::mould::run::curve_depth(depth)) {
                 crate::gpu::set(&mut s, k, &v).unwrap();
             }
             tier.settings(&mut s).unwrap();

@@ -36,6 +36,8 @@ use super::ui::theme::*;
 use super::ui::{experiment_card, experiment_card_h, experiment_meter, ExpInfo, Experiment};
 
 mod shop;
+mod stars;
+pub use stars::{StarNode, StarView};
 
 /// One switch on the options page: its value is `choices[at]`.
 #[derive(Clone, Debug, PartialEq)]
@@ -798,6 +800,9 @@ pub enum StartEvent {
     /// A new run on this seed (Past runs' "Play this run again", Direction
     /// 11-24: the same planets, maps and shop rolls).
     Replay(u64),
+    /// The star map's pick: node `k` of the step ahead (`route::Node`),
+    /// with its heat on or off; its shop comes next.
+    Route(u8, bool),
     Quit,
 }
 
@@ -819,6 +824,9 @@ pub enum Page {
     /// Your keys: each squad key, a click and a key press to move it
     /// (Direction 11-24, `world::keys`).
     Bind,
+    /// The run's star map (2026-11-26, `stars.rs`): the route so far and
+    /// the next planet to pick, before its shop.
+    Stars,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -889,6 +897,11 @@ enum Hit {
     ResetKeys,
     /// Past runs' "Play this run again": the run picked, anew on its seed.
     Replay,
+    /// A planet on the star map that the route can go to: a click picks
+    /// it (the pane tells it).
+    Star(u8),
+    /// The star map's heat switch for the planet picked.
+    Heat,
 }
 
 pub struct StartMenu {
@@ -907,6 +920,11 @@ pub struct StartMenu {
     pub notice: Option<String>,
     /// The run's shop (the Shop page draws it).
     pub shop: Option<Shop>,
+    /// The run's star map (the Stars page draws it), the planet picked on
+    /// it and whether its heat is on.
+    pub stars: Option<StarView>,
+    star_pick: Option<u8>,
+    heat: bool,
     /// Landing on the next planet (Direction 11-24, the time between
     /// planets): the planet's place, name and head start, drawn over the
     /// shop for the frames before the planet is built (its head start ran
@@ -1007,7 +1025,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, runs: Vec::new(), met: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new(), binds: Vec::new(), binding: None, note: None, run_seed: String::new(), run_pick: 0 }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, stars: None, star_pick: None, heat: false, landing: None, runs: Vec::new(), met: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new(), binds: Vec::new(), binding: None, note: None, run_seed: String::new(), run_pick: 0 }
     }
 
     /// The option named `key`.
@@ -1205,6 +1223,7 @@ impl StartMenu {
             }
             Page::Runs => (0..self.runs.len()).map(Hit::PastRun).chain([Hit::Replay, Hit::Back]).collect(),
             Page::Met => (0..self.met.len()).map(Hit::Seen).chain([Hit::Back]).collect(),
+            Page::Stars => self.star_rows(),
         }
     }
 
@@ -1234,7 +1253,7 @@ impl StartMenu {
                 Page::News => Hit::Build,
                 Page::Runs => Hit::Runs,
                 Page::Met => self.record_row().unwrap_or(Hit::Met),
-                Page::Main => Hit::Run,
+                Page::Main | Page::Stars => Hit::Run,
             };
             self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
         }
@@ -1259,7 +1278,10 @@ impl StartMenu {
             Hit::ShopTab(k) => self.open_shop_tab(k),
             Hit::BagFlip(by) => self.bag_sheet = (self.bag_sheet as isize + by).max(0) as usize,
             Hit::Slot(_) => {}
+            Hit::Next if self.page == Page::Stars => return self.star_pick.map(|k| StartEvent::Route(k, self.heat)),
             Hit::Next => return Some(StartEvent::NextLevel),
+            Hit::Star(k) => self.pick_star(k),
+            Hit::Heat => self.heat = !self.heat,
             Hit::EndRun => return Some(StartEvent::EndRun),
             Hit::Campaign => self.show(Page::Missions),
             Hit::Options => self.show(Page::Options),
@@ -1494,6 +1516,14 @@ impl StartMenu {
                 }
             }
             KeyCode::Escape if self.leaves_armory() => return vec![StartEvent::NextLevel],
+            // The star map: H the heat switch, Enter on a planet flies there.
+            KeyCode::KeyH if self.page == Page::Stars => self.heat = !self.heat,
+            KeyCode::Enter | KeyCode::NumpadEnter | KeyCode::Space if self.page == Page::Stars && matches!(row, Some(Hit::Star(_))) => {
+                if let Some(Hit::Star(k)) = row {
+                    self.pick_star(k);
+                    return vec![StartEvent::Route(k, self.heat)];
+                }
+            }
             KeyCode::Tab if self.tabbed() => {
                 let at = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
                 self.open_tab(at + 1);
@@ -1639,6 +1669,15 @@ impl StartMenu {
             }
             return;
         }
+        // The star map: one screen of its own too (`stars.rs`).
+        if self.page == Page::Stars {
+            let rows = self.rows();
+            let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
+            (self.scroll, self.scroll_max, self.body) = (0.0, 0.0, None);
+            self.stars_page(c, s, focus);
+            self.drawn = self.hits.clone();
+            return;
+        }
         let x = if inner { 40.0 * s } else { 48.0 * s };
         let w = (560.0 * s).min(sw - 2.0 * x);
         if self.page == Page::Main {
@@ -1668,8 +1707,8 @@ impl StartMenu {
             Page::News => self.try_page(c, x, at, s, focus),
             Page::Runs => self.runs_page(c, x, at, s, focus),
             Page::Met => self.met_page(c, x, at, s, focus),
-            // (Its own frame, above.)
-            Page::Shop => at,
+            // (Their own frames, above.)
+            Page::Shop | Page::Stars => at,
         };
         c.clip = None;
         self.scroll_max = (bottom + self.scroll + 12.0 * s - body.bottom()).max(0.0);
@@ -1719,7 +1758,7 @@ impl StartMenu {
             Page::Bind if self.binding.is_some() => "Press the key to put it on  ·  Esc cancels",
             Page::Bind if self.sheets > 1 => "Up/Down pick  ·  Enter or click, then press the new key  ·  Left/Right next page  ·  Esc back",
             Page::Bind => "Up/Down pick  ·  Enter or click, then press the new key: the two keys swap  ·  Esc back",
-            Page::Shop => "",
+            Page::Shop | Page::Stars => "",
             Page::News if self.news_tab == 0 && self.sheets > 1 => "Up/Down pick a line  ·  Left/Right or the wheel turn the page  ·  Tab things to try  ·  Esc back",
             Page::News if self.news_tab == 0 => "Up/Down pick a line  ·  Tab things to try  ·  Esc back",
             Page::News => "Up/Down pick  ·  Enter or click ticks it  ·  Tab what is new  ·  Esc back",
@@ -3846,7 +3885,7 @@ mod tests {
                     let probe = match page {
                         // (Land: the bottom bar's, whose height is fixed;
                         // the counter's rows shrink to fit before they page.)
-                        Page::Shop => Hit::Next,
+                        Page::Shop | Page::Stars => Hit::Next,
                         Page::Options => Hit::Reset(0),
                         Page::Missions => Hit::Mission(0),
                         Page::News => Hit::Line(0),

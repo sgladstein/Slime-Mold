@@ -32,6 +32,7 @@ sources:
   - Reports/planet2-sprawler-2026-11-18/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/review-2026-11-25/README.md
+  - Reports/review-2026-11-25/route-choice-brief.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
   - Reports/run-progression-2026-11-15/does-to-you.md
@@ -42,6 +43,7 @@ sources:
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/stand-2026-11-20/README.md
+  - Reports/star-map-2026-11-26/README.md
   - Reports/starfall-2026-11-20/README.md
   - Reports/starfall-look-2026-11-21/README.md
   - Reports/strategy-b-2026-11-26/README.md
@@ -53,6 +55,7 @@ code:
   - BossRules::for_depth
   - CASHED_SECS
   - CRYSTAL_CLEAR
+  - Contract::pool
   - DropGround
   - DropGround::snap
   - FruitRules
@@ -62,25 +65,31 @@ code:
   - Game::keep_panic_reach
   - Game::lump_taken
   - Game::wave_points
+  - HEAT_WALKERS
   - HeartRules
   - LADDER
   - LURE_PULL
   - LureMark
   - PLANETS
+  - Pip::offset
   - Playlog
   - RANGE_DEPTH
   - REF_OPEN
   - ROCK_CLEAR
   - Run::buy_into
   - Run::carried
+  - Run::choose
+  - Run::curve
   - Run::found
   - Run::from_save
   - Run::gun
   - Run::level
+  - Run::pay
   - Run::put_in
   - Run::range
   - Run::rules
   - Run::save_text
+  - Run::settle
   - Run::shop
   - SAVE_HEAD
   - STUCK_WARN
@@ -118,6 +127,8 @@ code:
   - shop_of
   - shrink_goal
   - size_roll
+  - star_map
+  - star_view
   - surge_food
   - surge_secs
   - tier_size
@@ -171,6 +182,30 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 
 Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
+
+
+## The star map
+
+Since 2026-11-26 (the owner's pick of directions 1 and 4,
+11-25 23:45Z: "each of those planet options should have clearly different
+difficulties with greater rewards on the harder planets"): a run is
+`PLANETS` 12 steps, the tuned eight-planet tables spread over them
+(`curve_depth`). Between the landing world and the home world every step
+offers two or three planets drawn from the run's seed (`route::star_map`),
+joined to the next step's by crossing lanes, and the player picks one on
+the Stars page before its shop (`Run::choose`; `Run::route` is saved). A
+planet's pip moves the place on the curve it is read at (`Pip::offset`: Safe
+-1, Fair 0, Hard +1.5, `Run::curve`), so its slime, heart, raids and map size
+and biome all follow; the species is the step's own (`LADDER` at the tuned
+planet nearest the step), the same for every planet of a fork;
+Safe has no twist, Hard always one. A win pays `reward` times 0.7, 1 or 1.5
+by pip (`Run::pay`), and a Hard planet puts a rare tier-3 card in its shop.
+Each planet has one or two optional contracts (`Contract::pool`, paid by
+`Run::settle`) and a Heat switch (`HEAT_WALKERS`: a bigger slime and sooner
+raids for half again the pay). The bot check that the pips are clearly
+ordered: [report](../../Reports/star-map-2026-11-26/README.md). What
+follows describes each planet as it was on eight steps; its numbers now
+read at the planet's curve place.
 
 ## The run's length: two dials
 
