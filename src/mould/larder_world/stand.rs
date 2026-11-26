@@ -151,8 +151,8 @@ pub struct Heart {
     /// (`StandRules::sated`).
     armed: bool,
     sated: u64,
-    /// The heart is the origin (`origin.rs`): formed at the landing on the
-    /// start crystal, fed from it, its death the planet's win.
+    /// The heart is a crystal heart (`origin.rs`, the origin until 11-26):
+    /// formed on a crystal the slime held thick, fed from it.
     pub origin: bool,
     /// The late last stand gathers into it: it takes in every free walker
     /// on the map (`time_stand`).
@@ -160,7 +160,7 @@ pub struct Heart {
 }
 
 impl Heart {
-    /// The origin's heart on lump `lump` round `home`, formed at `now`,
+    /// A crystal heart on lump `lump` round `home`, formed at `now`,
     /// its first lunge no sooner than `next`.
     pub(super) fn origin(lump: usize, home: (f32, f32), now: u64, next: u64) -> Heart {
         Heart { lump, home, born: now, members: 0, most: 0, centre: home, lunging: None, next, grown: now, bit_at: 0, hp_at: 0.0, cap: 0.0, window: 0, armed: false, sated: 0, origin: true, gather: false }
@@ -219,8 +219,10 @@ impl<W: World> Game<W> {
             self.keep_heart();
             return;
         }
-        // No second heart once the origin formed: its death is the win.
-        if !late || self.origin.formed {
+        // A crystal heart that formed and broke leaves the slot free: the
+        // late stand may still gather (until 11-26 the origin's death was
+        // the win, and no stand followed it).
+        if !late {
             return;
         }
         self.start_stand();
@@ -274,7 +276,7 @@ impl<W: World> Game<W> {
         (h.centre, h.members) = (centre, n);
         h.most = h.most.max(n);
         // The lump's sums lag a step behind its forming (as the fruit's).
-        // The origin breaks only under its floor, to the win
+        // A crystal heart breaks only under its floor
         // (`Game::keep_origin`), never for its age.
         if h.origin && self.keep_origin(&mut h) {
             return;

@@ -1039,9 +1039,9 @@ struct App {
     /// robbed (game second), out of food.
     dry: Vec<bool>,
     core_told: bool,
-    /// The origin's turns told (`origin.rs`): formed, gathering the last
-    /// stand, dead.
-    origin_told: (bool, bool, bool),
+    /// The crystal hearts' turns told (`origin.rs`): hearts formed,
+    /// gathering the last stand, hearts broken.
+    origin_told: (u32, bool, u32),
     /// Starfall's falls landed and cores dropped already told (`starfall.rs`).
     drops_told: (u32, u32),
     /// The run's one-time Starfall hint (`StarHint`).
@@ -1268,7 +1268,7 @@ impl App {
             building_sel: None,
             dry: Vec::new(),
             core_told: false,
-            origin_told: (false, false, false),
+            origin_told: (0, false, 0),
             drops_told: (0, 0),
             star_hint: StarHint::default(),
             hints: hints::Hints::default(),
@@ -1735,7 +1735,7 @@ impl App {
         self.controls.groups = Default::default();
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
-        self.origin_told = (false, false, false);
+        self.origin_told = (0, false, 0);
         self.broken_told = false;
         self.raids_told = 0;
         self.bank_log.clear();
@@ -2238,26 +2238,24 @@ impl App {
         if self.coach.done && !was && self.window.is_some() {
             let _ = settings::set("coached", "1");
         }
-        // The origin (`origin.rs`, Milestone 2's win): where it is when it
-        // forms, when the last stand gathers into it, and its death, each
-        // a ping on the minimap at its centre (Space jumps there). The
-        // goal line carries its count (`draw::origin_line`).
-        if g.rules.origin.on && g.origin.formed {
-            let at = g.stand.live.filter(|h| h.origin).map_or(g.core, |h| h.centre);
+        // Crystal hearts (`origin.rs`; the origin, Milestone 2's win,
+        // until 11-26): each one as it forms, the last stand gathering
+        // into it, and each one broken, a ping on the minimap at its
+        // centre (Space jumps there). The goal line carries its count
+        // (`draw::origin_line`).
+        if g.rules.origin.on {
+            let at = g.stand.live.filter(|h| h.origin).map_or(g.origin.home, |h| h.centre);
             let gather = g.stand.live.is_some_and(|h| h.origin && h.gather);
-            let dead = g.origin.fell.is_some();
-            if !self.origin_told.0 {
-                // Where it is, not the goal again: the top line says that
-                // (polish review finding 10's "objective three times").
-                self.hud.alert("The slime's heart is here: Space to look", Some(at), theme::ACCENT);
+            if g.origin.formed > self.origin_told.0 {
+                self.hud.alert("A heart is growing where the slime holds a crystal thick: Space to look", Some(at), theme::BAD);
             }
             if gather && !self.origin_told.1 {
                 self.hud.alert("The slime is gathering into its heart for a last stand", Some(at), theme::BAD);
             }
-            if dead && !self.origin_told.2 {
-                self.hud.alert("The slime's heart is broken: the slime is dying back", Some(at), theme::GOOD);
+            if g.origin.broken > self.origin_told.2 {
+                self.hud.alert("The heart is broken: thin or drain its crystal before another grows", Some(g.origin.home), theme::GOOD);
             }
-            self.origin_told = (true, self.origin_told.1 || gather, self.origin_told.2 || dead);
+            self.origin_told = (g.origin.formed, self.origin_told.1 || gather, g.origin.broken);
         }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;

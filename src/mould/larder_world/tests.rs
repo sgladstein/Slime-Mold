@@ -4039,16 +4039,16 @@ fn soldiers_in_its_reach_shoot_the_origin() {
     h.members = 300;
     h.centre = at;
     g.stand.live = Some(h);
-    g.core = at;
+    g.origin.home = at;
     let r = (300.0f32 / std::f32::consts::PI).sqrt();
     assert!(g.origin_reaches(0));
     assert_eq!(g.boss_aim(0), Some((at, r)), "in its reach: its members first");
     // Its crystal far off: the soldier is outside its reach.
-    g.core = (s0.x, s0.y + 3.0 * g.rules.origin.near * sc);
+    g.origin.home = (s0.x, s0.y + 3.0 * g.rules.origin.near * sc);
     assert!(!g.origin_reaches(0));
     assert_eq!(g.boss_aim(0), None, "outside its reach: not a target");
     // The last stand's heart is not the origin.
-    g.core = at;
+    g.origin.home = at;
     g.stand.live.as_mut().unwrap().origin = false;
     assert_eq!(g.boss_aim(0), None, "the last stand's heart is not a target");
     // Free fire (Direction 11-22, through `Game::target`'s near first): slime
@@ -4062,7 +4062,7 @@ fn soldiers_in_its_reach_shoot_the_origin() {
     let far = (s0.x, s0.y + 20.0 * sc + r);
     assert!(g.clear_line((s0.x, s0.y), far), "open ground to the far origin");
     g.stand.live.as_mut().unwrap().centre = far;
-    g.core = far;
+    g.origin.home = far;
     g.soldiers[0].stance = Stance::Free;
     let slime5 = (s0.x + 5.0 * sc, s0.y);
     g.soldiers[0].aim = Some(slime5);
@@ -4070,7 +4070,7 @@ fn soldiers_in_its_reach_shoot_the_origin() {
     assert_eq!(g.target(0), Some(slime5), "slime 5 cells off before an origin 20 off");
     let close = (s0.x, s0.y + 8.0 * sc + r);
     g.stand.live.as_mut().unwrap().centre = close;
-    g.core = close;
+    g.origin.home = close;
     assert_eq!(g.target(0), Some(close), "an origin 8 cells off before the slime");
 }
 

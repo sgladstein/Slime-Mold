@@ -1716,7 +1716,7 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     // times (3) walked 52 soldiers into a home of 12,700 walkers round an
     // origin of 2,200 and lost them all in 35 s (run seed 1 planet 2,
     // lavapipe), so it drains only at `per` a soldier, as `home_ok`.
-    let origin = g.stand.live.filter(|h| h.origin && g.origin.fell.is_none());
+    let origin = g.stand.live.filter(|h| h.origin);
     let rest_dry = (1..cs.len()).all(|c| cs[c].1 <= DRY || barren.contains(&c));
     let storming = (p.storm > 0.0 && g.alive() >= STORM_ARMY && g.mould as f32 <= p.storm * MEM.with_borrow(|mm| mm.start))
         || (p.army > 0 && g.alive() >= p.army)

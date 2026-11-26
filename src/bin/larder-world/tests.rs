@@ -1044,7 +1044,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.name, "planet:1:1");
     app.prepare();
     let m = app.model(None, None);
-    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Kill the slime's heart")), "{:?}", m.objective);
+    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Wipe out every last bit of slime")), "{:?}", m.objective);
     // Turrets and walls are on the build page (Card 2); walls are owned
     // from the start.
     app.build_page = true;

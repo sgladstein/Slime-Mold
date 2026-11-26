@@ -28,10 +28,6 @@ use slime_mould::mould::squad::{self, Frame};
 /// Real seconds the picture plays on before the end card comes up.
 /// Longer read as the game hanging; shorter, the slime barely moves.
 pub(super) const END_BEAT: f32 = 2.4;
-/// The beat after a heart's die-back (`origin.rs`): the slime has already
-/// died back on screen for its seconds, so the moment has been seen and
-/// the card comes sooner (Direction 11-24, the time between planets).
-pub(super) const END_BEAT_SEEN: f32 = 0.8;
 /// How far the camera draws back over the beat, as a share of its zoom.
 const DRAW_BACK: f32 = 0.18;
 
@@ -105,11 +101,8 @@ impl App {
     }
 }
 
-/// The beat's length for how `g` ended: short after a heart's die-back.
-fn beat_len(g: &Game<GpuWorld>) -> f32 {
-    if g.origin.fell.is_some() {
-        END_BEAT_SEEN
-    } else {
-        END_BEAT
-    }
+/// The beat's length for how `g` ended (short after the origin's
+/// die-back until 11-26, when a heart stopped being the win).
+fn beat_len(_g: &Game<GpuWorld>) -> f32 {
+    END_BEAT
 }
