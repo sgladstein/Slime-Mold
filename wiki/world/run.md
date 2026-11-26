@@ -101,11 +101,13 @@ code:
   - WaveRules
   - WorldListener::coins
   - ammo_price
+  - apply_levels
   - area_of
   - blows
   - bring
   - bring_shell
   - clock
+  - crystal_levels
   - does_to_you
   - dps_after
   - drift_core
@@ -114,6 +116,7 @@ code:
   - fort_mask
   - gun_price
   - head_start
+  - level_max
   - limit
   - par
   - raid_cores
@@ -235,9 +238,9 @@ The bot's curve on that schedule (11-21, three plans, 9 maps, before the heart c
 
 On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is just lots of shooting through masses of uniform orange. Think outside the box"): when the squad is winning, the slime streams 8% of itself (at most 2,500 walkers) into a knot at its thickest slime out of the guns' reach (`larder_world/fruit.rs`, `FruitRules`, on every run planet by `ENEMY_RULES`). The knot is a lump (`Game::lump_taken`: bosses, marches and fruits share `big::LUMPS`) whose members take two blows, it swells to twice its first size, and it is drawn umber, darkening as it ripens (`LumpLook::Fruit`, its strength the ripeness, `Game::fruit_looks`). After 30 s it bursts and every walker in it flies out as a spore that lands as living slime where its throw ends (`World::sow`, the engine's `sow_pass`; GPU only; it homed on food until 11-21, but that scent holds the soldiers' smell, and on CI's run seed 2 a burst came down on the squad and bit 21 of 30 in 5 s); since 11-21 the throw stops short of the guns' reach and `clear` from the nearest living soldier (`Game::sow_steps`), because the whole throw, 600 fine cells, came down all over a planet 1 map and round the owner's squad (21 of 28 dead in 3 s at 8:44 of his play): the nearer the squad, the closer round the pod its walkers land; its swelling never takes past its cap in one grow; shot under 35% of its most members it breaks. It starts from 1:30 after the landing once kills over 30 s reach a fifth of the slime's mass (a trigger on a fall under its peak was tried and deleted: on planet 3 it fired against a squad of four nowhere near), and not under 8% of its peak; one at a time, 40 s apart ([report](../../Reports/fruiting-2026-11-20/README.md)).
 
-## Tougher by planet
+## Tougher by planet, in levels
 
-Since 2026-11-26 (the owner, 06:58Z: "the progression needs to be way stronger for the slime"): an ordinary walker takes `blows` blows (`run::BLOWS` in `enemy_keys`): one on planet 1, 1.5 to 2.5 on the tuned planets 2-4, 3 on 6 and 5 on the core world, a fraction being a share of walkers taking one more. The squad's damage multiplies with its cards while the slime had grown only in walkers, which cost frame time. GPU only (engine.wgsl's `tough_walker`, the hits bits); mini-boss members keep their own armour; the planet's card names it. The before and after are in the commit that built it.
+Since 2026-11-26 (the owner, 06:58Z: "the progression needs to be way stronger for the slime"): an ordinary walker takes `blows` blows (`run::BLOWS` in `enemy_keys`), one on planet 1 up to 3 on the core world, a fraction being a share of walkers taking one more. The same day (08:24Z: "some toughness scaling and speed scaling is needed ... You could change slime color so their are 3-8 levels of slime ... one area on a later planet is the easier to kill orange slime and this other crystal is full of stronger more dangerous slime") the slime has levels (`larder_world/levels.rs`, `LevelRules`, `run::LEVEL_MAX`): each crystal has one, 0 on planet 1 up to 7 on the core world, the home crystal the highest and the rest rolled lower (`crystal_levels`). Slime born on a crystal takes its level and its children keep it; the slime there at the landing takes its nearest crystal's (`Engine::set_pile_levels`). A level takes `level_blows` 0.5 more blows, steps `level_speed` 6% faster and bites `level_bite` 0.3 walkers more (`LEVEL_BLOWS`, `LEVEL_SPEED`, `LEVEL_BITE`), and is drawn in its colour, gold through orange, red, crimson, wine, plum and indigo, by the mean level round each cell (view.wgsl's `level_rgb`), so where two crystals' slime meet the colour runs between them. GPU only (engine.wgsl's `tough_walker`, `GRADE_BITS`); mini-boss members keep their own armour; the planet's card names the hits and the highest level. The before and after page is [slime-levels-2026-11-26](../../Reports/slime-levels-2026-11-26/README.md).
 
 ## Waves
 
@@ -667,7 +670,7 @@ alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 
 Harder from planet 2 since 2026-11-22 (the owner won all 8 planets that night losing 0 to 1 soldiers on 7, "Still too easy", then "scale it up. You decide what is best"; planet 1 unchanged): raids at least 35 s apart (45 on planet 1), the strikers' cap grows with an army past 24 to 2.5 times, mini-bosses tougher by the planet (weakest grade's armour 4 to 10, bite up, three at once from planet 6), and the soldier's price climbs 1/40 for each soldier alive over 30 (`Rules::soldier_step`; 2x at 70). All in `run.rs` rows, each its own "what is new" line.
 
-Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1-4 in under 5:02 with 14 to 35 soldiers and met 0 to 3 raids, since the first was drawn at about 4:00): the first raid at about 2:00 and the next about 100 s apart (`RAID_FIRST`, `RAID_EVERY`; 4:00 and 150 s on planet 1), and a touching walker bites 2.5 instead of 2 (`DRAIN`). Mini-bosses then: grade 0.2 to 0.7 on planet 2, pace 1.2 to 1.5 times the slime's, broken under 20% (12% by planet 8) of their first members instead of 30% (`BossRules::for_depth`). A raid's marchers take 2 blows on planets 2-3, 3 on 4-6 and 4 on 7-8 until the march meets the squad or its target (`RAID_ARMOUR`, `RaidRules::march_armour`; the owner: tougher slime has a better chance of reaching the soldiers).
+Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1-4 in under 5:02 with 14 to 35 soldiers and met 0 to 3 raids, since the first was drawn at about 4:00): the first raid at about 2:00 and the next about 100 s apart (`RAID_FIRST`, `RAID_EVERY`; 4:00 and 150 s on planet 1), and a touching walker bites 2.5 instead of 2 (`DRAIN`). Mini-bosses then: grade 0.2 to 0.7 on planet 2, pace 1.2 to 1.5 times the slime's, broken under 20% (12% by planet 8) of their first members instead of 30% (`BossRules::for_depth`). A raid's marchers take 2 blows on planet 2 up to 8 on the core world (since 2026-11-26; 2 to 4 before) until the march meets the squad or its target (`RAID_ARMOUR`, `RaidRules::march_armour`; the owner: tougher slime has a better chance of reaching the soldiers). Since 2026-11-26 (the owner, 08:40Z: "You can make raids stronger too") the gap falls from 100 s on planet 2 to 70 s on the core world and a raid takes 0.15 of the slime on planets 1-2 up to 0.3 on the core world (`RAID_SIZE`, `RaidRules::size`).
 
 The Lab tried a counter to planet 4's armoured march from the slime's own food rule (11-24, its branch only): a hungry marcher on a charged crystal leaves its march and eats. A still squad of 8 lost no one to planet 4's marches on three seeds with mini-bosses off, so the rig had no march wall to counter; feeding did starve a wanderer heading for a crystal on one seed ([march counter](../../Reports/lab-march-counter-2026-11-24/README.md)). Tried as a wanderer counter on planets 4 and 7 (every mini-boss a wanderer), no bait squad was wiped against 2 of 6 off, and the wanderer broke on a charged crystal in 3 of 6 ([crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md)). Settled on planet 7 with a placed wanderer on six seeds, draining the squad's own crystal beat leaving it as bait (65 soldiers at the boss's end against 48, one wipe against none, that one by another road), since a wanderer starves on the crystals on its way, not the squad's ([bait or drain](../../Reports/lab-bait-trade-2026-11-24/README.md)).
 

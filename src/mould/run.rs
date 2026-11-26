@@ -411,15 +411,23 @@ const SOLDIER_STEP: [f32; 8] = [0.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0];
 /// - `DRAIN`: a touching walker's bite (`Rules::drain`, 2 since 11-12):
 ///   2.5 from planet 2, so walking into the slime costs a small squad too.
 const RAID_FIRST: [f32; 8] = [240.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0];
-const RAID_EVERY: [f32; 8] = [150.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0];
+///
+/// **Stronger raids deeper** (2026-11-26, the owner, 08:40Z: "You can make
+/// raids stronger too", after his 11-26 run, too easy past planet 1): the
+/// gap falls from 100 s on planet 2 to 70 s on the core world, a raid takes
+/// a fifth more of the slime from planet 4 and twice planet 1's share by
+/// the core world (`RAID_SIZE`, `RaidRules::size`, its spread and cap in
+/// step), and its marchers take up to 8 blows (`RAID_ARMOUR`).
+const RAID_EVERY: [f32; 8] = [150.0, 100.0, 95.0, 90.0, 85.0, 80.0, 75.0, 70.0];
+const RAID_SIZE: [f32; 8] = [0.15, 0.15, 0.17, 0.2, 0.22, 0.25, 0.28, 0.3];
 /// - `RAID_ARMOUR`: blows a marching raider takes (`RaidRules::
 ///   march_armour`) until the march meets the squad or its target; the
 ///   owner, same evening: "if the slime never reaches my soldiers,
 ///   increasing the bite doesn't matter. Tougher slime has a better
-///   chance". 2 on planets 2-3, 3 on 4-6, 4 on 7-8 (mini-bosses take 4 to
+///   chance". 2 on planet 2 up to 8 on the core world since 2026-11-26 (mini-bosses take 4 to
 ///   15). The bite above stays: it is what a raid that arrives does.
 const DRAIN: [f32; 8] = [2.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
-const RAID_ARMOUR: [u32; 8] = [0, 2, 2, 3, 3, 3, 4, 4];
+const RAID_ARMOUR: [u32; 8] = [0, 2, 3, 4, 5, 6, 7, 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -494,6 +502,11 @@ pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
     vec![
         // The slime's toughness (`BLOWS`): the blows a walker takes.
         ("blows", format!("{}", blows(e))),
+        // The slime's levels' strength (`LEVEL_MAX`; the levels themselves
+        // are the crystals', `Run::rules`).
+        ("level_blows", format!("{LEVEL_BLOWS}")),
+        ("level_speed", format!("{LEVEL_SPEED}")),
+        ("level_bite", format!("{LEVEL_BITE}")),
         ("surge", ((curve_at_u(&LONGEST_WAIT, e) as f32 * STRETCH).round() as u32).to_string()),
         ("surge_dash", curve_at_u(&SURGE_DASH, e).to_string()),
         ("roam", curve_at_u(&ROAM, e).to_string()),
@@ -544,7 +557,36 @@ pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
 /// members keep their own armour. Planet 5's Sporer, the one real fight
 /// of that run, gets no step of its own over planet 4. A Direction tuning
 /// number: retune from his play, not by switching it off.
-const BLOWS: [f32; 8] = [1.0, 1.5, 2.0, 2.5, 2.5, 3.0, 4.0, 5.0];
+///
+/// Since the slime's levels the same day (`LEVEL_MAX`, the owner, 08:24Z:
+/// "some toughness scaling and speed scaling is needed ... 3-8 levels of
+/// slime"), this is level 0's, the orange slime's, and each level adds
+/// `LEVEL_BLOWS`: planet 8's orange takes 3 and its home crystal's level 7
+/// six and a half, where every walker took 5 before.
+const BLOWS: [f32; 8] = [1.0, 1.25, 1.5, 1.75, 1.75, 2.0, 2.5, 3.0];
+
+/// **The slime's levels by planet** (2026-11-26, `larder_world/levels.rs`;
+/// the owner, 08:24Z: "You could change slime color so their are 3-8 levels
+/// of slime. The slimes could be mixed to so one area on a later planet is
+/// the easier to kill orange slime and this other crystal is full of
+/// stronger more dangerous slime"): the highest level on the planet, which
+/// its home crystal holds, the rest rolled lower. Planet 1 is all orange;
+/// the core world reaches 7, eight colours in all. Each level takes
+/// `LEVEL_BLOWS` more blows, steps `LEVEL_SPEED` faster and bites
+/// `LEVEL_BITE` walkers more (a soldier in level 7 slime is bitten as by
+/// three times as much of it). Direction's tuning numbers.
+const LEVEL_MAX: [u32; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
+const LEVEL_BLOWS: f32 = 0.5;
+const LEVEL_SPEED: f32 = 0.06;
+const LEVEL_BITE: f32 = 0.3;
+/// How the crystals' roll leans low (`LevelRules::lean`): at 1.5 about
+/// half a planet's crystals sit in its lower half of levels.
+const LEVEL_LEAN: f32 = 1.5;
+
+/// The highest slime level at curve place `e` (`LEVEL_MAX`).
+pub fn level_max(e: f32) -> u32 {
+    curve_at_u(&LEVEL_MAX, e)
+}
 
 /// The blows a walker takes at curve place `e` (`BLOWS`), for the planet's
 /// card.
@@ -1623,7 +1665,7 @@ fn twist_at(seed: u64, depth: u32) -> Option<PlanetTwist> {
 
 /// A small seeded generator (splitmix64): the shop's draw must be the same
 /// on every machine, so no floats.
-fn mix(mut z: u64) -> u64 {
+pub fn mix(mut z: u64) -> u64 {
     z = z.wrapping_add(0x9E37_79B9_7F4A_7C15);
     z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
     z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
@@ -1932,6 +1974,9 @@ impl Run {
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
             let at = |t: &[f32; 8]| curve_at(t, e);
             r.origin.size = at(&ORIGIN_SIZE);
+            // The slime's levels (`LEVEL_MAX`): each crystal's, from the
+            // level's seed.
+            r.levels = crate::mould::larder_world::LevelRules { max: level_max(e), seed: self.level().seed ^ 0x001E_7E15, lean: LEVEL_LEAN };
             r.origin.armour = curve_at_u(&ORIGIN_ARMOUR, e);
             // The planet's twist (`twist`), the rest of its numbers the
             // twist's own.
@@ -1952,6 +1997,12 @@ impl Run {
             r.raid.every_sd = d.every_sd * every / d.every;
             r.drain = at(&DRAIN);
             r.raid.march_armour = curve_at_u(&RAID_ARMOUR, e);
+            // A raid's size by planet (`RAID_SIZE`), its spread and cap
+            // kept at the default's shares of it.
+            let size = at(&RAID_SIZE);
+            r.raid.size_sd = d.size_sd * size / d.size;
+            r.raid.size_max = (d.size_max * size / d.size).min(0.6);
+            r.raid.size = size;
             let k = at(&STRIKER_SHARE);
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
@@ -3505,7 +3556,8 @@ mod tests {
     fn the_slime_gets_fiercer_deeper() {
         let get = |d: u32, k: &str| enemy_keys(curve_depth(d)).into_iter().find(|(n, _)| *n == k).map(|(_, v)| v.parse::<f32>().unwrap()).unwrap();
         assert_eq!(get(1, "blows"), 1.0, "planet 1 takes one blow, as before");
-        assert!(get(PLANETS, "blows") >= 4.0, "the core world's slime is the toughest");
+        assert!(get(PLANETS, "blows") >= 3.0, "the core world's orange slime is the toughest orange");
+        assert_eq!((level_max(curve_depth(1)), level_max(curve_depth(PLANETS))), (0, 7), "planet 1 all orange; the core world all eight levels");
         for d in 1..=10 {
             assert!(get(d + 1, "surge") <= get(d, "surge") && get(d + 1, "surge_dash") >= get(d, "surge_dash"), "planet {d}");
             // Specks no more often deeper (owner 11-16: "Specks more often
@@ -3520,10 +3572,10 @@ mod tests {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" || k == "blows" {
+                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" || k == "blows" || k.starts_with("level_") {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0 || s.blows >= 1.0, "planet {d}: {k}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0 || s.blows >= 1.0 || s.level_blows > 0.0, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();

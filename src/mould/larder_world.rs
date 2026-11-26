@@ -59,6 +59,7 @@ mod heart;
 mod stand;
 mod origin;
 mod twist;
+mod levels;
 mod strikers;
 mod starfall;
 mod cores;
@@ -101,6 +102,7 @@ pub use heart::HeartRules;
 pub use stand::{Heart, Stand, StandRules};
 pub use origin::{OriginRules, OriginState};
 pub use twist::{Twist, TwistNow, TwistRules};
+pub use levels::{apply_levels, crystal_levels, LevelRules};
 pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
@@ -732,6 +734,8 @@ struct Flight {
 /// its command ticks are the world's.
 pub fn head_start<W: World>(world: &mut W, secs: f32, rules: &Rules) {
     let frames = (secs.max(0.0) * rules.tps as f32 / rules.frame_ticks.max(1) as f32).round() as u32;
+    // The crystals' levels from the first birth (`levels.rs`).
+    apply_levels(world, rules);
     for _ in 0..frames {
         let f = Frame { units: Vec::new(), shots: Vec::new(), slime: squad::slime_trail(6.0), crater: 0, sink: rules.sink, ..Frame::default() };
         world.frame(&f, rules.frame_ticks);

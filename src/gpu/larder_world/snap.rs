@@ -81,7 +81,8 @@ snap_fields!(Engine {
         health, bites, pcell, piles, wstat, wb, sq, kills, hits, look,
     ],
     pairs: [trail, scent, germ, species],
-    skip: [device, queue, groups, sorter],
+    // The crystals' levels are in `piles`; the game sets them again.
+    skip: [device, queue, groups, sorter, pile_levels],
     values: [
         grows, energy_flows, gas_at, gas_until, gas_immune, mind_rest, clouds, minds, mind_until, lured, waved, wave_w, heart, strikers, striker_held,
         forted, clouded, cloud_until, cloud_top, cloud_at, withers, reach, specks, lumps_on, plant_no_clear, dense_at, plant_at, crust_at, plants,
