@@ -43,6 +43,7 @@ sources:
   - Reports/stand-2026-11-20/README.md
   - Reports/starfall-2026-11-20/README.md
   - Reports/starfall-look-2026-11-21/README.md
+  - Reports/strategy-b-2026-11-26/README.md
   - Reports/strikers-2026-11-20/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/trunk-fort-2026-11-18/README.md
@@ -617,6 +618,7 @@ alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 - A big-picture review of 11-16 to 11-25 (11-25, [report](../../Reports/review-2026-11-25/README.md)): the slime still can't reach a moving squad and difficulty has come from planet-gated timers; the nightly bot wins planets 1 to 3 with a plain rifle and no buildings; next steps lead with slime pressure from its own fields and a threat audit.
 - Its step A (11-25, the owner's order "a then c ... then b"): a [threat audit](../../Reports/review-2026-11-25/threat-audit.md) (five comeback events read one "squad is winning" signal; the body's own reach is about 5 cells past the guns) and a Lab brief for a body that chases; step C: [five ways to choose a route](../../Reports/review-2026-11-25/route-choice.html), the star map with contracts recommended.
 - The star map (the owner's pick, 11-25 23:45Z: directions 1 and 4): about 12 steps, two or three planets a step with clearly different difficulties (a curve step below, at, and 1.5 above the depth) paying x1, x1.5 and x2.25, and optional contracts ([brief](../../Reports/review-2026-11-25/route-choice-brief.md)). Not built yet. Directions 2 and 5 kept for later ([future directions](../../Reports/review-2026-11-25/future-route-directions.md)).
+- Does any plan beat the plain rifle (review step B, 11-26, [report](../../Reports/strategy-b-2026-11-26/README.md); hearts off, 12 game minutes, his three maps): on planet 2 only the rifle won all three, on planet 4 only the lure plan (pumps, turrets, a lure) did, so the best plan changes with the planet (3 maps, not significant); no plan wiped planet 6 out in 12 minutes, the first thing to check on the new win rule.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
 - The core world with C: 364,924 walkers, frame p95 12-14 ms on the 1070 (planet 1 4.6 ms) and a 12 s head-start pause before landing; kept until play says otherwise.
 
