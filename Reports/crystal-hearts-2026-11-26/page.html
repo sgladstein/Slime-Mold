@@ -1,0 +1,61 @@
+<title>Crystal Hearts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+  /* One column: what changed, then the two films, then the numbers behind them. */
+  :root {
+    --bg: #f3f1ec; --fg: #1d1c19; --muted: #615d54; --panel: #fffdf8; --line: #ddd7ca; --amber: #b36a00;
+    --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #15140f; --fg: #ece8de; --muted: #a8a294; --panel: #1f1d17; --line: #38342a; --amber: #f0a93a; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #15140f; --fg: #ece8de; --muted: #a8a294; --panel: #1f1d17; --line: #38342a; --amber: #f0a93a; color-scheme: dark }
+  body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 48px; }
+  main { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+  h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  h1 { font-size: 2.2rem; }
+  h2 { font-size: 1.25rem; }
+  p { margin: 0; max-width: 68ch; }
+  .lede { color: var(--muted); font-size: 1.05rem; }
+  .rule { border-left: 3px solid var(--amber); padding-left: 14px; display: grid; gap: 6px; }
+  figure { margin: 0; display: grid; gap: 10px; }
+  video { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+  figcaption { color: var(--muted); font-size: 0.95rem; max-width: 68ch; }
+  ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; max-width: 68ch; }
+  .tag { font-variant-numeric: tabular-nums; color: var(--amber); font-weight: 600; }
+  code { font-size: 0.9em; }
+</style>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>Crystal Hearts</h1>
+    <p class="lede">The slime's heart is a mini-boss now, not the way to win. Wherever the slime keeps a crystal packed thick for two minutes, a heart grows there and fights for it. You win a planet by wiping out every last bit of slime.</p>
+  </header>
+
+  <section class="rule">
+    <h2>The rule</h2>
+    <p>Each second, every crystal that still has charge is checked: if its slime covers 85% or more of the crystal, that crystal's clock runs. If the slime is thinned below that (fire that holes it), the clock falls back three seconds for every second. At two minutes a heart forms on that crystal, with the same size, armour, lunges and call-home that the old heart had on each planet. When you break it, what is left of it turns back into ordinary slime and the crystal's clock restarts from zero. Breaking it does nothing else. One heart lives at a time, and another crystal with a full clock grows its heart as soon as the first one breaks.</p>
+  </section>
+
+  <figure>
+    <video src="heart-z6.mp4" controls muted loop playsinline preload="metadata"></video>
+    <figcaption><span class="tag">Zoom 6, game seconds 140 to 230.</span> Planet 1, run seed 1, the scripted <code>origin2</code> squad of 20 on software Vulkan, with the camera held on the start crystal. The squad's early fire had pushed the clock back once, so the heart formed at 2:30 and gathered about 700 members, the planet 1 size. It lunged and called the body home. The squad cut it down and it broke at 3:44. The planet did not end: 10,227 walkers were still alive.</figcaption>
+  </figure>
+
+  <figure>
+    <video src="heart-z12.mp4" controls muted loop playsinline preload="metadata"></video>
+    <figcaption><span class="tag">Zoom 12, game seconds 150 to 225.</span> The same round, closer in. The heart is the dark-rimmed lump that gathers on the crystal from 2:30. The top line reads "a heart guards a crystal: N of M left, breaks under K".</figcaption>
+  </figure>
+
+  <section style="display:grid;gap:10px">
+    <h2>The rest of that round</h2>
+    <ol>
+      <li>Another crystal's clock was already full, so a second heart formed there at 3:45. It reached only 138 members before the squad, standing close by, broke it at 4:03.</li>
+      <li>The squad's fire left every crystal under 85% for two minutes, so no heart formed.</li>
+      <li>The slime packed a crystal again, and a third heart formed at 7:46. The scripted squad, which only knows how to siege a heart, was wiped at 8:07.</li>
+    </ol>
+    <p class="lede">On planets 1 and 3 with the greedy script (which never fights a heart), a heart formed on the start crystal at exactly 2:00 and grew to its planet's size: 690 of 700 on planet 1 and 1,001 of 1,000 on planet 3.</p>
+  </section>
+</main>

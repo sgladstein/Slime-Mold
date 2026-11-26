@@ -907,18 +907,25 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let each: Vec<String> = g.ceiling.cover.iter().enumerate().filter(|&(j, &v)| v >= 1.0 || g.ceiling.holding.get(j) == Some(&true)).map(|(j, &v)| format!("{j}{} {v:.0}/{} {:.0}%", if g.ceiling.holding.get(j) == Some(&true) { "*" } else { "" }, cells.get(j).copied().unwrap_or(0), 100.0 * cs.get(j).map_or(0.0, |c| c.1 as f64) / g.ceiling.full.get(j).copied().unwrap_or(1.0).max(1.0))).collect();
                     println!("  ceiling crystals t {:.0} s: {}", g.time(), each.join(", "));
                 }
-                // The origin (`origin.rs`, 11-22): its members, the most it
-                // held, its reach, lunges and calls, or the die-back.
+                // The crystal heart (`origin.rs`): its members, the most it
+                // held, its reach, lunges and calls, and the hearts so far.
                 if g.rules.origin.on {
                     match g.origin_hud() {
-                        Some((_, _, Some(left))) => println!("  origin t {:.0} s: broken, die-back {left:.0} s left, slime {}", g.time(), g.mould),
-                        Some((n, most, None)) => {
+                        Some((n, most)) => {
                             if most - n.min(most) >= origin_low.1 - origin_low.0.min(origin_low.1) {
                                 origin_low = (n, most);
                             }
-                            println!("  origin t {:.0} s: {n} members of {most} most, deepest {} of {}, armour {}, size {:.0}, reach {:.1}, {} lunges, {} calls home, gathering {}", g.time(), origin_low.0, origin_low.1, g.rules.origin.armour, g.rules.origin.size, g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather))
+                            println!("  origin t {:.0} s: {n} members of {most} most, deepest {} of {}, armour {}, size {:.0}, reach {:.1}, {} lunges, {} calls home, gathering {}; {} formed, {} broken", g.time(), origin_low.0, origin_low.1, g.rules.origin.armour, g.rules.origin.size, g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather), g.origin.formed, g.origin.broken)
                         }
-                        None => println!("  origin t {:.0} s: none", g.time()),
+                        None => {
+                            let clock = g.origin.thick.iter().map(|w| w.1).fold(0.0, f32::max);
+                            // The thickest crystal's walkers a fine cell
+                            // (`OriginRules::dense`), charged or not.
+                            let each: Vec<f32> = g.crystal_walkers().map_or(Vec::new(), |w| w.iter().map(|&(_, n, r)| n as f32 / (std::f32::consts::PI * r * r)).collect());
+                            let thick = each.iter().copied().fold(0.0, f32::max);
+                            let over = each.iter().filter(|&&d| d >= g.rules.origin.dense).count();
+                            println!("  origin t {:.0} s: none ({} formed, {} broken; fullest clock {clock:.0} s, thickest crystal {thick:.2} a cell, {over} of {} at {:.2})", g.time(), g.origin.formed, g.origin.broken, each.len(), g.rules.origin.dense)
+                        }
                     }
                 }
                 if g.rules.star.on {

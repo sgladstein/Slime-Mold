@@ -4587,7 +4587,7 @@ mod tests {
         for (screen, user, told) in [((1920, 1080), 1.0, true), ((3840, 2160), 2.5, true), ((1280, 720), 1.0, true), ((1920, 1080), 2.0, true), ((1280, 540), 2.0, true), ((800, 800), 1.0, true)] {
             let mut r = Rig::new(screen);
             r.c.ui.user = user;
-            r.m.objective = Some("Kill the slime's heart on its home crystal: 1,660 of 1,660 left, breaks under 166".into());
+            r.m.objective = Some("Wipe out every last bit of slime (40%: slime count 9,120 \u{2192} 0); a heart guards a crystal: 1,660 of 1,660 left, breaks under 166".into());
             r.m.pause_note = vec!["Quit any time: this planet and".into(), "your run are saved.".into()];
             r.m.pause_planet = Some(Intro { kicker: "Planet 7 of 8 · Ossary".into(), title: "The Grudge".into(), line: line.into(), counter: Some("Germ bullets rot it from within".into()), twist: Some(("Cold snap".into(), "Every two minutes the cold slows the slime and your squads for 20 seconds".into())), alpha: 1.0 });
             r.key(KeyCode::Escape);
