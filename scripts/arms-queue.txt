@@ -3,30 +3,63 @@
 # (scripts/run-bot-plan.txt) on SEED's planet DEPTH (`league=DEPTH:SEED:SECS`,
 # the planets before it taken as won with two stars and shopped by the plan),
 # or a whole run from planet 1 to N when DEPTH is `runN`. Line i goes to
-# shard i mod 8.
+# shard i mod 8. A `plan=` in GAME ARGS replaces the run bot's plan.
 #
-# 2026-11-22 (Direction, after the Enemy lane's report of the bot standing
-# by the home crystal): planets 1 to 3 as whole runs on the 11 maps the
-# strategy bot is judged on (seeds 1 to 8 and the owner's runs 1795038793,
-# 1795106014, 1795119328) with the slime's ceiling at 1.5 times (18; the
-# difficulty thread's next step), and as is on the eight maps run-bot.yml
-# does not play. Each planet capped at 12 game minutes (720).
-ceil18 run3 1 720 set=ceiling=18
-ceil18 run3 2 720 set=ceiling=18
-ceil18 run3 3 720 set=ceiling=18
-ceil18 run3 4 720 set=ceiling=18
-ceil18 run3 5 720 set=ceiling=18
-ceil18 run3 6 720 set=ceiling=18
-ceil18 run3 7 720 set=ceiling=18
-ceil18 run3 8 720 set=ceiling=18
-ceil18 run3 1795038793 720 set=ceiling=18
-ceil18 run3 1795106014 720 set=ceiling=18
-ceil18 run3 1795119328 720 set=ceiling=18
-as-is run3 4 720
-as-is run3 5 720
-as-is run3 6 720
-as-is run3 7 720
-as-is run3 8 720
-as-is run3 1795038793 720
-as-is run3 1795106014 720
-as-is run3 1795119328 720
+# 2026-11-25, review step B (the owner's order "a then c ... then b"):
+# does any plan beat the plain rifle somewhere and lose somewhere else?
+# Five plans, all without gun cards except `cards`: rifle (the run bot's
+# plan), econ (pumps), turtle (pumps, turrets, a wall, a lure), lure
+# (pumps, turrets, a lure) and cards (the run bot's plan buying gun cards).
+# Planets 2, 4 and 6 on the owner's three maps, 12 game minutes
+# each. Deciding measure, named before the run: per plan, planet-maps won
+# and median time to win against rifle on the same planet-map (paired sign
+# test over 9), and whether the best plan differs between planets.
+# Every game has the origin off (`set=origin=0`): the owner ruled on
+# 11-26 00:08Z that hearts stay as a mini-boss but are not the win
+# condition, so the planet is won by wiping the slime out, as before the
+# origin.
+rifle 2 1795038793 720 set=origin=0
+econ 2 1795038793 720 plan=econ,cards=0 set=origin=0
+turtle 2 1795038793 720 plan=turtle,cards=0 set=origin=0
+lure 2 1795038793 720 plan=lure,cards=0 set=origin=0
+cards 2 1795038793 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 2 1795106014 720 set=origin=0
+econ 2 1795106014 720 plan=econ,cards=0 set=origin=0
+turtle 2 1795106014 720 plan=turtle,cards=0 set=origin=0
+lure 2 1795106014 720 plan=lure,cards=0 set=origin=0
+cards 2 1795106014 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 2 1795119328 720 set=origin=0
+econ 2 1795119328 720 plan=econ,cards=0 set=origin=0
+turtle 2 1795119328 720 plan=turtle,cards=0 set=origin=0
+lure 2 1795119328 720 plan=lure,cards=0 set=origin=0
+cards 2 1795119328 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 4 1795038793 720 set=origin=0
+econ 4 1795038793 720 plan=econ,cards=0 set=origin=0
+turtle 4 1795038793 720 plan=turtle,cards=0 set=origin=0
+lure 4 1795038793 720 plan=lure,cards=0 set=origin=0
+cards 4 1795038793 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 4 1795106014 720 set=origin=0
+econ 4 1795106014 720 plan=econ,cards=0 set=origin=0
+turtle 4 1795106014 720 plan=turtle,cards=0 set=origin=0
+lure 4 1795106014 720 plan=lure,cards=0 set=origin=0
+cards 4 1795106014 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 4 1795119328 720 set=origin=0
+econ 4 1795119328 720 plan=econ,cards=0 set=origin=0
+turtle 4 1795119328 720 plan=turtle,cards=0 set=origin=0
+lure 4 1795119328 720 plan=lure,cards=0 set=origin=0
+cards 4 1795119328 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 6 1795038793 720 set=origin=0
+econ 6 1795038793 720 plan=econ,cards=0 set=origin=0
+turtle 6 1795038793 720 plan=turtle,cards=0 set=origin=0
+lure 6 1795038793 720 plan=lure,cards=0 set=origin=0
+cards 6 1795038793 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 6 1795106014 720 set=origin=0
+econ 6 1795106014 720 plan=econ,cards=0 set=origin=0
+turtle 6 1795106014 720 plan=turtle,cards=0 set=origin=0
+lure 6 1795106014 720 plan=lure,cards=0 set=origin=0
+cards 6 1795106014 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
+rifle 6 1795119328 720 set=origin=0
+econ 6 1795119328 720 plan=econ,cards=0 set=origin=0
+turtle 6 1795119328 720 plan=turtle,cards=0 set=origin=0
+lure 6 1795119328 720 plan=lure,cards=0 set=origin=0
+cards 6 1795119328 720 plan=bot,want=torch.standard|rush,aim=6,cards=2 set=origin=0
