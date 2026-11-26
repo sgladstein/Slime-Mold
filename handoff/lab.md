@@ -231,5 +231,14 @@ A second slime species that fights the first; the player's own mould
   `a7b9204e`); 64 games on the 1070 (`raw/batches-1070.txt`). Planet 3
   with two dug-outs plays 4 to 6.5 minutes; planets 4 and 5 not yet.
   Enemy's and Squad's patches in `raw/`.
-- Next step: add Engine's pack-only run when it comes; then wait for
-  Direction's next brief.
+- 2026-11-26: **the hunt** (step A of the 11-25 review, brief
+  `Reports/review-2026-11-25/lab-brief-slime-reach.md`; Opus thread, the
+  Fable one failed). The slime follows the squad's trail (engine key
+  `hunt_pull`, rules `hunt_reach` 80 and `hunt_lag` 4, `hunt.rs`; code
+  `ec603a74`, taken back out in the next commit so main holds the report
+  only). Report
+  [`Reports/lab-hunt-2026-11-26/`](../Reports/lab-hunt-2026-11-26/README.md),
+  page "The Slime's Hunt". The body pours after a kiting squad but no
+  kiting arm lost a soldier: it arrives down one corridor into the guns.
+- Next step: the body masses at the trail's end and comes in together
+  (the report's recommendation 2), if the owner picks it.

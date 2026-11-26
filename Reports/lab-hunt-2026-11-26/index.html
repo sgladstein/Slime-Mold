@@ -1,0 +1,123 @@
+<title>The Slime's Hunt</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* One column of findings; paired before/after clips side by side, stacking on phones. */
+:root {
+  --bg: #f6f4ee; --fg: #23211c; --muted: #6b665a; --line: #dcd6c8;
+  --slime: #c97a12; --rock: #4a4438; --panel: #ece7dc; --good: #2f7a5a;
+  --display: "Space Grotesk", system-ui, sans-serif;
+  --body: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17150f; --fg: #ece6d8; --muted: #a49d8c; --line: #38342b;
+  --slime: #f0a33a; --rock: #c9c0ad; --panel: #221f18; --good: #6cc49c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #17150f; --fg: #ece6d8; --muted: #a49d8c; --line: #38342b;
+  --slime: #f0a33a; --rock: #c9c0ad; --panel: #221f18; --good: #6cc49c; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 0.75rem/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--slime); }
+.lede { font-size: 1.08rem; }
+section { display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+video { width: 100%; max-width: 100%; border-radius: 6px; background: var(--rock); }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+figcaption b { color: var(--fg); }
+.verdict { background: var(--panel); border-left: 3px solid var(--slime); padding: 14px 16px; border-radius: 4px; display: grid; gap: 8px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 560px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+td.n { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+tr.hunt td:first-child { color: var(--slime); font-weight: 600; }
+code { font: 0.82rem var(--mono); }
+ol { margin: 0; padding-left: 1.3rem; display: grid; gap: 8px; max-width: 70ch; }
+.small { font-size: 0.85rem; color: var(--muted); }
+</style>
+
+<main>
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Lab · step A of the 11-25 review · 2026-11-26</div>
+    <h1>The Slime's Hunt</h1>
+    <p class="lede">Can the slime's own rules bring its body to a squad that keeps moving? Now it can: it follows the squad's trail and the whole body pours after it. But that alone still costs a kiting squad no soldiers, because the body arrives down one corridor into the guns.</p>
+  </header>
+
+  <section>
+    <h2>What changed</h2>
+    <p>Once a game second the game remembers where the soldiers stood. The slime smells that trail, with older places weighing as farther away, so a walker that meets the path follows it toward where the squad is now. A place older than about 20 seconds smells of nothing, so a squad that gets far enough ahead leaves a cold trail and the body stops. No clock or trigger: only a field the walkers lean down, like the lure's.</p>
+  </section>
+
+  <section>
+    <h2>Before and after, planet 2</h2>
+    <p class="small">Run seed 1, the same kiting bot with 15 rifles, every scheduled threat off. 1:00 to 1:40 of game time at five times speed.</p>
+    <div class="pair">
+      <figure>
+        <video src="before_all.mp4" controls muted loop playsinline preload="metadata" poster="before-80s.jpg"></video>
+        <figcaption><b>As the game is.</b> The slime spreads threads to the crystals across the map and leaves the squad alone on its crystal.</figcaption>
+      </figure>
+      <figure>
+        <video src="after_all.mp4" controls muted loop playsinline preload="metadata" poster="after-80s.jpg"></video>
+        <figcaption><b>With the hunt.</b> The body masses toward the squad and pours down the corridor after it, and stops spreading to far crystals while it hunts.</figcaption>
+      </figure>
+    </div>
+    <div class="pair">
+      <figure>
+        <video src="before_near.mp4" controls muted loop playsinline preload="metadata"></video>
+        <figcaption><b>As the game is, zoom 6.</b> Loose slime round the squad's crystal.</figcaption>
+      </figure>
+      <figure>
+        <video src="after_near.mp4" controls muted loop playsinline preload="metadata"></video>
+        <figcaption><b>With the hunt, zoom 6.</b> A thick tongue comes down on the squad, and its head dies at the guns.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The numbers</h2>
+    <p class="small">Planet 2, run seeds 1 to 6, 5:00 each, on the cloud's software GPU. Bitten: soldiers bitten to death by 5:00, by seed. Walkers killed is the sign the slime came to the guns.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Squad and slime</th><th>Bitten, seeds 1–6</th><th style="text-align:right">Walkers killed</th></tr></thead>
+        <tbody>
+          <tr><td>15 kiting, as the game is</td><td>0, 0, 0, 7, 0, 0</td><td class="n">23,093</td></tr>
+          <tr><td>15 kiting, fast tubes only</td><td>all 0</td><td class="n">17,379</td></tr>
+          <tr><td>15 kiting, stronger soldier smell only</td><td>all 0</td><td class="n">19,724</td></tr>
+          <tr class="hunt"><td>15 kiting, hunt</td><td>all 0</td><td class="n">61,340</td></tr>
+          <tr class="hunt"><td>15 kiting, hunt and fast tubes</td><td>all 0</td><td class="n">99,054</td></tr>
+          <tr class="hunt"><td>15 kiting, hunt, tubes and the Swarmer's charge</td><td>all 0</td><td class="n">89,083</td></tr>
+          <tr><td>15 kiting, the Swarmer's charge only</td><td>all 0</td><td class="n">22,140</td></tr>
+          <tr><td>6 kiting, as the game is</td><td>all 0</td><td class="n">8,107</td></tr>
+          <tr class="hunt"><td>6 kiting, hunt and fast tubes</td><td>all 0</td><td class="n">72,973</td></tr>
+          <tr><td>15 standing, as the game is</td><td>0, 1, 8, 23, 0, 0</td><td class="n">40,063</td></tr>
+          <tr class="hunt"><td>15 standing, hunt</td><td>0, 3, 2, 34, 5, 0</td><td class="n">136,139</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">Hunt and fast tubes against the game as it is: more walkers killed on 6 of 6 seeds (sign test p 0.03), with 6 soldiers too. The slime ends about the same size either way: it grows back from its crystals what it throws at the squad. Also tried with the hunt, each with 0 bitten: a haste on the trail, a charge reach of 15, no flinch.</p>
+  </section>
+
+  <section class="verdict">
+    <h2>What it means</h2>
+    <p>Reach was half the problem. The other half is that the body arrives one front at a time, through the narrowest place, into the guns: six rifles killed 73,000 walkers in five minutes and were never touched. A squad lost soldiers only when it walked into the body.</p>
+  </section>
+
+  <section>
+    <h2>Recommendation</h2>
+    <ol>
+      <li><b>Keep the hunt as the slime's reach.</b> It comes for the squad from its own senses and gives up on a cold trail. On its own it costs no soldiers, so it is not the threat yet.</li>
+      <li><b>Next Lab step: arrive as a mass.</b> Walkers at the end of the trail hold just outside the guns' reach until the front is deep, then come in together on the alarm, wider than the guns can cut. That is the wave event's idea, driven by the trail instead of by the squad's kill rate.</li>
+      <li><b>Or a balance answer:</b> the plain rifle at a corridor is the wall, the same thing the 11-25 review found (the bot wins planets 1 to 3 with it). That one is Direction's.</li>
+    </ol>
+    <p class="small">The rule is on the lab branch only (commit <code>ec603a74</code>), not in the game. The heart was left alone: another thread is reworking it.</p>
+  </section>
+</main>
