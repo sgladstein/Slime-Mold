@@ -544,6 +544,7 @@ pub(super) fn stage(spec: &str, depth: u32) -> &str {
 /// `fair` or `hard`, the star map's, 2026-11-26) lands on that planet of
 /// the step's fork, the route before it Fair: the bot check that a fork's
 /// planets are clearly ordered in difficulty.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, pip: Option<Pip>, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
     let mut r = Run::new(seed);
     r.restock();
