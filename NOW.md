@@ -59,7 +59,7 @@ asks at most once a session with a recommendation.
 
 | What | State |
 |---|---|
-| Longer planets or more of them | His 11-24 answer: at least two hours, by either; "we don't need to decide exactly now". The dials are on main (#749: `run::PLANETS`, `run::STRETCH`). Costed and asked 05:10Z: both roads, starting at 12 planets at 1.3x (recommended, about 2.5 days), 16 planets (2 days), 8 at 1.8x (1 day), or not yet. |
+| Longer planets or more of them | Answered 11-25 23:45Z by his pick of a star map with forks and contracts (about 12 steps, harder forks pay more; [brief](Reports/review-2026-11-25/route-choice-brief.md)), so the run reaches two hours by more planets, chosen. `run::STRETCH` stays 1 until he plays it. |
 | Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked next. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (asked 11-17 19:14Z). |
 

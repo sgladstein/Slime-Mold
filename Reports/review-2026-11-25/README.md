@@ -32,3 +32,8 @@ the nightly green, and a lighter handoff and what's-new.
   (https://claude.ai/artifact/85hVGbUEAL2pBYA4xovKts), with a
   [draft build brief](route-choice-brief.md) for the recommended star map
   with contracts, pending the owner's pick.
+
+**The owner's pick (11-25 23:45Z):** directions 1 and 4, with clearly
+different difficulties a fork and greater rewards on the harder planets
+([brief](route-choice-brief.md)); directions 2 and 5 kept for later
+([future directions](future-route-directions.md)).
