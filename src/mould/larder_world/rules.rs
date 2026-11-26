@@ -687,6 +687,14 @@ pub struct Rules {
     /// toward the lure (`gpu::Settings::lure_pull`). 60, the lab's rig
     /// (`Reports/lab-steering-2026-11-17`); `set=lure_reach=N`.
     pub lure_reach: f32,
+    /// **The hunt** (2026-11-26, the Lab; `hunt.rs`): how far, in dish
+    /// cells of walking with a place's age added, the squad's trail
+    /// reaches (`hunt_reach`), and how many dish cells a second of age
+    /// adds (`hunt_lag`). A place older than `hunt_reach / hunt_lag`
+    /// seconds has run cold. Read only while the slime has a pull
+    /// (`gpu::Settings::hunt_pull`).
+    pub hunt_reach: f32,
+    pub hunt_lag: f32,
     /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
     /// slime at a crowded knot or a big part cut off from food clenches
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
@@ -970,6 +978,8 @@ impl Rules {
             "raid_march_stall" => &mut self.raid.march_stall,
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
+            "hunt_reach" => &mut self.hunt_reach,
+            "hunt_lag" => &mut self.hunt_lag,
             "star_tail" => &mut self.star.tail,
             "star_first" => &mut self.star.first,
             "star_last" => &mut self.star.last,
@@ -1289,6 +1299,8 @@ impl Default for Rules {
             raid: super::RaidRules::default(),
             unit_paths: false,
             lure_reach: 60.0,
+            hunt_reach: 80.0,
+            hunt_lag: 4.0,
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),

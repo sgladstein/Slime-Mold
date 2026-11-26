@@ -261,8 +261,10 @@ struct Params {
     // the birth ceiling or the life states).
     tough: f32, tough_full: f32, scar_burn: u32, dream: f32,
     // The wind (`WIND_AT`, a planet twist, 2026-11-24): the push on every
-    // step a walker takes, in fine cells (0 none), and two spare words.
-    wind_x: f32, wind_y: f32, _wind_a: u32, _wind_b: u32,
+    // step a walker takes, in fine cells (0 none); then the hunt's pull
+    // and haste (`hunt`, `hunt_haste`, 2026-11-26, the Lab: 0 with no
+    // trail written).
+    wind_x: f32, wind_y: f32, hunt: f32, hunt_haste: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -1365,6 +1367,29 @@ fn wave_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
     if (d == 0xFFFFFFFFu) { return 0.0; }
     return f32(dh) - f32(d);
 }
+// **The hunt** (2026-11-26, the Lab; `Game::time_hunt`): the squad's
+// trail. Each block holds the walking distance to the nearest place a
+// soldier stood in the last seconds, that place's age added as distance
+// (`Rules::hunt_lag` cells a second), out to `Rules::hunt_reach`. Down it
+// a walker goes to the squad's path and then along it to where the squad
+// is now; a path older than the reach allows has run cold and pulls
+// nothing. In the raid's region's fourth quarter (after the raid's
+// blocks, the wave's and the condensed band's); no CPU twin.
+fn hunt_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    let v = atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + P.w * P.h + 3u * nb + q]);
+    if (v == 0u) { return 0xFFFFFFFFu; }
+    return v - 1u;
+}
+fn hunt_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE) { return 0.0; }
+    let d = hunt_dist(i);
+    if (d == 0xFFFFFFFFu) { return 0.0; }
+    return f32(dh) - f32(d);
+}
 // **The heartbeat** (2026-11-20, `Game::time_heart`): real slime mould
 // pulses, its cytoplasm streaming out and back every minute or two in
 // waves that run through the whole body. Here a beat runs outward from the
@@ -1673,6 +1698,20 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (f > -1.0e5) { f += P.lure * lure_near(wk.x, wk.y, h, so, dh); }
                 if (fl > -1.0e5) { fl += P.lure * lure_near(wk.x, wk.y, h - sa, so, dh); }
                 if (fr > -1.0e5) { fr += P.lure * lure_near(wk.x, wk.y, h + sa, so, dh); }
+            }
+        }
+        // **The hunt** (2026-11-26, the Lab; `hunt_dist`): a calm walker
+        // on the squad's trail leans down it, x `hunt`, as the lure's
+        // lean. Calm only: a charging walker keeps its charge.
+        if (lb == 0u && P.hunt > 0.0) {
+            let dh = hunt_dist(here);
+            if (dh != 0xFFFFFFFFu) {
+                // On the trail the body streams (`hunt_haste`): a longer
+                // step, never past 1.5 cells, as the crust's fast ground.
+                if (P.hunt_haste > 0.0) { st = min(st * (1.0 + P.hunt_haste), max(st, 1.5)); }
+                if (f > -1.0e5) { f += P.hunt * hunt_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += P.hunt * hunt_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += P.hunt * hunt_near(wk.x, wk.y, h + sa, so, dh); }
             }
         }
         // The heartbeat's lean, outward on the beat and home between.

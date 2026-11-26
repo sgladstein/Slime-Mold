@@ -59,6 +59,7 @@ mod heart;
 mod stand;
 mod origin;
 mod twist;
+mod hunt;
 mod strikers;
 mod starfall;
 mod cores;
@@ -653,6 +654,10 @@ pub struct Game<W: World> {
     /// Lures with no building (`raids::LureMark`; the lure's field,
     /// `time_lure_paths`), each until its tick.
     pub lure_marks: Vec<LureMark>,
+    /// The squad's trail for the hunt (`hunt.rs`): rebuilt within seconds
+    /// of a resume, so not saved.
+    #[serde(skip)]
+    hunt: hunt::Hunt,
     /// Mini-bosses (`Rules::boss`, `bosses.rs`): the live ones and the ended.
     pub bosses: Bosses,
     /// Fruiting (`Rules::fruit`, `fruit.rs`): the fruit ripening and the
@@ -866,6 +871,7 @@ impl<W: World> Game<W> {
             ate_was: 0.0,
             raids: Raids::new(seed),
             lure_marks: Vec::new(),
+            hunt: hunt::Hunt::default(),
             bosses: Bosses::new(seed),
             fruits: Fruits::default(),
             waves: Waves::default(),
