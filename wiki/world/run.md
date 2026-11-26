@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-25
+updated: 2026-11-26
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/balance-review-2026-11-24/README.md
@@ -15,6 +15,7 @@ sources:
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-bait-trade-2026-11-24/README.md
   - Reports/lab-crystal-bait-2026-11-24/README.md
+  - Reports/lab-hunt-2026-11-26/README.md
   - Reports/lab-march-counter-2026-11-24/README.md
   - Reports/lab-rescue-2026-11-24/README.md
   - Reports/lab-steering-2026-11-17/README.md
@@ -625,6 +626,8 @@ The Lab tried a counter to planet 4's armoured march from the slime's own food r
 
 For run variety (Milestone 2's test 2), the Lab built three planet twists a run could roll, each a minute's change to the slime's own numbers (11-24, its branch only): a cold snap (its step at 0.3: streams break into beads and stall), night (sensors reach 2.5 times as far: thick roads to food and the squad) and wind (each step pushed downwind: the body leans one way). Each shows within 30 s on planet 1 and changes no outcome there; it recommends wind and the cold snap, each with a card line ([planet twists](../../Reports/lab-twists-2026-11-24/README.md)).
 
+For step A of the 11-25 review the Lab built the hunt (11-26, its branch only): the slime smells where the soldiers stood over the last 20 s, older places weighing farther, so it follows the squad's path and stops on a cold trail. On planet 2 with the scheduled threats off the body pours after a kiting squad of 15 (more walkers killed on 6 of 6 seeds), but no kiting squad lost a soldier, with 15 or 6 rifles, since the body arrives down one corridor into the guns; it recommends keeping it as the reach and next making the body mass before it comes in ([the hunt](../../Reports/lab-hunt-2026-11-26/README.md)).
+
 For a planet goal other than the heart, the Lab built a rescue (11-24, its branch only): three soldiers hidden deep in the slime behind a ring of doors it gnaws, found when reached, then walked home at a wounded pace their squad keeps to, while the strikers turn on the march. On planet 1 an early rescue won in 1:19 to 2:30, a late one lost all three on the march, and greedy and idle lost when the ring gave way or the hiding ran out. Timed on the GTX 1070 with the heart win dropped, planet 3 with two dug-outs plays 4 to 6.5 minutes and is won early or late; planet 4's bot dies to the Swarmer before it can try, and planet 5 is won only by an early rescue with the alarm off. It recommends building it for planet 3 first ([rescue planet](../../Reports/lab-rescue-2026-11-24/README.md)).
 
 ## Sources
@@ -634,6 +637,7 @@ For a planet goal other than the heart, the Lab built a rescue (11-24, its branc
 - [march counter](../../Reports/lab-march-counter-2026-11-24/README.md), *Results*.
 - [planet twists](../../Reports/lab-twists-2026-11-24/README.md), *Recommendation*.
 - [rescue planet](../../Reports/lab-rescue-2026-11-24/README.md), *Recommendation*.
+- [the hunt](../../Reports/lab-hunt-2026-11-26/README.md), *Recommendation*.
 - [crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md), *Results*.
 - [bait or drain](../../Reports/lab-bait-trade-2026-11-24/README.md), *Results*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.

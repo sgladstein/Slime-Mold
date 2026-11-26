@@ -1247,14 +1247,6 @@ impl World for GpuWorld {
         self.e.write_lure_field(&field);
     }
 
-    fn hunt_pull(&self) -> bool {
-        self.s.hunt_pull > 0.0
-    }
-
-    fn set_hunt_field(&mut self, field: Vec<u32>) {
-        self.e.write_hunt_field(&field);
-    }
-
     /// Where setting runs (`Engine::setting`: the crust, the scar and
     /// `set_scar`), a walker can set on a fort's mask.
     fn forts(&self) -> bool {
@@ -1665,12 +1657,6 @@ mod tests {
         }
         fn set_lure_field(&mut self, field: Vec<u32>) {
             self.g.set_lure_field(field)
-        }
-        fn hunt_pull(&self) -> bool {
-            self.g.hunt_pull()
-        }
-        fn set_hunt_field(&mut self, field: Vec<u32>) {
-            self.g.set_hunt_field(field)
         }
         fn forts(&self) -> bool {
             self.g.forts()

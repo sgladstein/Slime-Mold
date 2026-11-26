@@ -83,7 +83,7 @@ snap_fields!(Engine {
     pairs: [trail, scent, germ, species],
     skip: [device, queue, groups, sorter],
     values: [
-        grows, energy_flows, gas_at, gas_until, gas_immune, mind_rest, clouds, minds, mind_until, lured, hunted, waved, wave_w, heart, strikers, striker_held,
+        grows, energy_flows, gas_at, gas_until, gas_immune, mind_rest, clouds, minds, mind_until, lured, waved, wave_w, heart, strikers, striker_held,
         forted, clouded, cloud_until, cloud_top, cloud_at, withers, reach, specks, lumps_on, plant_no_clear, dense_at, plant_at, crust_at, plants,
         fire_on, setting, plant_every, plant_sub, crater_steps, scorched, garden, ceiling_on, tends, ntend, npc, npiles, walled, ground_world, flows,
         squad, shot_sink, spray, squad_due, squad_one, squad_on, grid, n_hits, converts, boxes, outside, nsp, kinds, exploring, seeded, dish,

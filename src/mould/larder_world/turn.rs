@@ -511,7 +511,6 @@ impl<W: World> Game<W> {
             self.costed("time_unit_paths", |g| g.time_unit_paths());
             self.costed("time_food_paths", |g| g.time_food_paths());
             self.costed("time_lure_paths", |g| g.time_lure_paths());
-            self.costed("time_hunt", |g| g.time_hunt());
             self.costed("time_fort", |g| g.time_fort());
             self.costed("time_bosses", |g| g.time_bosses());
             self.costed("time_fruit", |g| g.time_fruit());

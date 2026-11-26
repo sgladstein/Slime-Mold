@@ -462,22 +462,6 @@ impl Way {
         }
     }
 
-    /// Any field built off the frame as `start`'s (the hunt's trail,
-    /// `hunt.rs`).
-    pub(super) fn start_with(build: impl FnOnce() -> Vec<u32> + Send + 'static) -> Way {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            Way::Building(std::thread::spawn(move || {
-                way_delay();
-                build()
-            }))
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            Way::Ready(build())
-        }
-    }
-
     /// Waits for a way still building (`Game::save`: a thread can't be
     /// written to a save).
     pub(super) fn settle(&mut self) {
@@ -511,16 +495,6 @@ impl Way {
 /// The search stops past `limit` fine cells of walking (`u32::MAX` past
 /// it), so a lure's field costs its reach and not the map.
 pub(super) fn round_walk(agar: &[bool], w: usize, h: usize, from: &[u32], limit: u32) -> Vec<u32> {
-    let from: Vec<(u32, u32)> = from.iter().map(|&u| (u, 0)).collect();
-    round_walk_from(agar, w, h, &from, limit)
-}
-
-/// `round_walk` from places that each start at a distance of their own
-/// (fine cells; the hunt's trail, 2026-11-26, the Lab: a place's age). A
-/// place starts once the search's front reaches its distance, so the
-/// ring's buckets still hold every distance left to settle; two places in
-/// one block keep the nearer start.
-pub(super) fn round_walk_from(agar: &[bool], w: usize, h: usize, from: &[(u32, u32)], limit: u32) -> Vec<u32> {
     use crate::mould::big::UNITS_REACH;
     let b = RAID_BLOCK;
     let (bw, bh) = (w.div_ceil(b), h.div_ceil(b));
@@ -532,11 +506,9 @@ pub(super) fn round_walk_from(agar: &[bool], w: usize, h: usize, from: &[(u32, u
         }
     }
     let r = UNITS_REACH as i64;
-    // Each start's block and its distance in fifths of a block (the
-    // search's units below: a straight step is 5).
-    let mut starts: Vec<(usize, u32)> = from
+    let mut starts: Vec<usize> = from
         .iter()
-        .filter_map(|&(u, c)| {
+        .filter_map(|&u| {
             let (tx, ty) = ((((u & 0xFFFF) as usize).min(w - 1) / b) as i64, (((u >> 16) as usize).min(h - 1) / b) as i64);
             let mut best: Option<(i64, usize)> = None;
             for dy in -r..=r {
@@ -551,13 +523,11 @@ pub(super) fn round_walk_from(agar: &[bool], w: usize, h: usize, from: &[(u32, u
                     }
                 }
             }
-            best.map(|p| (p.1, c.saturating_mul(5) / b as u32))
+            best.map(|p| p.1)
         })
         .collect();
     starts.sort_unstable();
-    starts.dedup_by_key(|s| s.0);
-    // Nearest start first, each let in as the front reaches it.
-    starts.sort_by_key(|s| s.1);
+    starts.dedup();
     // On a grid two closed blocks wider on every side, so no move needs a
     // bounds check.
     let pw = bw + 4;
@@ -586,21 +556,16 @@ pub(super) fn round_walk_from(agar: &[bool], w: usize, h: usize, from: &[(u32, u
     // still to settle.
     let mut ring: [Vec<u32>; 12] = Default::default();
     let mut left = 0usize;
-    let mut next = 0usize;
+    for &q in &starts {
+        let s = (q / bw + 2) * pw + q % bw + 2;
+        pd[s] = 0;
+        ring[0].push(s as u32);
+        left += 1;
+    }
     let mut at = 0u32;
     let last = limit.saturating_mul(5) / b as u32 + 5;
-    while (left > 0 || next < starts.len()) && at <= last {
+    while left > 0 && at <= last {
         let slot = (at % 12) as usize;
-        while next < starts.len() && starts[next].1 <= at {
-            let q = starts[next].0;
-            let s = (q / bw + 2) * pw + q % bw + 2;
-            if at < pd[s] {
-                pd[s] = at;
-                ring[slot].push(s as u32);
-                left += 1;
-            }
-            next += 1;
-        }
         let now = std::mem::take(&mut ring[slot]);
         left -= now.len();
         for &q in &now {
@@ -1078,7 +1043,7 @@ pub fn down_way(field: &[u32], bw: usize, from: (f32, f32), look: f32) -> Option
 
 #[cfg(test)]
 mod tests {
-    use super::{down_way, round_walk, round_walk_from, RaidRules, Raids};
+    use super::{down_way, round_walk, RaidRules, Raids};
     use crate::mould::big::{raid_field_for, units_field_for, RAID_BLOCK};
 
     /// **A march's way round a wall** (`down_way`, 2026-11-18): on a map
@@ -1195,39 +1160,5 @@ mod tests {
         let got = d[behind] as f32;
         assert!(got >= 0.97 * by_gap && got <= 1.1 * by_gap, "behind the wall by the gap: {got} against {by_gap}");
         assert!((120 / b..124 / b).all(|x| d[(100 / b) * bw + x] == u32::MAX), "no distance inside the wall");
-    }
-
-    /// **The hunt's trail leads along the path** (2026-11-26, the Lab;
-    /// `hunt.rs`). Places that start at their age (`round_walk_from`): with
-    /// the age at 0 it is `round_walk`; along a path whose places age
-    /// faster than it walks, each newer place reads nearer, so the field
-    /// falls along the path toward its newest end; and a place whose age
-    /// alone is past the limit adds nothing.
-    #[test]
-    fn the_hunts_trail_leads_along_the_path() {
-        let (w, h) = (200usize, 120usize);
-        let b = RAID_BLOCK;
-        let bw = w.div_ceil(b);
-        let open = vec![true; w * h];
-        let at = |x: u32, y: u32| x | y << 16;
-        let fresh = [at(30, 60), at(150, 60)];
-        let zero: Vec<(u32, u32)> = fresh.iter().map(|&c| (c, 0)).collect();
-        assert_eq!(round_walk_from(&open, w, h, &zero, 80), round_walk(&open, w, h, &fresh, 80), "no age: the lure's search");
-        // A path along y = 60 from x = 20 (oldest) to x = 120 (now), a place
-        // every 10 cells, each 10 cells older than the next: the lag (10
-        // a place) is the walk between them, so the field reads its age
-        // plus the walk at every place and falls toward the newest.
-        let path: Vec<(u32, u32)> = (0..=10).map(|k| (at(20 + 10 * k, 60), 10 * (10 - k))).collect();
-        let d = round_walk_from(&open, w, h, &path, 150);
-        let on = |x: usize| d[(60 / b) * bw + x / b];
-        for x in (20..120).step_by(10) {
-            assert!(on(x + 10) < on(x), "nearer toward the newest place: {} at {x}, {} at {}", on(x), on(x + 10), x + 10);
-        }
-        assert_eq!(on(120), 0, "0 where the squad is now");
-        // Beside the path the field leans to it and along it.
-        assert!(d[(80 / b) * bw + 100 / b] < d[(80 / b) * bw + 40 / b], "off the path the newer end reads nearer");
-        // Cold: a place older than the limit adds nothing.
-        let cold = round_walk_from(&open, w, h, &[(at(20, 60), 200)], 150);
-        assert!(cold.iter().all(|&v| v == u32::MAX), "a cold place reaches nowhere");
     }
 }
