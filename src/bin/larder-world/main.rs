@@ -1176,6 +1176,13 @@ struct App {
     /// The planet's landing card (`ui::Intro`) and the game time it first
     /// showed (`INTRO_SECS`, `draw`).
     intro: Option<(slime_mould::world::ui::Intro, f32)>,
+    /// When the player first pressed a key or a button over the landing
+    /// card (`App::intro_seen`): from then it fades over `INTRO_GONE` of
+    /// real time, so it is gone once play starts but stays readable until
+    /// then (owner, 2026-11-26: "should go away when you start pressing
+    /// buttons"). Real time, not game time, so a first press that pauses
+    /// still clears it.
+    intro_seen: Option<std::time::Instant>,
     /// Frames left before a run lands on its next planet (`menu::landing_frame`):
     /// the shop's landing card is drawn first, so the click shows at once.
     landing_due: Option<u8>,
@@ -1313,6 +1320,7 @@ impl App {
             run_file: None,
             run_saved: String::new(),
             intro: None,
+            intro_seen: None,
             landing_due: None,
             coach: draw::Coach::default(),
             run_mid: None,
@@ -1795,7 +1803,10 @@ impl App {
                     slime_mould::world::ui::Intro { kicker: tr.mission.name.clone(), title: title_case(tier.name()), line: slime_mould::mould::run::does_to_you(tier).says.to_string(), counter: menu::beat_it(tier).map(str::to_string), twist: r.twist().map(|t| (t.name().to_string(), t.card())), alpha: 1.0 }
                 });
                 match intro {
-                    Some(i) => self.intro = Some((i, self.game.as_ref().map_or(0.0, |g| g.time()))),
+                    Some(i) => {
+                        self.intro = Some((i, self.game.as_ref().map_or(0.0, |g| g.time())));
+                        self.intro_seen = None;
+                    }
                     None => self.hud.alert(&tr.mission.name, None, theme::ACCENT),
                 }
             }
