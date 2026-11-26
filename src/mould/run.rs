@@ -738,8 +738,34 @@ pub const STRETCH: f32 = 1.0;
 
 /// Planet `depth` as a place on the eight-planet curve the tables were
 /// tuned on: 1 to 8 at `PLANETS` 8, the same span for any other count.
+///
+/// Since 2026-11-26 the early steps climb faster (`early_lift`); from the
+/// curve place `LIFT_TO` on, the steps read exactly as before.
 pub fn curve_depth(depth: u32) -> f32 {
-    curve_depth_of(depth, PLANETS)
+    early_lift(curve_depth_of(depth, PLANETS))
+}
+
+/// **The early run climbs faster** (2026-11-26; the owner, 21:51Z: "You can
+/// increase the difficulty early but I don't think we should flatten out the
+/// later progression", after the 11-26 review found steps 1 to 5 of twelve
+/// read only old planets 1 to 3.5, the stretch his 11-26 run called too
+/// easy). Curve places under `LIFT_TO` are bent up by `LIFT_BEND` (1 + span
+/// x (place / span)^bend, span `LIFT_TO` - 1); planet 1 and every place from
+/// `LIFT_TO` on are unchanged, so the later steps keep their spacing. On
+/// twelve steps: step 2 1.64 -> 1.96, step 3 2.27 -> 2.56, step 4 2.91 ->
+/// 3.07, step 5 on as before. Rejected: a concave curve over the whole run
+/// (flattens the late steps, which he ruled out), and a higher start for
+/// step 1 (the landing world stays the gentle one). A Direction tuning
+/// number; `LIFT_BEND` 1 is the old straight line.
+const LIFT_TO: f32 = 3.5;
+const LIFT_BEND: f32 = 0.7;
+
+fn early_lift(e: f32) -> f32 {
+    if e <= 1.0 || e >= LIFT_TO {
+        return e;
+    }
+    let span = LIFT_TO - 1.0;
+    1.0 + span * ((e - 1.0) / span).powf(LIFT_BEND)
 }
 
 fn curve_depth_of(depth: u32, planets: u32) -> f32 {
@@ -3500,6 +3526,16 @@ mod tests {
                 assert_eq!(v != 0.0, d >= first_planet(k) && ENEMY_RULES.iter().any(|&(n, w)| n == k && w != 0.0), "{k} on planet {d}");
             }
         }
+        // The early lift (2026-11-26): steps 2 to 4 of twelve read higher,
+        // step 5 on as the straight line, every step still above the last.
+        let steps: Vec<f32> = (1..=PLANETS).map(curve_depth).collect();
+        assert!(steps.windows(2).all(|w| w[1] > w[0]), "{steps:?}");
+        for d in 2..=4 {
+            assert!(curve_depth(d) > curve_depth_of(d, PLANETS) + 0.15, "step {d}: {steps:?}");
+        }
+        for d in 5..=PLANETS {
+            assert_eq!(curve_depth(d), curve_depth_of(d, PLANETS), "step {d}");
+        }
         // Sixteen planets: the same span, in order.
         let e: Vec<f32> = (1..=16).map(|d| curve_depth_of(d, 16)).collect();
         assert_eq!((e[0], e[15]), (1.0, 8.0));
@@ -4074,7 +4110,8 @@ mod tests {
     fn a_skipped_planet_pays_an_average_win_and_the_home_world_cannot_be_skipped() {
         // The pay rises from planet 2 on and stays near a 2-star win plus drops.
         let pays: Vec<u32> = (1..=PLANETS).map(skip_pay).collect();
-        assert_eq!(pays, [360, 510, 510, 470, 530, 530, 580, 580, 630, 690, 690, 0]);
+        // Step 3 reads planet 3 since the early lift (11-26), so it pays planet 3's skip.
+        assert_eq!(pays, [360, 510, 470, 470, 530, 530, 580, 580, 630, 690, 690, 0]);
         let mut r = Run::new(3);
         r.restock();
         assert!(!r.shop().iter().any(|row| row.pick == Pick::DevSkip), "not without dev mode (11-24)");
