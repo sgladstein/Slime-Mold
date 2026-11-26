@@ -3960,7 +3960,7 @@ fn squads_shoot_a_mini_boss_first() {
     // Its body's edge within the defend reach: the mini-boss first, slime
     // on the soldier or not.
     let close = at(r + 0.5 * g.rules.defend * sc);
-    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
     g.bosses.live.push(boss);
     for touching in [0, 2] {
         set(&mut g, touching);
@@ -4906,7 +4906,7 @@ fn late_against_a_big_army_the_mortar_comes_from_planet_2() {
         (g.rules.strikers.few, g.rules.strikers.full) = if big { (0.0, 1.0) } else { (100.0, 200.0) };
         g.peak = if late { g.mould * 10 } else { g.mould };
         let c = (g.soldiers[0].x, g.soldiers[0].y);
-        let b = Boss { lump: 0, born: 0, at: c, cause: BossCause::Crowd, phase: BossPhase::Gather, first: 0, members: 0, centre: c, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        let b = Boss { lump: 0, born: 0, at: c, cause: BossCause::Crowd, phase: BossPhase::Gather, first: 0, members: 0, centre: c, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
         (0..200).filter(|_| g.pick_kind(&b) == BossKind::Mortar).count()
     };
     let (early, small_squad, big) = (draws(false, true), draws(true, false), draws(true, true));
@@ -4930,7 +4930,7 @@ fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
         let at = (if c.0 < w as f32 / 2.0 { w as f32 - 20.0 } else { 20.0 }, if c.1 < h as f32 / 2.0 { h as f32 - 20.0 } else { 20.0 });
         g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None });
         let from = ((c.0 + at.0) / 2.0, (c.1 + at.1) / 2.0);
-        let mut b = Boss { lump: 0, born: 0, at: from, cause: BossCause::Crowd, phase: BossPhase::Hunt(None), first: 100, members: 100, centre: from, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        let mut b = Boss { lump: 0, born: 0, at: from, cause: BossCause::Crowd, phase: BossPhase::Hunt(None), first: 100, members: 100, centre: from, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
         let round = g.boss_late() && g.army_scale() >= 1.0;
         (round, if round { g.round_errand(&mut b, 0) } else { None }, at)
     };
@@ -5014,4 +5014,46 @@ fn a_wounded_soldier_walks_at_its_pace() {
     let slowed = g.wade(k);
     g.soldiers[k].pace = 1.0;
     assert!((slowed - 0.3 * g.wade(k)).abs() < 1e-6, "pace times the wade");
+}
+
+/// **A hunter stalks the lone soldier** (2026-11-26, `BossRules::stalk`):
+/// with six soldiers in a knot and one alone a little farther off, a
+/// stalking hunter's prey is the lone one; without, the nearest of the
+/// knot. It keeps its prey while that scores near the best.
+#[test]
+fn a_stalking_hunter_goes_for_the_lone_soldier() {
+    let mut g = small(2);
+    while g.soldiers.len() < 7 {
+        let s = g.soldiers[0];
+        g.soldiers.push(s);
+    }
+    let sc = g.world.scale();
+    let (w, h) = g.world.size();
+    let c = (w as f32 / 2.0, h as f32 / 2.0);
+    for (k, s) in g.soldiers.iter_mut().enumerate() {
+        s.alive = true;
+        (s.x, s.y) = if k == 6 { (c.0 + 40.0 * sc, c.1) } else { (c.0 - 30.0 * sc + k as f32, c.1) };
+    }
+    let at = (c.0, c.1 + 20.0 * sc);
+    g.rules.boss.stalk = 0.0;
+    assert!(g.boss_prey(at, None).is_some_and(|k| k < 6), "plain: the nearest of the knot");
+    g.rules.boss.stalk = 1.0;
+    assert_eq!(g.boss_prey(at, None), Some(6), "stalking: the lone soldier");
+    assert_eq!(g.boss_prey(at, Some(6)), Some(6), "and it keeps it");
+}
+
+/// **A hunter falls back to feed** (`BossRules::backs`): its point is in
+/// its own slime, past the squad's guns.
+#[test]
+fn a_hunter_falls_back_into_its_slime_past_the_guns() {
+    let mut g = small(2);
+    for _ in 0..(10 * g.rules.tps) {
+        g.step();
+    }
+    let s = (g.soldiers[0].x, g.soldiers[0].y);
+    let Some(p) = g.back_point(s) else { panic!("a point to fall back to") };
+    let sc = g.world.scale();
+    let ring = (g.gun_range_max() + g.rules.panic_margin.max(0.0)) * sc;
+    let d = g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x - p.0).hypot(x.y - p.1)).fold(f32::INFINITY, f32::min);
+    assert!(d > ring, "past the guns: {d} against {ring}");
 }

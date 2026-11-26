@@ -581,7 +581,13 @@ fn armoured(k: u32) -> bool {
     if (lb == 0u) { return scar_tough(k) || tough_walker(k); }
     let wd = dense_word(k);
     let hurt = wd >> HURT_SHIFT;
-    if (hurt + 1u >= min(P.lumps[lb - 1u].armour, 15u)) { return false; }
+    // **A ward** (2026-11-26, `BossRules::ward_at`): bits 8-15 of the
+    // armour are the share x 256 of the blows that glance off, uncounted,
+    // so a member outlasts the 15 blows its 4 hurt bits can count.
+    let a = P.lumps[lb - 1u].armour;
+    let ward = (a >> 8u) & 255u;
+    if (ward != 0u && unit(keyed(P.s_starve, S.t, k ^ (hurt << 24u) ^ 0x3A7Du)) * 256.0 < f32(ward)) { return true; }
+    if (hurt + 1u >= min(a & 255u, 15u)) { return false; }
     set_dense(k, (wd & ~HURT_BITS) | ((hurt + 1u) << HURT_SHIFT));
     return true;
 }

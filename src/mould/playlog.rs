@@ -164,6 +164,7 @@ impl Playlog {
                     BossPhase::Hunt(_) => "hunt",
                     BossPhase::Go(_) => "go",
                     BossPhase::Sit(..) => "sit",
+                    BossPhase::Back(..) => "back",
                 };
                 let near = g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x - b.centre.0).hypot(x.y - b.centre.1)).fold(f32::INFINITY, f32::min);
                 s += &format!("boss t={t:.1} kind={} phase={phase} members={} at={:.0},{:.0} near={near:.0}\n", b.kind.name(), b.members, b.centre.0, b.centre.1);

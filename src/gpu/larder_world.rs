@@ -3900,6 +3900,60 @@ mod tests {
         assert!(flinched.1 + flinched.1 / 20 >= stood.1, "a flinch kills none: {flinched:?} against {stood:?}");
     }
 
+    /// **A warded mini-boss** (2026-11-26, `BossRules::ward_at`): with
+    /// three quarters of the blows glancing off (`Lump::armour` bits
+    /// 8-15), a lump of 2-blow members keeps most of them through four
+    /// blasts that leave a plain 2-blow lump almost none.
+    #[test]
+    fn a_warded_mini_boss_shrugs_off_blows() {
+        use crate::mould::big::{Lump, LUMP_BITS, LUMP_SHIFT};
+        use crate::mould::kit::KitRules;
+        use crate::mould::larder_world::{raid_cell, BossRules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |armour: u32| -> (usize, usize) {
+            let s = race_settings(seed, scale, walkers);
+            let rules = Rules { boss: BossRules { every: 0.0, first: 0.0, ..BossRules::default() }, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+            while g.time() < 20.0 {
+                g.step();
+            }
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let at = (home.0 / sc, home.1 / sc);
+            let (w, h) = g.world.size();
+            let b = BossRules::default();
+            g.world.form_lump(0, Some((at, 4.0)));
+            g.world.set_lump(0, Lump { aim: raid_cell(at, (w, h)), pull: b.pull, leash: b.leash_at(b.clench, 0.5), armour, ..Lump::default() });
+            for _ in 0..30 {
+                g.step();
+            }
+            let members = |g: &Game<GpuWorld>| {
+                let e = &g.world.e;
+                let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+                let news: Vec<u32> = read_back(&e.device, &e.queue, &e.news).chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+                let base = e.dense_at as usize / 4 + crate::gpu::DENSE_HEAD;
+                (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (news[base + q] & LUMP_BITS) >> LUMP_SHIFT == 1).count()
+            };
+            let before = members(&g);
+            let fine = g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+            for _ in 0..4 {
+                let c = g.world.lumps()[0].map_or(at, |(x, y, _)| (x / sc, y / sc));
+                g.world.burst(&squad::Burst { at: c, r: 12.0, kill: true, ..Default::default() }, &k);
+                for _ in 0..3 {
+                    g.step();
+                }
+            }
+            (before, members(&g))
+        };
+        let (plain, warded) = (play(2), play(2 | 192 << 8));
+        eprintln!("ward: (members before, after four blasts) plain {plain:?}, warded {warded:?}");
+        assert!(plain.0 > 30 && warded.0 > 30, "the lumps form: {plain:?} {warded:?}");
+        assert!(plain.1 * 5 < plain.0, "four blasts break a plain 2-blow lump: {plain:?}");
+        assert!(warded.1 * 2 > warded.0, "a ward of three quarters keeps most: {warded:?}");
+    }
+
     /// **A shot stops at set slime** (the owner's planet 3 round,
     /// 2026-11-19 20:46Z: "slime that i couldn't kill they were not moving
     /// but all my soliders would shoot them over and over and nothing hurt
