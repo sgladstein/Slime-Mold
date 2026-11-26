@@ -14,4 +14,4 @@ done; done; done
 printf '%s\n' "${jobs[@]}" | xargs -P "${1:-2}" -L1 bash -c '
   f='"$OUT"'/$0-$1-$2.txt
   [ -s "$f" ] && exit 0
-  timeout 2400 target/release/larder-world league=$0:$1:0:$2 "plan='"$PLAN"'" 2>&1 | grep -E "^league |error|panick" > "$f.tmp"; mv "$f.tmp" "$f"'
+  timeout 2400 ${LW:-target/release/larder-world} league=$0:$1:0:$2 "plan='"$PLAN"'" 2>&1 | grep -E "^league |error|panick" > "$f.tmp"; mv "$f.tmp" "$f"'

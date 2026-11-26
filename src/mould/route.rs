@@ -304,7 +304,7 @@ pub fn star_map(seed: u64, planets: u32, curve: impl Fn(u32) -> f32) -> StarMap 
         for (a, na) in here.iter().enumerate() {
             for nb in next {
                 e = mix(e);
-                if (na.lane - nb.lane).abs() <= 1.01 && (e % 3 != 0 || here.len() == 1 || next.len() == 1) {
+                if (na.lane - nb.lane).abs() <= 1.01 && (!e.is_multiple_of(3) || here.len() == 1 || next.len() == 1) {
                     to[a].push(nb.k);
                 }
             }
