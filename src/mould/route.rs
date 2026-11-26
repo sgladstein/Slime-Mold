@@ -19,8 +19,9 @@
 //! What a pip does to the planet is `run`'s: the pip moves the place on
 //! the tuned eight-planet curve the planet is read at (`Pip::offset`), so
 //! a harder planet is the same tables a step and a half further on (a
-//! bigger slime and heart, sooner raids, a later species and biome), not
-//! new numbers. Rejected: a second set of per-pip tables, which would be
+//! bigger slime and heart, sooner raids, a later map size and biome), not
+//! new numbers. The species stays the step's, so a fork's planets differ
+//! in how much of it there is, not which. Rejected: a second set of per-pip tables, which would be
 //! one more thing to tune for every planet.
 
 /// How hard a planet on the map is, and what it pays (the owner's "clearly

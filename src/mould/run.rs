@@ -1845,10 +1845,14 @@ impl Run {
         // the window's title and alert read its name.
         let planet = self.planet();
         let map = format!("planet:{md}:{}", node.seed);
-        // The species of the tuned planet nearest its curve place: each
-        // shows up at more than one step, and a Hard fork meets a later
-        // one than its Fair neighbour, a Safe fork an earlier one.
-        let tier = LADDER[nearest(e) as usize - 1];
+        // The species of the tuned planet nearest the step (not the pip's
+        // place): every planet of a fork meets the same species, so the pip
+        // orders them by size, threats and twist alone. Tried first: the
+        // species at the pip's place, and the bot check (Reports/
+        // star-map-2026-11-26) found Safe slower than Fair on 5 of 6 seeds
+        // at step 3, because Safe met the Drifter and Fair the Sprawler,
+        // whose `tier_size` is 0.45.
+        let tier = LADDER[nearest(self.step_curve()) as usize - 1];
         let shrink = shrink_goal(d);
         let mission = Mission {
             name: format!("Planet {d} of {PLANETS}, {}", planet.name),

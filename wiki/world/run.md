@@ -193,8 +193,9 @@ offers two or three planets drawn from the run's seed (`route::star_map`),
 joined to the next step's by crossing lanes, and the player picks one on
 the Stars page before its shop (`Run::choose`; `Run::route` is saved). A
 planet's pip moves the place on the curve it is read at (`Pip::offset`: Safe
--1, Fair 0, Hard +1.5, `Run::curve`), so its slime, heart, raids, species
-(`LADDER` at the nearest tuned planet) and map size and biome all follow;
+-1, Fair 0, Hard +1.5, `Run::curve`), so its slime, heart, raids and map size
+and biome all follow; the species is the step's own (`LADDER` at the tuned
+planet nearest the step), the same for every planet of a fork;
 Safe has no twist, Hard always one. A win pays `reward` times 0.7, 1 or 1.5
 by pip (`Run::pay`), and a Hard planet puts a rare tier-3 card in its shop.
 Each planet has one or two optional contracts (`Contract::pool`, paid by
