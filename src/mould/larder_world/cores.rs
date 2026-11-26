@@ -236,7 +236,7 @@ impl<W: World> Game<W> {
         (b.kind, b.grade) = (kind, grade);
         let (lump, born) = (b.lump, b.born);
         let size = self.world.size();
-        self.world.set_lump(lump, Lump { aim: raid_cell(at, size), leash: rb.leash_at(rb.clench, grade), armour: rb.armour_at(grade), bite: rb.bite_at(grade), ..Lump::default() });
+        self.world.set_lump(lump, Lump { aim: raid_cell(at, size), leash: rb.leash_at(rb.clench, grade), armour: rb.armour_word(rb.armour_at(grade), grade), bite: rb.bite_at(grade), ..Lump::default() });
         self.cores.carry.push((born, lump, carry));
         self.cores.reformed += 1;
         true

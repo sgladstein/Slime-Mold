@@ -783,6 +783,10 @@ impl Rules {
                 self.boss.most = (v.max(0.0) as usize).min(crate::mould::big::LUMPS);
                 return true;
             }
+            "boss_backs" => {
+                self.boss.backs = v.max(0.0) as u32;
+                return true;
+            }
             _ => {}
         }
         // `max_squad=N` (soldier-cap thread, 11-16): the most soldiers
@@ -925,6 +929,7 @@ impl Rules {
             "boss_least" => self.boss.least as f32,
             "boss_cut_least" => self.boss.cut_least as f32,
             "boss_most" => self.boss.most as f32,
+            "boss_backs" => self.boss.backs as f32,
             "max_squad" => self.max_squad as f32,
             "steer" => on(self.steer),
             "funnel" => on(self.funnel),
@@ -1108,6 +1113,11 @@ impl Rules {
             "boss_armour_hi" => &mut self.boss.armour_hi,
             "boss_bite_lo" => &mut self.boss.bite_lo,
             "boss_bite_hi" => &mut self.boss.bite_hi,
+            "boss_ward_lo" => &mut self.boss.ward_lo,
+            "boss_ward_hi" => &mut self.boss.ward_hi,
+            "boss_stalk" => &mut self.boss.stalk,
+            "boss_back_at" => &mut self.boss.back_at,
+            "boss_back_secs" => &mut self.boss.back_secs,
             "boss_size" => &mut self.boss.size,
             "boss_faster" => &mut self.boss.faster,
             "boss_tight" => &mut self.boss.tight,
