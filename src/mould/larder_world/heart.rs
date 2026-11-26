@@ -80,6 +80,18 @@ impl<W: World> Game<W> {
     /// cells); None with no slime on any (`pick_heart`).
     pub fn heart_site(&self) -> Option<(f32, f32)> {
         let sc = self.world.scale();
+        let counts = self.crystal_walkers()?;
+        let near = |p: (f32, f32)| counts.iter().position(|(at, _, _)| (at.0 - p.0).hypot(at.1 - p.1) < sc);
+        let n: Vec<u32> = counts.iter().map(|c| c.1).collect();
+        pick_heart(&n, near(self.core), self.heart_at.and_then(near), self.rules.heart.held).map(|i| counts[i].0)
+    }
+
+    /// Each crystal's middle (fine cells), the walkers within its rim (at
+    /// least a dish cell) from the mould grid's squares a dish cell wide,
+    /// and that rim (fine cells), in `World::crystals`' order; None with
+    /// no grid. Also the crystal hearts' clock (`origin.rs`).
+    pub fn crystal_walkers(&self) -> Option<Vec<CrystalSlime>> {
+        let sc = self.world.scale();
         let bin = (sc as usize).max(1);
         let grid = self.world.mould_grid(bin)?;
         let (w, _) = self.world.size();
@@ -91,12 +103,16 @@ impl<W: World> Game<W> {
             span(at.1, gh).flat_map(|y| span(at.0, gw).map(move |x| (x, y))).filter(|&(x, y)| (mid(x) - at.0).hypot(mid(y) - at.1) <= r).map(|(x, y)| grid[y * gw + x]).sum()
         };
         let crystals = self.world.crystals();
-        let counts: Vec<((f32, f32), u32)> = crystals.iter().enumerate().map(|(c, &(at, _))| (at, on(at, self.world.crystal_r(c).max(sc)))).collect();
-        let near = |p: (f32, f32)| counts.iter().position(|(at, _)| (at.0 - p.0).hypot(at.1 - p.1) < sc);
-        let n: Vec<u32> = counts.iter().map(|c| c.1).collect();
-        pick_heart(&n, near(self.core), self.heart_at.and_then(near), self.rules.heart.held).map(|i| counts[i].0)
+        Some(crystals.iter().enumerate().map(|(c, &(at, _))| {
+            let r = self.world.crystal_r(c).max(sc);
+            (at, on(at, r), r)
+        }).collect())
     }
 }
+
+/// A crystal's middle (fine cells), the walkers within its rim, and the
+/// rim (fine cells): `Game::crystal_walkers`.
+pub type CrystalSlime = ((f32, f32), u32, f32);
 
 /// Which crystal the heart beats from, of crystals holding `n` walkers
 /// each: `home` while it holds `held`; else `was` (the one it beats from
