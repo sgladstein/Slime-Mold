@@ -492,6 +492,8 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// as before.
 pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
     vec![
+        // The slime's toughness (`BLOWS`): the blows a walker takes.
+        ("blows", format!("{}", blows(e))),
         ("surge", ((curve_at_u(&LONGEST_WAIT, e) as f32 * STRETCH).round() as u32).to_string()),
         ("surge_dash", curve_at_u(&SURGE_DASH, e).to_string()),
         ("roam", curve_at_u(&ROAM, e).to_string()),
@@ -520,6 +522,34 @@ pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
         // into specks that never regrouped).
         ("boss_flinch", "0.5".to_string()),
     ]
+}
+
+/// **The blows an ordinary walker takes, by planet** (`blows`, 2026-11-26,
+/// the thread "Make the slime's progression much stronger"). The owner,
+/// 11-26 06:58Z, after run 1795651376 (planets 1-6 won, 9 soldiers lost, 8
+/// of them on planet 5): "way too easy. on the last planet, I didn't even
+/// need to buy another solider. I never felt pressure to need to build
+/// walls and turrets much ... the progression needs to be way stronger
+/// for the slime." His log: kills a second per soldier 9, 16, 37, 136, 58
+/// and 124 on planets 1-6 (about 15 times), the starting slime 18k, 9k,
+/// 33k, 59k, 111k and 95k (about 5 times); the jump at planet 4 is the
+/// carbine with pierce, seek and split, about 7 kills a shot to 35. The
+/// squad's damage multiplies (cards stack), the slime only grew in walkers,
+/// and more walkers cost frame time on the 1070 (planet 8 sits at 16.4 ms
+/// at 4K), so the slime now grows in toughness too: planet 1 as it was,
+/// 2.5 blows (twice to three times the work a walker) from planet 4, and
+/// 5 on the core world. With the size, the work to clear a planet's
+/// starting slime grows about 20 times from planet 1 to 6 against the
+/// squad's 15. Every gun, turret, blast and fire meets it alike; mini-boss
+/// members keep their own armour. Planet 5's Sporer, the one real fight
+/// of that run, gets no step of its own over planet 4. A Direction tuning
+/// number: retune from his play, not by switching it off.
+const BLOWS: [f32; 8] = [1.0, 1.5, 2.0, 2.5, 2.5, 3.0, 4.0, 5.0];
+
+/// The blows a walker takes at curve place `e` (`BLOWS`), for the planet's
+/// card.
+pub fn blows(e: f32) -> f32 {
+    curve_at(&BLOWS, e)
 }
 
 /// **The walkers a marcher's next cell must touch** (the engine's
@@ -3474,21 +3504,26 @@ mod tests {
     #[test]
     fn the_slime_gets_fiercer_deeper() {
         let get = |d: u32, k: &str| enemy_keys(curve_depth(d)).into_iter().find(|(n, _)| *n == k).map(|(_, v)| v.parse::<f32>().unwrap()).unwrap();
+        assert_eq!(get(1, "blows"), 1.0, "planet 1 takes one blow, as before");
+        assert!(get(PLANETS, "blows") >= 4.0, "the core world's slime is the toughest");
         for d in 1..=10 {
             assert!(get(d + 1, "surge") <= get(d, "surge") && get(d + 1, "surge_dash") >= get(d, "surge_dash"), "planet {d}");
             // Specks no more often deeper (owner 11-16: "Specks more often
             // early game"): chances no closer together, no larger share.
             assert!(get(d + 1, "roam") >= get(d, "roam") && get(d + 1, "roam_share") <= get(d, "roam_share"), "planet {d}");
+            // Tougher every planet from planet 1's single blow (the owner,
+            // 11-26: "the progression needs to be way stronger").
+            assert!(get(d + 1, "blows") >= get(d, "blows"), "planet {d}");
             assert_eq!(surge_secs(curve_depth(d)), get(d, "surge") / 30.0);
             let mut p = crate::mould::big::BigParams::today();
             for (k, v) in enemy_keys(curve_depth(d)) {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" {
+                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" || k == "blows" {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0, "planet {d}: {k}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0 || s.blows >= 1.0, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();

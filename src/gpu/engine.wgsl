@@ -261,8 +261,10 @@ struct Params {
     // the birth ceiling or the life states).
     tough: f32, tough_full: f32, scar_burn: u32, dream: f32,
     // The wind (`WIND_AT`, a planet twist, 2026-11-24): the push on every
-    // step a walker takes, in fine cells (0 none), and two spare words.
-    wind_x: f32, wind_y: f32, _wind_a: u32, _wind_b: u32,
+    // step a walker takes, in fine cells (0 none); then the blows an
+    // ordinary walker takes (`blows`, 2026-11-26, the slime's toughness by
+    // planet: 1 or less is one blow, as before) and a spare word.
+    wind_x: f32, wind_y: f32, blows: f32, _wind_b: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -518,6 +520,26 @@ fn scar_tough(k: u32) -> bool {
     let p = P.tough * min(scar_at(i) / P.tough_full, 1.0);
     return unit(keyed(P.s_starve, S.t, k ^ 0x71237123u)) < p;
 }
+// **The slime toughens planet by planet** (`Settings::blows`, 2026-11-26,
+// the owner's "the progression needs to be way stronger for the slime"
+// after his 11-26 run: the squad's kills a second per soldier grew about
+// 15 times from planet 1 to 6, the slime's size about 5): an ordinary
+// walker takes `blows` blows to kill, counted in its word's hits bits
+// (`HURT_BITS`, free outside a lump or a condensed striker; a birth clears
+// them, joining a lump clears them, and they never heal). A fraction is
+// a share of walkers taking one blow more, fixed by the slot, so 2.5 is
+// half the slime at 2 and half at 3. One word read a blow; nothing a step.
+fn tough_walker(k: u32) -> bool {
+    if (P.blows <= 1.0) { return false; }
+    let b = min(P.blows, 15.0);
+    var need = u32(floor(b));
+    if (unit(lowbias32(k ^ 0xB10B5u)) < b - floor(b)) { need += 1u; }
+    let wd = dense_word(k);
+    let hurt = wd >> HURT_SHIFT;
+    if (hurt + 1u >= min(need, 15u)) { return false; }
+    set_dense(k, (wd & ~HURT_BITS) | ((hurt + 1u) << HURT_SHIFT));
+    return true;
+}
 fn armoured(k: u32) -> bool {
     let lb = lump_of(k);
     // A condensed striker takes a blow for each walker it took in that is
@@ -537,7 +559,7 @@ fn armoured(k: u32) -> bool {
         set_put(k, w + 1u);
         return true;
     }
-    if (lb == 0u) { return scar_tough(k); }
+    if (lb == 0u) { return scar_tough(k) || tough_walker(k); }
     let wd = dense_word(k);
     let hurt = wd >> HURT_SHIFT;
     if (hurt + 1u >= min(P.lumps[lb - 1u].armour, 15u)) { return false; }

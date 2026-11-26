@@ -3947,6 +3947,50 @@ mod tests {
         assert!(killed >= 1, "{} shots at a set walker killed none", armour + 1);
     }
 
+    /// **The slime toughens by planet** (`blows`, 2026-11-26, the owner's
+    /// "the progression needs to be way stronger for the slime"): the same
+    /// world shot at its thickest cell every tick for 3 game seconds. At 3
+    /// blows the first shot kills none (every walker starts unhurt), the
+    /// shots leave hurt walkers, and they kill well under two thirds of
+    /// what they kill at 1 blow (as before).
+    #[test]
+    fn tough_slime_takes_its_blows() {
+        use crate::mould::squad::{slime_trail, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |blows: &str| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "blows", blows).unwrap();
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 8.0 {
+                g.step();
+            }
+            let mut kills = Vec::new();
+            for _ in 0..90 {
+                let e = &g.world.e;
+                let w = e.dish.w;
+                let wk = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+                let mut on = vec![0u32; w * e.dish.h];
+                for q in (0..e.n as usize).filter(|&q| en[q] >= 0.0) {
+                    on[wk[4 * q + 1] as usize * w + wk[4 * q] as usize] += 1;
+                }
+                let c = (0..on.len()).max_by_key(|&i| on[i]).unwrap();
+                let at = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+                let shot = Frame { shots: vec![ShotIn { from: at, to: at, r: 2.0, over: false }], slime: slime_trail(6.0), ..Frame::default() };
+                kills.push(g.world.frame(&shot, 1).shots[0].killed);
+            }
+            let hurt = g.world.e.dense_of().iter().filter(|&&d| d & 0x10000 == 0 && d >> 28 > 0).count();
+            (kills, hurt)
+        };
+        let (one, _) = play("1");
+        let (three, hurt) = play("3");
+        let (a, b) = (one.iter().sum::<u32>(), three.iter().sum::<u32>());
+        assert!(one[0] > 0 && three[0] == 0, "the first shot: {} at 1 blow, {} at 3", one[0], three[0]);
+        assert!(hurt > 0, "3 blows: no walker left hurt");
+        assert!(a > 20 && 3 * b < 2 * a, "kills in 3 s: {a} at 1 blow, {b} at 3");
+    }
+
     /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,
     /// `mould::plants`): a map with plants of all four kinds, sparse so
     /// they spread, run side by side; a burn lit at 3 s. The plants,

@@ -159,7 +159,8 @@ pub const SET_AT: usize = 1216;
 pub const TOUGH_AT: usize = 1232;
 /// The wind row (a planet twist, 2026-11-24; Params grew from 1248 to
 /// 1264, after the scar tissue row): the push on every step a walker
-/// takes, x and y in fine cells (`Settings::wind`), and two spare words.
+/// takes, x and y in fine cells (`Settings::wind`), the blows an ordinary
+/// walker takes (`Settings::blows`, 2026-11-26) and a spare word.
 pub const WIND_AT: usize = 1248;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
@@ -630,6 +631,15 @@ pub struct Settings {
     /// The game sets it (`World::set_twist`), so it has no key of its own
     /// (a planet twist, rolled on, not a switch); 0 none.
     pub wind: [f32; 2],
+    /// **The blows an ordinary walker takes** (`blows=B`, 2026-11-26, the
+    /// thread "Make the slime's progression much stronger"; GPU only, no
+    /// CPU twin): the slime's toughness by planet (`run::enemy_keys`), so
+    /// the squad's damage, which multiplies with its cards, meets a slime
+    /// that grows in toughness as well as size. A fraction is a share of
+    /// the walkers taking one blow more (engine.wgsl's `tough_walker`).
+    /// Lump members keep their lump's armour, set walkers theirs. 1 is one
+    /// blow, as before; at most 15 (`HURT_BITS`).
+    pub blows: f32,
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
     /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
@@ -923,6 +933,7 @@ impl Settings {
             scar_burn: false,
             dream: 0.0,
             wind: [0.0, 0.0],
+            blows: 1.0,
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
@@ -1270,6 +1281,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scar_tough_full" => s.scar_tough_full = f()?.max(1.0),
         "scar_burn" => s.scar_burn = int()? != 0,
         "dream" => s.dream = f()?.clamp(0.0, 1.0),
+        "blows" => s.blows = f()?.clamp(1.0, 15.0),
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
@@ -2715,7 +2727,7 @@ impl Engine {
         let dream = if s.ceiling > 0 && self.cycles { s.dream } else { 0.0 };
         b.extend(u32_bytes(&[(scars && s.scar_burn) as u32, dream.to_bits()]));
         assert_eq!(b.len(), WIND_AT, "Params rows before the wind row moved");
-        b.extend(f32_bytes(&[s.wind[0], s.wind[1], 0.0, 0.0]));
+        b.extend(f32_bytes(&[s.wind[0], s.wind[1], s.blows.clamp(1.0, 15.0), 0.0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food
