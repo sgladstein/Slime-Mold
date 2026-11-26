@@ -1496,7 +1496,7 @@ pub struct Run {
     /// picked at each step so far, from step 1, and whether its heat was
     /// on. Shorter than `depth` while the player is choosing the next
     /// planet (`choosing`). A save from before it reads as node 0 (the
-    /// Fair planet) everywhere, which is always a path.
+    /// Fair planet) everywhere.
     pub route: Vec<Leg>,
     /// Tests: the run read as tuned planet `tuned` of the eight, whatever
     /// its step (`Run::tuned`), so the tests written for eight planets

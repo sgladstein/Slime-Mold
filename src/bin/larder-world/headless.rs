@@ -114,7 +114,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let to: u32 = extra.parse().unwrap_or(2).clamp(2, slime_mould::mould::run::PLANETS);
             r.depth = 1;
             r.route.truncate(1);
-            while r.depth < to && !r.over {
+            while (r.depth < to || !r.choosing()) && !r.over && r.depth < slime_mould::mould::run::PLANETS {
                 if r.choosing() {
                     let c = r.choices();
                     let k = c[(r.depth as usize * 7 + 1) % c.len()].k;
@@ -210,7 +210,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             _ => {}
         }
         let mut extra = extra.split('@');
-        if let Some(tab) = extra.next().filter(|t| !t.is_empty()) {
+        if let Some(tab) = extra.next().filter(|t| !t.is_empty() && p != slime_mould::world::start::Page::Stars) {
             if !m.open_shop_tab_named(tab) {
                 return Err(format!("menu=...@{tab}: no such shop tab"));
             }

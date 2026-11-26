@@ -13,8 +13,8 @@
 //!
 //! The map is drawn from the run's seed alone (`star_map`), so a saved
 //! run keeps its map and only the route taken is saved (`Run::route`).
-//! Node 0 of every step is the Fair one and leads to the next step's node
-//! 0, so an all-zero route (an old save's) is always a path.
+//! Node 0 of every step is the Fair one; a run with no route (an old
+//! save's, the bots') plays node 0 at every step.
 //!
 //! What a pip does to the planet is `run`'s: the pip moves the place on
 //! the tuned eight-planet curve the planet is read at (`Pip::offset`), so
@@ -294,7 +294,9 @@ pub fn star_map(seed: u64, planets: u32, curve: impl Fn(u32) -> f32) -> StarMap 
     }
     // The lanes: each node leads to the next step's nodes beside it (at
     // most one lane over), each such edge kept two times in three, then
-    // every node given a way on and a way in, and Fair to Fair always.
+    // every node given a way on and a way in (rejected: a lane from Fair
+    // to Fair at every step, so an all-zero route was always a path; it
+    // drew lanes clean across the map, top to bottom).
     for i in 0..steps.len().saturating_sub(1) {
         let (here, next) = (&steps[i], &steps[i + 1]);
         let mut to: Vec<Vec<u8>> = vec![Vec::new(); here.len()];
@@ -306,9 +308,6 @@ pub fn star_map(seed: u64, planets: u32, curve: impl Fn(u32) -> f32) -> StarMap 
                     to[a].push(nb.k);
                 }
             }
-        }
-        if !to[0].contains(&0) {
-            to[0].push(0);
         }
         for (a, na) in here.iter().enumerate() {
             if to[a].is_empty() {
@@ -349,8 +348,8 @@ mod tests {
             for (i, step) in m.steps.iter().enumerate() {
                 assert_eq!(step[0].pip, Pip::Fair, "seed {seed}");
                 if i + 1 < m.steps.len() {
-                    assert!(step[0].to.contains(&0), "seed {seed} step {}: Fair leads to Fair", i + 1);
                     for n in step {
+                        assert!(n.to.iter().all(|&k| (m.steps[i + 1][k as usize].lane - n.lane).abs() <= 1.01), "seed {seed}: a lane across the map");
                         assert!(!n.to.is_empty(), "seed {seed}: a dead end at step {}", i + 1);
                     }
                     for n in &m.steps[i + 1] {

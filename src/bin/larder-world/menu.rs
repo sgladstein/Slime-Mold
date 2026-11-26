@@ -648,7 +648,7 @@ pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
         })
         .collect();
     let heading = format!("Planet {} of {}: pick the next planet. {}", r.depth, run::PLANETS, r.line());
-    let heat_says = format!("A slime {:.0}% bigger and sooner raids, for {}% of the pay", (run::HEAT_WALKERS - 1.0) * 100.0, run::HEAT_PAY_X10 * 10);
+    let heat_says = format!("Slime +{:.0}%, raids sooner: pay x{:.1}", (run::HEAT_WALKERS - 1.0) * 100.0, run::HEAT_PAY_X10 as f32 / 10.0);
     StarView { steps, at: r.depth, heading, purse: format!("{} points", r.points), heat_says }
 }
 
