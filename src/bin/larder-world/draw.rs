@@ -2379,10 +2379,14 @@ impl App {
         m.tell = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| slime_tell(g, r.level().tier));
         m.twist = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
         // The landing card: whole for `INTRO_SECS` of game time (it holds
-        // while paused), then fading over `INTRO_FADE`.
+        // while paused), then fading over `INTRO_FADE`; or, from the
+        // player's first key or click (`intro_seen`), fading over
+        // `INTRO_GONE` of real time, whichever is sooner.
         m.intro = self.intro.as_ref().and_then(|(i, at)| {
             let since = g.time() - at;
-            let a = ((INTRO_SECS + INTRO_FADE - since) / INTRO_FADE).clamp(0.0, 1.0);
+            let shown = ((INTRO_SECS + INTRO_FADE - since) / INTRO_FADE).clamp(0.0, 1.0);
+            let pressed = self.intro_seen.map_or(1.0, |t| (1.0 - t.elapsed().as_secs_f32() / INTRO_GONE).clamp(0.0, 1.0));
+            let a = shown.min(pressed);
             (a > 0.0).then(|| slime_mould::world::ui::Intro { alpha: a, ..i.clone() })
         });
         (m.ghost_ok, m.ghost_note) = match ghost {
@@ -3526,6 +3530,9 @@ fn compass(deg: f32) -> &'static str {
 /// Game seconds the landing card (`ui::Intro`) stays whole, and fades.
 const INTRO_SECS: f32 = 9.0;
 const INTRO_FADE: f32 = 1.5;
+/// Real seconds the landing card takes to fade once the player presses a
+/// key or a button (`App::intro_seen`; owner, 2026-11-26).
+const INTRO_GONE: f32 = 0.35;
 
 /// The goal line with a crystal heart alive (`origin.rs`; the origin's
 /// line, Look and interface 2026-11-24, until the owner's 11-26 ruling

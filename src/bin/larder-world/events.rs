@@ -113,6 +113,9 @@ impl ApplicationHandler for App {
             WindowEvent::KeyboardInput { event, .. } => {
                 let PhysicalKey::Code(code) = event.physical_key else { return };
                 let pressed = event.state == ElementState::Pressed;
+                if pressed && !event.repeat && !self.in_menu() {
+                    self.intro_pressed();
+                }
                 // Ctrl + and Ctrl - size the UI, in play and on the menu.
                 if pressed && self.ctrl && self.ui_key(code) {
                     return;
@@ -246,6 +249,9 @@ impl ApplicationHandler for App {
                     }
                     return;
                 }
+                if down {
+                    self.intro_pressed();
+                }
                 if self.viewer_button(b, down) {
                     return;
                 }
@@ -303,6 +309,19 @@ impl ApplicationHandler for App {
 /// until then they were silent). Straight to the speaker: a click is the
 /// player's, not the game's, so it never goes through the listener.
 impl App {
+    /// **The landing card goes at the first press** (owner, 2026-11-26:
+    /// "The message that pops up in every planet should go away when you
+    /// start pressing buttons"): a key or a click in play starts its fade
+    /// (`INTRO_GONE`, `draw`). Only presses count, so the release of the
+    /// shop's landing click, or a key still held from it, never clears it
+    /// unread; the cursor and the wheel leave it, to read while looking.
+    /// The pause menu's planet page still shows it whole.
+    fn intro_pressed(&mut self) {
+        if self.intro.is_some() && self.intro_seen.is_none() {
+            self.intro_seen = Some(std::time::Instant::now());
+        }
+    }
+
     pub(super) fn ui_sound(&mut self, cmds: &[slime_mould::sound::SoundCmd]) {
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
             sp.send(cmds.iter().copied());
