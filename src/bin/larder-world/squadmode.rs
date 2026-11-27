@@ -252,7 +252,7 @@ impl App {
             sq.steer = (0.0, 0.0);
         }
         self.controls.selected.clear();
-        self.hud.alert("No squad controlled: each runs on its own orders. WASD pans; click a squad, its number or Space to take command", None, theme::TEXT);
+        self.hud.alert("Squads on their own orders: click one or press Space to command", None, theme::TEXT);
     }
 
     /// With none controlled: the live squad nearest the world point, if a
@@ -395,7 +395,7 @@ impl App {
                 if let Some(&o) = overlapping(g, q as usize).first() {
                     g.apply(Cmd::Merge(q, o as u8));
                 } else {
-                    self.hud.alert("No squad overlaps yours: bring them together to combine, or link them (Ctrl + its number)", None, theme::WARN);
+                    self.hud.alert("No squad touches yours to combine (Ctrl + its number links)", None, theme::WARN);
                 }
             }
             _ => {
@@ -416,9 +416,9 @@ impl App {
                             self.hud.alert(&format!("Squad {} unlinked", n + 1), None, theme::TEXT);
                         } else if overlapping(g, q as usize).contains(&n) {
                             g.apply(Cmd::Link(q, n as u8));
-                            self.hud.alert(&format!("Squad {} linked with yours: you command them as one", n + 1), None, theme::TEXT);
+                            self.hud.alert(&format!("Squad {} linked: you command them as one", n + 1), None, theme::TEXT);
                         } else {
-                            self.hud.alert(&format!("Squad {} isn't touching yours: bring them together to link", n + 1), None, theme::WARN);
+                            self.hud.alert(&format!("Squad {} must touch yours to link", n + 1), None, theme::WARN);
                         }
                     }
                 } else {
@@ -528,7 +528,7 @@ impl App {
             Button::Left if self.squad_free() => !(!down && self.controls_dragging()),
             Button::Right if self.squad_free() => {
                 if down {
-                    self.hud.alert("No squad controlled: click a squad, its tile or its number to give it orders", None, theme::WARN);
+                    self.hud.alert("No squad in command: click one or press its number", None, theme::WARN);
                 }
                 true
             }
@@ -650,7 +650,7 @@ impl App {
                 let Some(g) = self.game.as_mut() else { return };
                 if g.active == Some(lead as usize) && g.apply(Cmd::Band(mask)) {
                     let names: Vec<String> = qs.iter().map(|q| (q + 1).to_string()).collect();
-                    self.hud.alert(&format!("Squads {}: you command them as one (click one, or its number, to take it alone)", names.join(", ")), None, theme::TEXT);
+                    self.hud.alert(&format!("Squads {} as one: click one to take it alone", names.join(", ")), None, theme::TEXT);
                 }
             }
         }
@@ -879,7 +879,7 @@ impl App {
     pub(super) fn squad_heal(&mut self) {
         let (Some(q), Some(g)) = (self.active(), self.game.as_mut()) else { return };
         if g.apply(Cmd::Heal(q)) {
-            self.hud.alert("Healing: stand still; fast by a crystal you hold, slow elsewhere, food from the bank", None, theme::TEXT);
+            self.hud.alert("Healing: stand still, fastest by your crystals", None, theme::TEXT);
         }
     }
 
@@ -936,7 +936,7 @@ impl App {
                 g.apply(Cmd::Stance(k, back));
             }
         }
-        self.hud.alert(if hold { "Hold fire: on (the left button still fires a volley)" } else { "Hold fire: off" }, None, theme::TEXT);
+        self.hud.alert(if hold { "Hold fire on: a left click still fires" } else { "Hold fire: off" }, None, theme::TEXT);
     }
 
     /// A squad panel event: command a squad, bring one in, split, combine.

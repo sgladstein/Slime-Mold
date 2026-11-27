@@ -1915,7 +1915,7 @@ impl App {
         let t = g.time();
         let line = slime_mould::mould::playlog::Playlog::note(self.log_notes, t, self.camera.centre(), self.camera.zoom);
         Self::log_write(&self.log_path, &line);
-        self.hud.alert(&format!("Note {} dropped at {}:{:02} (it is in the play log)", self.log_notes, t as u32 / 60, t as u32 % 60), None, theme::ACCENT);
+        self.hud.alert(&format!("Note {} saved at {}:{:02}", self.log_notes, t as u32 / 60, t as u32 % 60), None, theme::ACCENT);
     }
 
     /// Appends `text` to the play log (nothing without one).
@@ -2223,14 +2223,14 @@ impl App {
             let newest = |kind: DropKind| g.starfall.live.iter().rev().find(|d| d.down && d.kind == kind);
             if g.starfall.landed > landed {
                 if let Some(d) = newest(DropKind::Ore) {
-                    self.hud.alert("Ore has landed: send a squad to stand on it for shop points", Some(d.at), theme::WARN);
+                    self.hud.alert("Ore landed: stand a squad on it for shop points", Some(d.at), theme::WARN);
                 }
             }
             if g.starfall.cores > cores {
                 if let Some(d) = newest(DropKind::Core) {
                     let what = match d.from {
-                        CoreFrom::Boss { .. } => "A mini-boss dropped its core: stand a squad on it for shop points before the slime eats it back",
-                        CoreFrom::Raid => "The beaten raid dropped a core: stand a squad on it for shop points",
+                        CoreFrom::Boss { .. } => "A mini-boss core: stand a squad on it before the slime does",
+                        CoreFrom::Raid => "A raid's core: stand a squad on it for shop points",
                         _ => "A core dropped: stand a squad on it for shop points",
                     };
                     self.hud.alert(what, Some(d.at), theme::WARN);
@@ -2262,13 +2262,13 @@ impl App {
             let at = g.stand.live.filter(|h| h.origin).map_or(g.origin.home, |h| h.centre);
             let gather = g.stand.live.is_some_and(|h| h.origin && h.gather);
             if g.origin.formed > self.origin_told.0 {
-                self.hud.alert("A heart is growing where the slime holds a crystal thick: Space to look", Some(at), theme::BAD);
+                self.hud.alert("A heart is growing on a crystal (Space to look)", Some(at), theme::BAD);
             }
             if gather && !self.origin_told.1 {
-                self.hud.alert("The slime is gathering into its heart for a last stand", Some(at), theme::BAD);
+                self.hud.alert("The slime gathers into its heart for a last stand", Some(at), theme::BAD);
             }
             if g.origin.broken > self.origin_told.2 {
-                self.hud.alert("The heart is broken: thin or drain its crystal before another grows", Some(g.origin.home), theme::GOOD);
+                self.hud.alert("Heart broken: drain its crystal before another grows", Some(g.origin.home), theme::GOOD);
             }
             self.origin_told = (g.origin.formed, self.origin_told.1 || gather, g.origin.broken);
         }
@@ -2279,7 +2279,7 @@ impl App {
         if g.broken.is_some() != self.broken_told {
             self.broken_told = g.broken.is_some();
             if self.broken_told {
-                self.hud.alert("The slime is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
+                self.hud.alert("The slime is broken: cut-off bits starve", None, theme::GOOD);
             } else {
                 self.hud.alert("The slime is growing back from a crystal", None, theme::BAD);
             }
@@ -3376,7 +3376,7 @@ fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime
     use slime_mould::mould::larder_world::RaidAim;
     let name = |k: usize| g.buildings.get(k).map_or("building", |b| b.kind.name());
     match d.aim {
-        _ if d.last_stand => "Last stand: all of the slime rushes your soldiers".into(),
+        _ if d.last_stand => "Last stand: all the slime rushes you".into(),
         RaidAim::Building(k) => format!("The slime is raiding your {}", name(k)),
         RaidAim::Lure { from: Some(k), .. } => format!("A raid on your {} turns for the lure", name(k)),
         RaidAim::Lure { from: None, .. } => "A raid on your soldiers turns for the lure".into(),
