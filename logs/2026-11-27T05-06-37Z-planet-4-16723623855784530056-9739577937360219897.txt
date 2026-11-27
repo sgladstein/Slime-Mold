@@ -1,0 +1,799 @@
+log map=planet:4:16723623855784530056 seed=9739577937360219897 when=2026-11-27T05:06:37Z build=3627:b16e089:2026-11-26 mode=squads mission=Planet_5_of_12,_Ulme tier=swarmer planet=5 run=1795753581 gun=range+ammo/torch/needle/2/79/327/86/31/4/100 turrets=none bought=strike2+rate2+range2+fireproof2+walls1 devices=none switches=none keys=none
+cmd t=0.0 active 0
+cmd t=0.0 arm 0 carbine 3 19.864014 2.9937406 0.9605866 1 13 5 1.0792716
+cmd t=0.0 auto 0
+t=1 mould=44722 mass=44722 soldiers=4 squads=1 bank=2000 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=17.6
+frames px=3840x2004 detail=50 zoom=4.0 fast=0 n=440 step=0.9/17.0 hear=0.0/0.9 prep=1.0/6.4 wait=14.2/27.8 record=0.0/0.1 present=0.3/0.7
+cmd t=1.8 build pump 49 323.2375
+cmd t=1.8 sorder 0 build 0
+cmd t=1.8 buy
+cmd t=1.8 buy
+cmd t=1.8 buy
+t=2 mould=44713 mass=44713 soldiers=7 squads=1 bank=300 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=548 step=0.1/11.2 hear=0.0/0.5 prep=0.7/3.9 wait=15.3/15.6 record=0.0/0.1 present=0.3/4.7
+t=3 mould=44682 mass=44682 soldiers=7 squads=1 bank=300 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=59 step=0.3/1.3 hear=0.0/0.5 prep=0.6/1.2 wait=15.1/15.6 record=0.0/0.1 present=0.4/0.5
+t=4 mould=44680 mass=44680 soldiers=7 squads=1 bank=300 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=0.3/1.5 hear=0.0/0.5 prep=0.6/1.4 wait=15.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=5 mould=44691 mass=44691 soldiers=7 squads=1 bank=300 income=0 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=61 step=0.3/1.1 hear=0.0/0.5 prep=0.6/0.8 wait=15.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=6 mould=44685 mass=44685 soldiers=7 squads=1 bank=304 income=4 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=59 step=0.3/1.5 hear=0.0/0.5 prep=0.6/1.4 wait=15.1/15.6 record=0.0/0.1 present=0.4/0.6
+t=7 mould=44646 mass=44646 soldiers=7 squads=1 bank=309 income=9 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=24.0 fast=0 n=60 step=0.3/1.7 hear=0.0/0.5 prep=0.6/1.4 wait=15.1/15.6 record=0.0/0.1 present=0.4/0.5
+t=8 mould=44610 mass=44610 soldiers=7 squads=1 bank=313 income=13 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.3/2.1 hear=0.0/0.5 prep=0.6/0.8 wait=15.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=9 mould=44605 mass=44605 soldiers=7 squads=1 bank=317 income=17 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=0.3/1.7 hear=0.0/0.5 prep=0.6/1.3 wait=15.1/15.6 record=0.0/0.1 present=0.4/0.5
+crystals t=10 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=10 mould=44605 mass=44605 soldiers=7 squads=1 bank=321 income=21 pumped=0 shots=0 killed=0 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=0.3/2.0 hear=0.0/0.5 prep=0.6/0.8 wait=15.2/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=244682 late=0 gap=10.1 render=1.4 soft=0 dropped=0 reopened=0
+t=11 mould=44612 mass=44612 soldiers=7 squads=1 bank=374 income=74 pumped=0 shots=2 killed=1 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=0.6/8.0 hear=0.0/0.5 prep=0.6/0.8 wait=14.9/15.7 record=0.0/0.1 present=0.4/0.5
+t=12 mould=44627 mass=44627 soldiers=7 squads=1 bank=423 income=123 pumped=0 shots=2 killed=2 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=0.3/2.6 hear=0.0/0.5 prep=0.6/1.4 wait=15.1/15.6 record=0.0/0.1 present=0.4/0.5
+t=13 mould=44645 mass=44645 soldiers=7 squads=1 bank=471 income=171 pumped=0 shots=6 killed=6 pumps=0 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=0.5/8.5 hear=0.0/0.5 prep=0.6/0.9 wait=14.9/15.7 record=0.0/0.1 present=0.4/0.5
+t=14 mould=44656 mass=44656 soldiers=7 squads=1 bank=546 income=246 pumped=26 shots=6 killed=10 pumps=1 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.6/9.1 hear=0.0/0.5 prep=0.6/1.1 wait=14.8/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=14.4 steer 0 0 1
+cmd t=14.9 steer 0 0 0
+t=15 mould=44656 mass=44656 soldiers=7 squads=1 bank=633 income=333 pumped=65 shots=6 killed=11 pumps=1 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.4/3.9 hear=0.0/0.5 prep=0.6/1.4 wait=15.0/15.6 record=0.0/0.1 present=0.4/0.5
+t=16 mould=44728 mass=44728 soldiers=7 squads=1 bank=721 income=421 pumped=104 shots=11 killed=12 pumps=1 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.6/10.0 hear=0.0/0.5 prep=0.6/1.4 wait=14.8/15.6 record=0.0/0.1 present=0.4/0.5
+t=17 mould=44799 mass=44799 soldiers=7 squads=1 bank=808 income=508 pumped=142 shots=30 killed=33 pumps=1 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.4/10.4 hear=0.0/0.5 prep=0.6/0.8 wait=14.1/15.6 record=0.0/0.1 present=0.4/0.5
+t=18 mould=44860 mass=44860 soldiers=7 squads=1 bank=895 income=595 pumped=181 shots=38 killed=47 pumps=1 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.0/10.2 hear=0.0/0.5 prep=0.7/1.3 wait=14.3/15.6 record=0.0/0.1 present=0.4/0.6
+cmd t=19.0 build pump 98.333336 331.15833
+cmd t=19.0 squeue 0 build 1
+t=19 mould=44891 mass=44891 soldiers=7 squads=1 bank=483 income=683 pumped=220 shots=51 killed=87 pumps=1 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=59 step=1.4/10.8 hear=0.0/0.5 prep=3.0/3.9 wait=11.6/15.4 record=0.1/0.1 present=0.4/0.5
+crystals t=20 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=20 mould=45037 mass=45037 soldiers=7 squads=1 bank=573 income=773 pumped=259 shots=53 killed=92 pumps=1 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=61 step=0.6/10.0 hear=0.0/0.5 prep=0.9/3.6 wait=14.2/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=245682 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+cmd t=20.3 build pump 23.166668 349.99167
+cmd t=20.3 squeue 0 build 2
+t=21 mould=45127 mass=45127 soldiers=7 squads=1 bank=165 income=865 pumped=299 shots=56 killed=95 pumps=2 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.5/9.8 hear=0.0/0.5 prep=0.8/4.2 wait=14.5/15.6 record=0.0/0.1 present=0.4/0.5
+t=22 mould=45242 mass=45242 soldiers=7 squads=1 bank=261 income=961 pumped=343 shots=62 killed=109 pumps=2 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.2/10.9 hear=0.0/0.5 prep=0.6/1.3 wait=14.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=23 mould=45331 mass=45331 soldiers=7 squads=1 bank=353 income=1053 pumped=387 shots=64 killed=109 pumps=2 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.5/9.9 hear=0.0/0.5 prep=0.7/0.9 wait=14.8/15.6 record=0.0/0.1 present=0.4/0.5
+t=24 mould=45398 mass=45398 soldiers=7 squads=1 bank=447 income=1147 pumped=431 shots=66 killed=110 pumps=2 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.5/10.1 hear=0.0/0.5 prep=0.6/0.9 wait=14.9/15.6 record=0.0/0.1 present=0.4/0.5
+t=25 mould=45519 mass=45519 soldiers=7 squads=1 bank=543 income=1243 pumped=475 shots=73 killed=114 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.2/10.1 hear=0.0/0.5 prep=0.6/0.8 wait=14.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=26 mould=45683 mass=45683 soldiers=7 squads=1 bank=642 income=1342 pumped=524 shots=77 killed=116 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.5/10.2 hear=0.0/0.5 prep=0.6/0.9 wait=14.9/15.6 record=0.0/0.1 present=0.4/0.6
+cmd t=26.1 sorder 0 move 79.5 314.49167
+t=27 mould=45819 mass=45819 soldiers=7 squads=1 bank=741 income=1441 pumped=573 shots=77 killed=116 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.4/2.7 hear=0.0/0.5 prep=0.6/0.8 wait=15.0/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=27.3 stance 0 free
+cmd t=27.3 stance 1 free
+cmd t=27.3 stance 2 free
+cmd t=27.3 stance 3 free
+cmd t=27.3 stance 4 free
+cmd t=27.3 stance 5 free
+cmd t=27.3 stance 6 free
+t=28 mould=45934 mass=45934 soldiers=7 squads=1 bank=838 income=1538 pumped=622 shots=105 killed=117 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.9/11.0 hear=0.0/0.5 prep=0.7/1.3 wait=14.4/15.6 record=0.0/0.1 present=0.4/0.5
+t=29 mould=46000 mass=46000 soldiers=7 squads=1 bank=939 income=1639 pumped=671 shots=105 killed=117 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.3/1.7 hear=0.0/0.5 prep=0.6/0.8 wait=15.1/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=29.9 sorder 0 move 96.833336 291.99167
+crystals t=30 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=30 mould=46068 mass=46068 soldiers=7 squads=1 bank=1040 income=1740 pumped=720 shots=105 killed=117 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.3/2.6 hear=0.0/0.5 prep=0.6/0.8 wait=15.1/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=246682 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=31 mould=46188 mass=46188 soldiers=7 squads=1 bank=1092 income=1792 pumped=769 shots=109 killed=117 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=0.3/2.3 hear=0.0/0.5 prep=0.7/1.2 wait=15.0/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=31.1 buy
+cmd t=31.3 buy
+t=32 mould=46363 mass=46363 soldiers=9 squads=1 bank=340 income=1840 pumped=817 shots=178 killed=121 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.2/10.5 hear=0.0/0.5 prep=0.7/1.2 wait=14.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=33 mould=46488 mass=46488 soldiers=9 squads=1 bank=389 income=1889 pumped=866 shots=262 killed=124 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.4/11.2 hear=0.0/0.5 prep=0.6/1.0 wait=13.9/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=33.3 sorder 0 move 62 254.99167
+t=34 mould=46583 mass=46583 soldiers=9 squads=1 bank=438 income=1938 pumped=915 shots=323 killed=126 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.2/11.2 hear=0.0/0.5 prep=0.6/0.9 wait=14.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=35 mould=46637 mass=46637 soldiers=9 squads=1 bank=487 income=1987 pumped=964 shots=352 killed=126 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=3.0 fast=0 n=60 step=0.5/7.3 hear=0.0/0.5 prep=0.6/0.9 wait=14.9/15.6 record=0.0/0.1 present=0.4/0.5
+t=36 mould=46688 mass=46688 soldiers=9 squads=1 bank=536 income=2036 pumped=1013 shots=378 killed=129 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=3.0 fast=0 n=60 step=0.6/6.5 hear=0.0/0.4 prep=0.6/0.9 wait=14.8/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=36.1 sorder 0 move 96.66666 226.17499
+t=37 mould=46782 mass=46782 soldiers=9 squads=1 bank=585 income=2085 pumped=1062 shots=454 killed=130 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=3.0 fast=0 n=60 step=0.7/6.6 hear=0.0/0.4 prep=0.6/0.9 wait=14.6/15.6 record=0.0/0.1 present=0.4/0.5
+t=38 mould=46983 mass=46983 soldiers=9 squads=1 bank=634 income=2134 pumped=1110 shots=492 killed=132 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=3.0 fast=0 n=60 step=0.7/6.7 hear=0.0/0.5 prep=0.7/1.1 wait=14.6/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=38.5 build pump 61.333344 222.84164
+cmd t=38.5 sorder 0 build 3
+t=39 mould=47157 mass=47157 soldiers=9 squads=1 bank=187 income=2187 pumped=1159 shots=526 killed=133 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=3.0 fast=0 n=60 step=0.4/6.3 hear=0.0/0.5 prep=0.7/1.2 wait=14.8/15.6 record=0.0/0.1 present=0.4/0.5
+crystals t=40 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=40 mould=47271 mass=47271 soldiers=9 squads=1 bank=240 income=2240 pumped=1208 shots=597 killed=145 pumps=3 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=0.8/10.5 hear=0.0/0.5 prep=0.6/0.8 wait=14.6/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=247683 late=0 gap=10.0 render=0.8 soft=0 dropped=0 reopened=0
+t=41 mould=47343 mass=47343 soldiers=9 squads=1 bank=298 income=2298 pumped=1262 shots=677 killed=178 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=0.5/11.6 hear=0.0/0.5 prep=0.6/1.1 wait=14.9/15.6 record=0.0/0.1 present=0.4/0.6
+cmd t=41.7 sorder 0 move 107.125 169.13333
+t=42 mould=47413 mass=47413 soldiers=9 squads=1 bank=356 income=2356 pumped=1316 shots=773 killed=201 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=1.0/11.6 hear=0.0/0.5 prep=0.6/0.9 wait=14.2/15.6 record=0.0/0.1 present=0.4/0.6
+t=43 mould=47536 mass=47536 soldiers=9 squads=1 bank=414 income=2414 pumped=1370 shots=843 killed=213 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=1.3/11.2 hear=0.0/0.5 prep=0.6/1.0 wait=14.1/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=43.3 sorder 0 move 50.75 123.98749
+raid t=44.0 to=54,320 held=22029 share=0.60 size=0.28
+t=44 mould=47675 mass=47675 soldiers=9 squads=1 bank=472 income=2472 pumped=1423 shots=847 killed=213 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=0.4/3.9 hear=0.0/0.5 prep=0.6/0.9 wait=15.0/15.6 record=0.1/0.1 present=0.4/0.5
+t=45 mould=49719 mass=49719 soldiers=9 squads=1 bank=526 income=2526 pumped=1477 shots=848 killed=215 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=0.5/7.4 hear=0.0/0.5 prep=0.7/1.5 wait=14.8/15.5 record=0.0/0.1 present=0.4/0.5
+t=46 mould=50120 mass=50120 soldiers=9 squads=1 bank=580 income=2580 pumped=1531 shots=867 killed=216 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=0.5/7.9 hear=0.0/0.5 prep=0.6/1.0 wait=14.8/15.6 record=0.0/0.1 present=0.4/0.4
+t=47 mould=50255 mass=50255 soldiers=9 squads=1 bank=634 income=2634 pumped=1585 shots=912 killed=222 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=0.9/8.3 hear=0.0/0.5 prep=0.7/0.8 wait=14.4/15.5 record=0.0/0.1 present=0.4/0.5
+t=48 mould=50384 mass=50384 soldiers=9 squads=1 bank=688 income=2688 pumped=1639 shots=935 killed=223 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=0.7/8.9 hear=0.0/0.5 prep=0.7/1.0 wait=14.6/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=48.4 build pump 111 75.98749
+cmd t=48.4 sorder 0 build 4
+cmd t=48.9 sorder 0 move 94.25 99.23749
+t=49 mould=50492 mass=50492 soldiers=9 squads=1 bank=241 income=2741 pumped=1693 shots=1042 killed=239 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=205 step=0.4/8.9 hear=0.0/0.4 prep=0.8/3.8 wait=14.8/15.6 record=0.0/0.1 present=0.3/0.6
+crystals t=50 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=50 mould=50672 mass=50672 soldiers=9 squads=1 bank=295 income=2795 pumped=1746 shots=1150 killed=275 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=1.7/9.2 hear=0.0/0.4 prep=0.6/0.8 wait=13.7/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=248925 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=51 mould=50858 mass=50858 soldiers=9 squads=1 bank=349 income=2849 pumped=1800 shots=1258 killed=361 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.0/9.0 hear=0.0/0.5 prep=0.6/0.8 wait=13.4/15.6 record=0.0/0.1 present=0.4/0.5
+t=52 mould=50964 mass=50964 soldiers=9 squads=1 bank=420 income=2920 pumped=1854 shots=1366 killed=436 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=1.8/9.5 hear=0.0/0.5 prep=0.6/0.8 wait=13.6/15.5 record=0.0/0.1 present=0.4/0.5
+t=53 mould=51053 mass=51053 soldiers=9 squads=1 bank=492 income=2992 pumped=1908 shots=1474 killed=507 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=1.6/8.7 hear=0.0/0.5 prep=0.6/0.8 wait=13.8/15.6 record=0.0/0.1 present=0.4/0.5
+t=54 mould=51158 mass=51158 soldiers=9 squads=1 bank=563 income=3063 pumped=1962 shots=1582 killed=567 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.1/8.9 hear=0.0/0.4 prep=0.6/0.8 wait=13.4/15.6 record=0.0/0.1 present=0.4/0.5
+t=55 mould=51339 mass=51339 soldiers=9 squads=1 bank=634 income=3134 pumped=2016 shots=1690 killed=621 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=2.0 fast=0 n=60 step=2.1/8.6 hear=0.0/0.5 prep=0.6/0.8 wait=13.3/15.6 record=0.0/0.1 present=0.4/0.5
+t=56 mould=51527 mass=51527 soldiers=9 squads=1 bank=705 income=3205 pumped=2070 shots=1798 killed=711 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=1.4/11.9 hear=0.0/0.5 prep=0.6/0.8 wait=14.1/15.7 record=0.0/0.1 present=0.3/0.5
+t=57 mould=51615 mass=51615 soldiers=9 squads=1 bank=776 income=3276 pumped=2123 shots=1907 killed=912 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.4/10.7 hear=0.0/0.5 prep=0.6/0.8 wait=13.0/15.6 record=0.0/0.1 present=0.4/0.5
+t=58 mould=51767 mass=51767 soldiers=9 squads=1 bank=848 income=3348 pumped=2177 shots=2020 killed=1093 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=59 step=2.8/10.3 hear=0.0/0.5 prep=0.6/0.8 wait=12.6/15.6 record=0.0/0.1 present=0.4/0.5
+t=59 mould=51817 mass=51817 soldiers=9 squads=1 bank=919 income=3419 pumped=2231 shots=2128 killed=1249 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.5/10.0 hear=0.0/0.5 prep=0.6/0.9 wait=12.8/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=59.1 buy
+cmd t=59.3 buy
+crystals t=60 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=60 mould=52010 mass=52010 soldiers=11 squads=1 bank=190 income=3490 pumped=2285 shots=2253 killed=1384 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=61 step=2.4/10.2 hear=0.0/0.5 prep=0.7/1.2 wait=12.8/15.5 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=249925 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=61 mould=52058 mass=52058 soldiers=11 squads=1 bank=261 income=3561 pumped=2339 shots=2385 killed=1569 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=59 step=2.7/10.7 hear=0.0/0.5 prep=0.7/1.4 wait=12.6/15.6 record=0.0/0.1 present=0.4/0.5
+t=62 mould=52115 mass=52115 soldiers=11 squads=1 bank=332 income=3632 pumped=2393 shots=2517 killed=1773 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=61 step=2.4/10.3 hear=0.0/0.5 prep=0.6/1.0 wait=12.9/15.6 record=0.0/0.1 present=0.4/0.5
+t=63 mould=52202 mass=52202 soldiers=11 squads=1 bank=404 income=3704 pumped=2446 shots=2652 killed=1988 pumps=4 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.8/10.5 hear=0.0/0.5 prep=0.7/1.5 wait=12.6/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=63.1 sorder 0 build 4
+t=64 mould=52325 mass=52325 soldiers=11 squads=1 bank=476 income=3776 pumped=2501 shots=2784 killed=2115 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=59 step=2.3/11.0 hear=0.0/0.5 prep=0.7/1.2 wait=12.9/15.6 record=0.0/0.1 present=0.4/0.5
+t=65 mould=52538 mass=52538 soldiers=11 squads=1 bank=561 income=3861 pumped=2569 shots=2916 killed=2215 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.6/10.1 hear=0.0/0.5 prep=0.6/0.9 wait=12.8/15.6 record=0.0/0.1 present=0.4/0.5
+t=66 mould=52669 mass=52669 soldiers=11 squads=1 bank=646 income=3946 pumped=2637 shots=3049 killed=2339 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.0/13.1 hear=0.0/0.5 prep=0.6/0.9 wait=12.4/15.6 record=0.0/0.1 present=0.4/0.5
+t=67 mould=52778 mass=52778 soldiers=11 squads=1 bank=731 income=4031 pumped=2704 shots=3183 killed=2457 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.4/13.2 hear=0.0/0.5 prep=0.6/0.9 wait=13.0/15.6 record=0.0/0.1 present=0.4/0.5
+t=68 mould=52855 mass=52855 soldiers=11 squads=1 bank=816 income=4116 pumped=2772 shots=3318 killed=2645 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.1/11.9 hear=0.0/0.5 prep=0.6/0.9 wait=12.2/15.6 record=0.0/0.1 present=0.4/0.6
+boss t=69.0 formed kind=pinwheel cause=Cut grade=0.43 at=398,158
+t=69 mould=52995 mass=52995 soldiers=11 squads=1 bank=901 income=4201 pumped=2840 shots=3450 killed=2785 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.2/12.9 hear=0.0/0.5 prep=0.8/3.9 wait=12.0/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=69.5 formation 0 blob 1
+crystals t=70 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=70 mould=53073 mass=53073 soldiers=11 squads=1 bank=986 income=4286 pumped=2908 shots=3583 killed=2997 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.9/12.0 hear=0.0/0.5 prep=0.7/1.4 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=250923 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=71 mould=52899 mass=52899 soldiers=11 squads=1 bank=1071 income=4371 pumped=2975 shots=3715 killed=3293 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.9/11.7 hear=0.0/0.5 prep=0.6/1.3 wait=12.3/15.6 record=0.0/0.1 present=0.4/0.6
+cmd t=71.3 sorder 0 move 137.75 115.875
+t=72 mould=52734 mass=52734 soldiers=11 squads=1 bank=1157 income=4457 pumped=3043 shots=3847 killed=3689 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.8/12.4 hear=0.0/0.5 prep=0.6/1.4 wait=12.4/15.6 record=0.1/0.1 present=0.4/0.5
+t=73 mould=52042 mass=52042 soldiers=11 squads=1 bank=1242 income=4542 pumped=3111 shots=3984 killed=4274 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.2/12.0 hear=0.0/0.5 prep=0.7/1.4 wait=12.2/15.6 record=0.0/0.1 present=0.4/0.5
+boss t=74.0 kind=pinwheel phase=gather members=726 at=398,158 near=251
+t=74 mould=51176 mass=51176 soldiers=11 squads=1 bank=1309 income=4609 pumped=3178 shots=4118 killed=4682 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.2/12.2 hear=0.0/0.5 prep=0.7/1.4 wait=12.2/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=74.9 formation 0 blob 2
+t=75 mould=50600 mass=50600 soldiers=11 squads=1 bank=1377 income=4677 pumped=3246 shots=4254 killed=4940 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.1/11.7 hear=0.0/0.5 prep=0.6/1.3 wait=12.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=76 mould=50047 mass=50047 soldiers=11 squads=1 bank=1445 income=4745 pumped=3314 shots=4386 killed=5194 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.0/12.0 hear=0.0/0.5 prep=0.6/1.0 wait=12.5/15.6 record=0.0/0.1 present=0.4/0.5
+t=77 mould=49564 mass=49564 soldiers=11 squads=1 bank=1513 income=4813 pumped=3382 shots=4516 killed=5376 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.6/12.1 hear=0.0/0.5 prep=0.6/1.3 wait=12.8/15.6 record=0.1/0.1 present=0.4/0.5
+t=78 mould=49104 mass=49104 soldiers=11 squads=1 bank=1580 income=4880 pumped=3449 shots=4625 killed=5592 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.7/11.9 hear=0.0/0.5 prep=0.7/2.1 wait=12.6/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=78.5 buy
+cmd t=78.7 buy
+cmd t=78.9 buy
+boss t=79.0 kind=pinwheel phase=hunt members=726 at=386,172 near=233
+t=79 mould=48794 mass=48794 soldiers=14 squads=1 bank=448 income=4948 pumped=3517 shots=4737 killed=5739 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.3/12.1 hear=0.0/0.4 prep=0.7/1.4 wait=13.0/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=79.1 buy
+crystals t=80 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=80 mould=48619 mass=48619 soldiers=15 squads=1 bank=116 income=5016 pumped=3585 shots=4908 killed=5809 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.8/12.8 hear=0.0/0.4 prep=0.7/1.3 wait=12.3/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=251922 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=81 mould=48527 mass=48527 soldiers=15 squads=1 bank=184 income=5084 pumped=3653 shots=5039 killed=5936 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.2/8.2 hear=0.0/0.5 prep=0.6/0.9 wait=13.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=82 mould=48373 mass=48373 soldiers=15 squads=1 bank=251 income=5151 pumped=3720 shots=5171 killed=6080 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.2/8.1 hear=0.0/0.4 prep=0.6/0.9 wait=13.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=83 mould=48266 mass=48266 soldiers=15 squads=1 bank=319 income=5219 pumped=3788 shots=5305 killed=6192 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.1/9.0 hear=0.0/0.5 prep=0.6/0.9 wait=13.4/15.6 record=0.0/0.1 present=0.4/0.5
+boss t=84.0 kind=pinwheel phase=hunt members=726 at=340,168 near=185
+t=84 mould=48182 mass=48182 soldiers=15 squads=1 bank=387 income=5287 pumped=3856 shots=5465 killed=6300 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.1/9.1 hear=0.0/0.5 prep=0.6/0.9 wait=13.4/15.6 record=0.0/0.1 present=0.4/0.5
+t=85 mould=48133 mass=48133 soldiers=15 squads=1 bank=454 income=5354 pumped=3924 shots=5670 killed=6443 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.3/9.4 hear=0.0/0.4 prep=0.6/0.9 wait=13.2/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=85.3 buy
+t=86 mould=48053 mass=48053 soldiers=16 squads=1 bank=122 income=5422 pumped=3991 shots=5849 killed=6681 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=407 step=0.4/13.0 hear=0.0/0.5 prep=0.6/1.4 wait=15.0/15.6 record=0.0/0.1 present=0.3/0.5
+cmd t=86.0 split 0 176.86507 115.72474
+cmd t=86.0 split 1 188.3931 114.92667
+cmd t=86.0 sorder 2 move 43.5 50
+cmd t=86.0 active 1
+t=87 mould=48066 mass=48066 soldiers=16 squads=3 bank=190 income=5490 pumped=4059 shots=5931 killed=6816 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=554 step=0.3/13.5 hear=0.0/0.4 prep=0.6/1.3 wait=15.1/15.6 record=0.0/0.1 present=0.3/0.5
+t=88 mould=48183 mass=48183 soldiers=16 squads=3 bank=258 income=5558 pumped=4127 shots=6011 killed=6876 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=2.8/12.7 hear=0.0/0.4 prep=0.6/0.9 wait=12.7/15.6 record=0.0/0.1 present=0.4/0.5
+boss t=89.0 kind=pinwheel phase=hunt members=726 at=228,136 near=72
+t=89 mould=48243 mass=48243 soldiers=16 squads=3 bank=325 income=5625 pumped=4194 shots=6092 killed=6927 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.3/12.9 hear=0.0/0.4 prep=0.6/0.9 wait=12.1/15.6 record=0.0/0.1 present=0.4/0.5
+crystals t=90 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=90 mould=48295 mass=48295 soldiers=16 squads=3 bank=393 income=5693 pumped=4262 shots=6173 killed=6958 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.0/12.9 hear=0.0/0.4 prep=0.6/0.9 wait=12.5/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=254325 late=0 gap=10.1 render=0.7 soft=0 dropped=0 reopened=0
+t=91 mould=48375 mass=48375 soldiers=16 squads=3 bank=478 income=5778 pumped=4330 shots=6262 killed=6982 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.2/13.0 hear=0.0/0.4 prep=0.6/0.9 wait=12.3/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=91.0 merge 1 0
+t=92 mould=48464 mass=48464 soldiers=16 squads=2 bank=563 income=5863 pumped=4398 shots=6430 killed=7057 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.6/13.5 hear=0.0/0.4 prep=0.7/0.9 wait=11.7/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=92.3 buy
+t=93 mould=48524 mass=48524 soldiers=17 squads=2 bank=231 income=5931 pumped=4465 shots=6616 killed=7233 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.4/13.9 hear=0.0/0.4 prep=0.7/1.2 wait=11.7/15.6 record=0.1/0.1 present=0.4/0.5
+cmd t=93.5 fire 1 216.33333 135.66667
+cmd t=93.5 fire 1 218.16667 136.33333
+cmd t=93.6 fire 1 218.16667 141.5
+cmd t=93.7 fire 1 226.16667 131.16667
+cmd t=93.7 fire 1 233.16667 122.333336
+cmd t=93.9 fire 1 232.16667 132.5
+cmd t=93.9 fire 1 231 146.16667
+boss t=94.0 kind=pinwheel phase=hunt members=413 at=216,134 near=49
+t=94 mould=48567 mass=48567 soldiers=17 squads=2 bank=299 income=5999 pumped=4533 shots=6802 killed=7465 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.6/14.1 hear=0.0/0.5 prep=0.7/1.0 wait=11.7/15.6 record=0.1/0.1 present=0.4/4.5
+cmd t=94.0 fire 1 230.5 149
+cmd t=94.1 fire 1 230 143.66667
+cmd t=94.2 fire 1 230 125.833336
+cmd t=94.3 fire 1 230 113
+cmd t=94.3 fire 1 230.33333 106.5
+cmd t=94.5 fire 1 227.5 132.33333
+cmd t=94.5 fire 1 220.5 164.66667
+cmd t=94.7 fire 1 222.5 147.66667
+cmd t=94.7 fire 1 225.5 115.166664
+cmd t=94.8 fire 1 225.5 108.5
+cmd t=94.9 fire 1 226 106.166664
+cmd t=94.9 fire 1 227.5 100.666664
+t=95 mould=48484 mass=48484 soldiers=17 squads=2 bank=370 income=6070 pumped=4601 shots=6997 killed=7675 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.7/14.0 hear=0.0/0.5 prep=0.7/0.9 wait=11.7/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=95.0 fire 1 231 92.833336
+cmd t=95.1 fire 1 231.5 98.5
+cmd t=95.2 fire 1 230 134.83333
+cmd t=95.3 fire 1 225.33333 173.5
+cmd t=95.3 fire 1 225.33333 188
+cmd t=95.4 fire 1 225.33333 203.33333
+cmd t=95.5 fire 1 224.83333 217.16667
+cmd t=95.5 fire 1 225.16667 221.5
+cmd t=95.6 fire 1 225.83333 208.66667
+cmd t=95.7 fire 1 236.16667 160.16667
+cmd t=95.7 fire 1 242.83334 110.833336
+cmd t=95.8 fire 1 244.16666 99.166664
+t=96 mould=48531 mass=48531 soldiers=17 squads=2 bank=441 income=6141 pumped=4669 shots=7192 killed=7756 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.6/14.3 hear=0.0/0.5 prep=0.7/0.9 wait=11.8/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=96.0 fire 1 241.83334 139.33333
+cmd t=96.1 fire 1 241.83334 189.5
+cmd t=96.1 fire 1 241.83334 216.66667
+cmd t=96.2 fire 1 241.83334 220.83333
+cmd t=96.3 fire 1 242.16666 217.16667
+cmd t=96.3 fire 1 239.66667 166.5
+cmd t=96.4 fire 1 238 121.333336
+cmd t=96.5 fire 1 235.66667 97
+cmd t=96.6 fire 1 234.33333 113.333336
+cmd t=96.7 fire 1 231 173.66667
+cmd t=96.7 fire 1 231 212.16667
+cmd t=96.8 fire 1 231 222.83333
+cmd t=96.9 fire 1 231.5 211.83333
+cmd t=96.9 fire 1 229.83333 153.83333
+t=97 mould=48582 mass=48582 soldiers=17 squads=2 bank=512 income=6212 pumped=4736 shots=7387 killed=7816 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.5/14.1 hear=0.0/0.5 prep=0.7/0.9 wait=11.8/15.7 record=0.0/0.1 present=0.4/0.5
+cmd t=97.0 fire 1 231.83333 119.333336
+cmd t=97.1 fire 1 231.83333 127.166664
+cmd t=97.2 fire 1 228.66667 169.16667
+cmd t=97.3 fire 1 227 187
+cmd t=97.3 fire 1 226.16667 165.66667
+cmd t=97.4 fire 1 229.66667 120
+cmd t=97.5 fire 1 230.33333 115.166664
+cmd t=97.5 fire 1 228.83333 141.66667
+cmd t=97.6 fire 1 226.5 161.66667
+cmd t=97.7 fire 1 226.5 164.33333
+cmd t=97.7 fire 1 226.5 119.333336
+cmd t=97.8 fire 1 226.5 114.5
+cmd t=97.9 fire 1 226.5 120.166664
+cmd t=97.9 fire 1 225.33333 131.5
+boss t=98.0 ended=Broken kind=pinwheel members=103 first=726 stole=0
+boss t=98.0 formed kind=sapper cause=Crowd grade=0.74 at=199,323
+t=98 mould=48667 mass=48667 soldiers=17 squads=2 bank=582 income=6283 pumped=4804 shots=7582 killed=7879 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.5/13.6 hear=0.0/0.4 prep=0.6/0.9 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=98.0 fire 1 225.33333 129
+cmd t=98.1 fire 1 225.83333 107.666664
+cmd t=98.1 fire 1 225.33333 115.5
+cmd t=98.2 fire 1 222.33333 138.66667
+cmd t=98.3 fire 1 222.33333 134.5
+cmd t=98.3 fire 1 223.66667 92.333336
+cmd t=98.4 fire 1 224.16667 95
+cmd t=98.5 fire 1 223.5 127.166664
+cmd t=98.5 fire 1 223.5 129.33333
+cmd t=98.6 fire 1 227.16667 113.166664
+cmd t=98.7 fire 1 228.33333 110.833336
+cmd t=98.7 fire 1 229.83333 115.333336
+cmd t=98.9 fire 1 none
+t=99 mould=48761 mass=48761 soldiers=17 squads=2 bank=653 income=6353 pumped=4872 shots=7771 killed=7995 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=2.7/13.7 hear=0.0/0.4 prep=0.7/1.6 wait=12.5/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=99.0 sorder 1 move 229.83333 116
+cmd t=99.5 sorder 1 move 229.83333 123.833336
+crystals t=100 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=100 mould=48913 mass=48913 soldiers=17 squads=2 bank=724 income=6424 pumped=4940 shots=7910 killed=8070 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.1/12.7 hear=0.0/0.4 prep=0.6/0.9 wait=12.3/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=255324 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+cmd t=100.7 active 2
+cmd t=100.7 build pump 41.666668 31
+cmd t=100.7 sorder 2 build 5
+t=101 mould=49019 mass=49019 soldiers=17 squads=2 bank=295 income=6495 pumped=5007 shots=8021 killed=8191 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=208 step=0.9/12.7 hear=0.0/0.5 prep=0.7/1.2 wait=14.5/15.6 record=0.0/0.1 present=0.3/0.5
+t=102 mould=49089 mass=49089 soldiers=17 squads=2 bank=366 income=6566 pumped=5075 shots=8059 killed=8249 pumps=5 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=1.8/12.0 hear=0.0/0.4 prep=0.6/0.9 wait=13.7/15.6 record=0.0/0.1 present=0.4/0.5
+boss t=103.0 kind=sapper phase=gather members=496 at=204,322 near=180
+t=103 mould=49046 mass=49046 soldiers=17 squads=2 bank=438 income=6638 pumped=5144 shots=8097 killed=8414 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=2.3/12.6 hear=0.0/0.4 prep=0.6/0.9 wait=13.1/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=103.5 sorder 2 move 44.833332 190.33333
+t=104 mould=48874 mass=48874 soldiers=17 squads=2 bank=514 income=6714 pumped=5217 shots=8135 killed=8720 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=234 step=0.7/12.7 hear=0.0/0.4 prep=0.6/0.9 wait=14.8/15.6 record=0.0/0.1 present=0.3/0.5
+t=105 mould=48907 mass=48907 soldiers=17 squads=2 bank=587 income=6787 pumped=5289 shots=8173 killed=8946 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=2.7/12.3 hear=0.0/0.4 prep=0.6/0.9 wait=12.7/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=105.1 sorder 2 move 40.5 217
+cmd t=105.1 active 1
+t=106 mould=48609 mass=48609 soldiers=17 squads=2 bank=659 income=6860 pumped=5362 shots=8292 killed=9596 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=257 step=0.7/11.7 hear=0.0/0.4 prep=0.6/0.9 wait=14.8/15.6 record=0.0/0.1 present=0.3/0.7
+cmd t=106.5 sorder 1 move 262.0291 96.48337
+t=107 mould=48517 mass=48517 soldiers=17 squads=2 bank=732 income=6932 pumped=5435 shots=8412 killed=9804 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.5/10.7 hear=0.0/0.4 prep=0.6/1.0 wait=12.9/15.6 record=0.0/0.1 present=0.4/0.5
+boss t=108.0 kind=sapper phase=go members=496 at=222,300 near=167
+t=108 mould=48545 mass=48545 soldiers=17 squads=2 bank=805 income=7005 pumped=5508 shots=8551 killed=9976 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=2.8/13.1 hear=0.0/0.4 prep=0.6/0.9 wait=12.6/15.6 record=0.0/0.1 present=0.4/0.5
+t=109 mould=48397 mass=48397 soldiers=17 squads=2 bank=878 income=7078 pumped=5580 shots=8726 killed=10274 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.7/13.6 hear=0.0/0.4 prep=0.7/0.9 wait=12.7/15.5 record=0.0/0.1 present=0.4/0.5
+crystals t=110 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=110 mould=47121 mass=47121 soldiers=17 squads=2 bank=950 income=7151 pumped=5653 shots=8881 killed=11737 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=98 step=1.5/9.0 hear=0.0/0.4 prep=0.6/1.2 wait=13.9/15.6 record=0.0/0.1 present=0.4/0.6
+sound prio=proaudio calls=257252 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=111 mould=46727 mass=46727 soldiers=17 squads=2 bank=1023 income=7223 pumped=5726 shots=9015 killed=12396 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.2/8.2 hear=0.0/0.4 prep=0.6/0.9 wait=13.2/15.6 record=0.0/0.1 present=0.4/0.5
+t=112 mould=46647 mass=46647 soldiers=17 squads=2 bank=1096 income=7296 pumped=5799 shots=9134 killed=12747 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=1.9/8.9 hear=0.0/0.5 prep=0.6/0.9 wait=13.4/15.6 record=0.0/0.1 present=0.4/0.4
+cmd t=112.2 buy
+cmd t=112.3 buy
+boss t=113.0 kind=sapper phase=go members=496 at=238,282 near=163
+t=113 mould=46733 mass=46733 soldiers=19 squads=2 bank=369 income=7369 pumped=5871 shots=9282 killed=12984 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.1/9.1 hear=0.0/0.5 prep=0.7/0.9 wait=13.3/15.6 record=0.0/0.1 present=0.4/0.5
+t=114 mould=46371 mass=46371 soldiers=19 squads=2 bank=446 income=7446 pumped=5944 shots=9443 killed=13646 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.4/9.2 hear=0.0/0.4 prep=0.7/0.9 wait=13.0/15.6 record=0.1/0.1 present=0.4/0.5
+t=115 mould=46031 mass=46031 soldiers=19 squads=2 bank=523 income=7523 pumped=6017 shots=9605 killed=14124 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.6/11.1 hear=0.0/0.5 prep=0.7/1.4 wait=12.7/15.6 record=0.1/0.1 present=0.4/0.8
+t=116 mould=45754 mass=45754 soldiers=19 squads=2 bank=600 income=7600 pumped=6090 shots=9743 killed=14688 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.5/10.5 hear=0.0/0.5 prep=0.6/0.9 wait=12.8/15.6 record=0.0/0.1 present=0.4/0.5
+t=117 mould=45696 mass=45696 soldiers=19 squads=2 bank=677 income=7677 pumped=6162 shots=9864 killed=14977 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.7/10.3 hear=0.0/0.4 prep=0.6/0.9 wait=12.8/15.6 record=0.0/0.1 present=0.4/0.5
+boss t=118.0 kind=sapper phase=go members=496 at=236,240 near=121
+t=118 mould=45837 mass=45837 soldiers=19 squads=2 bank=754 income=7754 pumped=6235 shots=9978 killed=15199 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.0/10.3 hear=0.0/0.4 prep=0.6/0.9 wait=13.3/15.5 record=0.0/0.1 present=0.4/0.5
+t=119 mould=45995 mass=45995 soldiers=19 squads=2 bank=831 income=7831 pumped=6308 shots=10093 killed=15362 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.4/10.3 hear=0.0/0.5 prep=0.6/0.9 wait=13.0/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=119.7 buy
+cmd t=119.9 buy
+crystals t=120 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=120 mould=45993 mass=45993 soldiers=21 squads=2 bank=108 income=7908 pumped=6380 shots=10215 killed=15560 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=1.9/9.1 hear=0.0/0.4 prep=0.7/1.2 wait=13.1/15.5 record=0.0/0.1 present=0.4/0.4
+sound prio=proaudio calls=258253 late=0 gap=10.1 render=0.9 soft=0 dropped=0 reopened=0
+t=121 mould=45960 mass=45960 soldiers=21 squads=2 bank=185 income=7985 pumped=6453 shots=10388 killed=15779 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.4/9.2 hear=0.0/0.4 prep=0.7/1.6 wait=12.9/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=121.5 sorder 1 move 358.25 86.73749
+t=122 mould=45919 mass=45919 soldiers=21 squads=2 bank=262 income=8062 pumped=6526 shots=10565 killed=15974 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=100 step=1.4/9.1 hear=0.0/0.4 prep=0.7/0.9 wait=13.9/15.5 record=0.0/0.1 present=0.3/0.4
+cmd t=122.3 formation 1 blob 0
+boss t=123.0 kind=sapper phase=go members=496 at=238,196 near=85
+t=123 mould=45672 mass=45672 soldiers=21 squads=2 bank=339 income=8139 pumped=6599 shots=10728 killed=16615 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=170 step=0.9/11.4 hear=0.0/0.4 prep=0.7/1.8 wait=14.4/15.6 record=0.0/0.1 present=0.3/0.5
+t=124 mould=44822 mass=44822 soldiers=21 squads=2 bank=416 income=8216 pumped=6671 shots=10918 killed=18351 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.9/11.0 hear=0.0/0.4 prep=0.7/1.7 wait=12.4/15.5 record=0.0/0.1 present=0.4/0.5
+t=125 mould=42815 mass=42815 soldiers=21 squads=2 bank=493 income=8293 pumped=6744 shots=11150 killed=20900 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.0/11.6 hear=0.0/0.4 prep=0.7/1.4 wait=12.4/15.6 record=0.0/0.1 present=0.4/0.6
+t=126 mould=40825 mass=40825 soldiers=21 squads=2 bank=570 income=8370 pumped=6817 shots=11396 killed=23369 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=59 step=3.1/11.9 hear=0.0/0.5 prep=0.7/1.4 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.5
+raid t=127.0 to=353,89 held=12681 share=0.60 size=0.19
+t=127 mould=39416 mass=39416 soldiers=21 squads=2 bank=647 income=8447 pumped=6890 shots=11645 killed=24712 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.1/12.3 hear=0.0/0.4 prep=0.7/0.9 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.6
+boss t=128.0 kind=sapper phase=go members=496 at=238,178 near=129
+t=128 mould=42320 mass=42320 soldiers=21 squads=2 bank=724 income=8524 pumped=6962 shots=11899 killed=25432 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.1/11.9 hear=0.0/0.4 prep=0.7/1.4 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+t=129 mould=41030 mass=41030 soldiers=21 squads=2 bank=871 income=8671 pumped=7035 shots=12154 killed=26629 pumps=6 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.1/12.8 hear=0.0/0.5 prep=1.0/4.4 wait=11.9/15.4 record=0.0/0.1 present=0.4/0.7
+cmd t=129.3 build pump 387.97064 81.314964
+cmd t=129.3 sorder 1 build 6
+crystals t=130 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=130 mould=41244 mass=41244 soldiers=21 squads=2 bank=525 income=8826 pumped=7115 shots=12409 killed=26892 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.9/11.2 hear=0.0/0.5 prep=1.4/4.2 wait=11.5/15.5 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=259502 late=0 gap=10.0 render=0.9 soft=0 dropped=0 reopened=0
+t=131 mould=41071 mass=41071 soldiers=21 squads=2 bank=728 income=9028 pumped=7244 shots=12617 killed=27524 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.8
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.9/12.6 hear=0.0/0.5 prep=0.7/0.9 wait=12.4/15.8 record=0.1/0.1 present=0.4/0.6
+t=132 mould=41021 mass=41021 soldiers=21 squads=2 bank=931 income=9231 pumped=7373 shots=12823 killed=27690 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=61 step=2.4/12.7 hear=0.0/0.5 prep=0.7/1.0 wait=12.9/15.5 record=0.0/0.1 present=0.4/0.6
+cmd t=132.4 sorder 1 move 441.8554 110.10137
+boss t=133.0 kind=sapper phase=go members=496 at=198,186 near=154
+t=133 mould=41017 mass=41017 soldiers=21 squads=2 bank=1134 income=9434 pumped=7501 shots=13028 killed=27868 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.6/11.7 hear=0.0/0.5 prep=0.7/0.9 wait=12.6/15.5 record=0.0/0.1 present=0.4/0.5
+t=134 mould=40783 mass=40783 soldiers=21 squads=2 bank=1337 income=9637 pumped=7630 shots=13225 killed=28391 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=59 step=3.0/12.0 hear=0.0/0.5 prep=0.7/1.4 wait=12.4/15.5 record=0.0/0.1 present=0.4/0.5
+t=135 mould=40499 mass=40499 soldiers=21 squads=2 bank=1539 income=9840 pumped=7759 shots=13383 killed=29014 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.7/11.0 hear=0.0/0.5 prep=0.7/1.8 wait=12.7/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=135.1 sorder 1 move 358.64957 112.67125
+t=136 mould=40124 mass=40124 soldiers=21 squads=2 bank=1742 income=10043 pumped=7887 shots=13581 killed=29891 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=151 step=1.1/13.1 hear=0.0/0.5 prep=0.7/0.9 wait=14.3/15.5 record=0.0/0.1 present=0.3/0.5
+t=137 mould=40184 mass=40184 soldiers=21 squads=2 bank=1945 income=10246 pumped=8016 shots=13775 killed=30157 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.5/9.2 hear=0.0/0.5 prep=0.7/0.9 wait=12.9/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=137.4 active 2
+cmd t=137.4 buy
+cmd t=137.4 buy
+cmd t=137.4 buy
+cmd t=137.4 buy
+cmd t=137.4 sorder 2 move 96 219.98749
+boss t=138.0 kind=sapper phase=go members=496 at=188,188 near=132
+t=138 mould=40731 mass=40731 soldiers=25 squads=2 bank=548 income=10449 pumped=8145 shots=13879 killed=30230 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=307 step=0.3/8.6 hear=0.0/0.5 prep=0.7/0.9 wait=15.1/15.6 record=0.0/0.1 present=0.3/0.5
+t=139 mould=40900 mass=40900 soldiers=25 squads=2 bank=751 income=10651 pumped=8273 shots=13930 killed=30300 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=1.6/8.9 hear=0.0/0.5 prep=0.7/1.3 wait=13.8/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=139.5 active 1
+crystals t=140 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=140 mould=41048 mass=41048 soldiers=25 squads=2 bank=954 income=10854 pumped=8402 shots=14016 killed=30409 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=145 step=1.0/9.7 hear=0.0/0.4 prep=0.7/0.9 wait=14.4/15.6 record=0.0/0.1 present=0.3/0.5
+sound prio=proaudio calls=261207 late=0 gap=10.1 render=0.9 soft=0 dropped=0 reopened=0
+t=141 mould=41047 mass=41047 soldiers=25 squads=2 bank=1157 income=11057 pumped=8531 shots=14222 killed=30622 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=3.1/12.6 hear=0.0/0.5 prep=0.7/1.4 wait=12.3/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=141.9 sorder 1 move 447.25 109.98749
+t=142 mould=41186 mass=41186 soldiers=25 squads=2 bank=1360 income=11260 pumped=8659 shots=14444 killed=30811 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.5/9.3 hear=0.0/0.4 prep=0.7/0.9 wait=12.9/15.5 record=0.0/0.1 present=0.4/0.5
+boss t=143.0 kind=sapper phase=go members=496 at=182,190 near=73
+t=143 mould=41202 mass=41202 soldiers=25 squads=2 bank=1562 income=11463 pumped=8788 shots=14672 killed=31320 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.5/9.5 hear=0.0/0.5 prep=0.7/0.9 wait=12.9/15.5 record=0.0/0.1 present=0.4/0.4
+t=144 mould=40605 mass=40605 soldiers=25 squads=2 bank=1765 income=11666 pumped=8917 shots=14873 killed=32170 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.5/9.7 hear=0.0/0.4 prep=0.6/0.9 wait=12.8/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=144.5 active 2
+cmd t=144.5 buy
+cmd t=144.5 buy
+cmd t=144.5 buy
+cmd t=144.5 buy
+t=145 mould=39567 mass=39567 soldiers=29 squads=2 bank=298 income=11798 pumped=9045 shots=15073 killed=33343 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=191 step=0.8/9.4 hear=0.0/0.4 prep=0.7/1.4 wait=14.5/15.5 record=0.0/0.1 present=0.3/0.5
+cmd t=145.4 active 1
+t=146 mould=39003 mass=39003 soldiers=29 squads=2 bank=431 income=11931 pumped=9174 shots=15276 killed=34611 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=59 step=2.7/9.8 hear=0.0/0.5 prep=0.7/0.9 wait=12.5/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=146.3 split 1 473.31857 114.86962
+cmd t=146.3 split 0 482.50177 113.720894
+cmd t=146.3 sorder 3 move 334.52362 76.647064
+cmd t=146.3 active 0
+t=147 mould=37192 mass=37192 soldiers=29 squads=4 bank=564 income=12064 pumped=9302 shots=15438 killed=36218 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=633 step=0.3/11.6 hear=0.0/0.4 prep=0.7/1.3 wait=15.1/15.6 record=0.0/0.1 present=0.3/0.5
+boss t=148.0 kind=sapper phase=go members=371 at=168,196 near=60
+t=148 mould=36414 mass=36414 soldiers=29 squads=4 bank=697 income=12197 pumped=9431 shots=15569 killed=37113 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=2.9/11.0 hear=0.0/0.4 prep=0.7/0.9 wait=12.4/15.6 record=0.0/0.1 present=0.4/0.5
+t=149 mould=35967 mass=35967 soldiers=29 squads=4 bank=830 income=12330 pumped=9560 shots=15689 killed=37757 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=2.8/12.1 hear=0.0/0.4 prep=0.6/0.9 wait=12.7/15.7 record=0.0/0.1 present=0.4/0.5
+cmd t=149.5 merge 0 1
+crystals t=150 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=150 mould=35454 mass=35454 soldiers=29 squads=3 bank=1033 income=12533 pumped=9688 shots=15826 killed=38443 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=2.9/11.4 hear=0.0/0.4 prep=0.6/0.9 wait=12.5/15.5 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=263378 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=151 mould=34890 mass=34890 soldiers=29 squads=3 bank=1236 income=12736 pumped=9817 shots=16031 killed=39056 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.1/12.3 hear=0.0/0.4 prep=0.6/0.9 wait=12.3/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=151.4 sorder 0 move 479 100.48749
+t=152 mould=34550 mass=34550 soldiers=29 squads=3 bank=1439 income=12939 pumped=9946 shots=16254 killed=39586 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=203 step=0.9/12.8 hear=0.0/0.4 prep=0.7/0.9 wait=14.5/15.6 record=0.0/0.1 present=0.3/0.5
+boss t=153.0 kind=sapper phase=go members=199 at=152,202 near=41
+t=153 mould=33877 mass=33877 soldiers=29 squads=3 bank=1572 income=13071 pumped=10074 shots=16466 killed=40914 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.6/9.9 hear=0.0/0.4 prep=0.7/0.9 wait=12.7/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=153.1 buy
+cmd t=153.1 buy
+cmd t=153.1 buy
+raid t=154.0 to=380,80 held=7878 share=0.60 size=0.14
+t=154 mould=32294 mass=32294 soldiers=32 squads=3 bank=495 income=13204 pumped=10203 shots=16707 killed=43040 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=146 step=1.1/9.7 hear=0.0/0.4 prep=0.7/1.2 wait=14.2/15.5 record=0.0/0.1 present=0.3/0.5
+t=155 mould=32255 mass=32255 soldiers=32 squads=3 bank=630 income=13340 pumped=10332 shots=16995 killed=43986 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=59 step=3.4/15.5 hear=0.0/0.4 prep=0.7/0.9 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.5
+t=156 mould=30588 mass=30588 soldiers=32 squads=3 bank=766 income=13476 pumped=10460 shots=17273 killed=46202 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=61 step=3.4/14.3 hear=0.0/0.4 prep=0.7/1.2 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.9
+cmd t=156.2 active 3
+cmd t=156.2 sorder 3 move 356.0998 107.746956
+cmd t=156.9 active 0
+boss t=157.0 ended=Broken kind=sapper members=63 first=496 stole=0
+t=157 mould=29508 mass=29632 soldiers=32 squads=3 bank=901 income=13611 pumped=10589 shots=17442 killed=47143 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=441 step=0.4/12.6 hear=0.0/0.4 prep=0.7/0.9 wait=14.9/15.7 record=0.0/0.1 present=0.3/0.7
+raid t=158.0 to=344,94 held=9208 share=0.60 size=0.19
+t=158 mould=28635 mass=28623 soldiers=32 squads=3 bank=1037 income=13747 pumped=10717 shots=17683 killed=48407 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.5/15.0 hear=0.0/0.4 prep=0.7/0.9 wait=11.8/15.5 record=0.0/0.1 present=0.4/0.6
+cmd t=158.1 sorder 0 move 505 52.875
+t=159 mould=29481 mass=31313 soldiers=32 squads=3 bank=1173 income=13882 pumped=10846 shots=17945 killed=49075 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.7/14.0 hear=0.0/0.4 prep=0.7/1.0 wait=11.6/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=159.3 fire 0 524.875 27.75
+cmd t=159.3 fire 0 527.125 29.5
+cmd t=159.4 fire 0 539.875 38.25
+cmd t=159.5 fire 0 544.25 41.375
+cmd t=159.6 fire 0 545.875 33.375
+cmd t=159.7 fire 0 546.625 29.5
+cmd t=159.9 fire 0 552.25 41.75
+boss t=160.0 formed kind=pinwheel cause=Cut grade=0.80 at=353,151
+crystals t=160 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=160 mould=28617 mass=28032 soldiers=32 squads=3 bank=1308 income=14018 pumped=10975 shots=18229 killed=50878 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.3/13.6 hear=0.0/0.4 prep=0.7/1.0 wait=11.8/15.4 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=265395 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+cmd t=160.2 fire 0 none
+cmd t=160.6 sorder 0 move 491.75 102.5
+t=161 mould=26932 mass=26276 soldiers=32 squads=3 bank=1444 income=14154 pumped=11103 shots=18517 killed=51925 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=59 step=3.3/15.0 hear=0.0/0.4 prep=0.7/1.1 wait=11.5/15.4 record=0.0/0.1 present=0.4/0.5
+t=162 mould=25682 mass=25569 soldiers=32 squads=3 bank=1580 income=14289 pumped=11232 shots=18799 killed=52287 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=61 step=3.4/13.6 hear=0.0/0.4 prep=0.7/1.0 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.6
+t=163 mould=25276 mass=25168 soldiers=32 squads=3 bank=1715 income=14425 pumped=11361 shots=19078 killed=52498 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=121 step=1.7/13.6 hear=0.0/0.4 prep=0.8/1.0 wait=13.5/15.5 record=0.0/0.1 present=0.3/0.5
+t=164 mould=25038 mass=24928 soldiers=32 squads=3 bank=1848 income=14558 pumped=11489 shots=19340 killed=52730 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=24.0 fast=0 n=60 step=3.3/15.1 hear=0.0/0.4 prep=0.7/1.0 wait=12.0/15.5 record=0.0/0.1 present=0.4/0.5
+boss t=165.0 kind=pinwheel phase=gather members=747 at=350,158 near=44
+t=165 mould=25086 mass=25047 soldiers=32 squads=3 bank=1981 income=14691 pumped=11618 shots=19595 killed=52854 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.2/13.1 hear=0.0/0.4 prep=0.7/0.9 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.5
+t=166 mould=24994 mass=24931 soldiers=32 squads=3 bank=2114 income=14823 pumped=11746 shots=19859 killed=53009 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=59 step=3.4/14.3 hear=0.0/0.4 prep=0.7/0.9 wait=12.0/15.5 record=0.0/0.1 present=0.4/0.5
+t=167 mould=24906 mass=24801 soldiers=32 squads=3 bank=2247 income=14956 pumped=11875 shots=20116 killed=53190 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=3.0 fast=0 n=61 step=2.9/13.4 hear=0.0/0.4 prep=0.7/1.0 wait=12.5/15.5 record=0.0/0.1 present=0.4/0.5
+t=168 mould=24722 mass=24662 soldiers=32 squads=3 bank=2380 income=15089 pumped=12004 shots=20364 killed=53337 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=3.0 fast=0 n=59 step=2.2/9.5 hear=0.0/0.4 prep=0.7/0.9 wait=13.1/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=168.7 active 2
+cmd t=168.7 sorder 2 move 152 201.61603
+cmd t=168.7 formation 2 blob 0
+t=169 mould=24600 mass=24552 soldiers=32 squads=3 bank=2513 income=15222 pumped=12132 shots=20596 killed=53434 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=479 step=0.3/10.2 hear=0.0/0.4 prep=0.7/1.4 wait=15.1/15.6 record=0.0/0.1 present=0.3/0.5
+boss t=170.0 kind=pinwheel phase=go members=747 at=296,136 near=62
+crystals t=170 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=170 mould=24547 mass=24543 soldiers=32 squads=3 bank=2642 income=15351 pumped=12261 shots=20822 killed=53502 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=61 step=3.0/11.8 hear=0.0/0.4 prep=0.7/1.0 wait=12.3/15.5 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=267195 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=171 mould=24596 mass=24582 soldiers=32 squads=3 bank=2770 income=15479 pumped=12390 shots=21031 killed=53574 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=59 step=2.8/12.7 hear=0.0/0.4 prep=0.7/0.9 wait=12.5/15.6 record=0.0/0.1 present=0.4/0.5
+t=172 mould=24650 mass=24672 soldiers=32 squads=3 bank=2899 income=15608 pumped=12518 shots=21228 killed=53621 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=61 step=2.3/12.9 hear=0.0/0.4 prep=0.7/0.9 wait=13.0/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=172.2 active 0
+cmd t=172.2 active 3
+cmd t=172.2 wall 320.93436 77.28018 325.05936 95.59268
+cmd t=172.2 sorder 3 build 7
+t=173 mould=24796 mass=24818 soldiers=32 squads=3 bank=2840 income=15737 pumped=12647 shots=21380 killed=53677 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=579 step=0.3/13.9 hear=0.0/0.4 prep=0.7/1.2 wait=15.1/15.6 record=0.0/0.1 present=0.3/0.6
+cmd t=173.7 active 0
+cmd t=173.7 sorder 0 move 534.5 59.5
+cmd t=173.7 buy
+cmd t=173.7 buy
+cmd t=173.7 buy
+cmd t=173.7 buy
+cmd t=173.7 buy
+cmd t=173.7 active 3
+t=174 mould=24812 mass=24883 soldiers=37 squads=3 bank=771 income=15868 pumped=12775 shots=21517 killed=53748 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=536 step=0.3/14.1 hear=0.0/0.4 prep=0.7/1.2 wait=15.0/15.6 record=0.0/0.1 present=0.3/0.5
+boss t=175.0 kind=pinwheel phase=go members=747 at=234,108 near=86
+t=175 mould=24771 mass=24755 soldiers=37 squads=3 bank=903 income=15999 pumped=12904 shots=21661 killed=53819 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=61 step=2.5/14.2 hear=0.0/0.4 prep=0.7/1.0 wait=12.9/15.6 record=0.0/0.1 present=0.4/0.5
+t=176 mould=24775 mass=24709 soldiers=37 squads=3 bank=1031 income=16128 pumped=13033 shots=21798 killed=53872 pumps=7 turrets=0 walls=0 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=2.6/10.1 hear=0.0/0.4 prep=0.6/0.9 wait=12.9/15.6 record=0.0/0.1 present=0.4/0.5
+t=177 mould=24778 mass=24760 soldiers=37 squads=3 bank=1207 income=16304 pumped=13161 shots=21933 killed=53930 pumps=7 turrets=0 walls=1 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=59 step=2.7/13.7 hear=0.0/0.4 prep=0.7/1.1 wait=12.7/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=177.2 door 321.77527 81.01336 324.4123 92.72004
+cmd t=177.2 sorder 3 move 351.306 87.34703
+t=178 mould=24836 mass=24825 soldiers=37 squads=3 bank=1270 income=16486 pumped=13290 shots=22055 killed=53970 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=409 step=0.4/9.5 hear=0.0/0.4 prep=0.7/1.8 wait=14.9/15.6 record=0.0/0.1 present=0.3/0.6
+t=179 mould=24982 mass=24967 soldiers=37 squads=3 bank=1452 income=16668 pumped=13419 shots=22154 killed=54027 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=2.6/9.4 hear=0.0/0.4 prep=0.7/0.9 wait=12.8/15.6 record=0.1/0.1 present=0.4/0.5
+cmd t=179.0 sorder 3 move 411.19266 101.26846
+boss t=180.0 kind=pinwheel phase=go members=747 at=234,104 near=112
+crystals t=180 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=180 mould=25021 mass=25016 soldiers=37 squads=3 bank=1704 income=16920 pumped=13547 shots=22263 killed=54053 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=2.7/12.8 hear=0.0/0.4 prep=0.6/0.8 wait=12.8/15.6 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=270435 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+cmd t=180.2 sorder 3 move 383.33334 94.666664
+t=181 mould=25034 mass=25044 soldiers=37 squads=3 bank=1956 income=17172 pumped=13676 shots=22385 killed=54077 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=97 step=1.9/14.3 hear=0.0/0.4 prep=0.7/1.4 wait=13.4/15.6 record=0.0/0.1 present=0.3/0.5
+cmd t=181.0 heal 3
+t=182 mould=25090 mass=25094 soldiers=37 squads=3 bank=2208 income=17424 pumped=13804 shots=22512 killed=54098 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=133 step=1.3/14.3 hear=0.0/0.4 prep=0.7/1.3 wait=13.9/15.5 record=0.0/0.1 present=0.3/0.5
+cmd t=182.8 active 0
+t=183 mould=25184 mass=25211 soldiers=37 squads=3 bank=2455 income=17676 pumped=13933 shots=22611 killed=54125 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=118 step=1.5/14.5 hear=0.0/0.4 prep=0.7/0.9 wait=13.8/15.5 record=0.0/0.1 present=0.3/0.5
+t=184 mould=25268 mass=25231 soldiers=37 squads=3 bank=2697 income=17928 pumped=14062 shots=22913 killed=54207 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.6/14.7 hear=0.0/0.4 prep=0.7/0.9 wait=11.8/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=184.9 sorder 0 move 556.1667 233.33333
+boss t=185.0 kind=pinwheel phase=go members=747 at=230,104 near=109
+t=185 mould=25337 mass=25325 soldiers=37 squads=3 bank=2939 income=18180 pumped=14190 shots=23205 killed=54261 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.3/15.2 hear=0.0/0.4 prep=0.7/0.9 wait=11.8/15.6 record=0.0/0.1 present=0.4/0.5
+t=186 mould=25413 mass=25419 soldiers=37 squads=3 bank=3131 income=18382 pumped=14319 shots=23495 killed=54280 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.5/14.9 hear=0.0/0.4 prep=0.7/0.9 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.4
+cmd t=186.1 sorder 0 move 556.3333 231.83333
+t=187 mould=25435 mass=25462 soldiers=37 squads=3 bank=3323 income=18584 pumped=14448 shots=23793 killed=54334 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.5/14.7 hear=0.0/0.4 prep=0.7/0.9 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.5
+t=188 mould=25420 mass=25434 soldiers=37 squads=3 bank=3511 income=18782 pumped=14576 shots=24079 killed=54434 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=59 step=3.6/16.4 hear=0.0/0.4 prep=0.7/0.9 wait=11.7/15.5 record=0.0/0.1 present=0.4/0.5
+t=189 mould=25380 mass=25381 soldiers=37 squads=3 bank=3701 income=18981 pumped=14705 shots=24362 killed=54541 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=61 step=3.6/14.7 hear=0.0/0.4 prep=0.7/0.9 wait=11.7/15.5 record=0.0/0.1 present=0.4/0.5
+boss t=190.0 kind=pinwheel phase=go members=747 at=208,98 near=101
+crystals t=190 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=190 mould=25442 mass=25636 soldiers=37 squads=3 bank=3892 income=19179 pumped=14833 shots=24655 killed=54596 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=59 step=3.4/14.9 hear=0.0/0.4 prep=0.7/1.0 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.6
+sound prio=proaudio calls=271714 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=191 mould=25507 mass=25669 soldiers=37 squads=3 bank=4090 income=19378 pumped=14962 shots=24919 killed=54707 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.2/14.2 hear=0.0/0.4 prep=0.7/0.9 wait=12.0/15.5 record=0.0/0.1 present=0.4/0.5
+t=192 mould=25190 mass=25678 soldiers=37 squads=3 bank=4285 income=19577 pumped=15091 shots=25224 killed=54955 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=61 step=3.4/14.4 hear=0.0/0.4 prep=0.7/0.9 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.6
+t=193 mould=24830 mass=24737 soldiers=37 squads=3 bank=4478 income=19775 pumped=15219 shots=25514 killed=55297 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=59 step=3.8/14.7 hear=0.0/0.4 prep=0.7/0.9 wait=11.4/15.5 record=0.0/0.1 present=0.4/0.5
+t=194 mould=24332 mass=24731 soldiers=37 squads=3 bank=4674 income=19974 pumped=15348 shots=25824 killed=55602 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.8/15.3 hear=0.0/0.4 prep=0.7/0.9 wait=11.5/15.5 record=0.0/0.1 present=0.4/0.6
+boss t=195.0 kind=pinwheel phase=go members=747 at=132,76 near=114
+t=195 mould=24281 mass=24087 soldiers=37 squads=3 bank=4873 income=20172 pumped=15477 shots=26102 killed=55972 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=3.2/14.4 hear=0.0/0.4 prep=0.7/0.9 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+t=196 mould=23672 mass=23611 soldiers=37 squads=3 bank=5071 income=20371 pumped=15605 shots=26401 killed=56597 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.2/12.1 hear=0.0/0.4 prep=0.7/0.9 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.5
+t=197 mould=22966 mass=22739 soldiers=37 squads=3 bank=5270 income=20569 pumped=15734 shots=26718 killed=57420 pumps=7 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.2/12.7 hear=0.0/0.4 prep=0.7/0.9 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=197.0 fire 0 491.5833 322.27
+cmd t=197.1 fire 0 none
+cmd t=197.9 buy
+t=198 mould=22057 mass=22004 soldiers=38 squads=3 bank=4987 income=20756 pumped=15850 shots=27020 killed=58189 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.2/12.7 hear=0.0/0.4 prep=0.7/1.2 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=198.1 buy
+cmd t=198.3 buy
+cmd t=198.4 buy
+cmd t=198.6 buy
+cmd t=198.8 buy
+cmd t=198.9 buy
+t=199 mould=21653 mass=21747 soldiers=44 squads=3 bank=2141 income=20940 pumped=15965 shots=27353 killed=58710 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=2.6/12.7 hear=0.0/0.4 prep=0.7/1.2 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=199.1 buy
+cmd t=199.7 sorder 0 move 542.6667 274.68524
+boss t=200.0 kind=pinwheel phase=go members=747 at=92,60 near=139
+crystals t=200 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=200 mould=21303 mass=21405 soldiers=45 squads=3 bank=1786 income=21125 pumped=16080 shots=27729 killed=59226 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.2/13.4 hear=0.0/0.4 prep=0.7/1.0 wait=11.9/15.4 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=272714 late=0 gap=10.1 render=0.9 soft=0 dropped=0 reopened=0
+cmd t=200.4 sorder 0 move 524.5833 281.9072
+t=201 mould=20790 mass=20740 soldiers=45 squads=3 bank=1971 income=21310 pumped=16195 shots=28116 killed=60083 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.4/13.7 hear=0.0/0.4 prep=0.7/0.9 wait=12.0/15.5 record=0.1/0.1 present=0.4/0.5
+t=202 mould=19527 mass=19186 soldiers=45 squads=3 bank=2155 income=21494 pumped=16309 shots=28510 killed=61502 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.4/13.1 hear=0.0/0.4 prep=0.7/1.0 wait=11.9/15.5 record=0.0/0.1 present=0.4/0.5
+t=203 mould=17958 mass=17657 soldiers=45 squads=3 bank=2421 income=21760 pumped=16424 shots=28930 killed=62634 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.4/13.8 hear=0.0/0.4 prep=0.7/0.9 wait=11.9/15.4 record=0.0/0.1 present=0.4/0.5
+t=204 mould=17152 mass=17044 soldiers=45 squads=3 bank=2687 income=22026 pumped=16539 shots=29357 killed=63020 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.2/13.0 hear=0.0/0.4 prep=0.7/0.9 wait=12.1/15.4 record=0.0/0.1 present=0.4/0.6
+cmd t=204.1 sorder 0 move 333.125 303.67017
+boss t=205.0 kind=pinwheel phase=go members=747 at=60,46 near=167
+t=205 mould=16868 mass=17026 soldiers=45 squads=3 bank=2952 income=22291 pumped=16654 shots=29781 killed=63114 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.0/12.9 hear=0.0/0.4 prep=0.7/0.9 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+t=206 mould=16707 mass=17089 soldiers=45 squads=3 bank=3218 income=22557 pumped=16769 shots=30201 killed=63273 pumps=6 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.1/12.4 hear=0.0/0.4 prep=0.7/0.9 wait=12.2/15.5 record=0.1/0.1 present=0.4/0.5
+cmd t=206.5 sorder 0 move 470.625 318.6942
+t=207 mould=16391 mass=16500 soldiers=45 squads=3 bank=3483 income=22823 pumped=16883 shots=30587 killed=63546 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.2/11.9 hear=0.0/0.4 prep=0.7/0.9 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=207.2 sorder 0 move 343 273.97742
+t=208 mould=16198 mass=16437 soldiers=45 squads=3 bank=3744 income=23083 pumped=16993 shots=30971 killed=63750 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.1/12.1 hear=0.0/0.4 prep=0.7/1.0 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=208.4 buy
+cmd t=208.5 buy
+cmd t=208.7 buy
+cmd t=208.9 buy
+t=209 mould=16245 mass=16737 soldiers=49 squads=3 bank=1664 income=23263 pumped=17103 shots=31325 killed=63876 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=2.8/12.3 hear=0.0/0.4 prep=0.7/0.9 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=209.1 buy
+cmd t=209.2 buy
+boss t=210.0 kind=pinwheel phase=go members=747 at=44,64 near=162
+crystals t=210 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=210 mould=15999 mass=15697 soldiers=51 squads=3 bank=653 income=23443 pumped=17213 shots=31686 killed=64231 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.0/12.4 hear=0.0/0.4 prep=0.8/1.0 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+sound prio=proaudio calls=273713 late=0 gap=10.1 render=1.0 soft=0 dropped=0 reopened=0
+t=211 mould=14669 mass=14181 soldiers=51 squads=3 bank=833 income=23622 pumped=17323 shots=32118 killed=64889 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.2/12.6 hear=0.0/0.4 prep=0.7/1.0 wait=12.0/15.4 record=0.0/0.1 present=0.4/0.4
+cmd t=211.1 sorder 0 move 383.625 267.86874
+t=212 mould=13259 mass=13159 soldiers=51 squads=3 bank=943 income=23732 pumped=17432 shots=32580 killed=65445 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=8.0 fast=0 n=60 step=3.1/13.0 hear=0.0/0.4 prep=0.7/1.0 wait=12.0/15.4 record=0.0/0.1 present=0.4/0.5
+raid t=213.0 to=428,279 held=13259 share=1.00 size=inf last_stand=1
+t=213 mould=12414 mass=12687 soldiers=51 squads=3 bank=1123 income=23912 pumped=17542 shots=33111 killed=65878 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=24.0 fast=0 n=60 step=3.8/15.6 hear=0.0/0.4 prep=0.8/1.4 wait=11.4/15.5 record=0.0/0.1 present=0.4/0.5
+t=214 mould=12096 mass=12346 soldiers=51 squads=3 bank=1302 income=24092 pumped=17652 shots=33665 killed=66158 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=12.0 fast=0 n=60 step=3.4/15.5 hear=0.0/0.4 prep=0.8/1.5 wait=11.8/15.4 record=0.0/0.1 present=0.4/0.5
+cmd t=214.8 sorder 0 move 341.16666 318.825
+boss t=215.0 kind=pinwheel phase=go members=747 at=50,110 near=125
+t=215 mould=12006 mass=12377 soldiers=51 squads=3 bank=1482 income=24271 pumped=17762 shots=34215 killed=66487 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.5/13.0 hear=0.0/0.4 prep=0.8/1.0 wait=11.8/15.4 record=0.0/0.1 present=0.4/0.4
+cmd t=215.5 sorder 0 move 285.16666 311.65833
+t=216 mould=11777 mass=11708 soldiers=51 squads=3 bank=1662 income=24451 pumped=17872 shots=34722 killed=67146 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.3/13.4 hear=0.0/0.5 prep=0.7/1.0 wait=11.8/15.4 record=0.0/0.1 present=0.4/0.5
+cmd t=216.7 sorder 0 move 341.5 302.99167
+t=217 mould=11006 mass=11087 soldiers=51 squads=3 bank=1841 income=24631 pumped=17982 shots=35152 killed=67782 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.3/13.7 hear=0.0/0.4 prep=0.7/0.9 wait=11.8/15.5 record=0.0/0.1 present=0.4/0.5
+t=218 mould=10364 mass=10357 soldiers=51 squads=3 bank=2021 income=24810 pumped=18091 shots=35599 killed=68626 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.5/13.4 hear=0.0/0.5 prep=0.7/0.9 wait=11.8/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=218.7 sorder 0 move 244.66666 315.49167
+t=219 mould=9471 mass=9286 soldiers=51 squads=3 bank=2201 income=24990 pumped=18201 shots=36036 killed=69711 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.6/13.9 hear=0.0/0.4 prep=0.7/0.9 wait=11.7/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=219.9 active 2
+cmd t=219.9 sorder 2 move 75.666664 203.43005
+raid t=220.0 to=364,87 held=2886 share=0.60 size=0.19
+boss t=220.0 kind=pinwheel phase=go members=747 at=56,160 near=94
+crystals t=220 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=220 mould=8133 mass=7800 soldiers=51 squads=3 bank=2380 income=25170 pumped=18311 shots=36461 killed=71132 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=229 step=0.9/14.1 hear=0.0/0.4 prep=0.7/0.9 wait=14.4/15.5 record=0.0/0.1 present=0.3/0.5
+sound prio=proaudio calls=274995 late=0 gap=10.1 render=0.8 soft=0 dropped=0 reopened=0
+t=221 mould=6695 mass=6809 soldiers=51 squads=3 bank=2560 income=25350 pumped=18421 shots=36686 killed=71777 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=3.5/15.7 hear=0.0/0.4 prep=0.7/0.8 wait=11.8/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=221.6 sorder 2 move 113.33333 175.77792
+t=222 mould=5573 mass=5149 soldiers=51 squads=3 bank=2740 income=25529 pumped=18531 shots=36934 killed=72765 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=59 step=3.9/15.6 hear=0.0/0.4 prep=0.7/0.9 wait=11.4/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=222.7 sorder 2 move 100 167.66132
+t=223 mould=4094 mass=3678 soldiers=51 squads=3 bank=2919 income=25709 pumped=18640 shots=37198 killed=73748 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=6.0 fast=0 n=60 step=4.0/17.4 hear=0.0/0.4 prep=0.7/0.9 wait=11.3/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=223.1 sorder 2 move 109 168.66635
+cmd t=224.0 active 0
+t=224 mould=2985 mass=2860 soldiers=51 squads=3 bank=3099 income=25889 pumped=18750 shots=37468 killed=74263 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=150 step=1.7/16.6 hear=0.0/0.4 prep=0.7/1.1 wait=13.6/15.5 record=0.0/0.1 present=0.3/0.5
+cmd t=224.7 sorder 0 move 223.49948 331.97537
+boss t=225.0 kind=pinwheel phase=go members=488 at=58,170 near=38
+t=225 mould=2157 mass=2070 soldiers=51 squads=3 bank=3331 income=26121 pumped=18860 shots=37851 killed=75199 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=61 step=3.2/14.1 hear=0.0/0.4 prep=0.7/1.2 wait=12.0/15.5 record=0.0/0.1 present=0.4/0.8
+t=226 mould=1081 mass=1193 soldiers=51 squads=3 bank=3563 income=26353 pumped=18970 shots=38313 killed=76036 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=61 step=3.2/13.7 hear=0.0/0.4 prep=0.7/0.9 wait=12.1/15.5 record=0.0/0.1 present=0.4/0.5
+raid t=227.0 to=380,80 held=331 share=0.60 size=0.18
+t=227 mould=589 mass=472 soldiers=51 squads=3 bank=3795 income=26585 pumped=19080 shots=38796 killed=76266 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.6 p95=16.7
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=3.2/13.1 hear=0.0/0.4 prep=0.7/0.9 wait=12.2/15.4 record=0.1/0.1 present=0.4/0.5
+t=228 mould=419 mass=418 soldiers=51 squads=3 bank=4027 income=26817 pumped=19189 shots=39259 killed=76320 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=59 step=2.6/11.5 hear=0.0/0.4 prep=0.8/1.4 wait=12.6/15.4 record=0.0/0.1 present=0.4/0.6
+cmd t=228.2 sorder 0 move 298 277.9875
+cmd t=228.8 sorder 0 move 302.5 225.48749
+t=229 mould=337 mass=337 soldiers=51 squads=3 bank=4259 income=27049 pumped=19299 shots=39705 killed=76387 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.7
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=61 step=2.3/11.5 hear=0.0/0.4 prep=0.8/1.3 wait=12.8/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=229.2 sorder 0 move 286.5 225.48749
+boss t=230.0 kind=pinwheel phase=go members=265 at=58,160 near=38
+crystals t=230 621440/0 536960/0 133376/0 372864/0 402048/0 365056/0 14112/0 24448/0 26240/0 18816/0 32896/0 32896/0 20608/0 15456/0 24448/0
+t=230 mould=283 mass=282 soldiers=51 squads=3 bank=4491 income=27281 pumped=19409 shots=40164 killed=76427 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=59 step=2.5/9.5 hear=0.0/0.4 prep=0.7/0.9 wait=12.7/15.4 record=0.0/0.1 present=0.4/0.6
+sound prio=proaudio calls=276145 late=0 gap=10.1 render=0.9 soft=0 dropped=0 reopened=0
+cmd t=230.6 active 2
+t=231 mould=224 mass=224 soldiers=51 squads=3 bank=4723 income=27513 pumped=19519 shots=40551 killed=76507 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=4.0 fast=0 n=60 step=2.4/9.4 hear=0.0/0.4 prep=0.7/1.0 wait=12.7/15.4 record=0.0/0.1 present=0.4/0.6
+t=232 mould=150 mass=150 soldiers=51 squads=3 bank=4955 income=27745 pumped=19629 shots=40738 killed=76553 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=3.1/12.4 hear=0.0/0.4 prep=0.7/0.9 wait=12.2/15.5 record=0.0/0.1 present=0.4/0.5
+cmd t=232.4 sorder 2 move 75.375 158.76244
+boss t=233.0 ended=Broken kind=pinwheel members=87 first=747 stole=0
+t=233 mould=101 mass=101 soldiers=51 squads=3 bank=5188 income=27977 pumped=19738 shots=40901 killed=76608 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.5 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=2.9/11.2 hear=0.0/0.4 prep=0.7/0.9 wait=12.4/15.5 record=0.1/0.1 present=0.4/0.5
+t=234 mould=5 mass=5 soldiers=51 squads=3 bank=5420 income=28210 pumped=19848 shots=41028 killed=76692 pumps=5 turrets=0 walls=2 other=0 charge=2641664 took=0.500 stuck=0 p50=16.4 p95=16.6
+frames px=3840x2004 detail=40 zoom=16.0 fast=0 n=60 step=1.8/12.3 hear=0.0/0.4 prep=0.7/0.9 wait=13.5/15.6 record=0.0/0.1 present=0.4/0.5
+cmd t=234.0 sorder 2 move 60.5625 155.2222
+end t=235 Goal met at 3:55: 3 stars
