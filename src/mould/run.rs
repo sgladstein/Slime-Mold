@@ -36,6 +36,8 @@
 
 use super::campaign::{Bonus, Goal, Mission};
 use super::bodies::{Body, BodyKind};
+use super::larder_world::QUICK;
+use super::turrets::{Turret, TurretKind};
 use super::guns::{Gun, GunKind};
 use super::kit::KitRules;
 use super::larder_world::{Rules, Twist};
@@ -1286,6 +1288,25 @@ pub const REROLL_PRICE: u32 = 25;
 /// Device bodies for sale in each shop from planet 2 (`Run::body_rolls`).
 pub const BODY_OFFER: usize = 2;
 
+/// Turret designs for sale in each shop (`Run::turret_rolls`).
+pub const TURRET_OFFER: usize = 2;
+
+/// The old shop unlock's key a turret kind's building had (and its
+/// shop icon, `Face::Item`): `turret`, `mortar`, `sprayer`, `hunter`.
+pub fn turret_key(kind: TurretKind) -> &'static str {
+    match kind {
+        TurretKind::Gun => "turret",
+        TurretKind::Lobber => "mortar",
+        TurretKind::Sprayer => "sprayer",
+        TurretKind::Hunter => "hunter",
+    }
+}
+
+/// The turret kind an old unlock key stood for (`turret_key`).
+pub fn turret_of_key(key: &str) -> Option<TurretKind> {
+    TurretKind::ALL.into_iter().find(|&k| turret_key(k) == key)
+}
+
 /// A gun's price: dearer the deeper it was found and the better it rolled
 /// (`Gun::grade`, 1 average, squared so a lucky roll costs what it gives),
 /// in tens.
@@ -1487,6 +1508,12 @@ pub enum Pick {
     Body(usize),
     /// Owned body `i` into the loadout shown, which gives up its gun.
     CarryBody(usize),
+    /// Turret design on offer `i` (2026-11-27): bought, beside those owned.
+    Turret(usize),
+    /// The loadout shown in or out of quick build (`Run::quick`).
+    Quick,
+    /// Owned turret design `i` into the loadout shown.
+    CarryTurret(usize),
     /// The relic on offer bought (gun step F).
     Relic,
     /// The card offers redrawn for `reroll_price` (gun step F): the guns
@@ -1517,6 +1544,12 @@ pub struct Loadout {
     /// loadout holds a gun or a body, and a body's carries its cards
     /// (`Run::body_cards`) fitted to the body's rack.
     pub body: Option<usize>,
+    /// Its turret design, an index into `Run::turrets` (owner,
+    /// 2026-11-27 21:36Z: "Loadouts are built by combining guns or
+    /// turrets with bullet modifier, etc cards"): a loadout holds a gun, a
+    /// body or a turret, and every turret of that design fires its cards
+    /// (`Run::design_cards`) fitted to its rack.
+    pub turret: Option<usize>,
     /// Its cards in firing order, while another loadout is shown in the
     /// gun slots (the one shown keeps them in `Run::cards`).
     cards: Vec<Card>,
@@ -1564,6 +1597,20 @@ pub struct Run {
     pub bodies: Vec<Body>,
     /// This shop's bodies for sale.
     pub body_offers: Vec<Body>,
+    /// **Turret designs owned** (owner, 2026-11-27 21:36Z: "You buy
+    /// "turrets" like you buy guns"; `turrets.rs`), as many as bought,
+    /// none replaced (21:48Z: "Nothing gets replaced similar to guns").
+    /// A run starts with the plain gun turret (21:42Z: "on the first
+    /// planet a basic turret with this basic bullet is available. Doesn't
+    /// need to be unlocked"), in the second loadout.
+    pub turrets: Vec<Turret>,
+    /// **The loadouts quick to build** (owner, 21:48Z: "select two to
+    /// three loadouts in the menu that you can just quick build without
+    /// having to go back into the editor"): at most `QUICK`, each holding
+    /// a turret, in the Build page's order (`Game::designs`).
+    pub quick: Vec<usize>,
+    /// This shop's turrets for sale.
+    pub turret_offers: Vec<Turret>,
     /// Stars won on each level so far.
     pub stars: Vec<u8>,
     /// The run is over (a level was lost) at this depth.
@@ -1713,7 +1760,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0, splits: Vec::new(), route: vec![Leg::default()], #[cfg(test)] tuned: None }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, turret: None, cards: Vec::new() }, Loadout { turret: Some(0), ..Loadout::default() }], editing: 0, turret_loadout: 1, turrets: vec![Turret::plain(TurretKind::Gun)], quick: vec![1], turret_offers: Vec::new(), device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0, splits: Vec::new(), route: vec![Leg::default()], #[cfg(test)] tuned: None }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -1742,7 +1789,99 @@ impl Run {
 
     /// The unlock `key` is owned (the window's lock on the command card).
     pub fn has(&self, key: &str) -> bool {
+        // The turret unlocks went (owner, 2026-11-27 21:42Z): a building
+        // of a turret kind is open once a design of it is owned.
+        if let Some(kind) = turret_of_key(key) {
+            return self.turret_of(kind).is_some();
+        }
         self.level_of(key) > 0
+    }
+
+    /// The turret design of `kind` owned, if any (its index in `turrets`).
+    pub fn turret_of(&self, kind: TurretKind) -> Option<usize> {
+        self.turrets.iter().position(|t| t.kind == kind)
+    }
+
+    /// Quick-build slot `s`'s design and the loadout holding it
+    /// (`Game::designs`), if that slot is filled.
+    pub fn quick_design(&self, s: usize) -> Option<(Turret, usize)> {
+        let &l = self.quick.get(s)?;
+        let t = self.loadouts.get(l)?.turret?;
+        Some((*self.turrets.get(t)?, l))
+    }
+
+    /// The cards every turret built from loadout `l` fires
+    /// (`Game::design_decks`): its cards, as many as fit its design's
+    /// rack, in firing order; none if it holds no turret.
+    pub fn design_cards(&self, l: usize) -> Vec<Card> {
+        let Some(t) = self.loadouts.get(l).and_then(|x| x.turret) else { return Vec::new() };
+        let rack = self.turrets[t].rack();
+        let mut cards = self.cards_of(l);
+        while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
+            cards.pop();
+        }
+        cards
+    }
+
+    /// A design into the run (bought, or the old unlock's plain one),
+    /// beside those owned: into the first loadout holding nothing past the
+    /// squads', or a new one, so it is ready to take cards, and quick to
+    /// build while a slot is free.
+    fn own_turret(&mut self, t: Turret) {
+        self.turrets.push(t);
+        let i = self.turrets.len() - 1;
+        let free = (1..self.loadouts.len()).find(|&j| j != self.editing && self.loadouts[j].gun.is_none() && self.loadouts[j].body.is_none() && self.loadouts[j].turret.is_none() && self.loadouts[j].cards.is_empty());
+        let j = match free {
+            Some(j) => Some(j),
+            None if self.loadouts.len() < LOADOUTS_MAX => {
+                self.loadouts.push(Loadout::default());
+                Some(self.loadouts.len() - 1)
+            }
+            None => None,
+        };
+        if let Some(j) = j {
+            self.loadouts[j].turret = Some(i);
+            self.refit_stored(j);
+            if self.quick.len() < QUICK && !self.quick.contains(&j) {
+                self.quick.push(j);
+            }
+        }
+    }
+
+    /// The loadout shown in or out of quick build (`quick`): in only while
+    /// it holds a turret and a slot is free. True if it changed.
+    fn toggle_quick(&mut self) -> bool {
+        let l = self.editing;
+        if let Some(k) = self.quick.iter().position(|&q| q == l) {
+            self.quick.remove(k);
+            return true;
+        }
+        if self.quick.len() >= QUICK || self.loadouts.get(l).and_then(|x| x.turret).is_none() {
+            return false;
+        }
+        self.quick.push(l);
+        true
+    }
+
+    /// Design `t` into the loadout shown, out of any other, and the shown
+    /// one's gun or body back (a loadout holds one); its cards refit to
+    /// the design's rack. Not the squads' first loadout. True if it
+    /// changed.
+    fn take_turret(&mut self, t: usize) -> bool {
+        if t >= self.turrets.len() || self.editing == 0 || self.loadouts[self.editing].turret == Some(t) {
+            return false;
+        }
+        for j in 0..self.loadouts.len() {
+            if j != self.editing && self.loadouts[j].turret == Some(t) {
+                self.loadouts[j].turret = None;
+                self.refit_stored(j);
+            }
+        }
+        self.loadouts[self.editing].gun = None;
+        self.loadouts[self.editing].body = None;
+        self.loadouts[self.editing].turret = Some(t);
+        self.refit();
+        true
     }
 
     /// The current planet's twist (`PlanetTwist`), None on most.
@@ -2059,26 +2198,15 @@ impl Run {
         r.start_bank += 500.0 * l("bank");
         r.harvest *= 1.0 + 0.25 * l("harvest");
         r.fire_hurt *= fireproof_share(self.level_of("fireproof"));
-        let t = l("turret+");
         let p = l("pump+");
         let b = &mut r.build;
         b.pump_share *= 1.0 + 0.25 * p;
         b.pump_rate *= 1.0 + 0.25 * p;
-        b.turret_hp *= 1.0 + 0.3 * t;
-        b.turret_range += 3.0 * t;
-        b.turret_every *= 0.85f32.powf(t);
-        // Mortars are turrets' bodies: the same power (the turrets thread).
-        b.mortar_hp *= 1.0 + 0.3 * t;
-        b.mortar_range += 3.0 * t;
-        b.mortar_every *= 0.85f32.powf(t);
-        // And so are sprayers and hunters (the shop's line said sprayers
-        // since #796, but they were left out until the hunter came).
-        b.sprayer_hp *= 1.0 + 0.3 * t;
-        b.sprayer_range += 3.0 * t;
-        b.sprayer_every *= 0.85f32.powf(t);
-        b.hunter_hp *= 1.0 + 0.3 * t;
-        b.hunter_range += 3.0 * t;
-        b.hunter_every *= 0.85f32.powf(t);
+        // Turret power went (owner, 2026-11-27 21:42Z: "Turret upgrade is
+        // just replaced by better more expensive turret[s] being sold
+        // later in the run"); from 11-16 each level gave turrets, mortars,
+        // sprayers and hunters 30% more toughness, 3 cells of reach and
+        // fire 15% sooner.
     }
 
     /// The tools' prices with `tools+`.
@@ -2187,7 +2315,8 @@ impl Run {
     /// The gun turrets that follow the default fire (`turret_gun_of` of
     /// `turret_loadout`); None without turrets or with no gun there.
     pub fn turret_gun(&self) -> Option<Gun> {
-        self.has("turret").then(|| self.turret_gun_of(self.turret_loadout)).flatten()
+        // Retired with the shared deck (2026-11-27): designs.
+        None
     }
 
     /// The first loadout's gun as the squad lands with it (`armed_of`).
@@ -2219,6 +2348,9 @@ impl Run {
         if let Some(b) = self.loadouts.get(i).and_then(|l| l.body).and_then(|b| self.bodies.get(b)) {
             return b.rack();
         }
+        if let Some(t) = self.loadouts.get(i).and_then(|l| l.turret).and_then(|t| self.turrets.get(t)) {
+            return t.rack();
+        }
         self.gun_of(i).unwrap_or_else(|| self.turret_rack())
     }
 
@@ -2230,7 +2362,7 @@ impl Run {
     /// The gun slots show the turrets' loadout (and it is not the
     /// squads' first).
     pub fn editing_turrets(&self) -> bool {
-        self.editing == self.turret_loadout && self.editing != 0
+        self.loadouts.get(self.editing).is_some_and(|l| l.turret.is_some())
     }
 
     /// Loadout `i`'s cards, in firing order.
@@ -2249,11 +2381,12 @@ impl Run {
 
     /// The turrets' deck (`Game::turret_deck`), in firing order: empty
     /// without turrets.
+    ///
+    /// Retired in a run since 2026-11-27 (bought designs carry their own
+    /// cards, `design_cards`): always empty, so no shared deck also fires
+    /// from a turret.
     pub fn turret_cards(&self) -> Vec<Card> {
-        if !self.has("turret") {
-            return Vec::new();
-        }
-        self.turret_deck_of(self.turret_loadout)
+        Vec::new()
     }
 
     /// Whether the run owns a device (the Tools group's unlocks).
@@ -2293,11 +2426,14 @@ impl Run {
 
     /// The shop's gun slots show the turrets' loadout (`on`) or the first.
     /// True if it changed.
+    /// Since 2026-11-27 the turrets' loadout is the gun turret design's.
     pub fn edit_turrets(&mut self, on: bool) -> bool {
-        if on && !self.has("turret") {
-            return false;
+        let l = self.turret_of(TurretKind::Gun).and_then(|t| self.loadouts.iter().position(|l| l.turret == Some(t)));
+        match (on, l) {
+            (true, Some(l)) => self.edit(l),
+            (true, None) => false,
+            (false, _) => self.edit(0),
         }
-        self.edit(if on { self.turret_loadout } else { 0 })
     }
 
     /// Gun `g` into the loadout shown, out of any other: that one goes on
@@ -2310,8 +2446,9 @@ impl Run {
             }
         }
         self.loadouts[self.editing].gun = Some(g);
-        // A loadout holds a gun or a body (gun step E3).
+        // A loadout holds a gun, a body (gun step E3) or a turret.
         self.loadouts[self.editing].body = None;
+        self.loadouts[self.editing].turret = None;
         self.refit();
     }
 
@@ -2330,6 +2467,7 @@ impl Run {
             }
         }
         self.loadouts[self.editing].gun = None;
+        self.loadouts[self.editing].turret = None;
         self.loadouts[self.editing].body = Some(b);
         self.refit();
         true
@@ -2582,6 +2720,7 @@ impl Run {
             self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
             self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.roll_depth())).collect();
             self.body_offers = BodyKind::ALL.iter().enumerate().map(|(k, &kind)| Body::roll(kind, mix(z ^ (0xB0D1_0000 + k as u64)), self.roll_depth())).collect();
+            self.turret_offers = TurretKind::ALL.iter().enumerate().map(|(k, &kind)| Turret::roll(kind, mix(z ^ (0x7E77_0000 + k as u64)), self.roll_depth())).collect();
             return;
         }
         let n = OFFER + self.level_of("draw") as usize;
@@ -2687,6 +2826,7 @@ impl Run {
             .filter(|g| !self.guns.contains(g))
             .collect();
         self.body_offers = self.body_rolls(z);
+        self.turret_offers = self.turret_rolls(z);
         // A Hard planet's rare card (star map, 2026-11-26), in the last
         // card's place so the shop's rows keep their count.
         if let Some(c) = self.rare_offer().filter(|c| !self.offers.contains(c)) {
@@ -2798,6 +2938,21 @@ impl Run {
             .collect()
     }
 
+    /// This shop's turret designs (2026-11-27, first guesses):
+    /// `TURRET_OFFER` of different kinds, rolled for the shop's depth, so
+    /// a better one than the plain gun turret comes along as the run goes
+    /// deeper (owner, 21:42Z: "better more expensive turret[s] being sold
+    /// later in the run").
+    fn turret_rolls(&self, z: u64) -> Vec<Turret> {
+        let mut kinds = TurretKind::ALL.to_vec();
+        (0..TURRET_OFFER as u64)
+            .map(|k| {
+                let s = mix(z ^ (0x7E77_0000 + k));
+                Turret::roll(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth())
+            })
+            .collect()
+    }
+
     /// Shop points the squad took on the planet (`Game::starfall`: ore
     /// from the sky and boss cores), kept whether it is won or lost.
     /// Before `won`, so the end screen's sum is the shop's.
@@ -2903,7 +3058,9 @@ impl Run {
         // The loadout panel on a planet (`field`) sells nothing.
         // The device unlocks are sold as bodies since gun step E3
         // (`body_offers`, below).
-        for (i, it) in ITEMS.iter().enumerate().filter(|(_, it)| !self.range && !self.field && BodyKind::of_key(it.key).is_none()) {
+        // The turret unlocks and Turret power went too (owner, 2026-11-27
+        // 21:42Z): turrets are sold as designs (`turret_offers`, below).
+        for (i, it) in ITEMS.iter().enumerate().filter(|(_, it)| !self.range && !self.field && BodyKind::of_key(it.key).is_none() && turret_of_key(it.key).is_none() && it.key != "turret+") {
             let l = self.owned[i];
             let price = self.price(i);
             let needs = it.needs.is_some_and(|k| !self.has(k));
@@ -2946,6 +3103,25 @@ impl Run {
             let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
             let swap = if self.body_of(b.kind).is_some() { format!(" Replaces your {}.", b.kind.name()) } else { String::new() };
             rows.push(Row { group: Group::Tools, face: Face::Item(b.kind.key()), on: false, name: title(&b.title()), about: format!("{}.{swap}", b.kind.about()), price, state, ready: self.range || p <= self.points, pick: Pick::Body(i) });
+        }
+        // Turret designs (owner, 2026-11-27 21:36Z): those owned, each a
+        // click into the loadout shown (not the squads' first), then those
+        // for sale, in the Build tab where their unlocks were.
+        for (i, t) in self.turrets.iter().enumerate() {
+            let on = self.loadouts.get(self.editing).is_some_and(|l| l.turret == Some(i));
+            let holder = self.loadouts.iter().position(|l| l.turret == Some(i));
+            let (about, state) = match holder {
+                _ if on => (format!("{} In {shown}: every one you build fires its cards.", t.kind.about()), "carried".to_string()),
+                _ if self.editing == 0 => (format!("{} Show another loadout to give it cards (squads land with {shown}).", t.kind.about()), holder.map_or("owned".to_string(), |j| self.loadout_name(j))),
+                Some(j) => (format!("{} In {}: click to move it to {shown}.", t.kind.about(), self.loadout_name(j)), self.loadout_name(j)),
+                None => (format!("{} Click to put it in {shown}, to give it cards.", t.kind.about()), "owned".to_string()),
+            };
+            rows.push(Row { group: Group::Build, face: Face::Item(turret_key(t.kind)), on, name: title(&t.title()), about, price: String::new(), state, ready: !on && self.editing != 0, pick: Pick::CarryTurret(i) });
+        }
+        for (i, t) in self.turret_offers.iter().enumerate().filter(|_| !self.field) {
+            let p = t.price();
+            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
+            rows.push(Row { group: Group::Build, face: Face::Item(turret_key(t.kind)), on: false, name: title(&t.title()), about: format!("{} From planet {}; goes into a loadout of its own.", t.kind.about(), t.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Turret(i) });
         }
         for (i, g) in self.guns.iter().enumerate() {
             let on = self.carry() == Some(i);
@@ -2994,13 +3170,16 @@ impl Run {
         if !self.range {
             let bar = |name: String, about: String, on: bool, ready: bool, pick| Row { group: Group::Dev, face: Face::Dev, on, name, about, price: String::new(), state: String::new(), ready, pick };
             for i in 0..self.loadouts.len() {
-                let gun = self.gun_of(i).map_or("no gun".to_string(), |g| title(&g.title()));
+                // What it holds by name (2026-11-27: "2: Lobber"), a turret's
+                // or a body's in place of a gun's.
+                let held = self.loadouts[i].turret.and_then(|t| self.turrets.get(t)).map(|t| t.kind.name().to_string()).or_else(|| self.loadouts[i].body.and_then(|b| self.bodies.get(b)).map(|b| b.kind.name().to_string()));
+                let gun = held.unwrap_or_else(|| self.gun_of(i).map_or("no gun".to_string(), |g| title(&g.title())));
                 let mut users = Vec::new();
                 if i == 0 {
                     users.push("squads land with it".to_string());
                 }
-                if i == self.turret_loadout && self.has("turret") {
-                    users.push("new turrets use it".to_string());
+                if self.loadouts[i].turret.is_some() && self.quick.contains(&i) {
+                    users.push("quick build".to_string());
                 }
                 if self.device_loadout == Some(i) && self.has_device() {
                     users.push("devices carry its cards".to_string());
@@ -3031,12 +3210,21 @@ impl Run {
                 };
                 rows.push(bar(name, about, self.held.is_some(), true, Pick::Hold));
             }
-            if self.loadouts.len() < LOADOUTS_MAX {
-                rows.push(bar("New loadout".into(), "An empty loadout with no gun: put a gun and cards in it, then give it to a squad or turrets.".into(), false, true, Pick::NewLoadout));
+            // Quick build (owner, 21:48Z): the shown loadout's turret on
+            // the Build page, up to `QUICK`.
+            if let Some(t) = self.loadouts.get(self.editing).and_then(|l| l.turret).and_then(|t| self.turrets.get(t)) {
+                let on = self.quick.contains(&self.editing);
+                let (name, about) = if on {
+                    ("Quick build: on".to_string(), format!("{shown}'s {} is on the Build page on a planet. Click to take it off.", t.kind.name().to_lowercase()))
+                } else if self.quick.len() >= QUICK {
+                    ("Quick build: full".to_string(), format!("At most {QUICK} loadouts are quick to build: take one off first."))
+                } else {
+                    ("Quick build: off".to_string(), format!("Click to put {shown}'s {} on the Build page on a planet.", t.kind.name().to_lowercase()))
+                };
+                rows.push(bar(name, about, on, on || self.quick.len() < QUICK, Pick::Quick));
             }
-            if self.has("turret") && self.turret_loadout != self.editing {
-                let what = if self.editing == 0 { " (the squads' own: turrets on it fire the rifle and 2 cards)" } else { "" };
-                rows.push(bar("Turrets use this".into(), format!("New turrets use {shown}{what}; each turret can be changed in the game."), false, true, Pick::TurretsUse));
+            if self.loadouts.len() < LOADOUTS_MAX {
+                rows.push(bar("New loadout".into(), "An empty loadout: put a gun or a turret and cards in it.".into(), false, true, Pick::NewLoadout));
             }
             if self.has_device() && self.device_loadout != Some(self.editing) {
                 rows.push(bar("Devices use this".into(), format!("Every device with no loadout of its own also casts {shown}'s cards (as many as its body holds) where it goes off, as a hit there would."), false, true, Pick::DevicesUse));
@@ -3074,10 +3262,25 @@ impl Run {
     /// A shop pick; false when it can't be done (too dear, maxed, locked).
     pub fn pick(&mut self, p: Pick) -> bool {
         match p {
-            Pick::Item(_) | Pick::Offer(_) | Pick::Gun(_) if self.field => false,
+            Pick::Item(_) | Pick::Offer(_) | Pick::Gun(_) | Pick::Turret(_) if self.field => false,
             Pick::Item(i) => {
                 let Some(price) = self.price(i).filter(|&c| c <= self.points) else { return false };
                 if ITEMS[i].needs.is_some_and(|k| !self.has(k)) {
+                    return false;
+                }
+                // A turret unlock (gone from the shop since 2026-11-27; the
+                // bots still buy by key) is the plain design of it, and
+                // Turret power is gone.
+                if let Some(kind) = turret_of_key(ITEMS[i].key) {
+                    // Once, as the unlock was.
+                    if self.turret_of(kind).is_some() {
+                        return false;
+                    }
+                    self.points -= price;
+                    self.own_turret(Turret::plain(kind));
+                    return true;
+                }
+                if ITEMS[i].key == "turret+" {
                     return false;
                 }
                 // A device unlock (gone from the shop since gun step E3;
@@ -3106,6 +3309,19 @@ impl Run {
                 true
             }
             Pick::CarryBody(i) => self.take_body(i),
+            Pick::Turret(i) => {
+                let Some(&t) = self.turret_offers.get(i) else { return false };
+                let price = if self.range { 0 } else { t.price() };
+                if price > self.points || self.field {
+                    return false;
+                }
+                self.points -= price;
+                self.turret_offers.remove(i);
+                self.own_turret(t);
+                true
+            }
+            Pick::CarryTurret(i) => self.take_turret(i),
+            Pick::Quick => self.toggle_quick(),
             Pick::BodyAuto(i) => match self.bodies.get_mut(i) {
                 Some(b) => {
                     b.auto = !b.auto;
@@ -3169,9 +3385,9 @@ impl Run {
                 self.points -= price;
                 self.paid_rerolls += 1;
                 self.rerolls += 1;
-                let (guns, bodies) = (std::mem::take(&mut self.gun_offers), std::mem::take(&mut self.body_offers));
+                let (guns, bodies, turrets) = (std::mem::take(&mut self.gun_offers), std::mem::take(&mut self.body_offers), std::mem::take(&mut self.turret_offers));
                 self.restock();
-                (self.gun_offers, self.body_offers) = (guns, bodies);
+                (self.gun_offers, self.body_offers, self.turret_offers) = (guns, bodies, turrets);
                 true
             }
             Pick::Hold => {
@@ -3234,8 +3450,10 @@ impl Run {
                 self.loadouts.push(Loadout::default());
                 self.edit(self.loadouts.len() - 1)
             }
+            // Retired with the shared turret deck (2026-11-27): each turret
+            // design fires its own loadout.
             Pick::TurretsUse => {
-                let done = self.has("turret") && self.turret_loadout != self.editing;
+                let done = false;
                 if done {
                     self.turret_loadout = self.editing;
                 }
@@ -3322,12 +3540,17 @@ impl Run {
         put("gun_offers", guns(&self.gun_offers));
         put("bodies", self.bodies.iter().map(Body::word).collect::<Vec<_>>().join(" "));
         put("body_offers", self.body_offers.iter().map(Body::word).collect::<Vec<_>>().join(" "));
+        put("turrets", self.turrets.iter().map(Turret::word).collect::<Vec<_>>().join(" "));
+        put("turret_offers", self.turret_offers.iter().map(Turret::word).collect::<Vec<_>>().join(" "));
+        put("quick", self.quick.iter().map(|q| q.to_string()).collect::<Vec<_>>().join(" "));
         // A loadout: its gun's index or `-` (`-/B` for body B's, gun step
         // E3; an older build reads that as no gun), then its cards, `,`
         // between.
-        let head = |l: &Loadout| match l.body {
-            Some(b) => format!("-/{b}"),
-            None => l.gun.map_or("-".into(), |g| g.to_string()),
+        // `-@T` for turret design T's (2026-11-27).
+        let head = |l: &Loadout| match (l.body, l.turret) {
+            (Some(b), _) => format!("-/{b}"),
+            (None, Some(t)) => format!("-@{t}"),
+            (None, None) => l.gun.map_or("-".into(), |g| g.to_string()),
         };
         put("loadouts", self.loadouts.iter().map(|l| std::iter::once(head(l)).chain(l.cards.iter().map(|c| c.word())).collect::<Vec<_>>().join(",")).collect::<Vec<_>>().join(" "));
         put("editing", self.editing.to_string());
@@ -3396,16 +3619,33 @@ impl Run {
                 r.bodies.push(Body::plain(kind));
             }
         }
+        // Turret designs (2026-11-27). A save from before them keeps the
+        // starting gun turret and gets the plain design of each turret
+        // unlock it owned.
+        let saved: Vec<Turret> = list("turrets").into_iter().filter_map(Turret::from_word).collect();
+        let old = saved.is_empty();
+        if !old {
+            r.turrets = saved;
+        }
+        r.turret_offers = list("turret_offers").into_iter().filter_map(Turret::from_word).collect();
+        for kind in TurretKind::ALL.into_iter().filter(|_| old) {
+            if r.turret_of(kind).is_none() && r.level_of(turret_key(kind)) > 0 {
+                r.turrets.push(Turret::plain(kind));
+            }
+        }
+        let turrets = r.turrets.len();
         let bodies = r.bodies.len();
         let loadouts: Vec<Loadout> = list("loadouts")
             .into_iter()
             .map(|l| {
                 let mut parts = l.split(',');
                 let head = parts.next().unwrap_or("-");
+                let (head, t) = head.split_once('@').unwrap_or((head, ""));
                 let (g, b) = head.split_once('/').unwrap_or((head, ""));
                 let gun = g.parse::<usize>().ok().filter(|&g| g < r.guns.len());
                 let body = b.parse::<usize>().ok().filter(|&b| b < bodies);
-                Loadout { gun: if body.is_some() { None } else { gun }, body, cards: parts.filter_map(Card::from_word).collect() }
+                let turret = t.parse::<usize>().ok().filter(|&t| t < turrets).filter(|_| body.is_none());
+                Loadout { gun: if body.is_some() || turret.is_some() { None } else { gun }, body, turret, cards: parts.filter_map(Card::from_word).collect() }
             })
             .take(LOADOUTS_MAX)
             .collect();
@@ -3414,6 +3654,10 @@ impl Run {
         }
         let last = r.loadouts.len() - 1;
         r.editing = num("editing").map_or(0, |v| (v as usize).min(last));
+        // Quick build: the saved slots that still hold a turret, else the
+        // first loadouts that do (a save from before them).
+        let quick: Vec<usize> = list("quick").into_iter().filter_map(|v| v.parse::<usize>().ok()).filter(|&q| r.loadouts.get(q).is_some_and(|l| l.turret.is_some())).take(QUICK).collect();
+        r.quick = if quick.is_empty() { (0..r.loadouts.len()).filter(|&q| r.loadouts[q].turret.is_some()).take(QUICK).collect() } else { quick };
         r.turret_loadout = num("turret_loadout").map_or(r.turret_loadout, |v| v as usize).min(last);
         r.device_loadout = num("device_loadout").map(|v| (v as usize).min(last));
         r.stars = list("stars").into_iter().filter_map(|v| v.parse().ok()).collect();
@@ -3908,19 +4152,21 @@ mod tests {
     #[test]
     fn the_shop_sells_what_the_points_buy_and_no_more() {
         let mut r = Run::new(1);
-        assert!(r.has("walls") && !r.has("turret"));
+        assert!(r.has("walls") && r.has("turret"), "the plain gun turret from planet 1");
         assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_) | Pick::Edit(_) | Pick::NewLoadout | Pick::DevSkip)), "no points, nothing to buy");
         r.won(1);
         assert_eq!((r.depth, r.points), (2, reward(1, 1)));
         assert_eq!(r.offers.len(), OFFER + AMMO_OFFER);
-        let turret = ITEMS.iter().position(|i| i.key == "turret").unwrap();
-        let power = ITEMS.iter().position(|i| i.key == "turret+").unwrap();
-        assert!(!r.pick(Pick::Item(power)), "turret power needs turrets");
-        assert!(r.pick(Pick::Item(turret)));
-        assert!(r.has("turret") && !r.pick(Pick::Item(turret)), "an unlock is bought once");
+        let cord = ITEMS.iter().position(|i| i.key == "cord").unwrap();
+        let gas = ITEMS.iter().position(|i| i.key == "gas").unwrap();
+        assert!(r.pick(Pick::Item(cord)));
+        assert!(r.has("cord") && !r.pick(Pick::Item(cord)), "an unlock is bought once");
         assert_eq!(r.points, reward(1, 1) - 200);
         assert_eq!(reward(1, 1), 200, "the first win buys one unlock");
-        assert!(!r.pick(Pick::Item(power)), "too dear now");
+        assert!(!r.pick(Pick::Item(gas)), "too dear now");
+        // Turret power went with the turret unlocks (owner, 2026-11-27
+        // 21:42Z): neither is on the shelf.
+        assert!(!r.shop().iter().any(|w| matches!(w.pick, Pick::Item(i) if ITEMS[i].key == "turret+" || ITEMS[i].key == "turret")));
         // Levels rise in price.
         let hp = ITEMS.iter().position(|i| i.key == "hp").unwrap();
         r.points = 1000;
@@ -4004,7 +4250,8 @@ mod tests {
         }
         assert_eq!(r.offers[0], Card::Ammo(Ammo::standard(Shell::Plain)), "the standard set is exact");
         let rows = r.shop();
-        assert!(rows.iter().all(|row| !matches!(row.pick, Pick::Item(_)) && row.price.is_empty() && (row.ready || row.on)), "no upgrades, nothing to pay");
+        // (An owned turret can't go in the squads' loadout, shown first.)
+        assert!(rows.iter().all(|row| !matches!(row.pick, Pick::Item(_)) && row.price.is_empty() && (row.ready || row.on || matches!(row.pick, Pick::CarryTurret(_)))), "no upgrades, nothing to pay");
         // The same card twice, free, and still on the shelf.
         let n = r.offers.len();
         assert!(r.pick(Pick::Offer(0)) && r.pick(Pick::Offer(0)));
@@ -4282,38 +4529,43 @@ mod tests {
         assert!((a.rate - g.rate / 0.85).abs() < 1e-4, "{} then {}", g.rate, a.rate);
     }
 
-    /// **The turrets' deck comes out of the same bag** (the turrets
-    /// thread, 2026-11-16, after the independent review): with turrets
-    /// owned, the shop's gun slots switch to the turrets' rack (2 slots,
-    /// budget 4), a card put there leaves the bag and the squad's gun, both
-    /// decks survive the switch either way, and without turrets there is no
-    /// switch and no turret deck.
+    /// **Turrets are owned like guns** (owner, 2026-11-27 21:36Z-21:48Z):
+    /// the plain gun turret from planet 1 in loadout 2, quick to build;
+    /// cards on it leave the bag for its design's rack; bought designs,
+    /// of a kind owned or not, replace none, each lands in a loadout of
+    /// its own and is quick to build while one of the 3 slots is free; the
+    /// loadout bar's Quick build toggles a turret loadout in or out (not
+    /// while full, not with no turret); the save keeps it all.
     #[test]
-    fn the_turrets_take_cards_from_the_squads_bag() {
+    fn turrets_are_owned_like_guns_and_quick_built() {
         let mut r = Run::new(1);
-        r.cards = vec![(Card::Wide, true), (Card::Blast, false), (Card::Gas, false), (Card::Bomb, false)];
-        assert!(!r.pick(Pick::EditTurrets), "no turrets, no switch");
-        assert!(!r.shop().iter().any(|w| w.pick == Pick::TurretsUse));
-        assert!(r.turret_cards().is_empty());
-        r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
-        assert!(r.shop().iter().any(|w| w.pick == Pick::Edit(1)), "the turrets' loadout has its button");
-        assert!(r.pick(Pick::EditTurrets) && r.editing_turrets());
-        assert_eq!((r.rack().slots, r.rack().budget), (2, 4));
-        assert!(r.gun().is_empty(), "the slots now show the empty turret deck");
-        assert_eq!(r.squad_cards(), vec![Card::Wide], "the squad keeps its gun");
-        // Gas into the turrets: out of the bag.
+        assert_eq!(r.turrets, vec![Turret::plain(TurretKind::Gun)]);
+        assert_eq!(r.quick, vec![1]);
+        assert_eq!(r.quick_design(0).map(|q| (q.0.kind, q.1)), Some((TurretKind::Gun, 1)));
+        assert!(r.quick_design(1).is_none());
+        r.cards = vec![(Card::Wide, true), (Card::Blast, false), (Card::Gas, false)];
+        assert!(r.edit(1));
         let gas = r.cards.iter().position(|c| c.0 == Card::Gas).unwrap();
         assert!(r.pick(Pick::Card(gas)));
-        assert_eq!(r.turret_cards(), vec![Card::Gas]);
-        assert_eq!(r.cards.iter().filter(|c| !c.1).count(), 2, "the bag gave it up");
-        // Back to the gun: each deck where it was, the bag shared.
-        assert!(r.pick(Pick::EditTurrets) && !r.editing_turrets());
-        assert_eq!((r.squad_cards(), r.turret_cards()), (vec![Card::Wide], vec![Card::Gas]));
-        assert_eq!(r.gun(), vec![Card::Wide]);
-        assert!(r.cards.iter().all(|c| c.0 != Card::Gas), "gas is on the turrets, not in the bag");
-        // Turret power grows the rack: a slot and 2 budget a level.
-        r.owned[ITEMS.iter().position(|i| i.key == "turret+").unwrap()] = 2;
-        assert_eq!((r.turret_rack().slots, r.turret_rack().budget), (4, 8));
+        assert_eq!(r.design_cards(1), vec![Card::Gas]);
+        assert_eq!(r.squad_cards(), vec![Card::Wide], "the squad keeps its gun");
+        r.points = 10_000;
+        for kind in [TurretKind::Gun, TurretKind::Lobber, TurretKind::Sprayer] {
+            r.turret_offers = vec![Turret::roll(kind, 7, 2)];
+            assert!(r.pick(Pick::Turret(0)), "{kind:?}");
+        }
+        assert_eq!(r.turrets.len(), 4, "none replaced");
+        assert_eq!(r.quick.len(), QUICK);
+        assert_eq!(r.design_cards(1), vec![Card::Gas], "the first kept its cards");
+        let last = r.loadouts.iter().position(|l| l.turret == Some(3)).unwrap();
+        assert!(!r.quick.contains(&last), "the fourth found no free slot");
+        assert!(r.edit(last) && !r.pick(Pick::Quick), "full");
+        assert!(r.shop().iter().any(|w| w.pick == Pick::Quick));
+        assert!(r.edit(1) && r.pick(Pick::Quick) && !r.quick.contains(&1));
+        assert!(r.edit(last) && r.pick(Pick::Quick) && r.quick.contains(&last));
+        assert!(r.edit(0) && !r.pick(Pick::Quick), "no turret there");
+        let back = Run::from_save(&r.save_text()).unwrap();
+        assert_eq!((&back.turrets, &back.quick), (&r.turrets, &r.quick));
     }
 
     /// **Fireproof** (owner, 2026-11-22 07:40Z: "upgrade fire resistance
@@ -4372,9 +4624,12 @@ mod tests {
         r.owned[1] = 2;
         r.guns.push(Gun::roll(3, 2));
         r.gun_offers.push(GunKind::Long.average_at(3));
-        r.loadouts.push(Loadout { gun: Some(r.guns.len() - 1), body: None, cards: vec![Card::Blast, Card::Ammo(Ammo::roll(9, 2))] });
+        // Room for two more (the turret kinds bought above took a loadout
+        // each).
+        r.loadouts.truncate(LOADOUTS_MAX - 2);
+        r.loadouts.push(Loadout { gun: Some(r.guns.len() - 1), body: None, turret: None, cards: vec![Card::Blast, Card::Ammo(Ammo::roll(9, 2))] });
         r.own_body(Body::roll(BodyKind::Canister, 5, 2));
-        r.loadouts.push(Loadout { gun: None, body: r.body_of(BodyKind::Canister), cards: vec![Card::Torch] });
+        r.loadouts.push(Loadout { gun: None, body: r.body_of(BodyKind::Canister), turret: None, cards: vec![Card::Torch] });
         r.body_offers.push(Body::roll(BodyKind::Line, 6, 2));
         r.offers.push(Card::Pierce);
         r.played = 1234.5;
@@ -4461,54 +4716,6 @@ mod tests {
         // At most LOADOUTS_MAX.
         while r.pick(Pick::NewLoadout) {}
         assert_eq!(r.loadouts.len(), LOADOUTS_MAX);
-    }
-
-    /// **Turrets fire their loadout's gun** (owner, 2026-11-27): a
-    /// loadout with a gun gives turrets that gun (with the squad's barrel
-    /// and trigger upgrades) and all the cards it holds; one with no gun
-    /// gives them the rifle and as many cards as the turrets' rack takes.
-    /// A squad on a loadout with no gun lands with the run's rifle
-    /// (review, 2026-11-20). A gun bought while the turrets' loadout is
-    /// shown goes on the turrets.
-    #[test]
-    fn turrets_fire_their_loadouts_gun() {
-        let mut r = Run::new(1);
-        r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
-        assert!(r.pick(Pick::Edit(1)) && r.editing_turrets());
-        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
-        r.refit();
-        assert_eq!(r.turret_gun(), None, "no gun there: the rifle");
-        assert!(rounds::fit_gun(r.turret_cards(), &r.turret_rack()).is_ok());
-        assert_eq!(r.squad_gun(1).kind, first_gun().kind, "loadout 2 has no gun: the rifle");
-        // A long gun into the turrets' loadout.
-        r.guns.push(Gun { slots: 4, budget: 12, ..GunKind::Long.average() });
-        assert!(r.pick(Pick::Carry(1)) && r.editing_turrets());
-        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
-        r.refit();
-        assert_eq!(r.turret_gun().map(|g| g.kind), Some(GunKind::Long));
-        let t = r.turret_cards();
-        assert_eq!(t, r.gun(), "all its cards: the gun's slots, not the rack's");
-        assert!(t.len() > r.turret_rack().slots as usize);
-        // The barrel upgrade reaches it.
-        r.owned[ITEMS.iter().position(|i| i.key == "range").unwrap()] = 1;
-        assert_eq!(r.turret_gun().unwrap().range, GunKind::Long.average().range + 3.0);
-        // A gun bought with the turrets' loadout shown stays there.
-        let before = r.guns.len();
-        r.points = 10_000;
-        r.gun_offers = vec![GunKind::Scatter.average()];
-        assert!(r.pick(Pick::Gun(0)));
-        assert!(r.editing_turrets() && r.guns.len() == before + 1);
-        assert_eq!(r.turret_gun().map(|g| g.kind), Some(GunKind::Scatter));
-        // Not the squads' own loadout (adversarial review, 2026-11-27):
-        // turrets put on it fire the rifle and the rack, not a free copy
-        // of the squads' gun and whole deck.
-        assert!(r.edit(0));
-        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
-        r.refit();
-        assert!(r.gun().len() > r.turret_rack().slots as usize, "the squads fire them all: {:?}", r.gun());
-        assert!(r.pick(Pick::TurretsUse) && r.turret_loadout == 0);
-        assert_eq!(r.turret_gun(), None);
-        assert!(r.turret_cards().len() <= r.turret_rack().slots as usize && rounds::fit_gun(r.turret_cards(), &r.turret_rack()).is_ok());
     }
 
     /// **Devices carry a loadout's cards** (gun step E, 2026-11-24): no

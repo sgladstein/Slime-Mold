@@ -107,7 +107,7 @@ pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
-pub use buildings::{BuildRules, Building, HunterMark, Kind, Shell, Spray, PUMP_LEVELS, SPRAY_SHOW, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
+pub use buildings::{design_kind, BuildRules, Building, HunterMark, Kind, Shell, Spray, DESIGN_DECKS, DESIGN_KINDS, QUICK, PUMP_LEVELS, SPRAY_SHOW, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -532,6 +532,14 @@ pub struct Game<W: World> {
     /// (`Cmd::Arm(TURRET_DECK, ..)`, 2026-11-27: turrets hold guns you
     /// buy, as squads do); None, the standard rifle (`Game::turret_gun`).
     pub turret_gun: Option<Gun>,
+    /// **The run's quick-build turret designs** (owner, 2026-11-27 21:36Z
+    /// and 21:48Z: turrets bought like guns, two or three loadouts quick
+    /// to build; `turrets::Turret`, `Cmd::Design`), by slot: what
+    /// `Cmd::Place` raises and the rolls it fires by.
+    pub designs: [Option<crate::mould::turrets::Turret>; buildings::QUICK],
+    /// Each design's cards (`Cmd::Load(DESIGN_DECKS + i, ..)`): every
+    /// building of its kind fires them unless it has its own.
+    pub design_decks: [Option<Deck>; buildings::QUICK],
     /// **The devices' cards** (gun step E, 2026-11-24), by tool
     /// (`kit::TOOLS` order): every cast in a tool's goes off where it does,
     /// on top of its own effect (`Kit::carry`). `Cmd::Load(DEVICE_DECKS +
@@ -825,6 +833,8 @@ impl<W: World> Game<W> {
             bullet_mods: BulletMods::default(),
             turret_deck: None,
             turret_gun: None,
+            designs: [None; buildings::QUICK],
+            design_decks: [None; buildings::QUICK],
             device_decks: [None; 8],
             autocast: 0,
             autocast_clock: 0.0,
@@ -947,7 +957,9 @@ impl<W: World> Game<W> {
     /// turrets' deck; None (a turret's shot with no turret known) the
     /// turrets' deck.
     pub fn turret_cards(&self, b: Option<usize>) -> Option<Deck> {
-        b.and_then(|b| self.buildings.get(b)).and_then(|b| b.deck).or(self.turret_deck)
+        // Its own, else its design's (2026-11-27), else the turrets'.
+        let bd = b.and_then(|b| self.buildings.get(b));
+        bd.and_then(|b| b.deck).or_else(|| bd.and_then(|b| b.slot).and_then(|s| self.design_decks.get(s as usize).copied().flatten())).or(self.turret_deck)
     }
 
     /// What turret `b`'s bullets carry (`turret_cards`).
@@ -970,6 +982,10 @@ impl<W: World> Game<W> {
     pub fn load(&mut self, q: usize, deck: Option<Deck>) -> bool {
         if q == TURRET_DECK as usize {
             self.turret_deck = deck;
+            return true;
+        }
+        if (buildings::DESIGN_DECKS as usize..buildings::DESIGN_DECKS as usize + buildings::QUICK).contains(&q) {
+            self.design_decks[q - buildings::DESIGN_DECKS as usize] = deck;
             return true;
         }
         if q == gear::DEVICE_DECK as usize {

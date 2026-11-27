@@ -232,12 +232,22 @@ impl App {
         went
     }
 
+    /// The kind build card `id` places: a run's quick-build slot's
+    /// design's (`quick_slot`; none while the slot is empty), else its own.
+    pub(super) fn places(&self, id: u32) -> Option<Kind> {
+        match (quick_slot(id).filter(|_| self.args.run.is_some()), self.game.as_ref()) {
+            (Some(s), Some(g)) => g.design_rings(s).map(|r| r.0),
+            (Some(_), None) => None,
+            (None, _) => build_kind(id),
+        }
+    }
+
     /// The unfinished building of build card `id`'s kind under `at`, if
     /// any (the pump card finds a rig by its crystal, `unfinished_at`).
     fn unfinished_for(&self, id: u32, at: (f32, f32)) -> Option<usize> {
         let g = self.game.as_ref()?;
         let b = g.unfinished_at(at)?;
-        (Some(g.buildings[b].kind) == build_kind(id)).then_some(b)
+        (Some(g.buildings[b].kind) == self.places(id)).then_some(b)
     }
 
     /// What a point means as an order: harvest a crystal under it, else
@@ -582,12 +592,19 @@ impl App {
                         }
                     }
                 }
-                HudEvent::Point { id, at } if build_kind(id).is_some() => {
+                HudEvent::Point { id, at } if self.places(id).is_some() => {
+                    // A run's turret buttons place their quick-build slot's
+                    // design (2026-11-27, `quick_slot`).
+                    let slot = quick_slot(id).filter(|_| self.args.run.is_some());
+                    let kind = self.places(id).unwrap();
                     if let Some(g) = self.game.as_mut() {
-                        let kind = build_kind(id).unwrap();
+                        let cmd = match slot {
+                            Some(s) => Cmd::Place(s as u8, at),
+                            None => Cmd::Build(kind, at),
+                        };
                         if let Some(why) = g.build_blocked(kind, at) {
                             self.hud.alert(&format!("Can't build a {} there: {why}", kind.name()), None, theme::WARN);
-                        } else if g.apply(Cmd::Build(kind, at)) {
+                        } else if g.apply(cmd) {
                             self.builders(&sel);
                         }
                     }

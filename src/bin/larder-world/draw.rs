@@ -757,17 +757,26 @@ impl App {
         let bld = g.rules.build;
         // A turret's by its gun (2026-11-27): the hovered one's own, a
         // placed one the default's.
-        let rings = |k: Kind, b: Option<usize>| match k {
-            Kind::Mortar => vec![bld.mortar_range, bld.mortar_min],
-            Kind::Sprayer => vec![bld.sprayer_range],
-            Kind::Hunter => vec![bld.hunter_range, bld.hunter_min],
-            _ => vec![g.turret_reach(b)],
+        // A design's by its range roll (2026-11-27).
+        let rings = |k: Kind, b: Option<usize>| {
+            let dr = b.map_or(1.0, |b| g.design_rolls(b).0);
+            match k {
+                Kind::Mortar => vec![bld.mortar_range * dr, bld.mortar_min],
+                Kind::Sprayer => vec![bld.sprayer_range * dr],
+                Kind::Hunter => vec![bld.hunter_range * dr, bld.hunter_min],
+                _ => vec![g.turret_reach(b)],
+            }
         };
-        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k, None));
-        let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
-            g.buildings.iter().enumerate().find(|(_, b)| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|(k, b)| (b.at, b.kind, Some(k)))
+        // Placing: a run's quick-build slot shows its design's rings.
+        let placing = self.hud.targeting().and_then(|t| match quick_slot(t.0).filter(|_| self.args.run.is_some()) {
+            Some(s) => g.design_rings(s).map(|r| r.1),
+            None => build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter)).map(|k| rings(k, None)),
         });
-        for (at, reach) in placing.into_iter().chain(over).flat_map(|(at, k, b)| rings(k, b).into_iter().map(move |r| (at, r))) {
+        let placing = placing.zip(cursor.and_then(|p| self.hud.aim(p, &self.camera)));
+        let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
+            g.buildings.iter().enumerate().find(|(_, b)| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|(k, b)| (rings(b.kind, Some(k)), b.at))
+        });
+        for (at, reach) in placing.into_iter().chain(over).flat_map(|(rs, at)| rs.into_iter().map(move |r| (at, r))) {
             let reach = reach * sc;
             let n = if reach > 60.0 { 180 } else { 72 };
             for i in 0..n {
@@ -2323,6 +2332,38 @@ impl App {
                     let cards = run.body_cards(kind);
                     c.about = format!("{} {}", c.about, if cards.is_empty() { "It carries no cards: give it a loadout in the shop (or one marked \"Devices use this\").".to_string() } else { format!("It carries {}.", slime_mould::mould::rounds::name(&cards)) });
                 }
+                // The turret buttons are the quick-build slots (owner,
+                // 2026-11-27 21:48Z; `quick_slot`): each takes its
+                // design's name, icon and price, and says how it rolled
+                // and what it fires; an empty one says how to fill it.
+                if let Some(s) = quick_slot(c.id) {
+                    let cost_now = |cost: f32| (g.bank >= cost && room, if room { need(cost) } else { Some(format!("At most {} buildings", b.max)) });
+                    match (g.designs.get(s).copied().flatten(), run.quick.get(s)) {
+                        (Some(d), Some(&l)) => {
+                            let kind = slime_mould::mould::larder_world::design_kind(d.kind);
+                            let cost = g.build_price(kind, (0.0, 0.0));
+                            let cards = run.design_cards(l);
+                            let over = if d.over { "fires over walls" } else { "walls block it" };
+                            let fires = if cards.is_empty() { "no cards yet: give its loadout some in the shop".to_string() } else { slime_mould::mould::rounds::name(&cards) };
+                            c.name = d.kind.name().into();
+                            c.icon = building_icon(kind);
+                            c.cost = Some(format!("{cost:.0}"));
+                            (c.ready, c.why_not) = cost_now(cost);
+                            c.about = format!("Quick build {}: {}'s {}. {} Reach x{:.2}, rate x{:.2}, {over}. Every one fires {fires}. The shop's loadout bar picks which loadouts are here.", s + 1, run.loadout_name(l), d.title(), d.kind.about(), d.range, d.rate);
+                        }
+                        _ => {
+                            c.name = format!("Quick build {}", s + 1);
+                            c.icon = Icon::Turret;
+                            c.cost = None;
+                            c.ready = false;
+                            c.why_not = Some("Empty: show a turret loadout in the shop and click Quick build".into());
+                            c.about = format!("A slot for one of your turret loadouts (at most {}): its turret built here, as often as you like.", slime_mould::mould::larder_world::QUICK);
+                        }
+                    }
+                    // All three along the top row, where the run's hidden
+                    // siren and hunter were.
+                    c.slot = [(0, 0), (0, 4), (0, 5)][s];
+                }
                 if run_lock(c.id).is_some_and(|k| !run.has(k)) {
                     c.ready = false;
                     c.locked = true;
@@ -2470,8 +2511,8 @@ impl App {
                     None => (false, Some("this turret already renders".into())),
                 }
             }
-            Some((id, at, _)) if build_kind(id).is_some() => {
-                let kind = build_kind(id).unwrap();
+            Some((id, at, _)) if self.places(id).is_some() => {
+                let kind = self.places(id).unwrap();
                 match g.build_blocked(kind, at) {
                     Some(why) => (false, Some(why.into())),
                     None if g.reachable(at) => (true, Some(format!("{:.0} food, click to build", g.build_price(kind, at)))),
@@ -3236,7 +3277,7 @@ pub(super) fn run_hidden(id: u32) -> bool {
     // The Germ tool is never sold (`run_lock`): its locked button said
     // "the shop sells it" and no shop did (Look, 11-24); sickness comes
     // from the Germ gun card.
-    matches!(id, SIREN | OUTPOST | T_PROVOKE | T_STILL | T_GERM)
+    matches!(id, SIREN | OUTPOST | HUNTER | T_PROVOKE | T_STILL | T_GERM)
 }
 
 /// The device body that is tool button `id` (`bodies::BodyKind`).
@@ -3254,10 +3295,10 @@ fn body_of_button(id: u32) -> Option<slime_mould::mould::bodies::BodyKind> {
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {
     Some(match id {
         WALL | DOOR => "walls",
-        TURRET => "turret",
-        MORTAR => "mortar",
-        SPRAYER => "sprayer",
-        HUNTER => "hunter",
+        // The turret buttons are the quick-build slots (2026-11-27,
+        // `quick_slot`): an empty slot says so itself. The hunter is a
+        // design kind, built through a slot.
+        TURRET | MORTAR | SPRAYER | HUNTER => return None,
         // The lure is free from the first planet (Direction, 2026-11-18
         // 08:38Z, on the owner's "Lure now, in the three planets"): for an
         // hour it was a shop unlock, which left planet 1 without it.
@@ -3437,7 +3478,9 @@ impl App {
         // Its loadout in a run (owner 2026-11-19 19:22Z: "a default loadout
         // for turrets and then it can be changed one by one in the game"):
         // each press the next; H edits what they hold.
-        if let (Some(r), true) = (self.args.run.as_ref(), matches!(bd.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter)) {
+        // Not for a bought design's building (2026-11-27): every one of a
+        // design fires the design's loadout (owner, 21:42Z).
+        if let (Some(r), true) = (self.args.run.as_ref(), matches!(bd.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter) && g.design_at(bk).is_none()) {
             let now = bd.loadout.map_or(r.turret_loadout, usize::from);
             let cards: Vec<String> = r.turret_deck_of(now).iter().map(|c| c.title()).collect();
             let cards = if cards.is_empty() { "no cards".to_string() } else { cards.join(", ") };

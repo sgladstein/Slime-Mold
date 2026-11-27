@@ -490,7 +490,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 // The gun slots' switch to the turrets' deck: a bottom-bar
                 // button (`Pick::EditTurrets`).
                 // The loadouts' buttons too (2026-11-19).
-                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::DevicesUse | Pick::SquadUses | Pick::Reroll | Pick::Hold) => (String::new(), ShopArea::Upgrades),
+                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::Quick | Pick::DevicesUse | Pick::SquadUses | Pick::Reroll | Pick::Hold) => (String::new(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 // Each a tab of the shop's counter (Shop B, 11-15).
@@ -1953,6 +1953,8 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     }
     // Which bodies go off on their own (gun step E4).
     g.apply(Cmd::Auto(r.autocast()));
+    // The turret designs and their cards (2026-11-27).
+    g.arm_designs(r);
     // Turrets on a loadout of their own (`Building::loadout`) take its
     // cards, and a turret its gun (2026-11-27), as they now stand.
     for b in 0..g.buildings.len() {

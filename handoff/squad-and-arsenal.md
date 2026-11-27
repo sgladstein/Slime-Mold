@@ -48,6 +48,23 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-27, turrets bought like guns (same thread).** Owner 21:36Z,
+21:42Z, 21:48Z (rows in `wiki/decisions-game.md`): turrets are rolled designs
+sold in the shop, no separate mortar unlock; food cost fixed per kind, shop
+price by quality; unlocks and Turret power removed; plain gun turret from
+planet 1; nothing replaced; up to 3 loadouts quick to build. Built:
+`src/mould/turrets.rs` (`TurretKind` Gun/Lobber/Sprayer/Hunter, `Turret`
+rolls, price, rack, save word); `Run::turrets`, `turret_offers`, `quick`,
+`Pick::Turret`/`CarryTurret`/`Quick`, `Loadout::turret`, save keys
+`turrets`, `turret_offers`, `quick`, loadout head `@T`; `Game::designs` and
+`design_decks` (3 slots, `Cmd::Design`, `Cmd::Load(DESIGN_DECKS + s)`,
+armed by `Game::arm_designs`), `Building::slot`, `Cmd::Place` (replay word
+`place`), `design_rolls`, `fires_over`, `design_rings`; the window's
+`quick_slot` maps the turret, mortar and sprayer buttons to slots 1-3 in
+runs (hunter hidden there). Open: the run bot still builds by kind (plain
+rules, no design); a loadout-page redesign to suggest to Look and
+interface; the value-per-food duel offered after #875.
+
 **2026-11-27, turrets fire their loadout's gun (thread "Make turrets work
 like buyable guns").** Owner 05:50Z/05:52Z: turrets should be like the guns
 you buy, and were underpowered and dearer than a soldier. Built: a turret
