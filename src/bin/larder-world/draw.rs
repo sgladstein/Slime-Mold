@@ -755,18 +755,19 @@ impl App {
         let cursor = self.controls.cursor.filter(|&p| !self.hud.over(p));
         // A mortar's two rings: its reach and its blind ring inside.
         let bld = g.rules.build;
-        let rings = |k: Kind| match k {
+        // A turret's by its gun (2026-11-27): the hovered one's own, a
+        // placed one the default's.
+        let rings = |k: Kind, b: Option<usize>| match k {
             Kind::Mortar => vec![bld.mortar_range, bld.mortar_min],
             Kind::Sprayer => vec![bld.sprayer_range],
             Kind::Hunter => vec![bld.hunter_range, bld.hunter_min],
-            // The default turret's gun (2026-11-27).
-            _ => vec![g.turret_reach(None)],
+            _ => vec![g.turret_reach(b)],
         };
-        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k));
+        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k, None));
         let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
-            g.buildings.iter().find(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| (b.at, b.kind))
+            g.buildings.iter().enumerate().find(|(_, b)| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|(k, b)| (b.at, b.kind, Some(k)))
         });
-        for (at, reach) in placing.into_iter().chain(over).flat_map(|(at, k)| rings(k).into_iter().map(move |r| (at, r))) {
+        for (at, reach) in placing.into_iter().chain(over).flat_map(|(at, k, b)| rings(k, b).into_iter().map(move |r| (at, r))) {
             let reach = reach * sc;
             let n = if reach > 60.0 { 180 } else { 72 };
             for i in 0..n {
@@ -3429,7 +3430,7 @@ impl App {
                     (None, _) if !bd.up() => "Still being built".to_string(),
                     _ => "It already renders".to_string(),
                 }),
-                about: format!("Render: every bit of slime killed within {:.0} cells of it, by any shot, pays {:.2} food.", g.turret_reach(Some(bk)), b.render_food),
+                about: format!("Render: every bit of slime killed within {:.0} cells of it, by any shot, pays {:.2} food.", g.render_reach(bk), b.render_food),
                 ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Render", KeyCode::KeyU)
             });
         }
@@ -3441,10 +3442,12 @@ impl App {
             let cards: Vec<String> = r.turret_deck_of(now).iter().map(|c| c.title()).collect();
             let cards = if cards.is_empty() { "no cards".to_string() } else { cards.join(", ") };
             let follows = if bd.loadout.is_none() { ", the turrets' default" } else { "" };
+            // A turret names its gun (2026-11-27).
+            let gun = if bd.kind == Kind::Turret { format!(" with its {}", g.turret_gun(Some(bk)).kind.name()) } else { String::new() };
             cmds.push(Command {
                 ready: r.loadouts.len() > 1,
                 why_not: Some("One loadout only: make another with H".into()),
-                about: format!("It fires {}{follows} ({cards}). Click for the next loadout; H edits them.", r.loadout_name(now)),
+                about: format!("It fires {}{follows}{gun} ({cards}). Click for the next loadout; H edits them.", r.loadout_name(now)),
                 ..Command::new(TURRET_LOADOUT, (0, 2), Icon::Upgrade, &format!("Loadout {}", now + 1), KeyCode::KeyL)
             });
         }

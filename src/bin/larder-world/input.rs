@@ -329,7 +329,7 @@ impl App {
                 };
                 if g.apply(cmd) {
                     // Its loadout's gun too (2026-11-27).
-                    if let Some(l) = next {
+                    if let Some(l) = next.filter(|_| bd.kind == Kind::Turret) {
                         g.apply(Cmd::TurretArm(b as u32, r.turret_gun_of(l)));
                     }
                     let l = next.unwrap_or(r.turret_loadout);

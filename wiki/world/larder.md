@@ -394,7 +394,11 @@ turret's reach and gap with the average rifle (24 cells, 0.5 s, so twice a
 soldier's rate), and a mounted gun scales them by its range and rate over the
 rifle's; a scattergun's bullets fan evenly across its spread, a turret still
 aiming true. Its cards fit the gun's slots and budget; a loadout with no gun
-fires the rifle at the run's rules and the turret rack. The squad's Longer
+fires the rifle at the run's rules and the turret rack, and so does the
+squads' own first loadout, so turrets can't copy the squads' gun and deck
+for nothing (adversarial review, 2026-11-27). A mortar, sprayer or hunter
+has no gun but fires the same cards; Render pays within the rifle's reach
+whatever gun the turret holds (`Game::render_reach`). The squad's Longer
 barrels and Faster trigger reach turrets too, and a turret costs 350 food,
 less than a soldier (was 15 cells and 500 food; he, 05:52Z: turrets were
 "underpowered right now compared to guns (with squad upgrade)").

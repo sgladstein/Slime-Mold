@@ -2156,8 +2156,16 @@ impl Run {
     /// a bought gun gave turrets four cards and nothing else, review
     /// 2026-11-20); now the gun is what it fires, so a gun on the turrets
     /// is one no squad holds.
+    ///
+    /// Not the squads' first loadout (adversarial review, 2026-11-27):
+    /// turrets on it, by "Turrets use this" or a turret's Loadout button,
+    /// would copy the squads' gun and whole deck for nothing, the free
+    /// turret deck the 11-16 and 11-20 reviews closed. There they fire
+    /// the rifle and the rack, as before. Mortars, sprayers and hunters
+    /// fire these cards too, so a gun on the turrets' loadout widens
+    /// their deck as well.
     pub fn turret_deck_of(&self, i: usize) -> Vec<Card> {
-        let rack = self.gun_of(i).unwrap_or_else(|| self.turret_rack());
+        let rack = self.gun_of(i).filter(|_| i != 0).unwrap_or_else(|| self.turret_rack());
         let mut cards = self.cards_of(i);
         while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
             cards.pop();
@@ -2171,8 +2179,9 @@ impl Run {
     /// reach and rate on top (`BuildRules::turret_range`, `turret_every`,
     /// "Turret power"). None with no gun: the turret fires the standard
     /// rifle at the run's rules, which carry the same two upgrades.
+    /// None on the squads' first loadout too (`turret_deck_of`).
     pub fn turret_gun_of(&self, i: usize) -> Option<Gun> {
-        self.gun_of(i).map(|_| self.squad_gun(i))
+        self.gun_of(i).filter(|_| i != 0).map(|_| self.squad_gun(i))
     }
 
     /// The gun turrets that follow the default fire (`turret_gun_of` of
@@ -2951,7 +2960,7 @@ impl Run {
         for (i, g) in self.gun_offers.iter().enumerate().filter(|_| !self.field) {
             let p = gun_price(g);
             let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
-            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}.", g.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Gun(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}. Goes into {shown}.", g.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Gun(i) });
         }
         for (i, &c) in self.offers.iter().enumerate().filter(|_| !self.field) {
             let p = card_price(c);
@@ -3026,7 +3035,8 @@ impl Run {
                 rows.push(bar("New loadout".into(), "An empty loadout with no gun: put a gun and cards in it, then give it to a squad or turrets.".into(), false, true, Pick::NewLoadout));
             }
             if self.has("turret") && self.turret_loadout != self.editing {
-                rows.push(bar("Turrets use this".into(), format!("New turrets use {shown}; each turret can be changed in the game."), false, true, Pick::TurretsUse));
+                let what = if self.editing == 0 { " (the squads' own: turrets on it fire the rifle and 2 cards)" } else { "" };
+                rows.push(bar("Turrets use this".into(), format!("New turrets use {shown}{what}; each turret can be changed in the game."), false, true, Pick::TurretsUse));
             }
             if self.has_device() && self.device_loadout != Some(self.editing) {
                 rows.push(bar("Devices use this".into(), format!("Every device with no loadout of its own also casts {shown}'s cards (as many as its body holds) where it goes off, as a hit there would."), false, true, Pick::DevicesUse));
@@ -4489,6 +4499,16 @@ mod tests {
         assert!(r.pick(Pick::Gun(0)));
         assert!(r.editing_turrets() && r.guns.len() == before + 1);
         assert_eq!(r.turret_gun().map(|g| g.kind), Some(GunKind::Scatter));
+        // Not the squads' own loadout (adversarial review, 2026-11-27):
+        // turrets put on it fire the rifle and the rack, not a free copy
+        // of the squads' gun and whole deck.
+        assert!(r.edit(0));
+        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
+        r.refit();
+        assert!(r.gun().len() > r.turret_rack().slots as usize, "the squads fire them all: {:?}", r.gun());
+        assert!(r.pick(Pick::TurretsUse) && r.turret_loadout == 0);
+        assert_eq!(r.turret_gun(), None);
+        assert!(r.turret_cards().len() <= r.turret_rack().slots as usize && rounds::fit_gun(r.turret_cards(), &r.turret_rack()).is_ok());
     }
 
     /// **Devices carry a loadout's cards** (gun step E, 2026-11-24): no

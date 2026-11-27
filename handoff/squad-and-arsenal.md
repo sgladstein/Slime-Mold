@@ -59,6 +59,15 @@ turrets' loadout shown stays there; `turret_range` 15 to 24 (the rifle's,
 scaled by the gun), `turret_cost` 500 to 350; film key `tgun=KIND`. Open:
 the run bot does not put guns on turrets; mortars, sprayers and hunters
 still fire only the loadout's cards (their bodies are their own guns).
+Adversarial review (two agents, owner's ask 20:09Z) found turrets on the
+squads' first loadout copied its gun and whole deck free: closed (that
+loadout gives turrets the rifle and rack); also render circle kept at the
+rifle's reach, hovered turret's ring by its own gun, mortar casts no longer
+read the turrets' gun, duplicate arm commands, labels. Open from it: no
+value-per-food check (base turret about 2.3x a soldier's shots per food;
+a paired duel, turrets vs the same food in soldiers, is the next
+measure), turret sight not gated on `ready` (GPU cost untimed), and the
+owner's "a couple slots or types" may mean turret types in the Build tab.
 
 **2026-11-24/25, the kit's sounds and the wounded pace (pathfinding
 thread).** Direction 23:33Z: the Mortar, Hunter, Sprayer, Mine, Line,
