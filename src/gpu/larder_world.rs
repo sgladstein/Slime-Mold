@@ -3670,6 +3670,39 @@ mod tests {
         assert!(g.origin.fell.is_none(), "the heart did not break");
     }
 
+    /// **No mini-boss forms on the heart** (11-24, planet 7 map C: a Crowd
+    /// wanderer formed on the crowd's top, the packed heart, at 58 s and
+    /// took 954 of its 1,575 members, breaking it with no shot fired). The
+    /// race world's origin at 14 s: a boss asked to form on its centre
+    /// does not, and the heart keeps its members; one asked to form far
+    /// off does.
+    #[test]
+    fn no_mini_boss_forms_on_the_heart() {
+        use crate::mould::larder_world::BossCause;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 4_000);
+        let s = race_settings(seed, scale, walkers);
+        let mut rules = Rules::default();
+        rules.origin.on = true;
+        rules.origin.size = 150.0;
+        rules.origin.after = 2.0;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        while g.stand.live.is_none_or(|h| (h.members as f32) < 0.9 * g.rules.origin.size) && g.time() < 40.0 {
+            g.step();
+        }
+        let h = g.stand.live.expect("a heart formed");
+        let before = h.members;
+        let on = g.form_boss(h.centre, 6.0, BossCause::Crowd);
+        g.step();
+        let after = g.origin_hud().map_or(0, |o| o.0);
+        let far = g.world.crystals().iter().map(|c| c.0).max_by(|a, b| (a.0 - h.centre.0).hypot(a.1 - h.centre.1).total_cmp(&(b.0 - h.centre.0).hypot(b.1 - h.centre.1))).expect("crystals");
+        let off = !g.on_heart(far, 6.0);
+        eprintln!("heart {before} members, {after} after a boss was asked to form on it (formed: {on}); far crystal clear of it: {off}");
+        assert!(before >= 50, "the heart gathered: {before}");
+        assert!(!on, "no boss forms on the heart");
+        assert!(after + 10 >= before, "the heart keeps its members: {before} to {after}");
+        assert!(off, "a boss may form far from it");
+    }
     /// **A heart's members never fruit** (11-24, planet 5's Sporer): a
     /// spore is not counted in its lump's sums, so a shot's alarm burst
     /// planet 5's heart into spores that read as cut down, and 8 soldiers

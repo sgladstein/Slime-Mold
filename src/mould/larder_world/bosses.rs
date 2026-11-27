@@ -1200,7 +1200,9 @@ impl<W: World> Game<W> {
         }
         let fight = (self.gun_range_max() + self.rules.panic_margin.max(0.0)) * sc + body;
         let near = self.soldiers.iter().any(|s| s.alive && (s.x - centre.0).hypot(s.y - centre.1) < fight);
-        if self.bosses.ways[i].still >= STALL && !near {
+        // A regroup takes every walker in its reach, so never on the heart
+        // (as `form_boss`).
+        if self.bosses.ways[i].still >= STALL && !near && !self.on_heart(lead, (3.0 * body / sc).max(1.0)) {
             // As far round as holds no more walkers than it has: forming
             // takes every walker in reach, and in a thick body a first cut
             // at one and a half radii took in the slime round it (a hunter
@@ -1270,6 +1272,14 @@ impl<W: World> Game<W> {
         (most, most)
     }
 
+    /// Whether a lump formed round `at` (fine cells) with `reach` dish
+    /// cells would reach into the heart, the origin's or the last stand's
+    /// (`stand::Heart`), counted as a packed disc of its members.
+    pub fn on_heart(&self, at: (f32, f32), reach: f32) -> bool {
+        let sc = self.world.scale();
+        self.stand.live.is_some_and(|h| (h.centre.0 - at.0).hypot(h.centre.1 - at.1) < (h.members as f32 / std::f32::consts::PI).sqrt() + 2.0 * reach * sc)
+    }
+
     /// Forms a mini-boss round `at` (fine cells), of the walkers within
     /// `reach` dish cells (by its grade, `BossRules::reach_at`), on the
     /// first free lump, its grade drawn (`BossRules::grade_lo`); false with
@@ -1307,6 +1317,16 @@ impl<W: World> Game<W> {
         // Nor on a ripening fruit (`fruit.rs`, 2026-11-20), for the same
         // reason.
         if self.fruits.live.is_some_and(|f| (f.centre.0 - at.0).hypot(f.centre.1 - at.1) < (f.members as f32 / std::f32::consts::PI).sqrt() + 2.0 * reach * sc) {
+            return false;
+        }
+        // Nor on the heart (the origin or the last stand's, 11-24): on
+        // planet 7 map C the crowd's top was the packed heart, and a Crowd
+        // wanderer formed there at 58 s took 954 of its 1,575 members
+        // (lavapipe, run 1795119328), on the GTX 1070 enough to break it
+        // at 59 s with no shot fired. Kept out of the engine, where a
+        // lump that never took another's members also stopped a mortar
+        // taking its thrown members back (the CPU's mortar test).
+        if self.on_heart(at, reach) {
             return false;
         }
         // A lump no boss, march or fruit holds.
