@@ -1014,7 +1014,8 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     // The shop page shows what the run sells, by group.
     let shop = shop_of(&Run::new(1));
     assert!(shop.heading.starts_with(&format!("Planet 1 of {}", slime_mould::mould::run::PLANETS)), "{}", shop.heading);
-    assert!(shop.rows.iter().any(|row| row.group == "Buildings" && row.name == "Turrets"));
+    // The plain gun turret, owned from planet 1 (2026-11-27).
+    assert!(shop.rows.iter().any(|row| row.group == "Buildings" && row.name.starts_with("Gun turret")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
 }
 
 /// **A run in the window** (needs a GPU; the cloud's software Vulkan runs
@@ -1053,8 +1054,14 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let m = app.model(None, None);
     let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
+    // The turret buttons are the quick-build slots (2026-11-27): the
+    // first holds the plain gun turret, the others are empty, and the
+    // hunter has no button of its own.
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
-    assert!(!turret.ready && turret.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
+    assert!(!turret.locked && turret.name == "Gun turret", "{} {:?}", turret.name, turret.why_not);
+    let empty = m.commands.iter().find(|c| c.id == MORTAR).unwrap();
+    assert!(!empty.ready && empty.name == "Quick build 2", "{}", empty.name);
+    assert!(m.commands.iter().all(|c| c.id != HUNTER));
     // The lure is back on a run's build card (owner's card, 2026-11-18
     // 03:03Z), free from the first planet with no unlock (Direction,
     // 08:38Z); the siren and the outpost stay out, so the switch names
@@ -1101,22 +1108,23 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let on: Vec<&str> = shop.rows.iter().filter(|r| r.on && r.area == slime_mould::world::start::ShopArea::Cards).map(|r| r.name.as_str()).collect();
     assert_eq!(on, ["Blast", "Wide"]);
     assert!(app.in_menu(), "a move is no pick of a round");
-    // The turrets' deck (the turrets thread, 2026-11-16): with turrets
-    // owned the gun slots switch to the turrets', a bag card goes on, and
-    // the landed game's turrets carry it while the squad keeps its gun.
+    // The gun turret's loadout (2026-11-27): a bag card goes on, and the
+    // landed game's first quick-build slot carries it while the squad
+    // keeps its gun.
     {
         use slime_mould::mould::run::Pick;
         let r = app.run.as_mut().unwrap();
-        r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
         r.cards.push((rounds::Card::Gas, false));
-        assert!(r.pick(Pick::EditTurrets));
+        assert!(r.pick(Pick::Edit(1)));
         let gas = r.cards.iter().position(|c| c.0 == rounds::Card::Gas).unwrap();
         assert!(r.pick(Pick::Card(gas)));
+        assert!(r.pick(Pick::Edit(0)));
         assert_eq!(r.squad_cards(), [rounds::Card::Blast, rounds::Card::Wide]);
     }
     app.menu_event(StartEvent::NextLevel).unwrap();
     assert!(!app.in_menu());
-    assert_eq!(app.game.as_ref().unwrap().turret_deck.map(|d| d.cards()), Some(vec![rounds::Card::Gas]));
+    assert_eq!(app.game.as_ref().unwrap().design_decks[0].map(|d| d.cards()), Some(vec![rounds::Card::Gas]));
+    assert_eq!(app.game.as_ref().unwrap().designs[0].map(|d| d.kind), Some(slime_mould::mould::turrets::TurretKind::Gun));
     assert_eq!(app.game.as_ref().unwrap().rounds.round, [rounds::Card::Blast, rounds::Card::Wide]);
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
     assert_eq!(Some(saved()), app.args.run.clone(), "the run as it landed is saved");

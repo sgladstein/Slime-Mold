@@ -104,6 +104,12 @@ pub enum Cmd {
     /// 2026-11-27); None, the standard rifle. Sent after its
     /// `TurretLoad`, and read only while it has a deck of its own.
     TurretArm(u32, Option<Gun>),
+    /// The run's turret design for building kind slot `i`
+    /// (`buildings::DESIGN_KINDS`, `Game::designs`; owner 2026-11-27
+    /// 21:36Z); None: the kind fires by `BuildRules` alone.
+    Design(u8, Option<crate::mould::turrets::Turret>),
+    /// Quick-build slot `s`'s design raised at a point (`Game::place_design`).
+    Place(u8, (f32, f32)),
     /// Squad `q` stops and heals (`Squad::heal`).
     Heal(u8),
     /// A door between two points, fine cells (`Game::door`): a wall the
@@ -158,6 +164,9 @@ impl Cmd {
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
             Cmd::Load(q, None) => format!("load {q} army"),
             Cmd::Load(q, Some(d)) => format!("load {q} {}", super::super::rounds::name(&d.cards())),
+            Cmd::Place(s, a) => format!("place {s} {} {}", a.0, a.1),
+            Cmd::Design(i, None) => format!("design {i} none"),
+            Cmd::Design(i, Some(t)) => format!("design {i} {}", t.word()),
             Cmd::TurretArm(b, None) => format!("tarm {b} none"),
             Cmd::TurretArm(b, Some(g)) => format!("tarm {b} {}", g.to_words()),
             Cmd::TurretLoad(b, l, d) => format!("tload {b} {} {}", l.map_or("-".to_string(), |l| l.to_string()), d.map_or("army".to_string(), |d| super::super::rounds::name(&d.cards()))),
@@ -212,6 +221,12 @@ impl Cmd {
             "auto" => return Some(Cmd::Auto(w.get(1)?.parse().ok()?)),
             "heal" => return Some(Cmd::Heal(w.get(1)?.parse().ok()?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
+            "place" => {
+                let f = |i: usize| w.get(i).and_then(|v| v.parse::<f32>().ok());
+                return Some(Cmd::Place(w.get(1)?.parse().ok()?, (f(2)?, f(3)?)));
+            }
+            "design" if w.get(2) == Some(&"none") => return Some(Cmd::Design(w.get(1)?.parse().ok()?, None)),
+            "design" => return Some(Cmd::Design(w.get(1)?.parse().ok()?, Some(crate::mould::turrets::Turret::from_word(w.get(2)?)?))),
             "tarm" if w.get(2) == Some(&"none") => return Some(Cmd::TurretArm(w.get(1)?.parse().ok()?, None)),
             "tarm" => return Some(Cmd::TurretArm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
@@ -334,6 +349,14 @@ impl<W: World> Game<W> {
                     if d.is_none() {
                         bd.gun = None;
                     }
+                    true
+                }
+                None => false,
+            },
+            Cmd::Place(s, at) => self.place_design(s as usize, at),
+            Cmd::Design(i, d) => match self.designs.get_mut(i as usize) {
+                Some(s) => {
+                    *s = d;
                     true
                 }
                 None => false,

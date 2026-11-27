@@ -44,6 +44,7 @@
 use super::{Game, Shot, World};
 use crate::mould::guns::Gun;
 use crate::mould::rounds::Deck;
+use crate::mould::turrets::{Turret, TurretKind};
 use crate::mould::squad::{Burst, BurstRules, ShotIn, UnitIn, UnitOut};
 
 /// What a building is. A wall carries its far end (fine cells); its near
@@ -175,6 +176,10 @@ pub struct Building {
     /// read only while it has a deck of its own (`deck`); None there is
     /// the standard rifle. Read it through `Game::turret_gun`.
     pub gun: Option<Gun>,
+    /// The run's quick-build slot it was built from (`Cmd::Place`,
+    /// `Game::designs`; owner 2026-11-27 21:48Z): its design's rolls and
+    /// cards. None: built by kind (`Cmd::Build`), by `BuildRules` alone.
+    pub slot: Option<u8>,
 }
 
 /// A mortar's shell in the air (`Kind::Mortar`, `Game::shells`): fired
@@ -258,6 +263,23 @@ pub const TURRET_DECK: u8 = 255;
 /// mounted gun scales them by its own (`Game::turret_reach`).
 const RIFLE_RANGE: f32 = 24.0;
 const RIFLE_RATE: f32 = 1.0;
+
+/// The building kinds a bought turret design raises, in
+/// `TurretKind::ALL` order.
+pub const DESIGN_KINDS: [Kind; 4] = [Kind::Turret, Kind::Mortar, Kind::Sprayer, Kind::Hunter];
+
+/// Quick-build slots (`Game::designs`; owner 2026-11-27 21:48Z: "two to
+/// three loadouts ... that you can just quick build").
+pub const QUICK: usize = 3;
+
+/// The `Cmd::Load` ids of the quick-build slots' decks
+/// (`Game::design_decks`), below the devices' (`gear::DEVICE_DECKS`).
+pub const DESIGN_DECKS: u8 = 242;
+
+/// The building a turret design of `kind` raises.
+pub fn design_kind(kind: TurretKind) -> Kind {
+    DESIGN_KINDS[TurretKind::ALL.iter().position(|&k| k == kind).unwrap_or(0)]
+}
 
 /// A turret's levels: 2 renders the slime it kills (`BuildRules::render_food`).
 pub const TURRET_LEVELS: u8 = 2;
@@ -549,6 +571,9 @@ impl<W: World> Game<W> {
     pub fn build_price(&self, kind: Kind, at: (f32, f32)) -> f32 {
         let b = self.rules.build;
         match kind {
+            // The same for every design of a kind (owner, 2026-11-27
+            // 21:42Z: "turret food cost doesn't change based on quality.
+            // Only the shop cost is variable").
             Kind::Turret => b.turret_cost,
             Kind::Mortar => b.mortar_cost,
             Kind::Sprayer => b.sprayer_cost,
@@ -742,7 +767,10 @@ impl<W: World> Game<W> {
     /// 2026-11-27).
     pub fn turret_gun(&self, k: Option<usize>) -> Gun {
         let b = k.and_then(|k| self.buildings.get(k));
-        if b.is_some_and(|b| b.kind != Kind::Turret) {
+        // A bought design fires the plain rifle scaled by its own rolls
+        // (`design_rolls`): its loadout is the design and cards, no gun
+        // (owner, 2026-11-27 21:36Z).
+        if b.is_some_and(|b| b.kind != Kind::Turret || b.slot.is_some()) {
             return Gun::standard(&self.rules);
         }
         let g = match b.filter(|b| b.deck.is_some()) {
@@ -759,7 +787,7 @@ impl<W: World> Game<W> {
     pub fn turret_reach(&self, k: Option<usize>) -> f32 {
         let g = self.turret_gun(k);
         let m = self.turret_mods_of(k);
-        self.rules.build.turret_range * g.range / RIFLE_RANGE * (1.0 + self.rules.range_card * m.reach as f32)
+        self.rules.build.turret_range * g.range / RIFLE_RANGE * k.map_or(1.0, |k| self.design_rolls(k).0) * (1.0 + self.rules.range_card * m.reach as f32)
     }
 
     /// How far round turret `k` its Render pays (`render_pay`), dish
@@ -770,7 +798,7 @@ impl<W: World> Game<W> {
     pub fn render_reach(&self, k: usize) -> f32 {
         let g = Gun::standard(&self.rules);
         let m = self.turret_mods_of(Some(k));
-        self.rules.build.turret_range * g.range / RIFLE_RANGE * (1.0 + self.rules.range_card * m.reach as f32)
+        self.rules.build.turret_range * g.range / RIFLE_RANGE * self.design_rolls(k).0 * (1.0 + self.rules.range_card * m.reach as f32)
     }
 
     /// Seconds between turret `k`'s shots: `BuildRules::turret_every` with
@@ -780,7 +808,64 @@ impl<W: World> Game<W> {
     pub fn turret_every(&self, k: Option<usize>) -> f32 {
         let g = self.turret_gun(k);
         let m = self.turret_mods_of(k);
-        self.rules.build.turret_every * RIFLE_RATE / g.rate.max(0.01) / (1.0 + self.rules.rate_card * m.rate as f32).max(0.01)
+        self.rules.build.turret_every * RIFLE_RATE / g.rate.max(0.01) / k.map_or(1.0, |k| self.design_rolls(k).1) / (1.0 + self.rules.rate_card * m.rate as f32).max(0.01)
+    }
+
+    /// **Building `k`'s turret design** (owner, 2026-11-27: turrets are
+    /// bought like guns, `turrets::Turret`): the one in the quick-build
+    /// slot it was built from (`Building::slot`, `Game::designs`). None
+    /// outside a run, or for a building placed by kind, which fires by
+    /// `BuildRules` alone.
+    pub fn design_at(&self, k: usize) -> Option<Turret> {
+        self.buildings.get(k).and_then(|b| b.slot).and_then(|s| self.designs.get(s as usize).copied().flatten())
+    }
+
+    /// **Places quick-build slot `s`'s design at `at`** (`Cmd::Place`): the
+    /// building its kind raises, at that kind's food price (the same for
+    /// every design, owner 21:42Z), firing by its rolls and cards.
+    pub fn place_design(&mut self, s: usize, at: (f32, f32)) -> bool {
+        let Some(d) = self.designs.get(s).copied().flatten() else { return false };
+        if !self.build(design_kind(d.kind), at) {
+            return false;
+        }
+        let k = self.buildings.len() - 1;
+        self.buildings[k].slot = Some(s as u8);
+        true
+    }
+
+    /// Building `k`'s design rolls: (reach, rate) multipliers, 1 without.
+    /// What quick-build slot `s` places (`Game::designs`) and the reach
+    /// rings its ghost shows, dish cells: its kind's reach (and blind
+    /// ring) by the design's range roll and its loadout's Range cards.
+    pub fn design_rings(&self, s: usize) -> Option<(Kind, Vec<f32>)> {
+        let d = self.designs.get(s).copied().flatten()?;
+        let b = &self.rules.build;
+        let m = self.design_decks.get(s).copied().flatten().map_or_else(super::BulletMods::default, |d| crate::mould::rounds::flight(&d.cards()));
+        let up = d.range * (1.0 + self.rules.range_card * m.reach as f32);
+        let kind = design_kind(d.kind);
+        let rings = match kind {
+            Kind::Mortar => vec![b.mortar_range * up, b.mortar_min],
+            Kind::Sprayer => vec![b.sprayer_range * up],
+            Kind::Hunter => vec![b.hunter_range * up, b.hunter_min],
+            _ => vec![b.turret_range * up],
+        };
+        Some((kind, rings))
+    }
+
+    pub fn design_rolls(&self, k: usize) -> (f32, f32) {
+        self.design_at(k).map_or((1.0, 1.0), |d| (d.range, d.rate))
+    }
+
+    /// Whether building `k` sees and fires over walls: its design's roll,
+    /// else `BuildRules::turret_over` (the hunter never, the mortar always).
+    pub fn fires_over(&self, k: usize) -> bool {
+        let Some(b) = self.buildings.get(k) else { return self.rules.build.turret_over };
+        match (b.kind, self.design_at(k)) {
+            (Kind::Mortar, _) => true,
+            (Kind::Hunter, _) => false,
+            (_, Some(d)) => d.over,
+            _ => self.rules.build.turret_over,
+        }
     }
 
     /// The standing turret whose middle is within its touch of `at` (fine
@@ -866,7 +951,7 @@ impl<W: World> Game<W> {
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
         let home = if let Kind::Wall { to } = kind { self.wall_home(at, to) } else { (0.0, 0.0) };
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false, next: 0, deck: None, loadout: None, gun: None });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false, next: 0, deck: None, loadout: None, gun: None, slot: None });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -1119,9 +1204,6 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let t = self.world.ticks();
         let strike = (r.strike * sc).min(crate::mould::squad::R_MAX);
-        // The turrets' cards, read once a step (`Game::turret_deck`), and
-        // each turret with its own (`Building::deck`) by itself.
-        let tm0 = self.turret_mods();
         // Mortar shells that come down this frame: a short leg into their
         // landing point, as wide as the shell's strike, fired by their
         // mortar (`Firer`), so its cast, kills and Render go to it. The
@@ -1176,7 +1258,7 @@ impl<W: World> Game<W> {
                     // shot carries the next cast in the deck's turn, as a
                     // soldier's does (`Building::next`). No deck, plain
                     // strikes as before.
-                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
+                    let m = self.turret_mods_of(Some(k));
                     // Its gun (2026-11-27): reach, rate, and a
                     // scattergun's fan of bullets a shot.
                     let gun = self.turret_gun(Some(k));
@@ -1187,12 +1269,13 @@ impl<W: World> Game<W> {
                     // 2026-11-16 19:50Z: "turrets can fire over walls,
                     // lobbed fire goes over walls, but regular guns shots
                     // do not"). Its shell still stops at rock.
-                    u.over = b.turret_over;
+                    let over = self.fires_over(k);
+                    u.over = over;
                     if bd.ready <= t && self.bank >= r.price && bd.dense >= r.aim_min {
                         if let Some(aim) = bd.aim {
                             let (dx, dy) = (aim.0 - bd.at.0, aim.1 - bd.at.1);
                             let d = dx.hypot(dy).max(0.1);
-                            if d <= reach + 4.0 && if b.turret_over { self.lob_line(bd.at, aim) } else { self.clear_line(bd.at, aim) } {
+                            if d <= reach + 4.0 && if over { self.lob_line(bd.at, aim) } else { self.clear_line(bd.at, aim) } {
                                 // From the barrel tip, not the turret's middle
                                 // (art director, 11-14: the drawn head's barrels
                                 // reach 1.7 touch radii), capped at half the way
@@ -1242,7 +1325,7 @@ impl<W: World> Game<W> {
                                         let fan = if n_shots > 1 { (s as f32 / (n_shots - 1) as f32 * 2.0 - 1.0) * half } else { 0.0 };
                                         for p in 0..pellets {
                                             let a = a0 + side + fan + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
-                                            shots.push(ShotIn { from, to: (bd.at.0 + a.cos() * far, bd.at.1 + a.sin() * far), r: hit_r, over: b.turret_over });
+                                            shots.push(ShotIn { from, to: (bd.at.0 + a.cos() * far, bd.at.1 + a.sin() * far), r: hit_r, over });
                                             shooters.push((None, cast, Some(k)));
                                         }
                                     }
@@ -1261,8 +1344,9 @@ impl<W: World> Game<W> {
                     // stretch its reach, Rate cards its rate, each shell
                     // carries the next cast (multicast and pellets fan
                     // shells round the aim). Its own cards if it has them.
-                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
-                    let reach = b.mortar_range * sc * (1.0 + r.range_card * m.reach as f32);
+                    let m = self.turret_mods_of(Some(k));
+                    let (dr, dt) = self.design_rolls(k);
+                    let reach = b.mortar_range * dr * sc * (1.0 + r.range_card * m.reach as f32);
                     // It looks only the frame before it may fire: its sight
                     // reads (reach / BIN)^2 blocks, about 6,000 at reach
                     // 160 fine cells, so the other frames cost nothing.
@@ -1276,7 +1360,7 @@ impl<W: World> Game<W> {
                             let d = dx.hypot(dy).max(0.1);
                             if d >= b.mortar_min * sc && d <= reach + 4.0 && self.lob_line(bd.at, aim) {
                                 self.fire_shells(k, &m, aim, b.mortar_blast, b.mortar_flight, b.mortar_speed);
-                                let every = b.mortar_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
+                                let every = b.mortar_every / dt / (1.0 + r.rate_card * m.rate as f32).max(0.01);
                                 self.buildings[k].ready = t + self.secs(every).max(1);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -1288,10 +1372,11 @@ impl<W: World> Game<W> {
                 Kind::Sprayer => {
                     // As a mortar sees: the frame before it may fire, the
                     // thickest slime in its reach (Range cards stretch it).
-                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
-                    let reach = b.sprayer_range * sc * (1.0 + r.range_card * m.reach as f32);
+                    let m = self.turret_mods_of(Some(k));
+                    let (dr, dt) = self.design_rolls(k);
+                    let reach = b.sprayer_range * dr * sc * (1.0 + r.range_card * m.reach as f32);
                     u.sight = if bd.ready <= t + 2 * u64::from(r.frame_ticks) { reach } else { 0.0 };
-                    u.over = b.turret_over;
+                    u.over = self.fires_over(k);
                     if bd.ready <= t && self.bank >= r.price && bd.dense >= r.aim_min {
                         if let Some(aim) = bd.aim {
                             let (dx, dy) = (aim.0 - bd.at.0, aim.1 - bd.at.1);
@@ -1318,7 +1403,7 @@ impl<W: World> Game<W> {
                                 };
                                 self.sprays.push(Spray { from: bd.at, spots: (0..spots).map(at).collect(), fired: t, cast, sprayer: k, laid: false });
                                 self.sprays_fired += 1;
-                                let every = b.sprayer_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
+                                let every = b.sprayer_every / dt / (1.0 + r.rate_card * m.rate as f32).max(0.01);
                                 self.buildings[k].ready = t + self.secs(every).max(1);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -1331,8 +1416,9 @@ impl<W: World> Game<W> {
                     // It sees as a mortar does, the frame before it may
                     // fire, but picks its own mark (`hunter_mark`): the
                     // thickest slime is its last choice, not its first.
-                    let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
-                    let reach = b.hunter_range * sc * (1.0 + r.range_card * m.reach as f32);
+                    let m = self.turret_mods_of(Some(k));
+                    let (dr, dt) = self.design_rolls(k);
+                    let reach = b.hunter_range * dr * sc * (1.0 + r.range_card * m.reach as f32);
                     u.sight = if bd.ready <= t + 2 * u64::from(r.frame_ticks) { reach } else { 0.0 };
                     u.over = false;
                     if bd.ready <= t && self.bank >= r.price {
@@ -1340,7 +1426,7 @@ impl<W: World> Game<W> {
                         if let Some((to, what)) = self.hunter_mark(bd.at, reach, b.hunter_min * sc, aim) {
                             self.fire_shells(k, &m, to, b.hunter_blast, b.hunter_flight, b.hunter_speed);
                             self.hunter_marks[what as usize] += 1;
-                            let every = b.hunter_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
+                            let every = b.hunter_every / dt / (1.0 + r.rate_card * m.rate as f32).max(0.01);
                             self.buildings[k].ready = t + self.secs(every).max(1);
                             self.buildings[k].working = true;
                             self.bank -= r.price;

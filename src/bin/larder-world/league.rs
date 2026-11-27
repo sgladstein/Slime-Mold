@@ -63,7 +63,8 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
             }
         }
     }
-    if !p.tcards.is_empty() && r.edit_turrets(true) {
+    // Into the first quick-build loadout's turret (2026-11-27).
+    if !p.tcards.is_empty() && r.quick_design(0).is_some_and(|q| r.edit(q.1)) {
         buy_wants(r, &p.tcards, p.shelf, &mut bought);
         r.edit(0);
     }
@@ -716,7 +717,7 @@ mod tests {
         let p = Plan::parse("want=wide/rate,tcards=pierce/wide,order=wide/rate,cards=0,shop=turret").unwrap();
         let bought = shop(&mut r, &p);
         assert!(r.has("turret"), "{bought:?}");
-        assert_eq!(r.turret_cards(), vec![Card::Pierce, Card::Wide], "{bought:?}");
+        assert_eq!(r.design_cards(r.quick_design(0).unwrap().1), vec![Card::Pierce, Card::Wide], "{bought:?}");
         assert_eq!(r.squad_cards(), vec![Card::Wide, Card::Rate], "the order named, not the shop's (rate first)");
         assert_eq!(r.editing, 0);
         let p = Plan::parse("order=rate/wide,cards=0,shop=").unwrap();

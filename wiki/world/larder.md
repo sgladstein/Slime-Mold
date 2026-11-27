@@ -402,6 +402,23 @@ whatever gun the turret holds (`Game::render_reach`). The squad's Longer
 barrels and Faster trigger reach turrets too, and a turret costs 350 food,
 less than a soldier (was 15 cells and 500 food; he, 05:52Z: turrets were
 "underpowered right now compared to guns (with squad upgrade)").
+**Turrets are bought like guns** since 2026-11-27 (owner, 21:36Z: "You buy
+"turrets" like you buy guns now. They have different rates of fire, range,
+some could shoot over walls, Some can't"; 21:42Z and 21:48Z;
+`mould::turrets`): the run shop's Build tab sells rolled turret designs of
+four kinds (gun turret, lobber, sprayer, hunter; `TurretKind`), each with a
+reach and rate roll round 1, a card rack, and (gun turret and sprayer) a
+roll for firing over walls (the lobber always does, the hunter never);
+later planets roll better ones, and the shop price follows how good it is
+(60 to 600 points) while the food to build stays fixed per kind. A run
+starts with the plain gun turret in loadout 2; the turret unlocks and
+Turret power are gone. Nothing is replaced: each design bought takes a
+loadout of its own, whose cards every turret built from it fires
+(`Run::design_cards`). Up to three turret loadouts are **quick to build**
+(`Run::quick`, the loadout bar's Quick build): the Build page's first three
+building buttons are those slots, each named for its design, and placing
+one builds its kind (`Cmd::Place`, `Building::slot`, `Game::designs`),
+reaching and firing by its rolls (`Game::design_rolls`, `fires_over`).
 The first turret body is the **mortar** (owner's card, 2026-11-17 00:47Z,
 "Mortar anyway"), unlocked in the run shop after Turrets: a building that
 lobs a shell every 4 s at the thickest slime it sees within 80 dish cells,

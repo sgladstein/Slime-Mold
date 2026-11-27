@@ -1224,7 +1224,7 @@ fn a_walking_squad_or_a_standing_pump_is_not_stuck() {
     let mut g = small(1);
     hold(&mut g);
     let at = (g.soldiers[0].x, g.soldiers[0].y);
-    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None, gun: None });
+    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None, gun: None, slot: None });
     assert_eq!(stuck_for(&mut g), 0, "a standing pump is something");
     // Worn down, it no longer is.
     g.buildings[0].alive = false;
@@ -2335,6 +2335,47 @@ fn room_near(g: &Game<BigDish>, p: (f32, f32)) -> (f32, f32) {
         })
         .find(|&q| g.build_blocked(Kind::Turret, q).is_none() && (0..8).all(|j| { let a = j as f32 * 0.785; g.standable(q.0 + 6.0 * sc * a.cos(), q.1 + 6.0 * sc * a.sin()) }))
         .expect("open ground")
+}
+
+/// **A bought turret design fires its rolls and its loadout's cards**
+/// (owner, 2026-11-27 21:36Z-21:48Z): a quick-build slot's design placed
+/// (`Cmd::Place`) builds its kind at the kind's fixed food price, reaches
+/// and fires by its range and rate rolls, sees over walls by its roll,
+/// fires the slot's deck, and the replay lines round-trip; an empty slot
+/// places nothing.
+#[test]
+fn a_placed_design_fires_its_rolls_and_cards() {
+    use crate::mould::rounds::{Card, Deck};
+    use crate::mould::turrets::{Turret, TurretKind};
+    let mut g = small(15);
+    g.rules.start_bank = 1e6;
+    g.bank = 1e6;
+    let at = room_near(&g, g.larder);
+    assert!(!g.apply(Cmd::Place(0, at)), "an empty slot");
+    let d = Turret { range: 1.5, rate: 2.0, over: false, ..Turret::plain(TurretKind::Gun) };
+    let deck = Deck::new(&[Card::Gas]);
+    for c in [Cmd::Design(0, Some(d)), Cmd::Load(DESIGN_DECKS, Some(deck)), Cmd::Place(0, at)] {
+        assert_eq!(Cmd::parse(&c.to_line()).map(Cmd::to_line), Some(c.to_line()), "{}", c.to_line());
+    }
+    assert!(g.apply(Cmd::Design(0, Some(d))) && g.apply(Cmd::Load(DESIGN_DECKS, Some(deck))));
+    let bank = g.bank;
+    assert!(g.apply(Cmd::Place(0, at)));
+    let k = g.buildings.len() - 1;
+    let (paid, bank) = (bank - g.bank, g.bank);
+    assert!(g.apply(Cmd::Build(Kind::Turret, room_near(&g, (at.0 + 20.0 * g.s(), at.1)))));
+    let plain = g.buildings.len() - 1;
+    assert_eq!((g.buildings[k].kind, g.buildings[k].slot), (Kind::Turret, Some(0)));
+    assert!((paid - (bank - g.bank)).abs() < 1e-3, "the kind's food price, whatever the rolls");
+    assert!((g.turret_reach(Some(k)) / g.turret_reach(Some(plain)) - 1.5).abs() < 1e-3);
+    assert!((g.turret_every(Some(plain)) / g.turret_every(Some(k)) - 2.0).abs() < 1e-3);
+    assert!(!g.fires_over(k) && g.fires_over(plain) == g.rules.build.turret_over);
+    assert_eq!(g.turret_cards(Some(k)).map(|d| d.cards()), Some(deck.cards()));
+    // A lobber design builds a mortar.
+    let lob = Turret::plain(TurretKind::Lobber);
+    assert!(g.apply(Cmd::Design(1, Some(lob))));
+    assert_eq!(g.design_rings(1).map(|r| r.0), Some(Kind::Mortar));
+    assert!(g.apply(Cmd::Place(1, room_near(&g, (at.0, at.1 + 20.0 * g.s())))));
+    assert_eq!(g.buildings.last().map(|b| b.kind), Some(Kind::Mortar));
 }
 
 #[test]
@@ -4928,7 +4969,7 @@ fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
         let (w, h) = g.world.size();
         // A pump on the far side of the dish from the squad.
         let at = (if c.0 < w as f32 / 2.0 { w as f32 - 20.0 } else { 20.0 }, if c.1 < h as f32 / 2.0 { h as f32 - 20.0 } else { 20.0 });
-        g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None, gun: None });
+        g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None, gun: None, slot: None });
         let from = ((c.0 + at.0) / 2.0, (c.1 + at.1) / 2.0);
         let mut b = Boss { lump: 0, born: 0, at: from, cause: BossCause::Crowd, phase: BossPhase::Hunt(None), first: 100, members: 100, centre: from, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
         let round = g.boss_late() && g.army_scale() >= 1.0;

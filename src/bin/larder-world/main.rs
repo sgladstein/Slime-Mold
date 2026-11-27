@@ -374,6 +374,20 @@ fn spread_of(id: u32) -> Option<u8> {
 }
 
 /// The building a build-page command places.
+/// The quick-build slot a turret button places in a run (owner,
+/// 2026-11-27 21:48Z: "select two to three loadouts in the menu that you
+/// can just quick build"; `Game::designs`): the turret, mortar and sprayer
+/// buttons are slots 1-3 there, whatever kind each slot's design is. The
+/// hunter button is a run's fourth kind only through a slot.
+fn quick_slot(id: u32) -> Option<usize> {
+    match id {
+        TURRET => Some(0),
+        MORTAR => Some(1),
+        SPRAYER => Some(2),
+        _ => None,
+    }
+}
+
 fn build_kind(id: u32) -> Option<Kind> {
     match id {
         TURRET => Some(Kind::Turret),

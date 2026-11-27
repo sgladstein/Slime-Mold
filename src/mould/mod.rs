@@ -89,6 +89,7 @@ pub mod skirmish;
 pub mod squad;
 pub mod tiers;
 pub mod tune;
+pub mod turrets;
 pub mod wander;
 
 use std::f32::consts::TAU;

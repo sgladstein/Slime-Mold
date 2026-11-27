@@ -127,6 +127,25 @@ impl<W: World> Game<W> {
     /// which go off on their own (`Run::autocast`). The gun itself is the caller's to arm
     /// (`Cmd::Arm`): a run lands with `Run::armed`, the range with
     /// `Run::carried`, and a `gun=` key overrides both.
+    /// The run's turret designs and each one's cards (owner, 2026-11-27
+    /// 21:36Z: turrets bought like guns; `Cmd::Design`,
+    /// `Cmd::Load(DESIGN_DECKS + i, ..)`), as they now stand: at landing
+    /// and when the loadout panel closes.
+    pub fn arm_designs(&mut self, r: &Run) {
+        for s in 0..super::QUICK {
+            let q = r.quick_design(s);
+            let d = q.map(|q| q.0);
+            if self.designs[s] != d {
+                self.apply(Cmd::Design(s as u8, d));
+            }
+            let cards = q.map(|q| r.design_cards(q.1)).unwrap_or_default();
+            let deck = (!cards.is_empty()).then(|| Deck::new(&cards));
+            if self.design_decks[s].map(|d| d.cards()) != deck.map(|d| d.cards()) {
+                self.apply(Cmd::Load(super::DESIGN_DECKS + s as u8, deck));
+            }
+        }
+    }
+
     pub fn kit_out(&mut self, r: &Run, rr: RoundRules) {
         let mut kit = KitRules::default();
         r.kit(&mut kit);
@@ -142,6 +161,7 @@ impl<W: World> Game<W> {
         if let Some(g) = r.turret_gun() {
             self.apply(Cmd::Arm(TURRET_DECK, Some(g)));
         }
+        self.arm_designs(r);
         for kind in crate::mould::bodies::BodyKind::ALL {
             let d = r.body_cards(kind);
             if !d.is_empty() {
