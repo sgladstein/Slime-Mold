@@ -41,12 +41,11 @@ says otherwise.
   sounds (#853), play this run again and a frame readout (#852), pause menu
   planet card (#842), wounded pace from the Lab's rescue (#850, #851).
 
-## Started, not finished
+## Loadout page redesign
 
-- **Loadout page redesign** (Look and interface with Squad and arsenal):
-  just started at the move; no branch was pushed. Start again from the
-  loadout page as it is on main and the owner's ruling that menus must not
-  get in the way: one screen, no scrolling, UI scale applies.
+Done at the move in PR #880 (queued 11-27); its notes are in
+[`look-and-interface.md`](look-and-interface.md). If #880 is not on main,
+label it `queue` again.
 
 ## Ideas to carry
 
