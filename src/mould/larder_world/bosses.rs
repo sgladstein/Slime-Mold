@@ -282,9 +282,14 @@ impl BossRules {
         let depth = e.min(8.0);
         let t = (depth - 2.0) / 6.0;
         BossRules {
-            every: 150.0 + (45.0 - 150.0) * t,
-            every_sd: 30.0 + (10.0 - 30.0) * t,
-            first: 90.0 + (40.0 - 90.0) * t,
+            // Sooner and more often since 2026-11-27 (was every 150 to 45
+            // s, first at 90 to 40 s): on the owner's 11-27 run the one
+            // threat that cost him soldiers was a mortar landing in his
+            // crowd (24 soldiers to 7 in 15 s on step 2), and step 6's five
+            // mini-bosses took none of his 63. "Make it harder!" (06:54Z).
+            every: 110.0 + (35.0 - 110.0) * t,
+            every_sd: 25.0 + (8.0 - 25.0) * t,
+            first: 60.0 + (30.0 - 60.0) * t,
             cut: 0.02 + (0.1 - 0.02) * t,
             most: if depth >= 6.0 { 3 } else if depth >= 4.0 { 2 } else { 1 },
             // Weaker on the first planets, all of them stronger by the
@@ -307,8 +312,9 @@ impl BossRules {
             // 11-20); his squads were 14 to 35.
             haste: 1.2 + 0.3 * t,
             quorum: 0.2 - 0.08 * t,
-            // The mortar from planet 4 (the proposal the owner picked).
-            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4.0 { 1.0 } else { 0.0 }, if depth >= 3.0 { 1.0 } else { 0.0 }],
+            // The mortar from planet 4 (the proposal the owner picked); from
+            // planet 3 since 2026-11-27, as the threat that hurt.
+            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 3.0 { 1.0 } else { 0.0 }, if depth >= 3.0 { 1.0 } else { 0.0 }],
             // Tougher by the planet (2026-11-22, the thread "Make the run
             // harder after full-game win": 54 mini-bosses on the owner's
             // 11-22 run of all 8 planets were all broken, fizzled or spent
