@@ -408,45 +408,55 @@ pub(super) fn beat_it(tier: Tier) -> Option<&'static str> {
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
-    let mut lines = vec![format!("{}. Next: {}, a {} planet; its slime is {:.1} times the first planet's", r.line(), p.name, p.biome.name(), l.walkers)];
-    // What this tier does to you (`run::does_to_you`).
+    // The planet ahead in short lines, one fact each (2026-11-27, the
+    // owner: "planet text needs to be improved"). Until then two long
+    // lines ran six facts together with semicolons, and measured the slime
+    // against the first planet's ("0.4 times" on planet 2 read as a
+    // smaller slime); now against the planet just won, as the star map's
+    // cards do.
+    let mut lines = Vec::new();
+    if r.depth == run::PLANETS {
+        lines.push("The slime's home world: beat it and the run is won.".to_string());
+    }
+    let pip = if r.range { String::new() } else { format!(", {}{}", r.node().pip.name(), if r.leg().heat { " with heat" } else { "" }) };
+    let mut first = format!("A {} world{pip}.", p.biome.name());
+    if r.depth >= 2 && !r.range {
+        let mut before = r.clone();
+        before.depth -= 1;
+        first += &format!(" {}.", bigger_than(l.walkers, before.level().walkers, "The slime"));
+    }
+    lines.push(first);
     // What this tier does to you (`run::does_to_you`) is the pane's own
     // block above these lines since the planet's introduction (11-24).
     let does = run::does_to_you(l.tier).says;
-    // The level's speed star and head start (`run::par`, `run::head_start`);
-    // the clock counts up (owner, 2026-11-20), so there is no time limit to
-    // tell, only the star's.
-    let par = l.mission.rules(Rules::default()).par;
-    let secs = par.round() as u32;
-    let mut clock = format!("A star for clearing it under {}:{:02}", secs / 60, secs % 60);
-    if l.grow > 0.0 {
-        clock += &format!("; the slime spreads for {:.0} s before you land", l.grow);
-    }
-    // How often it surges here (`run::enemy_keys`; on the clock's line so the
-    // heading keeps two lines, the run thread's ask).
-    clock += &format!("; it surges as it feeds, at least every {:.0} s", run::surge_secs(l.curve));
     // How tough it is here (`run::blows`, 2026-11-26): the blows orange
     // slime takes and the highest level its crystals reach
     // (`run::level_max`), so the card says why the guns that cleared the
     // last planet take longer on this one.
     let b = run::blows(l.curve);
-    let hits = if b.fract() < 0.05 { format!("{b:.0}") } else { format!("{:.0}-{:.0}", b.floor(), b.ceil()) };
     let top = run::level_max(l.curve);
     if top > 0 {
-        clock += &format!("; orange slime takes {hits} hits, and its crystals reach level {top}: the darker the slime, the more hits it takes and the faster and harder it bites");
+        lines.push(format!("It takes {} hit{}. Its crystals reach level {top}: on a higher level the slime is darker, tougher and bites harder.", hits_words(b), if b < 1.05 { "" } else { "s" }));
     } else if b > 1.0 {
-        clock += &format!("; each bit of slime takes {hits} hits");
+        lines.push(format!("It takes {} hits.", hits_words(b)));
     }
-    if r.depth == run::PLANETS {
-        clock = format!("The slime's home world: beat it and the run is won. {clock}");
+    // How often it surges here (`run::enemy_keys`), and its head start.
+    let mut surge = format!("It surges as it feeds, at least every {:.0} s.", run::surge_secs(l.curve));
+    if l.grow > 0.0 {
+        surge += &format!(" It spreads for {:.0} s before you land.", l.grow);
     }
-    lines.push(clock);
-    // Its pip, pay and contracts (the star map, 2026-11-26).
+    lines.push(surge);
+    // The level's speed star (`run::par`); the clock counts up (owner,
+    // 2026-11-20), so there is no time limit to tell, only the star's.
+    let par = l.mission.rules(Rules::default()).par;
+    let secs = par.round() as u32;
+    lines.push(format!("A star for winning under {}:{:02}.", secs / 60, secs % 60));
+    // Its pay and contracts (the star map, 2026-11-26).
     if !r.range {
         let n = r.node();
-        let mut deal = format!("{}{}: a win pays {} points at two stars", n.pip.name(), if r.leg().heat { " with heat" } else { "" }, r.pay(2));
+        let mut deal = format!("A two-star win pays {} points.", r.pay(2));
         if !n.contracts.is_empty() {
-            deal += &format!("; contracts: {}", n.contracts.iter().map(|c| format!("{} (+{})", c.name(), c.pay(r.curve()))).collect::<Vec<_>>().join(", "));
+            deal += &format!(" Bonus: {}.", n.contracts.iter().map(|&c| format!("{} (+{})", contract_words(c, par), c.pay(r.curve()))).collect::<Vec<_>>().join(", "));
         }
         lines.push(deal);
     }
@@ -611,13 +621,21 @@ pub(super) fn shop_of(r: &Run) -> Shop {
 
 /// **The run's star map as the Stars page draws it** (2026-11-26,
 /// `mould::route`): every planet of every step, its pips and lanes, and
-/// for each one the route can reach next, what the pane tells.
+/// for each one the route can reach next, what its card tells.
+///
+/// The card's words (2026-11-27, the owner: "the planet path selection
+/// map needs to be improved and planet text needs to be improved"): the
+/// slime's size against the planet just won (it said "0.4 times the first
+/// planet's", which read as a smaller slime on a later planet and named a
+/// planet nobody remembers), the blows it takes, the map's size, and a
+/// speed contract as a time on the clock ("Win in 60% of the star's time"
+/// asked for sums).
 pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
     use slime_mould::mould::run::{self, Leg};
     use slime_mould::world::start::{StarNode, StarView};
     let map = r.star_map();
     let open: Vec<u8> = if r.choosing() { r.choices().iter().map(|n| n.k).collect() } else { Vec::new() };
-    let steps = map
+    let steps: Vec<Vec<StarNode>> = map
         .steps
         .iter()
         .enumerate()
@@ -637,6 +655,7 @@ pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
                     let mut hot = at.clone();
                     hot.route[i].heat = true;
                     let e = at.curve();
+                    let par = l.mission.rules(Rules::default()).par;
                     StarNode {
                         k: n.k,
                         lane: n.lane,
@@ -647,10 +666,12 @@ pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
                         biome: p.biome.name().to_string(),
                         twist: at.twist().map(|t| (t.name().to_string(), t.card())),
                         size: l.walkers,
+                        hits: run::blows(e),
+                        area: (p.size.0 * p.size.1) as f32,
                         pay: at.pay(2),
                         heat_pay: hot.pay(2),
                         about: n.pip.about().to_string(),
-                        contracts: n.contracts.iter().map(|c| (c.name(), c.pay(e))).collect(),
+                        contracts: n.contracts.iter().map(|&c| (contract_words(c, par), c.pay(e))).collect(),
                         taken: taken && (d < r.depth || !r.choosing()),
                         open: here,
                         stars: if taken { r.stars.get(i).copied() } else { None },
@@ -659,9 +680,56 @@ pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
                 .collect()
         })
         .collect();
-    let heading = format!("Planet {} of {}: pick the next planet. {}", r.depth, run::PLANETS, r.line());
-    let heat_says = format!("Slime +{:.0}%, raids sooner: pay x{:.1}", (run::HEAT_WALKERS - 1.0) * 100.0, run::HEAT_PAY_X10 as f32 / 10.0);
-    StarView { steps, at: r.depth, heading, purse: format!("{} points", r.points), heat_says }
+    // The planet just won, which the cards measure the next against.
+    let last = (r.depth >= 2).then(|| r.route.get(r.depth as usize - 2).and_then(|l| steps.get(r.depth as usize - 2)?.iter().find(|n| n.k == l.k))).flatten();
+    let heading = format!("Choose planet {} of {}", r.depth, run::PLANETS);
+    let heat_says = format!("Slime +{:.0}%, raids sooner, pays x{:.1}", (run::HEAT_WALKERS - 1.0) * 100.0, run::HEAT_PAY_X10 as f32 / 10.0);
+    StarView {
+        at: r.depth,
+        heading,
+        tally: r.line(),
+        purse: format!("{} points", r.points),
+        heat_says,
+        last_size: last.map(|n| n.size),
+        last_area: last.map(|n| n.area),
+        steps,
+    }
+}
+
+/// A contract's words where its planet's speed star is `par` seconds: the
+/// quick one as a time on the planet's clock, which counts up.
+pub(super) fn contract_words(c: slime_mould::mould::route::Contract, par: f32) -> String {
+    match c {
+        slime_mould::mould::route::Contract::Quick(p) if par > 0.0 => {
+            let t = (par * p as f32 / 100.0).round() as u32;
+            format!("Win before {}:{:02}", t / 60, t % 60)
+        }
+        _ => c.name(),
+    }
+}
+
+/// "2" or "2-3": the blows a bit of slime takes (`run::blows`).
+pub(super) fn hits_words(b: f32) -> String {
+    if b.fract() < 0.05 || b.fract() > 0.95 {
+        format!("{:.0}", b.round())
+    } else {
+        format!("{:.0}-{:.0}", b.floor(), b.ceil())
+    }
+}
+
+/// "Its slime is 30% bigger than the last planet's": a size against the
+/// planet just won, in words (within 5% is "about the same").
+pub(super) fn bigger_than(now: f32, last: f32, what: &str) -> String {
+    let f = now / last.max(1e-3);
+    if (f - 1.0).abs() < 0.05 {
+        format!("{what} is about the last planet's size")
+    } else if f >= 1.95 {
+        format!("{what} is {f:.1} times the last planet's")
+    } else if f > 1.0 {
+        format!("{what} is {:.0}% bigger than the last planet's", (f - 1.0) * 100.0)
+    } else {
+        format!("{what} is {:.0}% smaller than the last planet's", (1.0 - f) * 100.0)
+    }
 }
 
 /// The run as the menu's caption, the shop's strip and the end of a run

@@ -1666,9 +1666,9 @@ impl PlanetTwist {
             Twist::Cold => {
                 let d = crate::mould::larder_world::TwistRules::default();
                 let at = d.start as u32;
-                format!("Cold snap at {}:{:02}: for a minute the slime crawls in beads. Push now.", at / 60, at % 60)
+                format!("From {}:{:02}, for a minute, the slime crawls in beads. Push then.", at / 60, at % 60)
             }
-            Twist::Wind => format!("Wind from the {}: the slime leans and creeps {} all planet. Stand upwind, or let it blow onto your guns.", compass(self.angle + 180.0), compass(self.angle)),
+            Twist::Wind => format!("From the {}: the slime leans and creeps {} all planet. Stand upwind, or let it blow onto your guns.", compass(self.angle + 180.0), compass(self.angle)),
             Twist::None => String::new(),
         }
     }
@@ -3486,12 +3486,12 @@ mod tests {
         assert_eq!(r.twist.kind, Twist::Wind);
         assert_eq!(r.twist.wind_angle, twist_at(seed, 2).unwrap().angle);
         let t = run.twist().unwrap();
-        assert!(t.card().starts_with("Wind from the ") && t.card().contains("all planet"), "{}", t.card());
+        assert!(t.card().starts_with("From the ") && t.card().contains("all planet"), "{}", t.card());
         assert!(Run::range(seed).twist().is_none());
         let cold = PlanetTwist { kind: Twist::Cold, angle: 0.0 };
-        assert_eq!(cold.card(), "Cold snap at 0:20: for a minute the slime crawls in beads. Push now.");
+        assert_eq!(cold.card(), "From 0:20, for a minute, the slime crawls in beads. Push then.");
         let west = PlanetTwist { kind: Twist::Wind, angle: 0.0 };
-        assert_eq!(west.card(), "Wind from the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns.");
+        assert_eq!(west.card(), "From the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns.");
     }
 
     /// Each late threat waits for its planet (`FIRST_PLANET`, the owner
