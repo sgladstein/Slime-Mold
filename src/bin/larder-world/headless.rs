@@ -17,6 +17,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut load_at = args.load_at.clone();
     let mut tload_at = args.tload_at.clone();
+    let tgun = args.tgun;
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
@@ -106,6 +107,26 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 shop_run = Some(r);
             }
         }
+        // `menu=stars@STEP` (the star map, 2026-11-26): the run won up to
+        // step STEP (2 by default), a fork picked at each step by turns,
+        // so the route bends across the map.
+        if let (slime_mould::world::start::Page::Stars, Some(r)) = (p, app.run.as_ref()) {
+            let mut r = r.clone();
+            let to: u32 = extra.parse().unwrap_or(2).clamp(2, slime_mould::mould::run::PLANETS);
+            r.depth = 1;
+            r.route.truncate(1);
+            while (r.depth < to || !r.choosing()) && !r.over && r.depth < slime_mould::mould::run::PLANETS {
+                if r.choosing() {
+                    let c = r.choices();
+                    let k = c[(r.depth as usize * 7 + 1) % c.len()].k;
+                    r.choose(k, false);
+                }
+                r.won([2, 3, 1][r.depth as usize % 3]);
+            }
+            m.stars = Some(menu::star_view(&r));
+            m.run_live = true;
+            app.run = Some(r);
+        }
         // `menu=main-run|main-won|main-lost` (Look D, 11-24): the main
         // page's Run row and its strip with the run three planets in, won
         // (every planet freed) or lost on planet 4.
@@ -190,7 +211,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             _ => {}
         }
         let mut extra = extra.split('@');
-        if let Some(tab) = extra.next().filter(|t| !t.is_empty()) {
+        if let Some(tab) = extra.next().filter(|t| !t.is_empty() && p != slime_mould::world::start::Page::Stars) {
             if !m.open_shop_tab_named(tab) {
                 return Err(format!("menu=...@{tab}: no such shop tab"));
             }
@@ -293,6 +314,28 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         .filter_map(|m| {
             let v: Vec<f32> = m.split(',').filter_map(|x| x.trim().parse().ok()).collect();
             (v.len() == 3).then(|| (v[0], v[1], v[2]))
+        })
+        .collect();
+    // `LARDER_DEVICES=T,KIND,X,Y[,X2,Y2];..` (world units; KIND blast,
+    // mine, cord or gas; the kit sounds, 2026-11-24): squad 0 uses that
+    // device there once T has come (`Cmd::Device`, its slot made ready
+    // first, so the film need not wait out a cooldown), if a soldier is in
+    // reach; a cord runs from (X, Y) to (X2, Y2).
+    let mut devices: Vec<(f32, Tool)> = std::env::var("LARDER_DEVICES")
+        .unwrap_or_default()
+        .split(';')
+        .filter_map(|d| {
+            let w: Vec<&str> = d.split(',').map(|x| x.trim()).collect();
+            let n: Vec<f32> = w.iter().skip(2).filter_map(|x| x.parse().ok()).collect();
+            let t: f32 = w.first()?.parse().ok()?;
+            let tool = match (*w.get(1)?, n.as_slice()) {
+                ("blast", [x, y]) => Tool::Blast((*x, *y)),
+                ("mine", [x, y]) => Tool::Mine((*x, *y)),
+                ("gas", [x, y]) => Tool::Gas((*x, *y)),
+                ("cord", [x, y, x2, y2]) => Tool::Cord((*x, *y), (*x2, *y2)),
+                _ => return None,
+            };
+            Some((t, tool))
         })
         .collect();
     let mut drain_at: Option<f32> = std::env::var("LARDER_DRAIN").ok().and_then(|v| v.parse().ok());
@@ -471,6 +514,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
                 println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS.iter().find(|l| l.1 == cards).map_or(cards.as_str(), |l| l.0));
             }
+            // `tgun=KIND`: every turret fires KIND's average gun.
+            if let Some(kind) = tgun {
+                if let Some(g) = app.game.as_mut().filter(|g| g.turret_gun.map(|t| t.kind) != Some(kind)) {
+                    g.apply(Cmd::Arm(slime_mould::mould::larder_world::TURRET_DECK, Some(kind.average())));
+                    println!("  tgun t {:.2} s: the turrets fire the {}", g.time(), kind.name());
+                }
+            }
             // `tload=T,NAME`: every turret loads NAME once T has come.
             if let Some((lt, cards)) = tload_at.take_if(|(lt, _)| app.game.as_ref().is_some_and(|g| g.time() >= *lt)) {
                 let g = app.game.as_mut().unwrap();
@@ -535,6 +585,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     println!("  mine t {t:.2} s laid at {x},{y}");
                 }
                 mines.retain(|m| m.0 > t);
+                for &(_, tool) in devices.iter().filter(|d| d.0 <= t) {
+                    if let Some(q) = g.squads.first_mut() {
+                        q.device_at = 0;
+                    }
+                    let ok = g.apply(Cmd::Device(0, tool));
+                    println!("  device t {t:.2} s: {tool:?} {}", if ok { "used" } else { "refused (no soldier in reach, or not open ground)" });
+                }
+                devices.retain(|d| d.0 > t);
             }
             // `boom=T,X,Y`: the round set off there once T has come.
             for (j, (bt, bx, by, cards)) in booms.iter().enumerate() {
@@ -877,18 +935,25 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let each: Vec<String> = g.ceiling.cover.iter().enumerate().filter(|&(j, &v)| v >= 1.0 || g.ceiling.holding.get(j) == Some(&true)).map(|(j, &v)| format!("{j}{} {v:.0}/{} {:.0}%", if g.ceiling.holding.get(j) == Some(&true) { "*" } else { "" }, cells.get(j).copied().unwrap_or(0), 100.0 * cs.get(j).map_or(0.0, |c| c.1 as f64) / g.ceiling.full.get(j).copied().unwrap_or(1.0).max(1.0))).collect();
                     println!("  ceiling crystals t {:.0} s: {}", g.time(), each.join(", "));
                 }
-                // The origin (`origin.rs`, 11-22): its members, the most it
-                // held, its reach, lunges and calls, or the die-back.
+                // The crystal heart (`origin.rs`): its members, the most it
+                // held, its reach, lunges and calls, and the hearts so far.
                 if g.rules.origin.on {
                     match g.origin_hud() {
-                        Some((_, _, Some(left))) => println!("  origin t {:.0} s: broken, die-back {left:.0} s left, slime {}", g.time(), g.mould),
-                        Some((n, most, None)) => {
+                        Some((n, most)) => {
                             if most - n.min(most) >= origin_low.1 - origin_low.0.min(origin_low.1) {
                                 origin_low = (n, most);
                             }
-                            println!("  origin t {:.0} s: {n} members of {most} most, deepest {} of {}, armour {}, size {:.0}, reach {:.1}, {} lunges, {} calls home, gathering {}", g.time(), origin_low.0, origin_low.1, g.rules.origin.armour, g.rules.origin.size, g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather))
+                            println!("  origin t {:.0} s: {n} members of {most} most, deepest {} of {}, armour {}, size {:.0}, reach {:.1}, {} lunges, {} calls home, gathering {}; {} formed, {} broken", g.time(), origin_low.0, origin_low.1, g.rules.origin.armour, g.rules.origin.size, g.origin.reach, g.stand.lunges, g.origin.calls, g.stand.live.is_some_and(|h| h.gather), g.origin.formed, g.origin.broken)
                         }
-                        None => println!("  origin t {:.0} s: none", g.time()),
+                        None => {
+                            let clock = g.origin.thick.iter().map(|w| w.1).fold(0.0, f32::max);
+                            // The thickest crystal's walkers a fine cell
+                            // (`OriginRules::dense`), charged or not.
+                            let each: Vec<f32> = g.crystal_walkers().map_or(Vec::new(), |w| w.iter().map(|&(_, n, r)| n as f32 / (std::f32::consts::PI * r * r)).collect());
+                            let thick = each.iter().copied().fold(0.0, f32::max);
+                            let over = each.iter().filter(|&&d| d >= g.rules.origin.dense).count();
+                            println!("  origin t {:.0} s: none ({} formed, {} broken; fullest clock {clock:.0} s, thickest crystal {thick:.2} a cell, {over} of {} at {:.2})", g.time(), g.origin.formed, g.origin.broken, each.len(), g.rules.origin.dense)
+                        }
                     }
                 }
                 if g.rules.star.on {
@@ -1295,6 +1360,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             s.zips, s.sirens, s.blasts, s.torn, s.rejoined, s.withered, s.tells, s.charges, s.pieces, s.withering
         );
         println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}; coin ticks {}, drops emptied {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost, s.coins, s.cashed);
+        println!("  heard (kit): shells sent {}, landed {}, sprayer sweeps {}, line ripples {}, canister puffs {}, darts {}", s.launches, s.landings, s.sweeps, s.ripples, s.puffs, s.darts);
         println!("  hits by kills (0, 1, 2, 3-4, 5-8, 9-16, 17-32, 33+): {:?}; full weight at {:.0} kills", s.kill_hist, s.full);
         let b = bank.stats;
         println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);

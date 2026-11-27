@@ -27,12 +27,12 @@ pub(super) fn run_walkers(factor: f32) -> usize {
 /// and harder deeper, 11-15, and sends specks off to far crystals most
 /// often early, 11-16); the tier's keys and the
 /// menu's moved options go on after, so they win.
-pub(super) fn run_shape(s: &mut slime_mould::gpu::Settings, factor: f32, depth: u32) -> Result<(), String> {
+pub(super) fn run_shape(s: &mut slime_mould::gpu::Settings, factor: f32, curve: f32) -> Result<(), String> {
     let (_, keys) = shape_keys(DEFAULT_SHAPE).expect("the default shape is on the shapes page");
     for (k, v) in keys {
         slime_mould::gpu::set(s, k, v)?;
     }
-    for (k, v) in slime_mould::mould::run::enemy_keys(depth) {
+    for (k, v) in slime_mould::mould::run::enemy_keys(curve) {
         slime_mould::gpu::set(s, k, &v)?;
     }
     s.capacity = ((s.capacity as f32) * factor).round().max(s.walkers as f32) as usize;

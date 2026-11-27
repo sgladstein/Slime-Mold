@@ -2,7 +2,7 @@
 # each with a tick the game remembers on that PC. The Direction lane owns
 # this file; other lanes ask Direction for a line. One thing a line, in
 # plain words, the most important first. Lines starting with # are notes.
-The heart: each planet's slime now has a heart on its home crystal. Kill it to win the planet, or drain its crystal to stop it regrowing. Is it clear from the start what to go for?
+Hearts: a heart grows on any crystal the slime keeps packed thick for two minutes. Break it to take that crystal back; you win a planet only by wiping out every last bit of slime. Is it clear what to go for?
 Planets 2 to 8 are harder: raids come sooner and tougher, mini-bosses reach you, strikers grow with a big army. Too hard, too easy, or about right?
 Each planet's slime tells you on landing what it does to you, and a small amber number under the goal line tracks it. Did you notice it, and did it change how you played?
 Quit in the middle of a planet, then pick Back to the run: it carries on where you left it. Does it come back as you left it?

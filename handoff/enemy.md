@@ -34,6 +34,10 @@ given on 2026-11-17 is below it, unchanged.
 - **Parked by Direction:** the Death gas relic. Night (a twist) stays on
   the Lab's branch.
 
+## Slime progression thread (2026-11-26)
+
+The thread "Make the slime's progression much stronger" (owner 06:58Z: "way too easy ... progression needs to be way stronger for the slime") worked in this lane's files: #862 toughness by planet (`blows`, `run::BLOWS`), #864 crystal levels 0-7 coloured orange to indigo (`levels.rs`, dense bits 12-14, pile word 9, `level_*` keys) and stronger raids (`RAID_EVERY`/`RAID_SIZE`/`RAID_ARMOUR`), then mini-bosses stronger and smarter by planet: a ward (share of blows glancing off, `Lump::armour` bits 8-15), stalking the lone soldier (`boss_prey`), falling back to feed (`BossPhase::Back`). Retune from the owner's play; the owner ruled out faster regrowth of ordinary slime and nerfing the player's cards.
+
 ## Mini-boss review (2026-11-20, the thread "Analyse and improve the minibosses")
 
 Not this lane's thread, but the lane's file (`bosses.rs`), so recorded

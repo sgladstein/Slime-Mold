@@ -322,6 +322,22 @@ pub struct Bang {
     pub r: f32,
     pub tick: u64,
     pub killed: usize,
+    /// The tool that set it off (`Tool::index`: 0 a thrown Grenade, 1 a
+    /// Mine, 2 a point of a Line), so each is heard in its own voice
+    /// (`sound::world`, 2026-11-24). Old saves read 0.
+    #[serde(default)]
+    pub tool: u8,
+}
+
+/// A Canister's gas let out (`Tool::Gas`), for the sound: where, the tick,
+/// and whether it was the first release (`first`) or one of its later
+/// puffs of cards (`Kit::canisters`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Puff {
+    pub at: (f32, f32),
+    pub tick: u64,
+    pub first: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -345,6 +361,10 @@ pub struct Kit {
     /// Canisters letting out their cards (gun step E3): where, the tick
     /// of the next cast and the casts left.
     pub canisters: Vec<((f32, f32), u64, u32)>,
+    /// Gas let out, for the sound (`Puff`): kills nothing and leaves no
+    /// `Bang`, so until 2026-11-24 the Canister was silent.
+    #[serde(default)]
+    pub puffs: Vec<Puff>,
 }
 
 impl Kit {
@@ -510,7 +530,7 @@ impl Kit {
         let br = self.burst_rules(g);
         match t {
             Tool::Blast(p) => {
-                self.killed[i] += self.bang(g, p, r.blast_r, r.crater_r);
+                self.killed[i] += self.bang(g, p, r.blast_r, r.crater_r, i);
                 Self::carry(g, 0, p);
             }
             Tool::Mine(p) => {
@@ -523,7 +543,7 @@ impl Kit {
                 for j in 0..=n {
                     let f = j as f32 / n as f32;
                     let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
-                    self.killed[i] += self.bang(g, p, r.cord_r, r.cord_r);
+                    self.killed[i] += self.bang(g, p, r.cord_r, r.cord_r, i);
                 }
                 let m = (len / (r.cord_cards * s)).ceil().max(1.0) as usize;
                 for j in 0..=m {
@@ -538,6 +558,7 @@ impl Kit {
             Tool::Gas(p) => {
                 let steps = (r.gas_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
                 self.gassed += g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.gas_r, gas: steps, ..Burst::default() }, &br).gassed as usize;
+                self.puffs.push(Puff { at: p, tick: g.world.ticks(), first: true });
                 Self::carry(g, i, p);
                 // The Canister (gun step E3): its cards again once a game
                 // second after (`Kit::frame`), with cards to cast.
@@ -610,15 +631,15 @@ impl Kit {
         }
     }
 
-    /// One blast: kill, clear, alarm, crater, as one burst. Fine-cell
-    /// point, dish-cell radii.
-    fn bang<W: World>(&mut self, g: &mut Game<W>, p: (f32, f32), r: f32, crater: f32) -> usize {
+    /// One blast of tool `tool` (`Tool::index`): kill, clear, alarm,
+    /// crater, as one burst. Fine-cell point, dish-cell radii.
+    fn bang<W: World>(&mut self, g: &mut Game<W>, p: (f32, f32), r: f32, crater: f32, tool: usize) -> usize {
         let s = g.world.scale();
         let steps = (self.rules.crater_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
         let b = Burst { at: (p.0 / s, p.1 / s), r, kill: true, alarm: self.rules.blast_alarm, alarm_r: 2.0 * r, crater: steps, crater_r: crater, ..Burst::default() };
         let br = self.burst_rules(g);
         let killed = g.world.burst(&b, &br).killed as usize;
-        self.bangs.push(Bang { at: p, r: r * s, tick: g.world.ticks(), killed });
+        self.bangs.push(Bang { at: p, r: r * s, tick: g.world.ticks(), killed, tool: tool as u8 });
         killed
     }
 
@@ -641,6 +662,7 @@ impl Kit {
                 c.2 > 0
             });
             for p in due {
+                self.puffs.push(Puff { at: p, tick: now, first: false });
                 Self::carry(g, gas, p);
             }
         }
@@ -655,7 +677,7 @@ impl Kit {
         for &m in fired.iter().rev() {
             self.mine_near.remove(m);
             let p = self.mines.remove(m);
-            self.killed[1] += self.bang(g, p, r.blast_r, r.crater_r);
+            self.killed[1] += self.bang(g, p, r.blast_r, r.crater_r, 1);
             Self::carry(g, 1, p);
         }
         fired.len()

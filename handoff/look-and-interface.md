@@ -2,6 +2,24 @@
 
 ## State (2026-11-20)
 
+**11-27, alerts:** at most three (`ALERTS_MAX`), 4 s (`ALERT_LIFE`; red
+6 s, `ALERT_LIFE_BAD`), repeats counted (`Alert::count`, "x3"), none wider
+than `ALERT_W` 520 units or 42% of the screen (cut with an ellipsis). 19
+long alert texts reworded short in `squadmode.rs`, `input.rs` (Squad),
+`main.rs`, `resume.rs` (Engine), told through the coordinator. Next from
+the gauge page's list: Sleeper/Grudge tells and the heart in the bar.
+
+**11-27, the slime gauge (HUD; thread "Improve the top HUD and status
+pop-ups"):** in a run the top bar's middle is `SlimeGauge` (peak-wide bar,
+fill now, white landing mark, 3 s cut pale, Swarmer rush mark red), the goal
+sentence gone from the bar (kept for the pause menu), heart and stalemate
+as red pills (`run_alarms`), all pills in the row where they fit. Page in
+`Reports/slime-gauge-2026-11-27/`. Next from its list: shorter, fewer alerts
+(at most three, about 4 s, one short clause, repeats as x3); the Sleeper's
+and Grudge's tells and the heart drawn into the bar.
+
+**11-27, the star map and planet text** (owner 05:29Z: "The planet path selection map needs to be improved and planet text needs to be improved"): `start/stars.rs` redrawn: the route across the top (a column a step, its slime once over it, `pip_ink`/`pip_scale`/`biome_ink` planets), the open planets as side-by-side cards (`star_card`, `CARD_W`/`CARD_H`, rows drop from the end when short), heat in the bottom bar. `menu::star_view` fills `hits`, `area`, `tally`, `last_size`/`last_area`; `contract_words` gives the quick contract as a clock time; `shop_of`'s planet-ahead lines are one fact each (`bigger_than`, `hits_words`). Page `Reports/star-map-cards-2026-11-27/`. Twist cards no longer repeat their name (`PlanetTwist::card`, Enemy's run.rs, text only).
+
 **11-24, Look B, the Dozer's nap (planet 8):** `SlimeLook::Doze` (10):
 the Sleeper's crust machinery (`crust_look()`, `dormant_share`) with a pale
 straw rind (`NAP_RGB`, `NAP_DIM`, `NAP_MATTE`), and awake the Swarmer's
@@ -190,8 +208,33 @@ the heart; the scar is subtle, about 1% "on old scar" at 90 s). Direction's
 next list (20:47Z): 1 What is new caught up by day (`news_rows`,
 `day_name`, things to try beside the list over the note, a heading again
 on a page inside a day; done), 2 the pause card shows the planet's slime
-line, twist and goal (done: `Model::pause_planet`, a panel beside the card, or in it where only tall), 3 own pick from the 4K menu films. The rescue
-planet's screens come to this lane first.
+line, twist and goal (done: `Model::pause_planet`, a panel beside the card, or in it where only tall), 3 own pick from the 4K menu films
+(Past runs and Slimes met page by height, #843). The rescue
+planet's screens come to this lane first. Direction's list of 22:28Z:
+1 a colour check under simulated protan, deutan and tritan (#844: a dark
+notch before a bar's hurt chip, a dark band under hint rings; shot
+frames, twist and tell pills already carry words or icons); 2 key
+rebinding (`world::keys`: a swap of two keys, the game reads its old
+keys and `keys::means` turns the key pressed into the one it stands for,
+in `events.rs` after the menu branch; `ui::key_name` names the key
+pressed now, so every label follows; saved as `keys=` in settings;
+Options > Keys > Change keys is `Page::Bind`, its rows `menu::bind_rows`;
+`menu=change-keys` films it); 3 Squad's counter lines (sent 22:58Z, PR #845): `menu::beat_it(tier)`,
+`Intro::counter` and `Shop::beat`, drawn after "Beat it:" in the accent
+on the landing card, the shop's planet ahead and the pause card (the
+Sprawler's and Trunk's lines name theirs; the Grudge has none yet); 4 the
+rescue planet's screens when the Lab hands it over. Direction's list of
+23:38Z: 1 replay a run (Past runs' header "Play this run again",
+`Hit::Replay` plays `run_pick`'s seed, `StartEvent::Replay`; digits on
+the main page's Run row type `StartMenu::run_seed`, which `menu.rs` takes
+for a fresh run; the seed covers planets, maps, twists, the level seeds
+and the first shop, and later shops follow what was bought and
+rerolled), 2 the frame readout (Options > Screen, `frames=on`; `Hud::frame` keeps
+ten seconds of the window's frame intervals, fed from `App::auto_frame`,
+the same times Auto's World detail judges; `Model::readout` names the
+detail; drawn under the clock left of the experiments' mark; headless
+films feed no frame times, so it never shows in a film), 3 the rescue
+planet.
 
 **11-24, Look C, polish findings 3 and 4:** crystals are cut gems
 (`GEM_GIRDLE`, `GEM_TABLE`, `GEM_STAR`, `GEM_VEINS` in `shaded`) and a

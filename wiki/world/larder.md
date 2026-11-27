@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-18
+updated: 2026-11-27
 sources:
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
@@ -386,6 +386,22 @@ Pull drags slime toward the turret (step 2a). In a run the turrets' cards
 come out of the squad's bag: the shop's **Edit the turrets' cards** button
 switches the gun slots to a turret rack of 2 slots and budget 4 (more with
 Turret power), and a card there is one the squad doesn't fire (step 2b).
+**Turrets fire their loadout's gun** since 2026-11-27 (owner, 05:50Z:
+"Turrets should be more similar to guns that you can buy them";
+`Game::turret_gun`, `Game::turret_reach`, `Game::turret_every`,
+`Run::turret_gun_of`): `BuildRules::turret_range` and `turret_every` are a
+turret's reach and gap with the average rifle (24 cells, 0.5 s, so twice a
+soldier's rate), and a mounted gun scales them by its range and rate over the
+rifle's; a scattergun's bullets fan evenly across its spread, a turret still
+aiming true. Its cards fit the gun's slots and budget; a loadout with no gun
+fires the rifle at the run's rules and the turret rack, and so does the
+squads' own first loadout, so turrets can't copy the squads' gun and deck
+for nothing (adversarial review, 2026-11-27). A mortar, sprayer or hunter
+has no gun but fires the same cards; Render pays within the rifle's reach
+whatever gun the turret holds (`Game::render_reach`). The squad's Longer
+barrels and Faster trigger reach turrets too, and a turret costs 350 food,
+less than a soldier (was 15 cells and 500 food; he, 05:52Z: turrets were
+"underpowered right now compared to guns (with squad upgrade)").
 The first turret body is the **mortar** (owner's card, 2026-11-17 00:47Z,
 "Mortar anyway"), unlocked in the run shop after Turrets: a building that
 lobs a shell every 4 s at the thickest slime it sees within 80 dish cells,

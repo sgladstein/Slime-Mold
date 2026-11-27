@@ -42,6 +42,7 @@
 //! the world, at full health, when it is whole.
 
 use super::{Game, Shot, World};
+use crate::mould::guns::Gun;
 use crate::mould::rounds::Deck;
 use crate::mould::squad::{Burst, BurstRules, ShotIn, UnitIn, UnitOut};
 
@@ -170,6 +171,10 @@ pub struct Building {
     /// The run's loadout its `deck` came from, for the window to name and
     /// re-arm; None while it follows the default.
     pub loadout: Option<u8>,
+    /// The gun its own loadout holds (`Cmd::TurretArm`, 2026-11-27),
+    /// read only while it has a deck of its own (`deck`); None there is
+    /// the standard rifle. Read it through `Game::turret_gun`.
+    pub gun: Option<Gun>,
 }
 
 /// A mortar's shell in the air (`Kind::Mortar`, `Game::shells`): fired
@@ -247,6 +252,12 @@ pub const PUMP_LEVELS: u8 = 3;
 /// The squad id `Cmd::Load` loads every turret with (`Game::turret_deck`;
 /// `load 255 army` puts them back on plain strikes).
 pub const TURRET_DECK: u8 = 255;
+
+/// The average rifle's range and rate (`GunKind::Rifle`), which a
+/// turret's `BuildRules::turret_range` and `turret_every` are for; a
+/// mounted gun scales them by its own (`Game::turret_reach`).
+const RIFLE_RANGE: f32 = 24.0;
+const RIFLE_RATE: f32 = 1.0;
 
 /// A turret's levels: 2 renders the slime it kills (`BuildRules::render_food`).
 pub const TURRET_LEVELS: u8 = 2;
@@ -451,9 +462,9 @@ impl Default for BuildRules {
             max: 40,
             gap: 2.5,
             raise: 8.0,
-            turret_cost: 500.0,
+            turret_cost: 350.0,
             turret_hp: 300.0,
-            turret_range: 15.0,
+            turret_range: 24.0,
             turret_every: 0.5,
             turret_over: true,
             mortar_cost: 600.0,
@@ -716,6 +727,62 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// **The gun turret `k` fires** (owner, 2026-11-27: "Turrets should be
+    /// more similar to guns that you can buy them"): its own loadout's
+    /// (`Building::gun`) while it has one, else the turrets' default
+    /// (`Game::turret_gun`, `Cmd::Arm(TURRET_DECK, ..)`). A loadout with
+    /// no gun fires the standard rifle at these rules, so the squad's
+    /// Longer barrels and Faster trigger reach turrets too (he, 05:52Z:
+    /// turrets were "underpowered right now compared to guns (with squad
+    /// upgrade)"). None: the turrets' default.
+    ///
+    /// A mortar, sprayer or hunter has no gun (its body is its own): the
+    /// standard rifle, so the casts its shots carry (`release`) don't
+    /// fly as far as the turrets' long gun (adversarial review,
+    /// 2026-11-27).
+    pub fn turret_gun(&self, k: Option<usize>) -> Gun {
+        let b = k.and_then(|k| self.buildings.get(k));
+        if b.is_some_and(|b| b.kind != Kind::Turret) {
+            return Gun::standard(&self.rules);
+        }
+        let g = match b.filter(|b| b.deck.is_some()) {
+            Some(b) => b.gun,
+            None => self.turret_gun,
+        };
+        g.unwrap_or_else(|| Gun::standard(&self.rules))
+    }
+
+    /// How far turret `k` sees and fires, dish cells: `BuildRules::
+    /// turret_range` is a turret's reach with the average rifle, and a
+    /// gun reaches that times its range over the rifle's (a long gun
+    /// farther, a scattergun closer), stretched by its Range cards.
+    pub fn turret_reach(&self, k: Option<usize>) -> f32 {
+        let g = self.turret_gun(k);
+        let m = self.turret_mods_of(k);
+        self.rules.build.turret_range * g.range / RIFLE_RANGE * (1.0 + self.rules.range_card * m.reach as f32)
+    }
+
+    /// How far round turret `k` its Render pays (`render_pay`), dish
+    /// cells: the rifle's reach with its Range cards, whatever gun it
+    /// holds, so a long gun's reach doesn't multiply the kill box's
+    /// income (adversarial review, 2026-11-27: 2.8x the area of a rifle
+    /// turret's on the gun alone).
+    pub fn render_reach(&self, k: usize) -> f32 {
+        let g = Gun::standard(&self.rules);
+        let m = self.turret_mods_of(Some(k));
+        self.rules.build.turret_range * g.range / RIFLE_RANGE * (1.0 + self.rules.range_card * m.reach as f32)
+    }
+
+    /// Seconds between turret `k`'s shots: `BuildRules::turret_every` with
+    /// the average rifle, divided by the gun's rate over the rifle's (a
+    /// turret fires twice as fast as a soldier holding the same gun) and
+    /// by its Rate cards.
+    pub fn turret_every(&self, k: Option<usize>) -> f32 {
+        let g = self.turret_gun(k);
+        let m = self.turret_mods_of(k);
+        self.rules.build.turret_every * RIFLE_RATE / g.rate.max(0.01) / (1.0 + self.rules.rate_card * m.rate as f32).max(0.01)
+    }
+
     /// The standing turret whose middle is within its touch of `at` (fine
     /// cells), nearest first: the one a click on it upgrades.
     pub fn turret_at(&self, at: (f32, f32)) -> Option<usize> {
@@ -742,7 +809,7 @@ impl<W: World> Game<W> {
         // as they aim and fire (independent review, 2026-11-16).
         // Each turret's own Range cards when it has a deck of its own
         // (`Building::deck`, 2026-11-19).
-        let reach_of = |k: usize| b.turret_range * self.s() * (1.0 + self.rules.range_card * self.turret_mods_of(Some(k)).reach as f32);
+        let reach_of = |k: usize| self.render_reach(k) * self.s();
         let renders: Vec<((f32, f32), f32)> = self.buildings.iter().enumerate().filter(|(_, t)| t.up() && t.kind == Kind::Turret && t.level >= 2).map(|(k, t)| (t.at, reach_of(k))).collect();
         if renders.is_empty() {
             return 0.0;
@@ -799,7 +866,7 @@ impl<W: World> Game<W> {
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
         let home = if let Kind::Wall { to } = kind { self.wall_home(at, to) } else { (0.0, 0.0) };
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false, next: 0, deck: None, loadout: None });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false, next: 0, deck: None, loadout: None, gun: None });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -1110,7 +1177,10 @@ impl<W: World> Game<W> {
                     // soldier's does (`Building::next`). No deck, plain
                     // strikes as before.
                     let m = if bd.deck.is_some() { self.turret_mods_of(Some(k)) } else { tm0 };
-                    let reach = b.turret_range * sc * (1.0 + r.range_card * m.reach as f32);
+                    // Its gun (2026-11-27): reach, rate, and a
+                    // scattergun's fan of bullets a shot.
+                    let gun = self.turret_gun(Some(k));
+                    let reach = self.turret_reach(Some(k)) * sc;
                     u.sight = reach;
                     // A turret sees and fires over walls (`UnitIn::over`,
                     // `lob_line`); a soldier's gun does not (owner,
@@ -1159,13 +1229,25 @@ impl<W: World> Game<W> {
                                     let far = reach * ammo.range();
                                     let side = if nv > 1 { (v as f32 / (nv - 1) as f32 * 2.0 - 1.0) * crate::mould::rounds::VOLLEY_FAN } else { 0.0 };
                                     let pellets = shape.pellets.max(1);
-                                    for p in 0..pellets {
-                                        let a = a0 + side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
-                                        shots.push(ShotIn { from, to: (bd.at.0 + a.cos() * far, bd.at.1 + a.sin() * far), r: hit_r, over: b.turret_over });
-                                        shooters.push((None, cast, Some(k)));
+                                    // A gun of several bullets a shot fans
+                                    // them evenly across its spread at the
+                                    // aim (a turret still aims true: no
+                                    // random scatter, as before it had guns).
+                                    let n_shots = gun.shots.max(1);
+                                    // Read at no nearer than 4 cells, so a
+                                    // fan at slime on the barrel stays a fan
+                                    // and does not spray sideways.
+                                    let half = (gun.spread * ammo.spread() * sc / d.max(4.0 * sc)).atan();
+                                    for s in 0..n_shots {
+                                        let fan = if n_shots > 1 { (s as f32 / (n_shots - 1) as f32 * 2.0 - 1.0) * half } else { 0.0 };
+                                        for p in 0..pellets {
+                                            let a = a0 + side + fan + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
+                                            shots.push(ShotIn { from, to: (bd.at.0 + a.cos() * far, bd.at.1 + a.sin() * far), r: hit_r, over: b.turret_over });
+                                            shooters.push((None, cast, Some(k)));
+                                        }
                                     }
                                 }
-                                let every = b.turret_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
+                                let every = self.turret_every(Some(k));
                                 self.buildings[k].ready = t + self.secs(every).max(1);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -1521,6 +1603,70 @@ mod tests {
         assert!(b.hp < b.max_hp || !b.alive, "the mould wore it: {} of {}", b.hp, b.max_hp);
         // Shots cost what a soldier's do.
         assert!((g.spent - g.rules.build.turret_cost - g.shots as f32 * g.rules.price).abs() < 1e-2);
+    }
+
+    /// **A turret fires its gun** (owner, 2026-11-27: "Turrets should be
+    /// more similar to guns that you can buy them"): with no gun, the
+    /// rifle at `turret_range` and `turret_every`; a long gun reaches
+    /// farther and fires slower, a carbine the other way, and a
+    /// scattergun fires its fan of bullets in each shot. A turret on a
+    /// loadout of its own fires that loadout's gun, and back on the
+    /// default, the default's again.
+    #[test]
+    fn a_turret_fires_its_gun() {
+        use crate::mould::guns::GunKind;
+        let run = |gun: Option<GunKind>| {
+            let mut g = small(3);
+            let at = open_near(&g, (g.core.0 + 10.0, g.core.1));
+            stand(&mut g, at);
+            g.soldiers[0].stance = Stance::HoldFire;
+            assert!(g.apply(Cmd::Arm(TURRET_DECK, gun.map(|k| k.average()))));
+            assert!(g.build(Kind::Turret, at));
+            let (reach, every) = (g.turret_reach(Some(0)), g.turret_every(Some(0)));
+            let (mut fired, mut shots) = (0, 0);
+            for _ in 0..(g.rules.tps * 10) {
+                let n = g.shots;
+                g.step();
+                if g.buildings[0].working {
+                    fired += 1;
+                    shots = shots.max(g.shots - n);
+                }
+            }
+            (reach, every, fired, shots)
+        };
+        let b = BuildRules::default();
+        let rifle = run(None);
+        assert_eq!((rifle.0, rifle.1), (b.turret_range, b.turret_every), "no gun: the rifle");
+        let long = run(Some(GunKind::Long));
+        assert!(long.0 > rifle.0 && long.1 > rifle.1, "{long:?} against {rifle:?}");
+        let carbine = run(Some(GunKind::Carbine));
+        assert!(carbine.0 < rifle.0 && carbine.1 < rifle.1, "{carbine:?} against {rifle:?}");
+        assert!(rifle.2 > 0 && carbine.2 > rifle.2, "the carbine fires more often: {carbine:?} against {rifle:?}");
+        let scatter = run(Some(GunKind::Scatter));
+        assert!(scatter.2 > 0 && scatter.3 >= GunKind::Scatter.average().shots, "a fan a shot: {scatter:?}");
+        // One turret on its own loadout's gun, then back on the default.
+        let mut g = small(3);
+        let at = open_near(&g, (g.core.0 + 10.0, g.core.1));
+        stand(&mut g, at);
+        assert!(g.build(Kind::Turret, at));
+        assert!(g.apply(Cmd::TurretLoad(0, Some(2), Some(Deck::new(&[])))));
+        assert!(g.apply(Cmd::TurretArm(0, Some(GunKind::Long.average()))));
+        assert_eq!(g.turret_gun(Some(0)).kind, GunKind::Long);
+        assert_eq!(g.turret_gun(None).kind, GunKind::Rifle);
+        assert!(g.apply(Cmd::TurretLoad(0, None, None)));
+        assert_eq!(g.turret_gun(Some(0)).kind, GunKind::Rifle);
+        // A mortar has no gun: the turrets' long gun is not its reach
+        // (review, 2026-11-27), and its Render circle stays the rifle's.
+        assert!(g.apply(Cmd::Arm(TURRET_DECK, Some(GunKind::Long.average()))));
+        assert_eq!(g.turret_gun(Some(0)).kind, GunKind::Long);
+        assert_eq!(g.render_reach(0), g.rules.build.turret_range);
+        let m = open_near(&g, (g.core.0 - 10.0, g.core.1));
+        assert!(g.build(Kind::Mortar, m));
+        let mk = g.buildings.len() - 1;
+        assert_eq!(g.turret_gun(Some(mk)).kind, GunKind::Rifle);
+        // The replay's words read back.
+        let c = Cmd::TurretArm(0, Some(GunKind::Scatter.average()));
+        assert_eq!(Cmd::parse(&c.to_line()), Some(c));
     }
 
     /// **A turret fires over its own wall; a rifle does not** (owner,

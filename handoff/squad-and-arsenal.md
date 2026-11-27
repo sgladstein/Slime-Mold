@@ -48,6 +48,45 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-27, turrets fire their loadout's gun (thread "Make turrets work
+like buyable guns").** Owner 05:50Z/05:52Z: turrets should be like the guns
+you buy, and were underpowered and dearer than a soldier. Built: a turret
+fires its loadout's gun (`Game::turret_gun`, `turret_reach`,
+`turret_every`; `Cmd::Arm(TURRET_DECK, ..)` for the default,
+`Cmd::TurretArm` per turret, replay word `tarm`; `Run::turret_gun_of`,
+`Run::turret_gun`); cards fit the gun, not the rack; a gun bought with the
+turrets' loadout shown stays there; `turret_range` 15 to 24 (the rifle's,
+scaled by the gun), `turret_cost` 500 to 350; film key `tgun=KIND`. Open:
+the run bot does not put guns on turrets; mortars, sprayers and hunters
+still fire only the loadout's cards (their bodies are their own guns).
+Adversarial review (two agents, owner's ask 20:09Z) found turrets on the
+squads' first loadout copied its gun and whole deck free: closed (that
+loadout gives turrets the rifle and rack); also render circle kept at the
+rifle's reach, hovered turret's ring by its own gun, mortar casts no longer
+read the turrets' gun, duplicate arm commands, labels. Open from it: no
+value-per-food check (base turret about 2.3x a soldier's shots per food;
+a paired duel, turrets vs the same food in soldiers, is the next
+measure), turret sight not gated on `ready` (GPU cost untimed), and the
+owner's "a couple slots or types" may mean turret types in the Build tab.
+
+**2026-11-24/25, the kit's sounds and the wounded pace (pathfinding
+thread).** Direction 23:33Z: the Mortar, Hunter, Sprayer, Mine, Line,
+Canister and Dart each voiced, weighed against the Grenade by radius
+(`sound::world::blow`); new `GunVoice` Mortar/Hunter/Sprayer, `Bang::tool`,
+`Kit::puffs`, the Dart heard through `Rounds::darted`; film key
+`LARDER_DEVICES` (`Reports/kit-sounds-2026-11-24/`). The Lab's
+wounded-pace patch landed alone as #851 (`Soldier::pace` times
+`Game::wade`) for Enemy's planet 3 rescue. Open: re-film the Grudge with
+Tinder and a Torch once Enemy's scar retune lands (readout 10-20% by 2:00).
+
+**2026-11-24, a counter for every slime (pathfinding thread).** Direction
+20:49Z. Paired films found an answer on every planet but the Grudge
+(`Reports/slime-counters-2026-11-24/`); `bring_shell` now asks for Bomb
+(Swarmer, Dozer), Germ (Sporer), Flare (Sleeper). #845 merged.
+The Grudge's 3-minute hold film: its trait barely shows (1% on old scar),
+so no answer reads; sent to Direction (Enemy's keys). Open: the Lab's
+"wounded soldiers slow their squad" patch when it comes.
+
 **2026-11-24, unreachable build sites (pathfinding thread).** #832 (build
 variety) and #839 merged. #839: `build_blocked` refuses a site no soldier
 can walk to, "no way to walk there" (`Game::walled_off`, a flood capped at

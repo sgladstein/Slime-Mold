@@ -159,6 +159,8 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // of the slime's later threats the first time it shows on this PC.
     // Taken at once and saved, not a round's.
     o.push(Opt::new("hints", "Hints", &["on", "off"], "on", if super::hints::saved_on() { "on" } else { "off" }, "A line under each new threat the first time you meet it (strikers, waves, mini-bosses, fruiting and more), and how to collect a Starfall"));
+    // The frame readout (Direction 11-24), off by default: under the clock.
+    o.insert(4, Opt::new("frames", "Frame readout", &["off", "on"], "off", if super::draw::readout_on() { "on" } else { "off" }, "Under the clock: the last ten seconds' slowest frames (the 95th percentile, in ms; amber past 17.5, slower than 60 a second), frames a second, and the World detail the world is drawn at now"));
     o.insert(3, Opt::new("shake", "Screen shake", &shakes, "100%", &settings::percent(shake_user()), "How hard the camera shakes when a blast lands; 0% keeps it still"));
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
@@ -172,7 +174,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
                 // 11-22): the World detail row did not fit the Game tab
                 // at 1280 x 540 and 200%, so the UI size, the world's
                 // detail and the shake have a tab of their own, first.
-                "ui" | "detail" | "shake" => "Screen",
+                "ui" | "detail" | "shake" | "frames" => "Screen",
                 "map" | "planet" | "own" | "plants" => "Planet",
                 // The slime's rules as raw numbers (Panic 2, Wither 0.01):
                 // a tuning tab, last before Keys and named for what it is
@@ -244,27 +246,27 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         let at = |rows: &[(String, String)], head: &str| rows.iter().position(|r| r.0 == head && r.1.is_empty()).map_or(rows.len(), |i| i + 1);
         let fight = at(&squad, "Fighting");
         squad.insert(fight + 2, (format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(GUARD, KeyCode::KeyF)), "On the card: attack-move, drain a crystal, guard".into()));
-        let more: Vec<(String, String)> = [
-            ("Building and tools", ""),
-            ("Q", "Build page: turret, pump, wall (V, drag), door, lure, siren"),
-            ("E", "Tools page: blast, det cord, mine, germ, sleep gas"),
-            ("H", "Swap to the next loadout"),
-            ("The game", ""),
-            ("P", "Pause"),
-            ("Tab", "Four times faster, or back"),
-            ("M", "Minimap"),
-            ("O / K", "Sound; the slime's voice"),
-            ("F9", "Drop a note in the play log: marks this moment and place"),
-            ("Esc", "Cancel placing, or the menu"),
-            ("F1 or ?", "The key card"),
-            ("Ctrl + / Ctrl -", "Bigger or smaller UI and text (saved)"),
-        ]
-        .iter()
-        .map(|&(a, b)| (a.to_string(), b.to_string()))
-        .collect();
+        // Each key by the name it is pressed by now (`world::keys`: moved
+        // in Options' Change keys, the card names the new one).
+        let n = |key: KeyCode| slime_mould::world::ui::key_name(key).unwrap_or_default();
+        let more: Vec<(String, String)> = vec![
+            ("Building and tools".into(), String::new()),
+            (n(KeyCode::KeyQ), format!("Build page: turret, pump, wall ({}, drag), door, lure, siren", n(KeyCode::KeyV))),
+            (n(KeyCode::KeyE), "Tools page: blast, det cord, mine, germ, sleep gas".into()),
+            (n(KeyCode::KeyH), "Swap to the next loadout".into()),
+            ("The game".into(), String::new()),
+            (n(KeyCode::KeyP), "Pause".into()),
+            ("Tab".into(), "Four times faster, or back".into()),
+            (n(KeyCode::KeyM), "Minimap".into()),
+            (format!("{} / {}", n(KeyCode::KeyO), n(KeyCode::KeyK)), "Sound; the slime's voice".into()),
+            ("F9".into(), "Drop a note in the play log: marks this moment and place".into()),
+            ("Esc".into(), "Cancel placing, or the menu".into()),
+            ("F1 or ?".into(), "The key card".into()),
+            ("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text (saved)".into()),
+        ];
         let tools = at(&more, "Building and tools");
         let mut more = more;
-        more.insert(tools + 2, (format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
+        more.insert(tools + 2, (format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), format!("Mine, sleep gas ({}, {} and {} steer)", n(KeyCode::KeyA), n(KeyCode::KeyS), n(KeyCode::KeyD))));
         squad.extend(more);
         squad
     } else {
@@ -274,6 +276,49 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
         rts.into_iter().chain(squad).collect()
     }
+}
+
+/// **The keys Change keys can move** (Direction 11-24: "every squad
+/// key"), as the game reads them, with what each does in the squad game.
+/// The page shows the key pressed for each now (`world::keys`); a key the
+/// squad game does not use is not listed, and moving a listed key onto one
+/// leaves the old key doing nothing.
+pub(super) fn bind_rows() -> Vec<(KeyCode, String)> {
+    use super::squadmode::{CYCLE, FORMATION, HEAL_KEY, LOOSER, MERGE, SPLIT, TIGHTER};
+    use KeyCode as K;
+    let card = |id: u32, key: KeyCode| squad_card_key(id, key).unwrap_or(key);
+    [
+        (K::KeyW, "Steer up"),
+        (K::KeyA, "Steer left"),
+        (K::KeyS, "Steer down"),
+        (K::KeyD, "Steer right"),
+        (card(ATTACK, K::KeyA), "Attack-move (tools page: mine)"),
+        (K::KeyG, "Drain a crystal (build page: door)"),
+        (K::KeyF, "Guard (tools page: sleep gas)"),
+        (K::KeyX, "Fire: defend or free fire"),
+        (K::KeyZ, "Hold fire"),
+        (HEAL_KEY, "Heal"),
+        (K::KeyB, "Buy a soldier (tools page: blast)"),
+        (K::KeyV, "Wall"),
+        (K::KeyC, "Det cord (tools page)"),
+        (K::KeyU, "Pump (build page)"),
+        (K::KeyQ, "Build page"),
+        (K::KeyE, "Tools page"),
+        (FORMATION, "Formation page"),
+        (TIGHTER, "Stand tighter"),
+        (LOOSER, "Stand looser"),
+        (CYCLE, "Next squad"),
+        (SPLIT, "Split the squad"),
+        (MERGE, "Combine squads"),
+        (K::KeyH, "Next loadout"),
+        (K::KeyP, "Pause"),
+        (K::KeyM, "Minimap"),
+        (K::KeyO, "Sound"),
+        (K::KeyK, "The slime's voice"),
+    ]
+    .into_iter()
+    .map(|(k, w)| (k, w.to_string()))
+    .collect()
 }
 
 /// The menu for the command line's `base`.
@@ -290,6 +335,7 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
     let mut menu = StartMenu::new(slime_mould::world::GAME_NAME, entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu.planets = true;
+    menu.binds = bind_rows();
     menu.most_off = slime_mould::build::switches::MOST_OFF;
     // What the build holds, as a PC that has not played sees it (every
     // line new, nothing ticked): the window puts its own memory over it
@@ -340,32 +386,80 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
     a
 }
 
+/// **What beats each slime** (Direction 11-24, "a counter for every
+/// slime"; Squad checked each in paired one-minute films, PR #845,
+/// `Reports/slime-counters-2026-11-24/`), for the landing card, the shop's
+/// planet ahead and the pause card. The Sprawler's and the Trunk's own
+/// lines already name theirs ("bring Tinder and a Torch", "Burn the
+/// walls"); the Grudge has none yet. With #845 the shop before planets 4,
+/// 5, 6 and 8 puts that bullet first, so the advice can be taken.
+pub(super) fn beat_it(tier: Tier) -> Option<&'static str> {
+    match tier {
+        Tier::Drifter => Some("Guard each pump with a turret"),
+        Tier::Swarmer | Tier::Dozer => Some("Bomb bullets throw its charge back"),
+        Tier::Sporer => Some("Germ bullets rot it from within"),
+        Tier::Sleeper => Some("Flare it awake, then Germ it"),
+        Tier::Sprawler | Tier::Trunk | Tier::Grudge => None,
+    }
+}
+
 /// The shop page's contents for run `r` (the gun range's armory when
 /// `r` is the range's).
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
-    let mut lines = vec![format!("{}. Next: {}, a {} planet; its slime is {:.1} times the first planet's", r.line(), p.name, p.biome.name(), l.walkers)];
-    // What this tier does to you (`run::does_to_you`).
+    // The planet ahead in short lines, one fact each (2026-11-27, the
+    // owner: "planet text needs to be improved"). Until then two long
+    // lines ran six facts together with semicolons, and measured the slime
+    // against the first planet's ("0.4 times" on planet 2 read as a
+    // smaller slime); now against the planet just won, as the star map's
+    // cards do.
+    let mut lines = Vec::new();
+    if r.depth == run::PLANETS {
+        lines.push("The slime's home world: beat it and the run is won.".to_string());
+    }
+    let pip = if r.range { String::new() } else { format!(", {}{}", r.node().pip.name(), if r.leg().heat { " with heat" } else { "" }) };
+    let mut first = format!("A {} world{pip}.", p.biome.name());
+    if r.depth >= 2 && !r.range {
+        let mut before = r.clone();
+        before.depth -= 1;
+        first += &format!(" {}.", bigger_than(l.walkers, before.level().walkers, "The slime"));
+    }
+    lines.push(first);
     // What this tier does to you (`run::does_to_you`) is the pane's own
     // block above these lines since the planet's introduction (11-24).
     let does = run::does_to_you(l.tier).says;
-    // The level's speed star and head start (`run::par`, `run::head_start`);
-    // the clock counts up (owner, 2026-11-20), so there is no time limit to
-    // tell, only the star's.
+    // How tough it is here (`run::blows`, 2026-11-26): the blows orange
+    // slime takes and the highest level its crystals reach
+    // (`run::level_max`), so the card says why the guns that cleared the
+    // last planet take longer on this one.
+    let b = run::blows(l.curve);
+    let top = run::level_max(l.curve);
+    if top > 0 {
+        lines.push(format!("It takes {} hit{}. Its crystals reach level {top}: on a higher level the slime is darker, tougher and bites harder.", hits_words(b), if b < 1.05 { "" } else { "s" }));
+    } else if b > 1.0 {
+        lines.push(format!("It takes {} hits.", hits_words(b)));
+    }
+    // How often it surges here (`run::enemy_keys`), and its head start.
+    let mut surge = format!("It surges as it feeds, at least every {:.0} s.", run::surge_secs(l.curve));
+    if l.grow > 0.0 {
+        surge += &format!(" It spreads for {:.0} s before you land.", l.grow);
+    }
+    lines.push(surge);
+    // The level's speed star (`run::par`); the clock counts up (owner,
+    // 2026-11-20), so there is no time limit to tell, only the star's.
     let par = l.mission.rules(Rules::default()).par;
     let secs = par.round() as u32;
-    let mut clock = format!("A star for clearing it under {}:{:02}", secs / 60, secs % 60);
-    if l.grow > 0.0 {
-        clock += &format!("; the slime spreads for {:.0} s before you land", l.grow);
+    lines.push(format!("A star for winning under {}:{:02}.", secs / 60, secs % 60));
+    // Its pay and contracts (the star map, 2026-11-26).
+    if !r.range {
+        let n = r.node();
+        let mut deal = format!("A two-star win pays {} points.", r.pay(2));
+        if !n.contracts.is_empty() {
+            deal += &format!(" Bonus: {}.", n.contracts.iter().map(|&c| format!("{} (+{})", contract_words(c, par), c.pay(r.curve()))).collect::<Vec<_>>().join(", "));
+        }
+        lines.push(deal);
     }
-    // How often it surges here (`run::enemy_keys`; on the clock's line so the
-    // heading keeps two lines, the run thread's ask).
-    clock += &format!("; it surges as it feeds, at least every {:.0} s", run::surge_secs(l.depth));
-    if r.depth == run::PLANETS {
-        clock = format!("The slime's home world: beat it and the run is won. {clock}");
-    }
-    lines.push(clock);
     if r.range {
         lines = vec![
             "Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(),
@@ -511,6 +605,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         stats: dps_of(r).map_or(Vec::new(), |p| profile_bars(&p)),
         run: (!r.range).then(|| run_view(r)),
         slime: (!r.range && !does.is_empty()).then(|| (title_case(l.tier.name()), does.to_string())),
+        beat: beat_it(l.tier).filter(|_| !r.range).map(str::to_string),
         twist: r.twist().map(|t| (t.name().to_string(), t.card())),
         shots: shots
             .into_iter()
@@ -521,6 +616,119 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             })
             .collect(),
         plain_shot,
+    }
+}
+
+/// **The run's star map as the Stars page draws it** (2026-11-26,
+/// `mould::route`): every planet of every step, its pips and lanes, and
+/// for each one the route can reach next, what its card tells.
+///
+/// The card's words (2026-11-27, the owner: "the planet path selection
+/// map needs to be improved and planet text needs to be improved"): the
+/// slime's size against the planet just won (it said "0.4 times the first
+/// planet's", which read as a smaller slime on a later planet and named a
+/// planet nobody remembers), the blows it takes, the map's size, and a
+/// speed contract as a time on the clock ("Win in 60% of the star's time"
+/// asked for sums).
+pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
+    use slime_mould::mould::run::{self, Leg};
+    use slime_mould::world::start::{StarNode, StarView};
+    let map = r.star_map();
+    let open: Vec<u8> = if r.choosing() { r.choices().iter().map(|n| n.k).collect() } else { Vec::new() };
+    let steps: Vec<Vec<StarNode>> = map
+        .steps
+        .iter()
+        .enumerate()
+        .map(|(i, step)| {
+            let d = i as u32 + 1;
+            step.iter()
+                .map(|n| {
+                    let taken = r.route.get(i).is_some_and(|l| l.k == n.k);
+                    let here = d == r.depth && open.contains(&n.k);
+                    // The planet as the run would land on it: the route so
+                    // far, then this node.
+                    let mut at = r.clone();
+                    at.depth = d;
+                    at.route.resize(i, Leg::default());
+                    at.route.push(Leg { k: n.k, heat: false });
+                    let (l, p) = (at.level(), at.planet());
+                    let mut hot = at.clone();
+                    hot.route[i].heat = true;
+                    let e = at.curve();
+                    let par = l.mission.rules(Rules::default()).par;
+                    StarNode {
+                        k: n.k,
+                        lane: n.lane,
+                        pips: n.pip.count(),
+                        to: n.to.clone(),
+                        name: p.name,
+                        slime: title_case(l.tier.name()),
+                        biome: p.biome.name().to_string(),
+                        twist: at.twist().map(|t| (t.name().to_string(), t.card())),
+                        size: l.walkers,
+                        hits: run::blows(e),
+                        area: (p.size.0 * p.size.1) as f32,
+                        pay: at.pay(2),
+                        heat_pay: hot.pay(2),
+                        about: n.pip.about().to_string(),
+                        contracts: n.contracts.iter().map(|&c| (contract_words(c, par), c.pay(e))).collect(),
+                        taken: taken && (d < r.depth || !r.choosing()),
+                        open: here,
+                        stars: if taken { r.stars.get(i).copied() } else { None },
+                    }
+                })
+                .collect()
+        })
+        .collect();
+    // The planet just won, which the cards measure the next against.
+    let last = (r.depth >= 2).then(|| r.route.get(r.depth as usize - 2).and_then(|l| steps.get(r.depth as usize - 2)?.iter().find(|n| n.k == l.k))).flatten();
+    let heading = format!("Choose planet {} of {}", r.depth, run::PLANETS);
+    let heat_says = format!("Slime +{:.0}%, raids sooner, pays x{:.1}", (run::HEAT_WALKERS - 1.0) * 100.0, run::HEAT_PAY_X10 as f32 / 10.0);
+    StarView {
+        at: r.depth,
+        heading,
+        tally: r.line(),
+        purse: format!("{} points", r.points),
+        heat_says,
+        last_size: last.map(|n| n.size),
+        last_area: last.map(|n| n.area),
+        steps,
+    }
+}
+
+/// A contract's words where its planet's speed star is `par` seconds: the
+/// quick one as a time on the planet's clock, which counts up.
+pub(super) fn contract_words(c: slime_mould::mould::route::Contract, par: f32) -> String {
+    match c {
+        slime_mould::mould::route::Contract::Quick(p) if par > 0.0 => {
+            let t = (par * p as f32 / 100.0).round() as u32;
+            format!("Win before {}:{:02}", t / 60, t % 60)
+        }
+        _ => c.name(),
+    }
+}
+
+/// "2" or "2-3": the blows a bit of slime takes (`run::blows`).
+pub(super) fn hits_words(b: f32) -> String {
+    if b.fract() < 0.05 || b.fract() > 0.95 {
+        format!("{:.0}", b.round())
+    } else {
+        format!("{:.0}-{:.0}", b.floor(), b.ceil())
+    }
+}
+
+/// "Its slime is 30% bigger than the last planet's": a size against the
+/// planet just won, in words (within 5% is "about the same").
+pub(super) fn bigger_than(now: f32, last: f32, what: &str) -> String {
+    let f = now / last.max(1e-3);
+    if (f - 1.0).abs() < 0.05 {
+        format!("{what} is about the last planet's size")
+    } else if f >= 1.95 {
+        format!("{what} is {f:.1} times the last planet's")
+    } else if f > 1.0 {
+        format!("{what} is {:.0}% bigger than the last planet's", (f - 1.0) * 100.0)
+    } else {
+        format!("{what} is {:.0}% smaller than the last planet's", (1.0 - f) * 100.0)
     }
 }
 
@@ -897,9 +1105,13 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "campaign" | "missions" => Page::Missions,
         "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
+        "change-keys" => Page::Bind,
         // (`news-try`: its second tab, the things to try.)
         "news" | "news-try" => Page::News,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" | "shop-landing" => Page::Shop,
+        // (`stars@STEP`: the star map with the route picked up to STEP,
+        // `headless`.)
+        "stars" => Page::Stars,
         _ => return None,
     })
 }
@@ -1038,6 +1250,9 @@ impl App {
         if let Some(v) = self.menu.as_ref().and_then(|m| m.option("shake")).and_then(|o| settings::parse_volume(o.value())).filter(|&v| v != shake_user()) {
             self.set_shake(v);
         }
+        if let Some(on) = self.menu.as_ref().and_then(|m| m.option("frames")).map(|o| o.value() == "on").filter(|&on| on != super::draw::readout_on()) {
+            super::draw::set_readout(on);
+        }
         if let Some(on) = self.menu.as_ref().and_then(|m| m.option("hints")).map(|o| o.value() == "on").filter(|&on| on != super::hints::saved_on()) {
             let _ = settings::set("hints", if on { "on" } else { "off" });
             self.hints.on = on;
@@ -1172,10 +1387,13 @@ impl App {
             StartEvent::Run | StartEvent::NextLevel => {
                 let Some((base, _)) = self.base.clone() else { return Ok(false) };
                 let fresh = self.run.is_none();
+                // The seed typed on the Run row, or Past runs' "Play this
+                // run again" (Direction 11-24); taken once.
+                let typed = self.menu.as_mut().and_then(|m| std::mem::take(&mut m.run_seed).parse::<u64>().ok());
                 let mut r = self.run.take().unwrap_or_else(|| {
                     // A new run on a new seed each time (the clock), so two
                     // runs differ; `run=SEED` on the command line repeats one.
-                    let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs());
+                    let seed = typed.unwrap_or_else(|| std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs()));
                     Run::new(seed)
                 });
                 let Some(menu) = self.menu.take() else { return Ok(false) };
@@ -1202,6 +1420,16 @@ impl App {
                 self.paused = false;
                 // As it lands: closed mid-planet, it lands here again.
                 self.save_run();
+            }
+            // The star map's pick: the route on, then its shop.
+            StartEvent::Route(k, heat) => {
+                if let Some(r) = self.run.as_mut() {
+                    let done = r.choose(k, heat);
+                    if let Some(m) = self.menu.as_mut() {
+                        m.notice = (!done).then(|| "That planet is not a way on from here".into());
+                    }
+                }
+                self.show_shop();
             }
             StartEvent::Buy(i) => {
                 if let Some(r) = self.shop_run() {
@@ -1256,6 +1484,27 @@ impl App {
                     self.memory.set_tried(t, tried);
                 }
             }
+            // A past run again, on its seed: a new run as the Run row
+            // starts one (never over a run under way: the page says so).
+            StartEvent::Replay(seed) => {
+                if self.run.is_some() {
+                    return Ok(false);
+                }
+                if let Some(m) = self.menu.as_mut() {
+                    m.run_seed = seed.to_string();
+                }
+                return self.menu_event(StartEvent::Run);
+            }
+            // Change keys (`world::keys`): the two keys swap, saved beside
+            // the settings, and the key card names the new ones.
+            StartEvent::Bind(meant, key) => {
+                slime_mould::world::keys::bind(meant, key, true);
+                self.keys_changed();
+            }
+            StartEvent::ResetKeys => {
+                slime_mould::world::keys::reset(true);
+                self.keys_changed();
+            }
             StartEvent::EditMaps => {
                 let note = match launch_editor() {
                     Ok(()) => "The map editor opened in its own window".to_string(),
@@ -1280,6 +1529,14 @@ impl App {
             }
         }
         Ok(false)
+    }
+
+    /// The key card again, after a key moved.
+    fn keys_changed(&mut self) {
+        let squads = self.base.as_ref().is_some_and(|(b, _)| b.squads);
+        if let Some(m) = self.menu.as_mut() {
+            m.keys = key_card(squads);
+        }
     }
 
     /// The armory up over the range's round, or not. The view draws a
@@ -1456,7 +1713,21 @@ impl App {
             return self.show_armory();
         }
         let Some(r) = self.run.as_mut() else { return };
+        // A fork ahead: the star map first (2026-11-26), its shop after.
+        if r.choosing() && !r.field {
+            if let Some(m) = self.menu.as_mut() {
+                m.stars = Some(star_view(r));
+                m.shop = None;
+                m.run_live = true;
+                if m.page != Page::Stars {
+                    m.show(Page::Stars);
+                }
+            }
+            self.save_run();
+            return;
+        }
         if let Some(m) = self.menu.as_mut() {
+            m.stars = None;
             r.dev = m.option("dev").is_some_and(|o| o.value() == "on");
             m.shop = Some(shop_of(r));
             m.run_live = true;
@@ -1557,6 +1828,17 @@ impl App {
         r.found(self.game.as_ref().map_or(0, |g| g.starfall.earned()));
         // The slime that ended a lost planet, for the Past runs page.
         let slime = title_case(r.level().tier.name());
+        // The planet's contracts (star map, 2026-11-26): each kept one
+        // pays before the win's own points.
+        let mut kept_line = None;
+        if let (Some(g), Some(tr)) = (self.game.as_ref(), self.mission.as_ref()) {
+            let broken = g.bosses.ended.iter().filter(|(_, e, _)| *e == slime_mould::mould::larder_world::BossEnd::Broken).count() as u32;
+            let o = slime_mould::mould::route::Outcome { won: v.stars > 0, at: v.at, par: g.rules.par, lost: tr.lost() as u32, broken, pumped: g.pumped, found: g.starfall.earned() };
+            let kept: Vec<String> = r.settle(&o).into_iter().filter(|c| c.1).map(|(c, _, p)| format!("{} +{p}", c.name())).collect();
+            if !kept.is_empty() {
+                kept_line = Some(format!("Contract kept: {}", kept.join(", ")));
+            }
+        }
         if v.stars > 0 {
             r.won(v.stars);
         } else {
@@ -1595,7 +1877,7 @@ impl App {
             // Look D, 11-24); the notice line keeps the words for a film
             // or a screen too small for the summary.
             m.run_end = end;
-            m.notice = over;
+            m.notice = over.or(kept_line);
         }
         if self.run.is_some() {
             self.show_shop();
@@ -1662,6 +1944,7 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     }
     let t = r.turret_cards();
     g.apply(Cmd::Load(slime_mould::mould::larder_world::TURRET_DECK, (!t.is_empty()).then(|| rounds::Deck::new(&t))));
+    g.apply(Cmd::Arm(slime_mould::mould::larder_world::TURRET_DECK, r.turret_gun()));
     // Each body's cards (gun step E, `Run::body_cards`) as they now
     // stand.
     for kind in slime_mould::mould::bodies::BodyKind::ALL {
@@ -1671,11 +1954,14 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     // Which bodies go off on their own (gun step E4).
     g.apply(Cmd::Auto(r.autocast()));
     // Turrets on a loadout of their own (`Building::loadout`) take its
-    // cards as they now stand.
+    // cards, and a turret its gun (2026-11-27), as they now stand.
     for b in 0..g.buildings.len() {
         if let Some(l) = g.buildings[b].loadout.filter(|_| g.buildings[b].alive) {
             let l = (l as usize).min(r.loadouts.len() - 1);
             g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.turret_deck_of(l)))));
+            if g.buildings[b].kind == slime_mould::mould::larder_world::Kind::Turret {
+                g.apply(Cmd::TurretArm(b as u32, r.turret_gun_of(l)));
+            }
         }
     }
 }

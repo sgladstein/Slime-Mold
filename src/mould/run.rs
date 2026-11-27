@@ -42,6 +42,7 @@ use super::larder_world::{Rules, Twist};
 use super::levelgen::{self, Planet};
 use super::map::{Map, G_ROCK, MAP_H, MAP_W};
 use super::rounds::{self, Ammo, Card, Kind, RoundRules, Set, Shell};
+use super::route::{self, Contract, Node, Outcome, Pip, StarMap};
 use super::tiers::Tier;
 
 /// Where a level's ground comes from.
@@ -95,12 +96,19 @@ pub struct Level {
     /// Game seconds the slime grows alone before the squad lands
     /// (`head_start`); 0 on planets no bigger than today's map.
     pub grow: f32,
+    /// Its place on the tuned eight-planet curve (`Run::curve`): the
+    /// step's (`curve_depth`) moved by the star map node's pip.
+    pub curve: f32,
 }
 
 /// Planets in a run; the last is the slime's home world (the core world,
 /// the level generator's biggest map). Told to the level-gen thread
 /// 2026-11-14: the owner's guess is 20 minutes to over an hour a run.
-pub const PLANETS: u32 = 8;
+/// Twelve since the star map (2026-11-26, the owner's pick of a route
+/// with forks, 11-25 23:45Z, and his "at least 2 hours", 11-24 03:14Z):
+/// the eight tuned planets spread over twelve steps (`curve_depth`), each
+/// step a fork of planets of clearly different difficulty (`route`).
+pub const PLANETS: u32 = 12;
 
 /// The Tools group's unlocks that are devices (`Run::has_device`): the
 /// squad mode's device slot sets them off (`Game::device`).
@@ -403,15 +411,25 @@ const SOLDIER_STEP: [f32; 8] = [0.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0];
 /// - `DRAIN`: a touching walker's bite (`Rules::drain`, 2 since 11-12):
 ///   2.5 from planet 2, so walking into the slime costs a small squad too.
 const RAID_FIRST: [f32; 8] = [240.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0];
-const RAID_EVERY: [f32; 8] = [150.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0];
+///
+/// **Stronger raids deeper** (2026-11-26, the owner, 08:40Z: "You can make
+/// raids stronger too", after his 11-26 run, too easy past planet 1): the
+/// gap falls from 100 s on planet 2 to 70 s on the core world, a raid takes
+/// a fifth more of the slime from planet 4 and twice planet 1's share by
+/// the core world (`RAID_SIZE`, `RaidRules::size`, its spread and cap in
+/// step), and its marchers take up to 8 blows (`RAID_ARMOUR`).
+const RAID_EVERY: [f32; 8] = [150.0, 100.0, 95.0, 90.0, 85.0, 80.0, 75.0, 70.0];
+/// Raised 2026-11-27 (was 0.15, 0.15, 0.17, 0.2, 0.22, 0.25, 0.28, 0.3), with
+/// `BLOWS`: his 11-27 steps 5 and 6 took 17 raids without a loss.
+const RAID_SIZE: [f32; 8] = [0.15, 0.2, 0.23, 0.27, 0.3, 0.33, 0.37, 0.4];
 /// - `RAID_ARMOUR`: blows a marching raider takes (`RaidRules::
 ///   march_armour`) until the march meets the squad or its target; the
 ///   owner, same evening: "if the slime never reaches my soldiers,
 ///   increasing the bite doesn't matter. Tougher slime has a better
-///   chance". 2 on planets 2-3, 3 on 4-6, 4 on 7-8 (mini-bosses take 4 to
+///   chance". 2 on planet 2 up to 8 on the core world since 2026-11-26 (mini-bosses take 4 to
 ///   15). The bite above stays: it is what a raid that arrives does.
 const DRAIN: [f32; 8] = [2.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
-const RAID_ARMOUR: [u32; 8] = [0, 2, 2, 3, 3, 3, 4, 4];
+const RAID_ARMOUR: [u32; 8] = [0, 2, 3, 4, 5, 6, 7, 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
 /// most often early in the run** (2026-11-16, the slime-enemy thread).
@@ -482,12 +500,19 @@ const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 /// still take their bite and the crystal keeps its charge; what they ate is
 /// counted on the GPU (`pilesum`) so the surge clock (`time_surges`) runs
 /// as before.
-pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
+pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
     vec![
-        ("surge", ((on_curve_u(&LONGEST_WAIT, depth) as f32 * STRETCH).round() as u32).to_string()),
-        ("surge_dash", on_curve_u(&SURGE_DASH, depth).to_string()),
-        ("roam", on_curve_u(&ROAM, depth).to_string()),
-        ("roam_share", format!("{}", on_curve(&ROAM_SHARE, depth))),
+        // The slime's toughness (`BLOWS`): the blows a walker takes.
+        ("blows", format!("{}", blows(e))),
+        // The slime's levels' strength (`LEVEL_MAX`; the levels themselves
+        // are the crystals', `Run::rules`).
+        ("level_blows", format!("{LEVEL_BLOWS}")),
+        ("level_speed", format!("{LEVEL_SPEED}")),
+        ("level_bite", format!("{LEVEL_BITE}")),
+        ("surge", ((curve_at_u(&LONGEST_WAIT, e) as f32 * STRETCH).round() as u32).to_string()),
+        ("surge_dash", curve_at_u(&SURGE_DASH, e).to_string()),
+        ("roam", curve_at_u(&ROAM, e).to_string()),
+        ("roam_share", format!("{}", curve_at(&ROAM_SHARE, e))),
         ("far_smell", "1".to_string()),
         ("lure_pull", format!("{LURE_PULL}")),
         ("tether", format!("{TETHER}")),
@@ -512,6 +537,68 @@ pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
         // into specks that never regrouped).
         ("boss_flinch", "0.5".to_string()),
     ]
+}
+
+/// **The blows an ordinary walker takes, by planet** (`blows`, 2026-11-26,
+/// the thread "Make the slime's progression much stronger"). The owner,
+/// 11-26 06:58Z, after run 1795651376 (planets 1-6 won, 9 soldiers lost, 8
+/// of them on planet 5): "way too easy. on the last planet, I didn't even
+/// need to buy another solider. I never felt pressure to need to build
+/// walls and turrets much ... the progression needs to be way stronger
+/// for the slime." His log: kills a second per soldier 9, 16, 37, 136, 58
+/// and 124 on planets 1-6 (about 15 times), the starting slime 18k, 9k,
+/// 33k, 59k, 111k and 95k (about 5 times); the jump at planet 4 is the
+/// carbine with pierce, seek and split, about 7 kills a shot to 35. The
+/// squad's damage multiplies (cards stack), the slime only grew in walkers,
+/// and more walkers cost frame time on the 1070 (planet 8 sits at 16.4 ms
+/// at 4K), so the slime now grows in toughness too: planet 1 as it was,
+/// 2.5 blows (twice to three times the work a walker) from planet 4, and
+/// 5 on the core world. With the size, the work to clear a planet's
+/// starting slime grows about 20 times from planet 1 to 6 against the
+/// squad's 15. Every gun, turret, blast and fire meets it alike; mini-boss
+/// members keep their own armour. Planet 5's Sporer, the one real fight
+/// of that run, gets no step of its own over planet 4. A Direction tuning
+/// number: retune from his play, not by switching it off.
+///
+/// Since the slime's levels the same day (`LEVEL_MAX`, the owner, 08:24Z:
+/// "some toughness scaling and speed scaling is needed ... 3-8 levels of
+/// slime"), this is level 0's, the orange slime's, and each level adds
+/// `LEVEL_BLOWS`: planet 8's orange takes 3 and its home crystal's level 7
+/// six and a half, where every walker took 5 before.
+///
+/// Raised 2026-11-27 (was 1, 1.25, 1.5, 1.75, 1.75, 2, 2.5, 3): his run
+/// 1795753581 lost 6 soldiers on steps 3 to 6 in all, none on step 6's Hard
+/// planet against 131,000 walkers, and then: "Probably not enough. Make it
+/// harder!" (06:54Z). About half again from planet 2 on; planet 1 as it was.
+const BLOWS: [f32; 8] = [1.0, 1.75, 2.25, 2.75, 2.75, 3.25, 3.75, 4.5];
+
+/// **The slime's levels by planet** (2026-11-26, `larder_world/levels.rs`;
+/// the owner, 08:24Z: "You could change slime color so their are 3-8 levels
+/// of slime. The slimes could be mixed to so one area on a later planet is
+/// the easier to kill orange slime and this other crystal is full of
+/// stronger more dangerous slime"): the highest level on the planet, which
+/// its home crystal holds, the rest rolled lower. Planet 1 is all orange;
+/// the core world reaches 7, eight colours in all. Each level takes
+/// `LEVEL_BLOWS` more blows, steps `LEVEL_SPEED` faster and bites
+/// `LEVEL_BITE` walkers more (a soldier in level 7 slime is bitten as by
+/// three times as much of it). Direction's tuning numbers.
+const LEVEL_MAX: [u32; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
+const LEVEL_BLOWS: f32 = 0.5;
+const LEVEL_SPEED: f32 = 0.06;
+const LEVEL_BITE: f32 = 0.3;
+/// How the crystals' roll leans low (`LevelRules::lean`): at 1.5 about
+/// half a planet's crystals sit in its lower half of levels.
+const LEVEL_LEAN: f32 = 1.5;
+
+/// The highest slime level at curve place `e` (`LEVEL_MAX`).
+pub fn level_max(e: f32) -> u32 {
+    curve_at_u(&LEVEL_MAX, e)
+}
+
+/// The blows a walker takes at curve place `e` (`BLOWS`), for the planet's
+/// card.
+pub fn blows(e: f32) -> f32 {
+    curve_at(&BLOWS, e)
 }
 
 /// **The walkers a marcher's next cell must touch** (the engine's
@@ -638,8 +725,8 @@ pub fn first_planet(rule: &str) -> u32 {
 
 /// `ENEMY_RULES` on planet `depth`: each at its value from its planet
 /// (`FIRST_PLANET`), 0 (off) before it.
-pub fn enemy_rules(depth: u32) -> impl Iterator<Item = (&'static str, f32)> {
-    ENEMY_RULES.iter().map(move |&(k, v)| (k, if curve_depth(depth) >= first_planet(k) as f32 { v } else { 0.0 }))
+pub fn enemy_rules(e: f32) -> impl Iterator<Item = (&'static str, f32)> {
+    ENEMY_RULES.iter().map(move |&(k, v)| (k, if e >= first_planet(k) as f32 { v } else { 0.0 }))
 }
 
 /// **The run's two length dials** (2026-11-24, Direction's ask after the
@@ -648,7 +735,7 @@ pub fn enemy_rules(depth: u32) -> impl Iterator<Item = (&'static str, f32)> {
 /// need to decide exactly now"). `PLANETS` is how many planets a run has;
 /// the per-planet tables below hold eight values, tuned on eight planets,
 /// and a run of another length spreads its planets over the same curve
-/// (`curve_depth`, `on_curve`), so planet 1 and the last keep the first
+/// (`curve_depth`, `curve_at`), so planet 1 and the last keep the first
 /// and last values. `STRETCH` makes each planet longer: the clocks the
 /// slime's threats keep from the landing (raids, surges, mini-bosses)
 /// and the planet's star and far limit (`par`, `limit`) all run that many
@@ -658,8 +745,34 @@ pub const STRETCH: f32 = 1.0;
 
 /// Planet `depth` as a place on the eight-planet curve the tables were
 /// tuned on: 1 to 8 at `PLANETS` 8, the same span for any other count.
+///
+/// Since 2026-11-26 the early steps climb faster (`early_lift`); from the
+/// curve place `LIFT_TO` on, the steps read exactly as before.
 pub fn curve_depth(depth: u32) -> f32 {
-    curve_depth_of(depth, PLANETS)
+    early_lift(curve_depth_of(depth, PLANETS))
+}
+
+/// **The early run climbs faster** (2026-11-26; the owner, 21:51Z: "You can
+/// increase the difficulty early but I don't think we should flatten out the
+/// later progression", after the 11-26 review found steps 1 to 5 of twelve
+/// read only old planets 1 to 3.5, the stretch his 11-26 run called too
+/// easy). Curve places under `LIFT_TO` are bent up by `LIFT_BEND` (1 + span
+/// x (place / span)^bend, span `LIFT_TO` - 1); planet 1 and every place from
+/// `LIFT_TO` on are unchanged, so the later steps keep their spacing. On
+/// twelve steps: step 2 1.64 -> 1.96, step 3 2.27 -> 2.56, step 4 2.91 ->
+/// 3.07, step 5 on as before. Rejected: a concave curve over the whole run
+/// (flattens the late steps, which he ruled out), and a higher start for
+/// step 1 (the landing world stays the gentle one). A Direction tuning
+/// number; `LIFT_BEND` 1 is the old straight line.
+const LIFT_TO: f32 = 3.5;
+const LIFT_BEND: f32 = 0.7;
+
+fn early_lift(e: f32) -> f32 {
+    if e <= 1.0 || e >= LIFT_TO {
+        return e;
+    }
+    let span = LIFT_TO - 1.0;
+    1.0 + span * ((e - 1.0) / span).powf(LIFT_BEND)
 }
 
 fn curve_depth_of(depth: u32, planets: u32) -> f32 {
@@ -670,12 +783,8 @@ fn curve_depth_of(depth: u32, planets: u32) -> f32 {
     1.0 + (d - 1) as f32 * 7.0 / (planets - 1) as f32
 }
 
-/// A table's value at planet `depth`, read off its eight values between
+/// A table's value at curve place `e`, read off its eight values between
 /// the two nearest (exactly the value at a whole place on the curve).
-fn on_curve(table: &[f32; 8], depth: u32) -> f32 {
-    curve_at(table, curve_depth(depth))
-}
-
 fn curve_at(table: &[f32; 8], e: f32) -> f32 {
     let x = (e - 1.0).clamp(0.0, 7.0);
     let i = x.floor() as usize;
@@ -687,22 +796,28 @@ fn curve_at(table: &[f32; 8], e: f32) -> f32 {
     }
 }
 
-fn on_curve_u(table: &[u32; 8], depth: u32) -> u32 {
-    on_curve(&table.map(|v| v as f32), depth).round() as u32
+fn curve_at_u(table: &[u32; 8], e: f32) -> u32 {
+    curve_at(&table.map(|v| v as f32), e).round() as u32
+}
+
+/// The planet of the eight tuned ones nearest curve place `e`, 1 to 8:
+/// what rolls the shop, the species and the map's size and biome.
+pub fn nearest(e: f32) -> u32 {
+    (e.round() as u32).clamp(1, 8)
 }
 
 /// The food a planet's slime eats to build a surge (`Rules::surge_food`):
 /// its share of the sandbox's, times the level's walkers (`Level::walkers`,
 /// as the slime's slots are), since a bigger slime on a bigger planet
 /// eats more and would otherwise surge at the floor all game.
-pub fn surge_food(depth: u32, walkers: f32) -> f32 {
-    on_curve(&SURGE_FOOD_SHARE, depth) * crate::mould::larder_world::SURGE_FOOD * walkers.max(0.1)
+pub fn surge_food(e: f32, walkers: f32) -> f32 {
+    curve_at(&SURGE_FOOD_SHARE, e) * crate::mould::larder_world::SURGE_FOOD * walkers.max(0.1)
 }
 
 /// A planet's longest wait between surges in game seconds (`enemy_keys`),
 /// for the shop.
-pub fn surge_secs(depth: u32) -> f32 {
-    on_curve_u(&LONGEST_WAIT, depth) as f32 * STRETCH / 30.0
+pub fn surge_secs(e: f32) -> f32 {
+    curve_at_u(&LONGEST_WAIT, e) as f32 * STRETCH / 30.0
 }
 
 /// What a tier does to you: one thing each rung of `LADDER` does to the
@@ -906,9 +1021,26 @@ pub fn gun_only(c: Card) -> bool {
 /// - The Trunk: a Torch. Shot, it sets into amber walls that take three
 ///   hits each and that fire burns (the Enemy lane, 11-17: two torch shots
 ///   cut a 1,212-cell wall to 679 in 2 s).
+///
+/// A counter for every slime (Direction 11-24, Milestone 2; run seed 1,
+/// greedy squad, paired films, `Reports/slime-counters-2026-11-24/`):
+/// - The Swarmer and the Dozer: a Bomb. Its ring throws the charge back:
+///   planet 4, 25 soldiers at 1:30 where plain shots were wiped at 0:44
+///   (seed 2: 21 against 11); planet 8, 13 at 1:00 against wiped at 0:48.
+///   A blast was wiped too (0:40).
+/// - The Sporer: a Germ (frail 6, no resistance): its slime at 0:40 was
+///   18,714 against 91,854 with plain shots, three seeds alike.
+/// - The Sleeper: a Flare. The germ does nothing to its sleeping crust
+///   (`tiers.rs`); a flare wakes it and a germ then takes it: 10 soldiers
+///   at 1:00 against wiped at 0:38. The germ comes first, on planet 5.
+/// - Not the Grudge: fire burns its scar off, but the scar takes over a
+///   minute to grow, and no film yet shows the Torch answer it.
 pub fn bring_shell(tier: Tier) -> Option<Shell> {
     match tier {
         Tier::Sprawler | Tier::Trunk => Some(Shell::Torch),
+        Tier::Swarmer | Tier::Dozer => Some(Shell::Bomb),
+        Tier::Sporer => Some(Shell::Germ),
+        Tier::Sleeper => Some(Shell::Flare),
         _ => None,
     }
 }
@@ -950,14 +1082,19 @@ pub fn reward(depth: u32, stars: u8) -> u32 {
 /// The home world (planet `PLANETS`) can't be skipped: winning it ends
 /// the run. Rejected: the dev rows' flat 1,000 points, which is not what
 /// a run would have had to spend.
-pub const SKIP_STARS_X10: [u32; PLANETS as usize - 1] = [22, 26, 21, 18, 18, 18, 18];
-pub const SKIP_FOUND: [u32; PLANETS as usize - 1] = [100, 200, 160, 210, 235, 265, 295];
+pub const SKIP_STARS_X10: [u32; 7] = [22, 26, 21, 18, 18, 18, 18];
+pub const SKIP_FOUND: [u32; 7] = [100, 200, 160, 210, 235, 265, 295];
 
 /// The points skipping planet `depth` pays (`SKIP_STARS_X10`,
 /// `SKIP_FOUND`), rounded to tens; 0 for the home world.
 pub fn skip_pay(depth: u32) -> u32 {
-    let Some(i) = (depth as usize).checked_sub(1).filter(|&i| i < SKIP_FOUND.len()) else { return 0 };
-    let base = reward(depth, 1) + 50 * SKIP_STARS_X10[i].saturating_sub(10) / 10;
+    if depth == 0 || depth >= PLANETS {
+        return 0;
+    }
+    // By the tuned planet nearest the step (twelve steps, 2026-11-26).
+    let d = nearest(curve_depth(depth)).min(7);
+    let i = d as usize - 1;
+    let base = reward(d, 1) + 50 * SKIP_STARS_X10[i].saturating_sub(10) / 10;
     (base + SKIP_FOUND[i] + 5) / 10 * 10
 }
 
@@ -1036,7 +1173,7 @@ pub const ITEMS: [Item; 21] = [
     // also walks straight through fire, `Game::fire_via`).
     Item { key: "fireproof", name: "Fireproof", group: Group::Squad, about: "Soldiers take half the harm from fire; at level 3, none", max: 3, cost: 100, needs: None },
     Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
-    Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
+    Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret: fires its loadout's gun and cards twice as fast as a soldier, over walls", max: 1, cost: 200, needs: None },
     // The tree's first body (the turrets thread, owner 2026-11-17 00:47Z):
     // after turrets, as each next body will be after the one before.
     Item { key: "mortar", name: "Mortars", group: Group::Build, about: "Unlocks the mortar: the longest reach there is, lobbed over walls", max: 1, cost: 250, needs: Some("turret") },
@@ -1460,7 +1597,35 @@ pub struct Run {
     /// The Runs page's time on each planet (`planet_secs`) and best
     /// times per planet (Direction 11-24).
     pub splits: Vec<f32>,
+    /// **The route taken on the star map** (2026-11-26, `route`): the node
+    /// picked at each step so far, from step 1, and whether its heat was
+    /// on. Shorter than `depth` while the player is choosing the next
+    /// planet (`choosing`). A save from before it reads as node 0 (the
+    /// Fair planet) everywhere.
+    pub route: Vec<Leg>,
+    /// Tests: the run read as tuned planet `tuned` of the eight, whatever
+    /// its step (`Run::tuned`), so the tests written for eight planets
+    /// still name them.
+    #[cfg(test)]
+    pub tuned: Option<f32>,
 }
+
+/// One step of the route (`Run::route`): the node picked (`route::Node`'s
+/// `k`) and whether its **heat** was on (direction 4: a bigger, faster
+/// slime for more pay, `HEAT_*`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Leg {
+    pub k: u8,
+    pub heat: bool,
+}
+
+/// What heat does (first guesses, 2026-11-26; balance later): the slime a
+/// quarter bigger, the first raid at 60% of its time and the raids after
+/// at 80%, for half again the planet's pay.
+pub const HEAT_WALKERS: f32 = 1.25;
+pub const HEAT_RAID_FIRST: f32 = 0.6;
+pub const HEAT_RAID_EVERY: f32 = 0.8;
+pub const HEAT_PAY_X10: u32 = 15;
 
 /// The depth the gun range rolls its guns and bullets for at first.
 pub const RANGE_DEPTH: u32 = 3;
@@ -1508,15 +1673,17 @@ impl PlanetTwist {
             Twist::Cold => {
                 let d = crate::mould::larder_world::TwistRules::default();
                 let at = d.start as u32;
-                format!("Cold snap at {}:{:02}: for a minute the slime crawls in beads. Push now.", at / 60, at % 60)
+                format!("From {}:{:02}, for a minute, the slime crawls in beads. Push then.", at / 60, at % 60)
             }
-            Twist::Wind => format!("Wind from the {}: the slime leans and creeps {} all planet. Stand upwind, or let it blow onto your guns.", compass(self.angle + 180.0), compass(self.angle)),
+            Twist::Wind => format!("From the {}: the slime leans and creeps {} all planet. Stand upwind, or let it blow onto your guns.", compass(self.angle + 180.0), compass(self.angle)),
             Twist::None => String::new(),
         }
     }
 }
 
-/// The twist a run of `seed` rolls on planet `depth`.
+/// The twist a run of `seed` rolls on planet `depth` (before the star
+/// map; its Fair planets keep the odds, `Run::twist_of`).
+#[cfg(test)]
 fn twist_at(seed: u64, depth: u32) -> Option<PlanetTwist> {
     if depth < TWIST_FROM || twist_at(seed, depth - 1).is_some() {
         return None;
@@ -1531,7 +1698,7 @@ fn twist_at(seed: u64, depth: u32) -> Option<PlanetTwist> {
 
 /// A small seeded generator (splitmix64): the shop's draw must be the same
 /// on every machine, so no floats.
-fn mix(mut z: u64) -> u64 {
+pub fn mix(mut z: u64) -> u64 {
     z = z.wrapping_add(0x9E37_79B9_7F4A_7C15);
     z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
     z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
@@ -1546,7 +1713,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0, splits: Vec::new() }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], loadouts: vec![Loadout { gun: Some(0), body: None, cards: Vec::new() }, Loadout::default()], editing: 0, turret_loadout: 1, device_loadout: None, field: false, field_squad: None, gun_offers: Vec::new(), bodies: Vec::new(), body_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, held: None, paid_rerolls: 0, since_rare: 0, relics: Vec::new(), relic_offer: None, beaten: false, range: false, played: 0.0, splits: Vec::new(), route: vec![Leg::default()], #[cfg(test)] tuned: None }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -1583,32 +1750,218 @@ impl Run {
         if self.range {
             return None;
         }
-        twist_at(self.seed, self.depth)
+        self.twist_of(self.depth, &self.star_map())
+    }
+
+    /// The twist on the route's planet at `step` (star map, 2026-11-26): a
+    /// Safe planet never has one and a Hard one always does; a Fair one
+    /// rolls as every planet did (`twist_at`'s odds, never two in a row).
+    fn twist_of(&self, step: u32, map: &StarMap) -> Option<PlanetTwist> {
+        if step < TWIST_FROM {
+            return None;
+        }
+        let n = self.node_in(map, step);
+        let z = mix(n.seed ^ 0x5457_4953_5400_0000);
+        let roll = || {
+            let kind = if (z >> 8).is_multiple_of(2) { Twist::Cold } else { Twist::Wind };
+            Some(PlanetTwist { kind, angle: ((z >> 16) % 8) as f32 * 45.0 })
+        };
+        match n.pip {
+            Pip::Safe => None,
+            Pip::Hard => roll(),
+            Pip::Fair if self.twist_of(step - 1, map).is_some() || !z.is_multiple_of(TWIST_ODDS) => None,
+            Pip::Fair => roll(),
+        }
+    }
+
+    /// The run's star map (`route::star_map`), from its seed.
+    pub fn star_map(&self) -> StarMap {
+        route::star_map(self.seed, PLANETS, curve_depth)
+    }
+
+    /// The route's leg at the current step (node 0, no heat, until picked).
+    pub fn leg(&self) -> Leg {
+        self.route.get((self.depth as usize).saturating_sub(1)).copied().unwrap_or_default()
+    }
+
+    fn node_in(&self, map: &StarMap, step: u32) -> Node {
+        let k = self.route.get((step as usize).saturating_sub(1)).map_or(0, |l| l.k);
+        map.node(step, k).or_else(|| map.node(step, 0)).cloned().expect("every step has a node 0")
+    }
+
+    /// The route's node at the current step.
+    pub fn node(&self) -> Node {
+        self.node_in(&self.star_map(), self.depth.clamp(1, PLANETS))
+    }
+
+    /// The current planet's difficulty (Fair in the gun range).
+    pub fn pip(&self) -> Pip {
+        if self.range {
+            Pip::Fair
+        } else {
+            self.node().pip
+        }
+    }
+
+    /// The current planet's place on the tuned eight-planet curve: the
+    /// step's (`curve_depth`) moved by its pip (`Pip::offset`), 1 to 8.
+    /// Every per-planet table of the slime's is read here.
+    pub fn curve(&self) -> f32 {
+        (self.step_curve() + self.pip().offset()).clamp(1.0, 8.0)
+    }
+
+    /// The step's own place on the curve (`curve_depth`).
+    fn step_curve(&self) -> f32 {
+        #[cfg(test)]
+        if let Some(t) = self.tuned {
+            return t;
+        }
+        curve_depth(self.depth)
+    }
+
+    /// Tests: tuned planet `d` of the eight (`tuned`) at step `d`.
+    #[cfg(test)]
+    pub fn tuned(seed: u64, d: u32) -> Run {
+        let mut r = Run::new(seed);
+        r.set_tuned(d);
+        r
+    }
+
+    #[cfg(test)]
+    pub fn set_tuned(&mut self, d: u32) {
+        self.depth = d;
+        self.tuned = Some(d as f32);
+    }
+
+    /// The depth the level generator builds the current planet at (its
+    /// size and biome): the tuned planet nearest `curve`, and the core
+    /// world only at the last step.
+    pub fn map_depth(&self) -> u32 {
+        if self.depth >= PLANETS || self.step_curve() >= 8.0 {
+            levelgen::CORE_DEPTH
+        } else {
+            nearest(self.curve()).min(levelgen::CORE_DEPTH - 1)
+        }
+    }
+
+    /// The depth the shop rolls its guns, cards and bodies for: the tuned
+    /// planet nearest the step, so twelve steps keep the eight-planet
+    /// shop (the gun range's own depth there).
+    pub fn roll_depth(&self) -> u32 {
+        if self.range {
+            self.depth
+        } else {
+            nearest(self.step_curve())
+        }
+    }
+
+    /// The player is to pick the next planet on the star map: a fork,
+    /// once a planet is won (`won` picks a step with one way on).
+    pub fn choosing(&self) -> bool {
+        !self.range && !self.over && self.route.len() < self.depth as usize
+    }
+
+    /// The planets the route can go to at the current step.
+    pub fn choices(&self) -> Vec<Node> {
+        let from = (self.depth as usize).checked_sub(2).and_then(|i| self.route.get(i)).map(|l| l.k);
+        self.star_map().choices(self.depth, from).into_iter().cloned().collect()
+    }
+
+    /// Picks node `k` for the current step, with or without heat, and
+    /// draws its shop (a Hard planet's rare offer comes with it); false if
+    /// no pick is due or `k` is not a way on.
+    pub fn choose(&mut self, k: u8, heat: bool) -> bool {
+        if !self.choosing() || !self.choices().iter().any(|n| n.k == k) {
+            return false;
+        }
+        self.route.resize(self.depth as usize - 1, Leg::default());
+        self.route.push(Leg { k, heat });
+        self.restock();
+        true
+    }
+
+    /// The step's one way on, taken when it has no fork.
+    fn take_only_way(&mut self) {
+        if !self.choosing() {
+            return;
+        }
+        let c = self.choices();
+        if c.len() == 1 {
+            self.route.resize(self.depth as usize - 1, Leg::default());
+            self.route.push(Leg { k: c[0].k, heat: false });
+        }
+    }
+
+    /// The points winning the current planet with `stars` pays: `reward`
+    /// for the tuned planet nearest the step, times its pip's share
+    /// (`Pip::pay_x10`) and its heat's (`HEAT_PAY_X10`), rounded to fives.
+    pub fn pay(&self, stars: u8) -> u32 {
+        let base = reward(self.roll_depth(), stars);
+        if self.range {
+            return base;
+        }
+        let heat = if self.leg().heat { HEAT_PAY_X10 } else { 10 };
+        (base * self.pip().pay_x10() * heat + 250) / 500 * 5
+    }
+
+    /// The current planet's contracts, each kept or not by `o`, and its
+    /// pay (paid into `points` for those kept). Before `won`.
+    pub fn settle(&mut self, o: &Outcome) -> Vec<(Contract, bool, u32)> {
+        if self.range {
+            return Vec::new();
+        }
+        let e = self.curve();
+        let out: Vec<(Contract, bool, u32)> = self.node().contracts.iter().map(|&c| (c, c.met(o), c.pay(e))).collect();
+        self.points += out.iter().filter(|c| c.1).map(|c| c.2).sum::<u32>();
+        out
+    }
+
+    /// A Hard planet's rare offer (the brief's "a rare card or gun
+    /// offered in the next shop"): a tier-3 card the run doesn't own,
+    /// drawn by the planet's seed, or None.
+    pub fn rare_offer(&self) -> Option<Card> {
+        if self.range || self.pip() != Pip::Hard {
+            return None;
+        }
+        let owned: Vec<Card> = self.cards.iter().map(|c| c.0).collect();
+        let pool: Vec<Card> = Card::ALL.into_iter().filter(|&c| c.kind() != Kind::Payload && c.tier() >= 3 && card_power(c).is_some() && !owned.contains(&c)).collect();
+        (!pool.is_empty()).then(|| pool[(mix(self.node().seed ^ 0x5241_5245) % pool.len() as u64) as usize])
     }
 
     /// The planet card for the current depth (name, biome, size), with no
     /// map built.
     pub fn planet(&self) -> Planet {
-        levelgen::planet(self.seed, self.depth)
+        if self.range {
+            return levelgen::planet(self.seed, self.depth);
+        }
+        levelgen::planet(self.node().seed, self.map_depth())
     }
 
     /// The level at the current depth.
     pub fn level(&self) -> Level {
         let d = self.depth;
-        let seed = mix(self.seed ^ u64::from(d).wrapping_mul(0x5851_F42D));
+        // The star map's node (2026-11-26): its world, its place on the
+        // curve and the map depth the level generator builds it at.
+        let node = self.node();
+        let (e, md) = (self.curve(), self.map_depth());
+        let seed = mix(node.seed ^ u64::from(d).wrapping_mul(0x5851_F42D));
         // The planet the level generator makes for this run and depth
         // (its name and biome come with it); `map` as `map=` names it, so
         // the window's title and alert read its name.
         let planet = self.planet();
-        let map = format!("planet:{d}:{}", self.seed);
-        let tier = match LADDER.get(d as usize - 1) {
-            Some(&t) => t,
-            None => LADDER[LADDER.len() - 3 + (mix(seed) % 3) as usize],
-        };
+        let map = format!("planet:{md}:{}", node.seed);
+        // The species of the tuned planet nearest the step (not the pip's
+        // place): every planet of a fork meets the same species, so the pip
+        // orders them by size, threats and twist alone. Tried first: the
+        // species at the pip's place, and the bot check (Reports/
+        // star-map-2026-11-26) found Safe slower than Fair on 5 of 6 seeds
+        // at step 3, because Safe met the Drifter and Fair the Sprawler,
+        // whose `tier_size` is 0.45.
+        let tier = LADDER[nearest(self.step_curve()) as usize - 1];
         let shrink = shrink_goal(d);
         let mission = Mission {
             name: format!("Planet {d} of {PLANETS}, {}", planet.name),
-            says: if shrink > 0.0 { format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink) } else { "Kill the slime's heart on its home crystal, or every last bit of slime".to_string() },
+            says: if shrink > 0.0 { format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink) } else { "Wipe out every last bit of slime".to_string() },
             map: map.clone(),
             tier: Some(tier.name().to_string()),
             goal: Goal::Shrink(shrink),
@@ -1618,15 +1971,16 @@ impl Run {
             // the slime is very deadly (owner, 11-12).
             // The clock counts up to the speed star (`par`); only a
             // stalemate meets the far limit (`limit`).
-            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), limit(area_of(&planet)) * STRETCH), ("par".into(), par(d, area_of(&planet)) * STRETCH)],
+            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), limit(area_of(&planet)) * STRETCH), ("par".into(), par(md, area_of(&planet)) * STRETCH)],
             own: false,
         };
         // Walkers scale with the planet's area too (the level-gen thread,
         // 11-14 17:50Z: the same count covered a third of the smaller
         // planet 1 by 30 s, and would be a corner of a 6x core world).
         let area = area_of(&planet);
-        let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed) * tier_size(tier);
-        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers, mission, grow: head_start(area) }
+        let heat = if self.leg().heat { HEAT_WALKERS } else { 1.0 };
+        let walkers = (1.0 + WALKERS_PER_DEPTH * (e - 1.0)) * area * size_roll(seed) * tier_size(tier) * heat;
+        Level { depth: d, seed, ground: Ground::Planet { seed: node.seed, depth: md }, tier, walkers, mission, grow: head_start(area), curve: e }
     }
 
     /// The game's rules with the squad's and the buildings' upgrades.
@@ -1637,22 +1991,26 @@ impl Run {
             // Mini-bosses (2026-11-16, `larder_world/bosses.rs`): their
             // chance rises with the planet (owner, 04:58Z: "Chance increases
             // with progression into the run"); a tier's own rules after.
-            r.boss = crate::mould::larder_world::BossRules::for_curve(curve_depth(self.depth));
+            let e = self.curve();
+            r.boss = crate::mould::larder_world::BossRules::for_curve(e);
             r.boss.every *= STRETCH;
             r.boss.every_sd *= STRETCH;
             r.boss.first *= STRETCH;
             // What every planet's slime does from its planet on
             // (`ENEMY_RULES`, `FIRST_PLANET`).
-            for (k, v) in enemy_rules(self.depth) {
+            for (k, v) in enemy_rules(e) {
                 assert!(r.set(k, v), "ENEMY_RULES: no rule {k}");
             }
             // The planet's share scales the rate cap too, since the cap,
             // not the share, binds wherever the band is big (planet 1 run
             // seed 1: 16 soldiers lost and won at a quarter of the cap, 17
             // at the full cap, 43 and lost uncapped, 11 with no strikers).
-            let at = |t: &[f32; 8]| on_curve(t, self.depth);
+            let at = |t: &[f32; 8]| curve_at(t, e);
             r.origin.size = at(&ORIGIN_SIZE);
-            r.origin.armour = on_curve_u(&ORIGIN_ARMOUR, self.depth);
+            // The slime's levels (`LEVEL_MAX`): each crystal's, from the
+            // level's seed.
+            r.levels = crate::mould::larder_world::LevelRules { max: level_max(e), seed: self.level().seed ^ 0x001E_7E15, lean: LEVEL_LEAN };
+            r.origin.armour = curve_at_u(&ORIGIN_ARMOUR, e);
             // The planet's twist (`twist`), the rest of its numbers the
             // twist's own.
             if let Some(t) = self.twist() {
@@ -1664,13 +2022,20 @@ impl Run {
             r.strikers.army_most = at(&STRIKER_ARMY);
             r.soldier_step = at(&SOLDIER_STEP);
             let d = crate::mould::larder_world::RaidRules::default();
-            let (first, every) = (at(&RAID_FIRST) * STRETCH, at(&RAID_EVERY) * STRETCH);
+            let (hf, he) = if self.leg().heat { (HEAT_RAID_FIRST, HEAT_RAID_EVERY) } else { (1.0, 1.0) };
+            let (first, every) = (at(&RAID_FIRST) * STRETCH * hf, at(&RAID_EVERY) * STRETCH * he);
             r.raid.first = first;
             r.raid.first_sd = d.first_sd * first / d.first;
             r.raid.every = every;
             r.raid.every_sd = d.every_sd * every / d.every;
             r.drain = at(&DRAIN);
-            r.raid.march_armour = on_curve_u(&RAID_ARMOUR, self.depth);
+            r.raid.march_armour = curve_at_u(&RAID_ARMOUR, e);
+            // A raid's size by planet (`RAID_SIZE`), its spread and cap
+            // kept at the default's shares of it.
+            let size = at(&RAID_SIZE);
+            r.raid.size_sd = d.size_sd * size / d.size;
+            r.raid.size_max = (d.size_max * size / d.size).min(0.6);
+            r.raid.size = size;
             let k = at(&STRIKER_SHARE);
             r.strikers.share = k;
             r.strikers.rate = crate::mould::larder_world::StrikerRules::default().rate * k;
@@ -1680,7 +2045,7 @@ impl Run {
             // Starfall and boss cores (2026-11-20, `larder_world/starfall.rs`;
             // the owner, 19:06Z: "I like starfall with boss cores"): shop
             // points the squad takes on the planet, on top of `reward`.
-            r.star = crate::mould::larder_world::StarRules::for_depth(self.depth);
+            r.star = crate::mould::larder_world::StarRules::for_depth(nearest(e));
         }
         // A run is lost when its last soldier falls, food in the bank or
         // not (owner, 2026-11-18 15:56Z; `Rules::wipe_ends`).
@@ -1783,17 +2148,46 @@ impl Run {
         Gun { range: g.range + 3.0 * l("range"), rate: g.rate / 0.85f32.powf(l("rate")), ..g }
     }
 
-    /// Loadout `i`'s cards as a turret fires them: as many as fit the
-    /// turrets' rack, which "Turret power" grows, whatever gun the loadout
-    /// holds (a turret has no use for it; with its rack a bought gun
-    /// gave turrets four cards with no Turret power, review 2026-11-20).
+    /// Loadout `i`'s cards as a turret fires them: as many as fit its gun
+    /// (owner, 2026-11-27: "Turrets should be more similar to guns that
+    /// you can buy them"; `turret_gun_of`), else the turrets' rack, which
+    /// "Turret power" grows. From 11-20 to 11-27 a turret ignored the
+    /// loadout's gun and always cut its cards to the rack (with the rack
+    /// a bought gun gave turrets four cards and nothing else, review
+    /// 2026-11-20); now the gun is what it fires, so a gun on the turrets
+    /// is one no squad holds.
+    ///
+    /// Not the squads' first loadout (adversarial review, 2026-11-27):
+    /// turrets on it, by "Turrets use this" or a turret's Loadout button,
+    /// would copy the squads' gun and whole deck for nothing, the free
+    /// turret deck the 11-16 and 11-20 reviews closed. There they fire
+    /// the rifle and the rack, as before. Mortars, sprayers and hunters
+    /// fire these cards too, so a gun on the turrets' loadout widens
+    /// their deck as well.
     pub fn turret_deck_of(&self, i: usize) -> Vec<Card> {
-        let rack = self.turret_rack();
+        let rack = self.gun_of(i).filter(|_| i != 0).unwrap_or_else(|| self.turret_rack());
         let mut cards = self.cards_of(i);
         while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
             cards.pop();
         }
         cards
+    }
+
+    /// Loadout `i`'s gun as a turret fires it (`Game::turret_gun`,
+    /// `Cmd::Arm(TURRET_DECK, ..)`, `Cmd::TurretArm`): with the squad's
+    /// Longer barrels and Faster trigger as `squad_gun`, the turret's own
+    /// reach and rate on top (`BuildRules::turret_range`, `turret_every`,
+    /// "Turret power"). None with no gun: the turret fires the standard
+    /// rifle at the run's rules, which carry the same two upgrades.
+    /// None on the squads' first loadout too (`turret_deck_of`).
+    pub fn turret_gun_of(&self, i: usize) -> Option<Gun> {
+        self.gun_of(i).filter(|_| i != 0).map(|_| self.squad_gun(i))
+    }
+
+    /// The gun turrets that follow the default fire (`turret_gun_of` of
+    /// `turret_loadout`); None without turrets or with no gun there.
+    pub fn turret_gun(&self) -> Option<Gun> {
+        self.has("turret").then(|| self.turret_gun_of(self.turret_loadout)).flatten()
     }
 
     /// The first loadout's gun as the squad lands with it (`armed_of`).
@@ -2181,17 +2575,17 @@ impl Run {
             for (i, &shell) in Shell::ALL.iter().enumerate() {
                 let sets: &[Set] = if shell.special() { &[Set::Standard] } else { &Set::ALL };
                 for (j, &set) in sets.iter().enumerate() {
-                    let a = if set == Set::Standard { Ammo::standard(shell) } else { Ammo::roll_of(shell, set, mix(z ^ (16 * i + j) as u64), self.depth) };
+                    let a = if set == Set::Standard { Ammo::standard(shell) } else { Ammo::roll_of(shell, set, mix(z ^ (16 * i + j) as u64), self.roll_depth()) };
                     self.offers.push(Card::Ammo(a));
                 }
             }
             self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
-            self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.depth)).collect();
-            self.body_offers = BodyKind::ALL.iter().enumerate().map(|(k, &kind)| Body::roll(kind, mix(z ^ (0xB0D1_0000 + k as u64)), self.depth)).collect();
+            self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.roll_depth())).collect();
+            self.body_offers = BodyKind::ALL.iter().enumerate().map(|(k, &kind)| Body::roll(kind, mix(z ^ (0xB0D1_0000 + k as u64)), self.roll_depth())).collect();
             return;
         }
         let n = OFFER + self.level_of("draw") as usize;
-        let pool: Vec<Card> = Card::ALL.into_iter().filter(|&c| c.kind() != Kind::Payload && card_power(c).is_some_and(|p| power_from(p) <= self.depth)).collect();
+        let pool: Vec<Card> = Card::ALL.into_iter().filter(|&c| c.kind() != Kind::Payload && card_power(c).is_some_and(|p| power_from(p) <= self.roll_depth())).collect();
         let owned = self.all_cards();
         // A carrier (Trigger, Expire, Multicast) acts on a bullet card after
         // it, so none is sold while the run owns no bullet card (balance
@@ -2214,7 +2608,7 @@ impl Run {
         // blast's or flare's alarm away, which no slime answers before
         // `ALARM_FROM` (the drifter, sprawler and trunk ignore alarm,
         // `tiers::params`).
-        let pool: Vec<Card> = pool.into_iter().filter(|&c| (c != Card::Thrift || has_bullet) && (c != Card::Quiet || self.depth >= ALARM_FROM)).collect();
+        let pool: Vec<Card> = pool.into_iter().filter(|&c| (c != Card::Thrift || has_bullet) && (c != Card::Quiet || self.roll_depth() >= ALARM_FROM)).collect();
         let fresh: Vec<Card> = pool.iter().copied().filter(|c| !owned.contains(c)).collect();
         // The cards owned come back into the draw for the last card slot,
         // so a second loadout can buy its own copy (balance review,
@@ -2241,7 +2635,7 @@ impl Run {
         // starts with. And the first is the planet's (`bring_shell`) while
         // none of that shell is owned.
         let owns = |s: Shell| owned.iter().any(|c| matches!(c, Card::Ammo(a) if a.shell == s));
-        let mut shells: Vec<Shell> = shells_at(self.depth).into_iter().filter(|&s| match s {
+        let mut shells: Vec<Shell> = shells_at(self.roll_depth()).into_iter().filter(|&s| match s {
             Shell::Shatter => owns(Shell::Gas),
             Shell::Detonate => owns(Shell::Germ),
             _ => true,
@@ -2261,7 +2655,7 @@ impl Run {
             if (shell, set) == (Shell::Plain, Set::Standard) {
                 set = Set::ALL[1 + ((z >> 24) % (Set::ALL.len() as u64 - 1)) as usize];
             }
-            self.offers.push(Card::Ammo(Ammo::roll_of(shell, set, mix(z ^ 0xA330), self.depth)));
+            self.offers.push(Card::Ammo(Ammo::roll_of(shell, set, mix(z ^ 0xA330), self.roll_depth())));
         }
         let bullets = self.offers.len();
         self.offers.extend(wanted);
@@ -2288,11 +2682,19 @@ impl Run {
         self.gun_offers = (0..GUN_OFFER as u64)
             .filter_map(|k| {
                 let s = mix(z ^ (0x6755_4E00 + k));
-                (!kinds.is_empty()).then(|| Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.depth))
+                (!kinds.is_empty()).then(|| Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth()))
             })
             .filter(|g| !self.guns.contains(g))
             .collect();
         self.body_offers = self.body_rolls(z);
+        // A Hard planet's rare card (star map, 2026-11-26), in the last
+        // card's place so the shop's rows keep their count.
+        if let Some(c) = self.rare_offer().filter(|c| !self.offers.contains(c)) {
+            match self.offers.last_mut() {
+                Some(last) => *last = c,
+                None => self.offers.push(c),
+            }
+        }
     }
 
     /// **Luck's levers on the card offers** (gun step F, Direction 11-24
@@ -2349,7 +2751,7 @@ impl Run {
             }
         }
         // Pity: a tier-3 card after shops without one.
-        if self.depth >= power_from(3) && self.since_rare > 0 && !offers[bullets..].iter().any(|c| c.tier() >= 3) {
+        if self.roll_depth() >= power_from(3) && self.since_rare > 0 && !offers[bullets..].iter().any(|c| c.tier() >= 3) {
             z = mix(z);
             if (z >> 8) % 3 < u64::from(self.since_rare) {
                 // In place of a card of the same side of the mix, so the
@@ -2384,14 +2786,14 @@ impl Run {
     /// unless one is owned; from planet 2 two rolled bodies of two kinds,
     /// beside the guns (the guns on offer are as many as before).
     fn body_rolls(&self, z: u64) -> Vec<Body> {
-        if self.depth <= 1 {
+        if self.roll_depth() <= 1 {
             return if self.body_of(BodyKind::Grenade).is_some() { Vec::new() } else { vec![Body::plain(BodyKind::Grenade)] };
         }
         let mut kinds = BodyKind::ALL.to_vec();
         (0..BODY_OFFER as u64)
             .map(|k| {
                 let s = mix(z ^ (0xB0D1_0000 + k));
-                Body::roll(kinds.remove((s % kinds.len() as u64) as usize), s, self.depth)
+                Body::roll(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth())
             })
             .collect()
     }
@@ -2407,13 +2809,14 @@ impl Run {
     /// depth, and a fresh shop. Winning the last planet wins the run.
     pub fn won(&mut self, stars: u8) {
         self.split();
-        self.points += reward(self.depth, stars);
+        self.points += self.pay(stars);
         self.stars.push(stars);
         if self.depth >= PLANETS {
             self.over = true;
             return;
         }
         self.depth += 1;
+        self.take_only_way();
         self.next_shop();
     }
 
@@ -2426,9 +2829,13 @@ impl Run {
         // One unowned relic, drawn by the run's seed and the planet.
         let left: Vec<Relic> = Relic::ALL.into_iter().filter(|r| !self.relics.contains(r)).collect();
         let draw = mix(self.seed ^ u64::from(self.depth).wrapping_mul(0x9E37_79B9_7F4A_7C15)) as usize;
-        self.relic_offer = (RELIC_DEPTHS.contains(&self.depth) && !left.is_empty()).then(|| left[draw % left.len()]);
+        // At the first step on each of the tuned planets `RELIC_DEPTHS`
+        // names (twelve steps, 2026-11-26: steps 5, 9 and 12).
+        let at = self.roll_depth();
+        let first = self.depth <= 1 || nearest(curve_depth(self.depth - 1)) != at;
+        self.relic_offer = (RELIC_DEPTHS.contains(&at) && first && !left.is_empty()).then(|| left[draw % left.len()]);
         let rare = self.offers.iter().any(|&c| c.kind() != Kind::Payload && c.tier() >= 3);
-        self.since_rare = if rare || self.depth < power_from(3) { 0 } else { self.since_rare + 1 };
+        self.since_rare = if rare || at < power_from(3) { 0 } else { self.since_rare + 1 };
     }
 
     /// What `Pick::Reroll` costs now: `REROLL_PRICE`, doubling each time
@@ -2449,6 +2856,7 @@ impl Run {
         self.points += skip_pay(self.depth);
         self.stars.push(0);
         self.depth += 1;
+        self.take_only_way();
         self.next_shop();
         true
     }
@@ -2552,7 +2960,7 @@ impl Run {
         for (i, g) in self.gun_offers.iter().enumerate().filter(|_| !self.field) {
             let p = gun_price(g);
             let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
-            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}.", g.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Gun(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}. Goes into {shown}.", g.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Gun(i) });
         }
         for (i, &c) in self.offers.iter().enumerate().filter(|_| !self.field) {
             let p = card_price(c);
@@ -2627,7 +3035,8 @@ impl Run {
                 rows.push(bar("New loadout".into(), "An empty loadout with no gun: put a gun and cards in it, then give it to a squad or turrets.".into(), false, true, Pick::NewLoadout));
             }
             if self.has("turret") && self.turret_loadout != self.editing {
-                rows.push(bar("Turrets use this".into(), format!("New turrets use {shown}; each turret can be changed in the game."), false, true, Pick::TurretsUse));
+                let what = if self.editing == 0 { " (the squads' own: turrets on it fire the rifle and 2 cards)" } else { "" };
+                rows.push(bar("Turrets use this".into(), format!("New turrets use {shown}{what}; each turret can be changed in the game."), false, true, Pick::TurretsUse));
             }
             if self.has_device() && self.device_loadout != Some(self.editing) {
                 rows.push(bar("Devices use this".into(), format!("Every device with no loadout of its own also casts {shown}'s cards (as many as its body holds) where it goes off, as a hit there would."), false, true, Pick::DevicesUse));
@@ -2707,11 +3116,9 @@ impl Run {
             Pick::Offer(i) => self.buy(i).is_some(),
             Pick::Gun(i) => {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
-                // A new gun goes in the loadout shown (to the squads' first
-                // from the turrets', as before loadouts).
-                if self.editing_turrets() {
-                    self.edit(0);
-                }
+                // A new gun goes in the loadout shown, the turrets' too
+                // (2026-11-27: turrets fire their loadout's gun; before,
+                // a gun bought there went to the squads' first).
                 // The range swaps a rack gun for the owned one of its kind,
                 // which goes on the rack (four of each, either way back).
                 if let Some(k) = self.range.then(|| self.guns.iter().position(|o| o.kind == g.kind)).flatten() {
@@ -2738,6 +3145,8 @@ impl Run {
             }
             Pick::DevDepth(by) if self.dev || self.range => {
                 self.depth = (self.depth as i32 + by).clamp(1, PLANETS as i32) as u32;
+                // The jump takes the Fair planets (`route`).
+                self.route.resize(self.depth as usize, Leg::default());
                 self.restock();
                 true
             }
@@ -2936,6 +3345,9 @@ impl Run {
         put("relic_offer", self.relic_offer.map_or("", |r| r.key()).to_string());
         put("played", format!("{:.1}", self.played));
         put("splits", self.splits.iter().map(|t| format!("{t:.1}")).collect::<Vec<_>>().join(" "));
+        // The star map's route (2026-11-26): each step's node, `h` after
+        // it where the heat was on.
+        put("route", self.route.iter().map(|l| format!("{}{}", l.k, if l.heat { "h" } else { "" })).collect::<Vec<_>>().join(" "));
         s
     }
 
@@ -3018,6 +3430,28 @@ impl Run {
         r.played = get("played").and_then(|v| v.parse::<f32>().ok()).filter(|v| v.is_finite() && *v >= 0.0).unwrap_or(0.0);
         // (One unreadable reads as unknown, so the rest keep their planets.)
         r.splits = list("splits").into_iter().map(|v| v.parse::<f32>().ok().filter(|t| t.is_finite()).unwrap_or(-1.0)).collect();
+        // A save from before the star map: node 0 (Fair) at every step so
+        // far. A leg past the map's ways is dropped with the rest after
+        // it, so the player picks again there.
+        r.route = match get("route") {
+            None => vec![Leg::default(); r.depth as usize],
+            Some(_) => {
+                let map = r.star_map();
+                let mut legs: Vec<Leg> = Vec::new();
+                for w in list("route") {
+                    let heat = w.ends_with('h');
+                    let Ok(k) = w.trim_end_matches('h').parse::<u8>() else { break };
+                    let step = legs.len() as u32 + 1;
+                    let from = legs.last().map(|l| l.k);
+                    if step > r.depth || !map.choices(step, from).iter().any(|n| n.k == k) {
+                        break;
+                    }
+                    legs.push(Leg { k, heat });
+                }
+                legs
+            }
+        };
+        r.take_only_way();
         Ok(r)
     }
 }
@@ -3087,12 +3521,12 @@ mod tests {
         assert_eq!(r.twist.kind, Twist::Wind);
         assert_eq!(r.twist.wind_angle, twist_at(seed, 2).unwrap().angle);
         let t = run.twist().unwrap();
-        assert!(t.card().starts_with("Wind from the ") && t.card().contains("all planet"), "{}", t.card());
+        assert!(t.card().starts_with("From the ") && t.card().contains("all planet"), "{}", t.card());
         assert!(Run::range(seed).twist().is_none());
         let cold = PlanetTwist { kind: Twist::Cold, angle: 0.0 };
-        assert_eq!(cold.card(), "Cold snap at 0:20: for a minute the slime crawls in beads. Push now.");
+        assert_eq!(cold.card(), "From 0:20, for a minute, the slime crawls in beads. Push then.");
         let west = PlanetTwist { kind: Twist::Wind, angle: 0.0 };
-        assert_eq!(west.card(), "Wind from the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns.");
+        assert_eq!(west.card(), "From the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns.");
     }
 
     /// Each late threat waits for its planet (`FIRST_PLANET`, the owner
@@ -3108,21 +3542,34 @@ mod tests {
     /// last values, and the places between rise in order.
     #[test]
     fn the_length_dials_change_nothing_at_eight_planets() {
-        assert_eq!((PLANETS, STRETCH), (8, 1.0), "the dials as tuned");
+        // Twelve steps since the star map (2026-11-26); the curve's whole
+        // places are still the eight tuned planets exactly.
+        assert_eq!((PLANETS, STRETCH), (12, 1.0), "the dials as set");
+        assert_eq!((curve_depth(1), curve_depth(PLANETS)), (1.0, 8.0));
         let f32s: [&[f32; 8]; 11] = [&SURGE_FOOD_SHARE, &ORIGIN_SIZE, &STRIKER_SHARE, &CEILING_GROW, &RAID_GAP_MIN, &STRIKER_ARMY, &SOLDIER_STEP, &RAID_FIRST, &RAID_EVERY, &DRAIN, &ROAM_SHARE];
         let u32s: [&[u32; 8]; 5] = [&LONGEST_WAIT, &RAID_ARMOUR, &SURGE_DASH, &ROAM, &ORIGIN_ARMOUR];
-        for d in 1..=PLANETS {
-            assert_eq!(curve_depth(d), d as f32);
+        for d in 1..=8 {
+            assert_eq!(curve_depth_of(d, 8), d as f32);
             for t in f32s {
-                assert_eq!(on_curve(t, d).to_bits(), t[d as usize - 1].to_bits(), "planet {d}: {t:?}");
+                assert_eq!(curve_at(t, d as f32).to_bits(), t[d as usize - 1].to_bits(), "planet {d}: {t:?}");
             }
             for t in u32s {
-                assert_eq!(on_curve_u(t, d), t[d as usize - 1], "planet {d}: {t:?}");
+                assert_eq!(curve_at_u(t, d as f32), t[d as usize - 1], "planet {d}: {t:?}");
             }
-            assert_eq!(crate::mould::larder_world::BossRules::for_curve(curve_depth(d)), crate::mould::larder_world::BossRules::for_depth(d));
-            for (k, v) in enemy_rules(d) {
+            assert_eq!(crate::mould::larder_world::BossRules::for_curve(d as f32), crate::mould::larder_world::BossRules::for_depth(d));
+            for (k, v) in enemy_rules(d as f32) {
                 assert_eq!(v != 0.0, d >= first_planet(k) && ENEMY_RULES.iter().any(|&(n, w)| n == k && w != 0.0), "{k} on planet {d}");
             }
+        }
+        // The early lift (2026-11-26): steps 2 to 4 of twelve read higher,
+        // step 5 on as the straight line, every step still above the last.
+        let steps: Vec<f32> = (1..=PLANETS).map(curve_depth).collect();
+        assert!(steps.windows(2).all(|w| w[1] > w[0]), "{steps:?}");
+        for d in 2..=4 {
+            assert!(curve_depth(d) > curve_depth_of(d, PLANETS) + 0.15, "step {d}: {steps:?}");
+        }
+        for d in 5..=PLANETS {
+            assert_eq!(curve_depth(d), curve_depth_of(d, PLANETS), "step {d}");
         }
         // Sixteen planets: the same span, in order.
         let e: Vec<f32> = (1..=16).map(|d| curve_depth_of(d, 16)).collect();
@@ -3140,7 +3587,7 @@ mod tests {
         }
         let rules = |d: u32| {
             let mut r = Rules::default();
-            Run { depth: d, ..Run::new(1) }.rules(&mut r);
+            Run::tuned(1, d).rules(&mut r);
             r
         };
         // Wherever the strikers can be on, their share and cap are not 0.
@@ -3167,7 +3614,7 @@ mod tests {
         assert!(p2.fruit.on && p2.strikers.on && p2.strikers.share > 0.0 && !p2.wave.on && p2.late_at == 0.0 && !p2.stand.on);
         let p3 = rules(3);
         assert!(p3.strikers.on && p3.wave.on && p3.late_at > 0.0 && !p3.stand.on);
-        for d in 4..=PLANETS {
+        for d in 4..=8 {
             let r = rules(d);
             assert!(r.strikers.on && r.wave.on && r.late_at > 0.0 && r.stand.on && r.fruit.on && r.heart.on, "planet {d}");
         }
@@ -3178,32 +3625,38 @@ mod tests {
     /// and the core world fiercer, and every key is one the engine takes.
     #[test]
     fn the_slime_gets_fiercer_deeper() {
-        let get = |d: u32, k: &str| enemy_keys(d).into_iter().find(|(n, _)| *n == k).map(|(_, v)| v.parse::<f32>().unwrap()).unwrap();
+        let get = |d: u32, k: &str| enemy_keys(curve_depth(d)).into_iter().find(|(n, _)| *n == k).map(|(_, v)| v.parse::<f32>().unwrap()).unwrap();
+        assert_eq!(get(1, "blows"), 1.0, "planet 1 takes one blow, as before");
+        assert!(get(PLANETS, "blows") >= 3.0, "the core world's orange slime is the toughest orange");
+        assert_eq!((level_max(curve_depth(1)), level_max(curve_depth(PLANETS))), (0, 7), "planet 1 all orange; the core world all eight levels");
         for d in 1..=10 {
             assert!(get(d + 1, "surge") <= get(d, "surge") && get(d + 1, "surge_dash") >= get(d, "surge_dash"), "planet {d}");
             // Specks no more often deeper (owner 11-16: "Specks more often
             // early game"): chances no closer together, no larger share.
             assert!(get(d + 1, "roam") >= get(d, "roam") && get(d + 1, "roam_share") <= get(d, "roam_share"), "planet {d}");
-            assert_eq!(surge_secs(d), get(d, "surge") / 30.0);
+            // Tougher every planet from planet 1's single blow (the owner,
+            // 11-26: "the progression needs to be way stronger").
+            assert!(get(d + 1, "blows") >= get(d, "blows"), "planet {d}");
+            assert_eq!(surge_secs(curve_depth(d)), get(d, "surge") / 30.0);
             let mut p = crate::mould::big::BigParams::today();
-            for (k, v) in enemy_keys(d) {
+            for (k, v) in enemy_keys(curve_depth(d)) {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
-                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" {
+                if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" || k == "blows" || k.starts_with("level_") {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
-                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0, "planet {d}: {k}");
+                    assert!(s.lure_pull == LURE_PULL || s.tether == TETHER || s.crystal_keep || s.crater_shut > 0.0 || s.boss_flinch > 0.0 || s.blows >= 1.0 || s.level_blows > 0.0, "planet {d}: {k}");
                     continue;
                 }
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
             }
             // No bronze (owner 11-16: "Remove the bronze"), specks on.
             assert!(p.surge_every > 0 && p.surge_dash > 0 && p.roam > 0 && p.roam_share > 0.0);
-            assert!(surge_food(d + 1, 1.0) <= surge_food(d, 1.0) && surge_food(d, 2.0) == 2.0 * surge_food(d, 1.0), "planet {d}");
+            assert!(surge_food(curve_depth(d + 1), 1.0) <= surge_food(curve_depth(d), 1.0) && surge_food(curve_depth(d), 2.0) == 2.0 * surge_food(curve_depth(d), 1.0), "planet {d}");
         }
         let c_food = crate::mould::larder_world::SURGE_FOOD;
-        assert!(surge_food(1, 1.0) > c_food && surge_food(PLANETS, 1.0) < c_food);
+        assert!(surge_food(curve_depth(1), 1.0) > c_food && surge_food(curve_depth(PLANETS), 1.0) < c_food);
         let (_, c) = crate::mould::larder_world::shape_keys("c").unwrap();
         let c_surge: f32 = c.iter().find(|(k, _)| *k == "surge").unwrap().1.parse().unwrap();
         assert!(get(1, "surge") > c_surge && get(PLANETS, "surge") < c_surge);
@@ -3217,7 +3670,7 @@ mod tests {
         let mut r = Run::new(7);
         let mut walkers = 0.0;
         let mut goals = 1.0;
-        for d in 1..=10 {
+        for d in 1..=PLANETS {
             r.depth = d;
             let l = r.level();
             // A cell's walkers grow deeper, so a smaller planet (a breather)
@@ -3229,8 +3682,9 @@ mod tests {
             assert!(shrink_goal(d) <= goals);
             (walkers, goals) = (dense, shrink_goal(d));
             assert_eq!(l, Run { depth: d, ..Run::new(7) }.level());
-            assert_eq!(l.ground, Ground::Planet { seed: 7, depth: d });
-            assert_eq!(levelgen::spec_planet(&l.mission.map, 0), Some(Ok(levelgen::planet(7, d))), "the window reads the planet back from the mission's map");
+            let n = r.node();
+            assert_eq!(l.ground, Ground::Planet { seed: n.seed, depth: r.map_depth() });
+            assert_eq!(levelgen::spec_planet(&l.mission.map, 0), Some(Ok(levelgen::planet(n.seed, r.map_depth()))), "the window reads the planet back from the mission's map");
         }
         r.depth = 1;
         assert_eq!(r.level().tier, Tier::Drifter);
@@ -3239,9 +3693,12 @@ mod tests {
         r.depth = 2;
         let (l, area) = (r.level(), area_of(&r.planet()));
         assert_eq!(l.tier, Tier::Sprawler);
-        assert!((l.walkers - 0.45 * 1.2 * area * size_roll(l.seed)).abs() < 1e-5);
-        // The level generator's core world is the run's last planet.
-        assert_eq!(levelgen::CORE_DEPTH, PLANETS);
+        assert!((l.walkers - 0.45 * (1.0 + 0.2 * (curve_depth(2) - 1.0)) * area * size_roll(l.seed)).abs() < 1e-4);
+        // The level generator's core world is the run's last planet, and
+        // only the last.
+        r.depth = PLANETS;
+        assert_eq!(r.map_depth(), levelgen::CORE_DEPTH);
+        assert!((1..PLANETS).all(|d| Run { depth: d, ..Run::new(7) }.map_depth() < levelgen::CORE_DEPTH));
     }
 
     /// The planet review's finding 6 and 5 (11-15): the clock grows with
@@ -3320,7 +3777,7 @@ mod tests {
         for seed in 1..=20 {
             let mut r = Run::new(seed);
             for d in 1..=4 {
-                r.depth = d;
+                r.set_tuned(d);
                 for k in 0..5 {
                     r.rerolls = k;
                     r.restock();
@@ -3329,7 +3786,7 @@ mod tests {
             }
             r.cards = vec![(Card::Blast, true), (Card::Wide, false), (Card::Pierce, false)];
             for d in 1..=4 {
-                r.depth = d;
+                r.set_tuned(d);
                 for k in 0..5 {
                     r.rerolls = k;
                     r.restock();
@@ -3338,7 +3795,7 @@ mod tests {
             }
             r.cards = vec![(Card::Blast, true), (Card::Gas, false), (Card::Wide, false), (Card::Pierce, false)];
             for d in 1..=4 {
-                r.depth = d;
+                r.set_tuned(d);
                 for k in 0..5 {
                     r.rerolls = k;
                     r.restock();
@@ -3400,7 +3857,11 @@ mod tests {
         for seed in 1..=12 {
             let mut r = Run::new(seed);
             for tier in [Tier::Sprawler, Tier::Trunk] {
-                r.won(2);
+                // (Twelve steps: the Sprawler on steps 2 and 3, the Trunk
+                // on 4.)
+                while r.level().tier != tier {
+                    r.won(2);
+                }
                 assert_eq!((r.level().tier, bring_shell(tier)), (tier, Some(Shell::Torch)));
                 for _ in 0..6 {
                     let shells: Vec<(Shell, Set)> = r.offers.iter().filter_map(|c| if let Card::Ammo(a) = c { Some((a.shell, a.set)) } else { None }).collect();
@@ -3433,8 +3894,15 @@ mod tests {
             shatter += usize::from(shells.contains(&Shell::Shatter));
         }
         assert!(torch_first < 12 && shatter > 0, "torch first in {torch_first} of 40, shatter in {shatter}");
-        // The other rungs ask for no bullet yet.
-        assert!(LADDER.iter().all(|&t| matches!(t, Tier::Sprawler | Tier::Trunk) || bring_shell(t).is_none()));
+        // Later planets ask for their counter (11-24), each a shell their
+        // shop sells; the Drifter (no shop before it) and the Grudge ask
+        // for none.
+        for (depth, tier) in (1..).zip(LADDER) {
+            match bring_shell(tier) {
+                Some(s) => assert!(depth > 1 && shells_at(depth).contains(&s), "{tier:?}: {s:?} not sold at planet {depth}"),
+                None => assert!(matches!(tier, Tier::Drifter | Tier::Grudge), "{tier:?}"),
+            }
+        }
     }
 
     #[test]
@@ -3611,7 +4079,7 @@ mod tests {
             let budgets: Vec<f32> = (0..40u64)
                 .flat_map(|seed| {
                     let mut r = Run::new(seed);
-                    r.depth = d;
+                    r.set_tuned(d);
                     r.restock();
                     assert_eq!(r.gun_offers.len(), GUN_OFFER);
                     assert!(r.gun_offers.iter().all(|g| g.depth == d));
@@ -3677,7 +4145,8 @@ mod tests {
     fn a_skipped_planet_pays_an_average_win_and_the_home_world_cannot_be_skipped() {
         // The pay rises from planet 2 on and stays near a 2-star win plus drops.
         let pays: Vec<u32> = (1..=PLANETS).map(skip_pay).collect();
-        assert_eq!(pays, [360, 510, 470, 530, 580, 630, 690, 0]);
+        // Step 3 reads planet 3 since the early lift (11-26), so it pays planet 3's skip.
+        assert_eq!(pays, [360, 510, 470, 470, 530, 530, 580, 580, 630, 690, 690, 0]);
         let mut r = Run::new(3);
         r.restock();
         assert!(!r.shop().iter().any(|row| row.pick == Pick::DevSkip), "not without dev mode (11-24)");
@@ -3733,8 +4202,7 @@ mod tests {
             for &(k, v) in does.keys {
                 assert!(crate::gpu::set(&mut s, k, v).is_ok(), "{} key {k}", t.name());
             }
-            let mut run = Run::new(1);
-            run.depth = d as u32 + 1;
+            let run = Run::tuned(1, d as u32 + 1);
             assert_eq!(run.level().tier, *t);
             let mut r = Rules::default();
             run.rules(&mut r);
@@ -3759,9 +4227,9 @@ mod tests {
             assert_eq!(r.raid.last_stand, matches!(*t, Tier::Swarmer | Tier::Dozer), "{}", t.name());
             // Every planet: the far smell, and charges that go round walls.
             assert!(r.unit_paths, "{}", t.name());
-            assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
+            assert!(enemy_keys(curve_depth(d as u32 + 1)).iter().any(|(k, v)| *k == "far_smell" && v == "1"));
             // Every planet: a lure pulls (the owner's card, 11-18 03:03Z).
-            assert!(enemy_keys(d as u32 + 1).iter().any(|(k, v)| *k == "lure_pull" && v.parse::<f32>().unwrap() > 0.0));
+            assert!(enemy_keys(curve_depth(d as u32 + 1)).iter().any(|(k, v)| *k == "lure_pull" && v.parse::<f32>().unwrap() > 0.0));
         }
         let mut r = Rules::default();
         Run::range(1).rules(&mut r);
@@ -3995,21 +4463,52 @@ mod tests {
         assert_eq!(r.loadouts.len(), LOADOUTS_MAX);
     }
 
-    /// A turret fires as many of its loadout's cards as the turrets' rack
-    /// takes, whatever gun the loadout holds; a squad on a loadout with no
-    /// gun lands with the run's rifle (review, 2026-11-20).
+    /// **Turrets fire their loadout's gun** (owner, 2026-11-27): a
+    /// loadout with a gun gives turrets that gun (with the squad's barrel
+    /// and trigger upgrades) and all the cards it holds; one with no gun
+    /// gives them the rifle and as many cards as the turrets' rack takes.
+    /// A squad on a loadout with no gun lands with the run's rifle
+    /// (review, 2026-11-20). A gun bought while the turrets' loadout is
+    /// shown goes on the turrets.
     #[test]
-    fn turrets_fire_their_rack_and_gunless_squads_the_rifle() {
+    fn turrets_fire_their_loadouts_gun() {
         let mut r = Run::new(1);
         r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
-        r.guns.push(Gun { slots: 4, budget: 12, ..GunKind::Long.average() });
-        assert!(r.pick(Pick::Carry(1)));
+        assert!(r.pick(Pick::Edit(1)) && r.editing_turrets());
         r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
-        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok());
-        assert!(r.pick(Pick::TurretsUse));
-        let t = r.turret_cards();
-        assert!(t.len() < 4 && rounds::fit_gun(t.clone(), &r.turret_rack()).is_ok(), "{t:?} on a rack of {}", r.turret_rack().slots);
+        r.refit();
+        assert_eq!(r.turret_gun(), None, "no gun there: the rifle");
+        assert!(rounds::fit_gun(r.turret_cards(), &r.turret_rack()).is_ok());
         assert_eq!(r.squad_gun(1).kind, first_gun().kind, "loadout 2 has no gun: the rifle");
+        // A long gun into the turrets' loadout.
+        r.guns.push(Gun { slots: 4, budget: 12, ..GunKind::Long.average() });
+        assert!(r.pick(Pick::Carry(1)) && r.editing_turrets());
+        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
+        r.refit();
+        assert_eq!(r.turret_gun().map(|g| g.kind), Some(GunKind::Long));
+        let t = r.turret_cards();
+        assert_eq!(t, r.gun(), "all its cards: the gun's slots, not the rack's");
+        assert!(t.len() > r.turret_rack().slots as usize);
+        // The barrel upgrade reaches it.
+        r.owned[ITEMS.iter().position(|i| i.key == "range").unwrap()] = 1;
+        assert_eq!(r.turret_gun().unwrap().range, GunKind::Long.average().range + 3.0);
+        // A gun bought with the turrets' loadout shown stays there.
+        let before = r.guns.len();
+        r.points = 10_000;
+        r.gun_offers = vec![GunKind::Scatter.average()];
+        assert!(r.pick(Pick::Gun(0)));
+        assert!(r.editing_turrets() && r.guns.len() == before + 1);
+        assert_eq!(r.turret_gun().map(|g| g.kind), Some(GunKind::Scatter));
+        // Not the squads' own loadout (adversarial review, 2026-11-27):
+        // turrets put on it fire the rifle and the rack, not a free copy
+        // of the squads' gun and whole deck.
+        assert!(r.edit(0));
+        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
+        r.refit();
+        assert!(r.gun().len() > r.turret_rack().slots as usize, "the squads fire them all: {:?}", r.gun());
+        assert!(r.pick(Pick::TurretsUse) && r.turret_loadout == 0);
+        assert_eq!(r.turret_gun(), None);
+        assert!(r.turret_cards().len() <= r.turret_rack().slots as usize && rounds::fit_gun(r.turret_cards(), &r.turret_rack()).is_ok());
     }
 
     /// **Devices carry a loadout's cards** (gun step E, 2026-11-24): no
@@ -4119,13 +4618,15 @@ mod tests {
     fn carrion_is_a_relic_sold_after_planets_3_5_and_7() {
         let mut r = Run::new(1);
         let mut sold = Vec::new();
-        for _ in 0..7 {
+        for _ in 1..PLANETS {
             r.won(3);
             if r.relic_offer.is_some() {
                 sold.push(r.depth);
             }
         }
-        assert_eq!(sold, vec![4, 6, 8], "after planets 3, 5 and 7");
+        // Twelve steps (2026-11-26): the first step on tuned planets 4, 6
+        // and 8.
+        assert_eq!(sold, vec![5, 9, 12], "after steps 4, 8 and 11");
         let mut r = Run::new(1);
         for _ in 0..3 {
             r.won(3);
@@ -4150,7 +4651,7 @@ mod tests {
         for seed in 0..30 {
             let mut r = Run::new(seed);
             let mut seen = Vec::new();
-            for _ in 0..7 {
+            for _ in 1..PLANETS {
                 r.won(3);
                 if let Some(o) = r.relic_offer {
                     assert!(!r.relics.contains(&o));
@@ -4170,14 +4671,12 @@ mod tests {
         let mut rr = RoundRules::default();
         r.round_rules(&mut rr);
         assert_eq!((rr.backdraft_gap, rr.carrion_secs), (8.0, 0.0));
-        // All three owned: the shop after planet 5 sells none.
+        // All three owned: the shop of step 9 (a relic's) sells none.
         r.relics.push(Relic::Carrion);
-        r.won(3);
-        r.won(3);
-        r.won(3);
-        r.won(3);
-        r.won(3);
-        assert_eq!((r.depth, r.relic_offer), (6, None), "every relic owned: none more for sale");
+        while r.depth < 9 {
+            r.won(3);
+        }
+        assert_eq!((r.depth, r.relic_offer), (9, None), "every relic owned: none more for sale");
     }
 
     /// **Bodies** (gun step E3, Direction 11-24): planet 1's shop sells

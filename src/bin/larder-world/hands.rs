@@ -423,7 +423,7 @@ fn origin2_hand(g: &mut Game<GpuWorld>) {
     while g.bank >= g.rules.soldier_cost && g.apply(Cmd::Buy) {}
     let t = g.time();
     let range = g.gun_range(0) * g.world.scale();
-    let Some(h) = g.stand.live.filter(|h| h.origin && g.origin.fell.is_none()) else {
+    let Some(h) = g.stand.live.filter(|h| h.origin) else {
         let c = g.core;
         for k in 0..g.soldiers.len() {
             if g.soldiers[k].alive && g.soldiers[k].order == Order::Hold {

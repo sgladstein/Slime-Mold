@@ -184,8 +184,6 @@ fn lead(g: &Game<GpuWorld>, v: slime_mould::mould::campaign::Verdict) -> String 
         k => format!("with {k} of your {n} soldiers lost"),
     };
     match v.cause {
-        Cause::Goal if g.origin.fell.is_some() && g.mould > 0 => format!("You broke the slime's heart in {at}, and the slime died back to {left}, from a peak of {top}, {with}."),
-        Cause::Goal if g.origin.fell.is_some() => format!("You broke the slime's heart in {at}, and the slime died back from a peak of {top}, {with}."),
         Cause::Goal if g.mould == 0 => format!("You wiped out the slime in {at}, from a peak of {top}, {with}."),
         Cause::Goal => format!("You broke the slime in {at}, down to {left} of its {top} peak, {with}."),
         Cause::Cap => format!("The clock reached {at} with the slime still {left} strong, {share} of its {top} peak."),
@@ -757,17 +755,19 @@ impl App {
         let cursor = self.controls.cursor.filter(|&p| !self.hud.over(p));
         // A mortar's two rings: its reach and its blind ring inside.
         let bld = g.rules.build;
-        let rings = |k: Kind| match k {
+        // A turret's by its gun (2026-11-27): the hovered one's own, a
+        // placed one the default's.
+        let rings = |k: Kind, b: Option<usize>| match k {
             Kind::Mortar => vec![bld.mortar_range, bld.mortar_min],
             Kind::Sprayer => vec![bld.sprayer_range],
             Kind::Hunter => vec![bld.hunter_range, bld.hunter_min],
-            _ => vec![bld.turret_range],
+            _ => vec![g.turret_reach(b)],
         };
-        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k));
+        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k, None));
         let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
-            g.buildings.iter().find(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| (b.at, b.kind))
+            g.buildings.iter().enumerate().find(|(_, b)| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|(k, b)| (b.at, b.kind, Some(k)))
         });
-        for (at, reach) in placing.into_iter().chain(over).flat_map(|(at, k)| rings(k).into_iter().map(move |r| (at, r))) {
+        for (at, reach) in placing.into_iter().chain(over).flat_map(|(at, k, b)| rings(k, b).into_iter().map(move |r| (at, r))) {
             let reach = reach * sc;
             let n = if reach > 60.0 { 180 } else { 72 };
             for i in 0..n {
@@ -1702,7 +1702,14 @@ impl App {
                     // pixels wide (`Marks::health`), and a bar's anchor is a
                     // world point (a mark's colours replace what is under
                     // them, so a see-through back would cut a hole).
-                    let (left, right) = (-9.0 + 18.0 * hp, -9.0 + 18.0 * top);
+                    // A one-pixel dark notch at its left where the health
+                    // left meets it (the colour check, 11-24: a bite's
+                    // crimson on a red bar, and fire's orange on an amber
+                    // one under protanopia and deuteranopia, read as more
+                    // of the bar). The notch is cut from the chip, so it
+                    // grows nothing.
+                    let notch = if hp > 0.0 { 1.0 } else { 0.0 };
+                    let (left, right) = (-9.0 + 18.0 * hp + notch, -9.0 + 18.0 * top);
                     if right - left > 0.4 {
                         let mid = (left + right) / 2.0 / zoom.max(1e-3);
                         self.marks.bar((s.x + mid, s.y), below, ((right - left) / 2.0, 1.5), 1.0, lit, lit);
@@ -2218,7 +2225,7 @@ impl App {
             // the switch and Back below. Cancel a build left it: click the
             // building instead (`App::building_sel`).
             cmds = vec![
-                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest slime within {:.0} cells every {:.1} s. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food for each slime it kills.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires its loadout's gun at the thickest slime, now within {:.0} cells every {:.1} s, over walls. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food for each slime it kills.", g.turret_reach(None), g.turret_every(None), b.render_cost, b.render_food)),
                 pump((0, 1)),
                 place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest slime it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit slime within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
                 place(HUNTER, (0, 5), Icon::Target, "Hunter", KeyCode::KeyX, b.hunter_cost, format!("Every {:.0} s one fast flat shot within {:.0} cells, at what matters most: the slime on the nearest crystal it holds, then a ripening fruit, a mini-boss, a marching raid, the slime's heart, and only then the thickest slime. Rock and walls stop its shot. Fires the turrets' cards.", b.hunter_every, b.hunter_range)),
@@ -2339,11 +2346,18 @@ impl App {
         if self.args.run.is_some() {
             m.resources.retain(|r| r.icon != Icon::Target);
         }
+        // A run's planet (owner, 11-27: "Everything should be as
+        // unobtrusive on the screen as possible"): the slime's count moves
+        // to its gauge in the middle (`slime_gauge`), and the shop points
+        // show once there are some, or some coming.
+        if self.args.run.as_ref().is_some_and(|r| !r.range) {
+            m.resources.retain(|r| r.icon != Icon::Mould && !(r.icon == Icon::Upgrade && r.value == "0" && r.rate.is_none()));
+        }
         if g.world.garden.is_some() {
             // The player's own mould beside the enemy's, in its colour.
             let own = g.world.counts_by_side().0;
             // After the enemy's (a run's shop points sit before the soldiers).
-            let at = m.resources.iter().position(|r| r.icon == Icon::Mould).map_or(3, |i| i + 1);
+            let at = m.resources.iter().position(|r| r.icon == Icon::Mould).map_or(3, |i| i + 1).min(m.resources.len());
             m.resources.insert(at, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: format!("Your own slime (green): how much is alive. Sow it ({}); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs", if self.sq.is_some() { "U" } else { "W" }), value: thousands(own), rate: None });
         }
         m.commands = cmds;
@@ -2371,13 +2385,30 @@ impl App {
             (None, None) => (None, 0.0),
         };
         m.coach = self.coach.show.clone();
-        m.tell = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| slime_tell(g, r.level().tier));
-        m.twist = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
+        let run = self.args.run.as_ref().filter(|r| !r.range);
+        let tier = run.map(|r| r.level().tier);
+        m.tell = tier.and_then(|t| slime_tell(g, t));
+        m.twist = run.and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
+        // A run's middle (owner, 11-27): the slime's size as a bar in the
+        // goal line's place, the heart and the stalemate as red pills. The
+        // goal stays in the model for the pause menu, as its own words
+        // alone: "(1%: slime count 40,149 \u{2192} 0); a heart guards a
+        // crystal: 1,660 of 1,660 left, breaks under 166" ran onto a row
+        // of its own and said what the gauge now shows.
+        if let (Some(tier), Some(tr)) = (tier, &self.mission) {
+            m.gauge = Some(slime_gauge(g, tier));
+            m.alarms = run_alarms(g, tr);
+            m.objective = Some(tr.mission.says.clone());
+        }
         // The landing card: whole for `INTRO_SECS` of game time (it holds
-        // while paused), then fading over `INTRO_FADE`.
+        // while paused), then fading over `INTRO_FADE`; or, from the
+        // player's first key or click (`intro_seen`), fading over
+        // `INTRO_GONE` of real time, whichever is sooner.
         m.intro = self.intro.as_ref().and_then(|(i, at)| {
             let since = g.time() - at;
-            let a = ((INTRO_SECS + INTRO_FADE - since) / INTRO_FADE).clamp(0.0, 1.0);
+            let shown = ((INTRO_SECS + INTRO_FADE - since) / INTRO_FADE).clamp(0.0, 1.0);
+            let pressed = self.intro_seen.map_or(1.0, |t| (1.0 - t.elapsed().as_secs_f32() / INTRO_GONE).clamp(0.0, 1.0));
+            let a = shown.min(pressed);
             (a > 0.0).then(|| slime_mould::world::ui::Intro { alpha: a, ..i.clone() })
         });
         (m.ghost_ok, m.ghost_note) = match ghost {
@@ -2556,6 +2587,13 @@ impl App {
         // The planet's landing card again on the pause menu (Direction
         // 11-24): the slime's line and the twist, under the goal.
         m.pause_planet = (self.hud.menu_open() && self.planet_open()).then(|| self.intro.as_ref().map(|(i, _)| i.clone())).flatten();
+        // The frame readout (Options > Screen, Direction 11-24): the World
+        // detail the view draws at, and whether Auto picked it.
+        m.readout = readout_on().then(|| {
+            let pct = self.view.as_ref().map_or(100, |v| v.percent());
+            let auto = super::volume::detail_user() == "Auto";
+            format!("World detail {pct}%{}", if auto { ", Auto" } else { "" })
+        });
         m.loadout = Some(self.loadout(g, &sel));
         // A building selected takes the panel for its own state (option
         // b); a click on open ground, a tile's number or Space gives the
@@ -3289,7 +3327,11 @@ impl App {
                     format!("level {} of {PUMP_LEVELS}, {doing}", bd.level)
                 }
                 Kind::Turret => {
-                    stats.push(("Range".into(), format!("{:.0} cells", g.rules.build.turret_range)));
+                    // Its gun (2026-11-27: turrets fire their loadout's gun).
+                    let gun = g.turret_gun(Some(bk));
+                    stats.push(("Gun".into(), gun.kind.name().to_string()));
+                    stats.push(("Range".into(), format!("{:.0} cells", g.turret_reach(Some(bk)))));
+                    stats.push(("Rate".into(), format!("{:.1} shots a second", 1.0 / g.turret_every(Some(bk)).max(1e-3))));
                     if bd.working { "firing".into() } else { "watching".into() }
                 }
                 Kind::Mortar => {
@@ -3388,7 +3430,7 @@ impl App {
                     (None, _) if !bd.up() => "Still being built".to_string(),
                     _ => "It already renders".to_string(),
                 }),
-                about: format!("Render: every bit of slime killed within {:.0} cells of it, by any shot, pays {:.2} food.", b.turret_range, b.render_food),
+                about: format!("Render: every bit of slime killed within {:.0} cells of it, by any shot, pays {:.2} food.", g.render_reach(bk), b.render_food),
                 ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Render", KeyCode::KeyU)
             });
         }
@@ -3400,10 +3442,12 @@ impl App {
             let cards: Vec<String> = r.turret_deck_of(now).iter().map(|c| c.title()).collect();
             let cards = if cards.is_empty() { "no cards".to_string() } else { cards.join(", ") };
             let follows = if bd.loadout.is_none() { ", the turrets' default" } else { "" };
+            // A turret names its gun (2026-11-27).
+            let gun = if bd.kind == Kind::Turret { format!(" with its {}", g.turret_gun(Some(bk)).kind.name()) } else { String::new() };
             cmds.push(Command {
                 ready: r.loadouts.len() > 1,
                 why_not: Some("One loadout only: make another with H".into()),
-                about: format!("It fires {}{follows} ({cards}). Click for the next loadout; H edits them.", r.loadout_name(now)),
+                about: format!("It fires {}{follows}{gun} ({cards}). Click for the next loadout; H edits them.", r.loadout_name(now)),
                 ..Command::new(TURRET_LOADOUT, (0, 2), Icon::Upgrade, &format!("Loadout {}", now + 1), KeyCode::KeyL)
             });
         }
@@ -3479,11 +3523,58 @@ fn slime_tell(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> Opti
             if (g.mould as f32) < r.last_stand_at * g.peak as f32 {
                 return Some((Icon::Alert, "All of it is coming".into(), "Cut below a quarter of its peak, the slime has rushed you with everything it has".into()));
             }
-            let now = (100.0 * g.mould as f32 / g.peak as f32).round() as u32;
-            Some((Icon::Alert, format!("{now}% of its peak, all rush at {:.0}%", 100.0 * r.last_stand_at), "The slime against the most it has been; below the second number all of it charges you at once".into()))
+            // Until then the slime gauge's red mark is the tell (11-27);
+            // the pill said "96% of its peak, all rush at 25%" beside it.
+            None
         }
         _ => None,
     }
+}
+
+/// Game seconds of cut the slime gauge shows pale on its fill's end.
+const GAUGE_CUT_SECS: usize = 3;
+
+/// **The slime gauge** (`ui::SlimeGauge`; owner, 2026-11-27: "it should
+/// be easy to tell how big it is, compared to its start size and peak
+/// size"): the walkers now, at the landing's first count, at the most,
+/// and the most over the last `GAUGE_CUT_SECS` counts, so a volley's cut
+/// shows as a pale piece that the fill leaves behind. The Swarmer's
+/// all-out rush is its red mark, until it fires.
+fn slime_gauge(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> slime_mould::world::ui::SlimeGauge {
+    use slime_mould::mould::tiers::Tier;
+    let now = g.mould as u32;
+    let start = g.curve.first().map_or(now, |p| p.0);
+    let peak = (g.peak as u32).max(now).max(start);
+    let recent = g.curve.iter().rev().take(GAUGE_CUT_SECS).map(|p| p.0).max().unwrap_or(now);
+    let raid = &g.rules.raid;
+    let line = (tier == Tier::Swarmer && raid.last_stand && g.peak > 0 && (g.mould as f32) >= raid.last_stand_at * g.peak as f32).then_some(raid.last_stand_at);
+    let pct = (100.0 * now as f32 / peak.max(1) as f32).round() as u32;
+    let mut tip = format!("Slime {} now ({pct}% of its most)  \u{b7}  {} at landing (white mark)  \u{b7}  {} at its most", grouped(now as usize), grouped(start as usize), grouped(peak as usize));
+    if line.is_some() {
+        tip += "  \u{b7}  under the red mark all of it rushes you";
+    }
+    slime_mould::world::ui::SlimeGauge { name: title_case(tier.name()), now, start, peak, recent, count: thousands(g.mould), line, tip }
+}
+
+/// A run's red pills (11-27), which were tails on the goal line: the
+/// stalemate's count once it shows, and a heart on a crystal.
+fn run_alarms(g: &Game<GpuWorld>, tr: &Tracker) -> Vec<(Icon, String, String)> {
+    use slime_mould::mould::campaign::{STUCK_END, STUCK_WARN};
+    let mut out = Vec::new();
+    if tr.verdict.is_none() && tr.stuck_run as f32 >= STUCK_WARN {
+        let left = (STUCK_END - tr.stuck_run as f32).max(0.0);
+        out.push((Icon::Clock, format!("Nothing happening: ends in {left:.0} s"), "Walk, harvest, pump or fight, or the planet ends".into()));
+    }
+    match g.origin_hud() {
+        Some((members, most)) if most > 0 => {
+            let r = g.rules.origin;
+            let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;
+            out.push((Icon::Heart, format!("Heart {}, breaks under {}", grouped(members as usize), grouped(breaks as usize)), format!("A heart guards a crystal the slime held thick: {} of {} left. Cut it under {} to break it", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))));
+        }
+        Some(_) => out.push((Icon::Heart, "A heart is forming".into(), "The slime has held a crystal thick for two minutes: a heart grows there".into())),
+        None => {}
+    }
+    out
 }
 
 /// The planet's twist as a pill beside the tell (Enemy's #830, `twist.rs`):
@@ -3514,27 +3605,24 @@ fn compass(deg: f32) -> &'static str {
 /// Game seconds the landing card (`ui::Intro`) stays whole, and fades.
 const INTRO_SECS: f32 = 9.0;
 const INTRO_FADE: f32 = 1.5;
+/// Real seconds the landing card takes to fade once the player presses a
+/// key or a button (`App::intro_seen`; owner, 2026-11-26).
+const INTRO_GONE: f32 = 0.35;
 
-/// The goal line while a planet has its origin (Milestone 2, `origin.rs`;
-/// Look and interface, 2026-11-24): what to kill and how much is left of
-/// it, then the die-back's seconds once it breaks, in place of the
-/// mission's walker count (which a heart's planet is not won by). A
-/// "nothing is happening" warning in front (`progress_line`) is kept.
+/// The goal line with a crystal heart alive (`origin.rs`; the origin's
+/// line, Look and interface 2026-11-24, until the owner's 11-26 ruling
+/// that a heart is a mini-boss, not the win): the mission's own line, and
+/// how much is left of the heart after it.
 fn origin_line(g: &Game<GpuWorld>, line: String) -> String {
-    let Some((members, most, fell)) = g.origin_hud() else { return line };
-    let warn = line.split_once(" s. ").filter(|_| line.starts_with("Nothing is happening")).map(|(a, _)| format!("{a} s. ")).unwrap_or_default();
-    let goal = match fell {
-        Some(left) => format!("The slime's heart is broken: the slime is dying back ({:.0} s)", left.ceil()),
-        // No members yet (or a heart that never filled, as on a planet past
-        // the tuned ladder): the goal without its counts, not "0 of 0".
-        None if most == 0 => "Kill the slime's heart on its home crystal".to_string(),
-        None => {
+    match g.origin_hud() {
+        Some((members, most)) if most > 0 => {
             let r = g.rules.origin;
             let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;
-            format!("Kill the slime's heart on its home crystal: {} of {} left, breaks under {}", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))
+            format!("{line}; a heart guards a crystal: {} of {} left, breaks under {}", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))
         }
-    };
-    format!("{warn}{goal}")
+        Some(_) => format!("{line}; a heart is forming on a crystal"),
+        None => line,
+    }
 }
 
 /// **The first minute** (Direction 11-24, the planet's introduction, job
@@ -3561,7 +3649,7 @@ pub(super) struct Coach {
 const COACH: [(&str, f32); 3] = [
     ("Right click the ground to send your squad there, or steer it with W, A, S and D", 25.0),
     ("Your soldiers shoot slime in reach by themselves. Hold the left button and all of them fire where you point", 14.0),
-    ("Find the slime's heart on its home crystal (Space looks at it) and kill it, or every last bit of slime, to free the planet", 16.0),
+    ("Kill every last bit of slime to free the planet. Slime that holds a crystal thick for two minutes grows a heart there", 16.0),
 ];
 
 /// Game seconds after landing before the first step, so the landing card
@@ -3595,5 +3683,32 @@ impl Coach {
         }
         let a = (age / 0.5).min(1.0) * ((most - age) / 1.0).clamp(0.0, 1.0);
         self.show = Some((words.to_string(), format!("{} of {}", self.step + 1, COACH.len()), a));
+    }
+}
+
+/// **The frame readout** (Direction 11-24: "an optional frame readout in
+/// Options, off by default: the last 10 seconds' p95 frame time and the
+/// current World detail, in a corner", so Milestone 2's test 5, 60 frames
+/// a second at 4K, can be read on the owner's own screen). Saved as
+/// `frames=on` beside the settings; read once, then kept here.
+static READOUT: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
+pub(super) fn readout_on() -> bool {
+    use std::sync::atomic::Ordering;
+    match READOUT.load(Ordering::Relaxed) {
+        0 => {
+            let on = slime_mould::world::settings::get("frames").as_deref() == Some("on");
+            READOUT.store(if on { 2 } else { 1 }, Ordering::Relaxed);
+            on
+        }
+        k => k == 2,
+    }
+}
+
+/// The readout on or off, saved.
+pub(super) fn set_readout(on: bool) {
+    READOUT.store(if on { 2 } else { 1 }, std::sync::atomic::Ordering::Relaxed);
+    if let Err(e) = slime_mould::world::settings::set("frames", if on { "on" } else { "off" }) {
+        eprintln!("larder-world: the frame readout was not saved ({e})");
     }
 }

@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-24
+updated: 2026-11-27
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/balance-review-2026-11-24/README.md
@@ -15,6 +15,7 @@ sources:
   - Reports/gun-range-2026-11-15.md
   - Reports/lab-bait-trade-2026-11-24/README.md
   - Reports/lab-crystal-bait-2026-11-24/README.md
+  - Reports/lab-hunt-2026-11-26/README.md
   - Reports/lab-march-counter-2026-11-24/README.md
   - Reports/lab-rescue-2026-11-24/README.md
   - Reports/lab-steering-2026-11-17/README.md
@@ -29,7 +30,11 @@ sources:
   - Reports/planet-curve-2026-11-21/README.md
   - Reports/planet-things-2026-11-18/README.md
   - Reports/planet2-sprawler-2026-11-18/README.md
+  - Reports/playtest-2026-11-27/README.md
   - Reports/pump-economy-2026-11-15/README.md
+  - Reports/review-2026-11-25/README.md
+  - Reports/review-2026-11-25/route-choice-brief.md
+  - Reports/review-2026-11-26/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
   - Reports/run-progression-2026-11-15/does-to-you.md
@@ -40,8 +45,10 @@ sources:
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/stand-2026-11-20/README.md
+  - Reports/star-map-2026-11-26/README.md
   - Reports/starfall-2026-11-20/README.md
   - Reports/starfall-look-2026-11-21/README.md
+  - Reports/strategy-b-2026-11-26/README.md
   - Reports/strikers-2026-11-20/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/trunk-fort-2026-11-18/README.md
@@ -50,6 +57,7 @@ code:
   - BossRules::for_depth
   - CASHED_SECS
   - CRYSTAL_CLEAR
+  - Contract::pool
   - DropGround
   - DropGround::snap
   - FruitRules
@@ -59,25 +67,31 @@ code:
   - Game::keep_panic_reach
   - Game::lump_taken
   - Game::wave_points
+  - HEAT_WALKERS
   - HeartRules
   - LADDER
   - LURE_PULL
   - LureMark
   - PLANETS
+  - Pip::offset
   - Playlog
   - RANGE_DEPTH
   - REF_OPEN
   - ROCK_CLEAR
   - Run::buy_into
   - Run::carried
+  - Run::choose
+  - Run::curve
   - Run::found
   - Run::from_save
   - Run::gun
   - Run::level
+  - Run::pay
   - Run::put_in
   - Run::range
   - Run::rules
   - Run::save_text
+  - Run::settle
   - Run::shop
   - SAVE_HEAD
   - STUCK_WARN
@@ -89,10 +103,13 @@ code:
   - WaveRules
   - WorldListener::coins
   - ammo_price
+  - apply_levels
   - area_of
+  - blows
   - bring
   - bring_shell
   - clock
+  - crystal_levels
   - does_to_you
   - dps_after
   - drift_core
@@ -101,6 +118,7 @@ code:
   - fort_mask
   - gun_price
   - head_start
+  - level_max
   - limit
   - par
   - raid_cores
@@ -115,6 +133,8 @@ code:
   - shop_of
   - shrink_goal
   - size_roll
+  - star_map
+  - star_view
   - surge_food
   - surge_secs
   - tier_size
@@ -169,6 +189,34 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
 
+
+## The star map
+
+Since 2026-11-26 (the owner's pick of directions 1 and 4,
+11-25 23:45Z: "each of those planet options should have clearly different
+difficulties with greater rewards on the harder planets"): a run is
+`PLANETS` 12 steps, the tuned eight-planet tables spread over them
+(`curve_depth`). Between the landing world and the home world every step
+offers two or three planets drawn from the run's seed (`route::star_map`),
+joined to the next step's by crossing lanes, and the player picks one on
+the Stars page before its shop (`Run::choose`; `Run::route` is saved). A
+planet's pip moves the place on the curve it is read at (`Pip::offset`: Safe
+-1, Fair 0, Hard +2.5 since 11-27, +1.5 before, after his step 6 Hard cost no soldier, [playtest](../../Reports/playtest-2026-11-27/README.md); `Run::curve`), so its slime, heart, raids and map size
+and biome all follow; the species is the step's own (`LADDER` at the tuned
+planet nearest the step), the same for every planet of a fork;
+Safe has no twist, Hard always one. A win pays `reward` times 0.7, 1 or 1.5
+by pip (`Run::pay`), and a Hard planet puts a rare tier-3 card in its shop.
+Each planet has one or two optional contracts (`Contract::pool`, paid by
+`Run::settle`) and a Heat switch (`HEAT_WALKERS`: a bigger slime and sooner
+raids for half again the pay). The bot check that the pips are clearly
+ordered: [report](../../Reports/star-map-2026-11-26/README.md). What
+follows describes each planet as it was on eight steps; its numbers now
+read at the planet's curve place.
+
+The Stars page (`world::start::stars`), redrawn 2026-11-27 after the owner's "The planet path selection map needs to be improved and planet text needs to be improved": the route runs across the top, a column a step with its slime named once over it, each planet's ring coloured and sized by its pip (Safe green and small, Fair blue, Hard red-orange, larger, with a halo) and filled with its biome's colour; under it the planets the route can go to stand side by side as cards (slime size against the planet just won, hits, twist, rare card, contracts, world and map size, where it leads, pay), and the heat switch sits beside Fly. The shop's planet-ahead lines are one fact each (`menu::shop_of`). Stills: [PR stills](../../Reports/pr-stills/star-map-cards-2026-11-27.jpg).
+
+Since 2026-11-26 the early steps climb faster (`run::early_lift`; the owner, 21:51Z: "You can increase the difficulty early but I don't think we should flatten out the later progression"): curve places under `LIFT_TO` 3.5 are bent up by `LIFT_BEND` 0.7, so steps 2 to 4 of twelve read 1.96, 2.56 and 3.07 (were 1.64, 2.27, 2.91) and step 5 on reads as before. A pip's offset applies after the lift. Raising steps 5 on as well was put off (owner asked, 22:12Z): the tables stop at planet 8, so a shift would flatten the last steps, and the bot already lost step 6 on all six seeds ([review](../../Reports/review-2026-11-26/README.md)).
+
 ## The run's length: two dials
 
 Built 2026-11-24 (Direction's ask, after the owner's answer that day, 03:14Z: "It should be longer, at least 2 hours, but we can also double the number of planets. We also don't need to decide exactly now"). `run::PLANETS` is how many planets a run has; the per-planet tables in `run.rs` keep their eight values, tuned on eight planets, and a run of another length spreads its planets over the same curve (`run::curve_depth`, `on_curve`: planet 1 and the last read the first and last values, the ones between are read between the two nearest; `BossRules::for_curve` and `FIRST_PLANET` take the same place). `run::STRETCH` makes each planet longer: the raids' first time, gap and floor, the surges' longest wait, the mini-bosses' timing, and the planet's star (`par`) and far limit (`limit`) all run that many times as long. Both stand at 8 and 1, where every number is as before (`the_length_dials_change_nothing_at_eight_planets`). Past the seventh planet the ladder already picks one of the last three tiers at random. Not built: tiers that repeat stronger each lap, and longer planets' slime sizes.
@@ -196,6 +244,10 @@ The bot's curve on that schedule (11-21, three plans, 9 maps, before the heart c
 
 On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is just lots of shooting through masses of uniform orange. Think outside the box"): when the squad is winning, the slime streams 8% of itself (at most 2,500 walkers) into a knot at its thickest slime out of the guns' reach (`larder_world/fruit.rs`, `FruitRules`, on every run planet by `ENEMY_RULES`). The knot is a lump (`Game::lump_taken`: bosses, marches and fruits share `big::LUMPS`) whose members take two blows, it swells to twice its first size, and it is drawn umber, darkening as it ripens (`LumpLook::Fruit`, its strength the ripeness, `Game::fruit_looks`). After 30 s it bursts and every walker in it flies out as a spore that lands as living slime where its throw ends (`World::sow`, the engine's `sow_pass`; GPU only; it homed on food until 11-21, but that scent holds the soldiers' smell, and on CI's run seed 2 a burst came down on the squad and bit 21 of 30 in 5 s); since 11-21 the throw stops short of the guns' reach and `clear` from the nearest living soldier (`Game::sow_steps`), because the whole throw, 600 fine cells, came down all over a planet 1 map and round the owner's squad (21 of 28 dead in 3 s at 8:44 of his play): the nearer the squad, the closer round the pod its walkers land; its swelling never takes past its cap in one grow; shot under 35% of its most members it breaks. It starts from 1:30 after the landing once kills over 30 s reach a fifth of the slime's mass (a trigger on a fall under its peak was tried and deleted: on planet 3 it fired against a squad of four nowhere near), and not under 8% of its peak; one at a time, 40 s apart ([report](../../Reports/fruiting-2026-11-20/README.md)).
 
+## Tougher by planet, in levels
+
+Since 2026-11-26 (the owner, 06:58Z: "the progression needs to be way stronger for the slime"): an ordinary walker takes `blows` blows (`run::BLOWS` in `enemy_keys`), one on planet 1 up to 4.5 on the core world (1.75 on planet 2; 3 there until 11-27, raised with bigger raids and sooner mini-bosses after his "Make it harder!", [playtest](../../Reports/playtest-2026-11-27/README.md)), a fraction being a share of walkers taking one more. The same day (08:24Z: "some toughness scaling and speed scaling is needed ... You could change slime color so their are 3-8 levels of slime ... one area on a later planet is the easier to kill orange slime and this other crystal is full of stronger more dangerous slime") the slime has levels (`larder_world/levels.rs`, `LevelRules`, `run::LEVEL_MAX`): each crystal has one, 0 on planet 1 up to 7 on the core world, the home crystal the highest and the rest rolled lower (`crystal_levels`). Slime born on a crystal takes its level and its children keep it; the slime there at the landing takes its nearest crystal's (`Engine::set_pile_levels`). A level takes `level_blows` 0.5 more blows, steps `level_speed` 6% faster and bites `level_bite` 0.3 walkers more (`LEVEL_BLOWS`, `LEVEL_SPEED`, `LEVEL_BITE`), and is drawn in its colour, gold through orange, red, crimson, wine, plum and indigo, by the mean level round each cell (view.wgsl's `level_rgb`), so where two crystals' slime meet the colour runs between them. GPU only (engine.wgsl's `tough_walker`, `GRADE_BITS`); mini-boss members keep their own armour; the planet's card names the hits and the highest level. The before and after page is [slime-levels-2026-11-26](../../Reports/slime-levels-2026-11-26/README.md).
+
 ## Waves
 
 On since 2026-11-20 (the same thread as fruiting; `larder_world/waves.rs`, `WaveRules`, `run::ENEMY_RULES`' `wave`): from 1:30, when the squad's kills over 20 s reach an eighth of the slime's mass and the mass is down over those 20 s, the slime reads its losses. A field (`World::set_wave_field`, engine.wgsl's `wave_dist` in the raid region after the raid's blocks, pull 40, calm walkers only) leans it to two or three points 20 dish cells past the guns' reach round the thickest knot of soldiers, the points with the most slime near them, at least 70 degrees apart; for 12 s it masses there, then the field turns to the soldiers and a surge starts with the panic reach stretched to the masses (`Game::keep_panic_reach`), so it comes in from every point at once for 8 s. 45 s from one's end to the next. Since the review lane's note of 11-20 (the two fire on nearly the same signal, so nearly every fruit came with a wave) a wave and a fruit take turns: neither starts while the other runs. GPU only.
@@ -212,9 +264,13 @@ On since 2026-11-20 (the same thread, the owner's pick on the balance thread's c
 
 On since 2026-11-20 evening (the same thread; D of the balance thread's brief, which put it after strikers and the lunge "as every planet's end, once A works"; `larder_world/stand.rs`, `StandRules`, `run::ENEMY_RULES`' `stand`). Once the slime is under 20% of its peak against a squad of 24 or more (`at`, `army`, the strikers' `full`), every walker left that is in no other lump gathers into one heart (a lump, as the mini-bosses' and the fruit's) on its heart crystal (the heartbeat's, `Game::heart_site`), leaving the crystals it held; it takes in the slime grown since every 3 s. Each member takes 4 blows and bites as two walkers (`armour`, `bite`). It attacks, as the owner's 14:16Z note asked of any tough slime: every 20 s the whole heart lunges at the nearest soldier at 3 times its pace for 10 s (`every`, `haste`, `lunge`), then draws back to its crystal. Each bout, its forming's first 10 s or a lunge, stops once it has taken a quarter of the squad's health, 20 soldiers' worth at most; a lunge then draws back and the whole slime bites no soldier for 5 s (`cap`, `cap_most`, `sated`; 2026-11-21, Direction's ask after the deep bug check found a first lunge killing 68 in under 8 s). Main's heart took 65 of 80 in one lunge on planet 2 map 1 and lost a whole run's planet 2 with all 37 dead; capped, 13 and none, and no capped bout took more than 16 ([scores](../../Reports/late-threat-2026-11-20/README.md)). Condensed strikers never join a lump, so its strikers keep charging round it. No new slime, and the planet is won as before at the last walker. It is drawn with its own look (`LumpLook::Heart`, a deep gold over a hot white-gold core), dimming as it is cut down. Cut under 15% of the most it held, or 150 s old (`last`, `life`), it breaks and is slime again, which starves off its food as a broken slime does: kept to the end, a heart cut low sat 130 s on its crystal, and one that charged to the end held 29 walkers pressed on the ground until the game's cap (lavapipe, the strat bot, planet 2). Once a planet; a smaller squad mops up as before ([report](../../Reports/stand-2026-11-20/README.md)). GPU only.
 
+## Crystal hearts
+
+Since 2026-11-26 (the owner, 11-26 00:08Z: "slime hearts stay, but they are not the win condition. Basically anytime a slime maintains a density of slime on a crystal for a 2 minutes a heart form. It is basically just another mini-boss/way to make it harder to capture core slime crystals."; after 11-25 23:57Z, "the Slime heart makes the game even easier"). A planet is won again at its last walker (`run::WIN_SHARE` 0). The origin's machinery below now runs as a mini-boss on any crystal (`larder_world/origin.rs`, `OriginRules::dense`, `OriginRules::after`, `Game::crystal_walkers`): once a second each charged crystal's walkers within its rim are weighed against its disc, and while they stand at 0.85 a fine cell or more (free walkers stand about one a fine cell at most) its clock runs, falling back three seconds a second when thinned. At 120 s a heart forms there, sized, armoured and fighting as the origin did, fed from that crystal. One lives at a time; another full clock waits for it. Cut under its floor it breaks, its walkers are ordinary slime again and its crystal's clock starts from nothing; nothing else happens. The run bot still sieges a heart as it did the origin (`strat.rs` `hunt`) but now has to wipe the body to win; its curve is not yet re-measured.
+
 ## The origin
 
-Built 2026-11-22 on a branch that lands once the owner calls Milestone 1 done (his card that day, "Build now, land after M1"; Direction's go with its three questions settled: a die-back of about ten seconds, draining its crystal stops its regrowth, the last walker still wins as a fallback; `larder_world/origin.rs`, `OriginRules`, `run::ENEMY_RULES`' `origin`, `run::ORIGIN_SIZE`; [design](../../Reports/origin-design-2026-11-22/README.md)). The owner's idea of 11-16: a boss at the slime's start crystal you kill to win. It is the last-stand heart from the landing: a lump of armoured walkers (4 blows, bites as two) held round the start crystal (`Game::core`), drawn with the heart's look. Every 2 s it takes in the free walkers round its crystal, its reach widening half a dish cell at a time until it holds its planet's size (400, 600, 900 on planets 1-3), up to twice that, but only while its crystal has charge: draining or pumping the crystal stops it regrowing (the GPU test: 77 members fed against 1 on a drained crystal at 14 s). It lunges at soldiers within 30 dish cells of its crystal's rim (the heart's bout and cap), and when it loses 2% of its most in a second it calls the body home (a raid on the soldier nearest it, at most every 20 s). Cut under a tenth of its most (or 50) it breaks: births stop, the slime stops eating (the engine's `no_eat`, word 929 bit 2) and its upkeep goes up 40 times, so it dies back where it stands (planet 1: 13,119 to 4,466 in the first 6 s), and after 10 s the planet is won (`End::MouldWiped`), or at the last walker. Late in a planet against an army the last stand gathers into it instead of forming a second heart. Measured on run seed 1 (lavapipe), an army on attack-move to the origin (headless `hand=origin`, `set=start_bank=`): 44 soldiers won planet 1 at 1:23 and planet 2 at 1:12, where with the origin off the same rush had not won by 8:00 (24,578 and 10,690 walkers left); 9 soldiers were wiped on both; on planet 3 neither army reached the origin by 8:00. Tuned the same morning, as Direction asked that a straight rush cost losses and minutes: its own armour 12 and bite 2 (the last stand's 4 and 1), lunges every 12 s of 8 s taking up to 40% of the squad's health (`OriginRules::armour`, `bite`, `every`, `lunge`, `cap`), sizes 800, 1,200, 1,800 on planets 1-3 regrowing to half as much again (the first 400, 600, 900 took about 900-1,900 at their first wide takes, over the most they could regrow to, so a struck origin never regrew). Then: 44 soldiers won planet 1 at 2:13 and 24 at 2:42, none lost (planet 1's slime bites softly); on planet 2, 44 were wiped at 1:50 and 24 at 1:56 (it regrew from 260 to 489 and called the body home 4 times). A second pass the same morning (44 soldiers): planet 2 at 700 won at 2:05 with 34 lost (24 soldiers were wiped), at 600 at 1:45 with 10 lost, at 800 wiped; planet 1 lost no soldier whatever was tried (bite 3, armour 15, a lunge reach of 4 or 6 radii, `origin_lunge_leash`, or the flinch off), because 44 guns cut a lunge down before it touches them. So the sizes are now 1,200, 700, 1,800 on planets 1-3: planet 1 holds 44 soldiers 2:54, planet 2 costs real losses. With the army a player has when rushing planet 1 (Direction's measure): the starting squad of 9 (4 and the 2,000 bank's 5) was wiped at 4:35 with the origin still at 1,469 of 1,492 at 2:00; the starting squad and about one early harvest, 16 (the run bot had 16 at 1:00), was wiped at 4:52, the origin at 1,211 of 1,394 at 2:00 (neither buys more as it goes; at 1,200, seed 1). Then Engine's siege (the run bot aimed at the origin, planet 2, run seed 1) lost at 11:29 with 52 rifles: the origin refilled from its charged crystal, and late on from the whole map, as fast as they cut it, holding 1,900 to 2,200. So it regrows only after 4 s with no loss of 2% of the most it held in a second (`OriginRules::quiet`, `hurt`): a sustained fight wears it down, a strike and a pull-back lets it refill. The rush on planet 2 after that: 48 soldiers won at 1:39 with 10 lost, 52 at 1:36 with 7 lost (at 10 s and 0.5%, 48 won at 1:16 with none lost). Then, with Squad's near-first rule (a soldier shoots slime 5 cells off before an origin 20 off), Engine's siege on planet 1 (seeds 1 to 3) wore the origin down only 50 to 70 a minute and never broke it in 12 min, so Direction picked smaller origins (11-22): 700, 700, 1,000 on planets 1-3 (planet 2 later 500, below), for a siege won in under 10 min. On seed 2 it then formed at 1,120 against 700 (a take on a packed crystal overshoots), so it regrows only to about its size now (`OriginRules::most` 1, was 1.5), and each take reaches only the share of its reach its shortfall asks (seed 3 had gone 696 to 1,095 in one take at 6:15, the packed slime holding about 1.6 walkers a fine cell). Engine's siege on planet 1 then won seed 1 at 4:23 (11 lost), seed 2 at 4:42 (none) and seed 3 at 7:57 (7), the origin holding 650 to 760; planet 3 won seeds 1-3 at 4:00, 4:37 and 9:14; planet 2 wiped seeds 2 and 3 at 700 (and seed 3 at 600; both won with the origin off), so planet 2 is 500, won on seeds 1-3 at 5:49, 5:16 and 5:42 (0, 8 and 7 lost). The rush is D7, the owner's. The run bot's siege (`strat.rs` `hunt`) does not aim at the origin; Engine and tools will make it, once this lands.
+Until 2026-11-26, when the owner made the heart a mini-boss (above), this was the win. Built 2026-11-22 on a branch that lands once the owner calls Milestone 1 done (his card that day, "Build now, land after M1"; Direction's go with its three questions settled: a die-back of about ten seconds, draining its crystal stops its regrowth, the last walker still wins as a fallback; `larder_world/origin.rs`, `OriginRules`, `run::ENEMY_RULES`' `origin`, `run::ORIGIN_SIZE`; [design](../../Reports/origin-design-2026-11-22/README.md)). The owner's idea of 11-16: a boss at the slime's start crystal you kill to win. It is the last-stand heart from the landing: a lump of armoured walkers (4 blows, bites as two) held round the start crystal (`Game::core`), drawn with the heart's look. Every 2 s it takes in the free walkers round its crystal, its reach widening half a dish cell at a time until it holds its planet's size (400, 600, 900 on planets 1-3), up to twice that, but only while its crystal has charge: draining or pumping the crystal stops it regrowing (the GPU test: 77 members fed against 1 on a drained crystal at 14 s). It lunges at soldiers within 30 dish cells of its crystal's rim (the heart's bout and cap), and when it loses 2% of its most in a second it calls the body home (a raid on the soldier nearest it, at most every 20 s). Cut under a tenth of its most (or 50) it breaks: births stop, the slime stops eating (the engine's `no_eat`, word 929 bit 2) and its upkeep goes up 40 times, so it dies back where it stands (planet 1: 13,119 to 4,466 in the first 6 s), and after 10 s the planet is won (`End::MouldWiped`), or at the last walker. Late in a planet against an army the last stand gathers into it instead of forming a second heart. Measured on run seed 1 (lavapipe), an army on attack-move to the origin (headless `hand=origin`, `set=start_bank=`): 44 soldiers won planet 1 at 1:23 and planet 2 at 1:12, where with the origin off the same rush had not won by 8:00 (24,578 and 10,690 walkers left); 9 soldiers were wiped on both; on planet 3 neither army reached the origin by 8:00. Tuned the same morning, as Direction asked that a straight rush cost losses and minutes: its own armour 12 and bite 2 (the last stand's 4 and 1), lunges every 12 s of 8 s taking up to 40% of the squad's health (`OriginRules::armour`, `bite`, `every`, `lunge`, `cap`), sizes 800, 1,200, 1,800 on planets 1-3 regrowing to half as much again (the first 400, 600, 900 took about 900-1,900 at their first wide takes, over the most they could regrow to, so a struck origin never regrew). Then: 44 soldiers won planet 1 at 2:13 and 24 at 2:42, none lost (planet 1's slime bites softly); on planet 2, 44 were wiped at 1:50 and 24 at 1:56 (it regrew from 260 to 489 and called the body home 4 times). A second pass the same morning (44 soldiers): planet 2 at 700 won at 2:05 with 34 lost (24 soldiers were wiped), at 600 at 1:45 with 10 lost, at 800 wiped; planet 1 lost no soldier whatever was tried (bite 3, armour 15, a lunge reach of 4 or 6 radii, `origin_lunge_leash`, or the flinch off), because 44 guns cut a lunge down before it touches them. So the sizes are now 1,200, 700, 1,800 on planets 1-3: planet 1 holds 44 soldiers 2:54, planet 2 costs real losses. With the army a player has when rushing planet 1 (Direction's measure): the starting squad of 9 (4 and the 2,000 bank's 5) was wiped at 4:35 with the origin still at 1,469 of 1,492 at 2:00; the starting squad and about one early harvest, 16 (the run bot had 16 at 1:00), was wiped at 4:52, the origin at 1,211 of 1,394 at 2:00 (neither buys more as it goes; at 1,200, seed 1). Then Engine's siege (the run bot aimed at the origin, planet 2, run seed 1) lost at 11:29 with 52 rifles: the origin refilled from its charged crystal, and late on from the whole map, as fast as they cut it, holding 1,900 to 2,200. So it regrows only after 4 s with no loss of 2% of the most it held in a second (`OriginRules::quiet`, `hurt`): a sustained fight wears it down, a strike and a pull-back lets it refill. The rush on planet 2 after that: 48 soldiers won at 1:39 with 10 lost, 52 at 1:36 with 7 lost (at 10 s and 0.5%, 48 won at 1:16 with none lost). Then, with Squad's near-first rule (a soldier shoots slime 5 cells off before an origin 20 off), Engine's siege on planet 1 (seeds 1 to 3) wore the origin down only 50 to 70 a minute and never broke it in 12 min, so Direction picked smaller origins (11-22): 700, 700, 1,000 on planets 1-3 (planet 2 later 500, below), for a siege won in under 10 min. On seed 2 it then formed at 1,120 against 700 (a take on a packed crystal overshoots), so it regrows only to about its size now (`OriginRules::most` 1, was 1.5), and each take reaches only the share of its reach its shortfall asks (seed 3 had gone 696 to 1,095 in one take at 6:15, the packed slime holding about 1.6 walkers a fine cell). Engine's siege on planet 1 then won seed 1 at 4:23 (11 lost), seed 2 at 4:42 (none) and seed 3 at 7:57 (7), the origin holding 650 to 760; planet 3 won seeds 1-3 at 4:00, 4:37 and 9:14; planet 2 wiped seeds 2 and 3 at 700 (and seed 3 at 600; both won with the origin off), so planet 2 is 500, won on seeds 1-3 at 5:49, 5:16 and 5:42 (0, 8 and 7 lost). The rush is D7, the owner's. The run bot's siege (`strat.rs` `hunt`) does not aim at the origin; Engine and tools will make it, once this lands.
 
 Planets 4 to 8 (11-24, Direction's first numbers): 1,200, 1,500, 1,800, 2,100 and 2,400, half the first 2,400 to 4,800. Engine's siege (the run bot round the origin, Scott's three maps, GTX 1070, 720 s) won 10 of 15 at half against 6 of 15 at the first sizes; planet 4 won all three at 1,200 and lost all three at 2,400. On planet 7 (and planet 8 once) the origin had swallowed the body: from planet 4 the late last stand gathers into the origin, and it took every free walker on the map at once (79,940 and 66,426 members against 4,200). It now gathers only until it holds twice its size (`OriginRules::gather_most`). Later the same day planets 5, 6 and 8 went half as much again, to 2,250, 2,700 and 3,600 (Direction: a late win should cost more than an early one; Engine's batch s, the run bot with `storm` 0.5 on six maps, 720 s): planet 5 won 3 of 6 against 4 (a wash), planet 6 5 of 6 both ways but slower (map A 5:53 to 8:00, seed 3 4:24 to 9:50), planet 8 6 of 6 both ways in 5:07 to 7:05, the size not visible there. Planet 7 stays 2,100 with the cap at 2: the siege won 3 of 6 there, and a cap of 1.25 sizes won none. The first cap (a disc widening 3 dish cells a take, cut to its shortfall) still overshot on Engine's planet 7 rerun, 13,699 on map C, as a disc that reaches a packed body takes all of it. So the gather now takes the smallest disc round its crystal holding that many walkers, and the engine admits only as many joiners as the room left (`World::grow_lump_most`, a count in the dense header each joiner takes one from; the GPU test: an origin of 134 gathered to exactly 300 of 300 in a slime of 3,103). Since the same evening no mini-boss forms or regroups on the heart (`Game::on_heart`, as none forms on a march or a fruit): on planet 7 map C a crowd wanderer formed on the packed origin at 58 s and took 954 of its 1,575 members (lavapipe), and on the GTX 1070 enough to break it at 59 s with no shot fired. A guard in the engine (no forming lump takes another's members) was tried first and dropped, as it also stopped a mortar taking back its thrown members.
 
@@ -244,6 +300,8 @@ The Mortar (the owner's pick of his doc's two proposals, 11-20 13:21Z, "Mortar f
 
 The Pinwheel (the owner's second pick, 11-20): a sixth kind, from planet 3 on, a runner that hunts like the hunter in deep cobalt with a sky-blue core. Within 90 world units of its prey (`spin_near`) its body unfurls into three curved arms that turn round it (`Lump::spin`, the engine's: each member leans toward the nearest of three turning spokes); farther off it walks compact, since turning all the way halved its pace. On the owner's planet 3 and 4 maps with every boss a pinwheel it reached the squad 8 times of 21 ([report](../../Reports/miniboss-review-2026-11-20/README.md)).
 
+**Stronger and smarter by planet** (2026-11-26, the owner: "more stronger scarier smarter better progress ion scaled mini bosses. I think this is important"). A member can count only 15 blows, so the strength past that is a **ward**: a share of the blows that land glances off uncounted (`BossRules::ward_lo`/`ward_hi` by grade, 0 to 25% on planet 2 up to 30 to 65% on planet 8; packed in `Lump::armour` bits 8-15, engine.wgsl's `armoured`, GPU only). A hunter or pinwheel **stalks the lone soldier**: its prey scores its distance plus `stalk` x 8 dish cells for each other soldier within the guns' reach of it (`Game::boss_prey`; 0.4 on planet 2, full from planet 5), so it goes for the builder or the guard at a pump instead of the nearest gun in the blob, and keeps its prey while that scores within a fifth of the best. Shot under half its first members it **falls back to feed** (`BossPhase::Back`, `Game::back_point`): it runs a third faster into its own thick slime past the guns, takes in the slime round it (no more than it lost, an eighth of its first members a second), and hunts again at nine tenths or after 10 s; once on planets 2 to 4, twice from 5 (`backs`). It takes its walkers from the slime, so it makes no new slime.
+
 ## Ending early, the play log, pressure by depth
 
 **The clock counts up** since 11-20 (owner, 14:10Z: "there should not be a countdown clock"; [decisions](../decisions-game.md)). The speed star comes for a goal met before `par` (`Rules::par`: 8:00 on planet 1, 10:00 on planets 2-3, Direction's numbers; planet 3's scaled by the old clock on 4-8, 11:30 to 31:00), which the clock shows until it passes. Only a stalemate meets `limit` (`Rules::cap`, twice the old `clock`: 30:00 on planet 1 to 111:00 on the core world), named on the clock in its last two minutes and graded as the countdown was; its end screen reads "The slime held on", not "Mission won". Before, the clock counted down from `clock` (15:00 to 55:30) with two stars before four fifths of it (`two_stars`, still the missions' rule).
@@ -253,8 +311,8 @@ Since 11-15 (the whole-game review's W17, W30 and W13;
 counts as stuck only when, besides no shot, no food taken and the bank under
 a soldier's price, no soldier walked, no pump stands, nothing is being built
 and shots cost food or every crystal is dry (in squad mode shots are free,
-so a planet with charge left never ends stuck); from `STUCK_WARN` (10 s) the goal line warns
-that the planet ends at `STUCK_END` (30 s); before, a run ended at 1:37 with
+so a planet with charge left never ends stuck); from `STUCK_WARN` (10 s) a red pill on the top bar
+(`run_alarms`; the goal line until 11-27) warns that the planet ends at `STUCK_END` (30 s); before, a run ended at 1:37 with
 four healthy soldiers and both pumps standing. The shrink goal counts the
 slime's mass (`World::mass`, the enemy's living walkers; until 11-17 a
 thickened walker counted twice, so a body that thickened did not read as
@@ -413,6 +471,23 @@ with no germ), and its two guns are two kinds, neither the kind carried
 (`Run::restock`). Tinder costs 100 and a Torch at most 100 (`TINDER_PRICE`,
 `TORCH_MOST`; Direction, 11-18), so the pair fits what the least win of
 planet 1 pays.
+
+**A counter for every slime** (Direction 11-24, Milestone 2; paired
+films, run seed 1, greedy squad,
+[counters](../../Reports/slime-counters-2026-11-24/README.md)). Each
+planet's trait has a kit answer that shows within a minute: the Drifter, a
+turret beside the pump (191 of 200 at 1:30 against worn away); the
+Sprawler, Tinder and a Torch (no thread on a standing squad); the Trunk, a
+Torch (10,588 burned by 1:00); the Swarmer and the Dozer, a Bomb (25
+soldiers at 1:30 against wiped at 0:44; 13 at 1:00 against wiped at 0:48);
+the Sporer, a Germ (slime 18,714 at 0:40 against 91,854); the Sleeper, a
+Flare then a Germ (10 at 1:00 against wiped at 0:38). Since then the
+Swarmer and the Dozer ask for a Bomb, the Sporer a Germ and the Sleeper a
+Flare (`bring_shell`), so their shop puts it first until you own one, and
+the run bot buys it. The Grudge asks for none: fire burns its scar, but the
+scar takes over a minute to grow and no film yet shows the answer. Gas
+answers no slime that wakes on alarm (planets 4 to 8): a shot's alarm
+wakes it at once.
 
 ## Planet twists
 
@@ -592,6 +667,11 @@ alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - The balance review (11-20, [report](../../Reports/balance-review-2026-11-20/README.md)): in the owner's 14 won planets the slime holds at half its peak or more for a median 75% of the planet, then breaks in about 1.4 minutes, so the army's size decides a planet, rush or not (put to him with D7, nothing built). At the clock a planet cut to half its peak was a 1-star win (`Cause::Cap`), the run bot's only planet 3 win on main; the owner's answer (11-20 14:10Z) is a clock that counts up, built the same day (above). On the army he answered that the slime must not grow with it; the options for a squad the slime cannot touch are the balance thread's next job, with the slime-enemy thread. Planet 2 is now the hardest of the three and is not yet measured on today's game.
 - The balance review on the build with the origin (11-24, [report](../../Reports/balance-review-2026-11-24/README.md); nothing changed, the proposals went to Direction for the owner): his planets 1 to 4 take 4 to 6 minutes with 0 to 3 soldiers lost even with small squads, so the slime can't reach a squad he steers; a small squad sent at the origin wins planets 2 to 4 in 1 to 2.5 minutes on one map and fails on two (D7); fire on planet 3's plants burned most of the squad in 3 of 7 bot games, once without fire cards; planet 5 is long for its size alone.
+- A big-picture review of 11-16 to 11-25 (11-25, [report](../../Reports/review-2026-11-25/README.md)): the slime still can't reach a moving squad and difficulty has come from planet-gated timers; the nightly bot wins planets 1 to 3 with a plain rifle and no buildings; next steps lead with slime pressure from its own fields and a threat audit.
+- A review of 11-26's strength changes (11-26, [report](../../Reports/review-2026-11-26/README.md)): the run bot (rush, never builds) wins star-map step 6 Fair 0 of 6 times after `blows`, levels and the mini-boss ward, against 6 of 6 that morning; the slime is tougher but still does not come for the squad, and energy still goes unspent.
+- Its step A (11-25, the owner's order "a then c ... then b"): a [threat audit](../../Reports/review-2026-11-25/threat-audit.md) (five comeback events read one "squad is winning" signal; the body's own reach is about 5 cells past the guns) and a Lab brief for a body that chases; step C: [five ways to choose a route](../../Reports/review-2026-11-25/route-choice.html), the star map with contracts recommended.
+- The star map (the owner's pick, 11-25 23:45Z: directions 1 and 4): about 12 steps, two or three planets a step with clearly different difficulties (a curve step below, at, and 1.5 above the depth) paying x1, x1.5 and x2.25, and optional contracts ([brief](../../Reports/review-2026-11-25/route-choice-brief.md)). Not built yet. Directions 2 and 5 kept for later ([future directions](../../Reports/review-2026-11-25/future-route-directions.md)).
+- Does any plan beat the plain rifle (review step B, 11-26, [report](../../Reports/strategy-b-2026-11-26/README.md); hearts off, 12 game minutes, his three maps): on planet 2 only the rifle won all three, on planet 4 only the lure plan (pumps, turrets, a lure) did, so the best plan changes with the planet (3 maps, not significant); no plan wiped planet 6 out in 12 minutes, the first thing to check on the new win rule.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
 - The core world with C: 364,924 walkers, frame p95 12-14 ms on the 1070 (planet 1 4.6 ms) and a 12 s head-start pause before landing; kept until play says otherwise.
 
@@ -599,13 +679,15 @@ alone: the other half of a fire deck (the owner's Noita rule, 11-18).
 
 Harder from planet 2 since 2026-11-22 (the owner won all 8 planets that night losing 0 to 1 soldiers on 7, "Still too easy", then "scale it up. You decide what is best"; planet 1 unchanged): raids at least 35 s apart (45 on planet 1), the strikers' cap grows with an army past 24 to 2.5 times, mini-bosses tougher by the planet (weakest grade's armour 4 to 10, bite up, three at once from planet 6), and the soldier's price climbs 1/40 for each soldier alive over 30 (`Rules::soldier_step`; 2x at 70). All in `run.rs` rows, each its own "what is new" line.
 
-Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1-4 in under 5:02 with 14 to 35 soldiers and met 0 to 3 raids, since the first was drawn at about 4:00): the first raid at about 2:00 and the next about 100 s apart (`RAID_FIRST`, `RAID_EVERY`; 4:00 and 150 s on planet 1), and a touching walker bites 2.5 instead of 2 (`DRAIN`). Mini-bosses then: grade 0.2 to 0.7 on planet 2, pace 1.2 to 1.5 times the slime's, broken under 20% (12% by planet 8) of their first members instead of 30% (`BossRules::for_depth`). A raid's marchers take 2 blows on planets 2-3, 3 on 4-6 and 4 on 7-8 until the march meets the squad or its target (`RAID_ARMOUR`, `RaidRules::march_armour`; the owner: tougher slime has a better chance of reaching the soldiers).
+Sooner from planet 2 since the evening of 2026-11-22 (his next run won planets 1-4 in under 5:02 with 14 to 35 soldiers and met 0 to 3 raids, since the first was drawn at about 4:00): the first raid at about 2:00 and the next about 100 s apart (`RAID_FIRST`, `RAID_EVERY`; 4:00 and 150 s on planet 1), and a touching walker bites 2.5 instead of 2 (`DRAIN`). Mini-bosses then: grade 0.2 to 0.7 on planet 2, pace 1.2 to 1.5 times the slime's, broken under 20% (12% by planet 8) of their first members instead of 30% (`BossRules::for_depth`). A raid's marchers take 2 blows on planet 2 up to 8 on the core world (since 2026-11-26; 2 to 4 before) until the march meets the squad or its target (`RAID_ARMOUR`, `RaidRules::march_armour`; the owner: tougher slime has a better chance of reaching the soldiers). Since 2026-11-26 (the owner, 08:40Z: "You can make raids stronger too") the gap falls from 100 s on planet 2 to 70 s on the core world and a raid takes 0.15 of the slime on planets 1-2 up to 0.3 on the core world (`RAID_SIZE`, `RaidRules::size`).
 
 The Lab tried a counter to planet 4's armoured march from the slime's own food rule (11-24, its branch only): a hungry marcher on a charged crystal leaves its march and eats. A still squad of 8 lost no one to planet 4's marches on three seeds with mini-bosses off, so the rig had no march wall to counter; feeding did starve a wanderer heading for a crystal on one seed ([march counter](../../Reports/lab-march-counter-2026-11-24/README.md)). Tried as a wanderer counter on planets 4 and 7 (every mini-boss a wanderer), no bait squad was wiped against 2 of 6 off, and the wanderer broke on a charged crystal in 3 of 6 ([crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md)). Settled on planet 7 with a placed wanderer on six seeds, draining the squad's own crystal beat leaving it as bait (65 soldiers at the boss's end against 48, one wipe against none, that one by another road), since a wanderer starves on the crystals on its way, not the squad's ([bait or drain](../../Reports/lab-bait-trade-2026-11-24/README.md)).
 
 For run variety (Milestone 2's test 2), the Lab built three planet twists a run could roll, each a minute's change to the slime's own numbers (11-24, its branch only): a cold snap (its step at 0.3: streams break into beads and stall), night (sensors reach 2.5 times as far: thick roads to food and the squad) and wind (each step pushed downwind: the body leans one way). Each shows within 30 s on planet 1 and changes no outcome there; it recommends wind and the cold snap, each with a card line ([planet twists](../../Reports/lab-twists-2026-11-24/README.md)).
 
-For a planet goal other than the heart, the Lab built a rescue (11-24, its branch only): three soldiers hidden deep in the slime behind a ring of doors it gnaws, found when reached, then walked home at a wounded pace their squad keeps to, while the strikers turn on the march. On planet 1 an early rescue won in 1:19 to 2:30, a late one lost all three on the march, and greedy and idle lost when the ring gave way or the hiding ran out. It recommends an occasional rescue planet from planet 3, timed on the GTX 1070 first ([rescue planet](../../Reports/lab-rescue-2026-11-24/README.md)).
+For step A of the 11-25 review the Lab built the hunt (11-26, its branch only): the slime smells where the soldiers stood over the last 20 s, older places weighing farther, so it follows the squad's path and stops on a cold trail. On planet 2 with the scheduled threats off the body pours after a kiting squad of 15 (more walkers killed on 6 of 6 seeds), but no kiting squad lost a soldier, with 15 or 6 rifles, since the body arrives down one corridor into the guns; it recommends keeping it as the reach and next making the body mass before it comes in ([the hunt](../../Reports/lab-hunt-2026-11-26/README.md)).
+
+For a planet goal other than the heart, the Lab built a rescue (11-24, its branch only): three soldiers hidden deep in the slime behind a ring of doors it gnaws, found when reached, then walked home at a wounded pace their squad keeps to, while the strikers turn on the march. On planet 1 an early rescue won in 1:19 to 2:30, a late one lost all three on the march, and greedy and idle lost when the ring gave way or the hiding ran out. Timed on the GTX 1070 with the heart win dropped, planet 3 with two dug-outs plays 4 to 6.5 minutes and is won early or late; planet 4's bot dies to the Swarmer before it can try, and planet 5 is won only by an early rescue with the alarm off. It recommends building it for planet 3 first ([rescue planet](../../Reports/lab-rescue-2026-11-24/README.md)).
 
 ## Sources
 
@@ -614,6 +696,7 @@ For a planet goal other than the heart, the Lab built a rescue (11-24, its branc
 - [march counter](../../Reports/lab-march-counter-2026-11-24/README.md), *Results*.
 - [planet twists](../../Reports/lab-twists-2026-11-24/README.md), *Recommendation*.
 - [rescue planet](../../Reports/lab-rescue-2026-11-24/README.md), *Recommendation*.
+- [the hunt](../../Reports/lab-hunt-2026-11-26/README.md), *Recommendation*.
 - [crystal bait](../../Reports/lab-crystal-bait-2026-11-24/README.md), *Results*.
 - [bait or drain](../../Reports/lab-bait-trade-2026-11-24/README.md), *Results*.
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.

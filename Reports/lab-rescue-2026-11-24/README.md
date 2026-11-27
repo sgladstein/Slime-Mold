@@ -78,13 +78,13 @@ unfinished.
   0:07); thickening is now outward, and off by default.
 - Without the wound, the march home took 14 s.
 
-## Card line
+## Card line (round one)
 
 "Distress call: three of yours are dug in deep in the slime. Reach them and
 walk them home at a wounded pace; the slime wakes when you find them, and
 leave it too late and it breaks in."
 
-## Recommendation
+## Recommendation (round one)
 
 It earns a place as an occasional planet goal, one planet a run from
 planet 3, rolled like a twist. It asks for different play from the heart:
@@ -101,3 +101,83 @@ lanes: the origin ignores soldiers it cannot smell (this also hides a
 masked soldier from it), and wounded soldiers slow their squad. The heart
 can still be killed while the dug-out holds, which makes the rescue an
 either-or; a rescue planet could instead have no heart to kill.
+
+## Round two: planets 3 to 5 (Direction 19:37Z)
+
+Direction took it as an occasional planet goal from planet 3, with the
+heart win dropped: the heart still stands and bites, but only the rescue
+wins. Before it is built it must be a 4-to-8-minute planet on planets 3 to
+5, with paired smoke checks timed on the GTX 1070. Code `233b0f8a` and
+`a7b9204e`:
+
+- **No heart win.** On a rescue planet the origin does not break.
+- **More dug-outs.** `LAB_RESCUE_MORE=X,Y[;X,Y]` adds dug-outs on the same
+  terms. The planet is won when one soldier from every dug-out has reached
+  the larder, and lost when any one dug-out is wiped.
+- **The hand.** `rescue[@T]` plays greedy until T. Then everyone goes to
+  each dug-out in turn, then home. Once a dug-out is reached they move as
+  squads, at the wounded's pace.
+
+Three batches, 64 games on run seed 1, about 31 minutes of 1070 time.
+There is one line a game in `raw/batches-1070.txt` (scripts
+`raw/pc-rescue{2,3,4}.ps1`).
+
+**Planet 3 (the Trunk) meets the brief with two dug-outs**: 154,102 and
+42,139, the defaults (alarm on, ring one level, wound 0.3).
+
+| Hand | Outcome | Ended |
+|---|---|---|
+| idle | lost | 5:06 |
+| greedy | lost | 5:25 |
+| rescue from 1:00 | won, 2 and 3 of 3 home | 3:57 |
+| rescue from 2:30 | lost, never reached | 5:21 |
+| rescue from 4:00 | won, 1 and 3 of 3 home | 6:23 |
+
+The losses come when the slime gnaws through a ring at about 4:00 or the
+hiding ends at 5:00 and it closes in. The 2:30 rescue never reached either
+dug-out, the same in both batches: the bot's army stalls on the way. With
+one dug-out a rescue wins in 2:20 to 5:28. A second dug-out at 250,70 lay
+on the greedy hand's farm and was reached by chance at 0:13, so it moved.
+
+**Planet 4 (the Swarmer) can't be judged with this bot.** The greedy
+hand's own squad is wiped at 0:43 on run seed 1 with no rescue at all. In
+every rescue game the hand's army was dead before it could go, so greedy
+and rescue@60, @150 and @240 played the same. Rings one level thick fell
+at about 2:00 (idle lost at 1:59 and 2:34). Three levels held them to 4:30.
+
+**Planet 5 (the Sporer) is winnable only by an early rescue, and only
+without the alarm.** With the alarm on, every reached dug-out died on the
+march home through 87,000 to 140,000 walkers (12 of 12), mostly beside
+help. With rings three levels, wound 0.5 and the strikers not forced, a
+rescue from 1:00 won at 2:27 (and at 2:28 with reek 1). Rescues from 2:30
+and 4:00 still lost on the march, at 3:59 to 5:06. Greedy lost at 5:26 to
+7:41.
+
+### The two rule changes, as patches
+
+Against main (made at `0e01b479`, still applying at `0c3b742c`), each applies alone, and together they pass
+`cargo check --all-targets`:
+
+- `raw/origin-unsmelled.patch` (Enemy): the origin does not lunge at or
+  count a soldier it cannot smell (smell 0). That covers the toolkit's
+  mask too.
+- `raw/wounded-pace.patch` (Squad): `Soldier::pace` (1 whole) multiplies
+  `Game::wade`, so a wounded soldier walks slower, and a squad keeps to
+  its slowest as it does for wading.
+
+### Recommendation after round two
+
+Build it for planet 3 first, as the Trunk's rescue planet: two dug-outs
+deep in the body, alarm on, one-level rings. It plays 4 to 6.5 minutes,
+is won by going early or late, and is lost when a ring falls. For planets
+4 and 5 it needs more than the dug-outs' numbers:
+
+- **Planet 4** needs a hand that survives the Swarmer before it can be
+  timed. The owner's play or the strategy bot would show it.
+- **Planet 5** needs the alarm off and a shorter way home, for example
+  dug-outs nearer the body's edge. As it is, the march through the Sporer's
+  body kills the wounded after 2:30 every time.
+
+Card line for planet 3: "Distress call: two squads are dug in deep in the
+Trunk. Reach both and walk them home at a wounded pace. The slime wakes
+when you find them, and its rings won't hold past five minutes."

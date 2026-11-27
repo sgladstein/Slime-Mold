@@ -159,7 +159,8 @@ pub const SET_AT: usize = 1216;
 pub const TOUGH_AT: usize = 1232;
 /// The wind row (a planet twist, 2026-11-24; Params grew from 1248 to
 /// 1264, after the scar tissue row): the push on every step a walker
-/// takes, x and y in fine cells (`Settings::wind`), and two spare words.
+/// takes, x and y in fine cells (`Settings::wind`), the blows an ordinary
+/// walker takes (`Settings::blows`, 2026-11-26) and a spare word.
 pub const WIND_AT: usize = 1248;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
@@ -630,6 +631,25 @@ pub struct Settings {
     /// The game sets it (`World::set_twist`), so it has no key of its own
     /// (a planet twist, rolled on, not a switch); 0 none.
     pub wind: [f32; 2],
+    /// **The blows an ordinary walker takes** (`blows=B`, 2026-11-26, the
+    /// thread "Make the slime's progression much stronger"; GPU only, no
+    /// CPU twin): the slime's toughness by planet (`run::enemy_keys`), so
+    /// the squad's damage, which multiplies with its cards, meets a slime
+    /// that grows in toughness as well as size. A fraction is a share of
+    /// the walkers taking one blow more (engine.wgsl's `tough_walker`).
+    /// Lump members keep their lump's armour, set walkers theirs. 1 is one
+    /// blow, as before; at most 15 (`HURT_BITS`).
+    pub blows: f32,
+    /// **The slime's levels** (2026-11-26, the owner's "3-8 levels of
+    /// slime", each its own colour, mixed by crystal on later planets; GPU
+    /// only, no CPU twin): a walker of level L (0 to 7, engine.wgsl's
+    /// `GRADE_BITS`, taken from the crystal it is born on, `Engine::
+    /// set_pile_levels`, else from its parent) takes `level_blows` x L
+    /// blows more, steps `level_speed` x L faster and bites `level_bite` x
+    /// L walkers more. 0 off (every level plays as level 0).
+    pub level_blows: f32,
+    pub level_speed: f32,
+    pub level_bite: f32,
     /// **A mini-boss's walkers flinch out of a hit** (`boss_flinch=S`,
     /// 2026-11-21, Direction's job from the Look lane's exit test 2: a
     /// mini-boss showed no hurt but a drawn tint; 0 off, as here): a
@@ -923,6 +943,10 @@ impl Settings {
             scar_burn: false,
             dream: 0.0,
             wind: [0.0, 0.0],
+            blows: 1.0,
+            level_blows: 0.0,
+            level_speed: 0.0,
+            level_bite: 0.0,
             boss_flinch: 0.0,
             deep_wall: true,
             solid_walls: true,
@@ -1270,6 +1294,10 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scar_tough_full" => s.scar_tough_full = f()?.max(1.0),
         "scar_burn" => s.scar_burn = int()? != 0,
         "dream" => s.dream = f()?.clamp(0.0, 1.0),
+        "blows" => s.blows = f()?.clamp(1.0, 15.0),
+        "level_blows" => s.level_blows = f()?.clamp(0.0, 15.0),
+        "level_speed" => s.level_speed = f()?.clamp(0.0, 0.99),
+        "level_bite" => s.level_bite = f()?.clamp(0.0, 15.0),
         "boss_flinch" => s.boss_flinch = f()?.clamp(0.0, 1.0),
         // Deep water as a wall to the slime (`deep_wall=0` off; on by
         // default, 2026-11-20).
@@ -1863,6 +1891,8 @@ pub struct Engine {
     /// (`dclear`), so it counts on top of whatever the last count left.
     pub plant_no_clear: bool,
     pub dense_at: u64,
+    /// Each crystal's slime level + 1 as last set (`set_pile_levels`; 0 none).
+    pub pile_levels: Vec<u32>,
     /// Plants (`plant_words`): their words sit in `news` from `plant_at`
     /// (bytes); `plants` when the dish has any, `fire_on` once lit (from
     /// then the fire passes run every plant step, as the CPU's), and a
@@ -2214,6 +2244,7 @@ impl Engine {
             lumps_on: false,
             plant_no_clear: false,
             dense_at: 4 * (news_len + gas_len) as u64,
+            pile_levels: Vec::new(),
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
             crust_at: if d.crust.is_empty() { 0 } else { 4 * (news_len + gas_len + dense_len + plant_len) as u64 },
             sorter: None,
@@ -2379,6 +2410,12 @@ impl Engine {
         self.queue.write_buffer(&self.health, 0, &f32_bytes(&wd.health));
         self.queue.write_buffer(&self.pcell, 0, &u32_bytes(&wd.pcell));
         self.queue.write_buffer(&self.piles, 0, &u32_bytes(&wd.piles));
+        // The crystals' levels outlive a dish written over the engine's.
+        let levels = self.pile_levels();
+        let had = std::mem::take(&mut self.pile_levels);
+        if !had.is_empty() {
+            self.set_pile_levels(&levels);
+        }
         self.queue.write_buffer(&self.bites, 0, &vec![0u8; self.cells as usize * 4]);
         self.queue.write_buffer(&self.wstat, 0, &[0u8; 16]);
         self.walled = !d.wall.is_empty();
@@ -2679,7 +2716,7 @@ impl Engine {
         // alone; a step reads only the haste.
         b.extend(u32_bytes(&[(self.lumps_on || self.strikers.is_some()) as u32, self.strikers.unwrap_or(0.0).to_bits(), 0, 0]));
         for l in &s.lumps {
-            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), l.spin.to_bits()]));
+            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour() | (l.armour & 0xFF00), l.bite, l.ring.to_bits(), l.spin.to_bits()]));
         }
         assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
         // The Sprawler's threads (`Settings::thread_lanes`): lanes N, the
@@ -2715,7 +2752,11 @@ impl Engine {
         let dream = if s.ceiling > 0 && self.cycles { s.dream } else { 0.0 };
         b.extend(u32_bytes(&[(scars && s.scar_burn) as u32, dream.to_bits()]));
         assert_eq!(b.len(), WIND_AT, "Params rows before the wind row moved");
-        b.extend(f32_bytes(&[s.wind[0], s.wind[1], 0.0, 0.0]));
+        b.extend(f32_bytes(&[s.wind[0], s.wind[1], s.blows.clamp(1.0, 15.0)]));
+        // The slime's levels (`level_blows`, `level_speed`, `level_bite`),
+        // packed: sixteenths, 256ths, sixteenths.
+        let q = |v: f32, k: f32| (v.max(0.0) * k).round().min(255.0) as u32;
+        b.extend(u32_bytes(&[q(s.level_blows, 16.0) | q(s.level_speed, 256.0) << 8 | q(s.level_bite, 16.0) << 16]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food
@@ -3833,6 +3874,10 @@ fn gas_until(d: &BigDish) -> u64 {
 /// none), then a word a cell, clear (free since 11-17: condensed walkers
 /// a cell), the raid's field and the lumps' bite cells.
 pub const DENSE_HEAD: usize = 16;
+/// A walker's slime level in its dense word (engine.wgsl's `GRADE_BITS`,
+/// 2026-11-26).
+pub const LEVEL_SHIFT: u32 = 12;
+pub const LEVEL_BITS: u32 = 7 << LEVEL_SHIFT;
 
 pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     let mut w = vec![0u32; DENSE_HEAD];
@@ -4068,6 +4113,64 @@ impl Engine {
         let at = self.dense_at as usize + 16;
         let w: Vec<u32> = b[at..at + 48].chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
         std::array::from_fn(|i| (w[3 * i], w[3 * i + 1], w[3 * i + 2]))
+    }
+
+    /// **The crystals' slime levels** (2026-11-26; engine.wgsl's
+    /// `GRADE_BITS`): crystal p's level `levels[p]` (0 to 7), as word 9 of
+    /// its pile (`Pile::_c`, the level + 1); a crystal past the list has
+    /// none, and slime born there keeps its parent's. Written only when
+    /// it changes.
+    pub fn set_pile_levels(&mut self, levels: &[u32]) {
+        let want: Vec<u32> = (0..self.npiles as usize).map(|p| levels.get(p).map_or(0, |&l| l.min(7) + 1)).collect();
+        if want == self.pile_levels {
+            return;
+        }
+        for (p, &w) in want.iter().enumerate() {
+            self.queue.write_buffer(&self.piles, ((p * PILE_WORDS + 9) * 4) as u64, &w.to_le_bytes());
+        }
+        // The first time: the slime already there takes the level of the
+        // crystal it is nearest, so the landing shows each crystal's
+        // territory in its colour (births alone turned a race world's body
+        // only 2% over in 12 s). One read-back of the walkers and their
+        // words, once a game.
+        if self.pile_levels.is_empty() && want.iter().any(|&w| w > 1) {
+            self.seed_levels(&want);
+        }
+        self.pile_levels = want;
+    }
+
+    /// Every living walker's level (engine.wgsl's `GRADE_BITS`) that of the
+    /// crystal it is nearest (`want`: each pile's level + 1, 0 none).
+    fn seed_levels(&mut self, want: &[u32]) {
+        let n = self.n as usize;
+        let centres: Vec<(f32, f32, u32)> = (0..want.len().min(self.dish.piles.len()))
+            .filter(|&p| want[p] > 0)
+            .map(|p| {
+                let c = self.dish.pile_centre(p);
+                ((c & 0xFFFF) as f32 + 0.5, (c >> 16) as f32 + 0.5, want[p] - 1)
+            })
+            .collect();
+        if centres.is_empty() {
+            return;
+        }
+        let wk = floats(&read_back(&self.device, &self.queue, &self.walkers));
+        let en = floats(&read_back(&self.device, &self.queue, &self.energy));
+        let mut dw = self.dense_of();
+        for k in 0..n.min(dw.len()) {
+            if self.grows && en[k] < 0.0 {
+                continue;
+            }
+            let (x, y) = (wk[4 * k], wk[4 * k + 1]);
+            let lv = centres.iter().min_by(|a, b| ((a.0 - x).powi(2) + (a.1 - y).powi(2)).total_cmp(&((b.0 - x).powi(2) + (b.1 - y).powi(2)))).map_or(0, |c| c.2);
+            dw[k] = (dw[k] & !LEVEL_BITS) | lv.min(7) << LEVEL_SHIFT;
+        }
+        self.queue.write_buffer(&self.news, self.dense_at + 4 * DENSE_HEAD as u64, &u32_bytes(&dw));
+    }
+
+    /// The crystals' levels as `set_pile_levels` took them (0 to 7; 0 for
+    /// a crystal with none).
+    pub fn pile_levels(&self) -> Vec<u32> {
+        self.pile_levels.iter().map(|&w| w.saturating_sub(1)).collect()
     }
 
     pub fn dense_of(&self) -> Vec<u32> {

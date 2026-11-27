@@ -36,6 +36,8 @@ use super::ui::theme::*;
 use super::ui::{experiment_card, experiment_card_h, experiment_meter, ExpInfo, Experiment};
 
 mod shop;
+mod stars;
+pub use stars::{StarNode, StarView};
 
 /// One switch on the options page: its value is `choices[at]`.
 #[derive(Clone, Debug, PartialEq)]
@@ -311,6 +313,9 @@ pub struct Shop {
     /// The planet ahead's slime and its one line (`run::does_to_you`),
     /// in the pane above the briefing (the planet's introduction, 11-24).
     pub slime: Option<(String, String)>,
+    /// What beats that slime (`menu::beat_it`), a line at the foot of its
+    /// block in the accent after "Beat it:".
+    pub beat: Option<String>,
     /// The planet ahead's twist, if it rolled one (`run::PlanetTwist`):
     /// its name and line, a block under the slime's in ice blue.
     pub twist: Option<(String, String)>,
@@ -787,6 +792,17 @@ pub enum StartEvent {
     RandomPlanet,
     /// Thing to try `i` ticked or unticked: the game remembers it.
     Tried(usize, bool),
+    /// The thing done by the first key (as the game reads it) is pressed
+    /// with the second from now on (`world::keys::bind`, a swap).
+    Bind(KeyCode, KeyCode),
+    /// Every key back to its default.
+    ResetKeys,
+    /// A new run on this seed (Past runs' "Play this run again", Direction
+    /// 11-24: the same planets, maps and shop rolls).
+    Replay(u64),
+    /// The star map's pick: node `k` of the step ahead (`route::Node`),
+    /// with its heat on or off; its shop comes next.
+    Route(u8, bool),
     Quit,
 }
 
@@ -805,6 +821,12 @@ pub enum Page {
     Runs,
     /// Each slime and threat met on this PC (Direction 11-24).
     Met,
+    /// Your keys: each squad key, a click and a key press to move it
+    /// (Direction 11-24, `world::keys`).
+    Bind,
+    /// The run's star map (2026-11-26, `stars.rs`): the route so far and
+    /// the next planet to pick, before its shop.
+    Stars,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -866,6 +888,20 @@ enum Hit {
     Met,
     /// Slime or threat `i` on the Slimes met page: the pane tells it.
     Seen(usize),
+    /// The key list's "Change keys" button.
+    Rebind,
+    /// Key row `i` on the Change keys page: a click or Enter waits for
+    /// the key to put it on.
+    Bind(usize),
+    /// Every key back to its default.
+    ResetKeys,
+    /// Past runs' "Play this run again": the run picked, anew on its seed.
+    Replay,
+    /// A planet on the star map that the route can go to: a click picks
+    /// it (the pane tells it).
+    Star(u8),
+    /// The star map's heat switch for the planet picked.
+    Heat,
 }
 
 pub struct StartMenu {
@@ -884,6 +920,11 @@ pub struct StartMenu {
     pub notice: Option<String>,
     /// The run's shop (the Shop page draws it).
     pub shop: Option<Shop>,
+    /// The run's star map (the Stars page draws it), the planet picked on
+    /// it and whether its heat is on.
+    pub stars: Option<StarView>,
+    star_pick: Option<u8>,
+    heat: bool,
     /// Landing on the next planet (Direction 11-24, the time between
     /// planets): the planet's place, name and head start, drawn over the
     /// shop for the frames before the planet is built (its head start ran
@@ -901,6 +942,20 @@ pub struct StartMenu {
     /// Each slime and threat, met or not (`Met`); empty hides the main
     /// page's "Slimes met" row.
     pub met: Vec<Met>,
+    /// The keys that can be moved, as the game reads them, and what each
+    /// does (the Change keys page; empty hides its button).
+    pub binds: Vec<(KeyCode, String)>,
+    /// The row waiting for its new key, and why the last key pressed
+    /// could not take it.
+    binding: Option<usize>,
+    /// A line for the hint's place on an inner page: why a key could not
+    /// move, why a run cannot be played again now.
+    note: Option<String>,
+    /// The seed typed on the main page's Run row (digits; empty for a
+    /// random run), which a new run takes (Direction 11-24).
+    pub run_seed: String,
+    /// The past run last picked (the one "Play this run again" plays).
+    run_pick: usize,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
     /// That run as the Run row's caption tells it (Look D, 11-24); the
@@ -970,7 +1025,7 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, landing: None, runs: Vec::new(), met: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, stars: None, star_pick: None, heat: false, landing: None, runs: Vec::new(), met: Vec::new(), run_live: false, run_now: None, run_end: None, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1, build: None, most_off: 3, news_tab: 0, try_first: Vec::new(), binds: Vec::new(), binding: None, note: None, run_seed: String::new(), run_pick: 0 }
     }
 
     /// The option named `key`.
@@ -984,9 +1039,11 @@ impl StartMenu {
     }
 
     pub fn show(&mut self, page: Page) {
-        if page == Page::Keys && self.page != Page::Keys {
+        // (Back from Change keys keeps where the key list goes back to.)
+        if page == Page::Keys && !matches!(self.page, Page::Keys | Page::Bind) {
             self.keys_from = self.page;
         }
+        (self.binding, self.note) = (None, None);
         self.page = page;
         self.focus = 0;
         (self.shop_tab, self.picked, self.bag_sheet) = (0, false, 0);
@@ -1155,15 +1212,18 @@ impl StartMenu {
             Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Viewer]).chain(self.record_row()).chain(self.build.is_some().then_some(Hit::Build)).chain([Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
+            Page::Keys if !self.binds.is_empty() => vec![Hit::Rebind, Hit::Back],
             Page::Keys => vec![Hit::Back],
+            Page::Bind => (0..self.binds.len()).map(Hit::Bind).chain([Hit::ResetKeys, Hit::Back]).collect(),
             Page::Shop => self.shop_rows(),
             Page::News => {
                 let b = self.build.as_ref();
                 let n = b.map_or(0, |b| if self.news_tab == 0 { b.news.len() } else { b.to_try.len() });
                 (0..n).map(|i| if self.news_tab == 0 { Hit::Line(i) } else { Hit::Try(i) }).chain([Hit::Back]).collect()
             }
-            Page::Runs => (0..self.runs.len()).map(Hit::PastRun).chain([Hit::Back]).collect(),
+            Page::Runs => (0..self.runs.len()).map(Hit::PastRun).chain([Hit::Replay, Hit::Back]).collect(),
             Page::Met => (0..self.met.len()).map(Hit::Seen).chain([Hit::Back]).collect(),
+            Page::Stars => self.star_rows(),
         }
     }
 
@@ -1172,21 +1232,28 @@ impl StartMenu {
             // A refused buy's notice stays in the shop.
             self.notice = None;
         }
-        let to = if self.page == Page::Keys { self.keys_from } else { Page::Main };
+        let to = match self.page {
+            Page::Keys => self.keys_from,
+            Page::Bind => Page::Keys,
+            _ => Page::Main,
+        };
         let from = self.page;
         self.show(to);
+        if from == Page::Bind {
+            self.focus = self.rows().iter().position(|&h| h == Hit::Rebind).unwrap_or(0);
+        }
         // Back on the main page, on the row that led away.
         if to == Page::Main {
             let led = match from {
                 Page::Missions => Hit::Campaign,
                 Page::Options => Hit::Options,
-                Page::Keys => Hit::Options,
+                Page::Keys | Page::Bind => Hit::Options,
                 Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => Hit::Range,
                 Page::Shop => Hit::Run,
                 Page::News => Hit::Build,
                 Page::Runs => Hit::Runs,
                 Page::Met => self.record_row().unwrap_or(Hit::Met),
-                Page::Main => Hit::Run,
+                Page::Main | Page::Stars => Hit::Run,
             };
             self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
         }
@@ -1211,7 +1278,10 @@ impl StartMenu {
             Hit::ShopTab(k) => self.open_shop_tab(k),
             Hit::BagFlip(by) => self.bag_sheet = (self.bag_sheet as isize + by).max(0) as usize,
             Hit::Slot(_) => {}
+            Hit::Next if self.page == Page::Stars => return self.star_pick.map(|k| StartEvent::Route(k, self.heat)),
             Hit::Next => return Some(StartEvent::NextLevel),
+            Hit::Star(k) => self.pick_star(k),
+            Hit::Heat => self.heat = !self.heat,
             Hit::EndRun => return Some(StartEvent::EndRun),
             Hit::Campaign => self.show(Page::Missions),
             Hit::Options => self.show(Page::Options),
@@ -1233,7 +1303,7 @@ impl StartMenu {
             // Every rule back, the UI size and the volume kept (the
             // player's choices, not rules).
             Hit::ResetAll => {
-                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail")) {
+                for o in self.options.iter_mut().filter(|o| !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail" | "frames")) {
                     o.at = o.default;
                 }
             }
@@ -1249,7 +1319,15 @@ impl StartMenu {
             Hit::Build => self.show(Page::News),
             Hit::Runs => self.show(Page::Runs),
             // (A run's row only takes the focus: `button`.)
-            Hit::PastRun(_) => {}
+            Hit::PastRun(i) => self.run_pick = i,
+            Hit::Replay => {
+                let r = self.runs.get(self.run_pick)?;
+                if self.run_live {
+                    self.note = Some("A run is under way: finish it or give it up first, then play this one again".into());
+                    return None;
+                }
+                return Some(StartEvent::Replay(r.seed));
+            }
             Hit::Met => self.show(Page::Met),
             Hit::Seen(_) => {}
             Hit::NewsTab(k) => self.open_news_tab(k),
@@ -1264,6 +1342,17 @@ impl StartMenu {
                 }
                 return Some(StartEvent::Tried(i, now));
             }
+            Hit::Rebind => self.show(Page::Bind),
+            Hit::Bind(i) => {
+                (self.binding, self.note) = (Some(i), None);
+                if let Some(k) = self.rows().iter().position(|&r| r == Hit::Bind(i)) {
+                    self.focus = k;
+                }
+            }
+            Hit::ResetKeys => {
+                (self.binding, self.note) = (None, None);
+                return Some(StartEvent::ResetKeys);
+            }
             Hit::Panel => {}
         }
         None
@@ -1275,7 +1364,7 @@ impl StartMenu {
     fn flip(&mut self, by: isize) {
         let n = self.sheets.max(1) as isize;
         self.sheet = (self.sheet as isize + by).rem_euclid(n) as usize;
-        if matches!(self.page, Page::Options | Page::Missions | Page::Shop | Page::Runs) {
+        if matches!(self.page, Page::Options | Page::Missions | Page::Shop | Page::Runs | Page::Bind) {
             self.focus = self.sheet * self.per.max(1);
         } else if matches!(self.page, Page::News | Page::Met) {
             // (Both tabs page by height, and the slimes met by rows of
@@ -1383,6 +1472,41 @@ impl StartMenu {
         self.focus = self.focus.min(rows.len().saturating_sub(1));
         let row = rows.get(self.focus).copied();
         self.follow = true;
+        // On the main page's Run row, before a run is under way, digits
+        // type the new run's seed and Backspace takes one back (Direction
+        // 11-24: blank is a random run).
+        if self.page == Page::Main && row == Some(Hit::Run) && !self.run_live {
+            if let Some(d) = digit(code) {
+                let more = format!("{}{d}", self.run_seed);
+                if more.parse::<u64>().is_ok() {
+                    self.run_seed = more;
+                }
+                return Vec::new();
+            }
+            if code == KeyCode::Backspace {
+                self.run_seed.pop();
+                return Vec::new();
+            }
+        }
+        // Waiting for a new key: Esc lets the row go, a key that can move
+        // takes it, any other says why not.
+        if let (Page::Bind, Some(i)) = (self.page, self.binding) {
+            if code == KeyCode::Escape {
+                self.binding = None;
+                return Vec::new();
+            }
+            let Some(&(meant, _)) = self.binds.get(i) else {
+                self.binding = None;
+                return Vec::new();
+            };
+            if super::keys::FREE.contains(&code) {
+                self.binding = None;
+                return vec![StartEvent::Bind(meant, code)];
+            }
+            let name = super::ui::raw_key_name(code).unwrap_or_else(|| format!("{code:?}").trim_start_matches("Digit").to_string());
+            self.note = Some(format!("{name} stays as it is: a key can move to a letter, [, ] or `"));
+            return Vec::new();
+        }
         match code {
             KeyCode::F1 | KeyCode::Slash => {
                 if self.page == Page::Keys {
@@ -1392,6 +1516,14 @@ impl StartMenu {
                 }
             }
             KeyCode::Escape if self.leaves_armory() => return vec![StartEvent::NextLevel],
+            // The star map: H the heat switch, Enter on a planet flies there.
+            KeyCode::KeyH if self.page == Page::Stars => self.heat = !self.heat,
+            KeyCode::Enter | KeyCode::NumpadEnter | KeyCode::Space if self.page == Page::Stars && matches!(row, Some(Hit::Star(_))) => {
+                if let Some(Hit::Star(k)) = row {
+                    self.pick_star(k);
+                    return vec![StartEvent::Route(k, self.heat)];
+                }
+            }
             KeyCode::Tab if self.tabbed() => {
                 let at = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
                 self.open_tab(at + 1);
@@ -1413,7 +1545,7 @@ impl StartMenu {
                 self.picked = true;
             }
             KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
-            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if matches!(self.page, Page::Keys | Page::Runs) || (self.page == Page::Met && self.sheets > 1) || (self.page == Page::News && self.news_tab == 0) => {
+            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if matches!(self.page, Page::Keys | Page::Runs | Page::Bind) || (self.page == Page::Met && self.sheets > 1) || (self.page == Page::News && self.news_tab == 0) => {
                 self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
             }
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
@@ -1487,7 +1619,7 @@ impl StartMenu {
         // 17:31Z) found the title and its line repeated on every page took
         // 130 to 220 of the 565 units a 1080-line screen has at 200%
         // (`Reports/menu-layout-research-2026-11-15/`).
-        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met);
+        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met | Page::Bind);
         // A shade down the left, fading out, so the panel reads over the
         // dish; the shop and the inner pages span the screen, so they dim
         // all of it.
@@ -1537,6 +1669,15 @@ impl StartMenu {
             }
             return;
         }
+        // The star map: one screen of its own too (`stars.rs`).
+        if self.page == Page::Stars {
+            let rows = self.rows();
+            let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
+            (self.scroll, self.scroll_max, self.body) = (0.0, 0.0, None);
+            self.stars_page(c, s, focus);
+            self.drawn = self.hits.clone();
+            return;
+        }
         let x = if inner { 40.0 * s } else { 48.0 * s };
         let w = (560.0 * s).min(sw - 2.0 * x);
         if self.page == Page::Main {
@@ -1561,12 +1702,13 @@ impl StartMenu {
             Page::Missions => self.missions_page(c, x, at, w, s, focus),
             Page::Options => self.options_page(c, x, at, w, s, focus),
             Page::Keys => self.keys_page(c, x, at, w, s),
+            Page::Bind => self.bind_page(c, x, at, s, focus),
             Page::News if self.news_tab == 0 => self.news_page(c, x, at, s, focus),
             Page::News => self.try_page(c, x, at, s, focus),
             Page::Runs => self.runs_page(c, x, at, s, focus),
             Page::Met => self.met_page(c, x, at, s, focus),
-            // (Its own frame, above.)
-            Page::Shop => at,
+            // (Their own frames, above.)
+            Page::Shop | Page::Stars => at,
         };
         c.clip = None;
         self.scroll_max = (bottom + self.scroll + 12.0 * s - body.bottom()).max(0.0);
@@ -1613,7 +1755,10 @@ impl StartMenu {
             Page::Keys if self.sheets > 1 => "Left/Right next page  ·  Esc or F1 back",
             Page::Keys if self.tabbed() => "Tab next tab  ·  Esc or F1 back",
             Page::Keys => "Esc or F1 back",
-            Page::Shop => "",
+            Page::Bind if self.binding.is_some() => "Press the key to put it on  ·  Esc cancels",
+            Page::Bind if self.sheets > 1 => "Up/Down pick  ·  Enter or click, then press the new key  ·  Left/Right next page  ·  Esc back",
+            Page::Bind => "Up/Down pick  ·  Enter or click, then press the new key: the two keys swap  ·  Esc back",
+            Page::Shop | Page::Stars => "",
             Page::News if self.news_tab == 0 && self.sheets > 1 => "Up/Down pick a line  ·  Left/Right or the wheel turn the page  ·  Tab things to try  ·  Esc back",
             Page::News if self.news_tab == 0 => "Up/Down pick a line  ·  Tab things to try  ·  Esc back",
             Page::News => "Up/Down pick  ·  Enter or click ticks it  ·  Tab what is new  ·  Esc back",
@@ -1623,6 +1768,19 @@ impl StartMenu {
             Page::Met if self.sheets > 1 => "Up/Down pick one  ·  Left/Right or the wheel turn the page  ·  Esc back",
             Page::Met if !self.runs.is_empty() => "Up/Down pick one  ·  Tab the past runs  ·  Esc back",
             Page::Met => "Up/Down pick one  ·  Esc back",
+        };
+        // On the Run row: the seed typed, or how to type one.
+        let on_run = self.page == Page::Main && focus == Some(Hit::Run) && !self.run_live;
+        let seed_hint;
+        let hint = if on_run {
+            seed_hint = if self.run_seed.is_empty() {
+                "Enter starts a random run  ·  type a number first to play a seed (a past run's: Past runs)".to_string()
+            } else {
+                format!("Seed {}: Enter starts it, with that run's planets, maps and shop  ·  Backspace takes a digit back", self.run_seed)
+            };
+            seed_hint.as_str()
+        } else {
+            hint
         };
         let mut pager_w = if paged { 170.0 * s } else { 0.0 };
         // The main page's corner: which build this is, and left of it, in
@@ -1645,8 +1803,9 @@ impl StartMenu {
         }
         // On the main page a notice from the game (why the map editor did
         // not start) takes the hint's place, in full view.
-        let (hint, ink) = match &self.notice {
-            Some(n) if self.page == Page::Main => (n.as_str(), WARN),
+        let (hint, ink) = match (&self.notice, &self.note) {
+            (Some(n), _) if self.page == Page::Main => (n.as_str(), WARN),
+            (_, Some(n)) if matches!(self.page, Page::Bind | Page::Runs) => (n.as_str(), WARN),
             _ => (hint, MUTED),
         };
         c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, ink);
@@ -1694,7 +1853,7 @@ impl StartMenu {
     fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // The rules changed, by their labels; the UI size and the volume
         // are not rules ("Free play, with ui 200%", the review 11-15).
-        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail")).map(|o| format!("{} {}", o.label, o.value())).collect();
+        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && !matches!(o.key.as_str(), "ui" | "volume" | "music" | "shake" | "detail" | "frames")).map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
@@ -1706,6 +1865,7 @@ impl StartMenu {
                 match (&self.run_now, &self.run_end) {
                     (Some(r), _) if self.run_live => r.line(),
                     _ if self.run_live => "The shop, then the next planet".into(),
+                    _ if !self.run_seed.is_empty() => format!("A run on seed {}: the planets, maps and shop of any run on that seed", self.run_seed),
                     _ => "Planet after planet toward the slime's home world; upgrades between".into(),
                 },
                 Hit::Run,
@@ -1854,6 +2014,7 @@ impl StartMenu {
                 }
                 n
             }),
+            Page::Bind => "Change keys".into(),
             _ if self.tabbed() => "Options".into(),
             _ => "Keys".into(),
         };
@@ -1872,6 +2033,23 @@ impl StartMenu {
         };
         let tx = x + c.text(Weight::SemiBold, 22.0 * s, (x, 36.0 * s), Align::Left, &name, TEXT) + 24.0 * s;
         let back = Rect::new(sw - x - 116.0 * s, 10.0 * s, 116.0 * s, 36.0 * s);
+        // The key list's way to its Change keys page, and that page's
+        // reset, left of Back.
+        let extra = match self.page {
+            Page::Keys if !self.binds.is_empty() => Some(("Change keys", Hit::Rebind)),
+            Page::Bind => Some(("Reset keys", Hit::ResetKeys)),
+            Page::Runs if !self.runs.is_empty() => Some(("Play this run again", Hit::Replay)),
+            _ => None,
+        };
+        let back_x = match extra {
+            Some((label, hit)) => {
+                let w = c.atlas.measure(Weight::SemiBold, 16.0 * s, label) + 28.0 * s;
+                let r = Rect::new(back.x - 10.0 * s - w, back.y, w, back.h);
+                self.small_button(r, label, "", hit, focus == Some(hit), c, s);
+                r.x
+            }
+            None => back.x,
+        };
         if !tabs.is_empty() {
             let lit = match self.page {
                 Page::News => self.news_tab,
@@ -1884,7 +2062,7 @@ impl StartMenu {
             for (k, (t, hit)) in tabs.iter().enumerate() {
                 let w = c.atlas.measure(Weight::SemiBold, 15.0 * s, t) + 28.0 * s;
                 let r = Rect::new(tx, 11.0 * s, w, 34.0 * s);
-                if r.right() > back.x - 12.0 * s {
+                if r.right() > back_x - 12.0 * s {
                     break;
                 }
                 let on = k == lit;
@@ -2440,6 +2618,7 @@ impl StartMenu {
         let per = ((room - (lt - top) - cap - 12.0 * s) / rh).floor().max(1.0) as usize;
         if let Some(Hit::PastRun(i)) = focus {
             self.sheet = i / per;
+            self.run_pick = i;
         }
         let (shown, pages) = sheet_of(n, per, self.sheet);
         (self.sheets, self.per) = (pages, per);
@@ -2487,7 +2666,9 @@ impl StartMenu {
             y += rh;
         }
         // The run told in full.
-        let Some(r) = told.or((n > 0).then_some(first)).map(|i| &runs[i]) else { return panel.bottom() };
+        // (With the focus on "Play this run again", the run it plays.)
+        let picked = (focus == Some(Hit::Replay) && self.run_pick < n).then_some(self.run_pick);
+        let Some(r) = told.or(picked).or((n > 0).then_some(first)).map(|i| &runs[i]) else { return panel.bottom() };
         let tw = nw - 36.0 * s;
         let stops = r.stops();
         let held: Vec<(&str, String)> = [("Guns", &r.guns), ("Cards", &r.cards), ("Devices", &r.bodies), ("Relics", &r.relics)]
@@ -2878,10 +3059,76 @@ impl StartMenu {
         panel.bottom()
     }
 
+    /// **Change keys** (Direction 11-24): each key that can move, a chip
+    /// with the key pressed for it now and what it does, in columns a page
+    /// at a time. A click (or Enter) on a row waits for a key; that key
+    /// takes the row's job and its own old job moves to the row's old key
+    /// (`world::keys`). A key moved off its default says which it was.
+    fn bind_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let n = self.binds.len();
+        let avail = c.screen.0 as f32 - 2.0 * x;
+        let room = self.room(c, top, s);
+        let gap = 28.0 * s;
+        let cols = ((avail + gap) / (360.0 * s + gap)).floor().clamp(1.0, 3.0) as usize;
+        let col_w = (avail - (cols - 1) as f32 * gap) / cols as f32;
+        let rh = 38.0 * s;
+        // As many rows to a column as the room takes, then spread evenly
+        // over the pages and columns (27 keys in 3 columns of 9 on a wide
+        // screen, not two of 24 and 3 beside an empty one).
+        let most = ((room - 36.0 * s) / rh).floor().max(1.0) as usize;
+        let pages = n.div_ceil(most * cols).max(1);
+        let per_col = n.div_ceil(pages * cols).clamp(1, most);
+        let per = per_col * cols;
+        if let Some(Hit::Bind(i)) = focus {
+            self.sheet = i / per;
+        }
+        let (shown, pages) = sheet_of(n, per, self.sheet);
+        (self.sheets, self.per) = (pages, per);
+        self.sheet = self.sheet.min(pages - 1);
+        let rows_here = shown.len();
+        let used_rows = rows_here.min(per_col).max(1);
+        let panel = Rect::new(x, top, avail, used_rows as f32 * rh + 36.0 * s);
+        self.glass(panel, c, s);
+        let chip_w = 58.0 * s;
+        for (k, i) in shown.enumerate() {
+            let (col, row) = (k / per_col, k % per_col);
+            let r = Rect::new(panel.x + 20.0 * s + col as f32 * (col_w + gap), panel.y + 18.0 * s + row as f32 * rh, col_w - 24.0 * s, rh - 4.0 * s);
+            let (meant, what) = self.binds[i].clone();
+            let waiting = self.binding == Some(i);
+            let focused = focus == Some(Hit::Bind(i));
+            let hot = self.hover.is_some_and(|p| r.contains(p));
+            if focused || hot || waiting {
+                c.rrect(r, 8.0 * s, [255, 255, 255, if waiting { 26 } else { 14 }]);
+            }
+            if focused || waiting {
+                c.outline(r, 8.0 * s, 1.5 * s, ACCENT);
+            }
+            let now = super::keys::pressed(meant);
+            let moved = now != meant;
+            let chip = Rect::new(r.x + 6.0 * s, r.y + 4.0 * s, chip_w, r.h - 8.0 * s);
+            // Moved keys in amber, so a changed set reads at a glance (and
+            // by the "was" beside it, not by colour alone).
+            let (fill, ink) = if waiting { ([40, 70, 98, 255], TEXT) } else if moved { ([70, 54, 22, 255], WARN) } else { ([30, 36, 44, 255], ACCENT) };
+            c.rrect(chip, 6.0 * s, fill);
+            c.outline(chip, 6.0 * s, s.max(1.0), [255, 255, 255, 40]);
+            let label = if waiting { "...".to_string() } else { super::ui::raw_key_name(now).unwrap_or_default() };
+            c.text(Weight::SemiBold, 15.0 * s, (chip.x + chip.w / 2.0, chip.y + chip.h / 2.0 + 5.5 * s), Align::Centre, &label, ink);
+            let was = if moved { super::ui::raw_key_name(meant).map(|k| format!("was {k}")) } else { None };
+            let ww = was.as_ref().map_or(0.0, |w| c.atlas.measure(Weight::Medium, 13.0 * s, w) + 12.0 * s);
+            if let Some(w) = &was {
+                c.text(Weight::Medium, 13.0 * s, (r.right() - 8.0 * s, r.y + r.h / 2.0 + 5.0 * s), Align::Right, w, MUTED);
+            }
+            let tx = chip.right() + 14.0 * s;
+            c.text_fit(Weight::Medium, 15.0 * s, (tx, r.y + r.h / 2.0 + 5.5 * s), Align::Left, &what, r.right() - 8.0 * s - ww - tx, TEXT);
+            self.hits.push((r, Hit::Bind(i)));
+        }
+        panel.bottom()
+    }
+
     /// The pages the last drawn list took: an Options tab, the key list or
     /// the campaign (1 elsewhere). The fit tests'.
     pub fn sheets(&self) -> usize {
-        if matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::Shop | Page::News | Page::Runs) {
+        if matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::Shop | Page::News | Page::Runs | Page::Bind) {
             self.sheets
         } else {
             1
@@ -3130,7 +3377,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, twist: None, shots: Vec::new(), plain_shot: None }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -3179,7 +3426,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, twist: None, shots: Vec::new(), plain_shot: None }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
@@ -3604,13 +3851,14 @@ mod tests {
     #[test]
     fn every_page_follows_the_ui_size() {
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
-            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop, Page::News, Page::Runs, Page::Met] {
+            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop, Page::News, Page::Runs, Page::Met, Page::Bind] {
                 let size = |user: f32| {
                     let mut m = menu();
                     m.build = Some(build_page(12, 4));
                     m.runs = past_runs(30);
                     m.met = met_list();
                     m.keys = (0..40).map(|k| (format!("K{k}"), "Does a thing".to_string())).collect();
+                    m.binds = binds();
                     m.shop = Some(if page == Page::Shop { armory(9) } else { shop(14) });
                     m.show(page);
                     let mut c = Canvas::new(screen);
@@ -3630,19 +3878,20 @@ mod tests {
                         let b = m.body.unwrap_or(Rect::new(0.0, 0.0, screen.0 as f32, screen.1 as f32));
                         // The shop's two buttons and the inner pages'
                         // header are fixed, over and under the body.
-                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met) && h == Hit::Back);
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions | Page::News | Page::Runs | Page::Met | Page::Bind) && matches!(h, Hit::Back | Hit::Rebind | Hit::ResetKeys | Hit::Replay));
                         assert!(r.y >= 0.0 && r.bottom() <= screen.1 as f32, "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen");
                         assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
                     }
                     let probe = match page {
                         // (Land: the bottom bar's, whose height is fixed;
                         // the counter's rows shrink to fit before they page.)
-                        Page::Shop => Hit::Next,
+                        Page::Shop | Page::Stars => Hit::Next,
                         Page::Options => Hit::Reset(0),
                         Page::Missions => Hit::Mission(0),
                         Page::News => Hit::Line(0),
                         Page::Runs => Hit::PastRun(0),
                         Page::Met => Hit::Seen(0),
+                        Page::Bind => Hit::Bind(0),
                         Page::Keys | Page::Main => Hit::Back,
                     };
                     let probe = if page == Page::Main { Hit::Sandbox } else { probe };
@@ -3904,7 +4153,83 @@ mod tests {
         // the big sizes, and an experiment on (the corner names it).
         m.build = Some(build_page(24, 9));
         m.options.push(Opt::new("exp:feel", "Shake and hit-stop", &["off", "on"], "off", "on", "The camera shakes on blasts").in_tab("Experiments"));
+        m.binds = binds();
         m
+    }
+
+    /// Change keys' rows, as many as the window's (`bind_rows`), the
+    /// longest words it has.
+    fn binds() -> Vec<(KeyCode, String)> {
+        super::super::keys::FREE.iter().take(27).enumerate().map(|(i, &k)| (k, if i % 3 == 0 { "Drain a crystal (build page: door)".to_string() } else { format!("Thing {i}") })).collect()
+    }
+
+    /// Replay a run (Direction 11-24): digits on the Run row type a seed
+    /// (Backspace takes one back, too many to be a seed are refused); Past
+    /// runs' "Play this run again" plays the run picked on its seed, but
+    /// not over a run under way.
+    #[test]
+    fn a_run_can_be_played_again_on_its_seed() {
+        let mut m = menu();
+        m.runs = past_runs(5);
+        m.show(Page::Main);
+        assert_eq!(m.rows()[m.focus], Hit::Run);
+        for d in [KeyCode::Digit4, KeyCode::Digit2, KeyCode::Digit7] {
+            assert!(m.key(d, true).is_empty());
+        }
+        m.key(KeyCode::Backspace, true);
+        assert_eq!(m.run_seed, "42");
+        for _ in 0..30 {
+            m.key(KeyCode::Digit9, true);
+        }
+        assert!(m.run_seed.parse::<u64>().is_ok(), "{}", m.run_seed);
+        m.run_seed.clear();
+        m.show(Page::Runs);
+        assert!(m.rows().contains(&Hit::Replay));
+        m.key(KeyCode::ArrowDown, true);
+        m.key(KeyCode::ArrowDown, true);
+        let mut c = Canvas::new((1920, 1080));
+        m.draw(&mut c);
+        let at = m.rows().iter().position(|&h| h == Hit::Replay).unwrap();
+        m.focus = at;
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Replay(m.runs[2].seed)]);
+        m.run_live = true;
+        assert!(m.key(KeyCode::Enter, true).is_empty());
+        assert!(m.note.is_some(), "says why not");
+    }
+
+    /// Change keys (Direction 11-24): the key list's button opens it; a
+    /// row waits for a key, which comes back as a bind of the row's key;
+    /// a key that cannot move says so and keeps waiting; Esc lets the row
+    /// go, and then goes back to the key list on its button.
+    #[test]
+    fn change_keys_waits_for_a_key_and_binds_it() {
+        let mut m = full_menu();
+        m.show(Page::Options);
+        m.open_tab(m.tabs().len() - 1);
+        assert_eq!(m.rows(), vec![Hit::Rebind, Hit::Back]);
+        assert!(m.key(KeyCode::Enter, true).is_empty());
+        assert_eq!(m.page, Page::Bind);
+        assert_eq!(m.rows().len(), m.binds.len() + 2);
+        m.key(KeyCode::ArrowDown, true);
+        assert!(m.key(KeyCode::Enter, true).is_empty());
+        assert_eq!(m.binding, Some(1));
+        assert!(m.key(KeyCode::Digit3, true).is_empty());
+        assert!(m.note.as_deref().is_some_and(|n| n.starts_with("3 stays")), "{:?}", m.note);
+        assert_eq!(m.binding, Some(1), "still waiting");
+        assert_eq!(m.key(KeyCode::KeyQ, true), vec![StartEvent::Bind(m.binds[1].0, KeyCode::KeyQ)]);
+        assert_eq!(m.binding, None);
+        m.key(KeyCode::Enter, true);
+        m.key(KeyCode::Escape, true);
+        assert_eq!((m.page, m.binding), (Page::Bind, None), "Esc lets the row go first");
+        let reset = m.rows().iter().position(|&h| h == Hit::ResetKeys).unwrap();
+        m.focus = reset;
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::ResetKeys]);
+        m.key(KeyCode::Escape, true);
+        assert_eq!(m.page, Page::Keys);
+        assert_eq!(m.rows()[m.focus], Hit::Rebind);
+        assert!(m.tabbed(), "still a tab of Options");
+        m.key(KeyCode::Escape, true);
+        assert_eq!(m.page, Page::Main);
     }
 
     /// The owner, 11-15 17:31Z: "Having to scroll is horrible. That's not
@@ -3977,6 +4302,18 @@ mod tests {
             // (How many pages the game's own key list takes: the window's
             // test `the_menus_real_lists_fit_one_screen`.)
             assert!(pages >= 1);
+            // Change keys, every row focused, one waiting for its key.
+            m.show(Page::Bind);
+            for row in 0..m.rows().len() {
+                m.focus = row;
+                m.binding = (row == 2).then_some(2);
+                draw(&mut m, &mut c);
+                let h = m.rows()[row];
+                let at = format!("{screen:?} at {user}, Change keys {h:?}");
+                check(&m, &c, &at);
+                assert!(m.rect_of(h).is_some(), "{at}: not drawn when focused");
+            }
+            m.binding = None;
             // The campaign, each mission focused in turn.
             m.show(Page::Missions);
             for row in 0..m.rows().len() {

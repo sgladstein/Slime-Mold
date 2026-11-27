@@ -918,6 +918,27 @@ const MOULD_HUE: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2);
 // The gold the engine paints, which MOULD_HUE is measured against (a worked
 // value, so the viewer leaves it out).
 const MOULD_GOLD: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2) * 1.0;
+// **The slime's levels' colours** (2026-11-26, the owner's "change slime
+// color so there are 3-8 levels of slime"): a hue for each level 1 to 7
+// past the gold (0), deepening and cooling as the slime gets stronger, each
+// saturated enough for `cell_mat_c`'s push to keep it the brightest warm
+// thing in its patch; read between the two nearest by the mean level.
+fn level_rgb(l: f32) -> vec3<f32> {
+    var c = array<vec3<f32>, 8>(
+        MOULD_GOLD,
+        vec3<f32>(238.0, 112.0, 36.0),
+        vec3<f32>(220.0, 58.0, 32.0),
+        vec3<f32>(178.0, 26.0, 38.0),
+        vec3<f32>(140.0, 20.0, 58.0),
+        vec3<f32>(112.0, 26.0, 96.0),
+        vec3<f32>(80.0, 30.0, 120.0),
+        vec3<f32>(52.0, 22.0, 92.0),
+    );
+    let x = clamp(l, 0.0, 7.0);
+    let i = u32(floor(x));
+    let j = min(i + 1u, 7u);
+    return mix(c[i], c[j], x - floor(x));
+}
 // Each species its own hue (art direction rule 3; Look and interface,
 // 11-24, for Direction's "planets 4 to 8 each read differently at zoom
 // 6"). Filmed at rest on planets 4 to 8 (seed 1, idle hand, zoom 6), the
@@ -1381,6 +1402,18 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // A piece cut off from food (C8, 2026-11-14) goes ashen and dull as its
     // walkers' news goes stale, before they wither: the share of stale
     // walkers is the fade, so a piece greys as it starves, not on a timer.
+    // The slime's level (`dense` under 0 is minus the mean level round the
+    // cell, `prep`): from the gold at level 0 through red, crimson and
+    // violet, by the mean, so where two crystals' slime meet the colour
+    // runs between them as their walkers mix (no line is drawn).
+    // Mixed in after the gold's saturation push (`vivid`, below): through
+    // the push a deep wine came out hot pink, as the bronze came out orange.
+    var dshare = dense;
+    var lvl = 0.0;
+    if (dense < 0.0) {
+        lvl = -dense;
+        dshare = 0.0;
+    }
     hue = mix(hue, ASH_RGB, 0.75 * cut);
     // Bare ground is soil by the land's elevation, with the engine's tints
     // over it; before 2026-11-11 19:29Z it was the engine's flat near-black.
@@ -1409,7 +1442,8 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // order), and the gel adds a little of the hue's own light, so a thin
     // film stays above the darker ground (crystals thread, 11-14) in grey.
     let thick = smoothstep(0.6, 1.0, th);
-    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut)) * (1.0 - 0.3 * thick);
+    var vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut)) * (1.0 - 0.3 * thick);
+    if (lvl > 0.0) { vivid = mix(vivid, mix(level_rgb(lvl), ASH_RGB, 0.75 * cut), smoothstep(0.0, 1.0, lvl)); }
     // Condensed mould (11-14, the condense thread): where its walkers have
     // condensed (`dense`, the share of the mass round the cell) the body
     // turns deep bronze and holds near-full gloss, a harder, denser body,
@@ -1418,7 +1452,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // gold's saturation push: mixed into the hue before it, the push turned
     // the bronze orange, the panic's colour.
     let shade_th = 0.95 + 0.2 * smoothstep(0.3, 1.0, th);
-    let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dense * (1.0 - cut));
+    let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dshare * (1.0 - cut));
     var gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
     // The film's inside lifted toward 95 in grey with its own light (art
     // lead 11-15: thin film from 80, above rock and soft rock), gated by
@@ -2370,7 +2404,16 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let cut_share = clamp(m / max(n, 1e-3), 0.0, 1.0);
     // The share of the mould's mass round the cell that has condensed (a
     // condensed walker counts two in `n`).
-    let dense_share = clamp(2.0 * dn / max(n, 1e-3), 0.0, 1.0);
+    var dense_share = clamp(2.0 * dn / max(n, 1e-3), 0.0, 1.0);
+    // With nothing ripening (`ripe_at` 0, the game) those bits hold the
+    // walkers' levels (`draw_specks`): the mean level round the cell, 0 to
+    // 7, which colours the material (`cell_mat_c`), and no bronze.
+    var level = 0.0;
+    if (P.ripe_at == 0u) {
+        level = clamp(15.0 * dn / max(n, 1e-3), 0.0, 7.0);
+        dense_share = 0.0;
+    }
+    let mat_dense = select(dense_share, -level, P.ripe_at == 0u && level > 0.0);
     // Fresh absorptions round the cell (the last 0.3 s, `draw_specks`)
     // light it warm-white by how many (art director, 11-14: a big
     // condensation flares, a trickle glints), a fine cell's worth of them
@@ -2482,7 +2525,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         hcell[i] = hh.x + set_rise(ss, wide) + lump.pack;
         hcell[P.rw * P.rh + i] = hh.y;
         hcell[2u * P.rw * P.rh + i] = ground_pack(ground_cell(ix, iy).col);
-        var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
+        var m1 = cell_mat(ix, iy, tm, cut_share, mat_dense);
         m1.body = wide;
         m1.glow += ABSORB_RGB * 0.45 * flash;
         m1 = flush_mat(m1, hot);
@@ -2511,7 +2554,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         let cx = ix + o[q].x; let cy = iy + o[q].y;
         h += wq * cell_height(cx, cy, th_h);
         gcol += wq * ground_cell(cx, cy).col;
-        let mq = cell_mat_c(cx, cy, tm, cut_share, dense_share, cs);
+        let mq = cell_mat_c(cx, cy, tm, cut_share, mat_dense, cs);
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss; mt.vis += wq * mq.vis;
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
@@ -4304,6 +4347,12 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         } else if (P.ripe_at > 0u) {
             let r = clamp(f32(dw & 0xFFFFu) / f32(P.ripe_at), 0.0, 1.0);
             dcnt = u32(round(4.0 * r * r));
+        } else {
+            // **The slime's level** (2026-11-26, the engine's `GRADE_BITS`,
+            // bits 12-14): summed a fine cell in the condensed bits, free
+            // while nothing ripens (`ripe_at` 0, as the game runs), so
+            // `prep` reads the mean level round the cell (`level_rgb`).
+            dcnt = (dw >> 12u) & 7u;
         }
     }
     // The flare is calm brightness, which `base` lights as more walkers.

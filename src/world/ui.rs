@@ -617,12 +617,22 @@ pub struct Intro {
     pub kicker: String,
     pub title: String,
     pub line: String,
+    /// What beats this slime (`menu::beat_it`, Direction 11-24), under its
+    /// line after "Beat it:" in the accent; None where the line says it.
+    pub counter: Option<String>,
     /// The planet's twist, if it rolled one (`run::PlanetTwist`, Enemy's
     /// #830): its name and its line, under the slime's in the twist's
     /// ice blue.
     pub twist: Option<(String, String)>,
     pub alpha: f32,
 }
+
+/// The words before what beats a slime (`Intro::counter`, the shop's
+/// `Shop::beat`).
+pub const BEAT_IT: &str = "Beat it:";
+
+/// The frame readout's window (ms): ten seconds (Direction 11-24).
+const READOUT_MS: f32 = 10_000.0;
 
 /// A planet twist's colour on the HUD: an ice blue, apart from the slime's
 /// amber and the accent's cyan (the cold snap and the wind alike).
@@ -679,6 +689,15 @@ pub struct Model {
     /// ("Cold snap in 0:12", "Wind from the west") and hover, a pill in
     /// `TWIST` beside the tell's.
     pub twist: Option<(Icon, String, String)>,
+    /// The slime's size as a bar in the top bar's middle (`SlimeGauge`),
+    /// drawn in the goal's place: in a run the goal is to wipe the slime
+    /// out, so the bar going to nothing is the goal, and `objective` is
+    /// then read by the pause menu alone.
+    pub gauge: Option<SlimeGauge>,
+    /// Warnings beside the tell, in red, as its pills: a heart on a
+    /// crystal, the stalemate's count. They were tails on the goal line,
+    /// which then ran past its room onto a row of its own (owner, 11-27).
+    pub alarms: Vec<(Icon, String, String)>,
     /// The first minute's coaching (the window's `Coach`): the step's
     /// words, "1 of 3" and its opacity, in a panel over the command bar.
     pub coach: Option<(String, String, f32)>,
@@ -717,6 +736,11 @@ pub struct Model {
     /// slime's name and line, and the twist's, under the goal
     /// (`objective`). The card's `alpha` is not read here.
     pub pause_planet: Option<Intro>,
+    /// **The frame readout** (Direction 11-24, Options > Screen > Frame
+    /// readout, off by default): the World detail as the readout names
+    /// it ("World detail 50%, Auto"); Some draws the last ten seconds'
+    /// p95 frame time and frames a second beside it, under the clock.
+    pub readout: Option<String>,
     /// The end screen's first button carries on (`MenuItem::Continue`)
     /// under this label, instead of "Play again" (a roguelike run: the
     /// shop, or the run's end).
@@ -734,6 +758,33 @@ pub struct Model {
     /// The ghost is a throw (a toolkit tool; a squad's device later): drawn
     /// with its thrower, reach and arc as well as where it lands.
     pub throw: Option<Throw>,
+}
+
+/// **The slime's size** (owner, 2026-11-27: "The size of the slime should
+/// be shown much more visually and intuitively, it should be easy to tell
+/// how big it is, compared to its start size and peak size"). A bar the
+/// width of its peak, filled to its size now, a white mark where it
+/// landed, the walkers cut in the last seconds pale on the fill's end,
+/// and the count. Until then the count alone sat in the resources' pill,
+/// and again in the goal line ("slime count 9,560"), with nothing to read
+/// it against. Every part is a count the game keeps (`Game::curve`).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct SlimeGauge {
+    /// The slime's name ("The Trunk"), left of the bar where there is room.
+    pub name: String,
+    /// Walkers now, at the landing's first count, at the most so far, and
+    /// the most over the last few seconds.
+    pub now: u32,
+    pub start: u32,
+    pub peak: u32,
+    pub recent: u32,
+    /// The count as the bar writes it ("9,560", "40.1k").
+    pub count: String,
+    /// A red mark across the bar at this share of the peak, where the
+    /// slime does something (the Swarmer's all-out rush).
+    pub line: Option<f32>,
+    /// What hovering the bar says.
+    pub tip: String,
 }
 
 /// A throw being aimed (`Model::throw`; owner 2026-11-16: "when throwing
@@ -1074,12 +1125,35 @@ struct Alert {
     at: Option<(f32, f32)>,
     colour: Rgba,
     when: Instant,
+    /// How many times these words came while it showed ("x3" after them).
+    count: u32,
 }
 
-/// How long an alert stays, and fades.
-const ALERT_LIFE: Duration = Duration::from_secs(6);
+impl Alert {
+    /// How long it stays: a red one (a soldier lost, a raid) longer.
+    fn life(&self) -> Duration {
+        if self.colour == BAD {
+            ALERT_LIFE_BAD
+        } else {
+            ALERT_LIFE
+        }
+    }
+
+    fn live(&self, now: Instant) -> bool {
+        now.duration_since(self.when) < self.life()
+    }
+}
+
+/// How long an alert stays, and fades (owner, 2026-11-27: "all pop up
+/// extra status messages ... as unobtrusive on the screen as possible").
+/// Until then every alert stayed 6 s and five stacked, so a fight's
+/// soldier losses alone made a column of five alike down the left.
+const ALERT_LIFE: Duration = Duration::from_secs(4);
+const ALERT_LIFE_BAD: Duration = Duration::from_secs(6);
 const ALERT_FADE: f32 = 1.0;
-const ALERTS_MAX: usize = 5;
+const ALERTS_MAX: usize = 3;
+/// The widest an alert draws, UI units, its words cut to fit after that.
+const ALERT_W: f32 = 520.0;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Targeting {
@@ -1139,6 +1213,10 @@ pub struct Hud {
     /// The loadout's swap command, as last drawn.
     cycle: Option<u32>,
     started: Instant,
+    /// The last ten seconds' frame times (ms) and their sum, for the
+    /// frame readout (`Model::readout`).
+    frames: std::collections::VecDeque<f32>,
+    frames_ms: f32,
     /// The hover card's timing (`HoverCard`).
     card: HoverCard,
     /// The mouse buttons held (left, right, middle): no hover card then.
@@ -1226,7 +1304,33 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, end_carry: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, below: 0.0, world: (1.0, 1.0), end: false, end_carry: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), frames: std::collections::VecDeque::new(), frames_ms: 0.0, card: HoverCard::new(), held: [false; 3], #[cfg(test)] row: (Vec::new(), false, GunFit::BARE) }
+    }
+
+    /// One frame's time (ms), the interval between frames in the window
+    /// (as Auto's World detail judges them, `autodetail`): the readout
+    /// keeps the last ten seconds.
+    pub fn frame(&mut self, ms: f32) {
+        if !ms.is_finite() || ms <= 0.0 {
+            return;
+        }
+        self.frames.push_back(ms);
+        self.frames_ms += ms;
+        while self.frames_ms > READOUT_MS && self.frames.len() > 1 {
+            self.frames_ms -= self.frames.pop_front().unwrap_or(0.0);
+        }
+    }
+
+    /// The last ten seconds' 95th-percentile frame (ms) and frames a
+    /// second, once there are any.
+    pub fn frame_stats(&self) -> Option<(f32, f32)> {
+        if self.frames.is_empty() || self.frames_ms <= 0.0 {
+            return None;
+        }
+        let mut v: Vec<f32> = self.frames.iter().copied().collect();
+        v.sort_by(f32::total_cmp);
+        let k = ((v.len() as f32 * 0.95).ceil() as usize).clamp(1, v.len()) - 1;
+        Some((v[k], v.len() as f32 * 1000.0 / self.frames_ms))
     }
 
     /// The menu is open (the game should pause).
@@ -1239,7 +1343,8 @@ impl Hud {
     /// squad (controls review, 2026-11-21: Space is the squad's there, so a
     /// raid's or a landing ore's alert could only be reached by panning).
     pub fn newest_place(&self) -> Option<(f32, f32)> {
-        self.alerts.iter().rev().filter(|a| a.when.elapsed() < ALERT_LIFE).find_map(|a| a.at)
+        let now = Instant::now();
+        self.alerts.iter().rev().filter(|a| a.live(now)).find_map(|a| a.at)
     }
 
     /// A targeted command is waiting for its point: its id and target, and
@@ -1293,9 +1398,12 @@ impl Hud {
     /// An alert: `text`, at a world point if it has one (pinged on the
     /// minimap; Space goes there).
     pub fn alert(&mut self, text: &str, at: Option<(f32, f32)>, colour: Rgba) {
-        // The same words again refresh the old one rather than stack.
+        // The same words again refresh the old one rather than stack, and
+        // count ("A soldier was killed by the slime x4"), while it shows.
+        let now = Instant::now();
+        let count = self.alerts.iter().find(|a| a.text == text && a.live(now)).map_or(1, |a| a.count + 1);
         self.alerts.retain(|a| a.text != text);
-        self.alerts.push(Alert { text: text.into(), at, colour, when: Instant::now() });
+        self.alerts.push(Alert { text: text.into(), at, colour, when: now, count });
         if self.alerts.len() > ALERTS_MAX {
             self.alerts.remove(0);
         }
@@ -1604,7 +1712,7 @@ impl Hud {
             self.targeting = still.map(|index| Targeting { index, ..t });
         }
         let now = Instant::now();
-        self.alerts.retain(|a| now.duration_since(a.when) < ALERT_LIFE);
+        self.alerts.retain(|a| a.live(now));
         let pad = CARD_PAD * b;
 
         // The minimap's frame (bottom right), the command card left of it,
@@ -1706,6 +1814,10 @@ impl Hud {
                 // Thin, and gold as the panel's edge: a ring at the thing's
                 // own size, not a pulse (it never grows or flashes).
                 let w = 2.0 * s;
+                // On a dark band a pixel wider (the colour check, 11-24:
+                // under protanopia and deuteranopia the gold ring vanished
+                // into yellow slime; the dark edge holds by brightness).
+                c.ring(Rect::new(p.0 - r, p.1 - r, 2.0 * r, 2.0 * r), r, w + 2.0 * s, 1.0, alpha([14, 13, 10, 255], 0.55 * a));
                 c.ring(Rect::new(p.0 - r, p.1 - r, 2.0 * r, 2.0 * r), r, w, 1.0, alpha([255, 214, 90, 255], 0.75 * a));
             }
             // A reach ring can be wider than the screen: the panel hangs
@@ -1898,54 +2010,125 @@ impl Hud {
                 self.tip_small(&tip, ((r.right() - tw).max(8.0 * s), r.bottom() + 6.0 * s), c, s);
             }
         }
-        // The objective, centred between the resources' pill and the
-        // clock's, smaller if it must be; and if it still does not fit,
-        // on a row of its own under the bar, left of the experiments'
-        // mark, cut to the room there. Centred on the screen alone, at
+        // The frame readout (Options > Screen, off by default): the last
+        // ten seconds' p95 frame and frames a second, and the World
+        // detail, under the clock left of the experiments' mark. Amber
+        // and marked "slow" past Auto's own line for a slow second
+        // (`autodetail::SLOW_MS`, 17.5 ms), so 60 a second reads at once.
+        if let (Some(detail), Some((p95, fps))) = (&m.readout, self.frame_stats()) {
+            let slow = p95 > 17.5;
+            let t = format!("p95 {p95:.1} ms{}  ·  {fps:.0} a second  ·  {detail}", if slow { " (slow)" } else { "" });
+            let w = c.atlas.measure(Weight::Medium, small, &t) + 22.0 * s;
+            let right = if mark < sw { mark - 8.0 * s } else { menu.right() };
+            let r = Rect::new((right - w).max(8.0 * s), y + h + 6.0 * s, w, 22.0 * s);
+            c.shadow(r, r.h / 2.0, 10.0 * s, 2.0 * s, SHADOW);
+            c.panel(r, r.h / 2.0, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE);
+            c.text_fit(Weight::Medium, small, (r.x + 11.0 * s, r.y + 15.5 * s), Align::Left, &t, r.w - 16.0 * s, if slow { WARN } else { MUTED });
+            mark = r.x;
+        }
+        // The middle (owner, 11-27: "Everything should be as unobtrusive
+        // on the screen as possible ... the top center slime goal text was
+        // too long and it went onto multiple lines; that shouldn't
+        // happen"): the slime's size (`gauge`) or else the goal, then the
+        // pills (the alarms in red, the slime's tell, the twist), all in
+        // the bar's own row where they fit, the pills in one row under it
+        // where they do not. The goal shrinks to 12 px and is then cut,
+        // its whole words on hover. Only a middle too narrow for even
+        // that (a big UI size in a small window) puts it on a row of its
+        // own. Until 11-27 a long goal took that row (in a run it carried
+        // the slime's count and the heart's), and the pills hung under it:
+        // three rows deep into the fight. Centred on the screen alone, at
         // 200% on 1080 lines it covered the resources' fourth number
         // (11-18).
-        if let Some(obj) = &m.objective {
-            let left = if m.resources.is_empty() { 8.0 * s } else { 8.0 * s + inner + 28.0 * s } + 10.0 * s;
-            let right = pill.x - 10.0 * s;
-            let mut fs = 14.0 * s;
-            let mut ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
-            if ow > right - left {
-                fs = (fs * (right - left - 40.0 * s) / (ow - 40.0 * s)).max(12.0 * s);
-                ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
-            }
-            let r = if ow <= right - left {
-                Rect::new(((sw - ow) / 2.0).clamp(left, right - ow), y + 3.0 * s, ow, h - 6.0 * s)
-            } else {
-                fs = 14.0 * s;
-                let room = (mark.min(sw - 8.0 * s) - 10.0 * s - 8.0 * s).max(40.0 * s);
-                let ow = (c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s).min(room);
-                let r = Rect::new(((sw - ow) / 2.0).clamp(8.0 * s, 8.0 * s + room - ow), y + h + 6.0 * s, ow, h - 6.0 * s);
-                self.below = r.bottom();
-                r
-            };
+        let left = if m.resources.is_empty() { 8.0 * s } else { 8.0 * s + inner + 28.0 * s } + 10.0 * s;
+        let right = pill.x - 10.0 * s;
+        let room = right - left;
+        let gap = 8.0 * s;
+        let ts = 13.0 * s;
+        let pills: Vec<(&(Icon, String, String), Rgba)> = m.alarms.iter().map(|t| (t, BAD)).chain(m.tell.iter().map(|t| (t, WARN))).chain(m.twist.iter().map(|t| (t, TWIST))).collect();
+        let pill_ws: Vec<f32> = pills.iter().map(|((_, words, _), _)| c.atlas.measure(Weight::SemiBold, ts, words) + 42.0 * s).collect();
+        let pills_w = pill_ws.iter().sum::<f32>() + gap * pill_ws.len().saturating_sub(1) as f32;
+        // The gauge's parts: the count's steady width, the name's, and
+        // the rest (pads, icon, gaps).
+        let gauge = m.gauge.as_ref().map(|g| {
+            let count_w = steady_w(c, Weight::SemiBold, px, &g.count);
+            let name_w = if g.name.is_empty() { 0.0 } else { c.atlas.measure(Weight::Medium, 13.0 * s, &g.name) + 10.0 * s };
+            (g, count_w, name_w, 14.0 * s + 24.0 * s + 10.0 * s + count_w + 14.0 * s)
+        });
+        // The middle's best and least widths.
+        let goal_w = |c: &Canvas, fs: f32| m.objective.as_ref().map_or(0.0, |o| c.atlas.measure(Weight::Medium, fs, o) + 40.0 * s);
+        let (best, least) = match (&gauge, &m.objective) {
+            (Some((_, _, name_w, fixed)), _) => (fixed + name_w + GAUGE_BEST * s, fixed + GAUGE_LEAST * s),
+            (None, Some(_)) => (goal_w(c, 14.0 * s), goal_w(c, 12.0 * s).min(GOAL_LEAST * s)),
+            (None, None) => (0.0, 0.0),
+        };
+        let has_mid = gauge.is_some() || m.objective.is_some();
+        let with_gap = if has_mid && !pills.is_empty() { gap } else { 0.0 };
+        // The pills ride in the row if the middle at its least leaves them room.
+        let inline = least + with_gap + pills_w <= room;
+        let own_row = least > room;
+        let mid = if !has_mid {
+            None
+        } else if own_row {
+            let room = (mark.min(sw - 8.0 * s) - 10.0 * s - 8.0 * s).max(40.0 * s);
+            let w = best.min(room);
+            Some(Rect::new(((sw - w) / 2.0).clamp(8.0 * s, 8.0 * s + room - w), y + h + 6.0 * s, w, h - 6.0 * s))
+        } else {
+            let w = best.min(room - if inline { with_gap + pills_w } else { 0.0 }).max(least);
+            let group = w + if inline { with_gap + pills_w } else { 0.0 };
+            // The middle itself centred, the pills trailing it, so a pill
+            // that comes or goes leaves the gauge still (the first film,
+            // 11-27: the group re-centred when the cold snap ended).
+            Some(Rect::new(((sw - w) / 2.0).clamp(left, (right - group).max(left)), y + 3.0 * s, w, h - 6.0 * s))
+        };
+        if let Some(r) = mid {
+            self.below = self.below.max(r.bottom());
             self.glass(r, r.h / 2.0, c, s);
-            c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
-            c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
-            // The slime's trait as its number (`Model::tell`), a small
-            // amber pill hung under the goal's middle; its hover says
-            // what the number is.
-            // The planet's twist (`Model::twist`) beside it in ice blue, the
-            // two centred together under the goal.
-            let ts = 13.0 * s;
-            let pills: Vec<(&(Icon, String, String), Rgba)> = m.tell.iter().map(|t| (t, WARN)).chain(m.twist.iter().map(|t| (t, TWIST))).collect();
-            let widths: Vec<f32> = pills.iter().map(|((_, words, _), _)| c.atlas.measure(Weight::SemiBold, ts, words) + 42.0 * s).collect();
-            let gap = 8.0 * s;
-            let mut x = r.x + (r.w - widths.iter().sum::<f32>() - gap * widths.len().saturating_sub(1) as f32) / 2.0;
-            for (((icon, words, tip), colour), tw) in pills.into_iter().zip(widths) {
-                let t = Rect::new(x, r.bottom() + 5.0 * s, tw, 24.0 * s);
-                x += tw + gap;
-                self.glass(t, t.h / 2.0, c, s);
-                c.icon(*icon, (t.x + 11.0 * s, t.y + 5.0 * s), 14.0 * s, colour);
-                c.text(Weight::SemiBold, ts, (t.x + 31.0 * s, t.y + 16.5 * s), Align::Left, words, colour);
-                self.below = self.below.max(t.bottom());
-                if self.hover.is_some_and(|p| t.contains(p)) {
-                    self.tip_small(tip, (t.x, t.bottom() + 6.0 * s), c, s);
+            let hot = self.hover.is_some_and(|p| r.contains(p));
+            if let Some((g, count_w, name_w, fixed)) = gauge {
+                let mid_y = r.y + r.h / 2.0;
+                let mut x = r.x + 14.0 * s;
+                c.icon(Icon::Mould, (x, mid_y - 8.0 * s), 16.0 * s, GAUGE_FILL);
+                x += 24.0 * s;
+                // The name where the bar keeps its least beside it.
+                if name_w > 0.0 && r.w >= fixed + name_w + GAUGE_NAMED * s {
+                    c.text(Weight::Medium, 13.0 * s, (x, mid_y + 4.5 * s), Align::Left, &g.name, MUTED);
+                    x += name_w;
                 }
+                let bar = Rect::new(x, mid_y - 4.0 * s, (r.right() - 14.0 * s - count_w - 10.0 * s - x).max(4.0 * s), 8.0 * s);
+                gauge_bar(g, bar, c, s);
+                c.text(Weight::SemiBold, px, (r.right() - 14.0 * s - count_w, mid_y + 5.0 * s), Align::Left, &g.count, TEXT);
+                if hot {
+                    self.tip_small(&g.tip, (r.x, r.bottom() + 6.0 * s), c, s);
+                }
+            } else if let Some(obj) = &m.objective {
+                // 14 px, down to 12 to fit, then cut.
+                let fs = (14.0 * s * ((r.w - 40.0 * s) / (goal_w(c, 14.0 * s) - 40.0 * s).max(1.0))).clamp(12.0 * s, 14.0 * s);
+                c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
+                c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
+                if hot && c.atlas.measure(Weight::Medium, fs, obj) > r.w - 40.0 * s {
+                    self.tip_small(obj, (r.x, r.bottom() + 6.0 * s), c, s);
+                }
+            }
+        }
+        // The pills: in the row right of the middle, or centred under it.
+        let (mut x, py, ph) = match mid {
+            Some(r) if inline && !own_row => (r.right() + with_gap, r.y, r.h),
+            Some(r) => (r.x + (r.w - pills_w) / 2.0, r.bottom() + 5.0 * s, 24.0 * s),
+            None => (((sw - pills_w) / 2.0).clamp(left, (right - pills_w).max(left)), y + 3.0 * s, h - 6.0 * s),
+        };
+        if !inline || own_row {
+            x = x.clamp(8.0 * s, (mark.min(sw) - 8.0 * s - pills_w).max(8.0 * s));
+        }
+        for (((icon, words, tip), colour), tw) in pills.into_iter().zip(pill_ws) {
+            let t = Rect::new(x, py, tw, ph);
+            x += tw + gap;
+            self.glass(t, t.h / 2.0, c, s);
+            c.icon(*icon, (t.x + 11.0 * s, t.y + (t.h - 14.0 * s) / 2.0), 14.0 * s, colour);
+            c.text(Weight::SemiBold, ts, (t.x + 31.0 * s, t.y + t.h / 2.0 + 4.5 * s), Align::Left, words, colour);
+            self.below = self.below.max(t.bottom());
+            if self.hover.is_some_and(|p| t.contains(p)) {
+                self.tip_small(tip, (t.x, t.bottom() + 6.0 * s), c, s);
             }
         }
     }
@@ -1962,7 +2145,12 @@ impl Hud {
         let sw = c.screen.0 as f32;
         let w = (560.0 * s).min(sw - 32.0 * s);
         let tw = w - 48.0 * s;
-        let lines = c.wrap(Weight::Medium, 17.0 * s, tw, &i.line);
+        let mut lines = c.wrap(Weight::Medium, 17.0 * s, tw, &i.line);
+        // What beats it, its own lines under the slime's, "Beat it:" first
+        // so it reads by its words as well as its colour.
+        let beat = i.counter.as_ref().map_or(Vec::new(), |b| c.wrap(Weight::Medium, 17.0 * s, tw, &format!("{BEAT_IT} {b}.")));
+        let first_beat = lines.len();
+        lines.extend(beat);
         // The twist under the slime's line: its name, then its own line.
         let twist = i.twist.as_ref().map(|(name, line)| (name, c.wrap(Weight::Medium, 16.0 * s, tw, line)));
         let more = twist.as_ref().map_or(0.0, |(_, l)| 46.0 * s + l.len() as f32 * 22.0 * s);
@@ -1975,7 +2163,8 @@ impl Hud {
         c.text_fit(Weight::Medium, 13.5 * s, (cx, r.y + 32.0 * s), Align::Centre, &i.kicker, tw, alpha(MUTED, a));
         c.text_fit(Weight::SemiBold, 26.0 * s, (cx, r.y + 66.0 * s), Align::Centre, &i.title, tw, alpha(WARN, a));
         for (k, l) in lines.iter().enumerate() {
-            c.text(Weight::Medium, 17.0 * s, (cx, r.y + 96.0 * s + k as f32 * 24.0 * s), Align::Centre, l, alpha(TEXT, a));
+            let ink = if k >= first_beat { ACCENT } else { TEXT };
+            c.text(Weight::Medium, 17.0 * s, (cx, r.y + 96.0 * s + k as f32 * 24.0 * s), Align::Centre, l, alpha(ink, a));
         }
         if let Some((name, tl)) = &twist {
             let y = r.y + 96.0 * s + lines.len() as f32 * 24.0 * s;
@@ -2941,16 +3130,23 @@ impl Hud {
         let alerts = self.alerts.clone();
         for a in alerts.iter().rev() {
             let age = now.duration_since(a.when).as_secs_f32();
-            let life = ALERT_LIFE.as_secs_f32();
+            let life = a.life().as_secs_f32();
             let fade = ((life - age) / ALERT_FADE).clamp(0.0, 1.0);
-            let w = c.atlas.measure(Weight::Medium, 14.0 * s, &a.text) + 46.0 * s;
+            let times = (a.count > 1).then(|| format!("\u{d7}{}", a.count));
+            let times_w = times.as_ref().map_or(0.0, |t| c.atlas.measure(Weight::SemiBold, 13.0 * s, t) + 8.0 * s);
+            let most = (ALERT_W * s).min(c.screen.0 as f32 * 0.42) - 46.0 * s - times_w;
+            let tw = c.atlas.measure(Weight::Medium, 14.0 * s, &a.text).min(most.max(40.0 * s));
+            let w = tw + times_w + 46.0 * s;
             let r = Rect::new(8.0 * s, y, w, 32.0 * s);
             c.shadow(r, 8.0 * s, 12.0 * s, 3.0 * s, alpha(SHADOW, fade));
             c.panel(r, 8.0 * s, alpha(PANEL_TOP, fade), alpha(PANEL_BOTTOM, fade), 1.0, alpha(EDGE, fade));
             c.rrect(Rect::new(r.x, r.y + 6.0 * s, 3.0 * s, r.h - 12.0 * s), 1.5 * s, alpha(a.colour, fade));
             c.icon(Icon::Alert, (r.x + 12.0 * s, r.y + 8.0 * s), 16.0 * s, alpha(a.colour, fade));
-            c.text(Weight::Medium, 14.0 * s, (r.x + 34.0 * s, r.y + 21.5 * s), Align::Left, &a.text, alpha(TEXT, fade));
-            y += 38.0 * s;
+            c.text_fit(Weight::Medium, 14.0 * s, (r.x + 34.0 * s, r.y + 21.5 * s), Align::Left, &a.text, tw + 1.0, alpha(TEXT, fade));
+            if let Some(t) = &times {
+                c.text(Weight::SemiBold, 13.0 * s, (r.x + 34.0 * s + tw + 8.0 * s, r.y + 21.5 * s), Align::Left, t, alpha(a.colour, fade));
+            }
+            y += 36.0 * s;
             // A ping where it happened: a ring that opens over a second, on
             // the world and the minimap.
             if let Some(at) = a.at {
@@ -3142,6 +3338,9 @@ impl Hud {
                 }
                 if let Some(i) = &m.pause_planet {
                     parts.push((i.title.to_uppercase(), WARN, c.wrap(Weight::Medium, px, tw, &i.line)));
+                    if let Some(b) = &i.counter {
+                        parts.push((BEAT_IT.trim_end_matches(':').to_uppercase(), ACCENT, c.wrap(Weight::Medium, px, tw, &format!("{b}."))));
+                    }
                     if let Some((name, line)) = &i.twist {
                         parts.push((name.to_uppercase(), TWIST, c.wrap(Weight::Medium, px, tw, line)));
                     }
@@ -3523,6 +3722,51 @@ const CURVE_FILL: Rgba = [236, 150, 52, 90];
 /// the soldiers standing as a cyan step line on their own scale, with the
 /// slime's peak and the clock at both ends. Plain rectangles, as the rest
 /// of the card: the canvas draws no lines (gapped bars and dots to 11-24).
+/// The slime gauge's bar widths, UI units: at its best, the least beside
+/// the slime's name, and the least at all (no name).
+const GAUGE_BEST: f32 = 280.0;
+const GAUGE_NAMED: f32 = 120.0;
+const GAUGE_LEAST: f32 = 90.0;
+/// The goal pill's least before it takes a row of its own, UI units.
+const GOAL_LEAST: f32 = 220.0;
+/// The gauge's fill: the end screen's slime curve, so the two read as one.
+const GAUGE_FILL: Rgba = CURVE_SLIME;
+/// The walkers cut in the last seconds, pale on the fill's end.
+const GAUGE_CUT: Rgba = [255, 236, 204, 170];
+
+/// The slime gauge's bar (`SlimeGauge`) in `bar`: a track the width of
+/// the peak, the fill to the count now, the last seconds' cut pale after
+/// it, and upright marks at the landing's size (white, when under the
+/// peak) and the gauge's line (red), each a little taller than the bar so it reads over the
+/// fill and the track alike.
+fn gauge_bar(g: &SlimeGauge, bar: Rect, c: &mut Canvas, s: f32) {
+    let scale = g.peak.max(g.now).max(g.start).max(1) as f32;
+    let at = |n: f32| bar.x + bar.w * (n / scale).clamp(0.0, 1.0);
+    let rad = bar.h / 2.0;
+    c.rrect(bar, rad, TRACK);
+    let fill = at(g.now as f32);
+    let cut = at(g.recent.max(g.now) as f32);
+    if cut - fill >= 1.0 {
+        c.rrect(Rect::new(bar.x, bar.y, cut - bar.x, bar.h), rad, GAUGE_CUT);
+    }
+    if fill - bar.x >= 1.0 {
+        c.rrect(Rect::new(bar.x, bar.y, fill - bar.x, bar.h), rad.min((fill - bar.x) / 2.0), GAUGE_FILL);
+    }
+    let mark = |c: &mut Canvas, x: f32, colour: Rgba| {
+        c.rrect(Rect::new(x - 1.5 * s, bar.y - 4.0 * s, 3.0 * s, bar.h + 8.0 * s), 1.0 * s, [10, 12, 16, 200]);
+        c.rrect(Rect::new(x - 0.75 * s, bar.y - 3.0 * s, 1.5 * s, bar.h + 6.0 * s), 0.75 * s, colour);
+    };
+    if let Some(f) = g.line {
+        mark(c, bar.x + bar.w * f.clamp(0.0, 1.0), BAD);
+    }
+    // Not at the bar's very end (a slime still at its landing size): a
+    // mark there read as a divider before the count (the first film,
+    // 11-27), and the bar's end already says "its most".
+    if g.start > 0 && at(g.start as f32) < bar.right() - bar.h {
+        mark(c, at(g.start as f32), TEXT);
+    }
+}
+
 fn end_curve(curve: &[(u32, u32)], r: Rect, c: &mut Canvas, s: f32) {
     c.panel(r, 10.0 * s, [255, 255, 255, 12], [255, 255, 255, 6], 1.0, EDGE);
     let (padx, top, bottom) = (12.0 * s, 26.0 * s, 20.0 * s);
@@ -3637,8 +3881,15 @@ fn keycap_w(c: &Canvas, k: &str, px: f32, s: f32) -> f32 {
     (c.atlas.measure(Weight::SemiBold, px, k) + 8.0 * s).max(px + 5.0 * s)
 }
 
-/// A key's short name for the button's corner.
+/// A key's short name for the button's corner: the key now pressed for
+/// `k` (`keys`: a rebound key shows its new letter wherever the game
+/// names it).
 pub fn key_name(k: KeyCode) -> Option<String> {
+    raw_key_name(super::keys::pressed(k))
+}
+
+/// The key's own name, rebinding aside.
+pub fn raw_key_name(k: KeyCode) -> Option<String> {
     use KeyCode::*;
     let s = match k {
         KeyA => "A",
@@ -4479,15 +4730,36 @@ mod tests {
     /// slime's line and the twist, beside the card where the screen is
     /// wide, in it where it is only tall, and left out where neither fits;
     /// the card and its buttons stay on the screen at every size.
+    /// The frame readout keeps ten seconds of frames: its p95 is the
+    /// slow tail (a frame in twenty), and older frames drop out.
+    #[test]
+    fn the_frame_readout_keeps_ten_seconds() {
+        let mut h = Hud::new();
+        assert!(h.frame_stats().is_none());
+        for k in 0..600 {
+            h.frame(if k % 10 == 0 { 25.0 } else { 16.0 });
+        }
+        let (p95, fps) = h.frame_stats().unwrap();
+        assert_eq!(p95, 25.0, "a tenth of the frames slow: the p95 sees them");
+        assert!((58.0..61.0).contains(&fps), "{fps}");
+        for _ in 0..700 {
+            h.frame(16.0);
+        }
+        let (p95, fps) = h.frame_stats().unwrap();
+        assert_eq!(p95, 16.0, "the slow ones aged out");
+        assert!((fps - 62.5).abs() < 0.2, "{fps}");
+        assert!(h.frames_ms <= READOUT_MS);
+    }
+
     #[test]
     fn the_pause_menu_tells_the_planet() {
         let line = "Where you hurt it, it grows back tough. Don't fight on old ground";
         for (screen, user, told) in [((1920, 1080), 1.0, true), ((3840, 2160), 2.5, true), ((1280, 720), 1.0, true), ((1920, 1080), 2.0, true), ((1280, 540), 2.0, true), ((800, 800), 1.0, true)] {
             let mut r = Rig::new(screen);
             r.c.ui.user = user;
-            r.m.objective = Some("Kill the slime's heart on its home crystal: 1,660 of 1,660 left, breaks under 166".into());
+            r.m.objective = Some("Wipe out every last bit of slime (40%: slime count 9,120 \u{2192} 0); a heart guards a crystal: 1,660 of 1,660 left, breaks under 166".into());
             r.m.pause_note = vec!["Quit any time: this planet and".into(), "your run are saved.".into()];
-            r.m.pause_planet = Some(Intro { kicker: "Planet 7 of 8 · Ossary".into(), title: "The Grudge".into(), line: line.into(), twist: Some(("Cold snap".into(), "Every two minutes the cold slows the slime and your squads for 20 seconds".into())), alpha: 1.0 });
+            r.m.pause_planet = Some(Intro { kicker: "Planet 7 of 8 · Ossary".into(), title: "The Grudge".into(), line: line.into(), counter: Some("Germ bullets rot it from within".into()), twist: Some(("Cold snap".into(), "Every two minutes the cold slows the slime and your squads for 20 seconds".into())), alpha: 1.0 });
             r.key(KeyCode::Escape);
             r.draw();
             let said = |t: &str| r.c.runs.iter().any(|x| x.text == t);
@@ -4683,6 +4955,77 @@ mod tests {
                 }
             }
         }
+    }
+
+    /// The slime's gauge and its pills (owner, 11-27: the goal ran onto
+    /// rows of its own) stay in the top bar's row on 1080 lines and more
+    /// at up to 125%, and at every size on four screens stay on the screen
+    /// and off every other word on it; the goal it stands for is not drawn.
+    #[test]
+    fn the_slime_gauge_keeps_its_row_and_off_the_numbers() {
+        let pill = |icon: Icon, words: &str| (icon, words.to_string(), "hover".to_string());
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440), (3840, 2160)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                let rates = [Some("+23/s"), Some("+40"), Some("-8 lost")];
+                r.m.resources = ["2,091", "35", "11"].iter().zip(rates).map(|(v, rate)| Resource { icon: Icon::Clock, colour: TEXT, label: "a number".into(), value: (*v).into(), rate: rate.map(String::from) }).collect();
+                r.m.clock = "3:12  \u{b7}  star by 10:00".into();
+                r.m.speed = Some("Paused".into());
+                r.m.objective = Some("Wipe out every last bit of slime".into());
+                r.m.gauge = Some(SlimeGauge { name: "The Trunk".into(), now: 9_560, start: 7_000, peak: 15_400, recent: 10_100, count: "9,560".into(), line: Some(0.25), tip: "the slime".into() });
+                r.m.alarms = vec![pill(Icon::Heart, "Heart 1,660, breaks under 166")];
+                r.m.tell = Some(pill(Icon::Sleep, "62% asleep"));
+                r.m.twist = Some(pill(Icon::Clock, "Cold snap in 0:12"));
+                r.draw();
+                assert!(!r.c.runs.iter().any(|x| x.text.starts_with("Wipe out")), "{screen:?} at {user}: the goal drawn beside its gauge");
+                for word in ["9,560", "Heart 1,660, breaks under 166", "62% asleep", "Cold snap in 0:12"] {
+                    let g = r.c.runs.iter().find(|x| x.text == word).unwrap_or_else(|| panic!("{screen:?} at {user}: no {word}")).ink;
+                    assert!(g.0 >= 0.0 && g.2 <= screen.0 as f32, "{screen:?} at {user}: {word} off the screen: {g:?}");
+                    for x in r.c.runs.iter().filter(|x| x.text != word && x.ink.0 < x.ink.2) {
+                        let apart = g.2 <= x.ink.0 || x.ink.2 <= g.0 || g.3 <= x.ink.1 || x.ink.3 <= g.1;
+                        assert!(apart, "{screen:?} at {user}: {word} {g:?} over {:?} {:?}", x.text, x.ink);
+                    }
+                }
+                if screen.1 >= 1080 && user <= 1.25 {
+                    assert!(r.hud.below <= r.hud.top + 0.5, "{screen:?} at {user}: a second row under the top bar ({} past {})", r.hud.below, r.hud.top);
+                }
+            }
+        }
+    }
+
+    /// Alerts (owner, 11-27: "all pop up extra status messages ... as
+    /// unobtrusive as possible"): at most three, the same words again
+    /// counted rather than stacked, and none wider than `ALERT_W` or about
+    /// two fifths of the screen, at every size.
+    #[test]
+    fn alerts_stay_few_short_and_counted() {
+        for screen in [(1280, 800), (1920, 1080), (3840, 2160)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                for _ in 0..4 {
+                    r.hud.alert("A soldier was killed by the slime", None, BAD);
+                }
+                r.hud.alert("Pump upgraded to level 2: 40 food a second", None, GOOD);
+                r.hud.alert("A very long alert that goes on and on about a thing that happened somewhere on the planet far away from the squad", None, WARN);
+                r.hud.alert("Formation: blob, tight", None, TEXT);
+                assert_eq!(r.hud.alerts.len(), 3, "{screen:?} at {user}");
+                r.draw();
+                let n = r.c.runs.iter().filter(|x| x.text == "A soldier was killed by the slime").count();
+                assert_eq!(n, 0, "{screen:?} at {user}: the oldest of four went");
+                let s = r.c.ui.px(r.c.screen);
+                for x in r.c.runs.iter().filter(|x| x.text.starts_with("A very long") || x.text.starts_with("Pump") || x.text.starts_with("Formation")) {
+                    assert!(x.ink.2 <= 8.0 * s + (ALERT_W * s).min(screen.0 as f32 * 0.42) + 1.0, "{screen:?} at {user}: {:?} to {}", x.text, x.ink.2);
+                }
+            }
+        }
+        let mut r = Rig::new((1920, 1080));
+        for _ in 0..3 {
+            r.hud.alert("A soldier was killed by the slime", None, BAD);
+        }
+        r.draw();
+        assert!(r.c.runs.iter().any(|x| x.text == "\u{d7}3"), "three alike count as x3");
     }
 
     #[test]

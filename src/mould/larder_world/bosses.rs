@@ -219,6 +219,40 @@ pub struct BossRules {
     /// members lay under the crystal, the rig and the box, and almost none
     /// of it showed.
     pub ring: f32,
+    /// **Warded** (2026-11-26, the owner's "more stronger scarier smarter
+    /// better progress ion scaled mini bosses. I think this is
+    /// important"): this share of the blows that land on a member glance
+    /// off, `ward_lo` to `ward_hi` by grade (0 to 0.95; the engine's
+    /// `armoured`, packed in `Lump::armour` bits 8-15). A member takes at
+    /// most 15 counted blows (`HURT_BITS`), so a ward is the only way past
+    /// that: at 0.5 a member of 15 lasts about 30. The dead end of 11-20
+    /// (one sized to the army lived 1-3 s against 50 guns) stands for
+    /// size; this is toughness, and the smarter hunt below is how it
+    /// meets the guns.
+    #[serde(default)]
+    pub ward_lo: f32,
+    #[serde(default)]
+    pub ward_hi: f32,
+    /// **Stalks the lone soldier**: a hunter's prey is the soldier with
+    /// the least d + `stalk` x 8 x (soldiers within the guns' reach of
+    /// it) dish cells, so it goes for the builder, the guard at a pump or
+    /// the straggler, not the nearest gun of the blob (0: the nearest, as
+    /// before). It keeps its prey while that scores within a fifth of the
+    /// best, so it does not swing between two.
+    #[serde(default)]
+    pub stalk: f32,
+    /// **Falls back to feed** (`BossPhase::Back`): a hunter shot under
+    /// `back_at` of its first members runs from the squad for up to
+    /// `back_secs`, taking in the slime round it (`grow_lump_most`, no
+    /// more than it lost, an eighth of its first members a second) until
+    /// it is back to nine tenths, then hunts again; at most `backs` times. Its walkers are the slime's own, so
+    /// it costs the planet's slime and makes none.
+    #[serde(default)]
+    pub backs: u32,
+    #[serde(default)]
+    pub back_at: f32,
+    #[serde(default)]
+    pub back_secs: f32,
 }
 
 impl BossRules {
@@ -248,9 +282,14 @@ impl BossRules {
         let depth = e.min(8.0);
         let t = (depth - 2.0) / 6.0;
         BossRules {
-            every: 150.0 + (45.0 - 150.0) * t,
-            every_sd: 30.0 + (10.0 - 30.0) * t,
-            first: 90.0 + (40.0 - 90.0) * t,
+            // Sooner and more often since 2026-11-27 (was every 150 to 45
+            // s, first at 90 to 40 s): on the owner's 11-27 run the one
+            // threat that cost him soldiers was a mortar landing in his
+            // crowd (24 soldiers to 7 in 15 s on step 2), and step 6's five
+            // mini-bosses took none of his 63. "Make it harder!" (06:54Z).
+            every: 110.0 + (35.0 - 110.0) * t,
+            every_sd: 25.0 + (8.0 - 25.0) * t,
+            first: 60.0 + (30.0 - 60.0) * t,
             cut: 0.02 + (0.1 - 0.02) * t,
             most: if depth >= 6.0 { 3 } else if depth >= 4.0 { 2 } else { 1 },
             // Weaker on the first planets, all of them stronger by the
@@ -273,8 +312,9 @@ impl BossRules {
             // 11-20); his squads were 14 to 35.
             haste: 1.2 + 0.3 * t,
             quorum: 0.2 - 0.08 * t,
-            // The mortar from planet 4 (the proposal the owner picked).
-            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 4.0 { 1.0 } else { 0.0 }, if depth >= 3.0 { 1.0 } else { 0.0 }],
+            // The mortar from planet 4 (the proposal the owner picked); from
+            // planet 3 since 2026-11-27, as the threat that hurt.
+            kinds: [1.0, 1.0, 1.0, 1.0, if depth >= 3.0 { 1.0 } else { 0.0 }, if depth >= 3.0 { 1.0 } else { 0.0 }],
             // Tougher by the planet (2026-11-22, the thread "Make the run
             // harder after full-game win": 54 mini-bosses on the owner's
             // 11-22 run of all 8 planets were all broken, fizzled or spent
@@ -286,6 +326,16 @@ impl BossRules {
             armour_lo: 4.0 + 6.0 * t,
             bite_lo: 1.0 + t,
             bite_hi: 4.0 + 2.0 * t,
+            // Stronger and smarter by planet (2026-11-26, the owner's
+            // "more stronger scarier smarter ... progress ion scaled mini
+            // bosses"): a ward of 0 to 25% of blows on planet 2 to 30 to
+            // 65% by planet 8, stalking from a light lean on planet 2 to a
+            // full one by planet 5, and falling back to feed once on
+            // planets 2-4, twice from 5.
+            ward_lo: 0.3 * t,
+            ward_hi: 0.25 + 0.4 * t,
+            stalk: (0.4 + 1.2 * t).min(1.0),
+            backs: if depth >= 5.0 { 2 } else { 1 },
             ..BossRules::default()
         }
     }
@@ -293,6 +343,17 @@ impl BossRules {
     /// The blows a member of a grade `g` mini-boss takes (`Lump::armour`).
     pub fn armour_at(&self, g: f32) -> u32 {
         (self.armour_lo + (self.armour_hi - self.armour_lo) * g).round().clamp(1.0, 15.0) as u32
+    }
+
+    /// The share of blows that glance off a grade `g` member, 0 to 0.95.
+    pub fn ward_at(&self, g: f32) -> f32 {
+        (self.ward_lo + (self.ward_hi - self.ward_lo) * g).clamp(0.0, 0.95)
+    }
+
+    /// `Lump::armour` for a grade `g` member with `blows` blows: the blows
+    /// in bits 0-7 and the ward x 256 in bits 8-15 (`ward_at`).
+    pub fn armour_word(&self, blows: u32, g: f32) -> u32 {
+        blows.min(255) | (((self.ward_at(g) * 256.0).round() as u32).min(255) << 8)
     }
 
     /// The walkers a member touches as beyond itself (`Lump::bite`).
@@ -388,6 +449,12 @@ impl Default for BossRules {
             root: 15.0,
             grow: 2.0,
             ring: 1.5,
+            ward_lo: 0.0,
+            ward_hi: 0.0,
+            stalk: 0.0,
+            backs: 0,
+            back_at: 0.5,
+            back_secs: 10.0,
         }
     }
 }
@@ -406,6 +473,10 @@ pub enum BossPhase {
     /// There: a wanderer rooted on its crystal (since the tick), a sapper
     /// pressing into the wall, a leech on the pump.
     Sit((f32, f32), u64),
+    /// A hunter fallen back to feed (`BossRules::backs`): running for a
+    /// point in its own thick slime away from the squad (fine cells),
+    /// since the tick, taking in the slime round it as it goes.
+    Back((f32, f32), u64),
 }
 
 /// **What a mini-boss is** (`BossRules::kinds`), the view's kind number
@@ -472,6 +543,9 @@ pub struct Boss {
     /// Seconds of its `life` and its `trip` used (`BossRules::life`).
     pub lived: f32,
     pub walked: f32,
+    /// Times it has fallen back to feed (`BossRules::backs`).
+    #[serde(default)]
+    pub backs: u32,
 }
 
 /// What made a mini-boss.
@@ -711,8 +785,27 @@ impl<W: World> Game<W> {
                 continue;
             }
             let hunt = b.born + secs(r.gather);
+            // **Falling back to feed** (`BossRules::backs`): a hunter shot
+            // under `back_at` of its first members runs into its own thick
+            // slime away from the squad, taking it in, and hunts again
+            // when it is back to nine tenths or `back_secs` are up.
+            let hunter = matches!(b.kind, BossKind::Hunter | BossKind::Pinwheel);
+            if hunter && now >= hunt && b.first > 0 && b.backs < r.backs && !matches!(b.phase, BossPhase::Back(..)) && (members as f32) < r.back_at * b.first as f32 {
+                if let Some(p) = self.back_point(centre) {
+                    b.phase = BossPhase::Back(p, now);
+                    b.backs += 1;
+                }
+            }
+            let back = match b.phase {
+                BossPhase::Back(p, since) if (members as f32) < 0.9 * b.first as f32 && now < since + secs(r.back_secs) => Some(p),
+                BossPhase::Back(..) => {
+                    b.phase = BossPhase::Hunt(None);
+                    None
+                }
+                _ => None,
+            };
             let round = now >= hunt && matches!(b.kind, BossKind::Hunter | BossKind::Pinwheel) && self.boss_late() && self.army_scale() >= 1.0;
-            let errand = if now < hunt || b.kind == BossKind::Mortar {
+            let errand = if now < hunt || b.kind == BossKind::Mortar || back.is_some() {
                 None
             } else if round {
                 self.round_errand(&mut b, now)
@@ -723,7 +816,7 @@ impl<W: World> Game<W> {
             };
             let size = self.world.size();
             let cell = move |p: (f32, f32)| crate::mould::larder_world::raid_cell(p, size);
-            let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
+            let strong = Lump { armour: r.armour_word(r.armour_at(b.grade), b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
             let leash = r.leash_at(r.leash, b.grade);
             let clench = r.leash_at(r.clench, b.grade);
             let haste = r.haste_at(b.grade);
@@ -735,11 +828,22 @@ impl<W: World> Game<W> {
             let lump = if now < hunt {
                 b.phase = BossPhase::Gather;
                 Lump { aim: cell(centre), leash: clench, ..strong }
+            } else if let Some(p) = back {
+                // It takes in no more than it lost, an eighth of its first
+                // members a second at most, from the slime round its body
+                // (the wanderer's reach), and runs a third faster. Taking
+                // all it lost at once (the first cut) healed a hunter of
+                // 184 back to 362 in one second on planet 3 (run 1, step
+                // 4), and read as nothing: now it swells over 4 s or more.
+                let reach = (body * r.grow / self.world.scale()).clamp(1.0, 2.0 * r.reach);
+                self.world.grow_lump_most(b.lump, (centre, reach), b.first.saturating_sub(members).min(b.first.div_ceil(8)));
+                let aim = self.boss_steer(b.lump, p, false, centre, body);
+                Lump { haste: haste * 1.3, ..go(aim) }
             } else if b.kind == BossKind::Mortar {
                 // Held on where it sat down (its aim its own centre let the
                 // body drift with the slime round it: 28 cells in 11 s on
                 // the CPU dish).
-                let hold = Lump { aim: cell(b.at), pull: 0.5 * r.pull, leash: clench, armour: r.armour_at(0.5 * b.grade), ..strong };
+                let hold = Lump { aim: cell(b.at), pull: 0.5 * r.pull, leash: clench, armour: r.armour_word(r.armour_at(0.5 * b.grade), b.grade), ..strong };
                 if self.mortar(&mut b, centre, body, now, secs(r.lob_every)) {
                     hold
                 } else {
@@ -774,7 +878,8 @@ impl<W: World> Game<W> {
                     _ => go(self.boss_steer(b.lump, p, false, centre, body)),
                 }
             } else {
-                let prey = self.nearest_soldier(centre);
+                let keep = if let BossPhase::Hunt(p) = b.phase { p } else { None };
+                let prey = self.boss_prey(centre, keep);
                 b.phase = BossPhase::Hunt(prey);
                 match prey {
                     Some(s) => {
@@ -965,7 +1070,7 @@ impl<W: World> Game<W> {
             // to its members' centre, halfway home, as a stream (filmed
             // on the owner's planet 4, run 1795038793 at 1:34). Its pull
             // brings every member to the target instead.
-            self.world.set_lump(sl, Lump { aim: cell, pull: r.pull, armour: r.armour_at(0.5 * b.grade), bite: r.bite_at(b.grade), ..Lump::default() });
+            self.world.set_lump(sl, Lump { aim: cell, pull: r.pull, armour: r.armour_word(r.armour_at(0.5 * b.grade), b.grade), bite: r.bite_at(b.grade), ..Lump::default() });
             let look = self.lump_looks()[b.lump];
             self.bosses.shells.push(Shell { lump: sl, target: t, look, until: now + ((r.shell_life.max(0.0) * self.rules.tps as f32).round() as u64).max(1) });
             self.bosses.shelled += 1;
@@ -1189,7 +1294,7 @@ impl<W: World> Game<W> {
         // none at all: no pump or wall stood within 180 units of a knot.
         let now = self.world.ticks();
         let r = self.rules.boss;
-        let mut b = Boss { lump: 0, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade: 0.0, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        let mut b = Boss { lump: 0, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade: 0.0, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
         b.kind = self.pick_kind(&b);
         let mut at = at;
         // A mortar likewise takes the crowded knot nearest the player's
@@ -1234,7 +1339,7 @@ impl<W: World> Game<W> {
         let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();
         self.world.form_lump(lump, Some((at, r.reach_at(reach, grade))));
         let cell = crate::mould::larder_world::raid_cell(at, self.world.size());
-        self.world.set_lump(lump, Lump { aim: cell, leash: r.leash_at(r.clench, grade), armour: r.armour_at(grade), bite: r.bite_at(grade), ..Lump::default() });
+        self.world.set_lump(lump, Lump { aim: cell, leash: r.leash_at(r.clench, grade), armour: r.armour_word(r.armour_at(grade), grade), bite: r.bite_at(grade), ..Lump::default() });
         (b.lump, b.at, b.centre, b.grade) = (lump, at, at, grade);
         self.bosses.live.push(b);
         true
@@ -1784,6 +1889,62 @@ impl<W: World> Game<W> {
     /// standing buildings.
     fn player_things(&self) -> Vec<(f32, f32)> {
         self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).chain(self.buildings.iter().filter(|w| w.alive).map(|w| w.at)).collect()
+    }
+
+    /// **A hunter's prey** (`BossRules::stalk`): the live soldier with the
+    /// least distance from `at` plus `stalk` x 8 dish cells for each other
+    /// soldier within the guns' reach of it; `keep`, its prey till now,
+    /// while that scores within a fifth of the best.
+    pub(super) fn boss_prey(&self, at: (f32, f32), keep: Option<usize>) -> Option<usize> {
+        let stalk = self.rules.boss.stalk;
+        if stalk <= 0.0 {
+            return self.nearest_soldier(at);
+        }
+        let sc = self.world.scale();
+        let reach = self.gun_range_max() * sc;
+        let live: Vec<usize> = (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).collect();
+        let pos = |k: usize| (self.soldiers[k].x, self.soldiers[k].y);
+        let score = |k: usize| {
+            let p = pos(k);
+            let cover = live.iter().filter(|&&j| j != k && (pos(j).0 - p.0).hypot(pos(j).1 - p.1) < reach).count();
+            (p.0 - at.0).hypot(p.1 - at.1) + stalk * 8.0 * sc * cover as f32
+        };
+        let best = live.iter().copied().min_by(|&a, &b| score(a).total_cmp(&score(b)))?;
+        match keep.filter(|&k| k < self.soldiers.len() && self.soldiers[k].alive) {
+            Some(k) if score(k) <= 1.2 * score(best) + sc => Some(k),
+            _ => Some(best),
+        }
+    }
+
+    /// **Where a hunter falls back to** (`BossPhase::Back`): the square of
+    /// its own slime (`boss_grid`) past the squad's guns (`squad_ring` and
+    /// 10 dish cells more) holding the most walkers over 1 + (d / 30 dish
+    /// cells)^2, d its distance from `from`; None with no soldier or no
+    /// slime out there.
+    pub(super) fn back_point(&self, from: (f32, f32)) -> Option<(f32, f32)> {
+        let (c, ring) = self.squad_ring()?;
+        let (g, gw, gh, bin) = self.boss_grid()?;
+        let sc = self.world.scale();
+        let (out, near) = (ring + 10.0 * sc, 30.0 * sc);
+        let mut best: Option<(f32, (f32, f32))> = None;
+        for y in 0..gh {
+            for x in 0..gw {
+                let n = g[y * gw + x];
+                if n < (bin * bin) as u32 / 2 {
+                    continue;
+                }
+                let p = ((x * bin) as f32 + 0.5 * bin as f32, (y * bin) as f32 + 0.5 * bin as f32);
+                if (p.0 - c.0).hypot(p.1 - c.1) < out {
+                    continue;
+                }
+                let d = (p.0 - from.0).hypot(p.1 - from.1) / near;
+                let w = n as f32 / (1.0 + d * d);
+                if best.is_none_or(|(b, _)| w > b) {
+                    best = Some((w, p));
+                }
+            }
+        }
+        best.map(|(_, p)| p)
     }
 
     /// The live soldier nearest `at` (fine cells).

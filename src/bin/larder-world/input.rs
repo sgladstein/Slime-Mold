@@ -301,7 +301,7 @@ impl App {
                         self.hud.alert(&format!("Wall thickened to {cells:.0} cells"), Some(bd.at), theme::GOOD);
                     } else if bd.kind == Kind::Turret {
                         let f = g.rules.build.render_food;
-                        self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food for each bit"), Some(bd.at), theme::GOOD);
+                        self.hud.alert(&format!("Turret renders: {f:.2} food per slime killed near it"), Some(bd.at), theme::GOOD);
                     } else {
                         let rate = g.pump_draw(b) * g.pump_yield(b);
                         self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(bd.at), theme::GOOD);
@@ -328,11 +328,16 @@ impl App {
                     None => Cmd::TurretLoad(b as u32, None, None),
                 };
                 if g.apply(cmd) {
+                    // Its loadout's gun too (2026-11-27).
+                    if let Some(l) = next.filter(|_| bd.kind == Kind::Turret) {
+                        g.apply(Cmd::TurretArm(b as u32, r.turret_gun_of(l)));
+                    }
                     let l = next.unwrap_or(r.turret_loadout);
                     let names: Vec<String> = r.turret_deck_of(l).iter().map(|c| c.title()).collect();
                     let cards = if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") };
                     let tag = if next.is_none() { ", the turrets' default" } else { "" };
-                    self.hud.alert(&format!("This {what} fires {}{tag}: {cards}", r.loadout_name(l)), Some(bd.at), theme::GOOD);
+                    let gun = if bd.kind == Kind::Turret { format!(" with its {}", r.turret_gun_of(l).map_or("rifle", |g| g.kind.name())) } else { String::new() };
+                    self.hud.alert(&format!("This {what} fires {}{tag}{gun}: {cards}", r.loadout_name(l)), Some(bd.at), theme::GOOD);
                 }
             }
             _ => {}
@@ -566,7 +571,7 @@ impl App {
                         let price = g.upgrade_price(b);
                         if g.apply(Cmd::Upgrade(b)) {
                             let f = g.rules.build.render_food;
-                            self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food for each bit"), Some(g.buildings[b].at), theme::GOOD);
+                            self.hud.alert(&format!("Turret renders: {f:.2} food per slime killed near it"), Some(g.buildings[b].at), theme::GOOD);
                         } else {
                             let why = match price {
                                 Some(p) => format!("Rendering costs {p:.0} food"),
@@ -700,7 +705,7 @@ impl App {
         match code {
             KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
             KeyCode::Tab => self.fast = !self.fast,
-            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("In a run the next map is the next planet: beat this one", None, theme::WARN),
+            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("Beat this planet to reach the next", None, theme::WARN),
             KeyCode::KeyN => {
                 // On a generated planet, N rolls a new one at the same depth;
                 // one with its seed in the name (`planet:D:SEED`) goes on to

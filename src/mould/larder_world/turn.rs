@@ -506,6 +506,7 @@ impl<W: World> Game<W> {
             self.costed("check_broken", |g| g.check_broken());
             self.costed("time_ceiling", |g| g.time_ceiling());
             self.costed("time_twist", |g| g.time_twist());
+            self.costed("time_levels", |g| g.time_levels());
             self.costed("keep_panic_reach", |g| g.keep_panic_reach());
             self.costed("time_raids", |g| g.time_raids());
             self.costed("time_unit_paths", |g| g.time_unit_paths());

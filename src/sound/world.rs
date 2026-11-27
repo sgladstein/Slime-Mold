@@ -29,7 +29,7 @@
 //! what is off it is quieter the farther it is, so a fight across the map
 //! does not sound like the one in front of you.
 
-use crate::mould::kit::Bang;
+use crate::mould::kit::{Bang, Puff};
 use crate::mould::larder_world::{BossEnd, Game, Kind, Shot, World};
 use crate::mould::rounds::{Card, Pop};
 
@@ -146,8 +146,13 @@ impl Ear {
 /// The voice of the gun that fired `s` (`GunVoice`): a turret's, or its
 /// soldier's squad's gun's kind.
 pub fn gun_voice<W: World>(g: &Game<W>, s: &Shot) -> GunVoice {
-    if s.turret.is_some() {
-        return GunVoice::Turret;
+    if let Some(k) = s.turret {
+        return match g.buildings.get(k).map(|b| b.kind) {
+            Some(Kind::Mortar) => GunVoice::Mortar,
+            Some(Kind::Hunter) => GunVoice::Hunter,
+            Some(Kind::Sprayer) => GunVoice::Sprayer,
+            _ => GunVoice::Turret,
+        };
     }
     match s.by.and_then(|i| g.soldiers.get(i)) {
         Some(soldier) => match g.gun(soldier.squad as usize).kind {
@@ -157,6 +162,40 @@ pub fn gun_voice<W: World>(g: &Game<W>, s: &Shot) -> GunVoice {
             GunKind::Scatter => GunVoice::Scatter,
         },
         None => GunVoice::Turret,
+    }
+}
+
+/// The building kind of a shell coming down (`Game::shells` landing as a
+/// turret's shot, `Kind::Mortar` or `Kind::Hunter`), None for any other.
+fn shell_kind<W: World>(g: &Game<W>, s: &Shot) -> Option<Kind> {
+    s.turret.and_then(|k| g.buildings.get(k)).map(|b| b.kind).filter(|k| matches!(k, Kind::Mortar | Kind::Hunter))
+}
+
+/// **A blow's size** against the kit's thrown Grenade (`KitRules::blast_r`
+/// 6 dish cells), the biggest blow of the kit: the square root of its
+/// area's share, so a strike half as wide sounds half as loud, not a
+/// quarter (2026-11-24, Direction: "a big blow should sound big and a
+/// trickle shouldn't fill the air"). `r` is in dish cells.
+pub fn blow(r: f32) -> f32 {
+    (r / GRENADE_R).clamp(0.15, 1.2)
+}
+
+/// The Grenade's blast radius, dish cells (`KitRules::blast_r`'s default),
+/// against which `blow` weighs the rest of the kit.
+const GRENADE_R: f32 = 6.0;
+
+/// A shell coming down (`shell_kind`), `r` its strike's radius in dish
+/// cells: a mortar's is a crump (a low thud and its dirt), a hunter's a
+/// sharp knock with a lighter thud under it. Both scale by `blow`; the hit
+/// itself (the impact, weighted by kills) is the hits' own.
+fn landing(kind: Kind, r: f32, pan: f32, gain: f32, delay: f32, out: &mut Vec<SoundCmd>) {
+    let size = blow(r);
+    if kind == Kind::Hunter {
+        out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.45 * size * gain, delay });
+        out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.5 * size * gain, delay: delay + 0.01 });
+    } else {
+        out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.8 * size * gain, delay });
+        out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 100.0, secs: 0.22, pan, spread: 0.3, gain: 0.3 * size * gain });
     }
 }
 
@@ -230,6 +269,15 @@ pub struct WorldStats {
     /// shop points, and drops the squad emptied.
     pub coins: u32,
     pub cashed: u32,
+    /// The kit's own sounds (2026-11-24): mortar and hunter shells sent
+    /// and landed, sprayer sweeps, Canister releases and puffs, and Line
+    /// ripples (each of a Line's blasts is one ripple, not a thud apiece).
+    pub launches: u32,
+    pub landings: u32,
+    pub sweeps: u32,
+    pub puffs: u32,
+    pub ripples: u32,
+    pub darts: u32,
 }
 
 /// The upper ends of `WorldStats::kill_hist`'s bins.
@@ -276,6 +324,14 @@ pub struct WorldListener {
     sirens: u32,
     bang_tick: u64,
     bangs: Vec<Bang>,
+    /// The kit's guns and gas (2026-11-24): the last shell and sweep tick
+    /// heard, and the Canister's puffs waiting for `hear`.
+    shell_tick: u64,
+    spray_tick: u64,
+    puff_tick: u64,
+    puffs: Vec<Puff>,
+    /// Darts heard (`Rounds::darted`).
+    darted: u32,
     last_grid: Vec<u32>,
     held: Vec<SoundCmd>,
     /// Sound pass two: the rounds' pops heard so far (`pops`) and the new
@@ -345,6 +401,11 @@ impl WorldListener {
             sirens: 0,
             bang_tick: 0,
             bangs: Vec::new(),
+            shell_tick: 0,
+            spray_tick: 0,
+            puff_tick: 0,
+            puffs: Vec::new(),
+            darted: 0,
             last_grid: Vec::new(),
             held: Vec::new(),
             pops_seen: 0,
@@ -391,6 +452,11 @@ impl WorldListener {
         self.sirens = g.sirens;
         self.bang_tick = self.ticks;
         self.bangs.clear();
+        self.shell_tick = g.shells.iter().map(|s| s.fired).max().unwrap_or(0).max(self.ticks);
+        self.spray_tick = g.sprays.iter().map(|s| s.fired).max().unwrap_or(0).max(self.ticks);
+        self.puff_tick = self.ticks;
+        self.puffs.clear();
+        self.darted = g.rounds.darted;
         self.last_grid.clear();
         self.held.clear();
         self.pops_new.clear();
@@ -511,6 +577,14 @@ impl WorldListener {
             let s = shots[i];
             let delay = gap * j as f32;
             let (pan, gain) = ear.place(s.from);
+            // A shell coming down (a mortar's or a hunter's): no gun goes
+            // off there, the launch was heard when it was sent (`kit_guns`);
+            // this is the crump, as big as the strike (`landing`).
+            if let Some(kind) = shell_kind(g, &s) {
+                landing(kind, s.r / g.world.scale().max(1.0), pan, gain, delay, &mut out);
+                self.stats.landings += 1;
+                continue;
+            }
             // A turret's shot (no soldier) sits under the ones the player
             // orders, or a kill zone is a wall of cracks (design review of
             // #96).
@@ -556,6 +630,7 @@ impl WorldListener {
                 _ => self.stats.heavy += 1,
             }
         }
+        self.kit_guns(g, ear, &mut out);
         // The kill crackle: a pop a walker killed, where they died.
         self.kill_rate += (killed as f32 / dt - self.kill_rate) * k;
         if killed > 0 {
@@ -796,6 +871,10 @@ impl WorldListener {
 
 /// A turret's shot against one the player ordered.
 const TURRET: f32 = 0.5;
+/// A Line's blasts voiced as its ripple, and the gap between them, s:
+/// six over about a tenth of a second, a zip of blasts, not a drum roll.
+const RIPPLE_VOICED: usize = 6;
+const RIPPLE_GAP: f32 = 0.018;
 /// A gunshot's level on screen (`SoundCmd::Gun`). The old crack was 0.4
 /// of a thinner sound.
 const GUN_LEVEL: f32 = 0.38;
@@ -860,6 +939,64 @@ impl WorldListener {
         }
     }
 
+    /// The Canister's gas let out (`Kit::puffs`), called with the whole
+    /// list each frame like `bangs`.
+    pub fn puffs(&mut self, puffs: &[Puff]) {
+        for p in puffs.iter().filter(|p| p.tick > self.puff_tick) {
+            self.puffs.push(*p);
+        }
+        if let Some(t) = puffs.iter().map(|p| p.tick).max() {
+            self.puff_tick = self.puff_tick.max(t);
+        }
+    }
+
+    /// **The kit's guns going off** (2026-11-24): a mortar's or hunter's
+    /// shell sent (`Game::shells`, one launch a building a tick, however
+    /// many shells a multicast fans out) and a sprayer's sweep
+    /// (`Game::sprays`). Until then a shell was heard only where it landed,
+    /// as a plain turret's crack, and a sweep not at all. Set under the
+    /// squad's guns as every turret is (`TURRET`); the sweep's level is
+    /// its six small strikes' (`blow` of their radius) and no more.
+    fn kit_guns<W: World>(&mut self, g: &Game<W>, ear: Ear, out: &mut Vec<SoundCmd>) {
+        let mut sent: Vec<(usize, u64)> = Vec::new();
+        for sh in g.shells.iter().filter(|sh| sh.fired > self.shell_tick) {
+            if sent.contains(&(sh.mortar, sh.fired)) {
+                continue;
+            }
+            sent.push((sh.mortar, sh.fired));
+            let voice = match g.buildings.get(sh.mortar).map(|b| b.kind) {
+                Some(Kind::Hunter) => GunVoice::Hunter,
+                _ => GunVoice::Mortar,
+            };
+            let (pan, gain) = ear.place(sh.from);
+            out.push(SoundCmd::Gun { voice, pan, gain: GUN_LEVEL * TURRET * gain, delay: 0.0, far: ear.far(sh.from) });
+            // The mortar's shell whistles over on its way down, the last
+            // third of its flight (the hunter's is too quick to hear).
+            if voice == GunVoice::Mortar {
+                let secs = sh.lands.saturating_sub(sh.fired) as f32 / g.rules.tps.max(1) as f32;
+                let (pan, gain) = ear.place(sh.to);
+                out.push(SoundCmd::Grain { kind: GrainKind::Zip, pan, gain: 0.12 * gain, delay: (secs - 0.12).max(0.0) });
+            }
+            self.stats.launches += 1;
+        }
+        self.shell_tick = g.shells.iter().map(|sh| sh.fired).max().unwrap_or(0).max(self.shell_tick);
+        let plain = g.rules.build.sprayer_plain;
+        for sp in g.sprays.iter().filter(|sp| sp.fired > self.spray_tick) {
+            let (pan, gain) = ear.place(sp.from);
+            let size = blow(plain * (sp.spots.len() as f32).sqrt());
+            out.push(SoundCmd::Gun { voice: GunVoice::Sprayer, pan, gain: GUN_LEVEL * TURRET * (0.5 + 0.5 * size) * gain, delay: 0.0, far: ear.far(sp.from) });
+            // The jet across its arc: a patter of drips from the first
+            // spot to the last.
+            if let (Some(a), Some(b)) = (sp.spots.first(), sp.spots.last()) {
+                let mid = ((a.0 + b.0) * 0.5, (a.1 + b.1) * 0.5);
+                let (pan, gain) = ear.place(mid);
+                out.push(SoundCmd::Burst { kind: GrainKind::Drip, rate: 40.0, secs: 0.3, pan, spread: (ear.place(*b).0 - ear.place(*a).0).abs() * 0.5, gain: 0.18 * size * gain });
+            }
+            self.stats.sweeps += 1;
+        }
+        self.spray_tick = g.sprays.iter().map(|sp| sp.fired).max().unwrap_or(0).max(self.spray_tick);
+    }
+
     /// The rounds' pops (`Rounds::pops`, the gun cards' payloads going
     /// off), called with the whole list each frame like `bangs`: the ones
     /// past the last call are heard at the next `hear`. A shorter list is a
@@ -919,6 +1056,25 @@ impl WorldListener {
             }
             self.stats.payloads += 1;
         }
+        // The Dart: it kills none and leaves no pop, only a lure mark where
+        // it struck (`Rounds::dart`), so until 2026-11-24 it made no sound
+        // past the gun's. A thin thwip and a soft wet tock where it stuck,
+        // then a few drips drawn in, as quiet as the mind rounds: the
+        // newest marks, one a dart.
+        let darted = g.rounds.darted;
+        if darted < self.darted {
+            self.darted = darted;
+        }
+        let new = (darted - self.darted) as usize;
+        for (j, m) in g.lure_marks.iter().rev().take(new.min(PAYLOADS_VOICED)).enumerate() {
+            let (pan, gain) = ear.place(m.at);
+            let delay = 0.02 * j as f32;
+            out.push(SoundCmd::Grain { kind: GrainKind::Zip, pan, gain: 0.15 * gain, delay });
+            out.push(SoundCmd::Grain { kind: GrainKind::Squelch, pan, gain: 0.2 * gain, delay: delay + 0.05 });
+            out.push(SoundCmd::Burst { kind: GrainKind::Drip, rate: 14.0, secs: 0.6, pan, spread: 0.15, gain: 0.12 * gain });
+            self.stats.darts += 1;
+        }
+        self.darted = darted;
         let alive = g.end.is_none();
         // A raid starting: a groan where it is headed; the last stand
         // groans twice, louder, with a snarl.
@@ -1002,16 +1158,81 @@ impl WorldListener {
             self.stats.sirens += g.sirens - self.sirens;
         }
         self.sirens = g.sirens;
-        // A blast: a low thud and an impact weighted by its kills, and its
-        // debris.
-        for b in std::mem::take(&mut self.bangs) {
+        // The kit's blasts, each device in its own voice (2026-11-24):
+        // the Grenade a low thud, an impact weighted by its kills and its
+        // debris (the kit's biggest blow, against which the rest are
+        // weighed, `blow`); a Mine the same blow after the click of its
+        // trigger, with more dirt (it goes off under them); a Line's
+        // blasts are one ripple running along it.
+        let bangs = std::mem::take(&mut self.bangs);
+        let sc = g.world.scale().max(1.0);
+        let mut line: Vec<Bang> = Vec::new();
+        for b in bangs {
+            if b.tool == 2 {
+                line.push(b);
+                continue;
+            }
             let (pan, gain) = ear.place(b.at);
-            let gain = gain.max(0.5);
+            let gain = gain.max(0.5) * blow(b.r / sc);
             let w = kill_weight(b.killed as u32, self.full);
-            out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.8 * gain, delay: 0.0 });
-            out.push(SoundCmd::Impact { weight: w.max(0.5), pan, gain: (0.4 + 0.3 * w) * gain, delay: 0.02, far: ear.far(b.at) });
-            out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 120.0, secs: 0.25, pan, spread: 0.3, gain: 0.3 * gain });
+            let far = ear.far(b.at);
+            let (wait, dirt) = if b.tool == 1 {
+                out.push(SoundCmd::Grain { kind: GrainKind::Tick, pan, gain: 0.4 * gain, delay: 0.0 });
+                out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.25 * gain, delay: 0.03 });
+                (0.09, 0.45)
+            } else {
+                (0.0, 0.25)
+            };
+            out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.8 * gain, delay: wait });
+            out.push(SoundCmd::Impact { weight: w.max(0.5), pan, gain: (0.4 + 0.3 * w) * gain, delay: wait + 0.02, far });
+            out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 120.0, secs: dirt, pan, spread: 0.3, gain: 0.3 * gain });
             self.stats.blasts += 1;
+        }
+        // A Line: its blasts go off at once along it (`KitRules::cord_every`
+        // apart); heard as a ripple from one end to the other, a small
+        // thud a blast (`blow` of its own radius, 2.5 against the
+        // Grenade's 6), at most `RIPPLE_VOICED` of them, a crackle under
+        // the whole length, and one impact for the line's kills. Until
+        // then each blast was a full Grenade's thud: a 24-cell line was
+        // 13 of them at once.
+        let mut ticks: Vec<u64> = line.iter().map(|b| b.tick).collect();
+        ticks.dedup();
+        for t in ticks {
+            let one: Vec<&Bang> = line.iter().filter(|b| b.tick == t).collect();
+            let n = one.len();
+            let killed: usize = one.iter().map(|b| b.killed).sum();
+            let (a, z) = (one[0].at, one[n - 1].at);
+            let mid = ((a.0 + z.0) * 0.5, (a.1 + z.1) * 0.5);
+            let (pan, gain) = ear.place(mid);
+            let gain = gain.max(0.5);
+            let size = blow(one[0].r / sc);
+            let voiced = n.min(RIPPLE_VOICED);
+            for j in 0..voiced {
+                let b = one[if voiced > 1 { j * (n - 1) / (voiced - 1) } else { 0 }];
+                let (p, _) = ear.place(b.at);
+                out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan: p, gain: 0.8 * size * gain, delay: RIPPLE_GAP * j as f32 });
+            }
+            let secs = RIPPLE_GAP * voiced as f32 + 0.15;
+            let spread = (ear.place(z).0 - ear.place(a).0).abs() * 0.5;
+            out.push(SoundCmd::Burst { kind: GrainKind::Crackle, rate: 60.0, secs, pan, spread, gain: 0.3 * gain });
+            let w = kill_weight(killed as u32, self.full);
+            out.push(SoundCmd::Impact { weight: w.max(0.3), pan, gain: (0.3 + 0.3 * w) * gain, delay: 0.02, far: ear.far(mid) });
+            self.stats.blasts += n as u32;
+            self.stats.ripples += 1;
+        }
+        // The Canister: a pin's clink and a long hiss as it lets its gas
+        // out; each later puff of its cards a short soft one. It kills
+        // nothing, so it is a hiss and no thud.
+        for p in std::mem::take(&mut self.puffs) {
+            let (pan, gain) = ear.place(p.at);
+            if p.first {
+                out.push(SoundCmd::Grain { kind: GrainKind::Clank, pan, gain: 0.2 * gain, delay: 0.0 });
+                out.push(SoundCmd::Grain { kind: GrainKind::Hiss, pan, gain: 0.5 * gain, delay: 0.05 });
+                out.push(SoundCmd::Burst { kind: GrainKind::Hiss, rate: 3.0, secs: 1.2, pan, spread: 0.3, gain: 0.25 * gain });
+            } else {
+                out.push(SoundCmd::Grain { kind: GrainKind::Hiss, pan, gain: 0.25 * gain, delay: 0.0 });
+            }
+            self.stats.puffs += 1;
         }
         // The pieces, from the mould grid, and only when it is new: the
         // GPU world's is summed once a game second (`GRID_EVERY`), and a
@@ -1299,7 +1520,7 @@ mod tests {
         g.sirens += 1;
         assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 1);
         assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 0, "once per call");
-        let bang = Bang { at: (40.0, 40.0), r: 6.0, tick: 5, killed: 30 };
+        let bang = Bang { at: (40.0, 40.0), r: 6.0, tick: 5, killed: 30, tool: 0 };
         l.bangs(&[bang]);
         assert_eq!(thuds(&l.hear(&g, ear, 1.0 / 60.0, false)), 1);
         l.bangs(&[bang]);
@@ -1378,6 +1599,89 @@ mod tests {
         assert_eq!(gun_voice(&g, &shot(Some(0), None)), GunVoice::Long);
         assert_eq!(gun_voice(&g, &shot(None, Some(0))), GunVoice::Turret);
         assert_eq!(gun_voice(&g, &shot(None, None)), GunVoice::Turret);
+    }
+
+    /// **The kit's own sounds** (2026-11-24): a Mine is a Grenade's blow
+    /// after its trigger's click; a Line's thirteen blasts are one ripple
+    /// of at most `RIPPLE_VOICED` small thuds, each well under a Grenade's;
+    /// a Canister hisses and does not thud, its later puffs softer; a Dart
+    /// is not the mind rounds' shimmer.
+    #[test]
+    fn each_device_is_heard_in_its_own_voice_scaled_to_its_blow() {
+        let mut g = small(1);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let sc = g.world.scale();
+        let at = (40.0, 40.0);
+        let count = |c: &[SoundCmd], k: GrainKind| c.iter().filter(|c| matches!(c, SoundCmd::Grain { kind, .. } if *kind == k)).count();
+        let loudest = |c: &[SoundCmd], k: GrainKind| c.iter().filter_map(|c| match c { SoundCmd::Grain { kind, gain, .. } if *kind == k => Some(*gain), _ => None }).fold(0.0f32, f32::max);
+        l.bangs(&[Bang { at, r: 6.0 * sc, tick: 5, killed: 30, tool: 0 }]);
+        let grenade = l.hear(&g, ear, 1.0 / 60.0, false);
+        assert_eq!((count(&grenade, GrainKind::Thud), count(&grenade, GrainKind::Tick)), (1, 0));
+        l.bangs(&[Bang { at, r: 6.0 * sc, tick: 6, killed: 30, tool: 1 }]);
+        let mine = l.hear(&g, ear, 1.0 / 60.0, false);
+        assert_eq!((count(&mine, GrainKind::Thud), count(&mine, GrainKind::Tick)), (1, 1), "a mine clicks, then booms");
+        assert!((loudest(&mine, GrainKind::Thud) - loudest(&grenade, GrainKind::Thud)).abs() < 1e-4, "the same blow is as loud");
+        let line: Vec<Bang> = (0..13).map(|j| Bang { at: (20.0 + 4.0 * j as f32, 40.0), r: 2.5 * sc, tick: 7, killed: 2, tool: 2 }).collect();
+        l.bangs(&line);
+        let ripple = l.hear(&g, ear, 1.0 / 60.0, false);
+        assert_eq!(count(&ripple, GrainKind::Thud), RIPPLE_VOICED);
+        let (small_thud, big_thud) = (loudest(&ripple, GrainKind::Thud), loudest(&grenade, GrainKind::Thud));
+        assert!(small_thud < 0.5 * big_thud, "a line's blast {small_thud} against a grenade's {big_thud}");
+        assert_eq!((l.stats.blasts, l.stats.ripples), (15, 1));
+        l.puffs(&[Puff { at, tick: 8, first: true }, Puff { at, tick: 9, first: false }]);
+        let gas = l.hear(&g, ear, 1.0 / 60.0, false);
+        assert_eq!((count(&gas, GrainKind::Hiss), count(&gas, GrainKind::Thud)), (2, 0));
+        l.puffs(&[Puff { at, tick: 9, first: false }]);
+        assert_eq!(count(&l.hear(&g, ear, 1.0 / 60.0, false), GrainKind::Hiss), 0, "the same puff again is not new");
+        assert_eq!(l.stats.puffs, 2);
+        // A Dart leaves a lure mark and no pop (`Rounds::dart`).
+        g.lure_marks.push(crate::mould::larder_world::LureMark { at, until: 1_000 });
+        g.rounds.darted += 1;
+        assert_eq!(count(&l.hear(&g, ear, 1.0 / 60.0, false), GrainKind::Squelch), 1);
+        assert_eq!(count(&l.hear(&g, ear, 1.0 / 60.0, false), GrainKind::Squelch), 0, "heard once");
+        assert_eq!(l.stats.darts, 1);
+    }
+
+    /// The kit's guns: a mortar's and a hunter's shells are sent in their
+    /// own voices, once a building a tick however many a multicast fans
+    /// out, and land as a crump, not as a turret's crack; a sprayer's
+    /// sweep is the quietest of them.
+    #[test]
+    fn mortars_hunters_and_sprayers_have_their_own_voices() {
+        use crate::mould::larder_world::{Cmd, Shell, Spray};
+        let mut g = small(1);
+        g.bank = 1e9;
+        let s0 = (g.soldiers[0].x, g.soldiers[0].y);
+        let mut built = Vec::new();
+        for kind in [Kind::Mortar, Kind::Hunter, Kind::Sprayer] {
+            let site = (0..400).map(|i| (s0.0 + (i % 20) as f32 * 3.0 - 30.0, s0.1 + (i / 20) as f32 * 3.0 - 30.0)).find(|&p| g.apply(Cmd::Build(kind, p)));
+            assert!(site.is_some(), "no site for a {kind:?}");
+            built.push(g.buildings.len() - 1);
+        }
+        let (mortar, hunter, sprayer) = (built[0], built[1], built[2]);
+        let shot = |turret: usize| Shot { from: (10.0, 10.0), to: (11.0, 10.0), hit: None, killed: 0, by: None, turret: Some(turret), fired: true, cast: 0, r: 3.0 * g.world.scale() };
+        assert_eq!(gun_voice(&g, &shot(mortar)), GunVoice::Mortar);
+        assert_eq!(gun_voice(&g, &shot(hunter)), GunVoice::Hunter);
+        assert_eq!(gun_voice(&g, &shot(sprayer)), GunVoice::Sprayer);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let t = g.world.ticks() + 1;
+        let shell = |k: usize, to: (f32, f32)| Shell { from: (30.0, 30.0), to, fired: t, lands: t + 60, r: 6.0, cast: 0, mortar: k };
+        g.shells = vec![shell(mortar, (50.0, 50.0)), shell(mortar, (54.0, 50.0)), shell(hunter, (60.0, 40.0))];
+        g.sprays = vec![Spray { from: (30.0, 30.0), spots: vec![(40.0, 30.0), (40.0, 36.0)], fired: t, cast: 0, sprayer, laid: false }];
+        let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
+        let guns: Vec<(GunVoice, f32)> = cmds.iter().filter_map(|c| match c { SoundCmd::Gun { voice, gain, .. } => Some((*voice, *gain)), _ => None }).collect();
+        let level = |v: GunVoice| guns.iter().filter(|g| g.0 == v).map(|g| g.1).collect::<Vec<_>>();
+        assert_eq!((level(GunVoice::Mortar).len(), level(GunVoice::Hunter).len(), level(GunVoice::Sprayer).len()), (1, 1, 1), "{guns:?}");
+        assert!(level(GunVoice::Sprayer)[0] < level(GunVoice::Mortar)[0], "a sweep under a launch");
+        assert_eq!(l.stats.launches, 2);
+        assert!(l.hear(&g, ear, 1.0 / 60.0, false).iter().all(|c| !matches!(c, SoundCmd::Gun { .. })), "sent once");
+        // Landing: the mortar's shell as a turret's shot is a crump.
+        l.shots(&[shot(mortar)]);
+        let land = l.hear(&g, ear, 1.0 / 60.0, false);
+        assert!(land.iter().all(|c| !matches!(c, SoundCmd::Gun { .. })) && land.iter().any(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Thud, .. })));
+        assert_eq!(l.stats.landings, 1);
     }
 
     /// Sound pass two: a gun card's payload is heard once, in its own

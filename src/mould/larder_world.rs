@@ -59,6 +59,7 @@ mod heart;
 mod stand;
 mod origin;
 mod twist;
+mod levels;
 mod strikers;
 mod starfall;
 mod cores;
@@ -101,6 +102,7 @@ pub use heart::HeartRules;
 pub use stand::{Heart, Stand, StandRules};
 pub use origin::{OriginRules, OriginState};
 pub use twist::{Twist, TwistNow, TwistRules};
+pub use levels::{apply_levels, crystal_levels, LevelRules};
 pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
 pub use cores::Cores;
@@ -162,6 +164,11 @@ pub const QUEUE: usize = 8;
 /// guarded is coming onto it.
 pub const GUARD_RIM: f32 = 3.0;
 
+/// A soldier's pace when a record has none (`Soldier::pace`): whole.
+fn whole_pace() -> f32 {
+    1.0
+}
+
 #[derive(Clone, Copy, Debug)]
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Soldier {
@@ -194,6 +201,12 @@ pub struct Soldier {
     /// mould can't smell it, to sneak to a crystal) and reek (over 1: a
     /// decoy that pulls the mould off the harvesters), `mould::kit`.
     pub smell: f32,
+    /// Its own walking pace, 0..1 (1 whole): a wounded soldier walks
+    /// slower, and a squad keeps to its slowest (`Game::pace`) (Lab,
+    /// rescue planet 11-24: the found walk home at 0.3). A record from
+    /// before it reads whole (`whole_pace`), not 0, which would root it.
+    #[serde(default = "whole_pace")]
+    pub pace: f32,
     /// Carry taken up by tools it holds (`mould::kit`'s carry rule): a
     /// soldier carrying blasts brings home less food. 0 by default.
     pub load: f32,
@@ -515,6 +528,10 @@ pub struct Game<W: World> {
     /// no clicking round twenty turrets), and a turret shot carrying a cast
     /// is told from a soldier's by `by` None (`turret_mods`).
     pub turret_deck: Option<Deck>,
+    /// The gun every turret without a loadout of its own fires
+    /// (`Cmd::Arm(TURRET_DECK, ..)`, 2026-11-27: turrets hold guns you
+    /// buy, as squads do); None, the standard rifle (`Game::turret_gun`).
+    pub turret_gun: Option<Gun>,
     /// **The devices' cards** (gun step E, 2026-11-24), by tool
     /// (`kit::TOOLS` order): every cast in a tool's goes off where it does,
     /// on top of its own effect (`Kit::carry`). `Cmd::Load(DEVICE_DECKS +
@@ -721,6 +738,8 @@ struct Flight {
 /// its command ticks are the world's.
 pub fn head_start<W: World>(world: &mut W, secs: f32, rules: &Rules) {
     let frames = (secs.max(0.0) * rules.tps as f32 / rules.frame_ticks.max(1) as f32).round() as u32;
+    // The crystals' levels from the first birth (`levels.rs`).
+    apply_levels(world, rules);
     for _ in 0..frames {
         let f = Frame { units: Vec::new(), shots: Vec::new(), slime: squad::slime_trail(6.0), crater: 0, sink: rules.sink, ..Frame::default() };
         world.frame(&f, rules.frame_ticks);
@@ -805,6 +824,7 @@ impl<W: World> Game<W> {
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
             turret_deck: None,
+            turret_gun: None,
             device_decks: [None; 8],
             autocast: 0,
             autocast_clock: 0.0,
@@ -984,6 +1004,11 @@ impl<W: World> Game<W> {
     /// Squad `q` takes `gun` (`Cmd::Arm`); `None` gives back the standard
     /// rifle. Its soldiers fire it from their next shot.
     pub fn arm(&mut self, q: usize, gun: Option<Gun>) -> bool {
+        // `TURRET_DECK` arms every turret that follows the default.
+        if q == TURRET_DECK as usize {
+            self.turret_gun = gun;
+            return true;
+        }
         match self.squads.get_mut(q) {
             Some(s) => {
                 s.gun = gun;
@@ -1024,6 +1049,7 @@ impl<W: World> Game<W> {
             aim: None,
             dense: 0,
             smell: 1.0,
+            pace: 1.0,
             load: 0.0,
             squad: 0,
             rest: 0.0,

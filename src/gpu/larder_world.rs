@@ -1349,6 +1349,10 @@ impl World for GpuWorld {
         self.s.wind = [wind.0 * base, wind.1 * base];
     }
 
+    fn set_levels(&mut self, levels: &[u32]) {
+        self.e.set_pile_levels(levels);
+    }
+
     /// Each of the pile's cells written 0 (the mirror's list of them).
     fn empty_crystal(&mut self, c: usize) {
         let d = &self.e.dish;
@@ -1482,7 +1486,7 @@ pub fn engine_params(s: &Settings, scale: usize) -> BigParams {
 mod tests {
     use super::*;
     use crate::gpu::{block_on, reads};
-    use crate::mould::larder_world::{Cmd, End, Game, Order, Rules};
+    use crate::mould::larder_world::{Cmd, Game, Order, Rules};
     use crate::mould::tiers::Tier;
 
     /// Whether the tests run on a real card, not software Vulkan (llvmpipe in
@@ -3064,7 +3068,7 @@ mod tests {
             for (key, v) in shape_keys("c").unwrap().1 {
                 crate::gpu::set(&mut s, key, v).unwrap();
             }
-            for (key, v) in crate::mould::run::enemy_keys(1) {
+            for (key, v) in crate::mould::run::enemy_keys(1.0) {
                 crate::gpu::set(&mut s, key, &v).unwrap();
             }
             s.tether = tether;
@@ -3282,16 +3286,18 @@ mod tests {
         assert!(c.now as f64 >= want - 1.0 && c.now as usize <= ceil, "the ceiling follows it, under the roof: {} against {want}", c.now);
     }
 
-    /// **The origin** (`origin.rs`, 2026-11-22, Milestone 2's win; the
-    /// owner's idea of 11-16, Direction's go 11-22). Engine-side it is the
-    /// lumps the mini-bosses use, so the test is what it does on the
-    /// software GPU, in two race worlds alike: it forms at the landing on
-    /// the start crystal; with that crystal drained at once (as a squad
-    /// that drained it) it does not regrow, and in the fed world it holds
-    /// more; cut under its floor it breaks, births stop, and after the
-    /// die-back the planet is won while slime still lived when it broke.
+    /// **Crystal hearts** (`origin.rs`; the origin of 2026-11-22 until the
+    /// owner's 11-26 00:08Z ruling: a heart forms wherever the slime holds
+    /// a crystal thick for two minutes, a mini-boss, not the win).
+    /// Engine-side it is the lumps the mini-bosses use, so the test is what
+    /// it does on the software GPU, in two race worlds alike (the clock cut
+    /// to 6 s): no heart before the clock is full, then one on a crystal
+    /// held thick; a drained start crystal runs no clock and grows none; cut
+    /// under its floor it breaks and the planet goes on, the slime alive,
+    /// and a second heart forms (the other crystal's full clock, or the
+    /// first's again).
     #[test]
-    fn the_origin_forms_on_its_crystal_starves_when_drained_and_its_death_wins() {
+    fn a_heart_forms_on_a_crystal_held_thick_and_its_death_is_not_the_win() {
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 1, 4_000);
         let play = || {
@@ -3299,40 +3305,55 @@ mod tests {
             let mut rules = Rules::default();
             rules.origin.on = true;
             rules.origin.size = 150.0;
-            rules.origin.die_upkeep = std::env::var("DU").ok().and_then(|v| v.parse().ok()).unwrap_or(rules.origin.die_upkeep);
+            rules.origin.after = 6.0;
             Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed)
         };
         let (mut fed, mut dry) = (play(), play());
         let home = fed.core;
         let c = fed.crystal_at(home).map(|(c, _)| c).expect("the slime's start crystal");
         dry.world.empty_crystal(c);
-        while fed.time() < 14.0 {
+        let mut first = None;
+        while fed.time() < 20.0 {
             for g in [&mut fed, &mut dry] {
                 g.step();
             }
+            if first.is_none() && fed.origin.formed > 0 {
+                first = Some(fed.time());
+            }
         }
+        let thick = fed.crystal_walkers().map(|w| w.iter().map(|&(_, n, r)| n as f32 / (std::f32::consts::PI * r * r)).fold(0.0, f32::max)).unwrap_or(0.0);
         let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
         let (a, b) = (members(&fed), members(&dry));
-        eprintln!("origin: fed {a} members (reach {:.1}), drained {b} (reach {:.1})", fed.origin.reach, dry.origin.reach);
-        assert!(fed.origin.formed && fed.stand.live.is_some_and(|h| h.origin), "it formed at the landing");
+        eprintln!("hearts: fed formed at {first:?} with {a} members (reach {:.1}), thickest crystal {thick:.2} a cell; drained {b} ({} formed, clocks {:?})", fed.origin.reach, dry.origin.formed, dry.origin.thick);
+        let first = first.expect("a heart formed on the held crystal");
+        assert!(first >= fed.rules.origin.after, "not before its clock is full: {first:.1} s");
+        let h = fed.stand.live.expect("the heart lives");
+        // The race world's slime holds two crystals thick from the start:
+        // the heart is on one, the other's clock waits full.
+        let sc = fed.world.scale();
+        let on_start = |g: &Game<GpuWorld>| g.stand.live.is_some_and(|h| (h.home.0 - home.0).hypot(h.home.1 - home.1) < sc) || g.origin.thick.iter().any(|w| (w.0 .0 - home.0).hypot(w.0 .1 - home.1) < sc);
+        assert!(h.origin && on_start(&fed), "the held start crystal has its heart or a full clock");
         assert!(a >= 50, "it gathered round its fed crystal: {a}");
-        assert!(a > b + 30, "a drained crystal does not feed it: {a} against {b}");
-        // Its floor over its members: it breaks, and the die-back runs.
-        // It must have held a body first (`2 x floor_min`); its takes are
-        // cut to its shortfall (11-22), so it may get there after 14 s.
+        assert!(!on_start(&dry), "a drained crystal runs no clock and grows no heart");
+        // Its floor over its members: it breaks, and the planet goes on.
         while fed.stand.live.is_some_and(|h| (h.most as f32) < 2.0 * fed.rules.origin.floor_min) && fed.time() < 40.0 {
             fed.step();
         }
+        let floor = fed.rules.origin.floor;
         fed.rules.origin.floor = 2.0;
-        let mass = fed.mould;
         let broke_at = fed.time();
-        while fed.end.is_none() && fed.time() < broke_at + 20.0 {
+        while fed.origin.broken == 0 && fed.time() < broke_at + 5.0 {
             fed.step();
         }
-        eprintln!("broke at {broke_at:.1} s with {mass} walkers; ended {:?} with {} left", fed.end, fed.mould);
-        assert!(fed.origin.fell.is_some() && fed.stand.live.is_none(), "it broke under its floor");
-        assert!(matches!(fed.end, Some(End::MouldWiped(_))), "the planet is won: {:?}", fed.end);
-        assert!(fed.time() <= broke_at + fed.rules.origin.die_back + 2.0, "within the die-back: {:.1} s", fed.time() - broke_at);
+        fed.rules.origin.floor = floor;
+        assert!(fed.origin.broken == 1 && fed.stand.live.is_none(), "it broke under its floor");
+        let broke_at = fed.time();
+        while fed.origin.formed < 2 && fed.time() < broke_at + 30.0 {
+            fed.step();
+        }
+        eprintln!("broke at {broke_at:.1} s; {} hearts by {:.1} s, end {:?}, slime {}", fed.origin.formed, fed.time(), fed.end, fed.mould);
+        assert!(fed.end.is_none() && fed.mould > 1_000, "its death is not the win: {:?}, {} walkers", fed.end, fed.mould);
+        assert_eq!(fed.origin.formed, 2, "a second heart once a clock is full again");
     }
 
     /// **The last stand gathers only up to twice the origin's size**
@@ -3352,6 +3373,7 @@ mod tests {
         let mut rules = Rules::default();
         rules.origin.on = true;
         rules.origin.size = 150.0;
+        rules.origin.after = 2.0;
         let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
         let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
         while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
@@ -3621,6 +3643,7 @@ mod tests {
         let mut rules = Rules::default();
         rules.origin.on = true;
         rules.origin.size = 150.0;
+        rules.origin.after = 2.0;
         let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
         let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
         while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
@@ -3697,6 +3720,7 @@ mod tests {
         let mut rules = Rules::default();
         rules.origin.on = true;
         rules.origin.size = 150.0;
+        rules.origin.after = 2.0;
         let mut g = Game::new(GpuWorld::new(&device, &queue, s.clone(), scale), rules, seed);
         let members = |g: &Game<GpuWorld>| g.origin_hud().map_or(0, |o| o.0);
         while (members(&g) as f32) < 0.9 * g.rules.origin.size && g.time() < 40.0 {
@@ -3709,7 +3733,6 @@ mod tests {
         (g.world.s.spore_rate, g.world.s.spore_scent) = (s.spore_rate, s.spore_scent);
         let mut least = u32::MAX;
         let mut spores = 0;
-        // A broken heart ends the game (its die-back), and the clock with it.
         while g.time() < formed + 20.0 && g.end.is_none() {
             g.step();
             least = least.min(members(&g));
@@ -3909,6 +3932,60 @@ mod tests {
         assert!(flinched.1 + flinched.1 / 20 >= stood.1, "a flinch kills none: {flinched:?} against {stood:?}");
     }
 
+    /// **A warded mini-boss** (2026-11-26, `BossRules::ward_at`): with
+    /// three quarters of the blows glancing off (`Lump::armour` bits
+    /// 8-15), a lump of 2-blow members keeps most of them through four
+    /// blasts that leave a plain 2-blow lump almost none.
+    #[test]
+    fn a_warded_mini_boss_shrugs_off_blows() {
+        use crate::mould::big::{Lump, LUMP_BITS, LUMP_SHIFT};
+        use crate::mould::kit::KitRules;
+        use crate::mould::larder_world::{raid_cell, BossRules, World};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |armour: u32| -> (usize, usize) {
+            let s = race_settings(seed, scale, walkers);
+            let rules = Rules { boss: BossRules { every: 0.0, first: 0.0, ..BossRules::default() }, ..Rules::default() };
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+            while g.time() < 20.0 {
+                g.step();
+            }
+            let home = g.world.crystals()[0].0;
+            let sc = g.world.scale();
+            let at = (home.0 / sc, home.1 / sc);
+            let (w, h) = g.world.size();
+            let b = BossRules::default();
+            g.world.form_lump(0, Some((at, 4.0)));
+            g.world.set_lump(0, Lump { aim: raid_cell(at, (w, h)), pull: b.pull, leash: b.leash_at(b.clench, 0.5), armour, ..Lump::default() });
+            for _ in 0..30 {
+                g.step();
+            }
+            let members = |g: &Game<GpuWorld>| {
+                let e = &g.world.e;
+                let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+                let news: Vec<u32> = read_back(&e.device, &e.queue, &e.news).chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+                let base = e.dense_at as usize / 4 + crate::gpu::DENSE_HEAD;
+                (0..e.n as usize).filter(|&q| en[q] >= 0.0 && (news[base + q] & LUMP_BITS) >> LUMP_SHIFT == 1).count()
+            };
+            let before = members(&g);
+            let fine = g.world.fine_steps() as f32;
+            let k = crate::mould::rounds::burst_rules(&KitRules::default(), 30.0 * fine);
+            for _ in 0..4 {
+                let c = g.world.lumps()[0].map_or(at, |(x, y, _)| (x / sc, y / sc));
+                g.world.burst(&squad::Burst { at: c, r: 12.0, kill: true, ..Default::default() }, &k);
+                for _ in 0..3 {
+                    g.step();
+                }
+            }
+            (before, members(&g))
+        };
+        let (plain, warded) = (play(2), play(2 | 192 << 8));
+        eprintln!("ward: (members before, after four blasts) plain {plain:?}, warded {warded:?}");
+        assert!(plain.0 > 30 && warded.0 > 30, "the lumps form: {plain:?} {warded:?}");
+        assert!(plain.1 * 5 < plain.0, "four blasts break a plain 2-blow lump: {plain:?}");
+        assert!(warded.1 * 2 > warded.0, "a ward of three quarters keeps most: {warded:?}");
+    }
+
     /// **A shot stops at set slime** (the owner's planet 3 round,
     /// 2026-11-19 20:46Z: "slime that i couldn't kill they were not moving
     /// but all my soliders would shoot them over and over and nothing hurt
@@ -3958,6 +4035,101 @@ mod tests {
             killed += out.shots[0].killed;
         }
         assert!(killed >= 1, "{} shots at a set walker killed none", armour + 1);
+    }
+
+    /// **The slime toughens by planet** (`blows`, 2026-11-26, the owner's
+    /// "the progression needs to be way stronger for the slime"): the same
+    /// world shot at its thickest cell every tick for 3 game seconds. At 3
+    /// blows the first shot kills none (every walker starts unhurt), the
+    /// shots leave hurt walkers, and they kill well under two thirds of
+    /// what they kill at 1 blow (as before).
+    #[test]
+    fn tough_slime_takes_its_blows() {
+        use crate::mould::squad::{slime_trail, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |blows: &str| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "blows", blows).unwrap();
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            while g.time() < 8.0 {
+                g.step();
+            }
+            let mut kills = Vec::new();
+            for _ in 0..90 {
+                let e = &g.world.e;
+                let w = e.dish.w;
+                let wk = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+                let mut on = vec![0u32; w * e.dish.h];
+                for q in (0..e.n as usize).filter(|&q| en[q] >= 0.0) {
+                    on[wk[4 * q + 1] as usize * w + wk[4 * q] as usize] += 1;
+                }
+                let c = (0..on.len()).max_by_key(|&i| on[i]).unwrap();
+                let at = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+                let shot = Frame { shots: vec![ShotIn { from: at, to: at, r: 2.0, over: false }], slime: slime_trail(6.0), ..Frame::default() };
+                kills.push(g.world.frame(&shot, 1).shots[0].killed);
+            }
+            let hurt = g.world.e.dense_of().iter().filter(|&&d| d & 0x10000 == 0 && d >> 28 > 0).count();
+            (kills, hurt)
+        };
+        let (one, _) = play("1");
+        let (three, hurt) = play("3");
+        let (a, b) = (one.iter().sum::<u32>(), three.iter().sum::<u32>());
+        assert!(one[0] > 0 && three[0] == 0, "the first shot: {} at 1 blow, {} at 3", one[0], three[0]);
+        assert!(hurt > 0, "3 blows: no walker left hurt");
+        assert!(a > 20 && 3 * b < 2 * a, "kills in 3 s: {a} at 1 blow, {b} at 3");
+    }
+
+    /// **The slime's levels** (2026-11-26, `larder_world/levels.rs`): with
+    /// every crystal at level 3, slime born on them is level 3 and its
+    /// children keep it, so a race world's body turns level 3 as it
+    /// breeds; and level 3 slime at `level_blows` 1 shrugs off the shots
+    /// that kill level 0 (the same world, shot at its thickest cell).
+    #[test]
+    fn slime_born_on_a_crystal_takes_its_level() {
+        use crate::mould::squad::{slime_trail, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let play = |levels: bool| {
+            let mut s = race_settings(seed, scale, walkers);
+            crate::gpu::set(&mut s, "level_blows", "1").unwrap();
+            let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), Rules::default(), seed);
+            if levels {
+                let n = g.world.crystals().len();
+                g.world.set_levels(&vec![3; n]);
+            }
+            while g.time() < 12.0 {
+                g.step();
+            }
+            let e = &g.world.e;
+            let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+            let dw = e.dense_of();
+            let live: Vec<usize> = (0..e.n as usize).filter(|&q| en[q] >= 0.0).collect();
+            let at3 = live.iter().filter(|&&q| (dw[q] >> 12) & 7 == 3).count();
+            assert!(live.iter().all(|&q| (dw[q] >> 12) & 7 == 0 || (dw[q] >> 12) & 7 == 3), "only levels 0 and 3");
+            let mut kills = 0;
+            for _ in 0..30 {
+                let e = &g.world.e;
+                let w = e.dish.w;
+                let wk = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.walkers));
+                let en = crate::gpu::floats(&read_back(&e.device, &e.queue, &e.energy));
+                let mut on = vec![0u32; w * e.dish.h];
+                for q in (0..e.n as usize).filter(|&q| en[q] >= 0.0) {
+                    on[wk[4 * q + 1] as usize * w + wk[4 * q] as usize] += 1;
+                }
+                let c = (0..on.len()).max_by_key(|&i| on[i]).unwrap();
+                let at = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+                let shot = Frame { shots: vec![ShotIn { from: at, to: at, r: 2.0, over: false }], slime: slime_trail(6.0), ..Frame::default() };
+                kills += g.world.frame(&shot, 1).shots[0].killed;
+            }
+            (at3, live.len(), kills)
+        };
+        let (none3, _, k0) = play(false);
+        let (at3, live, k3) = play(true);
+        assert_eq!(none3, 0, "no levels: all level 0");
+        assert!(10 * at3 >= 9 * live, "level 3 walkers: {at3} of {live}");
+        assert!(k3 < k0, "kills in 1 s: {k0} at level 0, {k3} with level 3 crystals");
     }
 
     /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,

@@ -187,7 +187,9 @@ impl Lump {
 
     /// `armour` as both engines hold it.
     pub fn armour(&self) -> u32 {
-        self.armour.min(15)
+        // Bits 8-15 are the GPU's ward (`BossRules::ward_at`); the CPU
+        // engine counts the blows only.
+        (self.armour & 255).min(15)
     }
 
     pub fn on(&self) -> bool {

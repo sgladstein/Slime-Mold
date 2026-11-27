@@ -411,3 +411,15 @@ Enemy's #824. Bot batches on the PC wait while `gpu-timing.lock` exists.
 view's `full` after the Look lane's #638 (plant crowns skipped under the
 slime) and sends them the saving against 3.42 ms; `pump_maps` spikes
 (4.4 ms) if Squad and arsenal hand them back.
+
+**Star map (11-26, PR #860, the owner's pick of route directions 1 and 4).**
+A run is 12 steps (`PLANETS`); `src/mould/route.rs` draws a seeded map of
+2-3 planets a step, Safe/Fair/Hard (`Pip::offset` -1/0/+1.5 on the tuned
+eight-planet curve, `Run::curve`; a fork shares the step's species), pay
+x0.7/x1/x1.5, contracts (`Run::settle`), Heat (`HEAT_*`). The Stars page
+(`src/world/start/stars.rs`) comes before each shop; `route=` saves the
+picks. Filming: `menu=stars@STEP`, `run=SEED:STEPs|f|h`; bot:
+`league=STEP:SEED:SECS:PIP`. Bot check and page:
+`Reports/star-map-2026-11-26/`. Next: Hard +2 if play finds Hard too close
+to Fair late in a run; directions 2 and 5 wait
+(`Reports/review-2026-11-25/future-route-directions.md`).

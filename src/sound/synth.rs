@@ -531,6 +531,16 @@ fn gun_sound(v: GunVoice) -> GunSound {
         GunVoice::Long => GunSound { snap: (2600.0, 0.5, 0.007, 1.0), click: 0.65, punch: (62.0, 3.5, 0.09, 0.7), report: (650.0, 0.4, 0.33, 1.1, 0.4), action: (0.42, 0.35) },
         GunVoice::Scatter => GunSound { snap: (2000.0, 0.35, 0.009, 1.0), click: 0.55, punch: (75.0, 3.0, 0.07, 0.6), report: (800.0, 0.45, 0.22, 0.8, 0.35), action: (0.34, 0.3) },
         GunVoice::Turret => GunSound { snap: (2400.0, 2.5, 0.006, 0.6), click: 0.35, punch: (115.0, 1.5, 0.03, 0.35), report: (1100.0, 0.6, 0.09, 0.4, 0.15), action: (0.0, 0.0) },
+        // The kit's guns (2026-11-24). The mortar: a hollow tube thump, its
+        // "crack" a dull low band, a slow punch with little onset drop, a
+        // short dark breath after; no action.
+        GunVoice::Mortar => GunSound { snap: (700.0, 1.2, 0.02, 0.35), click: 0.15, punch: (58.0, 1.3, 0.11, 0.75), report: (420.0, 0.6, 0.18, 0.6, 0.22), action: (0.0, 0.0) },
+        // The hunter: a ringing crack (a narrow band, as the turret's) over
+        // a long gun's punch, a long report and a bolt worked after.
+        GunVoice::Hunter => GunSound { snap: (2900.0, 2.0, 0.007, 0.9), click: 0.5, punch: (70.0, 3.2, 0.07, 0.6), report: (750.0, 0.4, 0.26, 0.9, 0.32), action: (0.38, 0.3) },
+        // The sprayer: no punch and no click, a hiss for a crack and a
+        // longer softer one falling for its report: a jet, not a shot.
+        GunVoice::Sprayer => GunSound { snap: (5200.0, 0.6, 0.05, 0.3), click: 0.0, punch: (0.0, 0.0, 0.0, 0.0), report: (2600.0, 0.5, 0.2, 0.45, 0.22), action: (0.0, 0.0) },
     }
 }
 
@@ -544,8 +554,9 @@ fn gun_layers(v: GunVoice, rng: &mut Xs) -> [(GrainKind, Spec, f32); 6] {
     let j = |rng: &mut Xs, x: f32, by: f32| x * (1.0 + by * rng.bipolar());
     let none = (GrainKind::Action, base, 0.0);
     let mut out = [none; 6];
-    // The click: the first millisecond, wide and bright.
-    out[0] = (GrainKind::Crack, Spec { len: 0.008, attack: 0.0001, noise: g.click, noise_tau: 0.0007, band: j(rng, 5500.0, 0.1), q: 0.5, verb: 0.1, lp_hz: 15_000.0, ..base }, 0.0);
+    // The click: the first millisecond, wide and bright (none for a
+    // voice without one: a layer with `len` 0 is skipped).
+    out[0] = (GrainKind::Crack, Spec { len: if g.click > 0.0 { 0.008 } else { 0.0 }, attack: 0.0001, noise: g.click, noise_tau: 0.0007, band: j(rng, 5500.0, 0.1), q: 0.5, verb: 0.1, lp_hz: 15_000.0, ..base }, 0.0);
     // The crack: the gun's own band, falling a little.
     let (hz, q, tau, lvl) = g.snap;
     out[1] = (GrainKind::Crack, Spec { len: (tau * 10.0).max(0.04), attack: 0.0002, noise: j(rng, lvl, 0.1), noise_tau: j(rng, tau, 0.15), band: j(rng, hz, 0.08), q, band_end: 0.6, verb: 0.25, ..base }, 0.0);
@@ -553,7 +564,7 @@ fn gun_layers(v: GunVoice, rng: &mut Xs) -> [(GrainKind, Spec, f32); 6] {
     let (hz, drop, tau, lvl) = g.punch;
     out[2] = (
         GrainKind::Punch,
-        Spec { len: tau * 5.0, attack: 0.0004, sine: j(rng, lvl, 0.1), sine_tau: tau, freq: j(rng, hz, 0.06), freq_end: 0.75, drop, drop_tau: 0.012, noise: 0.35 * lvl, noise_tau: 0.012, band: j(rng, 300.0, 0.1), q: 0.8, verb: 0.05, ..base },
+        Spec { len: if lvl > 0.0 { tau * 5.0 } else { 0.0 }, attack: 0.0004, sine: j(rng, lvl, 0.1), sine_tau: tau, freq: j(rng, hz, 0.06), freq_end: 0.75, drop, drop_tau: 0.012, noise: 0.35 * lvl, noise_tau: 0.012, band: j(rng, 300.0, 0.1), q: 0.8, verb: 0.05, ..base },
         0.0,
     );
     // The report: the tail that rolls off, rough, wet, a breath after.

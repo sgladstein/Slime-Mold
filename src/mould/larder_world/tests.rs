@@ -1224,7 +1224,7 @@ fn a_walking_squad_or_a_standing_pump_is_not_stuck() {
     let mut g = small(1);
     hold(&mut g);
     let at = (g.soldiers[0].x, g.soldiers[0].y);
-    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None });
+    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None, gun: None });
     assert_eq!(stuck_for(&mut g), 0, "a standing pump is something");
     // Worn down, it no longer is.
     g.buildings[0].alive = false;
@@ -3873,8 +3873,8 @@ fn mini_boss_chances_rise_with_the_planet() {
     assert_eq!((one.every, one.cut), (0.0, 0.0), "none on planet 1");
     let (a, b) = (BossRules::for_depth(2), BossRules::for_depth(8));
     assert!(a.every > b.every && a.cut < b.cut && a.first > b.first, "{a:?} {b:?}");
-    assert_eq!((a.every, a.cut), (150.0, 0.02), "planet 2 has the curve's first step");
-    assert!((b.every - 45.0).abs() < 1e-3 && (b.cut - 0.1).abs() < 1e-6, "planet 8 as before: {b:?}");
+    assert_eq!((a.every, a.cut), (110.0, 0.02), "planet 2 has the curve's first step (150 s until 11-27)");
+    assert!((b.every - 35.0).abs() < 1e-3 && (b.cut - 0.1).abs() < 1e-6, "planet 8 every 35 s (45 until 11-27): {b:?}");
     assert_eq!((a.most, BossRules::for_depth(4).most), (1, 2));
     assert_eq!(Rules::default().boss.every, 0.0, "off outside a run");
     assert_eq!(Rules::default().boss.cut, 0.0);
@@ -3960,7 +3960,7 @@ fn squads_shoot_a_mini_boss_first() {
     // Its body's edge within the defend reach: the mini-boss first, slime
     // on the soldier or not.
     let close = at(r + 0.5 * g.rules.defend * sc);
-    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
     g.bosses.live.push(boss);
     for touching in [0, 2] {
         set(&mut g, touching);
@@ -4039,16 +4039,16 @@ fn soldiers_in_its_reach_shoot_the_origin() {
     h.members = 300;
     h.centre = at;
     g.stand.live = Some(h);
-    g.core = at;
+    g.origin.home = at;
     let r = (300.0f32 / std::f32::consts::PI).sqrt();
     assert!(g.origin_reaches(0));
     assert_eq!(g.boss_aim(0), Some((at, r)), "in its reach: its members first");
     // Its crystal far off: the soldier is outside its reach.
-    g.core = (s0.x, s0.y + 3.0 * g.rules.origin.near * sc);
+    g.origin.home = (s0.x, s0.y + 3.0 * g.rules.origin.near * sc);
     assert!(!g.origin_reaches(0));
     assert_eq!(g.boss_aim(0), None, "outside its reach: not a target");
     // The last stand's heart is not the origin.
-    g.core = at;
+    g.origin.home = at;
     g.stand.live.as_mut().unwrap().origin = false;
     assert_eq!(g.boss_aim(0), None, "the last stand's heart is not a target");
     // Free fire (Direction 11-22, through `Game::target`'s near first): slime
@@ -4062,7 +4062,7 @@ fn soldiers_in_its_reach_shoot_the_origin() {
     let far = (s0.x, s0.y + 20.0 * sc + r);
     assert!(g.clear_line((s0.x, s0.y), far), "open ground to the far origin");
     g.stand.live.as_mut().unwrap().centre = far;
-    g.core = far;
+    g.origin.home = far;
     g.soldiers[0].stance = Stance::Free;
     let slime5 = (s0.x + 5.0 * sc, s0.y);
     g.soldiers[0].aim = Some(slime5);
@@ -4070,7 +4070,7 @@ fn soldiers_in_its_reach_shoot_the_origin() {
     assert_eq!(g.target(0), Some(slime5), "slime 5 cells off before an origin 20 off");
     let close = (s0.x, s0.y + 8.0 * sc + r);
     g.stand.live.as_mut().unwrap().centre = close;
-    g.core = close;
+    g.origin.home = close;
     assert_eq!(g.target(0), Some(close), "an origin 8 cells off before the slime");
 }
 
@@ -4906,7 +4906,7 @@ fn late_against_a_big_army_the_mortar_comes_from_planet_2() {
         (g.rules.strikers.few, g.rules.strikers.full) = if big { (0.0, 1.0) } else { (100.0, 200.0) };
         g.peak = if late { g.mould * 10 } else { g.mould };
         let c = (g.soldiers[0].x, g.soldiers[0].y);
-        let b = Boss { lump: 0, born: 0, at: c, cause: BossCause::Crowd, phase: BossPhase::Gather, first: 0, members: 0, centre: c, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        let b = Boss { lump: 0, born: 0, at: c, cause: BossCause::Crowd, phase: BossPhase::Gather, first: 0, members: 0, centre: c, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
         (0..200).filter(|_| g.pick_kind(&b) == BossKind::Mortar).count()
     };
     let (early, small_squad, big) = (draws(false, true), draws(true, false), draws(true, true));
@@ -4928,9 +4928,9 @@ fn late_against_a_big_army_a_hunter_goes_round_to_a_building() {
         let (w, h) = g.world.size();
         // A pump on the far side of the dish from the squad.
         let at = (if c.0 < w as f32 / 2.0 { w as f32 - 20.0 } else { 20.0 }, if c.1 < h as f32 / 2.0 { h as f32 - 20.0 } else { 20.0 });
-        g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None });
+        g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false, next: 0, deck: None, loadout: None, gun: None });
         let from = ((c.0 + at.0) / 2.0, (c.1 + at.1) / 2.0);
-        let mut b = Boss { lump: 0, born: 0, at: from, cause: BossCause::Crowd, phase: BossPhase::Hunt(None), first: 100, members: 100, centre: from, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0 };
+        let mut b = Boss { lump: 0, born: 0, at: from, cause: BossCause::Crowd, phase: BossPhase::Hunt(None), first: 100, members: 100, centre: from, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0, lived: 0.0, walked: 0.0, backs: 0 };
         let round = g.boss_late() && g.army_scale() >= 1.0;
         (round, if round { g.round_errand(&mut b, 0) } else { None }, at)
     };
@@ -4997,4 +4997,63 @@ fn both_halves_of_a_split_squad_keep_its_orders() {
         assert_eq!(g.squads[q].work, Some(drain), "half {q} still drains");
         assert!(g.members(q).iter().all(|&k| g.soldiers[k].order == drain), "half {q}'s members still drain");
     }
+}
+
+/// **A wounded soldier walks at its own pace** (`Soldier::pace`, the Lab's
+/// rescue planet, 11-24): its share of full speed is its pace times the
+/// slime on its legs, and a whole soldier's is unchanged.
+#[test]
+fn a_wounded_soldier_walks_at_its_pace() {
+    let mut g = small(1);
+    let k = 0;
+    g.soldiers[k].touching = 0;
+    assert_eq!(g.wade(k), 1.0, "whole and clear of slime: full speed");
+    g.soldiers[k].pace = 0.3;
+    assert!((g.wade(k) - 0.3).abs() < 1e-6);
+    g.soldiers[k].touching = 3;
+    let slowed = g.wade(k);
+    g.soldiers[k].pace = 1.0;
+    assert!((slowed - 0.3 * g.wade(k)).abs() < 1e-6, "pace times the wade");
+}
+
+/// **A hunter stalks the lone soldier** (2026-11-26, `BossRules::stalk`):
+/// with six soldiers in a knot and one alone a little farther off, a
+/// stalking hunter's prey is the lone one; without, the nearest of the
+/// knot. It keeps its prey while that scores near the best.
+#[test]
+fn a_stalking_hunter_goes_for_the_lone_soldier() {
+    let mut g = small(2);
+    while g.soldiers.len() < 7 {
+        let s = g.soldiers[0];
+        g.soldiers.push(s);
+    }
+    let sc = g.world.scale();
+    let (w, h) = g.world.size();
+    let c = (w as f32 / 2.0, h as f32 / 2.0);
+    for (k, s) in g.soldiers.iter_mut().enumerate() {
+        s.alive = true;
+        (s.x, s.y) = if k == 6 { (c.0 + 40.0 * sc, c.1) } else { (c.0 - 30.0 * sc + k as f32, c.1) };
+    }
+    let at = (c.0, c.1 + 20.0 * sc);
+    g.rules.boss.stalk = 0.0;
+    assert!(g.boss_prey(at, None).is_some_and(|k| k < 6), "plain: the nearest of the knot");
+    g.rules.boss.stalk = 1.0;
+    assert_eq!(g.boss_prey(at, None), Some(6), "stalking: the lone soldier");
+    assert_eq!(g.boss_prey(at, Some(6)), Some(6), "and it keeps it");
+}
+
+/// **A hunter falls back to feed** (`BossRules::backs`): its point is in
+/// its own slime, past the squad's guns.
+#[test]
+fn a_hunter_falls_back_into_its_slime_past_the_guns() {
+    let mut g = small(2);
+    for _ in 0..(10 * g.rules.tps) {
+        g.step();
+    }
+    let s = (g.soldiers[0].x, g.soldiers[0].y);
+    let Some(p) = g.back_point(s) else { panic!("a point to fall back to") };
+    let sc = g.world.scale();
+    let ring = (g.gun_range_max() + g.rules.panic_margin.max(0.0)) * sc;
+    let d = g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x - p.0).hypot(x.y - p.1)).fold(f32::INFINITY, f32::min);
+    assert!(d > ring, "past the guns: {d} against {ring}");
 }

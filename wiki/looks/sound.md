@@ -2,8 +2,9 @@
 title: Sound
 kind: look
 status: current
-updated: 2026-11-22
+updated: 2026-11-24
 sources:
+  - Reports/kit-sounds-2026-11-24/README.md
   - Reports/larder-sound-2026-11-12.md
   - Reports/mould-sound-2026-11-10.md
   - Reports/music-bed-2026-11-22/README.md
@@ -23,6 +24,7 @@ code:
   - PIECE_SHARE
   - PULSE_FLOOR
   - Pieces
+  - RIPPLE_VOICED
   - SCORE_LEVEL
   - SETTLE
   - SHOTS_VOICED
@@ -35,6 +37,8 @@ code:
   - WorldListener
   - WorldListener::bangs
   - WorldListener::pops
+  - WorldListener::puffs
+  - blow
   - density
   - full_kill
   - gun_layers
@@ -72,9 +76,23 @@ voice bank prints a mix meter under every recording (`SynthStats::mix`).
 Since pass two the gun cards' payloads, raids, surges, mini-bosses,
 buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
 `App::click_sound`).
+The kit's own voices: [below](#the-kits-voices).
 The music bed and the planet's air: [The score](#the-score).
 
 Keeping it playing: [below](#keeping-it-playing).
+
+## The kit's voices
+
+(2026-11-24, Direction) A mortar's launch is a
+hollow thump and its shell whistles down into a crump; a hunter's is a
+ringing crack with a bolt; a sprayer's sweep a hiss (`GunVoice::Mortar`,
+`Hunter`, `Sprayer`; shells and sweeps heard as they are sent, `Game::shells`,
+`Game::sprays`). A Mine clicks before its blast; a Line is one ripple of at
+most `RIPPLE_VOICED` small thuds, not a Grenade's thud a blast; a Canister
+clinks and hisses (`WorldListener::puffs`); a Dart thwips and squelches
+where its lure mark lands. Every blow is weighed against the Grenade's by
+its radius (`blow`: the square root of its area's share). Levels and
+clips: [kit sounds](../../Reports/kit-sounds-2026-11-24/README.md).
 
 ## The score
 
@@ -131,6 +149,7 @@ alone with `cargo run --release --example scoreplay -- DIR`.
 
 ## Sources
 
+- [kit-sounds-2026-11-24](../../Reports/kit-sounds-2026-11-24/README.md); clips in that folder.
 - [music-bed-2026-11-22](../../Reports/music-bed-2026-11-22/README.md); page source and clips in that folder.
 - [sound-pass-2026-11-20.md](../../Reports/sound-pass-2026-11-20.md); page source in `Reports/sound-pass-2026-11-20/page/`.
 - [mould-sound-2026-11-10.md](../../Reports/mould-sound-2026-11-10.md); page source in `Reports/mould-sound-2026-11-10/`.

@@ -1013,7 +1013,7 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     assert!(round_args(&cli, false, &menu, &StartEvent::Sandbox).run.is_none(), "the sandbox is not a run");
     // The shop page shows what the run sells, by group.
     let shop = shop_of(&Run::new(1));
-    assert!(shop.heading.starts_with("Planet 1 of 8"), "{}", shop.heading);
+    assert!(shop.heading.starts_with(&format!("Planet 1 of {}", slime_mould::mould::run::PLANETS)), "{}", shop.heading);
     assert!(shop.rows.iter().any(|row| row.group == "Buildings" && row.name == "Turrets"));
 }
 
@@ -1040,11 +1040,13 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let _ = std::fs::remove_file(&save);
     app.run_file = Some(save.clone());
     let saved = || Run::from_save(&std::fs::read_to_string(&save).expect("a run save")).unwrap();
-    // Planet 1 of the run's seed, the level generator's (#277).
-    assert_eq!(app.name, "planet:1:1");
+    // Planet 1 of the run's seed, the level generator's (#277), at its
+    // star map node's world (2026-11-26).
+    let spec = |r: &Run| format!("planet:{}:{}", r.map_depth(), r.node().seed);
+    assert_eq!(app.name, spec(&Run::new(1)));
     app.prepare();
     let m = app.model(None, None);
-    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Kill the slime's heart")), "{:?}", m.objective);
+    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Wipe out every last bit of slime")), "{:?}", m.objective);
     // Turrets and walls are on the build page (Card 2); walls are owned
     // from the start.
     app.build_page = true;
@@ -1069,6 +1071,10 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(m.carry_on.as_deref(), Some("On to the shop"));
     app.carry_on().unwrap();
     assert!(app.in_menu());
+    // Planet 2 is a fork: the star map first, then the pick's shop.
+    assert_eq!(app.menu.as_ref().unwrap().page, Page::Stars);
+    let k = app.run.as_ref().unwrap().choices().iter().find(|n| n.k == 0).map_or_else(|| app.run.as_ref().unwrap().choices()[0].k, |n| n.k);
+    app.menu_event(StartEvent::Route(k, false)).unwrap();
     let menu = app.menu.as_ref().unwrap();
     assert_eq!(menu.page, Page::Shop);
     assert!(menu.run_live);
@@ -1128,11 +1134,11 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
         again.menu_event(StartEvent::Run).unwrap();
         assert_eq!(again.menu.as_ref().unwrap().page, Page::Shop, "Back to the run: the shop");
         again.menu_event(StartEvent::NextLevel).unwrap();
-        assert_eq!((again.name.as_str(), again.args.run.as_ref().map(|r| r.depth)), ("planet:2:1", Some(2)), "the same planet");
+        assert_eq!((again.name.clone(), again.args.run.as_ref().map(|r| r.depth)), (spec(app.args.run.as_ref().unwrap()), Some(2)), "the same planet");
         again.run_file = None;
     }
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
-    assert_eq!(app.name, "planet:2:1");
+    assert_eq!(app.name, spec(app.args.run.as_ref().unwrap()));
     // Loadouts on the planet (owner, 2026-11-19 19:22Z): H opens their
     // panel, paused, nothing for sale; the commanded squad is given the
     // turrets' loadout (Gas, no gun) and fires it once back, the run
@@ -1212,6 +1218,17 @@ fn start_on_planet_skips_to_its_shop_with_the_average_pay() {
     app.run = None;
     app.menu_event(StartEvent::Run).unwrap();
     assert!(app.in_menu(), "the shop, not a landing");
+    // A fork at planet 4: the star map, then its shop (2026-11-26).
+    // (A step with one way on from the last pick skips the map.)
+    let pick = |app: &mut App| {
+        if !app.run.as_ref().unwrap().choosing() {
+            return;
+        }
+        assert_eq!(app.menu.as_ref().unwrap().page, Page::Stars);
+        let k = app.run.as_ref().unwrap().choices()[0].k;
+        app.menu_event(StartEvent::Route(k, false)).unwrap();
+    };
+    pick(&mut app);
     assert_eq!(app.menu.as_ref().unwrap().page, Page::Shop);
     let paid = skip_pay(1) + skip_pay(2) + skip_pay(3);
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points, r.stars.clone())), Some((4, paid, vec![0, 0, 0])));
@@ -1220,6 +1237,7 @@ fn start_on_planet_skips_to_its_shop_with_the_average_pay() {
     let skip = app.run.as_ref().unwrap().shop().iter().position(|r| r.pick == Pick::DevSkip).expect("the shop's skip row");
     app.menu_event(StartEvent::Buy(skip)).unwrap();
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((5, paid + skip_pay(4))));
+    pick(&mut app);
     // On to planet 5: it lands.
     app.menu_event(StartEvent::NextLevel).unwrap();
     assert!(!app.in_menu());
@@ -2241,6 +2259,11 @@ fn the_menus_real_lists_fit_one_screen() {
             // at 200% on 720 (11-15; its text stays 15 units, the owner's
             // "the text seems too small").
             assert!(m.sheets() <= 3 && !m.scrolls(), "{at}: the key list takes {} pages", m.sheets());
+            // Change keys (11-24): every squad key, two pages at most.
+            m.show(Page::Bind);
+            draw(&mut m);
+            assert!(m.sheets() <= 2 && !m.scrolls(), "{at}: Change keys takes {} pages", m.sheets());
+            m.show(Page::Keys);
             m.key(KeyCode::Tab, true);
             assert_eq!(m.page, Page::Options, "{at}: Tab on the keys goes round to the first tab");
             m.show(Page::Missions);
@@ -2477,4 +2500,29 @@ fn a_given_up_run_is_kept_for_past_runs() {
     back.load_run();
     assert_eq!(back.menu.as_ref().unwrap().runs, app.menu.as_ref().unwrap().runs);
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// Change keys lists every squad key once, each one that can move.
+#[test]
+fn change_keys_lists_each_squad_key_once() {
+    let rows = bind_rows();
+    for (i, (k, w)) in rows.iter().enumerate() {
+        assert!(slime_mould::world::keys::FREE.contains(k), "{w}: {k:?} cannot move");
+        assert!(rows[..i].iter().all(|r| r.0 != *k), "{w}: {k:?} listed twice");
+    }
+}
+
+/// A run played again on its seed (Direction 11-24) gets the same planets,
+/// maps, twists and first shop; what the player buys and rerolls changes
+/// the later shops from there, as it did the first time.
+#[test]
+fn a_seed_gives_the_same_planets_and_first_shop() {
+    let (mut a, mut b) = (Run::new(1_732_456_789), Run::new(1_732_456_789));
+    a.restock();
+    b.restock();
+    assert_eq!((a.offers.clone(), a.gun_offers.clone()), (b.offers.clone(), b.gun_offers.clone()));
+    for d in 1..=slime_mould::mould::run::PLANETS {
+        (a.depth, b.depth) = (d, d);
+        assert_eq!((a.planet().name, a.twist(), a.level().seed), (b.planet().name, b.twist(), b.level().seed), "planet {d}");
+    }
 }

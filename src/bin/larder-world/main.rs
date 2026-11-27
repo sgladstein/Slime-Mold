@@ -637,6 +637,10 @@ struct Args {
     /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
     /// `Game::turret_deck`), a preset or a card list as `load=`.
     tload_at: Option<(f32, String)>,
+    /// `tgun=KIND` (look= only, 2026-11-27): every turret fires the
+    /// average gun of KIND (rifle, carbine, long, scatter) from the start
+    /// (`Cmd::Arm(TURRET_DECK, ..)`, `Game::turret_gun`).
+    tgun: Option<slime_mould::mould::guns::GunKind>,
     /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
     /// what the player does before frame N's picture, one step a frame
     /// (`headless::card_step`): main, build, tools, form, free, pick, fire,
@@ -1039,9 +1043,9 @@ struct App {
     /// robbed (game second), out of food.
     dry: Vec<bool>,
     core_told: bool,
-    /// The origin's turns told (`origin.rs`): formed, gathering the last
-    /// stand, dead.
-    origin_told: (bool, bool, bool),
+    /// The crystal hearts' turns told (`origin.rs`): hearts formed,
+    /// gathering the last stand, hearts broken.
+    origin_told: (u32, bool, u32),
     /// Starfall's falls landed and cores dropped already told (`starfall.rs`).
     drops_told: (u32, u32),
     /// The run's one-time Starfall hint (`StarHint`).
@@ -1176,6 +1180,13 @@ struct App {
     /// The planet's landing card (`ui::Intro`) and the game time it first
     /// showed (`INTRO_SECS`, `draw`).
     intro: Option<(slime_mould::world::ui::Intro, f32)>,
+    /// When the player first pressed a key or a button over the landing
+    /// card (`App::intro_seen`): from then it fades over `INTRO_GONE` of
+    /// real time, so it is gone once play starts but stays readable until
+    /// then (owner, 2026-11-26: "should go away when you start pressing
+    /// buttons"). Real time, not game time, so a first press that pauses
+    /// still clears it.
+    intro_seen: Option<std::time::Instant>,
     /// Frames left before a run lands on its next planet (`menu::landing_frame`):
     /// the shop's landing card is drawn first, so the click shows at once.
     landing_due: Option<u8>,
@@ -1268,7 +1279,7 @@ impl App {
             building_sel: None,
             dry: Vec::new(),
             core_told: false,
-            origin_told: (false, false, false),
+            origin_told: (0, false, 0),
             drops_told: (0, 0),
             star_hint: StarHint::default(),
             hints: hints::Hints::default(),
@@ -1313,6 +1324,7 @@ impl App {
             run_file: None,
             run_saved: String::new(),
             intro: None,
+            intro_seen: None,
             landing_due: None,
             coach: draw::Coach::default(),
             run_mid: None,
@@ -1376,10 +1388,10 @@ impl App {
         // mould; that slime shed nine tenths of its walkers in its first
         // minute on every planet (the slime-enemy thread found why).
         if let Some(l) = &level {
-            run_shape(&mut s, l.walkers * a.size(), l.depth)?;
+            run_shape(&mut s, l.walkers * a.size(), l.curve)?;
         }
         // The food the planet's slime eats to build a surge (`run::surge_food`).
-        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers * a.size()));
+        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.curve, l.walkers * a.size()));
         // The slime: the mission's tier, unless the tweaks file puts
         // another on this run planet (`planet N = SLIME`) or the viewer
         // shows one of the owner's own; a custom plays its base tier with
@@ -1735,7 +1747,7 @@ impl App {
         self.controls.groups = Default::default();
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
-        self.origin_told = (false, false, false);
+        self.origin_told = (0, false, 0);
         self.broken_told = false;
         self.raids_told = 0;
         self.bank_log.clear();
@@ -1792,10 +1804,13 @@ impl App {
                 // name and "Tier: what it does".
                 let intro = self.args.run.as_ref().filter(|r| !r.range).map(|r| {
                     let tier = r.level().tier;
-                    slime_mould::world::ui::Intro { kicker: tr.mission.name.clone(), title: title_case(tier.name()), line: slime_mould::mould::run::does_to_you(tier).says.to_string(), twist: r.twist().map(|t| (t.name().to_string(), t.card())), alpha: 1.0 }
+                    slime_mould::world::ui::Intro { kicker: tr.mission.name.clone(), title: title_case(tier.name()), line: slime_mould::mould::run::does_to_you(tier).says.to_string(), counter: menu::beat_it(tier).map(str::to_string), twist: r.twist().map(|t| (t.name().to_string(), t.card())), alpha: 1.0 }
                 });
                 match intro {
-                    Some(i) => self.intro = Some((i, self.game.as_ref().map_or(0.0, |g| g.time()))),
+                    Some(i) => {
+                        self.intro = Some((i, self.game.as_ref().map_or(0.0, |g| g.time())));
+                        self.intro_seen = None;
+                    }
                     None => self.hud.alert(&tr.mission.name, None, theme::ACCENT),
                 }
             }
@@ -1900,7 +1915,7 @@ impl App {
         let t = g.time();
         let line = slime_mould::mould::playlog::Playlog::note(self.log_notes, t, self.camera.centre(), self.camera.zoom);
         Self::log_write(&self.log_path, &line);
-        self.hud.alert(&format!("Note {} dropped at {}:{:02} (it is in the play log)", self.log_notes, t as u32 / 60, t as u32 % 60), None, theme::ACCENT);
+        self.hud.alert(&format!("Note {} saved at {}:{:02}", self.log_notes, t as u32 / 60, t as u32 % 60), None, theme::ACCENT);
     }
 
     /// Appends `text` to the play log (nothing without one).
@@ -2208,14 +2223,14 @@ impl App {
             let newest = |kind: DropKind| g.starfall.live.iter().rev().find(|d| d.down && d.kind == kind);
             if g.starfall.landed > landed {
                 if let Some(d) = newest(DropKind::Ore) {
-                    self.hud.alert("Ore has landed: send a squad to stand on it for shop points", Some(d.at), theme::WARN);
+                    self.hud.alert("Ore landed: stand a squad on it for shop points", Some(d.at), theme::WARN);
                 }
             }
             if g.starfall.cores > cores {
                 if let Some(d) = newest(DropKind::Core) {
                     let what = match d.from {
-                        CoreFrom::Boss { .. } => "A mini-boss dropped its core: stand a squad on it for shop points before the slime eats it back",
-                        CoreFrom::Raid => "The beaten raid dropped a core: stand a squad on it for shop points",
+                        CoreFrom::Boss { .. } => "A mini-boss core: stand a squad on it before the slime does",
+                        CoreFrom::Raid => "A raid's core: stand a squad on it for shop points",
                         _ => "A core dropped: stand a squad on it for shop points",
                     };
                     self.hud.alert(what, Some(d.at), theme::WARN);
@@ -2238,26 +2253,24 @@ impl App {
         if self.coach.done && !was && self.window.is_some() {
             let _ = settings::set("coached", "1");
         }
-        // The origin (`origin.rs`, Milestone 2's win): where it is when it
-        // forms, when the last stand gathers into it, and its death, each
-        // a ping on the minimap at its centre (Space jumps there). The
-        // goal line carries its count (`draw::origin_line`).
-        if g.rules.origin.on && g.origin.formed {
-            let at = g.stand.live.filter(|h| h.origin).map_or(g.core, |h| h.centre);
+        // Crystal hearts (`origin.rs`; the origin, Milestone 2's win,
+        // until 11-26): each one as it forms, the last stand gathering
+        // into it, and each one broken, a ping on the minimap at its
+        // centre (Space jumps there). The goal line carries its count
+        // (`draw::origin_line`).
+        if g.rules.origin.on {
+            let at = g.stand.live.filter(|h| h.origin).map_or(g.origin.home, |h| h.centre);
             let gather = g.stand.live.is_some_and(|h| h.origin && h.gather);
-            let dead = g.origin.fell.is_some();
-            if !self.origin_told.0 {
-                // Where it is, not the goal again: the top line says that
-                // (polish review finding 10's "objective three times").
-                self.hud.alert("The slime's heart is here: Space to look", Some(at), theme::ACCENT);
+            if g.origin.formed > self.origin_told.0 {
+                self.hud.alert("A heart is growing on a crystal (Space to look)", Some(at), theme::BAD);
             }
             if gather && !self.origin_told.1 {
-                self.hud.alert("The slime is gathering into its heart for a last stand", Some(at), theme::BAD);
+                self.hud.alert("The slime gathers into its heart for a last stand", Some(at), theme::BAD);
             }
-            if dead && !self.origin_told.2 {
-                self.hud.alert("The slime's heart is broken: the slime is dying back", Some(at), theme::GOOD);
+            if g.origin.broken > self.origin_told.2 {
+                self.hud.alert("Heart broken: drain its crystal before another grows", Some(g.origin.home), theme::GOOD);
             }
-            self.origin_told = (true, self.origin_told.1 || gather, self.origin_told.2 || dead);
+            self.origin_told = (g.origin.formed, self.origin_told.1 || gather, g.origin.broken);
         }
         if g.core_down.is_some() && !self.core_told {
             self.core_told = true;
@@ -2266,7 +2279,7 @@ impl App {
         if g.broken.is_some() != self.broken_told {
             self.broken_told = g.broken.is_some();
             if self.broken_told {
-                self.hud.alert("The slime is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
+                self.hud.alert("The slime is broken: cut-off bits starve", None, theme::GOOD);
             } else {
                 self.hud.alert("The slime is growing back from a crystal", None, theme::BAD);
             }
@@ -2350,6 +2363,7 @@ impl App {
         let t0 = Instant::now();
         // The kit's blasts (mines, thrown charges), heard where they went off.
         l.bangs(&g.kit.bangs);
+        l.puffs(&g.kit.puffs);
         // The gun cards' payloads (sound pass two, 2026-11-20).
         l.pops(&g.rounds.pops);
         // The score: the planet's mood, the menus' own under a menu.
@@ -2491,6 +2505,8 @@ impl App {
     /// interval between frames in the window, the frame's own time in the
     /// bench. Nothing when the player chose a step.
     fn auto_frame(&mut self, ms: f32) {
+        // (The frame readout, Options > Screen, keeps the same times.)
+        self.hud.frame(ms);
         if detail_user() == "Auto" {
             self.auto_detail.frame(ms);
         }
@@ -2766,8 +2782,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // slot's HUD (Look, 11-24).
                 let (seed, depth) = v.split_once(':').unwrap_or((v, "1"));
                 let (depth, bodies) = depth.split_once(':').unwrap_or((depth, ""));
+                // `run=SEED:6h` (the star map, 2026-11-26): lands on step
+                // 6's Safe, Fair or Hard planet (s, f, h), the route Fair
+                // before it, to film one pip beside another.
+                let (depth, pip) = match depth.strip_suffix(['s', 'f', 'h']) {
+                    Some(d) => (d, depth.chars().last()),
+                    None => (depth, None),
+                };
                 let mut r = Run::new(seed.parse()?);
                 r.depth = depth.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
+                if let Some(c) = pip {
+                    use slime_mould::mould::route::Pip;
+                    let want = match c {
+                        's' => Pip::Safe,
+                        'f' => Pip::Fair,
+                        _ => Pip::Hard,
+                    };
+                    let k = r.star_map().steps[r.depth as usize - 1].iter().find(|n| n.pip == want).map(|n| n.k).ok_or("run=SEED:STEPs|f|h: that step has no planet of that pip")?;
+                    r.route.resize(r.depth as usize - 1, slime_mould::mould::run::Leg::default());
+                    r.route.push(slime_mould::mould::run::Leg { k, heat: false });
+                }
                 for w in bodies.split('+').filter(|w| !w.is_empty()) {
                     let kind = slime_mould::mould::bodies::BodyKind::ALL.into_iter().find(|k| k.name().eq_ignore_ascii_case(w)).ok_or("run=SEED:DEPTH:BODIES: grenade, mine, line or canister, joined by +")?;
                     // Bought as the shop buys it (`Pick::Body`), which
@@ -3031,6 +3065,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let [x, y, r] = w.as_slice() else { return Err("watch=X,Y,R".into()) };
                 args.watch = Some((*x, *y, *r));
             }
+            "tgun" => {
+                args.tgun = Some(slime_mould::mould::guns::GunKind::parse(v).ok_or("tgun=rifle|carbine|long|scatter")?);
+            }
             "tload" => {
                 let (t, name) = v.split_once(',').ok_or("tload=T,NAME")?;
                 let cards = match LOADOUTS.iter().find(|l| l.0 == name) {
@@ -3156,7 +3193,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(job) = league_job {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         match job {
-            league::Job::Planet { depth, seed, secs } => league::planet(base, depth, seed, secs, &league_plan, &device, &queue)?,
+            league::Job::Planet { depth, seed, secs, pip } => league::planet(base, depth, seed, secs, pip, &league_plan, &device, &queue)?,
             league::Job::Run { seed, to, secs } => league::whole_run(base, seed, to, secs, &league_plan, &device, &queue)?,
         }
         return Ok(());
@@ -3339,7 +3376,7 @@ fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime
     use slime_mould::mould::larder_world::RaidAim;
     let name = |k: usize| g.buildings.get(k).map_or("building", |b| b.kind.name());
     match d.aim {
-        _ if d.last_stand => "Last stand: all of the slime rushes your soldiers".into(),
+        _ if d.last_stand => "Last stand: all the slime rushes you".into(),
         RaidAim::Building(k) => format!("The slime is raiding your {}", name(k)),
         RaidAim::Lure { from: Some(k), .. } => format!("A raid on your {} turns for the lure", name(k)),
         RaidAim::Lure { from: None, .. } => "A raid on your soldiers turns for the lure".into(),

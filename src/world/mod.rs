@@ -31,6 +31,7 @@ pub mod canvas;
 pub mod controls;
 pub mod demo;
 pub mod icons;
+pub mod keys;
 pub mod look;
 pub mod marks;
 pub mod settings;

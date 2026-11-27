@@ -732,6 +732,10 @@ pub struct Rules {
     /// **A planet twist** (2026-11-24; `twist.rs`): the cold snap or the
     /// wind, rolled by the run (`run::Run::twist`). None here. GPU only.
     pub twist: super::TwistRules,
+    /// **The slime's levels** (2026-11-26; `levels.rs`): each crystal's
+    /// level, rolled by the run (`run::LEVEL_MAX`). Off here. GPU only.
+    #[serde(default)]
+    pub levels: super::LevelRules,
 }
 
 /// `Rules::ceiling_grow`'s default: a slime on the crystals it landed on
@@ -777,6 +781,10 @@ impl Rules {
             }
             "boss_most" => {
                 self.boss.most = (v.max(0.0) as usize).min(crate::mould::big::LUMPS);
+                return true;
+            }
+            "boss_backs" => {
+                self.boss.backs = v.max(0.0) as u32;
                 return true;
             }
             _ => {}
@@ -864,6 +872,11 @@ impl Rules {
                 self.origin.armour = v.clamp(0.0, 15.0) as u32;
                 return true;
             }
+            // The slime's highest level (`levels.rs`; 0 all orange).
+            "level_max" => {
+                self.levels.max = v.clamp(0.0, 7.0) as u32;
+                return true;
+            }
             // 0 none, 1 the cold snap, 2 the wind (`twist.rs`).
             "twist" => {
                 self.twist.kind = match v as u32 {
@@ -916,6 +929,7 @@ impl Rules {
             "boss_least" => self.boss.least as f32,
             "boss_cut_least" => self.boss.cut_least as f32,
             "boss_most" => self.boss.most as f32,
+            "boss_backs" => self.boss.backs as f32,
             "max_squad" => self.max_squad as f32,
             "steer" => on(self.steer),
             "funnel" => on(self.funnel),
@@ -932,6 +946,7 @@ impl Rules {
             "stand" => on(self.stand.on),
             "origin" => on(self.origin.on),
             "origin_armour" => self.origin.armour as f32,
+            "level_max" => self.levels.max as f32,
             "twist" => self.twist.kind as u32 as f32,
             "origin_bite" => self.origin.bite as f32,
             "stand_armour" => self.stand.armour as f32,
@@ -1054,8 +1069,8 @@ impl Rules {
             "origin_near" => &mut self.origin.near,
             "origin_call_loss" => &mut self.origin.call_loss,
             "origin_call_every" => &mut self.origin.call_every,
-            "origin_die_back" => &mut self.origin.die_back,
-            "origin_die_upkeep" => &mut self.origin.die_upkeep,
+            "origin_dense" => &mut self.origin.dense,
+            "origin_after" => &mut self.origin.after,
             "origin_every" => &mut self.origin.every,
             "origin_lunge" => &mut self.origin.lunge,
             "origin_cap" => &mut self.origin.cap,
@@ -1098,6 +1113,11 @@ impl Rules {
             "boss_armour_hi" => &mut self.boss.armour_hi,
             "boss_bite_lo" => &mut self.boss.bite_lo,
             "boss_bite_hi" => &mut self.boss.bite_hi,
+            "boss_ward_lo" => &mut self.boss.ward_lo,
+            "boss_ward_hi" => &mut self.boss.ward_hi,
+            "boss_stalk" => &mut self.boss.stalk,
+            "boss_back_at" => &mut self.boss.back_at,
+            "boss_back_secs" => &mut self.boss.back_secs,
             "boss_size" => &mut self.boss.size,
             "boss_faster" => &mut self.boss.faster,
             "boss_tight" => &mut self.boss.tight,
@@ -1298,6 +1318,7 @@ impl Default for Rules {
             stand: super::StandRules::default(),
             origin: super::OriginRules::default(),
             twist: super::TwistRules::default(),
+            levels: super::LevelRules::default(),
         }
     }
 }
