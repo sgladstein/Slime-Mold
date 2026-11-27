@@ -2,6 +2,13 @@
 
 ## State (2026-11-20)
 
+**11-27, alerts:** at most three (`ALERTS_MAX`), 4 s (`ALERT_LIFE`; red
+6 s, `ALERT_LIFE_BAD`), repeats counted (`Alert::count`, "x3"), none wider
+than `ALERT_W` 520 units or 42% of the screen (cut with an ellipsis). 19
+long alert texts reworded short in `squadmode.rs`, `input.rs` (Squad),
+`main.rs`, `resume.rs` (Engine), told through the coordinator. Next from
+the gauge page's list: Sleeper/Grudge tells and the heart in the bar.
+
 **11-27, the slime gauge (HUD; thread "Improve the top HUD and status
 pop-ups"):** in a run the top bar's middle is `SlimeGauge` (peak-wide bar,
 fill now, white landing mark, 3 s cut pale, Swarmer rush mark red), the goal

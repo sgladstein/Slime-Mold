@@ -1125,12 +1125,35 @@ struct Alert {
     at: Option<(f32, f32)>,
     colour: Rgba,
     when: Instant,
+    /// How many times these words came while it showed ("x3" after them).
+    count: u32,
 }
 
-/// How long an alert stays, and fades.
-const ALERT_LIFE: Duration = Duration::from_secs(6);
+impl Alert {
+    /// How long it stays: a red one (a soldier lost, a raid) longer.
+    fn life(&self) -> Duration {
+        if self.colour == BAD {
+            ALERT_LIFE_BAD
+        } else {
+            ALERT_LIFE
+        }
+    }
+
+    fn live(&self, now: Instant) -> bool {
+        now.duration_since(self.when) < self.life()
+    }
+}
+
+/// How long an alert stays, and fades (owner, 2026-11-27: "all pop up
+/// extra status messages ... as unobtrusive on the screen as possible").
+/// Until then every alert stayed 6 s and five stacked, so a fight's
+/// soldier losses alone made a column of five alike down the left.
+const ALERT_LIFE: Duration = Duration::from_secs(4);
+const ALERT_LIFE_BAD: Duration = Duration::from_secs(6);
 const ALERT_FADE: f32 = 1.0;
-const ALERTS_MAX: usize = 5;
+const ALERTS_MAX: usize = 3;
+/// The widest an alert draws, UI units, its words cut to fit after that.
+const ALERT_W: f32 = 520.0;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Targeting {
@@ -1320,7 +1343,8 @@ impl Hud {
     /// squad (controls review, 2026-11-21: Space is the squad's there, so a
     /// raid's or a landing ore's alert could only be reached by panning).
     pub fn newest_place(&self) -> Option<(f32, f32)> {
-        self.alerts.iter().rev().filter(|a| a.when.elapsed() < ALERT_LIFE).find_map(|a| a.at)
+        let now = Instant::now();
+        self.alerts.iter().rev().filter(|a| a.live(now)).find_map(|a| a.at)
     }
 
     /// A targeted command is waiting for its point: its id and target, and
@@ -1374,9 +1398,12 @@ impl Hud {
     /// An alert: `text`, at a world point if it has one (pinged on the
     /// minimap; Space goes there).
     pub fn alert(&mut self, text: &str, at: Option<(f32, f32)>, colour: Rgba) {
-        // The same words again refresh the old one rather than stack.
+        // The same words again refresh the old one rather than stack, and
+        // count ("A soldier was killed by the slime x4"), while it shows.
+        let now = Instant::now();
+        let count = self.alerts.iter().find(|a| a.text == text && a.live(now)).map_or(1, |a| a.count + 1);
         self.alerts.retain(|a| a.text != text);
-        self.alerts.push(Alert { text: text.into(), at, colour, when: Instant::now() });
+        self.alerts.push(Alert { text: text.into(), at, colour, when: now, count });
         if self.alerts.len() > ALERTS_MAX {
             self.alerts.remove(0);
         }
@@ -1685,7 +1712,7 @@ impl Hud {
             self.targeting = still.map(|index| Targeting { index, ..t });
         }
         let now = Instant::now();
-        self.alerts.retain(|a| now.duration_since(a.when) < ALERT_LIFE);
+        self.alerts.retain(|a| a.live(now));
         let pad = CARD_PAD * b;
 
         // The minimap's frame (bottom right), the command card left of it,
@@ -3103,16 +3130,23 @@ impl Hud {
         let alerts = self.alerts.clone();
         for a in alerts.iter().rev() {
             let age = now.duration_since(a.when).as_secs_f32();
-            let life = ALERT_LIFE.as_secs_f32();
+            let life = a.life().as_secs_f32();
             let fade = ((life - age) / ALERT_FADE).clamp(0.0, 1.0);
-            let w = c.atlas.measure(Weight::Medium, 14.0 * s, &a.text) + 46.0 * s;
+            let times = (a.count > 1).then(|| format!("\u{d7}{}", a.count));
+            let times_w = times.as_ref().map_or(0.0, |t| c.atlas.measure(Weight::SemiBold, 13.0 * s, t) + 8.0 * s);
+            let most = (ALERT_W * s).min(c.screen.0 as f32 * 0.42) - 46.0 * s - times_w;
+            let tw = c.atlas.measure(Weight::Medium, 14.0 * s, &a.text).min(most.max(40.0 * s));
+            let w = tw + times_w + 46.0 * s;
             let r = Rect::new(8.0 * s, y, w, 32.0 * s);
             c.shadow(r, 8.0 * s, 12.0 * s, 3.0 * s, alpha(SHADOW, fade));
             c.panel(r, 8.0 * s, alpha(PANEL_TOP, fade), alpha(PANEL_BOTTOM, fade), 1.0, alpha(EDGE, fade));
             c.rrect(Rect::new(r.x, r.y + 6.0 * s, 3.0 * s, r.h - 12.0 * s), 1.5 * s, alpha(a.colour, fade));
             c.icon(Icon::Alert, (r.x + 12.0 * s, r.y + 8.0 * s), 16.0 * s, alpha(a.colour, fade));
-            c.text(Weight::Medium, 14.0 * s, (r.x + 34.0 * s, r.y + 21.5 * s), Align::Left, &a.text, alpha(TEXT, fade));
-            y += 38.0 * s;
+            c.text_fit(Weight::Medium, 14.0 * s, (r.x + 34.0 * s, r.y + 21.5 * s), Align::Left, &a.text, tw + 1.0, alpha(TEXT, fade));
+            if let Some(t) = &times {
+                c.text(Weight::SemiBold, 13.0 * s, (r.x + 34.0 * s + tw + 8.0 * s, r.y + 21.5 * s), Align::Left, t, alpha(a.colour, fade));
+            }
+            y += 36.0 * s;
             // A ping where it happened: a ring that opens over a second, on
             // the world and the minimap.
             if let Some(at) = a.at {
@@ -4958,6 +4992,40 @@ mod tests {
                 }
             }
         }
+    }
+
+    /// Alerts (owner, 11-27: "all pop up extra status messages ... as
+    /// unobtrusive as possible"): at most three, the same words again
+    /// counted rather than stacked, and none wider than `ALERT_W` or about
+    /// two fifths of the screen, at every size.
+    #[test]
+    fn alerts_stay_few_short_and_counted() {
+        for screen in [(1280, 800), (1920, 1080), (3840, 2160)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                for _ in 0..4 {
+                    r.hud.alert("A soldier was killed by the slime", None, BAD);
+                }
+                r.hud.alert("Pump upgraded to level 2: 40 food a second", None, GOOD);
+                r.hud.alert("A very long alert that goes on and on about a thing that happened somewhere on the planet far away from the squad", None, WARN);
+                r.hud.alert("Formation: blob, tight", None, TEXT);
+                assert_eq!(r.hud.alerts.len(), 3, "{screen:?} at {user}");
+                r.draw();
+                let n = r.c.runs.iter().filter(|x| x.text == "A soldier was killed by the slime").count();
+                assert_eq!(n, 0, "{screen:?} at {user}: the oldest of four went");
+                let s = r.c.ui.px(r.c.screen);
+                for x in r.c.runs.iter().filter(|x| x.text.starts_with("A very long") || x.text.starts_with("Pump") || x.text.starts_with("Formation")) {
+                    assert!(x.ink.2 <= 8.0 * s + (ALERT_W * s).min(screen.0 as f32 * 0.42) + 1.0, "{screen:?} at {user}: {:?} to {}", x.text, x.ink.2);
+                }
+            }
+        }
+        let mut r = Rig::new((1920, 1080));
+        for _ in 0..3 {
+            r.hud.alert("A soldier was killed by the slime", None, BAD);
+        }
+        r.draw();
+        assert!(r.c.runs.iter().any(|x| x.text == "\u{d7}3"), "three alike count as x3");
     }
 
     #[test]

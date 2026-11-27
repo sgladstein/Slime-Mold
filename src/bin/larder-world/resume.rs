@@ -138,7 +138,7 @@ impl App {
                 eprintln!("larder-world: the saved planet did not load ({e}); it relands fresh");
                 self.start()?;
                 self.paused = false;
-                self.hud.alert("The saved planet could not be read: it starts over, your run intact", None, theme::WARN);
+                self.hud.alert("Saved planet unreadable: it starts over, run kept", None, theme::WARN);
             }
         }
         self.save_run();

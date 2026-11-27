@@ -301,7 +301,7 @@ impl App {
                         self.hud.alert(&format!("Wall thickened to {cells:.0} cells"), Some(bd.at), theme::GOOD);
                     } else if bd.kind == Kind::Turret {
                         let f = g.rules.build.render_food;
-                        self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food for each bit"), Some(bd.at), theme::GOOD);
+                        self.hud.alert(&format!("Turret renders: {f:.2} food per slime killed near it"), Some(bd.at), theme::GOOD);
                     } else {
                         let rate = g.pump_draw(b) * g.pump_yield(b);
                         self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(bd.at), theme::GOOD);
@@ -571,7 +571,7 @@ impl App {
                         let price = g.upgrade_price(b);
                         if g.apply(Cmd::Upgrade(b)) {
                             let f = g.rules.build.render_food;
-                            self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food for each bit"), Some(g.buildings[b].at), theme::GOOD);
+                            self.hud.alert(&format!("Turret renders: {f:.2} food per slime killed near it"), Some(g.buildings[b].at), theme::GOOD);
                         } else {
                             let why = match price {
                                 Some(p) => format!("Rendering costs {p:.0} food"),
@@ -705,7 +705,7 @@ impl App {
         match code {
             KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
             KeyCode::Tab => self.fast = !self.fast,
-            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("In a run the next map is the next planet: beat this one", None, theme::WARN),
+            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("Beat this planet to reach the next", None, theme::WARN),
             KeyCode::KeyN => {
                 // On a generated planet, N rolls a new one at the same depth;
                 // one with its seed in the name (`planet:D:SEED`) goes on to
