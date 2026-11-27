@@ -72,6 +72,40 @@ pub const CEILING_HELD: f64 = 0.1;
 /// a few seconds apart with one share for both).
 pub const CEILING_LET_GO: f64 = 0.05;
 
+/// **A crystal nobody guards is the slime's once a small share of it sits
+/// there** (2026-11-27, the owner's planet 2 of run 1795753581: "it had
+/// full control of the map and all crystals but one and then it just
+/// died, starved itself"). With no live soldier within gun range of its
+/// rim and no squad building on it, the cover a crystal needs is at most
+/// this share of the slime's walkers (`CEILING_LET_GO_SLIME` to keep it),
+/// and at least `CEILING_LEAST_CELLS` cells. Only a small slime ever meets
+/// these before `CEILING_HELD`: at 25,000 walkers the floor is 125 cells,
+/// over the 91 its planet 2 home (905 cells) needed anyway.
+///
+/// Why: the cover a crystal needs was only a share of its own cells, which
+/// a slime shot down to a fraction of its size could not meet on its big
+/// home crystal. His squad cut the Sprawler from 29,000 walkers to 3,500
+/// at 5:49, a mortar then wiped the squad, and the slime spread over the
+/// map with its pumps gone, but it never held its home crystal again: it
+/// needed 91 covered cells of 905, while a threaded slime keeps only a few
+/// tenths of a percent of its walkers on a crystal at once (an unshot
+/// 25,000 on the same planet: 76 to 105 cells). So its ceiling stayed at
+/// the small crystals it held, about 4,900; when his last soldiers drained
+/// one its ceiling fell under it and it starved to 2,000 by 9:11
+/// (`Reports/playtest-2026-11-27`). On the software GPU, the same planet
+/// with its home crystal cut out at 1:40: before, it let the crystal go at
+/// 2:10 (32 cells covered) and starved to 1,321 by 2:40; after, it kept it
+/// and grew back to 4,082 by 3:20.
+pub const CEILING_HELD_SLIME: f64 = 0.005;
+
+/// The share of the slime under which it lets an unguarded crystal go
+/// (`CEILING_HELD_SLIME`'s `CEILING_LET_GO`).
+pub const CEILING_LET_GO_SLIME: f64 = 0.0025;
+
+/// The fewest covered cells that take or keep an unguarded crystal: a
+/// walker or two wandering onto one do not.
+pub const CEILING_LEAST_CELLS: f64 = 8.0;
+
 /// How far under the slime a falling ceiling may be set: when it loses a
 /// crystal its ceiling follows it down, at most this share under its size,
 /// so its upkeep stays mild while births are stopped, and it shrinks over
@@ -123,7 +157,20 @@ impl<W: World> Game<W> {
         }
         let covered = self.world.crystal_covered_each();
         let cells = self.world.crystal_cells_each();
-        let charge: Vec<f64> = self.world.crystals().iter().map(|c| c.1 as f64).collect();
+        let crystals = self.world.crystals();
+        let charge: Vec<f64> = crystals.iter().map(|c| c.1 as f64).collect();
+        // Each crystal the squad guards: a live soldier within its gun
+        // range of the rim, or a building of the squad's on it
+        // (`CEILING_HELD_SLIME`).
+        let sc = self.s();
+        let guarded: Vec<bool> = crystals
+            .iter()
+            .enumerate()
+            .map(|(j, &(c, _))| {
+                let cr = self.world.crystal_r(j);
+                self.buildings.iter().any(|b| b.alive && b.crystal == Some(j)) || self.soldiers.iter().any(|s| s.alive && (s.x - c.0).hypot(s.y - c.1) <= cr + self.gun_range(s.squad as usize) * sc)
+            })
+            .collect();
         let (slots, mould) = (self.world.slots(), self.mould);
         let first = self.ceiling.start == 0;
         let c = &mut self.ceiling;
@@ -142,7 +189,14 @@ impl<W: World> Game<W> {
         c.holds = 0;
         for (j, (&cov, hold)) in c.cover.iter().zip(c.holding.iter_mut()).enumerate() {
             let n = cells.get(j).copied().unwrap_or(0) as f64;
-            *hold = n > 0.0 && cov >= n * if *hold { CEILING_LET_GO } else { CEILING_HELD };
+            let mut need = n * if *hold { CEILING_LET_GO } else { CEILING_HELD };
+            // An unguarded crystal needs at most a share of the slime
+            // (not at the landing, whose density stays as it was).
+            if !first && !guarded.get(j).copied().unwrap_or(true) {
+                let slime = mould as f64 * if *hold { CEILING_LET_GO_SLIME } else { CEILING_HELD_SLIME };
+                need = need.min(slime.max(CEILING_LEAST_CELLS));
+            }
+            *hold = n > 0.0 && cov >= need;
             if *hold {
                 let (now, full) = (charge.get(j).copied().unwrap_or(0.0), c.full.get(j).copied().unwrap_or(0.0));
                 held += now.min(full).max(0.0);

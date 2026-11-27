@@ -58,11 +58,19 @@ impl Pip {
     /// +1.5. The steps of a twelve-planet run are 0.64 of a curve place
     /// apart, so Safe is about a step and a half back and Hard more than
     /// two steps on: a clear gap either way.
+    ///
+    /// Hard +2.5 since 2026-11-27 (was +1.5): the owner's run 1795753581
+    /// picked Hard on steps 2 and 6. Step 2 (curve 3.5) was his one real
+    /// fight, but "for selecting the hardest planet option it still should
+    /// have been harder", and step 6 (curve 5.7) he won in 8:04 losing no
+    /// soldier. +2.5 is about four steps on: step 2's Hard reads curve 4.5,
+    /// step 6's 6.7. A Hard planet reaches the curve's top, 8, from step 9
+    /// (it did from step 10).
     pub fn offset(self) -> f32 {
         match self {
             Pip::Safe => -1.0,
             Pip::Fair => 0.0,
-            Pip::Hard => 1.5,
+            Pip::Hard => 2.5,
         }
     }
 
