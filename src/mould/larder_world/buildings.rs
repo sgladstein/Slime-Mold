@@ -735,9 +735,17 @@ impl<W: World> Game<W> {
     /// Longer barrels and Faster trigger reach turrets too (he, 05:52Z:
     /// turrets were "underpowered right now compared to guns (with squad
     /// upgrade)"). None: the turrets' default.
+    ///
+    /// A mortar, sprayer or hunter has no gun (its body is its own): the
+    /// standard rifle, so the casts its shots carry (`release`) don't
+    /// fly as far as the turrets' long gun (adversarial review,
+    /// 2026-11-27).
     pub fn turret_gun(&self, k: Option<usize>) -> Gun {
-        let own = k.and_then(|k| self.buildings.get(k)).filter(|b| b.deck.is_some());
-        let g = match own {
+        let b = k.and_then(|k| self.buildings.get(k));
+        if b.is_some_and(|b| b.kind != Kind::Turret) {
+            return Gun::standard(&self.rules);
+        }
+        let g = match b.filter(|b| b.deck.is_some()) {
             Some(b) => b.gun,
             None => self.turret_gun,
         };
@@ -751,6 +759,17 @@ impl<W: World> Game<W> {
     pub fn turret_reach(&self, k: Option<usize>) -> f32 {
         let g = self.turret_gun(k);
         let m = self.turret_mods_of(k);
+        self.rules.build.turret_range * g.range / RIFLE_RANGE * (1.0 + self.rules.range_card * m.reach as f32)
+    }
+
+    /// How far round turret `k` its Render pays (`render_pay`), dish
+    /// cells: the rifle's reach with its Range cards, whatever gun it
+    /// holds, so a long gun's reach doesn't multiply the kill box's
+    /// income (adversarial review, 2026-11-27: 2.8x the area of a rifle
+    /// turret's on the gun alone).
+    pub fn render_reach(&self, k: usize) -> f32 {
+        let g = Gun::standard(&self.rules);
+        let m = self.turret_mods_of(Some(k));
         self.rules.build.turret_range * g.range / RIFLE_RANGE * (1.0 + self.rules.range_card * m.reach as f32)
     }
 
@@ -790,7 +809,7 @@ impl<W: World> Game<W> {
         // as they aim and fire (independent review, 2026-11-16).
         // Each turret's own Range cards when it has a deck of its own
         // (`Building::deck`, 2026-11-19).
-        let reach_of = |k: usize| self.turret_reach(Some(k)) * self.s();
+        let reach_of = |k: usize| self.render_reach(k) * self.s();
         let renders: Vec<((f32, f32), f32)> = self.buildings.iter().enumerate().filter(|(_, t)| t.up() && t.kind == Kind::Turret && t.level >= 2).map(|(k, t)| (t.at, reach_of(k))).collect();
         if renders.is_empty() {
             return 0.0;
@@ -1215,7 +1234,10 @@ impl<W: World> Game<W> {
                                     // aim (a turret still aims true: no
                                     // random scatter, as before it had guns).
                                     let n_shots = gun.shots.max(1);
-                                    let half = (gun.spread * ammo.spread() * sc / d).atan();
+                                    // Read at no nearer than 4 cells, so a
+                                    // fan at slime on the barrel stays a fan
+                                    // and does not spray sideways.
+                                    let half = (gun.spread * ammo.spread() * sc / d.max(4.0 * sc)).atan();
                                     for s in 0..n_shots {
                                         let fan = if n_shots > 1 { (s as f32 / (n_shots - 1) as f32 * 2.0 - 1.0) * half } else { 0.0 };
                                         for p in 0..pellets {
@@ -1633,6 +1655,15 @@ mod tests {
         assert_eq!(g.turret_gun(None).kind, GunKind::Rifle);
         assert!(g.apply(Cmd::TurretLoad(0, None, None)));
         assert_eq!(g.turret_gun(Some(0)).kind, GunKind::Rifle);
+        // A mortar has no gun: the turrets' long gun is not its reach
+        // (review, 2026-11-27), and its Render circle stays the rifle's.
+        assert!(g.apply(Cmd::Arm(TURRET_DECK, Some(GunKind::Long.average()))));
+        assert_eq!(g.turret_gun(Some(0)).kind, GunKind::Long);
+        assert_eq!(g.render_reach(0), g.rules.build.turret_range);
+        let m = open_near(&g, (g.core.0 - 10.0, g.core.1));
+        assert!(g.build(Kind::Mortar, m));
+        let mk = g.buildings.len() - 1;
+        assert_eq!(g.turret_gun(Some(mk)).kind, GunKind::Rifle);
         // The replay's words read back.
         let c = Cmd::TurretArm(0, Some(GunKind::Scatter.average()));
         assert_eq!(Cmd::parse(&c.to_line()), Some(c));
