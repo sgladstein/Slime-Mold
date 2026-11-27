@@ -81,9 +81,9 @@ impl Pip {
     /// Its one line on the node's card.
     pub fn about(self) -> &'static str {
         match self {
-            Pip::Safe => "A smaller slime from earlier in the run, no twist. Pays less.",
-            Pip::Fair => "The run's own pace.",
-            Pip::Hard => "A bigger slime from further on, always a twist. Pays half again, and a rare card or gun waits in the shop.",
+            Pip::Safe => "An easier world, no twist. Pays less.",
+            Pip::Fair => "The run's usual step.",
+            Pip::Hard => "A tougher world, always a twist. Pays half again.",
         }
     }
 }
