@@ -1,7 +1,7 @@
 # Now
 
 The front page: what is being built, who builds it, and what waits on the
-owner. Kept by the Direction lane (last change 2026-11-24), which owns it; send it
+owner. Kept by the Direction lane (last change 2026-11-27), which owns it; send it
 changes, don't edit it. At most 100 lines. The rules are in
 [`CLAUDE.md`](CLAUDE.md), each lane's state in `handoff/<lane>.md`, the
 reasons in [the plan](Reports/continuation-plan-2026-11-17.md) the owner
@@ -15,44 +15,46 @@ and the 11-22 evening changes raised planets 2 to 8 partway. The record is
 in [`handoff/direction.md`](handoff/direction.md) and
 [`wiki/decisions-game.md`](wiki/decisions-game.md).
 
-## Milestone 2: A whole run (about two weeks from 11-24)
+## Milestone 2: A whole run (re-anchored 11-27 on main 5cd97ab)
 
-The roguelike run in squad mode, all eight planets, as a run he wants to
-finish and replay. It is done when all six hold:
+The roguelike run in squad mode, twelve steps on the star map, as a run he
+wants to finish and replay. It is done when all six hold:
 
-1. **Every planet ends with the slime wiped out** (his ruling, 11-26 00:08Z: hearts stay, "but they are not the win condition"). A heart forms on any charged crystal the slime keeps packed for 2 minutes, as a mini-boss to break before the crystal is yours (#858). The run bot wins planets 1 to 8 by wiping the slime out, with no soft lock, and its time to win is measured again on that rule.
-2. **A run of at least two hours** (his answer, 11-24 03:14Z), reached by about 12 planets picked on a star map with forks and contracts (his pick, 11-25 23:45Z), the harder forks paying more. His own run lands at two hours or more.
-3. **The curve.** The run bot plays all eight planets on his maps, and one page shows time to win, soldiers, income and losses by planet. No planet is a wall for every main plan, and later planets cost more than earlier ones.
-4. **Save and resume.** He can quit between planets, or mid-planet, and pick the same run up on the next start.
-5. **60 frames a second on his PC**: frame p95 under 16.7 ms on the GTX 1070 at his own screen (3840 x 2160, World detail as shipped) through planets 1 to 8, the Sporer's big slimes included.
-6. **Everything built is on**, and the game's pages list what is new and the few experiments that are off (kept from Milestone 1).
+1. **Every planet ends with the slime wiped out** (his ruling, 11-26 00:08Z: hearts stay, "but they are not the win condition"). A heart forms on any charged crystal the slime keeps packed for 2 minutes, a mini-boss to break before the crystal is yours (#858). The run bot wins all twelve steps on Safe, Fair and Hard picks by wiping the slime out, with no soft lock.
+2. **A run of at least two hours** (his answer, 11-24 03:14Z), by twelve steps picked on a star map with forks, contracts and heat (his pick, 11-25 23:45Z; #860). His own run lands at two hours or more.
+3. **The curve.** The run bot plays the twelve steps, and one page shows time to win, soldiers, income and losses by step and pip. No step is a wall for every main plan, later steps cost more than earlier ones, and Hard costs more than Fair, Fair more than Safe.
+4. **Save and resume.** He can quit between planets, or mid-planet, and pick the same run up, its star-map route and turret designs included.
+5. **60 frames a second on his PC**: frame p95 under 16.7 ms on the GTX 1070 at his own screen (3840 x 2160, World detail as shipped) through the twelve steps, a Hard step 9 and the home world included.
+6. **Everything built is on**, and the game's pages list what is new and the few experiments that are off.
 
-The rush (D7): a heart tougher by planet (11-24 14:52Z) answered the heart snipe, which no longer wins a planet since 11-26; no other rush brake unasked. Milestone 3, a
-release, only if he chooses one.
+Milestone 3, a release, only if he chooses one.
 
-**Since 11-26.** Hearts are no longer the win (#858); the step-B strategy batch (five plans, planets 2, 4 and 6, hearts off) and the star map with forks and contracts (his pick, 11-25 23:45Z, [brief](Reports/review-2026-11-25/route-choice-brief.md)) are under way.
-
-**Where it stands (11-24, 20:10Z).** The origin is on main (#699), at 700, 500 and 1,000 on planets 1 to 3 and half size on 4 to 8 (#756), its gather capped at twice its size (#769).
-- **Curve (test 3).** Fourth pass (bot with storm and crystal-pick fixes): 36 of 48 on six maps, 21 of 24 on his three, P7 won on all three of his maps. Medians P1 4:36, P2 3:18, P3 6:04, P4 5:42, P5 4:30, P6 6:44, P7 8:39, P8 7:18. The fifth pass (main and builder arms, with D7) runs next; planet 5 is the one to watch.
-- **Rush (D7).** His card (14:52Z): the heart gets tougher by planet. Enemy's #836: a snipe needs 16 soldiers on P2 and 32 from P3 on, and the siege still wins.
-- **4K (test 5): passes** with #820 (Auto retries 50% only with room for it). On the 1070 at his 3840-wide window, Auto detail, frame p95: P3 12.7 ms, P5 15.2, P8 at its peak 16.4 and 16.3 in two runs (it steps to 40% once and stays). Left over: the landing frame's step (about 440 ms) and one 38 ms CPU step at 2:14 on P8.
-- **Save and resume (test 4): passes** (#757; 1070 check 07:07Z, 7.7 MB in about 50 ms).
-- **What each planet does** is on screen: P2 Sprawler threads, P6 Sleeper, P7 Grudge scar, P8 the Dozer (#784, #788), each with its landing card and HUD tell (#785, #792).
+**Where it stands (11-27).** From 11-25 to 11-27 his other project built, on his own chat rulings (all in [`wiki/decisions-game.md`](wiki/decisions-game.md)): the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness by planet (#862, #864), stronger and smarter mini-bosses (#865), a faster early climb (#868), harder Hard forks (#870), harder from step 2 (#873), turrets that fire their loadout's gun (#871, #875) and are bought like guns (#876), and the HUD's slime bar (#872). Review: [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE); plan: [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG).
+- **Tests 1 and 3: not measurable yet.** The run bot plays only the Fair planet, builds no turret designs and still aims its siege at hearts; the nightly Run bot was red on 11-25 and 11-27. Last curve pass: 11-24, eight planets.
+- **Test 2: close.** His 11-27 run took about 55 minutes for steps 1 to 6, so about 1 h 50 m for twelve, before the raises since.
+- **Test 4: holds**, recheck on his PC with a star-map run. **Test 5: held 11-24** (P8 p95 16.4 ms), recheck: levels, bigger raids and Hard home-world sizes came since. **Test 6: holds.**
+- **Difficulty hold (Direction, 11-27):** six raises landed in about 30 hours, unmeasured together, so no lane adds a toughness, raid, boss or curve raise until his next run's log or his word on the plan's card; then one retune from that log.
 
 ## Each lane's top jobs
 
 | Lane | Test | Top jobs, in order |
 |---|---|---|
-| Direction | all | This page and the rulings. His two-hour-run card, then D8. Sort each play session within the hour. The curve page when test 3 holds. |
-| Enemy | 1, 3 | The heart tougher by planet (D7, his card 14:52Z). Then the Lab's planet twists, Wind and Cold snap, on about one planet in three. P5, P6, P8 sized so later planets cost more. Lap two (Lab's sizes, rigs and `strikers_settle` patch) if he picks 12 or 16 planets. |
-| Squad and arsenal | 1, 3 | The gun row's card look B, fused shots (his 15:51Z pick), with Look HUD. Whatever the curve's builder arm shows broken in the kit. |
-| Look and interface | 1, 5 | HUD: first-sight hints for each threat and trait, then what the twists need on screen. Main: Look B, C from his notes. |
-| Engine and tools | 1, 3 | The storm dials (army, clock), then the fifth curve pass with the builder arm once D7 lands; the curve page follows. |
-| Lab | none | A rescue planet: a goal other than the heart, from the model. Night stays on its branch. |
+| Direction | all | This page and the rulings, including asks he makes in any thread. The one retune after his next run. The curve page when test 3 can be measured. D8. |
+| Enemy | 1, 3 | #848 (no mini-boss on a live heart), the Grudge readout, then the rescue planet as a star-map node (below). Pressure from the slime itself: rerun the Lab's hunt on today's slime. |
+| Squad and arsenal | 3 | Turret designs in the run bot (with Engine). Energy something worth buying if his next log still banks 5,000 or more. |
+| Look and interface | 1, 5 | The star map and slime colours checked against the art direction; the rescue node's badge and screens; then his A to D order. |
+| Engine and tools | 1, 3, 4, 5 | The run bot up to today's game: picks by pip, builds turret designs, no heart siege, the builder arm; then the curve on twelve steps. The 1070 retime and a star-map save check. The PC league stopped or rebuilt on main. |
+| Lab | none | Paused unless the hunt rerun needs its rig (the plan's card). |
 
-**Unparked now:** gun steps E and F, the next turret body, twists and rescue
-planets, more planet polish. Still parked: the player's own mould (D12), and
-everything frozen (campaign, RTS control, player AI, the dish games).
+**The rescue planet** (Direction's call, 11-24, moved 11-27): in about one
+run in three, one planet offered at the step that meets the Trunk is a
+Rescue planet, marked on its card; its goal is to walk two dug-in squads
+home, and wiping out the slime also wins it. Hearts work there as anywhere.
+
+Kept for later: the slime spreading between planets and planets that
+remember you (his 11-25 "keep 2 and 5"). Still parked: the player's own
+mould (D12), and everything frozen (campaign, RTS control, player AI, the
+dish games).
 
 ## What waits on the owner
 
@@ -61,16 +63,17 @@ asks at most once a session with a recommendation.
 
 | What | State |
 |---|---|
-| Longer planets or more of them | Answered 11-25 23:45Z by his pick of a star map with forks and contracts (about 12 steps, harder forks pay more; [brief](Reports/review-2026-11-25/route-choice-brief.md)), so the run reaches two hours by more planets, chosen. `run::STRETCH` stays 1 until he plays it. |
-| Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first; asked next. |
-| "Automatically delete head branches" in the repository settings | His switch to turn on (asked 11-17 19:14Z). |
+| The plan of 11-27: five lanes, the Lab paused, this project as the home, the difficulty hold | His card in "Plan next steps after the 11-25 gap", recommended as written. |
+| The PC strategy league | Still running on an 11-22 build; stop it or let Engine rebuild it on main. |
+| Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first. |
+| "Automatically delete head branches" in the repository settings | His switch to turn on (about 40 stale branches). |
 
 ## Things to try at the next play
 
 At most five, most important first; offers, not requests. The game shows them
 beside "What is new": [`news/things-to-try.txt`](news/things-to-try.txt).
-Today: the heart, the harder planets from 2, each slime's landing card and
-number, quitting mid-planet, and the Sprayer and Hunter.
+Today: hearts as a mini-boss, picking Safe, Fair or Hard on the star map,
+each slime's landing card, quitting mid-planet, and turrets bought like guns.
 What each build holds is in
 [`news/whats-new.txt`](news/whats-new.txt).
 

@@ -6,6 +6,14 @@ the game's "what is new" and "things to try" lists, the record of his play
 sessions and the tuning numbers. The brief it was started from is at the
 end.
 
+## State (2026-11-27 23:55Z), read this first
+
+- **Gap:** this project's threads were out of usage 11-25 01:00Z to 11-27 23:00Z. Meanwhile Scott's other project built the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness (#862 #864 #865), the early lift (#868), Hard +2.5 (#870), harder from step 2 (#873), turrets on loadout guns and bought like guns (#871 #875 #876) and the HUD slime bar (#872), all on his chat rulings, recorded in `wiki/decisions-game.md`. Review [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE), plan [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG) (thread "Plan next steps after the 11-25 gap"; his card on five lanes, Lab paused, this project as home, pending).
+- **NOW.md re-anchored** to twelve steps (this commit): tests 1, 3, 4, 5 reworded; lane table from the plan; the difficulty hold; the rescue planet as a star-map node.
+- **Told Enemy (23:45Z):** dropping P5 spore 0.05 and P4 heart 900 is right; #848 and the Grudge readout stand; the rescue planet is a node at the Trunk's step, heart rule dropped; no difficulty raises until his log or his card.
+- **D7 is moot as a rush brake:** a heart snipe no longer wins a planet.
+- **Next:** once he answers the plan's card, send each lane its first job (NOW.md's table) and ask each to rewrite its handoff from its own commits since 11-24. After his next run's log, the one retune. Then D8.
+
 ## State (2026-11-24 20:10Z), read this first
 
 - **Milestone 2 tests:** 4 (save and resume) and 5 (60 fps at his 4K on the 1070, P8 p95 16.4 with #820) pass. Test 3 (curve): fourth pass won 21 of 24 on his maps, P7 on all three; the fifth pass (main and builder arms, 96 games, plus P8 size 1.4) runs on the PC once #836 lands, then Direction builds the curve page. Test 1 rides on it. Test 2 (two hours) waits on his run-length card. Test 6 holds (one experiment off, Crystals refill).
