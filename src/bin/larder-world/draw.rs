@@ -2345,11 +2345,18 @@ impl App {
         if self.args.run.is_some() {
             m.resources.retain(|r| r.icon != Icon::Target);
         }
+        // A run's planet (owner, 11-27: "Everything should be as
+        // unobtrusive on the screen as possible"): the slime's count moves
+        // to its gauge in the middle (`slime_gauge`), and the shop points
+        // show once there are some, or some coming.
+        if self.args.run.as_ref().is_some_and(|r| !r.range) {
+            m.resources.retain(|r| r.icon != Icon::Mould && !(r.icon == Icon::Upgrade && r.value == "0" && r.rate.is_none()));
+        }
         if g.world.garden.is_some() {
             // The player's own mould beside the enemy's, in its colour.
             let own = g.world.counts_by_side().0;
             // After the enemy's (a run's shop points sit before the soldiers).
-            let at = m.resources.iter().position(|r| r.icon == Icon::Mould).map_or(3, |i| i + 1);
+            let at = m.resources.iter().position(|r| r.icon == Icon::Mould).map_or(3, |i| i + 1).min(m.resources.len());
             m.resources.insert(at, Resource { icon: Icon::Mould, colour: [120, 230, 90, 255], label: format!("Your own slime (green): how much is alive. Sow it ({}); lay its roads from the tools page (E, then Y); it converts enemy slime it outweighs", if self.sq.is_some() { "U" } else { "W" }), value: thousands(own), rate: None });
         }
         m.commands = cmds;
@@ -2377,8 +2384,21 @@ impl App {
             (None, None) => (None, 0.0),
         };
         m.coach = self.coach.show.clone();
-        m.tell = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| slime_tell(g, r.level().tier));
-        m.twist = self.args.run.as_ref().filter(|r| !r.range).and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
+        let run = self.args.run.as_ref().filter(|r| !r.range);
+        let tier = run.map(|r| r.level().tier);
+        m.tell = tier.and_then(|t| slime_tell(g, t));
+        m.twist = run.and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
+        // A run's middle (owner, 11-27): the slime's size as a bar in the
+        // goal line's place, the heart and the stalemate as red pills. The
+        // goal stays in the model for the pause menu, as its own words
+        // alone: "(1%: slime count 40,149 \u{2192} 0); a heart guards a
+        // crystal: 1,660 of 1,660 left, breaks under 166" ran onto a row
+        // of its own and said what the gauge now shows.
+        if let (Some(tier), Some(tr)) = (tier, &self.mission) {
+            m.gauge = Some(slime_gauge(g, tier));
+            m.alarms = run_alarms(g, tr);
+            m.objective = Some(tr.mission.says.clone());
+        }
         // The landing card: whole for `INTRO_SECS` of game time (it holds
         // while paused), then fading over `INTRO_FADE`; or, from the
         // player's first key or click (`intro_seen`), fading over
@@ -3500,11 +3520,58 @@ fn slime_tell(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> Opti
             if (g.mould as f32) < r.last_stand_at * g.peak as f32 {
                 return Some((Icon::Alert, "All of it is coming".into(), "Cut below a quarter of its peak, the slime has rushed you with everything it has".into()));
             }
-            let now = (100.0 * g.mould as f32 / g.peak as f32).round() as u32;
-            Some((Icon::Alert, format!("{now}% of its peak, all rush at {:.0}%", 100.0 * r.last_stand_at), "The slime against the most it has been; below the second number all of it charges you at once".into()))
+            // Until then the slime gauge's red mark is the tell (11-27);
+            // the pill said "96% of its peak, all rush at 25%" beside it.
+            None
         }
         _ => None,
     }
+}
+
+/// Game seconds of cut the slime gauge shows pale on its fill's end.
+const GAUGE_CUT_SECS: usize = 3;
+
+/// **The slime gauge** (`ui::SlimeGauge`; owner, 2026-11-27: "it should
+/// be easy to tell how big it is, compared to its start size and peak
+/// size"): the walkers now, at the landing's first count, at the most,
+/// and the most over the last `GAUGE_CUT_SECS` counts, so a volley's cut
+/// shows as a pale piece that the fill leaves behind. The Swarmer's
+/// all-out rush is its red mark, until it fires.
+fn slime_gauge(g: &Game<GpuWorld>, tier: slime_mould::mould::tiers::Tier) -> slime_mould::world::ui::SlimeGauge {
+    use slime_mould::mould::tiers::Tier;
+    let now = g.mould as u32;
+    let start = g.curve.first().map_or(now, |p| p.0);
+    let peak = (g.peak as u32).max(now).max(start);
+    let recent = g.curve.iter().rev().take(GAUGE_CUT_SECS).map(|p| p.0).max().unwrap_or(now);
+    let raid = &g.rules.raid;
+    let line = (tier == Tier::Swarmer && raid.last_stand && g.peak > 0 && (g.mould as f32) >= raid.last_stand_at * g.peak as f32).then_some(raid.last_stand_at);
+    let pct = (100.0 * now as f32 / peak.max(1) as f32).round() as u32;
+    let mut tip = format!("Slime {} now ({pct}% of its most)  \u{b7}  {} at landing (white mark)  \u{b7}  {} at its most", grouped(now as usize), grouped(start as usize), grouped(peak as usize));
+    if line.is_some() {
+        tip += "  \u{b7}  under the red mark all of it rushes you";
+    }
+    slime_mould::world::ui::SlimeGauge { name: title_case(tier.name()), now, start, peak, recent, count: thousands(g.mould), line, tip }
+}
+
+/// A run's red pills (11-27), which were tails on the goal line: the
+/// stalemate's count once it shows, and a heart on a crystal.
+fn run_alarms(g: &Game<GpuWorld>, tr: &Tracker) -> Vec<(Icon, String, String)> {
+    use slime_mould::mould::campaign::{STUCK_END, STUCK_WARN};
+    let mut out = Vec::new();
+    if tr.verdict.is_none() && tr.stuck_run as f32 >= STUCK_WARN {
+        let left = (STUCK_END - tr.stuck_run as f32).max(0.0);
+        out.push((Icon::Clock, format!("Nothing happening: ends in {left:.0} s"), "Walk, harvest, pump or fight, or the planet ends".into()));
+    }
+    match g.origin_hud() {
+        Some((members, most)) if most > 0 => {
+            let r = g.rules.origin;
+            let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;
+            out.push((Icon::Heart, format!("Heart {}, breaks under {}", grouped(members as usize), grouped(breaks as usize)), format!("A heart guards a crystal the slime held thick: {} of {} left. Cut it under {} to break it", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))));
+        }
+        Some(_) => out.push((Icon::Heart, "A heart is forming".into(), "The slime has held a crystal thick for two minutes: a heart grows there".into())),
+        None => {}
+    }
+    out
 }
 
 /// The planet's twist as a pill beside the tell (Enemy's #830, `twist.rs`):

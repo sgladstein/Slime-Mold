@@ -2,6 +2,15 @@
 
 ## State (2026-11-20)
 
+**11-27, the slime gauge (HUD; thread "Improve the top HUD and status
+pop-ups"):** in a run the top bar's middle is `SlimeGauge` (peak-wide bar,
+fill now, white landing mark, 3 s cut pale, Swarmer rush mark red), the goal
+sentence gone from the bar (kept for the pause menu), heart and stalemate
+as red pills (`run_alarms`), all pills in the row where they fit. Page in
+`Reports/slime-gauge-2026-11-27/`. Next from its list: shorter, fewer alerts
+(at most three, about 4 s, one short clause, repeats as x3); the Sleeper's
+and Grudge's tells and the heart drawn into the bar.
+
 **11-27, the star map and planet text** (owner 05:29Z: "The planet path selection map needs to be improved and planet text needs to be improved"): `start/stars.rs` redrawn: the route across the top (a column a step, its slime once over it, `pip_ink`/`pip_scale`/`biome_ink` planets), the open planets as side-by-side cards (`star_card`, `CARD_W`/`CARD_H`, rows drop from the end when short), heat in the bottom bar. `menu::star_view` fills `hits`, `area`, `tally`, `last_size`/`last_area`; `contract_words` gives the quick contract as a clock time; `shop_of`'s planet-ahead lines are one fact each (`bigger_than`, `hits_words`). Page `Reports/star-map-cards-2026-11-27/`. Twist cards no longer repeat their name (`PlanetTwist::card`, Enemy's run.rs, text only).
 
 **11-24, Look B, the Dozer's nap (planet 8):** `SlimeLook::Doze` (10):
