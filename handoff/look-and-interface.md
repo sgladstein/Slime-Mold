@@ -6,8 +6,19 @@
 6 s, `ALERT_LIFE_BAD`), repeats counted (`Alert::count`, "x3"), none wider
 than `ALERT_W` 520 units or 42% of the screen (cut with an ellipsis). 19
 long alert texts reworded short in `squadmode.rs`, `input.rs` (Squad),
-`main.rs`, `resume.rs` (Engine), told through the coordinator. Next from
-the gauge page's list: Sleeper/Grudge tells and the heart in the bar.
+`main.rs`, `resume.rs` (Engine), told through the coordinator.
+
+**Next for the HUD (held 11-27 until the owner has played the gauge; ask
+him or read his play notes first).** From the gauge page's list
+(`Reports/slime-gauge-2026-11-27/`), in order: (1) the slime's other tells
+in the bar: the Sleeper's and Dozer's asleep share as a darker part of the
+fill (`World::asleep`), the Grudge's scarred share the same way
+(`World::scarred`), and the heart as a small bar of its own (members against
+its most, a mark at its break floor; `Game::origin_hud`), so most pills go;
+(2) a hold-to-hide key that clears the top bar and pills while held; (3) the
+twist's countdown in the clock pill; (4) the empty gun panel ("No gun cards
+yet") shrunk to a slot until there is a card. Test any new top-bar part in
+`the_slime_gauge_keeps_its_row_and_off_the_numbers`.
 
 **11-27, the slime gauge (HUD; thread "Improve the top HUD and status
 pop-ups"):** in a run the top bar's middle is `SlimeGauge` (peak-wide bar,
