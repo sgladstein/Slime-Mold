@@ -543,11 +543,19 @@ impl StartMenu {
                 Some((name, line)) => {
                     fact(c, y, "Twist", name, None, crate::world::ui::TWIST);
                     y += 19.0 * s;
-                    for l in c.wrap(Weight::Medium, 13.0 * s, vw, line).into_iter().take(2) {
+                    // A third line's words join the second and end in an
+                    // ellipsis: at 4K, 250% the wind's line stopped on
+                    // "Stand" with nothing to say it went on (11-27 review).
+                    let mut lines = c.wrap(Weight::Medium, 13.0 * s, vw, line);
+                    if lines.len() > 2 {
+                        let rest = lines.split_off(1).join(" ");
+                        lines.push(rest);
+                    }
+                    for l in lines {
                         if y > limit + 4.0 * s {
                             break;
                         }
-                        c.text(Weight::Medium, 13.0 * s, (vx, y), Align::Left, &l, MUTED);
+                        c.text_fit(Weight::Medium, 13.0 * s, (vx, y), Align::Left, &l, vw, MUTED);
                         y += 17.0 * s;
                     }
                     y += 6.0 * s;
