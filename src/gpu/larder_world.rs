@@ -3685,11 +3685,12 @@ mod tests {
         let mut rules = Rules::default();
         rules.origin.on = true;
         rules.origin.size = 150.0;
+        rules.origin.after = 2.0;
         let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
-        while g.time() < 14.0 {
+        while g.stand.live.is_none_or(|h| (h.members as f32) < 0.9 * g.rules.origin.size) && g.time() < 40.0 {
             g.step();
         }
-        let h = g.stand.live.expect("the origin formed");
+        let h = g.stand.live.expect("a heart formed");
         let before = h.members;
         let on = g.form_boss(h.centre, 6.0, BossCause::Crowd);
         g.step();
