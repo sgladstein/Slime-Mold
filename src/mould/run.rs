@@ -419,7 +419,9 @@ const RAID_FIRST: [f32; 8] = [240.0, 120.0, 120.0, 120.0, 120.0, 120.0, 120.0, 1
 /// the core world (`RAID_SIZE`, `RaidRules::size`, its spread and cap in
 /// step), and its marchers take up to 8 blows (`RAID_ARMOUR`).
 const RAID_EVERY: [f32; 8] = [150.0, 100.0, 95.0, 90.0, 85.0, 80.0, 75.0, 70.0];
-const RAID_SIZE: [f32; 8] = [0.15, 0.15, 0.17, 0.2, 0.22, 0.25, 0.28, 0.3];
+/// Raised 2026-11-27 (was 0.15, 0.15, 0.17, 0.2, 0.22, 0.25, 0.28, 0.3), with
+/// `BLOWS`: his 11-27 steps 5 and 6 took 17 raids without a loss.
+const RAID_SIZE: [f32; 8] = [0.15, 0.2, 0.23, 0.27, 0.3, 0.33, 0.37, 0.4];
 /// - `RAID_ARMOUR`: blows a marching raider takes (`RaidRules::
 ///   march_armour`) until the march meets the squad or its target; the
 ///   owner, same evening: "if the slime never reaches my soldiers,
@@ -563,7 +565,12 @@ pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
 /// slime"), this is level 0's, the orange slime's, and each level adds
 /// `LEVEL_BLOWS`: planet 8's orange takes 3 and its home crystal's level 7
 /// six and a half, where every walker took 5 before.
-const BLOWS: [f32; 8] = [1.0, 1.25, 1.5, 1.75, 1.75, 2.0, 2.5, 3.0];
+///
+/// Raised 2026-11-27 (was 1, 1.25, 1.5, 1.75, 1.75, 2, 2.5, 3): his run
+/// 1795753581 lost 6 soldiers on steps 3 to 6 in all, none on step 6's Hard
+/// planet against 131,000 walkers, and then: "Probably not enough. Make it
+/// harder!" (06:54Z). About half again from planet 2 on; planet 1 as it was.
+const BLOWS: [f32; 8] = [1.0, 1.75, 2.25, 2.75, 2.75, 3.25, 3.75, 4.5];
 
 /// **The slime's levels by planet** (2026-11-26, `larder_world/levels.rs`;
 /// the owner, 08:24Z: "You could change slime color so their are 3-8 levels
