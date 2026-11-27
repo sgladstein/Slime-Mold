@@ -1944,6 +1944,15 @@ pub(super) fn arm_squads(g: &mut Game<GpuWorld>, r: &Run) {
     }
     let t = r.turret_cards();
     g.apply(Cmd::Load(slime_mould::mould::larder_world::TURRET_DECK, (!t.is_empty()).then(|| rounds::Deck::new(&t))));
+    g.apply(Cmd::Arm(slime_mould::mould::larder_world::TURRET_DECK, r.turret_gun()));
+    // Each turret on a loadout of its own takes that loadout's gun and
+    // cards as they now stand (2026-11-27: turrets fire their gun).
+    for b in 0..g.buildings.len() {
+        if let Some(l) = g.buildings[b].loadout.map(|l| (l as usize).min(r.loadouts.len() - 1)) {
+            g.apply(Cmd::TurretLoad(b as u32, Some(l as u8), Some(rounds::Deck::new(&r.turret_deck_of(l)))));
+            g.apply(Cmd::TurretArm(b as u32, r.turret_gun_of(l)));
+        }
+    }
     // Each body's cards (gun step E, `Run::body_cards`) as they now
     // stand.
     for kind in slime_mould::mould::bodies::BodyKind::ALL {
