@@ -117,3 +117,23 @@ cost no soldier, so it goes further.
 - **Unspent energy** on steps 1, 5 and 6 (5,000 to 8,000), and no turrets.
 - **The star map and planet text** (his ask in the same message) go to
   Look and interface.
+
+## Round 2, the same night: harder from planet 2
+
+The owner, 06:54Z, after #870: "How much harder did you make everything?
+Probably not enough. Make it harder!" Three of Direction's numbers, from
+planet 2 on (planet 1 unchanged):
+
+- `run::BLOWS` (an orange walker's blows): 1.25, 1.5, 1.75, 1.75, 2, 2.5,
+  3 on planets 2 to 8 to 1.75, 2.25, 2.75, 2.75, 3.25, 3.75, 4.5. With
+  the levels' +0.5 a level on top. Step 6's Hard planet (curve 6.7 since
+  #870) reads about 3.6 where his step 6 read 2.3.
+- `run::RAID_SIZE`: 0.15 to 0.3 by planet to 0.2 to 0.4.
+- `BossRules::for_curve`: a mini-boss every 110 s on planet 2 to 35 s on
+  planet 8 (was 150 to 45), the first at 60 to 30 s (was 90 to 40), and
+  the mortar from planet 3 (was 4): it was the one threat that cost him
+  soldiers.
+
+Not changed: the soldier's price climb (an army of 76 on step 1). The
+heavier slime and the mortar meet a big army first; the price is the next
+lever if armies still win.

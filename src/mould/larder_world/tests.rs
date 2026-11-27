@@ -3873,8 +3873,8 @@ fn mini_boss_chances_rise_with_the_planet() {
     assert_eq!((one.every, one.cut), (0.0, 0.0), "none on planet 1");
     let (a, b) = (BossRules::for_depth(2), BossRules::for_depth(8));
     assert!(a.every > b.every && a.cut < b.cut && a.first > b.first, "{a:?} {b:?}");
-    assert_eq!((a.every, a.cut), (150.0, 0.02), "planet 2 has the curve's first step");
-    assert!((b.every - 45.0).abs() < 1e-3 && (b.cut - 0.1).abs() < 1e-6, "planet 8 as before: {b:?}");
+    assert_eq!((a.every, a.cut), (110.0, 0.02), "planet 2 has the curve's first step (150 s until 11-27)");
+    assert!((b.every - 35.0).abs() < 1e-3 && (b.cut - 0.1).abs() < 1e-6, "planet 8 every 35 s (45 until 11-27): {b:?}");
     assert_eq!((a.most, BossRules::for_depth(4).most), (1, 2));
     assert_eq!(Rules::default().boss.every, 0.0, "off outside a run");
     assert_eq!(Rules::default().boss.cut, 0.0);
