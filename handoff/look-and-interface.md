@@ -11,6 +11,8 @@ as red pills (`run_alarms`), all pills in the row where they fit. Page in
 (at most three, about 4 s, one short clause, repeats as x3); the Sleeper's
 and Grudge's tells and the heart drawn into the bar.
 
+**11-27, the star map and planet text** (owner 05:29Z: "The planet path selection map needs to be improved and planet text needs to be improved"): `start/stars.rs` redrawn: the route across the top (a column a step, its slime once over it, `pip_ink`/`pip_scale`/`biome_ink` planets), the open planets as side-by-side cards (`star_card`, `CARD_W`/`CARD_H`, rows drop from the end when short), heat in the bottom bar. `menu::star_view` fills `hits`, `area`, `tally`, `last_size`/`last_area`; `contract_words` gives the quick contract as a clock time; `shop_of`'s planet-ahead lines are one fact each (`bigger_than`, `hits_words`). Page `Reports/star-map-cards-2026-11-27/`. Twist cards no longer repeat their name (`PlanetTwist::card`, Enemy's run.rs, text only).
+
 **11-24, Look B, the Dozer's nap (planet 8):** `SlimeLook::Doze` (10):
 the Sleeper's crust machinery (`crust_look()`, `dormant_share`) with a pale
 straw rind (`NAP_RGB`, `NAP_DIM`, `NAP_MATTE`), and awake the Swarmer's

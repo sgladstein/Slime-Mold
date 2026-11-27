@@ -17,6 +17,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut load_at = args.load_at.clone();
     let mut tload_at = args.tload_at.clone();
+    let tgun = args.tgun;
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
@@ -512,6 +513,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     g.apply(Cmd::Load(q as u8, Some(deck)));
                 }
                 println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS.iter().find(|l| l.1 == cards).map_or(cards.as_str(), |l| l.0));
+            }
+            // `tgun=KIND`: every turret fires KIND's average gun.
+            if let Some(kind) = tgun {
+                if let Some(g) = app.game.as_mut().filter(|g| g.turret_gun.map(|t| t.kind) != Some(kind)) {
+                    g.apply(Cmd::Arm(slime_mould::mould::larder_world::TURRET_DECK, Some(kind.average())));
+                    println!("  tgun t {:.2} s: the turrets fire the {}", g.time(), kind.name());
+                }
             }
             // `tload=T,NAME`: every turret loads NAME once T has come.
             if let Some((lt, cards)) = tload_at.take_if(|(lt, _)| app.game.as_ref().is_some_and(|g| g.time() >= *lt)) {

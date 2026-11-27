@@ -637,6 +637,10 @@ struct Args {
     /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
     /// `Game::turret_deck`), a preset or a card list as `load=`.
     tload_at: Option<(f32, String)>,
+    /// `tgun=KIND` (look= only, 2026-11-27): every turret fires the
+    /// average gun of KIND (rifle, carbine, long, scatter) from the start
+    /// (`Cmd::Arm(TURRET_DECK, ..)`, `Game::turret_gun`).
+    tgun: Option<slime_mould::mould::guns::GunKind>,
     /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
     /// what the player does before frame N's picture, one step a frame
     /// (`headless::card_step`): main, build, tools, form, free, pick, fire,
@@ -3060,6 +3064,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, r] = w.as_slice() else { return Err("watch=X,Y,R".into()) };
                 args.watch = Some((*x, *y, *r));
+            }
+            "tgun" => {
+                args.tgun = Some(slime_mould::mould::guns::GunKind::parse(v).ok_or("tgun=rifle|carbine|long|scatter")?);
             }
             "tload" => {
                 let (t, name) = v.split_once(',').ok_or("tload=T,NAME")?;

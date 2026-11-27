@@ -30,6 +30,7 @@ sources:
   - Reports/planet-curve-2026-11-21/README.md
   - Reports/planet-things-2026-11-18/README.md
   - Reports/planet2-sprawler-2026-11-18/README.md
+  - Reports/playtest-2026-11-27/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/review-2026-11-25/README.md
   - Reports/review-2026-11-25/route-choice-brief.md
@@ -200,7 +201,7 @@ offers two or three planets drawn from the run's seed (`route::star_map`),
 joined to the next step's by crossing lanes, and the player picks one on
 the Stars page before its shop (`Run::choose`; `Run::route` is saved). A
 planet's pip moves the place on the curve it is read at (`Pip::offset`: Safe
--1, Fair 0, Hard +1.5, `Run::curve`), so its slime, heart, raids and map size
+-1, Fair 0, Hard +2.5 since 11-27, +1.5 before, after his step 6 Hard cost no soldier, [playtest](../../Reports/playtest-2026-11-27/README.md); `Run::curve`), so its slime, heart, raids and map size
 and biome all follow; the species is the step's own (`LADDER` at the tuned
 planet nearest the step), the same for every planet of a fork;
 Safe has no twist, Hard always one. A win pays `reward` times 0.7, 1 or 1.5
@@ -211,6 +212,8 @@ raids for half again the pay). The bot check that the pips are clearly
 ordered: [report](../../Reports/star-map-2026-11-26/README.md). What
 follows describes each planet as it was on eight steps; its numbers now
 read at the planet's curve place.
+
+The Stars page (`world::start::stars`), redrawn 2026-11-27 after the owner's "The planet path selection map needs to be improved and planet text needs to be improved": the route runs across the top, a column a step with its slime named once over it, each planet's ring coloured and sized by its pip (Safe green and small, Fair blue, Hard red-orange, larger, with a halo) and filled with its biome's colour; under it the planets the route can go to stand side by side as cards (slime size against the planet just won, hits, twist, rare card, contracts, world and map size, where it leads, pay), and the heat switch sits beside Fly. The shop's planet-ahead lines are one fact each (`menu::shop_of`). Stills: [PR stills](../../Reports/pr-stills/star-map-cards-2026-11-27.jpg).
 
 Since 2026-11-26 the early steps climb faster (`run::early_lift`; the owner, 21:51Z: "You can increase the difficulty early but I don't think we should flatten out the later progression"): curve places under `LIFT_TO` 3.5 are bent up by `LIFT_BEND` 0.7, so steps 2 to 4 of twelve read 1.96, 2.56 and 3.07 (were 1.64, 2.27, 2.91) and step 5 on reads as before. A pip's offset applies after the lift. Raising steps 5 on as well was put off (owner asked, 22:12Z): the tables stop at planet 8, so a shift would flatten the last steps, and the bot already lost step 6 on all six seeds ([review](../../Reports/review-2026-11-26/README.md)).
 

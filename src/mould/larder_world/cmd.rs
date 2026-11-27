@@ -100,6 +100,10 @@ pub enum Cmd {
     /// `l` (`Building::deck`, `Building::loadout`; owner 2026-11-19: each
     /// turret changed one by one); None, None: back on the turrets' deck.
     TurretLoad(u32, Option<u8>, Option<Deck>),
+    /// Turret `b` takes the gun of its own loadout (`Building::gun`,
+    /// 2026-11-27); None, the standard rifle. Sent after its
+    /// `TurretLoad`, and read only while it has a deck of its own.
+    TurretArm(u32, Option<Gun>),
     /// Squad `q` stops and heals (`Squad::heal`).
     Heal(u8),
     /// A door between two points, fine cells (`Game::door`): a wall the
@@ -154,6 +158,8 @@ impl Cmd {
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
             Cmd::Load(q, None) => format!("load {q} army"),
             Cmd::Load(q, Some(d)) => format!("load {q} {}", super::super::rounds::name(&d.cards())),
+            Cmd::TurretArm(b, None) => format!("tarm {b} none"),
+            Cmd::TurretArm(b, Some(g)) => format!("tarm {b} {}", g.to_words()),
             Cmd::TurretLoad(b, l, d) => format!("tload {b} {} {}", l.map_or("-".to_string(), |l| l.to_string()), d.map_or("army".to_string(), |d| super::super::rounds::name(&d.cards()))),
             Cmd::Door(a, b) => format!("door {} {} {} {}", a.0, a.1, b.0, b.1),
         }
@@ -206,6 +212,8 @@ impl Cmd {
             "auto" => return Some(Cmd::Auto(w.get(1)?.parse().ok()?)),
             "heal" => return Some(Cmd::Heal(w.get(1)?.parse().ok()?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
+            "tarm" if w.get(2) == Some(&"none") => return Some(Cmd::TurretArm(w.get(1)?.parse().ok()?, None)),
+            "tarm" => return Some(Cmd::TurretArm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
             "load" if w.get(2) == Some(&"army") => return Some(Cmd::Load(w.get(1)?.parse().ok()?, None)),
             "load" => return Some(Cmd::Load(w.get(1)?.parse().ok()?, Some(Deck::new(&super::super::rounds::parse(w.get(2)?)?)))),
@@ -323,6 +331,16 @@ impl<W: World> Game<W> {
                     bd.deck = d;
                     bd.loadout = l;
                     bd.next = 0;
+                    if d.is_none() {
+                        bd.gun = None;
+                    }
+                    true
+                }
+                None => false,
+            },
+            Cmd::TurretArm(b, g) => match self.buildings.get_mut(b as usize).filter(|b| b.alive && b.kind == Kind::Turret) {
+                Some(bd) => {
+                    bd.gun = g;
                     true
                 }
                 None => false,

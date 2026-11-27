@@ -759,7 +759,8 @@ impl App {
             Kind::Mortar => vec![bld.mortar_range, bld.mortar_min],
             Kind::Sprayer => vec![bld.sprayer_range],
             Kind::Hunter => vec![bld.hunter_range, bld.hunter_min],
-            _ => vec![bld.turret_range],
+            // The default turret's gun (2026-11-27).
+            _ => vec![g.turret_reach(None)],
         };
         let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar | Kind::Sprayer | Kind::Hunter))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k));
         let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
@@ -2223,7 +2224,7 @@ impl App {
             // the switch and Back below. Cancel a build left it: click the
             // building instead (`App::building_sel`).
             cmds = vec![
-                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest slime within {:.0} cells every {:.1} s. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food for each slime it kills.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires its loadout's gun at the thickest slime, now within {:.0} cells every {:.1} s, over walls. Its hits call a Swarmer. Slime touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food for each slime it kills.", g.turret_reach(None), g.turret_every(None), b.render_cost, b.render_food)),
                 pump((0, 1)),
                 place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest slime it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit slime within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
                 place(HUNTER, (0, 5), Icon::Target, "Hunter", KeyCode::KeyX, b.hunter_cost, format!("Every {:.0} s one fast flat shot within {:.0} cells, at what matters most: the slime on the nearest crystal it holds, then a ripening fruit, a mini-boss, a marching raid, the slime's heart, and only then the thickest slime. Rock and walls stop its shot. Fires the turrets' cards.", b.hunter_every, b.hunter_range)),
@@ -3325,7 +3326,11 @@ impl App {
                     format!("level {} of {PUMP_LEVELS}, {doing}", bd.level)
                 }
                 Kind::Turret => {
-                    stats.push(("Range".into(), format!("{:.0} cells", g.rules.build.turret_range)));
+                    // Its gun (2026-11-27: turrets fire their loadout's gun).
+                    let gun = g.turret_gun(Some(bk));
+                    stats.push(("Gun".into(), gun.kind.name().to_string()));
+                    stats.push(("Range".into(), format!("{:.0} cells", g.turret_reach(Some(bk)))));
+                    stats.push(("Rate".into(), format!("{:.1} shots a second", 1.0 / g.turret_every(Some(bk)).max(1e-3))));
                     if bd.working { "firing".into() } else { "watching".into() }
                 }
                 Kind::Mortar => {
@@ -3424,7 +3429,7 @@ impl App {
                     (None, _) if !bd.up() => "Still being built".to_string(),
                     _ => "It already renders".to_string(),
                 }),
-                about: format!("Render: every bit of slime killed within {:.0} cells of it, by any shot, pays {:.2} food.", b.turret_range, b.render_food),
+                about: format!("Render: every bit of slime killed within {:.0} cells of it, by any shot, pays {:.2} food.", g.turret_reach(Some(bk)), b.render_food),
                 ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Render", KeyCode::KeyU)
             });
         }

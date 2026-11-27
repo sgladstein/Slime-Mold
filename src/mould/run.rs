@@ -1166,7 +1166,7 @@ pub const ITEMS: [Item; 21] = [
     // also walks straight through fire, `Game::fire_via`).
     Item { key: "fireproof", name: "Fireproof", group: Group::Squad, about: "Soldiers take half the harm from fire; at level 3, none", max: 3, cost: 100, needs: None },
     Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
-    Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
+    Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret: fires its loadout's gun and cards twice as fast as a soldier, over walls", max: 1, cost: 200, needs: None },
     // The tree's first body (the turrets thread, owner 2026-11-17 00:47Z):
     // after turrets, as each next body will be after the one before.
     Item { key: "mortar", name: "Mortars", group: Group::Build, about: "Unlocks the mortar: the longest reach there is, lobbed over walls", max: 1, cost: 250, needs: Some("turret") },
@@ -1666,9 +1666,9 @@ impl PlanetTwist {
             Twist::Cold => {
                 let d = crate::mould::larder_world::TwistRules::default();
                 let at = d.start as u32;
-                format!("Cold snap at {}:{:02}: for a minute the slime crawls in beads. Push now.", at / 60, at % 60)
+                format!("From {}:{:02}, for a minute, the slime crawls in beads. Push then.", at / 60, at % 60)
             }
-            Twist::Wind => format!("Wind from the {}: the slime leans and creeps {} all planet. Stand upwind, or let it blow onto your guns.", compass(self.angle + 180.0), compass(self.angle)),
+            Twist::Wind => format!("From the {}: the slime leans and creeps {} all planet. Stand upwind, or let it blow onto your guns.", compass(self.angle + 180.0), compass(self.angle)),
             Twist::None => String::new(),
         }
     }
@@ -2141,17 +2141,37 @@ impl Run {
         Gun { range: g.range + 3.0 * l("range"), rate: g.rate / 0.85f32.powf(l("rate")), ..g }
     }
 
-    /// Loadout `i`'s cards as a turret fires them: as many as fit the
-    /// turrets' rack, which "Turret power" grows, whatever gun the loadout
-    /// holds (a turret has no use for it; with its rack a bought gun
-    /// gave turrets four cards with no Turret power, review 2026-11-20).
+    /// Loadout `i`'s cards as a turret fires them: as many as fit its gun
+    /// (owner, 2026-11-27: "Turrets should be more similar to guns that
+    /// you can buy them"; `turret_gun_of`), else the turrets' rack, which
+    /// "Turret power" grows. From 11-20 to 11-27 a turret ignored the
+    /// loadout's gun and always cut its cards to the rack (with the rack
+    /// a bought gun gave turrets four cards and nothing else, review
+    /// 2026-11-20); now the gun is what it fires, so a gun on the turrets
+    /// is one no squad holds.
     pub fn turret_deck_of(&self, i: usize) -> Vec<Card> {
-        let rack = self.turret_rack();
+        let rack = self.gun_of(i).unwrap_or_else(|| self.turret_rack());
         let mut cards = self.cards_of(i);
         while !cards.is_empty() && rounds::fit_gun(cards.clone(), &rack).is_err() {
             cards.pop();
         }
         cards
+    }
+
+    /// Loadout `i`'s gun as a turret fires it (`Game::turret_gun`,
+    /// `Cmd::Arm(TURRET_DECK, ..)`, `Cmd::TurretArm`): with the squad's
+    /// Longer barrels and Faster trigger as `squad_gun`, the turret's own
+    /// reach and rate on top (`BuildRules::turret_range`, `turret_every`,
+    /// "Turret power"). None with no gun: the turret fires the standard
+    /// rifle at the run's rules, which carry the same two upgrades.
+    pub fn turret_gun_of(&self, i: usize) -> Option<Gun> {
+        self.gun_of(i).map(|_| self.squad_gun(i))
+    }
+
+    /// The gun turrets that follow the default fire (`turret_gun_of` of
+    /// `turret_loadout`); None without turrets or with no gun there.
+    pub fn turret_gun(&self) -> Option<Gun> {
+        self.has("turret").then(|| self.turret_gun_of(self.turret_loadout)).flatten()
     }
 
     /// The first loadout's gun as the squad lands with it (`armed_of`).
@@ -3079,11 +3099,9 @@ impl Run {
             Pick::Offer(i) => self.buy(i).is_some(),
             Pick::Gun(i) => {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
-                // A new gun goes in the loadout shown (to the squads' first
-                // from the turrets', as before loadouts).
-                if self.editing_turrets() {
-                    self.edit(0);
-                }
+                // A new gun goes in the loadout shown, the turrets' too
+                // (2026-11-27: turrets fire their loadout's gun; before,
+                // a gun bought there went to the squads' first).
                 // The range swaps a rack gun for the owned one of its kind,
                 // which goes on the rack (four of each, either way back).
                 if let Some(k) = self.range.then(|| self.guns.iter().position(|o| o.kind == g.kind)).flatten() {
@@ -3486,12 +3504,12 @@ mod tests {
         assert_eq!(r.twist.kind, Twist::Wind);
         assert_eq!(r.twist.wind_angle, twist_at(seed, 2).unwrap().angle);
         let t = run.twist().unwrap();
-        assert!(t.card().starts_with("Wind from the ") && t.card().contains("all planet"), "{}", t.card());
+        assert!(t.card().starts_with("From the ") && t.card().contains("all planet"), "{}", t.card());
         assert!(Run::range(seed).twist().is_none());
         let cold = PlanetTwist { kind: Twist::Cold, angle: 0.0 };
-        assert_eq!(cold.card(), "Cold snap at 0:20: for a minute the slime crawls in beads. Push now.");
+        assert_eq!(cold.card(), "From 0:20, for a minute, the slime crawls in beads. Push then.");
         let west = PlanetTwist { kind: Twist::Wind, angle: 0.0 };
-        assert_eq!(west.card(), "Wind from the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns.");
+        assert_eq!(west.card(), "From the west: the slime leans and creeps east all planet. Stand upwind, or let it blow onto your guns.");
     }
 
     /// Each late threat waits for its planet (`FIRST_PLANET`, the owner
@@ -4428,21 +4446,42 @@ mod tests {
         assert_eq!(r.loadouts.len(), LOADOUTS_MAX);
     }
 
-    /// A turret fires as many of its loadout's cards as the turrets' rack
-    /// takes, whatever gun the loadout holds; a squad on a loadout with no
-    /// gun lands with the run's rifle (review, 2026-11-20).
+    /// **Turrets fire their loadout's gun** (owner, 2026-11-27): a
+    /// loadout with a gun gives turrets that gun (with the squad's barrel
+    /// and trigger upgrades) and all the cards it holds; one with no gun
+    /// gives them the rifle and as many cards as the turrets' rack takes.
+    /// A squad on a loadout with no gun lands with the run's rifle
+    /// (review, 2026-11-20). A gun bought while the turrets' loadout is
+    /// shown goes on the turrets.
     #[test]
-    fn turrets_fire_their_rack_and_gunless_squads_the_rifle() {
+    fn turrets_fire_their_loadouts_gun() {
         let mut r = Run::new(1);
         r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
-        r.guns.push(Gun { slots: 4, budget: 12, ..GunKind::Long.average() });
-        assert!(r.pick(Pick::Carry(1)));
+        assert!(r.pick(Pick::Edit(1)) && r.editing_turrets());
         r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
-        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok());
-        assert!(r.pick(Pick::TurretsUse));
-        let t = r.turret_cards();
-        assert!(t.len() < 4 && rounds::fit_gun(t.clone(), &r.turret_rack()).is_ok(), "{t:?} on a rack of {}", r.turret_rack().slots);
+        r.refit();
+        assert_eq!(r.turret_gun(), None, "no gun there: the rifle");
+        assert!(rounds::fit_gun(r.turret_cards(), &r.turret_rack()).is_ok());
         assert_eq!(r.squad_gun(1).kind, first_gun().kind, "loadout 2 has no gun: the rifle");
+        // A long gun into the turrets' loadout.
+        r.guns.push(Gun { slots: 4, budget: 12, ..GunKind::Long.average() });
+        assert!(r.pick(Pick::Carry(1)) && r.editing_turrets());
+        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Bomb, true)];
+        r.refit();
+        assert_eq!(r.turret_gun().map(|g| g.kind), Some(GunKind::Long));
+        let t = r.turret_cards();
+        assert_eq!(t, r.gun(), "all its cards: the gun's slots, not the rack's");
+        assert!(t.len() > r.turret_rack().slots as usize);
+        // The barrel upgrade reaches it.
+        r.owned[ITEMS.iter().position(|i| i.key == "range").unwrap()] = 1;
+        assert_eq!(r.turret_gun().unwrap().range, GunKind::Long.average().range + 3.0);
+        // A gun bought with the turrets' loadout shown stays there.
+        let before = r.guns.len();
+        r.points = 10_000;
+        r.gun_offers = vec![GunKind::Scatter.average()];
+        assert!(r.pick(Pick::Gun(0)));
+        assert!(r.editing_turrets() && r.guns.len() == before + 1);
+        assert_eq!(r.turret_gun().map(|g| g.kind), Some(GunKind::Scatter));
     }
 
     /// **Devices carry a loadout's cards** (gun step E, 2026-11-24): no

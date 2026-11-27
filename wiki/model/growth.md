@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-22
+updated: 2026-11-27
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/condense-2026-11-14/README.md
@@ -13,6 +13,7 @@ sources:
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/mould-shape-2026-11-11.md
   - Reports/one-body-2026-11-12.md
+  - Reports/playtest-2026-11-27/README.md
   - Reports/raid-march-2026-11-18/README.md
   - Reports/slime-ceiling-2026-11-21/README.md
   - Reports/slime-enemy-review-2026-11-12.md
@@ -293,6 +294,15 @@ twin):
   each second, so it shrinks over tens of seconds: with the whole fall at
   once, upkeep x3 starved its off-crystal body together (planet 3, seed 1,
   36,683 walkers at 0:40 to 16,224 at 0:50).
+- Since 2026-11-27 a crystal the squad does not guard (no live soldier
+  within gun range of its rim, no squad building on it) needs at most
+  0.5% of the slime's walkers covering it to be taken, 0.25% to be kept,
+  at least 8 cells (`CEILING_HELD_SLIME`). His step 2 Sprawler, shot from
+  25,500 to 3,500, could not cover a tenth of its home crystal again with
+  the map to itself, so its ceiling stayed at its small crystals and it
+  starved when he drained one; on the software GPU the same planet keeps
+  its home and grows back
+  ([playtest](../../Reports/playtest-2026-11-27/README.md)).
 - Measured 11-22 (run seeds, greedy, software GPU): planet 3 seeds 2 and 3
   hold within 4% of their landing (41,022 and 34,718) to 1:20, where the
   first cut had them at 12,000-15,000 by 0:45; seed 1's squad takes a

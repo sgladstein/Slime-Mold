@@ -328,11 +328,16 @@ impl App {
                     None => Cmd::TurretLoad(b as u32, None, None),
                 };
                 if g.apply(cmd) {
+                    // Its loadout's gun too (2026-11-27).
+                    if let Some(l) = next {
+                        g.apply(Cmd::TurretArm(b as u32, r.turret_gun_of(l)));
+                    }
                     let l = next.unwrap_or(r.turret_loadout);
                     let names: Vec<String> = r.turret_deck_of(l).iter().map(|c| c.title()).collect();
                     let cards = if names.is_empty() { "no cards, plain shots".to_string() } else { names.join(", ") };
                     let tag = if next.is_none() { ", the turrets' default" } else { "" };
-                    self.hud.alert(&format!("This {what} fires {}{tag}: {cards}", r.loadout_name(l)), Some(bd.at), theme::GOOD);
+                    let gun = if bd.kind == Kind::Turret { format!(" with its {}", r.turret_gun_of(l).map_or("rifle", |g| g.kind.name())) } else { String::new() };
+                    self.hud.alert(&format!("This {what} fires {}{tag}{gun}: {cards}", r.loadout_name(l)), Some(bd.at), theme::GOOD);
                 }
             }
             _ => {}
