@@ -3569,7 +3569,9 @@ fn run_alarms(g: &Game<GpuWorld>, tr: &Tracker) -> Vec<(Icon, String, String)> {
         Some((members, most)) if most > 0 => {
             let r = g.rules.origin;
             let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;
-            out.push((Icon::Heart, format!("Heart {}, breaks under {}", grouped(members as usize), grouped(breaks as usize)), format!("A heart guards a crystal the slime held thick: {} of {} left. Cut it under {} to break it", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))));
+            // "Heart 696, breaks under 70" read as two facts with no
+            // ask (the 11-27 review at 4K): it says what to do now.
+            out.push((Icon::Heart, format!("Heart {}: cut it under {}", grouped(members as usize), grouped(breaks as usize)), format!("A heart guards a crystal the slime held thick: {} of {} left. Cut it under {} to break it", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))));
         }
         Some(_) => out.push((Icon::Heart, "A heart is forming".into(), "The slime has held a crystal thick for two minutes: a heart grows there".into())),
         None => {}
@@ -3618,7 +3620,7 @@ fn origin_line(g: &Game<GpuWorld>, line: String) -> String {
         Some((members, most)) if most > 0 => {
             let r = g.rules.origin;
             let breaks = (r.floor * most as f32).max(r.floor_min).ceil() as u32;
-            format!("{line}; a heart guards a crystal: {} of {} left, breaks under {}", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))
+            format!("{line}; a heart guards a crystal: {} of {} left, cut it under {}", grouped(members as usize), grouped(most as usize), grouped(breaks as usize))
         }
         Some(_) => format!("{line}; a heart is forming on a crystal"),
         None => line,

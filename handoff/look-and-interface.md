@@ -2,6 +2,8 @@
 
 ## State (2026-11-20)
 
+**11-27, the 4K review (Direction's 11-25 ask, re-filmed on 11-27's main):** command card squares (`command_card`, unlabelled cells) draw the icon at 19 units, 3.5 right and 2 down of centre (1.5 up with a cost), so the 15.5-unit keycap sits beside it; a smaller cap fails `the_bottom_row_keeps_its_text_at_every_size` (10.5 floor). Star card twist line: a third line joins the second, cut with an ellipsis. Heart pill and goal: "cut it under N". Slime `says` lines end in a full stop (`run::does_to_you`, Enemy's file, text only). Films and the ranked list went to Direction.
+
 **11-27, alerts:** at most three (`ALERTS_MAX`), 4 s (`ALERT_LIFE`; red
 6 s, `ALERT_LIFE_BAD`), repeats counted (`Alert::count`, "x3"), none wider
 than `ALERT_W` 520 units or 42% of the screen (cut with an ellipsis). 19

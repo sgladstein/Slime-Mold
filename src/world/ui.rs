@@ -2803,8 +2803,17 @@ impl Hud {
                     c.text_fit(Weight::SemiBold, 12.0 * s, (tx, b.y + 34.0 * s), Align::Left, &rest, second, words);
                 }
             } else {
-                let ic = 22.0 * s;
-                c.icon(cmd.icon, (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s), ic, ink);
+                // The icon smaller and a little right of and below
+                // centre, so the key's cap sits in the corner beside it,
+                // not on it: at 4K, 250% (the 11-27 review) the 22-unit
+                // icon centred under the 15.5-unit cap hid the crosshair's
+                // ring, the drain's hex and the heart's lobe. (A smaller
+                // cap was tried: its letter fell under the bar's 10.5
+                // floor.) A cell with a cost keeps its icon a little
+                // higher, clear of the cost's row.
+                let ic = 19.0 * s;
+                let lift = if cmd.cost.is_some() || cmd.locked { 1.5 * s } else { 0.0 };
+                c.icon(cmd.icon, (b.x + (cell - ic) / 2.0 + 3.5 * s, b.y + (cell - ic) / 2.0 + 2.0 * s - lift), ic, ink);
                 // The hotkey, top left.
                 if let Some(k) = key_name(cmd.key) {
                     let kw = keycap_w(c, &k, 10.5 * s, s);
