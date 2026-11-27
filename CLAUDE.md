@@ -3,6 +3,7 @@
 **Read only what your task needs**; this file is the only thing every thread
 reads. A runner thread reads nothing else.
 
+- New to the repo (the 11-27 account move): `handoff/account-move-2026-11-27.md`.
 - Every lane: `NOW.md` (the milestone and its exit tests, each lane's top
   jobs, what waits on the owner), then `handoff/<your-lane>.md`.
 - Game or simulation work: `wiki/index.md` and the page for the mechanism
