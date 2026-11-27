@@ -689,6 +689,15 @@ pub struct Model {
     /// ("Cold snap in 0:12", "Wind from the west") and hover, a pill in
     /// `TWIST` beside the tell's.
     pub twist: Option<(Icon, String, String)>,
+    /// The slime's size as a bar in the top bar's middle (`SlimeGauge`),
+    /// drawn in the goal's place: in a run the goal is to wipe the slime
+    /// out, so the bar going to nothing is the goal, and `objective` is
+    /// then read by the pause menu alone.
+    pub gauge: Option<SlimeGauge>,
+    /// Warnings beside the tell, in red, as its pills: a heart on a
+    /// crystal, the stalemate's count. They were tails on the goal line,
+    /// which then ran past its room onto a row of its own (owner, 11-27).
+    pub alarms: Vec<(Icon, String, String)>,
     /// The first minute's coaching (the window's `Coach`): the step's
     /// words, "1 of 3" and its opacity, in a panel over the command bar.
     pub coach: Option<(String, String, f32)>,
@@ -749,6 +758,33 @@ pub struct Model {
     /// The ghost is a throw (a toolkit tool; a squad's device later): drawn
     /// with its thrower, reach and arc as well as where it lands.
     pub throw: Option<Throw>,
+}
+
+/// **The slime's size** (owner, 2026-11-27: "The size of the slime should
+/// be shown much more visually and intuitively, it should be easy to tell
+/// how big it is, compared to its start size and peak size"). A bar the
+/// width of its peak, filled to its size now, a white mark where it
+/// landed, the walkers cut in the last seconds pale on the fill's end,
+/// and the count. Until then the count alone sat in the resources' pill,
+/// and again in the goal line ("slime count 9,560"), with nothing to read
+/// it against. Every part is a count the game keeps (`Game::curve`).
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct SlimeGauge {
+    /// The slime's name ("The Trunk"), left of the bar where there is room.
+    pub name: String,
+    /// Walkers now, at the landing's first count, at the most so far, and
+    /// the most over the last few seconds.
+    pub now: u32,
+    pub start: u32,
+    pub peak: u32,
+    pub recent: u32,
+    /// The count as the bar writes it ("9,560", "40.1k").
+    pub count: String,
+    /// A red mark across the bar at this share of the peak, where the
+    /// slime does something (the Swarmer's all-out rush).
+    pub line: Option<f32>,
+    /// What hovering the bar says.
+    pub tip: String,
 }
 
 /// A throw being aimed (`Model::throw`; owner 2026-11-16: "when throwing
@@ -1963,54 +1999,109 @@ impl Hud {
             c.text_fit(Weight::Medium, small, (r.x + 11.0 * s, r.y + 15.5 * s), Align::Left, &t, r.w - 16.0 * s, if slow { WARN } else { MUTED });
             mark = r.x;
         }
-        // The objective, centred between the resources' pill and the
-        // clock's, smaller if it must be; and if it still does not fit,
-        // on a row of its own under the bar, left of the experiments'
-        // mark, cut to the room there. Centred on the screen alone, at
+        // The middle (owner, 11-27: "Everything should be as unobtrusive
+        // on the screen as possible ... the top center slime goal text was
+        // too long and it went onto multiple lines; that shouldn't
+        // happen"): the slime's size (`gauge`) or else the goal, then the
+        // pills (the alarms in red, the slime's tell, the twist), all in
+        // the bar's own row where they fit, the pills in one row under it
+        // where they do not. The goal shrinks to 12 px and is then cut,
+        // its whole words on hover. Only a middle too narrow for even
+        // that (a big UI size in a small window) puts it on a row of its
+        // own. Until 11-27 a long goal took that row (in a run it carried
+        // the slime's count and the heart's), and the pills hung under it:
+        // three rows deep into the fight. Centred on the screen alone, at
         // 200% on 1080 lines it covered the resources' fourth number
         // (11-18).
-        if let Some(obj) = &m.objective {
-            let left = if m.resources.is_empty() { 8.0 * s } else { 8.0 * s + inner + 28.0 * s } + 10.0 * s;
-            let right = pill.x - 10.0 * s;
-            let mut fs = 14.0 * s;
-            let mut ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
-            if ow > right - left {
-                fs = (fs * (right - left - 40.0 * s) / (ow - 40.0 * s)).max(12.0 * s);
-                ow = c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s;
-            }
-            let r = if ow <= right - left {
-                Rect::new(((sw - ow) / 2.0).clamp(left, right - ow), y + 3.0 * s, ow, h - 6.0 * s)
-            } else {
-                fs = 14.0 * s;
-                let room = (mark.min(sw - 8.0 * s) - 10.0 * s - 8.0 * s).max(40.0 * s);
-                let ow = (c.atlas.measure(Weight::Medium, fs, obj) + 40.0 * s).min(room);
-                let r = Rect::new(((sw - ow) / 2.0).clamp(8.0 * s, 8.0 * s + room - ow), y + h + 6.0 * s, ow, h - 6.0 * s);
-                self.below = r.bottom();
-                r
-            };
+        let left = if m.resources.is_empty() { 8.0 * s } else { 8.0 * s + inner + 28.0 * s } + 10.0 * s;
+        let right = pill.x - 10.0 * s;
+        let room = right - left;
+        let gap = 8.0 * s;
+        let ts = 13.0 * s;
+        let pills: Vec<(&(Icon, String, String), Rgba)> = m.alarms.iter().map(|t| (t, BAD)).chain(m.tell.iter().map(|t| (t, WARN))).chain(m.twist.iter().map(|t| (t, TWIST))).collect();
+        let pill_ws: Vec<f32> = pills.iter().map(|((_, words, _), _)| c.atlas.measure(Weight::SemiBold, ts, words) + 42.0 * s).collect();
+        let pills_w = pill_ws.iter().sum::<f32>() + gap * pill_ws.len().saturating_sub(1) as f32;
+        // The gauge's parts: the count's steady width, the name's, and
+        // the rest (pads, icon, gaps).
+        let gauge = m.gauge.as_ref().map(|g| {
+            let count_w = steady_w(c, Weight::SemiBold, px, &g.count);
+            let name_w = if g.name.is_empty() { 0.0 } else { c.atlas.measure(Weight::Medium, 13.0 * s, &g.name) + 10.0 * s };
+            (g, count_w, name_w, 14.0 * s + 24.0 * s + 10.0 * s + count_w + 14.0 * s)
+        });
+        // The middle's best and least widths.
+        let goal_w = |c: &Canvas, fs: f32| m.objective.as_ref().map_or(0.0, |o| c.atlas.measure(Weight::Medium, fs, o) + 40.0 * s);
+        let (best, least) = match (&gauge, &m.objective) {
+            (Some((_, _, name_w, fixed)), _) => (fixed + name_w + GAUGE_BEST * s, fixed + GAUGE_LEAST * s),
+            (None, Some(_)) => (goal_w(c, 14.0 * s), goal_w(c, 12.0 * s).min(GOAL_LEAST * s)),
+            (None, None) => (0.0, 0.0),
+        };
+        let has_mid = gauge.is_some() || m.objective.is_some();
+        let with_gap = if has_mid && !pills.is_empty() { gap } else { 0.0 };
+        // The pills ride in the row if the middle at its least leaves them room.
+        let inline = least + with_gap + pills_w <= room;
+        let own_row = least > room;
+        let mid = if !has_mid {
+            None
+        } else if own_row {
+            let room = (mark.min(sw - 8.0 * s) - 10.0 * s - 8.0 * s).max(40.0 * s);
+            let w = best.min(room);
+            Some(Rect::new(((sw - w) / 2.0).clamp(8.0 * s, 8.0 * s + room - w), y + h + 6.0 * s, w, h - 6.0 * s))
+        } else {
+            let w = best.min(room - if inline { with_gap + pills_w } else { 0.0 }).max(least);
+            let group = w + if inline { with_gap + pills_w } else { 0.0 };
+            // The middle itself centred, the pills trailing it, so a pill
+            // that comes or goes leaves the gauge still (the first film,
+            // 11-27: the group re-centred when the cold snap ended).
+            Some(Rect::new(((sw - w) / 2.0).clamp(left, (right - group).max(left)), y + 3.0 * s, w, h - 6.0 * s))
+        };
+        if let Some(r) = mid {
+            self.below = self.below.max(r.bottom());
             self.glass(r, r.h / 2.0, c, s);
-            c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
-            c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
-            // The slime's trait as its number (`Model::tell`), a small
-            // amber pill hung under the goal's middle; its hover says
-            // what the number is.
-            // The planet's twist (`Model::twist`) beside it in ice blue, the
-            // two centred together under the goal.
-            let ts = 13.0 * s;
-            let pills: Vec<(&(Icon, String, String), Rgba)> = m.tell.iter().map(|t| (t, WARN)).chain(m.twist.iter().map(|t| (t, TWIST))).collect();
-            let widths: Vec<f32> = pills.iter().map(|((_, words, _), _)| c.atlas.measure(Weight::SemiBold, ts, words) + 42.0 * s).collect();
-            let gap = 8.0 * s;
-            let mut x = r.x + (r.w - widths.iter().sum::<f32>() - gap * widths.len().saturating_sub(1) as f32) / 2.0;
-            for (((icon, words, tip), colour), tw) in pills.into_iter().zip(widths) {
-                let t = Rect::new(x, r.bottom() + 5.0 * s, tw, 24.0 * s);
-                x += tw + gap;
-                self.glass(t, t.h / 2.0, c, s);
-                c.icon(*icon, (t.x + 11.0 * s, t.y + 5.0 * s), 14.0 * s, colour);
-                c.text(Weight::SemiBold, ts, (t.x + 31.0 * s, t.y + 16.5 * s), Align::Left, words, colour);
-                self.below = self.below.max(t.bottom());
-                if self.hover.is_some_and(|p| t.contains(p)) {
-                    self.tip_small(tip, (t.x, t.bottom() + 6.0 * s), c, s);
+            let hot = self.hover.is_some_and(|p| r.contains(p));
+            if let Some((g, count_w, name_w, fixed)) = gauge {
+                let mid_y = r.y + r.h / 2.0;
+                let mut x = r.x + 14.0 * s;
+                c.icon(Icon::Mould, (x, mid_y - 8.0 * s), 16.0 * s, GAUGE_FILL);
+                x += 24.0 * s;
+                // The name where the bar keeps its least beside it.
+                if name_w > 0.0 && r.w >= fixed + name_w + GAUGE_NAMED * s {
+                    c.text(Weight::Medium, 13.0 * s, (x, mid_y + 4.5 * s), Align::Left, &g.name, MUTED);
+                    x += name_w;
                 }
+                let bar = Rect::new(x, mid_y - 4.0 * s, (r.right() - 14.0 * s - count_w - 10.0 * s - x).max(4.0 * s), 8.0 * s);
+                gauge_bar(g, bar, c, s);
+                c.text(Weight::SemiBold, px, (r.right() - 14.0 * s - count_w, mid_y + 5.0 * s), Align::Left, &g.count, TEXT);
+                if hot {
+                    self.tip_small(&g.tip, (r.x, r.bottom() + 6.0 * s), c, s);
+                }
+            } else if let Some(obj) = &m.objective {
+                // 14 px, down to 12 to fit, then cut.
+                let fs = (14.0 * s * ((r.w - 40.0 * s) / (goal_w(c, 14.0 * s) - 40.0 * s).max(1.0))).clamp(12.0 * s, 14.0 * s);
+                c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
+                c.text_fit(Weight::Medium, fs, (r.x + 30.0 * s, r.y + r.h / 2.0 + fs * (4.0 / 14.0)), Align::Left, obj, r.w - 40.0 * s, TEXT);
+                if hot && c.atlas.measure(Weight::Medium, fs, obj) > r.w - 40.0 * s {
+                    self.tip_small(obj, (r.x, r.bottom() + 6.0 * s), c, s);
+                }
+            }
+        }
+        // The pills: in the row right of the middle, or centred under it.
+        let (mut x, py, ph) = match mid {
+            Some(r) if inline && !own_row => (r.right() + with_gap, r.y, r.h),
+            Some(r) => (r.x + (r.w - pills_w) / 2.0, r.bottom() + 5.0 * s, 24.0 * s),
+            None => (((sw - pills_w) / 2.0).clamp(left, (right - pills_w).max(left)), y + 3.0 * s, h - 6.0 * s),
+        };
+        if !inline || own_row {
+            x = x.clamp(8.0 * s, (mark.min(sw) - 8.0 * s - pills_w).max(8.0 * s));
+        }
+        for (((icon, words, tip), colour), tw) in pills.into_iter().zip(pill_ws) {
+            let t = Rect::new(x, py, tw, ph);
+            x += tw + gap;
+            self.glass(t, t.h / 2.0, c, s);
+            c.icon(*icon, (t.x + 11.0 * s, t.y + (t.h - 14.0 * s) / 2.0), 14.0 * s, colour);
+            c.text(Weight::SemiBold, ts, (t.x + 31.0 * s, t.y + t.h / 2.0 + 4.5 * s), Align::Left, words, colour);
+            self.below = self.below.max(t.bottom());
+            if self.hover.is_some_and(|p| t.contains(p)) {
+                self.tip_small(tip, (t.x, t.bottom() + 6.0 * s), c, s);
             }
         }
     }
@@ -3597,6 +3688,51 @@ const CURVE_FILL: Rgba = [236, 150, 52, 90];
 /// the soldiers standing as a cyan step line on their own scale, with the
 /// slime's peak and the clock at both ends. Plain rectangles, as the rest
 /// of the card: the canvas draws no lines (gapped bars and dots to 11-24).
+/// The slime gauge's bar widths, UI units: at its best, the least beside
+/// the slime's name, and the least at all (no name).
+const GAUGE_BEST: f32 = 280.0;
+const GAUGE_NAMED: f32 = 120.0;
+const GAUGE_LEAST: f32 = 90.0;
+/// The goal pill's least before it takes a row of its own, UI units.
+const GOAL_LEAST: f32 = 220.0;
+/// The gauge's fill: the end screen's slime curve, so the two read as one.
+const GAUGE_FILL: Rgba = CURVE_SLIME;
+/// The walkers cut in the last seconds, pale on the fill's end.
+const GAUGE_CUT: Rgba = [255, 236, 204, 170];
+
+/// The slime gauge's bar (`SlimeGauge`) in `bar`: a track the width of
+/// the peak, the fill to the count now, the last seconds' cut pale after
+/// it, and upright marks at the landing's size (white, when under the
+/// peak) and the gauge's line (red), each a little taller than the bar so it reads over the
+/// fill and the track alike.
+fn gauge_bar(g: &SlimeGauge, bar: Rect, c: &mut Canvas, s: f32) {
+    let scale = g.peak.max(g.now).max(g.start).max(1) as f32;
+    let at = |n: f32| bar.x + bar.w * (n / scale).clamp(0.0, 1.0);
+    let rad = bar.h / 2.0;
+    c.rrect(bar, rad, TRACK);
+    let fill = at(g.now as f32);
+    let cut = at(g.recent.max(g.now) as f32);
+    if cut - fill >= 1.0 {
+        c.rrect(Rect::new(bar.x, bar.y, cut - bar.x, bar.h), rad, GAUGE_CUT);
+    }
+    if fill - bar.x >= 1.0 {
+        c.rrect(Rect::new(bar.x, bar.y, fill - bar.x, bar.h), rad.min((fill - bar.x) / 2.0), GAUGE_FILL);
+    }
+    let mark = |c: &mut Canvas, x: f32, colour: Rgba| {
+        c.rrect(Rect::new(x - 1.5 * s, bar.y - 4.0 * s, 3.0 * s, bar.h + 8.0 * s), 1.0 * s, [10, 12, 16, 200]);
+        c.rrect(Rect::new(x - 0.75 * s, bar.y - 3.0 * s, 1.5 * s, bar.h + 6.0 * s), 0.75 * s, colour);
+    };
+    if let Some(f) = g.line {
+        mark(c, bar.x + bar.w * f.clamp(0.0, 1.0), BAD);
+    }
+    // Not at the bar's very end (a slime still at its landing size): a
+    // mark there read as a divider before the count (the first film,
+    // 11-27), and the bar's end already says "its most".
+    if g.start > 0 && at(g.start as f32) < bar.right() - bar.h {
+        mark(c, at(g.start as f32), TEXT);
+    }
+}
+
 fn end_curve(curve: &[(u32, u32)], r: Rect, c: &mut Canvas, s: f32) {
     c.panel(r, 10.0 * s, [255, 255, 255, 12], [255, 255, 255, 6], 1.0, EDGE);
     let (padx, top, bottom) = (12.0 * s, 26.0 * s, 20.0 * s);
@@ -4782,6 +4918,43 @@ mod tests {
                 for x in r.c.runs.iter().filter(|x| !x.text.starts_with("Wipe out") && x.ink.0 < x.ink.2) {
                     let apart = g.2 <= x.ink.0 || x.ink.2 <= g.0 || g.3 <= x.ink.1 || x.ink.3 <= g.1;
                     assert!(apart, "{screen:?} at {user}: the goal {g:?} over {:?} {:?}", x.text, x.ink);
+                }
+            }
+        }
+    }
+
+    /// The slime's gauge and its pills (owner, 11-27: the goal ran onto
+    /// rows of its own) stay in the top bar's row on 1080 lines and more
+    /// at up to 125%, and at every size on four screens stay on the screen
+    /// and off every other word on it; the goal it stands for is not drawn.
+    #[test]
+    fn the_slime_gauge_keeps_its_row_and_off_the_numbers() {
+        let pill = |icon: Icon, words: &str| (icon, words.to_string(), "hover".to_string());
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440), (3840, 2160)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.c.ui.user = user;
+                let rates = [Some("+23/s"), Some("+40"), Some("-8 lost")];
+                r.m.resources = ["2,091", "35", "11"].iter().zip(rates).map(|(v, rate)| Resource { icon: Icon::Clock, colour: TEXT, label: "a number".into(), value: (*v).into(), rate: rate.map(String::from) }).collect();
+                r.m.clock = "3:12  \u{b7}  star by 10:00".into();
+                r.m.speed = Some("Paused".into());
+                r.m.objective = Some("Wipe out every last bit of slime".into());
+                r.m.gauge = Some(SlimeGauge { name: "The Trunk".into(), now: 9_560, start: 7_000, peak: 15_400, recent: 10_100, count: "9,560".into(), line: Some(0.25), tip: "the slime".into() });
+                r.m.alarms = vec![pill(Icon::Heart, "Heart 1,660, breaks under 166")];
+                r.m.tell = Some(pill(Icon::Sleep, "62% asleep"));
+                r.m.twist = Some(pill(Icon::Clock, "Cold snap in 0:12"));
+                r.draw();
+                assert!(!r.c.runs.iter().any(|x| x.text.starts_with("Wipe out")), "{screen:?} at {user}: the goal drawn beside its gauge");
+                for word in ["9,560", "Heart 1,660, breaks under 166", "62% asleep", "Cold snap in 0:12"] {
+                    let g = r.c.runs.iter().find(|x| x.text == word).unwrap_or_else(|| panic!("{screen:?} at {user}: no {word}")).ink;
+                    assert!(g.0 >= 0.0 && g.2 <= screen.0 as f32, "{screen:?} at {user}: {word} off the screen: {g:?}");
+                    for x in r.c.runs.iter().filter(|x| x.text != word && x.ink.0 < x.ink.2) {
+                        let apart = g.2 <= x.ink.0 || x.ink.2 <= g.0 || g.3 <= x.ink.1 || x.ink.3 <= g.1;
+                        assert!(apart, "{screen:?} at {user}: {word} {g:?} over {:?} {:?}", x.text, x.ink);
+                    }
+                }
+                if screen.1 >= 1080 && user <= 1.25 {
+                    assert!(r.hud.below <= r.hud.top + 0.5, "{screen:?} at {user}: a second row under the top bar ({} past {})", r.hud.below, r.hud.top);
                 }
             }
         }

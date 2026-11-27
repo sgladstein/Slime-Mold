@@ -2,6 +2,15 @@
 
 ## State (2026-11-20)
 
+**11-27, the slime gauge (HUD; thread "Improve the top HUD and status
+pop-ups"):** in a run the top bar's middle is `SlimeGauge` (peak-wide bar,
+fill now, white landing mark, 3 s cut pale, Swarmer rush mark red), the goal
+sentence gone from the bar (kept for the pause menu), heart and stalemate
+as red pills (`run_alarms`), all pills in the row where they fit. Page in
+`Reports/slime-gauge-2026-11-27/`. Next from its list: shorter, fewer alerts
+(at most three, about 4 s, one short clause, repeats as x3); the Sleeper's
+and Grudge's tells and the heart drawn into the bar.
+
 **11-24, Look B, the Dozer's nap (planet 8):** `SlimeLook::Doze` (10):
 the Sleeper's crust machinery (`crust_look()`, `dormant_share`) with a pale
 straw rind (`NAP_RGB`, `NAP_DIM`, `NAP_MATTE`), and awake the Swarmer's

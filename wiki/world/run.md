@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-26
+updated: 2026-11-27
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/balance-review-2026-11-24/README.md
@@ -308,8 +308,8 @@ Since 11-15 (the whole-game review's W17, W30 and W13;
 counts as stuck only when, besides no shot, no food taken and the bank under
 a soldier's price, no soldier walked, no pump stands, nothing is being built
 and shots cost food or every crystal is dry (in squad mode shots are free,
-so a planet with charge left never ends stuck); from `STUCK_WARN` (10 s) the goal line warns
-that the planet ends at `STUCK_END` (30 s); before, a run ended at 1:37 with
+so a planet with charge left never ends stuck); from `STUCK_WARN` (10 s) a red pill on the top bar
+(`run_alarms`; the goal line until 11-27) warns that the planet ends at `STUCK_END` (30 s); before, a run ended at 1:37 with
 four healthy soldiers and both pumps standing. The shrink goal counts the
 slime's mass (`World::mass`, the enemy's living walkers; until 11-17 a
 thickened walker counted twice, so a body that thickened did not read as
