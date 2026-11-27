@@ -89,6 +89,29 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 // `menu=shop-turrets` (the turrets thread, 2026-11-16): the
                 // gun slots switched to the turrets' deck, with the first
                 // bag card that fits put on it.
+                // `menu=shop-loadouts` (the loadout page, 2026-11-27): a
+                // Lobber and a Sprayer bought (each a loadout, quick to
+                // build), a card on the Lobber, and an empty loadout;
+                // `shop-loadouts-lobber` with the Lobber's loadout shown.
+                if flag.starts_with("shop-loadouts") {
+                    let points = r.points;
+                    r.points = 100_000;
+                    for (k, kind) in [slime_mould::mould::turrets::TurretKind::Lobber, slime_mould::mould::turrets::TurretKind::Sprayer].into_iter().enumerate() {
+                        r.turret_offers = vec![slime_mould::mould::turrets::Turret::roll(kind, 11 + k as u64, 3)];
+                        r.pick(slime_mould::mould::run::Pick::Turret(0));
+                    }
+                    r.points = points;
+                    if let Some(l) = r.loadouts.iter().position(|l| l.turret.is_some_and(|t| r.turrets.get(t).is_some_and(|t| t.kind == slime_mould::mould::turrets::TurretKind::Lobber))) {
+                        r.edit(l);
+                        r.cards.push((slime_mould::mould::rounds::Card::Wide, false));
+                        if let Some(i) = (0..r.cards.len()).find(|&i| !r.cards[i].1 && r.fits(r.cards[i].0)) {
+                            r.pick(slime_mould::mould::run::Pick::Card(i));
+                        }
+                    }
+                    let lobber = r.editing;
+                    r.pick(slime_mould::mould::run::Pick::NewLoadout);
+                    r.edit(if flag == "shop-loadouts-lobber" { lobber } else { 0 });
+                }
                 if flag == "shop-turrets" {
                     r.pick(slime_mould::mould::run::Pick::EditTurrets);
                     if let Some(i) = (0..r.cards.len()).find(|&i| !r.cards[i].1 && r.fits(r.cards[i].0)) {

@@ -24,7 +24,7 @@ use slime_mould::mould::dps::Profile;
 use slime_mould::mould::guns;
 use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::build::news::{self, Memory};
-use slime_mould::world::start::{BuildPage, Entry, Glance, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, ShotTag, StartEvent, StartMenu, TryLine, BAG};
+use slime_mould::world::start::{BuildPage, Entry, Glance, LoadoutCard, NewsLine, Opt, Page, Shop, ShopArea, ShopRow, ShotTag, StartEvent, StartMenu, TryLine, BAG, LOADOUT_ROW, OWNED};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -475,6 +475,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     // or the turrets' rack (`Run::rack`).
     let gun = r.armed_of(r.editing).unwrap_or_else(|| r.rack());
     let raw = r.shop();
+    let picks: Vec<Pick> = raw.iter().map(|row| row.pick).collect();
     // The gun's cards in slot order, as the shop's gun row lists them (the
     // rows it marks in the gun), for the fused shots (owner, 11-24).
     let in_gun: Vec<rounds::Card> = raw.iter().filter(|row| row.on).filter_map(|row| if let Face::Card(c) = row.face { Some(c) } else { None }).collect();
@@ -490,7 +491,14 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 // The gun slots' switch to the turrets' deck: a bottom-bar
                 // button (`Pick::EditTurrets`).
                 // The loadouts' buttons too (2026-11-19).
-                _ if matches!(row.pick, Pick::EditTurrets | Pick::Edit(_) | Pick::NewLoadout | Pick::TurretsUse | Pick::Quick | Pick::DevicesUse | Pick::SquadUses | Pick::Reroll | Pick::Hold) => (String::new(), ShopArea::Upgrades),
+                // The loadouts' own rows on their row of cards over the
+                // gun slots (2026-11-27), the rest on the bottom bar.
+                _ if matches!(row.pick, Pick::Edit(_) | Pick::NewLoadout | Pick::Quick | Pick::QuickOf(_)) => (LOADOUT_ROW.to_string(), ShopArea::Upgrades),
+                _ if matches!(row.pick, Pick::EditTurrets | Pick::TurretsUse | Pick::DevicesUse | Pick::SquadUses | Pick::Reroll | Pick::Hold) => (String::new(), ShopArea::Upgrades),
+                // Every gun, turret and device owned on one tab, each with
+                // the loadout it is in (2026-11-27).
+                _ if !r.range && matches!(row.pick, Pick::Carry(_)) => (OWNED.to_string(), ShopArea::Guns),
+                _ if !r.range && matches!(row.pick, Pick::CarryTurret(_) | Pick::CarryBody(_)) => (OWNED.to_string(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 // Each a tab of the shop's counter (Shop B, 11-15).
@@ -531,6 +539,15 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     if matches!(row.pick, Pick::BodyAuto(_)) {
                         s.level = (0, 0);
                         s.bars = Vec::new();
+                    }
+                    // An owned turret design by its kind, its rolls as
+                    // bars (2026-11-27), as an owned body's are.
+                    if let Pick::CarryTurret(i) = row.pick {
+                        if let Some(t) = r.turrets.get(i) {
+                            s.name = t.kind.name().to_string();
+                            s.level = (0, 0);
+                            s.bars = turret_bars(t);
+                        }
                     }
                     if let Some((b, mine)) = body {
                         s.name = b.kind.name().to_string();
@@ -586,7 +603,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             s
         })
         .collect();
+    let row_of = |p: Pick| picks.iter().position(|&x| x == p);
+    let loadouts = if r.range { Vec::new() } else { loadout_cards(r, &row_of) };
     Shop {
+        loadouts,
+        new_loadout: row_of(Pick::NewLoadout),
         heading: if r.range { "The gun range".into() } else { format!("{} next: {}", l.mission.name, l.mission.says) },
         lines,
         purse: if r.range { "Free".into() } else { format!("{} points", r.points) },
@@ -1076,6 +1097,57 @@ fn body_bars(b: &slime_mould::mould::bodies::Body, mine: Option<&slime_mould::mo
         .collect()
 }
 
+/// The run's loadouts as the shop's row of cards (2026-11-27): what each
+/// holds, who uses it, its cards, and a turret's quick-build switch;
+/// `row_of` finds the shop row of a pick.
+fn loadout_cards(r: &Run, row_of: &dyn Fn(Pick) -> Option<usize>) -> Vec<LoadoutCard> {
+    let mut v = Vec::new();
+    for (i, l) in r.loadouts.iter().enumerate() {
+        let Some(row) = row_of(Pick::Edit(i)) else { continue };
+        let turret = l.turret.and_then(|t| r.turrets.get(t));
+        let body = l.body.and_then(|b| r.bodies.get(b));
+        let (holds, kind, icon) = if let Some(t) = turret {
+            (t.kind.name().to_string(), "Turret", item_icon(run::turret_key(t.kind)))
+        } else if let Some(b) = body {
+            (b.kind.name().to_string(), "Device", item_icon(b.kind.key()))
+        } else if let Some(g) = r.gun_of(i) {
+            (draw::capital(&g.title()), "Gun", draw::gun_icon(g.kind))
+        } else if i == 0 {
+            // The squads' first with no gun fires the plain rifle.
+            ("Plain rifle".to_string(), "Gun", Icon::Rifle)
+        } else {
+            ("Nothing yet".to_string(), "Empty", Icon::Carry)
+        };
+        let mut roles = Vec::new();
+        if i == 0 {
+            roles.push("Squads".to_string());
+        }
+        if let Some((q, _)) = r.field_squad.filter(|f| f.1 == i) {
+            roles.push(format!("Squad {}", q + 1));
+        }
+        if r.device_loadout == Some(i) && r.has_device() {
+            roles.push("Devices".to_string());
+        }
+        let quick = turret.and_then(|_| row_of(Pick::QuickOf(i))).map(|q| (q, r.quick.iter().position(|&x| x == i).map(|k| k as u8 + 1)));
+        v.push(LoadoutCard { n: i + 1, holds, kind: kind.to_string(), icon, roles, cards: r.cards_of(i).len(), shown: i == r.editing, row, quick });
+    }
+    v
+}
+
+/// A turret design's rolls as bars (2026-11-27), as a body's are.
+fn turret_bars(t: &slime_mould::mould::turrets::Turret) -> Vec<(String, f32, String)> {
+    let mut b = vec![
+        ("Reach".to_string(), (t.range / 1.5).clamp(0.0, 1.0), format!("x{:.2}", t.range)),
+        ("Rate".to_string(), (t.rate / 1.5).clamp(0.0, 1.0), format!("x{:.2}", t.rate)),
+        ("Card slots".to_string(), t.slots as f32 / 6.0, t.slots.to_string()),
+        ("Budget".to_string(), t.budget as f32 / 30.0, t.budget.to_string()),
+    ];
+    if t.over {
+        b.insert(2, ("Over walls".to_string(), 1.0, "yes".to_string()));
+    }
+    b
+}
+
 fn gun_bars(g: &slime_mould::mould::guns::Gun) -> Vec<(String, f32, String)> {
     let mut b = vec![
         ("Range".to_string(), g.range / 48.0, format!("{:.0}", g.range)),
@@ -1108,7 +1180,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "change-keys" => Page::Bind,
         // (`news-try`: its second tab, the things to try.)
         "news" | "news-try" => Page::News,
-        "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" | "shop-landing" => Page::Shop,
+        "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" | "shop-landing" | "shop-loadouts" | "shop-loadouts-lobber" => Page::Shop,
         // (`stars@STEP`: the star map with the route picked up to STEP,
         // `headless`.)
         "stars" => Page::Stars,

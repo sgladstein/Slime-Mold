@@ -2,6 +2,27 @@
 
 ## State (2026-11-20)
 
+**11-27, the loadout page (thread "Redesign the loadout page"; owner
+21:43Z "Does the page for creating gun and turret loadouts need to be
+improved?", 21:48Z "Nothing gets replaced ... select two to three
+loadouts ... quick build"):** the shop's loadouts are a row of cards over
+the gun slots (`loadout_rail` in `start/shop.rs`, `LoadoutCard`,
+`menu::loadout_cards`): number, what it holds, who uses it, its cards, a
+"Build N" quick-build switch on each turret's card (`Pick::QuickOf`,
+run.rs), "+ New loadout" last; one line high under 640 units
+(`RAIL_LOW`). The budget/DPS line moved to the right end of the shots'
+names row (`late_line`), else the Squad tab paged at 200% on 1080 and
+540 lines. New Owned tab (`OWNED`, `TabKind::Owned`, `owned_card`): every
+gun, turret and device with "In loadout N" / "Spare"; owned turrets show
+their rolls (`menu::turret_bars`). Film: `menu=shop-loadouts`,
+`shop-loadouts-lobber`, `shop-loadouts@Owned`. Stills
+`Reports/pr-stills/loadout-cards-2026-11-27-*.jpg`. Built on PR #876's
+branch (turrets bought like guns). **Next ideas:** drag a gun or turret
+from the Owned tab onto a loadout card; show a loadout's cards as mini
+pips on its card; "Devices use this" / "Squad N uses this" still sit on
+the bottom bar and could move onto the shown card; the bot still builds
+turrets by kind, not by quick slot.
+
 **11-27, alerts:** at most three (`ALERTS_MAX`), 4 s (`ALERT_LIFE`; red
 6 s, `ALERT_LIFE_BAD`), repeats counted (`Alert::count`, "x3"), none wider
 than `ALERT_W` 520 units or 42% of the screen (cut with an ellipsis). 19

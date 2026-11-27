@@ -33,6 +33,15 @@ const SHOT_INKS: [Rgba; 4] = [[96, 190, 255, 255], [255, 126, 182, 255], [182, 1
 const EVERY_INK: Rgba = [63, 208, 191, 255];
 /// The space between tiles.
 const GAP: f32 = 8.0;
+/// The row of loadout cards over the bench (2026-11-27): its height, the
+/// widest a card gets, and the "New loadout" card's width.
+const RAIL_H: f32 = 44.0;
+const RAIL_LOW: f32 = 30.0;
+const RAIL_MAX: f32 = 250.0;
+const RAIL_NEW: f32 = 128.0;
+/// An owned thing's card on the Owned tab: its height and least width.
+const OWNED_H: f32 = 84.0;
+const OWNED_W: f32 = 300.0;
 /// An upgrade tile: a little wider than tall, so a two-word name fits at
 /// 12.5 units (the old grid's tiles were 78 square with names at 11.5).
 const TILE_W: f32 = 100.0;
@@ -75,6 +84,9 @@ pub(super) enum TabKind {
     Guns,
     /// Upgrades, as the command card's tiles.
     Tiles,
+    /// Every gun, turret and device owned, each with the loadout it is in
+    /// (`OWNED`).
+    Owned,
 }
 
 /// A tab of the shop's counter.
@@ -385,8 +397,22 @@ impl StartMenu {
                 None => v.push(ShopTab { name: name.into(), kind, rows: vec![i] }),
             }
         }
-        let (mut cards, mut guns, mut tiles) = (Vec::new(), Vec::new(), Vec::new());
+        let (mut cards, mut guns, mut tiles, mut owned) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        let mut carried = None;
         for (i, r) in shop.rows.iter().enumerate() {
+            // The loadouts' row of cards draws its own; everything owned
+            // has a tab of its own (2026-11-27), the carried gun heading
+            // the Guns table too, so the guns on sale read against it.
+            if r.group == LOADOUT_ROW {
+                continue;
+            }
+            if r.group == OWNED {
+                put(&mut owned, TabKind::Owned, OWNED, i);
+                if r.area == ShopArea::Guns && r.on {
+                    carried = Some(i);
+                }
+                continue;
+            }
             match r.area {
                 ShopArea::Cards if r.on || r.group == BAG => {}
                 ShopArea::Cards => put(&mut cards, TabKind::Cards, &r.group, i),
@@ -395,11 +421,16 @@ impl StartMenu {
                 ShopArea::Upgrades => put(&mut tiles, TabKind::Tiles, &r.group, i),
             }
         }
+        // Guns first on the Owned tab, then turrets and devices.
+        for t in &mut owned {
+            t.rows.sort_by_key(|&i| shop.rows[i].area != ShopArea::Guns);
+        }
         // The carried gun heads its table.
         for t in &mut guns {
+            t.rows.extend(carried);
             t.rows.sort_by_key(|&i| !shop.rows[i].on);
         }
-        let mut v = if shop.range { [guns, cards].concat() } else { [cards, guns].concat() };
+        let mut v = if shop.range { [guns, cards].concat() } else { [cards, owned, guns].concat() };
         v.extend(tiles);
         v
     }
@@ -434,6 +465,14 @@ impl StartMenu {
         let mut v: Vec<Hit> = tabs.get(self.shop_tab.min(tabs.len().saturating_sub(1))).map_or(Vec::new(), |t| t.rows.iter().map(|&i| Hit::Buy(i)).collect());
         v.extend(self.gun_cards().into_iter().map(Hit::Buy));
         v.extend(self.bag_cards().into_iter().map(Hit::Buy));
+        // The loadouts' row: each card, its quick-build switch, a new one.
+        if let Some(shop) = &self.shop {
+            for l in &shop.loadouts {
+                v.push(Hit::Do(l.row));
+                v.extend(l.quick.map(|q| Hit::Do(q.0)));
+            }
+            v.extend(shop.new_loadout.map(Hit::Do));
+        }
         v.extend(self.tools().into_iter().map(Hit::Do));
         v.push(Hit::Next);
         if !self.shop.as_ref().is_some_and(|s| s.field) {
@@ -609,8 +648,24 @@ impl StartMenu {
         let pane = Rect::new(sw - x - pw, top + 10.0 * s, pw, by - 10.0 * s - (top + 10.0 * s));
         let lw = pane.x - 16.0 * s - x;
 
+        // The loadouts as a row of cards over the bench (2026-11-27), the
+        // one shown lit: what each holds, who uses it, a turret's
+        // quick-build switch, and a new one at the end. The bench moves
+        // down under it.
+        let rail = !shop.loadouts.is_empty();
+        let top_b = if rail {
+            // On a short screen (under 640 units high: 200% on 1,280 x 540)
+            // a one-line row, so the counter keeps its height.
+            let (gap, h) = if sh / s < 640.0 { (4.0, RAIL_LOW) } else { (8.0, RAIL_H) };
+            self.loadout_rail(&shop, Rect::new(x, top + gap * s, lw, h * s), ring, c, s);
+            top + (gap + h) * s
+        } else {
+            top
+        };
         // The bench: the carried gun's slots and the bag, pinned.
-        let gun_name = if !shop.bench.is_empty() {
+        let gun_name = if rail {
+            ""
+        } else if !shop.bench.is_empty() {
             shop.bench.as_str()
         } else if shop.turrets {
             "Every turret"
@@ -619,29 +674,46 @@ impl StartMenu {
         };
         // (Four units higher since the fused shots, 11-24, so the shots'
         // names fit under it.)
-        let gy = top + 26.0 * s;
-        let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
         let on = self.gun_cards();
         let line = format!("budget {} of {}  ·  {} of {} slots  ·  fired left to right", shop.budget.0, shop.budget.1, on.len(), shop.slots);
         // Its estimated damage a second at the line's right end (the
         // owner, 2026-11-22): the number large, what it is small before it.
-        let mut dps_w = 0.0;
-        if let Some(d) = shop.dps {
-            let v = dps_text(d);
-            let vw = c.text(Weight::SemiBold, 15.0 * s, (x + lw, gy), Align::Right, &v, TEXT);
-            let lab = if shop.turrets { "est. DPS a turret" } else { "est. DPS a soldier" };
-            let w2 = c.text(Weight::Medium, 12.5 * s, (x + lw - vw - 7.0 * s, gy), Align::Right, lab, MUTED);
-            dps_w = vw + 7.0 * s + w2 + 16.0 * s;
+        // Under the row of loadouts the line sits at the right end of the
+        // shots' names' row, after them (`late_line`), so the row costs
+        // the counter as little height as it can (at 200% on 1080 lines
+        // the Squad tab went to two pages with a line of its own).
+        let late_line = rail;
+        let gy = top_b + 26.0 * s;
+        if !late_line {
+            let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
+            let mut dps_w = 0.0;
+            if let Some(d) = shop.dps {
+                let v = dps_text(d);
+                let vw = c.text(Weight::SemiBold, 15.0 * s, (x + lw, gy), Align::Right, &v, TEXT);
+                let lab = if shop.turrets { "est. DPS a turret" } else { "est. DPS a soldier" };
+                let w2 = c.text(Weight::Medium, 12.5 * s, (x + lw - vw - 7.0 * s, gy), Align::Right, lab, MUTED);
+                dps_w = vw + 7.0 * s + w2 + 16.0 * s;
+            }
+            c.text_fit(Weight::Medium, 13.5 * s, (x + nw + 12.0 * s, gy), Align::Left, &line, lw - nw - 12.0 * s - dps_w, MUTED);
         }
-        c.text_fit(Weight::Medium, 13.5 * s, (x + nw + 12.0 * s, gy), Align::Left, &line, lw - nw - 12.0 * s - dps_w, MUTED);
         let ch = CARD_H * s;
         let (sx, sroom) = (x + LABEL * s, lw - LABEL * s);
         // Room above the row for the shots' names when there are any: six
         // units (a twelve-unit drop put the armory's bullets on two pages
         // at 200% on 540 lines; an empty gun keeps the old place).
         let fused = !on.is_empty() && shop.shots.len() == on.len();
-        let row_y = top + if fused { 48.0 } else { 42.0 } * s;
-        c.text(Weight::SemiBold, 13.5 * s, (x, row_y + ch / 2.0 + 5.0 * s), Align::Left, if shop.turrets { "Turrets" } else { "Gun" }, MUTED);
+        let row_y = top_b + if late_line { 24.0 } else if fused { 48.0 } else { 42.0 } * s;
+        // How far right the shots' names reach, for the late line.
+        let mut names_right = x;
+        // The slots' label: what the loadout shown holds (a turret's, a
+        // device's), "Gun" before loadouts had cards.
+        let label = match shop.loadouts.iter().find(|l| l.shown) {
+            Some(l) if l.kind != "Empty" => l.kind.as_str(),
+            Some(_) => "Slots",
+            None if shop.turrets => "Turrets",
+            None => "Gun",
+        };
+        c.text_fit(Weight::SemiBold, 13.5 * s, (x, row_y + ch / 2.0 + 5.0 * s), Align::Left, label, LABEL * s - 4.0 * s, MUTED);
         let n = (shop.slots as usize).max(on.len()).max(1);
         // Fused shots (the owner's pick, 2026-11-24 15:51Z: "B is best";
         // the six options are `Reports/card-links-2026-11-24/`): the cards
@@ -709,7 +781,8 @@ impl StartMenu {
                 };
                 c.rrect(f, 10.0 * s, with_alpha(ink, 0.08));
                 c.outline(f, 10.0 * s, 1.5 * s, with_alpha(ink, 0.8));
-                c.text_fit(Weight::SemiBold, 11.5 * s, (f.x + 6.0 * s, f.y - 3.0 * s), Align::Left, &name, f.w - 6.0 * s, ink);
+                let w = c.text_fit(Weight::SemiBold, 11.5 * s, (f.x + 6.0 * s, f.y - 3.0 * s), Align::Left, &name, f.w - 6.0 * s, ink);
+                names_right = names_right.max(f.x + 6.0 * s + w);
                 i = j + 1;
             }
             // The ghost: the gun's plain bullet, which the leftovers ride.
@@ -719,6 +792,29 @@ impl StartMenu {
                 c.outline(r, 8.0 * s, 1.0, with_alpha(ink, 0.45));
                 c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 - 1.0 * s), Align::Centre, "Plain bullet", r.w - 10.0 * s, MUTED);
                 c.text_fit(Weight::Medium, 11.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 13.0 * s), Align::Centre, "the gun's own", r.w - 10.0 * s, FAINT);
+            }
+        }
+        if late_line {
+            // The budget and the estimate, right-aligned over the slots,
+            // shorter where the shots' names leave less room.
+            let base = row_y - 6.0 * s;
+            let mut right = x + lw;
+            if let Some(d) = shop.dps {
+                let v = dps_text(d);
+                let vw = c.text(Weight::SemiBold, 14.0 * s, (right, base), Align::Right, &v, TEXT);
+                right -= vw + 6.0 * s;
+                let lab = if shop.turrets { "est. DPS a turret" } else { "est. DPS a soldier" };
+                let short = "DPS";
+                let room = right - names_right - 16.0 * s;
+                let lw2 = c.atlas.measure(Weight::Medium, 12.5 * s, lab);
+                let pick = if lw2 + 200.0 * s <= room { lab } else { short };
+                right -= c.text(Weight::Medium, 12.5 * s, (right, base), Align::Right, pick, MUTED) + 14.0 * s;
+            }
+            let room = right - names_right - 16.0 * s;
+            let short = format!("budget {}/{}  ·  {}/{} slots", shop.budget.0, shop.budget.1, on.len(), shop.slots);
+            let text = [line.as_str(), short.as_str()].into_iter().find(|t| c.atlas.measure(Weight::Medium, 12.5 * s, t) <= room);
+            if let Some(t) = text {
+                c.text(Weight::Medium, 12.5 * s, (right, base), Align::Right, t, MUTED);
             }
         }
         let mut from = None;
@@ -864,6 +960,16 @@ impl StartMenu {
                     let range = page(per, n.div_ceil(per.max(1)).max(1), self);
                     self.gun_table(&shop, &tab.rows[range], area, head, rh, ring, c, s);
                 }
+                TabKind::Owned => {
+                    let (per_row, w, per, pages) = flow(n, area, OWNED_W * s, area.w, OWNED_H * s, g, PAGER * s);
+                    let range = page(per, pages, self);
+                    for (j, k) in range.clone().enumerate() {
+                        let i = tab.rows[k];
+                        let r = Rect::new(area.x + (j % per_row) as f32 * (w + g), area.y + (j / per_row) as f32 * (OWNED_H * s + g), w, OWNED_H * s);
+                        self.owned_card(&shop, &shop.rows[i], r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hits.push((r, Hit::Buy(i)));
+                    }
+                }
                 TabKind::Tiles if hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)).is_some() => {
                     let (x0, y0, w, h) = hand(n, area, g, s, |w| self.hand_need(&shop, &tab.rows, w, c, s)).unwrap_or((area.x, area.y, area.w, area.h));
                     let fit = self.hand_need(&shop, &tab.rows, w, c, s);
@@ -973,6 +1079,182 @@ impl StartMenu {
         if let Some((at, t)) = tip.filter(|_| drag.is_none()) {
             super::strip_tip(c, at, &t, s);
         }
+    }
+
+    /// The row of loadout cards over the bench (2026-11-27). Each card:
+    /// its number, what it holds, who uses it and its cards; a turret's
+    /// quick-build switch at its right ("Build 2" while on); the one the
+    /// gun slots show lit. Narrower cards drop words, never the switch.
+    fn loadout_rail(&mut self, shop: &Shop, area: Rect, ring: impl Fn(Hit) -> bool, c: &mut Canvas, s: f32) {
+        let hover = self.hover;
+        let hot = |r: Rect| hover.is_some_and(|p| r.contains(p));
+        let g = GAP * s;
+        let nl = shop.loadouts.len();
+        let new = shop.new_loadout;
+        let n = nl + usize::from(new.is_some());
+        let even = (area.w - n.saturating_sub(1) as f32 * g) / n.max(1) as f32;
+        let (w, nw) = match new {
+            None => (even.min(RAIL_MAX * s), 0.0),
+            Some(_) if even <= RAIL_NEW * s => (even, even),
+            Some(_) => (((area.w - RAIL_NEW * s - nl as f32 * g) / nl.max(1) as f32).min(RAIL_MAX * s), RAIL_NEW * s),
+        };
+        let mut cx = area.x;
+        for l in &shop.loadouts {
+            let r = Rect::new(cx, area.y, w, area.h);
+            cx += w + g;
+            let lit = hot(r);
+            let (t0, t1, edge) = match (l.shown, lit) {
+                (true, _) => ([40, 70, 98, 255], [30, 54, 78, 255], ACCENT),
+                (false, true) => (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM, [255, 255, 255, 40]),
+                (false, false) => (BUTTON_TOP, BUTTON_BOTTOM, [255, 255, 255, 26]),
+            };
+            c.panel(r, 8.0 * s, t0, t1, if l.shown { 1.5 } else { 1.0 }, edge);
+            if ring(Hit::Do(l.row)) {
+                c.outline(r.inset(-2.0 * s), 10.0 * s, 1.5 * s, ACCENT);
+            }
+            self.hits.push((r, Hit::Do(l.row)));
+            // The number in its badge.
+            let d = if r.h < 40.0 * s { 20.0 * s } else { 22.0 * s };
+            let pad = if w < 96.0 * s { 6.0 * s } else { 10.0 * s };
+            let badge = Rect::new(r.x + pad, r.y + (r.h - d) / 2.0, d, d);
+            c.rrect(badge, 6.0 * s, if l.shown { ACCENT } else { [255, 255, 255, 22] });
+            c.text(Weight::SemiBold, 13.5 * s, (badge.x + d / 2.0, badge.y + d / 2.0 + 5.0 * s), Align::Centre, &l.n.to_string(), if l.shown { [12, 20, 28, 255] } else { TEXT });
+            // The quick-build switch at the right.
+            let mut right = r.right() - 8.0 * s;
+            if let Some((q, slot)) = l.quick {
+                let ready = shop.rows.get(q).is_some_and(|x| x.ready);
+                let words = match slot {
+                    Some(k) if w >= 150.0 * s => format!("Build {k}"),
+                    Some(k) => format!("B{k}"),
+                    None if w >= 190.0 * s => "Quick build".to_string(),
+                    None if w >= 150.0 * s => "Quick".to_string(),
+                    None => "Q".to_string(),
+                };
+                let px = 12.5 * s;
+                let pw = c.atlas.measure(Weight::SemiBold, px, &words) + 14.0 * s;
+                let ph = if r.h < 40.0 * s { 22.0 * s } else { 24.0 * s };
+                let pr = Rect::new(right - pw, r.y + (r.h - ph) / 2.0, pw, ph);
+                let (fill, line, ink) = match slot {
+                    Some(_) => (with_alpha(ACCENT, 0.22), ACCENT, ACCENT),
+                    None if ready && hot(pr) => ([255, 255, 255, 24], [255, 255, 255, 90], TEXT),
+                    None if ready => ([0, 0, 0, 0], [255, 255, 255, 50], MUTED),
+                    None => ([0, 0, 0, 0], [255, 255, 255, 22], FAINT),
+                };
+                c.rrect(pr, 12.0 * s, fill);
+                c.outline(pr, 12.0 * s, 1.0 * s, line);
+                if ring(Hit::Do(q)) {
+                    c.outline(pr.inset(-2.0 * s), 14.0 * s, 1.5 * s, ACCENT);
+                }
+                c.text(Weight::SemiBold, px, (pr.x + pw / 2.0, pr.y + pr.h / 2.0 + px * 0.36), Align::Centre, &words, ink);
+                self.hits.push((pr, Hit::Do(q)));
+                right = pr.x - 6.0 * s;
+            }
+            // What it holds, and under it who uses it and its cards; on a
+            // narrow card its icon only.
+            let tx = badge.right() + 8.0 * s;
+            let room = right - tx;
+            if room < 44.0 * s {
+                let ic = 18.0 * s;
+                if room >= ic {
+                    c.icon(l.icon, (tx, r.y + (r.h - ic) / 2.0), ic, if l.kind == "Empty" { FAINT } else { TEXT });
+                }
+                continue;
+            }
+            let ink = if l.kind == "Empty" { MUTED } else { TEXT };
+            if r.h < 40.0 * s {
+                // One line: what it holds, its cards after it where they fit.
+                let base = r.y + r.h / 2.0 + 5.0 * s;
+                let nw = c.text_fit(Weight::SemiBold, 14.0 * s, (tx, base), Align::Left, &l.holds, room, ink);
+                let tail = format!("\u{b7} {}", l.cards);
+                if nw + 8.0 * s + c.atlas.measure(Weight::Medium, 12.5 * s, &tail) <= room {
+                    c.text(Weight::Medium, 12.5 * s, (tx + nw + 8.0 * s, base), Align::Left, &tail, MUTED);
+                }
+                continue;
+            }
+            c.text_fit(Weight::SemiBold, 14.5 * s, (tx, r.y + 19.0 * s), Align::Left, &l.holds, room, ink);
+            let cards = match l.cards {
+                0 => "no cards".to_string(),
+                1 => "1 card".to_string(),
+                k => format!("{k} cards"),
+            };
+            let who = if l.roles.is_empty() { l.kind.clone() } else { l.roles.join(", ") };
+            let under = if l.kind == "Empty" { "put a gun or turret in".to_string() } else { format!("{who} \u{b7} {cards}") };
+            let tint = if l.roles.is_empty() { MUTED } else { with_alpha(ACCENT, 0.9) };
+            c.text_fit(Weight::Medium, 12.5 * s, (tx, r.y + 36.0 * s), Align::Left, &under, room, if l.kind == "Empty" { FAINT } else { tint });
+        }
+        if let Some(i) = new {
+            let r = Rect::new(cx, area.y, nw, area.h);
+            let lit = hot(r) || ring(Hit::Do(i));
+            c.rrect(r, 8.0 * s, if lit { [255, 255, 255, 16] } else { [255, 255, 255, 5] });
+            c.outline(r, 8.0 * s, 1.0 * s, if lit { [255, 255, 255, 90] } else { [255, 255, 255, 36] });
+            if ring(Hit::Do(i)) {
+                c.outline(r.inset(-2.0 * s), 10.0 * s, 1.5 * s, ACCENT);
+            }
+            let words = if nw >= 110.0 * s { "+ New loadout" } else if nw >= 50.0 * s { "+ New" } else { "+" };
+            c.text_fit(Weight::SemiBold, 13.5 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 5.0 * s), Align::Centre, words, r.w - 10.0 * s, if lit { TEXT } else { MUTED });
+            self.hits.push((r, Hit::Do(i)));
+        }
+    }
+
+    /// A gun, turret design or device owned, on the Owned tab (2026-11-27):
+    /// its icon, name and kind, its rolls on one line, and at the right
+    /// the loadout it is in ("In 2", lit when it is the one shown) or
+    /// "Spare". A pick puts it in the loadout shown.
+    #[allow(clippy::too_many_arguments)]
+    fn owned_card(&self, shop: &Shop, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+        self.face(r, row.ready || row.on, row.on, hot, focused, c, s);
+        let dim: f32 = if row.ready || row.on { 1.0 } else { 0.55 };
+        let ic = 30.0 * s;
+        c.icon(row.icon, (r.x + 14.0 * s, r.y + (r.h - ic) / 2.0), ic, with_alpha(if row.on { ACCENT } else { row.tint }, dim));
+        let tx = r.x + 14.0 * s + ic + 14.0 * s;
+        // Where it is: "In this loadout", "In 3", or "Spare".
+        let (tag, ink, fill) = if row.on {
+            ("In this loadout".to_string(), [12, 20, 28, 255], ACCENT)
+        } else if let Some(n) = row.state.strip_prefix("Loadout ") {
+            (if r.w >= 340.0 * s { format!("In loadout {n}") } else { format!("In {n}") }, TEXT, [255, 255, 255, 26])
+        } else {
+            ("Spare".to_string(), GOOD, with_alpha(GOOD, 0.14))
+        };
+        let px = 12.5 * s;
+        let tw = c.atlas.measure(Weight::SemiBold, px, &tag) + 16.0 * s;
+        let tr = Rect::new(r.right() - 12.0 * s - tw, r.y + 12.0 * s, tw, 22.0 * s);
+        c.rrect(tr, 11.0 * s, fill);
+        c.text(Weight::SemiBold, px, (tr.x + tw / 2.0, tr.y + tr.h / 2.0 + px * 0.36), Align::Centre, &tag, ink);
+        // Its name and kind.
+        let kind = match row.area {
+            ShopArea::Guns => "gun",
+            _ if row.icon == Icon::Turret || row.about.contains("wall") || row.bars.iter().any(|b| b.0 == "Reach" && b.2.starts_with('x')) => "turret",
+            _ => "device",
+        };
+        let room = (tr.x - 10.0 * s - tx).max(40.0 * s);
+        let nw = c.text_fit(Weight::SemiBold, 15.5 * s, (tx, r.y + 28.0 * s), Align::Left, &row.name, room, with_alpha(TEXT, dim.max(0.6)));
+        if nw + 8.0 * s < room {
+            c.text_fit(Weight::Medium, 12.5 * s, (tx + nw + 8.0 * s, r.y + 28.0 * s), Align::Left, kind, room - nw - 8.0 * s, FAINT);
+        }
+        // Its rolls, one line: "range 22 · rate 1.4/s · 3 slots".
+        let rolls = row
+            .bars
+            .iter()
+            .map(|(l, _, v)| match l.as_str() {
+                "Cooldown" => v.clone(),
+                "Card slots" | "Slots" => format!("{v} slots"),
+                "Over walls" => "over walls".to_string(),
+                _ => format!("{} {v}", l.to_lowercase()),
+            })
+            .collect::<Vec<_>>()
+            .join(" \u{b7} ");
+        let full = r.right() - 12.0 * s - tx;
+        c.text_fit(Weight::Medium, 13.0 * s, (tx, r.y + 50.0 * s), Align::Left, &rolls, full, with_alpha(ACCENT, dim.max(0.6)));
+        // What a pick does, or why it can't.
+        let say = if row.on {
+            "Fires the cards in the slots above".to_string()
+        } else if !row.ready {
+            "Not for the squads' loadout: show another".to_string()
+        } else {
+            let shown = shop.loadouts.iter().find(|l| l.shown).map_or(String::new(), |l| format!(" {}", l.n));
+            format!("Pick to put it in loadout{shown}")
+        };
+        c.text_fit(Weight::Medium, 12.5 * s, (tx, r.y + 70.0 * s), Align::Left, &say, full, FAINT);
     }
 
     /// The gun range's bullets as a grid, shape by payload, when every card
@@ -1121,6 +1403,8 @@ impl StartMenu {
             ShopArea::Cards if row.on => ("Take it out of the gun".into(), true),
             ShopArea::Cards if row.group == BAG => ("Put it in the gun".into(), true),
             ShopArea::Cards if row.price.is_empty() => ("Take it".into(), true),
+            _ if row.group == OWNED && row.on => ("In this loadout".into(), false),
+            _ if row.group == OWNED => ("Put it in this loadout".into(), row.ready),
             ShopArea::Guns if row.on => ("Your gun".into(), false),
             ShopArea::Guns if row.price.is_empty() => ("Carry this gun".into(), true),
             _ if owned(row) => ("Owned".into(), false),
