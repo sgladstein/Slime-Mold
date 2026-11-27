@@ -48,6 +48,18 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-27, turrets fire their loadout's gun (thread "Make turrets work
+like buyable guns").** Owner 05:50Z/05:52Z: turrets should be like the guns
+you buy, and were underpowered and dearer than a soldier. Built: a turret
+fires its loadout's gun (`Game::turret_gun`, `turret_reach`,
+`turret_every`; `Cmd::Arm(TURRET_DECK, ..)` for the default,
+`Cmd::TurretArm` per turret, replay word `tarm`; `Run::turret_gun_of`,
+`Run::turret_gun`); cards fit the gun, not the rack; a gun bought with the
+turrets' loadout shown stays there; `turret_range` 15 to 24 (the rifle's,
+scaled by the gun), `turret_cost` 500 to 350; film key `tgun=KIND`. Open:
+the run bot does not put guns on turrets; mortars, sprayers and hunters
+still fire only the loadout's cards (their bodies are their own guns).
+
 **2026-11-24/25, the kit's sounds and the wounded pace (pathfinding
 thread).** Direction 23:33Z: the Mortar, Hunter, Sprayer, Mine, Line,
 Canister and Dart each voiced, weighed against the Grenade by radius

@@ -246,7 +246,7 @@ impl<W: World> Game<W> {
         let b = self.rules.build;
         let (strike, range, over) = match q {
             Some(q) => (self.strike_of(q), self.gun_range(q), false),
-            None => ((self.rules.strike * self.s()).min(squad::R_MAX), b.turret_range * (1.0 + self.rules.range_card * m.reach as f32), b.turret_over),
+            None => ((self.rules.strike * self.s()).min(squad::R_MAX), self.turret_reach(o.turret), b.turret_over),
         };
         let (mut dir, mut at) = (o.dir, o.at);
         if o.wall {

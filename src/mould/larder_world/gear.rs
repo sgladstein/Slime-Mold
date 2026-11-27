@@ -138,6 +138,10 @@ impl<W: World> Game<W> {
         if !t.is_empty() {
             self.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&t))));
         }
+        // The turrets' gun (2026-11-27), when their loadout holds one.
+        if let Some(g) = r.turret_gun() {
+            self.apply(Cmd::Arm(TURRET_DECK, Some(g)));
+        }
         for kind in crate::mould::bodies::BodyKind::ALL {
             let d = r.body_cards(kind);
             if !d.is_empty() {

@@ -528,6 +528,10 @@ pub struct Game<W: World> {
     /// no clicking round twenty turrets), and a turret shot carrying a cast
     /// is told from a soldier's by `by` None (`turret_mods`).
     pub turret_deck: Option<Deck>,
+    /// The gun every turret without a loadout of its own fires
+    /// (`Cmd::Arm(TURRET_DECK, ..)`, 2026-11-27: turrets hold guns you
+    /// buy, as squads do); None, the standard rifle (`Game::turret_gun`).
+    pub turret_gun: Option<Gun>,
     /// **The devices' cards** (gun step E, 2026-11-24), by tool
     /// (`kit::TOOLS` order): every cast in a tool's goes off where it does,
     /// on top of its own effect (`Kit::carry`). `Cmd::Load(DEVICE_DECKS +
@@ -820,6 +824,7 @@ impl<W: World> Game<W> {
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
             turret_deck: None,
+            turret_gun: None,
             device_decks: [None; 8],
             autocast: 0,
             autocast_clock: 0.0,
@@ -999,6 +1004,11 @@ impl<W: World> Game<W> {
     /// Squad `q` takes `gun` (`Cmd::Arm`); `None` gives back the standard
     /// rifle. Its soldiers fire it from their next shot.
     pub fn arm(&mut self, q: usize, gun: Option<Gun>) -> bool {
+        // `TURRET_DECK` arms every turret that follows the default.
+        if q == TURRET_DECK as usize {
+            self.turret_gun = gun;
+            return true;
+        }
         match self.squads.get_mut(q) {
             Some(s) => {
                 s.gun = gun;
