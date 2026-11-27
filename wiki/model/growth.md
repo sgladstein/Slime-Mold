@@ -302,7 +302,8 @@ twin):
   the map to itself, so its ceiling stayed at its small crystals and it
   starved when he drained one; on the software GPU the same planet keeps
   its home and grows back
-  ([playtest](../../Reports/playtest-2026-11-27/README.md)).
+  ([playtest](../../Reports/playtest-2026-11-27/README.md); its round 2,
+  tougher slime and sooner mini-bosses, leaves this rule as it is).
 - Measured 11-22 (run seeds, greedy, software GPU): planet 3 seeds 2 and 3
   hold within 4% of their landing (41,022 and 34,718) to 1:20, where the
   first cut had them at 12,000-15,000 by 0:45; seed 1's squad takes a
