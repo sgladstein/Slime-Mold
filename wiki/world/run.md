@@ -30,6 +30,7 @@ sources:
   - Reports/planet-curve-2026-11-21/README.md
   - Reports/planet-things-2026-11-18/README.md
   - Reports/planet2-sprawler-2026-11-18/README.md
+  - Reports/playtest-2026-11-27/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/review-2026-11-25/README.md
   - Reports/review-2026-11-25/route-choice-brief.md
@@ -200,7 +201,7 @@ offers two or three planets drawn from the run's seed (`route::star_map`),
 joined to the next step's by crossing lanes, and the player picks one on
 the Stars page before its shop (`Run::choose`; `Run::route` is saved). A
 planet's pip moves the place on the curve it is read at (`Pip::offset`: Safe
--1, Fair 0, Hard +1.5, `Run::curve`), so its slime, heart, raids and map size
+-1, Fair 0, Hard +2.5 since 11-27, +1.5 before, after his step 6 Hard cost no soldier, [playtest](../../Reports/playtest-2026-11-27/README.md); `Run::curve`), so its slime, heart, raids and map size
 and biome all follow; the species is the step's own (`LADDER` at the tuned
 planet nearest the step), the same for every planet of a fork;
 Safe has no twist, Hard always one. A win pays `reward` times 0.7, 1 or 1.5
