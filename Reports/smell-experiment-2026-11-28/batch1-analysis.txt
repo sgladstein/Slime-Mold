@@ -1,0 +1,113 @@
+96 games
+
+planet 2 econ: 6 pairs
+  won        off 1  on 1
+  fell_end   off 35  on 36  (on lost fewer 0, same 5, more 1; sign p 1.00)
+  lost_bldg  off 9  on 12
+  raids off building 1 lure 0 soldiers 0 last stand 0; waves 0
+  raids on  building 0 lure 0 soldiers 0 last stand 0; waves 0
+  smelled    soldiers 39% of soldier-seconds, buildings 41% of building-seconds
+    seed 1: off lost      25s fell   7 | on lost      91s fell   8
+    seed 2: off won      175s fell   0 | on won      191s fell   0
+    seed 3: off lost      57s fell   7 | on lost      52s fell   7
+    seed 4: off lost      46s fell   7 | on lost      28s fell   7
+    seed 5: off lost      28s fell   7 | on lost      64s fell   7
+    seed 6: off lost      32s fell   7 | on lost      31s fell   7
+
+planet 2 kite: 6 pairs
+  won        off 6  on 6
+  fell_end   off 19  on 24  (on lost fewer 1, same 3, more 2; sign p 1.00)
+  lost_bldg  off 0  on 0
+  raids off building 0 lure 0 soldiers 15 last stand 0; waves 0
+  raids on  building 0 lure 0 soldiers 21 last stand 0; waves 0
+  smelled    soldiers 86% of soldier-seconds, buildings 0% of building-seconds
+    seed 1: off won      404s fell  10 | on won      848s fell  17
+    seed 2: off won       85s fell   0 | on won       85s fell   0
+    seed 3: off won      140s fell   0 | on won      148s fell   0
+    seed 4: off won      313s fell   9 | on won      231s fell   2
+    seed 5: off won      330s fell   0 | on won      203s fell   5
+    seed 6: off won      262s fell   0 | on won      250s fell   0
+
+planet 2 rush: 6 pairs
+  won        off 6  on 6
+  fell_end   off 24  on 16  (on lost fewer 4, same 2, more 0; sign p 0.12)
+  lost_bldg  off 0  on 0
+  raids off building 0 lure 0 soldiers 4 last stand 0; waves 0
+  raids on  building 0 lure 0 soldiers 5 last stand 0; waves 0
+  smelled    soldiers 68% of soldier-seconds, buildings 0% of building-seconds
+    seed 1: off won      232s fell   2 | on won      247s fell   0
+    seed 2: off won       82s fell   0 | on won       85s fell   0
+    seed 3: off won       72s fell   1 | on won       72s fell   0
+    seed 4: off won      153s fell   1 | on won      153s fell   1
+    seed 5: off won      170s fell   9 | on won      224s fell   8
+    seed 6: off won      146s fell  11 | on won      139s fell   7
+
+planet 2 turtle: 6 pairs
+  won        off 3  on 3
+  fell_end   off 16  on 12  (on lost fewer 1, same 5, more 0; sign p 1.00)
+  lost_bldg  off 18  on 17
+  raids off building 2 lure 2 soldiers 0 last stand 0; waves 0
+  raids on  building 0 lure 2 soldiers 0 last stand 0; waves 0
+  smelled    soldiers 64% of soldier-seconds, buildings 60% of building-seconds
+    seed 1: off won      320s fell   4 | on won      342s fell   0
+    seed 2: off won      241s fell   0 | on won      191s fell   0
+    seed 3: off won       86s fell   0 | on won       86s fell   0
+    seed 4: off lost      49s fell   4 | on lost      61s fell   4
+    seed 5: off lost      55s fell   4 | on lost      54s fell   4
+    seed 6: off lost      58s fell   4 | on lost      55s fell   4
+
+planet 4 econ: 6 pairs
+  won        off 2  on 2
+  fell_end   off 845  on 489  (on lost fewer 4, same 1, more 1; sign p 0.38)
+  lost_bldg  off 25  on 19
+  raids off building 79 lure 0 soldiers 12 last stand 0; waves 10
+  raids on  building 28 lure 0 soldiers 11 last stand 0; waves 1
+  smelled    soldiers 81% of soldier-seconds, buildings 43% of building-seconds
+    seed 1: off lost    2160s fell 251 | on lost     902s fell 116
+    seed 2: off lost      36s fell  11 | on lost      34s fell   9
+    seed 3: off lost      39s fell  10 | on won      310s fell  99
+    seed 4: off lost      21s fell   9 | on lost      22s fell   9
+    seed 5: off won      823s fell 338 | on lost     364s fell 125
+    seed 6: off won      683s fell 226 | on won      642s fell 131
+
+planet 4 kite: 6 pairs
+  won        off 0  on 0
+  fell_end   off 157  on 178  (on lost fewer 0, same 1, more 5; sign p 0.06)
+  lost_bldg  off 0  on 0
+  raids off building 0 lure 0 soldiers 120 last stand 0; waves 0
+  raids on  building 0 lure 0 soldiers 114 last stand 0; waves 0
+  smelled    soldiers 94% of soldier-seconds, buildings 0% of building-seconds
+    seed 1: off lost     796s fell  14 | on lost    1048s fell  15
+    seed 2: off lost    1656s fell  49 | on lost    1507s fell  53
+    seed 3: off lost     314s fell  34 | on lost     867s fell  43
+    seed 4: off lost     471s fell  14 | on lost     480s fell  14
+    seed 5: off lost     340s fell  14 | on lost     741s fell  15
+    seed 6: off lost    2160s fell  32 | on lost    1033s fell  38
+
+planet 4 rush: 6 pairs
+  won        off 2  on 2
+  fell_end   off 192  on 198  (on lost fewer 2, same 2, more 2; sign p 1.00)
+  lost_bldg  off 0  on 0
+  raids off building 0 lure 0 soldiers 29 last stand 0; waves 9
+  raids on  building 0 lure 0 soldiers 31 last stand 0; waves 4
+  smelled    soldiers 81% of soldier-seconds, buildings 0% of building-seconds
+    seed 1: off lost      32s fell   9 | on lost      32s fell   9
+    seed 2: off won      481s fell  20 | on lost     424s fell  55
+    seed 3: off won      536s fell  40 | on won      336s fell  20
+    seed 4: off lost      90s fell  16 | on lost      98s fell  16
+    seed 5: off lost     389s fell  58 | on won      445s fell  45
+    seed 6: off lost     401s fell  49 | on lost     479s fell  53
+
+planet 4 turtle: 6 pairs
+  won        off 4  on 2
+  fell_end   off 336  on 589  (on lost fewer 1, same 0, more 5; sign p 0.22)
+  lost_bldg  off 31  on 28
+  raids off building 22 lure 150 soldiers 20 last stand 0; waves 14
+  raids on  building 20 lure 156 soldiers 20 last stand 0; waves 13
+  smelled    soldiers 78% of soldier-seconds, buildings 73% of building-seconds
+    seed 1: off lost    2160s fell  42 | on lost    2160s fell  73
+    seed 2: off won      628s fell  22 | on won      550s fell  28
+    seed 3: off won      887s fell  47 | on won      526s fell  31
+    seed 4: off lost     180s fell   4 | on lost     471s fell  15
+    seed 5: off won     1654s fell  99 | on lost    2160s fell 193
+    seed 6: off won     2160s fell 122 | on lost    2160s fell 249
