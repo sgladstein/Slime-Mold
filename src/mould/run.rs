@@ -430,7 +430,20 @@ const RAID_SIZE: [f32; 8] = [0.15, 0.2, 0.23, 0.27, 0.3, 0.33, 0.37, 0.4];
 ///   increasing the bite doesn't matter. Tougher slime has a better
 ///   chance". 2 on planet 2 up to 8 on the core world since 2026-11-26 (mini-bosses take 4 to
 ///   15). The bite above stays: it is what a raid that arrives does.
-const DRAIN: [f32; 8] = [2.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
+///
+/// **Soldiers die easier, more so deeper** (2026-11-28, the owner's card
+/// "Both" at 06:06Z, after his 11-28 run, steps 1 to 4 all easy: "Maybe the
+/// soliders should be a easier to kill?"). The bite climbs from 2 on planet
+/// 1 to 4 on the core world (was 2, then 2.5 flat from planet 2), and a
+/// soldier lands with `SOLDIER_HP` health, 70 (was `Rules::hp`'s 100), so
+/// Armour's quarter more is worth buying. On his 11-28 run soldiers fell
+/// only to Pinwheels; a soldier took 40 walker-seconds of contact to fall
+/// on every planet past 1 (50 on planet 1), now 35 on planet 1 and 17.5 on
+/// the core world.
+const DRAIN: [f32; 8] = [2.0, 2.4, 2.7, 3.0, 3.3, 3.6, 3.8, 4.0];
+/// A soldier's health at the landing in a run (`Rules::hp`, before Armour);
+/// see `DRAIN`. The gun range and the free maps keep `Rules::hp`'s 100.
+pub const SOLDIER_HP: f32 = 70.0;
 const RAID_ARMOUR: [u32; 8] = [0, 2, 3, 4, 5, 6, 7, 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
@@ -2221,6 +2234,7 @@ impl Run {
             r.raid.every = every;
             r.raid.every_sd = d.every_sd * every / d.every;
             r.drain = at(&DRAIN);
+            r.hp = SOLDIER_HP;
             r.raid.march_armour = curve_at_u(&RAID_ARMOUR, e);
             // A raid's size by planet (`RAID_SIZE`), its spread and cap
             // kept at the default's shares of it.
@@ -4235,7 +4249,7 @@ mod tests {
         assert_eq!(r.points, 1000 - 120 - 240);
         let mut rules = Rules::default();
         r.rules(&mut rules);
-        assert_eq!(rules.hp, 1.5 * Rules::default().hp);
+        assert_eq!(rules.hp, 1.5 * SOLDIER_HP, "Armour on a run soldier's health");
     }
 
     /// The owner, 20:32Z: "How do I actually build and adjust my guns.
