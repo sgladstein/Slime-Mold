@@ -37,7 +37,8 @@ pub enum Shape {
     /// One 5x7 glyph, `hw` pixels a font pixel, its top-left at the anchor.
     Glyph = 5,
     /// A line from the anchor to (`hw`, `hh`), a world point; dashed every
-    /// `fill` pixels if `fill` > 0.
+    /// `fill` pixels if `fill` > 0; `extra` > 1 draws it that many pixels
+    /// wide (`Marks::stroke`).
     Line = 6,
     /// A top-down soldier `hw` across the radius (world cells with
     /// `WORLD`): facing `fill` radians (0 east, clockwise on screen, as
@@ -247,6 +248,11 @@ impl Marks {
     /// A line between two world points, dashed every `dash` pixels (0 solid).
     pub fn line(&mut self, a: (f32, f32), b: (f32, f32), dash: f32, colour: Rgba) {
         self.push(Mark { fill: dash, ..Mark::new(Shape::Line, a, b, colour) });
+    }
+
+    /// A line `wide` pixels across (a square pen; `line` is one pixel).
+    pub fn stroke(&mut self, a: (f32, f32), b: (f32, f32), wide: u32, colour: Rgba) {
+        self.push(Mark { extra: wide, ..Mark::new(Shape::Line, a, b, colour) });
     }
 
     /// Text at a world point, offset `offset` pixels, `scale` pixels a font
