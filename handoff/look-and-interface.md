@@ -30,10 +30,7 @@ levels as swatches (`LEVEL_INKS` in `start/stars.rs`, keep in step with
 owner, 11-28 03:37Z). The slime's level colours fail rules 3 and 5 on later
 steps: three options rendered in game went to the owner on a card
 (recommended A, a warm ramp with inner heat;
-`Reports/slime-level-colours-2026-11-28/`, diffs there). When he picks,
-build it in `level_rgb` and `LEVEL_INKS` together, tune its glow (0.2 of
-`LEVEL_HEAT` on the page; 0.55 erased the levels' differences) and film
-it in motion at zoom 6 and 12 on steps 4 and 10. Enemy's rescue contract
+`Reports/slime-level-colours-2026-11-28/`, diffs there). He kept today's colours (05:37Z: "Todays colors are still best. I like the vibrancy. All your new suggestions are too monotone."); nothing was built. Enemy's rescue contract
 is PR #891 (`Contract::Rescue`, `Game::rescue_now()` takes the twist
 pill, `Run::planet_line()` feeds the cards' twist line; run seed 3, step
 3, node 0 has one): badge and screens are this lane's next. Built
