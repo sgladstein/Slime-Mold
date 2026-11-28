@@ -800,7 +800,8 @@ impl<W: World> Game<W> {
     /// `RaidRules::lure_r` of it takes it (the nearest such lure).
     pub fn raid_aim(&self) -> Option<(RaidAim, (f32, f32))> {
         let sc = self.world.scale();
-        let up = |k: &usize| self.buildings[*k].up() && !matches!(self.buildings[*k].kind, Kind::Wall { .. });
+        // With the knowledge gate on (`know.rs`), only what it has smelled.
+        let up = |k: &usize| self.buildings[*k].up() && !matches!(self.buildings[*k].kind, Kind::Wall { .. }) && self.smelt_building(*k);
         let pump = (0..self.buildings.len()).filter(up).filter(|&k| self.buildings[k].kind == Kind::Pump && self.pump_draw(k) > 0.0).max_by(|&a, &b| self.pump_draw(a).total_cmp(&self.pump_draw(b)));
         let any = || (0..self.buildings.len()).filter(up).filter(|&k| !self.is_lure(k)).max_by(|&a, &b| self.buildings[a].max_hp.total_cmp(&self.buildings[b].max_hp));
         let from = pump.or_else(any);
@@ -830,10 +831,11 @@ impl<W: World> Game<W> {
     }
 
     /// The live soldier with the most live soldiers within 15 dish cells
-    /// (ties to the first).
+    /// (ties to the first); with the knowledge gate on (`know.rs`), of the
+    /// soldiers the slime has smelled.
     pub(super) fn thickest_knot(&self) -> Option<usize> {
         let r = 15.0 * self.world.scale();
-        let live: Vec<usize> = (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).collect();
+        let live: Vec<usize> = (0..self.soldiers.len()).filter(|&k| self.smelt_soldier(k)).collect();
         live.iter()
             .map(|&k| {
                 let s = &self.soldiers[k];

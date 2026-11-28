@@ -716,6 +716,15 @@ pub struct Rules {
     /// (`gpu::Settings::hunt_pull`).
     pub hunt_reach: f32,
     pub hunt_lag: f32,
+    /// **The slime knows only what it can smell** (2026-11-28, the scent
+    /// thread's experiment; `know.rs`): how far, in dish cells of walking
+    /// from its body, the slime smells a soldier or a building, and how
+    /// many game seconds it remembers one after. While on (reach > 0) the
+    /// hunt, raids, waves and mini-bosses aim only at what it has smelled;
+    /// 0, the default, is today's map-wide knowledge. Off primary play
+    /// (the owner, 11-28 08:31Z): `set=know_reach=40`.
+    pub know_reach: f32,
+    pub know_memory: f32,
     /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
     /// slime at a crowded knot or a big part cut off from food clenches
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
@@ -1043,6 +1052,8 @@ impl Rules {
             "lure_reach" => &mut self.lure_reach,
             "hunt_reach" => &mut self.hunt_reach,
             "hunt_lag" => &mut self.hunt_lag,
+            "know_reach" => &mut self.know_reach,
+            "know_memory" => &mut self.know_memory,
             "star_tail" => &mut self.star.tail,
             "star_first" => &mut self.star.first,
             "star_last" => &mut self.star.last,
@@ -1379,6 +1390,8 @@ impl Default for Rules {
             lure_reach: 60.0,
             hunt_reach: 80.0,
             hunt_lag: 4.0,
+            know_reach: 0.0,
+            know_memory: 10.0,
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),

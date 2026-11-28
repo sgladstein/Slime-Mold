@@ -59,8 +59,10 @@ impl<W: World> Game<W> {
         let now = self.world.ticks() / r.tps.max(1) as u64;
         let (w, h) = self.world.size();
         let cell = |x: f32, y: f32| (x.clamp(0.0, w as f32 - 1.0) as u32) | ((y.clamp(0.0, h as f32 - 1.0) as u32) << 16);
-        // A masked soldier (the toolkit's mask, smell 0) leaves no trail.
-        let here: Vec<u32> = self.soldiers.iter().filter(|s| s.alive && s.smell > 0.0).map(|s| cell(s.x, s.y)).collect();
+        // A masked soldier (the toolkit's mask, smell 0) leaves no trail,
+        // and with the knowledge gate on (`know.rs`) nor does one the
+        // slime has not smelled.
+        let here: Vec<u32> = (0..self.soldiers.len()).filter(|&k| self.soldiers[k].smell > 0.0 && self.smelt_soldier(k)).map(|k| cell(self.soldiers[k].x, self.soldiers[k].y)).collect();
         self.hunt.places.push_back((now, here));
         let lag = r.hunt_lag.max(0.0) * sc;
         let reach = r.hunt_reach.max(0.0) * sc;

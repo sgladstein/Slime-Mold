@@ -1152,7 +1152,7 @@ impl<W: World> Game<W> {
         if soldiers || w.field.is_empty() || moved(w.goal) {
             let size = self.world.size();
             let way = if soldiers {
-                let cells = self.soldiers.iter().filter(|s| s.alive).map(|s| crate::mould::larder_world::raid_cell((s.x, s.y), size)).collect();
+                let cells = (0..self.soldiers.len()).filter(|&k| self.smelt_soldier(k)).map(|k| crate::mould::larder_world::raid_cell((self.soldiers[k].x, self.soldiers[k].y), size)).collect();
                 Way::start_units(ground.clone(), cells)
             } else {
                 Way::start(ground.clone(), crate::mould::larder_world::raid_cell(to, size))
@@ -1886,9 +1886,11 @@ impl<W: World> Game<W> {
     }
 
     /// Where the player's things stand (fine cells): live soldiers and
-    /// standing buildings.
+    /// standing buildings; with the knowledge gate on (`know.rs`), those
+    /// the slime has smelled.
     fn player_things(&self) -> Vec<(f32, f32)> {
-        self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).chain(self.buildings.iter().filter(|w| w.alive).map(|w| w.at)).collect()
+        let soldiers = (0..self.soldiers.len()).filter(|&k| self.smelt_soldier(k)).map(|k| (self.soldiers[k].x, self.soldiers[k].y));
+        soldiers.chain((0..self.buildings.len()).filter(|&k| self.buildings[k].alive && self.smelt_building(k)).map(|k| self.buildings[k].at)).collect()
     }
 
     /// **A hunter's prey** (`BossRules::stalk`): the live soldier with the
@@ -1902,7 +1904,7 @@ impl<W: World> Game<W> {
         }
         let sc = self.world.scale();
         let reach = self.gun_range_max() * sc;
-        let live: Vec<usize> = (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).collect();
+        let live: Vec<usize> = (0..self.soldiers.len()).filter(|&k| self.smelt_soldier(k)).collect();
         let pos = |k: usize| (self.soldiers[k].x, self.soldiers[k].y);
         let score = |k: usize| {
             let p = pos(k);
@@ -1910,7 +1912,7 @@ impl<W: World> Game<W> {
             (p.0 - at.0).hypot(p.1 - at.1) + stalk * 8.0 * sc * cover as f32
         };
         let best = live.iter().copied().min_by(|&a, &b| score(a).total_cmp(&score(b)))?;
-        match keep.filter(|&k| k < self.soldiers.len() && self.soldiers[k].alive) {
+        match keep.filter(|&k| self.smelt_soldier(k)) {
             Some(k) if score(k) <= 1.2 * score(best) + sc => Some(k),
             _ => Some(best),
         }
@@ -1947,9 +1949,10 @@ impl<W: World> Game<W> {
         best.map(|(_, p)| p)
     }
 
-    /// The live soldier nearest `at` (fine cells).
+    /// The live soldier nearest `at` (fine cells); with the knowledge gate
+    /// on (`know.rs`), of those the slime has smelled.
     fn nearest_soldier(&self, at: (f32, f32)) -> Option<usize> {
-        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).min_by(|&a, &b| {
+        (0..self.soldiers.len()).filter(|&k| self.smelt_soldier(k)).min_by(|&a, &b| {
             let d = |k: usize| (self.soldiers[k].x - at.0).hypot(self.soldiers[k].y - at.1);
             d(a).total_cmp(&d(b))
         })

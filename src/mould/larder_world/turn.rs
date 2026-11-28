@@ -321,7 +321,9 @@ impl<W: World> Game<W> {
         if r.unit_paths {
             let size = self.world.size();
             // Ore and cores are no unit to charge: the slime eats them.
-            let masked = |w: &Who| matches!(*w, Who::Soldier(k) if self.soldiers[k].smell <= 0.0) || matches!(*w, Who::Drop(_));
+            // With the knowledge gate on (`know.rs`), what the slime has
+            // not smelled is left out too.
+            let masked = |w: &Who| matches!(*w, Who::Soldier(k) if self.soldiers[k].smell <= 0.0 || !self.smelt_soldier(k)) || matches!(*w, Who::Building(k) if !self.smelt_building(k)) || matches!(*w, Who::Drop(_));
             self.raids.unit_cells = units.iter().zip(&who).take(squad::UNITS_MAX).filter(|(_, w)| !masked(w)).map(|(u, _)| super::raid_cell((u.x, u.y), size)).collect();
         }
         let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share, catch };
@@ -508,6 +510,8 @@ impl<W: World> Game<W> {
             self.costed("time_twist", |g| g.time_twist());
             self.costed("time_levels", |g| g.time_levels());
             self.costed("keep_panic_reach", |g| g.keep_panic_reach());
+            // What the slime smells, before anything aims (`know.rs`).
+            self.costed("time_know", |g| g.time_know());
             self.costed("time_raids", |g| g.time_raids());
             self.costed("time_unit_paths", |g| g.time_unit_paths());
             self.costed("time_food_paths", |g| g.time_food_paths());

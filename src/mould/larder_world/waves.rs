@@ -236,7 +236,8 @@ impl<W: World> Game<W> {
         let sc = self.world.scale();
         let (w, h) = self.world.size();
         let cell = |x: f32, y: f32| (x.clamp(0.0, w as f32 - 1.0) as u32) | ((y.clamp(0.0, h as f32 - 1.0) as u32) << 16);
-        let cells = self.soldiers.iter().filter(|s| s.alive).map(|s| cell(s.x, s.y)).collect();
+        // With the knowledge gate on (`know.rs`), the soldiers it smelled.
+        let cells = (0..self.soldiers.len()).filter(|&k| self.smelt_soldier(k)).map(|k| cell(self.soldiers[k].x, self.soldiers[k].y)).collect();
         let reach = ((self.gun_range_max() + r.stand + r.reach).max(0.0) * sc) as u32;
         self.waves.way = Some((Way::start_lures(self.slime_ground(), cells, reach), r.strike_pull));
     }

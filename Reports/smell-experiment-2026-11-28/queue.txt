@@ -1,0 +1,115 @@
+# The smell experiment's first batch (2026-11-28, the scent thread):
+# the knowledge gate (`know.rs`, `set=know_reach=40`) against main's
+# map-wide knowledge, paired by planet, run seed and plan.
+#
+# One game a line: `ARM PLANET SEED SECS PLAN [GAME ARGS...]`, played as
+# `league=PLANET:SEED:SECS plan=PLAN` (the planets before taken as won and
+# shopped by the plan). SECS 0: the planet's clock and a minute.
+#
+# Plans: rush (the CI run bot), kite (the same, steering away from slime
+# inside 0.8 of its range), turtle (pumps, turrets, walls, a lure; home
+# long), econ (four pumps, no defences, a small squad).
+#
+# Deciding measures, named before the run: soldiers lost (fell_end) and
+# won, paired off/on by planet, seed and plan, sign test per plan. Also
+# raids sent by aim (know=...:b/l/s/x) and lost_buildings. Kill: rush or
+# kite lose fewer soldiers with the gate on 5 of 6 seeds on a planet; a
+# home plan (turtle, econ) wins more or loses fewer buildings with it on;
+# raids sent fall by half.
+
+off-rush 2 1 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 2 1 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 2 1 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 2 1 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 2 1 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 2 1 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 2 1 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 2 1 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 2 2 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 2 2 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 2 2 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 2 2 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 2 2 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 2 2 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 2 2 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 2 2 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 2 3 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 2 3 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 2 3 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 2 3 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 2 3 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 2 3 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 2 3 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 2 3 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 2 4 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 2 4 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 2 4 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 2 4 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 2 4 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 2 4 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 2 4 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 2 4 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 2 5 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 2 5 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 2 5 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 2 5 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 2 5 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 2 5 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 2 5 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 2 5 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 2 6 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 2 6 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 2 6 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 2 6 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 2 6 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 2 6 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 2 6 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 2 6 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 4 1 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 4 1 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 4 1 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 4 1 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 4 1 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 4 1 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 4 1 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 4 1 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 4 2 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 4 2 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 4 2 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 4 2 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 4 2 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 4 2 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 4 2 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 4 2 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 4 3 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 4 3 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 4 3 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 4 3 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 4 3 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 4 3 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 4 3 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 4 3 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 4 4 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 4 4 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 4 4 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 4 4 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 4 4 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 4 4 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 4 4 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 4 4 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 4 5 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 4 5 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 4 5 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 4 5 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 4 5 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 4 5 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 4 5 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 4 5 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40
+off-rush 4 6 0 bot,want=torch.standard|rush,aim=6,cards=0
+on-rush 4 6 0 bot,want=torch.standard|rush,aim=6,cards=0 set=know_reach=40
+off-kite 4 6 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8
+on-kite 4 6 0 bot,want=torch.standard,kite=0.8|rush,aim=6,cards=0,kite=0.8 set=know_reach=40
+off-turtle 4 6 0 bot,want=torch.standard|turtle,aim=6,cards=0
+on-turtle 4 6 0 bot,want=torch.standard|turtle,aim=6,cards=0 set=know_reach=40
+off-econ 4 6 0 bot,want=torch.standard|econ,aim=6,cards=0
+on-econ 4 6 0 bot,want=torch.standard|econ,aim=6,cards=0 set=know_reach=40

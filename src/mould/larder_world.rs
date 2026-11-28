@@ -61,6 +61,7 @@ mod origin;
 mod twist;
 mod levels;
 mod hunt;
+mod know;
 mod strikers;
 mod starfall;
 mod cores;
@@ -679,6 +680,10 @@ pub struct Game<W: World> {
     /// of a resume, so not saved.
     #[serde(skip)]
     hunt: hunt::Hunt,
+    /// What the slime has smelled (`know.rs`, the scent thread's
+    /// experiment): rebuilt within seconds of a resume, so not saved.
+    #[serde(skip)]
+    know: know::Know,
     /// Mini-bosses (`Rules::boss`, `bosses.rs`): the live ones and the ended.
     pub bosses: Bosses,
     /// Fruiting (`Rules::fruit`, `fruit.rs`): the fruit ripening and the
@@ -902,6 +907,7 @@ impl<W: World> Game<W> {
             raids: Raids::new(seed),
             lure_marks: Vec::new(),
             hunt: hunt::Hunt::default(),
+            know: know::Know::default(),
             bosses: Bosses::new(seed),
             fruits: Fruits::default(),
             waves: Waves::default(),

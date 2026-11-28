@@ -539,7 +539,7 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     // and the walkers the hunters' shells killed.
     let bodies = format!("{}/{}/{}/{}", count(|k| *k == Kind::Mortar), count(|k| *k == Kind::Sprayer), count(|k| *k == Kind::Hunter), g.hunter_killed);
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} pip={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} origin={origin} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} bodies={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
+        "depth={} seed={} planet_seed={} tier={} pip={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} origin={origin} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} bodies={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} know={} rest={}",
         r.depth,
         r.seed,
         l.seed,
@@ -590,6 +590,9 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
         g.stand.first,
         g.stand.worst,
         g.stand.killed,
+        // The scent thread's knowledge gate (`know.rs`) and the raids and
+        // waves it aims.
+        g.know_line(),
         // Where the last walkers were, when a game ends with a few left.
         if how != "won" && g.mould <= 50 { strat::remnant(g) } else { "-".to_string() }
     );
