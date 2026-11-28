@@ -3744,6 +3744,71 @@ mod tests {
     /// race world's origin at 14 s: a boss asked to form on its centre
     /// does not, and the heart keeps its members; one asked to form far
     /// off does.
+    /// **The rescue planet** (11-28, `larder_world::rescue`): the dug-outs
+    /// are dug in on slime clear of crystals, their soldiers hidden and
+    /// deaf to orders; a soldier of yours beside one reaches it (wounded,
+    /// into your squad), and with every dug-out at the larder the contract
+    /// is kept.
+    #[test]
+    fn the_rescue_digs_in_and_walks_home() {
+        use crate::mould::larder_world::{Cmd, Order};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 4_000);
+        let s = race_settings(seed, scale, walkers);
+        let mut rules = Rules::default();
+        rules.rescue.on = true;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        while g.rescue.as_ref().is_none_or(|r| r.sites.is_empty()) && g.time() < 15.0 {
+            g.step();
+        }
+        let r = g.rescue.clone().expect("dug in");
+        let sc = g.world.scale();
+        let doors = g.buildings.iter().filter(|b| b.alive && b.door).count();
+        eprintln!("rescue: {} dug-outs at {:?}, {doors} doors", r.sites.len(), r.sites.iter().map(|s| s.at).collect::<Vec<_>>());
+        assert!(!r.sites.is_empty(), "a dug-out was found ground for");
+        assert!(doors >= 6 * r.sites.len(), "each dug-out ringed: {doors} doors");
+        let cs = g.world.crystals();
+        for site in &r.sites {
+            assert_eq!(site.members.len(), 3);
+            assert!(cs.iter().enumerate().all(|(i, c)| (c.0 .0 - site.at.0).hypot(c.0 .1 - site.at.1) > g.world.crystal_r(i)), "a dug-out on a crystal");
+            for &k in &site.members {
+                assert!(g.soldiers[k].alive && g.soldiers[k].smell == 0.0, "hidden");
+            }
+        }
+        let pinned = r.sites[0].members[0];
+        assert!(!g.apply(Cmd::Order(pinned, Order::Move(g.larder.0, g.larder.1))), "a stranded soldier takes no orders");
+        // One of yours walks up to each in turn (put there).
+        let ours = (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && !r.pinned(k)).expect("a soldier of yours");
+        for i in 0..r.sites.len() {
+            let at = g.rescue.as_ref().unwrap().sites[i].at;
+            let so = &mut g.soldiers[ours];
+            (so.x, so.y, so.was) = (at.0 + 3.0 * sc, at.1, (at.0 + 3.0 * sc, at.1));
+            let t = g.time();
+            while g.time() < t + 1.5 {
+                g.step();
+            }
+            let site = &g.rescue.as_ref().unwrap().sites[i];
+            assert!(site.reached.is_some(), "dug-out {i} reached");
+            for &k in &site.members {
+                assert!(!g.soldiers[k].alive || (g.soldiers[k].squad == g.soldiers[ours].squad && g.soldiers[k].pace < 0.5 && g.soldiers[k].smell > 0.0), "found: wounded, in your squad, smelt");
+            }
+        }
+        assert!(g.end.is_none());
+        // Home: each dug-out's living put at the larder.
+        let l = g.larder;
+        for site in g.rescue.clone().unwrap().sites {
+            for k in site.members {
+                let so = &mut g.soldiers[k];
+                (so.x, so.y, so.was) = (l.0, l.1, l);
+            }
+        }
+        let t = g.time();
+        while g.time() < t + 1.5 {
+            g.step();
+        }
+        assert!(g.rescued() && g.end.is_none(), "every dug-out home keeps the contract, and the planet goes on: {:?}", g.end);
+    }
+
     #[test]
     fn no_mini_boss_forms_on_the_heart() {
         use crate::mould::larder_world::BossCause;
