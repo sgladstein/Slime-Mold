@@ -34,14 +34,15 @@ Milestone 3, a release, only if he chooses one.
 - **Test 2: close.** His 11-27 run took about 55 minutes for steps 1 to 6, so about 1 h 50 m for twelve, before the raises since.
 - **Test 4: holds**, recheck on his PC with a star-map run. **Test 5: held 11-24** (P8 p95 16.4 ms), recheck: levels, bigger raids and Hard home-world sizes came since. **Test 6: holds.**
 - **Difficulty (his card, 11-27 23:55Z, "Five lanes, no freeze"):** lanes keep raising difficulty on his notes; each of his run logs gets one retune pass from Direction with Enemy.
+- **First the core problem: too easy** (his word, 11-28 03:31Z). A stronger slime and better turrets come before any economy balance; the plan's step 6 (energy sink) is dropped, and food, soldier and turret costs are tuned from his playtests. Each lane asks him after its first review when its task is unclear or forks (03:27Z).
 
 ## Each lane's top jobs
 
 | Lane | Test | Top jobs, in order |
 |---|---|---|
 | Direction | all | This page and the rulings, including asks he makes in any thread. One retune pass from each of his run logs. The curve page when test 3 can be measured. D8. |
-| Enemy | 1, 3 | The Grudge readout (#848 merged 11-27), then the rescue planet as a star-map node (below). Pressure from the slime itself: rerun the Lab's hunt on today's slime. |
-| Squad and arsenal | 3 | Turret designs in the run bot (with Engine). Energy something worth buying if his next log still banks 5,000 or more. |
+| Enemy | 1, 3 | Pressure from the slime itself first: rerun the Lab's hunt on today's slime and build what it shows. Then the rescue planet as a star-map node (below). The Grudge readout is merged (#886). |
+| Squad and arsenal | 1, 3 | Turret designs in the run bot (with Engine, #887). Better turrets, worth building against a stronger slime. No economy retune: food, soldier and turret costs follow his playtests (his word, 11-28 03:31Z). |
 | Look and interface | 1, 5 | The star map and slime colours checked against the art direction; the rescue node's badge and screens; then his A to D order. |
 | Engine and tools | 1, 3, 4, 5 | The run bot up to today's game: picks by pip, builds turret designs, no heart siege, the builder arm; then the curve on twelve steps. The 1070 retime and a star-map save check. The PC league stopped or rebuilt on main. |
 | Lab | none | Paused until the hunt rerun needs its rig (his card, 11-27 23:55Z). |
