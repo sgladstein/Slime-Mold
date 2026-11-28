@@ -2337,8 +2337,10 @@ fn the_menus_real_lists_fit_one_screen() {
             assert!(m.sheets() <= 2 && !m.scrolls(), "{at}: the things to try take {} pages", m.sheets());
             // The run's shop three planets in (as `menu=shop-mid` films it)
             // and the gun range's armory (Shop B, 11-15): every tab whole on
-            // one screen, but the armory's eight guns, which may take two
-            // pages at 200% on a 540-line screen.
+            // one screen, but the armory's eight guns and the shop's Guns
+            // tab (since 2026-11-28 four guns and three turrets, two
+            // tables), which may take two pages at 200% on a 540-line
+            // screen.
             let mut r = Run::new(4);
             for _ in 0..3 {
                 r.won(3);
@@ -2351,12 +2353,12 @@ fn the_menus_real_lists_fit_one_screen() {
                 m.shop = Some(shop);
                 m.show(Page::Shop);
                 let n = m.shop.as_ref().map_or(0, |s| s.rows.len());
-                // (Cards, Guns, Squad, Buildings, Tools; Guns, Bullets,
+                // (Cards, Owned, Guns, Squad, Tools; Guns, Bullets,
                 // the special bullets, the two shelves of modifiers, and
                 // the trails' and shove cards'.)
                 for tab in 0..if name == "armory" { 6 } else { 5 } {
                     draw(&mut m);
-                    let most = if name == "armory" && tab == 0 { 2 } else { 1 };
+                    let most = if name == "armory" && tab == 0 || name == "shop" && tab == 2 { 2 } else { 1 };
                     assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {name}'s tab {tab} takes {} pages ({n} rows)", m.sheets());
                     m.key(KeyCode::Tab, true);
                 }

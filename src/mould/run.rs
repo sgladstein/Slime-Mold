@@ -2786,7 +2786,9 @@ impl Run {
             self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
             self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.roll_depth())).collect();
             self.body_offers = BodyKind::ALL.iter().enumerate().map(|(k, &kind)| Body::roll(kind, mix(z ^ (0xB0D1_0000 + k as u64)), self.roll_depth())).collect();
-            self.turret_offers = Family::ALL.iter().enumerate().map(|(k, &f)| Turret::roll_family(f, mix(z ^ (0x7E77_0000 + k as u64)), self.roll_depth())).collect();
+            // One design of each firing style, its family drawn (all
+            // eleven made the armory's Guns tab five pages at 200%).
+            self.turret_offers = TurretKind::ALL.iter().enumerate().map(|(k, &kind)| Turret::roll(kind, mix(z ^ (0x7E77_0000 + k as u64)), self.roll_depth())).collect();
             return;
         }
         let n = OFFER + self.level_of("draw") as usize;

@@ -419,7 +419,10 @@ impl StartMenu {
             match r.area {
                 ShopArea::Cards if r.on || r.group == BAG => {}
                 ShopArea::Cards => put(&mut cards, TabKind::Cards, &r.group, i),
-                ShopArea::Guns | ShopArea::Turrets => put(&mut guns, TabKind::Guns, "Guns", i),
+                ShopArea::Guns => put(&mut guns, TabKind::Guns, "Guns", i),
+                // In a run under the guns (2026-11-28); the gun range's
+                // armory, with eight guns already, gives them a tab.
+                ShopArea::Turrets => put(&mut guns, TabKind::Guns, if shop.range { "Turrets" } else { "Guns" }, i),
                 ShopArea::Upgrades if r.group.is_empty() => {}
                 ShopArea::Upgrades => put(&mut tiles, TabKind::Tiles, &r.group, i),
             }
@@ -963,11 +966,29 @@ impl StartMenu {
                     let head = 24.0 * s;
                     let gap = 30.0 * s;
                     let turrets = tab.rows.iter().filter(|&&i| shop.rows[i].area == ShopArea::Turrets).count();
-                    let heads = if turrets > 0 && turrets < n { 2.0 * head + gap } else { head };
-                    let fit = |rh: f32| ((area.h - heads) / rh).floor().max(1.0) as usize;
-                    let rh = if fit(ROW * s) >= n { ROW * s } else { (((area.h - heads) / n as f32).floor()).max(ROW_LEAST * s) };
-                    let per = if fit(rh) >= n { n } else { ((area.h - heads - PAGER * s) / rh).floor().max(1.0) as usize };
-                    let range = page(per, n.div_ceil(per.max(1)).max(1), self);
+                    let guns = n - turrets;
+                    let both = turrets > 0 && guns > 0;
+                    let heads = if both { 2.0 * head + gap } else { head };
+                    let fit = |rh: f32, heads: f32| ((area.h - heads) / rh).floor().max(1.0) as usize;
+                    let range = if !both || fit(ROW_LEAST * s, heads) >= n {
+                        let rh = if fit(ROW * s, heads) >= n { ROW * s } else { (((area.h - heads) / n as f32).floor()).max(ROW_LEAST * s) };
+                        let per = if fit(rh, heads) >= n { n } else { ((area.h - heads - PAGER * s) / rh).floor().max(1.0) as usize };
+                        (page(per, n.div_ceil(per.max(1)).max(1), self), rh)
+                    } else {
+                        // Too short for both tables (200% on a small
+                        // screen): the guns' pages, then the turrets'.
+                        let rh = ROW_LEAST * s;
+                        let per = ((area.h - head - PAGER * s) / rh).floor().max(1.0) as usize;
+                        let (pg, pt) = (guns.div_ceil(per), turrets.div_ceil(per));
+                        self.per = per;
+                        self.sheets = pg + pt;
+                        let of = |f: usize| if f < guns { f / per } else { pg + (f - guns) / per };
+                        self.sheet = (if self.focus < n { of(self.focus) } else { self.sheet }).min(pg + pt - 1);
+                        let k = self.sheet;
+                        let r = if k < pg { k * per..((k + 1) * per).min(guns) } else { guns + (k - pg) * per..(guns + (k - pg + 1) * per).min(n) };
+                        (r, rh)
+                    };
+                    let (range, rh) = range;
                     let on_page = &tab.rows[range];
                     let (g_rows, t_rows): (Vec<usize>, Vec<usize>) = on_page.iter().partition(|&&i| shop.rows[i].area != ShopArea::Turrets);
                     let mut top = area.y;
