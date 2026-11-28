@@ -27,9 +27,13 @@ def rows(paths):
                 line = line[line.find("CURVE "):] if "CURVE " in line else line
                 if not line.startswith("CURVE ") or " league " not in line:
                     continue
+                # The league line may sit after other output on the row (the
+                # first PC run wrote "failed <game output> league ..."): the
+                # row's own keys from its head, the game's from its league
+                # line, which win (its `pip=` is the planet played).
                 head, _, league = line.partition(" league ")
-                kv = dict(re.findall(r"(\w+)=(\S+)", league))
-                kv.update(dict(re.findall(r"(\w+)=(\S+)", head)))
+                kv = dict(re.findall(r"(\w+)=(\S+)", head.split(" wall=")[0]))
+                kv.update(dict(re.findall(r"(\w+)=(\S+)", league)))
                 if "how" in kv:
                     out.append(kv)
     return out

@@ -1063,8 +1063,8 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     assert!(shop.heading.starts_with(&format!("Planet 1 of {}", slime_mould::mould::run::PLANETS)), "{}", shop.heading);
     // The plain gun turret, owned from planet 1 (2026-11-27), on the
     // Owned tab, and in loadout 2 on the row of loadouts, quick to build.
-    assert!(shop.loadouts.iter().any(|l| l.n == 2 && l.holds == "Gun turret" && l.quick.is_some_and(|q| q.1 == Some(1))));
-    assert!(shop.rows.iter().any(|row| row.group == slime_mould::world::start::OWNED && row.name.starts_with("Gun turret")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
+    assert!(shop.loadouts.iter().any(|l| l.n == 2 && l.holds == "Sentry" && l.quick.is_some_and(|q| q.1 == Some(1))));
+    assert!(shop.rows.iter().any(|row| row.group == slime_mould::world::start::OWNED && row.name.starts_with("Sentry")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
 }
 
 /// **A run in the window** (needs a GPU; the cloud's software Vulkan runs
@@ -1104,10 +1104,10 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
     // The turret buttons are the quick-build slots (2026-11-27): the
-    // first holds the plain gun turret, the others are empty, and the
+    // first holds the plain Sentry (11-28), the others are empty, and the
     // hunter has no button of its own.
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
-    assert!(!turret.locked && turret.name == "Gun turret", "{} {:?}", turret.name, turret.why_not);
+    assert!(!turret.locked && turret.name == "Sentry", "{} {:?}", turret.name, turret.why_not);
     let empty = m.commands.iter().find(|c| c.id == MORTAR).unwrap();
     assert!(!empty.ready && empty.name == "Quick build 2", "{}", empty.name);
     assert!(m.commands.iter().all(|c| c.id != HUNTER));
@@ -1194,7 +1194,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
         assert_eq!((again.name.clone(), again.args.run.as_ref().map(|r| r.depth)), (spec(app.args.run.as_ref().unwrap()), Some(2)), "the same planet");
         again.run_file = None;
     }
-    assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
+    assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * slime_mould::mould::run::SOLDIER_HP);
     assert_eq!(app.name, spec(app.args.run.as_ref().unwrap()));
     // Loadouts on the planet (owner, 2026-11-19 19:22Z): H opens their
     // panel, paused, nothing for sale; the commanded squad is given the
@@ -1781,7 +1781,10 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
 /// moving ... same with attack move and other commands ... if I set up
 /// three moves, I should see the full path"). A move then two Shift-queued
 /// orders draw one chain from the squad's middle through all three points;
-/// before, a squad sent anywhere drew no line at all.
+/// before, a squad sent anywhere drew no line at all. Since 11-28 each leg
+/// is chevrons along the squad's way (`order_path`, the owner's pick of
+/// path looks): on open ground that way is the straight leg, so every
+/// leg's chevrons sit on it and point toward its goal.
 #[test]
 fn a_squads_orders_and_queue_draw_as_one_path() {
     let Some((device, queue)) = gpu() else { return };
@@ -1795,18 +1798,32 @@ fn a_squads_orders_and_queue_draw_as_one_path() {
     assert!(g.apply(Cmd::SquadQueue(q as u8, Order::Fight(pts[1].0, pts[1].1))));
     assert!(g.apply(Cmd::SquadQueue(q as u8, Order::Move(pts[2].0, pts[2].1))));
     app.marks();
-    let lines: Vec<_> = app.marks.list.iter().filter(|k| k.shape == slime_mould::world::Shape::Line).map(|k| (k.at, k.half, k.colour)).collect();
-    let near = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1) < 0.5;
+    // A chevron's arms in its pen's colour (not its dark under-pen): the
+    // tip (`at`) and the arm's end (`half`).
+    // A goal's crosshair ticks are straight; a chevron's arms slant.
+    let arms: Vec<_> = app.marks.list.iter().filter(|k| k.shape == slime_mould::world::Shape::Line && k.colour[0] > 200 && (k.half.0 - k.at.0).abs() > 0.1 && (k.half.1 - k.at.1).abs() > 0.1).map(|k| (k.at, k.half, k.colour)).collect();
     let from = [m, pts[0], pts[1]];
     for (i, (&a, &b)) in from.iter().zip(&pts).enumerate() {
-        let l = lines.iter().find(|l| near(l.0, a) && near(l.1, b));
-        assert!(l.is_some(), "leg {i} ({a:?} -> {b:?}) not drawn: {lines:?}");
-        // The attack-move leg is red, the moves white.
-        assert_eq!(l.unwrap().2[1] < 200, i == 1, "leg {i}'s colour {:?}", l.unwrap().2);
+        let len = (b.0 - a.0).hypot(b.1 - a.1);
+        let u = ((b.0 - a.0) / len, (b.1 - a.1) / len);
+        let on: Vec<_> = arms.iter().filter(|(t, _, _)| {
+            let (dx, dy) = (t.0 - a.0, t.1 - a.1);
+            let along = dx * u.0 + dy * u.1;
+            (dx * u.1 - dy * u.0).abs() < 0.5 && along > 0.5 && along < len - 0.5
+        }).collect();
+        assert!(on.len() >= 6, "leg {i} ({a:?} -> {b:?}) drew {} chevron arms: {arms:?}", on.len());
+        for (t, e, c) in &on {
+            // Pointing at the goal: the arm runs back from the tip.
+            assert!((t.0 - e.0) * u.0 + (t.1 - e.1) * u.1 > 0.0, "leg {i}: a chevron points away from its goal");
+            // The attack-move leg is red, the moves cream.
+            assert_eq!(c[1] < 200, i == 1, "leg {i}'s colour {c:?}");
+        }
     }
-    // One chain for the squad, not one per soldier.
+    // One chain for the squad, not one per soldier: two arms a chevron.
     let n = app.game.as_ref().unwrap().members(q).len();
-    assert!(n > 1 && lines.iter().filter(|l| near(l.1, pts[0])).count() == 1, "{n} soldiers drew {} lines to the first point", lines.iter().filter(|l| near(l.1, pts[0])).count());
+    let first = arms.iter().filter(|(t, _, _)| (t.1 - m.1).abs() < 0.5 && t.0 > m.0 && t.0 < pts[0].0).count();
+    let tips = arms.iter().filter(|(t, _, _)| (t.1 - m.1).abs() < 0.5 && t.0 > m.0 && t.0 < pts[0].0).map(|(t, _, _)| (t.0 * 4.0).round() as i32).collect::<std::collections::BTreeSet<_>>().len();
+    assert!(n > 1 && first == 2 * tips, "{n} soldiers drew {first} arms for {tips} chevrons on the first leg");
 }
 
 /// **Letting go of the squad** (owner 2026-11-15 02:58Z: "a way to
@@ -2337,8 +2354,10 @@ fn the_menus_real_lists_fit_one_screen() {
             assert!(m.sheets() <= 2 && !m.scrolls(), "{at}: the things to try take {} pages", m.sheets());
             // The run's shop three planets in (as `menu=shop-mid` films it)
             // and the gun range's armory (Shop B, 11-15): every tab whole on
-            // one screen, but the armory's eight guns, which may take two
-            // pages at 200% on a 540-line screen.
+            // one screen, but the armory's eight guns and the shop's Guns
+            // tab (since 2026-11-28 four guns and three turrets, two
+            // tables), which may take two pages at 200% on a 540-line
+            // screen.
             let mut r = Run::new(4);
             for _ in 0..3 {
                 r.won(3);
@@ -2351,12 +2370,12 @@ fn the_menus_real_lists_fit_one_screen() {
                 m.shop = Some(shop);
                 m.show(Page::Shop);
                 let n = m.shop.as_ref().map_or(0, |s| s.rows.len());
-                // (Cards, Guns, Squad, Buildings, Tools; Guns, Bullets,
+                // (Cards, Owned, Guns, Squad, Tools; Guns, Bullets,
                 // the special bullets, the two shelves of modifiers, and
                 // the trails' and shove cards'.)
                 for tab in 0..if name == "armory" { 6 } else { 5 } {
                     draw(&mut m);
-                    let most = if name == "armory" && tab == 0 { 2 } else { 1 };
+                    let most = if name == "armory" && tab == 0 || name == "shop" && tab == 2 { 2 } else { 1 };
                     assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {name}'s tab {tab} takes {} pages ({n} rows)", m.sheets());
                     m.key(KeyCode::Tab, true);
                 }

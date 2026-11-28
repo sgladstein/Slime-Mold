@@ -18,6 +18,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut load_at = args.load_at.clone();
     let mut tload_at = args.tload_at.clone();
     let tgun = args.tgun;
+    let tfam = args.tfam.clone();
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
@@ -201,7 +202,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         m.show(p);
         match flag {
             "shop-build" => {
-                m.open_shop_tab_named("Buildings");
+                m.open_shop_tab_named("Guns");
             }
             "shop-tools" => {
                 m.open_shop_tab_named("Tools");
@@ -536,6 +537,21 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     g.apply(Cmd::Load(q as u8, Some(deck)));
                 }
                 println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS.iter().find(|l| l.1 == cards).map_or(cards.as_str(), |l| l.0));
+            }
+            // `tfam=FAMILY,..`: each standing building of a listed family's
+            // style is that family's average design (quick slot 0..).
+            if let Some(g) = app.game.as_mut().filter(|_| !tfam.is_empty()) {
+                for (s, f) in tfam.iter().enumerate().take(slime_mould::mould::larder_world::QUICK) {
+                    let d = slime_mould::mould::turrets::Turret::average(*f);
+                    if g.designs.get(s).copied().flatten() != Some(d) {
+                        g.apply(Cmd::Design(s as u8, Some(d)));
+                        println!("  tfam t {:.2} s: slot {} is a {}", g.time(), s + 1, d.line());
+                    }
+                    let kind = slime_mould::mould::larder_world::design_kind(f.style());
+                    for b in g.buildings.iter_mut().filter(|b| b.kind == kind && b.slot.is_none()) {
+                        b.slot = Some(s as u8);
+                    }
+                }
             }
             // `tgun=KIND`: every turret fires KIND's average gun.
             if let Some(kind) = tgun {

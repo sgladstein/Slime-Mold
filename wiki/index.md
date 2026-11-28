@@ -25,6 +25,7 @@ work; a thread working on one directly may change it.
 
 - [Water and sleep](model/water-and-sleep.md): dry mould sleeps, water wakes it; Keep It Alive only.
 - [Sensor angle and reach](model/sensors.md): 45 obeys then freezes, 22.5 lives but ignores you; reach stays 9.
+- [Scent and trail fields](model/scent-and-trail.md): the smell fades in 0.76 s yet is followed at 1e-12; the squad smells loudest; clay blows up trails above keep 0.952.
 - [The mould at scale](model/scale.md): the GPU plan; phases 1-3 done, fields stay f32, 1.37 ms a frame at 100k walkers on the 1070; phase 4 starts as Larder World W0.
 - [The GPU sandbox](model/gpu-sandbox.md): the big dish live on the GPU with every tested option as a control; matches the CPU; 1.45 ms a frame at 100k.
 - [Outside looks and creature rules](model/outside-looks.md): why Jenson's clips look different; trunks, contagion, species, explorers, grazing droplets; fronts still open.
@@ -71,7 +72,7 @@ work; a thread working on one directly may change it.
 
 Write one only when there is a synthesis to add (rule 6). Candidates, with
 the reports that would feed them: the free dish and the storm
-(`mould-probe-2026-11-07.md`, `dead-ends.md`); food, scent and food flow
+(`mould-probe-2026-11-07.md`, `dead-ends.md`); food flow
 (`mould-probe`, *Food that flows*); the Wanderer and the Organ
 (`mould-game-2026-11-08/prototypes/`); the forest floor
 (`mould-real-world-2026-11-09.md`). The 2026-11-07 brainstorm is background,

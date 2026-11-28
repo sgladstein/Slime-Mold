@@ -40,6 +40,15 @@ the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
 one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
 `run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
 
+**11-28, Look B (the slime up close, Scott's pick 07:12Z):** inside a
+packed body only the walkers' energy varies (a hill over each crystal);
+the fed glow (`fed_on`, `fed_mat`, `FED_*` in `view.wgsl`; energy summed
+in the fine grid's third block, off for the Sleeper's crust) raises,
+lights and glosses the body by it and dulls the hungry rim, with a
+crisper sheen. Page and clips `Reports/slime-fed-glow-2026-11-28/`. A card
+asked Scott: land as is (recommended), stronger, land then real veins
+(an Enemy change: the body must not be packed), or something else.
+
 **11-28, Look A (the fight round the squad):** filmed `run=1:5
 hand=greedy at=14.25,24.25 centre=squad,12` (planet 4; the greedy squad
 is lost by 0:36, so film before 30 s). Found: the spray's droplets were
@@ -49,7 +58,10 @@ level rides in the droplet's word (bits 10-12 of layer 2; the layer test
 is now `(drop >> 8) & 3`), and a droplet takes its level's colour or its
 species' hue. No new reads in `base`; llvmpipe 1536x864 base 26.5 ms
 before, 25.9 after (noise). Strikers' beads stay hot gold (they are
-cores). Scott asked 06:15Z for the roadmap; a card asks which look bothers
+cores). Merged as #902. Then the squads' number plates were pushed in
+`marks()` before the soldiers, so a gun barrel lay over "1 *" at zoom 12:
+they now go in `plates` and are drawn after the selection rings
+(`Controls::marks`), #905 merged. Scott asked 06:15Z for the roadmap; a card asks which look bothers
 him most (recommended B, the slime up close).
 
 ## State (2026-11-20)

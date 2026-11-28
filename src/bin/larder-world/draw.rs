@@ -332,6 +332,109 @@ fn order_chain(marks: &mut Marks, g: &Game<GpuWorld>, from: (f32, f32), orders: 
     }
 }
 
+/// **A squad's planned path** (owner 2026-11-28 07:09Z: "Could we improve
+/// the visual of the squads planned path?"; of a solid route line, marching
+/// chevrons and dots a walking second apart, all filmed in the game, he
+/// picked the chevrons at 07:29Z; page in `Reports/path-look-2026-11-28/`):
+/// for each order, chevrons along the way the squad will really walk
+/// (`Game::route`), drifting toward the goal, cream on a dark pen as the
+/// selection ring is; red for fighting. The current leg is brighter, a
+/// queued one (Shift) fainter with its number at its goal. Each goal is a
+/// ring with a dot, a fight's a ring with a crosshair.
+/// Before, `order_chain` drew a one-pixel dotted line straight to each
+/// goal, through water and rock the squad walked round; it lost itself on
+/// bright slime and at 4K. `ui` is the HUD's scale, so the pens keep their
+/// size on screen. The goal mark is where the formation ghost of a held
+/// order goes (the formations thread, 2026-11-28).
+fn order_path(marks: &mut Marks, g: &Game<GpuWorld>, q: usize, from: (f32, f32), orders: impl Iterator<Item = (Order, bool)>, zoom: f32, ui: f32) {
+    let sc = g.world.scale();
+    // Screen pixels between chevrons, and how fast they drift, at 100%.
+    const GAP: f32 = 22.0;
+    const DRIFT: f32 = 26.0;
+    // Most chevrons a leg: a longer leg spaces them out. Each is 4 marks
+    // (`MAX_MARKS` is 4,096 for the whole frame).
+    const MOST: f32 = 60.0;
+    const INK: [u8; 4] = [14, 13, 10, 150];
+    let px = 1.0 / zoom.max(1e-3);
+    let pen = (2.0 * ui).round().max(2.0) as u32;
+    let ink = pen + 2;
+    let t = g.time();
+    let mut from = from;
+    for (n, (o, queued)) in orders.enumerate() {
+        let to = match o {
+            Order::Move(x, y) | Order::Fight(x, y) | Order::Clear(x, y) | Order::Guard(x, y) => Some((x, y)),
+            Order::Attack => Some(g.core),
+            Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+            Order::Build(b) => g.buildings.get(b).map(|b| b.at),
+            Order::Hold => None,
+        };
+        let Some(to) = to else { continue };
+        if n == 0 && !queued && (to.0 - from.0).hypot(to.1 - from.1) < sc {
+            continue;
+        }
+        let later = n > 0 || queued;
+        let fight = matches!(o, Order::Attack | Order::Fight(..));
+        let hue = if fight { [255, 120, 105] } else { [250, 246, 228] };
+        let a = if later { 165.0 } else { 235.0 };
+        let pts = g.route(q, from, to, !later);
+        let total: f32 = pts.windows(2).map(|w| (w[1].0 - w[0].0).hypot(w[1].1 - w[0].1)).sum();
+        let gap = (GAP * ui * px).max(total / MOST);
+        let arm = 5.0 * ui * px;
+        let mut next = (t * DRIFT * ui * px) % gap;
+        let mut done = 0.0;
+        for w in pts.windows(2) {
+            let (p0, p1) = (w[0], w[1]);
+            let l = (p1.0 - p0.0).hypot(p1.1 - p0.1);
+            if l < 1e-4 {
+                continue;
+            }
+            let u = ((p1.0 - p0.0) / l, (p1.1 - p0.1) / l);
+            while next <= done + l {
+                let d = next;
+                next += gap;
+                // Out of the squad's middle and short of the goal's ring.
+                let left = total - d;
+                if left < 10.0 * ui * px {
+                    continue;
+                }
+                let fade = (d / (18.0 * ui * px)).clamp(0.0, 1.0) * (left / (30.0 * ui * px)).clamp(0.35, 1.0);
+                if fade <= 0.02 {
+                    continue;
+                }
+                let tip = (p0.0 + u.0 * (d - done), p0.1 + u.1 * (d - done));
+                let ends = [-1.0f32, 1.0].map(|side| (tip.0 - (u.0 + u.1 * side) * arm, tip.1 - (u.1 - u.0 * side) * arm));
+                let c = [hue[0], hue[1], hue[2], (a * fade) as u8];
+                let k = [INK[0], INK[1], INK[2], (INK[3] as f32 * fade) as u8];
+                for e in ends {
+                    marks.stroke(tip, e, ink, k);
+                }
+                for e in ends {
+                    marks.stroke(tip, e, pen, c);
+                }
+            }
+            done += l;
+        }
+        // The goal.
+        let c = [hue[0], hue[1], hue[2], a as u8];
+        let rr = if later { 5.0 } else { 7.0 } * ui;
+        marks.ring_thin(to, rr + ui, 1.5 * ui + 1.0, INK);
+        marks.ring_thin(to, rr, 1.5 * ui, c);
+        if fight {
+            for (dx, dy) in [(1.0f32, 0.0f32), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0)] {
+                let (a0, a1) = ((rr + 2.0 * ui) * px, (rr + 6.0 * ui) * px);
+                marks.stroke((to.0 + dx * a0, to.1 + dy * a0), (to.0 + dx * a1, to.1 + dy * a1), pen, c);
+            }
+        } else {
+            marks.push(slime_mould::world::Mark::new(slime_mould::world::Shape::Disc, to, (1.6 * ui, 1.6 * ui), c));
+        }
+        if later {
+            let fs = ui.round().max(1.0);
+            marks.label(to, (rr + 3.0 * ui, -3.5 * fs), &format!("{}", n + 1), fs, c);
+        }
+        from = to;
+    }
+}
+
 /// Turret `k` (`Marks::turret`), drawn `half` world units, and the light
 /// of its shot at the muzzle, as a soldier's lights the ground.
 fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook], g: &Game<GpuWorld>, k: usize, half: f32) {
@@ -644,6 +747,11 @@ impl App {
                 self.marks.ring(c, g.world.crystal_r(i) + 2.0 * sc, [94, 214, 132, 170]);
             }
         }
+        // The squads' number plates, drawn after every figure (Look A,
+        // 11-28): pushed here they went under the soldiers drawn later,
+        // and at zoom 12 on planet 4 a neighbour's gun barrel lay across
+        // the selected squad's "1 *".
+        let mut plates: Vec<OverLabel> = Vec::new();
         if g.rules.squads {
             // Each squad's number over its middle (the key that controls
             // it: its id + 1, kept while it lives), the controlled one bright,
@@ -703,8 +811,7 @@ impl App {
                     // and read as part of it).
                     let scale = if lit { 2.0 } else { 1.5 };
                     let off = (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0));
-                    self.marks.plate((x, top), off, &label, scale, LABEL_PLATE);
-                    self.marks.label((x, top), off, &label, scale, colour);
+                    plates.push(((x, top), off, label, scale, colour));
                 }
             }
         }
@@ -1285,7 +1392,7 @@ impl App {
                     _ => None,
                 };
                 let orders = now.map(|o| (o, false)).into_iter().chain(sq.queue[..sq.queued as usize].iter().map(|&o| (o, true)));
-                order_chain(&mut self.marks, g, mid, orders, false, sc);
+                order_path(&mut self.marks, g, r, mid, orders, self.camera.zoom, self.hud.scale.max(1.0));
             }
         }
         // A shot's line, only while shots are rays: with bullets flying
@@ -1739,6 +1846,12 @@ impl App {
         let units = self.units();
         self.controls.prune(&units);
         self.controls.marks(&units, &self.camera, r, &mut self.marks);
+        // Over the selection rings too, so a ring's line never runs
+        // through the number (polish review 11-23, finding 5).
+        for (at, off, text, scale, colour) in plates {
+            self.marks.plate(at, off, &text, scale, LABEL_PLATE);
+            self.marks.label(at, off, &text, scale, colour);
+        }
         // Y held (Squad and arsenal, 2026-11-28): the soldiers a split
         // would take, ringed, and "2 of 9" at the cursor.
         let going = self.split_preview();
@@ -2095,7 +2208,7 @@ impl App {
                 cost: Some(format!("{:.0}", r.wall_cost)),
                 ready: g.bank >= r.wall_cost,
                 why_not: need(r.wall_cost),
-                about: format!("A wall the slime has to wear through, slowly. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_cost),
+                about: format!("A wall the slime has to wear through: {:.0} health a cell, Harden for more. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_hp, r.wall_cost),
                 ..Command::new(WALL, (1, 2), Icon::Wall, "Wall", KeyCode::KeyV)
             });
             cmds.push(Command {
@@ -2268,7 +2381,7 @@ impl App {
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
                     ready: g.bank >= r.wall_cost,
                     why_not: need(r.wall_cost),
-                    about: format!("A wall the slime has to wear through, slowly. Both ends within a soldier's range; costs {:.0} food a cell of its length.", r.wall_cost),
+                    about: format!("A wall the slime has to wear through: {:.0} health a cell, Harden for more. Both ends within a soldier's range; costs {:.0} food a cell of its length.", r.wall_hp, r.wall_cost),
                     ..Command::new(WALL, (0, 2), Icon::Wall, "Wall", KeyCode::KeyV)
                 },
                 Command {
@@ -2367,13 +2480,12 @@ impl App {
                             let kind = slime_mould::mould::larder_world::design_kind(d.kind);
                             let cost = g.build_price(kind, (0.0, 0.0));
                             let cards = run.design_cards(l);
-                            let over = if d.over { "fires over walls" } else { "walls block it" };
                             let fires = if cards.is_empty() { "no cards yet: give its loadout some in the shop".to_string() } else { slime_mould::mould::rounds::name(&cards) };
-                            c.name = d.kind.name().into();
+                            c.name = d.family.name().into();
                             c.icon = building_icon(kind);
                             c.cost = Some(format!("{cost:.0}"));
                             (c.ready, c.why_not) = cost_now(cost);
-                            c.about = format!("Quick build {}: {}'s {}. {} Reach x{:.2}, rate x{:.2}, {over}. Every one fires {fires}. The shop's loadout bar picks which loadouts are here.", s + 1, run.loadout_name(l), d.title(), d.kind.about(), d.range, d.rate);
+                            c.about = format!("Quick build {}: {}'s {}. {} {}. Every one fires {fires}. The shop's loadout bar picks which loadouts are here.", s + 1, run.loadout_name(l), d.title(), d.family.about(), d.line());
                         }
                         _ => {
                             c.name = format!("Quick build {}", s + 1);
@@ -3522,30 +3634,28 @@ impl App {
                 ..Command::new(TURRET_LOADOUT, (0, 2), Icon::Upgrade, &format!("Loadout {}", now + 1), KeyCode::KeyL)
             });
         }
-        // Thicken (owner 2026-11-16 14:25Z): a band of a wall's width on
-        // its home side, at the wall's first price; a door cut into a wall
-        // thickens its wall, and itself with it.
+        // Harden (the owner, 2026-11-28 06:07Z: more health a cell, not
+        // more cells; Thicken from 11-16 added a band): at the wall's
+        // first price; a door cut into a wall hardens its wall, and itself
+        // with it.
         if matches!(bd.kind, Kind::Wall { .. }) && bd.up() {
             let w = g.wall_of(bk);
             let up = g.upgrade_price(w);
             let need = up.filter(|&p| g.bank < p);
             let level = g.buildings[w].level;
-            let ww = g.rules.wall_width;
+            let (now, next) = (g.wall_full(level), g.wall_full(level + 1));
             cmds.push(Command {
                 cost: up.map(|p| format!("{p:.0}")),
                 ready: up.is_some() && need.is_none(),
                 why_not: Some(match (up, need) {
                     (_, Some(p)) => format!("Need {:.0} more food", p - g.bank),
-                    _ if level >= WALL_LEVELS => format!("At its thickest, {:.0} cells", ww * f32::from(level)),
-                    _ => "This wall can't be thickened".to_string(),
+                    _ if level >= WALL_LEVELS => format!("At its strongest, {now:.0} health a cell"),
+                    _ => "This wall can't be hardened".to_string(),
                 }),
                 about: format!(
-                    "Thicken: {:.0} more cells of wall on your side, from {:.0} to {:.0}, at once, for its first price. The slime eats one face at a time, so each band buys about as long again. {WALL_LEVELS} levels.",
-                    ww,
-                    ww * f32::from(level),
-                    ww * f32::from(level + 1)
+                    "Harden: every cell of this wall goes from {now:.0} to {next:.0} health, at once, for its first price; worn cells keep their wear. Lay another wall behind it to make it thicker. Level {level} of {WALL_LEVELS}."
                 ),
-                ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Thicken", KeyCode::KeyU)
+                ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Harden", KeyCode::KeyU)
             });
         }
         if matches!(bd.kind, Kind::Lure | Kind::Siren) {

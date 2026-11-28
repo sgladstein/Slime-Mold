@@ -12,10 +12,17 @@
 # Each game is one planet: `larder-world league=STEP:SEED:SECS:PIP`, the
 # steps before it taken as won with two stars on the Fair route and shopped
 # by the plan, then STEP's planet of that pip (a step with no such planet is
-# skipped: step 1 and the home world have only a Fair one). Two arms: the run
-# bot's plan (scripts/run-bot-plan.txt) and the builder arm, the same plan
-# with a pump guarded by a turret (`pumps=1,guard=1,turrets=1,hold=20`;
-# since #887 the turret is the best rolled design the shop sells).
+# skipped: step 1 and the home world have only a Fair one). Each arm is the
+# run bot's plan (scripts/run-bot-plan.txt) with its dials added to every
+# stage ($ArmDials below): main (the plan alone), builder (a pump guarded by
+# a turret; since #887 the turret is the best rolled design the shop sells),
+# kite (falls back while firing), kitecards (kite and two card buys a shop)
+# and kitebuild (kitecards and the builder's pump and turret). Direction
+# 11-28 06:51Z: the curve reads as test 3 only from an arm with a real
+# build, so the default arms are main, kitecards and kitebuild. Step 3 Fair
+# seed 1, 300 s, c596e7c6: main all 9 dead at 62 s (the hunt, #895);
+# kite=0.6 12 alive (peak 23, 11 fell); kite=0.6,cards=2 12 alive (2 fell);
+# kite=0.9,cards=2 5 alive; kitebuild 12 alive but built no pump.
 #
 # Its own clone (never the owner's play folder) at -Tree, on -Commit. One
 # game at a time; before each game it waits while the owner plays (a
@@ -35,7 +42,7 @@ param(
     [int[]]$Seeds = @(1, 2, 3),
     [int[]]$Steps = @(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
     [string[]]$Pips = @("safe", "fair", "hard"),
-    [string[]]$Arms = @("main", "builder"),
+    [string[]]$Arms = @("main", "kitecards", "kitebuild"),
     [int]$Secs = 0,
     [int]$Every = 6,
     [string]$Commit = "origin/main",
@@ -48,6 +55,14 @@ param(
 $ErrorActionPreference = "Continue"
 $lock = "C:\Users\Scott\Code\gpu-timing.lock"
 $builder = "pumps=1,guard=1,turrets=1,hold=20"
+$ArmDials = @{
+    "main"      = ""
+    "builder"   = $builder
+    "kite"      = "kite=0.6"
+    "kitecards" = "kite=0.6,cards=2"
+    "kitebuild" = "kite=0.6,cards=2,$builder"
+}
+foreach ($a in $Arms) { if (-not $ArmDials.ContainsKey($a)) { throw "no arm '$a': one of $($ArmDials.Keys -join ', ')" } }
 
 if (-not (Test-Path $Tree)) {
     if ($DryRun) { "dry: git clone https://github.com/sgladstein/Slime-Mold $Tree" } else { git clone https://github.com/sgladstein/Slime-Mold $Tree }
@@ -67,8 +82,9 @@ if (-not (Test-Path $rows)) { New-Item -ItemType File -Path $rows | Out-Null }
 $plan = (Get-Content (Join-Path $(if ($DryRun) { $Play } else { $Tree }) "scripts\run-bot-plan.txt") | Where-Object { $_ -notmatch '^#' -and $_.Trim() } | Select-Object -First 1).Trim()
 
 function PlanOf([string]$arm) {
-    if ($arm -eq "builder") { return (($plan -split '\|') | ForEach-Object { "$_,$builder" }) -join '|' }
-    return $plan
+    $d = $ArmDials[$arm]
+    if (-not $d) { return $plan }
+    return (($plan -split '\|') | ForEach-Object { "$_,$d" }) -join '|'
 }
 
 function WaitTurn {
@@ -106,12 +122,17 @@ foreach ($seed in $Seeds) {
                 if ($DryRun) { "dry: $key :: $exe $cmd plan=$p"; continue }
                 WaitTurn
                 $t0 = Get-Date
-                $out = & $exe $cmd "plan=$p" 2>&1
+                # `$res`, not `$out`: PowerShell names ignore case, so `$out`
+                # overwrote the -Out parameter and every push failed (first
+                # PC run, 11-28). Its lines are split again because stderr
+                # and stdout came back as one string, so `^league ` never
+                # matched and played games were written "failed".
+                $res = (& $exe $cmd "plan=$p" 2>&1 | ForEach-Object { "$_" }) -split "`r?`n"
                 $wall = [int]((Get-Date) - $t0).TotalSeconds
-                $line = $out | Where-Object { "$_" -match '^league ' } | Select-Object -First 1
+                $line = $res | Where-Object { $_ -match '^league ' } | Select-Object -First 1
                 if (-not $line) {
-                    $why = ($out | Where-Object { "$_" -match 'no (safe|fair|hard) planet' } | Select-Object -First 1)
-                    $line = if ($why) { "skipped $why" } else { "failed $($out | Select-Object -Last 1)" }
+                    $why = ($res | Where-Object { $_ -match 'no (safe|fair|hard) planet' } | Select-Object -First 1)
+                    $line = if ($why) { "skipped $why" } else { "failed $($res | Select-Object -Last 1)" }
                 }
                 "CURVE arm=$arm step=$step seed=$seed pip=$pip wall=$wall $line" | Tee-Object -FilePath $rows -Append
                 $played++

@@ -172,6 +172,11 @@ fn whole_pace() -> f32 {
     1.0
 }
 
+/// A switch on by default that a record from before it lacks.
+fn yes() -> bool {
+    true
+}
+
 #[derive(Clone, Copy, Debug)]
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Soldier {

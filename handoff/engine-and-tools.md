@@ -33,17 +33,21 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
   locks fail; one ore notice; the handoff lint. First runs by pip: Safe
   won 8 of 9 planets, Hard lost step 2 (Sprawler) on all three seeds, a
   finding for the curve page (Direction: Scott wants it harder).
-- **Branch `claude/project-thread-8iu6no`**, open PR: the curve kit.
-  `scripts/pc-curve.ps1` (the owner's PC: its own clone `slime-curve`, one
-  planet a game `league=STEP:SEED:SECS:PIP`, arms main and builder
-  `pumps=1,guard=1,turrets=1,hold=20`, waits while he plays or
-  `gpu-timing.lock` exists, resumes from its rows, `-Push` to branch
-  `curve-out`), `.github/workflows/curve.yml` (the GitHub fallback, by hand
-  only: a whole curve is about 190 games, tens of runner hours, so name the
-  part and its time first), `scripts/curve_table.py` (the table by step and
-  pip, and the paired checks). A league planet job refuses a pip its step
-  lacks (step 1 played Fair whatever the pip). Builder arm on step 2 Fair
-  (lavapipe, 240 s): one pump, two turrets.
+- **The curve kit** (#898, #904 merged; arms PR open on
+  `claude/project-thread-8iu6no`). `scripts/pc-curve.ps1` (the owner's PC:
+  its own clone `slime-curve`, one planet a game `league=STEP:SEED:SECS:PIP`,
+  arms from `$ArmDials`: main, builder, kite, kitecards, kitebuild; default
+  main, kitecards, kitebuild; waits while he plays or `gpu-timing.lock`
+  exists, resumes from its rows, `-Push` to branch `curve-out`),
+  `.github/workflows/curve.yml` (the GitHub fallback, by hand only: a whole
+  curve is about 280 games, tens of runner hours, so name the part and its
+  time first), `scripts/curve_table.py` (the table by arm, step and pip, and
+  the paired checks). First PC rows (c596e7c6, seed 1, main/builder): every
+  Safe step won, Hard step 2 lost at 77 s, Fair 3 to 5 lost to the hunt
+  (#895; `hunt_pull=0` kept 44 alive). Direction 06:51Z: a bot result, not
+  a retune signal; the curve needs an arm with a real build, hence the
+  kite arms. kitebuild still built no pump on steps 3 and 4: the builder
+  dials' pump wait is the next thing to look at if it stays bare.
 - **PC strategy league** (`C:\Users\Scott\Code\slime-league`, detached HEAD,
   src tree `cb8d00f3`, the 11-22 build): paused 11-28 03:27Z with a `PAUSE`
   file (Scott allowed the Remote Control card). Two worker Pythons were

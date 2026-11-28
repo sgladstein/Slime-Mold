@@ -8,6 +8,7 @@ sources:
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
   - Reports/command-card-2026-11-15/README.md
+  - Reports/formations-on-the-move-2026-11-28/README.md
   - Reports/free-camera-2026-11-15/README.md
   - Reports/guards-2026-11-15/README.md
   - Reports/map-sharing-2026-11-16/README.md
@@ -26,6 +27,7 @@ code:
   - Game::mark_hot
   - Game::rank_squad
   - Game::rim_spots
+  - Game::squeeze_turn
   - Game::steer_point
   - MAP_NEAR
   - Rules::fireway
@@ -33,6 +35,7 @@ code:
   - Rules::guard
   - Rules::max_squad
   - Rules::squads
+  - Rules::squeeze
   - Rules::steer
   - SPREADS
   - squad::UNITS_MAX
@@ -272,6 +275,16 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   walled base by a 4-cell door stood inside for good; now out in 26 s)
   ([report](../../Reports/narrow-squads-2026-11-15/README.md),
   [rework](../../Reports/squad-movement-2026-11-16/README.md)).
+  Since 2026-11-28 a spread squad first squeezes its spread to the
+  ground's width and opens up again past it (`Rules::squeeze`, on;
+  `Game::squeeze_turn`), so only ground too narrow for its tightest blob
+  makes a column, and a column keeps each soldier's place in the queue,
+  matched again once a second instead of every step (owner 06:12Z: "on
+  some when i tell them to move they get all disorganized"; his card
+  07:08Z, "Keep its spread, squeeze in gaps"). Before, a wide squad
+  measured the ground against its full spread and walked most of a
+  planet as a column whose soldiers traded places every step; the
+  counts are in the [report](../../Reports/formations-on-the-move-2026-11-28/README.md).
 - **Building** is shared with the RTS round: ghosts soldiers raise from reach 6,
   Shift queues, an unfinished one can be called off for the whole price
   ([report](../../Reports/build-flow-2026-11-14/README.md)). Since

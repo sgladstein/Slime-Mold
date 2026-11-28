@@ -1178,7 +1178,7 @@ pub(super) fn bot_hand(g: &mut Game<GpuWorld>) {
     }
 }
 
-/// `hand=movetour[,N[,clear][,fire]]` (pathfinding thread, 2026-11-20):
+/// `hand=movetour[,N[,clear][,fire][,wide]]` (pathfinding thread, 2026-11-20):
 /// buys N soldiers (15) into squad 0 and sends it on plain moves (right
 /// click) from crystal to crystal, each time it arrives the next of the
 /// further half of the crystals, by turns (with `clear`, of those with no
@@ -1192,12 +1192,18 @@ fn move_tour(g: &mut Game<GpuWorld>, spec: &str) {
     let flags: Vec<&str> = it.collect();
     let clear = flags.contains(&"clear");
     let fire = flags.contains(&"fire");
+    // `wide` (formations thread, 2026-11-28): the squad at its widest
+    // spread, for filming how a spread squad walks.
+    let wide = flags.contains(&"wide");
     while g.time() < 1.0 && g.alive() < n && g.apply(Cmd::Buy) {}
     if g.time() < 1.0 {
         for k in 0..g.soldiers.len() {
             if g.soldiers[k].alive && g.soldiers[k].squad != 0 {
                 g.apply(Cmd::Join(k, 0));
             }
+        }
+        if wide {
+            g.apply(Cmd::Formation(0, slime_mould::mould::larder_world::Formation::Blob, (slime_mould::mould::larder_world::SPREADS.len() - 1) as u8));
         }
         return;
     }
@@ -1220,6 +1226,12 @@ fn move_tour(g: &mut Game<GpuWorld>, spec: &str) {
     let half = by.len().div_ceil(2).max(1);
     let c = by[SENT.fetch_add(1, Ordering::Relaxed) * 7 % half];
     g.apply(Cmd::SquadOrder(0, Order::Move(c.0, c.1)));
+    if flags.contains(&"queue") {
+        let c2 = by[(SENT.load(Ordering::Relaxed) * 7 + 3) % by.len()];
+        let c3 = by[(SENT.load(Ordering::Relaxed) * 7 + 5) % by.len()];
+        g.apply(Cmd::SquadQueue(0, Order::Move(c2.0, c2.1)));
+        g.apply(Cmd::SquadQueue(0, Order::Fight(c3.0, c3.1)));
+    }
     if fire {
         // `fire`: a burn 6 dish cells round the middle of its way, as a
         // Scorch round lights it (`Rounds::flush` marks it hot the same).

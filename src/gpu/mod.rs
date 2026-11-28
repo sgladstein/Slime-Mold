@@ -3297,6 +3297,14 @@ impl Engine {
     /// mirror (`dish`) is not changed.
     #[allow(clippy::too_many_arguments)]
     pub fn build_wall(&mut self, shared: &Shared, s: &Settings, ax: f32, ay: f32, bx: f32, by: f32, width: f32) {
+        let hp = self.dish.p.wall_hp;
+        self.build_wall_hp(shared, s, ax, ay, bx, by, width, hp);
+    }
+
+    /// `build_wall` with its new cells at health `hp` (0: they never
+    /// break), the player's walls since 2026-11-28 (`Game::wall_full`).
+    #[allow(clippy::too_many_arguments)]
+    pub fn build_wall_hp(&mut self, shared: &Shared, s: &Settings, ax: f32, ay: f32, bx: f32, by: f32, width: f32, hp: f32) {
         let k = self.dish.p.scale as f32;
         let (w, h) = (self.dish.w, self.dish.h);
         let (ax, ay, bx, by, r) = (ax * k, ay * k, bx * k, by * k, (width * k / 2.0).max(0.5));
@@ -3306,7 +3314,7 @@ impl Engine {
             return;
         }
         let (bw, bh) = ((x1 - x0 + 1) as u32, (y1 - y0 + 1) as u32);
-        let hp = if self.dish.p.wall_hp > 0.0 { self.dish.p.wall_hp } else { f32::INFINITY };
+        let hp = if hp > 0.0 { hp } else { f32::INFINITY };
         let reach = (16.0 * k).ceil() as u32;
         let mut wb = f32_bytes(&[ax, ay, bx, by, r, hp]);
         wb.extend(u32_bytes(&[x0 as u32, y0 as u32, bw, bh, (s.wall_scent > 0.0) as u32, reach]));
@@ -3352,6 +3360,45 @@ impl Engine {
         }
         self.queue.write_buffer(&self.wb, 0, &at((EVICT_FAR * reach) | SQUEEZE));
         submit(&round);
+    }
+
+    /// Harden a wall (2026-11-28, the owner: an upgrade gives "more health
+    /// per cell", not more cells): every standing wall cell in the footprint
+    /// of the wall from (`ax`, `ay`) to (`bx`, `by`), `width` thick, as
+    /// `build_wall` lays it, gains `add` health. Between ticks, by a read
+    /// back of the box's rows and a write of them: a rare click, so no pass
+    /// of its own. Rubble (health 0) stays rubble.
+    pub fn harden_wall(&mut self, ax: f32, ay: f32, bx: f32, by: f32, width: f32, add: f32) {
+        let k = self.dish.p.scale as f32;
+        let (w, h) = (self.dish.w, self.dish.h);
+        let (ax, ay, bx, by, r) = (ax * k, ay * k, bx * k, by * k, (width * k / 2.0).max(0.5));
+        let (y0, y1) = ((ay.min(by) - r).floor().max(0.0) as usize, ((ay.max(by) + r).ceil() as usize).min(h - 1));
+        let (x0, x1) = ((ax.min(bx) - r).floor().max(0.0) as usize, ((ax.max(bx) + r).ceil() as usize).min(w - 1));
+        if y1 < y0 || x1 < x0 {
+            return;
+        }
+        let (dx, dy) = (bx - ax, by - ay);
+        let len2 = (dx * dx + dy * dy).max(1e-6);
+        let near = |x: f32, y: f32| {
+            let t = (((x - ax) * dx + (y - ay) * dy) / len2).clamp(0.0, 1.0);
+            (x - ax - t * dx).hypot(y - ay - t * dy) <= r
+        };
+        let (at, len) = ((y0 * w * 4) as u64, ((y1 - y0 + 1) * w * 4) as u64);
+        let bytes = read_back_range(&self.device, &self.queue, &self.health, at, len);
+        let mut hp: Vec<f32> = bytes.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+        let mut changed = false;
+        for y in y0..=y1 {
+            for x in x0..=x1 {
+                let j = (y - y0) * w + x;
+                if hp[j] > 0.0 && hp[j].is_finite() && self.dish.wall.get(y * w + x).copied().unwrap_or(false) && near(x as f32 + 0.5, y as f32 + 0.5) {
+                    hp[j] += add;
+                    changed = true;
+                }
+            }
+        }
+        if changed {
+            self.queue.write_buffer(&self.health, at, &f32_bytes(&hp));
+        }
     }
 
     /// Submits `passes` (pass, workgroups) on the current side, apart from

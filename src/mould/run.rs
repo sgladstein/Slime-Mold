@@ -37,7 +37,7 @@
 use super::campaign::{Bonus, Goal, Mission};
 use super::bodies::{Body, BodyKind};
 use super::larder_world::QUICK;
-use super::turrets::{Turret, TurretKind};
+use super::turrets::{Family, Turret, TurretKind};
 use super::guns::{Gun, GunKind};
 use super::kit::KitRules;
 use super::larder_world::{Rules, Twist};
@@ -430,7 +430,33 @@ const RAID_SIZE: [f32; 8] = [0.15, 0.2, 0.23, 0.27, 0.3, 0.33, 0.37, 0.4];
 ///   increasing the bite doesn't matter. Tougher slime has a better
 ///   chance". 2 on planet 2 up to 8 on the core world since 2026-11-26 (mini-bosses take 4 to
 ///   15). The bite above stays: it is what a raid that arrives does.
-const DRAIN: [f32; 8] = [2.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
+///
+/// **Soldiers die easier, more so deeper** (2026-11-28, the owner's card
+/// "Both" at 06:06Z, after his 11-28 run, steps 1 to 4 all easy: "Maybe the
+/// soliders should be a easier to kill?"). The bite climbs from 2 on planet
+/// 1 to 4 on the core world (was 2, then 2.5 flat from planet 2), and a
+/// soldier lands with `SOLDIER_HP` health, 70 (was `Rules::hp`'s 100), so
+/// Armour's quarter more is worth buying. On his 11-28 run soldiers fell
+/// only to Pinwheels; a soldier took 40 walker-seconds of contact to fall
+/// on every planet past 1 (50 on planet 1), now 35 on planet 1 and 17.5 on
+/// the core world.
+const DRAIN: [f32; 8] = [2.0, 2.4, 2.7, 3.0, 3.3, 3.6, 3.8, 4.0];
+/// A soldier's health at the landing in a run (`Rules::hp`, before Armour);
+/// see `DRAIN`. The gun range and the free maps keep `Rules::hp`'s 100.
+pub const SOLDIER_HP: f32 = 70.0;
+/// **Walls weaker, and weaker deeper** (2026-11-28, the owner's wall card
+/// "Both", then 06:07Z: "walls should not actually get thicker when
+/// upgrading, they get stronger (more health per cell). I just layer the
+/// walls in play to thicken"). A placed wall's cell health by planet
+/// (`Rules::wall_hp`; every planet had the world's 400): a quarter of that
+/// on planet 1, falling to a twelfth on the core world, as if the slime bit
+/// walls three times as hard by then. Each of a wall's three upgrades adds
+/// its first health again (`Rules::wall_harden` 1), so a wall upgraded to
+/// the top holds 400 a cell on planet 1 and 132 on the core world. On his
+/// 11-28 step 3 one wall of 1,672 food laid at 0:04 held four soldiers
+/// safe through six raids for three minutes while the slime grew 28k to
+/// 55k. The rescue's rings keep 400 (`rescue::RING_HP`).
+const WALL_HP: [f32; 8] = [100.0, 85.0, 72.0, 62.0, 52.0, 45.0, 38.0, 33.0];
 const RAID_ARMOUR: [u32; 8] = [0, 2, 3, 4, 5, 6, 7, 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
@@ -1153,6 +1179,9 @@ impl Group {
     pub fn name(self) -> &'static str {
         match self {
             Group::Squad => "Squad",
+            // The Buildings tab until 2026-11-28, when its Walls unlock and
+            // Pump power left the shop (`GONE`) and the turret designs went
+            // to the Guns tab; nothing is on it now.
             Group::Build => "Buildings",
             Group::Tools => "Tools",
             Group::Relics => "Relics",
@@ -1250,8 +1279,9 @@ pub fn first_gun() -> Gun {
     GunKind::Rifle.average_at(1)
 }
 
-/// Guns for sale in each shop.
-pub const GUN_OFFER: usize = 2;
+/// Guns for sale in each shop: 4 since 2026-11-28 (owner, 05:49Z: "Guns
+/// should also have more options per shop"; 2 before).
+pub const GUN_OFFER: usize = 4;
 /// **Relics** (gun step F, Direction 11-24 08:54Z and 09:51Z; the
 /// gun-system plan's "rare run-wide rules"): one is for sale in the shops
 /// of `RELIC_DEPTHS`, after planets 3, 5 and 7, at `Relic::price`; owned,
@@ -1314,6 +1344,14 @@ impl Relic {
 /// The shops that offer a relic: after planets 3, 5 and 7.
 pub const RELIC_DEPTHS: [u32; 3] = [4, 6, 8];
 
+/// Items no longer sold, kept in `ITEMS` so old saves and play logs read
+/// (a level a save owns still holds): Turret power (owner, 2026-11-27
+/// 21:42Z, replaced by better turrets for sale), Pump power (owner,
+/// 2026-11-28 05:49Z: "we don't need to upgrade pump power"), and the
+/// Walls unlock, which every run owns from the start (`START`), so its
+/// row only read "owned" on what was the Buildings tab.
+pub const GONE: [&str; 3] = ["turret+", "pump+", "walls"];
+
 /// The first paid reroll's price (`Run::reroll_price`, gun step F; the
 /// gun-system plan's "rerolls that cost more each time"; a tier-1 card is
 /// 80): it doubles each time in one shop. A first guess.
@@ -1322,8 +1360,9 @@ pub const REROLL_PRICE: u32 = 25;
 /// Device bodies for sale in each shop from planet 2 (`Run::body_rolls`).
 pub const BODY_OFFER: usize = 2;
 
-/// Turret designs for sale in each shop (`Run::turret_rolls`).
-pub const TURRET_OFFER: usize = 2;
+/// Turret designs for sale in each shop (`Run::turret_rolls`): 3 since
+/// 2026-11-28 (owner, 05:49Z, with guns' 2 to 4; 2 before).
+pub const TURRET_OFFER: usize = 3;
 
 /// The old shop unlock's key a turret kind's building had (and its
 /// shop icon, `Face::Item`): `turret`, `mortar`, `sprayer`, `hunter`.
@@ -2230,6 +2269,8 @@ impl Run {
             r.raid.every = every;
             r.raid.every_sd = d.every_sd * every / d.every;
             r.drain = at(&DRAIN);
+            r.hp = SOLDIER_HP;
+            r.wall_hp = at(&WALL_HP);
             r.raid.march_armour = curve_at_u(&RAID_ARMOUR, e);
             // A raid's size by planet (`RAID_SIZE`), its spread and cap
             // kept at the default's shares of it.
@@ -2782,6 +2823,8 @@ impl Run {
             self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
             self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.roll_depth())).collect();
             self.body_offers = BodyKind::ALL.iter().enumerate().map(|(k, &kind)| Body::roll(kind, mix(z ^ (0xB0D1_0000 + k as u64)), self.roll_depth())).collect();
+            // One design of each firing style, its family drawn (all
+            // eleven made the armory's Guns tab five pages at 200%).
             self.turret_offers = TurretKind::ALL.iter().enumerate().map(|(k, &kind)| Turret::roll(kind, mix(z ^ (0x7E77_0000 + k as u64)), self.roll_depth())).collect();
             return;
         }
@@ -2873,17 +2916,23 @@ impl Run {
             self.offers.push(again.remove((z % again.len() as u64) as usize));
         }
         z = self.luck(&pool, &owned, bullets, wanted, z);
-        // Guns for the planet ahead, each its own seed: two kinds, and
-        // neither the kind in hand (2026-11-18: a gun of another kind is
-        // the buy that most changes how the squad plays, and of seeds
-        // 1-12's first two shops 7 sold the same kind twice and 7 sold the
-        // rifle the run starts with).
+        // Guns for the planet ahead, each its own seed: none the kind in
+        // hand (2026-11-18: a gun of another kind is the buy that most
+        // changes how the squad plays, and of seeds 1-12's first two shops
+        // 7 sold the same kind twice and 7 sold the rifle the run starts
+        // with), and every other kind once before any comes twice (with
+        // `GUN_OFFER` 4 and three kinds left, the fourth repeats one, a
+        // second roll of it to set against the first).
         let held = self.gun_of(0);
-        let mut kinds: Vec<GunKind> = GunKind::ALL.into_iter().filter(|&k| held.is_none_or(|g| g.kind != k)).collect();
+        let others: Vec<GunKind> = GunKind::ALL.into_iter().filter(|&k| held.is_none_or(|g| g.kind != k)).collect();
+        let mut kinds = others.clone();
         self.gun_offers = (0..GUN_OFFER as u64)
-            .filter_map(|k| {
+            .map(|k| {
                 let s = mix(z ^ (0x6755_4E00 + k));
-                (!kinds.is_empty()).then(|| Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth()))
+                if kinds.is_empty() {
+                    kinds.clone_from(&others);
+                }
+                Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth())
             })
             .filter(|g| !self.guns.contains(g))
             .collect();
@@ -3001,18 +3050,25 @@ impl Run {
     }
 
     /// This shop's turret designs (2026-11-27, first guesses):
-    /// `TURRET_OFFER` of different kinds, rolled for the shop's depth, so
-    /// a better one than the plain gun turret comes along as the run goes
+    /// `TURRET_OFFER` of different families (2026-11-28), from those the
+    /// shop's depth sells (`Average::from`), each rolled for that depth,
+    /// so a better one than the plain Sentry comes along as the run goes
     /// deeper (owner, 21:42Z: "better more expensive turret[s] being sold
-    /// later in the run").
+    /// later in the run"), and no two of one firing style while another
+    /// style is left, so a shop shows how differently turrets can play.
     fn turret_rolls(&self, z: u64) -> Vec<Turret> {
-        let mut kinds = TurretKind::ALL.to_vec();
-        (0..TURRET_OFFER as u64)
-            .map(|k| {
-                let s = mix(z ^ (0x7E77_0000 + k));
-                Turret::roll(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth())
-            })
-            .collect()
+        let depth = self.roll_depth();
+        let mut fams: Vec<Family> = Family::ALL.into_iter().filter(|f| f.average().from <= depth).collect();
+        let mut out: Vec<Turret> = Vec::new();
+        for k in 0..TURRET_OFFER as u64 {
+            let s = mix(z ^ (0x7E77_0000 + k));
+            let fresh: Vec<Family> = fams.iter().copied().filter(|f| out.iter().all(|t| t.kind != f.style())).collect();
+            let from = if fresh.is_empty() { fams.clone() } else { fresh };
+            let Some(&f) = from.get((s % from.len().max(1) as u64) as usize) else { break };
+            fams.retain(|&g| g != f);
+            out.push(Turret::roll_family(f, s, depth));
+        }
+        out
     }
 
     /// Shop points the squad took on the planet (`Game::starfall`: ore
@@ -3122,7 +3178,7 @@ impl Run {
         // (`body_offers`, below).
         // The turret unlocks and Turret power went too (owner, 2026-11-27
         // 21:42Z): turrets are sold as designs (`turret_offers`, below).
-        for (i, it) in ITEMS.iter().enumerate().filter(|(_, it)| !self.range && !self.field && BodyKind::of_key(it.key).is_none() && turret_of_key(it.key).is_none() && it.key != "turret+") {
+        for (i, it) in ITEMS.iter().enumerate().filter(|(_, it)| !self.range && !self.field && BodyKind::of_key(it.key).is_none() && turret_of_key(it.key).is_none() && !GONE.contains(&it.key)) {
             let l = self.owned[i];
             let price = self.price(i);
             let needs = it.needs.is_some_and(|k| !self.has(k));
@@ -3168,22 +3224,23 @@ impl Run {
         }
         // Turret designs (owner, 2026-11-27 21:36Z): those owned, each a
         // click into the loadout shown (not the squads' first), then those
-        // for sale, in the Build tab where their unlocks were.
+        // for sale, on the Guns tab since 2026-11-28 (owner, 05:49Z: "in
+        // fact is should be in the gun section"; the Build tab before).
         for (i, t) in self.turrets.iter().enumerate() {
             let on = self.loadouts.get(self.editing).is_some_and(|l| l.turret == Some(i));
             let holder = self.loadouts.iter().position(|l| l.turret == Some(i));
             let (about, state) = match holder {
-                _ if on => (format!("{} In {shown}: every one you build fires its cards.", t.kind.about()), "carried".to_string()),
-                _ if self.editing == 0 => (format!("{} Show another loadout to give it cards (squads land with {shown}).", t.kind.about()), holder.map_or("owned".to_string(), |j| self.loadout_name(j))),
-                Some(j) => (format!("{} In {}: click to move it to {shown}.", t.kind.about(), self.loadout_name(j)), self.loadout_name(j)),
-                None => (format!("{} Click to put it in {shown}, to give it cards.", t.kind.about()), "owned".to_string()),
+                _ if on => (format!("{} In {shown}: every one you build fires its cards.", t.family.about()), "carried".to_string()),
+                _ if self.editing == 0 => (format!("{} Show another loadout to give it cards (squads land with {shown}).", t.family.about()), holder.map_or("owned".to_string(), |j| self.loadout_name(j))),
+                Some(j) => (format!("{} In {}: click to move it to {shown}.", t.family.about(), self.loadout_name(j)), self.loadout_name(j)),
+                None => (format!("{} Click to put it in {shown}, to give it cards.", t.family.about()), "owned".to_string()),
             };
-            rows.push(Row { group: Group::Build, face: Face::Item(turret_key(t.kind)), on, name: title(&t.title()), about, price: String::new(), state, ready: !on && self.editing != 0, pick: Pick::CarryTurret(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Item(turret_key(t.kind)), on, name: title(&t.title()), about, price: String::new(), state, ready: !on && self.editing != 0, pick: Pick::CarryTurret(i) });
         }
         for (i, t) in self.turret_offers.iter().enumerate().filter(|_| !self.field) {
             let p = t.price();
             let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
-            rows.push(Row { group: Group::Build, face: Face::Item(turret_key(t.kind)), on: false, name: title(&t.title()), about: format!("{} From planet {}; goes into a loadout of its own.", t.kind.about(), t.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Turret(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Item(turret_key(t.kind)), on: false, name: title(&t.title()), about: format!("{} From planet {}; goes into a loadout of its own.", t.family.about(), t.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Turret(i) });
         }
         for (i, g) in self.guns.iter().enumerate() {
             let on = self.carry() == Some(i);
@@ -3234,7 +3291,7 @@ impl Run {
             for i in 0..self.loadouts.len() {
                 // What it holds by name (2026-11-27: "2: Lobber"), a turret's
                 // or a body's in place of a gun's.
-                let held = self.loadouts[i].turret.and_then(|t| self.turrets.get(t)).map(|t| t.kind.name().to_string()).or_else(|| self.loadouts[i].body.and_then(|b| self.bodies.get(b)).map(|b| b.kind.name().to_string()));
+                let held = self.loadouts[i].turret.and_then(|t| self.turrets.get(t)).map(|t| t.family.name().to_string()).or_else(|| self.loadouts[i].body.and_then(|b| self.bodies.get(b)).map(|b| b.kind.name().to_string()));
                 let gun = held.unwrap_or_else(|| self.gun_of(i).map_or("no gun".to_string(), |g| title(&g.title())));
                 let mut users = Vec::new();
                 if i == 0 {
@@ -3277,7 +3334,7 @@ impl Run {
             // which the shop draws on that loadout's card (2026-11-27).
             for (i, t) in self.loadouts.iter().enumerate().filter_map(|(i, l)| Some((i, self.turrets.get(l.turret?)?))) {
                 let me = self.loadout_name(i);
-                let kind = t.kind.name().to_lowercase();
+                let kind = t.family.name().to_lowercase();
                 let on = self.quick.iter().position(|&q| q == i);
                 let (name, about) = match on {
                     Some(k) => (format!("Quick build {}", k + 1), format!("{me}'s {kind} is button {} of the Build page on a planet. Click to take it off.", k + 1)),
@@ -3343,7 +3400,7 @@ impl Run {
                     self.own_turret(Turret::plain(kind));
                     return true;
                 }
-                if ITEMS[i].key == "turret+" {
+                if GONE.contains(&ITEMS[i].key) {
                     return false;
                 }
                 // A device unlock (gone from the shop since gun step E3;
@@ -3854,7 +3911,7 @@ mod tests {
         // places are still the eight tuned planets exactly.
         assert_eq!((PLANETS, STRETCH), (12, 1.0), "the dials as set");
         assert_eq!((curve_depth(1), curve_depth(PLANETS)), (1.0, 8.0));
-        let f32s: [&[f32; 8]; 11] = [&SURGE_FOOD_SHARE, &ORIGIN_SIZE, &STRIKER_SHARE, &CEILING_GROW, &RAID_GAP_MIN, &STRIKER_ARMY, &SOLDIER_STEP, &RAID_FIRST, &RAID_EVERY, &DRAIN, &ROAM_SHARE];
+        let f32s: [&[f32; 8]; 12] = [&SURGE_FOOD_SHARE, &ORIGIN_SIZE, &STRIKER_SHARE, &CEILING_GROW, &RAID_GAP_MIN, &STRIKER_ARMY, &SOLDIER_STEP, &RAID_FIRST, &RAID_EVERY, &DRAIN, &ROAM_SHARE, &WALL_HP];
         let u32s: [&[u32; 8]; 5] = [&LONGEST_WAIT, &RAID_ARMOUR, &SURGE_DASH, &ROAM, &ORIGIN_ARMOUR];
         for d in 1..=8 {
             assert_eq!(curve_depth_of(d, 8), d as f32);
@@ -4244,7 +4301,7 @@ mod tests {
         assert_eq!(r.points, 1000 - 120 - 240);
         let mut rules = Rules::default();
         r.rules(&mut rules);
-        assert_eq!(rules.hp, 1.5 * Rules::default().hp);
+        assert_eq!(rules.hp, 1.5 * SOLDIER_HP, "Armour on a run soldier's health");
     }
 
     /// The owner, 20:32Z: "How do I actually build and adjust my guns.
@@ -4606,6 +4663,27 @@ mod tests {
     /// its own and is quick to build while one of the 3 slots is free; the
     /// loadout bar's Quick build toggles a turret loadout in or out (not
     /// while full, not with no turret); the save keeps it all.
+    #[test]
+    fn shops_sell_four_guns_three_turrets_and_no_pump_power() {
+        // Owner, 2026-11-28 05:49Z: more guns a shop; no Pump power.
+        for seed in 0..12u64 {
+            let mut r = Run::new(seed);
+            r.won(1);
+            r.points = 10_000;
+            let held = r.guns[r.carry().unwrap()].kind;
+            let kinds: Vec<GunKind> = r.gun_offers.iter().map(|g| g.kind).collect();
+            assert_eq!(kinds.len(), GUN_OFFER, "seed {seed}");
+            assert!(!kinds.contains(&held), "seed {seed}: {kinds:?} with a {held:?} carried");
+            // Every other kind once before one comes twice.
+            assert!(GunKind::ALL.iter().filter(|&&k| k != held).all(|k| kinds.contains(k)), "seed {seed}: {kinds:?}");
+            assert_eq!(r.turret_offers.len(), TURRET_OFFER);
+            let rows = r.shop();
+            assert!(!rows.iter().any(|w| matches!(w.pick, Pick::Item(i) if GONE.contains(&ITEMS[i].key))), "seed {seed}");
+            let pump = ITEMS.iter().position(|i| i.key == "pump+").unwrap();
+            assert!(!r.pick(Pick::Item(pump)) && r.level_of("pump+") == 0);
+        }
+    }
+
     #[test]
     fn turrets_are_owned_like_guns_and_quick_built() {
         let mut r = Run::new(1);

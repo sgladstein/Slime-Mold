@@ -345,6 +345,17 @@ pub struct Rules {
     /// Food a dish cell of wall costs, and its width in dish cells.
     pub wall_cost: f32,
     pub wall_width: f32,
+    /// A placed wall's cell health (`Game::wall_full`), and the share of
+    /// it each upgrade adds: level `l` holds `wall_hp * (1 + wall_harden *
+    /// (l - 1))` a cell. Since 2026-11-28 (the owner's card "Both" and
+    /// 06:07Z: walls "should not actually get thicker when upgrading, they
+    /// get stronger (more health per cell). I just layer the walls in play
+    /// to thicken") an upgrade hardens the wall in place; from 11-16 it
+    /// added a band of cells on the home side (Thicken). 400 and 1 here,
+    /// the world's old cell health; a run sets `wall_hp` by planet
+    /// (`run::WALL_HP`), a quarter of that on planet 1 and less deeper.
+    pub wall_hp: f32,
+    pub wall_harden: f32,
     /// Set slime blocks soldiers (E2b, the owner's 01:13Z "Both"): a fine
     /// cell with this many set walkers or more in its 3 x 3 is no ground to
     /// soldiers' feet until the count falls under half of it
@@ -515,6 +526,16 @@ pub struct Rules {
     /// `funnel`, owner 2026-11-15). Off, the formation's places that fall
     /// in rock all go to the anchor, as before.
     pub funnel: bool,
+    /// A moving squad squeezes its spread to the ground's width (on;
+    /// `Squad::squeeze`, formations thread 2026-11-28, owner 06:12Z: "on
+    /// some when i tell them to move they get all disorganized"): it
+    /// narrows where the ground narrows and opens up again past it, and
+    /// funnels into a column only where even its tightest blob does not
+    /// fit. Off (`set=squeeze=0`), a spread squad funnels wherever its
+    /// full spread does not fit, as before: a wide blob of 40 walked 99%
+    /// of a planet 1 or 8 walk as a column.
+    #[serde(default = "super::yes")]
+    pub squeeze: bool,
     /// Soldiers in the squad mode walk with a velocity (on; `steer`,
     /// squad movement rework 2026-11-16, owner: "It is still clunky
     /// overall"): they speed up and slow down, walk in step with their
@@ -826,6 +847,10 @@ impl Rules {
             self.funnel = v > 0.0;
             return true;
         }
+        if name == "squeeze" {
+            self.squeeze = v > 0.0;
+            return true;
+        }
         // Fruiting (`FruitRules`, 2026-11-20): `fruit=1` on; `fruit_armour`
         // and `fruit_throw` whole numbers.
         match name {
@@ -966,6 +991,7 @@ impl Rules {
             "max_squad" => self.max_squad as f32,
             "steer" => on(self.steer),
             "funnel" => on(self.funnel),
+            "squeeze" => on(self.squeeze),
             "fruit" => on(self.fruit.on),
             "star" => on(self.star.on),
             "star_least" => self.star.least as f32,
@@ -1232,6 +1258,8 @@ impl Rules {
             // Walls (the walls thread, 11-16): thickness films and tries.
             "wall_width" => &mut self.wall_width,
             "wall_cost" => &mut self.wall_cost,
+            "wall_hp" => &mut self.wall_hp,
+            "wall_harden" => &mut self.wall_harden,
             // Reserve recruit (11-17): its switch (`build::switches`,
             // "Free recruits") needs a key; until then only a campaign
             // mission's own rules could set it.
@@ -1315,6 +1343,8 @@ impl Default for Rules {
             max_squad: 200,
             wall_cost: 20.0,
             wall_width: 2.0,
+            wall_hp: 400.0,
+            wall_harden: 1.0,
             set_block: 0.0,
             fort: 0.0,
             hoard: 1.0,
@@ -1334,6 +1364,7 @@ impl Default for Rules {
             squads: false,
             fireway: true,
             funnel: true,
+            squeeze: true,
             steer: true,
             larder: true,
             guard: 120.0,

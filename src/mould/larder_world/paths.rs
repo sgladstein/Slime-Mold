@@ -1158,3 +1158,51 @@ impl<W: World> Game<W> {
         self.drop_offs().into_iter().min_by(|a, b| d(*a).total_cmp(&d(*b))).unwrap_or(self.larder)
     }
 }
+
+impl<W: World> Game<W> {
+    /// **The way squad `q` will walk from `from` to `to`**, for its planned
+    /// path (owner 2026-11-28 07:09Z: "Could we improve the visual of the
+    /// squads planned path?"; he picked marching chevrons on the real
+    /// route): read down the walking map its anchor goes by
+    /// (`Squad::map`) for its current leg, or the map built for `to`'s own
+    /// cell for a queued leg, a point every few cells. A straight walk, or
+    /// a leg no built map serves, is the straight line; nothing is asked
+    /// for, so drawing it builds no map. Before 11-28 the line was always
+    /// straight, and crossed the water and rock the squad walked round.
+    ///
+    /// Cost: one straight-walk test from `from` to `to`, then one step down
+    /// the map a cell, at most `ROUTE_CELLS`, for the selected squad and
+    /// those linked to it, once a frame.
+    pub fn route(&self, q: usize, from: (f32, f32), to: (f32, f32), current: bool) -> Vec<(f32, f32)> {
+        const ROUTE_CELLS: usize = 4096;
+        // A point every this many cells: the map steps in eighths of a
+        // turn, and these smooth the stair a diagonal walk makes.
+        const EVERY: usize = 4;
+        let (w, h) = self.world.size();
+        if self.walk_line(from, to) {
+            return vec![from, to];
+        }
+        let cell = |p: (f32, f32)| (p.1.clamp(0.0, h as f32 - 1.0) as usize) * w + p.0.clamp(0.0, w as f32 - 1.0) as usize;
+        let key = if current { self.squads.get(q).and_then(|s| s.map) } else { Some(cell(to)) };
+        let Some(map) = key.and_then(|k| self.paths.maps.get(&k)).map(|m| &m.0) else {
+            return vec![from, to];
+        };
+        let Some(mut at) = onto_map(w, h, map, cell(from)) else { return vec![from, to] };
+        let mut out = vec![from];
+        for n in 1..ROUTE_CELLS {
+            let next = downhill(w, h, map, at, self.rules.corners);
+            if next == at {
+                break;
+            }
+            at = next;
+            let p = ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5);
+            // A map near `to` serves it (`map_for`): its goal is a
+            // straight walk from `to`, so the route ends with that walk.
+            if n % EVERY == 0 {
+                out.push(p);
+            }
+        }
+        out.push(to);
+        out
+    }
+}

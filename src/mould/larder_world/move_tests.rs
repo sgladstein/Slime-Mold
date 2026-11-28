@@ -482,3 +482,95 @@ fn a_squad_crosses_planet_8_and_settles() {
     assert!(f.arrive.is_some() && f.settle < 10.0, "{f:?}");
     assert!(tr.waits < 200, "map waits {}", tr.waits);
 }
+
+/// Formation thread probe (2026-11-28): how far a moving squad's members
+/// stand from their formation places, by shape and spread.
+#[test]
+#[ignore]
+fn probe_order() {
+    let ns: Vec<usize> = std::env::var("MOVE_NS").map(|v| v.split(',').map(|x| x.parse().unwrap()).collect()).unwrap_or(vec![12, 24, 40]);
+    let seeds: Vec<u64> = std::env::var("MOVE_SEEDS").map(|v| v.split(',').map(|x| x.parse().unwrap()).collect()).unwrap_or(vec![1, 2]);
+    let maps: Vec<String> = std::env::var("MOVE_MAPS").map(|v| v.split(',').map(String::from).collect()).unwrap_or(vec!["open".into(), "planet1".into(), "planet8".into()]);
+    for mname in &maps {
+        for (shape, spread) in [(Formation::Blob, 0u8), (Formation::Blob, 2), (Formation::Blob, 4), (Formation::Ring, 0), (Formation::Ring, 3)] {
+            for &n in &ns {
+                for &seed in &seeds {
+                    let m = match mname.as_str() {
+                        "open" => door_map(0.0, 0.0, 0.0),
+                        "planet1" => crate::mould::levelgen::level(seed, 1),
+                        _ => crate::mould::levelgen::level(seed, 8),
+                    };
+                    let mut g = move_game(&m, seed, n);
+                    g.rules.squeeze = std::env::var("MOVE_SQUEEZE").map_or(true, |v| v != "0");
+                    g.apply(Cmd::Formation(0, shape, spread));
+                    for _ in 0..4 * g.rules.tps / g.rules.frame_ticks { g.step(); }
+                    let sc = g.s();
+                    let at = g.middle(0).unwrap();
+                    let goal = if mname == "open" { (at.0 + 50.0 * sc, at.1 + 10.0 * sc) } else {
+                        let d = |c: (f32, f32)| (c.0 - at.0).hypot(c.1 - at.1);
+                        g.world.crystals().into_iter().map(|c| c.0).filter(|&c| d(c) <= 120.0 * sc).max_by(|a, b| d(*a).total_cmp(&d(*b))).unwrap_or(at)
+                    };
+                    // At rest, before the move.
+                    let rest_off = |g: &Game<BigDish>| {
+                        let ms = g.members(0);
+                        let Some(Order::Move(x, y)) = ms.first().map(|&k| g.soldiers[k].order) else { return f32::NAN };
+                        ms.iter().map(|&k| { let o = g.place(k); (g.soldiers[k].x - x - o.0 * sc).hypot(g.soldiers[k].y - y - o.1 * sc) }).sum::<f32>() / ms.len() as f32 / sc
+                    };
+                    let before = rest_off(&g);
+                    g.apply(Cmd::SquadOrder(0, Order::Move(goal.0, goal.1)));
+                    let dt = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+                    let ms = g.members(0);
+                    let mut last_rank: Vec<u16> = ms.iter().map(|&k| g.ranks.get(k).copied().unwrap_or(0)).collect();
+                    let (mut steps, mut off, mut form_off, mut col, mut flips, mut swaps, mut far) = (0usize, 0.0f32, 0.0f32, 0usize, 0usize, 0usize, 0.0f32);
+                    let mut was_col = false;
+                    let (mut ratio, mut sqz) = (0.0f32, 0.0f32);
+                    let mut arrive = None;
+                    for i in 0..(60.0 / dt) as usize {
+                        g.step();
+                        let sq = g.squads[0];
+                        let Some(a) = sq.anchor else {
+                            if sq.dest.is_none() && arrive.is_none() { arrive = Some(i as f32 * dt); }
+                            if arrive.is_some() && i as f32 * dt > arrive.unwrap() + 3.0 { break; }
+                            continue;
+                        };
+                        steps += 1;
+                        let on = g.columns[0].on;
+                        col += on as usize;
+                        flips += (on != was_col) as usize;
+                        was_col = on;
+                        let gap = g.form_gap(0);
+                        let nn = ms.len();
+                        let mut worst = 0.0f32;
+                        for (j, &k) in ms.iter().enumerate() {
+                            let s = g.soldiers[k];
+                            let o = g.place(k);
+                            let d = (s.x - a.0 - o.0 * sc).hypot(s.y - a.1 - o.1 * sc) / sc;
+                            off += d;
+                            worst = worst.max(d);
+                            let r = g.ranks[k];
+                            let fo = sq.formation.offset(r as usize, nn, gap);
+                            form_off += (s.x - a.0 - fo.0 * sc).hypot(s.y - a.1 - fo.1 * sc) / sc;
+                            if r != last_rank[j] { swaps += 1; last_rank[j] = r; }
+                        }
+                        far += worst;
+                        // The squad's spread as walked: members' RMS from
+                        // their middle against the formation's own at its
+                        // own spread, and the spread it walks at.
+                        let mid = ms.iter().fold((0.0, 0.0), |s, &k| (s.0 + g.soldiers[k].x / nn as f32, s.1 + g.soldiers[k].y / nn as f32));
+                        let rms = (ms.iter().map(|&k| (g.soldiers[k].x - mid.0).powi(2) + (g.soldiers[k].y - mid.1).powi(2)).sum::<f32>() / nn as f32).sqrt() / sc;
+                        let own_gap = g.gap() * g.spread_own(0);
+                        let want = ((0..nn).map(|r| { let o = sq.formation.offset(r, nn, own_gap); o.0 * o.0 + o.1 * o.1 }).sum::<f32>() / nn as f32).sqrt();
+                        ratio += rms / want.max(1e-3);
+                        sqz += g.spread_now(0) / g.spread_own(0);
+                    }
+                    let after = rest_off(&g);
+                    let nn = ms.len() as f32;
+                    let st = steps.max(1) as f32;
+                    println!("{mname:>8} {:>4} s{spread} n={n:>3} seed={seed} rest_before={before:.2} moving: off={:.2} worst={:.2} formoff={:.2} column={:.0}% flips={flips} rank_changes/member={:.1} spread_kept={:.2} squeeze={:.2} arrive={} rest_after={after:.2}",
+                        shape.name(), off / st / nn, far / st, form_off / st / nn, 100.0 * col as f32 / st, swaps as f32 / nn, ratio / st, sqz / st,
+                        arrive.map_or("never".into(), |a| format!("{a:.1}s")));
+                }
+            }
+        }
+    }
+}
