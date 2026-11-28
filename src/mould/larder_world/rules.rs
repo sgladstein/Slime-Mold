@@ -697,8 +697,8 @@ pub struct Rules {
     pub hunt_lag: f32,
     /// **Several tongues** (2026-11-28, the Enemy lane; the owner's pick
     /// to see, 07:07Z, "A, B, and D"; `hunt.rs`): with `hunt_tongues` over
-    /// 0 the trail gets two side branches from the squad, `hunt_tongue_angle`
-    /// degrees either side of the way back along its path and
+    /// 0 the trail gets two branches from the squad, `hunt_tongue_angle`
+    /// degrees either side of the way to the slime near it and
     /// `hunt_tongue_len` dish cells long, each cell's age `hunt_tongue_age`
     /// of its distance from the squad. Under 1, walking to a branch and in
     /// along it is shorter down the field than walking straight in, so the
@@ -1157,6 +1157,7 @@ impl Rules {
             "wave_flank" => &mut self.wave.flank,
             "wave_lead" => &mut self.wave.lead,
             "wave_hunted_gather" => &mut self.wave.hunted_gather,
+            "wave_cold" => &mut self.wave.cold,
             "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
@@ -1378,9 +1379,9 @@ impl Default for Rules {
             hunt_reach: 80.0,
             hunt_lag: 4.0,
             hunt_tongues: 0.0,
-            hunt_tongue_angle: 100.0,
+            hunt_tongue_angle: 50.0,
             hunt_tongue_len: 60.0,
-            hunt_tongue_age: 0.4,
+            hunt_tongue_age: 0.25,
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),

@@ -45,9 +45,9 @@ figcaption b { font-family: var(--display); font-size: .98rem; }
 
 <main>
   <div class="lede">
-    <span class="tag">Enemy lane · 2026-11-28 · step 3, the Trunk, run seed 2</span>
+    <span class="tag">Enemy lane · 2026-11-28 · step 3, the Trunk, run seed 2 · second cut</span>
     <h1>Stronger slime: A, B and D</h1>
-    <p>Each option is played against today's game on the same planet, by the same hand (greedy, 4,000 food to buy soldiers), from the same moment, so the two clips start identical and split where the option first does something. Clips run at 3x (one frame every half game second). The default view follows the squad at zoom 6; switch to the whole map to see where the slime is coming from.</p>
+    <p>Refilmed with 19 soldiers standing at the landing on free fire, never moving, so all you see is the slime coming at them. Every clip is the same game, from 1:26 to 2:02, at 3x speed. The clips start identical and split where the option first does something. The default view is the squad at zoom 6; switch to the whole map to see where the slime comes from.</p>
     <div class="views" role="group" aria-label="View">
       <button type="button" id="v-near" aria-pressed="true">Squad, zoom 6</button>
       <button type="button" id="v-all" aria-pressed="false">Whole map</button>
@@ -55,51 +55,62 @@ figcaption b { font-family: var(--display); font-size: .98rem; }
   </div>
 
   <section>
-    <h2><span class="tag">A</span> Mass, then come in wide</h2>
-    <p>Once your squad has walked and the slime following your trail has caught up to the ring just past your guns' reach, the trail goes cold. The slime piles up out there for 8 s, with extra gathering points filled 70 degrees to either side, then comes in from all of them at once for 8 s. In this game it starts at 1:53 and strikes at 2:01.</p>
+    <h2><span class="tag">Today</span> Today's game</h2>
+    <p>One stream runs down the tube into the guns, a few walkers at a time. This is the easy case you described.</p>
     <div class="pair">
       <figure>
-        <video data-near="w2-main-near.mp4" data-all="w2-main-all.mp4" src="w2-main-near.mp4" controls loop muted playsinline preload="metadata"></video>
-        <figcaption><b>Today's game</b><span class="nums">1:36 → 2:12 · soldiers 29 → 10 <span class="down">(−18 from 1:53)</span> · slime killed 5,111 → 10,110</span></figcaption>
-      </figure>
-      <figure>
-        <video data-near="w2-a-near.mp4" data-all="w2-a-all.mp4" src="w2-a-near.mp4" controls loop muted playsinline preload="metadata"></video>
-        <figcaption><b>With A</b><span class="nums">1:36 → 2:12 · soldiers 29 → 16 <span class="down">(−12 from 1:53)</span> · slime killed 5,111 → 9,826</span></figcaption>
+        <video data-near="s-main-near.mp4" data-all="s-main-all.mp4" src="s-main-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>Today's game</b><span class="nums">soldiers 19 → 19 · slime killed in the clip 1,506</span></figcaption>
       </figure>
     </div>
-    <p class="verdict">What it does today: the pull-back gives the squad a breather, so here it lost fewer soldiers, not more, and nearly all the slime gathered at one point (1,712 walkers there, none at the flank). The bot with a card build agreed: over 4 paired step 3 games A made none harder (one game it lost without A, it survived with A). To make it a threat it would need a longer, bigger mass and real flanks. That is tuning I can do if you keep it.</p>
+  </section>
+
+  <section>
+    <h2><span class="tag">A</span> Mass, then come in wide</h2>
+    <p>Once the stream reaches the ring just past your guns' reach, it stops there and piles up at two or three points round the squad for 12 s, spread out to the sides, then comes in from all of them at once for 8 s. Here it starts at 1:30, strikes at 1:42, and again from 2:35 (after this clip) with 1,600 and 1,400 walkers at two points.</p>
+    <div class="pair">
+      <figure>
+        <video data-near="s-main-near.mp4" data-all="s-main-all.mp4" src="s-main-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>Today's game</b><span class="nums">soldiers 19 → 19 · slime killed 1,506</span></figcaption>
+      </figure>
+      <figure>
+        <video data-near="s-a-near.mp4" data-all="s-a-all.mp4" src="s-a-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>With A</b><span class="nums">soldiers 19 → 19 · slime killed 2,596</span></figcaption>
+      </figure>
+    </div>
+    <p class="verdict">The slime now arrives from two sides at once instead of one stream. Against 19 rifles it still loses (no soldier fell). If you keep it, the next lever is a longer gather so the masses are bigger when they come.</p>
   </section>
 
   <section>
     <h2><span class="tag">B</span> Armoured tongue</h2>
-    <p>Slime inside the hunt's trail field (on or near the path you walked) takes extra hits to kill. Filmed at 1 extra blow; at 2 extra blows the same squad was wiped by 1:39 (29 soldiers at 1:36 without it).</p>
+    <p>Slime on or near your trail takes one more hit to kill.</p>
     <div class="pair">
       <figure>
-        <video data-near="w1main-near.mp4" data-all="w1main-all.mp4" src="w1main-near.mp4" controls loop muted playsinline preload="metadata"></video>
-        <figcaption><b>Today's game</b><span class="nums">0:30 → 1:06 · soldiers 17 → 25 · slime killed 2,129 → 3,948</span></figcaption>
+        <video data-near="s-main-near.mp4" data-all="s-main-all.mp4" src="s-main-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>Today's game</b><span class="nums">soldiers 19 → 19 · slime killed 1,506</span></figcaption>
       </figure>
       <figure>
-        <video data-near="w1b-near.mp4" data-all="w1b-all.mp4" src="w1b-near.mp4" controls loop muted playsinline preload="metadata"></video>
-        <figcaption><b>With B (+1 blow)</b><span class="nums">0:30 → 1:06 · soldiers 17 → 23 · slime killed 1,903 → 3,920</span></figcaption>
+        <video data-near="s-b-near.mp4" data-all="s-b-all.mp4" src="s-b-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>With B (+1 blow)</b><span class="nums">soldiers 19 → 19 · slime killed 1,421</span></figcaption>
       </figure>
     </div>
-    <p class="verdict">What it does today: it is a plain toughness lever. +1 changes little you can see in this half minute; +2 is lethal on step 3. Nothing new to look at, only harder to kill.</p>
+    <p class="verdict">It looks the same as today. It is a toughness number, not something new to see. In the first cut, +2 wiped a moving squad.</p>
   </section>
 
   <section>
     <h2><span class="tag">D</span> Several tongues</h2>
-    <p>The trail gets two side branches from the squad, 100 degrees either side of the way back along its path and 60 dish cells long. Coming in along a branch is cheaper for the slime than walking straight in, so the slime near you splits onto them and comes at the squad from the sides as well as from behind.</p>
+    <p>Two branches run out from the squad toward the slime, 50 degrees either side of it. Coming in along a branch is cheaper for the slime than walking straight in, so the stream is meant to split and come in from two angles.</p>
     <div class="pair">
       <figure>
-        <video data-near="w1main-near.mp4" data-all="w1main-all.mp4" src="w1main-near.mp4" controls loop muted playsinline preload="metadata"></video>
-        <figcaption><b>Today's game</b><span class="nums">0:30 → 1:06 · soldiers 17 → 25 · slime killed 2,129 → 3,948</span></figcaption>
+        <video data-near="s-main-near.mp4" data-all="s-main-all.mp4" src="s-main-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>Today's game</b><span class="nums">soldiers 19 → 19 · slime killed 1,506</span></figcaption>
       </figure>
       <figure>
-        <video data-near="w1d-near.mp4" data-all="w1d-all.mp4" src="w1d-near.mp4" controls loop muted playsinline preload="metadata"></video>
-        <figcaption><b>With D</b><span class="nums">0:30 → 1:06 · soldiers 17 → 24 · slime killed 1,205 → 3,801</span></figcaption>
+        <video data-near="s-d-near.mp4" data-all="s-d-all.mp4" src="s-d-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>With D</b><span class="nums">soldiers 19 → 19 · slime killed 702</span></figcaption>
       </figure>
     </div>
-    <p class="verdict">What it does today: the slime streams toward the squad over a wider front (look at 0:50, where it runs along the squad's flank instead of trailing behind). It changes how the fight reads more than how many soldiers it costs in this window.</p>
+    <p class="verdict">Not what it should be yet. The slime piles into one big body just past your range and stops feeding the guns (half the kills), instead of splitting into two tongues. It needs another pass before it is worth judging.</p>
   </section>
 
   <p class="muted">Software GPU in the cloud (lavapipe), one game each, so the counts are one sample, not a measure. Clips and this page are kept in the repo under Reports/stronger-slime-2026-11-28.</p>

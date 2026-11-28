@@ -96,22 +96,31 @@ pub struct WaveRules {
     pub lead: f32,
     #[serde(default = "hunted_gather")]
     pub hunted_gather: f32,
+    /// Over 0, the hunt's trail goes cold while a wave gathers
+    /// (`hunt.rs`); 0 since the 11-28 standing films.
+    #[serde(default)]
+    pub cold: f32,
 }
 
 fn hunted_moved() -> f32 {
-    25.0
+    // 0 since the owner's 11-28 07:31Z note: a squad standing and shooting
+    // is the one that should meet it.
+    0.0
 }
 fn hunted_near() -> f32 {
-    0.06
+    // A stream into a standing squad's guns is a sliver of the body: 6%
+    // and 1.5% never fired against 19 standing soldiers on step 3 (11-28;
+    // 150-200 walkers of 24,000 on the ring).
+    0.005
 }
 fn hunted_flank() -> f32 {
     70.0
 }
 fn hunted_lead() -> f32 {
-    0.5
+    0.8
 }
 fn hunted_gather() -> f32 {
-    8.0
+    12.0
 }
 
 impl Default for WaveRules {
@@ -138,6 +147,7 @@ impl Default for WaveRules {
             flank: hunted_flank(),
             lead: hunted_lead(),
             hunted_gather: hunted_gather(),
+            cold: 0.0,
         }
     }
 }
@@ -279,8 +289,7 @@ impl<W: World> Game<W> {
             return false;
         }
         let sc = self.world.scale();
-        let Some(walked) = self.hunt.walked() else { return false };
-        if walked < r.moved * sc {
+        if r.moved > 0.0 && self.hunt.walked().is_none_or(|walked| walked < r.moved * sc) {
             return false;
         }
         let Some(k) = self.thickest_knot() else { return false };
@@ -304,7 +313,7 @@ impl<W: World> Game<W> {
     fn start_hunted_wave(&mut self) -> bool {
         let r = self.rules.wave;
         let now = self.world.ticks();
-        let Some((centre, mut points)) = self.wave_points_from(1) else { return false };
+        let Some((centre, mut points)) = self.wave_points_from(1, r.near * 0.4) else { return false };
         let massed = points.len();
         let sc = self.world.scale();
         let (w, h) = self.world.size();
@@ -426,12 +435,13 @@ impl<W: World> Game<W> {
     /// guns' reach of any soldier. The squad's middle and the points (fine
     /// cells); None with fewer than two.
     pub(super) fn wave_points(&self) -> Option<WaveSite> {
-        self.wave_points_from(2)
+        self.wave_points_from(2, self.rules.wave.least)
     }
 
-    /// `wave_points` with at least `fewest` points (a hunted wave fills
-    /// its flanks from one).
-    fn wave_points_from(&self, fewest: usize) -> Option<WaveSite> {
+    /// `wave_points` with at least `fewest` points, each holding `least`
+    /// of the slime's mass (a hunted wave fills its flanks from one, and
+    /// gathers a stream, a smaller share).
+    fn wave_points_from(&self, fewest: usize, least: f32) -> Option<WaveSite> {
         let r = self.rules.wave;
         let sc = self.world.scale();
         let bin = (sc as usize).max(1);
@@ -475,7 +485,7 @@ impl<W: World> Game<W> {
                     }
                 }
             }
-            if held as f32 >= r.least * mass {
+            if held as f32 >= least * mass {
                 scored.push((held as f32, a, p));
             }
         }

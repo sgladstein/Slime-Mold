@@ -1000,6 +1000,15 @@ fn wall_between(x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
     }
     return NONE;
 }
+// The most a trail keeps of its spread value a step, soil and all (the
+// scents review, 2026-11-28, finding 1, Reports/scent-review-2026-11-28):
+// clay keeps 1.05, so a keep of 0.952 or more on clay grew every step
+// instead of fading, and the viewer's slider (to 0.999, carried into the
+// game by slime-tweaks.txt) at 0.99 put 2e22 on planet 1's trail by 0:40
+// and drew the whole map as slime. No shipped tier reaches it (the
+// Trunk's 0.95 on clay is 0.9975), and under it the sums are the same
+// bits as before.
+const KEEP_MOST: f32 = 0.998;
 // What the trail on cell i keeps of its spread value (the CPU's `tick`
 // multiplies after the spread, and the trail after the species' sum).
 fn soil_keep(i: u32) -> f32 {
@@ -2630,7 +2639,12 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 }
             }
         }
-        trail_out[i] = sum / n * P.keep * soil_keep(i);
+        let f = soil_keep(i);
+        if (P.keep * f > KEEP_MOST) {
+            trail_out[i] = sum / n * KEEP_MOST;
+        } else {
+            trail_out[i] = sum / n * P.keep * f;
+        }
     } else {
         // Each species' field spreads as the trail would; the trail is
         // their sum, in species order (the CPU's `tick`).
@@ -2652,12 +2666,19 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         // cell's keep.
         let f = soil_keep(i);
         var total = 0.0;
+        var held = 0.0;
+        var over = false;
         for (var s = 0u; s < nsp(); s++) {
-            let v = sums[s] / n * keep_of(s);
-            sp_out[s * c + i] = v * f;
+            let ks = keep_of(s);
+            let v = sums[s] / n * ks;
+            // Capped as the one-species trail above (`KEEP_MOST`).
+            var kept = v * f;
+            if (ks * f > KEEP_MOST) { kept = sums[s] / n * KEEP_MOST; over = true; }
+            sp_out[s * c + i] = kept;
             total += v;
+            held += kept;
         }
-        trail_out[i] = total * f;
+        if (over) { trail_out[i] = held; } else { trail_out[i] = total * f; }
     }
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
     if (al) {
