@@ -1,0 +1,78 @@
+diff --git a/src/bin/larder-world/headless.rs b/src/bin/larder-world/headless.rs
+index 1947e13..21007db 100644
+--- a/src/bin/larder-world/headless.rs
++++ b/src/bin/larder-world/headless.rs
+@@ -1272,6 +1272,19 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
+             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
+             println!("{path}");
+         }
++        if let Ok(d) = std::env::var("SCENT_DUMP") {
++            let e = &app.game.as_ref().unwrap().world.e;
++            let fb = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
++            let ms = (t * 1000.0) as u32;
++            let _ = std::fs::write(format!("{d}/scent-{ms:06}.f32"), fb(&e.scent_of()));
++            let _ = std::fs::write(format!("{d}/trail-{ms:06}.f32"), fb(&e.trail_dbg()));
++            let _ = std::fs::write(format!("{d}/alarm-{ms:06}.f32"), fb(&e.alarm_of()));
++            let _ = std::fs::write(format!("{d}/occ-{ms:06}.u32"), e.occ_dbg().iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>());
++            let _ = std::fs::write(format!("{d}/agar.u8"), e.dish.agar.iter().map(|&a| a as u8).collect::<Vec<u8>>());
++            let g = app.game.as_ref().unwrap();
++            let sq: Vec<String> = g.soldiers.iter().filter(|s| s.alive).map(|s| format!("{:.1},{:.1}", s.x, s.y)).collect();
++            let _ = std::fs::write(format!("{d}/meta-{ms:06}.txt"), format!("w={} h={} done={}\nsoldiers={}\n", e.dish.w, e.dish.h, e.done, sq.join(" ")));
++        }
+         if app.args.crust_look.is_some() && !crust.is_empty() {
+             // The crust a cell, as the world map (a pixel a cell): black to
+             // white by crust; a cell with a walker on it now tinted orange,
+diff --git a/src/gpu/larder_world.rs b/src/gpu/larder_world.rs
+index 0f7f3ce..1d0fe47 100644
+--- a/src/gpu/larder_world.rs
++++ b/src/gpu/larder_world.rs
+@@ -1255,6 +1255,7 @@ impl World for GpuWorld {
+     /// The far smell's field (S2), written after the units' walking
+     /// distance.
+     fn set_food_field(&mut self, field: Vec<u32>) {
++        if let Ok(d) = std::env::var("SCENT_DUMP") { let _ = std::fs::write(format!("{d}/food-{:07}.u32", self.e.done), field.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>()); }
+         self.e.dish.food_field = field;
+         self.e.write_food_field();
+     }
+diff --git a/src/gpu/mod.rs b/src/gpu/mod.rs
+index 3589505..f97a71f 100644
+--- a/src/gpu/mod.rs
++++ b/src/gpu/mod.rs
+@@ -2511,6 +2511,7 @@ impl Engine {
+         // Food smelled at the reach when `smell` is 0, as `BigParams::scent_offset`.
+         let smell = if s.smell > 0.0 { s.smell } else { s.reach };
+         b.extend(f32_bytes(&[s.sensor_angle.to_radians(), s.turn.to_radians(), s.reach, smell, s.step, deposit, s.keep, t.scent_keep]));
++        if let Ok(d) = std::env::var("SCENT_DUMP") { if self.done % 300 == 0 { let _ = std::fs::write(format!("{d}/params.txt"), format!("sensor_angle={} reach={} smell={} step={} deposit={} keep={} scent_keep={} fed={} hunger_scent={} hunger_at={} far={} lure={} hunt={} alarm_w={} alarm_keep={} walkers={} laid={}\n", s.sensor_angle, s.reach, smell, s.step, deposit, s.keep, t.scent_keep, s.fed_scent, s.hunger_scent, s.hunger_at, s.far_smell, s.lure_pull, s.hunt_pull, s.alarm_weight, s.alarm_keep, s.walkers, s.laid)); } }
+         b.extend(f32_bytes(&[s.respawn, pull, bx, by, br, s.knee, s.gamma]));
+         b.extend(u32_bytes(&[stream(seed, DRAW_PULL), wipe, (s.colour == Colour::Grey) as u32, (s.field == Field::Walkers) as u32, (s.curve == Curve::Soft) as u32]));
+         b.extend(f32_bytes(&[t.tube, t.fed_scent]));
+@@ -3703,6 +3704,13 @@ impl Engine {
+         g[2 * self.cells as usize..3 * self.cells as usize].to_vec()
+     }
+ 
++    /// SCRATCH (scent review, never pushed): the trail and occupancy now.
++    pub fn trail_dbg(&self) -> Vec<f32> {
++        floats(&read_back(&self.device, &self.queue, &self.trail[(self.done % 2) as usize]))
++    }
++    pub fn occ_dbg(&self) -> Vec<u32> {
++        read_back(&self.device, &self.queue, &self.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect()
++    }
+     /// The food scent now (the CPU's `scent`), read back.
+     pub fn scent_of(&self) -> Vec<f32> {
+         floats(&read_back(&self.device, &self.queue, &self.scent[(self.done % 2) as usize]))
+@@ -3996,6 +4004,7 @@ impl Engine {
+     /// rule has no CPU twin. Nothing is written while there was no lure
+     /// and there is none (the game calls this once a game second).
+     pub fn write_lure_field(&mut self, field: &[u32]) {
++        if let Ok(d) = std::env::var("SCENT_DUMP") { let _ = std::fs::write(format!("{d}/lure-{:07}.u32", self.done), u32_bytes(field)); }
+         let reaches = field.iter().any(|&d| d != u32::MAX);
+         if !reaches && !self.lured {
+             return;
+@@ -4020,6 +4029,7 @@ impl Engine {
+     /// field clears it. No CPU twin. Nothing is written while there was
+     /// no trail and there is none.
+     pub fn write_hunt_field(&mut self, field: &[u32]) {
++        if let Ok(d) = std::env::var("SCENT_DUMP") { let _ = std::fs::write(format!("{d}/hunt-{:07}.u32", self.done), u32_bytes(field)); }
+         let reaches = field.iter().any(|&d| d != u32::MAX);
+         if !reaches && !self.hunted {
+             return;

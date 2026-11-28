@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Scents and trails</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface-2: #f0eee8;
+  --text: #1c1c1b;
+  --muted: #5d5b56;
+  --line: #e2dfd7;
+  --accent: #b8580c;
+  --accent-soft: #fbeedf;
+  --scent: #257de0;
+  --scent-soft: #e4effc;
+  --bar-rest: #b9b5ab;
+  --bad: #c2362f;
+  --bad-soft: #fbe9e7;
+  --good: #1f7a35;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gutter: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121315;
+    --surface: #1a1c1f;
+    --surface-2: #23262a;
+    --text: #ecebe7;
+    --muted: #a3a09a;
+    --line: #30333a;
+    --accent: #f0a050;
+    --accent-soft: #33261a;
+    --scent: #4d9bf0;
+    --scent-soft: #18263a;
+    --bar-rest: #5b5f66;
+    --bad: #ef6b63;
+    --bad-soft: #3a1f1d;
+    --good: #5cc277;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121315;
+  --surface: #1a1c1f;
+  --surface-2: #23262a;
+  --text: #ecebe7;
+  --muted: #a3a09a;
+  --line: #30333a;
+  --accent: #f0a050;
+  --accent-soft: #33261a;
+  --scent: #4d9bf0;
+  --scent-soft: #18263a;
+  --bar-rest: #5b5f66;
+  --bad: #ef6b63;
+  --bad-soft: #3a1f1d;
+  --good: #5cc277;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.6 var(--sans);
+}
+main { max-width: 860px; margin: 0 auto; padding: 32px var(--gutter) 80px; }
+h1 { font-size: 2.1rem; line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.01em; }
+h2 { font-size: 1.4rem; margin: 56px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.08rem; margin: 32px 0 8px; }
+p, li { max-width: 72ch; }
+a { color: var(--scent); }
+code { font: 0.88em var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.sub { color: var(--muted); margin: 0 0 24px; }
+.verdict { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 18px 20px; margin: 24px 0; }
+.verdict p { margin: 0 0 10px; }
+.verdict p:last-child { margin: 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 24px 0; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.tile b { display: block; font-size: 1.7rem; line-height: 1.1; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+.tile span { color: var(--muted); font-size: 0.9rem; line-height: 1.4; display: block; }
+nav.toc { font-size: 0.95rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px; }
+nav.toc ol { margin: 4px 0; padding-left: 20px; }
+.tablewrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; min-width: 620px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { background: var(--surface-2); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+figure { margin: 20px 0; }
+figure img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--line); image-rendering: auto; }
+figcaption { color: var(--muted); font-size: 0.88rem; margin-top: 8px; line-height: 1.5; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 20px 14px; margin: 18px 0; }
+.finding h3 { margin-top: 16px; }
+.tag { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; margin-right: 6px; vertical-align: 2px; background: var(--surface-2); color: var(--muted); }
+.tag.bug { background: var(--bad-soft); color: var(--bad); }
+.tag.play { background: var(--accent-soft); color: var(--accent); }
+.tag.look, .tag.speed { background: var(--scent-soft); color: var(--scent); }
+.idea { display: grid; grid-template-columns: 44px 1fr; gap: 0 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 14px 0; }
+.idea .n { font-size: 1.5rem; font-weight: 700; color: var(--muted); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.idea h3 { margin: 0 0 6px; }
+.idea p { margin: 6px 0; }
+.idea .meta { font-size: 0.86rem; color: var(--muted); margin-top: 8px; }
+.idea.top { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 8px; margin: 18px 0; position: relative; }
+.chart h4 { margin: 0 0 2px; font-size: 0.98rem; }
+.chart .note { color: var(--muted); font-size: 0.84rem; margin: 0 0 6px; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart svg text { font: 11px var(--sans); fill: var(--muted); }
+.chart svg .lbl { fill: var(--text); font-size: 11.5px; }
+.tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 0.8rem; padding: 5px 8px; border-radius: 6px; white-space: nowrap; opacity: 0; transition: opacity .08s; z-index: 2; }
+details { margin: 10px 0; }
+summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+.small { font-size: 0.88rem; color: var(--muted); }
+ul.tight li { margin: 4px 0; }
+@media (max-width: 520px) {
+  h1 { font-size: 1.7rem; }
+  .idea { grid-template-columns: 1fr; }
+  .idea .n { margin-bottom: 4px; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Scents and trails</h1>
+<p class="sub">How Plasmodia's slime smells its way around: what holds up, what does not, and ten ideas to play with it. A review of main after #901, 28 November 2026.</p>
+
+<div class="verdict">
+<p><b>The short answer.</b> The physics is sound and cheap for what it does, with one real bug: on clay, a trail keep above 0.952 grows without limit and the whole map turns to slime.</p>
+<p>The bigger issue is design. One short-lived smell (half of it gone in 0.76 s) does every job. Your squad is the loudest thing on the map. The strongest pulls (lure, hunt, wave, far smell) come from walking-distance maps the player never sees, and those maps send the slime down the one shortest gap, straight into your guns.</p>
+<p>Smell is the slime's whole sense of the world, and today it is almost invisible and hard to play against. The best next step is to make the slime route round your guns (idea 3), then make what it follows visible and counterable (ideas 4 and 5).</p>
+</div>
+
+<div class="tiles">
+  <div class="tile"><b>0.76 s</b><span>Half-life of the food smell. In that time it spreads 3.3 fine cells, yet walkers sniff it 36 cells ahead.</span></div>
+  <div class="tile"><b>24–36%</b><span>Share of open ground the F2 smell view can show. Walkers react to smell on all of it, down to 1e-20.</span></div>
+  <div class="tile"><b>4,136</b><span>Peak smell of the squad on planet 2 at 1:00. A crystal the slime has touched smells 85 to 96.</span></div>
+  <div class="tile"><b>37%</b><span>Share of the planet 8 GPU step spent on the trail and scent passes (2.0 of 5.3 ms, GTX 1070).</span></div>
+</div>
+
+<nav class="toc"><b>On this page</b>
+<ol>
+<li><a href="#today">How the fields work today</a></li>
+<li><a href="#findings">Findings</a></li>
+<li><a href="#ideas">Ten ideas, ranked</a></li>
+<li><a href="#next">What I recommend</a></li>
+<li><a href="#method">How this was measured</a></li>
+</ol>
+</nav>
+
+<h2 id="today">1. How the fields work today</h2>
+<p>Every engine step (30 a second at scale 2), each GPU field is averaged over its 3x3 neighbours and multiplied by a <i>keep</i>. That gives every field two numbers that decide how it plays: a <b>half-life</b> and a <b>spread length</b>, which is how far smell spreads before it fades (the square root of D over the loss rate, with D = 1/3 cell² a step). A fine cell is half a dish cell.</p>
+<p>Walkers read three points ahead (front, left, right) and turn toward the biggest reading. Only which reading is bigger matters, never by how much (Jones's rule). Every field a walker reads is added into one number per sensor: trail, plus food smell times hunger, plus alarm, scar and crust with their weights. On top of that, the CPU builds walking-distance maps round the walls once a second, and walkers lean down them.</p>
+
+<div class="tablewrap"><table>
+<thead><tr><th>GPU field</th><th>Laid by</th><th>Half-life</th><th>Spread</th><th>Read by</th><th>Player sees</th></tr></thead>
+<tbody>
+<tr><td><b>Trail</b></td><td>every walker as it moves; blocked walkers, spores and sleepers lay their own amounts</td><td class="num">0.10–0.45 s<br>(keep 0.8–0.95 by tier)</td><td class="num">1.2–2.5 cells</td><td>the three sensors, 6 to 18 cells ahead by tier</td><td>the slime's body is drawn from it</td></tr>
+<tr><td><b>Food smell</b></td><td>crystals (20 a cell a step, 15% once touched, times what is left), soldiers, lures, pumps, the larder, outposts, Bait shots</td><td class="num">0.76 s<br>(keep 0.97)</td><td class="num">3.3 cells</td><td>the sensors 36 cells ahead, times hunger</td><td>only the F2 view</td></tr>
+<tr><td><b>Alarm</b></td><td>hit and dying walkers, spores; relayed by the Sleeper</td><td class="num">1.1 s on alarm tiers<br>(keep 0.98)</td><td class="num">4.1 cells</td><td>alarm tiers, weight 3</td><td>nothing direct</td></tr>
+<tr><td><b>Scar</b> (Grudge)</td><td>1% of the alarm, per cell</td><td class="num">3.9 min<br>(keep 0.9999)</td><td class="num">none</td><td>Grudge walkers, weight 0.5</td><td>the Grudge readout</td></tr>
+</tbody></table></div>
+
+<div class="tablewrap"><table>
+<thead><tr><th>CPU walking-distance map</th><th>Source</th><th>How strong (weight)</th><th>Refresh</th><th>Player sees</th></tr></thead>
+<tbody>
+<tr><td><b>Far smell</b></td><td>fresh crystals</td><td>1, for walkers at least half hungry</td><td class="num">every 2 s</td><td>no</td></tr>
+<tr><td><b>Lure</b></td><td>Lure buildings</td><td>10 ("one number for every tier")</td><td class="num">every 1 s</td><td>the lure rings</td></tr>
+<tr><td><b>Hunt</b> (#895)</td><td>the squad's recent places, aged at 4 dish cells a second, out to 80</td><td>0, 10, 18, then 30 by the run's curve</td><td class="num">every 1 s</td><td>no</td></tr>
+<tr><td><b>Wave</b></td><td>the gather point, then the strike target</td><td>40</td><td class="num">every 1 s</td><td>no</td></tr>
+<tr><td><b>Raid, units</b></td><td>raid targets; your units</td><td>panic and raid branches</td><td class="num">every 1 s</td><td>no</td></tr>
+</tbody></table></div>
+<p class="small">All the maps are Dijkstra on 2x2 blocks with 16 neighbours, exact to a fifth of a block. A walker leans by weight times (distance here minus distance at its sensor).</p>
+
+<h2 id="findings">2. Findings</h2>
+
+<div class="finding">
+<h3><span class="tag bug">Bug</span>Trails on clay blow up when keep passes 0.952</h3>
+<p>The trail pass computes <code>mean × keep × soil_keep</code>, and clay's soil keep is 1.05 (<code>engine.wgsl</code> lines 2624 and 2644, <code>big.rs</code> line 1704). On clay, any keep at or above 1/1.05 = 0.952 multiplies the trail every step instead of fading it. The Trunk (keep 0.95) runs at 0.9975 on clay, a quarter of a percent from the edge. The slime viewer's keep slider goes up to 0.999, and <code>slime-tweaks.txt</code> carries it into the game.</p>
+<p>With keep 0.99 on planet 1 the trail peaked at 1.5e7 at 0:10, 5.6e14 at 0:25 and 2.1e22 at 0:40. By then 80,941 cells were over 10,000 and the whole planet drew as slime.</p>
+<figure><img src="images/clay-blowup.jpg" alt="Two game stills of planet 1. Left: normal play at 1:00, slime in patches. Right: keep 0.99 at 0:40, the whole map orange." loading="lazy" width="1284" height="400">
+<figcaption>Planet 1, seed 1, greedy hand. Left: as shipped, at 1:00. Right: trail keep 0.99, at 0:40. The clay islands under the crystals feed a trail that never fades, and it spreads from there.</figcaption></figure>
+<p><b>Fix:</b> cap the product, for example <code>min(keep × soil_keep, 0.998)</code>, in both places. At 0.998 no shipped tier changes. This is one line in the Enemy lane's file, and I've sent it to them.</p>
+<p class="small">At today's keeps, clay also shapes the look: the Drifter's 0.93 becomes 0.977 on clay, so the trail under walkers on planet 1 sits near 200 (median 199, top 212) while it is 13 to 34 on planet 2. That's fine, but a tier's keep does about twice as much on clay as elsewhere.</p>
+</div>
+
+<div class="finding">
+<h3><span class="tag">Design</span>One brief smell does every job, and the squad drowns the crystals</h3>
+<p>Crystals, soldiers, lures, pumps, the larder, outposts and Bait shots all pour into one food smell with one keep. Half of any smell is gone in 0.76 s, and in that time it spreads only 3.3 fine cells, yet walkers sniff it 36 cells ahead. A walker at a crystal's edge sniffs 36 cells out, where the smell is about a hundred-thousandth of the smell at the edge (chart). Walkers still find it because they compare readings rather than measure them: 1e-12 beats 1e-13. So the long reach works, through numbers too small for anything to show.</p>
+
+<div class="chart" id="profile">
+<h4>Smell of one untouched crystal, after it settles</h4>
+<p class="note">Smell against distance from the crystal's centre, log scale; a crystal of radius 12 fine cells laying 20 a cell a step, keep 0.97.</p>
+<svg viewBox="0 0 640 300" role="img" aria-label="Line chart: smell falls from 599 at the centre to 0.24 at 33 cells and about 1e-20 at 180 cells, one power of ten every 7.6 cells."></svg>
+<div class="tip"></div>
+</div>
+
+<p>We have already met the consequences. Soldiers' smell is gone about a second after they move (Lab hunt report), so the slime cannot track a squad by smell. Bait and Smother showed nothing until they were buffed, and the pump needed 20 times the smell. A stronger, wider soldier smell did not help the slime catch a kiting squad either (dead end, 11-26).</p>
+<p>Meanwhile the squad is the loudest source on the map. Its soldiers' smell discs overlap and add up: 14 soldiers on planet 2 at 1:00 peaked at 4,136, and 23 at 2:00 at 5,253. A crystal smells 540 to 870 untouched and 85 to 96 once the slime has touched it. Near both, walkers turn to the squad.</p>
+</div>
+
+<div class="finding">
+<h3><span class="tag">Physics</span>The far smell is already in the scent, in its exponent</h3>
+<p>A blur that fades at a fixed rate is the heat method for distance (Varadhan 1967; Crane, Weischedel and Wardetzky 2013): minus the log of the field, times the spread length, approximates the walking distance round walls. So the GPU food smell already holds a far smell, with no lag.</p>
+<p>I checked it against the CPU far smell, block by block. Ranking every block by minus log smell and by walking distance agrees closely: Spearman 0.87 to 0.93 on planet 1 (0:30 to 1:30) and 0.69 to 0.79 on planet 2 (0:30 to 2:00). Planet 2 is lower because the squad's smell pulls the map off the crystals. Off the slime's body, uphill in log smell points within 45° of the far smell's downhill on 83 to 90% of planet 1's blocks and 81 to 92% of planet 2's. The fitted slope on planet 1 is 0.25 to 0.27 per fine cell against 0.30 in theory.</p>
+<p>Almost every open cell (99.8%) holds some smell; the smallest is 4e-20 on planet 1 and 6e-18 on planet 2. Nothing gets near the float's floor, so the CPU and GPU agree. The F2 view's byte shows smell of 0.24 and up, which is 24 to 29% of open ground on planet 1 and 30 to 36% on planet 2.</p>
+<figure><img src="images/planet2-fields.png" alt="Four maps of planet 2 at 1:00: the F2 view, log smell in bands, the hunt map, and the far smell's rings." loading="lazy" width="1836" height="1164">
+<figcaption>Planet 2 at 1:00, seed 1, greedy hand; orange is the slime, white dots are soldiers. <b>Top left:</b> what F2 shows (the game's byte), blobs round the crystals and the squad. <b>Top right:</b> what the walkers follow, log smell banded every power of ten. <b>Bottom left:</b> the hunt map, bright where the squad has just been, by walking distance and age. <b>Bottom right:</b> the CPU far smell, a ring every 20 fine cells. The top-right bands and the bottom-right rings tell the same story across the whole map.</figcaption></figure>
+<details><summary>The same four maps on planet 1</summary>
+<figure><img src="images/planet1-fields.png" alt="Four maps of planet 1 at 1:00." loading="lazy" width="1612" height="1004">
+<figcaption>Planet 1 at 1:00, same layout. No hunt on planet 1 (its pull is 0), so the bottom-left panel is empty.</figcaption></figure>
+</details>
+</div>
+
+<div class="finding">
+<h3><span class="tag">Design</span>The walking-distance maps steer hardest, can't be seen, and send everything through one gap</h3>
+<p>A walker leans by weight times (distance here minus distance at its sensor), and that difference can be at most the sensor's reach. So one weight gives a different pull on each tier. <code>LURE_PULL</code> 10 is "one number for every tier" in <code>run.rs</code>, but it leans about 60 on planet 2 (reach 6) and 180 on planets 1 and 4 (reach 18). The hunt leans about 60 on planet 2 and about 340 on planet 4. A touched crystal smells about 90, so inside its range a lure, hunt or wave beats food.</p>
+<p>The hunt map is not a trail. It is a disc about 80 dish cells round the squad's recent places: 21% of planet 2 at 0:30 and 1:00, and 60% at 2:00. Every shortest path through the walls runs through the same gaps, so a hunt or wave arrives on one front, through the narrowest place, into the guns. The Lab's hunt report saw that, and kiting lost no soldiers.</p>
+<figure><img src="images/planet2-hunt.png" alt="The hunt map on planet 2 at 0:30 and 2:00, a bright disc round the squad growing to most of the map." loading="lazy" width="1836" height="576">
+<figcaption>The hunt map on planet 2 at 0:30 (left) and 2:00 (right). Bright is near the squad's recent path. It reaches 80 dish cells round every place the squad has been, so it fills a disc, not a line.</figcaption></figure>
+<p>The maps cost CPU, not GPU (the units map takes 7.4 ms on planet 8, off the frame), and lag 1 to 2 s. Only the lure has rings on screen.</p>
+</div>
+
+<div class="finding">
+<h3><span class="tag speed">Cost</span>The two passes are over a third of the step, and most of it is re-reading</h3>
+<div class="chart" id="passes">
+<h4>One GPU step on planet 8, by pass</h4>
+<p class="note">GTX 1070, every pass timed alone, after the walker sort; total 5.27 ms (Lab walker-sort report, 24 Nov).</p>
+<svg viewBox="0 0 640 266" role="img" aria-label="Bar chart: other passes 1.79 ms, trail 1.16, sense 0.84, scent 0.82, plant 0.21, egain 0.17, walk 0.15, life 0.14."></svg>
+<div class="tip"></div>
+</div>
+<p>The walker sort made every per-walker pass faster; the per-cell passes did not move. Each cell's trail sums 9 neighbours, and for every neighbour it reads that neighbour's deposit counters again: moved walkers, blocked walkers, spores and sleepers once the slime has a life cycle, the capped count, the alarm relay. That is about 63 to 81 reads a cell, many of them atomic. The scent pass reads each neighbour's crystal, touched flag and what is left: about 45 reads, plus 12 atomic clears.</p>
+<p><b>Fold, then blur.</b> A cheap pass first adds each cell's own deposit into its own trail (and alarm, and smell) and clears the counters. The blur then reads 9 plain floats. The float operations are the same, in the same order, so done with care the result stays bit-identical and the CPU twin tests stay green. My estimate is about half the cost, around 1 ms a step on planet 8, which needs a timing on the 1070. Test 5 held at a p95 of 16.4 ms against 16.7, and bigger raids and Hard sizes have landed since, so a millisecond matters. Tiling the blur in shared memory could follow.</p>
+</div>
+
+<div class="finding">
+<h3><span class="tag">Sound</span>Otherwise stable and well behaved</h3>
+<ul class="tight">
+<li>Each blur is an average times a keep below 1, so every field fades (clay aside). Map edges absorb, walls average over open neighbours only, and smell passes only through walls marked to let it.</li>
+<li>No smell gets near the float's floor on planets 1 and 2, so there are no subnormals and no CPU/GPU difference from them.</li>
+<li>Jones's rule is robust: it ignores each field's scale, which is why tiny far smells still steer. It also means a weight only matters where two fields meet.</li>
+<li>Once touched, a crystal keeps the dimmed smell (15%) for the rest of the planet; I found no reset.</li>
+</ul>
+</div>
+
+<div class="finding">
+<h3><span class="tag look">Readability</span>The player sees the trail and the lure rings, nothing else</h3>
+<p>The smell, the alarm, the hunt, the wave's gather point and the far smell are all invisible, except in the F2 view, which shows about a third of the map. So when the slime turns toward the squad, splits, or pours through a gap, the reason is not on screen. The owner's rule is that everything on screen is the simulation. The other side of that rule is the opportunity: much of the simulation is not on screen.</p>
+</div>
+
+<h2 id="ideas">3. Ten ideas, ranked</h2>
+<p>Ranked by what they do for play against what they cost. The first two change nothing you'd notice in play; the rest are game changes that need Scott's yes before they go into the game.</p>
+
+<div class="idea"><div class="n">1</div><div>
+<h3><span class="tag bug">Fix</span>Cap clay's keep</h3>
+<p>Cap the trail's keep times soil keep at 0.998, in both places. No shipped tier changes, and the viewer can no longer break a planet.</p>
+<p class="meta">Owner: Enemy. Cost: one line. Sent to the Enemy lane.</p>
+</div></div>
+
+<div class="idea"><div class="n">2</div><div>
+<h3><span class="tag speed">Speed</span>Fold, then blur</h3>
+<p>Add each cell's own deposit first, then blur plain floats. Bit-identical, about 1 ms a step on planet 8 by estimate, and every new field after it is cheaper too.</p>
+<p class="meta">Owner: Enemy (<code>engine.wgsl</code>) with Engine and tools (pass list, 1070 timing). Cost: a day.</p>
+</div></div>
+
+<div class="idea top"><div class="n">3</div><div>
+<h3><span class="tag play">Play</span>Flanking: the slime routes round your guns</h3>
+<p>Make the hunt, wave and units maps cost more to walk where your guns reach, or where walkers recently died (the alarm, or the Grudge's scar). Shortest paths then bend round the kill zone. The slime comes round the sides of a turret line and through two gaps instead of one, and probes for the gap you didn't wall.</p>
+<p>This answers Scott's 11-28 notes that the game is too easy to beat (he didn't need turrets, and "difficulty needs to be kicked up another notch") and the Lab's one-front finding without adding more slime. The Dijkstra already exists, and it only needs a cost per block. Dial it per planet like the hunt's pull.</p>
+<p class="meta">Owner: Enemy (<code>hunt.rs</code>, <code>raids.rs</code>). Cost: small CPU, no GPU. Prototype first in a Lab branch on planets 1 to 4.</p>
+</div></div>
+
+<div class="idea"><div class="n">4</div><div>
+<h3><span class="tag look">Look</span>Draw what the slime follows</h3>
+<p>Show the hunt as spoor: faint, stained tracks behind the squad, fading by age, drawn straight from the hunt map's values. Show the wave's gather point as a smell that swells before it strikes, and the alarm as a ripple through the body. It is all data already on the GPU, so it keeps to "the picture is the data".</p>
+<p class="meta">Owner: Look and interface (<code>view.wgsl</code>). Cost: a texture read a pixel.</p>
+</div></div>
+
+<div class="idea"><div class="n">5</div><div>
+<h3><span class="tag play">Play</span>Smell channels and palates</h3>
+<p>Split the one smell into food, prey (soldiers and buildings) and bait, each with its own keep. A prey smell that lasts about 10 s makes a real track the slime can follow, and one the player can fight: water washes it, fire burns it, Smother wipes it, a Mask card hides it, a Decoy lays it. Each tier gets a palate: the Drifter loves bait, the Swarmer hunts prey, the Sleeper wakes only to alarm. Crystals stop being drowned by the squad.</p>
+<p class="meta">Owner: Enemy, with Squad and arsenal for the cards. Cost: one or two more fields, about 0.4 ms a step each after idea 2.</p>
+</div></div>
+
+<div class="idea"><div class="n">6</div><div>
+<h3><span class="tag speed">Speed</span>A free far smell from the log of the food smell</h3>
+<p>Read minus log of the food smell as the far smell, retiring the CPU far map and its 2 s lag. It needs idea 5 first, so the squad doesn't bend it. The log of a prey channel gives the units map the same way.</p>
+<p class="meta">Owner: Enemy. Cost: small, after 5.</p>
+</div></div>
+
+<div class="idea"><div class="n">7</div><div>
+<h3><span class="tag play">Play</span>Smell on the wind</h3>
+<p>The Lab's wind twist already exists. Carry smell downwind each step (shift it along the wind before the blur). Come from downwind and the slime can't smell you; a lure upwind pulls it across the map.</p>
+<p class="meta">Owner: Lab first. Cost: one pass, or folded into idea 2's.</p>
+</div></div>
+
+<div class="idea"><div class="n">8</div><div>
+<h3><span class="tag play">Play</span>Lost crystals call the slime back</h3>
+<p>Once touched, a crystal smells at 15% for the rest of the planet. Reset that after some seconds with no slime on it, so a crystal you take back starts calling the slime again. Holding ground becomes a fight, not a one-off.</p>
+<p class="meta">Owner: Enemy. Cost: small.</p>
+</div></div>
+
+<div class="idea"><div class="n">9</div><div>
+<h3><span class="tag speed">Speed</span>Walking-distance maps on the GPU</h3>
+<p>Relax distance a few times each step (each cell takes the smaller of its own distance plus the lag, or a neighbour's plus a step), with sources at zero. No Dijkstra and no lag, and the units map's 7.4 ms of CPU on planet 8 goes. Flank costs from idea 3 become a texture read.</p>
+<p class="meta">Owner: Enemy with Engine and tools. Cost: a few days.</p>
+</div></div>
+
+<div class="idea"><div class="n">10</div><div>
+<h3><span class="tag">Bold</span>Ideas from the model</h3>
+<ul class="tight">
+<li><b>Veins by flow.</b> Walkers that have eaten lay more (the tube rule of Tero et al. 2010). Busy routes thicken into arteries the squad can cut to starve the far side. The Lab's veins prototype (11-19) found nothing inside a packed body that builds on itself; food carried along a route might be that thing (untested).</li>
+<li><b>Memory of where it has been.</b> Real slime mould avoids its own old slime (Reid et al. 2012). A negative weight on the crust makes the slime sweep new ground rather than retread old, and leaves a visible map of where it searched.</li>
+<li><b>Noise.</b> Shots lay alarm or prey smell where they are fired, so loud guns draw the slime and quiet ones don't: a gun trait with a cost.</li>
+<li><b>A stealth meter.</b> A squad standing still builds a pool of smell, and a moving squad spreads it thin. Dig in, and you get found.</li>
+</ul>
+</div></div>
+
+<h2 id="next">4. What I recommend</h2>
+<ol>
+<li><b>Now, with no change to play:</b> idea 1 (Enemy) and idea 2 (Enemy with Engine and tools). I've sent the clay bug to the Enemy lane.</li>
+<li><b>First prototype:</b> idea 3, flanking, in a Lab branch on planets 1 to 4. The measures are soldiers lost and how many fronts the slime arrives on, on paired seeds, set before the run. It is the cheapest change that attacks "too easy" directly.</li>
+<li><b>Then</b> ideas 4 and 5 together: visible spoor on a prey channel, which makes the hunt both readable and something you can fight, and opens Mask and Decoy cards.</li>
+</ol>
+<p>Scott has the choice of which to prototype first in the thread. Nothing here goes into the game without his yes.</p>
+
+<h2 id="method">5. How this was measured</h2>
+<ul class="tight">
+<li>Main at <code>351dcd5</code> (after #901), planets 1 and 2, run seed 1, <code>hand=greedy</code>, headless on software Vulkan. Fields dumped at 0:30, 1:00, 1:30 (planet 1) and 0:30, 1:00, 2:00 (planet 2).</li>
+<li>A scratch patch (<code>scent-dump.patch</code>, not for merging) wrote the GPU trail, smell, alarm and walker counts, and the CPU far smell, lure and hunt maps. <code>analyse.py</code> measures them and draws the maps; <code>theory.py</code> gives the half-lives, spreads and a lone crystal's profile.</li>
+<li>The clay test: <code>larder-world run=1:1 mode=squads hand=greedy keep=0.99 at=10,25,40</code>.</li>
+<li>GPU timings are the Lab's from the 1070 (Reports/lab-walker-sort-2026-11-24); none were taken here. Cloud runs are for checking only, never timing.</li>
+</ul>
+<p class="small">Sources and scripts: <code>Reports/scent-review-2026-11-28/</code> in the repo.</p>
+</main>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function fmt(v) {
+    if (v >= 100) return Math.round(v).toLocaleString();
+    if (v >= 1) return v.toFixed(1);
+    if (v >= 0.01) return v.toFixed(3);
+    return v.toExponential(1).replace("e", "e");
+  }
+  function placeTip(box, tip, x, y) {
+    var r = box.getBoundingClientRect();
+    tip.style.opacity = 1;
+    var w = tip.offsetWidth;
+    var left = Math.min(Math.max(4, x - w / 2), r.width - w - 4);
+    tip.style.left = left + "px";
+    tip.style.top = Math.max(0, y - 40) + "px";
+  }
+
+  // Chart 1: one crystal's smell against distance.
+  var prof = [599,595,580,551,499,409,265,137,69.7,35.9,18.6,9.66,5.04,2.64,1.39,0.732,0.386,0.204,0.108,0.0575,0.0306,0.0163,0.00866,0.00462,0.00246,0.00132,0.000704,0.000376,0.000202,0.000108,5.79e-05,3.1e-05,1.67e-05,8.94e-06,4.8e-06,2.58e-06,1.39e-06,7.45e-07,4.01e-07,2.16e-07,1.16e-07,6.25e-08,3.37e-08,1.81e-08,9.77e-09,5.27e-09,2.84e-09,1.53e-09,8.26e-10,4.46e-10,2.41e-10,1.3e-10,7.01e-11,3.78e-11,2.04e-11,1.1e-11,5.96e-12,3.22e-12,1.74e-12,9.4e-13,5.08e-13,2.75e-13,1.49e-13,8.03e-14,4.34e-14,2.35e-14,1.27e-14,6.88e-15,3.72e-15,2.01e-15,1.09e-15,5.9e-16,3.19e-16,1.73e-16,9.35e-17,5.06e-17,2.74e-17,1.48e-17,8.04e-18,4.35e-18,2.36e-18,1.28e-18,6.92e-19,3.75e-19,2.03e-19,1.1e-19,5.97e-20,3.23e-20,1.75e-20,9.5e-21,5.15e-21];
+  function drawProfile() {
+    var box = document.getElementById("profile"), svg = box.querySelector("svg"), tip = box.querySelector(".tip");
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var L = 52, R = 16, T = 12, B = 36, H = 300, W = Math.round(Math.max(320, Math.min(640, svg.getBoundingClientRect().width || 640)));
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var xmax = 180, ymin = -21, ymax = 3;
+    function X(d) { return L + (W - L - R) * d / xmax; }
+    function Y(v) { var lg = Math.log10(Math.max(v, 1e-30)); return T + (H - T - B) * (ymax - lg) / (ymax - ymin); }
+    var grid = css("--line"), muted = css("--muted"), scent = css("--scent"), accent = css("--accent");
+    for (var e = ymin; e <= ymax; e += 3) {
+      el("line", {x1: L, x2: W - R, y1: Y(Math.pow(10, e)), y2: Y(Math.pow(10, e)), stroke: grid, "stroke-width": 1}, svg);
+      var t = el("text", {x: L - 6, y: Y(Math.pow(10, e)) + 4, "text-anchor": "end"}, svg);
+      t.textContent = e === 0 ? "1" : "1e" + e;
+    }
+    for (var d = 0; d <= xmax; d += 30) {
+      var tx = el("text", {x: X(d), y: H - B + 16, "text-anchor": "middle"}, svg); tx.textContent = d;
+    }
+    var xl = el("text", {x: X(xmax), y: H - 4, "text-anchor": "end"}, svg); xl.textContent = "fine cells from the crystal's centre";
+    // Crystal edge and the F2 floor.
+    el("rect", {x: X(0), y: T, width: X(12) - X(0), height: H - T - B, fill: accent, opacity: 0.10}, svg);
+    var ce = el("text", {x: X(12) + 4, y: T + 12, class: "lbl"}, svg); ce.textContent = "crystal";
+    el("line", {x1: L, x2: W - R, y1: Y(0.24), y2: Y(0.24), stroke: muted, "stroke-width": 1, "stroke-dasharray": "4 4"}, svg);
+    var f2 = el("text", {x: W - R, y: Y(0.24) - 6, "text-anchor": "end", class: "lbl"}, svg); f2.textContent = "F2 view shows smell above 0.24";
+    el("line", {x1: X(48), x2: X(48), y1: T, y2: H - B, stroke: muted, "stroke-width": 1, "stroke-dasharray": "2 4"}, svg);
+    var sr = el("text", {x: X(48) + 4, y: Y(1e-9), class: "lbl"}, svg); sr.textContent = "a walker at the edge sniffs to here";
+    var pts = prof.map(function (v, i) { return X(i * 2) + "," + Y(v); }).join(" ");
+    el("polyline", {points: pts, fill: "none", stroke: scent, "stroke-width": 2, "stroke-linejoin": "round"}, svg);
+    var tail = el("text", {x: X(xmax), y: Y(1e-14), "text-anchor": "end", class: "lbl"}, svg); tail.textContent = "walkers still turn on these";
+    el("line", {x1: L, x2: L, y1: T, y2: H - B, stroke: grid}, svg);
+    el("line", {x1: L, x2: W - R, y1: H - B, y2: H - B, stroke: grid}, svg);
+    var cross = el("line", {x1: 0, x2: 0, y1: T, y2: H - B, stroke: muted, "stroke-width": 1, opacity: 0}, svg);
+    var dot = el("circle", {r: 4.5, fill: scent, stroke: css("--surface"), "stroke-width": 2, opacity: 0}, svg);
+    var hit = el("rect", {x: L, y: T, width: W - L - R, height: H - T - B, fill: "transparent"}, svg);
+    function move(ev) {
+      var r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) * W / r.width;
+      var i = Math.max(0, Math.min(prof.length - 1, Math.round((sx - L) / (W - L - R) * xmax / 2)));
+      var px = X(i * 2), py = Y(prof[i]);
+      cross.setAttribute("x1", px); cross.setAttribute("x2", px); cross.setAttribute("opacity", 0.6);
+      dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.setAttribute("opacity", 1);
+      tip.textContent = (i * 2) + " cells: smell " + fmt(prof[i]);
+      var br = box.getBoundingClientRect();
+      placeTip(box, tip, r.left - br.left + px * r.width / W, r.top - br.top + py * r.height / H);
+    }
+    function leave() { tip.style.opacity = 0; cross.setAttribute("opacity", 0); dot.setAttribute("opacity", 0); }
+    hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move); hit.addEventListener("pointerleave", leave);
+  }
+
+  // Chart 2: the planet 8 step by pass.
+  var passes = [["Other passes", 1.788, false], ["trail", 1.155, true], ["sense", 0.842, false], ["scent", 0.823, true], ["plant", 0.205, false], ["egain", 0.165, false], ["walk", 0.149, false], ["life", 0.142, false]];
+  function drawPasses() {
+    var box = document.getElementById("passes"), svg = box.querySelector("svg"), tip = box.querySelector(".tip");
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var L = 104, R = 56, T = 6, H = 266, row = 28, bh = 18, W = Math.round(Math.max(320, Math.min(640, svg.getBoundingClientRect().width || 640)));
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var xmax = 2.0;
+    function X(v) { return L + (W - L - R) * v / xmax; }
+    var grid = css("--line"), rest = css("--bar-rest"), hi = css("--scent");
+    for (var g = 0; g <= xmax; g += 0.5) {
+      el("line", {x1: X(g), x2: X(g), y1: T, y2: T + row * passes.length, stroke: grid}, svg);
+      var gt = el("text", {x: X(g), y: T + row * passes.length + 14, "text-anchor": "middle"}, svg); gt.textContent = g === 0 ? "0" : g.toFixed(1);
+    }
+    var ux = el("text", {x: W - R, y: T + row * passes.length + 30, "text-anchor": "end"}, svg); ux.textContent = "ms a step";
+    passes.forEach(function (p, i) {
+      var y = T + i * row + (row - bh) / 2;
+      var name = el("text", {x: L - 8, y: y + bh / 2 + 4, "text-anchor": "end", class: p[2] ? "lbl" : ""}, svg); name.textContent = p[0];
+      var w = X(p[1]) - X(0);
+      var path = "M" + X(0) + "," + y + " h" + (w - 4) + " a4,4 0 0 1 4,4 v" + (bh - 8) + " a4,4 0 0 1 -4,4 h" + (-(w - 4)) + " z";
+      var bar = el("path", {d: path, fill: p[2] ? hi : rest}, svg);
+      var v = el("text", {x: X(p[1]) + 6, y: y + bh / 2 + 4, class: p[2] ? "lbl" : ""}, svg); v.textContent = p[1].toFixed(2);
+      var hit = el("rect", {x: 0, y: T + i * row, width: W, height: row, fill: "transparent"}, svg);
+      function show(ev) {
+        var r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+        tip.textContent = p[0] + ": " + p[1].toFixed(3) + " ms, " + Math.round(p[1] / 5.269 * 100) + "% of the step";
+        placeTip(box, tip, r.left - br.left + X(p[1]) * r.width / W, r.top - br.top + y * r.height / H);
+      }
+      hit.addEventListener("pointermove", show); hit.addEventListener("pointerdown", show);
+      hit.addEventListener("pointerleave", function () { tip.style.opacity = 0; });
+    });
+  }
+  function draw() { drawProfile(); drawPasses(); }
+  draw();
+  var rt = null, lastW = window.innerWidth;
+  window.addEventListener("resize", function () { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rt); rt = setTimeout(draw, 120); });
+  try {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+    new MutationObserver(draw).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

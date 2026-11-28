@@ -2,7 +2,7 @@
 title: Art direction for Larder World (the style guide)
 kind: look
 status: open
-updated: 2026-11-27
+updated: 2026-11-28
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/biome-ground-2026-11-15/README.md
@@ -19,6 +19,7 @@ sources:
   - Reports/levelgen-review-2026-11-14/README.md
   - Reports/lure-rings-2026-11-18/README.md
   - Reports/mini-boss-look-2026-11-16/README.md
+  - Reports/path-look-2026-11-28/README.md
   - Reports/planet-ground-2026-11-20/README.md
   - Reports/polish-review-2026-11-24/README.md
   - Reports/raised-walls-2026-11-18/README.md
@@ -119,7 +120,10 @@ The 11-24 polish review ranks fifteen spots that still look unfinished, worst fi
    under 70% or for 2 s after a hurt (the squad's health is on its tile),
    a squad's number on a small dark plate; the dead look dead; buildings show their
    state (rising, hurt, working) in their sprite (soldier sprite A's style,
-   owner 11-11 16:48Z).
+   owner 11-11 16:48Z). A selected squad's planned path is chevrons drifting along
+   the way it will really walk, cream on a dark pen (red for a fight), wide
+   enough to keep their size at any UI scale; queued goals numbered (owner's
+   pick 11-28; [path look](../../Reports/path-look-2026-11-28/README.md)).
 7. **The HUD serves the fight.** In play the HUD covers at most about 15% of
    the screen, collapses when nothing is selected, and never sits over what
    the camera opens on. Its look stays the `theme` set in `ui.rs`.
